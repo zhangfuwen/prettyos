@@ -1,0 +1,64 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+                0x00400000                . = 0x400000
+
+.text           0x00400000      0x253
+                0x00400000                __code_start = .
+ *(.text*)
+ .text          0x00400000       0x20 start.o
+                0x00400000                _start
+ .text          0x00400020       0x88 userlib.o
+                0x0040007f                _strcmp
+                0x00400034                _putch
+                0x00400045                _puts
+                0x00400066                _floppy_dir
+                0x00400056                _getch
+                0x00400020                _settextcolor
+ .text          0x004000a8      0x1ab program.o
+                0x004000a8                _main
+
+.rel.dyn        0x00400254        0x0 load address 0x00400253
+ .rel.text      0x00000000        0x0 start.o
+
+.data           0x00400254        0x0
+                0x00400254                __data_start = .
+ *(.data)
+ .data          0x00400254        0x0 userlib.o
+ .data          0x00400254        0x0 program.o
+
+.rodata         0x00400254        0x0
+                0x00400254                __rodata_start = .
+ *(.rodata)
+
+.rodata.str1.1  0x00400254       0x2b
+ .rodata.str1.1
+                0x00400254       0x13 userlib.o
+ .rodata.str1.1
+                0x00400267       0x18 program.o
+
+.rodata.str1.4  0x00400280       0x74
+ .rodata.str1.4
+                0x00400280       0x74 program.o
+
+.bss            0x004002f4        0x0
+                0x004002f4                __bss_start = .
+ *(.bss)
+ .bss           0x004002f4        0x0 userlib.o
+ .bss           0x004002f4        0x0 program.o
+ *(COMMON)
+                0x004002f4                __end = .
+LOAD start.o
+LOAD userlib.o
+LOAD program.o
+OUTPUT(program.elf elf32-i386)
+
+.comment        0x00000000       0x43
+ .comment       0x00000000       0x1f start.o
+ .comment       0x0000001f       0x12 userlib.o
+ .comment       0x00000031       0x12 program.o

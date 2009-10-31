@@ -1,0 +1,27 @@
+ASFLAGSOBJ= -O32 -f elf
+NASM = nasmw
+ 
+CFLAGS= -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
+CC= i586-elf-gcc
+ 
+LDFLAGS= -T user.ld -Map kernel.map -nostdinc
+LD= i586-elf-ld
+ 
+all: program.elf
+	del *.o
+ 
+program.elf: 	start.o userlib.o program.o 
+	$(LD) $(LDFLAGS) $+ -o $@ 
+ 
+userlib.o: 	userlib.c 
+	 $(CC) -c $(CFLAGS) $< -o $@
+ 
+program.o: program.c 
+	 $(CC) -c $(CFLAGS) $< -o $@
+ 
+%.o: %.asm
+	$(NASM) $(ASFLAGSOBJ) $< -o $@ 
+ 
+#    $<  Erste Abhängigkeit
+#    $+  Liste aller Abhängigkeiten 
+#    $@  Name des Targets

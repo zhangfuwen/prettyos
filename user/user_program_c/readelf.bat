@@ -1,0 +1,1 @@
+i586-elf-readelf -a program.elf >elf.txt
