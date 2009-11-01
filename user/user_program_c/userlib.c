@@ -7,7 +7,7 @@ void settextcolor(unsigned int foreground, unsigned int background)
     asm volatile( "int $0x7F" : : "a"(2), "b"(foreground), "c"(background) );
 }
 
-void putch(char val)
+void putch(unsigned char val)
 {
     asm volatile( "int $0x7F" : : "a"(1), "b"(val) );
 }
@@ -17,16 +17,15 @@ void puts(char* pString)
     asm volatile( "int $0x7F" : : "a"(0), "b"(pString) );
 }
 
-char getch()
+unsigned char getch()
 {
-    char ret;
+    unsigned char ret;
     asm volatile( "int $0x7F" : "=a"(ret): "a"(7) );
     return ret;
 }
 
 void floppy_dir()
 {
-    puts("DEBUG: floppy_dir\n");
     asm volatile( "int $0x7F" : : "a"(8) );
 }
 

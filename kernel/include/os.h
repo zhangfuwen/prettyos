@@ -31,7 +31,10 @@ typedef signed long          int32_t;
 typedef signed short         int16_t;
 typedef signed char          int8_t;
 
-typedef enum {false, true} bool;
+#define bool _Bool
+#define true   1
+#define false  0
+#define __bool_true_false_are_defined 1
 
 /// //////////////////////////////////////
 

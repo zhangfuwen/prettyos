@@ -59,18 +59,34 @@ uint8_t FetchAndAnalyzeScancode()
 
 uint8_t ScanToASCII()
 {
-	uint8_t retchar;	                   // The character that returns the scan code to ASCII code
+	uint8_t retchar;                   // The character that returns the scan code to ASCII code
 	scan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
 
+    /// TEST
+    //  printformat(" scan:%d ",scan);
+    /// TEST
+
 	if( ShiftKeyDown )
-	    retchar = asciiShift[scan];	   // (Upper) Shift Codes
+	{
+	    retchar = asciiShift[scan];    // (Upper) Shift Codes
+	}
 	else
+	{
 		retchar = asciiNonShift[scan]; // (Lower) Non-Shift Codes
+	}
 
 	if( ( !(scan == KRLEFT_SHIFT || scan == KRRIGHT_SHIFT) ) && ( KeyPressed == 1 ) ) //filter Shift Key and Key Release
+	{
+	    /// TEST
+	    //  printformat("ascii:%x ", retchar);
+	    /// TEST
+
 	    return retchar; // ASCII version
+	}
 	else
+	{
 	    return 0;
+	}
 }
 
 void keyboard_handler(struct regs* r)
@@ -90,7 +106,6 @@ void keyboard_handler(struct regs* r)
            pODA->pTailKQ = (pODA->KEYQUEUE)+KQSIZE-1;
        }
    }
-   //task_switch();
 }
 
 int32_t k_checkKQ_and_print_char()
@@ -163,6 +178,9 @@ uint8_t k_checkKQ_and_return_char()
        {
            pODA->pHeadKQ = (pODA->KEYQUEUE)+KQSIZE-1;
        }
+       /// TEST
+	   //  printformat("KEY:%c ", KEY);
+	   /// TEST
        return KEY;
    }
    return 0;

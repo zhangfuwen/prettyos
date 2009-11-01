@@ -6,9 +6,9 @@
 
 // syscalls
 void settextcolor(unsigned int foreground, unsigned int background);
-void putch(char val);
+void putch(unsigned char val);
 void puts(char* pString);
-char getch();
+unsigned char getch();
 void floppy_dir();
 
 // user functions

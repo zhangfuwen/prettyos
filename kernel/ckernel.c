@@ -213,6 +213,22 @@ int main()
     // paging, kernel heap
     paging_install();
     kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, KHEAP_MAX, 1, 0); // SV and RW
+    tasking_install(); // ends with sti()
+
+    /// direct 1st floppy disk
+    if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
+    {
+        printformat("1.44 MB 1st floppy is installed\n\n");
+
+        flpydsk_set_working_drive(0); // set drive 0 as current drive
+	    flpydsk_install(6);           // floppy disk uses IRQ 6
+	    k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
+    }
+    else
+    {
+        printformat("1.44 MB 1st floppy not shown by CMOS\n\n");
+    }
+    /// direct 1st floppy disk
 
     // RAM Disk
     ///
@@ -224,9 +240,6 @@ int main()
     ///
     uint32_t ramdisk_start = k_malloc(0x200000, 0, 0);
     settextcolor(15,0);
-
-    // multitasking
-    tasking_install(); // ends with sti()
 
     // test with data and program from data.asm
     k_memcpy((void*)ramdisk_start, &file_data_start, (uint32_t)&file_data_end - (uint32_t)&file_data_start);
@@ -274,22 +287,6 @@ int main()
         ++i;
     }
     printformat("\n\n");
-
-    /// direct 1st floppy disk
-    if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
-    {
-        printformat("1.44 MB 1st floppy is installed\n\n");
-
-        flpydsk_set_working_drive(0); // set drive 0 as current drive
-	    flpydsk_install(6);           // floppy disk uses IRQ 6
-	    k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
-    }
-    else
-    {
-        printformat("1.44 MB 1st floppy not shown by CMOS\n\n");
-    }
-    /// direct 1st floppy disk
-
 
     /// shell in elf-executable-format provided by data.asm
     uint32_t elf_vaddr     = *( (uint32_t*)( address_TEST + 0x3C ) );

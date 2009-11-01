@@ -12,8 +12,7 @@ int main()
 
       while(TRUE)
       {
-        char input = getch();
-
+        unsigned char input = getch();
 
         // if (
         //      (input==32)                ||  // space key
@@ -24,9 +23,10 @@ int main()
         //     ((input>=48)&&(input<=57))      // 0 ... 9
         //     )
 
-        if( (input >= 0x20) && (input <= 0x7E) )
+        //if( (input >= 0x20) && (input <= 0x7E) )
+        if( (input >= 0x15) && (input <= 0xFF) ) // test-wise open, cf. ascii
         {
-          /*if(i<70)*/if(i<0x7E) // 7Eh = 126
+          if(i<0xFF) // test-wise open
           {
             putch(input);
             entry[i]=input;
@@ -56,7 +56,7 @@ int main()
       if( ( strcmp(entry,"help") == 0 ) || ( strcmp(entry,"?") == 0 ) )
       {
           settextcolor(2,0);
-          puts("Implemented Instructions: help ? hi\n");
+          puts("Implemented Instructions: help ? hi fdir\n");
           settextcolor(15,0);
       }
 

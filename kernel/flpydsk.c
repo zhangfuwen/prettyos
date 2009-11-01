@@ -5,6 +5,18 @@
 // http://www.brokenthorn.com/Resources/OSDev20.html
 // http://www.eit.lth.se/fileadmin/eit/courses/eit015/FAT12Description.pdf
 
+/*****************************************************************************
+  This module is based on the open source code
+  of the OSDEV tutorial series at www.brokenthorn.com
+*****************************************************************************/
+
+const int32_t FLOPPY_IRQ                   =    6; // floppy irq
+const int32_t FLPY_SECTORS_PER_TRACK       =   18; // sectors per track
+static uint8_t	_CurrentDrive              =    0; // current working drive. Defaults to 0.
+static volatile uint8_t _FloppyDiskIRQ     =    0; // set when IRQ fires
+const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  = 1000; // waiting time in milliseconds
+
+
 // IO ports
 enum FLPYDSK_IO
 {
@@ -105,14 +117,6 @@ enum FLPYDSK_SECTOR_DTL
 	FLPYDSK_SECTOR_DTL_1024	=	4
 };
 
-/**********************************
-* Constants
-**********************************/
-
-const int32_t FLOPPY_IRQ                         =  6;     // floppy irq
-const int32_t FLPY_SECTORS_PER_TRACK             = 18;     // sectors per track
-static uint8_t	_CurrentDrive        =  0;     // current working drive. Defaults to 0.
-static volatile uint8_t _FloppyDiskIRQ =  0;     // set when IRQ fires
 
 
 /**
@@ -229,29 +233,32 @@ void flpydsk_check_int(uint32_t* st0, uint32_t* cyl)
 }
 
 // turns the current floppy drives motor on/off
-void flpydsk_control_motor(int32_t b)
+void flpydsk_control_motor(bool b)
 {
 	// sanity check: invalid drive
-	if(_CurrentDrive > 3) return;
-	uint32_t motor = 0;
+	// if(_CurrentDrive > 3) return; // ??? void ???
 
+	uint32_t motor = 0;
 	switch(_CurrentDrive) // select the correct mask based on current drive
 	{
-		case 0:
-			motor = FLPYDSK_DOR_MASK_DRIVE0_MOTOR; break;
-		case 1:
-			motor = FLPYDSK_DOR_MASK_DRIVE1_MOTOR; break;
-		case 2:
-			motor = FLPYDSK_DOR_MASK_DRIVE2_MOTOR; break;
-		case 3:
-			motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
+		case 0: motor = FLPYDSK_DOR_MASK_DRIVE0_MOTOR; break;
+		case 1:	motor = FLPYDSK_DOR_MASK_DRIVE1_MOTOR; break;
+		case 2: motor = FLPYDSK_DOR_MASK_DRIVE2_MOTOR; break;
+		case 3:	motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
 	}
+
 	// turn on or off the motor of that drive
 	if(b)
-		flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA);
+	{
+        flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA);
+	}
 	else
-		flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET);
-	sleepMilliSeconds(20); // in all cases: wait a little bit for the motor to spin up/turn off
+	{
+
+        flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET);
+	}
+	sti(); // important!
+	sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
 }
 
 // configure drive
@@ -372,16 +379,16 @@ void flpydsk_set_working_drive(uint8_t drive){ if (drive < 4) _CurrentDrive = dr
 // get current working drive
 uint8_t flpydsk_get_working_drive(){ return _CurrentDrive; }
 
-// read or write a sector
-// http://www.isdaman.com/alsos/hardware/fdc/floppy_files/wrsec.gif
-void flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation) //read: operation = 0; write: operation = 1
+// read or write a sector // http://www.isdaman.com/alsos/hardware/fdc/floppy_files/wrsec.gif
+// read: operation = 0; write: operation = 1
+void flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
 {
 	uint32_t st0, cyl;
-
 	if(operation == 0) // read a sector
 	{
 	    flpydsk_dma_read();
-	    flpydsk_send_command( FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY);
+	    flpydsk_send_command( FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK |
+	                          FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY);
 	}
 	if(operation == 1) // write a sector
 	{
@@ -400,31 +407,33 @@ void flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_
 
 	flpydsk_wait_irq();
 
-	printformat("Return Values:\n");
+    printformat("status info: ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
 	int32_t j;
 	for(j=0; j<7; ++j)
 	{
 		int32_t val = flpydsk_read_data(); // read status info: ST0 ST1 ST2 C H S Size(2: 512 Byte)
-		printformat("%d: %d  ",j,val);
+		printformat("%d  ",val);
 	}
 	printformat("\n\n");
 	flpydsk_check_int(&st0,&cyl); // let FDC know we handled interrupt
-	sleepSeconds(5);
+	sleepMilliSeconds(200); // necessary?
 }
 
 // read a sector
 uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 {
-	if (_CurrentDrive >= 4) return 0;
-	// convert LBA sector to CHS
+    if(_CurrentDrive >= 4) return 0; // floppies 0-3 possible
+
 	int32_t head=0, track=0, sector=1;
 	flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
+
 	// turn motor on and seek to track
 	flpydsk_control_motor(true);
 	if(flpydsk_seek (track, head)) return 0;
+
 	// read sector and turn motor off
 	flpydsk_transfer_sector(head, track, sector, 0);
-	flpydsk_control_motor(FALSE);
+	flpydsk_control_motor(false);
 
 	return (uint8_t*)DMA_BUFFER;
 }
@@ -447,7 +456,6 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 
 void flpydsk_read_directory()
 {
-	// printformat("DEBUG flpydsk.c: flpydsk_read_directory\n");
 	flpydsk_read_sector(19); // start at 0x2600: root directory (14 sectors)
 	printformat("<Floppy Disc Root Dir>\n");
 

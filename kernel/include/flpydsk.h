@@ -16,7 +16,7 @@ void flpydsk_write_ccr(uint8_t val);
 void flpydsk_wait_irq();
 void i86_flpy_irq(struct regs* r);
 void flpydsk_check_int(uint32_t* st0, uint32_t* cyl);
-void flpydsk_control_motor(int32_t b);
+void flpydsk_control_motor(bool b);
 void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_t dma );
 int32_t flpydsk_calibrate(uint32_t drive);
 void flpydsk_disable_controller();
