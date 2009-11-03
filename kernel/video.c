@@ -74,6 +74,7 @@ void update_cursor()
 static uint8_t transferFromAsciiToCodepage437(uint8_t ascii)
 {
     uint8_t c;
+
     if      ( ascii == 0xE4 ) c = 0x84; // ä
     else if ( ascii == 0xF6 ) c = 0x94; // ö
     else if ( ascii == 0xFC ) c = 0x81; // ü
@@ -83,6 +84,12 @@ static uint8_t transferFromAsciiToCodepage437(uint8_t ascii)
     else if ( ascii == 0xC4 ) c = 0x8E; // Ä
     else if ( ascii == 0xD6 ) c = 0x99; // Ö
     else if ( ascii == 0xDC ) c = 0x9A; // Ü
+
+    else if ( ascii == 0xB2 ) c = 0xFD; // ²
+    else if ( ascii == 0xB3 ) c = 0x00; // ³ <-- not available
+    else if ( ascii == 0x80 ) c = 0xEE; // € <-- Greek epsilon used
+    else if ( ascii == 0xB5 ) c = 0xE6; // µ
+
     else    { c = ascii;  } // to be checked for more deviations
 
     return c;

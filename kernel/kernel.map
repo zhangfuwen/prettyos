@@ -41,7 +41,7 @@ Linker script and memory map
 
                 0x00040000                . = 0x40000
 
-.text           0x00040000     0x4a06
+.text           0x00040000     0x4a92
                 0x00040000                __code_start = .
  *(EXCLUDE_FILE(data.o shared_pages.o) .text)
  .text          0x00040000       0x30 kernel.o
@@ -174,135 +174,136 @@ Linker script and memory map
                 0x0004201c                _fault_handler
                 0x00042227                _isrs_install
  *fill*         0x000424d5        0x3 00
- .text          0x000424d8      0x274 keyboard.o
-                0x000426b4                _ScanToASCII
+ .text          0x000424d8      0x2c2 keyboard.o
+                0x000426e1                _ScanToASCII
                 0x00042616                _FetchAndAnalyzeScancode
-                0x000426fd                _keyboard_handler
+                0x0004274b                _keyboard_handler
                 0x000425d2                _keyboard_init
                 0x00042521                _k_checkKQ_and_print_char
                 0x000424d8                _k_checkKQ_and_return_char
                 0x000425fa                _keyboard_install
- .text          0x0004274c      0x66d kheap.o
-                0x00042760                _free
-                0x00042cd9                _create_heap
-                0x000429c8                _alloc
-                0x000429af                _kfree
- *fill*         0x00042db9        0x3 00
- .text          0x00042dbc       0x40 math.o
-                0x00042dee                _k_abs
-                0x00042dbc                _k_power
- .text          0x00042dfc      0x1cc ordered_array.o
-                0x00042dfc                _standard_lessthan_predicate
-                0x00042f7d                _create_ordered_array
-                0x00042e4a                _lookup_ordered_array
-                0x00042e7d                _insert_ordered_array
-                0x00042f28                _destroy_ordered_array
-                0x00042e0a                _remove_ordered_array
-                0x00042f3d                _place_ordered_array
- .text          0x00042fc8      0x7d4 paging.o
-                0x00042fe5                _free_frame
-                0x00043027                _alloc_frame
-                0x000434e1                _analyze_physical_addresses
-                0x000432db                _clone_directory
-                0x000434b1                _show_physical_address
-                0x0004312e                _analyze_frames_bitset
-                0x0004342f                _get_page
-                0x0004323e                _k_malloc
-                0x000435db                _paging_install
- .text          0x0004379c       0xd6 pci.o
-                0x0004379c                _pci_config_write_dword
-                0x000437ec                _pci_config_read
- *fill*         0x00043872        0x2 00
- .text          0x00043874       0xea syscall.o
-                0x00043919                _syscall_handler
-                0x00043889                _syscall_putch
-                0x000438f9                _syscall_k_checkKQ_and_return_char
-                0x000438d9                _syscall_switch_context
-                0x000438b9                _syscall_getpid
-                0x000438e9                _syscall_k_checkKQ_and_print_char
-                0x0004389f                _syscall_settextcolor
-                0x00043909                _syscall_flpydsk_read_directory
-                0x000438c9                _syscall_nop
-                0x00043874                _syscall_puts
- *fill*         0x0004395e        0x2 00
- .text          0x00043960      0x55f task.o
-                0x00043960                _getpid
-                0x00043b4a                _tasking_install
-                0x0004396c                _task_switch
-                0x00043e8c                _log_task_list
-                0x00043d2c                _task_log
-                0x00043be1                _TSS_log
-                0x00043db6                _fork
-                0x000439ea                _switch_context
-                0x000439f1                _create_task
- *fill*         0x00043ebf        0x1 00
- .text          0x00043ec0      0x103 timer.o
-                0x00043f34                _timer_install
-                0x00043fa6                _sleepSeconds
-                0x00043eec                _systemTimer_setFrequency
-                0x00043eda                _timer_uninstall
-                0x00043f57                _timer_wait
-                0x00043ec0                _timer_handler
-                0x00043f88                _sleepMilliSeconds
- *fill*         0x00043fc3        0x1 00
- .text          0x00043fc4      0x48e util.o
-                0x00044049                _fetchDS
-                0x0004417a                _k_strcat
-                0x00043fca                _cli
-                0x00044042                _fetchCS
-                0x00044030                _fetchEBP
-                0x000440a4                _k_memset
-                0x00044131                _k_strcpy
-                0x000443b6                _k_memshow
-                0x000442b6                _float2string
-                0x00044072                _outportl
-                0x000440e4                _k_strlen
-                0x0004403b                _fetchSS
-                0x00043fd0                _nop
-                0x000443e8                _panic_assert
-                0x0004405b                _inportl
-                0x00044025                _fetchESP
-                0x00044066                _outportb
-                0x00044108                _k_strcmp
-                0x000440c5                _k_memsetw
-                0x0004419b                _reboot
-                0x000441d0                _k_itoa
-                0x00044147                _k_strncpy
-                0x00043fc4                _sti
-                0x00044261                _k_i2hex
-                0x00043fd6                _initODA
-                0x0004407e                _k_memcpy
-                0x00044050                _inportb
- *fill*         0x00044452        0x2 00
- .text          0x00044454      0x5b2 video.o
-                0x000444bc                _restore_cursor
-                0x0004493f                _k_printf
-                0x0004446d                _move_cursor_right
-                0x000449c6                _k_clear_screen
-                0x000445d8                _putch
-                0x0004499e                _move_cursor_end
-                0x0004478e                _puts
-                0x000449b2                _move_cursor_home
-                0x00044508                _scroll
-                0x000447b9                _printformat
-                0x000444e2                _save_cursor
-                0x00044579                _update_cursor
-                0x00044981                _set_cursor
-                0x00044454                _settextcolor
-                0x0004448e                _move_cursor_left
-                0x00045000                . = 0x45000
+ *fill*         0x0004279a        0x2 00
+ .text          0x0004279c      0x66d kheap.o
+                0x000427b0                _free
+                0x00042d29                _create_heap
+                0x00042a18                _alloc
+                0x000429ff                _kfree
+ *fill*         0x00042e09        0x3 00
+ .text          0x00042e0c       0x40 math.o
+                0x00042e3e                _k_abs
+                0x00042e0c                _k_power
+ .text          0x00042e4c      0x1cc ordered_array.o
+                0x00042e4c                _standard_lessthan_predicate
+                0x00042fcd                _create_ordered_array
+                0x00042e9a                _lookup_ordered_array
+                0x00042ecd                _insert_ordered_array
+                0x00042f78                _destroy_ordered_array
+                0x00042e5a                _remove_ordered_array
+                0x00042f8d                _place_ordered_array
+ .text          0x00043018      0x7d4 paging.o
+                0x00043035                _free_frame
+                0x00043077                _alloc_frame
+                0x00043531                _analyze_physical_addresses
+                0x0004332b                _clone_directory
+                0x00043501                _show_physical_address
+                0x0004317e                _analyze_frames_bitset
+                0x0004347f                _get_page
+                0x0004328e                _k_malloc
+                0x0004362b                _paging_install
+ .text          0x000437ec       0xd6 pci.o
+                0x000437ec                _pci_config_write_dword
+                0x0004383c                _pci_config_read
+ *fill*         0x000438c2        0x2 00
+ .text          0x000438c4       0xea syscall.o
+                0x00043969                _syscall_handler
+                0x000438d9                _syscall_putch
+                0x00043949                _syscall_k_checkKQ_and_return_char
+                0x00043929                _syscall_switch_context
+                0x00043909                _syscall_getpid
+                0x00043939                _syscall_k_checkKQ_and_print_char
+                0x000438ef                _syscall_settextcolor
+                0x00043959                _syscall_flpydsk_read_directory
+                0x00043919                _syscall_nop
+                0x000438c4                _syscall_puts
+ *fill*         0x000439ae        0x2 00
+ .text          0x000439b0      0x55f task.o
+                0x000439b0                _getpid
+                0x00043b9a                _tasking_install
+                0x000439bc                _task_switch
+                0x00043edc                _log_task_list
+                0x00043d7c                _task_log
+                0x00043c31                _TSS_log
+                0x00043e06                _fork
+                0x00043a3a                _switch_context
+                0x00043a41                _create_task
+ *fill*         0x00043f0f        0x1 00
+ .text          0x00043f10      0x103 timer.o
+                0x00043f84                _timer_install
+                0x00043ff6                _sleepSeconds
+                0x00043f3c                _systemTimer_setFrequency
+                0x00043f2a                _timer_uninstall
+                0x00043fa7                _timer_wait
+                0x00043f10                _timer_handler
+                0x00043fd8                _sleepMilliSeconds
+ *fill*         0x00044013        0x1 00
+ .text          0x00044014      0x48e util.o
+                0x00044099                _fetchDS
+                0x000441ca                _k_strcat
+                0x0004401a                _cli
+                0x00044092                _fetchCS
+                0x00044080                _fetchEBP
+                0x000440f4                _k_memset
+                0x00044181                _k_strcpy
+                0x00044406                _k_memshow
+                0x00044306                _float2string
+                0x000440c2                _outportl
+                0x00044134                _k_strlen
+                0x0004408b                _fetchSS
+                0x00044020                _nop
+                0x00044438                _panic_assert
+                0x000440ab                _inportl
+                0x00044075                _fetchESP
+                0x000440b6                _outportb
+                0x00044158                _k_strcmp
+                0x00044115                _k_memsetw
+                0x000441eb                _reboot
+                0x00044220                _k_itoa
+                0x00044197                _k_strncpy
+                0x00044014                _sti
+                0x000442b1                _k_i2hex
+                0x00044026                _initODA
+                0x000440ce                _k_memcpy
+                0x000440a0                _inportb
+ *fill*         0x000444a2        0x2 00
+ .text          0x000444a4      0x5ee video.o
+                0x0004450c                _restore_cursor
+                0x000449cb                _k_printf
+                0x000444bd                _move_cursor_right
+                0x00044a52                _k_clear_screen
+                0x00044628                _putch
+                0x00044a2a                _move_cursor_end
+                0x0004481a                _puts
+                0x00044a3e                _move_cursor_home
+                0x00044558                _scroll
+                0x00044845                _printformat
+                0x00044532                _save_cursor
+                0x000445c9                _update_cursor
+                0x00044a0d                _set_cursor
+                0x000444a4                _settextcolor
+                0x000444de                _move_cursor_left
+                0x00045000                . = ALIGN (0x1000)
 
 .text1          0x00045000        0xa
  shared_pages.o(.text)
  .text          0x00045000        0xa shared_pages.o
                 0x00045000                _getAddressUserProgram
-                0x00046000                . = 0x46000
+                0x00046000                . = ALIGN (0x1000)
 
-.text2          0x00046000     0x1a5a
+.text2          0x00046000     0x1a56
  data.o(.text)
- .text          0x00046000     0x1a5a data.o
+ .text          0x00046000     0x1a56 data.o
                 0x00046000                _file_data_start
-                0x00047a5a                _file_data_end
+                0x00047a56                _file_data_end
 
 .data           0x00047a60       0x9c
                 0x00047a60                __data_start = .
@@ -338,7 +339,7 @@ Linker script and memory map
                 0x00047af4                _attrib
                 0x00047af8                _vidmem
 
-.rodata         0x00047b00      0x1ca
+.rodata         0x00047b00      0x22a
                 0x00047b00                __rodata_start = .
  *(.rodata)
  .rodata        0x00047b00       0x1c flpydsk.o
@@ -346,141 +347,143 @@ Linker script and memory map
                 0x00047b08                _MOTOR_SPIN_UP_TURN_OFF_TIME
                 0x00047b04                _FLPY_SECTORS_PER_TRACK
  *fill*         0x00047b1c        0x4 00
- .rodata        0x00047b20       0xf9 keyboard.o
- *fill*         0x00047c19        0x7 00
- .rodata        0x00047c20       0x24 syscall.o
- .rodata        0x00047c44       0x86 video.o
-                0x00047cc9                _LINES
-                0x00047cc8                _COLUMNS
+ .rodata        0x00047b20      0x159 keyboard.o
+ *fill*         0x00047c79        0x7 00
+ .rodata        0x00047c80       0x24 syscall.o
+ .rodata        0x00047ca4       0x86 video.o
+                0x00047d29                _LINES
+                0x00047d28                _COLUMNS
  *(.rdata)
 
-.rodata.str1.1  0x00047cca      0x4d5
+.rodata.str1.1  0x00047d2a      0x4d5
  .rodata.str1.1
-                0x00047cca       0xeb ckernel.o
+                0x00047d2a       0xeb ckernel.o
  .rodata.str1.1
-                0x00047db5       0x70 flpydsk.o
+                0x00047e15       0x70 flpydsk.o
  .rodata.str1.1
-                0x00047e25        0xb initrd.o
+                0x00047e85        0xb initrd.o
  .rodata.str1.1
-                0x00047e30      0x198 isrs.o
+                0x00047e90      0x198 isrs.o
  .rodata.str1.1
-                0x00047fc8        0x3 keyboard.o
+                0x00048028        0x3 keyboard.o
  .rodata.str1.1
-                0x00047fcb       0x88 kheap.o
+                0x0004802b       0x88 kheap.o
  .rodata.str1.1
-                0x00048053       0x31 ordered_array.o
+                0x000480b3       0x31 ordered_array.o
  .rodata.str1.1
-                0x00048084        0xd paging.o
+                0x000480e4        0xd paging.o
  .rodata.str1.1
-                0x00048091       0xd1 task.o
+                0x000480f1       0xd1 task.o
  .rodata.str1.1
-                0x00048162       0x3d util.o
+                0x000481c2       0x3d util.o
 
-.rodata.str1.4  0x000481a0      0x2f1
+.rodata.str1.4  0x00048200      0x2f1
  .rodata.str1.4
-                0x000481a0       0xc7 ckernel.o
- *fill*         0x00048267        0x1 00
+                0x00048200       0xc7 ckernel.o
+ *fill*         0x000482c7        0x1 00
  .rodata.str1.4
-                0x00048268       0x33 flpydsk.o
- *fill*         0x0004829b        0x1 00
+                0x000482c8       0x33 flpydsk.o
+ *fill*         0x000482fb        0x1 00
  .rodata.str1.4
-                0x0004829c      0x11d isrs.o
- *fill*         0x000483b9        0x3 00
+                0x000482fc      0x11d isrs.o
+ *fill*         0x00048419        0x3 00
  .rodata.str1.4
-                0x000483bc       0xa8 kheap.o
+                0x0004841c       0xa8 kheap.o
  .rodata.str1.4
-                0x00048464       0x2d paging.o
+                0x000484c4       0x2d paging.o
 
-.rodata.cst4    0x00048494        0x4
- .rodata.cst4   0x00048494        0x4 util.o
+.rodata.cst4    0x000484f4        0x4
+ .rodata.cst4   0x000484f4        0x4 util.o
 
-.bss            0x000484a0     0x55d8
-                0x000484a0                __bss_start = .
+.bss            0x00048500     0x55d8
+                0x00048500                __bss_start = .
  *(.bss)
- .bss           0x000484a0        0x0 shared_pages.o
- .bss           0x000484a0        0x8 ckernel.o
-                0x000484a4                _kheap
-                0x000484a0                _flag1
- .bss           0x000484a8        0x0 cmos.o
- .bss           0x000484a8        0x0 descriptor_tables.o
- .bss           0x000484a8        0x2 flpydsk.o
- *fill*         0x000484aa        0x2 00
- .bss           0x000484ac        0x4 fs.o
-                0x000484ac                _fs_root
- .bss           0x000484b0        0x0 gdt.o
- .bss           0x000484b0        0x0 idt.o
- .bss           0x000484b0        0x0 initrd.o
- .bss           0x000484b0        0x0 irq.o
- .bss           0x000484b0        0x0 isrs.o
- .bss           0x000484b0        0x3 keyboard.o
-                0x000484b0                _ShiftKeyDown
-                0x000484b2                _scan
-                0x000484b1                _KeyPressed
- *fill*         0x000484b3        0x1 00
- .bss           0x000484b4        0x0 kheap.o
- .bss           0x000484b4        0x0 math.o
- .bss           0x000484b4        0x0 ordered_array.o
- .bss           0x000484b4        0x8 paging.o
-                0x000484b8                _current_directory
-                0x000484b4                _kernel_directory
- .bss           0x000484bc        0x0 pci.o
- .bss           0x000484bc        0x0 syscall.o
- .bss           0x000484bc        0x0 task.o
- .bss           0x000484bc        0x4 timer.o
-                0x000484bc                _timer_ticks
- .bss           0x000484c0        0x0 util.o
- .bss           0x000484c0        0x4 video.o
-                0x000484c0                _csr_x
-                0x000484c3                _saved_csr_y
-                0x000484c1                _csr_y
-                0x000484c2                _saved_csr_x
+ .bss           0x00048500        0x0 shared_pages.o
+ .bss           0x00048500        0x8 ckernel.o
+                0x00048504                _kheap
+                0x00048500                _flag1
+ .bss           0x00048508        0x0 cmos.o
+ .bss           0x00048508        0x0 descriptor_tables.o
+ .bss           0x00048508        0x2 flpydsk.o
+ *fill*         0x0004850a        0x2 00
+ .bss           0x0004850c        0x4 fs.o
+                0x0004850c                _fs_root
+ .bss           0x00048510        0x0 gdt.o
+ .bss           0x00048510        0x0 idt.o
+ .bss           0x00048510        0x0 initrd.o
+ .bss           0x00048510        0x0 irq.o
+ .bss           0x00048510        0x0 isrs.o
+ .bss           0x00048510        0x5 keyboard.o
+                0x00048510                _ShiftKeyDown
+                0x00048511                _AltGrKeyDown
+                0x00048513                _curScan
+                0x00048514                _prevScan
+                0x00048512                _KeyPressed
+ *fill*         0x00048515        0x3 00
+ .bss           0x00048518        0x0 kheap.o
+ .bss           0x00048518        0x0 math.o
+ .bss           0x00048518        0x0 ordered_array.o
+ .bss           0x00048518        0x8 paging.o
+                0x0004851c                _current_directory
+                0x00048518                _kernel_directory
+ .bss           0x00048520        0x0 pci.o
+ .bss           0x00048520        0x0 syscall.o
+ .bss           0x00048520        0x0 task.o
+ .bss           0x00048520        0x4 timer.o
+                0x00048520                _timer_ticks
+ .bss           0x00048524        0x0 util.o
+ .bss           0x00048524        0x4 video.o
+                0x00048524                _csr_x
+                0x00048527                _saved_csr_y
+                0x00048525                _csr_y
+                0x00048526                _saved_csr_x
  *(COMMON)
- *fill*         0x000484c4       0x1c 00
- COMMON         0x000484e0       0x4c shared_pages.o
-                0x000484e0                _ODA
- *fill*         0x0004852c       0x14 00
- COMMON         0x00048540     0x4120 ckernel.o
-                0x00048540                _Mem_Chunk
-                0x00048640                _buf
-                0x0004a640                _address_user
-                0x0004a644                _initial_esp
-                0x0004a660                _address_TEST
- COMMON         0x0004c660      0x8c6 descriptor_tables.o
-                0x0004c660                _tss
-                0x0004c6e0                _gdt_entries
-                0x0004c710                _idt_ptr
-                0x0004c720                _idt_entries
-                0x0004cf20                _gdt_ptr
- *fill*         0x0004cf26       0x1a 00
- COMMON         0x0004cf40       0x36 gdt.o
-                0x0004cf40                _gdt
-                0x0004cf70                _gdt_register
- *fill*         0x0004cf76        0xa 00
- COMMON         0x0004cf80      0x806 idt.o
-                0x0004cf80                _idt
-                0x0004d780                _idt_register
- *fill*         0x0004d786       0x1a 00
- COMMON         0x0004d7a0       0xac initrd.o
-                0x0004d7a0                _initrd_header
-                0x0004d7a4                _initrd_root
-                0x0004d7a8                _initrd_dev
-                0x0004d7ac                _file_headers
-                0x0004d7c0                _dirent
-                0x0004d844                _root_nodes
-                0x0004d848                _nroot_nodes
- *fill*         0x0004d84c       0x14 00
- COMMON         0x0004d860      0x200 irq.o
-                0x0004d860                _irq_routines
- COMMON         0x0004da60        0xc paging.o
-                0x0004da60                _offs
-                0x0004da64                _ind
-                0x0004da68                _frames
- COMMON         0x0004da6c        0x8 task.o
-                0x0004da6c                _ready_queue
-                0x0004da70                _current_task
- COMMON         0x0004da74        0x4 timer.o
-                0x0004da74                _eticks
-                0x0004da78                __end = .
+ *fill*         0x00048528       0x18 00
+ COMMON         0x00048540       0x4c shared_pages.o
+                0x00048540                _ODA
+ *fill*         0x0004858c       0x14 00
+ COMMON         0x000485a0     0x4120 ckernel.o
+                0x000485a0                _Mem_Chunk
+                0x000486a0                _buf
+                0x0004a6a0                _address_user
+                0x0004a6a4                _initial_esp
+                0x0004a6c0                _address_TEST
+ COMMON         0x0004c6c0      0x8c6 descriptor_tables.o
+                0x0004c6c0                _tss
+                0x0004c740                _gdt_entries
+                0x0004c770                _idt_ptr
+                0x0004c780                _idt_entries
+                0x0004cf80                _gdt_ptr
+ *fill*         0x0004cf86       0x1a 00
+ COMMON         0x0004cfa0       0x36 gdt.o
+                0x0004cfa0                _gdt
+                0x0004cfd0                _gdt_register
+ *fill*         0x0004cfd6        0xa 00
+ COMMON         0x0004cfe0      0x806 idt.o
+                0x0004cfe0                _idt
+                0x0004d7e0                _idt_register
+ *fill*         0x0004d7e6       0x1a 00
+ COMMON         0x0004d800       0xac initrd.o
+                0x0004d800                _initrd_header
+                0x0004d804                _initrd_root
+                0x0004d808                _initrd_dev
+                0x0004d80c                _file_headers
+                0x0004d820                _dirent
+                0x0004d8a4                _root_nodes
+                0x0004d8a8                _nroot_nodes
+ *fill*         0x0004d8ac       0x14 00
+ COMMON         0x0004d8c0      0x200 irq.o
+                0x0004d8c0                _irq_routines
+ COMMON         0x0004dac0        0xc paging.o
+                0x0004dac0                _offs
+                0x0004dac4                _ind
+                0x0004dac8                _frames
+ COMMON         0x0004dacc        0x8 task.o
+                0x0004dacc                _ready_queue
+                0x0004dad0                _current_task
+ COMMON         0x0004dad4        0x4 timer.o
+                0x0004dad4                _eticks
+                0x0004dad8                __end = .
 LOAD kernel.o
 LOAD data.o
 LOAD flush.o
