@@ -8,7 +8,7 @@ Linker script and memory map
 
                 0x00400000                . = 0x400000
 
-.text           0x00400000      0x242
+.text           0x00400000      0x23f
                 0x00400000                __code_start = .
  *(.text*)
  .text          0x00400000       0x20 start.o
@@ -21,37 +21,37 @@ Linker script and memory map
                 0x00400056                _getch
                 0x00400020                _settextcolor
  *fill*         0x0040009b        0x1 00
- .text          0x0040009c      0x1a6 program.o
+ .text          0x0040009c      0x1a3 program.o
                 0x0040009c                _main
 
-.rel.dyn        0x00400244        0x0 load address 0x00400242
+.rel.dyn        0x00400240        0x0 load address 0x0040023f
  .rel.text      0x00000000        0x0 start.o
 
-.data           0x00400244        0x0
-                0x00400244                __data_start = .
+.data           0x00400240        0x0
+                0x00400240                __data_start = .
  *(.data)
- .data          0x00400244        0x0 userlib.o
- .data          0x00400244        0x0 program.o
+ .data          0x00400240        0x0 userlib.o
+ .data          0x00400240        0x0 program.o
 
-.rodata         0x00400244        0x0
-                0x00400244                __rodata_start = .
+.rodata         0x00400240        0x0
+                0x00400240                __rodata_start = .
  *(.rodata)
 
-.rodata.str1.1  0x00400244       0x18
+.rodata.str1.1  0x00400240       0x18
  .rodata.str1.1
-                0x00400244       0x18 program.o
+                0x00400240       0x18 program.o
 
-.rodata.str1.4  0x0040025c       0x78
+.rodata.str1.4  0x00400258       0x78
  .rodata.str1.4
-                0x0040025c       0x78 program.o
+                0x00400258       0x78 program.o
 
-.bss            0x004002d4        0x0
-                0x004002d4                __bss_start = .
+.bss            0x004002d0        0x0
+                0x004002d0                __bss_start = .
  *(.bss)
- .bss           0x004002d4        0x0 userlib.o
- .bss           0x004002d4        0x0 program.o
+ .bss           0x004002d0        0x0 userlib.o
+ .bss           0x004002d0        0x0 program.o
  *(COMMON)
-                0x004002d4                __end = .
+                0x004002d0                __end = .
 LOAD start.o
 LOAD userlib.o
 LOAD program.o

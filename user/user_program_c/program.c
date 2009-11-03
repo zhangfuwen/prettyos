@@ -1,16 +1,18 @@
 #include "userlib.h"
 
+#define MAX_CHAR_PER_LINE 70
+
 int main()
 {
-    while(TRUE)
+    for(;;)
     {
       settextcolor(15,0);
       puts("$> ");
 
-      char entry[80];
+      char entry[MAX_CHAR_PER_LINE+10];
       int i = 0;
 
-      while(TRUE)
+      for(;;)
       {
         unsigned char input = getch();
 
@@ -24,9 +26,9 @@ int main()
         //     )
 
         //if( (input >= 0x20) && (input <= 0x7E) )
-        if( (input >= 0x15) && (input <= 0xFF) ) // test-wise open, cf. ascii
+        if( (input >= 0x20) && (input <= 0xFF) ) // test-wise open, cf. ascii
         {
-          if(i<0xFF) // test-wise open
+          if(i<MAX_CHAR_PER_LINE) //
           {
             putch(input);
             entry[i]=input;
