@@ -355,27 +355,27 @@ Linker script and memory map
                 0x00047d28                _COLUMNS
  *(.rdata)
 
-.rodata.str1.1  0x00047d2a      0x4d5
+.rodata.str1.1  0x00047d2a      0x4d6
  .rodata.str1.1
                 0x00047d2a       0xeb ckernel.o
  .rodata.str1.1
                 0x00047e15       0x70 flpydsk.o
  .rodata.str1.1
-                0x00047e85        0xb initrd.o
+                0x00047e85        0xc initrd.o
  .rodata.str1.1
-                0x00047e90      0x198 isrs.o
+                0x00047e91      0x198 isrs.o
  .rodata.str1.1
-                0x00048028        0x3 keyboard.o
+                0x00048029        0x3 keyboard.o
  .rodata.str1.1
-                0x0004802b       0x88 kheap.o
+                0x0004802c       0x88 kheap.o
  .rodata.str1.1
-                0x000480b3       0x31 ordered_array.o
+                0x000480b4       0x31 ordered_array.o
  .rodata.str1.1
-                0x000480e4        0xd paging.o
+                0x000480e5        0xd paging.o
  .rodata.str1.1
-                0x000480f1       0xd1 task.o
+                0x000480f2       0xd1 task.o
  .rodata.str1.1
-                0x000481c2       0x3d util.o
+                0x000481c3       0x3d util.o
 
 .rodata.str1.4  0x00048200      0x2f1
  .rodata.str1.4
