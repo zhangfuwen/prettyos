@@ -1,1 +1,0 @@
-i586-elf-objdump -D program.elf >objdump.txt
