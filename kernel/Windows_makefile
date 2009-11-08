@@ -12,8 +12,8 @@ LDFLAGS= -T kernel.ld -Map kernel.map -nostdinc
 LD= i586-elf-ld
 
 all: ckernel.sys
-	del *.o
-	copy CKERNEL.SYS A:\CKERNEL.SYS
+	rm -fv *.o
+	cp -f CKERNEL.SYS A:\CKERNEL.SYS 
 
 %.o: %.asm
 	$(NASM) $(ASFLAGSOBJ) $< -o $@
@@ -26,3 +26,5 @@ data.asm: initrd.dat
 #    $<		Erste Abhängigkeit
 #    $+		Liste aller Abhängigkeiten	
 #    $@		Name des Targets
+#
+#    msys needed for rm, cp 

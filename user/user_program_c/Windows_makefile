@@ -8,7 +8,7 @@ LDFLAGS= -T user.ld -Map kernel.map -nostdinc
 LD= i586-elf-ld
  
 all: program.elf
-	del *.o
+	rm -fv *.o
  
 program.elf: 	start.o userlib.o program.o 
 	$(LD) $(LDFLAGS) $+ -o $@ 
@@ -25,3 +25,5 @@ program.o: program.c
 #    $<  Erste Abhängigkeit
 #    $+  Liste aller Abhängigkeiten 
 #    $@  Name des Targets
+#
+#    msys needed for rm, cp 
