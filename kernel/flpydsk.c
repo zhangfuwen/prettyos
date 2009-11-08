@@ -14,7 +14,7 @@ const int32_t FLOPPY_IRQ                   =    6; // floppy irq
 const int32_t FLPY_SECTORS_PER_TRACK       =   18; // sectors per track
 static uint8_t	_CurrentDrive              =    0; // current working drive. Defaults to 0.
 static volatile uint8_t _FloppyDiskIRQ     =    0; // set when IRQ fires
-const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  = 1000; // waiting time in milliseconds
+const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  =  500; // waiting time in milliseconds
 
 
 // IO ports
