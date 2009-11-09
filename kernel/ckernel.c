@@ -104,7 +104,7 @@ int main()
     uint32_t EHCI_data          = 0; // helper variable for EHCI_data
 
 
-    // list of devices
+    // list of devices, 50 for first tests
     for(i=0;i<50;++i)
     {
         pciDev_Array[i].number = i;
@@ -140,11 +140,8 @@ int main()
 
                     // output to screen
                     printformat("%d:%d.%d\t dev:%x vend:%x",
-                                     pciDev_Array[number].bus,
-                                     pciDev_Array[number].device,
-                                     pciDev_Array[number].func,
-                                     pciDev_Array[number].deviceID,
-                                     pciDev_Array[number].vendorID );
+                         pciDev_Array[number].bus, pciDev_Array[number].device, pciDev_Array[number].func,
+                         pciDev_Array[number].deviceID, pciDev_Array[number].vendorID );
 
                     if(pciDev_Array[number].irq!=255)
                     {
@@ -169,7 +166,7 @@ int main()
                         {
                             pciDev_Array[number].bar[i].memoryType = pciDev_Array[number].bar[i].baseAddress & 0x01;
 
-                            if(pciDev_Array[number].bar[i].baseAddress)
+                            if(pciDev_Array[number].bar[i].baseAddress) // check valid BAR
                             {
                                 if(pciDev_Array[number].bar[i].memoryType == 0)
                                 {
@@ -184,35 +181,43 @@ int main()
                                 cli();
                                 pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i, 0xFFFFFFFF );
                                 pciBar = pci_config_read( bus, device, func, PCI_BAR0 + 4*i             );
-                                pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i, pciDev_Array[number].bar[i].baseAddress  );
+                                pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i,
+                                                          pciDev_Array[number].bar[i].baseAddress       );
                                 sti();
                                 pciDev_Array[number].bar[i].memorySize = (~pciBar | 0x0F) + 1;
                                 printformat("sz:%d ", pciDev_Array[number].bar[i].memorySize );
-
-                                    /// TEST EHCI Data Begin
-                                    if(    (pciDev_Array[number].interfaceID==0x20)
-                                         && pciDev_Array[number].bar[i].baseAddress )
-                                    {
-                                        for(j=0;j<24;++j)
-                                        {
-                                             EHCI_data = *((volatile uint8_t*)( (pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + j ));
-                                             if(!j)
-                                             {
-                                                 printformat("\n");
-                                             }
-                                             else
-                                             {
-                                                 printformat("\t");
-                                             }
-                                             printformat("BAR%d+%d: %x ",i, j, EHCI_data);
-                                        }
-                                    }
-                                    /// TEST EHCI Data Begin
-
                                 /// TEST Memory Size End
-                            }
-                        }
-                    }
+
+                                /// TEST EHCI Data Begin
+                                if(  (pciDev_Array[number].interfaceID==0x20)   // EHCI
+                                   && pciDev_Array[number].bar[i].baseAddress ) // valid BAR
+                                {
+                                    /*
+                                    Offset Size Mnemonic    Power Well   Register Name
+                                    00h     1   CAPLENGTH      Core      Capability Register Length
+                                    01h     1   Reserved       Core      N/A
+                                    02h     2   HCIVERSION     Core      Interface Version Number
+                                    04h     4   HCSPARAMS      Core      Structural Parameters
+                                    08h     4   HCCPARAMS      Core      Capability Parameters
+                                    0Ch     8   HCSP-PORTROUTE Core      Companion Port Route Description
+                                    */
+
+                                    EHCI_data = *((volatile uint8_t* )((pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + 0x00 ));
+                                    printformat("\nBAR%d CAPLENGTH:  %x \t\t",i, EHCI_data);
+
+                                    EHCI_data = *((volatile uint16_t*)((pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + 0x02 ));
+                                    printformat(  "BAR%d HCIVERSION: %x \n",i, EHCI_data);
+
+                                    EHCI_data = *((volatile uint32_t*)((pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + 0x04 ));
+                                    printformat(  "BAR%d HCSPARAMS:  %X \t",i, EHCI_data);
+
+                                    EHCI_data = *((volatile uint32_t*)((pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + 0x08 ));
+                                    printformat(  "BAR%d HCCPARAMS:  %X \n",i, EHCI_data);
+                                }
+                                /// TEST EHCI Data End
+                            } // if
+                        } // for
+                    } // if
                     printformat("\n");
                     ++number;
                 } // if pciVendor
