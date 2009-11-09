@@ -27,6 +27,9 @@ uint8_t buf[FILEBUFFERSIZE];
 uint8_t flag1 = 0; // status of user-space-program
 Mem_Chunk_t Mem_Chunk[10]; // contiguous parts of memory detected by int 15h eax = 820h
 
+// TODO: use a dynamic list; TODO: create structs/functions list_t
+pciDev_t pciDev_Array[50];
+
 extern uint32_t placement_address;
 heap_t* kheap = 0;
 
@@ -93,92 +96,106 @@ int main()
 
     /// TEST PCI-SCAN BEGIN
     settextcolor(15,0);
-    uint16_t pciDevice          = 0; // device
-    uint16_t pciVendor          = 0; // vendor
-    uint8_t  pciClass           = 0; // device class
-    uint8_t  pciSubclass        = 0; // device subclass
-    uint8_t  pciProgrInterface  = 0; // program interface
-    uint8_t  pciIRQLine         = 0; // IRQ line (interrupt line)
     uint8_t  bus                = 0; // max. 256
     uint8_t  device             = 0; // max.  32
     uint8_t  func               = 0; // max.   8
 
-    struct pciBasicAddressRegister pciBAR[6]; // base address, size, type of BAR0 - BAR5
-    uint32_t pciBar             = 0;
-    uint32_t EHCI_data          = 0;
+    uint32_t pciBar             = 0; // helper variable for memory size
+    uint32_t EHCI_data          = 0; // helper variable for EHCI_data
 
+
+    // list of devices
+    for(i=0;i<50;++i)
+    {
+        pciDev_Array[i].number = i;
+    }
+
+    int number=0;
     for(bus=0;bus<8;++bus)
     {
         for(device=0;device<32;++device)
         {
             for(func=0;func<8;++func)
             {
-                pciVendor                 = pci_config_read( bus, device, func, PCI_VENDOR_ID );
-                pciDevice                 = pci_config_read( bus, device, func, PCI_DEVICE_ID );
-                pciClass                  = pci_config_read( bus, device, func, PCI_CLASS     );
-                pciSubclass               = pci_config_read( bus, device, func, PCI_SUBCLASS  );
-                pciProgrInterface         = pci_config_read( bus, device, func, PCI_INTERFACE );
-                pciIRQLine                = pci_config_read( bus, device, func, PCI_IRQLINE   );
-                pciBAR[0].baseAddress     = pci_config_read( bus, device, func, PCI_BAR0      );
-                pciBAR[1].baseAddress     = pci_config_read( bus, device, func, PCI_BAR1      );
-                pciBAR[2].baseAddress     = pci_config_read( bus, device, func, PCI_BAR2      );
-                pciBAR[3].baseAddress     = pci_config_read( bus, device, func, PCI_BAR3      );
-                pciBAR[4].baseAddress     = pci_config_read( bus, device, func, PCI_BAR4      );
-                pciBAR[5].baseAddress     = pci_config_read( bus, device, func, PCI_BAR5      );
+                pciDev_Array[number].vendorID     = pci_config_read( bus, device, func, PCI_VENDOR_ID  );
+                pciDev_Array[number].deviceID     = pci_config_read( bus, device, func, PCI_DEVICE_ID  );
+                pciDev_Array[number].classID      = pci_config_read( bus, device, func, PCI_CLASS      );
+                pciDev_Array[number].subclassID   = pci_config_read( bus, device, func, PCI_SUBCLASS   );
+                pciDev_Array[number].interfaceID  = pci_config_read( bus, device, func, PCI_INTERFACE  );
+                pciDev_Array[number].revID        = pci_config_read( bus, device, func, PCI_REVISION   );
+                pciDev_Array[number].irq          = pci_config_read( bus, device, func, PCI_IRQLINE    );
+                pciDev_Array[number].bar[0].baseAddress = pci_config_read( bus, device, func, PCI_BAR0 );
+                pciDev_Array[number].bar[1].baseAddress = pci_config_read( bus, device, func, PCI_BAR1 );
+                pciDev_Array[number].bar[2].baseAddress = pci_config_read( bus, device, func, PCI_BAR2 );
+                pciDev_Array[number].bar[3].baseAddress = pci_config_read( bus, device, func, PCI_BAR3 );
+                pciDev_Array[number].bar[4].baseAddress = pci_config_read( bus, device, func, PCI_BAR4 );
+                pciDev_Array[number].bar[5].baseAddress = pci_config_read( bus, device, func, PCI_BAR5 );
 
-                if( pciVendor != 0xFFFF )
+                if( pciDev_Array[number].vendorID != 0xFFFF )
                 {
-                    if(pciIRQLine!=255)
-                    {
-                        printformat("%d:%d.%d\t dev:%x vend:%x IRQ:%d ",
-                                     bus, device, func, pciDevice, pciVendor, pciIRQLine);
-                    }
-                    else // "255 is defined as meaning "unknown" or "no connection" to the interrupt controller"
-                    {
-                        printformat("%d:%d.%d\t dev:%x vend:%x IRQ:-- ",
-                                     bus, device, func, pciDevice, pciVendor);
+                    // Valid Device
+                    pciDev_Array[number].bus    = bus;
+                    pciDev_Array[number].device = device;
+                    pciDev_Array[number].func   = func;
 
+                    // output to screen
+                    printformat("%d:%d.%d\t dev:%x vend:%x",
+                                     pciDev_Array[number].bus,
+                                     pciDev_Array[number].device,
+                                     pciDev_Array[number].func,
+                                     pciDev_Array[number].deviceID,
+                                     pciDev_Array[number].vendorID );
+
+                    if(pciDev_Array[number].irq!=255)
+                    {
+                        printformat(" IRQ:%d ", pciDev_Array[number].irq );
+                    }
+                    else // "255 means "unknown" or "no connection" to the interrupt controller"
+                    {
+                        printformat(" IRQ:-- ");
                     }
 
-                    if( (pciClass==0x0C) && (pciSubclass==0x03) ) // USB
+                    // test on USB
+                    if( (pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03) )
                     {
                         printformat(" USB ");
-                        if( pciProgrInterface==0x00 ) { printformat("UHCI ");   }
-                        if( pciProgrInterface==0x10 ) { printformat("OHCI ");   }
-                        if( pciProgrInterface==0x20 ) { printformat("EHCI ");   }
-                        if( pciProgrInterface==0x80 ) { printformat("no HCI "); }
-                        if( pciProgrInterface==0xFE ) { printformat("any ");    }
+                        if( pciDev_Array[number].interfaceID==0x00 ) { printformat("UHCI ");   }
+                        if( pciDev_Array[number].interfaceID==0x10 ) { printformat("OHCI ");   }
+                        if( pciDev_Array[number].interfaceID==0x20 ) { printformat("EHCI ");   }
+                        if( pciDev_Array[number].interfaceID==0x80 ) { printformat("no HCI "); }
+                        if( pciDev_Array[number].interfaceID==0xFE ) { printformat("any ");    }
 
                         for(i=0;i<6;++i) // check USB BARs
                         {
-                            pciBAR[i].memoryType = pciBAR[i].baseAddress & 0x01;
+                            pciDev_Array[number].bar[i].memoryType = pciDev_Array[number].bar[i].baseAddress & 0x01;
 
-                            if(pciBAR[i].baseAddress)
+                            if(pciDev_Array[number].bar[i].baseAddress)
                             {
-                                if(pciBAR[i].memoryType == 0)
+                                if(pciDev_Array[number].bar[i].memoryType == 0)
                                 {
-                                    printformat("%d:%X MEM ", i, pciBAR[i].baseAddress & 0xFFFFFFF0 );
+                                    printformat("%d:%X MEM ", i, pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0 );
                                 }
-                                if(pciBAR[i].memoryType == 1)
+                                if(pciDev_Array[number].bar[i].memoryType == 1)
                                 {
-                                    printformat("%d:%X I/O ", i, pciBAR[i].baseAddress & 0xFFFFFFFC );
+                                    printformat("%d:%X I/O ", i, pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFFC );
                                 }
 
                                 /// TEST Memory Size Begin
                                 cli();
                                 pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i, 0xFFFFFFFF );
                                 pciBar = pci_config_read( bus, device, func, PCI_BAR0 + 4*i             );
-                                pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i, pciBAR[i].baseAddress  );
+                                pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i, pciDev_Array[number].bar[i].baseAddress  );
                                 sti();
-                                pciBAR[i].memorySize = (~pciBar | 0x0F) + 1;
-                                printformat("sz:%d ", pciBAR[i].memorySize );
+                                pciDev_Array[number].bar[i].memorySize = (~pciBar | 0x0F) + 1;
+                                printformat("sz:%d ", pciDev_Array[number].bar[i].memorySize );
 
                                     /// TEST EHCI Data Begin
-                                    if( (pciProgrInterface==0x20) && pciBAR[i].baseAddress )
+                                    if(    (pciDev_Array[number].interfaceID==0x20)
+                                         && pciDev_Array[number].bar[i].baseAddress )
                                     {
                                         for(j=0;j<24;++j)
                                         {
-                                             EHCI_data = *((volatile uint8_t*)( (pciBAR[i].baseAddress & 0xFFFFFFF0) + j ));
+                                             EHCI_data = *((volatile uint8_t*)( (pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + j ));
                                              if(!j)
                                              {
                                                  printformat("\n");
@@ -197,16 +214,17 @@ int main()
                         }
                     }
                     printformat("\n");
-                }
+                    ++number;
+                } // if pciVendor
 
                 // Bit 7 in header type (Bit 23-16) --> multifunctional
                 if( !(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80) )
                 {
                     break; // --> not multifunctional
                 }
-            }
-        }
-    }
+            } // for function
+        } // for device
+    } // for bus
     printformat("\n");
     /// TEST PCI-SCAN END
 

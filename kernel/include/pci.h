@@ -26,12 +26,30 @@
 #define PCI_BAR5        0x0424
 #define PCI_IRQLINE     0x013C
 
+typedef
 struct pciBasicAddressRegister
 {
     uint32_t baseAddress;
     size_t   memorySize;
     uint8_t  memoryType;
-};
+}pciBar_t;
+
+typedef
+struct pciDev
+{
+   uint8_t   number;
+   uint8_t   bus;
+   uint8_t   device;
+   uint8_t   func;
+   uint16_t  vendorID;
+   uint16_t  deviceID;
+   uint8_t   classID;
+   uint8_t   subclassID;
+   uint8_t   interfaceID;
+   uint8_t   revID;
+   uint8_t   irq;
+   pciBar_t  bar[6];
+}pciDev_t;
 
 uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content );
 void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val );
