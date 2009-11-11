@@ -383,6 +383,10 @@ uint8_t flpydsk_get_working_drive(){ return _CurrentDrive; }
 // read: operation = 0; write: operation = 1
 void flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
 {
+	/// TEST
+	flpydsk_initialize_dma();
+    /// TEST
+
 	uint32_t st0, cyl;
 	if(operation == 0) // read a sector
 	{

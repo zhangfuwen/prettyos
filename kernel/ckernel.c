@@ -8,6 +8,7 @@
 #include "pci.h"
 #include "cmos.h"
 #include "flpydsk.h"
+#include "list.h"
 //#include "fat12.h" //TEST
 
 // RAM Detection by Second Stage Bootloader
@@ -17,21 +18,23 @@
 // Buffer for User-Space Program
 #define FILEBUFFERSIZE   0x2000
 
+// determination of the usable memory
+Mem_Chunk_t Mem_Chunk[10]; // contiguous parts of memory detected by int 15h eax = 820h
+
+// paging & heap
+extern uint32_t placement_address;
 extern page_directory_t* kernel_directory;
 extern page_directory_t* current_directory;
+heap_t* kheap;
+
+// RAM disk and user program
 extern uint32_t file_data_start;
 extern uint32_t file_data_end;
 uint32_t address_user;
 uint8_t address_TEST[FILEBUFFERSIZE];
 uint8_t buf[FILEBUFFERSIZE];
 uint8_t flag1 = 0; // status of user-space-program
-Mem_Chunk_t Mem_Chunk[10]; // contiguous parts of memory detected by int 15h eax = 820h
 
-// TODO: use a dynamic list; TODO: create structs/functions list_t
-pciDev_t pciDev_Array[50];
-
-extern uint32_t placement_address;
-heap_t* kheap = 0;
 
 static void init()
 {
@@ -50,7 +53,6 @@ static void init()
     timer_install();
     keyboard_install();
 }
-
 
 int main()
 {
@@ -93,150 +95,40 @@ int main()
     }
     printformat("\n\n");
 
-
-    /// TEST PCI-SCAN BEGIN
-    settextcolor(15,0);
-    uint8_t  bus                = 0; // max. 256
-    uint8_t  device             = 0; // max.  32
-    uint8_t  func               = 0; // max.   8
-
-    uint32_t pciBar             = 0; // helper variable for memory size
-    uint32_t EHCI_data          = 0; // helper variable for EHCI_data
-
-
-    // list of devices, 50 for first tests
-    for(i=0;i<50;++i)
-    {
-        pciDev_Array[i].number = i;
-    }
-
-    int number=0;
-    for(bus=0;bus<8;++bus)
-    {
-        for(device=0;device<32;++device)
-        {
-            for(func=0;func<8;++func)
-            {
-                pciDev_Array[number].vendorID     = pci_config_read( bus, device, func, PCI_VENDOR_ID  );
-                pciDev_Array[number].deviceID     = pci_config_read( bus, device, func, PCI_DEVICE_ID  );
-                pciDev_Array[number].classID      = pci_config_read( bus, device, func, PCI_CLASS      );
-                pciDev_Array[number].subclassID   = pci_config_read( bus, device, func, PCI_SUBCLASS   );
-                pciDev_Array[number].interfaceID  = pci_config_read( bus, device, func, PCI_INTERFACE  );
-                pciDev_Array[number].revID        = pci_config_read( bus, device, func, PCI_REVISION   );
-                pciDev_Array[number].irq          = pci_config_read( bus, device, func, PCI_IRQLINE    );
-                pciDev_Array[number].bar[0].baseAddress = pci_config_read( bus, device, func, PCI_BAR0 );
-                pciDev_Array[number].bar[1].baseAddress = pci_config_read( bus, device, func, PCI_BAR1 );
-                pciDev_Array[number].bar[2].baseAddress = pci_config_read( bus, device, func, PCI_BAR2 );
-                pciDev_Array[number].bar[3].baseAddress = pci_config_read( bus, device, func, PCI_BAR3 );
-                pciDev_Array[number].bar[4].baseAddress = pci_config_read( bus, device, func, PCI_BAR4 );
-                pciDev_Array[number].bar[5].baseAddress = pci_config_read( bus, device, func, PCI_BAR5 );
-
-                if( pciDev_Array[number].vendorID != 0xFFFF )
-                {
-                    // Valid Device
-                    pciDev_Array[number].bus    = bus;
-                    pciDev_Array[number].device = device;
-                    pciDev_Array[number].func   = func;
-
-                    // output to screen
-                    printformat("%d:%d.%d\t dev:%x vend:%x",
-                         pciDev_Array[number].bus, pciDev_Array[number].device, pciDev_Array[number].func,
-                         pciDev_Array[number].deviceID, pciDev_Array[number].vendorID );
-
-                    if(pciDev_Array[number].irq!=255)
-                    {
-                        printformat(" IRQ:%d ", pciDev_Array[number].irq );
-                    }
-                    else // "255 means "unknown" or "no connection" to the interrupt controller"
-                    {
-                        printformat(" IRQ:-- ");
-                    }
-
-                    // test on USB
-                    if( (pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03) )
-                    {
-                        printformat(" USB ");
-                        if( pciDev_Array[number].interfaceID==0x00 ) { printformat("UHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x10 ) { printformat("OHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x20 ) { printformat("EHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x80 ) { printformat("no HCI "); }
-                        if( pciDev_Array[number].interfaceID==0xFE ) { printformat("any ");    }
-
-                        for(i=0;i<6;++i) // check USB BARs
-                        {
-                            pciDev_Array[number].bar[i].memoryType = pciDev_Array[number].bar[i].baseAddress & 0x01;
-
-                            if(pciDev_Array[number].bar[i].baseAddress) // check valid BAR
-                            {
-                                if(pciDev_Array[number].bar[i].memoryType == 0)
-                                {
-                                    printformat("%d:%X MEM ", i, pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0 );
-                                }
-                                if(pciDev_Array[number].bar[i].memoryType == 1)
-                                {
-                                    printformat("%d:%X I/O ", i, pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFFC );
-                                }
-
-                                /// TEST Memory Size Begin
-                                cli();
-                                pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i, 0xFFFFFFFF );
-                                pciBar = pci_config_read( bus, device, func, PCI_BAR0 + 4*i             );
-                                pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i,
-                                                          pciDev_Array[number].bar[i].baseAddress       );
-                                sti();
-                                pciDev_Array[number].bar[i].memorySize = (~pciBar | 0x0F) + 1;
-                                printformat("sz:%d ", pciDev_Array[number].bar[i].memorySize );
-                                /// TEST Memory Size End
-
-                                /// TEST EHCI Data Begin
-                                if(  (pciDev_Array[number].interfaceID==0x20)   // EHCI
-                                   && pciDev_Array[number].bar[i].baseAddress ) // valid BAR
-                                {
-                                    /*
-                                    Offset Size Mnemonic    Power Well   Register Name
-                                    00h     1   CAPLENGTH      Core      Capability Register Length
-                                    01h     1   Reserved       Core      N/A
-                                    02h     2   HCIVERSION     Core      Interface Version Number
-                                    04h     4   HCSPARAMS      Core      Structural Parameters
-                                    08h     4   HCCPARAMS      Core      Capability Parameters
-                                    0Ch     8   HCSP-PORTROUTE Core      Companion Port Route Description
-                                    */
-
-                                    EHCI_data = *((volatile uint8_t* )((pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + 0x00 ));
-                                    printformat("\nBAR%d CAPLENGTH:  %x \t\t",i, EHCI_data);
-
-                                    EHCI_data = *((volatile uint16_t*)((pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + 0x02 ));
-                                    printformat(  "BAR%d HCIVERSION: %x \n",i, EHCI_data);
-
-                                    EHCI_data = *((volatile uint32_t*)((pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + 0x04 ));
-                                    printformat(  "BAR%d HCSPARAMS:  %X \t",i, EHCI_data);
-
-                                    EHCI_data = *((volatile uint32_t*)((pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0) + 0x08 ));
-                                    printformat(  "BAR%d HCCPARAMS:  %X \n",i, EHCI_data);
-                                }
-                                /// TEST EHCI Data End
-                            } // if
-                        } // for
-                    } // if
-                    printformat("\n");
-                    ++number;
-                } // if pciVendor
-
-                // Bit 7 in header type (Bit 23-16) --> multifunctional
-                if( !(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80) )
-                {
-                    break; // --> not multifunctional
-                }
-            } // for function
-        } // for device
-    } // for bus
-    printformat("\n");
-    /// TEST PCI-SCAN END
+    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
+               // TODO: we need calculation of virtual address from physical address
+               //       that we can carry out this routine after paging_install()
 
     // paging, kernel heap
     paging_install();
     kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, KHEAP_MAX, 1, 0); // SV and RW
     tasking_install(); // ends with sti()
+
+    /// TEST list BEGIN
+    // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
+    listHead_t* pciDevList = listCreate();
+    for(i=0;i<50;++i)
+    {
+        if( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) )
+        {
+            listAppend(pciDevList, (void*)(pciDev_Array+i));
+            printformat("%X\t",pciDev_Array+i);
+        }
+    }
+    printformat("\n");
+    listShow(pciDevList);
+    printformat("\n");
+    for(i=0;i<50;++i)
+    {
+        void* element = listShowElement(pciDevList,i);
+        if(element)
+        {
+            //printformat("data: %X vendor: %x \t",(uint32_t*)element,*((uint16_t*)(element+4)));
+            printformat("data: %X vendor: %x \t",(uint32_t*)element,((pciDev_t*)element)->vendorID);
+        }
+    }
+    printformat("\n");
+    /// TEST list END
 
     /// direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
