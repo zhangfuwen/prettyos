@@ -63,7 +63,7 @@ fs_node_t* install_initrd(uint32_t location)
     #endif
     ///
 
-    initrd_root = (fs_node_t*) k_malloc( sizeof(fs_node_t),1,0 );
+    initrd_root = (fs_node_t*) k_malloc( sizeof(fs_node_t),PAGESIZE );
     k_strcpy(initrd_root->name, (const int8_t*)"dev");
     initrd_root->mask    = initrd_root->uid = initrd_root->gid = initrd_root->inode = initrd_root->length = 0;
     initrd_root->flags   = FS_DIRECTORY;
@@ -85,7 +85,7 @@ fs_node_t* install_initrd(uint32_t location)
     #endif
     ///
 
-    initrd_dev = (fs_node_t*)k_malloc(sizeof(fs_node_t),1,0);
+    initrd_dev = (fs_node_t*)k_malloc(sizeof(fs_node_t),PAGESIZE);
     k_strcpy(initrd_dev->name, (const int8_t*)"ramdisk");
     initrd_dev->mask     = initrd_dev->uid = initrd_dev->gid = initrd_dev->inode = initrd_dev->length = 0;
     initrd_dev->flags    = FS_DIRECTORY;
@@ -106,7 +106,7 @@ fs_node_t* install_initrd(uint32_t location)
     #endif
     ///
 
-    root_nodes = (fs_node_t*) k_malloc( sizeof(fs_node_t)*initrd_header->nfiles,1,0);
+    root_nodes = (fs_node_t*) k_malloc( sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
     nroot_nodes = initrd_header->nfiles;
 
     // For every file...

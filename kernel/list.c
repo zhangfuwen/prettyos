@@ -6,7 +6,7 @@
 
 listHead_t* listCreate()
 {
-    listHead_t* hd = (listHead_t*)k_malloc(sizeof(listHead_t),0,0);
+    listHead_t* hd = (listHead_t*)k_malloc(sizeof(listHead_t),0);
     if(hd)
     {
         hd->head = hd->tail = 0;
@@ -17,7 +17,7 @@ listHead_t* listCreate()
 
 int8_t listAppend(listHead_t* hd, void* data)
 {
-    element_t* ap = (element_t*)k_malloc(sizeof(element_t),0,0);
+    element_t* ap = (element_t*)k_malloc(sizeof(element_t),0);
     if(ap)
     {
         ap->data = data;
@@ -46,16 +46,16 @@ void listDeleteAll(struct listHead* hd)
     while(cur)
     {
         nex=cur->next;
-        kfree(cur->data);
-        kfree(cur);
+        k_free(cur->data);
+        k_free(cur);
         cur=nex;
     }
-    kfree(hd);
+    k_free(hd);
 }
 
 int8_t listInput(listHead_t* hd)
 {
-    void* dat = (void*)k_malloc(sizeof(void*),0,0);
+    void* dat = (void*)k_malloc(sizeof(void*),0);
     if(dat)
     {
         if(listAppend(hd,dat))
@@ -64,7 +64,7 @@ int8_t listInput(listHead_t* hd)
         }
         else
         {
-            kfree(dat);
+            k_free(dat);
             return 0;
         }
     }

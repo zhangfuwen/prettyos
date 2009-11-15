@@ -36,6 +36,10 @@ typedef signed char          int8_t;
 #define false  0
 #define __bool_true_false_are_defined 1
 
+#define NULL   0
+
+#define PAGESIZE 4096
+
 /// //////////////////////////////////////
 
 
@@ -156,6 +160,10 @@ extern void nop();
 extern void k_itoa(int32_t value, int8_t* valuestring);
 extern void k_i2hex(uint32_t val, int8_t* dest, int32_t len);
 extern void float2string(float value, int32_t decimal, int8_t* valuestring);
+uint32_t alignUp( uint32_t val, uint32_t alignment );
+uint32_t alignDown( uint32_t val, uint32_t alignment );
+uint32_t max( uint32_t a, uint32_t b );
+uint32_t min( uint32_t a, uint32_t b );
 
 // gtd.c itd.c irq.c isrs.c
 extern void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
@@ -180,10 +188,11 @@ extern int32_t k_abs(int32_t i);
 extern int32_t k_power(int32_t base,int32_t n);
 
 // paging.c
-extern void paging_install();
-extern uint32_t k_malloc(uint32_t size, uint8_t align, uint32_t* phys);
-extern void analyze_frames_bitset(uint32_t sec);
-extern uint32_t show_physical_address(uint32_t virtual_address);
-extern void analyze_physical_addresses();
+
+
+// heap.c
+extern void heap_install();
+extern void* k_malloc( uint32_t size, uint32_t alignment );
+extern void k_free( void* mem );
 
 #endif

@@ -1,9 +1,9 @@
 #include "os.h"
 int32_t INT_MAX = 2147483647;
 
-inline void sti() {	__asm__ volatile ( "sti" ); }	// Enable interrupts
-inline void cli() { __asm__ volatile ( "cli" ); }	// Disable interrupts
-inline void nop() { __asm__ volatile ( "nop" ); }	// Do nothing
+void sti() {	__asm__ volatile ( "sti" ); }	// Enable interrupts
+void cli() { __asm__ volatile ( "cli" ); }	// Disable interrupts
+void nop() { __asm__ volatile ( "nop" ); }	// Do nothing
 oda_t* pODA = &ODA;
 
 void initODA()
@@ -52,26 +52,26 @@ uint32_t fetchDS()
     return eax;
 }
 
-inline uint32_t inportb(uint16_t port)
+uint32_t inportb(uint16_t port)
 {
 	uint32_t ret_val;
 	__asm__ volatile ("inb %w1,%b0"	: "=a"(ret_val)	: "d"(port));
 	return ret_val;
 }
 
-inline uint32_t inportl(uint16_t port)
+uint32_t inportl(uint16_t port)
 {
 	uint32_t ret_val;
 	__asm__ volatile ("inl %1,%0" : "=a" (ret_val) : "Nd" (port));
 	return ret_val;
 }
 
-inline void outportb(uint16_t port, uint32_t val)
+void outportb(uint16_t port, uint32_t val)
 {
     __asm__ volatile ("outb %b0,%w1" : : "a"(val), "d"(port));
 }
 
-inline void outportl(uint16_t port, uint32_t val)
+void outportl(uint16_t port, uint32_t val)
 {
     __asm__ volatile ("outl %0,%1" : : "a"(val), "Nd"(port));
 }
@@ -102,6 +102,11 @@ void* k_memcpy(void* dest, const void* src, size_t count)
     uint8_t* dp = (uint8_t*)dest;
     for(; count != 0; count--) *dp++ = *sp++;
     return dest;
+}
+
+void* memcpy(void* dest, const void* src, size_t count)
+{
+    return k_memcpy( dest, src, count );
 }
 
 void* k_memset(void* dest, int8_t val, size_t count)
@@ -278,4 +283,30 @@ void float2string(float value, int32_t decimal, int8_t* valuestring) // float --
      ++tempstring;
    }
    *tempstring = '\0';
+}
+
+
+uint32_t alignUp( uint32_t val, uint32_t alignment )
+{
+	if ( ! alignment )
+		return val;
+	--alignment;
+	return (val+alignment) & ~alignment;
+}
+
+uint32_t alignDown( uint32_t val, uint32_t alignment )
+{
+	if ( ! alignment )
+		return val;
+	return val & ~(alignment-1);
+}
+
+uint32_t max( uint32_t a, uint32_t b )
+{
+	return a>=b? a : b;
+}
+
+uint32_t min( uint32_t a, uint32_t b )
+{
+	return a<=b? a : b;
 }

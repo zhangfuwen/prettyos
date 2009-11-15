@@ -2,8 +2,17 @@
 #define KHEAP_H
 
 #include "os.h"
-#include "ordered_array.h"
 
+
+#define HEAP_START_ADDRESS 0xC0000000
+
+
+void heap_install();
+void* k_malloc( uint32_t size, uint32_t alignment );
+void k_free( void* mem );
+
+
+/*#include "ordered_array.h"
 #define KHEAP_START         0x40000000 // 1GB
 #define KHEAP_INITIAL_SIZE  0x00300000
 #define KHEAP_MAX           0x4FFFF000
@@ -41,6 +50,6 @@ heap_t* create_heap(uint32_t start, uint32_t end, uint32_t max, uint8_t supervis
 
 void* alloc(uint32_t size, uint8_t page_align, heap_t *heap);
 void  free(void* p, heap_t* heap);
-void  kfree(void* p);
+void  kfree(void* p);*/
 
 #endif

@@ -13,7 +13,9 @@ LD= i586-elf-ld
 
 all: ckernel.sys
 	rm -fv *.o
+	CreateFloppyImage PrettyOS FloppyImage.bin ../_stage1_bootloader/boot.bin ../_stage2_bootloader/BOOT2.SYS CKERNEL.SYS
 	cp -f CKERNEL.SYS A:\CKERNEL.SYS 
+	#cmd /c bochs.bxrc
 
 %.o: %.asm
 	$(NASM) $(ASFLAGSOBJ) $< -o $@

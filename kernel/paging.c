@@ -1,390 +1,362 @@
 #include "paging.h"
 #include "kheap.h"
 
-uint32_t uint32_t_MAX = 0xFFFFFFFF;
-page_directory_t* kernel_directory  = 0;
-page_directory_t* current_directory = 0;
-
-uint32_t placement_address = 0x200000;
-extern heap_t* kheap;
-
-// A bitset of frames - used or free
-uint32_t*  frames; // pointer to the bitset (functions: set/clear/test)
 
 
-uint32_t k_malloc(uint32_t size, uint8_t align, uint32_t* phys)
+
+// Memory Map //
+typedef struct
 {
-    if( kheap!=0 )
+    uint64_t base;   // The region's address
+    uint64_t size;   // The region's size
+    uint32_t type;     // Is "1" for "free"
+    uint32_t ext;      // Unimportant for us
+} __attribute__((packed)) mem_map_entry_t;
+
+
+static bool memorymap_availability( const mem_map_entry_t* entries, uint64_t beg, uint64_t end )
+{
+    // There must not be an "reserved" entry which reaches into the specified area
+    for ( const mem_map_entry_t* entry=entries; entry->size; ++entry )
+        if ( entry->type!=1 && entry->base<end && (entry->base+entry->size)>beg )
+            return false;
+
+    // Check whether the "free" entries cover the whole specified area.
+    uint64_t covered = beg;
+    for ( const mem_map_entry_t* outer_loop=entries; outer_loop->size; ++outer_loop )
+        for ( const mem_map_entry_t* entry=entries; entry->size; ++entry )
+            if ( entry->base<=covered && (entry->base+entry->size)>covered )
+                covered = entry->base + entry->size;
+
+    // Return whether the whole area is covered by "free" entries
+    return covered >= end;
+}
+
+
+
+
+// Physical Memory //
+static uint32_t* data;
+static uint32_t  dword_count;
+static uint32_t  first_free_dword;
+
+
+static void phys_set_bits( uint32_t addr_begin, uint32_t addr_end, bool reserved )
+{
+    // Calculate the bit-numbers
+    uint32_t start = alignUp( addr_begin, PAGESIZE ) / PAGESIZE;
+    uint32_t end = alignDown( addr_end, PAGESIZE ) / PAGESIZE;
+
+    // Set all these bits
+    for ( uint32_t j=start; j<end; ++j )
+        if ( reserved )  data[j/32] |= 1<<(j%32);
+        else             data[j/32] &= ~(1<<(j%32));
+}
+
+
+static uint32_t phys_init()
+{
+    void* memory_map = (void*)MEMORY_MAP_ADDRESS;
+
+    // Some constants
+    const uint64_t FOUR_GB    = 0x100000000ull;
+    const uint32_t MAX_DWORDS = FOUR_GB / PAGESIZE / 32;
+
+    // Prepare the memory map entries, since we work with max
+    //   4 GB only. The last entry in the entry-array has size==0.
+    mem_map_entry_t* entries = (mem_map_entry_t*)memory_map;
+    for ( mem_map_entry_t* entry=entries; entry->size; ++entry )
     {
-        uint32_t addr = (uint32_t) alloc(size, align, kheap);
-        if (phys != 0)
+        // We will completely ignore memory above 4 GB, move following
+        //   entries backward by one then
+        if ( entry->base >= FOUR_GB )
+            for ( mem_map_entry_t* e=entry; e->size; ++e )
+                *e = *(e+1);
+
+        // Eventually reduce the size so the the block doesn't exceed 4 GB
+        else if ( entry->base + entry->size >= FOUR_GB )
+            entry->size = FOUR_GB - entry->base;
+    }
+
+    // Check that 16MB-20MB is free for use
+    if ( ! memorymap_availability( entries, 16*1024*1024, 20*1024*1024 ) )
+    {
+        printformat( "The memory between 16 MB and 20 MB is not free for use\n" );
+        for(;;);
+    }
+
+    // We store our data here, initialize all bits to "reserved"
+    data = k_malloc( 128*1024, 0 );
+    for ( uint32_t i=0; i<MAX_DWORDS; ++i )
+        data[i] = 0xFFFFFFFF;
+
+    // Set the bitmap bits according to the memory map now. "type==1" means "free".
+    for ( mem_map_entry_t* entry=entries; entry->size; ++entry )
+        if ( entry->type == 1 )
+            phys_set_bits( entry->base, entry->base+entry->size, false );
+    for ( mem_map_entry_t* entry=entries; entry->size; ++entry )
+        if ( entry->type != 1 )
+            phys_set_bits( entry->base, entry->base+entry->size, true );
+
+    // Reserve first 20 MB and the region of our kernel code
+    phys_set_bits( 0x00000000, 20*1024*1024, true );
+
+    extern char _kernel_beg, _kernel_end;
+    phys_set_bits( (uint32_t)&_kernel_beg, (uint32_t)&_kernel_end, true );
+
+    // Find the number of dwords we can use, skipping the last, "reserved"-only ones
+    for ( uint32_t i=0; i<MAX_DWORDS; ++i )
+        if ( data[i] != 0xFFFFFFFF )
+            dword_count = i+1;
+
+    // Exclude the first 16 MB from being allocated (they'll be needed for DMA later on)
+    first_free_dword = 16*1024*1024 / PAGESIZE / 32;
+
+    // Return the amount of memory available (or rather the highest address)
+    return dword_count*32*4096;
+}
+
+
+static uint32_t phys_alloc()
+{
+    // Search for a free uint32_t, i.e. one that not only contains ones
+    for ( ; first_free_dword<dword_count; ++first_free_dword )
+        if ( data[first_free_dword] != 0xFFFFFFFF )
         {
-            page_t* page = get_page(addr, 0, kernel_directory);
-            *phys = page->frame_addr * PAGESIZE + (addr&0xFFF);
+            // Find the number of a free bit
+            uint32_t val = data[first_free_dword];
+            uint32_t bitnr = 0;
+            while ( val & 1 )
+                val>>=1, ++bitnr;
+
+            // Set the page to "reserved" and return the frame's address
+            data[first_free_dword] |= 1<<(bitnr%32);
+            return (first_free_dword*32+bitnr) * PAGESIZE;
         }
 
-        ///
-        #ifdef _DIAGNOSIS_
-        settextcolor(3,0);
-        printformat("%x ",addr);
-        settextcolor(15,0);
-        #endif
-        ///
+    // No free page found
+    return NULL;
+}
 
-        return addr;
-    }
-    else
+
+static void phys_free( uint32_t addr )
+{
+    // Calculate the number of the bit
+    uint32_t bitnr = addr / PAGESIZE;
+
+    // Maybe the affected dword (which has a free bit now) is ahead of first_free_dword?
+    if ( bitnr/32 < first_free_dword )
+        first_free_dword = bitnr/32;
+
+    // Set the page to "free"
+    data[bitnr/32] &= ~(1<<(bitnr%32));
+}
+
+
+
+
+
+// Paging //
+typedef struct
+{
+    uint32_t pages[1024];
+} PageTable;
+
+struct page_directory_
+{
+    uint32_t       codes[1024];
+    PageTable* tables[1024];
+    uint32_t       pd_phys_addr;
+} __attribute__((packed));
+
+
+static const uint32_t MEM_PRESENT = 0x01;
+static page_directory_t* kernel_pd;
+
+
+static uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr )
+{
+    // Find the page table
+    uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
+    PageTable* pt = pd->tables[pagenr/1024];
+    ASSERT( pt != 0 );
+
+    // Read the address, cut off the flags, append the address' odd part
+    return (pt->pages[pagenr%1024]&0xFFFF000) + (((uint32_t)virt_addr)&0x00000FFF);
+}
+
+
+uint32_t paging_install()
+{
+    uint32_t ram_available = phys_init();
+
+    //// Setup the kernel page directory
+    kernel_pd = k_malloc( sizeof(page_directory_t), PAGESIZE );
+    k_memset( kernel_pd, 0, sizeof(page_directory_t) );
+    kernel_pd->pd_phys_addr = (uint32_t)kernel_pd;
+
+    // Setup the page tables for 0MB-20MB, identity mapping
+    uint32_t addr = 0;
+    for ( int i=0; i<5; ++i )
     {
-        if( !(placement_address == (placement_address & 0xFFFFF000) ) )
+        // Page directory entry, virt=phys due to placement allocation in id-mapped area
+        kernel_pd->tables[i] = k_malloc( sizeof(PageTable), PAGESIZE );
+        kernel_pd->codes[i] = (uint32_t)kernel_pd->tables[i] | MEM_PRESENT;
+
+        // Page table entries, identity mapping
+        for ( int j=0; j<1024; ++j )
         {
-            placement_address &= 0xFFFFF000;
-            placement_address += PAGESIZE;
-        }
-
-        if( phys )
-        {
-            *phys = placement_address;
-        }
-        uint32_t temp = placement_address;
-        placement_address += size;     // new placement_address is increased
-
-        ///
-        #ifdef _DIAGNOSIS_
-        settextcolor(9,0);
-        printformat("%x ",temp);
-        settextcolor(15,0);
-        #endif
-        ///
-
-        return temp;                   // old placement_address is returned
-    }
-}
-
-/************* bitset variables and functions **************/
-uint32_t ind, offs;
-
-static void get_Index_and_Offset(uint32_t frame_addr)
-{
-    uint32_t frame    = frame_addr/PAGESIZE;
-    ind    = frame/32;
-    offs   = frame%32;
-}
-
-static void set_frame(uint32_t frame_addr)
-{
-    get_Index_and_Offset(frame_addr);
-    frames[ind] |= (1<<offs);
-}
-
-static void clear_frame(uint32_t frame_addr)
-{
-    get_Index_and_Offset(frame_addr);
-    frames[ind] &= ~(1<<offs);
-}
-
-/*
-static uint32_t test_frame(uint32_t frame_addr)
-{
-    get_Index_and_Offset(frame_addr);
-    return( frames[ind] & (1<<offs) );
-}
-*/
-/***********************************************************/
-
-static uint32_t first_frame() // find the first free frame in frames bitset
-{
-    uint32_t index, offset;
-    for(index=0; index<( (pODA->Memory_Size/PAGESIZE)/32 ); ++index)
-    {
-        if(frames[index] != uint32_t_MAX)
-        {
-            for(offset=0; offset<32; ++offset)
-            {
-                if( !(frames[index] & 1<<offset) ) // bit set to zero?
-                    return (index*32 + offset);
-            }
+            kernel_pd->tables[i]->pages[j] = addr | MEM_PRESENT;
+            addr += PAGESIZE;
         }
     }
-    return uint32_t_MAX; // no free page frames
-}
 
-void alloc_frame(page_t* page, int32_t is_kernel, int32_t is_writeable) // allocate a frame
-{
-    if( !(page->frame_addr) )
+    // Set the page which covers the video area (0xB8000) to writeable
+    kernel_pd->codes[0] |= MEM_USER | MEM_WRITE;
+    kernel_pd->tables[0]->pages[184] |= MEM_USER | MEM_WRITE;
+
+    // Setup the page tables for the kernel heap (3GB-4GB), unmapped
+    PageTable* heap_pts = k_malloc( 256*sizeof(PageTable), PAGESIZE );
+    k_memset( heap_pts, 0, 256*sizeof(PageTable) );
+    for ( uint32_t i=0; i<256; ++i )
     {
-        uint32_t index = first_frame(); // search first free page frame
-        if( index == uint32_t_MAX )
-            printformat("message from alloc_frame: no free frames!!! ");
-
-        set_frame(index*PAGESIZE);
-
-        page->present    = 1;
-        page->rw         = ( is_writeable == 1 ) ? 1 : 0;
-        page->user       = ( is_kernel    == 1 ) ? 0 : 1;
-        page->frame_addr = index;
-    }
-}
-
-void free_frame(page_t* page) // deallocate a frame
-{
-    if( page->frame_addr )
-    {
-        clear_frame(page->frame_addr);
-        page->frame_addr = 0;
-    }
-}
-
-void paging_install()
-{
-    // setup bitset
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printformat("bitset: ");
-    settextcolor(15,0);
-    #endif
-    ///
-
-    frames = (uint32_t*) k_malloc( (pODA->Memory_Size/PAGESIZE) /32, 0, 0 );
-    k_memset( frames, 0, (pODA->Memory_Size/PAGESIZE) /32 );
-
-    // make a kernel page directory
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printformat("PD: ");
-    settextcolor(15,0);
-    #endif
-    ///
-
-    kernel_directory = (page_directory_t*) k_malloc( sizeof(page_directory_t), 1, 0 );
-    k_memset(kernel_directory, 0, sizeof(page_directory_t));
-    kernel_directory->physicalAddr = (uint32_t)kernel_directory->tablesPhysical;
-
-    uint32_t i=0;
-    // Map some pages in the kernel heap area.
-    for( i=KHEAP_START; i<KHEAP_START+KHEAP_INITIAL_SIZE; i+=PAGESIZE )
-        get_page(i, 1, kernel_directory);
-
-    // map (phys addr <---> virt addr) from 0x0 to the end of used memory
-    // Allocate at least 0x2000 extra, that the kernel heap, tasks, and kernel stacks can be initialized properly
-    i=0;
-    while( i < placement_address + 0x6000 ) //important to add more!
-    {
-        if( ((i>=0xb8000) && (i<=0xbf000)) || ((i>=0x17000) && (i<0x18000)) )
-        {
-            alloc_frame( get_page(i, 1, kernel_directory), US, RW); // user and read-write
-        }
-        else
-        {
-            alloc_frame( get_page(i, 1, kernel_directory), SV, RO); // supervisor and read-only
-        }
-        i += PAGESIZE;
+        kernel_pd->tables[768+i] = heap_pts;
+        kernel_pd->codes[768+i] = (uint32_t)kernel_pd->tables[768+i] | MEM_PRESENT | MEM_WRITE;
+        heap_pts += sizeof(PageTable);
     }
 
-    //Allocate user space
-    uint32_t user_space_start = 0x400000;
-    uint32_t user_space_end   = 0x600000;
-    i=user_space_start;
-    while( i <= user_space_end )
-    {
-        alloc_frame( get_page(i, 1, kernel_directory), US, RW); // user and read-write
-        i += PAGESIZE;
-    }
+    // Setup 0x00400000 to 0x00600000 as writeable userspace
+    kernel_pd->codes[1] |= MEM_USER | MEM_WRITE;
+    for ( int i=0; i<512; ++i )
+        kernel_pd->tables[1]->pages[i] |= MEM_USER | MEM_WRITE;
 
-    // Now allocate those pages we mapped earlier.
-    for( i=KHEAP_START; i<KHEAP_START+KHEAP_INITIAL_SIZE; i+=PAGESIZE )
-         alloc_frame( get_page(i, 1, kernel_directory), SV, RW); // supervisor and read/write
-
-    current_directory = clone_directory(kernel_directory);
-
-    // cr3: PDBR (Page Directory Base Register)
-    __asm__ volatile("mov %0, %%cr3":: "r"(kernel_directory->physicalAddr)); //set page directory base pointer
-
-    // read cr0, set paging bit, write cr0 back
+    // Enable paging
+    paging_activate_pd( kernel_pd );
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
     cr0 |= 0x80000000; // set the paging bit in CR0 to enable paging
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+
+    return ram_available;
 }
 
-page_t* get_page(uint32_t address, uint8_t make, page_directory_t* dir)
+
+bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t flags )
 {
-    address /= PAGESIZE;                // address ==> index.
-    uint32_t table_index = address / 1024; // ==> page table containing this address
+    // "addr" and "size" must be page-aligned
+    ASSERT( ((uint32_t)addr)%PAGESIZE == 0 );
+    ASSERT( size%PAGESIZE == 0 );
 
-    if(dir->tables[table_index])       // table already assigned
+    // "pd" may be NULL in which case the its the kernel's pd
+    if ( ! pd )
+        pd = kernel_pd;
+
+    // We repeat allocating one page at once
+    uint32_t pagenr = (uint32_t)addr / PAGESIZE;
+    for ( uint32_t size_left=size; size_left!=0; size_left-=PAGESIZE )
     {
-        return &dir->tables[table_index]->pages[address%1024];
-    }
-    else if(make)
-    {
-        uint32_t phys;
-        ///
-        #ifdef _DIAGNOSIS_
-        settextcolor(2,0);
-        printformat("gp_make: ");
-        settextcolor(15,0);
-        #endif
-        ///
-
-        dir->tables[table_index] = (page_table_t*) k_malloc( sizeof(page_table_t), 1, &phys );
-        k_memset(dir->tables[table_index], 0, PAGESIZE);
-        dir->tablesPhysical[table_index] = phys | 0x7; // 111b meaning: PRESENT=1, RW=1, USER=1
-        return &dir->tables[table_index]->pages[address%1024];
-    }
-    else
-        return 0;
-}
-
-static page_table_t *clone_table(page_table_t* src, uint32_t* physAddr)
-{
-    // Make a new page table, which is page aligned.
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printformat("clone_PT: ");
-    settextcolor(15,0);
-    #endif
-    ///
-
-    page_table_t *table = (page_table_t*)k_malloc(sizeof(page_table_t),1,physAddr);
-    // Ensure that the new table is blank.
-    k_memset(table, 0, sizeof(page_directory_t));
-
-    // For every entry in the table...
-    int32_t i;
-    for(i=0; i<1024; ++i)
-    {
-        // If the source entry has a frame associated with it...
-        if (!src->pages[i].frame_addr)
-            continue;
-        // Get a new frame.
-        alloc_frame(&table->pages[i], 0, 0);
-        // Clone the flags from source to destination.
-        if (src->pages[i].present) table->pages[i].present = 1;
-        if (src->pages[i].rw)      table->pages[i].rw = 1;
-        if (src->pages[i].user)    table->pages[i].user = 1;
-        if (src->pages[i].accessed)table->pages[i].accessed = 1;
-        if (src->pages[i].dirty)   table->pages[i].dirty = 1;
-
-        // Physically copy the data across. This function is in process.s.
-        copy_page_physical(src->pages[i].frame_addr*0x1000, table->pages[i].frame_addr*0x1000);
-    }
-    return table;
-}
-
-page_directory_t *clone_directory(page_directory_t *src)
-{
-    uint32_t phys;
-    // Make a new page directory and obtain its physical address.
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printformat("clone_PD: ");
-    settextcolor(15,0);
-    #endif
-    ///
-
-    page_directory_t *dir = (page_directory_t*) k_malloc( sizeof(page_directory_t),1,&phys );
-    // Ensure that it is blank.
-    k_memset( dir, 0, sizeof(page_directory_t) );
-
-    // Get the offset of tablesPhysical from the start of the page_directory_t structure.
-    uint32_t offset = (uint32_t)dir->tablesPhysical - (uint32_t)dir;
-
-    // Then the physical address of dir->tablesPhysical is:
-    dir->physicalAddr = phys + offset;
-
-    // Go through each page table. If the page table is in the kernel directory, do not make a new copy.
-    int32_t i;
-    for(i=0; i<1024; ++i)
-    {
-        if (!src->tables[i])
+        // Maybe there is already memory allocated?
+        if ( pd->tables[pagenr/1024] && pd->tables[pagenr/1024]->pages[pagenr%1024] )
             continue;
 
-        if (kernel_directory->tables[i] == src->tables[i])
+        // Allocate physical memory
+        uint32_t phys = phys_alloc();
+        if ( phys == NULL )
         {
-            // It's in the kernel, so just use the same pointer.
-            dir->tables[i] = src->tables[i];
-            dir->tablesPhysical[i] = src->tablesPhysical[i];
+            // Undo the allocations and return an error
+            paging_free( pd, addr, size-size_left );
+            return false;
         }
-        else
+
+        // Get the page table
+        PageTable* pt = pd->tables[pagenr/1024];
+        if ( ! pt )
         {
-            // Copy the table.
-            uint32_t phys;
-            dir->tables[i] = clone_table(src->tables[i], &phys);
-            dir->tablesPhysical[i] = phys | 0x07;
+            // Allocate the page table
+            pt = (PageTable*) k_malloc( sizeof(PageTable), PAGESIZE );
+            if ( ! pt )
+            {
+                phys_free( phys );
+                paging_free( pd, addr, size-size_left );
+                return false;
+            }
+            k_memset( pt, 0, sizeof(PageTable) );
+            pd->tables[pagenr/1024] = pt;
+
+            // Set physical address and flags
+            pd->codes[pagenr/1024] = paging_get_phys_addr(kernel_pd,pt) | MEM_PRESENT | MEM_WRITE | (flags&MEM_USER? MEM_USER : 0);
         }
+
+        // Setup the page
+        pt->pages[pagenr%1024] = phys | flags | MEM_PRESENT;
+
+        // Adjust for next run
+        ++pagenr;
     }
-    return dir;
+    return true;
 }
 
-void analyze_frames_bitset(uint32_t sec)
+
+void paging_free( page_directory_t* pd, void* addr, uint32_t size )
 {
-    uint32_t index, offset, counter1=0, counter2=0;
-    for(index=0; index<( (pODA->Memory_Size/PAGESIZE) /32); ++index)
+    // "addr" and "size" must be page-aligned
+    ASSERT( ((uint32_t)addr)%PAGESIZE == 0 );
+    ASSERT( size%PAGESIZE == 0 );
+
+    // "pd" may be NULL in which case the kernel's pd is meant
+    if ( ! pd )
+        pd = kernel_pd;
+
+    // Go through all pages and free them
+    uint32_t pagenr = (uint32_t)addr / PAGESIZE;
+    while ( size )
     {
-        settextcolor(15,0);
-        printformat("\n%x  ",index*32*0x1000);
-        ++counter1;
-        for(offset=0; offset<32; ++offset)
-        {
-            if( !(frames[index] & 1<<offset) )
-            {
-                settextcolor(4,0);
-                putch('0');
-            }
-            else
-            {
-                settextcolor(2,0);
-                putch('1');
-                ++counter2;
-            }
-        }
-        if(counter1==24)
-        {
-            counter1=0;
-            if(counter2)
-                sleepSeconds(sec);
-            counter2=0;
-        }
+        // Get the physical address and invalidate the page
+        uint32_t* page = &pd->tables[pagenr/1024]->pages[pagenr%1024];
+        uint32_t phys_addr = *page & 0xFFFFF000;
+        *page = 0;
+
+        // Free memory and adjust variables for next loop run
+        phys_free( phys_addr );
+        size -= PAGESIZE;
+        ++pagenr;
     }
 }
 
-uint32_t show_physical_address(uint32_t virtual_address)
+
+page_directory_t* paging_create_user_pd()
 {
-    page_t* page = get_page(virtual_address, 0, kernel_directory);
-    return( (page->frame_addr)*PAGESIZE + (virtual_address&0xFFF) );
+    page_directory_t* pd = (page_directory_t*) k_malloc( sizeof(page_directory_t), PAGESIZE );
+    if ( ! pd )
+        return NULL;
+
+    k_memcpy( pd, kernel_pd, sizeof(page_directory_t) );
+    pd->pd_phys_addr = paging_get_phys_addr( kernel_pd, pd->codes );
+    return pd;
 }
 
-void analyze_physical_addresses()
+
+void paging_destroy_user_pd( page_directory_t* pd )
 {
-   int32_t i,j,k=0, k_old;
-    for(i=0; i<( (pODA->Memory_Size/PAGESIZE) / 0x18000 + 1 ); ++i)
-    {
-        for(j=i*0x18000; j<i*0x18000+0x18000; j+=0x1000)
+    // Free all memory that is not from the kernel
+    for ( uint32_t i=0; i<1024; ++i )
+        if ( pd->tables[i] && pd->tables[i]!=kernel_pd->tables[i] )
         {
-            if(show_physical_address(j)==0)
+            for ( uint32_t j=0; j<1024; ++j )
             {
-                settextcolor(4,0);
-                k_old=k; k=1;
+                uint32_t phys_addr = pd->tables[i]->pages[j] & 0xFFFFF000;
+                if ( phys_addr )
+                    phys_free( phys_addr );
             }
-            else
-            {
-                if(show_physical_address(j)-j)
-                {
-                    settextcolor(3,0);
-                    k_old=k; k=2;
-                }
-                else
-                {
-                    settextcolor(2,0);
-                    k_old=k; k=3;
-                }
-            }
-            if(k!=k_old)
-                printformat("%x %x\n", j, show_physical_address(j));
+            k_free( pd->tables[i] );
         }
-    }
+
+    k_free( pd );
+}
+
+
+void paging_activate_pd( page_directory_t* pd  )
+{
+    if(!pd)  pd=kernel_pd;
+    __asm__ volatile("mov %0, %%cr3" : : "r" (pd->pd_phys_addr));
 }

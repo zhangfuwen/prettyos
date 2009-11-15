@@ -8,15 +8,15 @@ volatile task_t* current_task;
 // The start of the task linked list.
 volatile task_t* ready_queue;
 
-// Some externs are needed to access members in paging.c...
-extern page_directory_t* kernel_directory;
-extern page_directory_t* current_directory;
+// Some externs are needed
 extern tss_entry_t tss;
 extern void irq_tail();
 extern uint32_t read_eip();
 
 uint32_t next_pid = 1; // The next available process ID.
 int32_t getpid() { return current_task->id; }
+
+static page_directory_t* const KERNEL_DIRECTORY = NULL;
 
 void tasking_install()
 {
@@ -30,11 +30,11 @@ void tasking_install()
     #endif
     ///
 
-    current_task = ready_queue = (task_t*)k_malloc(sizeof(task_t),0,0); // first task (kernel task)
+    current_task = ready_queue = (task_t*)k_malloc(sizeof(task_t),0); // first task (kernel task)
     current_task->id = next_pid++;
     current_task->esp = current_task->ebp = 0;
     current_task->eip = 0;
-    current_task->page_directory = current_directory;
+    current_task->page_directory = KERNEL_DIRECTORY;
     current_task->next = 0;
 
     ///
@@ -45,14 +45,14 @@ void tasking_install()
     #endif
     ///
 
-    current_task->kernel_stack = k_malloc(KERNEL_STACK_SIZE,1,0)+KERNEL_STACK_SIZE;
+    current_task->kernel_stack = (uint32_t)k_malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     sti();
 }
 
 task_t* create_task(void* entry, uint8_t privilege)
 {
     cli();
-    page_directory_t* directory = clone_directory(current_directory);
+    page_directory_t* directory = paging_create_user_pd();//clone_directory(current_directory);
 
     ///
     #ifdef _DIAGNOSIS_
@@ -62,8 +62,7 @@ task_t* create_task(void* entry, uint8_t privilege)
     #endif
     ///
 
-    task_t* new_task            = (task_t*)k_malloc(sizeof(task_t),0,0);
-
+    task_t* new_task = (task_t*)k_malloc(sizeof(task_t),0);
     new_task->id  = next_pid++;
     new_task->page_directory = directory;
 
@@ -75,7 +74,7 @@ task_t* create_task(void* entry, uint8_t privilege)
     #endif
     ///
 
-    new_task->kernel_stack   = k_malloc(KERNEL_STACK_SIZE,1,0)+KERNEL_STACK_SIZE;
+    new_task->kernel_stack = (uint32_t) k_malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     new_task->next = 0;
 
     task_t* tmp_task = (task_t*)ready_queue;
@@ -150,10 +149,8 @@ uint32_t task_switch(uint32_t esp)
     if(!current_task) current_task = ready_queue;
 
     // new_task
-    current_directory = current_task->page_directory;
-    __asm__ volatile("mov %0, %%cr3" : : "r" (current_directory->physicalAddr));
-
-    tss.cr3  = current_directory->physicalAddr;
+	paging_activate_pd( current_task->page_directory );		
+	//tss.cr3 = ... TODO: Really unnecessary?
     tss.esp  = current_task->esp;
     tss.esp0 = (current_task->kernel_stack)+KERNEL_STACK_SIZE;
     tss.ebp  = current_task->ebp;
@@ -223,7 +220,7 @@ void TSS_log(tss_entry_t* tss)
     //printformat("iomap_base: %x ", tss->iomap_base);
 }
 
-int32_t fork()
+/*int32_t fork()
 {
     // We are modifying kernel structures, and so cannot be interrupted.
     cli();
@@ -243,7 +240,7 @@ int32_t fork()
     #endif
     ///
 
-    task_t* new_task = (task_t*)k_malloc(sizeof(task_t),0,0);
+    task_t* new_task = (task_t*)k_malloc(sizeof(task_t),0);
 
     new_task->id  = next_pid++;
     new_task->esp = new_task->ebp = 0;
@@ -257,7 +254,7 @@ int32_t fork()
     settextcolor(15,0);
     #endif
     ///
-    new_task->kernel_stack = k_malloc(KERNEL_STACK_SIZE,1,0)+KERNEL_STACK_SIZE;
+    new_task->kernel_stack = k_malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     new_task->next = 0;
 
     // Add it to the end of the ready queue. Find the end of the ready queue ...
@@ -288,4 +285,4 @@ int32_t fork()
         sti();
         return 0; // We are the child - by convention return 0
     }
-}
+}*/
