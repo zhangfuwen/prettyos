@@ -52,6 +52,7 @@ int main()
                //       that we can carry out this routine after paging_install()
 
     pODA->Memory_Size = paging_install();
+    printformat( "Memory size is %X\n", pODA->Memory_Size );
     heap_install();
     tasking_install();
     sti();
