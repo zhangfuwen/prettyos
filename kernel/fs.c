@@ -39,7 +39,7 @@ struct dirent* readdir_fs(fs_node_t* node, uint32_t index)
         return 0;
 }
 
-fs_node_t* finddir_fs(fs_node_t* node, int8_t* name)
+fs_node_t* finddir_fs(fs_node_t* node, char*name)
 {
     // Is the node a directory, and does it have a callback?
     if ( ((node->flags&0x7) == FS_DIRECTORY) && (node->finddir != 0) )

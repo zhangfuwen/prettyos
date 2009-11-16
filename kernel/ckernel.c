@@ -22,6 +22,8 @@
 // Buffer for User-Space Program
 #define FILEBUFFERSIZE   0x2000
 
+// determination of the usable memory
+Mem_Chunk_t Mem_Chunk[10]; // contiguous parts of memory detected by int 15h eax = 820h
 
 // RAM disk and user program
 extern uint32_t file_data_start;
@@ -36,7 +38,7 @@ uint8_t flag1 = 0; // status of user-space-program
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.1.0111]\n");
+    printformat("PrettyOS [Version 0.0.0.18]\n");
     gdt_install();
     idt_install();
     isrs_install();
@@ -50,9 +52,47 @@ int main()
 {
     init();
 
+    // get physical memory which is usable RAM
+    uint16_t num_of_entries = *( (uint16_t*)(ADDR_MEM_ENTRIES) );
+
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+    printformat("\nNUM of RAM-Entries: %d\n", num_of_entries);
+    settextcolor(15,0);
+    #endif
+
+    pODA->Memory_Size = 0;
+    uint32_t i,j;
+    for(i=0; i<num_of_entries; ++i)
+    {
+        for(j=0; j<24; j+=4)
+        {
+            if(j== 0) Mem_Chunk[i].base_lo   = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
+            if(j== 4) Mem_Chunk[i].base_hi   = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
+            if(j== 8) Mem_Chunk[i].length_lo = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
+            if(j==12) Mem_Chunk[i].length_hi = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
+            if(j==16) Mem_Chunk[i].type      = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
+            if(j==20) Mem_Chunk[i].extended  = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
+        }
+        if((Mem_Chunk[i].type)==1) pODA->Memory_Size += Mem_Chunk[i].length_lo;
+    }
+    if( (pODA->Memory_Size>0)&&(pODA->Memory_Size<=0xFFFFFFFF) )
+    {
+        printformat("Usable RAM: %d KB", (pODA->Memory_Size)/1024);
+    }
+    else
+    {
+        if(pODA->Memory_Size==0)
+           pODA->Memory_Size = 0x2000000; // 32 MB
+
+        printformat("\nNo memory detection. Estimated usable RAM: %d KB", (pODA->Memory_Size)/1024);
+    }
+    printformat("\n\n");
+
+
     settextcolor(15,0);
 
-    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
+    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[...]; (cf. pci.h)
                // TODO: we need calculation of virtual address from physical address
                //       that we can carry out this routine after paging_install()
 
@@ -65,6 +105,7 @@ int main()
     /// TEST list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
     listHead_t* pciDevList = listCreate();
+
     for(i=0;i<50;++i)
     {
         if( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) )
@@ -89,7 +130,7 @@ int main()
     /// TEST list END
 
     /// direct 1st floppy disk
-    /*if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
+    if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
     {
         printformat("1.44 MB 1st floppy is installed\n\n");
 
@@ -100,7 +141,7 @@ int main()
     else
     {
         printformat("1.44 MB 1st floppy not shown by CMOS\n\n");
-    }*/
+    }
     /// direct 1st floppy disk
 
     // RAM Disk
@@ -111,7 +152,7 @@ int main()
     settextcolor(15,0);
     #endif
     ///
-    uint32_t ramdisk_start = (uint32_t)k_malloc(0x200000, 0);
+    uint32_t ramdisk_start = (uint32_t)k_malloc(0x200000, PAGESIZE);
     settextcolor(15,0);
 
     // test with data and program from data.asm
@@ -120,7 +161,6 @@ int main()
 
     // search the content of files <- data from outside "loaded" via incbin ...
     settextcolor(15,0);
-    int i=0;
     struct dirent* node = 0;
     while( (node = readdir_fs(fs_root, i)) != 0)
     {
@@ -134,13 +174,13 @@ int main()
         {
             uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
 
-            int8_t name[40];
+            char name[40];
             k_memset((void*)name, 0, 40);
             k_memcpy((void*)name, node->name, 35); // protection against wrong / too long filename
             printformat("%d \t%s\n",sz,name);
 
             uint32_t j;
-            if( k_strcmp((const int8_t*)node->name,((const int8_t*)"shell")==0 ))
+            if( k_strcmp(node->name,"shell"==0 ))
             {
                 flag1=1;
 

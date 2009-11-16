@@ -12,7 +12,7 @@ typedef struct
 typedef struct
 {
     uint32_t magic;    // Magic number, for error checking.
-    int8_t  name[64]; // Filename.
+    char  name[64]; // Filename.
     uint32_t off;      // Offset in the initrd that the file starts.
     uint32_t length;   // Length of the file.
 } initrd_file_header_t;

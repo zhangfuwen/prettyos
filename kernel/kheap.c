@@ -152,7 +152,15 @@ void* k_malloc( uint32_t size, uint32_t alignment )
         return NULL;
 
     // Now there should be a region that is large enough
-    return k_malloc( size, alignment );
+    void* address = k_malloc( size, alignment );
+
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+    printformat("%X ",address);
+    settextcolor(15,0);
+    #endif
+
+    return address;
 }
 
 

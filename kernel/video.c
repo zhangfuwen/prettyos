@@ -7,7 +7,7 @@ uint8_t  saved_csr_x  = 0;
 uint8_t  saved_csr_y  = 0;
 uint8_t  attrib = 0x0F;
 
-uint16_t* vidmem = (uint16_t*) 0xb8000;
+uint16_t* vidmem = (uint16_t*) 0xB8000;
 const uint8_t COLUMNS =  80;
 const uint8_t LINES   =  50;
 
@@ -95,7 +95,7 @@ static uint8_t transferFromAsciiToCodepage437(uint8_t ascii)
     return c;
 }
 
-void putch(int8_t c)
+void putch(char c)
 {
     uint8_t uc = transferFromAsciiToCodepage437((uint8_t)c); // no negative values
 
@@ -150,7 +150,7 @@ void putch(int8_t c)
     update_cursor();
 }
 
-void puts(int8_t* text)
+void puts(char* text)
 {
     for(; *text; putch(*text), ++text);
 }
@@ -168,7 +168,7 @@ void scroll()
     }
 }
 
-void k_printf(int8_t* message, uint32_t line, uint8_t attribute)
+void k_printf(char* message, uint32_t line, uint8_t attribute)
 {
     // Top 4 bytes: background, bottom 4 bytes: foreground color
     settextcolor(attribute & 0x0F, attribute >> 4);
@@ -184,8 +184,9 @@ void printformat (char* args, ...)
 	va_start (ap, args);
 	int32_t index = 0, d;
 	uint32_t u;
-	int8_t c, *s;
-	int8_t buffer[256];
+	char  c;
+	char* s;
+	char buffer[256];
 
 	while (args[index])
 	{
@@ -217,7 +218,7 @@ void printformat (char* args, ...)
 				puts(buffer);
 				break;
 			case 's':
-				s = va_arg (ap, int8_t*);
+				s = va_arg (ap, char*);
 				puts(s);
 				break;
 			case 'c':

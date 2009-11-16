@@ -1,9 +1,9 @@
 #include "os.h"
 int32_t INT_MAX = 2147483647;
 
-void sti() {	__asm__ volatile ( "sti" ); }	// Enable interrupts
-void cli() { __asm__ volatile ( "cli" ); }	// Disable interrupts
-void nop() { __asm__ volatile ( "nop" ); }	// Do nothing
+inline void sti() {	__asm__ volatile ( "sti" ); }	// Enable interrupts
+inline void cli() { __asm__ volatile ( "cli" ); }	// Disable interrupts
+inline void nop() { __asm__ volatile ( "nop" ); }	// Do nothing
 oda_t* pODA = &ODA;
 
 void initODA()
@@ -52,26 +52,26 @@ uint32_t fetchDS()
     return eax;
 }
 
-uint32_t inportb(uint16_t port)
+inline uint32_t inportb(uint16_t port)
 {
 	uint32_t ret_val;
 	__asm__ volatile ("inb %w1,%b0"	: "=a"(ret_val)	: "d"(port));
 	return ret_val;
 }
 
-uint32_t inportl(uint16_t port)
+inline uint32_t inportl(uint16_t port)
 {
 	uint32_t ret_val;
 	__asm__ volatile ("inl %1,%0" : "=a" (ret_val) : "Nd" (port));
 	return ret_val;
 }
 
-void outportb(uint16_t port, uint32_t val)
+inline void outportb(uint16_t port, uint32_t val)
 {
     __asm__ volatile ("outb %b0,%w1" : : "a"(val), "d"(port));
 }
 
-void outportl(uint16_t port, uint32_t val)
+inline void outportl(uint16_t port, uint32_t val)
 {
     __asm__ volatile ("outl %0,%1" : : "a"(val), "Nd"(port));
 }
@@ -104,11 +104,6 @@ void* k_memcpy(void* dest, const void* src, size_t count)
     return dest;
 }
 
-void* memcpy(void* dest, const void* src, size_t count)
-{
-    return k_memcpy( dest, src, count );
-}
-
 void* k_memset(void* dest, int8_t val, size_t count)
 {
     int8_t* temp = (int8_t*)dest;
@@ -123,7 +118,7 @@ uint16_t* k_memsetw(uint16_t* dest, uint16_t val, size_t count)
     return dest;
 }
 
-size_t k_strlen(const int8_t* str)
+size_t k_strlen(const char* str)
 {
     size_t retval;
     for(retval = 0; *str != '\0'; ++str)
@@ -132,7 +127,7 @@ size_t k_strlen(const int8_t* str)
 }
 
 // Compare two strings. Returns -1 if str1 < str2, 0 if they are equal or 1 otherwise.
-int32_t k_strcmp( const int8_t* s1, const int8_t* s2 )
+int32_t k_strcmp( const char* s1, const char* s2 )
 {
     while ( ( *s1 ) && ( *s1 == *s2 ) )
     {
@@ -143,18 +138,18 @@ int32_t k_strcmp( const int8_t* s1, const int8_t* s2 )
 }
 
 // Copy the NUL-terminated string src into dest, and return dest.
-int8_t* k_strcpy(int8_t* dest, const int8_t* src)
+char* k_strcpy(char* dest, const char* src)
 {
     do { *dest++ = *src++;} while(*src);
     return dest;
 }
 
-int8_t* k_strncpy(int8_t* dest, const int8_t* src, size_t n)
+char* k_strncpy(char* dest, const char* src, size_t n)
 {
     if(n != 0)
     {
-        int8_t* d       = dest;
-        const int8_t* s = src;
+        char* d       = dest;
+        const char* s = src;
         do
         {
             if ((*d++ = *s++) == 0)
@@ -170,7 +165,7 @@ int8_t* k_strncpy(int8_t* dest, const int8_t* src, size_t n)
      return (dest);
 }
 
-int8_t* k_strcat(int8_t* dest, const int8_t* src)
+char* k_strcat(char* dest, const char* src)
 {
     while ( *dest) { dest++;     }
     do    { *dest++ = *src++;    } while(*src);
@@ -193,10 +188,11 @@ void reboot()
     outportb(0x64, 0xFE);
 }
 
-void k_itoa(int32_t value, int8_t* valuestring)
+void k_itoa(int32_t value, char* valuestring)
 {
   int32_t min_flag;
-  int8_t swap, *p;
+  char  swap;
+  char* p;
   min_flag = 0;
 
   if (0 > value)
@@ -227,10 +223,10 @@ void k_itoa(int32_t value, int8_t* valuestring)
   }
 }
 
-void k_i2hex(uint32_t val, int8_t* dest, int32_t len)
+void k_i2hex(uint32_t val, char* dest, int32_t len)
 {
-	int8_t* cp;
-	int8_t x;
+	char* cp;
+	char  x;
 	uint32_t n;
 	n = val;
 	cp = &dest[len];
@@ -244,29 +240,38 @@ void k_i2hex(uint32_t val, int8_t* dest, int32_t len)
     dest[len+1]='\0';
 }
 
-void float2string(float value, int32_t decimal, int8_t* valuestring) // float --> string
+void float2string(float value, int32_t decimal, char* valuestring) // float --> string
 {
-   int32_t neg = 0;    int8_t tempstr[20];
-   int32_t i = 0;   int32_t j = 0;   int32_t c;    int32_t val1, val2;
-   int8_t* tempstring;
+   int32_t neg = 0;
+   char tempstr[20];
+   int32_t i = 0;
+   int32_t j = 0;
+   int32_t c;
+   int32_t val1, val2;
+   char* tempstring;
+
    tempstring = valuestring;
    if (value < 0)
+   {
      {neg = 1; value = -value;}
+   }
    for (j=0; j < decimal; ++j)
+   {
      {value = value * 10;}
+   }
    val1 = (value * 2);
    val2 = (val1 / 2) + (val1 % 2);
    while (val2 !=0)
    {
      if ((decimal > 0) && (i == decimal))
      {
-       tempstr[i] = (int8_t)(0x2E);
+       tempstr[i] = (char)(0x2E);
        ++i;
      }
      else
      {
        c = (val2 % 10);
-       tempstr[i] = (int8_t) (c + 0x30);
+       tempstr[i] = (char) (c + 0x30);
        val2 = val2 / 10;
        ++i;
      }
@@ -284,7 +289,6 @@ void float2string(float value, int32_t decimal, int8_t* valuestring) // float --
    }
    *tempstring = '\0';
 }
-
 
 uint32_t alignUp( uint32_t val, uint32_t alignment )
 {
@@ -310,3 +314,4 @@ uint32_t min( uint32_t a, uint32_t b )
 {
 	return a<=b? a : b;
 }
+

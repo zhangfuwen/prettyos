@@ -42,16 +42,16 @@ void isrs_install()
 }
 
 /* Message string corresponding to the exception number 0-31: exception_messages[interrupt_number] */
-int8_t* exception_messages[] =
+char* exception_messages[] =
 {
-    (int8_t*)"Division By Zero",        (int8_t*)"Debug",                         (int8_t*)"Non Maskable Interrupt",    (int8_t*)"Breakpoint",
-    (int8_t*)"Into Detected Overflow",  (int8_t*)"Out of Bounds",                 (int8_t*)"Invalid Opcode",            (int8_t*)"No Coprocessor",
-    (int8_t*)"Double Fault",            (int8_t*)"Coprocessor Segment Overrun",   (int8_t*)"Bad TSS",                   (int8_t*)"Segment Not Present",
-    (int8_t*)"Stack Fault",             (int8_t*)"General Protection Fault",      (int8_t*)"Page Fault",                (int8_t*)"Unknown Interrupt",
-    (int8_t*)"Coprocessor Fault",       (int8_t*)"Alignment Check",               (int8_t*)"Machine Check",             (int8_t*)"Reserved",
-    (int8_t*)"Reserved",                (int8_t*)"Reserved",                      (int8_t*)"Reserved",                  (int8_t*)"Reserved",
-    (int8_t*)"Reserved",                (int8_t*)"Reserved",                      (int8_t*)"Reserved",                  (int8_t*)"Reserved",
-    (int8_t*)"Reserved",                (int8_t*)"Reserved",                      (int8_t*)"Reserved",                  (int8_t*)"Reserved"
+    "Division By Zero",        "Debug",                         "Non Maskable Interrupt",    "Breakpoint",
+    "Into Detected Overflow",  "Out of Bounds",                 "Invalid Opcode",            "No Coprocessor",
+    "Double Fault",            "Coprocessor Segment Overrun",   "Bad TSS",                   "Segment Not Present",
+    "Stack Fault",             "General Protection Fault",      "Page Fault",                "Unknown Interrupt",
+    "Coprocessor Fault",       "Alignment Check",               "Machine Check",             "Reserved",
+    "Reserved",                "Reserved",                      "Reserved",                  "Reserved",
+    "Reserved",                "Reserved",                      "Reserved",                  "Reserved",
+    "Reserved",                "Reserved",                      "Reserved",                  "Reserved"
 };
 
 uint32_t fault_handler(uint32_t esp)

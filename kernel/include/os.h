@@ -1,7 +1,7 @@
 /* PrettyOS is the result of a stepwise OS development
  * shown at www.henkessoft.de */
 
-/// #define _DIAGNOSIS_ // activates prints to the screen about memory use
+#define _DIAGNOSIS_ // activates prints to the screen about memory use
 
 #ifndef OS_H
 #define OS_H
@@ -102,10 +102,10 @@ typedef struct regs
 // video.c
 extern void k_clear_screen();
 extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
-extern void putch(int8_t c);
-extern void puts(int8_t* text);
+extern void putch(char c);
+extern void puts(char* text);
 extern void scroll();
-extern void k_printf(int8_t* message, uint32_t line, uint8_t attribute);
+extern void k_printf(char* message, uint32_t line, uint8_t attribute);
 extern void set_cursor(uint8_t x, uint8_t y);
 extern void update_cursor();
 extern void move_cursor_right();
@@ -148,18 +148,18 @@ extern void k_memshow(void* start, size_t count);
 extern void* k_memset(void* dest, int8_t val, size_t count);
 extern uint16_t* k_memsetw(uint16_t* dest, uint16_t val, size_t count);
 extern void* k_memcpy(void* dest, const void* src, size_t count);
-extern size_t k_strlen(const int8_t* str);
-extern int32_t k_strcmp( const int8_t* s1, const int8_t* s2 );
-extern int8_t* k_strcpy(int8_t* dest, const int8_t* src);
-extern int8_t* k_strncpy(int8_t* dest, const int8_t* src, size_t n);
-extern int8_t* k_strcat(int8_t* dest, const int8_t* src);
+extern size_t k_strlen(const char* str);
+extern int32_t k_strcmp( const char* s1, const char* s2 );
+extern char* k_strcpy(char* dest, const char* src);
+extern char* k_strncpy(char* dest, const char* src, size_t n);
+extern char* k_strcat(char* dest, const char* src);
 extern void reboot();
 extern void cli();
 extern void sti();
 extern void nop();
-extern void k_itoa(int32_t value, int8_t* valuestring);
-extern void k_i2hex(uint32_t val, int8_t* dest, int32_t len);
-extern void float2string(float value, int32_t decimal, int8_t* valuestring);
+extern void k_itoa(int32_t value, char* valuestring);
+extern void k_i2hex(uint32_t val, char* dest, int32_t len);
+extern void float2string(float value, int32_t decimal, char* valuestring);
 uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
 uint32_t max( uint32_t a, uint32_t b );
@@ -188,11 +188,8 @@ extern int32_t k_abs(int32_t i);
 extern int32_t k_power(int32_t base,int32_t n);
 
 // paging.c
-
-
-// heap.c
-extern void heap_install();
-extern void* k_malloc( uint32_t size, uint32_t alignment );
-extern void k_free( void* mem );
+extern void analyze_frames_bitset(uint32_t sec);
+extern uint32_t show_physical_address(uint32_t virtual_address);
+extern void analyze_physical_addresses();
 
 #endif

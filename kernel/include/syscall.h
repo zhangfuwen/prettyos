@@ -63,8 +63,8 @@ int syscall_##fn(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) \
 
 /******* declaration of syscalls in syscall.h **************/
 
-DECL_SYSCALL1( puts,  uint8_t*                      )
-DECL_SYSCALL1( putch, uint8_t                       )
+DECL_SYSCALL1( puts,  char*                      )
+DECL_SYSCALL1( putch, char                       )
 DECL_SYSCALL2( settextcolor, uint8_t, uint8_t )
 DECL_SYSCALL0( getpid                                     )
 DECL_SYSCALL0( nop                                        )

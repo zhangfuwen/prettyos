@@ -6,8 +6,8 @@
 // rest of functions must be declared here:
 extern void f4();
 
-DEFN_SYSCALL1( puts,                       0, uint8_t*               )
-DEFN_SYSCALL1( putch,                      1, uint8_t                )
+DEFN_SYSCALL1( puts,                       0, char*               )
+DEFN_SYSCALL1( putch,                      1, char                )
 DEFN_SYSCALL2( settextcolor,               2, uint8_t, uint8_t )
 DEFN_SYSCALL0( getpid,                     3                               )
 DEFN_SYSCALL0( nop,                        4                               )

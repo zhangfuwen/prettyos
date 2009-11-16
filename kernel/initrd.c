@@ -1,4 +1,5 @@
 #include "initrd.h"
+#include "kheap.h"
 
 initrd_header_t*       initrd_header; // The header.
 initrd_file_header_t*  file_headers;  // The list of file headers.
@@ -23,7 +24,7 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 {
     if( (node == initrd_root) && (index == 0) )
     {
-      k_strcpy(dirent.name, (const int8_t*)"dev");
+      k_strcpy(dirent.name, (const char*)"dev");
       dirent.name[3] = 0; // NUL-terminate the string
       dirent.ino     = 0;
       return &dirent;
@@ -37,9 +38,9 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
     return &dirent;
 }
 
-static fs_node_t* initrd_finddir(fs_node_t* node, int8_t* name)
+static fs_node_t* initrd_finddir(fs_node_t* node, char* name)
 {
-    if( (node == initrd_root) && (!k_strcmp(name,(const int8_t*)"dev")) )
+    if( (node == initrd_root) && (!k_strcmp(name,(const char*)"dev")) )
         return initrd_dev;
     int32_t i;
     for( i=0; i<nroot_nodes; ++i)
@@ -64,7 +65,7 @@ fs_node_t* install_initrd(uint32_t location)
     ///
 
     initrd_root = (fs_node_t*) k_malloc( sizeof(fs_node_t),PAGESIZE );
-    k_strcpy(initrd_root->name, (const int8_t*)"dev");
+    k_strcpy(initrd_root->name, (const char*)"dev");
     initrd_root->mask    = initrd_root->uid = initrd_root->gid = initrd_root->inode = initrd_root->length = 0;
     initrd_root->flags   = FS_DIRECTORY;
     initrd_root->read    = 0;
@@ -86,7 +87,7 @@ fs_node_t* install_initrd(uint32_t location)
     ///
 
     initrd_dev = (fs_node_t*)k_malloc(sizeof(fs_node_t),PAGESIZE);
-    k_strcpy(initrd_dev->name, (const int8_t*)"ramdisk");
+    k_strcpy(initrd_dev->name, (const char*)"ramdisk");
     initrd_dev->mask     = initrd_dev->uid = initrd_dev->gid = initrd_dev->inode = initrd_dev->length = 0;
     initrd_dev->flags    = FS_DIRECTORY;
     initrd_dev->read     = 0;
