@@ -31,7 +31,7 @@ uint8_t flag1 = 0; // status of user-space-program
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.20]\n");
+    printformat("PrettyOS [Version 0.0.0.21]\n");
     gdt_install();
     idt_install();
     isrs_install();
@@ -52,7 +52,7 @@ int main()
                //       that we can carry out this routine after paging_install()
 
     pODA->Memory_Size = paging_install();
-    printformat( "Memory size is %X\n", pODA->Memory_Size );
+    printformat( "Memory size: %X\n", pODA->Memory_Size );
     heap_install();
     tasking_install();
     sti();

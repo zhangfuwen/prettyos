@@ -1,7 +1,7 @@
 /* PrettyOS is the result of a stepwise OS development
  * shown at www.henkessoft.de */
 
-#define _DIAGNOSIS_ // activates prints to the screen about memory use
+// #define _DIAGNOSIS_ // activates prints to the screen about memory use
 
 #ifndef OS_H
 #define OS_H

@@ -8,7 +8,7 @@
 
 
 static const uint32_t MEM_READONLY = 0;
-static const uint32_t MEM_KERNEL   = 1;  // ?? originally 0 ??
+static const uint32_t MEM_KERNEL   = 0;
 static const uint32_t MEM_WRITE    = 2;
 static const uint32_t MEM_USER     = 4;
 
