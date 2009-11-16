@@ -3,8 +3,6 @@ section .text
 global _read_eip
 _read_eip:
     pop eax               ; Get the return address
-   ; push eax              ; TEST
-   ; ret                   ; TEST 
     jmp eax               ; Return. Can't use RET because return
                           ; address popped off the stack. 
 
@@ -39,6 +37,3 @@ _copy_page_physical:
     popf                  ; Pop EFLAGS back.
     pop ebx               ; Get the original value of EBX back.
     ret
-
-
-

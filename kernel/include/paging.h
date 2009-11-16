@@ -18,7 +18,7 @@ typedef struct page_directory_ page_directory_t;
 bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t flags );
 void paging_free ( page_directory_t* pd, void* addr, uint32_t size );
 
-void paging_activate_pd( page_directory_t* pd  );
+void paging_switch( page_directory_t* pd  );
 page_directory_t* paging_create_user_pd();
 void paging_destroy_user_pd( page_directory_t* pd );
 

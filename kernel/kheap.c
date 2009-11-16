@@ -3,6 +3,31 @@
 
 
 
+/*
+The heap provides the malloc/free-functionality, i.e. dynamic allocation of
+ memory. It manages a certain amount of continuous virtual memory, starting
+ at "heap_start". Whenever more memory is requested than there is available,
+ the heap expands.
+For expansion, the heap asks the paging module to map physical memory to the
+ following virtual addresses and increases it's "heap_size" variable afterwards.
+
+To manage the free and reserved (allocated) areas of the heap an array of
+ "region" elements are held. Each region specifies it's size and whether it
+ is reserved/allocated. Free regions are always merged. Regions don't store
+ their addresses, the third region's address is calculated by adding the first
+ and second region's size to "heap_start":
+ region_3_addr = heap_start + regions[0].size + regions[1].size.
+
+Before the heap is set up memory is allocated on a "placement address". This 
+ is an identity mapped area of continuous memory, the allocation just moves
+ a pointer forward by the requested size and returns it's previous value.
+
+The heap's management data is placed at this placement address, too. Since this
+ area cannot grow, the heap has a maximum amount of region-objects
+ ("region_max_count").
+*/
+
+
 
 typedef struct
 {
@@ -11,11 +36,25 @@ typedef struct
 } region_t;
 
 
-static region_t* regions = NULL;
-static uint32_t  region_count = 0;
-static uint32_t  region_max_count = 0;
-static char*     heap_start = NULL;
-static uint32_t  heap_size = 0;
+static region_t*   regions = NULL;
+static uint32_t    region_count = 0;
+static uint32_t    region_max_count = 0;
+static char* const heap_start = (char*)HEAP_START_ADDRESS;
+static uint32_t    heap_size = 0;
+
+static char* const PLACEMENT_BEGIN = (char*)(16*1024*1024);
+static char* const PLACEMENT_END   = (char*)(20*1024*1024);
+
+
+void heap_install()
+{
+    // This gets us the current placement address
+    regions = k_malloc( 0, 0 );
+
+    // We take the rest of the placement area
+    region_count = 0;
+    region_max_count = (PLACEMENT_END-(char*)regions) / sizeof(region_t);
+}
 
 
 static bool heap_grow( uint32_t size, char* heap_end )
@@ -48,33 +87,21 @@ static bool heap_grow( uint32_t size, char* heap_end )
 }
 
 
-void heap_install()
-{
-    // This gets us the current placement address
-    regions = k_malloc( 0, 0 );
-
-    // Initialize other variables
-    region_count = 0;
-    region_max_count = (20*1024*1024-(uint32_t)regions) / sizeof(region_t);
-    heap_start = (char*)HEAP_START_ADDRESS;
-}
-
-
 void* k_malloc( uint32_t size, uint32_t alignment )
 {
+    // Avoid odd addresses
+    size = alignUp( size, 8 );
+
     // If the heap is not set up..
     if ( regions == NULL )
     {
         // Do simple placement allocation
-        static char* addr = (char*)(16*1024*1024);
+        static char* addr = PLACEMENT_BEGIN;
         addr = (char*) alignUp( (uint32_t)addr, alignment );
         char* ret = addr;
-        addr += alignUp( size, 8 );
+        addr += size;
         return ret;
     }
-
-    // Avoid odd addresses
-    size = alignUp( size, 8 );
 
     // Walk the regions and find a big-enough one
     char* region_addr = heap_start;

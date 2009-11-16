@@ -26,6 +26,8 @@
 #define PCI_BAR5        0x0424
 #define PCI_IRQLINE     0x013C
 
+#define PCIARRAYSIZE      1024
+
 typedef
 struct pciBasicAddressRegister
 {

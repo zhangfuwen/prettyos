@@ -57,8 +57,8 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
     uint32_t EHCI_data          = 0; // helper variable for EHCI_data
 
 
-    // array of devices, 50 for first tests
-    for(i=0;i<50;++i)
+    // array of devices, PCIARRAYSIZE for first tests
+    for(i=0;i<PCIARRAYSIZE;++i)
     {
         pciDev_Array[i].number = i;
     }
@@ -93,7 +93,8 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                     pciDev_Array[number].func   = func;
 
                     // output to screen
-                    printformat("%d:%d.%d\t dev:%x vend:%x",
+                    printformat("#%d %d:%d.%d\t dev:%x vend:%x",
+                         number,
                          pciDev_Array[number].bus, pciDev_Array[number].device, pciDev_Array[number].func,
                          pciDev_Array[number].deviceID, pciDev_Array[number].vendorID );
 

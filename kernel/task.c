@@ -94,7 +94,7 @@ task_t* create_task(void* entry, uint8_t privilege)
     {
         // general information: Intel 3A Chapter 5.12
         *(--kernel_stack) = new_task->ss = 0x23;    // ss
-        *(--kernel_stack) = new_task->kernel_stack; // esp0
+        *(--kernel_stack) = new_task->kernel_stack; // esp
         code_segment = 0x1B; // 0x18|0x3=0x1B
     }
 
@@ -149,7 +149,7 @@ uint32_t task_switch(uint32_t esp)
     if(!current_task) current_task = ready_queue;
 
     // new_task
-	paging_activate_pd( current_task->page_directory );		
+	paging_switch( current_task->page_directory );		
 	//tss.cr3 = ... TODO: Really unnecessary?
     tss.esp  = current_task->esp;
     tss.esp0 = (current_task->kernel_stack)+KERNEL_STACK_SIZE;

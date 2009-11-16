@@ -10,10 +10,6 @@
 /// ////  TODO: ANSI TYPEDEFINITIONS  ////
 /// //////////////////////////////////////
 
-// old
-
-#define TRUE   1
-#define FALSE  0
 
 /// //////////////////////////////////////
 
@@ -78,17 +74,6 @@ typedef struct oda
 oda_t ODA;
 extern oda_t* pODA;
 
-typedef struct Mem_Chunk_struct
- {
-   uint32_t base_lo;
-   uint32_t base_hi;
-   uint32_t length_lo;
-   uint32_t length_hi;
-   uint32_t type;
-   uint32_t extended;
- }Mem_Chunk_t;
-
-
 
 /* This defines what the stack looks like after an ISR was running */
 typedef struct regs
@@ -114,7 +99,7 @@ extern void move_cursor_home();
 extern void move_cursor_end();
 extern void save_cursor();
 extern void restore_cursor();
-extern void printformat (char *args, ...); // why not int8_t ?
+extern void printformat (char *args, ...);
 
 // timer.c
 extern void timer_handler(struct regs* r);

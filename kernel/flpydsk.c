@@ -206,7 +206,7 @@ void flpydsk_write_ccr(uint8_t val)
 */
 
 // wait for irq
-inline void flpydsk_wait_irq()
+void flpydsk_wait_irq()
 {
     while ( _FloppyDiskIRQ == 0) // wait for irq to fire
 		;
@@ -268,7 +268,7 @@ void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_
 	flpydsk_send_command (FDC_CMD_SPECIFY); // send command
 	data = ((stepr & 0xf) << 4) | (unloadt & 0xf);
 	flpydsk_send_command(data);
-	data = (loadt) << 1 | (dma==FALSE) ? 0 : 1;
+	data = (loadt) << 1 | (dma? 1 : 0);
 	flpydsk_send_command(data);
 }
 
@@ -289,11 +289,11 @@ int32_t flpydsk_calibrate(uint32_t drive)
 
 		if(!cyl) // did we find cylinder 0? if so, we are done
 		{
-			flpydsk_control_motor(FALSE);
+			flpydsk_control_motor(false);
 			return 0;
 		}
 	}
-	flpydsk_control_motor(FALSE);
+	flpydsk_control_motor(false);
 	return -1;
 }
 
@@ -454,7 +454,7 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 	if(flpydsk_seek (track, head)) return -2;
 	// write sector and turn motor off
 	flpydsk_transfer_sector(head, track, sector, 1);
-	flpydsk_control_motor(FALSE);
+	flpydsk_control_motor(false);
 	return 0;
 }
 

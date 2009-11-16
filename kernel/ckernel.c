@@ -1,7 +1,3 @@
-// Michel TODO:
-//   Gesamtmenge des RAMs
-
-
 #include "os.h"
 #include "kheap.h"
 #include "paging.h"
@@ -22,8 +18,6 @@
 // Buffer for User-Space Program
 #define FILEBUFFERSIZE   0x2000
 
-// determination of the usable memory
-Mem_Chunk_t Mem_Chunk[10]; // contiguous parts of memory detected by int 15h eax = 820h
 
 // RAM disk and user program
 extern uint32_t file_data_start;
@@ -34,11 +28,10 @@ uint8_t buf[FILEBUFFERSIZE];
 uint8_t flag1 = 0; // status of user-space-program
 
 
-
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.18]\n");
+    printformat("PrettyOS [Version 0.0.0.20]\n");
     gdt_install();
     idt_install();
     isrs_install();
@@ -52,51 +45,12 @@ int main()
 {
     init();
 
-    // get physical memory which is usable RAM
-    uint16_t num_of_entries = *( (uint16_t*)(ADDR_MEM_ENTRIES) );
-
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printformat("\nNUM of RAM-Entries: %d\n", num_of_entries);
-    settextcolor(15,0);
-    #endif
-
-    pODA->Memory_Size = 0;
-    uint32_t i,j;
-    for(i=0; i<num_of_entries; ++i)
-    {
-        for(j=0; j<24; j+=4)
-        {
-            if(j== 0) Mem_Chunk[i].base_lo   = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
-            if(j== 4) Mem_Chunk[i].base_hi   = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
-            if(j== 8) Mem_Chunk[i].length_lo = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
-            if(j==12) Mem_Chunk[i].length_hi = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
-            if(j==16) Mem_Chunk[i].type      = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
-            if(j==20) Mem_Chunk[i].extended  = *( (uint32_t*)(ADDR_MEM_INFO+i*24+j) );
-        }
-        if((Mem_Chunk[i].type)==1) pODA->Memory_Size += Mem_Chunk[i].length_lo;
-    }
-    if( (pODA->Memory_Size>0)&&(pODA->Memory_Size<=0xFFFFFFFF) )
-    {
-        printformat("Usable RAM: %d KB", (pODA->Memory_Size)/1024);
-    }
-    else
-    {
-        if(pODA->Memory_Size==0)
-           pODA->Memory_Size = 0x2000000; // 32 MB
-
-        printformat("\nNo memory detection. Estimated usable RAM: %d KB", (pODA->Memory_Size)/1024);
-    }
-    printformat("\n\n");
-
-
     settextcolor(15,0);
 
-    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[...]; (cf. pci.h)
+    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
                // TODO: we need calculation of virtual address from physical address
                //       that we can carry out this routine after paging_install()
 
-    // paging, kernel heap, tasking
     pODA->Memory_Size = paging_install();
     heap_install();
     tasking_install();
@@ -105,25 +59,24 @@ int main()
     /// TEST list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
     listHead_t* pciDevList = listCreate();
-
-    for(i=0;i<50;++i)
+    for(int i=0;i<PCIARRAYSIZE;++i)
     {
         if( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) )
         {
             listAppend(pciDevList, (void*)(pciDev_Array+i));
-            printformat("%X\t",pciDev_Array+i);
+            // printformat("%X\t",pciDev_Array+i);
         }
     }
+    //printformat("\n");
+    // listShow(pciDevList); // shows addresses of list elements (not data)
+
     printformat("\n");
-    listShow(pciDevList);
-    printformat("\n");
-    for(i=0;i<50;++i)
+    for(int i=0;i<PCIARRAYSIZE;++i)
     {
         void* element = listShowElement(pciDevList,i);
         if(element)
         {
-            //printformat("data: %X vendor: %x \t",(uint32_t*)element,*((uint16_t*)(element+4)));
-            printformat("data: %X vendor: %x \t",(uint32_t*)element,((pciDev_t*)element)->vendorID);
+            printformat("%X dev: %x vend: %x\t",(pciDev_t*)element,((pciDev_t*)element)->deviceID,((pciDev_t*)element)->vendorID);
         }
     }
     printformat("\n");
@@ -162,7 +115,7 @@ int main()
     // search the content of files <- data from outside "loaded" via incbin ...
     settextcolor(15,0);
     struct dirent* node = 0;
-    while( (node = readdir_fs(fs_root, i)) != 0)
+    for ( int i=0; (node = readdir_fs(fs_root, i))!=0; ++i )
     {
         fs_node_t* fsnode = finddir_fs(fs_root, node->name);
 
@@ -175,12 +128,12 @@ int main()
             uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
 
             char name[40];
-            k_memset((void*)name, 0, 40);
-            k_memcpy((void*)name, node->name, 35); // protection against wrong / too long filename
+            k_memset(name, 0, 40);
+            k_memcpy(name, node->name, 35); // protection against wrong / too long filename
             printformat("%d \t%s\n",sz,name);
 
             uint32_t j;
-            if( k_strcmp(node->name,"shell"==0 ))
+            if( k_strcmp((const char*)node->name,((const char*)"shell")==0 ))
             {
                 flag1=1;
 
@@ -196,7 +149,6 @@ int main()
                     address_TEST[j] = buf[j];
             }
         }
-        ++i;
     }
     printformat("\n\n");
 
