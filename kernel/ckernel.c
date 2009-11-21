@@ -31,7 +31,8 @@ uint8_t flag1 = 0; // status of user-space-program
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.22]\n");
+    printformat("PrettyOS [Version 0.0.0.23]   ");
+    cmos_time(); printformat("\n\n");
     gdt_install();
     idt_install();
     isrs_install();
@@ -52,17 +53,34 @@ int main()
                //       that we can carry out this routine after paging_install()
 
     pODA->Memory_Size = paging_install();
-    printformat( "Memory size: %X\n", pODA->Memory_Size );
+    printformat( "\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
     heap_install();
     tasking_install();
     sti();
+
+
+    /// direct 1st floppy disk
+    if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
+    {
+        printformat("1.44 MB floppy disk is installed as floppy device 0\n\n");
+
+        flpydsk_set_working_drive(0); // set drive 0 as current drive
+	    flpydsk_install(6);           // floppy disk uses IRQ 6
+	    k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
+    }
+    else
+    {
+        printformat("1.44 MB 1st floppy not shown by CMOS\n\n");
+    }
+    /// direct 1st floppy disk
+
 
     /// TEST list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
     listHead_t* pciDevList = listCreate();
     for(int i=0;i<PCIARRAYSIZE;++i)
     {
-        if( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) )
+        if( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00) )   // there is no vendor EE00h
         {
             listAppend(pciDevList, (void*)(pciDev_Array+i));
             // printformat("%X\t",pciDev_Array+i);
@@ -77,128 +95,15 @@ int main()
         void* element = listShowElement(pciDevList,i);
         if(element)
         {
-            printformat("%X dev: %x vend: %x\t",(pciDev_t*)element,((pciDev_t*)element)->deviceID,((pciDev_t*)element)->vendorID);
+            printformat("%X dev: %x vend: %x\t",
+                       ( pciDev_t*)element,
+                       ((pciDev_t*)element)->deviceID,
+                       ((pciDev_t*)element)->vendorID);
         }
     }
-    printformat("\n");
+    printformat("\n\n");
     /// TEST list END
 
-    /// TEST show time and date (sourcecode of "Cuervo", PrettyOS team)
-    uint8_t hour       = (cmos_read(0x04));
-    uint8_t minutes    = (cmos_read(0x02));
-    uint8_t seconds    = (cmos_read(0x00));
-    uint8_t dayofmonth = (cmos_read(0x07));
-    uint8_t weekday    = (cmos_read(0x06));
-    uint8_t month      = (cmos_read(0x08));
-    uint8_t year       = (cmos_read(0x09));
-
-    printformat("\nDate & Time: ");
-
-    switch (weekday&0xF)
-    {
-        case 1:
-            printformat("Sunday, ");
-        break;
-        case 2:
-            printformat("Monday, ");
-        break;
-        case 3:
-            printformat("Tuesday, ");
-        break;
-        case 4:
-            printformat("Wednesday, ");
-        break;
-        case 5:
-            printformat("Thursday, ");
-        break;
-        case 6:
-            printformat("Friday, ");
-        break;
-        case 7:
-            printformat("Saturday, ");
-        break;
-        default:
-            printformat("Unknown Day: %d!",weekday&0xF);
-    }
-    printformat("%d%d ",dayofmonth>>4,dayofmonth&0xF);
-    switch (month&0xF)
-    {
-        case 1:
-            if ((month>>4) == 0)
-            {
-                printformat("January ");
-            }
-            else
-            {
-                printformat("November ");
-            }
-        break;
-        case 2:
-            if ((month>>4) == 0)
-            {
-                printformat("February ");
-            }
-            else
-            {
-                printformat("December ");
-            }
-        break;
-        case 3:
-            printformat("March ");
-        break;
-        case 4:
-            printformat("April ");
-        break;
-        case 5:
-            printformat("May ");
-        break;
-        case 6:
-            printformat("June ");
-        break;
-        case 7:
-            printformat("July ");
-        break;
-        case 8:
-            printformat("August ");
-        break;
-        case 9:
-            printformat("September ");
-        break;
-        case 10:
-            printformat("October ");
-        break;
-        default:
-            printformat("Unknown month: %d %d",month>>4,month&0xF);
-    }
-    printformat("%d%d:",hour>>4,hour&0xF);
-    printformat("%d%d:",minutes>>4,minutes&0xF);
-    printformat("%d%d ",seconds>>4,seconds&0xF);
-    if((year>>4)>6)
-    {
-        printformat("19%d%d",year>>4,year&0xF);
-    }
-    else
-    {
-        printformat("20%d%d",year>>4,year&0xF);
-    }
-    printformat("\n\n");
-    /// TEST show time and date END
-
-
-    /// direct 1st floppy disk
-    if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
-    {
-        printformat("1.44 MB 1st floppy is installed\n\n");
-
-        flpydsk_set_working_drive(0); // set drive 0 as current drive
-	    flpydsk_install(6);           // floppy disk uses IRQ 6
-	    k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
-    }
-    else
-    {
-        printformat("1.44 MB 1st floppy not shown by CMOS\n\n");
-    }
-    /// direct 1st floppy disk
 
     // RAM Disk
     ///

@@ -98,7 +98,7 @@ void* listShowElement(listHead_t* hd, uint32_t number)
     void* dat=0;
     if(!cur)
     {
-        printformat("The list is empty.");
+        /* printformat(""); */
     }
     else
     {

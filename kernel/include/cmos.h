@@ -7,5 +7,6 @@
 
 uint8_t cmos_read(uint8_t off); // Read byte from CMOS
 void cmos_write(uint8_t off,uint8_t val); // Write byte to CMOS
+void cmos_time(); // print date & time
 
 #endif
