@@ -79,7 +79,9 @@ task_t* create_task(void* entry, uint8_t privilege)
 
     task_t* tmp_task = (task_t*)ready_queue;
     while (tmp_task->next)
+    {
         tmp_task = tmp_task->next;
+    }
     tmp_task->next = new_task;
 
     uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
@@ -145,11 +147,14 @@ uint32_t task_switch(uint32_t esp)
     current_task->esp = esp;   // save esp
 
     // task switch
-    current_task = current_task->next;
-    if(!current_task) current_task = ready_queue;
+    current_task = current_task->next; // take the next task
+    if(!current_task)
+    {
+        current_task = ready_queue;    // start at the beginning of the queue
+    }
 
     // new_task
-	paging_switch( current_task->page_directory );		
+	paging_switch( current_task->page_directory );
 	//tss.cr3 = ... TODO: Really unnecessary?
     tss.esp  = current_task->esp;
     tss.esp0 = (current_task->kernel_stack)+KERNEL_STACK_SIZE;
@@ -219,70 +224,3 @@ void TSS_log(tss_entry_t* tss)
     //printformat("trap: %x ", tss->trap); //only 0 or 1
     //printformat("iomap_base: %x ", tss->iomap_base);
 }
-
-/*int32_t fork()
-{
-    // We are modifying kernel structures, and so cannot be interrupted.
-    cli();
-
-    // Take a pointer to this process' task struct for later reference.
-    task_t* parent_task = (task_t*)current_task;
-
-    // Clone the address space.
-    page_directory_t* directory = clone_directory(current_directory);
-
-    // Create a new process.
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printformat("fork_cr_proc: ");
-    settextcolor(15,0);
-    #endif
-    ///
-
-    task_t* new_task = (task_t*)k_malloc(sizeof(task_t),0);
-
-    new_task->id  = next_pid++;
-    new_task->esp = new_task->ebp = 0;
-    new_task->eip = 0;
-    new_task->page_directory = directory;
-
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printformat("fork_cr_proc_ks: ");
-    settextcolor(15,0);
-    #endif
-    ///
-    new_task->kernel_stack = k_malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-    new_task->next = 0;
-
-    // Add it to the end of the ready queue. Find the end of the ready queue ...
-    task_t* tmp_task = (task_t*)ready_queue;
-    while (tmp_task->next)
-        tmp_task = tmp_task->next;
-    tmp_task->next = new_task; // ... and extend it
-
-    uint32_t eip = read_eip(); // This will be the entry point for the new process
-
-    // We could be the parent or the child here - check.
-    if (current_task == parent_task)
-    {
-        // We are the parent, so set up the esp/ebp/eip for our child
-        uint32_t esp; __asm__ volatile("mov %%esp, %0" : "=r"(esp));
-        uint32_t ebp; __asm__ volatile("mov %%ebp, %0" : "=r"(ebp));
-        new_task->esp = esp;
-        new_task->ebp = ebp;
-        new_task->eip = eip;
-
-        task_log(new_task);
-
-        sti();               // All finished: Reenable interrupts.
-        return new_task->id; // And by convention return the PID of the child
-    }
-    else
-    {
-        sti();
-        return 0; // We are the child - by convention return 0
-    }
-}*/
