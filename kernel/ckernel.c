@@ -31,7 +31,7 @@ uint8_t flag1 = 0; // status of user-space-program
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.24]   ");
+    printformat("PrettyOS [Version 0.0.0.25]   ");
     cmos_time(); printformat("\n\n");
     gdt_install();
     idt_install();
@@ -62,7 +62,7 @@ int main()
     /// direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
     {
-        printformat("1.44 MB floppy disk is installed as floppy device 0\n\n");
+        printformat("\n1.44 MB floppy disk is installed as floppy device 0\n\n");
 
         flpydsk_set_working_drive(0); // set drive 0 as current drive
 	    flpydsk_install(6);           // floppy disk uses IRQ 6
@@ -70,7 +70,7 @@ int main()
     }
     else
     {
-        printformat("1.44 MB 1st floppy not shown by CMOS\n\n");
+        printformat("\n1.44 MB 1st floppy not shown by CMOS\n\n");
     }
     /// direct 1st floppy disk
 

@@ -99,8 +99,15 @@ void cmos_time()
             printformat("Unknown month: %d",month);
     }
 
-    //day
-    printformat("%d, ",dayofmonth);
+    // day
+    if(dayofmonth<10)
+    {
+        printformat("0%d, ",dayofmonth);
+    }
+    else
+    {
+        printformat("%d, ",dayofmonth);
+    }
 
     // year
     if(year>69)
@@ -120,5 +127,28 @@ void cmos_time()
     }
 
     // time
-    printformat("%d:%d:%d",hour,minutes,seconds);
+    if(hour<10)
+    {
+        printformat("0%d:",hour);
+    }
+    else
+    {
+        printformat("%d:",hour);
+    }
+    if(minutes<10)
+    {
+        printformat("0%d:",minutes);
+    }
+    else
+    {
+        printformat("%d:",minutes);
+    }
+    if(seconds<10)
+    {
+        printformat("0%d ",seconds);
+    }
+    else
+    {
+        printformat("%d ",seconds);
+    }
 }
