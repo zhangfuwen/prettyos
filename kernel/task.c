@@ -49,10 +49,9 @@ void tasking_install()
     sti();
 }
 
-task_t* create_task(void* entry, uint8_t privilege)
+task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege)
 {
     cli();
-    page_directory_t* directory = paging_create_user_pd();//clone_directory(current_directory);
 
     ///
     #ifdef _DIAGNOSIS_
@@ -154,7 +153,7 @@ uint32_t task_switch(uint32_t esp)
     }
 
     // new_task
-	paging_switch( current_task->page_directory );
+	paging_switch( current_task->page_directory );		
 	//tss.cr3 = ... TODO: Really unnecessary?
     tss.esp  = current_task->esp;
     tss.esp0 = (current_task->kernel_stack)+KERNEL_STACK_SIZE;

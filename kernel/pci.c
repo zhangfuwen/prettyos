@@ -1,5 +1,7 @@
 #include "pci.h"
 
+pciDev_t pciDev_Array[50];
+
 uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content )
 {
     // example: PCI_VENDOR_ID 0x0200 ==> length: 0x02 reg: 0x00 offset: 0x00

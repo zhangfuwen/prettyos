@@ -9,8 +9,8 @@ typedef struct
 {
     uint64_t base;   // The region's address
     uint64_t size;   // The region's size
-    uint32_t type;     // Is "1" for "free"
-    uint32_t ext;      // Unimportant for us
+    uint32_t type;   // Is "1" for "free"
+    uint32_t ext;    // Unimportant for us
 } __attribute__((packed)) mem_map_entry_t;
 
 
@@ -56,15 +56,24 @@ static void phys_set_bits( uint32_t addr_begin, uint32_t addr_end, bool reserved
 
 static uint32_t phys_init()
 {
-    void* memory_map = (void*)MEMORY_MAP_ADDRESS;
+    mem_map_entry_t* const entries = (mem_map_entry_t*)MEMORY_MAP_ADDRESS;
 
     // Some constants
     const uint64_t FOUR_GB    = 0x100000000ull;
     const uint32_t MAX_DWORDS = FOUR_GB / PAGESIZE / 32;
 
+    // Print the memory map
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+    printformat( "Memory map:\n" );
+    for ( mem_map_entry_t* entry=entries; entry->size; ++entry )
+        printformat( "  %X -> %X %i\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type );
+    settextcolor(15,0);
+    #endif
+    //
+
     // Prepare the memory map entries, since we work with max
     //   4 GB only. The last entry in the entry-array has size==0.
-    mem_map_entry_t* entries = (mem_map_entry_t*)memory_map;
     for ( mem_map_entry_t* entry=entries; entry->size; ++entry )
     {
         // We will completely ignore memory above 4 GB, move following

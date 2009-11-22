@@ -55,23 +55,13 @@ extern void panic_assert(char* file, uint32_t line, char* desc);  // why char ?
 typedef struct oda
 {
     // Hardware Data
-    uint32_t COM1, COM2, COM3, COM4; // address
-    uint32_t LPT1, LPT2, LPT3, LPT4; // address
     uint32_t Memory_Size;            // Memory size in Byte
-
-    // Key Queue
-    uint8_t  KEYQUEUE[KQSIZE];   // circular queue buffer
-    uint8_t* pHeadKQ;            // pointer to the head of valid data
-    uint8_t* pTailKQ;            // pointer to the tail of valid data
-    uint32_t  KQ_count_read;      // number of data read from queue buffer
-    uint32_t  KQ_count_write;     // number of data put into queue buffer
 
     //tasking
     uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
 }oda_t;
 
 // operatings system common data area
-oda_t ODA;
 extern oda_t* pODA;
 
 
@@ -111,7 +101,7 @@ extern void timer_install();
 extern void timer_uninstall();
 
 // keyboard.c
-extern void keyboard_init();
+extern void keyboard_install();
 extern uint8_t FetchAndAnalyzeScancode();
 extern uint8_t ScanToASCII();
 extern void keyboard_handler(struct regs* r);
@@ -119,7 +109,6 @@ extern int32_t k_checkKQ_and_print_char();
 extern uint8_t k_checkKQ_and_return_char();
 
 // util.c
-extern void initODA();
 extern void outportb(uint16_t port, uint32_t val);
 extern uint32_t inportb(uint16_t port);
 extern void outportl(uint16_t port, uint32_t val);
@@ -151,23 +140,16 @@ uint32_t max( uint32_t a, uint32_t b );
 uint32_t min( uint32_t a, uint32_t b );
 uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 
-// gtd.c itd.c irq.c isrs.c
+// gtd.c, irq.c interrupts.asm
 extern void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 extern void gdt_install();
-extern void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags);
 extern void idt_install();
-extern void isrs_install();
-extern void irq_install();
-
-extern void timer_install();
-extern void keyboard_install();
-
 extern uint32_t fault_handler(uint32_t esp);
 extern uint32_t irq_handler(uint32_t esp);
 extern void irq_install_handler(int32_t irq, void (*handler)(struct regs* r));
 extern void irq_uninstall_handler(int32_t irq);
-extern void irq_remap(void);
 
+extern void timer_install();
 
 // math.c
 extern int32_t k_abs(int32_t i);
@@ -177,5 +159,8 @@ extern int32_t k_power(int32_t base,int32_t n);
 extern void analyze_frames_bitset(uint32_t sec);
 extern uint32_t show_physical_address(uint32_t virtual_address);
 extern void analyze_physical_addresses();
+
+// elf.c
+bool elf_exec( const void* elf_file, uint32_t elf_file_size );
 
 #endif

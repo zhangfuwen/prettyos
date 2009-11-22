@@ -1,21 +1,12 @@
 #include "os.h"
 int32_t INT_MAX = 2147483647;
 
-void sti() {	__asm__ volatile ( "sti" ); }	// Enable interrupts
-void cli() { __asm__ volatile ( "cli" ); }	// Disable interrupts
-void nop() { __asm__ volatile ( "nop" ); }	// Do nothing
+void sti() { __asm__ volatile ( "sti" ); }  // Enable interrupts
+void cli() { __asm__ volatile ( "cli" ); }  // Disable interrupts
+void nop() { __asm__ volatile ( "nop" ); }  // Do nothing
+oda_t ODA;
 oda_t* pODA = &ODA;
 
-void initODA()
-{
-    int32_t i;
-    for(i=0;i<KQSIZE;++i)
-       pODA->KEYQUEUE[i]=0;          // circular queue buffer
-    pODA->pHeadKQ = pODA->KEYQUEUE;  // pointer to the head of valid data
-    pODA->pTailKQ = pODA->KEYQUEUE;  // pointer to the tail of valid data
-    pODA->KQ_count_read  = 0;        // number of data read from queue buffer
-    pODA->KQ_count_write = 0;        // number of data put into queue buffer
-}
 
 uint32_t fetchESP()
 {

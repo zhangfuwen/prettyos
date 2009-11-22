@@ -53,7 +53,7 @@ struct pciDev
    pciBar_t  bar[6];
 }pciDev_t;
 
-pciDev_t pciDev_Array[50];
+extern pciDev_t pciDev_Array[50];
 
 uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content );
 void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val );

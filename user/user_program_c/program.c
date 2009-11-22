@@ -26,7 +26,7 @@ int main()
         //     )
 
         //if( (input >= 0x20) && (input <= 0x7E) )
-        if( (input >= 0x20) && (input <= 0xFF) ) // test-wise open, cf. ascii
+        if( (input >= 0x20) /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
         {
           if(i<MAX_CHAR_PER_LINE) //
           {

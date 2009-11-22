@@ -9,10 +9,6 @@ extern void tss_flush();
 // Internal function prototypes.
 void write_tss(int32_t,uint16_t,uint32_t);
 
-gdt_entry_t gdt_entries[6];
-gdt_ptr_t   gdt_ptr;
-idt_entry_t idt_entries[256];
-idt_ptr_t   idt_ptr;
 tss_entry_t tss;
 
 

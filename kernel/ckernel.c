@@ -4,7 +4,6 @@
 #include "task.h"
 #include "initrd.h"
 #include "syscall.h"
-#include "shared_pages.h"
 #include "pci.h"
 #include "cmos.h"
 #include "flpydsk.h"
@@ -12,7 +11,6 @@
 //#include "fat12.h" //TEST
 
 // RAM Detection by Second Stage Bootloader
-#define ADDR_MEM_ENTRIES 0x0FFE
 #define ADDR_MEM_INFO    0x1000
 
 // Buffer for User-Space Program
@@ -22,25 +20,20 @@
 // RAM disk and user program
 extern uint32_t file_data_start;
 extern uint32_t file_data_end;
-uint32_t address_user;
-uint8_t address_TEST[FILEBUFFERSIZE];
-uint8_t buf[FILEBUFFERSIZE];
-uint8_t flag1 = 0; // status of user-space-program
 
 
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.25]   ");
+    printformat("PrettyOS [Version 0.0.0.26]   ");
     cmos_time(); printformat("\n\n");
     gdt_install();
     idt_install();
-    isrs_install();
-    irq_install();
-    initODA();
     timer_install();
     keyboard_install();
+    syscall_install();
 }
+
 
 int main()
 {
@@ -65,7 +58,7 @@ int main()
         printformat("\n1.44 MB floppy disk is installed as floppy device 0\n\n");
 
         flpydsk_set_working_drive(0); // set drive 0 as current drive
-	    flpydsk_install(6);           // floppy disk uses IRQ 6
+	    flpydsk_install(32+6);           // floppy disk uses IRQ 6
 	    k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
     }
     else
@@ -121,7 +114,8 @@ int main()
     fs_root = install_initrd(ramdisk_start);
 
     // search the content of files <- data from outside "loaded" via incbin ...
-    settextcolor(15,0);
+    bool shell_found = false;
+    uint8_t* buf = k_malloc( FILEBUFFERSIZE, 0 );
     struct dirent* node = 0;
     for ( int i=0; (node = readdir_fs(fs_root, i))!=0; ++i )
     {
@@ -140,75 +134,34 @@ int main()
             k_memcpy(name, node->name, 35); // protection against wrong / too long filename
             printformat("%d \t%s\n",sz,name);
 
-            uint32_t j;
-            if( k_strcmp((const char*)node->name,((const char*)"shell")==0 ))
+            if ( k_strcmp( (const char*)node->name, "shell" ) == 0 )
             {
-                flag1=1;
+                shell_found = true;
 
-                if(sz>=FILEBUFFERSIZE)
-                {
-                    sz = 0;
-                    settextcolor(4,0);
-                    printformat("Buffer Overflow prohibited!\n");
-                    settextcolor(15,0);
-                }
-
-                for(j=0; j<sz; ++j)
-                    address_TEST[j] = buf[j];
+                if ( ! elf_exec( buf, sz ) )
+                    printformat( "Cannot start shell!\n" );
             }
         }
     }
+    k_free( buf );
     printformat("\n\n");
 
-    /// shell in elf-executable-format provided by data.asm
-    uint32_t elf_vaddr     = *( (uint32_t*)( address_TEST + 0x3C ) );
-    uint32_t elf_offset    = *( (uint32_t*)( address_TEST + 0x38 ) );
-    uint32_t elf_filesize  = *( (uint32_t*)( address_TEST + 0x44 ) );
-
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(5,0);
-    printformat("virtual address: %X offset: %x size: %x", elf_vaddr, elf_offset, elf_filesize);
-    printformat("\n\n");
-    settextcolor(15,0);
-    #endif
-    ///
-
-    if( (elf_vaddr>0x5FF000) || (elf_vaddr<0x400000) || (elf_offset>0x130) || (elf_filesize>0x1000) )
+    if ( ! shell_found )
     {
-        flag1=2;
+        settextcolor(4,0);
+        printformat("Program not found.\n");
+        settextcolor(15,0);
     }
 
-    // Test-Programm ==> user space
-    if(flag1==1)
-    {
-        address_user = elf_vaddr;
-        k_memcpy((void*)address_user, address_TEST + elf_offset, elf_filesize); // ELF LOAD:
-                                                                                // Offset VADDR FileSize
-    }
+    pODA->ts_flag = 1;
 
-    pODA->ts_flag = 1; // enable task_switching
-
-    if(flag1==1)
+    const char* progress = "|/-\\";
+    const char* p = progress;
+    while ( true )
     {
-      create_task ((void*)getAddressUserProgram(),3); // program in user space (ring 3) takes over
+        *((uint16_t*)(0xB8000+158)) = 0x0F00 | *p;
+        if ( ! *++p )
+            p = progress;
     }
-    else
-    {
-        if(flag1==0)
-        {
-            settextcolor(4,0);
-            printformat("Program not found.\n");
-            settextcolor(15,0);
-        }
-        else
-        {
-            settextcolor(4,0);
-            printformat("Program corrupt.\n");
-            settextcolor(15,0);
-        }
-    }
-
-    while(true){/*  */}
     return 0;
 }

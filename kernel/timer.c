@@ -57,7 +57,7 @@ void systemTimer_setFrequency( uint32_t freq )
 void timer_install()
 {
     /* Installs 'timer_handler' to IRQ0 */
-    irq_install_handler(0, timer_handler);
+    irq_install_handler(32+0, timer_handler);
     systemTimer_setFrequency( 100 ); // 100 Hz, meaning a tick every 10 milliseconds
 }
 

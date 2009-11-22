@@ -9,7 +9,7 @@ jmp entry_point             ; go to entry point
 ;*******************************************************
 ;	Includes and Defines
 ;*******************************************************
-%include "gdt.inc"			; GDT definition
+%include "gdt2.inc"			; GDT definition
 %include "A20.inc"			; A20 gate enabling
 %include "Fat12.inc"		; FAT12 driver
 %include "GetMemoryMap.inc" ; INT 0x15, eax = 0xE820 
@@ -77,7 +77,7 @@ EnterProtectedMode:
     mov dx,0x3F2      
     mov al,0x0C
     out dx,al     	
-	
+
     ; switch to PM
     cli	                           
     mov eax, cr0                          ; set bit 0 in cr0 --> enter PM

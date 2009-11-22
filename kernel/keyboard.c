@@ -9,12 +9,17 @@
 #endif
 
 
-//TASKSWITCH
-#include "task.h"
-extern uint32_t read_eip();
-extern page_directory_t* current_directory;
-extern task_t* current_task;
-extern tss_entry_t tss_entry;
+
+
+ // Key Queue
+uint8_t  KEYQUEUE[KQSIZE];   // circular queue buffer
+uint8_t* pHeadKQ;            // pointer to the head of valid data
+uint8_t* pTailKQ;            // pointer to the tail of valid data
+uint32_t KQ_count_read;      // number of data read from queue buffer
+uint32_t KQ_count_write;     // number of data put into queue buffer
+
+
+
 
 uint8_t ShiftKeyDown = 0; // variable for Shift Key Down
 uint8_t AltGrKeyDown = 0; // variable for AltGr Key Down
@@ -126,34 +131,34 @@ void keyboard_handler(struct regs* r)
    uint8_t KEY = ScanToASCII();
    if(KEY)
    {
-       *(pODA->pTailKQ) = KEY;
-       ++(pODA->KQ_count_write);
+       *(pTailKQ) = KEY;
+       ++(KQ_count_write);
 
-       if(pODA->pTailKQ > pODA->KEYQUEUE)
+       if(pTailKQ > KEYQUEUE)
        {
-           --pODA->pTailKQ;
+           --pTailKQ;
        }
-       if(pODA->pTailKQ == pODA->KEYQUEUE)
+       if(pTailKQ == KEYQUEUE)
        {
-           pODA->pTailKQ = (pODA->KEYQUEUE)+KQSIZE-1;
+           pTailKQ = (KEYQUEUE)+KQSIZE-1;
        }
    }
 }
 
 int32_t k_checkKQ_and_print_char()
 {
-   if(pODA->KQ_count_write > pODA->KQ_count_read)
+   if(KQ_count_write > KQ_count_read)
    {
-       uint8_t KEY = *(pODA->pHeadKQ);
-       ++(pODA->KQ_count_read);
+       uint8_t KEY = *(pHeadKQ);
+       ++(KQ_count_read);
 
-       if(pODA->pHeadKQ > pODA->KEYQUEUE)
+       if(pHeadKQ > KEYQUEUE)
        {
-           --pODA->pHeadKQ;
+           --pHeadKQ;
        }
-       if(pODA->pHeadKQ == pODA->KEYQUEUE)
+       if(pHeadKQ == KEYQUEUE)
        {
-           pODA->pHeadKQ = (pODA->KEYQUEUE)+KQSIZE-1;
+           pHeadKQ = (KEYQUEUE)+KQSIZE-1;
        }
 
        //restore_cursor();
@@ -197,18 +202,18 @@ int32_t k_checkKQ_and_print_char()
 
 uint8_t k_checkKQ_and_return_char()
 {
-   if(pODA->KQ_count_write > pODA->KQ_count_read)
+   if(KQ_count_write > KQ_count_read)
    {
-       uint8_t KEY = *(pODA->pHeadKQ);
-       ++(pODA->KQ_count_read);
+       uint8_t KEY = *(pHeadKQ);
+       ++(KQ_count_read);
 
-       if(pODA->pHeadKQ > pODA->KEYQUEUE)
+       if(pHeadKQ > KEYQUEUE)
        {
-           --pODA->pHeadKQ;
+           --pHeadKQ;
        }
-       if(pODA->pHeadKQ == pODA->KEYQUEUE)
+       if(pHeadKQ == KEYQUEUE)
        {
-           pODA->pHeadKQ = (pODA->KEYQUEUE)+KQSIZE-1;
+           pHeadKQ = (KEYQUEUE)+KQSIZE-1;
        }
        /// TEST
 	   //  printformat("KEY:%c ", KEY);
@@ -220,10 +225,15 @@ uint8_t k_checkKQ_and_return_char()
 
 void keyboard_install()
 {
-    /* Installs 'keyboard_handler' to IRQ1 */
-    irq_install_handler(1, keyboard_handler);
+    // Setup the queue
+    for ( int i=0; i<KQSIZE; ++i )
+       KEYQUEUE[i]=0;
+    pHeadKQ = KEYQUEUE;
+    pTailKQ = KEYQUEUE;
+    KQ_count_read  = 0;
+    KQ_count_write = 0;
+
+    // Installs 'keyboard_handler' to IRQ1
+    irq_install_handler(32+1, keyboard_handler);
     keyboard_init();
 }
-
-
-

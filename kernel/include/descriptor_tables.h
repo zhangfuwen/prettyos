@@ -8,10 +8,6 @@ void write_tss(int32_t num, uint16_t ss0, uint32_t esp0);
 // asm functions in flush.asm
 extern void gdt_flush(uint32_t);
 extern void tss_flush();
-extern void idt_flush(uint32_t);
-
-// Initialisation function is publicly accessible.
-void init_descriptor_tables();
 
 // Allows the kernel stack in the TSS to be changed.
 void set_kernel_stack(uint32_t stack);
@@ -36,24 +32,6 @@ struct gdt_ptr
 typedef struct gdt_entry gdt_entry_t;
 typedef struct gdt_ptr   gdt_ptr_t;
 
-// IDT entry
-struct idt_entry
-{
-    uint16_t base_lo;
-    uint16_t sel;
-    uint8_t always0;
-    uint8_t flags;
-    uint16_t base_hi;
-}__attribute__((packed)); //prevent compiler optimization
-
-struct idt_ptr
-{
-    uint16_t limit;
-    uint32_t  base;
-}__attribute__((packed)); //prevent compiler optimization
-
-typedef struct idt_entry idt_entry_t;
-typedef struct idt_ptr   idt_ptr_t;
 
 // Task State Segment (TSS)
 struct tss_entry_struct

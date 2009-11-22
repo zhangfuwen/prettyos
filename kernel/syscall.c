@@ -16,9 +16,7 @@ DEFN_SYSCALL0( k_checkKQ_and_print_char,   6                               )
 DEFN_SYSCALL0( k_checkKQ_and_return_char,  7                               )
 DEFN_SYSCALL0( flpydsk_read_directory,     8                               )
 
-#define NUM_SYSCALLS 9
-
-static void* syscalls[NUM_SYSCALLS] =
+static void* syscalls[] =
 {
     &puts,
     &putch,
@@ -34,7 +32,7 @@ static void* syscalls[NUM_SYSCALLS] =
 void syscall_handler(struct regs* r)
 {
     // Firstly, check if the requested syscall number is valid. The syscall number is found in EAX.
-    if( r->eax >= NUM_SYSCALLS )
+    if( r->eax >= sizeof(syscalls)/sizeof(*syscalls) )
         return;
 
     void* addr = syscalls[r->eax]; // Get the required syscall location.
@@ -52,4 +50,10 @@ void syscall_handler(struct regs* r)
       add $20, %%esp; \
     " : "=a" (ret) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (addr));
     r->eax = ret;
+}
+
+
+void syscall_install()
+{
+    irq_install_handler( 127, syscall_handler );
 }

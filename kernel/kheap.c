@@ -45,6 +45,8 @@ static uint32_t    heap_size = 0;
 static char* const PLACEMENT_BEGIN = (char*)(16*1024*1024);
 static char* const PLACEMENT_END   = (char*)(20*1024*1024);
 
+static const uint32_t HEAP_MIN_GROWTH = 256*1024;
+
 
 void heap_install()
 {
@@ -174,7 +176,7 @@ void* k_malloc( uint32_t size, uint32_t alignment )
     }
 
     // There is nothing free, try to expand the heap
-    uint32_t to_grow = max( 256*1024, alignUp(size*3/2,PAGESIZE) );
+    uint32_t to_grow = max( HEAP_MIN_GROWTH, alignUp(size*3/2,PAGESIZE) );
     if ( ! heap_grow( to_grow, heap_start+heap_size ) )
         return NULL;
 

@@ -3,7 +3,7 @@
 
 #include "os.h"
 
-//void syscalls_install();
+void syscall_install();
 void syscall_handler(struct regs* regs);
 
 #define DECL_SYSCALL0(fn)                int syscall_##fn();

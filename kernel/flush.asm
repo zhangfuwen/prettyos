@@ -18,12 +18,6 @@ _gdt_flush:
 .flush:
     ret
 
-GLOBAL _idt_flush    ; Allows the C code to call idt_flush().
-
-_idt_flush:
-    mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter. 
-    lidt [eax]        ; Load the IDT register
-    ret
 
 GLOBAL _tss_flush    ; Allows our C code to call tss_flush().
 
