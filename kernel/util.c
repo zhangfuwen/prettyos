@@ -320,3 +320,7 @@ uint32_t min( uint32_t a, uint32_t b )
 	return a<=b? a : b;
 }
 
+ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
+ {
+     return ((PackedBCDVal >> 4) * 10 + (PackedBCDVal & 0xF));
+ }

@@ -149,6 +149,7 @@ uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
 uint32_t max( uint32_t a, uint32_t b );
 uint32_t min( uint32_t a, uint32_t b );
+uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 
 // gtd.c itd.c irq.c isrs.c
 extern void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);

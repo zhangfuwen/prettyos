@@ -31,7 +31,7 @@ uint8_t flag1 = 0; // status of user-space-program
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.23]   ");
+    printformat("PrettyOS [Version 0.0.0.24]   ");
     cmos_time(); printformat("\n\n");
     gdt_install();
     idt_install();

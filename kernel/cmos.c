@@ -18,18 +18,18 @@ void cmos_write(uint8_t off,uint8_t val)
 
 void cmos_time()
 {
-    // sourcecode of "Cuervo", PrettyOS team
+    // sourcecode of "Cuervo" and "ehenkes", PrettyOS team
 
-    uint8_t hour       = (cmos_read(0x04));
-    uint8_t minutes    = (cmos_read(0x02));
-    uint8_t seconds    = (cmos_read(0x00));
-    uint8_t dayofmonth = (cmos_read(0x07));
-    uint8_t weekday    = (cmos_read(0x06));
-    uint8_t month      = (cmos_read(0x08));
-    uint8_t year       = (cmos_read(0x09));
+    uint8_t seconds    = PackedBCD2Decimal(cmos_read(0x00));
+    uint8_t minutes    = PackedBCD2Decimal(cmos_read(0x02));
+    uint8_t hour       = PackedBCD2Decimal(cmos_read(0x04));
+    uint8_t weekday    = PackedBCD2Decimal(cmos_read(0x06));
+    uint8_t dayofmonth = PackedBCD2Decimal(cmos_read(0x07));
+    uint8_t month      = PackedBCD2Decimal(cmos_read(0x08));
+    uint8_t year       = PackedBCD2Decimal(cmos_read(0x09));
 
-    // day
-    switch (weekday&0xF)
+    // weekday
+    switch (weekday)
     {
         case 1:
             printformat("Sunday, ");
@@ -53,31 +53,17 @@ void cmos_time()
             printformat("Saturday, ");
         break;
         default:
-            printformat("Unknown Day: %d!",weekday&0xF);
+            printformat("Unknown Day: %d!",weekday);
     }
 
     // month
-    switch (month&0xF)
+    switch (month)
     {
         case 1:
-            if ((month>>4) == 0)
-            {
-                printformat("January ");
-            }
-            else
-            {
-                printformat("November ");
-            }
+            printformat("January ");
         break;
         case 2:
-            if ((month>>4) == 0)
-            {
-                printformat("February ");
-            }
-            else
-            {
-                printformat("December ");
-            }
+            printformat("February ");
         break;
         case 3:
             printformat("March ");
@@ -103,25 +89,36 @@ void cmos_time()
         case 10:
             printformat("October ");
         break;
+        case 11:
+            printformat("November ");
+        break;
+        case 12:
+            printformat("December ");
+        break;
         default:
-            printformat("Unknown month: %d %d",month>>4,month&0xF);
+            printformat("Unknown month: %d",month);
     }
 
     //day
-    printformat("%d%d, ",dayofmonth>>4,dayofmonth&0xF);
+    printformat("%d, ",dayofmonth);
 
     // year
-    if((year>>4)>6)
+    if(year>69)
     {
-        printformat("19%d%d",year>>4,year&0xF);
+        printformat("19%d ",year);
     }
     else
     {
-        printformat("20%d%d ",year>>4,year&0xF);
+        if(year<10)
+        {
+            printformat("200%d ",year);
+        }
+        else
+        {
+            printformat("20%d ",year);
+        }
     }
 
     // time
-    printformat("%d%d:",hour>>4,hour&0xF);
-    printformat("%d%d:",minutes>>4,minutes&0xF);
-    printformat("%d%d ",seconds>>4,seconds&0xF);
+    printformat("%d:%d:%d",hour,minutes,seconds);
 }
