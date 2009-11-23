@@ -25,7 +25,7 @@ extern uint32_t file_data_end;
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.26]   ");
+    printformat("PrettyOS [Version 0.0.0.27]   ");
     cmos_time(); printformat("\n\n");
     gdt_install();
     idt_install();
@@ -51,14 +51,13 @@ int main()
     tasking_install();
     sti();
 
-
     /// direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
     {
         printformat("\n1.44 MB floppy disk is installed as floppy device 0\n\n");
 
         flpydsk_set_working_drive(0); // set drive 0 as current drive
-	    flpydsk_install(32+6);           // floppy disk uses IRQ 6
+	    flpydsk_install(32+6);        // floppy disk uses IRQ 6 // 32+6
 	    k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
     }
     else
@@ -66,7 +65,6 @@ int main()
         printformat("\n1.44 MB 1st floppy not shown by CMOS\n\n");
     }
     /// direct 1st floppy disk
-
 
     /// TEST list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
@@ -96,7 +94,6 @@ int main()
     }
     printformat("\n\n");
     /// TEST list END
-
 
     // RAM Disk
     ///

@@ -206,7 +206,7 @@ void flpydsk_write_ccr(uint8_t val)
 */
 
 // wait for irq
-void flpydsk_wait_irq()
+/*inline*/ void flpydsk_wait_irq()
 {
     while ( _FloppyDiskIRQ == 0) // wait for irq to fire
 		;
@@ -268,7 +268,7 @@ void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_
 	flpydsk_send_command (FDC_CMD_SPECIFY); // send command
 	data = ((stepr & 0xf) << 4) | (unloadt & 0xf);
 	flpydsk_send_command(data);
-	data = (loadt) << 1 | (dma? 1 : 0);
+	data = (loadt) << 1 | (dma==false) ? 0 : 1;
 	flpydsk_send_command(data);
 }
 
@@ -384,7 +384,7 @@ uint8_t flpydsk_get_working_drive(){ return _CurrentDrive; }
 void flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
 {
 	/// TEST
-	// flpydsk_initialize_dma(); // does not solve the 'fdir' problem
+	flpydsk_initialize_dma(); // necessary?
     /// TEST
 
 	uint32_t st0, cyl;
