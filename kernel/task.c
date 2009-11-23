@@ -153,7 +153,7 @@ uint32_t task_switch(uint32_t esp)
     }
 
     // new_task
-	paging_switch( current_task->page_directory );		
+	paging_switch( current_task->page_directory );
 	//tss.cr3 = ... TODO: Really unnecessary?
     tss.esp  = current_task->esp;
     tss.esp0 = (current_task->kernel_stack)+KERNEL_STACK_SIZE;
@@ -165,7 +165,7 @@ uint32_t task_switch(uint32_t esp)
 
 void switch_context() // switch to next task
 {
-  __asm__ volatile("int $0x21");
+  __asm__ volatile("int $0x7E");
 }
 
 void log_task_list()

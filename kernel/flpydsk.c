@@ -10,7 +10,6 @@
   of the OSDEV tutorial series at www.brokenthorn.com
 *****************************************************************************/
 
-const int32_t FLOPPY_IRQ                   =    6; // floppy irq
 const int32_t FLPY_SECTORS_PER_TRACK       =   18; // sectors per track
 static uint8_t	_CurrentDrive              =    0; // current working drive. Defaults to 0.
 static volatile uint8_t _FloppyDiskIRQ     =    0; // set when IRQ fires

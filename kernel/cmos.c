@@ -23,7 +23,7 @@ void cmos_time()
     uint8_t seconds    = PackedBCD2Decimal(cmos_read(0x00));
     uint8_t minutes    = PackedBCD2Decimal(cmos_read(0x02));
     uint8_t hour       = PackedBCD2Decimal(cmos_read(0x04));
-    uint8_t weekday    = PackedBCD2Decimal(cmos_read(0x06));
+    uint8_t weekday    = cmos_read(0x06) & 0xF             ;
     uint8_t dayofmonth = PackedBCD2Decimal(cmos_read(0x07));
     uint8_t month      = PackedBCD2Decimal(cmos_read(0x08));
     uint8_t year       = PackedBCD2Decimal(cmos_read(0x09));
