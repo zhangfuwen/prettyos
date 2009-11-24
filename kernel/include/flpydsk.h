@@ -27,7 +27,7 @@ void flpydsk_lba_to_chs(int32_t lba, int32_t* head, int32_t* track, int32_t* sec
 void flpydsk_install(int32_t irq);
 void flpydsk_set_working_drive(uint8_t drive);
 uint8_t flpydsk_get_working_drive();
-void flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation);
+int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation);
 uint8_t* flpydsk_read_sector(int32_t sectorLBA);
 int32_t flpydsk_write_sector(int32_t sectorLBA);
 void flpydsk_read_directory();

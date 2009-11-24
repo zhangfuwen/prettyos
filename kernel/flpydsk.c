@@ -246,14 +246,13 @@ void flpydsk_control_motor(bool b)
 		case 3:	motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
 	}
 
-	// turn on or off the motor of that drive
+    // turn on or off the motor of that drive
 	if(b)
 	{
         flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA);
 	}
 	else
 	{
-
         flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET);
 	}
 	sti(); // important!
@@ -380,12 +379,8 @@ uint8_t flpydsk_get_working_drive(){ return _CurrentDrive; }
 
 // read or write a sector // http://www.isdaman.com/alsos/hardware/fdc/floppy_files/wrsec.gif
 // read: operation = 0; write: operation = 1
-void flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
+int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
 {
-	/// TEST
-	flpydsk_initialize_dma(); // necessary?
-    /// TEST
-
 	uint32_t st0, cyl;
 	if(operation == 0) // read a sector
 	{
@@ -411,15 +406,24 @@ void flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_
 	flpydsk_wait_irq();
 
     printformat("status info: ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
-	int32_t j;
+	int32_t j,retVal;
 	for(j=0; j<7; ++j)
 	{
 		int32_t val = flpydsk_read_data(); // read status info: ST0 ST1 ST2 C H S Size(2: 512 Byte)
 		printformat("%d  ",val);
+		if((j==6) && (val==2))
+		{
+		    retVal = 0;
+		}
+		else
+		{
+		    retVal = -1;
+		}
 	}
 	printformat("\n\n");
 	flpydsk_check_int(&st0,&cyl); // let FDC know we handled interrupt
 	sleepMilliSeconds(200); // necessary?
+	return retVal;
 }
 
 // read a sector
@@ -435,8 +439,12 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	if(flpydsk_seek (track, head)) return 0;
 
 	// read sector and turn motor off
-	flpydsk_transfer_sector(head, track, sector, 0);
+	int32_t retVal;
+	while( (retVal = flpydsk_transfer_sector(head, track, sector, 0)) == -1 )
+
+	printformat("transfer sectors (read)\n");
 	flpydsk_control_motor(false);
+	printformat("motor off\n");
 
 	return (uint8_t*)DMA_BUFFER;
 }
@@ -459,7 +467,8 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 
 void flpydsk_read_directory()
 {
-	flpydsk_read_sector(19); // start at 0x2600: root directory (14 sectors)
+	/*uint8_t* retVal = */ flpydsk_read_sector(19); // start at 0x2600: root directory (14 sectors)
+	// printformat("buffer = flpydsk_read_sector(...): %X\n",retVal);
 	printformat("<Floppy Disc Root Dir>\n");
 
 	uint32_t i;
