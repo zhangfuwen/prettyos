@@ -25,7 +25,7 @@ extern uint32_t file_data_end;
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.29]   ");
+    printformat("PrettyOS [Version 0.0.0.30]   ");
     cmos_time(); printformat("\n\n");
     gdt_install();
     idt_install();
@@ -154,9 +154,10 @@ int main()
 
     const char* progress = "|/-\\";
     const char* p = progress;
+
     while ( true )
     {
-        *((uint16_t*)(0xB8000+158)) = 0x0F00 | *p;
+        *((uint16_t*)(0xB8000+158)) = 0x0A00 | *p;
         if ( ! *++p )
             p = progress;
     }

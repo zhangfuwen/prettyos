@@ -318,7 +318,9 @@ void flpydsk_reset()
 	// send CHECK_INT/SENSE INTERRUPT command to all drives
 	int32_t i;
 	for(i=0; i<4; ++i)
+	{
 		flpydsk_check_int(&st0,&cyl);
+	}
 	flpydsk_write_ccr(0);              // transfer speed 500kb/s
 	flpydsk_drive_data(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
 	flpydsk_calibrate(_CurrentDrive);  // calibrate the disk
@@ -381,6 +383,8 @@ uint8_t flpydsk_get_working_drive(){ return _CurrentDrive; }
 // read: operation = 0; write: operation = 1
 int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
 {
+
+
 	uint32_t st0, cyl;
 	if(operation == 0) // read a sector
 	{
@@ -439,12 +443,10 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	if(flpydsk_seek (track, head)) return 0;
 
 	// read sector and turn motor off
-	int32_t retVal;
-	while( (retVal = flpydsk_transfer_sector(head, track, sector, 0)) == -1 )
-
-	printformat("transfer sectors (read)\n");
+	while( flpydsk_transfer_sector(head, track, sector, 0) == -1 ){};
+	// printformat("transfer sectors (read)\n");
 	flpydsk_control_motor(false);
-	printformat("motor off\n");
+	// printformat("motor off\n");
 
 	return (uint8_t*)DMA_BUFFER;
 }
@@ -464,6 +466,9 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 	flpydsk_control_motor(false);
 	return 0;
 }
+
+
+/// only for tests in flpydsk.c, later: file data system
 
 void flpydsk_read_directory()
 {
@@ -513,7 +518,7 @@ void flpydsk_read_directory()
 			// 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
             printformat("  1st phys. sec: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
 
-            printformat("\n"); // next root dirextory entry
+            printformat("\n"); // next root directory entry
 		  }//if
 	}//for
     printformat("\n");
