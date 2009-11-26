@@ -13,18 +13,16 @@ uint32_t eticks;
 void timer_handler(struct regs* r)
 {
     ++timer_ticks;
-    if(eticks)
+    if(eticks>0)
         --eticks;
 }
 
 void timer_wait (uint32_t ticks)
 {
-    timer_uninstall();
     eticks = ticks;
-    timer_install();
 
     // busy wait...
-    while (eticks)
+    while (eticks>0)
     {
         update_cursor();
     }
@@ -64,6 +62,6 @@ void timer_install()
 void timer_uninstall()
 {
     /* Uninstalls IRQ0 */
-    irq_uninstall_handler(0);
+    irq_uninstall_handler(32+0);
 }
 

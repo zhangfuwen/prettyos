@@ -10,83 +10,83 @@
   of the OSDEV tutorial series at www.brokenthorn.com
 *****************************************************************************/
 
-const int32_t FLPY_SECTORS_PER_TRACK       =   18; // sectors per track
-static uint8_t	_CurrentDrive              =    0; // current working drive. Defaults to 0.
-static volatile uint8_t _FloppyDiskIRQ     =    0; // set when IRQ fires
-const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  =  500; // waiting time in milliseconds
+const int32_t FLPY_SECTORS_PER_TRACK       =   18;     // sectors per track
+static uint8_t	_CurrentDrive              =    false; // current working drive. Defaults to 0.
+static volatile uint8_t _FloppyDiskIRQ     =    0;     // set when IRQ fires
+const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  =  500;     // waiting time in milliseconds
 
 
 // IO ports
 enum FLPYDSK_IO
 {
-	FLPYDSK_DOR		=	0x3f2,
-	FLPYDSK_MSR		=	0x3f4,
-	FLPYDSK_FIFO	=	0x3f5,
-	FLPYDSK_CTRL	=	0x3f7
+    FLPYDSK_DOR	        =   0x3f2,
+    FLPYDSK_MSR	        =   0x3f4,
+    FLPYDSK_FIFO        =   0x3f5,
+    FLPYDSK_CTRL        =   0x3f7
 };
 
-// Bits 0-4 of command byte.
+// Bits 0-4 of command byte
 enum FLPYDSK_CMD
 {
-	FDC_CMD_READ_TRACK	 =	  2,
-	FDC_CMD_SPECIFY		 =	  3,
-	FDC_CMD_CHECK_STAT	 =	  4,
-	FDC_CMD_WRITE_SECT	 =	  5,
-	FDC_CMD_READ_SECT	 =	  6,
-	FDC_CMD_CALIBRATE	 =	  7,
-	FDC_CMD_CHECK_INT	 =	  8,
-	FDC_CMD_FORMAT_TRACK =	0xd,
-	FDC_CMD_SEEK		 =	0xf
+    FDC_CMD_READ_TRACK	 =    2,
+    FDC_CMD_SPECIFY		 =    3,
+    FDC_CMD_CHECK_STAT	 =	  4,
+    FDC_CMD_WRITE_SECT	 =	  5,
+    FDC_CMD_READ_SECT	 =	  6,
+    FDC_CMD_CALIBRATE	 =	  7,
+    FDC_CMD_CHECK_INT	 =	  8,
+    FDC_CMD_FORMAT_TRACK =	0xd,
+    FDC_CMD_SEEK		 =	0xf
 };
 
-// Additional command masks. Can be masked with above commands
+// Additional command masks
 enum FLPYDSK_CMD_EXT
 {
-	FDC_CMD_EXT_SKIP		=	0x20,	//00100000
-	FDC_CMD_EXT_DENSITY		=	0x40,	//01000000
-	FDC_CMD_EXT_MULTITRACK	=	0x80	//10000000
+    FDC_CMD_EXT_SKIP       = 0x20,
+    FDC_CMD_EXT_DENSITY	   = 0x40,
+    FDC_CMD_EXT_MULTITRACK = 0x80
 };
 
-// Digital Output Register
+// Digital Output Register (DOR)
 enum FLPYDSK_DOR_MASK
 {
-	FLPYDSK_DOR_MASK_DRIVE0			=	0,	//00000000
-	FLPYDSK_DOR_MASK_DRIVE1			=	1,	//00000001
-	FLPYDSK_DOR_MASK_DRIVE2			=	2,	//00000010
-	FLPYDSK_DOR_MASK_DRIVE3			=	3,	//00000011
-	FLPYDSK_DOR_MASK_RESET			=	4,	//00000100
-	FLPYDSK_DOR_MASK_DMA			=	8,	//00001000
-	FLPYDSK_DOR_MASK_DRIVE0_MOTOR	=	16,	//00010000
-	FLPYDSK_DOR_MASK_DRIVE1_MOTOR	=	32,	//00100000
-	FLPYDSK_DOR_MASK_DRIVE2_MOTOR	=	64,	//01000000
-	FLPYDSK_DOR_MASK_DRIVE3_MOTOR	=	128	//10000000
+    FLPYDSK_DOR_MASK_DRIVE0       =   0,
+    FLPYDSK_DOR_MASK_DRIVE1       =   1,
+    FLPYDSK_DOR_MASK_DRIVE2	      =   2,
+    FLPYDSK_DOR_MASK_DRIVE3	      =   3,
+    FLPYDSK_DOR_MASK_RESET	      =   4,
+    FLPYDSK_DOR_MASK_DMA          =   8,
+    FLPYDSK_DOR_MASK_DRIVE0_MOTOR =  16,
+    FLPYDSK_DOR_MASK_DRIVE1_MOTOR =  32,
+    FLPYDSK_DOR_MASK_DRIVE2_MOTOR =	 64,
+    FLPYDSK_DOR_MASK_DRIVE3_MOTOR =	128
 };
 
 // Main Status Register
 enum FLPYDSK_MSR_MASK
 {
-	FLPYDSK_MSR_MASK_DRIVE1_POS_MODE	=	1,	//00000001
-	FLPYDSK_MSR_MASK_DRIVE2_POS_MODE	=	2,	//00000010
-	FLPYDSK_MSR_MASK_DRIVE3_POS_MODE	=	4,	//00000100
-	FLPYDSK_MSR_MASK_DRIVE4_POS_MODE	=	8,	//00001000
-	FLPYDSK_MSR_MASK_BUSY				=	16,	//00010000
-	FLPYDSK_MSR_MASK_DMA				=	32,	//00100000
-	FLPYDSK_MSR_MASK_DATAIO				=	64, //01000000
-	FLPYDSK_MSR_MASK_DATAREG			=	128	//10000000
+	FLPYDSK_MSR_MASK_DRIVE1_POS_MODE	=	  1,
+	FLPYDSK_MSR_MASK_DRIVE2_POS_MODE	=	  2,
+	FLPYDSK_MSR_MASK_DRIVE3_POS_MODE	=	  4,
+	FLPYDSK_MSR_MASK_DRIVE4_POS_MODE	=	  8,
+	FLPYDSK_MSR_MASK_BUSY				=	 16,
+	FLPYDSK_MSR_MASK_DMA				=	 32,
+	FLPYDSK_MSR_MASK_DATAIO				=	 64,
+	FLPYDSK_MSR_MASK_DATAREG			=	128
 };
 
 // Controller Status Port 0
 enum FLPYDSK_ST0_MASK
 {
-	FLPYDSK_ST0_MASK_DRIVE0		=	0,		//00000000
-	FLPYDSK_ST0_MASK_DRIVE1		=	1,		//00000001
-	FLPYDSK_ST0_MASK_DRIVE2		=	2,		//00000010
-	FLPYDSK_ST0_MASK_DRIVE3		=	3,		//00000011
-	FLPYDSK_ST0_MASK_HEADACTIVE	=	4,		//00000100
-	FLPYDSK_ST0_MASK_NOTREADY	=	8,		//00001000
-	FLPYDSK_ST0_MASK_UNITCHECK	=	16,		//00010000
-	FLPYDSK_ST0_MASK_SEEKEND	=	32,		//00100000
-	FLPYDSK_ST0_MASK_INTCODE	=	64		//11000000
+	FLPYDSK_ST0_MASK_DRIVE0		=   0,
+	FLPYDSK_ST0_MASK_DRIVE1		=   1,
+	FLPYDSK_ST0_MASK_DRIVE2		=   2,
+	FLPYDSK_ST0_MASK_DRIVE3		=   3,
+	FLPYDSK_ST0_MASK_HEADACTIVE	=   4,
+	FLPYDSK_ST0_MASK_NOTREADY	=   8,
+	FLPYDSK_ST0_MASK_UNITCHECK	=  16,
+	FLPYDSK_ST0_MASK_SEEKEND	=  32,
+	FLPYDSK_ST0_MASK_INTCODE	=  64
 };
 
 // LPYDSK_ST0_MASK_INTCODE types
@@ -116,8 +116,6 @@ enum FLPYDSK_SECTOR_DTL
 	FLPYDSK_SECTOR_DTL_1024	=	4
 };
 
-
-
 /**
 **	DMA Routines.
 **	The DMA (Direct Memory Access) controller allows the FDC to send data to the DMA, which can put the data in memory.
@@ -128,34 +126,33 @@ enum FLPYDSK_SECTOR_DTL
 // initialize DMA to use physical address 84k-128k
 void flpydsk_initialize_dma()
 {
-	outportb(0x0a, 0x06);	//mask dma channel 2
-	outportb(0xd8, 0xFF);	//reset master flip-flop
-	outportb(0x04, 0x00);   //address=0x1000
+	outportb(0x0a, 0x06);	// mask dma channel 2
+	outportb(0xd8, 0xFF);	// reset master flip-flop
+	outportb(0x04, 0x00);   // DMA buffer address 0x1000
 	outportb(0x04, 0x10);
-	outportb(0xd8, 0xFF);   //reset master flip-flop
-	outportb(0x05, 0xFF);   //count to 0x23FF (number of bytes in a 3.5" floppy disk track: 18*512)
+	outportb(0xd8, 0xFF);   // reset master flip-flop
+	outportb(0x05, 0xFF);   // count to 0x23FF (number of bytes in a 3.5" floppy disk track: 18*512)
 	outportb(0x05, 0x23);
 
-	outportb(0x81, 0x00);   //external page register = 0
-	outportb(0x0a, 0x02);   //unmask dma channel 2
+	outportb(0x81, 0x00);   // external page register = 0
+	outportb(0x0a, 0x02);   // unmask dma channel 2
 }
 
 // prepare the DMA for read transfer
 void flpydsk_dma_read()
 {
-	outportb(0x0a, 0x06); //mask dma channel 2
-	outportb(0x0b, 0x56); //single transfer, address increment, autoinit, read, channel 2
-	outportb(0x0a, 0x02); //unmask dma channel 2
+	outportb(0x0a, 0x06); // mask dma channel 2
+	outportb(0x0b, 0x56); // single transfer, address increment, autoinit, read, channel 2
+	outportb(0x0a, 0x02); // unmask dma channel 2
 }
 
 // prepare the DMA for write transfer
 void flpydsk_dma_write()
 {
-	outportb(0x0a, 0x06); //mask dma channel 2
-	outportb(0x0b, 0x5A); //single transfer, address increment, autoinit, write, channel 2
-	outportb(0x0a, 0x02); //unmask dma channel 2
+	outportb(0x0a, 0x06); // mask dma channel 2
+	outportb(0x0b, 0x5A); // single transfer, address increment, autoinit, write, channel 2
+	outportb(0x0a, 0x02); // unmask dma channel 2
 }
-
 
 /**
 *	Basic Controller In/Out Routines
@@ -207,16 +204,15 @@ void flpydsk_write_ccr(uint8_t val)
 // wait for irq
 /*inline*/ void flpydsk_wait_irq()
 {
-    while ( _FloppyDiskIRQ == 0) // wait for irq to fire
-		;
-	_FloppyDiskIRQ = 0;
+    while ( _FloppyDiskIRQ == false) // wait for irq to fire
+		;                        /// <--- freeze!!! ///
+	_FloppyDiskIRQ = false;
 }
 
 //	floppy disk irq handler
 void i86_flpy_irq(struct regs* r)
 {
-	_FloppyDiskIRQ = 1; // irq fired. Set flag!
-	// printformat("DEBUG flpydsk.c: after _FloppyDiskIRQ = 1; // irq fired. Set flag!\n");
+	_FloppyDiskIRQ = true; // irq fired. Set flag!
 }
 
 /**
@@ -234,9 +230,6 @@ void flpydsk_check_int(uint32_t* st0, uint32_t* cyl)
 // turns the current floppy drives motor on/off
 void flpydsk_control_motor(bool b)
 {
-	// sanity check: invalid drive
-	// if(_CurrentDrive > 3) return; // ??? void ???
-
 	uint32_t motor = 0;
 	switch(_CurrentDrive) // select the correct mask based on current drive
 	{
@@ -262,12 +255,9 @@ void flpydsk_control_motor(bool b)
 // configure drive
 void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_t dma )
 {
-	uint32_t data = 0;
-	flpydsk_send_command (FDC_CMD_SPECIFY); // send command
-	data = ((stepr & 0xf) << 4) | (unloadt & 0xf);
-	flpydsk_send_command(data);
-	data = (loadt) << 1 | (dma==false) ? 0 : 1;
-	flpydsk_send_command(data);
+	flpydsk_send_command(   FDC_CMD_SPECIFY                           );
+	flpydsk_send_command( ((stepr & 0xF) << 4) | (unloadt & 0xF)      );
+	flpydsk_send_command( ( loadt << 1)        | (dma==false) ? 0 : 1 );
 }
 
 // calibrate the drive
@@ -383,51 +373,44 @@ uint8_t flpydsk_get_working_drive(){ return _CurrentDrive; }
 // read: operation = 0; write: operation = 1
 int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
 {
-
-
-	uint32_t st0, cyl;
-	if(operation == 0) // read a sector
+    uint32_t st0, cyl;
+    if(operation == 0) // read a sector
+    {
+        flpydsk_dma_read();
+        flpydsk_send_command( FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY);
+    }
+    if(operation == 1) // write a sector
 	{
-	    flpydsk_dma_read();
-	    flpydsk_send_command( FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK |
-	                          FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY);
-	}
-	if(operation == 1) // write a sector
-	{
-	    flpydsk_dma_write();
-	    flpydsk_send_command( FDC_CMD_WRITE_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY );
-	}
-
-	flpydsk_send_command( head << 2 | _CurrentDrive );
-	flpydsk_send_command( track);
-	flpydsk_send_command( head);
-	flpydsk_send_command( sector);
-	flpydsk_send_command( FLPYDSK_SECTOR_DTL_512 );
-	flpydsk_send_command( FLPY_SECTORS_PER_TRACK );
-	flpydsk_send_command( FLPYDSK_GAP3_LENGTH_3_5 );
-	flpydsk_send_command( 0xFF );
-
-	flpydsk_wait_irq();
-
+        flpydsk_dma_write();
+        flpydsk_send_command( FDC_CMD_WRITE_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY );
+    }
+    flpydsk_send_command( head << 2 | _CurrentDrive );
+    flpydsk_send_command( track);
+    flpydsk_send_command( head);
+    flpydsk_send_command( sector);
+    flpydsk_send_command( FLPYDSK_SECTOR_DTL_512 );
+    flpydsk_send_command( FLPY_SECTORS_PER_TRACK );
+    flpydsk_send_command( FLPYDSK_GAP3_LENGTH_3_5 );
+    flpydsk_send_command( 0xFF );
+    flpydsk_wait_irq();
     printformat("status info: ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
-	int32_t j,retVal;
-	for(j=0; j<7; ++j)
-	{
-		int32_t val = flpydsk_read_data(); // read status info: ST0 ST1 ST2 C H S Size(2: 512 Byte)
-		printformat("%d  ",val);
-		if((j==6) && (val==2))
-		{
-		    retVal = 0;
-		}
-		else
-		{
-		    retVal = -1;
-		}
-	}
-	printformat("\n\n");
-	flpydsk_check_int(&st0,&cyl); // let FDC know we handled interrupt
-	sleepMilliSeconds(200); // necessary?
-	return retVal;
+    int32_t j,retVal;
+    for(j=0; j<7; ++j)
+    {
+        int32_t val = flpydsk_read_data(); // read status info: ST0 ST1 ST2 C H S Size(2: 512 Byte)
+        printformat("%d  ",val);
+        if((j==6) && (val==2))
+        {
+            retVal = 0;
+        }
+        else
+        {
+            retVal = -1;
+        }
+    }
+    printformat("\n\n");
+    flpydsk_check_int(&st0,&cyl);  // inform FDC that we handled interrupt
+    return retVal;
 }
 
 // read a sector
@@ -442,12 +425,15 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	flpydsk_control_motor(true);
 	if(flpydsk_seek (track, head)) return 0;
 
-	// read sector and turn motor off
-	while( flpydsk_transfer_sector(head, track, sector, 0) == -1 ){};
-	// printformat("transfer sectors (read)\n");
+	// read sector, turn motor off, return DMA buffer
+	int32_t timeout = 5;
+	while( flpydsk_transfer_sector(head, track, sector, 0) == -1 )
+	{
+	    --timeout;
+	    if (timeout<=0)
+	        break;
+	}
 	flpydsk_control_motor(false);
-	// printformat("motor off\n");
-
 	return (uint8_t*)DMA_BUFFER;
 }
 

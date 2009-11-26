@@ -1,5 +1,6 @@
 romimage: file=$BXSHARE/BIOS-bochs-latest
-megs: 32
+cpu: count=1, ips=10000000, reset_on_triple_fault=1
+megs: 1024
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 vga: extension=vbe
 floppya: 1_44=a:, status=inserted

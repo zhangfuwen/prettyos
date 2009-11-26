@@ -25,7 +25,7 @@ extern uint32_t file_data_end;
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.30]   ");
+    printformat("PrettyOS [Version 0.0.0.31]   ");
     cmos_time(); printformat("\n\n");
     gdt_install();
     idt_install();
