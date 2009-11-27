@@ -10,10 +10,10 @@
   of the OSDEV tutorial series at www.brokenthorn.com
 *****************************************************************************/
 
-const int32_t FLPY_SECTORS_PER_TRACK       =   18;     // sectors per track
-static uint8_t	_CurrentDrive              =    false; // current working drive. Defaults to 0.
-static volatile uint8_t _FloppyDiskIRQ     =    0;     // set when IRQ fires
-const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  =  500;     // waiting time in milliseconds
+const int32_t FLPY_SECTORS_PER_TRACK           =   18;   // sectors per track
+static uint8_t	_CurrentDrive                  =  false; // current working drive, default: 0
+static volatile uint8_t ReceivedFloppyDiskIRQ  =  false; // set when IRQ fires
+const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME      =  500;   // waiting time in milliseconds
 
 
 // IO ports
@@ -202,17 +202,24 @@ void flpydsk_write_ccr(uint8_t val)
 */
 
 // wait for irq
-/*inline*/ void flpydsk_wait_irq()
+void flpydsk_wait_irq()
 {
-    while ( _FloppyDiskIRQ == false) // wait for irq to fire
-		;                        /// <--- freeze!!! ///
-	_FloppyDiskIRQ = false;
+    uint32_t timeout = getCurrentSeconds()+5;
+    while( ReceivedFloppyDiskIRQ == false) // wait for irq to fire
+    {
+	    if( (timeout-getCurrentSeconds()) <= 0 )
+	    {
+	        printformat("\ntimeout: IRQ not received!\n");
+	        break;
+	    }
+    }
+    ReceivedFloppyDiskIRQ = false;
 }
 
 //	floppy disk irq handler
 void i86_flpy_irq(struct regs* r)
 {
-	_FloppyDiskIRQ = true; // irq fired. Set flag!
+	ReceivedFloppyDiskIRQ = true; // irq fired. Set flag!
 }
 
 /**
@@ -325,16 +332,17 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
 	for(i=0; i<10; ++i)
 	{
 		// send the command
-		flpydsk_send_command (FDC_CMD_SEEK);
-		flpydsk_send_command ( (head) << 2 | _CurrentDrive);
-		flpydsk_send_command (cyl);
-
-		flpydsk_wait_irq();
+        flpydsk_send_command (FDC_CMD_SEEK);
+        flpydsk_send_command ( (head) << 2 | _CurrentDrive);
+        flpydsk_send_command (cyl);
+        flpydsk_wait_irq();
 		flpydsk_check_int(&st0,&cyl0);
 
-		if ( cyl0 == cyl) // found the cylinder?
-			return 0;
-	}
+        if ( cyl0 == cyl) // found the cylinder?
+        {
+		    return 0;
+        }
+    }
 	return -1;
 }
 
@@ -393,7 +401,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     flpydsk_send_command( FLPYDSK_GAP3_LENGTH_3_5 );
     flpydsk_send_command( 0xFF );
     flpydsk_wait_irq();
-    printformat("status info: ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
+    printformat("ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
     int32_t j,retVal;
     for(j=0; j<7; ++j)
     {
@@ -409,7 +417,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
         }
     }
     printformat("\n\n");
-    flpydsk_check_int(&st0,&cyl);  // inform FDC that we handled interrupt
+    flpydsk_check_int(&st0,&cyl);    // inform FDC that we handled interrupt
     return retVal;
 }
 
@@ -423,16 +431,21 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 
 	// turn motor on and seek to track
 	flpydsk_control_motor(true);
-	if(flpydsk_seek (track, head)) return 0;
+	if(flpydsk_seek (track, head))
+	{
+	    return 0;
+	}
 
 	// read sector, turn motor off, return DMA buffer
-	int32_t timeout = 5;
+	uint32_t timeout = getCurrentSeconds()+5;
 	while( flpydsk_transfer_sector(head, track, sector, 0) == -1 )
-	{
-	    --timeout;
-	    if (timeout<=0)
+    {
+	    if( (timeout-getCurrentSeconds()) <= 0 )
+	    {
+	        printformat("\ntimeout: read/write error!\n");
 	        break;
-	}
+	    }
+    }
 	flpydsk_control_motor(false);
 	return (uint8_t*)DMA_BUFFER;
 }
@@ -458,8 +471,17 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 
 void flpydsk_read_directory()
 {
-	/*uint8_t* retVal = */ flpydsk_read_sector(19); // start at 0x2600: root directory (14 sectors)
-	// printformat("buffer = flpydsk_read_sector(...): %X\n",retVal);
+	/// TEST
+	// ReceivedFloppyDiskIRQ = false;
+	// flpydsk_initialize_dma();
+	// flpydsk_dma_read();
+	/// TEST
+
+	uint8_t* retVal = flpydsk_read_sector(19);   // start at 0x2600: root directory (14 sectors)
+	if(retVal != (uint8_t*)0x1000)
+	{
+	    printformat("\nerror: buffer = flpydsk_read_sector(...): %X\n",retVal);
+	}
 	printformat("<Floppy Disc Root Dir>\n");
 
 	uint32_t i;

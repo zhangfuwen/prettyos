@@ -154,12 +154,27 @@ int main()
 
     const char* progress = "|/-\\";
     const char* p = progress;
+    uint32_t CurrentSeconds=0, CurrentSecondsOld;
 
-    while ( true )
+    while( true )
     {
+        // SHOW ROTATING ASTERISK
         *((uint16_t*)(0xB8000+158)) = 0x0A00 | *p;
         if ( ! *++p )
             p = progress;
+
+        // PRINT TIME IN SECONDS AT STATUS BAR
+        char* valuestring="";
+
+        CurrentSecondsOld = CurrentSeconds;
+        CurrentSeconds = getCurrentSeconds();
+        if (CurrentSeconds!=CurrentSecondsOld)
+        {
+            k_itoa(CurrentSeconds, valuestring);
+            save_cursor();
+            k_printf(valuestring, 49, 0xC); // status bar
+            restore_cursor();
+        }
     }
     return 0;
 }

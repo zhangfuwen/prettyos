@@ -6,10 +6,13 @@ uint8_t  csr_y  = 0;
 uint8_t  saved_csr_x  = 0;
 uint8_t  saved_csr_y  = 0;
 uint8_t  attrib = 0x0F;
+uint8_t  saved_attrib = 0x0F;
 
 uint16_t* vidmem = (uint16_t*) 0xB8000;
 const uint8_t COLUMNS =  80;
 const uint8_t LINES   =  50;
+const uint8_t SCROLL_LINE = 48; // reserve line for the status bar
+bool scrollflag = true;
 
 
 void k_clear_screen()
@@ -62,7 +65,15 @@ void set_cursor(uint8_t x, uint8_t y)
 
 void update_cursor()
 {
-	uint16_t position = csr_y * COLUMNS + csr_x;
+    uint16_t position;
+	if(scrollflag)
+	{
+	    position = csr_y * COLUMNS + csr_x;
+	}
+	else
+	{
+	    position = saved_csr_y * COLUMNS + saved_csr_x;
+	}
 	// cursor HIGH port to vga INDEX register
 	outportb(0x3D4, 0x0E);
 	outportb(0x3D5, (uint8_t)((position>>8)&0xFF));
@@ -146,7 +157,10 @@ void putch(char c)
     }
 
     // scroll if needed, and finally move the cursor
-    scroll();
+    if(scrollflag)
+    {
+        scroll();
+    }
     update_cursor();
 }
 
@@ -159,12 +173,12 @@ void scroll()
 {
     uint32_t blank, temp;
     blank = 0x20 | (attrib << 8);
-    if(csr_y >= LINES)
+    if(csr_y >= SCROLL_LINE)
     {
-        temp = csr_y - LINES + 1;
-        k_memcpy (vidmem, vidmem + temp * COLUMNS, (LINES - temp) * COLUMNS * 2);
-        k_memsetw (vidmem + (LINES - temp) * COLUMNS, blank, COLUMNS);
-        csr_y = LINES - 1;
+        temp = csr_y - SCROLL_LINE + 1;
+        k_memcpy (vidmem, vidmem + temp * COLUMNS, (SCROLL_LINE - temp) * COLUMNS * 2);
+        k_memsetw (vidmem + (SCROLL_LINE - temp) * COLUMNS, blank, COLUMNS);
+        csr_y = SCROLL_LINE - 1;
     }
 }
 
@@ -174,7 +188,9 @@ void k_printf(char* message, uint32_t line, uint8_t attribute)
     settextcolor(attribute & 0x0F, attribute >> 4);
     csr_x = 0; csr_y = line;
     update_cursor();
+    scrollflag = false;
     puts(message);
+    scrollflag = true;
 };
 
 /* Lean version of printf: printformat(...): supports %u, %d, %x/%X, %s, %c */
@@ -242,18 +258,18 @@ void printformat (char* args, ...)
 
 void save_cursor()
 {
-    cli();
+    pODA->ts_flag=0;
     saved_csr_x  = csr_x;
     saved_csr_y  = csr_y;
-    sti();
+    saved_attrib = attrib;
 }
 
 void restore_cursor()
 {
-    cli();
     csr_x  = saved_csr_x;
     csr_y  = saved_csr_y;
-    sti();
+    attrib = saved_attrib;
+    pODA->ts_flag=1;
 }
 
 

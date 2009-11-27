@@ -74,6 +74,7 @@ typedef struct regs
     uint32_t eip, cs, eflags, useresp, ss;
 }registers_t;
 
+
 // video.c
 extern void k_clear_screen();
 extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
@@ -92,11 +93,14 @@ extern void restore_cursor();
 extern void printformat (char *args, ...);
 
 // timer.c
+extern uint32_t getCurrentSeconds();
+extern uint16_t systemfrequency; // system frequency
 extern void timer_handler(struct regs* r);
 extern void timer_wait (uint32_t ticks);
 extern void sleepSeconds (uint32_t seconds);
 extern void sleepMilliSeconds (uint32_t ms);
 extern void systemTimer_setFrequency( uint32_t freq );
+uint16_t    systemTimer_getFrequency();
 extern void timer_install();
 extern void timer_uninstall();
 

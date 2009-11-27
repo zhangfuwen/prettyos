@@ -7,8 +7,14 @@ extern page_directory_t* current_directory;
 extern task_t* current_task;
 extern tss_entry_t tss_entry;
 
+uint16_t systemfrequency = 100; // system frequency
 uint32_t timer_ticks = 0;
 uint32_t eticks;
+
+uint32_t getCurrentSeconds()
+{
+    return timer_ticks/systemfrequency;
+}
 
 void timer_handler(struct regs* r)
 {
@@ -30,19 +36,18 @@ void timer_wait (uint32_t ticks)
 
 void sleepSeconds (uint32_t seconds)
 {
-    timer_wait((uint32_t)100*seconds);
+    timer_wait((uint32_t)systemfrequency*seconds);
 }
 
 void sleepMilliSeconds (uint32_t ms)
 {
-    timer_wait((uint32_t)(ms/10));
+    timer_wait((uint32_t)(systemfrequency*ms/1000));
 }
 
 void systemTimer_setFrequency( uint32_t freq )
 {
-    uint32_t divisor = 1193180 / freq; //divisor must fit into 16 bits
-
-    //TODO: save frequency globally
+    systemfrequency = freq;
+    uint32_t divisor = 1193180 / systemfrequency; //divisor must fit into 16 bits
 
     // Send the command byte
     outportb(0x43, 0x36);
@@ -52,11 +57,16 @@ void systemTimer_setFrequency( uint32_t freq )
     outportb(0x40, (uint8_t)( (divisor>>8) & 0xFF )); // high byte
 }
 
+uint16_t systemTimer_getFrequency()
+{
+    return systemfrequency;
+}
+
 void timer_install()
 {
     /* Installs 'timer_handler' to IRQ0 */
     irq_install_handler(32+0, timer_handler);
-    systemTimer_setFrequency( 100 ); // 100 Hz, meaning a tick every 10 milliseconds
+    systemTimer_setFrequency( systemfrequency ); // x Hz, meaning a tick every 1000/x milliseconds
 }
 
 void timer_uninstall()
