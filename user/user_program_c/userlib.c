@@ -24,12 +24,12 @@ unsigned char getch()
     return ret;
 }
 
-void floppy_dir()
+int floppy_dir()
 {
-    asm volatile( "int $0x7F" : : "a"(8) );
+    int ret;
+    asm volatile( "int $0x7F" : "=a"(ret): "a"(8) );
+    return ret;
 }
-
-
 
 /// user functions ///
 

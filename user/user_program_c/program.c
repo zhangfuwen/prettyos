@@ -71,8 +71,13 @@ int main()
 
       else if( strcmp(entry,"fdir") == 0)
       {
+          int retVal;
           settextcolor(2,0);
-          floppy_dir();
+          retVal = floppy_dir();
+          if(retVal!=0)
+          {
+              floppy_dir();
+          }
           settextcolor(15,0);
       }
 

@@ -9,7 +9,7 @@ void settextcolor(unsigned int foreground, unsigned int background);
 void putch(unsigned char val);
 void puts(char* pString);
 unsigned char getch();
-void floppy_dir();
+int floppy_dir();
 
 // user functions
 int strcmp( const char* s1, const char* s2 );

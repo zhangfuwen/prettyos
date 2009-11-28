@@ -204,7 +204,7 @@ void flpydsk_write_ccr(uint8_t val)
 // wait for irq
 void flpydsk_wait_irq()
 {
-    uint32_t timeout = getCurrentSeconds()+5;
+    uint32_t timeout = getCurrentSeconds()+2;
     while( ReceivedFloppyDiskIRQ == false) // wait for irq to fire
     {
 	    if( (timeout-getCurrentSeconds()) <= 0 )
@@ -335,6 +335,9 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
         flpydsk_send_command (FDC_CMD_SEEK);
         flpydsk_send_command ( (head) << 2 | _CurrentDrive);
         flpydsk_send_command (cyl);
+        /// TEST
+        printformat("i=%d ", i);
+        /// TEST
         flpydsk_wait_irq();
 		flpydsk_check_int(&st0,&cyl0);
 
@@ -392,6 +395,11 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
         flpydsk_dma_write();
         flpydsk_send_command( FDC_CMD_WRITE_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY );
     }
+
+    /// Delay
+    sleepMilliSeconds(50); // what is Floppy Disk head settle time?
+    /// Delay
+
     flpydsk_send_command( head << 2 | _CurrentDrive );
     flpydsk_send_command( track);
     flpydsk_send_command( head);
@@ -437,7 +445,7 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	}
 
 	// read sector, turn motor off, return DMA buffer
-	uint32_t timeout = getCurrentSeconds()+5;
+	uint32_t timeout = getCurrentSeconds()+2;
 	while( flpydsk_transfer_sector(head, track, sector, 0) == -1 )
     {
 	    if( (timeout-getCurrentSeconds()) <= 0 )
@@ -469,12 +477,12 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 
 /// only for tests in flpydsk.c, later: file data system
 
-void flpydsk_read_directory()
+int32_t flpydsk_read_directory()
 {
+    int32_t error = -1; // return value
+
 	/// TEST
-	// ReceivedFloppyDiskIRQ = false;
-	// flpydsk_initialize_dma();
-	// flpydsk_dma_read();
+	k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
 	/// TEST
 
 	uint8_t* retVal = flpydsk_read_sector(19);   // start at 0x2600: root directory (14 sectors)
@@ -493,6 +501,7 @@ void flpydsk_read_directory()
 			(( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) != 0x0F )    /* 0x0F part of long file name */
 		  )
 		  {
+		    error = 0;
 			int32_t start = DMA_BUFFER + i*32; // name
 			int32_t count = 8;
 			int8_t* end = (int8_t*)(start+count);
@@ -530,4 +539,5 @@ void flpydsk_read_directory()
 		  }//if
 	}//for
     printformat("\n");
+    return error;
 }
