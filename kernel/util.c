@@ -133,6 +133,7 @@ int32_t k_strcmp( const char* s1, const char* s2 )
     return ( *s1 - *s2 );
 }
 
+/// http://en.wikipedia.org/wiki/Strcpy
 // Copy the NUL-terminated string src into dest, and return dest.
 char* k_strcpy(char* dest, const char* src)
 {
@@ -194,39 +195,41 @@ void reboot()
     outportb(0x64, 0xFE);
 }
 
-void k_itoa(int32_t value, char* valuestring)
+/// http://en.wikipedia.org/wiki/Itoa
+void k_reverse(char* s)
 {
-  int32_t min_flag;
-  char  swap;
-  char* p;
-  min_flag = 0;
+    int32_t i, j;
+    char c;
 
-  if (0 > value)
-  {
-    *valuestring++ = '-';
-    value = -INT_MAX > value ? min_flag = INT_MAX : -value;
-  }
+    for(i=0, j = k_strlen(s)-1; i<j; i++, j--)
+    {
+        c = s[i];
+        s[i] = s[j];
+        s[j] = c;
+    }
+}
 
-  p = valuestring;
+/// http://en.wikipedia.org/wiki/Itoa
+void k_itoa(int32_t n, char* s)
+{
+    int32_t i, sign;
+    if((sign = n) < 0)  // record sign
+    {
+        n = -n;         // make n positive
+    }
+    i=0;
+    do /* generate digits in reverse order */
+    {
+        s[i++] = n % 10 + '0';  // get next digit
+    }
+    while( (n /= 10) > 0 );     // delete it
 
-  do
-  {
-    *p++ = (int8_t)(value % 10) + '0';
-    value /= 10;
-  } while (value);
-
-  if (min_flag != 0)
-  {
-    ++*valuestring;
-  }
-  *p-- = '\0';
-
-  while (p > valuestring)
-  {
-    swap = *valuestring;
-    *valuestring++ = *p;
-    *p-- = swap;
-  }
+    if(sign < 0)
+    {
+        s[i++] = '-';
+    }
+    s[i] = '\0';
+    k_reverse(s);
 }
 
 void k_i2hex(uint32_t val, char* dest, int32_t len)

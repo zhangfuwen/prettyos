@@ -144,7 +144,7 @@ static uint32_t phys_alloc()
         }
 
     // No free page found
-    return NULL;
+    return 0;
 }
 
 
@@ -271,7 +271,7 @@ bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t fla
 
         // Allocate physical memory
         uint32_t phys = phys_alloc();
-        if ( phys == NULL )
+        if ( phys == 0 )
         {
             // Undo the allocations and return an error
             paging_free( pd, addr, done*PAGESIZE );

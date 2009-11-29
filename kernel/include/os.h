@@ -1,19 +1,11 @@
-/* PrettyOS is the result of a stepwise OS development
- * shown at www.henkessoft.de */
+/*
+*  license and disclaimer for the use of this source code as per statement below
+*/
 
-// #define _DIAGNOSIS_ // activates prints to the screen about memory use
+// #define _DIAGNOSIS_ // activates prints to the screen about some details and memory use
 
 #ifndef OS_H
 #define OS_H
-
-/// //////////////////////////////////////
-/// ////  TODO: ANSI TYPEDEFINITIONS  ////
-/// //////////////////////////////////////
-
-
-/// //////////////////////////////////////
-
-// new
 
 typedef unsigned int         size_t;
 
@@ -32,16 +24,13 @@ typedef signed char          int8_t;
 #define false  0
 #define __bool_true_false_are_defined 1
 
-#define NULL   0
-
+#define NULL (void*)0
 #define PAGESIZE 4096
-
-/// //////////////////////////////////////
 
 
 /// keyboard map
 // #define KEYMAP_US // US keyboard
-#define KEYMAP_GER // German keyboard // currently only TEST VERSION, does not run correctly
+#define KEYMAP_GER   // German keyboard
 
 extern uint32_t placement_address;
 
@@ -54,8 +43,8 @@ extern void panic_assert(char* file, uint32_t line, char* desc);  // why char ?
 
 typedef struct oda
 {
-    // Hardware Data
-    uint32_t Memory_Size;            // Memory size in Byte
+    // hardware data
+    uint32_t Memory_Size;        // memory size in byte
 
     //tasking
     uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
@@ -112,6 +101,27 @@ extern void keyboard_handler(struct regs* r);
 extern int32_t k_checkKQ_and_print_char();
 extern uint8_t k_checkKQ_and_return_char();
 
+// gtd.c, irq.c, interrupts.asm
+extern void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
+extern void gdt_install();
+extern void idt_install();
+extern uint32_t fault_handler(uint32_t esp);
+extern uint32_t irq_handler(uint32_t esp);
+extern void irq_install_handler(int32_t irq, void (*handler)(struct regs* r));
+extern void irq_uninstall_handler(int32_t irq);
+
+// math.c
+extern int32_t k_abs(int32_t i);
+extern int32_t k_power(int32_t base,int32_t n);
+
+// paging.c
+extern void analyze_frames_bitset(uint32_t sec);
+extern uint32_t show_physical_address(uint32_t virtual_address);
+extern void analyze_physical_addresses();
+
+// elf.c
+bool elf_exec( const void* elf_file, uint32_t elf_file_size );
+
 // util.c
 extern void outportb(uint16_t port, uint32_t val);
 extern uint32_t inportb(uint16_t port);
@@ -144,27 +154,32 @@ uint32_t max( uint32_t a, uint32_t b );
 uint32_t min( uint32_t a, uint32_t b );
 uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 
-// gtd.c, irq.c interrupts.asm
-extern void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
-extern void gdt_install();
-extern void idt_install();
-extern uint32_t fault_handler(uint32_t esp);
-extern uint32_t irq_handler(uint32_t esp);
-extern void irq_install_handler(int32_t irq, void (*handler)(struct regs* r));
-extern void irq_uninstall_handler(int32_t irq);
-
-extern void timer_install();
-
-// math.c
-extern int32_t k_abs(int32_t i);
-extern int32_t k_power(int32_t base,int32_t n);
-
-// paging.c
-extern void analyze_frames_bitset(uint32_t sec);
-extern uint32_t show_physical_address(uint32_t virtual_address);
-extern void analyze_physical_addresses();
-
-// elf.c
-bool elf_exec( const void* elf_file, uint32_t elf_file_size );
-
 #endif
+
+/*
+* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+*
+* http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
+*
+* Redistribution and use in source and binary forms, with or without modification,
+* are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice,
+*    this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
