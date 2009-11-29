@@ -511,7 +511,10 @@ int32_t flpydsk_read_directory()
 				    printformat("%c",*(end-count));
 			}
 
-			if(i!=0) printformat("."); // usual separator between file name and file extension
+			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) != 0x08 ) // no volume label
+			{
+			     printformat("."); // usual separator between file name and file extension
+			}
 
 			start = DMA_BUFFER + i*32 + 8; // extension
 			count = 3;
