@@ -209,7 +209,7 @@ void flpydsk_wait_irq()
     {
 	    if( (timeout-getCurrentSeconds()) <= 0 )
 	    {
-	        printformat("\ntimeout: IRQ not received!\n");
+	        // printformat("\ntimeout: IRQ not received!\n");
 	        break;
 	    }
     }
@@ -335,9 +335,9 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
         flpydsk_send_command (FDC_CMD_SEEK);
         flpydsk_send_command ( (head) << 2 | _CurrentDrive);
         flpydsk_send_command (cyl);
-        /// TEST
-        printformat("i=%d ", i);
-        /// TEST
+
+        // printformat("i=%d ", i);
+
         flpydsk_wait_irq();
 		flpydsk_check_int(&st0,&cyl0);
 
@@ -409,12 +409,12 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     flpydsk_send_command( FLPYDSK_GAP3_LENGTH_3_5 );
     flpydsk_send_command( 0xFF );
     flpydsk_wait_irq();
-    printformat("ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
+    // printformat("ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
     int32_t j,retVal;
     for(j=0; j<7; ++j)
     {
         int32_t val = flpydsk_read_data(); // read status info: ST0 ST1 ST2 C H S Size(2: 512 Byte)
-        printformat("%d  ",val);
+        // printformat("%d  ",val);
         if((j==6) && (val==2))
         {
             retVal = 0;
@@ -424,7 +424,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
             retVal = -1;
         }
     }
-    printformat("\n\n");
+    // printformat("\n\n");
     flpydsk_check_int(&st0,&cyl);    // inform FDC that we handled interrupt
     return retVal;
 }
@@ -525,7 +525,7 @@ int32_t flpydsk_read_directory()
             // attributes
 			printformat("\t");
 			if(*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100) printformat("\t");
-			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) == 0x08 ) printformat(" (lab)");
+			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) == 0x08 ) printformat(" (vol)");
 			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x10 ) == 0x10 ) printformat(" (dir)");
 			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x01 ) == 0x01 ) printformat(" (r/o)");
 			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x02 ) == 0x02 ) printformat(" (hid)");
@@ -533,8 +533,7 @@ int32_t flpydsk_read_directory()
 			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x20 ) == 0x20 ) printformat(" (arc)");
 
 			// 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
-            printformat("  1st phys. sec: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
-
+            printformat("  first sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
             printformat("\n"); // next root directory entry
 		  }//if
 	}//for

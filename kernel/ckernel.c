@@ -6,6 +6,7 @@
 #include "syscall.h"
 #include "pci.h"
 #include "cmos.h"
+#include "time.h"
 #include "flpydsk.h"
 #include "list.h"
 //#include "fat12.h" //TEST
@@ -21,19 +22,21 @@
 extern uint32_t file_data_start;
 extern uint32_t file_data_end;
 
+// String for Date&Time
+char DateAndTime[80];
 
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.31]   ");
-    cmos_time(); printformat("\n\n");
+    printformat("PrettyOS [Version 0.0.0.34]    ");
+    //printformat("%s",getCurrentDateAndTime(DateAndTime));
+    printformat("\n\n");
     gdt_install();
     idt_install();
     timer_install();
     keyboard_install();
     syscall_install();
 }
-
 
 int main()
 {
@@ -74,7 +77,12 @@ int main()
         if( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00) )   // there is no vendor EE00h
         {
             listAppend(pciDevList, (void*)(pciDev_Array+i));
-            // printformat("%X\t",pciDev_Array+i);
+            ///
+            #ifdef _DIAGNOSIS_
+            settextcolor(2,0);
+            printformat("%X\t",pciDev_Array+i);
+            #endif
+            ///
         }
     }
     //printformat("\n");
@@ -86,13 +94,24 @@ int main()
         void* element = listShowElement(pciDevList,i);
         if(element)
         {
+
+            ///
+            #ifdef _DIAGNOSIS_
+            settextcolor(2,0);
             printformat("%X dev: %x vend: %x\t",
                        ( pciDev_t*)element,
                        ((pciDev_t*)element)->deviceID,
                        ((pciDev_t*)element)->vendorID);
+            settextcolor(15,0);
+            #endif
+            ///
         }
     }
+    ///
+    #ifdef _DIAGNOSIS_
     printformat("\n\n");
+    #endif
+    ///
     /// TEST list END
 
     // RAM Disk
@@ -155,6 +174,7 @@ int main()
     const char* progress = "|/-\\";
     const char* p = progress;
     uint32_t CurrentSeconds=0, CurrentSecondsOld;
+    char timeBuffer[20];
 
     while( true )
     {
@@ -163,16 +183,23 @@ int main()
         if ( ! *++p )
             p = progress;
 
-        // PRINT TIME IN SECONDS AT STATUS BAR
-        char* valuestring="";
 
+
+        // PRINT TIME IN SECONDS AT STATUS BAR
         CurrentSecondsOld = CurrentSeconds;
         CurrentSeconds = getCurrentSeconds();
+
         if (CurrentSeconds!=CurrentSecondsOld)
         {
-            k_itoa(CurrentSeconds, valuestring);
+            k_itoa(CurrentSeconds, timeBuffer);
+            getCurrentDateAndTime(DateAndTime);
+            k_strcat(DateAndTime, "     ");
+            k_strcat(DateAndTime, timeBuffer);
+            k_strcat(DateAndTime, " seconds since start.");
+
+            // output in status bar
             save_cursor();
-            k_printf(valuestring, 49, 0xC); // status bar
+            k_printf(DateAndTime, 49, 0xC);
             restore_cursor();
         }
     }

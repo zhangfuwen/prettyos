@@ -136,11 +136,12 @@ int32_t k_strcmp( const char* s1, const char* s2 )
 // Copy the NUL-terminated string src into dest, and return dest.
 char* k_strcpy(char* dest, const char* src)
 {
-    do { *dest++ = *src++;} while(*src);
-    return dest;
+   char* save = dest;
+   while( (*dest++ = *src++) );
+   return save;
 }
 
-char* k_strncpy(char* dest, const char* src, size_t n)
+char* k_strncpy(char* dest, const char* src, size_t n) // okay?
 {
     if(n != 0)
     {
@@ -163,8 +164,17 @@ char* k_strncpy(char* dest, const char* src, size_t n)
 
 char* k_strcat(char* dest, const char* src)
 {
-    while ( *dest) { dest++;     }
-    do    { *dest++ = *src++;    } while(*src);
+    while(*dest)
+    {
+        dest++;
+    }
+
+    do
+    {
+        *dest++ = *src++;
+    }
+    while(*src);
+
     return dest;
 }
 
