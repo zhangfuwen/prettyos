@@ -163,22 +163,12 @@ char* k_strncpy(char* dest, const char* src, size_t n) // okay?
      return (dest);
 }
 
+/// http://en.wikipedia.org/wiki/Strcat
 char* k_strcat(char* dest, const char* src)
 {
-    while(*dest)
-    {
-        dest++;
-    }
-
-    do
-    {
-        *dest++ = *src++;
-    }
-    while(*src);
-
+    k_strcpy(dest + k_strlen(dest), src);
     return dest;
 }
-
 
 void reboot()
 {

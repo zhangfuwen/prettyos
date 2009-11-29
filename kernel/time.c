@@ -23,12 +23,6 @@ char* getCurrentDateAndTime(char* pStr)
     tm_t* pct = cmosTime(&currentTime);
     char buf[40];
 
-    int i;
-    for(i=0;i<80;++i)
-    {
-        pStr[i] = 0;
-    }
-
     // weekday
     switch (pct->weekday)
     {
