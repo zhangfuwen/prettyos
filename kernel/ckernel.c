@@ -13,6 +13,7 @@
 #include "time.h"
 #include "flpydsk.h"
 #include "list.h"
+#include "gags.h"
 //#include "fat12.h" //TEST
 
 // RAM Detection by Second Stage Bootloader
@@ -32,7 +33,7 @@ char DateAndTime[80];
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.36]    ");
+    printformat("PrettyOS [Version 0.0.0.38]    ");
     //printformat("%s",getCurrentDateAndTime(DateAndTime));
     printformat("\n\n");
     gdt_install();
@@ -204,6 +205,7 @@ int main()
             // output in status bar
             save_cursor();
             k_printf(DateAndTime, 49, 0xC);
+            showTrain(1);
             restore_cursor();
         }
     }

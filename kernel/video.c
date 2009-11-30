@@ -11,7 +11,7 @@ uint8_t  saved_attrib = 0x0F;
 uint16_t* vidmem = (uint16_t*) 0xB8000;
 const uint8_t COLUMNS =  80;
 const uint8_t LINES   =  50;
-const uint8_t SCROLL_LINE = 48; // reserve line for the status bar
+const uint8_t SCROLL_LINE = 45; // reserve line for the status bar and ascii-art
 bool scrollflag = true;
 
 
