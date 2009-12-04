@@ -1,5 +1,6 @@
 /*
 *  license and disclaimer for the use of this source code as per statement below
+*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
 // #define _DIAGNOSIS_ // activates prints to the screen about some details and memory use

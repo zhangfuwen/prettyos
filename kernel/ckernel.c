@@ -1,5 +1,6 @@
 /*
 *  license and disclaimer for the use of this source code as per statement below
+*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
 #include "os.h"
@@ -33,7 +34,7 @@ char DateAndTime[80];
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.38]    ");
+    printformat("PrettyOS [Version 0.0.0.39]    ");
     //printformat("%s",getCurrentDateAndTime(DateAndTime));
     printformat("\n\n");
     gdt_install();
@@ -205,7 +206,7 @@ int main()
             // output in status bar
             save_cursor();
             k_printf(DateAndTime, 49, 0xC);
-            showTrain(1);
+            // showTrain(1); // TODO: transfer to user space as elf exec format; k_printf as syscall
             restore_cursor();
         }
     }
