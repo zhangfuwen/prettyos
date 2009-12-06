@@ -63,15 +63,17 @@ int syscall_##fn(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) \
 
 /******* declaration of syscalls in syscall.h **************/
 
-DECL_SYSCALL1( puts,  char*                      )
-DECL_SYSCALL1( putch, char                       )
-DECL_SYSCALL2( settextcolor, uint8_t, uint8_t )
+DECL_SYSCALL1( puts,  char*                               )
+DECL_SYSCALL1( putch, char                                )
+DECL_SYSCALL2( settextcolor, uint8_t, uint8_t             )
 DECL_SYSCALL0( getpid                                     )
 DECL_SYSCALL0( nop                                        )
 DECL_SYSCALL0( switch_context                             )
 DECL_SYSCALL0( k_checkKQ_and_print_char                   )
 DECL_SYSCALL0( k_checkKQ_and_return_char                  )
 DECL_SYSCALL0( flpydsk_read_directory                     )
+DECL_SYSCALL3( k_printf, char*, uint32_t, uint8_t         )
+DECL_SYSCALL0( getCurrentSeconds                          )
 
 /***********************************************************/
 

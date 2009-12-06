@@ -184,6 +184,7 @@ void scroll()
 
 void k_printf(char* message, uint32_t line, uint8_t attribute)
 {
+    save_cursor();
     // Top 4 bytes: background, bottom 4 bytes: foreground color
     settextcolor(attribute & 0x0F, attribute >> 4);
     csr_x = 0; csr_y = line;
@@ -191,6 +192,7 @@ void k_printf(char* message, uint32_t line, uint8_t attribute)
     scrollflag = false;
     puts(message);
     scrollflag = true;
+    restore_cursor();
 };
 
 /* Lean version of printf: printformat(...): supports %u, %d, %x/%X, %s, %c */

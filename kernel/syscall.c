@@ -8,13 +8,15 @@ extern void f4();
 
 DEFN_SYSCALL1( puts,                       0, char*               )
 DEFN_SYSCALL1( putch,                      1, char                )
-DEFN_SYSCALL2( settextcolor,               2, uint8_t, uint8_t )
-DEFN_SYSCALL0( getpid,                     3                               )
-DEFN_SYSCALL0( nop,                        4                               )
-DEFN_SYSCALL0( switch_context,             5                               )
-DEFN_SYSCALL0( k_checkKQ_and_print_char,   6                               )
-DEFN_SYSCALL0( k_checkKQ_and_return_char,  7                               )
-DEFN_SYSCALL0( flpydsk_read_directory,     8                               )
+DEFN_SYSCALL2( settextcolor,               2, uint8_t, uint8_t    )
+DEFN_SYSCALL0( getpid,                     3                      )
+DEFN_SYSCALL0( nop,                        4                      )
+DEFN_SYSCALL0( switch_context,             5                      )
+DEFN_SYSCALL0( k_checkKQ_and_print_char,   6                      )
+DEFN_SYSCALL0( k_checkKQ_and_return_char,  7                      )
+DEFN_SYSCALL0( flpydsk_read_directory,     8                      )
+DEFN_SYSCALL3( k_printf,                   9, char*, uint32_t, uint8_t )
+DEFN_SYSCALL0( getCurrentSeconds,         10                      )
 
 static void* syscalls[] =
 {
@@ -26,7 +28,9 @@ static void* syscalls[] =
     &switch_context,
     &k_checkKQ_and_print_char,
     &k_checkKQ_and_return_char,
-    &flpydsk_read_directory
+    &flpydsk_read_directory,
+    &k_printf,
+    &getCurrentSeconds
 };
 
 void syscall_handler(struct regs* r)

@@ -11,6 +11,8 @@ int main()
 
       char entry[MAX_CHAR_PER_LINE+10];
       int i = 0;
+      int CurrentSeconds=0;
+      int CurrentSecondsOld;
 
       for(;;)
       {
@@ -58,18 +60,18 @@ int main()
       if( ( strcmp(entry,"help") == 0 ) || ( strcmp(entry,"?") == 0 ) )
       {
           settextcolor(2,0);
-          puts("Implemented Instructions: help ? hi fdir\n");
+          puts("Implemented Instructions: help ? hi fdir info1\n");
           settextcolor(15,0);
       }
 
-      else if( strcmp(entry,"hi") == 0)
+      else if( strcmp(entry,"hi") == 0 )
       {
           settextcolor(2,0);
           puts("I am PrettyOS. Always at your service!\n");
           settextcolor(15,0);
       }
 
-      else if( strcmp(entry,"fdir") == 0)
+      else if( strcmp(entry,"fdir") == 0 )
       {
           int retVal;
           settextcolor(2,0);
@@ -77,6 +79,18 @@ int main()
           if(retVal!=0)
           {
               floppy_dir();
+          }
+          settextcolor(15,0);
+      }
+
+      else if( strcmp(entry,"info1") == 0 )
+      {
+          settextcolor(2,0);
+          CurrentSecondsOld = CurrentSeconds;
+          CurrentSeconds = getCurrentSeconds();
+          if(CurrentSeconds!=CurrentSecondsOld)
+          {
+              showInfo(1);
           }
           settextcolor(15,0);
       }

@@ -14,7 +14,6 @@
 #include "time.h"
 #include "flpydsk.h"
 #include "list.h"
-#include "gags.h"
 //#include "fat12.h" //TEST
 
 // RAM Detection by Second Stage Bootloader
@@ -34,7 +33,7 @@ char DateAndTime[80];
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.39]    ");
+    printformat("PrettyOS [Version 0.0.0.40]    ");
     //printformat("%s",getCurrentDateAndTime(DateAndTime));
     printformat("\n\n");
     gdt_install();
@@ -204,10 +203,7 @@ int main()
             k_strcat(DateAndTime, " seconds since start.");
 
             // output in status bar
-            save_cursor();
             k_printf(DateAndTime, 49, 0xC);
-            // showTrain(1); // TODO: transfer to user space as elf exec format; k_printf as syscall
-            restore_cursor();
         }
     }
     return 0;
