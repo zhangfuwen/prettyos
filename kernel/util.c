@@ -81,13 +81,13 @@ void panic_assert(char* file, uint32_t line, char* desc) // why char ?
     for(;;);
 }
 
-void k_memshow(void* start, size_t count)
+void memshow(void* start, size_t count)
 {
     const uint8_t* end = (const uint8_t*)(start+count);
     for(; count != 0; count--) printformat("%x ",*(end-count));
 }
 
-void* k_memcpy(void* dest, const void* src, size_t count)
+void* memcpy(void* dest, const void* src, size_t count)
 {
     const uint8_t* sp = (const uint8_t*)src;
     uint8_t* dp = (uint8_t*)dest;
@@ -95,26 +95,21 @@ void* k_memcpy(void* dest, const void* src, size_t count)
     return dest;
 }
 
-void* memcpy(void* dest, const void* src, size_t count)
-{
-	return k_memcpy( dest, src, count );
-}
-
-void* k_memset(void* dest, int8_t val, size_t count)
+void* memset(void* dest, int8_t val, size_t count)
 {
     int8_t* temp = (int8_t*)dest;
     for( ; count != 0; count--) *temp++ = val;
     return dest;
 }
 
-uint16_t* k_memsetw(uint16_t* dest, uint16_t val, size_t count)
+uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count)
 {
     uint16_t* temp = (uint16_t*) dest;
     for( ; count != 0; count--) *temp++ = val;
     return dest;
 }
 
-size_t k_strlen(const char* str)
+size_t strlen(const char* str)
 {
     size_t retval;
     for(retval = 0; *str != '\0'; ++str)
@@ -123,7 +118,7 @@ size_t k_strlen(const char* str)
 }
 
 // Compare two strings. Returns -1 if str1 < str2, 0 if they are equal or 1 otherwise.
-int32_t k_strcmp( const char* s1, const char* s2 )
+int32_t strcmp( const char* s1, const char* s2 )
 {
     while ( ( *s1 ) && ( *s1 == *s2 ) )
     {
@@ -135,14 +130,14 @@ int32_t k_strcmp( const char* s1, const char* s2 )
 
 /// http://en.wikipedia.org/wiki/Strcpy
 // Copy the NUL-terminated string src into dest, and return dest.
-char* k_strcpy(char* dest, const char* src)
+char* strcpy(char* dest, const char* src)
 {
    char* save = dest;
    while( (*dest++ = *src++) );
    return save;
 }
 
-char* k_strncpy(char* dest, const char* src, size_t n) // okay?
+char* strncpy(char* dest, const char* src, size_t n) // okay?
 {
     if(n != 0)
     {
@@ -164,9 +159,9 @@ char* k_strncpy(char* dest, const char* src, size_t n) // okay?
 }
 
 /// http://en.wikipedia.org/wiki/Strcat
-char* k_strcat(char* dest, const char* src)
+char* strcat(char* dest, const char* src)
 {
-    k_strcpy(dest + k_strlen(dest), src);
+    strcpy(dest + strlen(dest), src);
     return dest;
 }
 
@@ -191,7 +186,7 @@ void k_reverse(char* s)
     int32_t i, j;
     char c;
 
-    for(i=0, j = k_strlen(s)-1; i<j; i++, j--)
+    for(i=0, j = strlen(s)-1; i<j; i++, j--)
     {
         c = s[i];
         s[i] = s[j];
@@ -200,7 +195,7 @@ void k_reverse(char* s)
 }
 
 /// http://en.wikipedia.org/wiki/Itoa
-void k_itoa(int32_t n, char* s)
+void itoa(int32_t n, char* s)
 {
     int32_t i, sign;
     if((sign = n) < 0)  // record sign
@@ -222,7 +217,7 @@ void k_itoa(int32_t n, char* s)
     k_reverse(s);
 }
 
-void k_i2hex(uint32_t val, char* dest, int32_t len)
+void i2hex(uint32_t val, char* dest, int32_t len)
 {
 	char* cp;
 	char  x;

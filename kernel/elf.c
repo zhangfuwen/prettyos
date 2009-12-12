@@ -159,7 +159,7 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size )
         // Copy the code
         cli();
         paging_switch( pd );
-        k_memcpy( (void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz );
+        memcpy( (void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz );
         paging_switch( NULL );
         sti();
 

@@ -98,7 +98,7 @@ static uint32_t phys_init()
     }
 
     // We store our data here, initialize all bits to "reserved"
-    data = k_malloc( 128*1024, 0 );
+    data = malloc( 128*1024, 0 );
     for ( uint32_t i=0; i<MAX_DWORDS; ++i )
         data[i] = 0xFFFFFFFF;
 
@@ -203,8 +203,8 @@ uint32_t paging_install()
     uint32_t ram_available = phys_init();
 
     //// Setup the kernel page directory
-    kernel_pd = k_malloc( sizeof(page_directory_t), PAGESIZE );
-    k_memset( kernel_pd, 0, sizeof(page_directory_t) );
+    kernel_pd = malloc( sizeof(page_directory_t), PAGESIZE );
+    memset( kernel_pd, 0, sizeof(page_directory_t) );
     kernel_pd->pd_phys_addr = (uint32_t)kernel_pd;
 
     // Setup the page tables for 0MB-20MB, identity mapping
@@ -212,7 +212,7 @@ uint32_t paging_install()
     for ( int i=0; i<5; ++i )
     {
         // Page directory entry, virt=phys due to placement allocation in id-mapped area
-        kernel_pd->tables[i] = k_malloc( sizeof(page_table_t), PAGESIZE );
+        kernel_pd->tables[i] = malloc( sizeof(page_table_t), PAGESIZE );
         kernel_pd->codes[i] = (uint32_t)kernel_pd->tables[i] | MEM_PRESENT;
 
         // Page table entries, identity mapping
@@ -228,8 +228,8 @@ uint32_t paging_install()
     kernel_pd->tables[0]->pages[184] |= MEM_USER | MEM_WRITE;
 
     // Setup the page tables for the kernel heap (3GB-4GB), unmapped
-    page_table_t* heap_pts = k_malloc( 256*sizeof(page_table_t), PAGESIZE );
-    k_memset( heap_pts, 0, 256*sizeof(page_table_t) );
+    page_table_t* heap_pts = malloc( 256*sizeof(page_table_t), PAGESIZE );
+    memset( heap_pts, 0, 256*sizeof(page_table_t) );
     for ( uint32_t i=0; i<256; ++i )
     {
         kernel_pd->tables[768+i] = heap_pts;
@@ -286,7 +286,7 @@ bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t fla
         if ( ! pt )
         {
             // Allocate the page table
-            pt = (page_table_t*) k_malloc( sizeof(page_table_t), PAGESIZE );
+            pt = (page_table_t*) malloc( sizeof(page_table_t), PAGESIZE );
             if ( ! pt )
             {
                 // Undo the allocations and return an error
@@ -294,7 +294,7 @@ bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t fla
                 paging_free( pd, addr, done*PAGESIZE );
                 return false;
             }
-            k_memset( pt, 0, sizeof(page_table_t) );
+            memset( pt, 0, sizeof(page_table_t) );
             pd->tables[pagenr/1024] = pt;
 
             // Set physical address and flags
@@ -338,12 +338,12 @@ void paging_free( page_directory_t* pd, void* addr, uint32_t size )
 page_directory_t* paging_create_user_pd()
 {
     // Allocate memory for the page directory
-    page_directory_t* pd = (page_directory_t*) k_malloc( sizeof(page_directory_t), PAGESIZE );
+    page_directory_t* pd = (page_directory_t*) malloc( sizeof(page_directory_t), PAGESIZE );
     if ( ! pd )
         return NULL;
 
     // Each user's page directory contains the same mapping as the kernel
-    k_memcpy( pd, kernel_pd, sizeof(page_directory_t) );
+    memcpy( pd, kernel_pd, sizeof(page_directory_t) );
 
     pd->pd_phys_addr = paging_get_phys_addr( kernel_pd, pd->codes );
     return pd;
@@ -362,10 +362,10 @@ void paging_destroy_user_pd( page_directory_t* pd )
                 if ( phys_addr )
                     phys_free( phys_addr );
             }
-            k_free( pd->tables[i] );
+            free( pd->tables[i] );
         }
 
-    k_free( pd );
+    free( pd );
 }
 
 

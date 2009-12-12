@@ -51,7 +51,7 @@ static const uint32_t HEAP_MIN_GROWTH = 256*1024;
 void heap_install()
 {
     // This gets us the current placement address
-    regions = k_malloc( 0, 0 );
+    regions = malloc( 0, 0 );
 
     // We take the rest of the placement area
     region_count = 0;
@@ -89,7 +89,7 @@ static bool heap_grow( uint32_t size, char* heap_end )
 }
 
 
-void* k_malloc( uint32_t size, uint32_t alignment )
+void* malloc( uint32_t size, uint32_t alignment )
 {
     // Avoid odd addresses
     size = alignUp( size, 8 );
@@ -181,7 +181,7 @@ void* k_malloc( uint32_t size, uint32_t alignment )
         return NULL;
 
     // Now there should be a region that is large enough
-    void* address = k_malloc( size, alignment );
+    void* address = malloc( size, alignment );
 
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
@@ -193,7 +193,7 @@ void* k_malloc( uint32_t size, uint32_t alignment )
 }
 
 
-void k_free( void* addr )
+void free( void* addr )
 {
     // Walk the regions and find the correct one
     char* region_addr = heap_start;

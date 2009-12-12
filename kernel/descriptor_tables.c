@@ -23,7 +23,7 @@ void write_tss(int32_t num, uint16_t ss0, uint32_t esp0)
     gdt_set_gate(num, base, limit, 0xE9, 0x00);
 
     // Ensure the descriptor is initially zero.
-    k_memset(&tss, 0, sizeof(tss));
+    memset(&tss, 0, sizeof(tss));
 
     tss.ss0  = ss0;  // Set the kernel stack segment.
     tss.esp0 = esp0; // Set the kernel stack pointer.

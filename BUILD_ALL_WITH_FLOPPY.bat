@@ -1,10 +1,10 @@
 	cls
 		
-	cd _stage1_bootloader
+	cd stage1_bootloader
 	call BUILD.bat
 	cd ..
 
-	cd _stage2_bootloader
+	cd stage2_bootloader
 	call BUILD.bat
 	cd ..
 

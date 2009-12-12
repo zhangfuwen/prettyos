@@ -8,8 +8,8 @@
 
 
 void heap_install();
-void* k_malloc( uint32_t size, uint32_t alignment );
-void k_free( void* mem );
+void* malloc( uint32_t size, uint32_t alignment );
+void free( void* mem );
 
 
 #endif

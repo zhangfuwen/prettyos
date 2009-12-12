@@ -17,7 +17,7 @@ bool scrollflag = true;
 
 void k_clear_screen()
 {
-    k_memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * LINES);
+    memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * LINES);
     csr_x = 0; csr_y = 0; update_cursor();
 }
 
@@ -176,13 +176,13 @@ void scroll()
     if(csr_y >= SCROLL_LINE)
     {
         temp = csr_y - SCROLL_LINE + 1;
-        k_memcpy (vidmem, vidmem + temp * COLUMNS, (SCROLL_LINE - temp) * COLUMNS * 2);
-        k_memsetw (vidmem + (SCROLL_LINE - temp) * COLUMNS, blank, COLUMNS);
+        memcpy (vidmem, vidmem + temp * COLUMNS, (SCROLL_LINE - temp) * COLUMNS * 2);
+        memsetw (vidmem + (SCROLL_LINE - temp) * COLUMNS, blank, COLUMNS);
         csr_y = SCROLL_LINE - 1;
     }
 }
 
-void k_printf(char* message, uint32_t line, uint8_t attribute)
+void printf(char* message, uint32_t line, uint8_t attribute)
 {
     save_cursor();
     // Top 4 bytes: background, bottom 4 bytes: foreground color
@@ -216,23 +216,23 @@ void printformat (char* args, ...)
 			{
 			case 'u':
 				u = va_arg (ap, uint32_t);
-				k_itoa(u, buffer);
+				itoa(u, buffer);
 				puts(buffer);
 				break;
 			case 'd':
 			case 'i':
 				d = va_arg (ap, int32_t);
-				k_itoa(d, buffer);
+				itoa(d, buffer);
 				puts(buffer);
 				break;
 			case 'X':
 			    d = va_arg (ap, int32_t);
-				k_i2hex(d, buffer,8);
+				i2hex(d, buffer,8);
 				puts(buffer);
 				break;
 			case 'x':
 			    d = va_arg (ap, int32_t);
-				k_i2hex(d, buffer,4);
+				i2hex(d, buffer,4);
 				puts(buffer);
 				break;
 			case 's':

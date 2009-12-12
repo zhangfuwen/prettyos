@@ -30,7 +30,7 @@ void tasking_install()
     #endif
     ///
 
-    current_task = ready_queue = (task_t*)k_malloc(sizeof(task_t),0); // first task (kernel task)
+    current_task = ready_queue = (task_t*)malloc(sizeof(task_t),0); // first task (kernel task)
     current_task->id = next_pid++;
     current_task->esp = current_task->ebp = 0;
     current_task->eip = 0;
@@ -45,7 +45,7 @@ void tasking_install()
     #endif
     ///
 
-    current_task->kernel_stack = (uint32_t)k_malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    current_task->kernel_stack = (uint32_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     sti();
 }
 
@@ -61,7 +61,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     #endif
     ///
 
-    task_t* new_task = (task_t*)k_malloc(sizeof(task_t),0);
+    task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
     new_task->id  = next_pid++;
     new_task->page_directory = directory;
 
@@ -73,7 +73,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     #endif
     ///
 
-    new_task->kernel_stack = (uint32_t) k_malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     new_task->next = 0;
 
     task_t* tmp_task = (task_t*)ready_queue;

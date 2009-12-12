@@ -15,7 +15,7 @@ DEFN_SYSCALL0( switch_context,             5                      )
 DEFN_SYSCALL0( k_checkKQ_and_print_char,   6                      )
 DEFN_SYSCALL0( k_checkKQ_and_return_char,  7                      )
 DEFN_SYSCALL0( flpydsk_read_directory,     8                      )
-DEFN_SYSCALL3( k_printf,                   9, char*, uint32_t, uint8_t )
+DEFN_SYSCALL3( printf,                   9, char*, uint32_t, uint8_t )
 DEFN_SYSCALL0( getCurrentSeconds,         10                      )
 
 static void* syscalls[] =
@@ -29,7 +29,7 @@ static void* syscalls[] =
     &k_checkKQ_and_print_char,
     &k_checkKQ_and_return_char,
     &flpydsk_read_directory,
-    &k_printf,
+    &printf,
     &getCurrentSeconds
 };
 

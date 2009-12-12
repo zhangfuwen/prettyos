@@ -33,25 +33,25 @@ char* getCurrentDateAndTime(char* pStr)
     switch (pct->weekday)
     {
         case 1:
-            k_strcpy(pStr, "Sunday, ");
+            strcpy(pStr, "Sunday, ");
         break;
         case 2:
-            k_strcpy(pStr, "Monday, ");
+            strcpy(pStr, "Monday, ");
         break;
         case 3:
-            k_strcpy(pStr, "Tuesday, ");
+            strcpy(pStr, "Tuesday, ");
         break;
         case 4:
-            k_strcpy(pStr, "Wednesday, ");
+            strcpy(pStr, "Wednesday, ");
         break;
         case 5:
-            k_strcpy(pStr, "Thursday, ");
+            strcpy(pStr, "Thursday, ");
         break;
         case 6:
-            k_strcpy(pStr, "Friday, ");
+            strcpy(pStr, "Friday, ");
         break;
         case 7:
-            k_strcpy(pStr, "Saturday, ");
+            strcpy(pStr, "Saturday, ");
         break;
     }
 
@@ -59,119 +59,119 @@ char* getCurrentDateAndTime(char* pStr)
     switch (pct->month)
     {
         case 1:
-            k_strcat(pStr, "January ");
+            strcat(pStr, "January ");
         break;
         case 2:
-            k_strcat(pStr, "February ");
+            strcat(pStr, "February ");
         break;
         case 3:
-            k_strcat(pStr, "March ");
+            strcat(pStr, "March ");
         break;
         case 4:
-            k_strcat(pStr, "April ");
+            strcat(pStr, "April ");
         break;
         case 5:
-            k_strcat(pStr, "May ");
+            strcat(pStr, "May ");
         break;
         case 6:
-            k_strcat(pStr, "June ");
+            strcat(pStr, "June ");
         break;
         case 7:
-            k_strcat(pStr, "July ");
+            strcat(pStr, "July ");
         break;
         case 8:
-            k_strcat(pStr, "August ");
+            strcat(pStr, "August ");
         break;
         case 9:
-            k_strcat(pStr, "September ");
+            strcat(pStr, "September ");
         break;
         case 10:
-            k_strcat(pStr, "October ");
+            strcat(pStr, "October ");
         break;
         case 11:
-            k_strcat(pStr, "November ");
+            strcat(pStr, "November ");
         break;
         case 12:
-            k_strcat(pStr, "December ");
+            strcat(pStr, "December ");
         break;
     }
 
     // day
     if(pct->dayofmonth<10)
     {
-        k_strcat(pStr,"0");
-        k_itoa(pct->dayofmonth, buf);
-        k_strcat(pStr, buf);
+        strcat(pStr,"0");
+        itoa(pct->dayofmonth, buf);
+        strcat(pStr, buf);
     }
     else
     {
-        k_itoa(pct->dayofmonth, buf);
-        k_strcat(pStr, buf);
+        itoa(pct->dayofmonth, buf);
+        strcat(pStr, buf);
     }
 
-    k_strcat(pStr,", ");
+    strcat(pStr,", ");
 
     // century
-    k_itoa(pct->century, buf);
-    k_strcat(pStr, buf);
+    itoa(pct->century, buf);
+    strcat(pStr, buf);
 
     // year
     if(pct->year<10)
     {
-        k_strcat(pStr,"0");
-        k_itoa(pct->year, buf);
-        k_strcat(pStr, buf);
+        strcat(pStr,"0");
+        itoa(pct->year, buf);
+        strcat(pStr, buf);
     }
     else
     {
-        k_itoa(pct->year, buf);
-        k_strcat(pStr, buf);
+        itoa(pct->year, buf);
+        strcat(pStr, buf);
     }
 
-    k_strcat(pStr,", ");
+    strcat(pStr,", ");
 
     // time
     if(pct->hour<10)
     {
-        k_strcat(pStr,"0");
-        k_itoa(pct->hour, buf);
-        k_strcat(pStr, buf);
+        strcat(pStr,"0");
+        itoa(pct->hour, buf);
+        strcat(pStr, buf);
     }
     else
     {
-        k_itoa(pct->hour, buf);
-        k_strcat(pStr, buf);
+        itoa(pct->hour, buf);
+        strcat(pStr, buf);
     }
 
-    k_strcat(pStr,":");
+    strcat(pStr,":");
 
     if(pct->minute<10)
     {
-        k_strcat(pStr,"0");
-        k_itoa(pct->minute, buf);
-        k_strcat(pStr, buf);
+        strcat(pStr,"0");
+        itoa(pct->minute, buf);
+        strcat(pStr, buf);
     }
     else
     {
-        k_itoa(pct->minute, buf);
-        k_strcat(pStr, buf);
+        itoa(pct->minute, buf);
+        strcat(pStr, buf);
     }
 
-    k_strcat(pStr,":");
+    strcat(pStr,":");
 
     if(pct->second<10)
     {
-        k_strcat(pStr,"0");
-        k_itoa(pct->second, buf);
-        k_strcat(pStr, buf);
+        strcat(pStr,"0");
+        itoa(pct->second, buf);
+        strcat(pStr, buf);
     }
     else
     {
-        k_itoa(pct->second, buf);
-        k_strcat(pStr, buf);
+        itoa(pct->second, buf);
+        strcat(pStr, buf);
     }
 
-    k_strcat(pStr, ""); // add '\0'
+    strcat(pStr, ""); // add '\0'
 
     return pStr;
 }

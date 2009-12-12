@@ -16,7 +16,7 @@ static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, cha
     size = header.length;
     if (offset > header.length)      return 0;
     if (offset+size > header.length) size = header.length-offset;
-    k_memcpy(buffer, (void*)(header.off + offset), size);
+    memcpy(buffer, (void*)(header.off + offset), size);
     return size;
 }
 
@@ -24,7 +24,7 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 {
     if( (node == initrd_root) && (index == 0) )
     {
-      k_strcpy(dirent.name, (const char*)"dev");
+      strcpy(dirent.name, (const char*)"dev");
       dirent.name[3] = 0; // NUL-terminate the string
       dirent.ino     = 0;
       return &dirent;
@@ -32,19 +32,19 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 
     if( index-1 >= nroot_nodes )
         return 0;
-    k_strcpy(dirent.name, root_nodes[index-1].name);
-    dirent.name[k_strlen(root_nodes[index-1].name)] = 0; // NUL-terminate the string
+    strcpy(dirent.name, root_nodes[index-1].name);
+    dirent.name[strlen(root_nodes[index-1].name)] = 0; // NUL-terminate the string
     dirent.ino = root_nodes[index-1].inode;
     return &dirent;
 }
 
 static fs_node_t* initrd_finddir(fs_node_t* node, char* name)
 {
-    if( (node == initrd_root) && (!k_strcmp(name,(const char*)"dev")) )
+    if( (node == initrd_root) && (!strcmp(name,(const char*)"dev")) )
         return initrd_dev;
     int32_t i;
     for( i=0; i<nroot_nodes; ++i)
-        if( !k_strcmp(name, root_nodes[i].name) )
+        if( !strcmp(name, root_nodes[i].name) )
             return &root_nodes[i];
     return 0;
 }
@@ -64,8 +64,8 @@ fs_node_t* install_initrd(uint32_t location)
     #endif
     ///
 
-    initrd_root = (fs_node_t*) k_malloc( sizeof(fs_node_t),PAGESIZE );
-    k_strcpy(initrd_root->name, (const char*)"dev");
+    initrd_root = (fs_node_t*) malloc( sizeof(fs_node_t),PAGESIZE );
+    strcpy(initrd_root->name, (const char*)"dev");
     initrd_root->mask    = initrd_root->uid = initrd_root->gid = initrd_root->inode = initrd_root->length = 0;
     initrd_root->flags   = FS_DIRECTORY;
     initrd_root->read    = 0;
@@ -86,8 +86,8 @@ fs_node_t* install_initrd(uint32_t location)
     #endif
     ///
 
-    initrd_dev = (fs_node_t*)k_malloc(sizeof(fs_node_t),PAGESIZE);
-    k_strcpy(initrd_dev->name, (const char*)"ramdisk");
+    initrd_dev = (fs_node_t*)malloc(sizeof(fs_node_t),PAGESIZE);
+    strcpy(initrd_dev->name, (const char*)"ramdisk");
     initrd_dev->mask     = initrd_dev->uid = initrd_dev->gid = initrd_dev->inode = initrd_dev->length = 0;
     initrd_dev->flags    = FS_DIRECTORY;
     initrd_dev->read     = 0;
@@ -107,7 +107,7 @@ fs_node_t* install_initrd(uint32_t location)
     #endif
     ///
 
-    root_nodes = (fs_node_t*) k_malloc( sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
+    root_nodes = (fs_node_t*) malloc( sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
     nroot_nodes = initrd_header->nfiles;
 
     // For every file...
@@ -118,7 +118,7 @@ fs_node_t* install_initrd(uint32_t location)
         file_headers[i].off += (location); /// We want it relative to the start of memory. ///
 
         // Create a new file node.
-        k_strncpy(root_nodes[i].name, file_headers[i].name, 64); /// critical !!!
+        strncpy(root_nodes[i].name, file_headers[i].name, 64); /// critical !!!
         root_nodes[i].name[64] = 0;
 
         root_nodes[i].mask    = root_nodes[i].uid = root_nodes[i].gid = 0;

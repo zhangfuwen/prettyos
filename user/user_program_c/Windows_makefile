@@ -1,6 +1,6 @@
 ASFLAGSOBJ= -O32 -f elf
-NASM = ..\..\_nasm\nasmw
-MAKE = ..\..\_mingw32-make\mingw32-make
+NASM = ..\..\nasm\nasmw
+MAKE = ..\..\mingw32-make\mingw32-make
  
 CFLAGS= -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
 CC= i586-elf-gcc

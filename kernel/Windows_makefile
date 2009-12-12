@@ -2,8 +2,8 @@ SOURCES = kernel.asm $(filter-out kernel.asm ,$(wildcard *.asm *.c))
 OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 
 ASFLAGSOBJ= -O32 -f elf
-NASM = ..\_nasm\nasmw
-MAKE = ..\_mingw32-make\mingw32-make
+NASM = ..\nasm\nasmw
+MAKE = ..\mingw32-make\mingw32-make
 
 CFLAGS= -std=c99 -march=i386 -mtune=i386 -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 CC= i586-elf-gcc
@@ -13,9 +13,9 @@ LD= i586-elf-ld
 
 all: ckernel.sys
 	rm *.o
-	CreateFloppyImage PrettyOS FloppyImage.bin ../_stage1_bootloader/boot.bin ../_stage2_bootloader/BOOT2.SYS CKERNEL.SYS
+	CreateFloppyImage PrettyOS FloppyImage.bin ../stage1_bootloader/boot.bin ../stage2_bootloader/BOOT2.SYS CKERNEL.SYS
 	cp -f CKERNEL.SYS A:\CKERNEL.SYS
-	cmd /c bochs.bxrc
+	#cmd /c bochs.bxrc
 
 %.o: %.asm
 	$(NASM) $(ASFLAGSOBJ) $< -o $@

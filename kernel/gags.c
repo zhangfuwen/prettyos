@@ -34,9 +34,9 @@ void showTrain(int8_t val)
             line1[0] = temp1;
             line2[0] = temp2;
             line3[0] = temp3;
-            k_printf(line1,46,0xE);
-            k_printf(line2,47,0xE);
-            k_printf(line3,48,0xE);
+            printf(line1,46,0xE);
+            printf(line2,47,0xE);
+            printf(line3,48,0xE);
         break;
 
         default:

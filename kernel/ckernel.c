@@ -33,7 +33,7 @@ char DateAndTime[80];
 static void init()
 {
     k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.40]    ");
+    printformat("PrettyOS [Version 0.0.0.41]    ");
     //printformat("%s",getCurrentDateAndTime(DateAndTime));
     printformat("\n\n");
     gdt_install();
@@ -66,7 +66,7 @@ int main()
 
         flpydsk_set_working_drive(0); // set drive 0 as current drive
 	    flpydsk_install(32+6);        // floppy disk uses IRQ 6 // 32+6
-	    k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
+	    memset((void*)DMA_BUFFER, 0x0, 0x2400);
     }
     else
     {
@@ -127,16 +127,16 @@ int main()
     settextcolor(15,0);
     #endif
     ///
-    uint32_t ramdisk_start = (uint32_t)k_malloc(0x200000, PAGESIZE);
+    uint32_t ramdisk_start = (uint32_t)malloc(0x200000, PAGESIZE);
     settextcolor(15,0);
 
     // test with data and program from data.asm
-    k_memcpy((void*)ramdisk_start, &file_data_start, (uint32_t)&file_data_end - (uint32_t)&file_data_start);
+    memcpy((void*)ramdisk_start, &file_data_start, (uint32_t)&file_data_end - (uint32_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
 
     // search the content of files <- data from outside "loaded" via incbin ...
     bool shell_found = false;
-    uint8_t* buf = k_malloc( FILEBUFFERSIZE, 0 );
+    uint8_t* buf = malloc( FILEBUFFERSIZE, 0 );
     struct dirent* node = 0;
     for ( int i=0; (node = readdir_fs(fs_root, i))!=0; ++i )
     {
@@ -151,11 +151,11 @@ int main()
             uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
 
             char name[40];
-            k_memset(name, 0, 40);
-            k_memcpy(name, node->name, 35); // protection against wrong / too long filename
+            memset(name, 0, 40);
+            memcpy(name, node->name, 35); // protection against wrong / too long filename
             printformat("%d \t%s\n",sz,name);
 
-            if ( k_strcmp( (const char*)node->name, "shell" ) == 0 )
+            if ( strcmp( (const char*)node->name, "shell" ) == 0 )
             {
                 shell_found = true;
 
@@ -164,7 +164,7 @@ int main()
             }
         }
     }
-    k_free( buf );
+    free( buf );
     printformat("\n\n");
 
     if ( ! shell_found )
@@ -188,22 +188,20 @@ int main()
         if ( ! *++p )
             p = progress;
 
-
-
         // PRINT TIME IN SECONDS AT STATUS BAR
         CurrentSecondsOld = CurrentSeconds;
         CurrentSeconds = getCurrentSeconds();
 
         if (CurrentSeconds!=CurrentSecondsOld)
         {
-            k_itoa(CurrentSeconds, timeBuffer);
+            itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
-            k_strcat(DateAndTime, "     ");
-            k_strcat(DateAndTime, timeBuffer);
-            k_strcat(DateAndTime, " seconds since start.");
+            strcat(DateAndTime, "     ");
+            strcat(DateAndTime, timeBuffer);
+            strcat(DateAndTime, " seconds since start.");
 
             // output in status bar
-            k_printf(DateAndTime, 49, 0xC);
+            printf(DateAndTime, 49, 0xC);
         }
     }
     return 0;

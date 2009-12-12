@@ -482,7 +482,7 @@ int32_t flpydsk_read_directory()
     int32_t error = -1; // return value
 
 	/// TEST
-	k_memset((void*)DMA_BUFFER, 0x0, 0x2400);
+	memset((void*)DMA_BUFFER, 0x0, 0x2400);
 	/// TEST
 
 	uint8_t* retVal = flpydsk_read_sector(19);   // start at 0x2600: root directory (14 sectors)
