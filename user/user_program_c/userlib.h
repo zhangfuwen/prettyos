@@ -11,7 +11,7 @@ void puts(char* pString);
 unsigned char getch();
 int floppy_dir();
 void printLine(char* message, unsigned int line, unsigned char attribute);
-
+unsigned int getCurrentSeconds();
 
 
 // user functions

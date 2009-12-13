@@ -41,6 +41,12 @@ void printLine(char* message, unsigned int line, unsigned char attribute)
     asm volatile( "int $0x7F" : : "a"(9), "b"(message), "c"(line), "d"(attribute) );
 }
 
+unsigned int getCurrentSeconds()
+{
+    unsigned char ret;
+    asm volatile( "int $0x7F" : "=a"(ret): "a"(10) );
+    return ret;
+}
 
 
 /// user functions ///
