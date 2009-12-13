@@ -23,7 +23,7 @@ ImageSize     dw 0
 ;	Data Section
 ;*******************************************************
 msgLoading db 0x0D, 0x0A, "Jumping to OS Kernel...", 0
-msgFailure db 0x0D, 0x0A, "Missing CKERNEL.SYS", 0x0D, 0x0A, 0x0A, 0
+msgFailure db 0x0D, 0x0A, "Missing KERNEL.BIN", 0x0D, 0x0A, 0x0A, 0
 
 entry_point:
    cli	              ; clear interrupts

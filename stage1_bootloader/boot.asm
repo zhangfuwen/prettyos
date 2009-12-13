@@ -261,11 +261,11 @@ Cylinder       db 0
 bootdevice     db 0
 datasector     dw 0
 cluster        dw 0
-ImageName      db "boot2   bin"
+ImageName      db "BOOT2   BIN"
 msgCRLF        db 0x0D, 0x0A, 0
 msgProgress    db "*", 0
 msgLoading     db "Loading Second Stage Bootloader", 0x0D, 0x0A, 0
-msgFailure     db 0x0D, 0x0A, "BOOT2.SYS MISSING", 0x0D, 0x0A, 0
+msgFailure     db 0x0D, 0x0A, "BOOT2.BIN MISSING", 0x0D, 0x0A, 0
  
 TIMES 510-($-$$) hlt                         ; fill bytes until boot signature
 db 0x55                                      ; boot signature
