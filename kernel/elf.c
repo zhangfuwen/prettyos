@@ -156,7 +156,7 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size )
         if ( ! paging_alloc( pd, (void*)(ph->vaddr), alignUp(ph->memsz,PAGESIZE), MEM_USER | MEM_WRITE ) )
             return false;
 
-        // Copy the code
+        // Copy the code, using the user's page directory
         cli();
         paging_switch( pd );
         memcpy( (void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz );

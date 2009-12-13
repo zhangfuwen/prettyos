@@ -32,8 +32,8 @@ char DateAndTime[80];
 
 static void init()
 {
-    k_clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.41]    ");
+    clear_screen(); settextcolor(14,0);
+    printformat("PrettyOS [Version 0.0.0.43]    ");
     //printformat("%s",getCurrentDateAndTime(DateAndTime));
     printformat("\n\n");
     gdt_install();

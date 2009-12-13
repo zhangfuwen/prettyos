@@ -181,7 +181,7 @@ void reboot()
 }
 
 /// http://en.wikipedia.org/wiki/Itoa
-void k_reverse(char* s)
+void reverse(char* s)
 {
     int32_t i, j;
     char c;
@@ -214,7 +214,7 @@ void itoa(int32_t n, char* s)
         s[i++] = '-';
     }
     s[i] = '\0';
-    k_reverse(s);
+    reverse(s);
 }
 
 void i2hex(uint32_t val, char* dest, int32_t len)

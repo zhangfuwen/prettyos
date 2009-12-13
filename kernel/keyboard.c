@@ -145,7 +145,7 @@ void keyboard_handler(struct regs* r)
    }
 }
 
-int32_t k_checkKQ_and_print_char()
+int32_t checkKQ_and_print_char()
 {
    if(KQ_count_write > KQ_count_read)
    {
@@ -200,7 +200,7 @@ int32_t k_checkKQ_and_print_char()
    return 0;
 }
 
-uint8_t k_checkKQ_and_return_char()
+uint8_t checkKQ_and_return_char()
 {
    if(KQ_count_write > KQ_count_read)
    {

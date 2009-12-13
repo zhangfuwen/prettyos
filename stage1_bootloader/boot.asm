@@ -261,7 +261,7 @@ Cylinder       db 0
 bootdevice     db 0
 datasector     dw 0
 cluster        dw 0
-ImageName      db "BOOT2   SYS"
+ImageName      db "boot2   bin"
 msgCRLF        db 0x0D, 0x0A, 0
 msgProgress    db "*", 0
 msgLoading     db "Loading Second Stage Bootloader", 0x0D, 0x0A, 0

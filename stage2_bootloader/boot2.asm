@@ -9,14 +9,14 @@ jmp entry_point             ; go to entry point
 ;*******************************************************
 ;	Includes and Defines
 ;*******************************************************
-%include "gdt2.inc"			; GDT definition
-%include "A20.inc"			; A20 gate enabling
-%include "Fat12.inc"		; FAT12 driver
+%include "gdt.inc"          ; GDT definition
+%include "A20.inc"          ; A20 gate enabling
+%include "Fat12.inc"        ; FAT12 driver
 %include "GetMemoryMap.inc" ; INT 0x15, eax = 0xE820 
 
 %define IMAGE_PMODE_BASE 0x40000 ; where the kernel is to be loaded to in protected mode
 %define IMAGE_RMODE_BASE 0x3000  ; where the kernel is to be loaded to in real mode
-ImageName     db "CKERNEL SYS"
+ImageName     db "kernel  bin"
 ImageSize     dw 0
 
 ;*******************************************************

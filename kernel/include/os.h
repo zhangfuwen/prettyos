@@ -66,7 +66,7 @@ typedef struct regs
 
 
 // video.c
-extern void k_clear_screen();
+extern void clear_screen();
 extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
 extern void putch(char c);
 extern void puts(char* text);
@@ -99,8 +99,8 @@ extern void keyboard_install();
 extern uint8_t FetchAndAnalyzeScancode();
 extern uint8_t ScanToASCII();
 extern void keyboard_handler(struct regs* r);
-extern int32_t k_checkKQ_and_print_char();
-extern uint8_t k_checkKQ_and_return_char();
+extern int32_t checkKQ_and_print_char();
+extern uint8_t checkKQ_and_return_char();
 
 // gtd.c, irq.c, interrupts.asm
 extern void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);

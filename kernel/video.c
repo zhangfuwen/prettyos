@@ -15,7 +15,7 @@ const uint8_t SCROLL_LINE = 45; // reserve line for the status bar and ascii-art
 bool scrollflag = true;
 
 
-void k_clear_screen()
+void clear_screen()
 {
     memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * LINES);
     csr_x = 0; csr_y = 0; update_cursor();
