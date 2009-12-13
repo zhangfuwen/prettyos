@@ -36,7 +36,7 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	$(NASM) -O32 -f elf $(KERNELDIR)/process.asm -I$(KERNELDIR)/ -o process.o
 	$(LD) *.o -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -nostdinc -o $(KERNELDIR)/kernel.bin
 	rm *.o -f
-	tools/CreateFloppyImage PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/boot2.bin $(KERNELDIR)/kernel.bin
+	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/boot2.bin $(KERNELDIR)/kernel.bin
 
 initrd: $(wildcard $(USERDIR)/*)
 	rm *.o -f
