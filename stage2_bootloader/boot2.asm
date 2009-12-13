@@ -16,7 +16,7 @@ jmp entry_point             ; go to entry point
 
 %define IMAGE_PMODE_BASE 0x40000 ; where the kernel is to be loaded to in protected mode
 %define IMAGE_RMODE_BASE 0x3000  ; where the kernel is to be loaded to in real mode
-ImageName     db "kernel  bin"
+ImageName     db "KERNEL  BIN"
 ImageSize     dw 0
 
 ;*******************************************************

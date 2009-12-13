@@ -40,6 +40,7 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 
 initrd: $(wildcard $(USERDIR)/*)
 	rm *.o -f
+	$(NASM) -O32 -f elf $(USERDIR)/start.asm -I$(USERDIR)/ -o start.o
 	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
 	$(LD) *.o -T $(USERDIR)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
 	rm *.o -f
