@@ -42,6 +42,7 @@ initrd: $(wildcard $(USERDIR)/*)
 	rm *.o -f
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -I$(USERDIR)/ -o start.o
 	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
+	$(NASM) -O32 -f elf $(USERDIR)/start.asm -o start.o
 	$(LD) *.o -T $(USERDIR)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
 	rm *.o -f
 	tools/make_initrd $(USERRDDIR)/test1.txt file1 $(USERRDDIR)/test2.txt file2 $(USERRDDIR)/test3.txt file3 $(USERDIR)/program.elf shell

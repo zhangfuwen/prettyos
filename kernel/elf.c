@@ -150,7 +150,7 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size )
         //
 
         ASSERT( (const void*)(ph->vaddr) == USERCODE_VADDR );
-        ASSERT( (const void*)(header->entry) == USERCODE_VADDR );
+        //ASSERT( (const void*)(header->entry) == USERCODE_VADDR );
 
         // Allocate code area for the user program
         if ( ! paging_alloc( pd, (void*)(ph->vaddr), alignUp(ph->memsz,PAGESIZE), MEM_USER | MEM_WRITE ) )
