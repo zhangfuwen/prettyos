@@ -1,2 +1,2 @@
-readelf -a program.elf
+readelf -l program.elf
 pause

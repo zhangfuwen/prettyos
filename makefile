@@ -24,7 +24,7 @@ boot1: $(wildcard $(STAGE1DIR)/*.asm $(STAGE1DIR)/*.inc)
 	$(NASM) -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
 
 boot2: $(wildcard $(STAGE2DIR)/*.asm $(STAGE2DIR)/*.inc)
-	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/boot2.bin
+	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	rm *.o -f
@@ -34,9 +34,9 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	$(NASM) -O32 -f elf $(KERNELDIR)/interrupts.asm -I$(KERNELDIR)/ -o interrupts.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/kernel.asm -I$(KERNELDIR)/ -o kernel.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/process.asm -I$(KERNELDIR)/ -o process.o
-	$(LD) *.o -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -nostdinc -o $(KERNELDIR)/kernel.bin
+	$(LD) *.o -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -nostdinc -o $(KERNELDIR)/KERNEL.BIN
 	rm *.o -f
-	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/boot2.bin $(KERNELDIR)/kernel.bin
+	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 
 initrd: $(wildcard $(USERDIR)/*)
 	rm *.o -f
