@@ -7,13 +7,20 @@ extern page_directory_t* current_directory;
 extern task_t* current_task;
 extern tss_entry_t tss_entry;
 
-uint16_t systemfrequency = 100; // system frequency
+uint16_t systemfrequency = 1000; // system frequency
 uint32_t timer_ticks = 0;
 uint32_t eticks;
 
 uint32_t getCurrentSeconds()
 {
+    // printformat("%d\n",timer_ticks/systemfrequency);
     return timer_ticks/systemfrequency;
+}
+
+uint32_t getCurrentMilliseconds()
+{
+    // printformat("%d\n",1000*timer_ticks/systemfrequency);
+    return 1000*timer_ticks/systemfrequency;
 }
 
 void timer_handler(struct regs* r)

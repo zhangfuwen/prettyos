@@ -6,16 +6,27 @@ int main()
 {
     for(;;)
     {
+      char entry[MAX_CHAR_PER_LINE+10];
+      int i = 0;
+      const unsigned int waitingTime = 20;
+      unsigned int start = getCurrentMilliseconds();
+
       settextcolor(15,0);
       puts("$> ");
 
-      char entry[MAX_CHAR_PER_LINE+10];
-      int i = 0;
-      int CurrentSeconds=0;
-      int CurrentSecondsOld;
-
       for(;;)
       {
+        // the train goes on ////////////////////////////
+          settextcolor(2,0);
+          if( getCurrentMilliseconds() >= (start + waitingTime) )
+          {
+            showInfo(1);
+            start = getCurrentMilliseconds();
+
+          }
+          settextcolor(15,0);
+        /////////////////////////////////////////////////
+
         unsigned char input = getch();
 
         // if (
@@ -83,24 +94,12 @@ int main()
           settextcolor(15,0);
       }
 
-      else if( strcmp(entry,"info1") == 0 )
-      {
-          settextcolor(2,0);
-          CurrentSecondsOld = CurrentSeconds;
-          CurrentSeconds = getCurrentSeconds();
-          if(CurrentSeconds!=CurrentSecondsOld)
-          {
-              showInfo(1);
-          }
-          settextcolor(15,0);
-      }
-
       else
       {
           settextcolor(2,0);
           puts("Sorry, I do not know this command.\n");
           settextcolor(15,0);
       }
-  }
-  return 0;
+    }
+    return 0;
 }

@@ -84,6 +84,7 @@ extern void printformat (char *args, ...);
 
 // timer.c
 extern uint32_t getCurrentSeconds();
+extern uint32_t getCurrentMilliseconds();
 extern uint16_t systemfrequency; // system frequency
 extern void timer_handler(struct regs* r);
 extern void timer_wait (uint32_t ticks);

@@ -43,11 +43,17 @@ void printLine(char* message, unsigned int line, unsigned char attribute)
 
 unsigned int getCurrentSeconds()
 {
-    unsigned char ret;
+    unsigned int ret;
     asm volatile( "int $0x7F" : "=a"(ret): "a"(10) );
     return ret;
 }
 
+unsigned int getCurrentMilliseconds()
+{
+    unsigned int ret;
+    asm volatile( "int $0x7F" : "=a"(ret): "a"(11) );
+    return ret;
+}
 
 /// user functions ///
 
@@ -63,14 +69,12 @@ int strcmp( const char* s1, const char* s2 )
 
 void showInfo(signed char val)
 {
-    char* line1 = "  _______                _______      <>_<>                                     "    ;
-    char* line2 = " (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                 "   ;
-    char* line3 = "`-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                                "  ;
+    static char* line1 = "   _______                _______      <>_<>                                    "    ;
+    static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                "   ;
+    static char* line3 = " `-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                               "  ;
 
     int i;
     char temp1,temp2,temp3;
-
-
 
     switch(val)
     {

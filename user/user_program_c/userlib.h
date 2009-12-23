@@ -12,6 +12,7 @@ unsigned char getch();
 int floppy_dir();
 void printLine(char* message, unsigned int line, unsigned char attribute);
 unsigned int getCurrentSeconds();
+unsigned int getCurrentMilliseconds();
 
 
 // user functions
