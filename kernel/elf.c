@@ -8,10 +8,7 @@
 #include "task.h"
 
 
-static const void* USERCODE_VADDR = (void*)0x01400000;
-
-
-
+// static const void* USERCODE_VADDR = (void*)0x01400000;
 
 typedef enum
 {
@@ -126,7 +123,7 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size )
         return false;
 
     // Further restrictions..
-    ASSERT( header->phnum == 1 );
+    // ASSERT( header->phnum == 1 );
 
     page_directory_t* pd = paging_create_user_pd();
 
@@ -149,8 +146,8 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size )
         #endif
         //
 
-        ASSERT( (const void*)(ph->vaddr) == USERCODE_VADDR );
-        //ASSERT( (const void*)(header->entry) == USERCODE_VADDR );
+        // ASSERT( (const void*)(ph->vaddr) == USERCODE_VADDR );
+        // ASSERT( (const void*)(header->entry) == USERCODE_VADDR );
 
         // Allocate code area for the user program
         if ( ! paging_alloc( pd, (void*)(ph->vaddr), alignUp(ph->memsz,PAGESIZE), MEM_USER | MEM_WRITE ) )
