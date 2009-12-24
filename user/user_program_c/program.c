@@ -8,7 +8,7 @@ int main()
     {
       char entry[MAX_CHAR_PER_LINE+10];
       int i = 0;
-      const unsigned int waitingTime = 20;
+      const unsigned int waitingTime = 25;
       unsigned int start = getCurrentMilliseconds();
 
       settextcolor(15,0);
