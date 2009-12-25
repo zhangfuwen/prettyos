@@ -9,49 +9,49 @@
 
 void settextcolor(unsigned int foreground, unsigned int background)
 {
-    asm volatile( "int $0x7F" : : "a"(2), "b"(foreground), "c"(background) );
+    __asm__ volatile( "int $0x7F" : : "a"(2), "b"(foreground), "c"(background) );
 }
 
 void putch(unsigned char val)
 {
-    asm volatile( "int $0x7F" : : "a"(1), "b"(val) );
+    __asm__ volatile( "int $0x7F" : : "a"(1), "b"(val) );
 }
 
 void puts(char* pString)
 {
-    asm volatile( "int $0x7F" : : "a"(0), "b"(pString) );
+    __asm__ volatile( "int $0x7F" : : "a"(0), "b"(pString) );
 }
 
 unsigned char getch()
 {
     unsigned char ret;
-    asm volatile( "int $0x7F" : "=a"(ret): "a"(7) );
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(7) );
     return ret;
 }
 
 int floppy_dir()
 {
     int ret;
-    asm volatile( "int $0x7F" : "=a"(ret): "a"(8) );
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(8) );
     return ret;
 }
 
 void printLine(char* message, unsigned int line, unsigned char attribute)
 {
-    asm volatile( "int $0x7F" : : "a"(9), "b"(message), "c"(line), "d"(attribute) );
+    __asm__ volatile( "int $0x7F" : : "a"(9), "b"(message), "c"(line), "d"(attribute) );
 }
 
 unsigned int getCurrentSeconds()
 {
     unsigned int ret;
-    asm volatile( "int $0x7F" : "=a"(ret): "a"(10) );
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(10) );
     return ret;
 }
 
 unsigned int getCurrentMilliseconds()
 {
     unsigned int ret;
-    asm volatile( "int $0x7F" : "=a"(ret): "a"(11) );
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(11) );
     return ret;
 }
 

@@ -28,7 +28,7 @@ boot2: $(wildcard $(STAGE2DIR)/*.asm $(STAGE2DIR)/*.inc)
 
 ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	rm *.o -f
-	$(CC) $(KERNELDIR)/*.c -c -I$(KERNELDIR)/include -std=c99 -march=i386 -mtune=i386 -m32 -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
+	$(CC) $(KERNELDIR)/*.c -c -I$(KERNELDIR)/include -std=c99 -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 	$(NASM) -O32 -f elf $(KERNELDIR)/data.asm -I$(KERNELDIR)/ -o data.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/flush.asm -I$(KERNELDIR)/ -o flush.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/interrupts.asm -I$(KERNELDIR)/ -o interrupts.o
@@ -41,7 +41,7 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 initrd: $(wildcard $(USERDIR)/*)
 	rm *.o -f
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -I$(USERDIR)/ -o start.o
-	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -m32 -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
+	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -o start.o
 	$(LD) *.o -T $(USERDIR)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
 	rm *.o -f
