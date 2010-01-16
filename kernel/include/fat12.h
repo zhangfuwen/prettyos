@@ -1,5 +1,3 @@
-// some ideas
-
 #ifndef _FAT12_H
 #define _FAT12_H
 
@@ -8,17 +6,19 @@
 typedef struct RootDirEntry
 {
     char name[11];
-    int  firstCluster;
-    int  filesize;
+    int32_t  firstCluster;
+    int32_t  filesize;
     //...
 } RootDirEntry_t;
 
 typedef struct File
 {
-    USHORT chain[2850];
-    USHORT RDE_Num;
+    uint16_t chain[2850];
+    uint16_t RDE_Num;
 } File_t;
 
-RootDirEntry_t RDE[224]
+RootDirEntry_t RDE[224];
+
+int32_t flpydsk_read_directory();
 
 #endif

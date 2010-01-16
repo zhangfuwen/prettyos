@@ -1,10 +1,10 @@
 #include "syscall.h"
 #include "task.h"
-#include "flpydsk.h"
+#include "fat12.h"
 
 // some functions declared extern in os.h
 // rest of functions must be declared here:
-extern void f4();
+// ...
 
 DEFN_SYSCALL1( puts,                       0, char*                    )
 DEFN_SYSCALL1( putch,                      1, char                     )
