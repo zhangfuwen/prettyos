@@ -262,6 +262,24 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     uint8_t a[512];
     int32_t i, j;
 
+    /**************** TEST *****************************/
+    // Preformat: set sectors to zero to analyze effectiveness
+    // of flpydsk_format(...)
+
+    for(i=0;i<512;i++)
+    {
+        a[i] = 0xAA; // <--- select number different from zero
+    }
+
+    for(j=0;j<33;j++)
+    {
+        flpydsk_write_sector_ia(j,a);
+    }
+    printformat("TEST: preformat finished.\n");
+    // return 0; // stop for test on zero <-- it works
+
+    /**************** TEST *****************************/
+
     /*
        int32_t dt, tm; // for VolumeSerial
     */
@@ -314,7 +332,8 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
       dt = ((dt & 0xff) << 8) | ((dt & 0xFF00) >> 8);
       tm = ((tm & 0xff) << 8) | ((tm & 0xFF00) >> 8);
       */
-    b.VolumeSerial      = /* tm << 16 + dt; */ 12345678;
+    b.VolumeSerial = 0x12345678;
+    /* b.VolumeSerial = tm << 16 + dt; */
 
     for(i=0;i<11;i++)
     {
@@ -371,33 +390,6 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
         a[i]=0;
     }
     flpydsk_write_sector_ia( FAT2_SEC, a );
-
-    /*************************************/
-
-      /// TODO: this overwrites FAT2 ??
-      /*
-
-      a[0]=0; a[1]=0; a[2]=0;
-
-      /// write!
-      for(i=FAT1_SEC+1;i<FAT2_SEC;i++)
-      {
-          retVal = flpydsk_write_sector_ia(i,a);
-	      if(retVal != 0)
-	      {
-		      return E_DISK;
-	      }
-
-          retVal = flpydsk_write_sector_ia(i+9,a);
-	      if(retVal != 0)
-	      {
-		      return E_DISK;
-	      }
-      }
-
-      */
-
-    /*************************************/
 
     //form volume root dir entry
     for(i=0;i<8;i++)
