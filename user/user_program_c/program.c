@@ -71,7 +71,7 @@ int main()
       if( ( strcmp(entry,"help") == 0 ) || ( strcmp(entry,"?") == 0 ) )
       {
           settextcolor(2,0);
-          puts("Implemented Instructions: help ? hi fdir info1\n");
+          puts("Implemented Instructions: hi  help ?  fdir  fformat\n");
           settextcolor(15,0);
       }
 
@@ -94,10 +94,23 @@ int main()
           settextcolor(15,0);
       }
 
+      else if( strcmp(entry,"fformat") == 0 )
+      {
+          int retVal;
+          settextcolor(2,0);
+          retVal = floppy_format("PrettyOS");
+          retVal = floppy_dir();
+          if(retVal!=0)
+          {
+              floppy_dir();
+          }
+          settextcolor(15,0);
+      }
+
       else
       {
           settextcolor(2,0);
-          puts("Sorry, I do not know this command.\n");
+          puts("Sorry, PrettyOS does not know this command.\n");
           settextcolor(15,0);
       }
     }

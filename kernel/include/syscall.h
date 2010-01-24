@@ -75,6 +75,7 @@ DECL_SYSCALL0( flpydsk_read_directory                     )
 DECL_SYSCALL3( printf, char*, uint32_t, uint8_t           )
 DECL_SYSCALL0( getCurrentSeconds                          )
 DECL_SYSCALL0( getCurrentMilliseconds                     )
+DECL_SYSCALL1( flpydsk_format, char*                      )
 
 /***********************************************************/
 

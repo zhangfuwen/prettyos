@@ -55,6 +55,13 @@ unsigned int getCurrentMilliseconds()
     return ret;
 }
 
+int floppy_format(char* volumeLabel)
+{
+    int ret;
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(12), "b"(volumeLabel) );
+    return ret;
+}
+
 /// user functions ///
 
 // Compare two strings. Returns -1 if str1 < str2, 0 if they are equal or 1 otherwise.

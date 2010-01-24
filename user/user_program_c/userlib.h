@@ -13,7 +13,7 @@ int floppy_dir();
 void printLine(char* message, unsigned int line, unsigned char attribute);
 unsigned int getCurrentSeconds();
 unsigned int getCurrentMilliseconds();
-
+int floppy_format(char* volumeLabel);
 
 // user functions
 int strcmp( const char* s1, const char* s2 );
