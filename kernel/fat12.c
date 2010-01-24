@@ -70,7 +70,7 @@ int32_t flpydsk_read_directory()
 
 int32_t flpydsk_write_sector_ia( int32_t i, void* a)
 {
-    memset((void*)DMA_BUFFER, 0x0, 0x200);
+    // memset((void*)DMA_BUFFER, 0x0, 0x200);
     memcpy((void*)DMA_BUFFER, a  , 0x200);
     int retVal = flpydsk_write_sector(i);
     return retVal;
@@ -105,7 +105,7 @@ int32_t flpydsk_write_boot_sector(struct boot_sector *bs)
     int32_t i,j;
     uint8_t a[512];
 
-    flpydsk_read_sector_ia( BOOT_SEC, a); ///TEST
+    flpydsk_read_sector_ia( BOOT_SEC, a ); ///TEST
 
     i=0;
     for(j=0;j<3;j++)
@@ -188,7 +188,7 @@ int32_t flpydsk_write_boot_sector(struct boot_sector *bs)
     // boot signature
     a[510]= 0x55; a[511]= 0xAA;
 
-    return flpydsk_write_sector_ia(BOOT_SEC,a);
+    return flpydsk_write_sector_ia( BOOT_SEC, a );
 }
 
 int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
@@ -196,16 +196,9 @@ int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
     uint8_t a[512];
     int32_t i,j;
 
-    st_sec = st_sec + in/DIR_ENTRIES; //??
+    st_sec = st_sec + in/DIR_ENTRIES;
 
-    flpydsk_read_sector_ia( st_sec, a); ///TEST
-
-    /*
-    if(flpydsk_read_sector(st_sec) != 0)        /// read sector !!!
-    {
-        return E_DISK;
-    }
-    */
+    flpydsk_read_sector_ia( st_sec, a );
 
     printformat("\nwriting directory to sector %d in %d\n", st_sec, in );
     i = (in % DIR_ENTRIES) * 32;
@@ -286,34 +279,34 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
         vlab[j] = ' ';
     }
 
-      b.jumpBoot[0] = 0xeb;
-      b.jumpBoot[1] = 0x3c;
-      b.jumpBoot[2] = 0x90;
+    b.jumpBoot[0] = 0xeb;
+    b.jumpBoot[1] = 0x3c;
+    b.jumpBoot[2] = 0x90;
 
-      b.SysName[0] = 'P';
-      b.SysName[1] = 'R';
-      b.SysName[2] = 'E';
-      b.SysName[3] = 'T';
-      b.SysName[4] = 'T';
-      b.SysName[5] = 'Y';
-      b.SysName[6] = 'O';
-      b.SysName[7] = 'S';
+    b.SysName[0] = 'P';
+    b.SysName[1] = 'R';
+    b.SysName[2] = 'E';
+    b.SysName[3] = 'T';
+    b.SysName[4] = 'T';
+    b.SysName[5] = 'Y';
+    b.SysName[6] = 'O';
+    b.SysName[7] = 'S';
 
-      b.charsPerSector    =  512;
-      b.SectorsPerCluster =    1;
-      b.ReservedSectors   =    1;
-      b.FATcount          =    2;
-      b.MaxRootEntries    =  224;
-      b.TotalSectors1     = 2880;
-      b.MediaDescriptor   = 0xF0;
-      b.SectorsPerFAT     =    9;
-      b.SectorsPerTrack   =   18;
-      b.HeadCount         =    2;
-      b.HiddenSectors     =    0;
-      b.TotalSectors2     =    0;
-      b.DriveNumber       =    0;
-      b.Reserved1         =    0;
-      b.ExtBootSignature  = 0x29;
+    b.charsPerSector    =  512;
+    b.SectorsPerCluster =    1;
+    b.ReservedSectors   =    1;
+    b.FATcount          =    2;
+    b.MaxRootEntries    =  224;
+    b.TotalSectors1     = 2880;
+    b.MediaDescriptor   = 0xF0;
+    b.SectorsPerFAT     =    9;
+    b.SectorsPerTrack   =   18;
+    b.HeadCount         =    2;
+    b.HiddenSectors     =    0;
+    b.TotalSectors2     =    0;
+    b.DriveNumber       =    0;
+    b.Reserved1         =    0;
+    b.ExtBootSignature  = 0x29;
 
       /*
       dt = form_date();
@@ -321,65 +314,68 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
       dt = ((dt & 0xff) << 8) | ((dt & 0xFF00) >> 8);
       tm = ((tm & 0xff) << 8) | ((tm & 0xFF00) >> 8);
       */
-      b.VolumeSerial = /* tm << 16 + dt; */ 12345678;
+    b.VolumeSerial      = /* tm << 16 + dt; */ 12345678;
 
-      for(i=0;i<11;i++)
-      {
-          b.VolumeLabel[i] = vlab[i];
-      }
-      b.Reserved2[0] = 'F';
-      b.Reserved2[1] = 'A';
-      b.Reserved2[2] = 'T';
-      b.Reserved2[3] = '1';
-      b.Reserved2[4] = '2';
-      b.Reserved2[5] = ' ';
-      b.Reserved2[6] = ' ';
-      b.Reserved2[7] = ' ';
+    for(i=0;i<11;i++)
+    {
+        b.VolumeLabel[i] = vlab[i];
+    }
+    b.Reserved2[0] = 'F';
+    b.Reserved2[1] = 'A';
+    b.Reserved2[2] = 'T';
+    b.Reserved2[3] = '1';
+    b.Reserved2[4] = '2';
+    b.Reserved2[5] = ' ';
+    b.Reserved2[6] = ' ';
+    b.Reserved2[7] = ' ';
 
-      /// write bootsector
-      retVal = flpydsk_write_boot_sector(&b);
-      if(retVal != 0)
-      {
-          return E_DISK;
-      }
+    /// write bootsector
+    retVal = flpydsk_write_boot_sector(&b);
+    if(retVal != 0)
+    {
+        return E_DISK;
+    }
 
-      for(i=0;i<512;i++)
-      {
-          a[i] = 0;
-      }
-      printformat("Format Completed (in percent):\n");
+    for(i=0;i<512;i++)
+    {
+        a[i] = 0;
+    }
+    printformat("Format completed (in percent):\n");
 
-      /// write!
-      for(i=1;i<33;i++)
-      {
-          retVal = flpydsk_write_sector_ia(i,a);
-          if(retVal != 0)
-          {
-              return E_DISK;
-          }
-          printformat("%d  ",(int32_t)i*100/32);
-      }
+    /// write!
+    for(i=1;i<33;i++)
+    {
+        retVal = flpydsk_write_sector_ia(i,a);
+        if(retVal != 0)
+        {
+            return E_DISK;
+        }
+        printformat("%d ",(int32_t)i*100/32);
+    }
 
-      /// write two reserved FAT entries and others as 0
-      //FAT1
-      flpydsk_read_sector_ia( FAT1_SEC,a); ///TEST
-      a[0]=0xF0; a[1]=0xFF; a[2]=0xFF;
-      for(i=3;i<512;i++)
-      {
-          a[i]=0;
-      }
-      flpydsk_write_sector_ia(FAT1_SEC,a);
+    /// write two reserved FAT entries and others as 0
+    //FAT1
+    flpydsk_read_sector_ia( FAT1_SEC, a ); ///TEST
+    a[0]=0xF0; a[1]=0xFF; a[2]=0xFF;
+    for(i=3;i<512;i++)
+    {
+        a[i]=0;
+    }
+    flpydsk_write_sector_ia( FAT1_SEC, a );
 
-      //FAT2
-      flpydsk_read_sector_ia( FAT2_SEC,a); ///TEST
-      a[0]=0xF0; a[1]=0xFF; a[2]=0xFF;
-      for(i=3;i<512;i++)
-      {
-          a[i]=0;
-      }
-      flpydsk_write_sector_ia(FAT2_SEC,a);
+    //FAT2
+    flpydsk_read_sector_ia( FAT2_SEC, a ); ///TEST
+    a[0]=0xF0; a[1]=0xFF; a[2]=0xFF;
+    for(i=3;i<512;i++)
+    {
+        a[i]=0;
+    }
+    flpydsk_write_sector_ia( FAT2_SEC, a );
 
-      /*************************************/
+    /*************************************/
+
+      /// TODO: this overwrites FAT2 ??
+      /*
 
       a[0]=0; a[1]=0; a[2]=0;
 
@@ -399,37 +395,38 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
 	      }
       }
 
-      /*************************************/
+      */
 
-      //form volume root dir entry
-      for(i=0;i<8;i++)
-      {
-          d.Filename[i] = vlab[i];
-      }
-      for(i=0;i<3;i++)
-      {
-          d.Extension[i] = vlab[8+i];
-      }
-      d.Attributes   = ATTR_VOLUME_ID | ATTR_ARCHIVE;
-      d.NTRes        = 0;
-      d.CrtTimeTenth = 0;
-      d.CrtTime      = 0;
-      d.CrtDate      = 0;
-      d.LstAccDate   = 0;
-      d.FstClusHI    = 0;
-      d.WrtTime      = 0; /* form_time(); */
-      d.WrtDate      = 0; /* form_date(); */
-      d.FstClusLO    = 0;
-      d.FileSize     = 0;
+    /*************************************/
 
-     /// write directory
-     retVal = flpydsk_write_dir( &d, 0, ROOT_SEC );
-     if(retVal != 0)
-     {
-         return E_DISK;
-     }
+    //form volume root dir entry
+    for(i=0;i<8;i++)
+    {
+        d.Filename[i] = vlab[i];
+    }
+    for(i=0;i<3;i++)
+    {
+        d.Extension[i] = vlab[8+i];
+    }
+    d.Attributes   = ATTR_VOLUME_ID | ATTR_ARCHIVE;
+    d.NTRes        = 0;
+    d.CrtTimeTenth = 0;
+    d.CrtTime      = 0;
+    d.CrtDate      = 0;
+    d.LstAccDate   = 0;
+    d.FstClusHI    = 0;
+    d.WrtTime      = 0; /* form_time(); */
+    d.WrtDate      = 0; /* form_date(); */
+    d.FstClusLO    = 0;
+    d.FileSize     = 0;
 
-     printformat("\nFormat Complete.\n");
+    /// write directory
+    retVal = flpydsk_write_dir( &d, 0, ROOT_SEC );
+    if(retVal != 0)
+    {
+        return E_DISK;
+    }
 
-     return 0;
+    printformat("\nFormat Complete.\n");
+    return 0;
 }
