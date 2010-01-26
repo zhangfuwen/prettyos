@@ -70,9 +70,25 @@ int32_t flpydsk_read_directory()
 
 int32_t flpydsk_write_sector_ia( int32_t i, void* a)
 {
-    // memset((void*)DMA_BUFFER, 0x0, 0x200);
     memcpy((void*)DMA_BUFFER, a  , 0x200);
-    int retVal = flpydsk_write_sector(i);
+
+    uint32_t timeout = 2; // limit
+    int32_t  retVal  = 0;
+    while( flpydsk_write_sector(i) != 0 )
+    {
+        retVal = -1;
+        timeout--;
+        printformat("error write_sector. left: %d\n",timeout);
+	    if(timeout<=0)
+	    {
+	        printformat("timeout\n");
+	        break;
+	    }
+    }
+    if(retVal==0)
+    {
+        printformat("success write_sector.\n");
+    }
     return retVal;
 }
 
@@ -262,24 +278,6 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     uint8_t a[512];
     int32_t i, j;
 
-    /**************** TEST *****************************/
-    // Preformat: set sectors to zero to analyze effectiveness
-    // of flpydsk_format(...)
-
-    for(i=0;i<512;i++)
-    {
-        a[i] = 0xAA; // <--- select number different from zero
-    }
-
-    for(j=0;j<33;j++)
-    {
-        flpydsk_write_sector_ia(j,a);
-    }
-    printformat("TEST: preformat finished.\n");
-    // return 0; // stop for test on zero <-- it works
-
-    /**************** TEST *****************************/
-
     /*
        int32_t dt, tm; // for VolumeSerial
     */
@@ -350,8 +348,9 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
 
     /// write bootsector
     retVal = flpydsk_write_boot_sector(&b);
-    if(retVal != 0)
+    if(retVal!=0)
     {
+        printformat("E_Disk - flpydsk_write_boot_sector\n");
         return E_DISK;
     }
 
@@ -367,6 +366,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
         retVal = flpydsk_write_sector_ia(i,a);
         if(retVal != 0)
         {
+            printformat("E_Disk - flpydsk_write_sector - sector 1-32 nullen: %d\n",i);
             return E_DISK;
         }
         printformat("%d ",(int32_t)i*100/32);
@@ -416,6 +416,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     retVal = flpydsk_write_dir( &d, 0, ROOT_SEC );
     if(retVal != 0)
     {
+        printformat("E_Disk - flpydsk_write_dir\n");
         return E_DISK;
     }
 
