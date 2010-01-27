@@ -324,29 +324,43 @@ void flpydsk_reset()
 }
 
 // seek to given track/cylinder
+// TODO: does not work perfectly with write_sector on real hardware
 int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
 {
+	int32_t  retVal;
 	uint32_t st0, cyl0;
 	if (_CurrentDrive >= 4)	return -1;
 	int32_t i;
-	for(i=0; i<10; ++i)
+	for(i=0; i<5; ++i)
 	{
 		// send the command
         flpydsk_send_command (FDC_CMD_SEEK);
         flpydsk_send_command ( (head) << 2 | _CurrentDrive);
         flpydsk_send_command (cyl);
 
-        // printformat("i=%d ", i);
+        printformat("i=%d ", i);
 
         flpydsk_wait_irq();
 		flpydsk_check_int(&st0,&cyl0);
 
-        if ( cyl0 == cyl) // found the cylinder?
+        if(cyl0 == cyl) // found the cylinder?
         {
-		    return 0;
+		    retVal = 0;
+		    break;
         }
     }
-	return -1;
+    if(retVal==0)
+    {
+        printformat("cylinder found\n");
+        printformat("cyl0: %d cyl: %d \n",cyl0,cyl);
+        return 0;
+    }
+    else
+    {
+        printformat("cylinder not found\n");
+        printformat("cyl0: %d cyl: %d \n",cyl0,cyl);
+	    return -1;
+    }
 }
 
 /*
@@ -466,8 +480,12 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 	int32_t head=0, track=0, sector=1;
 	flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 	// turn motor on and seek to track
+
 	flpydsk_control_motor(true);
-	if(flpydsk_seek (track, head)) return -2;
+
+	if(flpydsk_seek (track, head)!=0) return -2; // <-- problem with real hardware
+    printformat("seek ok\n");
+
 	// write sector and turn motor off
 	flpydsk_transfer_sector(head, track, sector, 1);
 	flpydsk_control_motor(false);
