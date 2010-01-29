@@ -297,7 +297,10 @@ void flpydsk_reset()
 	}
 	flpydsk_write_ccr(0);              // transfer speed 500kb/s
 	flpydsk_drive_data(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
+
+	flpydsk_control_motor(true);
 	flpydsk_calibrate(_CurrentDrive);  // calibrate the disk
+	flpydsk_control_motor(false);
 }
 
 /*
@@ -340,7 +343,7 @@ int32_t flpydsk_calibrate(uint32_t drive)
 	{
 	    return -2;
 	}
-	flpydsk_control_motor(true); // turn on the motor
+
 	for(i=0; i<10; ++i)
 	{
 		// send command
@@ -359,7 +362,7 @@ int32_t flpydsk_calibrate(uint32_t drive)
 		    retVal = -1;
 		}
 	}
-	flpydsk_control_motor(false);
+
 	if(retVal==0)
     {
         return 0;
@@ -371,7 +374,6 @@ int32_t flpydsk_calibrate(uint32_t drive)
 }
 
 // seek to given track/cylinder
-// TODO: does not work perfectly with write_sector on real hardware
 int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
 {
 	int32_t  retVal;
@@ -383,7 +385,6 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
 
 	/// TEST
 	flpydsk_calibrate(_CurrentDrive);  // calibrate the disk ==> cyl. 0
-	flpydsk_control_motor(true);
 	/// TEST
 
 	for(i=0; i<10; ++i)
@@ -392,12 +393,9 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
         flpydsk_send_command (FDC_CMD_SEEK);
         flpydsk_send_command ( (head) << 2 | _CurrentDrive);
         flpydsk_send_command (cyl);
-
-        printformat("i=%d ", i);
-
+        // printformat("i=%d ", i);
         flpydsk_wait_irq();
 		flpydsk_check_int(&st0,&cyl0);
-
         if(cyl0 == cyl) // found the cylinder?
         {
 		    retVal = 0;
@@ -410,14 +408,14 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
     }
     if(retVal==0)
     {
-        printformat("cyl. found\t");
-        printformat("cyl0: %d cyl: %d \n",cyl0,cyl);
+        // printformat("cyl. found\t");
+        // printformat("cyl0: %d cyl: %d \n",cyl0,cyl);
         return 0;
     }
     else
     {
-        printformat("cyl. not found\t");
-        printformat("cyl0: %d cyl: %d \n",cyl0,cyl);
+        // printformat("cyl. not found\t");
+        // printformat("cyl0: %d cyl: %d \n",cyl0,cyl);
 	    return -1;
     }
 }
@@ -520,7 +518,7 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 	}
 	else
 	{
-        printformat("flpydsk_seek ok\n");
+        // printformat("flpydsk_seek ok\n");
         flpydsk_transfer_sector(head, track, sector, 1);
         flpydsk_control_motor(false);
         return 0;

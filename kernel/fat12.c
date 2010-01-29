@@ -87,7 +87,7 @@ int32_t flpydsk_write_sector_ia( int32_t i, void* a)
     }
     if(retVal==0)
     {
-        printformat("success write_sector.\n");
+        // printformat("success write_sector.\n");
     }
     return retVal;
 }
@@ -212,11 +212,11 @@ int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
     uint8_t a[512];
     int32_t i,j;
 
-    st_sec = st_sec + in/DIR_ENTRIES;
+    st_sec = st_sec + in/DIR_ENTRIES; // ??
 
     flpydsk_read_sector_ia( st_sec, a );
 
-    printformat("\nwriting directory to sector %d in %d\n", st_sec, in );
+    printformat("\nwriting directory to sector %d\n", st_sec);
     i = (in % DIR_ENTRIES) * 32;
 
     for(j=0;j<8;j++,i++)
