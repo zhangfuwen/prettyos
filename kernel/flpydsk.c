@@ -380,6 +380,12 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
 	{
 	    return -2;
 	}
+
+	/// TEST
+	flpydsk_calibrate(_CurrentDrive);  // calibrate the disk ==> cyl. 0
+	flpydsk_control_motor(true);
+	/// TEST
+
 	for(i=0; i<10; ++i)
 	{
 		// send the command
