@@ -486,12 +486,14 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	}
 
 	// read sector, turn motor off, return DMA buffer
-	uint32_t timeout = getCurrentSeconds()+2;
+	uint32_t timeout = 2; // limit
 	while( flpydsk_transfer_sector(head, track, sector, 0) == -1 )
     {
-	    if( (timeout-getCurrentSeconds()) <= 0 )
+	    timeout--;
+	    printformat("error read_sector. left: %d\n",timeout);
+	    if(timeout<= 0)
 	    {
-	        printformat("\nread_sector timeout: read/write error!\n");
+	        printformat("\nread_sector timeout: read error!\n");
 	        break;
 	    }
     }
