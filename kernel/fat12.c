@@ -74,7 +74,7 @@ int32_t flpydsk_write_sector_ia( int32_t i, void* a)
 
     uint32_t timeout = 2; // limit
     int32_t  retVal  = 0;
-    while( flpydsk_write_sector(i) != 0 )
+    while( flpydsk_write_sector_wo_motor(i) != 0 ) // without motor on/off
     {
         retVal = -1;
         timeout--;
@@ -204,6 +204,10 @@ int32_t flpydsk_write_boot_sector(struct boot_sector *bs)
     // boot signature
     a[510]= 0x55; a[511]= 0xAA;
 
+    /// turn motor on
+    flpydsk_control_motor(true); printformat("write_boot_sector.motor_on\n");
+    /// turn motor on
+
     return flpydsk_write_sector_ia( BOOT_SEC, a );
 }
 
@@ -266,6 +270,10 @@ int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
     a[i+2] = BYTE3(rs->FileSize);
     a[i+3] = BYTE4(rs->FileSize);
     i+=4;
+
+    /// turn motor on
+    flpydsk_control_motor(true); printformat("write_dir.motor_on\n");
+    /// turn motor on
 
     return flpydsk_write_sector_ia(st_sec,a);
 }
@@ -346,6 +354,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     b.Reserved2[6] = ' ';
     b.Reserved2[7] = ' ';
 
+
     /// write bootsector
     retVal = flpydsk_write_boot_sector(&b);
     if(retVal!=0)
@@ -380,6 +389,11 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     {
         a[i]=0;
     }
+
+    /// turn motor on
+    flpydsk_control_motor(true); printformat("format_fat1.motor_on\n");
+    /// turn motor on
+
     flpydsk_write_sector_ia( FAT1_SEC, a );
 
     //FAT2
@@ -389,6 +403,10 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     {
         a[i]=0;
     }
+    /// turn motor on
+    flpydsk_control_motor(true); printformat("format_fat2.motor_on\n");
+    /// turn motor on
+
     flpydsk_write_sector_ia( FAT2_SEC, a );
 
     //form volume root dir entry
