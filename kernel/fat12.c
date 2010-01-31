@@ -1,12 +1,15 @@
 #include "flpydsk.h"
 #include "fat12.h"
 
+uint8_t track0[9216];
+uint8_t track1[9216];
+
 int32_t flpydsk_read_directory()
 {
     int32_t error = -1; // return value
 
 	/// TEST
-	memset((void*)DMA_BUFFER, 0x0, 0x2400);
+	memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
 	/// TEST
 
 	uint8_t* retVal = flpydsk_read_sector(19);   // start at 0x2600: root directory (14 sectors)
@@ -92,6 +95,31 @@ int32_t flpydsk_write_sector_ia( int32_t i, void* a)
     return retVal;
 }
 
+int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer)
+{
+    memcpy((void*)DMA_BUFFER, trackbuffer, 0x2400);
+
+    uint32_t timeout = 2; // limit
+    int32_t  retVal  = 0;
+    while( flpydsk_write_sector_wo_motor(track*18) != 0 ) // without motor on/off
+    {
+        retVal = -1;
+        timeout--;
+        printformat("error write_track: %d. left attempts: %d\n",track,timeout);
+	    if(timeout<=0)
+	    {
+	        printformat("timeout\n");
+	        break;
+	    }
+    }
+    if(retVal==0)
+    {
+        printformat("success write_track: %d.\n",track);
+    }
+    return retVal;
+}
+
+
 int32_t flpydsk_read_sector_ia( int32_t i, void* a)
 {
     uint8_t* retVal = flpydsk_read_sector(i); // retVal should be DMA_BUFFER
@@ -116,9 +144,9 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
   or any later version.
 *****************************************************************************/
 
-int32_t flpydsk_write_boot_sector(struct boot_sector *bs)
+int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
 {
-    int32_t i,j;
+    int32_t i,j,k;
     uint8_t a[512];
 
     flpydsk_read_sector_ia( BOOT_SEC, a ); ///TEST
@@ -204,87 +232,26 @@ int32_t flpydsk_write_boot_sector(struct boot_sector *bs)
     // boot signature
     a[510]= 0x55; a[511]= 0xAA;
 
-    /// turn motor on
-    flpydsk_control_motor(true); printformat("write_boot_sector.motor_on\n");
-    /// turn motor on
 
-    return flpydsk_write_sector_ia( BOOT_SEC, a );
+    // flpydsk_control_motor(true); printformat("write_boot_sector.motor_on\n");
+    // return flpydsk_write_sector_ia( BOOT_SEC, a );
+    /// prepare sector 0 of track 0
+    for(k=0;k<511;k++)
+    {
+        track0[k] = a[k];
+    }
+    return 0;
 }
 
-int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
-{
-    uint8_t a[512];
-    int32_t i,j;
 
-    st_sec = st_sec + in/DIR_ENTRIES; // ??
-
-    flpydsk_read_sector_ia( st_sec, a );
-
-    printformat("\nwriting directory to sector %d\n", st_sec);
-    i = (in % DIR_ENTRIES) * 32;
-
-    for(j=0;j<8;j++,i++)
-    {
-        a[i] = rs->Filename[j];
-    }
-
-    for(j=0;j<3;j++,i++)
-    {
-        a[i] = rs->Extension[j];
-    }
-
-    a[i++] = rs->Attributes;
-    a[i++] = rs->NTRes;
-    a[i++] = rs->CrtTimeTenth;
-
-    a[i]   = BYTE1(rs->CrtTime);
-    a[i+1] = BYTE2(rs->CrtTime);
-    i+= 2;
-
-    a[i]   = BYTE1(rs->CrtDate);
-    a[i+1] = BYTE2(rs->CrtDate);
-    i+= 2;
-
-    a[i]   = BYTE1(rs->LstAccDate);
-    a[i+1] = BYTE2(rs->LstAccDate);
-    i+=2;
-
-    a[i]   = BYTE1(rs->FstClusHI);
-    a[i+1] = BYTE2(rs->FstClusHI);
-    i+=2;
-
-    a[i]   = BYTE1(rs->WrtTime);
-    a[i+1] = BYTE2(rs->WrtTime);
-    i+=2;
-
-    a[i]   = BYTE1(rs->WrtDate);
-    a[i+1] = BYTE2(rs->WrtDate);
-    i+=2;
-
-    a[i]   = BYTE1(rs->FstClusLO);
-    a[i+1] = BYTE2(rs->FstClusLO);
-    i+=2;
-
-    a[i]   = BYTE1(rs->FileSize);
-    a[i+1] = BYTE2(rs->FileSize);
-    a[i+2] = BYTE3(rs->FileSize);
-    a[i+3] = BYTE4(rs->FileSize);
-    i+=4;
-
-    /// turn motor on
-    flpydsk_control_motor(true); printformat("write_dir.motor_on\n");
-    /// turn motor on
-
-    return flpydsk_write_sector_ia(st_sec,a);
-}
 
 int32_t flpydsk_format(char* vlab) //VolumeLabel
 {
-    int32_t retVal;
+    printformat("Format process started.\n");
+
     struct  boot_sector b;
-    struct  dir_entry   d;
     uint8_t a[512];
-    int32_t i, j;
+    int32_t i,j;
 
     /*
        int32_t dt, tm; // for VolumeSerial
@@ -355,89 +322,111 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     b.Reserved2[7] = ' ';
 
 
-    /// write bootsector
-    retVal = flpydsk_write_boot_sector(&b);
-    if(retVal!=0)
+    /// bootsector
+    flpydsk_prepare_boot_sector(&b);
+    printformat("bootsector prepared.\n");
+
+    /// prepare FATs
+    for(i=512;i<9216;i++)
     {
-        printformat("E_Disk - flpydsk_write_boot_sector\n");
-        return E_DISK;
+        track0[i] = 0;
+    }
+    for(i=0;i<9216;i++)
+    {
+        track1[i] = 0;
     }
 
-    for(i=0;i<512;i++)
-    {
-        a[i] = 0;
-    }
-    printformat("Format completed (in percent):\n");
-
-    /// write!
-    for(i=1;i<33;i++)
-    {
-        retVal = flpydsk_write_sector_ia(i,a);
-        if(retVal != 0)
-        {
-            printformat("E_Disk - flpydsk_write_sector - sector 1-32 nullen: %d\n",i);
-            return E_DISK;
-        }
-        printformat("%d ",(int32_t)i*100/32);
-    }
-
-    /// write two reserved FAT entries and others as 0
-    //FAT1
-    flpydsk_read_sector_ia( FAT1_SEC, a ); ///TEST
     a[0]=0xF0; a[1]=0xFF; a[2]=0xFF;
-    for(i=3;i<512;i++)
-    {
-        a[i]=0;
-    }
-
-    /// turn motor on
-    flpydsk_control_motor(true); printformat("format_fat1.motor_on\n");
-    /// turn motor on
-
-    flpydsk_write_sector_ia( FAT1_SEC, a );
-
-    //FAT2
-    flpydsk_read_sector_ia( FAT2_SEC, a ); ///TEST
-    a[0]=0xF0; a[1]=0xFF; a[2]=0xFF;
-    for(i=3;i<512;i++)
-    {
-        a[i]=0;
-    }
-    /// turn motor on
-    flpydsk_control_motor(true); printformat("format_fat2.motor_on\n");
-    /// turn motor on
-
-    flpydsk_write_sector_ia( FAT2_SEC, a );
-
-    //form volume root dir entry
-    for(i=0;i<8;i++)
-    {
-        d.Filename[i] = vlab[i];
-    }
     for(i=0;i<3;i++)
     {
-        d.Extension[i] = vlab[8+i];
+        track0[FAT1_SEC*512+i]=a[i]; // FAT1 starts at 0x200 (sector 1)
+        track0[FAT2_SEC*512+i]=a[i]; // FAT2 starts at 0x1400 (sector 10)
     }
-    d.Attributes   = ATTR_VOLUME_ID | ATTR_ARCHIVE;
-    d.NTRes        = 0;
-    d.CrtTimeTenth = 0;
-    d.CrtTime      = 0;
-    d.CrtDate      = 0;
-    d.LstAccDate   = 0;
-    d.FstClusHI    = 0;
-    d.WrtTime      = 0; /* form_time(); */
-    d.WrtDate      = 0; /* form_date(); */
-    d.FstClusLO    = 0;
-    d.FileSize     = 0;
 
-    /// write directory
-    retVal = flpydsk_write_dir( &d, 0, ROOT_SEC );
-    if(retVal != 0)
+    /// prepare first root directory entry (volume label)
+    for(i=0;i<11;i++)
     {
-        printformat("E_Disk - flpydsk_write_dir\n");
-        return E_DISK;
+        track1[512+i] = vlab[i];
+    }
+    track1[512+11] = ATTR_VOLUME_ID | ATTR_ARCHIVE;
+
+    for(i=7680;i<9216;i++)
+    {
+        track1[i] = 0xF6; // format ID of MS Windows
     }
 
-    printformat("\nFormat Complete.\n");
+    /// write track 0 & track 1
+    flpydsk_control_motor(true); printformat("writing tracks 1 & 2\n");
+    flpydsk_write_track_ia( 0, track0);
+    flpydsk_write_track_ia( 1, track1);
+    printformat("\nQuickformat Complete.\n");
     return 0;
 }
+
+/*
+int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
+{
+    uint8_t a[512];
+    int32_t i,j;
+
+    st_sec = st_sec + in/DIR_ENTRIES; // ??
+
+    flpydsk_read_sector_ia( st_sec, a );
+
+    printformat("\nwriting directory to sector %d\n", st_sec);
+    i = (in % DIR_ENTRIES) * 32;
+
+    for(j=0;j<8;j++,i++)
+    {
+        a[i] = rs->Filename[j];
+    }
+
+    for(j=0;j<3;j++,i++)
+    {
+        a[i] = rs->Extension[j];
+    }
+
+    a[i++] = rs->Attributes;
+    a[i++] = rs->NTRes;
+    a[i++] = rs->CrtTimeTenth;
+
+    a[i]   = BYTE1(rs->CrtTime);
+    a[i+1] = BYTE2(rs->CrtTime);
+    i+= 2;
+
+    a[i]   = BYTE1(rs->CrtDate);
+    a[i+1] = BYTE2(rs->CrtDate);
+    i+= 2;
+
+    a[i]   = BYTE1(rs->LstAccDate);
+    a[i+1] = BYTE2(rs->LstAccDate);
+    i+=2;
+
+    a[i]   = BYTE1(rs->FstClusHI);
+    a[i+1] = BYTE2(rs->FstClusHI);
+    i+=2;
+
+    a[i]   = BYTE1(rs->WrtTime);
+    a[i+1] = BYTE2(rs->WrtTime);
+    i+=2;
+
+    a[i]   = BYTE1(rs->WrtDate);
+    a[i+1] = BYTE2(rs->WrtDate);
+    i+=2;
+
+    a[i]   = BYTE1(rs->FstClusLO);
+    a[i+1] = BYTE2(rs->FstClusLO);
+    i+=2;
+
+    a[i]   = BYTE1(rs->FileSize);
+    a[i+1] = BYTE2(rs->FileSize);
+    a[i+2] = BYTE3(rs->FileSize);
+    a[i+3] = BYTE4(rs->FileSize);
+    i+=4;
+
+    /// turn motor on
+    flpydsk_control_motor(true); printformat("write_dir.motor_on\n");
+    /// turn motor on
+    return flpydsk_write_sector_ia(st_sec,a);
+}
+*/

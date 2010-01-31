@@ -6,16 +6,10 @@
 
 #include "os.h"
 
-//Macros
-#define BYTE1(a) (  a       & 0xFF)
-#define BYTE2(a) (( a>> 8 ) & 0xFF)
-#define BYTE3(a) (( a>>16 ) & 0xFF)
-#define BYTE4(a) (( a>>24 ) & 0xFF)
-
-//Error
+// Error
 #define E_DISK -1
 
-//Attributes in Root Directory
+// Attributes in Root Directory
 #define ATTR_READ_ONLY       0x01
 #define ATTR_HIDDEN          0x02
 #define ATTR_SYSTEM          0x04
@@ -25,7 +19,7 @@
 #define ATTR_LONG_NAME       0x0F
 #define ATTR_LONG_NAME_MASK  0x3F
 
-//Start Sector Values
+// Start Sector Values
 #define BOOT_SEC      0
 #define FAT1_SEC      1
 #define FAT2_SEC     10
@@ -34,7 +28,7 @@
 #define MAX_BLOCK  2849
 #define MAX_SECTOR 2880
 
-//Number of Entries
+// Number of Entries
 #define DIR_ENTRIES 16
 
 struct boot_sector
@@ -79,10 +73,9 @@ struct dir_entry
  };
 
 
-/********************************************/
+/*************** functions ******************/
 
-
-int32_t flpydsk_write_boot_sector(struct boot_sector *bs);
+int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);
 int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec);
 int32_t flpydsk_read_directory();
 int32_t flpydsk_format(char* vlab); //VolumeLabel
