@@ -252,11 +252,25 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
 
 int32_t flpydsk_format(char* vlab) //VolumeLabel
 {
-    printformat("Format process started.\n");
+    printformat("Content of Disc:\n");
 
     struct  boot_sector b;
     uint8_t a[512];
     int32_t i,j;
+
+    ///TEST
+    struct dir_entry entry;
+    for(i=0;i<224;i++)
+    {
+        read_dir(&entry, i, 19);
+        if(strcmp((&entry)->Filename,"")==0)
+        {
+            break;
+        }
+        sleepSeconds(2);
+    }
+    ///TEST
+    printformat("Format process started.\n");
 
     /*
        int32_t dt, tm; // for VolumeSerial
@@ -365,7 +379,100 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     flpydsk_write_track_ia( 0, track0);
     flpydsk_write_track_ia( 1, track1);
     printformat("Quickformat complete.\n\n");
+
+    ///TEST
+    printformat("Content of Disc:\n");
+    // struct dir_entry entry;
+    for(i=0;i<224;i++)
+    {
+        read_dir(&entry, i, 19);
+        if(strcmp((&entry)->Filename,"")==0)
+        {
+            break;
+        }
+    }
+    printformat("\n");
+    ///TEST
+
     return 0;
+}
+
+
+
+
+void parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs)
+{
+   int32_t i,j;
+   i = (in %DIR_ENTRIES) * 32;
+
+   for(j=0;j<8;j++,i++)
+   {
+       rs->Filename[j] = a[i];
+   }
+
+   for(j=0;j<3;j++,i++)
+   {
+       rs->Extension[j] = a[i];
+   }
+
+   rs->Attributes   = a[i++];
+   rs->NTRes        = a[i++];
+   rs->CrtTimeTenth = a[i++];
+   rs->CrtTime      = FORM_INT(a[i],a[i+1]);                  i+=2;
+   rs->CrtDate      = FORM_INT(a[i],a[i+1]);                  i+=2;
+   rs->LstAccDate   = FORM_INT(a[i],a[i+1]);                  i+=2;
+   rs->FstClusHI    = FORM_INT(a[i],a[i+1]);                  i+=2;
+   rs->WrtTime      = FORM_INT(a[i],a[i+1]);                  i+=2;
+   rs->WrtDate      = FORM_INT(a[i],a[i+1]);                  i+=2;
+   rs->FstClusLO    = FORM_INT(a[i],a[i+1]);                  i+=2;
+   rs->FileSize     = FORM_LONG(a[i],a[i+1],a[i+2],a[i+3]);   i+=4;
+}
+
+void print_dir(struct dir_entry* rs)
+{
+    int32_t j;
+
+    if(strcmp(rs->Filename,"")!=0)
+    {
+        printformat("File Name : ");
+        for(j=0;j<8;j++)
+        {
+            printformat("%c",rs->Filename[j]);
+        }
+        printformat("\n");
+        printformat("Extension : ");
+        for(j=0;j<3;j++)
+        {
+            printformat("%c",rs->Extension[j]);
+        }
+        printformat("\n");
+        printformat("Attributes   = %d\t %x\n",rs->Attributes,   rs->Attributes      );
+        printformat("NTRes        = %d\t %x\n",rs->NTRes,        rs->NTRes           );
+        printformat("CrtTimeTenth = %d\t %x\n",rs->CrtTimeTenth, rs->CrtTimeTenth    );
+        printformat("CrtTime      = %d\t %x\n",rs->CrtTime,      rs->CrtTime         );
+        printformat("CrtDate      = %d\t %x\n",rs->CrtDate,      rs->CrtDate         );
+        printformat("LstAccDate   = %d\t %x\n",rs->LstAccDate,   rs->LstAccDate      );
+        printformat("FstClusHI    = %d\t %x\n",rs->FstClusHI,    rs->FstClusHI       );
+        printformat("WrtTime      = %d\t %x\n",rs->WrtTime,      rs->WrtTime         );
+        printformat("WrtDate      = %d\t %x\n",rs->WrtDate,      rs->WrtDate         );
+        printformat("FstClusLO    = %d\t %x\n",rs->FstClusLO,    rs->FstClusLO       );
+        printformat("FileSize     = %d\t %x\n",rs->FileSize,     rs->FileSize        );
+        printformat("\n");
+    }
+}
+
+int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
+{
+   uint8_t a[512];
+   st_sec = st_sec + in/DIR_ENTRIES;
+
+   if(flpydsk_read_sector_ia(st_sec,a) != 0)
+   {
+       return E_DISK;
+   }
+   parse_dir(a,in,rs);
+   print_dir(rs);
+   return 0;
 }
 
 /*
@@ -429,9 +536,8 @@ int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
     a[i+3] = BYTE4(rs->FileSize);
     i+=4;
 
-    /// turn motor on
+    ///TODO: do not use sector-wise writing!
     flpydsk_control_motor(true); printformat("write_dir.motor_on\n");
-    /// turn motor on
     return flpydsk_write_sector_ia(st_sec,a);
 }
 */

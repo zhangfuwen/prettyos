@@ -27,6 +27,8 @@ typedef signed char          int8_t;
 #define __bool_true_false_are_defined 1
 
 // Macros
+#define FORM_INT(a,b) ((b<<8)|a)
+#define FORM_LONG(a,b,c,d) ((d<<24)|(c<<16)|(b<<8)|a)
 #define BYTE1(a) (  a       & 0xFF)
 #define BYTE2(a) (( a>> 8 ) & 0xFF)
 #define BYTE3(a) (( a>>16 ) & 0xFF)

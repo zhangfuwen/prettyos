@@ -28,8 +28,10 @@
 #define MAX_BLOCK  2849
 #define MAX_SECTOR 2880
 
-// Number of Entries
+// Numbers
 #define DIR_ENTRIES 16
+#define MAX_DIR     10
+#define MAX_FILE    10
 
 struct boot_sector
 {
@@ -75,11 +77,19 @@ struct dir_entry
 
 /*************** functions ******************/
 
-int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);
-int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec);
 int32_t flpydsk_read_directory();
+
+int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);
 int32_t flpydsk_format(char* vlab); //VolumeLabel
 int32_t flpydsk_write_sector_ia( int32_t i, void* a);
+int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer);
 int32_t flpydsk_read_sector_ia ( int32_t i, void* a);
+
+void    parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs);
+void    print_dir(struct dir_entry* rs);
+int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec);
+
+//int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec);
+
 
 #endif
