@@ -298,9 +298,9 @@ void flpydsk_reset()
 	flpydsk_write_ccr(0);              // transfer speed 500kb/s
 	flpydsk_drive_data(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
 
-	flpydsk_control_motor(true);printformat("reset.motor_on\n");
+	flpydsk_control_motor(true);       //printformat("reset.motor_on\n");
 	flpydsk_calibrate(_CurrentDrive);  // calibrate the disk
-	flpydsk_control_motor(false);printformat("reset.motor_off\n");
+	flpydsk_control_motor(false);      // printformat("reset.motor_off\n");
 }
 
 /*
@@ -479,7 +479,7 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
 	// turn motor on and seek to track
-	flpydsk_control_motor(true);printformat("read_sector.motor_on\n");
+	flpydsk_control_motor(true);         // printformat("read_sector.motor_on\n");
 	if(flpydsk_seek (track, head))
 	{
 	    return 0;
@@ -497,7 +497,7 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	        break;
 	    }
     }
-	flpydsk_control_motor(false);printformat("read_sector.motor_off\n");
+	flpydsk_control_motor(false); // printformat("read_sector.motor_off\n");
 	return (uint8_t*)DMA_BUFFER;
 }
 
@@ -511,18 +511,18 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 	flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
 	// turn motor on and seek to track
-	flpydsk_control_motor(true); printformat("write_sector.motor_on\n");
-	if(flpydsk_seek (track, head)!=0) // <-- problem with real hardware
+	flpydsk_control_motor(true);      // printformat("write_sector.motor_on\n");
+	if(flpydsk_seek (track, head)!=0)
 	{
 	    printformat("flpydsk_seek not ok. sector not written.\n");
-	    flpydsk_control_motor(false);printformat("write_sector.motor_off\n");
+	    flpydsk_control_motor(false); // printformat("write_sector.motor_off\n");
 	    return -2;
 	}
 	else
 	{
         // printformat("flpydsk_seek ok\n");
         flpydsk_transfer_sector(head, track, sector, 1);
-        flpydsk_control_motor(false);printformat("write_sector.motor_off\n");
+        flpydsk_control_motor(false); // printformat("write_sector.motor_off\n");
         return 0;
 	}
 }

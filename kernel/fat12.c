@@ -1,6 +1,11 @@
 #include "flpydsk.h"
 #include "fat12.h"
 
+/*
+Links:
+http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
+*/
+
 uint8_t track0[9216];
 uint8_t track1[9216];
 
@@ -17,7 +22,7 @@ int32_t flpydsk_read_directory()
 	{
 	    printformat("\nerror: buffer = flpydsk_read_sector(...): %X\n",retVal);
 	}
-	printformat("<Floppy Disc Root Dir>\n");
+	printformat("<Floppy Disc Directory>\n");
 
 	uint32_t i;
 	for(i=0;i<224;++i)       // 224 Entries * 32 Byte
@@ -54,7 +59,7 @@ int32_t flpydsk_read_directory()
 
             // attributes
 			printformat("\t");
-			if(*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100) printformat("\t");
+			if(*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100)                   printformat("\t");
 			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) == 0x08 ) printformat(" (vol)");
 			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x10 ) == 0x10 ) printformat(" (dir)");
 			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x01 ) == 0x01 ) printformat(" (r/o)");
@@ -63,7 +68,7 @@ int32_t flpydsk_read_directory()
 			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x20 ) == 0x20 ) printformat(" (arc)");
 
 			// 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
-            printformat("  first sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
+            printformat("  1st sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
             printformat("\n"); // next root directory entry
 		  }//if
 	}//for
@@ -81,7 +86,7 @@ int32_t flpydsk_write_sector_ia( int32_t i, void* a)
     {
         retVal = -1;
         timeout--;
-        printformat("error write_sector. left: %d\n",timeout);
+        printformat("error write_sector. attempts left: %d\n",timeout);
 	    if(timeout<=0)
 	    {
 	        printformat("timeout\n");
@@ -114,7 +119,7 @@ int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer)
     }
     if(retVal==0)
     {
-        printformat("success write_track: %d.\n",track);
+        // printformat("success write_track: %d.\n",track);
     }
     return retVal;
 }
@@ -274,14 +279,14 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     b.jumpBoot[1] = 0x3c;
     b.jumpBoot[2] = 0x90;
 
-    b.SysName[0] = 'P';
-    b.SysName[1] = 'R';
-    b.SysName[2] = 'E';
-    b.SysName[3] = 'T';
-    b.SysName[4] = 'T';
-    b.SysName[5] = 'Y';
-    b.SysName[6] = 'O';
-    b.SysName[7] = 'S';
+    b.SysName[0] = 'M';
+    b.SysName[1] = 'S';
+    b.SysName[2] = 'W';
+    b.SysName[3] = 'I';
+    b.SysName[4] = 'N';
+    b.SysName[5] = '4';
+    b.SysName[6] = '.';
+    b.SysName[7] = '1';
 
     b.charsPerSector    =  512;
     b.SectorsPerCluster =    1;
@@ -324,7 +329,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
 
     /// bootsector
     flpydsk_prepare_boot_sector(&b);
-    printformat("bootsector prepared.\n");
+    // printformat("bootsector prepared.\n");
 
     /// prepare FATs
     for(i=512;i<9216;i++)
@@ -359,7 +364,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     flpydsk_control_motor(true); printformat("writing tracks 1 & 2\n");
     flpydsk_write_track_ia( 0, track0);
     flpydsk_write_track_ia( 1, track1);
-    printformat("\nQuickformat Complete.\n");
+    printformat("Quickformat complete.\n\n");
     return 0;
 }
 
