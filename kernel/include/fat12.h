@@ -87,7 +87,11 @@ int32_t flpydsk_read_sector_ia ( int32_t i, void* a);
 
 void    parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs);
 void    print_dir(struct dir_entry* rs);
-int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec);
+int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag);
+uint32_t search_file_first_cluster(char* name, char* ext);
+void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in);
+int32_t read_fat(int32_t* fat_entry, int32_t in, int32_t st_sec);
+
 
 //int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec);
 

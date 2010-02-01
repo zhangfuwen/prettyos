@@ -252,29 +252,30 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
 
 int32_t flpydsk_format(char* vlab) //VolumeLabel
 {
-    printformat("Content of Disc:\n");
-
-    struct  boot_sector b;
+    struct boot_sector b;
     uint8_t a[512];
     int32_t i,j;
-
-    ///TEST
-    struct dir_entry entry;
-    for(i=0;i<224;i++)
-    {
-        read_dir(&entry, i, 19);
-        if(strcmp((&entry)->Filename,"")==0)
-        {
-            break;
-        }
-        sleepSeconds(2);
-    }
-    ///TEST
-    printformat("Format process started.\n");
-
     /*
        int32_t dt, tm; // for VolumeSerial
     */
+
+    ///TEST
+    printformat("Search for \"KERNEL.BIN\" in root directory\n");
+    uint32_t firstCluster = search_file_first_cluster("KERNEL  ","BIN");
+    printformat("FirstCluster (retVal): %x\n",firstCluster);
+    ///TEST
+
+    ///TEST
+    printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
+    int32_t fat_entry[100];
+    for(i=0;i<100;i++)
+    {
+        read_fat(&fat_entry[i], i, FAT1_SEC);
+    }
+    ///TEST
+
+
+    printformat("Format process started.\n");
 
     for(i=0;i<11;i++)
     {
@@ -382,10 +383,10 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
 
     ///TEST
     printformat("Content of Disc:\n");
-    // struct dir_entry entry;
+    struct dir_entry entry;
     for(i=0;i<224;i++)
     {
-        read_dir(&entry, i, 19);
+        read_dir(&entry, i, 19, true);
         if(strcmp((&entry)->Filename,"")==0)
         {
             break;
@@ -396,8 +397,6 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
 
     return 0;
 }
-
-
 
 
 void parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs)
@@ -461,7 +460,9 @@ void print_dir(struct dir_entry* rs)
     }
 }
 
-int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
+// Disk --sector_read--> a[...] --parse_dir--> rs --print_dir--> ScreenOutput
+
+int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
 {
    uint8_t a[512];
    st_sec = st_sec + in/DIR_ENTRIES;
@@ -471,9 +472,90 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
        return E_DISK;
    }
    parse_dir(a,in,rs);
-   print_dir(rs);
+   if(flag==true)
+   {
+       print_dir(rs);
+   }
    return 0;
 }
+
+uint32_t search_file_first_cluster(char* name, char* ext)
+{
+   struct dir_entry entry;
+   int32_t i;
+   char buffer1[10];
+   char buffer2[5];
+   for(i=0;i<224;i++)
+   {
+       read_dir(&entry, i, 19, false);
+       char* dest1 = strcat(strncpy(buffer1,(&entry)->Filename,8),"");
+       char* dest2 = strcat(strncpy(buffer2,(&entry)->Extension,3),"");
+       printformat("->%s.%s<-\n",dest1,dest2);
+       if((strcmp(dest1,name)==0) && (strcmp(dest2,ext)==0))
+       {
+           break;
+       }
+    }
+    printformat("name: %s 1stClusterLO: %d 1stClusterHI: %d\n",name,(&entry)->FstClusLO,(&entry)->FstClusHI);
+    return FORM_INT((&entry)->FstClusLO,(&entry)->FstClusHI); // TODO: nicht ok?
+}
+
+void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
+{
+    int32_t fat;
+    if(in%2 == 0)
+    {
+        fat = ((fat2 & 0x0f) << 8) | fat1;
+    }
+    else
+    {
+        fat = (fat2 << 4) | ((fat1 &0x0f0) >> 4);
+    }
+    fat = fat & 0xFFF;
+    *fat_entry = fat;
+
+    //printformat("fat1: %x fat2: %x fat: %x\n", fat1,fat2,fat);
+    printformat("%x ", fat);
+}
+
+int32_t read_fat(int32_t* fat_entry, int32_t in, int32_t st_sec)
+{
+    int32_t fat_in, res;
+    uint8_t a[512];
+    int32_t fat1, fat2;
+    fat_in = (in*3)/2;
+    st_sec = st_sec + fat_in/512;
+    if(fat_in % 512 == 511)
+    {
+        //spans sectors
+        res = flpydsk_read_sector_ia(st_sec,a);
+        if(res != 0)
+        {
+            return E_DISK;
+        }
+        fat1 = a[511];
+        res = flpydsk_read_sector_ia(st_sec+1,a);
+        fat2 = a[0];
+    }
+    else
+    {
+        fat_in = fat_in%512;
+        res = flpydsk_read_sector_ia(st_sec,a);
+        if(res != 0)
+        {
+            return E_DISK;
+        }
+        fat1 = a[fat_in] & 0xff;
+        fat2 = a[fat_in+1] & 0xff;
+     }
+     parse_fat(fat_entry,fat1,fat2,in);
+     //Even And Odd logical clusters
+
+     return 0;
+}
+
+
+
 
 /*
 int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
