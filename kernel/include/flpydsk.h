@@ -30,6 +30,7 @@ uint8_t flpydsk_get_working_drive();
 
 int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation);
 uint8_t* flpydsk_read_sector(int32_t sectorLBA);
+uint8_t* flpydsk_read_sector_wo_motor(int32_t sectorLBA);
 int32_t flpydsk_write_sector(int32_t sectorLBA);
 int32_t flpydsk_write_sector_wo_motor(int32_t sectorLBA);
 

@@ -127,7 +127,7 @@ int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer)
 
 int32_t flpydsk_read_sector_ia( int32_t i, void* a)
 {
-    uint8_t* retVal = flpydsk_read_sector(i); // retVal should be DMA_BUFFER
+    uint8_t* retVal = flpydsk_read_sector_wo_motor(i); // retVal should be DMA_BUFFER
     memcpy( a, (void*)DMA_BUFFER, 0x200);
     if(retVal == (uint8_t*)DMA_BUFFER)
     {
@@ -258,6 +258,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     /*
        int32_t dt, tm; // for VolumeSerial
     */
+    flpydsk_control_motor(true);
 
     ///TEST
     printformat("Search for \"KERNEL.BIN\" in root directory\n");
@@ -482,22 +483,33 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
 uint32_t search_file_first_cluster(char* name, char* ext)
 {
    struct dir_entry entry;
-   int32_t i;
-   char buffer1[10];
-   char buffer2[5];
-   for(i=0;i<224;i++)
+   int32_t i,j;
+   char buf1[10];
+   char buf2[5];
+
+   for(i=0;i<4;i++)
    {
        read_dir(&entry, i, 19, false);
-       char* dest1 = strcat(strncpy(buffer1,(&entry)->Filename,8),"");
-       char* dest2 = strcat(strncpy(buffer2,(&entry)->Extension,3),"");
-       printformat("->%s.%s<-\n",dest1,dest2);
-       if((strcmp(dest1,name)==0) && (strcmp(dest2,ext)==0))
+       // printformat("Filename: %s\n",(&entry)->Filename);
+       // printformat("Fileext : %s\n",(&entry)->Extension);
+       for(j=0;j<3;j++)
+       {
+           buf1[j] = (&entry)->Filename[j];
+           buf2[j] = (&entry)->Extension[j];
+       }
+       for(j=3;j<8;j++)
+       {
+           buf1[j] = (&entry)->Filename[j];
+       }
+       buf1[8]=0; //string termination Filename
+       buf2[3]=0; //string termination Extension
+
+       if((strcmp(buf1,name)==0) && (strcmp(buf2,ext)==0))
        {
            break;
        }
     }
-    printformat("name: %s 1stClusterLO: %d 1stClusterHI: %d\n",name,(&entry)->FstClusLO,(&entry)->FstClusHI);
-    return FORM_INT((&entry)->FstClusLO,(&entry)->FstClusHI); // TODO: nicht ok?
+    return FORM_INT((&entry)->FstClusLO,(&entry)->FstClusHI);
 }
 
 void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
@@ -554,7 +566,18 @@ int32_t read_fat(int32_t* fat_entry, int32_t in, int32_t st_sec)
      return 0;
 }
 
+/*
 
+Clusters are numbered from a cluster offset as defined above (?) and the FilestartCluster is in 0x1a.
+This would mean the first data segment X can be calculated using the Boot Sector fields:
+
+FileStartSector =
+ReservedSectors(0x0e)
++ (NumofFAT(0x10) * Sectors2FAT(0x16))
++ (MaxRootEntry(0x11) * 32 / BytesPerSector(0x0b))
++ ((X − 2) * SectorsPerCluster(0x0d))
+
+*/
 
 
 /*

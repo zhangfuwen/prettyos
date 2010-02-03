@@ -501,6 +501,33 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	return (uint8_t*)DMA_BUFFER;
 }
 
+// read a sector
+uint8_t* flpydsk_read_sector_wo_motor(int32_t sectorLBA)
+{
+    if(_CurrentDrive >= 4) return 0; // floppies 0-3 possible
+	int32_t head=0, track=0, sector=1;
+	flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
+
+	if(flpydsk_seek (track, head))
+	{
+	    return 0;
+	}
+
+	// read sector, turn motor off, return DMA buffer
+	uint32_t timeout = 2; // limit
+	while( flpydsk_transfer_sector(head, track, sector, 0) == -1 )
+    {
+	    timeout--;
+	    printformat("error read_sector. left: %d\n",timeout);
+	    if(timeout<= 0)
+	    {
+	        printformat("\nread_sector timeout: read error!\n");
+	        break;
+	    }
+    }
+	return (uint8_t*)DMA_BUFFER;
+}
+
 // write a sector
 int32_t flpydsk_write_sector(int32_t sectorLBA)
 {
@@ -536,9 +563,7 @@ int32_t flpydsk_write_sector_wo_motor(int32_t sectorLBA)
 	int32_t head=0, track=0, sector=1;
 	flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
-	// turn motor on and seek to track
-
-	if(flpydsk_seek (track, head)!=0) // <-- problem with real hardware
+	if(flpydsk_seek (track, head)!=0)
 	{
 	    printformat("flpydsk_seek not ok. sector not written.\n");
 	    return -2;
@@ -550,3 +575,4 @@ int32_t flpydsk_write_sector_wo_motor(int32_t sectorLBA)
         return 0;
 	}
 }
+
