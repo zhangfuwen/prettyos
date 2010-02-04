@@ -84,6 +84,7 @@ int32_t flpydsk_format(char* vlab); //VolumeLabel
 int32_t flpydsk_write_sector_ia( int32_t i, void* a);
 int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer);
 int32_t flpydsk_read_sector_ia ( int32_t i, void* a);
+int32_t file_ia(uint32_t number, int32_t* fatEntry, uint32_t firstCluster, void* file);
 
 void    parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs);
 void    print_dir(struct dir_entry* rs);

@@ -139,6 +139,48 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
     }
 }
 
+int32_t file_ia(uint32_t number, int32_t* fatEntry, uint32_t firstCluster, void* file)
+{
+    uint8_t a[512];
+    uint32_t sectornumber;
+    uint32_t i, count, pos;  // count for chains between 0xFFF, pos for data position
+    const uint32_t ADD = 31;
+
+    // copy first cluster
+    sectornumber = firstCluster+ADD;
+    printformat("\n\n1st sector: %d\n",sectornumber);
+    flpydsk_read_sector_ia(sectornumber,a); // read
+    memcpy( file, (void*)a, 512);
+
+    // // find chain in fat
+    count=1;
+    pos=0;
+    for(i=0;i<20;i++) /// MAX_FAT_ENTRIES ???
+    {
+        printformat("\ni: %d fatentry: %x\n",i,fatEntry[i]);
+        if(fatEntry[i]==0xFFF)
+        {
+            count++;
+            continue;
+        }
+        if(count == number)
+        {
+            // copy data from chain
+            pos++;
+            sectornumber = fatEntry[i]+ADD;
+            printformat("\nsector: %d\n",sectornumber);
+            flpydsk_read_sector_ia(sectornumber,a); // read
+            memcpy( (void*)(file+pos*512), (void*)a, 512);
+        }
+        if(count == number+1)
+        {
+            break;
+        }
+    }
+
+    return 0;
+}
+
 /*****************************************************************************
   The following functions are derived from source code of the dynacube team.
   which was published in the year 2004 at http://www.dynacube.net
@@ -260,23 +302,41 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     */
     flpydsk_control_motor(true);
 
-    ///TEST
-    printformat("Search for \"KERNEL.BIN\" in root directory\n");
-    uint32_t firstCluster = search_file_first_cluster("KERNEL  ","BIN");
+    ///TEST TODO: auslagern in eigene Funktion
+    printformat("Search for \"BOOT2.BIN\" in root directory\n");
+    uint32_t firstCluster = search_file_first_cluster("BOOT2   ","BIN");
     printformat("FirstCluster (retVal): %x\n",firstCluster);
-    ///TEST
 
-    ///TEST
     printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
-    int32_t fat_entry[100];
-    for(i=0;i<100;i++)
+    int32_t fat_entry[20];
+    for(i=0;i<20;i++)
     {
         read_fat(&fat_entry[i], i, FAT1_SEC);
+    }
+
+    uint8_t file[5120];
+    file_ia(2,fat_entry,firstCluster,file); // TODO: woher kommt die 2?
+    printformat("\nFile content: ");
+    printformat("\n1st sector:\n");
+    for(i=0;i<20;i++)
+    {
+        printformat("%x ",file[i]);
+    }
+    printformat("\n2nd sector:\n");
+    for(i=512;i<532;i++)
+    {
+        printformat("%x ",file[i]);
+    }
+    printformat("\n3rd sector:\n");
+    for(i=1024;i<1044;i++)
+    {
+        printformat("%x ",file[i]);
     }
     ///TEST
 
 
-    printformat("Format process started.\n");
+
+    printformat("\n\nFormat process started.\n");
 
     for(i=0;i<11;i++)
     {
@@ -387,7 +447,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     struct dir_entry entry;
     for(i=0;i<224;i++)
     {
-        read_dir(&entry, i, 19, true);
+        read_dir(&entry, i, 19, false); // testweise unterdrückt
         if(strcmp((&entry)->Filename,"")==0)
         {
             break;
@@ -487,7 +547,7 @@ uint32_t search_file_first_cluster(char* name, char* ext)
    char buf1[10];
    char buf2[5];
 
-   for(i=0;i<4;i++)
+   for(i=0;i<224;i++)
    {
        read_dir(&entry, i, 19, false);
        // printformat("Filename: %s\n",(&entry)->Filename);
