@@ -8,6 +8,7 @@ http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 
 uint8_t track0[9216];
 uint8_t track1[9216];
+uint8_t file[51200];
 
 int32_t flpydsk_read_directory()
 {
@@ -298,7 +299,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     printformat("Search for a file\n");
 
     struct file f;
-    uint32_t firstCluster = search_file_first_cluster("PROGRAM ","ELF", &f);
+    uint32_t firstCluster = search_file_first_cluster("KERNEL  ","BIN", &f);
     printformat("FirstCluster (retVal): %d\n",firstCluster);
     printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
 
@@ -309,7 +310,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
         read_fat(&fat_entry[i], i, FAT1_SEC);
     }
 
-    uint8_t file[51200];
+
     file_ia(fat_entry,firstCluster,file);
     printformat("\nFile content: ");
     printformat("\n1st sector:\n");
