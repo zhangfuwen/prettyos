@@ -139,11 +139,11 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
     }
 }
 
-int32_t file_ia(uint32_t number, int32_t* fatEntry, uint32_t firstCluster, void* file)
+int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
 {
     uint8_t a[512];
     uint32_t sectornumber;
-    uint32_t i, count, pos;  // count for chains between 0xFFF, pos for data position
+    uint32_t i, pos;  // i for FAT-index, pos for data position
     const uint32_t ADD = 31;
 
     // copy first cluster
@@ -152,30 +152,22 @@ int32_t file_ia(uint32_t number, int32_t* fatEntry, uint32_t firstCluster, void*
     flpydsk_read_sector_ia(sectornumber,a); // read
     memcpy( file, (void*)a, 512);
 
-    // // find chain in fat
-    count=1;
+    // // find second cluster and chain in fat
     pos=0;
-    for(i=0;i<20;i++) /// MAX_FAT_ENTRIES ???
+    i = firstCluster;
+    while(fatEntry[i]!=0xFFF)
     {
         printformat("\ni: %d fatentry: %x\n",i,fatEntry[i]);
-        if(fatEntry[i]==0xFFF)
-        {
-            count++;
-            continue;
-        }
-        if(count == number)
-        {
-            // copy data from chain
-            pos++;
-            sectornumber = fatEntry[i]+ADD;
-            printformat("\nsector: %d\n",sectornumber);
-            flpydsk_read_sector_ia(sectornumber,a); // read
-            memcpy( (void*)(file+pos*512), (void*)a, 512);
-        }
-        if(count == number+1)
-        {
-            break;
-        }
+
+        // copy data from chain
+        pos++;
+        sectornumber = fatEntry[i]+ADD;
+        printformat("\nsector: %d\n",sectornumber);
+        flpydsk_read_sector_ia(sectornumber,a); // read
+        memcpy( (void*)(file+pos*512), (void*)a, 512);
+
+        //increase FAT-index
+        i++;
     }
 
     return 0;
@@ -303,19 +295,22 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     flpydsk_control_motor(true);
 
     ///TEST TODO: auslagern in eigene Funktion
-    printformat("Search for \"BOOT2.BIN\" in root directory\n");
-    uint32_t firstCluster = search_file_first_cluster("BOOT2   ","BIN");
-    printformat("FirstCluster (retVal): %x\n",firstCluster);
+    printformat("Search for a file\n");
+
+    struct file f;
+    uint32_t firstCluster = search_file_first_cluster("PROGRAM ","ELF", &f);
+    printformat("FirstCluster (retVal): %d\n",firstCluster);
+    printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
 
     printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
-    int32_t fat_entry[20];
-    for(i=0;i<20;i++)
+    int32_t fat_entry[FATMAXINDEX];
+    for(i=0;i<FATMAXINDEX;i++)
     {
         read_fat(&fat_entry[i], i, FAT1_SEC);
     }
 
-    uint8_t file[5120];
-    file_ia(2,fat_entry,firstCluster,file); // TODO: woher kommt die 2?
+    uint8_t file[51200];
+    file_ia(fat_entry,firstCluster,file);
     printformat("\nFile content: ");
     printformat("\n1st sector:\n");
     for(i=0;i<20;i++)
@@ -540,7 +535,7 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
    return 0;
 }
 
-uint32_t search_file_first_cluster(char* name, char* ext)
+uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
 {
    struct dir_entry entry;
    int32_t i,j;
@@ -569,7 +564,10 @@ uint32_t search_file_first_cluster(char* name, char* ext)
            break;
        }
     }
-    return FORM_INT((&entry)->FstClusLO,(&entry)->FstClusHI);
+    f->size = (&entry)->FileSize;
+    f->firstCluster = FORM_INT((&entry)->FstClusLO,(&entry)->FstClusHI);
+
+    return f->firstCluster;
 }
 
 void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
