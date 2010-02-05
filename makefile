@@ -27,7 +27,7 @@ boot2: $(wildcard $(STAGE2DIR)/*.asm $(STAGE2DIR)/*.inc)
 	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
-	rm *.o -f
+	rm -f *.o 
 	$(CC) $(KERNELDIR)/*.c -c -I$(KERNELDIR)/include -std=c99 -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 	$(NASM) -O32 -f elf $(KERNELDIR)/data.asm -I$(KERNELDIR)/ -o data.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/flush.asm -I$(KERNELDIR)/ -o flush.o
@@ -35,15 +35,15 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	$(NASM) -O32 -f elf $(KERNELDIR)/kernel.asm -I$(KERNELDIR)/ -o kernel.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/process.asm -I$(KERNELDIR)/ -o process.o
 	$(LD) *.o -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -nostdinc -o $(KERNELDIR)/KERNEL.BIN
-	rm *.o -f
+	rm -f *.o 
 	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 
 initrd: $(wildcard $(USERDIR)/*)
-	rm *.o -f
+	rm -f *.o 
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -I$(USERDIR)/ -o start.o
 	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -o start.o
 	$(LD) *.o -T $(USERDIR)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
-	rm *.o -f
+	rm -f *.o 
 	tools/make_initrd $(USERRDDIR)/test1.txt file1 $(USERRDDIR)/test2.txt file2 $(USERRDDIR)/test3.txt file3 $(USERDIR)/program.elf shell
 	mv initrd.dat $(KERNELDIR)/initrd.dat

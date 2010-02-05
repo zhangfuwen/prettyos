@@ -44,15 +44,23 @@ int32_t flpydsk_read_directory()
 				    printformat("%c",*(end-count));
 			}
 
-			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) != 0x08 ) // no volume label
+            start = DMA_BUFFER + i*32 + 8; // extension
+
+			if(((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) == 0x08) ||  // volume label
+			     ( ( *((uint8_t*) (start))   == 0x20) &&
+			       ( *((uint8_t*) (start+1)) == 0x20) &&
+			       ( *((uint8_t*) (start+2)) == 0x20) ))                          // extension == three 'space'
 			{
-			     printformat("."); // usual separator between file name and file extension
+			    // do nothing
+			}
+			else
+			{
+			    printformat("."); // usual separator between file name and file extension
 			}
 
-			start = DMA_BUFFER + i*32 + 8; // extension
 			count = 3;
 			end = (int8_t*)(start+count);
-			for(; count != 0; --count)
+			for(; count!=0; --count)
 				printformat("%c",*(end-count));
 
 			// filesize
@@ -158,7 +166,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
     i = firstCluster;
     while(fatEntry[i]!=0xFFF)
     {
-        printformat("\ni: %d fatentry: %x\n",i,fatEntry[i]);
+        printformat("\ni: %d FAT-entry: %x\n",i,fatEntry[i]);
 
         // copy data from chain
         pos++;
@@ -167,10 +175,9 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
         flpydsk_read_sector_ia(sectornumber,a); // read
         memcpy( (void*)(file+pos*512), (void*)a, 512);
 
-        //increase FAT-index
-        i++;
+        // search next cluster of the file
+        i = fatEntry[i];
     }
-
     return 0;
 }
 
@@ -299,7 +306,7 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     printformat("Search for a file\n");
 
     struct file f;
-    uint32_t firstCluster = search_file_first_cluster("KERNEL  ","BIN", &f);
+    uint32_t firstCluster = search_file_first_cluster("BOOT2   ","BIN", &f);
     printformat("FirstCluster (retVal): %d\n",firstCluster);
     printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
 
@@ -584,8 +591,6 @@ void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
     }
     fat = fat & 0xFFF;
     *fat_entry = fat;
-
-    //printformat("fat1: %x fat2: %x fat: %x\n", fat1,fat2,fat);
     printformat("%x ", fat);
 }
 
