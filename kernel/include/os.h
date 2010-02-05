@@ -131,7 +131,7 @@ extern uint32_t show_physical_address(uint32_t virtual_address);
 extern void analyze_physical_addresses();
 
 // elf.c
-bool elf_exec( const void* elf_file, uint32_t elf_file_size );
+extern bool elf_exec( const void* elf_file, uint32_t elf_file_size );
 
 // util.c
 extern void outportb(uint16_t port, uint32_t val);

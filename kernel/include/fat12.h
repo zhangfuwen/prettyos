@@ -32,7 +32,7 @@
 #define DIR_ENTRIES 16
 #define MAX_DIR     10
 #define MAX_FILE    10
-#define FATMAXINDEX 100 ///TEST
+#define FATMAXINDEX 150 ///TEST
 
 struct boot_sector
 {
@@ -92,6 +92,7 @@ int32_t flpydsk_write_sector_ia( int32_t i, void* a);
 int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer);
 int32_t flpydsk_read_sector_ia ( int32_t i, void* a);
 int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file);
+int32_t flpydsk_load(char* name, char* ext);
 
 void    parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs);
 void    print_dir(struct dir_entry* rs);

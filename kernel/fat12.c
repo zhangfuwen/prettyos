@@ -290,33 +290,22 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
     return 0;
 }
 
-
-
-int32_t flpydsk_format(char* vlab) //VolumeLabel
+int32_t flpydsk_load(char* name, char* ext)
 {
-    struct boot_sector b;
-    uint8_t a[512];
-    int32_t i,j;
-    /*
-       int32_t dt, tm; // for VolumeSerial
-    */
+    printformat("Load  and execute \"hello.elf\" from floppy disk\n");
     flpydsk_control_motor(true);
 
-    ///TEST TODO: auslagern in eigene Funktion
-    printformat("Search for a file\n");
-
     struct file f;
-    uint32_t firstCluster = search_file_first_cluster("BOOT2   ","BIN", &f);
+    uint32_t firstCluster = search_file_first_cluster(name,ext,&f);
     printformat("FirstCluster (retVal): %d\n",firstCluster);
     printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
 
     printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
-    int32_t fat_entry[FATMAXINDEX];
+    int32_t fat_entry[FATMAXINDEX], i;
     for(i=0;i<FATMAXINDEX;i++)
     {
         read_fat(&fat_entry[i], i, FAT1_SEC);
     }
-
 
     file_ia(fat_entry,firstCluster,file);
     printformat("\nFile content: ");
@@ -335,10 +324,28 @@ int32_t flpydsk_format(char* vlab) //VolumeLabel
     {
         printformat("%x ",file[i]);
     }
+
+    printformat("\n\n");
+    elf_exec( file, f.size ); // execute loaded file
+    printformat("\n\n");
+
+    return 0;
+}
+
+int32_t flpydsk_format(char* vlab) // VolumeLabel
+{
+    struct boot_sector b;
+    uint8_t a[512];
+    int32_t i,j;
+    /*
+        int32_t dt, tm; // for VolumeSerial
+    */
+
+    ///TEST
+    flpydsk_load("HELLO   ", "ELF");
     ///TEST
 
-
-
+    flpydsk_control_motor(true);
     printformat("\n\nFormat process started.\n");
 
     for(i=0;i<11;i++)

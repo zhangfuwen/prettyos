@@ -3,6 +3,8 @@ STAGE2DIR= stage2_bootloader
 KERNELDIR= kernel
 USERRDDIR= user/init_rd_img
 USERDIR= user/user_program_c
+USERTEST= user/user_test_c
+
 
 ifeq ($(OS),WINDOWS)
     NASM= nasmw
@@ -36,7 +38,7 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	$(NASM) -O32 -f elf $(KERNELDIR)/process.asm -I$(KERNELDIR)/ -o process.o
 	$(LD) *.o -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -nostdinc -o $(KERNELDIR)/KERNEL.BIN
 	rm -f *.o 
-	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
+	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERTEST)/HELLO.ELF
 
 initrd: $(wildcard $(USERDIR)/*)
 	rm -f *.o 

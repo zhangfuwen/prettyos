@@ -14,14 +14,12 @@
 #include "time.h"
 #include "flpydsk.h"
 #include "list.h"
-//#include "fat12.h" //TEST
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
 
 // Buffer for User-Space Program
 #define FILEBUFFERSIZE   0x2000
-
 
 // RAM disk and user program
 extern uint32_t file_data_start;
@@ -33,8 +31,7 @@ char DateAndTime[80];
 static void init()
 {
     clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.76]    ");
-    //printformat("%s",getCurrentDateAndTime(DateAndTime));
+    printformat("PrettyOS [Version 0.0.0.77]    ");
     printformat("\n\n");
     gdt_install();
     idt_install();
@@ -46,7 +43,6 @@ static void init()
 int main()
 {
     init();
-
     settextcolor(15,0);
 
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)

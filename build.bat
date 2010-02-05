@@ -17,6 +17,7 @@ IF [%1]==[] GOTO Continue
 		tools\dd if=stage1_bootloader/boot.bin of=\\.\A: bs=512 count=1 --progress
 		copy stage2_bootloader\boot2.bin A:\boot2.bin
 		copy kernel\kernel.bin A:\kernel.bin
+		copy user\user_test_c\hello.elf A:\hello.elf
 	)
 SHIFT
 GOTO Loop
