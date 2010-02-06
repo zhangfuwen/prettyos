@@ -111,6 +111,13 @@ int main()
           settextcolor(15,0);
       }
 
+      else if( strcmp(entry,"") == 0 )
+      {
+          settextcolor(2,0);
+          puts("<-- Sorry, this was a blank entry.\n");
+          settextcolor(15,0);
+      }
+
       else
       {
           settextcolor(2,0);
@@ -119,7 +126,7 @@ int main()
           char ext[4];
           int i, posPoint=8;
 
-          name[8]='\0';
+          name[8]='\0';puts("<-- Sorry, PrettyOS does not know this command.\n");
           ext[3] ='\0';
 
           for(i=0;i<8;i++)

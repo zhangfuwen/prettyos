@@ -357,9 +357,8 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
     struct boot_sector b;
     uint8_t a[512];
     int32_t i,j;
-    /*
-        int32_t dt, tm; // for VolumeSerial
-    */
+
+    // int32_t dt, tm; // for VolumeSerial
 
     flpydsk_control_motor(true);
     printformat("\n\nFormat process started.\n");
@@ -431,7 +430,6 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
 
     /// bootsector
     flpydsk_prepare_boot_sector(&b);
-    // printformat("bootsector prepared.\n");
 
     /// prepare FATs
     for(i=512;i<9216;i++)
@@ -446,7 +444,7 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
     a[0]=0xF0; a[1]=0xFF; a[2]=0xFF;
     for(i=0;i<3;i++)
     {
-        track0[FAT1_SEC*512+i]=a[i]; // FAT1 starts at 0x200 (sector 1)
+        track0[FAT1_SEC*512+i]=a[i]; // FAT1 starts at 0x200  (sector  1)
         track0[FAT2_SEC*512+i]=a[i]; // FAT2 starts at 0x1400 (sector 10)
     }
 
@@ -473,7 +471,7 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
     struct dir_entry entry;
     for(i=0;i<224;i++)
     {
-        read_dir(&entry, i, 19, false); // testweise unterdrückt
+        read_dir(&entry, i, 19, false);
         if(strcmp((&entry)->Filename,"")==0)
         {
             break;
@@ -547,8 +545,6 @@ void print_dir(struct dir_entry* rs)
     }
 }
 
-// Disk --sector_read--> a[...] --parse_dir--> rs --print_dir--> ScreenOutput
-
 int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
 {
    uint8_t a[512];
@@ -576,8 +572,6 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
    for(i=0;i<224;i++)
    {
        read_dir(&entry, i, 19, false);
-       // printformat("Filename: %s\n",(&entry)->Filename);
-       // printformat("Fileext : %s\n",(&entry)->Extension);
        for(j=0;j<3;j++)
        {
            buf1[j] = (&entry)->Filename[j];
@@ -606,11 +600,11 @@ void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
     int32_t fat;
     if(in%2 == 0)
     {
-        fat = ((fat2 & 0x0f) << 8) | fat1;
+        fat = ((fat2 & 0x0F) << 8) | fat1;
     }
     else
     {
-        fat = (fat2 << 4) | ((fat1 &0x0f0) >> 4);
+        fat = (fat2 << 4) | ((fat1 &0x0F0) >> 4);
     }
     fat = fat & 0xFFF;
     *fat_entry = fat;
@@ -648,88 +642,6 @@ int32_t read_fat(int32_t* fat_entry, int32_t in, int32_t st_sec)
         fat2 = a[fat_in+1] & 0xff;
      }
      parse_fat(fat_entry,fat1,fat2,in);
-     //Even And Odd logical clusters
 
      return 0;
 }
-
-/*
-
-Clusters are numbered from a cluster offset as defined above (?) and the FilestartCluster is in 0x1a.
-This would mean the first data segment X can be calculated using the Boot Sector fields:
-
-FileStartSector =
-ReservedSectors(0x0e)
-+ (NumofFAT(0x10) * Sectors2FAT(0x16))
-+ (MaxRootEntry(0x11) * 32 / BytesPerSector(0x0b))
-+ ((X − 2) * SectorsPerCluster(0x0d))
-
-*/
-
-
-/*
-int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec)
-{
-    uint8_t a[512];
-    int32_t i,j;
-
-    st_sec = st_sec + in/DIR_ENTRIES; // ??
-
-    flpydsk_read_sector_ia( st_sec, a );
-
-    printformat("\nwriting directory to sector %d\n", st_sec);
-    i = (in % DIR_ENTRIES) * 32;
-
-    for(j=0;j<8;j++,i++)
-    {
-        a[i] = rs->Filename[j];
-    }
-
-    for(j=0;j<3;j++,i++)
-    {
-        a[i] = rs->Extension[j];
-    }
-
-    a[i++] = rs->Attributes;
-    a[i++] = rs->NTRes;
-    a[i++] = rs->CrtTimeTenth;
-
-    a[i]   = BYTE1(rs->CrtTime);
-    a[i+1] = BYTE2(rs->CrtTime);
-    i+= 2;
-
-    a[i]   = BYTE1(rs->CrtDate);
-    a[i+1] = BYTE2(rs->CrtDate);
-    i+= 2;
-
-    a[i]   = BYTE1(rs->LstAccDate);
-    a[i+1] = BYTE2(rs->LstAccDate);
-    i+=2;
-
-    a[i]   = BYTE1(rs->FstClusHI);
-    a[i+1] = BYTE2(rs->FstClusHI);
-    i+=2;
-
-    a[i]   = BYTE1(rs->WrtTime);
-    a[i+1] = BYTE2(rs->WrtTime);
-    i+=2;
-
-    a[i]   = BYTE1(rs->WrtDate);
-    a[i+1] = BYTE2(rs->WrtDate);
-    i+=2;
-
-    a[i]   = BYTE1(rs->FstClusLO);
-    a[i+1] = BYTE2(rs->FstClusLO);
-    i+=2;
-
-    a[i]   = BYTE1(rs->FileSize);
-    a[i+1] = BYTE2(rs->FileSize);
-    a[i+2] = BYTE3(rs->FileSize);
-    a[i+3] = BYTE4(rs->FileSize);
-    i+=4;
-
-    ///TODO: do not use sector-wise writing!
-    flpydsk_control_motor(true); printformat("write_dir.motor_on\n");
-    return flpydsk_write_sector_ia(st_sec,a);
-}
-*/

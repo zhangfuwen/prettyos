@@ -250,10 +250,16 @@ void flpydsk_control_motor(bool b)
 	if(b)
 	{
         flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA);
+        settextcolor(14,0);
+        printformat("floppy motor on\n");
+        settextcolor(2,0);
 	}
 	else
 	{
         flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET);
+        settextcolor(14,0);
+        printformat("floppy motor off\n");
+        settextcolor(2,0);
 	}
 	sti(); // important!
 	sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
@@ -438,7 +444,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     }
 
     /// Delay
-    sleepMilliSeconds(50); // what is Floppy Disk head settle time?
+    // sleepMilliSeconds(50); // what is Floppy Disk head settle time?
     /// Delay
 
     flpydsk_send_command( head << 2 | _CurrentDrive );
