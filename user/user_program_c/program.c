@@ -7,7 +7,11 @@ int main()
     for(;;)
     {
       char entry[MAX_CHAR_PER_LINE+10];
-      int i = 0;
+      int i=0,j;
+      for(j=0;j<MAX_CHAR_PER_LINE;j++)
+      {
+          entry[j]=0;
+      }
       const unsigned int waitingTime = 25;
       unsigned int start = getCurrentMilliseconds();
 

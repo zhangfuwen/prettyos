@@ -300,7 +300,13 @@ int32_t flpydsk_load(char* name, char* ext)
     flpydsk_control_motor(true);
 
     struct file f;
-    uint32_t firstCluster = search_file_first_cluster(name,ext,&f);
+    uint32_t firstCluster = 0;
+    firstCluster = search_file_first_cluster(name,ext,&f);
+    if(firstCluster==0)
+    {
+        printformat("file not found in root directory\n");
+        return -1;
+    }
     printformat("FirstCluster (retVal): %d\n",firstCluster);
     printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
 
@@ -492,13 +498,13 @@ void parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs)
    rs->Attributes   = a[i++];
    rs->NTRes        = a[i++];
    rs->CrtTimeTenth = a[i++];
-   rs->CrtTime      = FORM_INT(a[i],a[i+1]);                  i+=2;
-   rs->CrtDate      = FORM_INT(a[i],a[i+1]);                  i+=2;
-   rs->LstAccDate   = FORM_INT(a[i],a[i+1]);                  i+=2;
-   rs->FstClusHI    = FORM_INT(a[i],a[i+1]);                  i+=2;
-   rs->WrtTime      = FORM_INT(a[i],a[i+1]);                  i+=2;
-   rs->WrtDate      = FORM_INT(a[i],a[i+1]);                  i+=2;
-   rs->FstClusLO    = FORM_INT(a[i],a[i+1]);                  i+=2;
+   rs->CrtTime      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
+   rs->CrtDate      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
+   rs->LstAccDate   = FORM_SHORT(a[i],a[i+1]);                  i+=2;
+   rs->FstClusHI    = FORM_SHORT(a[i],a[i+1]);                  i+=2;
+   rs->WrtTime      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
+   rs->WrtDate      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
+   rs->FstClusLO    = FORM_SHORT(a[i],a[i+1]);                  i+=2;
    rs->FileSize     = FORM_LONG(a[i],a[i+1],a[i+2],a[i+3]);   i+=4;
 }
 
@@ -584,7 +590,7 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
        }
     }
     f->size = (&entry)->FileSize;
-    f->firstCluster = FORM_INT((&entry)->FstClusLO,(&entry)->FstClusHI);
+    f->firstCluster = FORM_SHORT((&entry)->FstClusLO,(&entry)->FstClusHI);
 
     return f->firstCluster;
 }
