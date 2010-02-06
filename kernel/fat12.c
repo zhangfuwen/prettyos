@@ -339,9 +339,15 @@ int32_t flpydsk_load(char* name, char* ext)
     {
         printformat("%x ",file[i]);
     }
+    printformat("\n5th sector:\n");
+    for(i=2048;i<2074;i++)
+    {
+        printformat("%x ",file[i]);
+    }
     printformat("\n\n");
     elf_exec( file, f.size ); // execute loaded file
     printformat("\n\n");
+    flpydsk_control_motor(false);
 
     return 0;
 }
