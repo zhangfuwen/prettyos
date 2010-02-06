@@ -1,5 +1,6 @@
 #include "flpydsk.h"
 #include "fat12.h"
+#include "task.h" // for log_task_list()
 
 /*
 Links:
@@ -345,9 +346,14 @@ int32_t flpydsk_load(char* name, char* ext)
         printformat("%x ",file[i]);
     }
     printformat("\n\n");
+
+    log_task_list();
+
     elf_exec( file, f.size ); // execute loaded file
     printformat("\n\n");
     flpydsk_control_motor(false);
+
+    log_task_list();
 
     return 0;
 }
