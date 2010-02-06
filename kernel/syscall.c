@@ -19,6 +19,7 @@ DEFN_SYSCALL3( printf,                     9, char*, uint32_t, uint8_t )
 DEFN_SYSCALL0( getCurrentSeconds,         10                           )
 DEFN_SYSCALL0( getCurrentMilliseconds,    11                           )
 DEFN_SYSCALL1( flpydsk_format,            12, char*                    )
+DEFN_SYSCALL2( flpydsk_load,              13, char*, char*             )
 
 static void* syscalls[] =
 {
@@ -34,7 +35,8 @@ static void* syscalls[] =
     &printf,
     &getCurrentSeconds,
     &getCurrentMilliseconds,
-    &flpydsk_format
+    &flpydsk_format,
+    &flpydsk_load
 };
 
 void syscall_handler(struct regs* r)

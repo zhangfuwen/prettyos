@@ -62,7 +62,54 @@ int floppy_format(char* volumeLabel)
     return ret;
 }
 
+int floppy_load(char* name, char* ext)
+{
+    int ret;
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(13), "b"(name), "c"(ext)  );
+    return ret;
+}
+
+
+
 /// user functions ///
+
+char toLower(char c)
+{
+    return isupper(c) ? ('a' - 'A') + c : c;
+}
+
+char toUpper(char c)
+{
+    return islower(c) ? ('A' - 'a') + c : c;
+}
+
+char* toupper( char* s )
+{
+    int i;
+    for(i=0;i<strlen(s);i++)
+    {
+        s[i]=toUpper(s[i]);
+    }
+    return s;
+}
+
+char* tolower( char* s )
+{
+    int i;
+    for(i=0;i<strlen(s);i++)
+    {
+        s[i]=toLower(s[i]);
+    }
+    return s;
+}
+
+unsigned int strlen(const char* str)
+{
+    unsigned int retval;
+    for(retval = 0; *str != '\0'; ++str)
+        ++retval;
+    return retval;
+}
 
 // Compare two strings. Returns -1 if str1 < str2, 0 if they are equal or 1 otherwise.
 int strcmp( const char* s1, const char* s2 )

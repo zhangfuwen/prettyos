@@ -292,7 +292,11 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
 
 int32_t flpydsk_load(char* name, char* ext)
 {
-    printformat("Load  and execute \"hello.elf\" from floppy disk\n");
+    printformat("Load and execute ");
+    settextcolor(14,0);
+    printformat("-->%s.%s<--",name,ext);
+    settextcolor(2,0);
+    printformat(" from floppy disk\n");
     flpydsk_control_motor(true);
 
     struct file f;
@@ -310,21 +314,25 @@ int32_t flpydsk_load(char* name, char* ext)
     file_ia(fat_entry,firstCluster,file);
     printformat("\nFile content: ");
     printformat("\n1st sector:\n");
-    for(i=0;i<20;i++)
+    for(i=0;i<26;i++)
     {
         printformat("%x ",file[i]);
     }
     printformat("\n2nd sector:\n");
-    for(i=512;i<532;i++)
+    for(i=512;i<538;i++)
     {
         printformat("%x ",file[i]);
     }
     printformat("\n3rd sector:\n");
-    for(i=1024;i<1044;i++)
+    for(i=1024;i<1050;i++)
     {
         printformat("%x ",file[i]);
     }
-
+    printformat("\n4th sector:\n");
+    for(i=1536;i<1562;i++)
+    {
+        printformat("%x ",file[i]);
+    }
     printformat("\n\n");
     elf_exec( file, f.size ); // execute loaded file
     printformat("\n\n");
@@ -340,10 +348,6 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
     /*
         int32_t dt, tm; // for VolumeSerial
     */
-
-    ///TEST
-    flpydsk_load("HELLO   ", "ELF");
-    ///TEST
 
     flpydsk_control_motor(true);
     printformat("\n\nFormat process started.\n");

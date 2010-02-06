@@ -4,6 +4,12 @@
 #define true		1
 #define false		0
 
+#define isdigit(c) ((c) >= '0' && (c) <= '9')
+#define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
+#define isalnum(c) (isdigit(c) || isalpha(c))
+#define isupper(character) ((character) >= 'A' && (character) <= 'Z')
+#define islower(character) ((character) >= 'a' && (character) <= 'z')
+
 // syscalls
 void settextcolor(unsigned int foreground, unsigned int background);
 void putch(unsigned char val);
@@ -14,8 +20,14 @@ void printLine(char* message, unsigned int line, unsigned char attribute);
 unsigned int getCurrentSeconds();
 unsigned int getCurrentMilliseconds();
 int floppy_format(char* volumeLabel);
+int floppy_load(char* name, char* ext);
 
 // user functions
+unsigned int strlen(const char* str);
+char toLower(char c);
+char toUpper(char c);
+char* toupper( char* s );
+char* tolower( char* s );
 int strcmp( const char* s1, const char* s2 );
 
 void showInfo(signed char val);
