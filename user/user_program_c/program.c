@@ -20,6 +20,12 @@ int main()
 
       for(;;)
       {
+          ///TEST
+          settextcolor(4,0);
+          puts(".");
+          settextcolor(15,0);
+          ///TEST
+
         // the train goes on ////////////////////////////
           settextcolor(2,0);
           if( getCurrentMilliseconds() >= (start + waitingTime) )
@@ -33,16 +39,6 @@ int main()
 
         unsigned char input = getch();
 
-        // if (
-        //      (input==32)                ||  // space key
-        //      (input==45)                ||  // "-"   key
-        //      (input==63)                ||  // "?"   key
-        //     ((input>=65)&&(input<=90))  ||  // capital letters
-        //     ((input>=97)&&(input<=122)) ||  // little letters
-        //     ((input>=48)&&(input<=57))      // 0 ... 9
-        //     )
-
-        //if( (input >= 0x20) && (input <= 0x7E) )
         if( (input >= 0x20) /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
         {
           if(i<MAX_CHAR_PER_LINE) //
@@ -120,13 +116,14 @@ int main()
 
       else
       {
+          puts("file is being searched.\n");
           settextcolor(2,0);
           toupper(entry);
           char name[9];
           char ext[4];
           int i, posPoint=8;
 
-          name[8]='\0';puts("<-- Sorry, PrettyOS does not know this command.\n");
+          name[8]='\0';
           ext[3] ='\0';
 
           for(i=0;i<8;i++)
