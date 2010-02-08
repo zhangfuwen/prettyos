@@ -24,9 +24,21 @@ void puts(char* pString)
 
 unsigned char getch()
 {
+    /*
     unsigned char ret;
     __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(6) );
     return ret;
+    */
+
+    ///TEST
+    unsigned char ret;
+    do
+    {
+        __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(6) );
+    }
+    while(ret==0);
+    return ret;
+    ///TEST
 }
 
 int floppy_dir()

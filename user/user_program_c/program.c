@@ -33,11 +33,7 @@ int main()
 
       while(true)
       {
-          ///TEST
-          settextcolor(4,0);
-          puts(".");
-          settextcolor(15,0);
-          ///TEST
+          /* settextcolor(4,0); puts("."); settextcolor(15,0); */
 
           // the train goes on ////////////////////////////
           settextcolor(2,0);
