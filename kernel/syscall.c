@@ -12,14 +12,13 @@ DEFN_SYSCALL2( settextcolor,               2, uint8_t, uint8_t         )
 DEFN_SYSCALL0( getpid,                     3                           )
 DEFN_SYSCALL0( nop,                        4                           )
 DEFN_SYSCALL0( switch_context,             5                           )
-DEFN_SYSCALL0( checkKQ_and_print_char,     6                           )
-DEFN_SYSCALL0( checkKQ_and_return_char,    7                           )
-DEFN_SYSCALL0( flpydsk_read_directory,     8                           )
-DEFN_SYSCALL3( printf,                     9, char*, uint32_t, uint8_t )
-DEFN_SYSCALL0( getCurrentSeconds,         10                           )
-DEFN_SYSCALL0( getCurrentMilliseconds,    11                           )
-DEFN_SYSCALL1( flpydsk_format,            12, char*                    )
-DEFN_SYSCALL2( flpydsk_load,              13, char*, char*             )
+DEFN_SYSCALL0( checkKQ_and_return_char,    6                           )//7
+DEFN_SYSCALL0( flpydsk_read_directory,     7                           )//8
+DEFN_SYSCALL3( printf,                     8, char*, uint32_t, uint8_t )//9
+DEFN_SYSCALL0( getCurrentSeconds,          9                           )//10
+DEFN_SYSCALL0( getCurrentMilliseconds,    10                           )//11
+DEFN_SYSCALL1( flpydsk_format,            11, char*                    )//12
+DEFN_SYSCALL2( flpydsk_load,              12, char*, char*             )//13
 
 static void* syscalls[] =
 {
@@ -29,7 +28,6 @@ static void* syscalls[] =
     &getpid,
     &nop,
     &switch_context,
-    &checkKQ_and_print_char,
     &checkKQ_and_return_char,
     &flpydsk_read_directory,
     &printf,

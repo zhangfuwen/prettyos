@@ -145,8 +145,10 @@ void keyboard_handler(struct regs* r)
    }
 }
 
-int32_t checkKQ_and_print_char()
+uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX like
 {
+   /// TODO: should only return character, if keystroke was entered
+
    if(KQ_count_write > KQ_count_read)
    {
        uint8_t KEY = *(pHeadKQ);
@@ -160,64 +162,6 @@ int32_t checkKQ_and_print_char()
        {
            pHeadKQ = (KEYQUEUE)+KQSIZE-1;
        }
-
-       //restore_cursor();
-       switch(KEY)
-       {
-           case KINS:
-               break;
-           case KDEL:
-               move_cursor_right();
-               putch('\b'); //BACKSPACE
-               break;
-           case KHOME:
-               move_cursor_home();
-               break;
-           case KEND:
-               move_cursor_end();
-               break;
-           case KPGUP:
-               break;
-           case KPGDN:
-               break;
-           case KLEFT:
-               move_cursor_left();
-               break;
-           case KUP:
-               break;
-           case KDOWN:
-               break;
-           case KRIGHT:
-               move_cursor_right();
-               break;
-           default:
-               printformat("%c",KEY); // the ASCII character
-               break;
-       }
-       save_cursor();
-       return 1;
-   }
-   return 0;
-}
-
-uint8_t checkKQ_and_return_char()
-{
-   if(KQ_count_write > KQ_count_read)
-   {
-       uint8_t KEY = *(pHeadKQ);
-       ++(KQ_count_read);
-
-       if(pHeadKQ > KEYQUEUE)
-       {
-           --pHeadKQ;
-       }
-       if(pHeadKQ == KEYQUEUE)
-       {
-           pHeadKQ = (KEYQUEUE)+KQSIZE-1;
-       }
-       /// TEST
-	   //  printformat("KEY:%c ", KEY);
-	   /// TEST
        return KEY;
    }
    return 0;
@@ -227,7 +171,9 @@ void keyboard_install()
 {
     // Setup the queue
     for ( int i=0; i<KQSIZE; ++i )
+    {
        KEYQUEUE[i]=0;
+    }
     pHeadKQ = KEYQUEUE;
     pTailKQ = KEYQUEUE;
     KQ_count_read  = 0;
