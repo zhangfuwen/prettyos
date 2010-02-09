@@ -165,7 +165,43 @@ uint32_t task_switch(uint32_t esp)
 
 void switch_context() // switch to next task
 {
-  __asm__ volatile("int $0x7E");
+    __asm__ volatile("int $0x7E");
+}
+
+void exit()
+{
+    // TEST
+    log_task_list();
+
+    // finish current task and free occupied heap
+    void* pkernelstack = (void*) ( (uint32_t) current_task->kernel_stack - KERNEL_STACK_SIZE );
+    void* ptask        = (void*) current_task;
+
+
+    // delete task in linked list
+    task_t* tmp_task = (task_t*)ready_queue;
+    do
+    {
+        if(tmp_task->next == current_task)
+        {
+            tmp_task->next = current_task->next;
+        }
+        if(tmp_task->next)
+        {
+            tmp_task = tmp_task->next;
+        }
+    }
+    while (tmp_task->next);
+    printformat("after delete task in linked list.\n");
+
+    // free memory at heap
+    free(pkernelstack);
+    free(ptask);
+    printformat("pid: %d t: %x ks: %x <---heap freed.\n",getpid(),ptask,pkernelstack);
+
+    // TEST
+    log_task_list();
+    printformat("exit finished.\n");
 }
 
 void log_task_list()
@@ -190,6 +226,7 @@ void task_log(task_t* t)
     printformat("PD: %x ", t->page_directory);   // Page directory.
     printformat("k_stack: %x ",t->kernel_stack); // Kernel stack location.
     printformat("next: %x\n",  t->next);         // The next task in a linked list.
+    settextcolor(15,0);
 }
 
 void TSS_log(tss_entry_t* tss)

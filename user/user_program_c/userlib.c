@@ -24,13 +24,6 @@ void puts(char* pString)
 
 unsigned char getch()
 {
-    /*
-    unsigned char ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(6) );
-    return ret;
-    */
-
-    ///TEST
     unsigned char ret;
     do
     {
@@ -38,7 +31,6 @@ unsigned char getch()
     }
     while(ret==0);
     return ret;
-    ///TEST
 }
 
 int floppy_dir()
@@ -79,6 +71,11 @@ int floppy_load(char* name, char* ext)
     int ret;
     __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(12), "b"(name), "c"(ext)  );
     return ret;
+}
+
+void exit()
+{
+    __asm__ volatile( "int $0x7F" : : "a"(13) );
 }
 
 
@@ -131,6 +128,29 @@ int strcmp( const char* s1, const char* s2 )
         ++s1; ++s2;
     }
     return ( *s1 - *s2 );
+}
+
+char* gets(char* s) ///TODO: leads to no success
+{
+    int i=0;
+    char c;
+    do
+    {
+        c = getch();
+        putch(c);
+        if(c==8)  // Backspace
+        {
+           if(i>0)
+           {
+              s[i]='\0';
+           }
+        }
+        s[i] = c;
+        i++;
+    }
+    while(c!=10); // Linefeed
+    s[i]='\0';
+    return s;
 }
 
 void showInfo(signed char val)

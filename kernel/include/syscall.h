@@ -76,6 +76,7 @@ DECL_SYSCALL0( getCurrentSeconds                          )
 DECL_SYSCALL0( getCurrentMilliseconds                     )
 DECL_SYSCALL1( flpydsk_format, char*                      )
 DECL_SYSCALL2( flpydsk_load, char*, char*                 )
+DECL_SYSCALL0( exit                                       )
 
 /***********************************************************/
 

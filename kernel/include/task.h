@@ -26,6 +26,7 @@ int32_t fork();
 int32_t getpid();
 task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege );
 void switch_context();
+void exit();
 
 void task_log(task_t* t);
 void TSS_log(tss_entry_t* tss);

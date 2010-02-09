@@ -347,13 +347,11 @@ int32_t flpydsk_load(char* name, char* ext)
     }
     printformat("\n\n");
 
-    log_task_list();
-
     elf_exec( file, f.size ); // execute loaded file
-    printformat("\n\n");
-    flpydsk_control_motor(false);
 
-    log_task_list();
+    printformat("\n\n");
+
+    flpydsk_control_motor(false);
 
     return 0;
 }
