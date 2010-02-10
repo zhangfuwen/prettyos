@@ -31,7 +31,7 @@ char* toupper( char* s );
 char* tolower( char* s );
 int strcmp( const char* s1, const char* s2 );
 char* gets(char* s);
-
+void test();
 void showInfo(signed char val);
 
 #endif

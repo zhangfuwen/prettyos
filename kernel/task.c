@@ -160,6 +160,12 @@ uint32_t task_switch(uint32_t esp)
     tss.ebp  = current_task->ebp;
     tss.ss   = current_task->ss;
 
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+    printformat("%d ",getpid());
+    settextcolor(15,0);
+    #endif
+
     return current_task->esp;  // return new task's esp
 }
 
@@ -170,7 +176,7 @@ void switch_context() // switch to next task
 
 void exit()
 {
-    // TEST
+    cli();
     log_task_list();
 
     // finish current task and free occupied heap
@@ -199,9 +205,9 @@ void exit()
     free(ptask);
     printformat("pid: %d t: %x ks: %x <---heap freed.\n",getpid(),ptask,pkernelstack);
 
-    // TEST
     log_task_list();
     printformat("exit finished.\n");
+    sti();
 }
 
 void log_task_list()

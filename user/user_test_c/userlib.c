@@ -82,6 +82,13 @@ void exit()
 
 /// user functions ///
 
+void test()
+{
+    settextcolor(4,0);
+    puts(">>> TEST: behind exit ! <<<");
+    settextcolor(15,0);
+}
+
 char toLower(char c)
 {
     return isupper(c) ? ('a' - 'A') + c : c;
