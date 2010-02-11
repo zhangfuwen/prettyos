@@ -182,7 +182,9 @@ void switch_context() // switch to next task
 void exit()
 {
     cli();
+    #ifdef _DIAGNOSIS_
     log_task_list();
+    #endif
 
     // finish current task and free occupied heap
     void* pkernelstack = (void*) ( (uint32_t) current_task->kernel_stack - KERNEL_STACK_SIZE );
@@ -203,15 +205,17 @@ void exit()
         }
     }
     while (tmp_task->next);
-    printformat("after delete task in linked list.\n");
+    // printformat("after delete task in linked list.\n");
 
     // free memory at heap
     free(pkernelstack);
     free(ptask);
-    printformat("pid: %d t: %x ks: %x <---heap freed.\n",getpid(),ptask,pkernelstack);
+    // printformat("pid: %d t: %x ks: %x <---heap freed.\n",getpid(),ptask,pkernelstack);
 
+    #ifdef _DIAGNOSIS_
     log_task_list();
     printformat("exit finished.\n");
+    #endif
     sti();
     switch_context(); // switch to next task
 }

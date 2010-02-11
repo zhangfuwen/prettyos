@@ -33,6 +33,9 @@ char* tolower( char* s );
 int strcmp( const char* s1, const char* s2 );
 char* gets(char* s);
 void test();
+void reverse(char* s);
+void itoa(int n, char* s);
+int atoi(char* s);
 void showInfo(signed char val);
 
 #endif
