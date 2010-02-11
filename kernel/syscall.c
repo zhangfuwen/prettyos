@@ -20,6 +20,7 @@ DEFN_SYSCALL0( getCurrentMilliseconds,    10                           )
 DEFN_SYSCALL1( flpydsk_format,            11, char*                    )
 DEFN_SYSCALL2( flpydsk_load,              12, char*, char*             )
 DEFN_SYSCALL0( exit,                      13                           )
+DEFN_SYSCALL1( settaskflag,               14, int                      )
 
 static void* syscalls[] =
 {
@@ -36,7 +37,8 @@ static void* syscalls[] =
     &getCurrentMilliseconds,
     &flpydsk_format,
     &flpydsk_load,
-    &exit
+    &exit,
+    &settaskflag
 };
 
 void syscall_handler(struct regs* r)

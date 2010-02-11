@@ -78,6 +78,11 @@ void exit()
     __asm__ volatile( "int $0x7F" : : "a"(13) );
 }
 
+void settaskflag(int i)
+{
+    __asm__ volatile( "int $0x7F" : : "a"(14), "b"(i) );
+}
+
 
 
 /// user functions ///
@@ -137,10 +142,14 @@ int strcmp( const char* s1, const char* s2 )
     return ( *s1 - *s2 );
 }
 
-char* gets(char* s) ///TODO: leads to no success
+char* gets(char* s) ///TODO: task switch has to be handled!
 {
     int i=0;
     char c;
+
+    ///TEST
+    settaskflag(0);
+
     do
     {
         c = getch();
@@ -157,6 +166,10 @@ char* gets(char* s) ///TODO: leads to no success
     }
     while(c!=10); // Linefeed
     s[i]='\0';
+
+    ///TEST
+    settaskflag(1);
+
     return s;
 }
 

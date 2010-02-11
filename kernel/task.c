@@ -18,6 +18,11 @@ int32_t getpid() { return current_task->id; }
 
 static page_directory_t* const KERNEL_DIRECTORY = NULL;
 
+void settaskflag(bool i)
+{
+    pODA->ts_flag = i;
+}
+
 void tasking_install()
 {
     cli();

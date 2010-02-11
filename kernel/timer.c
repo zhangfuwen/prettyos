@@ -7,7 +7,7 @@ extern page_directory_t* current_directory;
 extern task_t* current_task;
 extern tss_entry_t tss_entry;
 
-uint16_t systemfrequency = 10; // system frequency
+uint16_t systemfrequency = 100; // system frequency
 uint32_t timer_ticks = 0;
 uint32_t eticks;
 

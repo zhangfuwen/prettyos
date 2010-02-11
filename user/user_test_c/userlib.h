@@ -22,6 +22,7 @@ unsigned int getCurrentMilliseconds();
 int floppy_format(char* volumeLabel);
 int floppy_load(char* name, char* ext);
 void exit();
+void settaskflag(int i);
 
 // user functions
 unsigned int strlen(const char* str);

@@ -3,7 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#define _DIAGNOSIS_ // activates prints to the screen about some details and memory use
+///#define _DIAGNOSIS_ // activates prints to the screen about some details and memory use
 
 #ifndef OS_H
 #define OS_H

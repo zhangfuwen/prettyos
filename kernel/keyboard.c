@@ -149,6 +149,7 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
 {
    /// TODO: should only return character, if keystroke was entered
 
+   cli();
    if(KQ_count_write > KQ_count_read)
    {
        uint8_t KEY = *(pHeadKQ);
@@ -164,6 +165,7 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
        }
        return KEY;
    }
+   sti();
    return 0;
 }
 
