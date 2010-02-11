@@ -213,6 +213,7 @@ void exit()
     log_task_list();
     printformat("exit finished.\n");
     sti();
+    switch_context(); // switch to next task
 }
 
 void log_task_list()

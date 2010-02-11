@@ -31,6 +31,7 @@
 global _idt_install
 extern _irq_handler
 
+%define CONTEXT_SWITCH_CALL 126
 %define SYSCALL_NUMBER 127
 
 
@@ -57,22 +58,22 @@ section .text
 	%assign routine_nr routine_nr+1
 %endrep
 
-; Create the Syscall ISR routine
+; Create the Syscall ISR routines
+IR_ROUTINE CONTEXT_SWITCH_CALL
 IR_ROUTINE SYSCALL_NUMBER
-
 
 
 ; Called from each interrupt routine, saves registers and jumps to C-code
 ir_common_stub:
     push eax
-	push ecx
-	push edx
-	push ebx
-	push ebp
-	push esi
-	push edi
+    push ecx
+    push edx
+    push ebx
+    push ebp
+    push esi
+    push edi
 
-	push ds
+    push ds
     push es
     push fs
     push gs
@@ -126,6 +127,7 @@ _idt_install:
     %endrep
 
     DO_IDT_ENTRY SYSCALL_NUMBER, 0x0008, 0xEE00
+	DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0xEE00
 
     ; Remap IRQ 0-15 to 32-47 (see http://wiki.osdev.org/PIC#Initialisation)
 	%macro putport 2
