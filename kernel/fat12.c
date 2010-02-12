@@ -149,6 +149,20 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
     }
 }
 
+int32_t flpydsk_read_track_ia  ( int32_t track, void* trackbuffer)
+{
+    uint8_t* retVal = flpydsk_read_sector_wo_motor(track*18); // retVal should be DMA_BUFFER
+    memcpy( trackbuffer, (void*)DMA_BUFFER, 0x2400);
+    if(retVal == (uint8_t*)DMA_BUFFER)
+    {
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
 int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
 {
     uint8_t a[512];
@@ -312,13 +326,20 @@ int32_t flpydsk_load(char* name, char* ext)
     printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
 
     printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
+
+    ///TEST
+    flpydsk_read_track_ia ( 0, track0);
+    ///TEST
+
     int32_t fat_entry[FATMAXINDEX], i;
     for(i=0;i<FATMAXINDEX;i++)
     {
-        read_fat(&fat_entry[i], i, FAT1_SEC);
+        read_fat(&fat_entry[i], i, FAT1_SEC);  ///TODO: to be accelerated
     }
 
     file_ia(fat_entry,firstCluster,file);
+
+    ///TEST ///TODO: dependent on filesize and DIAGNOSIS ONLY
     printformat("\nFile content: ");
     printformat("\n1st sector:\n");
     for(i=0;i<26;i++)
@@ -345,6 +366,8 @@ int32_t flpydsk_load(char* name, char* ext)
     {
         printformat("%x ",file[i]);
     }
+    ///TEST
+
     printformat("\n\n");
 
     elf_exec( file, f.size ); // execute loaded file
@@ -599,6 +622,8 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
     return f->firstCluster;
 }
 
+
+// change two FAT-entries fat1 and fat2 into a 12-bit-value fat_entry
 void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
 {
     int32_t fat;
@@ -617,35 +642,28 @@ void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
 
 int32_t read_fat(int32_t* fat_entry, int32_t in, int32_t st_sec)
 {
-    int32_t fat_in, res;
+    int32_t fat_in;
     uint8_t a[512];
     int32_t fat1, fat2;
     fat_in = (in*3)/2;
     st_sec = st_sec + fat_in/512;
     if(fat_in % 512 == 511)
     {
-        //spans sectors
-        res = flpydsk_read_sector_ia(st_sec,a);
-        if(res != 0)
-        {
-            return E_DISK;
-        }
+        memcpy((void*)a,(void*)(track0+st_sec*512),0x200);
         fat1 = a[511];
-        res = flpydsk_read_sector_ia(st_sec+1,a);
+        memcpy((void*)a,(void*)(track0+(st_sec+1)*512),0x200);
         fat2 = a[0];
     }
     else
     {
         fat_in = fat_in%512;
-        res = flpydsk_read_sector_ia(st_sec,a);
-        if(res != 0)
-        {
-            return E_DISK;
-        }
+        memcpy((void*)a,(void*)(track0+st_sec*512),0x200);
         fat1 = a[fat_in] & 0xff;
         fat2 = a[fat_in+1] & 0xff;
      }
+
      parse_fat(fat_entry,fat1,fat2,in);
 
      return 0;
 }
+
