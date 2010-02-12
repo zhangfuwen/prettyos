@@ -149,7 +149,8 @@ int main()
                   }
               }
 
-              for(i=posPoint+1;i<12;i++)
+              //for(i=posPoint+1;i<12;i++)
+              for(i=posPoint+1;i<posPoint+4;i++)///TEST
               {
                   ext[i-posPoint-1]=entry[i];
               }
