@@ -1,6 +1,7 @@
 #include "syscall.h"
 #include "task.h"
 #include "fat12.h"
+#include "sys_speaker.h"
 
 // some functions declared extern in os.h
 // rest of functions must be declared here:
@@ -21,6 +22,7 @@ DEFN_SYSCALL1( flpydsk_format,            11, char*                    )
 DEFN_SYSCALL2( flpydsk_load,              12, char*, char*             )
 DEFN_SYSCALL0( exit,                      13                           )
 DEFN_SYSCALL1( settaskflag,               14, int                      )
+DEFN_SYSCALL2( beep,                      15, uint32_t, uint32_t       )
 
 static void* syscalls[] =
 {
@@ -38,7 +40,8 @@ static void* syscalls[] =
     &flpydsk_format,
     &flpydsk_load,
     &exit,
-    &settaskflag
+    &settaskflag,
+    &beep
 };
 
 void syscall_handler(struct regs* r)

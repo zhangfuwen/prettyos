@@ -19,10 +19,10 @@ int32_t flpydsk_read_directory()
 	memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
 	/// TEST
 
-	uint8_t* retVal = flpydsk_read_sector(19);   // start at 0x2600: root directory (14 sectors)
-	if(retVal != (uint8_t*)DMA_BUFFER)
+	int32_t retVal = flpydsk_read_sector(19,1); // start at 0x2600: root directory (14 sectors)
+	if(retVal != 0)
 	{
-	    printformat("\nerror: buffer = flpydsk_read_sector(...): %X\n",retVal);
+	    printformat("\nread error: %d\n",retVal);
 	}
 	printformat("<Floppy Disc Directory>\n");
 
@@ -134,33 +134,26 @@ int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer)
     return retVal;
 }
 
-
 int32_t flpydsk_read_sector_ia( int32_t i, void* a)
 {
-    uint8_t* retVal = flpydsk_read_sector_wo_motor(i); // retVal should be DMA_BUFFER
+    int32_t retVal = flpydsk_read_sector(i,0);
+    if(retVal!=0)
+    {
+        printformat("\nread error: %d\n",retVal);
+    }
     memcpy( a, (void*)DMA_BUFFER, 0x200);
-    if(retVal == (uint8_t*)DMA_BUFFER)
-    {
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
+    return retVal;
 }
 
-int32_t flpydsk_read_track_ia  ( int32_t track, void* trackbuffer)
+int32_t flpydsk_read_track_ia( int32_t track, void* trackbuffer)
 {
-    uint8_t* retVal = flpydsk_read_sector_wo_motor(track*18); // retVal should be DMA_BUFFER
+    int32_t retVal = flpydsk_read_sector(track*18,0);
+    if(retVal!=0)
+    {
+        printformat("\nread error: %d\n",retVal);
+    }
     memcpy( (void*)trackbuffer, (void*)DMA_BUFFER, 0x2400);
-    if(retVal == (uint8_t*)DMA_BUFFER)
-    {
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
+    return retVal;
 }
 
 int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
@@ -265,21 +258,11 @@ int32_t flpydsk_load(char* name, char* ext)
 
     printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
 
-    ///TEST
     retVal = flpydsk_read_track_ia ( 0, track0);
     settextcolor(14,0);
-    printformat("retVal flpydsk_read_track_ia: %d (0: success)\t", retVal);
+    printformat("read_track_ia: %d (0: success)\t", retVal);
     settextcolor(2,0);
-    printformat("track0 content: ");
-    printformat("\n1st sector (boot sector):\n"); for(i=   0;i<  26;i++) {printformat("%x ",track0[i]);}
-    printformat("\n2nd sector (FAT1):\n");        for(i= 512;i< 558;i++) {printformat("%x ",track0[i]);}
-    printformat("\n3rd sector:\n");               for(i=1024;i<1050;i++) {printformat("%x ",track0[i]);}
-    printformat("\n4th sector:\n");               for(i=1536;i<1562;i++) {printformat("%x ",track0[i]);}
-    printformat("\n5th sector:\n");               for(i=2048;i<2074;i++) {printformat("%x ",track0[i]);}
-    printformat("\n\n");
-    sleepSeconds(5);
-
-    ///TEST
+    sleepSeconds(3); ///TEST
 
     ///TODO: read only entries which are necessary for file_ia
     ///      perhaps reading FAT entry and data sector it can be combined
@@ -295,9 +278,8 @@ int32_t flpydsk_load(char* name, char* ext)
     printformat("\n1st sector:\n"); for(i=   0;i<  26;i++) {printformat("%x ",file[i]);}
     printformat("\n2nd sector:\n"); for(i= 512;i< 538;i++) {printformat("%x ",file[i]);}
     printformat("\n3rd sector:\n"); for(i=1024;i<1050;i++) {printformat("%x ",file[i]);}
-    //printformat("\n4th sector:\n"); for(i=1536;i<1562;i++) {printformat("%x ",file[i]);}
-    //printformat("\n5th sector:\n"); for(i=2048;i<2074;i++) {printformat("%x ",file[i]);}
-
+    printformat("\n4th sector:\n"); for(i=1536;i<1562;i++) {printformat("%x ",file[i]);}
+    printformat("\n5th sector:\n"); for(i=2048;i<2074;i++) {printformat("%x ",file[i]);}
     printformat("\n\n");
 
     if(retVal==0)
@@ -355,7 +337,11 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
     int32_t i,j,k;
     uint8_t a[512];
 
-    flpydsk_read_sector_ia( BOOT_SEC, a ); ///TEST
+    int32_t retVal = flpydsk_read_sector_ia( BOOT_SEC, a );
+    if(retVal!=0)
+    {
+        printformat("\nread error: %d\n",retVal);
+    }
 
     i=0;
     for(j=0;j<3;j++)

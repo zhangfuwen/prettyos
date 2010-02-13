@@ -83,9 +83,15 @@ void settaskflag(int i)
     __asm__ volatile( "int $0x7F" : : "a"(14), "b"(i) );
 }
 
+void beep(unsigned int frequency, unsigned int duration)
+{
+    __asm__ volatile( "int $0x7F" : : "a"(15), "b"(frequency), "c"(duration)  );
+}
 
 
-/// user functions ///
+/// ///////////////////////////// ///
+///          user functions       ///
+/// ///////////////////////////// ///
 
 void test()
 {
@@ -274,6 +280,7 @@ void showInfo(signed char val)
         printLine(line3,48,0xE);
     }
 }
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

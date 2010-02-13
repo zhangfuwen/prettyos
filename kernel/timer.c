@@ -7,7 +7,7 @@ extern page_directory_t* current_directory;
 extern task_t* current_task;
 extern tss_entry_t tss_entry;
 
-uint16_t systemfrequency = 1000; // system frequency
+uint16_t systemfrequency = 100; // system frequency
 uint32_t timer_ticks = 0;
 uint32_t eticks;
 
@@ -55,7 +55,7 @@ void systemTimer_setFrequency( uint32_t freq )
 {
     systemfrequency = freq;
     uint32_t divisor = 1193180 / systemfrequency; //divisor must fit into 16 bits
-
+                                                  // PIT (programable interrupt timer)
     // Send the command byte
     outportb(0x43, 0x36);
 

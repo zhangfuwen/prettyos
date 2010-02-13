@@ -37,5 +37,6 @@ void reverse(char* s);
 void itoa(int n, char* s);
 int atoi(char* s);
 void showInfo(signed char val);
+void beep(unsigned int frequency, unsigned int duration);
 
 #endif

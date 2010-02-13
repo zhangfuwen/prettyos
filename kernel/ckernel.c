@@ -14,6 +14,7 @@
 #include "time.h"
 #include "flpydsk.h"
 #include "list.h"
+#include "sys_speaker.h"
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -31,20 +32,20 @@ char DateAndTime[80];
 static void init()
 {
     clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.96]    ");
+    printformat("PrettyOS [Version 0.0.0.97]    ");
     printformat("\n\n");
     gdt_install();
     idt_install();
     timer_install();
     keyboard_install();
     syscall_install();
+    msgbeep();
 }
 
 int main()
 {
     init();
-    settextcolor(15,0);
-
+	settextcolor(15,0);
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
                // TODO: we need calculation of virtual address from physical address
                //       that we can carry out this routine after paging_install()
@@ -88,8 +89,7 @@ int main()
     }
     //printformat("\n");
     // listShow(pciDevList); // shows addresses of list elements (not data)
-
-    printformat("\n");
+	printformat("\n");
     for(int i=0;i<PCIARRAYSIZE;++i)
     {
         void* element = listShowElement(pciDevList,i);
@@ -176,7 +176,6 @@ int main()
     const char* p = progress;
     uint32_t CurrentSeconds=0, CurrentSecondsOld;
     char timeBuffer[20];
-
     while( true )
     {
         // SHOW ROTATING ASTERISK

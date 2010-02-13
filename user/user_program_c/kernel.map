@@ -11,7 +11,7 @@ LOAD start.o
 LOAD userlib.o
                 0x01400000                . = 0x1400000
 
-.text           0x01400000      0x7ab
+.text           0x01400000      0x7bf
                 0x01400000                __code_start = .
  *(.text*)
  .text          0x01400000      0x39a program.o
@@ -19,68 +19,69 @@ LOAD userlib.o
  *fill*         0x0140039a        0x6 00
  .text          0x014003a0        0xc start.o
                 0x014003a0                _start
- .text          0x014003ac      0x3ff userlib.o
+ .text          0x014003ac      0x413 userlib.o
                 0x01400406                _printLine
-                0x01400562                _strcmp
-                0x014004a7                _toLower
-                0x014004bc                _toUpper
-                0x01400483                _test
+                0x01400576                _strcmp
+                0x014004bb                _toLower
+                0x014004d0                _toUpper
+                0x01400497                _test
                 0x014003c0                _putch
                 0x014003d1                _puts
                 0x0140043d                _floppy_format
-                0x01400528                _toupper
-                0x0140058b                _gets
-                0x014006a6                _atoi
-                0x014004ee                _tolower
+                0x0140053c                _toupper
+                0x0140059f                _gets
+                0x014006ba                _atoi
+                0x01400502                _tolower
                 0x014003f6                _floppy_dir
-                0x0140063f                _itoa
+                0x01400653                _itoa
                 0x0140042d                _getCurrentMilliseconds
-                0x01400724                _showInfo
-                0x014005fa                _reverse
+                0x01400738                _showInfo
+                0x0140060e                _reverse
                 0x01400450                _floppy_load
                 0x014003e2                _getch
                 0x014003ac                _settextcolor
                 0x0140041d                _getCurrentSeconds
-                0x014004d1                _strlen
+                0x014004e5                _strlen
                 0x01400466                _exit
                 0x01400472                _settaskflag
+                0x01400483                _beep
 
-.data           0x014007ac        0x0
-                0x014007ac                __data_start = .
+.data           0x014007c0        0x0
+                0x014007c0                __data_start = .
  *(.data)
- .data          0x014007ac        0x0 program.o
- .data          0x014007ac        0x0 userlib.o
+ .data          0x014007c0        0x0 program.o
+ .data          0x014007c0        0x0 userlib.o
 
-.rodata         0x014007ac        0xc
-                0x014007ac                __rodata_start = .
+.rodata         0x014007c0        0xc
+                0x014007c0                __rodata_start = .
  *(.rodata)
- .rodata        0x014007ac        0xc userlib.o
+ .rodata        0x014007c0        0xc userlib.o
 
-.rodata.str1.1  0x014007b8       0x4f
+.rodata.str1.1  0x014007cc       0x4f
  .rodata.str1.1
-                0x014007b8       0x42 program.o
+                0x014007cc       0x42 program.o
                                  0x43 (size before relaxing)
  .rodata.str1.1
-                0x014007fa        0xd userlib.o
+                0x0140080e        0xd userlib.o
 
-.rodata.str1.4  0x01400808      0x1b4
+.rodata.str1.4  0x0140081c      0x1b4
  .rodata.str1.4
-                0x01400808       0xb5 program.o
- *fill*         0x014008bd        0x3 00
+                0x0140081c       0xb5 program.o
+ *fill*         0x014008d1        0x3 00
  .rodata.str1.4
-                0x014008c0       0xfc userlib.o
+                0x014008d4       0xfc userlib.o
                                  0xf9 (size before relaxing)
 
-.rel.dyn        0x014009bc        0x0
+.rel.dyn        0x014009d0        0x0
  .rel.text      0x00000000        0x0 program.o
 
-.bss            0x014009bc        0x0
-                0x014009bc                __bss_start = .
+.bss            0x014009d0        0x0
+                0x014009d0                __bss_start = .
  *(.bss)
- .bss           0x014009bc        0x0 program.o
- .bss           0x014009bc        0x0 userlib.o
+ .bss           0x014009d0        0x0 program.o
+ .bss           0x014009d0        0x0 userlib.o
  *(COMMON)
-                0x014009bc                __end = .
+                0x014009d0                __end = .
 OUTPUT(user/user_program_c/program.elf elf32-i386)
 
 .comment        0x00000000       0x24
