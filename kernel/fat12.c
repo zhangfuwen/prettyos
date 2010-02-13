@@ -181,20 +181,124 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
     i = firstCluster;
     while(fatEntry[i]!=0xFFF)
     {
-        printformat("\ni: %d FAT-entry: %x\n",i,fatEntry[i]);
+        printformat("\ni: %d FAT-entry: %x\t",i,fatEntry[i]);
+        if( (fatEntry[i]<3) || (fatEntry[i]>MAX_BLOCK))
+        {
+            printformat("FAT-error.\n");
+            return -1;
+        }
 
         // copy data from chain
         pos++;
         sectornumber = fatEntry[i]+ADD;
-        printformat("\nsector: %d\n",sectornumber);
+        printformat("sector: %d",sectornumber);
         flpydsk_read_sector_ia(sectornumber,a); // read
         memcpy( (void*)(file+pos*512), (void*)a, 512);
 
         // search next cluster of the file
         i = fatEntry[i];
     }
+    printformat("\n");
     return 0;
 }
+
+int32_t flpydsk_load(char* name, char* ext)
+{
+    printformat("Load and execute ");
+    settextcolor(14,0);
+    printformat("-->%s.%s<--",name,ext);
+    settextcolor(2,0);
+    printformat(" from floppy disk\n");
+    flpydsk_control_motor(true);
+
+    int32_t i, retVal;
+    struct file f;
+    uint32_t firstCluster = 0;
+    firstCluster = search_file_first_cluster(name,ext,&f);
+    if(firstCluster==0)
+    {
+        printformat("file not found in root directory\n");
+        return -1;
+    }
+    printformat("FirstCluster (retVal): %d\n",firstCluster);
+    printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
+
+    printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
+
+    ///TEST
+    retVal = flpydsk_read_track_ia ( 0, track0);
+    settextcolor(14,0);
+    printformat("retVal flpydsk_read_track_ia: %d (0: success)\t", retVal);
+    settextcolor(2,0);
+    printformat("track0 content: ");
+    printformat("\n1st sector (boot sector):\n"); for(i=   0;i<  26;i++) {printformat("%x ",track0[i]);}
+    printformat("\n2nd sector (FAT1):\n");        for(i= 512;i< 558;i++) {printformat("%x ",track0[i]);}
+    printformat("\n3rd sector:\n");               for(i=1024;i<1050;i++) {printformat("%x ",track0[i]);}
+    printformat("\n4th sector:\n");               for(i=1536;i<1562;i++) {printformat("%x ",track0[i]);}
+    printformat("\n5th sector:\n");               for(i=2048;i<2074;i++) {printformat("%x ",track0[i]);}
+    printformat("\n\n");
+    sleepSeconds(5);
+
+    ///TEST
+
+    ///TODO: read only entries which are necessary for file_ia
+    ///      perhaps reading FAT entry and data sector it can be combined
+    int32_t fat_entry[FATMAXINDEX];
+    for(i=0;i<FATMAXINDEX;i++)
+    {
+        read_fat(&fat_entry[i], i, FAT1_SEC, track0);
+    }
+    retVal = file_ia(fat_entry,firstCluster,file);
+    ///
+
+    printformat("\nFile content: ");
+    printformat("\n1st sector:\n"); for(i=   0;i<  26;i++) {printformat("%x ",file[i]);}
+    printformat("\n2nd sector:\n"); for(i= 512;i< 538;i++) {printformat("%x ",file[i]);}
+    printformat("\n3rd sector:\n"); for(i=1024;i<1050;i++) {printformat("%x ",file[i]);}
+    //printformat("\n4th sector:\n"); for(i=1536;i<1562;i++) {printformat("%x ",file[i]);}
+    //printformat("\n5th sector:\n"); for(i=2048;i<2074;i++) {printformat("%x ",file[i]);}
+
+    printformat("\n\n");
+
+    if(retVal==0)
+    {
+        elf_exec( file, f.size ); // execute loaded file
+    }
+    else if(retVal==-1)
+    {
+        printformat("file was not executed due to FAT error.");
+    }
+    printformat("\n\n");
+
+    flpydsk_control_motor(false);
+
+    return 0;
+}
+
+int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer)
+{
+    // example: //TODO: only necessary FAT entries and combine these tow steps:
+                //parse FAT & load file data
+    // for(i=0;i<FATMAXINDEX;i++)
+    //    read_fat(&fat_entry[i], i, FAT1_SEC);
+    // file_ia(fat_entry,firstCluster,file);
+
+
+    int32_t fat_index;
+    int32_t fat1, fat2;
+
+    fat_index = (index*3)/2; // 0 -> 0, 1 -> 1
+                       // 100 -> 150, 101 -> 151, 102 -> 153, 103 -> 154, 104 -> 156, ...
+                       // 511 -> 766, 512 -> 768
+
+    fat1 = buffer[st_sec*512+fat_index]   & 0xFF;
+    fat2 = buffer[st_sec*512+fat_index+1] & 0xFF;
+
+    parse_fat(fat_entry,fat1,fat2,index);
+
+    return 0;
+}
+
 
 /*****************************************************************************
   The following functions are derived from source code of the dynacube team.
@@ -305,79 +409,7 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
     return 0;
 }
 
-int32_t flpydsk_load(char* name, char* ext)
-{
-    printformat("Load and execute ");
-    settextcolor(14,0);
-    printformat("-->%s.%s<--",name,ext);
-    settextcolor(2,0);
-    printformat(" from floppy disk\n");
-    flpydsk_control_motor(true);
 
-    struct file f;
-    uint32_t firstCluster = 0;
-    firstCluster = search_file_first_cluster(name,ext,&f);
-    if(firstCluster==0)
-    {
-        printformat("file not found in root directory\n");
-        return -1;
-    }
-    printformat("FirstCluster (retVal): %d\n",firstCluster);
-    printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
-
-    printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
-
-    ///TEST
-    flpydsk_read_track_ia ( 0, track0);
-    ///TEST
-
-    int32_t fat_entry[FATMAXINDEX], i;
-    for(i=0;i<FATMAXINDEX;i++)
-    {
-        read_fat(&fat_entry[i], i, FAT1_SEC);  ///TODO: to be accelerated
-    }
-
-    file_ia(fat_entry,firstCluster,file);
-
-    ///TEST ///TODO: dependent on filesize and DIAGNOSIS ONLY
-    printformat("\nFile content: ");
-    printformat("\n1st sector:\n");
-    for(i=0;i<26;i++)
-    {
-        printformat("%x ",file[i]);
-    }
-    printformat("\n2nd sector:\n");
-    for(i=512;i<538;i++)
-    {
-        printformat("%x ",file[i]);
-    }
-    printformat("\n3rd sector:\n");
-    for(i=1024;i<1050;i++)
-    {
-        printformat("%x ",file[i]);
-    }
-    printformat("\n4th sector:\n");
-    for(i=1536;i<1562;i++)
-    {
-        printformat("%x ",file[i]);
-    }
-    printformat("\n5th sector:\n");
-    for(i=2048;i<2074;i++)
-    {
-        printformat("%x ",file[i]);
-    }
-    ///TEST
-
-    printformat("\n\n");
-
-    elf_exec( file, f.size ); // execute loaded file
-
-    printformat("\n\n");
-
-    flpydsk_control_motor(false);
-
-    return 0;
-}
 
 int32_t flpydsk_format(char* vlab) // VolumeLabel
 {
@@ -623,7 +655,7 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
 }
 
 
-// change two FAT-entries fat1 and fat2 into a 12-bit-value fat_entry
+// combine two FAT-entries fat1 and fat2 to a 12-bit-value fat_entry
 void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
 {
     int32_t fat;
@@ -638,32 +670,5 @@ void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
     fat = fat & 0xFFF;
     *fat_entry = fat;
     printformat("%x ", fat);
-}
-
-int32_t read_fat(int32_t* fat_entry, int32_t in, int32_t st_sec)
-{
-    int32_t fat_in;
-    uint8_t a[512];
-    int32_t fat1, fat2;
-    fat_in = (in*3)/2;
-    st_sec = st_sec + fat_in/512;
-    if(fat_in % 512 == 511)
-    {
-        memcpy((void*)a,(void*)(track0+st_sec*512),0x200);
-        fat1 = a[511];
-        memcpy((void*)a,(void*)(track0+(st_sec+1)*512),0x200);
-        fat2 = a[0];
-    }
-    else
-    {
-        fat_in = fat_in%512;
-        memcpy((void*)a,(void*)(track0+st_sec*512),0x200);
-        fat1 = a[fat_in] & 0xff;
-        fat2 = a[fat_in+1] & 0xff;
-     }
-
-     parse_fat(fat_entry,fat1,fat2,in);
-
-     return 0;
 }
 

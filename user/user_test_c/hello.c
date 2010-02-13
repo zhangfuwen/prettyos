@@ -15,14 +15,18 @@ int main()
     puts("This piece of software was loaded by PrettyOS from the floppy disk of ");
     puts(s);
     putch('\n');
-    puts("--------------------------------------------------------------------\n");
-    puts("---                     Collatz-Folge 3n+1                       ---\n");
-    puts("--------------------------------------------------------------------\n");
+    puts("********************************************************************\n");
+    puts("***                     Collatz-Folge 3n+1                       ***\n");
+    puts("********************************************************************\n");
 
     /**************************** Eingabebereich ****************************/
     puts("Erste Zahl:   ");
     gets(s);
     start = atoi(s);
+    if(start<1)
+    {
+        start=1;
+    }
     puts("Letzte Zahl:  ");
     gets(s);
     end   = atoi(s);
