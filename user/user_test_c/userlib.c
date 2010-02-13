@@ -88,17 +88,17 @@ void beep(unsigned int frequency, unsigned int duration)
     __asm__ volatile( "int $0x7F" : : "a"(15), "b"(frequency), "c"(duration)  );
 }
 
+int getUserTaskNumber()
+{
+    int ret;
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(16) );
+    return ret;
+}
+
 
 /// ///////////////////////////// ///
 ///          user functions       ///
 /// ///////////////////////////// ///
-
-void test()
-{
-    settextcolor(4,0);
-    puts(">>> TEST <<<");
-    settextcolor(15,0);
-}
 
 char toLower(char c)
 {
@@ -147,6 +147,44 @@ int strcmp( const char* s1, const char* s2 )
     }
     return ( *s1 - *s2 );
 }
+
+/// http://en.wikipedia.org/wiki/Strcpy
+// Copy the NUL-terminated string src into dest, and return dest.
+char* strcpy(char* dest, const char* src)
+{
+   char* save = dest;
+   while( (*dest++ = *src++) );
+   return save;
+}
+
+char* strncpy(char* dest, const char* src, unsigned int n) // okay?
+{
+    if(n != 0)
+    {
+        char* d       = dest;
+        const char* s = src;
+        do
+        {
+            if ((*d++ = *s++) == 0)
+            {
+                /* NUL pad the remaining n-1 bytes */
+                while(--n != 0)
+                   *d++ = 0;
+                break;
+            }
+        }
+        while(--n != 0);
+     }
+     return (dest);
+}
+
+/// http://en.wikipedia.org/wiki/Strcat
+char* strcat(char* dest, const char* src)
+{
+    strcpy(dest + strlen(dest), src);
+    return dest;
+}
+
 
 char* gets(char* s) ///TODO: task switch has to be handled!
 {
@@ -241,7 +279,55 @@ int atoi(char* s)
     return num;
 }
 
+void float2string(float value, int decimal, char* valuestring) // float --> string
+{
+   int neg = 0;
+   char tempstr[20];
+   int i = 0;
+   int j = 0;
+   int c;
+   int val1, val2;
+   char* tempstring;
 
+   tempstring = valuestring;
+   if (value < 0)
+   {
+     {neg = 1; value = -value;}
+   }
+   for (j=0; j < decimal; ++j)
+   {
+     {value = value * 10;}
+   }
+   val1 = (value * 2);
+   val2 = (val1 / 2) + (val1 % 2);
+   while (val2 !=0)
+   {
+     if ((decimal > 0) && (i == decimal))
+     {
+       tempstr[i] = (char)(0x2E);
+       ++i;
+     }
+     else
+     {
+       c = (val2 % 10);
+       tempstr[i] = (char) (c + 0x30);
+       val2 = val2 / 10;
+       ++i;
+     }
+   }
+   if (neg)
+   {
+     *tempstring = '-';
+      ++tempstring;
+   }
+   i--;
+   for (;i > -1;i--)
+   {
+     *tempstring = tempstr[i];
+     ++tempstring;
+   }
+   *tempstring = '\0';
+}
 
 
 
@@ -279,6 +365,13 @@ void showInfo(signed char val)
         printLine(line2,47,0xE);
         printLine(line3,48,0xE);
     }
+}
+
+void test()
+{
+    settextcolor(4,0);
+    puts(">>> TEST <<<");
+    settextcolor(15,0);
 }
 
 

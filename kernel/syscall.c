@@ -23,6 +23,7 @@ DEFN_SYSCALL2( flpydsk_load,              12, char*, char*             )
 DEFN_SYSCALL0( exit,                      13                           )
 DEFN_SYSCALL1( settaskflag,               14, int                      )
 DEFN_SYSCALL2( beep,                      15, uint32_t, uint32_t       )
+DEFN_SYSCALL0( getUserTaskNumber,         16                           )
 
 static void* syscalls[] =
 {
@@ -41,7 +42,8 @@ static void* syscalls[] =
     &flpydsk_load,
     &exit,
     &settaskflag,
-    &beep
+    &beep,
+    &getUserTaskNumber
 };
 
 void syscall_handler(struct regs* r)

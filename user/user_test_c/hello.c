@@ -90,10 +90,11 @@ int ConvertToInt(char c) {
 	return((int)(c) - '1' + 1);
 }
 
-int main() {
+int main()
+{
     settextcolor(11,0);
-    puts("====================================================================\n");
-    puts("                      Mr.X TicTacToe 3x3  v0.1                      \n");
+    puts("--------------------------------------------------------------------\n");
+    puts("                      Mr.X TicTacToe 3x3  v0.1a                     \n");
     puts("--------------------------------------------------------------------\n\n");
 
     beep(1000,300);
@@ -103,7 +104,8 @@ int main() {
 	char t[1];
 	helper();
 
-	do {
+	do
+	{
 		x = *gets(t);
 	}
 	while (!isdigit(x));
@@ -111,17 +113,24 @@ int main() {
 	tictactoe[ConvertToInt(x)] = X;
 	printField();
 
-	for(int i = 0; i < 4 && !ende; i++) {
+	for(int i = 0; ((i<4) && (!ende)); i++)
+	{
+	    settextcolor(11,0);
 		helper();
-		while(z == 0) {
-			do {
+		while(z == 0)
+		{
+			do
+			{
 				x = *gets(t);
 			}
 			while (!isdigit(x));
-			if((tictactoe[ConvertToInt(x)] == X) || (tictactoe[ConvertToInt(x)] == O)) {
+
+			if((tictactoe[ConvertToInt(x)] == X) || (tictactoe[ConvertToInt(x)] == O))
+			{
 				puts("unmoeglich\n");
 			}
-			else {
+			else
+			{
 				tictactoe[ConvertToInt(x)] = O;
 				z = 1;
 			}
@@ -129,19 +138,24 @@ int main() {
 		printField();
 		z = 0;
 		gewinnen();
-		if(ende) {
+		if(ende)
+		{
 			break;
 		}
 		helper();
-		while(z == 0) {
-			do {
+		while(z == 0)
+		{
+			do
+			{
 				x = *gets(t);
 			}
 			while(!isdigit(x));
-			if((tictactoe[ConvertToInt(x)] == 1) || (tictactoe[ConvertToInt(x)] == 2)){
+			if((tictactoe[ConvertToInt(x)] == 1) || (tictactoe[ConvertToInt(x)] == 2))
+			{
 				puts("unmoeglich\n");
 			}
-			else {
+			else
+			{
 				tictactoe[ConvertToInt(x)] = X;
 				z = 1;
 			}
@@ -151,5 +165,6 @@ int main() {
 		gewinnen();
 	}
     settextcolor(15,0);
+	puts("GAME OVER\n\n");
 	return 0;
 }

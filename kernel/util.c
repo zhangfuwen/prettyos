@@ -137,7 +137,7 @@ char* strcpy(char* dest, const char* src)
    return save;
 }
 
-char* strncpy(char* dest, const char* src, size_t n) // okay?
+char* strncpy(char* dest, const char* src, unsigned int n) // okay?
 {
     if(n != 0)
     {
@@ -157,6 +157,7 @@ char* strncpy(char* dest, const char* src, size_t n) // okay?
      }
      return (dest);
 }
+
 
 /// http://en.wikipedia.org/wiki/Strcat
 char* strcat(char* dest, const char* src)

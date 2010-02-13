@@ -7,11 +7,15 @@ Links:
 http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 */
 
+///TEST
+#define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 50
+///TEST
+
 uint8_t track0[9216];
 uint8_t track1[9216];
 uint8_t file[51200];
 
-int32_t flpydsk_read_directory()
+int32_t flpydsk_read_directory() /// TODO: check whether Floppy ---> DMA really works !
 {
     int32_t error = -1; // return value
 
@@ -144,7 +148,7 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
     flpydsk_control_motor(true);
 
     int32_t n, retVal;
-    for(n=0;n<10;n++) // maximum ten times should be enough to overwrite the AAAA...
+    for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum ten times should be enough to overwrite the AAAA...
     {
         retVal = flpydsk_read_sector(i,0);
         if(retVal!=0)
@@ -188,7 +192,7 @@ int32_t flpydsk_read_track_ia( int32_t track, void* trackbuffer)
     flpydsk_control_motor(true);
 
     int32_t n, retVal;
-    for(n=0;n<10;n++) // maximum ten times should be enough to overwrite the AAAA...
+    for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum x times should be enough to overwrite the AAAA...
     {
         retVal = flpydsk_read_sector(track*18,0);
         if(retVal!=0)
@@ -340,7 +344,7 @@ int32_t flpydsk_load(char* name, char* ext)
     retVal = file_ia(fat_entry,firstCluster,file);
     ///
 
-    printformat("\nFile content: ");
+    printformat("\nFile content (start of first 5 clusters): ");
     printformat("\n1st sector:\n"); for(i=   0;i<  26;i++) {printformat("%x ",file[i]);}
     printformat("\n2nd sector:\n"); for(i= 512;i< 538;i++) {printformat("%x ",file[i]);}
     printformat("\n3rd sector:\n"); for(i=1024;i<1050;i++) {printformat("%x ",file[i]);}
@@ -350,7 +354,11 @@ int32_t flpydsk_load(char* name, char* ext)
 
     if(retVal==0)
     {
-        elf_exec( file, f.size ); // execute loaded file
+        /// START TASK AND INCREASE TASKCOUNTER
+        if( elf_exec( file, f.size ) ) // execute loaded file
+        {
+            userTaskCounter++; // an additional user-program has been started
+        }
     }
     else if(retVal==-1)
     {

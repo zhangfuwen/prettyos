@@ -18,6 +18,7 @@ int main()
     char ext[4];
     int posPoint;
     unsigned char input;
+    int numTasks;
 
     // to steer the train's velocity:
     const unsigned int waitingTime = 25;
@@ -25,14 +26,26 @@ int main()
 
     while(true)
     {
-      settextcolor(15,0);
-      i=0;
-      clearEntry(entry,&n);
-      puts("$> ");
-      start = getCurrentMilliseconds();
+      numTasks = getUserTaskNumber();
 
-      while(true)
+      #ifdef _DIAGNOSIS_
+      static char s[10];
+      settextcolor(2,0);
+      itoa(numTasks,s);
+      puts(s); putch(' ');
+      settextcolor(15,0);
+      #endif
+
+      if(numTasks<=0) // no user tasks are running
       {
+        settextcolor(15,0);
+        i=0;
+        clearEntry(entry,&n);
+        puts("$> ");
+        start = getCurrentMilliseconds();
+
+        while(true)
+        {
           /* settextcolor(4,0); puts("."); settextcolor(15,0); */
 
           // the train goes on ////////////////////////////
@@ -75,10 +88,10 @@ int main()
               ++i;
               break;
           }
-      }//while
+        }//while
 
-      // evaluation of entry
-      {
+        // evaluation of entry
+        {
           if( ( strcmp(entry,"help") == 0 ) || ( strcmp(entry,"?") == 0 ) )
           {
               settextcolor(2,0);
@@ -169,7 +182,8 @@ int main()
               }
               settextcolor(15,0);
           }//else
-      }//evaluation
+        }//evaluation
+      }//if
     }//while
     return 0;
 }

@@ -24,20 +24,29 @@ int floppy_load(char* name, char* ext);
 void exit();
 void settaskflag(int i);
 void beep(unsigned int frequency, unsigned int duration);
+int getUserTaskNumber();
 
 // user functions
-unsigned int strlen(const char* str);
+
 char toLower(char c);
 char toUpper(char c);
 char* toupper( char* s );
 char* tolower( char* s );
+
+unsigned int strlen(const char* str);
 int strcmp( const char* s1, const char* s2 );
+char* strcpy(char* dest, const char* src);
+char* strncpy(char* dest, const char* src, unsigned int n);
+char* strcat(char* dest, const char* src);
+
 char* gets(char* s);
-void test();
+
 void reverse(char* s);
 void itoa(int n, char* s);
 int atoi(char* s);
-void showInfo(signed char val);
+void float2string(float value, int decimal, char* valuestring); // float --> string
 
+void showInfo(signed char val);
+void test();
 
 #endif

@@ -23,6 +23,11 @@ void settaskflag(bool i)
     pODA->ts_flag = i;
 }
 
+int32_t getUserTaskNumber()
+{
+    return userTaskCounter;
+}
+
 void tasking_install()
 {
     cli();
@@ -52,6 +57,8 @@ void tasking_install()
 
     current_task->kernel_stack = (uint32_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     sti();
+
+    userTaskCounter = 0;
 }
 
 task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege)
@@ -216,6 +223,8 @@ void exit()
     log_task_list();
     printformat("exit finished.\n");
     #endif
+
+    userTaskCounter--; // a user-program has been deleted
     sti();
     switch_context(); // switch to next task
 }

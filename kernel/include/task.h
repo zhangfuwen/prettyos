@@ -20,7 +20,11 @@ typedef struct task
     struct task* next;                // The next task in a linked list.
 } task_t;
 
+int32_t userTaskCounter;
+
+int32_t getUserTaskNumber();
 void settaskflag(bool i);
+
 void tasking_install();
 uint32_t task_switch(uint32_t esp);
 int32_t fork();
