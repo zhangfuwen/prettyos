@@ -173,7 +173,27 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
     // copy first cluster
     sectornumber = firstCluster+ADD;
     printformat("\n\n1st sector: %d\n",sectornumber);
-    flpydsk_read_sector_ia(sectornumber,a); // read
+
+    ///TEST
+    uint32_t timeout = 2; // limit
+    int32_t  retVal  = 0;
+    while( flpydsk_read_sector_ia(sectornumber,a) != 0 )
+    {
+        retVal = -1;
+        timeout--;
+        printformat("error read_sector. attempts left: %d\n",timeout);
+	    if(timeout<=0)
+	    {
+	        printformat("timeout\n");
+	        break;
+	    }
+    }
+    if(retVal==0)
+    {
+        printformat("success read_sector.\n");
+    }
+    ///TEST
+
     memcpy( file, (void*)a, 512);
 
     // // find second cluster and chain in fat
@@ -191,8 +211,28 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
         // copy data from chain
         pos++;
         sectornumber = fatEntry[i]+ADD;
-        printformat("sector: %d",sectornumber);
-        flpydsk_read_sector_ia(sectornumber,a); // read
+        printformat("sector: %d\t",sectornumber);
+
+        ///TEST
+        timeout = 2; // limit
+        retVal  = 0;
+        while( flpydsk_read_sector_ia(sectornumber,a) != 0 )
+        {
+            retVal = -1;
+            timeout--;
+            printformat("error read_sector. attempts left: %d\n",timeout);
+	        if(timeout<=0)
+	        {
+	            printformat("timeout\n");
+	            break;
+	        }
+        }
+        if(retVal==0)
+        {
+            printformat("success read_sector.\n");
+        }
+        ///TEST
+
         memcpy( (void*)(file+pos*512), (void*)a, 512);
 
         // search next cluster of the file
