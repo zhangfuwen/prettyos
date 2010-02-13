@@ -152,7 +152,7 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
 int32_t flpydsk_read_track_ia  ( int32_t track, void* trackbuffer)
 {
     uint8_t* retVal = flpydsk_read_sector_wo_motor(track*18); // retVal should be DMA_BUFFER
-    memcpy( trackbuffer, (void*)DMA_BUFFER, 0x2400);
+    memcpy( (void*)trackbuffer, (void*)DMA_BUFFER, 0x2400);
     if(retVal == (uint8_t*)DMA_BUFFER)
     {
         return 0;
@@ -194,7 +194,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
     }
     ///TEST
 
-    memcpy( file, (void*)a, 512);
+    memcpy( (void*)file, (void*)a, 512);
 
     // // find second cluster and chain in fat
     pos=0;

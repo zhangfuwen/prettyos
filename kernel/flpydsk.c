@@ -494,6 +494,7 @@ uint8_t* flpydsk_read_sector(int32_t sectorLBA)
 	flpydsk_control_motor(true);         // printformat("read_sector.motor_on\n");
 	if(flpydsk_seek (track, head))
 	{
+	    printformat("flpydsk_seek not ok.\n");
 	    return 0;
 	}
 
@@ -522,6 +523,7 @@ uint8_t* flpydsk_read_sector_wo_motor(int32_t sectorLBA)
 
 	if(flpydsk_seek (track, head))
 	{
+	    printformat("flpydsk_seek not ok.\n");
 	    return 0;
 	}
 
