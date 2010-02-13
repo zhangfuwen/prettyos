@@ -144,26 +144,80 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
     flpydsk_control_motor(true);
 
     int32_t n, retVal;
-    for(n=0;n<2;n++) // two times should be enough to overwrite the AAAA...
+    for(n=0;n<10;n++) // maximum ten times should be enough to overwrite the AAAA...
     {
         retVal = flpydsk_read_sector(i,0);
         if(retVal!=0)
         {
             printformat("\nread error: %d\n",retVal);
         }
+        if( (*(uint8_t*)(DMA_BUFFER)  ==0x41) && (*(uint8_t*)(DMA_BUFFER+1)==0x41) && (*(uint8_t*)(DMA_BUFFER+2 )==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+4)==0x41) && (*(uint8_t*)(DMA_BUFFER+5)==0x41) && (*(uint8_t*)(DMA_BUFFER+6 )==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+8)==0x41) && (*(uint8_t*)(DMA_BUFFER+9)==0x41) && (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
+          )
+          {
+              settextcolor(4,0);
+              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
+              if(n>=9)
+              {
+                  printformat("Floppy ---> DMA error.\n");
+              }
+              settextcolor(2,0);
+              continue;
+          }
+          else
+          {
+              settextcolor(3,0);
+              printformat("Floppy ---> DMA success.\n");
+              settextcolor(2,0);
+              break;
+          }
     }
 
-    memcpy( a, (void*)DMA_BUFFER, 0x200);
+    memcpy( (void*)a, (void*)DMA_BUFFER, 0x200);
     return retVal;
 }
 
 int32_t flpydsk_read_track_ia( int32_t track, void* trackbuffer)
 {
-    int32_t retVal = flpydsk_read_sector(track*18,0);
-    if(retVal!=0)
+    /// TEST: change DMA before write/read
+    printformat("DMA manipulation\n");
+    memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
+
+    /// TEST: motor on/off
+    flpydsk_control_motor(true);
+
+    int32_t n, retVal;
+    for(n=0;n<10;n++) // maximum ten times should be enough to overwrite the AAAA...
     {
-        printformat("\nread error: %d\n",retVal);
+        retVal = flpydsk_read_sector(track*18,0);
+        if(retVal!=0)
+        {
+            printformat("\nread error: %d\n",retVal);
+        }
+        if( (*(uint8_t*)(DMA_BUFFER)  ==0x41) && (*(uint8_t*)(DMA_BUFFER+1)==0x41) && (*(uint8_t*)(DMA_BUFFER+2 )==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+4)==0x41) && (*(uint8_t*)(DMA_BUFFER+5)==0x41) && (*(uint8_t*)(DMA_BUFFER+6 )==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+8)==0x41) && (*(uint8_t*)(DMA_BUFFER+9)==0x41) && (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
+          )
+          {
+              settextcolor(4,0);
+              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
+              if(n>=9)
+              {
+                  printformat("Floppy ---> DMA error.\n");
+              }
+              settextcolor(2,0);
+              continue;
+          }
+          else
+          {
+              settextcolor(3,0);
+              printformat("Floppy ---> DMA success.\n");
+              settextcolor(2,0);
+              break;
+          }
     }
+
     memcpy( (void*)trackbuffer, (void*)DMA_BUFFER, 0x2400);
     return retVal;
 }
