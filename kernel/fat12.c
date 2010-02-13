@@ -136,11 +136,23 @@ int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer)
 
 int32_t flpydsk_read_sector_ia( int32_t i, void* a)
 {
-    int32_t retVal = flpydsk_read_sector(i,0);
-    if(retVal!=0)
+    /// TEST: change DMA before write/read
+    printformat("DMA manipulation\n");
+    memset((void*)DMA_BUFFER, 0x41, 0x200); // 0x41 is in ASCII the 'A'
+
+    /// TEST: motor on/off
+    flpydsk_control_motor(true);
+
+    int32_t n, retVal;
+    for(n=0;n<2;n++) // two times should be enough to overwrite the AAAA...
     {
-        printformat("\nread error: %d\n",retVal);
+        retVal = flpydsk_read_sector(i,0);
+        if(retVal!=0)
+        {
+            printformat("\nread error: %d\n",retVal);
+        }
     }
+
     memcpy( a, (void*)DMA_BUFFER, 0x200);
     return retVal;
 }
@@ -657,6 +669,11 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
    for(i=0;i<224;i++)
    {
        read_dir(&entry, i, 19, false);
+
+       settextcolor(14,0);
+       printformat("read_dir: %s.%s\n",(&entry)->Filename, (&entry)->Extension); ///TEST
+       settextcolor(2,0);
+
        for(j=0;j<3;j++)
        {
            buf1[j] = (&entry)->Filename[j];
@@ -674,6 +691,11 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
            break;
        }
     }
+    settextcolor(14,0);
+    printformat("rootdir search finished. 5 sec break.\n\n");
+    settextcolor(2,0);
+    sleepSeconds(5);
+
     f->size = (&entry)->FileSize;
     f->firstCluster = FORM_SHORT((&entry)->FstClusLO,(&entry)->FstClusHI);
 

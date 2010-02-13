@@ -450,7 +450,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     }
 
     /// Delay
-    // sleepMilliSeconds(50); // what is Floppy Disk head settle time?
+    sleepMilliSeconds(50); // what is Floppy Disk head settle time?
     /// Delay
 
     flpydsk_send_command( head << 2 | _CurrentDrive );
