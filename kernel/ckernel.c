@@ -32,7 +32,7 @@ char DateAndTime[80];
 static void init()
 {
     clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.100]");
+    printformat("PrettyOS [Version 0.0.0.101]");
     printformat("\n\n");
     gdt_install();
     idt_install();
@@ -57,13 +57,13 @@ int main()
     sti();
 
     /// direct 1st floppy disk
-    if( (cmos_read(0x10)>>4) == 4 ) // 1st floppy 1,44 MB: 0100....b
+    if( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
     {
-        printformat("\n1.44 MB floppy disk is installed as floppy device 0\n\n");
-
+        printformat("\n1.44 MB floppy disk has been installed as floppy device 0\n\n");
+        pODA->flpy_motor[0] = false;        // first floppy motor is off
         flpydsk_set_working_drive(0); // set drive 0 as current drive
 	    flpydsk_install(32+6);        // floppy disk uses IRQ 6 // 32+6
-	    memset((void*)DMA_BUFFER, 0x0, 0x2400);
+	    memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero
     }
     else
     {

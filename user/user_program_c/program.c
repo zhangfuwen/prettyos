@@ -24,6 +24,11 @@ int main()
     const unsigned int waitingTime = 25;
     unsigned int start;
 
+    ///TEST
+    //puts(">>>STOP<<<\t");
+    //for(;;);
+    ///TEST
+
     while(true)
     {
       numTasks = getUserTaskNumber();

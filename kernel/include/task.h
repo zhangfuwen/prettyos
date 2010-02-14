@@ -23,7 +23,7 @@ typedef struct task
 int32_t userTaskCounter;
 
 int32_t getUserTaskNumber();
-void settaskflag(bool i);
+void settaskflag(int32_t i);
 
 void tasking_install();
 uint32_t task_switch(uint32_t esp);

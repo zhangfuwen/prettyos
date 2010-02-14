@@ -11,10 +11,9 @@
 *****************************************************************************/
 
 const int32_t FLPY_SECTORS_PER_TRACK           =   18;   // sectors per track
-static uint8_t	_CurrentDrive                  =  false; // current working drive, default: 0
+static uint8_t	_CurrentDrive                  =    0;   // current working drive, default: 0
 static volatile uint8_t ReceivedFloppyDiskIRQ  =  false; // set when IRQ fires
-const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME      =  500;  // waiting time in milliseconds
-
+const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME      =  350;   // waiting time in milliseconds
 
 // IO ports
 enum FLPYDSK_IO
@@ -101,19 +100,19 @@ enum FLPYDSK_ST0_INTCODE_TYP
 // GAP 3 sizes
 enum FLPYDSK_GAP3_LENGTH
 {
-	FLPYDSK_GAP3_LENGTH_STD  = 42,
-	FLPYDSK_GAP3_LENGTH_5_14 = 32,
-	FLPYDSK_GAP3_LENGTH_3_5  = 27
+	FLPYDSK_GAP3_LENGTH_STD      = 42,
+	FLPYDSK_GAP3_LENGTH_5_14     = 32,
+	FLPYDSK_GAP3_LENGTH_3_5      = 27
 };
 
 // Formula: 2^sector_number * 128
 enum FLPYDSK_SECTOR_DTL
 {
 
-	FLPYDSK_SECTOR_DTL_128	=	0,
-	FLPYDSK_SECTOR_DTL_256	=	1,
-	FLPYDSK_SECTOR_DTL_512	=	2,
-	FLPYDSK_SECTOR_DTL_1024	=	4
+	FLPYDSK_SECTOR_DTL_128	    =	0,
+	FLPYDSK_SECTOR_DTL_256 	    =	1,
+	FLPYDSK_SECTOR_DTL_512 	    =	2,
+	FLPYDSK_SECTOR_DTL_1024	    =	4
 };
 
 /**
@@ -138,11 +137,13 @@ void flpydsk_initialize_dma()
 	outportb(0x0a, 0x02);   // unmask dma channel 2
 }
 
+/// autoinit (2^4=16) creates problems with MS Virtual PC
 // prepare the DMA for read transfer
 void flpydsk_dma_read()
 {
 	outportb(0x0a, 0x06); // mask dma channel 2
 	outportb(0x0b, 0x56); // single transfer, address increment, autoinit, read, channel 2
+	///outportb(0x0b, 0x46); // single transfer, address increment, read, channel 2 // without autoinit
 	outportb(0x0a, 0x02); // unmask dma channel 2
 }
 
@@ -151,6 +152,7 @@ void flpydsk_dma_write()
 {
 	outportb(0x0a, 0x06); // mask dma channel 2
 	outportb(0x0b, 0x5A); // single transfer, address increment, autoinit, write, channel 2
+	///outportb(0x0b, 0x4A); // single transfer, address increment, write, channel 2 // without autoinit
 	outportb(0x0a, 0x02); // unmask dma channel 2
 }
 
@@ -246,10 +248,10 @@ void flpydsk_control_motor(bool b)
 		case 3:	motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
 	}
 
-    // turn on or off the motor of that drive
-	if(b)
+    // turn on or off the motor of the current drive
+	if((b==true) && (pODA->flpy_motor[_CurrentDrive]==false))
 	{
-        flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA);
+        flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
 
         /*
         settextcolor(14,0);
@@ -257,9 +259,9 @@ void flpydsk_control_motor(bool b)
         settextcolor(2,0);
         */
 	}
-	else
+	else if((b==false) && (pODA->flpy_motor[_CurrentDrive]==true))
 	{
-        flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET);
+        flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET); // motor off
 
         /*
         settextcolor(14,0);

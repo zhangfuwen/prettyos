@@ -58,6 +58,10 @@ typedef struct oda
 
     //tasking
     uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
+
+    // floppy disk
+    bool  flpy_motor[4];         // 0: motor off  1: motor on
+                                 // array index is number of floppy drive (0,1,2,3)
 }oda_t;
 
 // operatings system common data area

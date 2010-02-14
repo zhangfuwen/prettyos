@@ -77,7 +77,7 @@ DECL_SYSCALL0( getCurrentMilliseconds                     )
 DECL_SYSCALL1( flpydsk_format, char*                      )
 DECL_SYSCALL2( flpydsk_load, char*, char*                 )
 DECL_SYSCALL0( exit                                       )
-DECL_SYSCALL1( settaskflag, int                           )
+DECL_SYSCALL1( settaskflag, int32_t                       )
 DECL_SYSCALL2( beep, uint32_t, uint32_t                   )
 DECL_SYSCALL0( getUserTaskNumber                          )
 /***********************************************************/
