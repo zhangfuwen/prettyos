@@ -185,14 +185,12 @@ char* strcat(char* dest, const char* src)
     return dest;
 }
 
-
-char* gets(char* s) ///TODO: task switch has to be handled!
+char* gets(char* s)
 {
     int i=0;
     char c;
 
-    ///TEST
-    settaskflag(0);
+    //settaskflag(0);
 
     do
     {
@@ -202,7 +200,8 @@ char* gets(char* s) ///TODO: task switch has to be handled!
         {
            if(i>0)
            {
-              s[i]='\0';
+              s[i-1]='\0';
+              --i;
            }
         }
         s[i] = c;
@@ -211,8 +210,7 @@ char* gets(char* s) ///TODO: task switch has to be handled!
     while(c!=10); // Linefeed
     s[i]='\0';
 
-    ///TEST
-    settaskflag(1);
+    //settaskflag(1);
 
     return s;
 }

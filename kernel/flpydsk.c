@@ -270,7 +270,14 @@ void flpydsk_control_motor(bool b)
         */
 	}
 	sti(); // important!
-	sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
+	if((b==true) && (pODA->flpy_motor[_CurrentDrive]==false))///TEST
+	{
+	    sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
+	}
+	else
+	{
+	    sleepMilliSeconds(10);
+	}
 }
 
 // configure drive

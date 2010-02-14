@@ -332,7 +332,6 @@ int32_t flpydsk_load(char* name, char* ext)
     settextcolor(14,0);
     printformat("read_track_ia: %d (0: success)\t", retVal);
     settextcolor(2,0);
-    sleepSeconds(3); ///TEST
 
     ///TODO: read only entries which are necessary for file_ia
     ///      perhaps reading FAT entry and data sector it can be combined
@@ -754,9 +753,9 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
        }
     }
     settextcolor(14,0);
-    printformat("rootdir search finished. 5 sec break.\n\n");
+    printformat("rootdir search finished. 2 sec break.\n\n");
     settextcolor(2,0);
-    sleepSeconds(5);
+    sleepSeconds(2);
 
     f->size = (&entry)->FileSize;
     f->firstCluster = FORM_SHORT((&entry)->FstClusLO,(&entry)->FstClusHI);
