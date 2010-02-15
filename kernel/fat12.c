@@ -141,7 +141,7 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option)
         val = i*18;
     }
 
-    flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
+    //flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
     flpydsk_control_motor(true);
 
     int32_t n, retVal;
@@ -298,7 +298,7 @@ int32_t flpydsk_read_directory() /// TODO: check whether Floppy ---> DMA really 
 
 	memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
 
-    flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
+    //flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
 
 	/// TODO: change to read_ia(...)!
 	int32_t retVal = flpydsk_read_sector(19,1); // start at 0x2600: root directory (14 sectors)

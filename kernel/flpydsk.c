@@ -138,13 +138,11 @@ void flpydsk_initialize_dma()
 	outportb(0x0a, 0x02);   // unmask dma channel 2
 }
 
-/// autoinit (2^4=16) creates problems with MS Virtual PC
+/// autoinit ( 2^4 = 16 = 0x10 ) creates problems with MS Virtual PC and on real hardware!
 // prepare the DMA for read transfer
 void flpydsk_dma_read()
 {
 	outportb(0x0a, 0x06); // mask dma channel 2
-	///outportb(0x0b, 0x56); // single transfer, address increment, autoinit, read, channel 2
-	//outportb(0x0b, 0x16); // TEST: demand transfer
 	outportb(0x0b, 0x46); // single transfer, address increment, read, channel 2 // without autoinit
 	outportb(0x0a, 0x02); // unmask dma channel 2
 }
@@ -153,8 +151,8 @@ void flpydsk_dma_read()
 void flpydsk_dma_write()
 {
 	outportb(0x0a, 0x06); // mask dma channel 2
-	outportb(0x0b, 0x5A); // single transfer, address increment, autoinit, write, channel 2
-	///outportb(0x0b, 0x4A); // single transfer, address increment, write, channel 2 // without autoinit
+	/// outportb(0x0b, 0x5A); // single transfer, address increment, autoinit, write, channel 2
+	outportb(0x0b, 0x4A); // single transfer, address increment, write, channel 2 // without autoinit
 	outportb(0x0a, 0x02); // unmask dma channel 2
 }
 
@@ -450,6 +448,11 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
 int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
 {
     uint32_t st0, cyl;
+
+    ///TEST
+    flpydsk_initialize_dma();
+    ///TEST
+
     if(operation == 0) // read a sector
     {
         flpydsk_dma_read();
@@ -462,7 +465,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     }
 
     /// Delay
-    sleepMilliSeconds(50); // what is Floppy Disk head settle time?
+    // sleepMilliSeconds(50); // what is Floppy Disk head settle time?
     /// Delay
 
     flpydsk_send_command( head << 2 | _CurrentDrive );
@@ -560,6 +563,7 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 	else
 	{
         // printformat("flpydsk_seek ok\n");
+
         flpydsk_transfer_sector(head, track, sector, 1);
         flpydsk_control_motor(false); // printformat("write_sector.motor_off\n");
         return 0;
