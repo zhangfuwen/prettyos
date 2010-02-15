@@ -42,7 +42,7 @@ uint32_t irq_handler( uint32_t esp )
 
     if (r->int_no < 32) //exception
     {
-        settextcolor(4,0);
+        settextcolor(12,0);
 
         if (r->int_no == 6 || r->int_no == 1) //Invalid Opcode
         {

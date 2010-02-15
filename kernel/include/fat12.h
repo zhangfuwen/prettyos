@@ -89,10 +89,8 @@ int32_t flpydsk_read_directory();
 int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);
 int32_t flpydsk_format(char* vlab); //VolumeLabel
 
-int32_t flpydsk_write_sector_ia( int32_t i, void* a);
-int32_t flpydsk_write_track_ia ( int32_t track, void* trackbuffer);
-int32_t flpydsk_read_sector_ia ( int32_t i, void* a);
-int32_t flpydsk_read_track_ia  ( int32_t track, void* trackbuffer);
+int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option);
+int32_t flpydsk_read_ia ( int32_t i, void* a, int8_t option);
 
 int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file);
 int32_t flpydsk_load(char* name, char* ext);

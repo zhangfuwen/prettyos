@@ -7,9 +7,11 @@ Links:
 http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 */
 
-///TEST
+
 #define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 60
-///TEST
+#define SECTOR 0
+#define TRACK  1
+
 
 uint8_t track0[9216];
 uint8_t track1[9216];
@@ -36,7 +38,7 @@ int32_t flpydsk_load(char* name, char* ext)
 
     printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
 
-    retVal = flpydsk_read_track_ia(0,track0);
+    retVal = flpydsk_read_ia(0,track0, TRACK);
     settextcolor(14,0); printformat("read_track_ia: %d (0: success)\n", retVal);
     settextcolor(2,0);
 
@@ -80,17 +82,29 @@ int32_t flpydsk_load(char* name, char* ext)
 
 
 
-int32_t flpydsk_write_sector_ia( int32_t i, void* a)
+int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option)
 {
-    memcpy((void*)DMA_BUFFER, a  , 0x200);
+    int32_t val=0;
+
+    if(option == SECTOR)
+    {
+        memcpy((void*)DMA_BUFFER, a  , 0x200);
+        val = i;
+    }
+    else if(option == TRACK)
+    {
+        memcpy((void*)DMA_BUFFER, a, 0x2400);
+        val = i*18;
+    }
 
     uint32_t timeout = 2; // limit
     int32_t  retVal  = 0;
-    while( flpydsk_write_sector_wo_motor(i) != 0 ) // without motor on/off
+
+    while( flpydsk_write_sector_wo_motor(val) != 0 ) // without motor on/off
     {
         retVal = -1;
         timeout--;
-        printformat("error write_sector. attempts left: %d\n",timeout);
+        printformat("write error: attempts left: %d\n",timeout);
 	    if(timeout<=0)
 	    {
 	        printformat("timeout\n");
@@ -104,43 +118,31 @@ int32_t flpydsk_write_sector_ia( int32_t i, void* a)
     return retVal;
 }
 
-int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer)
-{
-    memcpy((void*)DMA_BUFFER, trackbuffer, 0x2400);
 
-    uint32_t timeout = 2; // limit
-    int32_t  retVal  = 0;
-    while( flpydsk_write_sector_wo_motor(track*18) != 0 ) // without motor on/off
-    {
-        retVal = -1;
-        timeout--;
-        printformat("error write_track: %d. left attempts: %d\n",track,timeout);
-	    if(timeout<=0)
-	    {
-	        printformat("timeout\n");
-	        break;
-	    }
-    }
-    if(retVal==0)
-    {
-        // printformat("success write_track: %d.\n",track);
-    }
-    return retVal;
-}
-
-int32_t flpydsk_read_sector_ia( int32_t i, void* a)
+int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option)
 {
     /// TEST: change DMA before write/read
     printformat("DMA manipulation\n");
-    memset((void*)DMA_BUFFER, 0x41, 0x200); // 0x41 is in ASCII the 'A'
 
-    /// TEST: motor on/off
+    int32_t val=0;
+
+    if(option == SECTOR)
+    {
+        memset((void*)DMA_BUFFER, 0x41, 0x200); // 0x41 is in ASCII the 'A'
+        val = i;
+    }
+    else if(option == TRACK)
+    {
+        memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
+        val = i*18;
+    }
+
     flpydsk_control_motor(true);
 
     int32_t n, retVal;
     for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum ten times should be enough to overwrite the AAAA...
     {
-        retVal = flpydsk_read_sector(i,0);
+        retVal = flpydsk_read_sector(val,0);
         if(retVal!=0)
         {
             printformat("\nread error: %d\n",retVal);
@@ -152,7 +154,7 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
             (*(uint8_t*)(DMA_BUFFER+ 8)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 9)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
           )
-          {
+          {memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
               settextcolor(4,0);
               printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
               if(n>=MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
@@ -171,56 +173,17 @@ int32_t flpydsk_read_sector_ia( int32_t i, void* a)
           }
     }
 
-    memcpy( (void*)a, (void*)DMA_BUFFER, 0x200);
-    return retVal;
-}
-
-int32_t flpydsk_read_track_ia( int32_t track, void* trackbuffer)
-{
-    /// TEST: change DMA before write/read
-    printformat("DMA manipulation\n");
-    memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
-
-    /// TEST: motor on/off
-    flpydsk_control_motor(true);
-
-    int32_t n, retVal;
-    for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum x times should be enough to overwrite the AAAA...
+    if(option == SECTOR)
     {
-        retVal = flpydsk_read_sector(track*18,0);
-        if(retVal!=0)
-        {
-            printformat("\nread error: %d\n",retVal);
-        }
-        if( (*(uint8_t*)(DMA_BUFFER+ 0)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 1)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+ 2)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+ 4)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 5)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+ 6)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+ 8)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 9)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
-          )
-          {
-              settextcolor(4,0);
-              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
-              if(n>=MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
-              {
-                  printformat("Floppy ---> DMA error.\n");
-              }
-              settextcolor(2,0);
-              continue;
-          }
-          else
-          {
-              settextcolor(3,0);
-              printformat("Floppy ---> DMA success.\n");
-              settextcolor(2,0);
-              break;
-          }
+        memcpy( (void*)a, (void*)DMA_BUFFER, 0x200);
     }
-
-    memcpy( (void*)trackbuffer, (void*)DMA_BUFFER, 0x2400);
+    else if(option == TRACK)
+    {
+        memcpy( (void*)a, (void*)DMA_BUFFER, 0x2400);
+    }
     return retVal;
 }
+
 
 int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
 {
@@ -235,7 +198,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
 
     uint32_t timeout = 2; // limit
     int32_t  retVal  = 0;
-    while( flpydsk_read_sector_ia(sectornumber,a) != 0 )
+    while( flpydsk_read_ia(sectornumber,a,SECTOR) != 0 )
     {
         retVal = -1;
         timeout--;
@@ -272,7 +235,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
 
         timeout = 2; // limit
         retVal  = 0;
-        while( flpydsk_read_sector_ia(sectornumber,a) != 0 )
+        while( flpydsk_read_ia(sectornumber,a,SECTOR) != 0 )
         {
             retVal = -1;
             timeout--;
@@ -331,6 +294,7 @@ int32_t flpydsk_read_directory() /// TODO: check whether Floppy ---> DMA really 
 	memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
 	/// TEST
 
+	/// TODO: change to read_ia(...)!
 	int32_t retVal = flpydsk_read_sector(19,1); // start at 0x2600: root directory (14 sectors)
 	if(retVal != 0)
 	{
@@ -414,7 +378,7 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
     int32_t i,j,k;
     uint8_t a[512];
 
-    int32_t retVal = flpydsk_read_sector_ia( BOOT_SEC, a );
+    int32_t retVal = flpydsk_read_ia(BOOT_SEC,a,SECTOR);
     if(retVal!=0)
     {
         printformat("\nread error: %d\n",retVal);
@@ -624,8 +588,8 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
 
     /// write track 0 & track 1
     flpydsk_control_motor(true); printformat("writing tracks 1 & 2\n");
-    flpydsk_write_track_ia( 0, track0);
-    flpydsk_write_track_ia( 1, track1);
+    flpydsk_write_ia(0,track0,TRACK);
+    flpydsk_write_ia(1,track1,TRACK);
     printformat("Quickformat complete.\n\n");
 
     ///TEST
@@ -712,7 +676,7 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
    uint8_t a[512];
    st_sec = st_sec + in/DIR_ENTRIES;
 
-   if(flpydsk_read_sector_ia(st_sec,a) != 0)
+   if(flpydsk_read_ia(st_sec,a,SECTOR) != 0)
    {
        return E_DISK;
    }
