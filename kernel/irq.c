@@ -6,6 +6,7 @@
 
 #include "os.h"
 #include "task.h"
+#include "flpydsk.h" // floppy motor off
 
 
 typedef void(*interrupt_handler_t)(struct regs*);
@@ -43,6 +44,7 @@ uint32_t irq_handler( uint32_t esp )
     if (r->int_no < 32) //exception
     {
         settextcolor(12,0);
+        flpydsk_control_motor(false); // floppy motor off
 
         if (r->int_no == 6 || r->int_no == 1) //Invalid Opcode
         {

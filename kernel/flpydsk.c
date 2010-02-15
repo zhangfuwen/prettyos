@@ -14,7 +14,7 @@ const int32_t FLPY_SECTORS_PER_TRACK           =   18;   // sectors per track
 static uint8_t	_CurrentDrive                  =    0;   // current working drive, default: 0
 static volatile uint8_t ReceivedFloppyDiskIRQ  =  false; // set when IRQ fires
 const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME      =  350;   // waiting time in milliseconds (motor spin up)
-const int32_t WAITING_TIME                     =   50;   // waiting time in milliseconds (for dynamic processes)
+const int32_t WAITING_TIME                     =   10;   // waiting time in milliseconds (for dynamic processes)
 
 // IO ports
 enum FLPYDSK_IO
@@ -143,9 +143,9 @@ void flpydsk_initialize_dma()
 void flpydsk_dma_read()
 {
 	outportb(0x0a, 0x06); // mask dma channel 2
-	outportb(0x0b, 0x56); // single transfer, address increment, autoinit, read, channel 2
-	///outportb(0x0b, 0x16); // TEST: demand transfer
-	///outportb(0x0b, 0x46); // single transfer, address increment, read, channel 2 // without autoinit
+	///outportb(0x0b, 0x56); // single transfer, address increment, autoinit, read, channel 2
+	//outportb(0x0b, 0x16); // TEST: demand transfer
+	outportb(0x0b, 0x46); // single transfer, address increment, read, channel 2 // without autoinit
 	outportb(0x0a, 0x02); // unmask dma channel 2
 }
 
@@ -254,7 +254,7 @@ void flpydsk_control_motor(bool b)
 	if((b==true) && (pODA->flpy_motor[_CurrentDrive]==false))
 	{
         flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
-
+        pODA->flpy_motor[_CurrentDrive]=true;
         /*
         settextcolor(14,0);
         printformat("floppy motor on\n");
@@ -264,6 +264,7 @@ void flpydsk_control_motor(bool b)
 	else if((b==false) && (pODA->flpy_motor[_CurrentDrive]==true))
 	{
         flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET); // motor off
+        pODA->flpy_motor[_CurrentDrive]=false;
 
         /*
         settextcolor(14,0);

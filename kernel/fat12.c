@@ -39,8 +39,12 @@ int32_t flpydsk_load(char* name, char* ext)
     printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
 
     retVal = flpydsk_read_ia(0,track0, TRACK);
-    settextcolor(14,0); printformat("read_track_ia: %d (0: success)\n", retVal);
+
+    /*
+    settextcolor(14,0);
+    printformat("read_track_ia: %d (0: success)\n", retVal);
     settextcolor(2,0);
+    */
 
     ///TODO: read only entries which are necessary for file_ia
     ///      perhaps reading FAT entry and data sector it can be combined
@@ -122,7 +126,7 @@ int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option)
 int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option)
 {
     /// TEST: change DMA before write/read
-    printformat("DMA manipulation\n");
+    /// printformat("DMA manipulation\n");
 
     int32_t val=0;
 
@@ -137,6 +141,7 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option)
         val = i*18;
     }
 
+    flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
     flpydsk_control_motor(true);
 
     int32_t n, retVal;
@@ -211,7 +216,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
     }
     if(retVal==0)
     {
-        printformat("success read_sector.\n");
+        /// printformat("success read_sector.\n");
     }
 
     memcpy( (void*)file, (void*)a, 512);
@@ -248,7 +253,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
         }
         if(retVal==0)
         {
-            printformat("success read_sector.\n");
+            /// printformat("success read_sector.\n");
         }
 
         memcpy( (void*)(file+pos*512), (void*)a, 512);
@@ -290,9 +295,10 @@ int32_t flpydsk_read_directory() /// TODO: check whether Floppy ---> DMA really 
 {
     int32_t error = -1; // return value
 
-	/// TEST
+
 	memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
-	/// TEST
+
+    flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
 
 	/// TODO: change to read_ia(...)!
 	int32_t retVal = flpydsk_read_sector(19,1); // start at 0x2600: root directory (14 sectors)
