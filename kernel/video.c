@@ -235,6 +235,11 @@ void printformat (char* args, ...)
 				i2hex(d, buffer,4);
 				puts(buffer);
 				break;
+			case 'y':
+			    d = va_arg (ap, int32_t);
+				i2hex(d, buffer,2);
+				puts(buffer);
+				break;
 			case 's':
 				s = va_arg (ap, char*);
 				puts(s);

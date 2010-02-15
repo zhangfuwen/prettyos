@@ -32,7 +32,7 @@
 #define DIR_ENTRIES 16
 #define MAX_DIR     10
 #define MAX_FILE    10
-#define FATMAXINDEX 300 ///TEST
+#define FATMAXINDEX MAX_BLOCK ///TEST
 
 struct boot_sector
 {

@@ -8,12 +8,320 @@ http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 */
 
 ///TEST
-#define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 50
+#define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 60
 ///TEST
 
 uint8_t track0[9216];
 uint8_t track1[9216];
 uint8_t file[51200];
+int32_t fat_entry[FATMAXINDEX];
+
+int32_t flpydsk_load(char* name, char* ext)
+{
+    printformat("Load and execute "); settextcolor(14,0); printformat("-->%s.%s<--",name,ext);
+    settextcolor(2,0); printformat(" from floppy disk\n");
+    flpydsk_control_motor(true);
+
+    int32_t i, retVal;
+    struct file f;
+    uint32_t firstCluster = 0;
+
+    firstCluster = search_file_first_cluster(name,ext,&f);
+    if(firstCluster==0)
+    {
+        printformat("file not found in root directory\n");
+        return -1;
+    }
+    printformat("FileSize: %d Byte, 1st Cluster: %d\n",f.size, f.firstCluster);
+
+    printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
+
+    retVal = flpydsk_read_track_ia(0,track0);
+    settextcolor(14,0); printformat("read_track_ia: %d (0: success)\n", retVal);
+    settextcolor(2,0);
+
+    ///TODO: read only entries which are necessary for file_ia
+    ///      perhaps reading FAT entry and data sector it can be combined
+
+    for(i=0;i<FATMAXINDEX;i++)
+    {
+        read_fat(&fat_entry[i], i, FAT1_SEC, track0);
+    }
+    retVal = file_ia(fat_entry,firstCluster,file);
+    ///
+
+    printformat("\nFile content (start of first 5 clusters): ");
+    printformat("\n1st sector:\n"); for(i=   0;i<  20;i++) {printformat("%y ",file[i]);}
+    printformat("\n2nd sector:\n"); for(i= 512;i< 532;i++) {printformat("%y ",file[i]);}
+    printformat("\n3rd sector:\n"); for(i=1024;i<1044;i++) {printformat("%y ",file[i]);}
+    printformat("\n4th sector:\n"); for(i=1536;i<1556;i++) {printformat("%y ",file[i]);}
+    printformat("\n5th sector:\n"); for(i=2048;i<2068;i++) {printformat("%y ",file[i]);}
+    printformat("\n\n");
+
+    if(retVal==0)
+    {
+        /// START TASK AND INCREASE TASKCOUNTER
+        if( elf_exec( file, f.size ) ) // execute loaded file
+        {
+            userTaskCounter++; // an additional user-program has been started
+        }
+    }
+    else if(retVal==-1)
+    {
+        printformat("file was not executed due to FAT error.");
+    }
+    printformat("\n\n");
+
+    flpydsk_control_motor(false);
+
+    return 0;
+}
+
+
+
+
+int32_t flpydsk_write_sector_ia( int32_t i, void* a)
+{
+    memcpy((void*)DMA_BUFFER, a  , 0x200);
+
+    uint32_t timeout = 2; // limit
+    int32_t  retVal  = 0;
+    while( flpydsk_write_sector_wo_motor(i) != 0 ) // without motor on/off
+    {
+        retVal = -1;
+        timeout--;
+        printformat("error write_sector. attempts left: %d\n",timeout);
+	    if(timeout<=0)
+	    {
+	        printformat("timeout\n");
+	        break;
+	    }
+    }
+    if(retVal==0)
+    {
+        // printformat("success write_sector.\n");
+    }
+    return retVal;
+}
+
+int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer)
+{
+    memcpy((void*)DMA_BUFFER, trackbuffer, 0x2400);
+
+    uint32_t timeout = 2; // limit
+    int32_t  retVal  = 0;
+    while( flpydsk_write_sector_wo_motor(track*18) != 0 ) // without motor on/off
+    {
+        retVal = -1;
+        timeout--;
+        printformat("error write_track: %d. left attempts: %d\n",track,timeout);
+	    if(timeout<=0)
+	    {
+	        printformat("timeout\n");
+	        break;
+	    }
+    }
+    if(retVal==0)
+    {
+        // printformat("success write_track: %d.\n",track);
+    }
+    return retVal;
+}
+
+int32_t flpydsk_read_sector_ia( int32_t i, void* a)
+{
+    /// TEST: change DMA before write/read
+    printformat("DMA manipulation\n");
+    memset((void*)DMA_BUFFER, 0x41, 0x200); // 0x41 is in ASCII the 'A'
+
+    /// TEST: motor on/off
+    flpydsk_control_motor(true);
+
+    int32_t n, retVal;
+    for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum ten times should be enough to overwrite the AAAA...
+    {
+        retVal = flpydsk_read_sector(i,0);
+        if(retVal!=0)
+        {
+            printformat("\nread error: %d\n",retVal);
+        }
+        if( (*(uint8_t*)(DMA_BUFFER+ 0)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 1)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 2)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 4)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 5)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 6)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 8)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 9)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
+          )
+          {
+              settextcolor(4,0);
+              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
+              if(n>=MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
+              {
+                  printformat("Floppy ---> DMA error.\n");
+              }
+              settextcolor(2,0);
+              continue;
+          }
+          else
+          {
+              settextcolor(3,0);
+              printformat("Floppy ---> DMA success.\n");
+              settextcolor(2,0);
+              break;
+          }
+    }
+
+    memcpy( (void*)a, (void*)DMA_BUFFER, 0x200);
+    return retVal;
+}
+
+int32_t flpydsk_read_track_ia( int32_t track, void* trackbuffer)
+{
+    /// TEST: change DMA before write/read
+    printformat("DMA manipulation\n");
+    memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
+
+    /// TEST: motor on/off
+    flpydsk_control_motor(true);
+
+    int32_t n, retVal;
+    for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum x times should be enough to overwrite the AAAA...
+    {
+        retVal = flpydsk_read_sector(track*18,0);
+        if(retVal!=0)
+        {
+            printformat("\nread error: %d\n",retVal);
+        }
+        if( (*(uint8_t*)(DMA_BUFFER+ 0)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 1)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 2)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 4)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 5)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 6)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 8)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 9)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
+          )
+          {
+              settextcolor(4,0);
+              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
+              if(n>=MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
+              {
+                  printformat("Floppy ---> DMA error.\n");
+              }
+              settextcolor(2,0);
+              continue;
+          }
+          else
+          {
+              settextcolor(3,0);
+              printformat("Floppy ---> DMA success.\n");
+              settextcolor(2,0);
+              break;
+          }
+    }
+
+    memcpy( (void*)trackbuffer, (void*)DMA_BUFFER, 0x2400);
+    return retVal;
+}
+
+int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
+{
+    uint8_t a[512];
+    uint32_t sectornumber;
+    uint32_t i, pos;  // i for FAT-index, pos for data position
+    const uint32_t ADD = 31;
+
+    // copy first cluster
+    sectornumber = firstCluster+ADD;
+    printformat("\n\n1st sector: %d\n",sectornumber);
+
+    uint32_t timeout = 2; // limit
+    int32_t  retVal  = 0;
+    while( flpydsk_read_sector_ia(sectornumber,a) != 0 )
+    {
+        retVal = -1;
+        timeout--;
+        printformat("error read_sector. attempts left: %d\n",timeout);
+	    if(timeout<=0)
+	    {
+	        printformat("timeout\n");
+	        break;
+	    }
+    }
+    if(retVal==0)
+    {
+        printformat("success read_sector.\n");
+    }
+
+    memcpy( (void*)file, (void*)a, 512);
+
+    // // find second cluster and chain in fat
+    pos=0;
+    i = firstCluster;
+    while(fatEntry[i]!=0xFFF)
+    {
+        printformat("\ni: %d FAT-entry: %x\t",i,fatEntry[i]);
+        if( (fatEntry[i]<3) || (fatEntry[i]>MAX_BLOCK))
+        {
+            printformat("FAT-error.\n");
+            return -1;
+        }
+
+        // copy data from chain
+        pos++;
+        sectornumber = fatEntry[i]+ADD;
+        printformat("sector: %d\t",sectornumber);
+
+        timeout = 2; // limit
+        retVal  = 0;
+        while( flpydsk_read_sector_ia(sectornumber,a) != 0 )
+        {
+            retVal = -1;
+            timeout--;
+            printformat("error read_sector. attempts left: %d\n",timeout);
+	        if(timeout<=0)
+	        {
+	            printformat("timeout\n");
+	            break;
+	        }
+        }
+        if(retVal==0)
+        {
+            printformat("success read_sector.\n");
+        }
+
+        memcpy( (void*)(file+pos*512), (void*)a, 512);
+
+        // search next cluster of the file
+        i = fatEntry[i];
+    }
+    printformat("\n");
+    return 0;
+}
+
+
+
+int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer)
+{
+    // example: //TODO: only necessary FAT entries and combine these tow steps:
+                //parse FAT & load file data
+    // for(i=0;i<FATMAXINDEX;i++)
+    //    read_fat(&fat_entry[i], i, FAT1_SEC);
+    // file_ia(fat_entry,firstCluster,file);
+
+
+    int32_t fat_index;
+    int32_t fat1, fat2;
+
+    fat_index = (index*3)/2; // 0 -> 0, 1 -> 1
+                       // 100 -> 150, 101 -> 151, 102 -> 153, 103 -> 154, 104 -> 156, ...
+                       // 511 -> 766, 512 -> 768
+
+    fat1 = buffer[st_sec*512+fat_index]   & 0xFF;
+    fat2 = buffer[st_sec*512+fat_index+1] & 0xFF;
+
+    parse_fat(fat_entry,fat1,fat2,index);
+
+    return 0;
+}
 
 int32_t flpydsk_read_directory() /// TODO: check whether Floppy ---> DMA really works !
 {
@@ -88,310 +396,6 @@ int32_t flpydsk_read_directory() /// TODO: check whether Floppy ---> DMA really 
 	}//for
     printformat("\n");
     return error;
-}
-
-int32_t flpydsk_write_sector_ia( int32_t i, void* a)
-{
-    memcpy((void*)DMA_BUFFER, a  , 0x200);
-
-    uint32_t timeout = 2; // limit
-    int32_t  retVal  = 0;
-    while( flpydsk_write_sector_wo_motor(i) != 0 ) // without motor on/off
-    {
-        retVal = -1;
-        timeout--;
-        printformat("error write_sector. attempts left: %d\n",timeout);
-	    if(timeout<=0)
-	    {
-	        printformat("timeout\n");
-	        break;
-	    }
-    }
-    if(retVal==0)
-    {
-        // printformat("success write_sector.\n");
-    }
-    return retVal;
-}
-
-int32_t flpydsk_write_track_ia( int32_t track, void* trackbuffer)
-{
-    memcpy((void*)DMA_BUFFER, trackbuffer, 0x2400);
-
-    uint32_t timeout = 2; // limit
-    int32_t  retVal  = 0;
-    while( flpydsk_write_sector_wo_motor(track*18) != 0 ) // without motor on/off
-    {
-        retVal = -1;
-        timeout--;
-        printformat("error write_track: %d. left attempts: %d\n",track,timeout);
-	    if(timeout<=0)
-	    {
-	        printformat("timeout\n");
-	        break;
-	    }
-    }
-    if(retVal==0)
-    {
-        // printformat("success write_track: %d.\n",track);
-    }
-    return retVal;
-}
-
-int32_t flpydsk_read_sector_ia( int32_t i, void* a)
-{
-    /// TEST: change DMA before write/read
-    printformat("DMA manipulation\n");
-    memset((void*)DMA_BUFFER, 0x41, 0x200); // 0x41 is in ASCII the 'A'
-
-    /// TEST: motor on/off
-    flpydsk_control_motor(true);
-
-    int32_t n, retVal;
-    for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum ten times should be enough to overwrite the AAAA...
-    {
-        retVal = flpydsk_read_sector(i,0);
-        if(retVal!=0)
-        {
-            printformat("\nread error: %d\n",retVal);
-        }
-        if( (*(uint8_t*)(DMA_BUFFER)  ==0x41) && (*(uint8_t*)(DMA_BUFFER+1)==0x41) && (*(uint8_t*)(DMA_BUFFER+2 )==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+4)==0x41) && (*(uint8_t*)(DMA_BUFFER+5)==0x41) && (*(uint8_t*)(DMA_BUFFER+6 )==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+8)==0x41) && (*(uint8_t*)(DMA_BUFFER+9)==0x41) && (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
-          )
-          {
-              settextcolor(4,0);
-              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
-              if(n>=9)
-              {
-                  printformat("Floppy ---> DMA error.\n");
-              }
-              settextcolor(2,0);
-              continue;
-          }
-          else
-          {
-              settextcolor(3,0);
-              printformat("Floppy ---> DMA success.\n");
-              settextcolor(2,0);
-              break;
-          }
-    }
-
-    memcpy( (void*)a, (void*)DMA_BUFFER, 0x200);
-    return retVal;
-}
-
-int32_t flpydsk_read_track_ia( int32_t track, void* trackbuffer)
-{
-    /// TEST: change DMA before write/read
-    printformat("DMA manipulation\n");
-    memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
-
-    /// TEST: motor on/off
-    flpydsk_control_motor(true);
-
-    int32_t n, retVal;
-    for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum x times should be enough to overwrite the AAAA...
-    {
-        retVal = flpydsk_read_sector(track*18,0);
-        if(retVal!=0)
-        {
-            printformat("\nread error: %d\n",retVal);
-        }
-        if( (*(uint8_t*)(DMA_BUFFER)  ==0x41) && (*(uint8_t*)(DMA_BUFFER+1)==0x41) && (*(uint8_t*)(DMA_BUFFER+2 )==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+4)==0x41) && (*(uint8_t*)(DMA_BUFFER+5)==0x41) && (*(uint8_t*)(DMA_BUFFER+6 )==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+8)==0x41) && (*(uint8_t*)(DMA_BUFFER+9)==0x41) && (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
-          )
-          {
-              settextcolor(4,0);
-              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
-              if(n>=9)
-              {
-                  printformat("Floppy ---> DMA error.\n");
-              }
-              settextcolor(2,0);
-              continue;
-          }
-          else
-          {
-              settextcolor(3,0);
-              printformat("Floppy ---> DMA success.\n");
-              settextcolor(2,0);
-              break;
-          }
-    }
-
-    memcpy( (void*)trackbuffer, (void*)DMA_BUFFER, 0x2400);
-    return retVal;
-}
-
-int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
-{
-    uint8_t a[512];
-    uint32_t sectornumber;
-    uint32_t i, pos;  // i for FAT-index, pos for data position
-    const uint32_t ADD = 31;
-
-    // copy first cluster
-    sectornumber = firstCluster+ADD;
-    printformat("\n\n1st sector: %d\n",sectornumber);
-
-    ///TEST
-    uint32_t timeout = 2; // limit
-    int32_t  retVal  = 0;
-    while( flpydsk_read_sector_ia(sectornumber,a) != 0 )
-    {
-        retVal = -1;
-        timeout--;
-        printformat("error read_sector. attempts left: %d\n",timeout);
-	    if(timeout<=0)
-	    {
-	        printformat("timeout\n");
-	        break;
-	    }
-    }
-    if(retVal==0)
-    {
-        printformat("success read_sector.\n");
-    }
-    ///TEST
-
-    memcpy( (void*)file, (void*)a, 512);
-
-    // // find second cluster and chain in fat
-    pos=0;
-    i = firstCluster;
-    while(fatEntry[i]!=0xFFF)
-    {
-        printformat("\ni: %d FAT-entry: %x\t",i,fatEntry[i]);
-        if( (fatEntry[i]<3) || (fatEntry[i]>MAX_BLOCK))
-        {
-            printformat("FAT-error.\n");
-            return -1;
-        }
-
-        // copy data from chain
-        pos++;
-        sectornumber = fatEntry[i]+ADD;
-        printformat("sector: %d\t",sectornumber);
-
-        ///TEST
-        timeout = 2; // limit
-        retVal  = 0;
-        while( flpydsk_read_sector_ia(sectornumber,a) != 0 )
-        {
-            retVal = -1;
-            timeout--;
-            printformat("error read_sector. attempts left: %d\n",timeout);
-	        if(timeout<=0)
-	        {
-	            printformat("timeout\n");
-	            break;
-	        }
-        }
-        if(retVal==0)
-        {
-            printformat("success read_sector.\n");
-        }
-        ///TEST
-
-        memcpy( (void*)(file+pos*512), (void*)a, 512);
-
-        // search next cluster of the file
-        i = fatEntry[i];
-    }
-    printformat("\n");
-    return 0;
-}
-
-int32_t flpydsk_load(char* name, char* ext)
-{
-    printformat("Load and execute ");
-    settextcolor(14,0);
-    printformat("-->%s.%s<--",name,ext);
-    settextcolor(2,0);
-    printformat(" from floppy disk\n");
-    flpydsk_control_motor(true);
-
-    int32_t i, retVal;
-    struct file f;
-    uint32_t firstCluster = 0;
-    firstCluster = search_file_first_cluster(name,ext,&f);
-    if(firstCluster==0)
-    {
-        printformat("file not found in root directory\n");
-        return -1;
-    }
-    printformat("FirstCluster (retVal): %d\n",firstCluster);
-    printformat("FileSize: %d FirstCluster: %d\n",f.size, f.firstCluster);
-
-    printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
-
-    retVal = flpydsk_read_track_ia ( 0, track0);
-    settextcolor(14,0);
-    printformat("read_track_ia: %d (0: success)\t", retVal);
-    settextcolor(2,0);
-
-    ///TODO: read only entries which are necessary for file_ia
-    ///      perhaps reading FAT entry and data sector it can be combined
-    int32_t fat_entry[FATMAXINDEX];
-    for(i=0;i<FATMAXINDEX;i++)
-    {
-        read_fat(&fat_entry[i], i, FAT1_SEC, track0);
-    }
-    retVal = file_ia(fat_entry,firstCluster,file);
-    ///
-
-    printformat("\nFile content (start of first 5 clusters): ");
-    printformat("\n1st sector:\n"); for(i=   0;i<  26;i++) {printformat("%x ",file[i]);}
-    printformat("\n2nd sector:\n"); for(i= 512;i< 538;i++) {printformat("%x ",file[i]);}
-    printformat("\n3rd sector:\n"); for(i=1024;i<1050;i++) {printformat("%x ",file[i]);}
-    printformat("\n4th sector:\n"); for(i=1536;i<1562;i++) {printformat("%x ",file[i]);}
-    printformat("\n5th sector:\n"); for(i=2048;i<2074;i++) {printformat("%x ",file[i]);}
-    printformat("\n\n");
-
-    if(retVal==0)
-    {
-        /// START TASK AND INCREASE TASKCOUNTER
-        if( elf_exec( file, f.size ) ) // execute loaded file
-        {
-            userTaskCounter++; // an additional user-program has been started
-        }
-    }
-    else if(retVal==-1)
-    {
-        printformat("file was not executed due to FAT error.");
-    }
-    printformat("\n\n");
-
-    flpydsk_control_motor(false);
-
-    return 0;
-}
-
-int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer)
-{
-    // example: //TODO: only necessary FAT entries and combine these tow steps:
-                //parse FAT & load file data
-    // for(i=0;i<FATMAXINDEX;i++)
-    //    read_fat(&fat_entry[i], i, FAT1_SEC);
-    // file_ia(fat_entry,firstCluster,file);
-
-
-    int32_t fat_index;
-    int32_t fat1, fat2;
-
-    fat_index = (index*3)/2; // 0 -> 0, 1 -> 1
-                       // 100 -> 150, 101 -> 151, 102 -> 153, 103 -> 154, 104 -> 156, ...
-                       // 511 -> 766, 512 -> 768
-
-    fat1 = buffer[st_sec*512+fat_index]   & 0xFF;
-    fat2 = buffer[st_sec*512+fat_index+1] & 0xFF;
-
-    parse_fat(fat_entry,fat1,fat2,index);
-
-    return 0;
 }
 
 
@@ -667,7 +671,7 @@ void parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs)
    rs->WrtTime      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
    rs->WrtDate      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
    rs->FstClusLO    = FORM_SHORT(a[i],a[i+1]);                  i+=2;
-   rs->FileSize     = FORM_LONG(a[i],a[i+1],a[i+2],a[i+3]);   i+=4;
+   rs->FileSize     = FORM_LONG(a[i],a[i+1],a[i+2],a[i+3]);     i+=4;
 }
 
 void print_dir(struct dir_entry* rs)
@@ -778,6 +782,6 @@ void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
     }
     fat = fat & 0xFFF;
     *fat_entry = fat;
-    printformat("%x ", fat);
+    ///printformat("%x ", fat);
 }
 
