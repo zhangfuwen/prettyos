@@ -139,6 +139,7 @@ void flpydsk_initialize_dma()
 }
 
 /// autoinit ( 2^4 = 16 = 0x10 ) creates problems with MS Virtual PC and on real hardware!
+/// hence, it is not used here, but reinitialization is used before read/write
 // prepare the DMA for read transfer
 void flpydsk_dma_read()
 {
@@ -151,7 +152,6 @@ void flpydsk_dma_read()
 void flpydsk_dma_write()
 {
 	outportb(0x0a, 0x06); // mask dma channel 2
-	/// outportb(0x0b, 0x5A); // single transfer, address increment, autoinit, write, channel 2
 	outportb(0x0b, 0x4A); // single transfer, address increment, write, channel 2 // without autoinit
 	outportb(0x0a, 0x02); // unmask dma channel 2
 }

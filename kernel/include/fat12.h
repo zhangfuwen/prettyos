@@ -84,6 +84,7 @@ struct dir_entry
 
 /*************** functions ******************/
 
+int32_t initCache();
 int32_t flpydsk_read_directory();
 
 int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);

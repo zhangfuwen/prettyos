@@ -12,23 +12,54 @@ http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 #define SECTOR 0
 #define TRACK  1
 
+// cache memory for tracks 0 and 1
+uint8_t cache0[9216];
+uint8_t cache1[9216];
 
+// long term necessary?
 uint8_t track0[9216];
 uint8_t track1[9216];
+
+// how to handle memory for the file?
 uint8_t file[51200];
 int32_t fat_entry[FATMAXINDEX];
 
+int32_t initCache()
+{
+    int32_t retVal0, retVal1;
+
+    retVal0 = flpydsk_read_ia(0,cache0,TRACK);
+    retVal1 = flpydsk_read_ia(1,cache1,TRACK);
+
+    if((!retVal0) && (!retVal1))
+    {
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
 int32_t flpydsk_load(char* name, char* ext)
 {
-    printformat("Load and execute "); settextcolor(14,0); printformat("-->%s.%s<--",name,ext);
-    settextcolor(2,0); printformat(" from floppy disk\n");
-    flpydsk_control_motor(true);
-
     int32_t i, retVal;
     struct file f;
     uint32_t firstCluster = 0;
 
-    firstCluster = search_file_first_cluster(name,ext,&f);
+    flpydsk_control_motor(true);
+    retVal = initCache();
+    if(retVal)
+    {
+        settextcolor(12,0);
+        printformat("track0 & track1 read error.\n");
+        settextcolor(2,0);
+    }
+
+    printformat("Load and execute "); settextcolor(14,0); printformat("-->%s.%s<--",name,ext);
+    settextcolor(2,0); printformat(" from floppy disk\n");
+
+    firstCluster = search_file_first_cluster(name,ext,&f); // now working with cache
     if(firstCluster==0)
     {
         printformat("file not found in root directory\n");
@@ -38,13 +69,9 @@ int32_t flpydsk_load(char* name, char* ext)
 
     printformat("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
 
-    retVal = flpydsk_read_ia(0,track0, TRACK);
+    /*retVal = flpydsk_read_ia(0,track0, TRACK);*/
 
-    /*
-    settextcolor(14,0);
-    printformat("read_track_ia: %d (0: success)\n", retVal);
-    settextcolor(2,0);
-    */
+    memcpy((void*)track0, (void*)cache0, 0x2400); // cache0 --> track0 (necessary?)
 
     ///TODO: read only entries which are necessary for file_ia
     ///      perhaps reading FAT entry and data sector it can be combined
@@ -53,7 +80,7 @@ int32_t flpydsk_load(char* name, char* ext)
     {
         read_fat(&fat_entry[i], i, FAT1_SEC, track0);
     }
-    retVal = file_ia(fat_entry,firstCluster,file);
+    retVal = file_ia(fat_entry,firstCluster,file); // read sectors of file
     ///
 
     printformat("\nFile content (start of first 5 clusters): ");
@@ -682,10 +709,14 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
    uint8_t a[512];
    st_sec = st_sec + in/DIR_ENTRIES;
 
-   if(flpydsk_read_ia(st_sec,a,SECTOR) != 0)
+   /*
+   if(flpydsk_read_ia(st_sec,a,SECTOR) != 0) // <--- bullshit
    {
        return E_DISK;
    }
+   */
+   memcpy((void*)a,(void*)(cache1+st_sec*512-9216),0x200); //copy data from cache to a[...]
+
    parse_dir(a,in,rs);
    if(flag==true)
    {
@@ -706,7 +737,10 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
        read_dir(&entry, i, 19, false);
 
        settextcolor(14,0);
-       printformat("read_dir: %s.%s\n",(&entry)->Filename, (&entry)->Extension); ///TEST
+       printformat("root dir entry: %c%c%c%c%c%c%c%c.%c%c%c\n",
+                   (&entry)->Filename[0],(&entry)->Filename[1],(&entry)->Filename[2],(&entry)->Filename[3],
+                   (&entry)->Filename[4],(&entry)->Filename[5],(&entry)->Filename[6],(&entry)->Filename[7],
+                   (&entry)->Extension[0],(&entry)->Extension[1],(&entry)->Extension[2]);
        settextcolor(2,0);
 
        for(j=0;j<3;j++)

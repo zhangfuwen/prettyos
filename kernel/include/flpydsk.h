@@ -8,6 +8,7 @@
 void flpydsk_initialize_dma();
 void flpydsk_dma_read();
 void flpydsk_dma_write();
+
 uint8_t flpydsk_read_status ();
 void flpydsk_write_dor( uint8_t val );
 void flpydsk_send_command (uint8_t cmd);
