@@ -4,8 +4,11 @@
 */
 
 #include "pci.h"
+#include "kheap.h" //# just for testing?
 
 pciDev_t pciDev_Array[50];
+uint8_t network_buffer[ 65536]; ///TEST for network card
+
 
 uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content )
 {
@@ -52,6 +55,11 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
     outportl(PCI_CONFIGURATION_DATA, val);
 }
 
+// this is the handler for an IRQ interrupt of our Network Card
+void rtl8139_handler(struct regs* r) {
+	printformat("RTL8139 IRQ\n");
+}
+
  void pciScan()
  {
     uint32_t i;
@@ -62,6 +70,8 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 
     uint32_t pciBar             = 0; // helper variable for memory size
     uint32_t EHCI_data          = 0; // helper variable for EHCI_data
+
+
 
 
     // array of devices, PCIARRAYSIZE for first tests
@@ -182,7 +192,74 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                             } // if
                         } // for
                     } // if
-                    printformat("\n");
+
+					printformat("\n");
+
+					// #
+					// test on the RTL8139 network card and test for some functions to work ;)
+
+					// i took the informations from the RTL8139 specifiction and from the wiki
+					// http://wiki.osdev.org/RTL8139
+
+					if(	pciDev_Array[number].deviceID == 0x8139 /* "PCI Full-Duplex Ethernet Controller with PnP Function" but in QEMU its just "RTL8139" setted */ &&
+						pciDev_Array[number].vendorID == 0x10EC /* "realtek semiconductors" */
+					) {
+						printformat("Found the RTL8139 Network Card\n");
+
+						// set it up
+
+						// "power on" the card
+						*((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x52 )) = 0x00;
+
+						// do an Software reset on that card
+						*((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x37 )) = 0x10;
+
+						// and wait for the reset of the "reset flag"
+						unsigned long i;
+						for(i = 0;;i++) {
+							if( !( *((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x62 )) & 0x8000 ) ) {
+								break;
+							}
+						}
+
+						// print a message
+						printformat("waiting sucessfull(%d)!\n", i);
+
+						// allocate our "Network Buffer"
+						//network_buffer = malloc(65536*2, 8); // is this enougth?
+
+
+						// first 65536 bytes are our sending buffer and the last bytes are our reciving buffer
+
+						if( network_buffer == NULL ) {
+							// we couln't allocate our Buffer, this is fatal!
+							printformat("FATAL!\n");
+							// halt
+							for(;;){}
+						}
+
+
+
+						// set RBSTART to our buffer for the Receive Buffer
+						*((unsigned long*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x30 )) = (unsigned long)network_buffer + 65536;
+
+						// Sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
+						// this allows us to get an interrupt if something happens...
+						*((short*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x3C )) = 0x0005;
+
+						// configure "Receive Configuration Register"(RCR)
+						// we set the AB, AM, APM, AAP flags
+						// we don't activate the WRAP bit (like in the wiki)
+						*((unsigned long*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x44 )) = 0xf;
+
+						// now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
+						*((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x37 )) = 0x0C;
+
+						printformat("All fine, install irq handler\n");
+
+						irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);
+					}
+
                     ++number;
                 } // if pciVendor
 
@@ -195,6 +272,8 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
         } // for device
     } // for bus
     printformat("\n");
+
+	// for(;;){} //#
 }
 
 /*
