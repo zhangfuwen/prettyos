@@ -32,14 +32,13 @@ char DateAndTime[80];
 static void init()
 {
     clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.109");
+    printformat("PrettyOS [Version 0.0.0.110");
     printformat("\n\n");
     gdt_install();
     idt_install();
     timer_install();
     keyboard_install();
     syscall_install();
-    msgbeep();
 }
 
 int main()
@@ -55,11 +54,15 @@ int main()
     settextcolor(14,0);
     __asm__ volatile( "int $43" : : "a"(0) );
     settextcolor(15,0);
+    printformat("Test with IRQ 32+5: ");
+    settextcolor(14,0);
+    __asm__ volatile( "int $37" : : "a"(0) );
+    settextcolor(15,0);
     ///TEST
 
 
     pODA->Memory_Size = paging_install();
-    printformat( "\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
+    printformat( "\n\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
     heap_install();
     tasking_install();
     sti();
@@ -178,6 +181,7 @@ int main()
         settextcolor(15,0);
     }
 
+    msgbeep();
     pODA->ts_flag = 1;
 
     const char* progress = "|/-\\";
