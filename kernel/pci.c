@@ -63,12 +63,26 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 // this is the handler for an IRQ interrupt of our Network Card
 void rtl8139_handler(struct regs* r)
 {
-	printformat("RTL8139 IRQ\t");
-	///TODO: reset interrupts bei writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
-	///TEST
-	//*((uint16_t*)( BaseAddressRTL8139      + 0x3E )) = 0xFF; // reset
-	*((uint16_t*)( BaseAddressRTL8139_IO   + 0x3E )) = 0xFF; // reset	///TEST
-	*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E )) = 0xFF; // reset	///TEST
+	settextcolor(4,0);
+
+
+	// read bytes 003Eh bis 003Fh, Interrupt Status Register
+    uint32_t val = inportw(BaseAddressRTL8139_IO + 0x3E);
+    char str[80];
+    if((val & 0x01) == 0x1)
+    {
+        strcpy(str,"Receive OK");
+    }
+    else
+    {
+           strcpy(str,"");
+    }
+    printformat("\nRTL8139 IRQ, %y %s\n", val,str);
+    settextcolor(15,0);
+
+    // reset interrupts bei writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
+	outportb( BaseAddressRTL8139_IO + 0x3E, 0xF );
+	outportb( BaseAddressRTL8139_IO + 0x3F, 0xF );
 }
 
  void pciScan()
@@ -157,7 +171,7 @@ void rtl8139_handler(struct regs* r)
                                 }
                                 if(pciDev_Array[number].bar[i].memoryType == 1)
                                 {
-                                    printformat("%d:%X I/O ", i, pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFFC );
+                                    printformat("%d:%x I/O ", i, pciDev_Array[number].bar[i].baseAddress & 0xFFFC );
                                 }
 
                                 /// TEST Memory Size Begin
@@ -226,27 +240,31 @@ void rtl8139_handler(struct regs* r)
                                 }
                                 if(pciDev_Array[number].bar[j].memoryType == 1)
                                 {
-                                    BaseAddressRTL8139_IO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFFFFFC;
+                                    BaseAddressRTL8139_IO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFC;
                                 }
                             }
                         }
-                        BaseAddressRTL8139 = BaseAddressRTL8139_MMIO; // correct?
-                        printformat("\nUsed Base for RTL8139: %X",BaseAddressRTL8139);
+
+                        /// important:
+                        /// access to BaseAddressRTL8139_IO + offset: outxxx(BaseAddressRTL8139_IO + offset, data)
+                        ///
+
+                        printformat("\nUsed MMIO Base for RTL8139: %X",BaseAddressRTL8139_MMIO);
 
 						// "power on" the card
-						*((uint8_t*)( BaseAddressRTL8139 + 0x52 )) = 0x00;
+						*((uint8_t*)( BaseAddressRTL8139_MMIO + 0x52 )) = 0x00;
 
 						// do an Software reset on that card
 						/* Einen Reset der Karte durchführen: Bit 4 im Befehlsregister (0x37, 1 Byte) setzen.
 						   Wenn ich hier Portnummern von Registern angebe, ist damit der Offset zum ersten Port der Karte gemeint,
 						   der durch die PCI-Funktionen ermittelt werden muss. */
-						*((uint8_t*)( BaseAddressRTL8139 + 0x37 )) = 0x10;
+						*((uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) = 0x10;
 
 						// and wait for the reset of the "reset flag"
 						k=0;
 						while(true)
 						{
-							if( !( *((uint16_t*)( BaseAddressRTL8139 + 0x62 )) & 0x8000 ) ) /// wo kommt das her? Basic Mode Control
+							if( !( *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x62 )) & 0x8000 ) ) /// wo kommt das her? Basic Mode Control
 							{
 								break;
 							}
@@ -256,27 +274,27 @@ void rtl8139_handler(struct regs* r)
 						printformat("\nwaiting successful(%d)!\n", k);
 
 						printformat("mac address: %y-%y-%y-%y-%y-%y\n",
-						            *((uint8_t*)(BaseAddressRTL8139)+0),
-						            *((uint8_t*)(BaseAddressRTL8139)+1),
-						            *((uint8_t*)(BaseAddressRTL8139)+2),
-						            *((uint8_t*)(BaseAddressRTL8139)+3),
-						            *((uint8_t*)(BaseAddressRTL8139)+4),
-						            *((uint8_t*)(BaseAddressRTL8139)+5) );
+						            *((uint8_t*)(BaseAddressRTL8139_MMIO)+0),
+						            *((uint8_t*)(BaseAddressRTL8139_MMIO)+1),
+						            *((uint8_t*)(BaseAddressRTL8139_MMIO)+2),
+						            *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
+						            *((uint8_t*)(BaseAddressRTL8139_MMIO)+4),
+						            *((uint8_t*)(BaseAddressRTL8139_MMIO)+5) );
 
                         // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
                         /*
                         Aktivieren des Transmitters und des Receivers: Setze Bits 2 und 3 (TE bzw. RE) im Befehlsregister (0x37, 1 Byte).
                         Dies darf angeblich nicht erst später geschehen, da die folgenden Befehle ansonsten ignoriert würden.
                         */
-						*((uint8_t*)( BaseAddressRTL8139 + 0x37 )) = 0x0C; // 1100b
+						*((uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) = 0x0C; // 1100b
 
                         /*
                         TCR (Transmit Configuration Register, 0x40, 4 Bytes) und RCR (Receive Configuration Register, 0x44, 4 Bytes) setzen.
                         An dieser Stelle nicht weiter kommentierter Vorschlag: TCR = 0x03000700, RCR = 0x0000070a
                         */
-                        *((uint32_t*)( BaseAddressRTL8139 + 0x40 )) = 0x03000700; //TCR
-                        *((uint32_t*)( BaseAddressRTL8139 + 0x44 )) = 0x0000070a; //RCR
-                        //*((uint32_t*)( BaseAddressRTL8139 + 0x44 )) = 0xF;        //RCR pci.c in rev. 108 ??
+                        *((uint32_t*)( BaseAddressRTL8139_MMIO + 0x40 )) = 0x03000700; //TCR
+                        *((uint32_t*)( BaseAddressRTL8139_MMIO + 0x44 )) = 0x0000070a; //RCR
+                        //*((uint32_t*)( BaseAddressRTL8139_MMIO + 0x44 )) = 0xF;        //RCR pci.c in rev. 108 ??
                         /*0xF means AB+AM+APM+AAP*/
 
 						// first 65536 bytes are our sending buffer and the last bytes are our receiving buffer
@@ -287,7 +305,7 @@ void rtl8139_handler(struct regs* r)
                         Was ausreichend bedeutet, ist dabei davon abhängig, welche Menge wir auf einmal absenden wollen.
                         Anschließend muss die physische(!) Adresse des Empfangspuffers nach RBSTART (0x30, 4 Bytes) geschrieben werden.
                         */
-						*((uint32_t*)( BaseAddressRTL8139 + 0x30 )) = (uint32_t)network_buffer /* + 8192+16 */ ;
+						*((uint32_t*)( BaseAddressRTL8139_MMIO + 0x30 )) = (uint32_t)network_buffer /* + 8192+16 */ ;
 
 						// Sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
 						// this allows us to get an interrupt if something happens...
@@ -295,11 +313,11 @@ void rtl8139_handler(struct regs* r)
 						Interruptmaske setzen (0x3C, 2 Bytes). In diesem Register können die Ereignisse ausgewählt werden,
 						die einen IRQ auslösen sollen. Wir nehmen der Einfachkeit halber alle und setzen 0xffff.
 						*/
-						//*((uint16_t*)( BaseAddressRTL8139 + 0x3C )) = 0xFFFF;
-						*((uint16_t*)( BaseAddressRTL8139 + 0x3C )) = 0x5;// only TOK and ROK
+						//*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0xFFFF;
+						*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0x5;// only TOK and ROK
 
-						printformat("All fine, install irq handler (temporarily deactivated!)\n");
-						// irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler); //// DEACTIVATED
+						printformat("All fine, install irq handler.\n");
+						irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);
 					} // if 8139 ...
 
                     ++number;

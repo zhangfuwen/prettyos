@@ -38,6 +38,7 @@ int strcmp( const char* s1, const char* s2 );
 char* strcpy(char* dest, const char* src);
 char* strncpy(char* dest, const char* src, unsigned int n);
 char* strcat(char* dest, const char* src);
+char* strchr(char* str, int character);
 
 char* gets(char* s);
 

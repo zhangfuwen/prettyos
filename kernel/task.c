@@ -157,6 +157,7 @@ uint32_t task_switch(uint32_t esp)
     if(!current_task) return esp;
     current_task->esp = esp;   // save esp
 
+    // Dispatcher
     // task switch
     current_task = current_task->next; // take the next task
     if(!current_task)

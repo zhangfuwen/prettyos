@@ -32,7 +32,7 @@ char DateAndTime[80];
 static void init()
 {
     clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.113");
+    printformat("PrettyOS [Version 0.0.0.114");
     printformat("\n\n");
     gdt_install();
     idt_install();
@@ -54,7 +54,7 @@ int main()
     tasking_install();
     sti();
 
-    /// direct 1st floppy disk
+    // direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
     {
         printformat("\n1.44 MB floppy disk has been installed as floppy device 0\n\n");

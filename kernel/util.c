@@ -50,6 +50,13 @@ uint32_t inportb(uint16_t port)
 	return ret_val;
 }
 
+uint16_t inportw(uint16_t port)
+{
+	uint16_t ret_val;
+	__asm__ volatile ("inw %1,%0" : "=a" (ret_val) : "Nd" (port));
+	return ret_val;
+}
+
 uint32_t inportl(uint16_t port)
 {
 	uint32_t ret_val;

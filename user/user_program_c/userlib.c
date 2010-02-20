@@ -185,6 +185,23 @@ char* strcat(char* dest, const char* src)
     return dest;
 }
 
+char* strchr(char* str, int character)
+{
+	for(;;str++)
+	{
+		// NOTE< the order here is important >
+		if( *str == character )
+		{
+			return str;
+		}
+		if( *str == 0 )
+		{
+			return 0;
+		}
+	}
+}
+
+
 char* gets(char* s)
 {
     int i=0;
