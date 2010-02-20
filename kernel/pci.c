@@ -7,7 +7,7 @@
 #include "kheap.h" //# just for testing?
 
 pciDev_t pciDev_Array[50];
-uint8_t network_buffer[ 65536]; ///TEST for network card
+uint8_t network_buffer[ 2*65536]; ///TEST for network card
 
 
 uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content )
@@ -212,51 +212,63 @@ void rtl8139_handler(struct regs* r) {
 						*((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x52 )) = 0x00;
 
 						// do an Software reset on that card
+						/* Einen Reset der Karte durchführen: Bit 4 im Befehlsregister (0x37, 1 Byte) setzen.
+						   Wenn ich hier Portnummern von Registern angebe, ist damit der Offset zum ersten Port der Karte gemeint,
+						   der durch die PCI-Funktionen ermittelt werden muss. */
 						*((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x37 )) = 0x10;
 
 						// and wait for the reset of the "reset flag"
 						unsigned long i;
-						for(i = 0;;i++) {
-							if( !( *((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x62 )) & 0x8000 ) ) {
+						for(i = 0;;i++)
+						{
+							if( !( *((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x62 )) & 0x8000 ) )
+							{
 								break;
 							}
 						}
-
 						// print a message
 						printformat("waiting sucessfull(%d)!\n", i);
+                        /*
+                        Aktivieren des Transmitters und des Receivers: Setze Bits 2 und 3 (TE bzw. RE) im Befehlsregister (0x37, 1 Byte).
+                        Dies darf angeblich nicht erst später geschehen, da die folgenden Befehle ansonsten ignoriert würden.
+                        */
 
-						// allocate our "Network Buffer"
-						//network_buffer = malloc(65536*2, 8); // is this enougth?
+						// now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
+						*((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x37 )) = 0x0C; // 1100b
 
+                        /*
+                        TCR (Transmit Configuration Register, 0x40, 4 Bytes) und RCR (Receive Configuration Register, 0x44, 4 Bytes) setzen.
+                        An dieser Stelle nicht weiter kommentierter Vorschlag: TCR = 0x03000700, RCR = 0x0000070a
+                        */
+                        *((unsigned long*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x40 )) = 0x03000700; //TCR
+                        *((unsigned long*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x44 )) = 0x0000070a; //RCR
 
-						// first 65536 bytes are our sending buffer and the last bytes are our reciving buffer
-
-						if( network_buffer == NULL ) {
-							// we couln't allocate our Buffer, this is fatal!
-							printformat("FATAL!\n");
-							// halt
-							for(;;){}
-						}
-
-
-
+                        /*
+                        Puffer für den Empfang (evtl auch zum Senden, das kann aber auch später passieren) initialisieren.
+                        Wir brauchen für bei den vorgeschlagenen Werten 8K + 16 Bytes für den Empfangspuffer und einen ausreichend großen Sendepuffer.
+                        Was ausreichend bedeutet, ist dabei davon abhängig, welche Menge wir auf einmal absenden wollen.
+                        Anschließend muss die physische (!) Adresse des Empfangspuffers nach RBSTART (0x30, 4 Bytes) geschrieben werden.
+                        */
+						// first 65536 bytes are our sending buffer and the last bytes are our receiving buffer
 						// set RBSTART to our buffer for the Receive Buffer
 						*((unsigned long*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x30 )) = (unsigned long)network_buffer + 65536;
 
+						/*
+						Interruptmaske setzen (0x3C, 2 Bytes). In diesem Register können die Ereignisse ausgewählt werden,
+						die einen IRQ auslösen sollen. Wir nehmen der Einfachkeit halber alle und setzen 0xffff.
+						*/
 						// Sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
 						// this allows us to get an interrupt if something happens...
-						*((short*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x3C )) = 0x0005;
+						*((unsigned short*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x3C )) = 0xFFFF;
 
+						/*
 						// configure "Receive Configuration Register"(RCR)
 						// we set the AB, AM, APM, AAP flags
 						// we don't activate the WRAP bit (like in the wiki)
-						*((unsigned long*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x44 )) = 0xf;
-
-						// now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
-						*((unsigned char*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x37 )) = 0x0C;
+						*((unsigned long*)( (unsigned long)pciDev_Array[number].bar[0].baseAddress + 0x44 )) = 0xf; //?
+						*/
 
 						printformat("All fine, install irq handler\n");
-
 						irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);
 					}
 
