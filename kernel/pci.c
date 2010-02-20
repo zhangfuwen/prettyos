@@ -63,8 +63,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 // this is the handler for an IRQ interrupt of our Network Card
 void rtl8139_handler(struct regs* r)
 {
-	settextcolor(4,0);
-
+	settextcolor(3,0);
 
 	// read bytes 003Eh bis 003Fh, Interrupt Status Register
     uint32_t val = inportw(BaseAddressRTL8139_IO + 0x3E);
@@ -78,11 +77,18 @@ void rtl8139_handler(struct regs* r)
            strcpy(str,"");
     }
     printformat("\nRTL8139 IRQ, %y %s\n", val,str);
-    settextcolor(15,0);
 
     // reset interrupts bei writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
-	outportb( BaseAddressRTL8139_IO + 0x3E, 0xF );
-	outportb( BaseAddressRTL8139_IO + 0x3F, 0xF );
+	outportw( BaseAddressRTL8139_IO + 0x3E, val );
+
+	printformat("\nReceiving Buffer content: ");
+    int32_t length, i;
+    length = network_buffer[3]*0x100 + network_buffer[2];
+    if (length>300) length = 300;
+    for(i=0;i<=length;i++) {printformat("%y ",network_buffer[i]);}
+    printformat("\n");
+
+    settextcolor(15,0);
 }
 
  void pciScan()
@@ -96,8 +102,8 @@ void rtl8139_handler(struct regs* r)
     uint32_t pciBar             = 0; // helper variable for memory size
     uint32_t EHCI_data          = 0; // helper variable for EHCI_data
 
-
-
+    //clear receiving buffer
+    memset((void*) network_buffer, 0x0, 8192+16);
 
     // array of devices, PCIARRAYSIZE for first tests
     for(i=0;i<PCIARRAYSIZE;++i)
@@ -313,8 +319,8 @@ void rtl8139_handler(struct regs* r)
 						Interruptmaske setzen (0x3C, 2 Bytes). In diesem Register können die Ereignisse ausgewählt werden,
 						die einen IRQ auslösen sollen. Wir nehmen der Einfachkeit halber alle und setzen 0xffff.
 						*/
-						//*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0xFFFF;
-						*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0x5;// only TOK and ROK
+						*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0xFF; // all interrupts
+						//*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0x5; // only TOK and ROK
 
 						printformat("All fine, install irq handler.\n");
 						irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);

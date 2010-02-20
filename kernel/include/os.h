@@ -138,11 +138,13 @@ extern void analyze_physical_addresses();
 extern bool elf_exec( const void* elf_file, uint32_t elf_file_size );
 
 // util.c
-extern void outportb(uint16_t port, uint32_t val);
+extern uint32_t inportl(uint16_t port);
 extern uint32_t inportb(uint16_t port);
 extern uint16_t inportw(uint16_t port);
+extern void outportb(uint16_t port, uint32_t val);
+extern void outportw(uint16_t port, uint32_t val);
 extern void outportl(uint16_t port, uint32_t val);
-extern uint32_t inportl(uint16_t port);
+
 extern uint32_t fetchESP();
 extern uint32_t fetchEBP();
 extern uint32_t fetchSS();
