@@ -32,7 +32,7 @@ char DateAndTime[80];
 static void init()
 {
     clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.112");
+    printformat("PrettyOS [Version 0.0.0.113");
     printformat("\n\n");
     gdt_install();
     idt_install();
@@ -46,21 +46,8 @@ int main()
     init();
 	settextcolor(15,0);
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
-               // TODO: we need calculation of virtual address from physical address
+               // TODO: we need calculation or idendity-mapping of virtual address from physical address
                //       that we can carry out this routine after paging_install()
-
-    ///TEST
-    printformat("Test with IRQ 32+11: ");
-    settextcolor(14,0);
-    __asm__ volatile( "int $43" : : "a"(0) );
-    settextcolor(15,0);
-    printformat("Test with IRQ 32+5: ");
-    settextcolor(14,0);
-    __asm__ volatile( "int $37" : : "a"(0) );
-    settextcolor(15,0);
-    ///TEST
-
-
     pODA->Memory_Size = paging_install();
     printformat( "\n\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
     heap_install();

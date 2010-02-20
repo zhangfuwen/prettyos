@@ -9,7 +9,10 @@
 pciDev_t pciDev_Array[50];
 
 uint8_t network_buffer[8192+16]; ///TEST for network card
+uint32_t BaseAddressRTL8139_IO;     ///TEST for network card
+uint32_t BaseAddressRTL8139_MMIO;     ///TEST for network card
 uint32_t BaseAddressRTL8139;     ///TEST for network card
+
 
 
 uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content )
@@ -62,11 +65,15 @@ void rtl8139_handler(struct regs* r)
 {
 	printformat("RTL8139 IRQ\t");
 	///TODO: reset interrupts bei writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
+	///TEST
+	//*((uint16_t*)( BaseAddressRTL8139      + 0x3E )) = 0xFF; // reset
+	*((uint16_t*)( BaseAddressRTL8139_IO   + 0x3E )) = 0xFF; // reset	///TEST
+	*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E )) = 0xFF; // reset	///TEST
 }
 
  void pciScan()
  {
-    uint32_t i;
+    uint32_t i,j,k;
     settextcolor(15,0);
     uint8_t  bus                = 0; // max. 256
     uint8_t  device             = 0; // max.  32
@@ -206,31 +213,25 @@ void rtl8139_handler(struct regs* r)
 
 					if(	(pciDev_Array[number].deviceID == 0x8139) && (pciDev_Array[number].vendorID == 0x10EC) )
 					{
-						for(i=0;i<6;++i) // check network card BARs
+						for(j=0;j<6;++j) // check network card BARs
                         {
-                            pciDev_Array[number].bar[i].memoryType = pciDev_Array[number].bar[i].baseAddress & 0x01;
+                            pciDev_Array[number].bar[j].memoryType = pciDev_Array[number].bar[j].baseAddress & 0x01;
 
-                            if(pciDev_Array[number].bar[i].baseAddress) // check valid BAR
+                            if(pciDev_Array[number].bar[j].baseAddress) // check valid BAR
                             {
-                                if(pciDev_Array[number].bar[i].memoryType == 0)
+                                if(pciDev_Array[number].bar[j].memoryType == 0)
                                 {
-                                    pciDev_Array[number].bar[i].baseAddress &= 0xFFFFFFF0;
+                                    BaseAddressRTL8139_MMIO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFFFFF0;
+
                                 }
-                                if(pciDev_Array[number].bar[i].memoryType == 1)
+                                if(pciDev_Array[number].bar[j].memoryType == 1)
                                 {
-                                    pciDev_Array[number].bar[i].baseAddress &= 0xFFFFFFFC;
+                                    BaseAddressRTL8139_IO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFFFFFC;
                                 }
                             }
                         }
-                        for(i=0;i<6;++i) // get BAR.baseAddress
-                        {
-                            if((pciDev_Array[number].bar[i].baseAddress!=0x0) && (pciDev_Array[number].bar[i].memoryType == 0))
-                            {
-                                BaseAddressRTL8139 = pciDev_Array[number].bar[i].baseAddress;
-                                printformat("\nUsed Base for RTL8139: %X",BaseAddressRTL8139);
-                                break;
-                            }
-                        }
+                        BaseAddressRTL8139 = BaseAddressRTL8139_MMIO; // correct?
+                        printformat("\nUsed Base for RTL8139: %X",BaseAddressRTL8139);
 
 						// "power on" the card
 						*((uint8_t*)( BaseAddressRTL8139 + 0x52 )) = 0x00;
@@ -242,15 +243,17 @@ void rtl8139_handler(struct regs* r)
 						*((uint8_t*)( BaseAddressRTL8139 + 0x37 )) = 0x10;
 
 						// and wait for the reset of the "reset flag"
+						k=0;
 						while(true)
 						{
 							if( !( *((uint16_t*)( BaseAddressRTL8139 + 0x62 )) & 0x8000 ) ) /// wo kommt das her? Basic Mode Control
 							{
 								break;
 							}
+							k++;
 						}
 
-						printformat("waiting successful(%d)!\n", i);
+						printformat("\nwaiting successful(%d)!\n", k);
 
 						printformat("mac address: %y-%y-%y-%y-%y-%y\n",
 						            *((uint8_t*)(BaseAddressRTL8139)+0),
@@ -292,11 +295,12 @@ void rtl8139_handler(struct regs* r)
 						Interruptmaske setzen (0x3C, 2 Bytes). In diesem Register können die Ereignisse ausgewählt werden,
 						die einen IRQ auslösen sollen. Wir nehmen der Einfachkeit halber alle und setzen 0xffff.
 						*/
-						*((uint16_t*)( BaseAddressRTL8139 + 0x3C )) = 0xFFFF;
+						//*((uint16_t*)( BaseAddressRTL8139 + 0x3C )) = 0xFFFF;
+						*((uint16_t*)( BaseAddressRTL8139 + 0x3C )) = 0x5;// only TOK and ROK
 
-						printformat("All fine, install irq handler\n");
-						irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);
-					}
+						printformat("All fine, install irq handler (temporarily deactivated!)\n");
+						// irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler); //// DEACTIVATED
+					} // if 8139 ...
 
                     ++number;
                 } // if pciVendor
