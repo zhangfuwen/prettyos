@@ -1,6 +1,8 @@
 #ifndef USERLIB_H
 #define USERLIB_H
 
+typedef char bool;
+
 #define true		1
 #define false		0
 
@@ -15,6 +17,7 @@ void settextcolor(unsigned int foreground, unsigned int background);
 void putch(unsigned char val);
 void puts(char* pString);
 unsigned char getch();
+bool testch();
 int floppy_dir();
 void printLine(char* message, unsigned int line, unsigned char attribute);
 unsigned int getCurrentSeconds();

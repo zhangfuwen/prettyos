@@ -12,40 +12,40 @@ void helper()
 
 void printField() {
 	puts("*************\n| ");
-	for(int i = 0; i < 3; i++) {	
-		if(tictactoe[i] == 0) {
+	for(int i = 0; i < 3; i++) {
+		if(tictactoe[i] == Leer) {
 			putch(' ');
 		}
-		if(tictactoe[i] == 1) {
+		if(tictactoe[i] == X) {
 			putch('X');
 		}
-		if(tictactoe[i] == 2) {
+		if(tictactoe[i] == O) {
 			putch('O');
 		}
 		puts(" | ");
 	}
 	puts("\n*************\n| ");
-	for(int i = 3; i < 6; i++) {	
-		if(tictactoe[i] == 0) {
+	for(int i = 3; i < 6; i++) {
+		if(tictactoe[i] == Leer) {
 			putch(' ');
 		}
-		if(tictactoe[i] == 1) {
+		if(tictactoe[i] == X) {
 			putch('X');
 		}
-		if(tictactoe[i] == 2) {
+		if(tictactoe[i] == O) {
 			putch('O');
 		}
 		puts(" | ");
 	}
 	puts("\n*************\n| ");
-	for(int i = 6; i < 9; i++) {	
-		if(tictactoe[i] == 0) {
+	for(int i = 6; i < 9; i++) {
+		if(tictactoe[i] == Leer) {
 			putch(' ');
 		}
-		if(tictactoe[i] == 1) {
+		if(tictactoe[i] == X) {
 			putch('X');
 		}
-		if(tictactoe[i] == 2) {
+		if(tictactoe[i] == O) {
 			putch('O');
 		}
 		puts(" | ");
@@ -54,33 +54,33 @@ void printField() {
 }
 
 void gewinnen () {
-	if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == 1) || 
-	   (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == 1) || 
-	   (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == 1) || 
-	   (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == 1) || 
-	   (tictactoe[1] == tictactoe[4] && tictactoe[1] == tictactoe[7] && tictactoe[1] == 1) || 
-	   (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == 1) || 
-	   (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == 1) || 
-	   (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == 1)) {
-			puts("Spieler 1 hat gewonnen!\n\n");
+	if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == X) ||
+	   (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == X) ||
+	   (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == X) ||
+	   (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == X) ||
+	   (tictactoe[1] == tictactoe[4] && tictactoe[1] == tictactoe[7] && tictactoe[1] == X) ||
+	   (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == X) ||
+	   (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == X) ||
+	   (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == X)) {
+			puts("Player X wins\n\n");
 			ende = true;
 	}
-	if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == 2) || 
-	   (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == 2) || 
-	   (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == 2) || 
-	   (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == 2) || 
-	   (tictactoe[1] == tictactoe[4] && tictactoe[1] == tictactoe[7] && tictactoe[1] == 2) || 
-	   (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == 2) || 
-	   (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == 2) || 
-	   (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == 2)) {
-			puts("Spieler 2 hat gewonnen!\n\n");
+	if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) ||
+	   (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == O) ||
+	   (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == O) ||
+	   (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == O) ||
+	   (tictactoe[1] == tictactoe[4] && tictactoe[1] == tictactoe[7] && tictactoe[1] == O) ||
+	   (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == O) ||
+	   (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == O) ||
+	   (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == O)) {
+			puts("Player O wins!\n\n");
 			ende = true;
 	}
 	else {
-		if(tictactoe[0] != 0 && tictactoe[1] != 0 && tictactoe[2] != 0 && 
-		   tictactoe[3] != 0 && tictactoe[4] != 0 && tictactoe[5] != 0 && 
-		   tictactoe[6] != 0 && tictactoe[7] != 0 && tictactoe[8] != 0) {
-			   puts("Unentschieden!\n\n");
+		if(tictactoe[0] != Leer && tictactoe[1] != Leer && tictactoe[2] != Leer &&
+		   tictactoe[3] != Leer && tictactoe[4] != Leer && tictactoe[5] != Leer &&
+		   tictactoe[6] != Leer && tictactoe[7] != Leer && tictactoe[8] != Leer) {
+			   puts("Remis!\n\n");
 			ende = true;
 		}
 	}
@@ -91,23 +91,24 @@ int ConvertToInt(char c) {
 }
 
 char x = 0;
-char t[1];
 
 void Zug(int Player) {
+	putch('\n');
 	helper();
-	for(;;) {
-		do {
-			x = *gets(&x);
+	char x = 0;
+	putch('\n');
+	for(; ; x = *gets(&x)) {
+		if(!isdigit(x) || x == '9') {
+			puts("Please type in a number betwen 0 and 8.\n\n");
 		}
-		while (!isdigit(x) && x != '9');
-		if(tictactoe[ConvertToInt(x)] != Leer){
-			puts("unmöglich\n");
+		else if(tictactoe[ConvertToInt(x)] != Leer) {
+			puts("You cannot type in an number which has been used already.\n\n");
 		}
 		else {
-			tictactoe[ConvertToInt(x)] = Player;
 			break;
 		}
 	}
+	tictactoe[ConvertToInt(x)] = Player;
 	printField();
 	gewinnen();
 }
@@ -115,12 +116,12 @@ void Zug(int Player) {
 int main() {
     settextcolor(11,0);
     puts("================================================================================\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.2                            \n");
-    puts("--------------------------------------------------------------------------------\n\n");
+    puts("                            Mr.X TicTacToe 3x3  v0.3                            \n");
+    puts("--------------------------------------------------------------------------------\n");
 
 	Zug(X);
 
-	for(int i = 0; i < 4 && !ende; i++) {
+	for(int i = 0; i < 4 && !ende; ++i) {
 		Zug(O);
 		if(ende) {
 			break;
