@@ -253,9 +253,8 @@ uint32_t paging_install()
     memset( heap_pts, 0, 256*sizeof(page_table_t) );
     for ( uint32_t i=0; i<256; ++i )
     {
-        kernel_pd->tables[768+i] = heap_pts;
+        kernel_pd->tables[768+i] = &heap_pts[i];
         kernel_pd->codes[768+i] = (uint32_t)kernel_pd->tables[768+i] | MEM_PRESENT | MEM_WRITE;
-        heap_pts += sizeof(page_table_t);
     }
 
     // Setup 0x00400000 to 0x00600000 as writeable userspace
