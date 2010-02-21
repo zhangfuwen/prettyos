@@ -4,14 +4,13 @@
 */
 
 #include "pci.h"
-#include "kheap.h" //# just for testing?
 
 pciDev_t pciDev_Array[50];
 
-uint8_t network_buffer[8192+16]; ///TEST for network card
-uint32_t BaseAddressRTL8139_IO;     ///TEST for network card
-uint32_t BaseAddressRTL8139_MMIO;     ///TEST for network card
-uint32_t BaseAddressRTL8139;     ///TEST for network card
+uint8_t network_buffer[8192+16];  ///TEST for network card
+uint32_t BaseAddressRTL8139_IO;   ///TEST for network card
+uint32_t BaseAddressRTL8139_MMIO; ///TEST for network card
+uint32_t BaseAddressRTL8139;      ///TEST for network card
 
 
 
@@ -60,33 +59,77 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
     outportl(PCI_CONFIGURATION_DATA, val);
 }
 
-// this is the handler for an IRQ interrupt of our Network Card
+/// this is the handler for an IRQ interrupt of our Network Card
 void rtl8139_handler(struct regs* r)
 {
-	settextcolor(3,0);
-
 	// read bytes 003Eh bis 003Fh, Interrupt Status Register
     uint32_t val = inportw(BaseAddressRTL8139_IO + 0x3E);
     char str[80];
-    if((val & 0x01) == 0x1)
+    strcpy(str,"");
+    settextcolor(3,0);
+    if((val & 0x1) == 0x1)
     {
-        strcpy(str,"Receive OK");
+        strcpy(str,"Receive OK,");
     }
-    else
+    if((val & 0x4) == 0x4)
     {
-           strcpy(str,"");
+        strcpy(str,"Transfer OK,");
     }
-    printformat("\nRTL8139 IRQ, %y %s\n", val,str);
+    printformat("\nRTL8139 IRQ, %y %s  ", val,str);
 
     // reset interrupts bei writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
 	outportw( BaseAddressRTL8139_IO + 0x3E, val );
 
-	printformat("\nReceiving Buffer content: ");
-    int32_t length, i;
+	strcat(str," Receiving Buffer content:\n");
+	printformat(str);
+
+    int32_t length, ethernetType, i;
     length = network_buffer[3]*0x100 + network_buffer[2];
     if (length>300) length = 300;
-    for(i=0;i<=length;i++) {printformat("%y ",network_buffer[i]);}
+    ethernetType = network_buffer[17]*0x100 + network_buffer[16];
+
+    // output receiving buffer
+    settextcolor(5,0);
+    printformat("Flags: ");
+    settextcolor(3,0);
+    for(i=0;i<2;i++) {printformat("%y ",network_buffer[i]);}
+
+    settextcolor(5,0); printformat("\tLength: "); settextcolor(3,0);
+    for(i=2;i<4;i++) {printformat("%y ",network_buffer[i]);}
+
+    settextcolor(5,0); printformat("\nMAC Receiver: "); settextcolor(3,0);
+    for(i=4;i<10;i++) {printformat("%y ",network_buffer[i]);}
+
+    settextcolor(5,0); printformat("\tMAC Transmitter: "); settextcolor(3,0);
+    for(i=10;i<16;i++) {printformat("%y ",network_buffer[i]);}
+
+    settextcolor(5,0);
+    printformat("\nEthernet: ");
+    settextcolor(3,0);
+    if(ethernetType<=0x05DC)
+    {
+        printformat("type 1, ");
+    }
+    else
+    {
+        printformat("type 2, ");
+    }
+    settextcolor(5,0);
+    if(ethernetType<=0x05DC)
+    {
+        printformat("Length: ");
+    }
+    else
+    {
+        printformat("Type: ");
+    }
+    settextcolor(3,0);
+    for(i=16;i<18;i++) {printformat("%y ",network_buffer[i]);}
+
+    settextcolor(5,0); printformat("\ndata: "); settextcolor(3,0);
+    for(i=18;i<=length;i++) {printformat("%y ",network_buffer[i]);}
     printformat("\n");
+
 
     settextcolor(15,0);
 }

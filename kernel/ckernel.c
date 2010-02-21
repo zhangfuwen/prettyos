@@ -32,7 +32,7 @@ char DateAndTime[80];
 static void init()
 {
     clear_screen(); settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.115");
+    printformat("PrettyOS [Version 0.0.0.116");
     printformat("\n\n");
     gdt_install();
     idt_install();
@@ -47,7 +47,7 @@ int main()
 	settextcolor(15,0);
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
                // TODO: we need calculation or idendity-mapping of virtual address from physical address
-               //       that we can carry out this routine after paging_install()
+               //       to carry out this routine after paging_install()
     pODA->Memory_Size = paging_install();
     printformat( "\n\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
     heap_install();
