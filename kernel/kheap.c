@@ -12,8 +12,8 @@ For expansion, the heap asks the paging module to map physical memory to the
  following virtual addresses and increases it's "heap_size" variable afterwards.
 
 To manage the free and reserved (allocated) areas of the heap an array of
- "region" elements are held. Each region specifies it's size and whether it
- is reserved/allocated. Free regions are always merged. Regions don't store
+ "region" elements is held. Each region specifies it's size and whether it
+ is reserved/allocated. Free regions always get merged. Regions don't store
  their addresses, the third region's address is calculated by adding the first
  and second region's size to "heap_start":
  region_3_addr = heap_start + regions[0].size + regions[1].size.
@@ -28,6 +28,8 @@ The heap's management data is placed at this placement address, too. Since this
 */
 
 
+// TODO: Ensure the heap won't overflow (over 4 GB)
+
 
 typedef struct
 {
@@ -39,7 +41,7 @@ typedef struct
 static region_t*   regions = NULL;
 static uint32_t    region_count = 0;
 static uint32_t    region_max_count = 0;
-static char* const heap_start = (char*)HEAP_START_ADDRESS;
+static char* const heap_start = (char*)KERNEL_HEAP_START;
 static uint32_t    heap_size = 0;
 
 static char* const PLACEMENT_BEGIN = (char*)(16*1024*1024);

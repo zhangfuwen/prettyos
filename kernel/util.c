@@ -9,12 +9,12 @@ void nop() { __asm__ volatile ( "nop" ); }  // Do nothing
 oda_t   ODA;
 oda_t* pODA = &ODA;
 
-inline uint32_t max( uint32_t a, uint32_t b )
+uint32_t max( uint32_t a, uint32_t b )
 {
 	return a>=b? a : b;
 }
 
-inline uint32_t min( uint32_t a, uint32_t b )
+uint32_t min( uint32_t a, uint32_t b )
 {
 	return a<=b? a : b;
 }

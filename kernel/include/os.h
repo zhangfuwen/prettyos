@@ -34,8 +34,24 @@ typedef signed char          int8_t;
 #define BYTE3(a) (( a>>16 ) & 0xFF)
 #define BYTE4(a) (( a>>24 ) & 0xFF)
 
-// Paging
+
+//// Memory configuration ////
+// BE AWARE, THE MEMORY MANAGEMENT CODE STILL HAS SOME HARDCODED
+//       ADDRESSES, SO DO NOT CHANGE THESE ONES HERE!
+
+// The page size must not be changed
 #define PAGESIZE 4096
+
+// Where the kernel's private data is stored (virtual addresses)
+#define KERNEL_DATA_START 0xC0000000    //3 GB
+#define KERNEL_DATA_END   0x100000000   //4 GB
+
+// Virtual adress area for the kernel heap
+#define KERNEL_HEAP_START KERNEL_DATA_START
+#define KERNEL_HEAP_END   KERNEL_DATA_END
+#define KERNEL_HEAP_SIZE  (KERNEL_HEAP_END - KERNEL_HEAP_START)
+
+
 
 
 /// keyboard map

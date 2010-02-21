@@ -3,8 +3,25 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+
+// TODO: Apply multithreading safety
+
 #include "paging.h"
 #include "kheap.h"
+
+
+//// Some general helper functions
+// Searches for an element in an array
+/*static void** search_ptr_array( void** array, unsigned count, void* elem )
+{
+	for ( unsigned i=0; i<count; ++i )
+		if ( array[i] == elem )
+			return &array[count];
+	return NULL;
+}*/
+
+
+
 
 
 // Memory Map //
@@ -39,7 +56,7 @@ static bool memorymap_availability( const mem_map_entry_t* entries, uint64_t beg
 
 
 // Physical Memory //
-static uint32_t* data;
+static uint32_t* bittable;
 static uint32_t  dword_count;
 static uint32_t  first_free_dword;
 
@@ -52,8 +69,8 @@ static void phys_set_bits( uint32_t addr_begin, uint32_t addr_end, bool reserved
 
     // Set all these bits
     for ( uint32_t j=start; j<end; ++j )
-        if ( reserved )  data[j/32] |= 1<<(j%32);
-        else             data[j/32] &= ~(1<<(j%32));
+        if ( reserved )  bittable[j/32] |= 1<<(j%32);
+        else             bittable[j/32] &= ~(1<<(j%32));
 }
 
 
@@ -98,9 +115,9 @@ static uint32_t phys_init()
     }
 
     // We store our data here, initialize all bits to "reserved"
-    data = malloc( 128*1024, 0 );
+    bittable = malloc( 128*1024, 0 );
     for ( uint32_t i=0; i<MAX_DWORDS; ++i )
-        data[i] = 0xFFFFFFFF;
+        bittable[i] = 0xFFFFFFFF;
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
     for ( mem_map_entry_t* entry=entries; entry->size; ++entry )
@@ -118,7 +135,7 @@ static uint32_t phys_init()
 
     // Find the number of dwords we can use, skipping the last, "reserved"-only ones
     for ( uint32_t i=0; i<MAX_DWORDS; ++i )
-        if ( data[i] != 0xFFFFFFFF )
+        if ( bittable[i] != 0xFFFFFFFF )
             dword_count = i+1;
 
     // Exclude the first 16 MB from being allocated (they'll be needed for DMA later on)
@@ -133,16 +150,16 @@ static uint32_t phys_alloc()
 {
     // Search for a free uint32_t, i.e. one that not only contains ones
     for ( ; first_free_dword<dword_count; ++first_free_dword )
-        if ( data[first_free_dword] != 0xFFFFFFFF )
+        if ( bittable[first_free_dword] != 0xFFFFFFFF )
         {
             // Find the number of a free bit
-            uint32_t val = data[first_free_dword];
+            uint32_t val = bittable[first_free_dword];
             uint32_t bitnr = 0;
             while ( val & 1 )
                 val>>=1, ++bitnr;
 
             // Set the page to "reserved" and return the frame's address
-            data[first_free_dword] |= 1<<(bitnr%32);
+            bittable[first_free_dword] |= 1<<(bitnr%32);
             return (first_free_dword*32+bitnr) * PAGESIZE;
         }
 
@@ -161,7 +178,7 @@ static void phys_free( uint32_t addr )
         first_free_dword = bitnr/32;
 
     // Set the page to "free"
-    data[bitnr/32] &= ~(1<<(bitnr%32));
+    bittable[bitnr/32] &= ~(1<<(bitnr%32));
 }
 
 
@@ -184,6 +201,9 @@ struct page_directory_
 
 static const uint32_t MEM_PRESENT = 0x01;
 static page_directory_t* kernel_pd;
+//static page_directory_t* current_pd;
+
+//static page_directory_t* all_pds[1024] = { NULL };
 
 
 static uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr )
@@ -191,7 +211,7 @@ static uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr )
     // Find the page table
     uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
     page_table_t* pt = pd->tables[pagenr/1024];
-    ASSERT( pt != 0 );
+    ASSERT( pt );
 
     // Read the address, cut off the flags, append the address' odd part
     return (pt->pages[pagenr%1024]&0xFFFF000) + (((uint32_t)virt_addr)&0x00000FFF);
@@ -206,6 +226,7 @@ uint32_t paging_install()
     kernel_pd = malloc( sizeof(page_directory_t), PAGESIZE );
     memset( kernel_pd, 0, sizeof(page_directory_t) );
     kernel_pd->pd_phys_addr = (uint32_t)kernel_pd;
+	//all_pds[0] = kernel_pd;
 
     // Setup the page tables for 0MB-20MB, identity mapping
     uint32_t addr = 0;
@@ -253,10 +274,10 @@ uint32_t paging_install()
 }
 
 
-bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t flags )
+bool paging_alloc( page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags )
 {
-    // "addr" and "size" must be page-aligned
-    ASSERT( ((uint32_t)addr)%PAGESIZE == 0 );
+    // "virt_addr" and "size" must be page-aligned
+    ASSERT( ((uint32_t)virt_addr)%PAGESIZE == 0 );
     ASSERT( size%PAGESIZE == 0 );
 
     // "pd" may be NULL in which case its the kernel's pd
@@ -266,7 +287,7 @@ bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t fla
     // We repeat allocating one page at once
     for ( uint32_t done=0; done!=size/PAGESIZE; ++done )
     {
-        uint32_t pagenr = (uint32_t)addr/PAGESIZE + done;
+        uint32_t pagenr = (uint32_t)virt_addr/PAGESIZE + done;
 
         // Maybe there is already memory allocated?
         if ( pd->tables[pagenr/1024] && pd->tables[pagenr/1024]->pages[pagenr%1024] )
@@ -277,7 +298,7 @@ bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t fla
         if ( phys == 0 )
         {
             // Undo the allocations and return an error
-            paging_free( pd, addr, done*PAGESIZE );
+            paging_free( pd, virt_addr, done*PAGESIZE );
             return false;
         }
 
@@ -291,7 +312,7 @@ bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t fla
             {
                 // Undo the allocations and return an error
                 phys_free( phys );
-                paging_free( pd, addr, done*PAGESIZE );
+                paging_free( pd, virt_addr, done*PAGESIZE );
                 return false;
             }
             memset( pt, 0, sizeof(page_table_t) );
@@ -308,10 +329,10 @@ bool paging_alloc( page_directory_t* pd, void* addr, uint32_t size, uint32_t fla
 }
 
 
-void paging_free( page_directory_t* pd, void* addr, uint32_t size )
+void paging_free( page_directory_t* pd, void* virt_addr, uint32_t size )
 {
-    // "addr" and "size" must be page-aligned
-    ASSERT( ((uint32_t)addr)%PAGESIZE == 0 );
+    // "virt_addr" and "size" must be page-aligned
+    ASSERT( ((uint32_t)virt_addr)%PAGESIZE == 0 );
     ASSERT( size%PAGESIZE == 0 );
 
     // "pd" may be NULL in which case the kernel's pd is meant
@@ -319,7 +340,7 @@ void paging_free( page_directory_t* pd, void* addr, uint32_t size )
         pd = kernel_pd;
 
     // Go through all pages and free them
-    uint32_t pagenr = (uint32_t)addr / PAGESIZE;
+    uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
     while ( size )
     {
         // Get the physical address and invalidate the page
@@ -344,14 +365,27 @@ page_directory_t* paging_create_user_pd()
 
     // Each user's page directory contains the same mapping as the kernel
     memcpy( pd, kernel_pd, sizeof(page_directory_t) );
-
     pd->pd_phys_addr = paging_get_phys_addr( kernel_pd, pd->codes );
+
+	// Registrate the page directory in "all_pds"
+	//page_directory_t** entry = (page_directory_t**) search_ptr_array( (void**)all_pds, sizeof(all_pds)/sizeof(*all_pds), NULL );
+	//ASSERT( entry && "Too many page directories, adjust 'all_pds' in paging.c" );
+	//*entry = pd;
+
     return pd;
 }
 
 
 void paging_destroy_user_pd( page_directory_t* pd )
 {
+	// The kernel's page directory must not be destroyed
+	ASSERT( pd != kernel_pd );
+
+	// Remove the page directory from "all_pds"
+	//page_directory_t** entry = (page_directory_t**) search_ptr_array( (void**)all_pds, sizeof(all_pds)/sizeof(*all_pds), pd );
+	//ASSERT( entry );
+	//*entry = NULL;
+
     // Free all memory that is not from the kernel
     for ( uint32_t i=0; i<1024; ++i )
         if ( pd->tables[i] && pd->tables[i]!=kernel_pd->tables[i] )
@@ -369,11 +403,88 @@ void paging_destroy_user_pd( page_directory_t* pd )
 }
 
 
-void paging_switch( page_directory_t* pd  )
+void paging_switch( page_directory_t* pd )
 {
+	cli();
     if(!pd)  pd=kernel_pd;
+	//current_pd = pd;
     __asm__ volatile("mov %0, %%cr3" : : "r" (pd->pd_phys_addr));
+	sti();
 }
+
+
+
+bool paging_do_idmapping( uint32_t phys_addr )
+{
+	// TODO: Ensure that the physical memory is not used otherwise
+	// TODO: The page table entry may point to a different address
+	// TODO: Create solution for addreses != 0xF...
+
+	// Adress must be a 0xF...-address
+	if ( (phys_addr & 0xF0000000) != 0xF0000000 )
+		return false;
+
+	const uint32_t pagenr = phys_addr/PAGESIZE;
+	const uint32_t aligned = phys_addr & ~4095;
+
+	// Setup the page
+	page_table_t* pt = kernel_pd->tables[pagenr/1024];
+	ASSERT( pt );
+	pt->pages[pagenr%1024] = aligned | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
+
+	// Reserve the physical memory
+	phys_set_bits( aligned, aligned+PAGESIZE, true );
+
+	return true;
+}
+
+/*static bool paging_remap_phys( page_directory_t* pd, uint32_t phys_addr )
+{
+	for ( int i=0; i<1024; ++i )
+		if ( pd->tables[i] )
+			for ( int j=0; j<1024; ++j )
+				if ( (pd->tables[i]->pages[j] & ~4095) == phys_addr )
+				{
+					// Copy the page's content in a temporary buffer
+					void* buf = malloc( PAGESIZE, 0 );
+					page_directory_t* actual_pd = current_pd;
+					paging_switch( pd );
+					memcpy( buf, (void*)(i*1024*PAGESIZE + j*PAGESIZE), PAGESIZE );
+					paging_switch( actual_pd );
+
+					// Get new memory for the page table
+					uint32_t new_mem = phys_alloc();
+					ASSERT( new_mem );
+					pd->tables[i]->pages[j] = new_mem | (pd->tables[i]->pages[j] & 4095);
+
+					// Restore the page's content
+					paging_switch( pd );
+					memcpy( (void*)(i*1024*PAGESIZE + j*PAGESIZE), buf, PAGESIZE );
+					paging_switch( actual_pd );
+
+					free( buf );
+					return true;
+				}
+	return false;
+}
+
+void* paging_reserve_phys_addr( uint32_t phys_addr )
+{
+	// Assure that the physical address is free for use
+	const uint32_t aligned_phys = phys_addr & ~4095;
+	for ( int i=0; i<sizeof(all_pds)/sizeof(*all_pds); ++i )
+		if ( all_pds[i] && paging_remap_phys(all_pds[i],aligned_phys) )
+			break;
+
+	// Set the physical address to reserved
+	phys_set_bits( aligned_phys, aligned_phys+PAGESIZE, true );
+
+	// Map the physical address to a reserved virtual address
+	
+
+	return NULL;
+}*/
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
