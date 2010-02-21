@@ -4,7 +4,6 @@
 #include "os.h"
 #include "cmos.h"
 
-typedef
 struct tm
 {
     int8_t second;      // seconds 0-60 (60, because there can be a leap second
@@ -15,8 +14,9 @@ struct tm
     int8_t month;       // month 1-12
     int8_t year;        // year (2 digits)
     int8_t century;     // century (2 digits)
-} tm_t;
+} __attribute__((packed));
 
+typedef struct tm tm_t;
 
 tm_t* cmosTime(tm_t* ptm);
 char* getCurrentDateAndTime(char* pStr);

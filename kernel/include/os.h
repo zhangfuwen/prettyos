@@ -51,7 +51,7 @@ extern void panic_assert(char* file, uint32_t line, char* desc);  // why char ?
 
 #define KQSIZE    20 // size of key queue
 
-typedef struct oda
+struct oda
 {
     // hardware data
     uint32_t Memory_Size;        // memory size in byte
@@ -62,20 +62,24 @@ typedef struct oda
     // floppy disk
     bool  flpy_motor[4];         // 0: motor off  1: motor on
                                  // array index is number of floppy drive (0,1,2,3)
-}oda_t;
+}__attribute__((packed));
+
+typedef struct oda oda_t;
 
 // operatings system common data area
 extern oda_t* pODA;
 
 
 /* This defines what the stack looks like after an ISR was running */
-typedef struct regs
+struct regs
 {
     uint32_t gs, fs, es, ds;
     uint32_t edi, esi, ebp, ebx, edx, ecx, eax;
     uint32_t int_no, err_code;
     uint32_t eip, cs, eflags, useresp, ss;
-}registers_t;
+}__attribute__((packed));
+
+typedef struct regs registers_t;
 
 
 // video.c
@@ -138,11 +142,11 @@ extern void analyze_physical_addresses();
 extern bool elf_exec( const void* elf_file, uint32_t elf_file_size );
 
 // util.c
-extern uint32_t inportl(uint16_t port);
-extern uint32_t inportb(uint16_t port);
+extern uint8_t inportb(uint16_t port);
 extern uint16_t inportw(uint16_t port);
-extern void outportb(uint16_t port, uint32_t val);
-extern void outportw(uint16_t port, uint32_t val);
+extern uint32_t inportl(uint16_t port);
+extern void outportb(uint16_t port, uint8_t val);
+extern void outportw(uint16_t port, uint16_t val);
 extern void outportl(uint16_t port, uint32_t val);
 
 extern uint32_t fetchESP();
@@ -150,27 +154,36 @@ extern uint32_t fetchEBP();
 extern uint32_t fetchSS();
 extern uint32_t fetchCS();
 extern uint32_t fetchDS();
+
 extern void memshow(void* start, size_t count);
 extern void* memset(void* dest, int8_t val, size_t count);
 extern uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
 extern void* memcpy(void* dest, const void* src, size_t count);
+
 extern size_t strlen(const char* str);
 extern int32_t strcmp( const char* s1, const char* s2 );
 extern char* strcpy(char* dest, const char* src);
 extern char* strncpy(char* dest, const char* src, size_t n);
 extern char* strcat(char* dest, const char* src);
+
 extern void reboot();
+
 extern void cli();
 extern void sti();
 extern void nop();
+
+uint32_t max( uint32_t a, uint32_t b );
+uint32_t min( uint32_t a, uint32_t b );
+
 extern void itoa(int32_t value, char* valuestring);
 extern void i2hex(uint32_t val, char* dest, int32_t len);
 extern void float2string(float value, int32_t decimal, char* valuestring);
+
+uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
+
 uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
-uint32_t max( uint32_t a, uint32_t b );
-uint32_t min( uint32_t a, uint32_t b );
-uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
+
 
 #endif
 

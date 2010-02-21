@@ -28,15 +28,16 @@
 
 #define PCIARRAYSIZE      1024
 
-typedef
 struct pciBasicAddressRegister
 {
     uint32_t baseAddress;
     size_t   memorySize;
     uint8_t  memoryType;
-}pciBar_t;
+}__attribute__((packed));
 
-typedef
+typedef struct pciBasicAddressRegister pciBar_t;
+
+
 struct pciDev
 {
    uint8_t   number;
@@ -51,7 +52,9 @@ struct pciDev
    uint8_t   revID;
    uint8_t   irq;
    pciBar_t  bar[6];
-}pciDev_t;
+}__attribute__((packed));
+
+typedef struct pciDev pciDev_t;
 
 extern pciDev_t pciDev_Array[50];
 

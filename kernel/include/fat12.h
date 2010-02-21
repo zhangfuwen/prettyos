@@ -56,7 +56,7 @@ struct boot_sector
     int32_t VolumeSerial;
     char    VolumeLabel[11];
     char    Reserved2[8];
-};
+}__attribute__((packed));
 
 struct dir_entry
 {
@@ -73,13 +73,13 @@ struct dir_entry
   int32_t WrtDate;
   int32_t FstClusLO;
   int32_t FileSize;
- };
+ }__attribute__((packed));
 
  struct file
  {
    uint32_t firstCluster;
    uint32_t size;
- };
+ }__attribute__((packed));
 
 
 /*************** functions ******************/

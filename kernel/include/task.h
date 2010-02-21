@@ -9,7 +9,7 @@
 
 uint32_t initial_esp;
 
-typedef struct task
+struct task
 {
     int32_t id;                           // Process ID.
     uint32_t esp, ebp;                   // Stack and base pointers.
@@ -18,7 +18,9 @@ typedef struct task
     page_directory_t* page_directory; // Page directory.
     uint32_t kernel_stack;               // Kernel stack location.
     struct task* next;                // The next task in a linked list.
-} task_t;
+} __attribute__((packed));
+
+typedef struct task task_t;
 
 int32_t userTaskCounter;
 

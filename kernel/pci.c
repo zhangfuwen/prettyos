@@ -3,6 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "os.h"
 #include "pci.h"
 
 pciDev_t pciDev_Array[50];

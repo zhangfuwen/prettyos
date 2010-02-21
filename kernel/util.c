@@ -3,10 +3,23 @@ int32_t INT_MAX = 2147483647;
 
 void sti() { __asm__ volatile ( "sti" ); }  // Enable interrupts
 void cli() { __asm__ volatile ( "cli" ); }  // Disable interrupts
+
 void nop() { __asm__ volatile ( "nop" ); }  // Do nothing
-oda_t ODA;
+
+oda_t   ODA;
 oda_t* pODA = &ODA;
 
+inline uint32_t max( uint32_t a, uint32_t b )
+{
+	return a>=b? a : b;
+}
+
+inline uint32_t min( uint32_t a, uint32_t b )
+{
+	return a<=b? a : b;
+}
+
+/**********************************************************************/
 
 uint32_t fetchESP()
 {
@@ -43,41 +56,45 @@ uint32_t fetchDS()
     return eax;
 }
 
-uint32_t inportb(uint16_t port)
+/**********************************************************************/
+
+uint8_t inportb(uint16_t port)
 {
-	uint32_t ret_val;
-	__asm__ volatile ("inb %w1,%b0"	: "=a"(ret_val)	: "d"(port));
-	return ret_val;
+    uint8_t ret_val;
+    __asm__ volatile ("in %%dx,%%al" : "=a"(ret_val) : "d"(port));
+    return ret_val;
 }
 
 uint16_t inportw(uint16_t port)
 {
-	uint16_t ret_val;
-	__asm__ volatile ("inw %1,%0" : "=a" (ret_val) : "Nd" (port));
-	return ret_val;
+    uint16_t ret_val;
+    __asm__ volatile ("in %%dx,%%ax" : "=a" (ret_val) : "d"(port));
+    return ret_val;
 }
 
 uint32_t inportl(uint16_t port)
 {
-	uint32_t ret_val;
-	__asm__ volatile ("inl %1,%0" : "=a" (ret_val) : "Nd" (port));
-	return ret_val;
+    uint32_t ret_val;
+    __asm__ volatile ("in %%dx,%%eax" : "=a" (ret_val) : "d"(port));
+    return ret_val;
 }
 
-void outportb(uint16_t port, uint32_t val)
+void outportb(uint16_t port, uint8_t val)
 {
-    __asm__ volatile ("outb %b0,%w1" : : "a"(val), "d"(port));
+    __asm__ volatile ("out %%al,%%dx" :: "a"(val), "d"(port));
 }
 
-void outportw(uint16_t port, uint32_t val)
+void outportw(uint16_t port, uint16_t val)
 {
     __asm__ volatile ("out %%ax,%%dx" :: "a"(val), "d"(port));
 }
 
 void outportl(uint16_t port, uint32_t val)
 {
-    __asm__ volatile ("outl %0,%1" : : "a"(val), "Nd"(port));
+    __asm__ volatile ("outl %%eax,%%dx" : : "a"(val), "d"(port));
 }
+
+/**********************************************************************/
 
 void panic_assert(char* file, uint32_t line, char* desc) // why char ?
 {
@@ -92,6 +109,8 @@ void panic_assert(char* file, uint32_t line, char* desc) // why char ?
     // Halt by going into an infinite loop.
     for(;;);
 }
+
+/**********************************************************************/
 
 void memshow(void* start, size_t count)
 {
@@ -120,6 +139,8 @@ uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count)
     for( ; count != 0; count--) *temp++ = val;
     return dest;
 }
+
+/**********************************************************************/
 
 size_t strlen(const char* str)
 {
@@ -178,20 +199,7 @@ char* strcat(char* dest, const char* src)
     return dest;
 }
 
-void reboot()
-{
-	int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
-    do //flush the keyboard controller
-    {
-       temp = inportb( 0x64 );
-       if( temp & 1 )
-         inportb( 0x60 );
-    }
-	while ( temp & 2 );
-
-    // Reboot
-    outportb(0x64, 0xFE);
-}
+/**********************************************************************/
 
 /// http://en.wikipedia.org/wiki/Itoa
 void reverse(char* s)
@@ -312,17 +320,25 @@ uint32_t alignDown( uint32_t val, uint32_t alignment )
 	return val & ~(alignment-1);
 }
 
-uint32_t max( uint32_t a, uint32_t b )
+uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
 {
-	return a>=b? a : b;
+    return ((PackedBCDVal >> 4) * 10 + (PackedBCDVal & 0xF));
 }
 
-uint32_t min( uint32_t a, uint32_t b )
+/**********************************************************************/
+
+void reboot()
 {
-	return a<=b? a : b;
+	int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
+    do //flush the keyboard controller
+    {
+       temp = inportb( 0x64 );
+       if( temp & 1 )
+         inportb( 0x60 );
+    }
+	while ( temp & 2 );
+
+    // Reboot
+    outportb(0x64, 0xFE);
 }
 
- uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
- {
-     return ((PackedBCDVal >> 4) * 10 + (PackedBCDVal & 0xF));
- }
