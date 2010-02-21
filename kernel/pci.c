@@ -5,6 +5,7 @@
 
 #include "os.h"
 #include "pci.h"
+#include "paging.h"
 
 pciDev_t pciDev_Array[50];
 
@@ -294,6 +295,23 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 
                         printformat("\nUsed MMIO Base for RTL8139: %X",BaseAddressRTL8139_MMIO);
 
+
+
+                        /// idendity mapping of BaseAddressRTL8139_MMIO
+                        /// TEST
+                        int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO ); /// NEW FUNCTION
+                        if(retVal == true)
+                        {
+                            printformat("\npaging_do_idmapping(...) successful.\n");
+                        }
+                        else
+                        {
+                            printformat("\npaging_do_idmapping(...) error.\n");
+                        }
+                        /// TEST
+
+
+
 						// "power on" the card
 						*((uint8_t*)( BaseAddressRTL8139_MMIO + 0x52 )) = 0x00;
 
@@ -406,4 +424,5 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 

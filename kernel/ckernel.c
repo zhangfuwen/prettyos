@@ -33,26 +33,23 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.121");
-    printformat("\n\n");
+    printformat("PrettyOS [Version 0.0.0.124]\n\n");
     gdt_install();
     idt_install();
     timer_install();
     keyboard_install();
     syscall_install();
+    settextcolor(15,0);
 }
 
 int main()
 {
     init();
-	settextcolor(15,0);
-    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
-               // TODO: we need calculation or idendity-mapping of virtual address from physical address
-               //       to carry out this routine after paging_install()
     pODA->Memory_Size = paging_install();
     printformat( "\n\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
     heap_install();
     tasking_install();
+    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
 
     // direct 1st floppy disk
@@ -230,3 +227,4 @@ int main()
 * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
