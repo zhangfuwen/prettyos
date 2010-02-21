@@ -32,7 +32,12 @@ void keyboard_init()
 {
     while( inportb(0x64)&1 )
         inportb(0x60);
-};
+}
+
+bool testch()
+{
+    return pHeadKQ != pTailKQ;
+}
 
 uint8_t FetchAndAnalyzeScancode()
 {

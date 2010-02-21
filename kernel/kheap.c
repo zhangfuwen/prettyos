@@ -28,6 +28,7 @@ The heap's management data is placed at this placement address, too. Since this
 */
 
 
+// TODO: Multithreading safety
 // TODO: Ensure the heap won't overflow (over 4 GB)
 
 

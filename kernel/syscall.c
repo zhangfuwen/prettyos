@@ -24,6 +24,7 @@ DEFN_SYSCALL0( exit,                      13                           )
 DEFN_SYSCALL1( settaskflag,               14, int32_t                  )
 DEFN_SYSCALL2( beep,                      15, uint32_t, uint32_t       )
 DEFN_SYSCALL0( getUserTaskNumber,         16                           )
+DEFN_SYSCALL0( testch,                    17                           )
 
 static void* syscalls[] =
 {
@@ -43,7 +44,8 @@ static void* syscalls[] =
     &exit,
     &settaskflag,
     &beep,
-    &getUserTaskNumber
+    &getUserTaskNumber,
+    &testch
 };
 
 void syscall_handler(struct regs* r)

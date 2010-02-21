@@ -1,18 +1,18 @@
 #include "os.h"
 #include "my_stdarg.h"
 
-uint8_t  csr_x  = 0;
-uint8_t  csr_y  = 0;
-uint8_t  saved_csr_x  = 0;
-uint8_t  saved_csr_y  = 0;
-uint8_t  attrib = 0x0F;
-uint8_t  saved_attrib = 0x0F;
+static uint8_t  csr_x  = 0;
+static uint8_t  csr_y  = 0;
+static uint8_t  saved_csr_x  = 0;
+static uint8_t  saved_csr_y  = 0;
+static uint8_t  attrib = 0x0F;
+static uint8_t  saved_attrib = 0x0F;
 
-uint16_t* vidmem = (uint16_t*) 0xB8000;
-const uint8_t COLUMNS =  80;
-const uint8_t LINES   =  50;
-const uint8_t SCROLL_LINE = 45; // reserve line for the status bar and ascii-art
-bool scrollflag = true;
+static uint16_t* vidmem = (uint16_t*) 0xB8000;
+static const uint8_t COLUMNS =  80;
+static const uint8_t LINES   =  50;
+static const uint8_t SCROLL_LINE = 45; // reserve line for the status bar and ascii-art
+static bool scrollflag = true;
 
 
 void clear_screen()
@@ -80,30 +80,27 @@ void update_cursor()
 	// cursor LOW port to vga INDEX register
 	outportb(0x3D4, 0x0F);
 	outportb(0x3D5, (uint8_t)(position&0xFF));
-};
+}
 
 static uint8_t transferFromAsciiToCodepage437(uint8_t ascii)
 {
-    uint8_t c;
-
-    if      ( ascii == 0xE4 ) c = 0x84; // ä
-    else if ( ascii == 0xF6 ) c = 0x94; // ö
-    else if ( ascii == 0xFC ) c = 0x81; // ü
-    else if ( ascii == 0xDF ) c = 0xE1; // ß
-    else if ( ascii == 0xA7 ) c = 0x15; // §
-    else if ( ascii == 0xB0 ) c = 0xF8; // °
-    else if ( ascii == 0xC4 ) c = 0x8E; // Ä
-    else if ( ascii == 0xD6 ) c = 0x99; // Ö
-    else if ( ascii == 0xDC ) c = 0x9A; // Ü
-
-    else if ( ascii == 0xB2 ) c = 0xFD; // ²
-    else if ( ascii == 0xB3 ) c = 0x00; // ³ <-- not available
-    else if ( ascii == 0x80 ) c = 0xEE; // € <-- Greek epsilon used
-    else if ( ascii == 0xB5 ) c = 0xE6; // µ
-
-    else    { c = ascii;  } // to be checked for more deviations
-
-    return c;
+    switch ( ascii )
+    {
+        case 0xE4:  return 0x84;  // ä
+        case 0xF6:  return 0x94;  // ö
+        case 0xFC:  return 0x81;  // ü
+        case 0xDF:  return 0xE1;  // ß
+        case 0xA7:  return 0x15;  // §
+        case 0xB0:  return 0xF8;  // °
+        case 0xC4:  return 0x8E;  // Ä
+        case 0xD6:  return 0x99;  // Ö
+        case 0xDC:  return 0x9A;  // Ü
+        case 0xB2:  return 0xFD;  // ²
+        case 0xB3:  return 0x00;  // ³ <-- not available
+        case 0x80:  return 0xEE;  // € <-- Greek epsilon used
+        case 0xB5:  return 0xE6;  // µ
+        default:    return ascii; // to be checked for more deviations
+    }
 }
 
 void putch(char c)

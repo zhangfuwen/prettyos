@@ -405,11 +405,9 @@ void paging_destroy_user_pd( page_directory_t* pd )
 
 void paging_switch( page_directory_t* pd )
 {
-	cli();
     if(!pd)  pd=kernel_pd;
 	//current_pd = pd;
     __asm__ volatile("mov %0, %%cr3" : : "r" (pd->pd_phys_addr));
-	sti();
 }
 
 

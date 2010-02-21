@@ -95,6 +95,13 @@ int getUserTaskNumber()
     return ret;
 }
 
+bool testch()
+{
+    int ret;
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(17) );
+    return ret!=0;
+}
+
 
 /// ///////////////////////////// ///
 ///          user functions       ///

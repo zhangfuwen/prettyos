@@ -135,6 +135,7 @@ extern uint8_t ScanToASCII();
 extern void keyboard_handler(struct regs* r);
 extern int32_t checkKQ_and_print_char();
 extern uint8_t checkKQ_and_return_char();
+extern bool testch();
 
 // gtd.c, irq.c, interrupts.asm
 extern void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);

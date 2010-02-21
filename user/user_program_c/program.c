@@ -64,34 +64,37 @@ int main()
           settextcolor(15,0);
           /////////////////////////////////////////////////
 
-          input = getch();
-
-          if( (input >= 0x20) /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
+          if ( testch() )
           {
+            input = getch();
+
+            if( (input >= 0x20) /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
+            {
               if(i<MAX_CHAR_PER_LINE) //
               {
                   putch(input);
                   entry[i]=input;
                   ++i;
               }
-          }
-          if( input==8 )                      // Backspace
-          {
+            }
+            if( input==8 )                      // Backspace
+            {
               if(i>0)
               {
                   putch('\b');
                   entry[i-1]='\0';
                   --i;
               }
-          }
+            }
 
-          if( input==10 )                     // Line Feed (ENTER-Key)
-          {
+            if( input==10 )                     // Line Feed (ENTER-Key)
+            {
               puts(" <--");
               putch('\n');
               entry[i]='\0';
               ++i;
               break;
+            }
           }
         }//while
 
