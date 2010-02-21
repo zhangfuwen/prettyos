@@ -18,6 +18,8 @@ uint32_t BaseAddressRTL8139;      ///TEST for network card
 // only here for tests --> TODO: own module
 void rtl8139_handler(struct regs* r)
 {
+	/// TODO: ring buffer, we get always the first received data!
+
 	// read bytes 003Eh bis 003Fh, Interrupt Status Register
     uint32_t val = inportw(BaseAddressRTL8139_IO + 0x3E);
     char str[80];
@@ -245,6 +247,17 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 
                                     uint32_t bar = pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0;
 
+                                    /// idendity mapping of bar
+                                    int retVal1 = paging_do_idmapping( bar );
+                                    if(retVal1 == true)
+                                    {
+                                       printformat("\npaging_do_idmapping(...) successful.\n");
+                                    }
+                                    else
+                                    {
+                                        printformat("\npaging_do_idmapping(...) error.\n");
+                                    }
+
                                     EHCI_data = *((volatile uint8_t* )(bar + 0x00));
                                     printformat("\nBAR%d CAPLENGTH:  %x \t\t",i, EHCI_data);
 
@@ -269,7 +282,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 					// informations from the RTL8139 specification,
 					// and the wikis http://wiki.osdev.org/RTL8139, http://lowlevel.brainsware.org/wiki/index.php/RTL8139
 
-					if(	(pciDev_Array[number].deviceID == 0x8139) && (pciDev_Array[number].vendorID == 0x10EC) )
+					if(	(pciDev_Array[number].deviceID == 0x8139) /*&& (pciDev_Array[number].vendorID == 0x10EC)*/ )
 					{
 						for(j=0;j<6;++j) // check network card BARs
                         {
@@ -289,17 +302,10 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                             }
                         }
 
-                        /// important:
-                        /// access to BaseAddressRTL8139_IO + offset: outxxx(BaseAddressRTL8139_IO + offset, data)
-                        ///
-
                         printformat("\nUsed MMIO Base for RTL8139: %X",BaseAddressRTL8139_MMIO);
 
-
-
                         /// idendity mapping of BaseAddressRTL8139_MMIO
-                        /// TEST
-                        int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO ); /// NEW FUNCTION
+                        int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO );
                         if(retVal == true)
                         {
                             printformat("\npaging_do_idmapping(...) successful.\n");
@@ -308,9 +314,6 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                         {
                             printformat("\npaging_do_idmapping(...) error.\n");
                         }
-                        /// TEST
-
-
 
 						// "power on" the card
 						*((uint8_t*)( BaseAddressRTL8139_MMIO + 0x52 )) = 0x00;
@@ -424,5 +427,4 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 
