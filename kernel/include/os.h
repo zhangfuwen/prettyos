@@ -202,6 +202,7 @@ uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
 
 extern void rtl8139_handler(struct regs* r);
+extern void install_RTL8139(uint32_t number);
 
 #endif
 

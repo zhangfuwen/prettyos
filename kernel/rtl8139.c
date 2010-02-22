@@ -85,6 +85,90 @@ void rtl8139_handler(struct regs* r)
     settextcolor(15,0);
 }
 
+void install_RTL8139(uint32_t number)
+{
+    printformat("\nUsed MMIO Base for RTL8139: %X",BaseAddressRTL8139_MMIO);
+
+    /// idendity mapping of BaseAddressRTL8139_MMIO
+    int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO );
+    if(retVal == true)
+    {
+        printformat("\npaging_do_idmapping(...) successful.\n");
+    }
+    else
+    {
+        printformat("\npaging_do_idmapping(...) error.\n");
+    }
+
+    // "power on" the card
+    *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x52 )) = 0x00;
+
+    // do an Software reset on that card
+    /* Einen Reset der Karte durchführen: Bit 4 im Befehlsregister (0x37, 1 Byte) setzen.
+       Wenn ich hier Portnummern von Registern angebe, ist damit der Offset zum ersten Port der Karte gemeint,
+       der durch die PCI-Funktionen ermittelt werden muss. */
+    *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) = 0x10;
+
+    // and wait for the reset of the "reset flag"
+    int k=0;
+    while(true)
+    {
+        if( !( *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x62 )) & 0x8000 ) ) /// wo kommt das her? Basic Mode Control
+        {
+            break;
+        }
+        k++;
+    }
+
+    printformat("\nwaiting successful(%d)!\n", k);
+
+    printformat("mac address: %y-%y-%y-%y-%y-%y\n",
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+0),
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+1),
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+2),
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+4),
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+5) );
+
+    // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
+    /*
+    Aktivieren des Transmitters und des Receivers: Setze Bits 2 und 3 (TE bzw. RE) im Befehlsregister (0x37, 1 Byte).
+    Dies darf angeblich nicht erst später geschehen, da die folgenden Befehle ansonsten ignoriert würden.
+    */
+    *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) = 0x0C; // 1100b
+
+    /*
+    TCR (Transmit Configuration Register, 0x40, 4 Bytes) und RCR (Receive Configuration Register, 0x44, 4 Bytes) setzen.
+    An dieser Stelle nicht weiter kommentierter Vorschlag: TCR = 0x03000700, RCR = 0x0000070a
+    */
+    *((uint32_t*)( BaseAddressRTL8139_MMIO + 0x40 )) = 0x03000700; //TCR
+    *((uint32_t*)( BaseAddressRTL8139_MMIO + 0x44 )) = 0x0000070a; //RCR
+    //*((uint32_t*)( BaseAddressRTL8139_MMIO + 0x44 )) = 0xF;        //RCR pci.c in rev. 108 ??
+    /*0xF means AB+AM+APM+AAP*/
+
+    // first 65536 bytes are our sending buffer and the last bytes are our receiving buffer
+    // set RBSTART to our buffer for the Receive Buffer
+    /*
+    Puffer für den Empfang (evtl auch zum Senden, das kann aber auch später passieren) initialisieren.
+    Wir brauchen bei den vorgeschlagenen Werten 8K + 16 Bytes für den Empfangspuffer und einen ausreichend großen Sendepuffer.
+    Was ausreichend bedeutet, ist dabei davon abhängig, welche Menge wir auf einmal absenden wollen.
+    Anschließend muss die physische(!) Adresse des Empfangspuffers nach RBSTART (0x30, 4 Bytes) geschrieben werden.
+    */
+    *((uint32_t*)( BaseAddressRTL8139_MMIO + 0x30 )) = (uint32_t)network_buffer /* + 8192+16 */ ;
+
+    // Sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
+    // this allows us to get an interrupt if something happens...
+    /*
+    Interruptmaske setzen (0x3C, 2 Bytes). In diesem Register können die Ereignisse ausgewählt werden,
+    die einen IRQ auslösen sollen. Wir nehmen der Einfachkeit halber alle und setzen 0xffff.
+    */
+    *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0xFF; // all interrupts
+    //*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0x5; // only TOK and ROK
+
+    printformat("All fine, install irq handler.\n");
+    irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);
+}
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
