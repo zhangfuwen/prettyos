@@ -211,31 +211,69 @@ char* strchr(char* str, int character)
 
 char* gets(char* s)
 {
-    int i=0;
+    int i=0,flag=0;
     char c;
-
     //settaskflag(0);
-
     do
     {
         c = getch();
-        putch(c);
-        if(c==8)  // Backspace
+        //settextcolor(i,0);///TEST
+        if(c=='\b')  // Backspace
         {
            if(i>0)
            {
+              putch(c);
               s[i-1]='\0';
               --i;
            }
+           else
+           {
+               beep(50,20);
+               if(flag==false)
+               {
+                   putch('\n');
+                   flag=true;
+               }
+           }
         }
-        s[i] = c;
-        i++;
+        else
+        {
+            s[i] = c;
+            putch(c);
+            flag=false;
+            i++;
+        }
     }
     while(c!=10); // Linefeed
     s[i]='\0';
 
+/*
+    settextcolor(15,0);
+    int j;
+    for(j=0;j<15;j++)
+    {
+        if(s[j]=='\b')
+        {
+            puts("backspace");
+        }
+        else if(s[j]=='\0')
+        {
+            puts("EOS");
+            putch('\n');
+            break;
+        }
+        else if(s[j]=='\n')
+        {
+            puts("NL");
+        }
+        else
+        {
+            putch(s[j]);
+        }
+        putch('\n');
+    }
+*/
     //settaskflag(1);
-
     return s;
 }
 
