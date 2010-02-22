@@ -201,6 +201,7 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
 
+extern void rtl8139_handler(struct regs* r);
 
 #endif
 
