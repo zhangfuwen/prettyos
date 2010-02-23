@@ -1,9 +1,7 @@
-#ifndef XYZ_H
-#define XYZ_H
+#ifndef _H_IPTCPSTACK
+#define _H_IPTCPSTACK
 
 #include "os.h"
-
-#define _H_IPTCPSTACK
 
 struct ethernet
 {
