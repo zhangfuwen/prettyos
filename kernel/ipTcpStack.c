@@ -27,6 +27,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
   settextcolor(14,0); printformat("--- TCP-IP stack ---\n"); settextcolor(15,0);
 
   // we dump the Data
+  settextcolor(3,0);
   for(uint32_t c = 0; c < Length; c++ )
   {
     printformat("%y ", ((char*)Data)[c]);
@@ -71,13 +72,13 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     // ASK < any other ideas to test for the type of the protocol? >
 
     // now we check if it is really an ipv4 ARP paket
-    if( ( ( (arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1] ) ==      1 ) &&
-        ( ( (arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1] ) == 0x2048 ) &&
-        ( arp->hardware_addresssize                                              ==      6 ) &&
-        ( arp->protocol_addresssize                                              ==      4 )
+    if( ( ( (arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1] ) ==    1 ) &&
+        ( ( (arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1] ) == 2048 ) &&
+        ( arp->hardware_addresssize                                              ==    6 ) &&
+        ( arp->protocol_addresssize                                              ==    4 )
       )
       {
-        settextcolor(14,0); printformat("ARP Paket:\n"); settextcolor(15,0);
+        settextcolor(14,0); printformat("ARP Paket.\n"); settextcolor(15,0);
 
         // extract the operation
         uint16_t operation = (arp->operation[0] << 8) | arp->operation[1];
