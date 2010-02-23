@@ -12,10 +12,10 @@ struct ethernet
 
 struct arp
 {
-	uint8_t hardware_adresstype[2];
-	uint8_t protocol_adresstype[2];
-	uint8_t hardware_adresssize;
-	uint8_t protocol_adresssize;
+	uint8_t hardware_addresstype[2];
+	uint8_t protocol_addresstype[2];
+	uint8_t hardware_addresssize;
+	uint8_t protocol_addresssize;
 	uint8_t operation[2];
 	uint8_t source_mac[6];
 	uint8_t source_ip[4];
