@@ -183,7 +183,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                     int retVal1 = paging_do_idmapping( bar );
                                     if(retVal1 == true)
                                     {
-                                       printformat("\npaging_do_idmapping(...) successful.\n");
+                                       printformat("\n\n");
                                     }
                                     else
                                     {
@@ -191,16 +191,29 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                     }
 
                                     EHCI_data = *((volatile uint8_t* )(bar + 0x00));
-                                    printformat("\nBAR%d CAPLENGTH:  %x \t\t",i, EHCI_data);
+                                    uint32_t OpRegs = bar + EHCI_data;
+                                    //printformat("\nCAPLENGTH: %y ", EHCI_data); // Capability Register Length
 
                                     EHCI_data = *((volatile uint16_t*)(bar + 0x02));
-                                    printformat(  "BAR%d HCIVERSION: %x \n",i, EHCI_data);
+                                    printformat(  "HCIVERSION: %x ", EHCI_data); // Interface Version Number
 
                                     EHCI_data = *((volatile uint32_t*)(bar + 0x04));
-                                    printformat(  "BAR%d HCSPARAMS:  %X \t",i, EHCI_data);
+                                    printformat(  "HCSPARAMS: %X ", EHCI_data); // Structural Parameters
 
                                     EHCI_data = *((volatile uint32_t*)(bar + 0x08));
-                                    printformat(  "BAR%d HCCPARAMS:  %X \n",i, EHCI_data);
+                                    printformat(  "HCCPARAMS: %X ", EHCI_data); // Capability Parameters
+
+                                    EHCI_data = BYTE2(*((volatile uint32_t*) (bar + 0x08)));
+                                    if(EHCI_data==0) printformat("No ext. capabil. "); // Extended Capabilities Pointer
+
+                                    printformat("\nOpRegs Address: %X ", OpRegs); // Host Controller Operational Registers
+
+
+
+
+
+
+
                                 }
                                 /// TEST EHCI Data End
                             } // if
