@@ -415,10 +415,11 @@ bool paging_do_idmapping( uint32_t phys_addr )
 {
 	// TODO: Ensure that the physical memory is not used otherwise
 	// TODO: The page table entry may point to a different address
-	// TODO: Create solution for addreses != 0xF...
+	// TODO: Create solution for addreses != 0xC...
 
-	// Adress must be a 0xF...-address
-	if ( (phys_addr & 0xF0000000) != 0xF0000000 )
+	// Adress must be a 0xC...-address
+	//if ( (phys_addr & 0xF0000000) != 0xF0000000 )
+	if ( phys_addr < 0xC0000000 )
 		return false;
 
 	const uint32_t pagenr = phys_addr/PAGESIZE;
@@ -477,7 +478,7 @@ void* paging_reserve_phys_addr( uint32_t phys_addr )
 	phys_set_bits( aligned_phys, aligned_phys+PAGESIZE, true );
 
 	// Map the physical address to a reserved virtual address
-	
+
 
 	return NULL;
 }*/

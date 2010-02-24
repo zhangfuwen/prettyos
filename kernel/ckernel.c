@@ -33,7 +33,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.132]\n\n");
+    printformat("PrettyOS [Version 0.0.0.133]\n\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -48,8 +48,8 @@ int main()
     pODA->Memory_Size = paging_install();
     printformat( "\n\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
     heap_install();
-    tasking_install();
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
+    tasking_install();
     sti();
 
     // direct 1st floppy disk
