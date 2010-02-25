@@ -102,6 +102,18 @@ bool testch()
     return ret!=0;
 }
 
+void clear_screen()
+{
+    __asm__ volatile( "int $0x7F" : : "a"(18 ) );
+}
+
+void gotoxy(unsigned char x, unsigned char y)
+{
+    __asm__ volatile( "int $0x7F" : : "a"(19), "b"(x), "c"(y)  );
+}
+
+
+
 
 /// ///////////////////////////// ///
 ///          user functions       ///
