@@ -43,7 +43,7 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 initrd: $(wildcard $(USERDIR)/*)
 	rm -f *.o 
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -I$(USERDIR)/ -o start.o
-	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
+	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -m32 -fno-pic -std=c99 -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -o start.o
 	$(LD) *.o -T $(USERDIR)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
 	rm -f *.o 

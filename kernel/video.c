@@ -174,11 +174,10 @@ void puts(char* text)
 
 void scroll()
 {
-    uint32_t blank, temp;
-    blank = 0x20 | (attrib << 8);
+    uint32_t blank = 0x20 | (attrib << 8);
     if(csr_y >= SCROLL_LINE)
     {
-        temp = csr_y - SCROLL_LINE + 1;
+        uint8_t temp = csr_y - SCROLL_LINE + 1;
         memcpy (vidmem, vidmem + temp * COLUMNS, (SCROLL_LINE - temp) * COLUMNS * 2);
         memsetw (vidmem + (SCROLL_LINE - temp) * COLUMNS, blank, COLUMNS);
         csr_y = SCROLL_LINE - 1;

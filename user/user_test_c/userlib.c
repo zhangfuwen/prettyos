@@ -415,16 +415,13 @@ void showInfo(signed char val)
     static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                "   ;
     static char* line3 = " `-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                               "  ;
 
-    int i;
-    char temp1,temp2,temp3;
-
     if(val==1)
     {
-        temp1 = line1[79];
-        temp2 = line2[79];
-        temp3 = line3[79];
+        char temp1 = line1[79];
+        char temp2 = line2[79];
+        char temp3 = line3[79];
 
-        for(i=79;i>0;--i)
+        for(int i=79;i>0;--i)
         {
             line1[i] = line1[i-1];
             line2[i] = line2[i-1];

@@ -20,17 +20,13 @@
 	return NULL;
 }*/
 
-
-
-
-
 // Memory Map //
 typedef struct
 {
     uint64_t base;   // The region's address
     uint64_t size;   // The region's size
     uint32_t type;   // Is "1" for "free"
-    uint32_t ext;    // Unimportant for us
+    // uint32_t ext;    // Unimportant for us
 } __attribute__((packed)) mem_map_entry_t;
 
 
@@ -51,8 +47,6 @@ static bool memorymap_availability( const mem_map_entry_t* entries, uint64_t beg
     // Return whether the whole area is covered by "free" entries
     return covered >= end;
 }
-
-
 
 
 // Physical Memory //

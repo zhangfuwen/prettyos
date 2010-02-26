@@ -645,15 +645,14 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
 
 void parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs)
 {
-   int32_t i,j;
-   i = (in %DIR_ENTRIES) * 32;
+   int32_t i = (in %DIR_ENTRIES) * 32;
 
-   for(j=0;j<8;j++,i++)
+   for(int32_t j=0;j<8;j++,i++)
    {
        rs->Filename[j] = a[i];
    }
 
-   for(j=0;j<3;j++,i++)
+   for(int32_t j=0;j<3;j++,i++)
    {
        rs->Extension[j] = a[i];
    }
@@ -673,18 +672,16 @@ void parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs)
 
 void print_dir(struct dir_entry* rs)
 {
-    int32_t j;
-
     if(strcmp(rs->Filename,"")!=0)
     {
         printformat("File Name : ");
-        for(j=0;j<8;j++)
+        for(int32_t j=0;j<8;j++)
         {
             printformat("%c",rs->Filename[j]);
         }
         printformat("\n");
         printformat("Extension : ");
-        for(j=0;j<3;j++)
+        for(int32_t j=0;j<3;j++)
         {
             printformat("%c",rs->Extension[j]);
         }
