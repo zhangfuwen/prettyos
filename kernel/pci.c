@@ -62,7 +62,6 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 
  void pciScan()
  {
-    uint32_t i,j;
     settextcolor(15,0);
     uint8_t  bus                = 0; // max. 256
     uint8_t  device             = 0; // max.  32
@@ -74,7 +73,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
     memset((void*) network_buffer, 0x0, 8192+16);
 
     // array of devices, PCIARRAYSIZE for first tests
-    for(i=0;i<PCIARRAYSIZE;++i)
+    for(uint32_t i=0;i<PCIARRAYSIZE;++i)
     {
         pciDev_Array[i].number = i;
     }
@@ -133,7 +132,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                         if( pciDev_Array[number].interfaceID==0x80 ) { printformat("no HCI "); }
                         if( pciDev_Array[number].interfaceID==0xFE ) { printformat("any ");    }
 
-                        for(i=0;i<6;++i) // check USB BARs
+                        for(uint8_t i=0;i<6;++i) // check USB BARs
                         {
                             pciDev_Array[number].bar[i].memoryType = pciDev_Array[number].bar[i].baseAddress & 0x01;
 
@@ -201,7 +200,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 
 					if(	(pciDev_Array[number].deviceID == 0x8139) /*&& (pciDev_Array[number].vendorID == 0x10EC)*/ )
 					{
-						for(j=0;j<6;++j) // check network card BARs
+						for(uint8_t j=0;j<6;++j) // check network card BARs
                         {
                             pciDev_Array[number].bar[j].memoryType = pciDev_Array[number].bar[j].baseAddress & 0x01;
 
