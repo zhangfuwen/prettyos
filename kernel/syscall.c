@@ -25,7 +25,7 @@ DEFN_SYSCALL1( settaskflag,               14, int32_t                  )
 DEFN_SYSCALL2( beep,                      15, uint32_t, uint32_t       )
 DEFN_SYSCALL0( getUserTaskNumber,         16                           )
 DEFN_SYSCALL0( testch,                    17                           )
-DEFN_SYSCALL0( clear_screen,              18                           )
+DEFN_SYSCALL0( clear_userscreen,          18                           )
 DEFN_SYSCALL2( set_cursor,                19, uint8_t, uint8_t         )
 
 static void* syscalls[] =
@@ -48,7 +48,7 @@ static void* syscalls[] =
     &beep,
     &getUserTaskNumber,
     &testch,
-    &clear_screen,
+    &clear_userscreen,
     &set_cursor
 };
 

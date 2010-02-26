@@ -100,6 +100,7 @@ typedef struct regs registers_t;
 
 // video.c
 extern void clear_screen();
+extern void clear_userscreen();
 extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
 extern void putch(char c);
 extern void puts(char* text);

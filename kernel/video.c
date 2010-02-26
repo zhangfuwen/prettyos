@@ -21,6 +21,12 @@ void clear_screen()
     csr_x = 0; csr_y = 0; update_cursor();
 }
 
+void clear_userscreen()
+{
+    memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * (SCROLL_LINE+1));
+    csr_x = 0; csr_y = 0; update_cursor();
+}
+
 void settextcolor(uint8_t forecolor, uint8_t backcolor)
 {
     // Top 4 bytes: background, bottom 4 bytes: foreground color
