@@ -176,8 +176,7 @@ void flpydsk_write_dor( uint8_t val )
 void flpydsk_send_command (uint8_t cmd)
 {
     // wait until data register is ready. We send commands to the data register
-	int32_t i;
-	for(i=0; i<500; ++i)
+	for(int32_t i=0; i<500; ++i)
 		if( flpydsk_read_status() & FLPYDSK_MSR_MASK_DATAREG )
 			return outportb(FLPYDSK_FIFO, cmd);
 }
@@ -186,8 +185,7 @@ void flpydsk_send_command (uint8_t cmd)
 uint8_t flpydsk_read_data()
 {
 	// same as above function but returns data register for reading
-	int32_t i;
-	for(i=0; i<500; ++i)
+	for(int32_t i=0; i<500; ++i)
 		if( flpydsk_read_status() & FLPYDSK_MSR_MASK_DATAREG )
 			return inportb(FLPYDSK_FIFO);
 	return 0;
@@ -312,8 +310,7 @@ void flpydsk_reset()
 	flpydsk_wait_irq();
 
 	// send CHECK_INT/SENSE INTERRUPT command to all drives
-	int32_t i;
-	for(i=0; i<4; ++i)
+	for(int32_t i=0; i<4; ++i)
 	{
 		flpydsk_check_int(&st0,&cyl);
 	}
@@ -360,13 +357,13 @@ uint8_t flpydsk_get_working_drive(){ return _CurrentDrive; }
 int32_t flpydsk_calibrate(uint32_t drive)
 {
 	int32_t  retVal;
-	uint32_t st0, cyl, i;
+	uint32_t st0, cyl;
 	if (drive >= 4)
 	{
 	    return -2;
 	}
 
-	for(i=0; i<10; ++i)
+	for(uint8_t i=0; i<10; ++i)
 	{
 		// send command
 		flpydsk_send_command( FDC_CMD_CALIBRATE );
@@ -399,7 +396,7 @@ int32_t flpydsk_calibrate(uint32_t drive)
 int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
 {
 	int32_t  retVal;
-	uint32_t st0, cyl0, i;
+	uint32_t st0, cyl0;
 	if (_CurrentDrive >= 4)
 	{
 	    return -2;
@@ -409,7 +406,7 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
 	flpydsk_calibrate(_CurrentDrive);  // calibrate the disk ==> cyl. 0
 	/// TEST
 
-	for(i=0; i<10; ++i)
+	for(uint8_t i=0; i<10; ++i)
 	{
 		// send the command
         flpydsk_send_command (FDC_CMD_SEEK);
@@ -478,8 +475,8 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     flpydsk_send_command( 0xFF );
     flpydsk_wait_irq();
     // printformat("ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
-    int32_t j,retVal;
-    for(j=0; j<7; ++j)
+    int32_t retVal;
+    for(uint8_t j=0; j<7; ++j)
     {
         int32_t val = flpydsk_read_data(); // read status info: ST0 ST1 ST2 C H S Size(2: 512 Byte)
         // printformat("%d  ",val);

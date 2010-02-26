@@ -102,9 +102,9 @@ bool testch()
     return ret!=0;
 }
 
-void clear_screen()
+void clearScreen(unsigned char backgroundColor)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(18 ) );
+    __asm__ volatile( "int $0x7F" : : "a"(18 ), "b"(backgroundColor) );
 }
 
 void gotoxy(unsigned char x, unsigned char y)

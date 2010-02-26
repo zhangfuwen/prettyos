@@ -81,7 +81,7 @@ DECL_SYSCALL1( settaskflag, int32_t                       )
 DECL_SYSCALL2( beep, uint32_t, uint32_t                   )
 DECL_SYSCALL0( getUserTaskNumber                          )
 DECL_SYSCALL0( testch                                     )
-DECL_SYSCALL0( clear_screen                               )
+DECL_SYSCALL1( clear_userscreen, uint8_t                  )
 DECL_SYSCALL2( set_cursor, uint8_t, uint8_t               )
 /***********************************************************/
 

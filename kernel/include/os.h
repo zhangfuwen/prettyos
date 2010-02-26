@@ -100,7 +100,7 @@ typedef struct regs registers_t;
 
 // video.c
 extern void clear_screen();
-extern void clear_userscreen();
+extern void clear_userscreen(uint8_t backcolor);
 extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
 extern void putch(char c);
 extern void puts(char* text);
@@ -202,8 +202,12 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
 
+// network
 extern void rtl8139_handler(struct regs* r);
 extern void install_RTL8139(uint32_t number);
+
+// USB 2.0 EHCI
+extern void analyzeEHCI(uint32_t bar);
 
 #endif
 

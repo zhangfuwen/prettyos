@@ -29,7 +29,7 @@ void settaskflag(int i);
 void beep(unsigned int frequency, unsigned int duration);
 int getUserTaskNumber();
 
-void clear_screen();
+void clearScreen(unsigned char backgroundColor);
 void gotoxy(unsigned char x, unsigned char y);
 
 // user functions

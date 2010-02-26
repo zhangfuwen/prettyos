@@ -9,12 +9,9 @@
 
 pciDev_t pciDev_Array[50];
 
-uint8_t network_buffer[8192+16];  ///TEST for network card
-uint32_t BaseAddressRTL8139_IO;   ///TEST for network card
-uint32_t BaseAddressRTL8139_MMIO; ///TEST for network card
-uint32_t BaseAddressRTL8139;      ///TEST for network card
-
-
+uint8_t network_buffer[8192+16];  // TEST for network card
+uint32_t BaseAddressRTL8139_IO;
+uint32_t BaseAddressRTL8139_MMIO;
 
 uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content )
 {
@@ -72,7 +69,6 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
     uint8_t  func               = 0; // max.   8
 
     uint32_t pciBar             = 0; // helper variable for memory size
-    uint32_t EHCI_data          = 0; // helper variable for EHCI_data
 
     //clear receiving buffer
     memset((void*) network_buffer, 0x0, 8192+16);
@@ -189,31 +185,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                     {
                                         printformat("\npaging_do_idmapping(...) error.\n");
                                     }
-
-                                    EHCI_data = *((volatile uint8_t* )(bar + 0x00));
-                                    uint32_t OpRegs = bar + EHCI_data;
-                                    //printformat("\nCAPLENGTH: %y ", EHCI_data); // Capability Register Length
-
-                                    EHCI_data = *((volatile uint16_t*)(bar + 0x02));
-                                    printformat(  "HCIVERSION: %x ", EHCI_data); // Interface Version Number
-
-                                    EHCI_data = *((volatile uint32_t*)(bar + 0x04));
-                                    printformat(  "HCSPARAMS: %X ", EHCI_data); // Structural Parameters
-
-                                    EHCI_data = *((volatile uint32_t*)(bar + 0x08));
-                                    printformat(  "HCCPARAMS: %X ", EHCI_data); // Capability Parameters
-
-                                    EHCI_data = BYTE2(*((volatile uint32_t*) (bar + 0x08)));
-                                    if(EHCI_data==0) printformat("No ext. capabil. "); // Extended Capabilities Pointer
-
-                                    printformat("\nOpRegs Address: %X ", OpRegs); // Host Controller Operational Registers
-
-
-
-
-
-
-
+                                    analyzeEHCI(bar);
                                 }
                                 /// TEST EHCI Data End
                             } // if

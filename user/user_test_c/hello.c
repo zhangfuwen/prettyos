@@ -113,10 +113,12 @@ void Zug(int Player) {
 	gewinnen();
 }
 
-int main() {
+int main()
+{
+    clearScreen(1);
     settextcolor(11,0);
     puts("================================================================================\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.3                            \n");
+    puts("                            Mr.X TicTacToe 3x3  v0.31                           \n");
     puts("--------------------------------------------------------------------------------\n");
 
 	Zug(X);

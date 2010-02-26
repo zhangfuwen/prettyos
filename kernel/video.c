@@ -18,13 +18,18 @@ static bool scrollflag = true;
 void clear_screen()
 {
     memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * LINES);
-    csr_x = 0; csr_y = 0; update_cursor();
+    csr_x = 0;
+    csr_y = 0;
+    update_cursor();
 }
 
-void clear_userscreen()
+void clear_userscreen(uint8_t backcolor)
 {
+    attrib = (backcolor << 4) | 0x0F;
     memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * (SCROLL_LINE+1));
-    csr_x = 0; csr_y = 0; update_cursor();
+    csr_x = 0;
+    csr_y = 0;
+    update_cursor();
 }
 
 void settextcolor(uint8_t forecolor, uint8_t backcolor)
