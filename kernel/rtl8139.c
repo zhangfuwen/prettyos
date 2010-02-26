@@ -10,13 +10,11 @@
 
 extern pciDev_t pciDev_Array[50];
 
-extern uint8_t network_buffer[8192+16];  ///TEST for network card
-extern uint32_t BaseAddressRTL8139_IO;   ///TEST for network card
-extern uint32_t BaseAddressRTL8139_MMIO; ///TEST for network card
-extern uint32_t BaseAddressRTL8139;      ///TEST for network card
+extern uint8_t network_buffer[8192+16]; /// OK?
+extern uint32_t BaseAddressRTL8139_IO;
+extern uint32_t BaseAddressRTL8139_MMIO;
 
-/// this is the handler for an IRQ interrupt of our Network Card
-// only here for tests --> TODO: own module
+// handler for IRQ interrupt of Network Card
 /*
 void rtl8139_handler(struct regs* r)
 {
@@ -119,7 +117,7 @@ void rtl8139_handler(struct regs* r)
 	strcat(str,"   Receiving Buffer content:\n");
 	printformat(str);
 
-    int32_t length, ethernetType, i;
+    int32_t length, ethernetType;
     length = network_buffer[3]*0x100 + network_buffer[2]; // Little Endian
     if (length>300) length = 300;
     ethernetType = network_buffer[16]*0x100 + network_buffer[17]; // Big Endian
@@ -128,7 +126,7 @@ void rtl8139_handler(struct regs* r)
     settextcolor(13,0);
     printformat("Flags: ");
     settextcolor(3,0);
-    for(i=0;i<2;i++) {printformat("%y ",network_buffer[i]);}
+    for(int8_t i=0;i<2;i++) {printformat("%y ",network_buffer[i]);}
 
 	// settextcolor(13,0); printformat("\tLength: "); settextcolor(3,0);
     // for(i=2;i<4;i++) {printformat("%y ",network_buffer[i]);}
@@ -138,10 +136,10 @@ void rtl8139_handler(struct regs* r)
 	printformat("\tLength: ");	settextcolor(3,0);	printformat("%d", paket_length);
 
 	settextcolor(13,0); printformat("\nMAC Receiver: "); settextcolor(3,0);
-    for(i=4;i<10;i++) {printformat("%y ",network_buffer[i]);}
+    for(int8_t i=4;i<10;i++) {printformat("%y ",network_buffer[i]);}
 
     settextcolor(13,0); printformat("MAC Transmitter: "); settextcolor(3,0);
-    for(i=10;i<16;i++) {printformat("%y ",network_buffer[i]);}
+    for(int8_t i=10;i<16;i++) {printformat("%y ",network_buffer[i]);}
 
     settextcolor(13,0);
     printformat("\nEthernet: ");
@@ -153,10 +151,10 @@ void rtl8139_handler(struct regs* r)
     if(ethernetType<=0x05DC){  printformat("Length: "); }
     else                    {  printformat("Type: ");   }
     settextcolor(3,0);
-    for(i=16;i<18;i++) {printformat("%y ",network_buffer[i]);}
+    for(int8_t i=16;i<18;i++) {printformat("%y ",network_buffer[i]);}
 
     printformat("\n");
-    for(i=18;i<=length;i++) {printformat("%y ",network_buffer[i]);}
+    for(int8_t i=18;i<=length;i++) {printformat("%y ",network_buffer[i]);}
     printformat("\n--------------------------------------------------------------------------------\n");
 
     settextcolor(15,0);

@@ -131,8 +131,7 @@ char toUpper(char c)
 
 char* toupper( char* s )
 {
-    int i;
-    for(i=0;i<strlen(s);i++)
+    for(int i=0;i<strlen(s);i++)
     {
         s[i]=toUpper(s[i]);
     }
@@ -141,8 +140,7 @@ char* toupper( char* s )
 
 char* tolower( char* s )
 {
-    int i;
-    for(i=0;i<strlen(s);i++)
+    for(int i=0;i<strlen(s);i++)
     {
         s[i]=toLower(s[i]);
     }
@@ -153,7 +151,9 @@ unsigned int strlen(const char* str)
 {
     unsigned int retval;
     for(retval = 0; *str != '\0'; ++str)
+    {
         ++retval;
+    }
     return retval;
 }
 
@@ -292,10 +292,9 @@ char* gets(char* s)
 /// http://en.wikipedia.org/wiki/Itoa
 void reverse(char* s)
 {
-    int i, j;
     char c;
 
-    for(i=0, j = strlen(s)-1; i<j; i++, j--)
+    for(int i=0,j=strlen(s)-1; i<j; i++, j--)
     {
         c = s[i];
         s[i] = s[j];
@@ -328,8 +327,8 @@ void itoa(int n, char* s)
 
 int atoi(char* s)
 {
-    int num=0,flag=0, i;
-    for(i=0;i<=strlen(s);i++)
+    int num=0,flag=0;
+    for(int i=0;i<=strlen(s);i++)
     {
         if(s[i] >= '0' && s[i] <= '9')
         {
@@ -355,8 +354,7 @@ void float2string(float value, int decimal, char* valuestring) // float --> stri
 {
    int neg = 0;
    char tempstr[20];
-   int i = 0;
-   int j = 0;
+   int i=0;
    int c;
    int val1, val2;
    char* tempstring;
@@ -366,7 +364,7 @@ void float2string(float value, int decimal, char* valuestring) // float --> stri
    {
      {neg = 1; value = -value;}
    }
-   for (j=0; j < decimal; ++j)
+   for (int j=0; j < decimal; ++j)
    {
      {value = value * 10;}
    }

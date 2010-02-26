@@ -204,10 +204,9 @@ char* strcat(char* dest, const char* src)
 /// http://en.wikipedia.org/wiki/Itoa
 void reverse(char* s)
 {
-    int32_t i, j;
     char c;
 
-    for(i=0, j = strlen(s)-1; i<j; i++, j--)
+    for(int32_t i=0, j=strlen(s)-1; i<j; i++, j--)
     {
         c = s[i];
         s[i] = s[j];
