@@ -26,7 +26,7 @@ typedef struct
     uint64_t base;   // The region's address
     uint64_t size;   // The region's size
     uint32_t type;   // Is "1" for "free"
-    // uint32_t ext;    // Unimportant for us
+    uint32_t ext;    // Unimportant for us, but necessary! Do not take out!
 } __attribute__((packed)) mem_map_entry_t;
 
 
