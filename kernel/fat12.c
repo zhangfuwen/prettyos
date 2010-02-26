@@ -43,7 +43,7 @@ int32_t initCache()
 
 int32_t flpydsk_load(char* name, char* ext)
 {
-    int32_t i, retVal;
+    int32_t retVal;
     struct file f;
     uint32_t firstCluster = 0;
 
@@ -76,7 +76,7 @@ int32_t flpydsk_load(char* name, char* ext)
     ///TODO: read only entries which are necessary for file_ia
     ///      perhaps reading FAT entry and data sector it can be combined
 
-    for(i=0;i<FATMAXINDEX;i++)
+    for(uint32_t i=0;i<FATMAXINDEX;i++)
     {
         read_fat(&fat_entry[i], i, FAT1_SEC, track0);
     }
@@ -84,11 +84,11 @@ int32_t flpydsk_load(char* name, char* ext)
     ///
 
     printformat("\nFile content (start of first 5 clusters): ");
-    printformat("\n1st sector:\n"); for(i=   0;i<  20;i++) {printformat("%y ",file[i]);}
-    printformat("\n2nd sector:\n"); for(i= 512;i< 532;i++) {printformat("%y ",file[i]);}
-    printformat("\n3rd sector:\n"); for(i=1024;i<1044;i++) {printformat("%y ",file[i]);}
-    printformat("\n4th sector:\n"); for(i=1536;i<1556;i++) {printformat("%y ",file[i]);}
-    printformat("\n5th sector:\n"); for(i=2048;i<2068;i++) {printformat("%y ",file[i]);}
+    printformat("\n1st sector:\n"); for(uint16_t i=   0;i<  20;i++) {printformat("%y ",file[i]);}
+    printformat("\n2nd sector:\n"); for(uint16_t i= 512;i< 532;i++) {printformat("%y ",file[i]);}
+    printformat("\n3rd sector:\n"); for(uint16_t i=1024;i<1044;i++) {printformat("%y ",file[i]);}
+    printformat("\n4th sector:\n"); for(uint16_t i=1536;i<1556;i++) {printformat("%y ",file[i]);}
+    printformat("\n5th sector:\n"); for(uint16_t i=2048;i<2068;i++) {printformat("%y ",file[i]);}
     printformat("\n\n");
 
     if(retVal==0)
@@ -171,8 +171,8 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option)
     //flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
     flpydsk_control_motor(true);
 
-    int32_t n, retVal;
-    for(n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++) // maximum ten times should be enough to overwrite the AAAA...
+    int32_t retVal;
+    for(uint8_t n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++)
     {
         retVal = flpydsk_read_sector(val,0);
         if(retVal!=0)
@@ -335,8 +335,7 @@ int32_t flpydsk_read_directory() /// TODO: check whether Floppy ---> DMA really 
 	}
 	printformat("<Floppy Disc Directory>\n");
 
-	uint32_t i;
-	for(i=0;i<224;++i)       // 224 Entries * 32 Byte
+	for(uint8_t i=0;i<224;++i)       // 224 Entries * 32 Byte
 	{
         if(
 			(( *((uint8_t*)(DMA_BUFFER + i*32)) )      != 0x00 ) && /* free from here on           */
@@ -408,7 +407,7 @@ int32_t flpydsk_read_directory() /// TODO: check whether Floppy ---> DMA really 
 
 int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
 {
-    int32_t i,j,k;
+    int32_t i;
     uint8_t a[512];
 
     int32_t retVal = flpydsk_read_ia(BOOT_SEC,a,SECTOR);
@@ -418,13 +417,13 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
     }
 
     i=0;
-    for(j=0;j<3;j++)
+    for(uint8_t j=0;j<3;j++)
     {
         a[j]=bs->jumpBoot[j];
     }
 
     i+= 3;
-    for(j=0;j<8;j++,i++)
+    for(uint8_t j=0;j<8;j++,i++)
     {
         a[i]= bs->SysName[j];
     }
@@ -485,12 +484,12 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
     a[i+3] = BYTE4(bs->VolumeSerial);
     i+=4;
 
-    for(j=0;j<11;j++,i++)
+    for(uint8_t j=0;j<11;j++,i++)
     {
         a[i] = bs->VolumeLabel[j];
     }
 
-    for(j=0;j<8;j++,i++)
+    for(uint8_t j=0;j<8;j++,i++)
     {
         a[i] = bs->Reserved2[j];
     }
@@ -502,7 +501,7 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs)
     // flpydsk_control_motor(true); printformat("write_boot_sector.motor_on\n");
     // return flpydsk_write_sector_ia( BOOT_SEC, a );
     /// prepare sector 0 of track 0
-    for(k=0;k<511;k++)
+    for(uint16_t k=0;k<511;k++)
     {
         track0[k] = a[k];
     }
@@ -515,7 +514,7 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
 {
     struct boot_sector b;
     uint8_t a[512];
-    int32_t i,j;
+    uint8_t i;
 
     // int32_t dt, tm; // for VolumeSerial
 
@@ -530,7 +529,7 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
         }
     }
 
-    for(j=i;j<11;j++)
+    for(uint8_t j=i;j<11;j++)
     {
         vlab[j] = ' ';
     }
@@ -573,9 +572,9 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
     b.VolumeSerial = 0x12345678;
     /* b.VolumeSerial = tm << 16 + dt; */
 
-    for(i=0;i<11;i++)
+    for(uint8_t j=0;j<11;j++)
     {
-        b.VolumeLabel[i] = vlab[i];
+        b.VolumeLabel[j] = vlab[j];
     }
     b.Reserved2[0] = 'F';
     b.Reserved2[1] = 'A';
@@ -591,32 +590,32 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
     flpydsk_prepare_boot_sector(&b);
 
     /// prepare FATs
-    for(i=512;i<9216;i++)
+    for(uint16_t j=512;j<9216;j++)
     {
-        track0[i] = 0;
+        track0[j] = 0;
     }
-    for(i=0;i<9216;i++)
+    for(uint16_t j=0;j<9216;j++)
     {
-        track1[i] = 0;
+        track1[j] = 0;
     }
 
     a[0]=0xF0; a[1]=0xFF; a[2]=0xFF;
-    for(i=0;i<3;i++)
+    for(uint8_t j=0;j<3;j++)
     {
-        track0[FAT1_SEC*512+i]=a[i]; // FAT1 starts at 0x200  (sector  1)
-        track0[FAT2_SEC*512+i]=a[i]; // FAT2 starts at 0x1400 (sector 10)
+        track0[FAT1_SEC*512+j]=a[j]; // FAT1 starts at 0x200  (sector  1)
+        track0[FAT2_SEC*512+j]=a[j]; // FAT2 starts at 0x1400 (sector 10)
     }
 
     /// prepare first root directory entry (volume label)
-    for(i=0;i<11;i++)
+    for(uint8_t j=0;j<11;j++)
     {
-        track1[512+i] = vlab[i];
+        track1[512+j] = vlab[j];
     }
     track1[512+11] = ATTR_VOLUME_ID | ATTR_ARCHIVE;
 
-    for(i=7680;i<9216;i++)
+    for(uint16_t j=7680;j<9216;j++)
     {
-        track1[i] = 0xF6; // format ID of MS Windows
+        track1[j] = 0xF6; // format ID of MS Windows
     }
 
     /// write track 0 & track 1
@@ -628,9 +627,9 @@ int32_t flpydsk_format(char* vlab) // VolumeLabel
     ///TEST
     printformat("Content of Disc:\n");
     struct dir_entry entry;
-    for(i=0;i<224;i++)
+    for(uint8_t j=0;j<224;j++)
     {
-        read_dir(&entry, i, 19, false);
+        read_dir(&entry, j, 19, false);
         if(strcmp((&entry)->Filename,"")==0)
         {
             break;
@@ -725,11 +724,10 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
 uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
 {
    struct dir_entry entry;
-   int32_t i,j;
    char buf1[10];
    char buf2[5];
 
-   for(i=0;i<224;i++)
+   for(uint8_t i=0;i<224;i++)
    {
        read_dir(&entry, i, 19, false);
 
@@ -740,12 +738,12 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
                    (&entry)->Extension[0],(&entry)->Extension[1],(&entry)->Extension[2]);
        settextcolor(2,0);
 
-       for(j=0;j<3;j++)
+       for(uint8_t j=0;j<3;j++)
        {
            buf1[j] = (&entry)->Filename[j];
            buf2[j] = (&entry)->Extension[j];
        }
-       for(j=3;j<8;j++)
+       for(uint8_t j=3;j<8;j++)
        {
            buf1[j] = (&entry)->Filename[j];
        }
