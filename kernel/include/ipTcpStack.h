@@ -1,5 +1,5 @@
-#ifndef _H_IPTCPSTACK
-#define _H_IPTCPSTACK
+#ifndef IPTCPSTACK_H
+#define IPTCPSTACK_H
 
 #include "os.h"
 

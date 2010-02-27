@@ -208,6 +208,7 @@ extern void install_RTL8139(uint32_t number);
 
 // USB 2.0 EHCI
 extern void analyzeEHCI(uint32_t bar);
+extern void initEHCIHostController();
 
 #endif
 

@@ -185,6 +185,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                         printformat("\npaging_do_idmapping(...) error.\n");
                                     }
                                     analyzeEHCI(bar);
+                                    // initEHCIHostController();
                                 }
                                 /// TEST EHCI Data End
                             } // if
