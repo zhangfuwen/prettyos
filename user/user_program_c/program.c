@@ -11,7 +11,7 @@ static void clearEntry(char* entry, int* j)
 
 int main()
 {
-    int i, n;
+    int j, n;
     char entry[MAX_CHAR_PER_LINE+10];
     int retVal;
     char name[9];
@@ -44,7 +44,7 @@ int main()
       if(numTasks<=0) // no user tasks are running
       {
         settextcolor(15,0);
-        i=0;
+        j=0;
         clearEntry(entry,&n);
         puts("$> ");
         start = getCurrentMilliseconds();
@@ -70,20 +70,20 @@ int main()
 
             if( (input >= 0x20) /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
             {
-              if(i<MAX_CHAR_PER_LINE) //
+              if(j<MAX_CHAR_PER_LINE) //
               {
                   putch(input);
-                  entry[i]=input;
-                  ++i;
+                  entry[j]=input;
+                  ++j;
               }
             }
             if( input==8 )                      // Backspace
             {
-              if(i>0)
+              if(j>0)
               {
                   putch('\b');
-                  entry[i-1]='\0';
-                  --i;
+                  entry[j-1]='\0';
+                  --j;
               }
             }
 
@@ -91,8 +91,8 @@ int main()
             {
               puts(" <--");
               putch('\n');
-              entry[i]='\0';
-              ++i;
+              entry[j]='\0';
+              ++j;
               break;
             }
           }
@@ -150,7 +150,7 @@ int main()
               name[8]='\0';
               ext[3] ='\0';
 
-              for(i=0;i<8;i++)
+              for(int i=0;i<8;i++)
               {
                   if(entry[i]=='.')
                   {
@@ -158,7 +158,7 @@ int main()
                   }
               }
 
-              for(i=0;i<8;i++)
+              for(int i=0; i<8; i++)
               {
                   if( (i<posPoint) && (isalnum(entry[i])) )
                   {
@@ -170,8 +170,7 @@ int main()
                   }
               }
 
-              //for(i=posPoint+1;i<12;i++)
-              for(i=posPoint+1;i<posPoint+4;i++)///TEST
+              for(int i=posPoint+1; i<posPoint+4; i++)
               {
                   ext[i-posPoint-1]=entry[i];
               }

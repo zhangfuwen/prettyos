@@ -189,17 +189,21 @@ void install_RTL8139(uint32_t number)
     *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) = 0x10;
 
     // and wait for the reset of the "reset flag"
-    int k=0;
+    uint32_t k=0;
     while(true)
     {
-        if( !( *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x62 )) & 0x8000 ) ) /// wo kommt das her? Basic Mode Control
+        if( !( *((volatile uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) & 0x10 ) ) //
         {
+            printformat("\nwaiting successful(%d)!\n", k);
             break;
         }
         k++;
+        if(k>100)
+        {
+            printformat("\nWaiting not successful. Finished by timeout.\n");
+            break;
+        }
     }
-
-    printformat("\nwaiting successful(%d)!\n", k);
 
     printformat("mac address: %y-%y-%y-%y-%y-%y\n",
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+0),
