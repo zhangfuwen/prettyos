@@ -154,7 +154,7 @@ void rtl8139_handler(struct regs* r)
     for(int8_t i=16;i<18;i++) {printformat("%y ",network_buffer[i]);}
 
     printformat("\n");
-    for(int8_t i=18;i<=length;i++) {printformat("%y ",network_buffer[i]);}
+    for(int32_t i=18;i<=length;i++) {printformat("%y ",network_buffer[i]);}
     printformat("\n--------------------------------------------------------------------------------\n");
 
     settextcolor(15,0);
