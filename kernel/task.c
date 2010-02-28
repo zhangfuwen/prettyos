@@ -12,11 +12,14 @@ volatile task_t* ready_queue;
 extern tss_entry_t tss;
 extern void irq_tail();
 extern uint32_t read_eip();
+extern page_directory_t* kernel_pd;
 
 uint32_t next_pid = 1; // The next available process ID.
-int32_t getpid() { return current_task->id; }
 
-static page_directory_t* const KERNEL_DIRECTORY = NULL;
+int32_t getpid()
+{
+    return current_task->id;
+}
 
 void settaskflag(int32_t i)
 {
@@ -44,7 +47,7 @@ void tasking_install()
     current_task->id = next_pid++;
     current_task->esp = current_task->ebp = 0;
     current_task->eip = 0;
-    current_task->page_directory = KERNEL_DIRECTORY;
+    current_task->page_directory = kernel_pd;
     current_task->next = 0;
 
     ///
