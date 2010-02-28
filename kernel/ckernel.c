@@ -33,7 +33,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.155]\n\n");
+    printformat("PrettyOS [Version 0.0.0.156]\n\n");
     gdt_install();
     idt_install();
     timer_install();

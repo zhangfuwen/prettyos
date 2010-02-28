@@ -36,44 +36,40 @@ void analyzeEHCI(uint32_t bar)
 
 void initEHCIHostController()
 {
-    printformat("\n");
-    printformat("\nCTRLDSSEGMENT:    %X", *((volatile uint32_t*)(opregs + 0x10)) );
-    printformat("\nUSBINTR:          %X", *((volatile uint32_t*)(opregs + 0x08)) );
-    printformat("\nPERIODICLISTBASE: %X", *((volatile uint32_t*)(opregs + 0x14)) );
-    printformat("\nUSBCMD:           %X", *((volatile uint32_t*)(opregs + 0x00)) );
-    printformat("\nCONFIGFLAG:       %X", *((volatile uint32_t*)(opregs + 0x40)) );
-
     // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
-    pOpRegs->CTRLDSSEGMENT = *((volatile uint32_t*)(opregs + 0x10));
+    pOpRegs->CTRLDSSEGMENT = *((volatile uint32_t*)(opregs + 0x10)); // default
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
+    // pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
+    pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x0; /// TEST
 
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
-
     uint32_t virtualMemoryPERIODICLISTBASE = (uint32_t) malloc(0x1000,PAGESIZE);
     uint32_t physicalMemoryPERIODICLISTBASE = paging_get_phys_addr( kernel_pd, (void*)virtualMemoryPERIODICLISTBASE );
     pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = physicalMemoryPERIODICLISTBASE;
 
     // If there are no work items in the periodic schedule,
     // all elements of the Periodic Frame List should have their T-Bits set to 1.
-
     /// TODO: set T-Bits
 
-    // Write the USBCMD register to set the desired interrupt threshold,
-    // frame list size (if applicable) and turn the host controller ON via setting the Run/Stop bit.
-    pOpRegs->USBCMD = *((volatile uint32_t*)(opregs + 0x08));
-    pOpRegs->USBCMD &= (0x8<<16);  //Bits 23-16: 08h, means 8 micro-frames (default, equates to 1 ms)
+    // Write the USBCMD register to set the desired interrupt threshold
+    // and turn the host controller ON via setting the Run/Stop bit.
+    // Software must not write a one to this field unless the host controller is in the Halted state
+    // (i.e. HCHalted in the USBSTS register is a one). Doing so will yield undefined results.
+    pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<12)   ); // set Bit 12
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= (0x8<<16) ); // Bits 23-16: 08h, means 8 micro-frames
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |=  0x1      ); // set Start-Stop-Bit                                                           |=  0x1 );    // Run-Stop-Bit
 
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG    = *((volatile uint32_t*)(opregs + 0x40)) = 1;
 
     printformat("\n\nAfter Init of EHCI:");
-    printformat("\nCTRLDSSEGMENT:    %X", *((volatile uint32_t*)(opregs + 0x10)) );
-    printformat("\nUSBINTR:          %X", *((volatile uint32_t*)(opregs + 0x08)) );
-    printformat("\nPERIODICLISTBASE: %X", *((volatile uint32_t*)(opregs + 0x14)) );
-    printformat("\nUSBCMD:           %X", *((volatile uint32_t*)(opregs + 0x00)) );
-    printformat("\nCONFIGFLAG:       %X", *((volatile uint32_t*)(opregs + 0x40)) );
+    printformat("\nCTRLDSSEGMENT:              %X", *((volatile uint32_t*)(opregs + 0x10)) );
+    printformat("\nUSBINTR:                    %X", *((volatile uint32_t*)(opregs + 0x08)) );
+    printformat("\nPERIODICLISTBASE phys addr: %X", *((volatile uint32_t*)(opregs + 0x14)) );
+    printformat("  virt addr: %X", virtualMemoryPERIODICLISTBASE);
+    printformat("\nUSBCMD:                     %X", *((volatile uint32_t*)(opregs + 0x00)) );
+    printformat("\nCONFIGFLAG:                 %X", *((volatile uint32_t*)(opregs + 0x40)) );
 }
 
 /*

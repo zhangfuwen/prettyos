@@ -25,6 +25,12 @@ uint32_t getCurrentMilliseconds()
 
 void timer_handler(struct regs* r)
 {
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+        printformat(".");
+    settextcolor(15,0);
+    #endif
+
     ++timer_ticks;
     if(eticks>0)
         --eticks;
