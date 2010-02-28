@@ -255,34 +255,34 @@ void task_log(task_t* t)
     settextcolor(15,0);
 }
 
-void TSS_log(tss_entry_t* tss)
+void TSS_log(tss_entry_t* tssEntry)
 {
     settextcolor(6,0);
-    //printformat("\nprev_tss: %x ", tss->prev_tss);
-    printformat("esp0: %x ", tss->esp0);
-    printformat("ss0: %x ", tss->ss0);
-    //printformat("esp1: %x ", tss->esp1);
-    //printformat("ss1: %x ", tss->ss1);
-    //printformat("esp2: %x ", tss->esp2);
-    //printformat("ss2: %x ", tss->ss2);
-    printformat("cr3: %x ", tss->cr3);
-    printformat("eip: %x ", tss->eip);
-    printformat("eflags: %x ", tss->eflags);
-    printformat("eax: %x ", tss->eax);
-    printformat("ecx: %x ", tss->ecx);
-    printformat("edx: %x ", tss->edx);
-    printformat("ebx: %x ", tss->ebx);
-    printformat("esp: %x ", tss->esp);
-    printformat("ebp: %x ", tss->ebp);
-    printformat("esi: %x ", tss->esi);
-    printformat("edi: %x ", tss->edi);
-    printformat("es: %x ", tss->es);
-    printformat("cs: %x ", tss->cs);
-    printformat("ss: %x ", tss->ss);
-    printformat("ds: %x ", tss->ds);
-    printformat("fs: %x ", tss->fs);
-    printformat("gs: %x ", tss->gs);
-    //printformat("ldt: %x ", tss->ldt);
-    //printformat("trap: %x ", tss->trap); //only 0 or 1
-    //printformat("iomap_base: %x ", tss->iomap_base);
+    //printformat("\nprev_tss: %x ", tssEntry->prev_tss);
+    printformat("esp0: %x ", tssEntry->esp0);
+    printformat("ss0: %x ", tssEntry->ss0);
+    //printformat("esp1: %x ", tssEntry->esp1);
+    //printformat("ss1: %x ", tssEntry->ss1);
+    //printformat("esp2: %x ", tssEntry->esp2);
+    //printformat("ss2: %x ", tssEntry->ss2);
+    printformat("cr3: %x ", tssEntry->cr3);
+    printformat("eip: %x ", tssEntry->eip);
+    printformat("eflags: %x ", tssEntry->eflags);
+    printformat("eax: %x ", tssEntry->eax);
+    printformat("ecx: %x ", tssEntry->ecx);
+    printformat("edx: %x ", tssEntry->edx);
+    printformat("ebx: %x ", tssEntry->ebx);
+    printformat("esp: %x ", tssEntry->esp);
+    printformat("ebp: %x ", tssEntry->ebp);
+    printformat("esi: %x ", tssEntry->esi);
+    printformat("edi: %x ", tssEntry->edi);
+    printformat("es: %x ", tssEntry->es);
+    printformat("cs: %x ", tssEntry->cs);
+    printformat("ss: %x ", tssEntry->ss);
+    printformat("ds: %x ", tssEntry->ds);
+    printformat("fs: %x ", tssEntry->fs);
+    printformat("gs: %x ", tssEntry->gs);
+    //printformat("ldt: %x ", tssEntry->ldt);
+    //printformat("trap: %x ", tssEntry->trap); //only 0 or 1
+    //printformat("iomap_base: %x ", tssEntry->iomap_base);
 }

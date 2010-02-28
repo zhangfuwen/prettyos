@@ -217,7 +217,7 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option)
 }
 
 
-int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
+int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData)
 {
     uint8_t a[512];
     uint32_t sectornumber;
@@ -246,7 +246,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
         /// printformat("success read_sector.\n");
     }
 
-    memcpy( (void*)file, (void*)a, 512);
+    memcpy( (void*)fileData, (void*)a, 512);
 
     // // find second cluster and chain in fat
     pos=0;
@@ -283,9 +283,9 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
             /// printformat("success read_sector.\n");
         }
 
-        memcpy( (void*)(file+pos*512), (void*)a, 512);
+        memcpy( (void*)(fileData+pos*512), (void*)a, 512);
 
-        // search next cluster of the file
+        // search next cluster of the fileData
         i = fatEntry[i];
     }
     printformat("\n");
@@ -294,13 +294,13 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file)
 
 
 
-int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer)
+int32_t read_fat(int32_t* fat_entrypoint, int32_t index, int32_t st_sec, uint8_t* buffer)
 {
     // example: //TODO: only necessary FAT entries and combine these tow steps:
                 //parse FAT & load file data
     // for(i=0;i<FATMAXINDEX;i++)
-    //    read_fat(&fat_entry[i], i, FAT1_SEC);
-    // file_ia(fat_entry,firstCluster,file);
+    //    read_fat(&fat_entrypoint[i], i, FAT1_SEC);
+    // file_ia(fat_entrypoint,firstCluster,file);
 
 
     int32_t fat_index;
@@ -313,7 +313,7 @@ int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buf
     fat1 = buffer[st_sec*512+fat_index]   & 0xFF;
     fat2 = buffer[st_sec*512+fat_index+1] & 0xFF;
 
-    parse_fat(fat_entry,fat1,fat2,index);
+    parse_fat(fat_entrypoint,fat1,fat2,index);
 
     return 0;
 }
@@ -768,7 +768,7 @@ uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
 
 
 // combine two FAT-entries fat1 and fat2 to a 12-bit-value fat_entry
-void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
+void parse_fat(int32_t* fat_entrypoint, int32_t fat1, int32_t fat2, int32_t in)
 {
     int32_t fat;
     if(in%2 == 0)
@@ -780,7 +780,7 @@ void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in)
         fat = (fat2 << 4) | ((fat1 &0x0F0) >> 4);
     }
     fat = fat & 0xFFF;
-    *fat_entry = fat;
+    *fat_entrypoint = fat;
     ///printformat("%x ", fat);
 }
 

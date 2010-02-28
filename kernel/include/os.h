@@ -7,7 +7,7 @@
 #define OS_H
 
 
-#define _DIAGNOSIS_ // activates prints to the screen about some details and memory use
+//#define _DIAGNOSIS_ // activates prints to the screen about some details and memory use
 
 
 // typedefs for char, short, int, long, ...
