@@ -7,6 +7,9 @@
 #include "pci.h"
 #include "ehci.h"
 #include "kheap.h"
+#include "paging.h"
+
+extern page_directory_t* kernel_pd;
 
 uint32_t opregs;
 struct ehci_CapRegs* pCapRegs;
@@ -48,9 +51,15 @@ void initEHCIHostController()
     pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
 
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
-    // If there are no work items in the periodic schedule, all elements of the Periodic Frame List
-    // should have their T-Bits set to 1.
-    pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = (uint32_t) malloc(0x1000,PAGESIZE);
+
+    uint32_t virtualMemoryPERIODICLISTBASE = (uint32_t) malloc(0x1000,PAGESIZE);
+    uint32_t physicalMemoryPERIODICLISTBASE = paging_get_phys_addr( kernel_pd, (void*)virtualMemoryPERIODICLISTBASE );
+    pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = physicalMemoryPERIODICLISTBASE;
+
+    // If there are no work items in the periodic schedule,
+    // all elements of the Periodic Frame List should have their T-Bits set to 1.
+
+    /// TODO: set T-Bits
 
     // Write the USBCMD register to set the desired interrupt threshold,
     // frame list size (if applicable) and turn the host controller ON via setting the Run/Stop bit.

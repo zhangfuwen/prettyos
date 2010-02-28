@@ -27,6 +27,8 @@ void paging_switch( page_directory_t* pd  );
 page_directory_t* paging_create_user_pd();
 void paging_destroy_user_pd( page_directory_t* pd );
 
+uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr );
+
 uint32_t paging_install();
 
 

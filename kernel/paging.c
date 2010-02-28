@@ -194,17 +194,25 @@ struct page_directory_
 
 
 static const uint32_t MEM_PRESENT = 0x01;
-static page_directory_t* kernel_pd;
+page_directory_t* kernel_pd;
 //static page_directory_t* current_pd;
 
 //static page_directory_t* all_pds[1024] = { NULL };
 
 
-static uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr )
+uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr )
 {
     // Find the page table
     uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
     page_table_t* pt = pd->tables[pagenr/1024];
+
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+        printformat("\nvirt-->phys: pagenr: %d ",pagenr);
+        printformat("pt: %X\n",pt);
+    settextcolor(15,0);
+    #endif
+
     ASSERT( pt );
 
     // Read the address, cut off the flags, append the address' odd part
@@ -220,6 +228,14 @@ uint32_t paging_install()
     kernel_pd = malloc( sizeof(page_directory_t), PAGESIZE );
     memset( kernel_pd, 0, sizeof(page_directory_t) );
     kernel_pd->pd_phys_addr = (uint32_t)kernel_pd;
+
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+        printformat("\nkernel_pd (virt.): %X ",kernel_pd);
+        printformat("kernel_pd (phys.): %X\n",kernel_pd->pd_phys_addr);
+    settextcolor(15,0);
+    #endif
+
 	//all_pds[0] = kernel_pd;
 
     // Setup the page tables for 0MB-20MB, identity mapping

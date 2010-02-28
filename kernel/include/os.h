@@ -3,18 +3,19 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-///#define _DIAGNOSIS_ // activates prints to the screen about some details and memory use
-
 #ifndef OS_H
 #define OS_H
 
-typedef unsigned int         size_t;
 
+#define _DIAGNOSIS_ // activates prints to the screen about some details and memory use
+
+
+// typedefs for char, short, int, long, ...
+typedef unsigned int         size_t;
 typedef unsigned long long   uint64_t;
 typedef unsigned long        uint32_t;
 typedef unsigned short       uint16_t;
 typedef unsigned char        uint8_t;
-
 typedef signed long long     int64_t;
 typedef signed long          int32_t;
 typedef signed short         int16_t;
@@ -40,7 +41,7 @@ typedef signed char          int8_t;
 //       ADDRESSES, SO DO NOT CHANGE THESE ONES HERE!
 
 // The page size must not be changed
-#define PAGESIZE 4096
+#define PAGESIZE 0x1000  // 4096 Byte = 4KByte
 
 // Where the kernel's private data is stored (virtual addresses)
 #define KERNEL_DATA_START 0xC0000000    //3 GB

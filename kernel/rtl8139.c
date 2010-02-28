@@ -192,6 +192,7 @@ void install_RTL8139(uint32_t number)
     uint32_t k=0;
     while(true)
     {
+        sleepMilliSeconds(10);
         if( !( *((volatile uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) & 0x10 ) ) //
         {
             printformat("\nwaiting successful(%d)!\n", k);
@@ -212,6 +213,8 @@ void install_RTL8139(uint32_t number)
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+4),
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+5) );
+
+    sleepSeconds(3); // for analysis
 
     // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
     /*
