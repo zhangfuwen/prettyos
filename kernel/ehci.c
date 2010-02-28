@@ -36,14 +36,12 @@ void analyzeEHCI(uint32_t bar)
 
 void initEHCIHostController()
 {
-    /*
     printformat("\n");
     printformat("\nCTRLDSSEGMENT:    %X", *((volatile uint32_t*)(opregs + 0x10)) );
     printformat("\nUSBINTR:          %X", *((volatile uint32_t*)(opregs + 0x08)) );
     printformat("\nPERIODICLISTBASE: %X", *((volatile uint32_t*)(opregs + 0x14)) );
     printformat("\nUSBCMD:           %X", *((volatile uint32_t*)(opregs + 0x00)) );
     printformat("\nCONFIGFLAG:       %X", *((volatile uint32_t*)(opregs + 0x40)) );
-    */
 
     // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
     pOpRegs->CTRLDSSEGMENT = *((volatile uint32_t*)(opregs + 0x10));

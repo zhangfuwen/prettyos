@@ -173,6 +173,8 @@ char* getCurrentDateAndTime(char* pStr)
 
     strcat(pStr, ""); // add '\0'
 
+    // printformat("\nstringlänge: %d",strlen(pStr));
+
     return pStr;
 }
 

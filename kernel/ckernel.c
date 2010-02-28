@@ -33,7 +33,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.152]\n\n");
+    printformat("PrettyOS [Version 0.0.0.153]\n\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -51,6 +51,18 @@ int main()
     tasking_install();
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
+
+    /// TEST
+    /*
+    printformat("float test:" );
+    float a = 5.12, b = 64.26, c = 0.00;
+    c = a * b;
+    char string[80];
+    float2string(c, 4, string);
+    printformat(" 5.12 * 64.26 = " );
+    printformat("%s",string);
+    */
+    /// TEST
 
     // direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
@@ -187,13 +199,14 @@ int main()
         if (CurrentSeconds!=CurrentSecondsOld)
         {
             itoa(CurrentSeconds, timeBuffer);
-            getCurrentDateAndTime(DateAndTime);
-            strcat(DateAndTime, "     ");
-            strcat(DateAndTime, timeBuffer);
-            strcat(DateAndTime, " seconds since start.");
+            // getCurrentDateAndTime(DateAndTime); // not ok!
+            //strcat(DateAndTime, "     ");
+            //strcat(DateAndTime, timeBuffer);
+            //strcat(DateAndTime, " seconds since start.");
 
             // output in status bar
-            printf(DateAndTime, 49, 0xC);
+            //printf(DateAndTime, 49, 0xC);
+            printf("- temporarily not available - ", 49, 0xC);
         }
         __asm__ volatile ("hlt");
     }
