@@ -1,4 +1,5 @@
-USERLIB=../user_program_c/
+USERLIB=../user_program_c
+USERTOOLS=../user_tools
 
 ifeq ($(OS),WINDOWS)
     RM=del
@@ -13,9 +14,9 @@ else
 endif
 
 main:
-	$(NASM) -O32 -f elf start.asm -o start.o
-	$(GCC) -c $(USERLIB)\userlib.c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
-	$(GCC) -c *.c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude -I$(USERLIB)
-	$(LD) *.o -T user.ld -Map user.map -nostdinc -o HELLO.ELF
+	$(NASM) -O32 -f elf $(USERTOOLS)/start.asm -o start.o
+	$(GCC) -c $(USERTOOLS)/userlib.c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
+	$(GCC) -c *.c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude -I$(USERTOOLS)
+	$(LD) *.o -T $(USERTOOLS)/user.ld -Map user.map -nostdinc -o HELLO.ELF
 	$(RM) *.o
 	

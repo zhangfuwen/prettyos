@@ -4,7 +4,7 @@ KERNELDIR= kernel
 USERRDDIR= user/init_rd_img
 USERDIR= user/user_program_c
 USERTEST= user/user_test_c
-
+USERTOOLS= user/user_tools
 
 ifeq ($(OS),WINDOWS)
     RM=del
@@ -12,9 +12,6 @@ ifeq ($(OS),WINDOWS)
     NASM= nasmw
     CC= i586-elf-gcc
     LD= i586-elf-ld
-    #NASM= tools/nasmw
-    #CC= tools/i586-elf/bin/i586-elf-gcc
-    #LD= tools/i586-elf/bin/i586-elf-ld
 else
     RM=rm -f
     MV=mv
@@ -34,7 +31,7 @@ boot2: $(wildcard $(STAGE2DIR)/*.asm $(STAGE2DIR)/*.inc)
 
 ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	$(RM) *.o
-	$(CC) $(KERNELDIR)/*.c -c -I$(KERNELDIR)/include -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
+	$(CC) $(KERNELDIR)/*.c -c -I$(KERNELDIR)/include -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 	$(NASM) -O32 -f elf $(KERNELDIR)/data.asm -I$(KERNELDIR)/ -o data.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/flush.asm -I$(KERNELDIR)/ -o flush.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/interrupts.asm -I$(KERNELDIR)/ -o interrupts.o
@@ -47,9 +44,9 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 initrd: $(wildcard $(USERDIR)/*)
 	$(RM) *.o 
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -I$(USERDIR)/ -o start.o
-	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -m32 -fno-pic -std=c99 -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin
-	$(NASM) -O32 -f elf $(USERDIR)/start.asm -o start.o
-	$(LD) *.o -T $(USERDIR)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
+	$(CC) $(USERTOOLS)/userlib.c -c -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
+	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
+	$(LD) *.o -T $(USERTOOLS)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
 	$(RM) *.o 
 	tools/make_initrd $(USERRDDIR)/test1.txt file1 $(USERRDDIR)/test2.txt file2 $(USERRDDIR)/test3.txt file3 $(USERDIR)/program.elf shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
