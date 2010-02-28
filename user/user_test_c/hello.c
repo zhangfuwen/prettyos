@@ -65,8 +65,6 @@ int ConvertToInt(char c) {
 	return((int)(c) - '1' + 1);
 }
 
-char x = 0;
-
 void Zug(int Player) {
 	char x = 0;
 	for(; ; x = *gets(&x)) {
@@ -95,7 +93,7 @@ int main() {
 	clearScreen(0);
     settextcolor(11,0);
     puts("================================================================================\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.4                            \n");
+    puts("                            Mr.X TicTacToe 3x3  v0.41                           \n");
     puts("--------------------------------------------------------------------------------\n\n");
 	gotoxy(0, 24);
 	puts("Please type in a number betwen 0 and 8.\n\n");
