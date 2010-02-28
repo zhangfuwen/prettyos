@@ -27,13 +27,13 @@ extern uint32_t file_data_start;
 extern uint32_t file_data_end;
 
 // String for Date&Time
-char DateAndTime[80];
+char DateAndTime[100];
 
 static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.154]\n\n");
+    printformat("PrettyOS [Version 0.0.0.155]\n\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -199,14 +199,13 @@ int main()
         if (CurrentSeconds!=CurrentSecondsOld)
         {
             itoa(CurrentSeconds, timeBuffer);
-            // getCurrentDateAndTime(DateAndTime); // not ok!
-            //strcat(DateAndTime, "     ");
-            //strcat(DateAndTime, timeBuffer);
-            //strcat(DateAndTime, " seconds since start.");
+            getCurrentDateAndTime(DateAndTime); // not ok!
+            strcat(DateAndTime, "     ");
+            strcat(DateAndTime, timeBuffer);
+            strcat(DateAndTime, " seconds since start.");
 
             // output in status bar
-            //printf(DateAndTime, 49, 0xC);
-            printf("- temporarily not available - ", 49, 0xC);
+            printf(DateAndTime, 49, 0xC);
         }
         __asm__ volatile ("hlt");
     }

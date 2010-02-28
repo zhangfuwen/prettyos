@@ -25,78 +25,39 @@ tm_t* cmosTime(tm_t* ptm)
 
 char* getCurrentDateAndTime(char* pStr)
 {
+    pStr[0]='\0'; // clear string
+
     // sourcecode of "Cuervo" and "ehenkes", PrettyOS team
     tm_t* pct = cmosTime(&currentTime);
     char buf[40];
 
-    // weekday
     switch (pct->weekday)
     {
-        case 1:
-            strcpy(pStr, "Sunday, ");
-        break;
-        case 2:
-            strcpy(pStr, "Monday, ");
-        break;
-        case 3:
-            strcpy(pStr, "Tuesday, ");
-        break;
-        case 4:
-            strcpy(pStr, "Wednesday, ");
-        break;
-        case 5:
-            strcpy(pStr, "Thursday, ");
-        break;
-        case 6:
-            strcpy(pStr, "Friday, ");
-        break;
-        case 7:
-            strcpy(pStr, "Saturday, ");
-        break;
+        case 1: strcpy(pStr, "Sunday, ");    break;
+        case 2: strcpy(pStr, "Monday, ");    break;
+        case 3: strcpy(pStr, "Tuesday, ");   break;
+        case 4: strcpy(pStr, "Wednesday, "); break;
+        case 5: strcpy(pStr, "Thursday, ");  break;
+        case 6: strcpy(pStr, "Friday, ");    break;
+        case 7: strcpy(pStr, "Saturday, ");  break;
     }
 
-    // month
     switch (pct->month)
     {
-        case 1:
-            strcat(pStr, "January ");
-        break;
-        case 2:
-            strcat(pStr, "February ");
-        break;
-        case 3:
-            strcat(pStr, "March ");
-        break;
-        case 4:
-            strcat(pStr, "April ");
-        break;
-        case 5:
-            strcat(pStr, "May ");
-        break;
-        case 6:
-            strcat(pStr, "June ");
-        break;
-        case 7:
-            strcat(pStr, "July ");
-        break;
-        case 8:
-            strcat(pStr, "August ");
-        break;
-        case 9:
-            strcat(pStr, "September ");
-        break;
-        case 10:
-            strcat(pStr, "October ");
-        break;
-        case 11:
-            strcat(pStr, "November ");
-        break;
-        case 12:
-            strcat(pStr, "December ");
-        break;
+        case 1:  strcat(pStr, "January ");   break;
+        case 2:  strcat(pStr, "February ");  break;
+        case 3:  strcat(pStr, "March ");     break;
+        case 4:  strcat(pStr, "April ");     break;
+        case 5:  strcat(pStr, "May ");       break;
+        case 6:  strcat(pStr, "June ");      break;
+        case 7:  strcat(pStr, "July ");      break;
+        case 8:  strcat(pStr, "August ");    break;
+        case 9:  strcat(pStr, "September "); break;
+        case 10: strcat(pStr, "October ");   break;
+        case 11: strcat(pStr, "November ");  break;
+        case 12: strcat(pStr, "December ");  break;
     }
 
-    // day
     if(pct->dayofmonth<10)
     {
         strcat(pStr,"0");
@@ -111,11 +72,9 @@ char* getCurrentDateAndTime(char* pStr)
 
     strcat(pStr,", ");
 
-    // century
     itoa(pct->century, buf);
     strcat(pStr, buf);
 
-    // year
     if(pct->year<10)
     {
         strcat(pStr,"0");
@@ -130,7 +89,6 @@ char* getCurrentDateAndTime(char* pStr)
 
     strcat(pStr,", ");
 
-    // time
     if(pct->hour<10)
     {
         strcat(pStr,"0");
@@ -172,9 +130,6 @@ char* getCurrentDateAndTime(char* pStr)
     }
 
     strcat(pStr, ""); // add '\0'
-
-    // printformat("\nstringlänge: %d",strlen(pStr));
-
     return pStr;
 }
 
