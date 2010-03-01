@@ -25,7 +25,7 @@ struct ehci_OpRegs
     uint32_t PERIODICLISTBASE; // Frame List Base Address         Core  // +14h
     uint32_t ASYNCLISTADDR;    // Next Asynchronous List Address  Core  // +18h
     uint32_t CONFIGFLAG;       // Configured Flag Register        Aux   // +40h
-    uint32_t PORTSC;           // Port Status/Control             Aux   // +44h
+    uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h, +48h, ...
 };
 
 bool EHCIflag;

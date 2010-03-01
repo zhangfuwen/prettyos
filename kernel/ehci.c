@@ -12,8 +12,10 @@
 extern page_directory_t* kernel_pd;
 
 uint32_t opregs;
-struct ehci_CapRegs* pCapRegs;
-struct ehci_OpRegs*  pOpRegs;
+struct ehci_CapRegs CapRegs;
+struct ehci_OpRegs  OpRegs;
+struct ehci_CapRegs* pCapRegs = &CapRegs;
+struct ehci_OpRegs*  pOpRegs  = &OpRegs;
 
 void analyzeEHCI(uint32_t bar)
 {
@@ -83,7 +85,7 @@ void initEHCIHostController()
 
 void showUSBSTS()
 {
-    settextcolor(14,0);
+    settextcolor(13,0);
     printformat("\n\nFetching USB status register: ");
     pOpRegs->USBSTS = *((volatile uint32_t*)(opregs + 0x04));
     settextcolor(3,0);
@@ -104,11 +106,25 @@ void showUSBSTS()
 void showPORTSC()
 {
     settextcolor(14,0);
-    printformat("\n\nFetching First Port status register: ");
-    pOpRegs->PORTSC = *((volatile uint32_t*)(opregs + 0x44));
+    printformat("\n\nFetching Port status register: ");
+
+    uint8_t numPorts = (pCapRegs->HCSPARAMS & 0x000F);
+    printformat("number of ports: %d\n", numPorts);
+
     settextcolor(3,0);
-    printformat("%X",pOpRegs->PORTSC);
-    if( pOpRegs->PORTSC & (1<<0) )  { printformat("\nConnect Status Change");  pOpRegs->PORTSC = (*((volatile uint32_t*)(opregs + 0x44)) |= (1<<0)); }
+    for(uint8_t j=1; j<=numPorts; j++)
+    {
+         pOpRegs->PORTSC[j] = *((volatile uint32_t*)(opregs + 0x44 + 4*(j-1)));
+         printformat("%X\t",pOpRegs->PORTSC[j]);
+         if( pOpRegs->PORTSC[j] & (1<<1) )
+         {
+             settextcolor(12,0);
+             printformat(" Connect Status Change Port %d\n", j);
+             sleepSeconds(5);
+             settextcolor(3,0);
+             pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<1));
+         }
+    }
     settextcolor(15,0);
 }
 
