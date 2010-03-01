@@ -15,6 +15,7 @@
 #include "flpydsk.h"
 #include "list.h"
 #include "sys_speaker.h"
+#include "ehci.h"
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -33,7 +34,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.156]\n\n");
+    printformat("PrettyOS [Version 0.0.0.157]\n\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -198,6 +199,8 @@ int main()
 
         if (CurrentSeconds!=CurrentSecondsOld)
         {
+            showUSBSTS();//TEST
+
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime); // not ok!
             strcat(DateAndTime, "     ");

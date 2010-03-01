@@ -41,7 +41,8 @@ void initEHCIHostController()
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     // pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
-    pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x0; /// TEST
+    pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x1 | 0x2 | 0x4 |/*0x8 |*/ 0x10 | 0x20;
+    /// TEST: Bit 3 cannot be set to 1, Frame List Rollover Enable, otherwise keyboard does not come through
 
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
     uint32_t virtualMemoryPERIODICLISTBASE = (uint32_t) malloc(0x1000,PAGESIZE);
@@ -50,7 +51,12 @@ void initEHCIHostController()
 
     // If there are no work items in the periodic schedule,
     // all elements of the Periodic Frame List should have their T-Bits set to 1.
-    /// TODO: set T-Bits
+
+    for(int numElement=0; numElement<1024; numElement++)
+    {
+         *((volatile uint32_t*)(virtualMemoryPERIODICLISTBASE + 4*numElement)) |= 0x1;
+    }
+    printformat("\nFirst Periodic List Element: %X\n",*(volatile uint32_t*)virtualMemoryPERIODICLISTBASE);
 
     // Write the USBCMD register to set the desired interrupt threshold
     // and turn the host controller ON via setting the Run/Stop bit.
@@ -58,7 +64,7 @@ void initEHCIHostController()
     // (i.e. HCHalted in the USBSTS register is a one). Doing so will yield undefined results.
     pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<12)   ); // set Bit 12
     pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= (0x8<<16) ); // Bits 23-16: 08h, means 8 micro-frames
-    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |=  0x1      ); // set Start-Stop-Bit                                                           |=  0x1 );    // Run-Stop-Bit
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |=  0x1      ); // set Run-Stop-Bit
 
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG    = *((volatile uint32_t*)(opregs + 0x40)) = 1;
@@ -70,6 +76,25 @@ void initEHCIHostController()
     printformat("  virt addr: %X", virtualMemoryPERIODICLISTBASE);
     printformat("\nUSBCMD:                     %X", *((volatile uint32_t*)(opregs + 0x00)) );
     printformat("\nCONFIGFLAG:                 %X", *((volatile uint32_t*)(opregs + 0x40)) );
+    showUSBSTS();
+}
+
+void showUSBSTS()
+{
+    printformat("\nFetching USB status register. ");
+    pOpRegs->USBSTS = *((volatile uint32_t*)(opregs + 0x04));
+    settextcolor(3,0);
+    if( pOpRegs->USBSTS & (1<<0) )  { printformat("\nUSB Interrupt");                 }
+    if( pOpRegs->USBSTS & (1<<1) )  { printformat("\nUSB Error Interrupt");           }
+    if( pOpRegs->USBSTS & (1<<2) )  { printformat("\nPort Change Detect");            }
+    if( pOpRegs->USBSTS & (1<<3) )  { printformat("\nFrame List Rollover"); pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<3)); }
+    if( pOpRegs->USBSTS & (1<<4) )  { printformat("\nHost System Error");             }
+    if( pOpRegs->USBSTS & (1<<5) )  { printformat("\nInterrupt on Async Advance");    }
+    if( pOpRegs->USBSTS & (1<<12) ) { printformat("\nHCHalted");                      }
+    if( pOpRegs->USBSTS & (1<<13) ) { printformat("\nReclamation");                   }
+    if( pOpRegs->USBSTS & (1<<14) ) { printformat("\nPeriodic Schedule Status");      }
+    if( pOpRegs->USBSTS & (1<<15) ) { printformat("\nAsynchronous Schedule Status");  }
+    settextcolor(15,0);
 }
 
 /*

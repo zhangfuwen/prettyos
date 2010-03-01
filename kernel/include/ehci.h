@@ -30,4 +30,8 @@ struct ehci_OpRegs
 
 // functions, ...
 
+void analyzeEHCI(uint32_t bar);
+void initEHCIHostController();
+void showUSBSTS();
+
 #endif

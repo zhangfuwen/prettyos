@@ -20,7 +20,7 @@ uint32_t getCurrentSeconds()
 uint32_t getCurrentMilliseconds()
 {
     // printformat("%d\n",1000*timer_ticks/systemfrequency);
-    return 1000*timer_ticks/systemfrequency;
+    return 1000*getCurrentSeconds();
 }
 
 void timer_handler(struct regs* r)
