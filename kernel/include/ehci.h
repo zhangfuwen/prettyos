@@ -28,10 +28,13 @@ struct ehci_OpRegs
     uint32_t PORTSC;           // Port Status/Control             Aux   // +44h
 };
 
+bool EHCIflag;
+
 // functions, ...
 
 void analyzeEHCI(uint32_t bar);
 void initEHCIHostController();
 void showUSBSTS();
+void showPORTSC();
 
 #endif

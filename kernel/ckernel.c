@@ -34,7 +34,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.157]\n\n");
+    printformat("PrettyOS [Version 0.0.0.159]\n\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -50,6 +50,8 @@ int main()
     printformat( "\n\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
     heap_install();
     tasking_install();
+
+    EHCIflag = false;
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
 
@@ -199,7 +201,13 @@ int main()
 
         if (CurrentSeconds!=CurrentSecondsOld)
         {
-            showUSBSTS();//TEST
+            /// TEST
+            if(EHCIflag)
+            {
+                showPORTSC();
+                showUSBSTS();
+            }
+            /// TEST
 
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime); // not ok!
