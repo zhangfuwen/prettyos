@@ -84,16 +84,16 @@ void showUSBSTS()
     printformat("\nFetching USB status register. ");
     pOpRegs->USBSTS = *((volatile uint32_t*)(opregs + 0x04));
     settextcolor(3,0);
-    if( pOpRegs->USBSTS & (1<<0) )  { printformat("\nUSB Interrupt");                 }
-    if( pOpRegs->USBSTS & (1<<1) )  { printformat("\nUSB Error Interrupt");           }
-    if( pOpRegs->USBSTS & (1<<2) )  { printformat("\nPort Change Detect");            }
+    if( pOpRegs->USBSTS & (1<<0) )  { printformat("\nUSB Interrupt");       pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<0)); }
+    if( pOpRegs->USBSTS & (1<<1) )  { printformat("\nUSB Error Interrupt"); pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<1)); }
+    if( pOpRegs->USBSTS & (1<<2) )  { printformat("\nPort Change Detect");  pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<2)); }
     if( pOpRegs->USBSTS & (1<<3) )  { printformat("\nFrame List Rollover"); pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<3)); }
-    if( pOpRegs->USBSTS & (1<<4) )  { printformat("\nHost System Error");             }
-    if( pOpRegs->USBSTS & (1<<5) )  { printformat("\nInterrupt on Async Advance");    }
-    if( pOpRegs->USBSTS & (1<<12) ) { printformat("\nHCHalted");                      }
-    if( pOpRegs->USBSTS & (1<<13) ) { printformat("\nReclamation");                   }
-    if( pOpRegs->USBSTS & (1<<14) ) { printformat("\nPeriodic Schedule Status");      }
-    if( pOpRegs->USBSTS & (1<<15) ) { printformat("\nAsynchronous Schedule Status");  }
+    if( pOpRegs->USBSTS & (1<<4) )  { printformat("\nHost System Error");   pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<4)); }
+    if( pOpRegs->USBSTS & (1<<5) )  { printformat("\nInterrupt on Async Advance"); pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<5)); }
+    if( pOpRegs->USBSTS & (1<<12) ) { printformat("\nHCHalted");            pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<12));}
+    if( pOpRegs->USBSTS & (1<<13) ) { printformat("\nReclamation");         pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<13));}
+    if( pOpRegs->USBSTS & (1<<14) ) { printformat("\nPeriodic Schedule Status"); pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<14));}
+    if( pOpRegs->USBSTS & (1<<15) ) { printformat("\nAsynchronous Schedule Status"); pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<15));}
     settextcolor(15,0);
 }
 
