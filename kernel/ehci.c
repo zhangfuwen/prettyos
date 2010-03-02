@@ -60,15 +60,16 @@ void initEHCIHostController()
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
 
     void* virtualMemoryPERIODICLISTBASE  = malloc(0x1000,PAGESIZE);
-    /* void* physicalMemoryPERIODICLISTBASE  = (void*) */ paging_get_phys_addr(kernel_pd, virtualMemoryPERIODICLISTBASE);
-    // pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = (uint32_t)physicalMemoryPERIODICLISTBASE ;
-    ///TEST
-    pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = 0xE8000;
-    ///TEST
-    // If there are no work items in the periodic schedule, all elements should have their T-Bits set to 1.
+    void* physicalMemoryPERIODICLISTBASE  = (void*) paging_get_phys_addr(kernel_pd, virtualMemoryPERIODICLISTBASE);
+    pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = (uint32_t)physicalMemoryPERIODICLISTBASE ;
 
+    ///TEST
+    // pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = 0xE8000;
+    ///TEST
+
+    // If there are no work items in the periodic schedule, all elements should have their T-Bits set to 1.
     memsetl(virtualMemoryPERIODICLISTBASE, 0x01, 0x400);
-    printformat("\nTest: 1st Periodic List Element: %X\n",*(volatile uint32_t*)virtualMemoryPERIODICLISTBASE); //TEST
+    // printformat("\nTest: 1st Periodic List Element: %X\n",*(volatile uint32_t*)virtualMemoryPERIODICLISTBASE); //TEST
 
     // Write the USBCMD register to set the desired interrupt threshold
     // and turn the host controller ON via setting the Run/Stop bit.
@@ -76,7 +77,7 @@ void initEHCIHostController()
     // (i.e. HCHalted in the USBSTS register is a one). Doing so will yield undefined results.
 
     pOpRegs->USBSTS = *((volatile uint32_t*)(opregs + 0x04));
-    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= (0x8<<16) ); // Bits 23-16: 08h, means 8 micro-frames
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= (0x08<<16) ); // Bits 23-16: 08h, means 8 micro-frames
     if( pOpRegs->USBSTS & (1<<12) )
     {
         pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |=  0x1      ); // set Run-Stop-Bit
@@ -93,6 +94,7 @@ void initEHCIHostController()
          pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<12)); // power on
          pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) &=  ~ 0x4);  // disable bit2
          pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<8));  // reset
+
     }
 
     printformat("\n\nAfter Init of EHCI:");
@@ -110,7 +112,7 @@ void showUSBSTS()
     settextcolor(15,0);
     printformat("\n\nUSB status: ");
     pOpRegs->USBSTS = *((volatile uint32_t*)(opregs + 0x04));
-    settextcolor(3,0);
+    settextcolor(2,0);
     printformat("%X",pOpRegs->USBSTS);
     settextcolor(14,0);
     if( pOpRegs->USBSTS & (1<<0) )  { printformat("\nUSB Interrupt");                 pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<0)); }
@@ -134,10 +136,13 @@ void showPORTSC()
     settextcolor(3,0);
     for(uint8_t j=1; j<=numPorts; j++)
     {
+         /*
          pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<12)); // power on
          pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) &=  ~ 0x4);  // disable bit2
          pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<8));  // reset
-         printformat("%X\t",pOpRegs->PORTSC[j]);
+         */
+
+         printformat("%x ",pOpRegs->PORTSC[j]);
          if( pOpRegs->PORTSC[j] & (1<<1) )
          {
              settextcolor(14,0);
