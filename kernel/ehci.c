@@ -17,6 +17,11 @@ struct ehci_OpRegs  OpRegs;
 struct ehci_CapRegs* pCapRegs = &CapRegs;
 struct ehci_OpRegs*  pOpRegs  = &OpRegs;
 
+/*
+<Tobiking>Mit "pCapRegs = (struct ehci_OpRegs*)bar;"
+<Tobiking>kann man das Struct direkt auf die Register setzen
+*/
+
 void analyzeEHCI(uint32_t bar)
 {
     EHCIflag = true;
@@ -41,7 +46,7 @@ void analyzeEHCI(uint32_t bar)
 void initEHCIHostController()
 {
     // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
-    pOpRegs->CTRLDSSEGMENT = *((volatile uint32_t*)(opregs + 0x10)); // default
+    pOpRegs->CTRLDSSEGMENT = *((volatile uint32_t*)(opregs + 0x10)) = 0x0;
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     // pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
@@ -66,9 +71,12 @@ void initEHCIHostController()
     // and turn the host controller ON via setting the Run/Stop bit.
     // Software must not write a one to this field unless the host controller is in the Halted state
     // (i.e. HCHalted in the USBSTS register is a one). Doing so will yield undefined results.
-    pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<12)   ); // set Bit 12
+    pOpRegs->USBSTS = *((volatile uint32_t*)(opregs + 0x04));
     pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= (0x8<<16) ); // Bits 23-16: 08h, means 8 micro-frames
-    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |=  0x1      ); // set Run-Stop-Bit
+    if( pOpRegs->USBSTS & (1<<12) )
+    {
+        pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |=  0x1      ); // set Run-Stop-Bit
+    }
 
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG    = *((volatile uint32_t*)(opregs + 0x40)) = 1;
@@ -114,7 +122,7 @@ void showPORTSC()
     settextcolor(3,0);
     for(uint8_t j=1; j<=numPorts; j++)
     {
-         pOpRegs->PORTSC[j] = *((volatile uint32_t*)(opregs + 0x44 + 4*(j-1)));
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<12)); // power on
          printformat("%X\t",pOpRegs->PORTSC[j]);
          if( pOpRegs->PORTSC[j] & (1<<1) )
          {
