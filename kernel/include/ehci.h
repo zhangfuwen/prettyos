@@ -28,6 +28,7 @@ struct ehci_OpRegs
     uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h, +48h, ...
 };
 
+uint8_t numPorts;
 bool EHCIflag;
 
 // functions, ...
