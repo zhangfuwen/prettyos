@@ -177,6 +177,7 @@ extern uint32_t fetchDS();
 extern void memshow(void* start, size_t count);
 extern void* memset(void* dest, int8_t val, size_t count);
 extern uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
+extern uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
 extern void* memcpy(void* dest, const void* src, size_t count);
 
 extern size_t strlen(const char* str);

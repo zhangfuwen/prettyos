@@ -135,7 +135,14 @@ void* memset(void* dest, int8_t val, size_t count)
 
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count)
 {
-    uint16_t* temp = (uint16_t*) dest;
+    uint16_t* temp = dest;
+    for( ; count != 0; count--) *temp++ = val;
+    return dest;
+}
+
+uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
+{
+    uint32_t* temp = dest;
     for( ; count != 0; count--) *temp++ = val;
     return dest;
 }
