@@ -46,6 +46,19 @@ void analyzeEHCI(uint32_t bar)
 
 void initEHCIHostController()
 {
+    // Stop HC (bit0 = 0)
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) &= ~0x1 ); // set Run-Stop-Bit to 0
+
+    // wait
+    sleepMilliSeconds(20); // wait at least 16 microframes (=16*125 µs =2 ms)
+
+    // resetHC (bit1=1)
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= 1<<1 ); // set Reset-Bit to 1
+    while( (*((volatile uint32_t*)(opregs + 0x00)) & 0x1) != 0 )
+    {
+        printformat("waiting for HC reset\n");
+    }
+
     // Program the CTRLDSSEGMENT register with 4-Gigabyte segment
     // where all of the interface data structures are allocated.
 
@@ -63,13 +76,8 @@ void initEHCIHostController()
     void* physicalMemoryPERIODICLISTBASE  = (void*) paging_get_phys_addr(kernel_pd, virtualMemoryPERIODICLISTBASE);
     pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = (uint32_t)physicalMemoryPERIODICLISTBASE ;
 
-    ///TEST
-    // pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = 0xE8000;
-    ///TEST
-
     // If there are no work items in the periodic schedule, all elements should have their T-Bits set to 1.
     memsetl(virtualMemoryPERIODICLISTBASE, 0x01, 0x400);
-    // printformat("\nTest: 1st Periodic List Element: %X\n",*(volatile uint32_t*)virtualMemoryPERIODICLISTBASE); //TEST
 
     // Write the USBCMD register to set the desired interrupt threshold
     // and turn the host controller ON via setting the Run/Stop bit.
