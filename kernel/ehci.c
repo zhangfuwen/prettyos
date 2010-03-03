@@ -55,9 +55,14 @@ void initEHCIHostController()
 
     // resetHC (bit1=1)
     pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= 1<<1 ); // set Reset-Bit to 1
-    while( (*((volatile uint32_t*)(opregs + 0x00)) & 0x1) != 0 )
+    int32_t timeout=0;
+    while( (*((volatile uint32_t*)(opregs + 0x00)) & 0x2) != 0 )
     {
         printformat("waiting for HC reset\n");
+        sleepMilliSeconds(20);
+        timeout++;
+        if(timeout>10)
+            break;
     }
 
     // Program the CTRLDSSEGMENT register with 4-Gigabyte segment
