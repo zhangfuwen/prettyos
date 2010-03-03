@@ -73,8 +73,7 @@ void initEHCIHostController()
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     // pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
 
-    pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x1 | 0x2 |/* 0x4 |0x8 |*/ 0x10 | 0x20;
-    /// TEST: Bit 3 cannot be set to 1, Frame List Rollover Enable, otherwise keyboard does not come through
+    pOpRegs->USBINTR = *((volatile uint32_t*)(opregs + 0x08)) = 0; /* 0x1 | 0x2 | 0x4 | 0x8 | 0x10 | 0x20 */
 
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
 
@@ -100,15 +99,15 @@ void initEHCIHostController()
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG    = *((volatile uint32_t*)(opregs + 0x40)) = 1;
 
-
     // Ports enablen:
 
     for(uint8_t j=1; j<=numPorts; j++)
     {
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<12)); // power on
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) &=  ~ 0x4);  // disable bit2
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<8));  // reset
-
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |=  (1<<12)); // power on
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) &= ~(1<<2));  // set bit2 to 0
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |=  (1<<8));  // set reset bit to 1
+         sleepMilliSeconds(50);                                                               // wait
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) &= ~(1<<8));  // set reset bit to 0
     }
 
     printformat("\n\nAfter Init of EHCI:");
