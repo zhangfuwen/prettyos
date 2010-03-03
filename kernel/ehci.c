@@ -8,6 +8,7 @@
 #include "ehci.h"
 #include "kheap.h"
 #include "paging.h"
+#include "sys_speaker.h"
 
 extern page_directory_t* kernel_pd;
 
@@ -67,7 +68,7 @@ void initEHCIHostController()
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     // pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
 
-    pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x1 | 0x2 | 0x4 |/*0x8 |*/ 0x10 | 0x20;
+    pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x1 | 0x2 |/* 0x4 |0x8 |*/ 0x10 | 0x20;
     /// TEST: Bit 3 cannot be set to 1, Frame List Rollover Enable, otherwise keyboard does not come through
 
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
@@ -144,18 +145,14 @@ void showPORTSC()
     settextcolor(3,0);
     for(uint8_t j=1; j<=numPorts; j++)
     {
-         /*
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<12)); // power on
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) &=  ~ 0x4);  // disable bit2
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<8));  // reset
-         */
-
+         pOpRegs->PORTSC[j] = *((volatile uint32_t*)(opregs + 0x44 + 4*(j-1)));
          printformat("%x ",pOpRegs->PORTSC[j]);
          if( pOpRegs->PORTSC[j] & (1<<1) )
          {
              settextcolor(14,0);
+             beep(1000,500);
              printformat(" Connect Status Change Port %d\n", j);
-             sleepSeconds(5);
+             sleepSeconds(2);
              settextcolor(3,0);
              pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<1));
          }
