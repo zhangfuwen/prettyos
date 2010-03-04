@@ -96,7 +96,7 @@ void outportl(uint16_t port, uint32_t val)
 
 /**********************************************************************/
 
-void panic_assert(char* file, uint32_t line, char* desc) // why char ?
+void panic_assert(const char* file, uint32_t line, const char* desc) // why char ?
 {
     cli();
     printformat("ASSERTION FAILED(");

@@ -40,7 +40,7 @@ int floppy_dir()
     return ret;
 }
 
-void printLine(char* message, unsigned int line, unsigned char attribute)
+void printLine(const char* message, unsigned int line, unsigned char attribute)
 {
     __asm__ volatile( "int $0x7F" : : "a"(8), "b"(message), "c"(line), "d"(attribute) );
 }
@@ -66,7 +66,7 @@ int floppy_format(char* volumeLabel)
     return ret;
 }
 
-int floppy_load(char* name, char* ext)
+int floppy_load(const char* name, const char* ext)
 {
     int ret;
     __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(12), "b"(name), "c"(ext)  );
@@ -325,7 +325,7 @@ void itoa(int n, char* s)
     reverse(s);
 }
 
-int atoi(char* s)
+int atoi(const char* s)
 {
     int num=0,flag=0;
     for(int i=0;i<=strlen(s);i++)

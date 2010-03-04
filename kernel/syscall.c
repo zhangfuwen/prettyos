@@ -7,7 +7,7 @@
 // rest of functions must be declared here:
 // ...
 
-DEFN_SYSCALL1( puts,                       0, char*                    )
+DEFN_SYSCALL1( puts,                       0, const char*              )
 DEFN_SYSCALL1( putch,                      1, char                     )
 DEFN_SYSCALL2( settextcolor,               2, uint8_t, uint8_t         )
 DEFN_SYSCALL0( getpid,                     3                           )
@@ -19,7 +19,7 @@ DEFN_SYSCALL3( printf,                     8, char*, uint32_t, uint8_t )
 DEFN_SYSCALL0( getCurrentSeconds,          9                           )
 DEFN_SYSCALL0( getCurrentMilliseconds,    10                           )
 DEFN_SYSCALL1( flpydsk_format,            11, char*                    )
-DEFN_SYSCALL2( flpydsk_load,              12, char*, char*             )
+DEFN_SYSCALL2( flpydsk_load,              12, const char*, const char* )
 DEFN_SYSCALL0( exit,                      13                           )
 DEFN_SYSCALL1( settaskflag,               14, int32_t                  )
 DEFN_SYSCALL2( beep,                      15, uint32_t, uint32_t       )

@@ -62,7 +62,7 @@ typedef signed char          int8_t;
 extern uint32_t placement_address;
 
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b))
-extern void panic_assert(char* file, uint32_t line, char* desc);  // why char ?
+extern void panic_assert(const char* file, uint32_t line, const char* desc);  // why char ?
 
 /* This defines the operatings system common data area */
 
@@ -106,7 +106,7 @@ extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
 extern void putch(char c);
 extern void puts(const char* text);
 extern void scroll();
-extern void printf(char* message, uint32_t line, uint8_t attribute);
+extern void printf(const char* message, uint32_t line, uint8_t attribute);
 extern void set_cursor(uint8_t x, uint8_t y);
 extern void update_cursor();
 extern void move_cursor_right();
@@ -115,7 +115,7 @@ extern void move_cursor_home();
 extern void move_cursor_end();
 extern void save_cursor();
 extern void restore_cursor();
-extern void printformat (char *args, ...);
+extern void printformat (const char *args, ...);
 
 // timer.c
 extern uint32_t getCurrentSeconds();

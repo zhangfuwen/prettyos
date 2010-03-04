@@ -24,7 +24,7 @@ void irq_uninstall_handler(int32_t ir) {irq_routines[ir] = 0;}
 
 
 /* Message string corresponding to the exception number 0-31: exception_messages[interrupt_number] */
-char* exception_messages[] =
+const char* exception_messages[] =
 {
     "Division By Zero",        "Debug",                         "Non Maskable Interrupt",    "Breakpoint",
     "Into Detected Overflow",  "Out of Bounds",                 "Invalid Opcode",            "No Coprocessor",

@@ -15,11 +15,11 @@ void puts(const char* pString);
 unsigned char getch();
 bool testch();
 int floppy_dir();
-void printLine(char* message, unsigned int line, unsigned char attribute);
+void printLine(const char* message, unsigned int line, unsigned char attribute);
 unsigned int getCurrentSeconds();
 unsigned int getCurrentMilliseconds();
 int floppy_format(char* volumeLabel);
-int floppy_load(char* name, char* ext);
+int floppy_load(const char* name, const char* ext);
 void exit();
 void settaskflag(int i);
 void beep(unsigned int frequency, unsigned int duration);
@@ -46,7 +46,7 @@ char* gets(char* s);
 
 void reverse(char* s);
 void itoa(int n, char* s);
-int atoi(char* s);
+int atoi(const char* s);
 void float2string(float value, int decimal, char* valuestring); // float --> string
 
 void showInfo(signed char val);

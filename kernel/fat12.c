@@ -41,7 +41,7 @@ int32_t initCache()
     }
 }
 
-int32_t flpydsk_load(char* name, char* ext)
+int32_t flpydsk_load(const char* name, const char* ext)
 {
     int32_t retVal;
     struct file f;
@@ -721,7 +721,7 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
    return 0;
 }
 
-uint32_t search_file_first_cluster(char* name, char* ext, struct file* f)
+uint32_t search_file_first_cluster(const char* name, const char* ext, struct file* f)
 {
    struct dir_entry entry;
    char buf1[10];
