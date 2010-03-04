@@ -48,13 +48,13 @@ void analyzeEHCI(uint32_t bar)
 void initEHCIHostController()
 {
     // Stop HC (bit0 = 0)
-    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) &= ~0x1 ); // set Run-Stop-Bit to 0
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) &= ~CMD_RUN_STOP ); // set Run-Stop-Bit to 0
 
     // wait
-    sleepMilliSeconds(20); // wait at least 16 microframes (=16*125 µs =2 ms)
+    sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
 
-    // resetHC (bit1=1)
-    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= 1<<1 ); // set Reset-Bit to 1
+    // resetHC (bit1 = 1)
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= CMD_HCRESET );  // set Reset-Bit to 1
     int32_t timeout=0;
     while( (*((volatile uint32_t*)(opregs + 0x00)) & 0x2) != 0 )
     {
@@ -73,7 +73,7 @@ void initEHCIHostController()
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     // pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
 
-    pOpRegs->USBINTR = *((volatile uint32_t*)(opregs + 0x08)) = 0; /* 0x1 | 0x2 | 0x4 | 0x8 | 0x10 | 0x20 */
+    pOpRegs->USBINTR = *((volatile uint32_t*)(opregs + 0x08)) = 0; // no interrupts, we poll from USBSTS
 
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
 
@@ -90,24 +90,24 @@ void initEHCIHostController()
     // (i.e. HCHalted in the USBSTS register is a one). Doing so will yield undefined results.
 
     pOpRegs->USBSTS = *((volatile uint32_t*)(opregs + 0x04));
-    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= (0x08<<16) ); // Bits 23-16: 08h, means 8 micro-frames
-    if( pOpRegs->USBSTS & (1<<12) )
+    pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= CMD_8_MICROFRAME ); // Bits 23-16: 08h
+    if( pOpRegs->USBSTS & STS_HCHALTED )
     {
-        pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |=  0x1      ); // set Run-Stop-Bit
+        pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= CMD_RUN_STOP ); // set Run-Stop-Bit
     }
 
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
-    pOpRegs->CONFIGFLAG    = *((volatile uint32_t*)(opregs + 0x40)) = 1;
+    pOpRegs->CONFIGFLAG    = *((volatile uint32_t*)(opregs + 0x40)) = CF;
 
     // Ports enablen:
 
-    for(uint8_t j=1; j<=numPorts; j++)
+    for(uint8_t j=0; j<numPorts; j++)
     {
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |=  (1<<12)); // power on
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) &= ~(1<<2));  // set bit2 to 0
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |=  (1<<8));  // set reset bit to 1
-         sleepMilliSeconds(50);                                                               // wait
-         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) &= ~(1<<8));  // set reset bit to 0
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*j)) |=  PSTS_POWERON);
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*j)) &= ~PSTS_ENABLED);
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*j)) |=  PSTS_PORT_RESET);
+         sleepMilliSeconds(50);
+         pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*j)) &= ~PSTS_PORT_RESET);
     }
 
     printformat("\n\nAfter Init of EHCI:");
@@ -128,16 +128,16 @@ void showUSBSTS()
     settextcolor(2,0);
     printformat("%X",pOpRegs->USBSTS);
     settextcolor(14,0);
-    if( pOpRegs->USBSTS & (1<<0) )  { printformat("\nUSB Interrupt");                 pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<0)); }
-    if( pOpRegs->USBSTS & (1<<1) )  { printformat("\nUSB Error Interrupt");           pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<1)); }
-    if( pOpRegs->USBSTS & (1<<2) )  { printformat("\nPort Change Detect");            pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<2)); }
-    if( pOpRegs->USBSTS & (1<<3) )  { printformat("\nFrame List Rollover");           pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<3)); }
-    if( pOpRegs->USBSTS & (1<<4) )  { printformat("\nHost System Error");             pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<4)); }
-    if( pOpRegs->USBSTS & (1<<5) )  { printformat("\nInterrupt on Async Advance");    pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<5)); }
-    if( pOpRegs->USBSTS & (1<<12) ) { printformat("\nHCHalted");                      pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<12));}
-    if( pOpRegs->USBSTS & (1<<13) ) { printformat("\nReclamation");                   pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<13));}
-    if( pOpRegs->USBSTS & (1<<14) ) { printformat("\nPeriodic Schedule Status");      pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<14));}
-    if( pOpRegs->USBSTS & (1<<15) ) { printformat("\nAsynchronous Schedule Status");  pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= (1<<15));}
+    if( pOpRegs->USBSTS & STS_USBINT )             { printformat("\nUSB Interrupt");                 pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_USBINT); }
+    if( pOpRegs->USBSTS & STS_USBERRINT )          { printformat("\nUSB Error Interrupt");           pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_USBERRINT); }
+    if( pOpRegs->USBSTS & STS_PORT_CHANGE )        { printformat("\nPort Change Detect");            pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_PORT_CHANGE); }
+    if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER ) { printformat("\nFrame List Rollover");           pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_FRAMELIST_ROLLOVER); }
+    if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )  { printformat("\nHost System Error");             pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_HOST_SYSTEM_ERROR); }
+    if( pOpRegs->USBSTS & STS_ASYNC_INT )          { printformat("\nInterrupt on Async Advance");    pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_ASYNC_INT); }
+    if( pOpRegs->USBSTS & STS_HCHALTED )           { printformat("\nHCHalted");                      pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_HCHALTED);}
+    if( pOpRegs->USBSTS & STS_RECLAMATION )        { printformat("\nReclamation");                   pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_RECLAMATION);}
+    if( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printformat("\nPeriodic Schedule Status");      pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_PERIODIC_ENABLED);}
+    if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printformat("\nAsynchronous Schedule Status");  pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_ASYNC_ENABLED);}
     settextcolor(15,0);
 }
 
@@ -147,18 +147,18 @@ void showPORTSC()
     printformat("\n\nPort status: ");
 
     settextcolor(3,0);
-    for(uint8_t j=1; j<=numPorts; j++)
+    for(uint8_t j=0; j<numPorts; j++)
     {
-         pOpRegs->PORTSC[j] = *((volatile uint32_t*)(opregs + 0x44 + 4*(j-1)));
+         pOpRegs->PORTSC[j] = *((volatile uint32_t*)(opregs + 0x44 + 4*j));
          printformat("%x ",pOpRegs->PORTSC[j]);
-         if( pOpRegs->PORTSC[j] & (1<<1) )
+         if( pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE )
          {
              settextcolor(14,0);
              beep(1000,500);
-             printformat(" Connect Status Change Port %d\n", j);
+             printformat(" Connect Status Change Port %d\n", j+1); // USB port# starts with 1
              sleepSeconds(2);
              settextcolor(3,0);
-             pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*(j-1))) |= (1<<1));
+             pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*j)) |= PSTS_CONNECTED_CHANGE); // ack
          }
     }
     settextcolor(15,0);
