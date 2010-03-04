@@ -172,7 +172,7 @@ void putch(char c)
     update_cursor();
 }
 
-void puts(char* text)
+void puts(const char* text)
 {
     for(; *text; putch(*text), ++text);
 }

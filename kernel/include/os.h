@@ -104,7 +104,7 @@ extern void clear_screen();
 extern void clear_userscreen(uint8_t backcolor);
 extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
 extern void putch(char c);
-extern void puts(char* text);
+extern void puts(const char* text);
 extern void scroll();
 extern void printf(char* message, uint32_t line, uint8_t attribute);
 extern void set_cursor(uint8_t x, uint8_t y);

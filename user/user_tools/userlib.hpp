@@ -1,17 +1,13 @@
 #ifndef USERLIB_H
 #define USERLIB_H
 
-typedef char bool;
-
-#define true		1
-#define false		0
-
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #define isalnum(c) (isdigit(c) || isalpha(c))
 #define isupper(character) ((character) >= 'A' && (character) <= 'Z')
 #define islower(character) ((character) >= 'a' && (character) <= 'z')
 
+extern "C" {
 // syscalls
 void settextcolor(unsigned int foreground, unsigned int background);
 void putch(unsigned char val);
@@ -55,5 +51,6 @@ void float2string(float value, int decimal, char* valuestring); // float --> str
 
 void showInfo(signed char val);
 void test();
+}
 
 #endif

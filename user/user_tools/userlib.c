@@ -17,7 +17,7 @@ void putch(unsigned char val)
     __asm__ volatile( "int $0x7F" : : "a"(1), "b"(val) );
 }
 
-void puts(char* pString)
+void puts(const char* pString)
 {
     __asm__ volatile( "int $0x7F" : : "a"(0), "b"(pString) );
 }
