@@ -71,7 +71,7 @@ void analyzeEHCI(uint32_t bar)
 
 void initEHCIHostController(uint32_t number)
 {
-    irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
+    // irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler); /// TEST for Sun VBox
 
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
 
@@ -125,7 +125,7 @@ void initEHCIHostController(uint32_t number)
     }
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> breakdown!
+    pOpRegs->USBINTR = 0; // STS_INTMASK; // all interrupts allowed  // ---> breakdown!
 
     printformat("\n\nAfter Init of EHCI:");
     printformat("\nCTRLDSSEGMENT:              %X", pOpRegs->CTRLDSSEGMENT);

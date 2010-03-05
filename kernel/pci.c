@@ -6,6 +6,7 @@
 #include "os.h"
 #include "pci.h"
 #include "paging.h"
+#include "ehci.h"
 
 pciDev_t pciDev_Array[50];
 
