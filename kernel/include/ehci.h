@@ -144,7 +144,7 @@ uint8_t numPorts;
 #define PSTS_PI_GREEN                  0x00008000
 
 #define PSTS_COMPANION_HC_OWNED        0x00002000 /* rw */
-#define PSTS_POWERON                   0x00001000 /* rw valid if PPC=1 */
+#define PSTS_POWERON                   0x00001000 /* rw valid, if PPC == 1 */
 
 #define PSTS_LINE_STATUS               0x00000C00 /* ro meanings: */
 #define PSTS_LINE_SE0                  0x00000000

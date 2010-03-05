@@ -17,7 +17,7 @@ uint32_t ubar;
 
 void ehci_handler(struct regs* r)
 {
-	printformat("EHCI-Interrupt: %X\n", pOpRegs->USBSTS);
+	/* printformat("EHCI-Interrupt: %X\n", pOpRegs->USBSTS); */
 	settextcolor(14,0);
     if( pOpRegs->USBSTS & STS_USBINT )
     {
@@ -31,17 +31,18 @@ void ehci_handler(struct regs* r)
     }
     if( pOpRegs->USBSTS & STS_PORT_CHANGE )
     {
-        printformat("\nPort Change Detect");
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
+        //printformat("\nPort Change Detect Interrupt");
+        showPORTSC();
     }
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
-        printformat("\nFrame List Rollover");
+        /*printformat("\nFrame List Rollover Interrupt");*/
         pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
     if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )
     {
-        printformat("\nHost System Error");
+        printformat("\nHost System Error Interrupt");
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
     }
     if( pOpRegs->USBSTS & STS_ASYNC_INT )
@@ -113,7 +114,7 @@ void initEHCIHostController(uint32_t number)
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG = CF;
 
-    // Énable ports
+    // Enable ports
     for(uint8_t j=0; j<numPorts; j++)
     {
          pOpRegs->PORTSC[j] |=  PSTS_POWERON;
@@ -124,7 +125,7 @@ void initEHCIHostController(uint32_t number)
     }
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    /// pOpRegs->USBINTR /* = *((volatile uint32_t*)(opregs + 0x08)) */ = STS_INTMASK; // all interrupts allowed  // ---> breakdown!
+    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> breakdown!
 
     printformat("\n\nAfter Init of EHCI:");
     printformat("\nCTRLDSSEGMENT:              %X", pOpRegs->CTRLDSSEGMENT);
@@ -137,42 +138,66 @@ void initEHCIHostController(uint32_t number)
     showUSBSTS();
 }
 
-void showUSBSTS()
-{
-    settextcolor(15,0);   printformat("\n\nUSB status: ");
-    settextcolor(2,0);    printformat("%X",pOpRegs->USBSTS);    settextcolor(14,0);
-    if( pOpRegs->USBSTS & STS_USBINT )             { printformat("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT; }
-    if( pOpRegs->USBSTS & STS_USBERRINT )          { printformat("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT; }
-    if( pOpRegs->USBSTS & STS_PORT_CHANGE )        { printformat("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE; }
-    if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER ) { printformat("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER; }
-    if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )  { printformat("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR; }
-    if( pOpRegs->USBSTS & STS_ASYNC_INT )          { printformat("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT; }
-    if( pOpRegs->USBSTS & STS_HCHALTED )           { printformat("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;}
-    if( pOpRegs->USBSTS & STS_RECLAMATION )        { printformat("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;}
-    if( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printformat("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;}
-    if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printformat("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;}
-    settextcolor(15,0);
-}
-
 void showPORTSC()
 {
-    settextcolor(15,0);   printformat("\n\nPort status: ");     settextcolor(3,0);
     for(uint8_t j=0; j<numPorts; j++)
     {
-         printformat("%x ",pOpRegs->PORTSC[j]);
-         if( pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE )
-         {
-             settextcolor(14,0);
-             beep(1000,500);
-             printformat(" Connect Status Change Port %d\n", j+1); // USB port# starts with 1
-             settextcolor(3,0);
-             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // ack
-         }
+        if( pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE )
+        {
+            //settextcolor(14,0);
+            //printformat("Port %d", j+1); // USB port# starts with 1 (not 0)
+            //settextcolor(3,0);
+            //printformat(", Status: %x ", pOpRegs->PORTSC[j]);
+
+            char str[80], PortNumber[5], PortStatus[40];
+
+            itoa(j+1,PortNumber);
+            if( pOpRegs->PORTSC[j] & PSTS_CONNECTED )
+            {
+                strcpy(PortStatus,"Device attached");
+            }
+            else
+            {
+                strcpy(PortStatus,"Device not attached");
+            }
+
+            str[0]='\0';
+            strcpy(str,"Port ");
+            strcat(str,PortNumber);
+            strcat(str," Status: ");
+            strcat(str,PortStatus);
+            uint8_t color = 14;
+            printf("                                                                              ",46,color);
+            printf(str, 46, color); // output to info screen area
+            printf("                                                                              ",47,color);
+            printf("                                                                              ",48,color);
+
+            pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
+            // settextcolor(15,0);
+            beep(1000,500);
+        }
     }
-    settextcolor(15,0);
 }
 
-
+void showUSBSTS()
+{
+    settextcolor(15,0);
+    printformat("\n\nUSB status: ");
+    settextcolor(2,0);
+    printformat("%X",pOpRegs->USBSTS);
+    settextcolor(14,0);
+    if( pOpRegs->USBSTS & STS_USBINT )             { printformat("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
+    if( pOpRegs->USBSTS & STS_USBERRINT )          { printformat("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
+    if( pOpRegs->USBSTS & STS_PORT_CHANGE )        { printformat("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
+    if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER ) { printformat("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
+    if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )  { printformat("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
+    if( pOpRegs->USBSTS & STS_ASYNC_INT )          { printformat("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT;           }
+    if( pOpRegs->USBSTS & STS_HCHALTED )           { printformat("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;            }
+    if( pOpRegs->USBSTS & STS_RECLAMATION )        { printformat("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
+    if( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printformat("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
+    if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printformat("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
+    settextcolor(15,0);
+}
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

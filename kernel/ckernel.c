@@ -34,7 +34,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.175\n\n");
+    printformat("PrettyOS [Version 0.0.0.176\n\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -204,8 +204,8 @@ int main()
             /// TEST
             if(EHCIflag)
             {
-                showPORTSC();
-                showUSBSTS();
+                //showPORTSC();
+                //showUSBSTS();
             }
             /// TEST
 
