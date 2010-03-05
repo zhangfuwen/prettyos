@@ -7,30 +7,41 @@
 
 struct ehci_CapRegs
 {
-    uint8_t  CAPLENGTH;        // Core Capability Register Length
-    uint16_t HCIVERSION;       // Core Interface Version Number
-    uint32_t HCSPARAMS;        // Core Structural Parameters
-    uint32_t HCCPARAMS;        // Core Capability Parameters
-    uint32_t HCSPPORTROUTE_Hi; // Core Companion Port Route Description
-    uint32_t HCSPPORTROUTE_Lo; // Core Companion Port Route Description
-};
+    volatile uint8_t  CAPLENGTH;        // Core Capability Register Length
+    volatile uint8_t  reserved;
+    volatile uint16_t HCIVERSION;       // Core Interface Version Number
+    volatile uint32_t HCSPARAMS;        // Core Structural Parameters
+    volatile uint32_t HCCPARAMS;        // Core Capability Parameters
+    volatile uint32_t HCSPPORTROUTE_Hi; // Core Companion Port Route Description
+    volatile uint32_t HCSPPORTROUTE_Lo; // Core Companion Port Route Description
+} __attribute__((packed));
+
 
 struct ehci_OpRegs
 {
-    uint32_t USBCMD;           // USB Command                     Core  // +00h
-    uint32_t USBSTS;           // USB Status                      Core  // +04h
-    uint32_t USBINTR;          // USB Interrupt Enable            Core  // +08h
-    uint32_t FRINDEX;          // USB Frame Index                 Core  // +0Ch
-    uint32_t CTRLDSSEGMENT;    // 4G Segment Selector             Core  // +10h
-    uint32_t PERIODICLISTBASE; // Frame List Base Address         Core  // +14h
-    uint32_t ASYNCLISTADDR;    // Next Asynchronous List Address  Core  // +18h
-    uint32_t CONFIGFLAG;       // Configured Flag Register        Aux   // +40h
-    uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h, +48h, ...
-};
+    volatile uint32_t USBCMD;           // USB Command                     Core  // +00h
+    volatile uint32_t USBSTS;           // USB Status                      Core  // +04h
+    volatile uint32_t USBINTR;          // USB Interrupt Enable            Core  // +08h
+    volatile uint32_t FRINDEX;          // USB Frame Index                 Core  // +0Ch
+    volatile uint32_t CTRLDSSEGMENT;    // 4G Segment Selector             Core  // +10h
+    volatile uint32_t PERIODICLISTBASE; // Frame List Base Address         Core  // +14h
+    volatile uint32_t ASYNCLISTADDR;    // Next Asynchronous List Address  Core  // +18h
+    volatile uint32_t reserved1;												 // +1Ch
+    volatile uint32_t reserved2;												 // +20h
+    volatile uint32_t reserved3;												 // +24h
+    volatile uint32_t reserved4;												 // +28h
+    volatile uint32_t reserved5;												 // +2Ch
+    volatile uint32_t reserved6;												 // +30h
+    volatile uint32_t reserved7;												 // +34h
+    volatile uint32_t reserved8;												 // +38h
+    volatile uint32_t reserved9;												 // +3Ch
+    volatile uint32_t CONFIGFLAG;       // Configured Flag Register        Aux   // +40h
+    volatile uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h
+} __attribute__((packed));
+
 
 bool    EHCIflag;
 uint8_t numPorts;
-
 
 /* ****** */
 /* USBCMD */
@@ -55,12 +66,12 @@ uint8_t numPorts;
 
 #define CMD_PERIODIC_ENABLE            0x00000010
 
-#define CMD_FRAMELIST_SIZE             0x0000000C /* valid: */
+#define CMD_FRAMELIST_SIZE             0x0000000C /* valid values are: */
 #define CMD_FRAMELIST_1024             0x00000000
 #define CMD_FRAMELIST_512              0x00000004
 #define CMD_FRAMELIST_256              0x00000008
 
-#define CMD_HCRESET                    0x00000002
+#define CMD_HCRESET                    0x00000002 /* reset */
 #define CMD_RUN_STOP                   0x00000001 /* run/stop */
 
 
@@ -73,9 +84,9 @@ uint8_t numPorts;
 #define STS_PERIODIC_ENABLED           0x00004000
 #define STS_RECLAMATION                0x00002000
 #define STS_HCHALTED                   0x00001000
-#define STS_IMASK                      0x0000005F
 
 // USBSTS (Interrupts)
+#define STS_INTMASK                    0x0000003F
 #define STS_ASYNC_INT                  0x00000020
 #define STS_HOST_SYSTEM_ERROR          0x00000010
 #define STS_FRAMELIST_ROLLOVER         0x00000008
@@ -88,21 +99,21 @@ uint8_t numPorts;
 /* FRINDEX */
 /* *********/
 
-#define FRI_MASK                       0x00001fff
+#define FRI_MASK                       0x00001FFF
 
 
 /* **************** */
 /* PERIODICLISTBASE */
 /* **************** */
 
-#define PLB_ALIGNMENT                  0x00000fff  /* 4kB */
+#define PLB_ALIGNMENT                  0x00000FFF  /* 4kB */
 
 
 /* ************* */
 /* ASYNCLISTADDR */
 /* ************* */
 
-#define ALB_ALIGNMENT                  0x0000001f  /* 32B */
+#define ALB_ALIGNMENT                  0x0000001F  /* 32B */
 
 
 /* ********** */
@@ -156,8 +167,9 @@ uint8_t numPorts;
 
 // functions, ...
 
+void ehci_handler(struct regs* r);
 void analyzeEHCI(uint32_t bar);
-void initEHCIHostController();
+void initEHCIHostController(uint32_t number);
 void showUSBSTS();
 void showPORTSC();
 

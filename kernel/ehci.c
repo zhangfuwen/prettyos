@@ -22,6 +22,43 @@ struct ehci_OpRegs*  pOpRegs  = &OpRegs;
 <Tobiking> Mit "pCapRegs = (struct ehci_OpRegs*)bar;" kann man das Struct direkt auf die Register setzen
 */
 
+void ehci_handler(struct regs* r)
+{
+	printformat("EHCI-Interrupt: %X\n", pOpRegs->USBSTS);
+	settextcolor(14,0);
+    if( pOpRegs->USBSTS & STS_USBINT )
+    {
+        printformat("\nUSB Interrupt");
+        pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_USBINT);
+    }
+    if( pOpRegs->USBSTS & STS_USBERRINT )
+    {
+        printformat("\nUSB Error Interrupt");
+        pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_USBERRINT);
+    }
+    if( pOpRegs->USBSTS & STS_PORT_CHANGE )
+    {
+        printformat("\nPort Change Detect");
+        pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_PORT_CHANGE);
+    }
+    if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
+    {
+        printformat("\nFrame List Rollover");
+        pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_FRAMELIST_ROLLOVER);
+    }
+    if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )
+    {
+        printformat("\nHost System Error");
+        pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_HOST_SYSTEM_ERROR);
+    }
+    if( pOpRegs->USBSTS & STS_ASYNC_INT )
+    {
+        printformat("\nInterrupt on Async Advance");
+        pOpRegs->USBSTS = (*((volatile uint32_t*)(opregs + 0x04)) |= STS_ASYNC_INT);
+    }
+	settextcolor(15,0);
+}
+
 void analyzeEHCI(uint32_t bar)
 {
     EHCIflag = true;
@@ -45,7 +82,7 @@ void analyzeEHCI(uint32_t bar)
     printformat("\nOpRegs Address: %X ", opregs); // Host Controller Operational Registers
 }
 
-void initEHCIHostController()
+void initEHCIHostController(uint32_t number)
 {
     // Stop HC (bit0 = 0)
     pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) &= ~CMD_RUN_STOP ); // set Run-Stop-Bit to 0
@@ -65,18 +102,14 @@ void initEHCIHostController()
             break;
     }
 
-    // Program the CTRLDSSEGMENT register with 4-Gigabyte segment
-    // where all of the interface data structures are allocated.
+    pOpRegs->USBINTR = *((volatile uint32_t*)(opregs + 0x08)) = 0; // EHCI interrupts disabled
+    irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
 
+    // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
     pOpRegs->CTRLDSSEGMENT = *((volatile uint32_t*)(opregs + 0x10)) = 0x0;
 
-    // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    // pOpRegs->USBINTR       = *((volatile uint32_t*)(opregs + 0x08)) = 0x3F; // 63 = 00111111b
-
-    pOpRegs->USBINTR = *((volatile uint32_t*)(opregs + 0x08)) = 0; // no interrupts, we poll from USBSTS
 
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
-
     void* virtualMemoryPERIODICLISTBASE  = malloc(0x1000,PAGESIZE);
     void* physicalMemoryPERIODICLISTBASE  = (void*) paging_get_phys_addr(kernel_pd, virtualMemoryPERIODICLISTBASE);
     pOpRegs->PERIODICLISTBASE = *((volatile uint32_t*)(opregs + 0x14)) = (uint32_t)physicalMemoryPERIODICLISTBASE ;
@@ -88,7 +121,6 @@ void initEHCIHostController()
     // and turn the host controller ON via setting the Run/Stop bit.
     // Software must not write a one to this field unless the host controller is in the Halted state
     // (i.e. HCHalted in the USBSTS register is a one). Doing so will yield undefined results.
-
     pOpRegs->USBSTS = *((volatile uint32_t*)(opregs + 0x04));
     pOpRegs->USBCMD = (*((volatile uint32_t*)(opregs + 0x00)) |= CMD_8_MICROFRAME ); // Bits 23-16: 08h
     if( pOpRegs->USBSTS & STS_HCHALTED )
@@ -99,8 +131,7 @@ void initEHCIHostController()
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG    = *((volatile uint32_t*)(opregs + 0x40)) = CF;
 
-    // Ports enablen:
-
+    // enable ports
     for(uint8_t j=0; j<numPorts; j++)
     {
          pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*j)) |=  PSTS_POWERON);
@@ -110,6 +141,9 @@ void initEHCIHostController()
          pOpRegs->PORTSC[j] = (*((volatile uint32_t*)(opregs + 0x44 + 4*j)) &= ~PSTS_PORT_RESET);
     }
 
+    // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
+    /// pOpRegs->USBINTR = *((volatile uint32_t*)(opregs + 0x08)) = STS_INTMASK; // all interrupts allowed  // ---> breakdown!
+
     printformat("\n\nAfter Init of EHCI:");
     printformat("\nCTRLDSSEGMENT:              %X", *((volatile uint32_t*)(opregs + 0x10)) );
     printformat("\nUSBINTR:                    %X", *((volatile uint32_t*)(opregs + 0x08)) );
@@ -117,6 +151,7 @@ void initEHCIHostController()
     printformat("  virt addr: %X", virtualMemoryPERIODICLISTBASE);
     printformat("\nUSBCMD:                     %X", *((volatile uint32_t*)(opregs + 0x00)) );
     printformat("\nCONFIGFLAG:                 %X", *((volatile uint32_t*)(opregs + 0x40)) );
+
     showUSBSTS();
 }
 
