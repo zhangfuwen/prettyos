@@ -17,7 +17,6 @@ uint32_t ubar;
 
 void ehci_handler(struct regs* r)
 {
-	/* printformat("EHCI-Interrupt: %X\n", pOpRegs->USBSTS); */
 	settextcolor(14,0);
     if( pOpRegs->USBSTS & STS_USBINT )
     {
@@ -32,7 +31,6 @@ void ehci_handler(struct regs* r)
     if( pOpRegs->USBSTS & STS_PORT_CHANGE )
     {
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
-        //printformat("\nPort Change Detect Interrupt");
         showPORTSC();
     }
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
@@ -71,7 +69,7 @@ void analyzeEHCI(uint32_t bar)
 
 void initEHCIHostController(uint32_t number)
 {
-    // irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler); /// TEST for Sun VBox
+    irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
 
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
 
@@ -125,7 +123,7 @@ void initEHCIHostController(uint32_t number)
     }
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    pOpRegs->USBINTR = 0; // STS_INTMASK; // all interrupts allowed  // ---> breakdown!
+    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
 
     printformat("\n\nAfter Init of EHCI:");
     printformat("\nCTRLDSSEGMENT:              %X", pOpRegs->CTRLDSSEGMENT);
@@ -144,11 +142,6 @@ void showPORTSC()
     {
         if( pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE )
         {
-            //settextcolor(14,0);
-            //printformat("Port %d", j+1); // USB port# starts with 1 (not 0)
-            //settextcolor(3,0);
-            //printformat(", Status: %x ", pOpRegs->PORTSC[j]);
-
             char str[80], PortNumber[5], PortStatus[40];
 
             itoa(j+1,PortNumber);

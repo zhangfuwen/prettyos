@@ -34,7 +34,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.178]\n\n");
+    printformat("PrettyOS [Version 0.0.0.179]\n\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -201,15 +201,6 @@ int main()
 
         if (CurrentSeconds!=CurrentSecondsOld)
         {
-            /// TEST
-            if(EHCIflag)
-            {
-                //showPORTSC();
-                //showUSBSTS();
-                ehci_handler((struct regs*)NULL); /// TEST for Sun VBox
-            }
-            /// TEST
-
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime); // not ok!
             strcat(DateAndTime, "     ");
