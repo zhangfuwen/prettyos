@@ -48,5 +48,5 @@ initrd: $(wildcard $(USERDIR)/*)
 	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 	$(LD) *.o -T $(USERTOOLS)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
 	$(RM) *.o 
-	tools/make_initrd $(USERRDDIR)/test1.txt file1 $(USERRDDIR)/test2.txt file2 $(USERRDDIR)/test3.txt file3 $(USERDIR)/program.elf shell
+	tools/make_initrd $(USERRDDIR)/info.txt info $(USERDIR)/program.elf shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
