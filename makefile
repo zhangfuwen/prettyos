@@ -9,7 +9,7 @@ USERTOOLS= user/user_tools
 ifeq ($(OS),WINDOWS)
     RM=del
     MV=cmd /c move/Y
-    NASM= nasmw
+    NASM= nasm
     CC= i586-elf-gcc
     LD= i586-elf-ld
 else

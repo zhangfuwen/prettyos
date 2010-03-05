@@ -177,10 +177,7 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
 void keyboard_install()
 {
     // Setup the queue
-    for ( int i=0; i<KQSIZE; ++i )
-    {
-       KEYQUEUE[i]=0;
-    }
+	memset(KEYQUEUE, 0, KQSIZE);
     pHeadKQ = KEYQUEUE;
     pTailKQ = KEYQUEUE;
     KQ_count_read  = 0;
