@@ -83,20 +83,22 @@ int32_t flpydsk_load(const char* name, const char* ext)
     retVal = file_ia(fat_entry,firstCluster,file); // read sectors of file
     ///
 
-    printformat("\nFile content (start of first 5 clusters): ");
-    printformat("\n1st sector:\n"); for(uint16_t i=   0;i<  20;i++) {printformat("%y ",file[i]);}
-    printformat("\n2nd sector:\n"); for(uint16_t i= 512;i< 532;i++) {printformat("%y ",file[i]);}
-    printformat("\n3rd sector:\n"); for(uint16_t i=1024;i<1044;i++) {printformat("%y ",file[i]);}
-    printformat("\n4th sector:\n"); for(uint16_t i=1536;i<1556;i++) {printformat("%y ",file[i]);}
-    printformat("\n5th sector:\n"); for(uint16_t i=2048;i<2068;i++) {printformat("%y ",file[i]);}
-    printformat("\n\n");
+    #ifdef _DIAGNOSIS_
+        printformat("\nFile content (start of first 5 clusters): ");
+        printformat("\n1st sector:\n"); for(uint16_t i=   0;i<  20;i++) {printformat("%y ",file[i]);}
+        printformat("\n2nd sector:\n"); for(uint16_t i= 512;i< 532;i++) {printformat("%y ",file[i]);}
+        printformat("\n3rd sector:\n"); for(uint16_t i=1024;i<1044;i++) {printformat("%y ",file[i]);}
+        printformat("\n4th sector:\n"); for(uint16_t i=1536;i<1556;i++) {printformat("%y ",file[i]);}
+        printformat("\n5th sector:\n"); for(uint16_t i=2048;i<2068;i++) {printformat("%y ",file[i]);}
+        printformat("\n\n");
+    #endif
 
-    if(retVal==0)
+    if(!retVal)
     {
         /// START TASK AND INCREASE TASKCOUNTER
         if( elf_exec( file, f.size ) ) // execute loaded file
         {
-            userTaskCounter++; // an additional user-program has been started
+            userTaskCounter++;         // an additional user-program has been started
         }
     }
     else if(retVal==-1)
@@ -104,13 +106,9 @@ int32_t flpydsk_load(const char* name, const char* ext)
         printformat("file was not executed due to FAT error.");
     }
     printformat("\n\n");
-
     flpydsk_control_motor(false);
-
     return 0;
 }
-
-
 
 
 int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option)
@@ -724,13 +722,15 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag)
 uint32_t search_file_first_cluster(const char* name, const char* ext, struct file* f)
 {
    struct dir_entry entry;
-   char buf1[10];
-   char buf2[5];
+   char buf1[10], buf2[5];
 
    for(uint8_t i=0;i<224;i++)
    {
        read_dir(&entry, i, 19, false);
-
+       if ((&entry)->Filename[0] == 0)
+       {
+           break; // filter empty entry, no further entries expected
+       }
        settextcolor(14,0);
        printformat("root dir entry: %c%c%c%c%c%c%c%c.%c%c%c\n",
                    (&entry)->Filename[0],(&entry)->Filename[1],(&entry)->Filename[2],(&entry)->Filename[3],
@@ -756,9 +756,8 @@ uint32_t search_file_first_cluster(const char* name, const char* ext, struct fil
        }
     }
     settextcolor(14,0);
-    printformat("rootdir search finished. 2 sec break.\n\n");
+    printformat("rootdir search finished.\n\n");
     settextcolor(2,0);
-    //sleepSeconds(2);
 
     f->size = (&entry)->FileSize;
     f->firstCluster = FORM_SHORT((&entry)->FstClusLO,(&entry)->FstClusHI);

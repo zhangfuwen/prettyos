@@ -123,10 +123,12 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                     pciDev_Array[number].func   = func;
 
                     // output to screen
-                    printformat("#%d %d:%d.%d\t dev:%x vend:%x",
+                    printformat("#%d  %d:%d.%d\t dev:%x vend:%x",
                          number,
-                         pciDev_Array[number].bus, pciDev_Array[number].device, pciDev_Array[number].func,
-                         pciDev_Array[number].deviceID, pciDev_Array[number].vendorID );
+                         pciDev_Array[number].bus, pciDev_Array[number].device,
+                         pciDev_Array[number].func,
+                         pciDev_Array[number].deviceID,
+                         pciDev_Array[number].vendorID );
 
                     if(pciDev_Array[number].irq!=255)
                     {
@@ -155,14 +157,14 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                             {
                                 if(pciDev_Array[number].bar[i].memoryType == 0)
                                 {
-                                    printformat("%d:%X MEM ", i, pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0 );
+                                    printformat("%X MMIO ", pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0 );
                                 }
                                 if(pciDev_Array[number].bar[i].memoryType == 1)
                                 {
-                                    printformat("%d:%x I/O ", i, pciDev_Array[number].bar[i].baseAddress & 0xFFFC );
+                                    printformat("%x I/O ",  pciDev_Array[number].bar[i].baseAddress & 0xFFFC );
                                 }
 
-                                /// TEST Memory Size Begin
+                                // TEST Memory Size Begin
                                 cli();
                                 pci_config_write_dword  ( bus, device, func, PCI_BAR0 + 4*i, 0xFFFFFFFF );
                                 pciBar = pci_config_read( bus, device, func, PCI_BAR0 + 4*i             );
@@ -171,7 +173,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                 sti();
                                 pciDev_Array[number].bar[i].memorySize = (~pciBar | 0x0F) + 1;
                                 printformat("sz:%d ", pciDev_Array[number].bar[i].memorySize );
-                                /// TEST Memory Size End
+                                // TEST Memory Size End
 
                                 /// TEST EHCI Data Begin
                                 if(  (pciDev_Array[number].interfaceID==0x20)   // EHCI

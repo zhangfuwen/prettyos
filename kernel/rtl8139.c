@@ -14,8 +14,6 @@ extern uint8_t network_buffer[8192+16]; /// OK?
 extern uint32_t BaseAddressRTL8139_IO;
 extern uint32_t BaseAddressRTL8139_MMIO;
 
-// handler for IRQ interrupt of Network Card
-/*
 void rtl8139_handler(struct regs* r)
 {
 	/// TODO: ring buffer, we get always the first received data!
@@ -40,78 +38,7 @@ void rtl8139_handler(struct regs* r)
     printformat("\nRTL8139 IRQ: %y, %s  ", val,str);
     settextcolor(3,0);
 
-    // reset interrupts bei writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
-	*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E )) = val;
-
-	strcat(str,"   Receiving Buffer content:\n");
-	printformat(str);
-
-    int32_t length, ethernetType, i;
-    length = network_buffer[3]*0x100 + network_buffer[2]; // Little Endian
-    if (length>300) length = 300;
-    ethernetType = network_buffer[16]*0x100 + network_buffer[17]; // Big Endian
-
-    // output receiving buffer
-    settextcolor(13,0);
-    printformat("Flags: ");
-    settextcolor(3,0);
-    for(i=0;i<2;i++) {printformat("%y ",network_buffer[i]);}
-
-    settextcolor(13,0); printformat("\tLength: "); settextcolor(3,0);
-    for(i=2;i<4;i++) {printformat("%y ",network_buffer[i]);}
-
-    settextcolor(13,0); printformat("\nMAC Receiver: "); settextcolor(3,0);
-    for(i=4;i<10;i++) {printformat("%y ",network_buffer[i]);}
-
-    settextcolor(13,0); printformat("MAC Transmitter: "); settextcolor(3,0);
-    for(i=10;i<16;i++) {printformat("%y ",network_buffer[i]);}
-
-    settextcolor(13,0);
-    printformat("\nEthernet: ");
-    settextcolor(3,0);
-    if(ethernetType<=0x05DC){  printformat("type 1, "); }
-    else                    {  printformat("type 2, "); }
-
-    settextcolor(13,0);
-    if(ethernetType<=0x05DC){  printformat("Length: "); }
-    else                    {  printformat("Type: ");   }
-    settextcolor(3,0);
-    for(i=16;i<18;i++) {printformat("%y ",network_buffer[i]);}
-
-    printformat("\n");
-    for(i=18;i<=length;i++) {printformat("%y ",network_buffer[i]);}
-    printformat("\n--------------------------------------------------------------------------------\n");
-
-    settextcolor(15,0);
-}
-*/
-
-// proposal of tty:
-void rtl8139_handler(struct regs* r)
-{
-	/// TODO: ring buffer, we get always the first received data!
-
-	// read bytes 003Eh bis 003Fh, Interrupt Status Register
-    uint16_t val = *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E ));
-
-    char str[80];
-    strcpy(str,"");
-
-    if((val & 0x1) == 0x1)
-    {
-        strcpy(str,"Receive OK,");
-    }
-    if((val & 0x4) == 0x4)
-    {
-        strcpy(str,"Transfer OK,");
-    }
-    settextcolor(3,0);
-    printformat("\n--------------------------------------------------------------------------------");
-    settextcolor(14,0);
-    printformat("\nRTL8139 IRQ: %y, %s  ", val,str);
-    settextcolor(3,0);
-
-    // reset interrupts bei writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
+    // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
 	*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E )) = val;
 
 	strcat(str,"   Receiving Buffer content:\n");
@@ -166,13 +93,17 @@ void rtl8139_handler(struct regs* r)
 
 void install_RTL8139(uint32_t number)
 {
-    printformat("\nUsed MMIO Base for RTL8139: %X",BaseAddressRTL8139_MMIO);
+    #ifdef _DIAGNOSIS_
+        settextcolor(3,0);
+        printformat("RTL8139 MMIO: %X\n",BaseAddressRTL8139_MMIO);
+        settextcolor(15,0);
+    #endif
 
     /// idendity mapping of BaseAddressRTL8139_MMIO
     int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO );
     if(retVal == true)
     {
-        printformat("\npaging_do_idmapping(...) successful.\n");
+        printformat("\n");
     }
     else
     {
@@ -182,39 +113,38 @@ void install_RTL8139(uint32_t number)
     // "power on" the card
     *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x52 )) = 0x00;
 
-    // do an Software reset on that card
-    /* Einen Reset der Karte durchführen: Bit 4 im Befehlsregister (0x37, 1 Byte) setzen.
-       Wenn ich hier Portnummern von Registern angebe, ist damit der Offset zum ersten Port der Karte gemeint,
-       der durch die PCI-Funktionen ermittelt werden muss. */
+    // carry out reset of network card: set bit 4 at offset 0x37 (1 Byte)
     *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) = 0x10;
 
-    // and wait for the reset of the "reset flag"
+    // wait for the reset of the "reset flag"
     uint32_t k=0;
     while(true)
     {
         sleepMilliSeconds(10);
         if( !( *((volatile uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) & 0x10 ) ) //
         {
-            printformat("\nwaiting successful(%d)!\n", k);
+            #ifdef _DIAGNOSIS_
+                settextcolor(3,0);
+                printformat("\nwaiting successful(%d).\n", k);
+                settextcolor(15,0);
+            #endif
             break;
         }
         k++;
         if(k>100)
         {
-            printformat("\nWaiting not successful. Finished by timeout.\n");
+            printformat("\nWaiting not successful! Finished by timeout.\n");
             break;
         }
     }
-
-    printformat("mac address: %y-%y-%y-%y-%y-%y\n",
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+0),
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+1),
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+2),
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+4),
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+5) );
-
-    sleepSeconds(3); // for analysis
+    #ifdef _DIAGNOSIS_
+        settextcolor(3,0);
+        printformat("mac address: %y-%y-%y-%y-%y-%y\n",
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+0), *((uint8_t*)(BaseAddressRTL8139_MMIO)+1),
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+2), *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+4), *((uint8_t*)(BaseAddressRTL8139_MMIO)+5) );
+        settextcolor(15,0);
+    #endif
 
     // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
     /*
@@ -251,7 +181,6 @@ void install_RTL8139(uint32_t number)
     *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0xFF; // all interrupts
     //*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0x5; // only TOK and ROK
 
-    printformat("All fine, install irq handler.\n");
     irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);
 }
 

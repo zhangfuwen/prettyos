@@ -30,11 +30,24 @@ extern uint32_t file_data_end;
 // String for Date&Time
 char DateAndTime[100];
 
+/*
+static void floatTest()
+{
+    printformat("float test:" );
+    float a = 5.12, b = 64.26, c = 0.00;
+    c = a * b;
+    char string[80];
+    float2string(c, 4, string);
+    printformat(" 5.12 * 64.26 = " );
+    printformat("%s",string);
+}
+*/
+
 static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.185]\n\n");
+    printformat("PrettyOS [Version 0.0.0.186]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -55,22 +68,14 @@ int main()
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
 
-    /// TEST
     /*
-    printformat("float test:" );
-    float a = 5.12, b = 64.26, c = 0.00;
-    c = a * b;
-    char string[80];
-    float2string(c, 4, string);
-    printformat(" 5.12 * 64.26 = " );
-    printformat("%s",string);
+        void floatTest()
     */
-    /// TEST
 
     // direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
     {
-        printformat("\n1.44 MB floppy disk has been installed as floppy device 0\n\n");
+        printformat("1.44 MB FDD device 0\n\n");
         pODA->flpy_motor[0] = false;        // first floppy motor is off
         flpydsk_set_working_drive(0); // set drive 0 as current drive
 	    flpydsk_install(32+6);        // floppy disk uses IRQ 6 // 32+6
