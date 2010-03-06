@@ -1,4 +1,3 @@
-USERLIB=../user_program_c
 USERTOOLS=../user_tools
 
 ifeq ($(OS),WINDOWS)

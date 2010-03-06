@@ -1,18 +1,20 @@
 #include "userlib.h"
 #define MAX_CHAR_PER_LINE 70
+#define ENTRY_CACHE_SIZE 10
 
-static void clearEntry(char* entry, int* j)
+void* memset(void* dest, char val, unsigned int count)
 {
-    for((*j)=0;(*j)<MAX_CHAR_PER_LINE;(*j)++)
-    {
-        entry[(*j)]=0;
-    }
+    char* temp = (char*)dest;
+    for( ; count != 0; count--) *temp++ = val;
+    return dest;
 }
 
 int main()
 {
-    int j, n;
+	unsigned int j, cursorPos;
     char entry[MAX_CHAR_PER_LINE+10];
+	char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+10];
+	int curEntry = -1;
     int retVal;
     char name[9];
     char ext[4];
@@ -29,6 +31,11 @@ int main()
     //for(;;);
     ///TEST
 
+	//Init Cache
+	for(int i = 0; i < ENTRY_CACHE_SIZE; i++) {
+		memset(entryCache, 0, MAX_CHAR_PER_LINE+10);
+	}
+
     while(true)
     {
       numTasks = getUserTaskNumber();
@@ -44,8 +51,8 @@ int main()
       if(numTasks<=0) // no user tasks are running
       {
         settextcolor(15,0);
-        j=0;
-        clearEntry(entry,&n);
+		j = 0; cursorPos = 0;
+		memset(entry, 0, MAX_CHAR_PER_LINE);
         puts("$> ");
         start = getCurrentMilliseconds();
 
@@ -68,36 +75,104 @@ int main()
           {
             input = getch();
 
-            if( (input >= 0x20) /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
-            {
-              if(j<MAX_CHAR_PER_LINE) //
-              {
-                  putch(input);
-                  entry[j]=input;
-                  ++j;
-              }
-            }
-            if( input==8 )                      // Backspace
-            {
-              if(j>0)
-              {
-                  putch('\b');
-                  entry[j-1]='\0';
-                  --j;
-              }
-            }
-
-            if( input==10 )                     // Line Feed (ENTER-Key)
-            {
-              puts(" <--");
-              putch('\n');
-              entry[j]='\0';
-              ++j;
-              break;
-            }
-          }
+			switch(input) {
+				case 8:   // Backspace
+					if(curEntry != -1) {
+						curEntry = -1;
+						strcpy(entry, entryCache[curEntry]);
+					}
+					if(j>0)
+					{
+						putch('\b');
+						entry[j-1]='\0';
+						--j;
+					}
+					break;
+				case 10:  // Line Feed (ENTER)
+					puts(" <--\n");
+					entry[j]='\0';
+					++j;
+					if(curEntry == -1) {
+						for(int i = ENTRY_CACHE_SIZE-2; i >= 0; i--) {
+							strcpy(entryCache[i+1], entryCache[i]);
+						}
+						strcpy(entryCache[0], entry);
+					}
+					else {
+						strcpy(entry, entryCache[curEntry]);
+					}
+					goto EVALUATION;
+				case 144: // Insert; To be implemented later
+					break;
+				case 145: // Delete; To be implemented later
+					if(curEntry != -1) {
+						curEntry = -1;
+						strcpy(entry, entryCache[curEntry]);
+					}
+					break;
+				case 146: // POS1; To be implemented later
+					break;
+				case 147: // END; To be implemented later
+					break;
+				case 150: // Left Arrow; To be implemented later
+					if(cursorPos > 0) {
+						cursorPos--;
+					}
+					break;
+				case 151: // Up Arrow
+					if(curEntry < ENTRY_CACHE_SIZE-1 && *entryCache[curEntry+1] != 0) {
+						for(; j > 0; j--) {
+							putch('\b'); //Zeile leeren
+						}
+						++curEntry;
+						puts(entryCache[curEntry]);
+						j = strlen(entryCache[curEntry]);
+					}
+					break;
+				case 152: // Down Arrow
+					if(curEntry >= 0) {
+						for(; j > 0; j--) {
+							putch('\b'); //Zeile leeren
+						}
+						--curEntry;
+						if(curEntry == -1) {
+							puts(entry);
+							j = strlen(entry);
+						}
+						else {
+							puts(entryCache[curEntry]);
+							j = strlen(entryCache[curEntry]);
+						}
+					}
+					if(curEntry == -1) {
+						for(; j > 0; j--) {
+							putch('\b'); //Zeile leeren
+						}
+						memset(entry, 0, MAX_CHAR_PER_LINE);
+					}
+					break;
+				case 153: // Right Arrow; To be implemented later
+					if(cursorPos < j) {
+						cursorPos++;
+					}
+					break;
+				default:
+					if(input >= 0x20 && j<MAX_CHAR_PER_LINE /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
+					{
+						if(curEntry != -1) {
+							curEntry = -1;
+							strcpy(entry, entryCache[curEntry]);
+						}
+						putch(input);
+						entry[j]=input;
+						++j;
+					}
+					break;
+			}//switch
+          }//if
         }//while
 
+EVALUATION:
         // evaluation of entry
         {
           if( ( strcmp(entry,"help") == 0 ) || ( strcmp(entry,"?") == 0 ) )
