@@ -213,12 +213,14 @@ void DeactivateLegacySupport(uint32_t number)
         int32_t eecp_id=0;
         while(eecp)
         {
+            printformat("eecp = %x, ",eecp);
             eecp_id = pci_config_read( bus, dev, func, 0x0100/*length 1 byte*/ + eecp + 0 );
-            if (eecp_id == 1)
-            {
-                break;
-            }
+            printformat("eecp_id = %x\n",eecp_id);
+            if(eecp_id == 1)
+                 break;
             eecp = pci_config_read( bus, dev, func, 0x0100 + eecp + 1 );
+            if(eecp == 0xFF)
+                break;
         }
 
         // Check, whether a Legacy-Support-EC was found and the BIOS-Semaphore is set
