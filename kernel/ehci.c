@@ -14,6 +14,7 @@ extern page_directory_t* kernel_pd;
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 uint32_t ubar;
+uint32_t eecp;
 
 void ehci_handler(struct regs* r)
 {
@@ -70,6 +71,10 @@ void analyzeEHCI(uint32_t bar)
 void initEHCIHostController(uint32_t number)
 {
     irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
+
+    /// TEST
+    DeactivateLegacySupport(number);
+    /// TEST
 
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
 
@@ -190,6 +195,69 @@ void showUSBSTS()
     if( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printformat("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
     if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printformat("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
     settextcolor(15,0);
+}
+
+void DeactivateLegacySupport(uint32_t number)
+{
+    // number = 2^3*2^5*bus + 2^3*dev + func
+    uint8_t func = (number >> 0) & 0x07;
+    uint8_t dev  = (number >> 3) & 0x1F;
+    uint8_t bus  = (number >> 8);
+
+    bool failed = false;
+    eecp = BYTE2(pCapRegs->HCCPARAMS);
+    printformat("DeactivateLegacySupport: eecp = %x\n",eecp);
+
+    if (eecp >= 0x40) // behind standard pci registers, cf. http://wiki.osdev.org/PCI#PCI_Device_Structure
+    {
+        int32_t eecp_id=0;
+        while(eecp)
+        {
+            eecp_id = pci_config_read( bus, dev, func, 0x0100/*length 1 byte*/ + eecp + 0 );
+            if (eecp_id == 1)
+            {
+                break;
+            }
+            eecp = pci_config_read( bus, dev, func, 0x0100 + eecp + 1 );
+        }
+
+        // Check, whether a Legacy-Support-EC was found and the BIOS-Semaphore is set
+
+        if((eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 + eecp + 2 ) & 0x01))
+        {
+            // set OS-Semaphore
+            pci_config_write_byte( bus, dev, func, eecp + 3, 0x01 );
+            failed = true;
+
+            int32_t timeout=0;
+            // Wait for BIOS-Semaphore being not set
+            while( ( pci_config_read( bus, dev, func, 0x0100 + eecp + 2 ) & 0x01 ) && ( timeout<50 ) )
+            {
+                sleepMilliSeconds(20);
+                timeout++;
+            }
+
+            if( !( pci_config_read( bus, dev, func, 0x0100 + eecp + 2 ) & 0x01) )
+            {
+                // Wait for the OS-Semaphore being set
+                timeout=0;
+                while( !( pci_config_read( bus, dev, func, 0x0100 + eecp + 3 ) & 0x01) && (timeout<50) )
+                {
+                    sleepMilliSeconds(20);
+                    timeout++;
+                }
+            }
+            if( pci_config_read( bus, dev, func, 0x0100 + eecp + 3 ) & 0x01 )
+            {
+                failed = false;
+            }
+            if(failed)
+            {
+                // Deactivate Legacy Support now
+                pci_config_write_dword( bus, dev, func, eecp + 4, 0x0 );
+            }
+        }
+    }
 }
 
 /*

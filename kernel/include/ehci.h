@@ -172,5 +172,6 @@ void analyzeEHCI(uint32_t bar);
 void initEHCIHostController(uint32_t number);
 void showUSBSTS();
 void showPORTSC();
+void DeactivateLegacySupport(uint32_t number);
 
 #endif

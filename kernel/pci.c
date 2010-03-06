@@ -47,6 +47,18 @@ uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t co
     return readVal;
 }
 
+void pci_config_write_byte( uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint8_t val )
+{
+    outportl(PCI_CONFIGURATION_ADDRESS,
+        0x80000000
+        | (bus     << 16)
+        | (device  << 11)
+        | (func    <<  8)
+        |  reg );
+
+    outportb(PCI_CONFIGURATION_DATA, val);
+}
+
 void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val )
 {
     outportl(PCI_CONFIGURATION_ADDRESS,
@@ -58,6 +70,8 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 
     outportl(PCI_CONFIGURATION_DATA, val);
 }
+
+
 
 
 
