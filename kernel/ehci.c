@@ -199,10 +199,9 @@ void showUSBSTS()
 
 void DeactivateLegacySupport(uint32_t number)
 {
-    // number = 2^3*2^5*bus + 2^3*dev + func
-    uint8_t func = (number >> 0) & 0x07;
-    uint8_t dev  = (number >> 3) & 0x1F;
-    uint8_t bus  = (number >> 8);
+    uint8_t bus  = pciDev_Array[number].bus;
+    uint8_t dev  = pciDev_Array[number].device;
+    uint8_t func = pciDev_Array[number].func;
 
     bool failed = false;
     eecp = BYTE2(pCapRegs->HCCPARAMS);
@@ -214,18 +213,18 @@ void DeactivateLegacySupport(uint32_t number)
         while(eecp)
         {
             printformat("eecp = %x, ",eecp);
-            eecp_id = pci_config_read( bus, dev, func, 0x0100/*length 1 byte*/ + eecp + 0 );
+            eecp_id = pci_config_read( bus, dev, func, 0x0100/*length 1 byte*/ | (eecp + 0) );
             printformat("eecp_id = %x\n",eecp_id);
             if(eecp_id == 1)
                  break;
-            eecp = pci_config_read( bus, dev, func, 0x0100 + eecp + 1 );
+            eecp = pci_config_read( bus, dev, func, 0x0100 | (eecp + 1) );
             if(eecp == 0xFF)
                 break;
         }
 
         // Check, whether a Legacy-Support-EC was found and the BIOS-Semaphore is set
 
-        if((eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 + eecp + 2 ) & 0x01))
+        if((eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01))
         {
             // set OS-Semaphore
             pci_config_write_byte( bus, dev, func, eecp + 3, 0x01 );
@@ -233,23 +232,23 @@ void DeactivateLegacySupport(uint32_t number)
 
             int32_t timeout=0;
             // Wait for BIOS-Semaphore being not set
-            while( ( pci_config_read( bus, dev, func, 0x0100 + eecp + 2 ) & 0x01 ) && ( timeout<50 ) )
+            while( ( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01 ) && ( timeout<50 ) )
             {
                 sleepMilliSeconds(20);
                 timeout++;
             }
 
-            if( !( pci_config_read( bus, dev, func, 0x0100 + eecp + 2 ) & 0x01) )
+            if( !( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01) )
             {
                 // Wait for the OS-Semaphore being set
                 timeout=0;
-                while( !( pci_config_read( bus, dev, func, 0x0100 + eecp + 3 ) & 0x01) && (timeout<50) )
+                while( !( pci_config_read( bus, dev, func, 0x0100 | (eecp + 3) ) & 0x01) && (timeout<50) )
                 {
                     sleepMilliSeconds(20);
                     timeout++;
                 }
             }
-            if( pci_config_read( bus, dev, func, 0x0100 + eecp + 3 ) & 0x01 )
+            if( pci_config_read( bus, dev, func, 0x0100 | (eecp + 3) ) & 0x01 )
             {
                 failed = false;
             }
