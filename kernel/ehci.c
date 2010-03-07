@@ -69,23 +69,38 @@ void analyzeEHCI(uint32_t bar)
     printformat("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
 }
 
-void resetPort(uint8_t number)
+void resetPort(uint8_t j, bool sleepFlag)
 {
-     // power on and set the enabled bit to zero
-     pOpRegs->PORTSC[number] |=  PSTS_POWERON;
-     pOpRegs->PORTSC[number] &= ~PSTS_ENABLED;
+     pOpRegs->PORTSC[j] |=  PSTS_POWERON;
+     pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
 
-     // reset
-     pOpRegs->PORTSC[number] |=  PSTS_PORT_RESET;
-     sleepMilliSeconds(50);
-     pOpRegs->PORTSC[number] &= ~PSTS_PORT_RESET;
+     pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
+
+     if(sleepFlag)
+     {
+         sleepMilliSeconds(50);
+     }
+     else
+     {
+         for(uint32_t k=0; k<50000000; k++){nop();}
+     }
+
+     pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
 
      // wait and check, whether really zero
      uint32_t timeoutPortReset=0;
-     while((pOpRegs->PORTSC[number] & PSTS_PORT_RESET) != 0)
+     while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
      {
          printformat("\nwaiting for port reset ...");
-         sleepMilliSeconds(50);
+
+         if(sleepFlag)
+         {
+             sleepMilliSeconds(50);
+         }
+         else
+         {
+             for(uint32_t k=0; k<50000000; k++){nop();}
+         }
          timeoutPortReset++;
          if(timeoutPortReset>20)
          {
@@ -145,7 +160,7 @@ void initEHCIHostController(uint32_t number)
     // Enable ports
     for(uint8_t j=0; j<numPorts; j++)
     {
-         resetPort(j);
+         resetPort(j,true);
 
          // test on high speed 1005h
          if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
@@ -184,7 +199,7 @@ void showPORTSC()
             if( pOpRegs->PORTSC[j] & PSTS_CONNECTED )
             {
                 strcpy(PortStatus,"Device attached");
-                //resetPort(j);
+                resetPort(j,false);
             }
             else
             {
@@ -247,7 +262,7 @@ void checkPortLineStatus()
         printformat("SE0");
         if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
         {
-             settextcolor(11,0);
+             settextcolor(14,0);
              printformat(" ,high speed, enabled");
              settextcolor(15,0);
         }

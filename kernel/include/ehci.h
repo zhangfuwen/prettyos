@@ -174,6 +174,5 @@ void showUSBSTS();
 void showPORTSC();
 void DeactivateLegacySupport(uint32_t number);
 void checkPortLineStatus();
-void resetPort(uint8_t number);
-
+void resetPort(uint8_t j, bool sleepFlag);
 #endif
