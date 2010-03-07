@@ -180,11 +180,10 @@ char* strncpy(char* dest, const char* src, unsigned int n) // okay?
 {
     if(n != 0)
     {
-        char* d       = dest;
-        const char* s = src;
+        char* d = dest;
         do
         {
-            if ((*d++ = *s++) == 0)
+            if ((*d++ = *src++) == 0)
             {
                 /* NUL pad the remaining n-1 bytes */
                 while(--n != 0)

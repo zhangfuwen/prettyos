@@ -113,8 +113,8 @@ int main()
                     {
                         if(curEntry != -1)
                         {
-                            curEntry = -1;
                             strcpy(entry, entryCache[curEntry]);
+                            curEntry = -1;
                         }
                         eraseFirst(entry+cursorPos-1);
                         --j;
@@ -153,8 +153,8 @@ int main()
                     if(cursorPos < j) {
                         if(curEntry != -1)
                         {
-                            curEntry = -1;
                             strcpy(entry, entryCache[curEntry]);
+                            curEntry = -1;
                         }
                         eraseFirst(entry+cursorPos);
                         --j;
@@ -232,8 +232,8 @@ int main()
                     {
                         if(curEntry != -1)
                         {
-                            curEntry = -1;
                             strcpy(entry, entryCache[curEntry]);
+                            curEntry = -1;
                         }
                         if(InsertMode)
                         {
