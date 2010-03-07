@@ -33,6 +33,7 @@ void ehci_handler(struct regs* r)
     {
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
         showPORTSC();
+        checkPortLineStatus(); ///TEST
     }
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
@@ -71,13 +72,9 @@ void analyzeEHCI(uint32_t bar)
 void initEHCIHostController(uint32_t number)
 {
     irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
-
-    /// TEST
     DeactivateLegacySupport(number);
-    /// TEST
 
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
-
     sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
 
     pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
@@ -120,8 +117,13 @@ void initEHCIHostController(uint32_t number)
     // Enable ports
     for(uint8_t j=0; j<numPorts; j++)
     {
+         // power on and enable bit to zero
          pOpRegs->PORTSC[j] |=  PSTS_POWERON;
          pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
+
+
+
+         // reset port
          pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
          sleepMilliSeconds(50);
          pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
@@ -194,6 +196,41 @@ void showUSBSTS()
     if( pOpRegs->USBSTS & STS_RECLAMATION )        { printformat("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
     if( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printformat("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
     if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printformat("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
+    settextcolor(15,0);
+}
+
+void checkPortLineStatus()
+{
+    settextcolor(14,0);
+    printformat("\n\n>>> Status of USB Ports <<<");
+
+    for(uint8_t j=0; j<numPorts; j++)
+    {
+      //check line status
+      settextcolor(11,0);
+      printformat("\nport %d: %X, line: %y  ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
+      settextcolor(14,0);
+      if( ((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
+      {
+        settextcolor(11,0);
+        printformat("%s","SE0 (Single Ended 0)");
+      }
+      if( ((pOpRegs->PORTSC[j]>>10)&3) == 1) // K_STATE
+      {
+        settextcolor(14,0);
+        printformat("%s","K-State");
+      }
+      if( ((pOpRegs->PORTSC[j]>>10)&3) == 2) // J_STATE
+      {
+        settextcolor(14,0);
+        printformat("%s","J-state");
+      }
+      if( ((pOpRegs->PORTSC[j]>>10)&3) == 3) // undefined
+      {
+        settextcolor(12,0);
+        printformat("%s","undefined");
+      }
+    }
     settextcolor(15,0);
 }
 
