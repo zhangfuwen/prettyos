@@ -121,17 +121,36 @@ void initEHCIHostController(uint32_t number)
          pOpRegs->PORTSC[j] |=  PSTS_POWERON;
          pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
 
-
-
          // reset port
          pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
          sleepMilliSeconds(50);
          pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
+
+         // wait and check, whether really zero
+         int32_t timeoutPortReset=0;
+         while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
+         {
+             printformat("\nwaiting for port reset ...");
+             sleepMilliSeconds(20);
+             timeoutPortReset++;
+             if(timeoutPortReset>10)
+             {
+                 break;
+             }
+         }
+         // test on high speed 1005h
+         if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
+         {
+             settextcolor(11,0);
+             printformat("Port %d: %s\n",j+1,"high speed idle, enabled, SE0 ");
+             settextcolor(15,0);
+         }
     }
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
 
+    settextcolor(3,0);
     printformat("\n\nAfter Init of EHCI:");
     printformat("\nCTRLDSSEGMENT:              %X", pOpRegs->CTRLDSSEGMENT);
     printformat("\nUSBINTR:                    %X", pOpRegs->USBINTR);
@@ -139,8 +158,9 @@ void initEHCIHostController(uint32_t number)
     printformat("  virt addr: %X", virtualMemoryPERIODICLISTBASE);
     printformat("\nUSBCMD:                     %X", pOpRegs->USBCMD);
     printformat("\nCONFIGFLAG:                 %X", pOpRegs->CONFIGFLAG);
+    settextcolor(15,0);
 
-    showUSBSTS();
+    // showUSBSTS();
 }
 
 void showPORTSC()
@@ -213,22 +233,28 @@ void checkPortLineStatus()
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
       {
         settextcolor(11,0);
-        printformat("%s","SE0 (Single Ended 0)");
+        printformat("SE0");
+        if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
+        {
+             settextcolor(11,0);
+             printformat(" ,high speed, enabled");
+             settextcolor(15,0);
+        }
       }
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 1) // K_STATE
       {
         settextcolor(14,0);
-        printformat("%s","K-State");
+        printformat("K-State");
       }
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 2) // J_STATE
       {
         settextcolor(14,0);
-        printformat("%s","J-state");
+        printformat("J-state");
       }
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 3) // undefined
       {
         settextcolor(12,0);
-        printformat("%s","undefined");
+        printformat("undefined");
       }
     }
     settextcolor(15,0);
