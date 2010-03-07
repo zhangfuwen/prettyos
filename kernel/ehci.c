@@ -33,7 +33,7 @@ void ehci_handler(struct regs* r)
     {
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
         showPORTSC();
-        checkPortLineStatus(); ///TEST
+        checkPortLineStatus();
     }
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
@@ -67,6 +67,34 @@ void analyzeEHCI(uint32_t bar)
     printformat("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
     if(BYTE2(pCapRegs->HCCPARAMS)==0) printformat("No ext. capabil. ");  // Extended Capabilities Pointer
     printformat("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
+}
+
+void resetPort(uint8_t number)
+{
+     // power on and set the enabled bit to zero
+     pOpRegs->PORTSC[number] |=  PSTS_POWERON;
+     pOpRegs->PORTSC[number] &= ~PSTS_ENABLED;
+
+     // reset
+     pOpRegs->PORTSC[number] |=  PSTS_PORT_RESET;
+     sleepMilliSeconds(50);
+     pOpRegs->PORTSC[number] &= ~PSTS_PORT_RESET;
+
+     // wait and check, whether really zero
+     uint32_t timeoutPortReset=0;
+     while((pOpRegs->PORTSC[number] & PSTS_PORT_RESET) != 0)
+     {
+         printformat("\nwaiting for port reset ...");
+         sleepMilliSeconds(50);
+         timeoutPortReset++;
+         if(timeoutPortReset>20)
+         {
+             settextcolor(4,0);
+             printformat("\nerror: no port reset!");
+             settextcolor(15,0);
+             break;
+         }
+     }
 }
 
 void initEHCIHostController(uint32_t number)
@@ -117,31 +145,12 @@ void initEHCIHostController(uint32_t number)
     // Enable ports
     for(uint8_t j=0; j<numPorts; j++)
     {
-         // power on and enable bit to zero
-         pOpRegs->PORTSC[j] |=  PSTS_POWERON;
-         pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
+         resetPort(j);
 
-         // reset port
-         pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
-         sleepMilliSeconds(50);
-         pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
-
-         // wait and check, whether really zero
-         int32_t timeoutPortReset=0;
-         while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
-         {
-             printformat("\nwaiting for port reset ...");
-             sleepMilliSeconds(20);
-             timeoutPortReset++;
-             if(timeoutPortReset>10)
-             {
-                 break;
-             }
-         }
          // test on high speed 1005h
          if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
          {
-             settextcolor(11,0);
+             settextcolor(14,0);
              printformat("Port %d: %s\n",j+1,"high speed idle, enabled, SE0 ");
              settextcolor(15,0);
          }
@@ -175,11 +184,13 @@ void showPORTSC()
             if( pOpRegs->PORTSC[j] & PSTS_CONNECTED )
             {
                 strcpy(PortStatus,"Device attached");
+                //resetPort(j);
             }
             else
             {
                 strcpy(PortStatus,"Device not attached");
             }
+            pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
 
             str[0]='\0';
             strcpy(str,"Port ");
@@ -192,8 +203,6 @@ void showPORTSC()
             printf("                                                                              ",47,color);
             printf("                                                                              ",48,color);
 
-            pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
-            // settextcolor(15,0);
             beep(1000,500);
         }
     }
@@ -218,6 +227,8 @@ void showUSBSTS()
     if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printformat("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
     settextcolor(15,0);
 }
+
+
 
 void checkPortLineStatus()
 {
