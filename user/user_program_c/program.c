@@ -9,13 +9,48 @@ void* memset(void* dest, char val, unsigned int count)
     return dest;
 }
 
+inline unsigned int min(unsigned int l, unsigned int r) {
+    return(l < r ? l : r);
+}
+
+void eraseFirst(char* string)
+{
+    strcpy(string, string+1);
+}
+void insert(char* string, char c)
+{
+    for(int i = strlen(string)-1; i >= 0; i--) {
+        string[i+1] = string[i];
+    }
+    *string = c;
+}
+
+static unsigned int cursorPos;
+static unsigned int j;
+static bool InsertMode = false;
+
+void drawEntry(char* entry)
+{
+    putch('\r');
+    puts("$> ");
+    for(int i = 0; i <= j; i++) {
+        if(i == cursorPos) {
+            settextcolor(0, 15);
+            putch(entry[cursorPos]);
+            settextcolor(15, 0);
+        }
+        else {
+            putch(entry[i]);
+        }
+    }
+    putch(' ');
+}
+
 int main()
 {
-    unsigned int j, cursorPos;
     char entry[MAX_CHAR_PER_LINE+1];
     char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1];
     int curEntry = -1;
-    int retVal;
     unsigned char input;
     int numTasks;
 
@@ -29,7 +64,7 @@ int main()
     ///TEST
 
     //Init Cache
-    for(unsigned int i = 0; i < ENTRY_CACHE_SIZE; i++) {
+    for(unsigned int i = 0; i < ENTRY_CACHE_SIZE+1; i++) {
         memset(entryCache, 0, MAX_CHAR_PER_LINE+1);
     }
 
@@ -74,102 +109,146 @@ int main()
 
             switch(input) {
                 case 8:   // Backspace
-                    if(curEntry != -1) {
-                        curEntry = -1;
-                        strcpy(entry, entryCache[curEntry]);
-                    }
-                    if(j>0)
+                    if(cursorPos>0)
                     {
-                        putch('\b');
-                        entry[j-1]='\0';
+                        if(curEntry != -1)
+                        {
+                            curEntry = -1;
+                            strcpy(entry, entryCache[curEntry]);
+                        }
+                        eraseFirst(entry+cursorPos-1);
                         --j;
+                        --cursorPos;
+                        drawEntry(entry);
                     }
                     break;
-                case 10:  // Line Feed (ENTER)
-                    puts(" <--\n");
+                case 10:  // Enter
+                    cursorPos = j;
+                    drawEntry(entry);
+                    puts("<--\n");
                     entry[j]='\0';
-                    ++j;
                     if(curEntry == -1) {
                         //Insert entry
-                        for(int i = ENTRY_CACHE_SIZE-2; i >= 0; i--) {
-                            strcpy(entryCache[i+1], entryCache[i]);
+                        for(int i = ENTRY_CACHE_SIZE-2; i >= 0; i--)
+                        {
+                            strncpy(entryCache[i+1], entryCache[i], MAX_CHAR_PER_LINE);
                         }
                         strcpy(entryCache[0], entry);
                     }
                     else {
                         //Move entry to front
                         strcpy(entry, entryCache[curEntry]);
-                        for(int i = curEntry-1; i >= 0; i--) {
+                        for(int i = curEntry-1; i >= 0; i--)
+                        {
                             strcpy(entryCache[i+1], entryCache[i]);
                         }
                         strcpy(entryCache[0], entry);
                         curEntry = -1;
                     }
                     goto EVALUATION;
-                case 144: // Insert; To be implemented later
+                case 144: // Insert
+                    InsertMode = !InsertMode;
                     break;
-                case 145: // Delete; To be implemented later
-                    if(curEntry != -1) {
-                        curEntry = -1;
-                        strcpy(entry, entryCache[curEntry]);
+                case 145: // Delete
+                    if(cursorPos < j) {
+                        if(curEntry != -1)
+                        {
+                            curEntry = -1;
+                            strcpy(entry, entryCache[curEntry]);
+                        }
+                        eraseFirst(entry+cursorPos);
+                        --j;
+                        drawEntry(entry);
                     }
                     break;
-                case 146: // POS1; To be implemented later
+                case 146: // Pos 1
+                    cursorPos = 0;
+                    drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
                     break;
-                case 147: // END; To be implemented later
+                case 147: // END
+                    cursorPos = j;
+                    drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
                     break;
-                case 150: // Left Arrow; To be implemented later
-                    if(cursorPos > 0) {
+                case 150: // Left Arrow
+                    if(cursorPos > 0)
+                    {
                         cursorPos--;
+                        drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
                     }
                     break;
                 case 151: // Up Arrow
                     if(curEntry < ENTRY_CACHE_SIZE-1 && *entryCache[curEntry+1] != 0) {
-                        for(; j > 0; j--) {
+                        for(; j > 0; j--)
+                        {
                             putch('\b'); //Clear row
                         }
                         ++curEntry;
                         puts(entryCache[curEntry]);
                         j = strlen(entryCache[curEntry]);
+                        cursorPos = j;
+                        drawEntry(entryCache[curEntry]);
                     }
                     break;
                 case 152: // Down Arrow
                     if(curEntry >= 0) {
-                        for(; j > 0; j--) {
+                        for(; j > 0; j--)
+                        {
                             putch('\b'); //Clear row
                         }
                         --curEntry;
-                        if(curEntry == -1) {
+                        if(curEntry == -1)
+                        {
                             puts(entry);
                             j = strlen(entry);
+                            cursorPos = j;
                         }
-                        else {
+                        else
+                        {
                             puts(entryCache[curEntry]);
                             j = strlen(entryCache[curEntry]);
+                            cursorPos = j;
                         }
                     }
-                    if(curEntry == -1) {
-                        for(; j > 0; j--) {
+                    if(curEntry == -1)
+                    {
+                        for(; j > 0; j--)
+                        {
                             putch('\b'); //Clear row
                         }
                         memset(entry, 0, MAX_CHAR_PER_LINE);
+                        cursorPos = 0;
                     }
+                    drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
                     break;
-                case 153: // Right Arrow; To be implemented later
-                    if(cursorPos < j) {
+                case 153: // Right Arrow
+                    if(cursorPos < j)
+                    {
                         cursorPos++;
+                        drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
                     }
                     break;
                 default:
                     if(input >= 0x20 && j<MAX_CHAR_PER_LINE /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
                     {
-                        if(curEntry != -1) {
+                        if(curEntry != -1)
+                        {
                             curEntry = -1;
                             strcpy(entry, entryCache[curEntry]);
                         }
-                        putch(input);
-                        entry[j]=input;
-                        ++j;
+                        if(InsertMode)
+                        {
+                            entry[cursorPos]=input;
+                            if(cursorPos == j) {
+                                j++;
+                            }
+                        }
+                        else
+                        {
+                            insert(entry+cursorPos, input);
+                            ++j;
+                        }
+                        ++cursorPos;
+                        drawEntry(entry);
                     }
                     break;
             }//switch
@@ -194,8 +273,7 @@ EVALUATION:
           else if( strcmp(entry,"fdir") == 0 )
           {
               settextcolor(2,0);
-              retVal = floppy_dir();
-              if(retVal!=0)
+              if(floppy_dir())
               {
                   floppy_dir();
               }
@@ -204,9 +282,8 @@ EVALUATION:
           else if( strcmp(entry,"fformat") == 0 )
           {
               settextcolor(2,0);
-              retVal = floppy_format("PrettyOS");
-              retVal = floppy_dir();
-              if(retVal!=0)
+              floppy_format("PrettyOS");
+              if(floppy_dir())
               {
                   floppy_dir();
               }
@@ -262,8 +339,7 @@ EVALUATION:
                   ext[2] = 'F';
               }
 
-              retVal = floppy_load(name,ext);
-              if(retVal!=0)
+              if(floppy_load(name,ext))
               {
                    puts("<-- Sorry, PrettyOS does not know this command.\n");
               }
