@@ -38,7 +38,7 @@ void drawEntry(char* entry)
             putch(entry[i]);
         }
     }
-	if(cursorPos == j) {
+	if(cursorPos == j && j < MAX_CHAR_PER_LINE) {
 		settextcolor(0, 15);
 	    putch(' ');
 		settextcolor(15, 0);

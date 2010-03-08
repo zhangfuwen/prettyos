@@ -2,6 +2,7 @@
 ;	boot2.asm
 ;	Second Stage Bootloader
 ;******************************************************************************
+
 [Bits 16]
 org 0x500
 jmp entry_point             ; go to entry point
@@ -16,8 +17,13 @@ jmp entry_point             ; go to entry point
 
 %define IMAGE_PMODE_BASE 0x40000 ; where the kernel is to be loaded to in protected mode
 %define IMAGE_RMODE_BASE 0x3000  ; where the kernel is to be loaded to in real mode
+
 ImageName     db "KERNEL  BIN"
-ImageSize     dw 0
+
+;=====================================================HOTFIX============
+;ImageSize     dw 0 muﬂ dd sein wg. "mov [ImageSize], Ecx" weiter unten
+ImageSize     dd 0
+;=====================================================HOTFIX============
 
 ;*******************************************************
 ;	Data Section
@@ -30,8 +36,19 @@ entry_point:
    xor ax, ax         ; null segments
    mov ds, ax
    mov es, ax
-   mov ss, ax
-   mov sp, 0xFFFF     ; stack begins at 0xffff (downwards)
+
+;=====================================================HOTFIX============
+;   mov ss, ax
+;   mov sp, 0xFFFF     ; stack begins at 0xffff (downwards)
+
+; stack bei 0000:FFFF ?
+
+mov ax,0x1000
+mov ss,ax
+xor sp,sp
+dec sp
+;=====================================================HOTFIX============
+
    sti	              ; enable interrupts
 
 A20:	
@@ -41,6 +58,7 @@ A20:
 ;   Determine physical memory INT 0x15, eax = 0xE820                     
 ;   input: es:di -> destination buffer         
 ;*******************************************************
+
 Get_Memory_Map:
     xor eax, eax
     mov ds, ax
@@ -54,11 +72,21 @@ Install_GDT:
     sti	
 	
 Load_Root:
+
     call LoadRoot
     mov ebx, 0
     mov ebp, IMAGE_RMODE_BASE
     mov esi, ImageName
+
+;=====================================================HOTFIX============
+; ES muﬂ erstmal IMAGE_RMODE_BASE sein wg. call zu FindFile in Fat12.inc
+mov bx,0x3000
+mov es,bx
+xor bx,bx
+;=====================================================HOTFIX============
+
     call LoadFile		
+
     mov DWORD [ImageSize], ecx
     cmp ax, 0
     je EnterProtectedMode

@@ -65,7 +65,7 @@ ReadSectors:
     push    ax
     push    bx
     push    cx
-    call    Convert_LBA_to_CHS                              ; convert starting sector to CHS
+    call    Convert_LBA_to_CHS                  ; convert starting sector to CHS
     mov     ah, 0x02                            ; BIOS read sector
     mov     al, 0x01                            ; read one sector
     mov     ch, BYTE [Cylinder]                 ; track
@@ -111,13 +111,13 @@ LoadRoot:
     ; compute size of root directory and store in "cx"
 	xor     cx, cx						
  	xor     dx, dx
-	mov     ax, 32					    ; 32 byte directory entry
-	mul     WORD [RootEntries]			; total size of directory
-	div     WORD [BytesPerSec]			; sectors used by directory
+	mov     ax, 32		             ; 32 byte directory entry
+	mul     WORD [RootEntries]		; total size of directory
+	div     WORD [BytesPerSec]		; sectors used by directory
 	xchg    ax, cx						; store in CX
 
     ; compute location of root directory and store in "ax"
-    mov     al, BYTE [NumFATs]			; number of FATs
+        mov     al, BYTE [NumFATs]			; number of FATs
 	mul     WORD [FATSize]				; sectors used by FATs
 	add     ax, WORD [ReservedSec]
 	mov     WORD [datasector], ax				; base of root directory
@@ -168,10 +168,20 @@ LoadFAT:
 ;******************************************************************************
 
 FindFile:
+
+;=====================================================HOTFIX============
+; ES muß hier 0x0000 sein wg. "rep cmps" -> [ES:DI] !!!
+; und weil DI ungünstig initialisiert ist
+push bx
+xor bx,bx
+mov es,bx
+pop bx
+;=====================================================HOTFIX============
+
 	push cx						; store registers
 	push dx
 	push bx
-	mov	bx, si					; copy filename for later
+	mov  bx, si					; copy filename for later
 
     ; browse root directory for binary image
 	mov cx, WORD [RootEntries]	; load loop counter
@@ -211,17 +221,27 @@ FindFile:
 ; AX      Return value: success 0, error -1
 ;******************************************************************************
 
+
 LoadFile:
-	xor	ecx, ecx					; size of file in sectors
+	xor  ecx, ecx	; size of file in sectors
 	push ecx
 
 .FIND_FILE:
-	push bx						; BX=>BP points to buffer to write to; store it for later
-	push bp
+
+	push bx
+;=====================================================HOTFIX============
+;	push bp
+push es
+;=====================================================HOTFIX============
+
 	call FindFile				; find our file. ES:SI contains our filename
 	cmp	ax, -1
 	jne	.LOAD_IMAGE_PRE
-	pop	bp
+
+;=====================================================HOTFIX============
+;	pop	bp
+pop es
+;=====================================================HOTFIX============
 	pop	bx
 	pop	ecx
 	mov	ax, -1
@@ -232,44 +252,60 @@ LoadFile:
 	sub	eax, ROOT_OFFSET
 
 	; get starting cluster
-	push word ROOT_SEG				;root segment loc
+	push word ROOT_SEG			;root segment loc
 	pop	es
 	mov	dx, WORD [es:di + 0x001A]	; DI points to file entry in root directory table. Refrence the table...
-	mov	WORD [cluster], dx			; file's first cluster
-	pop	bx							; get location to write to so we dont screw up the stack
+	mov	WORD [cluster], dx		; file's first cluster
+	pop	bx				; get location to write to so we dont screw up the stack
 	pop	es
-	push bx							; store location for later again
+	push bx					; store location for later again
 	push es
 	call LoadFAT
 
 .LOAD_IMAGE:
 	; load the cluster
 	mov	ax, WORD [cluster]		; cluster to read
-	pop	es						; bx:bp=es:bx
+	pop	es				; bx:bp=es:bx
 	pop	bx
 	call Convert_Cluster_to_LBA
 	xor	cx, cx
 	mov cl, BYTE [SecPerClus]
+
+;=====================================================HOTFIX============
+; ES muß aktualisiert werden falls BX zu groß wird
+; -> kann man machen wie auch immer z.b. so:
+cmp bx,0x4000
+jae .LAB0001
+jmp .LAB0005
+.LAB0001:
+mov bx,es
+add bx,0x0100
+mov es,bx
+mov bx,0x3000
+.LAB0005:
+;=====================================================HOTFIX============
+
 	call ReadSectors
+
 	pop	ecx
 	inc	ecx
 	push ecx
 	push bx
 	push es
-	mov	ax, FAT_SEG						;start reading from fat
+	mov	ax, FAT_SEG				;start reading from fat
 	mov	es, ax
 	xor	bx, bx
 
 	; get next cluster
 	mov ax, WORD [cluster]				; identify current cluster
 	mov cx, ax							; copy current cluster
-	mov dx, ax							; copy current cluster
-	shr dx, 1   						; divide by two
-	add cx, dx							; sum for (3/2)
-	mov	bx, 0							;location of fat in memory
+	mov dx, ax					; copy current cluster
+	shr dx, 1   					; divide by two
+	add cx, dx					; sum for (3/2)
+	mov	bx, 0					;location of fat in memory
 	add	bx, cx
 	mov	dx, WORD [es:bx]
-	test ax, 1						    ; test for odd or even cluster
+	test ax, 1				    ; test for odd or even cluster
 	jnz	.ODD_CLUSTER
 
 .EVEN_CLUSTER:

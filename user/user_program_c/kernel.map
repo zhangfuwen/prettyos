@@ -14,13 +14,13 @@ LOAD userlib.o
 .text           0x01400000     0x1072
                 0x01400000                __code_start = .
  *(.text*)
- .text          0x01400000      0xa46 program.o
-                0x0140010b                _insert
+ .text          0x01400000      0xa4c program.o
+                0x01400111                _insert
                 0x01400039                _drawEntry
                 0x01400000                _memset
                 0x01400021                _eraseFirst
-                0x01400142                _main
- *fill*         0x01400a46        0xa 00
+                0x01400148                _main
+ *fill*         0x01400a4c        0x4 00
  .text          0x01400a50        0xc start.o
                 0x01400a50                _start
  .text          0x01400a5c      0x616 userlib.o
