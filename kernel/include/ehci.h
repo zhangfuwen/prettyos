@@ -176,7 +176,7 @@ struct qtd_token
 
 	uint8_t pid:          2;
 	uint8_t errorCounter: 2;
-	uint8_t currPage:     2;
+	uint8_t currPage:     3;
 	uint8_t interrupt:    1;
 	uint16_t bytes:      15;
 	uint16_t dataToggle:  1;

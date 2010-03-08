@@ -102,26 +102,47 @@ void* createInQTD(void* address, void* next)
 
 ///TEST
 void testTransfer(uint32_t device)
+
 {
+
 	printformat("\nStarting test transfer on Device: %d\n", device);
+
 	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd) + 4*sizeof(struct ehci_qtd),PAGESIZE);
+
 	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
+
+
 	// Fill the List
+
 	void* position = virtualAsyncList;
+
 	createSetupQH(position, position + sizeof(struct ehci_qhd));
+
 	position += sizeof(struct ehci_qhd);
+
 	uint8_t* data = (uint8_t*) createInQTD(position, (void*)0x1);	// End of the List (for now)
+
 	position += sizeof(struct ehci_qtd);
 
+
+
 	// Enable Async...
+
 	printformat("Enabling Async Schedule\n");
+
 	pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
+
 	sleepSeconds(5);
+
 	printformat("Data: %X\n", *data );
+
 	sleepSeconds(5);
+
 }
+
 ///TEST
 
 
