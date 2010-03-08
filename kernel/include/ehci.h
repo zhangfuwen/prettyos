@@ -174,15 +174,15 @@ struct qtd_token
 {
 	uint8_t status;
 
-	uint8_t pid:2;
-	uint8_t errorCounter:2;
-	uint8_t currPage:2;
-	uint8_t interrupt:1;
-
-	uint16_t bytes:15;
-	uint16_t dataToggle:1;
+	uint8_t pid:          2;
+	uint8_t errorCounter: 2;
+	uint8_t currPage:     2;
+	uint8_t interrupt:    1;
+	uint16_t bytes:      15;
+	uint16_t dataToggle:  1;
 
 } __attribute__((packed));
+
 
 struct ehci_qtd
 {
@@ -196,37 +196,38 @@ struct ehci_qtd
 	uint32_t buffer4;
 } __attribute__((packed));
 
+
+
 struct ehci_qhd
 {
 	uint32_t horizontalPointer;
-	uint32_t deviceAddress:7;
-	uint32_t inactive:1;
-	uint32_t endpoint:4;
-	uint32_t endpointSpeed:2;
-	uint32_t dataToggleControl:1;
-	uint32_t H:1;
- 	uint32_t maxPacketLength:11;
-	uint32_t controlEndpointFlag:1;
-	uint32_t nakCountReload:4;
-
+	uint32_t deviceAddress:       7;
+	uint32_t inactive:            1;
+	uint32_t endpoint:            4;
+	uint32_t endpointSpeed:       2;
+	uint32_t dataToggleControl:   1;
+	uint32_t H:                   1;
+ 	uint32_t maxPacketLength:    11;
+	uint32_t controlEndpointFlag: 1;
+	uint32_t nakCountReload:      4;
 	uint8_t interruptScheduleMask;
 	uint8_t splitCompletionMask;
-	uint16_t hubAddr:7;
-	uint16_t portNumber:7;
-	uint16_t mult:2;
-
+	uint16_t hubAddr:             7;
+	uint16_t portNumber:          7;
+	uint16_t mult:                2;
 	uint32_t current;
-
-	uint32_t next;
-	uint32_t nextAlt;
-	struct qtd_token token;
-	uint32_t buffer0;
-	uint32_t buffer1;
-	uint32_t buffer2;
-	uint32_t buffer3;
-	uint32_t buffer4;
+    struct ehci_qtd qtd;
 } __attribute__((packed));
 
+struct ehci_request
+{
+	uint8_t type;
+	uint8_t request;
+	uint8_t valueLo;
+	uint8_t valueHi;
+	uint16_t index;
+	uint16_t length;
+} __attribute__((packed));
 
 
 // functions, ...
