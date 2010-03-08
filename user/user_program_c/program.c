@@ -9,10 +9,6 @@ void* memset(void* dest, char val, unsigned int count)
     return dest;
 }
 
-inline unsigned int min(unsigned int l, unsigned int r) {
-    return(l < r ? l : r);
-}
-
 void eraseFirst(char* string)
 {
     strcpy(string, string+1);
@@ -27,7 +23,6 @@ void insert(char* string, char c)
 
 static unsigned int cursorPos;
 static unsigned int j;
-static bool InsertMode = false;
 
 void drawEntry(char* entry)
 {
@@ -43,7 +38,15 @@ void drawEntry(char* entry)
             putch(entry[i]);
         }
     }
-    putch(' ');
+	if(cursorPos == j) {
+		settextcolor(0, 15);
+	    putch(' ');
+		settextcolor(15, 0);
+	    putch(' ');
+	}
+	else {
+	    putch(' ');
+	}
 }
 
 int main()
@@ -51,6 +54,7 @@ int main()
     char entry[MAX_CHAR_PER_LINE+1];
     char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1];
     int curEntry = -1;
+	bool insertMode = false;
     unsigned char input;
     int numTasks;
 
@@ -85,7 +89,7 @@ int main()
         settextcolor(15,0);
         j = 0; cursorPos = 0;
         memset(entry, 0, MAX_CHAR_PER_LINE+1);
-        puts("$> ");
+        drawEntry(entry);
         start = getCurrentMilliseconds();
 
         while(true)
@@ -98,7 +102,6 @@ int main()
           {
               showInfo(1);
               start = getCurrentMilliseconds();
-
           }
           settextcolor(15,0);
           /////////////////////////////////////////////////
@@ -123,7 +126,7 @@ int main()
                     }
                     break;
                 case 10:  // Enter
-                    cursorPos = j;
+                    cursorPos = j+1;
                     drawEntry(entry);
                     puts("<--\n");
                     entry[j]='\0';
@@ -147,7 +150,7 @@ int main()
                     }
                     goto EVALUATION;
                 case 144: // Insert
-                    InsertMode = !InsertMode;
+                    insertMode = !insertMode;
                     break;
                 case 145: // Delete
                     if(cursorPos < j) {
@@ -228,14 +231,14 @@ int main()
                     }
                     break;
                 default:
-                    if(input >= 0x20 && j<MAX_CHAR_PER_LINE /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
+                    if(input >= 0x20 && (j<MAX_CHAR_PER_LINE || (insertMode && j <=MAX_CHAR_PER_LINE && cursorPos != j)) /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
                     {
                         if(curEntry != -1)
                         {
                             strcpy(entry, entryCache[curEntry]);
                             curEntry = -1;
                         }
-                        if(InsertMode)
+                        if(insertMode)
                         {
                             entry[cursorPos]=input;
                             if(cursorPos == j) {
@@ -258,45 +261,37 @@ int main()
 EVALUATION:
         // evaluation of entry
         {
+          settextcolor(2,0);
           if( ( strcmp(entry,"help") == 0 ) || ( strcmp(entry,"?") == 0 ) )
           {
-              settextcolor(2,0);
               puts("Implemented Instructions: hi  help ?  fdir  fformat\n");
-              settextcolor(15,0);
           }
           else if( strcmp(entry,"hi") == 0 )
           {
-              settextcolor(2,0);
               puts("I am PrettyOS. Always at your service!\n");
-              settextcolor(15,0);
           }
           else if( strcmp(entry,"fdir") == 0 )
           {
-              settextcolor(2,0);
               if(floppy_dir())
               {
                   floppy_dir();
               }
-              settextcolor(15,0);
           }
           else if( strcmp(entry,"fformat") == 0 )
           {
-              settextcolor(2,0);
               floppy_format("PrettyOS");
               if(floppy_dir())
               {
                   floppy_dir();
               }
-              settextcolor(15,0);
           }
           else if( strcmp(entry,"") == 0 )
           {
-              settextcolor(2,0);
               puts("<-- Sorry, this was a blank entry.\n");
-              settextcolor(15,0);
           }
           else
           {
+			  settextcolor(15,0);
               puts("file is being searched.\n");
               settextcolor(2,0);
               toupper(entry);
@@ -343,8 +338,8 @@ EVALUATION:
               {
                    puts("<-- Sorry, PrettyOS does not know this command.\n");
               }
-              settextcolor(15,0);
           }//else
+          settextcolor(15,0);
         }//evaluation
       }//if
     }//while
