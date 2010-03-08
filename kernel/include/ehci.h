@@ -241,11 +241,7 @@ void DeactivateLegacySupport(uint32_t number);
 void checkPortLineStatus();
 void resetPort(uint8_t j, bool sleepFlag);
 
-void  createQTD(   void* address);
-void* createQTDIn( void* address);
-void  createQTDOut(void* address, void* data);
-void  createQH(    void* address);
-void* createQHIn(  void* address);
-void  createQHOut( void* address, void* data);
-
+void createSetupQTD(void* address, void* next);
+void createSetupQH(void* address, void* next);
+void* createInQTD(void* address, void* next);
 #endif
