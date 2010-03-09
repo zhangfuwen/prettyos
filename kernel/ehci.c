@@ -16,11 +16,12 @@ struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 uint32_t ubar;
 uint32_t eecp;
 
-void createSetupQTD(void* address, void* next)
+
+void createSetupQTD(void* address, uint32_t next, bool toggle)
 {
 	struct ehci_qtd* td = (struct ehci_qtd*)address;
 
-	td->next = (uint32_t)next;	// No next, so T-Bit is set to 1
+	td->next = next;	// No next, so T-Bit is set to 1
 	td->nextAlt = 0x1;	// No alternative next, so T-Bit is set to 1
 	td->token.status       = 0x0;	 // This will be filled by the Host Controller
 	td->token.pid          = 0x2;	 // Setup Token
@@ -28,7 +29,7 @@ void createSetupQTD(void* address, void* next)
 	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
 	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
 	td->token.bytes        = 0x1000; // The full first buffer (4k)
-	td->token.dataToggle   = 0x0;	 // Should be toggled every list entry
+	td->token.dataToggle   = toggle;	 // Should be toggled every list entry
 
 	// Init Request
 	void* data = malloc(0x8, PAGESIZE);
@@ -49,7 +50,9 @@ void createSetupQTD(void* address, void* next)
 	td->buffer4 = 0x0;
 }
 
-void createSetupQH(void* address, void* next)
+
+
+void createSetupQH(void* address, uint32_t next, bool toggle)
 {
 	struct ehci_qhd* head = (struct ehci_qhd*)address;
 
@@ -67,16 +70,20 @@ void createSetupQH(void* address, void* next)
 	head->hubAddr                = 0x0;	// unused if high speed (Split transfer)
 	head->portNumber             = 0x0;	// unused if high speed (Split transfer)
 	head->mult                   = 0x1;	// Maybe unused for non interrupt queue head in async list
-	head->current                = (uint32_t) ((uint32_t*)address + 4);
 
-	return createSetupQTD((void*)head->current, next);
+	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
+	head->current                = paging_get_phys_addr(kernel_pd, qtd);
+
+	return createSetupQTD(qtd, next, toggle);
 }
 
-void* createInQTD(void* address, void* next)
+
+
+void* createInQTD(void* address, uint32_t next, bool toggle)
 {
 	struct ehci_qtd* td = (struct ehci_qtd*)address;
 
-	td->next = (uint32_t)next;	     // No next, so T-Bit is set to 1
+	td->next = next;	     // No next, so T-Bit is set to 1
 	td->nextAlt            = 0x1;	 // No alternative next, so T-Bit is set to 1
 	td->token.status       = 0x0;	 // This will be filled by the Host Controller
 	td->token.pid          = 0x1;	 // Setup Token
@@ -84,7 +91,7 @@ void* createInQTD(void* address, void* next)
 	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
 	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
 	td->token.bytes        = 0x1000; // The full first buffer (4k)
-	td->token.dataToggle   = 0x0;	 // Should be toggled every list entry
+	td->token.dataToggle   = toggle;	 // Should be toggled every list entry
 
 	// Init Request
 	void* data = malloc(0x8, PAGESIZE);
@@ -101,48 +108,29 @@ void* createInQTD(void* address, void* next)
 
 
 ///TEST
+
 void testTransfer(uint32_t device)
-
 {
-
 	printformat("\nStarting test transfer on Device: %d\n", device);
-
-	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd) + 4*sizeof(struct ehci_qtd),PAGESIZE);
-
+	void* virtualAsyncList = malloc(0x1000,PAGESIZE);
 	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
-
-
 	// Fill the List
-
 	void* position = virtualAsyncList;
-
-	createSetupQH(position, position + sizeof(struct ehci_qhd));
-
-	position += sizeof(struct ehci_qhd);
-
-	uint8_t* data = (uint8_t*) createInQTD(position, (void*)0x1);	// End of the List (for now)
-
+	createSetupQH(position, paging_get_phys_addr(kernel_pd, position + 0x100), 0);
+	position += 0x100;
+	uint8_t* data = (uint8_t*) createInQTD(position, 0x1, 1);	// End of the List (for now)
 	position += sizeof(struct ehci_qtd);
 
 
-
 	// Enable Async...
-
 	printformat("Enabling Async Schedule\n");
-
 	pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
-
 	sleepSeconds(5);
-
 	printformat("Data: %X\n", *data );
-
 	sleepSeconds(5);
-
 }
-
 ///TEST
 
 

@@ -241,7 +241,7 @@ void DeactivateLegacySupport(uint32_t number);
 void checkPortLineStatus();
 void resetPort(uint8_t j, bool sleepFlag);
 
-void createSetupQTD(void* address, void* next);
-void createSetupQH(void* address, void* next);
-void* createInQTD(void* address, void* next);
+void createSetupQTD(void* address, uint32_t next, bool toggle);
+void createSetupQH( void* address, uint32_t next, bool toggle);
+void* createInQTD(  void* address, uint32_t next, bool toggle);
 #endif
