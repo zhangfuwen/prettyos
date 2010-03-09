@@ -29,7 +29,7 @@ void createSetupQTD(void* address, uint32_t next, bool toggle)
 	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
 	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
 	td->token.bytes        = 0x1000; // The full first buffer (4k)
-	td->token.dataToggle   = toggle;	 // Should be toggled every list entry
+	td->token.dataToggle   = toggle; // Should be toggled every list entry
 
 	// Init Request
 	void* data = malloc(0x8, PAGESIZE);
@@ -56,25 +56,29 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 {
 	struct ehci_qhd* head = (struct ehci_qhd*)address;
 
-	head->horizontalPointer      = 0x1;	// No next Queue Head
+	head->horizontalPointer      =   1;	// No next Queue Head
 	head->deviceAddress          =   0;	// The device address
 	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
-	head->endpointSpeed          = 0x2;	// 00b = full speed; 01b = low speed; 10b = high speed
-	head->dataToggleControl      = 0x1;	// Get the Data Toggle bit out of the included qTD
-	head->H                      = 0x0;	// ???
+	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
+	head->dataToggleControl      =   0;	// Get the Data Toggle bit out of the included qTD
+	head->H                      =   0;
 	head->maxPacketLength        =  64;	// It's 64 bytes for a control transfer to a high speed device.
-	head->controlEndpointFlag    = 0x0;	// Only used if Endpoint is a control endpoint and not high speed
-	head->nakCountReload         = 0x0;	//	???
-	head->interruptScheduleMask  = 0x0;	// not used for async schedule
-	head->splitCompletionMask    = 0x0;	// unused if not (low/full speed and in periodic schedule)
-	head->hubAddr                = 0x0;	// unused if high speed (Split transfer)
-	head->portNumber             = 0x0;	// unused if high speed (Split transfer)
-	head->mult                   = 0x1;	// Maybe unused for non interrupt queue head in async list
+	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
+	head->nakCountReload         =   0;	// This value is used by HC to reload the Nak Counter field.
+	head->interruptScheduleMask  =   0;	// not used for async schedule
+	head->splitCompletionMask    =   0;	// unused if not (low/full speed and in periodic schedule)
+	head->hubAddr                =   0;	// unused if high speed (Split transfer)
+	head->portNumber             =   0;	// unused if high speed (Split transfer)
+	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
+	                                    // Maybe unused for non interrupt queue head in async list
 
 	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
-	head->current                = paging_get_phys_addr(kernel_pd, qtd);
+	head->current = paging_get_phys_addr(kernel_pd, qtd);
 
-	return createSetupQTD(qtd, next, toggle);
+    //DEBUG
+	printformat("\nvirt qtd: %X phys qtd: %X\n",qtd,head->current );
+
+	createSetupQTD(qtd, next, toggle);
 }
 
 
@@ -86,7 +90,7 @@ void* createInQTD(void* address, uint32_t next, bool toggle)
 	td->next = next;	     // No next, so T-Bit is set to 1
 	td->nextAlt            = 0x1;	 // No alternative next, so T-Bit is set to 1
 	td->token.status       = 0x0;	 // This will be filled by the Host Controller
-	td->token.pid          = 0x1;	 // Setup Token
+	td->token.pid          = 0x1;	 // IN Token
 	td->token.errorCounter = 0x0;    // Written by the Host Controller. Hopefully stays 0 :D
 	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
 	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
@@ -114,6 +118,10 @@ void testTransfer(uint32_t device)
 	printformat("\nStarting test transfer on Device: %d\n", device);
 	void* virtualAsyncList = malloc(0x1000,PAGESIZE);
 	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+	//DEBUG
+	printformat("\nvirt: %X phys: %X\n",virtualAsyncList,phsysicalAddr );
+
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
 	// Fill the List
