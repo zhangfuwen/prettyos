@@ -21,7 +21,7 @@ void createSetupQTD(void* address, uint32_t next, bool toggle)
 {
 	struct ehci_qtd* td = (struct ehci_qtd*)address;
 
-	td->next = next;	// No next, so T-Bit is set to 1
+	td->next = 0x1;	// No next, so T-Bit is set to 1
 	td->nextAlt = 0x1;	// No alternative next, so T-Bit is set to 1
 	td->token.status       = 0x0;	 // This will be filled by the Host Controller
 	td->token.pid          = 0x2;	 // Setup Token
@@ -56,12 +56,12 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 {
 	struct ehci_qhd* head = (struct ehci_qhd*)address;
 
-	head->horizontalPointer      =   1;	// No next Queue Head
+	head->horizontalPointer      =   next | 0x2;	// No next Queue Head
 	head->deviceAddress          =   0;	// The device address
 	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
 	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
 	head->dataToggleControl      =   0;	// Get the Data Toggle bit out of the included qTD
-	head->H                      =   0;
+	head->H                      =   1;
 	head->maxPacketLength        =  64;	// It's 64 bytes for a control transfer to a high speed device.
 	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
 	head->nakCountReload         =   0;	// This value is used by HC to reload the Nak Counter field.
@@ -76,7 +76,7 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 	head->current = paging_get_phys_addr(kernel_pd, qtd);
 
     //DEBUG
-	printformat("\nvirt qtd: %X phys qtd: %X\n",qtd,head->current );
+	//printformat("\nvirt qtd: %X phys qtd: %X\n",qtd,head->current );
 
 	createSetupQTD(qtd, next, toggle);
 }
@@ -87,7 +87,7 @@ void* createInQTD(void* address, uint32_t next, bool toggle)
 {
 	struct ehci_qtd* td = (struct ehci_qtd*)address;
 
-	td->next = next;	     // No next, so T-Bit is set to 1
+	td->next = 0x1;	     // No next, so T-Bit is set to 1
 	td->nextAlt            = 0x1;	 // No alternative next, so T-Bit is set to 1
 	td->token.status       = 0x0;	 // This will be filled by the Host Controller
 	td->token.pid          = 0x1;	 // IN Token
@@ -110,9 +110,36 @@ void* createInQTD(void* address, uint32_t next, bool toggle)
 	return data;
 }
 
+void* createInQH(void* address, uint32_t next, bool toggle)
+{
+	struct ehci_qhd* head = (struct ehci_qhd*)address;
+
+	head->horizontalPointer      =   next | 0x2;	// No next Queue Head
+	head->deviceAddress          =   0;	// The device address
+	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
+	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
+	head->dataToggleControl      =   0;	// Get the Data Toggle bit out of the included qTD
+	head->H                      =   0;
+	head->maxPacketLength        =  64;	// It's 64 bytes for a control transfer to a high speed device.
+	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
+	head->nakCountReload         =   0;	// This value is used by HC to reload the Nak Counter field.
+	head->interruptScheduleMask  =   0;	// not used for async schedule
+	head->splitCompletionMask    =   0;	// unused if not (low/full speed and in periodic schedule)
+	head->hubAddr                =   0;	// unused if high speed (Split transfer)
+	head->portNumber             =   0;	// unused if high speed (Split transfer)
+	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
+	                                    // Maybe unused for non interrupt queue head in async list
+
+	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
+	head->current = paging_get_phys_addr(kernel_pd, qtd);
+
+    //DEBUG
+	//printformat("\nvirt qtd: %X phys qtd: %X\n",qtd,head->current );
+
+	return createInQTD(qtd , next, toggle);
+}
 
 ///TEST
-
 void testTransfer(uint32_t device)
 {
 	printformat("\nStarting test transfer on Device: %d\n", device);
@@ -120,7 +147,7 @@ void testTransfer(uint32_t device)
 	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
 	//DEBUG
-	printformat("\nvirt: %X phys: %X\n",virtualAsyncList,phsysicalAddr );
+	//printformat("\nvirt: %X phys: %X\n",virtualAsyncList,phsysicalAddr );
 
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
@@ -128,7 +155,7 @@ void testTransfer(uint32_t device)
 	void* position = virtualAsyncList;
 	createSetupQH(position, paging_get_phys_addr(kernel_pd, position + 0x100), 0);
 	position += 0x100;
-	uint8_t* data = (uint8_t*) createInQTD(position, 0x1, 1);	// End of the List (for now)
+	uint8_t* data = (uint8_t*) createInQH(position, phsysicalAddr, 1);	// End of the List (for now)
 	position += sizeof(struct ehci_qtd);
 
 
@@ -140,6 +167,7 @@ void testTransfer(uint32_t device)
 	sleepSeconds(5);
 }
 ///TEST
+
 
 
 void ehci_handler(struct regs* r)
