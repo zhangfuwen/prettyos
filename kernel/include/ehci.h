@@ -245,5 +245,6 @@ void createSetupQTD(void* address, uint32_t next, bool toggle);
 void createSetupQH( void* address, uint32_t next, bool toggle);
 void* createInQTD(  void* address, uint32_t next, bool toggle);
 
-void showQTD(void* address);
+void showMEM_();
+void showMEM(void* address, uint8_t n, const char* str);
 #endif

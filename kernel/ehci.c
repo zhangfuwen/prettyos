@@ -16,6 +16,38 @@ struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 uint32_t ubar;
 uint32_t eecp;
 
+//DEBUG
+    void *virtSetup_QH, *virtSetup_Qtd, *virtSetup_Buffer, *virtIn_QH, *virtIn_Qtd, *virtIn_Buffer; // virtual Addresses at heap
+    uint8_t  nQH=4, nQtd=4, nBuffer=4; // DWORDs to be printed out to screen
+//DEBUG
+
+void showMEM_()
+{
+    showMEM(virtSetup_QH,      nQH,     "SetupQH    " );
+    showMEM(virtIn_QH,         nQH,     "InQH       " );
+    showMEM(virtSetup_Qtd,     nQtd,    "SetupQtd   ");
+    showMEM(virtIn_Qtd,        nQtd,    "InQtd      ");
+    showMEM(virtSetup_Buffer,  nBuffer, "SetupBuffer");
+    showMEM(virtIn_Buffer,     nBuffer, "InBuffer   ");
+}
+
+void showMEM(void* address, uint8_t n, const char* str)
+{
+    settextcolor(11,0);
+    printformat("\n%s: ", str);
+    settextcolor(9,0);
+    printformat("%X\n", address);
+
+    for (uint8_t i=0; i<n; i++)
+    {
+        settextcolor(6,0);
+        printformat("%d:", i);
+        settextcolor(14,0);
+        printformat(" %X ", *((uint32_t*)address+i) );
+    }
+    settextcolor(15,0);
+}
+
 
 void createSetupQTD(void* address, uint32_t next, bool toggle)
 {
@@ -33,6 +65,9 @@ void createSetupQTD(void* address, uint32_t next, bool toggle)
 
 	// Init Request
 	void* data = malloc(0x8, PAGESIZE);
+	//DEBUG
+	     virtSetup_Buffer = data; // M3
+	//DEBUG
 	uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
 	struct ehci_request* request = (struct ehci_request*)data;
 
@@ -73,6 +108,9 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 	                                    // Maybe unused for non interrupt queue head in async list
 
 	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
+	//DEBUG
+	    virtSetup_Qtd = qtd ; // M2
+	//DEBUG
 	head->current = paging_get_phys_addr(kernel_pd, qtd);
 
     //DEBUG
@@ -99,6 +137,9 @@ void* createInQTD(void* address, uint32_t next, bool toggle)
 
 	// Init Request
 	void* data = malloc(0x8, PAGESIZE);
+	//DEBUG
+	    virtIn_Buffer = data ; // M5
+	//DEBUG
 	uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
 
 	td->buffer0 = dataPhysical;
@@ -131,6 +172,9 @@ void* createInQH(void* address, uint32_t next, bool toggle)
 	                                    // Maybe unused for non interrupt queue head in async list
 
 	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
+	//DEBUG
+	    virtIn_Qtd = qtd ; // M4
+	//DEBUG
 	head->current = paging_get_phys_addr(kernel_pd, qtd);
 
     //DEBUG
@@ -139,13 +183,6 @@ void* createInQH(void* address, uint32_t next, bool toggle)
 	return createInQTD(qtd , next, toggle);
 }
 
-void showQTD(void* address)
-{
-    for (int32_t i = 0; i<8;i++)
-    {
-        printformat("QTD uint %d: %X\n",i, *((uint32_t*)address+i) );
-    }
-}
 
 
 ///TEST
@@ -155,36 +192,37 @@ void testTransfer(uint32_t device)
 	void* virtualAsyncList = malloc(0x1000,PAGESIZE);
 	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
-	//DEBUG
-	//printformat("\nvirt: %X phys: %X\n",virtualAsyncList,phsysicalAddr );
-
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
+	//DEBUG
+	    virtSetup_QH = virtualAsyncList; // M1a
+	//DEBUG
 
 	// Fill the List
 	void* position = virtualAsyncList;
 	createSetupQH(position, paging_get_phys_addr(kernel_pd, position + 0x100), 0);
-
-	///TEST
-	showQTD(virtualAsyncList);
-
 	position += 0x100;
+
+	//DEBUG
+	    virtIn_QH = position; // M1b
+	//DEBUG
 
 	uint8_t* data = (uint8_t*) createInQH(position, phsysicalAddr, 1);	// End of the List (for now)
 	//position += sizeof(struct ehci_qtd);
 
 	///TEST
-	showQTD(position);
+	printformat("\n\n");
+	showMEM_();
 
 	// Enable Async...
-	printformat("Enabling Async Schedule\n");
+	printformat("\nEnabling Async Schedule\n");
 	pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 	sleepSeconds(5);
 
     ///TEST
-	showQTD(position);
+	showMEM_();
 
-	printformat("Data: %X\n", *data );
-	sleepSeconds(5);
+	printformat("\nData: %X\n", *data );
+	sleepSeconds(20);
 }
 ///TEST
 
