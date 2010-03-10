@@ -23,11 +23,20 @@ tm_t* cmosTime(tm_t* ptm)
     return ptm;
 }
 
+static void appendInt(int val, char* dest, char* buf) {
+    if(val<10)
+    {
+        strcat(dest,"0");
+    }
+    itoa(val, buf);
+	strcat(dest, buf);
+}
+
 char* getCurrentDateAndTime(char* pStr)
 {
     pStr[0]='\0'; // clear string
 
-    // sourcecode of "Cuervo" and "ehenkes", PrettyOS team
+    // sourcecode of "Cuervo", "ehenkes" and "Mr X", PrettyOS team
     tm_t* pct = cmosTime(&currentTime);
     char buf[40];
 
@@ -58,76 +67,26 @@ char* getCurrentDateAndTime(char* pStr)
         case 12: strcat(pStr, "December ");  break;
     }
 
-    if(pct->dayofmonth<10)
-    {
-        strcat(pStr,"0");
-        itoa(pct->dayofmonth, buf);
-        strcat(pStr, buf);
-    }
-    else
-    {
-        itoa(pct->dayofmonth, buf);
-        strcat(pStr, buf);
-    }
+	appendInt(pct->dayofmonth, pStr, buf);
 
     strcat(pStr,", ");
 
     itoa(pct->century, buf);
     strcat(pStr, buf);
 
-    if(pct->year<10)
-    {
-        strcat(pStr,"0");
-        itoa(pct->year, buf);
-        strcat(pStr, buf);
-    }
-    else
-    {
-        itoa(pct->year, buf);
-        strcat(pStr, buf);
-    }
+	appendInt(pct->year, pStr, buf);
 
     strcat(pStr,", ");
 
-    if(pct->hour<10)
-    {
-        strcat(pStr,"0");
-        itoa(pct->hour, buf);
-        strcat(pStr, buf);
-    }
-    else
-    {
-        itoa(pct->hour, buf);
-        strcat(pStr, buf);
-    }
+	appendInt(pct->hour, pStr, buf);
 
     strcat(pStr,":");
 
-    if(pct->minute<10)
-    {
-        strcat(pStr,"0");
-        itoa(pct->minute, buf);
-        strcat(pStr, buf);
-    }
-    else
-    {
-        itoa(pct->minute, buf);
-        strcat(pStr, buf);
-    }
+	appendInt(pct->minute, pStr, buf);
 
     strcat(pStr,":");
 
-    if(pct->second<10)
-    {
-        strcat(pStr,"0");
-        itoa(pct->second, buf);
-        strcat(pStr, buf);
-    }
-    else
-    {
-        itoa(pct->second, buf);
-        strcat(pStr, buf);
-    }
+	appendInt(pct->second, pStr, buf);
 
     strcat(pStr, ""); // add '\0'
     return pStr;
