@@ -244,4 +244,6 @@ void resetPort(uint8_t j, bool sleepFlag);
 void createSetupQTD(void* address, uint32_t next, bool toggle);
 void createSetupQH( void* address, uint32_t next, bool toggle);
 void* createInQTD(  void* address, uint32_t next, bool toggle);
+
+void showQTD(void* address);
 #endif
