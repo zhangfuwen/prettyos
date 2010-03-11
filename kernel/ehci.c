@@ -109,8 +109,8 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
 	                                    // Maybe unused for non interrupt queue head in async list
 
-	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
-	memset(qtd,0,0x1000);
+	void* qtd = malloc(sizeof(struct ehci_qtd), PAGESIZE);
+	memset(qtd,0,sizeof(struct ehci_qtd));
 	//DEBUG
 	    virtSetup_Qtd = qtd ; // M2
 	//DEBUG
@@ -176,8 +176,8 @@ void* createInQH(void* address, uint32_t next, bool toggle)
 	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
 	                                    // Maybe unused for non interrupt queue head in async list
 
-	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
-	memset(qtd,0,0x1000);
+	void* qtd = malloc(sizeof(struct ehci_qtd), PAGESIZE);
+	memset(qtd,0,sizeof(struct ehci_qtd));
 	//DEBUG
 	    virtIn_Qtd = qtd ; // M4
 	//DEBUG
