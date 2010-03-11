@@ -25,10 +25,10 @@ void showMEM_()
 {
     showMEM(virtSetup_QH,      nQH,     "SetupQH    " );
     showMEM(virtIn_QH,         nQH,     "InQH       " );
-    showMEM(virtSetup_Qtd,     nQtd,    "SetupQtd   ");
-    showMEM(virtIn_Qtd,        nQtd,    "InQtd      ");
-    showMEM(virtSetup_Buffer,  nBuffer, "SetupBuffer");
-    showMEM(virtIn_Buffer,     nBuffer, "InBuffer   ");
+    showMEM(virtSetup_Qtd,     nQtd,    "SetupQtd   " );
+    showMEM(virtIn_Qtd,        nQtd,    "InQtd      " );
+    showMEM(virtSetup_Buffer,  nBuffer, "SetupBuffer" );
+    showMEM(virtIn_Buffer,     nBuffer, "InBuffer   " );
 }
 
 void showMEM(void* address, uint8_t n, const char* str)
@@ -55,9 +55,9 @@ void createSetupQTD(void* address, uint32_t next, bool toggle)
 
 	td->next = 0x1;	// No next, so T-Bit is set to 1
 	td->nextAlt = 0x1;	// No alternative next, so T-Bit is set to 1
-	td->token.status       = 0x0;	 // This will be filled by the Host Controller
+	td->token.status       = 0x80;	 // This will be filled by the Host Controller
 	td->token.pid          = 0x2;	 // Setup Token
-	td->token.errorCounter = 0x0;    // Written by the Host Controller. Hopefully stays 0 :D
+	td->token.errorCounter = 0x3;    // Written by the Host Controller.
 	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
 	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
 	td->token.bytes        = 0x1000; // The full first buffer (4k)
@@ -101,7 +101,7 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
 	head->nakCountReload         =   0;	// This value is used by HC to reload the Nak Counter field.
 	head->interruptScheduleMask  =   0;	// not used for async schedule
-	head->splitCompletionMask    =   0;	// unused if not low/full speed and in periodic schedule
+	head->splitCompletionMask    =   0;	// unused if (not low/full speed and in periodic schedule)
 	head->hubAddr                =   0;	// unused if high speed (Split transfer)
 	head->portNumber             =   0;	// unused if high speed (Split transfer)
 	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
@@ -127,9 +127,9 @@ void* createInQTD(void* address, uint32_t next, bool toggle)
 
 	td->next = 0x1;	     // No next, so T-Bit is set to 1
 	td->nextAlt            = 0x1;	 // No alternative next, so T-Bit is set to 1
-	td->token.status       = 0x0;	 // This will be filled by the Host Controller
+	td->token.status       = 0x80;	 // This will be filled by the Host Controller
 	td->token.pid          = 0x1;	 // IN Token
-	td->token.errorCounter = 0x0;    // Written by the Host Controller. Hopefully stays 0 :D
+	td->token.errorCounter = 0x3;    // Written by the Host Controller.
 	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
 	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
 	td->token.bytes        = 0x1000; // The full first buffer (4k)
@@ -212,6 +212,7 @@ void testTransfer(uint32_t device)
 	///TEST
 	printformat("\n\n");
 	showMEM_();
+	showUSBSTS();
 
 	// Enable Async...
 	printformat("\nEnabling Async Schedule\n");
@@ -220,6 +221,7 @@ void testTransfer(uint32_t device)
 
     ///TEST
 	showMEM_();
+	showUSBSTS();
 
 	printformat("\nData: %X\n", *data );
 	sleepSeconds(20);
@@ -369,6 +371,9 @@ void initEHCIHostController(uint32_t number)
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG = CF;
 
+    // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
+    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
+
     // Enable ports
     for(uint8_t j=0; j<numPorts; j++)
     {
@@ -387,9 +392,6 @@ void initEHCIHostController(uint32_t number)
 	         testTransfer(0);
 	     }
     }
-
-    // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
 
     settextcolor(3,0);
     printformat("\n\nAfter Init of EHCI:");
