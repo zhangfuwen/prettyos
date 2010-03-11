@@ -18,7 +18,7 @@ uint32_t eecp;
 
 //DEBUG
     void *virtSetup_QH, *virtSetup_Qtd, *virtSetup_Buffer, *virtIn_QH, *virtIn_Qtd, *virtIn_Buffer; // virtual Addresses at heap
-    uint8_t  nQH=4, nQtd=4, nBuffer=4; // DWORDs to be printed out to screen
+    uint8_t  nQH=4, nQtd=4, nBuffer=2; // DWORDs to be printed out to screen
 //DEBUG
 
 void showMEM_()
@@ -64,7 +64,8 @@ void createSetupQTD(void* address, uint32_t next, bool toggle)
 	td->token.dataToggle   = toggle; // Should be toggled every list entry
 
 	// Init Request
-	void* data = malloc(0x8, PAGESIZE);
+	void* data = malloc(0x10, PAGESIZE);
+	memset(data,0,0x10);
 	//DEBUG
 	     virtSetup_Buffer = data; // M3
 	//DEBUG
@@ -108,6 +109,7 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 	                                    // Maybe unused for non interrupt queue head in async list
 
 	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
+	memset(qtd,0,0x1000);
 	//DEBUG
 	    virtSetup_Qtd = qtd ; // M2
 	//DEBUG
@@ -136,7 +138,8 @@ void* createInQTD(void* address, uint32_t next, bool toggle)
 	td->token.dataToggle   = toggle;	 // Should be toggled every list entry
 
 	// Init Request
-	void* data = malloc(0x8, PAGESIZE);
+	void* data = malloc(0x10, PAGESIZE);
+	memset(data,0,0x10);
 	//DEBUG
 	    virtIn_Buffer = data ; // M5
 	//DEBUG
@@ -172,6 +175,7 @@ void* createInQH(void* address, uint32_t next, bool toggle)
 	                                    // Maybe unused for non interrupt queue head in async list
 
 	void* qtd = malloc(sizeof(struct ehci_qtd), 0x1000);
+	memset(qtd,0,0x1000);
 	//DEBUG
 	    virtIn_Qtd = qtd ; // M4
 	//DEBUG
@@ -190,6 +194,7 @@ void testTransfer(uint32_t device)
 {
 	printformat("\nStarting test transfer on Device: %d\n", device);
 	void* virtualAsyncList = malloc(0x1000,PAGESIZE);
+	memset(virtualAsyncList,0,0x1000);
 	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
@@ -224,7 +229,7 @@ void testTransfer(uint32_t device)
 	showUSBSTS();
 
 	printformat("\nData: %X\n", *data );
-	sleepSeconds(20);
+	sleepSeconds(5);
 }
 ///TEST
 
@@ -354,6 +359,7 @@ void initEHCIHostController(uint32_t number)
 
     // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
     void* virtualMemoryPERIODICLISTBASE   = malloc(0x1000,PAGESIZE);
+    memset(virtualMemoryPERIODICLISTBASE, 0, 0x1000);
     void* physicalMemoryPERIODICLISTBASE  = (void*) paging_get_phys_addr(kernel_pd, virtualMemoryPERIODICLISTBASE);
     pOpRegs->PERIODICLISTBASE = (uint32_t)physicalMemoryPERIODICLISTBASE ;
 
@@ -388,9 +394,8 @@ void initEHCIHostController(uint32_t number)
          }
          if( pOpRegs->PORTSC[j] & PSTS_ENABLED )
          {
-             printformat("Port %d is enabled", j);
-	         testTransfer(0);
-	     }
+             testTransfer(0);
+         }
     }
 
     settextcolor(3,0);
