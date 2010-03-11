@@ -77,7 +77,7 @@ void createSetupQTD(void* address, uint32_t next, bool toggle)
 	request->valueHi =    1;	// Type:1 (Device)
 	request->valueLo =    0;	//  Index: 0, used only for String or Configuration descriptors
 	request->index   =    0;	// Language ID: Default
-	request->length  =   -1;	// Maximum
+	request->length  =   18;	// Maximum
 
 	td->buffer0 = dataPhysical;
 	td->buffer1 = 0x0;
@@ -94,9 +94,10 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 
 	head->horizontalPointer      =   next | 0x2;
 	head->deviceAddress          =   0;	// The device address
+	head->inactive               =   0;
 	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
 	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
-	head->dataToggleControl      =   0;	// Get the Data Toggle bit out of the included qTD
+	head->dataToggleControl      =   1;	// Get the Data Toggle bit out of the included qTD
 	head->H                      =   1;
 	head->maxPacketLength        =  64;	// It's 64 bytes for a control transfer to a high speed device.
 	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
@@ -160,9 +161,10 @@ void* createInQH(void* address, uint32_t next, bool toggle)
 
 	head->horizontalPointer      =   next | 0x2;
 	head->deviceAddress          =   0;	// The device address
+	head->inactive               =   0;
 	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
 	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
-	head->dataToggleControl      =   0;	// Get the Data Toggle bit out of the included qTD
+	head->dataToggleControl      =   1;	// Get the Data Toggle bit out of the included qTD
 	head->H                      =   0;
 	head->maxPacketLength        =  64;	// It's 64 bytes for a control transfer to a high speed device.
 	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
@@ -221,7 +223,7 @@ void testTransfer(uint32_t device)
 
 	// Enable Async...
 	printformat("\nEnabling Async Schedule\n");
-	pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
+	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/;
 	sleepSeconds(5);
 
     ///TEST
