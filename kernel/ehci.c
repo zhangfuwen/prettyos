@@ -18,6 +18,8 @@ uint32_t eecp;
 uint8_t* inBuffer;
 void* InQTD;
 void* SetupQTD;
+void* InQTDpage0;
+void* SetupQTDpage0;
 
 void createQH(void* address, void* firstQTD, uint32_t device)
 {
@@ -72,7 +74,7 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 
 	if(pid == 0x2) // SETUP
 	{
-		struct ehci_request* request = (struct ehci_request*)data;
+	    struct ehci_request* request = (struct ehci_request*)data;
 		request->type    = 0x80;	// Device->Host
 		request->request =  0x6;	// GET_DESCRIPTOR
 		request->valueHi =    1;	// Type:1 (Device)
@@ -95,6 +97,16 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 	return address;
 }
 
+void showPacket(void* virtAddrBuf0, uint32_t size)
+{
+     for(uint32_t c=0; c<size; c++)
+     {
+         settextcolor(3,0);
+         printformat("%y ", *((uint8_t*)virtAddrBuf0+c));
+         settextcolor(15,0);
+     }
+}
+
 void showStatusbyteQTD(void* addressQTD)
 {
      uint8_t statusbyte = *((uint8_t*)addressQTD+8);
@@ -114,7 +126,10 @@ void testTransfer(uint32_t device, uint8_t port)
 
 	// Create QTDs (in reversed order)
 	void* next =     InQTD    = createQTD(0x1,            0x1, 1, 18); // IN DATA1, 18 byte
+	InQTDpage0 =     (void*) (*(uint32_t*)InQTD+3);
+
 	void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
+    SetupQTDpage0  = (void*) (*(uint32_t*)SetupQTD+3);
 
 	// Create QH
 	createQH(virtualAsyncList, firstQTD, device);
@@ -289,8 +304,9 @@ void initEHCIHostController(uint32_t number)
              settextcolor(15,0);
 
              testTransfer(0,j+1); // device address, port number
-             printformat("\nsetup: "); showStatusbyteQTD(SetupQTD);
-             printformat("\nin:    "); showStatusbyteQTD(InQTD);
+             printformat("\nsetup packet: "); //showPacket(SetupQTDpage0,8);
+             printformat("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+             printformat("in    status: "); showStatusbyteQTD(InQTD);
          }
     }
 
@@ -386,8 +402,9 @@ void checkPortLineStatus()
              printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
              settextcolor(15,0);
              testTransfer(0,j+1); // device address, port number
+             printformat("\nsetup packet: "); //showPacket(SetupQTDpage0,8);
              printformat("\nsetup: "); showStatusbyteQTD(SetupQTD);
-             printformat("\nin:    "); showStatusbyteQTD(InQTD);
+             printformat("in:    "); showStatusbyteQTD(InQTD);
              /// TEST
         }
       }
