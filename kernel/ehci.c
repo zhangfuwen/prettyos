@@ -93,11 +93,13 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle)
 }
 
 ///TEST
-void testTransfer(uint32_t device)
+void testTransfer(uint32_t device, uint8_t port)
 {
-	printformat("\nStarting test transfer on device address	: %d\n", device);
+	settextcolor(3,0);
+	printformat("Test transfer at port %d on device address: %d\n", port, device);
+    settextcolor(15,0);
 
-	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+ 	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
 	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
@@ -112,9 +114,9 @@ void testTransfer(uint32_t device)
 	printformat("\nEnabling Async Schedule\n");
 	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/;
 
-	sleepSeconds(5);
+	sleepSeconds(2);
 	printformat("\nData: %X\n", *inBuffer );
-	sleepSeconds(5);
+	sleepSeconds(2);
 }
 ///TEST
 
@@ -142,7 +144,7 @@ void ehci_handler(struct regs* r)
 
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
-        /*printformat("\nFrame List Rollover Interrupt");*/
+        printformat("\nFrame List Rollover Interrupt");
         pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
 
@@ -268,12 +270,16 @@ void initEHCIHostController(uint32_t number)
          if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
          {
              settextcolor(14,0);
-             printformat("Port %d: %s\n",j+1,"high speed idle, enabled, SE0 ");
+             printformat("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
              settextcolor(15,0);
          }
          if( pOpRegs->PORTSC[j] & PSTS_ENABLED )
          {
-             testTransfer(0);
+             settextcolor(3,0);
+             printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
+             settextcolor(15,0);
+
+             testTransfer(0,j+1); // device address, port number
          }
     }
 
@@ -363,6 +369,14 @@ void checkPortLineStatus()
              settextcolor(14,0);
              printformat(" ,high speed, enabled");
              settextcolor(15,0);
+
+             /// TEST
+             settextcolor(3,0);
+             printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
+             settextcolor(15,0);
+
+             testTransfer(0,j+1); // device address, port number
+             /// TEST
         }
       }
 
