@@ -244,6 +244,7 @@ void resetPort(uint8_t j, bool sleepFlag);
 void createQH(void* address, void* firstQTD, uint32_t device);
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes);
 void testTransfer(uint32_t device, uint8_t port);
+void showStatusbyteQTD(void* addressQTD);
 
 //void showMEM_();
 //void showMEM(void* address, uint8_t n, const char* str);
