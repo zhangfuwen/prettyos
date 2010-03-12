@@ -42,7 +42,7 @@ void createQH(void* address, void* firstQTD, uint32_t device)
 	head->qtd.next = physNext;
 }
 
-void* createQTD(uint32_t next, uint8_t pid, bool toggle)
+void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 {
 	void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
 	struct ehci_qtd* td = (struct ehci_qtd*)address;
@@ -51,17 +51,18 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle)
 	{
 		uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
 		td->next = phys;
-	} else
+	}
+	else
 	{
 		td->next = 0x1;
 	}
-	td->nextAlt = 0x1;	// No alternative next, so T-Bit is set to 1
+	td->nextAlt = td->next; /// 0x1;	// No alternative next, so T-Bit is set to 1
 	td->token.status       = 0x80;	 // This will be filled by the Host Controller
 	td->token.pid          = pid;	 // Setup Token
 	td->token.errorCounter = 0x3;    // Written by the Host Controller.
 	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
 	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
-	td->token.bytes        = 0x20;	 // 32 Byte
+	td->token.bytes        = tokenBytes; // dependent on transfer
 	td->token.dataToggle   = toggle; // Should be toggled every list entry
 
 	void* data = malloc(0x20, PAGESIZE);	// Enough for a full page
@@ -75,7 +76,7 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle)
 		request->valueHi =    1;	// Type:1 (Device)
 		request->valueLo =    0;	//  Index: 0, used only for String or Configuration descriptors
 		request->index   =    0;	// Language ID: Default
-		request->length  =   0x20;	// 32 Byte
+		request->length  =   18; /// 0x20;	// 32 Byte
 	}
 	else if(pid == 0x1)// IN
 	{
@@ -104,8 +105,8 @@ void testTransfer(uint32_t device, uint8_t port)
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
 	// Create QTDs (in reversed order)
-	void* next = createQTD(0x1, 0x1, 1);	// IN DATA1
-	void* firstQTD = createQTD((uint32_t)next, 0x2, 0);	// SETUP DATA0
+	void* next = createQTD(0x1, 0x1, 1, 18);	            // IN DATA1, 18 byte
+	void* firstQTD = createQTD((uint32_t)next, 0x2, 0, 8);	// SETUP DATA0, 8 byte
 
 	// Create QH
 	createQH(virtualAsyncList, firstQTD, device);
