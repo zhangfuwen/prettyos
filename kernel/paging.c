@@ -6,6 +6,7 @@
 
 // TODO: Apply multithreading safety
 
+#include "os.h"
 #include "paging.h"
 #include "kheap.h"
 
@@ -280,10 +281,6 @@ bool paging_alloc( page_directory_t* pd, void* virt_addr, uint32_t size, uint32_
     ASSERT( ((uint32_t)virt_addr)%PAGESIZE == 0 );
     ASSERT( size%PAGESIZE == 0 );
 
-    // "pd" may be NULL in which case its the kernel's pd
-    if ( ! pd )
-        pd = kernel_pd;
-
     // We repeat allocating one page at once
     for ( uint32_t done=0; done!=size/PAGESIZE; ++done )
     {
@@ -334,10 +331,6 @@ void paging_free( page_directory_t* pd, void* virt_addr, uint32_t size )
     // "virt_addr" and "size" must be page-aligned
     ASSERT( ((uint32_t)virt_addr)%PAGESIZE == 0 );
     ASSERT( size%PAGESIZE == 0 );
-
-    // "pd" may be NULL in which case the kernel's pd is meant
-    if ( ! pd )
-        pd = kernel_pd;
 
     // Go through all pages and free them
     uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
@@ -405,12 +398,28 @@ void paging_destroy_user_pd( page_directory_t* pd )
 
 void paging_switch( page_directory_t* pd )
 {
-    if(!pd)  pd=kernel_pd;
 	//current_pd = pd;
     __asm__ volatile("mov %0, %%cr3" : : "r" (pd->pd_phys_addr));
 }
 
 
+void* paging_acquire_pcimem( uint32_t phys_addr )
+{
+    printformat( "paging_acquire_pcimem: %X\n", phys_addr );
+
+    static char* virt = (char*)0xFFF00000;
+
+    uint32_t pagenr = (uint32_t)virt/PAGESIZE;
+
+    // Check the page table and setup the page
+    //ASSERT( kernel_pd->tables[pagenr/1024];
+    printformat( "paging_acquire_pcimem: Page address is %X\n", &(kernel_pd->tables[pagenr/1024]->pages[pagenr%1024]) );
+    kernel_pd->tables[pagenr/1024]->pages[pagenr%1024] = phys_addr | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
+
+    char* ret = virt;
+    virt += PAGESIZE;
+    return ret;
+}
 
 bool paging_do_idmapping( uint32_t phys_addr )
 {

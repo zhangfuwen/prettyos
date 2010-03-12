@@ -17,7 +17,7 @@ volatile task_t* ready_queue;
 extern tss_entry_t tss;
 extern void irq_tail();
 extern uint32_t read_eip();
-extern page_directory_t* kernel_pd;
+
 
 uint32_t next_pid = 1; // The next available process ID.
 

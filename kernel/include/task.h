@@ -30,7 +30,6 @@ void settaskflag(int32_t i);
 
 void tasking_install();
 uint32_t task_switch(uint32_t esp);
-int32_t fork();
 int32_t getpid();
 task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege );
 void switch_context();

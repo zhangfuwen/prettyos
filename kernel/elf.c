@@ -157,7 +157,7 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size )
         cli();
         paging_switch( pd );
         memcpy( (void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz );
-        paging_switch( NULL );
+        paging_switch( kernel_pd );
         sti();
 
         header_pos += header->phentrysize;

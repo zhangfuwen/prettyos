@@ -100,14 +100,23 @@ void install_RTL8139(uint32_t number)
     #endif
 
     /// idendity mapping of BaseAddressRTL8139_MMIO
-    int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO );
-    if(retVal == true)
+    bool USE_VIRTUAL_APPROACH = true;
+    if ( USE_VIRTUAL_APPROACH )
     {
-        printformat("\n");
+        BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem( BaseAddressRTL8139_MMIO );
+        printformat( "BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO );
     }
     else
     {
-        printformat("\npaging_do_idmapping(...) error.\n");
+        int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO );
+        if(retVal == true)
+        {
+            printformat("\n");
+        }
+        else
+        {
+            printformat("\npaging_do_idmapping(...) error.\n");
+        }
     }
 
     // "power on" the card

@@ -10,7 +10,6 @@
 #include "paging.h"
 #include "sys_speaker.h"
 
-extern page_directory_t* kernel_pd;
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 uint32_t ubar;

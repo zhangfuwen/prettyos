@@ -15,6 +15,8 @@ static const uint32_t MEM_USER     = 4;
 struct page_directory_;
 typedef struct page_directory_ page_directory_t;
 
+extern page_directory_t* kernel_pd;
+
 bool paging_alloc( page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags );
 void paging_free ( page_directory_t* pd, void* virt_addr, uint32_t size );
 
@@ -26,6 +28,7 @@ bool paging_do_idmapping( uint32_t phys_addr );
 void paging_switch( page_directory_t* pd  );
 page_directory_t* paging_create_user_pd();
 void paging_destroy_user_pd( page_directory_t* pd );
+void* paging_acquire_pcimem( uint32_t phys_addr );
 
 uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr );
 

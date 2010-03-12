@@ -71,7 +71,7 @@ static bool heap_grow( uint32_t size, char* heap_end )
         return false;
 
     // Enhance the memory
-    if ( ! paging_alloc( NULL, heap_end, size, MEM_KERNEL|MEM_WRITE ) )
+    if ( ! paging_alloc( kernel_pd, heap_end, size, MEM_KERNEL|MEM_WRITE ) )
         return false;
 
     // Maybe we can merge with the last region object?
