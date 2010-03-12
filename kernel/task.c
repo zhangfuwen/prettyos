@@ -2,6 +2,11 @@
 #include "paging.h"
 #include "kheap.h"
 
+
+
+// Count of running tasks
+int32_t userTaskCounter;
+
 // The currently running task.
 volatile task_t* current_task;
 

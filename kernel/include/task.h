@@ -7,7 +7,6 @@
 
 #define KERNEL_STACK_SIZE 2048       // Use a 2kb kernel stack.
 
-uint32_t initial_esp;
 
 struct task
 {
@@ -22,7 +21,9 @@ struct task
 
 typedef struct task task_t;
 
-int32_t userTaskCounter;
+
+
+extern int32_t userTaskCounter;
 
 int32_t getUserTaskNumber();
 void settaskflag(int32_t i);

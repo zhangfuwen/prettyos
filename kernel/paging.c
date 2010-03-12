@@ -10,15 +10,6 @@
 #include "kheap.h"
 
 
-//// Some general helper functions
-// Searches for an element in an array
-/*static void** search_ptr_array( void** array, unsigned count, void* elem )
-{
-	for ( unsigned i=0; i<count; ++i )
-		if ( array[i] == elem )
-			return &array[count];
-	return NULL;
-}*/
 
 // Memory Map //
 typedef struct
@@ -50,8 +41,9 @@ static bool memorymap_availability( const mem_map_entry_t* entries, uint64_t beg
 
 
 // Physical Memory //
+static const uint32_t MAX_DWORDS = 0x100000000ull / PAGESIZE / 32;
+
 static uint32_t* bittable;
-static uint32_t  dword_count;
 static uint32_t  first_free_dword;
 
 
@@ -70,11 +62,9 @@ static void phys_set_bits( uint32_t addr_begin, uint32_t addr_end, bool reserved
 
 static uint32_t phys_init()
 {
-    mem_map_entry_t* const entries = (mem_map_entry_t*)MEMORY_MAP_ADDRESS;
+    static const uint64_t FOUR_GB    = 0x100000000ull;
 
-    // Some constants
-    const uint64_t FOUR_GB    = 0x100000000ull;
-    const uint32_t MAX_DWORDS = FOUR_GB / PAGESIZE / 32;
+    mem_map_entry_t* const entries = (mem_map_entry_t*)MEMORY_MAP_ADDRESS;
 
     // Print the memory map
     #ifdef _DIAGNOSIS_
@@ -128,6 +118,7 @@ static uint32_t phys_init()
     phys_set_bits( (uint32_t)&_kernel_beg, (uint32_t)&_kernel_end, true );
 
     // Find the number of dwords we can use, skipping the last, "reserved"-only ones
+    uint32_t dword_count = 0;
     for ( uint32_t i=0; i<MAX_DWORDS; ++i )
         if ( bittable[i] != 0xFFFFFFFF )
             dword_count = i+1;
@@ -143,7 +134,7 @@ static uint32_t phys_init()
 static uint32_t phys_alloc()
 {
     // Search for a free uint32_t, i.e. one that not only contains ones
-    for ( ; first_free_dword<dword_count; ++first_free_dword )
+    for ( ; first_free_dword<MAX_DWORDS; ++first_free_dword )
         if ( bittable[first_free_dword] != 0xFFFFFFFF )
         {
             // Find the number of a free bit

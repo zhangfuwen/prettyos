@@ -1,15 +1,15 @@
 ; The CPU needs a table that contains information about interrupts that may
 ;  occur. Each entry is 8 bytes in size and holds the interrupt-routine's
 ;  address as well as some flags related to that interrupt. The default flags
-;  are "0x0008, 0x8E00". If an interrupt is allowed to be executed from user
-;  code the second flag word is 0xEE00 instead of 0x8E00.
+;  are "0x0008, 0x8E00". If user code shall be allowed to trigger a specific
+;  interrupt, set the second flag word to 0xEE00 instead of 0x8E00.
 ; The interrupts numbered 0-32 are called "Interrupt Service Routines (ISRs)"
 ;  and are triggered automatically by the CPU when something bad happens, e.g.
 ;  at division by zero, occurance of broken instruction code or access to a
 ;  disallowed memory area.
 ; Interrupts 32-256 are called "Interrupt ReQuests (IRQs)", some of them
-;  (no 32-48) are again triggered externally e.g. by the timer or the keyboard
-;  and the rest can be fired internally using an "int 0xXX" assembler
+;  (no 32-48) are again triggered externally e.g. by the timer  chip or the
+;  keyboard and the rest can be fired internally using an "int 0xXX" assembler
 ;  instruction.
 ;
 ; This file contains:
