@@ -15,85 +15,15 @@ struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 uint32_t ubar;
 uint32_t eecp;
+uint8_t* inBuffer;
 
-//DEBUG
-    void *virtSetup_QH, *virtSetup_Qtd, *virtSetup_Buffer, *virtIn_QH, *virtIn_Qtd, *virtIn_Buffer; // virtual Addresses at heap
-    uint8_t  nQH=4, nQtd=4, nBuffer=2; // DWORDs to be printed out to screen
-//DEBUG
-
-void showMEM_()
-{
-    showMEM(virtSetup_QH,      nQH,     "SetupQH    " );
-    showMEM(virtIn_QH,         nQH,     "InQH       " );
-    showMEM(virtSetup_Qtd,     nQtd,    "SetupQtd   " );
-    showMEM(virtIn_Qtd,        nQtd,    "InQtd      " );
-    showMEM(virtSetup_Buffer,  nBuffer, "SetupBuffer" );
-    showMEM(virtIn_Buffer,     nBuffer, "InBuffer   " );
-}
-
-void showMEM(void* address, uint8_t n, const char* str)
-{
-    settextcolor(11,0);
-    printformat("\n%s: ", str);
-    settextcolor(9,0);
-    printformat("%X\n", address);
-
-    for (uint8_t i=0; i<n; i++)
-    {
-        settextcolor(6,0);
-        printformat("%d:", i);
-        settextcolor(14,0);
-        printformat(" %X ", *((uint32_t*)address+i) );
-    }
-    settextcolor(15,0);
-}
-
-
-void createSetupQTD(void* address, uint32_t next, bool toggle)
-{
-	struct ehci_qtd* td = (struct ehci_qtd*)address;
-
-	td->next = 0x1;	// No next, so T-Bit is set to 1
-	td->nextAlt = 0x1;	// No alternative next, so T-Bit is set to 1
-	td->token.status       = 0x80;	 // This will be filled by the Host Controller
-	td->token.pid          = 0x2;	 // Setup Token
-	td->token.errorCounter = 0x3;    // Written by the Host Controller.
-	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
-	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
-	td->token.bytes        = 0x1000; // The full first buffer (4k)
-	td->token.dataToggle   = toggle; // Should be toggled every list entry
-
-	// Init Request
-	void* data = malloc(0x10, PAGESIZE);
-	memset(data,0,0x10);
-	//DEBUG
-	     virtSetup_Buffer = data; // M3
-	//DEBUG
-	uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
-	struct ehci_request* request = (struct ehci_request*)data;
-
-	request->type    = 0x80;	// Device->Host
-	request->request =  0x6;	// GET_DESCRIPTOR
-	request->valueHi =    1;	// Type:1 (Device)
-	request->valueLo =    0;	//  Index: 0, used only for String or Configuration descriptors
-	request->index   =    0;	// Language ID: Default
-	request->length  =   18;	// Maximum
-
-	td->buffer0 = dataPhysical;
-	td->buffer1 = 0x0;
-	td->buffer2 = 0x0;
-	td->buffer3 = 0x0;
-	td->buffer4 = 0x0;
-}
-
-
-
-void createSetupQH(void* address, uint32_t next, bool toggle)
+void createQH(void* address, void* firstQTD, uint32_t device)
 {
 	struct ehci_qhd* head = (struct ehci_qhd*)address;
-
-	head->horizontalPointer      =   next | 0x2;
-	head->deviceAddress          =   0;	// The device address
+	memset(address, 0, sizeof(struct ehci_qhd));
+	uint32_t phys = paging_get_phys_addr(kernel_pd, address);
+	head->horizontalPointer      =   phys | 0x2;
+	head->deviceAddress          =   device; // The device address
 	head->inactive               =   0;
 	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
 	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
@@ -107,135 +37,86 @@ void createSetupQH(void* address, uint32_t next, bool toggle)
 	head->hubAddr                =   0;	// unused if high speed (Split transfer)
 	head->portNumber             =   0;	// unused if high speed (Split transfer)
 	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
-	                                    // Maybe unused for non interrupt queue head in async list
-
-	void* qtd = malloc(sizeof(struct ehci_qtd), PAGESIZE);
-	memset(qtd,0,sizeof(struct ehci_qtd));
-	//DEBUG
-	    virtSetup_Qtd = qtd ; // M2
-	//DEBUG
-	head->current = paging_get_phys_addr(kernel_pd, qtd);
-
-    //DEBUG
-	//printformat("\nvirt qtd: %X phys qtd: %X\n",qtd,head->current );
-
-	createSetupQTD(qtd, next, toggle);
+                                        // Maybe unused for non interrupt queue head in async list
+	uint32_t physNext = paging_get_phys_addr(kernel_pd, firstQTD);
+	head->qtd.next = physNext;
 }
 
-
-
-void* createInQTD(void* address, uint32_t next, bool toggle)
+void* createQTD(uint32_t next, uint8_t pid, bool toggle)
 {
+	void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
 	struct ehci_qtd* td = (struct ehci_qtd*)address;
 
-	td->next = 0x1;	     // No next, so T-Bit is set to 1
-	td->nextAlt            = 0x1;	 // No alternative next, so T-Bit is set to 1
+	if(next != 0x1)
+	{
+		uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
+		td->next = phys;
+	} else
+	{
+		td->next = 0x1;
+	}
+	td->nextAlt = 0x1;	// No alternative next, so T-Bit is set to 1
 	td->token.status       = 0x80;	 // This will be filled by the Host Controller
-	td->token.pid          = 0x1;	 // IN Token
+	td->token.pid          = pid;	 // Setup Token
 	td->token.errorCounter = 0x3;    // Written by the Host Controller.
 	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
 	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
-	td->token.bytes        = 0x1000; // The full first buffer (4k)
-	td->token.dataToggle   = toggle;	 // Should be toggled every list entry
+	td->token.bytes        = 0x20;	 // 32 Byte
+	td->token.dataToggle   = toggle; // Should be toggled every list entry
 
-	// Init Request
-	void* data = malloc(0x10, PAGESIZE);
-	memset(data,0,0x10);
-	//DEBUG
-	    virtIn_Buffer = data ; // M5
-	//DEBUG
+	void* data = malloc(0x20, PAGESIZE);	// Enough for a full page
+	memset(data,0,0x20);
+
+	if(pid == 0x2) // SETUP
+	{
+		struct ehci_request* request = (struct ehci_request*)data;
+		request->type    = 0x80;	// Device->Host
+		request->request =  0x6;	// GET_DESCRIPTOR
+		request->valueHi =    1;	// Type:1 (Device)
+		request->valueLo =    0;	//  Index: 0, used only for String or Configuration descriptors
+		request->index   =    0;	// Language ID: Default
+		request->length  =   0x20;	// 32 Byte
+	}
+	else if(pid == 0x1)// IN
+	{
+		inBuffer = data;
+	}
+
 	uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
-
 	td->buffer0 = dataPhysical;
 	td->buffer1 = 0x0;
 	td->buffer2 = 0x0;
 	td->buffer3 = 0x0;
 	td->buffer4 = 0x0;
 
-	return data;
+	return address;
 }
-
-void* createInQH(void* address, uint32_t next, bool toggle)
-{
-	struct ehci_qhd* head = (struct ehci_qhd*)address;
-
-	head->horizontalPointer      =   next | 0x2;
-	head->deviceAddress          =   0;	// The device address
-	head->inactive               =   0;
-	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
-	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
-	head->dataToggleControl      =   1;	// Get the Data Toggle bit out of the included qTD
-	head->H                      =   0;
-	head->maxPacketLength        =  64;	// It's 64 bytes for a control transfer to a high speed device.
-	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
-	head->nakCountReload         =   0;	// This value is used by HC to reload the Nak Counter field.
-	head->interruptScheduleMask  =   0;	// not used for async schedule
-	head->splitCompletionMask    =   0;	// unused if not (low/full speed and in periodic schedule)
-	head->hubAddr                =   0;	// unused if high speed (Split transfer)
-	head->portNumber             =   0;	// unused if high speed (Split transfer)
-	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
-	                                    // Maybe unused for non interrupt queue head in async list
-
-	void* qtd = malloc(sizeof(struct ehci_qtd), PAGESIZE);
-	memset(qtd,0,sizeof(struct ehci_qtd));
-	//DEBUG
-	    virtIn_Qtd = qtd ; // M4
-	//DEBUG
-	head->current = paging_get_phys_addr(kernel_pd, qtd);
-
-    //DEBUG
-	//printformat("\nvirt qtd: %X phys qtd: %X\n",qtd,head->current );
-
-	return createInQTD(qtd , next, toggle);
-}
-
-
 
 ///TEST
 void testTransfer(uint32_t device)
 {
-	printformat("\nStarting test transfer on Device: %d\n", device);
-	void* virtualAsyncList = malloc(0x1000,PAGESIZE);
-	memset(virtualAsyncList,0,0x1000);
+	printformat("\nStarting test transfer on device address	: %d\n", device);
+
+	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
 	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
-	//DEBUG
-	    virtSetup_QH = virtualAsyncList; // M1a
-	//DEBUG
 
-	// Fill the List
-	void* position = virtualAsyncList;
-	createSetupQH(position, paging_get_phys_addr(kernel_pd, position + 0x100), 0);
-	position += 0x100;
+	// Create QTDs (in reversed order)
+	void* next = createQTD(0x1, 0x1, 1);	// IN DATA1
+	void* firstQTD = createQTD((uint32_t)next, 0x2, 0);	// SETUP DATA0
 
-	//DEBUG
-	    virtIn_QH = position; // M1b
-	//DEBUG
-
-	uint8_t* data = (uint8_t*) createInQH(position, phsysicalAddr, 1);	// End of the List (for now)
-	//position += sizeof(struct ehci_qtd);
-
-	///TEST
-	printformat("\n\n");
-	showMEM_();
-	showUSBSTS();
+	// Create QH
+	createQH(virtualAsyncList, firstQTD, device);
 
 	// Enable Async...
 	printformat("\nEnabling Async Schedule\n");
 	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/;
+
 	sleepSeconds(5);
-
-    ///TEST
-	showMEM_();
-	showUSBSTS();
-
-	printformat("\nData: %X\n", *data );
+	printformat("\nData: %X\n", *inBuffer );
 	sleepSeconds(5);
 }
 ///TEST
-
-
 
 void ehci_handler(struct regs* r)
 {
@@ -245,27 +126,32 @@ void ehci_handler(struct regs* r)
         printformat("\nUSB Interrupt");
         pOpRegs->USBSTS |= STS_USBINT;
     }
+
     if( pOpRegs->USBSTS & STS_USBERRINT )
     {
         printformat("\nUSB Error Interrupt");
         pOpRegs->USBSTS |= STS_USBERRINT;
     }
+
     if( pOpRegs->USBSTS & STS_PORT_CHANGE )
     {
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
         showPORTSC();
         checkPortLineStatus();
     }
+
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
         /*printformat("\nFrame List Rollover Interrupt");*/
         pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
+
     if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )
     {
         printformat("\nHost System Error Interrupt");
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
     }
+
     if( pOpRegs->USBSTS & STS_ASYNC_INT )
     {
         printformat("\nInterrupt on Async Advance");
@@ -294,7 +180,6 @@ void resetPort(uint8_t j, bool sleepFlag)
 {
      pOpRegs->PORTSC[j] |=  PSTS_POWERON;
      pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
-
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
 
      if(sleepFlag)
@@ -322,6 +207,7 @@ void resetPort(uint8_t j, bool sleepFlag)
          {
              for(uint32_t k=0; k<50000000; k++){nop();}
          }
+
          timeoutPortReset++;
          if(timeoutPortReset>20)
          {
@@ -336,12 +222,14 @@ void resetPort(uint8_t j, bool sleepFlag)
 void initEHCIHostController(uint32_t number)
 {
     irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
+
     DeactivateLegacySupport(number);
 
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
     sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
 
     pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
+
     int32_t timeout=0;
     while( (pOpRegs->USBCMD & 0x2) != 0 )
     {
@@ -359,17 +247,7 @@ void initEHCIHostController(uint32_t number)
     // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
     pOpRegs->CTRLDSSEGMENT = 0;
 
-    // Write the base address of the Periodic Frame List to the PERIODICLIST BASE register.
-    void* virtualMemoryPERIODICLISTBASE   = malloc(0x1000,PAGESIZE);
-    memset(virtualMemoryPERIODICLISTBASE, 0, 0x1000);
-    void* physicalMemoryPERIODICLISTBASE  = (void*) paging_get_phys_addr(kernel_pd, virtualMemoryPERIODICLISTBASE);
-    pOpRegs->PERIODICLISTBASE = (uint32_t)physicalMemoryPERIODICLISTBASE ;
-
-    // If there are no work items in the periodic schedule, all elements should have their T-Bits set to 1.
-    memsetl(virtualMemoryPERIODICLISTBASE, 1, 1024);
-
-    // Turn the host controller ON via setting the Run/Stop bit
-    // Software must not write a one to this field unless the host controller is in the Halted state
+    // Turn the host controller ON via setting the Run/Stop bit. Software must not write a one to this field unless the host controller is in the Halted state
     pOpRegs->USBCMD |= CMD_8_MICROFRAME;
     if( pOpRegs->USBSTS & STS_HCHALTED )
     {
@@ -387,7 +265,6 @@ void initEHCIHostController(uint32_t number)
     {
          resetPort(j,true);
 
-         // test on high speed 1005h
          if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
          {
              settextcolor(14,0);
@@ -405,12 +282,9 @@ void initEHCIHostController(uint32_t number)
     printformat("\nCTRLDSSEGMENT:              %X", pOpRegs->CTRLDSSEGMENT);
     printformat("\nUSBINTR:                    %X", pOpRegs->USBINTR);
     printformat("\nPERIODICLISTBASE phys addr: %X", pOpRegs->PERIODICLISTBASE);
-    printformat("  virt addr: %X", virtualMemoryPERIODICLISTBASE);
     printformat("\nUSBCMD:                     %X", pOpRegs->USBCMD);
     printformat("\nCONFIGFLAG:                 %X", pOpRegs->CONFIGFLAG);
     settextcolor(15,0);
-
-    // showUSBSTS();
 }
 
 void showPORTSC()
@@ -420,8 +294,8 @@ void showPORTSC()
         if( pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE )
         {
             char str[80], PortNumber[5], PortStatus[40];
-
             itoa(j+1,PortNumber);
+
             if( pOpRegs->PORTSC[j] & PSTS_CONNECTED )
             {
                 strcpy(PortStatus,"Device attached");
@@ -444,7 +318,7 @@ void showPORTSC()
             printf("                                                                              ",47,color);
             printf("                                                                              ",48,color);
 
-            beep(1000,500);
+            beep(1000,100);
         }
     }
 }
@@ -469,8 +343,6 @@ void showUSBSTS()
     settextcolor(15,0);
 }
 
-
-
 void checkPortLineStatus()
 {
     settextcolor(14,0);
@@ -493,16 +365,19 @@ void checkPortLineStatus()
              settextcolor(15,0);
         }
       }
+
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 1) // K_STATE
       {
         settextcolor(14,0);
         printformat("K-State");
       }
+
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 2) // J_STATE
       {
         settextcolor(14,0);
         printformat("J-state");
       }
+
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 3) // undefined
       {
         settextcolor(12,0);
@@ -520,6 +395,7 @@ void DeactivateLegacySupport(uint32_t number)
 
     bool failed = false;
     eecp = BYTE2(pCapRegs->HCCPARAMS);
+
     printformat("DeactivateLegacySupport: eecp = %x\n",eecp);
 
     if (eecp >= 0x40) // behind standard pci registers, cf. http://wiki.osdev.org/PCI#PCI_Device_Structure
@@ -538,7 +414,6 @@ void DeactivateLegacySupport(uint32_t number)
         }
 
         // Check, whether a Legacy-Support-EC was found and the BIOS-Semaphore is set
-
         if((eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01))
         {
             // set OS-Semaphore
@@ -552,7 +427,6 @@ void DeactivateLegacySupport(uint32_t number)
                 sleepMilliSeconds(20);
                 timeout++;
             }
-
             if( !( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01) )
             {
                 // Wait for the OS-Semaphore being set
@@ -603,4 +477,3 @@ void DeactivateLegacySupport(uint32_t number)
 * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-

@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.209]\n");
+    printformat("PrettyOS [Version 0.0.0.211]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -186,7 +186,7 @@ int main()
         settextcolor(15,0);
     }
 
-    msgbeep();
+    // msgbeep();
     pODA->ts_flag = 1;
 
     const char* progress = "|/-\\";

@@ -241,10 +241,10 @@ void DeactivateLegacySupport(uint32_t number);
 void checkPortLineStatus();
 void resetPort(uint8_t j, bool sleepFlag);
 
-void createSetupQTD(void* address, uint32_t next, bool toggle);
-void createSetupQH( void* address, uint32_t next, bool toggle);
-void* createInQTD(  void* address, uint32_t next, bool toggle);
+void createQH(void* address, void* firstQTD, uint32_t device);
+void* createQTD(uint32_t next, uint8_t pid, bool toggle);
+void testTransfer(uint32_t device);
 
-void showMEM_();
-void showMEM(void* address, uint8_t n, const char* str);
+//void showMEM_();
+//void showMEM(void* address, uint8_t n, const char* str);
 #endif
