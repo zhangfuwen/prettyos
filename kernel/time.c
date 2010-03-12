@@ -15,7 +15,6 @@ tm_t* cmosTime(tm_t* ptm)
     ptm->second     = PackedBCD2Decimal(cmos_read(0x00));
     ptm->minute     = PackedBCD2Decimal(cmos_read(0x02));
     ptm->hour       = PackedBCD2Decimal(cmos_read(0x04));
-    ptm->weekday    = cmos_read(0x06) & 0xF             ;
     ptm->dayofmonth = PackedBCD2Decimal(cmos_read(0x07));
     ptm->month      = PackedBCD2Decimal(cmos_read(0x08));
     ptm->year       = PackedBCD2Decimal(cmos_read(0x09));

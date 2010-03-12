@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.211]\n");
+    printformat("PrettyOS [Version 0.0.0.212]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -60,7 +60,15 @@ int main()
 {
     init();
     pODA->Memory_Size = paging_install();
-    printformat( "\n\nMemory size: %d KB\n", pODA->Memory_Size/1024 );
+	if(pODA->Memory_Size > 1000000000) {
+		printformat( "\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
+	}
+	else if(pODA->Memory_Size > 1000000) {
+		printformat( "\n\nMemory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size );
+	}
+	else {
+		printformat( "\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size );
+	}
     heap_install();
     tasking_install();
 
