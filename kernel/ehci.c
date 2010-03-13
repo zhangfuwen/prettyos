@@ -170,7 +170,8 @@ void testTransfer(uint32_t device, uint8_t port)
 	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
 	// Create QTDs (in reversed order)
-	void* next =     InQTD    = createQTD(0x1,            0x1, 1, 18); // IN DATA1, 18 byte
+	void* next                = createQTD(0x1, 0x0, 1, 0);	// Handshake is the opposite direction of Data
+	next       =     InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
 	void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
 
 	// Create QH
