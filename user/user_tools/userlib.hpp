@@ -7,7 +7,7 @@
 #define isupper(character) ((character) >= 'A' && (character) <= 'Z')
 #define islower(character) ((character) >= 'a' && (character) <= 'z')
 
-extern "C" {
+extern "C" { //Functions from C-Userlib
 	// syscalls
 	void settextcolor(unsigned int foreground, unsigned int background);
 	void putch(unsigned char val);
@@ -53,6 +53,9 @@ extern "C" {
 
 	void showInfo(signed char val);
 	void test();
+
+	void* malloc( unsigned size );
+	void free( void* mem );
 }
 
 #endif
