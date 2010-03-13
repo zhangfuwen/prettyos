@@ -120,35 +120,35 @@ void showStatusbyteQTD(void* addressQTD)
 
     // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     settextcolor(14,0);
-    if( statusbyte & 1<<7 )
+    if( statusbyte & (1<<7) )
     {
         printformat("\nqTD Status: Active - HC transactions enabled");
     }
-    if( statusbyte & 1<<6 )
+    if( statusbyte & (1<<6) )
     {
         printformat("\nqTD Status: Halted - serious error at the device/endpoint");
     }
-    if( statusbyte & 1<<5 )
+    if( statusbyte & (1<<5) )
     {
         printformat("\nqTD Status: Data Buffer Error (overrun or underrun)");
     }
-    if( statusbyte & 1<<4 )
+    if( statusbyte & (1<<4) )
     {
         printformat("\nqTD Status: Babble (fatal error leads to Halted)");
     }
-    if( statusbyte & 1<<3 )
+    if( statusbyte & (1<<3) )
     {
         printformat("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");
     }
-    if( statusbyte & 1<<2 )
+    if( statusbyte & (1<<2) )
     {
         printformat("\nqTD Status: Missed Micro-Frame");
     }
-    if( statusbyte & 1<<1 )
+    if( statusbyte & (1<<1) )
     {
         printformat("\nqTD Status: Do Complete Split");
     }
-    if( statusbyte & 1<<0 )
+    if( statusbyte & (1<<0) )
     {
         printformat("\nqTD Status: Do Ping");
     }
@@ -182,7 +182,7 @@ void testTransfer(uint32_t device, uint8_t port)
 	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/;
 
 	sleepSeconds(2);
-	printformat("\nData: %X\n", *inBuffer );
+	//printformat("\nData: %X\n", *inBuffer );
 	showPacket(InQTDpage0,18);
 	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );
 	sleepSeconds(2);
@@ -337,7 +337,7 @@ void initEHCIHostController(uint32_t number)
              testTransfer(0,j+1); // device address, port number
              printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
              printformat("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-             printformat("in    status: "); showStatusbyteQTD(InQTD);
+             printformat("\nin    status: "); showStatusbyteQTD(InQTD);
          }
     }
 
