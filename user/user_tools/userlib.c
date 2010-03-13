@@ -112,6 +112,13 @@ void gotoxy(unsigned char x, unsigned char y)
     __asm__ volatile( "int $0x7F" : : "a"(19), "b"(x), "c"(y)  );
 }
 
+void* grow_heap( unsigned increase )
+{
+    int ret;
+    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(20), "b"(increase) );
+    return (void*)ret;
+}
+
 
 
 
@@ -438,6 +445,43 @@ void test()
     settextcolor(4,0);
     puts(">>> TEST <<<");
     settextcolor(15,0);
+}
+
+
+void* malloc( unsigned size )
+{
+    static char* cur = 0;
+    static char* top = 0;
+
+    // Align
+    size = (size+15) & ~15;
+
+    // Heap not set up?
+    if ( ! cur )
+    {
+        unsigned to_grow = (size+4095) & ~4095;
+        cur = grow_heap( to_grow );
+        if ( ! cur )
+            return 0;
+        top = cur + to_grow;
+    }
+    // Not enough space on heap?
+    else if ( top - cur < size )
+    {
+        unsigned to_grow = (size+4095) & ~4095;
+        if ( ! grow_heap( to_grow ) )
+            return 0;
+        top += to_grow;
+    }
+
+    void* ret = cur;
+    cur += size;
+    return ret;
+}
+
+void free( void* mem )
+{
+    // Nothing to do
 }
 
 

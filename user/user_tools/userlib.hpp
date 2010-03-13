@@ -28,6 +28,8 @@ extern "C" {
 	void clearScreen(unsigned char backgroundColor);
 	void gotoxy(unsigned char x, unsigned char y);
 
+    void* grow_heap( unsigned increase );
+
 	// user functions
 
 	char toLower(char c);

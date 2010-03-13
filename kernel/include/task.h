@@ -15,6 +15,7 @@ struct task
     uint32_t eip;                        // Instruction pointer.
     uint32_t ss;
     page_directory_t* page_directory; // Page directory.
+    char* heap_top;
     uint32_t kernel_stack;               // Kernel stack location.
     struct task* next;                // The next task in a linked list.
 } __attribute__((packed));
@@ -34,6 +35,8 @@ int32_t getpid();
 task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege );
 void switch_context();
 void exit();
+
+void* task_grow_userheap( uint32_t increase );
 
 void task_log(task_t* t);
 void TSS_log(tss_entry_t* tss);

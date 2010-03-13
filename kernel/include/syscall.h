@@ -83,6 +83,7 @@ DECL_SYSCALL0( getUserTaskNumber                          )
 DECL_SYSCALL0( testch                                     )
 DECL_SYSCALL1( clear_userscreen, uint8_t                  )
 DECL_SYSCALL2( set_cursor, uint8_t, uint8_t               )
+DECL_SYSCALL1( grow_heap, uint32_t                        )
 /***********************************************************/
 
 #endif

@@ -27,6 +27,7 @@ DEFN_SYSCALL0( getUserTaskNumber,         16                           )
 DEFN_SYSCALL0( testch,                    17                           )
 DEFN_SYSCALL1( clear_userscreen,          18, uint8_t                  )
 DEFN_SYSCALL2( set_cursor,                19, uint8_t, uint8_t         )
+DEFN_SYSCALL1( grow_heap,                 20, uint32_t                 )
 
 static void* syscalls[] =
 {
@@ -49,7 +50,8 @@ static void* syscalls[] =
     &getUserTaskNumber,
     &testch,
     &clear_userscreen,
-    &set_cursor
+    &set_cursor,
+    &task_grow_userheap
 };
 
 void syscall_handler(struct regs* r)

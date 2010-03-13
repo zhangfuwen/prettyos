@@ -28,9 +28,10 @@ void exit();
 void settaskflag(int i);
 void beep(unsigned int frequency, unsigned int duration);
 int getUserTaskNumber();
-
 void clearScreen(unsigned char backgroundColor);
 void gotoxy(unsigned char x, unsigned char y);
+void* grow_heap( unsigned increase );
+
 
 // user functions
 
@@ -55,5 +56,8 @@ void float2string(float value, int decimal, char* valuestring); // float --> str
 
 void showInfo(signed char val);
 void test();
+
+void* malloc( unsigned size );
+void free( void* mem );
 
 #endif

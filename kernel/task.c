@@ -84,6 +84,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
     new_task->id  = next_pid++;
     new_task->page_directory = directory;
+    new_task->heap_top = USER_HEAP_START;
 
     ///
     #ifdef _DIAGNOSIS_
@@ -237,6 +238,23 @@ void exit()
     sti();
     switch_context(); // switch to next task
 }
+
+
+void* task_grow_userheap( uint32_t increase )
+{
+    increase = alignUp( increase, PAGESIZE );
+
+    if ( current_task->heap_top + increase > USER_HEAP_END )
+        return false;
+
+    if ( ! paging_alloc( current_task->page_directory, current_task->heap_top, increase, MEM_USER | MEM_WRITE ) )
+        return NULL;
+
+    void* before = current_task->heap_top;
+    current_task->heap_top += increase;
+    return before;
+}
+
 
 void log_task_list()
 {

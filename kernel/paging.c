@@ -405,15 +405,14 @@ void paging_switch( page_directory_t* pd )
 
 void* paging_acquire_pcimem( uint32_t phys_addr )
 {
-    printformat( "paging_acquire_pcimem: %X\n", phys_addr );
-
-    static char* virt = (char*)0xFFF00000;
+    static char* virt = PCI_MEM_START;
+    if ( virt == PCI_MEM_END )
+        panic_assert( __FILE__, __LINE__, "Not enough PCI-memory available" );
 
     uint32_t pagenr = (uint32_t)virt/PAGESIZE;
 
     // Check the page table and setup the page
-    //ASSERT( kernel_pd->tables[pagenr/1024];
-    printformat( "paging_acquire_pcimem: Page address is %X\n", &(kernel_pd->tables[pagenr/1024]->pages[pagenr%1024]) );
+    ASSERT( kernel_pd->tables[pagenr/1024] );
     kernel_pd->tables[pagenr/1024]->pages[pagenr%1024] = phys_addr | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
 
     char* ret = virt;

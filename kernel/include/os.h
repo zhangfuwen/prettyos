@@ -44,13 +44,25 @@ typedef signed char          int8_t;
 #define PAGESIZE 0x1000  // 4096 Byte = 4KByte
 
 // Where the kernel's private data is stored (virtual addresses)
-#define KERNEL_DATA_START 0xC0000000    //3 GB
-#define KERNEL_DATA_END   0x100000000   //4 GB
+#define KERNEL_DATA_START (0xC0000000)    //3 GB
+#define KERNEL_DATA_END   (0x100000000)   //4 GB
+
+// PCI/EHCI memory location for MM IO
+#define PCI_MEM_START ((char*)0xFFF00000)
+#define PCI_MEM_END   ((char*)0x100000000)
 
 // Virtual adress area for the kernel heap
 #define KERNEL_HEAP_START KERNEL_DATA_START
-#define KERNEL_HEAP_END   KERNEL_DATA_END
+#define KERNEL_HEAP_END   PCI_MEM_START
 #define KERNEL_HEAP_SIZE  (KERNEL_HEAP_END - KERNEL_HEAP_START)
+
+// Placement allocation
+#define PLACEMENT_BEGIN ((char*)(16*1024*1024))
+#define PLACEMENT_END   ((char*)(20*1024*1024))
+
+// User Heap management
+#define USER_HEAP_START ((char*)(20*1024*1024))
+#define USER_HEAP_END   ((char*)(KERNEL_DATA_START - 16*1024*1024))
 
 
 

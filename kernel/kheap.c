@@ -45,8 +45,6 @@ static uint32_t    region_max_count = 0;
 static char* const heap_start = (char*)KERNEL_HEAP_START;
 static uint32_t    heap_size = 0;
 
-static char* const PLACEMENT_BEGIN = (char*)(16*1024*1024);
-static char* const PLACEMENT_END   = (char*)(20*1024*1024);
 
 static const uint32_t HEAP_MIN_GROWTH = 256*1024;
 
