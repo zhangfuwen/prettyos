@@ -114,11 +114,50 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 void showStatusbyteQTD(void* addressQTD)
 {
-     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
-     printformat("QTD: %X Statusbyte: %y\n", addressQTD, statusbyte);
+    uint8_t statusbyte = *((uint8_t*)addressQTD+8);
+    printformat("QTD: %X Statusbyte: %y", addressQTD, statusbyte);
+
+    // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
+    settextcolor(14,0);
+    if( statusbyte & 1<<7 )
+    {
+        printformat("\nqTD Status: Active - HC transactions enabled");
+    }
+    if( statusbyte & 1<<6 )
+    {
+        printformat("\nqTD Status: Halted - serious error at the device/endpoint");
+    }
+    if( statusbyte & 1<<5 )
+    {
+        printformat("\nqTD Status: Data Buffer Error (overrun or underrun)");
+    }
+    if( statusbyte & 1<<4 )
+    {
+        printformat("\nqTD Status: Babble (fatal error leads to Halted)");
+    }
+    if( statusbyte & 1<<3 )
+    {
+        printformat("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");
+    }
+    if( statusbyte & 1<<2 )
+    {
+        printformat("\nqTD Status: Missed Micro-Frame");
+    }
+    if( statusbyte & 1<<1 )
+    {
+        printformat("\nqTD Status: Do Complete Split");
+    }
+    if( statusbyte & 1<<0 )
+    {
+        printformat("\nqTD Status: Do Ping");
+    }
+    if( statusbyte == 0 )
+    {
+        printformat("\n");
+    }
+	settextcolor(15,0);
 }
 
-///TEST
 void testTransfer(uint32_t device, uint8_t port)
 {
 	settextcolor(3,0);
@@ -145,7 +184,6 @@ void testTransfer(uint32_t device, uint8_t port)
 	showPacket(InQTDpage0,18);
 	sleepSeconds(2);
 }
-///TEST
 
 void ehci_handler(struct regs* r)
 {
@@ -171,7 +209,7 @@ void ehci_handler(struct regs* r)
 
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
-        printformat("\nFrame List Rollover Interrupt");
+        // printformat("\nFrame List Rollover Interrupt");
         pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
 
@@ -251,6 +289,10 @@ void resetPort(uint8_t j, bool sleepFlag)
 void initEHCIHostController(uint32_t number)
 {
     irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
+
+    /// TEST
+    irq_install_handler(32 + pciDev_Array[number].irq-1, ehci_handler); /// TEST for VirtualBox
+    /// TEST
 
     DeactivateLegacySupport(number);
 
