@@ -203,8 +203,7 @@ void ehci_handler(struct regs* r)
     if( pOpRegs->USBSTS & STS_PORT_CHANGE )
     {
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
-        showPORTSC();
-        checkPortLineStatus();
+        portchangeFlag = true;
     }
 
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
@@ -243,20 +242,13 @@ void analyzeEHCI(uint32_t bar)
     printformat("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
 }
 
-void resetPort(uint8_t j, bool sleepFlag)
+void resetPort(uint8_t j)
 {
      pOpRegs->PORTSC[j] |=  PSTS_POWERON;
      pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
 
-     if(sleepFlag)
-     {
-         sleepMilliSeconds(50);
-     }
-     else
-     {
-         for(uint32_t k=0; k<1500000000; k++){nop();}
-     }
+     sleepMilliSeconds(50);
 
      pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
 
@@ -264,16 +256,9 @@ void resetPort(uint8_t j, bool sleepFlag)
      uint32_t timeoutPortReset=0;
      while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
      {
-         if(sleepFlag)
-         {
-             sleepMilliSeconds(50);
-         }
-         else
-         {
-             for(uint32_t k=0; k<50000000; k++){nop();}
-         }
-
+         sleepMilliSeconds(50);
          timeoutPortReset++;
+
          if(timeoutPortReset>50)
          {
              settextcolor(4,0);
@@ -332,7 +317,7 @@ void initEHCIHostController(uint32_t number)
     // Enable ports
     for(uint8_t j=0; j<numPorts; j++)
     {
-         resetPort(j,true);
+         resetPort(j);
 
          if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
          {
@@ -375,7 +360,7 @@ void showPORTSC()
             if( pOpRegs->PORTSC[j] & PSTS_CONNECTED )
             {
                 strcpy(PortStatus,"Device attached");
-                resetPort(j,false);
+                resetPort(j);
             }
             else
             {

@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.225]\n");
+    printformat("PrettyOS [Version 0.0.0.226]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -225,6 +225,14 @@ int main()
 
             // output in status bar
             printf(DateAndTime, 49, 0xC);
+
+            /// work-around port reset EHCI
+            if(portchangeFlag)
+            {
+                portchangeFlag = false;
+                showPORTSC();
+                checkPortLineStatus();
+            }
         }
         __asm__ volatile ("hlt");
     }

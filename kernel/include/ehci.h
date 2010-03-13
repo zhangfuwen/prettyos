@@ -230,6 +230,11 @@ struct ehci_request
 } __attribute__((packed));
 
 
+/// work-around
+bool portchangeFlag;
+/// work-around
+
+
 // functions, ...
 
 void ehci_handler(struct regs* r);
@@ -239,7 +244,7 @@ void showUSBSTS();
 void showPORTSC();
 void DeactivateLegacySupport(uint32_t number);
 void checkPortLineStatus();
-void resetPort(uint8_t j, bool sleepFlag);
+void resetPort(uint8_t j);
 
 void createQH(void* address, void* firstQTD, uint32_t device);
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes);
