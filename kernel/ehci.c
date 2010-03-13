@@ -9,6 +9,7 @@
 #include "kheap.h"
 #include "paging.h"
 #include "sys_speaker.h"
+#include "usb2.h"
 
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
@@ -182,6 +183,7 @@ void testTransfer(uint32_t device, uint8_t port)
 	sleepSeconds(2);
 	printformat("\nData: %X\n", *inBuffer );
 	showPacket(InQTDpage0,18);
+	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );
 	sleepSeconds(2);
 }
 
@@ -520,6 +522,8 @@ void DeactivateLegacySupport(uint32_t number)
         }
     }
 }
+
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
