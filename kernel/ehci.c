@@ -255,7 +255,7 @@ void resetPort(uint8_t j, bool sleepFlag)
      }
      else
      {
-         for(uint32_t k=0; k<50000000; k++){nop();}
+         for(uint32_t k=0; k<1500000000; k++){nop();}
      }
 
      pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
@@ -264,8 +264,6 @@ void resetPort(uint8_t j, bool sleepFlag)
      uint32_t timeoutPortReset=0;
      while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
      {
-         printformat("\nwaiting for port reset ...");
-
          if(sleepFlag)
          {
              sleepMilliSeconds(50);
@@ -276,7 +274,7 @@ void resetPort(uint8_t j, bool sleepFlag)
          }
 
          timeoutPortReset++;
-         if(timeoutPortReset>20)
+         if(timeoutPortReset>50)
          {
              settextcolor(4,0);
              printformat("\nerror: no port reset!");
