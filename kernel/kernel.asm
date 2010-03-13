@@ -1,6 +1,5 @@
 [Bits 32]
 section .text    ; ld needs that for coff format
-global KernelStart
 
 KernelStart:
     mov ax, 0x10
