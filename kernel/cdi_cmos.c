@@ -3,7 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "cdi_cmos.h"
+#include "cdi/cmos.h"
 #include "cmos.h"
 
 /**

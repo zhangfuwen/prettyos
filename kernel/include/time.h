@@ -2,7 +2,6 @@
 #define TIME_H
 
 #include "os.h"
-#include "cmos.h"
 
 struct tm
 {
