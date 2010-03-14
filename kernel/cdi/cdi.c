@@ -3,28 +3,16 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "cdi/cmos.h"
-#include "cmos.h"
+#include "cdi.h"
 
-/**
- * Performs CMOS reads
- * @param index Index within CMOS RAM to read from.
- * @return Result of reading CMOS RAM at specified index.
- */
-uint8_t cdi_cmos_read(uint8_t index)
-{
-    return cmos_read(index); // Read byte from CMOS
-}
 
-/**
- * Performs CMOS writes
- * @param index Index within CMOS RAM to write to.
- * @param value Value to write to the CMOS
- */
-void cdi_cmos_write(uint8_t index, uint8_t value)
-{
-     cmos_write( index, value ); // Write byte to CMOS
-}
+void cdi_init(void);
+
+void cdi_driver_init(struct cdi_driver* driver);
+
+void cdi_driver_destroy(struct cdi_driver* driver);
+
+void cdi_driver_register(struct cdi_driver* driver);
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
