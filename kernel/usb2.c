@@ -55,7 +55,7 @@ void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
    printformat("manufacturer:      %x\n",    d->manufacturer);
    printformat("product:           %x\n",    d->product);
    printformat("serial number:     %x\n",    d->serialNumber);
-   printformat("number of config.: %d\n",    d->bumConfigurations); // number of possible configurations
+   printformat("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
    settextcolor(15,0);
 }
 

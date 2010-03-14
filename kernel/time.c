@@ -4,12 +4,15 @@
 */
 
 
-#include "cmos.h"
+#include "cdi_cmos.h"
 #include "time.h"
 
 tm_t currentTime;
 
 // info from http://lowlevel.brainsware.org/wiki/index.php/CMOS
+/*
+
+/// do not use direct call to the kernel function, but the CDI wrapper
 tm_t* cmosTime(tm_t* ptm)
 {
     ptm->second     = PackedBCD2Decimal(cmos_read(0x00));
@@ -19,6 +22,20 @@ tm_t* cmosTime(tm_t* ptm)
     ptm->month      = PackedBCD2Decimal(cmos_read(0x08));
     ptm->year       = PackedBCD2Decimal(cmos_read(0x09));
     ptm->century    = PackedBCD2Decimal(cmos_read(0x32));
+    return ptm;
+}
+*/
+
+/// CDI wrapper used
+tm_t* cmosTime(tm_t* ptm)
+{
+    ptm->second     = PackedBCD2Decimal(cdi_cmos_read(0x00));
+    ptm->minute     = PackedBCD2Decimal(cdi_cmos_read(0x02));
+    ptm->hour       = PackedBCD2Decimal(cdi_cmos_read(0x04));
+    ptm->dayofmonth = PackedBCD2Decimal(cdi_cmos_read(0x07));
+    ptm->month      = PackedBCD2Decimal(cdi_cmos_read(0x08));
+    ptm->year       = PackedBCD2Decimal(cdi_cmos_read(0x09));
+    ptm->century    = PackedBCD2Decimal(cdi_cmos_read(0x32));
     return ptm;
 }
 

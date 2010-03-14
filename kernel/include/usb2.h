@@ -19,7 +19,7 @@ struct usb2_deviceDescriptor
    uint8_t  manufacturer;
    uint8_t  product;
    uint8_t  serialNumber;
-   uint8_t  bumConfigurations; // number of possible configurations
+   uint8_t  numConfigurations; // number of possible configurations
 }__attribute__((packed));
 
 
