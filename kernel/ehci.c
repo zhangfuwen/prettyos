@@ -11,16 +11,6 @@
 #include "sys_speaker.h"
 #include "usb2.h"
 
-struct ehci_CapRegs* pCapRegs; // = &CapRegs;
-struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
-uint32_t ubar;
-uint32_t eecp;
-uint8_t* inBuffer;
-void* InQTD;
-void* SetupQTD;
-uint32_t InQTDpage0;
-uint32_t SetupQTDpage0;
-
 void createQH(void* address, void* firstQTD, uint32_t device)
 {
 	struct ehci_qhd* head = (struct ehci_qhd*)address;
@@ -157,35 +147,6 @@ void showStatusbyteQTD(void* addressQTD)
         printformat("\n");
     }
 	settextcolor(15,0);
-}
-
-void testTransfer(uint32_t device, uint8_t port)
-{
-	settextcolor(3,0);
-	printformat("Test transfer at port %d on device address: %d\n", port, device);
-    settextcolor(15,0);
-
- 	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
-
-	// Create QTDs (in reversed order)
-	void* next                = createQTD(0x1, 0x0, 1, 0);	// Handshake is the opposite direction of Data
-	next       =     InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
-	void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
-
-	// Create QH
-	createQH(virtualAsyncList, firstQTD, device);
-
-	// Enable Async...
-	printformat("\nEnabling Async Schedule\n");
-	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/;
-
-	sleepSeconds(2);
-	//printformat("\nData: %X\n", *inBuffer );
-	showPacket(InQTDpage0,18);
-	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );
-	sleepSeconds(2);
 }
 
 void ehci_handler(struct regs* r)

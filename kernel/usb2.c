@@ -10,6 +10,35 @@
 #include "sys_speaker.h"
 #include "usb2.h"
 
+void testTransfer(uint32_t device, uint8_t port)
+{
+	settextcolor(3,0);
+	printformat("Test transfer at port %d on device address: %d\n", port, device);
+    settextcolor(15,0);
+
+ 	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
+
+	// Create QTDs (in reversed order)
+	void* next                = createQTD(0x1, 0x0, 1, 0);	// Handshake is the opposite direction of Data
+	next       =     InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
+	void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
+
+	// Create QH
+	createQH(virtualAsyncList, firstQTD, device);
+
+	// Enable Async...
+	printformat("\nEnabling Async Schedule\n");
+	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/;
+
+	sleepSeconds(2);
+	printformat("\n");
+	showPacket(InQTDpage0,18);
+	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );
+	sleepSeconds(2);
+}
+
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
    settextcolor(10,0);
@@ -22,7 +51,7 @@ void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
    printformat("max packet size:   %d\n",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
    printformat("vendor:            %x\n",    d->idVendor);
    printformat("product:           %x\n",    d->idProduct);
-   printformat("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice);   // release of the device
+   printformat("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
    printformat("manufacturer:      %x\n",    d->manufacturer);
    printformat("product:           %x\n",    d->product);
    printformat("serial number:     %x\n",    d->serialNumber);

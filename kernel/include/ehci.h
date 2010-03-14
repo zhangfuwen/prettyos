@@ -39,12 +39,18 @@ struct ehci_OpRegs
     volatile uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h
 } __attribute__((packed));
 
+struct ehci_CapRegs* pCapRegs; // = &CapRegs;
+struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-bool    EHCIflag;
-uint8_t numPorts;
-
-
-
+bool     EHCIflag;
+uint8_t  numPorts;
+uint32_t ubar;
+uint32_t eecp;
+uint8_t* inBuffer;
+void*    InQTD;
+void*    SetupQTD;
+uint32_t InQTDpage0;
+uint32_t SetupQTDpage0;
 
 
 /* ****** */
@@ -248,7 +254,6 @@ void resetPort(uint8_t j);
 
 void createQH(void* address, void* firstQTD, uint32_t device);
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes);
-void testTransfer(uint32_t device, uint8_t port);
 void showStatusbyteQTD(void* addressQTD);
 void showPacket(uint32_t virtAddrBuf0, uint32_t size);
 
