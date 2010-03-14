@@ -11,8 +11,9 @@
 #ifndef _CDI_DMA_H_
 #define _CDI_DMA_H_
 
-#include <stdint.h>
-#include <stdio.h>
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
+/// #include <stdio.h>  /// CDI-style
 
 #include <cdi.h>
 #include <cdi-osdep.h>

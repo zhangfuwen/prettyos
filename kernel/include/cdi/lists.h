@@ -21,8 +21,9 @@
 
 #ifndef _CDI_LISTS_
 #define _CDI_LISTS_
-#include <stddef.h>
-#include <stdint.h>
+/// #include <stddef.h> /// CDI-style
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
 
 /**
  * \german

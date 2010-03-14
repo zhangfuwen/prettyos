@@ -17,7 +17,8 @@
 #ifndef _CDI_STORAGE_H_
 #define _CDI_STORAGE_H_
 
-#include <stdint.h>
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
 
 #include <cdi.h>
 

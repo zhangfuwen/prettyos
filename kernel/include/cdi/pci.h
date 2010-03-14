@@ -11,7 +11,8 @@
 #ifndef _CDI_PCI_H_
 #define _CDI_PCI_H_
 
-#include <stdint.h>
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
 
 #include <cdi.h>
 #include <cdi-osdep.h>

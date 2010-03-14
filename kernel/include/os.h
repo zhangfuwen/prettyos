@@ -20,6 +20,7 @@ typedef signed long long     int64_t;
 typedef signed long          int32_t;
 typedef signed short         int16_t;
 typedef signed char          int8_t;
+typedef uint32_t             uintptr_t;
 
 #define NULL (void*)0
 #define bool _Bool

@@ -11,7 +11,8 @@
 #ifndef _CDI_IO_H_
 #define _CDI_IO_H_
 
-#include <stdint.h>
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,40 +20,34 @@ extern "C" {
 
 static inline uint16_t cdi_inw(uint16_t _port)
 {
-	uint16_t result;
-	asm volatile ("inw %1, %0" : "=a" (result) : "Nd" (_port));
-	return result;
+	return inportw(_port);
 }
 
 static inline uint8_t cdi_inb(uint16_t _port)
 {
-	uint8_t result;
-	asm volatile ("inb %1, %0" : "=a" (result) : "Nd" (_port));
-	return result;
+	return inportb(_port);
 }
 
 static inline uint32_t cdi_inl(uint16_t _port)
 {
-	uint32_t result;
-	asm volatile("inl %1, %0" : "=a" (result) : "Nd" (_port));
-	return result;
+	return inportl(_port);
 }
 
 
 
 static inline void cdi_outw(uint16_t _port, uint16_t _data)
 {
-	asm volatile ("outw %0, %1" : : "a" (_data), "Nd" (_port));
+	outportw(_port, _data);
 }
 
 static inline void cdi_outb(uint16_t _port, uint8_t _data)
 {
-	asm volatile ("outb %0, %1" : : "a" (_data), "Nd" (_port));
+	outportb(_port, _data);
 }
 
 static inline void cdi_outl(uint16_t _port, uint32_t _data)
 {
-	asm volatile ("outl %0, %1" : : "a"(_data), "Nd" (_port));
+	outportl(_port, _data);
 }
 
 #ifdef __cplusplus

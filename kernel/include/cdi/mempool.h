@@ -23,8 +23,9 @@
 #ifndef CDI_MEMPOOL_H
 #define CDI_MEMPOOL_H
 
-#include <stdlib.h>
-#include <stdint.h>
+/// #include <stdlib.h> /// CDI-style
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
 
 #ifdef __cplusplus
 extern "C" {

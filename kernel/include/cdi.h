@@ -100,7 +100,8 @@
 #ifndef _CDI_H_
 #define _CDI_H_
 
-#include <stdint.h>
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
 
 #include <cdi-osdep.h>
 #include <cdi/lists.h>

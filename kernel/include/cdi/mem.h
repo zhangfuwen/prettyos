@@ -11,7 +11,8 @@
 #ifndef _CDI_MEM_H_
 #define _CDI_MEM_H_
 
-#include <stdint.h>
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
 #include "cdi.h"
 
 #ifdef __cplusplus

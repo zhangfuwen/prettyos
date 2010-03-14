@@ -17,8 +17,9 @@
 #ifndef _CDI_SCSI_H_
 #define _CDI_SCSI_H_
 
-#include <stdint.h>
-#include <stddef.h>
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
+/// #include <stddef.h> /// CDI-style
 
 #include <cdi.h>
 

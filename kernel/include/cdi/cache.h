@@ -11,7 +11,8 @@
 #ifndef _CDI_CACHE_H_
 #define _CDI_CACHE_H_
 
-#include <stdint.h>
+/// #include <stdint.h> /// CDI-style
+#include "os.h"         /// PrettyOS work-around
 
 struct cdi_cache {
     /** Groesse der Blocks, die der Cache verwaltet */
