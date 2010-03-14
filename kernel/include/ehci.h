@@ -43,6 +43,7 @@ struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
 bool     EHCIflag;
+bool     initEHCIFlag;
 uint8_t  numPorts;
 uint32_t ubar;
 uint32_t eecp;
@@ -51,6 +52,8 @@ void*    InQTD;
 void*    SetupQTD;
 uint32_t InQTDpage0;
 uint32_t SetupQTDpage0;
+
+
 
 
 /* ****** */

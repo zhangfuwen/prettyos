@@ -235,11 +235,9 @@ void resetPort(uint8_t j)
 
 void initEHCIHostController(uint32_t number)
 {
+    initEHCIFlag = false;
     irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
-
-    /// TEST
-    irq_install_handler(32 + pciDev_Array[number].irq-1, ehci_handler); /// TEST for VirtualBox
-    /// TEST
+    irq_install_handler(32 + pciDev_Array[number].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     DeactivateLegacySupport(number);
 
@@ -296,12 +294,13 @@ void initEHCIHostController(uint32_t number)
              settextcolor(15,0);
 
              testTransfer(0,j+1); // device address, port number
+             initEHCIFlag = true;
              printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
              printformat("\nsetup status: "); showStatusbyteQTD(SetupQTD);
              printformat("\nin    status: "); showStatusbyteQTD(InQTD);
          }
     }
-
+    /*
     settextcolor(3,0);
     printformat("\n\nAfter Init of EHCI:");
     printformat("\nCTRLDSSEGMENT:              %X", pOpRegs->CTRLDSSEGMENT);
@@ -310,6 +309,7 @@ void initEHCIHostController(uint32_t number)
     printformat("\nUSBCMD:                     %X", pOpRegs->USBCMD);
     printformat("\nCONFIGFLAG:                 %X", pOpRegs->CONFIGFLAG);
     settextcolor(15,0);
+    */
 }
 
 void showPORTSC()
@@ -389,15 +389,18 @@ void checkPortLineStatus()
              printformat(" ,high speed, enabled");
              settextcolor(15,0);
 
-             /// TEST
-             settextcolor(3,0);
-             printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
-             settextcolor(15,0);
-             testTransfer(0,j+1); // device address, port number
-             printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-             printformat("\nsetup: "); showStatusbyteQTD(SetupQTD);
-             printformat("in:    "); showStatusbyteQTD(InQTD);
-             /// TEST
+             if(initEHCIFlag==false)
+             {
+                 /// TEST
+                 settextcolor(3,0);
+                 printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
+                 settextcolor(15,0);
+                 testTransfer(0,j+1); // device address, port number
+                 printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 printformat("\nsetup: "); showStatusbyteQTD(SetupQTD);
+                 printformat("in:    "); showStatusbyteQTD(InQTD);
+                 /// TEST
+             }
         }
       }
 

@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.232]\n");
+    printformat("PrettyOS [Version 0.0.0.233]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -232,6 +232,7 @@ int main()
                 portchangeFlag = false;
                 showPORTSC();
                 checkPortLineStatus();
+                initEHCIFlag = false;
             }
         }
         __asm__ volatile ("hlt");
