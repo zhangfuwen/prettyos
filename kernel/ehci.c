@@ -185,8 +185,7 @@ void ehci_handler(struct regs* r)
         pOpRegs->USBSTS |= STS_INTMASK;
         printformat("\nRestart HC after fatal error");
         initEHCIFlag = false;
-        startHostController();
-        enablePorts();
+        ehciHostControllerRestartFlag = true;
     }
 
     if( pOpRegs->USBSTS & STS_ASYNC_INT )

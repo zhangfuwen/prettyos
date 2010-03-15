@@ -239,8 +239,9 @@ struct ehci_request
 } __attribute__((packed));
 
 
-/// work-around
+/// work-around // Multithreading needed
 bool portchangeFlag;
+bool ehciHostControllerRestartFlag;
 /// work-around
 
 

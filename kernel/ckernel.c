@@ -55,7 +55,7 @@ static void init()
     strcat(buf,"]\n");
     printformat(buf);
     */
-    printformat("PrettyOS [Version 0.0.0.240]\n");
+    printformat("PrettyOS [Version 0.0.0.241]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -241,6 +241,14 @@ int main()
                 showPORTSC();
                 checkPortLineStatus();
                 initEHCIFlag = false;
+            }
+
+            /// work-around EHCI HC restart
+            if(ehciHostControllerRestartFlag)
+            {
+                ehciHostControllerRestartFlag = false;
+                startHostController();
+                enablePorts();
             }
         }
         __asm__ volatile ("hlt");
