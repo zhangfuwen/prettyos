@@ -9,8 +9,6 @@
 #endif
 
 
-
-
  // Key Queue
 uint8_t  KEYQUEUE[KQSIZE];   // circular queue buffer
 uint8_t* pHeadKQ;            // pointer to the head of valid data
@@ -19,13 +17,12 @@ uint32_t KQ_count_read;      // number of data read from queue buffer
 uint32_t KQ_count_write;     // number of data put into queue buffer
 
 
+bool ShiftKeyDown  = false;  // variable for Shift Key Down
+bool AltGrKeyDown  = false;  // variable for AltGr Key Down
+bool KeyPressed    = false;  // variable for Key Pressed
+uint8_t curScan    = 0;      // current scan code from Keyboard
+uint8_t prevScan   = 0;      // previous scan code
 
-
-uint8_t ShiftKeyDown = 0; // variable for Shift Key Down
-uint8_t AltGrKeyDown = 0; // variable for AltGr Key Down
-uint8_t KeyPressed   = 0; // variable for Key Pressed
-uint8_t curScan      = 0; // current scan code from Keyboard
-uint8_t prevScan     = 0; // previous scan code
 
 /* wait until buffer is empty */
 void keyboard_init()
@@ -51,27 +48,27 @@ uint8_t FetchAndAnalyzeScancode()
 
 	if( curScan & 0x80 ) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
 	{
-        KeyPressed = 0;
+        KeyPressed = false;
         curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
         if( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT ) // A key was released, shift key up?
         {
-            ShiftKeyDown = 0;	// yes, it is up --> NonShift
+            ShiftKeyDown = false;	// yes, it is up --> NonShift
         }
         if( (curScan == 0x38) && (prevScan == 0x60) )
 		{
-            AltGrKeyDown = 0;
+            AltGrKeyDown = false;
 		}
 	}
 	else // Key was pressed
 	{
-	    KeyPressed = 1;
+	    KeyPressed = true;
 		if( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT )
 		{
-		    ShiftKeyDown = 1; // It is down, use asciiShift characters
+		    ShiftKeyDown = true; // It is down, use asciiShift characters
 		}
 		if( (curScan == 0x38) && (prevScan == 0x60) )
 		{
-            AltGrKeyDown = 1;
+            AltGrKeyDown = true;
 		}
 	}
 	prevScan = curScan;
@@ -80,55 +77,47 @@ uint8_t FetchAndAnalyzeScancode()
 
 uint8_t ScanToASCII()
 {
-	uint8_t retchar = 0;                  // The character that returns the scan code to ASCII code
 	curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
+
+    //filter Shift Key and Key Release
+	if( ( (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) ) || ( KeyPressed == false ) )
+	{
+	    return 0;
+	}
 
     /// TEST
     //  printformat(" scan:%d ",scan);
     /// TEST
 
+	uint8_t retchar = 0;  // The character that returns the scan code to ASCII code
     if( ShiftKeyDown )
 	{
-	    if( AltGrKeyDown)
+	    if( AltGrKeyDown )
         {
-            /* no reaction */
+			retchar = asciiShiftAltGr[curScan];
         }
-        else
+	    if( !AltGrKeyDown || retchar == 0 ) // if just shift is pressed or if there is no key specified for ShiftAltGr
         {
             retchar = asciiShift[curScan];
         }
 	}
-	else
+	if( !ShiftKeyDown || retchar == 0)
 	{
-	    if( AltGrKeyDown)
+	    if( AltGrKeyDown )
         {
-            #ifdef KEYMAP_GER
             retchar = asciiAltGr[curScan];
-            #endif
-
-            #ifdef KEYMAP_US
-            /// not yet implemented
-            #endif
         }
-        else
+	    if( !AltGrKeyDown || retchar == 0 )
         {
 		    retchar = asciiNonShift[curScan]; // (Lower) Non-Shift Codes
         }
 	}
 
-    //filter Shift Key and Key Release
-	if( ( !(curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) ) && ( KeyPressed == 1 ) )
-	{
-	    /// TEST
-	    //  printformat("ascii:%x ", retchar);
-	    /// TEST
+	/// TEST
+	//  printformat("ascii:%x ", retchar);
+	/// TEST
 
-	    return retchar; // ASCII version
-	}
-	else
-	{
-	    return 0;
-	}
+	return retchar; // ASCII version
 }
 
 void keyboard_handler(struct regs* r)
