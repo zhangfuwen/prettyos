@@ -30,7 +30,8 @@ void testTransfer(uint32_t device, uint8_t port)
 
 	// Enable Async...
 	printformat("\nEnabling Async Schedule\n");
-	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/;
+	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL;
+	// printformat("\nAsync Schedule enabled\n");
 
 	sleepSeconds(2);
 	printformat("\n");

@@ -178,8 +178,15 @@ void ehci_handler(struct regs* r)
 
     if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )
     {
+        settextcolor(4,0);
         printformat("\nHost System Error Interrupt");
-        pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
+        settextcolor(15,0);
+        pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+        pOpRegs->USBSTS |= STS_INTMASK;
+        printformat("\nRestart HC after fatal error");
+        initEHCIFlag = false;
+        startHostController();
+        enablePorts();
     }
 
     if( pOpRegs->USBSTS & STS_ASYNC_INT )
@@ -204,6 +211,74 @@ void analyzeEHCI(uint32_t bar)
     printformat("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
     if(BYTE2(pCapRegs->HCCPARAMS)==0) printformat("No ext. capabil. ");  // Extended Capabilities Pointer
     printformat("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
+}
+
+void startHostController()
+{
+    settextcolor(14,0);
+    printformat("\nstarting HC\n");
+    settextcolor(15,0);
+    pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
+    sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
+
+    pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
+
+    int32_t timeout=0;
+    while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
+    {
+        printformat("waiting for HC reset\n");
+        sleepMilliSeconds(20);
+        timeout++;
+        if(timeout>10)
+        {
+            break;
+        }
+    }
+
+    pOpRegs->USBINTR = 0; // EHCI interrupts disabled
+
+    // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
+    pOpRegs->CTRLDSSEGMENT = 0;
+
+    // Turn the host controller ON via setting the Run/Stop bit. Software must not write a one to this field unless the host controller is in the Halted state
+    pOpRegs->USBCMD |= CMD_8_MICROFRAME;
+    if( pOpRegs->USBSTS & STS_HCHALTED )
+    {
+        pOpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
+    }
+
+    // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
+    pOpRegs->CONFIGFLAG = CF;
+
+    // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
+    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
+}
+
+void enablePorts()
+{
+    for(uint8_t j=0; j<numPorts; j++)
+    {
+         resetPort(j);
+
+         if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
+         {
+             settextcolor(14,0);
+             printformat("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
+             settextcolor(15,0);
+         }
+         if( pOpRegs->PORTSC[j] & PSTS_ENABLED )
+         {
+             settextcolor(3,0);
+             printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
+             settextcolor(15,0);
+
+             testTransfer(0,j+1); // device address, port number
+             initEHCIFlag = true;
+             printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+             printformat("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+             printformat("\nin    status: "); showStatusbyteQTD(InQTD);
+         }
+    }
 }
 
 void resetPort(uint8_t j)
@@ -241,65 +316,9 @@ void initEHCIHostController(uint32_t number)
 
     DeactivateLegacySupport(number);
 
-    pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
-    sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
+    startHostController();
+    enablePorts();
 
-    pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
-
-    int32_t timeout=0;
-    while( (pOpRegs->USBCMD & 0x2) != 0 )
-    {
-        printformat("waiting for HC reset\n");
-        sleepMilliSeconds(20);
-        timeout++;
-        if(timeout>10)
-        {
-            break;
-        }
-    }
-
-    pOpRegs->USBINTR = 0; // EHCI interrupts disabled
-
-    // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
-    pOpRegs->CTRLDSSEGMENT = 0;
-
-    // Turn the host controller ON via setting the Run/Stop bit. Software must not write a one to this field unless the host controller is in the Halted state
-    pOpRegs->USBCMD |= CMD_8_MICROFRAME;
-    if( pOpRegs->USBSTS & STS_HCHALTED )
-    {
-        pOpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
-    }
-
-    // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
-    pOpRegs->CONFIGFLAG = CF;
-
-    // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
-
-    // Enable ports
-    for(uint8_t j=0; j<numPorts; j++)
-    {
-         resetPort(j);
-
-         if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
-         {
-             settextcolor(14,0);
-             printformat("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
-             settextcolor(15,0);
-         }
-         if( pOpRegs->PORTSC[j] & PSTS_ENABLED )
-         {
-             settextcolor(3,0);
-             printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
-             settextcolor(15,0);
-
-             testTransfer(0,j+1); // device address, port number
-             initEHCIFlag = true;
-             printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-             printformat("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-             printformat("\nin    status: "); showStatusbyteQTD(InQTD);
-         }
-    }
     /*
     settextcolor(3,0);
     printformat("\n\nAfter Init of EHCI:");

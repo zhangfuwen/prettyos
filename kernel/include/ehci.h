@@ -248,6 +248,8 @@ bool portchangeFlag;
 
 void ehci_handler(struct regs* r);
 void analyzeEHCI(uint32_t bar);
+void startHostController();
+void enablePorts();
 void initEHCIHostController(uint32_t number);
 void showUSBSTS();
 void showPORTSC();
