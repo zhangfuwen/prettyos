@@ -47,7 +47,13 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.235]\n");
+    char buf[40];
+    const char* revStr = "$Rev: ZAHL$"; //SVN
+    strcpy(buf,"PrettyOS [");
+    strcat(buf,revStr);
+    strcat(buf,"]\n");
+    printformat(buf);
+    //printformat("PrettyOS [Version 0.0.0.235]\n");
     gdt_install();
     idt_install();
     timer_install();
