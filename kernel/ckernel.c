@@ -55,7 +55,7 @@ static void init()
     strcat(buf,"]\n");
     printformat(buf);
     */
-    printformat("PrettyOS [Version 0.0.0.241]\n");
+    printformat("PrettyOS [Version 0.0.0.242]\n");
     gdt_install();
     idt_install();
     timer_install();
