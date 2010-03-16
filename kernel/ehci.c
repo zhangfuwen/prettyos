@@ -214,35 +214,52 @@ void analyzeEHCI(uint32_t bar)
 
 void startHostController()
 {
-    settextcolor(14,0);
-    printformat("\nstarting HC\n");
+    settextcolor(2,0);
+    printformat("\nreset HC\n");
     settextcolor(15,0);
-    pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
-    sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
+
+    pOpRegs->USBINTR = 0; // EHCI interrupts disabled
+    if(!(pOpRegs->USBSTS & STS_HCHALTED))
+    {
+        pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
+        sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
+    }
 
     pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
 
-    int32_t timeout=0;
+    int32_t timeout=10;
     while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
     {
-        printformat("waiting for HC reset\n");
+        printformat("... waiting for HC reset\n");
         sleepMilliSeconds(20);
-        timeout++;
-        if(timeout>10)
+        timeout--;
+        if(timeout<=0)
         {
+            settextcolor(4,0);
+            printformat("timeout HC reset\n");
+            settextcolor(15,0);
             break;
         }
     }
 
-    pOpRegs->USBINTR = 0; // EHCI interrupts disabled
+    settextcolor(2,0);
+    printformat("initialize HC\n");
+    settextcolor(15,0);
 
     // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
     pOpRegs->CTRLDSSEGMENT = 0;
 
-    // Turn the host controller ON via setting the Run/Stop bit. Software must not write a one to this field unless the host controller is in the Halted state
+    // Turn the host controller ON via setting the Run/Stop bit.
+    // Software must not write a one to this field unless the host controller is in the Halted state
     pOpRegs->USBCMD |= CMD_8_MICROFRAME;
+
+
+
     if( pOpRegs->USBSTS & STS_HCHALTED )
     {
+        settextcolor(2,0);
+        printformat("start HC\n");
+        settextcolor(15,0);
         pOpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
     }
 
@@ -250,7 +267,7 @@ void startHostController()
     pOpRegs->CONFIGFLAG = CF;
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
+    pOpRegs->USBINTR = STS_INTMASK; // all six interrupts allowed
 }
 
 void enablePorts()
@@ -361,7 +378,7 @@ void showPORTSC()
             printf("                                                                              ",47,color);
             printf("                                                                              ",48,color);
 
-            beep(1000,100);
+            // beep(1000,100);
         }
     }
 }

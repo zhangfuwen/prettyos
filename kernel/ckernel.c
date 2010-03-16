@@ -55,7 +55,7 @@ static void init()
     strcat(buf,"]\n");
     printformat(buf);
     */
-    printformat("PrettyOS [Version 0.0.0.243]\n");
+    printformat("PrettyOS [Version 0.0.0.244]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -217,39 +217,40 @@ int main()
         // SHOW ROTATING ASTERISK
         *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *p;
         if ( ! *++p )
+        {
             p = progress;
+        }
 
-        // PRINT TIME IN SECONDS AT STATUS BAR
+        /// work-around port reset EHCI
+        if(portchangeFlag)
+        {
+            portchangeFlag = false;
+            showPORTSC();
+            checkPortLineStatus();
+            initEHCIFlag = false;
+        }
+
+        /// work-around EHCI HC restart
+        if(ehciHostControllerRestartFlag)
+        {
+            ehciHostControllerRestartFlag = false;
+            startHostController();
+            enablePorts();
+        }
+
+        // Show Date & Time at Status bar
         CurrentSecondsOld = CurrentSeconds;
         CurrentSeconds = getCurrentSeconds();
-
         if (CurrentSeconds!=CurrentSecondsOld)
         {
             itoa(CurrentSeconds, timeBuffer);
-            getCurrentDateAndTime(DateAndTime); // not ok!
+            getCurrentDateAndTime(DateAndTime);
             strcat(DateAndTime, "     ");
             strcat(DateAndTime, timeBuffer);
             strcat(DateAndTime, " seconds since start.");
 
             // output in status bar
             printf(DateAndTime, 49, 0xC);
-
-            /// work-around port reset EHCI
-            if(portchangeFlag)
-            {
-                portchangeFlag = false;
-                showPORTSC();
-                checkPortLineStatus();
-                initEHCIFlag = false;
-            }
-
-            /// work-around EHCI HC restart
-            if(ehciHostControllerRestartFlag)
-            {
-                ehciHostControllerRestartFlag = false;
-                startHostController();
-                enablePorts();
-            }
         }
         __asm__ volatile ("hlt");
     }
