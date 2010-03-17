@@ -47,15 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    /*
-    char buf[40];
-    const char* revStr = $Rev$; //SVN
-    strcpy(buf,"PrettyOS [");
-    strcat(buf,revStr);
-    strcat(buf,"]\n");
-    printformat(buf);
-    */
-    printformat("PrettyOS [Version 0.0.0.246]\n");
+    printformat("PrettyOS [Version 0.0.0.247]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -216,41 +208,44 @@ int main()
     {
         // SHOW ROTATING ASTERISK
         *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *p;
-        if ( ! *++p )
+        if( ! *++p )
         {
             p = progress;
         }
 
-        /// work-around port reset EHCI
-        if(portchangeFlag)
-        {
-            portchangeFlag = false;
-            showPORTSC();
-            checkPortLineStatus();
-            initEHCIFlag = false;
-        }
-
-        /// work-around EHCI HC restart
-        if(ehciHostControllerRestartFlag)
-        {
-            ehciHostControllerRestartFlag = false;
-            startHostController();
-            enablePorts();
-        }
-
+		/// work-around EHCI HC restart
+		if( ehciHostControllerRestartFlag )
+		{
+			ehciHostControllerRestartFlag = false;
+			settextcolor(14,0);
+			printformat("\nRestart HC after fatal error");
+			settextcolor(15,0);
+			startHostController();
+			enablePorts();
+		}		
+		
+		/// work-around port reset EHCI
+		if(portchangeFlag)
+		{
+			portchangeFlag = false;
+			showPORTSC();
+			checkPortLineStatus();
+			initEHCIFlag = false;	            
+		}
+		
         // Show Date & Time at Status bar
         CurrentSecondsOld = CurrentSeconds;
         CurrentSeconds = getCurrentSeconds();
-        if (CurrentSeconds!=CurrentSecondsOld)
+        if( CurrentSeconds != CurrentSecondsOld )
         {
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
             strcat(DateAndTime, "     ");
             strcat(DateAndTime, timeBuffer);
             strcat(DateAndTime, " seconds since start.");
+            printf(DateAndTime, 49, 0xC); // output in status bar
+			
 
-            // output in status bar
-            printf(DateAndTime, 49, 0xC);
         }
         __asm__ volatile ("hlt");
     }

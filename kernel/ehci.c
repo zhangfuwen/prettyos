@@ -182,8 +182,7 @@ void ehci_handler(struct regs* r)
         printformat("\nHost System Error Interrupt");
         settextcolor(15,0);
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-        pOpRegs->USBSTS |= STS_INTMASK;
-        printformat("\nRestart HC after fatal error");
+        pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         initEHCIFlag = false;
         ehciHostControllerRestartFlag = true;
     }
@@ -214,15 +213,18 @@ void analyzeEHCI(uint32_t bar)
 
 void startHostController()
 {
-    settextcolor(2,0);
+    DeactivateLegacySupport(pciNumber);
+	
+	settextcolor(2,0);
     printformat("\nreset HC\n");
     settextcolor(15,0);
 
-    pOpRegs->USBINTR = 0; // EHCI interrupts disabled
+    // pOpRegs->USBINTR = 0; // EHCI interrupts disabled
+
     if(!(pOpRegs->USBSTS & STS_HCHALTED))
     {
         pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
-        sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
+        sleepMilliSeconds(100); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
     }
 
     pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
@@ -303,18 +305,17 @@ void resetPort(uint8_t j)
      pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
 
-     sleepMilliSeconds(50);
+     sleepMilliSeconds(100);
 
      pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
 
      // wait and check, whether really zero
-     uint32_t timeoutPortReset=0;
+     uint32_t timeout=10;
      while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
      {
-         sleepMilliSeconds(50);
-         timeoutPortReset++;
-
-         if(timeoutPortReset>50)
+         sleepMilliSeconds(20);
+         timeout--;
+         if(timeout<=0)
          {
              settextcolor(4,0);
              printformat("\nerror: no port reset!");
@@ -326,25 +327,13 @@ void resetPort(uint8_t j)
 
 void initEHCIHostController(uint32_t number)
 {
-    initEHCIFlag = false;
+    pciNumber =  number;
+	initEHCIFlag = false;
     irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
     irq_install_handler(32 + pciDev_Array[number].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
-    DeactivateLegacySupport(number);
-
     startHostController();
-    enablePorts();
-
-    /*
-    settextcolor(3,0);
-    printformat("\n\nAfter Init of EHCI:");
-    printformat("\nCTRLDSSEGMENT:              %X", pOpRegs->CTRLDSSEGMENT);
-    printformat("\nUSBINTR:                    %X", pOpRegs->USBINTR);
-    printformat("\nPERIODICLISTBASE phys addr: %X", pOpRegs->PERIODICLISTBASE);
-    printformat("\nUSBCMD:                     %X", pOpRegs->USBCMD);
-    printformat("\nCONFIGFLAG:                 %X", pOpRegs->CONFIGFLAG);
-    settextcolor(15,0);
-    */
+    enablePorts(); 
 }
 
 void showPORTSC()
