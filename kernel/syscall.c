@@ -1,6 +1,7 @@
 #include "syscall.h"
 #include "task.h"
 #include "fat12.h"
+#include "file.h"
 #include "sys_speaker.h"
 
 // some functions declared extern in os.h

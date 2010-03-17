@@ -5,6 +5,10 @@
 #define DMA_BUFFER 0x1000 // start of dma tranfer buffer, end: 0x10000 (64KB border).
                           // It must be below 16MB = 0x1000000 and in identity mapped memory!
 
+#define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 60
+#define SECTOR 0
+#define TRACK  1
+
 void flpydsk_initialize_dma();
 void flpydsk_dma_read();
 void flpydsk_dma_write();
@@ -35,5 +39,10 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor);
 
 int32_t flpydsk_write_sector(int32_t sectorLBA);
 int32_t flpydsk_write_sector_wo_motor(int32_t sectorLBA);
+
+///*****************************************************************///
+
+int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option);
+int32_t flpydsk_read_ia ( int32_t i, void* a, int8_t option);
 
 #endif

@@ -1,6 +1,3 @@
-
-
-
 #ifndef _FAT12_H
 #define _FAT12_H
 
@@ -33,6 +30,8 @@
 #define MAX_DIR     10
 #define MAX_FILE    10
 #define FATMAXINDEX MAX_BLOCK ///TEST
+
+
 
 struct boot_sector
 {
@@ -82,30 +81,26 @@ struct dir_entry
  }__attribute__((packed));
 
 
-/*************** functions ******************/
+// cache memory for tracks 0 and 1
+uint8_t cache0[9216], cache1[9216];
 
-int32_t initCache();
+// long term necessary?
+uint8_t track0[9216], track1[9216];
+
+// how to handle memory for the file?
+
+int32_t fat_entry[FATMAXINDEX];
+
+
+// functions
 int32_t flpydsk_read_directory();
-
 int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);
 int32_t flpydsk_format(char* vlab); //VolumeLabel
-
-int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option);
-int32_t flpydsk_read_ia ( int32_t i, void* a, int8_t option);
-
-int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* file);
-int32_t flpydsk_load(const char* name, const char* ext);
 int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer);
-
 void    parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs);
 void    print_dir(struct dir_entry* rs);
 int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag);
 uint32_t search_file_first_cluster(const char* name, const char* ext, struct file* f);
 void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in);
-
-
-
-//int32_t flpydsk_write_dir(struct dir_entry* rs, int32_t in, int32_t st_sec);
-
 
 #endif

@@ -589,3 +589,116 @@ int32_t flpydsk_write_sector_wo_motor(int32_t sectorLBA)
 	}
 }
 
+
+///******************* block write and read *****************************///
+
+int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option) /// floppy
+{
+    int32_t val=0;
+
+    if(option == SECTOR)
+    {
+        memcpy((void*)DMA_BUFFER, a  , 0x200);
+        val = i;
+    }
+    else if(option == TRACK)
+    {
+        memcpy((void*)DMA_BUFFER, a, 0x2400);
+        val = i*18;
+    }
+
+    uint32_t timeout = 2; // limit
+    int32_t  retVal  = 0;
+
+    while( flpydsk_write_sector_wo_motor(val) != 0 ) // without motor on/off
+    {
+        retVal = -1;
+        timeout--;
+        printformat("write error: attempts left: %d\n",timeout);
+	    if(timeout<=0)
+	    {
+	        printformat("timeout\n");
+	        break;
+	    }
+    }
+    if(retVal==0)
+    {
+        // printformat("success write_sector.\n");
+    }
+    return retVal;
+}
+
+
+int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option) /// floppy
+{
+    /// TEST: change DMA before write/read
+    /// printformat("DMA manipulation\n");
+
+    int32_t val=0;
+
+    if(option == SECTOR)
+    {
+        memset((void*)DMA_BUFFER, 0x41, 0x200); // 0x41 is in ASCII the 'A'
+        val = i;
+    }
+    else if(option == TRACK)
+    {
+        memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
+        val = i*18;
+    }
+
+    //flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
+    flpydsk_control_motor(true);
+
+    int32_t retVal;
+    for(uint8_t n=0;n<MAX_ATTEMPTS_FLOPPY_DMA_BUFFER;n++)
+    {
+        retVal = flpydsk_read_sector(val,0);
+        if(retVal!=0)
+        {
+            printformat("\nread error: %d\n",retVal);
+        }
+        if( (*(uint8_t*)(DMA_BUFFER+ 0)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 1)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 2)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 4)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 5)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 6)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+ 8)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 9)==0x41) &&
+            (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
+          )
+          {memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
+              settextcolor(4,0);
+              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
+              if(n>=MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
+              {
+                  printformat("Floppy ---> DMA error.\n");
+              }
+              settextcolor(2,0);
+              continue;
+          }
+          else
+          {
+              /*
+              settextcolor(3,0);
+              printformat("Floppy ---> DMA success.\n");
+              settextcolor(2,0);
+              */
+              break;
+          }
+    }
+
+    if(option == SECTOR)
+    {
+        memcpy( (void*)a, (void*)DMA_BUFFER, 0x200);
+    }
+    else if(option == TRACK)
+    {
+        memcpy( (void*)a, (void*)DMA_BUFFER, 0x2400);
+    }
+    return retVal;
+}
+
+
+
+
+
+

@@ -7,7 +7,7 @@ USERTEST= user/user_test_c
 USERTOOLS= user/user_tools
 
 ifeq ($(OS),WINDOWS)
-    RM=del
+    RM=-del
     MV=cmd /c move/Y
     NASM= nasm
     CC= i586-elf-gcc
@@ -30,7 +30,6 @@ boot2: $(wildcard $(STAGE2DIR)/*.asm $(STAGE2DIR)/*.inc)
 	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
-	$(RM) *.o
 	$(CC) $(KERNELDIR)/*.c -c -I$(KERNELDIR)/include -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 	$(CC) $(KERNELDIR)/cdi/*.c -c -I$(KERNELDIR)/include -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 	$(NASM) -O32 -f elf $(KERNELDIR)/data.asm -I$(KERNELDIR)/ -o data.o
@@ -43,7 +42,6 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERTEST)/HELLO.ELF
 
 initrd: $(wildcard $(USERDIR)/*)
-	$(RM) *.o 
 	$(NASM) -O32 -f elf $(USERDIR)/start.asm -I$(USERDIR)/ -o start.o
 	$(CC) $(USERTOOLS)/userlib.c -c -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
