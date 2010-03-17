@@ -2,9 +2,7 @@
 
 #ifdef KEYMAP_GER
 #include "keyboard_GER.h"
-#endif
-
-#ifdef KEYMAP_US
+#else //US-Keyboard if nothing else is defined
 #include "keyboard_US.h"
 #endif
 
@@ -38,86 +36,86 @@ bool testch()
 
 uint8_t FetchAndAnalyzeScancode()
 {
-	if( inportb(0x64)&1 )
-	    curScan = inportb(0x60);   // 0x60: get scan code from the keyboard
+    if( inportb(0x64)&1 )
+        curScan = inportb(0x60);   // 0x60: get scan code from the keyboard
 
     // ACK: toggle bit 7 at port 0x61
     uint8_t port_value = inportb(0x61);
     outportb(0x61,port_value |  0x80); // 0->1
     outportb(0x61,port_value &~ 0x80); // 1->0
 
-	if( curScan & 0x80 ) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
-	{
+    if( curScan & 0x80 ) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
+    {
         KeyPressed = false;
         curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
         if( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT ) // A key was released, shift key up?
         {
-            ShiftKeyDown = false;	// yes, it is up --> NonShift
+            ShiftKeyDown = false;    // yes, it is up --> NonShift
         }
         if( (curScan == 0x38) && (prevScan == 0x60) )
-		{
+        {
             AltGrKeyDown = false;
-		}
-	}
-	else // Key was pressed
-	{
-	    KeyPressed = true;
-		if( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT )
-		{
-		    ShiftKeyDown = true; // It is down, use asciiShift characters
-		}
-		if( (curScan == 0x38) && (prevScan == 0x60) )
-		{
+        }
+    }
+    else // Key was pressed
+    {
+        KeyPressed = true;
+        if( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT )
+        {
+            ShiftKeyDown = true; // It is down, use asciiShift characters
+        }
+        if( (curScan == 0x38) && (prevScan == 0x60) )
+        {
             AltGrKeyDown = true;
-		}
-	}
-	prevScan = curScan;
-	return curScan;
+        }
+    }
+    prevScan = curScan;
+    return curScan;
 }
 
 uint8_t ScanToASCII()
 {
-	curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
+    curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
 
     //filter Shift Key and Key Release
-	if( ( (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) ) || ( KeyPressed == false ) )
-	{
-	    return 0;
-	}
+    if( ( (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) ) || ( KeyPressed == false ) )
+    {
+        return 0;
+    }
 
     /// TEST
     //  printformat(" scan:%d ",scan);
     /// TEST
 
-	uint8_t retchar = 0;  // The character that returns the scan code to ASCII code
-    if( ShiftKeyDown )
-	{
-	    if( AltGrKeyDown )
+    uint8_t retchar = 0;  // The character that returns the scan code to ASCII code
+    if( AltGrKeyDown )
+    {
+        if( ShiftKeyDown )
         {
-			retchar = asciiShiftAltGr[curScan];
+            retchar = asciiShiftAltGr[curScan];
         }
-	    if( !AltGrKeyDown || retchar == 0 ) // if just shift is pressed or if there is no key specified for ShiftAltGr
-        {
-            retchar = asciiShift[curScan];
-        }
-	}
-	if( !ShiftKeyDown || retchar == 0)
-	{
-	    if( AltGrKeyDown )
+        if( !ShiftKeyDown || retchar == 0 ) // if just shift is pressed or if there is no key specified for ShiftAltGr
         {
             retchar = asciiAltGr[curScan];
         }
-	    if( !AltGrKeyDown || retchar == 0 )
+    }
+    if( !AltGrKeyDown || retchar == 0)
+    {
+        if( ShiftKeyDown )
         {
-		    retchar = asciiNonShift[curScan]; // (Lower) Non-Shift Codes
+            retchar = asciiShift[curScan];
         }
-	}
+        if( !ShiftKeyDown || retchar == 0 )
+        {
+            retchar = asciiNonShift[curScan]; // (Lower) Non-Shift Codes
+        }
+    }
 
-	/// TEST
-	//  printformat("ascii:%x ", retchar);
-	/// TEST
+    /// TEST
+    //  printformat("ascii:%x ", retchar);
+    /// TEST
 
-	return retchar; // ASCII version
+    return retchar; // ASCII version
 }
 
 void keyboard_handler(struct regs* r)
@@ -166,7 +164,7 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
 void keyboard_install()
 {
     // Setup the queue
-	memset(KEYQUEUE, 0, KQSIZE);
+    memset(KEYQUEUE, 0, KQSIZE);
     pHeadKQ = KEYQUEUE;
     pTailKQ = KEYQUEUE;
     KQ_count_read  = 0;

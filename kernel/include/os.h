@@ -22,6 +22,13 @@ typedef signed short         int16_t;
 typedef signed char          int8_t;
 typedef uint32_t             uintptr_t;
 
+// typedefs for CDI
+typedef struct {} FILE;     /// Dummy: Please fix it
+typedef unsigned int dev_t; // Defined like in tyndur
+typedef unsigned int uid_t; // Defined like in tyndur
+typedef unsigned int gid_t; // Defined like in tyndur
+
+
 #define NULL (void*)0
 #define bool _Bool
 #define true   1
@@ -110,7 +117,6 @@ struct regs
 }__attribute__((packed));
 
 typedef struct regs registers_t;
-
 
 // video.c
 extern void clear_screen();

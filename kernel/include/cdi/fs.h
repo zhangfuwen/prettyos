@@ -17,13 +17,14 @@
 #ifndef _CDI_FS_
 #define _CDI_FS_
 
-#include <stdio.h>
+/// #include <stdio.h>     /// CDI-style
 
 #include <cdi.h>
 #include <cdi/lists.h>
 #include <cdi/cache.h>
 
-#include <sys/types.h>
+/// #include <sys/types.h> // CDI-style
+#include "os.h"            /// PrettyOS work-around
 
 struct cdi_fs_filesystem;
 /**
