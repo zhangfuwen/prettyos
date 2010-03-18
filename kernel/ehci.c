@@ -214,7 +214,7 @@ void analyzeEHCI(uint32_t bar)
 void startHostController()
 {
     DeactivateLegacySupport(pciNumber);
-	
+
 	settextcolor(2,0);
     printformat("\nreset HC\n");
     settextcolor(15,0);
@@ -234,8 +234,7 @@ void startHostController()
     {
         printformat("... waiting for HC reset\n");
         sleepMilliSeconds(20);
-        timeout--;
-        if(timeout<=0)
+        if( timeout-- <= 0 )
         {
             settextcolor(4,0);
             printformat("timeout HC reset\n");
@@ -255,8 +254,6 @@ void startHostController()
     // Software must not write a one to this field unless the host controller is in the Halted state
     pOpRegs->USBCMD |= CMD_8_MICROFRAME;
 
-
-
     if( pOpRegs->USBSTS & STS_HCHALTED )
     {
         settextcolor(2,0);
@@ -265,8 +262,25 @@ void startHostController()
         pOpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
     }
 
+    // check HC start
+    timeout=10;
+    while( pOpRegs->USBSTS & STS_HCHALTED )
+    {
+        printformat("... waiting for HC start\n");
+        sleepMilliSeconds(20);
+        if( timeout-- <= 0 )
+        {
+            settextcolor(4,0);
+            printformat("timeout HC start\n");
+            settextcolor(15,0);
+            break;
+        }
+    }
+
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG = CF;
+    sleepMilliSeconds(20);
+    printformat("all ports routed to the EHCI controller\n");
 
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     pOpRegs->USBINTR = STS_INTMASK; // all six interrupts allowed
@@ -333,7 +347,7 @@ void initEHCIHostController(uint32_t number)
     irq_install_handler(32 + pciDev_Array[number].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     startHostController();
-    enablePorts(); 
+    enablePorts();
 }
 
 void showPORTSC()
