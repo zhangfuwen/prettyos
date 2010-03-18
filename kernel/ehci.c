@@ -1,6 +1,6 @@
 /*
 *  license and disclaimer for the use of this source code as per statement below
-*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+*  Lizenz und Haftungsausschluss f?r die Verwendung dieses Sourcecodes siehe unten
 */
 
 #include "os.h"
@@ -179,10 +179,11 @@ void ehci_handler(struct regs* r)
     if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )
     {
         settextcolor(4,0);
-        printformat("\nHost System Error Interrupt");
+        printformat("\nHost System Error");
         settextcolor(15,0);
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-        pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
+        pOpRegs->USBSTS |= STS_INTMASK;
+        printformat("\nRestart HC after fatal error");
         initEHCIFlag = false;
         ehciHostControllerRestartFlag = true;
     }
@@ -213,77 +214,45 @@ void analyzeEHCI(uint32_t bar)
 
 void startHostController()
 {
-    DeactivateLegacySupport(pciNumber);
-
-	settextcolor(2,0);
-    printformat("\nreset HC\n");
+    settextcolor(14,0);
+    printformat("\nstarting HC\n");
     settextcolor(15,0);
-
-    // pOpRegs->USBINTR = 0; // EHCI interrupts disabled
-
-    if(!(pOpRegs->USBSTS & STS_HCHALTED))
-    {
-        pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
-        sleepMilliSeconds(100); // wait at least 16 microframes ( = 16*125 µs = 2 ms )
-    }
+    pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
+    sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
 
     pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
 
-    int32_t timeout=10;
+    int32_t timeout=0;
     while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
     {
-        printformat("... waiting for HC reset\n");
+        printformat("waiting for HC reset\n");
         sleepMilliSeconds(20);
-        if( timeout-- <= 0 )
+        timeout++;
+        if(timeout>10)
         {
-            settextcolor(4,0);
-            printformat("timeout HC reset\n");
-            settextcolor(15,0);
             break;
         }
     }
 
-    settextcolor(2,0);
-    printformat("initialize HC\n");
-    settextcolor(15,0);
+    pOpRegs->USBINTR = 0; // EHCI interrupts disabled
 
     // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
     pOpRegs->CTRLDSSEGMENT = 0;
 
-    // Turn the host controller ON via setting the Run/Stop bit.
-    // Software must not write a one to this field unless the host controller is in the Halted state
+    // Turn the host controller ON via setting the Run/Stop bit. Software must not write a one to this field unless the host controller is in the Halted state
     pOpRegs->USBCMD |= CMD_8_MICROFRAME;
-
     if( pOpRegs->USBSTS & STS_HCHALTED )
     {
-        settextcolor(2,0);
-        printformat("start HC\n");
-        settextcolor(15,0);
         pOpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
-    }
-
-    // check HC start
-    timeout=10;
-    while( pOpRegs->USBSTS & STS_HCHALTED )
-    {
-        printformat("... waiting for HC start\n");
-        sleepMilliSeconds(20);
-        if( timeout-- <= 0 )
-        {
-            settextcolor(4,0);
-            printformat("timeout HC start\n");
-            settextcolor(15,0);
-            break;
-        }
     }
 
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG = CF;
-    sleepMilliSeconds(20);
-    printformat("all ports routed to the EHCI controller\n");
-
+	
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    pOpRegs->USBINTR = STS_INTMASK; // all six interrupts allowed
+    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
+	
+	sleepMilliSeconds(100);
 }
 
 void enablePorts()
@@ -319,17 +288,18 @@ void resetPort(uint8_t j)
      pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
 
-     sleepMilliSeconds(100);
+     sleepMilliSeconds(50);
 
      pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
 
      // wait and check, whether really zero
-     uint32_t timeout=10;
+     uint32_t timeoutPortReset=0;
      while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
      {
-         sleepMilliSeconds(20);
-         timeout--;
-         if(timeout<=0)
+         sleepMilliSeconds(30);
+         timeoutPortReset++;
+
+         if(timeoutPortReset>20)
          {
              settextcolor(4,0);
              printformat("\nerror: no port reset!");
@@ -341,13 +311,14 @@ void resetPort(uint8_t j)
 
 void initEHCIHostController(uint32_t number)
 {
-    pciNumber =  number;
-	initEHCIFlag = false;
+    initEHCIFlag = false;
     irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
     irq_install_handler(32 + pciDev_Array[number].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
+    DeactivateLegacySupport(number);
+
     startHostController();
-    enablePorts();
+    enablePorts(); 
 }
 
 void showPORTSC()
@@ -381,7 +352,7 @@ void showPORTSC()
             printf("                                                                              ",47,color);
             printf("                                                                              ",48,color);
 
-            // beep(1000,100);
+            beep(1000,100);
         }
     }
 }

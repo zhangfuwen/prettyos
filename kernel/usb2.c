@@ -22,7 +22,7 @@ void testTransfer(uint32_t device, uint8_t port)
 
 	// Create QTDs (in reversed order)
 	void* next                = createQTD(0x1, 0x0, 1, 0);	// Handshake is the opposite direction of Data
-	next       =     InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
+	next           = InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
 	void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
 
 	// Create QH
@@ -30,9 +30,8 @@ void testTransfer(uint32_t device, uint8_t port)
 
 	// Enable Async...
 	printformat("\nEnabling Async Schedule\n");
-	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /* | CMD_ASYNCH_INT_DOORBELL */ ;
+	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL ;
 	sleepMilliSeconds(200);
-	void showUSBSTS();
 	printformat("\n");
 	showPacket(InQTDpage0,18);
 	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );	
@@ -41,22 +40,25 @@ void testTransfer(uint32_t device, uint8_t port)
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
-   settextcolor(10,0);
-   printformat("\nlength:            %d\n",  d->length);
-   printformat("descriptor type:   %d\n",    d->descriptorType);
-   printformat("USB specification: %d.%d\n", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
-   printformat("USB class:         %x\n",    d->deviceClass);
-   printformat("USB subclass:      %x\n",    d->deviceSubclass);
-   printformat("USB protocol       %x\n",    d->deviceProtocol);
-   printformat("max packet size:   %d\n",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
-   printformat("vendor:            %x\n",    d->idVendor);
-   printformat("product:           %x\n",    d->idProduct);
-   printformat("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
-   printformat("manufacturer:      %x\n",    d->manufacturer);
-   printformat("product:           %x\n",    d->product);
-   printformat("serial number:     %x\n",    d->serialNumber);
-   printformat("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
-   settextcolor(15,0);
+   if(d->length)
+   {
+	   settextcolor(10,0);
+	   printformat("\nlength:            %d\n",  d->length);
+	   printformat("descriptor type:   %d\n",    d->descriptorType);
+	   printformat("USB specification: %d.%d\n", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
+	   printformat("USB class:         %x\n",    d->deviceClass);
+	   printformat("USB subclass:      %x\n",    d->deviceSubclass);
+	   printformat("USB protocol       %x\n",    d->deviceProtocol);
+	   printformat("max packet size:   %d\n",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
+	   printformat("vendor:            %x\n",    d->idVendor);
+	   printformat("product:           %x\n",    d->idProduct);
+	   printformat("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
+	   printformat("manufacturer:      %x\n",    d->manufacturer);
+	   printformat("product:           %x\n",    d->product);
+	   printformat("serial number:     %x\n",    d->serialNumber);
+	   printformat("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
+	   settextcolor(15,0);
+	}
 }
 
 /*

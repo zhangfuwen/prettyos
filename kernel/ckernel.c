@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.248]\n");
+    printformat("PrettyOS [Version 0.0.0.249]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -195,7 +195,7 @@ int main()
         settextcolor(4,0);
         printformat("Program not found.\n");
         settextcolor(15,0);
-    }
+    }	
 
     // msgbeep();
     pODA->ts_flag = 1;
@@ -212,7 +212,20 @@ int main()
         {
             p = progress;
         }
-
+		
+        // Show Date & Time at Status bar
+        CurrentSecondsOld = CurrentSeconds;
+        CurrentSeconds = getCurrentSeconds();
+        if( CurrentSeconds != CurrentSecondsOld )
+        {
+            itoa(CurrentSeconds, timeBuffer);
+            getCurrentDateAndTime(DateAndTime);
+            strcat(DateAndTime, "     ");
+            strcat(DateAndTime, timeBuffer);
+            strcat(DateAndTime, " seconds since start.");
+            printf(DateAndTime, 49, 0xC); // output in status bar
+		}
+		
 		/// work-around EHCI HC restart
 		if( ehciHostControllerRestartFlag )
 		{
@@ -232,21 +245,6 @@ int main()
 			checkPortLineStatus();
 			initEHCIFlag = false;	            
 		}
-		
-        // Show Date & Time at Status bar
-        CurrentSecondsOld = CurrentSeconds;
-        CurrentSeconds = getCurrentSeconds();
-        if( CurrentSeconds != CurrentSecondsOld )
-        {
-            itoa(CurrentSeconds, timeBuffer);
-            getCurrentDateAndTime(DateAndTime);
-            strcat(DateAndTime, "     ");
-            strcat(DateAndTime, timeBuffer);
-            strcat(DateAndTime, " seconds since start.");
-            printf(DateAndTime, 49, 0xC); // output in status bar
-			
-
-        }
         __asm__ volatile ("hlt");
     }
     return 0;
