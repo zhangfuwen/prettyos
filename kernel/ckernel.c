@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.249]\n");
+    printformat("PrettyOS [Version 0.0.0.250]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -79,9 +79,7 @@ int main()
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
 
-    /*
-        void floatTest()
-    */
+    // void floatTest()
 
     // direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
@@ -98,7 +96,7 @@ int main()
     }
     /// direct 1st floppy disk
 
-    /// TEST list BEGIN
+    /// PCI list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
     listHead_t* pciDevList = listCreate();
     for(int i=0;i<PCIARRAYSIZE;++i)
@@ -140,7 +138,7 @@ int main()
     printformat("\n\n");
     #endif
     ///
-    /// TEST list END
+    /// PCI list END
 
     // RAM Disk
     ///
@@ -187,7 +185,7 @@ int main()
             }
         }
     }
-    free( buf );
+    free(buf);
     printformat("\n\n");
 
     if ( ! shell_found )
@@ -195,7 +193,7 @@ int main()
         settextcolor(4,0);
         printformat("Program not found.\n");
         settextcolor(15,0);
-    }	
+    }
 
     // msgbeep();
     pODA->ts_flag = 1;
@@ -206,13 +204,13 @@ int main()
     char timeBuffer[20];
     while( true )
     {
-        // SHOW ROTATING ASTERISK
+        // Show Rotating Asterisk
         *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *p;
         if( ! *++p )
         {
             p = progress;
         }
-		
+
         // Show Date & Time at Status bar
         CurrentSecondsOld = CurrentSeconds;
         CurrentSeconds = getCurrentSeconds();
@@ -224,27 +222,28 @@ int main()
             strcat(DateAndTime, timeBuffer);
             strcat(DateAndTime, " seconds since start.");
             printf(DateAndTime, 49, 0xC); // output in status bar
+
+            /// work-around EHCI HC restart
+            if( ehciHostControllerRestartFlag )
+            {
+                ehciHostControllerRestartFlag = false;
+                settextcolor(14,0);
+                printformat("\nRestart HC after fatal error");
+                settextcolor(15,0);
+                startHostController();
+                enablePorts();
+            }
+
+            /// work-around port reset EHCI
+            if(portchangeFlag)
+            {
+                portchangeFlag = false;
+                showPORTSC();
+                checkPortLineStatus();
+                initEHCIFlag = false;
+            }
 		}
-		
-		/// work-around EHCI HC restart
-		if( ehciHostControllerRestartFlag )
-		{
-			ehciHostControllerRestartFlag = false;
-			settextcolor(14,0);
-			printformat("\nRestart HC after fatal error");
-			settextcolor(15,0);
-			startHostController();
-			enablePorts();
-		}		
-		
-		/// work-around port reset EHCI
-		if(portchangeFlag)
-		{
-			portchangeFlag = false;
-			showPORTSC();
-			checkPortLineStatus();
-			initEHCIFlag = false;	            
-		}
+
         __asm__ volatile ("hlt");
     }
     return 0;
