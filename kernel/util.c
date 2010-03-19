@@ -56,6 +56,13 @@ uint32_t fetchDS()
     return eax;
 }
 
+uint64_t rdtsc()
+{
+    uint64_t val;
+    __asm__ volatile ("rdtsc" : "=A"(val)); // "=A" for getting 64 bit value
+    return val;
+}
+
 /**********************************************************************/
 
 uint8_t inportb(uint16_t port)

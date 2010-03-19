@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.250]\n");
+    printformat("PrettyOS [Version 0.0.0.251]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -72,6 +72,7 @@ int main()
 	{
 		printformat( "\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size );
 	}
+
     heap_install();
     tasking_install();
 
@@ -202,6 +203,9 @@ int main()
     const char* p = progress;
     uint32_t CurrentSeconds=0, CurrentSecondsOld;
     char timeBuffer[20];
+
+    uint64_t CurrentRdtscValue=0, OldRdtscValue, RdtscDiffValue;
+
     while( true )
     {
         // Show Rotating Asterisk
@@ -214,8 +218,29 @@ int main()
         // Show Date & Time at Status bar
         CurrentSecondsOld = CurrentSeconds;
         CurrentSeconds = getCurrentSeconds();
+
+        OldRdtscValue = CurrentRdtscValue;
+
         if( CurrentSeconds != CurrentSecondsOld )
         {
+            // all values 64 bit
+            CurrentRdtscValue = rdtsc();
+            RdtscDiffValue = CurrentRdtscValue - OldRdtscValue;
+            uint64_t RdtscKCounts = RdtscDiffValue>>10; // divide by 1024
+
+	        uint32_t RdtscKCountsHi    = RdtscKCounts >> 32;
+	        uint32_t RdtscKCountsLo    = RdtscKCounts & 0xFFFFFFFF;
+
+	        if(RdtscKCountsHi==0)
+	        {
+	            printformat("\nRdtsc/ms: %d\n",(RdtscKCountsLo/1000)<<10 );
+	        }
+	        else
+	        {
+	            printformat("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",
+	                           RdtscKCountsHi,    RdtscKCountsLo );
+	        }
+
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
             strcat(DateAndTime, "     ");

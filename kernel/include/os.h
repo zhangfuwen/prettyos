@@ -192,6 +192,7 @@ extern uint32_t fetchEBP();
 extern uint32_t fetchSS();
 extern uint32_t fetchCS();
 extern uint32_t fetchDS();
+extern uint64_t rdtsc();
 
 extern void memshow(void* start, size_t count);
 extern void* memset(void* dest, int8_t val, size_t count);
