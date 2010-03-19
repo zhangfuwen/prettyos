@@ -99,6 +99,8 @@ struct oda
     // floppy disk
     bool  flpy_motor[4];         // 0: motor off  1: motor on
                                  // array index is number of floppy drive (0,1,2,3)
+    uint32_t CPU_Frequency_kHz;  // determined from rdtsc
+
 }__attribute__((packed));
 
 typedef struct oda oda_t;
@@ -148,6 +150,7 @@ extern void systemTimer_setFrequency( uint32_t freq );
 uint16_t    systemTimer_getFrequency();
 extern void timer_install();
 extern void timer_uninstall();
+extern void delay (uint32_t microsec);
 
 // keyboard.c
 extern void keyboard_install();

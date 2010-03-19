@@ -42,7 +42,7 @@ struct ehci_OpRegs
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-uint32_t pciNumber; 
+uint32_t pciEHCINumber;
 bool     EHCIflag;
 bool     initEHCIFlag;
 uint8_t  numPorts;

@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.252]\n");
+    printformat("PrettyOS [Version 0.0.0.253]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -234,11 +234,13 @@ int main()
 
 	        if(RdtscKCountsHi==0)
 	        {
-	          itoa( ((RdtscKCountsLo/1000)<<10)/1000, CurrentFrequency);
+	          uint32_t CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
+	          pODA->CPU_Frequency_kHz = CPU_Frequency_kHz;
+	          itoa(CPU_Frequency_kHz/1000, CurrentFrequency);
 	        }
 	        else
 	        {
-
+	          // not to be expected
 	          // printformat("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
 	        }
 
@@ -251,23 +253,9 @@ int main()
             strcat(DateAndTime, " MHz   ");
             printf(DateAndTime, 49, 0xC); // output in status bar
 
-            /// work-around EHCI HC restart
-            if( ehciHostControllerRestartFlag )
+            if( (initEHCIFlag = true) && (CurrentSeconds >= 2) && pciEHCINumber )
             {
-                ehciHostControllerRestartFlag = false;
-                settextcolor(14,0);
-                printformat("\nRestart HC after fatal error");
-                settextcolor(15,0);
-                startHostController();
-                enablePorts();
-            }
-
-            /// work-around port reset EHCI
-            if(portchangeFlag)
-            {
-                portchangeFlag = false;
-                showPORTSC();
-                checkPortLineStatus();
+                initEHCIHostController(pciEHCINumber);
                 initEHCIFlag = false;
             }
 		}

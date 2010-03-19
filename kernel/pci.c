@@ -201,10 +201,13 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                     {
                                         printformat("\npaging_do_idmapping(...) error.\n");
                                     }
+
                                     if(!EHCIflag)
                                     {
+                                        pciEHCINumber = number; /// TODO: implement for more than one EHCI
+                                        EHCIflag = true;
+                                        initEHCIFlag = true;
                                         analyzeEHCI(bar);
-                                        initEHCIHostController(number);
                                     }
                                 }
                                 /// TEST EHCI Data End

@@ -167,7 +167,9 @@ void ehci_handler(struct regs* r)
     if( pOpRegs->USBSTS & STS_PORT_CHANGE )
     {
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
-        portchangeFlag = true;
+        showPORTSC();
+        checkPortLineStatus();
+        initEHCIFlag = false;
     }
 
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
@@ -185,7 +187,13 @@ void ehci_handler(struct regs* r)
         pOpRegs->USBSTS |= STS_INTMASK;
         printformat("\nRestart HC after fatal error");
         initEHCIFlag = false;
-        ehciHostControllerRestartFlag = true;
+
+        //ehciHostControllerRestart
+        settextcolor(14,0);
+        printformat("\nRestart HC after fatal error");
+        settextcolor(15,0);
+        startHostController();
+        enablePorts();
     }
 
     if( pOpRegs->USBSTS & STS_ASYNC_INT )
@@ -199,7 +207,6 @@ void ehci_handler(struct regs* r)
 void analyzeEHCI(uint32_t bar)
 {
     ubar = bar;
-    EHCIflag = true;
     pCapRegs = (struct ehci_CapRegs*) ubar;
 	pOpRegs  = (struct ehci_OpRegs*) (ubar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
@@ -218,7 +225,8 @@ void startHostController()
     printformat("\nstarting HC\n");
     settextcolor(15,0);
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
-    sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
+    //sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
+    delay(30000);
 
     pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
 
@@ -226,7 +234,8 @@ void startHostController()
     while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
     {
         printformat("waiting for HC reset\n");
-        sleepMilliSeconds(20);
+        //sleepMilliSeconds(20);
+        delay(20000);
         timeout++;
         if(timeout>10)
         {
@@ -248,11 +257,12 @@ void startHostController()
 
     // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
     pOpRegs->CONFIGFLAG = CF;
-	
+
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
-	
-	sleepMilliSeconds(100);
+
+	//sleepMilliSeconds(100);
+	delay(100000);
 }
 
 void enablePorts()
@@ -274,7 +284,9 @@ void enablePorts()
              settextcolor(15,0);
 
              testTransfer(0,j+1); // device address, port number
-             initEHCIFlag = true;
+
+             //initEHCIHostController(pciEHCINumber); ///???
+
              printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
              printformat("\nsetup status: "); showStatusbyteQTD(SetupQTD);
              printformat("\nin    status: "); showStatusbyteQTD(InQTD);
@@ -288,7 +300,8 @@ void resetPort(uint8_t j)
      pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
 
-     sleepMilliSeconds(50);
+     //sleepMilliSeconds(50);
+     delay(50000);
 
      pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
 
@@ -296,9 +309,9 @@ void resetPort(uint8_t j)
      uint32_t timeoutPortReset=0;
      while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
      {
-         sleepMilliSeconds(30);
+         //sleepMilliSeconds(30);
+         delay(30000);
          timeoutPortReset++;
-
          if(timeoutPortReset>20)
          {
              settextcolor(4,0);
@@ -309,16 +322,16 @@ void resetPort(uint8_t j)
      }
 }
 
-void initEHCIHostController(uint32_t number)
+void initEHCIHostController(uint32_t num)
 {
     initEHCIFlag = false;
-    irq_install_handler(32 + pciDev_Array[number].irq, ehci_handler);
-    irq_install_handler(32 + pciDev_Array[number].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+    irq_install_handler(32 + pciDev_Array[num].irq, ehci_handler);
+    irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
-    DeactivateLegacySupport(number);
+    DeactivateLegacySupport(num);
 
     startHostController();
-    enablePorts(); 
+    enablePorts();
 }
 
 void showPORTSC()
@@ -434,11 +447,11 @@ void checkPortLineStatus()
     settextcolor(15,0);
 }
 
-void DeactivateLegacySupport(uint32_t number)
+void DeactivateLegacySupport(uint32_t num)
 {
-    uint8_t bus  = pciDev_Array[number].bus;
-    uint8_t dev  = pciDev_Array[number].device;
-    uint8_t func = pciDev_Array[number].func;
+    uint8_t bus  = pciDev_Array[num].bus;
+    uint8_t dev  = pciDev_Array[num].device;
+    uint8_t func = pciDev_Array[num].func;
 
     bool failed = false;
     eecp = BYTE2(pCapRegs->HCCPARAMS);
@@ -471,7 +484,8 @@ void DeactivateLegacySupport(uint32_t number)
             // Wait for BIOS-Semaphore being not set
             while( ( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01 ) && ( timeout<50 ) )
             {
-                sleepMilliSeconds(20);
+                //sleepMilliSeconds(20);
+                delay(20000);
                 timeout++;
             }
             if( !( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01) )
@@ -480,7 +494,8 @@ void DeactivateLegacySupport(uint32_t number)
                 timeout=0;
                 while( !( pci_config_read( bus, dev, func, 0x0100 | (eecp + 3) ) & 0x01) && (timeout<50) )
                 {
-                    sleepMilliSeconds(20);
+                    //sleepMilliSeconds(20);
+                    delay(20000);
                     timeout++;
                 }
             }

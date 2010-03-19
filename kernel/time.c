@@ -11,8 +11,6 @@ tm_t currentTime;
 
 // info from http://lowlevel.brainsware.org/wiki/index.php/CMOS
 
-
-/// do not use direct call to the kernel function, but the CDI wrapper
 tm_t* cmosTime(tm_t* ptm)
 {
     ptm->second     = PackedBCD2Decimal(cmos_read(0x00));

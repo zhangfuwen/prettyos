@@ -89,3 +89,16 @@ void timer_uninstall()
     irq_uninstall_handler(32+0);
 }
 
+///***********************************************************************///
+
+// delay in microseconds independent of timer interrupt but on rdtsc
+void delay (uint32_t microsec)
+{
+    uint64_t timeout = rdtsc() + (uint64_t)(microsec/1000*pODA->CPU_Frequency_kHz);
+
+    while( rdtsc()<timeout )
+    {
+        //do nothing
+    }
+}
+
