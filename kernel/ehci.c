@@ -13,6 +13,10 @@
 
 void createQH(void* address, void* firstQTD, uint32_t device)
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: createQH\n");
+	settextcolor(15,0);
+
 	struct ehci_qhd* head = (struct ehci_qhd*)address;
 	memset(address, 0, sizeof(struct ehci_qhd));
 	uint32_t phys = paging_get_phys_addr(kernel_pd, address);
@@ -38,6 +42,10 @@ void createQH(void* address, void* firstQTD, uint32_t device)
 
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: createQTD\n");
+	settextcolor(15,0);
+
 	void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
 	struct ehci_qtd* td = (struct ehci_qtd*)address;
 
@@ -94,17 +102,25 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
-     printformat("virtAddrBuf0: %X\n", virtAddrBuf0);
-     for(uint32_t c=0; c<size; c++)
-     {
-         settextcolor(3,0);
-         printformat("%y ", *((uint8_t*)virtAddrBuf0+c));
-         settextcolor(15,0);
-     }
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: showPacket\n");
+	settextcolor(15,0);
+
+    printformat("virtAddrBuf0: %X\n", virtAddrBuf0);
+    for(uint32_t c=0; c<size; c++)
+    {
+        settextcolor(3,0);
+        printformat("%y ", *((uint8_t*)virtAddrBuf0+c));
+        settextcolor(15,0);
+    }
 }
 
 void showStatusbyteQTD(void* addressQTD)
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: showStatusbyteQTD\n");
+	settextcolor(15,0);
+
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
     printformat("QTD: %X Statusbyte: %y", addressQTD, statusbyte);
 
@@ -151,6 +167,13 @@ void showStatusbyteQTD(void* addressQTD)
 
 void ehci_handler(struct regs* r)
 {
+    if( !(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) )
+    {
+      settextcolor(9,0);delay(2000000);
+      printformat("\n>>> >>> function: ehci_handler: ");
+	  settextcolor(15,0);
+    }
+
 	settextcolor(14,0);
     if( pOpRegs->USBSTS & STS_USBINT )
     {
@@ -166,6 +189,10 @@ void ehci_handler(struct regs* r)
 
     if( pOpRegs->USBSTS & STS_PORT_CHANGE )
     {
+        settextcolor(9,0);
+        printformat("Port Change");
+        settextcolor(15,0);
+
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
         showPORTSC();
         checkPortLineStatus();
@@ -173,7 +200,7 @@ void ehci_handler(struct regs* r)
 
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
-        // printformat("\nFrame List Rollover Interrupt");
+        //printformat("\nFrame List Rollover Interrupt");
         pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
 
@@ -205,6 +232,10 @@ leave_handler:
 
 void analyzeEHCI(uint32_t bar)
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: analyzeEHCI\n");
+	settextcolor(15,0);
+
     ubar = bar;
     pCapRegs = (struct ehci_CapRegs*) ubar;
 	pOpRegs  = (struct ehci_OpRegs*) (ubar + pCapRegs->CAPLENGTH);
@@ -220,6 +251,10 @@ void analyzeEHCI(uint32_t bar)
 
 void startHostController()
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: startHostController\n");
+	settextcolor(15,0);
+
     settextcolor(14,0);
     printformat("\nstarting HC\n");
     settextcolor(15,0);
@@ -265,6 +300,10 @@ void startHostController()
 
 void enablePorts()
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: enablePorts\n");
+	settextcolor(15,0);
+
     for(uint8_t j=0; j<numPorts; j++)
     {
          resetPort(j);
@@ -286,6 +325,10 @@ void enablePorts()
 
 void resetPort(uint8_t j)
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: resetPort\n");
+	settextcolor(15,0);
+
      pOpRegs->PORTSC[j] |=  PSTS_POWERON;
 
      /*
@@ -299,7 +342,7 @@ void resetPort(uint8_t j)
      it must also write a zero to the Port Enable bit.
      */
      pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
-     printformat("\nstart reset sequence\n");
+
      /*
      The HCHalted bit in the USBSTS register should be a zero
      before software attempts to use this bit.
@@ -320,8 +363,11 @@ void resetPort(uint8_t j)
          settextcolor(15,0);
      }
 
+     printformat("\nstart port reset sequence\n");
+     pOpRegs->USBINTR = 0;
+
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
-     delay(50000);                          // wait
+     delay(250000);                          // wait
      pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
 
      // wait and check, whether really zero
@@ -339,10 +385,16 @@ void resetPort(uint8_t j)
              break;
          }
      }
+     printformat("\nport reset sequence successful\n");
+     pOpRegs->USBINTR = STS_INTMASK;
 }
 
 int32_t initEHCIHostController(uint32_t num)
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: initEHCIHostController\n");
+	settextcolor(15,0);
+
     static uint32_t timeout = 3;
     irq_install_handler(32 + pciDev_Array[num].irq, ehci_handler);
     irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
@@ -378,6 +430,10 @@ int32_t initEHCIHostController(uint32_t num)
 
 void showPORTSC()
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: showPORTSC\n");
+	settextcolor(15,0);
+
     for(uint8_t j=0; j<numPorts; j++)
     {
         if( pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE )
@@ -414,6 +470,10 @@ void showPORTSC()
 
 void showUSBSTS()
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: showUSBSTS\n");
+	settextcolor(15,0);
+
     settextcolor(15,0);
     printformat("\nUSB status: ");
     settextcolor(2,0);
@@ -434,6 +494,10 @@ void showUSBSTS()
 
 void checkPortLineStatus()
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: checkPortLineStatus\n");
+	settextcolor(15,0);
+
     settextcolor(14,0);
     printformat("\n\n>>> Status of USB Ports <<<");
 
@@ -484,6 +548,10 @@ void checkPortLineStatus()
 
 void DeactivateLegacySupport(uint32_t num)
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>> function: DeactivateLegacySupport\n");
+	settextcolor(15,0);
+
     uint8_t bus  = pciDev_Array[num].bus;
     uint8_t dev  = pciDev_Array[num].device;
     uint8_t func = pciDev_Array[num].func;

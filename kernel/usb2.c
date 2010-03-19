@@ -12,6 +12,10 @@
 
 void testTransfer(uint32_t device, uint8_t port)
 {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>>function: testTransfer\n");
+	settextcolor(15,0);
+
 	settextcolor(3,0);
 	printformat("Test transfer at port %d on device address: %d\n", port, device);
     settextcolor(15,0);
@@ -34,14 +38,18 @@ void testTransfer(uint32_t device, uint8_t port)
 	delay(200000);
 	printformat("\n");
 	showPacket(InQTDpage0,18);
-	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );	
+	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );
 	delay(1000000);
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
-   if(d->length)
-   {
+    settextcolor(9,0);delay(2000000);
+    printformat("\n>>> >>>function: showDeviceDesriptor\n");
+	settextcolor(15,0);
+
+    if(d->length)
+    {
 	   settextcolor(10,0);
 	   printformat("\nlength:            %d\n",  d->length);
 	   printformat("descriptor type:   %d\n",    d->descriptorType);
