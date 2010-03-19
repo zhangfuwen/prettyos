@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.254]\n");
+    printformat("PrettyOS [Version 0.0.0.255]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -253,10 +253,10 @@ int main()
             strcat(DateAndTime, " MHz   ");
             printf(DateAndTime, 49, 0xC); // output in status bar
 
-            if( (initEHCIFlag = true) && (CurrentSeconds >= 2) && pciEHCINumber )
+            if( (initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber )
             {
-                initEHCIHostController(pciEHCINumber);
                 initEHCIFlag = false;
+                initEHCIHostController(pciEHCINumber);
             }
 		}
         __asm__ volatile ("hlt");

@@ -169,7 +169,6 @@ void ehci_handler(struct regs* r)
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
         showPORTSC();
         checkPortLineStatus();
-        initEHCIFlag = false;
     }
 
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
@@ -186,10 +185,13 @@ void ehci_handler(struct regs* r)
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         settextcolor(14,0);
-        printformat("\nRestart HC after fatal error");
+        printformat("\nInit EHCI after fatal error");
         settextcolor(15,0);
-        startHostController();
-        enablePorts();
+        int32_t retVal = initEHCIHostController(pciEHCINumber);
+        if(retVal==-1)
+        {
+            goto leave_handler;
+        }
     }
 
     if( pOpRegs->USBSTS & STS_ASYNC_INT )
@@ -197,6 +199,7 @@ void ehci_handler(struct regs* r)
         printformat("\nInterrupt on Async Advance");
         pOpRegs->USBSTS |= STS_ASYNC_INT;
     }
+leave_handler:
 	settextcolor(15,0);
 }
 
@@ -224,14 +227,17 @@ void startHostController()
     delay(30000); //sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
     pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
 
-    int32_t timeout=0;
+    int32_t timeout=10;
     while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
     {
         printformat("waiting for HC reset\n");
         delay(20000); //sleepMilliSeconds(20);
-        timeout++;
-        if(timeout>10)
+        timeout--;
+        if(timeout<=0)
         {
+            settextcolor(4,0);
+            printformat("Error: HC Reset-Bit still set to 1\n");
+            settextcolor(15,0);
             break;
         }
     }
@@ -281,39 +287,93 @@ void enablePorts()
 void resetPort(uint8_t j)
 {
      pOpRegs->PORTSC[j] |=  PSTS_POWERON;
+
+     /*
+     http://www.intel.com/technology/usb/download/ehci-r10.pdf
+     When software writes a one to this bit (from a zero),
+     the bus reset sequence as defined in the USB Specification Revision 2.0 is started.
+     Software writes a zero to this bit to terminate the bus reset sequence.
+     Software must keep this bit at a one long enough to ensure the reset sequence,
+     as specified in the USB Specification Revision 2.0, completes.
+     Note: when software writes this bit to a one,
+     it must also write a zero to the Port Enable bit.
+     */
      pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
-     pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
+     printformat("\nstart reset sequence\n");
+     /*
+     The HCHalted bit in the USBSTS register should be a zero
+     before software attempts to use this bit.
+     The host controller may hold Port Reset asserted to a one
+     when the HCHalted bit is a one.
+     */
+     if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
+     {
+         settextcolor(2,0);
+         printformat("\nHCHalted set to 0 (OK)");
+         settextcolor(15,0);
+     }
+     else
+     {
+         settextcolor(4,0);
+         printformat("\nHCHalted set to 1 (Not OK!)");
+         showUSBSTS();
+         settextcolor(15,0);
+     }
 
-     delay(50000); //sleepMilliSeconds(50);
-
-     pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
+     pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
+     delay(50000);                          // wait
+     pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
 
      // wait and check, whether really zero
-     uint32_t timeoutPortReset=0;
+     uint32_t timeout=20;
      while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
      {
-         delay(30000); //sleepMilliSeconds(30);
-         timeoutPortReset++;
-         if(timeoutPortReset>20)
+         delay(20000);
+         timeout--;
+         if( timeout <= 0 )
          {
              settextcolor(4,0);
-             printformat("\nerror: no port reset!");
+             printformat("\nerror: port %d did not reset! ",j+1);
              settextcolor(15,0);
+             printformat("PortStatus: %X",pOpRegs->PORTSC[j]);
              break;
          }
      }
 }
 
-void initEHCIHostController(uint32_t num)
+int32_t initEHCIHostController(uint32_t num)
 {
-    initEHCIFlag = false;
+    static uint32_t timeout = 3;
     irq_install_handler(32 + pciDev_Array[num].irq, ehci_handler);
     irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     DeactivateLegacySupport(num);
 
     startHostController();
-    enablePorts();
+
+    if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
+    {
+         settextcolor(2,0);
+         printformat("\nHCHalted set to 0 (OK)");
+         enablePorts();
+         settextcolor(15,0);
+    }
+    else
+    {
+         settextcolor(4,0);
+         printformat("\nHCHalted set to 1 (Not OK!) --> Ports cannot be enabled");
+         showUSBSTS();
+         if(timeout-- <=0)
+         {
+             return -1;
+         }
+         else
+         {
+             initEHCIHostController(pciEHCINumber);
+         }
+         settextcolor(15,0);
+    }
+    return 0;
 }
 
 void showPORTSC()
@@ -355,7 +415,7 @@ void showPORTSC()
 void showUSBSTS()
 {
     settextcolor(15,0);
-    printformat("\n\nUSB status: ");
+    printformat("\nUSB status: ");
     settextcolor(2,0);
     printformat("%X",pOpRegs->USBSTS);
     settextcolor(14,0);
@@ -431,7 +491,7 @@ void DeactivateLegacySupport(uint32_t num)
     bool failed = false;
     eecp = BYTE2(pCapRegs->HCCPARAMS);
 
-    printformat("DeactivateLegacySupport: eecp = %x\n",eecp);
+    printformat("\nDeactivateLegacySupport: eecp = %x\n",eecp);
 
     if (eecp >= 0x40) // behind standard pci registers, cf. http://wiki.osdev.org/PCI#PCI_Device_Structure
     {
