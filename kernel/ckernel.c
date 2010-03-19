@@ -47,7 +47,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.251]\n");
+    printformat("PrettyOS [Version 0.0.0.252]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -205,6 +205,7 @@ int main()
     char timeBuffer[20];
 
     uint64_t CurrentRdtscValue=0, OldRdtscValue, RdtscDiffValue;
+    char CurrentFrequency[10];
 
     while( true )
     {
@@ -233,19 +234,21 @@ int main()
 
 	        if(RdtscKCountsHi==0)
 	        {
-	            printformat("\nRdtsc/ms: %d\n",(RdtscKCountsLo/1000)<<10 );
+	          itoa( ((RdtscKCountsLo/1000)<<10)/1000, CurrentFrequency);
 	        }
 	        else
 	        {
-	            printformat("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",
-	                           RdtscKCountsHi,    RdtscKCountsLo );
+
+	          // printformat("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
 	        }
 
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
-            strcat(DateAndTime, "     ");
+            strcat(DateAndTime, "   ");
             strcat(DateAndTime, timeBuffer);
-            strcat(DateAndTime, " seconds since start.");
+            strcat(DateAndTime, " s runtime. CPU: ");
+            strcat(DateAndTime, CurrentFrequency);
+            strcat(DateAndTime, " MHz   ");
             printf(DateAndTime, 49, 0xC); // output in status bar
 
             /// work-around EHCI HC restart
@@ -268,7 +271,6 @@ int main()
                 initEHCIFlag = false;
             }
 		}
-
         __asm__ volatile ("hlt");
     }
     return 0;
