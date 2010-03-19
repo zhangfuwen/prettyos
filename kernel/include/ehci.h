@@ -240,12 +240,6 @@ struct ehci_request
 } __attribute__((packed));
 
 
-/// work-around // Multithreading needed
-bool portchangeFlag;
-bool ehciHostControllerRestartFlag;
-/// work-around
-
-
 // functions, ...
 
 void ehci_handler(struct regs* r);

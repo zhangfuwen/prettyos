@@ -183,12 +183,8 @@ void ehci_handler(struct regs* r)
         settextcolor(4,0);
         printformat("\nHost System Error");
         settextcolor(15,0);
-        pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-        pOpRegs->USBSTS |= STS_INTMASK;
-        printformat("\nRestart HC after fatal error");
-        initEHCIFlag = false;
-
-        //ehciHostControllerRestart
+        pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
+        pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         settextcolor(14,0);
         printformat("\nRestart HC after fatal error");
         settextcolor(15,0);
@@ -225,17 +221,14 @@ void startHostController()
     printformat("\nstarting HC\n");
     settextcolor(15,0);
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
-    //sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
-    delay(30000);
-
+    delay(30000); //sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
     pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
 
     int32_t timeout=0;
     while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
     {
         printformat("waiting for HC reset\n");
-        //sleepMilliSeconds(20);
-        delay(20000);
+        delay(20000); //sleepMilliSeconds(20);
         timeout++;
         if(timeout>10)
         {
@@ -261,8 +254,7 @@ void startHostController()
     // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
     pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
 
-	//sleepMilliSeconds(100);
-	delay(100000);
+	delay(100000); //sleepMilliSeconds(100);
 }
 
 void enablePorts()
@@ -276,16 +268,8 @@ void enablePorts()
              settextcolor(14,0);
              printformat("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
              settextcolor(15,0);
-         }
-         if( pOpRegs->PORTSC[j] & PSTS_ENABLED )
-         {
-             settextcolor(3,0);
-             printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
-             settextcolor(15,0);
 
              testTransfer(0,j+1); // device address, port number
-
-             //initEHCIHostController(pciEHCINumber); ///???
 
              printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
              printformat("\nsetup status: "); showStatusbyteQTD(SetupQTD);
@@ -300,8 +284,7 @@ void resetPort(uint8_t j)
      pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET;
 
-     //sleepMilliSeconds(50);
-     delay(50000);
+     delay(50000); //sleepMilliSeconds(50);
 
      pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET;
 
@@ -309,8 +292,7 @@ void resetPort(uint8_t j)
      uint32_t timeoutPortReset=0;
      while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
      {
-         //sleepMilliSeconds(30);
-         delay(30000);
+         delay(30000); //sleepMilliSeconds(30);
          timeoutPortReset++;
          if(timeoutPortReset>20)
          {
@@ -409,20 +391,13 @@ void checkPortLineStatus()
         {
              settextcolor(14,0);
              printformat(" ,high speed, enabled");
+             settextcolor(3,0);
+             printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
              settextcolor(15,0);
-
-             if(initEHCIFlag==false)
-             {
-                 /// TEST
-                 settextcolor(3,0);
-                 printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
-                 settextcolor(15,0);
-                 testTransfer(0,j+1); // device address, port number
-                 printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printformat("\nsetup: "); showStatusbyteQTD(SetupQTD);
-                 printformat("in:    "); showStatusbyteQTD(InQTD);
-                 /// TEST
-             }
+             testTransfer(0,j+1); // device address, port number
+             printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+             printformat("\nsetup:        "); showStatusbyteQTD(SetupQTD);
+             printformat("in:             "); showStatusbyteQTD(InQTD);
         }
       }
 

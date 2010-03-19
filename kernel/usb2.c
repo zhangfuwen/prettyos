@@ -31,11 +31,11 @@ void testTransfer(uint32_t device, uint8_t port)
 	// Enable Async...
 	printformat("\nEnabling Async Schedule\n");
 	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL ;
-	sleepMilliSeconds(200);
+	delay(200000);
 	printformat("\n");
 	showPacket(InQTDpage0,18);
 	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );	
-	sleepMilliSeconds(1000);
+	delay(1000000);
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)

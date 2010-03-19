@@ -180,14 +180,14 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                    && pciDev_Array[number].bar[i].baseAddress ) // valid BAR
                                 {
                                     /*
-                                    Offset Size Mnemonic    Power Well   Register Name
-                                    00h     1   CAPLENGTH      Core      Capability Register Length
-                                    01h     1   Reserved       Core      N/A
-                                    02h     2   HCIVERSION     Core      Interface Version Number
-                                    04h     4   HCSPARAMS      Core      Structural Parameters
-                                    08h     4   HCCPARAMS      Core      Capability Parameters
-                                    0Ch     8   HCSP-PORTROUTE Core      Companion Port Route Description
-                                    */
+					                                    Offset Size Mnemonic    Power Well   Register Name
+					                                    00h     1   CAPLENGTH      Core      Capability Register Length
+					                                    01h     1   Reserved       Core      N/A
+					                                    02h     2   HCIVERSION     Core      Interface Version Number
+					                                    04h     4   HCSPARAMS      Core      Structural Parameters
+					                                    08h     4   HCCPARAMS      Core      Capability Parameters
+					                                    0Ch     8   HCSP-PORTROUTE Core      Companion Port Route Description
+					                                    */
 
                                     uint32_t bar = pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0;
 
@@ -202,16 +202,15 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                         printformat("\npaging_do_idmapping(...) error.\n");
                                     }
 
-                                    if(!EHCIflag)
+                                    if(!EHCIflag) // only the first EHCI is used
                                     {
                                         pciEHCINumber = number; /// TODO: implement for more than one EHCI
-                                        EHCIflag = true;
-                                        initEHCIFlag = true;
-                                        analyzeEHCI(bar);
+                                        EHCIflag = true; // only the first EHCI is used 
+                                        initEHCIFlag = true; // init of EHCI shall be carried out
+                                        analyzeEHCI(bar); // get data (capregs, opregs)
                                     }
-                                }
-                                /// TEST EHCI Data End
-                            } // if
+                                } /// TEST EHCI Data End
+                            } /// if USB
                         } // for
                     } // if
 
