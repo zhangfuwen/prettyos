@@ -34,7 +34,7 @@ void testTransfer(uint32_t device, uint8_t port)
 
 	// Enable Async...
 	printformat("\nEnabling Async Schedule\n");
-	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL ;
+	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/ ;
 	delay(200000);
 	printformat("\n");
 	showPacket(InQTDpage0,18);
