@@ -13,7 +13,7 @@
 
 void createQH(void* address, void* firstQTD, uint32_t device)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: createQH\n");
 	settextcolor(15,0);
 
@@ -42,7 +42,7 @@ void createQH(void* address, void* firstQTD, uint32_t device)
 
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: createQTD\n");
 	settextcolor(15,0);
 
@@ -102,7 +102,7 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: showPacket\n");
 	settextcolor(15,0);
 
@@ -117,7 +117,7 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 void showStatusbyteQTD(void* addressQTD)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: showStatusbyteQTD\n");
 	settextcolor(15,0);
 
@@ -169,7 +169,7 @@ void ehci_handler(struct regs* r)
 {
     if( !(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) )
     {
-      settextcolor(9,0);delay(2000000);
+      delay(2000000);settextcolor(9,0);
       printformat("\n>>> >>> function: ehci_handler: ");
 	  settextcolor(15,0);
     }
@@ -232,7 +232,7 @@ leave_handler:
 
 void analyzeEHCI(uint32_t bar)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: analyzeEHCI\n");
 	settextcolor(15,0);
 
@@ -251,7 +251,7 @@ void analyzeEHCI(uint32_t bar)
 
 void startHostController()
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: startHostController\n");
 	settextcolor(15,0);
 
@@ -300,7 +300,7 @@ void startHostController()
 
 void enablePorts()
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: enablePorts\n");
 	settextcolor(15,0);
 
@@ -325,7 +325,7 @@ void enablePorts()
 
 void resetPort(uint8_t j)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: resetPort\n");
 	settextcolor(15,0);
 
@@ -363,7 +363,7 @@ void resetPort(uint8_t j)
          settextcolor(15,0);
      }
 
-     printformat("\nstart port reset sequence\n");
+     printformat("\nstart port reset sequence");
      pOpRegs->USBINTR = 0;
 
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
@@ -391,7 +391,7 @@ void resetPort(uint8_t j)
 
 int32_t initEHCIHostController(uint32_t num)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: initEHCIHostController\n");
 	settextcolor(15,0);
 
@@ -430,7 +430,7 @@ int32_t initEHCIHostController(uint32_t num)
 
 void showPORTSC()
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: showPORTSC\n");
 	settextcolor(15,0);
 
@@ -470,7 +470,7 @@ void showPORTSC()
 
 void showUSBSTS()
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: showUSBSTS\n");
 	settextcolor(15,0);
 
@@ -494,7 +494,7 @@ void showUSBSTS()
 
 void checkPortLineStatus()
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: checkPortLineStatus\n");
 	settextcolor(15,0);
 
@@ -548,20 +548,39 @@ void checkPortLineStatus()
 
 void DeactivateLegacySupport(uint32_t num)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>> function: DeactivateLegacySupport\n");
 	settextcolor(15,0);
 
+	bool failed = false;
+
+    // pci bus data
     uint8_t bus  = pciDev_Array[num].bus;
     uint8_t dev  = pciDev_Array[num].device;
     uint8_t func = pciDev_Array[num].func;
 
-    bool failed = false;
     eecp = BYTE2(pCapRegs->HCCPARAMS);
-
     printformat("\nDeactivateLegacySupport: eecp = %x\n",eecp);
+    /*
+    cf. EHCI 1.0 spec, 2.2.4 HCCPARAMS - Capability Parameters, Bit 15:8 (BYTE2)
+    EHCI Extended Capabilities Pointer (EECP). Default = Implementation Dependent.
+    This optional field indicates the existence of a capabilities list.
+    A value of 00h indicates no extended capabilities are implemented.
+    A non-zero value in this register indicates the offset in PCI configuration space
+    of the first EHCI extended capability. The pointer value must be 40h or greater
+    if implemented to maintain the consistency of the PCI header defined for this class of device.
+    */
+    // cf. http://wiki.osdev.org/PCI#PCI_Device_Structure
 
-    if (eecp >= 0x40) // behind standard pci registers, cf. http://wiki.osdev.org/PCI#PCI_Device_Structure
+    //                            eecp      // RO  - This field identifies the extended capability.
+                                            //       01h identifies the capability as Legacy Support.
+    uint32_t NextEHCIExtCapPtr  = eecp + 1; // RO  - 00h indicates end of the ext. cap. list.
+    uint32_t BIOSownedSemaphore = eecp + 2; // R/W - only Bit 16 (Bit 23:17 Reserved, must be set to zero)
+    uint32_t OSownedSemaphore   = eecp + 3; // R/W - only Bit 24 (Bit 31:25 Reserved, must be set to zero)
+    uint32_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
+
+
+    if (eecp >= 0x40)
     {
         int32_t eecp_id=0;
         while(eecp)
@@ -571,51 +590,74 @@ void DeactivateLegacySupport(uint32_t num)
             printformat("eecp_id = %x\n",eecp_id);
             if(eecp_id == 1)
                  break;
-            eecp = pci_config_read( bus, dev, func, 0x0100 | (eecp + 1) );
+            eecp = pci_config_read( bus, dev, func, 0x0100 | NextEHCIExtCapPtr );
             if(eecp == 0xFF)
                 break;
         }
 
-        // Check, whether a Legacy-Support-EC was found and the BIOS-Semaphore is set
-        if((eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01))
+        // Legacy-Support-EC found? BIOS-Semaphore set?
+        if( (eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) )
         {
-            // set OS-Semaphore
-            pci_config_write_byte( bus, dev, func, eecp + 3, 0x01 );
+            printformat("set OS-Semaphore.\n");
+            pci_config_write_byte( bus, dev, func, OSownedSemaphore, 0x01 );
             failed = true;
 
-            int32_t timeout=0;
+            int32_t timeout=200;
             // Wait for BIOS-Semaphore being not set
-            while( ( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01 ) && ( timeout<50 ) )
+            while( ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01 ) && ( timeout>0 ) )
             {
-                //sleepMilliSeconds(20);
+                printformat(".");
+                timeout--;
                 delay(20000);
-                timeout++;
             }
-            if( !( pci_config_read( bus, dev, func, 0x0100 | (eecp + 2) ) & 0x01) )
+            if( !( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) ) // not set
             {
-                // Wait for the OS-Semaphore being set
-                timeout=0;
-                while( !( pci_config_read( bus, dev, func, 0x0100 | (eecp + 3) ) & 0x01) && (timeout<50) )
+                printformat("BIOS-Semaphore being not set.\n");
+                timeout=200;
+                while( !( pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore ) & 0x01) && (timeout>0) )
                 {
-                    //sleepMilliSeconds(20);
+                    printformat(".");
+                    timeout--;
                     delay(20000);
-                    timeout++;
                 }
             }
-            if( pci_config_read( bus, dev, func, 0x0100 | (eecp + 3) ) & 0x01 )
+            if( pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore ) & 0x01 )
             {
                 failed = false;
+                printformat("OS-Semaphore being set.\n");
             }
-            if(failed)
+            if(failed==false)
             {
-                // Deactivate Legacy Support now
-                pci_config_write_dword( bus, dev, func, eecp + 4, 0x0 );
+                /*
+                USB SMI Enable R/W. 0=Default.
+                When this bit is a one, and the SMI on USB Complete bit (above) in this register is a one,
+                the host controller will issue an SMI immediately.
+                */
+                pci_config_write_dword( bus, dev, func, USBLEGCTLSTS, 0x0 ); // USB SMI disabled
+
+                printformat("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
+                             pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
+                             pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
+                settextcolor(2,0);
+                printformat("Legacy Support Deactivated.\n");
+                settextcolor(15,0);
+            }
+            else
+            {
+                settextcolor(4,0);
+                printformat("Legacy Support Deactivated failed.\n");
+                printformat("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
+                             pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
+                             pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
+                settextcolor(15,0);
             }
         }
     }
+    else
+    {
+        printformat("No valid eecp found.\n");
+    }
 }
-
-
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

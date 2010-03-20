@@ -12,8 +12,8 @@
 
 void testTransfer(uint32_t device, uint8_t port)
 {
-    settextcolor(9,0);delay(2000000);
-    printformat("\n>>> >>>function: testTransfer\n");
+    delay(2000000);settextcolor(9,0);
+    printformat("\n>>> >>> function: testTransfer\n");
 	settextcolor(15,0);
 
 	settextcolor(3,0);
@@ -44,7 +44,7 @@ void testTransfer(uint32_t device, uint8_t port)
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
-    settextcolor(9,0);delay(2000000);
+    delay(2000000);settextcolor(9,0);
     printformat("\n>>> >>>function: showDeviceDesriptor\n");
 	settextcolor(15,0);
 

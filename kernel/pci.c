@@ -8,7 +8,7 @@
 #include "paging.h"
 #include "ehci.h"
 
-pciDev_t pciDev_Array[50];
+pciDev_t pciDev_Array[PCIARRAYSIZE];
 
 uint8_t network_buffer[8192+16];  // TEST for network card
 uint32_t BaseAddressRTL8139_IO;
@@ -205,7 +205,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                     if(!EHCIflag) // only the first EHCI is used
                                     {
                                         pciEHCINumber = number; /// TODO: implement for more than one EHCI
-                                        EHCIflag = true; // only the first EHCI is used 
+                                        EHCIflag = true; // only the first EHCI is used
                                         initEHCIFlag = true; // init of EHCI shall be carried out
                                         analyzeEHCI(bar); // get data (capregs, opregs)
                                     }
