@@ -30,6 +30,9 @@ extern uint32_t file_data_end;
 // String for Date&Time
 char DateAndTime[100];
 
+// pci devices list
+extern pciDev_t pciDev_Array[PCIARRAYSIZE];
+
 /*
 static void floatTest()
 {
@@ -47,7 +50,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.257]\n");
+    printformat("PrettyOS [Version 0.0.0.258]\n");
     gdt_install();
     idt_install();
     timer_install();

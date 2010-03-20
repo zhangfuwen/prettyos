@@ -11,6 +11,9 @@
 #include "sys_speaker.h"
 #include "usb2.h"
 
+// pci devices list
+extern pciDev_t pciDev_Array[PCIARRAYSIZE];
+
 void createQH(void* address, void* firstQTD, uint32_t device)
 {
     delay(2000000);settextcolor(9,0);
