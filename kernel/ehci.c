@@ -653,6 +653,12 @@ void DeactivateLegacySupport(uint32_t num)
                 settextcolor(15,0);
             }
         }
+        else
+        {
+                settextcolor(10,0);
+                printformat("\nBIOS did not own the EHCI. No action needed.\n");
+                settextcolor(15,0);
+        }
     }
     else
     {
