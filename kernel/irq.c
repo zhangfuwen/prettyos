@@ -48,10 +48,10 @@ uint32_t irq_handler( uint32_t esp )
 
         if (r->int_no == 6 || r->int_no == 1) //Invalid Opcode
         {
-            printformat("err_code: %X address(eip): %X\n", r->err_code, r->eip);
-            printformat("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-            printformat("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-            printformat("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+            printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
+            printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+            printf("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+            printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
         }
 
         if (r->int_no == 14) //Page Fault
@@ -67,22 +67,22 @@ uint32_t irq_handler( uint32_t esp )
             int32_t id        =   r->err_code & 0x10; // Caused by an instruction fetch?
 
             // Output an error message.
-                          printformat("\nPage Fault (");
-            if (present)  printformat("page not present");
-            if (rw)       printformat(" read-only - write operation");
-            if (us)       printformat(" user-mode");
-            if (reserved) printformat(" overwritten CPU-reserved bits of page entry");
-            if (id)       printformat(" caused by an instruction fetch");
-                          printformat(") at %X - EIP: %X\n", faulting_address, r->eip);
+                          printf("\nPage Fault (");
+            if (present)  printf("page not present");
+            if (rw)       printf(" read-only - write operation");
+            if (us)       printf(" user-mode");
+            if (reserved) printf(" overwritten CPU-reserved bits of page entry");
+            if (id)       printf(" caused by an instruction fetch");
+                          printf(") at %X - EIP: %X\n", faulting_address, r->eip);
         }
 
-        printformat("err_code: %X address(eip): %X\n", r->err_code, r->eip);
-        printformat("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-        printformat("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-        printformat("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+        printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
+        printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+        printf("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+        printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
 
-        printformat("\n");
-        printformat("%s >>> Exception. System Halted! <<<", exception_messages[r->int_no]);
+        printf("\n");
+        printf("%s >>> Exception. System Halted! <<<", exception_messages[r->int_no]);
         for (;;);
     }
 

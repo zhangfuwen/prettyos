@@ -76,17 +76,17 @@ int8_t listInput(listHead_t* hd)
 
 void listShow(listHead_t* hd)
 {
-    printformat("List elements:\n");
+    printf("List elements:\n");
     element_t* cur = hd->head;
     if(!cur)
     {
-        printformat("The list is empty.");
+        printf("The list is empty.");
     }
     else
     {
         while(cur)
         {
-            printformat("%X\t",cur);
+            printf("%X\t",cur);
             cur = cur->next;
         }
     }
@@ -98,7 +98,7 @@ void* listShowElement(listHead_t* hd, uint32_t number)
     void* dat=0;
     if(!cur)
     {
-        /* printformat(""); */
+        /* printf(""); */
     }
     else
     {

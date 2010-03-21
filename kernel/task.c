@@ -43,7 +43,7 @@ void tasking_install()
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("1st_task: ");
+    printf("1st_task: ");
     settextcolor(15,0);
     #endif
     ///
@@ -58,7 +58,7 @@ void tasking_install()
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("1st_ks: ");
+    printf("1st_ks: ");
     settextcolor(15,0);
     #endif
     ///
@@ -76,7 +76,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("cr_task: ");
+    printf("cr_task: ");
     settextcolor(15,0);
     #endif
     ///
@@ -89,7 +89,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("cr_task_ks: ");
+    printf("cr_task_ks: ");
     settextcolor(15,0);
     #endif
     ///
@@ -184,7 +184,7 @@ uint32_t task_switch(uint32_t esp)
 
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("%d ",getpid());
+    printf("%d ",getpid());
     settextcolor(15,0);
     #endif
 
@@ -222,16 +222,16 @@ void exit()
         }
     }
     while (tmp_task->next);
-    // printformat("after delete task in linked list.\n");
+    // printf("after delete task in linked list.\n");
 
     // free memory at heap
     free(pkernelstack);
     free(ptask);
-    // printformat("pid: %d t: %x ks: %x <---heap freed.\n",getpid(),ptask,pkernelstack);
+    // printf("pid: %d t: %x ks: %x <---heap freed.\n",getpid(),ptask,pkernelstack);
 
     #ifdef _DIAGNOSIS_
     log_task_list();
-    printformat("exit finished.\n");
+    printf("exit finished.\n");
     #endif
 
     userTaskCounter--; // a user-program has been deleted
@@ -271,44 +271,44 @@ void log_task_list()
 void task_log(task_t* t)
 {
     settextcolor(5,0);
-    printformat("\nid: %d ", t->id);               // Process ID
-    printformat("ebp: %x ",t->ebp);              // Base pointer
-    printformat("esp: %x ",t->esp);              // Stack pointer
-    printformat("eip: %x ",t->eip);              // Instruction pointer
-    printformat("PD: %x ", t->page_directory);   // Page directory.
-    printformat("k_stack: %x ",t->kernel_stack); // Kernel stack location.
-    printformat("next: %x\n",  t->next);         // The next task in a linked list.
+    printf("\nid: %d ", t->id);               // Process ID
+    printf("ebp: %x ",t->ebp);              // Base pointer
+    printf("esp: %x ",t->esp);              // Stack pointer
+    printf("eip: %x ",t->eip);              // Instruction pointer
+    printf("PD: %x ", t->page_directory);   // Page directory.
+    printf("k_stack: %x ",t->kernel_stack); // Kernel stack location.
+    printf("next: %x\n",  t->next);         // The next task in a linked list.
     settextcolor(15,0);
 }
 
 void TSS_log(tss_entry_t* tssEntry)
 {
     settextcolor(6,0);
-    //printformat("\nprev_tss: %x ", tssEntry->prev_tss);
-    printformat("esp0: %x ", tssEntry->esp0);
-    printformat("ss0: %x ", tssEntry->ss0);
-    //printformat("esp1: %x ", tssEntry->esp1);
-    //printformat("ss1: %x ", tssEntry->ss1);
-    //printformat("esp2: %x ", tssEntry->esp2);
-    //printformat("ss2: %x ", tssEntry->ss2);
-    printformat("cr3: %x ", tssEntry->cr3);
-    printformat("eip: %x ", tssEntry->eip);
-    printformat("eflags: %x ", tssEntry->eflags);
-    printformat("eax: %x ", tssEntry->eax);
-    printformat("ecx: %x ", tssEntry->ecx);
-    printformat("edx: %x ", tssEntry->edx);
-    printformat("ebx: %x ", tssEntry->ebx);
-    printformat("esp: %x ", tssEntry->esp);
-    printformat("ebp: %x ", tssEntry->ebp);
-    printformat("esi: %x ", tssEntry->esi);
-    printformat("edi: %x ", tssEntry->edi);
-    printformat("es: %x ", tssEntry->es);
-    printformat("cs: %x ", tssEntry->cs);
-    printformat("ss: %x ", tssEntry->ss);
-    printformat("ds: %x ", tssEntry->ds);
-    printformat("fs: %x ", tssEntry->fs);
-    printformat("gs: %x ", tssEntry->gs);
-    //printformat("ldt: %x ", tssEntry->ldt);
-    //printformat("trap: %x ", tssEntry->trap); //only 0 or 1
-    //printformat("iomap_base: %x ", tssEntry->iomap_base);
+    //printf("\nprev_tss: %x ", tssEntry->prev_tss);
+    printf("esp0: %x ", tssEntry->esp0);
+    printf("ss0: %x ", tssEntry->ss0);
+    //printf("esp1: %x ", tssEntry->esp1);
+    //printf("ss1: %x ", tssEntry->ss1);
+    //printf("esp2: %x ", tssEntry->esp2);
+    //printf("ss2: %x ", tssEntry->ss2);
+    printf("cr3: %x ", tssEntry->cr3);
+    printf("eip: %x ", tssEntry->eip);
+    printf("eflags: %x ", tssEntry->eflags);
+    printf("eax: %x ", tssEntry->eax);
+    printf("ecx: %x ", tssEntry->ecx);
+    printf("edx: %x ", tssEntry->edx);
+    printf("ebx: %x ", tssEntry->ebx);
+    printf("esp: %x ", tssEntry->esp);
+    printf("ebp: %x ", tssEntry->ebp);
+    printf("esi: %x ", tssEntry->esi);
+    printf("edi: %x ", tssEntry->edi);
+    printf("es: %x ", tssEntry->es);
+    printf("cs: %x ", tssEntry->cs);
+    printf("ss: %x ", tssEntry->ss);
+    printf("ds: %x ", tssEntry->ds);
+    printf("fs: %x ", tssEntry->fs);
+    printf("gs: %x ", tssEntry->gs);
+    //printf("ldt: %x ", tssEntry->ldt);
+    //printf("trap: %x ", tssEntry->trap); //only 0 or 1
+    //printf("iomap_base: %x ", tssEntry->iomap_base);
 }

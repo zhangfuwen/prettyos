@@ -33,16 +33,16 @@ void rtl8139_handler(struct regs* r)
         strcpy(str,"Transfer OK,");
     }
     settextcolor(3,0);
-    printformat("\n--------------------------------------------------------------------------------");
+    printf("\n--------------------------------------------------------------------------------");
     settextcolor(14,0);
-    printformat("\nRTL8139 IRQ: %y, %s  ", val,str);
+    printf("\nRTL8139 IRQ: %y, %s  ", val,str);
     settextcolor(3,0);
 
     // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
 	*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E )) = val;
 
 	strcat(str,"   Receiving Buffer content:\n");
-	printformat(str);
+	printf(str);
 
     int32_t length, ethernetType;
     length = network_buffer[3]*0x100 + network_buffer[2]; // Little Endian
@@ -51,38 +51,38 @@ void rtl8139_handler(struct regs* r)
 
     // output receiving buffer
     settextcolor(13,0);
-    printformat("Flags: ");
+    printf("Flags: ");
     settextcolor(3,0);
-    for(int8_t i=0;i<2;i++) {printformat("%y ",network_buffer[i]);}
+    for(int8_t i=0;i<2;i++) {printf("%y ",network_buffer[i]);}
 
-	// settextcolor(13,0); printformat("\tLength: "); settextcolor(3,0);
-    // for(i=2;i<4;i++) {printformat("%y ",network_buffer[i]);}
+	// settextcolor(13,0); printf("\tLength: "); settextcolor(3,0);
+    // for(i=2;i<4;i++) {printf("%y ",network_buffer[i]);}
     uint32_t paket_length = (network_buffer[3] << 8) | network_buffer[2];
 
     settextcolor(13,0);
-	printformat("\tLength: ");	settextcolor(3,0);	printformat("%d", paket_length);
+	printf("\tLength: ");	settextcolor(3,0);	printf("%d", paket_length);
 
-	settextcolor(13,0); printformat("\nMAC Receiver: "); settextcolor(3,0);
-    for(int8_t i=4;i<10;i++) {printformat("%y ",network_buffer[i]);}
+	settextcolor(13,0); printf("\nMAC Receiver: "); settextcolor(3,0);
+    for(int8_t i=4;i<10;i++) {printf("%y ",network_buffer[i]);}
 
-    settextcolor(13,0); printformat("MAC Transmitter: "); settextcolor(3,0);
-    for(int8_t i=10;i<16;i++) {printformat("%y ",network_buffer[i]);}
-
-    settextcolor(13,0);
-    printformat("\nEthernet: ");
-    settextcolor(3,0);
-    if(ethernetType<=0x05DC){  printformat("type 1, "); }
-    else                    {  printformat("type 2, "); }
+    settextcolor(13,0); printf("MAC Transmitter: "); settextcolor(3,0);
+    for(int8_t i=10;i<16;i++) {printf("%y ",network_buffer[i]);}
 
     settextcolor(13,0);
-    if(ethernetType<=0x05DC){  printformat("Length: "); }
-    else                    {  printformat("Type: ");   }
+    printf("\nEthernet: ");
     settextcolor(3,0);
-    for(int8_t i=16;i<18;i++) {printformat("%y ",network_buffer[i]);}
+    if(ethernetType<=0x05DC){  printf("type 1, "); }
+    else                    {  printf("type 2, "); }
 
-    printformat("\n");
-    for(int32_t i=18;i<=length;i++) {printformat("%y ",network_buffer[i]);}
-    printformat("\n--------------------------------------------------------------------------------\n");
+    settextcolor(13,0);
+    if(ethernetType<=0x05DC){  printf("Length: "); }
+    else                    {  printf("Type: ");   }
+    settextcolor(3,0);
+    for(int8_t i=16;i<18;i++) {printf("%y ",network_buffer[i]);}
+
+    printf("\n");
+    for(int32_t i=18;i<=length;i++) {printf("%y ",network_buffer[i]);}
+    printf("\n--------------------------------------------------------------------------------\n");
 
     settextcolor(15,0);
 
@@ -95,7 +95,7 @@ void install_RTL8139(uint32_t number)
 {
     #ifdef _DIAGNOSIS_
         settextcolor(3,0);
-        printformat("RTL8139 MMIO: %X\n",BaseAddressRTL8139_MMIO);
+        printf("RTL8139 MMIO: %X\n",BaseAddressRTL8139_MMIO);
         settextcolor(15,0);
     #endif
 
@@ -104,18 +104,18 @@ void install_RTL8139(uint32_t number)
     if ( USE_VIRTUAL_APPROACH )
     {
         BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem( BaseAddressRTL8139_MMIO );
-        printformat( "BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO );
+        printf( "BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO );
     }
     else
     {
         int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO );
         if(retVal == true)
         {
-            printformat("\n");
+            printf("\n");
         }
         else
         {
-            printformat("\npaging_do_idmapping(...) error.\n");
+            printf("\npaging_do_idmapping(...) error.\n");
         }
     }
 
@@ -134,7 +134,7 @@ void install_RTL8139(uint32_t number)
         {
             #ifdef _DIAGNOSIS_
                 settextcolor(3,0);
-                printformat("\nwaiting successful(%d).\n", k);
+                printf("\nwaiting successful(%d).\n", k);
                 settextcolor(15,0);
             #endif
             break;
@@ -142,13 +142,13 @@ void install_RTL8139(uint32_t number)
         k++;
         if(k>100)
         {
-            printformat("\nWaiting not successful! Finished by timeout.\n");
+            printf("\nWaiting not successful! Finished by timeout.\n");
             break;
         }
     }
     #ifdef _DIAGNOSIS_
         settextcolor(3,0);
-        printformat("mac address: %y-%y-%y-%y-%y-%y\n",
+        printf("mac address: %y-%y-%y-%y-%y-%y\n",
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+0), *((uint8_t*)(BaseAddressRTL8139_MMIO)+1),
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+2), *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+4), *((uint8_t*)(BaseAddressRTL8139_MMIO)+5) );

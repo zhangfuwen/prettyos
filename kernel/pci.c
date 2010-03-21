@@ -119,7 +119,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                     pciDev_Array[number].func   = func;
 
                     // output to screen
-                    printformat("#%d  %d:%d.%d\t dev:%x vend:%x",
+                    printf("#%d  %d:%d.%d\t dev:%x vend:%x",
                          number,
                          pciDev_Array[number].bus, pciDev_Array[number].device,
                          pciDev_Array[number].func,
@@ -128,22 +128,22 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 
                     if(pciDev_Array[number].irq!=255)
                     {
-                        printformat(" IRQ:%d ", pciDev_Array[number].irq );
+                        printf(" IRQ:%d ", pciDev_Array[number].irq );
                     }
                     else // "255 means "unknown" or "no connection" to the interrupt controller"
                     {
-                        printformat(" IRQ:-- ");
+                        printf(" IRQ:-- ");
                     }
 
                     // test on USB
                     if( (pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03) )
                     {
-                        printformat(" USB ");
-                        if( pciDev_Array[number].interfaceID==0x00 ) { printformat("UHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x10 ) { printformat("OHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x20 ) { printformat("EHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x80 ) { printformat("no HCI "); }
-                        if( pciDev_Array[number].interfaceID==0xFE ) { printformat("any ");    }
+                        printf(" USB ");
+                        if( pciDev_Array[number].interfaceID==0x00 ) { printf("UHCI ");   }
+                        if( pciDev_Array[number].interfaceID==0x10 ) { printf("OHCI ");   }
+                        if( pciDev_Array[number].interfaceID==0x20 ) { printf("EHCI ");   }
+                        if( pciDev_Array[number].interfaceID==0x80 ) { printf("no HCI "); }
+                        if( pciDev_Array[number].interfaceID==0xFE ) { printf("any ");    }
 
                         for(uint8_t i=0;i<6;++i) // check USB BARs
                         {
@@ -153,11 +153,11 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                             {
                                 if(pciDev_Array[number].bar[i].memoryType == 0)
                                 {
-                                    printformat("%X MMIO ", pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0 );
+                                    printf("%X MMIO ", pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0 );
                                 }
                                 if(pciDev_Array[number].bar[i].memoryType == 1)
                                 {
-                                    printformat("%x I/O ",  pciDev_Array[number].bar[i].baseAddress & 0xFFFC );
+                                    printf("%x I/O ",  pciDev_Array[number].bar[i].baseAddress & 0xFFFC );
                                 }
 
                                 // TEST Memory Size Begin
@@ -168,7 +168,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                                           pciDev_Array[number].bar[i].baseAddress       );
                                 sti();
                                 pciDev_Array[number].bar[i].memorySize = (~pciBar | 0x0F) + 1;
-                                printformat("sz:%d ", pciDev_Array[number].bar[i].memorySize );
+                                printf("sz:%d ", pciDev_Array[number].bar[i].memorySize );
                                 // TEST Memory Size End
 
                                 /// TEST EHCI Data Begin
@@ -191,11 +191,11 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                     int retVal1 = paging_do_idmapping( bar );
                                     if(retVal1 == true)
                                     {
-                                       printformat("\n\n");
+                                       printf("\n\n");
                                     }
                                     else
                                     {
-                                        printformat("\npaging_do_idmapping(...) error.\n");
+                                        printf("\npaging_do_idmapping(...) error.\n");
                                     }
 
                                     if(!EHCIflag) // only the first EHCI is used
@@ -210,7 +210,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                         } // for
                     } // if
 
-					printformat("\n");
+					printf("\n");
 
 
 					/// test on the RTL8139 network card and test for some functions to work ;)
@@ -249,7 +249,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
             } // for function
         } // for device
     } // for bus
-    printformat("\n");
+    printf("\n");
 
 	// for(;;){} //#
 }

@@ -106,13 +106,13 @@ void outportl(uint16_t port, uint32_t val)
 void panic_assert(const char* file, uint32_t line, const char* desc) // why char ?
 {
     cli();
-    printformat("ASSERTION FAILED(");
-    printformat("%s",desc);
-    printformat(") at ");
-    printformat("%s",file);
-    printformat(":");
-    printformat("%i",line);
-    printformat("OPERATING SYSTEM HALTED\n");
+    printf("ASSERTION FAILED(");
+    printf("%s",desc);
+    printf(") at ");
+    printf("%s",file);
+    printf(":");
+    printf("%i",line);
+    printf("OPERATING SYSTEM HALTED\n");
     // Halt by going into an infinite loop.
     for(;;);
 }
@@ -122,7 +122,7 @@ void panic_assert(const char* file, uint32_t line, const char* desc) // why char
 void memshow(void* start, size_t count)
 {
     const uint8_t* end = (const uint8_t*)(start+count);
-    for(; count != 0; count--) printformat("%x ",*(end-count));
+    for(; count != 0; count--) printf("%x ",*(end-count));
 }
 
 void* memcpy(void* dest, const void* src, size_t count)

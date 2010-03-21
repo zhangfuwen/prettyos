@@ -17,7 +17,7 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 void createQH(void* address, void* firstQTD, uint32_t device)
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: createQH\n");
+    printf("\n>>> >>> function: createQH\n");
 	settextcolor(15,0);
 
 	struct ehci_qhd* head = (struct ehci_qhd*)address;
@@ -53,7 +53,7 @@ void createQH(void* address, void* firstQTD, uint32_t device)
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: createQTD\n");
+    printf("\n>>> >>> function: createQTD\n");
 	settextcolor(15,0);
 
 	void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
@@ -113,14 +113,14 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: showPacket\n");
+    printf("\n>>> >>> function: showPacket\n");
 	settextcolor(15,0);
 
-    printformat("virtAddrBuf0: %X\n", virtAddrBuf0);
+    printf("virtAddrBuf0: %X\n", virtAddrBuf0);
     for(uint32_t c=0; c<size; c++)
     {
         settextcolor(3,0);
-        printformat("%y ", *((uint8_t*)virtAddrBuf0+c));
+        printf("%y ", *((uint8_t*)virtAddrBuf0+c));
         settextcolor(15,0);
     }
 }
@@ -128,49 +128,49 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 void showStatusbyteQTD(void* addressQTD)
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: showStatusbyteQTD\n");
+    printf("\n>>> >>> function: showStatusbyteQTD\n");
 	settextcolor(15,0);
 
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
-    printformat("QTD: %X Statusbyte: %y", addressQTD, statusbyte);
+    printf("QTD: %X Statusbyte: %y", addressQTD, statusbyte);
 
     // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     settextcolor(14,0);
     if( statusbyte & (1<<7) )
     {
-        printformat("\nqTD Status: Active - HC transactions enabled");
+        printf("\nqTD Status: Active - HC transactions enabled");
     }
     if( statusbyte & (1<<6) )
     {
-        printformat("\nqTD Status: Halted - serious error at the device/endpoint");
+        printf("\nqTD Status: Halted - serious error at the device/endpoint");
     }
     if( statusbyte & (1<<5) )
     {
-        printformat("\nqTD Status: Data Buffer Error (overrun or underrun)");
+        printf("\nqTD Status: Data Buffer Error (overrun or underrun)");
     }
     if( statusbyte & (1<<4) )
     {
-        printformat("\nqTD Status: Babble (fatal error leads to Halted)");
+        printf("\nqTD Status: Babble (fatal error leads to Halted)");
     }
     if( statusbyte & (1<<3) )
     {
-        printformat("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");
+        printf("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");
     }
     if( statusbyte & (1<<2) )
     {
-        printformat("\nqTD Status: Missed Micro-Frame");
+        printf("\nqTD Status: Missed Micro-Frame");
     }
     if( statusbyte & (1<<1) )
     {
-        printformat("\nqTD Status: Do Complete Split");
+        printf("\nqTD Status: Do Complete Split");
     }
     if( statusbyte & (1<<0) )
     {
-        printformat("\nqTD Status: Do Ping");
+        printf("\nqTD Status: Do Ping");
     }
     if( statusbyte == 0 )
     {
-        printformat("\n");
+        printf("\n");
     }
 	settextcolor(15,0);
 }
@@ -180,27 +180,27 @@ void ehci_handler(struct regs* r)
     if( !(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) )
     {
       delay(2000000);settextcolor(9,0);
-      printformat("\n>>> >>> function: ehci_handler: ");
+      printf("\n>>> >>> function: ehci_handler: ");
 	  settextcolor(15,0);
     }
 
 	settextcolor(14,0);
     if( pOpRegs->USBSTS & STS_USBINT )
     {
-        printformat("\nUSB Interrupt");
+        printf("\nUSB Interrupt");
         pOpRegs->USBSTS |= STS_USBINT;
     }
 
     if( pOpRegs->USBSTS & STS_USBERRINT )
     {
-        printformat("\nUSB Error Interrupt");
+        printf("\nUSB Error Interrupt");
         pOpRegs->USBSTS |= STS_USBERRINT;
     }
 
     if( pOpRegs->USBSTS & STS_PORT_CHANGE )
     {
         settextcolor(9,0);
-        printformat("Port Change");
+        printf("Port Change");
         settextcolor(15,0);
 
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
@@ -210,19 +210,19 @@ void ehci_handler(struct regs* r)
 
     if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
-        //printformat("\nFrame List Rollover Interrupt");
+        //printf("\nFrame List Rollover Interrupt");
         pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
 
     if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )
     {
         settextcolor(4,0);
-        printformat("\nHost System Error");
+        printf("\nHost System Error");
         settextcolor(15,0);
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         settextcolor(14,0);
-        printformat("\nInit EHCI after fatal error");
+        printf("\nInit EHCI after fatal error");
         settextcolor(15,0);
         int32_t retVal = initEHCIHostController(pciEHCINumber);
         if(retVal==-1)
@@ -233,7 +233,7 @@ void ehci_handler(struct regs* r)
 
     if( pOpRegs->USBSTS & STS_ASYNC_INT )
     {
-        printformat("\nInterrupt on Async Advance");
+        printf("\nInterrupt on Async Advance");
         pOpRegs->USBSTS |= STS_ASYNC_INT;
     }
 leave_handler:
@@ -243,7 +243,7 @@ leave_handler:
 void analyzeEHCI(uint32_t bar)
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: analyzeEHCI\n");
+    printf("\n>>> >>> function: analyzeEHCI\n");
 	settextcolor(15,0);
 
     ubar = bar;
@@ -251,22 +251,22 @@ void analyzeEHCI(uint32_t bar)
 	pOpRegs  = (struct ehci_OpRegs*) (ubar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
-    printformat("HCIVERSION: %x ", pCapRegs->HCIVERSION);                // Interface Version Number
-    printformat("HCSPARAMS: %X ", pCapRegs->HCSPARAMS);                  // Structural Parameters
-    printformat("Ports: %d ", numPorts);
-    printformat("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
-    if(BYTE2(pCapRegs->HCCPARAMS)==0) printformat("No ext. capabil. ");  // Extended Capabilities Pointer
-    printformat("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
+    printf("HCIVERSION: %x ", pCapRegs->HCIVERSION);                // Interface Version Number
+    printf("HCSPARAMS: %X ", pCapRegs->HCSPARAMS);                  // Structural Parameters
+    printf("Ports: %d ", numPorts);
+    printf("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
+    if(BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. ");  // Extended Capabilities Pointer
+    printf("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
 }
 
 void startHostController()
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: startHostController\n");
+    printf("\n>>> >>> function: startHostController\n");
 	settextcolor(15,0);
 
     settextcolor(14,0);
-    printformat("\nstarting HC\n");
+    printf("\nstarting HC\n");
     settextcolor(15,0);
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
     delay(30000); //sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
@@ -275,13 +275,13 @@ void startHostController()
     int32_t timeout=10;
     while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
     {
-        printformat("waiting for HC reset\n");
+        printf("waiting for HC reset\n");
         delay(20000); //sleepMilliSeconds(20);
         timeout--;
         if(timeout<=0)
         {
             settextcolor(4,0);
-            printformat("Error: HC Reset-Bit still set to 1\n");
+            printf("Error: HC Reset-Bit still set to 1\n");
             settextcolor(15,0);
             break;
         }
@@ -311,7 +311,7 @@ void startHostController()
 void enablePorts()
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: enablePorts\n");
+    printf("\n>>> >>> function: enablePorts\n");
 	settextcolor(15,0);
 
     for(uint8_t j=0; j<numPorts; j++)
@@ -321,14 +321,14 @@ void enablePorts()
          if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
          {
              settextcolor(14,0);
-             printformat("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
+             printf("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
              settextcolor(15,0);
 
              testTransfer(0,j+1); // device address, port number
 
-             printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-             printformat("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-             printformat("\nin    status: "); showStatusbyteQTD(InQTD);
+             printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+             printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+             printf("\nin    status: "); showStatusbyteQTD(InQTD);
          }
     }
 }
@@ -336,7 +336,7 @@ void enablePorts()
 void resetPort(uint8_t j)
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: resetPort\n");
+    printf("\n>>> >>> function: resetPort\n");
 	settextcolor(15,0);
 
      pOpRegs->PORTSC[j] |=  PSTS_POWERON;
@@ -362,18 +362,18 @@ void resetPort(uint8_t j)
      if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
      {
          settextcolor(2,0);
-         printformat("\nHCHalted set to 0 (OK)");
+         printf("\nHCHalted set to 0 (OK)");
          settextcolor(15,0);
      }
      else
      {
          settextcolor(4,0);
-         printformat("\nHCHalted set to 1 (Not OK!)");
+         printf("\nHCHalted set to 1 (Not OK!)");
          showUSBSTS();
          settextcolor(15,0);
      }
 
-     printformat("\nstart port reset sequence");
+     printf("\nstart port reset sequence");
      pOpRegs->USBINTR = 0;
 
      pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
@@ -389,20 +389,20 @@ void resetPort(uint8_t j)
          if( timeout <= 0 )
          {
              settextcolor(4,0);
-             printformat("\nerror: port %d did not reset! ",j+1);
+             printf("\nerror: port %d did not reset! ",j+1);
              settextcolor(15,0);
-             printformat("PortStatus: %X",pOpRegs->PORTSC[j]);
+             printf("PortStatus: %X",pOpRegs->PORTSC[j]);
              break;
          }
      }
-     printformat("\nport reset sequence successful\n");
+     printf("\nport reset sequence successful\n");
      pOpRegs->USBINTR = STS_INTMASK;
 }
 
 int32_t initEHCIHostController(uint32_t num)
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: initEHCIHostController\n");
+    printf("\n>>> >>> function: initEHCIHostController\n");
 	settextcolor(15,0);
 
     static uint32_t timeout = 3;
@@ -416,14 +416,14 @@ int32_t initEHCIHostController(uint32_t num)
     if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
     {
          settextcolor(2,0);
-         printformat("\nHCHalted set to 0 (OK)");
+         printf("\nHCHalted set to 0 (OK)");
          enablePorts();
          settextcolor(15,0);
     }
     else
     {
          settextcolor(4,0);
-         printformat("\nHCHalted set to 1 (Not OK!) --> Ports cannot be enabled");
+         printf("\nHCHalted set to 1 (Not OK!) --> Ports cannot be enabled");
          showUSBSTS();
          if(timeout-- <=0)
          {
@@ -441,7 +441,7 @@ int32_t initEHCIHostController(uint32_t num)
 void showPORTSC()
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: showPORTSC\n");
+    printf("\n>>> >>> function: showPORTSC\n");
 	settextcolor(15,0);
 
     for(uint8_t j=0; j<numPorts; j++)
@@ -468,10 +468,10 @@ void showPORTSC()
             strcat(str," Status: ");
             strcat(str,PortStatus);
             uint8_t color = 14;
-            printf("                                                                              ",46,color);
-            printf(str, 46, color); // output to info screen area
-            printf("                                                                              ",47,color);
-            printf("                                                                              ",48,color);
+            kprintf("                                                                              ",46,color);
+            kprintf(str, 46, color); // output to info screen area
+            kprintf("                                                                              ",47,color);
+            kprintf("                                                                              ",48,color);
 
             beep(1000,100);
         }
@@ -481,76 +481,76 @@ void showPORTSC()
 void showUSBSTS()
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: showUSBSTS\n");
+    printf("\n>>> >>> function: showUSBSTS\n");
 	settextcolor(15,0);
 
     settextcolor(15,0);
-    printformat("\nUSB status: ");
+    printf("\nUSB status: ");
     settextcolor(2,0);
-    printformat("%X",pOpRegs->USBSTS);
+    printf("%X",pOpRegs->USBSTS);
     settextcolor(14,0);
-    if( pOpRegs->USBSTS & STS_USBINT )             { printformat("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
-    if( pOpRegs->USBSTS & STS_USBERRINT )          { printformat("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
-    if( pOpRegs->USBSTS & STS_PORT_CHANGE )        { printformat("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
-    if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER ) { printformat("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
-    if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )  { printformat("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
-    if( pOpRegs->USBSTS & STS_ASYNC_INT )          { printformat("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT;           }
-    if( pOpRegs->USBSTS & STS_HCHALTED )           { printformat("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;            }
-    if( pOpRegs->USBSTS & STS_RECLAMATION )        { printformat("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
-    if( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printformat("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
-    if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printformat("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
+    if( pOpRegs->USBSTS & STS_USBINT )             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
+    if( pOpRegs->USBSTS & STS_USBERRINT )          { printf("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
+    if( pOpRegs->USBSTS & STS_PORT_CHANGE )        { printf("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
+    if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER ) { printf("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
+    if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )  { printf("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
+    if( pOpRegs->USBSTS & STS_ASYNC_INT )          { printf("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT;           }
+    if( pOpRegs->USBSTS & STS_HCHALTED )           { printf("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;            }
+    if( pOpRegs->USBSTS & STS_RECLAMATION )        { printf("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
+    if( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printf("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
+    if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printf("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
     settextcolor(15,0);
 }
 
 void checkPortLineStatus()
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: checkPortLineStatus\n");
+    printf("\n>>> >>> function: checkPortLineStatus\n");
 	settextcolor(15,0);
 
     settextcolor(14,0);
-    printformat("\n\n>>> Status of USB Ports <<<");
+    printf("\n\n>>> Status of USB Ports <<<");
 
     for(uint8_t j=0; j<numPorts; j++)
     {
       //check line status
       settextcolor(11,0);
-      printformat("\nport %d: %X, line: %y  ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
+      printf("\nport %d: %X, line: %y  ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
       settextcolor(14,0);
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
       {
         settextcolor(11,0);
-        printformat("SE0");
+        printf("SE0");
         if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
         {
              settextcolor(14,0);
-             printformat(" ,high speed, enabled");
+             printf(" ,high speed, enabled");
              settextcolor(3,0);
-             printformat("\nport status: %x\t",pOpRegs->PORTSC[j]);
+             printf("\nport status: %x\t",pOpRegs->PORTSC[j]);
              settextcolor(15,0);
              testTransfer(0,j+1); // device address, port number
-             printformat("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-             printformat("\nsetup:        "); showStatusbyteQTD(SetupQTD);
-             printformat("in:             "); showStatusbyteQTD(InQTD);
+             printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+             printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
+             printf("in:             "); showStatusbyteQTD(InQTD);
         }
       }
 
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 1) // K_STATE
       {
         settextcolor(14,0);
-        printformat("K-State");
+        printf("K-State");
       }
 
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 2) // J_STATE
       {
         settextcolor(14,0);
-        printformat("J-state");
+        printf("J-state");
       }
 
       if( ((pOpRegs->PORTSC[j]>>10)&3) == 3) // undefined
       {
         settextcolor(12,0);
-        printformat("undefined");
+        printf("undefined");
       }
     }
     settextcolor(15,0);
@@ -559,7 +559,7 @@ void checkPortLineStatus()
 void DeactivateLegacySupport(uint32_t num)
 {
     delay(2000000);settextcolor(9,0);
-    printformat("\n>>> >>> function: DeactivateLegacySupport\n");
+    printf("\n>>> >>> function: DeactivateLegacySupport\n");
 	settextcolor(15,0);
 
 	bool failed = false;
@@ -570,7 +570,7 @@ void DeactivateLegacySupport(uint32_t num)
     uint8_t func = pciDev_Array[num].func;
 
     eecp = BYTE2(pCapRegs->HCCPARAMS);
-    printformat("\nDeactivateLegacySupport: eecp = %x\n",eecp);
+    printf("\nDeactivateLegacySupport: eecp = %x\n",eecp);
     /*
     cf. EHCI 1.0 spec, 2.2.4 HCCPARAMS - Capability Parameters, Bit 15:8 (BYTE2)
     EHCI Extended Capabilities Pointer (EECP). Default = Implementation Dependent.
@@ -591,9 +591,9 @@ void DeactivateLegacySupport(uint32_t num)
         int32_t eecp_id=0;
         while(eecp)
         {
-            printformat("eecp = %x, ",eecp);
+            printf("eecp = %x, ",eecp);
             eecp_id = pci_config_read( bus, dev, func, 0x0100/*length 1 byte*/ | (eecp + 0) );
-            printformat("eecp_id = %x\n",eecp_id);
+            printf("eecp_id = %x\n",eecp_id);
             if(eecp_id == 1)
                  break;
             NextEHCIExtCapPtr = eecp + 1;
@@ -606,7 +606,7 @@ void DeactivateLegacySupport(uint32_t num)
         // Legacy-Support-EC found? BIOS-Semaphore set?
         if( (eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) )
         {
-            printformat("set OS-Semaphore.\n");
+            printf("set OS-Semaphore.\n");
             pci_config_write_byte( bus, dev, func, OSownedSemaphore, 0x01 );
             failed = true;
 
@@ -614,17 +614,17 @@ void DeactivateLegacySupport(uint32_t num)
             // Wait for BIOS-Semaphore being not set
             while( ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01 ) && ( timeout>0 ) )
             {
-                printformat(".");
+                printf(".");
                 timeout--;
                 delay(20000);
             }
             if( !( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) ) // not set
             {
-                printformat("BIOS-Semaphore being not set.\n");
+                printf("BIOS-Semaphore being not set.\n");
                 timeout=200;
                 while( !( pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore ) & 0x01) && (timeout>0) )
                 {
-                    printformat(".");
+                    printf(".");
                     timeout--;
                     delay(20000);
                 }
@@ -632,22 +632,22 @@ void DeactivateLegacySupport(uint32_t num)
             if( pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore ) & 0x01 )
             {
                 failed = false;
-                printformat("OS-Semaphore being set.\n");
+                printf("OS-Semaphore being set.\n");
             }
             if(failed==false)
             {
-                printformat("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
+                printf("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
                              pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
                              pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
                 settextcolor(2,0);
-                printformat("Legacy Support Deactivated.\n");
+                printf("Legacy Support Deactivated.\n");
                 settextcolor(15,0);
             }
             else
             {
                 settextcolor(4,0);
-                printformat("Legacy Support Deactivated failed.\n");
-                printformat("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
+                printf("Legacy Support Deactivated failed.\n");
+                printf("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
                              pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
                              pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
 
@@ -658,7 +658,7 @@ void DeactivateLegacySupport(uint32_t num)
                 */
                 // The OS tries to do it itself:
                 settextcolor(14,0);
-                printformat("OS tries to set USBLEGCTLSTS to zero.\n");
+                printf("OS tries to set USBLEGCTLSTS to zero.\n");
                 settextcolor(15,0);
                 pci_config_write_dword( bus, dev, func, USBLEGCTLSTS, 0x0 ); // USB SMI disabled
             }
@@ -666,13 +666,13 @@ void DeactivateLegacySupport(uint32_t num)
         else
         {
                 settextcolor(10,0);
-                printformat("\nBIOS did not own the EHCI. No action needed.\n");
+                printf("\nBIOS did not own the EHCI. No action needed.\n");
                 settextcolor(15,0);
         }
     }
     else
     {
-        printformat("No valid eecp found.\n");
+        printf("No valid eecp found.\n");
     }
 }
 

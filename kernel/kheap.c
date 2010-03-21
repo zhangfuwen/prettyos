@@ -186,7 +186,7 @@ void* malloc( uint32_t size, uint32_t alignment )
 
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("%X ",address);
+    printf("%X ",address);
     settextcolor(15,0);
     #endif
 
@@ -235,6 +235,6 @@ void free( void* addr )
         region_addr += regions[i].size;
     }
 
-    printformat( "Broken free: %X\n", addr );
+    printf( "Broken free: %X\n", addr );
     ASSERT( false );
 }

@@ -189,7 +189,7 @@ void scroll()
     }
 }
 
-void printf(const char* message, uint32_t line, uint8_t attribute)
+void kprintf(const char* message, uint32_t line, uint8_t attribute)
 {
     save_cursor();
     // Top 4 bytes: background, bottom 4 bytes: foreground color
@@ -202,8 +202,8 @@ void printf(const char* message, uint32_t line, uint8_t attribute)
     restore_cursor();
 };
 
-/* Lean version of printf: printformat(...): supports %u, %d, %x/%X, %s, %c */
-void printformat (const char* args, ...)
+// printf(...): supports %u, %d, %x/%X, %s, %c
+void printf (const char* args, ...)
 {
 	va_list ap;
 	va_start (ap, args);

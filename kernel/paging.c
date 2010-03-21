@@ -70,9 +70,9 @@ static uint32_t phys_init()
     // Print the memory map
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat( "Memory map:\n" );
+    printf( "Memory map:\n" );
     for ( mem_map_entry_t* entry=entries; entry->size; ++entry )
-        printformat( "  %X -> %X %i\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type );
+        printf( "  %X -> %X %i\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type );
     settextcolor(15,0);
     #endif
     //
@@ -95,7 +95,7 @@ static uint32_t phys_init()
     // Check that 16MB-20MB is free for use
     if ( ! memorymap_availability( entries, 16*1024*1024, 20*1024*1024 ) )
     {
-        printformat( "The memory between 16 MB and 20 MB is not free for use\n" );
+        printf( "The memory between 16 MB and 20 MB is not free for use\n" );
         for(;;);
     }
 
@@ -200,8 +200,8 @@ uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr )
 
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-        printformat("\nvirt-->phys: pagenr: %d ",pagenr);
-        printformat("pt: %X\n",pt);
+        printf("\nvirt-->phys: pagenr: %d ",pagenr);
+        printf("pt: %X\n",pt);
     settextcolor(15,0);
     #endif
 
@@ -223,8 +223,8 @@ uint32_t paging_install()
 
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-        printformat("\nkernel_pd (virt.): %X ",kernel_pd);
-        printformat("kernel_pd (phys.): %X\n",kernel_pd->pd_phys_addr);
+        printf("\nkernel_pd (virt.): %X ",kernel_pd);
+        printf("kernel_pd (phys.): %X\n",kernel_pd->pd_phys_addr);
     settextcolor(15,0);
     #endif
 

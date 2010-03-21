@@ -2,9 +2,16 @@
 
 enum Feldstatus {Leer, X, O};
 
-int tictactoe[9];
-char ende = false;
+uint16_t tictactoe[9];
+bool ende = false;
 
+//Aus util.c
+void* memset(void* dest, uint8_t val, size_t count)
+{
+    uint8_t* temp = (uint8_t*)dest;
+    for( ; count != 0; count--) *temp++ = val;
+    return dest;
+}
 
 void SetField(unsigned int x, unsigned int y, int Player) {
 	gotoxy(x*4+2, y*2+15);
@@ -33,7 +40,7 @@ void gewinnen () {
 			settextcolor(15,0);
 			ende = true;
 	}
-	if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) || 
+	else if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) || 
 		(tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == O) || 
 		(tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == O) || 
 		(tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == O) || 
@@ -60,11 +67,11 @@ void gewinnen () {
 	}
 }
 
-int ConvertToInt(char c) {
-	return((int)(c) - '1' + 1);
+uint16_t ConvertToInt(char c) {
+	return((uint16_t)(c) - '1' + 1);
 }
 
-void Zug(int Player) {
+void Zug(uint16_t Player) {
 	char x = 0;
 	for(; ; x = *gets(&x)) {
 		if(!isdigit(x) || x == '9') {
@@ -89,10 +96,11 @@ void Zug(int Player) {
 }
 
 int main() {
+	memset(tictactoe, 0, 9);
 	clearScreen(0);
     settextcolor(11,0);
     puts("================================================================================\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.5                            \n");
+    puts("                            Mr.X TicTacToe 3x3  v0.51                           \n");
     puts("--------------------------------------------------------------------------------\n\n");
 	gotoxy(0, 6);
     settextcolor(15,0);
@@ -104,7 +112,7 @@ int main() {
     settextcolor(15,0);
 
 	Zug(X);
-	for(int i = 0; i < 4 && !ende; ++i) {
+	for(uint8_t i = 0; i < 4 && !ende; ++i) {
 		Zug(O);
 		if(ende) {
 			break;

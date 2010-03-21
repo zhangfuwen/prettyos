@@ -209,7 +209,7 @@ void flpydsk_wait_irq()
     {
 	    if( (timeout-getCurrentSeconds()) <= 0 )
 	    {
-	        // printformat("\ntimeout: IRQ not received!\n");
+	        // printf("\ntimeout: IRQ not received!\n");
 	        break;
 	    }
     }
@@ -253,7 +253,7 @@ void flpydsk_control_motor(bool b)
         pODA->flpy_motor[_CurrentDrive]=true;
         /*
         settextcolor(14,0);
-        printformat("floppy motor on\n");
+        printf("floppy motor on\n");
         settextcolor(2,0);
         */
 	}
@@ -264,7 +264,7 @@ void flpydsk_control_motor(bool b)
 
         /*
         settextcolor(14,0);
-        printformat("floppy motor off\n");
+        printf("floppy motor off\n");
         settextcolor(2,0);
         */
 	}
@@ -317,9 +317,9 @@ void flpydsk_reset()
 	flpydsk_write_ccr(0);              // transfer speed 500kb/s
 	flpydsk_drive_data(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
 
-	flpydsk_control_motor(true);       //printformat("reset.motor_on\n");
+	flpydsk_control_motor(true);       //printf("reset.motor_on\n");
 	flpydsk_calibrate(_CurrentDrive);  // calibrate the disk
-	flpydsk_control_motor(false);      // printformat("reset.motor_off\n");
+	flpydsk_control_motor(false);      // printf("reset.motor_off\n");
 }
 
 /*
@@ -412,7 +412,7 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
         flpydsk_send_command (FDC_CMD_SEEK);
         flpydsk_send_command ( (head) << 2 | _CurrentDrive);
         flpydsk_send_command (cyl);
-        // printformat("i=%d ", i);
+        // printf("i=%d ", i);
         flpydsk_wait_irq();
 		flpydsk_check_int(&st0,&cyl0);
         if(cyl0 == cyl) // found the cylinder?
@@ -427,14 +427,14 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
     }
     if(retVal==0)
     {
-        // printformat("cyl. found\t");
-        // printformat("cyl0: %d cyl: %d \n",cyl0,cyl);
+        // printf("cyl. found\t");
+        // printf("cyl0: %d cyl: %d \n",cyl0,cyl);
         return 0;
     }
     else
     {
-        // printformat("cyl. not found\t");
-        // printformat("cyl0: %d cyl: %d \n",cyl0,cyl);
+        // printf("cyl. not found\t");
+        // printf("cyl0: %d cyl: %d \n",cyl0,cyl);
 	    return -1;
     }
 }
@@ -474,12 +474,12 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     flpydsk_send_command( FLPYDSK_GAP3_LENGTH_3_5 );
     flpydsk_send_command( 0xFF );
     flpydsk_wait_irq();
-    // printformat("ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
+    // printf("ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
     int32_t retVal;
     for(uint8_t j=0; j<7; ++j)
     {
         int32_t val = flpydsk_read_data(); // read status info: ST0 ST1 ST2 C H S Size(2: 512 Byte)
-        // printformat("%d  ",val);
+        // printf("%d  ",val);
         if((j==6) && (val==2)) // value 2 means 512 Byte
         {
             retVal = 0;
@@ -489,7 +489,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
             retVal = -1;
         }
     }
-    // printformat("\n\n");
+    // printf("\n\n");
     flpydsk_check_int(&st0,&cyl);    // inform FDC that we handled interrupt
     return retVal;
 }
@@ -507,7 +507,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
 	if(motor)
 	{
 	    flpydsk_control_motor(true);
-	    // printformat("read_sector.motor_on\n");
+	    // printf("read_sector.motor_on\n");
 	}
 
 	int32_t head=0, track=0, sector=1;
@@ -515,7 +515,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
 
 	if( flpydsk_seek (track, head) !=0 )
 	{
-	    printformat("flpydsk_seek not ok.\n");
+	    printf("flpydsk_seek not ok.\n");
 	    retVal=-2;
 	}
 
@@ -523,10 +523,10 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
 	while( flpydsk_transfer_sector(head, track, sector, 0) == -1 )
     {
 	    timeout--;
-	    printformat("error read_sector. left: %d\n",timeout);
+	    printf("error read_sector. left: %d\n",timeout);
 	    if(timeout<= 0)
 	    {
-	        printformat("\nread_sector timeout: read error!\n");
+	        printf("\nread_sector timeout: read error!\n");
 	        retVal=-1;
 	        break;
 	    }
@@ -534,7 +534,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
 
 	if(motor)
 	{
-	    flpydsk_control_motor(false); // printformat("read_sector.motor_off\n");
+	    flpydsk_control_motor(false); // printf("read_sector.motor_off\n");
 	}
 
 	return retVal;
@@ -550,19 +550,19 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 	flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
 	// turn motor on and seek to track
-	flpydsk_control_motor(true);      // printformat("write_sector.motor_on\n");
+	flpydsk_control_motor(true);      // printf("write_sector.motor_on\n");
 	if(flpydsk_seek (track, head)!=0)
 	{
-	    printformat("flpydsk_seek not ok. sector not written.\n");
-	    flpydsk_control_motor(false); // printformat("write_sector.motor_off\n");
+	    printf("flpydsk_seek not ok. sector not written.\n");
+	    flpydsk_control_motor(false); // printf("write_sector.motor_off\n");
 	    return -2;
 	}
 	else
 	{
-        // printformat("flpydsk_seek ok\n");
+        // printf("flpydsk_seek ok\n");
 
         flpydsk_transfer_sector(head, track, sector, 1);
-        flpydsk_control_motor(false); // printformat("write_sector.motor_off\n");
+        flpydsk_control_motor(false); // printf("write_sector.motor_off\n");
         return 0;
 	}
 }
@@ -578,12 +578,12 @@ int32_t flpydsk_write_sector_wo_motor(int32_t sectorLBA)
 
 	if(flpydsk_seek (track, head)!=0)
 	{
-	    printformat("flpydsk_seek not ok. sector not written.\n");
+	    printf("flpydsk_seek not ok. sector not written.\n");
 	    return -2;
 	}
 	else
 	{
-        // printformat("flpydsk_seek ok\n");
+        // printf("flpydsk_seek ok\n");
         flpydsk_transfer_sector(head, track, sector, 1);
         return 0;
 	}
@@ -614,16 +614,16 @@ int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option) /// floppy
     {
         retVal = -1;
         timeout--;
-        printformat("write error: attempts left: %d\n",timeout);
+        printf("write error: attempts left: %d\n",timeout);
 	    if(timeout<=0)
 	    {
-	        printformat("timeout\n");
+	        printf("timeout\n");
 	        break;
 	    }
     }
     if(retVal==0)
     {
-        // printformat("success write_sector.\n");
+        // printf("success write_sector.\n");
     }
     return retVal;
 }
@@ -632,7 +632,7 @@ int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option) /// floppy
 int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option) /// floppy
 {
     /// TEST: change DMA before write/read
-    /// printformat("DMA manipulation\n");
+    /// printf("DMA manipulation\n");
 
     int32_t val=0;
 
@@ -656,7 +656,7 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option) /// floppy
         retVal = flpydsk_read_sector(val,0);
         if(retVal!=0)
         {
-            printformat("\nread error: %d\n",retVal);
+            printf("\nread error: %d\n",retVal);
         }
         if( (*(uint8_t*)(DMA_BUFFER+ 0)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 1)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+ 2)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
@@ -667,10 +667,10 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option) /// floppy
           )
           {memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
               settextcolor(4,0);
-              printformat("Floppy ---> DMA attempt no. %d failed.\n",n+1);
+              printf("Floppy ---> DMA attempt no. %d failed.\n",n+1);
               if(n>=MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
               {
-                  printformat("Floppy ---> DMA error.\n");
+                  printf("Floppy ---> DMA error.\n");
               }
               settextcolor(2,0);
               continue;
@@ -679,7 +679,7 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option) /// floppy
           {
               /*
               settextcolor(3,0);
-              printformat("Floppy ---> DMA success.\n");
+              printf("Floppy ---> DMA success.\n");
               settextcolor(2,0);
               */
               break;

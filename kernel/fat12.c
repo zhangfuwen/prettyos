@@ -48,9 +48,9 @@ int32_t flpydsk_read_directory()
 	int32_t retVal = flpydsk_read_sector(19,1); // start at 0x2600: root directory (14 sectors)
 	if(retVal != 0)
 	{
-	    printformat("\nread error: %d\n",retVal);
+	    printf("\nread error: %d\n",retVal);
 	}
-	printformat("<Floppy Disc Directory>\n");
+	printf("<Floppy Disc Directory>\n");
 
 	for(uint8_t i=0;i<224;++i)       // 224 Entries * 32 Byte
 	{
@@ -67,7 +67,7 @@ int32_t flpydsk_read_directory()
 			for(; count != 0; --count)
 			{
 			    if( *(end-count) != 0x20 ) /* empty space in file name */
-				    printformat("%c",*(end-count));
+				    printf("%c",*(end-count));
 			}
 
             start = DMA_BUFFER + i*32 + 8; // extension
@@ -81,33 +81,33 @@ int32_t flpydsk_read_directory()
 			}
 			else
 			{
-			    printformat("."); // usual separator between file name and file extension
+			    printf("."); // usual separator between file name and file extension
 			}
 
 			count = 3;
 			end = (int8_t*)(start+count);
 			for(; count!=0; --count)
-				printformat("%c",*(end-count));
+				printf("%c",*(end-count));
 
 			// filesize
-			printformat("\t%d byte", *((uint32_t*)(DMA_BUFFER + i*32 + 28)));
+			printf("\t%d byte", *((uint32_t*)(DMA_BUFFER + i*32 + 28)));
 
             // attributes
-			printformat("\t");
-			if(*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100)                   printformat("\t");
-			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) == 0x08 ) printformat(" (vol)");
-			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x10 ) == 0x10 ) printformat(" (dir)");
-			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x01 ) == 0x01 ) printformat(" (r/o)");
-			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x02 ) == 0x02 ) printformat(" (hid)");
-			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x04 ) == 0x04 ) printformat(" (sys)");
-			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x20 ) == 0x20 ) printformat(" (arc)");
+			printf("\t");
+			if(*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100)                   printf("\t");
+			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) == 0x08 ) printf(" (vol)");
+			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x10 ) == 0x10 ) printf(" (dir)");
+			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x01 ) == 0x01 ) printf(" (r/o)");
+			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x02 ) == 0x02 ) printf(" (hid)");
+			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x04 ) == 0x04 ) printf(" (sys)");
+			if((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x20 ) == 0x20 ) printf(" (arc)");
 
 			// 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
-            printformat("  1st sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
-            printformat("\n"); // next root directory entry
+            printf("  1st sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
+            printf("\n"); // next root directory entry
 		  }//if
 	}//for
-    printformat("\n");
+    printf("\n");
     return error;
 }
 
@@ -130,7 +130,7 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
     int32_t retVal = flpydsk_read_ia(BOOT_SEC,a,SECTOR);
     if(retVal!=0)
     {
-        printformat("\nread error: %d\n",retVal);
+        printf("\nread error: %d\n",retVal);
     }
 
     i=0;
@@ -215,7 +215,7 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
     a[510]= 0x55; a[511]= 0xAA;
 
 
-    // flpydsk_control_motor(true); printformat("write_boot_sector.motor_on\n");
+    // flpydsk_control_motor(true); printf("write_boot_sector.motor_on\n");
     // return flpydsk_write_sector_ia( BOOT_SEC, a );
     /// prepare sector 0 of track 0
     for(uint16_t k=0;k<511;k++)
@@ -236,7 +236,7 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
     // int32_t dt, tm; // for VolumeSerial
 
     flpydsk_control_motor(true);
-    printformat("\n\nFormat process started.\n");
+    printf("\n\nFormat process started.\n");
 
     for(i=0;i<11;i++)
     {
@@ -336,13 +336,13 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
     }
 
     /// write track 0 & track 1
-    flpydsk_control_motor(true); printformat("writing tracks 1 & 2\n");
+    flpydsk_control_motor(true); printf("writing tracks 1 & 2\n");
     flpydsk_write_ia(0,track0,TRACK);
     flpydsk_write_ia(1,track1,TRACK);
-    printformat("Quickformat complete.\n\n");
+    printf("Quickformat complete.\n\n");
 
     ///TEST
-    printformat("Content of Disc:\n");
+    printf("Content of Disc:\n");
     struct dir_entry entry;
     for(uint8_t j=0;j<224;j++)
     {
@@ -352,7 +352,7 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
             break;
         }
     }
-    printformat("\n");
+    printf("\n");
     ///TEST
 
     return 0;
@@ -390,30 +390,30 @@ void print_dir(struct dir_entry* rs) /// FAT12
 {
     if(strcmp(rs->Filename,"")!=0)
     {
-        printformat("File Name : ");
+        printf("File Name : ");
         for(int32_t j=0;j<8;j++)
         {
-            printformat("%c",rs->Filename[j]);
+            printf("%c",rs->Filename[j]);
         }
-        printformat("\n");
-        printformat("Extension : ");
+        printf("\n");
+        printf("Extension : ");
         for(int32_t j=0;j<3;j++)
         {
-            printformat("%c",rs->Extension[j]);
+            printf("%c",rs->Extension[j]);
         }
-        printformat("\n");
-        printformat("Attributes   = %d\t %x\n",rs->Attributes,   rs->Attributes      );
-        printformat("NTRes        = %d\t %x\n",rs->NTRes,        rs->NTRes           );
-        printformat("CrtTimeTenth = %d\t %x\n",rs->CrtTimeTenth, rs->CrtTimeTenth    );
-        printformat("CrtTime      = %d\t %x\n",rs->CrtTime,      rs->CrtTime         );
-        printformat("CrtDate      = %d\t %x\n",rs->CrtDate,      rs->CrtDate         );
-        printformat("LstAccDate   = %d\t %x\n",rs->LstAccDate,   rs->LstAccDate      );
-        printformat("FstClusHI    = %d\t %x\n",rs->FstClusHI,    rs->FstClusHI       );
-        printformat("WrtTime      = %d\t %x\n",rs->WrtTime,      rs->WrtTime         );
-        printformat("WrtDate      = %d\t %x\n",rs->WrtDate,      rs->WrtDate         );
-        printformat("FstClusLO    = %d\t %x\n",rs->FstClusLO,    rs->FstClusLO       );
-        printformat("FileSize     = %d\t %x\n",rs->FileSize,     rs->FileSize        );
-        printformat("\n");
+        printf("\n");
+        printf("Attributes   = %d\t %x\n",rs->Attributes,   rs->Attributes      );
+        printf("NTRes        = %d\t %x\n",rs->NTRes,        rs->NTRes           );
+        printf("CrtTimeTenth = %d\t %x\n",rs->CrtTimeTenth, rs->CrtTimeTenth    );
+        printf("CrtTime      = %d\t %x\n",rs->CrtTime,      rs->CrtTime         );
+        printf("CrtDate      = %d\t %x\n",rs->CrtDate,      rs->CrtDate         );
+        printf("LstAccDate   = %d\t %x\n",rs->LstAccDate,   rs->LstAccDate      );
+        printf("FstClusHI    = %d\t %x\n",rs->FstClusHI,    rs->FstClusHI       );
+        printf("WrtTime      = %d\t %x\n",rs->WrtTime,      rs->WrtTime         );
+        printf("WrtDate      = %d\t %x\n",rs->WrtDate,      rs->WrtDate         );
+        printf("FstClusLO    = %d\t %x\n",rs->FstClusLO,    rs->FstClusLO       );
+        printf("FileSize     = %d\t %x\n",rs->FileSize,     rs->FileSize        );
+        printf("\n");
     }
 }
 
@@ -451,7 +451,7 @@ uint32_t search_file_first_cluster(const char* name, const char* ext, struct fil
            break; // filter empty entry, no further entries expected
        }
        settextcolor(14,0);
-       printformat("root dir entry: %c%c%c%c%c%c%c%c.%c%c%c\n",
+       printf("root dir entry: %c%c%c%c%c%c%c%c.%c%c%c\n",
                    (&entry)->Filename[0],(&entry)->Filename[1],(&entry)->Filename[2],(&entry)->Filename[3],
                    (&entry)->Filename[4],(&entry)->Filename[5],(&entry)->Filename[6],(&entry)->Filename[7],
                    (&entry)->Extension[0],(&entry)->Extension[1],(&entry)->Extension[2]);
@@ -475,7 +475,7 @@ uint32_t search_file_first_cluster(const char* name, const char* ext, struct fil
        }
     }
     settextcolor(14,0);
-    printformat("rootdir search finished.\n\n");
+    printf("rootdir search finished.\n\n");
     settextcolor(2,0);
 
     f->size = (&entry)->FileSize;
@@ -499,6 +499,6 @@ void parse_fat(int32_t* fat_entrypoint, int32_t fat1, int32_t fat2, int32_t in) 
     }
     fat = fat & 0xFFF;
     *fat_entrypoint = fat;
-    ///printformat("%x ", fat);
+    ///printf("%x ", fat);
 }
 

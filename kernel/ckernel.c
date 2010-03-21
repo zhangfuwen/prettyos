@@ -36,13 +36,13 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 /*
 static void floatTest()
 {
-    printformat("float test:" );
+    printf("float test:" );
     float a = 5.12, b = 64.26, c = 0.00;
     c = a * b;
     char string[80];
     float2string(c, 4, string);
-    printformat(" 5.12 * 64.26 = " );
-    printformat("%s",string);
+    printf(" 5.12 * 64.26 = " );
+    printf("%s",string);
 }
 */
 
@@ -50,7 +50,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printformat("PrettyOS [Version 0.0.0.265]\n");
+    printf("PrettyOS [Version 0.0.0.266]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -65,15 +65,15 @@ int main()
     pODA->Memory_Size = paging_install();
 	if(pODA->Memory_Size > 1073741824)
 	{
-		printformat( "\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
+		printf( "\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
 	}
 	else if(pODA->Memory_Size > 1048576)
 	{
-		printformat( "\n\nMemory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size );
+		printf( "\n\nMemory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size );
 	}
 	else
 	{
-		printformat( "\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size );
+		printf( "\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size );
 	}
 
     heap_install();
@@ -88,7 +88,7 @@ int main()
     // direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
     {
-        printformat("1.44 MB FDD device 0\n\n");
+        printf("1.44 MB FDD device 0\n\n");
         pODA->flpy_motor[0] = false;        // first floppy motor is off
         flpydsk_set_working_drive(0); // set drive 0 as current drive
 	    flpydsk_install(32+6);        // floppy disk uses IRQ 6 // 32+6
@@ -96,7 +96,7 @@ int main()
     }
     else
     {
-        printformat("\n1.44 MB 1st floppy not shown by CMOS\n\n");
+        printf("\n1.44 MB 1st floppy not shown by CMOS\n\n");
     }
     /// direct 1st floppy disk
 
@@ -111,14 +111,14 @@ int main()
             ///
             #ifdef _DIAGNOSIS_
             settextcolor(2,0);
-            printformat("%X\t",pciDev_Array+i);
+            printf("%X\t",pciDev_Array+i);
             #endif
             ///
         }
     }
-    //printformat("\n");
+    //printf("\n");
     // listShow(pciDevList); // shows addresses of list elements (not data)
-	printformat("\n");
+	printf("\n");
     for(int i=0;i<PCIARRAYSIZE;++i)
     {
         void* element = listShowElement(pciDevList,i);
@@ -128,7 +128,7 @@ int main()
             ///
             #ifdef _DIAGNOSIS_
             settextcolor(2,0);
-            printformat("%X dev: %x vend: %x\t",
+            printf("%X dev: %x vend: %x\t",
                        ( pciDev_t*)element,
                        ((pciDev_t*)element)->deviceID,
                        ((pciDev_t*)element)->vendorID);
@@ -139,7 +139,7 @@ int main()
     }
     ///
     #ifdef _DIAGNOSIS_
-    printformat("\n\n");
+    printf("\n\n");
     #endif
     ///
     /// PCI list END
@@ -148,7 +148,7 @@ int main()
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("rd_start: ");
+    printf("rd_start: ");
     settextcolor(15,0);
     #endif
     ///
@@ -169,7 +169,7 @@ int main()
 
         if((fsnode->flags & 0x7) == FS_DIRECTORY)
         {
-            printformat("<RAM Disk at %X DIR> %s\n", ramdisk_start, node->name);
+            printf("<RAM Disk at %X DIR> %s\n", ramdisk_start, node->name);
         }
         else
         {
@@ -178,24 +178,24 @@ int main()
             char name[40];
             memset(name, 0, 40);
             memcpy(name, node->name, 35); // protection against wrong / too long filename
-            printformat("%d \t%s\n",sz,name);
+            printf("%d \t%s\n",sz,name);
 
             if ( strcmp( (const char*)node->name, "shell" ) == 0 )
             {
                 shell_found = true;
 
                 if ( ! elf_exec( buf, sz ) )
-                    printformat( "Cannot start shell!\n" );
+                    printf( "Cannot start shell!\n" );
             }
         }
     }
     free(buf);
-    printformat("\n\n");
+    printf("\n\n");
 
     if ( ! shell_found )
     {
         settextcolor(4,0);
-        printformat("Program not found.\n");
+        printf("Program not found.\n");
         settextcolor(15,0);
     }
 
@@ -244,7 +244,7 @@ int main()
 	        else
 	        {
 	          // not to be expected
-	          // printformat("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
+	          // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
 	        }
 
             itoa(CurrentSeconds, timeBuffer);
@@ -254,7 +254,7 @@ int main()
             strcat(DateAndTime, " s runtime. CPU: ");
             strcat(DateAndTime, CurrentFrequency);
             strcat(DateAndTime, " MHz   ");
-            printf(DateAndTime, 49, 0xC); // output in status bar
+            kprintf(DateAndTime, 49, 0xC); // output in status bar
 
             if( (initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber )
             {

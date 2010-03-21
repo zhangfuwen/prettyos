@@ -127,7 +127,7 @@ extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
 extern void putch(char c);
 extern void puts(const char* text);
 extern void scroll();
-extern void printf(const char* message, uint32_t line, uint8_t attribute);
+extern void kprintf(const char* message, uint32_t line, uint8_t attribute);
 extern void set_cursor(uint8_t x, uint8_t y);
 extern void update_cursor();
 extern void move_cursor_right();
@@ -136,7 +136,7 @@ extern void move_cursor_home();
 extern void move_cursor_end();
 extern void save_cursor();
 extern void restore_cursor();
-extern void printformat (const char *args, ...);
+extern void printf (const char *args, ...);
 
 // timer.c
 extern uint32_t getCurrentSeconds();

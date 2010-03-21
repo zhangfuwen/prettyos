@@ -4,6 +4,7 @@
 */
 
 #include "userlib.h"
+#include "my_stdarg.h"
 
 /// syscalls ///
 
@@ -126,6 +127,74 @@ void* grow_heap( unsigned increase )
 ///          user functions       ///
 /// ///////////////////////////// ///
 
+// printf(...): supports %u, %d, %x/%X, %s, %c
+void printf (const char* args, ...)
+{
+	va_list ap;
+	va_start (ap, args);
+	int32_t index = 0, d;
+	uint32_t u;
+	char  c;
+	char* s;
+	char buffer[256];
+
+	while (args[index])
+	{
+		switch (args[index])
+		{
+		case '%':
+			++index;
+			switch (args[index])
+			{
+			case 'u':
+				u = va_arg (ap, uint32_t);
+				itoa(u, buffer);
+				puts(buffer);
+				break;
+			case 'd':
+			case 'i':
+				d = va_arg (ap, int32_t);
+				itoa(d, buffer);
+				puts(buffer);
+				break;
+			case 'X':
+			    d = va_arg (ap, int32_t);
+				i2hex(d, buffer,8);
+				puts(buffer);
+				break;
+			case 'x':
+			    d = va_arg (ap, int32_t);
+				i2hex(d, buffer,4);
+				puts(buffer);
+				break;
+			case 'y':
+			    d = va_arg (ap, int32_t);
+				i2hex(d, buffer,2);
+				puts(buffer);
+				break;
+			case 's':
+				s = va_arg (ap, char*);
+				puts(s);
+				break;
+			case 'c':
+				c = (int8_t) va_arg (ap, int32_t);
+				putch(c);
+				break;
+			default:
+				putch('%');
+				putch('%');
+				break;
+			}
+			break;
+
+		default:
+			putch(args[index]); //printf("%c",*(args+index));
+			break;
+		}
+		++index;
+	}
+}
+
 char toLower(char c)
 {
     return isupper(c) ? ('a' - 'A') + c : c;
@@ -183,7 +252,7 @@ char* strcpy(char* dest, const char* src)
    return save;
 }
 
-char* strncpy(char* dest, const char* src, unsigned int n) // okay?
+char* strncpy(char* dest, const char* src, size_t n) // okay?
 {
     if(n != 0)
     {
@@ -405,6 +474,23 @@ void float2string(float value, int decimal, char* valuestring) // float --> stri
    *tempstring = '\0';
 }
 
+void i2hex(uint32_t val, char* dest, int32_t len)
+{
+	char* cp;
+	char  x;
+	uint32_t n;
+	n = val;
+	cp = &dest[len];
+	while (cp > dest)
+	{
+		x = n & 0xF;
+		n >>= 4;
+		*--cp = x + ((x > 9) ? 'A' - 10 : '0');
+	}
+    dest[len]  ='h';
+    dest[len+1]='\0';
+}
+
 
 
 
@@ -448,7 +534,7 @@ void test()
 }
 
 
-void* malloc( unsigned size )
+void* malloc( size_t size )
 {
     static char* cur = 0;
     static char* top = 0;

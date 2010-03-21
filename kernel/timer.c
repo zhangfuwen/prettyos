@@ -13,13 +13,13 @@ uint32_t eticks;
 
 uint32_t getCurrentSeconds()
 {
-    // printformat("%d\n",timer_ticks/systemfrequency);
+    // printf("%d\n",timer_ticks/systemfrequency);
     return timer_ticks/systemfrequency;
 }
 
 uint32_t getCurrentMilliseconds()
 {
-    // printformat("%d\n",1000*timer_ticks/systemfrequency);
+    // printf("%d\n",1000*timer_ticks/systemfrequency);
     return 1000*getCurrentSeconds();
 }
 
@@ -27,7 +27,7 @@ void timer_handler(struct regs* r)
 {
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-        printformat(".");
+        printf(".");
     settextcolor(15,0);
     #endif
 

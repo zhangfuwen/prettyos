@@ -72,7 +72,7 @@ fs_node_t* install_initrd(uint32_t location)
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("rd_root: ");
+    printf("rd_root: ");
     settextcolor(15,0);
     #endif
     ///
@@ -94,7 +94,7 @@ fs_node_t* install_initrd(uint32_t location)
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("rd_dev: ");
+    printf("rd_dev: ");
     settextcolor(15,0);
     #endif
     ///
@@ -115,7 +115,7 @@ fs_node_t* install_initrd(uint32_t location)
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
-    printformat("root_nodes: ");
+    printf("root_nodes: ");
     settextcolor(15,0);
     #endif
     ///

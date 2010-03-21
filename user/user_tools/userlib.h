@@ -1,7 +1,18 @@
 #ifndef USERLIB_H
 #define USERLIB_H
 
-typedef char bool;
+// typedefs for bool, char, short, int, long, ...
+typedef unsigned int        size_t;
+typedef unsigned long long  uint64_t;
+typedef unsigned long       uint32_t;
+typedef unsigned short      uint16_t;
+typedef unsigned char       uint8_t;
+typedef signed long long    int64_t;
+typedef signed long         int32_t;
+typedef signed short        int16_t;
+typedef signed char         int8_t;
+typedef uint32_t            uintptr_t;
+typedef char                bool;
 
 #define true		1
 #define false		0
@@ -34,6 +45,7 @@ void* grow_heap( unsigned increase );
 
 
 // user functions
+void printf (const char *args, ...);
 
 char toLower(char c);
 char toUpper(char c);
@@ -43,7 +55,7 @@ char* tolower( char* s );
 unsigned int strlen(const char* str);
 int strcmp( const char* s1, const char* s2 );
 char* strcpy(char* dest, const char* src);
-char* strncpy(char* dest, const char* src, unsigned int n);
+char* strncpy(char* dest, const char* src, size_t n);
 char* strcat(char* dest, const char* src);
 char* strchr(char* str, int character);
 
@@ -53,11 +65,12 @@ void reverse(char* s);
 void itoa(int n, char* s);
 int atoi(const char* s);
 void float2string(float value, int decimal, char* valuestring); // float --> string
+void i2hex(uint32_t val, char* dest, int32_t len);
 
 void showInfo(signed char val);
 void test();
 
-void* malloc( unsigned size );
+void* malloc( size_t size );
 void free( void* mem );
 
 #endif

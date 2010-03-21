@@ -84,7 +84,7 @@ uint8_t ScanToASCII()
     }
 
     /// TEST
-    //  printformat(" scan:%d ",scan);
+    //  printf(" scan:%d ",scan);
     /// TEST
 
     uint8_t retchar = 0;  // The character that returns the scan code to ASCII code
@@ -112,7 +112,7 @@ uint8_t ScanToASCII()
     }
 
     /// TEST
-    //  printformat("ascii:%x ", retchar);
+    //  printf("ascii:%x ", retchar);
     /// TEST
 
     return retchar; // ASCII version
