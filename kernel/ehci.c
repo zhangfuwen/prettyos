@@ -575,13 +575,9 @@ void DeactivateLegacySupport(uint32_t num)
     */
     // cf. http://wiki.osdev.org/PCI#PCI_Device_Structure
 
-    //                            eecp      // RO  - This field identifies the extended capability.
-                                            //       01h identifies the capability as Legacy Support.
-    uint32_t NextEHCIExtCapPtr  = eecp + 1; // RO  - 00h indicates end of the ext. cap. list.
-    uint32_t BIOSownedSemaphore = eecp + 2; // R/W - only Bit 16 (Bit 23:17 Reserved, must be set to zero)
-    uint32_t OSownedSemaphore   = eecp + 3; // R/W - only Bit 24 (Bit 31:25 Reserved, must be set to zero)
-    uint32_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
-
+    //               eecp       // RO  - This field identifies the extended capability.
+                                //       01h identifies the capability as Legacy Support.
+    uint32_t NextEHCIExtCapPtr; // RO  - 00h indicates end of the ext. cap. list.
 
     if (eecp >= 0x40)
     {
@@ -593,10 +589,12 @@ void DeactivateLegacySupport(uint32_t num)
             printformat("eecp_id = %x\n",eecp_id);
             if(eecp_id == 1)
                  break;
+            NextEHCIExtCapPtr = eecp + 1;
             eecp = pci_config_read( bus, dev, func, 0x0100 | NextEHCIExtCapPtr );
-            if(eecp == 0xFF)
-                break;
         }
+        uint32_t BIOSownedSemaphore = eecp + 2; // R/W - only Bit 16 (Bit 23:17 Reserved, must be set to zero)
+        uint32_t OSownedSemaphore   = eecp + 3; // R/W - only Bit 24 (Bit 31:25 Reserved, must be set to zero)
+        uint32_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
 
         // Legacy-Support-EC found? BIOS-Semaphore set?
         if( (eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) )
