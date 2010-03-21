@@ -47,7 +47,7 @@ void createQH(void* address, void* firstQTD, uint32_t device)
 	{
 	    uint32_t physNext = paging_get_phys_addr(kernel_pd, firstQTD);
 	    head->qtd.next = physNext;
-	}	
+	}
 }
 
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
@@ -636,13 +636,6 @@ void DeactivateLegacySupport(uint32_t num)
             }
             if(failed==false)
             {
-                /*
-                USB SMI Enable R/W. 0=Default.
-                When this bit is a one, and the SMI on USB Complete bit (above) in this register is a one,
-                the host controller will issue an SMI immediately.
-                */
-                pci_config_write_dword( bus, dev, func, USBLEGCTLSTS, 0x0 ); // USB SMI disabled
-
                 printformat("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
                              pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
                              pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
@@ -657,7 +650,17 @@ void DeactivateLegacySupport(uint32_t num)
                 printformat("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
                              pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
                              pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
+
+                /*
+                USB SMI Enable R/W. 0=Default.
+                When this bit is a one, and the SMI on USB Complete bit (above) in this register is a one,
+                the host controller will issue an SMI immediately.
+                */
+                // The OS tries to do it itself:
+                settextcolor(14,0);
+                printformat("OS tries to set USBLEGCTLSTS to zero.\n");
                 settextcolor(15,0);
+                pci_config_write_dword( bus, dev, func, USBLEGCTLSTS, 0x0 ); // USB SMI disabled
             }
         }
         else
