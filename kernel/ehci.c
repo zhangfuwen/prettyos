@@ -39,8 +39,15 @@ void createQH(void* address, void* firstQTD, uint32_t device)
 	head->portNumber             =   0;	// unused if high speed (Split transfer)
 	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
                                         // Maybe unused for non interrupt queue head in async list
-	uint32_t physNext = paging_get_phys_addr(kernel_pd, firstQTD);
-	head->qtd.next = physNext;
+	if(firstQTD == NULL)
+	{
+	    head->qtd.next = 0x1;
+	}
+	else
+	{
+	    uint32_t physNext = paging_get_phys_addr(kernel_pd, firstQTD);
+	    head->qtd.next = physNext;
+	}	
 }
 
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
