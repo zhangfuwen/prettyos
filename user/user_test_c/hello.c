@@ -14,9 +14,8 @@ void SetField(unsigned int x, unsigned int y, int Player) {
 	else if(Player == O) {
 		putch('O');
 	}
-	gotoxy(0, 22);
-	puts("  ");
-	gotoxy(0, 22);
+	gotoxy(0, 24);
+	puts("     \r");
 }
 
 void gewinnen () {
@@ -72,18 +71,18 @@ void Zug(int Player) {
 		}
 		else if(tictactoe[ConvertToInt(x)] != Leer) {
 			settextcolor(4,0);
-			gotoxy(0, 25);
+			gotoxy(0, 26);
 			puts("You cannot type in an number which has been used already.\n\n");
-			gotoxy(0, 22);
+			gotoxy(0, 24);
 			settextcolor(15,0);
 		}
 		else {
 			break;
 		}
 	}
-	gotoxy(0, 25);
-	puts("                                                                                ");
-	gotoxy(0, 23);
+	gotoxy(0, 26);
+	puts("                                                         ");
+	gotoxy(0, 24);
 	tictactoe[ConvertToInt(x)] = Player;
 	SetField(ConvertToInt(x)%3, ConvertToInt(x)/3, Player);
 	gewinnen();
@@ -93,17 +92,18 @@ int main() {
 	clearScreen(0);
     settextcolor(11,0);
     puts("================================================================================\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.41                           \n");
+    puts("                            Mr.X TicTacToe 3x3  v0.5                            \n");
     puts("--------------------------------------------------------------------------------\n\n");
-	gotoxy(0, 24);
-	puts("Please type in a number betwen 0 and 8.\n\n");
 	gotoxy(0, 6);
     settextcolor(15,0);
-
 	puts("*************\n| 0 | 1 | 2 |\n*************\n| 3 | 4 | 5 |\n*************\n| 6 | 7 | 8 |\n*************\n\n");
 	puts("*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n\n");
-	Zug(X);
+    settextcolor(11,0);
+	gotoxy(0, 22);
+	puts("Please type in a number betwen 0 and 8.\n\n");
+    settextcolor(15,0);
 
+	Zug(X);
 	for(int i = 0; i < 4 && !ende; ++i) {
 		Zug(O);
 		if(ende) {

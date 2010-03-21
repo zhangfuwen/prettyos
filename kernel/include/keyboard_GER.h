@@ -76,7 +76,7 @@ TAB  , 'q', 'w'   , 'e', 'r' , 't'  , 'z'  , 'u' , 'i' , 'o' , 'p' , 0xFC , '+' 
 'a'  , 's', 'd'   , 'f', 'g' , 'h'  , 'j'  , 'k' , 'l' , 0xF6, 0xE4, '^'  , 0   , '#'  , 'y',
 'x'  , 'c', 'v'   , 'b', 'n' , 'm'  , ','  , '.' , '-' , 0   , 0   , 0    , ' ' , 0    , KF1,
 KF2  , KF3, KF4   , KF5, KF6 , KF7  , KF8  , KF9 , KF10, 0   , 0   , KHOME, KUP , KPGUP, '-',
-KLEFT, '5', KRIGHT, '+', KEND, KDOWN, KPGDN, KINS, KDEL, 0   , 0   , '<'  , KF11, KF12  };
+KLEFT, '5', KRIGHT, '+', KEND, KDOWN, KPGDN, KINS, KDEL, 0   , 0   , '<'  , KF11, KF12 };
 
 // Shifted scan codes to ASCII:
 static unsigned char asciiShift[] = {
@@ -85,7 +85,7 @@ TAB  , 'Q', 'W'   , 'E', 'R' , 'T'  , 'Z'  , 'U' , 'I' , 'O' , 'P' , 0xDC , '*' 
 'A'  , 'S', 'D'   , 'F', 'G' , 'H'  , 'J'  , 'K' , 'L' , 0xD6, 0xC4, 0xB0 , 0   , '\'' , 'Y',
 'X'  , 'C', 'V'   , 'B', 'N' , 'M'  , ';'  , ':' , '_' , 0   , 0   , 0    , ' ' , 0    , KF1,
 KF2  , KF3, KF4   , KF5, KF6 , KF7  , KF8  , KF9 , KF10, 0   , 0   , KHOME, KUP , KPGUP, '-',
-KLEFT, '5', KRIGHT, '+', KEND, KDOWN, KPGDN, KINS, KDEL, 0   , 0   , '>'  , KF11, KF12  };
+KLEFT, '5', KRIGHT, '+', KEND, KDOWN, KPGDN, KINS, KDEL, 0   , 0   , '>'  , KF11, KF12 };
 
 static unsigned char asciiAltGr[] = { //If there is a "00", we were not able to find out the code of the character. Please help us.
 0, 0   , 0, 0xB2, 00  , 0   , 0, 0, 0x7B, 0x5B, 0x5D, 0x7D, 0x5C, 0, 0, /*   ²³   {[]}\  */

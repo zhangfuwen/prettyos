@@ -37,15 +37,18 @@ ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
 	$(NASM) -O32 -f elf $(KERNELDIR)/interrupts.asm -I$(KERNELDIR)/ -o interrupts.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/kernel.asm -I$(KERNELDIR)/ -o kernel.o
 	$(NASM) -O32 -f elf $(KERNELDIR)/process.asm -I$(KERNELDIR)/ -o process.o
-	$(LD) *.o -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -nostdinc -o $(KERNELDIR)/KERNEL.BIN 
-	$(RM) *.o 
+	$(LD) *.o -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -nostdinc -o $(KERNELDIR)/KERNEL.BIN
+	$(RM) *.o
 	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERTEST)/HELLO.ELF
 
 initrd: $(wildcard $(USERDIR)/*)
-	$(NASM) -O32 -f elf $(USERDIR)/start.asm -I$(USERDIR)/ -o start.o
+	$(NASM) -O32 -f elf $(USERTOOLS)/start.asm -o start.o
 	$(CC) $(USERTOOLS)/userlib.c -c -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
-	$(CC) $(USERDIR)/*.c -c -I$(USERDIR) -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
+	$(CC) $(USERDIR)/*.c -c -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 	$(LD) *.o -T $(USERTOOLS)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
-	$(RM) *.o 
+	$(RM) *.o
 	tools/make_initrd $(USERRDDIR)/info.txt info $(USERDIR)/program.elf shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
+
+clear:
+	$(RM) *.o
