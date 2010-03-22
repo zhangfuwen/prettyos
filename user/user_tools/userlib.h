@@ -14,8 +14,8 @@ typedef signed char         int8_t;
 typedef uint32_t            uintptr_t;
 typedef char                bool;
 
-#define true		1
-#define false		0
+#define true        1
+#define false        0
 
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
@@ -41,7 +41,7 @@ void beep(unsigned int frequency, unsigned int duration);
 int getUserTaskNumber();
 void clearScreen(unsigned char backgroundColor);
 void gotoxy(unsigned char x, unsigned char y);
-void* grow_heap( unsigned increase );
+void* grow_heap(unsigned increase);
 
 
 // user functions
@@ -49,11 +49,11 @@ void printf (const char *args, ...);
 
 char toLower(char c);
 char toUpper(char c);
-char* toupper( char* s );
-char* tolower( char* s );
+char* toupper(char* s);
+char* tolower(char* s);
 
 unsigned int strlen(const char* str);
-int strcmp( const char* s1, const char* s2 );
+int strcmp(const char* s1, const char* s2);
 char* strcpy(char* dest, const char* src);
 char* strncpy(char* dest, const char* src, size_t n);
 char* strcat(char* dest, const char* src);
@@ -70,7 +70,7 @@ void i2hex(uint32_t val, char* dest, int32_t len);
 void showInfo(signed char val);
 void test();
 
-void* malloc( size_t size );
-void free( void* mem );
+void* malloc(size_t size);
+void free(void* mem);
 
 #endif

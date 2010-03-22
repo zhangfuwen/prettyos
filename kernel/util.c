@@ -9,16 +9,6 @@ void nop() { __asm__ volatile ( "nop" ); }  // Do nothing
 oda_t   ODA;
 oda_t* pODA = &ODA;
 
-uint32_t max( uint32_t a, uint32_t b )
-{
-	return a>=b? a : b;
-}
-
-uint32_t min( uint32_t a, uint32_t b )
-{
-	return a<=b? a : b;
-}
-
 /**********************************************************************/
 
 uint32_t fetchESP()
@@ -253,17 +243,17 @@ void itoa(int32_t n, char* s)
 
 void i2hex(uint32_t val, char* dest, int32_t len)
 {
-	char* cp;
-	char  x;
-	uint32_t n;
-	n = val;
-	cp = &dest[len];
-	while (cp > dest)
-	{
-		x = n & 0xF;
-		n >>= 4;
-		*--cp = x + ((x > 9) ? 'A' - 10 : '0');
-	}
+    char* cp;
+    char  x;
+    uint32_t n;
+    n = val;
+    cp = &dest[len];
+    while (cp > dest)
+    {
+        x = n & 0xF;
+        n >>= 4;
+        *--cp = x + ((x > 9) ? 'A' - 10 : '0');
+    }
     dest[len]  ='h';
     dest[len+1]='\0';
 }
@@ -320,17 +310,17 @@ void float2string(float value, int32_t decimal, char* valuestring) // float --> 
 
 uint32_t alignUp( uint32_t val, uint32_t alignment )
 {
-	if ( ! alignment )
-		return val;
-	--alignment;
-	return (val+alignment) & ~alignment;
+    if ( ! alignment )
+        return val;
+    --alignment;
+    return (val+alignment) & ~alignment;
 }
 
 uint32_t alignDown( uint32_t val, uint32_t alignment )
 {
-	if ( ! alignment )
-		return val;
-	return val & ~(alignment-1);
+    if ( ! alignment )
+        return val;
+    return val & ~(alignment-1);
 }
 
 uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
@@ -342,16 +332,15 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
 
 void reboot()
 {
-	int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
+    int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
     do //flush the keyboard controller
     {
        temp = inportb( 0x64 );
        if( temp & 1 )
          inportb( 0x60 );
     }
-	while ( temp & 2 );
+    while ( temp & 2 );
 
     // Reboot
     outportb(0x64, 0xFE);
 }
-

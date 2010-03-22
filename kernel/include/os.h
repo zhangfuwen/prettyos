@@ -36,12 +36,12 @@ typedef unsigned int gid_t; // Defined like in tyndur
 #define __bool_true_false_are_defined 1
 
 // Macros
-#define FORM_SHORT(a,b) ((b<<8)|a)
-#define FORM_LONG(a,b,c,d) ((d<<24)|(c<<16)|(b<<8)|a)
-#define BYTE1(a) (  a       & 0xFF)
-#define BYTE2(a) (( a>> 8 ) & 0xFF)
-#define BYTE3(a) (( a>>16 ) & 0xFF)
-#define BYTE4(a) (( a>>24 ) & 0xFF)
+#define FORM_SHORT(a,b) (((b)<<8)|a)
+#define FORM_LONG(a,b,c,d) (((d)<<24)|((c)<<16)|((b)<<8)|(a))
+#define BYTE1(a) ( (a)       & 0xFF)
+#define BYTE2(a) (((a)>> 8 ) & 0xFF)
+#define BYTE3(a) (((a)>>16 ) & 0xFF)
+#define BYTE4(a) (((a)>>24 ) & 0xFF)
 
 
 //// Memory configuration ////
@@ -82,7 +82,7 @@ typedef unsigned int gid_t; // Defined like in tyndur
 extern uint32_t placement_address;
 
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b))
-extern void panic_assert(const char* file, uint32_t line, const char* desc);  // why char ?
+void panic_assert(const char* file, uint32_t line, const char* desc);  // why char ?
 
 /* This defines the operatings system common data area */
 
@@ -121,106 +121,105 @@ struct regs
 typedef struct regs registers_t;
 
 // video.c
-extern void clear_screen();
-extern void clear_userscreen(uint8_t backcolor);
-extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
-extern void putch(char c);
-extern void puts(const char* text);
-extern void scroll();
-extern void kprintf(const char* message, uint32_t line, uint8_t attribute);
-extern void set_cursor(uint8_t x, uint8_t y);
-extern void update_cursor();
-extern void move_cursor_right();
-extern void move_cursor_left();
-extern void move_cursor_home();
-extern void move_cursor_end();
-extern void save_cursor();
-extern void restore_cursor();
-extern void printf (const char *args, ...);
+void clear_screen();
+void clear_userscreen(uint8_t backcolor);
+void settextcolor(uint8_t forecolor, uint8_t backcolor);
+void putch(char c);
+void puts(const char* text);
+void scroll();
+void kprintf(const char* message, uint32_t line, uint8_t attribute);
+void set_cursor(uint8_t x, uint8_t y);
+void update_cursor();
+void move_cursor_right();
+void move_cursor_left();
+void move_cursor_home();
+void move_cursor_end();
+void save_cursor();
+void restore_cursor();
+void printf (const char *args, ...);
 
 // timer.c
-extern uint32_t getCurrentSeconds();
-extern uint32_t getCurrentMilliseconds();
-extern uint16_t systemfrequency; // system frequency
-extern void timer_handler(struct regs* r);
-extern void timer_wait (uint32_t ticks);
-extern void sleepSeconds (uint32_t seconds);
-extern void sleepMilliSeconds (uint32_t ms);
-extern void systemTimer_setFrequency( uint32_t freq );
+uint32_t getCurrentSeconds();
+uint32_t getCurrentMilliseconds();
+uint16_t systemfrequency; // system frequency
+void timer_handler(struct regs* r);
+void timer_wait (uint32_t ticks);
+void sleepSeconds (uint32_t seconds);
+void sleepMilliSeconds (uint32_t ms);
+void systemTimer_setFrequency( uint32_t freq );
 uint16_t    systemTimer_getFrequency();
-extern void timer_install();
-extern void timer_uninstall();
-extern void delay (uint32_t microsec);
+void timer_install();
+void timer_uninstall();
+void delay (uint32_t microsec);
 
 // keyboard.c
-extern void keyboard_install();
-extern uint8_t FetchAndAnalyzeScancode();
-extern uint8_t ScanToASCII();
-extern void keyboard_handler(struct regs* r);
-extern int32_t checkKQ_and_print_char();
-extern uint8_t checkKQ_and_return_char();
-extern bool testch();
+void keyboard_install();
+uint8_t FetchAndAnalyzeScancode();
+uint8_t ScanToASCII();
+void keyboard_handler(struct regs* r);
+int32_t checkKQ_and_print_char();
+uint8_t checkKQ_and_return_char();
+bool testch();
 
 // gtd.c, irq.c, interrupts.asm
-extern void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
-extern void gdt_install();
-extern void idt_install();
-extern uint32_t fault_handler(uint32_t esp);
-extern uint32_t irq_handler(uint32_t esp);
-extern void irq_install_handler(int32_t irq, void (*handler)(struct regs* r));
-extern void irq_uninstall_handler(int32_t irq);
+void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
+void gdt_install();
+void idt_install();
+uint32_t fault_handler(uint32_t esp);
+uint32_t irq_handler(uint32_t esp);
+void irq_install_handler(int32_t irq, void (*handler)(struct regs* r));
+void irq_uninstall_handler(int32_t irq);
 
 // math.c
-extern int32_t abs(int32_t i);
-extern int32_t power(int32_t base,int32_t n);
+uint32_t max(uint32_t a, uint32_t b);
+uint32_t min(uint32_t a, uint32_t b);
+int32_t abs(int32_t i);
+int32_t power(int32_t base,int32_t n);
 
 // paging.c
-extern void analyze_frames_bitset(uint32_t sec);
-extern uint32_t show_physical_address(uint32_t virtual_address);
-extern void analyze_physical_addresses();
+void analyze_frames_bitset(uint32_t sec);
+uint32_t show_physical_address(uint32_t virtual_address);
+void analyze_physical_addresses();
 
 // elf.c
-extern bool elf_exec( const void* elf_file, uint32_t elf_file_size );
+bool elf_exec( const void* elf_file, uint32_t elf_file_size );
 
 // util.c
-extern uint8_t inportb(uint16_t port);
-extern uint16_t inportw(uint16_t port);
-extern uint32_t inportl(uint16_t port);
-extern void outportb(uint16_t port, uint8_t val);
-extern void outportw(uint16_t port, uint16_t val);
-extern void outportl(uint16_t port, uint32_t val);
+uint8_t inportb(uint16_t port);
+uint16_t inportw(uint16_t port);
+uint32_t inportl(uint16_t port);
+void outportb(uint16_t port, uint8_t val);
+void outportw(uint16_t port, uint16_t val);
+void outportl(uint16_t port, uint32_t val);
 
-extern uint32_t fetchESP();
-extern uint32_t fetchEBP();
-extern uint32_t fetchSS();
-extern uint32_t fetchCS();
-extern uint32_t fetchDS();
-extern uint64_t rdtsc();
+uint32_t fetchESP();
+uint32_t fetchEBP();
+uint32_t fetchSS();
+uint32_t fetchCS();
+uint32_t fetchDS();
+uint64_t rdtsc();
 
-extern void memshow(void* start, size_t count);
-extern void* memset(void* dest, int8_t val, size_t count);
-extern uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
-extern uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
-extern void* memcpy(void* dest, const void* src, size_t count);
+void memshow(void* start, size_t count);
+void* memset(void* dest, int8_t val, size_t count);
+uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
+uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
+void* memcpy(void* dest, const void* src, size_t count);
 
-extern size_t strlen(const char* str);
-extern int32_t strcmp( const char* s1, const char* s2 );
-extern char* strcpy(char* dest, const char* src);
-extern char* strncpy(char* dest, const char* src, size_t n);
-extern char* strcat(char* dest, const char* src);
+size_t strlen(const char* str);
+int32_t strcmp( const char* s1, const char* s2 );
+char* strcpy(char* dest, const char* src);
+char* strncpy(char* dest, const char* src, size_t n);
+char* strcat(char* dest, const char* src);
 
-extern void reboot();
+void reboot();
 
-extern void cli();
-extern void sti();
-extern void nop();
+void cli();
+void sti();
+void nop();
 
-uint32_t max( uint32_t a, uint32_t b );
-uint32_t min( uint32_t a, uint32_t b );
-
-extern void itoa(int32_t value, char* valuestring);
-extern void i2hex(uint32_t val, char* dest, int32_t len);
-extern void float2string(float value, int32_t decimal, char* valuestring);
+void itoa(int32_t value, char* valuestring);
+void i2hex(uint32_t val, char* dest, int32_t len);
+void float2string(float value, int32_t decimal, char* valuestring);
 
 uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 
@@ -228,11 +227,11 @@ uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
 
 // network
-extern void rtl8139_handler(struct regs* r);
-extern void install_RTL8139(uint32_t number);
+void rtl8139_handler(struct regs* r);
+void install_RTL8139(uint32_t number);
 
 // USB 2.0 EHCI
-extern void analyzeEHCI(uint32_t bar);
+void analyzeEHCI(uint32_t bar);
 
 #endif
 

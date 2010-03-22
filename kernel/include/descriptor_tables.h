@@ -6,8 +6,8 @@
 void write_tss(int32_t num, uint16_t ss0, uint32_t esp0);
 
 // asm functions in flush.asm
-extern void gdt_flush(uint32_t);
-extern void tss_flush();
+void gdt_flush(uint32_t);
+void tss_flush();
 
 // Allows the kernel stack in the TSS to be changed.
 void set_kernel_stack(uint32_t stack);

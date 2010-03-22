@@ -1,7 +1,7 @@
 #ifndef USERLIB_HPP
 #define USERLIB_HPP
 
-// typedefs for bool, char, short, int, long, ...
+// typedefs for char, short, int, long, ...
 typedef unsigned int        size_t;
 typedef unsigned long long  uint64_t;
 typedef unsigned long       uint32_t;
@@ -12,10 +12,6 @@ typedef signed long         int32_t;
 typedef signed short        int16_t;
 typedef signed char         int8_t;
 typedef uint32_t            uintptr_t;
-typedef char                bool;
-
-#define true		1
-#define false		0
 
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
@@ -44,15 +40,15 @@ extern "C" { //Functions from C-Userlib
 	void clearScreen(unsigned char backgroundColor);
 	void gotoxy(unsigned char x, unsigned char y);
 
-    void* grow_heap( unsigned increase );
+    void* grow_heap(unsigned increase);
 
 	// user functions
 	void printf (const char *args, ...);
 
 	char toLower(char c);
 	char toUpper(char c);
-	char* toupper( char* s );
-	char* tolower( char* s );
+	char* toupper(char* s);
+	char* tolower(char* s);
 
 	unsigned int strlen(const char* str);
 	int strcmp( const char* s1, const char* s2 );
@@ -71,8 +67,8 @@ extern "C" { //Functions from C-Userlib
 	void showInfo(signed char val);
 	void test();
 
-	void* malloc( size_t size );
-	void free( void* mem );
+	void* malloc(size_t size);
+	void free(void* mem);
 }
 
 #endif

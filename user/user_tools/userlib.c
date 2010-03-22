@@ -127,72 +127,63 @@ void* grow_heap( unsigned increase )
 ///          user functions       ///
 /// ///////////////////////////// ///
 
-// printf(...): supports %u, %d, %x/%X, %s, %c
+// printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
 void printf (const char* args, ...)
 {
-	va_list ap;
-	va_start (ap, args);
-	int32_t index = 0, d;
-	uint32_t u;
-	char  c;
-	char* s;
-	char buffer[256];
+    va_list ap;
+    va_start (ap, args);
+    char buffer[32]; // Larger is not needed at the moment
 
-	while (args[index])
-	{
-		switch (args[index])
-		{
-		case '%':
-			++index;
-			switch (args[index])
-			{
-			case 'u':
-				u = va_arg (ap, uint32_t);
-				itoa(u, buffer);
-				puts(buffer);
-				break;
-			case 'd':
-			case 'i':
-				d = va_arg (ap, int32_t);
-				itoa(d, buffer);
-				puts(buffer);
-				break;
-			case 'X':
-			    d = va_arg (ap, int32_t);
-				i2hex(d, buffer,8);
-				puts(buffer);
-				break;
-			case 'x':
-			    d = va_arg (ap, int32_t);
-				i2hex(d, buffer,4);
-				puts(buffer);
-				break;
-			case 'y':
-			    d = va_arg (ap, int32_t);
-				i2hex(d, buffer,2);
-				puts(buffer);
-				break;
-			case 's':
-				s = va_arg (ap, char*);
-				puts(s);
-				break;
-			case 'c':
-				c = (int8_t) va_arg (ap, int32_t);
-				putch(c);
-				break;
-			default:
-				putch('%');
-				putch('%');
-				break;
-			}
-			break;
-
-		default:
-			putch(args[index]); //printf("%c",*(args+index));
-			break;
-		}
-		++index;
-	}
+    for(; *args; args++)
+    {
+        switch (*args)
+        {
+        case '%':
+            switch (*(++args))
+            {
+            case 'u':
+                itoa(va_arg(ap, uint32_t), buffer);
+                puts(buffer);
+                break;
+            case 'f':
+                float2string(va_arg(ap, double), 10, buffer);
+                puts(buffer);
+                break;
+            case 'i': case 'd':
+                itoa(va_arg(ap, int32_t), buffer);
+                puts(buffer);
+                break;
+            case 'X':
+                i2hex(va_arg(ap, int32_t), buffer,8);
+                puts(buffer);
+                break;
+            case 'x':
+                i2hex(va_arg(ap, int32_t), buffer,4);
+                puts(buffer);
+                break;
+            case 'y':
+                i2hex(va_arg(ap, int32_t), buffer,2);
+                puts(buffer);
+                break;
+            case 's':
+                puts(va_arg (ap, char*));
+                break;
+            case 'c':
+                putch((int8_t)va_arg(ap, int32_t));
+                break;
+            case '%':
+                putch('%');
+                break;
+            default:
+                --args;
+                break;
+            }
+            break;
+        default:
+            putch(*args); //printf("%c",*(args+index));
+            break;
+        }
+    }
 }
 
 char toLower(char c)
@@ -281,18 +272,18 @@ char* strcat(char* dest, const char* src)
 
 char* strchr(char* str, int character)
 {
-	for(;;str++)
-	{
-		// NOTE< the order here is important >
-		if( *str == character )
-		{
-			return str;
-		}
-		if( *str == 0 )
-		{
-			return 0;
-		}
-	}
+    for(;;str++)
+    {
+        // NOTE< the order here is important >
+        if( *str == character )
+        {
+            return str;
+        }
+        if( *str == 0 )
+        {
+            return 0;
+        }
+    }
 }
 
 
@@ -476,17 +467,17 @@ void float2string(float value, int decimal, char* valuestring) // float --> stri
 
 void i2hex(uint32_t val, char* dest, int32_t len)
 {
-	char* cp;
-	char  x;
-	uint32_t n;
-	n = val;
-	cp = &dest[len];
-	while (cp > dest)
-	{
-		x = n & 0xF;
-		n >>= 4;
-		*--cp = x + ((x > 9) ? 'A' - 10 : '0');
-	}
+    char* cp;
+    char  x;
+    uint32_t n;
+    n = val;
+    cp = &dest[len];
+    while (cp > dest)
+    {
+        x = n & 0xF;
+        n >>= 4;
+        *--cp = x + ((x > 9) ? 'A' - 10 : '0');
+    }
     dest[len]  ='h';
     dest[len+1]='\0';
 }
