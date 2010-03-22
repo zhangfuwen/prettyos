@@ -37,6 +37,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     if(firstCluster==0)
     {
         printf("file not found in root directory\n");
+        flpydsk_control_motor(false);
         return -1;
     }
 

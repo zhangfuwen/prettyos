@@ -11,7 +11,7 @@ LOAD start.o
 LOAD userlib.o
                 0x01400000                . = 0x1400000
 
-.text           0x01400000     0x1307
+.text           0x01400000     0x1300
                 0x01400000                __code_start = .
  *(.text*)
  .text          0x01400000      0xa4c program.o
@@ -24,7 +24,7 @@ LOAD userlib.o
  .text          0x01400a50       0x16 start.o
                 0x01400a50                _start
  *fill*         0x01400a66        0x2 00
- .text          0x01400a68      0x89f userlib.o
+ .text          0x01400a68      0x898 userlib.o
                 0x01400ac2                _printLine
                 0x01400b9d                _grow_heap
                 0x01401174                _free
@@ -65,45 +65,45 @@ LOAD userlib.o
                 0x01400b2e                _settaskflag
                 0x01400b3f                _beep
 
-.data           0x01401308        0x0
-                0x01401308                __data_start = .
+.data           0x01401300        0x0
+                0x01401300                __data_start = .
  *(.data)
- .data          0x01401308        0x0 program.o
- .data          0x01401308        0x0 userlib.o
+ .data          0x01401300        0x0 program.o
+ .data          0x01401300        0x0 userlib.o
 
-.rodata         0x01401308       0x94
-                0x01401308                __rodata_start = .
+.rodata         0x01401300      0x160
+                0x01401300                __rodata_start = .
  *(.rodata)
- .rodata        0x01401308       0x94 userlib.o
+ .rodata        0x01401300      0x160 userlib.o
 
-.rodata.str1.1  0x0140139c       0x4f
+.rodata.str1.1  0x01401460       0x4f
  .rodata.str1.1
-                0x0140139c       0x42 program.o
+                0x01401460       0x42 program.o
                                  0x43 (size before relaxing)
  .rodata.str1.1
-                0x014013de        0xd userlib.o
+                0x014014a2        0xd userlib.o
 
-.rodata.str1.4  0x014013ec      0x1b4
+.rodata.str1.4  0x014014b0      0x1b4
  .rodata.str1.4
-                0x014013ec       0xb5 program.o
- *fill*         0x014014a1        0x3 00
+                0x014014b0       0xb5 program.o
+ *fill*         0x01401565        0x3 00
  .rodata.str1.4
-                0x014014a4       0xfc userlib.o
+                0x01401568       0xfc userlib.o
                                  0xf9 (size before relaxing)
 
-.rodata.cst4    0x014015a0        0x4
- .rodata.cst4   0x014015a0        0x4 userlib.o
+.rodata.cst4    0x01401664        0x4
+ .rodata.cst4   0x01401664        0x4 userlib.o
 
-.rel.dyn        0x014015a4        0x0
+.rel.dyn        0x01401668        0x0
  .rel.text      0x00000000        0x0 program.o
 
-.bss            0x014015a4       0x10
-                0x014015a4                __bss_start = .
+.bss            0x01401668       0x10
+                0x01401668                __bss_start = .
  *(.bss)
- .bss           0x014015a4        0x8 program.o
- .bss           0x014015ac        0x8 userlib.o
+ .bss           0x01401668        0x8 program.o
+ .bss           0x01401670        0x8 userlib.o
  *(COMMON)
-                0x014015b4                __end = .
+                0x01401678                __end = .
 OUTPUT(user/user_program_c/program.elf elf32-i386)
 
 .comment        0x00000000       0x24
