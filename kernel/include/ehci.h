@@ -253,7 +253,7 @@ void DeactivateLegacySupport(uint32_t num);
 void checkPortLineStatus();
 void resetPort(uint8_t j);
 
-void createQH(void* address, void* firstQTD, uint32_t device);
+void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device);
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes);
 void showStatusbyteQTD(void* addressQTD);
 void showPacket(uint32_t virtAddrBuf0, uint32_t size);

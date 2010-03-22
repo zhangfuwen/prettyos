@@ -14,7 +14,7 @@
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
-void createQH(void* address, void* firstQTD, uint32_t device)
+void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: createQH\n");
@@ -22,14 +22,16 @@ void createQH(void* address, void* firstQTD, uint32_t device)
 
 	struct ehci_qhd* head = (struct ehci_qhd*)address;
 	memset(address, 0, sizeof(struct ehci_qhd));
-	uint32_t phys = paging_get_phys_addr(kernel_pd, address);
-	head->horizontalPointer      =   phys | 0x2;
+
+
+
+	head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1 00b iTD, 01b QH, 10b siTD, 11b FSTN // 0x2 Queue Head
 	head->deviceAddress          =   device; // The device address
 	head->inactive               =   0;
 	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
 	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
 	head->dataToggleControl      =   1;	// Get the Data Toggle bit out of the included qTD
-	head->H                      =   1;
+	head->H                      =   H;
 	head->maxPacketLength        =  64;	// It's 64 bytes for a control transfer to a high speed device.
 	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
 	head->nakCountReload         =   0;	// This value is used by HC to reload the Nak Counter field.
@@ -136,42 +138,15 @@ void showStatusbyteQTD(void* addressQTD)
 
     // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     settextcolor(14,0);
-    if( statusbyte & (1<<7) )
-    {
-        printf("\nqTD Status: Active - HC transactions enabled");
-    }
-    if( statusbyte & (1<<6) )
-    {
-        printf("\nqTD Status: Halted - serious error at the device/endpoint");
-    }
-    if( statusbyte & (1<<5) )
-    {
-        printf("\nqTD Status: Data Buffer Error (overrun or underrun)");
-    }
-    if( statusbyte & (1<<4) )
-    {
-        printf("\nqTD Status: Babble (fatal error leads to Halted)");
-    }
-    if( statusbyte & (1<<3) )
-    {
-        printf("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");
-    }
-    if( statusbyte & (1<<2) )
-    {
-        printf("\nqTD Status: Missed Micro-Frame");
-    }
-    if( statusbyte & (1<<1) )
-    {
-        printf("\nqTD Status: Do Complete Split");
-    }
-    if( statusbyte & (1<<0) )
-    {
-        printf("\nqTD Status: Do Ping");
-    }
-    if( statusbyte == 0 )
-    {
-        printf("\n");
-    }
+    if( statusbyte & (1<<7) ) { printf("\nqTD Status: Active - HC transactions enabled");                                     }
+    if( statusbyte & (1<<6) ) { printf("\nqTD Status: Halted - serious error at the device/endpoint");                        }
+    if( statusbyte & (1<<5) ) { printf("\nqTD Status: Data Buffer Error (overrun or underrun)");                              }
+    if( statusbyte & (1<<4) ) { printf("\nqTD Status: Babble (fatal error leads to Halted)");                                 }
+    if( statusbyte & (1<<3) ) { printf("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");  }
+    if( statusbyte & (1<<2) ) { printf("\nqTD Status: Missed Micro-Frame");                                                   }
+    if( statusbyte & (1<<1) ) { printf("\nqTD Status: Do Complete Split");                                                    }
+    if( statusbyte & (1<<0) ) { printf("\nqTD Status: Do Ping");                                                              }
+    if( statusbyte == 0 )     { printf("\n");                                                                                 }
 	settextcolor(15,0);
 }
 
@@ -324,7 +299,7 @@ void enablePorts()
              printf("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
              settextcolor(15,0);
 
-             testTransfer(0,j+1); // device address, port number
+             testTransfer(0); // device address, port number
 
              printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
              printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
@@ -336,7 +311,7 @@ void enablePorts()
 void resetPort(uint8_t j)
 {
     delay(2000000);settextcolor(9,0);
-    printf("\n>>> >>> function: resetPort %d",j+1);
+    printf("\n>>> >>> function: resetPort %d  ",j+1);
 	settextcolor(15,0);
 
     pOpRegs->PORTSC[j] |=  PSTS_POWERON;
@@ -464,7 +439,7 @@ void showPORTSC()
             kprintf("                                                                              ",47,color);
             kprintf("                                                                              ",48,color);
 
-            beep(1000,100);
+            // beep(1000,100);
         }
     }
 }
@@ -512,14 +487,14 @@ void checkPortLineStatus()
       {
         settextcolor(11,0);
         printf("SE0");
-        if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
+        if( (pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED) )
         {
              settextcolor(14,0);
-             printf(" ,high speed, enabled");
+             printf(" ,power on, enabled, EHCI owned");
              settextcolor(3,0);
              printf("\nport status: %x\t",pOpRegs->PORTSC[j]);
              settextcolor(15,0);
-             testTransfer(0,j+1); // device address, port number
+             testTransfer(0); // device address
              printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
              printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
              printf("in:             "); showStatusbyteQTD(InQTD);

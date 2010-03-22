@@ -10,14 +10,14 @@
 #include "sys_speaker.h"
 #include "usb2.h"
 
-void testTransfer(uint32_t device, uint8_t port)
+void testTransfer(uint32_t device)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: testTransfer\n");
 	settextcolor(15,0);
 
 	settextcolor(3,0);
-	printf("Test transfer at port %d on device address: %d\n", port, device);
+	printf("Test transfer with device address: %d\n", device);
     settextcolor(15,0);
 
  	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
@@ -29,8 +29,12 @@ void testTransfer(uint32_t device, uint8_t port)
 	next           = InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
 	void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
 
-	// Create QH
-	createQH(virtualAsyncList, firstQTD, device);
+	// Create QH 1
+	void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+	createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, device);
+
+	// Create QH 2
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device);
 
 	// Enable Async...
 	printf("\nEnabling Async Schedule\n");

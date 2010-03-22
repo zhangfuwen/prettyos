@@ -24,7 +24,7 @@ struct usb2_deviceDescriptor
 
 
 // functions, ...
-void testTransfer(uint32_t device, uint8_t port);
+void testTransfer(uint32_t device);
 void showDeviceDesriptor(struct usb2_deviceDescriptor*);
 
 #endif
