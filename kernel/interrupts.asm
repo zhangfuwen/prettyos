@@ -126,8 +126,8 @@ _idt_install:
         %assign COUNTER COUNTER+1
     %endrep
 
-    DO_IDT_ENTRY SYSCALL_NUMBER, 0x0008, 0xEE00
-	DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0xEE00 ;0x8E00 ??
+    DO_IDT_ENTRY SYSCALL_NUMBER,      0x0008, 0xEE00
+	DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0x8E00 
 
     ; Remap IRQ 0-15 to 32-47 (see http://wiki.osdev.org/PIC#Initialisation)
 	%macro putport 2

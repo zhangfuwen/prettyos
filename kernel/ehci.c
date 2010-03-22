@@ -266,7 +266,7 @@ void startHostController()
 	settextcolor(15,0);
 
     settextcolor(14,0);
-    printf("\nstarting HC\n");
+    printf("starting HC\n");
     settextcolor(15,0);
     pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
     delay(30000); //sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
@@ -336,12 +336,12 @@ void enablePorts()
 void resetPort(uint8_t j)
 {
     delay(2000000);settextcolor(9,0);
-    printf("\n>>> >>> function: resetPort\n");
+    printf("\n>>> >>> function: resetPort %d",j+1);
 	settextcolor(15,0);
 
-     pOpRegs->PORTSC[j] |=  PSTS_POWERON;
+    pOpRegs->PORTSC[j] |=  PSTS_POWERON;
 
-     /*
+    /*
      http://www.intel.com/technology/usb/download/ehci-r10.pdf
      When software writes a one to this bit (from a zero),
      the bus reset sequence as defined in the USB Specification Revision 2.0 is started.
@@ -350,53 +350,44 @@ void resetPort(uint8_t j)
      as specified in the USB Specification Revision 2.0, completes.
      Note: when software writes this bit to a one,
      it must also write a zero to the Port Enable bit.
-     */
-     pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
+    */
+    pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
 
-     /*
+    /*
      The HCHalted bit in the USBSTS register should be a zero
      before software attempts to use this bit.
      The host controller may hold Port Reset asserted to a one
      when the HCHalted bit is a one.
-     */
-     if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
-     {
-         settextcolor(2,0);
-         printf("\nHCHalted set to 0 (OK)");
-         settextcolor(15,0);
-     }
-     else
-     {
+    */
+    if( pOpRegs->USBSTS & STS_HCHALTED ) // TEST
+    {
          settextcolor(4,0);
          printf("\nHCHalted set to 1 (Not OK!)");
          showUSBSTS();
          settextcolor(15,0);
-     }
+    }
 
-     printf("\nstart port reset sequence");
-     pOpRegs->USBINTR = 0;
+    pOpRegs->USBINTR = 0;
+    pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
+    delay(250000);                          // wait
+    pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
 
-     pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
-     delay(250000);                          // wait
-     pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
-
-     // wait and check, whether really zero
-     uint32_t timeout=20;
-     while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
-     {
-         delay(20000);
-         timeout--;
-         if( timeout <= 0 )
-         {
-             settextcolor(4,0);
-             printf("\nerror: port %d did not reset! ",j+1);
-             settextcolor(15,0);
-             printf("PortStatus: %X",pOpRegs->PORTSC[j]);
-             break;
-         }
-     }
-     printf("\nport reset sequence successful\n");
-     pOpRegs->USBINTR = STS_INTMASK;
+    // wait and check, whether really zero
+    uint32_t timeout=20;
+    while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
+    {
+        delay(20000);
+        timeout--;
+        if( timeout <= 0 )
+        {
+            settextcolor(4,0);
+            printf("\nerror: port %d did not reset! ",j+1);
+            settextcolor(15,0);
+            printf("PortStatus: %X",pOpRegs->PORTSC[j]);
+            break;
+        }
+    }
+    pOpRegs->USBINTR = STS_INTMASK;
 }
 
 int32_t initEHCIHostController(uint32_t num)
@@ -416,7 +407,7 @@ int32_t initEHCIHostController(uint32_t num)
     if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
     {
          settextcolor(2,0);
-         printf("\nHCHalted set to 0 (OK)");
+         // printf("\nHCHalted set to 0 (OK)");
          enablePorts();
          settextcolor(15,0);
     }

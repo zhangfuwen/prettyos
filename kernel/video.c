@@ -1,19 +1,25 @@
 #include "os.h"
 #include "my_stdarg.h"
 
-static uint8_t  csr_x  = 0;
-static uint8_t  csr_y  = 0;
+static uint8_t  csr_x        = 0;
+static uint8_t  csr_y        = 0;
 static uint8_t  saved_csr_x  = 0;
 static uint8_t  saved_csr_y  = 0;
-static uint8_t  attrib = 0x0F;
+static uint8_t  attrib       = 0x0F;
 static uint8_t  saved_attrib = 0x0F;
 
 static uint16_t* vidmem = (uint16_t*) 0xB8000;
-static const uint8_t COLUMNS =  80;
-static const uint8_t LINES   =  50;
-static const uint8_t SCROLL_LINE = 45; // reserve line for the status bar and ascii-art
-static bool scrollflag = true;
 
+static const uint8_t COLUMNS = 80;
+static const uint8_t LINES   = 50;
+
+// reserve 5 lines:
+// one line:     separation,
+// three lines:  info area,
+// one line:     status bar
+static const uint8_t SCROLL_LINE = 45;
+
+static bool scrollflag = true;
 
 void clear_screen()
 {
@@ -34,7 +40,7 @@ void clear_userscreen(uint8_t backcolor)
 
 void settextcolor(uint8_t forecolor, uint8_t backcolor)
 {
-    // Top 4 bytes: background, bottom 4 bytes: foreground color
+    // Hi 4 bit: background, low 4 bit: foreground
     attrib = (backcolor << 4) | (forecolor & 0x0F);
 }
 
@@ -202,7 +208,8 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute)
     restore_cursor();
 };
 
-// printf(...): supports %u, %d, %x/%X, %s, %c
+/// TODO: make it standardized !
+// supports %u, %d, %y/%x/%X, %s, %c
 void printf (const char* args, ...)
 {
 	va_list ap;
