@@ -234,18 +234,39 @@ void analyzeEHCI(uint32_t bar)
     printf("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
 }
 
-void startHostController()
+void resetHostController()
 {
-    delay(2000000);settextcolor(9,0);
-    printf("\n>>> >>> function: startHostController\n");
-	settextcolor(15,0);
+    /*
+	Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
+	Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003
 
-    settextcolor(14,0);
-    printf("starting HC\n");
-    settextcolor(15,0);
-    pOpRegs->USBCMD &= ~CMD_RUN_STOP; // set Run-Stop-Bit to 0
-    delay(30000); //sleepMilliSeconds(30); // wait at least 16 microframes ( = 16*125 ?s = 2 ms )
-    pOpRegs->USBCMD |= CMD_HCRESET;  // set Reset-Bit to 1
+	To initiate a host controller reset
+	system software must:
+	*/
+
+    // 1. Stop the host controller.
+    //    System software must program the USB2CMD.Run/Stop bit to 0 to stop the host controller.
+    pOpRegs->USBCMD &= ~CMD_RUN_STOP;            // set Run-Stop-Bit to 0
+
+    /*
+	2. Wait for the host controller to halt.
+	   To determine when the host controller has halted, system software must read the USB2STS.HCHalted bit;
+	   the host controller will set this bit to 1 as soon as
+	   it has successfully transitioned from a running state to a stopped state (halted).
+	   Attempting to reset an actively running host controller will result in undefined behavior.
+    */
+    while( !(pOpRegs->USBSTS & STS_HCHALTED) )
+    {
+        delay(30000);                            // wait at least 16 microframes ( = 16*125 micro-sec = 2 ms )
+    }
+
+    // 3. Program the USB2CMD.HostControllerReset bit to a 1.
+    //    This will cause the host controller to begin the host controller reset.
+    pOpRegs->USBCMD |= CMD_HCRESET;              // set Reset-Bit to 1
+
+	// 4. Wait until the host controller has completed its reset.
+	// To determine when the reset is complete, system software must read the USB2CMD.HostControllerReset bit;
+	// the host controller will set this bit to 0 upon completion of the reset.
 
     int32_t timeout=10;
     while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
@@ -261,26 +282,96 @@ void startHostController()
             break;
         }
     }
+}
 
-    pOpRegs->USBINTR = 0; // EHCI interrupts disabled
+void startHostController(uint32_t num)
+{
+    delay(2000000);settextcolor(9,0);
+    printf("\n>>> >>> function: startHostController\n");
+	settextcolor(15,0);
 
-    // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
-    pOpRegs->CTRLDSSEGMENT = 0;
+    settextcolor(14,0);
+    printf("reset HC\n");
+    settextcolor(15,0);
 
-    // Turn the host controller ON via setting the Run/Stop bit. Software must not write a one to this field unless the host controller is in the Halted state
+    resetHostController();
+
+    /*
+    Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
+	Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003:
+    After the reset has completed, the system software must reinitialize the host controller so as to
+    return the host controller to an operational state (See Section 4.3.3.3, Post-Operating System Initialization)
+
+    ... software must complete the controller initialization by performing the following steps:
+    */
+
+    // 1. Claim/request ownership of the EHCI. This process is described in detail in Section 5 - EHCI Ownership.
+    DeactivateLegacySupport(num);
+
+    // 2. Program the CTRLDSSEGMENT register. This value must be programmed since the ICH4/5 only uses 64bit addressing
+    //    (See Section 4.3.3.1.2-HCCPARAMS – Host Controller Capability Parameters).
+    //    This register must be programmed before the periodic and asynchronous schedules are enabled.
+    pOpRegs->CTRLDSSEGMENT = 0; // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
+
+    // 3. Determine which events should cause an interrupt. System software programs the USB2INTR register
+    //    with the appropriate value. See Section 9 - Hardware Interrupt Routing - for additional details.
+    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed
+
+    // 4. Program the USB2CMD.InterruptThresholdControl bits to set the desired interrupt threshold
     pOpRegs->USBCMD |= CMD_8_MICROFRAME;
+
+    //    and turn the host controller ON via setting the USB2CMD.Run/Stop bit. Setting the Run/Stop
+    //    bit with both the periodic and asynchronous schedules disabled will still allow interrupts and
+    //    enabled port events to be visible to software
     if( pOpRegs->USBSTS & STS_HCHALTED )
     {
         pOpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
     }
 
-    // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
-    pOpRegs->CONFIGFLAG = CF;
-
-    // Write the appropriate value to the USBINTR register to enable the appropriate interrupts.
-    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed  // ---> VMWare works!
+    // 5. Program the Configure Flag to a 1 to route all ports to the EHCI controller. Because setting
+    //    this flag causes all ports to be unconditionally routed to the EHCI, all USB1.1 devices will
+    //    cease to function until the bus is properly enumerated (i.e., each port is properly routed to its
+    //    associated controller type: UHCI or EHCI)
+    pOpRegs->CONFIGFLAG = CF; // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
 
 	delay(100000); //sleepMilliSeconds(100);
+}
+
+int32_t initEHCIHostController(uint32_t num)
+{
+    delay(2000000);settextcolor(9,0);
+    printf("\n>>> >>> function: initEHCIHostController\n");
+	settextcolor(15,0);
+
+    static uint32_t timeout = 3;
+    irq_install_handler(32 + pciDev_Array[num].irq, ehci_handler);
+    irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+
+    startHostController(num);
+
+    if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
+    {
+         settextcolor(2,0);
+         // printf("\nHCHalted set to 0 (OK)");
+         enablePorts();
+         settextcolor(15,0);
+    }
+    else
+    {
+         settextcolor(4,0);
+         printf("\nHCHalted set to 1 (Not OK!) --> Ports cannot be enabled");
+         showUSBSTS();
+         if(timeout-- <=0)
+         {
+             return -1;
+         }
+         else
+         {
+             initEHCIHostController(pciEHCINumber);
+         }
+         settextcolor(15,0);
+    }
+    return 0;
 }
 
 void enablePorts()
@@ -365,44 +456,7 @@ void resetPort(uint8_t j)
     pOpRegs->USBINTR = STS_INTMASK;
 }
 
-int32_t initEHCIHostController(uint32_t num)
-{
-    delay(2000000);settextcolor(9,0);
-    printf("\n>>> >>> function: initEHCIHostController\n");
-	settextcolor(15,0);
 
-    static uint32_t timeout = 3;
-    irq_install_handler(32 + pciDev_Array[num].irq, ehci_handler);
-    irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
-
-    DeactivateLegacySupport(num);
-
-    startHostController();
-
-    if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
-    {
-         settextcolor(2,0);
-         // printf("\nHCHalted set to 0 (OK)");
-         enablePorts();
-         settextcolor(15,0);
-    }
-    else
-    {
-         settextcolor(4,0);
-         printf("\nHCHalted set to 1 (Not OK!) --> Ports cannot be enabled");
-         showUSBSTS();
-         if(timeout-- <=0)
-         {
-             return -1;
-         }
-         else
-         {
-             initEHCIHostController(pciEHCINumber);
-         }
-         settextcolor(15,0);
-    }
-    return 0;
-}
 
 void showPORTSC()
 {

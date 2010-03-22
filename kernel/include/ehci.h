@@ -243,13 +243,18 @@ struct ehci_request
 // functions, ...
 
 void ehci_handler(struct regs* r);
+
 void analyzeEHCI(uint32_t bar);
-void startHostController();
-void enablePorts();
+
+void resetHostController();
+void startHostController(uint32_t num);
 int32_t initEHCIHostController(uint32_t num);
+void DeactivateLegacySupport(uint32_t num);
+void enablePorts();
+
 void showUSBSTS();
 void showPORTSC();
-void DeactivateLegacySupport(uint32_t num);
+
 void checkPortLineStatus();
 void resetPort(uint8_t j);
 
