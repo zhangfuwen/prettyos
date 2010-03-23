@@ -82,9 +82,6 @@ struct dir_entry
 
 
 // cache memory for tracks 0 and 1
-uint8_t cache0[9216], cache1[9216];
-
-// long term necessary?
 uint8_t track0[9216], track1[9216];
 
 // how to handle memory for the file?

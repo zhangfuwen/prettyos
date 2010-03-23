@@ -6,8 +6,8 @@
 
 int32_t initCache() /// floppy
 {
-    int32_t retVal0 = flpydsk_read_ia(0,cache0,TRACK);
-    int32_t retVal1 = flpydsk_read_ia(1,cache1,TRACK);
+    int32_t retVal0 = flpydsk_read_ia(0,track0,TRACK);
+    int32_t retVal1 = flpydsk_read_ia(1,track1,TRACK);
 
     if(retVal0 || retVal1)
         return -1;
@@ -49,7 +49,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
 
     ///************** FAT ********************///
     printf("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
-    memcpy((void*)track0, (void*)cache0, 0x2400); /// TODO: avoid cache0 --> track0
+
     /// TODO: read only entries which are necessary for file_ia
     ///       combine reading FAT entry and data sector
     for(uint32_t i=0;i<FATMAXINDEX;i++)
@@ -94,6 +94,34 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     printf("\n\n");
     flpydsk_control_motor(false);
     sleepSeconds(3); // show screen output
+    return 0;
+}
+
+int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t size)
+{
+    printf("file save routine not yet implemented \n");
+
+    
+
+    // how many floppy disc sectors are needed?
+    
+    uint32_t neededSectors=0;
+    if( size%512 == 0)
+    {
+        neededSectors = (size/512);
+    }
+    else
+    {
+        neededSectors = (size/512)+1;
+    }
+
+    // TODO:
+    // search "neededSectors" free sectors
+    // write name, extension, first cluster into root directory
+    // define and write FAT chain to FAT1 and FAT2
+    // divide file in memory into sectors sizes; file: address and size needed
+    // write sectors from memory to floppy disk
+    // free memory, if necessary
     return 0;
 }
 

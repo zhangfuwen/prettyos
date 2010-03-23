@@ -99,7 +99,7 @@ void update_cursor()
     outportb(0x3D5, (uint8_t)(position&0xFF));
 }
 
-static uint8_t transferFromAsciiToCodepage437(uint8_t ascii)
+static uint8_t AsciiToCP437(uint8_t ascii)
 {
     switch ( ascii )
     {
@@ -122,7 +122,7 @@ static uint8_t transferFromAsciiToCodepage437(uint8_t ascii)
 
 void putch(char c)
 {
-    uint8_t uc = transferFromAsciiToCodepage437((uint8_t)c); // no negative values
+    uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
     uint16_t* pos;
     uint32_t att = attrib << 8;

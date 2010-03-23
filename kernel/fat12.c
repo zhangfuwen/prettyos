@@ -428,7 +428,7 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag) //
        return E_DISK;
    }
    */
-   memcpy((void*)a,(void*)(cache1+st_sec*512-9216),0x200); //copy data from cache to a[...]
+   memcpy((void*)a,(void*)(track1+st_sec*512-9216),0x200); //copy data from cache to a[...]
 
    parse_dir(a,in,rs);
    if(flag==true)
