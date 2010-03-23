@@ -90,8 +90,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     else if(retVal==-1)
     {
         printf("file was not executed due to FAT error.");
-    }
-    printf("\n\n");
+    }    
     flpydsk_control_motor(false);
     sleepSeconds(3); // show screen output
     return 0;

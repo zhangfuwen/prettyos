@@ -33,24 +33,11 @@ char DateAndTime[100];
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
-/*
-static void floatTest()
-{
-    printf("float test:" );
-    float a = 5.12, b = 64.26, c = 0.00;
-    c = a * b;
-    char string[80];
-    float2string(c, 4, string);
-    printf(" 5.12 * 64.26 = " );
-    printf("%s",string);
-}
-*/
-
 static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printf("PrettyOS [Version 0.0.0.272]\n");
+    printf("PrettyOS [Version 0.0.0.273]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -82,8 +69,6 @@ int main()
     EHCIflag = false;
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
-
-    // void floatTest()
 
     // direct 1st floppy disk
     if( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
