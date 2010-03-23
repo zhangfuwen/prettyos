@@ -1,0 +1,1 @@
+tools\mingw32-make clean OS=WINDOWS

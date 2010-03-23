@@ -1,54 +1,77 @@
-STAGE1DIR= stage1_bootloader
-STAGE2DIR= stage2_bootloader
-KERNELDIR= kernel
-USERRDDIR= user/init_rd_img
-USERDIR= user/user_program_c
-USERTEST= user/user_test_c
-USERTOOLS= user/user_tools
-
+# Define OS-dependant Tools
 ifeq ($(OS),WINDOWS)
-    RM=-del
-    MV=cmd /c move/Y
+    RM= - del
+    MV= cmd /c move/Y
     NASM= nasm
     CC= i586-elf-gcc
     LD= i586-elf-ld
 else
-    RM=rm -f
-    MV=mv
-    NASM=nasm
-    CC=gcc
-    LD=ld
+    RM= rm -f
+    MV= mv
+    NASM= nasm
+    CC= gcc
+    LD= ld
 endif
 
+# Folders
+OBJDIR= object_files
+STAGE1DIR= stage1_bootloader
+STAGE2DIR= stage2_bootloader
+KERNELDIR= kernel
+USERDIR= user
+SHELLDIR= user_program_c
+USERRDDIR= init_rd_img
+USERTEST= user_test_c
+USERTOOLS= user_tools
 
-all: boot1 boot2 ckernel
+# dependancies
+KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
+SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.c $(USERDIR)/$(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.asm))
 
-boot1: $(wildcard $(STAGE1DIR)/*.asm $(STAGE1DIR)/*.inc)
+# Compiler-/Linker-Flags
+NASMFLAGS= -O32 -f elf
+GCCFLAGS= -c -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdinc -fno-builtin -fno-stack-protector -Iinclude
+LDFLAGS= -nostdlib
+
+# targets to build one asm or c-file to an object file
+vpath %.o $(OBJDIR)
+%.o: %.c 
+	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR)/include -I $(USERDIR)/$(USERTOOLS) -o $(OBJDIR)/$@
+%.o: %.asm
+	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
+
+# targets to build PrettyOS
+.PHONY: clean all
+all: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN FloppyImage.bin
+
+$(STAGE1DIR)/boot.bin:
 	$(NASM) -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
-
-boot2: $(wildcard $(STAGE2DIR)/*.asm $(STAGE2DIR)/*.inc)
+$(STAGE2DIR)/BOOT2.BIN:
 	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
-ckernel: $(wildcard $(KERNELDIR)/* $(KERNELDIR)/include/*) initrd
-	$(CC) $(KERNELDIR)/*.c -c -I$(KERNELDIR)/include -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
-	$(CC) $(KERNELDIR)/cdi/*.c -c -I$(KERNELDIR)/include -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
-	$(NASM) -O32 -f elf $(KERNELDIR)/data.asm -I$(KERNELDIR)/ -o data.o
-	$(NASM) -O32 -f elf $(KERNELDIR)/flush.asm -I$(KERNELDIR)/ -o flush.o
-	$(NASM) -O32 -f elf $(KERNELDIR)/interrupts.asm -I$(KERNELDIR)/ -o interrupts.o
-	$(NASM) -O32 -f elf $(KERNELDIR)/kernel.asm -I$(KERNELDIR)/ -o kernel.o
-	$(NASM) -O32 -f elf $(KERNELDIR)/process.asm -I$(KERNELDIR)/ -o process.o
-	$(LD) *.o -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -nostdinc -o $(KERNELDIR)/KERNEL.BIN
-	$(RM) *.o
-	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERTEST)/HELLO.ELF
+$(KERNELDIR)/KERNEL.BIN: $(KERNEL_OBJECTS) $(KERNELDIR)/initrd.dat
+	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 
-initrd: $(wildcard $(USERDIR)/*)
-	$(NASM) -O32 -f elf $(USERTOOLS)/start.asm -o start.o
-	$(CC) $(USERTOOLS)/userlib.c -c -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
-	$(CC) $(USERDIR)/*.c -c -I$(USERTOOLS) -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdlib -nostdinc -fno-builtin -fno-stack-protector -Iinclude
-	$(LD) *.o -T $(USERTOOLS)/user.ld -Map $(USERDIR)/kernel.map -nostdinc -o $(USERDIR)/program.elf
-	$(RM) *.o
-	tools/make_initrd $(USERRDDIR)/info.txt info $(USERDIR)/program.elf shell
+$(USERDIR)/$(SHELLDIR)/program.elf: $(SHELL_OBJECTS)
+	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(SHELLDIR)/kernel.map -o $(USERDIR)/$(SHELLDIR)/program.elf
+
+$(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/program.elf
+	tools/make_initrd $(USERDIR)/$(USERRDDIR)/info.txt info $(USERDIR)/$(SHELLDIR)/program.elf shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
-clear:
-	$(RM) *.o
+FloppyImage.bin:
+	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF
+
+clean:
+# OS-dependant code because of different interpretation of / in Windows and Linux
+ifeq ($(OS),WINDOWS)
+	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
+	$(RM) $(OBJDIR)\$(KERNELDIR)\cdi\*.o
+	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTOOLS)\*.o
+	$(RM) $(OBJDIR)\$(USERDIR)\$(SHELLDIR)\*.o
+else
+	$(RM) $(OBJDIR)/$(KERNELDIR)/*.o
+	$(RM) $(OBJDIR)/$(KERNELDIR)/cdi/*.o
+	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTOOLS)/*.o
+	$(RM) $(OBJDIR)/$(USERDIR)/$(SHELLDIR)/*.o
+endif
