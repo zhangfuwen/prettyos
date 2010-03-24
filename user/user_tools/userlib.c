@@ -30,7 +30,7 @@ unsigned char getch()
     {
         __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(6) );
     }
-    while(ret==0);
+    while (ret==0);
     return ret;
 }
 
@@ -134,7 +134,7 @@ void printf (const char* args, ...)
     va_start (ap, args);
     char buffer[32]; // Larger is not needed at the moment
 
-    for(; *args; args++)
+    for (; *args; args++)
     {
         switch (*args)
         {
@@ -198,7 +198,7 @@ char toUpper(char c)
 
 char* toupper( char* s )
 {
-    for(int i=0;i<strlen(s);i++)
+    for (int i=0;i<strlen(s);i++)
     {
         s[i]=toUpper(s[i]);
     }
@@ -207,7 +207,7 @@ char* toupper( char* s )
 
 char* tolower( char* s )
 {
-    for(int i=0;i<strlen(s);i++)
+    for (int i=0;i<strlen(s);i++)
     {
         s[i]=toLower(s[i]);
     }
@@ -217,7 +217,7 @@ char* tolower( char* s )
 unsigned int strlen(const char* str)
 {
     unsigned int retval;
-    for(retval = 0; *str != '\0'; ++str)
+    for (retval = 0; *str != '\0'; ++str)
     {
         ++retval;
     }
@@ -239,13 +239,13 @@ int strcmp( const char* s1, const char* s2 )
 char* strcpy(char* dest, const char* src)
 {
    char* save = dest;
-   while( (*dest++ = *src++) );
+   while ( (*dest++ = *src++) );
    return save;
 }
 
 char* strncpy(char* dest, const char* src, size_t n) // okay?
 {
-    if(n != 0)
+    if (n != 0)
     {
         char* d = dest;
         do
@@ -253,12 +253,12 @@ char* strncpy(char* dest, const char* src, size_t n) // okay?
             if ((*d++ = *src++) == 0)
             {
                 /* NUL pad the remaining n-1 bytes */
-                while(--n != 0)
+                while (--n != 0)
                    *d++ = 0;
                 break;
             }
         }
-        while(--n != 0);
+        while (--n != 0);
      }
      return (dest);
 }
@@ -272,14 +272,14 @@ char* strcat(char* dest, const char* src)
 
 char* strchr(char* str, int character)
 {
-    for(;;str++)
+    for (;;str++)
     {
         // NOTE< the order here is important >
-        if( *str == character )
+        if ( *str == character )
         {
             return str;
         }
-        if( *str == 0 )
+        if ( *str == 0 )
         {
             return 0;
         }
@@ -296,9 +296,9 @@ char* gets(char* s)
     {
         c = getch();
         //settextcolor(i,0);///TEST
-        if(c=='\b')  // Backspace
+        if (c=='\b')  // Backspace
         {
-           if(i>0)
+           if (i>0)
            {
               putch(c);
               s[i-1]='\0';
@@ -307,7 +307,7 @@ char* gets(char* s)
            else
            {
                beep(50,20);
-               if(flag==false)
+               if (flag==false)
                {
                    putch('\n');
                    flag=true;
@@ -322,25 +322,25 @@ char* gets(char* s)
             i++;
         }
     }
-    while(c!=10); // Linefeed
+    while (c!=10); // Linefeed
     s[i]='\0';
 
 /*
     settextcolor(15,0);
     int j;
-    for(j=0;j<15;j++)
+    for (j=0;j<15;j++)
     {
-        if(s[j]=='\b')
+        if (s[j]=='\b')
         {
             puts("backspace");
         }
-        else if(s[j]=='\0')
+        else if (s[j]=='\0')
         {
             puts("EOS");
             putch('\n');
             break;
         }
-        else if(s[j]=='\n')
+        else if (s[j]=='\n')
         {
             puts("NL");
         }
@@ -360,7 +360,7 @@ void reverse(char* s)
 {
     char c;
 
-    for(int i=0,j=strlen(s)-1; i<j; i++, j--)
+    for (int i=0,j=strlen(s)-1; i<j; i++, j--)
     {
         c = s[i];
         s[i] = s[j];
@@ -372,7 +372,7 @@ void reverse(char* s)
 void itoa(int n, char* s)
 {
     int i, sign;
-    if((sign = n) < 0)  // record sign
+    if ((sign = n) < 0)  // record sign
     {
         n = -n;         // make n positive
     }
@@ -381,9 +381,9 @@ void itoa(int n, char* s)
     {
         s[i++] = n % 10 + '0';  // get next digit
     }
-    while( (n /= 10) > 0 );     // delete it
+    while ( (n /= 10) > 0 );     // delete it
 
-    if(sign < 0)
+    if (sign < 0)
     {
         s[i++] = '-';
     }
@@ -394,13 +394,13 @@ void itoa(int n, char* s)
 int atoi(const char* s)
 {
     int num=0,flag=0;
-    for(int i=0;i<=strlen(s);i++)
+    for (int i=0;i<=strlen(s);i++)
     {
-        if(s[i] >= '0' && s[i] <= '9')
+        if (s[i] >= '0' && s[i] <= '9')
         {
             num = num * 10 + s[i] -'0';
         }
-        else if(s[0] == '-' && i==0)
+        else if (s[0] == '-' && i==0)
         {
             flag =1;
         }
@@ -409,7 +409,7 @@ int atoi(const char* s)
             break;
         }
     }
-    if(flag == 1)
+    if (flag == 1)
     {
         num = num * -1;
     }
@@ -496,13 +496,13 @@ void showInfo(signed char val)
     static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                "   ;
     static char* line3 = " `-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                               "  ;
 
-    if(val==1)
+    if (val==1)
     {
         char temp1 = line1[79];
         char temp2 = line2[79];
         char temp3 = line3[79];
 
-        for(int i=79;i>0;--i)
+        for (int i=79;i>0;--i)
         {
             line1[i] = line1[i-1];
             line2[i] = line2[i-1];

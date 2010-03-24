@@ -23,13 +23,13 @@ void noSound()
 
 void msgbeep()
 {
-	beep(440,1000);
+    beep(440,1000);
 }
 
 void beep(uint32_t freq, uint32_t duration)
 {
-	sound(freq);
-	sti();
-	sleepMilliSeconds(duration);
-	noSound();
+    sound(freq);
+    sti();
+    sleepMilliSeconds(duration);
+    noSound();
 }

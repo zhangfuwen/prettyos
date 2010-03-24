@@ -7,7 +7,7 @@
 listHead_t* listCreate()
 {
     listHead_t* hd = (listHead_t*)malloc(sizeof(listHead_t),0);
-    if(hd)
+    if (hd)
     {
         hd->head = hd->tail = 0;
         return hd;
@@ -18,12 +18,12 @@ listHead_t* listCreate()
 int8_t listAppend(listHead_t* hd, void* data)
 {
     element_t* ap = (element_t*)malloc(sizeof(element_t),0);
-    if(ap)
+    if (ap)
     {
         ap->data = data;
         ap->next = 0;
 
-        if(!hd->head) // there exist no list element
+        if (!hd->head) // there exist no list element
         {
             hd->head = hd->tail = ap;
             return 1;
@@ -43,7 +43,7 @@ void listDeleteAll(struct listHead* hd)
     element_t* cur = hd->head;
     element_t* nex;
 
-    while(cur)
+    while (cur)
     {
         nex=cur->next;
         free(cur->data);
@@ -56,9 +56,9 @@ void listDeleteAll(struct listHead* hd)
 int8_t listInput(listHead_t* hd)
 {
     void* dat = (void*)malloc(sizeof(void*),0);
-    if(dat)
+    if (dat)
     {
-        if(listAppend(hd,dat))
+        if (listAppend(hd,dat))
         {
             return 1;
         }
@@ -78,13 +78,13 @@ void listShow(listHead_t* hd)
 {
     printf("List elements:\n");
     element_t* cur = hd->head;
-    if(!cur)
+    if (!cur)
     {
         printf("The list is empty.");
     }
     else
     {
-        while(cur)
+        while (cur)
         {
             printf("%X\t",cur);
             cur = cur->next;
@@ -96,17 +96,17 @@ void* listShowElement(listHead_t* hd, uint32_t number)
 {
     element_t* cur = hd->head;
     void* dat=0;
-    if(!cur)
+    if (!cur)
     {
         /* printf(""); */
     }
     else
     {
         uint32_t index=0;
-        while(cur)
+        while (cur)
         {
             ++index;
-            if(index==number)
+            if (index==number)
             {
                 dat = cur->data;
             }

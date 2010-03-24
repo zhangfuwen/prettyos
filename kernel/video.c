@@ -47,7 +47,7 @@ void settextcolor(uint8_t forecolor, uint8_t backcolor)
 void move_cursor_right()
 {
     ++csr_x;
-    if(csr_x>=COLUMNS)
+    if (csr_x>=COLUMNS)
     {
       ++csr_y;
       csr_x=0;
@@ -56,9 +56,9 @@ void move_cursor_right()
 
 void move_cursor_left()
 {
-    if(csr_x)
+    if (csr_x)
         --csr_x;
-    if(!csr_x && csr_y>0)
+    if (!csr_x && csr_y>0)
     {
         csr_x=COLUMNS-1;
         --csr_y;
@@ -83,7 +83,7 @@ void set_cursor(uint8_t x, uint8_t y)
 void update_cursor()
 {
     uint16_t position;
-    if(scrollflag)
+    if (scrollflag)
     {
         position = csr_y * COLUMNS + csr_x;
     }
@@ -127,15 +127,15 @@ void putch(char c)
     uint16_t* pos;
     uint32_t att = attrib << 8;
 
-    if(uc == 0x08) // backspace: move the cursor one space backwards and delete
+    if (uc == 0x08) // backspace: move the cursor one space backwards and delete
     {
-        if(csr_x)
+        if (csr_x)
         {
             --csr_x;
             putch(' ');
             --csr_x;
         }
-        if(!csr_x && csr_y>0)
+        if (!csr_x && csr_y>0)
         {
             csr_x=COLUMNS-1;
             --csr_y;
@@ -144,34 +144,34 @@ void putch(char c)
             --csr_y;
         }
     }
-    else if(uc == 0x09) // tab: increment csr_x (divisible by 8)
+    else if (uc == 0x09) // tab: increment csr_x (divisible by 8)
     {
         csr_x = (csr_x + 8) & ~(8 - 1);
     }
-    else if(uc == '\r') // cr: cursor back to the margin
+    else if (uc == '\r') // cr: cursor back to the margin
     {
         csr_x = 0;
     }
-    else if(uc == '\n') // newline: like 'cr': cursor to the margin and increment csr_y
+    else if (uc == '\n') // newline: like 'cr': cursor to the margin and increment csr_y
     {
         csr_x = 0; ++csr_y;
     }
 
-    else if(uc != 0)
+    else if (uc != 0)
     {
         pos = vidmem + (csr_y * COLUMNS + csr_x);
        *pos = uc | att; // character AND attributes: color
         ++csr_x;
     }
 
-    if(csr_x >= COLUMNS) // cursor reaches edge of the screen's width, a new line is inserted
+    if (csr_x >= COLUMNS) // cursor reaches edge of the screen's width, a new line is inserted
     {
         csr_x = 0;
         ++csr_y;
     }
 
     // scroll if needed, and finally move the cursor
-    if(scrollflag)
+    if (scrollflag)
     {
         scroll();
     }
@@ -180,13 +180,13 @@ void putch(char c)
 
 void puts(const char* text)
 {
-    for(; *text; putch(*text), ++text);
+    for (; *text; putch(*text), ++text);
 }
 
 void scroll()
 {
     uint32_t blank = 0x20 | (attrib << 8);
-    if(csr_y >= SCROLL_LINE)
+    if (csr_y >= SCROLL_LINE)
     {
         uint8_t temp = csr_y - SCROLL_LINE + 1;
         memcpy (vidmem, vidmem + temp * COLUMNS, (SCROLL_LINE - temp) * COLUMNS * 2);
@@ -216,7 +216,7 @@ void printf (const char* args, ...)
     va_start (ap, args);
     char buffer[32]; // Larger is not needed at the moment
 
-    for(; *args; args++)
+    for (; *args; args++)
     {
         switch (*args)
         {

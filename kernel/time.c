@@ -38,45 +38,45 @@ tm_t* cmosTime(tm_t* ptm)
 //}
 
 static void appendInt(int val, char* dest, char* buf) {
-    if(val<10)
+    if (val<10)
     {
         strcat(dest,"0");
     }
     itoa(val, buf);
-	strcat(dest, buf);
+    strcat(dest, buf);
 }
 
 unsigned int calculateWeekday(unsigned int year, unsigned int month, unsigned int day) {
-	day += 6; //1.1.2000 was Saturday
-	day += (year-2000)*365.25;
-	if(month > 11)
-		day+=334;
-	else if(month > 10)
-		day+=304;
-	else if(month > 9)
-		day+=273;
-	else if(month > 8)
-		day+=243;
-	else if(month > 7)
-		day+=212;
-	else if(month > 6)
-		day+=181;
-	else if(month > 5)
-		day+=151;
-	else if(month > 4)
-		day+=120;
-	else if(month > 3)
-		day+=90;
-	else if(month > 2)
-		day+=59;
-	else if(month > 1)
-		day+=31;
+    day += 6; //1.1.2000 was Saturday
+    day += (year-2000)*365.25;
+    if (month > 11)
+        day+=334;
+    else if (month > 10)
+        day+=304;
+    else if (month > 9)
+        day+=273;
+    else if (month > 8)
+        day+=243;
+    else if (month > 7)
+        day+=212;
+    else if (month > 6)
+        day+=181;
+    else if (month > 5)
+        day+=151;
+    else if (month > 4)
+        day+=120;
+    else if (month > 3)
+        day+=90;
+    else if (month > 2)
+        day+=59;
+    else if (month > 1)
+        day+=31;
 
-	if(year%4 == 0 && (month < 2 || (month == 2 && day <= 28))) {
-		day--;
-	}
+    if (year%4 == 0 && (month < 2 || (month == 2 && day <= 28))) {
+        day--;
+    }
 
-	return(day%7+1);
+    return(day%7+1);
 }
 
 char* getCurrentDateAndTime(char* pStr)
@@ -87,7 +87,7 @@ char* getCurrentDateAndTime(char* pStr)
     tm_t* pct = cmosTime(&currentTime);
     char buf[40];
 
-	pct->weekday = calculateWeekday(2000+pct->year, pct->month, pct->dayofmonth);
+    pct->weekday = calculateWeekday(2000+pct->year, pct->month, pct->dayofmonth);
     switch (pct->weekday)
     {
         case 1: strcpy(pStr, "Sunday, ");    break;
@@ -115,26 +115,26 @@ char* getCurrentDateAndTime(char* pStr)
         case 12: strcat(pStr, "December ");  break;
     }
 
-	appendInt(pct->dayofmonth, pStr, buf);
+    appendInt(pct->dayofmonth, pStr, buf);
 
     strcat(pStr,", ");
 
     itoa(pct->century, buf);
     strcat(pStr, buf);
 
-	appendInt(pct->year, pStr, buf);
+    appendInt(pct->year, pStr, buf);
 
     strcat(pStr,", ");
 
-	appendInt(pct->hour, pStr, buf);
+    appendInt(pct->hour, pStr, buf);
 
     strcat(pStr,":");
 
-	appendInt(pct->minute, pStr, buf);
+    appendInt(pct->minute, pStr, buf);
 
     strcat(pStr,":");
 
-	appendInt(pct->second, pStr, buf);
+    appendInt(pct->second, pStr, buf);
 
     strcat(pStr, ""); // add '\0'
     return pStr;

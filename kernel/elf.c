@@ -12,73 +12,73 @@
 
 typedef enum
 {
-	ET_NONE = 0,
-	ET_REL = 1,
-	ET_EXEC = 2,
-	ET_DYN = 3,
-	ET_CORE = 4
+    ET_NONE = 0,
+    ET_REL = 1,
+    ET_EXEC = 2,
+    ET_DYN = 3,
+    ET_CORE = 4
 } elf_header_type_t;
 
 typedef enum
 {
-	EM_NONE = 0,
-	EM_M32 = 1,
-	EM_SPARC = 2,
-	EM_386 = 3,
-	EM_86K = 4,
-	EM_88K = 5,
-	EM_860 = 7,
-	EM_MIPS = 8
+    EM_NONE = 0,
+    EM_M32 = 1,
+    EM_SPARC = 2,
+    EM_386 = 3,
+    EM_86K = 4,
+    EM_88K = 5,
+    EM_860 = 7,
+    EM_MIPS = 8
 } elf_header_machine_t;
 
 typedef enum
 {
-	EV_NONE = 0,
-	EV_CURRENT = 1
+    EV_NONE = 0,
+    EV_CURRENT = 1
 } elf_header_version_t;
 
 typedef enum
 {
-	EI_MAG0 = 0,
-	EI_MAG1 = 1,
-	EI_MAG2 = 2,
-	EI_MAG3 = 3,
-	EI_CLASS = 4,
-	EI_DATA = 5,
-	EI_VERSION = 6,
-	EI_PAD = 7
+    EI_MAG0 = 0,
+    EI_MAG1 = 1,
+    EI_MAG2 = 2,
+    EI_MAG3 = 3,
+    EI_CLASS = 4,
+    EI_DATA = 5,
+    EI_VERSION = 6,
+    EI_PAD = 7
 } elf_header_ident_t;
 
 typedef enum
 {
-	ELFCLASSNONE = 0,
-	ELFCLASS32 = 1,
-	ELFCLASS64 = 2
+    ELFCLASSNONE = 0,
+    ELFCLASS32 = 1,
+    ELFCLASS64 = 2
 } elf_header_ident_class_t;
 
 typedef enum
 {
-	ELFDATANONE = 0,
-	ELFDATA2LSB = 1,
-	ELFDATA2MSB = 2
+    ELFDATANONE = 0,
+    ELFDATA2LSB = 1,
+    ELFDATA2MSB = 2
 } elf_header_ident_data_t;
 
 typedef struct
 {
-	uint8_t  ident[16];
-	uint16_t type;
-	uint16_t machine;
-	uint32_t version;
-	uint32_t entry;
-	uint32_t phoff;
-	uint32_t shoff;
-	uint32_t flags;
-	uint16_t ehsize;
-	uint16_t phentrysize;
-	uint16_t phnum;
-	uint16_t shentrysize;
-	uint16_t shnum;
-	uint16_t shstrndx;
+    uint8_t  ident[16];
+    uint16_t type;
+    uint16_t machine;
+    uint32_t version;
+    uint32_t entry;
+    uint32_t phoff;
+    uint32_t shoff;
+    uint32_t flags;
+    uint16_t ehsize;
+    uint16_t phentrysize;
+    uint16_t phnum;
+    uint16_t shentrysize;
+    uint16_t shnum;
+    uint16_t shstrndx;
 } elf_header_t;
 
 
@@ -155,9 +155,9 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size )
 
         // Copy the code, using the user's page directory
         cli();
-        paging_switch( pd );
+        paging_switch ( pd );
         memcpy( (void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz );
-        paging_switch( kernel_pd );
+        paging_switch ( kernel_pd );
         sti();
 
         header_pos += header->phentrysize;

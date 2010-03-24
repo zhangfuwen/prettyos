@@ -28,7 +28,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
 
   // we dump the Data
   settextcolor(3,0);
-  for(uint32_t c = 0; c < Length; c++ )
+  for (uint32_t c = 0; c < Length; c++ )
   {
     printf("%y ", ((char*)Data)[c]);
   }
@@ -44,7 +44,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
 
   // now we check if it is Ethernet 1 or Ethernet 2
   // (but we just throw it away, because we can read the length of the data from the other Layers)
-  if( ( (eth->type_len[0] << 8) | eth->type_len[1] ) > 1500 )
+  if ( ( (eth->type_len[0] << 8) | eth->type_len[1] ) > 1500 )
   {
     settextcolor(14,0); printf("Ethernet 2 Packet.\n"); settextcolor(15,0);
   }
@@ -58,11 +58,11 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
   ip  = (struct ip* )( (unsigned long)eth + sizeof(struct ethernet) );
 
   // to decide if it is an ip or an arp paket we just look at the ip-version
-  if( (ip->version_ihl >> 4) == 4 )
+  if ( (ip->version_ihl >> 4) == 4 )
   {
     settextcolor(14,0); printf("IPv4 Packet.\n"); settextcolor(15,0);
   }
-  else if( (ip->version_ihl >> 4) == 6 )
+  else if ( (ip->version_ihl >> 4) == 6 )
   {
     settextcolor(14,0); printf("IPv6 Packet.\n"); settextcolor(15,0);
   }
@@ -72,7 +72,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     // ASK < any other ideas to test for the type of the protocol? >
 
     // now we check if it is really an ipv4 ARP paket
-    if( ( ( (arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1] ) ==    1 ) &&
+    if ( ( ( (arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1] ) ==    1 ) &&
         ( ( (arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1] ) == 2048 ) &&
         ( arp->hardware_addresssize                                              ==    6 ) &&
         ( arp->protocol_addresssize                                              ==    4 )
@@ -84,11 +84,11 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
         uint16_t operation = (arp->operation[0] << 8) | arp->operation[1];
 
         // print the operation
-        if( operation == 1 ) // it is an ARP-Request
+        if ( operation == 1 ) // it is an ARP-Request
         {
             settextcolor(14,0); printf("Operation: Request\n"); settextcolor(15,0);
         }
-        else if( operation == 2 ) // it is an ARP-Response
+        else if ( operation == 2 ) // it is an ARP-Response
         {
             settextcolor(14,0); printf("Operation: Response\n"); settextcolor(15,0);
         }

@@ -16,19 +16,19 @@ extern uint32_t BaseAddressRTL8139_MMIO;
 
 void rtl8139_handler(struct regs* r)
 {
-	/// TODO: ring buffer, we get always the first received data!
+    /// TODO: ring buffer, we get always the first received data!
 
-	// read bytes 003Eh bis 003Fh, Interrupt Status Register
+    // read bytes 003Eh bis 003Fh, Interrupt Status Register
     uint16_t val = *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E ));
 
     char str[80];
     strcpy(str,"");
 
-    if((val & 0x1) == 0x1)
+    if ((val & 0x1) == 0x1)
     {
         strcpy(str,"Receive OK,");
     }
-    if((val & 0x4) == 0x4)
+    if ((val & 0x4) == 0x4)
     {
         strcpy(str,"Transfer OK,");
     }
@@ -39,10 +39,10 @@ void rtl8139_handler(struct regs* r)
     settextcolor(3,0);
 
     // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
-	*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E )) = val;
+    *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E )) = val;
 
-	strcat(str,"   Receiving Buffer content:\n");
-	printf(str);
+    strcat(str,"   Receiving Buffer content:\n");
+    printf(str);
 
     int32_t length, ethernetType;
     length = network_buffer[3]*0x100 + network_buffer[2]; // Little Endian
@@ -53,41 +53,41 @@ void rtl8139_handler(struct regs* r)
     settextcolor(13,0);
     printf("Flags: ");
     settextcolor(3,0);
-    for(int8_t i=0;i<2;i++) {printf("%y ",network_buffer[i]);}
+    for (int8_t i=0;i<2;i++) {printf("%y ",network_buffer[i]);}
 
-	// settextcolor(13,0); printf("\tLength: "); settextcolor(3,0);
-    // for(i=2;i<4;i++) {printf("%y ",network_buffer[i]);}
+    // settextcolor(13,0); printf("\tLength: "); settextcolor(3,0);
+    // for (i=2;i<4;i++) {printf("%y ",network_buffer[i]);}
     uint32_t paket_length = (network_buffer[3] << 8) | network_buffer[2];
 
     settextcolor(13,0);
-	printf("\tLength: ");	settextcolor(3,0);	printf("%d", paket_length);
+    printf("\tLength: ");    settextcolor(3,0);    printf("%d", paket_length);
 
-	settextcolor(13,0); printf("\nMAC Receiver: "); settextcolor(3,0);
-    for(int8_t i=4;i<10;i++) {printf("%y ",network_buffer[i]);}
+    settextcolor(13,0); printf("\nMAC Receiver: "); settextcolor(3,0);
+    for (int8_t i=4;i<10;i++) {printf("%y ",network_buffer[i]);}
 
     settextcolor(13,0); printf("MAC Transmitter: "); settextcolor(3,0);
-    for(int8_t i=10;i<16;i++) {printf("%y ",network_buffer[i]);}
+    for (int8_t i=10;i<16;i++) {printf("%y ",network_buffer[i]);}
 
     settextcolor(13,0);
     printf("\nEthernet: ");
     settextcolor(3,0);
-    if(ethernetType<=0x05DC){  printf("type 1, "); }
+    if (ethernetType<=0x05DC){  printf("type 1, "); }
     else                    {  printf("type 2, "); }
 
     settextcolor(13,0);
-    if(ethernetType<=0x05DC){  printf("Length: "); }
+    if (ethernetType<=0x05DC){  printf("Length: "); }
     else                    {  printf("Type: ");   }
     settextcolor(3,0);
-    for(int8_t i=16;i<18;i++) {printf("%y ",network_buffer[i]);}
+    for (int8_t i=16;i<18;i++) {printf("%y ",network_buffer[i]);}
 
     printf("\n");
-    for(int32_t i=18;i<=length;i++) {printf("%y ",network_buffer[i]);}
+    for (int32_t i=18;i<=length;i++) {printf("%y ",network_buffer[i]);}
     printf("\n--------------------------------------------------------------------------------\n");
 
     settextcolor(15,0);
 
-	// call to the IP-TCP Stack
-	ipTcpStack_recv((void*)(&(network_buffer[4])), paket_length);
+    // call to the IP-TCP Stack
+    ipTcpStack_recv((void*)(&(network_buffer[4])), paket_length);
 }
 
 
@@ -109,7 +109,7 @@ void install_RTL8139(uint32_t number)
     else
     {
         int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO );
-        if(retVal == true)
+        if (retVal == true)
         {
             printf("\n");
         }
@@ -127,10 +127,10 @@ void install_RTL8139(uint32_t number)
 
     // wait for the reset of the "reset flag"
     uint32_t k=0;
-    while(true)
+    while (true)
     {
         sleepMilliSeconds(10);
-        if( !( *((volatile uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) & 0x10 ) ) //
+        if ( !( *((volatile uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) & 0x10 ) ) //
         {
             #ifdef _DIAGNOSIS_
                 settextcolor(3,0);
@@ -140,7 +140,7 @@ void install_RTL8139(uint32_t number)
             break;
         }
         k++;
-        if(k>100)
+        if (k>100)
         {
             printf("\nWaiting not successful! Finished by timeout.\n");
             break;

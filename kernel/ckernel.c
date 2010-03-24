@@ -37,7 +37,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printf("PrettyOS [Version 0.0.0.274]\n");
+    printf("PrettyOS [Version 0.0.0.275 - Cuervos birthday Rev! - 24th March]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -50,18 +50,18 @@ int main()
 {
     init();
     pODA->Memory_Size = paging_install();
-	if(pODA->Memory_Size > 1073741824)
-	{
-		printf( "\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
-	}
-	else if(pODA->Memory_Size > 1048576)
-	{
-		printf( "\n\nMemory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size );
-	}
-	else
-	{
-		printf( "\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size );
-	}
+    if (pODA->Memory_Size > 1073741824)
+    {
+        printf( "\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
+    }
+    else if (pODA->Memory_Size > 1048576)
+    {
+        printf( "\n\nMemory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size );
+    }
+    else
+    {
+        printf( "\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size );
+    }
 
     heap_install();
     tasking_install();
@@ -71,13 +71,13 @@ int main()
     sti();
 
     // direct 1st floppy disk
-    if( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
+    if ( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
     {
         printf("1.44 MB FDD device 0\n\n");
         pODA->flpy_motor[0] = false;        // first floppy motor is off
         flpydsk_set_working_drive(0); // set drive 0 as current drive
-	    flpydsk_install(32+6);        // floppy disk uses IRQ 6 // 32+6
-	    memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero
+        flpydsk_install(32+6);        // floppy disk uses IRQ 6 // 32+6
+        memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero
     }
     else
     {
@@ -88,9 +88,9 @@ int main()
     /// PCI list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
     listHead_t* pciDevList = listCreate();
-    for(int i=0;i<PCIARRAYSIZE;++i)
+    for (int i=0;i<PCIARRAYSIZE;++i)
     {
-        if( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00) )   // there is no vendor EE00h
+        if ( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00) )   // there is no vendor EE00h
         {
             listAppend(pciDevList, (void*)(pciDev_Array+i));
             ///
@@ -103,11 +103,11 @@ int main()
     }
     //printf("\n");
     // listShow(pciDevList); // shows addresses of list elements (not data)
-	printf("\n");
-    for(int i=0;i<PCIARRAYSIZE;++i)
+    printf("\n");
+    for (int i=0;i<PCIARRAYSIZE;++i)
     {
         void* element = listShowElement(pciDevList,i);
-        if(element)
+        if (element)
         {
 
             ///
@@ -152,7 +152,7 @@ int main()
     {
         fs_node_t* fsnode = finddir_fs(fs_root, node->name);
 
-        if((fsnode->flags & 0x7) == FS_DIRECTORY)
+        if ((fsnode->flags & 0x7) == FS_DIRECTORY)
         {
             printf("<RAM Disk at %X DIR> %s\n", ramdisk_start, node->name);
         }
@@ -195,11 +195,11 @@ int main()
     uint64_t CurrentRdtscValue=0, OldRdtscValue, RdtscDiffValue;
     char CurrentFrequency[10];
 
-    while( true )
+    while ( true )
     {
         // Show Rotating Asterisk
         *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *p;
-        if( ! *++p )
+        if ( ! *++p )
         {
             p = progress;
         }
@@ -210,27 +210,27 @@ int main()
 
         OldRdtscValue = CurrentRdtscValue;
 
-        if( CurrentSeconds != CurrentSecondsOld )
+        if ( CurrentSeconds != CurrentSecondsOld )
         {
             // all values 64 bit
             CurrentRdtscValue = rdtsc();
             RdtscDiffValue = CurrentRdtscValue - OldRdtscValue;
             uint64_t RdtscKCounts = RdtscDiffValue>>10; // divide by 1024
 
-	        uint32_t RdtscKCountsHi    = RdtscKCounts >> 32;
-	        uint32_t RdtscKCountsLo    = RdtscKCounts & 0xFFFFFFFF;
+            uint32_t RdtscKCountsHi    = RdtscKCounts >> 32;
+            uint32_t RdtscKCountsLo    = RdtscKCounts & 0xFFFFFFFF;
 
-	        if(RdtscKCountsHi==0)
-	        {
-	          uint32_t CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
-	          pODA->CPU_Frequency_kHz = CPU_Frequency_kHz;
-	          itoa(CPU_Frequency_kHz/1000, CurrentFrequency);
-	        }
-	        else
-	        {
-	          // not to be expected
-	          // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
-	        }
+            if (RdtscKCountsHi==0)
+            {
+              uint32_t CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
+              pODA->CPU_Frequency_kHz = CPU_Frequency_kHz;
+              itoa(CPU_Frequency_kHz/1000, CurrentFrequency);
+            }
+            else
+            {
+              // not to be expected
+              // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
+            }
 
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
@@ -241,12 +241,12 @@ int main()
             strcat(DateAndTime, " MHz   ");
             kprintf(DateAndTime, 49, 0xC); // output in status bar
 
-            if( (initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber )
+            if ( (initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber )
             {
                 initEHCIFlag = false;
                 initEHCIHostController(pciEHCINumber);
             }
-		}
+        }
         __asm__ volatile ("hlt");
     }
     return 0;

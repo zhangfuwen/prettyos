@@ -25,7 +25,7 @@ uint8_t prevScan   = 0;      // previous scan code
 /* wait until buffer is empty */
 void keyboard_init()
 {
-    while( inportb(0x64)&1 )
+    while ( inportb(0x64)&1 )
         inportb(0x60);
 }
 
@@ -36,7 +36,7 @@ bool testch()
 
 uint8_t FetchAndAnalyzeScancode()
 {
-    if( inportb(0x64)&1 )
+    if ( inportb(0x64)&1 )
         curScan = inportb(0x60);   // 0x60: get scan code from the keyboard
 
     // ACK: toggle bit 7 at port 0x61
@@ -44,15 +44,15 @@ uint8_t FetchAndAnalyzeScancode()
     outportb(0x61,port_value |  0x80); // 0->1
     outportb(0x61,port_value &~ 0x80); // 1->0
 
-    if( curScan & 0x80 ) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
+    if ( curScan & 0x80 ) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
     {
         KeyPressed = false;
         curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
-        if( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT ) // A key was released, shift key up?
+        if ( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT ) // A key was released, shift key up?
         {
             ShiftKeyDown = false;    // yes, it is up --> NonShift
         }
-        if( (curScan == 0x38) && (prevScan == 0x60) )
+        if ( (curScan == 0x38) && (prevScan == 0x60) )
         {
             AltGrKeyDown = false;
         }
@@ -60,11 +60,11 @@ uint8_t FetchAndAnalyzeScancode()
     else // Key was pressed
     {
         KeyPressed = true;
-        if( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT )
+        if ( curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT )
         {
             ShiftKeyDown = true; // It is down, use asciiShift characters
         }
-        if( (curScan == 0x38) && (prevScan == 0x60) )
+        if ( (curScan == 0x38) && (prevScan == 0x60) )
         {
             AltGrKeyDown = true;
         }
@@ -78,7 +78,7 @@ uint8_t ScanToASCII()
     curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
 
     //filter Shift Key and Key Release
-    if( ( (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) ) || ( KeyPressed == false ) )
+    if ( ( (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) ) || ( KeyPressed == false ) )
     {
         return 0;
     }
@@ -88,24 +88,24 @@ uint8_t ScanToASCII()
     /// TEST
 
     uint8_t retchar = 0;  // The character that returns the scan code to ASCII code
-    if( AltGrKeyDown )
+    if ( AltGrKeyDown )
     {
-        if( ShiftKeyDown )
+        if ( ShiftKeyDown )
         {
             retchar = asciiShiftAltGr[curScan];
         }
-        if( !ShiftKeyDown || retchar == 0 ) // if just shift is pressed or if there is no key specified for ShiftAltGr
+        if ( !ShiftKeyDown || retchar == 0 ) // if just shift is pressed or if there is no key specified for ShiftAltGr
         {
             retchar = asciiAltGr[curScan];
         }
     }
-    if( !AltGrKeyDown || retchar == 0)
+    if ( !AltGrKeyDown || retchar == 0)
     {
-        if( ShiftKeyDown )
+        if ( ShiftKeyDown )
         {
             retchar = asciiShift[curScan];
         }
-        if( !ShiftKeyDown || retchar == 0 )
+        if ( !ShiftKeyDown || retchar == 0 )
         {
             retchar = asciiNonShift[curScan]; // (Lower) Non-Shift Codes
         }
@@ -121,16 +121,16 @@ uint8_t ScanToASCII()
 void keyboard_handler(struct regs* r)
 {
    uint8_t KEY = ScanToASCII();
-   if(KEY)
+   if (KEY)
    {
        *(pTailKQ) = KEY;
        ++(KQ_count_write);
 
-       if(pTailKQ > KEYQUEUE)
+       if (pTailKQ > KEYQUEUE)
        {
            --pTailKQ;
        }
-       if(pTailKQ == KEYQUEUE)
+       if (pTailKQ == KEYQUEUE)
        {
            pTailKQ = (KEYQUEUE)+KQSIZE-1;
        }
@@ -142,16 +142,16 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
    /// TODO: should only return character, if keystroke was entered
 
    cli();
-   if(KQ_count_write > KQ_count_read)
+   if (KQ_count_write > KQ_count_read)
    {
        uint8_t KEY = *(pHeadKQ);
        ++(KQ_count_read);
 
-       if(pHeadKQ > KEYQUEUE)
+       if (pHeadKQ > KEYQUEUE)
        {
            --pHeadKQ;
        }
-       if(pHeadKQ == KEYQUEUE)
+       if (pHeadKQ == KEYQUEUE)
        {
            pHeadKQ = (KEYQUEUE)+KQSIZE-1;
        }

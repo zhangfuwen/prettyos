@@ -14,63 +14,63 @@ void testTransfer(uint32_t device)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: testTransfer\n");
-	settextcolor(15,0);
-
-	settextcolor(3,0);
-	printf("Test transfer with device address: %d\n", device);
     settextcolor(15,0);
 
- 	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-	uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-	pOpRegs->ASYNCLISTADDR = phsysicalAddr;
+    settextcolor(3,0);
+    printf("Test transfer with device address: %d\n", device);
+    settextcolor(15,0);
 
-	// Create QTDs (in reversed order)
-	void* next                = createQTD(0x1, 0x0, 1, 0);	// Handshake is the opposite direction of Data
-	next           = InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
-	void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
+     void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+    uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
-	// Create QH 1
-	void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-	createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, device);
+    // Create QTDs (in reversed order)
+    void* next                = createQTD(0x1, 0x0, 1, 0);    // Handshake is the opposite direction of Data
+    next           = InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
+    void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
 
-	// Create QH 2
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device);
+    // Create QH 1
+    void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, device);
 
-	// Enable Async...
-	printf("\nEnabling Async Schedule\n");
-	pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/ ;
-	delay(200000);
-	printf("\n");
-	showPacket(InQTDpage0,18);
-	showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );
-	delay(1000000);
+    // Create QH 2
+    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device);
+
+    // Enable Async...
+    printf("\nEnabling Async Schedule\n");
+    pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/ ;
+    delay(200000);
+    printf("\n");
+    showPacket(InQTDpage0,18);
+    showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );
+    delay(1000000);
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>>function: showDeviceDesriptor\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
-    if(d->length)
+    if (d->length)
     {
-	   settextcolor(10,0);
-	   printf("\nlength:            %d\n",  d->length);
-	   printf("descriptor type:   %d\n",    d->descriptorType);
-	   printf("USB specification: %d.%d\n", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
-	   printf("USB class:         %x\n",    d->deviceClass);
-	   printf("USB subclass:      %x\n",    d->deviceSubclass);
-	   printf("USB protocol       %x\n",    d->deviceProtocol);
-	   printf("max packet size:   %d\n",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
-	   printf("vendor:            %x\n",    d->idVendor);
-	   printf("product:           %x\n",    d->idProduct);
-	   printf("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
-	   printf("manufacturer:      %x\n",    d->manufacturer);
-	   printf("product:           %x\n",    d->product);
-	   printf("serial number:     %x\n",    d->serialNumber);
-	   printf("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
-	   settextcolor(15,0);
-	}
+       settextcolor(10,0);
+       printf("\nlength:            %d\n",  d->length);
+       printf("descriptor type:   %d\n",    d->descriptorType);
+       printf("USB specification: %d.%d\n", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
+       printf("USB class:         %x\n",    d->deviceClass);
+       printf("USB subclass:      %x\n",    d->deviceSubclass);
+       printf("USB protocol       %x\n",    d->deviceProtocol);
+       printf("max packet size:   %d\n",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
+       printf("vendor:            %x\n",    d->idVendor);
+       printf("product:           %x\n",    d->idProduct);
+       printf("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
+       printf("manufacturer:      %x\n",    d->manufacturer);
+       printf("product:           %x\n",    d->product);
+       printf("serial number:     %x\n",    d->serialNumber);
+       printf("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
+       settextcolor(15,0);
+    }
 }
 
 /*

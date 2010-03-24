@@ -32,7 +32,7 @@ void timer_handler(struct regs* r)
     #endif
 
     ++timer_ticks;
-    if(eticks>0)
+    if (eticks>0)
         --eticks;
 }
 
@@ -96,7 +96,7 @@ void delay (uint32_t microsec)
 {
     uint64_t timeout = rdtsc() + (uint64_t)( ((uint32_t)(microsec/1000)) * pODA->CPU_Frequency_kHz);
 
-    while( rdtsc()<timeout )
+    while ( rdtsc()<timeout )
     {
         nop();
     }

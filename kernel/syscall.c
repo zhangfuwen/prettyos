@@ -58,7 +58,7 @@ static void* syscalls[] =
 void syscall_handler(struct regs* r)
 {
     // Firstly, check if the requested syscall number is valid. The syscall number is found in EAX.
-    if( r->eax >= sizeof(syscalls)/sizeof(*syscalls) )
+    if ( r->eax >= sizeof(syscalls)/sizeof(*syscalls) )
         return;
 
     void* addr = syscalls[r->eax]; // Get the required syscall location.

@@ -32,7 +32,7 @@ uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t co
     // use offset to find searched content
     uint32_t readVal = inportl(PCI_CONFIGURATION_DATA) >> (8 * offset);
 
-    switch(length)
+    switch (length)
     {
         case 1:
             readVal &= 0x000000FF;
@@ -84,20 +84,20 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
     memset((void*) network_buffer, 0x0, 8192+16);
 
     // array of devices, PCIARRAYSIZE for first tests
-    for(uint32_t i=0;i<PCIARRAYSIZE;++i)
+    for (uint32_t i=0;i<PCIARRAYSIZE;++i)
     {
         pciDev_Array[i].number = i;
     }
 
     int number=0;
-    for(bus=0;bus<8;++bus)
+    for (bus=0;bus<8;++bus)
     {
-        for(device=0;device<32;++device)
+        for (device=0;device<32;++device)
         {
-            for(func=0;func<8;++func)
+            for (func=0;func<8;++func)
             {
                 uint16_t vendorID = pci_config_read( bus, device, func, PCI_VENDOR_ID);
-                if( vendorID && (vendorID != 0xFFFF) )
+                if ( vendorID && (vendorID != 0xFFFF) )
                 {
                     pciDev_Array[number].vendorID     = vendorID;
                     pciDev_Array[number].deviceID     = pci_config_read( bus, device, func, PCI_DEVICE_ID  );
@@ -126,7 +126,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                          pciDev_Array[number].deviceID,
                          pciDev_Array[number].vendorID );
 
-                    if(pciDev_Array[number].irq!=255)
+                    if (pciDev_Array[number].irq!=255)
                     {
                         printf(" IRQ:%d ", pciDev_Array[number].irq );
                     }
@@ -136,26 +136,26 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                     }
 
                     // test on USB
-                    if( (pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03) )
+                    if ( (pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03) )
                     {
                         printf(" USB ");
-                        if( pciDev_Array[number].interfaceID==0x00 ) { printf("UHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x10 ) { printf("OHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x20 ) { printf("EHCI ");   }
-                        if( pciDev_Array[number].interfaceID==0x80 ) { printf("no HCI "); }
-                        if( pciDev_Array[number].interfaceID==0xFE ) { printf("any ");    }
+                        if ( pciDev_Array[number].interfaceID==0x00 ) { printf("UHCI ");   }
+                        if ( pciDev_Array[number].interfaceID==0x10 ) { printf("OHCI ");   }
+                        if ( pciDev_Array[number].interfaceID==0x20 ) { printf("EHCI ");   }
+                        if ( pciDev_Array[number].interfaceID==0x80 ) { printf("no HCI "); }
+                        if ( pciDev_Array[number].interfaceID==0xFE ) { printf("any ");    }
 
-                        for(uint8_t i=0;i<6;++i) // check USB BARs
+                        for (uint8_t i=0;i<6;++i) // check USB BARs
                         {
                             pciDev_Array[number].bar[i].memoryType = pciDev_Array[number].bar[i].baseAddress & 0x01;
 
-                            if(pciDev_Array[number].bar[i].baseAddress) // check valid BAR
+                            if (pciDev_Array[number].bar[i].baseAddress) // check valid BAR
                             {
-                                if(pciDev_Array[number].bar[i].memoryType == 0)
+                                if (pciDev_Array[number].bar[i].memoryType == 0)
                                 {
                                     printf("%X MMIO ", pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0 );
                                 }
-                                if(pciDev_Array[number].bar[i].memoryType == 1)
+                                if (pciDev_Array[number].bar[i].memoryType == 1)
                                 {
                                     printf("%x I/O ",  pciDev_Array[number].bar[i].baseAddress & 0xFFFC );
                                 }
@@ -172,24 +172,24 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                 // TEST Memory Size End
 
                                 /// TEST EHCI Data Begin
-                                if(  (pciDev_Array[number].interfaceID==0x20)   // EHCI
+                                if (  (pciDev_Array[number].interfaceID==0x20)   // EHCI
                                    && pciDev_Array[number].bar[i].baseAddress ) // valid BAR
                                 {
                                     /*
-					                                    Offset Size Mnemonic    Power Well   Register Name
-					                                    00h     1   CAPLENGTH      Core      Capability Register Length
-					                                    01h     1   Reserved       Core      N/A
-					                                    02h     2   HCIVERSION     Core      Interface Version Number
-					                                    04h     4   HCSPARAMS      Core      Structural Parameters
-					                                    08h     4   HCCPARAMS      Core      Capability Parameters
-					                                    0Ch     8   HCSP-PORTROUTE Core      Companion Port Route Description
-					                                    */
+                                                        Offset Size Mnemonic    Power Well   Register Name
+                                                        00h     1   CAPLENGTH      Core      Capability Register Length
+                                                        01h     1   Reserved       Core      N/A
+                                                        02h     2   HCIVERSION     Core      Interface Version Number
+                                                        04h     4   HCSPARAMS      Core      Structural Parameters
+                                                        08h     4   HCCPARAMS      Core      Capability Parameters
+                                                        0Ch     8   HCSP-PORTROUTE Core      Companion Port Route Description
+                                                        */
 
                                     uint32_t bar = pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0;
 
                                     /// idendity mapping of bar
                                     int retVal1 = paging_do_idmapping( bar );
-                                    if(retVal1 == true)
+                                    if (retVal1 == true)
                                     {
                                        printf("\n\n");
                                     }
@@ -198,7 +198,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                                         printf("\npaging_do_idmapping(...) error.\n");
                                     }
 
-                                    if(!EHCIflag) // only the first EHCI is used
+                                    if (!EHCIflag) // only the first EHCI is used
                                     {
                                         pciEHCINumber = number; /// TODO: implement for more than one EHCI
                                         EHCIflag = true; // only the first EHCI is used
@@ -210,39 +210,39 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
                         } // for
                     } // if
 
-					printf("\n");
+                    printf("\n");
 
 
-					/// test on the RTL8139 network card and test for some functions to work ;)
-					// informations from the RTL8139 specification,
-					// and the wikis http://wiki.osdev.org/RTL8139, http://lowlevel.brainsware.org/wiki/index.php/RTL8139
+                    /// test on the RTL8139 network card and test for some functions to work ;)
+                    // informations from the RTL8139 specification,
+                    // and the wikis http://wiki.osdev.org/RTL8139, http://lowlevel.brainsware.org/wiki/index.php/RTL8139
 
-					if(	(pciDev_Array[number].deviceID == 0x8139) /*&& (pciDev_Array[number].vendorID == 0x10EC)*/ )
-					{
-						for(uint8_t j=0;j<6;++j) // check network card BARs
+                    if (    (pciDev_Array[number].deviceID == 0x8139) /*&& (pciDev_Array[number].vendorID == 0x10EC)*/ )
+                    {
+                        for (uint8_t j=0;j<6;++j) // check network card BARs
                         {
                             pciDev_Array[number].bar[j].memoryType = pciDev_Array[number].bar[j].baseAddress & 0x01;
 
-                            if(pciDev_Array[number].bar[j].baseAddress) // check valid BAR
+                            if (pciDev_Array[number].bar[j].baseAddress) // check valid BAR
                             {
-                                if(pciDev_Array[number].bar[j].memoryType == 0)
+                                if (pciDev_Array[number].bar[j].memoryType == 0)
                                 {
                                     BaseAddressRTL8139_MMIO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFFFFF0;
 
                                 }
-                                if(pciDev_Array[number].bar[j].memoryType == 1)
+                                if (pciDev_Array[number].bar[j].memoryType == 1)
                                 {
                                     BaseAddressRTL8139_IO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFC;
                                 }
                             }
                         }
                         install_RTL8139(number);
-					}
+                    }
                     ++number;
                 } // if pciVendor
 
                 // Bit 7 in header type (Bit 23-16) --> multifunctional
-                if( !(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80) )
+                if ( !(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80) )
                 {
                     break; // --> not multifunctional, only function 0 used
                 }
@@ -251,7 +251,7 @@ void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t 
     } // for bus
     printf("\n");
 
-	// for(;;){} //#
+    // for (;;){} //#
 }
 
 /*

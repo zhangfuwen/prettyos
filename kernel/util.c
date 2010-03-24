@@ -104,7 +104,7 @@ void panic_assert(const char* file, uint32_t line, const char* desc) // why char
     printf("%i",line);
     printf("OPERATING SYSTEM HALTED\n");
     // Halt by going into an infinite loop.
-    for(;;);
+    for (;;);
 }
 
 /**********************************************************************/
@@ -112,35 +112,35 @@ void panic_assert(const char* file, uint32_t line, const char* desc) // why char
 void memshow(void* start, size_t count)
 {
     const uint8_t* end = (const uint8_t*)(start+count);
-    for(; count != 0; count--) printf("%x ",*(end-count));
+    for (; count != 0; count--) printf("%x ",*(end-count));
 }
 
 void* memcpy(void* dest, const void* src, size_t count)
 {
     const uint8_t* sp = (const uint8_t*)src;
     uint8_t* dp = (uint8_t*)dest;
-    for(; count != 0; count--) *dp++ = *sp++;
+    for (; count != 0; count--) *dp++ = *sp++;
     return dest;
 }
 
 void* memset(void* dest, int8_t val, size_t count)
 {
     int8_t* temp = (int8_t*)dest;
-    for( ; count != 0; count--) *temp++ = val;
+    for ( ; count != 0; count--) *temp++ = val;
     return dest;
 }
 
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count)
 {
     uint16_t* temp = dest;
-    for( ; count != 0; count--) *temp++ = val;
+    for ( ; count != 0; count--) *temp++ = val;
     return dest;
 }
 
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 {
     uint32_t* temp = dest;
-    for( ; count != 0; count--) *temp++ = val;
+    for ( ; count != 0; count--) *temp++ = val;
     return dest;
 }
 
@@ -149,7 +149,7 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 size_t strlen(const char* str)
 {
     size_t retval;
-    for(retval = 0; *str != '\0'; ++str)
+    for (retval = 0; *str != '\0'; ++str)
         ++retval;
     return retval;
 }
@@ -170,13 +170,13 @@ int32_t strcmp( const char* s1, const char* s2 )
 char* strcpy(char* dest, const char* src)
 {
    char* save = dest;
-   while( (*dest++ = *src++) );
+   while ( (*dest++ = *src++) );
    return save;
 }
 
 char* strncpy(char* dest, const char* src, unsigned int n) // okay?
 {
-    if(n != 0)
+    if (n != 0)
     {
         char* d       = dest;
         const char* s = src;
@@ -185,12 +185,12 @@ char* strncpy(char* dest, const char* src, unsigned int n) // okay?
             if ((*d++ = *s++) == 0)
             {
                 /* NUL pad the remaining n-1 bytes */
-                while(--n != 0)
+                while (--n != 0)
                    *d++ = 0;
                 break;
             }
         }
-        while(--n != 0);
+        while (--n != 0);
      }
      return (dest);
 }
@@ -210,7 +210,7 @@ void reverse(char* s)
 {
     char c;
 
-    for(int32_t i=0, j=strlen(s)-1; i<j; i++, j--)
+    for (int32_t i=0, j=strlen(s)-1; i<j; i++, j--)
     {
         c = s[i];
         s[i] = s[j];
@@ -222,7 +222,7 @@ void reverse(char* s)
 void itoa(int32_t n, char* s)
 {
     int32_t i, sign;
-    if((sign = n) < 0)  // record sign
+    if ((sign = n) < 0)  // record sign
     {
         n = -n;         // make n positive
     }
@@ -231,9 +231,9 @@ void itoa(int32_t n, char* s)
     {
         s[i++] = n % 10 + '0';  // get next digit
     }
-    while( (n /= 10) > 0 );     // delete it
+    while ( (n /= 10) > 0 );     // delete it
 
-    if(sign < 0)
+    if (sign < 0)
     {
         s[i++] = '-';
     }
@@ -336,7 +336,7 @@ void reboot()
     do //flush the keyboard controller
     {
        temp = inportb( 0x64 );
-       if( temp & 1 )
+       if ( temp & 1 )
          inportb( 0x60 );
     }
     while ( temp & 2 );

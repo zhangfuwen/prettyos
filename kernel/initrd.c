@@ -28,7 +28,7 @@ static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, cha
 
 static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 {
-    if( (node == initrd_root) && (index == 0) )
+    if ( (node == initrd_root) && (index == 0) )
     {
       strcpy(dirent.name, (const char*)"dev");
       dirent.name[3] = 0; // NUL-terminate the string
@@ -36,7 +36,7 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
       return &dirent;
     }
 
-    if( index-1 >= nroot_nodes )
+    if ( index-1 >= nroot_nodes )
     {
         return 0;
     }
@@ -48,13 +48,13 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 
 static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
 {
-    if( (node == initrd_root) && (!strcmp(name,(const char*)"dev")) )
+    if ( (node == initrd_root) && (!strcmp(name,(const char*)"dev")) )
     {
         return initrd_dev;
     }
-    for(int32_t i=0; i<nroot_nodes; ++i)
+    for (int32_t i=0; i<nroot_nodes; ++i)
     {
-        if( !strcmp(name, root_nodes[i].name) )
+        if ( !strcmp(name, root_nodes[i].name) )
         {
             return &root_nodes[i];
         }
@@ -124,7 +124,7 @@ fs_node_t* install_initrd(uint32_t location)
     nroot_nodes = initrd_header->nfiles;
 
     // For every file...
-    for(uint32_t i=0; i<initrd_header->nfiles; ++i)
+    for (uint32_t i=0; i<initrd_header->nfiles; ++i)
     {
         // Edit the file's header - currently it holds the file offset relative to the start of the ramdisk.
         file_headers[i].off += (location); /// We want it relative to the start of memory. ///

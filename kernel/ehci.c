@@ -18,108 +18,108 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: createQH\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
-	struct ehci_qhd* head = (struct ehci_qhd*)address;
-	memset(address, 0, sizeof(struct ehci_qhd));
+    struct ehci_qhd* head = (struct ehci_qhd*)address;
+    memset(address, 0, sizeof(struct ehci_qhd));
 
 
 
-	head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1 00b iTD, 01b QH, 10b siTD, 11b FSTN // 0x2 Queue Head
-	head->deviceAddress          =   device; // The device address
-	head->inactive               =   0;
-	head->endpoint               =   0;	// Endpoint 0 contains Device infos such as name
-	head->endpointSpeed          =   2;	// 00b = full speed; 01b = low speed; 10b = high speed
-	head->dataToggleControl      =   1;	// Get the Data Toggle bit out of the included qTD
-	head->H                      =   H;
-	head->maxPacketLength        =  64;	// It's 64 bytes for a control transfer to a high speed device.
-	head->controlEndpointFlag    =   0;	// Only used if Endpoint is a control endpoint and not high speed
-	head->nakCountReload         =   0;	// This value is used by HC to reload the Nak Counter field.
-	head->interruptScheduleMask  =   0;	// not used for async schedule
-	head->splitCompletionMask    =   0;	// unused if (not low/full speed and in periodic schedule)
-	head->hubAddr                =   0;	// unused if high speed (Split transfer)
-	head->portNumber             =   0;	// unused if high speed (Split transfer)
-	head->mult                   =   1;	// One transaction to be issued for this endpoint per micro-frame.
+    head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1 00b iTD, 01b QH, 10b siTD, 11b FSTN // 0x2 Queue Head
+    head->deviceAddress          =   device; // The device address
+    head->inactive               =   0;
+    head->endpoint               =   0;    // Endpoint 0 contains Device infos such as name
+    head->endpointSpeed          =   2;    // 00b = full speed; 01b = low speed; 10b = high speed
+    head->dataToggleControl      =   1;    // Get the Data Toggle bit out of the included qTD
+    head->H                      =   H;
+    head->maxPacketLength        =  64;    // It's 64 bytes for a control transfer to a high speed device.
+    head->controlEndpointFlag    =   0;    // Only used if Endpoint is a control endpoint and not high speed
+    head->nakCountReload         =   0;    // This value is used by HC to reload the Nak Counter field.
+    head->interruptScheduleMask  =   0;    // not used for async schedule
+    head->splitCompletionMask    =   0;    // unused if (not low/full speed and in periodic schedule)
+    head->hubAddr                =   0;    // unused if high speed (Split transfer)
+    head->portNumber             =   0;    // unused if high speed (Split transfer)
+    head->mult                   =   1;    // One transaction to be issued for this endpoint per micro-frame.
                                         // Maybe unused for non interrupt queue head in async list
-	if(firstQTD == NULL)
-	{
-	    head->qtd.next = 0x1;
-	}
-	else
-	{
-	    uint32_t physNext = paging_get_phys_addr(kernel_pd, firstQTD);
-	    head->qtd.next = physNext;
-	}
+    if (firstQTD == NULL)
+    {
+        head->qtd.next = 0x1;
+    }
+    else
+    {
+        uint32_t physNext = paging_get_phys_addr(kernel_pd, firstQTD);
+        head->qtd.next = physNext;
+    }
 }
 
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: createQTD\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
-	void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
-	struct ehci_qtd* td = (struct ehci_qtd*)address;
+    void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
+    struct ehci_qtd* td = (struct ehci_qtd*)address;
 
-	if(next != 0x1)
-	{
-		uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
-		td->next = phys;
-	}
-	else
-	{
-		td->next = 0x1;
-	}
-	td->nextAlt = td->next; /// 0x1;	// No alternative next, so T-Bit is set to 1
-	td->token.status       = 0x80;	 // This will be filled by the Host Controller
-	td->token.pid          = pid;	 // Setup Token
-	td->token.errorCounter = 0x3;    // Written by the Host Controller.
-	td->token.currPage     = 0x0;	 // Start with first page. After that it's written by Host Controller???
-	td->token.interrupt    = 0x1;	 // We want an interrupt after complete transfer
-	td->token.bytes        = tokenBytes; // dependent on transfer
-	td->token.dataToggle   = toggle; // Should be toggled every list entry
+    if (next != 0x1)
+    {
+        uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
+        td->next = phys;
+    }
+    else
+    {
+        td->next = 0x1;
+    }
+    td->nextAlt = td->next; /// 0x1;    // No alternative next, so T-Bit is set to 1
+    td->token.status       = 0x80;     // This will be filled by the Host Controller
+    td->token.pid          = pid;     // Setup Token
+    td->token.errorCounter = 0x3;    // Written by the Host Controller.
+    td->token.currPage     = 0x0;     // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;     // We want an interrupt after complete transfer
+    td->token.bytes        = tokenBytes; // dependent on transfer
+    td->token.dataToggle   = toggle; // Should be toggled every list entry
 
-	void* data = malloc(0x20, PAGESIZE);	// Enough for a full page
-	memset(data,0,0x20);
+    void* data = malloc(0x20, PAGESIZE);    // Enough for a full page
+    memset(data,0,0x20);
 
 
 
-	if(pid == 0x2) // SETUP
-	{
-	    SetupQTDpage0  = (uint32_t)data;
+    if (pid == 0x2) // SETUP
+    {
+        SetupQTDpage0  = (uint32_t)data;
 
-	    struct ehci_request* request = (struct ehci_request*)data;
-		request->type    = 0x80;	// Device->Host
-		request->request =  0x6;	// GET_DESCRIPTOR
-		request->valueHi =    1;	// Type:1 (Device)
-		request->valueLo =    0;	// Index: 0, used only for String or Configuration descriptors
-		request->index   =    0;	// Language ID: Default
-		request->length  =   18;    // according to the the requested data bytes in IN qTD
-	}
-	else if(pid == 0x1)// IN
-	{
-		InQTDpage0  = (uint32_t)data;
-		inBuffer = data;
-	}
+        struct ehci_request* request = (struct ehci_request*)data;
+        request->type    = 0x80;    // Device->Host
+        request->request =  0x6;    // GET_DESCRIPTOR
+        request->valueHi =    1;    // Type:1 (Device)
+        request->valueLo =    0;    // Index: 0, used only for String or Configuration descriptors
+        request->index   =    0;    // Language ID: Default
+        request->length  =   18;    // according to the the requested data bytes in IN qTD
+    }
+    else if (pid == 0x1)// IN
+    {
+        InQTDpage0  = (uint32_t)data;
+        inBuffer = data;
+    }
 
-	uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
-	td->buffer0 = dataPhysical;
-	td->buffer1 = 0x0;
-	td->buffer2 = 0x0;
-	td->buffer3 = 0x0;
-	td->buffer4 = 0x0;
+    uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
+    td->buffer0 = dataPhysical;
+    td->buffer1 = 0x0;
+    td->buffer2 = 0x0;
+    td->buffer3 = 0x0;
+    td->buffer4 = 0x0;
 
-	return address;
+    return address;
 }
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: showPacket\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
     printf("virtAddrBuf0: %X\n", virtAddrBuf0);
-    for(uint32_t c=0; c<size; c++)
+    for (uint32_t c=0; c<size; c++)
     {
         settextcolor(3,0);
         printf("%y ", *((uint8_t*)virtAddrBuf0+c));
@@ -131,48 +131,48 @@ void showStatusbyteQTD(void* addressQTD)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: showStatusbyteQTD\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
     printf("QTD: %X Statusbyte: %y", addressQTD, statusbyte);
 
     // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     settextcolor(14,0);
-    if( statusbyte & (1<<7) ) { printf("\nqTD Status: Active - HC transactions enabled");                                     }
-    if( statusbyte & (1<<6) ) { printf("\nqTD Status: Halted - serious error at the device/endpoint");                        }
-    if( statusbyte & (1<<5) ) { printf("\nqTD Status: Data Buffer Error (overrun or underrun)");                              }
-    if( statusbyte & (1<<4) ) { printf("\nqTD Status: Babble (fatal error leads to Halted)");                                 }
-    if( statusbyte & (1<<3) ) { printf("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");  }
-    if( statusbyte & (1<<2) ) { printf("\nqTD Status: Missed Micro-Frame");                                                   }
-    if( statusbyte & (1<<1) ) { printf("\nqTD Status: Do Complete Split");                                                    }
-    if( statusbyte & (1<<0) ) { printf("\nqTD Status: Do Ping");                                                              }
-    if( statusbyte == 0 )     { printf("\n");                                                                                 }
-	settextcolor(15,0);
+    if ( statusbyte & (1<<7) ) { printf("\nqTD Status: Active - HC transactions enabled");                                     }
+    if ( statusbyte & (1<<6) ) { printf("\nqTD Status: Halted - serious error at the device/endpoint");                        }
+    if ( statusbyte & (1<<5) ) { printf("\nqTD Status: Data Buffer Error (overrun or underrun)");                              }
+    if ( statusbyte & (1<<4) ) { printf("\nqTD Status: Babble (fatal error leads to Halted)");                                 }
+    if ( statusbyte & (1<<3) ) { printf("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");  }
+    if ( statusbyte & (1<<2) ) { printf("\nqTD Status: Missed Micro-Frame");                                                   }
+    if ( statusbyte & (1<<1) ) { printf("\nqTD Status: Do Complete Split");                                                    }
+    if ( statusbyte & (1<<0) ) { printf("\nqTD Status: Do Ping");                                                              }
+    if ( statusbyte == 0 )     { printf("\n");                                                                                 }
+    settextcolor(15,0);
 }
 
 void ehci_handler(struct regs* r)
 {
-    if( !(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) )
+    if ( !(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) )
     {
       delay(2000000);settextcolor(9,0);
       printf("\n>>> >>> function: ehci_handler: ");
-	  settextcolor(15,0);
+      settextcolor(15,0);
     }
 
-	settextcolor(14,0);
-    if( pOpRegs->USBSTS & STS_USBINT )
+    settextcolor(14,0);
+    if ( pOpRegs->USBSTS & STS_USBINT )
     {
         printf("\nUSB Interrupt");
         pOpRegs->USBSTS |= STS_USBINT;
     }
 
-    if( pOpRegs->USBSTS & STS_USBERRINT )
+    if ( pOpRegs->USBSTS & STS_USBERRINT )
     {
         printf("\nUSB Error Interrupt");
         pOpRegs->USBSTS |= STS_USBERRINT;
     }
 
-    if( pOpRegs->USBSTS & STS_PORT_CHANGE )
+    if ( pOpRegs->USBSTS & STS_PORT_CHANGE )
     {
         settextcolor(9,0);
         printf("Port Change");
@@ -183,13 +183,13 @@ void ehci_handler(struct regs* r)
         checkPortLineStatus();
     }
 
-    if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
+    if ( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER )
     {
         //printf("\nFrame List Rollover Interrupt");
         pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
 
-    if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )
+    if ( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )
     {
         settextcolor(4,0);
         printf("\nHost System Error");
@@ -200,62 +200,62 @@ void ehci_handler(struct regs* r)
         printf("\nInit EHCI after fatal error");
         settextcolor(15,0);
         int32_t retVal = initEHCIHostController(pciEHCINumber);
-        if(retVal==-1)
+        if (retVal==-1)
         {
             goto leave_handler;
         }
     }
 
-    if( pOpRegs->USBSTS & STS_ASYNC_INT )
+    if ( pOpRegs->USBSTS & STS_ASYNC_INT )
     {
         printf("\nInterrupt on Async Advance");
         pOpRegs->USBSTS |= STS_ASYNC_INT;
     }
 leave_handler:
-	settextcolor(15,0);
+    settextcolor(15,0);
 }
 
 void analyzeEHCI(uint32_t bar)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: analyzeEHCI\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
     ubar = bar;
     pCapRegs = (struct ehci_CapRegs*) ubar;
-	pOpRegs  = (struct ehci_OpRegs*) (ubar + pCapRegs->CAPLENGTH);
+    pOpRegs  = (struct ehci_OpRegs*) (ubar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
     printf("HCIVERSION: %x ", pCapRegs->HCIVERSION);                // Interface Version Number
     printf("HCSPARAMS: %X ", pCapRegs->HCSPARAMS);                  // Structural Parameters
     printf("Ports: %d ", numPorts);
     printf("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
-    if(BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. ");  // Extended Capabilities Pointer
+    if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. ");  // Extended Capabilities Pointer
     printf("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
 }
 
 void resetHostController()
 {
     /*
-	Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
-	Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003
+    Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
+    Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003
 
-	To initiate a host controller reset
-	system software must:
-	*/
+    To initiate a host controller reset
+    system software must:
+    */
 
     // 1. Stop the host controller.
     //    System software must program the USB2CMD.Run/Stop bit to 0 to stop the host controller.
     pOpRegs->USBCMD &= ~CMD_RUN_STOP;            // set Run-Stop-Bit to 0
 
     /*
-	2. Wait for the host controller to halt.
-	   To determine when the host controller has halted, system software must read the USB2STS.HCHalted bit;
-	   the host controller will set this bit to 1 as soon as
-	   it has successfully transitioned from a running state to a stopped state (halted).
-	   Attempting to reset an actively running host controller will result in undefined behavior.
+    2. Wait for the host controller to halt.
+       To determine when the host controller has halted, system software must read the USB2STS.HCHalted bit;
+       the host controller will set this bit to 1 as soon as
+       it has successfully transitioned from a running state to a stopped state (halted).
+       Attempting to reset an actively running host controller will result in undefined behavior.
     */
-    while( !(pOpRegs->USBSTS & STS_HCHALTED) )
+    while ( !(pOpRegs->USBSTS & STS_HCHALTED) )
     {
         delay(30000);                            // wait at least 16 microframes ( = 16*125 micro-sec = 2 ms )
     }
@@ -264,17 +264,17 @@ void resetHostController()
     //    This will cause the host controller to begin the host controller reset.
     pOpRegs->USBCMD |= CMD_HCRESET;              // set Reset-Bit to 1
 
-	// 4. Wait until the host controller has completed its reset.
-	// To determine when the reset is complete, system software must read the USB2CMD.HostControllerReset bit;
-	// the host controller will set this bit to 0 upon completion of the reset.
+    // 4. Wait until the host controller has completed its reset.
+    // To determine when the reset is complete, system software must read the USB2CMD.HostControllerReset bit;
+    // the host controller will set this bit to 0 upon completion of the reset.
 
     int32_t timeout=10;
-    while( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
+    while ( (pOpRegs->USBCMD & CMD_HCRESET) != 0 ) // Reset-Bit still set to 1
     {
         printf("waiting for HC reset\n");
         delay(20000); //sleepMilliSeconds(20);
         timeout--;
-        if(timeout<=0)
+        if (timeout<=0)
         {
             settextcolor(4,0);
             printf("Error: HC Reset-Bit still set to 1\n");
@@ -288,7 +288,7 @@ void startHostController(uint32_t num)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: startHostController\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
     settextcolor(14,0);
     printf("reset HC\n");
@@ -298,7 +298,7 @@ void startHostController(uint32_t num)
 
     /*
     Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
-	Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003:
+    Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003:
     After the reset has completed, the system software must reinitialize the host controller so as to
     return the host controller to an operational state (See Section 4.3.3.3, Post-Operating System Initialization)
 
@@ -323,7 +323,7 @@ void startHostController(uint32_t num)
     //    and turn the host controller ON via setting the USB2CMD.Run/Stop bit. Setting the Run/Stop
     //    bit with both the periodic and asynchronous schedules disabled will still allow interrupts and
     //    enabled port events to be visible to software
-    if( pOpRegs->USBSTS & STS_HCHALTED )
+    if ( pOpRegs->USBSTS & STS_HCHALTED )
     {
         pOpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
     }
@@ -334,14 +334,14 @@ void startHostController(uint32_t num)
     //    associated controller type: UHCI or EHCI)
     pOpRegs->CONFIGFLAG = CF; // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
 
-	delay(100000); //sleepMilliSeconds(100);
+    delay(100000); //sleepMilliSeconds(100);
 }
 
 int32_t initEHCIHostController(uint32_t num)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: initEHCIHostController\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
     static uint32_t timeout = 3;
     irq_install_handler(32 + pciDev_Array[num].irq, ehci_handler);
@@ -349,7 +349,7 @@ int32_t initEHCIHostController(uint32_t num)
 
     startHostController(num);
 
-    if( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
+    if ( !(pOpRegs->USBSTS & STS_HCHALTED) ) // TEST
     {
          settextcolor(2,0);
          // printf("\nHCHalted set to 0 (OK)");
@@ -361,7 +361,7 @@ int32_t initEHCIHostController(uint32_t num)
          settextcolor(4,0);
          printf("\nHCHalted set to 1 (Not OK!) --> Ports cannot be enabled");
          showUSBSTS();
-         if(timeout-- <=0)
+         if (timeout-- <=0)
          {
              return -1;
          }
@@ -378,13 +378,13 @@ void enablePorts()
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: enablePorts\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
-    for(uint8_t j=0; j<numPorts; j++)
+    for (uint8_t j=0; j<numPorts; j++)
     {
          resetPort(j);
 
-         if( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
+         if ( pOpRegs->PORTSC[j] == 0x1005 ) // high speed idle, enabled, SE0
          {
              settextcolor(14,0);
              printf("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
@@ -403,7 +403,7 @@ void resetPort(uint8_t j)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: resetPort %d  ",j+1);
-	settextcolor(15,0);
+    settextcolor(15,0);
 
     pOpRegs->PORTSC[j] |=  PSTS_POWERON;
 
@@ -425,7 +425,7 @@ void resetPort(uint8_t j)
      The host controller may hold Port Reset asserted to a one
      when the HCHalted bit is a one.
     */
-    if( pOpRegs->USBSTS & STS_HCHALTED ) // TEST
+    if ( pOpRegs->USBSTS & STS_HCHALTED ) // TEST
     {
          settextcolor(4,0);
          printf("\nHCHalted set to 1 (Not OK!)");
@@ -440,11 +440,11 @@ void resetPort(uint8_t j)
 
     // wait and check, whether really zero
     uint32_t timeout=20;
-    while((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
+    while ((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
     {
         delay(20000);
         timeout--;
-        if( timeout <= 0 )
+        if ( timeout <= 0 )
         {
             settextcolor(4,0);
             printf("\nerror: port %d did not reset! ",j+1);
@@ -462,16 +462,16 @@ void showPORTSC()
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: showPORTSC\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
-    for(uint8_t j=0; j<numPorts; j++)
+    for (uint8_t j=0; j<numPorts; j++)
     {
-        if( pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE )
+        if ( pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE )
         {
             char str[80], PortNumber[5], PortStatus[40];
             itoa(j+1,PortNumber);
 
-            if( pOpRegs->PORTSC[j] & PSTS_CONNECTED )
+            if ( pOpRegs->PORTSC[j] & PSTS_CONNECTED )
             {
                 strcpy(PortStatus,"Device attached");
                 resetPort(j);
@@ -502,23 +502,23 @@ void showUSBSTS()
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: showUSBSTS\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
     settextcolor(15,0);
     printf("\nUSB status: ");
     settextcolor(2,0);
     printf("%X",pOpRegs->USBSTS);
     settextcolor(14,0);
-    if( pOpRegs->USBSTS & STS_USBINT )             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
-    if( pOpRegs->USBSTS & STS_USBERRINT )          { printf("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
-    if( pOpRegs->USBSTS & STS_PORT_CHANGE )        { printf("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
-    if( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER ) { printf("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
-    if( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )  { printf("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
-    if( pOpRegs->USBSTS & STS_ASYNC_INT )          { printf("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT;           }
-    if( pOpRegs->USBSTS & STS_HCHALTED )           { printf("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;            }
-    if( pOpRegs->USBSTS & STS_RECLAMATION )        { printf("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
-    if( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printf("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
-    if( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printf("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
+    if ( pOpRegs->USBSTS & STS_USBINT )             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
+    if ( pOpRegs->USBSTS & STS_USBERRINT )          { printf("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
+    if ( pOpRegs->USBSTS & STS_PORT_CHANGE )        { printf("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
+    if ( pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER ) { printf("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
+    if ( pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR )  { printf("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
+    if ( pOpRegs->USBSTS & STS_ASYNC_INT )          { printf("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT;           }
+    if ( pOpRegs->USBSTS & STS_HCHALTED )           { printf("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;            }
+    if ( pOpRegs->USBSTS & STS_RECLAMATION )        { printf("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
+    if ( pOpRegs->USBSTS & STS_PERIODIC_ENABLED )   { printf("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
+    if ( pOpRegs->USBSTS & STS_ASYNC_ENABLED )      { printf("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
     settextcolor(15,0);
 }
 
@@ -526,22 +526,22 @@ void checkPortLineStatus()
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: checkPortLineStatus\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
     settextcolor(14,0);
     printf("\n\n>>> Status of USB Ports <<<");
 
-    for(uint8_t j=0; j<numPorts; j++)
+    for (uint8_t j=0; j<numPorts; j++)
     {
       //check line status
       settextcolor(11,0);
       printf("\nport %d: %X, line: %y  ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
       settextcolor(14,0);
-      if( ((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
+      if ( ((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
       {
         settextcolor(11,0);
         printf("SE0");
-        if( (pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED) )
+        if ( (pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED) )
         {
              settextcolor(14,0);
              printf(" ,power on, enabled, EHCI owned");
@@ -555,19 +555,19 @@ void checkPortLineStatus()
         }
       }
 
-      if( ((pOpRegs->PORTSC[j]>>10)&3) == 1) // K_STATE
+      if ( ((pOpRegs->PORTSC[j]>>10)&3) == 1) // K_STATE
       {
         settextcolor(14,0);
         printf("K-State");
       }
 
-      if( ((pOpRegs->PORTSC[j]>>10)&3) == 2) // J_STATE
+      if ( ((pOpRegs->PORTSC[j]>>10)&3) == 2) // J_STATE
       {
         settextcolor(14,0);
         printf("J-state");
       }
 
-      if( ((pOpRegs->PORTSC[j]>>10)&3) == 3) // undefined
+      if ( ((pOpRegs->PORTSC[j]>>10)&3) == 3) // undefined
       {
         settextcolor(12,0);
         printf("undefined");
@@ -580,9 +580,9 @@ void DeactivateLegacySupport(uint32_t num)
 {
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: DeactivateLegacySupport\n");
-	settextcolor(15,0);
+    settextcolor(15,0);
 
-	bool failed = false;
+    bool failed = false;
 
     // pci bus data
     uint8_t bus  = pciDev_Array[num].bus;
@@ -609,12 +609,12 @@ void DeactivateLegacySupport(uint32_t num)
     if (eecp >= 0x40)
     {
         int32_t eecp_id=0;
-        while(eecp)
+        while (eecp)
         {
             printf("eecp = %x, ",eecp);
             eecp_id = pci_config_read( bus, dev, func, 0x0100/*length 1 byte*/ | (eecp + 0) );
             printf("eecp_id = %x\n",eecp_id);
-            if(eecp_id == 1)
+            if (eecp_id == 1)
                  break;
             NextEHCIExtCapPtr = eecp + 1;
             eecp = pci_config_read( bus, dev, func, 0x0100 | NextEHCIExtCapPtr );
@@ -624,7 +624,7 @@ void DeactivateLegacySupport(uint32_t num)
         uint32_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
 
         // Legacy-Support-EC found? BIOS-Semaphore set?
-        if( (eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) )
+        if ( (eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) )
         {
             printf("set OS-Semaphore.\n");
             pci_config_write_byte( bus, dev, func, OSownedSemaphore, 0x01 );
@@ -632,29 +632,29 @@ void DeactivateLegacySupport(uint32_t num)
 
             int32_t timeout=200;
             // Wait for BIOS-Semaphore being not set
-            while( ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01 ) && ( timeout>0 ) )
+            while ( ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01 ) && ( timeout>0 ) )
             {
                 printf(".");
                 timeout--;
                 delay(20000);
             }
-            if( !( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) ) // not set
+            if ( !( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) ) // not set
             {
                 printf("BIOS-Semaphore being not set.\n");
                 timeout=200;
-                while( !( pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore ) & 0x01) && (timeout>0) )
+                while ( !( pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore ) & 0x01) && (timeout>0) )
                 {
                     printf(".");
                     timeout--;
                     delay(20000);
                 }
             }
-            if( pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore ) & 0x01 )
+            if ( pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore ) & 0x01 )
             {
                 failed = false;
                 printf("OS-Semaphore being set.\n");
             }
-            if(failed==false)
+            if (failed==false)
             {
                 printf("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
                              pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),

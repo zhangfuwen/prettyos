@@ -112,7 +112,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     *(--kernel_stack) = 0x0;  // return address dummy
 ///TEST///
 
-    if(privilege == 3)
+    if (privilege == 3)
     {
         // general information: Intel 3A Chapter 5.12
         *(--kernel_stack) = new_task->ss = 0x23;    // ss
@@ -136,7 +136,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     *(--kernel_stack) = 0;
     *(--kernel_stack) = 0;
 
-    if(privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
+    if (privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
 
     *(--kernel_stack) = data_segment;
     *(--kernel_stack) = data_segment;
@@ -161,22 +161,22 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     return new_task;
 }
 
-uint32_t task_switch(uint32_t esp)
+uint32_t task_switch (uint32_t esp)
 {
-    if(!current_task) return esp;
+    if (!current_task) return esp;
     current_task->esp = esp;   // save esp
 
     // Dispatcher
     // task switch
     current_task = current_task->next; // take the next task
-    if(!current_task)
+    if (!current_task)
     {
         current_task = ready_queue;    // start at the beginning of the queue
     }
 
     // new_task
-	paging_switch( current_task->page_directory );
-	//tss.cr3 = ... TODO: Really unnecessary?
+    paging_switch ( current_task->page_directory );
+    //tss.cr3 = ... TODO: Really unnecessary?
     tss.esp  = current_task->esp;
     tss.esp0 = (current_task->kernel_stack)+KERNEL_STACK_SIZE;
     tss.ebp  = current_task->ebp;
@@ -212,11 +212,11 @@ void exit()
     task_t* tmp_task = (task_t*)ready_queue;
     do
     {
-        if(tmp_task->next == current_task)
+        if (tmp_task->next == current_task)
         {
             tmp_task->next = current_task->next;
         }
-        if(tmp_task->next)
+        if (tmp_task->next)
         {
             tmp_task = tmp_task->next;
         }
