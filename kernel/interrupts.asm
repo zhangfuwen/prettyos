@@ -44,7 +44,7 @@ section .text
 %macro IR_ROUTINE 1
     _ir%1:
     cli
-	%if (%1!=8) && (%1<10 || %1>14)
+    %if (%1!=8) && (%1<10 || %1>14)
     push dword 0    ; Dummy error code needs to be pushed on some interrupts
     %endif
     push dword %1
@@ -54,8 +54,8 @@ section .text
 ; Create the 48 interrupt-routines
 %assign routine_nr 0
 %rep 48
-	IR_ROUTINE routine_nr
-	%assign routine_nr routine_nr+1
+    IR_ROUTINE routine_nr
+    %assign routine_nr routine_nr+1
 %endrep
 
 ; Create the Syscall ISR routines
@@ -84,27 +84,27 @@ ir_common_stub:
     mov fs, ax
     mov gs, ax
 
-	push esp              ; parameter of _irq_handler 
+    push esp              ; parameter of _irq_handler 
     call _irq_handler    ;  
     global _irq_tail
     _irq_tail:
-	mov esp, eax          ; return value: changed or unchanged esp
+    mov esp, eax          ; return value: changed or unchanged esp
 
     pop gs
     pop fs
     pop es
     pop ds
 
-	pop edi
-	pop esi
-	pop ebp
-	pop ebx
-	pop edx
-	pop ecx
-	pop eax
+    pop edi
+    pop esi
+    pop ebp
+    pop ebx
+    pop edx
+    pop ecx
+    pop eax
 
-	add esp, 8
-	iret
+    add esp, 8
+    iret
 
 
 ; Setup and load the IDT
@@ -127,23 +127,23 @@ _idt_install:
     %endrep
 
     DO_IDT_ENTRY SYSCALL_NUMBER,      0x0008, 0xEE00
-	DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0xEE00 
+    DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0xEE00 
 
     ; Remap IRQ 0-15 to 32-47 (see http://wiki.osdev.org/PIC#Initialisation)
-	%macro putport 2
-		mov al, %2
-		out %1, al
-	%endmacro
-	putport 0x20, 0x11
-	putport 0xA0, 0x11
-	putport 0x21, 0x20
-	putport 0xA1, 0x28
-	putport 0x21, 0x04
-	putport 0xA1, 0x02
-	putport 0x21, 0x01
-	putport 0xA1, 0x01
-	putport 0x21, 0x00
-	putport 0xA1, 0x00
+    %macro putport 2
+        mov al, %2
+        out %1, al
+    %endmacro
+    putport 0x20, 0x11
+    putport 0xA0, 0x11
+    putport 0x21, 0x20
+    putport 0xA1, 0x28
+    putport 0x21, 0x04
+    putport 0xA1, 0x02
+    putport 0x21, 0x01
+    putport 0xA1, 0x01
+    putport 0x21, 0x00
+    putport 0xA1, 0x00
 
     ; Perform the actual load operation
     lidt [idt_descriptor]

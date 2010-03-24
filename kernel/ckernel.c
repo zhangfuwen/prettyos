@@ -37,7 +37,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printf("PrettyOS [Version 0.0.0.276]\n");
+    printf("PrettyOS [Version 0.0.0.277]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -279,4 +279,3 @@ int main()
 * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-

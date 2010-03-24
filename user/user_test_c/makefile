@@ -2,7 +2,7 @@ USERTOOLS=../user_tools
 
 ifeq ($(OS),WINDOWS)
     RM=del
-    NASM= ../../tools/nasm
+    NASM= nasm
     GCC= i586-elf-gcc
     LD= i586-elf-ld
 else

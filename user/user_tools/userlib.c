@@ -486,10 +486,6 @@ void i2hex(uint32_t val, char* dest, int32_t len)
 
 
 
-
-
-
-
 void showInfo(signed char val)
 {
     static char* line1 = "   _______                _______      <>_<>                                    "    ;
