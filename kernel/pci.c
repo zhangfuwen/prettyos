@@ -57,7 +57,7 @@ void pci_config_write_byte( uint8_t bus, uint8_t device, uint8_t func, uint8_t r
         | (reg & 0xFC) );
 
     outportb(PCI_CONFIGURATION_DATA + (reg & 0x03), val);
-}
+} /// correctness of function pci_config_write_byte checked with bar0 from EHCI - ehenkes, 2010-03-24
 
 void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val )
 {

@@ -604,13 +604,14 @@ void DeactivateLegacySupport(uint32_t num)
 
     //               eecp       // RO  - This field identifies the extended capability.
                                 //       01h identifies the capability as Legacy Support.
-    uint32_t NextEHCIExtCapPtr; // RO  - 00h indicates end of the ext. cap. list.
-
     if (eecp >= 0x40)
     {
         int32_t eecp_id=0;
+
         while (eecp)
         {
+            uint32_t NextEHCIExtCapPtr; // RO  - 00h indicates end of the ext. cap. list.
+
             printf("eecp = %x, ",eecp);
             eecp_id = pci_config_read( bus, dev, func, 0x0100/*length 1 byte*/ | (eecp + 0) );
             printf("eecp_id = %x\n",eecp_id);
@@ -622,6 +623,43 @@ void DeactivateLegacySupport(uint32_t num)
         uint32_t BIOSownedSemaphore = eecp + 2; // R/W - only Bit 16 (Bit 23:17 Reserved, must be set to zero)
         uint32_t OSownedSemaphore   = eecp + 3; // R/W - only Bit 24 (Bit 31:25 Reserved, must be set to zero)
         uint32_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
+
+        /* /// TEST
+        if( eecp_id == 1)
+        {
+            uint32_t PCITESTADDR = 0x10; // bar0
+            printf("TEST - TEST - TEST begin\n");
+            printf("PCITESTADDR: %X\n",pci_config_read( bus, dev, func, 0x0400 | PCITESTADDR) );
+
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+1, 0x00 );
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+2, 0x00 );
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+3, 0xC0 );
+            //pci_config_write_dword( bus, dev, func, PCITESTADDR,   0xC0000000 );
+            printf("PCITESTADDR: %X\n",pci_config_read( bus, dev, func, 0x0400 | PCITESTADDR) );
+
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+1, 0x10 );
+            //pci_config_write_dword( bus, dev, func, PCITESTADDR,   0xC0001000 );
+            printf("PCITESTADDR: %X\n",pci_config_read( bus, dev, func, 0x0400 | PCITESTADDR) );
+
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+1, 0x00 );
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+2, 0x01 );
+            //pci_config_write_dword( bus, dev, func, PCITESTADDR,   0xC0010000 );
+            printf("PCITESTADDR: %X\n",pci_config_read( bus, dev, func, 0x0400 | PCITESTADDR) );
+
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+2, 0x10 );
+            //pci_config_write_dword( bus, dev, func, PCITESTADDR,   0xC0100000 );
+            printf("PCITESTADDR: %X\n",pci_config_read( bus, dev, func, 0x0400 | PCITESTADDR) );
+
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+1, 0xF0 );
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+2, 0xFF );
+            pci_config_write_byte( bus, dev, func, PCITESTADDR+3, 0xCF );
+            //pci_config_write_dword( bus, dev, func, PCITESTADDR,   0xCFFFF000 );
+            printf("PCITESTADDR: %X\n",pci_config_read( bus, dev, func, 0x0400 | PCITESTADDR) );
+
+            printf("TEST - TEST - TEST end\n");
+            delay(4000000);
+        }
+        /// TEST */
 
         // Legacy-Support-EC found? BIOS-Semaphore set?
         if ( (eecp_id == 1) && ( pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ) & 0x01) )
