@@ -45,7 +45,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     if (firstCluster==0)
     {
         settextcolor(4,0);
-        printf("file is not ok\n");
+        printf("file is not ok (no valid first cluster)\n");
         settextcolor(15,0);
         flpydsk_control_motor(false);
         return -1;
@@ -62,10 +62,13 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
 
     /// TODO: read only entries which are necessary for file_ia
     ///       combine reading FAT entry and data sector
+
+    // whole FAT is read from index 0 to FATMAXINDEX ( = 2849 = 0xB21 )
     for (uint32_t i=0;i<FATMAXINDEX;i++)
     {
         read_fat(&fat_entry[i], i, FAT1_SEC, track0);
     }
+
     // load file to memory
     retVal = file_ia(fat_entry,firstCluster,file); // read sectors of file
     ///************** FAT ********************///
@@ -99,7 +102,9 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     }
     else if (retVal==-1)
     {
-        printf("file was not executed due to FAT error.");
+        settextcolor(4,0);
+        printf("file was not executed due to FAT error.\n");
+        settextcolor(15,0);
     }
     flpydsk_control_motor(false);
     sleepSeconds(3); // show screen output
@@ -116,8 +121,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
 
     int32_t retVal;
     // struct file f;
-    //uint32_t firstCluster = 0; // no valid value for a file
-    uint32_t firstCluster = 1000;   // TEST
+    uint32_t firstCluster = 0; // no valid value for a file
     uint8_t  freeRootDirEntry = 0xFF;
 
     flpydsk_control_motor(true);
@@ -140,15 +144,23 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     }
     printf("test file written to FDD: %d bytes, %d sectors needed.\n", size, neededSectors);
 
-    // TODO:
-    // search "neededSectors" free sectors
-    // search first free cluster!
+    // search first free cluster
+    //  whole FAT is read from index 2 to maximum FATMAXINDEX ( = 2849 = 0xB21 )
+    for (uint32_t i=2;i<FATMAXINDEX;i++)
+    {
+        read_fat(&fat_entry[i], i, FAT1_SEC, track0);
+        if ( (fat_entry[i]==0) && (fat_entry[i-1]==LAST_ENTRY_IN_FAT_CHAIN) )
+        {
+            firstCluster = i; // free and behind a FAT chain
+            break;
+        }
+    }
 
-    /// search free place in root dir and write entry
+    // search free place in root dir and write entry
     uint32_t rootdirStart = ROOT_SEC*0x200;
     for(uint16_t i=0;i<ROOT_DIR_ENTRIES;i++)
     {
-        if ( track1[(rootdirStart-9216/*track0*/)+i*0x20]==0x00 )
+        if ( track1[(rootdirStart-9216)+i*0x20]==0x00 )
         {
             printf("free root dir entry nr. %d\n\n",i);
             freeRootDirEntry = i;
@@ -156,6 +168,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+ 8], (void*)bufExt,        3); // write extension
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+26], (void*)&firstCluster, 2); // write first cluster
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+28], (void*)&size,         4); // write size
+                           track1[(rootdirStart-9216)+i*0x20+11] = ATTR_ARCHIVE;            // archive
             break;
         }
         else
@@ -170,15 +183,46 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
         settextcolor(15,0);
     }
 
-    // define and write FAT chain to FAT1 and FAT2
+    // search "neededSectors" free sectors
+    uint32_t FileCluster[neededSectors];
+    int32_t counter = 0;
+    for (uint32_t i=firstCluster;i<FATMAXINDEX;i++)
+    {
+        if(counter>=neededSectors)
+        {
+            break;
+        }
+        read_fat(&fat_entry[i], i, FAT1_SEC, track0);
+        if (fat_entry[i]==0)
+        {
+            FileCluster[counter] = i;
+            counter++;
+        }
+    }
 
-    // divide file in memory into sectors sizes; file: address and size needed
+    // define FAT chain
+    printf("\nFAT chain:\n");
+    for (uint32_t i=0;i<neededSectors;i++)
+    {
+        fat_entry[FileCluster[i]] = FileCluster[i+1];
+        if (i==(neededSectors-1))
+        {
+            fat_entry[FileCluster[neededSectors-1]] = LAST_ENTRY_IN_FAT_CHAIN;
+        }
+        printf("%d ", fat_entry[FileCluster[i]]);
+    }
+    printf("\n\n");
+
+    // write FAT chain to FAT1 and FAT2
+    // ...
+    // use write_fat(int32_t fat, int32_t in, int32_t st_sec) <--- to be adapted
 
     // write track0, track1 from memory to floppy disk
     flpydsk_write_ia( 0, track0, TRACK);
     flpydsk_write_ia( 1, track1, TRACK);
 
     // write sectors from memory to floppy disk
+    // ...
 
     // free memory, if necessary
 

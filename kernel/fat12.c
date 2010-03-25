@@ -12,14 +12,20 @@ Links:
 http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 */
 
-
+/*
+parameter:
+fat_entrypoint: array of 12-bit-values
+index:          counter variable 12-bit-FAT index
+st_sec:         sector
+buffer:         e.g. track0
+*/
 int32_t read_fat(int32_t* fat_entrypoint, int32_t index, int32_t st_sec, uint8_t* buffer) /// FAT12
 {
     // example: //TODO: only necessary FAT entries and combine these tow steps:
                 //parse FAT & load file data
     // for (i=0;i<FATMAXINDEX;i++)
-    //    read_fat(&fat_entrypoint[i], i, FAT1_SEC);
-    // file_ia(fat_entrypoint,firstCluster,file);
+    //    read_fat(&fat_entry[i], i, FAT1_SEC, track0);
+    // file_ia(fat_entry,firstCluster,file);
 
 
     int32_t fat_index;
@@ -32,8 +38,101 @@ int32_t read_fat(int32_t* fat_entrypoint, int32_t index, int32_t st_sec, uint8_t
     fat1 = buffer[st_sec*512+fat_index]   & 0xFF;
     fat2 = buffer[st_sec*512+fat_index+1] & 0xFF;
 
+    // combine two FAT-entries fat1 and fat2 to a 12-bit-value fat_entry
     parse_fat(fat_entrypoint,fat1,fat2,index);
 
+    return 0;
+}
+
+/// TODO: to be adapted a[...] and b[...] --> track0[...]
+int32_t write_fat(int32_t fat, int32_t in, int32_t st_sec)
+{
+  int32_t fat_in;
+  uint8_t a[512],b[512];
+  int8_t fat1,fat2;
+  // int32_t res;
+
+  //2fat index from cluster index
+  fat_in = (in*3)/2;
+
+  //Sector and index from fat_index
+  st_sec = st_sec + fat_in/512;
+  fat_in = fat_in%512;
+
+  printf("write fat %d to sec %d in %d sector_in %d", fat, st_sec, fat_in, in+DATA_SEC-2);
+
+  if (fat_in == 511)
+  {
+    //spans sectors
+    /*
+    res = read_sector(st_sec,a);
+    if(res != 0)
+       return E_DISK;
+    */
+
+    fat1 = a[511];
+
+    /*
+    res = read_sector(st_sec+1,b); /// read
+    if(res != 0)
+      return E_DISK;
+    */
+
+    fat2 = b[0];
+  }
+  else
+  {
+    /*
+    res = read_sector(st_sec,a);   /// read
+    if(res != 0)
+       return E_DISK;
+    */
+
+    fat1 = a[fat_in];
+    fat2 = a[fat_in+1];
+  }
+
+  //Even and odd cluster
+  if(in%2 == 0)
+  {
+      fat1 = fat & 0x0ff;
+      fat2 = (fat2 & 0xf0) | ((fat & 0xf00) >> 8);
+  }
+  else
+  {
+      fat1 = (fat1 &0x0f) | ( (fat & 0x00f) << 4);
+      fat2 = (fat  & 0xff0) >>4;
+  }
+
+  //Write back
+    if(fat_in == 511)
+    {
+      a[511]=fat1;
+      b[0] = fat2;
+
+      /*
+      res = write_sector(st_sec,a);   /// write
+      if(res != 0)
+          return E_DISK;
+      */
+
+      /*
+      res = write_sector(st_sec+1,b); /// write
+      if(res != 0)
+          return E_DISK;
+      */
+    }
+    else
+    {
+      a[fat_in] = fat1;
+      a[fat_in+1] = fat2;
+
+      /*
+      res = write_sector(st_sec,a);  /// write
+      if(res != 0)
+          return E_DISK;
+      */
+    }
     return 0;
 }
 
@@ -116,13 +215,8 @@ int32_t flpydsk_read_directory()
 
 
 /*****************************************************************************
-  The following functions are derived from source code of the dynacube team.
+  The following functions are derived from free source code of the dynacube team.
   which was published in the year 2004 at http://www.dynacube.net
-
-  This functions are free software and can be redistributed/modified
-  under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License,
-  or any later version.
 *****************************************************************************/
 
 int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
