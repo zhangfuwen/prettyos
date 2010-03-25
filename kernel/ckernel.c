@@ -16,6 +16,7 @@
 #include "list.h"
 #include "sys_speaker.h"
 #include "ehci.h"
+#include "file.h"
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -37,7 +38,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printf("PrettyOS [Version 0.0.0.277]\n");
+    printf("PrettyOS [Version 0.0.0.278]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -84,6 +85,7 @@ int main()
         printf("\n1.44 MB 1st floppy not shown by CMOS\n\n");
     }
     /// direct 1st floppy disk
+
 
     /// PCI list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
@@ -143,6 +145,12 @@ int main()
     // test with data and program from data.asm
     memcpy((void*)ramdisk_start, &file_data_start, (uint32_t)&file_data_end - (uint32_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
+
+    /// TEST
+        printf("TEST - flpydsk_write");
+        flpydsk_write("TEST    ", "POS", (void*)ramdisk_start, (uint32_t)&file_data_end - (uint32_t)&file_data_start);
+    /// TEST
+
 
     // search the content of files <- data from outside "loaded" via incbin ...
     bool shell_found = false;

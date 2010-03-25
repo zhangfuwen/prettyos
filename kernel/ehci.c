@@ -13,6 +13,7 @@
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
+bool USBtransferFlag; // switch on/off tests for USB-Transfer
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)
 {
@@ -339,6 +340,8 @@ void startHostController(uint32_t num)
 
 int32_t initEHCIHostController(uint32_t num)
 {
+    USBtransferFlag = false;
+
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: initEHCIHostController\n");
     settextcolor(15,0);
@@ -390,7 +393,10 @@ void enablePorts()
              printf("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
              settextcolor(15,0);
 
-             testTransfer(0); // device address, port number
+             if (USBtransferFlag)
+             {
+                 testTransfer(0); // device address
+             }
 
              printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
              printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
@@ -548,10 +554,14 @@ void checkPortLineStatus()
              settextcolor(3,0);
              printf("\nport status: %x\t",pOpRegs->PORTSC[j]);
              settextcolor(15,0);
-             testTransfer(0); // device address
-             printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-             printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
-             printf("in:             "); showStatusbyteQTD(InQTD);
+
+             if (USBtransferFlag)
+             {
+                 testTransfer(0); // device address
+                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
+                 printf("in:             "); showStatusbyteQTD(InQTD);
+             }
         }
       }
 

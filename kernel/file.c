@@ -35,13 +35,18 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
         settextcolor(2,0);
     }
 
-    printf("Load and execute "); settextcolor(14,0); printf("-->%s.%s<--",name,ext);
-    settextcolor(2,0); printf(" from floppy disk\n");
+    printf("Load and execute ");
+    settextcolor(14,0);
+    printf("-->%s.%s<--",name,ext);
+    settextcolor(2,0);
+    printf(" from floppy disk\n");
 
     firstCluster = search_file_first_cluster(name,ext,&f); // now working with cache
     if (firstCluster==0)
     {
-        printf("file not found in root directory\n");
+        settextcolor(4,0);
+        printf("file is not ok\n");
+        settextcolor(15,0);
         flpydsk_control_motor(false);
         return -1;
     }
@@ -95,7 +100,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     else if (retVal==-1)
     {
         printf("file was not executed due to FAT error.");
-    }    
+    }
     flpydsk_control_motor(false);
     sleepSeconds(3); // show screen output
     return 0;
@@ -103,12 +108,27 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
 
 int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t size)
 {
-    printf("file save routine not yet implemented \n");
+    char bufName[8], bufExt[3];
+    memset( bufName,0x20,   8); // ASCII: Space (0x20)
+    memset( bufExt, 0x20,   3); // ASCII: Space (0x20)
+    strncpy(bufName,name,   8);
+    strncpy(bufExt ,ext,    3);
 
-    
+    int32_t retVal;
+    // struct file f;
+    //uint32_t firstCluster = 0; // no valid value for a file
+    uint32_t firstCluster = 1000;   // TEST
+    uint8_t  freeRootDirEntry = 0xFF;
 
+    flpydsk_control_motor(true);
+    retVal = initCache();
+    if (retVal)
+    {
+        settextcolor(12,0);
+        printf("track0 & track1 read error.\n");
+        settextcolor(2,0);
+    }
     // how many floppy disc sectors are needed?
-    
     uint32_t neededSectors=0;
     if ( size%512 == 0)
     {
@@ -118,14 +138,53 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     {
         neededSectors = (size/512)+1;
     }
+    printf("test file written to FDD: %d bytes, %d sectors needed.\n", size, neededSectors);
 
     // TODO:
     // search "neededSectors" free sectors
-    // write name, extension, first cluster into root directory
+    // search first free cluster!
+
+    /// search free place in root dir and write entry
+    uint32_t rootdirStart = ROOT_SEC*0x200;
+    for(uint16_t i=0;i<ROOT_DIR_ENTRIES;i++)
+    {
+        if ( track1[(rootdirStart-9216/*track0*/)+i*0x20]==0x00 )
+        {
+            printf("free root dir entry nr. %d\n\n",i);
+            freeRootDirEntry = i;
+            memcpy((void*)&track1[(rootdirStart-9216)+i*0x20   ], (void*)bufName,       8); // write name
+            memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+ 8], (void*)bufExt,        3); // write extension
+            memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+26], (void*)&firstCluster, 2); // write first cluster
+            memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+28], (void*)&size,         4); // write size
+            break;
+        }
+        else
+        {
+            // printf("occupied root dir entry nr. %d first byte: %y\n",i,track1[(rootdirStart-9216/*track0*/)+i*0x20]);
+        }
+    }
+    if (freeRootDirEntry==0xFF)
+    {
+        settextcolor(4,0);
+        printf("no free root dir entry found.\n\n");
+        settextcolor(15,0);
+    }
+
     // define and write FAT chain to FAT1 and FAT2
+
     // divide file in memory into sectors sizes; file: address and size needed
+
+    // write track0, track1 from memory to floppy disk
+    flpydsk_write_ia( 0, track0, TRACK);
+    flpydsk_write_ia( 1, track1, TRACK);
+
     // write sectors from memory to floppy disk
+
     // free memory, if necessary
+
+    // motor off
+    flpydsk_control_motor(false);
+
     return 0;
 }
 

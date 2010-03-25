@@ -27,6 +27,7 @@
 
 // Numbers
 #define DIR_ENTRIES 16
+#define ROOT_DIR_ENTRIES 224
 #define MAX_DIR     10
 #define MAX_FILE    10
 #define FATMAXINDEX MAX_BLOCK ///TEST

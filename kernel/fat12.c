@@ -55,7 +55,7 @@ int32_t flpydsk_read_directory()
     }
     printf("<Floppy Disc Directory>\n");
 
-    for (uint8_t i=0;i<224;++i)       // 224 Entries * 32 Byte
+    for (uint8_t i=0;i<ROOT_DIR_ENTRIES;++i)       // 224 Entries * 32 Byte
     {
         if (
             (( *((uint8_t*)(DMA_BUFFER + i*32)) )      != 0x00 ) && /* free from here on           */
@@ -271,7 +271,7 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
     b.SectorsPerCluster =    1;
     b.ReservedSectors   =    1;
     b.FATcount          =    2;
-    b.MaxRootEntries    =  224;
+    b.MaxRootEntries    =  ROOT_DIR_ENTRIES;
     b.TotalSectors1     = 2880;
     b.MediaDescriptor   = 0xF0;
     b.SectorsPerFAT     =    9;
@@ -347,7 +347,7 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
     ///TEST
     printf("Content of Disc:\n");
     struct dir_entry entry;
-    for (uint8_t j=0;j<224;j++)
+    for (uint8_t j=0;j<ROOT_DIR_ENTRIES;j++)
     {
         read_dir(&entry, j, 19, false);
         if (strcmp((&entry)->Filename,"")==0)
@@ -446,7 +446,7 @@ uint32_t search_file_first_cluster(const char* name, const char* ext, struct fil
    struct dir_entry entry;
    char buf1[10], buf2[5];
 
-   for (uint8_t i=0;i<224;i++)
+   for (uint8_t i=0;i<ROOT_DIR_ENTRIES;i++)
    {
        read_dir(&entry, i, 19, false);
        if ((&entry)->Filename[0] == 0)
