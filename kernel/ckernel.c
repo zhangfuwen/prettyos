@@ -31,6 +31,9 @@ extern uint32_t file_data_end;
 // String for Date&Time
 char DateAndTime[100];
 
+// buffer for video screen
+uint8_t videoscreen[80*50]; // only signs, no attributes
+
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
@@ -38,7 +41,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printf("PrettyOS [Version 0.0.0.279]\n");
+    printf("PrettyOS [Version 0.0.0.280]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -146,12 +149,6 @@ int main()
     memcpy((void*)ramdisk_start, &file_data_start, (uint32_t)&file_data_end - (uint32_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
 
-    /// TEST
-        printf("TEST - flpydsk_write");
-        flpydsk_write("TEST    ", "POS", (void*)ramdisk_start, (uint32_t)&file_data_end - (uint32_t)&file_data_start);
-    /// TEST
-
-
     // search the content of files <- data from outside "loaded" via incbin ...
     bool shell_found = false;
     uint8_t* buf = malloc( FILEBUFFERSIZE, 0 );
@@ -248,6 +245,15 @@ int main()
             strcat(DateAndTime, CurrentFrequency);
             strcat(DateAndTime, " MHz   ");
             kprintf(DateAndTime, 49, 0xC); // output in status bar
+
+            /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
+            printf("TEST - flpydsk_write");
+            for(int32_t i=0; i<4000;i++)
+            {
+                videoscreen[i] = *(uint8_t*)(0xB8000+2*i); // only signs, no attributes
+            }
+            flpydsk_write(timeBuffer, "TXT", (void*)videoscreen, 4000);
+            /// TEST
 
             if ( (initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber )
             {

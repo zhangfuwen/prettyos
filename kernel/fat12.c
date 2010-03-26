@@ -14,7 +14,7 @@ http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
 
 /*
 parameter:
-fat_entrypoint: array of 12-bit-values
+fat_entrypoint: array of cluster indices
 index:          counter variable 12-bit-FAT index
 st_sec:         sector
 buffer:         e.g. track0
@@ -44,94 +44,67 @@ int32_t read_fat(int32_t* fat_entrypoint, int32_t index, int32_t st_sec, uint8_t
     return 0;
 }
 
-/// TODO: to be adapted a[...] and b[...] --> track0[...]
-int32_t write_fat(int32_t fat, int32_t in, int32_t st_sec)
+/*
+parameter:
+fat:       array of cluster indices
+index:     counter variable 12-bit-FAT index
+st_sec:    sector
+buffer:    e.g. track0
+*/
+int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer) /// FAT12
 {
-  int32_t fat_in;
-  uint8_t a[512],b[512];
-  int8_t fat1,fat2;
-  // int32_t res;
+  int8_t fat1, fat2;       // first byte, second byte for one FAT entry at the FAT:
+                           // DAB efc --> AB cD ef or dab EFC --> ab Cd EF
+  uint8_t a[512], b[512];  // FAT data (sector-wise)
 
-  //2fat index from cluster index
-  fat_in = (in*3)/2;
+  int32_t fat_index = (index*3)/2; // cluster index ---> fat index
 
-  //Sector and index from fat_index
-  st_sec = st_sec + fat_in/512;
-  fat_in = fat_in%512;
+  // calculate sector and index from fat_index
+  st_sec = st_sec + fat_index/512;
+  fat_index = fat_index%512;
 
-  printf("write fat %d to sec %d in %d sector_in %d", fat, st_sec, fat_in, in+DATA_SEC-2);
-
-  if (fat_in == 511)
+  // Read a[...] b[...] from track0[...] and insert new FAT entries
+  if (fat_index == 511) // spans sectors
   {
-    //spans sectors
-    /*
-    res = read_sector(st_sec,a);
-    if(res != 0)
-       return E_DISK;
-    */
-
+    memcpy((void*)a,(void*)&buffer[st_sec*512],512);
     fat1 = a[511];
-
-    /*
-    res = read_sector(st_sec+1,b); /// read
-    if(res != 0)
-      return E_DISK;
-    */
-
+    memcpy((void*)b,(void*)&buffer[(st_sec+1)*512],512);
     fat2 = b[0];
   }
   else
   {
-    /*
-    res = read_sector(st_sec,a);   /// read
-    if(res != 0)
-       return E_DISK;
-    */
-
-    fat1 = a[fat_in];
-    fat2 = a[fat_in+1];
+    memcpy((void*)a,(void*)&buffer[st_sec*512],512);
+    fat1 = a[fat_index];
+    fat2 = a[fat_index+1];
   }
 
-  //Even and odd cluster
-  if(in%2 == 0)
+  // even and odd cluster:
+  // DAB ... --> AB .D ..
+  // ... EFC --> .. C. EF
+  if(index%2 == 0)
   {
-      fat1 = fat & 0x0ff;
-      fat2 = (fat2 & 0xf0) | ((fat & 0xf00) >> 8);
+      fat1 = fat & 0x0FF;                           // .AB --> AB ..
+      fat2 = (fat2 & 0xF0) | ((fat & 0xF00) >> 8);  // D.. --> .. .D
   }
   else
   {
-      fat1 = (fat1 &0x0f) | ( (fat & 0x00f) << 4);
-      fat2 = (fat  & 0xff0) >>4;
+      fat1 = (fat1 & 0x0F) | ( (fat & 0x00F) << 4); //  ..C --> C. ..
+      fat2 = (fat  & 0xFF0) >> 4;                   //  EF. --> .. EF
   }
 
-  //Write back
-    if(fat_in == 511)
+  // Write back from a[...] b[...] to track0[...]
+    if(fat_index == 511)
     {
-      a[511]=fat1;
-      b[0] = fat2;
-
-      /*
-      res = write_sector(st_sec,a);   /// write
-      if(res != 0)
-          return E_DISK;
-      */
-
-      /*
-      res = write_sector(st_sec+1,b); /// write
-      if(res != 0)
-          return E_DISK;
-      */
+      a[511] = fat1;
+      b[0]   = fat2;
+      memcpy((void*)&buffer[st_sec*512],(void*)a,512);
+      memcpy((void*)&buffer[(st_sec+1)*512],(void*)b,512);
     }
     else
     {
-      a[fat_in] = fat1;
-      a[fat_in+1] = fat2;
-
-      /*
-      res = write_sector(st_sec,a);  /// write
-      if(res != 0)
-          return E_DISK;
-      */
+      a[fat_index]   = fat1;
+      a[fat_index+1] = fat2;
+      memcpy((void*)&buffer[st_sec*512],(void*)a,512);
     }
     return 0;
 }

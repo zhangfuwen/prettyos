@@ -3,6 +3,8 @@
 
 #include "os.h"
 
+#define ADD 31
+
 // structs, ...
 // uint8_t file[51200]; /// <---- TODO: malloc(filesize) ???
 
