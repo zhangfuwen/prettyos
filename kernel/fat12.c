@@ -550,6 +550,7 @@ uint32_t search_file_first_cluster(const char* name, const char* ext, struct fil
 
     f->size = (&entry)->FileSize;
     f->firstCluster = FORM_SHORT((&entry)->FstClusLO,(&entry)->FstClusHI);
+    printf("1st Cluster: hi: %d lo: %d\n",(&entry)->FstClusHI,(&entry)->FstClusLO);
 
     return f->firstCluster;
 }

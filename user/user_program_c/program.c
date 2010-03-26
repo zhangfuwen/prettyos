@@ -294,6 +294,7 @@ EVALUATION:
               settextcolor(15,0);
               puts("file is being searched.\n");
               settextcolor(2,0);
+
               toupper(entry);
 
               int posPoint = 8;

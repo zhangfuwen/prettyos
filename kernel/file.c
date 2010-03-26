@@ -114,10 +114,25 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
 int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t size)
 {
     char bufName[8], bufExt[3];
-    memset( bufName,0x20,   8); // ASCII: Space (0x20)
-    memset( bufExt, 0x20,   3); // ASCII: Space (0x20)
-    strncpy(bufName,name,   8);
-    strncpy(bufExt ,ext,    3);
+    strncpy(bufName,name,8);
+    strncpy(bufExt ,ext, 3);
+
+    // ensure that there is no zero in the string! Use 0x20 (SPACE).
+    for(int32_t i=0;i<8;i++)
+    {
+        if (bufName[i]<0x20)
+        {
+            bufName[i] = 0x20;
+        }
+    }
+
+    for(int32_t i=0;i<3;i++)
+    {
+        if (bufExt[i]<0x20)
+        {
+            bufExt[i] = 0x20;
+        }
+    }
 
     int32_t retVal=0;
     // struct file f;
