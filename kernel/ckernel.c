@@ -41,7 +41,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printf("PrettyOS [Version 0.0.0.281]\n");
+    printf("PrettyOS [Version 0.0.0.282]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -248,17 +248,20 @@ int main()
 
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
 
-            if ((CurrentSeconds%40)==0)
+            if ((CurrentSeconds%2)==0)
             {
-              for (int32_t i=0; i<4100;i++)
+              int32_t NewLine = 0;
+              int32_t j;
+              for (int32_t i=0; i<4000;i++)
               {
-                videoscreen[i] = *(uint8_t*)(0xB8000+2*i); // only signs, no attributes
-                if ((i%81) == 79)
+                j=i+2*NewLine;
+                videoscreen[j] = *(uint8_t*)(0xB8000 + 2*i); // only signs, no attributes
+                if ((i%80) == 79)
                 {
                     // CR LF (0xD 0xA)
-                    videoscreen[i+1]= 0xD;
-                    videoscreen[i+2]= 0xA;
-                    i+=2;
+                    videoscreen[j+1]= 0xD;
+                    videoscreen[j+2]= 0xA;
+                    NewLine++;
                 }
               }
               flpydsk_write(timeBuffer,"TXT", (void*)videoscreen, 4100);
