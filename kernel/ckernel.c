@@ -32,7 +32,7 @@ extern uint32_t file_data_end;
 char DateAndTime[100];
 
 // buffer for video screen
-uint8_t videoscreen[80*50]; // only signs, no attributes
+uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
@@ -41,7 +41,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-    printf("PrettyOS [Version 0.0.0.280]\n");
+    printf("PrettyOS [Version 0.0.0.281]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -247,12 +247,22 @@ int main()
             kprintf(DateAndTime, 49, 0xC); // output in status bar
 
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
-            printf("TEST - flpydsk_write");
-            for(int32_t i=0; i<4000;i++)
+
+            if ((CurrentSeconds%40)==0)
             {
+              for (int32_t i=0; i<4100;i++)
+              {
                 videoscreen[i] = *(uint8_t*)(0xB8000+2*i); // only signs, no attributes
+                if ((i%81) == 79)
+                {
+                    // CR LF (0xD 0xA)
+                    videoscreen[i+1]= 0xD;
+                    videoscreen[i+2]= 0xA;
+                    i+=2;
+                }
+              }
+              flpydsk_write(timeBuffer,"TXT", (void*)videoscreen, 4100);
             }
-            flpydsk_write(timeBuffer, "TXT", (void*)videoscreen, 4000);
             /// TEST
 
             if ( (initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber )
