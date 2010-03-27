@@ -31,7 +31,7 @@ void console_exit(volatile console_t* console)
 
 bool changeDisplayedConsole(uint8_t ID)
 {
-    // Chaning visible console, returning false, if this console is not available.
+    // Changing visible console, returning false, if this console is not available.
     if (ID > 11 || reachableConsoles[ID] == 0) {
         return(false);
     }

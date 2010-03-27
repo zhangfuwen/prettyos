@@ -19,7 +19,7 @@
 #include "file.h"
 
 // PrettyOS Version string
-const char* version = "0.0.0.286";
+const char* version = "0.0.0.288";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -37,6 +37,32 @@ uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
+void set_fpu_control_word(const uint16_t cw)
+{
+    // FLDCW = Load FPU Control Word
+    __asm__ volatile("fldcw %0;"::"m"(cw)); // sets the FPU control word to "cw"
+
+}
+
+// 9th bit (OSFXSR) in the CR4 tells the CPU
+// that we intend on using the FXSAVE, FXRSTOR, and SSEx instructions.
+void setup_x87_fpu()
+{
+    size_t cr4; // backup of CR4
+
+    // place CR4 into our variable
+    __asm__ volatile("mov %%cr4, %0;" : "=r" (cr4));
+
+    // set the OSFXSR bit
+    cr4 |= 0x200;
+
+    // reload CR4 and INIT the FPU (FINIT)
+    __asm__ volatile("mov %0, %%cr4; finit;" : : "r"(cr4));
+
+    // set the FPU Control Word
+    set_fpu_control_word(0x37F);
+}
+
 static void init()
 {
     clear_screen();
@@ -46,6 +72,7 @@ static void init()
     timer_install();
     keyboard_install();
     syscall_install();
+    setup_x87_fpu();
     settextcolor(15,0);
 }
 
