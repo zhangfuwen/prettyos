@@ -3,15 +3,15 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "list.h"
 #include "task.h"
 #include "paging.h"
 #include "kheap.h"
 
-
 // Count of running tasks
 int32_t userTaskCounter;
 
-// The currently running task.
+// The currently running and currently displayed task.
 volatile task_t* current_task;
 
 // The start of the task linked list.
@@ -22,8 +22,8 @@ extern tss_entry_t tss;
 extern void irq_tail();
 extern uint32_t read_eip();
 
-
 uint32_t next_pid = 1; // The next available process ID.
+
 
 int32_t getpid()
 {
@@ -51,14 +51,12 @@ void tasking_install()
     settextcolor(15,0);
     #endif
     ///
-
     current_task = ready_queue = (task_t*)malloc(sizeof(task_t),0); // first task (kernel task)
     current_task->id = next_pid++;
     current_task->esp = current_task->ebp = 0;
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
     current_task->next = 0;
-
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
@@ -101,6 +99,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     new_task->next = 0;
 
+
     task_t* tmp_task = (task_t*)ready_queue;
     while (tmp_task->next)
     {
@@ -111,6 +110,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
 
     uint32_t code_segment=0x08, data_segment=0x10;
+
 
 ///TEST///
     *(--kernel_stack) = 0x0;  // return address dummy

@@ -31,7 +31,7 @@ DEFN_SYSCALL1( settaskflag,               14, int32_t                  )
 DEFN_SYSCALL2( beep,                      15, uint32_t, uint32_t       )
 DEFN_SYSCALL0( getUserTaskNumber,         16                           )
 DEFN_SYSCALL0( testch,                    17                           )
-DEFN_SYSCALL1( clear_userscreen,          18, uint8_t                  )
+DEFN_SYSCALL1( clear_console,             18, uint8_t                  )
 DEFN_SYSCALL2( set_cursor,                19, uint8_t, uint8_t         )
 DEFN_SYSCALL1( grow_heap,                 20, uint32_t                 )
 
@@ -55,7 +55,7 @@ static void* syscalls[] =
     &beep,
     &getUserTaskNumber,
     &testch,
-    &clear_userscreen,
+    &clear_console,
     &set_cursor,
     &task_grow_userheap
 };

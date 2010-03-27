@@ -18,6 +18,9 @@
 #include "ehci.h"
 #include "file.h"
 
+// PrettyOS Version string
+const char* version = "0.0.0.284";
+
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
 
@@ -28,9 +31,6 @@
 extern uint32_t file_data_start;
 extern uint32_t file_data_end;
 
-// String for Date&Time
-char DateAndTime[100];
-
 // buffer for video screen
 uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
 
@@ -40,8 +40,8 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 static void init()
 {
     clear_screen();
+	kprintf("PrettyOS [Version %s]", 0, 0x0E, version);
     settextcolor(14,0);
-    printf("PrettyOS [Version 0.0.0.283]\n");
     gdt_install();
     idt_install();
     timer_install();
@@ -195,10 +195,13 @@ int main()
     const char* progress = "|/-\\";
     const char* p = progress;
     uint32_t CurrentSeconds=0, CurrentSecondsOld;
-    char timeBuffer[20];
 
     uint64_t CurrentRdtscValue=0, OldRdtscValue, RdtscDiffValue;
-    char CurrentFrequency[10];
+
+
+	// String for Date&Time
+	char DateAndTime[81];
+	char timeBuffer[20];
 
     while ( true )
     {
@@ -229,7 +232,6 @@ int main()
             {
               uint32_t CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
               pODA->CPU_Frequency_kHz = CPU_Frequency_kHz;
-              itoa(CPU_Frequency_kHz/1000, CurrentFrequency);
             }
             else
             {
@@ -237,14 +239,9 @@ int main()
               // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
             }
 
-            itoa(CurrentSeconds, timeBuffer);
+			itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
-            strcat(DateAndTime, "   ");
-            strcat(DateAndTime, timeBuffer);
-            strcat(DateAndTime, " s runtime. CPU: ");
-            strcat(DateAndTime, CurrentFrequency);
-            strcat(DateAndTime, " MHz   ");
-            kprintf(DateAndTime, 49, 0xC); // output in status bar
+			kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0xC, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
 

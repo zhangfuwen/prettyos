@@ -21,6 +21,8 @@ uint32_t KQ_count_write;     // number of data put into queue buffer
 
 
 bool ShiftKeyDown  = false;  // variable for Shift Key Down
+bool CtrlKeyDown   = false;  // variable for Ctrl Key Down
+bool AltKeyDown  = false;  // variable for Alt Key Down
 bool AltGrKeyDown  = false;  // variable for AltGr Key Down
 bool KeyPressed    = false;  // variable for Key Pressed
 uint8_t curScan    = 0;      // current scan code from Keyboard
@@ -61,6 +63,13 @@ uint8_t FetchAndAnalyzeScancode()
         {
             AltGrKeyDown = false;
         }
+		else if (curScan == 0x38) {
+            AltKeyDown = false;
+		}
+        if (curScan == 0x1D)
+        {
+            CtrlKeyDown = false;
+        }
     }
     else // Key was pressed
     {
@@ -73,6 +82,13 @@ uint8_t FetchAndAnalyzeScancode()
         {
             AltGrKeyDown = true;
         }
+		else if (curScan == 0x38) {
+            AltKeyDown = true;
+		}
+        if (curScan == 0x1D)
+        {
+            CtrlKeyDown = true;
+        }
     }
     prevScan = curScan;
     return curScan;
@@ -82,11 +98,12 @@ uint8_t ScanToASCII()
 {
     curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
 
-    //filter Shift Key and Key Release
+    // filter Shift Key and Key Release
     if ( ( (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) ) || ( KeyPressed == false ) )
     {
         return 0;
     }
+
 
     /// TEST
     //  printf(" scan:%d ",scan);

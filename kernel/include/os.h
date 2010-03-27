@@ -120,14 +120,22 @@ struct regs
 
 typedef struct regs registers_t;
 
+// PrettyOS Version string
+extern const char* version;
+
 // video.c
+static const uint8_t COLUMNS = 80;
+static const uint8_t USER_LINES = 46;
+uint8_t AsciiToCP437(uint8_t ascii);
+void refreshUserScreen();
 void clear_screen();
-void clear_userscreen(uint8_t backcolor);
+void clear_console(uint8_t backcolor);
 void settextcolor(uint8_t forecolor, uint8_t backcolor);
 void putch(char c);
 void puts(const char* text);
+void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
+void printf (const char *args, ...);
 void scroll();
-void kprintf(const char* message, uint32_t line, uint8_t attribute);
 void set_cursor(uint8_t x, uint8_t y);
 void update_cursor();
 void move_cursor_right();
@@ -136,7 +144,6 @@ void move_cursor_home();
 void move_cursor_end();
 void save_cursor();
 void restore_cursor();
-void printf (const char *args, ...);
 
 // timer.c
 uint32_t getCurrentSeconds();
@@ -147,7 +154,7 @@ void timer_wait (uint32_t ticks);
 void sleepSeconds (uint32_t seconds);
 void sleepMilliSeconds (uint32_t ms);
 void systemTimer_setFrequency( uint32_t freq );
-uint16_t    systemTimer_getFrequency();
+uint16_t systemTimer_getFrequency();
 void timer_install();
 void timer_uninstall();
 void delay (uint32_t microsec);
@@ -217,6 +224,7 @@ void cli();
 void sti();
 void nop();
 
+int8_t ctoi(char c);
 void itoa(int32_t value, char* valuestring);
 void i2hex(uint32_t val, char* dest, int32_t len);
 void float2string(float value, int32_t decimal, char* valuestring);

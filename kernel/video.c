@@ -15,7 +15,6 @@ static uint8_t  saved_attrib = 0x0F;
 
 static uint16_t* vidmem = (uint16_t*) 0xB8000;
 
-static const uint8_t COLUMNS = 80;
 static const uint8_t LINES   = 50;
 
 // reserve 5 lines:
@@ -34,7 +33,7 @@ void clear_screen()
     update_cursor();
 }
 
-void clear_userscreen(uint8_t backcolor)
+void clear_console(uint8_t backcolor)
 {
     attrib = (backcolor << 4) | 0x0F;
     memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * (SCROLL_LINE));
@@ -104,7 +103,7 @@ void update_cursor()
     outportb(0x3D5, (uint8_t)(position&0xFF));
 }
 
-static uint8_t AsciiToCP437(uint8_t ascii)
+uint8_t AsciiToCP437(uint8_t ascii)
 {
     switch ( ascii )
     {
@@ -200,7 +199,7 @@ void scroll()
     }
 }
 
-void kprintf(const char* message, uint32_t line, uint8_t attribute)
+void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
     save_cursor();
     // Top 4 bytes: background, bottom 4 bytes: foreground color
@@ -208,7 +207,62 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute)
     csr_x = 0; csr_y = line;
     update_cursor();
     scrollflag = false;
-    puts(message);
+	
+	va_list ap;
+    va_start (ap, attribute);
+    char buffer[32]; // Larger is not needed at the moment
+
+    for (; *message; message++)
+    {
+        switch (*message)
+        {
+            case '%':
+                switch (*(++message))
+                {
+                    case 'u':
+                        itoa(va_arg(ap, uint32_t), buffer);
+                        puts(buffer);
+                        break;
+                    case 'f':
+                        float2string(va_arg(ap, double), 10, buffer);
+                        puts(buffer);
+                        break;
+                    case 'i': case 'd':
+                        itoa(va_arg(ap, int32_t), buffer);
+                        puts(buffer);
+                        break;
+                    case 'X':
+                        i2hex(va_arg(ap, int32_t), buffer, 8);
+                        puts(buffer);
+                        break;
+                    case 'x':
+                        i2hex(va_arg(ap, int32_t), buffer, 4);
+                        puts(buffer);
+                        break;
+                    case 'y':
+                        i2hex(va_arg(ap, int32_t), buffer, 2);
+                        puts(buffer);
+                        break;
+                    case 's':
+                        puts(va_arg (ap, char*));
+                        break;
+                    case 'c':
+                        putch((int8_t)va_arg(ap, int32_t));
+                        break;
+                    case '%':
+                        putch('%');
+                        break;
+                    default:
+                        --message;
+                        break;
+                }
+                break;
+            default:
+                putch(*message);
+                break;
+        }
+    }
+
     scrollflag = true;
     restore_cursor();
 };
