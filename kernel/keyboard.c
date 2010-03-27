@@ -4,6 +4,8 @@
 */
 
 #include "os.h"
+#include "task.h"
+#include "console.h"
 
 #ifdef KEYMAP_GER
 #include "keyboard_GER.h"
@@ -22,7 +24,7 @@ uint32_t KQ_count_write;     // number of data put into queue buffer
 
 bool ShiftKeyDown  = false;  // variable for Shift Key Down
 bool CtrlKeyDown   = false;  // variable for Ctrl Key Down
-bool AltKeyDown  = false;  // variable for Alt Key Down
+bool AltKeyDown  = false;    // variable for Alt Key Down
 bool AltGrKeyDown  = false;  // variable for AltGr Key Down
 bool KeyPressed    = false;  // variable for Key Pressed
 uint8_t curScan    = 0;      // current scan code from Keyboard
@@ -63,9 +65,9 @@ uint8_t FetchAndAnalyzeScancode()
         {
             AltGrKeyDown = false;
         }
-		else if (curScan == 0x38) {
+        else if (curScan == 0x38) {
             AltKeyDown = false;
-		}
+        }
         if (curScan == 0x1D)
         {
             CtrlKeyDown = false;
@@ -82,9 +84,9 @@ uint8_t FetchAndAnalyzeScancode()
         {
             AltGrKeyDown = true;
         }
-		else if (curScan == 0x38) {
+        else if (curScan == 0x38) {
             AltKeyDown = true;
-		}
+        }
         if (curScan == 0x1D)
         {
             CtrlKeyDown = true;
@@ -133,6 +135,19 @@ uint8_t ScanToASCII()
         }
     }
 
+    // filter Console-Switch-Keys
+    if(AltKeyDown)
+    {
+        if(retchar == 'm') {
+            changeDisplayedConsole(10);
+            return(0);
+        }
+        if(ctoi(retchar) != -1) {
+            changeDisplayedConsole(ctoi(retchar));
+            return(0);
+        }
+    }
+
     /// TEST
     //  printf("ascii:%x ", retchar);
     /// TEST
@@ -166,8 +181,8 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
    cli();
    if (KQ_count_write > KQ_count_read)
    {
-       uint8_t KEY = *(pHeadKQ);
-       ++(KQ_count_read);
+       uint8_t KEY = *pHeadKQ;
+       ++KQ_count_read;
 
        if (pHeadKQ > KEYQUEUE)
        {
@@ -175,7 +190,7 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
        }
        if (pHeadKQ == KEYQUEUE)
        {
-           pHeadKQ = (KEYQUEUE)+KQSIZE-1;
+           pHeadKQ = KEYQUEUE+KQSIZE-1;
        }
        return KEY;
    }

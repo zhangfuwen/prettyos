@@ -224,10 +224,10 @@ void reverse(char* s)
 }
 
 int8_t ctoi(char c) {
-	if(c < 48 || c > 57) {
-		return(-1);
-	}
-	return(c-48);
+    if(c < 48 || c > 57) {
+        return(-1);
+    }
+    return(c-48);
 }
 
 /// http://en.wikipedia.org/wiki/Itoa

@@ -33,7 +33,7 @@ DEFN_SYSCALL0( getUserTaskNumber,         16                           )
 DEFN_SYSCALL0( testch,                    17                           )
 DEFN_SYSCALL1( clear_console,             18, uint8_t                  )
 DEFN_SYSCALL2( set_cursor,                19, uint8_t, uint8_t         )
-DEFN_SYSCALL1( grow_heap,                 20, uint32_t                 )
+DEFN_SYSCALL1( task_grow_userheap,        20, uint32_t                 )
 
 static void* syscalls[] =
 {

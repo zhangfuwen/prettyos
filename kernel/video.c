@@ -4,103 +4,48 @@
 */
 
 #include "os.h"
+#include "console.h"
 #include "my_stdarg.h"
 
-static uint8_t  csr_x        = 0;
-static uint8_t  csr_y        = 0;
-static uint8_t  saved_csr_x  = 0;
-static uint8_t  saved_csr_y  = 0;
-static uint8_t  attrib       = 0x0F;
-static uint8_t  saved_attrib = 0x0F;
-
-static uint16_t* vidmem = (uint16_t*) 0xB8000;
+uint16_t* vidmem = (uint16_t*) 0xB8000;
 
 static const uint8_t LINES   = 50;
 
-// reserve 5 lines:
-// one line:     separation,
-// three lines:  info area,
-// one line:     status bar
-static const uint8_t SCROLL_LINE = 45;
+static const uint8_t USER_BEGIN = 2; // Reserving Titlebar+Separation
+static const uint8_t USER_END = 48; // Reserving Statusbar+Separation
 
-static bool scrollflag = true;
+uint8_t csr_x  = 0;
+uint8_t csr_y  = 0;
+uint8_t attrib = 0x0F;
 
 void clear_screen()
 {
-    memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * LINES);
-    csr_x = 0;
-    csr_y = 0;
+    memsetw (vidmem, 0x20 | (0x00 << 8), COLUMNS * LINES);
     update_cursor();
 }
 
-void clear_console(uint8_t backcolor)
-{
-    attrib = (backcolor << 4) | 0x0F;
-    memsetw (vidmem, 0x20 | (attrib << 8), COLUMNS * (SCROLL_LINE));
-    csr_x = 0;
+void refreshUserScreen() {
+    // Printing titlebar
+    kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
     csr_y = 0;
-    update_cursor();
-}
 
-void settextcolor(uint8_t forecolor, uint8_t backcolor)
-{
-    // Hi 4 bit: background, low 4 bit: foreground
-    attrib = (backcolor << 4) | (forecolor & 0x0F);
-}
-
-void move_cursor_right()
-{
-    ++csr_x;
-    if (csr_x>=COLUMNS)
-    {
-      ++csr_y;
-      csr_x=0;
-    }
-}
-
-void move_cursor_left()
-{
-    if (csr_x)
-        --csr_x;
-    if (!csr_x && csr_y>0)
-    {
-        csr_x=COLUMNS-1;
-        --csr_y;
-    }
-}
-
-void move_cursor_home()
-{
-    csr_x = 0; update_cursor();
-}
-
-void move_cursor_end()
-{
-    csr_x = COLUMNS-1; update_cursor();
-}
-
-void set_cursor(uint8_t x, uint8_t y)
-{
-    csr_x = x; csr_y = y; update_cursor();
-}
-
-void update_cursor()
-{
-    uint16_t position;
-    if (scrollflag)
-    {
-        position = csr_y * COLUMNS + csr_x;
+    if(displayedConsole == 10) {
+        csr_x = COLUMNS - 5;
+        kputs("Shell");
     }
     else
     {
-        position = saved_csr_y * COLUMNS + saved_csr_x;
+        char Buffer[70]; char Temp[30];
+        strcpy(Buffer, "Console ");
+        itoa(displayedConsole, Temp);
+        strcat(Buffer, Temp);
+        strcat(Buffer, ": ");
+        strcat(Buffer, reachableConsoles[displayedConsole]->name);
+        csr_x = COLUMNS - strlen(Buffer);
+        kputs(Buffer);
     }
-    // cursor HIGH port to vga INDEX register
-    outportb(0x3D4, 0x0E);
-    outportb(0x3D5, (uint8_t)((position>>8)&0xFF));
-    // cursor LOW port to vga INDEX register
-    outportb(0x3D4, 0x0F);
-    outportb(0x3D5, (uint8_t)(position&0xFF));
+    // copying content of visible console to the video-ram
+    memcpy((void*)((uint32_t)(vidmem) + USER_BEGIN * COLUMNS * 2), (void*)(uint32_t)(reachableConsoles[displayedConsole]->vidmem), COLUMNS * USER_LINES*2);
 }
 
 uint8_t AsciiToCP437(uint8_t ascii)
@@ -124,48 +69,47 @@ uint8_t AsciiToCP437(uint8_t ascii)
     }
 }
 
-void putch(char c)
+void kputch(char c)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
     uint16_t* pos;
     uint32_t att = attrib << 8;
 
-    if (uc == 0x08) // backspace: move the cursor one space backwards and delete
-    {
-        if (csr_x)
-        {
-            --csr_x;
-            putch(' ');
-            --csr_x;
-        }
-        if (!csr_x && csr_y>0)
-        {
-            csr_x=COLUMNS-1;
-            --csr_y;
-            putch(' ');
-            csr_x=COLUMNS-1;
-            --csr_y;
-        }
-    }
-    else if (uc == 0x09) // tab: increment csr_x (divisible by 8)
-    {
-        csr_x = (csr_x + 8) & ~(8 - 1);
-    }
-    else if (uc == '\r') // cr: cursor back to the margin
-    {
-        csr_x = 0;
-    }
-    else if (uc == '\n') // newline: like 'cr': cursor to the margin and increment csr_y
-    {
-        csr_x = 0; ++csr_y;
-    }
-
-    else if (uc != 0)
-    {
-        pos = vidmem + (csr_y * COLUMNS + csr_x);
-       *pos = uc | att; // character AND attributes: color
-        ++csr_x;
+    switch(uc) {
+        case 0x08: // backspace: move the cursor one space backwards and delete
+            if (csr_x)
+            {
+                --csr_x;
+                kputch(' ');
+                --csr_x;
+            }
+            else if (csr_y>0)
+            {
+                csr_x=COLUMNS-1;
+                --csr_y;
+                kputch(' ');
+                csr_x=COLUMNS-1;
+                --csr_y;
+            }
+            break;
+        case 0x09: // tab: increment csr_x (divisible by 8)
+            csr_x = (csr_x + 8) & ~(8 - 1);
+            break;
+        case '\r': // cr: cursor back to the margin
+            csr_x = 0;
+            break;
+        case '\n': // newline: like 'cr': cursor to the margin and increment csr_y
+            csr_x = 0; ++csr_y;
+            break;
+        default:
+            if (uc != 0)
+            {
+                pos = vidmem + (csr_y * COLUMNS + csr_x);
+                *pos = uc | att; // character AND attributes: color
+                ++csr_x;
+            }
+            break;
     }
 
     if (csr_x >= COLUMNS) // cursor reaches edge of the screen's width, a new line is inserted
@@ -173,42 +117,19 @@ void putch(char c)
         csr_x = 0;
         ++csr_y;
     }
-
-    // scroll if needed, and finally move the cursor
-    if (scrollflag)
-    {
-        scroll();
-    }
-    update_cursor();
 }
 
-void puts(const char* text)
+void kputs(const char* text)
 {
-    for (; *text; putch(*text), ++text);
-}
-
-void scroll()
-{
-    uint32_t blank = 0x20 | (attrib << 8);
-    if (csr_y >= SCROLL_LINE)
-    {
-        uint8_t temp = csr_y - SCROLL_LINE + 1;
-        memcpy (vidmem, vidmem + temp * COLUMNS, (SCROLL_LINE - temp) * COLUMNS * 2);
-        memsetw (vidmem + (SCROLL_LINE - temp) * COLUMNS, blank, COLUMNS);
-        csr_y = SCROLL_LINE - 1;
-    }
+    for (; *text; kputch(*text), ++text);
 }
 
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
-    save_cursor();
-    // Top 4 bytes: background, bottom 4 bytes: foreground color
-    settextcolor(attribute & 0x0F, attribute >> 4);
+    attrib = 0x0C;//(attribute >> 4 << 4) | (attribute & 0x0F & 0x0F);
     csr_x = 0; csr_y = line;
-    update_cursor();
-    scrollflag = false;
-	
-	va_list ap;
+
+    va_list ap;
     va_start (ap, attribute);
     char buffer[32]; // Larger is not needed at the moment
 
@@ -221,36 +142,36 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 {
                     case 'u':
                         itoa(va_arg(ap, uint32_t), buffer);
-                        puts(buffer);
+                        kputs(buffer);
                         break;
                     case 'f':
                         float2string(va_arg(ap, double), 10, buffer);
-                        puts(buffer);
+                        kputs(buffer);
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), buffer);
-                        puts(buffer);
+                        kputs(buffer);
                         break;
                     case 'X':
                         i2hex(va_arg(ap, int32_t), buffer, 8);
-                        puts(buffer);
+                        kputs(buffer);
                         break;
                     case 'x':
                         i2hex(va_arg(ap, int32_t), buffer, 4);
-                        puts(buffer);
+                        kputs(buffer);
                         break;
                     case 'y':
                         i2hex(va_arg(ap, int32_t), buffer, 2);
-                        puts(buffer);
+                        kputs(buffer);
                         break;
                     case 's':
-                        puts(va_arg (ap, char*));
+                        kputs(va_arg (ap, char*));
                         break;
                     case 'c':
-                        putch((int8_t)va_arg(ap, int32_t));
+                        kputch((int8_t)va_arg(ap, int32_t));
                         break;
                     case '%':
-                        putch('%');
+                        kputch('%');
                         break;
                     default:
                         --message;
@@ -258,90 +179,12 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 }
                 break;
             default:
-                putch(*message);
+                kputch(*message);
                 break;
         }
     }
-
-    scrollflag = true;
-    restore_cursor();
 };
 
-/// TODO: make it standardized !
-// printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
-void printf (const char* args, ...)
-{
-    va_list ap;
-    va_start (ap, args);
-    char buffer[32]; // Larger is not needed at the moment
-
-    for (; *args; args++)
-    {
-        switch (*args)
-        {
-            case '%':
-                switch (*(++args))
-                {
-                    case 'u':
-                        itoa(va_arg(ap, uint32_t), buffer);
-                        puts(buffer);
-                        break;
-                    case 'f':
-                        float2string(va_arg(ap, double), 10, buffer);
-                        puts(buffer);
-                        break;
-                    case 'i': case 'd':
-                        itoa(va_arg(ap, int32_t), buffer);
-                        puts(buffer);
-                        break;
-                    case 'X':
-                        i2hex(va_arg(ap, int32_t), buffer, 8);
-                        puts(buffer);
-                        break;
-                    case 'x':
-                        i2hex(va_arg(ap, int32_t), buffer, 4);
-                        puts(buffer);
-                        break;
-                    case 'y':
-                        i2hex(va_arg(ap, int32_t), buffer, 2);
-                        puts(buffer);
-                        break;
-                    case 's':
-                        puts(va_arg (ap, char*));
-                        break;
-                    case 'c':
-                        putch((int8_t)va_arg(ap, int32_t));
-                        break;
-                    case '%':
-                        putch('%');
-                        break;
-                    default:
-                        --args;
-                        break;
-                }
-                break;
-            default:
-                putch(*args); //printf("%c",*(args+index));
-                break;
-        }
-    }
-}
-
-void save_cursor()
-{
-    pODA->ts_flag=0;
-    saved_csr_x  = csr_x;
-    saved_csr_y  = csr_y;
-    saved_attrib = attrib;
-}
-
-void restore_cursor()
-{
-    csr_x  = saved_csr_x;
-    csr_y  = saved_csr_y;
-    attrib = saved_attrib;
-    pODA->ts_flag=1;
-}
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

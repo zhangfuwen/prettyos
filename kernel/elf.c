@@ -108,7 +108,7 @@ typedef struct
 
 
 
-bool elf_exec( const void* elf_file, uint32_t elf_file_size )
+bool elf_exec( const void* elf_file, uint32_t elf_file_size, const char* programName )
 {
     const char* elf_beg = elf_file;
     const char* elf_end = elf_beg + elf_file_size;
@@ -164,7 +164,7 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size )
     }
 
     // Execute the task
-    create_task( pd, (void*)(header->entry), 3 );
+    create_task( pd, (void*)(header->entry), 3 , programName);
 
     return true;
 }

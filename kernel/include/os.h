@@ -124,16 +124,20 @@ typedef struct regs registers_t;
 extern const char* version;
 
 // video.c
-static const uint8_t COLUMNS = 80;
-static const uint8_t USER_LINES = 46;
-uint8_t AsciiToCP437(uint8_t ascii);
 void refreshUserScreen();
 void clear_screen();
+void kputch(char c);
+void kputs(const char* text);
+void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
+uint8_t AsciiToCP437(uint8_t ascii);
+
+// console.c
+static const uint8_t COLUMNS = 80;
+static const uint8_t USER_LINES = 46;
 void clear_console(uint8_t backcolor);
 void settextcolor(uint8_t forecolor, uint8_t backcolor);
 void putch(char c);
 void puts(const char* text);
-void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void printf (const char *args, ...);
 void scroll();
 void set_cursor(uint8_t x, uint8_t y);
@@ -189,7 +193,7 @@ uint32_t show_physical_address(uint32_t virtual_address);
 void analyze_physical_addresses();
 
 // elf.c
-bool elf_exec( const void* elf_file, uint32_t elf_file_size );
+bool elf_exec( const void* elf_file, uint32_t elf_file_size, const char* programName );
 
 // util.c
 uint8_t inportb(uint16_t port);

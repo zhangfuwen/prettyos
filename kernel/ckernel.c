@@ -19,7 +19,7 @@
 #include "file.h"
 
 // PrettyOS Version string
-const char* version = "0.0.0.285";
+const char* version = "0.0.0.286";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -40,7 +40,6 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 static void init()
 {
     clear_screen();
-	kprintf("PrettyOS [Version %s]", 0, 0x0E, version);
     settextcolor(14,0);
     gdt_install();
     idt_install();
@@ -54,6 +53,9 @@ int main()
 {
     init();
     pODA->Memory_Size = paging_install();
+    heap_install();
+    tasking_install();
+
     if (pODA->Memory_Size > 1073741824)
     {
         printf( "\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
@@ -66,9 +68,6 @@ int main()
     {
         printf( "\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size );
     }
-
-    heap_install();
-    tasking_install();
 
     EHCIflag = false;
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
@@ -174,7 +173,7 @@ int main()
             {
                 shell_found = true;
 
-                if ( ! elf_exec( buf, sz ) )
+                if (!elf_exec(buf, sz, "Shell"))
                     printf( "Cannot start shell!\n" );
             }
         }
@@ -194,14 +193,14 @@ int main()
 
     const char* progress = "|/-\\";
     const char* p = progress;
-    uint32_t CurrentSeconds=0, CurrentSecondsOld;
+    uint32_t CurrentSeconds=0xFFFFFFFF; // Set on a high value to force a refresh of the display at the beginning.
 
     uint64_t CurrentRdtscValue=0, OldRdtscValue, RdtscDiffValue;
 
 
-	// String for Date&Time
-	char DateAndTime[81];
-	char timeBuffer[20];
+    // String for Date&Time
+    char DateAndTime[81];
+    char timeBuffer[20];
 
     while ( true )
     {
@@ -213,13 +212,12 @@ int main()
         }
 
         // Show Date & Time at Status bar
-        CurrentSecondsOld = CurrentSeconds;
-        CurrentSeconds = getCurrentSeconds();
 
         OldRdtscValue = CurrentRdtscValue;
 
-        if ( CurrentSeconds != CurrentSecondsOld )
+        if ( getCurrentSeconds() != CurrentSeconds )
         {
+            CurrentSeconds = getCurrentSeconds();
             // all values 64 bit
             CurrentRdtscValue = rdtsc();
             RdtscDiffValue = CurrentRdtscValue - OldRdtscValue;
@@ -239,9 +237,9 @@ int main()
               // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
             }
 
-			itoa(CurrentSeconds, timeBuffer);
+            itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
-			kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0xC, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
+            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0xC, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
             if ((CurrentSeconds%40)==0)

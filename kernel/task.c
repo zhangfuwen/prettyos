@@ -13,6 +13,7 @@ int32_t userTaskCounter;
 
 // The currently running and currently displayed task.
 volatile task_t* current_task;
+console_t* current_console;
 
 // The start of the task linked list.
 volatile task_t* ready_queue;
@@ -57,6 +58,11 @@ void tasking_install()
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
     current_task->next = 0;
+    current_task->console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
+    reachableConsoles[10] = current_task->console; // reachableConsoles[10] is reserved for kernels console
+    current_console = current_task->console; // Kernels console is currently active (does not mean that it is visible)
+    console_init(reachableConsoles[10], "");
+    refreshUserScreen();
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
@@ -71,7 +77,7 @@ void tasking_install()
     userTaskCounter = 0;
 }
 
-task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege)
+task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege, const char* programName)
 {
     cli();
 
@@ -99,6 +105,22 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     new_task->next = 0;
 
+    if(strcmp(programName, "Shell") == 0)
+    {
+        new_task->console = reachableConsoles[10]; // The Shell uses the same console as the kernel
+    }
+    else
+    {
+        new_task->console = malloc(sizeof(console_t), PAGESIZE);
+        console_init(new_task->console, programName);
+        for(uint8_t i = 0; i < 10; i++) { // The next free place in our console-list will be filled with the new console
+            if(reachableConsoles[i] == 0) {
+                reachableConsoles[i] = new_task->console;
+                changeDisplayedConsole(i); //Switching to the new console
+                break;
+            }
+        }
+    }
 
     task_t* tmp_task = (task_t*)ready_queue;
     while (tmp_task->next)
@@ -192,6 +214,7 @@ uint32_t task_switch (uint32_t esp)
     settextcolor(15,0);
     #endif
 
+    current_console = current_task->console;
     return current_task->esp;  // return new task's esp
 }
 
@@ -210,6 +233,21 @@ void exit()
     // finish current task and free occupied heap
     void* pkernelstack = (void*) ( (uint32_t) current_task->kernel_stack - KERNEL_STACK_SIZE );
     void* ptask        = (void*) current_task;
+
+    // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
+    for(int i = 0; i < 10; i++) 
+    {
+        if(current_task->console == reachableConsoles[i]) {
+            if(i == displayedConsole) {
+                changeDisplayedConsole(10);
+            }
+            reachableConsoles[i] = 0;
+        }
+    }
+    console_exit(current_task->console);
+    if(current_task->console != reachableConsoles[10]) {
+        free(current_task->console);
+    }
 
 
     // delete task in linked list

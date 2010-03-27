@@ -2,6 +2,7 @@
 #define TASK_H
 
 #include "os.h"
+#include "console.h"
 #include "paging.h"
 #include "descriptor_tables.h"
 
@@ -10,6 +11,7 @@
 
 struct task
 {
+    console_t* console;               // Console used by this task
     int32_t id;                       // Process ID.
     uint32_t esp, ebp;                // Stack and base pointers.
     uint32_t eip;                     // Instruction pointer.
@@ -27,13 +29,15 @@ typedef struct task task_t;
 extern int32_t userTaskCounter;
 extern volatile task_t* displayed_task;
 
+extern console_t* current_console;
+
 int32_t getUserTaskNumber();
 void settaskflag(int32_t i);
 
 void tasking_install();
 uint32_t task_switch(uint32_t esp);
 int32_t getpid();
-task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege );
+task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege, const char* programName );
 void switch_context();
 void exit();
 
