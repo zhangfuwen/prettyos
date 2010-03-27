@@ -396,11 +396,10 @@ void enablePorts()
              if (USBtransferFlag)
              {
                  testTransfer(0); // device address
+                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nin    status: "); showStatusbyteQTD(InQTD);
              }
-
-             printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-             printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-             printf("\nin    status: "); showStatusbyteQTD(InQTD);
          }
     }
 }
@@ -702,34 +701,15 @@ void DeactivateLegacySupport(uint32_t num)
                 failed = false;
                 printf("OS-Semaphore being set.\n");
             }
-            if (failed==false)
-            {
-                printf("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
-                             pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
-                             pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
-                settextcolor(2,0);
-                printf("Legacy Support Deactivated.\n");
-                settextcolor(15,0);
-            }
-            else
-            {
-                settextcolor(4,0);
-                printf("Legacy Support Deactivated failed.\n");
-                printf("BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
-                             pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
-                             pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
 
-                /*
-                USB SMI Enable R/W. 0=Default.
-                When this bit is a one, and the SMI on USB Complete bit (above) in this register is a one,
-                the host controller will issue an SMI immediately.
-                */
-                // The OS tries to do it itself:
-                settextcolor(14,0);
-                printf("OS tries to set USBLEGCTLSTS to zero.\n");
-                settextcolor(15,0);
-                pci_config_write_dword( bus, dev, func, USBLEGCTLSTS, 0x0 ); // USB SMI disabled
-            }
+            printf("Check: BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
+                pci_config_read( bus, dev, func, 0x0100 | BIOSownedSemaphore ),
+                pci_config_read( bus, dev, func, 0x0100 | OSownedSemaphore   ) );
+
+
+            // USB SMI Enable R/W. 0=Default.
+            // The OS tries to set SMI to disabled in case that BIOS bit satys at one.
+            pci_config_write_dword( bus, dev, func, USBLEGCTLSTS, 0x0 ); // USB SMI disabled
         }
         else
         {
