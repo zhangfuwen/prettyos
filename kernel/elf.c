@@ -108,63 +108,63 @@ typedef struct
 
 
 
-bool elf_exec( const void* elf_file, uint32_t elf_file_size, const char* programName )
+bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programName)
 {
     const char* elf_beg = elf_file;
     const char* elf_end = elf_beg + elf_file_size;
 
     // Read the header
     const elf_header_t* header = (elf_header_t*) elf_beg;
-    if ( header->ident[EI_MAG0]!=0x7F || header->ident[EI_MAG1]!='E' || header->ident[EI_MAG2]!='L' || header->ident[EI_MAG3]!='F' )
+    if (header->ident[EI_MAG0]!=0x7F || header->ident[EI_MAG1]!='E' || header->ident[EI_MAG2]!='L' || header->ident[EI_MAG3]!='F')
         return false;
-    if ( header->ident[EI_CLASS]!=ELFCLASS32 || header->ident[EI_DATA]!=ELFDATA2LSB || header->ident[EI_VERSION]!=EV_CURRENT )
+    if (header->ident[EI_CLASS]!=ELFCLASS32 || header->ident[EI_DATA]!=ELFDATA2LSB || header->ident[EI_VERSION]!=EV_CURRENT)
         return false;
-    if ( header->type!=ET_EXEC || header->machine!=EM_386 || header->version!=EV_CURRENT )
+    if (header->type!=ET_EXEC || header->machine!=EM_386 || header->version!=EV_CURRENT)
         return false;
 
     // Further restrictions..
-    // ASSERT( header->phnum == 1 );
+    // ASSERT(header->phnum == 1);
 
     page_directory_t* pd = paging_create_user_pd();
 
     // Read all program headers
     const char* header_pos = elf_beg + header->phoff;
-    for ( uint32_t i=0; i<header->phnum; ++i )
+    for (uint32_t i=0; i<header->phnum; ++i)
     {
         // Check whether the entry exceeds the file
-        if ( header_pos+sizeof(program_header_t) >= elf_end )
+        if (header_pos+sizeof(program_header_t) >= elf_end)
             return -1;
 
         program_header_t* ph = (program_header_t*)header_pos;
 
         #ifdef _DIAGNOSIS_
         settextcolor(2,0);
-        printf( "ELF file program header:\n" );
+        printf("ELF file program header:\n");
         const char* types[] = { "NULL", "Loadable Segment", "Dynamic Linking Information", "Interpreter", "Note", "??", "Program Header" };
-        printf( "  %s, offset %i, vaddr %X, paddr %X, filesz %i, memsz %i, flags %i, align %i\n", types[ph->type], ph->offset, ph->vaddr, ph->paddr, ph->filesz, ph->memsz, ph->flags, ph->align );
+        printf("  %s, offset %i, vaddr %X, paddr %X, filesz %i, memsz %i, flags %i, align %i\n", types[ph->type], ph->offset, ph->vaddr, ph->paddr, ph->filesz, ph->memsz, ph->flags, ph->align);
         settextcolor(15,0);
         #endif
         //
 
-        // ASSERT( (const void*)(ph->vaddr) == USERCODE_VADDR );
-        // ASSERT( (const void*)(header->entry) == USERCODE_VADDR );
+        // ASSERT((const void*)(ph->vaddr) == USERCODE_VADDR);
+        // ASSERT((const void*)(header->entry) == USERCODE_VADDR);
 
         // Allocate code area for the user program
-        if ( ! paging_alloc( pd, (void*)(ph->vaddr), alignUp(ph->memsz,PAGESIZE), MEM_USER | MEM_WRITE ) )
+        if (! paging_alloc(pd, (void*)(ph->vaddr), alignUp(ph->memsz,PAGESIZE), MEM_USER | MEM_WRITE))
             return false;
 
         // Copy the code, using the user's page directory
         cli();
-        paging_switch ( pd );
-        memcpy( (void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz );
-        paging_switch ( kernel_pd );
+        paging_switch (pd);
+        memcpy((void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz);
+        paging_switch (kernel_pd);
         sti();
 
         header_pos += header->phentrysize;
     }
 
     // Execute the task
-    create_task( pd, (void*)(header->entry), 3 , programName);
+    create_task(pd, (void*)(header->entry), 3, programName);
 
     return true;
 }

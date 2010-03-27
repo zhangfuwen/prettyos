@@ -36,7 +36,7 @@ const char* exception_messages[] =
 };
 
 
-uint32_t irq_handler( uint32_t esp )
+uint32_t irq_handler(uint32_t esp)
 {
     struct regs* r = (struct regs*)esp;
 
@@ -85,13 +85,13 @@ uint32_t irq_handler( uint32_t esp )
         for (;;);
     }
 
-    if ( pODA->ts_flag && (r->int_no==0x20 || r->int_no==0x7E) ) // timer interrupt or function switch_context
+    if (pODA->ts_flag && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_context
         esp = task_switch (esp); //new task's esp
 
     interrupt_handler_t handler = irq_routines[r->int_no];
     if (handler) { handler(r); }
 
-    if ( r->int_no >= 40 )
+    if (r->int_no >= 40)
         outportb(0xA0, 0x20);
     outportb(0x20, 0x20);
 

@@ -19,7 +19,7 @@ void rtl8139_handler(struct regs* r)
     /// TODO: ring buffer, we get always the first received data!
 
     // read bytes 003Eh bis 003Fh, Interrupt Status Register
-    uint16_t val = *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E ));
+    uint16_t val = *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E));
 
     char str[80];
     strcpy(str,"");
@@ -39,7 +39,7 @@ void rtl8139_handler(struct regs* r)
     settextcolor(3,0);
 
     // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
-    *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3E )) = val;
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E)) = val;
 
     strcat(str,"   Receiving Buffer content:\n");
     printf(str);
@@ -101,14 +101,14 @@ void install_RTL8139(uint32_t number)
 
     /// idendity mapping of BaseAddressRTL8139_MMIO
     bool USE_VIRTUAL_APPROACH = true;
-    if ( USE_VIRTUAL_APPROACH )
+    if (USE_VIRTUAL_APPROACH)
     {
-        BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem( BaseAddressRTL8139_MMIO );
-        printf( "BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO );
+        BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem(BaseAddressRTL8139_MMIO);
+        printf("BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO);
     }
     else
     {
-        int retVal = paging_do_idmapping( BaseAddressRTL8139_MMIO );
+        int retVal = paging_do_idmapping(BaseAddressRTL8139_MMIO);
         if (retVal == true)
         {
             printf("\n");
@@ -120,17 +120,17 @@ void install_RTL8139(uint32_t number)
     }
 
     // "power on" the card
-    *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x52 )) = 0x00;
+    *((uint8_t*)(BaseAddressRTL8139_MMIO + 0x52)) = 0x00;
 
     // carry out reset of network card: set bit 4 at offset 0x37 (1 Byte)
-    *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) = 0x10;
+    *((uint8_t*)(BaseAddressRTL8139_MMIO + 0x37)) = 0x10;
 
     // wait for the reset of the "reset flag"
     uint32_t k=0;
     while (true)
     {
         sleepMilliSeconds(10);
-        if ( !( *((volatile uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) & 0x10 ) ) //
+        if (!(*((volatile uint8_t*)(BaseAddressRTL8139_MMIO + 0x37)) & 0x10)) //
         {
             #ifdef _DIAGNOSIS_
                 settextcolor(3,0);
@@ -151,7 +151,7 @@ void install_RTL8139(uint32_t number)
         printf("mac address: %y-%y-%y-%y-%y-%y\n",
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+0), *((uint8_t*)(BaseAddressRTL8139_MMIO)+1),
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+2), *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+4), *((uint8_t*)(BaseAddressRTL8139_MMIO)+5) );
+                *((uint8_t*)(BaseAddressRTL8139_MMIO)+4), *((uint8_t*)(BaseAddressRTL8139_MMIO)+5));
         settextcolor(15,0);
     #endif
 
@@ -160,15 +160,15 @@ void install_RTL8139(uint32_t number)
     Aktivieren des Transmitters und des Receivers: Setze Bits 2 und 3 (TE bzw. RE) im Befehlsregister (0x37, 1 Byte).
     Dies darf angeblich nicht erst später geschehen, da die folgenden Befehle ansonsten ignoriert würden.
     */
-    *((uint8_t*)( BaseAddressRTL8139_MMIO + 0x37 )) = 0x0C; // 1100b
+    *((uint8_t*)(BaseAddressRTL8139_MMIO + 0x37)) = 0x0C; // 1100b
 
     /*
     TCR (Transmit Configuration Register, 0x40, 4 Bytes) und RCR (Receive Configuration Register, 0x44, 4 Bytes) setzen.
     An dieser Stelle nicht weiter kommentierter Vorschlag: TCR = 0x03000700, RCR = 0x0000070a
     */
-    *((uint32_t*)( BaseAddressRTL8139_MMIO + 0x40 )) = 0x03000700; //TCR
-    *((uint32_t*)( BaseAddressRTL8139_MMIO + 0x44 )) = 0x0000070a; //RCR
-    //*((uint32_t*)( BaseAddressRTL8139_MMIO + 0x44 )) = 0xF;        //RCR pci.c in rev. 108 ??
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x40)) = 0x03000700; //TCR
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0x0000070a; //RCR
+    //*((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0xF;        //RCR pci.c in rev. 108 ??
     /*0xF means AB+AM+APM+AAP*/
 
     // first 65536 bytes are our sending buffer and the last bytes are our receiving buffer
@@ -179,7 +179,7 @@ void install_RTL8139(uint32_t number)
     Was ausreichend bedeutet, ist dabei davon abhängig, welche Menge wir auf einmal absenden wollen.
     Anschließend muss die physische(!) Adresse des Empfangspuffers nach RBSTART (0x30, 4 Bytes) geschrieben werden.
     */
-    *((uint32_t*)( BaseAddressRTL8139_MMIO + 0x30 )) = (uint32_t)network_buffer /* + 8192+16 */ ;
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x30)) = (uint32_t)network_buffer /* + 8192+16 */ ;
 
     // Sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
     // this allows us to get an interrupt if something happens...
@@ -187,8 +187,8 @@ void install_RTL8139(uint32_t number)
     Interruptmaske setzen (0x3C, 2 Bytes). In diesem Register können die Ereignisse ausgewählt werden,
     die einen IRQ auslösen sollen. Wir nehmen der Einfachkeit halber alle und setzen 0xffff.
     */
-    *((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0xFF; // all interrupts
-    //*((uint16_t*)( BaseAddressRTL8139_MMIO + 0x3C )) = 0x5; // only TOK and ROK
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFF; // all interrupts
+    //*((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
 
     irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);
 }

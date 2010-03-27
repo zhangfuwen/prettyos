@@ -61,7 +61,7 @@ void sleepMilliSeconds (uint32_t ms)
     timer_wait((uint32_t)(systemfrequency*ms/1000));
 }
 
-void systemTimer_setFrequency( uint32_t freq )
+void systemTimer_setFrequency(uint32_t freq)
 {
     systemfrequency = freq;
     uint32_t divisor = 1193180 / systemfrequency; //divisor must fit into 16 bits
@@ -71,8 +71,8 @@ void systemTimer_setFrequency( uint32_t freq )
        outportb(0x43, 0x34); // 0x34 -> Mode 2 : Rate Generator // thx to +gjm+
 
     // Send divisor
-    outportb(0x40, (uint8_t)(  divisor     & 0xFF )); // low  byte
-    outportb(0x40, (uint8_t)( (divisor>>8) & 0xFF )); // high byte
+    outportb(0x40, (uint8_t)(divisor     & 0xFF)); // low  byte
+    outportb(0x40, (uint8_t)((divisor>>8) & 0xFF)); // high byte
 }
 
 uint16_t systemTimer_getFrequency()
@@ -84,7 +84,7 @@ void timer_install()
 {
     /* Installs 'timer_handler' to IRQ0 */
     irq_install_handler(32+0, timer_handler);
-    systemTimer_setFrequency( systemfrequency ); // x Hz, meaning a tick every 1000/x milliseconds
+    systemTimer_setFrequency(systemfrequency); // x Hz, meaning a tick every 1000/x milliseconds
 }
 
 void timer_uninstall()
@@ -98,9 +98,9 @@ void timer_uninstall()
 // delay in microseconds independent of timer interrupt but on rdtsc
 void delay (uint32_t microsec)
 {
-    uint64_t timeout = rdtsc() + (uint64_t)( ((uint32_t)(microsec/1000)) * pODA->CPU_Frequency_kHz);
+    uint64_t timeout = rdtsc() + (uint64_t)(((uint32_t)(microsec/1000)) * pODA->CPU_Frequency_kHz);
 
-    while ( rdtsc()<timeout )
+    while (rdtsc()<timeout)
     {
         nop();
     }

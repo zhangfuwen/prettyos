@@ -42,7 +42,7 @@ void testTransfer(uint32_t device)
     delay(200000);
     printf("\n");
     showPacket(InQTDpage0,18);
-    showDeviceDesriptor( (struct usb2_deviceDescriptor*)InQTDpage0 );
+    showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
     delay(1000000);
 }
 

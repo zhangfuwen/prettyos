@@ -77,7 +77,7 @@ void tasking_install()
     userTaskCounter = 0;
 }
 
-task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege, const char* programName)
+task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege, const char* programName)
 {
     cli();
 
@@ -105,7 +105,7 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     new_task->next = 0;
 
-    if(strcmp(programName, "Shell") == 0)
+    if (strcmp(programName, "Shell") == 0)
     {
         new_task->console = reachableConsoles[10]; // The Shell uses the same console as the kernel
     }
@@ -113,8 +113,8 @@ task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege
     {
         new_task->console = malloc(sizeof(console_t), PAGESIZE);
         console_init(new_task->console, programName);
-        for(uint8_t i = 0; i < 10; i++) { // The next free place in our console-list will be filled with the new console
-            if(reachableConsoles[i] == 0) {
+        for (uint8_t i = 0; i < 10; i++) { // The next free place in our console-list will be filled with the new console
+            if (reachableConsoles[i] == 0) {
                 reachableConsoles[i] = new_task->console;
                 changeDisplayedConsole(i); //Switching to the new console
                 break;
@@ -201,7 +201,7 @@ uint32_t task_switch (uint32_t esp)
     }
 
     // new_task
-    paging_switch ( current_task->page_directory );
+    paging_switch (current_task->page_directory);
     //tss.cr3 = ... TODO: Really unnecessary?
     tss.esp  = current_task->esp;
     tss.esp0 = (current_task->kernel_stack)+KERNEL_STACK_SIZE;
@@ -231,21 +231,21 @@ void exit()
     #endif
 
     // finish current task and free occupied heap
-    void* pkernelstack = (void*) ( (uint32_t) current_task->kernel_stack - KERNEL_STACK_SIZE );
+    void* pkernelstack = (void*) ((uint32_t) current_task->kernel_stack - KERNEL_STACK_SIZE);
     void* ptask        = (void*) current_task;
 
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
-    for(int i = 0; i < 10; i++) 
+    for (int i = 0; i < 10; i++)
     {
-        if(current_task->console == reachableConsoles[i]) {
-            if(i == displayedConsole) {
+        if (current_task->console == reachableConsoles[i]) {
+            if (i == displayedConsole) {
                 changeDisplayedConsole(10);
             }
             reachableConsoles[i] = 0;
         }
     }
     console_exit(current_task->console);
-    if(current_task->console != reachableConsoles[10]) {
+    if (current_task->console != reachableConsoles[10]) {
         free(current_task->console);
     }
 
@@ -282,14 +282,14 @@ void exit()
 }
 
 
-void* task_grow_userheap( uint32_t increase )
+void* task_grow_userheap(uint32_t increase)
 {
-    increase = alignUp( increase, PAGESIZE );
+    increase = alignUp(increase, PAGESIZE);
 
-    if ( current_task->heap_top + increase > USER_HEAP_END )
+    if (current_task->heap_top + increase > USER_HEAP_END)
         return false;
 
-    if ( ! paging_alloc( current_task->page_directory, current_task->heap_top, increase, MEM_USER | MEM_WRITE ) )
+    if (! paging_alloc(current_task->page_directory, current_task->heap_top, increase, MEM_USER | MEM_WRITE))
         return NULL;
 
     void* before = current_task->heap_top;

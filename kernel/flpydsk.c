@@ -144,7 +144,7 @@ void flpydsk_initialize_dma()
     outportb(0x0a, 0x02);   // unmask dma channel 2
 }
 
-/// autoinit ( 2^4 = 16 = 0x10 ) creates problems with MS Virtual PC and on real hardware!
+/// autoinit (2^4 = 16 = 0x10) creates problems with MS Virtual PC and on real hardware!
 /// hence, it is not used here, but reinitialization is used before read/write
 // prepare the DMA for read transfer
 void flpydsk_dma_read()
@@ -173,7 +173,7 @@ uint8_t flpydsk_read_status ()
 }
 
 // write to the fdc dor
-void flpydsk_write_dor( uint8_t val )
+void flpydsk_write_dor(uint8_t val)
 {
     outportb(FLPYDSK_DOR, val); // write the digital output register
 }
@@ -183,7 +183,7 @@ void flpydsk_send_command (uint8_t cmd)
 {
     // wait until data register is ready. We send commands to the data register
     for (int32_t i=0; i<500; ++i)
-        if ( flpydsk_read_status() & FLPYDSK_MSR_MASK_DATAREG )
+        if (flpydsk_read_status() & FLPYDSK_MSR_MASK_DATAREG)
             return outportb(FLPYDSK_FIFO, cmd);
 }
 
@@ -192,7 +192,7 @@ uint8_t flpydsk_read_data()
 {
     // same as above function but returns data register for reading
     for (int32_t i=0; i<500; ++i)
-        if ( flpydsk_read_status() & FLPYDSK_MSR_MASK_DATAREG )
+        if (flpydsk_read_status() & FLPYDSK_MSR_MASK_DATAREG)
             return inportb(FLPYDSK_FIFO);
     return 0;
 }
@@ -211,9 +211,9 @@ void flpydsk_write_ccr(uint8_t val)
 void flpydsk_wait_irq()
 {
     uint32_t timeout = getCurrentSeconds()+2;
-    while ( ReceivedFloppyDiskIRQ == false) // wait for irq to fire
+    while (ReceivedFloppyDiskIRQ == false) // wait for irq to fire
     {
-        if ( (timeout-getCurrentSeconds()) <= 0 )
+        if ((timeout-getCurrentSeconds()) <= 0)
         {
             // printf("\ntimeout: IRQ not received!\n");
             break;
@@ -286,11 +286,11 @@ void flpydsk_control_motor(bool b)
 }
 
 // configure drive
-void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_t dma )
+void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_t dma)
 {
-    flpydsk_send_command(   FDC_CMD_SPECIFY                           );
-    flpydsk_send_command( ((stepr & 0xF) << 4) | (unloadt & 0xF)      );
-    flpydsk_send_command( ( loadt << 1)        | (dma==false) ? 0 : 1 );
+    flpydsk_send_command(FDC_CMD_SPECIFY);
+    flpydsk_send_command(((stepr & 0xF) << 4) | (unloadt & 0xF));
+    flpydsk_send_command((loadt << 1)        | (dma==false) ? 0 : 1);
 }
 
 
@@ -339,9 +339,9 @@ SECT = TEMP % SPT + 1
 // convert LBA to CHS
 void flpydsk_lba_to_chs(int32_t lba, int32_t* head, int32_t* track, int32_t* sector)
 {
-   *track  =   lba / ( FLPY_SECTORS_PER_TRACK * 2 );
-   *head   = ( lba % ( FLPY_SECTORS_PER_TRACK * 2 ) ) / ( FLPY_SECTORS_PER_TRACK );
-   *sector = ( lba % ( FLPY_SECTORS_PER_TRACK * 2 ) ) % FLPY_SECTORS_PER_TRACK + 1;
+   *track  =   lba / (FLPY_SECTORS_PER_TRACK * 2);
+   *head   = (lba % (FLPY_SECTORS_PER_TRACK * 2)) / (FLPY_SECTORS_PER_TRACK);
+   *sector = (lba % (FLPY_SECTORS_PER_TRACK * 2)) % FLPY_SECTORS_PER_TRACK + 1;
 }
 
 // install floppy driver
@@ -372,8 +372,8 @@ int32_t flpydsk_calibrate(uint32_t drive)
     for (uint8_t i=0; i<10; ++i)
     {
         // send command
-        flpydsk_send_command( FDC_CMD_CALIBRATE );
-        flpydsk_send_command( drive );
+        flpydsk_send_command(FDC_CMD_CALIBRATE);
+        flpydsk_send_command(drive);
         flpydsk_wait_irq();
         flpydsk_check_int(&st0, &cyl);
 
@@ -399,7 +399,7 @@ int32_t flpydsk_calibrate(uint32_t drive)
 }
 
 // seek to given track/cylinder
-int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
+int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
 {
     int32_t  retVal;
     uint32_t st0, cyl0;
@@ -416,7 +416,7 @@ int32_t flpydsk_seek( uint32_t cyl, uint32_t head )
     {
         // send the command
         flpydsk_send_command (FDC_CMD_SEEK);
-        flpydsk_send_command ( (head) << 2 | _CurrentDrive);
+        flpydsk_send_command ((head) << 2 | _CurrentDrive);
         flpydsk_send_command (cyl);
         // printf("i=%d ", i);
         flpydsk_wait_irq();
@@ -459,26 +459,26 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     if (operation == 0) // read a sector
     {
         flpydsk_dma_read();
-        flpydsk_send_command( FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY);
+        flpydsk_send_command(FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY);
     }
     if (operation == 1) // write a sector
     {
         flpydsk_dma_write();
-        flpydsk_send_command( FDC_CMD_WRITE_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY );
+        flpydsk_send_command(FDC_CMD_WRITE_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY);
     }
 
     /// Delay
     // sleepMilliSeconds(50); // what is Floppy Disk head settle time?
     /// Delay
 
-    flpydsk_send_command( head << 2 | _CurrentDrive );
-    flpydsk_send_command( track);
-    flpydsk_send_command( head);
-    flpydsk_send_command( sector);
-    flpydsk_send_command( FLPYDSK_SECTOR_DTL_512 );
-    flpydsk_send_command( FLPY_SECTORS_PER_TRACK );
-    flpydsk_send_command( FLPYDSK_GAP3_LENGTH_3_5 );
-    flpydsk_send_command( 0xFF );
+    flpydsk_send_command(head << 2 | _CurrentDrive);
+    flpydsk_send_command(track);
+    flpydsk_send_command(head);
+    flpydsk_send_command(sector);
+    flpydsk_send_command(FLPYDSK_SECTOR_DTL_512);
+    flpydsk_send_command(FLPY_SECTORS_PER_TRACK);
+    flpydsk_send_command(FLPYDSK_GAP3_LENGTH_3_5);
+    flpydsk_send_command(0xFF);
     flpydsk_wait_irq();
     // printf("ST0 ST1 ST2 C H S Size(2: 512 Byte):\n");
     int32_t retVal;
@@ -519,14 +519,14 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
     int32_t head=0, track=0, sector=1;
     flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
-    if ( flpydsk_seek (track, head) !=0 )
+    if (flpydsk_seek (track, head) !=0)
     {
         printf("flpydsk_seek not ok.\n");
         retVal=-2;
     }
 
     uint32_t timeout = 2; // limit
-    while ( flpydsk_transfer_sector(head, track, sector, 0) == -1 )
+    while (flpydsk_transfer_sector(head, track, sector, 0) == -1)
     {
         timeout--;
         printf("error read_sector. left: %d\n",timeout);
@@ -598,13 +598,13 @@ int32_t flpydsk_write_sector_wo_motor(int32_t sectorLBA)
 
 ///******************* block write and read *****************************///
 
-int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option) /// floppy
+int32_t flpydsk_write_ia(int32_t i, void* a, int8_t option) /// floppy
 {
     int32_t val=0;
 
     if (option == SECTOR)
     {
-        memcpy((void*)DMA_BUFFER, a  , 0x200);
+        memcpy((void*)DMA_BUFFER, a, 0x200);
         val = i;
     }
     else if (option == TRACK)
@@ -616,7 +616,7 @@ int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option) /// floppy
     uint32_t timeout = 2; // limit
     int32_t  retVal  = 0;
 
-    while ( flpydsk_write_sector_wo_motor(val) != 0 ) // without motor on/off
+    while (flpydsk_write_sector_wo_motor(val) != 0) // without motor on/off
     {
         retVal = -1;
         timeout--;
@@ -635,7 +635,7 @@ int32_t flpydsk_write_ia( int32_t i, void* a, int8_t option) /// floppy
 }
 
 
-int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option) /// floppy
+int32_t flpydsk_read_ia(int32_t i, void* a, int8_t option) /// floppy
 {
     /// TEST: change DMA before write/read
     /// printf("DMA manipulation\n");
@@ -664,13 +664,13 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option) /// floppy
         {
             printf("\nread error: %d\n",retVal);
         }
-        if ( (*(uint8_t*)(DMA_BUFFER+ 0)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 1)==0x41) &&
+        if ((*(uint8_t*)(DMA_BUFFER+ 0)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 1)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+ 2)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 3)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+ 4)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 5)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+ 6)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+ 8)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 9)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
-          )
+)
           {memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
               settextcolor(4,0);
               printf("Floppy ---> DMA attempt no. %d failed.\n",n+1);
@@ -694,11 +694,11 @@ int32_t flpydsk_read_ia( int32_t i, void* a, int8_t option) /// floppy
 
     if (option == SECTOR)
     {
-        memcpy( (void*)a, (void*)DMA_BUFFER, 0x200);
+        memcpy((void*)a, (void*)DMA_BUFFER, 0x200);
     }
     else if (option == TRACK)
     {
-        memcpy( (void*)a, (void*)DMA_BUFFER, 0x2400);
+        memcpy((void*)a, (void*)DMA_BUFFER, 0x2400);
     }
     return retVal;
 }

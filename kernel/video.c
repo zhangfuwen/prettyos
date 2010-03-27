@@ -29,7 +29,7 @@ void refreshUserScreen() {
     kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
     csr_y = 0;
 
-    if(displayedConsole == 10) {
+    if (displayedConsole == 10) {
         csr_x = COLUMNS - 5;
         kputs("Shell");
     }
@@ -50,7 +50,7 @@ void refreshUserScreen() {
 
 uint8_t AsciiToCP437(uint8_t ascii)
 {
-    switch ( ascii )
+    switch (ascii)
     {
         case 0xE4:  return 0x84;  // ä
         case 0xF6:  return 0x94;  // ö
@@ -76,7 +76,7 @@ void kputch(char c)
     uint16_t* pos;
     uint32_t att = attrib << 8;
 
-    switch(uc) {
+    switch (uc) {
         case 0x08: // backspace: move the cursor one space backwards and delete
             if (csr_x)
             {

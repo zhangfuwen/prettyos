@@ -58,15 +58,15 @@ int main()
 
     if (pODA->Memory_Size > 1073741824)
     {
-        printf( "\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
+        printf("\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
     }
     else if (pODA->Memory_Size > 1048576)
     {
-        printf( "\n\nMemory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size );
+        printf("\n\nMemory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
     }
     else
     {
-        printf( "\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size );
+        printf("\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
     }
 
     EHCIflag = false;
@@ -74,7 +74,7 @@ int main()
     sti();
 
     // direct 1st floppy disk
-    if ( (cmos_read(0x10)>>4) == 4 )   // 1st floppy 1,44 MB: 0100....b
+    if ((cmos_read(0x10)>>4) == 4)   // 1st floppy 1,44 MB: 0100....b
     {
         printf("1.44 MB FDD device 0\n\n");
         pODA->flpy_motor[0] = false;        // first floppy motor is off
@@ -94,7 +94,7 @@ int main()
     listHead_t* pciDevList = listCreate();
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
-        if ( pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00) )   // there is no vendor EE00h
+        if (pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00))   // there is no vendor EE00h
         {
             listAppend(pciDevList, (void*)(pciDev_Array+i));
             ///
@@ -118,7 +118,7 @@ int main()
             #ifdef _DIAGNOSIS_
             settextcolor(2,0);
             printf("%X dev: %x vend: %x\t",
-                       ( pciDev_t*)element,
+                       (pciDev_t*)element,
                        ((pciDev_t*)element)->deviceID,
                        ((pciDev_t*)element)->vendorID);
             settextcolor(15,0);
@@ -150,9 +150,9 @@ int main()
 
     // search the content of files <- data from outside "loaded" via incbin ...
     bool shell_found = false;
-    uint8_t* buf = malloc( FILEBUFFERSIZE, 0 );
+    uint8_t* buf = malloc(FILEBUFFERSIZE, 0);
     struct dirent* node = 0;
-    for ( int i=0; (node = readdir_fs(fs_root, i))!=0; ++i )
+    for (int i=0; (node = readdir_fs(fs_root, i))!=0; ++i)
     {
         fs_node_t* fsnode = finddir_fs(fs_root, node->name);
 
@@ -169,19 +169,19 @@ int main()
             memcpy(name, node->name, 35); // protection against wrong / too long filename
             printf("%d \t%s\n",sz,name);
 
-            if ( strcmp( (const char*)node->name, "shell" ) == 0 )
+            if (strcmp((const char*)node->name, "shell") == 0)
             {
                 shell_found = true;
 
                 if (!elf_exec(buf, sz, "Shell"))
-                    printf( "Cannot start shell!\n" );
+                    printf("Cannot start shell!\n");
             }
         }
     }
     free(buf);
     printf("\n\n");
 
-    if ( ! shell_found )
+    if (! shell_found)
     {
         settextcolor(4,0);
         printf("Program not found.\n");
@@ -202,11 +202,11 @@ int main()
     char DateAndTime[81];
     char timeBuffer[20];
 
-    while ( true )
+    while (true)
     {
         // Show Rotating Asterisk
         *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *p;
-        if ( ! *++p )
+        if (! *++p)
         {
             p = progress;
         }
@@ -215,7 +215,7 @@ int main()
 
         OldRdtscValue = CurrentRdtscValue;
 
-        if ( getCurrentSeconds() != CurrentSeconds )
+        if (getCurrentSeconds() != CurrentSeconds)
         {
             CurrentSeconds = getCurrentSeconds();
             // all values 64 bit
@@ -234,7 +234,7 @@ int main()
             else
             {
               // not to be expected
-              // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo );
+              // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo);
             }
 
             itoa(CurrentSeconds, timeBuffer);
@@ -266,7 +266,7 @@ int main()
             }
             /// TEST
 
-            if ( (initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber )
+            if ((initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber)
             {
                 initEHCIFlag = false;
                 initEHCIHostController(pciEHCINumber);

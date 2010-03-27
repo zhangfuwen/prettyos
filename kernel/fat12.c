@@ -81,19 +81,19 @@ int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer) /
   // even and odd cluster:
   // DAB ... --> AB .D ..
   // ... EFC --> .. C. EF
-  if(index%2 == 0)
+  if (index%2 == 0)
   {
       fat1 = fat & 0x0FF;                           // .AB --> AB ..
       fat2 = (fat2 & 0xF0) | ((fat & 0xF00) >> 8);  // D.. --> .. .D
   }
   else
   {
-      fat1 = (fat1 & 0x0F) | ( (fat & 0x00F) << 4); //  ..C --> C. ..
+      fat1 = (fat1 & 0x0F) | ((fat & 0x00F) << 4); //  ..C --> C. ..
       fat2 = (fat  & 0xFF0) >> 4;                   //  EF. --> .. EF
   }
 
   // Write back from a[...] b[...] to track0[...]
-    if(fat_index == 511)
+    if (fat_index == 511)
     {
       a[511] = fat1;
       b[0]   = fat2;
@@ -130,10 +130,10 @@ int32_t flpydsk_read_directory()
     for (uint8_t i=0;i<ROOT_DIR_ENTRIES;++i)       // 224 Entries * 32 Byte
     {
         if (
-            (( *((uint8_t*)(DMA_BUFFER + i*32)) )      != 0x00 ) && /* free from here on           */
-            (( *((uint8_t*)(DMA_BUFFER + i*32)) )      != 0xE5 ) && /* 0xE5 deleted = free         */
-            (( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) != 0x0F )    /* 0x0F part of long file name */
-          )
+            ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0x00) && /* free from here on           */
+            ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0xE5) && /* 0xE5 deleted = free         */
+            ((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) != 0x0F)    /* 0x0F part of long file name */
+)
           {
             error = 0;
             int32_t start = DMA_BUFFER + i*32; // name
@@ -141,16 +141,16 @@ int32_t flpydsk_read_directory()
             int8_t* end = (int8_t*)(start+count);
             for (; count != 0; --count)
             {
-                if ( *(end-count) != 0x20 ) /* empty space in file name */
+                if (*(end-count) != 0x20) /* empty space in file name */
                     printf("%c",*(end-count));
             }
 
             start = DMA_BUFFER + i*32 + 8; // extension
 
-            if (((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) == 0x08) ||  // volume label
-                 ( ( *((uint8_t*) (start))   == 0x20) &&
-                   ( *((uint8_t*) (start+1)) == 0x20) &&
-                   ( *((uint8_t*) (start+2)) == 0x20) ))                          // extension == three 'space'
+            if ((((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x08) == 0x08) ||  // volume label
+                 ((*((uint8_t*) (start))   == 0x20) &&
+                   (*((uint8_t*) (start+1)) == 0x20) &&
+                   (*((uint8_t*) (start+2)) == 0x20)))                          // extension == three 'space'
             {
                 // do nothing
             }
@@ -170,12 +170,12 @@ int32_t flpydsk_read_directory()
             // attributes
             printf("\t");
             if (*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100)                   printf("\t");
-            if ((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x08 ) == 0x08 ) printf(" (vol)");
-            if ((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x10 ) == 0x10 ) printf(" (dir)");
-            if ((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x01 ) == 0x01 ) printf(" (r/o)");
-            if ((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x02 ) == 0x02 ) printf(" (hid)");
-            if ((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x04 ) == 0x04 ) printf(" (sys)");
-            if ((( *((uint8_t*)(DMA_BUFFER + i*32 + 11)) ) & 0x20 ) == 0x20 ) printf(" (arc)");
+            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x08) == 0x08) printf(" (vol)");
+            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x10) == 0x10) printf(" (dir)");
+            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x01) == 0x01) printf(" (r/o)");
+            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x02) == 0x02) printf(" (hid)");
+            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x04) == 0x04) printf(" (sys)");
+            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x20) == 0x20) printf(" (arc)");
 
             // 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
             printf("  1st sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
@@ -286,7 +286,7 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
 
 
     // flpydsk_control_motor(true); printf("write_boot_sector.motor_on\n");
-    // return flpydsk_write_sector_ia( BOOT_SEC, a );
+    // return flpydsk_write_sector_ia(BOOT_SEC, a);
     /// prepare sector 0 of track 0
     for (uint16_t k=0;k<511;k++)
     {
@@ -472,17 +472,17 @@ void print_dir(struct dir_entry* rs) /// FAT12
             printf("%c",rs->Extension[j]);
         }
         printf("\n");
-        printf("Attributes   = %d\t %x\n",rs->Attributes,   rs->Attributes      );
-        printf("NTRes        = %d\t %x\n",rs->NTRes,        rs->NTRes           );
-        printf("CrtTimeTenth = %d\t %x\n",rs->CrtTimeTenth, rs->CrtTimeTenth    );
-        printf("CrtTime      = %d\t %x\n",rs->CrtTime,      rs->CrtTime         );
-        printf("CrtDate      = %d\t %x\n",rs->CrtDate,      rs->CrtDate         );
-        printf("LstAccDate   = %d\t %x\n",rs->LstAccDate,   rs->LstAccDate      );
-        printf("FstClusHI    = %d\t %x\n",rs->FstClusHI,    rs->FstClusHI       );
-        printf("WrtTime      = %d\t %x\n",rs->WrtTime,      rs->WrtTime         );
-        printf("WrtDate      = %d\t %x\n",rs->WrtDate,      rs->WrtDate         );
-        printf("FstClusLO    = %d\t %x\n",rs->FstClusLO,    rs->FstClusLO       );
-        printf("FileSize     = %d\t %x\n",rs->FileSize,     rs->FileSize        );
+        printf("Attributes   = %d\t %x\n",rs->Attributes,   rs->Attributes);
+        printf("NTRes        = %d\t %x\n",rs->NTRes,        rs->NTRes);
+        printf("CrtTimeTenth = %d\t %x\n",rs->CrtTimeTenth, rs->CrtTimeTenth);
+        printf("CrtTime      = %d\t %x\n",rs->CrtTime,      rs->CrtTime);
+        printf("CrtDate      = %d\t %x\n",rs->CrtDate,      rs->CrtDate);
+        printf("LstAccDate   = %d\t %x\n",rs->LstAccDate,   rs->LstAccDate);
+        printf("FstClusHI    = %d\t %x\n",rs->FstClusHI,    rs->FstClusHI);
+        printf("WrtTime      = %d\t %x\n",rs->WrtTime,      rs->WrtTime);
+        printf("WrtDate      = %d\t %x\n",rs->WrtDate,      rs->WrtDate);
+        printf("FstClusLO    = %d\t %x\n",rs->FstClusLO,    rs->FstClusLO);
+        printf("FileSize     = %d\t %x\n",rs->FileSize,     rs->FileSize);
         printf("\n");
     }
 }

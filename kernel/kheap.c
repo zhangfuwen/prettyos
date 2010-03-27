@@ -22,7 +22,7 @@ To manage the free and reserved (allocated) areas of the heap an array of
  and second region's size to "heap_start":
  region_3_addr = heap_start + regions[0].size + regions[1].size.
 
-Before the heap is set up memory is allocated on a "placement address". This 
+Before the heap is set up memory is allocated on a "placement address". This
  is an identity mapped area of continuous memory, the allocation just moves
  a pointer forward by the requested size and returns it's previous value.
 
@@ -56,7 +56,7 @@ static const uint32_t HEAP_MIN_GROWTH = 256*1024;
 void heap_install()
 {
     // This gets us the current placement address
-    regions = malloc( 0, 0 );
+    regions = malloc(0, 0);
 
     // We take the rest of the placement area
     region_count = 0;
@@ -64,20 +64,20 @@ void heap_install()
 }
 
 
-static bool heap_grow( uint32_t size, char* heap_end )
+static bool heap_grow(uint32_t size, char* heap_end)
 {
     // We will have to append another region-object to our array if
     //   we can't merge with the last region - check whether there
     //   would be enough space to insert the region-object
-    if ( region_count>0 && regions[region_count-1].reserved && region_count+1>region_max_count )
+    if (region_count>0 && regions[region_count-1].reserved && region_count+1>region_max_count)
         return false;
 
     // Enhance the memory
-    if ( ! paging_alloc( kernel_pd, heap_end, size, MEM_KERNEL|MEM_WRITE ) )
+    if (! paging_alloc(kernel_pd, heap_end, size, MEM_KERNEL|MEM_WRITE))
         return false;
 
     // Maybe we can merge with the last region object?
-    if ( region_count>0 && !regions[region_count-1].reserved )
+    if (region_count>0 && !regions[region_count-1].reserved)
     {
         regions[region_count-1].size += size;
     }
@@ -94,17 +94,17 @@ static bool heap_grow( uint32_t size, char* heap_end )
 }
 
 
-void* malloc( uint32_t size, uint32_t alignment )
+void* malloc(uint32_t size, uint32_t alignment)
 {
     // Avoid odd addresses
-    size = alignUp( size, 8 );
+    size = alignUp(size, 8);
 
     // If the heap is not set up..
-    if ( regions == NULL )
+    if (regions == NULL)
     {
         // Do simple placement allocation
         static char* addr = PLACEMENT_BEGIN;
-        addr = (char*) alignUp( (uint32_t)addr, alignment );
+        addr = (char*) alignUp((uint32_t)addr, alignment);
         char* ret = addr;
         addr += size;
         return ret;
@@ -112,14 +112,14 @@ void* malloc( uint32_t size, uint32_t alignment )
 
     // Walk the regions and find a big-enough one
     char* region_addr = heap_start;
-    for ( uint32_t i=0; i<region_count; ++i )
+    for (uint32_t i=0; i<region_count; ++i)
     {
         // Calculate aligned address and the how much more size is needed due to alignment
-        char* aligned_addr = (char*)alignUp( (uint32_t)region_addr, alignment );
+        char* aligned_addr = (char*)alignUp((uint32_t)region_addr, alignment);
         uint32_t additional_size = aligned_addr - region_addr;
 
         // Check whether this region is free and big enough
-        if ( !regions[i].reserved && regions[i].size>=(size+additional_size) )
+        if (!regions[i].reserved && regions[i].size>=(size+additional_size))
         {
             // We will split up this region...
             // +--------------------------------------------------------+
@@ -134,14 +134,14 @@ void* malloc( uint32_t size, uint32_t alignment )
             // +------------------+--------------------------+----------+
 
             // Split the pre-alignment area
-            if ( aligned_addr != region_addr )
+            if (aligned_addr != region_addr)
             {
                 // Check whether we are able to expand
-                if ( region_count+1 > region_max_count )
+                if (region_count+1 > region_max_count)
                     return NULL;
 
                 // Move all following regions ahead to get room for a new one
-                for ( uint32_t j=region_count; j>i; --j )
+                for (uint32_t j=region_count; j>i; --j)
                     regions[j] = regions[j-1];
                 ++region_count;
 
@@ -156,14 +156,14 @@ void* malloc( uint32_t size, uint32_t alignment )
             }
 
             // Split the leftover
-            if ( regions[i].size > (size+additional_size) )
+            if (regions[i].size > (size+additional_size))
             {
                 // Check whether we are able to expand
-                if ( region_count+1 > region_max_count )
+                if (region_count+1 > region_max_count)
                     return NULL;
 
                 // Move all following regions ahead to get room for a new one
-                for ( uint32_t j=region_count; j>i+1; --j )
+                for (uint32_t j=region_count; j>i+1; --j)
                     regions[j] = regions[j-1];
                 ++region_count;
 
@@ -181,12 +181,12 @@ void* malloc( uint32_t size, uint32_t alignment )
     }
 
     // There is nothing free, try to expand the heap
-    uint32_t to_grow = max( HEAP_MIN_GROWTH, alignUp(size*3/2,PAGESIZE) );
-    if ( ! heap_grow( to_grow, heap_start+heap_size ) )
+    uint32_t to_grow = max(HEAP_MIN_GROWTH, alignUp(size*3/2,PAGESIZE));
+    if (! heap_grow(to_grow, heap_start+heap_size))
         return NULL;
 
     // Now there should be a region that is large enough
-    void* address = malloc( size, alignment );
+    void* address = malloc(size, alignment);
 
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
@@ -198,36 +198,36 @@ void* malloc( uint32_t size, uint32_t alignment )
 }
 
 
-void free( void* addr )
+void free(void* addr)
 {
     // Walk the regions and find the correct one
     char* region_addr = heap_start;
-    for ( uint32_t i=0; i<region_count; ++i )
+    for (uint32_t i=0; i<region_count; ++i)
     {
-        if ( region_addr == addr )
+        if (region_addr == addr)
         {
             regions[i].reserved = false;
 
             // Check for a merge with the next region
-            if ( i+1<region_count && !regions[i+1].reserved )
+            if (i+1<region_count && !regions[i+1].reserved)
             {
                 // Adjust the size of the now-free region
                 regions[i].size += regions[i+1].size;
 
                 // Move all following regions back by one
-                for ( uint32_t j=i+1; j<region_count-1; ++j )
+                for (uint32_t j=i+1; j<region_count-1; ++j)
                     regions[j] = regions[j+1];
                 --region_count;
             }
 
             // Check for a merge with the previous region
-            if ( i>0 && !regions[i-1].reserved )
+            if (i>0 && !regions[i-1].reserved)
             {
                 // Adjust the size of the previous region
                 regions[i-1].size += regions[i].size;
 
                 // Move all following regions back by one
-                for ( uint32_t j=i; j<region_count-1; ++j )
+                for (uint32_t j=i; j<region_count-1; ++j)
                     regions[j] = regions[j+1];
                 --region_count;
             }
@@ -239,8 +239,8 @@ void free( void* addr )
         region_addr += regions[i].size;
     }
 
-    printf( "Broken free: %X\n", addr );
-    ASSERT( false );
+    printf("Broken free: %X\n", addr);
+    ASSERT(false);
 }
 
 /*

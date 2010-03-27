@@ -33,7 +33,7 @@ static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, cha
 
 static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 {
-    if ( (node == initrd_root) && (index == 0) )
+    if ((node == initrd_root) && (index == 0))
     {
       strcpy(dirent.name, (const char*)"dev");
       dirent.name[3] = 0; // NUL-terminate the string
@@ -41,7 +41,7 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
       return &dirent;
     }
 
-    if ( index-1 >= nroot_nodes )
+    if (index-1 >= nroot_nodes)
     {
         return 0;
     }
@@ -53,13 +53,13 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 
 static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
 {
-    if ( (node == initrd_root) && (!strcmp(name,(const char*)"dev")) )
+    if ((node == initrd_root) && (!strcmp(name,(const char*)"dev")))
     {
         return initrd_dev;
     }
     for (int32_t i=0; i<nroot_nodes; ++i)
     {
-        if ( !strcmp(name, root_nodes[i].name) )
+        if (!strcmp(name, root_nodes[i].name))
         {
             return &root_nodes[i];
         }
@@ -82,7 +82,7 @@ fs_node_t* install_initrd(uint32_t location)
     #endif
     ///
 
-    initrd_root = (fs_node_t*) malloc( sizeof(fs_node_t),PAGESIZE );
+    initrd_root = (fs_node_t*) malloc(sizeof(fs_node_t),PAGESIZE);
     strcpy(initrd_root->name, (const char*)"dev");
     initrd_root->mask    = initrd_root->uid = initrd_root->gid = initrd_root->inode = initrd_root->length = 0;
     initrd_root->flags   = FS_DIRECTORY;
@@ -125,7 +125,7 @@ fs_node_t* install_initrd(uint32_t location)
     #endif
     ///
 
-    root_nodes = (fs_node_t*) malloc( sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
+    root_nodes = (fs_node_t*) malloc(sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
     nroot_nodes = initrd_header->nfiles;
 
     // For every file...

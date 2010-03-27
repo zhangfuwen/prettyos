@@ -20,7 +20,7 @@ int main(char argc, char **argv)
     int i;
     for (i=0; i<N; ++i)               // set the memory of N headers to binary 0
     {
-        memset( (void*)&headers[i], 0, sizeof(struct initrd_header) );
+        memset((void*)&headers[i], 0, sizeof(struct initrd_header));
     }
 
     unsigned int off = N * sizeof(struct initrd_header) + sizeof(int); // set data offset to N * 76

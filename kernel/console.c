@@ -32,7 +32,7 @@ void console_exit(volatile console_t* console)
 bool changeDisplayedConsole(uint8_t ID)
 {
     // Chaning visible console, returning false, if this console is not available.
-    if(ID > 11 || reachableConsoles[ID] == 0) {
+    if (ID > 11 || reachableConsoles[ID] == 0) {
         return(false);
     }
     displayedConsole = ID;
@@ -48,7 +48,7 @@ void clear_console(uint8_t backcolor)
     memsetw (current_console->vidmem, 0x20 | (current_console->attrib << 8), COLUMNS * USER_LINES * 2);
     current_console->csr_x = 0;
     current_console->csr_y = 0;
-    if(current_console == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
+    if (current_console == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
     {
         refreshUserScreen();
     }
@@ -102,7 +102,7 @@ void putch(char c)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
-    switch(uc) {
+    switch (uc) {
         case 0x08: // backspace: move the cursor one space backwards and delete
             if (current_console->csr_x)
             {
@@ -132,7 +132,7 @@ void putch(char c)
             if (uc != 0)
             {
                 uint32_t att = current_console->attrib << 8;
-                if(reachableConsoles[displayedConsole] == current_console) { //print to screen
+                if (reachableConsoles[displayedConsole] == current_console) { //print to screen
                     *(vidmem + (current_console->csr_y+2) * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color
                 }
                 *(current_console->vidmem + current_console->csr_y * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color

@@ -16,12 +16,12 @@ void sound(uint32_t frequency)
     outportb(0x42, frequency & 0xFF);
     outportb(0x42, frequency>>8);
     //Sound on
-    outportb(0x61, inportb(0x61)|3 );
+    outportb(0x61, inportb(0x61)|3);
 }
 
 void noSound()
 {
-    outportb(0x61, inportb(0x61) & ~3 );
+    outportb(0x61, inportb(0x61) & ~3);
 }
 
 void msgbeep()
