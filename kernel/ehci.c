@@ -14,6 +14,7 @@
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 bool USBtransferFlag; // switch on/off tests for USB-Transfer
+bool enabledPortFlag; // port enabled
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)
 {
@@ -180,8 +181,12 @@ void ehci_handler(struct regs* r)
         settextcolor(15,0);
 
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
-        showPORTSC();
-        checkPortLineStatus();
+
+        if(enabledPortFlag)
+        {
+            showPORTSC();
+            checkPortLineStatus();
+        }
     }
 
     if (pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER)
@@ -340,13 +345,13 @@ void startHostController(uint32_t num)
 
 int32_t initEHCIHostController(uint32_t num)
 {
-    USBtransferFlag = false;
+    USBtransferFlag = true;
+    enabledPortFlag = false;
 
     delay(2000000);settextcolor(9,0);
     printf("\n>>> >>> function: initEHCIHostController\n");
     settextcolor(15,0);
 
-    static uint32_t timeout = 3;
     irq_install_handler(32 + pciDev_Array[num].irq, ehci_handler);
     irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
@@ -355,24 +360,17 @@ int32_t initEHCIHostController(uint32_t num)
     if (!(pOpRegs->USBSTS & STS_HCHALTED)) // TEST
     {
          settextcolor(2,0);
-         // printf("\nHCHalted set to 0 (OK)");
+         printf("\nHCHalted bit set to 0 (OK), ports can be enabled now.");
          enablePorts();
          settextcolor(15,0);
     }
-    else
+    else // not OK
     {
          settextcolor(4,0);
-         printf("\nHCHalted set to 1 (Not OK!) --> Ports cannot be enabled");
+         printf("\nHCHalted bit set to 1 (Not OK!), fatal Error --> Ports cannot be enabled");
          showUSBSTS();
-         if (timeout-- <=0)
-         {
-             return -1;
-         }
-         else
-         {
-             initEHCIHostController(pciEHCINumber);
-         }
          settextcolor(15,0);
+         return -1;
     }
     return 0;
 }
@@ -387,21 +385,29 @@ void enablePorts()
     {
          resetPort(j);
 
-         if (pOpRegs->PORTSC[j] == 0x1005) // high speed idle, enabled, SE0
+         if (pOpRegs->PORTSC[j] == (0x1005 || 0x1004)) // high speed idle, enabled, SE0
          {
              settextcolor(14,0);
-             printf("Port %d: %s\n",j+1,"high speed idle, enabled, SE0");
+             if (pOpRegs->PORTSC[j] == 0x1005)
+             {
+                 printf("Port %d: high speed enabled, device attached\n",j+1);
+             }
+             else
+             {
+                 printf("Port %d: high speed enabled, device not attached\n",j+1);
+             }
              settextcolor(15,0);
 
              if (USBtransferFlag)
              {
-                 testTransfer(0); // device address
+                 testTransfer(0); // device address 0 direct after reset
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
                  printf("\nin    status: "); showStatusbyteQTD(InQTD);
              }
          }
     }
+    enabledPortFlag = true;
 }
 
 void resetPort(uint8_t j)
@@ -550,11 +556,9 @@ void checkPortLineStatus()
         {
              settextcolor(14,0);
              printf(",power on, enabled, EHCI owned");
-             settextcolor(3,0);
-             printf("\nport status: %x\t",pOpRegs->PORTSC[j]);
              settextcolor(15,0);
 
-             if (USBtransferFlag)
+             if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & PSTS_CONNECTED))
              {
                  testTransfer(0); // device address
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
@@ -632,43 +636,6 @@ void DeactivateLegacySupport(uint32_t num)
         uint32_t BIOSownedSemaphore = eecp + 2; // R/W - only Bit 16 (Bit 23:17 Reserved, must be set to zero)
         uint32_t OSownedSemaphore   = eecp + 3; // R/W - only Bit 24 (Bit 31:25 Reserved, must be set to zero)
         uint32_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
-
-        /* /// TEST
-        if (eecp_id == 1)
-        {
-            uint32_t PCITESTADDR = 0x10; // bar0
-            printf("TEST - TEST - TEST begin\n");
-            printf("PCITESTADDR: %X\n",pci_config_read(bus, dev, func, 0x0400 | PCITESTADDR));
-
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+1, 0x00);
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+2, 0x00);
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+3, 0xC0);
-            //pci_config_write_dword(bus, dev, func, PCITESTADDR,   0xC0000000);
-            printf("PCITESTADDR: %X\n",pci_config_read(bus, dev, func, 0x0400 | PCITESTADDR));
-
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+1, 0x10);
-            //pci_config_write_dword(bus, dev, func, PCITESTADDR,   0xC0001000);
-            printf("PCITESTADDR: %X\n",pci_config_read(bus, dev, func, 0x0400 | PCITESTADDR));
-
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+1, 0x00);
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+2, 0x01);
-            //pci_config_write_dword(bus, dev, func, PCITESTADDR,   0xC0010000);
-            printf("PCITESTADDR: %X\n",pci_config_read(bus, dev, func, 0x0400 | PCITESTADDR));
-
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+2, 0x10);
-            //pci_config_write_dword(bus, dev, func, PCITESTADDR,   0xC0100000);
-            printf("PCITESTADDR: %X\n",pci_config_read(bus, dev, func, 0x0400 | PCITESTADDR));
-
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+1, 0xF0);
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+2, 0xFF);
-            pci_config_write_byte(bus, dev, func, PCITESTADDR+3, 0xCF);
-            //pci_config_write_dword(bus, dev, func, PCITESTADDR,   0xCFFFF000);
-            printf("PCITESTADDR: %X\n",pci_config_read(bus, dev, func, 0x0400 | PCITESTADDR));
-
-            printf("TEST - TEST - TEST end\n");
-            delay(4000000);
-        }
-        /// TEST */
 
         // Legacy-Support-EC found? BIOS-Semaphore set?
         if ((eecp_id == 1) && (pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore) & 0x01))
