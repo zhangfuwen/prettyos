@@ -179,10 +179,11 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     uint32_t rootdirStart = ROOT_SEC*0x200;
     for (uint16_t i=0;i<ROOT_DIR_ENTRIES;i++)
     {
-        if (track1[(rootdirStart-9216)+i*0x20]==0x00)
+        if ( (track1[(rootdirStart-9216)+i*0x20]==0x00)||(track1[(rootdirStart-9216)+i*0x20]==0xE5) ) // 00h: nothing in it E5h: deleted entry
         {
             printf("free root dir entry nr. %d\n\n",i);
             freeRootDirEntry = i;
+            memset((void*)&track1[(rootdirStart-9216)+i*0x20]   , 0x00,                32); // 32 times zero
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20   ], (void*)bufName,       8); // write name
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+ 8], (void*)bufExt,        3); // write extension
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+26], (void*)&firstCluster, 2); // write first cluster
