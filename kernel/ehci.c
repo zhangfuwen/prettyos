@@ -182,7 +182,7 @@ void ehci_handler(struct regs* r)
 
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
 
-        if(enabledPortFlag)
+        if (enabledPortFlag)
         {
             showPORTSC();
             checkPortLineStatus();

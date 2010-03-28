@@ -40,7 +40,7 @@ void refreshUserScreen() {
         csr_x = COLUMNS - strlen(Buffer);
         kputs(Buffer);
     }
-	kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
+    kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
     // copying content of visible console to the video-ram
     memcpy((void*)((uint32_t)(vidmem) + USER_BEGIN * COLUMNS * 2), (void*)(uint32_t)(reachableConsoles[displayedConsole]->vidmem), COLUMNS * USER_LINES*2);
 }

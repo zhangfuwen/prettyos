@@ -9,7 +9,7 @@ bool ende = false;
 void* memset(void* dest, uint8_t val, size_t count)
 {
     uint8_t* temp = (uint8_t*)dest;
-    for ( ; count != 0; count--) *temp++ = val;
+    for (; count != 0; count--) *temp++ = val;
     return dest;
 }
 
@@ -26,13 +26,13 @@ void SetField(unsigned int x, unsigned int y, int Player) {
 }
 
 void gewinnen () {
-    if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == X) || 
-        (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == X) || 
-        (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == X) || 
-        (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == X) || 
-        (tictactoe[1] == tictactoe[4] && tictactoe[1] == tictactoe[7] && tictactoe[1] == X) || 
-        (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == X) || 
-        (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == X) || 
+    if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == X) ||
+        (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == X) ||
+        (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == X) ||
+        (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == X) ||
+        (tictactoe[1] == tictactoe[4] && tictactoe[1] == tictactoe[7] && tictactoe[1] == X) ||
+        (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == X) ||
+        (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == X) ||
         (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == X)) {
             settextcolor(5,0);
             gotoxy(0,26);
@@ -40,13 +40,13 @@ void gewinnen () {
             settextcolor(15,0);
             ende = true;
     }
-    else if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) || 
-        (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == O) || 
-        (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == O) || 
-        (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == O) || 
-        (tictactoe[1] == tictactoe[4] && tictactoe[1] == tictactoe[7] && tictactoe[1] == O) || 
-        (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == O) || 
-        (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == O) || 
+    else if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) ||
+        (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == O) ||
+        (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == O) ||
+        (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == O) ||
+        (tictactoe[1] == tictactoe[4] && tictactoe[1] == tictactoe[7] && tictactoe[1] == O) ||
+        (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == O) ||
+        (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == O) ||
         (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == O)) {
             settextcolor(5,0);
             gotoxy(0,26);
@@ -55,8 +55,8 @@ void gewinnen () {
             ende = true;
     }
     else {
-        if (tictactoe[0] != Leer && tictactoe[1] != Leer && tictactoe[2] != Leer && 
-            tictactoe[3] != Leer && tictactoe[4] != Leer && tictactoe[5] != Leer && 
+        if (tictactoe[0] != Leer && tictactoe[1] != Leer && tictactoe[2] != Leer &&
+            tictactoe[3] != Leer && tictactoe[4] != Leer && tictactoe[5] != Leer &&
             tictactoe[6] != Leer && tictactoe[7] != Leer && tictactoe[8] != Leer) {
                 settextcolor(5,0);
                 gotoxy(0,26);

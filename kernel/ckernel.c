@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.291";
+const char* version = "0.0.0.292";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -244,7 +244,7 @@ int main()
 
         if (getCurrentSeconds() != CurrentSeconds)
         {
-			kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
+            kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
             CurrentSeconds = getCurrentSeconds();
             // all values 64 bit
             CurrentRdtscValue = rdtsc();

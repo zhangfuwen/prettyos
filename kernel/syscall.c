@@ -13,28 +13,28 @@
 // rest of functions must be declared here:
 // ...
 
-DEFN_SYSCALL1( puts,                       0, const char*              )
-DEFN_SYSCALL1( putch,                      1, char                     )
-DEFN_SYSCALL2( settextcolor,               2, uint8_t, uint8_t         )
-DEFN_SYSCALL0( getpid,                     3                           )
-DEFN_SYSCALL0( nop,                        4                           )
-DEFN_SYSCALL0( switch_context,             5                           )
-DEFN_SYSCALL0( checkKQ_and_return_char,    6                           )
-DEFN_SYSCALL0( flpydsk_read_directory,     7                           )
-DEFN_SYSCALL3( kprintf,                    8, char*, uint32_t, uint8_t )
-DEFN_SYSCALL0( getCurrentSeconds,          9                           )
-DEFN_SYSCALL0( getCurrentMilliseconds,    10                           )
-DEFN_SYSCALL1( flpydsk_format,            11, char*                    )
-DEFN_SYSCALL2( flpydsk_load,              12, const char*, const char* )
-DEFN_SYSCALL0( exit,                      13                           )
-DEFN_SYSCALL1( settaskflag,               14, int32_t                  )
-DEFN_SYSCALL2( beep,                      15, uint32_t, uint32_t       )
-DEFN_SYSCALL0( getUserTaskNumber,         16                           )
-DEFN_SYSCALL0( testch,                    17                           )
-DEFN_SYSCALL1( clear_console,             18, uint8_t                  )
-DEFN_SYSCALL2( set_cursor,                19, uint8_t, uint8_t         )
-DEFN_SYSCALL1( task_grow_userheap,        20, uint32_t                 )
-DEFN_SYSCALL2( setScrollField,            21, uint8_t, uint8_t         )
+DEFN_SYSCALL1(puts,                       0, const char*)
+DEFN_SYSCALL1(putch,                      1, char)
+DEFN_SYSCALL2(settextcolor,               2, uint8_t, uint8_t)
+DEFN_SYSCALL0(getpid,                     3)
+DEFN_SYSCALL0(nop,                        4)
+DEFN_SYSCALL0(switch_context,             5)
+DEFN_SYSCALL0(checkKQ_and_return_char,    6)
+DEFN_SYSCALL0(flpydsk_read_directory,     7)
+DEFN_SYSCALL3(kprintf,                    8, char*, uint32_t, uint8_t)
+DEFN_SYSCALL0(getCurrentSeconds,          9)
+DEFN_SYSCALL0(getCurrentMilliseconds,    10)
+DEFN_SYSCALL1(flpydsk_format,            11, char*)
+DEFN_SYSCALL2(flpydsk_load,              12, const char*, const char*)
+DEFN_SYSCALL0(exit,                      13)
+DEFN_SYSCALL1(settaskflag,               14, int32_t)
+DEFN_SYSCALL2(beep,                      15, uint32_t, uint32_t)
+DEFN_SYSCALL0(getUserTaskNumber,         16)
+DEFN_SYSCALL0(testch,                    17)
+DEFN_SYSCALL1(clear_console,             18, uint8_t)
+DEFN_SYSCALL2(set_cursor,                19, uint8_t, uint8_t)
+DEFN_SYSCALL1(task_grow_userheap,        20, uint32_t)
+DEFN_SYSCALL2(setScrollField,            21, uint8_t, uint8_t)
 
 static void* syscalls[] =
 {
@@ -65,7 +65,7 @@ static void* syscalls[] =
 void syscall_handler(struct regs* r)
 {
     // Firstly, check if the requested syscall number is valid. The syscall number is found in EAX.
-    if ( r->eax >= sizeof(syscalls)/sizeof(*syscalls) )
+    if (r->eax >= sizeof(syscalls)/sizeof(*syscalls))
         return;
 
     void* addr = syscalls[r->eax]; // Get the required syscall location.
@@ -88,7 +88,7 @@ void syscall_handler(struct regs* r)
 
 void syscall_install()
 {
-    irq_install_handler( 127, syscall_handler );
+    irq_install_handler(127, syscall_handler);
 }
 
 /*

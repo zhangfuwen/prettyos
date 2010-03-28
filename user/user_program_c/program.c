@@ -5,7 +5,7 @@
 void* memset(void* dest, char val, unsigned int count)
 {
     char* temp = (char*)dest;
-    for ( ; count != 0; count--) *temp++ = val;
+    for (; count != 0; count--) *temp++ = val;
     return dest;
 }
 
@@ -51,7 +51,7 @@ void drawEntry(char* entry)
 
 int main()
 {
-	setScrollField(0, 42);
+    setScrollField(0, 42);
     char entry[MAX_CHAR_PER_LINE+1];
     char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1];
     int curEntry = -1;
@@ -99,7 +99,7 @@ int main()
 
           // the train goes on ////////////////////////////
           settextcolor(2,0);
-          if ( getCurrentMilliseconds() >= (start + waitingTime) )
+          if (getCurrentMilliseconds() >= (start + waitingTime))
           {
               showInfo(1);
               start = getCurrentMilliseconds();
@@ -107,7 +107,7 @@ int main()
           settextcolor(15,0);
           /////////////////////////////////////////////////
 
-          if ( testch() )
+          if (testch())
           {
             input = getch();
 
@@ -232,7 +232,7 @@ int main()
                     }
                     break;
                 default:
-                    if (input >= 0x20 && (j<MAX_CHAR_PER_LINE || (insertMode && j <=MAX_CHAR_PER_LINE && cursorPos != j)) /*&& (input <= 0xFF)*/ ) // test-wise open, cf. ascii
+                    if (input >= 0x20 && (j<MAX_CHAR_PER_LINE || (insertMode && j <=MAX_CHAR_PER_LINE && cursorPos != j)) /*&& (input <= 0xFF)*/) // test-wise open, cf. ascii
                     {
                         if (curEntry != -1)
                         {
@@ -263,22 +263,22 @@ EVALUATION:
         // evaluation of entry
         {
           settextcolor(2,0);
-          if ( ( strcmp(entry,"help") == 0 ) || ( strcmp(entry,"?") == 0 ) )
+          if ((strcmp(entry,"help") == 0) || (strcmp(entry,"?") == 0))
           {
               puts("Implemented Instructions: hi  help ?  fdir  fformat\n");
           }
-          else if ( strcmp(entry,"hi") == 0 )
+          else if (strcmp(entry,"hi") == 0)
           {
               puts("I am PrettyOS. Always at your service!\n");
           }
-          else if ( strcmp(entry,"fdir") == 0 )
+          else if (strcmp(entry,"fdir") == 0)
           {
               if (floppy_dir())
               {
                   floppy_dir();
               }
           }
-          else if ( strcmp(entry,"fformat") == 0 )
+          else if (strcmp(entry,"fformat") == 0)
           {
               floppy_format("PrettyOS");
               if (floppy_dir())
@@ -286,7 +286,7 @@ EVALUATION:
                   floppy_dir();
               }
           }
-          else if ( strcmp(entry,"") == 0 )
+          else if (strcmp(entry,"") == 0)
           {
               puts("<-- Sorry, this was a blank entry.\n");
           }
@@ -314,7 +314,7 @@ EVALUATION:
 
               for (int i=0; i<8; i++)
               {
-                  if ( (i<posPoint) && (isalnum(entry[i])) )
+                  if ((i<posPoint) && (isalnum(entry[i])))
                   {
                       name[i]=entry[i];
                   }
@@ -329,7 +329,7 @@ EVALUATION:
                   ext[i-posPoint-1]=entry[i];
               }
 
-              if ( (ext[0]==0) && (ext[1]==0) && (ext[2]==0) )
+              if ((ext[0]==0) && (ext[1]==0) && (ext[2]==0))
               {
                   ext[0] = 'E';
                   ext[1] = 'L';

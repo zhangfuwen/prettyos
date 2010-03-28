@@ -10,17 +10,17 @@
 
 void settextcolor(unsigned int foreground, unsigned int background)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(2), "b"(foreground), "c"(background) );
+    __asm__ volatile("int $0x7F" : : "a"(2), "b"(foreground), "c"(background));
 }
 
 void putch(unsigned char val)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(1), "b"(val) );
+    __asm__ volatile("int $0x7F" : : "a"(1), "b"(val));
 }
 
 void puts(const char* pString)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(0), "b"(pString) );
+    __asm__ volatile("int $0x7F" : : "a"(0), "b"(pString));
 }
 
 unsigned char getch()
@@ -28,7 +28,7 @@ unsigned char getch()
     unsigned char ret;
     do
     {
-        __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(6) );
+        __asm__ volatile("int $0x7F" : "=a"(ret): "a"(6));
     }
     while (ret==0);
     return ret;
@@ -37,101 +37,101 @@ unsigned char getch()
 int floppy_dir()
 {
     int ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(7) );
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(7));
     return ret;
 }
 
 void printLine(const char* message, unsigned int line, unsigned char attribute)
 {
-	if(line <= 45) // User may only write in his own area (size is 45)
-	{
-	    __asm__ volatile( "int $0x7F" : : "a"(8), "b"(message), "c"(line+2), "d"(attribute) );
-	}
+    if (line <= 45) // User may only write in his own area (size is 45)
+    {
+        __asm__ volatile("int $0x7F" : : "a"(8), "b"(message), "c"(line+2), "d"(attribute));
+    }
 }
 
 unsigned int getCurrentSeconds()
 {
     unsigned int ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(9) );
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(9));
     return ret;
 }
 
 unsigned int getCurrentMilliseconds()
 {
     unsigned int ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(10) );
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(10));
     return ret;
 }
 
 int floppy_format(char* volumeLabel)
 {
     int ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(11), "b"(volumeLabel) );
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(11), "b"(volumeLabel));
     return ret;
 }
 
 int floppy_load(const char* name, const char* ext)
 {
     int ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(12), "b"(name), "c"(ext)  );
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(12), "b"(name), "c"(ext));
     return ret;
 }
 
 void exit()
 {
-    __asm__ volatile( "int $0x7F" : : "a"(13) );
+    __asm__ volatile("int $0x7F" : : "a"(13));
 }
 
 void settaskflag(int i)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(14), "b"(i) );
+    __asm__ volatile("int $0x7F" : : "a"(14), "b"(i));
 }
 
 void beep(unsigned int frequency, unsigned int duration)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(15), "b"(frequency), "c"(duration)  );
+    __asm__ volatile("int $0x7F" : : "a"(15), "b"(frequency), "c"(duration));
 }
 
 int getUserTaskNumber()
 {
     int ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(16) );
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(16));
     return ret;
 }
 
 bool testch()
 {
     int ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(17) );
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(17));
     return ret!=0;
 }
 
 void clearScreen(unsigned char backgroundColor)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(18 ), "b"(backgroundColor) );
+    __asm__ volatile("int $0x7F" : : "a"(18), "b"(backgroundColor));
 }
 
 void gotoxy(unsigned char x, unsigned char y)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(19), "b"(x), "c"(y)  );
+    __asm__ volatile("int $0x7F" : : "a"(19), "b"(x), "c"(y));
 }
 
-void* grow_heap( unsigned increase )
+void* grow_heap(unsigned increase)
 {
     int ret;
-    __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(20), "b"(increase) );
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(20), "b"(increase));
     return (void*)ret;
 }
 void setScrollField(uint8_t begin, uint8_t end) {
-    __asm__ volatile( "int $0x7F" : : "a"(21), "b"(begin), "c"(end)  );
+    __asm__ volatile("int $0x7F" : : "a"(21), "b"(begin), "c"(end));
 }
 
 
 
 
-/// ///////////////////////////// ///
+///////////////////////////////////
 ///          user functions       ///
-/// ///////////////////////////// ///
+///////////////////////////////////
 
 // printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
 void printf (const char* args, ...)
@@ -219,7 +219,7 @@ void sprintf (char *buffer, const char *args, ...)
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), m_buffer);
-                        strcat(buffer, m_buffer);  
+                        strcat(buffer, m_buffer);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'X':
@@ -258,7 +258,7 @@ void sprintf (char *buffer, const char *args, ...)
                 break;
         }
         pos++;
-        buffer[pos] = '\0';    
+        buffer[pos] = '\0';
     }
 }
 
@@ -272,7 +272,7 @@ char toUpper(char c)
     return islower(c) ? ('A' - 'a') + c : c;
 }
 
-char* toupper( char* s )
+char* toupper(char* s)
 {
     for (int i=0;i<strlen(s);i++)
     {
@@ -281,7 +281,7 @@ char* toupper( char* s )
     return s;
 }
 
-char* tolower( char* s )
+char* tolower(char* s)
 {
     for (int i=0;i<strlen(s);i++)
     {
@@ -301,13 +301,13 @@ unsigned int strlen(const char* str)
 }
 
 // Compare two strings. Returns -1 if str1 < str2, 0 if they are equal or 1 otherwise.
-int strcmp( const char* s1, const char* s2 )
+int strcmp(const char* s1, const char* s2)
 {
-    while ( ( *s1 ) && ( *s1 == *s2 ) )
+    while ((*s1) && (*s1 == *s2))
     {
         ++s1; ++s2;
     }
-    return ( *s1 - *s2 );
+    return (*s1 - *s2);
 }
 
 /// http://en.wikipedia.org/wiki/Strcpy
@@ -315,7 +315,7 @@ int strcmp( const char* s1, const char* s2 )
 char* strcpy(char* dest, const char* src)
 {
    char* save = dest;
-   while ( (*dest++ = *src++) );
+   while ((*dest++ = *src++));
    return save;
 }
 
@@ -351,11 +351,11 @@ char* strchr(char* str, int character)
     for (;;str++)
     {
         // NOTE< the order here is important >
-        if ( *str == character )
+        if (*str == character)
         {
             return str;
         }
-        if ( *str == 0 )
+        if (*str == 0)
         {
             return 0;
         }
@@ -457,7 +457,7 @@ void itoa(int n, char* s)
     {
         s[i++] = n % 10 + '0';  // get next digit
     }
-    while ( (n /= 10) > 0 );     // delete it
+    while ((n /= 10) > 0);     // delete it
 
     if (sign < 0)
     {
@@ -597,7 +597,7 @@ void test()
 }
 
 
-void* malloc( size_t size )
+void* malloc(size_t size)
 {
     static char* cur = 0;
     static char* top = 0;
@@ -606,19 +606,19 @@ void* malloc( size_t size )
     size = (size+15) & ~15;
 
     // Heap not set up?
-    if ( ! cur )
+    if (! cur)
     {
         unsigned to_grow = (size+4095) & ~4095;
-        cur = grow_heap( to_grow );
-        if ( ! cur )
+        cur = grow_heap(to_grow);
+        if (! cur)
             return 0;
         top = cur + to_grow;
     }
     // Not enough space on heap?
-    else if ( top - cur < size )
+    else if (top - cur < size)
     {
         unsigned to_grow = (size+4095) & ~4095;
-        if ( ! grow_heap( to_grow ) )
+        if (! grow_heap(to_grow))
             return 0;
         top += to_grow;
     }
@@ -628,7 +628,7 @@ void* malloc( size_t size )
     return ret;
 }
 
-void free( void* mem )
+void free(void* mem)
 {
     // Nothing to do
 }

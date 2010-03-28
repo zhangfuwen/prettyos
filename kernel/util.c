@@ -8,10 +8,10 @@
 
 const int32_t INT_MAX = 2147483647;
 
-void sti() { __asm__ volatile ( "sti" ); }  // Enable interrupts
-void cli() { __asm__ volatile ( "cli" ); }  // Disable interrupts
+void sti() { __asm__ volatile ("sti"); }  // Enable interrupts
+void cli() { __asm__ volatile ("cli"); }  // Disable interrupts
 
-void nop() { __asm__ volatile ( "nop" ); }  // Do nothing
+void nop() { __asm__ volatile ("nop"); }  // Do nothing
 
 oda_t   ODA;
 oda_t* pODA = &ODA;
@@ -35,21 +35,21 @@ uint32_t fetchEBP()
 uint32_t fetchSS()
 {
     register uint32_t eax __asm__("%eax");
-    __asm__ volatile ( "movl %ss,%eax" );
+    __asm__ volatile ("movl %ss,%eax");
     return eax;
 }
 
 uint32_t fetchCS()
 {
     register uint32_t eax __asm__("%eax");
-    __asm__ volatile ( "movl %cs,%eax" );
+    __asm__ volatile ("movl %cs,%eax");
     return eax;
 }
 
 uint32_t fetchDS()
 {
     register uint32_t eax __asm__("%eax");
-    __asm__ volatile ( "movl %ds,%eax" );
+    __asm__ volatile ("movl %ds,%eax");
     return eax;
 }
 
@@ -133,21 +133,21 @@ void* memcpy(void* dest, const void* src, size_t count)
 void* memset(void* dest, int8_t val, size_t count)
 {
     int8_t* temp = (int8_t*)dest;
-    for ( ; count != 0; count--) *temp++ = val;
+    for (; count != 0; count--) *temp++ = val;
     return dest;
 }
 
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count)
 {
     uint16_t* temp = dest;
-    for ( ; count != 0; count--) *temp++ = val;
+    for (; count != 0; count--) *temp++ = val;
     return dest;
 }
 
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 {
     uint32_t* temp = dest;
-    for ( ; count != 0; count--) *temp++ = val;
+    for (; count != 0; count--) *temp++ = val;
     return dest;
 }
 
@@ -180,7 +180,7 @@ void sprintf (char *buffer, const char *args, ...)
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), m_buffer);
-                        strcat(buffer, m_buffer);  
+                        strcat(buffer, m_buffer);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'X':
@@ -219,7 +219,7 @@ void sprintf (char *buffer, const char *args, ...)
                 break;
         }
         pos++;
-        buffer[pos] = '\0';    
+        buffer[pos] = '\0';
     }
 }
 
@@ -232,14 +232,14 @@ size_t strlen(const char* str)
 }
 
 // Compare two strings. Returns -1 if str1 < str2, 0 if they are equal or 1 otherwise.
-int32_t strcmp( const char* s1, const char* s2 )
+int32_t strcmp(const char* s1, const char* s2)
 {
-    while ( ( *s1 ) && ( *s1 == *s2 ) )
+    while ((*s1) && (*s1 == *s2))
     {
         ++s1;
         ++s2;
     }
-    return ( *s1 - *s2 );
+    return (*s1 - *s2);
 }
 
 /// http://en.wikipedia.org/wiki/Strcpy
@@ -247,7 +247,7 @@ int32_t strcmp( const char* s1, const char* s2 )
 char* strcpy(char* dest, const char* src)
 {
    char* save = dest;
-   while ( (*dest++ = *src++) );
+   while ((*dest++ = *src++));
    return save;
 }
 
@@ -296,7 +296,7 @@ void reverse(char* s)
 }
 
 int8_t ctoi(char c) {
-    if(c < 48 || c > 57) {
+    if (c < 48 || c > 57) {
         return(-1);
     }
     return(c-48);
@@ -315,7 +315,7 @@ void itoa(int32_t n, char* s)
     {
         s[i++] = n % 10 + '0';  // get next digit
     }
-    while ( (n /= 10) > 0 );     // delete it
+    while ((n /= 10) > 0);     // delete it
 
     if (sign < 0)
     {
@@ -392,17 +392,17 @@ void float2string(float value, int32_t decimal, char* valuestring) // float --> 
     *tempstring = '\0';
 }
 
-uint32_t alignUp( uint32_t val, uint32_t alignment )
+uint32_t alignUp(uint32_t val, uint32_t alignment)
 {
-    if ( ! alignment )
+    if (! alignment)
         return val;
     --alignment;
     return (val+alignment) & ~alignment;
 }
 
-uint32_t alignDown( uint32_t val, uint32_t alignment )
+uint32_t alignDown(uint32_t val, uint32_t alignment)
 {
-    if ( ! alignment )
+    if (! alignment)
         return val;
     return val & ~(alignment-1);
 }
@@ -419,11 +419,11 @@ void reboot()
     int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
     do //flush the keyboard controller
     {
-       temp = inportb( 0x64 );
-       if ( temp & 1 )
-         inportb( 0x60 );
+       temp = inportb(0x64);
+       if (temp & 1)
+         inportb(0x60);
     }
-    while ( temp & 2 );
+    while (temp & 2);
 
     // Reboot
     outportb(0x64, 0xFE);
