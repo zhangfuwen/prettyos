@@ -51,6 +51,7 @@ void drawEntry(char* entry)
 
 int main()
 {
+	setScrollField(0, 42);
     char entry[MAX_CHAR_PER_LINE+1];
     char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1];
     int curEntry = -1;

@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.290";
+const char* version = "0.0.0.291";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -85,15 +85,15 @@ int main()
 
     if (pODA->Memory_Size > 1073741824)
     {
-        printf("\n\nMemory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
+        printf("Memory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
     }
     else if (pODA->Memory_Size > 1048576)
     {
-        printf("\n\nMemory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
+        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
     }
     else
     {
-        printf("\n\nMemory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
+        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
     }
 
     EHCIflag = false;
@@ -134,7 +134,7 @@ int main()
     }
     //printf("\n");
     // listShow(pciDevList); // shows addresses of list elements (not data)
-    printf("\n");
+    putch('\n');
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
         void* element = listShowElement(pciDevList,i);
@@ -155,7 +155,7 @@ int main()
     }
     ///
     #ifdef _DIAGNOSIS_
-    printf("\n\n");
+    puts("\n\n");
     #endif
     ///
     /// PCI list END
@@ -206,7 +206,7 @@ int main()
         }
     }
     free(buf);
-    printf("\n\n");
+    puts("\n\n");
 
     if (! shell_found)
     {
@@ -244,6 +244,7 @@ int main()
 
         if (getCurrentSeconds() != CurrentSeconds)
         {
+			kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
             CurrentSeconds = getCurrentSeconds();
             // all values 64 bit
             CurrentRdtscValue = rdtsc();
@@ -266,7 +267,7 @@ int main()
 
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
-            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0xC, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
+            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
             if ((CurrentSeconds%40)==0)
@@ -287,8 +288,7 @@ int main()
               }
 
               char timeStr[10];
-              strcpy(timeStr,"TIME");
-              strcat(timeStr,timeBuffer);
+              sprintf(timeStr, "TIME%s", timeBuffer);
               flpydsk_write(timeStr,"TXT", (void*)videoscreen, 4100);
             }
             /// TEST

@@ -35,15 +35,12 @@ void refreshUserScreen() {
     }
     else
     {
-        char Buffer[70]; char Temp[30];
-        strcpy(Buffer, "Console ");
-        itoa(displayedConsole, Temp);
-        strcat(Buffer, Temp);
-        strcat(Buffer, ": ");
-        strcat(Buffer, reachableConsoles[displayedConsole]->name);
+        char Buffer[70];
+        sprintf(Buffer, "Console %i: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
         csr_x = COLUMNS - strlen(Buffer);
         kputs(Buffer);
     }
+	kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
     // copying content of visible console to the video-ram
     memcpy((void*)((uint32_t)(vidmem) + USER_BEGIN * COLUMNS * 2), (void*)(uint32_t)(reachableConsoles[displayedConsole]->vidmem), COLUMNS * USER_LINES*2);
 }
@@ -126,7 +123,7 @@ void kputs(const char* text)
 
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
-    attrib = 0x0C;//(attribute >> 4 << 4) | (attribute & 0x0F & 0x0F);
+    attrib = (attribute >> 4 << 4) | (attribute & 0x0F & 0x0F);
     csr_x = 0; csr_y = line;
 
     va_list ap;

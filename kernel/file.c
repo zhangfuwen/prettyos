@@ -86,9 +86,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     if (!retVal)
     {
         char Buffer[10];
-        strcpy(Buffer, name);
-        strcat(Buffer, ".");
-        strcat(Buffer, ext);
+        sprintf(Buffer, "%s.%s", name, ext);
         /// START TASK AND INCREASE TASKCOUNTER
         if (elf_exec(file, f.size, Buffer)) // execute loaded file
         {

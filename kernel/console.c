@@ -20,6 +20,8 @@ void console_init(volatile console_t* console, const char* name)
     console->csr_x        = 0;
     console->csr_y        = 0;
     console->attrib       = 0x0F;
+    //console->SCROLL_BEGIN = 0;
+    console->SCROLL_END   = USER_LINES;
     strcpy(console->name, name);
     memsetw (console->vidmem, 0x20 | (console->attrib << 8), COLUMNS * USER_LINES * 2);
 }
@@ -39,6 +41,10 @@ bool changeDisplayedConsole(uint8_t ID)
     refreshUserScreen();
     update_cursor();
     return(true);
+}
+void setScrollField(uint8_t begin, uint8_t end) {
+    //current_console->SCROLL_BEGIN = begin;
+    current_console->SCROLL_END = end;
 }
 
 void clear_console(uint8_t backcolor)
@@ -159,12 +165,14 @@ void puts(const char* text)
 void scroll()
 {
     uint32_t blank = 0x20 | (current_console->attrib << 8);
-    if (current_console->csr_y >= USER_LINES)
+
+    uint8_t scroll_end = min(USER_LINES, current_console->SCROLL_END);
+    if (current_console->csr_y >= scroll_end)
     {
-        uint8_t temp = current_console->csr_y - USER_LINES + 1;
-        memcpy (current_console->vidmem, current_console->vidmem + temp * COLUMNS, (USER_LINES - temp) * COLUMNS * sizeof(uint16_t));
-        memsetw (current_console->vidmem + (USER_LINES - temp) * COLUMNS, blank, COLUMNS);
-        current_console->csr_y = USER_LINES - 1;
+        uint8_t temp = current_console->csr_y - scroll_end + 1;
+        memcpy (current_console->vidmem, current_console->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
+        memsetw (current_console->vidmem + (scroll_end - temp) * COLUMNS, blank, COLUMNS);
+        current_console->csr_y = scroll_end - 1;
         refreshUserScreen();
     }
 }

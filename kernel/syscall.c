@@ -34,6 +34,7 @@ DEFN_SYSCALL0( testch,                    17                           )
 DEFN_SYSCALL1( clear_console,             18, uint8_t                  )
 DEFN_SYSCALL2( set_cursor,                19, uint8_t, uint8_t         )
 DEFN_SYSCALL1( task_grow_userheap,        20, uint32_t                 )
+DEFN_SYSCALL2( setScrollField,            21, uint8_t, uint8_t         )
 
 static void* syscalls[] =
 {
@@ -57,7 +58,8 @@ static void* syscalls[] =
     &testch,
     &clear_console,
     &set_cursor,
-    &task_grow_userheap
+    &task_grow_userheap,
+    &setScrollField
 };
 
 void syscall_handler(struct regs* r)

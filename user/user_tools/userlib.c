@@ -43,7 +43,10 @@ int floppy_dir()
 
 void printLine(const char* message, unsigned int line, unsigned char attribute)
 {
-    __asm__ volatile( "int $0x7F" : : "a"(8), "b"(message), "c"(line), "d"(attribute) );
+	if(line <= 45) // User may only write in his own area (size is 45)
+	{
+	    __asm__ volatile( "int $0x7F" : : "a"(8), "b"(message), "c"(line+2), "d"(attribute) );
+	}
 }
 
 unsigned int getCurrentSeconds()
@@ -119,6 +122,9 @@ void* grow_heap( unsigned increase )
     __asm__ volatile( "int $0x7F" : "=a"(ret): "a"(20), "b"(increase) );
     return (void*)ret;
 }
+void setScrollField(uint8_t begin, uint8_t end) {
+    __asm__ volatile( "int $0x7F" : : "a"(21), "b"(begin), "c"(end)  );
+}
 
 
 
@@ -183,6 +189,76 @@ void printf (const char* args, ...)
             putch(*args); //printf("%c",*(args+index));
             break;
         }
+    }
+}
+
+void sprintf (char *buffer, const char *args, ...)
+{
+    va_list ap;
+    va_start (ap, args);
+    int pos = 0;
+    char m_buffer[32]; // Larger is not needed at the moment
+    buffer[0] = '\0';
+
+    for (; *args; args++)
+    {
+        switch (*args)
+        {
+            case '%':
+                switch (*(++args))
+                {
+                    case 'u':
+                        itoa(va_arg(ap, uint32_t), m_buffer);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'f':
+                        float2string(va_arg(ap, double), 8, m_buffer);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'i': case 'd':
+                        itoa(va_arg(ap, int32_t), m_buffer);
+                        strcat(buffer, m_buffer);  
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'X':
+                        i2hex(va_arg(ap, int32_t), m_buffer,8);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'x':
+                        i2hex(va_arg(ap, int32_t), m_buffer,4);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'y':
+                        i2hex(va_arg(ap, int32_t), m_buffer,2);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 's':
+                        strcat(buffer, va_arg (ap, char*));
+                        pos = strlen(buffer) - 1;
+                        break;
+                    case 'c':
+                        buffer[pos] = (int8_t)va_arg(ap, int32_t);
+                        break;
+                    case '%':
+                        buffer[pos] = '%';
+                        break;
+                    default:
+                        --args;
+                        --pos;
+                        break;
+                    }
+                break;
+            default:
+                buffer[pos] = (*args);
+                break;
+        }
+        pos++;
+        buffer[pos] = '\0';    
     }
 }
 
@@ -507,9 +583,9 @@ void showInfo(signed char val)
         line1[0] = temp1;
         line2[0] = temp2;
         line3[0] = temp3;
-        printLine(line1,46,0xE);
-        printLine(line2,47,0xE);
-        printLine(line3,48,0xE);
+        printLine(line1,43,0xE);
+        printLine(line2,44,0xE);
+        printLine(line3,45,0xE);
     }
 }
 

@@ -216,6 +216,7 @@ uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
 void* memcpy(void* dest, const void* src, size_t count);
 
+void sprintf (char *buffer, const char *args, ...);
 size_t strlen(const char* str);
 int32_t strcmp( const char* s1, const char* s2 );
 char* strcpy(char* dest, const char* src);

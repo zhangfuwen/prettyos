@@ -4,7 +4,9 @@
 */
 
 #include "os.h"
-int32_t INT_MAX = 2147483647;
+#include "my_stdarg.h"
+
+const int32_t INT_MAX = 2147483647;
 
 void sti() { __asm__ volatile ( "sti" ); }  // Enable interrupts
 void cli() { __asm__ volatile ( "cli" ); }  // Disable interrupts
@@ -151,6 +153,76 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 
 /**********************************************************************/
 
+void sprintf (char *buffer, const char *args, ...)
+{
+    va_list ap;
+    va_start (ap, args);
+    int pos = 0;
+    char m_buffer[32]; // Larger is not needed at the moment
+    buffer[0] = '\0';
+
+    for (; *args; args++)
+    {
+        switch (*args)
+        {
+            case '%':
+                switch (*(++args))
+                {
+                    case 'u':
+                        itoa(va_arg(ap, uint32_t), m_buffer);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'f':
+                        float2string(va_arg(ap, double), 8, m_buffer);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'i': case 'd':
+                        itoa(va_arg(ap, int32_t), m_buffer);
+                        strcat(buffer, m_buffer);  
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'X':
+                        i2hex(va_arg(ap, int32_t), m_buffer,8);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'x':
+                        i2hex(va_arg(ap, int32_t), m_buffer,4);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'y':
+                        i2hex(va_arg(ap, int32_t), m_buffer,2);
+                        strcat(buffer, m_buffer);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 's':
+                        strcat(buffer, va_arg (ap, char*));
+                        pos = strlen(buffer) - 1;
+                        break;
+                    case 'c':
+                        buffer[pos] = (int8_t)va_arg(ap, int32_t);
+                        break;
+                    case '%':
+                        buffer[pos] = '%';
+                        break;
+                    default:
+                        --args;
+                        --pos;
+                        break;
+                    }
+                break;
+            default:
+                buffer[pos] = (*args);
+                break;
+        }
+        pos++;
+        buffer[pos] = '\0';    
+    }
+}
+
 size_t strlen(const char* str)
 {
     size_t retval;
@@ -272,52 +344,52 @@ void i2hex(uint32_t val, char* dest, int32_t len)
 
 void float2string(float value, int32_t decimal, char* valuestring) // float --> string
 {
-   int32_t neg = 0;
-   char tempstr[20];
-   int32_t i = 0;
-   int32_t j = 0;
-   int32_t c;
-   int32_t val1, val2;
-   char* tempstring;
+    int32_t neg = 0;
+    char tempstr[20];
+    int32_t i = 0;
+    int32_t j = 0;
+    int32_t c;
+    int32_t val1, val2;
+    char* tempstring;
 
-   tempstring = valuestring;
-   if (value < 0)
-   {
-     {neg = 1; value = -value;}
-   }
-   for (j=0; j < decimal; ++j)
-   {
-     {value = value * 10;}
-   }
-   val1 = (value * 2);
-   val2 = (val1 / 2) + (val1 % 2);
-   while (val2 !=0)
-   {
-     if ((decimal > 0) && (i == decimal))
-     {
-       tempstr[i] = (char)(0x2E);
-       ++i;
-     }
-     else
-     {
-       c = (val2 % 10);
-       tempstr[i] = (char) (c + 0x30);
-       val2 = val2 / 10;
-       ++i;
-     }
-   }
-   if (neg)
-   {
-     *tempstring = '-';
-      ++tempstring;
-   }
-   i--;
-   for (;i > -1;i--)
-   {
-     *tempstring = tempstr[i];
-     ++tempstring;
-   }
-   *tempstring = '\0';
+    tempstring = valuestring;
+    if (value < 0)
+    {
+        neg = 1; value = -value;
+    }
+    for (j=0; j < decimal; ++j)
+    {
+        value = value * 10;
+    }
+    val1 = (value * 2);
+    val2 = (val1 / 2) + (val1 % 2);
+    while (val2 !=0)
+    {
+        if ((decimal > 0) && (i == decimal))
+        {
+            tempstr[i] = (char)(0x2E);
+            ++i;
+        }
+        else
+        {
+            c = (val2 % 10);
+            tempstr[i] = (char) (c + 0x30);
+            val2 = val2 / 10;
+            ++i;
+        }
+    }
+    if (neg)
+    {
+        *tempstring = '-';
+        ++tempstring;
+    }
+    i--;
+    for (;i > -1;i--)
+    {
+        *tempstring = tempstr[i];
+        ++tempstring;
+    }
+    *tempstring = '\0';
 }
 
 uint32_t alignUp( uint32_t val, uint32_t alignment )

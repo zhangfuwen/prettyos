@@ -44,6 +44,7 @@ extern "C" { //Functions from C-Userlib
 
 	// user functions
 	void printf (const char *args, ...);
+void sprintf (char *buffer, const char *args, ...);
 
 	char toLower(char c);
 	char toUpper(char c);
