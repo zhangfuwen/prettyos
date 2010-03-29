@@ -62,6 +62,7 @@ void tasking_install()
     reachableConsoles[10] = current_task->console; // reachableConsoles[10] is reserved for kernels console
     current_console = current_task->console; // Kernels console is currently active (does not mean that it is visible)
     console_init(reachableConsoles[10], "");
+    current_console->SCROLL_END = 39;
     refreshUserScreen();
     ///
     #ifdef _DIAGNOSIS_

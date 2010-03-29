@@ -12,6 +12,7 @@ console_t* reachableConsoles[11]; // Mainconsole + up to 10 Subconsoles
 uint8_t displayedConsole = 10;    // Currently visible console (10 per default, because console 10 is the kernels console)
 
 extern uint16_t* vidmem;
+bool scroll_flag = true;
 
 void console_init(volatile console_t* console, const char* name)
 {
@@ -133,6 +134,7 @@ void putch(char c)
             break;
         case '\n': // newline: like 'cr': cursor to the margin and increment csr_y
             current_console->csr_x = 0; ++current_console->csr_y;
+            scroll();
             break;
         default:
             if (uc != 0)
@@ -151,9 +153,9 @@ void putch(char c)
     {
         current_console->csr_x = 0;
         ++current_console->csr_y;
+        scroll();
     }
 
-    scroll();
     update_cursor();
 }
 
@@ -164,14 +166,12 @@ void puts(const char* text)
 
 void scroll()
 {
-    uint32_t blank = 0x20 | (current_console->attrib << 8);
-
     uint8_t scroll_end = min(USER_LINES, current_console->SCROLL_END);
-    if (current_console->csr_y >= scroll_end)
+    if (scroll_flag && current_console->csr_y >= scroll_end)
     {
         uint8_t temp = current_console->csr_y - scroll_end + 1;
         memcpy (current_console->vidmem, current_console->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
-        memsetw (current_console->vidmem + (scroll_end - temp) * COLUMNS, blank, COLUMNS);
+        memsetw (current_console->vidmem + (scroll_end - temp) * COLUMNS, current_console->attrib << 8, COLUMNS);
         current_console->csr_y = scroll_end - 1;
         refreshUserScreen();
     }
@@ -235,6 +235,77 @@ void printf (const char* args, ...)
                 break;
         }
     }
+}
+
+void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
+{
+    uint8_t old_attrib = current_console->attrib;
+    uint8_t c_x = current_console->csr_x;
+    uint8_t c_y = current_console->csr_y;
+    scroll_flag = false;
+
+    current_console->attrib = attribute;
+    current_console->csr_x = 0; current_console->csr_y = line;
+
+    va_list ap;
+    va_start (ap, attribute);
+    char buffer[32]; // Larger is not needed at the moment
+
+    for (; *message; message++)
+    {
+        switch (*message)
+        {
+            case '%':
+                switch (*(++message))
+                {
+                    case 'u':
+                        itoa(va_arg(ap, uint32_t), buffer);
+                        puts(buffer);
+                        break;
+                    case 'f':
+                        float2string(va_arg(ap, double), 10, buffer);
+                        puts(buffer);
+                        break;
+                    case 'i': case 'd':
+                        itoa(va_arg(ap, int32_t), buffer);
+                        puts(buffer);
+                        break;
+                    case 'X':
+                        i2hex(va_arg(ap, int32_t), buffer, 8);
+                        puts(buffer);
+                        break;
+                    case 'x':
+                        i2hex(va_arg(ap, int32_t), buffer, 4);
+                        puts(buffer);
+                        break;
+                    case 'y':
+                        i2hex(va_arg(ap, int32_t), buffer, 2);
+                        puts(buffer);
+                        break;
+                    case 's':
+                        puts(va_arg (ap, char*));
+                        break;
+                    case 'c':
+                        putch((int8_t)va_arg(ap, int32_t));
+                        break;
+                    case '%':
+                        putch('%');
+                        break;
+                    default:
+                        --message;
+                        break;
+                }
+                break;
+            default:
+                putch(*message);
+                break;
+        }
+    }
+    
+    scroll_flag = true;
+    current_console->attrib = old_attrib;
+    current_console->csr_x = c_x;
+    current_console->csr_y = c_y;
 }
 
 void update_cursor()

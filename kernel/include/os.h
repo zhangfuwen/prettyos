@@ -126,8 +126,6 @@ extern const char* version;
 // video.c
 void refreshUserScreen();
 void clear_screen();
-void kputch(char c);
-void kputs(const char* text);
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 uint8_t AsciiToCP437(uint8_t ascii);
 
@@ -139,6 +137,7 @@ void settextcolor(uint8_t forecolor, uint8_t backcolor);
 void putch(char c);
 void puts(const char* text);
 void printf (const char *args, ...);
+void cprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void scroll();
 void set_cursor(uint8_t x, uint8_t y);
 void update_cursor();

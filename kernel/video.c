@@ -18,6 +18,8 @@ uint8_t csr_x  = 0;
 uint8_t csr_y  = 0;
 uint8_t attrib = 0x0F;
 
+void kputs(const char* text);
+
 void clear_screen()
 {
     memsetw (vidmem, 0x20 | (0x00 << 8), COLUMNS * LINES);
@@ -123,7 +125,7 @@ void kputs(const char* text)
 
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
-    attrib = (attribute >> 4 << 4) | (attribute & 0x0F & 0x0F);
+    attrib = attribute;
     csr_x = 0; csr_y = line;
 
     va_list ap;
@@ -167,6 +169,11 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                     case 'c':
                         kputch((int8_t)va_arg(ap, int32_t));
                         break;
+                    case 'v':
+                        attrib = (attribute >> 4) | (attribute << 4);
+                        kputch(*(++message));
+                        attrib = attribute;
+                        break;
                     case '%':
                         kputch('%');
                         break;
@@ -180,7 +187,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 break;
         }
     }
-};
+}
 
 
 /*

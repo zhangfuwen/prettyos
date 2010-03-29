@@ -71,7 +71,7 @@ DECL_SYSCALL0( nop                                        )
 DECL_SYSCALL0( switch_context                             )
 DECL_SYSCALL0( checkKQ_and_return_char                    )
 DECL_SYSCALL0( flpydsk_read_directory                     )
-DECL_SYSCALL3( kprintf, char*, uint32_t, uint8_t          )
+DECL_SYSCALL3( cprintf, char*, uint32_t, uint8_t          )
 DECL_SYSCALL0( getCurrentSeconds                          )
 DECL_SYSCALL0( getCurrentMilliseconds                     )
 DECL_SYSCALL1( flpydsk_format, char*                      )
@@ -84,7 +84,6 @@ DECL_SYSCALL0( testch                                     )
 DECL_SYSCALL1( clear_console, uint8_t                     )
 DECL_SYSCALL2( set_cursor, uint8_t, uint8_t               )
 DECL_SYSCALL1( task_grow_userheap, uint32_t               )
-DECL_SYSCALL2( setScrollField, uint8_t, uint8_t           )
 /***********************************************************/
 
 #endif

@@ -479,7 +479,7 @@ void showPORTSC()
     {
         if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
         {
-            char str[80], PortNumber[5], PortStatus[40];
+            char PortNumber[5], PortStatus[40];
             itoa(j+1,PortNumber);
 
             if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
@@ -493,16 +493,11 @@ void showPORTSC()
             }
             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
 
-            str[0]='\0';
-            strcpy(str,"Port ");
-            strcat(str,PortNumber);
-            strcat(str," Status: ");
-            strcat(str,PortStatus);
             uint8_t color = 14;
-            kprintf("                                                                              ",46,color);
-            kprintf(str, 46, color); // output to info screen area
-            kprintf("                                                                              ",47,color);
-            kprintf("                                                                              ",48,color);
+            cprintf("                                                                              ",46,color);
+            cprintf("Port %i Status: %i", 46, color, PortNumber, PortStatus); // output to info screen area
+            cprintf("                                                                              ",47,color);
+            cprintf("                                                                              ",48,color);
 
             // beep(1000,100);
         }

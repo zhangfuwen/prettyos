@@ -45,7 +45,7 @@ void printLine(const char* message, unsigned int line, unsigned char attribute)
 {
     if (line <= 45) // User may only write in his own area (size is 45)
     {
-        __asm__ volatile("int $0x7F" : : "a"(8), "b"(message), "c"(line+2), "d"(attribute));
+        __asm__ volatile("int $0x7F" : : "a"(8), "b"(message), "c"(line), "d"(attribute));
     }
 }
 
@@ -121,9 +121,6 @@ void* grow_heap(unsigned increase)
     int ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(20), "b"(increase));
     return (void*)ret;
-}
-void setScrollField(uint8_t begin, uint8_t end) {
-    __asm__ volatile("int $0x7F" : : "a"(21), "b"(begin), "c"(end));
 }
 
 
@@ -564,9 +561,9 @@ void i2hex(uint32_t val, char* dest, int32_t len)
 
 void showInfo(signed char val)
 {
-    static char* line1 = "   _______                _______      <>_<>                                    "    ;
-    static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                "   ;
-    static char* line3 = " `-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                               "  ;
+    static char* line1 = "   _______                _______      <>_<>                                    ";
+    static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                ";
+    static char* line3 = " `-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                               ";
 
     if (val==1)
     {

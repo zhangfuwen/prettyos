@@ -42,7 +42,6 @@ int getUserTaskNumber();
 void clearScreen(unsigned char backgroundColor);
 void gotoxy(unsigned char x, unsigned char y);
 void* grow_heap(unsigned increase);
-void setScrollField(uint8_t begin, uint8_t end);
 
 
 // user functions
