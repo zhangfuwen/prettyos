@@ -59,9 +59,9 @@ void tasking_install()
     current_task->page_directory = kernel_pd;
     current_task->next = 0;
     current_task->console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
+    console_init(current_task->console, "");
     reachableConsoles[10] = current_task->console; // reachableConsoles[10] is reserved for kernels console
     current_console = current_task->console; // Kernels console is currently active (does not mean that it is visible)
-    console_init(reachableConsoles[10], "");
     current_console->SCROLL_END = 39;
     refreshUserScreen();
     ///
@@ -200,6 +200,7 @@ uint32_t task_switch (uint32_t esp)
     {
         current_task = ready_queue;    // start at the beginning of the queue
     }
+    current_console = current_task->console;
 
     // new_task
     paging_switch (current_task->page_directory);
@@ -215,7 +216,6 @@ uint32_t task_switch (uint32_t esp)
     settextcolor(15,0);
     #endif
 
-    current_console = current_task->console;
     return current_task->esp;  // return new task's esp
 }
 
@@ -243,6 +243,7 @@ void exit()
                 changeDisplayedConsole(10);
             }
             reachableConsoles[i] = 0;
+			break;
         }
     }
     console_exit(current_task->console);

@@ -71,12 +71,13 @@ uint16_t ConvertToInt(char c) {
     return((uint16_t)(c) - '1' + 1);
 }
 
+char x[10];
 void Zug(uint16_t Player) {
-    char x = 0;
-    for (; ; x = *gets(&x)) {
-        if (!isdigit(x) || x == '9') {
+	memset(x, 0, 10);
+    for (; ; gets(x)) {
+        if (!isdigit(*x) || *x == '9') {
         }
-        else if (tictactoe[ConvertToInt(x)] != Leer) {
+        else if (tictactoe[ConvertToInt(*x)] != Leer) {
             settextcolor(4,0);
             gotoxy(0, 26);
             puts("You cannot type in an number which has been used already.\n\n");
@@ -86,12 +87,13 @@ void Zug(uint16_t Player) {
         else {
             break;
         }
+		memset(x, 0, 10);
     }
     gotoxy(0, 26);
     puts("                                                         ");
     gotoxy(0, 24);
-    tictactoe[ConvertToInt(x)] = Player;
-    SetField(ConvertToInt(x)%3, ConvertToInt(x)/3, Player);
+    tictactoe[ConvertToInt(*x)] = Player;
+    SetField(ConvertToInt(*x)%3, ConvertToInt(*x)/3, Player);
     gewinnen();
 }
 
@@ -100,7 +102,7 @@ int main() {
     clearScreen(0);
     settextcolor(11,0);
     puts("================================================================================\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.51                           \n");
+    puts("                            Mr.X TicTacToe 3x3  v0.52                           \n");
     puts("--------------------------------------------------------------------------------\n\n");
     gotoxy(0, 6);
     settextcolor(15,0);
