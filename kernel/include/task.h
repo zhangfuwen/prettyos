@@ -8,7 +8,6 @@
 
 #define KERNEL_STACK_SIZE 2048        // Use a 2kb kernel stack.
 
-
 struct task
 {
     console_t* console;               // Console used by this task
@@ -25,9 +24,7 @@ struct task
 typedef struct task task_t;
 
 
-
 extern int32_t userTaskCounter;
-extern volatile task_t* displayed_task;
 
 extern console_t* current_console;
 

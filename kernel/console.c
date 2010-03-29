@@ -14,7 +14,7 @@ uint8_t displayedConsole = 10;    // Currently visible console (10 per default, 
 extern uint16_t* vidmem;
 bool scroll_flag = true;
 
-void console_init(volatile console_t* console, const char* name)
+void console_init(console_t* console, const char* name)
 {
     console->name         = malloc(strlen(name), PAGESIZE);
     console->vidmem       = malloc(COLUMNS*USER_LINES*2, PAGESIZE);
@@ -25,8 +25,14 @@ void console_init(volatile console_t* console, const char* name)
     console->SCROLL_END   = USER_LINES;
     strcpy(console->name, name);
     memsetw (console->vidmem, 0x20 | (console->attrib << 8), COLUMNS * USER_LINES * 2);
+    // Setup the keyqueue
+    memset(console->KQ.buffer, 0, KQSIZE);
+    console->KQ.pHead = console->KQ.buffer;
+    console->KQ.pTail = console->KQ.buffer;
+    console->KQ.count_read  = 0;
+    console->KQ.count_write = 0;
 }
-void console_exit(volatile console_t* console)
+void console_exit(console_t* console)
 {
     free(console->vidmem);
     free(console->name);

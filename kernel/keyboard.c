@@ -13,22 +13,13 @@
 #include "keyboard_US.h"
 #endif
 
-
- // Key Queue
-uint8_t  KEYQUEUE[KQSIZE];   // circular queue buffer
-uint8_t* pHeadKQ;            // pointer to the head of valid data
-uint8_t* pTailKQ;            // pointer to the tail of valid data
-uint32_t KQ_count_read;      // number of data read from queue buffer
-uint32_t KQ_count_write;     // number of data put into queue buffer
-
-
-bool ShiftKeyDown  = false;  // variable for Shift Key Down
-bool CtrlKeyDown   = false;  // variable for Ctrl Key Down
-bool AltKeyDown  = false;    // variable for Alt Key Down
-bool AltGrKeyDown  = false;  // variable for AltGr Key Down
-bool KeyPressed    = false;  // variable for Key Pressed
-uint8_t curScan    = 0;      // current scan code from Keyboard
-uint8_t prevScan   = 0;      // previous scan code
+bool ShiftKeyDown = false;  // variable for Shift Key Down
+bool CtrlKeyDown  = false;  // variable for Ctrl Key Down
+bool AltKeyDown   = false;    // variable for Alt Key Down
+bool AltGrKeyDown = false;  // variable for AltGr Key Down
+bool KeyPressed   = false;  // variable for Key Pressed
+uint8_t curScan   = 0;      // current scan code from Keyboard
+uint8_t prevScan  = 0;      // previous scan code
 
 
 /* wait until buffer is empty */
@@ -40,7 +31,7 @@ void keyboard_init()
 
 bool testch()
 {
-    return pHeadKQ != pTailKQ;
+    return current_console->KQ.pHead != current_console->KQ.pTail;
 }
 
 uint8_t FetchAndAnalyzeScancode()
@@ -65,7 +56,8 @@ uint8_t FetchAndAnalyzeScancode()
         {
             AltGrKeyDown = false;
         }
-        else if (curScan == 0x38) {
+        else if (curScan == 0x38)
+        {
             AltKeyDown = false;
         }
         if (curScan == 0x1D)
@@ -160,16 +152,16 @@ void keyboard_handler(struct regs* r)
    uint8_t KEY = ScanToASCII();
    if (KEY)
    {
-       *(pTailKQ) = KEY;
-       ++(KQ_count_write);
+       *(reachableConsoles[displayedConsole]->KQ.pTail) = KEY;
+       ++(reachableConsoles[displayedConsole]->KQ.count_write);
 
-       if (pTailKQ > KEYQUEUE)
+       if (reachableConsoles[displayedConsole]->KQ.pTail > reachableConsoles[displayedConsole]->KQ.buffer)
        {
-           --pTailKQ;
+           --reachableConsoles[displayedConsole]->KQ.pTail;
        }
-       if (pTailKQ == KEYQUEUE)
+       if (reachableConsoles[displayedConsole]->KQ.pTail == reachableConsoles[displayedConsole]->KQ.buffer)
        {
-           pTailKQ = (KEYQUEUE)+KQSIZE-1;
+           reachableConsoles[displayedConsole]->KQ.pTail = (reachableConsoles[displayedConsole]->KQ.buffer)+KQSIZE-1;
        }
    }
 }
@@ -179,18 +171,18 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
    /// TODO: should only return character, if keystroke was entered
 
    cli();
-   if (KQ_count_write > KQ_count_read)
+   if (current_console->KQ.count_write > current_console->KQ.count_read)
    {
-       uint8_t KEY = *pHeadKQ;
-       ++KQ_count_read;
+       uint8_t KEY = *current_console->KQ.pHead;
+       ++current_console->KQ.count_read;
 
-       if (pHeadKQ > KEYQUEUE)
+       if (current_console->KQ.pHead > current_console->KQ.buffer)
        {
-           --pHeadKQ;
+           --current_console->KQ.pHead;
        }
-       if (pHeadKQ == KEYQUEUE)
+       if (current_console->KQ.pHead == current_console->KQ.buffer)
        {
-           pHeadKQ = KEYQUEUE+KQSIZE-1;
+           current_console->KQ.pHead = current_console->KQ.buffer+KQSIZE-1;
        }
        return KEY;
    }
@@ -200,13 +192,6 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
 
 void keyboard_install()
 {
-    // Setup the queue
-    memset(KEYQUEUE, 0, KQSIZE);
-    pHeadKQ = KEYQUEUE;
-    pTailKQ = KEYQUEUE;
-    KQ_count_read  = 0;
-    KQ_count_write = 0;
-
     // Installs 'keyboard_handler' to IRQ1
     irq_install_handler(32+1, keyboard_handler);
     keyboard_init();

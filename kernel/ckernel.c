@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.293";
+const char* version = "0.0.0.294";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -30,9 +30,6 @@ const char* version = "0.0.0.293";
 // RAM disk and user program
 extern uint32_t file_data_start;
 extern uint32_t file_data_end;
-
-// buffer for video screen
-uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
@@ -256,13 +253,13 @@ int main()
 
             if (RdtscKCountsHi==0)
             {
-              uint32_t CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
-              pODA->CPU_Frequency_kHz = CPU_Frequency_kHz;
+                uint32_t CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
+                pODA->CPU_Frequency_kHz = CPU_Frequency_kHz;
             }
             else
             {
-              // not to be expected
-              // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo);
+                // not to be expected
+                // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo);
             }
 
             itoa(CurrentSeconds, timeBuffer);
@@ -272,24 +269,27 @@ int main()
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
             if ((CurrentSeconds%40)==0)
             {
-              int32_t NewLine = 0;
-              int32_t j;
-              for (int32_t i=0; i<4000;i++)
-              {
-                j=i+2*NewLine;
-                videoscreen[j] = *(uint8_t*)(0xB8000 + 2*i); // only signs, no attributes
-                if ((i%80) == 79)
-                {
-                    // CR LF (0xD 0xA)
-                    videoscreen[j+1]= 0xD;
-                    videoscreen[j+2]= 0xA;
-                    NewLine++;
-                }
-              }
 
-              char timeStr[10];
-              sprintf(timeStr, "TIME%s", timeBuffer);
-              flpydsk_write(timeStr,"TXT", (void*)videoscreen, 4100);
+                // buffer for video screen
+                uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
+                int32_t NewLine = 0;
+                int32_t j;
+                for (int32_t i=0; i<4000;i++)
+                {
+                    j=i+2*NewLine;
+                    videoscreen[j] = *(uint8_t*)(0xB8000 + 2*i); // only signs, no attributes
+                    if ((i%80) == 79)
+                    {
+                        // CR LF (0xD 0xA)
+                        videoscreen[j+1]= 0xD;
+                        videoscreen[j+2]= 0xA;
+                        NewLine++;
+                    }
+                }
+
+                char timeStr[10];
+                sprintf(timeStr, "TIME%s", timeBuffer);
+                flpydsk_write(timeStr,"TXT", (void*)videoscreen, 4100);
             }
             /// TEST
 
