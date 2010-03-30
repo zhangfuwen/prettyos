@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.295";
+const char* version = "0.0.0.296";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -267,7 +267,7 @@ int main()
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
-            if ((CurrentSeconds%40)==0)
+            if ((CurrentSeconds%400)==0)
             {
 
                 // buffer for video screen

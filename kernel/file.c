@@ -9,12 +9,22 @@
 #include "task.h"
 #include "kheap.h"
 
-int32_t initCache() /// floppy
+int32_t cacheFirstTracks() /// floppy
 {
     int32_t retVal0 = flpydsk_read_ia(0,track0,TRACK);
     int32_t retVal1 = flpydsk_read_ia(1,track1,TRACK);
 
     if (retVal0 || retVal1)
+        return -1;
+    else
+        return 0;
+}
+
+int32_t cacheTrack(uint32_t trackNum, void* addr) /// floppy
+{
+    int32_t retVal = flpydsk_read_ia(trackNum,addr,TRACK); // read
+
+    if (retVal)
         return -1;
     else
         return 0;
@@ -27,7 +37,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     uint32_t firstCluster = 0;
 
     flpydsk_control_motor(true);
-    retVal = initCache();
+    retVal = cacheFirstTracks();
     if (retVal)
     {
         settextcolor(12,0);
@@ -51,17 +61,37 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
         return -1;
     }
 
+    /*
+    // cache
+    cacheTrackNumber[0] = (firstCluster+ADD)/18;
+    cacheTrack(cacheTrackNumber[0],cache[0]); // read track
+
+    cacheTrackNumber[1] = cacheTrackNumber[0] + 1;
+    cacheTrack(cacheTrackNumber[1],cache[1]); // read track
+
+    if (f.size/0x2400 > 1)
+    {
+        cacheTrackNumber[2] = cacheTrackNumber[0] + 2;
+        cacheTrack(cacheTrackNumber[2],cache[2]); // read track
+    }
+
+    if (f.size/0x2400 > 2)
+    {
+        cacheTrackNumber[3] = cacheTrackNumber[0] + 3;
+        cacheTrack(cacheTrackNumber[3],cache[3]); // read track
+    }
+
+    if (f.size/0x2400 > 3)
+    {
+        cacheTrackNumber[4] = cacheTrackNumber[0] + 4;
+        cacheTrack(cacheTrackNumber[4],cache[4]); // read track
+    }
+    */
+
     /// ********************************** File memory prepared **************************************///
 
     uint8_t* file = malloc(f.size,PAGESIZE); /// TODO: free allocated memory, if program is finished
     printf("FileSize: %d Byte, 1st Cluster: %d, Memory: %X\n",f.size, f.firstCluster, file);
-    sleepSeconds(3); // show screen output
-
-    ///************** FAT ********************///
-    // printf("\nFAT1 parsed 12-bit-wise: ab cd ef --> dab efc\n");
-
-    /// TODO: read only entries which are necessary for file_ia
-    ///       combine reading FAT entry and data sector
 
     // whole FAT is read from index 0 to FATMAXINDEX (= 2849 = 0xB21)
     for (uint32_t i=0;i<FATMAXINDEX;i++)
@@ -70,10 +100,10 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     }
 
     // load file to memory
-    retVal = file_ia(fat_entry,firstCluster,file); // read sectors of file
-    ///************** FAT ********************///
+    // retVal = file_ia_cache(fat_entry,firstCluster,file); /// read sectors of file from cache
+    retVal = file_ia(fat_entry,firstCluster,file); /// read sectors of file
 
-    #ifdef _DIAGNOSIS_
+    ///#ifdef _DIAGNOSIS_
         printf("\nFile content (start of first 5 clusters): ");
         printf("\n1st sector:\n"); for (uint16_t i=   0;i<  20;i++) {printf("%y ",file[i]);}
         printf("\n2nd sector:\n"); for (uint16_t i= 512;i< 532;i++) {printf("%y ",file[i]);}
@@ -81,11 +111,11 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
         printf("\n4th sector:\n"); for (uint16_t i=1536;i<1556;i++) {printf("%y ",file[i]);}
         printf("\n5th sector:\n"); for (uint16_t i=2048;i<2068;i++) {printf("%y ",file[i]);}
         printf("\n\n");
-    #endif
+    ///#endif
 
     if (!retVal)
     {
-        char Buffer[10];
+        char Buffer[13];
         sprintf(Buffer, "%s.%s", name, ext);
         /// START TASK AND INCREASE TASKCOUNTER
         if (elf_exec(file, f.size, Buffer)) // execute loaded file
@@ -109,7 +139,6 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
         settextcolor(15,0);
     }
     flpydsk_control_motor(false);
-    sleepSeconds(3); // show screen output
     return 0;
 }
 
@@ -142,7 +171,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     uint8_t  freeRootDirEntry = 0xFF;
 
     flpydsk_control_motor(true);
-    retVal = initCache();
+    retVal = cacheFirstTracks();
     if (retVal)
     {
         settextcolor(12,0);
@@ -218,30 +247,6 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
         }
     }
 
-    // FAT chain
-    // printf("\nFAT chain:\n");
-
-/*
-    // seems to be not necessary
-    // write firstCluster from memory to floppy disk
-    uint32_t timeout = 2; // limit
-    while (flpydsk_write_ia(firstCluster+ADD, memory, SECTOR) != 0)
-    {
-        retVal = -1;
-        timeout--;
-        printf("error write_sector. attempts left: %d\n",timeout);
-        if (timeout<=0)
-        {
-            printf("timeout\n");
-            break;
-        }
-    }
-    if (retVal==0)
-    {
-        printf("success write_sector %d (firstCluster)\t", firstCluster+ADD);
-    }
-*/
-
     for (uint32_t i=0;i<neededSectors;i++)
     {
         if (i==(neededSectors-1))
@@ -271,8 +276,6 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
            }
        }
     }
-    //printf("\n\n");
-
 
     // write FAT1 to FAT2
     for (int32_t i=0;i<0x1000;i++)
@@ -287,8 +290,6 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     // write track0, track1 from memory to floppy disk
     flpydsk_write_ia(0, track0, TRACK);
     flpydsk_write_ia(1, track1, TRACK);
-
-
 
     // free memory, if necessary
 
@@ -364,6 +365,58 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// lo
         }
 
         memcpy((void*)(fileData+pos*512), (void*)a, 512);
+
+        // search next cluster of the fileData
+        i = fatEntry[i];
+    }
+    printf("\n");
+    return 0;
+}
+
+/// does not work correct!
+int32_t file_ia_cache(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// load file
+{
+    uint32_t sectornumber;
+    uint32_t i, n, pos;  // i for FAT-index, n for index of cacheTrackNumber, pos for data position
+
+    // copy first cluster
+    sectornumber  = firstCluster+ADD;
+    uint8_t sectorInTrack = sectornumber%18;
+    printf("\n\n1st sector: %d\n",sectornumber);
+
+    // flpydsk_read_ia(sectornumber,a,SECTOR);
+    for(n=0;n<5;n++)
+    {
+        if (sectornumber/18 == cacheTrackNumber[n])
+            break;
+    }
+    memcpy((void*)fileData, (void*)(uint32_t)(cache[n][sectorInTrack*0x200]),512);
+
+    /// find second cluster and chain in fat /// FAT12 specific
+    pos=0;
+    i = firstCluster;
+    while (fatEntry[i]!=0xFFF)
+    {
+        printf("\ni: %d FAT-entry: %x\t",i,fatEntry[i]);
+        if ((fatEntry[i]<3) || (fatEntry[i]>MAX_BLOCK))
+        {
+            printf("FAT-error.\n");
+            return -1;
+        }
+
+        // copy data from chain
+        pos++;
+        sectornumber  = fatEntry[i]+ADD;
+        sectorInTrack = sectornumber%18;
+        printf("sector: %d\t",sectornumber);
+
+        //flpydsk_read_ia(sectornumber,a,SECTOR);
+        for(n=0;n<5;n++)
+        {
+            if (sectornumber/18 == cacheTrackNumber[n])
+                break;
+        }
+        memcpy((void*)(fileData+pos*512), (void*)(uint32_t)(cache[n][sectorInTrack*0x200]),512);
 
         // search next cluster of the fileData
         i = fatEntry[i];
