@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.299";
+const char* version = "0.0.0.300";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -60,45 +60,8 @@ void setup_x87_fpu()
     set_fpu_control_word(0x37F);
 }
 
-static void init()
-{
-    clear_screen();
-    settextcolor(14,0);
-    gdt_install();
-    idt_install();
-    timer_install();
-    keyboard_install();
-    syscall_install();
-    setup_x87_fpu();
-    settextcolor(15,0);
-}
-
-int main()
-{
-    init();
-    pODA->Memory_Size = paging_install();
-    heap_install();
-    tasking_install();
-
-    if (pODA->Memory_Size > 1073741824)
-    {
-        printf("Memory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
-    }
-    else if (pODA->Memory_Size > 1048576)
-    {
-        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
-    }
-    else
-    {
-        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
-    }
-
-    EHCIflag = false;
-    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
-    sti();
-	
-	/// Show Startup Screen
-	printf("\n\n\n\n");
+void bootscreen() {
+	printf("\n\n\n\n\n\n\n\n");
 	settextcolor(14,0);
 	printf("    #######                     ###    ##                  ######      #####\n");
 	printf("    #########                   ###    ##                #########    #######\n");
@@ -133,7 +96,48 @@ int main()
 	beep(659,300);
 	beep(784,300);
 	beep(1047,900);
-	///
+}
+
+static void init()
+{
+    clear_screen();
+    settextcolor(14,0);
+    gdt_install();
+    idt_install();
+    timer_install();
+    keyboard_install();
+    syscall_install();
+    setup_x87_fpu();
+    settextcolor(15,0);
+}
+
+int main()
+{
+    init();
+    pODA->Memory_Size = paging_install();
+    heap_install();
+    tasking_install();
+
+	// Show Startup Screen
+	bootscreen();
+
+
+    if (pODA->Memory_Size > 1073741824)
+    {
+        printf("Memory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
+    }
+    else if (pODA->Memory_Size > 1048576)
+    {
+        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
+    }
+    else
+    {
+        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
+    }
+
+    EHCIflag = false;
+    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
+    sti();
 	
     // direct 1st floppy disk
     if ((cmos_read(0x10)>>4) == 4)   // 1st floppy 1,44 MB: 0100....b
@@ -241,7 +245,7 @@ int main()
         }
     }
     free(buf);
-    puts("\n\n");
+    putch('\n');
 
     if (! shell_found)
     {
