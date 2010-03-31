@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.298";
+const char* version = "0.0.0.299";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -120,7 +120,7 @@ int main()
 	printf("\n");
 	settextcolor(10,0);
 	printf("  #    #    #      #\n");
-	printf("  #   # #   #      #\n");
+	printf("  #    #    #      #\n");
 	printf("   #  # #  #  ###  #  ###   ###  # ####   ###\n");
 	printf("   #  # #  # #   # # #   # #   # ## #  # #   #\n");
 	printf("   # #   # # ##### # #     #   # #  #  # #####\n");
@@ -132,7 +132,7 @@ int main()
 	beep(523,300);
 	beep(659,300);
 	beep(784,300);
-	beep(1047,300);
+	beep(1047,900);
 	///
 	
     // direct 1st floppy disk
@@ -250,7 +250,6 @@ int main()
         settextcolor(15,0);
     }
 
-    // msgbeep();
     pODA->ts_flag = 1;
 
     const char* progress = "|/-\\";
@@ -304,8 +303,9 @@ int main()
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
+			/*
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
-            if ((CurrentSeconds%400)==0 && 1==0)
+            if ((CurrentSeconds%400)==0)
             {
 
                 // buffer for video screen
@@ -330,6 +330,7 @@ int main()
                 flpydsk_write(timeStr,"TXT", (void*)videoscreen, 4100);
             }
             /// TEST
+			*/
 
             if ((initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber)
             {
