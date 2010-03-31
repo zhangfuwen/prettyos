@@ -68,10 +68,10 @@ uint32_t irq_handler(uint32_t esp)
             // Output an error message.
                           printf("\nPage Fault (");
             if (present)  printf("page not present");
-            if (rw)       printf(" read-only - write operation");
-            if (us)       printf(" user-mode");
-            if (reserved) printf(" overwritten CPU-reserved bits of page entry");
-            if (id)       printf(" caused by an instruction fetch");
+            if (rw)       printf(" - read-only - write operation");
+            if (us)       printf(" - user-mode");
+            if (reserved) printf(" - overwritten CPU-reserved bits of page entry");
+            if (id)       printf(" - caused by an instruction fetch");
                           printf(") at %X - EIP: %X\n", faulting_address, r->eip);
         }
 
@@ -80,8 +80,10 @@ uint32_t irq_handler(uint32_t esp)
         printf("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
         printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
 
-        printf("\n");
-        printf("%s >>> Exception. System Halted! <<<", exception_messages[r->int_no]);
+        printf("\n\n");
+		settextcolor(11,0);
+        printf("%s!\n", exception_messages[r->int_no]);
+		printf("| <Exception - System Halted!> |");
         for (;;);
     }
 
