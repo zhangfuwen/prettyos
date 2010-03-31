@@ -157,7 +157,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     {
         // general information: Intel 3A Chapter 5.12
         *(--kernel_stack) = new_task->ss = 0x23;    // ss
-        *(--kernel_stack) = new_task->kernel_stack; // esp
+        *(--kernel_stack) = USER_STACK; // esp
         code_segment = 0x1B; // 0x18|0x3=0x1B
     }
 
@@ -189,9 +189,6 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     tss.esp   = current_task->esp;
     tss.esp0  = new_task->kernel_stack;
     tss.ss    = data_segment;
-
-    printf("esp: %X ",fetchESP());
-    printf("esp0: %X\n",tss.esp0);
 
     //setup task_t
     new_task->ebp = 0xd00fc0de; // test value
