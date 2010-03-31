@@ -243,7 +243,7 @@ void exit()
                 changeDisplayedConsole(10);
             }
             reachableConsoles[i] = 0;
-			break;
+            break;
         }
     }
     console_exit(current_task->console);

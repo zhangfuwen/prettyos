@@ -80,13 +80,12 @@ unsigned int calculateWeekday(unsigned int year, unsigned int month, unsigned in
 
 char* getCurrentDateAndTime(char* pStr)
 {
-    pStr[0]='\0'; // clear string
-
     // sourcecode of "Cuervo", "ehenkes" and "Mr X", PrettyOS team
     tm_t* pct = cmosTime(&currentTime);
-    char buf[40];
-
     pct->weekday = calculateWeekday(2000+pct->year, pct->month, pct->dayofmonth);
+
+    pStr[0]='\0'; // clear string
+    char buf[32];
     switch (pct->weekday)
     {
         case 1: strcpy(pStr, "Sunday, ");    break;

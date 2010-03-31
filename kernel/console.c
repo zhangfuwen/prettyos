@@ -46,7 +46,6 @@ bool changeDisplayedConsole(uint8_t ID)
     }
     displayedConsole = ID;
     refreshUserScreen();
-    update_cursor();
     return(true);
 }
 void setScrollField(uint8_t begin, uint8_t end) {
@@ -78,8 +77,9 @@ void move_cursor_right()
     ++current_console->csr_x;
     if (current_console->csr_x>=COLUMNS)
     {
-      ++current_console->csr_y;
-      current_console->csr_x=0;
+        ++current_console->csr_y;
+        current_console->csr_x=0;
+        scroll();
     }
 }
 
@@ -134,12 +134,18 @@ void putch(char c)
             break;
         case 0x09: // tab: increment csr_x (divisible by 8)
             current_console->csr_x = (current_console->csr_x + 8) & ~(8 - 1);
+			if (current_console->csr_x>=COLUMNS)
+			{
+				++current_console->csr_y;
+				current_console->csr_x=0;
+				scroll();
+			}
             break;
         case '\r': // cr: cursor back to the margin
-            current_console->csr_x = 0;
+            move_cursor_home();
             break;
         case '\n': // newline: like 'cr': cursor to the margin and increment csr_y
-            current_console->csr_x = 0; ++current_console->csr_y;
+            ++current_console->csr_y; scroll(); move_cursor_home();
             scroll();
             break;
         default:
@@ -150,19 +156,10 @@ void putch(char c)
                     *(vidmem + (current_console->csr_y+2) * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color
                 }
                 *(current_console->vidmem + current_console->csr_y * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color
-                ++current_console->csr_x;
+			    move_cursor_right();
             }
             break;
     }
-
-    if (current_console->csr_x >= COLUMNS) // cursor reaches edge of the screen's width, a new line is inserted
-    {
-        current_console->csr_x = 0;
-        ++current_console->csr_y;
-        scroll();
-    }
-
-    update_cursor();
 }
 
 void puts(const char* text)

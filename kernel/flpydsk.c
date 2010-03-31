@@ -16,110 +16,110 @@
   of the OSDEV tutorial series at www.brokenthorn.com
 *****************************************************************************/
 
-const int32_t FLPY_SECTORS_PER_TRACK           =   18;   // sectors per track
-static uint8_t    _CurrentDrive                  =    0;   // current working drive, default: 0
-static volatile uint8_t ReceivedFloppyDiskIRQ  =  false; // set when IRQ fires
-const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME      =  350;   // waiting time in milliseconds (motor spin up)
-const int32_t WAITING_TIME                     =   10;   // waiting time in milliseconds (for dynamic processes)
+const int32_t FLPY_SECTORS_PER_TRACK           =    18; // sectors per track
+static uint8_t    _CurrentDrive                =     0; // current working drive, default: 0
+static volatile uint8_t ReceivedFloppyDiskIRQ  = false; // set when IRQ fires
+const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME      =   350; // waiting time in milliseconds (motor spin up)
+const int32_t WAITING_TIME                     =    10; // waiting time in milliseconds (for dynamic processes)
 
 // IO ports
 enum FLPYDSK_IO
 {
-    FLPYDSK_DOR            =   0x3f2,
-    FLPYDSK_MSR            =   0x3f4,
-    FLPYDSK_FIFO        =   0x3f5,
-    FLPYDSK_CTRL        =   0x3f7
+    FLPYDSK_DOR          =  0x3f2,
+    FLPYDSK_MSR          =  0x3f4,
+    FLPYDSK_FIFO         =  0x3f5,
+    FLPYDSK_CTRL         =  0x3f7
 };
 
 // Bits 0-4 of command byte
 enum FLPYDSK_CMD
 {
-    FDC_CMD_READ_TRACK     =    2,
-    FDC_CMD_SPECIFY         =    3,
-    FDC_CMD_CHECK_STAT     =      4,
-    FDC_CMD_WRITE_SECT     =      5,
-    FDC_CMD_READ_SECT     =      6,
-    FDC_CMD_CALIBRATE     =      7,
-    FDC_CMD_CHECK_INT     =      8,
-    FDC_CMD_FORMAT_TRACK =    0xd,
-    FDC_CMD_SEEK         =    0xf
+    FDC_CMD_READ_TRACK   =   2,
+    FDC_CMD_SPECIFY      =   3,
+    FDC_CMD_CHECK_STAT   =   4,
+    FDC_CMD_WRITE_SECT   =   5,
+    FDC_CMD_READ_SECT    =   6,
+    FDC_CMD_CALIBRATE    =   7,
+    FDC_CMD_CHECK_INT    =   8,
+    FDC_CMD_FORMAT_TRACK = 0xd,
+    FDC_CMD_SEEK         = 0xf
 };
 
 // Additional command masks
 enum FLPYDSK_CMD_EXT
 {
     FDC_CMD_EXT_SKIP       = 0x20,
-    FDC_CMD_EXT_DENSITY       = 0x40,
+    FDC_CMD_EXT_DENSITY    = 0x40,
     FDC_CMD_EXT_MULTITRACK = 0x80
 };
 
 // Digital Output Register (DOR)
 enum FLPYDSK_DOR_MASK
 {
-    FLPYDSK_DOR_MASK_DRIVE0       =   0,
-    FLPYDSK_DOR_MASK_DRIVE1       =   1,
-    FLPYDSK_DOR_MASK_DRIVE2          =   2,
-    FLPYDSK_DOR_MASK_DRIVE3          =   3,
-    FLPYDSK_DOR_MASK_RESET          =   4,
-    FLPYDSK_DOR_MASK_DMA          =   8,
-    FLPYDSK_DOR_MASK_DRIVE0_MOTOR =  16,
-    FLPYDSK_DOR_MASK_DRIVE1_MOTOR =  32,
-    FLPYDSK_DOR_MASK_DRIVE2_MOTOR =     64,
-    FLPYDSK_DOR_MASK_DRIVE3_MOTOR =    128
+    FLPYDSK_DOR_MASK_DRIVE0        =   0,
+    FLPYDSK_DOR_MASK_DRIVE1        =   1,
+    FLPYDSK_DOR_MASK_DRIVE2        =   2,
+    FLPYDSK_DOR_MASK_DRIVE3        =   3,
+    FLPYDSK_DOR_MASK_RESET         =   4,
+    FLPYDSK_DOR_MASK_DMA           =   8,
+    FLPYDSK_DOR_MASK_DRIVE0_MOTOR  =  16,
+    FLPYDSK_DOR_MASK_DRIVE1_MOTOR  =  32,
+    FLPYDSK_DOR_MASK_DRIVE2_MOTOR  =  64,
+    FLPYDSK_DOR_MASK_DRIVE3_MOTOR  = 128
 };
 
 // Main Status Register
 enum FLPYDSK_MSR_MASK
 {
-    FLPYDSK_MSR_MASK_DRIVE1_POS_MODE    =      1,
-    FLPYDSK_MSR_MASK_DRIVE2_POS_MODE    =      2,
-    FLPYDSK_MSR_MASK_DRIVE3_POS_MODE    =      4,
-    FLPYDSK_MSR_MASK_DRIVE4_POS_MODE    =      8,
-    FLPYDSK_MSR_MASK_BUSY                =     16,
-    FLPYDSK_MSR_MASK_DMA                =     32,
-    FLPYDSK_MSR_MASK_DATAIO                =     64,
-    FLPYDSK_MSR_MASK_DATAREG            =    128
+    FLPYDSK_MSR_MASK_DRIVE1_POS_MODE  =   1,
+    FLPYDSK_MSR_MASK_DRIVE2_POS_MODE  =   2,
+    FLPYDSK_MSR_MASK_DRIVE3_POS_MODE  =   4,
+    FLPYDSK_MSR_MASK_DRIVE4_POS_MODE  =   8,
+    FLPYDSK_MSR_MASK_BUSY             =  16,
+    FLPYDSK_MSR_MASK_DMA              =  32,
+    FLPYDSK_MSR_MASK_DATAIO           =  64,
+    FLPYDSK_MSR_MASK_DATAREG          = 128
 };
 
 // Controller Status Port 0
 enum FLPYDSK_ST0_MASK
 {
-    FLPYDSK_ST0_MASK_DRIVE0        =   0,
-    FLPYDSK_ST0_MASK_DRIVE1        =   1,
-    FLPYDSK_ST0_MASK_DRIVE2        =   2,
-    FLPYDSK_ST0_MASK_DRIVE3        =   3,
-    FLPYDSK_ST0_MASK_HEADACTIVE    =   4,
+    FLPYDSK_ST0_MASK_DRIVE0      =   0,
+    FLPYDSK_ST0_MASK_DRIVE1      =   1,
+    FLPYDSK_ST0_MASK_DRIVE2      =   2,
+    FLPYDSK_ST0_MASK_DRIVE3      =   3,
+    FLPYDSK_ST0_MASK_HEADACTIVE  =   4,
     FLPYDSK_ST0_MASK_NOTREADY    =   8,
-    FLPYDSK_ST0_MASK_UNITCHECK    =  16,
-    FLPYDSK_ST0_MASK_SEEKEND    =  32,
-    FLPYDSK_ST0_MASK_INTCODE    =  64
+    FLPYDSK_ST0_MASK_UNITCHECK   =  16,
+    FLPYDSK_ST0_MASK_SEEKEND     =  32,
+    FLPYDSK_ST0_MASK_INTCODE     =  64
 };
 
 // LPYDSK_ST0_MASK_INTCODE types
 enum FLPYDSK_ST0_INTCODE_TYP
 {
-    FLPYDSK_ST0_TYP_NORMAL         =    0,
-    FLPYDSK_ST0_TYP_ABNORMAL_ERR =    1,
-    FLPYDSK_ST0_TYP_INVALID_ERR     =    2,
-    FLPYDSK_ST0_TYP_NOTREADY     =    3
+    FLPYDSK_ST0_TYP_NORMAL        =  0,
+    FLPYDSK_ST0_TYP_ABNORMAL_ERR  =  1,
+    FLPYDSK_ST0_TYP_INVALID_ERR   =  2,
+    FLPYDSK_ST0_TYP_NOTREADY      =  3
 };
 
 // GAP 3 sizes
 enum FLPYDSK_GAP3_LENGTH
 {
-    FLPYDSK_GAP3_LENGTH_STD      = 42,
-    FLPYDSK_GAP3_LENGTH_5_14     = 32,
-    FLPYDSK_GAP3_LENGTH_3_5      = 27
+    FLPYDSK_GAP3_LENGTH_STD   =  42,
+    FLPYDSK_GAP3_LENGTH_5_14  =  32,
+    FLPYDSK_GAP3_LENGTH_3_5   =  27
 };
 
 // Formula: 2^sector_number * 128
 enum FLPYDSK_SECTOR_DTL
 {
 
-    FLPYDSK_SECTOR_DTL_128        =    0,
-    FLPYDSK_SECTOR_DTL_256         =    1,
-    FLPYDSK_SECTOR_DTL_512         =    2,
-    FLPYDSK_SECTOR_DTL_1024        =    4
+    FLPYDSK_SECTOR_DTL_128   =  0,
+    FLPYDSK_SECTOR_DTL_256   =  1,
+    FLPYDSK_SECTOR_DTL_512   =  2,
+    FLPYDSK_SECTOR_DTL_1024  =  4
 };
 
 /**

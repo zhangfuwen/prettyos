@@ -141,26 +141,20 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void scroll();
 void set_cursor(uint8_t x, uint8_t y);
 void update_cursor();
-void move_cursor_right();
-void move_cursor_left();
-void move_cursor_home();
-void move_cursor_end();
-void save_cursor();
-void restore_cursor();
 
 // timer.c
+uint16_t systemfrequency; // system frequency
 uint32_t getCurrentSeconds();
 uint32_t getCurrentMilliseconds();
-uint16_t systemfrequency; // system frequency
 void timer_handler(struct regs* r);
-void timer_wait (uint32_t ticks);
-void sleepSeconds (uint32_t seconds);
-void sleepMilliSeconds (uint32_t ms);
-void systemTimer_setFrequency( uint32_t freq );
+void timer_wait(uint32_t ticks);
+void sleepSeconds(uint32_t seconds);
+void sleepMilliSeconds(uint32_t ms);
+void systemTimer_setFrequency(uint32_t freq);
 uint16_t systemTimer_getFrequency();
 void timer_install();
 void timer_uninstall();
-void delay (uint32_t microsec);
+void delay(uint32_t microsec);
 
 // keyboard.c
 void keyboard_install();
