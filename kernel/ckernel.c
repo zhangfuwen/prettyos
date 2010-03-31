@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.297";
+const char* version = "0.0.0.298";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -96,7 +96,45 @@ int main()
     EHCIflag = false;
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
-
+	
+	/// Show Startup Screen
+	printf("\n\n\n\n");
+	settextcolor(14,0);
+	printf("    #######                     ###    ##                  ######      #####\n");
+	printf("    #########                   ###    ##                #########    #######\n");
+	printf("    ##    ###                   ##    ###               ####   ####  ###   ##\n");
+	printf("    ##    ### ## ###   #####  ############# ###   ###  ###      ###  ###\n");
+	printf("   ###    ### ######  ####### ############# ###   ###  ###      ###  ###\n");
+	printf("   ###   ###  ###    ###  ###  ###    ##    ###  ###  ###       ###  #####\n");
+	printf("   ########  ###     ###  ###  ###    ##    ###  ###  ###       ###   #####\n");
+	printf("   #######   ###    ########   ##    ###     ##  ###  ###       ###     ####\n");
+	printf("   ##        ###    #######    ##    ###     ## ###   ###      ###       ###\n");
+	printf("   ##        ##     ###       ###    ###     ######   ###     ####       ###\n");
+	printf("  ###       ###     ###    #  ###    ###     #####    ####   ####  ##   ####\n");
+	printf("  ###       ###     ########  #####  #####   ####      #########   ########\n");
+	printf("  ###       ###      ######    ####  ####    ####       ######      #####\n");
+	printf("                                             ###\n");
+	printf("                                            ###\n");
+	printf("                                            ###\n");
+	printf("                                           ###\n");
+	printf("\n");
+	settextcolor(10,0);
+	printf("  #    #    #      #\n");
+	printf("  #   # #   #      #\n");
+	printf("   #  # #  #  ###  #  ###   ###  # ####   ###\n");
+	printf("   #  # #  # #   # # #   # #   # ## #  # #   #\n");
+	printf("   # #   # # ##### # #     #   # #  #  # #####\n");
+	printf("   # #   # # #     # #     #   # #  #  # #\n");
+	printf("    #     #  #   # # #   # #   # #  #  # #   #\n");
+	printf("    #     #   ###  #  ###   ###  #  #  #  ###\n");
+	printf("\n\n");
+	settextcolor(15,0);
+	beep(523,300);
+	beep(659,300);
+	beep(784,300);
+	beep(1047,300);
+	///
+	
     // direct 1st floppy disk
     if ((cmos_read(0x10)>>4) == 4)   // 1st floppy 1,44 MB: 0100....b
     {
@@ -111,8 +149,8 @@ int main()
         printf("\n1.44 MB 1st floppy not shown by CMOS\n\n");
     }
     /// direct 1st floppy disk
-
-
+	
+	
     /// PCI list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
     listHead_t* pciDevList = listCreate();
@@ -267,7 +305,7 @@ int main()
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
-            if ((CurrentSeconds%400)==0)
+            if ((CurrentSeconds%400)==0 && 1==0)
             {
 
                 // buffer for video screen
