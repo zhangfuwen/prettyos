@@ -93,7 +93,21 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
     new_task->id  = next_pid++;
     new_task->page_directory = directory;
-    new_task->heap_top = USER_HEAP_START;
+
+    /// TEST
+    //new_task->heap_top = USER_HEAP_START;
+
+    if ( privilege == 3 /*&& (strcmp(programName, "Shell") != 0)*/ )
+    {
+        new_task->heap_top = USER_HEAP_START;
+
+        #ifdef _DIAGNOSIS_
+        printf("task: %X. Alloc user-stack: \n",new_task);
+        #endif
+
+        paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
+    }
+    /// TEST
 
     ///
     #ifdef _DIAGNOSIS_
@@ -170,19 +184,24 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     *(--kernel_stack) = data_segment;
     *(--kernel_stack) = data_segment;
 
-
-
     //setup TSS
     tss.ss0   = 0x10;
+    tss.esp   = current_task->esp;
     tss.esp0  = new_task->kernel_stack;
     tss.ss    = data_segment;
 
+    printf("esp: %X ",fetchESP());
+    printf("esp0: %X\n",tss.esp0);
 
     //setup task_t
     new_task->ebp = 0xd00fc0de; // test value
     new_task->esp = (uint32_t)kernel_stack;
     new_task->eip = (uint32_t)irq_tail;
     new_task->ss  = data_segment;
+
+    #ifdef _DIAGNOSIS_
+    task_log(new_task);
+    #endif
 
     sti();
     return new_task;
@@ -205,8 +224,9 @@ uint32_t task_switch (uint32_t esp)
     // new_task
     paging_switch (current_task->page_directory);
     //tss.cr3 = ... TODO: Really unnecessary?
+
     tss.esp  = current_task->esp;
-    tss.esp0 = (current_task->kernel_stack)+KERNEL_STACK_SIZE;
+    tss.esp0 = current_task->kernel_stack; ///+KERNEL_STACK_SIZE; ???
     tss.ebp  = current_task->ebp;
     tss.ss   = current_task->ss;
 
@@ -316,12 +336,12 @@ void task_log(task_t* t)
 {
     settextcolor(5,0);
     printf("\nid: %d ", t->id);               // Process ID
-    printf("ebp: %x ",t->ebp);              // Base pointer
-    printf("esp: %x ",t->esp);              // Stack pointer
-    printf("eip: %x ",t->eip);              // Instruction pointer
-    printf("PD: %x ", t->page_directory);   // Page directory.
-    printf("k_stack: %x ",t->kernel_stack); // Kernel stack location.
-    printf("next: %x\n",  t->next);         // The next task in a linked list.
+    printf("ebp: %X ",t->ebp);              // Base pointer
+    printf("esp: %X ",t->esp);              // Stack pointer
+    printf("eip: %X ",t->eip);              // Instruction pointer
+    printf("PD: %X ", t->page_directory);   // Page directory.
+    printf("k_stack: %X ",t->kernel_stack); // Kernel stack location.
+    printf("next: %X\n",  t->next);         // The next task in a linked list.
     settextcolor(15,0);
 }
 
@@ -329,32 +349,32 @@ void TSS_log(tss_entry_t* tssEntry)
 {
     settextcolor(6,0);
     //printf("\nprev_tss: %x ", tssEntry->prev_tss);
-    printf("esp0: %x ", tssEntry->esp0);
-    printf("ss0: %x ", tssEntry->ss0);
-    //printf("esp1: %x ", tssEntry->esp1);
-    //printf("ss1: %x ", tssEntry->ss1);
-    //printf("esp2: %x ", tssEntry->esp2);
-    //printf("ss2: %x ", tssEntry->ss2);
-    printf("cr3: %x ", tssEntry->cr3);
-    printf("eip: %x ", tssEntry->eip);
-    printf("eflags: %x ", tssEntry->eflags);
-    printf("eax: %x ", tssEntry->eax);
-    printf("ecx: %x ", tssEntry->ecx);
-    printf("edx: %x ", tssEntry->edx);
-    printf("ebx: %x ", tssEntry->ebx);
-    printf("esp: %x ", tssEntry->esp);
-    printf("ebp: %x ", tssEntry->ebp);
-    printf("esi: %x ", tssEntry->esi);
-    printf("edi: %x ", tssEntry->edi);
-    printf("es: %x ", tssEntry->es);
-    printf("cs: %x ", tssEntry->cs);
-    printf("ss: %x ", tssEntry->ss);
-    printf("ds: %x ", tssEntry->ds);
-    printf("fs: %x ", tssEntry->fs);
-    printf("gs: %x ", tssEntry->gs);
-    //printf("ldt: %x ", tssEntry->ldt);
-    //printf("trap: %x ", tssEntry->trap); //only 0 or 1
-    //printf("iomap_base: %x ", tssEntry->iomap_base);
+    printf("esp0: %X ", tssEntry->esp0);
+    printf("ss0: %X ", tssEntry->ss0);
+    //printf("esp1: %X ", tssEntry->esp1);
+    //printf("ss1: %X ", tssEntry->ss1);
+    //printf("esp2: %X ", tssEntry->esp2);
+    //printf("ss2: %X ", tssEntry->ss2);
+    printf("cr3: %X ", tssEntry->cr3);
+    printf("eip: %X ", tssEntry->eip);
+    printf("eflags: %X ", tssEntry->eflags);
+    printf("eax: %X ", tssEntry->eax);
+    printf("ecx: %X ", tssEntry->ecx);
+    printf("edx: %X ", tssEntry->edx);
+    printf("ebx: %X ", tssEntry->ebx);
+    printf("esp: %X ", tssEntry->esp);
+    printf("ebp: %X ", tssEntry->ebp);
+    printf("esi: %X ", tssEntry->esi);
+    printf("edi: %X ", tssEntry->edi);
+    printf("es: %X ", tssEntry->es);
+    printf("cs: %X ", tssEntry->cs);
+    printf("ss: %X ", tssEntry->ss);
+    printf("ds: %X ", tssEntry->ds);
+    printf("fs: %X ", tssEntry->fs);
+    printf("gs: %X ", tssEntry->gs);
+    //printf("ldt: %X ", tssEntry->ldt);
+    //printf("trap: %X ", tssEntry->trap); //only 0 or 1
+    //printf("iomap_base: %X ", tssEntry->iomap_base);
 }
 
 /*

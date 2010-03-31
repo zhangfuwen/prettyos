@@ -9,7 +9,7 @@ extern _test
 global _start
 
 _start:
-    mov esp, 0x500000 ; stackpointer
+    mov esp, 0x1420000 ; stackpointer
     call _main	
 	
 	call _exit	

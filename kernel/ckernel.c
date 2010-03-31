@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.300";
+const char* version = "0.0.0.301";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -138,7 +138,7 @@ int main()
     EHCIflag = false;
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
-	
+
     // direct 1st floppy disk
     if ((cmos_read(0x10)>>4) == 4)   // 1st floppy 1,44 MB: 0100....b
     {
@@ -153,8 +153,8 @@ int main()
         printf("\n1.44 MB 1st floppy not shown by CMOS\n\n");
     }
     /// direct 1st floppy disk
-	
-	
+
+
     /// PCI list BEGIN
     // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
     listHead_t* pciDevList = listCreate();

@@ -284,10 +284,7 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
     // boot signature
     a[510]= 0x55; a[511]= 0xAA;
 
-
-    // flpydsk_control_motor(true); printf("write_boot_sector.motor_on\n");
-    // return flpydsk_write_sector_ia(BOOT_SEC, a);
-    /// prepare sector 0 of track 0
+    // prepare sector 0 of track 0
     for (uint16_t k=0;k<511;k++)
     {
         track0[k] = a[k];
@@ -492,12 +489,6 @@ int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag) //
    uint8_t a[512];
    st_sec = st_sec + in/DIR_ENTRIES;
 
-   /*
-   if (flpydsk_read_ia(st_sec,a,SECTOR) != 0) // <--- bullshit
-   {
-       return E_DISK;
-   }
-   */
    memcpy((void*)a,(void*)(track1+st_sec*512-9216),0x200); //copy data from cache to a[...]
 
    parse_dir(a,in,rs);
@@ -550,7 +541,6 @@ uint32_t search_file_first_cluster(const char* name, const char* ext, struct fil
 
     f->size = (&entry)->FileSize;
     f->firstCluster = FORM_SHORT((&entry)->FstClusLO,(&entry)->FstClusHI);
-    printf("1st Cluster: hi: %d lo: %d\n",(&entry)->FstClusHI,(&entry)->FstClusLO);
 
     return f->firstCluster;
 }

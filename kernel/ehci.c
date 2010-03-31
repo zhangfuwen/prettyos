@@ -18,7 +18,7 @@ bool enabledPortFlag; // port enabled
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: createQH\n");
     settextcolor(15,0);
 
@@ -56,7 +56,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: createQTD\n");
     settextcolor(15,0);
 
@@ -116,7 +116,7 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: showPacket\n");
     settextcolor(15,0);
 
@@ -131,7 +131,7 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 void showStatusbyteQTD(void* addressQTD)
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: showStatusbyteQTD\n");
     settextcolor(15,0);
 
@@ -156,7 +156,7 @@ void ehci_handler(struct regs* r)
 {
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER))
     {
-      delay(2000000);settextcolor(9,0);
+      delay(100000);settextcolor(9,0);
       printf("\n>>> >>> function: ehci_handler: ");
       settextcolor(15,0);
     }
@@ -223,7 +223,7 @@ leave_handler:
 
 void analyzeEHCI(uint32_t bar)
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: analyzeEHCI\n");
     settextcolor(15,0);
 
@@ -292,7 +292,7 @@ void resetHostController()
 
 void startHostController(uint32_t num)
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: startHostController\n");
     settextcolor(15,0);
 
@@ -340,7 +340,7 @@ void startHostController(uint32_t num)
     //    associated controller type: UHCI or EHCI)
     pOpRegs->CONFIGFLAG = CF; // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
 
-    delay(100000); //sleepMilliSeconds(100);
+    delay(100000);
 }
 
 int32_t initEHCIHostController(uint32_t num)
@@ -348,7 +348,7 @@ int32_t initEHCIHostController(uint32_t num)
     USBtransferFlag = true;
     enabledPortFlag = false;
 
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: initEHCIHostController\n");
     settextcolor(15,0);
 
@@ -377,7 +377,7 @@ int32_t initEHCIHostController(uint32_t num)
 
 void enablePorts()
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: enablePorts\n");
     settextcolor(15,0);
 
@@ -412,7 +412,7 @@ void enablePorts()
 
 void resetPort(uint8_t j)
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: resetPort %d  ",j+1);
     settextcolor(15,0);
 
@@ -471,7 +471,7 @@ void resetPort(uint8_t j)
 
 void showPORTSC()
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: showPORTSC\n");
     settextcolor(15,0);
 
@@ -495,7 +495,7 @@ void showPORTSC()
 
             uint8_t color = 14;
             cprintf("                                                                              ",46,color);
-            cprintf("Port %i Status: %i", 46, color, PortNumber, PortStatus); // output to info screen area
+            cprintf("Port %i Status: %X", 46, color, PortNumber, PortStatus); // output to info screen area
             cprintf("                                                                              ",47,color);
             cprintf("                                                                              ",48,color);
 
@@ -506,7 +506,7 @@ void showPORTSC()
 
 void showUSBSTS()
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: showUSBSTS\n");
     settextcolor(15,0);
 
@@ -530,7 +530,7 @@ void showUSBSTS()
 
 void checkPortLineStatus()
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: checkPortLineStatus\n");
     settextcolor(15,0);
 
@@ -586,7 +586,7 @@ void checkPortLineStatus()
 
 void DeactivateLegacySupport(uint32_t num)
 {
-    delay(2000000);settextcolor(9,0);
+    delay(100000);settextcolor(9,0);
     printf("\n>>> >>> function: DeactivateLegacySupport\n");
     settextcolor(15,0);
 
@@ -684,6 +684,7 @@ void DeactivateLegacySupport(uint32_t num)
     {
         printf("No valid eecp found.\n");
     }
+    delay(1000000);
 }
 
 /*

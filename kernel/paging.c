@@ -259,10 +259,12 @@ uint32_t paging_install()
         kernel_pd->codes[768+i] = (uint32_t)kernel_pd->tables[768+i] | MEM_PRESENT | MEM_WRITE;
     }
 
+/*
     // Setup 0x00400000 to 0x00600000 as writeable userspace
     kernel_pd->codes[1] |= MEM_USER | MEM_WRITE;
     for (int i=0; i<512; ++i)
         kernel_pd->tables[1]->pages[i] |= MEM_USER | MEM_WRITE;
+*/
 
     // Enable paging
     paging_switch (kernel_pd);
@@ -287,8 +289,16 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
         uint32_t pagenr = (uint32_t)virt_addr/PAGESIZE + done;
 
         // Maybe there is already memory allocated?
+
+        /// TEST
         if (pd->tables[pagenr/1024] && pd->tables[pagenr/1024]->pages[pagenr%1024])
+        {
+            #ifdef _DIAGNOSIS_
+            printf("pagenumber already allocated: %d\n",pagenr);
+            #endif
             continue;
+        }
+        /// TEST
 
         // Allocate physical memory
         uint32_t phys = phys_alloc();
@@ -321,6 +331,13 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
 
         // Setup the page
         pt->pages[pagenr%1024] = phys | flags | MEM_PRESENT;
+
+        #ifdef _DIAGNOSIS_
+        if(flags&MEM_USER)
+        {
+            printf("pagenumber now allocated: %d phys: %X\n",pagenr,phys);
+        }
+        #endif
     }
     return true;
 }
