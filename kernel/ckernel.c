@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.305";
+const char* version = "0.0.0.306";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -151,7 +151,8 @@ int main()
         printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
     }
 
-    EHCIflag = false;
+    EHCIflag     = false;  // first EHCI device found?
+    initEHCIFlag = false;  //   any EHCI device found?
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
     sti();
 
