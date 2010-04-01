@@ -186,7 +186,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
 
     //setup TSS
     tss.ss0   = 0x10;
-    tss.esp   = current_task->esp;
+    tss.esp   = current_task->esp = USER_STACK;
     tss.esp0  = new_task->kernel_stack;
     tss.ss    = data_segment;
 
@@ -223,7 +223,7 @@ uint32_t task_switch (uint32_t esp)
     //tss.cr3 = ... TODO: Really unnecessary?
 
     tss.esp  = current_task->esp;
-    tss.esp0 = current_task->kernel_stack; ///+KERNEL_STACK_SIZE; ???
+    tss.esp0 = current_task->kernel_stack;
     tss.ebp  = current_task->ebp;
     tss.ss   = current_task->ss;
 

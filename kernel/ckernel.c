@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.304";
+const char* version = "0.0.0.305";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -103,14 +103,14 @@ void bootscreen() {
 	beep(784,200); // G
 	beep(689,200); // F
 	beep(622,200); // Es
-	
+
 	beep(523,200); // C
 	beep(659,200); // E
 	beep(689,200); // F
 	beep(784,200); // G
 	beep(689,200); // F
 	beep(659,200); // E
-	
+
 	beep(523,1000); // C
 }
 

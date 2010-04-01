@@ -24,7 +24,7 @@ void console_init(console_t* console, const char* name)
     //console->SCROLL_BEGIN = 0;
     console->SCROLL_END   = USER_LINES;
     strcpy(console->name, name);
-    memsetw (console->vidmem, 0x20 | (console->attrib << 8), COLUMNS * USER_LINES * 2);
+    memsetw (console->vidmem, 0x20 | (console->attrib << 8), COLUMNS * USER_LINES);
     // Setup the keyqueue
     memset(console->KQ.buffer, 0, KQSIZE);
     console->KQ.pHead = console->KQ.buffer;
@@ -41,14 +41,16 @@ void console_exit(console_t* console)
 bool changeDisplayedConsole(uint8_t ID)
 {
     // Changing visible console, returning false, if this console is not available.
-    if (ID > 11 || reachableConsoles[ID] == 0) {
+    if (ID > 11 || reachableConsoles[ID] == 0)
+    {
         return(false);
     }
     displayedConsole = ID;
     refreshUserScreen();
     return(true);
 }
-void setScrollField(uint8_t begin, uint8_t end) {
+void setScrollField(uint8_t begin, uint8_t end)
+{
     //current_console->SCROLL_BEGIN = begin;
     current_console->SCROLL_END = end;
 }
@@ -57,7 +59,7 @@ void clear_console(uint8_t backcolor)
 {
     // Erasing the content of the active console
     current_console->attrib = (backcolor << 4) | 0x0F;
-    memsetw (current_console->vidmem, 0x20 | (current_console->attrib << 8), COLUMNS * USER_LINES * 2);
+    memsetw (current_console->vidmem, 0x20 | (current_console->attrib << 8), COLUMNS * USER_LINES);
     current_console->csr_x = 0;
     current_console->csr_y = 0;
     if (current_console == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
@@ -304,7 +306,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 break;
         }
     }
-    
+
     scroll_flag = true;
     current_console->attrib = old_attrib;
     current_console->csr_x = c_x;
