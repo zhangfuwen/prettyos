@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.303";
+const char* version = "0.0.0.304";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -92,10 +92,26 @@ void bootscreen() {
 	printf("    #     #   ###  #  ###   ###  #  #  #  ###\n");
 	printf("\n\n");
 	settextcolor(15,0);
-	beep(523,300);
-	beep(659,300);
-	beep(784,300);
-	beep(1047,900);
+	// Melody
+	// C Es F G F Es
+	// C E F G F E C
+	// http://www.flutepage.de/deutsch/goodies/frequenz.shtml (German)
+	// http://www.flutepage.de/englisch/goodies/frequenz.shtml (English)
+	beep(523,200); // C
+	beep(622,200); // Es
+	beep(689,200); // F
+	beep(784,200); // G
+	beep(689,200); // F
+	beep(622,200); // Es
+	
+	beep(523,200); // C
+	beep(659,200); // E
+	beep(689,200); // F
+	beep(784,200); // G
+	beep(689,200); // F
+	beep(659,200); // E
+	
+	beep(523,1000); // C
 }
 
 static void init()

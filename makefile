@@ -43,7 +43,7 @@ vpath %.o $(OBJDIR)
 
 # targets to build PrettyOS
 .PHONY: clean all
-all: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN FloppyImage.bin
+all: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN FloppyImage
 
 $(STAGE1DIR)/boot.bin:
 	$(NASM) -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
@@ -64,19 +64,23 @@ $(USERDIR)/$(USERTEST)/HELLO.ELF: $(TESTC_OBJCETS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(TESTC_OBJECTS)) -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(USERTEST)/user.map -o $(USERDIR)/$(SHELLDIR)/HELLO.ELF
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(TESTC_OBJECTS)) -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(USERTEST)/user.map -o $(USERDIR)/$(USERTEST)/HELLO.ELF
 
-FloppyImage.bin: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN #$(USERDIR)/$(USERTEST)/HELLO.ELF
+FloppyImage: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN #$(USERDIR)/$(USERTEST)/HELLO.ELF
 	tools/CreateFloppyImage2 PrettyOS FloppyImage.bin $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF
+	tools/CreateFloppyImage2 PrettyOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF
+
 
 clean:
-# OS-dependant code because of different interpretation of / in Windows and Linux
+# OS-dependant code because of different interpretation of/in Windows and UNIX-OS (Linux and Mac OS X)
 ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
+	$(RM) $(OBJDIR)\$(KERNELDIR)\KERNEL.BIN
 	$(RM) $(OBJDIR)\$(KERNELDIR)\cdi\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(SHELLDIR)\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTEST)\*.o
 else
 	$(RM) $(OBJDIR)/$(KERNELDIR)/*.o
+	$(RM) $(OBJDIR)/$(KERNELDIR)/KERNEL.BIN
 	$(RM) $(OBJDIR)/$(KERNELDIR)/cdi/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(SHELLDIR)/*.o
