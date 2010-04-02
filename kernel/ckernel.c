@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.309";
+const char* version = "0.0.0.310";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -58,60 +58,6 @@ void setup_x87_fpu()
 
     // set the FPU Control Word
     set_fpu_control_word(0x37F);
-}
-
-void bootscreen() {
-	printf("\n\n\n\n\n\n\n\n");
-	settextcolor(14,0);
-	printf("    #######                     ###    ##                  ######      #####\n");
-	printf("    #########                   ###    ##                #########    #######\n");
-	printf("    ##    ###                   ##    ###               ####   ####  ###   ##\n");
-	printf("    ##    ### ## ###   #####  ############# ###   ###  ###      ###  ###\n");
-	printf("   ###    ### ######  ####### ############# ###   ###  ###      ###  ###\n");
-	printf("   ###   ###  ###    ###  ###  ###    ##    ###  ###  ###       ###  #####\n");
-	printf("   ########  ###     ###  ###  ###    ##    ###  ###  ###       ###   #####\n");
-	printf("   #######   ###    ########   ##    ###     ##  ###  ###       ###     ####\n");
-	printf("   ##        ###    #######    ##    ###     ## ###   ###      ###       ###\n");
-	printf("   ##        ##     ###       ###    ###     ######   ###     ####       ###\n");
-	printf("  ###       ###     ###    #  ###    ###     #####    ####   ####  ##   ####\n");
-	printf("  ###       ###     ########  #####  #####   ####      #########   ########\n");
-	printf("  ###       ###      ######    ####  ####    ####       ######      #####\n");
-	printf("                                             ###\n");
-	printf("                                            ###\n");
-	printf("                                            ###\n");
-	printf("                                           ###\n");
-	printf("\n");
-	settextcolor(10,0);
-	printf("  #    #    #      #\n");
-	printf("  #    #    #      #\n");
-	printf("   #  # #  #  ###  #  ###   ###  # ####   ###\n");
-	printf("   #  # #  # #   # # #   # #   # ## #  # #   #\n");
-	printf("   # #   # # ##### # #     #   # #  #  # #####\n");
-	printf("   # #   # # #     # #     #   # #  #  # #\n");
-	printf("    #     #  #   # # #   # #   # #  #  # #   #\n");
-	printf("    #     #   ###  #  ###   ###  #  #  #  ###\n");
-	printf("\n\n");
-	settextcolor(15,0);
-	// Melody
-	// C Es F G F Es
-	// C E F G F E C
-	// http://www.flutepage.de/deutsch/goodies/frequenz.shtml (German)
-	// http://www.flutepage.de/englisch/goodies/frequenz.shtml (English)
-	beep(523,200); // C
-	beep(622,200); // Es
-	beep(689,200); // F
-	beep(784,200); // G
-	beep(689,200); // F
-	beep(622,200); // Es
-
-	beep(523,200); // C
-	beep(659,200); // E
-	beep(689,200); // F
-	beep(784,200); // G
-	beep(689,200); // F
-	beep(659,200); // E
-
-	beep(523,1000); // C
 }
 
 static void init()
@@ -365,7 +311,7 @@ int main()
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

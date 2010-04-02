@@ -219,6 +219,8 @@ char* strcat(char* dest, const char* src);
 
 void reboot();
 
+void bootscreen();
+
 void cli();
 void sti();
 void nop();
