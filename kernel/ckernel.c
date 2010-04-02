@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.310";
+const char* version = "0.0.0.311";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -58,6 +58,12 @@ void setup_x87_fpu()
 
     // set the FPU Control Word
     set_fpu_control_word(0x37F);
+
+    // set TS in cr0
+    uint32_t cr0;
+    __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
+    cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
+    __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
 }
 
 static void init()
@@ -232,6 +238,15 @@ int main()
 
     while (true)
     {
+        /// FPU-TEST
+        float number1 = 2.5;
+        float number2 = 2.5;
+        float number3 = number1 * number2;
+        char str[40];
+        float2string(number3,3,str);
+        printf("float result: %s\n",str);
+        /// TEST
+
         // Show Rotating Asterisk
         *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *p;
         if (! *++p)

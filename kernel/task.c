@@ -57,6 +57,10 @@ void tasking_install()
     current_task->esp = current_task->ebp = 0;
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
+    pODA->curTask = (uintptr_t)current_task;
+
+    current_task->FPU_flag = false;
+
     current_task->next = 0;
     current_task->console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
     console_init(current_task->console, "");
@@ -94,9 +98,6 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     new_task->id  = next_pid++;
     new_task->page_directory = directory;
 
-    /// TEST
-    //new_task->heap_top = USER_HEAP_START;
-
     if ( privilege == 3 /*&& (strcmp(programName, "Shell") != 0)*/ )
     {
         new_task->heap_top = USER_HEAP_START;
@@ -107,7 +108,6 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
 
         paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
     }
-    /// TEST
 
     ///
     #ifdef _DIAGNOSIS_
@@ -118,6 +118,10 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     ///
 
     new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+
+    pODA->curTask = (uintptr_t)new_task;
+    new_task->FPU_flag = false;
+
     new_task->next = 0;
 
     if (strcmp(programName, "Shell") == 0)
@@ -209,13 +213,16 @@ uint32_t task_switch (uint32_t esp)
     if (!current_task) return esp;
     current_task->esp = esp;   // save esp
 
-    // Dispatcher
-    // task switch
+    // Dispatcher - task switch
     current_task = current_task->next; // take the next task
     if (!current_task)
     {
         current_task = ready_queue;    // start at the beginning of the queue
     }
+
+    // write active task struct address to ODA
+    pODA->curTask = (uintptr_t)current_task;
+
     current_console = current_task->console;
 
     // new_task
@@ -233,6 +240,14 @@ uint32_t task_switch (uint32_t esp)
     settextcolor(15,0);
     #endif
 
+    // set TS in cr0, if the task has not used the FPU before
+    if (current_task->FPU_flag == false);
+    {
+        uint32_t cr0;
+        __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
+        cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
+        __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+    }
     return current_task->esp;  // return new task's esp
 }
 

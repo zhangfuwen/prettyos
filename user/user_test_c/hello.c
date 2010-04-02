@@ -103,11 +103,11 @@ int32_t main()
     bool ende = false;
     char str[80];
 
-    memset((void*)tictactoe, 0, 18); // tictactoe has two bytes!
+    memset((void*)tictactoe, 0, sizeof(tictactoe));
     clearScreen(0);
     settextcolor(11,0);
     puts("--------------------------------------------------------------------------------\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.55                           \n");
+    puts("                            Mr.X TicTacToe 3x3  v0.56                           \n");
     puts("--------------------------------------------------------------------------------\n\n");
     gotoxy(0,6);
     settextcolor(15,0);

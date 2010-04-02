@@ -39,8 +39,32 @@ const char* exception_messages[] =
 uint32_t irq_handler(uint32_t esp)
 {
     struct regs* r = (struct regs*)esp;
+    task_t* pCurrentTask = (task_t*)(pODA->curTask);
 
-    if (r->int_no < 32) //exception
+    if ( (r->int_no < 32) && (r->int_no == 7) ) //exception #NM (number 7)
+    {
+         settextcolor(12,0);
+         printf("#NM: FPU is used\n");
+         settextcolor(15,0);
+
+         // current task uses FPU
+         pCurrentTask->FPU_flag = true;
+
+         // save FPU ...
+         // ...
+
+         // restore FPU ...
+         // ...
+
+         // set TS in cr0 to zero
+
+         uint32_t cr0;
+         __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
+         cr0 &= ~0x8; // reset the TS bit (no. 3) in CR0 to disable #NM
+         __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+    }
+
+    if ( (r->int_no < 32) && (r->int_no != 7) ) //exception w/o #NM
     {
         settextcolor(12,0);
         flpydsk_control_motor(false); // floppy motor off
