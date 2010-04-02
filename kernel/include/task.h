@@ -19,6 +19,7 @@ struct task
     char* heap_top;
     uint32_t kernel_stack;            // Kernel stack location.
     bool FPU_flag;                    // task uses FPU
+    uintptr_t FPU_ptr;                // pointer to FPU data
     struct task* next;                // The next task in a linked list.
 } __attribute__((packed));
 

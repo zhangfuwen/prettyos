@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.312";
+const char* version = "0.0.0.313";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -64,6 +64,9 @@ void setup_x87_fpu()
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
     cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+
+   // init TaskFPU in ODA
+   pODA->TaskFPU = (uintptr_t)NULL;
 }
 
 static void init()

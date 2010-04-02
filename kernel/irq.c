@@ -5,6 +5,7 @@
 
 #include "os.h"
 #include "task.h"
+#include "kheap.h"
 #include "flpydsk.h" // floppy motor off
 
 
@@ -35,34 +36,47 @@ const char* exception_messages[] =
     "Reserved",                "Reserved",                      "Reserved",                  "Reserved"
 };
 
-
 uint32_t irq_handler(uint32_t esp)
 {
     struct regs* r = (struct regs*)esp;
     task_t* pCurrentTask = (task_t*)(pODA->curTask);
 
-    if ( (r->int_no < 32) && (r->int_no == 7) ) //exception #NM (number 7)
+    if ( r->int_no == 7 ) //exception #NM (number 7)
     {
-         settextcolor(12,0);
-         printf("#NM: FPU is used\n");
-         settextcolor(15,0);
-
-         // current task uses FPU
-         pCurrentTask->FPU_flag = true;
-         pODA->TaskFPU = (uintptr_t)pCurrentTask;
-
-         // save FPU data ...
-         // ...
-
-         // restore FPU data ...
-         // ...
-
          // set TS in cr0 to zero
-
          uint32_t cr0;
          __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
          cr0 &= ~0x8; // reset the TS bit (no. 3) in CR0 to disable #NM
          __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+
+         settextcolor(12,0);
+         printf("#NM: FPU is used. pCurrentTask: %X\n",pCurrentTask);
+         settextcolor(15,0);
+
+         // current task uses FPU
+         pCurrentTask->FPU_flag = true;
+
+         // save FPU data ...
+         if(pODA->TaskFPU)
+         {
+             // fsave or fnsave to pODA->TaskFPU->FPU_ptr
+             __asm__ volatile("fnsave %0" :: "m" (*(char*)(((task_t*)pODA->TaskFPU)->FPU_ptr)));
+         }
+
+         // store the last task using FPU
+         pODA->TaskFPU = (uintptr_t)pCurrentTask;
+
+         // restore FPU data ...
+         if(pCurrentTask->FPU_ptr)
+         {
+             // frstor from pCurrentTask->FPU_ptr
+             __asm__ volatile("frstor %0" :: "m" (*(char*)(pCurrentTask->FPU_ptr)));
+         }
+         else
+         {
+             // allocate memory to pCurrentTask->FPU_ptr
+             pCurrentTask->FPU_ptr = (uintptr_t)malloc(108,4);
+         }
     }
 
     if ( (r->int_no < 32) && (r->int_no != 7) ) //exception w/o #NM
