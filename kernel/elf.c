@@ -156,6 +156,7 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
         // Copy the code, using the user's page directory
         cli();
         paging_switch (pd);
+        memset((void *)ph->vaddr, 0, ph->memsz); // to set the bss (Block Started by Symbol) to zero
         memcpy((void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz);
         paging_switch (kernel_pd);
         sti();

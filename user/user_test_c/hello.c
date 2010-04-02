@@ -1,5 +1,7 @@
 #include "userlib.h"
 
+enum Feldstatus {Leer, X, O};
+
 //cf. util.c
 void* memset(void* dest, uint8_t val, size_t count)
 {
@@ -10,7 +12,6 @@ void* memset(void* dest, uint8_t val, size_t count)
 
 void SetField(uint16_t x, uint16_t y, uint8_t Player)
 {
-    enum Feldstatus {Leer, X, O};
     gotoxy(x*4+2,y*2+15);
     if (Player == X){putch('X');}
     if (Player == O){putch('O');}
@@ -20,7 +21,6 @@ void SetField(uint16_t x, uint16_t y, uint8_t Player)
 
 void gewinnen (uint16_t* tictactoe, bool ende)
 {
-    enum Feldstatus {Leer, X, O};
     if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == X) ||
         (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == X) ||
         (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == X) ||
@@ -68,7 +68,6 @@ void gewinnen (uint16_t* tictactoe, bool ende)
 
 void Zug(uint16_t Player, char* str, uint16_t* tictactoe, bool ende)
 {
-	enum Feldstatus {Leer, X, O};
 	memset((void*)str, 0, 80);
 
     for (; ; gets(str))
@@ -100,16 +99,15 @@ void Zug(uint16_t Player, char* str, uint16_t* tictactoe, bool ende)
 
 int32_t main()
 {
-    enum Feldstatus {Leer, X, O};
     uint16_t tictactoe[9];
     bool ende = false;
     char str[80];
 
-    memset((void*)tictactoe, 0, 9);
+    memset((void*)tictactoe, 0, 18); // tictactoe has two bytes!
     clearScreen(0);
     settextcolor(11,0);
     puts("--------------------------------------------------------------------------------\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.54                           \n");
+    puts("                            Mr.X TicTacToe 3x3  v0.55                           \n");
     puts("--------------------------------------------------------------------------------\n\n");
     gotoxy(0,6);
     settextcolor(15,0);
