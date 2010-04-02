@@ -97,6 +97,7 @@ struct oda
     //tasking
     uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
     uintptr_t curTask;           // Address of currentTask
+    uintptr_t TaskFPU;           // Address of Task using FPU
 
     // floppy disk
     bool  flpy_motor[4];         // 0: motor off  1: motor on

@@ -72,6 +72,14 @@ void Zug(uint16_t Player, char* str, uint16_t* tictactoe, bool ende)
 
     for (; ; gets(str))
     {
+     /// FLOAT-TEST
+     float number1 = 2.5;
+     float number2 = 2.5;
+     float number3 = number1 * number2;
+     char floatStr[40];
+     float2string(number3,3,floatStr);
+     /// TEST
+
         if (!isdigit(*str) || *str == '9')
         {
         }

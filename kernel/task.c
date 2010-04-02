@@ -58,9 +58,7 @@ void tasking_install()
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
     pODA->curTask = (uintptr_t)current_task;
-
     current_task->FPU_flag = false;
-
     current_task->next = 0;
     current_task->console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
     console_init(current_task->console, "");
@@ -240,8 +238,15 @@ uint32_t task_switch (uint32_t esp)
     settextcolor(15,0);
     #endif
 
-    // set TS in cr0, if the task has not used the FPU before
-    if (current_task->FPU_flag == false);
+    // set TS
+    if (pODA->curTask == pODA->TaskFPU)
+    {
+        uint32_t cr0;
+        __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
+        cr0 &= ~0x8; // reset the TS bit (no. 3) in CR0 to disable #NM (exception no. 7)
+        __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+    }
+    else
     {
         uint32_t cr0;
         __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0

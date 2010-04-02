@@ -73,14 +73,14 @@ clean:
 # OS-dependant code because of different interpretation of/in Windows and UNIX-OS (Linux and Mac OS X)
 ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
-	$(RM) $(OBJDIR)\$(KERNELDIR)\KERNEL.BIN
+	$(RM) $(KERNELDIR)\KERNEL.BIN
 	$(RM) $(OBJDIR)\$(KERNELDIR)\cdi\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(SHELLDIR)\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTEST)\*.o
 else
 	$(RM) $(OBJDIR)/$(KERNELDIR)/*.o
-	$(RM) $(OBJDIR)/$(KERNELDIR)/KERNEL.BIN
+	$(RM) $(KERNELDIR)/KERNEL.BIN
 	$(RM) $(OBJDIR)/$(KERNELDIR)/cdi/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(SHELLDIR)/*.o

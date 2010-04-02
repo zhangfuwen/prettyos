@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.311";
+const char* version = "0.0.0.312";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -238,15 +238,6 @@ int main()
 
     while (true)
     {
-        /// FPU-TEST
-        float number1 = 2.5;
-        float number2 = 2.5;
-        float number3 = number1 * number2;
-        char str[40];
-        float2string(number3,3,str);
-        printf("float result: %s\n",str);
-        /// TEST
-
         // Show Rotating Asterisk
         *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *p;
         if (! *++p)
@@ -284,6 +275,18 @@ int main()
             itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
+
+            /// FPU-TEST
+            if ((CurrentSeconds%5)==0)
+            {
+                float number1 = 2.5;
+                float number2 = 2.5;
+                float number3 = number1 * number2;
+                char str[40];
+                float2string(number3,3,str);
+                printf("float result: %s\n",str);
+            }
+            /// TEST
 
 			/*
             /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
