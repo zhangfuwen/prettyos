@@ -58,7 +58,6 @@ void tasking_install()
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
     pODA->curTask = (uintptr_t)current_task;
-    current_task->FPU_flag = false;
     current_task->FPU_ptr = (uintptr_t)NULL;
     current_task->next = 0;
     current_task->console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
@@ -117,11 +116,8 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     ///
 
     new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-
     pODA->curTask = (uintptr_t)new_task;
-    new_task->FPU_flag = false;
     new_task->FPU_ptr = (uintptr_t)NULL;
-
     new_task->next = 0;
 
     if (strcmp(programName, "Shell") == 0)

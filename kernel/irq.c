@@ -50,14 +50,11 @@ uint32_t irq_handler(uint32_t esp)
          printf("#NM: FPU is used. pCurrentTask: %X\n",pCurrentTask);
          settextcolor(15,0);
 
-         // current task uses FPU
-         pCurrentTask->FPU_flag = true;
-
          // save FPU data ...
          if(pODA->TaskFPU)
          {
              // fsave or fnsave to pODA->TaskFPU->FPU_ptr
-             __asm__ volatile("fnsave %0" :: "m" (*(char*)(((task_t*)pODA->TaskFPU)->FPU_ptr)));
+             __asm__ volatile("fsave %0" :: "m" (*(char*)(((task_t*)pODA->TaskFPU)->FPU_ptr)));
          }
 
          // store the last task using FPU
