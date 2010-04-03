@@ -21,7 +21,7 @@ void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, ui
     gdt[num].base_high   = (base >> 24) & 0xFF;
 
     /* Setup the descriptor limits */
-    gdt[num].limit_low   = (limit & 0xFFFF);
+    gdt[num].limit_low   = ( limit & 0xFFFF);
     gdt[num].granularity = ((limit >> 16) & 0x0F);
 
     /* Finally, set up the granularity and access flags */
@@ -36,14 +36,15 @@ void gdt_install()
     gdt_register.base  = (uint32_t) &gdt;
 
     /* GDT GATES -  desriptors with pointers to the linear memory address */
-    gdt_set_gate(0, 0, 0, 0, 0);                // NULL descriptor
-    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // CODE, privilege level 0 for kernel mode (supervisor)
-    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // DATA, privilege level 0 for kernel mode (supervisor)
-    gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // CODE, privilege level 3 for user mode
-    gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // DATA, privilege level 3 for user mode
+    gdt_set_gate(0,0,0,0,0); // NULL descriptor
 
-    write_tss(5, 0x10, 0x0);                    // num, ss0, esp0
+    /*          num base limit     access                                               gran */
+    gdt_set_gate(1, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | CODE_EXEC_READ  , _4KB_ | USE32 | 0xF);
+    gdt_set_gate(2, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | DATA_READ_WRITE , _4KB_ | USE32 | 0xF);
+    gdt_set_gate(3, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | CODE_EXEC_READ  , _4KB_ | USE32 | 0xF);
+    gdt_set_gate(4, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | DATA_READ_WRITE , _4KB_ | USE32 | 0xF);
 
+    write_tss(5, 0x10, 0x0); // num, ss0, esp0
     gdt_flush((uint32_t)&gdt_register);
     tss_flush();
 }
