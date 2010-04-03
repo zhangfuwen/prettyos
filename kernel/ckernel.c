@@ -17,9 +17,10 @@
 #include "sys_speaker.h"
 #include "ehci.h"
 #include "file.h"
+#include "console.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.316";
+const char* version = "0.0.0.317";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -279,6 +280,13 @@ int main()
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
+            if (CurrentSeconds%120==3)
+            {
+                char timeStr[10];
+                sprintf(timeStr, "TIME%s", timeBuffer);
+                screenshot(timeStr);
+            }
+
             /// FPU-TEST
             if ((CurrentSeconds%5)==0)
             {
@@ -291,36 +299,7 @@ int main()
             }
             /// TEST
 
-			/*
-            /// TEST flpydsk_write <-------------------------------------------- TEST TEST TEST TEST TEST
-            if ((CurrentSeconds%400)==0)
-            {
-
-                // buffer for video screen
-                uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
-                int32_t NewLine = 0;
-                int32_t j;
-                for (int32_t i=0; i<4000;i++)
-                {
-                    j=i+2*NewLine;
-                    videoscreen[j] = *(uint8_t*)(0xB8000 + 2*i); // only signs, no attributes
-                    if ((i%80) == 79)
-                    {
-                        // CR LF (0xD 0xA)
-                        videoscreen[j+1]= 0xD;
-                        videoscreen[j+2]= 0xA;
-                        NewLine++;
-                    }
-                }
-
-                char timeStr[10];
-                sprintf(timeStr, "TIME%s", timeBuffer);
-                flpydsk_write(timeStr,"TXT", (void*)videoscreen, 4100);
-            }
-            /// TEST
-			*/
-
-            if ((initEHCIFlag == true) && (CurrentSeconds >= 2) && pciEHCINumber)
+            if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pciEHCINumber)
             {
                 initEHCIFlag = false;
                 initEHCIHostController(pciEHCINumber);
