@@ -44,10 +44,7 @@ uint32_t irq_handler(uint32_t esp)
     if ( r->int_no == 7 ) //exception #NM (number 7)
     {
          // set TS in cr0 to zero
-         uint32_t cr0;
-         __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-         cr0 &= ~0x8; // reset the TS bit (no. 3) in CR0 to disable #NM
-         __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+         __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
 
          settextcolor(12,0);
          printf("#NM: FPU is used. pCurrentTask: %X\n",pCurrentTask);

@@ -243,10 +243,7 @@ uint32_t task_switch (uint32_t esp)
     // set TS
     if (pODA->curTask == pODA->TaskFPU)
     {
-        uint32_t cr0;
-        __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-        cr0 &= ~0x8; // reset the TS bit (no. 3) in CR0 to disable #NM (exception no. 7)
-        __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+        __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
     }
     else
     {
