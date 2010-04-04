@@ -5,8 +5,10 @@
 
 #include "list.h"
 #include "task.h"
+#include "scheduler.h"
 #include "paging.h"
 #include "kheap.h"
+
 
 // Count of running tasks
 int32_t userTaskCounter;
@@ -16,7 +18,7 @@ volatile task_t* current_task;
 console_t* current_console;
 
 // The start of the task linked list.
-volatile task_t* ready_queue;
+volatile task_t* ready_queue; /// TODO: clarify, whether volatile is necessary
 
 // Some externs are needed
 extern tss_entry_t tss;
@@ -52,7 +54,9 @@ void tasking_install()
     settextcolor(15,0);
     #endif
     ///
-    current_task = ready_queue = (task_t*)malloc(sizeof(task_t),0); // first task (kernel task)
+    //current_task = ready_queue = (task_t*)malloc(sizeof(task_t),0); // first task (kernel task)
+    current_task = initTaskQueue();
+
     current_task->id = next_pid++;
     current_task->esp = current_task->ebp = 0;
     current_task->eip = 0;
@@ -137,7 +141,9 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
         }
     }
 
-    task_t* tmp_task = (task_t*)ready_queue;
+    //task_t* tmp_task = (task_t*)ready_queue;
+    task_t* tmp_task = getReadyTask();
+
     while (tmp_task->next)
     {
         tmp_task = tmp_task->next;
@@ -213,7 +219,8 @@ uint32_t task_switch (uint32_t esp)
     current_task = current_task->next; // take the next task
     if (!current_task)
     {
-        current_task = ready_queue;    // start at the beginning of the queue
+        //current_task = ready_queue;    // start at the beginning of the queue
+        current_task = getReadyTask();
     }
 
     // write active task struct address to ODA
@@ -285,7 +292,8 @@ void exit()
 
 
     // delete task in linked list
-    task_t* tmp_task = (task_t*)ready_queue;
+    // task_t* tmp_task = (task_t*)ready_queue;
+    task_t* tmp_task = getReadyTask();
     do
     {
         if (tmp_task->next == current_task)
@@ -334,7 +342,8 @@ void* task_grow_userheap(uint32_t increase)
 
 void log_task_list()
 {
-    task_t* tmp_task = (task_t*)ready_queue;
+    // task_t* tmp_task = (task_t*)ready_queue;
+    task_t* tmp_task = getReadyTask();
     do
     {
         task_log(tmp_task);

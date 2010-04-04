@@ -57,7 +57,7 @@ void mouse_handler(struct regs *a_r) //struct regs *a_r (not used but just there
 					mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
 				if (!(mouse_byte[0] & 0x10))
 					mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
-				
+
 				mouse_x=mouse_x+mouse_byte[1];
 				mouse_y=mouse_y+mouse_byte[2];
 				printf("MouseX: %d - MouseY: %d\n",mouse_x,mouse_y);
@@ -88,10 +88,12 @@ void mouse_handler(struct regs *a_r) //struct regs *a_r (not used but just there
 				mouse_x=mouse_x+mouse_byte[1];
 				mouse_y=mouse_y+mouse_byte[2];
 				mouse_z=mouse_z+mouse_byte[3];
-				printf("MouseX: %d - MouseY: %d\n",mouse_x,mouse_y);
-				printf("LM: %d - MM: %d - RM: %d\n",mouse_lm,mouse_mm,mouse_rm);
-				printf("%y\n",mouseid);
-				printf("Mousewheel: %d\n",mouse_z);
+
+				printf("Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
+				mouse_x,mouse_y,mouse_z,
+				mouse_lm,mouse_mm,mouse_rm,
+				mouseid);
+
 				mouse_cycle=0;
 			}
 			break;
@@ -147,11 +149,11 @@ char mouse_read()
 void mouse_install()
 {
 	char _status;  //unsigned char
-	
+
 	//Enable the auxiliary mouse device
 	mouse_wait(1);
 	outportb(0x64, 0xA8);
-	
+
 	//Enable the interrupts
 	mouse_wait(1);
 	outportb(0x64, 0x20);
@@ -161,27 +163,27 @@ void mouse_install()
 	outportb(0x64, 0x60);
 	mouse_wait(1);
 	outportb(0x60, _status);
-	
+
 	//Tell the mouse to use default settings
 	mouse_write(0xF6);
 	mouse_read();  //Acknowledge
-	
-	
+
+
 	mouse_write(0xF3);
 	mouse_write(0xC8); // Maus auf 200 samples/sek setzen
 	mouse_write(0xF3);
 	mouse_write(0x64); // Maus auf 100 samples/sek setzen
 	mouse_write(0xF3);
 	mouse_write(0x50); // Maus auf 80 samples/sek setzen
-	
+
 	mouse_write(0xF2);
 	mouseid=mouse_read();
-	
-	
+
+
 	//Enable the mouse
 	mouse_write(0xF4);
 	mouse_read();  //Acknowledge
-	
+
 	//Setup the mouse handler
 	irq_install_handler(32+12, mouse_handler);
 }
@@ -194,7 +196,7 @@ void mouse_handler(struct regs* r)
 	static unsigned char cycle = 0;
 	static char mouse_bytes[3];
 	mouse_bytes[cycle++] = inportb(0x60);
-	
+
 	if (cycle == 3) { // if we have all the 3 bytes...
 		cycle = 0; // reset the counter
 		// do what you wish with the bytes, this is just a sample
