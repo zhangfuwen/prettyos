@@ -98,7 +98,7 @@ struct oda
     uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
     uintptr_t curTask;           // Address of currentTask
     uintptr_t TaskFPU;           // Address of Task using FPU
-
+	
     // floppy disk
     bool  flpy_motor[4];         // 0: motor off  1: motor on
                                  // array index is number of floppy drive (0,1,2,3)
@@ -167,6 +167,13 @@ void keyboard_handler(struct regs* r);
 int32_t checkKQ_and_print_char();
 uint8_t checkKQ_and_return_char();
 bool testch();
+
+// mouse.c
+void mouse_install();
+void mouse_wait(unsigned char a_type);
+void mouse_write(char a_write);
+char mouse_read();
+void mouse_handler(struct regs *a_r);
 
 // gtd.c, irq.c, interrupts.asm
 void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);

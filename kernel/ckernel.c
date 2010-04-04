@@ -20,7 +20,7 @@
 #include "console.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.317";
+const char* version = "0.0.0.318";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -78,6 +78,7 @@ static void init()
     idt_install();
     timer_install();
     keyboard_install();
+	mouse_install();
     syscall_install();
     setup_x87_fpu();
     settextcolor(15,0);
@@ -284,7 +285,7 @@ int main()
             {
                 char timeStr[10];
                 sprintf(timeStr, "TIME%s", timeBuffer);
-                screenshot(timeStr);
+                // screenshot(timeStr); ==> iDon't want a screenshot!
             }
 
             /// FPU-TEST
