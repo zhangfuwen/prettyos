@@ -32,27 +32,18 @@ entry_point:
     mov si, msgLoading
     call print_string
 
-;;;;; TEST
-;;;;; 132*60 VESA Text Output
-;; mov ax, 0x4F02
-;; mov bx, 0x010C  ; 132*60 
-;; int 0x10
-;;;;; TEST	---> does not work; where is vid mem?
-
-;;;;; TEST
-;;;;; set 80x50 text mode and 8x8 font
-mov ax, 0x1112
-xor bl, bl
-int 0x10
-;;;;; TEST
+    ; set 80x50 text mode and 8x8 font
+    mov ax, 0x1112
+    xor bl, bl
+    int 0x10
 
 Load_Root_Directory_Table:
     ; compute size of root directory and store in "cx"
     xor cx, cx
     xor dx, dx
-    mov ax, 0x20                             ; 32 byte directory entry
-    mul WORD [RootEntries]                   ; total size of directory
-    div WORD [BytesPerSec]                   ; sectors used by directory
+    mov ax, 0x20                              ; 32 byte directory entry
+    mul WORD [RootEntries]                    ; total size of directory
+    div WORD [BytesPerSec]                    ; sectors used by directory
     xchg ax, cx
 
     ; compute location of root directory and store in "ax"
@@ -91,19 +82,19 @@ Load_Root_Directory_Table:
 Load_FAT:
     ; save starting cluster of boot image
     mov dx, WORD [di + 0x001A]
-    mov WORD [cluster], dx                  ; file's first cluster
+    mov WORD [cluster], dx                   ; file's first cluster
 
     ; compute size of FAT and store in "cx"
     xor ax, ax
-    mov al, BYTE [NumFATs]                  ; number of FATs
-    mul WORD [FATSize]                      ; sectors used by FATs
+    mov al, BYTE [NumFATs]                   ; number of FATs
+    mul WORD [FATSize]                       ; sectors used by FATs
     mov cx, ax
 
     ; compute location of FAT and store in "ax"
-    mov ax, WORD [ReservedSec]              ; adjust for bootsector
+    mov ax, WORD [ReservedSec]               ; adjust for bootsector
 
     ; read FAT into memory (7E00h)
-    mov bx, 0x7E00                          ; copy FAT above bootcode
+    mov bx, 0x7E00                           ; copy FAT above bootcode
     call ReadSectors
 
     ; read image file into memory (0500h)

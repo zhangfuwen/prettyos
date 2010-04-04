@@ -3,7 +3,6 @@
 
 [BITS 16]
 
-;##############################################################################
 ; "FAT 12" file system is build up by four areas at Floppy Disk:
 ; - Boot Sector (also called BIOS Parameter Block, BPB) 
 ; - File Allocation Table, FAT 
@@ -29,8 +28,7 @@ DriveNum            db 0
 Reserved            db 0
 BootSig             db 0x29
 VolumeSerialNum     dd 0xD00FC0DE      
-VolumeLabel         db "PrettyOS   "   ; 11 byte
+VolumeLabel         db "PRETTY OS  "   ; 11 byte
 FileSys             db "FAT12   "      ;  8 byte
-;##############################################################################
 
 %endif

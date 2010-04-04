@@ -1,10 +1,6 @@
 %ifndef GDT_INC
 %define GDT_INC
 
-;******************************************************************************
-;	gdt.inc
-;******************************************************************************
-
 [BITS 16]
 
 InstallGDT:             ; load GDT into GDTR
@@ -44,9 +40,7 @@ DATA_Desc:
                         ; big bit (0=USE16-Segm., 1=USE32-Segm.), 2 bits avail.
                         ; bit 3-0: segment length bits 16-19
     db    0             ; segment base    byte 3
-    
 end_of_gdt:
-
 gdt_limit_and_base: 
     dw end_of_gdt - gdt_data - 1    ; limit (size/length of GDT)
     dd gdt_data                     ; base of GDT

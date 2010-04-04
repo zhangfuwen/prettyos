@@ -98,7 +98,7 @@ struct oda
     uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
     uintptr_t curTask;           // Address of currentTask
     uintptr_t TaskFPU;           // Address of Task using FPU
-	
+
     // floppy disk
     bool  flpy_motor[4];         // 0: motor off  1: motor on
                                  // array index is number of floppy drive (0,1,2,3)
@@ -125,6 +125,10 @@ typedef struct regs registers_t;
 
 // PrettyOS Version string
 extern const char* version;
+
+// fpu.c
+void set_fpu_cw(const uint16_t ctrlword);
+void fpu_install();
 
 // video.c
 void refreshUserScreen();
@@ -155,7 +159,7 @@ void sleepSeconds(uint32_t seconds);
 void sleepMilliSeconds(uint32_t ms);
 void systemTimer_setFrequency(uint32_t freq);
 uint16_t systemTimer_getFrequency();
-void timer_install();
+void timer_install(uint16_t sysfreq);
 void timer_uninstall();
 void delay(uint32_t microsec);
 

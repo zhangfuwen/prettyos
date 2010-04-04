@@ -20,13 +20,13 @@
 #include "console.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.320";
+const char* version = "0.0.0.321";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
 
 // Buffer for User-Space Program
-#define FILEBUFFERSIZE   0x2000
+#define FILEBUFFERSIZE   0x4000 // shell
 
 // RAM disk and user program
 extern uint32_t file_data_start;
@@ -35,52 +35,17 @@ extern uint32_t file_data_end;
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
-void set_fpu_control_word(const uint16_t cw)
-{
-    // FLDCW = Load FPU Control Word
-    __asm__ volatile("fldcw %0;"::"m"(cw)); // sets the FPU control word to "cw"
-
-}
-
-// 9th bit (OSFXSR) in the CR4 tells the CPU
-// that we intend on using the FXSAVE, FXRSTOR, and SSEx instructions.
-void setup_x87_fpu()
-{
-    size_t cr4; // backup of CR4
-
-    // place CR4 into our variable
-    __asm__ volatile("mov %%cr4, %0;" : "=r" (cr4));
-
-    // set the OSFXSR bit
-    cr4 |= 0x200;
-
-    // reload CR4 and INIT the FPU (FINIT)
-    __asm__ volatile("mov %0, %%cr4; finit;" : : "r"(cr4));
-
-    // set the FPU Control Word
-    set_fpu_control_word(0x37F);
-
-    // set TS in cr0
-    uint32_t cr0;
-    __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-    cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
-    __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
-
-   // init TaskFPU in ODA
-   pODA->TaskFPU = (uintptr_t)NULL;
-}
-
 static void init()
 {
     clear_screen();
     settextcolor(14,0);
     gdt_install();
-    idt_install();
-    timer_install();
+    idt_install(); // cf. interrupts.asm
+    timer_install(1000); // Sets system frequency to ... Hz
     keyboard_install();
 	mouse_install();
     syscall_install();
-    setup_x87_fpu();
+    fpu_install();
     settextcolor(15,0);
 }
 

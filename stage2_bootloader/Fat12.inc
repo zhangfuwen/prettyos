@@ -1,11 +1,6 @@
 %ifndef FAT12_INC
 %define FAT12_INC
 
-;******************************************************************************
-;    Fat12.inc
-;    FAT12 filesystem for 3,5" floppy disk
-;******************************************************************************
-
 [BITS 16]
 
 %include "Fat12_BPB.inc"
@@ -235,7 +230,7 @@ push es
 ;=====================================================HOTFIX============
 
     call FindFile               ; find our file. ES:SI contains our filename
-    cmp x, -1
+    cmp ax, -1
     jne .LOAD_IMAGE_PRE
 
 ;=====================================================HOTFIX============
@@ -272,8 +267,8 @@ pop es
     mov cl, BYTE [SecPerClus]
 
 ;=====================================================HOTFIX============
-; ES muß aktualisiert werden falls BX zu groß wird
-; -> kann man machen wie auch immer z.b. so:
+; ES has to be adapted, if BX is too large
+; -> different solutions possible, e.g.:
 cmp bx,0x4000
 jae .LAB0001
 jmp .LAB0005

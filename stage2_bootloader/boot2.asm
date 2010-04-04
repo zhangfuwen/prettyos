@@ -1,7 +1,4 @@
-;******************************************************************************
-;	boot2.asm
-;	Second Stage Bootloader
-;******************************************************************************
+;boot2.asm
 
 [Bits 16]
 org 0x500
@@ -19,11 +16,7 @@ jmp entry_point                  ; go to entry point
 %define IMAGE_RMODE_BASE 0x3000  ; where the kernel is to be loaded to in real mode
 
 ImageName     db "KERNEL  BIN"
-
-;=====================================================HOTFIX============
-;ImageSize     dw 0 muﬂ dd sein wg. "mov [ImageSize], Ecx" weiter unten
 ImageSize     dd 0
-;=====================================================HOTFIX============
 
 ;*******************************************************
 ;	Data Section
@@ -32,23 +25,15 @@ msgLoading db 0x0D, 0x0A, "Jumping to OS Kernel...", 0
 msgFailure db 0x0D, 0x0A, "Missing KERNEL.BIN", 0x0D, 0x0A, 0x0A, 0
 
 entry_point:
-   cli                  ; clear interrupts
-   xor ax, ax           ; null segments
-   mov ds, ax
-   mov es, ax
+    cli                  ; clear interrupts
+    xor ax, ax           ; null segments
+    mov ds, ax
+    mov es, ax
 
-;=====================================================HOTFIX============
-;    mov ss, ax
-;    mov sp, 0xFFFF       ; stack begins at 0xffff (downwards)
-
-; stack bei 0000:FFFF ?
-
-    mov ax,0x1000
-    mov ss,ax
+    mov ax,0x1000 
+    mov ss,ax            ; stack
     xor sp,sp
     dec sp
-;=====================================================HOTFIX============
-
     sti                  ; enable interrupts
 
 A20:
@@ -74,18 +59,18 @@ Install_GDT:
 Load_Root:
 
     call LoadRoot
-    mov ebx, 0
+    xor ebx, ebx
     mov ebp, IMAGE_RMODE_BASE
     mov esi, ImageName
 
 ;=====================================================HOTFIX============
     ; ES muﬂ erstmal IMAGE_RMODE_BASE sein wg. call zu FindFile in Fat12.inc
-    mov bx,0x3000
+    mov bx,IMAGE_RMODE_BASE
     mov es,bx
     xor bx,bx
 ;=====================================================HOTFIX============
 
-    call LoadFile
+    call LoadFile                       ; FAT12.inc
 
     mov DWORD [ImageSize], ecx
     cmp ax, 0

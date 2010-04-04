@@ -15,21 +15,24 @@
 
 bool ShiftKeyDown = false;  // variable for Shift Key Down
 bool CtrlKeyDown  = false;  // variable for Ctrl Key Down
-bool AltKeyDown   = false;    // variable for Alt Key Down
+bool AltKeyDown   = false;  // variable for Alt Key Down
 bool AltGrKeyDown = false;  // variable for AltGr Key Down
 bool KeyPressed   = false;  // variable for Key Pressed
 uint8_t curScan   = 0;      // current scan code from Keyboard
 uint8_t prevScan  = 0;      // previous scan code
 
-
-/* wait until buffer is empty */
-void keyboard_init()
+void keyboard_install()
 {
-    while (inportb(0x64)&1)
+    // Installs 'keyboard_handler' to IRQ1
+    irq_install_handler(32+1, keyboard_handler);
+
+    while (inportb(0x64)&1) // wait until buffer is empty
+    {
         inportb(0x60);
+    }
 }
 
-bool testch()
+bool testch() // delete?
 {
     return current_console->KQ.pHead != current_console->KQ.pTail;
 }
@@ -76,7 +79,8 @@ uint8_t FetchAndAnalyzeScancode()
         {
             AltGrKeyDown = true;
         }
-        else if (curScan == 0x38) {
+        else if (curScan == 0x38)
+        {
             AltKeyDown = true;
         }
         if (curScan == 0x1D)
@@ -98,12 +102,8 @@ uint8_t ScanToASCII()
         return 0;
     }
 
-
-    /// TEST
-    //  printf(" scan:%d ",scan);
-    /// TEST
-
     uint8_t retchar = 0;  // The character that returns the scan code to ASCII code
+
     if (AltGrKeyDown)
     {
         if (ShiftKeyDown)
@@ -140,10 +140,6 @@ uint8_t ScanToASCII()
         }
     }
 
-    /// TEST
-    //  printf("ascii:%x ", retchar);
-    /// TEST
-
     return retchar; // ASCII version
 }
 
@@ -161,7 +157,7 @@ void keyboard_handler(struct regs* r)
        }
        if (reachableConsoles[displayedConsole]->KQ.pTail == reachableConsoles[displayedConsole]->KQ.buffer)
        {
-           reachableConsoles[displayedConsole]->KQ.pTail = (reachableConsoles[displayedConsole]->KQ.buffer)+KQSIZE-1;
+           reachableConsoles[displayedConsole]->KQ.pTail = reachableConsoles[displayedConsole]->KQ.buffer + KQSIZE - 1;
        }
    }
 }
@@ -188,13 +184,6 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
    }
    sti();
    return 0;
-}
-
-void keyboard_install()
-{
-    // Installs 'keyboard_handler' to IRQ1
-    irq_install_handler(32+1, keyboard_handler);
-    keyboard_init();
 }
 
 /*
