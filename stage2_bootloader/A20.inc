@@ -18,7 +18,7 @@ EnableA20:
     jmp .A20_done
    
 .no_fast_A20:         ; no fast shortcut -> use the slow kbc...
-    call empty_8042  
+    call empty_8042
    
     mov al, 0xD1      ; kbc command: write to output port
     out 0x64, al
@@ -51,12 +51,11 @@ empty_8042:
 .done:
     ret
 
-Waitingloop:                   
+Waitingloop:
     mov bx,0xFFFF
 .loop_start:
-    dec bx     
+    dec bx
     jnz .loop_start
-    ret  
+    ret
     
-%endif       
-    
+%endif

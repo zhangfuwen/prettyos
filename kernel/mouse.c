@@ -10,213 +10,214 @@
 #include "os.h"
 
 char mouseid;
-uint32_t mouse_x=10;			// Mouse X
-uint32_t mouse_y=10;			// Mouse Y
-uint32_t mouse_z=0;				// Mouse Z (Mousewheel)
-char mouse_lm=0;				// Mouse Left Button
-char mouse_mm=0;				// Mouse Middle Button
-char mouse_rm=0;				// Mouse Right Button
+uint32_t mouse_x=10;           // Mouse X
+uint32_t mouse_y=10;           // Mouse Y
+uint32_t mouse_z=0;            // Mouse Z (Mousewheel)
+char mouse_lm=0;               // Mouse Left Button
+char mouse_mm=0;               // Mouse Middle Button
+char mouse_rm=0;               // Mouse Right Button
 
-char mouse_cycle=0;			// MouseHandler help
-char mouse_byte[4];			// MouseHandler bytes
+char mouse_cycle=0;            // MouseHandler help
+char mouse_byte[4];            // MouseHandler bytes
 
 
 //Mouse functions
 void mouse_handler(struct regs *a_r) //struct regs *a_r (not used but just there)
 {
-	switch(mouse_cycle)
-	{
-		case 0:
-			mouse_byte[0]=inportb(0x60);
-			if(mouse_byte[0] & (1<<3)) // Only if this is really the first Byte!
-			{
-				mouse_cycle++;
-				mouse_lm=(mouse_byte[0] & 0x1);//<< 0);
-				mouse_rm=(mouse_byte[0] & 0x2);//<< 1);
-				mouse_mm=(mouse_byte[0] & 0x4);//<< 2);
-				if(mouse_rm==2)
-					mouse_rm=1;
-				if(mouse_mm==4)
-					mouse_mm=1;
-			}
-			else
-			{
-				printf("Mouse sent unknown package!\n");
-			}
+    switch(mouse_cycle)
+    {
+        case 0:
+            mouse_byte[0]=inportb(0x60);
+            if(mouse_byte[0] & (1<<3)) // Only if this is really the first Byte!
+            {
+                mouse_cycle++;
+                mouse_lm=(mouse_byte[0] & 0x1);//<< 0);
+                mouse_rm=(mouse_byte[0] & 0x2);//<< 1);
+                mouse_mm=(mouse_byte[0] & 0x4);//<< 2);
+                if(mouse_rm==2)
+                    mouse_rm=1;
+                if(mouse_mm==4)
+                    mouse_mm=1;
+            }
+            else
+            {
+                printf("Mouse sent unknown package!\n");
+            }
 
-			break;
-		case 1:
-			mouse_byte[1]=inportb(0x60);
-			mouse_cycle++;
-			break;
-		case 2:
-			mouse_byte[2]=inportb(0x60);
-			if (mouseid == 0x0)
-			{
-				if (!(mouse_byte[0] & 0x20))
-					mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
-				if (!(mouse_byte[0] & 0x10))
-					mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
+            break;
+        case 1:
+            mouse_byte[1]=inportb(0x60);
+            mouse_cycle++;
+            break;
+        case 2:
+            mouse_byte[2]=inportb(0x60);
+            if (mouseid == 0x0)
+            {
+                if (!(mouse_byte[0] & 0x20))
+                    mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
+                if (!(mouse_byte[0] & 0x10))
+                    mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
 
-				mouse_x=mouse_x+mouse_byte[1];
-				mouse_y=mouse_y+mouse_byte[2];
-				printf("MouseX: %d - MouseY: %d\n",mouse_x,mouse_y);
-				printf("LM: %d - MM: %d - RM: %d\n",mouse_lm,mouse_mm,mouse_rm);
-				printf("%y\n",mouseid);
-				printf("No mousewheel found!\n");
-				mouse_cycle=0;
-			}
-			else
-			{
-				mouse_cycle++;
-			}
+                mouse_x=mouse_x+mouse_byte[1];
+                mouse_y=mouse_y+mouse_byte[2];
+                printf("Mouse: X:%d Y:%d LM:%d MM:%d RM:%d id:%y\n",
+                    mouse_x,mouse_y,mouse_z,
+                    mouse_lm,mouse_mm,mouse_rm,
+                    mouseid);
+                printf("No mousewheel found!\n");
+                mouse_cycle=0;
+            }
+            else
+            {
+                mouse_cycle++;
+            }
 
-			break;
-		case 3:
-			if (mouseid == 0x0)
-			{
-				inportb(0x60);
-				mouse_cycle=0;
-			}
-			else
-			{
-				mouse_byte[3]=inportb(0x60);
-				if (!(mouse_byte[0] & 0x20))
-					mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
-				if (!(mouse_byte[0] & 0x10))
-					mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
-				mouse_x=mouse_x+mouse_byte[1];
-				mouse_y=mouse_y+mouse_byte[2];
-				mouse_z=mouse_z+mouse_byte[3];
+            break;
+        case 3:
+            if (mouseid == 0x0)
+            {
+                inportb(0x60);
+                mouse_cycle=0;
+            }
+            else
+            {
+                mouse_byte[3]=inportb(0x60);
+                if (!(mouse_byte[0] & 0x20))
+                    mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
+                if (!(mouse_byte[0] & 0x10))
+                    mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
+                mouse_x=mouse_x+mouse_byte[1];
+                mouse_y=mouse_y+mouse_byte[2];
+                mouse_z=mouse_z+mouse_byte[3];
 
-				printf("Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
-				mouse_x,mouse_y,mouse_z,
-				mouse_lm,mouse_mm,mouse_rm,
-				mouseid);
+                printf("Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
+                    mouse_x,mouse_y,mouse_z,
+                    mouse_lm,mouse_mm,mouse_rm,
+                    mouseid);
 
-				mouse_cycle=0;
-			}
-			break;
-	}
+                mouse_cycle=0;
+            }
+            break;
+    }
 }
 
 inline void mouse_wait(unsigned char a_type) //unsigned char
 {
-	unsigned int _time_out=100000; //unsigned int
-	if(a_type==0)
-	{
-		while(_time_out--) //Data
-		{
-			if((inportb(0x64) & 1)==1)
-			{
-				return;
-			}
-		}
-		return;
-	}
-	else
-	{
-		while(_time_out--) //Signal
-		{
-			if((inportb(0x64) & 2)==0)
-			{
-				return;
-			}
-		}
-		return;
-	}
+    unsigned int _time_out=100000; //unsigned int
+    if(a_type==0)
+    {
+        while(_time_out--) //Data
+        {
+            if((inportb(0x64) & 1)==1)
+            {
+                return;
+            }
+        }
+        return;
+    }
+    else
+    {
+        while(_time_out--) //Signal
+        {
+            if((inportb(0x64) & 2)==0)
+            {
+                return;
+            }
+        }
+        return;
+    }
 }
 
 inline void mouse_write(char a_write) //unsigned char
 {
-	//Wait to be able to send a command
-	mouse_wait(1);
-	//Tell the mouse we are sending a command
-	outportb(0x64, 0xD4);
-	//Wait for the final part
-	mouse_wait(1);
-	//Finally write
-	outportb(0x60, a_write);
+    //Wait to be able to send a command
+    mouse_wait(1);
+    //Tell the mouse we are sending a command
+    outportb(0x64, 0xD4);
+    //Wait for the final part
+    mouse_wait(1);
+    //Finally write
+    outportb(0x60, a_write);
 }
 
 char mouse_read()
 {
-	//Get's response from mouse
-	mouse_wait(0);
-	return inportb(0x60);
+    //Get's response from mouse
+    mouse_wait(0);
+    return inportb(0x60);
 }
 
 void mouse_install()
 {
-	char _status;  //unsigned char
+    char _status;  //unsigned char
 
-	//Enable the auxiliary mouse device
-	mouse_wait(1);
-	outportb(0x64, 0xA8);
+    //Enable the auxiliary mouse device
+    mouse_wait(1);
+    outportb(0x64, 0xA8);
 
-	//Enable the interrupts
-	mouse_wait(1);
-	outportb(0x64, 0x20);
-	mouse_wait(0);
-	_status=(inportb(0x60) | 2);
-	mouse_wait(1);
-	outportb(0x64, 0x60);
-	mouse_wait(1);
-	outportb(0x60, _status);
+    //Enable the interrupts
+    mouse_wait(1);
+    outportb(0x64, 0x20);
+    mouse_wait(0);
+    _status=(inportb(0x60) | 2);
+    mouse_wait(1);
+    outportb(0x64, 0x60);
+    mouse_wait(1);
+    outportb(0x60, _status);
 
-	//Tell the mouse to use default settings
-	mouse_write(0xF6);
-	mouse_read();  //Acknowledge
-
-
-	mouse_write(0xF3);
-	mouse_write(0xC8); // Maus auf 200 samples/sek setzen
-	mouse_write(0xF3);
-	mouse_write(0x64); // Maus auf 100 samples/sek setzen
-	mouse_write(0xF3);
-	mouse_write(0x50); // Maus auf 80 samples/sek setzen
-
-	mouse_write(0xF2);
-	mouseid=mouse_read();
+    //Tell the mouse to use default settings
+    mouse_write(0xF6);
+    mouse_read();  //Acknowledge
 
 
-	//Enable the mouse
-	mouse_write(0xF4);
-	mouse_read();  //Acknowledge
+    mouse_write(0xF3);
+    mouse_write(0xC8); // Maus auf 200 samples/sek setzen
+    mouse_write(0xF3);
+    mouse_write(0x64); // Maus auf 100 samples/sek setzen
+    mouse_write(0xF3);
+    mouse_write(0x50); // Maus auf 80 samples/sek setzen
 
-	//Setup the mouse handler
-	irq_install_handler(32+12, mouse_handler);
+    mouse_write(0xF2);
+    mouseid=mouse_read();
+
+
+    //Enable the mouse
+    mouse_write(0xF4);
+    mouse_read();  //Acknowledge
+
+    //Setup the mouse handler
+    irq_install_handler(32+12, mouse_handler);
 }
 
 
 /*
 void mouse_handler(struct regs* r)
 {
-	//printf("Mouse_handler called!\n");
-	static unsigned char cycle = 0;
-	static char mouse_bytes[3];
-	mouse_bytes[cycle++] = inportb(0x60);
+    //printf("Mouse_handler called!\n");
+    static unsigned char cycle = 0;
+    static char mouse_bytes[3];
+    mouse_bytes[cycle++] = inportb(0x60);
 
-	if (cycle == 3) { // if we have all the 3 bytes...
-		cycle = 0; // reset the counter
-		// do what you wish with the bytes, this is just a sample
-		if ((mouse_bytes[0] & 0x80) || (mouse_bytes[0] & 0x40))
-			return; // the mouse only sends information about overflowing, do not care about it and return
-		if (!(mouse_bytes[0] & 0x20))
-			mouse_bytes[2] |= 0xFFFFFF00; //delta-y is a negative value
-		if (!(mouse_bytes[0] & 0x10))
-			mouse_bytes[1] |= 0xFFFFFF00; //delta-x is a negative value
-		if (mouse_bytes[0] & 0x4)
-			printf("Middle button is pressed!\n");
-		if (mouse_bytes[0] & 0x2)
-			printf("Right button is pressed!\n");
-		if (mouse_bytes[0] & 0x1)
-			printf("Left button is pressed!\n");
-		// do what you want here, just replace the puts's to execute an action for each button
-		// to use the coordinate data, use mouse_bytes[1] for delta-x, and mouse_bytes[2] for delta-y
-		mouse_x=mouse_bytes[1];
-		mouse_y=mouse_bytes[2];
-		printf("Mouse_x: %d - Mouse_y: %d\n",mouse_x,mouse_y);
+    if (cycle == 3) { // if we have all the 3 bytes...
+        cycle = 0; // reset the counter
+        // do what you wish with the bytes, this is just a sample
+        if ((mouse_bytes[0] & 0x80) || (mouse_bytes[0] & 0x40))
+            return; // the mouse only sends information about overflowing, do not care about it and return
+        if (!(mouse_bytes[0] & 0x20))
+            mouse_bytes[2] |= 0xFFFFFF00; //delta-y is a negative value
+        if (!(mouse_bytes[0] & 0x10))
+            mouse_bytes[1] |= 0xFFFFFF00; //delta-x is a negative value
+        if (mouse_bytes[0] & 0x4)
+            printf("Middle button is pressed!\n");
+        if (mouse_bytes[0] & 0x2)
+            printf("Right button is pressed!\n");
+        if (mouse_bytes[0] & 0x1)
+            printf("Left button is pressed!\n");
+        // do what you want here, just replace the puts's to execute an action for each button
+        // to use the coordinate data, use mouse_bytes[1] for delta-x, and mouse_bytes[2] for delta-y
+        mouse_x=mouse_bytes[1];
+        mouse_y=mouse_bytes[2];
+        printf("Mouse_x: %d - Mouse_y: %d\n",mouse_x,mouse_y);
   }
 }
 */
