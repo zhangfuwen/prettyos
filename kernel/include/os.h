@@ -174,7 +174,10 @@ bool testch();
 
 // mouse.c
 void mouse_install();
+void mouse_uninstall();
+void mouse_setsamples(unsigned char samples_per_second);
 void mouse_wait(unsigned char a_type);
+void mouse_initspecialfeatures();
 void mouse_write(char a_write);
 char mouse_read();
 void mouse_handler(struct regs *a_r);

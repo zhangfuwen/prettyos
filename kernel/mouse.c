@@ -1,11 +1,12 @@
 /*
 *  license and disclaimer for the use of this source code as per statement below
-*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+*  Lizenz und Haftungsausschluss fŸr die Verwendung dieses Sourcecodes siehe unten
 */
 
 // http://houbysoft.com/download/ps2mouse.html
 // http://forum.osdev.org/viewtopic.php?t=10247
-// 'ported' by Cuervo
+// http://lowlevel.brainsware.org/wiki/index.php/Programmierung_der_PS/2-Maus
+// 'ported' and debugged by Cuervo
 
 #include "os.h"
 
@@ -16,6 +17,8 @@ uint32_t mouse_z=0;            // Mouse Z (Mousewheel)
 char mouse_lm=0;               // Mouse Left Button
 char mouse_mm=0;               // Mouse Middle Button
 char mouse_rm=0;               // Mouse Right Button
+char mouse_b4=0;               // Mouse Button 4
+char mouse_b5=0;               // Mouse button 5
 
 char mouse_cycle=0;            // MouseHandler help
 char mouse_byte[4];            // MouseHandler bytes
@@ -74,14 +77,9 @@ void mouse_handler(struct regs *a_r) //struct regs *a_r (not used but just there
 
             break;
         case 3:
-            if (mouseid == 0x0)
+            if (mouseid == 1) // Mouse has 'only' a scrollwheel
             {
-                inportb(0x60);
-                mouse_cycle=0;
-            }
-            else
-            {
-                mouse_byte[3]=inportb(0x60);
+				mouse_byte[3]=inportb(0x60);
                 if (!(mouse_byte[0] & 0x20))
                     mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
                 if (!(mouse_byte[0] & 0x10))
@@ -89,12 +87,34 @@ void mouse_handler(struct regs *a_r) //struct regs *a_r (not used but just there
                 mouse_x=mouse_x+mouse_byte[1];
                 mouse_y=mouse_y+mouse_byte[2];
                 mouse_z=mouse_z+mouse_byte[3];
-
+				
                 printf("Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
-                    mouse_x,mouse_y,mouse_z,
-                    mouse_lm,mouse_mm,mouse_rm,
-                    mouseid);
-
+					   mouse_x,mouse_y,mouse_z,
+					   mouse_lm,mouse_mm,mouse_rm,
+					   mouseid);
+				
+                mouse_cycle=0;
+            }
+            else // Mouse has also Buttons 4+5
+            {
+				mouse_byte[3]=inportb(0x60);
+                if (!(mouse_byte[0] & 0x20))
+                    mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
+                if (!(mouse_byte[0] & 0x10))
+                    mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
+                
+				mouse_b4=(mouse_byte[3] & 0x16);
+				mouse_b5=(mouse_byte[3] & 0x32);
+				mouse_x=mouse_x+mouse_byte[1];
+                mouse_y=mouse_y+mouse_byte[2];
+                mouse_z=mouse_z+(mouse_byte[3] & 0xF);
+				printf("%y: %y\n",mouse_byte[3],(mouse_byte[3] & 0xF));
+				/*
+                printf("Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
+					   mouse_x,mouse_y,mouse_z,
+					   mouse_lm,mouse_mm,mouse_rm,
+					   mouseid);
+				*/
                 mouse_cycle=0;
             }
             break;
@@ -147,9 +167,76 @@ char mouse_read()
     return inportb(0x60);
 }
 
+void mouse_setsamples(unsigned char samples_per_second)
+{
+	mouse_write(0xF3);
+	switch(samples_per_second)
+	{
+		case 10:
+			mouse_write(0x0A);
+			break;
+		case 20:
+			mouse_write(0x14);
+			break;
+		case 40:
+			mouse_write(0x28);
+			break;
+		case 60:
+			mouse_write(0x3C);
+			break;
+		case 80:
+			mouse_write(0x50);
+			break;
+		case 100:
+			mouse_write(0x64);
+			break;
+		case 200:
+			mouse_write(0xC8);
+			break;
+		default: // Sorry, mouse just has 10/20/40/60/80/100/200 Samples/sec, so
+				 // we go back to 80..
+			mouse_setsamples(80);
+			break;
+	}
+}
+
+void mouse_initspecialfeatures()
+{
+	// Wheel-Mode test
+	mouse_setsamples(200);
+	mouse_setsamples(100);
+	mouse_setsamples(80);
+    mouse_write(0xF2);
+    mouseid=mouse_read();
+	if(mouseid != 0x0)
+	{
+		mouseid=1;
+	}
+	else
+	{
+		return;
+	}
+	
+	// Sorry, 5-Buttons does not work, so here we
+	return;
+	
+	// Wheel-and-5-Button-Mode test
+	mouse_setsamples(200);
+	mouse_setsamples(200);
+	mouse_setsamples(80);
+    mouse_write(0xF2);
+    mouseid=mouse_read();
+	if(mouseid != 0x0 && mouseid != 0x01)
+	{
+		mouseid=2;
+	}
+	
+	return;
+}
+
 void mouse_install()
 {
-    char _status;  //unsigned char
+    unsigned char _status;
 
     //Enable the auxiliary mouse device
     mouse_wait(1);
@@ -167,26 +254,25 @@ void mouse_install()
 
     //Tell the mouse to use default settings
     mouse_write(0xF6);
-    mouse_read();  //Acknowledge
-
-
-    mouse_write(0xF3);
-    mouse_write(0xC8); // Maus auf 200 samples/sek setzen
-    mouse_write(0xF3);
-    mouse_write(0x64); // Maus auf 100 samples/sek setzen
-    mouse_write(0xF3);
-    mouse_write(0x50); // Maus auf 80 samples/sek setzen
-
-    mouse_write(0xF2);
-    mouseid=mouse_read();
+    mouse_read();
+	
+	
+	// Check mouse for special features (mousewheel (up/down), button 4+5) 
+	mouse_initspecialfeatures();
 
 
     //Enable the mouse
     mouse_write(0xF4);
-    mouse_read();  //Acknowledge
+    mouse_read();
 
     //Setup the mouse handler
     irq_install_handler(32+12, mouse_handler);
+}
+
+void mouse_uninstall()
+{
+	irq_uninstall_handler(32+12);
+	mouse_write(0xFF);
 }
 
 
@@ -224,7 +310,7 @@ void mouse_handler(struct regs* r)
 
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
