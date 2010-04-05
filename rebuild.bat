@@ -1,5 +1,6 @@
 cls
 del FloppyImage.img
+tools\mingw32-make clean OS=WINDOWS
 tools\mingw32-make FloppyImage.img OS=WINDOWS
 
 @echo off

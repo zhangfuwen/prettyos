@@ -42,8 +42,7 @@ vpath %.o $(OBJDIR)
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
 
 # targets to build PrettyOS
-.PHONY: clean all
-all: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN FloppyImage.bin
+.PHONY: clean
 
 $(STAGE1DIR)/boot.bin:
 	$(NASM) -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
@@ -51,6 +50,8 @@ $(STAGE2DIR)/BOOT2.BIN:
 	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(KERNEL_OBJECTS)
+#	because changes in the Shell should change data.o we build data.o everytimes
+	$(NASM) $(KERNELDIR)/data.asm $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$(KERNELDIR)/data.o
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 
 $(USERDIR)/$(SHELLDIR)/program.elf: $(SHELL_OBJECTS)
@@ -62,26 +63,32 @@ $(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/program.elf
 
 $(USERDIR)/$(USERTEST)/HELLO.ELF: $(TESTC_OBJCETS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(TESTC_OBJECTS)) -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(USERTEST)/user.map -o $(USERDIR)/$(SHELLDIR)/HELLO.ELF
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(TESTC_OBJECTS)) -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(USERTEST)/user.map -o $(USERDIR)/$(USERTEST)/HELLO.ELF
 
-FloppyImage.bin: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN #$(USERDIR)/$(USERTEST)/HELLO.ELF
-	tools/CreateFloppyImage2 PrettyOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF
+FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN #$(USERDIR)/$(USERTEST)/HELLO.ELF
+	tools/CreateFloppyImage2 PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF
+
 
 
 clean:
 # OS-dependant code because of different interpretation of "/" in Windows and UNIX-OS (Linux and Mac OS X)
 ifeq ($(OS),WINDOWS)
+	$(RM) $(STAGE1DIR)\boot.bin
+	$(RM) $(STAGE2DIR)\BOOT2.BIN
 	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
 	$(RM) $(KERNELDIR)\KERNEL.BIN
 	$(RM) $(OBJDIR)\$(KERNELDIR)\cdi\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(SHELLDIR)\*.o
+	$(RM) $(USERDIR)\$(SHELLDIR)\program.elf
 	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTEST)\*.o
 else
+	$(RM) $(STAGE1DIR)/boot.bin
+	$(RM) $(STAGE2DIR)/BOOT2.BIN
 	$(RM) $(OBJDIR)/$(KERNELDIR)/*.o
 	$(RM) $(KERNELDIR)/KERNEL.BIN
 	$(RM) $(OBJDIR)/$(KERNELDIR)/cdi/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(SHELLDIR)/*.o
+	$(RM) $(USERDIR)/$(SHELLDIR)/program.elf
 	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTEST)/*.o
 endif
