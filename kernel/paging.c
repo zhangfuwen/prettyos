@@ -333,7 +333,7 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
         pt->pages[pagenr%1024] = phys | flags | MEM_PRESENT;
 
         #ifdef _DIAGNOSIS_
-        if(flags&MEM_USER)
+        if (flags&MEM_USER)
         {
             printf("pagenumber now allocated: %d phys: %X\n",pagenr,phys);
         }

@@ -754,7 +754,7 @@ void bootscreen() {
     printf("    ##       ##       ######   ###   ###   ###       #####      #####\n");
     printf("                                           ##\n");
     printf("                                          ##\n");
-    printf("                                         ##\n");    
+    printf("                                         ##\n");
     printf("\n\n");
     settextcolor(14,0);
     printf("                     Copyright (c) 2010 The PrettyOS Team\n");
@@ -777,7 +777,7 @@ void bootscreen() {
     printf(" created");
     beep(622,200); // Es
     printf(" by\n\n");
-    
+
     beep(523,200); // C
     printf("                     Cuervo,");
     beep(659,200); // E
@@ -789,7 +789,7 @@ void bootscreen() {
     beep(689,200); // F
     printf(" team");
     beep(659,200); // E
-    
+
     beep(523,1000); // C
     settextcolor(15,0);
     printf("\n\n\n\n\n");

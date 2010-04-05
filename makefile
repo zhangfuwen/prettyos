@@ -9,8 +9,8 @@ else
     RM= rm -f
     MV= mv
     NASM= nasm
-    CC= gcc
-    LD= ld
+    CC= i586-elf-gcc
+    LD= i586-elf-ld
 endif
 
 # Folders
@@ -43,6 +43,8 @@ vpath %.o $(OBJDIR)
 
 # targets to build PrettyOS
 .PHONY: clean
+
+all: FloppyImage.img
 
 $(STAGE1DIR)/boot.bin:
 	$(NASM) -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin

@@ -100,7 +100,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     new_task->id  = next_pid++;
     new_task->page_directory = directory;
 
-    if ( privilege == 3 /*&& (strcmp(programName, "Shell") != 0)*/ )
+    if (privilege == 3 /*&& (strcmp(programName, "Shell") != 0)*/)
     {
         new_task->heap_top = USER_HEAP_START;
 

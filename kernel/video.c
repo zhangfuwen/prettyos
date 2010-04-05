@@ -45,7 +45,7 @@ void refreshUserScreen() {
     kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
     // copying content of visible console to the video-ram
     memcpy((void*)((uint32_t)(vidmem) + USER_BEGIN * COLUMNS * 2), (void*)(uint32_t)(reachableConsoles[displayedConsole]->vidmem), COLUMNS * USER_LINES*2);
-	update_cursor();
+    update_cursor();
 }
 
 uint8_t AsciiToCP437(uint8_t ascii)

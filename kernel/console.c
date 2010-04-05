@@ -137,12 +137,12 @@ void putch(char c)
             break;
         case 0x09: // tab: increment csr_x (divisible by 8)
             current_console->csr_x = (current_console->csr_x + 8) & ~(8 - 1);
-			if (current_console->csr_x>=COLUMNS)
-			{
-				++current_console->csr_y;
-				current_console->csr_x=0;
-				scroll();
-			}
+            if (current_console->csr_x>=COLUMNS)
+            {
+                ++current_console->csr_y;
+                current_console->csr_x=0;
+                scroll();
+            }
             break;
         case '\r': // cr: cursor back to the margin
             move_cursor_home();
@@ -159,7 +159,7 @@ void putch(char c)
                     *(vidmem + (current_console->csr_y+2) * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color
                 }
                 *(current_console->vidmem + current_console->csr_y * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color
-			    move_cursor_right();
+                move_cursor_right();
             }
             break;
     }

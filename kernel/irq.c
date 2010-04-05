@@ -41,7 +41,7 @@ uint32_t irq_handler(uint32_t esp)
     struct regs* r = (struct regs*)esp;
     task_t* pCurrentTask = (task_t*)(pODA->curTask);
 
-    if ( r->int_no == 7 ) //exception #NM (number 7)
+    if (r->int_no == 7) //exception #NM (number 7)
     {
          // set TS in cr0 to zero
          __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
@@ -51,7 +51,7 @@ uint32_t irq_handler(uint32_t esp)
          settextcolor(15,0);
 
          // save FPU data ...
-         if(pODA->TaskFPU)
+         if (pODA->TaskFPU)
          {
              // fsave or fnsave to pODA->TaskFPU->FPU_ptr
              __asm__ volatile("fsave %0" :: "m" (*(char*)(((task_t*)pODA->TaskFPU)->FPU_ptr)));
@@ -61,7 +61,7 @@ uint32_t irq_handler(uint32_t esp)
          pODA->TaskFPU = (uintptr_t)pCurrentTask;
 
          // restore FPU data ...
-         if(pCurrentTask->FPU_ptr)
+         if (pCurrentTask->FPU_ptr)
          {
              // frstor from pCurrentTask->FPU_ptr
              __asm__ volatile("frstor %0" :: "m" (*(char*)(pCurrentTask->FPU_ptr)));
@@ -73,7 +73,7 @@ uint32_t irq_handler(uint32_t esp)
          }
     }
 
-    if ( (r->int_no < 32) && (r->int_no != 7) ) //exception w/o #NM
+    if ((r->int_no < 32) && (r->int_no != 7)) //exception w/o #NM
     {
         settextcolor(12,0);
         flpydsk_control_motor(false); // floppy motor off
@@ -114,9 +114,9 @@ uint32_t irq_handler(uint32_t esp)
         printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
 
         printf("\n\n");
-		settextcolor(11,0);
+        settextcolor(11,0);
         printf("%s!\n", exception_messages[r->int_no]);
-		printf("| <Exception - System Halted!> |");
+        printf("| <Exception - System Halted!> |");
         for (;;);
     }
 

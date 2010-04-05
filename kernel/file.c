@@ -385,7 +385,7 @@ int32_t file_ia_cache(int32_t* fatEntry, uint32_t firstCluster, void* fileData) 
     printf("\n\n1st sector: %d\n",sectornumber);
 
     // flpydsk_read_ia(sectornumber,a,SECTOR);
-    for(n=0;n<5;n++)
+    for (n=0;n<5;n++)
     {
         if (sectornumber/18 == cacheTrackNumber[n])
             break;
@@ -411,7 +411,7 @@ int32_t file_ia_cache(int32_t* fatEntry, uint32_t firstCluster, void* fileData) 
         printf("sector: %d\t",sectornumber);
 
         //flpydsk_read_ia(sectornumber,a,SECTOR);
-        for(n=0;n<5;n++)
+        for (n=0;n<5;n++)
         {
             if (sectornumber/18 == cacheTrackNumber[n])
                 break;
