@@ -69,8 +69,8 @@ typedef unsigned int gid_t; // Defined like in tyndur
 #define PLACEMENT_END   ((char*)(20*1024*1024))
 
 // User Heap management
-#define USER_HEAP_START ((char*)(20*1024*1024))
-#define USER_HEAP_END   ((char*)(KERNEL_DATA_START - 16*1024*1024))
+#define USER_HEAP_START ((uint8_t*)(20*1024*1024))
+#define USER_HEAP_END   ((uint8_t*)(KERNEL_DATA_START - 16*1024*1024))
 
 // User Stack
 #define USER_STACK 0x1420000

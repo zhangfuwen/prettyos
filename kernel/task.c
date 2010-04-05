@@ -9,24 +9,18 @@
 #include "paging.h"
 #include "kheap.h"
 
-
-// Count of running tasks
+// Count of running user tasks
 int32_t userTaskCounter;
 
 // The currently running and currently displayed task.
-volatile task_t* current_task;
+volatile task_t* current_task; /// TODO: clarify, whether volatile is necessary
 console_t* current_console;
-
-// The start of the task linked list.
-volatile task_t* ready_queue; /// TODO: clarify, whether volatile is necessary
 
 // Some externs are needed
 extern tss_entry_t tss;
 extern void irq_tail();
-extern uint32_t read_eip();
 
-uint32_t next_pid = 1; // The next available process ID.
-
+uint32_t next_pid = 0; // The next available process ID.
 
 int32_t getpid()
 {
@@ -54,22 +48,22 @@ void tasking_install()
     settextcolor(15,0);
     #endif
     ///
-    //current_task = ready_queue = (task_t*)malloc(sizeof(task_t),0); // first task (kernel task)
-    current_task = initTaskQueue();
 
+    current_task = initTaskQueue();
     current_task->id = next_pid++;
     current_task->esp = current_task->ebp = 0;
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
     pODA->curTask = (uintptr_t)current_task;
     current_task->FPU_ptr = (uintptr_t)NULL;
-    current_task->next = 0;
+    current_task->next = 0; // scheduler.c setNextTask(...) ??
     current_task->console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
     console_init(current_task->console, "");
     reachableConsoles[10] = current_task->console; // reachableConsoles[10] is reserved for kernels console
     current_console = current_task->console; // Kernels console is currently active (does not mean that it is visible)
     current_console->SCROLL_END = 39;
     refreshUserScreen();
+
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
@@ -79,9 +73,8 @@ void tasking_install()
     ///
 
     current_task->kernel_stack = (uint32_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-    sti();
-
     userTaskCounter = 0;
+    sti();
 }
 
 task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege, const char* programName)
@@ -100,9 +93,9 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     new_task->id  = next_pid++;
     new_task->page_directory = directory;
 
-    if (privilege == 3 /*&& (strcmp(programName, "Shell") != 0)*/)
+    if (privilege == 3)
     {
-        new_task->heap_top = USER_HEAP_START;
+        new_task->heap_top = (uint8_t*)USER_HEAP_START;
 
         #ifdef _DIAGNOSIS_
         printf("task: %X. Alloc user-stack: \n",new_task);
@@ -124,7 +117,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     new_task->FPU_ptr = (uintptr_t)NULL;
     new_task->next = 0;
 
-    if (strcmp(programName, "Shell") == 0)
+    if (strcmp(programName, "Shell") == 0) // TODO: use parameter instead of name
     {
         new_task->console = reachableConsoles[10]; // The Shell uses the same console as the kernel
     }
@@ -132,8 +125,10 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     {
         new_task->console = malloc(sizeof(console_t), PAGESIZE);
         console_init(new_task->console, programName);
-        for (uint8_t i = 0; i < 10; i++) { // The next free place in our console-list will be filled with the new console
-            if (reachableConsoles[i] == 0) {
+        for (uint8_t i = 0; i < 10; i++)
+        { // The next free place in our console-list will be filled with the new console
+            if (reachableConsoles[i] == 0)
+            {
                 reachableConsoles[i] = new_task->console;
                 changeDisplayedConsole(i); //Switching to the new console
                 break;
@@ -141,23 +136,16 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
         }
     }
 
-    //task_t* tmp_task = (task_t*)ready_queue;
     task_t* tmp_task = getReadyTask();
 
-    while (tmp_task->next)
+    while (tmp_task->next) // find last task in queue
     {
         tmp_task = tmp_task->next;
     }
-    tmp_task->next = new_task;
+    tmp_task->next = new_task; // new task is now the last one
 
     uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
-
     uint32_t code_segment=0x08, data_segment=0x10;
-
-
-///TEST///
-    *(--kernel_stack) = 0x0;  // return address dummy
-///TEST///
 
     if (privilege == 3)
     {
@@ -197,7 +185,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     tss.ss    = data_segment;
 
     //setup task_t
-    new_task->ebp = 0xd00fc0de; // test value
+    new_task->ebp = 0xD00FC0DE; // test value
     new_task->esp = (uint32_t)kernel_stack;
     new_task->eip = (uint32_t)irq_tail;
     new_task->ss  = data_segment;
@@ -219,7 +207,6 @@ uint32_t task_switch (uint32_t esp)
     current_task = current_task->next; // take the next task
     if (!current_task)
     {
-        //current_task = ready_queue;    // start at the beginning of the queue
         current_task = getReadyTask();
     }
 
@@ -277,8 +264,10 @@ void exit()
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
     for (int i = 0; i < 10; i++)
     {
-        if (current_task->console == reachableConsoles[i]) {
-            if (i == displayedConsole) {
+        if (current_task->console == reachableConsoles[i])
+        {
+            if (i == displayedConsole)
+            {
                 changeDisplayedConsole(10);
             }
             reachableConsoles[i] = 0;
@@ -286,14 +275,13 @@ void exit()
         }
     }
     console_exit(current_task->console);
-    if (current_task->console != reachableConsoles[10]) {
+    if (current_task->console != reachableConsoles[10])
+    {
         free(current_task->console);
     }
 
-
     // delete task in linked list
-    // task_t* tmp_task = (task_t*)ready_queue;
-    task_t* tmp_task = getReadyTask();
+    task_t* tmp_task = getReadyTask(); // ---> scheduler.c
     do
     {
         if (tmp_task->next == current_task)
@@ -306,12 +294,10 @@ void exit()
         }
     }
     while (tmp_task->next);
-    // printf("after delete task in linked list.\n");
 
     // free memory at heap
     free(pkernelstack);
     free(ptask);
-    // printf("pid: %d t: %x ks: %x <---heap freed.\n",getpid(),ptask,pkernelstack);
 
     #ifdef _DIAGNOSIS_
     log_task_list();
@@ -326,19 +312,18 @@ void exit()
 
 void* task_grow_userheap(uint32_t increase)
 {
+    uint8_t* old_heap_top = current_task->heap_top;
     increase = alignUp(increase, PAGESIZE);
 
-    if (current_task->heap_top + increase > USER_HEAP_END)
-        return false;
-
-    if (! paging_alloc(current_task->page_directory, current_task->heap_top, increase, MEM_USER | MEM_WRITE))
+    if (((uintptr_t)old_heap_top + increase) > (uintptr_t)USER_HEAP_END)
         return NULL;
 
-    void* before = current_task->heap_top;
-    current_task->heap_top += increase;
-    return before;
-}
+    if (! paging_alloc(current_task->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
+        return NULL;
 
+    current_task->heap_top += increase; // correct???
+    return old_heap_top;
+}
 
 void log_task_list()
 {

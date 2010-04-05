@@ -16,7 +16,7 @@ struct task
     uint32_t eip;                     // Instruction pointer.
     uint32_t ss;
     page_directory_t* page_directory; // Page directory.
-    char* heap_top;
+    uint8_t* heap_top;
     uint32_t kernel_stack;            // Kernel stack location.
     uintptr_t FPU_ptr;                // pointer to FPU data
     struct task* next;                // The next task in a linked list.
