@@ -4,6 +4,7 @@
 */
 
 #include "task.h"
+#include "scheduler.h"
 #include "kheap.h"
 
 // The start of the task linked list.
@@ -37,7 +38,7 @@ task_t* getLastTask()
 }
 
 // take task out of linked list
-void clearTaskTask(task_t* task1)
+void clearTask(task_t* task1)
 {
     task_t* tmp_task = getReadyTask();
     do

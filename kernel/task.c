@@ -24,7 +24,7 @@ uint32_t next_pid = 0; // The next available process ID.
 
 int32_t getpid()
 {
-    return current_task->id;
+    return current_task->pid;
 }
 
 void settaskflag(int32_t i)
@@ -50,10 +50,11 @@ void tasking_install()
     ///
 
     current_task = initTaskQueue();
-    current_task->id = next_pid++;
-    current_task->esp = current_task->ebp = 0;
+    current_task->pid = next_pid++;
+    current_task->esp = 0;
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
+    current_task->privilege = 0;
     pODA->curTask = (uintptr_t)current_task;
     current_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask((task_t*)current_task, NULL); // last task in queue
@@ -90,8 +91,10 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     ///
 
     task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
-    new_task->id  = next_pid++;
+    new_task->pid  = next_pid++;
     new_task->page_directory = directory;
+    new_task->privilege = privilege;
+    new_task->threadFlag = false;
 
     if (privilege == 3)
     {
@@ -179,7 +182,115 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     tss.ss    = data_segment;
 
     //setup task_t
-    new_task->ebp = 0xD00FC0DE; // test value
+    new_task->esp = (uint32_t)kernel_stack;
+    new_task->eip = (uint32_t)irq_tail;
+    new_task->ss  = data_segment;
+
+    #ifdef _DIAGNOSIS_
+    task_log(new_task);
+    #endif
+
+    sti();
+    return new_task;
+}
+
+task_t* create_thread(task_t* parentTask, void* entry)
+{
+    cli();
+
+    ///
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+    printf("cr_thread: ");
+    settextcolor(15,0);
+    #endif
+    ///
+
+    task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
+    new_task->pid  = parentTask->pid;
+    new_task->page_directory = parentTask->page_directory;
+    uint8_t privilege = parentTask->privilege;
+    new_task->threadFlag = true;
+
+    if (privilege == 3)
+    {
+        new_task->heap_top = (uint8_t*)USER_HEAP_START;
+
+        #ifdef _DIAGNOSIS_
+        printf("task: %X. Alloc user-stack: \n",new_task);
+        #endif
+
+        paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
+    }
+
+    ///
+    #ifdef _DIAGNOSIS_
+    settextcolor(2,0);
+    printf("cr_thread_ks: ");
+    settextcolor(15,0);
+    #endif
+    ///
+
+    new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    pODA->curTask = (uintptr_t)new_task;
+    new_task->FPU_ptr = (uintptr_t)NULL;
+    setNextTask(new_task, NULL); // last task in queue
+
+    // new_task->console = parentTask->console; // The thread uses the same console as the parent Task
+    new_task->console = malloc(sizeof(console_t), PAGESIZE);
+    console_init(new_task->console, "Thread");
+    for (uint8_t i = 0; i < 10; i++)
+    { // The next free place in our console-list will be filled with the new console
+        if (reachableConsoles[i] == 0)
+        {
+            reachableConsoles[i] = new_task->console;
+            changeDisplayedConsole(i); //Switching to the new console
+            break;
+        }
+    }
+
+    setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
+
+    uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
+    uint32_t code_segment=0x08, data_segment=0x10;
+
+    if (privilege == 3)
+    {
+        // general information: Intel 3A Chapter 5.12
+        *(--kernel_stack) = new_task->ss = 0x23;    // ss
+        *(--kernel_stack) = USER_STACK; // esp
+        code_segment = 0x1B; // 0x18|0x3=0x1B
+    }
+
+    *(--kernel_stack) = 0x0202; // eflags = interrupts activated and iopl = 0
+    *(--kernel_stack) = code_segment; // cs
+    *(--kernel_stack) = (uint32_t)entry; // eip
+    *(--kernel_stack) = 0; // error code
+
+    *(--kernel_stack) = 0; // interrupt nummer
+
+    // general purpose registers w/o esp
+    *(--kernel_stack) = 0;
+    *(--kernel_stack) = 0;
+    *(--kernel_stack) = 0;
+    *(--kernel_stack) = 0;
+    *(--kernel_stack) = 0;
+    *(--kernel_stack) = 0;
+    *(--kernel_stack) = 0;
+
+    if (privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
+
+    *(--kernel_stack) = data_segment;
+    *(--kernel_stack) = data_segment;
+    *(--kernel_stack) = data_segment;
+    *(--kernel_stack) = data_segment;
+
+    //setup TSS
+    tss.ss0   = 0x10;
+    tss.esp0  = new_task->kernel_stack;
+    tss.ss    = data_segment;
+
+    //setup task_t
     new_task->esp = (uint32_t)kernel_stack;
     new_task->eip = (uint32_t)irq_tail;
     new_task->ss  = data_segment;
@@ -215,7 +326,6 @@ uint32_t task_switch (uint32_t esp)
 
     tss.esp  = current_task->esp;
     tss.esp0 = current_task->kernel_stack;
-    tss.ebp  = current_task->ebp;
     tss.ss   = current_task->ss;
 
     #ifdef _DIAGNOSIS_
@@ -255,6 +365,11 @@ void exit()
     void* pkernelstack = (void*) ((uint32_t) current_task->kernel_stack - KERNEL_STACK_SIZE);
     void* ptask        = (void*) current_task;
 
+    if ( (current_task->privilege == 3) && !(current_task->threadFlag) )
+    {
+        userTaskCounter--; // a user-program is going to stop
+    }
+
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
     for (int i = 0; i < 10; i++)
     {
@@ -274,7 +389,7 @@ void exit()
         free(current_task->console);
     }
 
-    void clearTask(task_t* current_task);
+    clearTask((task_t*)current_task);
 
     // free memory at heap
     free(pkernelstack);
@@ -285,7 +400,9 @@ void exit()
     printf("exit finished.\n");
     #endif
 
-    userTaskCounter--; // a user-program has been deleted
+
+
+
     sti();
     switch_context(); // switch to next task
 }
@@ -308,8 +425,7 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     settextcolor(5,0);
-    printf("\nid: %d ", t->id);               // Process ID
-    printf("ebp: %X ",t->ebp);              // Base pointer
+    printf("\npid: %d ", t->pid);             // Process ID
     printf("esp: %X ",t->esp);              // Stack pointer
     printf("eip: %X ",t->eip);              // Instruction pointer
     printf("PD: %X ", t->page_directory);   // Page directory.
@@ -336,7 +452,7 @@ void TSS_log(tss_entry_t* tssEntry)
     printf("edx: %X ", tssEntry->edx);
     printf("ebx: %X ", tssEntry->ebx);
     printf("esp: %X ", tssEntry->esp);
-    printf("ebp: %X ", tssEntry->ebp);
+    // printf("ebp: %X ", tssEntry->ebp);
     printf("esi: %X ", tssEntry->esi);
     printf("edi: %X ", tssEntry->edi);
     printf("es: %X ", tssEntry->es);

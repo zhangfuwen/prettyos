@@ -7,6 +7,8 @@
 #include "my_stdarg.h"
 #include "sys_speaker.h"
 
+#include "scheduler.h"
+
 const int32_t INT_MAX = 2147483647;
 
 void sti() { __asm__ volatile ("sti"); }  // Enable interrupts
@@ -765,6 +767,7 @@ void bootscreen() {
     // C E F G F E C
     // http://www.flutepage.de/deutsch/goodies/frequenz.shtml (German)
     // http://www.flutepage.de/englisch/goodies/frequenz.shtml (English)
+
     beep(523,200); // C
     printf("                     This");
     beep(622,200); // Es
@@ -791,8 +794,12 @@ void bootscreen() {
     beep(659,200); // E
 
     beep(523,1000); // C
+
     settextcolor(15,0);
     printf("\n\n\n\n\n");
+
+    log_task_list();
+    exit();
 }
 
 /*

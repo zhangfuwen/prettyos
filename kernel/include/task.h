@@ -10,16 +10,18 @@
 
 struct task
 {
+    bool threadFlag;                  // 0: process 1: thread
     console_t* console;               // Console used by this task
-    int32_t id;                       // Process ID.
-    uint32_t esp, ebp;                // Stack and base pointers.
-    uint32_t eip;                     // Instruction pointer.
-    uint32_t ss;
-    page_directory_t* page_directory; // Page directory.
-    uint8_t* heap_top;
-    uint32_t kernel_stack;            // Kernel stack location.
+    uint32_t pid;                     // Process ID
+    uint32_t esp;                     // Stack pointer
+    uint32_t eip;                     // Instruction pointer
+    uint32_t ss;                      // stack segment
+    page_directory_t* page_directory; // Page directory
+    uint8_t privilege;                // access privilege
+    uint8_t* heap_top;                // user heap top
+    uint32_t kernel_stack;            // Kernel stack location
     uintptr_t FPU_ptr;                // pointer to FPU data
-    struct task* next;                // The next task in a linked list.
+    struct task* next;                // The next task in a linked list
 } __attribute__((packed));
 
 typedef struct task task_t;
@@ -36,6 +38,7 @@ void tasking_install();
 uint32_t task_switch(uint32_t esp);
 int32_t getpid();
 task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege, const char* programName );
+task_t* create_thread(task_t* parentTask, void* entry);
 void switch_context();
 void exit();
 

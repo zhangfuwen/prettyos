@@ -20,7 +20,7 @@
 #include "console.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.326";
+const char* version = "0.0.0.327";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -56,8 +56,10 @@ int main()
     heap_install();
     tasking_install();
 
-    // Show Startup Screen
-    bootscreen();
+    // Create Startup Screen
+    create_thread((task_t*)pODA->curTask, &bootscreen);
+    pODA->ts_flag = true;
+
 
     if (pODA->Memory_Size > 1073741824)
     {
@@ -145,11 +147,11 @@ int main()
     settextcolor(15,0);
     #endif
     ///
-    uint32_t ramdisk_start = (uint32_t)malloc(0x200000, PAGESIZE);
+    uintptr_t ramdisk_start = (uintptr_t)malloc(0x200000, PAGESIZE);
     settextcolor(15,0);
 
     // test with data and program from data.asm
-    memcpy((void*)ramdisk_start, &file_data_start, (uint32_t)&file_data_end - (uint32_t)&file_data_start);
+    memcpy((void*)ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
 
     // search the content of files <- data from outside "loaded" via incbin ...
@@ -192,7 +194,7 @@ int main()
         settextcolor(15,0);
     }
 
-    pODA->ts_flag = 1;
+    pODA->ts_flag = true;
 
     const char* progress = "|/-\\";
     const char* p = progress;
@@ -249,7 +251,7 @@ int main()
             {
                 char timeStr[10];
                 sprintf(timeStr, "TIME%s", timeBuffer);
-                // screenshot(timeStr);
+                screenshot(timeStr);
             }
 
             /// FPU-TEST
