@@ -20,7 +20,7 @@
 #include "console.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.324";
+const char* version = "0.0.0.326";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -58,7 +58,6 @@ int main()
 
     // Show Startup Screen
     bootscreen();
-
 
     if (pODA->Memory_Size > 1073741824)
     {
@@ -250,7 +249,7 @@ int main()
             {
                 char timeStr[10];
                 sprintf(timeStr, "TIME%s", timeBuffer);
-                // screenshot(timeStr); ==> iDon't want a screenshot!
+                // screenshot(timeStr);
             }
 
             /// FPU-TEST

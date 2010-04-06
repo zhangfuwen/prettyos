@@ -21,6 +21,51 @@ task_t* getReadyTask()
     return (task_t*)ready_queue;
 }
 
+void setNextTask(task_t* task1, task_t* task2)
+{
+    task1->next = task2;
+}
+
+task_t* getLastTask()
+{
+    task_t* tmp_task = getReadyTask();
+    while (tmp_task->next)
+    {
+        tmp_task = tmp_task->next;
+    }
+    return tmp_task;
+}
+
+// take task out of linked list
+void clearTaskTask(task_t* task1)
+{
+    task_t* tmp_task = getReadyTask();
+    do
+    {
+        if (tmp_task->next == task1)
+        {
+            tmp_task->next = task1->next;
+        }
+        if (tmp_task->next)
+        {
+            tmp_task = tmp_task->next;
+        }
+    }
+    while (tmp_task->next);
+}
+
+void log_task_list()
+{
+    task_t* tmp_task = getReadyTask();
+    do
+    {
+        task_log(tmp_task);
+        tmp_task = tmp_task->next;
+    }
+    while (tmp_task->next);
+    task_log(tmp_task);
+}
+
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
 *

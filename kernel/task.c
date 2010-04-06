@@ -56,7 +56,7 @@ void tasking_install()
     current_task->page_directory = kernel_pd;
     pODA->curTask = (uintptr_t)current_task;
     current_task->FPU_ptr = (uintptr_t)NULL;
-    current_task->next = 0; // scheduler.c setNextTask(...) ??
+    setNextTask((task_t*)current_task, NULL); // last task in queue
     current_task->console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
     console_init(current_task->console, "");
     reachableConsoles[10] = current_task->console; // reachableConsoles[10] is reserved for kernels console
@@ -115,7 +115,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     pODA->curTask = (uintptr_t)new_task;
     new_task->FPU_ptr = (uintptr_t)NULL;
-    new_task->next = 0;
+    setNextTask(new_task, NULL); // last task in queue
 
     if (strcmp(programName, "Shell") == 0) // TODO: use parameter instead of name
     {
@@ -136,13 +136,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
         }
     }
 
-    task_t* tmp_task = getReadyTask();
-
-    while (tmp_task->next) // find last task in queue
-    {
-        tmp_task = tmp_task->next;
-    }
-    tmp_task->next = new_task; // new task is now the last one
+    setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
 
     uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
     uint32_t code_segment=0x08, data_segment=0x10;
@@ -280,20 +274,7 @@ void exit()
         free(current_task->console);
     }
 
-    // delete task in linked list
-    task_t* tmp_task = getReadyTask(); // ---> scheduler.c
-    do
-    {
-        if (tmp_task->next == current_task)
-        {
-            tmp_task->next = current_task->next;
-        }
-        if (tmp_task->next)
-        {
-            tmp_task = tmp_task->next;
-        }
-    }
-    while (tmp_task->next);
+    void clearTask(task_t* current_task);
 
     // free memory at heap
     free(pkernelstack);
@@ -309,7 +290,6 @@ void exit()
     switch_context(); // switch to next task
 }
 
-
 void* task_grow_userheap(uint32_t increase)
 {
     uint8_t* old_heap_top = current_task->heap_top;
@@ -323,19 +303,6 @@ void* task_grow_userheap(uint32_t increase)
 
     current_task->heap_top += increase; // correct???
     return old_heap_top;
-}
-
-void log_task_list()
-{
-    // task_t* tmp_task = (task_t*)ready_queue;
-    task_t* tmp_task = getReadyTask();
-    do
-    {
-        task_log(tmp_task);
-        tmp_task = tmp_task->next;
-    }
-    while (tmp_task->next);
-    task_log(tmp_task);
 }
 
 void task_log(task_t* t)

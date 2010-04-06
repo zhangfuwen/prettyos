@@ -43,6 +43,5 @@ void* task_grow_userheap( uint32_t increase );
 
 void task_log(task_t* t);
 void TSS_log(tss_entry_t* tss);
-void log_task_list();
 
 #endif
