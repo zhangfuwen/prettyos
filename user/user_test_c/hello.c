@@ -2,6 +2,9 @@
 
 enum Feldstatus {Leer, X, O};
 
+uint16_t tictactoe[9];
+bool ende = false;
+
 //cf. util.c
 void* memset(void* dest, uint8_t val, size_t count)
 {
@@ -13,13 +16,17 @@ void* memset(void* dest, uint8_t val, size_t count)
 void SetField(uint16_t x, uint16_t y, uint8_t Player)
 {
     gotoxy(x*4+2,y*2+15);
-    if (Player == X){putch('X');}
-    if (Player == O){putch('O');}
+    if(Player == X) {
+        putch('X');
+    }
+    if(Player == O){
+        putch('O');
+    }
     gotoxy(0,24);
     puts("     \r");
 }
 
-void gewinnen (uint16_t* tictactoe, bool ende)
+void gewinnen()
 {
     if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == X) ||
         (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == X) ||
@@ -29,14 +36,14 @@ void gewinnen (uint16_t* tictactoe, bool ende)
         (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == X) ||
         (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == X) ||
         (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == X))
-        {
-            settextcolor(5,0);
-            gotoxy(0,26);
-            puts("Player X wins\n\n");
-            settextcolor(15,0);
-            ende = true;
-        }
-    else if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) ||
+    {
+        settextcolor(5,0);
+        gotoxy(0,26);
+        puts("Player X wins\n\n");
+        settextcolor(15,0);
+        ende = true;
+    }
+    else if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) ||
         (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == O) ||
         (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == O) ||
         (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == O) ||
@@ -44,46 +51,36 @@ void gewinnen (uint16_t* tictactoe, bool ende)
         (tictactoe[2] == tictactoe[5] && tictactoe[2] == tictactoe[8] && tictactoe[2] == O) ||
         (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == O) ||
         (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == O))
-        {
-            settextcolor(5,0);
-            gotoxy(0,26);
-            puts("Player O wins!\n\n");
-            settextcolor(15,0);
-            ende = true;
-        }
-    else
     {
-        if (tictactoe[0] != Leer && tictactoe[1] != Leer && tictactoe[2] != Leer &&
-            tictactoe[3] != Leer && tictactoe[4] != Leer && tictactoe[5] != Leer &&
-            tictactoe[6] != Leer && tictactoe[7] != Leer && tictactoe[8] != Leer)
-            {
-                settextcolor(5,0);
-                gotoxy(0,26);
-                puts("Remis!\n\n");
-                settextcolor(15,0);
-                ende = true;
-            }
+        settextcolor(5,0);
+        gotoxy(0,26);
+        puts("Player O wins!\n\n");
+        settextcolor(15,0);
+        ende = true;
+    }
+    else if(tictactoe[0] != Leer && tictactoe[1] != Leer && tictactoe[2] != Leer &&
+        tictactoe[3] != Leer && tictactoe[4] != Leer && tictactoe[5] != Leer &&
+        tictactoe[6] != Leer && tictactoe[7] != Leer && tictactoe[8] != Leer)
+    {
+        settextcolor(5,0);
+        gotoxy(0,26);
+        puts("Remis!\n\n");
+        settextcolor(15,0);
+        ende = true;
     }
 }
 
-void Zug(uint16_t Player, char* str, uint16_t* tictactoe, bool ende)
+void Zug(uint16_t Player)
 {
-	memset((void*)str, 0, 80);
+    char str[80];
+    memset(str, 0, 80);
 
-    for (; ; gets(str))
+    for(; ; gets(str))
     {
-     /// FLOAT-TEST
-     float number1 = 2.5;
-     float number2 = 2.5;
-     float number3 = number1 * number2;
-     char floatStr[40];
-     float2string(number3,3,floatStr);
-     /// TEST
-
-        if (!isdigit(*str) || *str == '9')
+        if(!isdigit(*str) || *str == '9')
         {
         }
-        else if (tictactoe[atoi(str)] != Leer)
+        else if(tictactoe[atoi(str)] != Leer)
         {
             settextcolor(12,0);
             gotoxy(0,26);
@@ -95,27 +92,23 @@ void Zug(uint16_t Player, char* str, uint16_t* tictactoe, bool ende)
         {
             break;
         }
-		memset((void*)str, 0, 80);
+        memset(str, 0, 80);
     }
     gotoxy(0,26);
     puts("                                                         ");
     gotoxy(0,24);
     tictactoe[atoi(str)] = Player;
     SetField(atoi(str)%3, atoi(str)/3, Player);
-    gewinnen(tictactoe, ende);
+    gewinnen();
 }
 
 int32_t main()
 {
-    uint16_t tictactoe[9];
-    bool ende = false;
-    char str[80];
-
-    memset((void*)tictactoe, 0, sizeof(tictactoe));
+    memset(tictactoe, 0, sizeof(tictactoe));
     clearScreen(0);
     settextcolor(11,0);
     puts("--------------------------------------------------------------------------------\n");
-    puts("                            Mr.X TicTacToe 3x3  v0.56                           \n");
+    puts("                           Mr.X TicTacToe 3x3  v0.5.7                           \n");
     puts("--------------------------------------------------------------------------------\n\n");
     gotoxy(0,6);
     settextcolor(15,0);
@@ -126,14 +119,19 @@ int32_t main()
     puts("Please type in a number betwen 0 and 8.\n\n");
     settextcolor(15,0);
 
-    Zug(X,str,tictactoe,ende);
-    for (uint8_t i=0; i<4 && !ende; ++i)
+    Zug(X);
+    for(uint8_t i=0; i<4 && !ende; ++i)
     {
-        Zug(O,str,tictactoe,ende);
-        if (ende){ break; }
-        Zug(X,str,tictactoe,ende);
+        Zug(O);
+        if(ende) {
+            break;
+        }
+        Zug(X);
     }
+
     settextcolor(15,0);
     gotoxy(0,28);
+	puts("Press a key to continue... ");
+	getch();
     return 0;
 }

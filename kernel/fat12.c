@@ -5,7 +5,6 @@
 
 #include "flpydsk.h"
 #include "fat12.h"
-#include "task.h" // for log_task_list()
 
 /*
 Links:

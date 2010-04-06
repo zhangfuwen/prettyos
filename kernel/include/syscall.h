@@ -4,7 +4,7 @@
 #include "os.h"
 
 void syscall_install();
-void syscall_handler(struct regs* regs);
+void syscall_handler(registers_t* regs);
 
 #define DECL_SYSCALL0(fn)                int syscall_##fn();
 #define DECL_SYSCALL1(fn,p1)             int syscall_##fn(p1);

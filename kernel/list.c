@@ -4,8 +4,7 @@
 */
 
 #include "list.h"
-#include "paging.h" // malloc
-#include "kheap.h"    // free
+#include "kheap.h" // malloc and free
 
 //listHead_t* myList = 0;
 

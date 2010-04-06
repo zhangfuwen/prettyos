@@ -26,15 +26,15 @@ struct ehci_OpRegs
     volatile uint32_t CTRLDSSEGMENT;    // 4G Segment Selector             Core  // +10h
     volatile uint32_t PERIODICLISTBASE; // Frame List Base Address         Core  // +14h
     volatile uint32_t ASYNCLISTADDR;    // Next Asynchronous List Address  Core  // +18h
-    volatile uint32_t reserved1;												 // +1Ch
-    volatile uint32_t reserved2;												 // +20h
-    volatile uint32_t reserved3;												 // +24h
-    volatile uint32_t reserved4;												 // +28h
-    volatile uint32_t reserved5;												 // +2Ch
-    volatile uint32_t reserved6;												 // +30h
-    volatile uint32_t reserved7;												 // +34h
-    volatile uint32_t reserved8;												 // +38h
-    volatile uint32_t reserved9;												 // +3Ch
+    volatile uint32_t reserved1;                                                 // +1Ch
+    volatile uint32_t reserved2;                                                 // +20h
+    volatile uint32_t reserved3;                                                 // +24h
+    volatile uint32_t reserved4;                                                 // +28h
+    volatile uint32_t reserved5;                                                 // +2Ch
+    volatile uint32_t reserved6;                                                 // +30h
+    volatile uint32_t reserved7;                                                 // +34h
+    volatile uint32_t reserved8;                                                 // +38h
+    volatile uint32_t reserved9;                                                 // +3Ch
     volatile uint32_t CONFIGFLAG;       // Configured Flag Register        Aux   // +40h
     volatile uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h
 } __attribute__((packed));
@@ -182,61 +182,61 @@ uint32_t SetupQTDpage0;
 
 struct qtd_token
 {
-	uint8_t status;
+    uint8_t status;
 
-	uint8_t pid:          2;
-	uint8_t errorCounter: 2;
-	uint8_t currPage:     3;
-	uint8_t interrupt:    1;
-	uint16_t bytes:      15;
-	uint16_t dataToggle:  1;
+    uint8_t pid:          2;
+    uint8_t errorCounter: 2;
+    uint8_t currPage:     3;
+    uint8_t interrupt:    1;
+    uint16_t bytes:      15;
+    uint16_t dataToggle:  1;
 
 } __attribute__((packed));
 
 
 struct ehci_qtd
 {
-	uint32_t next;
-	uint32_t nextAlt;
-	struct qtd_token token;
-	uint32_t buffer0;
-	uint32_t buffer1;
-	uint32_t buffer2;
-	uint32_t buffer3;
-	uint32_t buffer4;
+    uint32_t next;
+    uint32_t nextAlt;
+    struct qtd_token token;
+    uint32_t buffer0;
+    uint32_t buffer1;
+    uint32_t buffer2;
+    uint32_t buffer3;
+    uint32_t buffer4;
 } __attribute__((packed));
 
 
 
 struct ehci_qhd
 {
-	uint32_t horizontalPointer;
-	uint32_t deviceAddress:       7;
-	uint32_t inactive:            1;
-	uint32_t endpoint:            4;
-	uint32_t endpointSpeed:       2;
-	uint32_t dataToggleControl:   1;
-	uint32_t H:                   1;
- 	uint32_t maxPacketLength:    11;
-	uint32_t controlEndpointFlag: 1;
-	uint32_t nakCountReload:      4;
-	uint8_t interruptScheduleMask;
-	uint8_t splitCompletionMask;
-	uint16_t hubAddr:             7;
-	uint16_t portNumber:          7;
-	uint16_t mult:                2;
-	uint32_t current;
+    uint32_t horizontalPointer;
+    uint32_t deviceAddress:       7;
+    uint32_t inactive:            1;
+    uint32_t endpoint:            4;
+    uint32_t endpointSpeed:       2;
+    uint32_t dataToggleControl:   1;
+    uint32_t H:                   1;
+     uint32_t maxPacketLength:    11;
+    uint32_t controlEndpointFlag: 1;
+    uint32_t nakCountReload:      4;
+    uint8_t interruptScheduleMask;
+    uint8_t splitCompletionMask;
+    uint16_t hubAddr:             7;
+    uint16_t portNumber:          7;
+    uint16_t mult:                2;
+    uint32_t current;
     struct ehci_qtd qtd;
 } __attribute__((packed));
 
 struct ehci_request
 {
-	uint8_t type;
-	uint8_t request;
-	uint8_t valueLo;
-	uint8_t valueHi;
-	uint16_t index;
-	uint16_t length;
+    uint8_t type;
+    uint8_t request;
+    uint8_t valueLo;
+    uint8_t valueHi;
+    uint16_t index;
+    uint16_t length;
 } __attribute__((packed));
 
 

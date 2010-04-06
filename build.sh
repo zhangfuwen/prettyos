@@ -20,7 +20,7 @@ for target in $*; do
 		continue
 	fi
 	if [ $target == "qemuimage" ]; then
-		qemu -usbdevice mouse -fda FloppyImage.bin -boot a -localtime
+		qemu -usbdevice mouse -fda FloppyImage.img -boot a -localtime
 		continue
 	fi
 	declare -a arr
@@ -33,6 +33,6 @@ for target in $*; do
 		qemu -usbdevice mouse -fda ${arr[1]} -boot a -localtime
 	fi
 	if [ ${arr[0]} == "disk" ]; then
-		dd if=FloppyImage.bin of=${arr[1]} bs=18432 count=80
+		dd if=FloppyImage.img of=${arr[1]} bs=18432 count=80
 	fi
 done

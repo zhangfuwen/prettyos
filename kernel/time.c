@@ -22,20 +22,6 @@ tm_t* cmosTime(tm_t* ptm)
     return ptm;
 }
 
-
-///// CDI wrapper used. Needs to include cdi/cmos.h instead of cmos.h
-//tm_t* cmosTime(tm_t* ptm)
-//{
-//    ptm->second     = PackedBCD2Decimal(cdi_cmos_read(0x00));
-//    ptm->minute     = PackedBCD2Decimal(cdi_cmos_read(0x02));
-//    ptm->hour       = PackedBCD2Decimal(cdi_cmos_read(0x04));
-//    ptm->dayofmonth = PackedBCD2Decimal(cdi_cmos_read(0x07));
-//    ptm->month      = PackedBCD2Decimal(cdi_cmos_read(0x08));
-//    ptm->year       = PackedBCD2Decimal(cdi_cmos_read(0x09));
-//    ptm->century    = PackedBCD2Decimal(cdi_cmos_read(0x32));
-//    return ptm;
-//}
-
 static void appendInt(int val, char* dest, char* buf) {
     if (val<10)
     {
@@ -45,7 +31,7 @@ static void appendInt(int val, char* dest, char* buf) {
     strcat(dest, buf);
 }
 
-unsigned int calculateWeekday(unsigned int year, unsigned int month, unsigned int day) {
+unsigned int calculateWeekday(uint16_t year, uint8_t month, uint32_t day) {
     day += 6; //1.1.2000 was Saturday
     day += (year-2000)*365.25;
     if (month > 11)

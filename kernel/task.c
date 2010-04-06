@@ -3,10 +3,10 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "list.h"
 #include "task.h"
 #include "scheduler.h"
 #include "paging.h"
+#include "descriptor_tables.h"
 #include "kheap.h"
 
 // Count of running user tasks

@@ -17,10 +17,9 @@
 #include "sys_speaker.h"
 #include "ehci.h"
 #include "file.h"
-#include "console.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.328";
+const char* version = "0.0.0.329";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -253,18 +252,6 @@ int main()
                 sprintf(timeStr, "TIME%s", timeBuffer);
                 screenshot(timeStr);
             }
-
-            /// FPU-TEST
-            if ((CurrentSeconds%5)==0)
-            {
-                float number1 = 2.5;
-                float number2 = 2.5;
-                float number3 = number1 * number2;
-                char str[40];
-                float2string(number3,3,str);
-                printf("float result: %s\n",str);
-            }
-            /// TEST
 
             if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pciEHCINumber)
             {
