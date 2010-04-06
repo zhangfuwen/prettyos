@@ -799,6 +799,7 @@ void bootscreen() {
     printf("\n\n\n\n\n");
 
     log_task_list();
+    sleepSeconds(5);
     exit();
 }
 
