@@ -91,7 +91,10 @@ void panic_assert(const char* file, uint32_t line, const char* desc);  // why ch
 
 struct oda
 {
-    // hardware data
+    // CPU
+    uint32_t CPU_Frequency_kHz;  // determined from rdtsc
+
+    // RAM
     uint32_t Memory_Size;        // memory size in byte
 
     //tasking
@@ -99,11 +102,9 @@ struct oda
     uintptr_t curTask;           // Address of currentTask
     uintptr_t TaskFPU;           // Address of Task using FPU
 
-    // floppy disk
-    bool  flpy_motor[4];         // 0: motor off  1: motor on
-                                 // array index is number of floppy drive (0,1,2,3)
-    uint32_t CPU_Frequency_kHz;  // determined from rdtsc
-
+    // floppy disk               // array index is number of floppy drive (0,1,2,3)
+    bool flpy_motor[4];          // 0: motor off  1: motor on
+    bool flpy_ReadWriteFlag[4];  // 0: ready      1: busy (blocked)
 }__attribute__((packed));
 
 typedef struct oda oda_t;

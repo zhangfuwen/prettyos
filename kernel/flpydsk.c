@@ -452,9 +452,32 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
 {
     uint32_t st0, cyl;
 
-    ///TEST
+    /// TEST
+    while ( pODA->flpy_ReadWriteFlag[_CurrentDrive] == true )
+    {
+        printf("waiting for Floppy Disk ");
+        if (operation == 0)
+        {
+            printf("read ");
+        }
+        else if (operation == 1)
+        {
+            printf("write ");
+        }
+
+        for(uint32_t t=0;t<60;t++)
+        {
+             delay(1000000);
+             printf(".");
+        }
+        printf("\n");
+        break;
+    }
+
+    pODA->flpy_ReadWriteFlag[_CurrentDrive] = true; // busy
+    /// TEST
+
     flpydsk_initialize_dma();
-    ///TEST
 
     if (operation == 0) // read a sector
     {
@@ -466,10 +489,6 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
         flpydsk_dma_write();
         flpydsk_send_command(FDC_CMD_WRITE_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY);
     }
-
-    /// Delay
-    // sleepMilliSeconds(50); // what is Floppy Disk head settle time?
-    /// Delay
 
     flpydsk_send_command(head << 2 | _CurrentDrive);
     flpydsk_send_command(track);
@@ -497,6 +516,11 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     }
     // printf("\n\n");
     flpydsk_check_int(&st0,&cyl);    // inform FDC that we handled interrupt
+
+    /// TEST
+    pODA->flpy_ReadWriteFlag[_CurrentDrive] = false; // ready
+    /// TEST
+
     return retVal;
 }
 

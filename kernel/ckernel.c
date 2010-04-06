@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.329";
+const char* version = "0.0.0.330";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -54,11 +54,11 @@ int main()
     pODA->Memory_Size = paging_install();
     heap_install();
     tasking_install();
+    sti();
 
     // Create Startup Screen
     create_thread((task_t*)pODA->curTask, &bootscreen);
     pODA->ts_flag = true;
-
 
     if (pODA->Memory_Size > 1073741824)
     {
@@ -76,7 +76,7 @@ int main()
     EHCIflag     = false;  // first EHCI device found?
     initEHCIFlag = false;  //   any EHCI device found?
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
-    sti();
+
 
     // direct 1st floppy disk
     if ((cmos_read(0x10)>>4) == 4)   // 1st floppy 1,44 MB: 0100....b
@@ -250,7 +250,7 @@ int main()
             {
                 char timeStr[10];
                 sprintf(timeStr, "TIME%s", timeBuffer);
-                screenshot(timeStr);
+                // screenshot(timeStr);
             }
 
             if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pciEHCINumber)
