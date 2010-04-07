@@ -15,6 +15,13 @@ uint8_t displayedConsole = 10;    // Currently visible console (10 per default, 
 extern uint16_t* vidmem;
 bool scroll_flag = true;
 
+void kernel_console_init() {
+    current_console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
+    console_init(current_console, "");
+    reachableConsoles[10] = current_console; // reachableConsoles[10] is reserved for kernels console
+    current_console->SCROLL_END = 39;
+}
+
 void console_init(console_t* console, const char* name)
 {
     console->name         = malloc(strlen(name), PAGESIZE);

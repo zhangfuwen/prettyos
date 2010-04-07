@@ -6,11 +6,18 @@ ifeq ($(OS),WINDOWS)
     CC= i586-elf-gcc
     LD= i586-elf-ld
 else
+    ifeq ($(OS),MACOSX)
+        CC= i586-elf-gcc
+        LD= i586-elf-ld
+    else
+        CC= gcc
+        LD= ld
+    endif
     RM= rm -f
     MV= mv
     NASM= nasm
-    CC= i586-elf-gcc
-    LD= i586-elf-ld
+    CC= gcc
+    LD= ld
 endif
 
 # Folders

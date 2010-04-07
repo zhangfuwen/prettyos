@@ -242,18 +242,11 @@ EVALUATION: // evaluation of entry
         }
         else if (strcmp(entry,"fdir") == 0)
         {
-            if (floppy_dir())
-            {
-                floppy_dir();
-            }
+            floppy_dir();
         }
         else if (strcmp(entry,"fformat") == 0)
         {
             floppy_format("PrettyOS");
-            if (floppy_dir())
-            {
-                floppy_dir();
-            }
         }
         else
         {

@@ -25,7 +25,7 @@ typedef struct { // Defines the User-Space of the display
 extern console_t* reachableConsoles[11]; // All accessible consoles: up to 10 subconsoles + main console
 extern uint8_t displayedConsole;
 
-
+void kernel_console_init();
 void console_init(console_t* console, const char* name);
 void console_exit(console_t* console);
 

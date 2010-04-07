@@ -12,8 +12,8 @@ KernelStart:
 
     mov esp, 0x190000 ; set stack below 2 MB limit
 
-extern _main    ; entry point in ckernel.c
-    call _main  ; ->-> C-Kernel
+extern _main     ; entry point in ckernel.c
+    call _main   ; --> C-Kernel
 
     cli
     hlt

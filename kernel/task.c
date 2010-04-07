@@ -58,11 +58,7 @@ void tasking_install()
     pODA->curTask = (uintptr_t)current_task;
     current_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask((task_t*)current_task, NULL); // last task in queue
-    current_task->console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
-    console_init(current_task->console, "");
-    reachableConsoles[10] = current_task->console; // reachableConsoles[10] is reserved for kernels console
-    current_console = current_task->console; // Kernels console is currently active (does not mean that it is visible)
-    current_console->SCROLL_END = 39;
+    current_task->console = current_console;
     refreshUserScreen();
 
     ///
@@ -78,7 +74,24 @@ void tasking_install()
     sti();
 }
 
-task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege, const char* programName)
+task_t* create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* programName)
+{
+	task_t* new_task = create_task(directory, entry, privilege);
+    new_task->console = malloc(sizeof(console_t), PAGESIZE);
+    console_init(new_task->console, programName);
+    for (uint8_t i = 0; i < 10; i++)
+    { // The next free place in our console-list will be filled with the new console
+        if (reachableConsoles[i] == 0)
+        {
+            reachableConsoles[i] = new_task->console;
+            changeDisplayedConsole(i); //Switching to the new console
+            break;
+        }
+    }
+	return(new_task);
+}
+
+task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
 {
     cli();
 
@@ -120,24 +133,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
 
-    if (strcmp(programName, "Shell") == 0) // TODO: use parameter instead of name
-    {
-        new_task->console = reachableConsoles[10]; // The Shell uses the same console as the kernel
-    }
-    else
-    {
-        new_task->console = malloc(sizeof(console_t), PAGESIZE);
-        console_init(new_task->console, programName);
-        for (uint8_t i = 0; i < 10; i++)
-        { // The next free place in our console-list will be filled with the new console
-            if (reachableConsoles[i] == 0)
-            {
-                reachableConsoles[i] = new_task->console;
-                changeDisplayedConsole(i); //Switching to the new console
-                break;
-            }
-        }
-    }
+    new_task->console = reachableConsoles[10]; // task uses the same console as the kernel
 
     setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
 
@@ -194,6 +190,22 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege,
     return new_task;
 }
 
+task_t* create_cthread(task_t* parentTask, void* entry, const char* consoleName) {
+	task_t* new_task = create_thread(parentTask, entry);
+    new_task->console = malloc(sizeof(console_t), PAGESIZE);
+    console_init(new_task->console, consoleName);
+    for (uint8_t i = 0; i < 10; i++)
+    { // The next free place in our console-list will be filled with the new console
+        if (reachableConsoles[i] == 0)
+        {
+            reachableConsoles[i] = new_task->console;
+            changeDisplayedConsole(i); //Switching to the new console
+            break;
+        }
+    }
+	return(new_task);
+}
+
 task_t* create_thread(task_t* parentTask, void* entry)
 {
     cli();
@@ -236,18 +248,7 @@ task_t* create_thread(task_t* parentTask, void* entry)
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
 
-    // new_task->console = parentTask->console; // The thread uses the same console as the parent Task
-    new_task->console = malloc(sizeof(console_t), PAGESIZE);
-    console_init(new_task->console, "Thread");
-    for (uint8_t i = 0; i < 10; i++)
-    { // The next free place in our console-list will be filled with the new console
-        if (reachableConsoles[i] == 0)
-        {
-            reachableConsoles[i] = new_task->console;
-            changeDisplayedConsole(i); //Switching to the new console
-            break;
-        }
-    }
+    new_task->console = parentTask->console; // The thread uses the same console as the parent Task
 
     setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
 

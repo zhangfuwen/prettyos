@@ -13,7 +13,7 @@ void* memset(void* dest, uint8_t val, size_t count)
     return dest;
 }
 
-void SetField(uint16_t x, uint16_t y, uint8_t Player)
+void SetField(uint8_t x, uint8_t y, uint8_t Player)
 {
     gotoxy(x*4+2,y*2+15);
     if(Player == X) {
@@ -22,8 +22,6 @@ void SetField(uint16_t x, uint16_t y, uint8_t Player)
     if(Player == O){
         putch('O');
     }
-    gotoxy(0,24);
-    puts("     \r");
 }
 
 void gewinnen()
@@ -37,10 +35,7 @@ void gewinnen()
         (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == X) ||
         (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == X))
     {
-        settextcolor(5,0);
-        gotoxy(0,26);
-        puts("Player X wins\n\n");
-        settextcolor(15,0);
+        printLine("Player X wins", 26, 0x05);
         ende = true;
     }
     else if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) ||
@@ -52,20 +47,14 @@ void gewinnen()
         (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == O) ||
         (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == O))
     {
-        settextcolor(5,0);
-        gotoxy(0,26);
-        puts("Player O wins!\n\n");
-        settextcolor(15,0);
+        printLine("Player O wins!", 26, 0x05);
         ende = true;
     }
     else if(tictactoe[0] != Leer && tictactoe[1] != Leer && tictactoe[2] != Leer &&
         tictactoe[3] != Leer && tictactoe[4] != Leer && tictactoe[5] != Leer &&
         tictactoe[6] != Leer && tictactoe[7] != Leer && tictactoe[8] != Leer)
     {
-        settextcolor(5,0);
-        gotoxy(0,26);
-        puts("Remis!\n\n");
-        settextcolor(15,0);
+        printLine("Remis!", 26, 0x05);
         ende = true;
     }
 }
@@ -73,32 +62,39 @@ void gewinnen()
 void Zug(uint16_t Player)
 {
     char str[80];
-    memset(str, 0, 80);
+	uint32_t input = 9;
 
-    for(; ; gets(str))
+    for(;;)
     {
-        if(!isdigit(*str) || *str == '9')
+		gotoxy(0, 24);
+		memset(str, 0, 80);
+		gets(str);
+		if(*str != 0) {
+			input = atoi(str);
+		}
+		else {
+			input = 9; // String is empty -> Input not useful
+		}
+
+		printLine("                                                                                ", 24, 0x0F); // Clear Inputline
+		printLine("                                                                                ", 26, 0x0F); // Clear Errorline
+
+        if(input >= 9 || input < 0)
         {
+            printLine("Your Input was not useful.", 26, 0x0C);
         }
-        else if(tictactoe[atoi(str)] != Leer)
+        else if(tictactoe[input] != Leer)
         {
-            settextcolor(12,0);
-            gotoxy(0,26);
-            puts("Field already used. Please enter a valid number.\n\n");
-            gotoxy(0,24);
-            settextcolor(15,0);
+            printLine("Field already used.", 26, 0x0C);
         }
         else
         {
             break;
         }
-        memset(str, 0, 80);
     }
-    gotoxy(0,26);
-    puts("                                                         ");
-    gotoxy(0,24);
-    tictactoe[atoi(str)] = Player;
-    SetField(atoi(str)%3, atoi(str)/3, Player);
+
+    tictactoe[input] = Player;
+    SetField(input%3, input/3, Player);
     gewinnen();
 }
 
@@ -106,18 +102,17 @@ int32_t main()
 {
     memset(tictactoe, 0, sizeof(tictactoe));
     clearScreen(0);
-    settextcolor(11,0);
-    puts("--------------------------------------------------------------------------------\n");
-    puts("                           Mr.X TicTacToe 3x3  v0.5.7                           \n");
-    puts("--------------------------------------------------------------------------------\n\n");
+
+    printLine("--------------------------------------------------------------------------------", 0, 0x0B);
+    printLine("                            Mr.X TicTacToe 3x3  v0.6                            ", 2, 0x0B);
+    printLine("--------------------------------------------------------------------------------", 4, 0x0B);
+
     gotoxy(0,6);
     settextcolor(15,0);
     puts("*************\n| 0 | 1 | 2 |\n*************\n| 3 | 4 | 5 |\n*************\n| 6 | 7 | 8 |\n*************\n\n");
     puts("*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n\n");
-    settextcolor(11,0);
-    gotoxy(0,22);
-    puts("Please type in a number betwen 0 and 8.\n\n");
-    settextcolor(15,0);
+
+    printLine("Please type in a number betwen 0 and 8.", 22, 0x0B);
 
     Zug(X);
     for(uint8_t i=0; i<4 && !ende; ++i)
@@ -129,9 +124,8 @@ int32_t main()
         Zug(X);
     }
 
-    settextcolor(15,0);
-    gotoxy(0,28);
-	puts("Press a key to continue... ");
+	printLine("Press a key to continue... ", 28, 0x0F);
 	getch();
+
     return 0;
 }

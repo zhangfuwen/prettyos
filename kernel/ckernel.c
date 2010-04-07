@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.330";
+const char* version = "0.0.0.331";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -38,6 +38,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
+	kernel_console_init(); // This does not cause problems? confusing...
     gdt_install();
     idt_install(); // cf. interrupts.asm
     timer_install(1000); // Sets system frequency to ... Hz
@@ -57,7 +58,7 @@ int main()
     sti();
 
     // Create Startup Screen
-    create_thread((task_t*)pODA->curTask, &bootscreen);
+    create_cthread((task_t*)pODA->curTask, &bootscreen, "Booting...");
     pODA->ts_flag = true;
 
     if (pODA->Memory_Size > 1073741824)

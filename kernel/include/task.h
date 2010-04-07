@@ -26,7 +26,6 @@ struct task
 
 typedef struct task task_t;
 
-
 extern int32_t userTaskCounter;
 
 extern console_t* current_console;
@@ -37,8 +36,10 @@ void settaskflag(int32_t i);
 void tasking_install();
 uint32_t task_switch(uint32_t esp);
 int32_t getpid();
-task_t* create_task( page_directory_t* directory, void* entry, uint8_t privilege, const char* programName );
-task_t* create_thread(task_t* parentTask, void* entry);
+task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege); // Creates task using kernels console
+task_t* create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* consoleName); // Creates task with own console
+task_t* create_thread(task_t* parentTask, void* entry); // Creates thread using parentTasks console
+task_t* create_cthread(task_t* parentTask, void* entry, const char* consoleName); // Creates a thread with own console
 void switch_context();
 void exit();
 

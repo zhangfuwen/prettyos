@@ -798,8 +798,13 @@ void bootscreen() {
     settextcolor(15,0);
     printf("\n\n\n\n\n");
 
+    ///
+    #ifdef _DIAGNOSIS_
     log_task_list();
     sleepSeconds(5);
+    #endif
+	///
+
     exit();
 }
 

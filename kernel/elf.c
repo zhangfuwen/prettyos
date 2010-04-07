@@ -165,7 +165,12 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
     }
 
     // Execute the task
-    create_task(pd, (void*)(header->entry), 3, programName);
+	if(strcmp("Shell", programName) == 0) {
+	    create_task(pd, (void*)(header->entry), 3);
+	}
+	else {
+	    create_ctask(pd, (void*)(header->entry), 3, programName);
+	}
 
     return true;
 }

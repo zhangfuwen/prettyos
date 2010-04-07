@@ -85,7 +85,7 @@ ir_common_stub:
     mov gs, ax
 
     push esp              ; parameter of _irq_handler 
-    call _irq_handler    ;  
+    call _irq_handler    ;
     global _irq_tail
     _irq_tail:
     mov esp, eax          ; return value: changed or unchanged esp
@@ -127,7 +127,7 @@ _idt_install:
     %endrep
 
     DO_IDT_ENTRY SYSCALL_NUMBER,      0x0008, 0xEE00
-    DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0xEE00 
+    DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0xEE00
 
     ; Remap IRQ 0-15 to 32-47 (see http://wiki.osdev.org/PIC#Initialisation)
     %macro putport 2
@@ -148,8 +148,6 @@ _idt_install:
     ; Perform the actual load operation
     lidt [idt_descriptor]
     ret
-
-
 
 
 section .data
