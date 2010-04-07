@@ -801,10 +801,10 @@ void bootscreen() {
     ///
     #ifdef _DIAGNOSIS_
     log_task_list();
-    sleepSeconds(5);
     #endif
 	///
 
+    sleepSeconds(5);
     exit();
 }
 

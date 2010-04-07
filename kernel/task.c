@@ -190,7 +190,8 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     return new_task;
 }
 
-task_t* create_cthread(task_t* parentTask, void* entry, const char* consoleName) {
+task_t* create_cthread(task_t* parentTask, void* entry, const char* consoleName)
+{
 	task_t* new_task = create_thread(parentTask, entry);
     new_task->console = malloc(sizeof(console_t), PAGESIZE);
     console_init(new_task->console, consoleName);

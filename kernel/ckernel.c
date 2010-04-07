@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.332";
+const char* version = "0.0.0.331";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -58,7 +58,7 @@ int main()
     sti();
 
     // Create Startup Screen
-    create_cthread((task_t*)pODA->curTask, &bootscreen, "Booting...");
+    create_cthread((task_t*)pODA->curTask, &bootscreen, "Booting ...");
     pODA->ts_flag = true;
 
     if (pODA->Memory_Size > 1073741824)
@@ -251,6 +251,7 @@ int main()
             {
                 char timeStr[10];
                 sprintf(timeStr, "TIME%s", timeBuffer);
+                create_cthread((task_t*)pODA->curTask, &screenshot, "Screenshot ..."); // TODO: provide parameter of screenshot(...)
                 // screenshot(timeStr);
             }
 

@@ -6,6 +6,7 @@
 #include "console.h"
 #include "kheap.h"
 #include "task.h"
+#include "scheduler.h"
 #include "my_stdarg.h"
 #include "file.h"
 
@@ -334,6 +335,8 @@ void update_cursor()
 
 int32_t screenshot(char* name)
 {
+    log_task_list();
+
     // buffer for video screen
     uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
     int32_t NewLine = 0;
@@ -350,8 +353,19 @@ int32_t screenshot(char* name)
             NewLine++;
         }
     }
-    return flpydsk_write(name, "TXT", (void*)videoscreen, 4100);
+    if (strcmp(name,"")==0)
+    {
+        return flpydsk_write("SCRSHOT", "TXT", (void*)videoscreen, 4100);
+    }
+    else
+    {
+        return flpydsk_write(name, "TXT", (void*)videoscreen, 4100);
+    }
+
+    sleepSeconds(5);
+    exit();
 }
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

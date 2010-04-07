@@ -121,6 +121,8 @@ uint32_t irq_handler(uint32_t esp)
         settextcolor(11,0);
         printf("%s!\n", exception_messages[r->int_no]);
         printf("| <Exception - System Halted!> |");
+        sleepSeconds(5);
+        exit();
         for (;;);
     }
 
