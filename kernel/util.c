@@ -805,7 +805,6 @@ void bootscreen() {
 	///
 
     sleepSeconds(5);
-    exit();
 }
 
 /*

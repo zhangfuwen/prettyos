@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.331";
+const char* version = "0.0.0.334";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -247,12 +247,12 @@ int main()
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
-            if (CurrentSeconds%120==3)
+            if (CurrentSeconds%40==20)
             {
                 char timeStr[10];
                 sprintf(timeStr, "TIME%s", timeBuffer);
-                create_cthread((task_t*)pODA->curTask, &screenshot, "Screenshot ..."); // TODO: provide parameter of screenshot(...)
-                // screenshot(timeStr);
+                // create_cthread((task_t*)pODA->curTask, &screenshot, "Screenshot ..."); // TODO: provide parameter of screenshot(...)
+                screenshot(timeStr);
             }
 
             if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pciEHCINumber)

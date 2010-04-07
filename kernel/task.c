@@ -256,6 +256,10 @@ task_t* create_thread(task_t* parentTask, void* entry)
     uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
     uint32_t code_segment=0x08, data_segment=0x10;
 
+    /// TEST
+    *(--kernel_stack) = (uintptr_t)&exit;
+    /// TEST
+
     if (privilege == 3)
     {
         // general information: Intel 3A Chapter 5.12
