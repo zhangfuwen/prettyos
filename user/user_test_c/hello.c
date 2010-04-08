@@ -2,14 +2,17 @@
 
 enum Feldstatus {Leer, X, O};
 
-uint16_t tictactoe[9];
+uint8_t tictactoe[9];
 bool ende = false;
 
 //cf. util.c
 void* memset(void* dest, uint8_t val, size_t count)
 {
     uint8_t* temp = (uint8_t*)dest;
-    for (; count != 0; count--) *temp++ = val;
+    for (; count != 0; count--)
+	{
+		*temp++ = val;
+	}
     return dest;
 }
 
@@ -35,7 +38,7 @@ void gewinnen()
         (tictactoe[0] == tictactoe[4] && tictactoe[0] == tictactoe[8] && tictactoe[0] == X) ||
         (tictactoe[2] == tictactoe[4] && tictactoe[2] == tictactoe[6] && tictactoe[2] == X))
     {
-        printLine("Player X wins", 26, 0x05);
+        printLine("Player X wins!", 26, 0x05);
         ende = true;
     }
     else if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) ||
@@ -67,7 +70,6 @@ void Zug(uint16_t Player)
     for(;;)
     {
 		gotoxy(0, 24);
-		memset(str, 0, 80);
 		gets(str);
 		if(*str != 0) {
 			input = atoi(str);
@@ -77,7 +79,7 @@ void Zug(uint16_t Player)
 		}
 
 		printLine("                                                                                ", 24, 0x0F); // Clear Inputline
-		printLine("                                                                                ", 26, 0x0F); // Clear Errorline
+		printLine("                                                                                ", 26, 0x0F); // Clear Messageline
 
         if(input >= 9 || input < 0)
         {
@@ -104,7 +106,7 @@ int32_t main()
     clearScreen(0);
 
     printLine("--------------------------------------------------------------------------------", 0, 0x0B);
-    printLine("                            Mr.X TicTacToe 3x3  v0.6                            ", 2, 0x0B);
+    printLine("                           Mr.X TicTacToe 3x3  v0.6.1                           ", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     gotoxy(0,6);
@@ -115,7 +117,7 @@ int32_t main()
     printLine("Please type in a number betwen 0 and 8.", 22, 0x0B);
 
     Zug(X);
-    for(uint8_t i=0; i<4 && !ende; ++i)
+    for(uint8_t i = 0; i < 4 && !ende; ++i)
     {
         Zug(O);
         if(ende) {
@@ -124,7 +126,7 @@ int32_t main()
         Zug(X);
     }
 
-	printLine("Press a key to continue... ", 28, 0x0F);
+	printLine("Press a key to continue...", 28, 0x0F);
 	getch();
 
     return 0;

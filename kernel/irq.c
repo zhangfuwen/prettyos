@@ -9,7 +9,7 @@
 #include "flpydsk.h" // floppy motor off
 
 
-typedef void(*interrupt_handler_t)(struct regs*);
+typedef void(*interrupt_handler_t)(registers_t*);
 
 
 /* Array of function pointers handling custom ir handlers for a given ir */
@@ -38,7 +38,7 @@ const char* exception_messages[] =
 
 uint32_t irq_handler(uint32_t esp)
 {
-    struct regs* r = (struct regs*)esp;
+    registers_t* r = (registers_t*)esp;
     task_t* pCurrentTask = (task_t*)(pODA->curTask);
 
     if (r->int_no == 7) //exception #NM (number 7)
@@ -58,17 +58,17 @@ uint32_t irq_handler(uint32_t esp)
         if (pODA->TaskFPU)
         {
             // fsave or fnsave to pODA->TaskFPU->FPU_ptr
-            __asm__ volatile("fsave %0" :: "m" (*(char*)(((task_t*)pODA->TaskFPU)->FPU_ptr)));
+            __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(((task_t*)pODA->TaskFPU)->FPU_ptr)));
         }
 
         // store the last task using FPU
-        pODA->TaskFPU = (uintptr_t)pCurrentTask;
+        pODA->TaskFPU = pCurrentTask;
 
         // restore FPU data ...
         if (pCurrentTask->FPU_ptr)
         {
             // frstor from pCurrentTask->FPU_ptr
-            __asm__ volatile("frstor %0" :: "m" (*(char*)(pCurrentTask->FPU_ptr)));
+            __asm__ volatile("frstor %0" :: "m" (*(uint8_t*)(pCurrentTask->FPU_ptr)));
         }
         else
         {

@@ -13,7 +13,7 @@
 int32_t userTaskCounter;
 
 // The currently running and currently displayed task.
-volatile task_t* current_task; /// TODO: clarify, whether volatile is necessary
+task_t* current_task; /// TODO: clarify, whether volatile is necessary
 console_t* current_console;
 
 // Some externs are needed
@@ -55,9 +55,9 @@ void tasking_install()
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
     current_task->privilege = 0;
-    pODA->curTask = (uintptr_t)current_task;
+    pODA->curTask = current_task;
     current_task->FPU_ptr = (uintptr_t)NULL;
-    setNextTask((task_t*)current_task, NULL); // last task in queue
+    setNextTask(current_task, NULL); // last task in queue
     current_task->console = current_console;
     refreshUserScreen();
 
@@ -69,7 +69,7 @@ void tasking_install()
     #endif
     ///
 
-    current_task->kernel_stack = (uint32_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    current_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     userTaskCounter = 0;
     sti();
 }
@@ -128,8 +128,8 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     #endif
     ///
 
-    new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-    pODA->curTask = (uintptr_t)new_task;
+    new_task->kernel_stack = (void*)((uintptr_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE);
+    pODA->curTask = new_task;
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
 
@@ -174,7 +174,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     //setup TSS
     tss.ss0   = 0x10;
     tss.esp   = current_task->esp = USER_STACK;
-    tss.esp0  = new_task->kernel_stack;
+    tss.esp0  = (uintptr_t)new_task->kernel_stack;
     tss.ss    = data_segment;
 
     //setup task_t
@@ -244,8 +244,8 @@ task_t* create_thread(task_t* parentTask, void* entry)
     #endif
     ///
 
-    new_task->kernel_stack = (uint32_t) malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-    pODA->curTask = (uintptr_t)new_task;
+    new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    pODA->curTask = new_task;
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
 
@@ -293,7 +293,7 @@ task_t* create_thread(task_t* parentTask, void* entry)
 
     //setup TSS
     tss.ss0   = 0x10;
-    tss.esp0  = new_task->kernel_stack;
+    tss.esp0  = (uintptr_t)new_task->kernel_stack;
     tss.ss    = data_segment;
 
     //setup task_t
@@ -322,7 +322,7 @@ uint32_t task_switch (uint32_t esp)
     }
 
     // write active task struct address to ODA
-    pODA->curTask = (uintptr_t)current_task;
+    pODA->curTask = current_task;
 
     current_console = current_task->console;
 
@@ -331,7 +331,7 @@ uint32_t task_switch (uint32_t esp)
     //tss.cr3 = ... TODO: Really unnecessary?
 
     tss.esp  = current_task->esp;
-    tss.esp0 = current_task->kernel_stack;
+    tss.esp0 = (uintptr_t)current_task->kernel_stack;
     tss.ss   = current_task->ss;
 
     #ifdef _DIAGNOSIS_

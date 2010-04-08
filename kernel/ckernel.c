@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.334";
+const char* version = "0.0.0.335";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -38,10 +38,10 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-	kernel_console_init(); // This does not cause problems? confusing...
+	kernel_console_init();
     gdt_install();
-    idt_install(); // cf. interrupts.asm
-    timer_install(1000); // Sets system frequency to ... Hz
+    idt_install();         // cf. interrupts.asm
+    timer_install(1000);   // Sets system frequency to ... Hz
     keyboard_install();
     mouse_install();
     syscall_install();
@@ -147,11 +147,11 @@ int main()
     settextcolor(15,0);
     #endif
     ///
-    uintptr_t ramdisk_start = (uintptr_t)malloc(0x200000, PAGESIZE);
+    void* ramdisk_start = malloc(0x200000, PAGESIZE);
     settextcolor(15,0);
 
     // test with data and program from data.asm
-    memcpy((void*)ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
+    memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
 
     // search the content of files <- data from outside "loaded" via incbin ...
@@ -205,7 +205,6 @@ int main()
 
     // String for Date&Time
     char DateAndTime[81];
-    char timeBuffer[20];
 
     while (true)
     {
@@ -243,17 +242,8 @@ int main()
                 // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo);
             }
 
-            itoa(CurrentSeconds, timeBuffer);
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
-
-            if (CurrentSeconds%40==20)
-            {
-                char timeStr[10];
-                sprintf(timeStr, "TIME%s", timeBuffer);
-                // create_cthread((task_t*)pODA->curTask, &screenshot, "Screenshot ..."); // TODO: provide parameter of screenshot(...)
-                screenshot(timeStr);
-            }
 
             if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pciEHCINumber)
             {

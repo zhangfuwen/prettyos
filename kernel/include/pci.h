@@ -63,6 +63,4 @@ void pci_config_write_byte(  uint8_t bus, uint8_t device, uint8_t func, uint8_t 
 void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val );
 void pciScan();
 
-void rtl8139_handler(struct regs* r); //TEST network
-
 #endif

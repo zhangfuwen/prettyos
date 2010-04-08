@@ -28,7 +28,7 @@ uint32_t getCurrentMilliseconds()
     return 1000*getCurrentSeconds();
 }
 
-void timer_handler(struct regs* r)
+void timer_handler(registers_t* r)
 {
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);

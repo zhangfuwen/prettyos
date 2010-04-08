@@ -202,7 +202,7 @@ void sprintf (char *buffer, const char *args, ...)
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 's':
-                        strcat(buffer, va_arg (ap, char*));
+                        strcat(buffer, va_arg (ap, const char*));
                         pos = strlen(buffer) - 1;
                         break;
                     case 'c':
@@ -801,10 +801,10 @@ void bootscreen() {
     ///
     #ifdef _DIAGNOSIS_
     log_task_list();
+    sleepSeconds(5);
     #endif
 	///
 
-    sleepSeconds(5);
 }
 
 /*

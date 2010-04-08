@@ -67,7 +67,7 @@ static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
     return 0;
 }
 
-fs_node_t* install_initrd(uint32_t location)
+fs_node_t* install_initrd(void* location)
 {
     // Initialise the main and file header pointers and populate the root directory.
     initrd_header = (initrd_header_t*) location;
@@ -132,7 +132,7 @@ fs_node_t* install_initrd(uint32_t location)
     for (uint32_t i=0; i<initrd_header->nfiles; ++i)
     {
         // Edit the file's header - currently it holds the file offset relative to the start of the ramdisk.
-        file_headers[i].off += (location); /// We want it relative to the start of memory. ///
+        file_headers[i].off += (uintptr_t)location; /// We want it relative to the start of memory. ///
 
         // Create a new file node.
         strncpy(root_nodes[i].name, file_headers[i].name, 64); /// critical !!!

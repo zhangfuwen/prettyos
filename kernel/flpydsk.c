@@ -223,7 +223,7 @@ void flpydsk_wait_irq()
 }
 
 //    floppy disk irq handler
-void i86_flpy_irq(struct regs* r)
+void i86_flpy_irq(registers_t* r)
 {
     ReceivedFloppyDiskIRQ = true; // irq fired. Set flag!
 }

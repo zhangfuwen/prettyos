@@ -152,7 +152,7 @@ void showStatusbyteQTD(void* addressQTD)
     settextcolor(15,0);
 }
 
-void ehci_handler(struct regs* r)
+void ehci_handler(registers_t* r)
 {
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER))
     {

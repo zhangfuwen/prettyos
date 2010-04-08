@@ -19,7 +19,7 @@ struct task
     page_directory_t* page_directory; // Page directory
     uint8_t privilege;                // access privilege
     uint8_t* heap_top;                // user heap top
-    uint32_t kernel_stack;            // Kernel stack location
+    void* kernel_stack;               // Kernel stack location
     uintptr_t FPU_ptr;                // pointer to FPU data
     struct task* next;                // The next task in a linked list
 } __attribute__((packed));

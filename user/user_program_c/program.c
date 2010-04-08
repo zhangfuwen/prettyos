@@ -91,9 +91,6 @@ int main()
                         break; // entry is empty
                     }
                     cursorPos = entryLength+1;
-                    settextcolor(0x0B, 0);
-                    printf("%s <--\n", (curEntry == -1 ? entry : entryCache[curEntry]));
-                    settextcolor(15, 0);
                     entry[entryLength]='\0';
                     if (curEntry == -1)
                     {
@@ -115,6 +112,9 @@ int main()
                         strcpy(entryCache[0], entry);
                         curEntry = -1;
                     }
+                    settextcolor(0x0B, 0);
+                    printf("$> %s <--\n", entry);
+                    settextcolor(15, 0);
                     printLine("$>                                                                              ", 40, 0x0B);
                     goto EVALUATION;
                 case 144: // Insert
@@ -202,7 +202,7 @@ int main()
                     }
                     break;
                 default:
-                    if (input >= 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <=MAX_CHAR_PER_LINE && cursorPos != entryLength)) /*&& (input <= 0xFF)*/) // test-wise open, cf. ascii
+                    if (input >= 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <= MAX_CHAR_PER_LINE && cursorPos != entryLength)))
                     {
                         if (curEntry != -1)
                         {

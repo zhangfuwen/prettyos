@@ -20,7 +20,7 @@ void testTransfer(uint32_t device)
     printf("Test transfer with device address: %d\n", device);
     settextcolor(15,0);
 
-     void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+    void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
     uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
     pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 

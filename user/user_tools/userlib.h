@@ -69,7 +69,6 @@ void float2string(float value, int decimal, char* valuestring); // float --> str
 void i2hex(uint32_t val, char* dest, int32_t len);
 
 void showInfo(signed char val);
-void test();
 
 void* malloc(size_t size);
 void free(void* mem);

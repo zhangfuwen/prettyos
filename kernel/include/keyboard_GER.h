@@ -45,8 +45,8 @@
 #define  KMETA_ANY    (KMETA_ALT | KMETA_CTRL | KMETA_SHIFT)
 
 // Other keys
-#define  KPRNT        (KRT    + 1)
-#define  KPAUSE       (KPRNT  + 1)
+#define  KPRINT       (KF12   + 1)
+#define  KPAUSE       (KPRINT + 1)
 #define  KLWIN        (KPAUSE + 1)
 #define  KRWIN        (KLWIN  + 1)
 #define  KMENU        (KRWIN  + 1)

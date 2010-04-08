@@ -6,7 +6,8 @@
 #include "userlib.h"
 #include "my_stdarg.h"
 
-/// syscalls ///
+
+/// Syscalls
 
 void settextcolor(unsigned int foreground, unsigned int background)
 {
@@ -125,10 +126,7 @@ void* grow_heap(unsigned increase)
 
 
 
-
-///////////////////////////////////
-///          user functions       ///
-///////////////////////////////////
+/// user functions
 
 // printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
 void printf (const char* args, ...)
@@ -445,14 +443,14 @@ void reverse(char* s)
 void itoa(int n, char* s)
 {
     int i, sign;
-    if ((sign = n) < 0)  // record sign
+    if ((sign = n) < 0) // record sign
     {
         n = -n;         // make n positive
     }
     i=0;
-    do /* generate digits in reverse order */
+    do // generate digits in reverse order
     {
-        s[i++] = n % 10 + '0';  // get next digit
+        s[i++] = n % 10 + '0'; // get next digit
     }
     while ((n /= 10) > 0);     // delete it
 
@@ -584,13 +582,6 @@ void showInfo(signed char val)
         printLine(line2,44,0xE);
         printLine(line3,45,0xE);
     }
-}
-
-void test()
-{
-    settextcolor(4,0);
-    puts(">>> TEST <<<");
-    settextcolor(15,0);
 }
 
 

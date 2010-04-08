@@ -25,7 +25,7 @@ char mouse_byte[4];            // MouseHandler bytes
 
 
 //Mouse functions
-void mouse_handler(struct regs *a_r) //struct regs *a_r (not used but just there)
+void mouse_handler(registers_t* a_r) //struct regs *a_r (not used but just there)
 {
     switch (mouse_cycle)
     {

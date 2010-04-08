@@ -52,25 +52,25 @@ typedef unsigned int gid_t; // Defined like in tyndur
 #define PAGESIZE 0x1000  // 4096 Byte = 4KByte
 
 // Where the kernel's private data is stored (virtual addresses)
-#define KERNEL_DATA_START (0xC0000000)    //3 GB
-#define KERNEL_DATA_END   (0x100000000)   //4 GB
+#define KERNEL_DATA_START ((uint8_t*)0xC0000000)    //3 GB
+#define KERNEL_DATA_END   ((uint8_t*)0x100000000)   //4 GB
 
 // PCI/EHCI memory location for MM IO
-#define PCI_MEM_START ((char*)0xFFF00000)
-#define PCI_MEM_END   ((char*)0x100000000)
+#define PCI_MEM_START     ((uint8_t*)0xFFF00000)
+#define PCI_MEM_END       ((uint8_t*)0x100000000)
 
 // Virtual adress area for the kernel heap
 #define KERNEL_HEAP_START KERNEL_DATA_START
 #define KERNEL_HEAP_END   PCI_MEM_START
-#define KERNEL_HEAP_SIZE  (KERNEL_HEAP_END - KERNEL_HEAP_START)
+#define KERNEL_HEAP_SIZE  ((uint8_t*)((uintptr_t)KERNEL_HEAP_END - (uintptr_t)KERNEL_HEAP_START))
 
 // Placement allocation
-#define PLACEMENT_BEGIN ((char*)(16*1024*1024))
-#define PLACEMENT_END   ((char*)(20*1024*1024))
+#define PLACEMENT_BEGIN   ((uint8_t*)(16*1024*1024))
+#define PLACEMENT_END     ((uint8_t*)(20*1024*1024))
 
 // User Heap management
-#define USER_HEAP_START ((uint8_t*)(20*1024*1024))
-#define USER_HEAP_END   ((uint8_t*)(KERNEL_DATA_START - 16*1024*1024))
+#define USER_HEAP_START   ((uint8_t*)(20*1024*1024))
+#define USER_HEAP_END     ((uint8_t*)(KERNEL_DATA_START - 16*1024*1024))
 
 // User Stack
 #define USER_STACK 0x1420000
@@ -89,7 +89,7 @@ void panic_assert(const char* file, uint32_t line, const char* desc);  // why ch
 
 #define KQSIZE    20 // size of key queue
 
-struct oda
+typedef struct
 {
     // CPU
     uint32_t CPU_Frequency_kHz;  // determined from rdtsc
@@ -99,30 +99,26 @@ struct oda
 
     //tasking
     uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
-    uintptr_t curTask;           // Address of currentTask
-    uintptr_t TaskFPU;           // Address of Task using FPU
+    void* curTask;               // Address of currentTask
+    void* TaskFPU;               // Address of Task using FPU
 
     // floppy disk               // array index is number of floppy drive (0,1,2,3)
     bool flpy_motor[4];          // 0: motor off  1: motor on
     bool flpy_ReadWriteFlag[4];  // 0: ready      1: busy (blocked)
-}__attribute__((packed));
-
-typedef struct oda oda_t;
+}__attribute__((packed)) oda_t;
 
 // operatings system common data area
 extern oda_t* pODA;
 
 
 /* This defines what the stack looks like after an ISR was running */
-struct regs
+typedef struct
 {
     uint32_t gs, fs, es, ds;
     uint32_t edi, esi, ebp, ebx, edx, ecx, eax;
     uint32_t int_no, err_code;
     uint32_t eip, cs, eflags, useresp, ss;
-}__attribute__((packed));
-
-typedef struct regs registers_t;
+}__attribute__((packed)) registers_t;
 
 // PrettyOS Version string
 extern const char* version;
@@ -144,7 +140,7 @@ void clear_console(uint8_t backcolor);
 void settextcolor(uint8_t forecolor, uint8_t backcolor);
 void putch(char c);
 void puts(const char* text);
-void printf (const char *args, ...);
+void printf (const char* args, ...);
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void scroll();
 void set_cursor(uint8_t x, uint8_t y);
@@ -154,7 +150,7 @@ void update_cursor();
 uint16_t systemfrequency; // system frequency
 uint32_t getCurrentSeconds();
 uint32_t getCurrentMilliseconds();
-void timer_handler(struct regs* r);
+void timer_handler(registers_t* r);
 void timer_wait(uint32_t ticks);
 void sleepSeconds(uint32_t seconds);
 void sleepMilliSeconds(uint32_t ms);
@@ -168,7 +164,7 @@ void delay(uint32_t microsec);
 void keyboard_install();
 uint8_t FetchAndAnalyzeScancode();
 uint8_t ScanToASCII();
-void keyboard_handler(struct regs* r);
+void keyboard_handler(registers_t* r);
 int32_t checkKQ_and_print_char();
 uint8_t checkKQ_and_return_char();
 bool testch();
@@ -181,7 +177,7 @@ void mouse_wait(unsigned char a_type);
 void mouse_initspecialfeatures();
 void mouse_write(char a_write);
 char mouse_read();
-void mouse_handler(struct regs *a_r);
+void mouse_handler(registers_t* a_r);
 
 // gtd.c, irq.c, interrupts.asm
 void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
@@ -189,7 +185,7 @@ void gdt_install();
 void idt_install();
 uint32_t fault_handler(uint32_t esp);
 uint32_t irq_handler(uint32_t esp);
-void irq_install_handler(int32_t irq, void (*handler)(struct regs* r));
+void irq_install_handler(int32_t irq, void (*handler)(registers_t* r));
 void irq_uninstall_handler(int32_t irq);
 
 // math.c
@@ -253,7 +249,7 @@ uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
 
 // network
-void rtl8139_handler(struct regs* r);
+void rtl8139_handler(registers_t* r);
 void install_RTL8139(uint32_t number);
 
 // USB 2.0 EHCI

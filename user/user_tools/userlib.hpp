@@ -64,7 +64,6 @@ extern "C" { //Functions from C-Userlib
     void float2string(float value, int decimal, char* valuestring); // float --> string
 
     void showInfo(signed char val);
-    void test();
 
     void* malloc(size_t size);
     void free(void* mem);

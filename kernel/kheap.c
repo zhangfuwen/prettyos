@@ -43,11 +43,11 @@ typedef struct
 } region_t;
 
 
-static region_t*   regions = NULL;
-static uint32_t    region_count = 0;
-static uint32_t    region_max_count = 0;
-static char* const heap_start = (char*)KERNEL_HEAP_START;
-static uint32_t    heap_size = 0;
+static region_t*      regions = NULL;
+static uint32_t       region_count = 0;
+static uint32_t       region_max_count = 0;
+static uint8_t* const heap_start = KERNEL_HEAP_START;
+static uint32_t       heap_size = 0;
 
 
 static const uint32_t HEAP_MIN_GROWTH = 256*1024;
@@ -60,11 +60,11 @@ void heap_install()
 
     // We take the rest of the placement area
     region_count = 0;
-    region_max_count = (PLACEMENT_END-(char*)regions) / sizeof(region_t);
+    region_max_count = ((uintptr_t)PLACEMENT_END - (uintptr_t)regions) / sizeof(region_t);
 }
 
 
-static bool heap_grow(uint32_t size, char* heap_end)
+static bool heap_grow(uint32_t size, uint8_t* heap_end)
 {
     // We will have to append another region-object to our array if
     //   we can't merge with the last region - check whether there
@@ -103,19 +103,19 @@ void* malloc(uint32_t size, uint32_t alignment)
     if (regions == NULL)
     {
         // Do simple placement allocation
-        static char* addr = PLACEMENT_BEGIN;
-        addr = (char*) alignUp((uint32_t)addr, alignment);
-        char* ret = addr;
+        static uint8_t* addr = PLACEMENT_BEGIN;
+        addr = (uint8_t*) alignUp((uint32_t)addr, alignment);
+        uint8_t* ret = addr;
         addr += size;
         return ret;
     }
 
     // Walk the regions and find a big-enough one
-    char* region_addr = heap_start;
+    uint8_t* region_addr = heap_start;
     for (uint32_t i=0; i<region_count; ++i)
     {
         // Calculate aligned address and the how much more size is needed due to alignment
-        char* aligned_addr = (char*)alignUp((uint32_t)region_addr, alignment);
+        uint8_t* aligned_addr = (uint8_t*)alignUp((uintptr_t)region_addr, alignment);
         uint32_t additional_size = aligned_addr - region_addr;
 
         // Check whether this region is free and big enough
@@ -182,7 +182,7 @@ void* malloc(uint32_t size, uint32_t alignment)
 
     // There is nothing free, try to expand the heap
     uint32_t to_grow = max(HEAP_MIN_GROWTH, alignUp(size*3/2,PAGESIZE));
-    if (! heap_grow(to_grow, heap_start+heap_size))
+    if (! heap_grow(to_grow, (uint8_t*)(heap_start + (uintptr_t)heap_size)))
         return NULL;
 
     // Now there should be a region that is large enough
@@ -201,7 +201,7 @@ void* malloc(uint32_t size, uint32_t alignment)
 void free(void* addr)
 {
     // Walk the regions and find the correct one
-    char* region_addr = heap_start;
+    uint8_t* region_addr = heap_start;
     for (uint32_t i=0; i<region_count; ++i)
     {
         if (region_addr == addr)

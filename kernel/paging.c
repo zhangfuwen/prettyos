@@ -422,7 +422,7 @@ void paging_switch (page_directory_t* pd)
 
 void* paging_acquire_pcimem(uint32_t phys_addr)
 {
-    static char* virt = PCI_MEM_START;
+    static uint8_t* virt = PCI_MEM_START;
     if (virt == PCI_MEM_END)
         panic_assert(__FILE__, __LINE__, "Not enough PCI-memory available");
 
@@ -432,7 +432,7 @@ void* paging_acquire_pcimem(uint32_t phys_addr)
     ASSERT(kernel_pd->tables[pagenr/1024]);
     kernel_pd->tables[pagenr/1024]->pages[pagenr%1024] = phys_addr | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
 
-    char* ret = virt;
+    uint8_t* ret = virt;
     virt += PAGESIZE;
     return ret;
 }

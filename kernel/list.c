@@ -59,7 +59,7 @@ void listDeleteAll(struct listHead* hd)
 
 int8_t listInput(listHead_t* hd)
 {
-    void* dat = (void*)malloc(sizeof(void*),0);
+    void* dat = malloc(sizeof(void*),0);
     if (dat)
     {
         if (listAppend(hd,dat))

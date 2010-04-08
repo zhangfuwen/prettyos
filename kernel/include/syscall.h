@@ -71,7 +71,7 @@ DECL_SYSCALL0( nop                                        )
 DECL_SYSCALL0( switch_context                             )
 DECL_SYSCALL0( checkKQ_and_return_char                    )
 DECL_SYSCALL0( flpydsk_read_directory                     )
-DECL_SYSCALL3( cprintf, char*, uint32_t, uint8_t          )
+DECL_SYSCALL3( cprintf, const char*, uint32_t, uint8_t    )
 DECL_SYSCALL0( getCurrentSeconds                          )
 DECL_SYSCALL0( getCurrentMilliseconds                     ) // substitute
 DECL_SYSCALL1( flpydsk_format, char*                      )

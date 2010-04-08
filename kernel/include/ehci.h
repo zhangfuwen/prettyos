@@ -242,7 +242,7 @@ struct ehci_request
 
 // functions, ...
 
-void ehci_handler(struct regs* r);
+void ehci_handler(registers_t* r);
 
 void analyzeEHCI(uint32_t bar);
 

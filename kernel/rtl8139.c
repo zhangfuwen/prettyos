@@ -14,7 +14,7 @@ extern uint8_t network_buffer[8192+16]; /// OK?
 extern uint32_t BaseAddressRTL8139_IO;
 extern uint32_t BaseAddressRTL8139_MMIO;
 
-void rtl8139_handler(struct regs* r)
+void rtl8139_handler(registers_t* r)
 {
     /// TODO: ring buffer, we get always the first received data!
 
