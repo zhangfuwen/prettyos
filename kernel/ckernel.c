@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.339";
+const char* version = "0.0.0.340";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -243,7 +243,7 @@ int main()
             if (screenshot_Flag == true)
             {
                 printf("Screenshot Test\n");
-                create_cthread((task_t*)pODA->curTask, &screenshot_easy, "Screenshot_easy ...");
+                create_thread((task_t*)pODA->curTask, &screenshot_easy);
                 screenshot_Flag = false;
             }
 

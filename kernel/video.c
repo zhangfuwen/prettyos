@@ -10,6 +10,10 @@
 
 uint16_t* vidmem = (uint16_t*) 0xB8000;
 
+// buffer for video screen
+uint8_t videoscreen[4000+98]; // only signs, no attributes, 49 times CR LF at line end
+
+
 static const uint8_t LINES   = 50;
 
 static const uint8_t USER_BEGIN = 2; // Reserving Titlebar+Separation
@@ -191,60 +195,49 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     }
 }
 
-int32_t screenshot(char* name)
+static void catchVidmem()
 {
-    // buffer for video screen
-    uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
     int32_t NewLine = 0;
 
     for (uint16_t i=0; i<4000;i++)
     {
         uint16_t j=i+2*NewLine;
         videoscreen[j] = *(uint8_t*)(0xB8000 + 2*i); // only signs, no attributes
-        if ((i%80) == 79)
+        if ( (i%80 == 79) && (i!=3999) )
         {
-            // CR LF (0xD 0xA)
-            videoscreen[j+1]= 0xD;
-            videoscreen[j+2]= 0xA;
+            videoscreen[j+1]= 0xD; // CR
+            videoscreen[j+2]= 0xA; // LF
             NewLine++;
         }
     }
+}
+
+int32_t screenshot(char* name)
+{
+    catchVidmem();
 
     if (strcmp(name,"")==0)
     {
-        return flpydsk_write("SCRSHOT", "TXT", (void*)videoscreen, 4100);
+        return flpydsk_write("SCRSHOT", "TXT", (void*)videoscreen, 4098);
     }
     else
     {
-        return flpydsk_write(name, "TXT", (void*)videoscreen, 4100);
+        return flpydsk_write(name, "TXT", (void*)videoscreen, 4098);
     }
 }
 
 void screenshot_easy()
 {
-    // buffer for video screen
-    uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
-    int32_t NewLine = 0;
-
-    for (uint16_t i=0; i<4000;i++)
-    {
-        uint16_t j=i+2*NewLine;
-        videoscreen[j] = *(uint8_t*)(0xB8000 + 2*i); // only signs, no attributes
-        if ((i%80) == 79)
-        {
-            // CR LF (0xD 0xA)
-            videoscreen[j+1]= 0xD;
-            videoscreen[j+2]= 0xA;
-            NewLine++;
-        }
-    }
+    catchVidmem();
 
     char timeBuffer[20];
     itoa(getCurrentSeconds(), timeBuffer);
     char timeStr[10];
     sprintf(timeStr, "TIME%s", timeBuffer);
-    flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4100);
+    flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4098);
 }
+
+
 
 
 /*
