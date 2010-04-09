@@ -36,7 +36,7 @@ TESTC_OBJCETS := $(patsubst %.c, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.c $(U
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -O32 -f elf
-GCCFLAGS= -c -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -O -ffreestanding -fleading-underscore -nostdinc -fno-builtin -fno-stack-protector -Iinclude
+GCCFLAGS= -c -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-builtin -fno-stack-protector -Iinclude
 LDFLAGS= -nostdlib
 
 # targets to build one asm or c-file to an object file
@@ -62,7 +62,7 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(KERNEL_OBJECTS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 
 $(USERDIR)/$(SHELLDIR)/program.elf: $(SHELL_OBJECTS)
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(SHELLDIR)/shell.map -o $(USERDIR)/$(SHELLDIR)/program.elf
+	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(SHELLDIR)/shell.map -o $(USERDIR)/$(SHELLDIR)/program.elf
 
 $(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/program.elf
 	tools/make_initrd $(USERDIR)/$(USERRDDIR)/info.txt info $(USERDIR)/$(SHELLDIR)/program.elf shell
@@ -72,9 +72,7 @@ $(USERDIR)/$(USERTEST)/HELLO.ELF: $(TESTC_OBJCETS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(TESTC_OBJECTS)) -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(USERTEST)/user.map -o $(USERDIR)/$(SHELLDIR)/HELLO.ELF
 
 FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN #$(USERDIR)/$(USERTEST)/HELLO.ELF
-	tools/CreateFloppyImage2 PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF
-
-
+	tools/CreateFloppyImage2 PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF
 
 clean:
 # OS-dependant code because of different interpretation of "/" in Windows and UNIX-OS (Linux and Mac OS X)

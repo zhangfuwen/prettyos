@@ -34,7 +34,4 @@ void console_exit(console_t* console);
 bool changeDisplayedConsole(uint8_t ID);
 void setScrollField(uint8_t begin, uint8_t end);
 
-int32_t screenshot(char* name);
-void screenshot_easy();
-
 #endif

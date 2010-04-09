@@ -136,6 +136,8 @@ void refreshUserScreen();
 void clear_screen();
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 uint8_t AsciiToCP437(uint8_t ascii);
+int32_t screenshot(char* name);
+void screenshot_easy();
 
 // console.c
 static const uint8_t COLUMNS = 80;
