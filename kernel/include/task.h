@@ -12,6 +12,7 @@ struct task
 {
     bool threadFlag;                  // 0: process 1: thread
     console_t* console;               // Console used by this task
+	bool ownConsole;
     uint32_t pid;                     // Process ID
     uint32_t esp;                     // Stack pointer
     uint32_t eip;                     // Instruction pointer

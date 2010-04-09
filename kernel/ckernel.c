@@ -19,7 +19,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.336";
+const char* version = "0.0.0.337";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -38,7 +38,7 @@ static void init()
 {
     clear_screen();
     settextcolor(14,0);
-	kernel_console_init();
+    kernel_console_init();
     gdt_install();
     idt_install();         // cf. interrupts.asm
     timer_install(1000);   // Sets system frequency to ... Hz
@@ -197,44 +197,35 @@ int main()
     pODA->ts_flag = true;
 
     const char* progress = "|/-\\";
-    const char* p = progress;
-    uint32_t CurrentSeconds=0xFFFFFFFF; // Set on a high value to force a refresh of the display at the beginning.
 
-    uint64_t CurrentRdtscValue=0, OldRdtscValue, RdtscDiffValue;
+    uint64_t LastRdtscValue = 0;
 
-
-    // String for Date&Time
-    char DateAndTime[81];
+    uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the display at the beginning.
+    char DateAndTime[81]; // String for Date&Time
 
     while (true)
     {
         // Show Rotating Asterisk
-        *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *p;
-        if (! *++p)
+        *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *progress;
+        if (! *++progress)
         {
-            p = progress;
+            progress = "|/-\\";
         }
-
-        // Show Date & Time at Status bar
-
-        OldRdtscValue = CurrentRdtscValue;
 
         if (getCurrentSeconds() != CurrentSeconds)
         {
-            kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
             CurrentSeconds = getCurrentSeconds();
-            // all values 64 bit
-            CurrentRdtscValue = rdtsc();
-            RdtscDiffValue = CurrentRdtscValue - OldRdtscValue;
-            uint64_t RdtscKCounts = RdtscDiffValue>>10; // divide by 1024
 
-            uint32_t RdtscKCountsHi    = RdtscKCounts >> 32;
-            uint32_t RdtscKCountsLo    = RdtscKCounts & 0xFFFFFFFF;
+            // all values 64 bit
+            uint64_t RdtscDiffValue = rdtsc() - LastRdtscValue;
+            LastRdtscValue = rdtsc();
+            uint64_t RdtscKCounts = RdtscDiffValue>>10; // divide by 1024
+            uint32_t RdtscKCountsHi = RdtscKCounts >> 32;
+            uint32_t RdtscKCountsLo = RdtscKCounts & 0xFFFFFFFF;
 
             if (RdtscKCountsHi==0)
             {
-                uint32_t CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
-                pODA->CPU_Frequency_kHz = CPU_Frequency_kHz;
+                pODA->CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
             }
             else
             {
@@ -242,6 +233,8 @@ int main()
                 // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo);
             }
 
+            // Draw Status bar and Separation
+            kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
 
