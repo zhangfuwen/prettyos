@@ -479,25 +479,24 @@ void showPORTSC()
     {
         if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
         {
-            char PortNumber[5], PortStatus[40];
-            itoa(j+1,PortNumber);
+            char PortStatus[20];
 
             if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
-                strcpy(PortStatus,"Device attached");
+                strcpy(PortStatus,"attached");
                 resetPort(j);
             }
             else
             {
-                strcpy(PortStatus,"Device not attached");
+                strcpy(PortStatus,"not attached");
             }
             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
 
             uint8_t color = 14;
-            cprintf("                                                                              ",46,color);
-            cprintf("Port %i Status: %X", 46, color, PortNumber, PortStatus); // output to info screen area
-            cprintf("                                                                              ",47,color);
-            cprintf("                                                                              ",48,color);
+            cprintf("                                                                              ",46-3,color);
+            cprintf("Port: %i, device %s", 46-3, color, j+1, PortStatus); // output to info screen area
+            cprintf("                                                                              ",47-3,color);
+            cprintf("                                                                              ",48-3,color);
 
             // beep(1000,100);
         }

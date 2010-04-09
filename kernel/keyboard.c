@@ -146,6 +146,7 @@ uint8_t ScanToASCII()
         char timeStr[10];
         sprintf(timeStr, "TIME%s", timeBuffer);
 		screenshot(timeStr);
+		return(0);
 	}
 
     return retchar; // ASCII version

@@ -360,8 +360,6 @@ int32_t screenshot(char* name)
     {
         return flpydsk_write(name, "TXT", (void*)videoscreen, 4100);
     }
-
-    sleepSeconds(3);
 }
 
 

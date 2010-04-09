@@ -188,7 +188,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     {
         neededSectors = (size/512)+1;
     }
-    printf("test file written to FDD: %d bytes, %d sectors needed.\n", size, neededSectors);
+    printf("\nSave data to Floppy Disk: %d bytes, %d sectors needed.\n", size, neededSectors);
 
     // search first free cluster
     //  whole FAT is read from index 2 to maximum FATMAXINDEX (= 2849 = 0xB21)
