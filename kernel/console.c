@@ -362,6 +362,32 @@ int32_t screenshot(char* name)
     }
 }
 
+void screenshot_easy()
+{
+    // buffer for video screen
+    uint8_t videoscreen[4000+100]; // only signs, no attributes, 50 times CR LF (0xD 0xA) at line end
+    int32_t NewLine = 0;
+
+    for (uint16_t i=0; i<4000;i++)
+    {
+        uint16_t j=i+2*NewLine;
+        videoscreen[j] = *(uint8_t*)(0xB8000 + 2*i); // only signs, no attributes
+        if ((i%80) == 79)
+        {
+            // CR LF (0xD 0xA)
+            videoscreen[j+1]= 0xD;
+            videoscreen[j+2]= 0xA;
+            NewLine++;
+        }
+    }
+
+    char timeBuffer[20];
+    itoa(getCurrentSeconds(), timeBuffer);
+    char timeStr[10];
+    sprintf(timeStr, "TIME%s", timeBuffer);
+    flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4100);
+}
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

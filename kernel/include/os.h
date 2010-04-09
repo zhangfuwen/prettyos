@@ -110,6 +110,8 @@ typedef struct
 // operatings system common data area
 extern oda_t* pODA;
 
+// Flags
+bool screenshot_Flag;
 
 /* This defines what the stack looks like after an ISR was running */
 typedef struct
@@ -122,6 +124,8 @@ typedef struct
 
 // PrettyOS Version string
 extern const char* version;
+
+
 
 // fpu.c
 void set_fpu_cw(const uint16_t ctrlword);

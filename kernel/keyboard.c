@@ -130,7 +130,8 @@ uint8_t ScanToASCII()
     // filter Special Keys
     if (AltKeyDown) // Console-Switching
     {
-        if (retchar == 'm') {
+        if (retchar == 'm')
+        {
             changeDisplayedConsole(10);
             return(0);
         }
@@ -139,13 +140,19 @@ uint8_t ScanToASCII()
             return(0);
         }
     }
-    if (CtrlKeyDown && retchar == 's') // Taking a screenshot; Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
+    if (CtrlKeyDown && (retchar == 's')) // Taking a screenshot; Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
     {
         char timeBuffer[20];
         itoa(getCurrentSeconds(), timeBuffer);
         char timeStr[10];
         sprintf(timeStr, "TIME%s", timeBuffer);
         screenshot(timeStr);
+        return(0);
+    }
+
+    if (CtrlKeyDown && (retchar == 't')) // For tests
+    {
+        screenshot_Flag = true;
         return(0);
     }
 

@@ -3,7 +3,8 @@
 
 #include "os.h"
 
-typedef struct {
+typedef struct
+{
     uint8_t buffer[KQSIZE];  // circular queue buffer
     uint8_t* pHead;          // pointer to the head of valid data
     uint8_t* pTail;          // pointer to the tail of valid data
@@ -11,7 +12,8 @@ typedef struct {
     uint32_t count_write;    // number of data put into queue buffer
 } keyqueue_t;
 
-typedef struct { // Defines the User-Space of the display
+typedef struct // Defines the User-Space of the display
+{
     char* name;
     uint16_t* vidmem; // memory that stores the content of this console. Size is USER_LINES*COLUMNS
     //uint8_t SCROLL_BEGIN;
@@ -33,5 +35,6 @@ bool changeDisplayedConsole(uint8_t ID);
 void setScrollField(uint8_t begin, uint8_t end);
 
 int32_t screenshot(char* name);
+void screenshot_easy();
 
 #endif
