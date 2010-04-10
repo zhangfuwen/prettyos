@@ -8,6 +8,7 @@
 #include "ehci.h"
 #include "kheap.h"
 #include "paging.h"
+#include "task.h"
 #include "sys_speaker.h"
 #include "usb2.h"
 
@@ -18,14 +19,12 @@ bool enabledPortFlag; // port enabled
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: createQH\n");
     settextcolor(15,0);
 
     struct ehci_qhd* head = (struct ehci_qhd*)address;
     memset(address, 0, sizeof(struct ehci_qhd));
-
-
 
     head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1 00b iTD, 01b QH, 10b siTD, 11b FSTN // 0x2 Queue Head
     head->deviceAddress          =   device; // The device address
@@ -56,7 +55,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: createQTD\n");
     settextcolor(15,0);
 
@@ -72,19 +71,17 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
     {
         td->next = 0x1;
     }
-    td->nextAlt = td->next; /// 0x1;    // No alternative next, so T-Bit is set to 1
-    td->token.status       = 0x80;     // This will be filled by the Host Controller
-    td->token.pid          = pid;     // Setup Token
-    td->token.errorCounter = 0x3;    // Written by the Host Controller.
-    td->token.currPage     = 0x0;     // Start with first page. After that it's written by Host Controller???
-    td->token.interrupt    = 0x1;     // We want an interrupt after complete transfer
+    td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
+    td->token.status       = 0x80;       // This will be filled by the Host Controller
+    td->token.pid          = pid;        // Setup Token
+    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
     td->token.bytes        = tokenBytes; // dependent on transfer
-    td->token.dataToggle   = toggle; // Should be toggled every list entry
+    td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    void* data = malloc(0x20, PAGESIZE);    // Enough for a full page
+    void* data = malloc(0x20, PAGESIZE); // Enough for a full page
     memset(data,0,0x20);
-
-
 
     if (pid == 0x2) // SETUP
     {
@@ -116,7 +113,7 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: showPacket\n");
     settextcolor(15,0);
 
@@ -131,7 +128,7 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 void showStatusbyteQTD(void* addressQTD)
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: showStatusbyteQTD\n");
     settextcolor(15,0);
 
@@ -156,7 +153,7 @@ void ehci_handler(registers_t* r)
 {
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER))
     {
-      delay(100000);settextcolor(9,0);
+      settextcolor(9,0);
       printf("\n>>> >>> function: ehci_handler: ");
       settextcolor(15,0);
     }
@@ -184,8 +181,7 @@ void ehci_handler(registers_t* r)
 
         if (enabledPortFlag)
         {
-            showPORTSC();
-            checkPortLineStatus();
+            portCheckFlag = true;
         }
     }
 
@@ -223,7 +219,7 @@ leave_handler:
 
 void analyzeEHCI(uint32_t bar)
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: analyzeEHCI\n");
     settextcolor(15,0);
 
@@ -263,7 +259,7 @@ void resetHostController()
     */
     while (!(pOpRegs->USBSTS & STS_HCHALTED))
     {
-        delay(30000);                            // wait at least 16 microframes (= 16*125 micro-sec = 2 ms)
+        delay(30000); // wait at least 16 microframes (= 16*125 micro-sec = 2 ms)
     }
 
     // 3. Program the USB2CMD.HostControllerReset bit to a 1.
@@ -278,7 +274,7 @@ void resetHostController()
     while ((pOpRegs->USBCMD & CMD_HCRESET) != 0) // Reset-Bit still set to 1
     {
         printf("waiting for HC reset\n");
-        delay(20000); //sleepMilliSeconds(20);
+        delay(20000);
         timeout--;
         if (timeout<=0)
         {
@@ -292,12 +288,8 @@ void resetHostController()
 
 void startHostController(uint32_t num)
 {
-    delay(100000);settextcolor(9,0);
-    printf("\n>>> >>> function: startHostController\n");
-    settextcolor(15,0);
-
-    settextcolor(14,0);
-    printf("reset HC\n");
+    settextcolor(9,0);
+    printf("\n>>> >>> function: startHostController (reset HC)\n");
     settextcolor(15,0);
 
     resetHostController();
@@ -340,7 +332,7 @@ void startHostController(uint32_t num)
     //    associated controller type: UHCI or EHCI)
     pOpRegs->CONFIGFLAG = CF; // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
 
-    delay(100000);
+    delay(100000); // do not delete
 }
 
 int32_t initEHCIHostController()
@@ -350,7 +342,7 @@ int32_t initEHCIHostController()
     USBtransferFlag = true;
     enabledPortFlag = false;
 
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: initEHCIHostController\n");
     settextcolor(15,0);
 
@@ -379,7 +371,7 @@ int32_t initEHCIHostController()
 
 void enablePorts()
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: enablePorts\n");
     settextcolor(15,0);
 
@@ -414,7 +406,7 @@ void enablePorts()
 
 void resetPort(uint8_t j)
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: resetPort %d  ",j+1);
     settextcolor(15,0);
 
@@ -448,7 +440,7 @@ void resetPort(uint8_t j)
 
     pOpRegs->USBINTR = 0;
     pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
-    delay(250000);                          // wait
+    delay(250000); // do not delete         // wait
     pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
 
     // wait and check, whether really zero
@@ -473,7 +465,7 @@ void resetPort(uint8_t j)
 
 void showPORTSC()
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: showPORTSC\n");
     settextcolor(15,0);
 
@@ -501,17 +493,24 @@ void showPORTSC()
             cprintf("                                                                              ",48-3,color);
 
             // beep(1000,100);
+            delay(3000000); // show result
         }
     }
 }
 
+void portCheck()
+{
+    showPORTSC();
+    checkPortLineStatus();
+    sleepSeconds(10);
+}
+
 void showUSBSTS()
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: showUSBSTS\n");
     settextcolor(15,0);
 
-    settextcolor(15,0);
     printf("\nUSB status: ");
     settextcolor(2,0);
     printf("%X",pOpRegs->USBSTS);
@@ -531,7 +530,7 @@ void showUSBSTS()
 
 void checkPortLineStatus()
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: checkPortLineStatus\n");
     settextcolor(15,0);
 
@@ -587,7 +586,7 @@ void checkPortLineStatus()
 
 void DeactivateLegacySupport(uint32_t num)
 {
-    delay(100000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: DeactivateLegacySupport\n");
     settextcolor(15,0);
 
@@ -685,7 +684,7 @@ void DeactivateLegacySupport(uint32_t num)
     {
         printf("No valid eecp found.\n");
     }
-    delay(1000000);
+    delay(1000000); // show result
 }
 
 /*

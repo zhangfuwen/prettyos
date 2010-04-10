@@ -235,7 +235,7 @@ void listPCI() {
                                     if (USE_VIRTUAL_APPROACH_EHCI)
                                     {
                                         bar = (uint32_t) paging_acquire_pcimem(bar);
-                                        printf("BaseAddressEHCI_MMIO mapped to virtual address %X\n", bar);
+                                        printf("\nBaseAddressEHCI_MMIO mapped to virtual address %X\n", bar);
                                     }
                                     else
                                     {

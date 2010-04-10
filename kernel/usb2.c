@@ -12,7 +12,7 @@
 
 void testTransfer(uint32_t device)
 {
-    delay(2000000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>> function: testTransfer\n");
     settextcolor(15,0);
 
@@ -38,17 +38,16 @@ void testTransfer(uint32_t device)
 
     // Enable Async...
     printf("\nEnabling Async Schedule\n");
-    pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE /*| CMD_ASYNCH_INT_DOORBELL*/ ;
-    delay(200000);
+    pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
+
     printf("\n");
     showPacket(InQTDpage0,18);
     showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
-    delay(1000000);
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
-    delay(2000000);settextcolor(9,0);
+    settextcolor(9,0);
     printf("\n>>> >>>function: showDeviceDesriptor\n");
     settextcolor(15,0);
 

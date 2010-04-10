@@ -44,6 +44,8 @@ struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
 bool     EHCIflag;
 bool     initEHCIFlag;
+bool     portCheckFlag;
+
 uint8_t  numPorts;
 uint32_t ubar;
 uint32_t eecp;
@@ -256,6 +258,7 @@ void showPORTSC();
 
 void checkPortLineStatus();
 void resetPort(uint8_t j);
+void portCheck();
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device);
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes);
