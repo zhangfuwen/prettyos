@@ -202,7 +202,7 @@ static void catchVidmem()
     for (uint16_t i=0; i<4000;i++)
     {
         uint16_t j=i+2*NewLine;
-        videoscreen[j] = *(uint8_t*)(0xB8000 + 2*i); // only signs, no attributes
+        videoscreen[j] = *(uint8_t*)(vidmem + 2*i); // only signs, no attributes
         if ( (i%80 == 79) && (i!=3999) )
         {
             videoscreen[j+1]= 0xD; // CR

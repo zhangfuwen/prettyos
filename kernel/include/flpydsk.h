@@ -9,6 +9,8 @@
 #define SECTOR 0
 #define TRACK  1
 
+void floppy_install();
+
 void flpydsk_initialize_dma();
 void flpydsk_dma_read();
 void flpydsk_dma_write();

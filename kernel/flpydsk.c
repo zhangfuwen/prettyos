@@ -4,6 +4,7 @@
 */
 
 #include "flpydsk.h"
+#include "cmos.h"
 
 // detailed infos about FDC and FAT12:
 // http://www.isdaman.com/alsos/hardware/fdc/floppy.htm
@@ -121,6 +122,26 @@ enum FLPYDSK_SECTOR_DTL
     FLPYDSK_SECTOR_DTL_512   =  2,
     FLPYDSK_SECTOR_DTL_1024  =  4
 };
+
+void floppy_install() {
+    if ((cmos_read(0x10)>>4) == 4)         // 1st floppy 1,44 MB: 0100....b
+    {
+        printf("1.44 MB FDD device 0\n\n");
+        pODA->flpy_motor[0] = false;            // first floppy motor is off
+        flpydsk_set_working_drive(0);           // set drive 0 as current drive
+        flpydsk_install(32+6);                  // floppy disk uses IRQ 6 // 32+6
+        memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero
+        if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: 0100....b
+        {
+            printf("1.44 MB FDD device 1\n\n");
+            pODA->flpy_motor[1] = false;        // second floppy motor is off
+        }
+    }
+    else
+    {
+        printf("\n1.44 MB 1st floppy not shown by CMOS\n\n");
+    }
+}
 
 /**
 **    DMA Routines.

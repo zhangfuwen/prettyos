@@ -7,23 +7,46 @@
 #define MEMORY_MAP_ADDRESS 0x1000
 
 
+// Memory Map //
+typedef struct
+{
+    uint64_t base;   // The region's address
+    uint64_t size;   // The region's size
+    uint32_t type;   // Is "1" for "free"
+    uint32_t ext;    // Unimportant for us, but necessary! Do not take out!
+} __attribute__((packed)) mem_map_entry_t;
+
+// Paging //
+typedef struct
+{
+    uint32_t pages[1024];
+} page_table_t;
+
+struct page_directory_
+{
+    uint32_t       codes[1024];
+    page_table_t* tables[1024];
+    uint32_t       pd_phys_addr;
+} __attribute__((packed));
+typedef struct page_directory_ page_directory_t;
+
+
+static const uint32_t MEM_PRESENT = 0x01;
+
+page_directory_t* kernel_pd;
+
+
 static const uint32_t MEM_READONLY = 0;
 static const uint32_t MEM_KERNEL   = 0;
 static const uint32_t MEM_WRITE    = 2;
 static const uint32_t MEM_USER     = 4;
-
-struct page_directory_;
-typedef struct page_directory_ page_directory_t;
 
 extern page_directory_t* kernel_pd;
 
 bool paging_alloc( page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags );
 void paging_free ( page_directory_t* pd, void* virt_addr, uint32_t size );
 
-// ID-maps the 4 KB-block at the given physical address if the address has
-//   the form 0xF........
-// Returns whether the address could be ID-mapped (i.e. is of that form)
-bool paging_do_idmapping( uint32_t phys_addr );
+bool paging_do_idmapping( uint32_t phys_addr ); /// TODO: Delete
 
 void paging_switch( page_directory_t* pd  );
 page_directory_t* paging_create_user_pd();

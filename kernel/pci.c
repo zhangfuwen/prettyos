@@ -7,6 +7,7 @@
 #include "pci.h"
 #include "paging.h"
 #include "ehci.h"
+#include "list.h"
 
 pciDev_t pciDev_Array[PCIARRAYSIZE];
 
@@ -69,6 +70,48 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
         | (reg & 0xFC));
 
     outportl(PCI_CONFIGURATION_DATA, val);
+}
+
+void listPCI() {
+    listHead_t* pciDevList = listCreate();
+    for (int i=0;i<PCIARRAYSIZE;++i)
+    {
+        if (pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00))   // there is no vendor EE00h
+        {
+            listAppend(pciDevList, (void*)(pciDev_Array+i));
+            ///
+            #ifdef _DIAGNOSIS_
+            settextcolor(2,0);
+            printf("%X\t",pciDev_Array+i);
+            #endif
+            ///
+        }
+    }
+    //printf("\n");
+    // listShow(pciDevList); // shows addresses of list elements (not data)
+    putch('\n');
+    for (int i=0;i<PCIARRAYSIZE;++i)
+    {
+        void* element = listShowElement(pciDevList,i);
+        if (element)
+        {
+
+            ///
+            #ifdef _DIAGNOSIS_
+            settextcolor(2,0);
+            printf("%X dev: %x vend: %x\t",
+                       (pciDev_t*)element,
+                       ((pciDev_t*)element)->deviceID,
+                       ((pciDev_t*)element)->vendorID);
+            settextcolor(15,0);
+            #endif
+            ///
+        }
+    }
+    ///
+    #ifdef _DIAGNOSIS_
+    puts("\n\n");
+    #endif
 }
 
  void pciScan()

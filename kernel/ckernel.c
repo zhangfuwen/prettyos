@@ -13,13 +13,12 @@
 #include "cmos.h"
 #include "time.h"
 #include "flpydsk.h"
-#include "list.h"
 #include "sys_speaker.h"
 #include "ehci.h"
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.340";
+const char* version = "0.0.0.341";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -46,23 +45,14 @@ static void init()
     mouse_install();
     syscall_install();
     fpu_install();
-    settextcolor(15,0);
-}
-
-int main()
-{
-    init();
-    screenshot_Flag = false;
-
     pODA->Memory_Size = paging_install();
     heap_install();
     tasking_install();
     sti();
+    settextcolor(15,0);
+}
 
-    // Create Startup Screen
-    create_cthread((task_t*)pODA->curTask, &bootscreen, "Booting ...");
-    pODA->ts_flag = true;
-
+void showMemorySize() {
     if (pODA->Memory_Size > 1073741824)
     {
         printf("Memory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
@@ -75,73 +65,9 @@ int main()
     {
         printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
     }
+}
 
-    EHCIflag     = false;  // first EHCI device found?
-    initEHCIFlag = false;  //   any EHCI device found?
-    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[50]; (cf. pci.h)
-
-
-    // direct 1st floppy disk
-    if ((cmos_read(0x10)>>4) == 4)   // 1st floppy 1,44 MB: 0100....b
-    {
-        printf("1.44 MB FDD device 0\n\n");
-        pODA->flpy_motor[0] = false;        // first floppy motor is off
-        flpydsk_set_working_drive(0); // set drive 0 as current drive
-        flpydsk_install(32+6);        // floppy disk uses IRQ 6 // 32+6
-        memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero
-    }
-    else
-    {
-        printf("\n1.44 MB 1st floppy not shown by CMOS\n\n");
-    }
-    /// direct 1st floppy disk
-
-
-    /// PCI list BEGIN
-    // link valid devices from pciDev_t pciDev_Array[50] to a dynamic list
-    listHead_t* pciDevList = listCreate();
-    for (int i=0;i<PCIARRAYSIZE;++i)
-    {
-        if (pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00))   // there is no vendor EE00h
-        {
-            listAppend(pciDevList, (void*)(pciDev_Array+i));
-            ///
-            #ifdef _DIAGNOSIS_
-            settextcolor(2,0);
-            printf("%X\t",pciDev_Array+i);
-            #endif
-            ///
-        }
-    }
-    //printf("\n");
-    // listShow(pciDevList); // shows addresses of list elements (not data)
-    putch('\n');
-    for (int i=0;i<PCIARRAYSIZE;++i)
-    {
-        void* element = listShowElement(pciDevList,i);
-        if (element)
-        {
-
-            ///
-            #ifdef _DIAGNOSIS_
-            settextcolor(2,0);
-            printf("%X dev: %x vend: %x\t",
-                       (pciDev_t*)element,
-                       ((pciDev_t*)element)->deviceID,
-                       ((pciDev_t*)element)->vendorID);
-            settextcolor(15,0);
-            #endif
-            ///
-        }
-    }
-    ///
-    #ifdef _DIAGNOSIS_
-    puts("\n\n");
-    #endif
-    ///
-    /// PCI list END
-
-    // RAM Disk
+void* ramdisk_install(size_t size) {
     ///
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
@@ -149,14 +75,36 @@ int main()
     settextcolor(15,0);
     #endif
     ///
-    void* ramdisk_start = malloc(0x200000, PAGESIZE);
-    settextcolor(15,0);
+    void* ramdisk_start = malloc(size, PAGESIZE);
 
-    // test with data and program from data.asm
+    // shell via incbin in data.asm
     memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
 
-    // search the content of files <- data from outside "loaded" via incbin ...
+    return(ramdisk_start);
+}
+
+int main()
+{
+    init();
+    screenshot_Flag = false;
+    EHCIflag     = false;  // first EHCI device found?
+    initEHCIFlag = false;  //   any EHCI device found?
+
+    // Create Startup Screen
+    create_cthread((task_t*)pODA->curTask, &bootscreen, "Booting ...");
+    pODA->ts_flag = true;
+
+    showMemorySize();
+
+    floppy_install();// detect FDDs
+
+    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
+    listPCI();
+
+    void* ramdisk_start = ramdisk_install(0x200000);
+
+    // search and load shell
     bool shell_found = false;
     uint8_t* buf = malloc(FILEBUFFERSIZE, 0);
     struct dirent* node = 0;
@@ -196,19 +144,17 @@ int main()
         settextcolor(15,0);
     }
 
-    pODA->ts_flag = true;
-
     const char* progress = "|/-\\";
 
     uint64_t LastRdtscValue = 0;
 
-    uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the display at the beginning.
+    uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char DateAndTime[81]; // String for Date&Time
 
     while (true)
     {
         // Show Rotating Asterisk
-        *((uint16_t*)(0xB8000 + 49*160+ 158)) = 0x0C00 | *progress;
+        *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
         if (! *++progress)
         {
             progress = "|/-\\";
@@ -228,11 +174,6 @@ int main()
             if (RdtscKCountsHi==0)
             {
                 pODA->CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
-            }
-            else
-            {
-                // not to be expected
-                // printf("\nRdtscKCountsHi: %d RdtscKCountsLo: %d\n",RdtscKCountsHi,RdtscKCountsLo);
             }
 
             // Draw Status bar and Separation
@@ -259,7 +200,7 @@ int main()
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -4,16 +4,21 @@
 */
 
 #include "os.h"
+#include "cmos.h"
 
 void set_fpu_cw(const uint16_t ctrlword)
 {
     // FLDCW = Load FPU Control Word
     __asm__ volatile("fldcw %0;"::"m"(ctrlword));
-
 }
 
 void fpu_install()
 {
+    if (! (cmos_read(0x14) & 1<<1) ) {
+        printf("Math Coprozessor not available\n");
+        return;
+    }
+
     uint32_t cr4;
     __asm__ volatile("mov %%cr4, %0;" : "=r" (cr4));
 
@@ -30,8 +35,8 @@ void fpu_install()
     cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
 
-   // init TaskFPU in ODA
-   pODA->TaskFPU = (uintptr_t)NULL;
+    // init TaskFPU in ODA
+    pODA->TaskFPU = NULL;
 }
 
 /*

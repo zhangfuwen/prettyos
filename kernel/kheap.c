@@ -36,13 +36,6 @@ The heap's management data is placed at this placement address, too. Since this
 // TODO: Ensure the heap won't overflow (over 4 GB)
 
 
-typedef struct
-{
-    uint32_t size;
-    bool     reserved;
-} region_t;
-
-
 static region_t*      regions = NULL;
 static uint32_t       region_count = 0;
 static uint32_t       region_max_count = 0;
@@ -50,7 +43,7 @@ static uint8_t* const heap_start = KERNEL_HEAP_START;
 static uint32_t       heap_size = 0;
 
 
-static const uint32_t HEAP_MIN_GROWTH = 256*1024;
+static const uint32_t HEAP_MIN_GROWTH = 0x40000;
 
 
 void heap_install()
@@ -110,7 +103,7 @@ void* malloc(uint32_t size, uint32_t alignment)
         return ret;
     }
 
-    // Walk the regions and find a big-enough one
+    // Walk the regions and find one being suitable
     uint8_t* region_addr = heap_start;
     for (uint32_t i=0; i<region_count; ++i)
     {
@@ -244,7 +237,7 @@ void free(void* addr)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
