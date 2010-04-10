@@ -242,26 +242,19 @@ struct ehci_request
 
 
 // functions, ...
-
 void ehci_handler(registers_t* r);
-
 void analyzeEHCI(uint32_t bar);
-
 void resetHostController();
 void startHostController(uint32_t num);
 int32_t initEHCIHostController();
 void DeactivateLegacySupport(uint32_t num);
 void enablePorts();
-
 void showUSBSTS();
 void showPORTSC();
-
 void checkPortLineStatus();
 void resetPort(uint8_t j);
-
 void portCheck(); // for thread with own console
 void startEHCI(); // for thread with own console
-
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device);
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes);
 void showStatusbyteQTD(void* addressQTD);

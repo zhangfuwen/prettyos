@@ -257,13 +257,6 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 uint32_t alignUp( uint32_t val, uint32_t alignment );
 uint32_t alignDown( uint32_t val, uint32_t alignment );
 
-// network
-void rtl8139_handler(registers_t* r);
-void install_RTL8139(uint32_t number);
-
-// USB 2.0 EHCI
-void analyzeEHCI(uint32_t bar);
-
 #endif
 
 /*

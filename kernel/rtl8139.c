@@ -102,7 +102,6 @@ void install_RTL8139(uint32_t number)
         settextcolor(15,0);
     #endif
 
-    /// idendity mapping of BaseAddressRTL8139_MMIO
     BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem(BaseAddressRTL8139_MMIO);
     printf("BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO);
 

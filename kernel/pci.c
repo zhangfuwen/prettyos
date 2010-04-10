@@ -8,6 +8,7 @@
 #include "paging.h"
 #include "ehci.h"
 #include "list.h"
+#include "rtl8139.h"
 
 uint8_t network_buffer[8192+16];  // TEST for network card
 uint32_t BaseAddressRTL8139_IO;
@@ -175,7 +176,8 @@ void listPCI()
                     if ((pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03))
                     {
                         printf(" USB ");
-                        switch(pciDev_Array[number].interfaceID) {
+                        switch(pciDev_Array[number].interfaceID)
+                        {
                             case 0x00: printf("UHCI "); break;
                             case 0x10: printf("OHCI "); break;
                             case 0x20: printf("EHCI "); break;
