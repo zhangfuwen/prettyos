@@ -383,31 +383,6 @@ void* paging_acquire_pcimem(uint32_t phys_addr)
     return ret;
 }
 
-bool paging_do_idmapping(uint32_t phys_addr) /// TODO: Delete
-{
-    // TODO: Ensure that the physical memory is not used otherwise
-    // TODO: The page table entry may point to a different address
-    // TODO: Create solution for addreses != 0xC...
-
-    // Adress must be a 0xC...-address
-    //if ((phys_addr & 0xF0000000) != 0xF0000000)
-    if (phys_addr < 0xC0000000)
-        return false;
-
-    const uint32_t pagenr = phys_addr/PAGESIZE;
-    const uint32_t aligned = phys_addr & ~4095;
-
-    // Setup the page
-    page_table_t* pt = kernel_pd->tables[pagenr/1024];
-    ASSERT(pt);
-    pt->pages[pagenr%1024] = aligned | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
-
-    // Reserve the physical memory
-    phys_set_bits(aligned, aligned+PAGESIZE, true);
-
-    return true;
-}
-
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.

@@ -9,11 +9,11 @@
 #include "ehci.h"
 #include "list.h"
 
-pciDev_t pciDev_Array[PCIARRAYSIZE];
-
 uint8_t network_buffer[8192+16];  // TEST for network card
 uint32_t BaseAddressRTL8139_IO;
 uint32_t BaseAddressRTL8139_MMIO;
+
+pciDev_t pciDev_Array[PCIARRAYSIZE];
 
 uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t func, uint16_t content)
 {
@@ -37,13 +37,13 @@ uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t func, uint16_t con
     {
         case 1:
             readVal &= 0x000000FF;
-        break;
+            break;
         case 2:
             readVal &= 0x0000FFFF;
-        break;
+            break;
         case 4:
             readVal &= 0xFFFFFFFF;
-        break;
+            break;
     }
     return readVal;
 }
@@ -72,7 +72,8 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
     outportl(PCI_CONFIGURATION_DATA, val);
 }
 
-void listPCI() {
+void listPCI()
+{
     listHead_t* pciDevList = listCreate();
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
@@ -87,44 +88,36 @@ void listPCI() {
             ///
         }
     }
-    //printf("\n");
-    // listShow(pciDevList); // shows addresses of list elements (not data)
     putch('\n');
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
+        ///
+        #ifdef _DIAGNOSIS_
         void* element = listShowElement(pciDevList,i);
         if (element)
         {
-
-            ///
-            #ifdef _DIAGNOSIS_
             settextcolor(2,0);
             printf("%X dev: %x vend: %x\t",
                        (pciDev_t*)element,
                        ((pciDev_t*)element)->deviceID,
                        ((pciDev_t*)element)->vendorID);
             settextcolor(15,0);
-            #endif
-            ///
         }
+        #endif
+        ///
     }
     ///
     #ifdef _DIAGNOSIS_
     puts("\n\n");
     #endif
+    ///
 }
 
  void pciScan()
  {
     settextcolor(15,0);
-    uint8_t  bus                = 0; // max. 256
-    uint8_t  device             = 0; // max.  32
-    uint8_t  func               = 0; // max.   8
 
-    uint32_t pciBar             = 0; // helper variable for memory size
-
-    //clear receiving buffer
-    memset((void*) network_buffer, 0x0, 8192+16);
+    uint32_t pciBar  = 0; // helper variable for memory size
 
     // array of devices, PCIARRAYSIZE for first tests
     for (uint32_t i=0;i<PCIARRAYSIZE;++i)
@@ -133,11 +126,11 @@ void listPCI() {
     }
 
     int number=0;
-    for (bus=0;bus<8;++bus)
+    for (uint8_t bus=0;bus<4;++bus) // we scan only four busses of 256 possibles
     {
-        for (device=0;device<32;++device)
+        for (uint8_t device=0;device<32;++device)
         {
-            for (func=0;func<8;++func)
+            for (uint8_t func=0;func<8;++func)
             {
                 uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
                 if (vendorID && (vendorID != 0xFFFF))
@@ -182,11 +175,13 @@ void listPCI() {
                     if ((pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03))
                     {
                         printf(" USB ");
-                        if (pciDev_Array[number].interfaceID==0x00) { printf("UHCI ");   }
-                        if (pciDev_Array[number].interfaceID==0x10) { printf("OHCI ");   }
-                        if (pciDev_Array[number].interfaceID==0x20) { printf("EHCI ");   }
-                        if (pciDev_Array[number].interfaceID==0x80) { printf("no HCI "); }
-                        if (pciDev_Array[number].interfaceID==0xFE) { printf("any ");    }
+                        switch(pciDev_Array[number].interfaceID) {
+                            case 0x00: printf("UHCI "); break;
+                            case 0x10: printf("OHCI "); break;
+                            case 0x20: printf("EHCI "); break;
+                            case 0x80: printf("no HCI "); break;
+                            case 0xFE: printf("any "); break;
+                        }
 
                         for (uint8_t i=0;i<6;++i) // check USB BARs
                         {
@@ -198,7 +193,7 @@ void listPCI() {
                                 {
                                     printf("%X MMIO ", pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0);
                                 }
-                                if (pciDev_Array[number].bar[i].memoryType == 1)
+                                else if (pciDev_Array[number].bar[i].memoryType == 1)
                                 {
                                     printf("%x I/O ",  pciDev_Array[number].bar[i].baseAddress & 0xFFFC);
                                 }
@@ -214,51 +209,23 @@ void listPCI() {
                                 printf("sz:%d ", pciDev_Array[number].bar[i].memorySize);
                                 // TEST Memory Size End
 
-                                /// TEST EHCI Data Begin
+                                /// EHCI Data
                                 if ((pciDev_Array[number].interfaceID==0x20)   // EHCI
                                    && pciDev_Array[number].bar[i].baseAddress) // valid BAR
                                 {
-                                    /*
-                                                        Offset Size Mnemonic    Power Well   Register Name
-                                                        00h     1   CAPLENGTH      Core      Capability Register Length
-                                                        01h     1   Reserved       Core      N/A
-                                                        02h     2   HCIVERSION     Core      Interface Version Number
-                                                        04h     4   HCSPARAMS      Core      Structural Parameters
-                                                        08h     4   HCCPARAMS      Core      Capability Parameters
-                                                        0Ch     8   HCSP-PORTROUTE Core      Companion Port Route Description
-                                                        */
-
                                     uint32_t bar = pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0;
 
-                                    /// TEST
-                                    bool USE_VIRTUAL_APPROACH_EHCI = true;
-                                    if (USE_VIRTUAL_APPROACH_EHCI)
-                                    {
-                                        bar = (uint32_t) paging_acquire_pcimem(bar);
-                                        printf("\nBaseAddressEHCI_MMIO mapped to virtual address %X\n", bar);
-                                    }
-                                    else
-                                    {
-                                        int retVal1 = paging_do_idmapping(bar);
-                                        if (retVal1 == true)
-                                        {
-                                            printf("\n\n");
-                                        }
-                                        else
-                                        {
-                                            printf("\npaging_do_idmapping(...) error.\n");
-                                        }
-                                    }
-                                    /// TEST
+                                    bar = (uint32_t) paging_acquire_pcimem(bar);
+                                    printf("\nBaseAddressEHCI_MMIO mapped to virtual address %X\n", bar);
 
                                     if (!EHCIflag) // only the first EHCI is used
                                     {
                                         pODA->pciEHCInumber = number; /// TODO: implement for more than one EHCI
                                         EHCIflag = true; // only the first EHCI is used
-                                        initEHCIFlag = true; // init of EHCI shall be carried out
+                                        initEHCIFlag = true; // init of EHCI shall be carried out; message-flag
                                         analyzeEHCI(bar); // get data (capregs, opregs)
                                     }
-                                } /// TEST EHCI Data End
+                                }
                             } /// if USB
                         } // for
                     } // if
@@ -266,11 +233,8 @@ void listPCI() {
                     printf("\n");
 
 
-                    /// test on the RTL8139 network card and test for some functions to work ;)
-                    // informations from the RTL8139 specification,
-                    // and the wikis http://wiki.osdev.org/RTL8139, http://lowlevel.brainsware.org/wiki/index.php/RTL8139
-
-                    if ((pciDev_Array[number].deviceID == 0x8139) /*&& (pciDev_Array[number].vendorID == 0x10EC)*/)
+                    /// RTL 8139 network card
+                    if ((pciDev_Array[number].deviceID == 0x8139))
                     {
                         for (uint8_t j=0;j<6;++j) // check network card BARs
                         {
@@ -303,12 +267,10 @@ void listPCI() {
         } // for device
     } // for bus
     printf("\n");
-
-    // for (;;){} //#
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

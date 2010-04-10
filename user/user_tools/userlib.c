@@ -124,6 +124,9 @@ void* grow_heap(unsigned increase)
     return (void*)ret;
 }
 
+void setScrollField(uint8_t top, uint8_t bottom) {
+    __asm__ volatile("int $0x7F" : : "a"(21), "b"(top), "c"(bottom));
+}
 
 
 /// user functions
@@ -622,8 +625,83 @@ void free(void* mem)
 }
 
 
+//math functions
+
+double cos(double x)
+{
+    double result;
+    __asm__ volatile("fcos;" : "=t" (result) : "0" (x));
+    return result;
+}
+
+double sin(double x)
+{
+    double result;
+    __asm__ volatile("fsin;" : "=t" (result) : "0" (x));
+    return result;
+}
+
+double tan(double x)
+{
+    double result;
+    __asm__ volatile("fptan; fstp %%st(0)": "=t" (result) : "0" (x));
+    return result;
+}
+
+double acos(double x) 
+{
+    double result;
+    if (x < -1 || x > 1) 
+        return NAN;
+    
+    result = pi / 2 - asin(x);
+    return result;
+}
+
+double asin(double x) 
+{
+    if (x < -1 || x > 1)
+        return NAN;
+
+    return 2 * atan(x / (1 + sqrt(1 - (x * x))));
+}
+
+double atan(double x)
+{
+    double result;
+    __asm__ volatile("fld1; fpatan" : "=t" (result) : "0" (x));
+    return result;
+}
+
+double atan2(double x, double y) 
+{
+    double result;
+    __asm__ volatile("fpatan" : "=t" (result) : "0" (y), "u" (x));
+    return result;
+}
+
+double sqrt(double x)
+{
+    double result;
+    if (x <  0.0) 
+        return NAN;
+    
+    __asm__ volatile("fsqrt" : "=t" (result) : "0" (x));
+
+    return result;
+}
+
+double fabs(double x)
+{
+    if (x < 0.0) 
+        return -x;
+    else 
+        return x;
+}
+
+
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

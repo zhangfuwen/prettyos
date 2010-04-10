@@ -16,7 +16,8 @@ int cdi_ioports_alloc(uint16_t start, uint16_t count);
 
 int cdi_ioports_free(uint16_t start, uint16_t count);
 
-void cdi_sleep_ms(uint32_t ms) {
+void cdi_sleep_ms(uint32_t ms)
+{
     sleepMilliSeconds(ms);
 }
 

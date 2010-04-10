@@ -84,6 +84,7 @@ DECL_SYSCALL0( testch                                     ) // substitute
 DECL_SYSCALL1( clear_console, uint8_t                     )
 DECL_SYSCALL2( set_cursor, uint8_t, uint8_t               )
 DECL_SYSCALL1( task_grow_userheap, uint32_t               )
+DECL_SYSCALL2( setScrollField, uint8_t, uint8_t           )
 /***********************************************************/
 
 #endif

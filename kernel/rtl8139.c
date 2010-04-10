@@ -8,7 +8,7 @@
 #include "paging.h"
 #include "ipTcpStack.h"
 
-extern pciDev_t pciDev_Array[50];
+extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
 extern uint8_t network_buffer[8192+16]; /// OK?
 extern uint32_t BaseAddressRTL8139_IO;
@@ -93,6 +93,9 @@ void rtl8139_handler(registers_t* r)
 
 void install_RTL8139(uint32_t number)
 {
+    //clear receiving buffer
+    memset((void*)network_buffer, 0x0, 8192+16);
+
     #ifdef _DIAGNOSIS_
         settextcolor(3,0);
         printf("RTL8139 MMIO: %X\n",BaseAddressRTL8139_MMIO);
@@ -100,24 +103,8 @@ void install_RTL8139(uint32_t number)
     #endif
 
     /// idendity mapping of BaseAddressRTL8139_MMIO
-    bool USE_VIRTUAL_APPROACH = true;
-    if (USE_VIRTUAL_APPROACH)
-    {
-        BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem(BaseAddressRTL8139_MMIO);
-        printf("BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO);
-    }
-    else
-    {
-        int retVal = paging_do_idmapping(BaseAddressRTL8139_MMIO);
-        if (retVal == true)
-        {
-            printf("\n");
-        }
-        else
-        {
-            printf("\npaging_do_idmapping(...) error.\n");
-        }
-    }
+    BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem(BaseAddressRTL8139_MMIO);
+    printf("BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO);
 
     // "power on" the card
     *((uint8_t*)(BaseAddressRTL8139_MMIO + 0x52)) = 0x00;

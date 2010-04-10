@@ -42,6 +42,7 @@ int getUserTaskNumber();
 void clearScreen(unsigned char backgroundColor);
 void gotoxy(unsigned char x, unsigned char y);
 void* grow_heap(unsigned increase);
+void setScrollField(uint8_t top, uint8_t bottom);
 
 
 // user functions
@@ -72,5 +73,23 @@ void showInfo(signed char val);
 
 void* malloc(size_t size);
 void free(void* mem);
+
+//math functions
+
+#define NAN         (__builtin_nanf (""))
+#define pi 3.1415926535897932384626433832795028841971693993
+
+double cos(double x);
+double sin(double x);
+double tan(double x);
+
+double acos(double x);
+double asin(double x);
+double atan(double x);
+double atan2(double x, double y); 
+
+double sqrt(double x);
+
+double fabs(double x);
 
 #endif
