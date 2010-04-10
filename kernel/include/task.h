@@ -6,7 +6,7 @@
 #include "paging.h"
 #include "descriptor_tables.h"
 
-#define KERNEL_STACK_SIZE 2048        // Use a 2kb kernel stack.
+#define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
 
 struct task
 {

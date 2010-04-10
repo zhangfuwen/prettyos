@@ -18,7 +18,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.342";
+const char* version = "0.0.0.343";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -90,8 +90,9 @@ int main()
 {
     init();
     screenshot_Flag = false;
-    EHCIflag     = false;  // first EHCI device found?
-    initEHCIFlag = false;  //   any EHCI device found?
+    EHCIflag     = false;     // first EHCI device found?
+    initEHCIFlag = false;     //   any EHCI device found?
+    pODA->pciEHCInumber = 0;  // pci number of first EHCI device
 
     // Create Startup Screen
     create_cthread((task_t*)pODA->curTask, &bootscreen, "Booting ...");
@@ -192,10 +193,10 @@ int main()
                 create_thread((task_t*)pODA->curTask, &screenshot_thread);
             }
 
-            if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pciEHCINumber)
+            if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pODA->pciEHCInumber)
             {
                 initEHCIFlag = false;
-                initEHCIHostController(pciEHCINumber);
+                create_cthread((task_t*)pODA->curTask, &initEHCIHostController, "EHCI");
             }
         }
 

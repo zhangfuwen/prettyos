@@ -205,7 +205,7 @@ void ehci_handler(registers_t* r)
         settextcolor(14,0);
         printf("\nInit EHCI after fatal error");
         settextcolor(15,0);
-        int32_t retVal = initEHCIHostController(pciEHCINumber);
+        int32_t retVal = initEHCIHostController();
         if (retVal==-1)
         {
             goto leave_handler;
@@ -343,8 +343,10 @@ void startHostController(uint32_t num)
     delay(100000);
 }
 
-int32_t initEHCIHostController(uint32_t num)
+int32_t initEHCIHostController()
 {
+    uint32_t num = pODA->pciEHCInumber;
+
     USBtransferFlag = true;
     enabledPortFlag = false;
 

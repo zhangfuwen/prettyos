@@ -230,20 +230,30 @@ void listPCI() {
 
                                     uint32_t bar = pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0;
 
-                                    /// idendity mapping of bar
-                                    int retVal1 = paging_do_idmapping(bar);
-                                    if (retVal1 == true)
+                                    /// TEST
+                                    bool USE_VIRTUAL_APPROACH_EHCI = true;
+                                    if (USE_VIRTUAL_APPROACH_EHCI)
                                     {
-                                       printf("\n\n");
+                                        bar = (uint32_t) paging_acquire_pcimem(bar);
+                                        printf("BaseAddressEHCI_MMIO mapped to virtual address %X\n", bar);
                                     }
                                     else
                                     {
-                                        printf("\npaging_do_idmapping(...) error.\n");
+                                        int retVal1 = paging_do_idmapping(bar);
+                                        if (retVal1 == true)
+                                        {
+                                            printf("\n\n");
+                                        }
+                                        else
+                                        {
+                                            printf("\npaging_do_idmapping(...) error.\n");
+                                        }
                                     }
+                                    /// TEST
 
                                     if (!EHCIflag) // only the first EHCI is used
                                     {
-                                        pciEHCINumber = number; /// TODO: implement for more than one EHCI
+                                        pODA->pciEHCInumber = number; /// TODO: implement for more than one EHCI
                                         EHCIflag = true; // only the first EHCI is used
                                         initEHCIFlag = true; // init of EHCI shall be carried out
                                         analyzeEHCI(bar); // get data (capregs, opregs)

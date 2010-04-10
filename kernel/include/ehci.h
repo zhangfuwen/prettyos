@@ -42,7 +42,6 @@ struct ehci_OpRegs
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-uint32_t pciEHCINumber;
 bool     EHCIflag;
 bool     initEHCIFlag;
 uint8_t  numPorts;
@@ -248,7 +247,7 @@ void analyzeEHCI(uint32_t bar);
 
 void resetHostController();
 void startHostController(uint32_t num);
-int32_t initEHCIHostController(uint32_t num);
+int32_t initEHCIHostController();
 void DeactivateLegacySupport(uint32_t num);
 void enablePorts();
 

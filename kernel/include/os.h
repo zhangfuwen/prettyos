@@ -105,6 +105,9 @@ typedef struct
     // floppy disk               // array index is number of floppy drive (0,1,2,3)
     bool flpy_motor[4];          // 0: motor off  1: motor on
     bool flpy_ReadWriteFlag[4];  // 0: ready      1: busy (blocked)
+
+    // EHCI
+    uint32_t pciEHCInumber;      // pci device number
 }__attribute__((packed)) oda_t;
 
 // operatings system common data area
