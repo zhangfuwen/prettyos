@@ -258,7 +258,9 @@ void showPORTSC();
 
 void checkPortLineStatus();
 void resetPort(uint8_t j);
-void portCheck();
+
+void portCheck(); // for thread with own console
+void startEHCI(); // for thread with own console
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device);
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes);

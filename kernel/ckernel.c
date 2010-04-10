@@ -18,7 +18,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.345";
+const char* version = "0.0.0.346";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -197,7 +197,7 @@ int main()
             if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pODA->pciEHCInumber)
             {
                 initEHCIFlag = false;
-                create_cthread((task_t*)pODA->curTask, &initEHCIHostController, "EHCI");
+                create_cthread((task_t*)pODA->curTask, &startEHCI, "EHCI");
             }
 
             if ((portCheckFlag == true) && (CurrentSeconds >= 3) && pODA->pciEHCInumber)

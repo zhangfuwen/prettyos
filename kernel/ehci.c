@@ -502,7 +502,19 @@ void portCheck()
 {
     showPORTSC();
     checkPortLineStatus();
-    sleepSeconds(10);
+    settextcolor(13,0);
+    printf("\n>>> Press key to close this console. <<<");
+    settextcolor(15,0);
+    while(!checkKQ_and_return_char());
+}
+
+void startEHCI()
+{
+    initEHCIHostController();
+    settextcolor(13,0);
+    printf("\n>>> Press key to close this console. <<<");
+    settextcolor(15,0);
+    while(!checkKQ_and_return_char());
 }
 
 void showUSBSTS()
