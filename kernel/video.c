@@ -31,7 +31,8 @@ void clear_screen()
     update_cursor();
 }
 
-void refreshUserScreen() {
+void refreshUserScreen()
+{
     // Printing titlebar
     kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
     csr_y = 0;
@@ -202,8 +203,8 @@ static void catchVidmem()
     for (uint16_t i=0; i<4000;i++)
     {
         uint16_t j=i+2*NewLine;
-        videoscreen[j] = *(uint8_t*)(vidmem + 2*i); // only signs, no attributes
-        if ( (i%80 == 79) && (i!=3999) )
+        videoscreen[j] = *(char*)(vidmem+i); // only signs, no attributes
+        if ((i%80 == 79) && (i!=3999)) // for last row no NewLine
         {
             videoscreen[j+1]= 0xD; // CR
             videoscreen[j+2]= 0xA; // LF
@@ -226,7 +227,7 @@ int32_t screenshot(char* name)
     }
 }
 
-void screenshot_easy()
+void screenshot_thread()
 {
     catchVidmem();
 
@@ -236,9 +237,6 @@ void screenshot_easy()
     sprintf(timeStr, "TIME%s", timeBuffer);
     flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4098);
 }
-
-
-
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

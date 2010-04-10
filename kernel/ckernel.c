@@ -18,7 +18,7 @@
 #include "file.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.341";
+const char* version = "0.0.0.342";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -52,35 +52,37 @@ static void init()
     settextcolor(15,0);
 }
 
-void showMemorySize() {
+void showMemorySize()
+{
     if (pODA->Memory_Size > 1073741824)
     {
-        printf("Memory size: %u GiB / %u GB  (%u Bytes)\n", pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
+        printf("Memory size: %u GiB / %u GB  (%u Bytes)\n",
+        pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
     }
     else if (pODA->Memory_Size > 1048576)
     {
-        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
+        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n",
+        pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
     }
     else
     {
-        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
+        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n",
+        pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
     }
 }
 
-void* ramdisk_install(size_t size) {
-    ///
+void* ramdisk_install(size_t size)
+{
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
     printf("rd_start: ");
     settextcolor(15,0);
     #endif
-    ///
-    void* ramdisk_start = malloc(size, PAGESIZE);
 
+    void* ramdisk_start = malloc(size, PAGESIZE);
     // shell via incbin in data.asm
     memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
-
     return(ramdisk_start);
 }
 
@@ -151,14 +153,11 @@ int main()
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char DateAndTime[81]; // String for Date&Time
 
-    while (true)
+    while (true) // start of kernel idle loop
     {
         // Show Rotating Asterisk
         *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
-        if (! *++progress)
-        {
-            progress = "|/-\\";
-        }
+        if (! *++progress){ progress = "|/-\\"; }
 
         if (getCurrentSeconds() != CurrentSeconds)
         {
@@ -171,21 +170,26 @@ int main()
             uint32_t RdtscKCountsHi = RdtscKCounts >> 32;
             uint32_t RdtscKCountsLo = RdtscKCounts & 0xFFFFFFFF;
 
-            if (RdtscKCountsHi==0)
-            {
-                pODA->CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
-            }
+            if (RdtscKCountsHi==0){ pODA->CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10; }
 
-            // Draw Status bar and Separation
+            // draw separation line
             kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
+
+            // draw status bar with date & time and frequency
             getCurrentDateAndTime(DateAndTime);
-            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000); // output in status bar
+            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, // output in status bar
+                    DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000);
+
+
+            /////////////////////////////////////////////////////////////////////////////////////////
+            // actions in kernel idle loop due to flags                                            //
+            /////////////////////////////////////////////////////////////////////////////////////////
 
             if (screenshot_Flag == true)
             {
-                printf("Screenshot Test\n");
-                create_thread((task_t*)pODA->curTask, &screenshot_easy);
                 screenshot_Flag = false;
+                printf("Screenshot Test\n");
+                create_thread((task_t*)pODA->curTask, &screenshot_thread);
             }
 
             if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pciEHCINumber)
@@ -194,9 +198,10 @@ int main()
                 initEHCIHostController(pciEHCINumber);
             }
         }
-        __asm__ volatile ("hlt");
-    }
-    return 0;
+
+    __asm__ volatile ("hlt"); // HLT halts the CPU until the next external interrupt is fired.
+
+    } // end of kernel idle loop
 }
 
 /*

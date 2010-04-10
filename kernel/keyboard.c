@@ -23,10 +23,9 @@ uint8_t prevScan  = 0;      // previous scan code
 
 void keyboard_install()
 {
-    // Installs 'keyboard_handler' to IRQ1
-    irq_install_handler(32+1, keyboard_handler);
+    irq_install_handler(32+1, keyboard_handler); // Installs 'keyboard_handler' to IRQ1
 
-    while (inportb(0x64)&1) // wait until buffer is empty
+    while ( inportb(0x64) & 1 ) // wait until buffer is empty
     {
         inportb(0x60);
     }
@@ -53,7 +52,7 @@ uint8_t FetchAndAnalyzeScancode()
         curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
         if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) // A key was released, shift key up?
         {
-            ShiftKeyDown = false;    // yes, it is up --> NonShift
+            ShiftKeyDown = false; // yes, it is up --> NonShift
         }
         if ((curScan == 0x38) && (prevScan == 0x60))
         {
@@ -135,9 +134,10 @@ uint8_t ScanToASCII()
             changeDisplayedConsole(10);
             return(0);
         }
-        if (ctoi(retchar) != -1) {
+        if (ctoi(retchar) != -1)
+        {
             changeDisplayedConsole(ctoi(retchar));
-            return(0);
+            return 0;
         }
     }
     if (CtrlKeyDown && (retchar == 's')) // Taking a screenshot; Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
@@ -147,13 +147,13 @@ uint8_t ScanToASCII()
         char timeStr[10];
         sprintf(timeStr, "TIME%s", timeBuffer);
         screenshot(timeStr);
-        return(0);
+        return 0;
     }
 
-    if (CtrlKeyDown && (retchar == 't')) // For tests
+    if (CtrlKeyDown && (retchar == 't')) // For tests: function screenshot_thread as a thread
     {
         screenshot_Flag = true;
-        return(0);
+        return 0;
     }
 
     return retchar; // ASCII version
