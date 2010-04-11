@@ -6,17 +6,14 @@
 #include "list.h"
 #include "kheap.h" // malloc and free
 
-//listHead_t* myList = 0;
-
 listHead_t* listCreate()
 {
     listHead_t* hd = (listHead_t*)malloc(sizeof(listHead_t),0);
     if (hd)
     {
         hd->head = hd->tail = 0;
-        return hd;
     }
-    return 0;
+    return(hd);
 }
 
 int8_t listAppend(listHead_t* hd, void* data)
@@ -29,15 +26,14 @@ int8_t listAppend(listHead_t* hd, void* data)
 
         if (!hd->head) // there exist no list element
         {
-            hd->head = hd->tail = ap;
-            return 1;
+            hd->head = ap;
         }
         else   // there exist at least one list element
         {
             hd->tail->next = ap;
-            hd->tail = ap;
-            return 1;
         }
+        hd->tail = ap;
+        return 1;
     }
     return 0;
 }
@@ -54,27 +50,6 @@ void listDeleteAll(listHead_t* hd)
         cur=nex;
     }
     free(hd);
-}
-
-int8_t listInput(listHead_t* hd)
-{
-    void* dat = malloc(sizeof(void*),0);
-    if (dat)
-    {
-        if (listAppend(hd,dat))
-        {
-            return 1;
-        }
-        else
-        {
-            free(dat);
-            return 0;
-        }
-    }
-    else
-    {
-        return 0;
-    }
 }
 
 void listShow(listHead_t* hd)
@@ -95,7 +70,7 @@ void listShow(listHead_t* hd)
     }
 }
 
-void* listShowElement(listHead_t* hd, uint32_t number)
+void* listGetElement(listHead_t* hd, uint32_t number)
 {
     element_t* cur = hd->head;
     while (cur)

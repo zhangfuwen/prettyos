@@ -69,8 +69,8 @@ extern "C" { //Functions from C-Userlib
     void* malloc(size_t size);
     void free(void* mem);
 
-    //mathe functions
-    #define NAN         (__builtin_nanf (""))
+    // math functions
+    #define NAN (__builtin_nanf (""))
     #define pi 3.1415926535897932384626433832795028841971693993
 
     double cos(double x);

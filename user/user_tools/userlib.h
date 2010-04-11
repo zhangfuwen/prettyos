@@ -15,7 +15,7 @@ typedef uint32_t            uintptr_t;
 typedef char                bool;
 
 #define true        1
-#define false        0
+#define false       0
 
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
@@ -74,9 +74,9 @@ void showInfo(signed char val);
 void* malloc(size_t size);
 void free(void* mem);
 
-//math functions
+// math functions
 
-#define NAN         (__builtin_nanf (""))
+#define NAN (__builtin_nanf (""))
 #define pi 3.1415926535897932384626433832795028841971693993
 
 double cos(double x);

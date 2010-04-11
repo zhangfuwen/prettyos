@@ -274,7 +274,7 @@ char* toupper(char* s)
 {
     for (int i=0;i<strlen(s);i++)
     {
-        s[i]=toUpper(s[i]);
+        s[i] = toUpper(s[i]);
     }
     return s;
 }
@@ -283,7 +283,7 @@ char* tolower(char* s)
 {
     for (int i=0;i<strlen(s);i++)
     {
-        s[i]=toLower(s[i]);
+        s[i] = toLower(s[i]);
     }
     return s;
 }
@@ -348,7 +348,7 @@ char* strchr(char* str, int character)
 {
     for (;;str++)
     {
-        // NOTE< the order here is important >
+        // the order here is important
         if (*str == character)
         {
             return str;
@@ -445,12 +445,12 @@ void reverse(char* s)
 /// http://en.wikipedia.org/wiki/Itoa
 void itoa(int n, char* s)
 {
-    int i, sign;
+    int sign;
     if ((sign = n) < 0) // record sign
     {
         n = -n;         // make n positive
     }
-    i=0;
+    int i=0;
     do // generate digits in reverse order
     {
         s[i++] = n % 10 + '0'; // get next digit
@@ -467,8 +467,8 @@ void itoa(int n, char* s)
 
 int atoi(const char* s)
 {
-    int num=0,flag=0;
-    for (int i=0;i<=strlen(s);i++)
+    int num=0, flag=0;
+    for (int i=0; i<=strlen(s); i++)
     {
         if (s[i] >= '0' && s[i] <= '9')
         {
@@ -476,7 +476,7 @@ int atoi(const char* s)
         }
         else if (s[0] == '-' && i==0)
         {
-            flag =1;
+            flag = 1;
         }
         else
         {
@@ -493,23 +493,22 @@ int atoi(const char* s)
 void float2string(float value, int decimal, char* valuestring) // float --> string
 {
    int neg = 0;
-   char tempstr[20];
-   int i=0;
-   int c;
-   int val1, val2;
-   char* tempstring;
-
-   tempstring = valuestring;
    if (value < 0)
    {
-     {neg = 1; value = -value;}
+       neg = 1;
+       value = -value;
    }
    for (int j=0; j < decimal; ++j)
    {
-     {value = value * 10;}
+       value = value * 10;
    }
-   val1 = (value * 2);
-   val2 = (val1 / 2) + (val1 % 2);
+
+   char tempstr[20];
+   char* tempstring = valuestring;
+   int i=0;
+   int val1 = value * 2;
+   int val2 = (val1 / 2) + (val1 % 2);
+
    while (val2 !=0)
    {
      if ((decimal > 0) && (i == decimal))
@@ -519,7 +518,7 @@ void float2string(float value, int decimal, char* valuestring) // float --> stri
      }
      else
      {
-       c = (val2 % 10);
+       int c = (val2 % 10);
        tempstr[i] = (char) (c + 0x30);
        val2 = val2 / 10;
        ++i;
@@ -562,12 +561,11 @@ void i2hex(uint32_t val, char* dest, int32_t len)
 
 void showInfo(signed char val)
 {
-    static char* line1 = "   _______                _______      <>_<>                                    ";
-    static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                ";
-    static char* line3 = " `-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                               ";
-
     if (val==1)
     {
+        static char* line1 = "   _______                _______      <>_<>                                    ";
+        static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                ";
+        static char* line3 = " `-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                               ";
         char temp1 = line1[79];
         char temp2 = line2[79];
         char temp3 = line3[79];
@@ -625,7 +623,7 @@ void free(void* mem)
 }
 
 
-//math functions
+/// math functions
 
 double cos(double x)
 {
@@ -650,12 +648,10 @@ double tan(double x)
 
 double acos(double x) 
 {
-    double result;
     if (x < -1 || x > 1) 
         return NAN;
-    
-    result = pi / 2 - asin(x);
-    return result;
+
+    return(pi / 2 - asin(x));
 }
 
 double asin(double x) 
@@ -663,7 +659,7 @@ double asin(double x)
     if (x < -1 || x > 1)
         return NAN;
 
-    return 2 * atan(x / (1 + sqrt(1 - (x * x))));
+    return(2 * atan(x / (1 + sqrt(1 - (x * x)))));
 }
 
 double atan(double x)
@@ -682,21 +678,19 @@ double atan2(double x, double y)
 
 double sqrt(double x)
 {
-    double result;
     if (x <  0.0) 
         return NAN;
-    
-    __asm__ volatile("fsqrt" : "=t" (result) : "0" (x));
 
+    double result; 
+    __asm__ volatile("fsqrt" : "=t" (result) : "0" (x));
     return result;
 }
 
 double fabs(double x)
 {
-    if (x < 0.0) 
-        return -x;
-    else 
-        return x;
+    double result; 
+    __asm__ volatile("fabs" : "=t" (result) : "0" (x));
+    return result;
 }
 
 

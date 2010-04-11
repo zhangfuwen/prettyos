@@ -193,9 +193,9 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     return new_task;
 }
 
-task_t* create_cthread(task_t* parentTask, void* entry, const char* consoleName)
+task_t* create_cthread(void* entry, const char* consoleName)
 {
-    task_t* new_task = create_thread(parentTask, entry);
+    task_t* new_task = create_thread(entry);
     new_task->ownConsole = true;
     new_task->console = malloc(sizeof(console_t), PAGESIZE);
     console_init(new_task->console, consoleName);
@@ -211,7 +211,7 @@ task_t* create_cthread(task_t* parentTask, void* entry, const char* consoleName)
     return(new_task);
 }
 
-task_t* create_thread(task_t* parentTask, void* entry)
+task_t* create_thread(void* entry)
 {
     cli();
 
@@ -224,10 +224,10 @@ task_t* create_thread(task_t* parentTask, void* entry)
     ///
 
     task_t* new_task = malloc(sizeof(task_t),0);
-    new_task->pid  = parentTask->pid;
-    new_task->page_directory = parentTask->page_directory;
-    // new_task->privilege = parentTask->privilege;
-    new_task->privilege = 0; /// TEST
+    new_task->pid  = current_task->pid;
+    new_task->page_directory = current_task->page_directory;
+    new_task->privilege = current_task->privilege;
+    // new_task->privilege = 0; /// TEST
     new_task->threadFlag = true;
 
     if (new_task->privilege == 3)
@@ -255,7 +255,7 @@ task_t* create_thread(task_t* parentTask, void* entry)
     setNextTask(new_task, NULL); // last task in queue
 
     new_task->ownConsole = false;
-    new_task->console = parentTask->console; // The thread uses the same console as the parent Task
+    new_task->console = current_task->console; // The thread uses the same console as the parent Task
 
     setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
 

@@ -23,8 +23,9 @@ void events_install()
 }
 
 void handleEvents() {
-    for(int i = 0; listShowElement(eventQueue, i) != 0; i++) {
-        ((event_handler_t*)listShowElement(eventQueue, i))->function();
+    for(int i = 0; listGetElement(eventQueue, i) != 0; i++)
+    {
+        ((event_handler_t*)listGetElement(eventQueue, i))->function();
     }
     listDeleteAll(eventQueue);
     eventQueue = listCreate();

@@ -35,11 +35,11 @@ bool enabledPortFlag; // port enabled
 
 void ehci_init()
 {
-    create_cthread((task_t*)pODA->curTask, &startEHCI, "EHCI");
+    create_cthread(&startEHCI, "EHCI");
 }
 void ehci_portcheck()
 {
-    create_cthread((task_t*)pODA->curTask, &portCheck, "EHCI Ports");
+    create_cthread(&portCheck, "EHCI Ports");
 }
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)

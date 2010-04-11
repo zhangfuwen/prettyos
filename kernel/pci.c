@@ -89,7 +89,7 @@ void listPCI()
     putch('\n');
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
-        void* element = listShowElement(pciDevList,i);
+        void* element = listGetElement(pciDevList,i);
         if (element)
         {
             settextcolor(2,0);

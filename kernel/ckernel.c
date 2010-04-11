@@ -18,7 +18,7 @@
 #include "file.h"
 #include "event_list.h"
 
-const char* version = "0.0.0.353";
+const char* version = "0.0.0.354";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -36,7 +36,6 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 static void init()
 {
     clear_screen();
-    settextcolor(14,0);
     kernel_console_init();
     gdt_install();
     idt_install();         // cf. interrupts.asm
@@ -50,7 +49,6 @@ static void init()
     tasking_install();
     events_install();
     sti();
-    settextcolor(15,0);
 }
 
 void showMemorySize()
@@ -89,7 +87,7 @@ int main()
     pODA->pciEHCInumber = 0;  // pci number of first EHCI device
 
     // Create Startup Screen
-    create_cthread((task_t*)pODA->curTask, &bootscreen, "Booting ...");
+    create_cthread(&bootscreen, "Booting ...");
     pODA->ts_flag = true;
 
     showMemorySize();

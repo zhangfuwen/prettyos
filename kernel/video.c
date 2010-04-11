@@ -15,7 +15,7 @@ uint16_t* vidmem = (uint16_t*) 0xB8000;
 uint8_t videoscreen[4000+98]; // only signs, no attributes, 49 times CR LF at line end
 
 
-static const uint8_t LINES   = 50;
+static const uint8_t LINES = 50;
 
 static const uint8_t USER_BEGIN = 2; // Reserving Titlebar+Separation
 static const uint8_t USER_END = 48; // Reserving Statusbar+Separation
@@ -214,9 +214,10 @@ static void catchVidmem()
     }
 }
 
-void mt_screenshot() {
+void mt_screenshot()
+{
     printf("Screenshot (Thread)\n");
-    create_thread((task_t*)pODA->curTask, &screenshot_thread);
+    create_thread(&screenshot_thread);
 }
 
 int32_t screenshot(char* name)

@@ -2,9 +2,10 @@
 
 int main()
 {
-	setScrollField(0, 43); // We do not want to see scrolling output...
+    setScrollField(0, 43); // We do not want to see scrolling output...
     puts("Hello World");
-    for(;;) {
+    for(;;)
+    {
         showInfo(1);
     }
     return 0;

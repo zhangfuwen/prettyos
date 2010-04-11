@@ -207,8 +207,8 @@ bool elf_exec( const void* elf_file, uint32_t elf_file_size, const char* program
 // math.c
 uint32_t max(uint32_t a, uint32_t b);
 uint32_t min(uint32_t a, uint32_t b);
-int32_t  abs(int32_t i);
 int32_t  power(int32_t base, int32_t n);
+double   fabs(double x);
 
 // util.c
 uint8_t  inportb  (uint16_t port);
