@@ -33,6 +33,13 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 bool USBtransferFlag; // switch on/off tests for USB-Transfer
 bool enabledPortFlag; // port enabled
 
+void ehci_init() {
+    create_cthread((task_t*)pODA->curTask, &startEHCI, "EHCI");
+}
+void ehci_portcheck() {
+    create_cthread((task_t*)pODA->curTask, &portCheck, "EHCI Ports");
+}
+
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)
 {
     settextcolor(9,0);
@@ -197,7 +204,7 @@ void ehci_handler(registers_t* r)
 
         if (enabledPortFlag && pODA->pciEHCInumber)
         {
-            addEvent(EHCI_PORTCHECK);
+            addEvent(&EHCI_PORTCHECK);
         }
     }
 

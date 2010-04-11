@@ -50,7 +50,6 @@ void listDeleteAll(listHead_t* hd)
     while (cur)
     {
         nex=cur->next;
-        free(cur->data);
         free(cur);
         cur=nex;
     }
@@ -99,29 +98,21 @@ void listShow(listHead_t* hd)
 void* listShowElement(listHead_t* hd, uint32_t number)
 {
     element_t* cur = hd->head;
-    void* dat=0;
-    if (!cur)
+    while (cur)
     {
-        /* printf(""); */
-    }
-    else
-    {
-        uint32_t index=0;
-        while (cur)
+        if (number == 0)
         {
-            ++index;
-            if (index==number)
-            {
-                dat = cur->data;
-            }
-            cur = cur->next;
+            return(cur->data);
         }
+        --number;
+        cur = cur->next;
     }
-    return dat;
+    return(0);
 }
 
+
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

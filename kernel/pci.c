@@ -82,19 +82,13 @@ void listPCI()
         if (pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00))   // there is no vendor EE00h
         {
             listAppend(pciDevList, (void*)(pciDev_Array+i));
-            ///
-            #ifdef _DIAGNOSIS_
             settextcolor(2,0);
             printf("%X\t",pciDev_Array+i);
-            #endif
-            ///
         }
     }
     putch('\n');
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
-        ///
-        #ifdef _DIAGNOSIS_
         void* element = listShowElement(pciDevList,i);
         if (element)
         {
@@ -105,14 +99,8 @@ void listPCI()
                        ((pciDev_t*)element)->vendorID);
             settextcolor(15,0);
         }
-        #endif
-        ///
     }
-    ///
-    #ifdef _DIAGNOSIS_
     puts("\n\n");
-    #endif
-    ///
 }
 
  void pciScan()
@@ -227,7 +215,7 @@ void listPCI()
                                         EHCIflag = true; // only the first EHCI is used
                                         if(pODA->pciEHCInumber)
                                         {
-                                            addEvent(EHCI_INIT);
+                                            addEvent(&EHCI_INIT);
                                         }
                                         analyzeEHCI(bar); // get data (capregs, opregs)
                                     }

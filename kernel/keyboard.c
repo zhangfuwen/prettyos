@@ -153,7 +153,7 @@ uint8_t ScanToASCII()
 
     if (CtrlKeyDown && (retchar == 't')) // For tests: function screenshot_thread as a thread
     {
-        addEvent(VIDEO_SCREENSHOT);
+        addEvent(&VIDEO_SCREENSHOT);
         return 0;
     }
 

@@ -18,7 +18,7 @@
 #include "file.h"
 #include "event_list.h"
 
-const char* version = "0.0.0.350";
+const char* version = "0.0.0.351";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -97,7 +97,11 @@ int main()
     floppy_install();// detect FDDs
 
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
+    ///
+    #ifdef _DIAGNOSIS_
     listPCI();
+    #endif
+    ///
 
     void* ramdisk_start = ramdisk_install(0x200000);
 
@@ -148,8 +152,6 @@ int main()
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char DateAndTime[81]; // String for Date&Time
 
-    bool eventsAvailable = true;
-
     while (true) // start of kernel idle loop
     {
         // Show Rotating Asterisk
@@ -178,26 +180,8 @@ int main()
                     DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000);
         }
 
-        while(eventsAvailable) // Handling Events
-        {
-            switch(takeEvent())
-            {
-            case EHCI_INIT:
-                create_cthread((task_t*)pODA->curTask, &startEHCI, "EHCI");
-                break;
-            case EHCI_PORTCHECK:
-                create_cthread((task_t*)pODA->curTask, &portCheck, "EHCI Ports");
-                break;
-            case VIDEO_SCREENSHOT:
-                printf("Screenshot (Thread)\n");
-                create_thread((task_t*)pODA->curTask, &screenshot_thread);
-                break;
-            case NONE:
-            default:
-                eventsAvailable = false;
-            }
-        }
-        eventsAvailable = true;
+        // Handling Events
+        handleEvents();
 
         __asm__ volatile ("hlt"); // HLT halts the CPU until the next external interrupt is fired.
     } // end of kernel idle loop

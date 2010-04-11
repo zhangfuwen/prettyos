@@ -5,38 +5,34 @@
 
 #include "os.h"
 #include "event_list.h"
-#include "list.h"
+#include "ehci.h"
 
-listHead_t* eventList;
+listHead_t* eventQueue;
+
+event_handler_t EHCI_INIT;
+event_handler_t EHCI_PORTCHECK;
+event_handler_t VIDEO_SCREENSHOT;
 
 void events_install()
 {
-    eventList = listCreate();
+    eventQueue = listCreate();
+    // Init event-handlers
+    EHCI_INIT.function = &ehci_init;
+    EHCI_PORTCHECK.function = &ehci_portcheck;
+    VIDEO_SCREENSHOT.function = &mt_screenshot;
 }
 
-uint32_t takeEvent()
-{
-    if(eventList->head == 0) {
-        // Event-List is finished
-        listDeleteAll(eventList);
-        eventList = listCreate();
-        return(0);
+void handleEvents() {
+    for(int i = 0; listShowElement(eventQueue, i) != 0; i++) {
+        ((event_handler_t*)listShowElement(eventQueue, i))->function();
     }
-    uint32_t retval = (uint32_t)eventList->head->data;
-    if(eventList->head == eventList->tail)
-    {
-        eventList->head = 0;
-    }
-    else
-    {
-        eventList->head = eventList->head->next;
-    }
-    return(retval);
+    listDeleteAll(eventQueue);
+    eventQueue = listCreate();
 }
 
-void addEvent(uint32_t ID)
+void addEvent(event_handler_t* event)
 {
-    listAppend(eventList, (void*)ID);
+    listAppend(eventQueue, (void*)event);
 }
 
 

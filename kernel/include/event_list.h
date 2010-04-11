@@ -2,17 +2,19 @@
 #define EVENT_LIST_H
 
 #include "os.h"
+#include "list.h"
 
-enum EVENTS {
-    NONE = 0,
-    // EHCI-Events
-    EHCI_INIT, EHCI_PORTCHECK,
-    // Video-Events
-    VIDEO_SCREENSHOT
-};
+typedef struct {
+    void (*function)();
+} event_handler_t;
+
+
+extern event_handler_t EHCI_INIT;
+extern event_handler_t EHCI_PORTCHECK;
+extern event_handler_t VIDEO_SCREENSHOT;
 
 void events_install();
-uint32_t takeEvent();
-void addEvent(uint32_t ID);
+void handleEvents();
+void addEvent(event_handler_t* event);
 
 #endif

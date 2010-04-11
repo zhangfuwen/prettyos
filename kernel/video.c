@@ -6,6 +6,7 @@
 #include "os.h"
 #include "console.h"
 #include "my_stdarg.h"
+#include "task.h"
 #include "file.h"
 
 uint16_t* vidmem = (uint16_t*) 0xB8000;
@@ -211,6 +212,11 @@ static void catchVidmem()
             NewLine++;
         }
     }
+}
+
+void mt_screenshot() {
+    printf("Screenshot (Thread)\n");
+    create_thread((task_t*)pODA->curTask, &screenshot_thread);
 }
 
 int32_t screenshot(char* name)
