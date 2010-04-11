@@ -39,7 +39,7 @@ const char* exception_messages[] =
 uint32_t irq_handler(uint32_t esp)
 {
     registers_t* r = (registers_t*)esp;
-    task_t* pCurrentTask = (task_t*)(pODA->curTask);
+    task_t* pCurrentTask = (task_t*)(ODA.curTask);
 
     if (r->int_no == 7) //exception #NM (number 7)
     {
@@ -55,14 +55,14 @@ uint32_t irq_handler(uint32_t esp)
         ///
 
         // save FPU data ...
-        if (pODA->TaskFPU)
+        if (ODA.TaskFPU)
         {
-            // fsave or fnsave to pODA->TaskFPU->FPU_ptr
-            __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(((task_t*)pODA->TaskFPU)->FPU_ptr)));
+            // fsave or fnsave to ODA.TaskFPU->FPU_ptr
+            __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(((task_t*)ODA.TaskFPU)->FPU_ptr)));
         }
 
         // store the last task using FPU
-        pODA->TaskFPU = pCurrentTask;
+        ODA.TaskFPU = pCurrentTask;
 
         // restore FPU data ...
         if (pCurrentTask->FPU_ptr)
@@ -126,7 +126,7 @@ uint32_t irq_handler(uint32_t esp)
         for (;;);
     }
 
-    if (pODA->ts_flag && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_context
+    if (ODA.ts_flag && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_context
         esp = task_switch (esp); //new task's esp
 
     interrupt_handler_t handler = irq_routines[r->int_no];

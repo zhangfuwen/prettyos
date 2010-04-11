@@ -36,7 +36,7 @@ void fpu_install()
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
 
     // init TaskFPU in ODA
-    pODA->TaskFPU = NULL;
+    ODA.TaskFPU = NULL;
 }
 
 /*

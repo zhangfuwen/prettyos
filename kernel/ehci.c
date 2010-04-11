@@ -204,7 +204,7 @@ void ehci_handler(registers_t* r)
 
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
 
-        if (enabledPortFlag && pODA->pciEHCInumber)
+        if (enabledPortFlag && ODA.pciEHCInumber)
         {
             addEvent(&EHCI_PORTCHECK);
         }
@@ -368,7 +368,7 @@ void startHostController(uint32_t num)
 
 int32_t initEHCIHostController()
 {
-    uint32_t num = pODA->pciEHCInumber;
+    uint32_t num = ODA.pciEHCInumber;
 
     USBtransferFlag = true;
     enabledPortFlag = false;

@@ -16,9 +16,6 @@ void cli() { __asm__ volatile ("cli"); }  // Disable interrupts
 
 void nop() { __asm__ volatile ("nop"); }  // Do nothing
 
-oda_t   ODA;
-oda_t* pODA = &ODA;
-
 /**********************************************************************/
 
 uint32_t fetchESP()

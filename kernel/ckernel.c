@@ -18,7 +18,7 @@
 #include "file.h"
 #include "event_list.h"
 
-const char* version = "0.0.0.354";
+const char* version = "0.0.0.355";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -33,6 +33,9 @@ extern uint32_t file_data_end;
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
+// operatings system common data area
+oda_t ODA;
+
 static void init()
 {
     clear_screen();
@@ -44,7 +47,7 @@ static void init()
     mouse_install();
     syscall_install();
     fpu_install();
-    pODA->Memory_Size = paging_install();
+    ODA.Memory_Size = paging_install();
     heap_install();
     tasking_install();
     events_install();
@@ -53,15 +56,15 @@ static void init()
 
 void showMemorySize()
 {
-    if (pODA->Memory_Size > 1048576)
+    if (ODA.Memory_Size > 1048576)
     {
         printf("Memory size: %u MiB / %u MB  (%u Bytes)\n",
-        pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
+        ODA.Memory_Size/1048576, ODA.Memory_Size/1000000, ODA.Memory_Size);
     }
     else
     {
         printf("Memory size: %u KiB / %u KB  (%u Bytes)\n",
-        pODA->Memory_Size/1024, pODA->Memory_Size/1000, pODA->Memory_Size);
+        ODA.Memory_Size/1024, ODA.Memory_Size/1000, ODA.Memory_Size);
     }
 }
 
@@ -84,11 +87,11 @@ int main()
 {
     init();
     EHCIflag        = false;  // first EHCI device found?
-    pODA->pciEHCInumber = 0;  // pci number of first EHCI device
+    ODA.pciEHCInumber = 0;  // pci number of first EHCI device
 
     // Create Startup Screen
     create_cthread(&bootscreen, "Booting ...");
-    pODA->ts_flag = true;
+    ODA.ts_flag = true;
 
     showMemorySize();
 
@@ -167,7 +170,7 @@ int main()
             uint32_t RdtscKCountsHi = RdtscKCounts >> 32;
             uint32_t RdtscKCountsLo = RdtscKCounts & 0xFFFFFFFF;
 
-            if (RdtscKCountsHi==0){ pODA->CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10; }
+            if (RdtscKCountsHi==0){ ODA.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10; }
 
             // draw separation line
             kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
@@ -175,7 +178,7 @@ int main()
             // draw status bar with date & time and frequency
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, // output in status bar
-                    DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000);
+                    DateAndTime, CurrentSeconds, ODA.CPU_Frequency_kHz/1000);
         }
 
         // Handling Events

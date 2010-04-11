@@ -89,6 +89,7 @@ void panic_assert(const char* file, uint32_t line, const char* desc);  // why ch
 
 #define KQSIZE    20 // size of key queue
 
+typedef struct task task_t;
 typedef struct
 {
     // CPU
@@ -99,8 +100,8 @@ typedef struct
 
     //tasking
     uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
-    void* curTask;               // Address of currentTask
-    void* TaskFPU;               // Address of Task using FPU
+    task_t* curTask;             // Address of currentTask
+    task_t* TaskFPU;             // Address of Task using FPU
 
     // floppy disk               // array index is number of floppy drive (0,1,2,3)
     bool flpy_motor[4];          // 0: motor off  1: motor on
@@ -111,7 +112,7 @@ typedef struct
 }__attribute__((packed)) oda_t;
 
 // operatings system common data area
-extern oda_t* pODA;
+extern oda_t ODA;
 
 /* This defines what the stack looks like after an ISR was running */
 typedef struct

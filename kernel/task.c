@@ -29,7 +29,7 @@ int32_t getpid()
 
 void settaskflag(int32_t i)
 {
-    pODA->ts_flag = i;
+    ODA.ts_flag = i;
 }
 
 int32_t getUserTaskNumber()
@@ -55,7 +55,7 @@ void tasking_install()
     current_task->eip = 0;
     current_task->page_directory = kernel_pd;
     current_task->privilege = 0;
-    pODA->curTask = current_task;
+    ODA.curTask = current_task;
     current_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(current_task, NULL); // last task in queue
     current_task->console = current_console;
@@ -131,7 +131,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     ///
 
     new_task->kernel_stack = (void*)((uintptr_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE);
-    pODA->curTask = new_task;
+    ODA.curTask = new_task;
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
 
@@ -250,7 +250,7 @@ task_t* create_thread(void* entry)
     ///
 
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-    pODA->curTask = new_task;
+    ODA.curTask = new_task;
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
 
@@ -328,7 +328,7 @@ uint32_t task_switch (uint32_t esp)
     }
 
     // write active task struct address to ODA
-    pODA->curTask = current_task;
+    ODA.curTask = current_task;
 
     current_console = current_task->console;
 
@@ -347,7 +347,7 @@ uint32_t task_switch (uint32_t esp)
     #endif
 
     // set TS
-    if (pODA->curTask == pODA->TaskFPU)
+    if (ODA.curTask == ODA.TaskFPU)
     {
         __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
     }

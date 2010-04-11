@@ -212,9 +212,9 @@ void listPCI()
 
                                     if (!EHCIflag) // only the first EHCI is used
                                     {
-                                        pODA->pciEHCInumber = number; /// TODO: implement for more than one EHCI
+                                        ODA.pciEHCInumber = number; /// TODO: implement for more than one EHCI
                                         EHCIflag = true; // only the first EHCI is used
-                                        if(pODA->pciEHCInumber)
+                                        if(ODA.pciEHCInumber)
                                         {
                                             addEvent(&EHCI_INIT);
                                         }
