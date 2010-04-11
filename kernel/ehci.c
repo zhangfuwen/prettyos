@@ -226,20 +226,14 @@ void ehci_handler(registers_t* r)
         settextcolor(14,0);
         printf("\nInit EHCI after fatal error");
         settextcolor(15,0);
-        int32_t retVal = initEHCIHostController();
-        if (retVal==-1)
-        {
-            goto leave_handler;
-        }
+        addEvent(&EHCI_INIT);
     }
 
     if (pOpRegs->USBSTS & STS_ASYNC_INT)
     {
         printf("\nInterrupt on Async Advance");
         pOpRegs->USBSTS |= STS_ASYNC_INT;
-    }
-leave_handler:
-    settextcolor(15,0);
+    }    
 }
 
 void analyzeEHCI(uintptr_t bar, uintptr_t offset)

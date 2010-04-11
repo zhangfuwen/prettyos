@@ -145,12 +145,16 @@ int32_t flpydsk_read_directory()
             error = 0;
             int32_t start = DMA_BUFFER + i*32; // name
             int32_t count = 8;
+            int32_t letters = 0;
             int8_t* end = (int8_t*)(start+count);
             for (; count != 0; --count)
             {
                 if (*(end-count) != 0x20) /* empty space in file name */
+				{
                     printf("%c",*(end-count));
-            }
+					letters++;
+				}
+            }			
 
             start = DMA_BUFFER + i*32 + 8; // extension
 
@@ -169,7 +173,11 @@ int32_t flpydsk_read_directory()
             count = 3;
             end = (int8_t*)(start+count);
             for (; count!=0; --count)
+			{
                 printf("%c",*(end-count));
+			}
+            
+			if (letters<4) printf("\t"); 
 
             // filesize
             printf("\t%d byte", *((uint32_t*)(DMA_BUFFER + i*32 + 28)));

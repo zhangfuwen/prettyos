@@ -18,7 +18,7 @@
 #include "file.h"
 #include "event_list.h"
 
-const char* version = "0.0.0.356";
+const char* version = "0.0.0.357";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
