@@ -226,7 +226,8 @@ task_t* create_thread(task_t* parentTask, void* entry)
     task_t* new_task = malloc(sizeof(task_t),0);
     new_task->pid  = parentTask->pid;
     new_task->page_directory = parentTask->page_directory;
-    new_task->privilege = parentTask->privilege;
+    // new_task->privilege = parentTask->privilege;
+    new_task->privilege = 0; /// TEST
     new_task->threadFlag = true;
 
     if (new_task->privilege == 3)
