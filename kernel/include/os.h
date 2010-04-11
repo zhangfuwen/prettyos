@@ -52,12 +52,12 @@ typedef unsigned int gid_t; // Defined like in tyndur
 #define PAGESIZE 0x1000  // 4096 Byte = 4KByte
 
 // Where the kernel's private data is stored (virtual addresses)
-#define KERNEL_DATA_START ((uint8_t*)0xC0000000)    //3 GB
-#define KERNEL_DATA_END   ((uint8_t*)0x100000000)   //4 GB
+#define KERNEL_DATA_START ((uint8_t*)0x0C0000000)   // 3 GB
+#define KERNEL_DATA_END   ((uint8_t*)0x100000000)   // 4 GB
 
 // PCI/EHCI memory location for MM IO
-#define PCI_MEM_START     ((uint8_t*)0xFFF00000)
-#define PCI_MEM_END       ((uint8_t*)0x100000000)
+#define PCI_MEM_START     ((uint8_t*)0x0FFF00000)   // 4 GB minus 1 MB
+#define PCI_MEM_END       ((uint8_t*)0x100000000)   // 4 GB
 
 // Virtual adress area for the kernel heap
 #define KERNEL_HEAP_START KERNEL_DATA_START
@@ -65,12 +65,12 @@ typedef unsigned int gid_t; // Defined like in tyndur
 #define KERNEL_HEAP_SIZE  ((uint8_t*)((uintptr_t)KERNEL_HEAP_END - (uintptr_t)KERNEL_HEAP_START))
 
 // Placement allocation
-#define PLACEMENT_BEGIN   ((uint8_t*)(16*1024*1024))
-#define PLACEMENT_END     ((uint8_t*)(20*1024*1024))
+#define PLACEMENT_BEGIN   ((uint8_t*)0x1000000)     // 16 MB
+#define PLACEMENT_END     ((uint8_t*)0x1400000)     // 20 MB
 
 // User Heap management
-#define USER_HEAP_START   ((uint8_t*)(20*1024*1024))
-#define USER_HEAP_END     ((uint8_t*)(KERNEL_DATA_START - 16*1024*1024))
+#define USER_HEAP_START   ((uint8_t*)0x1400000)     // 20 MB
+#define USER_HEAP_END     ((uint8_t*)(KERNEL_DATA_START - 0x1000000)) // 3 GB minus 16 MB
 
 // User Stack
 #define USER_STACK 0x1420000
@@ -125,7 +125,9 @@ typedef struct
 // PrettyOS Version string
 extern const char* version;
 
-
+/////////////////////////////////////////////////////////////////////////
+// functions                                                           //
+/////////////////////////////////////////////////////////////////////////
 
 // fpu.c
 void set_fpu_cw(const uint16_t ctrlword);
@@ -166,13 +168,13 @@ void timer_uninstall();
 void delay(uint32_t microsec);
 
 // keyboard.c
-void keyboard_install();
+void    keyboard_install();
 uint8_t FetchAndAnalyzeScancode();
 uint8_t ScanToASCII();
-void keyboard_handler(registers_t* r);
+void    keyboard_handler(registers_t* r);
 int32_t checkKQ_and_print_char();
 uint8_t checkKQ_and_return_char();
-bool testch();
+bool    testch();
 
 // mouse.c
 void mouse_install();
@@ -193,47 +195,48 @@ uint32_t irq_handler(uint32_t esp);
 void irq_install_handler(int32_t irq, void (*handler)(registers_t* r));
 void irq_uninstall_handler(int32_t irq);
 
-// math.c
-uint32_t max(uint32_t a, uint32_t b);
-uint32_t min(uint32_t a, uint32_t b);
-int32_t abs(int32_t i);
-int32_t power(int32_t base,int32_t n);
-
 // paging.c
-void analyze_frames_bitset(uint32_t sec);
+void     analyze_frames_bitset(uint32_t sec);
 uint32_t show_physical_address(uint32_t virtual_address);
-void analyze_physical_addresses();
+void     analyze_physical_addresses();
 
 // elf.c
 bool elf_exec( const void* elf_file, uint32_t elf_file_size, const char* programName );
 
+// math.c
+uint32_t max(uint32_t a, uint32_t b);
+uint32_t min(uint32_t a, uint32_t b);
+int32_t  abs(int32_t i);
+int32_t  power(int32_t base, int32_t n);
+
 // util.c
-uint8_t inportb(uint16_t port);
-uint16_t inportw(uint16_t port);
-uint32_t inportl(uint16_t port);
-void outportb(uint16_t port, uint8_t val);
-void outportw(uint16_t port, uint16_t val);
-void outportl(uint16_t port, uint32_t val);
+uint8_t  inportb  (uint16_t port);
+uint16_t inportw  (uint16_t port);
+uint32_t inportl  (uint16_t port);
+void     outportb (uint16_t port, uint8_t val);
+void     outportw (uint16_t port, uint16_t val);
+void     outportl (uint16_t port, uint32_t val);
 
 uint32_t fetchESP();
 uint32_t fetchEBP();
 uint32_t fetchSS();
 uint32_t fetchCS();
 uint32_t fetchDS();
+
 uint64_t rdtsc();
 
-void memshow(void* start, size_t count);
-void* memset(void* dest, int8_t val, size_t count);
+void      memshow(void* start, size_t count);
+void*     memset(void* dest, int8_t val, size_t count);
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
-void* memcpy(void* dest, const void* src, size_t count);
+void*     memcpy(void* dest, const void* src, size_t count);
 
-void sprintf (char *buffer, const char *args, ...);
-size_t strlen(const char* str);
+void    sprintf (char *buffer, const char *args, ...);
+size_t  strlen(const char* str);
 int32_t strcmp( const char* s1, const char* s2 );
-char* strcpy(char* dest, const char* src);
-char* strncpy(char* dest, const char* src, size_t n);
-char* strcat(char* dest, const char* src);
+char*   strcpy(char* dest, const char* src);
+char*   strncpy(char* dest, const char* src, size_t n);
+char*   strcat(char* dest, const char* src);
 
 void reboot();
 
@@ -244,9 +247,9 @@ void sti();
 void nop();
 
 int8_t ctoi(char c);
-void itoa(int32_t value, char* valuestring);
-void i2hex(uint32_t val, char* dest, int32_t len);
-void float2string(float value, int32_t decimal, char* valuestring);
+void   itoa(int32_t value, char* valuestring);
+void   i2hex(uint32_t val, char* dest, int32_t len);
+void   float2string(float value, int32_t decimal, char* valuestring);
 
 uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 

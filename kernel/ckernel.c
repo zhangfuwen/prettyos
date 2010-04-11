@@ -18,8 +18,7 @@
 #include "file.h"
 #include "event_list.h"
 
-/// PrettyOS Version string
-const char* version = "0.0.0.349";
+const char* version = "0.0.0.350";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -56,12 +55,7 @@ static void init()
 
 void showMemorySize()
 {
-    if (pODA->Memory_Size > 1073741824)
-    {
-        printf("Memory size: %u GiB / %u GB  (%u Bytes)\n",
-        pODA->Memory_Size/1073741824, pODA->Memory_Size/1000000000, pODA->Memory_Size);
-    }
-    else if (pODA->Memory_Size > 1048576)
+    if (pODA->Memory_Size > 1048576)
     {
         printf("Memory size: %u MiB / %u MB  (%u Bytes)\n",
         pODA->Memory_Size/1048576, pODA->Memory_Size/1000000, pODA->Memory_Size);
