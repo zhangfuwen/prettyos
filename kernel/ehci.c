@@ -425,7 +425,11 @@ void enablePorts()
 
              if (USBtransferFlag)
              {
-                 testTransfer(0); // device address 0 direct after reset
+                 settextcolor(13,0);
+                 printf("\n>>> Press key to start USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+				 testTransfer(0); // device address 0 direct after reset
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
                  printf("\nin    status: "); showStatusbyteQTD(InQTD);
@@ -598,6 +602,10 @@ void checkPortLineStatus()
 
              if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & PSTS_CONNECTED))
              {
+			     settextcolor(13,0);
+                 printf("\n>>> Press key to start USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
                  testTransfer(0); // device address
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
