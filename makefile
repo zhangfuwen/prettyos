@@ -36,8 +36,8 @@ TESTC_OBJCETS := $(patsubst %.c, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.c $(U
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -O32 -f elf
-GCCFLAGS= -c -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-builtin -fno-stack-protector -Iinclude
-LDFLAGS= -nostdlib
+GCCFLAGS= -c -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-builtin -fno-stack-protector -fno-common -Iinclude
+LDFLAGS= -nostdlib --warn-common
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)

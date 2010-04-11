@@ -23,7 +23,7 @@ typedef struct fs_node* (*finddir_type_t) (struct fs_node*,const char* name);
 
 typedef struct fs_node
 {
-    char  name[128]; // The filename.
+    char name[128];  // The filename.
     uint32_t mask;   // The permissions mask.
     uint32_t uid;    // The owning user.
     uint32_t gid;    // The owning group.

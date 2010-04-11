@@ -9,6 +9,7 @@
 #include "ehci.h"
 #include "list.h"
 #include "rtl8139.h"
+#include "event_list.h"
 
 uint8_t network_buffer[8192+16];  // TEST for network card
 uint32_t BaseAddressRTL8139_IO;
@@ -224,7 +225,10 @@ void listPCI()
                                     {
                                         pODA->pciEHCInumber = number; /// TODO: implement for more than one EHCI
                                         EHCIflag = true; // only the first EHCI is used
-                                        initEHCIFlag = true; // init of EHCI shall be carried out; message-flag
+                                        if(pODA->pciEHCInumber)
+                                        {
+                                            addEvent(EHCI_INIT);
+                                        }
                                         analyzeEHCI(bar); // get data (capregs, opregs)
                                     }
                                 }

@@ -12,12 +12,11 @@ struct element
     element_t* next;
 };
 
-typedef
-struct listHead
+typedef struct
 {
     element_t* head;
     element_t* tail;
-}listHead_t;
+} listHead_t;
 
 listHead_t* listCreate();
 int8_t      listAppend(listHead_t* hd, void* data);

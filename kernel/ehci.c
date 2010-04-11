@@ -11,6 +11,22 @@
 #include "task.h"
 #include "sys_speaker.h"
 #include "usb2.h"
+#include "event_list.h"
+
+
+struct ehci_CapRegs* pCapRegs; // = &CapRegs;
+struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
+
+bool     EHCIflag;
+
+uint8_t  numPorts;
+uint32_t ubar;
+uint32_t eecp;
+uint8_t* inBuffer;
+void*    InQTD;
+void*    SetupQTD;
+uint32_t InQTDpage0;
+uint32_t SetupQTDpage0;
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
@@ -179,9 +195,9 @@ void ehci_handler(registers_t* r)
 
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
 
-        if (enabledPortFlag)
+        if (enabledPortFlag && pODA->pciEHCInumber)
         {
-            portCheckFlag = true;
+            addEvent(EHCI_PORTCHECK);
         }
     }
 

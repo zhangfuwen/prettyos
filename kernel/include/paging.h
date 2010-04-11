@@ -31,11 +31,7 @@ struct page_directory_
 typedef struct page_directory_ page_directory_t;
 
 
-static const uint32_t MEM_PRESENT = 0x01;
-
-page_directory_t* kernel_pd;
-
-
+static const uint32_t MEM_PRESENT  = 0x01;
 static const uint32_t MEM_READONLY = 0;
 static const uint32_t MEM_KERNEL   = 0;
 static const uint32_t MEM_WRITE    = 2;

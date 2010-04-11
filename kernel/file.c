@@ -9,6 +9,10 @@
 #include "task.h"
 #include "kheap.h"
 
+// reserve caches for 5 floppy disk tracks (18*512 byte)
+uint8_t cache[5][9216];
+uint8_t cacheTrackNumber[5];
+
 int32_t cacheFirstTracks() /// floppy
 {
     int32_t retVal0 = flpydsk_read_ia(0,track0,TRACK);

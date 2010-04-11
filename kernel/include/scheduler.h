@@ -4,9 +4,6 @@
 #include "os.h"
 #include "task.h"
 
-// structs, ...
-
-// functions, ...
 task_t* initTaskQueue();
 task_t* getReadyTask();
 void setNextTask(task_t* task1, task_t* task2);

@@ -39,23 +39,14 @@ struct ehci_OpRegs
     volatile uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h
 } __attribute__((packed));
 
-struct ehci_CapRegs* pCapRegs; // = &CapRegs;
-struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-bool     EHCIflag;
-bool     initEHCIFlag;
-bool     portCheckFlag;
+extern struct ehci_CapRegs* pCapRegs; // = &CapRegs;
+extern struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-uint8_t  numPorts;
-uint32_t ubar;
-uint32_t eecp;
-uint8_t* inBuffer;
-void*    InQTD;
-void*    SetupQTD;
-uint32_t InQTDpage0;
-uint32_t SetupQTDpage0;
-
-
+extern bool     EHCIflag;
+extern void*    InQTD;
+extern void*    SetupQTD;
+extern uint32_t InQTDpage0;
 
 
 /* ****** */

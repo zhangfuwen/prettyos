@@ -11,6 +11,8 @@
 #include "kheap.h"
 
 
+page_directory_t* kernel_pd;
+
 // Memory Map //
 extern char _kernel_beg, _kernel_end; // defined in linker script
 

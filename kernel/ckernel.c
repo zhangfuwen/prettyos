@@ -16,9 +16,10 @@
 #include "sys_speaker.h"
 #include "ehci.h"
 #include "file.h"
+#include "event_list.h"
 
 /// PrettyOS Version string
-const char* version = "0.0.0.348";
+const char* version = "0.0.0.349";
 
 // RAM Detection by Second Stage Bootloader
 #define ADDR_MEM_INFO    0x1000
@@ -48,6 +49,7 @@ static void init()
     pODA->Memory_Size = paging_install();
     heap_install();
     tasking_install();
+    events_install();
     sti();
     settextcolor(15,0);
 }
@@ -89,10 +91,7 @@ void* ramdisk_install(size_t size)
 int main()
 {
     init();
-    screenshot_Flag = false;
     EHCIflag        = false;  // first EHCI device found?
-    initEHCIFlag    = false;  // any EHCI device found?
-    portCheckFlag   = false;  // EHCI port change
     pODA->pciEHCInumber = 0;  // pci number of first EHCI device
 
     // Create Startup Screen
@@ -155,6 +154,8 @@ int main()
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char DateAndTime[81]; // String for Date&Time
 
+    bool eventsAvailable = true;
+
     while (true) // start of kernel idle loop
     {
         // Show Rotating Asterisk
@@ -181,34 +182,30 @@ int main()
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, // output in status bar
                     DateAndTime, CurrentSeconds, pODA->CPU_Frequency_kHz/1000);
-
-
-            /////////////////////////////////////////////////////////////////////////////////////////
-            // actions in kernel idle loop due to flags                                            //
-            /////////////////////////////////////////////////////////////////////////////////////////
-
-            if (screenshot_Flag == true)
-            {
-                screenshot_Flag = false;
-                printf("Screenshot (Thread)\n");
-                create_thread((task_t*)pODA->curTask, &screenshot_thread);
-            }
-
-            if ((initEHCIFlag == true) && (CurrentSeconds >= 3) && pODA->pciEHCInumber)
-            {
-                initEHCIFlag = false;
-                create_cthread((task_t*)pODA->curTask, &startEHCI, "EHCI");
-            }
-
-            if ((portCheckFlag == true) && (CurrentSeconds >= 3) && pODA->pciEHCInumber)
-            {
-                portCheckFlag = false;
-                create_cthread((task_t*)pODA->curTask, &portCheck, "EHCI Ports");
-            }
         }
 
-    __asm__ volatile ("hlt"); // HLT halts the CPU until the next external interrupt is fired.
+        while(eventsAvailable) // Handling Events
+        {
+            switch(takeEvent())
+            {
+            case EHCI_INIT:
+                create_cthread((task_t*)pODA->curTask, &startEHCI, "EHCI");
+                break;
+            case EHCI_PORTCHECK:
+                create_cthread((task_t*)pODA->curTask, &portCheck, "EHCI Ports");
+                break;
+            case VIDEO_SCREENSHOT:
+                printf("Screenshot (Thread)\n");
+                create_thread((task_t*)pODA->curTask, &screenshot_thread);
+                break;
+            case NONE:
+            default:
+                eventsAvailable = false;
+            }
+        }
+        eventsAvailable = true;
 
+        __asm__ volatile ("hlt"); // HLT halts the CPU until the next external interrupt is fired.
     } // end of kernel idle loop
 }
 

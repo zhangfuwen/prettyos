@@ -113,9 +113,6 @@ typedef struct
 // operatings system common data area
 extern oda_t* pODA;
 
-// Flags
-bool screenshot_Flag;
-
 /* This defines what the stack looks like after an ISR was running */
 typedef struct
 {
@@ -156,7 +153,6 @@ void set_cursor(uint8_t x, uint8_t y);
 void update_cursor();
 
 // timer.c
-uint16_t systemfrequency; // system frequency
 uint32_t getCurrentSeconds();
 uint32_t getCurrentMilliseconds();
 void timer_handler(registers_t* r);

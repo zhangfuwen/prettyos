@@ -42,7 +42,7 @@ int8_t listAppend(listHead_t* hd, void* data)
     return 0;
 }
 
-void listDeleteAll(struct listHead* hd)
+void listDeleteAll(listHead_t* hd)
 {
     element_t* cur = hd->head;
     element_t* nex;

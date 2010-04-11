@@ -6,6 +6,7 @@
 #include "os.h"
 #include "task.h"
 #include "console.h"
+#include "event_list.h"
 
 #ifdef KEYMAP_GER
 #include "keyboard_GER.h"
@@ -152,7 +153,7 @@ uint8_t ScanToASCII()
 
     if (CtrlKeyDown && (retchar == 't')) // For tests: function screenshot_thread as a thread
     {
-        screenshot_Flag = true;
+        addEvent(VIDEO_SCREENSHOT);
         return 0;
     }
 
@@ -196,6 +197,7 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
        {
            current_console->KQ.pHead = current_console->KQ.buffer+KQSIZE-1;
        }
+       sti();
        return KEY;
    }
    sti();

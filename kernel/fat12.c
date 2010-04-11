@@ -6,6 +6,14 @@
 #include "flpydsk.h"
 #include "fat12.h"
 
+
+// cache memory for tracks 0 and 1
+uint8_t track0[9216], track1[9216];
+
+// how to handle memory for the file?
+
+int32_t fat_entry[FATMAXINDEX];
+
 /*
 Links:
 http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
