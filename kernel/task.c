@@ -226,10 +226,10 @@ task_t* create_thread(task_t* parentTask, void* entry)
     task_t* new_task = malloc(sizeof(task_t),0);
     new_task->pid  = parentTask->pid;
     new_task->page_directory = parentTask->page_directory;
-    uint8_t privilege = parentTask->privilege;
+    new_task->privilege = parentTask->privilege;
     new_task->threadFlag = true;
 
-    if (privilege == 3)
+    if (new_task->privilege == 3)
     {
         new_task->heap_top = (uint8_t*)USER_HEAP_START;
 
@@ -265,7 +265,7 @@ task_t* create_thread(task_t* parentTask, void* entry)
     *(--kernel_stack) = (uintptr_t)&exit;
     /// TEST
 
-    if (privilege == 3)
+    if (new_task->privilege == 3)
     {
         // general information: Intel 3A Chapter 5.12
         *(--kernel_stack) = new_task->ss = 0x23;    // ss
@@ -289,7 +289,7 @@ task_t* create_thread(task_t* parentTask, void* entry)
     *(--kernel_stack) = 0;
     *(--kernel_stack) = 0;
 
-    if (privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
+    if (new_task->privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
 
     *(--kernel_stack) = data_segment;
     *(--kernel_stack) = data_segment;

@@ -120,8 +120,8 @@ uint32_t irq_handler(uint32_t esp)
         printf("\n\n");
         settextcolor(11,0);
         printf("%s!\n", exception_messages[r->int_no]);
-        printf("| <Exception - System Halted!> |");
-        sleepSeconds(5);
+        printf("| <Exception - System Halted> Press key for exit from the task! |");
+        while(!checkKQ_and_return_char());
         exit();
         for (;;);
     }

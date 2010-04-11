@@ -13,30 +13,32 @@
 #include "usb2.h"
 #include "event_list.h"
 
-
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-bool     EHCIflag;
+extern page_directory_t* kernel_pd; // paging.c
 
-uint8_t  numPorts;
-uint32_t ubar;
-uint32_t eecp;
-uint8_t* inBuffer;
-void*    InQTD;
-void*    SetupQTD;
-uint32_t InQTDpage0;
-uint32_t SetupQTDpage0;
+bool      EHCIflag;
+
+uint8_t   numPorts;
+uintptr_t eecp;
+uint8_t*  inBuffer;
+void*     InQTD;
+void*     SetupQTD;
+uintptr_t InQTDpage0;
+uintptr_t SetupQTDpage0;
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 bool USBtransferFlag; // switch on/off tests for USB-Transfer
 bool enabledPortFlag; // port enabled
 
-void ehci_init() {
+void ehci_init()
+{
     create_cthread((task_t*)pODA->curTask, &startEHCI, "EHCI");
 }
-void ehci_portcheck() {
+void ehci_portcheck()
+{
     create_cthread((task_t*)pODA->curTask, &portCheck, "EHCI Ports");
 }
 
@@ -240,22 +242,28 @@ leave_handler:
     settextcolor(15,0);
 }
 
-void analyzeEHCI(uint32_t bar)
+void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 {
     settextcolor(9,0);
     printf("\n>>> >>> function: analyzeEHCI\n");
     settextcolor(15,0);
 
-    ubar = bar;
-    pCapRegs = (struct ehci_CapRegs*) ubar;
-    pOpRegs  = (struct ehci_OpRegs*) (ubar + pCapRegs->CAPLENGTH);
+    bar += offset;
+
+    /// TEST
+    uintptr_t bar_phys = (uintptr_t)paging_get_phys_addr(kernel_pd, (void*)bar);
+    printf("EHCI bar get_phys_Addr: %X\n", bar_phys);
+    /// TEST
+
+    pCapRegs = (struct ehci_CapRegs*) bar;
+    pOpRegs  = (struct ehci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
-    printf("HCIVERSION: %x ", pCapRegs->HCIVERSION);                // Interface Version Number
-    printf("HCSPARAMS: %X ", pCapRegs->HCSPARAMS);                  // Structural Parameters
-    printf("Ports: %d ", numPorts);
+    printf("HCIVERSION: %x ",  pCapRegs->HCIVERSION);               // Interface Version Number
+    printf("HCSPARAMS: %X ",   pCapRegs->HCSPARAMS);                // Structural Parameters
+    printf("Ports: %d ",       numPorts);                           // Number of Ports
     printf("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
-    if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. ");  // Extended Capabilities Pointer
+    if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. "); // Extended Capabilities Pointer
     printf("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
 }
 
@@ -369,7 +377,7 @@ int32_t initEHCIHostController()
     printf("\n>>> >>> function: initEHCIHostController\n");
     settextcolor(15,0);
 
-    irq_install_handler(32 + pciDev_Array[num].irq, ehci_handler);
+    irq_install_handler(32 + pciDev_Array[num].irq,   ehci_handler);
     irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     startHostController(num);

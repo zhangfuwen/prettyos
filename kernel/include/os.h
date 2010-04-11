@@ -55,8 +55,8 @@ typedef unsigned int gid_t; // Defined like in tyndur
 #define KERNEL_DATA_START ((uint8_t*)0x0C0000000)   // 3 GB
 #define KERNEL_DATA_END   ((uint8_t*)0x100000000)   // 4 GB
 
-// PCI/EHCI memory location for MM IO
-#define PCI_MEM_START     ((uint8_t*)0x0FFF00000)   // 4 GB minus 1 MB
+// PCI/EHCI memory location for MMIO
+#define PCI_MEM_START     ((uint8_t*)0x0FF000000)
 #define PCI_MEM_END       ((uint8_t*)0x100000000)   // 4 GB
 
 // Virtual adress area for the kernel heap

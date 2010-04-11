@@ -236,7 +236,7 @@ struct ehci_request
 void ehci_init();
 void ehci_portcheck();
 void ehci_handler(registers_t* r);
-void analyzeEHCI(uint32_t bar);
+void analyzeEHCI(uintptr_t bar, uintptr_t offset);
 void resetHostController();
 void startHostController(uint32_t num);
 int32_t initEHCIHostController();

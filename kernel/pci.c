@@ -204,10 +204,11 @@ void listPCI()
                                 if ((pciDev_Array[number].interfaceID==0x20)   // EHCI
                                    && pciDev_Array[number].bar[i].baseAddress) // valid BAR
                                 {
-                                    uint32_t bar = pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0;
+                                    uintptr_t bar_phys = pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0;
 
-                                    bar = (uint32_t) paging_acquire_pcimem(bar);
-                                    printf("\nBaseAddressEHCI_MMIO mapped to virtual address %X\n", bar);
+                                    uintptr_t bar = (uintptr_t) paging_acquire_pcimem(bar_phys);
+                                    uintptr_t offset = bar_phys%PAGESIZE;
+                                    printf("\nEHCI_MMIO %X mapped to virt addr %X, offset: %x\n", bar_phys, bar, offset);
 
                                     if (!EHCIflag) // only the first EHCI is used
                                     {
@@ -217,7 +218,7 @@ void listPCI()
                                         {
                                             addEvent(&EHCI_INIT);
                                         }
-                                        analyzeEHCI(bar); // get data (capregs, opregs)
+                                        analyzeEHCI(bar,offset); // get data (capregs, opregs)
                                     }
                                 }
                             } /// if USB
