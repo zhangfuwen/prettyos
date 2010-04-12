@@ -48,25 +48,25 @@ void testTransfer(uint32_t device)
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
     settextcolor(9,0);
-    printf("\n>>> >>>function: showDeviceDesriptor\n");
+    printf("\n>>> >>>function: showDeviceDesriptor");
     settextcolor(15,0);
 
     if (d->length)
     {
        settextcolor(10,0);
-       printf("\nlength:            %d\n",  d->length);
+       printf("\nlength:            %d\t\t",  d->length);
        printf("descriptor type:   %d\n",    d->descriptorType);
-       printf("USB specification: %d.%d\n", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
+       printf("USB specification: %d.%d\t\t", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
        printf("USB class:         %x\n",    d->deviceClass);
-       printf("USB subclass:      %x\n",    d->deviceSubclass);
+       printf("USB subclass:      %x\t",    d->deviceSubclass);
        printf("USB protocol       %x\n",    d->deviceProtocol);
-       printf("max packet size:   %d\n",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
+       printf("max packet size:   %d\t\t",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
        printf("vendor:            %x\n",    d->idVendor);
-       printf("product:           %x\n",    d->idProduct);
+       printf("product:           %x\t",    d->idProduct);
        printf("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
-       printf("manufacturer:      %x\n",    d->manufacturer);
+       printf("manufacturer:      %x\t",    d->manufacturer);
        printf("product:           %x\n",    d->product);
-       printf("serial number:     %x\n",    d->serialNumber);
+       printf("serial number:     %x\t",    d->serialNumber);
        printf("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
        settextcolor(15,0);
     }

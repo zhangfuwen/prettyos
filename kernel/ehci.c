@@ -16,9 +16,7 @@
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-extern page_directory_t* kernel_pd; // paging.c
-
-bool      EHCIflag;
+bool      EHCIflag; // signals that one EHCI device was found /// TODO: manage more than one EHCI
 
 uint8_t   numPorts;
 uintptr_t eecp;
@@ -45,7 +43,7 @@ void ehci_portcheck()
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)
 {
     settextcolor(9,0);
-    printf("\n>>> >>> function: createQH\n");
+    printf("\n>>> >>> function: createQH");
     settextcolor(15,0);
 
     struct ehci_qhd* head = (struct ehci_qhd*)address;
@@ -81,7 +79,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 {
     settextcolor(9,0);
-    printf("\n>>> >>> function: createQTD\n");
+    printf("\n>>> >>> function: createQTD");
     settextcolor(15,0);
 
     void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
@@ -233,7 +231,7 @@ void ehci_handler(registers_t* r)
     {
         printf("\nInterrupt on Async Advance");
         pOpRegs->USBSTS |= STS_ASYNC_INT;
-    }    
+    }
 }
 
 void analyzeEHCI(uintptr_t bar, uintptr_t offset)
@@ -314,7 +312,7 @@ void resetHostController()
 void startHostController(uint32_t num)
 {
     settextcolor(9,0);
-    printf("\n>>> >>> function: startHostController (reset HC)\n");
+    printf("\n>>> >>> function: startHostController (reset HC)");
     settextcolor(15,0);
 
     resetHostController();
@@ -368,7 +366,7 @@ int32_t initEHCIHostController()
     enabledPortFlag = false;
 
     settextcolor(9,0);
-    printf("\n>>> >>> function: initEHCIHostController\n");
+    printf("\n>>> >>> function: initEHCIHostController");
     settextcolor(15,0);
 
     irq_install_handler(32 + pciDev_Array[num].irq,   ehci_handler);
@@ -397,7 +395,7 @@ int32_t initEHCIHostController()
 void enablePorts()
 {
     settextcolor(9,0);
-    printf("\n>>> >>> function: enablePorts\n");
+    printf("\n>>> >>> function: enablePorts");
     settextcolor(15,0);
 
     for (uint8_t j=0; j<numPorts; j++)
@@ -495,7 +493,7 @@ void resetPort(uint8_t j)
 void showPORTSC()
 {
     settextcolor(9,0);
-    printf("\n>>> >>> function: showPORTSC\n");
+    printf("\n>>> >>> function: showPORTSC");
     settextcolor(15,0);
 
     for (uint8_t j=0; j<numPorts; j++)
@@ -632,7 +630,7 @@ void checkPortLineStatus()
 void DeactivateLegacySupport(uint32_t num)
 {
     settextcolor(9,0);
-    printf("\n>>> >>> function: DeactivateLegacySupport\n");
+    printf("\n>>> >>> function: DeactivateLegacySupport");
     settextcolor(15,0);
 
     bool failed = false;
