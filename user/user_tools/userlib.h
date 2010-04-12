@@ -46,6 +46,7 @@ void setScrollField(uint8_t top, uint8_t bottom);
 
 
 // user functions
+void* memcpy(void* dest, const void* src, size_t count);
 void printf (const char *args, ...);
 void sprintf (char *buffer, const char *args, ...);
 
@@ -66,7 +67,11 @@ char* gets(char* s);
 void reverse(char* s);
 void itoa(int n, char* s);
 int atoi(const char* s);
+float atof(const char* s);
+
+void ftoa(float f, char* buffer);
 void float2string(float value, int decimal, char* valuestring); // float --> string
+
 void i2hex(uint32_t val, char* dest, int32_t len);
 
 void showInfo(signed char val);
@@ -86,7 +91,7 @@ double tan(double x);
 double acos(double x);
 double asin(double x);
 double atan(double x);
-double atan2(double x, double y); 
+double atan2(double x, double y);
 
 double sqrt(double x);
 

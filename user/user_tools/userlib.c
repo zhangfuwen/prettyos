@@ -131,6 +131,14 @@ void setScrollField(uint8_t top, uint8_t bottom) {
 
 /// user functions
 
+void* memcpy(void* dest, const void* src, size_t count)
+{
+    const uint8_t* sp = (const uint8_t*)src;
+    uint8_t* dp = (uint8_t*)dest;
+    for (; count != 0; count--) *dp++ = *sp++;
+    return dest;
+}
+
 // printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
 void printf (const char* args, ...)
 {
@@ -150,7 +158,7 @@ void printf (const char* args, ...)
                 puts(buffer);
                 break;
             case 'f':
-                float2string(va_arg(ap, double), 10, buffer);
+                float2string(va_arg(ap, double), 6, buffer);
                 puts(buffer);
                 break;
             case 'i': case 'd':
@@ -211,7 +219,7 @@ void sprintf (char *buffer, const char *args, ...)
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'f':
-                        float2string(va_arg(ap, double), 8, m_buffer);
+                        float2string(va_arg(ap, double), 6, m_buffer);
                         strcat(buffer, m_buffer);
                         pos += strlen(m_buffer) - 1;
                         break;
@@ -490,6 +498,67 @@ int atoi(const char* s)
     return num;
 }
 
+// K&R S. 70
+float atof(const char* s)
+{
+    float val, power;
+    int32_t i;
+
+    for (i=0; (s[i]==' '); i++);
+
+    int32_t sign = (s[i] == '-') ? -1 : 1;
+
+    if (s[i] == '+' || s[i] == '-')
+    {
+        i++;
+    }
+    for (val = 0.0; isdigit(s[i]);i++)
+    {
+        val = 10.0 * val + (s[i] - '0');
+    }
+    if (s[i] == '.')
+    {
+        i++;
+    }
+    for (power = 1.0; isdigit(s[i]); i++)
+    {
+        val = 10.0 * val + (s[i] - '0');
+        power *= 10.0;
+    }
+    return sign * val / power;
+}
+
+void ftoa(float f, char* buffer)
+{
+      char tmp[32];
+      int index = (sizeof(tmp) - 1);
+      if(f < 0.0)
+      {
+              *buffer = '-';
+              ++buffer;
+              f = -f;
+      }
+
+      int i = f;
+      while(i > 0)
+      {
+              tmp[index] = ('0' + (i % 10));
+              i /= 10;
+              --index;
+      }
+      memcpy((void*)buffer, (void*)&tmp[index + 1], ((sizeof(tmp) - 1) - index));
+      buffer += ((sizeof(tmp) - 1) - index);
+      *buffer = '.';
+      ++buffer;
+
+        *buffer++ = ((int)(f * 10.0) % 10) + '0';
+        *buffer++ = ((int)(f * 100.0) % 10) + '0';
+        *buffer++ = ((int)(f * 1000.0) % 10) + '0';
+        *buffer++ = ((int)(f * 10000.0) % 10) + '0';
+        *buffer++ = ((int)(f * 100000.0) % 10) + '0';
+        *buffer++ = ((int)(f * 1000000.0) % 10) + '0';
+}
+
 void float2string(float value, int decimal, char* valuestring) // float --> string
 {
    int neg = 0;
@@ -646,15 +715,15 @@ double tan(double x)
     return result;
 }
 
-double acos(double x) 
+double acos(double x)
 {
-    if (x < -1 || x > 1) 
+    if (x < -1 || x > 1)
         return NAN;
 
     return(pi / 2 - asin(x));
 }
 
-double asin(double x) 
+double asin(double x)
 {
     if (x < -1 || x > 1)
         return NAN;
@@ -669,7 +738,7 @@ double atan(double x)
     return result;
 }
 
-double atan2(double x, double y) 
+double atan2(double x, double y)
 {
     double result;
     __asm__ volatile("fpatan" : "=t" (result) : "0" (y), "u" (x));
@@ -678,17 +747,17 @@ double atan2(double x, double y)
 
 double sqrt(double x)
 {
-    if (x <  0.0) 
+    if (x <  0.0)
         return NAN;
 
-    double result; 
+    double result;
     __asm__ volatile("fsqrt" : "=t" (result) : "0" (x));
     return result;
 }
 
 double fabs(double x)
 {
-    double result; 
+    double result;
     __asm__ volatile("fabs" : "=t" (result) : "0" (x));
     return result;
 }
