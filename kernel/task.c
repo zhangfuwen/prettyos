@@ -13,7 +13,6 @@
 int32_t userTaskCounter;
 
 // The currently running and currently displayed task.
-task_t* current_task; /// TODO: clarify, whether volatile is necessary
 console_t* current_console;
 
 // Some externs are needed
@@ -24,7 +23,7 @@ uint32_t next_pid = 0; // The next available process ID.
 
 int32_t getpid()
 {
-    return current_task->pid;
+    return ODA.curTask->pid;
 }
 
 void settaskflag(int32_t i)
@@ -49,17 +48,16 @@ void tasking_install()
     #endif
     ///
 
-    current_task = initTaskQueue();
-    current_task->pid = next_pid++;
-    current_task->esp = 0;
-    current_task->eip = 0;
-    current_task->page_directory = kernel_pd;
-    current_task->privilege = 0;
-    ODA.curTask = current_task;
-    current_task->FPU_ptr = (uintptr_t)NULL;
-    setNextTask(current_task, NULL); // last task in queue
-    current_task->console = current_console;
-    current_task->ownConsole = true;
+    ODA.curTask = initTaskQueue();
+    ODA.curTask->pid = next_pid++;
+    ODA.curTask->esp = 0;
+    ODA.curTask->eip = 0;
+    ODA.curTask->page_directory = kernel_pd;
+    ODA.curTask->privilege = 0;
+    ODA.curTask->FPU_ptr = (uintptr_t)NULL;
+    setNextTask(ODA.curTask, NULL); // last task in queue
+    ODA.curTask->console = current_console;
+    ODA.curTask->ownConsole = true;
     refreshUserScreen();
 
     ///
@@ -70,7 +68,7 @@ void tasking_install()
     #endif
     ///
 
-    current_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    ODA.curTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     userTaskCounter = 0;
     sti();
 }
@@ -131,7 +129,6 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     ///
 
     new_task->kernel_stack = (void*)((uintptr_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE);
-    ODA.curTask = new_task;
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
 
@@ -173,12 +170,6 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     *(--kernel_stack) = data_segment;
     *(--kernel_stack) = data_segment;
     *(--kernel_stack) = data_segment;
-
-    //setup TSS
-    tss.ss0   = 0x10;
-    tss.esp   = current_task->esp = USER_STACK;
-    tss.esp0  = (uintptr_t)new_task->kernel_stack;
-    tss.ss    = data_segment;
 
     //setup task_t
     new_task->esp = (uint32_t)kernel_stack;
@@ -224,10 +215,9 @@ task_t* create_thread(void* entry)
     ///
 
     task_t* new_task = malloc(sizeof(task_t),0);
-    new_task->pid  = current_task->pid;
-    new_task->page_directory = current_task->page_directory;
-    new_task->privilege = current_task->privilege;
-    // new_task->privilege = 0; /// TEST
+    new_task->pid  = ODA.curTask->pid;
+    new_task->page_directory = ODA.curTask->page_directory;
+    new_task->privilege = ODA.curTask->privilege;
     new_task->threadFlag = true;
 
     if (new_task->privilege == 3)
@@ -250,12 +240,11 @@ task_t* create_thread(void* entry)
     ///
 
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-    ODA.curTask = new_task;
+    new_task->ownConsole = false;
+    new_task->console = ODA.curTask->console; // The thread uses the same console as the parent Task
+
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
-
-    new_task->ownConsole = false;
-    new_task->console = current_task->console; // The thread uses the same console as the parent Task
 
     setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
 
@@ -297,11 +286,6 @@ task_t* create_thread(void* entry)
     *(--kernel_stack) = data_segment;
     *(--kernel_stack) = data_segment;
 
-    //setup TSS
-    tss.ss0   = 0x10;
-    tss.esp0  = (uintptr_t)new_task->kernel_stack;
-    tss.ss    = data_segment;
-
     //setup task_t
     new_task->esp = (uint32_t)kernel_stack;
     new_task->eip = (uint32_t)irq_tail;
@@ -317,28 +301,25 @@ task_t* create_thread(void* entry)
 
 uint32_t task_switch (uint32_t esp)
 {
-    if (!current_task) return esp;
-    current_task->esp = esp;   // save esp
+    if (!ODA.curTask) return esp;
+    ODA.curTask->esp = esp;   // save esp
 
     // Dispatcher - task switch
-    current_task = current_task->next; // take the next task
-    if (!current_task)
+    ODA.curTask = ODA.curTask->next; // take the next task
+    if (!ODA.curTask)
     {
-        current_task = getReadyTask();
+        ODA.curTask = getReadyTask();
     }
 
-    // write active task struct address to ODA
-    ODA.curTask = current_task;
-
-    current_console = current_task->console;
+    current_console = ODA.curTask->console;
 
     // new_task
-    paging_switch (current_task->page_directory);
+    paging_switch (ODA.curTask->page_directory);
     //tss.cr3 = ... TODO: Really unnecessary?
 
-    tss.esp  = current_task->esp;
-    tss.esp0 = (uintptr_t)current_task->kernel_stack;
-    tss.ss   = current_task->ss;
+    tss.esp  = ODA.curTask->esp;
+    tss.esp0 = (uintptr_t)ODA.curTask->kernel_stack;
+    tss.ss   = ODA.curTask->ss;
 
     #ifdef _DIAGNOSIS_
     settextcolor(2,0);
@@ -358,7 +339,7 @@ uint32_t task_switch (uint32_t esp)
         cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
         __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
     }
-    return current_task->esp;  // return new task's esp
+    return ODA.curTask->esp;  // return new task's esp
 }
 
 void switch_context() // switch to next task
@@ -374,19 +355,19 @@ void exit()
     #endif
 
     // finish current task and free occupied heap
-    void* pkernelstack = (void*) ((uint32_t) current_task->kernel_stack - KERNEL_STACK_SIZE);
-    void* ptask        = (void*) current_task;
+    void* pkernelstack = (void*) ((uint32_t) ODA.curTask->kernel_stack - KERNEL_STACK_SIZE);
+    task_t* ptask        = ODA.curTask;
 
-    if ( (current_task->privilege == 3) && !(current_task->threadFlag) )
+    if ( (ODA.curTask->privilege == 3) && !(ODA.curTask->threadFlag) )
     {
         userTaskCounter--; // a user-program is going to stop
     }
 
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
-    if(current_task->ownConsole) {
+    if(ODA.curTask->ownConsole) {
         for (int i = 0; i < 10; i++)
         {
-            if (current_task->console == reachableConsoles[i])
+            if (ODA.curTask->console == reachableConsoles[i])
             {
                 if (i == displayedConsole)
                 {
@@ -396,11 +377,11 @@ void exit()
                 break;
             }
         }
-        console_exit(current_task->console);
-        free(current_task->console);
+        console_exit(ODA.curTask->console);
+        free(ODA.curTask->console);
     }
 
-    clearTask((task_t*)current_task);
+    clearTask(ODA.curTask);
 
     // free memory at heap
     free(pkernelstack);
@@ -417,16 +398,16 @@ void exit()
 
 void* task_grow_userheap(uint32_t increase)
 {
-    uint8_t* old_heap_top = current_task->heap_top;
+    uint8_t* old_heap_top = ODA.curTask->heap_top;
     increase = alignUp(increase, PAGESIZE);
 
     if (((uintptr_t)old_heap_top + increase) > (uintptr_t)USER_HEAP_END)
         return NULL;
 
-    if (! paging_alloc(current_task->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
+    if (! paging_alloc(ODA.curTask->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
         return NULL;
 
-    current_task->heap_top += increase; // correct???
+    ODA.curTask->heap_top += increase; // correct???
     return old_heap_top;
 }
 

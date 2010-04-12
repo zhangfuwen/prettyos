@@ -156,7 +156,6 @@ int main()
                             putch('\b'); //Clear row
                         }
                         ++curEntry;
-                        puts(entryCache[curEntry]);
                         entryLength = strlen(entryCache[curEntry]);
                         cursorPos = entryLength;
                         drawEntry(entryCache[curEntry]);
@@ -172,13 +171,11 @@ int main()
                         --curEntry;
                         if (curEntry == -1)
                         {
-                            puts(entry);
                             entryLength = strlen(entry);
                             cursorPos = entryLength;
                         }
                         else
                         {
-                            puts(entryCache[curEntry]);
                             entryLength = strlen(entryCache[curEntry]);
                             cursorPos = entryLength;
                         }

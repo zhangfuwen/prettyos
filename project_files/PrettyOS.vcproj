@@ -17,38 +17,19 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
+			Name="Release|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="0"
+			BuildLogFile="BuildLog.htm"
 			>
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="cd ..&#x0D;&#x0A;build.bat"
 				ReBuildCommandLine="cd ..&#x0D;&#x0A;rebuild.bat"
-				CleanCommandLine="cd ..&#x0D;&#x0D;&#x0A;clean.bat"
+				CleanCommandLine="cd ..&#x0D;&#x0A;clean.bat"
 				Output=""
 				PreprocessorDefinitions=""
-				IncludeSearchPath=""
-				ForcedIncludes=""
-				AssemblySearchPath=""
-				ForcedUsingAssemblies=""
-				CompileAsManaged=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="0"
-			>
-			<Tool
-				Name="VCNMakeTool"
-				BuildCommandLine="build.bat"
-				ReBuildCommandLine="rebuild.bat"
-				CleanCommandLine="clean.bat"
-				Output=""
-				PreprocessorDefinitions="WIN32;NDEBUG"
 				IncludeSearchPath=""
 				ForcedIncludes=""
 				AssemblySearchPath=""

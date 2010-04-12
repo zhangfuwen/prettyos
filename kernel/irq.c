@@ -39,7 +39,7 @@ const char* exception_messages[] =
 uint32_t irq_handler(uint32_t esp)
 {
     registers_t* r = (registers_t*)esp;
-    task_t* pCurrentTask = (task_t*)(ODA.curTask);
+    task_t* pCurrentTask = ODA.curTask;
 
     if (r->int_no == 7) //exception #NM (number 7)
     {
@@ -58,7 +58,7 @@ uint32_t irq_handler(uint32_t esp)
         if (ODA.TaskFPU)
         {
             // fsave or fnsave to ODA.TaskFPU->FPU_ptr
-            __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(((task_t*)ODA.TaskFPU)->FPU_ptr)));
+            __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(ODA.TaskFPU->FPU_ptr)));
         }
 
         // store the last task using FPU
