@@ -70,7 +70,6 @@ int atoi(const char* s);
 float atof(const char* s);
 
 void ftoa(float f, char* buffer);
-void float2string(float value, int decimal, char* valuestring); // float --> string
 
 void i2hex(uint32_t val, char* dest, int32_t len);
 

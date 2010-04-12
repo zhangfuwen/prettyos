@@ -158,7 +158,7 @@ void printf (const char* args, ...)
                 puts(buffer);
                 break;
             case 'f':
-                float2string(va_arg(ap, double), 6, buffer);
+                ftoa(va_arg(ap, double), buffer);
                 puts(buffer);
                 break;
             case 'i': case 'd':
@@ -219,7 +219,7 @@ void sprintf (char *buffer, const char *args, ...)
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'f':
-                        float2string(va_arg(ap, double), 6, m_buffer);
+                        ftoa(va_arg(ap, double), m_buffer);
                         strcat(buffer, m_buffer);
                         pos += strlen(m_buffer) - 1;
                         break;
@@ -498,49 +498,47 @@ int atoi(const char* s)
     return num;
 }
 
-// K&R S. 70
 float atof(const char* s)
 {
-    float val, power;
-    int32_t i;
+    int32_t i = 0;
+	int8_t sign = 1;
+	while(s[i] == ' ' || s[i] == '+' || s[i] == '-')
+	{
+		sign *= (s[i] == '-') ? -1 : 1;
+		i++;
+	}
 
-    for (i=0; (s[i]==' '); i++);
-
-    int32_t sign = (s[i] == '-') ? -1 : 1;
-
-    if (s[i] == '+' || s[i] == '-')
+    float val;
+	for (val = 0.0; isdigit(s[i]); i++)
     {
-        i++;
-    }
-    for (val = 0.0; isdigit(s[i]);i++)
-    {
-        val = 10.0 * val + (s[i] - '0');
+        val = 10.0 * val + s[i] - '0';
     }
     if (s[i] == '.')
     {
         i++;
     }
-    for (power = 1.0; isdigit(s[i]); i++)
+    float pow;
+    for (pow = 1.0; isdigit(s[i]); i++)
     {
-        val = 10.0 * val + (s[i] - '0');
-        power *= 10.0;
+        val = 10.0 * val + s[i] - '0';
+        pow *= 10.0;
     }
-    return sign * val / power;
+    return(sign * val / pow);
 }
 
 void ftoa(float f, char* buffer)
 {
       char tmp[32];
-      int index = (sizeof(tmp) - 1);
-      if(f < 0.0)
+      int32_t index = (sizeof(tmp) - 1);
+      if (f < 0.0)
       {
-              *buffer = '-';
-              ++buffer;
-              f = -f;
+          *buffer = '-';
+          ++buffer;
+          f = -f;
       }
 
-      int i = f;
-      while(i > 0)
+      int32_t i = f;
+      while (i > 0)
       {
               tmp[index] = ('0' + (i % 10));
               i /= 10;
@@ -551,60 +549,13 @@ void ftoa(float f, char* buffer)
       *buffer = '.';
       ++buffer;
 
-        *buffer++ = ((int)(f * 10.0) % 10) + '0';
-        *buffer++ = ((int)(f * 100.0) % 10) + '0';
-        *buffer++ = ((int)(f * 1000.0) % 10) + '0';
-        *buffer++ = ((int)(f * 10000.0) % 10) + '0';
-        *buffer++ = ((int)(f * 100000.0) % 10) + '0';
-        *buffer++ = ((int)(f * 1000000.0) % 10) + '0';
-}
-
-void float2string(float value, int decimal, char* valuestring) // float --> string
-{
-   int neg = 0;
-   if (value < 0)
-   {
-       neg = 1;
-       value = -value;
-   }
-   for (int j=0; j < decimal; ++j)
-   {
-       value = value * 10;
-   }
-
-   char tempstr[20];
-   char* tempstring = valuestring;
-   int i=0;
-   int val1 = value * 2;
-   int val2 = (val1 / 2) + (val1 % 2);
-
-   while (val2 !=0)
-   {
-     if ((decimal > 0) && (i == decimal))
-     {
-       tempstr[i] = (char)(0x2E);
-       ++i;
-     }
-     else
-     {
-       int c = (val2 % 10);
-       tempstr[i] = (char) (c + 0x30);
-       val2 = val2 / 10;
-       ++i;
-     }
-   }
-   if (neg)
-   {
-     *tempstring = '-';
-      ++tempstring;
-   }
-   i--;
-   for (;i > -1;i--)
-   {
-     *tempstring = tempstr[i];
-     ++tempstring;
-   }
-   *tempstring = '\0';
+        *buffer++ = ((uint32_t)(f * 10.0) % 10) + '0';
+        *buffer++ = ((uint32_t)(f * 100.0) % 10) + '0';
+        *buffer++ = ((uint32_t)(f * 1000.0) % 10) + '0';
+        *buffer++ = ((uint32_t)(f * 10000.0) % 10) + '0';
+        *buffer++ = ((uint32_t)(f * 100000.0) % 10) + '0';
+        *buffer++ = ((uint32_t)(f * 1000000.0) % 10) + '0';
+        *buffer   = '\0';
 }
 
 void i2hex(uint32_t val, char* dest, int32_t len)
