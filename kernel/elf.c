@@ -7,53 +7,50 @@
 #include "paging.h"
 #include "task.h"
 
-
-// static const void* USERCODE_VADDR = (void*)0x01400000;
-
 typedef enum
 {
-    ET_NONE = 0,
-    ET_REL = 1,
-    ET_EXEC = 2,
-    ET_DYN = 3,
-    ET_CORE = 4
+    ET_NONE  = 0,
+    ET_REL   = 1,
+    ET_EXEC  = 2,
+    ET_DYN   = 3,
+    ET_CORE  = 4
 } elf_header_type_t;
 
 typedef enum
 {
-    EM_NONE = 0,
-    EM_M32 = 1,
+    EM_NONE  = 0,
+    EM_M32   = 1,
     EM_SPARC = 2,
-    EM_386 = 3,
-    EM_86K = 4,
-    EM_88K = 5,
-    EM_860 = 7,
-    EM_MIPS = 8
+    EM_386   = 3,
+    EM_86K   = 4,
+    EM_88K   = 5,
+    EM_860   = 7,
+    EM_MIPS  = 8
 } elf_header_machine_t;
 
 typedef enum
 {
-    EV_NONE = 0,
+    EV_NONE    = 0,
     EV_CURRENT = 1
 } elf_header_version_t;
 
 typedef enum
 {
-    EI_MAG0 = 0,
-    EI_MAG1 = 1,
-    EI_MAG2 = 2,
-    EI_MAG3 = 3,
-    EI_CLASS = 4,
-    EI_DATA = 5,
+    EI_MAG0    = 0,
+    EI_MAG1    = 1,
+    EI_MAG2    = 2,
+    EI_MAG3    = 3,
+    EI_CLASS   = 4,
+    EI_DATA    = 5,
     EI_VERSION = 6,
-    EI_PAD = 7
+    EI_PAD     = 7
 } elf_header_ident_t;
 
 typedef enum
 {
     ELFCLASSNONE = 0,
-    ELFCLASS32 = 1,
-    ELFCLASS64 = 2
+    ELFCLASS32   = 1,
+    ELFCLASS64   = 2
 } elf_header_ident_class_t;
 
 typedef enum
@@ -105,70 +102,82 @@ typedef struct
     uint32_t align;
 } program_header_t;
 
-
-
-
 bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programName)
 {
-    const char* elf_beg = elf_file;
-    const char* elf_end = elf_beg + elf_file_size;
+    const uint8_t* elf_beg = elf_file;
+    const uint8_t* elf_end = elf_beg + elf_file_size;
 
     // Read the header
     const elf_header_t* header = (elf_header_t*) elf_beg;
-    if (header->ident[EI_MAG0]!=0x7F || header->ident[EI_MAG1]!='E' || header->ident[EI_MAG2]!='L' || header->ident[EI_MAG3]!='F')
-        return false;
-    if (header->ident[EI_CLASS]!=ELFCLASS32 || header->ident[EI_DATA]!=ELFDATA2LSB || header->ident[EI_VERSION]!=EV_CURRENT)
-        return false;
-    if (header->type!=ET_EXEC || header->machine!=EM_386 || header->version!=EV_CURRENT)
-        return false;
 
-    // Further restrictions..
-    // ASSERT(header->phnum == 1);
+    // validation checks
+    if (
+        (header->ident[EI_MAG0]    != 0x7F        ) ||
+        (header->ident[EI_MAG1]    != 'E'         ) ||
+        (header->ident[EI_MAG2]    != 'L'         ) ||
+        (header->ident[EI_MAG3]    != 'F'         ) ||
+        (header->ident[EI_CLASS]   != ELFCLASS32  ) ||
+        (header->ident[EI_DATA]    != ELFDATA2LSB ) ||
+        (header->ident[EI_VERSION] != EV_CURRENT  ) ||
+        (header->type              != ET_EXEC     ) ||
+        (header->machine           != EM_386      ) ||
+        (header->version           != EV_CURRENT  )
+    )
+    return false;
 
     page_directory_t* pd = paging_create_user_pd();
 
     // Read all program headers
-    const char* header_pos = elf_beg + header->phoff;
+    const uint8_t* header_pos = elf_beg + header->phoff;
     for (uint32_t i=0; i<header->phnum; ++i)
     {
         // Check whether the entry exceeds the file
         if (header_pos+sizeof(program_header_t) >= elf_end)
+        {
             return -1;
+        }
 
         program_header_t* ph = (program_header_t*)header_pos;
 
+        ///
         #ifdef _DIAGNOSIS_
         settextcolor(2,0);
         printf("ELF file program header:\n");
-        const char* types[] = { "NULL", "Loadable Segment", "Dynamic Linking Information", "Interpreter", "Note", "??", "Program Header" };
-        printf("  %s, offset %i, vaddr %X, paddr %X, filesz %i, memsz %i, flags %i, align %i\n", types[ph->type], ph->offset, ph->vaddr, ph->paddr, ph->filesz, ph->memsz, ph->flags, ph->align);
+        const char* types[] = { "NULL", "Loadable Segment", "Dynamic Linking Information",
+                                "Interpreter", "Note", "??", "Program Header" };
+        printf("  %s, offset %i, vaddr %X, paddr %X, filesz %i, memsz %i, flags %i, align %i\n",
+            types[ph->type], ph->offset, ph->vaddr, ph->paddr, ph->filesz, ph->memsz, ph->flags, ph->align);
         settextcolor(15,0);
         #endif
-        //
+        ///
 
-        // ASSERT((const void*)(ph->vaddr) == USERCODE_VADDR);
-        // ASSERT((const void*)(header->entry) == USERCODE_VADDR);
-
+        /// TODO: check read/write privileges (info in elf?)
         // Allocate code area for the user program
         if (! paging_alloc(pd, (void*)(ph->vaddr), alignUp(ph->memsz,PAGESIZE), MEM_USER | MEM_WRITE))
+        {
             return false;
+        }
+
+        /// TODO: check all sections, not only code
 
         // Copy the code, using the user's page directory
         cli();
-        paging_switch (pd);
-        memset((void *)ph->vaddr, 0, ph->memsz); // to set the bss (Block Started by Symbol) to zero
-        memcpy((void*)(ph->vaddr), elf_beg+ph->offset, ph->filesz);
-        paging_switch (kernel_pd);
+        paging_switch(pd);
+        memset((void*)ph->vaddr, 0, ph->memsz); // to set the bss (Block Started by Symbol) to zero
+        memcpy((void*)ph->vaddr, elf_beg+ph->offset, ph->filesz);
+        paging_switch(kernel_pd);
         sti();
 
         header_pos += header->phentrysize;
     }
 
     // Execute the task
-    if(strcmp("Shell", programName) == 0) {
+    if(strcmp("Shell", programName) == 0)
+    {
         create_task(pd, (void*)(header->entry), 3);
     }
-    else {
+    else
+    {
         create_ctask(pd, (void*)(header->entry), 3, programName);
     }
 
@@ -176,7 +185,7 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
