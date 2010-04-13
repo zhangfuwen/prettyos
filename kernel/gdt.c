@@ -38,11 +38,11 @@ void gdt_install()
     /* GDT GATES -  desriptors with pointers to the linear memory address */
     gdt_set_gate(0,0,0,0,0); // NULL descriptor
 
-    /*          num base limit     access                                               gran */
-    gdt_set_gate(1, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | CODE_EXEC_READ, _4KB_ | USE32 | 0xF);
-    gdt_set_gate(2, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32 | 0xF);
-    gdt_set_gate(3, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | CODE_EXEC_READ, _4KB_ | USE32 | 0xF);
-    gdt_set_gate(4, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32 | 0xF);
+    /*           num base limit     access                                               gran */
+    gdt_set_gate( 1, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32 );
+    gdt_set_gate( 2, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32 );
+    gdt_set_gate( 3, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32 );
+    gdt_set_gate( 4, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32 );
 
     write_tss(5, 0x10, 0x0); // num, ss0, esp0
     gdt_flush((uint32_t)&gdt_register);
