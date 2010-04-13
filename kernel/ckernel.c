@@ -13,18 +13,14 @@
 #include "cmos.h"
 #include "time.h"
 #include "flpydsk.h"
-#include "sys_speaker.h"
 #include "ehci.h"
 #include "file.h"
 #include "event_list.h"
 
-const char* version = "0.0.0.361";
+#define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
+#define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-// RAM Detection by Second Stage Bootloader
-#define ADDR_MEM_INFO    0x1000
-
-// Buffer for User-Space Program
-#define FILEBUFFERSIZE   0x4000 // shell
+const char* version = "0.0.0.362";
 
 // RAM disk and user program
 extern uint32_t file_data_start;
@@ -33,7 +29,7 @@ extern uint32_t file_data_end;
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
-// operatings system common data area
+// Operatings system common Data Area
 oda_t ODA;
 
 static void init()
@@ -42,7 +38,7 @@ static void init()
     kernel_console_init();
     gdt_install();
     idt_install();         // cf. interrupts.asm
-    timer_install(1000);   // Sets system frequency to ... Hz
+    timer_install(100);    // Sets system frequency to ... Hz
     keyboard_install();
     mouse_install();
     syscall_install();
