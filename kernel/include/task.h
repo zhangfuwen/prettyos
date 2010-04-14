@@ -1,10 +1,10 @@
 #ifndef TASK_H
 #define TASK_H
 
-#include "os.h"
 #include "console.h"
 #include "paging.h"
 #include "descriptor_tables.h"
+
 
 #define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
 

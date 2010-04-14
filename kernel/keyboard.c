@@ -3,10 +3,14 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
+#include "keyboard.h"
+#include "util.h"
 #include "task.h"
 #include "console.h"
 #include "event_list.h"
+#include "video.h"
+#include "timer.h"
+#include "irq.h"
 
 #ifdef KEYMAP_GER
 #include "keyboard_GER.h"

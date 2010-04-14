@@ -5,6 +5,8 @@
 
 #include "flpydsk.h"
 #include "fat12.h"
+#include "console.h"
+#include "util.h"
 
 
 // cache memory for tracks 0 and 1
@@ -150,11 +152,11 @@ int32_t flpydsk_read_directory()
             for (; count != 0; --count)
             {
                 if (*(end-count) != 0x20) /* empty space in file name */
-				{
+                {
                     printf("%c",*(end-count));
-					letters++;
-				}
-            }			
+                    letters++;
+                }
+            }            
 
             start = DMA_BUFFER + i*32 + 8; // extension
 
@@ -173,11 +175,11 @@ int32_t flpydsk_read_directory()
             count = 3;
             end = (int8_t*)(start+count);
             for (; count!=0; --count)
-			{
+            {
                 printf("%c",*(end-count));
-			}
+            }
             
-			if (letters<4) printf("\t"); 
+            if (letters<4) printf("\t"); 
 
             // filesize
             printf("\t%d byte", *((uint32_t*)(DMA_BUFFER + i*32 + 28)));

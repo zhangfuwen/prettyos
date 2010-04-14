@@ -3,7 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
+#include "util.h"
 #include "descriptor_tables.h"
 
 // ASM functions in flush.asm

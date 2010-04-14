@@ -501,15 +501,18 @@ int atoi(const char* s)
 float atof(const char* s)
 {
     int32_t i = 0;
-	int8_t sign = 1;
-	while(s[i] == ' ' || s[i] == '+' || s[i] == '-')
-	{
-		sign *= (s[i] == '-') ? -1 : 1;
-		i++;
-	}
+    int8_t sign = 1;
+    while(s[i] == ' ' || s[i] == '+' || s[i] == '-')
+    {
+        if(s[i] == '-')
+        {
+            sign *= -1;
+        }
+        i++;
+    }
 
     float val;
-	for (val = 0.0; isdigit(s[i]); i++)
+    for (val = 0.0; isdigit(s[i]); i++)
     {
         val = 10.0 * val + s[i] - '0';
     }
@@ -528,34 +531,34 @@ float atof(const char* s)
 
 void ftoa(float f, char* buffer)
 {
-      char tmp[32];
-      int32_t index = (sizeof(tmp) - 1);
-      if (f < 0.0)
-      {
-          *buffer = '-';
-          ++buffer;
-          f = -f;
-      }
+    char tmp[32];
+    int32_t index = sizeof(tmp) - 1;
+    if (f < 0.0)
+    {
+        *buffer = '-';
+        ++buffer;
+        f = -f;
+    }
 
-      int32_t i = f;
-      while (i > 0)
-      {
-              tmp[index] = ('0' + (i % 10));
-              i /= 10;
-              --index;
-      }
-      memcpy((void*)buffer, (void*)&tmp[index + 1], ((sizeof(tmp) - 1) - index));
-      buffer += ((sizeof(tmp) - 1) - index);
-      *buffer = '.';
-      ++buffer;
+    int32_t i = f;
+    while (i > 0)
+    {
+        tmp[index] = ('0' + (i % 10));
+        i /= 10;
+        --index;
+    }
+    memcpy((void*)buffer, (void*)&tmp[index + 1], sizeof(tmp) - 1 - index);
+    buffer += sizeof(tmp) - 1 - index;
+    *buffer = '.';
+    ++buffer;
 
-        *buffer++ = ((uint32_t)(f * 10.0) % 10) + '0';
-        *buffer++ = ((uint32_t)(f * 100.0) % 10) + '0';
-        *buffer++ = ((uint32_t)(f * 1000.0) % 10) + '0';
-        *buffer++ = ((uint32_t)(f * 10000.0) % 10) + '0';
-        *buffer++ = ((uint32_t)(f * 100000.0) % 10) + '0';
-        *buffer++ = ((uint32_t)(f * 1000000.0) % 10) + '0';
-        *buffer   = '\0';
+    *buffer++ = ((uint32_t)(f * 10.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 100.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 1000.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 10000.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 100000.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 1000000.0) % 10) + '0';
+    *buffer   = '\0';
 }
 
 void i2hex(uint32_t val, char* dest, int32_t len)

@@ -3,11 +3,12 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
+#include "util.h"
 #include "console.h"
-#include "my_stdarg.h"
 #include "task.h"
 #include "file.h"
+#include "video.h"
+#include "timer.h"
 
 uint16_t* vidmem = (uint16_t*) 0xB8000;
 
@@ -152,7 +153,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                         kputs(buffer);
                         break;
                     case 'f':
-                        float2string(va_arg(ap, double), 10, buffer);
+                        ftoa(va_arg(ap, double), buffer);
                         kputs(buffer);
                         break;
                     case 'i': case 'd':

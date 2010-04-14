@@ -1,7 +1,6 @@
 #ifndef INITRD_H
 #define INITRD_H
 
-#include "os.h"
 #include "fs.h"
 
 typedef struct

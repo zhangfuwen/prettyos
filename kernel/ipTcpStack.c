@@ -3,8 +3,8 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
 #include "ipTcpStack.h"
+#include "console.h"
 
 // This is (normally) called from a Network-Card-Driver
 // It interprets the whole data (also the Ethernet-Header)

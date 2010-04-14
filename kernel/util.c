@@ -3,10 +3,8 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
-#include "my_stdarg.h"
+#include "util.h"
 #include "sys_speaker.h"
-
 #include "scheduler.h"
 
 const int32_t INT_MAX = 2147483647;
@@ -174,7 +172,7 @@ void sprintf (char *buffer, const char *args, ...)
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'f':
-                        float2string(va_arg(ap, double), 8, m_buffer);
+                        ftoa(va_arg(ap, double), m_buffer);
                         strcat(buffer, m_buffer);
                         pos += strlen(m_buffer) - 1;
                         break;
@@ -199,7 +197,7 @@ void sprintf (char *buffer, const char *args, ...)
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 's':
-                        strcat(buffer, va_arg (ap, const char*));
+                        strcat(buffer, va_arg (ap, char*));
                         pos = strlen(buffer) - 1;
                         break;
                     case 'c':
@@ -342,55 +340,69 @@ void i2hex(uint32_t val, char* dest, int32_t len)
     dest[len+1]='\0';
 }
 
-void float2string(float value, int32_t decimal, char* valuestring) // float --> string
+float atof(const char* s)
 {
-    int32_t neg = 0;
-    char tempstr[20];
     int32_t i = 0;
-    int32_t j = 0;
-    int32_t c;
-    int32_t val1, val2;
-    char* tempstring;
+    int8_t sign = 1;
+    while(s[i] == ' ' || s[i] == '+' || s[i] == '-')
+    {
+        if(s[i] == '-')
+        {
+            sign *= -1;
+        }
+        i++;
+    }
 
-    tempstring = valuestring;
-    if (value < 0)
+    float val;
+    for (val = 0.0; isdigit(s[i]); i++)
     {
-        neg = 1; value = -value;
+        val = 10.0 * val + s[i] - '0';
     }
-    for (j=0; j < decimal; ++j)
+    if (s[i] == '.')
     {
-        value = value * 10;
+        i++;
     }
-    val1 = (value * 2);
-    val2 = (val1 / 2) + (val1 % 2);
-    while (val2 !=0)
+    float pow;
+    for (pow = 1.0; isdigit(s[i]); i++)
     {
-        if ((decimal > 0) && (i == decimal))
-        {
-            tempstr[i] = (char)(0x2E);
-            ++i;
-        }
-        else
-        {
-            c = (val2 % 10);
-            tempstr[i] = (char) (c + 0x30);
-            val2 = val2 / 10;
-            ++i;
-        }
+        val = 10.0 * val + s[i] - '0';
+        pow *= 10.0;
     }
-    if (neg)
-    {
-        *tempstring = '-';
-        ++tempstring;
-    }
-    i--;
-    for (;i > -1;i--)
-    {
-        *tempstring = tempstr[i];
-        ++tempstring;
-    }
-    *tempstring = '\0';
+    return(sign * val / pow);
 }
+
+void ftoa(float f, char* buffer)
+{
+    char tmp[32];
+    int32_t index = sizeof(tmp) - 1;
+    if (f < 0.0)
+    {
+        *buffer = '-';
+        ++buffer;
+        f = -f;
+    }
+
+    int32_t i = f;
+    while (i > 0)
+    {
+        tmp[index] = ('0' + (i % 10));
+        i /= 10;
+        --index;
+    }
+    memcpy((void*)buffer, (void*)&tmp[index + 1], sizeof(tmp) - 1 - index);
+    buffer += sizeof(tmp) - 1 - index;
+    *buffer = '.';
+    ++buffer;
+
+    *buffer++ = ((uint32_t)(f * 10.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 100.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 1000.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 10000.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 100000.0) % 10) + '0';
+    *buffer++ = ((uint32_t)(f * 1000000.0) % 10) + '0';
+    *buffer   = '\0';
+}
+
 
 uint32_t alignUp(uint32_t val, uint32_t alignment)
 {
@@ -800,12 +812,43 @@ void bootscreen() {
     log_task_list();
     sleepSeconds(5);
     #endif
-	///
+    ///
+}
 
+
+uint32_t max(uint32_t a, uint32_t b)
+{
+    return(a >= b ? a : b);
+}
+
+uint32_t min(uint32_t a, uint32_t b)
+{
+    return(a <= b ? a : b);
+}
+
+int32_t power(int32_t base, int32_t n)
+{
+    if (n == 0 || base == 1)
+    {
+        return 1;
+    }
+    int32_t p = 1;
+    for (; n > 0; --n)
+    {
+        p *= base;
+    }
+    return(p);
+}
+
+double fabs(double x)
+{
+    double result; 
+    __asm__ volatile("fabs" : "=t" (result) : "0" (x));
+    return result;
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

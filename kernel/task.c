@@ -4,10 +4,12 @@
 */
 
 #include "task.h"
+#include "util.h"
 #include "scheduler.h"
 #include "paging.h"
 #include "descriptor_tables.h"
 #include "kheap.h"
+#include "video.h"
 
 // Count of running user tasks
 int32_t userTaskCounter;

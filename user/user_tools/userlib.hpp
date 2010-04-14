@@ -61,8 +61,9 @@ extern "C" { //Functions from C-Userlib
 
     void reverse(char* s);
     void itoa(int n, char* s);
+    void ftoa(float f, char* buffer);
     int atoi(const char* s);
-    void float2string(float value, int decimal, char* valuestring); // float --> string
+    float atof(const char* s);
 
     void showInfo(signed char val);
 

@@ -181,10 +181,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\kernel\math.c"
-				>
-			</File>
-			<File
 				RelativePath="..\kernel\mouse.c"
 				>
 			</File>
@@ -244,10 +240,6 @@
 				Name="include"
 				>
 				<File
-					RelativePath="..\kernel\include\_template_header.h"
-					>
-				</File>
-				<File
 					RelativePath="..\kernel\include\cdi-osdep.h"
 					>
 				</File>
@@ -300,6 +292,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\kernel\include\irq.h"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\include\keyboard.h"
+					>
+				</File>
+				<File
 					RelativePath="..\kernel\include\keyboard_GER.h"
 					>
 				</File>
@@ -316,7 +316,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\include\my_stdarg.h"
+					RelativePath="..\kernel\include\mouse.h"
 					>
 				</File>
 				<File
@@ -360,7 +360,23 @@
 					>
 				</File>
 				<File
+					RelativePath="..\kernel\include\timer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\include\types.h"
+					>
+				</File>
+				<File
 					RelativePath="..\kernel\include\usb2.h"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\include\util.h"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\include\video.h"
 					>
 				</File>
 				<Filter

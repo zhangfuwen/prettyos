@@ -3,8 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
-#include "paging.h"
+#include "util.h"
+#include "timer.h"
+#include "video.h"
 #include "kheap.h"
 #include "initrd.h"
 #include "task.h"
@@ -13,12 +14,13 @@
 #include "pci.h"
 #include "time.h"
 #include "flpydsk.h"
-#include "file.h"
 #include "ehci.h"
+#include "mouse.h"
+
 
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
-const char* version = "0.0.0.365";
+const char* version = "0.0.0.366";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script

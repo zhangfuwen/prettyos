@@ -6,9 +6,10 @@
 
 // TODO: Apply multithreading safety
 
-#include "os.h"
 #include "paging.h"
+#include "util.h"
 #include "kheap.h"
+#include "console.h"
 
 
 page_directory_t* kernel_pd;

@@ -3,13 +3,14 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
+#include "util.h"
 #include "pci.h"
 #include "paging.h"
 #include "ehci.h"
 #include "list.h"
 #include "rtl8139.h"
 #include "event_list.h"
+#include "console.h"
 
 uint8_t network_buffer[8192+16];  // TEST for network card
 uint32_t BaseAddressRTL8139_IO;

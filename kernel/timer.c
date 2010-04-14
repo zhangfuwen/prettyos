@@ -3,7 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
+#include "util.h"
+#include "timer.h"
+#include "irq.h"
 
 uint16_t systemfrequency; // system frequency
 uint32_t timer_ticks = 0;

@@ -1,7 +1,6 @@
 #ifndef EVENT_LIST_H
 #define EVENT_LIST_H
 
-#include "os.h"
 #include "list.h"
 
 typedef struct {

@@ -4,6 +4,7 @@
 */
 
 #include "file.h"
+#include "util.h"
 #include "flpydsk.h"
 #include "fat12.h"
 #include "task.h"

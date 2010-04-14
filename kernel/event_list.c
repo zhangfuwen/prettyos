@@ -3,9 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
 #include "event_list.h"
 #include "ehci.h"
+#include "video.h"
 
 listHead_t* eventQueue;
 
@@ -23,12 +23,15 @@ void events_install()
 }
 
 void handleEvents() {
-    for(int i = 0; listGetElement(eventQueue, i) != 0; i++)
+    int i = 0;
+    for(; listGetElement(eventQueue, i) != 0; i++)
     {
         ((event_handler_t*)listGetElement(eventQueue, i))->function();
     }
-    listDeleteAll(eventQueue);
-    eventQueue = listCreate();
+    if(i > 0) {
+        listDeleteAll(eventQueue);
+        eventQueue = listCreate();
+    }
 }
 
 void addEvent(event_handler_t* event)

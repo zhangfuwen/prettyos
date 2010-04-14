@@ -3,8 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
-#include "paging.h"
+#include "util.h"
 #include "task.h"
 
 typedef enum

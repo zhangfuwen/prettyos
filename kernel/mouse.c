@@ -8,7 +8,10 @@
 // http://lowlevel.brainsware.org/wiki/index.php/Programmierung_der_PS/2-Maus
 // 'ported' and debugged by Cuervo
 
-#include "os.h"
+#include "mouse.h"
+#include "util.h"
+#include "console.h"
+#include "irq.h"
 
 char mouseid;
 uint32_t mouse_x=10;           // Mouse X

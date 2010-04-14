@@ -1,8 +1,6 @@
 #ifndef _FAT12_H
 #define _FAT12_H
 
-#include "os.h"
-
 // Error
 #define E_DISK -1
 

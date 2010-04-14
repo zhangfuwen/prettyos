@@ -2,6 +2,7 @@
 #define _FLPYDSK_DRIVER_H
 
 #include "os.h"
+
 #define DMA_BUFFER 0x1000 // start of dma tranfer buffer, end: 0x10000 (64KB border).
                           // It must be below 16MB = 0x1000000 and in identity mapped memory!
 

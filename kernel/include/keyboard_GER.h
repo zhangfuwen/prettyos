@@ -1,5 +1,5 @@
-#ifndef KEYBOARD_H
-#define KEYBOARD_H
+#ifndef KEYBOARD_KEYTABLE_H
+#define KEYBOARD_KEYTABLE_H
 
 #define ESC       27
 #define BACKSPACE '\b'

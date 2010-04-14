@@ -3,12 +3,11 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
 #include "ehci.h"
 #include "kheap.h"
 #include "paging.h"
-#include "sys_speaker.h"
 #include "usb2.h"
+#include "console.h"
 
 void testTransfer(uint32_t device)
 {

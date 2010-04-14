@@ -3,10 +3,13 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
+#include "util.h"
 #include "pci.h"
 #include "paging.h"
 #include "ipTcpStack.h"
+#include "console.h"
+#include "timer.h"
+#include "irq.h"
 
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 

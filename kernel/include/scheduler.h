@@ -1,7 +1,6 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "os.h"
 #include "task.h"
 
 task_t* initTaskQueue();

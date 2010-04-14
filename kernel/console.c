@@ -4,10 +4,10 @@
 */
 
 #include "console.h"
+#include "util.h"
 #include "kheap.h"
 #include "task.h"
-#include "scheduler.h"
-#include "my_stdarg.h"
+#include "video.h"
 
 console_t* reachableConsoles[11]; // Mainconsole + up to 10 Subconsoles
 uint8_t displayedConsole = 10;    // Currently visible console (10 per default, because console 10 is the kernels console)
@@ -210,7 +210,7 @@ void printf (const char* args, ...)
                         puts(buffer);
                         break;
                     case 'f':
-                        float2string(va_arg(ap, double), 10, buffer);
+                        ftoa(va_arg(ap, double), buffer);
                         puts(buffer);
                         break;
                     case 'i': case 'd':
@@ -276,7 +276,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                         puts(buffer);
                         break;
                     case 'f':
-                        float2string(va_arg(ap, double), 10, buffer);
+                        ftoa(va_arg(ap, double), buffer);
                         puts(buffer);
                         break;
                     case 'i': case 'd':

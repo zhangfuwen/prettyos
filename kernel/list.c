@@ -5,6 +5,7 @@
 
 #include "list.h"
 #include "kheap.h" // malloc and free
+#include "console.h"
 
 listHead_t* listCreate()
 {
@@ -16,7 +17,7 @@ listHead_t* listCreate()
     return(hd);
 }
 
-int8_t listAppend(listHead_t* hd, void* data)
+bool listAppend(listHead_t* hd, void* data)
 {
     element_t* ap = (element_t*)malloc(sizeof(element_t),0);
     if (ap)
@@ -33,9 +34,9 @@ int8_t listAppend(listHead_t* hd, void* data)
             hd->tail->next = ap;
         }
         hd->tail = ap;
-        return 1;
+        return(true);
     }
-    return 0;
+    return(false);
 }
 
 void listDeleteAll(listHead_t* hd)

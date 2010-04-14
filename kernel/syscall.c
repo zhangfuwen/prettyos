@@ -4,10 +4,13 @@
 */
 
 #include "syscall.h"
+#include "util.h"
 #include "task.h"
 #include "fat12.h"
 #include "file.h"
 #include "sys_speaker.h"
+#include "timer.h"
+#include "irq.h"
 
 DEFN_SYSCALL1(puts,                       0, const char*)
 DEFN_SYSCALL1(putch,                      1, char)
@@ -55,7 +58,7 @@ static void* syscalls[] =
     &clear_console,
     &set_cursor,
     &task_grow_userheap,
-	&setScrollField
+    &setScrollField
 };
 
 void syscall_install()

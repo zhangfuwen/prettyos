@@ -6,6 +6,8 @@
 
 #define MEMORY_MAP_ADDRESS 0x1000
 
+// The page size must not be changed
+#define PAGESIZE 0x1000  // 4096 Byte = 4KByte
 
 // Memory Map //
 typedef struct
@@ -38,6 +40,10 @@ static const uint32_t MEM_WRITE    = 2;
 static const uint32_t MEM_USER     = 4;
 
 extern page_directory_t* kernel_pd;
+
+void     analyze_frames_bitset(uint32_t sec);
+uint32_t show_physical_address(uint32_t virtual_address);
+void     analyze_physical_addresses();
 
 bool paging_alloc( page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags );
 void paging_free ( page_directory_t* pd, void* virt_addr, uint32_t size );

@@ -3,8 +3,8 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
 #include "cmos.h"
+#include "console.h"
 
 void set_fpu_cw(const uint16_t ctrlword)
 {

@@ -4,6 +4,7 @@
 */
 
 #include "cmos.h"
+#include "util.h"
 
 // Read byte from CMOS
 uint8_t cmos_read(uint8_t off)

@@ -3,8 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "cmos.h"
 #include "time.h"
+#include "util.h"
+#include "cmos.h"
 
 tm_t currentTime;
 

@@ -3,7 +3,8 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
+#include "irq.h"
+#include "util.h"
 #include "task.h"
 #include "kheap.h"
 #include "flpydsk.h" // floppy motor off

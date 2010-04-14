@@ -4,6 +4,7 @@
 */
 
 #include "cdi/misc.h"
+#include "timer.h"
 
 
 void cdi_register_irq(uint8_t irq, void (*handler)(struct cdi_device*), struct cdi_device* device);

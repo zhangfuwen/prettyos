@@ -3,15 +3,15 @@
 *  Lizenz und Haftungsausschluss f?r die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "os.h"
+#include "util.h"
+#include "timer.h"
 #include "pci.h"
 #include "ehci.h"
 #include "kheap.h"
-#include "paging.h"
 #include "task.h"
-#include "sys_speaker.h"
 #include "usb2.h"
 #include "event_list.h"
+#include "irq.h"
 
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
@@ -425,7 +425,7 @@ void enablePorts()
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
-				 testTransfer(0); // device address 0 direct after reset
+                 testTransfer(0); // device address 0 direct after reset
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
                  printf("\nin    status: "); showStatusbyteQTD(InQTD);
@@ -598,7 +598,7 @@ void checkPortLineStatus()
 
              if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & PSTS_CONNECTED))
              {
-			     settextcolor(13,0);
+                 settextcolor(13,0);
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());

@@ -3,8 +3,6 @@
 
 #include "os.h"
 
-// structs, ...
-
 struct ehci_CapRegs
 {
     volatile uint8_t  CAPLENGTH;        // Core Capability Register Length
@@ -232,7 +230,6 @@ struct ehci_request
 } __attribute__((packed));
 
 
-// functions, ...
 void ehci_init();
 void ehci_portcheck();
 void ehci_handler(registers_t* r);
@@ -255,4 +252,5 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size);
 
 //void showMEM_();
 //void showMEM(void* address, uint8_t n, const char* str);
+
 #endif

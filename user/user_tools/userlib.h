@@ -66,10 +66,9 @@ char* gets(char* s);
 
 void reverse(char* s);
 void itoa(int n, char* s);
+void ftoa(float f, char* buffer);
 int atoi(const char* s);
 float atof(const char* s);
-
-void ftoa(float f, char* buffer);
 
 void i2hex(uint32_t val, char* dest, int32_t len);
 
