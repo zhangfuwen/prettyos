@@ -9,7 +9,7 @@
 #include "usb2.h"
 #include "console.h"
 
-void testTransfer(uint32_t device)
+void testTransfer(uint32_t device, uint32_t endpoint)
 {
     settextcolor(9,0);
     printf("\n>>> >>> function: testTransfer\n");
@@ -22,26 +22,31 @@ void testTransfer(uint32_t device)
     void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
     uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
     pOpRegs->ASYNCLISTADDR = phsysicalAddr;
-
-    // Create QTDs (in reversed order)
-    void* next                = createQTD(0x1, 0x0, 1, 0);    // Handshake is the opposite direction of Data
-    next           = InQTD    = createQTD((uint32_t)next, 0x1, 1, 18); // IN DATA1, 18 byte
-    void* firstQTD = SetupQTD = createQTD((uint32_t)next, 0x2, 0,  8); // SETUP DATA0, 8 byte
+    
+	// Create QTDs (in reversed order)
+	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
+    
+	// GET_DESCRIPTOR
+	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 18);    // IN DATA1, 18 byte
+    //void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device,        lo, index, length
+      void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH 1
     void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, device);
+    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, device, endpoint);
 
     // Create QH 2
-    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device);
+    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
 
     // Enable Async...
     printf("\nEnabling Async Schedule\n");
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
     printf("\n");
-    showPacket(InQTDpage0,18);
-    showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
+    //showPacket(InQTDpage0,18);
+	showPacket(InQTDpage0,9);
+    //showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
+	showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
@@ -67,6 +72,28 @@ void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
        printf("product:           %x\n",    d->product);
        printf("serial number:     %x\t",    d->serialNumber);
        printf("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
+       settextcolor(15,0);
+    }
+}
+
+void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
+{
+    settextcolor(9,0);
+    printf("\n>>> >>>function: showConfigurationDesriptor");
+    settextcolor(15,0);
+
+    if (d->length)
+    {
+       settextcolor(10,0);
+	   printf("\nlength:               %d\t\t",  d->length);
+       printf("descriptor type:      %d\n",  d->descriptorType);
+       printf("total length:         %d\t",  d->totalLength);
+       printf("number of interfaces: %d\n",  d->NumInterfaces);
+       printf("ID of config:         %x\t",  d->ConfigurationValue);
+       printf("ID of config name     %x\n",  d->Configuration);
+	   printf("Remote Wakeup:        %s\t",  d->Attributes & (1<<5) ? "yes" : "no");
+	   printf("Self-powered:         %s\n",  d->Attributes & (1<<6) ? "yes" : "no");
+       printf("max power (mA):       %d\n",  d->MaxPower*2);
        settextcolor(15,0);
     }
 }

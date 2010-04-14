@@ -44,7 +44,7 @@ void ehci_portcheck()
     create_cthread(&portCheck, "EHCI Ports");
 }
 
-void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device)
+void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint)
 {
     settextcolor(9,0);
     printf("\n>>> >>> function: createQH");
@@ -53,22 +53,22 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     struct ehci_qhd* head = (struct ehci_qhd*)address;
     memset(address, 0, sizeof(struct ehci_qhd));
 
-    head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1 00b iTD, 01b QH, 10b siTD, 11b FSTN // 0x2 Queue Head
-    head->deviceAddress          =   device; // The device address
+    head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1   00b iTD,   01b QH,   10b siTD,   11b FSTN 
+    head->deviceAddress          =   device;         // The device address
     head->inactive               =   0;
-    head->endpoint               =   0;    // Endpoint 0 contains Device infos such as name
-    head->endpointSpeed          =   2;    // 00b = full speed; 01b = low speed; 10b = high speed
-    head->dataToggleControl      =   1;    // Get the Data Toggle bit out of the included qTD
+    head->endpoint               =   endpoint;       // Endpoint 0 contains Device infos such as name
+    head->endpointSpeed          =   2;              // 00b = full speed; 01b = low speed; 10b = high speed
+    head->dataToggleControl      =   1;              // Get the Data Toggle bit out of the included qTD
     head->H                      =   H;
-    head->maxPacketLength        =  64;    // It's 64 bytes for a control transfer to a high speed device.
-    head->controlEndpointFlag    =   0;    // Only used if Endpoint is a control endpoint and not high speed
-    head->nakCountReload         =   0;    // This value is used by HC to reload the Nak Counter field.
-    head->interruptScheduleMask  =   0;    // not used for async schedule
-    head->splitCompletionMask    =   0;    // unused if (not low/full speed and in periodic schedule)
-    head->hubAddr                =   0;    // unused if high speed (Split transfer)
-    head->portNumber             =   0;    // unused if high speed (Split transfer)
-    head->mult                   =   1;    // One transaction to be issued for this endpoint per micro-frame.
-                                        // Maybe unused for non interrupt queue head in async list
+    head->maxPacketLength        =  64;              // It's 64 bytes for a control transfer to a high speed device.
+    head->controlEndpointFlag    =   0;              // Only used if Endpoint is a control endpoint and not high speed
+    head->nakCountReload         =   0;              // This value is used by HC to reload the Nak Counter field.
+    head->interruptScheduleMask  =   0;              // not used for async schedule
+    head->splitCompletionMask    =   0;              // unused if (not low/full speed and in periodic schedule)
+    head->hubAddr                =   0;              // unused if high speed (Split transfer)
+    head->portNumber             =   0;              // unused if high speed (Split transfer)
+    head->mult                   =   1;              // One transaction to be issued for this endpoint per micro-frame.
+                                                     // Maybe unused for non interrupt queue head in async list
     if (firstQTD == NULL)
     {
         head->qtd.next = 0x1;
@@ -80,10 +80,10 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     }
 }
 
-void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
+void* createQTD_IN(uint32_t next, bool toggle, uint32_t tokenBytes)
 {
     settextcolor(9,0);
-    printf("\n>>> >>> function: createQTD");
+    printf("\n>>> >>> function: createQTD_IN");
     settextcolor(15,0);
 
     void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
@@ -100,7 +100,7 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
     }
     td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = pid;        // Setup Token
+    td->token.pid          = 0x1;        // In Token
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
     td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
     td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
@@ -110,23 +110,8 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
     void* data = malloc(0x20, PAGESIZE); // Enough for a full page
     memset(data,0,0x20);
 
-    if (pid == 0x2) // SETUP
-    {
-        SetupQTDpage0  = (uint32_t)data;
-
-        struct ehci_request* request = (struct ehci_request*)data;
-        request->type    = 0x80;    // Device->Host
-        request->request =  0x6;    // GET_DESCRIPTOR
-        request->valueHi =    1;    // Type:1 (Device)
-        request->valueLo =    0;    // Index: 0, used only for String or Configuration descriptors
-        request->index   =    0;    // Language ID: Default
-        request->length  =   18;    // according to the the requested data bytes in IN qTD
-    }
-    else if (pid == 0x1)// IN
-    {
-        InQTDpage0  = (uint32_t)data;
-        inBuffer = data;
-    }
+    InQTDpage0  = (uint32_t)data;
+    inBuffer = data;
 
     uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
     td->buffer0 = dataPhysical;
@@ -137,6 +122,97 @@ void* createQTD(uint32_t next, uint8_t pid, bool toggle, uint32_t tokenBytes)
 
     return address;
 }
+
+void* createQTD_SETUP(uint32_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
+{
+    settextcolor(9,0);
+    printf("\n>>> >>> function: createQTD_SETUP");
+    settextcolor(15,0);
+
+    void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
+    struct ehci_qtd* td = (struct ehci_qtd*)address;
+
+    if (next != 0x1)
+    {
+        uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
+        td->next = phys;
+    }
+    else
+    {
+        td->next = 0x1;
+    }
+    td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
+    td->token.status       = 0x80;       // This will be filled by the Host Controller
+    td->token.pid          = 0x2;        // Setup Token
+    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
+    td->token.bytes        = tokenBytes; // dependent on transfer
+    td->token.dataToggle   = toggle;     // Should be toggled every list entry
+
+    void* data = malloc(0x20, PAGESIZE); // Enough for a full page
+    memset(data,0,0x20);
+
+    SetupQTDpage0  = (uint32_t)data;
+
+    struct ehci_request* request = (struct ehci_request*)data;
+    request->type    = type;    // 0x80;   // Device->Host
+    request->request = req;     // 0x6;    // GET_DESCRIPTOR
+    request->valueHi = hiVal;   // Type:1 (Device)
+    request->valueLo = loVal;   // Index: 0, used only for String or Configuration descriptors
+    request->index   = index;   // 0;    // Language ID: Default
+    request->length  = length;  // 18;    // according to the the requested data bytes in IN qTD
+
+    uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
+    td->buffer0 = dataPhysical;
+    td->buffer1 = 0x0;
+    td->buffer2 = 0x0;
+    td->buffer3 = 0x0;
+    td->buffer4 = 0x0;
+
+    return address;
+}
+
+void* createQTD_HANDSHAKE(uint32_t next, bool toggle, uint32_t tokenBytes)
+{
+    settextcolor(9,0);
+    printf("\n>>> >>> function: createQTD_HANDSHAKE");
+    settextcolor(15,0);
+
+    void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
+    struct ehci_qtd* td = (struct ehci_qtd*)address;
+
+    if (next != 0x1)
+    {
+        uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
+        td->next = phys;
+    }
+    else
+    {
+        td->next = 0x1;
+    }
+    td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
+    td->token.status       = 0x80;       // This will be filled by the Host Controller
+    td->token.pid          = 0;          // Handshake Token
+    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
+    td->token.bytes        = tokenBytes; // dependent on transfer
+    td->token.dataToggle   = toggle;     // Should be toggled every list entry
+
+    void* data = malloc(0x20, PAGESIZE); // Enough for a full page
+    memset(data,0,0x20);
+
+    uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
+    td->buffer0 = dataPhysical;
+    td->buffer1 = 0x0;
+    td->buffer2 = 0x0;
+    td->buffer3 = 0x0;
+    td->buffer4 = 0x0;
+
+    return address;
+}
+
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
@@ -425,7 +501,7 @@ void enablePorts()
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
-                 testTransfer(0); // device address 0 direct after reset
+                 testTransfer(0,0); // device address 0, endpoint 0, direct after reset
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
                  printf("\nin    status: "); showStatusbyteQTD(InQTD);
@@ -602,7 +678,7 @@ void checkPortLineStatus()
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
-                 testTransfer(0); // device address
+                 testTransfer(0,0); // device address, endpoint
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
                  printf("in:             "); showStatusbyteQTD(InQTD);

@@ -22,9 +22,21 @@ struct usb2_deviceDescriptor
    uint8_t  numConfigurations; // number of possible configurations
 }__attribute__((packed));
 
+struct usb2_configurationDescriptor
+{
+   uint8_t  length;            // 9
+   uint8_t  descriptorType;    // 2
+   uint16_t totalLength;       
+   uint8_t  NumInterfaces;
+   uint8_t  ConfigurationValue;
+   uint8_t  Configuration;
+   uint8_t  Attributes;     
+   uint8_t  MaxPower;
+}__attribute__((packed));
 
 // functions, ...
-void testTransfer(uint32_t device);
+void testTransfer(uint32_t device, uint32_t endpoint);
 void showDeviceDesriptor(struct usb2_deviceDescriptor*);
+void showConfigurationDesriptor(struct usb2_configurationDescriptor*);
 
 #endif
