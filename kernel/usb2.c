@@ -9,7 +9,7 @@
 #include "usb2.h"
 #include "console.h"
 
-void testTransfer(uint32_t device, uint32_t endpoint)
+void testTransfer1(uint32_t device, uint32_t endpoint)
 {
     settextcolor(9,0);
     printf("\n>>> >>> function: testTransfer\n");
@@ -25,11 +25,8 @@ void testTransfer(uint32_t device, uint32_t endpoint)
     
 	// Create QTDs (in reversed order)
 	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
-    
-	// GET_DESCRIPTOR
 	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 18);    // IN DATA1, 18 byte
-    //void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device,        lo, index, length
-      void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
+    void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device,        lo, index, length
 
     // Create QH 1
     void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
@@ -43,10 +40,45 @@ void testTransfer(uint32_t device, uint32_t endpoint)
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
     printf("\n");
-    //showPacket(InQTDpage0,18);
-	showPacket(InQTDpage0,9);
-    //showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
-	showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
+
+	showPacket(InQTDpage0,18);
+    showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
+}
+
+void testTransfer2(uint32_t device, uint32_t endpoint)
+{
+    settextcolor(9,0);
+    printf("\n>>> >>> function: testTransfer\n");
+    settextcolor(15,0);
+
+    settextcolor(3,0);
+    printf("Test transfer with device address: %d\n", device);
+    settextcolor(15,0);
+
+    void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+    uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->ASYNCLISTADDR = phsysicalAddr;
+    
+	// Create QTDs (in reversed order)
+ 	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
+	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 18);    // IN DATA1, 18 byte
+	void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
+
+    // Create QH 1
+    void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, device, endpoint);
+
+    // Create QH 2
+    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
+
+    // Enable Async...
+    printf("\nEnabling Async Schedule\n");
+    pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
+
+    printf("\n");
+
+ 	showPacket(InQTDpage0,9);
+    showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)

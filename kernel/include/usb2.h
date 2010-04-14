@@ -35,7 +35,8 @@ struct usb2_configurationDescriptor
 }__attribute__((packed));
 
 // functions, ...
-void testTransfer(uint32_t device, uint32_t endpoint);
+void testTransfer1(uint32_t device, uint32_t endpoint);
+void testTransfer2(uint32_t device, uint32_t endpoint);
 void showDeviceDesriptor(struct usb2_deviceDescriptor*);
 void showConfigurationDesriptor(struct usb2_configurationDescriptor*);
 

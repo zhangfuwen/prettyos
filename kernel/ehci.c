@@ -46,10 +46,6 @@ void ehci_portcheck()
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: createQH");
-    settextcolor(15,0);
-
     struct ehci_qhd* head = (struct ehci_qhd*)address;
     memset(address, 0, sizeof(struct ehci_qhd));
 
@@ -82,10 +78,6 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 
 void* createQTD_IN(uint32_t next, bool toggle, uint32_t tokenBytes)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: createQTD_IN");
-    settextcolor(15,0);
-
     void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
 
@@ -125,10 +117,6 @@ void* createQTD_IN(uint32_t next, bool toggle, uint32_t tokenBytes)
 
 void* createQTD_SETUP(uint32_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: createQTD_SETUP");
-    settextcolor(15,0);
-
     void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
 
@@ -175,10 +163,6 @@ void* createQTD_SETUP(uint32_t next, bool toggle, uint32_t tokenBytes, uint32_t 
 
 void* createQTD_HANDSHAKE(uint32_t next, bool toggle, uint32_t tokenBytes)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: createQTD_HANDSHAKE");
-    settextcolor(15,0);
-
     void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
 
@@ -501,11 +485,17 @@ void enablePorts()
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
-                 testTransfer(0,0); // device address 0, endpoint 0, direct after reset
-                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nin    status: "); showStatusbyteQTD(InQTD);
-             }
+                 
+				 testTransfer1(0,0); // device address 0, endpoint 0, direct after reset
+                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+                 //printf("\nin    status: "); showStatusbyteQTD(InQTD);
+                 
+				 testTransfer2(0,0); // device address 0, endpoint 0
+                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+                 //printf("\nin    status: "); showStatusbyteQTD(InQTD);
+			 }
          }
     }
     enabledPortFlag = true;
@@ -678,10 +668,17 @@ void checkPortLineStatus()
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
-                 testTransfer(0,0); // device address, endpoint
-                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
-                 printf("in:             "); showStatusbyteQTD(InQTD);
+                 
+				 testTransfer1(0,0); // device address, endpoint
+                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 //printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
+                 //printf("in:             "); showStatusbyteQTD(InQTD);
+ 				 
+				 testTransfer2(0,0); // device address 0, endpoint 0
+                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+                 //printf("\nin    status: "); showStatusbyteQTD(InQTD);
+
              }
         }
       }
