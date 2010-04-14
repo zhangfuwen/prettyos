@@ -4,27 +4,29 @@
 */
 
 #include "os.h"
-#include "kheap.h"
 #include "paging.h"
-#include "task.h"
+#include "kheap.h"
 #include "initrd.h"
+#include "task.h"
+#include "event_list.h"
 #include "syscall.h"
 #include "pci.h"
-#include "cmos.h"
 #include "time.h"
 #include "flpydsk.h"
-#include "ehci.h"
 #include "file.h"
-#include "event_list.h"
+#include "ehci.h"
 
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
+const char* version = "0.0.0.365";
 
-const char* version = "0.0.0.364";
+// .bss
+extern uintptr_t _bss_start;  // linker script
+extern uintptr_t _kernel_end; // linker script
 
-// RAM disk and user program
-extern uint32_t file_data_start;
-extern uint32_t file_data_end;
+// file and data going to RAM disk
+extern uintptr_t file_data_start;
+extern uintptr_t file_data_end;
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
@@ -34,19 +36,34 @@ oda_t ODA;
 
 static void init()
 {
+    // set .bss to zero
+    memset(&_bss_start,0x0,(uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
+
+    // video
     clear_screen();
     kernel_console_init();
+
+    // descriptors
     gdt_install();
     idt_install();         // cf. interrupts.asm
+
+    // internal devices
     timer_install(100);    // Sets system frequency to ... Hz
+    fpu_install();
+
+    // external devices
     keyboard_install();
     mouse_install();
-    syscall_install();
-    fpu_install();
+
+    // memory
     ODA.Memory_Size = paging_install();
     heap_install();
+
+    // processes & threads
     tasking_install();
     events_install();
+    syscall_install();
+
     sti();
 }
 
@@ -82,14 +99,21 @@ void* ramdisk_install(size_t size)
 int main()
 {
     init();
-    EHCIflag        = false;  // first EHCI device found?
-    ODA.pciEHCInumber = 0;  // pci number of first EHCI device
+    EHCIflag          = false; // first EHCI device found?
+    ODA.pciEHCInumber = 0;     // pci number of first EHCI device
 
     // Create Startup Screen
     create_cthread(&bootscreen, "Booting ...");
-    ODA.ts_flag = true;
+    ODA.ts_flag = true;        // start task switch
 
+    ///
+    #ifdef _DIAGNOSIS_
+    settextcolor(14,0);
+    printf(".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
     showMemorySize();
+    settextcolor(15,0);
+    #endif
+    ///
 
     floppy_install();// detect FDDs
 

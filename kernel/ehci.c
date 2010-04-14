@@ -33,6 +33,10 @@ bool enabledPortFlag; // port enabled
 
 void ehci_init()
 {
+    settextcolor(13,0);
+    printf("\n>>> Press key for EHCI (re)initialization. <<<");
+    settextcolor(15,0);
+    while(!checkKQ_and_return_char());
     create_cthread(&startEHCI, "EHCI");
 }
 void ehci_portcheck()
