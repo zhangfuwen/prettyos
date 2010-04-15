@@ -33,10 +33,6 @@ bool enabledPortFlag; // port enabled
 
 void ehci_init()
 {
-    settextcolor(13,0);
-    printf("\n>>> Press key for EHCI (re)initialization. <<<");
-    settextcolor(15,0);
-    while(!checkKQ_and_return_char());
     create_cthread(&startEHCI, "EHCI");
 }
 void ehci_portcheck()
@@ -197,14 +193,9 @@ void* createQTD_HANDSHAKE(uint32_t next, bool toggle, uint32_t tokenBytes)
     return address;
 }
 
-
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: showPacket\n");
-    settextcolor(15,0);
-
-    printf("virtAddrBuf0: %X\n", virtAddrBuf0);
+    // printf("virtAddrBuf0: %X\n", virtAddrBuf0);
     for (uint32_t c=0; c<size; c++)
     {
         settextcolor(3,0);
@@ -215,10 +206,6 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 void showStatusbyteQTD(void* addressQTD)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: showStatusbyteQTD\n");
-    settextcolor(15,0);
-
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
     printf("QTD: %X Statusbyte: %y", addressQTD, statusbyte);
 
@@ -241,20 +228,20 @@ void ehci_handler(registers_t* r)
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER))
     {
       settextcolor(9,0);
-      printf("\n>>> >>> function: ehci_handler: ");
+      printf("\nehci_handler: ");
       settextcolor(15,0);
     }
 
     settextcolor(14,0);
     if (pOpRegs->USBSTS & STS_USBINT)
     {
-        printf("\nUSB Interrupt");
+        printf("USB Interrupt");
         pOpRegs->USBSTS |= STS_USBINT;
     }
 
     if (pOpRegs->USBSTS & STS_USBERRINT)
     {
-        printf("\nUSB Error Interrupt");
+        printf("USB Error Interrupt");
         pOpRegs->USBSTS |= STS_USBERRINT;
     }
 
@@ -274,36 +261,34 @@ void ehci_handler(registers_t* r)
 
     if (pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER)
     {
-        //printf("\nFrame List Rollover Interrupt");
+        //printf("Frame List Rollover Interrupt");
         pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
 
     if (pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)
     {
         settextcolor(4,0);
-        printf("\nHost System Error");
+        printf("Host System Error");
         settextcolor(15,0);
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         settextcolor(14,0);
-        printf("\nInit EHCI after fatal error");
+		printf("\n>>> Init EHCI after fatal error:           <<<");
+     	printf("\n>>> Press key for EHCI (re)initialization. <<<");
+        while(!checkKQ_and_return_char());
         settextcolor(15,0);
         addEvent(&EHCI_INIT);
     }
 
     if (pOpRegs->USBSTS & STS_ASYNC_INT)
     {
-        printf("\nInterrupt on Async Advance");
+        printf("Interrupt on Async Advance");
         pOpRegs->USBSTS |= STS_ASYNC_INT;
     }
 }
 
 void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: analyzeEHCI\n");
-    settextcolor(15,0);
-
     bar += offset;
 
     /// TEST
@@ -440,10 +425,10 @@ int32_t initEHCIHostController()
 
     if (!(pOpRegs->USBSTS & STS_HCHALTED)) // TEST
     {
-         settextcolor(2,0);
-         printf("\nHCHalted bit set to 0 (OK), ports can be enabled now.");
+         // settextcolor(2,0);
+         // printf("\nHCHalted bit set to 0 (OK), ports can be enabled now.");
          enablePorts();
-         settextcolor(15,0);
+         // settextcolor(15,0);
     }
     else // not OK
     {
@@ -485,7 +470,8 @@ void enablePorts()
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
-                 
+                 printf("\n");
+
 				 testTransfer1(0,0); // device address 0, endpoint 0, direct after reset
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
@@ -558,14 +544,8 @@ void resetPort(uint8_t j)
     pOpRegs->USBINTR = STS_INTMASK;
 }
 
-
-
 void showPORTSC()
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: showPORTSC");
-    settextcolor(15,0);
-
     for (uint8_t j=0; j<numPorts; j++)
     {
         if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
@@ -616,10 +596,6 @@ void startEHCI()
 
 void showUSBSTS()
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: showUSBSTS\n");
-    settextcolor(15,0);
-
     printf("\nUSB status: ");
     settextcolor(2,0);
     printf("%X",pOpRegs->USBSTS);
@@ -639,10 +615,6 @@ void showUSBSTS()
 
 void checkPortLineStatus()
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: checkPortLineStatus\n");
-    settextcolor(15,0);
-
     settextcolor(14,0);
     printf("\n\n>>> Status of USB Ports <<<");
 
@@ -668,6 +640,7 @@ void checkPortLineStatus()
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
+				 printf("\n");
                  
 				 testTransfer1(0,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
@@ -706,10 +679,6 @@ void checkPortLineStatus()
 
 void DeactivateLegacySupport(uint32_t num)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: DeactivateLegacySupport");
-    settextcolor(15,0);
-
     bool failed = false;
 
     // pci bus data
@@ -803,8 +772,7 @@ void DeactivateLegacySupport(uint32_t num)
     else
     {
         printf("No valid eecp found.\n");
-    }
-    delay(1000000); // show result
+    }    
 }
 
 /*

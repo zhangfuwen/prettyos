@@ -11,12 +11,8 @@
 
 void testTransfer1(uint32_t device, uint32_t endpoint)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: testTransfer\n");
-    settextcolor(15,0);
-
-    settextcolor(3,0);
-    printf("Test transfer with device address: %d\n", device);
+    settextcolor(11,0);
+    printf("\nUSB2: GET_DESCRIPTOR device, dev: %d endpoint: %d", device, endpoint);
     settextcolor(15,0);
 
     void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
@@ -36,7 +32,7 @@ void testTransfer1(uint32_t device, uint32_t endpoint)
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
 
     // Enable Async...
-    printf("\nEnabling Async Schedule\n");
+    // printf("\nEnabling Async Schedule\n");
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
     printf("\n");
@@ -47,12 +43,8 @@ void testTransfer1(uint32_t device, uint32_t endpoint)
 
 void testTransfer2(uint32_t device, uint32_t endpoint)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>> function: testTransfer\n");
-    settextcolor(15,0);
-
-    settextcolor(3,0);
-    printf("Test transfer with device address: %d\n", device);
+    settextcolor(11,0);
+	printf("\nUSB2: GET_DESCRIPTOR config, dev: %d endpoint: %d", device, endpoint);
     settextcolor(15,0);
 
     void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
@@ -72,7 +64,7 @@ void testTransfer2(uint32_t device, uint32_t endpoint)
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
 
     // Enable Async...
-    printf("\nEnabling Async Schedule\n");
+    // printf("\nEnabling Async Schedule\n");
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
     printf("\n");
@@ -83,10 +75,6 @@ void testTransfer2(uint32_t device, uint32_t endpoint)
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>>function: showDeviceDesriptor");
-    settextcolor(15,0);
-
     if (d->length)
     {
        settextcolor(10,0);
@@ -110,10 +98,6 @@ void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 
 void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
 {
-    settextcolor(9,0);
-    printf("\n>>> >>>function: showConfigurationDesriptor");
-    settextcolor(15,0);
-
     if (d->length)
     {
        settextcolor(10,0);
