@@ -182,11 +182,7 @@ void* malloc(uint32_t size, uint32_t alignment)
     // Now there should be a region that is large enough
     void* address = malloc(size, alignment);
 
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printf("%X ",address);
-    settextcolor(15,0);
-    #endif
+    kdebug("%X ",address);
 
     return address;
 }

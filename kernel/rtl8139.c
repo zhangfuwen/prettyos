@@ -99,11 +99,7 @@ void install_RTL8139(uint32_t number)
     //clear receiving buffer
     memset((void*)network_buffer, 0x0, 8192+16);
 
-    #ifdef _DIAGNOSIS_
-        settextcolor(3,0);
-        printf("RTL8139 MMIO: %X\n",BaseAddressRTL8139_MMIO);
-        settextcolor(15,0);
-    #endif
+    kdebug("RTL8139 MMIO: %X\n",BaseAddressRTL8139_MMIO);
 
     BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem(BaseAddressRTL8139_MMIO);
     printf("BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO);
@@ -121,11 +117,7 @@ void install_RTL8139(uint32_t number)
         sleepMilliSeconds(10);
         if (!(*((volatile uint8_t*)(BaseAddressRTL8139_MMIO + 0x37)) & 0x10)) //
         {
-            #ifdef _DIAGNOSIS_
-                settextcolor(3,0);
-                printf("\nwaiting successful(%d).\n", k);
-                settextcolor(15,0);
-            #endif
+            kdebug("\nwaiting successful(%d).\n", k);
             break;
         }
         k++;
@@ -135,14 +127,10 @@ void install_RTL8139(uint32_t number)
             break;
         }
     }
-    #ifdef _DIAGNOSIS_
-        settextcolor(3,0);
-        printf("mac address: %y-%y-%y-%y-%y-%y\n",
+    kdebug("mac address: %y-%y-%y-%y-%y-%y\n",
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+0), *((uint8_t*)(BaseAddressRTL8139_MMIO)+1),
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+2), *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+4), *((uint8_t*)(BaseAddressRTL8139_MMIO)+5));
-        settextcolor(15,0);
-    #endif
 
     // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
     /*

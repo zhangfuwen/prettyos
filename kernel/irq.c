@@ -47,13 +47,7 @@ uint32_t irq_handler(uint32_t esp)
         // set TS in cr0 to zero
         __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
 
-        ///
-        #ifdef _DIAGNOSIS_
-        settextcolor(12,0);
-        printf("#NM: FPU is used. pCurrentTask: %X\n",pCurrentTask);
-        settextcolor(15,0);
-        #endif
-        ///
+        kdebug("#NM: FPU is used. pCurrentTask: %X\n",pCurrentTask);
 
         // save FPU data ...
         if (ODA.TaskFPU)

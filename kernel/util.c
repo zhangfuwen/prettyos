@@ -807,12 +807,10 @@ void bootscreen() {
     settextcolor(15,0);
     printf("\n\n\n\n\n");
 
-    ///
     #ifdef _DIAGNOSIS_
     log_task_list();
     sleepSeconds(5);
     #endif
-    ///
 }
 
 
@@ -842,7 +840,7 @@ int32_t power(int32_t base, int32_t n)
 
 double fabs(double x)
 {
-    double result; 
+    double result;
     __asm__ volatile("fabs" : "=t" (result) : "0" (x));
     return result;
 }

@@ -20,7 +20,7 @@
 
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
-const char* version = "0.0.0.370";
+const char* version = "0.0.0.371";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -85,11 +85,7 @@ void showMemorySize()
 
 void* ramdisk_install(size_t size)
 {
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printf("rd_start: ");
-    settextcolor(15,0);
-    #endif
+    kdebug("rd_start: ");
 
     void* ramdisk_start = malloc(size, PAGESIZE);
     // shell via incbin in data.asm
@@ -108,23 +104,16 @@ int main()
     create_cthread(&bootscreen, "Booting ...");
     ODA.ts_flag = true;        // start task switch
 
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(14,0);
-    printf(".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
-    showMemorySize();
-    settextcolor(15,0);
-    #endif
-    ///
+    kdebug(".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
+    showMemorySize();
     floppy_install();// detect FDDs
 
     pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
-    ///
+
     #ifdef _DIAGNOSIS_
     listPCI();
     #endif
-    ///
 
     void* ramdisk_start = ramdisk_install(0x200000);
 

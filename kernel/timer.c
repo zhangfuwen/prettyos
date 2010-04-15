@@ -32,11 +32,7 @@ uint32_t getCurrentMilliseconds()
 
 void timer_handler(registers_t* r)
 {
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-        printf(".");
-    settextcolor(15,0);
-    #endif
+    kdebug(".");
 
     ++timer_ticks;
     if (eticks>0)

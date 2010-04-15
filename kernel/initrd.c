@@ -76,13 +76,7 @@ fs_node_t* install_initrd(void* location)
     file_headers  = (initrd_file_header_t*) (location+sizeof(initrd_header_t));
 
     // Initialise the root directory.
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printf("rd_root: ");
-    settextcolor(15,0);
-    #endif
-    ///
+    kdebug("rd_root: ");
 
     initrd_root = (fs_node_t*) malloc(sizeof(fs_node_t),PAGESIZE);
     strcpy(initrd_root->name, (const char*)"dev");
@@ -98,13 +92,7 @@ fs_node_t* install_initrd(void* location)
     initrd_root->impl    = 0;
 
     // Initialise the /dev directory (required!)
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printf("rd_dev: ");
-    settextcolor(15,0);
-    #endif
-    ///
+    kdebug("rd_dev: ");
 
     initrd_dev = (fs_node_t*)malloc(sizeof(fs_node_t),PAGESIZE);
     strcpy(initrd_dev->name, (const char*)"ramdisk");
@@ -119,13 +107,7 @@ fs_node_t* install_initrd(void* location)
     initrd_dev->ptr      = 0;
     initrd_dev->impl     = 0;
 
-    ///
-    #ifdef _DIAGNOSIS_
-    settextcolor(2,0);
-    printf("root_nodes: ");
-    settextcolor(15,0);
-    #endif
-    ///
+    kdebug("root_nodes: ");
 
     root_nodes = (fs_node_t*) malloc(sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
     nroot_nodes = initrd_header->nfiles;

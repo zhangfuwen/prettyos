@@ -4,7 +4,16 @@
 #include "types.h"
 
 /// Diagnosis-Output - activates prints to the screen about some details and memory use
-// #define _DIAGNOSIS_
+/// #define _DIAGNOSIS_
+
+#ifdef _DIAGNOSIS_
+ #define kdebug(...)   \
+  settextcolor(3,0);    \
+  printf(__VA_ARGS__);  \
+  settextcolor(15,0);
+#else
+ #define kdebug(...)
+#endif
 
 /// keyboard map
 // #define KEYMAP_US // US keyboard
@@ -24,5 +33,11 @@ void set_fpu_cw(const uint16_t ctrlword);
 void fpu_install();
 // elf.c
 bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programName);
+
+// console.h
+extern void settextcolor(uint8_t forecolor, uint8_t backcolor);
+extern void printf (const char* args, ...);
+// timer.h
+extern void sleepSeconds (uint32_t seconds);
 
 #endif
