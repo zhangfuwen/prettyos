@@ -10,7 +10,7 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 boot: floppy
 floppy_bootsig_check: disabled=0
 log: bochsout.txt
-panic: action=ask
+panic: action=ignore
 error: action=report
 info: action=report
 debug: action=ignore

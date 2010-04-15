@@ -1,7 +1,6 @@
 cls
 del FloppyImage.img
 tools\mingw32-make FloppyImage.img OS=WINDOWS
-pause
 
 @echo off
 :Loop

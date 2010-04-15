@@ -135,7 +135,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     setNextTask(new_task, NULL); // last task in queue
 
     new_task->ownConsole = false;
-    new_task->console = reachableConsoles[10]; // task uses the same console as the kernel
+    new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
     setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
 

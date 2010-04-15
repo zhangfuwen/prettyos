@@ -8,51 +8,22 @@
 #include "task.h"
 #include "file.h"
 #include "video.h"
+#include "kheap.h"
 #include "timer.h"
 
 uint16_t* vidmem = (uint16_t*) 0xB8000;
 
-// buffer for video screen
-uint8_t videoscreen[4000+98]; // only signs, no attributes, 49 times CR LF at line end
-
-
-static const uint8_t LINES = 50;
-
-static const uint8_t USER_BEGIN = 2; // Reserving Titlebar+Separation
-static const uint8_t USER_END = 48; // Reserving Statusbar+Separation
+static const uint8_t LINES      = 50;
+static const uint8_t USER_BEGIN =  2; // Reserving Titlebar +Separation
+static const uint8_t USER_END   = 48; // Reserving Statusbar+Separation
 
 uint8_t csr_x  = 0;
 uint8_t csr_y  = 0;
-uint8_t attrib = 0x0F;
-
-void kputs(const char* text);
+uint8_t attrib = 0x0F; // white text on black ground
 
 void clear_screen()
 {
     memsetw (vidmem, 0x20 | (0x00 << 8), COLUMNS * LINES);
-    update_cursor();
-}
-
-void refreshUserScreen()
-{
-    // Printing titlebar
-    kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
-    csr_y = 0;
-
-    if (displayedConsole == 10) {
-        csr_x = COLUMNS - 5;
-        kputs("Shell");
-    }
-    else
-    {
-        char Buffer[70];
-        sprintf(Buffer, "Console %i: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
-        csr_x = COLUMNS - strlen(Buffer);
-        kputs(Buffer);
-    }
-    kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
-    // copying content of visible console to the video-ram
-    memcpy((void*)((uint32_t)(vidmem) + USER_BEGIN * COLUMNS * 2), (void*)(uint32_t)(reachableConsoles[displayedConsole]->vidmem), COLUMNS * USER_LINES*2);
     update_cursor();
 }
 
@@ -160,7 +131,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                         itoa(va_arg(ap, int32_t), buffer);
                         kputs(buffer);
                         break;
-                    case 'X':
+                    case 'X': /// TODO: make it standardized
                         i2hex(va_arg(ap, int32_t), buffer, 8);
                         kputs(buffer);
                         break;
@@ -198,9 +169,42 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     }
 }
 
-static void catchVidmem()
+void refreshUserScreen()
 {
-    int32_t NewLine = 0;
+    // Printing titlebar
+    kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
+    csr_y = 0;
+
+    if (displayedConsole == KERNELCONSOLE_ID)
+	{
+        csr_x = COLUMNS - 5;
+        kputs("Shell");
+    }
+    else
+    {
+        char Buffer[70];
+        sprintf(Buffer, "Console %i: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
+        csr_x = COLUMNS - strlen(Buffer);
+        kputs(Buffer);
+    }
+    kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
+    // copying content of visible console to the video-ram
+    memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * USER_LINES*2);
+    update_cursor();
+}
+
+void mt_screenshot()
+{
+    printf("Screenshot (Thread)\n");
+    create_thread(&screenshot);
+}
+
+void screenshot()
+{
+   int32_t NewLine = 0;
+
+	// buffer for video screen
+	uint8_t* videoscreen = malloc(4000+98, PAGESIZE); // only signs, no attributes, 49 times CR LF at line end
 
     for (uint16_t i=0; i<4000;i++)
     {
@@ -213,41 +217,17 @@ static void catchVidmem()
             NewLine++;
         }
     }
-}
-
-void mt_screenshot()
-{
-    printf("Screenshot (Thread)\n");
-    create_thread(&screenshot_thread);
-}
-
-int32_t screenshot(char* name)
-{
-    catchVidmem();
-
-    if (strcmp(name,"")==0)
-    {
-        return flpydsk_write("SCRSHOT", "TXT", (void*)videoscreen, 4098);
-    }
-    else
-    {
-        return flpydsk_write(name, "TXT", (void*)videoscreen, 4098);
-    }
-}
-
-void screenshot_thread()
-{
-    catchVidmem();
 
     char timeBuffer[20];
     itoa(getCurrentSeconds(), timeBuffer);
     char timeStr[10];
     sprintf(timeStr, "TIME%s", timeBuffer);
     flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4098);
+	free(videoscreen);
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

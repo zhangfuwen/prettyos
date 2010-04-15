@@ -9,16 +9,17 @@
 #include "task.h"
 #include "video.h"
 
-console_t* reachableConsoles[11]; // Mainconsole + up to 10 Subconsoles
-uint8_t displayedConsole = 10;    // Currently visible console (10 per default, because console 10 is the kernels console)
+console_t* reachableConsoles[11]; // Mainconsole + up to KERNELCONSOLE_ID Subconsoles
+uint8_t displayedConsole = KERNELCONSOLE_ID; // Currently visible console (KERNELCONSOLE_ID per default)
 
 extern uint16_t* vidmem;
 bool scroll_flag = true;
 
-void kernel_console_init() {
+void kernel_console_init()
+{
     current_console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
     console_init(current_console, "");
-    reachableConsoles[10] = current_console; // reachableConsoles[10] is reserved for kernels console
+    reachableConsoles[KERNELCONSOLE_ID] = current_console;
     current_console->SCROLL_END = 39;
 }
 
@@ -217,7 +218,7 @@ void printf (const char* args, ...)
                         itoa(va_arg(ap, int32_t), buffer);
                         puts(buffer);
                         break;
-                    case 'X':
+                    case 'X': /// TODO: make it standardized
                         i2hex(va_arg(ap, int32_t), buffer, 8);
                         puts(buffer);
                         break;
@@ -334,7 +335,7 @@ void update_cursor()
 
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

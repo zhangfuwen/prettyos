@@ -23,22 +23,12 @@
 #ifndef CDI_MEMPOOL_H
 #define CDI_MEMPOOL_H
 
-/// #include <stdlib.h> /// CDI-style
-/// #include <stdint.h> /// CDI-style
-#include "os.h"         /// PrettyOS work-around
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "os.h"
 
 struct cdi_mempool;
 
 struct cdi_mempool* cdi_mempool_create(size_t pool_size, size_t object_size);
 int cdi_mempool_get(struct cdi_mempool* pool, void** obj, uintptr_t* phys_obj);
 int cdi_mempool_put(struct cdi_mempool* pool, void* obj);
-
-#ifdef __cplusplus
-}; // extern "C"
-#endif
 
 #endif

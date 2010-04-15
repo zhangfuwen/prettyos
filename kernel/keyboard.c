@@ -9,7 +9,6 @@
 #include "console.h"
 #include "event_list.h"
 #include "video.h"
-#include "timer.h"
 #include "irq.h"
 
 #ifdef KEYMAP_GER
@@ -145,19 +144,14 @@ uint8_t ScanToASCII()
             return 0;
         }
     }
+
     if (CtrlKeyDown && (retchar == 's')) // Taking a screenshot; Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
     {
-        char timeBuffer[20];
-        itoa(getCurrentSeconds(), timeBuffer);
-        char timeStr[10];
-        sprintf(timeStr, "TIME%s", timeBuffer);
-        screenshot(timeStr);
+        addEvent(&VIDEO_SCREENSHOT);
         return 0;
     }
-
-    if (CtrlKeyDown && (retchar == 't')) // For tests: function screenshot_thread as a thread
+	if (CtrlKeyDown && (retchar == 't')) // If you want to test something
     {
-        addEvent(&VIDEO_SCREENSHOT);
         return 0;
     }
 

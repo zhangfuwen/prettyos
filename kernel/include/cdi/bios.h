@@ -1,19 +1,7 @@
-/*
- * Copyright (c) 2008 Mathias Gottschlag
- *
- * This program is free software. It comes without any warranty, to
- * the extent permitted by applicable law. You can redistribute it 
- * and/or modify it under the terms of the Do What The Fuck You Want 
- * To Public License, Version 2, as published by Sam Hocevar. See
- * http://sam.zoy.org/projects/COPYING.WTFPL for more details.
- */  
+#ifndef CDI_BIOS_H
+#define CDI_BIOS_H
 
-#ifndef _CDI_BIOS_H_
-#define _CDI_BIOS_H_
-
-///#include <stdint.h> /// CDI-style
-#include "os.h"         /// PrettyOS work-around
-
+#include "os.h"
 #include <cdi/lists.h>
 
 struct cdi_bios_registers {
@@ -27,46 +15,23 @@ struct cdi_bios_registers {
     uint16_t es;
 };
 
-/**
- * Struktur zum Zugriff auf Speicherbereiche des 16bit-Prozesses
- */
+// Structure to access memory areas of a 16-bit Process
 struct cdi_bios_memory {
-    /**
-     * Virtuelle Addresse im Speicher des 16bit-Prozesses. Muss unterhalb von
-     * 0xC0000 liegen.
-     */
-    uintptr_t dest;
-    /**
-     * Pointer auf reservierten Speicher für die Daten des Speicherbereichs. Wird
-     * beim Start des Tasks zum Initialisieren des Bereichs benutzt und erhaelt
-     * auch wieder die Daten nach dem BIOS-Aufruf.
-     */
+    uintptr_t dest; // Virtuelle Addresse im Speicher des 16bit-Prozesses. Muss unterhalb von 0xC0000 liegen.
+
+    /* Pointer auf reservierten Speicher für die Daten des Speicherbereichs. Wird beim Start des Tasks zum Initialisieren
+       des Bereichs benutzt und erhaelt auch wieder die Daten nach dem BIOS-Aufruf. */
     void *src;
-    /**
-     * Laenge des Speicherbereichs
-     */
-    uint16_t size;
+
+    uint16_t size; // Length of memory area
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Ruft den BIOS-Interrupt 0x10 auf.
- * @param registers Pointer auf eine Register-Struktur. Diese wird beim Aufruf
- * in die Register des Tasks geladen und bei Beendigung des Tasks wieder mit den
- * Werten des Tasks gefuellt.
- * @param memory Speicherbereiche, die in den Bios-Task kopiert und bei Beendigung
- * des Tasks wieder zurueck kopiert werden sollen. Die Liste ist vom Typ struct
- * cdi_bios_memory.
- * @return 0, wenn der Aufruf erfolgreich war, -1 bei Fehlern
- */
+/* Ruft den BIOS-Interrupt 0x10 auf.
+   registers: Pointer auf eine Register-Struktur. Diese wird beim Aufruf in die Register des Tasks geladen und 
+                  bei Beendigung des Tasks wieder mit den Werten des Tasks gefuellt.
+   memory:    Speicherbereiche, die in den Bios-Task kopiert und bei Beendigung des Tasks wieder zurueck kopiert
+                  werden sollen. Die Liste ist vom Typ struct cdi_bios_memory.
+   return:    0, wenn der Aufruf erfolgreich war, -1 bei Fehlern */
 int cdi_bios_int10(struct cdi_bios_registers *registers, cdi_list_t memory);
 
-#ifdef __cplusplus
-}; // extern "C"
 #endif
-
-#endif
-

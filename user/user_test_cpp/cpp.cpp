@@ -6,5 +6,5 @@ int main() {
     puts("                               C++ - Testprogramm!                              \n");
     puts("--------------------------------------------------------------------------------\n\n");
     settextcolor(15,0);
-	return 0;
+    return 0;
 }

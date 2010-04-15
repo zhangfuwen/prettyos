@@ -3,15 +3,17 @@
 
 #include "keyboard.h"
 
+#define KERNELCONSOLE_ID 10
+
 typedef struct // Defines the User-Space of the display
 {
     char* name;
     uint16_t* vidmem; // memory that stores the content of this console. Size is USER_LINES*COLUMNS
     //uint8_t SCROLL_BEGIN;
     uint8_t SCROLL_END;
-    uint8_t  csr_x;
-    uint8_t  csr_y;
-    uint8_t  attrib;
+    uint8_t csr_x;
+    uint8_t csr_y;
+    uint8_t attrib;
     keyqueue_t KQ; // Buffer storing keyboard input
 } console_t;
 
