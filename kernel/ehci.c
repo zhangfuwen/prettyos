@@ -45,7 +45,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     struct ehci_qhd* head = (struct ehci_qhd*)address;
     memset(address, 0, sizeof(struct ehci_qhd));
 
-    head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1   00b iTD,   01b QH,   10b siTD,   11b FSTN 
+    head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1   00b iTD,   01b QH,   10b siTD,   11b FSTN
     head->deviceAddress          =   device;         // The device address
     head->inactive               =   0;
     head->endpoint               =   endpoint;       // Endpoint 0 contains Device infos such as name
@@ -331,7 +331,7 @@ void resetHostController()
     */
     while (!(pOpRegs->USBSTS & STS_HCHALTED))
     {
-        delay(30000); // wait at least 16 microframes (= 16*125 micro-sec = 2 ms)
+        sleepMilliSeconds(30); // wait at least 16 microframes (= 16*125 micro-sec = 2 ms)
     }
 
     // 3. Program the USB2CMD.HostControllerReset bit to a 1.
@@ -346,7 +346,7 @@ void resetHostController()
     while ((pOpRegs->USBCMD & CMD_HCRESET) != 0) // Reset-Bit still set to 1
     {
         printf("waiting for HC reset\n");
-        delay(20000);
+        sleepMilliSeconds(20);
         timeout--;
         if (timeout<=0)
         {
@@ -404,7 +404,7 @@ void startHostController(uint32_t num)
     //    associated controller type: UHCI or EHCI)
     pOpRegs->CONFIGFLAG = CF; // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
 
-    delay(100000); // do not delete
+    sleepMilliSeconds(100); // do not delete
 }
 
 int32_t initEHCIHostController()
@@ -476,7 +476,7 @@ void enablePorts()
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
                  //printf("\nin    status: "); showStatusbyteQTD(InQTD);
-                 
+
 				 usbTransferConfig(0,0); // device address 0, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
@@ -523,14 +523,14 @@ void resetPort(uint8_t j)
 
     pOpRegs->USBINTR = 0;
     pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
-    delay(250000); // do not delete         // wait
+    sleepMilliSeconds(250); // do not delete         // wait
     pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
 
     // wait and check, whether really zero
     uint32_t timeout=20;
     while ((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
     {
-        delay(20000);
+        sleepMilliSeconds(20);
         timeout--;
         if (timeout <= 0)
         {
@@ -556,6 +556,7 @@ void showPORTSC()
             {
                 strcpy(PortStatus,"attached");
                 resetPort(j);
+                checkPortLineStatus(j);
             }
             else
             {
@@ -570,15 +571,13 @@ void showPORTSC()
             cprintf("                                                                              ",48-3,color);
 
             // beep(1000,100);
-            delay(3000000); // show result
         }
     }
 }
 
 void portCheck()
 {
-    showPORTSC();
-    checkPortLineStatus();
+    showPORTSC(); // with resetPort(j) and checkPortLineStatus(j), if PORTSC: 1005h
     settextcolor(13,0);
     printf("\n>>> Press key to close this console. <<<");
     settextcolor(15,0);
@@ -613,12 +612,12 @@ void showUSBSTS()
     settextcolor(15,0);
 }
 
-void checkPortLineStatus()
+void checkPortLineStatus(uint8_t j)
 {
     settextcolor(14,0);
     printf("\n\n>>> Status of USB Ports <<<");
 
-    for (uint8_t j=0; j<numPorts; j++)
+    if (j<numPorts)
     {
       //check line status
       settextcolor(11,0);
@@ -641,12 +640,12 @@ void checkPortLineStatus()
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
 				 printf("\n");
-                 
+
 				 usbTransferDevice(0,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
                  //printf("in:             "); showStatusbyteQTD(InQTD);
- 				 
+
 				 usbTransferConfig(0,0); // device address 0, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
@@ -734,7 +733,7 @@ void DeactivateLegacySupport(uint32_t num)
             {
                 printf(".");
                 timeout--;
-                delay(20000);
+                sleepMilliSeconds(20);
             }
             if (!(pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore) & 0x01)) // not set
             {
@@ -744,7 +743,7 @@ void DeactivateLegacySupport(uint32_t num)
                 {
                     printf(".");
                     timeout--;
-                    delay(20000);
+                    sleepMilliSeconds(20);
                 }
             }
             if (pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore) & 0x01)
@@ -772,7 +771,7 @@ void DeactivateLegacySupport(uint32_t num)
     else
     {
         printf("No valid eecp found.\n");
-    }    
+    }
 }
 
 /*

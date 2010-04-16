@@ -8,6 +8,7 @@
 #include "paging.h"
 #include "usb2.h"
 #include "console.h"
+#include "timer.h"
 
 void usbTransferDevice(uint32_t device, uint32_t endpoint)
 {
@@ -18,7 +19,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
     uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
     pOpRegs->ASYNCLISTADDR = phsysicalAddr;
-    
+
 	// Create QTDs (in reversed order)
 	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
 	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 18);    // IN DATA1, 18 byte
@@ -35,6 +36,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     // printf("\nEnabling Async Schedule\n");
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
+    sleepMilliSeconds(500);
     printf("\n");
 
 	showPacket(InQTDpage0,18);
@@ -50,7 +52,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
     uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
     pOpRegs->ASYNCLISTADDR = phsysicalAddr;
-    
+
 	// Create QTDs (in reversed order)
  	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
 	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 32);    // IN DATA1, 32 byte
@@ -68,6 +70,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
     printf("\n");
+    sleepMilliSeconds(500);
 
  	showPacket(InQTDpage0,32);
     showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
@@ -140,12 +143,12 @@ void showEndpointDesriptor(struct usb2_endpointDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
-	   printf("\nlength:            %d\t\t",  d->length);     // 7  
+	   printf("\nlength:            %d\t\t",  d->length);     // 7
        printf("descriptor type:   %d\n",    d->descriptorType); // 5
 	   printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
 	   printf("endpoint number:   %d\n",    d->endpointAddress & 0xF);
        printf("attributes:        %y\t\t",  d->attributes);     // bit 1:0 00 control       01 isochronous       10 bulk                            11 interrupt
-	                                                          // bit 3:2 00 no sync       01 async             10 adaptive                        11 sync (only if isochronous) 
+	                                                          // bit 3:2 00 no sync       01 async             10 adaptive                        11 sync (only if isochronous)
 	                                                          // bit 5:4 00 data endpoint 01 feedback endpoint 10 explicit feedback data endpoint 11 reserved (Iso Mode)
        printf("max packet size:   %d\n",  d->maxPacketSize);
 	   printf("interval:          %d\n",  d->interval);
@@ -158,7 +161,7 @@ void showStringDesriptor(struct usb2_stringDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
-	   printf("\nlength:            %d\t\t",  d->length);     // ?  
+	   printf("\nlength:            %d\t\t",  d->length);     // ?
        printf("descriptor type:   %d\n",  d->descriptorType); // 3
 	   for(int i=0; i<10;i++)
 	   {

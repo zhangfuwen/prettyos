@@ -241,7 +241,7 @@ void DeactivateLegacySupport(uint32_t num);
 void enablePorts();
 void showUSBSTS();
 void showPORTSC();
-void checkPortLineStatus();
+void checkPortLineStatus(uint8_t j);
 void resetPort(uint8_t j);
 void portCheck(); // for thread with own console
 void startEHCI(); // for thread with own console
