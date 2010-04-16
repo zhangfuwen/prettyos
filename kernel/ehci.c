@@ -472,12 +472,12 @@ void enablePorts()
                  while(!checkKQ_and_return_char());
                  printf("\n");
 
-				 testTransfer1(0,0); // device address 0, endpoint 0, direct after reset
+				 usbTransferDevice(0,0); // device address 0, endpoint 0, direct after reset
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
                  //printf("\nin    status: "); showStatusbyteQTD(InQTD);
                  
-				 testTransfer2(0,0); // device address 0, endpoint 0
+				 usbTransferConfig(0,0); // device address 0, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
                  //printf("\nin    status: "); showStatusbyteQTD(InQTD);
@@ -642,12 +642,12 @@ void checkPortLineStatus()
                  while(!checkKQ_and_return_char());
 				 printf("\n");
                  
-				 testTransfer1(0,0); // device address, endpoint
+				 usbTransferDevice(0,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
                  //printf("in:             "); showStatusbyteQTD(InQTD);
  				 
-				 testTransfer2(0,0); // device address 0, endpoint 0
+				 usbTransferConfig(0,0); // device address 0, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
                  //printf("\nin    status: "); showStatusbyteQTD(InQTD);

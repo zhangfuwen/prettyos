@@ -9,7 +9,7 @@
 #include "usb2.h"
 #include "console.h"
 
-void testTransfer1(uint32_t device, uint32_t endpoint)
+void usbTransferDevice(uint32_t device, uint32_t endpoint)
 {
     settextcolor(11,0);
     printf("\nUSB2: GET_DESCRIPTOR device, dev: %d endpoint: %d", device, endpoint);
@@ -41,7 +41,7 @@ void testTransfer1(uint32_t device, uint32_t endpoint)
     showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
 }
 
-void testTransfer2(uint32_t device, uint32_t endpoint)
+void usbTransferConfig(uint32_t device, uint32_t endpoint)
 {
     settextcolor(11,0);
 	printf("\nUSB2: GET_DESCRIPTOR config, dev: %d endpoint: %d", device, endpoint);
@@ -53,8 +53,8 @@ void testTransfer2(uint32_t device, uint32_t endpoint)
     
 	// Create QTDs (in reversed order)
  	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
-	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 18);    // IN DATA1, 18 byte
-	void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
+	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 32);    // IN DATA1, 32 byte
+	void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH 1
     void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
@@ -69,8 +69,11 @@ void testTransfer2(uint32_t device, uint32_t endpoint)
 
     printf("\n");
 
- 	showPacket(InQTDpage0,9);
+ 	showPacket(InQTDpage0,32);
     showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
+    showInterfaceDesriptor( (struct usb2_interfaceDescriptor*)((uint8_t*)InQTDpage0 +  9 ));
+	showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)InQTDpage0 + 18 ));
+	showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)InQTDpage0 + 25 ));
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
@@ -104,15 +107,67 @@ void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
 	   printf("\nlength:               %d\t\t",  d->length);
        printf("descriptor type:      %d\n",  d->descriptorType);
        printf("total length:         %d\t",  d->totalLength);
-       printf("number of interfaces: %d\n",  d->NumInterfaces);
-       printf("ID of config:         %x\t",  d->ConfigurationValue);
-       printf("ID of config name     %x\n",  d->Configuration);
-	   printf("Remote Wakeup:        %s\t",  d->Attributes & (1<<5) ? "yes" : "no");
-	   printf("Self-powered:         %s\n",  d->Attributes & (1<<6) ? "yes" : "no");
-       printf("max power (mA):       %d\n",  d->MaxPower*2);
+       printf("number of interfaces: %d\n",  d->numInterfaces);
+       printf("ID of config:         %x\t",  d->configurationValue);
+       printf("ID of config name     %x\n",  d->configuration);
+	   printf("remote wakeup:        %s\t",  d->attributes & (1<<5) ? "yes" : "no");
+	   printf("self-powered:         %s\n",  d->attributes & (1<<6) ? "yes" : "no");
+       printf("max power (mA):       %d\n",  d->maxPower*2); // 2 mA steps used
        settextcolor(15,0);
     }
 }
+
+void showInterfaceDesriptor(struct usb2_interfaceDescriptor* d)
+{
+    if (d->length)
+    {
+       settextcolor(10,0);
+	   printf("\nlength:               %d\t\t",  d->length);        // 9
+       printf("descriptor type:      %d\n",  d->descriptorType);    // 4
+       printf("interface number:     %d\t\t",  d->interfaceNumber);
+       printf("alternate Setting:    %d\n",  d->alternateSetting);
+       printf("number of endpoints:  %d\t\t",  d->numEndpoints);
+	   printf("interface class:      %d\n",  d->interfaceClass);
+	   printf("interface subclass:   %d\t\t",  d->interfaceSubclass);
+	   printf("interface protocol:   %d\n",  d->interfaceProtocol);
+       printf("interface:            %x\n",  d->interface);
+       settextcolor(15,0);
+    }
+}
+
+void showEndpointDesriptor(struct usb2_endpointDescriptor* d)
+{
+    if (d->length)
+    {
+       settextcolor(10,0);
+	   printf("\nlength:            %d\t\t",  d->length);     // 7  
+       printf("descriptor type:   %d\n",    d->descriptorType); // 5
+	   printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
+	   printf("endpoint number:   %d\n",    d->endpointAddress & 0xF);
+       printf("attributes:        %y\t\t",  d->attributes);     // bit 1:0 00 control       01 isochronous       10 bulk                            11 interrupt
+	                                                          // bit 3:2 00 no sync       01 async             10 adaptive                        11 sync (only if isochronous) 
+	                                                          // bit 5:4 00 data endpoint 01 feedback endpoint 10 explicit feedback data endpoint 11 reserved (Iso Mode)
+       printf("max packet size:   %d\n",  d->maxPacketSize);
+	   printf("interval:          %d\n",  d->interval);
+       settextcolor(15,0);
+    }
+}
+
+void showStringDesriptor(struct usb2_stringDescriptor* d)
+{
+    if (d->length)
+    {
+       settextcolor(10,0);
+	   printf("\nlength:            %d\t\t",  d->length);     // ?  
+       printf("descriptor type:   %d\n",  d->descriptorType); // 3
+	   for(int i=0; i<10;i++)
+	   {
+	       printf("lang: %x\t",  d->languageID[i]);
+	   }
+	   settextcolor(15,0);
+    }
+}
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

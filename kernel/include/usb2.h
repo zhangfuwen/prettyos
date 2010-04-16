@@ -27,17 +27,51 @@ struct usb2_configurationDescriptor
    uint8_t  length;            // 9
    uint8_t  descriptorType;    // 2
    uint16_t totalLength;       
-   uint8_t  NumInterfaces;
-   uint8_t  ConfigurationValue;
-   uint8_t  Configuration;
-   uint8_t  Attributes;     
-   uint8_t  MaxPower;
+   uint8_t  numInterfaces;
+   uint8_t  configurationValue;
+   uint8_t  configuration;
+   uint8_t  attributes;     
+   uint8_t  maxPower;
+}__attribute__((packed));
+
+struct usb2_interfaceDescriptor
+{
+   uint8_t  length;            // 9
+   uint8_t  descriptorType;    // 4
+   uint8_t  interfaceNumber;       
+   uint8_t  alternateSetting;
+   uint8_t  numEndpoints;
+   uint8_t  interfaceClass;
+   uint8_t  interfaceSubclass;
+   uint8_t  interfaceProtocol;     
+   uint8_t  interface;
+}__attribute__((packed));
+
+struct usb2_endpointDescriptor
+{
+   uint8_t  length;            // 9
+   uint8_t  descriptorType;    // 5
+   uint8_t  endpointAddress;       
+   uint8_t  attributes;
+   uint16_t maxPacketSize;
+   uint8_t  interval;   
+}__attribute__((packed));
+
+struct usb2_stringDescriptor
+{
+   uint8_t  length;            // 9
+   uint8_t  descriptorType;    // 3
+   uint16_t languageID[10];    // n = ??   
 }__attribute__((packed));
 
 // functions, ...
-void testTransfer1(uint32_t device, uint32_t endpoint);
-void testTransfer2(uint32_t device, uint32_t endpoint);
+void usbTransferDevice(uint32_t device, uint32_t endpoint);
+void usbTransferConfig(uint32_t device, uint32_t endpoint);
+
 void showDeviceDesriptor(struct usb2_deviceDescriptor*);
 void showConfigurationDesriptor(struct usb2_configurationDescriptor*);
+void showInterfaceDesriptor(struct usb2_interfaceDescriptor* d);
+void showEndpointDesriptor(struct usb2_endpointDescriptor* d);
+void showStringDesriptor(struct usb2_stringDescriptor* d);
 
 #endif
