@@ -433,12 +433,13 @@ int32_t initEHCIHostController()
     // pci bus data
 	uint32_t num = ODA.pciEHCInumber;
 	
-	//uint8_t bus  = pciDev_Array[num].bus;
-    //uint8_t dev  = pciDev_Array[num].device;
-    //uint8_t func = pciDev_Array[num].func;
+	// uint8_t bus  = pciDev_Array[num].bus;
+    // uint8_t dev  = pciDev_Array[num].device;
+    // uint8_t func = pciDev_Array[num].func;
 	// prepare PCI command register
-	// bit 9 (0x200): Fast Back-to-Back Enable
-	// pci_config_write_dword(bus, dev, func, 0x4, 0x00000200 ); // resets status register, sets command register 
+	// bit 9 (0x0200): Fast Back-to-Back Enable // negative consequences
+    // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
+	// pci_config_write_dword(bus, dev, func, 0x4, 0x00000002 ); // resets status register, sets command register 
 
     USBtransferFlag = true;
     enabledPortFlag = false;
@@ -496,15 +497,18 @@ void enablePorts()
                  while(!checkKQ_and_return_char());
                  printf("\n");
 
-				 usbTransferDevice(0,0); // device address 0, endpoint 0, direct after reset
-                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-                 //printf("\nin    status: "); showStatusbyteQTD(InQTD);
+				 uint8_t devAddr = usbTransferEnumerate(j);
+				 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
 
-				 usbTransferConfig(0,0); // device address 0, endpoint 0
+				 usbTransferDevice(devAddr,0); // device address, endpoint 0, direct after reset
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-                 //printf("\nin    status: "); showStatusbyteQTD(InQTD);
+                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nin    status: "); showStatusbyteQTD(InQTD);
+
+				 usbTransferConfig(devAddr,0); // device address, endpoint 0
+                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nin    status: "); showStatusbyteQTD(InQTD);
 			 }
          }
     }
@@ -674,15 +678,18 @@ void checkPortLineStatus(uint8_t j)
                  while(!checkKQ_and_return_char());
 				 printf("\n");
 
-				 usbTransferDevice(0,0); // device address, endpoint
-                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 //printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
-                 //printf("in:             "); showStatusbyteQTD(InQTD);
+                 uint8_t devAddr = usbTransferEnumerate(j);
+                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
 
-				 usbTransferConfig(0,0); // device address 0, endpoint 0
+				 usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 //printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-                 //printf("\nin    status: "); showStatusbyteQTD(InQTD);
+                 printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
+                 printf("in:             "); showStatusbyteQTD(InQTD);
+
+				 usbTransferConfig(devAddr,0); // device address 0, endpoint 0
+                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nin    status: "); showStatusbyteQTD(InQTD);
 
              }
         }

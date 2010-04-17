@@ -65,6 +65,7 @@ struct usb2_stringDescriptor
 }__attribute__((packed));
 
 // functions, ...
+uint8_t usbTransferEnumerate(uint8_t j);
 void usbTransferDevice(uint32_t device, uint32_t endpoint);
 void usbTransferConfig(uint32_t device, uint32_t endpoint);
 

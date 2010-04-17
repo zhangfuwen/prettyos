@@ -10,6 +10,38 @@
 #include "console.h"
 #include "timer.h"
 
+uint8_t usbTransferEnumerate(uint8_t j)
+{
+    settextcolor(11,0);
+    printf("\nUSB2: SET_ADDRESS");
+    settextcolor(15,0);
+
+    uint8_t new_address = j+1; // indicated port number
+	
+	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+    uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->ASYNCLISTADDR = phsysicalAddr;
+
+	// Create QTDs (in reversed order)
+	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
+	void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
+
+    // Create QH 1
+    void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
+    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, 0, 0);
+
+    // Create QH 2
+    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, 0, 0);
+
+    // Enable Async...
+    // printf("\nEnabling Async Schedule\n");
+    pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
+
+    sleepMilliSeconds(500);
+    printf("\n");
+	return new_address; // new_address
+}
+
 void usbTransferDevice(uint32_t device, uint32_t endpoint)
 {
     settextcolor(11,0);
@@ -23,7 +55,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
 	// Create QTDs (in reversed order)
 	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
 	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 18);    // IN DATA1, 18 byte
-    void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device,        lo, index, length
+    void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
     // Create QH 1
     void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
