@@ -183,7 +183,6 @@ struct qtd_token
 
 } __attribute__((packed));
 
-
 struct ehci_qtd
 {
     uint32_t next;
@@ -194,9 +193,12 @@ struct ehci_qtd
     uint32_t buffer2;
     uint32_t buffer3;
     uint32_t buffer4;
+    uint32_t extend0;
+    uint32_t extend1;
+    uint32_t extend2;
+    uint32_t extend3;
+    uint32_t extend4;
 } __attribute__((packed));
-
-
 
 struct ehci_qhd
 {

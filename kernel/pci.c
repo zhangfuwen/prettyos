@@ -18,6 +18,35 @@ uint32_t BaseAddressRTL8139_MMIO;
 
 pciDev_t pciDev_Array[PCIARRAYSIZE];
 
+void analyzeHostSystemError(uint32_t num)
+{
+     uint8_t bus  = pciDev_Array[num].bus;
+     uint8_t dev  = pciDev_Array[num].device;
+     uint8_t func = pciDev_Array[num].func;
+
+	 // check pci status register of the device
+     uint32_t pciStatus = pci_config_read(bus, dev, func, PCI_STATUS);
+	 
+	 
+	 printf("\nPCI status word: %x\n",pciStatus);
+	 settextcolor(3,0);
+	 // bits 0...2 reserved
+	 if(pciStatus & 1<< 3) printf("Interrupt Status\n");
+	 if(pciStatus & 1<< 4) printf("Capabilities List\n");
+	 if(pciStatus & 1<< 5) printf("66 MHz Capable\n");
+	 // bit 6 reserved
+	 if(pciStatus & 1<< 7) printf("Fast Back-to-Back Transactions Capable\n");
+	 settextcolor(12,0);
+	 if(pciStatus & 1<< 8) printf("Master Data Parity Error\n");
+	 // DEVSEL Timing: bits 10:9 	 
+	 if(pciStatus & 1<<11) printf("Signalled Target-Abort\n");
+	 if(pciStatus & 1<<12) printf("Received Target-Abort\n");
+	 if(pciStatus & 1<<13) printf("Received Master-Abort\n");
+	 if(pciStatus & 1<<14) printf("Signalled System Error\n");
+	 if(pciStatus & 1<<15) printf("Detected Parity Error\n");
+	 settextcolor(15,0);
+}
+
 uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t func, uint16_t content)
 {
     // example: PCI_VENDOR_ID 0x0200 ==> length: 0x02 reg: 0x00 offset: 0x00

@@ -57,7 +57,7 @@ struct pciDev
 typedef struct pciDev pciDev_t;
 
 
-
+void analyzeHostSystemError(uint32_t num);
 uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content );
 void pci_config_write_byte(  uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint8_t  val );
 void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val );

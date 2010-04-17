@@ -14,7 +14,8 @@
 #include "irq.h"
 
 /// TEST
-const uint8_t PORTRESET = 3; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port
+//const uint8_t PORTRESET = 7; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port
+#define PORTRESET j
 /// TEST
 
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
@@ -111,6 +112,11 @@ void* createQTD_IN(uint32_t next, bool toggle, uint32_t tokenBytes)
     td->buffer2 = 0x0;
     td->buffer3 = 0x0;
     td->buffer4 = 0x0;
+    td->extend0 = 0x0;
+    td->extend1 = 0x0;
+    td->extend2 = 0x0;
+    td->extend3 = 0x0;
+    td->extend4 = 0x0;
 
     return address;
 }
@@ -157,8 +163,13 @@ void* createQTD_SETUP(uint32_t next, bool toggle, uint32_t tokenBytes, uint32_t 
     td->buffer2 = 0x0;
     td->buffer3 = 0x0;
     td->buffer4 = 0x0;
-
-    return address;
+    td->extend0 = 0x0;
+    td->extend1 = 0x0;
+    td->extend2 = 0x0;
+    td->extend3 = 0x0;
+    td->extend4 = 0x0;
+    
+	return address;
 }
 
 void* createQTD_HANDSHAKE(uint32_t next, bool toggle, uint32_t tokenBytes)
@@ -193,6 +204,11 @@ void* createQTD_HANDSHAKE(uint32_t next, bool toggle, uint32_t tokenBytes)
     td->buffer2 = 0x0;
     td->buffer3 = 0x0;
     td->buffer4 = 0x0;
+	td->extend0 = 0x0;
+    td->extend1 = 0x0;
+    td->extend2 = 0x0;
+    td->extend3 = 0x0;
+    td->extend4 = 0x0;
 
     return address;
 }
@@ -276,7 +292,8 @@ void ehci_handler(registers_t* r)
         settextcolor(15,0);
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
-        settextcolor(14,0);
+        analyzeHostSystemError(ODA.pciEHCInumber);
+		settextcolor(14,0);
 		printf("\n>>> Init EHCI after fatal error:           <<<");
      	printf("\n>>> Press key for EHCI (re)initialization. <<<");
         while(!checkKQ_and_return_char());
@@ -413,7 +430,15 @@ void startHostController(uint32_t num)
 
 int32_t initEHCIHostController()
 {
-    uint32_t num = ODA.pciEHCInumber;
+    // pci bus data
+	uint32_t num = ODA.pciEHCInumber;
+	
+	//uint8_t bus  = pciDev_Array[num].bus;
+    //uint8_t dev  = pciDev_Array[num].device;
+    //uint8_t func = pciDev_Array[num].func;
+	// prepare PCI command register
+	// bit 9 (0x200): Fast Back-to-Back Enable
+	// pci_config_write_dword(bus, dev, func, 0x4, 0x00000200 ); // resets status register, sets command register 
 
     USBtransferFlag = true;
     enabledPortFlag = false;
