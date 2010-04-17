@@ -13,6 +13,10 @@
 #include "event_list.h"
 #include "irq.h"
 
+/// TEST
+const uint8_t PORTRESET = 3; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port
+/// TEST
+
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
@@ -419,7 +423,7 @@ int32_t initEHCIHostController()
     settextcolor(15,0);
 
     irq_install_handler(32 + pciDev_Array[num].irq,   ehci_handler);
-    irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+    /// irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     startHostController(num);
 
@@ -449,19 +453,14 @@ void enablePorts()
 
     for (uint8_t j=0; j<numPorts; j++)
     {
-         resetPort(j);
+         // resetPort(j);
+         resetPort(PORTRESET);
 
-         if (pOpRegs->PORTSC[j] == (0x1005 || 0x1004)) // high speed idle, enabled, SE0
+         //if ( pOpRegs->PORTSC[j] == 0x1005  ) // high speed idle, enabled, SE0
+         if ( pOpRegs->PORTSC[PORTRESET] == 0x1005  ) // high speed idle, enabled, SE0
          {
              settextcolor(14,0);
-             if (pOpRegs->PORTSC[j] == 0x1005)
-             {
-                 printf("Port %d: high speed enabled, device attached\n",j+1);
-             }
-             else
-             {
-                 printf("Port %d: high speed enabled, device not attached\n",j+1);
-             }
+             printf("Port %d: high speed enabled, device attached\n",j+1);
              settextcolor(15,0);
 
              if (USBtransferFlag)
@@ -548,15 +547,23 @@ void showPORTSC()
 {
     for (uint8_t j=0; j<numPorts; j++)
     {
-        if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
+        //if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
+        if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED_CHANGE)
         {
             char PortStatus[20];
 
-            if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
+            // if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
+            if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED)
             {
                 strcpy(PortStatus,"attached");
+
+                /*
                 resetPort(j);
                 checkPortLineStatus(j);
+                */
+                resetPort(PORTRESET);
+                checkPortLineStatus(PORTRESET);
+
             }
             else
             {
@@ -617,7 +624,8 @@ void checkPortLineStatus(uint8_t j)
     settextcolor(14,0);
     printf("\n\n>>> Status of USB Ports <<<");
 
-    if (j<numPorts)
+    // if (j<numPorts)
+    if (j==PORTRESET)
     {
       //check line status
       settextcolor(11,0);
