@@ -185,11 +185,11 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 void showStatusbyteQTD(void* addressQTD)
 {
-    uint8_t statusbyte = *((uint8_t*)addressQTD+8);
-    printf("QTD: %X Statusbyte: %y", addressQTD, statusbyte);
-
-    // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     settextcolor(14,0);
+	uint8_t statusbyte = *((uint8_t*)addressQTD+8);
+    printf("\nQTD: %X Statusbyte: %y", addressQTD, statusbyte);
+
+	// analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     if (statusbyte & (1<<7)) { printf("\nqTD Status: Active - HC transactions enabled");                                     }
     if (statusbyte & (1<<6)) { printf("\nqTD Status: Halted - serious error at the device/endpoint");                        }
     if (statusbyte & (1<<5)) { printf("\nqTD Status: Data Buffer Error (overrun or underrun)");                              }
@@ -389,27 +389,29 @@ void startHostController(uint32_t num)
 
 int32_t initEHCIHostController()
 {
-    // pci bus data
-	uint32_t num = ODA.pciEHCInumber;
-	
-	// uint8_t bus  = pciDev_Array[num].bus;
-    // uint8_t dev  = pciDev_Array[num].device;
-    // uint8_t func = pciDev_Array[num].func;
-	// prepare PCI command register
-	// bit 9 (0x0200): Fast Back-to-Back Enable // negative consequences
-    // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
-	// pci_config_write_dword(bus, dev, func, 0x4, 0x00000002 ); // resets status register, sets command register 
-
-    USBtransferFlag = true;
-    enabledPortFlag = false;
-
     settextcolor(9,0);
     printf("\n>>> >>> function: initEHCIHostController");
     settextcolor(15,0);
 
-    irq_install_handler(32 + pciDev_Array[num].irq,   ehci_handler);
-    /// irq_install_handler(32 + pciDev_Array[num].irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+	// pci bus data
+	uint32_t num = ODA.pciEHCInumber;
+	uint8_t bus  = pciDev_Array[num].bus;
+    uint8_t dev  = pciDev_Array[num].device;
+    uint8_t func = pciDev_Array[num].func;
+	uint8_t irq  = pciDev_Array[num].irq;
+	// prepare PCI command register // offset 0x04
+	// bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
+    // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
+	uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
+	printf("\nPCI Command Register before:          %x", pciCommandRegister);
+	pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register 
+    printf("\nPCI Command Register plus bus master: %x", pci_config_read(bus, dev, func, 0x0204));
 
+    irq_install_handler(32 + irq,   ehci_handler);
+    /// irq_install_handler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+
+    USBtransferFlag = true;
+    enabledPortFlag = false;
     startHostController(num);
 
     if (!(pOpRegs->USBSTS & STS_HCHALTED)) // TEST
@@ -458,17 +460,23 @@ void enablePorts()
                  printf("\n");
 
 				 uint8_t devAddr = usbTransferEnumerate(j);
-				 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
 
-				 usbTransferDevice(devAddr,0); // device address, endpoint 0, direct after reset
+				 usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nin    status: "); showStatusbyteQTD(InQTD);
+				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(InQTD);
 
 				 usbTransferConfig(devAddr,0); // device address, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nin    status: "); showStatusbyteQTD(InQTD);
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO   : "); showStatusbyteQTD(InQTD);
+       /// TEST
+				 usbTransferDevice(0,0); // device address 0, endpoint 0
+                 usbTransferConfig(0,0); // device address 0, endpoint 0
+                 
+       /// TEST
+
 			 }
          }
     }
@@ -639,17 +647,22 @@ void checkPortLineStatus(uint8_t j)
 				 printf("\n");
 
                  uint8_t devAddr = usbTransferEnumerate(j);
-                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
+				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
 
 				 usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nsetup:        "); showStatusbyteQTD(SetupQTD);
-                 printf("in:             "); showStatusbyteQTD(InQTD);
+				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(InQTD);
 
-				 usbTransferConfig(devAddr,0); // device address 0, endpoint 0
+				 usbTransferConfig(devAddr,0); // device address, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nsetup status: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nin    status: "); showStatusbyteQTD(InQTD);
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO   : "); showStatusbyteQTD(InQTD);
+       /// TEST
+				 usbTransferDevice(0,0); // device address 0, endpoint 0
+                 usbTransferConfig(0,0); // device address 0, endpoint 0
+                 
+       /// TEST
 
              }
         }
