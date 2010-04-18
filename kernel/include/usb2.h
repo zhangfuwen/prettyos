@@ -3,6 +3,10 @@
 
 #include "os.h"
 
+#define OUT   0
+#define IN    1
+#define SETUP 2
+
 // structs, ...
 struct usb2_deviceDescriptor
 {

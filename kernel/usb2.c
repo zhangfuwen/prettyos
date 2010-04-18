@@ -23,7 +23,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
     pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
 	// Create QTDs (in reversed order)
-	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
+	void* next                = createQTD_IO(0x1, IN, 1,  0);       // Handshake IN directly after Setup
 	void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
 
     // Create QH 1
@@ -53,8 +53,8 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
 	// Create QTDs (in reversed order)
-	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
-	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 18);    // IN DATA1, 18 byte
+	void* next                = createQTD_IO(           0x1, OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
+	next           = InQTD    = createQTD_IO((uint32_t)next, IN,  1, 18);    // IN DATA1, 18 byte
     void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
     // Create QH 1
@@ -86,8 +86,8 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     pOpRegs->ASYNCLISTADDR = phsysicalAddr;
 
 	// Create QTDs (in reversed order)
- 	void* next                = createQTD_HANDSHAKE(0x1,  1,  0);       // Handshake is the opposite direction of Data
-	next           = InQTD    = createQTD_IN((uint32_t)next, 1, 32);    // IN DATA1, 32 byte
+ 	void* next                = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
+	next           = InQTD    = createQTD_IO((uint32_t)next, IN,  1, 32);    // IN DATA1, 32 byte
 	void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH 1

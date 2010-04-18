@@ -77,7 +77,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     }
 }
 
-void* createQTD_IN(uint32_t next, bool toggle, uint32_t tokenBytes)
+void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
 {
     void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
@@ -93,7 +93,7 @@ void* createQTD_IN(uint32_t next, bool toggle, uint32_t tokenBytes)
     }
     td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = 0x1;        // In Token
+    td->token.pid          = 0x2;        // SETUP = 2 
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
     td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
     td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
@@ -103,51 +103,7 @@ void* createQTD_IN(uint32_t next, bool toggle, uint32_t tokenBytes)
     void* data = malloc(0x20, PAGESIZE); // Enough for a full page
     memset(data,0,0x20);
 
-    InQTDpage0  = (uint32_t)data;
-    inBuffer = data;
-
-    uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
-    td->buffer0 = dataPhysical;
-    td->buffer1 = 0x0;
-    td->buffer2 = 0x0;
-    td->buffer3 = 0x0;
-    td->buffer4 = 0x0;
-    td->extend0 = 0x0;
-    td->extend1 = 0x0;
-    td->extend2 = 0x0;
-    td->extend3 = 0x0;
-    td->extend4 = 0x0;
-
-    return address;
-}
-
-void* createQTD_SETUP(uint32_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
-{
-    void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
-    struct ehci_qtd* td = (struct ehci_qtd*)address;
-
-    if (next != 0x1)
-    {
-        uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
-        td->next = phys;
-    }
-    else
-    {
-        td->next = 0x1;
-    }
-    td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
-    td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = 0x2;        // Setup Token
-    td->token.errorCounter = 0x3;        // Written by the Host Controller.
-    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
-    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
-    td->token.bytes        = tokenBytes; // dependent on transfer
-    td->token.dataToggle   = toggle;     // Should be toggled every list entry
-
-    void* data = malloc(0x20, PAGESIZE); // Enough for a full page
-    memset(data,0,0x20);
-
-    SetupQTDpage0  = (uint32_t)data;
+    SetupQTDpage0  = (uintptr_t)data;
 
     struct ehci_request* request = (struct ehci_request*)data;
     request->type    = type;    // 0x80;   // Device->Host
@@ -172,7 +128,7 @@ void* createQTD_SETUP(uint32_t next, bool toggle, uint32_t tokenBytes, uint32_t 
 	return address;
 }
 
-void* createQTD_HANDSHAKE(uint32_t next, bool toggle, uint32_t tokenBytes)
+void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
 {
     void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
@@ -188,7 +144,7 @@ void* createQTD_HANDSHAKE(uint32_t next, bool toggle, uint32_t tokenBytes)
     }
     td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = 0;          // Handshake Token
+    td->token.pid          = direction;  // OUT = 0, IN = 1
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
     td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
     td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
@@ -198,13 +154,16 @@ void* createQTD_HANDSHAKE(uint32_t next, bool toggle, uint32_t tokenBytes)
     void* data = malloc(0x20, PAGESIZE); // Enough for a full page
     memset(data,0,0x20);
 
+    InQTDpage0  = (uintptr_t)data;
+    inBuffer = data;
+
     uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
     td->buffer0 = dataPhysical;
     td->buffer1 = 0x0;
     td->buffer2 = 0x0;
     td->buffer3 = 0x0;
     td->buffer4 = 0x0;
-	td->extend0 = 0x0;
+    td->extend0 = 0x0;
     td->extend1 = 0x0;
     td->extend2 = 0x0;
     td->extend3 = 0x0;
@@ -483,7 +442,8 @@ void enablePorts()
          resetPort(PORTRESET);
 
          //if ( pOpRegs->PORTSC[j] == 0x1005  ) // high speed idle, enabled, SE0
-         if ( pOpRegs->PORTSC[PORTRESET] == 0x1005  ) // high speed idle, enabled, SE0
+         //if ( pOpRegs->PORTSC[PORTRESET] == 0x1005  ) // high speed idle, enabled, SE0
+		 if ( pOpRegs->PORTSC[PORTRESET] & (PSTS_POWERON|PSTS_ENABLED) ) // for tests with qemu EHCI
          {
              settextcolor(14,0);
              printf("Port %d: high speed enabled, device attached\n",j+1);
@@ -671,7 +631,7 @@ void checkPortLineStatus(uint8_t j)
              settextcolor(15,0);
 
              if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & PSTS_CONNECTED))
-             {
+			 {
                  settextcolor(13,0);
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
