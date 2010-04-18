@@ -22,6 +22,7 @@ struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
 bool      EHCIflag; // signals that one EHCI device was found /// TODO: manage more than one EHCI
+bool      USBINTflag; // signals STS_USBINT reset by EHCI handler
 
 uint8_t   numPorts;
 uintptr_t eecp;
@@ -204,7 +205,7 @@ void showStatusbyteQTD(void* addressQTD)
 
 void ehci_handler(registers_t* r)
 {
-    if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER))
+    if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
     {
       settextcolor(9,0);
       printf("\nehci_handler: ");
@@ -212,11 +213,15 @@ void ehci_handler(registers_t* r)
     }
 
     settextcolor(14,0);
-    if (pOpRegs->USBSTS & STS_USBINT)
+    
+	// is asked by polling
+	if (pOpRegs->USBSTS & STS_USBINT)
     {
-        printf("USB Interrupt");
+		printf(".");
+		USBINTflag = true;
+        // printf("USB Interrupt");
         pOpRegs->USBSTS |= STS_USBINT;
-    }
+    }	
 
     if (pOpRegs->USBSTS & STS_USBERRINT)
     {
@@ -365,9 +370,12 @@ void startHostController(uint32_t num)
 
     // 3. Determine which events should cause an interrupt. System software programs the USB2INTR register
     //    with the appropriate value. See Section 9 - Hardware Interrupt Routing - for additional details.
-    pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed
+    // pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed
+    pOpRegs->USBINTR = STS_ASYNC_INT|STS_HOST_SYSTEM_ERROR/*|
+		               STS_FRAMELIST_ROLLOVER*/|STS_PORT_CHANGE|
+					   STS_USBERRINT|STS_USBINT; 
 
-    // 4. Program the USB2CMD.InterruptThresholdControl bits to set the desired interrupt threshold
+	// 4. Program the USB2CMD.InterruptThresholdControl bits to set the desired interrupt threshold
     pOpRegs->USBCMD |= CMD_8_MICROFRAME;
 
     //    and turn the host controller ON via setting the USB2CMD.Run/Stop bit. Setting the Run/Stop

@@ -15,7 +15,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
     settextcolor(11,0); printf("\nUSB2: SET_ADDRESS"); settextcolor(15,0);
 
     uint8_t new_address = j+1; // indicated port number
-	
+
 	void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
@@ -30,12 +30,11 @@ uint8_t usbTransferEnumerate(uint8_t j)
     // Create QH 2
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, 0, 0);
 
-    // Enable Async...
-    // printf("\nEnabling Async Schedule\n");
-    pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
+	// Enable Async...
+    printf("\nEnable Async Schedule\n");
+	pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
+    sleepSeconds(1);
 
-    sleepSeconds(2);
-    printf("\n");
 	return new_address; // new_address
 }
 
@@ -59,11 +58,30 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
 
     // Enable Async...
-    // printf("\nEnabling Async Schedule\n");
-    pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
+    printf("\nReset STS_USBINT and enable Async Schedule\n");
+	USBINTflag = false;
+	pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 
-    sleepSeconds(2);
-    printf("\n");
+	int8_t timeout=80;
+	while (!USBINTflag) // set by interrupt
+	{
+		timeout--;
+		if(timeout>0)
+		{
+		    sleepMilliSeconds(20);
+		    printf("#");
+		}
+		else
+		{
+			settextcolor(12,0);
+			printf("\ntimeout - no STS_USBINT set!");
+			settextcolor(15,0);
+			break;
+		}
+	};
+    USBINTflag = false;
+    pOpRegs->USBSTS |= STS_USBINT;
 
 	showPacket(InQTDpage0,18);
     showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
@@ -89,11 +107,30 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
 
     // Enable Async...
-    // printf("\nEnabling Async Schedule\n");
-    pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
+    printf("\nReset STS_USBINT and enable Async Schedule\n");
+	USBINTflag = false;
+	pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 
-    printf("\n");
-    sleepSeconds(2);
+	int8_t timeout=80;
+	while (!USBINTflag) // set by interrupt
+	{
+		timeout--;
+		if(timeout>0)
+		{
+		    sleepMilliSeconds(20);
+		    printf("#");
+		}
+		else
+		{
+			settextcolor(12,0);
+			printf("\ntimeout - no STS_USBINT set!");
+			settextcolor(15,0);
+			break;
+		}
+	};
+    USBINTflag = false;
+    pOpRegs->USBSTS |= STS_USBINT;
 
  	showPacket(InQTDpage0,32);
     showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
