@@ -161,6 +161,12 @@ inline void mouse_write(char a_write) //unsigned char
     mouse_wait(1);
     //Finally write
     outportb(0x60, a_write);
+	// If necessary, wait for ACK
+	if (a_write != 0xEB && a_write != 0xEC && a_write != 0xF2 && a_write != 0xFF) {
+		if (mouse_read() != 0xFA) {
+			// No ACK!!!!
+		}
+	}
 }
 
 char mouse_read()
