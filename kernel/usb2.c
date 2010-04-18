@@ -12,23 +12,20 @@
 
 uint8_t usbTransferEnumerate(uint8_t j)
 {
-    settextcolor(11,0);
-    printf("\nUSB2: SET_ADDRESS");
-    settextcolor(15,0);
+    settextcolor(11,0); printf("\nUSB2: SET_ADDRESS"); settextcolor(15,0);
 
     uint8_t new_address = j+1; // indicated port number
 	
-	void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-    uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-    pOpRegs->ASYNCLISTADDR = phsysicalAddr;
+	void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
 	// Create QTDs (in reversed order)
-	void* next                = createQTD_IO(0x1, IN, 1,  0);       // Handshake IN directly after Setup
-	void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
+	void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
+	SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
 
     // Create QH 1
-    void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, 0, 0);
+    void* QH1 = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 0, 0, 0);
 
     // Create QH 2
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, 0, 0);
@@ -37,29 +34,26 @@ uint8_t usbTransferEnumerate(uint8_t j)
     // printf("\nEnabling Async Schedule\n");
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
-    sleepMilliSeconds(500);
+    sleepSeconds(2);
     printf("\n");
 	return new_address; // new_address
 }
 
 void usbTransferDevice(uint32_t device, uint32_t endpoint)
 {
-    settextcolor(11,0);
-    printf("\nUSB2: GET_DESCRIPTOR device, dev: %d endpoint: %d", device, endpoint);
-    settextcolor(15,0);
+    settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR device, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
 
-    void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-    uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-    pOpRegs->ASYNCLISTADDR = phsysicalAddr;
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
 	// Create QTDs (in reversed order)
-	void* next                = createQTD_IO(           0x1, OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
-	next           = InQTD    = createQTD_IO((uint32_t)next, IN,  1, 18);    // IN DATA1, 18 byte
-    void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
+	void* next   = createQTD_IO(           0x1, OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
+	next = InQTD = createQTD_IO((uint32_t)next, IN,  1, 18);    // IN DATA1, 18 byte
+    SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
     // Create QH 1
-    void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, device, endpoint);
+    void* QH1 = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 0, device, endpoint);
 
     // Create QH 2
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
@@ -68,7 +62,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     // printf("\nEnabling Async Schedule\n");
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
-    sleepMilliSeconds(500);
+    sleepSeconds(2);
     printf("\n");
 
 	showPacket(InQTDpage0,18);
@@ -77,22 +71,19 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
 
 void usbTransferConfig(uint32_t device, uint32_t endpoint)
 {
-    settextcolor(11,0);
-	printf("\nUSB2: GET_DESCRIPTOR config, dev: %d endpoint: %d", device, endpoint);
-    settextcolor(15,0);
+    settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR config, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
 
-    void* virtualAsyncList = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-    uint32_t phsysicalAddr = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-    pOpRegs->ASYNCLISTADDR = phsysicalAddr;
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
 	// Create QTDs (in reversed order)
- 	void* next                = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
-	next           = InQTD    = createQTD_IO((uint32_t)next, IN,  1, 32);    // IN DATA1, 32 byte
-	void* firstQTD = SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
+ 	void* next   = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
+	next = InQTD = createQTD_IO((uint32_t)next, IN,  1, 32);    // IN DATA1, 32 byte
+	SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH 1
-    void* QH1 = malloc(sizeof(struct ehci_qhd), PAGESIZE);
-    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), firstQTD, 0, device, endpoint);
+    void* QH1 = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 0, device, endpoint);
 
     // Create QH 2
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
@@ -102,7 +93,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     pOpRegs->USBCMD = pOpRegs->USBCMD | CMD_ASYNCH_ENABLE;
 
     printf("\n");
-    sleepMilliSeconds(500);
+    sleepSeconds(2);
 
  	showPacket(InQTDpage0,32);
     showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
@@ -175,13 +166,13 @@ void showEndpointDesriptor(struct usb2_endpointDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
-	   printf("\nlength:            %d\t\t",  d->length);     // 7
+	   printf("\nlength:            %d\t\t",  d->length);       // 7
        printf("descriptor type:   %d\n",    d->descriptorType); // 5
 	   printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
 	   printf("endpoint number:   %d\n",    d->endpointAddress & 0xF);
        printf("attributes:        %y\t\t",  d->attributes);     // bit 1:0 00 control       01 isochronous       10 bulk                            11 interrupt
-	                                                          // bit 3:2 00 no sync       01 async             10 adaptive                        11 sync (only if isochronous)
-	                                                          // bit 5:4 00 data endpoint 01 feedback endpoint 10 explicit feedback data endpoint 11 reserved (Iso Mode)
+	                                                            // bit 3:2 00 no sync       01 async             10 adaptive                        11 sync (only if isochronous)
+	                                                            // bit 5:4 00 data endpoint 01 feedback endpoint 10 explicit feedback data endpoint 11 reserved (Iso Mode)
        printf("max packet size:   %d\n",  d->maxPacketSize);
 	   printf("interval:          %d\n",  d->interval);
        settextcolor(15,0);

@@ -7,7 +7,7 @@
 #define IN    1
 #define SETUP 2
 
-// structs, ...
+
 struct usb2_deviceDescriptor
 {
    uint8_t  length;            // 18
@@ -68,7 +68,7 @@ struct usb2_stringDescriptor
    uint16_t languageID[10];    // n = ??   
 }__attribute__((packed));
 
-// functions, ...
+
 uint8_t usbTransferEnumerate(uint8_t j);
 void usbTransferDevice(uint32_t device, uint32_t endpoint);
 void usbTransferConfig(uint32_t device, uint32_t endpoint);

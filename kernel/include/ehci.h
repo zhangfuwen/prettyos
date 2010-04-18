@@ -220,6 +220,9 @@ struct ehci_qhd
     uint32_t current;
     struct ehci_qtd qtd;
 } __attribute__((packed));
+typedef struct ehci_qhd ehci_qhd_t;
+
+
 
 struct ehci_request
 {
