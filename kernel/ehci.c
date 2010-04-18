@@ -441,9 +441,9 @@ void enablePorts()
          // resetPort(j);
          resetPort(PORTRESET);
 
-         //if ( pOpRegs->PORTSC[j] == 0x1005  ) // high speed idle, enabled, SE0
-         //if ( pOpRegs->PORTSC[PORTRESET] == 0x1005  ) // high speed idle, enabled, SE0
-		 if ( pOpRegs->PORTSC[PORTRESET] & (PSTS_POWERON|PSTS_ENABLED) ) // for tests with qemu EHCI
+         //if ( pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)  ) // high speed idle, enabled, SE0
+         if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
+		 // if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED) ) // for tests with qemu EHCI
          {
              settextcolor(14,0);
              printf("Port %d: high speed enabled, device attached\n",j+1);
@@ -630,7 +630,7 @@ void checkPortLineStatus(uint8_t j)
              printf(",power on, enabled, EHCI owned");
              settextcolor(15,0);
 
-             if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & PSTS_CONNECTED))
+             if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED))) 
 			 {
                  settextcolor(13,0);
                  printf("\n>>> Press key to start USB-Test. <<<");
