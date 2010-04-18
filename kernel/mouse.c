@@ -67,7 +67,7 @@ void mouse_handler(registers_t* a_r) //struct regs *a_r (not used but just there
                 mouse_x=mouse_x+mouse_byte[1];
                 mouse_y=mouse_y+mouse_byte[2];
                 printf("Mouse: X:%d Y:%d LM:%d MM:%d RM:%d id:%y\n",
-                    mouse_x,mouse_y,mouse_z,
+                    mouse_x,mouse_y,
                     mouse_lm,mouse_mm,mouse_rm,
                     mouseid);
                 printf("No mousewheel found!\n");
