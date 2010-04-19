@@ -210,7 +210,7 @@ struct ehci_qhd
     uint32_t endpointSpeed:       2;
     uint32_t dataToggleControl:   1;
     uint32_t H:                   1;
-     uint32_t maxPacketLength:    11;
+    uint32_t maxPacketLength:    11;
     uint32_t controlEndpointFlag: 1;
     uint32_t nakCountReload:      4;
     uint8_t interruptScheduleMask;

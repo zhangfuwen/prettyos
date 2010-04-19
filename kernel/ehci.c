@@ -80,7 +80,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 
 void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
 {
-    void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
+    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // Can be changed to 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
 
     if (next != 0x1)
@@ -101,8 +101,8 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    void* data = malloc(0x20, PAGESIZE); // Enough for a full page
-    memset(data,0,0x20);
+    void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
+    memset(data,0,PAGESIZE);
 
     SetupQTDpage0  = (uintptr_t)data;
 
@@ -131,7 +131,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
 
 void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
 {
-    void* address = malloc(sizeof(struct ehci_qtd), PAGESIZE); // Can be changed to 32 Byte alignment
+    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // Can be changed to 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
 
     if (next != 0x1)
@@ -152,8 +152,8 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    void* data = malloc(0x20, PAGESIZE); // Enough for a full page
-    memset(data,0,0x20);
+    void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
+    memset(data,0,PAGESIZE);
 
     InQTDpage0  = (uintptr_t)data;
     inBuffer = data;
