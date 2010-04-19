@@ -182,7 +182,7 @@ void* malloc(uint32_t size, uint32_t alignment)
     // Now there should be a region that is large enough
     void* address = malloc(size, alignment);
 
-    kdebug("%X ",address);
+    kdebug(3, "%X ",address);
 
     return address;
 }

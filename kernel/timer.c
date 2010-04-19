@@ -32,7 +32,7 @@ uint32_t getCurrentMilliseconds()
 
 void timer_handler(registers_t* r)
 {
-    kdebug(".");
+    kdebug(3, ".");
 
     ++timer_ticks;
     if (eticks>0)

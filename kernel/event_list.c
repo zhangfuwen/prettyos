@@ -36,7 +36,7 @@ void handleEvents() {
 
 void addEvent(event_handler_t* event)
 {
-    listAppend(eventQueue, (void*)event);
+    listAppend(eventQueue, event);
 }
 
 

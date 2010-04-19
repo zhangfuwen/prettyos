@@ -1,7 +1,6 @@
 #ifndef USERLIB_H
 #define USERLIB_H
 
-// typedefs for bool, char, short, int, long, ...
 typedef unsigned int        size_t;
 typedef unsigned long long  uint64_t;
 typedef unsigned long       uint32_t;
@@ -12,10 +11,12 @@ typedef signed long         int32_t;
 typedef signed short        int16_t;
 typedef signed char         int8_t;
 typedef uint32_t            uintptr_t;
-typedef char                bool;
+typedef _Bool               bool;
+#define true   1
+#define false  0
+#define __bool_true_false_are_defined 1
 
-#define true        1
-#define false       0
+#define NULL (void*)0
 
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))

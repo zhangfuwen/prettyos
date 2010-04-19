@@ -37,7 +37,7 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 {
     if ((node == initrd_root) && (index == 0))
     {
-      strcpy(dirent.name, (const char*)"dev");
+      strcpy(dirent.name, "dev");
       dirent.name[3] = 0; // NUL-terminate the string
       dirent.ino     = 0;
       return &dirent;
@@ -55,7 +55,7 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 
 static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
 {
-    if ((node == initrd_root) && (!strcmp(name,(const char*)"dev")))
+    if ((node == initrd_root) && (!strcmp(name, "dev")))
     {
         return initrd_dev;
     }
@@ -76,10 +76,10 @@ fs_node_t* install_initrd(void* location)
     file_headers  = (initrd_file_header_t*) (location+sizeof(initrd_header_t));
 
     // Initialise the root directory.
-    kdebug("rd_root: ");
+    kdebug(3, "rd_root: ");
 
     initrd_root = (fs_node_t*) malloc(sizeof(fs_node_t),PAGESIZE);
-    strcpy(initrd_root->name, (const char*)"dev");
+    strcpy(initrd_root->name, "dev");
     initrd_root->mask    = initrd_root->uid = initrd_root->gid = initrd_root->inode = initrd_root->length = 0;
     initrd_root->flags   = FS_DIRECTORY;
     initrd_root->read    = 0;
@@ -92,10 +92,10 @@ fs_node_t* install_initrd(void* location)
     initrd_root->impl    = 0;
 
     // Initialise the /dev directory (required!)
-    kdebug("rd_dev: ");
+    kdebug(3, "rd_dev: ");
 
     initrd_dev = (fs_node_t*)malloc(sizeof(fs_node_t),PAGESIZE);
-    strcpy(initrd_dev->name, (const char*)"ramdisk");
+    strcpy(initrd_dev->name, "ramdisk");
     initrd_dev->mask     = initrd_dev->uid = initrd_dev->gid = initrd_dev->inode = initrd_dev->length = 0;
     initrd_dev->flags    = FS_DIRECTORY;
     initrd_dev->read     = 0;
@@ -107,7 +107,7 @@ fs_node_t* install_initrd(void* location)
     initrd_dev->ptr      = 0;
     initrd_dev->impl     = 0;
 
-    kdebug("root_nodes: ");
+    kdebug(3, "root_nodes: ");
 
     root_nodes = (fs_node_t*) malloc(sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
     nroot_nodes = initrd_header->nfiles;

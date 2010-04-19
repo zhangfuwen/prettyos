@@ -42,7 +42,7 @@ void tasking_install()
 {
     cli();
 
-    kdebug("1st_task: ");
+    kdebug(3, "1st_task: ");
 
     ODA.curTask = initTaskQueue();
     ODA.curTask->pid = next_pid++;
@@ -56,7 +56,7 @@ void tasking_install()
     ODA.curTask->ownConsole = true;
     refreshUserScreen();
 
-    kdebug("1st_ks: ");
+    kdebug(3, "1st_ks: ");
 
     ODA.curTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     userTaskCounter = 0;
@@ -85,7 +85,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
 {
     cli();
 
-    kdebug("cr_task: ");
+    kdebug(3, "cr_task: ");
 
     task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
     new_task->pid  = next_pid++;
@@ -97,12 +97,12 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     {
         new_task->heap_top = (uint8_t*)USER_HEAP_START;
 
-        kdebug("task: %X. Alloc user-stack: \n",new_task);
+        kdebug(3, "task: %X. Alloc user-stack: \n",new_task);
 
         paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
     }
 
-    kdebug("cr_task_ks: ");
+    kdebug(3, "cr_task_ks: ");
 
     new_task->kernel_stack = (void*)((uintptr_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE);
     new_task->FPU_ptr = (uintptr_t)NULL;
@@ -182,7 +182,7 @@ task_t* create_thread(void* entry)
 {
     cli();
 
-    kdebug("cr_thread: ");
+    kdebug(3, "cr_thread: ");
 
     task_t* new_task = malloc(sizeof(task_t),0);
     new_task->pid  = ODA.curTask->pid;
@@ -194,12 +194,12 @@ task_t* create_thread(void* entry)
     {
         new_task->heap_top = (uint8_t*)USER_HEAP_START;
 
-        kdebug("task: %X. Alloc user-stack: \n",new_task);
+        kdebug(3, "task: %X. Alloc user-stack: \n",new_task);
 
         paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
     }
 
-    kdebug("cr_thread_ks: ");
+    kdebug(3, "cr_thread_ks: ");
 
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     new_task->ownConsole = false;
@@ -283,7 +283,7 @@ uint32_t task_switch (uint32_t esp)
     tss.esp0 = (uintptr_t)ODA.curTask->kernel_stack;
     tss.ss   = ODA.curTask->ss;
 
-    kdebug("%d ",getpid());
+    kdebug(3, "%d ",getpid());
 
     // set TS
     if (ODA.curTask == ODA.TaskFPU)
@@ -348,7 +348,7 @@ void exit()
     #ifdef _DIAGNOSIS_
     log_task_list();
     #endif
-    kdebug("exit finished.\n");
+    kdebug(3, "exit finished.\n");
 
     sti();
     switch_context(); // switch to next task

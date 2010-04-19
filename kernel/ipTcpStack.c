@@ -24,7 +24,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
 
     // first we cast our Data pointer into a pointer at our Ethernet-Frame
     eth = (struct ethernet*)Data;
-    settextcolor(14,0); printf("--- TCP-IP stack ---\n"); settextcolor(15,0);
+    settextcolor(14,0); printf("--- TCP-IP stack ---\n");
 
     // we dump the Data
     settextcolor(3,0);
@@ -35,22 +35,24 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
 
     // we leave the transmitter-mac-addr and receiver-mac-addr unchanged
     // DEBUG < we just print them >
-    settextcolor(14,0); printf("\n\nEthernet header:\n"); settextcolor(15,0);
-    settextcolor(13,0); printf("MAC Transmitter: "); settextcolor(3,0);
+    settextcolor(14,0); printf("\n\nEthernet header:\n");
+    settextcolor(13,0); printf("MAC Transmitter: ");
+    settextcolor(3,0);
     printf("%y-%y-%y-%y-%y-%y\n", eth->send_mac[0], eth->send_mac[1], eth->send_mac[2], eth->send_mac[3], eth->send_mac[4], eth->send_mac[5]);
-    settextcolor(13,0); printf("MAC Receiver:    "); settextcolor(3,0);
+    settextcolor(13,0); printf("MAC Receiver:    ");
+    settextcolor(3,0);
     printf("%y-%y-%y-%y-%y-%y\n", eth->recv_mac[0], eth->recv_mac[1], eth->recv_mac[2], eth->recv_mac[3], eth->recv_mac[4], eth->recv_mac[5]);
-    settextcolor(15,0);
 
+    settextcolor(14,0);
     // now we check if it is Ethernet 1 or Ethernet 2
     // (but we just throw it away, because we can read the length of the data from the other Layers)
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
     {
-        settextcolor(14,0); printf("Ethernet 2 Packet.\n"); settextcolor(15,0);
+        printf("Ethernet 2 Packet.\n");
     }
     else
     {
-        settextcolor(14,0); printf("Ethernet 1 Packet.\n"); settextcolor(15,0);
+        printf("Ethernet 1 Packet.\n");
     }
 
     // now we set our arp/ip pointer to the Ethernet-payload
@@ -60,11 +62,11 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     // to decide if it is an ip or an arp paket we just look at the ip-version
     if ((ip->version_ihl >> 4) == 4)
     {
-        settextcolor(14,0); printf("IPv4 Packet.\n"); settextcolor(15,0);
+        printf("IPv4 Packet.\n");
     }
     else if ((ip->version_ihl >> 4) == 6)
     {
-        settextcolor(14,0); printf("IPv6 Packet.\n"); settextcolor(15,0);
+        printf("IPv6 Packet.\n");
     }
     else
     {
@@ -74,11 +76,10 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
         // now we check if it is really an ipv4 ARP paket
         if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
             (((arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1]) == 2048) &&
-            (arp->hardware_addresssize                                              ==    6) &&
-            (arp->protocol_addresssize                                              ==    4)
-)
+            (arp->hardware_addresssize                                            ==    6) &&
+            (arp->protocol_addresssize                                            ==    4))
         {
-            settextcolor(14,0); printf("ARP Paket.\n"); settextcolor(15,0);
+            printf("ARP Paket.\n");
 
             // extract the operation
             uint16_t operation = (arp->operation[0] << 8) | arp->operation[1];
@@ -86,11 +87,11 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
             // print the operation
             if (operation == 1) // it is an ARP-Request
             {
-                settextcolor(14,0); printf("Operation: Request\n"); settextcolor(15,0);
+                printf("Operation: Request\n");
             }
             else if (operation == 2) // it is an ARP-Response
             {
-                settextcolor(14,0); printf("Operation: Response\n"); settextcolor(15,0);
+                printf("Operation: Response\n");
             }
         }
         else
@@ -98,7 +99,8 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
             // NOTE < here we ignore silently other packets that we don't know >
         }
     }
-    settextcolor(14,0); printf("--- TCP-IP stack ---\n"); settextcolor(15,0);
+    printf("--- TCP-IP stack ---\n"); 
+    settextcolor(15,0);
 }
 
 /*

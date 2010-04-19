@@ -6,14 +6,22 @@
 /// Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _DIAGNOSIS_
 
-#ifdef _DIAGNOSIS_
- #define kdebug(...)   \
-  settextcolor(3,0);    \
-  printf(__VA_ARGS__);  \
-  settextcolor(15,0);
-#else
- #define kdebug(...)
-#endif
+void settextcolor(uint8_t, uint8_t);
+void printf(const char*, ...);
+static inline void kdebug(int8_t color, ...)
+{
+    #ifdef _DIAGNOSIS_
+    if(color != -1) {
+        settextcolor(color, 0);
+    }
+    va_list args;
+    va_start (args, color);
+    printf(args);
+    if(color != -1) {
+        settextcolor(15, 0);
+    }
+    #endif
+}
 
 /// keyboard map
 // #define KEYMAP_US // US keyboard

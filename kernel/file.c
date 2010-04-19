@@ -108,15 +108,13 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     // retVal = file_ia_cache(fat_entry,firstCluster,file); /// read sectors of file from cache
     retVal = file_ia(fat_entry,firstCluster,file); /// read sectors of file
 
-    #ifdef _DIAGNOSIS_
-        printf("\nFile content (start of first 5 clusters): ");
-        printf("\n1st sector:\n"); for (uint16_t i=   0;i<  20;i++) {printf("%y ",file[i]);}
-        printf("\n2nd sector:\n"); for (uint16_t i= 512;i< 532;i++) {printf("%y ",file[i]);}
-        printf("\n3rd sector:\n"); for (uint16_t i=1024;i<1044;i++) {printf("%y ",file[i]);}
-        printf("\n4th sector:\n"); for (uint16_t i=1536;i<1556;i++) {printf("%y ",file[i]);}
-        printf("\n5th sector:\n"); for (uint16_t i=2048;i<2068;i++) {printf("%y ",file[i]);}
-        printf("\n\n");
-    #endif
+    kdebug(-1, "\nFile content (start of first 5 clusters): ");
+    kdebug(-1, "\n1st sector:\n"); for (uint16_t i=   0;i<  20;i++) {kdebug(-1, "%y ",file[i]);}
+    kdebug(-1, "\n2nd sector:\n"); for (uint16_t i= 512;i< 532;i++) {kdebug(-1, "%y ",file[i]);}
+    kdebug(-1, "\n3rd sector:\n"); for (uint16_t i=1024;i<1044;i++) {kdebug(-1, "%y ",file[i]);}
+    kdebug(-1, "\n4th sector:\n"); for (uint16_t i=1536;i<1556;i++) {kdebug(-1, "%y ",file[i]);}
+    kdebug(-1, "\n5th sector:\n"); for (uint16_t i=2048;i<2068;i++) {kdebug(-1, "%y ",file[i]);}
+    kdebug(-1, "\n\n");
 
     if (!retVal)
     {

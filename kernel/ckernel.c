@@ -20,7 +20,7 @@
 
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
-const char* version = "0.0.0.385";
+const char* version = "0.0.0.386";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -39,7 +39,7 @@ oda_t ODA;
 static void init()
 {
     // set .bss to zero
-    memset(&_bss_start,0x0,(uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
+    memset(&_bss_start, 0x0, (uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
 
     // video
     kernel_console_init();
@@ -73,19 +73,17 @@ void showMemorySize()
 {
     if (ODA.Memory_Size > 1048576)
     {
-        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n",
-        ODA.Memory_Size/1048576, ODA.Memory_Size/1000000, ODA.Memory_Size);
+        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", ODA.Memory_Size/1048576, ODA.Memory_Size/1000000, ODA.Memory_Size);
     }
     else
     {
-        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n",
-        ODA.Memory_Size/1024, ODA.Memory_Size/1000, ODA.Memory_Size);
+        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", ODA.Memory_Size/1024, ODA.Memory_Size/1000, ODA.Memory_Size);
     }
 }
 
 void* ramdisk_install(size_t size)
 {
-    kdebug("rd_start: ");
+    kdebug(-1, "rd_start: ");
 
     void* ramdisk_start = malloc(size, PAGESIZE);
     // shell via incbin in data.asm
@@ -104,12 +102,12 @@ int main()
     create_cthread(&bootscreen, "Booting ...");
     ODA.ts_flag = true;        // start task switch
 
-    kdebug(".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
+    kdebug(-1, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
-    floppy_install();// detect FDDs
+    floppy_install(); // detect FDDs
 
-    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)	
+    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)    
 
     #ifdef _DIAGNOSIS_
     listPCI();
@@ -121,7 +119,7 @@ int main()
     bool shell_found = false;
     uint8_t* buf = malloc(FILEBUFFERSIZE, 0);
     struct dirent* node = 0;
-    for (int i=0; (node = readdir_fs(fs_root, i))!=0; ++i)
+    for (int i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
     {
         fs_node_t* fsnode = finddir_fs(fs_root, node->name);
 
@@ -188,8 +186,7 @@ int main()
 
             // draw status bar with date & time and frequency
             getCurrentDateAndTime(DateAndTime);
-            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, // output in status bar
-                    DateAndTime, CurrentSeconds, ODA.CPU_Frequency_kHz/1000);
+            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, ODA.CPU_Frequency_kHz/1000); // output in status bar
         }
 
         // Handling Events

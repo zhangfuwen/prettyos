@@ -34,8 +34,8 @@ uint32_t paging_install()
     memset(kernel_pd, 0, sizeof(page_directory_t));
     kernel_pd->pd_phys_addr = (uint32_t)kernel_pd;
 
-    kdebug("\nkernel_pd (virt.): %X ",kernel_pd);
-    kdebug("kernel_pd (phys.): %X\n",kernel_pd->pd_phys_addr);
+    kdebug(3, "\nkernel_pd (virt.): %X ",kernel_pd);
+    kdebug(3, "kernel_pd (phys.): %X\n",kernel_pd->pd_phys_addr);
 
     // Setup the page tables for 0MB-20MB, identity mapping
     uint32_t addr = 0;
@@ -82,8 +82,8 @@ uint32_t paging_get_phys_addr(page_directory_t* pd, void* virt_addr)
     uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
     page_table_t* pt = pd->tables[pagenr/1024];
 
-    kdebug("\nvirt-->phys: pagenr: %d ",pagenr);
-    kdebug("pt: %X\n",pt);
+    kdebug(3, "\nvirt-->phys: pagenr: %d ",pagenr);
+    kdebug(3, "pt: %X\n",pt);
 
     ASSERT(pt);
 
@@ -135,10 +135,10 @@ static uint32_t phys_init()
     mem_map_entry_t* const entries = (mem_map_entry_t*)MEMORY_MAP_ADDRESS;
 
     // Print the memory map
-    kdebug("Memory map:\n");
+    kdebug(3, "Memory map:\n");
     for (mem_map_entry_t* entry=entries; entry->size; ++entry)
     {
-        kdebug("  %X -> %X %i\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
+        kdebug(3, "  %X -> %X %i\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }
 
     // Prepare the memory map entries, since we work with max
@@ -187,7 +187,7 @@ static uint32_t phys_init()
     // Exclude the first 16 MB from being allocated (they'll be needed for DMA later on)
     first_free_dword = 16*1024*1024 / PAGESIZE / 32;
 
-    kdebug("Highest available RAM: %X\n", dword_count*32*4096);
+    kdebug(3, "Highest available RAM: %X\n", dword_count*32*4096);
 
     // Return the amount of memory available (or rather the highest address)
     return dword_count*32*4096;
@@ -244,7 +244,7 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
 
         if (pd->tables[pagenr/1024] && pd->tables[pagenr/1024]->pages[pagenr%1024])
         {
-            kdebug("pagenumber already allocated: %d\n",pagenr);
+            kdebug(3, "pagenumber already allocated: %d\n",pagenr);
             continue;
         }
 
@@ -282,7 +282,7 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
 
         if (flags & MEM_USER)
         {
-            kdebug("pagenumber now allocated: %d phys: %X\n",pagenr,phys);
+            kdebug(3, "pagenumber now allocated: %d phys: %X\n",pagenr,phys);
         }
     }
     return true;

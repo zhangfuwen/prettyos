@@ -101,13 +101,7 @@ void outportl(uint16_t port, uint32_t val)
 void panic_assert(const char* file, uint32_t line, const char* desc) // why char ?
 {
     cli();
-    printf("ASSERTION FAILED(");
-    printf("%s",desc);
-    printf(") at ");
-    printf("%s",file);
-    printf(":");
-    printf("%i",line);
-    printf("OPERATING SYSTEM HALTED\n");
+	printf("ASSERTION FAILED(%s) at %s:%i\nOPERATING SYSTEM HALTED\n", desc, file, line);
     // Halt by going into an infinite loop.
     for (;;);
 }
@@ -373,8 +367,6 @@ float atof(const char* s)
 
 void ftoa(float f, char* buffer)
 {
-    char tmp[32];
-    int32_t index = sizeof(tmp) - 1;
     if (f < 0.0)
     {
         *buffer = '-';
@@ -382,7 +374,9 @@ void ftoa(float f, char* buffer)
         f = -f;
     }
 
+    char tmp[32];
     int32_t i = f;
+    int32_t index = sizeof(tmp) - 1;
     while (i > 0)
     {
         tmp[index] = ('0' + (i % 10));
@@ -803,9 +797,6 @@ void bootscreen() {
     beep(659,200); // E
 
     beep(523,1000); // C
-
-    settextcolor(15,0);
-    printf("\n\n\n\n\n");
 
     #ifdef _DIAGNOSIS_
     log_task_list();

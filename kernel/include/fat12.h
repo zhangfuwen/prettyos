@@ -61,19 +61,19 @@ struct boot_sector
 
 struct dir_entry
 {
-  char    Filename[8];
-  char    Extension[3];
-  char    Attributes;
-  char    NTRes;
-  char    CrtTimeTenth;
-  int32_t CrtTime;
-  int32_t CrtDate;
-  int32_t LstAccDate;
-  int32_t FstClusHI;
-  int32_t WrtTime;
-  int32_t WrtDate;
-  int32_t FstClusLO;
-  int32_t FileSize;
+    char    Filename[8];
+    char    Extension[3];
+    char    Attributes;
+    char    NTRes;
+    char    CrtTimeTenth;
+    int32_t CrtTime;
+    int32_t CrtDate;
+    int32_t LstAccDate;
+    int32_t FstClusHI;
+    int32_t WrtTime;
+    int32_t WrtDate;
+    int32_t FstClusLO;
+    int32_t FileSize;
  }__attribute__((packed));
 
  struct file
@@ -92,7 +92,7 @@ extern int32_t fat_entry[FATMAXINDEX];
 
 int32_t flpydsk_read_directory();
 int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);
-int32_t flpydsk_format(char* vlab); //VolumeLabel
+int32_t flpydsk_format(char* vlab); // VolumeLabel
 int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer);
 int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer);
 void    parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs);

@@ -24,7 +24,7 @@ STAGE1DIR= stage1_bootloader
 STAGE2DIR= stage2_bootloader
 KERNELDIR= kernel
 USERDIR= user
-SHELLDIR= user_program_c
+SHELLDIR= shell
 USERRDDIR= init_rd_img
 USERTEST= user_test_c
 USERTOOLS= user_tools
@@ -32,11 +32,10 @@ USERTOOLS= user_tools
 # dependancies
 KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
 SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.c $(USERDIR)/$(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.asm))
-TESTC_OBJCETS := $(patsubst %.c, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.c $(USERDIR)/$(USERTEST)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.asm))
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -O32 -f elf
-GCCFLAGS= -c -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -fno-pic -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-builtin -fno-stack-protector -fno-common -Iinclude
+GCCFLAGS= -c -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common
 
 # targets to build one asm or c-file to an object file
@@ -61,17 +60,14 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(KERNEL_OBJECTS)
 	$(NASM) $(KERNELDIR)/data.asm $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$(KERNELDIR)/data.o
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 
-$(USERDIR)/$(SHELLDIR)/program.elf: $(SHELL_OBJECTS)
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(SHELLDIR)/shell.map -o $(USERDIR)/$(SHELLDIR)/program.elf
+$(USERDIR)/$(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
+	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(SHELLDIR)/shell.map -o $(USERDIR)/$(SHELLDIR)/shell.elf
 
-$(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/program.elf
-	tools/make_initrd $(USERDIR)/$(USERRDDIR)/info.txt info $(USERDIR)/$(SHELLDIR)/program.elf shell
+$(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/shell.elf
+	tools/make_initrd $(USERDIR)/$(USERRDDIR)/info.txt info $(USERDIR)/$(SHELLDIR)/shell.elf shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
-$(USERDIR)/$(USERTEST)/HELLO.ELF: $(TESTC_OBJCETS)
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(TESTC_OBJECTS)) -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(USERTEST)/user.map -o $(USERDIR)/$(SHELLDIR)/HELLO.ELF
-
-FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN #$(USERDIR)/$(USERTEST)/HELLO.ELF
+FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 	tools/CreateFloppyImage2 PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF $(USERDIR)/other_userprogs/PQEQ.ELF
 
 clean:
@@ -84,8 +80,7 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\cdi\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(SHELLDIR)\*.o
-	$(RM) $(USERDIR)\$(SHELLDIR)\program.elf
-	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTEST)\*.o
+	$(RM) $(USERDIR)\$(SHELLDIR)\shell.elf
 else
 	$(RM) $(STAGE1DIR)/boot.bin
 	$(RM) $(STAGE2DIR)/BOOT2.BIN
@@ -94,6 +89,5 @@ else
 	$(RM) $(OBJDIR)/$(KERNELDIR)/cdi/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(SHELLDIR)/*.o
-	$(RM) $(USERDIR)/$(SHELLDIR)/program.elf
-	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTEST)/*.o
+	$(RM) $(USERDIR)/$(SHELLDIR)/shell.elf
 endif

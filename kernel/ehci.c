@@ -126,7 +126,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
     td->extend3 = 0x0;
     td->extend4 = 0x0;
     
-	return address;
+    return address;
 }
 
 void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
@@ -187,10 +187,10 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 void showStatusbyteQTD(void* addressQTD)
 {
     settextcolor(14,0);
-	uint8_t statusbyte = *((uint8_t*)addressQTD+8);
+    uint8_t statusbyte = *((uint8_t*)addressQTD+8);
     printf("\nQTD: %X Statusbyte: %y", addressQTD, statusbyte);
 
-	// analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
+    // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     if (statusbyte & (1<<7)) { printf("\nqTD Status: Active - HC transactions enabled");                                     }
     if (statusbyte & (1<<6)) { printf("\nqTD Status: Halted - serious error at the device/endpoint");                        }
     if (statusbyte & (1<<5)) { printf("\nqTD Status: Data Buffer Error (overrun or underrun)");                              }
@@ -214,14 +214,14 @@ void ehci_handler(registers_t* r)
 
     settextcolor(14,0);
     
-	// is asked by polling
-	if (pOpRegs->USBSTS & STS_USBINT)
+    // is asked by polling
+    if (pOpRegs->USBSTS & STS_USBINT)
     {
-		printf(".");
-		USBINTflag = true;
+        printf(".");
+        USBINTflag = true;
         // printf("USB Interrupt");
         pOpRegs->USBSTS |= STS_USBINT;
-    }	
+    }    
 
     if (pOpRegs->USBSTS & STS_USBERRINT)
     {
@@ -257,9 +257,9 @@ void ehci_handler(registers_t* r)
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         analyzeHostSystemError(ODA.pciEHCInumber);
-		settextcolor(14,0);
-		printf("\n>>> Init EHCI after fatal error:           <<<");
-     	printf("\n>>> Press key for EHCI (re)initialization. <<<");
+        settextcolor(14,0);
+        printf("\n>>> Init EHCI after fatal error:           <<<");
+         printf("\n>>> Press key for EHCI (re)initialization. <<<");
         while(!checkKQ_and_return_char());
         settextcolor(15,0);
         addEvent(&EHCI_INIT);
@@ -372,10 +372,10 @@ void startHostController(uint32_t num)
     //    with the appropriate value. See Section 9 - Hardware Interrupt Routing - for additional details.
     // pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed
     pOpRegs->USBINTR = STS_ASYNC_INT|STS_HOST_SYSTEM_ERROR/*|
-		               STS_FRAMELIST_ROLLOVER*/|STS_PORT_CHANGE|
-					   STS_USBERRINT|STS_USBINT; 
+                       STS_FRAMELIST_ROLLOVER*/|STS_PORT_CHANGE|
+                       STS_USBERRINT|STS_USBINT; 
 
-	// 4. Program the USB2CMD.InterruptThresholdControl bits to set the desired interrupt threshold
+    // 4. Program the USB2CMD.InterruptThresholdControl bits to set the desired interrupt threshold
     pOpRegs->USBCMD |= CMD_8_MICROFRAME;
 
     //    and turn the host controller ON via setting the USB2CMD.Run/Stop bit. Setting the Run/Stop
@@ -401,36 +401,36 @@ int32_t initEHCIHostController()
     printf("\n>>> >>> function: initEHCIHostController");
     settextcolor(15,0);
 
-	// pci bus data
-	uint32_t num = ODA.pciEHCInumber;
-	uint8_t bus  = pciDev_Array[num].bus;
+    // pci bus data
+    uint32_t num = ODA.pciEHCInumber;
+    uint8_t bus  = pciDev_Array[num].bus;
     uint8_t dev  = pciDev_Array[num].device;
     uint8_t func = pciDev_Array[num].func;
-	uint8_t irq  = pciDev_Array[num].irq;
-	// prepare PCI command register // offset 0x04
-	// bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
+    uint8_t irq  = pciDev_Array[num].irq;
+    // prepare PCI command register // offset 0x04
+    // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
     // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
-	uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
-	printf("\nPCI Command Register before:          %x", pciCommandRegister);
-	pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register 
+    uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
+    printf("\nPCI Command Register before:          %x", pciCommandRegister);
+    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register 
     printf("\nPCI Command Register plus bus master: %x", pci_config_read(bus, dev, func, 0x0204));
 
     uint16_t pciCapabilitiesList = pci_config_read(bus, dev, func, 0x0234);
-	printf("\nPCI Capabilities List: first Pointer: %x", pciCapabilitiesList);
+    printf("\nPCI Capabilities List: first Pointer: %x", pciCapabilitiesList);
 
-	if (pciCapabilitiesList) // pointer != NULL
-	{
-	    uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
-	    printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
+    if (pciCapabilitiesList) // pointer != NULL
+    {
+        uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
+        printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
 
         while (BYTE2(nextCapability)) // pointer != NULL
-	    {
-	        nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
-	        printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
-	    }
-	}
+        {
+            nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
+            printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
+        }
+    }
     
-	irq_install_handler(32 + irq,   ehci_handler);
+    irq_install_handler(32 + irq,   ehci_handler);
     irq_install_handler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     USBtransferFlag = true;
@@ -468,7 +468,7 @@ void enablePorts()
 
          //if ( pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)  ) // high speed idle, enabled, SE0
          if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
-		 // if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED) ) // for tests with qemu EHCI
+         // if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED) ) // for tests with qemu EHCI
          {
              settextcolor(14,0);
              printf("Port %d: high speed enabled, device attached\n",j+1);
@@ -482,25 +482,25 @@ void enablePorts()
                  while(!checkKQ_and_return_char());
                  printf("\n");
 
-				 uint8_t devAddr = usbTransferEnumerate(j);
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 uint8_t devAddr = usbTransferEnumerate(j);
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
 
-				 usbTransferDevice(devAddr,0); // device address, endpoint
+                 usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO:    "); showStatusbyteQTD(InQTD);
 
-				 usbTransferConfig(devAddr,0); // device address, endpoint 0
+                 usbTransferConfig(devAddr,0); // device address, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(InQTD);
        /// TEST
-				 usbTransferDevice(0,0); // device address 0, endpoint 0
+                 usbTransferDevice(0,0); // device address 0, endpoint 0
                  usbTransferConfig(0,0); // device address 0, endpoint 0
                  
        /// TEST
 
-			 }
+             }
          }
     }
     enabledPortFlag = true;
@@ -662,27 +662,27 @@ void checkPortLineStatus(uint8_t j)
              settextcolor(15,0);
 
              if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED))) 
-			 {
+             {
                  settextcolor(13,0);
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
-				 printf("\n");
+                 printf("\n");
 
                  uint8_t devAddr = usbTransferEnumerate(j);
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
 
-				 usbTransferDevice(devAddr,0); // device address, endpoint
+                 usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO:    "); showStatusbyteQTD(InQTD);
 
-				 usbTransferConfig(devAddr,0); // device address, endpoint 0
+                 usbTransferConfig(devAddr,0); // device address, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(InQTD);
        /// TEST
-				 usbTransferDevice(0,0); // device address 0, endpoint 0
+                 usbTransferDevice(0,0); // device address 0, endpoint 0
                  usbTransferConfig(0,0); // device address 0, endpoint 0
                  
        /// TEST
