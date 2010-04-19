@@ -23,14 +23,10 @@ uint8_t usbTransferEnumerate(uint8_t j)
     void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
     SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
 
-    // Create QH 1
-    void* QH1 = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 0, 0, 0);
-
-    // Create QH 2
-    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, 0, 0);
-
-    // Enable Async...
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0);
+    
+	// Enable Async...
     printf("\nReset STS_USBINT and enable Async Schedule\n");
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
@@ -71,12 +67,8 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     next = InQTD = createQTD_IO((uint32_t)next, IN,  1, 18);    // IN DATA1, 18 byte
     SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
-    // Create QH 1
-    void* QH1 = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 0, device, endpoint);
-
-    // Create QH 2
-    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
 
     // Enable Async...
     printf("\nReset STS_USBINT and enable Async Schedule\n");
@@ -120,13 +112,9 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     next = InQTD = createQTD_IO((uint32_t)next, IN,  1, 32);    // IN DATA1, 32 byte
     SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
-    // Create QH 1
-    void* QH1 = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 0, device, endpoint);
-
-    // Create QH 2
-    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, device, endpoint);
-
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
+    
     // Enable Async...
     printf("\nReset STS_USBINT and enable Async Schedule\n");
     USBINTflag = false;
