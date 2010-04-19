@@ -415,8 +415,23 @@ int32_t initEHCIHostController()
 	pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register 
     printf("\nPCI Command Register plus bus master: %x", pci_config_read(bus, dev, func, 0x0204));
 
-    irq_install_handler(32 + irq,   ehci_handler);
-    /// irq_install_handler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+    uint16_t pciCapabilitiesList = pci_config_read(bus, dev, func, 0x0234);
+	printf("\nPCI Capabilities List: first Pointer: %x", pciCapabilitiesList);
+
+	if (pciCapabilitiesList) // pointer != NULL
+	{
+	    uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
+	    printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
+
+        while (BYTE2(nextCapability)) // pointer != NULL
+	    {
+	        nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
+	        printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
+	    }
+	}
+    
+	irq_install_handler(32 + irq,   ehci_handler);
+    irq_install_handler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     USBtransferFlag = true;
     enabledPortFlag = false;
