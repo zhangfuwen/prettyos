@@ -14,7 +14,7 @@
 #include "irq.h"
 
 /// TEST
-//const uint8_t PORTRESET = 7; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port
+/// const uint8_t PORTRESET = 3; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port
 #define PORTRESET j
 /// TEST
 

@@ -31,9 +31,30 @@ uint8_t usbTransferEnumerate(uint8_t j)
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), NULL, 1, 0, 0);
 
 	// Enable Async...
-    printf("\nEnable Async Schedule\n");
-	pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
-    sleepSeconds(1);
+    printf("\nReset STS_USBINT and enable Async Schedule\n");
+	USBINTflag = false;
+	pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
+
+	int8_t timeout=40;
+	while (!USBINTflag) // set by interrupt
+	{
+		timeout--;
+		if(timeout>0)
+		{
+		    sleepMilliSeconds(20);
+		    printf("#");
+		}
+		else
+		{
+			settextcolor(12,0);
+			printf("\ntimeout - no STS_USBINT set!");
+			settextcolor(15,0);
+			break;
+		}
+	};
+    USBINTflag = false;
+    pOpRegs->USBSTS |= STS_USBINT;
 
 	return new_address; // new_address
 }
@@ -63,7 +84,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
 	pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 
-	int8_t timeout=80;
+	int8_t timeout=40;
 	while (!USBINTflag) // set by interrupt
 	{
 		timeout--;
@@ -112,7 +133,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 	pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 
-	int8_t timeout=80;
+	int8_t timeout=40;
 	while (!USBINTflag) // set by interrupt
 	{
 		timeout--;
