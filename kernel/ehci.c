@@ -186,10 +186,11 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 void showStatusbyteQTD(void* addressQTD)
 {
-    settextcolor(14,0);
+    settextcolor(15,0);
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
-    printf("\nQTD: %X Statusbyte: %y", addressQTD, statusbyte);
+    printf(" qTD Status: %y", statusbyte);
 
+	settextcolor(14,0);
     // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     if (statusbyte & (1<<7)) { printf("\nqTD Status: Active - HC transactions enabled");                                     }
     if (statusbyte & (1<<6)) { printf("\nqTD Status: Halted - serious error at the device/endpoint");                        }
@@ -212,13 +213,11 @@ void ehci_handler(registers_t* r)
       settextcolor(15,0);
     }
 
-    settextcolor(14,0);
+	settextcolor(14,0);
 
-    // is asked by polling
-    if (pOpRegs->USBSTS & STS_USBINT)
+	if (pOpRegs->USBSTS & STS_USBINT)
     {
-        printf(".");
-        USBINTflag = true;
+        USBINTflag = true; // is asked by polling
         // printf("USB Interrupt");
         pOpRegs->USBSTS |= STS_USBINT;
     }
@@ -465,49 +464,18 @@ void enablePorts()
          resetPort(PORTRESET);
 
          //if ( pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)  ) // high speed idle, enabled, SE0
-         // if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
-         if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED) ) // for tests with qemu EHCI
+         if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
          {
              settextcolor(14,0);
              printf("Port %d: high speed enabled, device attached\n",j+1);
              settextcolor(15,0);
 
-             if (USBtransferFlag)
+             /*
+			 if (USBtransferFlag)
              {
-                 settextcolor(13,0);
-                 printf("\n>>> Press key to start USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
-
-                 uint8_t devAddr = usbTransferEnumerate(j);
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 showUSBSTS();
-				 
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
-
-                 usbTransferDevice(devAddr,0); // device address, endpoint
-                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
-
-                 usbTransferConfig(devAddr,0); // device address, endpoint 0
-                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
+                 // only port change activated for USB transfer
              }
+			 */
          }
     }
     enabledPortFlag = true;

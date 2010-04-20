@@ -27,7 +27,6 @@ uint8_t usbTransferEnumerate(uint8_t j)
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0);
 
 	// Enable Async...
-    printf("\nReset STS_USBINT and enable Async Schedule\n");
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
@@ -51,7 +50,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
 
     return new_address; // new_address
 }
@@ -72,7 +71,6 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
 
     // Enable Async...
-    printf("\nReset STS_USBINT and enable Async Schedule\n");
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
@@ -96,9 +94,9 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
 
-    showPacket(DataQTDpage0,18);
+    // showPacket(DataQTDpage0,18);
     showDeviceDesriptor((struct usb2_deviceDescriptor*)DataQTDpage0);
 }
 
@@ -118,7 +116,6 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
 
     // Enable Async...
-    printf("\nReset STS_USBINT and enable Async Schedule\n");
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
@@ -142,13 +139,23 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
-
-    showPacket(DataQTDpage0,32);
-    showConfigurationDesriptor((struct usb2_configurationDescriptor*)DataQTDpage0);
-    showInterfaceDesriptor( (struct usb2_interfaceDescriptor*)((uint8_t*)DataQTDpage0 +  9 ));
-    showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)DataQTDpage0 + 18 ));
-    showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)DataQTDpage0 + 25 ));
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+    
+	printf("\n");
+	showPacket(DataQTDpage0,32);
+	showConfigurationDesriptor((struct usb2_configurationDescriptor*)DataQTDpage0);
+    if ( *((uint8_t*)DataQTDpage0+9)==9)
+	{
+	    showInterfaceDesriptor( (struct usb2_interfaceDescriptor*)((uint8_t*)DataQTDpage0 +  9 ));
+	}
+    if ( *((uint8_t*)DataQTDpage0+18)==7)
+	{
+        showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)DataQTDpage0 + 18 ));
+	}
+    if ( *((uint8_t*)DataQTDpage0+25)==7)
+	{
+	    showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)DataQTDpage0 + 25 ));
+	}
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
