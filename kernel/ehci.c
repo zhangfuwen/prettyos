@@ -27,9 +27,9 @@ bool      USBINTflag; // signals STS_USBINT reset by EHCI handler
 uint8_t   numPorts;
 uintptr_t eecp;
 uint8_t*  inBuffer;
-void*     InQTD;
+void*     DataQTD;
 void*     SetupQTD;
-uintptr_t InQTDpage0;
+uintptr_t DataQTDpage0;
 uintptr_t SetupQTDpage0;
 
 // pci devices list
@@ -155,7 +155,7 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
     memset(data,0,PAGESIZE);
 
-    InQTDpage0  = (uintptr_t)data;
+    DataQTDpage0  = (uintptr_t)data;
     inBuffer = data;
 
     uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
@@ -482,7 +482,6 @@ void enablePorts()
 
                  uint8_t devAddr = usbTransferEnumerate(j);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(InQTD);
                  showUSBSTS();
 				 
 				 settextcolor(13,0);
@@ -494,7 +493,7 @@ void enablePorts()
                  usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(InQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
 
 				 settextcolor(13,0);
@@ -506,7 +505,7 @@ void enablePorts()
                  usbTransferConfig(devAddr,0); // device address, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO   : "); showStatusbyteQTD(InQTD);
+                 printf("\nIO   : "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
              }
          }
@@ -679,7 +678,6 @@ void checkPortLineStatus(uint8_t j)
 
                  uint8_t devAddr = usbTransferEnumerate(j);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(InQTD);
                  showUSBSTS();
 				 
 				 settextcolor(13,0);
@@ -691,7 +689,7 @@ void checkPortLineStatus(uint8_t j)
                  usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(InQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
 
 				 settextcolor(13,0);
@@ -703,7 +701,7 @@ void checkPortLineStatus(uint8_t j)
                  usbTransferConfig(devAddr,0); // device address, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO   : "); showStatusbyteQTD(InQTD);
+                 printf("\nIO   : "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
              }
         }

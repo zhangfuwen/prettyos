@@ -43,9 +43,9 @@ extern struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
 extern bool     EHCIflag;
 extern bool     USBINTflag;
-extern void*    InQTD;
+extern void*    DataQTD;
 extern void*    SetupQTD;
-extern uint32_t InQTDpage0;
+extern uint32_t DataQTDpage0;
 
 
 /* ****** */

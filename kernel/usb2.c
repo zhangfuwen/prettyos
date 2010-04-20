@@ -65,7 +65,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(           0x1, OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = InQTD = createQTD_IO((uint32_t)next, IN,  1, 18);    // IN DATA1, 18 byte
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 18);    // IN DATA1, 18 byte
     SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
     // Create QH
@@ -98,8 +98,8 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
 
-    showPacket(InQTDpage0,18);
-    showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
+    showPacket(DataQTDpage0,18);
+    showDeviceDesriptor((struct usb2_deviceDescriptor*)DataQTDpage0);
 }
 
 void usbTransferConfig(uint32_t device, uint32_t endpoint)
@@ -111,7 +111,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = InQTD = createQTD_IO((uint32_t)next, IN,  1, 32);    // IN DATA1, 32 byte
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 32);    // IN DATA1, 32 byte
     SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH
@@ -144,11 +144,11 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
 
-    showPacket(InQTDpage0,32);
-    showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
-    showInterfaceDesriptor( (struct usb2_interfaceDescriptor*)((uint8_t*)InQTDpage0 +  9 ));
-    showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)InQTDpage0 + 18 ));
-    showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)InQTDpage0 + 25 ));
+    showPacket(DataQTDpage0,32);
+    showConfigurationDesriptor((struct usb2_configurationDescriptor*)DataQTDpage0);
+    showInterfaceDesriptor( (struct usb2_interfaceDescriptor*)((uint8_t*)DataQTDpage0 +  9 ));
+    showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)DataQTDpage0 + 18 ));
+    showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)DataQTDpage0 + 25 ));
 }
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
