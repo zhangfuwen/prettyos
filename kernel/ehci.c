@@ -94,7 +94,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
     }
     td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = 0x2;        // SETUP = 2 
+    td->token.pid          = 0x2;        // SETUP = 2
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
     td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
     td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
@@ -125,7 +125,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
     td->extend2 = 0x0;
     td->extend3 = 0x0;
     td->extend4 = 0x0;
-    
+
     return address;
 }
 
@@ -213,7 +213,7 @@ void ehci_handler(registers_t* r)
     }
 
     settextcolor(14,0);
-    
+
     // is asked by polling
     if (pOpRegs->USBSTS & STS_USBINT)
     {
@@ -221,7 +221,7 @@ void ehci_handler(registers_t* r)
         USBINTflag = true;
         // printf("USB Interrupt");
         pOpRegs->USBSTS |= STS_USBINT;
-    }    
+    }
 
     if (pOpRegs->USBSTS & STS_USBERRINT)
     {
@@ -366,14 +366,12 @@ void startHostController(uint32_t num)
     // 2. Program the CTRLDSSEGMENT register. This value must be programmed since the ICH4/5 only uses 64bit addressing
     //    (See Section 4.3.3.1.2-HCCPARAMS – Host Controller Capability Parameters).
     //    This register must be programmed before the periodic and asynchronous schedules are enabled.
-    pOpRegs->CTRLDSSEGMENT = 0; // Program the CTRLDSSEGMENT register with 4-Gigabyte segment where all of the interface data structures are allocated.
+    pOpRegs->CTRLDSSEGMENT = 0; // Program the CTRLDSSEGMENT register with 4-GiB-segment where all of the interface data structures are allocated.
 
     // 3. Determine which events should cause an interrupt. System software programs the USB2INTR register
     //    with the appropriate value. See Section 9 - Hardware Interrupt Routing - for additional details.
     // pOpRegs->USBINTR = STS_INTMASK; // all interrupts allowed
-    pOpRegs->USBINTR = STS_ASYNC_INT|STS_HOST_SYSTEM_ERROR/*|
-                       STS_FRAMELIST_ROLLOVER*/|STS_PORT_CHANGE|
-                       STS_USBERRINT|STS_USBINT; 
+    pOpRegs->USBINTR = STS_ASYNC_INT|STS_HOST_SYSTEM_ERROR|STS_PORT_CHANGE|STS_USBERRINT|STS_USBINT/*|STS_FRAMELIST_ROLLOVER*/;
 
     // 4. Program the USB2CMD.InterruptThresholdControl bits to set the desired interrupt threshold
     pOpRegs->USBCMD |= CMD_8_MICROFRAME;
@@ -412,7 +410,7 @@ int32_t initEHCIHostController()
     // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
     uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
     printf("\nPCI Command Register before:          %x", pciCommandRegister);
-    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register 
+    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register
     printf("\nPCI Command Register plus bus master: %x", pci_config_read(bus, dev, func, 0x0204));
 
     uint16_t pciCapabilitiesList = pci_config_read(bus, dev, func, 0x0234);
@@ -429,7 +427,7 @@ int32_t initEHCIHostController()
             printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
         }
     }
-    
+
     irq_install_handler(32 + irq,   ehci_handler);
     irq_install_handler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
@@ -467,8 +465,8 @@ void enablePorts()
          resetPort(PORTRESET);
 
          //if ( pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)  ) // high speed idle, enabled, SE0
-         if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
-         // if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED) ) // for tests with qemu EHCI
+         // if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
+         if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED) ) // for tests with qemu EHCI
          {
              settextcolor(14,0);
              printf("Port %d: high speed enabled, device attached\n",j+1);
@@ -484,22 +482,32 @@ void enablePorts()
 
                  uint8_t devAddr = usbTransferEnumerate(j);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(InQTD);
+                 showUSBSTS();
+				 
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
 
                  usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO:    "); showStatusbyteQTD(InQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
 
                  usbTransferConfig(devAddr,0); // device address, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(InQTD);
-       /// TEST
-                 usbTransferDevice(0,0); // device address 0, endpoint 0
-                 usbTransferConfig(0,0); // device address 0, endpoint 0
-                 
-       /// TEST
-
+                 showUSBSTS();
              }
          }
     }
@@ -661,7 +669,7 @@ void checkPortLineStatus(uint8_t j)
              printf(",power on, enabled, EHCI owned");
              settextcolor(15,0);
 
-             if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED))) 
+             if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
              {
                  settextcolor(13,0);
                  printf("\n>>> Press key to start USB-Test. <<<");
@@ -671,22 +679,32 @@ void checkPortLineStatus(uint8_t j)
 
                  uint8_t devAddr = usbTransferEnumerate(j);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(InQTD);
+                 showUSBSTS();
+				 
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
 
                  usbTransferDevice(devAddr,0); // device address, endpoint
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO:    "); showStatusbyteQTD(InQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
 
                  usbTransferConfig(devAddr,0); // device address, endpoint 0
                  //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(InQTD);
-       /// TEST
-                 usbTransferDevice(0,0); // device address 0, endpoint 0
-                 usbTransferConfig(0,0); // device address 0, endpoint 0
-                 
-       /// TEST
-
+                 showUSBSTS();
              }
         }
       }

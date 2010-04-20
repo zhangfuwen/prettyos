@@ -25,7 +25,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0);
-    
+
 	// Enable Async...
     printf("\nReset STS_USBINT and enable Async Schedule\n");
     USBINTflag = false;
@@ -51,6 +51,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
 
     return new_address; // new_address
 }
@@ -95,6 +96,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
 
     showPacket(InQTDpage0,18);
     showDeviceDesriptor((struct usb2_deviceDescriptor*)InQTDpage0);
@@ -114,7 +116,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
-    
+
     // Enable Async...
     printf("\nReset STS_USBINT and enable Async Schedule\n");
     USBINTflag = false;
@@ -140,6 +142,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
 
     showPacket(InQTDpage0,32);
     showConfigurationDesriptor((struct usb2_configurationDescriptor*)InQTDpage0);
