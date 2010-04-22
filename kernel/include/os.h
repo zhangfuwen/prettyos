@@ -5,6 +5,7 @@
 
 /// Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _DIAGNOSIS_
+/// #define _SOUND_
 
 void settextcolor(uint8_t, uint8_t);
 void printf(const char*, ...);

@@ -33,10 +33,12 @@ void msgbeep()
 
 void beep(uint32_t freq, uint32_t duration)
 {
+    #if _SOUND_
     sound(freq);
     sti();
     sleepMilliSeconds(duration);
     noSound();
+    #endif
 }
 
 /*

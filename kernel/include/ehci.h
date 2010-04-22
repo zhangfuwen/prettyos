@@ -223,8 +223,6 @@ struct ehci_qhd
 } __attribute__((packed));
 typedef struct ehci_qhd ehci_qhd_t;
 
-
-
 struct ehci_request
 {
     uint8_t type;
@@ -234,7 +232,6 @@ struct ehci_request
     uint16_t index;
     uint16_t length;
 } __attribute__((packed));
-
 
 void ehci_init();
 void ehci_portcheck();
@@ -253,14 +250,10 @@ void portCheck(); // for thread with own console
 void startEHCI(); // for thread with own console
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint);
-
 void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
 void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
 
 void showStatusbyteQTD(void* addressQTD);
 void showPacket(uint32_t virtAddrBuf0, uint32_t size);
-
-//void showMEM_();
-//void showMEM(void* address, uint8_t n, const char* str);
 
 #endif

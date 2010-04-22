@@ -10,6 +10,8 @@
 #include "console.h"
 #include "timer.h"
 
+usb2_Device_t usbDevices[16];
+
 uint8_t usbTransferEnumerate(uint8_t j)
 {
     settextcolor(11,0); printf("\nUSB2: SET_ADDRESS"); settextcolor(15,0);
@@ -50,7 +52,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
     return new_address; // new_address
 }
@@ -94,10 +96,11 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
     // showPacket(DataQTDpage0,18);
-    showDeviceDesriptor((struct usb2_deviceDescriptor*)DataQTDpage0);
+    addDevice ( (struct usb2_deviceDescriptor*)DataQTDpage0, &usbDevices[device] );
+    showDevice( &usbDevices[device] );
 }
 
 void usbTransferConfig(uint32_t device, uint32_t endpoint)
@@ -139,8 +142,8 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
-    
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+
 	printf("\n");
 	showPacket(DataQTDpage0,32);
 	showConfigurationDesriptor((struct usb2_configurationDescriptor*)DataQTDpage0);
@@ -197,8 +200,8 @@ void usbTransferString(uint32_t device, uint32_t endpoint)
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
-    
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+
 	printf("\n");
 	showPacket(DataQTDpage0,12);
 	showStringDesriptor((struct usb2_stringDescriptor*)DataQTDpage0);
@@ -243,34 +246,45 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
     };
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
-    
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+
 	printf("\n");
 	showPacket(DataQTDpage0,30);
 	showStringDesriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0);
 }
 
-void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
+void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
 {
-    if (d->length)
-    {
+    usbDev->usbSpec               = d->bcdUSB;
+    usbDev->usbClass              = d->deviceClass;
+    usbDev->usbSubclass           = d->deviceSubclass;
+    usbDev->usbProtocol           = d->deviceProtocol;
+    usbDev->maxPacketSize         = d->maxPacketSize;
+    usbDev->vendor                = d->idVendor;
+    usbDev->product               = d->idProduct;
+    usbDev->releaseNumber         = d->bcdDevice;
+    usbDev->manufacturerStringID  = d->manufacturer;
+    usbDev->productStringID       = d->product;
+    usbDev->serNumberStringID     = d->serialNumber;
+    usbDev->numConfigurations     = d->numConfigurations;
+}
+
+void showDevice(usb2_Device_t* usbDev)
+{
        settextcolor(10,0);
-       printf("\nlength:            %d\t\t",  d->length);
-       printf("descriptor type:   %d\n",    d->descriptorType);
-       printf("USB specification: %d.%d\t\t", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
-       printf("USB class:         %x\n",    d->deviceClass);
-       printf("USB subclass:      %x\t",    d->deviceSubclass);
-       printf("USB protocol       %x\n",    d->deviceProtocol);
-       printf("max packet size:   %d\t\t",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
-       printf("vendor:            %x\n",    d->idVendor);
-       printf("product:           %x\t",    d->idProduct);
-       printf("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
-       printf("manufacturer:      %x\t",    d->manufacturer);
-       printf("product:           %x\n",    d->product);
-       printf("serial number:     %x\t",    d->serialNumber);
-       printf("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
+       printf("\nUSB specification: %d.%d\t\t", usbDev->usbSpec>>8, usbDev->usbSpec&0xFF);     // e.g. 0x0210 means 2.10
+       printf("USB class:         %x\n",    usbDev->usbClass);
+       printf("USB subclass:      %x\t",    usbDev->usbSubclass);
+       printf("USB protocol       %x\n",    usbDev->usbProtocol);
+       printf("max packet size:   %d\t\t",    usbDev->maxPacketSize);             // MPS0, must be 8,16,32,64
+       printf("vendor:            %x\n",    usbDev->vendor);
+       printf("product:           %x\t",    usbDev->product);
+       printf("release number:    %d.%d\n", usbDev->releaseNumber>>8, usbDev->releaseNumber&0xFF);  // release of the device
+       printf("manufacturer:      %x\t",    usbDev->manufacturerStringID);
+       printf("product:           %x\n",    usbDev->productStringID);
+       printf("serial number:     %x\t",    usbDev->serNumberStringID);
+       printf("number of config.: %d\n",    usbDev->numConfigurations); // number of possible configurations
        settextcolor(15,0);
-    }
 }
 
 void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
@@ -353,20 +367,46 @@ void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d)
        settextcolor(10,0);
        printf("\nlength:            %d\t\t",  d->length);     // ?
        printf("descriptor type:   %d\n",  d->descriptorType); // 3
-       
-	   printf("string: "); 
+
+	   printf("string: ");
 	   settextcolor(14,0);
 	   for(int i=0; i<30;i+=2) // show only low value of Unicode character
        {
 		   if ( (i<(d->length-2)) && (d->widechar[i]) )
 		   {
                putch(d->widechar[i]);
-		   }		   
+		   }
        }
 	   printf("\n");
        settextcolor(15,0);
     }
 }
+
+/*
+void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
+{
+    if (d->length)
+    {
+       settextcolor(10,0);
+       printf("\nlength:            %d\t\t",  d->length);
+       printf("descriptor type:   %d\n",    d->descriptorType);
+       printf("USB specification: %d.%d\t\t", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
+       printf("USB class:         %x\n",    d->deviceClass);
+       printf("USB subclass:      %x\t",    d->deviceSubclass);
+       printf("USB protocol       %x\n",    d->deviceProtocol);
+       printf("max packet size:   %d\t\t",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
+       printf("vendor:            %x\n",    d->idVendor);
+       printf("product:           %x\t",    d->idProduct);
+       printf("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
+       printf("manufacturer:      %x\t",    d->manufacturer);
+       printf("product:           %x\n",    d->product);
+       printf("serial number:     %x\t",    d->serialNumber);
+       printf("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
+       settextcolor(15,0);
+    }
+}
+*/
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

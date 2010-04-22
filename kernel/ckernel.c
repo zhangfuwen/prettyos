@@ -20,7 +20,7 @@
 
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
-const char* version = "0.0.0.392";
+const char* version = "0.0.0.393";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -40,7 +40,7 @@ static void init()
 {
     // set .bss to zero
     memset(&_bss_start, 0x0, (uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
-    
+
 	// descriptors
     gdt_install();
     idt_install();      // cf. interrupts.asm
@@ -107,7 +107,7 @@ int main()
     showMemorySize();
     floppy_install(); // detect FDDs
 
-    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)    
+    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 
     #ifdef _DIAGNOSIS_
     listPCI();
