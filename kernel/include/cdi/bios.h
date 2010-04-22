@@ -17,21 +17,18 @@ struct cdi_bios_registers {
 
 // Structure to access memory areas of a 16-bit Process
 struct cdi_bios_memory {
-    uintptr_t dest; // Virtuelle Addresse im Speicher des 16bit-Prozesses. Muss unterhalb von 0xC0000 liegen.
+    uintptr_t dest; // Virtual adress inside the memory of the 16bit-Processes. Has to be lower than 0xC0000.
 
-    /* Pointer auf reservierten Speicher für die Daten des Speicherbereichs. Wird beim Start des Tasks zum Initialisieren
-       des Bereichs benutzt und erhaelt auch wieder die Daten nach dem BIOS-Aufruf. */
+    /* Pointer to reserved memory for the data of this memory area. Will be used at start to initialize the area and contains the data after BIOS call. */
     void *src;
 
     uint16_t size; // Length of memory area
 };
 
-/* Ruft den BIOS-Interrupt 0x10 auf.
-   registers: Pointer auf eine Register-Struktur. Diese wird beim Aufruf in die Register des Tasks geladen und 
-                  bei Beendigung des Tasks wieder mit den Werten des Tasks gefuellt.
-   memory:    Speicherbereiche, die in den Bios-Task kopiert und bei Beendigung des Tasks wieder zurueck kopiert
-                  werden sollen. Die Liste ist vom Typ struct cdi_bios_memory.
-   return:    0, wenn der Aufruf erfolgreich war, -1 bei Fehlern */
+/* Calls the BIOS-Interrupt 0x10
+   registers: Pointer to a Register-Struct. It will be load to the tasks registers at call time and contains the values of the task after it has been finished.
+   memory:    Memory area copied to BIOS task and back after the task is finished. The list has the type struct cdi_bios_memory.
+   return:    0, in case of successful call, -1 otherwise */
 int cdi_bios_int10(struct cdi_bios_registers *registers, cdi_list_t memory);
 
 #endif

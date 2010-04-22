@@ -85,155 +85,7 @@
 			Name="CKernel"
 			>
 			<File
-				RelativePath="..\kernel\ckernel.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\cmos.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\console.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\data.asm"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\descriptor_tables.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\ehci.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\elf.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\event_list.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\fat12.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\file.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\flpydsk.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\flush.asm"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\fpu.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\fs.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\gdt.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\initrd.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\interrupts.asm"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\ipTcpStack.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\irq.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\kernel.asm"
-				>
-			</File>
-			<File
 				RelativePath="..\kernel\kernel.ld"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\keyboard.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\kheap.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\list.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\mouse.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\paging.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\pci.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\process.asm"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\rtl8139.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\scheduler.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\sys_speaker.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\syscall.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\task.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\time.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\timer.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\usb2.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\util.c"
-				>
-			</File>
-			<File
-				RelativePath="..\kernel\video.c"
 				>
 			</File>
 			<Filter
@@ -441,68 +293,220 @@
 				</Filter>
 			</Filter>
 			<Filter
-				Name="cdi"
+				Name="sources"
 				>
 				<File
-					RelativePath="..\kernel\cdi\cdi.c"
+					RelativePath="..\kernel\ckernel.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_bios.c"
+					RelativePath="..\kernel\cmos.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_cache.c"
+					RelativePath="..\kernel\console.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_cmos.c"
+					RelativePath="..\kernel\data.asm"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_dma.c"
+					RelativePath="..\kernel\descriptor_tables.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_fs.c"
+					RelativePath="..\kernel\ehci.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_io.c"
+					RelativePath="..\kernel\elf.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_lists.c"
+					RelativePath="..\kernel\event_list.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_mem.c"
+					RelativePath="..\kernel\fat12.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_mempool.c"
+					RelativePath="..\kernel\file.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_misc.c"
+					RelativePath="..\kernel\flpydsk.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_net.c"
+					RelativePath="..\kernel\flush.asm"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_pci.c"
+					RelativePath="..\kernel\fpu.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_scsi.c"
+					RelativePath="..\kernel\fs.c"
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\cdi\cdi_storage.c"
+					RelativePath="..\kernel\gdt.c"
 					>
 				</File>
+				<File
+					RelativePath="..\kernel\initrd.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\interrupts.asm"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\ipTcpStack.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\irq.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\kernel.asm"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\keyboard.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\kheap.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\list.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\mouse.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\paging.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\pci.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\process.asm"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\rtl8139.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\scheduler.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\sys_speaker.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\syscall.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\task.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\time.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\timer.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\usb2.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\util.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\video.c"
+					>
+				</File>
+				<Filter
+					Name="cdi"
+					>
+					<File
+						RelativePath="..\kernel\cdi\cdi.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_bios.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_cache.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_cmos.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_dma.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_fs.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_io.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_lists.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_mem.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_mempool.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_misc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_net.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_pci.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_scsi.c"
+						>
+					</File>
+					<File
+						RelativePath="..\kernel\cdi\cdi_storage.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -512,7 +516,7 @@
 				Name="Shell"
 				>
 				<File
-					RelativePath="..\user\user_program_c\program.c"
+					RelativePath="..\user\shell\shell.c"
 					>
 				</File>
 			</Filter>

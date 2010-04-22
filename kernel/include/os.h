@@ -3,9 +3,9 @@
 
 #include "types.h"
 
-/// Diagnosis-Output - activates prints to the screen about some details and memory use
-/// #define _DIAGNOSIS_
-/// #define _SOUND_
+// Switches changing the behaviour of PrettyOS
+/// #define _DIAGNOSIS_ // Diagnosis-Output - activates prints to the screen about some details and memory use
+    #define _SOUND_     // Sound-Messages - activated per default, but they increase the boot-time.
 
 void settextcolor(uint8_t, uint8_t);
 void printf(const char*, ...);

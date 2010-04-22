@@ -24,14 +24,12 @@ typedef int (cdi_cache_write_block_t)(struct cdi_cache* cache, uint64_t block, s
 
 /* Cache erstellen
    block_size:  Groesse der Blocks die der Cache verwalten soll
-   blkpriv_len: Groesse der privaten Daten die fuer jeden Block alloziert werden und danach vom aurfrufer frei benutzt
-                    werden duerfen
+   blkpriv_len: Groesse der privaten Daten die fuer jeden Block alloziert werden und danach vom aurfrufer frei benutzt werden duerfen
    read_block:  Funktionspointer auf eine Funktion zum einlesen eines Blocks.
    write_block: Funktionspointer auf eine Funktion zum schreiben eines Blocks.
    prv_data:    Wird den Callbacks als letzter Parameter uebergeben
    return:      Pointer auf das Cache-Handle */
-struct cdi_cache* cdi_cache_create(size_t block_size, size_t blkpriv_len,
-    cdi_cache_read_block_t* read_block, cdi_cache_write_block_t* write_block, void* prv_data);
+struct cdi_cache* cdi_cache_create(size_t block_size, size_t blkpriv_len, cdi_cache_read_block_t* read_block, cdi_cache_write_block_t* write_block, void* prv_data);
 
 // Destroy cache
 void cdi_cache_destroy(struct cdi_cache* cache);

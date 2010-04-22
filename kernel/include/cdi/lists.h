@@ -11,7 +11,7 @@ typedef struct cdi_list_implementation* cdi_list_t;
 
 /* Creates a new list.
    return: Returns a new list, or NULL if no memory could be allocated for the list. */
-cdi_list_t cdi_list_create(void);
+cdi_list_t cdi_list_create();
 
 // Frees the memory associated with a list. (Values of the list members must already be free.)
 void cdi_list_destroy(cdi_list_t list);
@@ -19,7 +19,7 @@ void cdi_list_destroy(cdi_list_t list);
 /* Adds a new element to the head of the list.
    list:   The list to insert into.
    value:  The element to be added.
-   return: The list @a value has been inserted into, or NULL if @a value could not be inserted (for example, because no memory could be allocated). */
+   return: The value has been inserted into, or NULL if value could not be inserted (for example, because no memory could be allocated). */
 cdi_list_t cdi_list_push(cdi_list_t list, void* value);
 
 /* Removes an element from the head of the list and returns that element's value.
@@ -33,13 +33,13 @@ void* cdi_list_pop(cdi_list_t list);
 size_t cdi_list_empty(cdi_list_t list);
 
 /* Returns the value of a list element at a specified index.
-   list:   The list from which @a index will be read
+   list:   The list from which index will be read
    index:  The index of the element to return the value of
    return: The list element requested or NULL if no element exists at the specified index. */
 void* cdi_list_get(cdi_list_t list, size_t index);
 
-/* Adds a new element (@a value) to @a list. The element is added at index @a index. The index of all elements before @a value shall remain the same,
-   while the index of elements after @a value shall increase by one.
+/* Adds a new element (value) to the list. The element is added at index @a index. The index of all elements before value shall remain the same,
+   while the index of elements after value shall increase by one.
    list:   The list to insert into
    index:  The index to be used for the new element
    value:  The element to be inserted

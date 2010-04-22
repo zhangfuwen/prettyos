@@ -6,7 +6,7 @@
 #include "cdi/lists.h"
 
 
-cdi_list_t cdi_list_create(void);
+cdi_list_t cdi_list_create();
 
 void cdi_list_destroy(cdi_list_t list);
 
@@ -25,7 +25,7 @@ void* cdi_list_remove(cdi_list_t list, size_t index);
 size_t cdi_list_size(cdi_list_t list);
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

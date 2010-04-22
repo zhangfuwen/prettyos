@@ -52,12 +52,6 @@ int main()
 
     while (true)
     {
-#ifdef _DIAGNOSIS_
-        settextcolor(2,0);
-        printf("%i ", getUserTaskNumber());
-        settextcolor(15,0);
-#endif
-
         settextcolor(15,0);
         entryLength = 0; cursorPos = 0;
         memset(entry, 0, MAX_CHAR_PER_LINE+1);
@@ -72,7 +66,7 @@ int main()
 
             switch (input) {
                 case 8:   // Backspace
-                    if (cursorPos>0)
+                    if (cursorPos > 0)
                     {
                         if (curEntry != -1)
                         {
@@ -247,44 +241,41 @@ EVALUATION: // evaluation of entry
         }
         else
         {
-            settextcolor(15,0);
-            puts("file is being searched.\n");
-            settextcolor(2,0);
+            puts("file is being searched...\n");
 
             toupper(entry);
 
-            int posPoint = 8;
-            char name[9];
-            char ext[4];
-            name[8]='\0';
-            ext[3] ='\0';
-
-            for (int i=0;i<8;i++)
+            uint8_t posPoint = 8;
+            for (uint8_t i = 0; i < 8; i++)
             {
                 if (entry[i]=='.')
                 {
-                    posPoint=i; // search point position
+                    posPoint = i; // search point position
                 }
             }
 
-            for (int i=0; i<8; i++)
+            char name[9];
+            memset(name, 0x20, 8); name[8] = '\0';
+            for (uint8_t i = 0; i < 8; i++)
             {
-                if ((i<posPoint) && (isalnum(entry[i])))
+                if (i < posPoint && isalnum(entry[i]))
                 {
-                    name[i]=entry[i];
+                    name[i] = entry[i];
                 }
                 else
                 {
-                    name[i]=0x20; // space
+                    name[i] = 0x20; // space
                 }
             }
 
-            for (int i=posPoint+1; i<posPoint+4; i++)
+            char ext[4];
+            memset(ext, '\0', 4);
+            for (uint8_t i = 0; i < 3; i++)
             {
-                ext[i-posPoint-1]=entry[i];
+                ext[i] = entry[i + posPoint + 1];
             }
 
-            if ((ext[0]==0) && (ext[1]==0) && (ext[2]==0))
+            if (ext[0]==0 && ext[1]==0 && ext[2]==0)
             {
                 ext[0] = 'E';
                 ext[1] = 'L';
@@ -296,7 +287,6 @@ EVALUATION: // evaluation of entry
                 puts("<-- Sorry, PrettyOS does not know this command.\n");
             }
         }//else
-        settextcolor(15,0);
     }//while
     return 0;
 }

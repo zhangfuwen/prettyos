@@ -6,8 +6,7 @@
 #include "cdi/cache.h"
 
 
-struct cdi_cache* cdi_cache_create(size_t block_size, size_t blkpriv_len, cdi_cache_read_block_t* read_block,
-    cdi_cache_write_block_t* write_block, void* prv_data);
+struct cdi_cache* cdi_cache_create(size_t block_size, size_t blkpriv_len, cdi_cache_read_block_t* read_block, cdi_cache_write_block_t* write_block, void* prv_data);
 
 void cdi_cache_destroy(struct cdi_cache* cache);
 

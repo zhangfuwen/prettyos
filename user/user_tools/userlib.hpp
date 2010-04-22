@@ -1,7 +1,6 @@
 #ifndef USERLIB_HPP
 #define USERLIB_HPP
 
-// typedefs for char, short, int, long, ...
 typedef unsigned int        size_t;
 typedef unsigned long long  uint64_t;
 typedef unsigned long       uint32_t;
@@ -12,6 +11,8 @@ typedef signed long         int32_t;
 typedef signed short        int16_t;
 typedef signed char         int8_t;
 typedef uint32_t            uintptr_t;
+
+#define NULL (void*)0
 
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))

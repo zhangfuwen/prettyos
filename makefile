@@ -26,7 +26,8 @@ KERNELDIR= kernel
 USERDIR= user
 SHELLDIR= shell
 USERRDDIR= init_rd_img
-USERTEST= user_test_c
+USERTESTC= user_test_c
+USERTESTCPP= user_test_cpp
 USERTOOLS= user_tools
 
 # dependancies
@@ -35,7 +36,7 @@ SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.c $(U
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -O32 -f elf
-GCCFLAGS= -c -m32 -std=c99 -Wshadow -march=i386 -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
+GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common
 
 # targets to build one asm or c-file to an object file
@@ -46,7 +47,7 @@ vpath %.o $(OBJDIR)
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
 
 # targets to build PrettyOS
-.PHONY: clean
+.PHONY: clean all
 
 all: FloppyImage.img
 
@@ -68,7 +69,7 @@ $(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/shell.elf
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
 FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
-	tools/CreateFloppyImage2 PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTEST)/HELLO.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF $(USERDIR)/other_userprogs/PQEQ.ELF
+	tools/CreateFloppyImage2 PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTESTC)/HELLO.ELF $(USERDIR)/$(USERTESTCPP)/CPP.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF $(USERDIR)/other_userprogs/PQEQ.ELF
 
 clean:
 # OS-dependant code because of different interpretation of "/" in Windows and UNIX-OS (Linux and Mac OS X)

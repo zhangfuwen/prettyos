@@ -762,7 +762,7 @@ void bootscreen() {
     printf("                                         ##\n");
     printf("\n\n");
     settextcolor(14,0);
-    printf("                     Copyright (c) 2010 The PrettyOS Team\n");
+    printf("                    Copyright (c) 2010  The PrettyOS Team\n");
     printf("\n\n");
     settextcolor(15,0);
     // Melody
