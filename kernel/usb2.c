@@ -65,9 +65,9 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(           0x1, OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 18);    // IN DATA1, 18 byte
-    SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
+    void* next   = createQTD_IO(             0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 18);  // IN DATA1, 18 byte
+    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
@@ -111,9 +111,9 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 32);    // IN DATA1, 32 byte
-    SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
+    void* next   = createQTD_IO(0x1,              OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 32);  // IN DATA1, 32 byte
+    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
@@ -169,9 +169,9 @@ void usbTransferString(uint32_t device, uint32_t endpoint)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 12);    // IN DATA1, 32 byte
-    SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, 0, 0, 12); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
+    void* next   = createQTD_IO(0x1,              OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 12);  // IN DATA1, 12 byte
+    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, 0, 0, 12); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
@@ -215,9 +215,9 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 12);    // IN DATA1, 32 byte
-    SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 30); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
+    void* next   = createQTD_IO(0x1,              OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 64);  // IN DATA1, 64 byte
+    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 64); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, stringIndex, languageID, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
@@ -249,7 +249,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
 	printf("\n");
-	showPacket(DataQTDpage0,30);
+	showPacket(DataQTDpage0,64);
 	showStringDesriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0);
 }
 
@@ -370,9 +370,9 @@ void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d)
 
 	   printf("string: ");
 	   settextcolor(14,0);
-	   for(int i=0; i<30;i+=2) // show only low value of Unicode character
+	   for(int i=0; i<(d->length-2);i+=2) // show only low value of Unicode character
        {
-		   if ( (i<(d->length-2)) && (d->widechar[i]) )
+		   if (d->widechar[i])
 		   {
                putch(d->widechar[i]);
 		   }
