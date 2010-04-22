@@ -63,20 +63,29 @@ struct usb2_endpointDescriptor
 
 struct usb2_stringDescriptor
 {
-   uint8_t  length;            // 9
+   uint8_t  length;            // ?
    uint8_t  descriptorType;    // 3
-   uint16_t languageID[10];    // n = ??   
+   uint16_t languageID[10];    // n = 10 test-wise   
 }__attribute__((packed));
 
+struct usb2_stringDescriptorUnicode
+{
+   uint8_t  length;            // 2 + 2 * numUnicodeCharacters
+   uint8_t  descriptorType;    // 3
+   uint8_t  widechar[30];      // n = 30 test-wise     
+}__attribute__((packed));
 
 uint8_t usbTransferEnumerate(uint8_t j);
 void usbTransferDevice(uint32_t device, uint32_t endpoint);
 void usbTransferConfig(uint32_t device, uint32_t endpoint);
+void usbTransferString(uint32_t device, uint32_t endpoint);
+void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t stringIndex);
 
 void showDeviceDesriptor(struct usb2_deviceDescriptor*);
 void showConfigurationDesriptor(struct usb2_configurationDescriptor*);
 void showInterfaceDesriptor(struct usb2_interfaceDescriptor* d);
 void showEndpointDesriptor(struct usb2_endpointDescriptor* d);
 void showStringDesriptor(struct usb2_stringDescriptor* d);
+void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d);
 
 #endif

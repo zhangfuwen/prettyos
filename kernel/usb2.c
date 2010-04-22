@@ -158,6 +158,98 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 	}
 }
 
+void usbTransferString(uint32_t device, uint32_t endpoint)
+{
+    settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR string, dev: %d endpoint: %d languageIDs", device, endpoint); settextcolor(15,0);
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // Create QTDs (in reversed order)
+    void* next   = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 12);    // IN DATA1, 32 byte
+    SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, 0, 0, 12); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
+
+    // Enable Async...
+    USBINTflag = false;
+    pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
+
+    int8_t timeout=40;
+    while (!USBINTflag) // set by interrupt
+    {
+        timeout--;
+        if(timeout>0)
+        {
+            sleepMilliSeconds(20);
+            printf("#");
+        }
+        else
+        {
+            settextcolor(12,0);
+            printf("\ntimeout - no STS_USBINT set!");
+            settextcolor(15,0);
+            break;
+        }
+    };
+    USBINTflag = false;
+    pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+    
+	printf("\n");
+	showPacket(DataQTDpage0,12);
+	showStringDesriptor((struct usb2_stringDescriptor*)DataQTDpage0);
+}
+
+void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t stringIndex)
+{
+	settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR string, dev: %d endpoint: %d stringIndex: %d", device, endpoint,stringIndex); settextcolor(15,0);
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // Create QTDs (in reversed order)
+    void* next   = createQTD_IO(0x1,            OUT, 1,  0);    // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 12);    // IN DATA1, 32 byte
+    SetupQTD     = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 30); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
+
+    // Enable Async...
+    USBINTflag = false;
+    pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
+
+    int8_t timeout=40;
+    while (!USBINTflag) // set by interrupt
+    {
+        timeout--;
+        if(timeout>0)
+        {
+            sleepMilliSeconds(20);
+            printf("#");
+        }
+        else
+        {
+            settextcolor(12,0);
+            printf("\ntimeout - no STS_USBINT set!");
+            settextcolor(15,0);
+            break;
+        }
+    };
+    USBINTflag = false;
+    pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+    
+	printf("\n");
+	showPacket(DataQTDpage0,30);
+	showStringDesriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0);
+}
+
 void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
 {
     if (d->length)
@@ -244,12 +336,37 @@ void showStringDesriptor(struct usb2_stringDescriptor* d)
        printf("descriptor type:   %d\n",  d->descriptorType); // 3
        for(int i=0; i<10;i++)
        {
-           printf("lang: %x\t",  d->languageID[i]);
+           if (d->languageID[i])
+		   {
+			   printf("lang: %x\t",  d->languageID[i]);
+		   }
        }
+	   printf("\n");
        settextcolor(15,0);
     }
 }
 
+void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d)
+{
+    if (d->length)
+    {
+       settextcolor(10,0);
+       printf("\nlength:            %d\t\t",  d->length);     // ?
+       printf("descriptor type:   %d\n",  d->descriptorType); // 3
+       
+	   printf("string: "); 
+	   settextcolor(14,0);
+	   for(int i=0; i<30;i+=2) // show only low value of Unicode character
+       {
+		   if ( (i<(d->length-2)) && (d->widechar[i]) )
+		   {
+               putch(d->widechar[i]);
+		   }		   
+       }
+	   printf("\n");
+       settextcolor(15,0);
+    }
+}
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
