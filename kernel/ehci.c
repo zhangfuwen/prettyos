@@ -617,10 +617,8 @@ void showUSBSTS()
 void checkPortLineStatus(uint8_t j)
 {
     settextcolor(14,0);
-    printf("\n\n>>> Status of USB Ports <<<");
-
-    // if (j<numPorts)
-    if (j==PORTRESET)
+    if (j<numPorts)
+    // if (j==PORTRESET) // ??
     {
       //check line status
       settextcolor(11,0);

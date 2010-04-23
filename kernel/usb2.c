@@ -12,24 +12,8 @@
 
 usb2_Device_t usbDevices[16];
 
-uint8_t usbTransferEnumerate(uint8_t j)
+static void performAsyncScheduler()
 {
-    #ifdef _USB_DIAGNOSIS_
-	  settextcolor(11,0); printf("\nUSB2: SET_ADDRESS"); settextcolor(15,0);
-    #endif
-
-    uint8_t new_address = j+1; // indicated port number
-
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-
-    // Create QTDs (in reversed order)
-    void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
-    SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
-
-    // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0);
-
 	// Enable Async...
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
@@ -55,8 +39,31 @@ uint8_t usbTransferEnumerate(uint8_t j)
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+	
+	sleepMilliSeconds(100);
+}
 
-    return new_address; // new_address
+uint8_t usbTransferEnumerate(uint8_t j)
+{
+    #ifdef _USB_DIAGNOSIS_
+	  settextcolor(11,0); printf("\nUSB2: SET_ADDRESS"); settextcolor(15,0);
+    #endif
+
+    uint8_t new_address = j+1; // indicated port number
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // Create QTDs (in reversed order)
+    void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
+    SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0);
+
+	performAsyncScheduler();
+    
+	return new_address; // new_address
 }
 
 void usbTransferDevice(uint32_t device, uint32_t endpoint)
@@ -76,33 +83,10 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
 
-    // Enable Async...
-    USBINTflag = false;
-    pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
+    performAsyncScheduler();
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 
-    int8_t timeout=40;
-    while (!USBINTflag) // set by interrupt
-    {
-        timeout--;
-        if(timeout>0)
-        {
-            sleepMilliSeconds(20);
-            //printf("#");
-        }
-        else
-        {
-            settextcolor(12,0);
-            printf("\ntimeout - no STS_USBINT set!");
-            settextcolor(15,0);
-            break;
-        }
-    };
-    USBINTflag = false;
-    pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-
-    // showPacket(DataQTDpage0,18);
+	// showPacket(DataQTDpage0,18);
     addDevice ( (struct usb2_deviceDescriptor*)DataQTDpage0, &usbDevices[device] );
     showDevice( &usbDevices[device] );
 }
@@ -124,33 +108,8 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
 
-    // Enable Async...
-    USBINTflag = false;
-    pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
-
-    int8_t timeout=40;
-    while (!USBINTflag) // set by interrupt
-    {
-        timeout--;
-        if(timeout>0)
-        {
-            sleepMilliSeconds(20);
-            //printf("#");
-        }
-        else
-        {
-            settextcolor(12,0);
-            printf("\ntimeout - no STS_USBINT set!");
-            settextcolor(15,0);
-            break;
-        }
-    };
-    USBINTflag = false;
-    pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-
-	printf("\n");
+    performAsyncScheduler();
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 	
     #ifdef _USB_DIAGNOSIS_
 	  showPacket(DataQTDpage0,32);
@@ -188,34 +147,8 @@ void usbTransferString(uint32_t device, uint32_t endpoint)
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
 
-    // Enable Async...
-    USBINTflag = false;
-    pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
-
-    int8_t timeout=40;
-    while (!USBINTflag) // set by interrupt
-    {
-        timeout--;
-        if(timeout>0)
-        {
-            sleepMilliSeconds(20);
-            //printf("#");
-        }
-        else
-        {
-            settextcolor(12,0);
-            printf("\ntimeout - no STS_USBINT set!");
-            settextcolor(15,0);
-            break;
-        }
-    };
-    USBINTflag = false;
-    pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-
-	printf("\n");
-	
+    performAsyncScheduler();
+		
     #ifdef _USB_DIAGNOSIS_
 	  showPacket(DataQTDpage0,12);
     #endif
@@ -239,34 +172,8 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
 
-    // Enable Async...
-    USBINTflag = false;
-    pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
-
-    int8_t timeout=40;
-    while (!USBINTflag) // set by interrupt
-    {
-        timeout--;
-        if(timeout>0)
-        {
-            sleepMilliSeconds(20);
-            //printf("#");
-        }
-        else
-        {
-            settextcolor(12,0);
-            printf("\ntimeout - no STS_USBINT set!");
-            settextcolor(15,0);
-            break;
-        }
-    };
-    USBINTflag = false;
-    pOpRegs->USBSTS |= STS_USBINT;
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-
-	printf("\n");
-	
+    performAsyncScheduler();
+    	
     #ifdef _USB_DIAGNOSIS_
 	  showPacket(DataQTDpage0,64);
     #endif
@@ -317,7 +224,7 @@ void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
 	   printf("\nlength:               %d\t\t",  d->length);
        printf("descriptor type:      %d\n",  d->descriptorType);
        #endif
-	   printf("total length:         %d\t",  d->totalLength);
+	   printf("\ntotal length:         %d\t",  d->totalLength);
        printf("number of interfaces: %d\n",  d->numInterfaces);
        printf("ID of config:         %x\t",  d->configurationValue);
        printf("ID of config name     %x\n",  d->configuration);
@@ -332,9 +239,11 @@ void showInterfaceDesriptor(struct usb2_interfaceDescriptor* d)
 {
     if (d->length)
     {
-       settextcolor(10,0);
+       settextcolor(14,0);
+	   printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\n");
+	   settextcolor(10,0);
        #ifdef _USB_DIAGNOSIS_
-	   printf("\nlength:               %d\t\t",  d->length);        // 9
+	   printf("length:               %d\t\t",  d->length);        // 9
        printf("descriptor type:      %d\n",  d->descriptorType);    // 4
        #endif
 	   printf("interface number:     %d\t\t",  d->interfaceNumber);
@@ -352,9 +261,11 @@ void showEndpointDesriptor(struct usb2_endpointDescriptor* d)
 {
     if (d->length)
     {
-       settextcolor(10,0);
+       settextcolor(14,0);
+	   printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\n");
+	   settextcolor(10,0);
        #ifdef _USB_DIAGNOSIS_
-	   printf("\nlength:            %d\t\t",  d->length);       // 7
+	   printf("length:            %d\t\t",  d->length);       // 7
        printf("descriptor type:   %d\n",    d->descriptorType); // 5
        #endif
 	   printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
@@ -383,7 +294,14 @@ void showStringDesriptor(struct usb2_stringDescriptor* d)
        {
            if (d->languageID[i])
 		   {
-			   printf("language code: %x\t",  d->languageID[i]);
+			   if (d->languageID[i] == 0x409)
+			   {
+				   printf("\nlanguage: German\t");
+			   }
+			   else
+			   {
+			       printf("\nlanguage: %x\t", d->languageID[i]);
+			   }
 		   }
        }
 	   printf("\n");
