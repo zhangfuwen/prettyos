@@ -7,7 +7,7 @@
 #define IN    1
 #define SETUP 2
 
-struct usb2_Device
+typedef struct usb2_Device
 {
     uint16_t usbSpec;
     uint8_t  usbClass;
@@ -21,9 +21,8 @@ struct usb2_Device
     uint8_t  productStringID;
     uint8_t  serNumberStringID;
     uint8_t  numConfigurations;
-    //...
-}__attribute__((packed));
-typedef struct usb2_Device usb2_Device_t;
+}   
+usb2_Device_t;
 
 struct usb2_deviceDescriptor
 {

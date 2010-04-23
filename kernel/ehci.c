@@ -638,14 +638,18 @@ void checkPortLineStatus(uint8_t j)
 
              if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
              {
-                 settextcolor(13,0);
+               #ifdef _USB_DIAGNOSIS_
+				 settextcolor(13,0);
                  printf("\n>>> Press key to start USB-Test. <<<");
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
                  printf("\n");
+               #endif
 
                  uint8_t devAddr = usbTransferEnumerate(j);
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+               
+               #ifdef _USB_DIAGNOSIS_               
+				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  showUSBSTS();
 				 
 				 settextcolor(13,0);
@@ -653,9 +657,12 @@ void checkPortLineStatus(uint8_t j)
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
                  printf("\n");
+               #endif
 
                  usbTransferDevice(devAddr,0); // device address, endpoint
-                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+               
+               #ifdef _USB_DIAGNOSIS_    
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO:    "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
@@ -665,9 +672,11 @@ void checkPortLineStatus(uint8_t j)
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
                  printf("\n");
+               #endif
 
                  usbTransferConfig(devAddr,0); // device address, endpoint 0
-                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+               #ifdef _USB_DIAGNOSIS_      
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
@@ -677,26 +686,35 @@ void checkPortLineStatus(uint8_t j)
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
                  printf("\n");
+               #endif
 
 				 usbTransferString(devAddr,0); // device address, endpoint 0
-                 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+               
+               #ifdef _USB_DIAGNOSIS_      
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
 				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(DataQTD);
 				 showUSBSTS();
-
+               #endif
+			
 				 for(int k=1; k<4;k++) // fetch 3 strings
 				 {
-   				     settextcolor(13,0);
+   				   #ifdef _USB_DIAGNOSIS_    
+					 settextcolor(13,0);
                      printf("\n>>> Press key to go on with USB-Test. <<<");
                      settextcolor(15,0);
                      while(!checkKQ_and_return_char());
                      printf("\n");
+                  #endif					 
 
 					 usbTransferStringUnicode(devAddr,0,k);
-					 //printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                  
+                  #ifdef _USB_DIAGNOSIS_    					
+					 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
 				     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                      printf("\nIO   : "); showStatusbyteQTD(DataQTD);
 				     showUSBSTS();
+                  #endif 
 				 }
              }
         }

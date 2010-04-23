@@ -14,7 +14,9 @@ usb2_Device_t usbDevices[16];
 
 uint8_t usbTransferEnumerate(uint8_t j)
 {
-    settextcolor(11,0); printf("\nUSB2: SET_ADDRESS"); settextcolor(15,0);
+    #ifdef _USB_DIAGNOSIS_
+	  settextcolor(11,0); printf("\nUSB2: SET_ADDRESS"); settextcolor(15,0);
+    #endif
 
     uint8_t new_address = j+1; // indicated port number
 
@@ -40,7 +42,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
         if(timeout>0)
         {
             sleepMilliSeconds(20);
-            printf("#");
+            //printf("#");
         }
         else
         {
@@ -59,7 +61,9 @@ uint8_t usbTransferEnumerate(uint8_t j)
 
 void usbTransferDevice(uint32_t device, uint32_t endpoint)
 {
-    settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR device, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
+    #ifdef _USB_DIAGNOSIS_
+	  settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR device, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
+    #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
@@ -84,7 +88,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
         if(timeout>0)
         {
             sleepMilliSeconds(20);
-            printf("#");
+            //printf("#");
         }
         else
         {
@@ -105,7 +109,9 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
 
 void usbTransferConfig(uint32_t device, uint32_t endpoint)
 {
-    settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR config, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
+    #ifdef _USB_DIAGNOSIS_
+	  settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR config, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
+    #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
@@ -130,7 +136,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
         if(timeout>0)
         {
             sleepMilliSeconds(20);
-            printf("#");
+            //printf("#");
         }
         else
         {
@@ -145,7 +151,11 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
 	printf("\n");
-	showPacket(DataQTDpage0,32);
+	
+    #ifdef _USB_DIAGNOSIS_
+	  showPacket(DataQTDpage0,32);
+    #endif
+	
 	showConfigurationDesriptor((struct usb2_configurationDescriptor*)DataQTDpage0);
     if ( *((uint8_t*)DataQTDpage0+9)==9)
 	{
@@ -163,7 +173,9 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 
 void usbTransferString(uint32_t device, uint32_t endpoint)
 {
-    settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR string, dev: %d endpoint: %d languageIDs", device, endpoint); settextcolor(15,0);
+    #ifdef _USB_DIAGNOSIS_
+	  settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR string, dev: %d endpoint: %d languageIDs", device, endpoint); settextcolor(15,0);
+    #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
@@ -188,7 +200,7 @@ void usbTransferString(uint32_t device, uint32_t endpoint)
         if(timeout>0)
         {
             sleepMilliSeconds(20);
-            printf("#");
+            //printf("#");
         }
         else
         {
@@ -203,13 +215,18 @@ void usbTransferString(uint32_t device, uint32_t endpoint)
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
 	printf("\n");
-	showPacket(DataQTDpage0,12);
+	
+    #ifdef _USB_DIAGNOSIS_
+	  showPacket(DataQTDpage0,12);
+    #endif
 	showStringDesriptor((struct usb2_stringDescriptor*)DataQTDpage0);
 }
 
 void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t stringIndex)
 {
-	settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR string, dev: %d endpoint: %d stringIndex: %d", device, endpoint,stringIndex); settextcolor(15,0);
+	#ifdef _USB_DIAGNOSIS_
+	  settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR string, dev: %d endpoint: %d stringIndex: %d", device, endpoint,stringIndex); settextcolor(15,0);
+    #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
@@ -234,7 +251,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
         if(timeout>0)
         {
             sleepMilliSeconds(20);
-            printf("#");
+            //printf("#");
         }
         else
         {
@@ -249,7 +266,11 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
 	printf("\n");
-	showPacket(DataQTDpage0,64);
+	
+    #ifdef _USB_DIAGNOSIS_
+	  showPacket(DataQTDpage0,64);
+    #endif
+
 	showStringDesriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0);
 }
 
@@ -292,9 +313,11 @@ void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
-       printf("\nlength:               %d\t\t",  d->length);
+       #ifdef _USB_DIAGNOSIS_
+	   printf("\nlength:               %d\t\t",  d->length);
        printf("descriptor type:      %d\n",  d->descriptorType);
-       printf("total length:         %d\t",  d->totalLength);
+       #endif
+	   printf("total length:         %d\t",  d->totalLength);
        printf("number of interfaces: %d\n",  d->numInterfaces);
        printf("ID of config:         %x\t",  d->configurationValue);
        printf("ID of config name     %x\n",  d->configuration);
@@ -310,9 +333,11 @@ void showInterfaceDesriptor(struct usb2_interfaceDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
-       printf("\nlength:               %d\t\t",  d->length);        // 9
+       #ifdef _USB_DIAGNOSIS_
+	   printf("\nlength:               %d\t\t",  d->length);        // 9
        printf("descriptor type:      %d\n",  d->descriptorType);    // 4
-       printf("interface number:     %d\t\t",  d->interfaceNumber);
+       #endif
+	   printf("interface number:     %d\t\t",  d->interfaceNumber);
        printf("alternate Setting:    %d\n",  d->alternateSetting);
        printf("number of endpoints:  %d\t\t",  d->numEndpoints);
        printf("interface class:      %d\n",  d->interfaceClass);
@@ -328,9 +353,11 @@ void showEndpointDesriptor(struct usb2_endpointDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
-       printf("\nlength:            %d\t\t",  d->length);       // 7
+       #ifdef _USB_DIAGNOSIS_
+	   printf("\nlength:            %d\t\t",  d->length);       // 7
        printf("descriptor type:   %d\n",    d->descriptorType); // 5
-       printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
+       #endif
+	   printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
        printf("endpoint number:   %d\n",    d->endpointAddress & 0xF);
        printf("attributes:        %y\t\t",  d->attributes);     // bit 1:0 00 control       01 isochronous       10 bulk                            11 interrupt
                                                                 // bit 3:2 00 no sync       01 async             10 adaptive                        11 sync (only if isochronous)
@@ -346,13 +373,17 @@ void showStringDesriptor(struct usb2_stringDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
-       printf("\nlength:            %d\t\t",  d->length);     // ?
-       printf("descriptor type:   %d\n",  d->descriptorType); // 3
-       for(int i=0; i<10;i++)
+      
+       #ifdef _USB_DIAGNOSIS_
+	   printf("\nlength:            %d\t\t",  d->length);     // 12
+       printf("descriptor type:   %d\n",  d->descriptorType); //  3
+       #endif
+       
+	   for(int i=0; i<10;i++)
        {
            if (d->languageID[i])
 		   {
-			   printf("lang: %x\t",  d->languageID[i]);
+			   printf("language code: %x\t",  d->languageID[i]);
 		   }
        }
 	   printf("\n");
@@ -365,10 +396,13 @@ void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d)
     if (d->length)
     {
        settextcolor(10,0);
-       printf("\nlength:            %d\t\t",  d->length);     // ?
-       printf("descriptor type:   %d\n",  d->descriptorType); // 3
-
-	   printf("string: ");
+       
+       #ifdef _USB_DIAGNOSIS_
+	     printf("\nlength:            %d\t\t",  d->length);     
+         printf("descriptor type:   %d\n",  d->descriptorType); // 3
+         printf("string: ");
+	   #endif
+	   
 	   settextcolor(14,0);
 	   for(int i=0; i<(d->length-2);i+=2) // show only low value of Unicode character
        {
