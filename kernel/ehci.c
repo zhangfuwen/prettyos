@@ -673,6 +673,7 @@ void checkPortLineStatus(uint8_t j)
                #endif
 
                  usbTransferConfig(devAddr,0); // device address, endpoint 0
+ 
                #ifdef _USB_DIAGNOSIS_      
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);

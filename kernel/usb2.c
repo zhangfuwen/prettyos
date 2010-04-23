@@ -102,8 +102,8 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,              OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 32);  // IN DATA1, 32 byte
-    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, 32); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, PAGESIZE);  // IN DATA1, 4096 byte
+    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, PAGESIZE); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
@@ -115,18 +115,56 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 	  showPacket(DataQTDpage0,32);
     #endif
 	
-	showConfigurationDesriptor((struct usb2_configurationDescriptor*)DataQTDpage0);
-    if ( *((uint8_t*)DataQTDpage0+9)==9)
+    // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
+	uintptr_t addrPointer = (uintptr_t)DataQTDpage0;
+    uintptr_t lastByte    = addrPointer + (*(uint16_t*)(addrPointer+2)); // totalLength (WORD)
+	// printf("\nlastByte: %X\n",lastByte); // test
+	
+	while(addrPointer<lastByte)
 	{
-	    showInterfaceDesriptor( (struct usb2_interfaceDescriptor*)((uint8_t*)DataQTDpage0 +  9 ));
-	}
-    if ( *((uint8_t*)DataQTDpage0+18)==7)
-	{
-        showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)DataQTDpage0 + 18 ));
-	}
-    if ( *((uint8_t*)DataQTDpage0+25)==7)
-	{
-	    showEndpointDesriptor ( (struct usb2_endpointDescriptor*) ((uint8_t*)DataQTDpage0 + 25 ));
+		bool found = false;
+		// printf("addrPointer: %X\n",addrPointer); // test
+		if ( ((*(uint8_t*)addrPointer) == 9) && ((*(uint8_t*)(addrPointer+1)) == 2) ) // length, type
+		{
+			showConfigurationDesriptor((struct usb2_configurationDescriptor*)addrPointer);
+			addrPointer += 9;
+			found = true;
+		}
+	    
+		if ( ((*(uint8_t*)addrPointer) == 9) && ((*(uint8_t*)(addrPointer+1)) == 4) ) // length, type
+		{
+			showInterfaceDesriptor((struct usb2_interfaceDescriptor*)addrPointer);
+			addrPointer += 9;
+			found = true;
+		}
+
+		if ( ((*(uint8_t*)addrPointer) == 7) && ((*(uint8_t*)(addrPointer+1)) == 5) ) // length, type
+		{
+			showEndpointDesriptor ((struct usb2_endpointDescriptor*)addrPointer);
+			addrPointer += 7;
+			found = true;
+		} 
+		
+		if ( ((*(uint8_t*)(addrPointer+1)) != 2 ) && ((*(uint8_t*)(addrPointer+1)) != 4 ) && ((*(uint8_t*)(addrPointer+1)) != 5 ) ) // length, type
+		{
+			settextcolor(9,0);
+			printf("\nlength: %d type: %d unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
+			settextcolor(15,0);
+			addrPointer += *(uint8_t*)addrPointer;
+			found = true;
+		} 
+		
+		if (found == false)
+		{
+			printf("\nlength: %d type: %d not found\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
+			break;
+		}
+		
+		settextcolor(13,0);
+        printf("\n>>> Press key to go on with data analysis from config descriptor. <<<");
+        settextcolor(15,0);
+        while(!checkKQ_and_return_char());
+        printf("\n");
 	}
 }
 
@@ -220,11 +258,12 @@ void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
+	   printf("\n");
        #ifdef _USB_DIAGNOSIS_
-	   printf("\nlength:               %d\t\t",  d->length);
+	   printf("length:               %d\t\t",  d->length);
        printf("descriptor type:      %d\n",  d->descriptorType);
        #endif
-	   printf("\ntotal length:         %d\t",  d->totalLength);
+	   printf("total length:         %d\t",  d->totalLength);
        printf("number of interfaces: %d\n",  d->numInterfaces);
        printf("ID of config:         %x\t",  d->configurationValue);
        printf("ID of config name     %x\n",  d->configuration);
@@ -329,7 +368,7 @@ void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d)
                putch(d->widechar[i]);
 		   }
        }
-	   printf("\n");
+	   printf("\n\n\n\n"); // can be deleted by "Port: ..., device attached" <--- TODO
        settextcolor(15,0);
     }
 }
