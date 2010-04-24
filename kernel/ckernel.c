@@ -20,7 +20,7 @@
 
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
-const char* version = "0.0.0.399";
+const char* version = "0.0.0.400";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -42,10 +42,6 @@ static void init()
     memset(&_bss_start, 0x0, (uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
 
 	// descriptors
-    gdt_install();
-    idt_install();      // cf. interrupts.asm
-
-    // descriptors
     gdt_install();
     idt_install();      // cf. interrupts.asm
 
@@ -140,7 +136,7 @@ int main()
             memcpy(name, node->name, 35); // protection against wrong / too long filename
             printf("%d \t%s\n",sz,name);
 
-            if (strcmp((const char*)node->name, "shell") == 0)
+            if (strcmp(node->name, "shell") == 0)
             {
                 shell_found = true;
 
@@ -183,7 +179,10 @@ int main()
             uint32_t RdtscKCountsHi = RdtscKCounts >> 32;
             uint32_t RdtscKCountsLo = RdtscKCounts & 0xFFFFFFFF;
 
-            if (RdtscKCountsHi==0){ ODA.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10; }
+            if (RdtscKCountsHi == 0)
+			{
+				ODA.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
+			}
 
             // draw separation line
             kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation

@@ -13,9 +13,9 @@
 
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
-extern uint8_t network_buffer[8192+16]; /// OK?
-extern uint32_t BaseAddressRTL8139_IO;
-extern uint32_t BaseAddressRTL8139_MMIO;
+uint8_t network_buffer[8192+16];  // TEST for network card
+uint32_t BaseAddressRTL8139_IO;
+uint32_t BaseAddressRTL8139_MMIO;
 
 void rtl8139_handler(registers_t* r)
 {
@@ -122,6 +122,24 @@ void rtl8139_handler(registers_t* r)
 
 void install_RTL8139(uint32_t number)
 {
+    for (uint8_t j=0;j<6;++j) // check network card BARs
+    {
+        pciDev_Array[number].bar[j].memoryType = pciDev_Array[number].bar[j].baseAddress & 0x01;
+
+        if (pciDev_Array[number].bar[j].baseAddress) // check valid BAR
+        {
+            if (pciDev_Array[number].bar[j].memoryType == 0)
+            {
+                BaseAddressRTL8139_MMIO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFFFFF0;
+
+            }
+            if (pciDev_Array[number].bar[j].memoryType == 1)
+            {
+                BaseAddressRTL8139_IO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFC;
+            }
+        }
+    }
+
     //clear receiving buffer
     memset((void*)network_buffer, 0x0, 8192+16);
 
@@ -143,7 +161,7 @@ void install_RTL8139(uint32_t number)
         sleepMilliSeconds(10);
         if (!(*((volatile uint8_t*)(BaseAddressRTL8139_MMIO + 0x37)) & 0x10))
         {
-            kdebug(3, "\nwaiting successful(%d).\n", k);
+            kdebug(3, "\nwaiting successful (%d).\n", k);
             break;
         }
         k++;
@@ -198,7 +216,7 @@ void install_RTL8139(uint32_t number)
 
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

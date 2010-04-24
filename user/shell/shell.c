@@ -2,9 +2,9 @@
 #define MAX_CHAR_PER_LINE 70
 #define ENTRY_CACHE_SIZE 10
 
-void* memset(void* dest, char val, unsigned int count)
+void* memset(void* dest, int8_t val, size_t count)
 {
-    char* temp = (char*)dest;
+    int8_t* temp = (int8_t*)dest;
     for (; count != 0; count--) *temp++ = val;
     return dest;
 }

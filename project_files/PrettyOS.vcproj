@@ -192,10 +192,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\kernel\include\shared_pages.h"
-					>
-				</File>
-				<File
 					RelativePath="..\kernel\include\sys_speaker.h"
 					>
 				</File>

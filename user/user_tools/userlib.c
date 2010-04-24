@@ -9,9 +9,9 @@
 
 /// Syscalls
 
-void settextcolor(unsigned int foreground, unsigned int background)
+void puts(const char* pString)
 {
-    __asm__ volatile("int $0x7F" : : "a"(2), "b"(foreground), "c"(background));
+    __asm__ volatile("int $0x7F" : : "a"(0), "b"(pString));
 }
 
 void putch(unsigned char val)
@@ -19,9 +19,9 @@ void putch(unsigned char val)
     __asm__ volatile("int $0x7F" : : "a"(1), "b"(val));
 }
 
-void puts(const char* pString)
+void settextcolor(unsigned int foreground, unsigned int background)
 {
-    __asm__ volatile("int $0x7F" : : "a"(0), "b"(pString));
+    __asm__ volatile("int $0x7F" : : "a"(2), "b"(foreground), "c"(background));
 }
 
 unsigned char getch()

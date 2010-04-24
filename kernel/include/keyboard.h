@@ -3,7 +3,7 @@
 
 #include "os.h"
 
-#define KQSIZE    20 // size of key queue
+#define KQSIZE 20 // size of key queue
 
 typedef struct
 {

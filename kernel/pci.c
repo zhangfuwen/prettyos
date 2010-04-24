@@ -12,10 +12,6 @@
 #include "event_list.h"
 #include "console.h"
 
-uint8_t network_buffer[8192+16];  // TEST for network card
-uint32_t BaseAddressRTL8139_IO;
-uint32_t BaseAddressRTL8139_MMIO;
-
 pciDev_t pciDev_Array[PCIARRAYSIZE];
 
 void analyzeHostSystemError(uint32_t num)
@@ -155,13 +151,13 @@ void listPCI()
                 uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
                 if (vendorID && (vendorID != 0xFFFF))
                 {
-                    pciDev_Array[number].vendorID     = vendorID;
-                    pciDev_Array[number].deviceID     = pci_config_read(bus, device, func, PCI_DEVICE_ID);
-                    pciDev_Array[number].classID      = pci_config_read(bus, device, func, PCI_CLASS);
-                    pciDev_Array[number].subclassID   = pci_config_read(bus, device, func, PCI_SUBCLASS);
-                    pciDev_Array[number].interfaceID  = pci_config_read(bus, device, func, PCI_INTERFACE);
-                    pciDev_Array[number].revID        = pci_config_read(bus, device, func, PCI_REVISION);
-                    pciDev_Array[number].irq          = pci_config_read(bus, device, func, PCI_IRQLINE);
+                    pciDev_Array[number].vendorID    = vendorID;
+                    pciDev_Array[number].deviceID    = pci_config_read(bus, device, func, PCI_DEVICE_ID);
+                    pciDev_Array[number].classID     = pci_config_read(bus, device, func, PCI_CLASS);
+                    pciDev_Array[number].subclassID  = pci_config_read(bus, device, func, PCI_SUBCLASS);
+                    pciDev_Array[number].interfaceID = pci_config_read(bus, device, func, PCI_INTERFACE);
+                    pciDev_Array[number].revID       = pci_config_read(bus, device, func, PCI_REVISION);
+                    pciDev_Array[number].irq         = pci_config_read(bus, device, func, PCI_IRQLINE);
                     pciDev_Array[number].bar[0].baseAddress = pci_config_read(bus, device, func, PCI_BAR0);
                     pciDev_Array[number].bar[1].baseAddress = pci_config_read(bus, device, func, PCI_BAR1);
                     pciDev_Array[number].bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
@@ -229,7 +225,7 @@ void listPCI()
                                 printf("sz:%d ", pciDev_Array[number].bar[i].memorySize);                                
 
                                 /// EHCI Data
-                                if ((pciDev_Array[number].interfaceID==0x20)   // EHCI
+                                if (pciDev_Array[number].interfaceID == 0x20   // EHCI
                                    && pciDev_Array[number].bar[i].baseAddress) // valid BAR
                                 {
                                     ehci_install(number,i);
@@ -244,23 +240,6 @@ void listPCI()
                     /// RTL 8139 network card
                     if ((pciDev_Array[number].deviceID == 0x8139))
                     {
-                        for (uint8_t j=0;j<6;++j) // check network card BARs
-                        {
-                            pciDev_Array[number].bar[j].memoryType = pciDev_Array[number].bar[j].baseAddress & 0x01;
-
-                            if (pciDev_Array[number].bar[j].baseAddress) // check valid BAR
-                            {
-                                if (pciDev_Array[number].bar[j].memoryType == 0)
-                                {
-                                    BaseAddressRTL8139_MMIO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFFFFF0;
-
-                                }
-                                if (pciDev_Array[number].bar[j].memoryType == 1)
-                                {
-                                    BaseAddressRTL8139_IO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFC;
-                                }
-                            }
-                        }
                         install_RTL8139(number);
                     }
                     ++number;
