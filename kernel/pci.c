@@ -152,13 +152,13 @@ void listPCI()
                 uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
                 if (vendorID && (vendorID != 0xFFFF))
                 {
-                    pciDev_Array[number].vendorID    = vendorID;
-                    pciDev_Array[number].deviceID    = pci_config_read(bus, device, func, PCI_DEVICE_ID);
-                    pciDev_Array[number].classID     = pci_config_read(bus, device, func, PCI_CLASS);
-                    pciDev_Array[number].subclassID  = pci_config_read(bus, device, func, PCI_SUBCLASS);
-                    pciDev_Array[number].interfaceID = pci_config_read(bus, device, func, PCI_INTERFACE);
-                    pciDev_Array[number].revID       = pci_config_read(bus, device, func, PCI_REVISION);
-                    pciDev_Array[number].irq         = pci_config_read(bus, device, func, PCI_IRQLINE);
+                    pciDev_Array[number].vendorID           = vendorID;
+                    pciDev_Array[number].deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);
+                    pciDev_Array[number].classID            = pci_config_read(bus, device, func, PCI_CLASS);
+                    pciDev_Array[number].subclassID         = pci_config_read(bus, device, func, PCI_SUBCLASS);
+                    pciDev_Array[number].interfaceID        = pci_config_read(bus, device, func, PCI_INTERFACE);
+                    pciDev_Array[number].revID              = pci_config_read(bus, device, func, PCI_REVISION);
+                    pciDev_Array[number].irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
                     pciDev_Array[number].bar[0].baseAddress = pci_config_read(bus, device, func, PCI_BAR0);
                     pciDev_Array[number].bar[1].baseAddress = pci_config_read(bus, device, func, PCI_BAR1);
                     pciDev_Array[number].bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
@@ -192,54 +192,7 @@ void listPCI()
                     if ((pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03))
                     {
                         install_USB_HostController(number);
-
-                        /*
-                        printf(" USB ");
-                        switch(pciDev_Array[number].interfaceID)
-                        {
-                            case 0x00: printf("UHCI "); break;
-                            case 0x10: printf("OHCI "); break;
-                            case 0x20: printf("EHCI "); break;
-                            case 0x80: printf("no HCI "); break;
-                            case 0xFE: printf("any "); break;
-                        }
-
-                        for (uint8_t i=0;i<6;++i) // check USB BARs
-                        {
-                            pciDev_Array[number].bar[i].memoryType = pciDev_Array[number].bar[i].baseAddress & 0x01;
-
-                            if (pciDev_Array[number].bar[i].baseAddress) // check valid BAR
-                            {
-                                if (pciDev_Array[number].bar[i].memoryType == 0)
-                                {
-                                    printf("%X MMIO ", pciDev_Array[number].bar[i].baseAddress & 0xFFFFFFF0);
-                                }
-                                else if (pciDev_Array[number].bar[i].memoryType == 1)
-                                {
-                                    printf("%x I/O ",  pciDev_Array[number].bar[i].baseAddress & 0xFFFC);
-                                }
-
-                                // check Memory Size
-                                cli();
-                                pci_config_write_dword  (bus, device, func, PCI_BAR0 + 4*i, 0xFFFFFFFF);
-                                pciBar = pci_config_read(bus, device, func, PCI_BAR0 + 4*i);
-                                pci_config_write_dword  (bus, device, func, PCI_BAR0 + 4*i, pciDev_Array[number].bar[i].baseAddress);
-                                sti();
-                                pciDev_Array[number].bar[i].memorySize = (~pciBar | 0x0F) + 1;
-                                printf("sz:%d ", pciDev_Array[number].bar[i].memorySize);
-
-                                /// EHCI Data
-                                if (pciDev_Array[number].interfaceID == 0x20   // EHCI
-                                   && pciDev_Array[number].bar[i].baseAddress) // valid BAR
-                                {
-                                    ehci_install(number,i);
-                                }
-                            } /// if USB
-                        } // for
-                        */
-
-                    } // if
-
+                    }
                     printf("\n");
 
                     /// RTL 8139 network card

@@ -20,7 +20,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.401";
+const char* version = "0.0.0.402";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -43,7 +43,7 @@ static void init()
 
 	// descriptors
     gdt_install();
-    idt_install();      // cf. interrupts.asm
+    idt_install(); // cf. interrupts.asm
 
     // video
     kernel_console_init();
@@ -61,7 +61,7 @@ static void init()
     keyboard_install();
     mouse_install();
 
-    // processes & threads
+    // processes/threads, messaging and system calls
     tasking_install();
     events_install();
     syscall_install();
@@ -71,13 +71,13 @@ static void init()
 
 void showMemorySize()
 {
-    if (ODA.Memory_Size > 1048576)
+    if (ODA.Memory_Size > 0x100000)
     {
-        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", ODA.Memory_Size/1048576, ODA.Memory_Size/1000000, ODA.Memory_Size);
+        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", ODA.Memory_Size/0x100000, ODA.Memory_Size/1000000, ODA.Memory_Size);
     }
     else
     {
-        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", ODA.Memory_Size/1024, ODA.Memory_Size/1000, ODA.Memory_Size);
+        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", ODA.Memory_Size/0x400, ODA.Memory_Size/1000, ODA.Memory_Size);
     }
 }
 

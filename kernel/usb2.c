@@ -128,21 +128,21 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 		// printf("addrPointer: %X\n",addrPointer); // test
 		if ( ((*(uint8_t*)addrPointer) == 9) && ((*(uint8_t*)(addrPointer+1)) == 2) ) // length, type
 		{
-			showConfigurationDesriptor((struct usb2_configurationDescriptor*)addrPointer);
+			showConfigurationDescriptor((struct usb2_configurationDescriptor*)addrPointer);
 			addrPointer += 9;
 			found = true;
 		}
 	    
 		if ( ((*(uint8_t*)addrPointer) == 9) && ((*(uint8_t*)(addrPointer+1)) == 4) ) // length, type
 		{
-			showInterfaceDesriptor((struct usb2_interfaceDescriptor*)addrPointer);
+			showInterfaceDescriptor((struct usb2_interfaceDescriptor*)addrPointer);
 			addrPointer += 9;
 			found = true;
 		}
 
 		if ( ((*(uint8_t*)addrPointer) == 7) && ((*(uint8_t*)(addrPointer+1)) == 5) ) // length, type
 		{
-			showEndpointDesriptor ((struct usb2_endpointDescriptor*)addrPointer);
+			showEndpointDescriptor ((struct usb2_endpointDescriptor*)addrPointer);
 			addrPointer += 7;
 			found = true;
 		} 
@@ -192,7 +192,7 @@ void usbTransferString(uint32_t device, uint32_t endpoint)
     #ifdef _USB_DIAGNOSIS_
 	  showPacket(DataQTDpage0,12);
     #endif
-	showStringDesriptor((struct usb2_stringDescriptor*)DataQTDpage0);
+	showStringDescriptor((struct usb2_stringDescriptor*)DataQTDpage0);
 }
 
 void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t stringIndex)
@@ -218,7 +218,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
 	  showPacket(DataQTDpage0,64);
     #endif
 
-	showStringDesriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0);
+	showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0);
 }
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
@@ -255,7 +255,7 @@ void showDevice(usb2_Device_t* usbDev)
        settextcolor(15,0);
 }
 
-void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
+void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
 {
     if (d->length)
     {
@@ -276,7 +276,7 @@ void showConfigurationDesriptor(struct usb2_configurationDescriptor* d)
     }
 }
 
-void showInterfaceDesriptor(struct usb2_interfaceDescriptor* d)
+void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
 {
     if (d->length)
     {
@@ -298,7 +298,7 @@ void showInterfaceDesriptor(struct usb2_interfaceDescriptor* d)
     }
 }
 
-void showEndpointDesriptor(struct usb2_endpointDescriptor* d)
+void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
 {
     if (d->length)
     {
@@ -320,7 +320,7 @@ void showEndpointDesriptor(struct usb2_endpointDescriptor* d)
     }
 }
 
-void showStringDesriptor(struct usb2_stringDescriptor* d)
+void showStringDescriptor(struct usb2_stringDescriptor* d)
 {
     if (d->length)
     {
@@ -350,7 +350,7 @@ void showStringDesriptor(struct usb2_stringDescriptor* d)
     }
 }
 
-void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d)
+void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
 {
     if (d->length)
     {
@@ -376,7 +376,7 @@ void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d)
 }
 
 /*
-void showDeviceDesriptor(struct usb2_deviceDescriptor* d)
+void showDeviceDescriptor(struct usb2_deviceDescriptor* d)
 {
     if (d->length)
     {

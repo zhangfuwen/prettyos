@@ -99,12 +99,12 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);
-void showConfigurationDesriptor(struct usb2_configurationDescriptor*);
-void showInterfaceDesriptor(struct usb2_interfaceDescriptor* d);
-void showEndpointDesriptor(struct usb2_endpointDescriptor* d);
-void showStringDesriptor(struct usb2_stringDescriptor* d);
-void showStringDesriptorUnicode(struct usb2_stringDescriptorUnicode* d);
+void showConfigurationDescriptor(struct usb2_configurationDescriptor* d);
+void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d);
+void showEndpointDescriptor(struct usb2_endpointDescriptor* d);
+void showStringDescriptor(struct usb2_stringDescriptor* d);
+void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d);
 
-// void showDeviceDesriptor(struct usb2_deviceDescriptor*);
+// void showDeviceDescriptor(struct usb2_deviceDescriptor*);
 
 #endif
