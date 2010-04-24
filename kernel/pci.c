@@ -6,6 +6,7 @@
 #include "util.h"
 #include "pci.h"
 #include "paging.h"
+#include "usb_hc.h"
 #include "ehci.h"
 #include "list.h"
 #include "rtl8139.h"
@@ -22,8 +23,8 @@ void analyzeHostSystemError(uint32_t num)
 
      // check pci status register of the device
      uint32_t pciStatus = pci_config_read(bus, dev, func, PCI_STATUS);
-     
-     
+
+
      printf("\nPCI status word: %x\n",pciStatus);
      settextcolor(3,0);
      // bits 0...2 reserved
@@ -34,7 +35,7 @@ void analyzeHostSystemError(uint32_t num)
      if(pciStatus & 1<< 7) printf("Fast Back-to-Back Transactions Capable\n");
      settextcolor(12,0);
      if(pciStatus & 1<< 8) printf("Master Data Parity Error\n");
-     // DEVSEL Timing: bits 10:9      
+     // DEVSEL Timing: bits 10:9
      if(pciStatus & 1<<11) printf("Signalled Target-Abort\n");
      if(pciStatus & 1<<12) printf("Received Target-Abort\n");
      if(pciStatus & 1<<13) printf("Received Master-Abort\n");
@@ -133,7 +134,7 @@ void listPCI()
  {
     settextcolor(15,0);
 
-    uint32_t pciBar  = 0; // helper variable for memory size
+    // uint32_t pciBar  = 0; // helper variable for memory size
 
     // array of devices, PCIARRAYSIZE for first tests
     for (uint32_t i=0;i<PCIARRAYSIZE;++i)
@@ -187,9 +188,12 @@ void listPCI()
                         printf(" IRQ:-- ");
                     }
 
-                    // test on USB
+                    /// USB Host Controller
                     if ((pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03))
                     {
+                        install_USB_HostController(number);
+
+                        /*
                         printf(" USB ");
                         switch(pciDev_Array[number].interfaceID)
                         {
@@ -215,14 +219,14 @@ void listPCI()
                                     printf("%x I/O ",  pciDev_Array[number].bar[i].baseAddress & 0xFFFC);
                                 }
 
-                                // check Memory Size 
+                                // check Memory Size
                                 cli();
                                 pci_config_write_dword  (bus, device, func, PCI_BAR0 + 4*i, 0xFFFFFFFF);
                                 pciBar = pci_config_read(bus, device, func, PCI_BAR0 + 4*i);
                                 pci_config_write_dword  (bus, device, func, PCI_BAR0 + 4*i, pciDev_Array[number].bar[i].baseAddress);
                                 sti();
                                 pciDev_Array[number].bar[i].memorySize = (~pciBar | 0x0F) + 1;
-                                printf("sz:%d ", pciDev_Array[number].bar[i].memorySize);                                
+                                printf("sz:%d ", pciDev_Array[number].bar[i].memorySize);
 
                                 /// EHCI Data
                                 if (pciDev_Array[number].interfaceID == 0x20   // EHCI
@@ -232,10 +236,11 @@ void listPCI()
                                 }
                             } /// if USB
                         } // for
+                        */
+
                     } // if
 
                     printf("\n");
-
 
                     /// RTL 8139 network card
                     if ((pciDev_Array[number].deviceID == 0x8139))

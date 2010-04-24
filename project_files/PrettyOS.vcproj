@@ -220,6 +220,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\kernel\include\usb_hc.h"
+					>
+				</File>
+				<File
 					RelativePath="..\kernel\include\util.h"
 					>
 				</File>
@@ -429,6 +433,10 @@
 				</File>
 				<File
 					RelativePath="..\kernel\usb2.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\usb_hc.c"
 					>
 				</File>
 				<File

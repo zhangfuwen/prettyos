@@ -37,7 +37,6 @@ struct pciBasicAddressRegister
 
 typedef struct pciBasicAddressRegister pciBar_t;
 
-
 struct pciDev
 {
    uint8_t   number;
