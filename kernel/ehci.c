@@ -37,6 +37,26 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 bool USBtransferFlag; // switch on/off tests for USB-Transfer
 bool enabledPortFlag; // port enabled
 
+void ehci_install(uint32_t num, uint32_t i)
+{
+	uintptr_t bar_phys = pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0;
+
+    uintptr_t bar = (uintptr_t) paging_acquire_pcimem(bar_phys);
+    uintptr_t offset = bar_phys%PAGESIZE;
+    printf("\nEHCI_MMIO %X mapped to virt addr %X, offset: %x\n", bar_phys, bar, offset);
+
+    if (!EHCIflag) // only the first EHCI is used
+    {
+        ODA.pciEHCInumber = num; /// TODO: implement for more than one EHCI
+        EHCIflag = true; // only the first EHCI is used
+        if(ODA.pciEHCInumber)
+        {
+            addEvent(&EHCI_INIT);
+        }
+        analyzeEHCI(bar,offset); // get data (capregs, opregs)
+    }
+}
+
 void ehci_init()
 {
     create_cthread(&startEHCI, "EHCI");

@@ -69,7 +69,7 @@ struct usb2_interfaceDescriptor
 
 struct usb2_endpointDescriptor
 {
-   uint8_t  length;            // 9
+   uint8_t  length;            // 7
    uint8_t  descriptorType;    // 5
    uint8_t  endpointAddress;
    uint8_t  attributes;

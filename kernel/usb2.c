@@ -111,14 +111,16 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     performAsyncScheduler();
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 	
-    #ifdef _USB_DIAGNOSIS_
-	  showPacket(DataQTDpage0,32);
-    #endif
+
 	
     // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
 	uintptr_t addrPointer = (uintptr_t)DataQTDpage0;
     uintptr_t lastByte    = addrPointer + (*(uint16_t*)(addrPointer+2)); // totalLength (WORD)
-	// printf("\nlastByte: %X\n",lastByte); // test
+    // printf("\nlastByte: %X\n",lastByte); // test    
+    
+    #ifdef _USB_DIAGNOSIS_
+	  showPacket(DataQTDpage0,(*(uint16_t*)(addrPointer+2))); 
+    #endif
 	
 	while(addrPointer<lastByte)
 	{

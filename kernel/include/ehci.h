@@ -233,6 +233,7 @@ struct ehci_request
     uint16_t length;
 } __attribute__((packed));
 
+void ehci_install(uint32_t num, uint32_t i);
 void ehci_init();
 void ehci_portcheck();
 void ehci_handler(registers_t* r);
