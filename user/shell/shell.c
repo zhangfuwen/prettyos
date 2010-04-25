@@ -38,6 +38,7 @@ void drawEntry(const char* entry)
 
 int main()
 {
+	setScrollField(0, 39);
     char entry[MAX_CHAR_PER_LINE+1];
     char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1];
     int curEntry = -1;
@@ -60,7 +61,6 @@ int main()
         while (true)
         {
             showInfo(1); // the train goes on...
-            printLine("--------------------------------------------------------------------------------", 42, 7); // Draw separation between Info-area and Shell
 
             input = getch();
 

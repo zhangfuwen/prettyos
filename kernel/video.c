@@ -13,6 +13,8 @@
 
 uint16_t* vidmem = (uint16_t*) 0xB8000;
 
+char infoBar[3][81]; // Infobar with 3 lines and 80 columns
+
 static const uint8_t LINES      = 50;
 static const uint8_t USER_BEGIN =  2; // Reserving Titlebar +Separation
 static const uint8_t USER_END   = 48; // Reserving Statusbar+Separation
@@ -169,6 +171,10 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     }
 }
 
+void writeInfo(uint8_t line, char* content) {
+	strncpy(infoBar[line], content, 80);
+}
+
 void refreshUserScreen()
 {
     // Printing titlebar
@@ -188,8 +194,22 @@ void refreshUserScreen()
         kputs(Buffer);
     }
     kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
-    // copying content of visible console to the video-ram
-    memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * USER_LINES*2);
+	if(reachableConsoles[displayedConsole]->showInfobar)
+	{
+		// copying content of visible console to the video-ram
+		memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * (USER_LINES-4) * 2);
+		memsetw(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS); // Clearing info-area
+		kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
+		kprintf(infoBar[0], 45, 14);
+		kprintf(infoBar[1], 46, 14);
+		kprintf(infoBar[2], 47, 14);
+	}
+	else
+	{
+		// copying content of visible console to the video-ram
+		memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * USER_LINES*2);
+	}
+    kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
     update_cursor();
 }
 

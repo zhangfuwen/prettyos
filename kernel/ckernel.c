@@ -20,7 +20,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.404";
+const char* version = "0.0.0.405";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -183,9 +183,6 @@ int main()
 			{
 				ODA.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
 			}
-
-            // draw separation line
-            kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
 
             // draw status bar with date & time and frequency
             getCurrentDateAndTime(DateAndTime);

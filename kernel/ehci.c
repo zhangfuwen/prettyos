@@ -11,6 +11,7 @@
 #include "task.h"
 #include "usb2.h"
 #include "event_list.h"
+#include "video.h"
 #include "irq.h"
 #include "video.h"
 
@@ -587,11 +588,9 @@ void showPORTSC()
             }
             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
 
-            uint8_t color = 14;
-            cprintf("                                                                              ",46-3,color);
-            cprintf("Port: %i, device %s", 46-3, color, j+1, PortStatus); // output to info screen area
-            cprintf("                                                                              ",47-3,color);
-            cprintf("                                                                              ",48-3,color);
+			char str[81];
+			sprintf(str, "Port: %i, device %s", j+1, PortStatus);
+            writeInfo(0, str);
 
             // beep(1000,100);
         }
@@ -600,7 +599,7 @@ void showPORTSC()
 
 void portCheck()
 {
-    setScrollField(0,41); // protect console against info area
+    showInfobar(true); // protect console against info area
 	showPORTSC(); // with resetPort(j) and checkPortLineStatus(j), if PORTSC: 1005h
     settextcolor(13,0);
     printf("\n>>> Press key to close this console. <<<");

@@ -20,7 +20,8 @@ void kernel_console_init()
     current_console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
     console_init(current_console, "");
     reachableConsoles[KERNELCONSOLE_ID] = current_console;
-    current_console->SCROLL_END = 39;
+    current_console->SCROLL_END = 42;
+	current_console->showInfobar = true;
 }
 
 void console_init(console_t* console, const char* name)
@@ -32,6 +33,7 @@ void console_init(console_t* console, const char* name)
     console->attrib       = 0x0F;
     //console->SCROLL_BEGIN = 0;
     console->SCROLL_END   = USER_LINES;
+	console->showInfobar = false;
     strcpy(console->name, name);
     memsetw (console->vidmem, 0x20 | (console->attrib << 8), COLUMNS * USER_LINES);
     // Setup the keyqueue
@@ -62,6 +64,14 @@ void setScrollField(uint8_t begin, uint8_t end)
 {
     //current_console->SCROLL_BEGIN = begin;
     current_console->SCROLL_END = end;
+	scroll();
+}
+
+void showInfobar(bool show)
+{
+	current_console->showInfobar = show;
+	current_console->SCROLL_END = min(current_console->SCROLL_END, 42);
+    refreshUserScreen();
 }
 
 void clear_console(uint8_t backcolor)
