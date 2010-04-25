@@ -677,7 +677,7 @@ void checkPortLineStatus(uint8_t j)
                  printf("\n");
                #endif
 
-                 usbTransferDevice(devAddr,0); // device address, endpoint
+                 usbTransferDevice(devAddr); // device address, endpoint=0
                
                #ifdef _USB_DIAGNOSIS_    
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
@@ -692,7 +692,7 @@ void checkPortLineStatus(uint8_t j)
                  printf("\n");
                #endif
 
-                 usbTransferConfig(devAddr,0); // device address, endpoint 0
+                 usbTransferConfig(devAddr); // device address, endpoint 0
  
                #ifdef _USB_DIAGNOSIS_      
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
@@ -707,7 +707,7 @@ void checkPortLineStatus(uint8_t j)
                  printf("\n");
                #endif
 
-				 usbTransferString(devAddr,0); // device address, endpoint 0
+				 usbTransferString(devAddr); // device address, endpoint 0
                
                #ifdef _USB_DIAGNOSIS_      
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
@@ -716,7 +716,7 @@ void checkPortLineStatus(uint8_t j)
 				 showUSBSTS();
                #endif
 			
-				 for(int k=1; k<4;k++) // fetch 3 strings
+			     for(int k=1; k<4;k++) // fetch 3 strings
 				 {
    				   #ifdef _USB_DIAGNOSIS_    
 					 settextcolor(13,0);
@@ -724,17 +724,81 @@ void checkPortLineStatus(uint8_t j)
                      settextcolor(15,0);
                      while(!checkKQ_and_return_char());
                      printf("\n");
-                  #endif					 
+                   #endif					 
 
-					 usbTransferStringUnicode(devAddr,0,k);
+					 usbTransferStringUnicode(devAddr,k);
                   
-                  #ifdef _USB_DIAGNOSIS_    					
+                   #ifdef _USB_DIAGNOSIS_    					
 					 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
 				     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                      printf("\nIO   : "); showStatusbyteQTD(DataQTD);
 				     showUSBSTS();
-                  #endif 
+                   #endif 
 				 }
+
+				 printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
+				 printf("\n\n\n");
+				 
+                 #ifdef _USB_DIAGNOSIS_    
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
+				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
+                 #endif
+
+				 usbTransferSetConfiguration(devAddr, 2);
+                 #ifdef _USB_DIAGNOSIS_               
+				    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                    showUSBSTS();					
+                 #endif
+
+                 printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
+				 printf("\n\n\n");
+				 
+                 #ifdef _USB_DIAGNOSIS_    
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+				 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
+                 #endif
+
+				 usbTransferSetConfiguration(devAddr, 1);
+                 #ifdef _USB_DIAGNOSIS_               
+				    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                    showUSBSTS();
+				 #endif
+
+				 printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
+				 printf("\n\n\n");
+				 
+                 #ifdef _USB_DIAGNOSIS_    
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+                 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
+				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
+                 #endif
+
              }
         }
       }

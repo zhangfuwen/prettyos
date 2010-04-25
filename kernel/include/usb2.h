@@ -92,10 +92,12 @@ struct usb2_stringDescriptorUnicode
 }__attribute__((packed));
 
 uint8_t usbTransferEnumerate(uint8_t j);
-void usbTransferDevice(uint32_t device, uint32_t endpoint);
-void usbTransferConfig(uint32_t device, uint32_t endpoint);
-void usbTransferString(uint32_t device, uint32_t endpoint);
-void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t stringIndex);
+void usbTransferDevice(uint32_t device);
+void usbTransferConfig(uint32_t device);
+void usbTransferString(uint32_t device);
+void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex);
+void usbTransferSetConfiguration(uint32_t device, uint32_t configuration);
+uint8_t usbTransferGetConfiguration(uint32_t device);
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);

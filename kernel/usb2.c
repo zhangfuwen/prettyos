@@ -66,7 +66,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
 	return new_address; // new_address
 }
 
-void usbTransferDevice(uint32_t device, uint32_t endpoint)
+void usbTransferDevice(uint32_t device)
 {
     #ifdef _USB_DIAGNOSIS_
 	  settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR device, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
@@ -81,7 +81,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
     // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0); // endpoint 0
 
     performAsyncScheduler();
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
@@ -91,7 +91,7 @@ void usbTransferDevice(uint32_t device, uint32_t endpoint)
     showDevice( &usbDevices[device] );
 }
 
-void usbTransferConfig(uint32_t device, uint32_t endpoint)
+void usbTransferConfig(uint32_t device)
 {
     #ifdef _USB_DIAGNOSIS_
 	  settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR config, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
@@ -106,12 +106,10 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
     SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, PAGESIZE); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0); // endpoint 0
 
     performAsyncScheduler();
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
-	
-
 	
     // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
 	uintptr_t addrPointer = (uintptr_t)DataQTDpage0;
@@ -170,7 +168,7 @@ void usbTransferConfig(uint32_t device, uint32_t endpoint)
 	}
 }
 
-void usbTransferString(uint32_t device, uint32_t endpoint)
+void usbTransferString(uint32_t device)
 {
     #ifdef _USB_DIAGNOSIS_
 	  settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR string, dev: %d endpoint: %d languageIDs", device, endpoint); settextcolor(15,0);
@@ -185,7 +183,7 @@ void usbTransferString(uint32_t device, uint32_t endpoint)
     SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, 0, 0, 12); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
 
     // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0); // endpoint 0
 
     performAsyncScheduler();
 		
@@ -195,7 +193,7 @@ void usbTransferString(uint32_t device, uint32_t endpoint)
 	showStringDescriptor((struct usb2_stringDescriptor*)DataQTDpage0);
 }
 
-void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t stringIndex)
+void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 {
 	#ifdef _USB_DIAGNOSIS_
 	  settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR string, dev: %d endpoint: %d stringIndex: %d", device, endpoint,stringIndex); settextcolor(15,0);
@@ -210,7 +208,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
     SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 64); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, stringIndex, languageID, length
 
     // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, endpoint);
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0); // endpoint 0
 
     performAsyncScheduler();
     	
@@ -219,6 +217,49 @@ void usbTransferStringUnicode(uint32_t device, uint32_t endpoint, uint32_t strin
     #endif
 
 	showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0);
+}
+
+// http://www.lowlevel.eu/wiki/USB#SET_CONFIGURATION
+void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
+{
+    //#ifdef _USB_DIAGNOSIS_
+	  settextcolor(11,0); printf("\nUSB2: SET_CONFIGURATION %d",configuration); settextcolor(15,0);
+    //#endif    
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // Create QTDs (in reversed order)
+    void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
+    SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0); // endpoint 0
+
+	performAsyncScheduler();
+}
+
+uint8_t usbTransferGetConfiguration(uint32_t device)
+{
+    //#ifdef _USB_DIAGNOSIS_
+	  settextcolor(11,0); printf("\nUSB2: GET_CONFIGURATION"); settextcolor(15,0);
+    //#endif    
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // Create QTDs (in reversed order)
+    void* next = createQTD_IO(0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 1);  // IN DATA1, 1 byte
+	SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 8, 0, 0, 0, 1); // SETUP DATA0, 8 byte, request type, GET_CONFIGURATION(9), hi, lo, index=0, length=1
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0); // endpoint 0
+
+	performAsyncScheduler();
+    
+	uint8_t configuration = *((uint8_t*)DataQTDpage0);
+	return configuration;
 }
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
@@ -370,7 +411,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
                putch(d->widechar[i]);
 		   }
        }
-	   printf("\n\n\n\n"); // can be deleted by "Port: ..., device attached" <--- TODO
+	   printf("\n"); 
        settextcolor(15,0);
     }
 }
