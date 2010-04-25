@@ -281,15 +281,41 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     // bulk transfer
 	// Create QTDs (in reversed order)
     void* next     = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
-    next = DataQTD = createQTD_MSD((uint32_t)next, 0, 0x12, 0x21, 0xFF, 0, 0, numInterface, 0);	
+    next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 0x12, 0x21, 0xFF, 0, 0, numInterface, 0);	
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 00100001b     11111111b 0000h  Interface 0000h     none
 	
 	// Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, 0, 64); // endpoint 0 
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0 
 
     performAsyncScheduler();
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+}
+
+// Bulk-Only Mass Storage Reset
+uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
+{
+    #ifdef _USB_DIAGNOSIS_
+	settextcolor(11,0); printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %d interface: %d", device, numInterface); settextcolor(15,0);
+    #endif
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // bulk transfer
+	// Create QTDs (in reversed order)
+    void* next      = createQTD_IO(           0x1,  OUT, 1, 0); // Handshake is the opposite direction of Data
+    next = DataQTD  = createQTD_IO( (uint32_t)next, OUT, 1, 1);  // IN DATA1, 1 byte
+	next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 0x12, 0xA1, 0xFE, 0, 0, numInterface, 1);	
+    // bmRequestType bRequest  wValue wIndex    wLength   Data
+    // 10100001b     11111110b 0000h  Interface 0001h     1 byte
+	
+	// Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0 
+
+    performAsyncScheduler();
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+	return *((uint8_t*)DataQTDpage0);
 }
 
 /*

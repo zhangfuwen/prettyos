@@ -112,7 +112,9 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration);
 uint8_t usbTransferGetConfiguration(uint32_t device);
 
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
-void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCSIcommand); /// TEST SCSI to MSD
+uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
+
+//void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCSIcommand); /// TEST SCSI to MSD
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);

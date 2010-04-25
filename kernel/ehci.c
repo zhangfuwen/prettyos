@@ -180,8 +180,8 @@ void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t t
     void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
     memset(data,0,PAGESIZE);
 
-    SetupQTDpage0  = (uintptr_t)data;
-
+	SetupQTDpage0  = (uintptr_t)data;
+    
     struct ehci_request* request = (struct ehci_request*)data;
     request->type    = type;    
     request->request = req;     
@@ -797,7 +797,7 @@ void checkPortLineStatus(uint8_t j)
                     showUSBSTS();					
                  #endif
 
-                 printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
+                 printf(" %d",usbTransferGetConfiguration(devAddr));
 				 				 
                  #ifdef _USB_DIAGNOSIS_    
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
@@ -817,6 +817,11 @@ void checkPortLineStatus(uint8_t j)
                  printf(" ==> BulkOnlyMassStorageReset");
 				 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); 
                  showUSBSTS();
+                  
+				 uint8_t maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
+                 printf("\nMax. Logical Unit Numbers: %d",maxLUN);
+                 showUSBSTS();
+
 
 				 /*
 				 /// TEST MSD SCSI USB-Stick
