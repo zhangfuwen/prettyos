@@ -12,6 +12,7 @@
 #include "usb2.h"
 #include "event_list.h"
 #include "irq.h"
+#include "video.h"
 
 /// TEST
 /// const uint8_t PORTRESET = 3; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port
@@ -599,7 +600,8 @@ void showPORTSC()
 
 void portCheck()
 {
-    showPORTSC(); // with resetPort(j) and checkPortLineStatus(j), if PORTSC: 1005h
+    setScrollField(0,41); // protect console against info area
+	showPORTSC(); // with resetPort(j) and checkPortLineStatus(j), if PORTSC: 1005h
     settextcolor(13,0);
     printf("\n>>> Press key to close this console. <<<");
     settextcolor(15,0);
@@ -737,7 +739,6 @@ void checkPortLineStatus(uint8_t j)
 				 }
 
 				 printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
-				 printf("\n\n\n");
 				 
                  #ifdef _USB_DIAGNOSIS_    
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
@@ -760,8 +761,7 @@ void checkPortLineStatus(uint8_t j)
                  #endif
 
                  printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
-				 printf("\n\n\n");
-				 
+				 				 
                  #ifdef _USB_DIAGNOSIS_    
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
 				 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
@@ -783,8 +783,7 @@ void checkPortLineStatus(uint8_t j)
 				 #endif
 
 				 printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
-				 printf("\n\n\n");
-				 
+				 				 
                  #ifdef _USB_DIAGNOSIS_    
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\ndata packet: "); showPacket(DataQTDpage0,1);
@@ -798,7 +797,6 @@ void checkPortLineStatus(uint8_t j)
                  while(!checkKQ_and_return_char());
                  printf("\n");
                  #endif
-
              }
         }
       }
