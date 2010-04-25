@@ -39,6 +39,9 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 bool USBtransferFlag; // switch on/off tests for USB-Transfer
 bool enabledPortFlag; // port enabled
 
+// usb devices list
+extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
+
 void ehci_install(uint32_t num, uint32_t i)
 {
 	uintptr_t bar_phys = pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0;
@@ -68,7 +71,7 @@ void ehci_portcheck()
     create_cthread(&portCheck, "EHCI Ports");
 }
 
-void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint)
+void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
     struct ehci_qhd* head = (struct ehci_qhd*)address;
     memset(address, 0, sizeof(struct ehci_qhd));
@@ -80,7 +83,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     head->endpointSpeed          =   2;              // 00b = full speed; 01b = low speed; 10b = high speed
     head->dataToggleControl      =   1;              // Get the Data Toggle bit out of the included qTD
     head->H                      =   H;
-    head->maxPacketLength        =  64;              // It's 64 bytes for a control transfer to a high speed device.
+    head->maxPacketLength        =   packetSize;     // It's 64 bytes for a control transfer to a high speed device.
     head->controlEndpointFlag    =   0;              // Only used if Endpoint is a control endpoint and not high speed
     head->nakCountReload         =   0;              // This value is used by HC to reload the Nak Counter field.
     head->interruptScheduleMask  =   0;              // not used for async schedule
@@ -149,6 +152,57 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
     td->extend4 = 0x0;
 
     return address;
+}
+
+void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
+{
+    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // Can be changed to 32 Byte alignment
+    struct ehci_qtd* td = (struct ehci_qtd*)address;
+
+    if (next != 0x1)
+    {
+        uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
+        td->next = phys;
+    }
+    else
+    {
+        td->next = 0x1;
+    }
+    td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
+    td->token.status       = 0x80;       // This will be filled by the Host Controller
+    td->token.pid          = 0x2;        // SETUP = 2
+    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
+    td->token.bytes        = tokenBytes; // dependent on transfer
+    td->token.dataToggle   = toggle;     // Should be toggled every list entry
+
+    void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
+    memset(data,0,PAGESIZE);
+
+    SetupQTDpage0  = (uintptr_t)data;
+
+    struct ehci_request* request = (struct ehci_request*)data;
+    request->type    = type;    
+    request->request = req;     
+    request->valueHi = hiVal;   
+    request->valueLo = loVal;   
+    request->index   = index;   
+    request->length  = length;  
+
+    uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
+    td->buffer0 = dataPhysical;
+    td->buffer1 = 0x0;
+    td->buffer2 = 0x0;
+    td->buffer3 = 0x0;
+    td->buffer4 = 0x0;
+    td->extend0 = 0x0;
+    td->extend1 = 0x0;
+    td->extend2 = 0x0;
+    td->extend3 = 0x0;
+    td->extend4 = 0x0;    
+
+	return address;
 }
 
 void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
@@ -737,23 +791,7 @@ void checkPortLineStatus(uint8_t j)
                    #endif 
 				 }
 
-				 printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
-				 
-                 #ifdef _USB_DIAGNOSIS_    
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
-                 #endif
-
-				 usbTransferSetConfiguration(devAddr, 2);
+				 usbTransferSetConfiguration(devAddr, 1); // set first configuration
                  #ifdef _USB_DIAGNOSIS_               
 				    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                     showUSBSTS();					
@@ -774,19 +812,19 @@ void checkPortLineStatus(uint8_t j)
                  while(!checkKQ_and_return_char());
                  printf("\n");
                  #endif
+                  
+				 printf("\ndev: %d MSDinterface: %d",devAddr, usbDevices[devAddr].numInterfaceMSD);
+                 printf(" ==> BulkOnlyMassStorageReset");
+				 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); 
+                 showUSBSTS();
 
-				 usbTransferSetConfiguration(devAddr, 1);
-                 #ifdef _USB_DIAGNOSIS_               
-				    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                    showUSBSTS();
-				 #endif
-
-				 printf("\nconfig: %d",usbTransferGetConfiguration(devAddr));
-				 				 
-                 #ifdef _USB_DIAGNOSIS_    
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+				 /*
+				 /// TEST MSD SCSI USB-Stick
+				 uint8_t endpointIN = 1; // TODO: get it from config
+				 usbTransferSCSIcommandToMSD(devAddr, endpointIN, 0x00);
+				 
+                 // #ifdef _USB_DIAGNOSIS_    
+				 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
                  printf("\nIO:    "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
 
@@ -795,7 +833,8 @@ void checkPortLineStatus(uint8_t j)
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
                  printf("\n");
-                 #endif
+                 // #endif
+				 */
              }
         }
       }

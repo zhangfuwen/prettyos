@@ -21,6 +21,11 @@ typedef struct usb2_Device
     uint8_t  productStringID;
     uint8_t  serNumberStringID;
     uint8_t  numConfigurations;
+
+	// MSD specific
+	uint8_t  numInterfaceMSD;
+    uint8_t  numEndpointInMSD;
+	uint8_t  numEndpointOutMSD;
 }   
 usb2_Device_t;
 
@@ -91,6 +96,13 @@ struct usb2_stringDescriptorUnicode
    uint8_t  widechar[30];      // n = 30 test-wise
 }__attribute__((packed));
 
+
+struct usb2_SCSIcommand
+{
+    uint8_t  commandByte[6];    
+} __attribute__((packed));
+
+
 uint8_t usbTransferEnumerate(uint8_t j);
 void usbTransferDevice(uint32_t device);
 void usbTransferConfig(uint32_t device);
@@ -98,6 +110,9 @@ void usbTransferString(uint32_t device);
 void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex);
 void usbTransferSetConfiguration(uint32_t device, uint32_t configuration);
 uint8_t usbTransferGetConfiguration(uint32_t device);
+
+void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
+void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCSIcommand); /// TEST SCSI to MSD
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);
