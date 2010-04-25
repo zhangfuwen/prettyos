@@ -813,24 +813,22 @@ void checkPortLineStatus(uint8_t j)
                  printf("\n");
                  #endif
                   
-				 printf("\ndev: %d MSDinterface: %d",devAddr, usbDevices[devAddr].numInterfaceMSD);
-                 printf(" ==> BulkOnlyMassStorageReset");
-				 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); 
-                 showUSBSTS();
-                  
 				 uint8_t maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
                  printf("\nMax. Logical Unit Numbers: %d",maxLUN);
                  showUSBSTS();
 
+			     printf("\ndev: %d MSDinterface: %d",devAddr, usbDevices[devAddr].numInterfaceMSD);
+                 printf(" ==> BulkOnlyMassStorageReset");
+				 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); 
+                 showUSBSTS();
 
-				 /*
-				 /// TEST MSD SCSI USB-Stick
-				 uint8_t endpointIN = 1; // TODO: get it from config
-				 usbTransferSCSIcommandToMSD(devAddr, endpointIN, 0x00);
+                 /// TEST MSD SCSI USB-Stick
+				 uint8_t endpointIN  = 1; // TODO: get it from config
+                 uint8_t endpointOUT = 2; // TODO: get it from config
+				 usbTransferSCSIcommandToMSD(devAddr, endpointOUT, 0x00);
 				 
                  // #ifdef _USB_DIAGNOSIS_    
-				 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
-                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
 
 				 settextcolor(13,0);
@@ -838,8 +836,20 @@ void checkPortLineStatus(uint8_t j)
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
                  printf("\n");
-                 // #endif
-				 */
+                 // #endif	
+
+				 usbTransferGetAnswerToCommandMSD(devAddr, endpointIN);
+
+                 // #ifdef _USB_DIAGNOSIS_    
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
+                 // #endif	
              }
         }
       }

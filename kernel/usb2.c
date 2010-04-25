@@ -318,13 +318,11 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 	return *((uint8_t*)DataQTDpage0);
 }
 
-/*
-/// TEST Sending SCSI command to Mass Storage Device (only TEST, does not yet work, has to be optimized)
 /// http://en.wikipedia.org/wiki/SCSI_command
 void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCSIcommand)
 {
     #ifdef _USB_DIAGNOSIS_
-	settextcolor(11,0); printf("\nUSB2: GET_DESCRIPTOR device, dev: %d endpoint: %d SCSI command: %y", device, endpoint, SCSIcommand); settextcolor(15,0);
+	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpoint, SCSIcommand); settextcolor(15,0);
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
@@ -332,32 +330,65 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCS
 
     // bulk transfer
 	// Create QTDs (in reversed order)
-    void* next   = createQTD_IO(               0x1,  IN, 1, 0); // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD   = createQTD_IO((uint32_t)next, OUT, 0, 6); // OUT DATA0, 6 byte
+    void* next = createQTD_IO(               0x1,  IN, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, OUT, 0, 31); // OUT DATA0, 31 byte
     
     // http://en.wikipedia.org/wiki/SCSI_CDB
-	struct usb2_SCSIcommand* SCSIcmd = (struct usb2_SCSIcommand*)DataQTD;
+	struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
 	switch (SCSIcommand)
 	{
 	case 0x00: // http://en.wikipedia.org/wiki/SCSI_Test_Unit_Ready_Command
-        SCSIcmd->commandByte[0] = 0; 
-		SCSIcmd->commandByte[1] = 0;
-		SCSIcmd->commandByte[2] = 0;
-		SCSIcmd->commandByte[3] = 0;
-		SCSIcmd->commandByte[4] = 0;
-		SCSIcmd->commandByte[5] = 0;
+        
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 0;
+	    cbw->CBWFlags              = 0x00; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                = 0; // only bits 3:0
+	    cbw->CBWCBLength           = 6; // only bits 4:0 
+		cbw->commandByte[0] = 0; 
+		cbw->commandByte[1] = 0;
+		cbw->commandByte[2] = 0;
+		cbw->commandByte[3] = 0;
+		cbw->commandByte[4] = 0;
+		cbw->commandByte[5] = 0;
 	    break;
+		
 	}
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN for MSD
 
     performAsyncScheduler();
-	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
-
-	showPacket(DataQTDpage0,6);   
+    printf("\n");
+	showPacket(DataQTDpage0,31);
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");	   
 }
-*/
+
+void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpoint)
+{
+    #ifdef _USB_DIAGNOSIS_
+	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpoint, SCSIcommand); settextcolor(15,0);
+    #endif
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // bulk transfer
+	// Create QTDs (in reversed order)
+    void* next = createQTD_IO(               0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  0, 13); // IN DATA0, 512 byte
+    
+	(*(((uint32_t*)DataQTDpage0)+0)) = 0x53425355; // magic
+	(*(((uint32_t*)DataQTDpage0)+1)) = 0x00000000; // set to zero (CSWTag)
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN for MSD
+
+    performAsyncScheduler();
+    printf("\n");
+	showPacket(DataQTDpage0,13);
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");	   
+}
 
 
 
