@@ -39,7 +39,7 @@ static void performAsyncScheduler()
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-	
+
 	sleepMilliSeconds(100);
 }
 
@@ -62,7 +62,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0,64);
 
 	performAsyncScheduler();
-    
+
 	return new_address; // new_address
 }
 
@@ -110,16 +110,16 @@ void usbTransferConfig(uint32_t device)
 
     performAsyncScheduler();
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
-	
+
     // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
 	uintptr_t addrPointer = (uintptr_t)DataQTDpage0;
     uintptr_t lastByte    = addrPointer + (*(uint16_t*)(addrPointer+2)); // totalLength (WORD)
-    // printf("\nlastByte: %X\n",lastByte); // test    
-    
+    // printf("\nlastByte: %X\n",lastByte); // test
+
     #ifdef _USB_DIAGNOSIS_
-	  showPacket(DataQTDpage0,(*(uint16_t*)(addrPointer+2))); 
+	  showPacket(DataQTDpage0,(*(uint16_t*)(addrPointer+2)));
     #endif
-	
+
 	while(addrPointer<lastByte)
 	{
 		bool found = false;
@@ -130,16 +130,16 @@ void usbTransferConfig(uint32_t device)
 			addrPointer += 9;
 			found = true;
 		}
-	    
+
 		if ( ((*(uint8_t*)addrPointer) == 9) && ((*(uint8_t*)(addrPointer+1)) == 4) ) // length, type
 		{
 			showInterfaceDescriptor((struct usb2_interfaceDescriptor*)addrPointer);
-			
+
 			if (((struct usb2_interfaceDescriptor*)addrPointer)->interfaceClass == 8)
 			{
                 // store interface number for mass storage transfers
 				usbDevices[device].numInterfaceMSD = ((struct usb2_interfaceDescriptor*)addrPointer)->interfaceNumber;
-			}			
+			}
 			addrPointer += 9;
 			found = true;
 		}
@@ -147,10 +147,20 @@ void usbTransferConfig(uint32_t device)
 		if ( ((*(uint8_t*)addrPointer) == 7) && ((*(uint8_t*)(addrPointer+1)) == 5) ) // length, type
 		{
 			showEndpointDescriptor ((struct usb2_endpointDescriptor*)addrPointer);
+
+			// store endpoint numbers for IN/OUT mass storage transfers
+			if (((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80)
+			{
+			    usbDevices[device].numEndpointInMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
+			}
+			else
+			{
+			    usbDevices[device].numEndpointOutMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
+			}
 			addrPointer += 7;
 			found = true;
-		} 
-		
+		}
+
 		if ( ((*(uint8_t*)(addrPointer+1)) != 2 ) && ((*(uint8_t*)(addrPointer+1)) != 4 ) && ((*(uint8_t*)(addrPointer+1)) != 5 ) ) // length, type
 		{
 			settextcolor(9,0);
@@ -158,14 +168,14 @@ void usbTransferConfig(uint32_t device)
 			settextcolor(15,0);
 			addrPointer += *(uint8_t*)addrPointer;
 			found = true;
-		} 
-		
+		}
+
 		if (found == false)
 		{
 			printf("\nlength: %d type: %d not found\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
 			break;
 		}
-		
+
 		settextcolor(13,0);
         printf("\n>>> Press key to go on with data analysis from config descriptor. <<<");
         settextcolor(15,0);
@@ -192,7 +202,7 @@ void usbTransferString(uint32_t device)
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler();
-		
+
     #ifdef _USB_DIAGNOSIS_
 	  showPacket(DataQTDpage0,12);
     #endif
@@ -217,7 +227,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler();
-    	
+
     #ifdef _USB_DIAGNOSIS_
 	  showPacket(DataQTDpage0,64);
     #endif
@@ -230,7 +240,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
 {
     //#ifdef _USB_DIAGNOSIS_
 	  settextcolor(11,0); printf("\nUSB2: SET_CONFIGURATION %d",configuration); settextcolor(15,0);
-    //#endif    
+    //#endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
@@ -249,7 +259,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
 {
     //#ifdef _USB_DIAGNOSIS_
 	  settextcolor(11,0); printf("\nUSB2: GET_CONFIGURATION"); settextcolor(15,0);
-    //#endif    
+    //#endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
@@ -263,7 +273,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
 	performAsyncScheduler();
-    
+
 	uint8_t configuration = *((uint8_t*)DataQTDpage0);
 	return configuration;
 }
@@ -281,12 +291,12 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     // bulk transfer
 	// Create QTDs (in reversed order)
     void* next     = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
-    next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);	
+    next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 00100001b     11111111b 0000h  Interface 0000h     none
-	
+
 	// Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0 
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler();
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
@@ -306,12 +316,12 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 	// Create QTDs (in reversed order)
     void* next      = createQTD_IO(           0x1,  OUT, 1, 0); // Handshake is the opposite direction of Data
     next = DataQTD  = createQTD_IO( (uint32_t)next, IN, 1, 1);  // IN DATA1, 1 byte
-	next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);	
+	next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 10100001b     11111110b 0000h  Interface 0001h     1 byte
-	
+
 	// Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0 
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler();
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
@@ -330,38 +340,44 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCS
 
     // bulk transfer
 	// Create QTDs (in reversed order)
+
+    /*
     void* next = createQTD_IO(               0x1,  IN, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
     next = DataQTD = createQTD_IO((uint32_t)next, OUT, 0, 31); // OUT DATA0, 31 byte
-    
+    */
+
+    DataQTD = createQTD_IO(0x1, OUT, 0, 31); // OUT DATA0, 31 byte
+
     // http://en.wikipedia.org/wiki/SCSI_CDB
 	struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
 	switch (SCSIcommand)
 	{
 	case 0x00: // http://en.wikipedia.org/wiki/SCSI_Test_Unit_Ready_Command
-        
+
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
 	    cbw->CBWDataTransferLength = 0;
 	    cbw->CBWFlags              = 0x00; // Out: 0x00  In: 0x80
 	    cbw->CBWLUN                = 0; // only bits 3:0
-	    cbw->CBWCBLength           = 6; // only bits 4:0 
-		cbw->commandByte[0] = 0; 
+	    cbw->CBWCBLength           = 6; // only bits 4:0
+		cbw->commandByte[0] = 0;
 		cbw->commandByte[1] = 0;
 		cbw->commandByte[2] = 0;
 		cbw->commandByte[3] = 0;
 		cbw->commandByte[4] = 0;
 		cbw->commandByte[5] = 0;
 	    break;
-		
+
 	}
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN for MSD
 
     performAsyncScheduler();
+    sleepMilliSeconds(100); // extra time ?
     printf("\n");
 	showPacket(DataQTDpage0,31);
-	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");	   
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 
 void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpoint)
@@ -376,18 +392,21 @@ void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpoint)
     // bulk transfer
 	// Create QTDs (in reversed order)
     void* next = createQTD_IO(               0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  0, 13); // IN DATA0, 512 byte
-    
+    next = DataQTD = createQTD_IO((uint32_t)next, IN,  0, 13); // IN DATA0, 13 byte
+
 	(*(((uint32_t*)DataQTDpage0)+0)) = 0x53425355; // magic
-	(*(((uint32_t*)DataQTDpage0)+1)) = 0x00000000; // set to zero (CSWTag)
+	(*(((uint32_t*)DataQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
+	(*(((uint32_t*)DataQTDpage0)+2)) = 0xAAAAAAAA; //
+	(*(((uint32_t*)DataQTDpage0)+3)) = 0xFFFFFFAA; //
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN for MSD
 
     performAsyncScheduler();
+    sleepMilliSeconds(100); // extra time ?
     printf("\n");
-	showPacket(DataQTDpage0,13);
-	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");	   
+	showPacket(DataQTDpage0,16); // three bytes more (FF) for control
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 
 
@@ -423,7 +442,7 @@ void showDevice(usb2_Device_t* usbDev)
        printf("product:           %x\n",    usbDev->productStringID);
        printf("serial number:     %x\t",    usbDev->serNumberStringID);
        printf("number of config.: %d\n",    usbDev->numConfigurations); // number of possible configurations
-       printf("numInterfaceMSD:   %d\n",    usbDev->numInterfaceMSD);   
+       printf("numInterfaceMSD:   %d\n",    usbDev->numInterfaceMSD);
        settextcolor(15,0);
 }
 
@@ -497,12 +516,12 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
     if (d->length)
     {
        settextcolor(10,0);
-      
+
        #ifdef _USB_DIAGNOSIS_
 	   printf("\nlength:            %d\t\t",  d->length);     // 12
        printf("descriptor type:   %d\n",  d->descriptorType); //  3
        #endif
-       
+
 	   for(int i=0; i<10;i++)
        {
            if (d->languageID[i])
@@ -527,13 +546,13 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
     if (d->length)
     {
        settextcolor(10,0);
-       
+
        #ifdef _USB_DIAGNOSIS_
-	     printf("\nlength:            %d\t\t",  d->length);     
+	     printf("\nlength:            %d\t\t",  d->length);
          printf("descriptor type:   %d\n",  d->descriptorType); // 3
          printf("string: ");
 	   #endif
-	   
+
 	   settextcolor(14,0);
 	   for(int i=0; i<(d->length-2);i+=2) // show only low value of Unicode character
        {
@@ -542,7 +561,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
                putch(d->widechar[i]);
 		   }
        }
-	   printf("\n"); 
+	   printf("\n");
        settextcolor(15,0);
     }
 }

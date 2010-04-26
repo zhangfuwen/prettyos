@@ -181,14 +181,14 @@ void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t t
     memset(data,0,PAGESIZE);
 
 	SetupQTDpage0  = (uintptr_t)data;
-    
+
     struct ehci_request* request = (struct ehci_request*)data;
-    request->type    = type;    
-    request->request = req;     
-    request->valueHi = hiVal;   
-    request->valueLo = loVal;   
-    request->index   = index;   
-    request->length  = length;  
+    request->type    = type;
+    request->request = req;
+    request->valueHi = hiVal;
+    request->valueLo = loVal;
+    request->index   = index;
+    request->length  = length;
 
     uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
     td->buffer0 = dataPhysical;
@@ -200,7 +200,7 @@ void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t t
     td->extend1 = 0x0;
     td->extend2 = 0x0;
     td->extend3 = 0x0;
-    td->extend4 = 0x0;    
+    td->extend4 = 0x0;
 
 	return address;
 }
@@ -720,11 +720,11 @@ void checkPortLineStatus(uint8_t j)
                #endif
 
                  uint8_t devAddr = usbTransferEnumerate(j);
-               
-               #ifdef _USB_DIAGNOSIS_               
+
+               #ifdef _USB_DIAGNOSIS_
 				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  showUSBSTS();
-				 
+
 				 settextcolor(13,0);
                  printf("\n>>> Press key to go on with USB-Test. <<<");
                  settextcolor(15,0);
@@ -733,8 +733,8 @@ void checkPortLineStatus(uint8_t j)
                #endif
 
                  usbTransferDevice(devAddr); // device address, endpoint=0
-               
-               #ifdef _USB_DIAGNOSIS_    
+
+               #ifdef _USB_DIAGNOSIS_
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO:    "); showStatusbyteQTD(DataQTD);
@@ -748,8 +748,8 @@ void checkPortLineStatus(uint8_t j)
                #endif
 
                  usbTransferConfig(devAddr); // device address, endpoint 0
- 
-               #ifdef _USB_DIAGNOSIS_      
+
+               #ifdef _USB_DIAGNOSIS_
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(DataQTD);
@@ -763,43 +763,43 @@ void checkPortLineStatus(uint8_t j)
                #endif
 
 				 usbTransferString(devAddr); // device address, endpoint 0
-               
-               #ifdef _USB_DIAGNOSIS_      
+
+               #ifdef _USB_DIAGNOSIS_
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
 				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(DataQTD);
 				 showUSBSTS();
                #endif
-			
+
 			     for(int k=1; k<4;k++) // fetch 3 strings
 				 {
-   				   #ifdef _USB_DIAGNOSIS_    
+   				   #ifdef _USB_DIAGNOSIS_
 					 settextcolor(13,0);
                      printf("\n>>> Press key to go on with USB-Test. <<<");
                      settextcolor(15,0);
                      while(!checkKQ_and_return_char());
                      printf("\n");
-                   #endif					 
+                   #endif
 
 					 usbTransferStringUnicode(devAddr,k);
-                  
-                   #ifdef _USB_DIAGNOSIS_    					
+
+                   #ifdef _USB_DIAGNOSIS_
 					 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
 				     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                      printf("\nIO   : "); showStatusbyteQTD(DataQTD);
 				     showUSBSTS();
-                   #endif 
+                   #endif
 				 }
 
 				 usbTransferSetConfiguration(devAddr, 1); // set first configuration
-                 #ifdef _USB_DIAGNOSIS_               
+                 #ifdef _USB_DIAGNOSIS_
 				    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                    showUSBSTS();					
+                    showUSBSTS();
                  #endif
 
                  printf(" %d",usbTransferGetConfiguration(devAddr));
-				 				 
-                 #ifdef _USB_DIAGNOSIS_    
+
+                 #ifdef _USB_DIAGNOSIS_
 				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
 				 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
@@ -812,22 +812,23 @@ void checkPortLineStatus(uint8_t j)
                  while(!checkKQ_and_return_char());
                  printf("\n");
                  #endif
-                  
-				 uint8_t maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
-                 printf("\nMax. Logical Unit Numbers: %d",maxLUN);
+
+				 usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
+                 printf("\nMax. Logical Unit Numbers: %d",usbDevices[devAddr].maxLUN);
+
                  showUSBSTS();
 
 			     printf("\ndev: %d MSDinterface: %d",devAddr, usbDevices[devAddr].numInterfaceMSD);
                  printf(" ==> BulkOnlyMassStorageReset");
-				 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); 
+				 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD);
                  showUSBSTS();
 
                  /// TEST MSD SCSI USB-Stick
-				 uint8_t endpointIN  = 1; // TODO: get it from config
-                 uint8_t endpointOUT = 2; // TODO: get it from config
-				 usbTransferSCSIcommandToMSD(devAddr, endpointOUT, 0x00);
-				 
-                 // #ifdef _USB_DIAGNOSIS_    
+				 printf("\nendpOUT: %d  endpIN: %d",usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
+
+				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00);
+
+                 // #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
 
@@ -836,11 +837,11 @@ void checkPortLineStatus(uint8_t j)
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
                  printf("\n");
-                 // #endif	
+                 // #endif
 
-				 usbTransferGetAnswerToCommandMSD(devAddr, endpointIN);
+				 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
 
-                 // #ifdef _USB_DIAGNOSIS_    
+                 // #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
                  showUSBSTS();
 
@@ -849,7 +850,7 @@ void checkPortLineStatus(uint8_t j)
                  settextcolor(15,0);
                  while(!checkKQ_and_return_char());
                  printf("\n");
-                 // #endif	
+                 // #endif
              }
         }
       }

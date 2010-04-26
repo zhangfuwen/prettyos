@@ -21,6 +21,7 @@ typedef struct usb2_Device
     uint8_t  productStringID;
     uint8_t  serNumberStringID;
     uint8_t  numConfigurations;
+	uint8_t  maxLUN;
 
 	// MSD specific
 	uint8_t  numInterfaceMSD;
