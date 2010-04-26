@@ -826,6 +826,7 @@ void checkPortLineStatus(uint8_t j)
                  /// TEST MSD SCSI USB-Stick
 				 printf("\nendpOUT: %d  endpIN: %d",usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
 
+				 /*
 				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00);
 
                  // #ifdef _USB_DIAGNOSIS_
@@ -839,6 +840,46 @@ void checkPortLineStatus(uint8_t j)
                  printf("\n");
                  // #endif
 
+				 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
+
+                 // #ifdef _USB_DIAGNOSIS_
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
+                 // #endif
+				 */
+
+				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x28); // read(10)
+                 
+                 // #ifdef _USB_DIAGNOSIS_
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
+                 // #endif
+
+				 usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 512);
+                 
+				 // #ifdef _USB_DIAGNOSIS_
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 showUSBSTS();
+
+				 settextcolor(13,0);
+                 printf("\n>>> Press key to go on with USB-Test. <<<");
+                 settextcolor(15,0);
+                 while(!checkKQ_and_return_char());
+                 printf("\n");
+                 // #endif
+				 
 				 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
 
                  // #ifdef _USB_DIAGNOSIS_

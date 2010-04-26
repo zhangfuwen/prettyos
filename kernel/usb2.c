@@ -367,16 +367,58 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCS
 		cbw->commandByte[4] = 0;
 		cbw->commandByte[5] = 0;
 	    break;
+	
+	case 0x28: // http://en.wikipedia.org/wiki/SCSI_Read_Commands#Read_.2810.29
 
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 512;
+	    cbw->CBWFlags              = 0x00; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                =  0; // only bits 3:0
+	    cbw->CBWCBLength           = 10; // only bits 4:0
+		cbw->commandByte[0] = 0x28; // Operation code
+		cbw->commandByte[1] = 0;    // 7:5 LUN 	4 DPO  3 FUA  2:1 Reserved  0 RelAdr
+		cbw->commandByte[2] = 0;    // LBA
+		cbw->commandByte[3] = 0;    // LBA
+		cbw->commandByte[4] = 0;    // LBA
+		cbw->commandByte[5] = 0;    // LBA
+        cbw->commandByte[6] = 0;    // Reserved
+		cbw->commandByte[7] = 0x00; // Transfer length
+		cbw->commandByte[8] = 0x02; // Transfer length
+		cbw->commandByte[9] = 0;    // Control		
+	    break;
 	}
 
     // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN for MSD
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint OUT for MSD
 
     performAsyncScheduler();
     sleepMilliSeconds(100); // extra time ?
     printf("\n");
 	showPacket(DataQTDpage0,31);
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+}
+
+void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength)
+{
+    #ifdef _USB_DIAGNOSIS_
+	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpoint, SCSIcommand); settextcolor(15,0);
+    #endif
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // bulk transfer
+	// Create QTDs (in reversed order)
+    DataQTD = createQTD_IO(0x1, InOut, 1, TransferLength); // IN/OUT DATA1, ... byte
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN/OUT for MSD
+
+    performAsyncScheduler();
+    sleepMilliSeconds(100); // extra time ?
+    printf("\n");
+	showPacket(DataQTDpage0,TransferLength);
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 
