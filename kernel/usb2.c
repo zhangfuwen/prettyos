@@ -9,6 +9,7 @@
 #include "usb2.h"
 #include "console.h"
 #include "timer.h"
+#include "util.h"
 
 usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
@@ -278,30 +279,6 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
 	return configuration;
 }
 
-// Bulk-Only Mass Storage Reset
-void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
-{
-    #ifdef _USB_DIAGNOSIS_
-	settextcolor(11,0); printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %d interface: %d", device, numInterface); settextcolor(15,0);
-    #endif
-
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-
-    // bulk transfer
-	// Create QTDs (in reversed order)
-    void* next     = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
-    next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
-    // bmRequestType bRequest  wValue wIndex    wLength   Data
-    // 00100001b     11111111b 0000h  Interface 0000h     none
-
-	// Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
-
-    performAsyncScheduler();
-	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
-}
-
 // Bulk-Only Mass Storage get maximum number of Logical Units
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 {
@@ -328,11 +305,35 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 	return *((uint8_t*)DataQTDpage0);
 }
 
-/// http://en.wikipedia.org/wiki/SCSI_command
-void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCSIcommand)
+// Bulk-Only Mass Storage Reset
+void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 {
     #ifdef _USB_DIAGNOSIS_
-	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpoint, SCSIcommand); settextcolor(15,0);
+	settextcolor(11,0); printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %d interface: %d", device, numInterface); settextcolor(15,0);
+    #endif
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // bulk transfer
+	// Create QTDs (in reversed order)
+    void* next     = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
+    next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
+    // bmRequestType bRequest  wValue wIndex    wLength   Data
+    // 00100001b     11111111b 0000h  Interface 0000h     none
+
+	// Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
+
+    performAsyncScheduler();
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+}
+
+/// http://en.wikipedia.org/wiki/SCSI_command
+void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t SCSIcommand)
+{
+    #ifdef _USB_DIAGNOSIS_
+	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpointOut, SCSIcommand); settextcolor(15,0);
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
@@ -341,15 +342,12 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCS
     // bulk transfer
 	// Create QTDs (in reversed order)
 
-    /*
-    void* next = createQTD_IO(               0x1,  IN, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, OUT, 0, 31); // OUT DATA0, 31 byte
-    */
-
     DataQTD = createQTD_IO(0x1, OUT, 0, 31); // OUT DATA0, 31 byte
 
     // http://en.wikipedia.org/wiki/SCSI_CDB
 	struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
+	memset(cbw,0,sizeof(struct usb2_CommandBlockWrapper)); // zero of cbw
+
 	switch (SCSIcommand)
 	{
 	case 0x00: // http://en.wikipedia.org/wiki/SCSI_Test_Unit_Ready_Command
@@ -357,7 +355,7 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCS
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
 	    cbw->CBWDataTransferLength = 0;
-	    cbw->CBWFlags              = 0x00; // Out: 0x00  In: 0x80
+	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
 	    cbw->CBWLUN                = 0; // only bits 3:0
 	    cbw->CBWCBLength           = 6; // only bits 4:0
 		cbw->commandByte[0] = 0;
@@ -367,30 +365,52 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCS
 		cbw->commandByte[4] = 0;
 		cbw->commandByte[5] = 0;
 	    break;
-	
-	case 0x28: // http://en.wikipedia.org/wiki/SCSI_Read_Commands#Read_.2810.29
+
+	case 0x28: // read(10) http://en.wikipedia.org/wiki/SCSI_Read_Commands#Read_.2810.29
 
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
 	    cbw->CBWDataTransferLength = 512;
-	    cbw->CBWFlags              = 0x00; // Out: 0x00  In: 0x80
+	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
 	    cbw->CBWLUN                =  0; // only bits 3:0
 	    cbw->CBWCBLength           = 10; // only bits 4:0
 		cbw->commandByte[0] = 0x28; // Operation code
-		cbw->commandByte[1] = 0;    // 7:5 LUN 	4 DPO  3 FUA  2:1 Reserved  0 RelAdr
+		cbw->commandByte[1] = 0x18; // 7:5 LUN 	4 DPO  3 FUA  2:1 Reserved  0 RelAdr
 		cbw->commandByte[2] = 0;    // LBA
 		cbw->commandByte[3] = 0;    // LBA
 		cbw->commandByte[4] = 0;    // LBA
 		cbw->commandByte[5] = 0;    // LBA
         cbw->commandByte[6] = 0;    // Reserved
+		cbw->commandByte[7] = 0x00; // Transfer length LSB
+		cbw->commandByte[8] = 0x02; // Transfer length MSB
+		cbw->commandByte[9] = 0;    // Control
+	    break;
+
+    case 0xA8: // read(12) http://en.wikipedia.org/wiki/SCSI_Read_Commands#Read_.2810.29
+
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 512;
+	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                =  0; // only bits 3:0
+	    cbw->CBWCBLength           = 12; // only bits 4:0
+		cbw->commandByte[0] = 0xA8; // Operation code
+		cbw->commandByte[1] = 0x18; // 7:5 Reserved  4 DPO  3 FUA  2:1 Reserved  0 RelAdr
+		cbw->commandByte[2] = 0;    // LBA
+		cbw->commandByte[3] = 0;    // LBA
+		cbw->commandByte[4] = 0;    // LBA
+		cbw->commandByte[5] = 0;    // LBA
+        cbw->commandByte[6] = 0x00; // Transfer length LSB
 		cbw->commandByte[7] = 0x00; // Transfer length
 		cbw->commandByte[8] = 0x02; // Transfer length
-		cbw->commandByte[9] = 0;    // Control		
+		cbw->commandByte[9] = 0x00; // Transfer length MSB
+		cbw->commandByte[10] = 0;   // Reserved
+		cbw->commandByte[11] = 0;   // Control
 	    break;
 	}
 
     // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint OUT for MSD
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpointOut, 512);
 
     performAsyncScheduler();
     sleepMilliSeconds(100); // extra time ?
@@ -402,7 +422,7 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCS
 void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength)
 {
     #ifdef _USB_DIAGNOSIS_
-	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpoint, SCSIcommand); settextcolor(15,0);
+	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper Transfer, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
@@ -422,10 +442,10 @@ void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 
-void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpoint)
+void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
 {
     #ifdef _USB_DIAGNOSIS_
-	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpoint, SCSIcommand); settextcolor(15,0);
+	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper Status, dev: %d endpoint: %d", device, endpointIn); settextcolor(15,0);
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
@@ -442,7 +462,7 @@ void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpoint)
 	(*(((uint32_t*)DataQTDpage0)+3)) = 0xFFFFFFAA; //
 
     // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN for MSD
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
 
     performAsyncScheduler();
     sleepMilliSeconds(100); // extra time ?

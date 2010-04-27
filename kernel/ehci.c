@@ -42,6 +42,15 @@ bool enabledPortFlag; // port enabled
 // usb devices list
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
+static void waitForKeyStroke()
+{
+   settextcolor(13,0);
+   printf("\n>>> Press key to go on with USB-Test. <<<");
+   settextcolor(15,0);
+   while(!checkKQ_and_return_char());
+   printf("\n");
+}
+
 void ehci_install(uint32_t num, uint32_t i)
 {
 	uintptr_t bar_phys = pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0;
@@ -105,7 +114,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 
 void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
 {
-    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // Can be changed to 32 Byte alignment
+    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
 
     if (next != 0x1)
@@ -156,7 +165,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
 
 void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
 {
-    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // Can be changed to 32 Byte alignment
+    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
 
     if (next != 0x1)
@@ -207,7 +216,7 @@ void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t t
 
 void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
 {
-    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // Can be changed to 32 Byte alignment
+    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // 32 Byte alignment
     struct ehci_qtd* td = (struct ehci_qtd*)address;
 
     if (next != 0x1)
@@ -276,7 +285,8 @@ void showStatusbyteQTD(void* addressQTD)
     if (statusbyte & (1<<2)) { printf("\nqTD Status: Missed Micro-Frame");                                                   }
     if (statusbyte & (1<<1)) { printf("\nqTD Status: Do Complete Split");                                                    }
     if (statusbyte & (1<<0)) { printf("\nqTD Status: Do Ping");                                                              }
-    if (statusbyte == 0)     { printf("\n");                                                                                 }
+    settextcolor(10,0);
+    if (statusbyte == 0)     { printf("\nqTD Status: OK (no bit set)");                                                                                 }
     settextcolor(15,0);
 }
 
@@ -711,186 +721,107 @@ void checkPortLineStatus(uint8_t j)
 
              if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
              {
-               #ifdef _USB_DIAGNOSIS_
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to start USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
-               #endif
-
                  uint8_t devAddr = usbTransferEnumerate(j);
 
                #ifdef _USB_DIAGNOSIS_
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
+				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
                #endif
 
                  usbTransferDevice(devAddr); // device address, endpoint=0
 
                #ifdef _USB_DIAGNOSIS_
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                #endif
 
                  usbTransferConfig(devAddr); // device address, endpoint 0
 
                #ifdef _USB_DIAGNOSIS_
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO   : "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                #endif
 
 				 usbTransferString(devAddr); // device address, endpoint 0
 
                #ifdef _USB_DIAGNOSIS_
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-				 showUSBSTS();
                #endif
 
 			     for(int k=1; k<4;k++) // fetch 3 strings
 				 {
    				   #ifdef _USB_DIAGNOSIS_
-					 settextcolor(13,0);
-                     printf("\n>>> Press key to go on with USB-Test. <<<");
-                     settextcolor(15,0);
-                     while(!checkKQ_and_return_char());
-                     printf("\n");
+       	             waitForKeyStroke();
                    #endif
 
 					 usbTransferStringUnicode(devAddr,k);
 
                    #ifdef _USB_DIAGNOSIS_
-					 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-				     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+					 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                      printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-				     showUSBSTS();
                    #endif
 				 }
 
 				 usbTransferSetConfiguration(devAddr, 1); // set first configuration
                  #ifdef _USB_DIAGNOSIS_
 				    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                    showUSBSTS();
                  #endif
 
-                 printf(" %d",usbTransferGetConfiguration(devAddr));
+                 printf(" %d",usbTransferGetConfiguration(devAddr)); // check configuration
 
                  #ifdef _USB_DIAGNOSIS_
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-				 printf("\ndata packet: "); showPacket(DataQTDpage0,1);
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
+				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+				 printf("\ndata packet: ");  showPacket(DataQTDpage0, 1); printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 waitForKeyStroke();
                  #endif
 
 				 usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
                  printf("\nMax. Logical Unit Numbers: %d",usbDevices[devAddr].maxLUN);
 
-                 showUSBSTS();
-
 			     printf("\ndev: %d MSDinterface: %d",devAddr, usbDevices[devAddr].numInterfaceMSD);
                  printf(" ==> BulkOnlyMassStorageReset");
 				 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD);
-                 showUSBSTS();
 
-                 /// TEST MSD SCSI USB-Stick
+                 /// USB Mass Storage Devices (SCSI)
 				 printf("\nendpOUT: %d  endpIN: %d",usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
 
-				 /*
+				 /// Test Suite 1: send SCSI comamnd "test for ready" 0x00, and get Status
+                 /*
+                 settextcolor(1,0); printf("\n>>> test for ready(0x00)"); settextcolor(15,0); 
 				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00);
 
                  // #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  // #endif
 
-				 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
+				 settextcolor(1,0); printf("\n>>> get status"); settextcolor(15,0); 
+                 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
 
                  // #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+                 // #endif                 
+                 */
 
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
-                 // #endif
-				 */
-
+                 /// Test Suite 2: send SCSI comamnd "read(10)" 0x28, read 512 byte from LBA 0, and get Status
+                 settextcolor(1,0); printf("\n>>> read(10)"); settextcolor(15,0); 
 				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x28); // read(10)
-                 
+
                  // #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  // #endif
-
-				 usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 512);
                  
-				 // #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
+                 settextcolor(1,0); printf("\n>>> get sector from MSD"); settextcolor(15,0); 
+				 usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 512);
 
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
+				 // #ifdef _USB_DIAGNOSIS_
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  // #endif
-				 
+
+                 settextcolor(1,0); printf("\n>>> get status"); settextcolor(15,0); 
 				 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
 
                  // #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 showUSBSTS();
-
-				 settextcolor(13,0);
-                 printf("\n>>> Press key to go on with USB-Test. <<<");
-                 settextcolor(15,0);
-                 while(!checkKQ_and_return_char());
-                 printf("\n");
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  // #endif
              }
         }
