@@ -258,5 +258,6 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
 
 void showStatusbyteQTD(void* addressQTD);
 void showPacket(uint32_t virtAddrBuf0, uint32_t size);
+void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size);
 
 #endif

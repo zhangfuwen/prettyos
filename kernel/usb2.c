@@ -401,8 +401,8 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 		cbw->commandByte[4] = 0;    // LBA
 		cbw->commandByte[5] = 0;    // LBA
         cbw->commandByte[6] = 0x00; // Transfer length LSB
-		cbw->commandByte[7] = 0x00; // Transfer length
-		cbw->commandByte[8] = 0x02; // Transfer length
+		cbw->commandByte[7] = 0x02; // Transfer length
+		cbw->commandByte[8] = 0x00; // Transfer lengthe
 		cbw->commandByte[9] = 0x00; // Transfer length MSB
 		cbw->commandByte[10] = 0;   // Reserved
 		cbw->commandByte[11] = 0;   // Control
@@ -428,9 +428,14 @@ void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
+    uint8_t oppositeInOut;
+    if(InOut==OUT){oppositeInOut=IN; }
+    else          {oppositeInOut=OUT;}
+
     // bulk transfer
-	// Create QTDs (in reversed order)
-    DataQTD = createQTD_IO(0x1, InOut, 1, TransferLength); // IN/OUT DATA1, ... byte
+	// Create QTDs (in reversed order) // TODO: is handshake needed here?
+    void* next = createQTD_IO(        0x1, oppositeInOut, 1, 0             ); // Handshake is the opposite direction of Data, therefore OUT after IN
+    DataQTD = createQTD_IO((uint32_t)next, InOut,         1, TransferLength); // IN/OUT DATA1, ... byte
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN/OUT for MSD
@@ -439,6 +444,7 @@ void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_
     sleepMilliSeconds(100); // extra time ?
     printf("\n");
 	showPacket(DataQTDpage0,TransferLength);
+	showPacketAlphaNumeric(DataQTDpage0,TransferLength);
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 

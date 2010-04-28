@@ -260,13 +260,29 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
-    // printf("virtAddrBuf0: %X\n", virtAddrBuf0);
+    printf("virtAddrBuf0 %X : ", virtAddrBuf0);
     for (uint32_t c=0; c<size; c++)
     {
         settextcolor(3,0);
         printf("%y ", *((uint8_t*)virtAddrBuf0+c));
         settextcolor(15,0);
     }
+    printf("\n");
+}
+
+void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
+{
+    printf("virtAddrBuf0 %X : ", virtAddrBuf0);
+
+    for (uint32_t c=0; c<size; c++)
+    {
+        settextcolor(15,0);
+        if(*((uint8_t*)virtAddrBuf0+c)>=0x20)
+        {
+            printf("%c", *((uint8_t*)virtAddrBuf0+c));
+        }
+    }
+    printf("\n");
 }
 
 void showStatusbyteQTD(void* addressQTD)
@@ -787,37 +803,38 @@ void checkPortLineStatus(uint8_t j)
 
 				 /// Test Suite 1: send SCSI comamnd "test for ready" 0x00, and get Status
                  /*
-                 settextcolor(1,0); printf("\n>>> test for ready(0x00)"); settextcolor(15,0); 
+                 settextcolor(1,0); printf("\n>>> SCSI: test unit ready(0x00)"); settextcolor(15,0);
 				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00);
 
                  // #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  // #endif
 
-				 settextcolor(1,0); printf("\n>>> get status"); settextcolor(15,0); 
+				 settextcolor(1,0); printf("\n>>> get status"); settextcolor(15,0);
                  usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
 
                  // #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 // #endif                 
+                 // #endif
                  */
 
-                 /// Test Suite 2: send SCSI comamnd "read(10)" 0x28, read 512 byte from LBA 0, and get Status
-                 settextcolor(1,0); printf("\n>>> read(10)"); settextcolor(15,0); 
+                 /// Test Suite 2: send SCSI comamnd "read(..)", read 512 byte from LBA 0, and get Status
+                 settextcolor(1,0); printf("\n>>> SCSI: read(..)"); settextcolor(15,0);
 				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x28); // read(10)
+				 // usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0xA8); // read(12)
 
                  // #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  // #endif
-                 
-                 settextcolor(1,0); printf("\n>>> get sector from MSD"); settextcolor(15,0); 
+
+                 settextcolor(1,0); printf("\n>>> get sector from MSD"); settextcolor(15,0);
 				 usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 512);
 
 				 // #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  // #endif
 
-                 settextcolor(1,0); printf("\n>>> get status"); settextcolor(15,0); 
+                 settextcolor(1,0); printf("\n>>> get status"); settextcolor(15,0);
 				 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
 
                  // #ifdef _USB_DIAGNOSIS_
