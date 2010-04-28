@@ -350,62 +350,61 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 
 	switch (SCSIcommand)
 	{
-	case 0x00: // http://en.wikipedia.org/wiki/SCSI_Test_Unit_Ready_Command
+	case 0x00: // test unit ready(6)
 
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
 	    cbw->CBWDataTransferLength = 0;
 	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
-	    cbw->CBWLUN                = 0; // only bits 3:0
-	    cbw->CBWCBLength           = 6; // only bits 4:0
-		cbw->commandByte[0] = 0;
-		cbw->commandByte[1] = 0;
-		cbw->commandByte[2] = 0;
-		cbw->commandByte[3] = 0;
-		cbw->commandByte[4] = 0;
-		cbw->commandByte[5] = 0;
+	    cbw->CBWLUN                = 0;    // only bits 3:0
+	    cbw->CBWCBLength           = 6;    // only bits 4:0
+		cbw->commandByte[0] = 0x00; // Operation code
+		cbw->commandByte[1] = 0;    // Reserved
+		cbw->commandByte[2] = 0;    // Reserved
+		cbw->commandByte[3] = 0;    // Reserved
+		cbw->commandByte[4] = 0;    // Reserved
+		cbw->commandByte[5] = 0;    // Control
 	    break;
 
-	case 0x28: // read(10) http://en.wikipedia.org/wiki/SCSI_Read_Commands#Read_.2810.29
+	case 0x25: // read capacity(10)
 
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
-	    cbw->CBWDataTransferLength = 512;
+	    cbw->CBWDataTransferLength = 20;
+	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                =  0; // only bits 3:0
+	    cbw->CBWCBLength           = 10; // only bits 4:0
+		cbw->commandByte[0] = 0x25; // Operation code
+		cbw->commandByte[1] = 0;    // 7:5 LUN  4:1 reserved  0 RelAddr
+		cbw->commandByte[2] = 0;    // LBA
+		cbw->commandByte[3] = 0;    // LBA
+		cbw->commandByte[4] = 0;    // LBA
+		cbw->commandByte[5] = 0;    // LBA
+        cbw->commandByte[6] = 0;    // Reserved
+		cbw->commandByte[7] = 0;    // Reserved
+		cbw->commandByte[8] = 0;    // 7:1 Reserved  0 PMI
+		cbw->commandByte[9] = 0;    // Control
+	    break;
+
+
+	case 0x28: //
+
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 0x2000;
 	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
 	    cbw->CBWLUN                =  0; // only bits 3:0
 	    cbw->CBWCBLength           = 10; // only bits 4:0
 		cbw->commandByte[0] = 0x28; // Operation code
-		cbw->commandByte[1] = 0x18; // 7:5 LUN 	4 DPO  3 FUA  2:1 Reserved  0 RelAdr
+		cbw->commandByte[1] = 0;    // Reserved
 		cbw->commandByte[2] = 0;    // LBA
 		cbw->commandByte[3] = 0;    // LBA
 		cbw->commandByte[4] = 0;    // LBA
 		cbw->commandByte[5] = 0;    // LBA
         cbw->commandByte[6] = 0;    // Reserved
 		cbw->commandByte[7] = 0x00; // Transfer length LSB
-		cbw->commandByte[8] = 0x02; // Transfer length MSB
+		cbw->commandByte[8] = 0x20; // Transfer length MSB
 		cbw->commandByte[9] = 0;    // Control
-	    break;
-
-    case 0xA8: // read(12) http://en.wikipedia.org/wiki/SCSI_Read_Commands#Read_.2810.29
-
-		cbw->CBWSignature          = 0x43425355; // magic
-        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
-	    cbw->CBWDataTransferLength = 512;
-	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
-	    cbw->CBWLUN                =  0; // only bits 3:0
-	    cbw->CBWCBLength           = 12; // only bits 4:0
-		cbw->commandByte[0] = 0xA8; // Operation code
-		cbw->commandByte[1] = 0x18; // 7:5 Reserved  4 DPO  3 FUA  2:1 Reserved  0 RelAdr
-		cbw->commandByte[2] = 0;    // LBA
-		cbw->commandByte[3] = 0;    // LBA
-		cbw->commandByte[4] = 0;    // LBA
-		cbw->commandByte[5] = 0;    // LBA
-        cbw->commandByte[6] = 0x00; // Transfer length LSB
-		cbw->commandByte[7] = 0x02; // Transfer length
-		cbw->commandByte[8] = 0x00; // Transfer lengthe
-		cbw->commandByte[9] = 0x00; // Transfer length MSB
-		cbw->commandByte[10] = 0;   // Reserved
-		cbw->commandByte[11] = 0;   // Control
 	    break;
 	}
 
