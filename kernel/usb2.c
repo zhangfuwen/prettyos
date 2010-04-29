@@ -341,8 +341,8 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 
     // bulk transfer
 	// Create QTDs (in reversed order)
-
-    DataQTD = createQTD_IO(0x1, OUT, 0, 31); // OUT DATA0, 31 byte
+    // void* next = createQTD_IO(        0x1, IN,  1,  0); // Handshake
+    DataQTD = createQTD_IO(/*(uint32_t)next*/0x01, OUT, 0, 31); // OUT DATA0, 31 byte
 
     // http://en.wikipedia.org/wiki/SCSI_CDB
 	struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
@@ -366,11 +366,27 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 		cbw->commandByte[5] = 0;    // Control
 	    break;
 
+	case 0x03: // Request Sense(6)
+
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 0;
+	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                = 0;    // only bits 3:0
+	    cbw->CBWCBLength           = 6;    // only bits 4:0
+		cbw->commandByte[0] = 0x03; // Operation code
+		cbw->commandByte[1] = 0;    // Reserved
+		cbw->commandByte[2] = 0;    // Reserved
+		cbw->commandByte[3] = 0;    // Reserved
+		cbw->commandByte[4] = 19;   // Allocation length ??
+		cbw->commandByte[5] = 0;    // Control
+	    break;
+
 	case 0x25: // read capacity(10)
 
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
-	    cbw->CBWDataTransferLength = 20;
+	    cbw->CBWDataTransferLength = 8;
 	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
 	    cbw->CBWLUN                =  0; // only bits 3:0
 	    cbw->CBWCBLength           = 10; // only bits 4:0
@@ -387,11 +403,11 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 	    break;
 
 
-	case 0x28: //
+	case 0x28: // read(10)
 
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
-	    cbw->CBWDataTransferLength = 0x2000;
+	    cbw->CBWDataTransferLength = 512;
 	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
 	    cbw->CBWLUN                =  0; // only bits 3:0
 	    cbw->CBWCBLength           = 10; // only bits 4:0
@@ -403,7 +419,7 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 		cbw->commandByte[5] = 0;    // LBA
         cbw->commandByte[6] = 0;    // Reserved
 		cbw->commandByte[7] = 0x00; // Transfer length LSB
-		cbw->commandByte[8] = 0x20; // Transfer length MSB
+		cbw->commandByte[8] = 0x02; // Transfer length MSB
 		cbw->commandByte[9] = 0;    // Control
 	    break;
 	}
@@ -412,7 +428,7 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpointOut, 512);
 
     performAsyncScheduler();
-    sleepMilliSeconds(100); // extra time ?
+
     printf("\n");
 	showPacket(DataQTDpage0,31);
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
@@ -433,19 +449,20 @@ void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_
 
     // bulk transfer
 	// Create QTDs (in reversed order) // TODO: is handshake needed here?
-    void* next = createQTD_IO(        0x1, oppositeInOut, 1, 0             ); // Handshake is the opposite direction of Data, therefore OUT after IN
-    DataQTD = createQTD_IO((uint32_t)next, InOut,         1, TransferLength); // IN/OUT DATA1, ... byte
+    //void* next = createQTD_IO(        0x1, oppositeInOut, 1, 0             ); // Handshake is the opposite direction of Data, therefore OUT after IN
+    DataQTD = createQTD_IO(/*(uint32_t)next*/0x01, InOut,         0, TransferLength); // IN/OUT DATA0, ... byte
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN/OUT for MSD
 
     performAsyncScheduler();
-    sleepMilliSeconds(100); // extra time ?
+
     printf("\n");
 	showPacket(DataQTDpage0,TransferLength);
 	showPacketAlphaNumeric(DataQTDpage0,TransferLength);
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
+
 
 void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
 {
@@ -458,10 +475,10 @@ void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
 
     // bulk transfer
 	// Create QTDs (in reversed order)
-    void* next = createQTD_IO(               0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  0, 13); // IN DATA0, 13 byte
+    //void* next = createQTD_IO(        0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
+    DataQTD = createQTD_IO(/*(uint32_t)next*/0x01, IN,  0, 13); // IN DATA0, 13 byte
 
-	(*(((uint32_t*)DataQTDpage0)+0)) = 0x53425355; // magic
+	(*(((uint32_t*)DataQTDpage0)+0)) = 0x53425355; // magic USBS
 	(*(((uint32_t*)DataQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
 	(*(((uint32_t*)DataQTDpage0)+2)) = 0xAAAAAAAA; //
 	(*(((uint32_t*)DataQTDpage0)+3)) = 0xFFFFFFAA; //
@@ -470,13 +487,25 @@ void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
 
     performAsyncScheduler();
-    sleepMilliSeconds(100); // extra time ?
+
     printf("\n");
 	showPacket(DataQTDpage0,16); // three bytes more (FF) for control
+    settextcolor(9,0); printf("\nThis was the status answer"); settextcolor(15,0);
+    
+    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x0 )
+    {
+        printf("\nCommand Passed (\"good status\") ");
+    }
+    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x1 )
+    {
+        printf("\nCommand failed");
+    }
+    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x2 )
+    {
+        printf("\nPhase Error");
+    }
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
-
-
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
 {
