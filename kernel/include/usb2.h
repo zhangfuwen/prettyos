@@ -27,7 +27,7 @@ typedef struct usb2_Device
 	uint8_t  numInterfaceMSD;
     uint8_t  numEndpointInMSD;
 	uint8_t  numEndpointOutMSD;
-}   
+}
 usb2_Device_t;
 
 struct usb2_deviceDescriptor
@@ -97,18 +97,16 @@ struct usb2_stringDescriptorUnicode
    uint8_t  widechar[30];      // n = 30 test-wise
 }__attribute__((packed));
 
-
 struct usb2_CommandBlockWrapper
 {
     uint32_t CBWSignature;
     uint32_t CBWTag;
 	uint32_t CBWDataTransferLength;
 	uint8_t  CBWFlags;
-	uint8_t  CBWLUN; // only bits 3:0
-	uint8_t  CBWCBLength; // only bits 4:0 
-	uint8_t  commandByte[16];    
+	uint8_t  CBWLUN;           // only bits 3:0
+	uint8_t  CBWCBLength;      // only bits 4:0
+	uint8_t  commandByte[16];
 } __attribute__((packed));
-
 
 uint8_t usbTransferEnumerate(uint8_t j);
 void usbTransferDevice(uint32_t device);
@@ -132,7 +130,5 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d);
 void showEndpointDescriptor(struct usb2_endpointDescriptor* d);
 void showStringDescriptor(struct usb2_stringDescriptor* d);
 void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d);
-
-// void showDeviceDescriptor(struct usb2_deviceDescriptor*);
 
 #endif

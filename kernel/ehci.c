@@ -260,7 +260,9 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
+    #ifdef _USB_DIAGNOSIS_
     printf("virtAddrBuf0 %X : ", virtAddrBuf0);
+    #endif
     for (uint32_t c=0; c<size; c++)
     {
         settextcolor(3,0);
@@ -272,8 +274,9 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
 {
+    #ifdef _USB_DIAGNOSIS_
     printf("virtAddrBuf0 %X : ", virtAddrBuf0);
-
+    #endif
     for (uint32_t c=0; c<size; c++)
     {
         settextcolor(15,0);
@@ -792,9 +795,8 @@ void checkPortLineStatus(uint8_t j)
                  #endif
 
 				 /// maxLUN (0 for USB-sticks)
-				 usbDevices[devAddr].maxLUN = 0;
-				 // usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
-                 // printf("\nMax. Logical Unit Numbers: %d",usbDevices[devAddr].maxLUN);
+				 usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
+                 printf("\nMax. Logical Unit Numbers: %d",usbDevices[devAddr].maxLUN);
 
 			     printf("\ndev: %d MSDinterface: %d",devAddr, usbDevices[devAddr].numInterfaceMSD);
                  printf(" ==> BulkOnlyMassStorageReset");
@@ -804,76 +806,74 @@ void checkPortLineStatus(uint8_t j)
 				 printf("\nendpOUT: %d  endpIN: %d",usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
 
        ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
-                 
+
                  for(int i=0;i<2;i++)
                  {
                      settextcolor(9,0); printf("\n>>> SCSI: test unit ready"); settextcolor(15,0);
 				     usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00);
 
-                     // #ifdef _USB_DIAGNOSIS_
+                     #ifdef _USB_DIAGNOSIS_
 				     printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                     // #endif
+                     #endif
 
                      settextcolor(9,0); printf("\n>>> get status"); settextcolor(15,0);
 				     usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
-                     
-                     // #ifdef _USB_DIAGNOSIS_
+
+                     #ifdef _USB_DIAGNOSIS_
 				     printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                     // #endif
+                     #endif
                  }
-                     
+
        ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
-                 
+
                  settextcolor(9,0); printf("\n>>> SCSI: read capacity"); settextcolor(15,0);
 				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x25);
 
-                 // #ifdef _USB_DIAGNOSIS_
+                 #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 // #endif
+                 #endif
 
                  settextcolor(9,0); printf("\n>>> get Last LBA and Block Length (both Big Endian)"); settextcolor(15,0);
 				 usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 8);
-                 uint32_t lastLBA = (*((uint8_t*)DataQTDpage0+0))* 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + 
-                                    (*((uint8_t*)DataQTDpage0+2)) * 256     + (*((uint8_t*)DataQTDpage0+3));
-                 uint32_t blocksize = (*((uint8_t*)DataQTDpage0+4))* 16777216 + (*((uint8_t*)DataQTDpage0+5)) * 65536 + 
-                                    (*((uint8_t*)DataQTDpage0+6)) * 256     + (*((uint8_t*)DataQTDpage0+7));
+
+                 uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + (*((uint8_t*)DataQTDpage0+2)) * 256 + (*((uint8_t*)DataQTDpage0+3));
+                 uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 16777216 + (*((uint8_t*)DataQTDpage0+5)) * 65536 + (*((uint8_t*)DataQTDpage0+6)) * 256 + (*((uint8_t*)DataQTDpage0+7));
+                 uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
+
                  settextcolor(14,0);
-                 printf("\nLast LBA: %d, block size %d",lastLBA,blocksize);
+                 printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
                  settextcolor(15,0);
 				 waitForKeyStroke();
 
-				 // #ifdef _USB_DIAGNOSIS_
+				 #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 // #endif
+                 #endif
 
                  settextcolor(9,0); printf("\n>>> get status"); settextcolor(15,0);
 				 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
 
-                 // #ifdef _USB_DIAGNOSIS_
+                 #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 // #endif
-                 
+                 #endif
+
 
        ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
 
-                 settextcolor(9,0); printf("\n>>> SCSI: read(..)"); settextcolor(15,0);
+                 settextcolor(9,0); printf("\n>>> SCSI: read(10)"); settextcolor(15,0);
 				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x28); // read(10)
 
+                 #ifdef _USB_DIAGNOSIS_
+				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+                 #endif
+
+                 // get 512 byte blocks
+                 settextcolor(9,0); printf("\n>>> get sector from MSD"); settextcolor(15,0);
+
+                 usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 512);
                  // #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  // #endif
 
-                 // get 512 byte blocks                  
-                 settextcolor(9,0); printf("\n>>> get sector from MSD"); settextcolor(15,0);
-
-                 for(int i=0;i<10;i++)
-                 {
-                   usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 512);
-                   // #ifdef _USB_DIAGNOSIS_
-				   printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                   // #endif
-                 }
-       
        ///////// Test Suite 4: ...
 
              }

@@ -32,7 +32,7 @@ static void performAsyncScheduler()
         else
         {
             settextcolor(12,0);
-            printf("\ntimeout - no STS_USBINT set!");
+            printf("\nError: no USB interrupt! Transfer not completed?");
             settextcolor(15,0);
             break;
         }
@@ -41,7 +41,7 @@ static void performAsyncScheduler()
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
-	sleepMilliSeconds(100);
+	sleepMilliSeconds(200);
 }
 
 uint8_t usbTransferEnumerate(uint8_t j)
@@ -378,7 +378,7 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 		cbw->commandByte[1] = 0;    // Reserved
 		cbw->commandByte[2] = 0;    // Reserved
 		cbw->commandByte[3] = 0;    // Reserved
-		cbw->commandByte[4] = 19;   // Allocation length ??
+		cbw->commandByte[4] = 19;   // Allocation length (max. bytes)
 		cbw->commandByte[5] = 0;    // Control
 	    break;
 
@@ -418,8 +418,8 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 		cbw->commandByte[4] = 0;    // LBA
 		cbw->commandByte[5] = 0;    // LBA
         cbw->commandByte[6] = 0;    // Reserved
-		cbw->commandByte[7] = 0x02; // Transfer length 
-		cbw->commandByte[8] = 0x00; // Transfer length 
+		cbw->commandByte[7] = 0x02; // Transfer length
+		cbw->commandByte[8] = 0x00; // Transfer length
 		cbw->commandByte[9] = 0;    // Control
 	    break;
 	}
@@ -491,7 +491,7 @@ void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
     printf("\n");
 	showPacket(DataQTDpage0,16); // three bytes more (FF) for control
     settextcolor(9,0); printf("\nThis was the status answer"); settextcolor(15,0);
-    
+
     if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x0 )
     {
         printf("\nCommand Passed (\"good status\") ");
@@ -531,6 +531,7 @@ void showDevice(usb2_Device_t* usbDev)
        printf("USB subclass:      %x\t",    usbDev->usbSubclass);
        printf("USB protocol       %x\n",    usbDev->usbProtocol);
        printf("max packet size:   %d\t\t",    usbDev->maxPacketSize);             // MPS0, must be 8,16,32,64
+       #ifdef _USB_DIAGNOSIS_
        printf("vendor:            %x\n",    usbDev->vendor);
        printf("product:           %x\t",    usbDev->product);
        printf("release number:    %d.%d\n", usbDev->releaseNumber>>8, usbDev->releaseNumber&0xFF);  // release of the device
@@ -539,6 +540,7 @@ void showDevice(usb2_Device_t* usbDev)
        printf("serial number:     %x\t",    usbDev->serNumberStringID);
        printf("number of config.: %d\n",    usbDev->numConfigurations); // number of possible configurations
        printf("numInterfaceMSD:   %d\n",    usbDev->numInterfaceMSD);
+       #endif
        settextcolor(15,0);
 }
 
@@ -552,13 +554,17 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
 	   printf("length:               %d\t\t",  d->length);
        printf("descriptor type:      %d\n",  d->descriptorType);
        #endif
+	   settextcolor(7,0);
 	   printf("total length:         %d\t",  d->totalLength);
+       settextcolor(10,0);
        printf("number of interfaces: %d\n",  d->numInterfaces);
+       #ifdef _USB_DIAGNOSIS_
        printf("ID of config:         %x\t",  d->configurationValue);
        printf("ID of config name     %x\n",  d->configuration);
        printf("remote wakeup:        %s\t",  d->attributes & (1<<5) ? "yes" : "no");
        printf("self-powered:         %s\n",  d->attributes & (1<<6) ? "yes" : "no");
        printf("max power (mA):       %d\n",  d->maxPower*2); // 2 mA steps used
+       #endif
        settextcolor(15,0);
     }
 }
@@ -575,12 +581,16 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
        printf("descriptor type:      %d\n",  d->descriptorType);    // 4
        #endif
 	   printf("interface number:     %d\t\t",  d->interfaceNumber);
+       #ifdef _USB_DIAGNOSIS_
        printf("alternate Setting:    %d\n",  d->alternateSetting);
-       printf("number of endpoints:  %d\t\t",  d->numEndpoints);
+       #endif
+       printf("number of endpoints:  %d\n",  d->numEndpoints);
        printf("interface class:      %d\n",  d->interfaceClass);
-       printf("interface subclass:   %d\t\t",  d->interfaceSubclass);
+       printf("interface subclass:   %d\n",  d->interfaceSubclass);
        printf("interface protocol:   %d\n",  d->interfaceProtocol);
+       #ifdef _USB_DIAGNOSIS_
        printf("interface:            %x\n",  d->interface);
+       #endif
        settextcolor(15,0);
     }
 }
@@ -598,11 +608,17 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
        #endif
 	   printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
        printf("endpoint number:   %d\n",    d->endpointAddress & 0xF);
-       printf("attributes:        %y\t\t",  d->attributes);     // bit 1:0 00 control       01 isochronous       10 bulk                            11 interrupt
-                                                                // bit 3:2 00 no sync       01 async             10 adaptive                        11 sync (only if isochronous)
-                                                                // bit 5:4 00 data endpoint 01 feedback endpoint 10 explicit feedback data endpoint 11 reserved (Iso Mode)
+       printf("attributes:        %y\t\t",  d->attributes); // bit 1:0 00 control    01 isochronous    10 bulk                         11 interrupt
+                                                            // bit 3:2 00 no sync    01 async          10 adaptive                     11 sync (only if isochronous)
+                                                            // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
+       if (d->attributes == 2)
+       {
+           printf("\nattributes: bulk - no sync - data endpoint");
+       }
        printf("max packet size:   %d\n",  d->maxPacketSize);
+       #ifdef _USB_DIAGNOSIS_
        printf("interval:          %d\n",  d->interval);
+       #endif
        settextcolor(15,0);
     }
 }
@@ -661,31 +677,6 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
        settextcolor(15,0);
     }
 }
-
-/*
-void showDeviceDescriptor(struct usb2_deviceDescriptor* d)
-{
-    if (d->length)
-    {
-       settextcolor(10,0);
-       printf("\nlength:            %d\t\t",  d->length);
-       printf("descriptor type:   %d\n",    d->descriptorType);
-       printf("USB specification: %d.%d\t\t", d->bcdUSB>>8, d->bcdUSB&0xFF);     // e.g. 0x0210 means 2.10
-       printf("USB class:         %x\n",    d->deviceClass);
-       printf("USB subclass:      %x\t",    d->deviceSubclass);
-       printf("USB protocol       %x\n",    d->deviceProtocol);
-       printf("max packet size:   %d\t\t",    d->maxPacketSize);             // MPS0, must be 8,16,32,64
-       printf("vendor:            %x\n",    d->idVendor);
-       printf("product:           %x\t",    d->idProduct);
-       printf("release number:    %d.%d\n", d->bcdDevice>>8, d->bcdDevice&0xFF);  // release of the device
-       printf("manufacturer:      %x\t",    d->manufacturer);
-       printf("product:           %x\n",    d->product);
-       printf("serial number:     %x\t",    d->serialNumber);
-       printf("number of config.: %d\n",    d->numConfigurations); // number of possible configurations
-       settextcolor(15,0);
-    }
-}
-*/
 
 
 /*
