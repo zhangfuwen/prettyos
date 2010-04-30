@@ -57,7 +57,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
 
     // Create QTDs (in reversed order)
     void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
-    SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
+    SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0,64);
@@ -77,9 +77,9 @@ void usbTransferDevice(uint32_t device)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(             0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 18);  // IN DATA1, 18 byte
-    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
+    void* next   = createQTD_IO(              0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 18);  // IN DATA1, 18 byte
+    SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
@@ -102,9 +102,9 @@ void usbTransferConfig(uint32_t device)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(0x1,              OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, PAGESIZE);  // IN DATA1, 4096 byte
-    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 2, 0, 0, PAGESIZE); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
+    void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, PAGESIZE);  // IN DATA1, 4096 byte
+    SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 2, 0, 0, PAGESIZE); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
@@ -195,9 +195,9 @@ void usbTransferString(uint32_t device)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(0x1,              OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 12);  // IN DATA1, 12 byte
-    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, 0, 0, 12); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
+    void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 12);  // IN DATA1, 12 byte
+    SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 3, 0, 0, 12); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
@@ -220,9 +220,9 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(0x1,              OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 64);  // IN DATA1, 64 byte
-    SetupQTD = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 64); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, stringIndex, languageID, length
+    void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 64);  // IN DATA1, 64 byte
+    SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 64); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, stringIndex, languageID, length
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
@@ -248,7 +248,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
 
     // Create QTDs (in reversed order)
     void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
-    SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
+    SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
@@ -267,8 +267,8 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
 
     // Create QTDs (in reversed order)
     void* next = createQTD_IO(0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uint32_t)next, IN,  1, 1);  // IN DATA1, 1 byte
-	SetupQTD   = createQTD_SETUP((uint32_t)next, 0, 8, 0x80, 8, 0, 0, 0, 1); // SETUP DATA0, 8 byte, request type, GET_CONFIGURATION(9), hi, lo, index=0, length=1
+    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 1);  // IN DATA1, 1 byte
+	SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 8, 0, 0, 0, 1); // SETUP DATA0, 8 byte, request type, GET_CONFIGURATION(9), hi, lo, index=0, length=1
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
@@ -291,9 +291,9 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 
     // bulk transfer
 	// Create QTDs (in reversed order)
-    void* next      = createQTD_IO(           0x1,  OUT, 1, 0); // Handshake is the opposite direction of Data
-    next = DataQTD  = createQTD_IO( (uint32_t)next, IN, 1, 1);  // IN DATA1, 1 byte
-	next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
+    void* next      = createQTD_IO(             0x1,  OUT, 1, 0); // Handshake is the opposite direction of Data
+    next = DataQTD  = createQTD_IO( (uintptr_t)next, IN, 1, 1);  // IN DATA1, 1 byte
+	next = SetupQTD = createQTD_MSD((uintptr_t)next, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 10100001b     11111110b 0000h  Interface 0001h     1 byte
 
@@ -317,8 +317,8 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 
     // bulk transfer
 	// Create QTDs (in reversed order)
-    void* next     = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
-    next = SetupQTD = createQTD_MSD((uint32_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
+    void* next      = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
+    next = SetupQTD = createQTD_MSD((uintptr_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 00100001b     11111111b 0000h  Interface 0000h     none
 
@@ -329,20 +329,15 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 
-/// http://en.wikipedia.org/wiki/SCSI_command
-void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t SCSIcommand)
+void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint32_t TransferLength, bool MSDStatus)
 {
-    #ifdef _USB_DIAGNOSIS_
-	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpointOut, SCSIcommand); settextcolor(15,0);
-    #endif
-
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH1              = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // bulk transfer
-	// Create QTDs (in reversed order)
-    // void* next = createQTD_IO(        0x1, IN,  1,  0); // Handshake
-    DataQTD = createQTD_IO(/*(uint32_t)next*/0x01, OUT, 0, 31); // OUT DATA0, 31 byte
+	// Create QTDs 
+    void* cmdQTD  = createQTD_IO(0x01, OUT, 0, 31); // OUT DATA0, 31 byte
 
     // http://en.wikipedia.org/wiki/SCSI_CDB
 	struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
@@ -392,10 +387,10 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 	    cbw->CBWCBLength           = 10; // only bits 4:0
 		cbw->commandByte[0] = 0x25; // Operation code
 		cbw->commandByte[1] = 0;    // 7:5 LUN  4:1 reserved  0 RelAddr
-		cbw->commandByte[2] = 0;    // LBA
-		cbw->commandByte[3] = 0;    // LBA
-		cbw->commandByte[4] = 0;    // LBA
-		cbw->commandByte[5] = 0;    // LBA
+		cbw->commandByte[2] = BYTE4(LBA);    // LBA MSB
+		cbw->commandByte[3] = BYTE3(LBA);    // LBA
+		cbw->commandByte[4] = BYTE2(LBA);    // LBA
+		cbw->commandByte[5] = BYTE1(LBA);    // LBA LSB
         cbw->commandByte[6] = 0;    // Reserved
 		cbw->commandByte[7] = 0;    // Reserved
 		cbw->commandByte[8] = 0;    // 7:1 Reserved  0 PMI
@@ -413,10 +408,10 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 	    cbw->CBWCBLength           = 10; // only bits 4:0
 		cbw->commandByte[0] = 0x28; // Operation code
 		cbw->commandByte[1] = 0;    // Reserved
-		cbw->commandByte[2] = 0;    // LBA
-		cbw->commandByte[3] = 0;    // LBA
-		cbw->commandByte[4] = 0;    // LBA
-		cbw->commandByte[5] = 0;    // LBA
+		cbw->commandByte[2] = BYTE4(LBA);    // LBA MSB
+		cbw->commandByte[3] = BYTE3(LBA);    // LBA
+		cbw->commandByte[4] = BYTE2(LBA);    // LBA
+		cbw->commandByte[5] = BYTE1(LBA);    // LBA LSB
         cbw->commandByte[6] = 0;    // Reserved
 		cbw->commandByte[7] = 0x02; // Transfer length
 		cbw->commandByte[8] = 0x00; // Transfer length
@@ -424,45 +419,55 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 	    break;
 	}
 
-    // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpointOut, 512);
+    // OUT
+    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), cmdQTD,  1, device, endpointOut, 512);
 
+
+    if (MSDStatus && TransferLength)
+    {
+        void* next = createQTD_MSDStatus(0x01, 0); // next, toggle // IN 13 byte
+        DataQTD = createQTD_IO((uintptr_t)next, IN,  0, TransferLength); // IN/OUT DATA0, ... byte
+    }
+    else if (MSDStatus && !TransferLength)
+    {
+        DataQTD = createQTD_MSDStatus(0x01, 0); // next, toggle // IN 13 byte        
+    }
+    else
+    {
+        DataQTD = createQTD_IO(0x1, IN,  0, TransferLength); // IN/OUT DATA0, ... byte
+    }
+    
+    // IN
+    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 0, device, endpointIn, 512); // endpoint IN/OUT for MSD
+    
     performAsyncScheduler();
 
-    printf("\n");
-	showPacket(DataQTDpage0,31);
-	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+	if (TransferLength)
+    {
+        printf("\n");
+	    showPacket(DataQTDpage0,TransferLength);
+	    showPacketAlphaNumeric(DataQTDpage0,TransferLength);
+    }
+	
+    if (MSDStatus)
+    {
+        printf("\n");
+	    showPacket(MSDStatusQTDpage0,13); 
+        
+        if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x0 )
+        {
+            printf("\nCommand Passed (\"good status\") ");
+        }
+        if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x1 )
+        {
+            printf("\nCommand failed");
+        }
+        if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x2 )
+        {
+            printf("\nPhase Error"); 
+        }
+    }
 }
-
-void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength)
-{
-    #ifdef _USB_DIAGNOSIS_
-	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper Transfer, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
-    #endif
-
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-
-    uint8_t oppositeInOut;
-    if(InOut==OUT){oppositeInOut=IN; }
-    else          {oppositeInOut=OUT;}
-
-    // bulk transfer
-	// Create QTDs (in reversed order) // TODO: is handshake needed here?
-    //void* next = createQTD_IO(        0x1, oppositeInOut, 1, 0             ); // Handshake is the opposite direction of Data, therefore OUT after IN
-    DataQTD = createQTD_IO(/*(uint32_t)next*/0x01, InOut,   0, TransferLength); // IN/OUT DATA0, ... byte
-
-    // Create QH
-	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN/OUT for MSD
-
-    performAsyncScheduler();
-
-    printf("\n");
-	showPacket(DataQTDpage0,TransferLength);
-	showPacketAlphaNumeric(DataQTDpage0,TransferLength);
-	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
-}
-
 
 int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
 {
@@ -708,4 +713,146 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+
+/// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST ///
+
+
+
+
+/*
+/// http://en.wikipedia.org/wiki/SCSI_command
+void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t SCSIcommand)
+{
+    #ifdef _USB_DIAGNOSIS_
+	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper, dev: %d endpoint: %d SCSI command: %y", device, endpointOut, SCSIcommand); settextcolor(15,0);
+    #endif
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // bulk transfer
+	// Create QTDs (in reversed order)
+    DataQTD = createQTD_IO(0x01, OUT, 0, 31); // OUT DATA0, 31 byte
+
+    // http://en.wikipedia.org/wiki/SCSI_CDB
+	struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
+	memset(cbw,0,sizeof(struct usb2_CommandBlockWrapper)); // zero of cbw
+
+	switch (SCSIcommand)
+	{
+	case 0x00: // test unit ready(6)
+
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 0;
+	    cbw->CBWFlags              = 0x00; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                = 0;    // only bits 3:0
+	    cbw->CBWCBLength           = 6;    // only bits 4:0
+		cbw->commandByte[0] = 0x00; // Operation code
+		cbw->commandByte[1] = 0;    // Reserved
+		cbw->commandByte[2] = 0;    // Reserved
+		cbw->commandByte[3] = 0;    // Reserved
+		cbw->commandByte[4] = 0;    // Reserved
+		cbw->commandByte[5] = 0;    // Control
+	    break;
+
+	case 0x03: // Request Sense(6)
+
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 0;
+	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                = 0;    // only bits 3:0
+	    cbw->CBWCBLength           = 6;    // only bits 4:0
+		cbw->commandByte[0] = 0x03; // Operation code
+		cbw->commandByte[1] = 0;    // Reserved
+		cbw->commandByte[2] = 0;    // Reserved
+		cbw->commandByte[3] = 0;    // Reserved
+		cbw->commandByte[4] = 19;   // Allocation length (max. bytes)
+		cbw->commandByte[5] = 0;    // Control
+	    break;
+
+	case 0x25: // read capacity(10)
+
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 8;
+	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                =  0; // only bits 3:0
+	    cbw->CBWCBLength           = 10; // only bits 4:0
+		cbw->commandByte[0] = 0x25; // Operation code
+		cbw->commandByte[1] = 0;    // 7:5 LUN  4:1 reserved  0 RelAddr
+		cbw->commandByte[2] = 0;    // LBA
+		cbw->commandByte[3] = 0;    // LBA
+		cbw->commandByte[4] = 0;    // LBA
+		cbw->commandByte[5] = 0;    // LBA
+        cbw->commandByte[6] = 0;    // Reserved
+		cbw->commandByte[7] = 0;    // Reserved
+		cbw->commandByte[8] = 0;    // 7:1 Reserved  0 PMI
+		cbw->commandByte[9] = 0;    // Control
+	    break;
+
+
+	case 0x28: // read(10)
+
+		cbw->CBWSignature          = 0x43425355; // magic
+        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+	    cbw->CBWDataTransferLength = 512;
+	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
+	    cbw->CBWLUN                =  0; // only bits 3:0
+	    cbw->CBWCBLength           = 10; // only bits 4:0
+		cbw->commandByte[0] = 0x28; // Operation code
+		cbw->commandByte[1] = 0;    // Reserved
+		cbw->commandByte[2] = 0;    // LBA
+		cbw->commandByte[3] = 0;    // LBA
+		cbw->commandByte[4] = 0;    // LBA
+		cbw->commandByte[5] = 0;    // LBA
+        cbw->commandByte[6] = 0;    // Reserved
+		cbw->commandByte[7] = 0x02; // Transfer length
+		cbw->commandByte[8] = 0x00; // Transfer length
+		cbw->commandByte[9] = 0;    // Control
+	    break;
+	}
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpointOut, 512);
+
+    performAsyncScheduler();
+
+    printf("\n");
+	showPacket(DataQTDpage0,31);
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+}
+
+void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength)
+{
+    #ifdef _USB_DIAGNOSIS_
+	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper Transfer, dev: %d endpoint: %d", device, endpoint); settextcolor(15,0);
+    #endif
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    uint8_t oppositeInOut;
+    if(InOut==OUT){oppositeInOut=IN; }
+    else          {oppositeInOut=OUT;}
+
+    // bulk transfer
+	// Create QTDs (in reversed order) // TODO: is handshake needed here?
+    //void* next = createQTD_IO(        0x1, oppositeInOut, 1, 0             ); // Handshake is the opposite direction of Data, therefore OUT after IN
+    DataQTD = createQTD_IO(0x01, InOut,   0, TransferLength); // IN/OUT DATA0, ... byte
+
+    // Create QH
+	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN/OUT for MSD
+
+    performAsyncScheduler();
+
+    printf("\n");
+	showPacket(DataQTDpage0,TransferLength);
+	showPacketAlphaNumeric(DataQTDpage0,TransferLength);
+	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+}
 */

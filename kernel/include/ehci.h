@@ -37,16 +37,17 @@ struct ehci_OpRegs
     volatile uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h
 } __attribute__((packed));
 
-
 extern struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 extern struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-extern bool     EHCIflag;
-extern bool     USBINTflag;
-extern void*    DataQTD;
-extern void*    SetupQTD;
-extern uint32_t DataQTDpage0;
+extern bool      EHCIflag;
+extern bool      USBINTflag;
 
+extern void*     DataQTD;
+extern void*     SetupQTD;
+extern uintptr_t DataQTDpage0;
+extern uintptr_t MSDStatusQTDpage0;
+extern uintptr_t SetupQTDpage0;
 
 /* ****** */
 /* USBCMD */
@@ -254,7 +255,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
 void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
 void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
-
+void* createQTD_MSDStatus(uintptr_t next, bool toggle);
 
 void showStatusbyteQTD(void* addressQTD);
 void showPacket(uint32_t virtAddrBuf0, uint32_t size);

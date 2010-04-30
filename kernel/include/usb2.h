@@ -119,9 +119,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device);
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
 
-void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCSIcommand); /// TEST SCSI to MSD
-void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength);
-int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpoint);
+void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint32_t TransferLength, bool MSDStatus);
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);
@@ -130,5 +128,11 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d);
 void showEndpointDescriptor(struct usb2_endpointDescriptor* d);
 void showStringDescriptor(struct usb2_stringDescriptor* d);
 void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d);
+
+// substitute by one function
+void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCSIcommand); /// TEST SCSI to MSD
+void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength, bool MSDStatus);
+int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpoint);
+
 
 #endif

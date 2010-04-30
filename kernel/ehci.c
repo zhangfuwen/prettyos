@@ -32,6 +32,7 @@ uint8_t*  inBuffer;
 void*     DataQTD;
 void*     SetupQTD;
 uintptr_t DataQTDpage0;
+uintptr_t MSDStatusQTDpage0;
 uintptr_t SetupQTDpage0;
 
 // pci devices list
@@ -257,6 +258,55 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
 
     return address;
 }
+
+void* createQTD_MSDStatus(uintptr_t next, bool toggle)
+{
+    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // 32 Byte alignment
+    struct ehci_qtd* td = (struct ehci_qtd*)address;
+
+    if (next != 0x1)
+    {
+        uint32_t phys = paging_get_phys_addr(kernel_pd, (void*)next);
+        td->next = phys;
+    }
+    else
+    {
+        td->next = 0x1;
+    }
+    td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
+    td->token.status       = 0x80;       // This will be filled by the Host Controller
+    td->token.pid          = IN;         // OUT = 0, IN = 1
+    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
+    td->token.bytes        = 13;         // dependent on transfer, here 13 byte status information
+    td->token.dataToggle   = toggle;     // Should be toggled every list entry
+
+    void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
+    memset(data,0,PAGESIZE);
+
+    MSDStatusQTDpage0  = (uintptr_t)data;
+    (*(((uint32_t*)MSDStatusQTDpage0)+0)) = 0x53425355; // magic USBS
+	(*(((uint32_t*)MSDStatusQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
+	(*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA; //
+	(*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA; //
+    
+    uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
+    td->buffer0 = dataPhysical;
+    td->buffer1 = 0x0;
+    td->buffer2 = 0x0;
+    td->buffer3 = 0x0;
+    td->buffer4 = 0x0;
+    td->extend0 = 0x0;
+    td->extend1 = 0x0;
+    td->extend2 = 0x0;
+    td->extend3 = 0x0;
+    td->extend4 = 0x0;
+
+    return address;
+}
+
+
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
@@ -808,39 +858,18 @@ void checkPortLineStatus(uint8_t j)
 
        ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
 
-                 for(int i=0;i<3;i++)
+                 for(int i=0;i<5;i++)
                  {
                      settextcolor(9,0); printf("\n>>> SCSI: test unit ready"); settextcolor(15,0);
-				     usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00);
-
-                     #ifdef _USB_DIAGNOSIS_
-				     printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                     #endif
-
-                     settextcolor(9,0); printf("\n>>> get status"); settextcolor(15,0);
-				     int32_t retVal = usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
-                     if(retVal==0) // OK
-                     {
-                         break; 
-                     }
-
-                     #ifdef _USB_DIAGNOSIS_
-				     printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                     #endif
+				     
+                     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+                     if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x0 ) break;
                  }
 
        ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
 
                  settextcolor(9,0); printf("\n>>> SCSI: read capacity"); settextcolor(15,0);
-				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x25);
-
-                 #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 #endif
-
-                 settextcolor(9,0); printf("\n>>> get Last LBA and Block Length (both Big Endian)"); settextcolor(15,0);
-				 usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 8);
-
+				 usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
                  uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + (*((uint8_t*)DataQTDpage0+2)) * 256 + (*((uint8_t*)DataQTDpage0+3));
                  uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 16777216 + (*((uint8_t*)DataQTDpage0+5)) * 65536 + (*((uint8_t*)DataQTDpage0+6)) * 256 + (*((uint8_t*)DataQTDpage0+7));
                  uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
@@ -850,35 +879,14 @@ void checkPortLineStatus(uint8_t j)
                  settextcolor(15,0);
 				 waitForKeyStroke();
 
-				 #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 #endif
-
-                 settextcolor(9,0); printf("\n>>> get status"); settextcolor(15,0);
-				 /*int32_t retVal =*/ 
-                 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
-
-                 #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 #endif
-
-
        ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
 
                  settextcolor(9,0); printf("\n>>> SCSI: read(10)"); settextcolor(15,0);
-				 usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x28); // read(10)
-
-                 #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 #endif
-
-                 // get 512 byte blocks
-                 settextcolor(9,0); printf("\n>>> get sector from MSD"); settextcolor(15,0);
-
-                 usbTransferAfterSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointInMSD, IN, 512);
-                 // #ifdef _USB_DIAGNOSIS_
-				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 // #endif
+				 usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, 0, 512, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+                 printf("\nIO:"); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+                 showPacket(DataQTDpage0,512);
+	             showPacketAlphaNumeric(DataQTDpage0,512);  
+                 waitForKeyStroke();
 
        ///////// Test Suite 4: ...
 
