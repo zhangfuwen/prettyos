@@ -41,7 +41,7 @@ static void performAsyncScheduler()
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
-	sleepMilliSeconds(200);
+	sleepMilliSeconds(80);
 }
 
 uint8_t usbTransferEnumerate(uint8_t j)
@@ -355,7 +355,7 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
 	    cbw->CBWDataTransferLength = 0;
-	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
+	    cbw->CBWFlags              = 0x00; // Out: 0x00  In: 0x80
 	    cbw->CBWLUN                = 0;    // only bits 3:0
 	    cbw->CBWCBLength           = 6;    // only bits 4:0
 		cbw->commandByte[0] = 0x00; // Operation code
@@ -450,7 +450,7 @@ void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_
     // bulk transfer
 	// Create QTDs (in reversed order) // TODO: is handshake needed here?
     //void* next = createQTD_IO(        0x1, oppositeInOut, 1, 0             ); // Handshake is the opposite direction of Data, therefore OUT after IN
-    DataQTD = createQTD_IO(/*(uint32_t)next*/0x01, InOut,         0, TransferLength); // IN/OUT DATA0, ... byte
+    DataQTD = createQTD_IO(/*(uint32_t)next*/0x01, InOut,   0, TransferLength); // IN/OUT DATA0, ... byte
 
     // Create QH
 	createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpoint, 512); // endpoint IN/OUT for MSD
@@ -464,7 +464,7 @@ void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_
 }
 
 
-void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
+int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
 {
     #ifdef _USB_DIAGNOSIS_
 	settextcolor(11,0); printf("\nUSB2: Command Block Wrapper Status, dev: %d endpoint: %d", device, endpointIn); settextcolor(15,0);
@@ -492,19 +492,22 @@ void usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
 	showPacket(DataQTDpage0,16); // three bytes more (FF) for control
     settextcolor(9,0); printf("\nThis was the status answer"); settextcolor(15,0);
 
+    int32_t retVal = 0;
     if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x0 )
     {
-        printf("\nCommand Passed (\"good status\") ");
+        printf("\nCommand Passed (\"good status\") "); retVal = 0;
+
     }
     if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x1 )
     {
-        printf("\nCommand failed");
+        printf("\nCommand failed"); retVal = 1;
     }
     if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x2 )
     {
-        printf("\nPhase Error");
+        printf("\nPhase Error"); retVal = 2;
     }
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+    return retVal;
 }
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
@@ -613,7 +616,7 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
                                                             // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
        if (d->attributes == 2)
        {
-           printf("\nattributes: bulk - no sync - data endpoint");
+           printf("\nattributes: bulk - no sync - data endpoint\n");
        }
        printf("max packet size:   %d\n",  d->maxPacketSize);
        #ifdef _USB_DIAGNOSIS_

@@ -795,8 +795,9 @@ void checkPortLineStatus(uint8_t j)
                  #endif
 
 				 /// maxLUN (0 for USB-sticks)
-				 usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
-                 printf("\nMax. Logical Unit Numbers: %d",usbDevices[devAddr].maxLUN);
+                 usbDevices[devAddr].maxLUN = 0;
+				 // usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
+                 // printf("\nMax. Logical Unit Numbers: %d",usbDevices[devAddr].maxLUN);
 
 			     printf("\ndev: %d MSDinterface: %d",devAddr, usbDevices[devAddr].numInterfaceMSD);
                  printf(" ==> BulkOnlyMassStorageReset");
@@ -807,7 +808,7 @@ void checkPortLineStatus(uint8_t j)
 
        ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
 
-                 for(int i=0;i<2;i++)
+                 for(int i=0;i<3;i++)
                  {
                      settextcolor(9,0); printf("\n>>> SCSI: test unit ready"); settextcolor(15,0);
 				     usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00);
@@ -817,7 +818,11 @@ void checkPortLineStatus(uint8_t j)
                      #endif
 
                      settextcolor(9,0); printf("\n>>> get status"); settextcolor(15,0);
-				     usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
+				     int32_t retVal = usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
+                     if(retVal==0) // OK
+                     {
+                         break; 
+                     }
 
                      #ifdef _USB_DIAGNOSIS_
 				     printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
@@ -850,7 +855,8 @@ void checkPortLineStatus(uint8_t j)
                  #endif
 
                  settextcolor(9,0); printf("\n>>> get status"); settextcolor(15,0);
-				 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
+				 /*int32_t retVal =*/ 
+                 usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointInMSD);
 
                  #ifdef _USB_DIAGNOSIS_
 				 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
