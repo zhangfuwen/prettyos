@@ -418,8 +418,8 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 		cbw->commandByte[4] = 0;    // LBA
 		cbw->commandByte[5] = 0;    // LBA
         cbw->commandByte[6] = 0;    // Reserved
-		cbw->commandByte[7] = 0x00; // Transfer length LSB
-		cbw->commandByte[8] = 0x02; // Transfer length MSB
+		cbw->commandByte[7] = 0x02; // Transfer length 
+		cbw->commandByte[8] = 0x00; // Transfer length 
 		cbw->commandByte[9] = 0;    // Control
 	    break;
 	}
