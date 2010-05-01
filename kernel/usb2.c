@@ -329,7 +329,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 
-void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint32_t TransferLength, bool MSDStatus)
+void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, bool MSDStatus)
 {
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     void* QH1              = malloc(sizeof(ehci_qhd_t), PAGESIZE);
@@ -402,7 +402,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
 
 		cbw->CBWSignature          = 0x43425355; // magic
         cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
-	    cbw->CBWDataTransferLength = 512;
+	    cbw->CBWDataTransferLength = TransferLength;
 	    cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
 	    cbw->CBWLUN                =  0; // only bits 3:0
 	    cbw->CBWCBLength           = 10; // only bits 4:0
@@ -413,8 +413,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
 		cbw->commandByte[4] = BYTE2(LBA);    // LBA
 		cbw->commandByte[5] = BYTE1(LBA);    // LBA LSB
         cbw->commandByte[6] = 0;    // Reserved
-		cbw->commandByte[7] = 0x02; // Transfer length
-		cbw->commandByte[8] = 0x00; // Transfer length
+		cbw->commandByte[7] = BYTE2(TransferLength);
+		cbw->commandByte[8] = BYTE1(TransferLength);
 		cbw->commandByte[9] = 0;    // Control
 	    break;
 	}
@@ -423,18 +423,18 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), cmdQTD,  1, device, endpointOut, 512);
 
 
-    if (MSDStatus && TransferLength)
+    if ((MSDStatus==true) && (TransferLength > 0))
     {
-        void* next = createQTD_MSDStatus(0x01, 0); // next, toggle // IN 13 byte
+        void* next = createQTD_MSDStatus(0x01, 1); // next, toggle // IN 13 byte
         DataQTD = createQTD_IO((uintptr_t)next, IN,  0, TransferLength); // IN/OUT DATA0, ... byte
     }
-    else if (MSDStatus && !TransferLength)
+    else if ((MSDStatus==true) && (TransferLength==0))
     {
         DataQTD = createQTD_MSDStatus(0x01, 0); // next, toggle // IN 13 byte        
     }
     else
     {
-        DataQTD = createQTD_IO(0x1, IN,  0, TransferLength); // IN/OUT DATA0, ... byte
+        DataQTD = createQTD_IO(0x1, IN, 0, TransferLength); // IN/OUT DATA0, ... byte
     }
     
     // IN
@@ -722,7 +722,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
 
 
 
-/*
+
 /// http://en.wikipedia.org/wiki/SCSI_command
 void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t SCSIcommand)
 {
@@ -827,6 +827,7 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 
+/*
 void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength)
 {
     #ifdef _USB_DIAGNOSIS_

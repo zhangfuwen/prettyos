@@ -844,29 +844,40 @@ void checkPortLineStatus(uint8_t j)
                  waitForKeyStroke();
                  #endif
 
-				 /// maxLUN (0 for USB-sticks)
+				 /// device, interface, endpoints, and maxLUN (0 for USB-sticks)
                  usbDevices[devAddr].maxLUN = 0;
-				 // usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
-                 // printf("\nMax. Logical Unit Numbers: %d",usbDevices[devAddr].maxLUN);
-
-			     printf("\ndev: %d MSDinterface: %d",devAddr, usbDevices[devAddr].numInterfaceMSD);
-                 printf(" ==> BulkOnlyMassStorageReset");
-				 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD);
-
-                 /// USB Mass Storage Devices (SCSI)
-				 printf("\nendpOUT: %d  endpIN: %d",usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
+                 // usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
+                 
+			     printf("\ndev: %d interface: %d endpOUT: %d  endpIN: %d",devAddr, usbDevices[devAddr].numInterfaceMSD, 
+                                             usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
+                 // printf("\nMax. Logical Unit Numbers (LUN): %d",usbDevices[devAddr].maxLUN);
 
        ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
 
-                 for(int i=0;i<5;i++)
-                 {
+                 /*
+                 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+                 
+                 for(int i=0;i<3;i++)
+                 {                     
                      settextcolor(9,0); printf("\n>>> SCSI: test unit ready"); settextcolor(15,0);
-				     
-                     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
-                     if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x0 ) break;
+				     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+                     printf("\nbyte 13: %d",( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ));
+                     if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x00 ) break;
+
+                     
+                     // classical style 
+                     // usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00); // TEST UNIT READY
+                     // int32_t retVal = usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD);
+                     // if( retVal == 0x00 ) break;
+                     
                  }
+                 */
+                 
 
        ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
+
+                 /*
+                 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
                  settextcolor(9,0); printf("\n>>> SCSI: read capacity"); settextcolor(15,0);
 				 usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
@@ -878,11 +889,14 @@ void checkPortLineStatus(uint8_t j)
                  printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
                  settextcolor(15,0);
 				 waitForKeyStroke();
+                 */
 
        ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
 
+                 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+                 
                  settextcolor(9,0); printf("\n>>> SCSI: read(10)"); settextcolor(15,0);
-				 usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, 0, 512, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+				 usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, 0, 512, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
                  printf("\nIO:"); showStatusbyteQTD(DataQTD); waitForKeyStroke();
                  showPacket(DataQTDpage0,512);
 	             showPacketAlphaNumeric(DataQTDpage0,512);  
