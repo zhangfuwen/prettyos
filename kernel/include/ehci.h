@@ -256,6 +256,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
 void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
 void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
 void* createQTD_MSDStatus(uintptr_t next, bool toggle);
+void* createQTD_HS(uint8_t direction);
 
 void showStatusbyteQTD(void* addressQTD);
 void showPacket(uint32_t virtAddrBuf0, uint32_t size);

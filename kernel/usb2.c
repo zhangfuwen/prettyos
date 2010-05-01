@@ -329,14 +329,14 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 	printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
 
+/// cf. http://www.beyondlogic.org/usbnutshell/usb4.htm#Bulk
 void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, bool MSDStatus)
 {
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     void* QH1              = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-
-    // bulk transfer
-	// Create QTDs 
+    
+    // OUT qTD
     void* cmdQTD  = createQTD_IO(0x01, OUT, 0, 31); // OUT DATA0, 31 byte
 
     // http://en.wikipedia.org/wiki/SCSI_CDB
@@ -419,25 +419,37 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
 	    break;
 	}
 
-    // OUT
+    // OUT QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), cmdQTD,  1, device, endpointOut, 512);
-
-
-    if ((MSDStatus==true) && (TransferLength > 0))
+    
+    // IN qTDs
+    void* next = createQTD_HS(OUT); // Handshake 
+    
+    if (MSDStatus==true)
     {
-        void* next = createQTD_MSDStatus(0x01, 1); // next, toggle // IN 13 byte
-        DataQTD = createQTD_IO((uintptr_t)next, IN,  0, TransferLength); // IN/OUT DATA0, ... byte
-    }
-    else if ((MSDStatus==true) && (TransferLength==0))
-    {
-        DataQTD = createQTD_MSDStatus(0x01, 0); // next, toggle // IN 13 byte        
-    }
+        if (TransferLength > 0)
+        {
+            next = createQTD_MSDStatus((uintptr_t)next, 1); // next, toggle // IN 13 byte
+            DataQTD = createQTD_IO((uintptr_t)next, IN,  0, TransferLength); // IN/OUT DATA0, ... byte
+        }
+        else
+        {
+            DataQTD = createQTD_MSDStatus((uintptr_t)next, 0); // next, toggle // IN 13 byte    
+        }
+    }    
     else
-    {
-        DataQTD = createQTD_IO(0x1, IN, 0, TransferLength); // IN/OUT DATA0, ... byte
+    { 
+        if (TransferLength > 0)       
+        {
+            DataQTD = createQTD_IO((uintptr_t)next, IN, 0, TransferLength); // IN DATA0, ... byte
+        }
+        else
+        {
+            DataQTD = NULL; // no qTD
+        }
     }
     
-    // IN
+    // IN QH
     createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 0, device, endpointIn, 512); // endpoint IN/OUT for MSD
     
     performAsyncScheduler();

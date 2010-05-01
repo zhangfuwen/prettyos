@@ -155,11 +155,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
     td->buffer2 = 0x0;
     td->buffer3 = 0x0;
     td->buffer4 = 0x0;
-    td->extend0 = 0x0;
-    td->extend1 = 0x0;
-    td->extend2 = 0x0;
-    td->extend3 = 0x0;
-    td->extend4 = 0x0;
+    td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
     return address;
 }
@@ -206,11 +202,7 @@ void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t t
     td->buffer2 = 0x0;
     td->buffer3 = 0x0;
     td->buffer4 = 0x0;
-    td->extend0 = 0x0;
-    td->extend1 = 0x0;
-    td->extend2 = 0x0;
-    td->extend3 = 0x0;
-    td->extend4 = 0x0;
+    td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
 	return address;
 }
@@ -250,11 +242,32 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     td->buffer2 = 0x0;
     td->buffer3 = 0x0;
     td->buffer4 = 0x0;
-    td->extend0 = 0x0;
-    td->extend1 = 0x0;
-    td->extend2 = 0x0;
-    td->extend3 = 0x0;
-    td->extend4 = 0x0;
+    td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
+
+    return address;
+}
+
+void* createQTD_HS(uint8_t direction)
+{
+    uintptr_t next      = 0x1;
+    uint32_t tokenBytes = 0;
+    bool toggle         = 1;
+    
+    void* address = malloc(sizeof(struct ehci_qtd), 0x20); // 32 Byte alignment
+    struct ehci_qtd* td = (struct ehci_qtd*)address;
+ 
+    td->next = next;                     // No next, so T-Bit is set to 1
+    td->nextAlt = td->next;              // No alternative next, so T-Bit is set to 1
+    td->token.status       = 0x80;       // This will be filled by the Host Controller
+    td->token.pid          = direction;  // OUT = 0, IN = 1
+    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
+    td->token.bytes        = tokenBytes; // 0 for handshake
+    td->token.dataToggle   = toggle;     // 1 for handshake
+
+    td->buffer0 = td->buffer1 = td->buffer2 = td->buffer3 = td->buffer4 = 0x0;
+    td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
     return address;
 }
@@ -297,11 +310,7 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
     td->buffer2 = 0x0;
     td->buffer3 = 0x0;
     td->buffer4 = 0x0;
-    td->extend0 = 0x0;
-    td->extend1 = 0x0;
-    td->extend2 = 0x0;
-    td->extend3 = 0x0;
-    td->extend4 = 0x0;
+    td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
     return address;
 }
@@ -330,7 +339,7 @@ void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
     for (uint32_t c=0; c<size; c++)
     {
         settextcolor(15,0);
-        if(*((uint8_t*)virtAddrBuf0+c)>=0x20)
+        if ( (*((uint8_t*)virtAddrBuf0+c)>=0x20) && (*((uint8_t*)virtAddrBuf0+c)<=0x7E) )
         {
             printf("%c", *((uint8_t*)virtAddrBuf0+c));
         }
@@ -863,19 +872,12 @@ void checkPortLineStatus(uint8_t j)
 				     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
                      printf("\nbyte 13: %d",( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ));
                      if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x00 ) break;
-
-                     
-                     // classical style 
-                     // usbTransferSCSIcommandToMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD, 0x00); // TEST UNIT READY
-                     // int32_t retVal = usbTransferGetAnswerToCommandMSD(devAddr, usbDevices[devAddr].numEndpointOutMSD);
-                     // if( retVal == 0x00 ) break;
-                     
-                 }
+                     waitForKeyStroke();
+                 } 
                  */
-                 
 
        ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
-
+                 
                  /*
                  usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
@@ -895,12 +897,17 @@ void checkPortLineStatus(uint8_t j)
 
                  usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
                  
-                 settextcolor(9,0); printf("\n>>> SCSI: read(10)"); settextcolor(15,0);
-				 usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, 0, 512, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
-                 printf("\nIO:"); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 showPacket(DataQTDpage0,512);
-	             showPacketAlphaNumeric(DataQTDpage0,512);  
-                 waitForKeyStroke();
+                 uint32_t length = 512; // number of byte to be read
+                 
+                 for(uint32_t sector=0; sector < 10; sector++)
+                 {
+                     settextcolor(9,0); printf("\n>>> SCSI: read(10)"); settextcolor(15,0);
+				     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, sector, length, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
+                     printf("\nIO:"); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+                     showPacket(DataQTDpage0,length);
+	                 showPacketAlphaNumeric(DataQTDpage0,length);  
+                     waitForKeyStroke();
+                 }
 
        ///////// Test Suite 4: ...
 
