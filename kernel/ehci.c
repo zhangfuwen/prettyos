@@ -351,20 +351,24 @@ void showStatusbyteQTD(void* addressQTD)
 {
     settextcolor(15,0);
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
-    printf(" qTD Status: %y", statusbyte);
+    printf("\nqTD Status: %y\t", statusbyte);
 
-	settextcolor(14,0);
-    // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
-    if (statusbyte & (1<<7)) { printf("\nqTD Status: Active - HC transactions enabled");                                     }
-    if (statusbyte & (1<<6)) { printf("\nqTD Status: Halted - serious error at the device/endpoint");                        }
-    if (statusbyte & (1<<5)) { printf("\nqTD Status: Data Buffer Error (overrun or underrun)");                              }
-    if (statusbyte & (1<<4)) { printf("\nqTD Status: Babble (fatal error leads to Halted)");                                 }
-    if (statusbyte & (1<<3)) { printf("\nqTD Status: Transaction Error (XactErr)- host received no valid response device");  }
-    if (statusbyte & (1<<2)) { printf("\nqTD Status: Missed Micro-Frame");                                                   }
-    if (statusbyte & (1<<1)) { printf("\nqTD Status: Do Complete Split");                                                    }
-    if (statusbyte & (1<<0)) { printf("\nqTD Status: Do Ping");                                                              }
+	// analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
+    
+    // Status not OK
+    settextcolor(14,0);
+    if (statusbyte & (1<<7)) { printf("Active - HC transactions enabled");                                     }
+    if (statusbyte & (1<<6)) { printf("Halted - serious error at the device/endpoint");                        }
+    if (statusbyte & (1<<5)) { printf("Data Buffer Error (overrun or underrun)");                              }
+    if (statusbyte & (1<<4)) { printf("Babble (fatal error leads to Halted)");                                 }
+    if (statusbyte & (1<<3)) { printf("Transaction Error (XactErr)- host received no valid response device");  }
+    if (statusbyte & (1<<2)) { printf("Missed Micro-Frame");                                                   }
+    if (statusbyte & (1<<1)) { printf("Do Complete Split");                                                    }
+    if (statusbyte & (1<<0)) { printf("Do Ping");                                                              }
     settextcolor(10,0);
-    if (statusbyte == 0)     { printf("\nqTD Status: OK (no bit set)");                                                                                 }
+    
+    // Status OK
+    if (statusbyte == 0)     { printf("OK (no bit set)");                                                                                 }
     settextcolor(15,0);
 }
 
@@ -860,54 +864,66 @@ void checkPortLineStatus(uint8_t j)
                  // printf("\nMax. Logical Unit Numbers (LUN): %d",usbDevices[devAddr].maxLUN);
 
        ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
-
-                 /*
-                 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-                 
-                 for(int i=0;i<3;i++)
+                 int32_t timeout = 5; 
+                 uint8_t statusByte;
+                 do
                  {                     
+                     usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
                      settextcolor(9,0); printf("\n>>> SCSI: test unit ready"); settextcolor(15,0);
-				     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
-                     printf("\nbyte 13: %d",( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ));
-                     if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x00 ) break;
-                     waitForKeyStroke();
-                 } 
-                 */
+                     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+                     statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
-       ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
-                 
-                 /*
-                 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-
-                 settextcolor(9,0); printf("\n>>> SCSI: read capacity"); settextcolor(15,0);
-				 usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
-                 uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + (*((uint8_t*)DataQTDpage0+2)) * 256 + (*((uint8_t*)DataQTDpage0+3));
-                 uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 16777216 + (*((uint8_t*)DataQTDpage0+5)) * 65536 + (*((uint8_t*)DataQTDpage0+6)) * 256 + (*((uint8_t*)DataQTDpage0+7));
-                 uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
-
-                 settextcolor(14,0);
-                 printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
-                 settextcolor(15,0);
-				 waitForKeyStroke();
-                 */
-
-       ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
-
-                 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-                 
-                 uint32_t length = 512; // number of byte to be read
-                 
-                 for(uint32_t sector=0; sector < 10; sector++)
-                 {
-                     settextcolor(9,0); printf("\n>>> SCSI: read(10)"); settextcolor(15,0);
-				     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, sector, length, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
-                     printf("\nIO:"); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                     showPacket(DataQTDpage0,length);
-	                 showPacketAlphaNumeric(DataQTDpage0,length);  
+                     timeout--;
+                     if (timeout <= 0) 
+                     {
+                         break;
+                     }
                      waitForKeyStroke();
                  }
+                 while (statusByte != 0x00); // 0x00 means: Command Passed ("good status")
+                                  
+                 if (statusByte != 0x00)
+                 {
+                     settextcolor(12,0);
+                     printf("\n\nCommand Block Status Values not in \"good status\"\n");
+                     settextcolor(15,0);
+                 }
+                 else
+                 {
 
-       ///////// Test Suite 4: ...
+                   ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
+                     
+                     /*
+                     usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+
+                     settextcolor(9,0); printf("\n>>> SCSI: read capacity"); settextcolor(15,0);
+				     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+                     uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + (*((uint8_t*)DataQTDpage0+2)) * 256 + (*((uint8_t*)DataQTDpage0+3));
+                     uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 16777216 + (*((uint8_t*)DataQTDpage0+5)) * 65536 + (*((uint8_t*)DataQTDpage0+6)) * 256 + (*((uint8_t*)DataQTDpage0+7));
+                     uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
+
+                     settextcolor(14,0);
+                     printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
+                     settextcolor(15,0);
+				     waitForKeyStroke();
+                     */
+
+                   ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
+
+                     // usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+                     
+                     uint32_t length = 512; // number of byte to be read
+                     
+                     for(uint32_t sector=0; sector < 10; sector++)
+                     {
+                         settextcolor(9,0); printf("\n>>> SCSI: read(10)"); settextcolor(15,0);
+                         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 
+                                        0x28, sector, length, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
+                         waitForKeyStroke();                     
+                     }
+
+                   ///////// Test Suite 4: ...
+                 }
 
              }
         }

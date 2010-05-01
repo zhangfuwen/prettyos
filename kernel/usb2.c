@@ -479,6 +479,9 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
             printf("\nPhase Error"); 
         }
     }
+    
+    // transfer diagnosis
+    showStatusbyteQTD(DataQTD);     
 }
 
 int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
