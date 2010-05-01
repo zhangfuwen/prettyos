@@ -57,13 +57,6 @@ unsigned int getCurrentSeconds()
     return ret;
 }
 
-unsigned int getCurrentMilliseconds()
-{
-    unsigned int ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(10));
-    return ret;
-}
-
 int floppy_format(char* volumeLabel)
 {
     int ret;
@@ -91,20 +84,6 @@ void settaskflag(int i)
 void beep(unsigned int frequency, unsigned int duration)
 {
     __asm__ volatile("int $0x7F" : : "a"(15), "b"(frequency), "c"(duration));
-}
-
-int getUserTaskNumber()
-{
-    int ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(16));
-    return ret;
-}
-
-bool testch()
-{
-    int ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(17));
-    return ret!=0;
 }
 
 void clearScreen(unsigned char backgroundColor)

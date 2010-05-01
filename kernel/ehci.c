@@ -48,7 +48,7 @@ static void waitForKeyStroke()
    settextcolor(13,0);
    printf("\n>>> Press key to go on with USB-Test. <<<");
    settextcolor(15,0);
-   while(!checkKQ_and_return_char());
+   while(!keyboard_getChar());
    printf("\n");
 }
 
@@ -423,7 +423,7 @@ void ehci_handler(registers_t* r)
         settextcolor(14,0);
         printf("\n>>> Init EHCI after fatal error:           <<<");
          printf("\n>>> Press key for EHCI (re)initialization. <<<");
-        while(!checkKQ_and_return_char());
+        while(!keyboard_getChar());
         settextcolor(15,0);
         addEvent(&EHCI_INIT);
     }
@@ -730,9 +730,7 @@ void showPORTSC()
             }
             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
 
-			char str[81];
-			sprintf(str, "Port: %i, device %s", j+1, PortStatus);
-            writeInfo(0, str);
+            writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
 
             // beep(1000,100);
         }
@@ -746,7 +744,7 @@ void portCheck()
     settextcolor(13,0);
     printf("\n>>> Press key to close this console. <<<");
     settextcolor(15,0);
-    while(!checkKQ_and_return_char());
+    while(!keyboard_getChar());
 }
 
 void startEHCI()
@@ -755,7 +753,7 @@ void startEHCI()
     settextcolor(13,0);
     printf("\n>>> Press key to close this console. <<<");
     settextcolor(15,0);
-    while(!checkKQ_and_return_char());
+    while(!keyboard_getChar());
 }
 
 void showUSBSTS()

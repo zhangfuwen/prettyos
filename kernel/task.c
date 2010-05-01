@@ -11,9 +11,6 @@
 #include "kheap.h"
 #include "video.h"
 
-// Count of running user tasks
-int32_t userTaskCounter;
-
 // The currently running and currently displayed task.
 console_t* current_console;
 
@@ -25,7 +22,7 @@ uint32_t next_pid = 0; // The next available process ID.
 
 int32_t getpid()
 {
-    return ODA.curTask->pid;
+    return(ODA.curTask->pid);
 }
 
 void settaskflag(int32_t i)
@@ -33,17 +30,11 @@ void settaskflag(int32_t i)
     ODA.ts_flag = i;
 }
 
-int32_t getUserTaskNumber()
-{
-    return userTaskCounter;
-}
-
 void tasking_install()
 {
-    cli();
-
     kdebug(3, "1st_task: ");
 
+    cli();
     ODA.curTask = initTaskQueue();
     ODA.curTask->pid = next_pid++;
     ODA.curTask->esp = 0;
@@ -59,7 +50,6 @@ void tasking_install()
     kdebug(3, "1st_ks: ");
 
     ODA.curTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-    userTaskCounter = 0;
     sti();
 }
 
@@ -83,10 +73,9 @@ task_t* create_ctask(page_directory_t* directory, void* entry, uint8_t privilege
 
 task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
 {
-    cli();
-
     kdebug(3, "cr_task: ");
 
+    cli();
     task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
     new_task->pid  = next_pid++;
     new_task->page_directory = directory;
@@ -160,7 +149,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     return new_task;
 }
 
-task_t* create_cthread(void* entry, const char* consoleName)
+task_t* create_cthread(void(*entry)(), const char* consoleName)
 {
     task_t* new_task = create_thread(entry);
     new_task->ownConsole = true;
@@ -178,12 +167,11 @@ task_t* create_cthread(void* entry, const char* consoleName)
     return(new_task);
 }
 
-task_t* create_thread(void* entry)
+task_t* create_thread(void(*entry)())
 {
-    cli();
-
     kdebug(3, "cr_thread: ");
 
+    cli();
     task_t* new_task = malloc(sizeof(task_t),0);
     new_task->pid  = ODA.curTask->pid;
     new_task->page_directory = ODA.curTask->page_directory;
@@ -213,9 +201,7 @@ task_t* create_thread(void* entry)
     uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
     uint32_t code_segment=0x08, data_segment=0x10;
 
-    /// TEST
     *(--kernel_stack) = (uintptr_t)&exit;
-    /// TEST
 
     if (new_task->privilege == 3)
     {
@@ -316,14 +302,9 @@ void exit()
     void* pkernelstack = (void*) ((uint32_t) ODA.curTask->kernel_stack - KERNEL_STACK_SIZE);
     task_t* ptask        = ODA.curTask;
 
-    if ( (ODA.curTask->privilege == 3) && !(ODA.curTask->threadFlag) )
-    {
-        userTaskCounter--; // a user-program is going to stop
-    }
-
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
     if(ODA.curTask->ownConsole) {
-        for (int i = 0; i < 10; i++)
+        for (uint8_t i = 0; i < 10; i++)
         {
             if (ODA.curTask->console == reachableConsoles[i])
             {
@@ -348,9 +329,9 @@ void exit()
     #ifdef _DIAGNOSIS_
     log_task_list();
     #endif
+    sti();
     kdebug(3, "exit finished.\n");
 
-    sti();
     switch_context(); // switch to next task
 }
 
@@ -359,20 +340,20 @@ void* task_grow_userheap(uint32_t increase)
     uint8_t* old_heap_top = ODA.curTask->heap_top;
     increase = alignUp(increase, PAGESIZE);
 
-    if (((uintptr_t)old_heap_top + increase) > (uintptr_t)USER_HEAP_END)
-        return NULL;
+    if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_HEAP_END) ||
+	   !paging_alloc(ODA.curTask->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
+	{
+		return NULL;
+	}
 
-    if (! paging_alloc(ODA.curTask->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
-        return NULL;
-
-    ODA.curTask->heap_top += increase; // correct???
+    ODA.curTask->heap_top += increase;
     return old_heap_top;
 }
 
 void task_log(task_t* t)
 {
     settextcolor(5,0);
-    printf("\npid: %d ", t->pid);             // Process ID
+    printf("\npid: %d ", t->pid);           // Process ID
     printf("esp: %X ",t->esp);              // Stack pointer
     printf("eip: %X ",t->eip);              // Instruction pointer
     printf("PD: %X ", t->page_directory);   // Page directory.
@@ -414,7 +395,7 @@ void TSS_log(tss_entry_t* tssEntry)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

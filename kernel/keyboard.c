@@ -35,11 +35,6 @@ void keyboard_install()
     }
 }
 
-bool testch() // delete?
-{
-    return current_console->KQ.pHead != current_console->KQ.pTail;
-}
-
 uint8_t FetchAndAnalyzeScancode()
 {
     if (inportb(0x64)&1)
@@ -163,8 +158,8 @@ void keyboard_handler(registers_t* r)
    uint8_t KEY = ScanToASCII();
    if (KEY)
    {
-       *(reachableConsoles[displayedConsole]->KQ.pTail) = KEY;
-       ++(reachableConsoles[displayedConsole]->KQ.count_write);
+       *reachableConsoles[displayedConsole]->KQ.pTail = KEY;
+       ++reachableConsoles[displayedConsole]->KQ.count_write;
 
        if (reachableConsoles[displayedConsole]->KQ.pTail > reachableConsoles[displayedConsole]->KQ.buffer)
        {
@@ -177,13 +172,13 @@ void keyboard_handler(registers_t* r)
    }
 }
 
-uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX like
+uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
 {
    /// TODO: should only return character, if keystroke was entered
 
-   cli();
    if (current_console->KQ.count_write > current_console->KQ.count_read)
    {
+	   cli();
        uint8_t KEY = *current_console->KQ.pHead;
        ++current_console->KQ.count_read;
 
@@ -193,17 +188,16 @@ uint8_t checkKQ_and_return_char() // get a character <--- TODO: make it POSIX li
        }
        if (current_console->KQ.pHead == current_console->KQ.buffer)
        {
-           current_console->KQ.pHead = current_console->KQ.buffer+KQSIZE-1;
+           current_console->KQ.pHead = current_console->KQ.buffer + KQSIZE - 1;
        }
-       sti();
+	   sti();
        return KEY;
    }
-   sti();
    return 0;
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -18,7 +18,6 @@ void    keyboard_install();
 uint8_t FetchAndAnalyzeScancode();
 uint8_t ScanToASCII();
 void    keyboard_handler(registers_t* r);
-uint8_t checkKQ_and_return_char();
-bool    testch();
+uint8_t keyboard_getChar();
 
 #endif

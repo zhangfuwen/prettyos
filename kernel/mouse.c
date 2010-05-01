@@ -11,29 +11,63 @@
 #include "mouse.h"
 #include "util.h"
 #include "console.h"
+#include "video.h"
 #include "irq.h"
 
 char mouseid;
-uint32_t mouse_x=10;           // Mouse X
-uint32_t mouse_y=10;           // Mouse Y
-uint32_t mouse_z=0;            // Mouse Z (Mousewheel)
-char mouse_lm=0;               // Mouse Left Button
-char mouse_mm=0;               // Mouse Middle Button
-char mouse_rm=0;               // Mouse Right Button
-char mouse_b4=0;               // Mouse Button 4
-char mouse_b5=0;               // Mouse button 5
+uint32_t mouse_x=10;   // Mouse X
+uint32_t mouse_y=10;   // Mouse Y
+uint32_t mouse_z=0;    // Mouse Z (Mousewheel)
+char mouse_lm=0;       // Mouse Left Button
+char mouse_mm=0;       // Mouse Middle Button
+char mouse_rm=0;       // Mouse Right Button
+char mouse_b4=0;       // Mouse Button 4
+char mouse_b5=0;       // Mouse button 5
 
-char mouse_cycle=0;            // MouseHandler help
-char mouse_byte[4];            // MouseHandler bytes
+char mouse_cycle=0;    // MouseHandler help
+char mouse_byte[4];    // MouseHandler bytes
 
 
-//Mouse functions
-void mouse_handler(registers_t* a_r) //struct regs *a_r (not used but just there)
+void mouse_install()
+{
+    // Enable the auxiliary mouse device
+    mouse_wait(1);
+    outportb(0x64, 0xA8);
+
+    // Enable the interrupts
+    mouse_wait(1);
+    outportb(0x64, 0x20);
+    mouse_wait(0);
+    uint8_t _status=(inportb(0x60) | 2);
+    mouse_wait(1);
+    outportb(0x64, 0x60);
+    mouse_wait(1);
+    outportb(0x60, _status);
+
+    // Tell the mouse to use default settings
+    mouse_write(0xF6);
+    mouse_read();
+
+
+    // Check mouse for special features (mousewheel (up/down), button 4+5)
+    mouse_initspecialfeatures();
+
+
+    // Enable the mouse
+    mouse_write(0xF4);
+    mouse_read();
+
+    // Setup the mouse handler
+    irq_install_handler(32+12, mouse_handler);
+}
+
+// Mouse functions
+void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just there)
 {
     switch (mouse_cycle)
     {
         case 0:
-            mouse_byte[0]=inportb(0x60);
+            mouse_byte[0] = inportb(0x60);
             if (mouse_byte[0] & (1<<3)) // Only if this is really the first Byte!
             {
                 mouse_cycle++;
@@ -60,17 +94,16 @@ void mouse_handler(registers_t* a_r) //struct regs *a_r (not used but just there
             if (mouseid == 0x0)
             {
                 if (!(mouse_byte[0] & 0x20))
-                    mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
+                    mouse_byte[2] |= 0xFFFFFF00; // delta-y is a negative value
                 if (!(mouse_byte[0] & 0x10))
-                    mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
+                    mouse_byte[1] |= 0xFFFFFF00; // delta-x is a negative value
 
-                mouse_x=mouse_x+mouse_byte[1];
-                mouse_y=mouse_y+mouse_byte[2];
-                printf("Mouse: X:%d Y:%d LM:%d MM:%d RM:%d id:%y\n",
-                    mouse_x,mouse_y,
-                    mouse_lm,mouse_mm,mouse_rm,
+                mouse_x = mouse_x+mouse_byte[1];
+                mouse_y = mouse_y+mouse_byte[2];
+				writeInfo(1, "Mouse: X:%d Y:%d Z:No Mousewheel found LM:%d MM:%d RM:%d id:%y\n",
+                    mouse_x, mouse_y,
+                    mouse_lm, mouse_mm, mouse_rm,
                     mouseid);
-                printf("No mousewheel found!\n");
                 mouse_cycle=0;
             }
             else
@@ -80,37 +113,31 @@ void mouse_handler(registers_t* a_r) //struct regs *a_r (not used but just there
 
             break;
         case 3:
+            mouse_byte[3]=inportb(0x60);
+            if (!(mouse_byte[0] & 0x20))
+                mouse_byte[2] |= 0xFFFFFF00; // delta-y is a negative value
+            if (!(mouse_byte[0] & 0x10))
+                mouse_byte[1] |= 0xFFFFFF00; // delta-x is a negative value
             if (mouseid == 1) // Mouse has 'only' a scrollwheel
             {
-                mouse_byte[3]=inportb(0x60);
-                if (!(mouse_byte[0] & 0x20))
-                    mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
-                if (!(mouse_byte[0] & 0x10))
-                    mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
-                mouse_x=mouse_x+mouse_byte[1];
-                mouse_y=mouse_y+mouse_byte[2];
-                mouse_z=mouse_z+mouse_byte[3];
+                mouse_x = mouse_x+mouse_byte[1];
+                mouse_y = mouse_y+mouse_byte[2];
+                mouse_z = mouse_z+mouse_byte[3];
 
-                printf("Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
-                       mouse_x,mouse_y,mouse_z,
-                       mouse_lm,mouse_mm,mouse_rm,
+                writeInfo(1, "Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
+                       mouse_x, mouse_y, mouse_z,
+                       mouse_lm, mouse_mm, mouse_rm,
                        mouseid);
 
                 mouse_cycle=0;
             }
             else // Mouse has also Buttons 4+5
             {
-                mouse_byte[3]=inportb(0x60);
-                if (!(mouse_byte[0] & 0x20))
-                    mouse_byte[2] |= 0xFFFFFF00; //delta-y is a negative value
-                if (!(mouse_byte[0] & 0x10))
-                    mouse_byte[1] |= 0xFFFFFF00; //delta-x is a negative value
-
-                mouse_b4=(mouse_byte[3] & 0x16);
-                mouse_b5=(mouse_byte[3] & 0x32);
-                mouse_x=mouse_x+mouse_byte[1];
-                mouse_y=mouse_y+mouse_byte[2];
-                mouse_z=mouse_z+(mouse_byte[3] & 0xF);
+                mouse_b4 = mouse_byte[3] & 0x16;
+                mouse_b5 = mouse_byte[3] & 0x32;
+                mouse_x = mouse_x+mouse_byte[1];
+                mouse_y = mouse_y+mouse_byte[2];
+                mouse_z = mouse_z+(mouse_byte[3] & 0xF);
                 printf("%y: %y\n",mouse_byte[3],(mouse_byte[3] & 0xF));
                 /*
                 printf("Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
@@ -124,42 +151,40 @@ void mouse_handler(registers_t* a_r) //struct regs *a_r (not used but just there
     }
 }
 
-inline void mouse_wait(unsigned char a_type) //unsigned char
+inline void mouse_wait(uint8_t a_type)
 {
-    unsigned int _time_out=100000; //unsigned int
+    unsigned int _time_out = 100000;
     if (a_type==0)
     {
-        while (_time_out--) //Data
+        while (_time_out--) // Data
         {
             if ((inportb(0x64) & 1)==1)
             {
                 return;
             }
         }
-        return;
     }
     else
     {
-        while (_time_out--) //Signal
+        while (_time_out--) // Signal
         {
             if ((inportb(0x64) & 2)==0)
             {
                 return;
             }
         }
-        return;
     }
 }
 
-inline void mouse_write(char a_write) //unsigned char
+inline void mouse_write(int8_t a_write)
 {
-    //Wait to be able to send a command
+    // Wait to be able to send a command
     mouse_wait(1);
-    //Tell the mouse we are sending a command
+    // Tell the mouse we are sending a command
     outportb(0x64, 0xD4);
-    //Wait for the final part
+    // Wait for the final part
     mouse_wait(1);
-    //Finally write
+    // Finally write
     outportb(0x60, a_write);
 	// If necessary, wait for ACK
 	if (a_write != 0xEB && a_write != 0xEC && a_write != 0xF2 && a_write != 0xFF) {
@@ -171,12 +196,12 @@ inline void mouse_write(char a_write) //unsigned char
 
 char mouse_read()
 {
-    //Get's response from mouse
+    // Get's response from mouse
     mouse_wait(0);
     return inportb(0x60);
 }
 
-void mouse_setsamples(unsigned char samples_per_second)
+void mouse_setsamples(uint8_t samples_per_second)
 {
     mouse_write(0xF3);
     switch (samples_per_second)
@@ -241,41 +266,6 @@ void mouse_initspecialfeatures()
     }
 
     return;
-}
-
-void mouse_install()
-{
-    unsigned char _status;
-
-    //Enable the auxiliary mouse device
-    mouse_wait(1);
-    outportb(0x64, 0xA8);
-
-    //Enable the interrupts
-    mouse_wait(1);
-    outportb(0x64, 0x20);
-    mouse_wait(0);
-    _status=(inportb(0x60) | 2);
-    mouse_wait(1);
-    outportb(0x64, 0x60);
-    mouse_wait(1);
-    outportb(0x60, _status);
-
-    //Tell the mouse to use default settings
-    mouse_write(0xF6);
-    mouse_read();
-
-
-    // Check mouse for special features (mousewheel (up/down), button 4+5)
-    mouse_initspecialfeatures();
-
-
-    //Enable the mouse
-    mouse_write(0xF4);
-    mouse_read();
-
-    //Setup the mouse handler
-    irq_install_handler(32+12, mouse_handler);
 }
 
 void mouse_uninstall()

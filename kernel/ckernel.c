@@ -20,7 +20,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.421";
+const char* version = "0.0.0.422";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -92,7 +92,7 @@ void* ramdisk_install(size_t size)
     return(ramdisk_start);
 }
 
-int main()
+void main()
 {
     init();
     EHCIflag          = false; // first EHCI device found?

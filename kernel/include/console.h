@@ -34,6 +34,7 @@ void setScrollField(uint8_t begin, uint8_t end);
 void putch(char c);
 void puts(const char* text);
 void printf (const char* args, ...);
+void vprintf(const char* args, va_list ap);
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void scroll();
 void set_cursor(uint8_t x, uint8_t y);

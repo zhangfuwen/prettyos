@@ -18,7 +18,7 @@ DEFN_SYSCALL2(settextcolor,               2, uint8_t, uint8_t)
 DEFN_SYSCALL0(getpid,                     3)
 DEFN_SYSCALL0(nop,                        4)
 DEFN_SYSCALL0(switch_context,             5)
-DEFN_SYSCALL0(checkKQ_and_return_char,    6)
+DEFN_SYSCALL0(keyboard_getChar,              6)
 DEFN_SYSCALL0(flpydsk_read_directory,     7)
 DEFN_SYSCALL3(cprintf,                    8, const char*, uint32_t, uint8_t)
 DEFN_SYSCALL0(getCurrentSeconds,          9)
@@ -28,7 +28,7 @@ DEFN_SYSCALL2(flpydsk_load,              12, const char*, const char*)
 DEFN_SYSCALL0(exit,                      13)
 DEFN_SYSCALL1(settaskflag,               14, int32_t)
 DEFN_SYSCALL2(beep,                      15, uint32_t, uint32_t)
-DEFN_SYSCALL0(getUserTaskNumber,         16)
+DEFN_SYSCALL0(getUserTaskNumber,         16) // substitute
 DEFN_SYSCALL0(testch,                    17) // substitute
 DEFN_SYSCALL1(clear_console,             18, uint8_t)
 DEFN_SYSCALL2(set_cursor,                19, uint8_t, uint8_t)
@@ -43,18 +43,18 @@ static void* syscalls[] =
     &getpid,
     &nop,
     &switch_context,
-    &checkKQ_and_return_char,
+    &keyboard_getChar,
     &flpydsk_read_directory,
     &cprintf,
     &getCurrentSeconds,
-    &getCurrentMilliseconds, // substitute
+    &nop, // substitute
     &flpydsk_format,
     &flpydsk_load,
     &exit,
     &settaskflag,
     &beep,
-    &getUserTaskNumber,
-    &testch,                 // substitute
+    &nop, // substitute
+    &nop, // substitute
     &clear_console,
     &set_cursor,
     &task_grow_userheap,

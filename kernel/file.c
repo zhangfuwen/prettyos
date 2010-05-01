@@ -119,11 +119,10 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     if (!retVal)
     {
         char Buffer[13];
-        sprintf(Buffer, "%s.%s", name, ext);
+        snprintf(Buffer, 13, "%s.%s", name, ext);
         /// START TASK AND INCREASE TASKCOUNTER
         if (elf_exec(file, f.size, Buffer)) // execute loaded file
         {
-            userTaskCounter++;         // an additional user-program has been started
             free(file);
         }
         else

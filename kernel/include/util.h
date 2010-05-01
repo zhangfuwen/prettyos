@@ -41,19 +41,22 @@ uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
 void*     memcpy(void* dest, const void* src, size_t count);
 
-void    sprintf (char *buffer, const char *args, ...);
+void    vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
+void    snprintf (char *buffer, size_t length, const char *args, ...);
 size_t  strlen(const char* str);
-int32_t strcmp( const char* s1, const char* s2 );
+int32_t strcmp(const char* s1, const char* s2);
 char*   strcpy(char* dest, const char* src);
 char*   strncpy(char* dest, const char* src, size_t n);
 char*   strcat(char* dest, const char* src);
+char*   strncat(char* dest, const char* src, size_t n);
 
 void reboot();
 
 void bootscreen();
 
-void cli();
-void sti();
+static inline void sti() { __asm__ volatile ("sti"); }  // Enable interrupts
+static inline void cli() { __asm__ volatile ("cli"); }  // Disable interrupts
+
 void nop();
 
 int8_t ctoi(char c);

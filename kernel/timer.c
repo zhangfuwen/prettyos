@@ -25,11 +25,6 @@ uint32_t getCurrentSeconds()
     return timer_ticks/systemfrequency;
 }
 
-uint32_t getCurrentMilliseconds()
-{
-    return 1000*getCurrentSeconds();
-}
-
 void timer_handler(registers_t* r)
 {
     kdebug(3, ".");

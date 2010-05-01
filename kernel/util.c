@@ -9,8 +9,6 @@
 
 const int32_t INT_MAX = 2147483647;
 
-void sti() { __asm__ volatile ("sti"); }  // Enable interrupts
-void cli() { __asm__ volatile ("cli"); }  // Disable interrupts
 
 void nop() { __asm__ volatile ("nop"); }  // Do nothing
 
@@ -145,15 +143,13 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 
 /**********************************************************************/
 
-void sprintf (char *buffer, const char *args, ...)
+void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
 {
-    va_list ap;
-    va_start (ap, args);
-    int pos = 0;
+    size_t pos = 0;
     char m_buffer[32]; // Larger is not needed at the moment
     buffer[0] = '\0';
 
-    for (; *args; args++)
+    for (; *args && pos < length; args++)
     {
         switch (*args)
         {
@@ -162,36 +158,36 @@ void sprintf (char *buffer, const char *args, ...)
                 {
                     case 'u':
                         itoa(va_arg(ap, uint32_t), m_buffer);
-                        strcat(buffer, m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'f':
                         ftoa(va_arg(ap, double), m_buffer);
-                        strcat(buffer, m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), m_buffer);
-                        strcat(buffer, m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'X':
                         i2hex(va_arg(ap, int32_t), m_buffer,8);
-                        strcat(buffer, m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'x':
                         i2hex(va_arg(ap, int32_t), m_buffer,4);
-                        strcat(buffer, m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'y':
                         i2hex(va_arg(ap, int32_t), m_buffer,2);
-                        strcat(buffer, m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 's':
-                        strcat(buffer, va_arg (ap, char*));
+                        strncat(buffer, va_arg (ap, char*), length - pos - 1);
                         pos = strlen(buffer) - 1;
                         break;
                     case 'c':
@@ -213,6 +209,12 @@ void sprintf (char *buffer, const char *args, ...)
         pos++;
         buffer[pos] = '\0';
     }
+}
+void snprintf (char *buffer, size_t length, const char *args, ...)
+{
+    va_list ap;
+    va_start (ap, args);
+	vsnprintf(buffer, length, args, ap);
 }
 
 size_t strlen(const char* str)
@@ -269,6 +271,12 @@ char* strncpy(char* dest, const char* src, unsigned int n) // okay?
 char* strcat(char* dest, const char* src)
 {
     strcpy(dest + strlen(dest), src);
+    return dest;
+}
+
+char* strncat(char* dest, const char* src, size_t n)
+{
+    strncpy(dest + strlen(dest), src, n);
     return dest;
 }
 

@@ -202,11 +202,9 @@ void scroll()
 }
 
 /// TODO: make it standardized !
-// printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
-void printf (const char* args, ...)
+// vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
+void vprintf(const char* args, va_list ap)
 {
-    va_list ap;
-    va_start (ap, args);
     char buffer[32]; // Larger is not needed at the moment
 
     for (; *args; ++args)
@@ -259,6 +257,12 @@ void printf (const char* args, ...)
                 break;
         }
     }
+}
+void printf(const char* args, ...)
+{
+    va_list ap;
+    va_start (ap, args);
+	vprintf(args, ap);
 }
 
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)

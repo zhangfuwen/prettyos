@@ -180,7 +180,7 @@ void usbTransferConfig(uint32_t device)
 		settextcolor(13,0);
         printf("\n>>> Press key to go on with data analysis from config descriptor. <<<");
         settextcolor(15,0);
-        while(!checkKQ_and_return_char());
+        while(!keyboard_getChar());
         printf("\n");
 	}
 }

@@ -171,8 +171,12 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     }
 }
 
-void writeInfo(uint8_t line, char* content) {
-	strncpy(infoBar[line], content, 80);
+void writeInfo(uint8_t line, char* args, ...)
+{
+    va_list ap;
+    va_start(ap, args);
+	vsnprintf(infoBar[line], 81, args, ap);
+	refreshUserScreen();
 }
 
 void refreshUserScreen()
@@ -189,7 +193,7 @@ void refreshUserScreen()
     else
     {
         char Buffer[70];
-        sprintf(Buffer, "Console %i: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
+        snprintf(Buffer, 70, "Console %i: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
         csr_x = COLUMNS - strlen(Buffer);
         kputs(Buffer);
     }
@@ -241,7 +245,7 @@ void screenshot()
     char timeBuffer[20];
     itoa(getCurrentSeconds(), timeBuffer);
     char timeStr[10];
-    sprintf(timeStr, "TIME%s", timeBuffer);
+    snprintf(timeStr, 10, "TIME%s", timeBuffer);
     flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4098);
 	free(videoscreen);
 }

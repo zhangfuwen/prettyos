@@ -28,7 +28,7 @@ struct page_directory_
 {
     uint32_t       codes[1024];
     page_table_t* tables[1024];
-    uint32_t       pd_phys_addr;
+    uint32_t      pd_phys_addr;
 } __attribute__((packed));
 typedef struct page_directory_ page_directory_t;
 
