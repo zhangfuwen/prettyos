@@ -5,6 +5,8 @@
 
 #include "usb_hc.h"
 #include "util.h"
+#include "pci.h"
+#include "ehci.h"
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
@@ -18,14 +20,14 @@ void install_USB_HostController(uint32_t num)
     printf(" USB ");
     switch(pciDev_Array[num].interfaceID)
     {
-        case 0x00: printf("UHCI "); break;
-        case 0x10: printf("OHCI "); break;
-        case 0x20: printf("EHCI "); break;
+        case 0x00: printf("UHCI ");   break;
+        case 0x10: printf("OHCI ");   break;
+        case 0x20: printf("EHCI ");   break;
         case 0x80: printf("no HCI "); break;
-        case 0xFE: printf("any "); break;
+        case 0xFE: printf("any ");    break;
     }
 
-    for (uint8_t i=0;i<6;++i) // check USB BARs
+    for (uint8_t i = 0; i < 6; ++i) // check USB BARs
     {
         pciDev_Array[num].bar[i].memoryType = pciDev_Array[num].bar[i].baseAddress & 0x01;
 
@@ -42,25 +44,25 @@ void install_USB_HostController(uint32_t num)
 
             // check Memory Size
             cli();
-            pci_config_write_dword  (bus, dev, func, PCI_BAR0 + 4*i, 0xFFFFFFFF);
+            pci_config_write_dword(bus, dev, func, PCI_BAR0 + 4*i, 0xFFFFFFFF);
             uintptr_t pciBar = pci_config_read(bus, dev, func, PCI_BAR0 + 4*i);
-            pci_config_write_dword  (bus, dev, func, PCI_BAR0 + 4*i, pciDev_Array[num].bar[i].baseAddress);
+            pci_config_write_dword(bus, dev, func, PCI_BAR0 + 4*i, pciDev_Array[num].bar[i].baseAddress);
             sti();
             pciDev_Array[num].bar[i].memorySize = (~pciBar | 0x0F) + 1;
             printf("sz:%d ", pciDev_Array[num].bar[i].memorySize);
 
-            /// EHCI Data
+            // EHCI Data
             if (pciDev_Array[num].interfaceID == 0x20   // EHCI
                && pciDev_Array[num].bar[i].baseAddress) // valid BAR
             {
                 ehci_install(num,i);
             }
-        } /// if USB
-    } // for
+        }
+    }
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

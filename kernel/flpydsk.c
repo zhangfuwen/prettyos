@@ -283,9 +283,9 @@ void flpydsk_control_motor(bool b)
         flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
         ODA.flpy_motor[_CurrentDrive]=true;
         /*
-        settextcolor(14,0);
+        textColor(0x0E);
         printf("floppy motor on\n");
-        settextcolor(2,0);
+        textColor(0x02);
         */
     }
     else if ((b==false) && (ODA.flpy_motor[_CurrentDrive]==true))
@@ -294,9 +294,9 @@ void flpydsk_control_motor(bool b)
         ODA.flpy_motor[_CurrentDrive]=false;
 
         /*
-        settextcolor(14,0);
+        textColor(0x0E);
         printf("floppy motor off\n");
-        settextcolor(2,0);
+        textColor(0x02);
         */
     }
     sti(); // important!
@@ -721,21 +721,21 @@ int32_t flpydsk_read_ia(int32_t i, void* a, int8_t option) /// floppy
             (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
 )
           {memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
-              settextcolor(4,0);
+              textColor(0x04);
               printf("Floppy ---> DMA attempt no. %d failed.\n",n+1);
               if (n>=MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
               {
                   printf("Floppy ---> DMA error.\n");
               }
-              settextcolor(2,0);
+              textColor(0x02);
               continue;
           }
           else
           {
               /*
-              settextcolor(3,0);
+              textColor(0x03);
               printf("Floppy ---> DMA success.\n");
-              settextcolor(2,0);
+              textColor(0x02);
               */
               break;
           }

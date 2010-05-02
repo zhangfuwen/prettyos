@@ -310,15 +310,15 @@ struct cdi_fs_res_link {
 
 struct cdi_fs_res_special {
     /* Geraeteadresse der Spezialdatei Lesen
-	   stream: Stream
-	   dev:    Pointer auf die Variable in der die Geraeteadresse gespeichert werden soll.
-	   return: Falls die Geraeteadresse erfolgreich gelesen wurde 1, sonst 0 */
+       stream: Stream
+       dev:    Pointer auf die Variable in der die Geraeteadresse gespeichert werden soll.
+       return: Falls die Geraeteadresse erfolgreich gelesen wurde 1, sonst 0 */
     int (*dev_read)(struct cdi_fs_stream* stream, dev_t* dev);
 
     /* Geraeteadresse der Spezialdatei Aendern
-	   stream: Stream
-	   dev:    Die neue Geraeteadresse
-	   return: Falls die Geraeteadresse erfolgreich geaendert wurde 1, sonst 0 */
+       stream: Stream
+       dev:    Die neue Geraeteadresse
+       return: Falls die Geraeteadresse erfolgreich geaendert wurde 1, sonst 0 */
     int (*dev_write)(struct cdi_fs_stream* stream, dev_t dev);
 };
 

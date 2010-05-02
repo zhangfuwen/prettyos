@@ -13,18 +13,24 @@
 typedef void(*interrupt_handler_t)(registers_t*);
 
 
-/* Array of function pointers handling custom ir handlers for a given ir */
+// Array of function pointers handling custom ir handlers for a given ir
 interrupt_handler_t irq_routines[256-32];
 
-/* Implement a custom ir handler for the given ir */
-void irq_install_handler(int32_t ir, interrupt_handler_t handler) {irq_routines[ir] = handler;}
+// Implement a custom ir handler for the given ir
+void irq_install_handler(int32_t ir, interrupt_handler_t handler)
+{
+    irq_routines[ir] = handler;
+}
 
-/* Clear the custom ir handler */
-void irq_uninstall_handler(int32_t ir) {irq_routines[ir] = 0;}
+// Clear the custom ir handler
+void irq_uninstall_handler(int32_t ir)
+{
+    irq_routines[ir] = 0;
+}
 
 
 
-/* Message string corresponding to the exception number 0-31: exception_messages[interrupt_number] */
+// Message string corresponding to the exception number 0-31: exception_messages[interrupt_number]
 const char* exception_messages[] =
 {
     "Division By Zero",        "Debug",                         "Non Maskable Interrupt",    "Breakpoint",
@@ -42,7 +48,7 @@ uint32_t irq_handler(uint32_t esp)
     registers_t* r = (registers_t*)esp;
     task_t* pCurrentTask = ODA.curTask;
 
-    if (r->int_no == 7) //exception #NM (number 7)
+    if (r->int_no == 7) // exception #NM (number 7)
     {
         // set TS in cr0 to zero
         __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
@@ -72,12 +78,12 @@ uint32_t irq_handler(uint32_t esp)
         }
     }
 
-    if ((r->int_no < 32) && (r->int_no != 7)) //exception w/o #NM
+    if ((r->int_no < 32) && (r->int_no != 7)) // exception w/o #NM
     {
-        settextcolor(12,0);
+        textColor(0x0C);
         flpydsk_control_motor(false); // floppy motor off
 
-        if (r->int_no == 6 || r->int_no == 1) //Invalid Opcode
+        if (r->int_no == 6 || r->int_no == 1) // Invalid Opcode
         {
             printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
             printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
@@ -85,7 +91,7 @@ uint32_t irq_handler(uint32_t esp)
             printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
         }
 
-        if (r->int_no == 14) //Page Fault
+        if (r->int_no == 14) // Page Fault
         {
             uint32_t faulting_address;
             __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_address)); // faulting address <== CR2 register
@@ -98,13 +104,13 @@ uint32_t irq_handler(uint32_t esp)
             int32_t id        =   r->err_code & 0x10; // Caused by an instruction fetch?
 
             // Output an error message.
-                          printf("\nPage Fault (");
+            printf("\nPage Fault (");
             if (present)  printf("page not present");
             if (rw)       printf(" - read-only - write operation");
             if (us)       printf(" - user-mode");
             if (reserved) printf(" - overwritten CPU-reserved bits of page entry");
             if (id)       printf(" - caused by an instruction fetch");
-                          printf(") at %X - EIP: %X\n", faulting_address, r->eip);
+            printf(") at %X - EIP: %X\n", faulting_address, r->eip);
         }
 
         printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
@@ -113,7 +119,7 @@ uint32_t irq_handler(uint32_t esp)
         printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
 
         printf("\n\n");
-        settextcolor(11,0);
+        textColor(0x0B);
         printf("%s!\n", exception_messages[r->int_no]);
         printf("| <Exception - System Halted> Press key for exit from the task! |");
         while(!keyboard_getChar());
@@ -122,7 +128,7 @@ uint32_t irq_handler(uint32_t esp)
     }
 
     if (ODA.ts_flag && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_context
-        esp = task_switch (esp); //new task's esp
+        esp = task_switch (esp); // new task's esp
 
     interrupt_handler_t handler = irq_routines[r->int_no];
     if (handler) { handler(r); }
@@ -135,7 +141,7 @@ uint32_t irq_handler(uint32_t esp)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -45,23 +45,23 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     retVal = cacheFirstTracks();
     if (retVal)
     {
-        settextcolor(12,0);
+        textColor(0x0C);
         printf("track0 & track1 read error.\n");
-        settextcolor(2,0);
+        textColor(0x02);
     }
 
     printf("Load and execute ");
-    settextcolor(14,0);
+    textColor(0x0E);
     printf("-->%s.%s<--",name,ext);
-    settextcolor(2,0);
+    textColor(0x02);
     printf(" from floppy disk\n");
 
     firstCluster = search_file_first_cluster(name,ext,&f); // now working with cache
     if (firstCluster==0)
     {
-        settextcolor(4,0);
+        textColor(0x04);
         printf("file is not ok (no valid first cluster)\n");
-        settextcolor(15,0);
+        textColor(0x0F);
         flpydsk_control_motor(false);
         return -1;
     }
@@ -108,13 +108,13 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     // retVal = file_ia_cache(fat_entry,firstCluster,file); /// read sectors of file from cache
     retVal = file_ia(fat_entry,firstCluster,file); /// read sectors of file
 
-    kdebug(-1, "\nFile content (start of first 5 clusters): ");
-    kdebug(-1, "\n1st sector:\n"); for (uint16_t i=   0;i<  20;i++) {kdebug(-1, "%y ",file[i]);}
-    kdebug(-1, "\n2nd sector:\n"); for (uint16_t i= 512;i< 532;i++) {kdebug(-1, "%y ",file[i]);}
-    kdebug(-1, "\n3rd sector:\n"); for (uint16_t i=1024;i<1044;i++) {kdebug(-1, "%y ",file[i]);}
-    kdebug(-1, "\n4th sector:\n"); for (uint16_t i=1536;i<1556;i++) {kdebug(-1, "%y ",file[i]);}
-    kdebug(-1, "\n5th sector:\n"); for (uint16_t i=2048;i<2068;i++) {kdebug(-1, "%y ",file[i]);}
-    kdebug(-1, "\n\n");
+    kdebug(0x00, "\nFile content (start of first 5 clusters): ");
+    kdebug(0x00, "\n1st sector:\n"); for (uint16_t i=   0;i<  20;i++) {kdebug(0x00, "%y ",file[i]);}
+    kdebug(0x00, "\n2nd sector:\n"); for (uint16_t i= 512;i< 532;i++) {kdebug(0x00, "%y ",file[i]);}
+    kdebug(0x00, "\n3rd sector:\n"); for (uint16_t i=1024;i<1044;i++) {kdebug(0x00, "%y ",file[i]);}
+    kdebug(0x00, "\n4th sector:\n"); for (uint16_t i=1536;i<1556;i++) {kdebug(0x00, "%y ",file[i]);}
+    kdebug(0x00, "\n5th sector:\n"); for (uint16_t i=2048;i<2068;i++) {kdebug(0x00, "%y ",file[i]);}
+    kdebug(0x00, "\n\n");
 
     if (!retVal)
     {
@@ -127,18 +127,18 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
         }
         else
         {
-            settextcolor(14,0);
+            textColor(0x0E);
             printf("File has unknown format and will not be executed.\n");
-            settextcolor(15,0);
+            textColor(0x0F);
             // other actions?
             free(file); // still needed in kernel?
         }
     }
     else if (retVal==-1)
     {
-        settextcolor(4,0);
+        textColor(0x04);
         printf("file was not executed due to FAT error.\n");
-        settextcolor(15,0);
+        textColor(0x0F);
     }
     flpydsk_control_motor(false);
     return 0;
@@ -176,9 +176,9 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     retVal = cacheFirstTracks();
     if (retVal)
     {
-        settextcolor(12,0);
+        textColor(0x0C);
         printf("track0 & track1 read error.\n");
-        settextcolor(2,0);
+        textColor(0x02);
     }
     // how many floppy disc sectors are needed?
     uint32_t neededSectors=0;
@@ -227,9 +227,9 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     }
     if (freeRootDirEntry==0xFF)
     {
-        settextcolor(4,0);
+        textColor(0x04);
         printf("no free root dir entry found.\n\n");
-        settextcolor(15,0);
+        textColor(0x0F);
     }
 
     // search "neededSectors" free sectors

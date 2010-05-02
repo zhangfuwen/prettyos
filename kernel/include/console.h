@@ -8,7 +8,7 @@
 typedef struct // Defines the User-Space of the display
 {
     char* name;
-	bool showInfobar;
+    bool showInfobar;
     uint16_t* vidmem; // memory that stores the content of this console. Size is USER_LINES*COLUMNS
     //uint8_t SCROLL_BEGIN;
     uint8_t SCROLL_END;
@@ -28,7 +28,7 @@ void console_init(console_t* console, const char* name);
 void console_exit(console_t* console);
 
 void clear_console(uint8_t backcolor);
-void settextcolor(uint8_t forecolor, uint8_t backcolor);
+void textColor(uint8_t color); // bit 4-7: background; bit 1-3: foreground
 void showInfobar(bool show);
 void setScrollField(uint8_t begin, uint8_t end);
 void putch(char c);

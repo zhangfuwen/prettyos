@@ -38,7 +38,7 @@ void drawEntry(const char* entry)
 
 int main()
 {
-	setScrollField(0, 39);
+    setScrollField(0, 39);
     char entry[MAX_CHAR_PER_LINE+1];
     char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1];
     int curEntry = -1;
@@ -53,7 +53,7 @@ int main()
 
     while (true)
     {
-        settextcolor(15,0);
+        textColor(0x0F);
         entryLength = 0; cursorPos = 0;
         memset(entry, 0, MAX_CHAR_PER_LINE+1);
         drawEntry(entry);
@@ -106,9 +106,9 @@ int main()
                         strcpy(entryCache[0], entry);
                         curEntry = -1;
                     }
-                    settextcolor(0x0B, 0);
+                    textColor(0x0B);
                     printf("$> %s <--\n", entry);
-                    settextcolor(15, 0);
+                    textColor(0x0F);
                     printLine("$>                                                                              ", 40, 0x0B);
                     goto EVALUATION;
                 case 144: // Insert
@@ -222,7 +222,7 @@ int main()
         }//while
 
 EVALUATION: // evaluation of entry
-        settextcolor(2,0);
+        textColor(0x02);
         if ((strcmp(entry,"help") == 0) || (strcmp(entry,"?") == 0))
         {
             puts("Implemented Instructions: hi  help ?  fdir  fformat\n");

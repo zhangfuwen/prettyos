@@ -26,14 +26,14 @@ void analyzeHostSystemError(uint32_t num)
 
 
      printf("\nPCI status word: %x\n",pciStatus);
-     settextcolor(3,0);
+     textColor(0x03);
      // bits 0...2 reserved
      if(pciStatus & 1<< 3) printf("Interrupt Status\n");
      if(pciStatus & 1<< 4) printf("Capabilities List\n");
      if(pciStatus & 1<< 5) printf("66 MHz Capable\n");
      // bit 6 reserved
      if(pciStatus & 1<< 7) printf("Fast Back-to-Back Transactions Capable\n");
-     settextcolor(12,0);
+     textColor(0x0C);
      if(pciStatus & 1<< 8) printf("Master Data Parity Error\n");
      // DEVSEL Timing: bits 10:9
      if(pciStatus & 1<<11) printf("Signalled Target-Abort\n");
@@ -41,7 +41,7 @@ void analyzeHostSystemError(uint32_t num)
      if(pciStatus & 1<<13) printf("Received Master-Abort\n");
      if(pciStatus & 1<<14) printf("Signalled System Error\n");
      if(pciStatus & 1<<15) printf("Detected Parity Error\n");
-     settextcolor(15,0);
+     textColor(0x0F);
 }
 
 uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t func, uint16_t content)
@@ -109,22 +109,19 @@ void listPCI()
         if (pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00))   // there is no vendor EE00h
         {
             listAppend(pciDevList, (void*)(pciDev_Array+i));
-            settextcolor(2,0);
-            printf("%X\t",pciDev_Array+i);
+            textColor(0x02);
+            printf("%X\t", pciDev_Array+i);
         }
     }
     putch('\n');
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
-        void* element = listGetElement(pciDevList,i);
+        pciDev_t* element = (pciDev_t*)listGetElement(pciDevList, i);
         if (element)
         {
-            settextcolor(2,0);
-            printf("%X dev: %x vend: %x\t",
-                       (pciDev_t*)element,
-                       ((pciDev_t*)element)->deviceID,
-                       ((pciDev_t*)element)->vendorID);
-            settextcolor(15,0);
+            textColor(0x02);
+            printf("%X dev: %x vend: %x\t", element, element->deviceID, element->vendorID);
+            textColor(0x0F);
         }
     }
     puts("\n\n");
@@ -132,7 +129,7 @@ void listPCI()
 
  void pciScan()
  {
-    settextcolor(15,0);
+    textColor(0x0F);
 
     // uint32_t pciBar  = 0; // helper variable for memory size
 
@@ -143,11 +140,11 @@ void listPCI()
     }
 
     int number=0;
-    for (uint8_t bus=0;bus<4;++bus) // we scan only four busses of 256 possibles
+    for (uint8_t bus = 0; bus < 4; ++bus) // we scan only four busses of 256 possibles
     {
-        for (uint8_t device=0;device<32;++device)
+        for (uint8_t device = 0; device < 32; ++device)
         {
-            for (uint8_t func=0;func<8;++func)
+            for (uint8_t func = 0; func < 8; ++func)
             {
                 uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
                 if (vendorID && (vendorID != 0xFFFF))

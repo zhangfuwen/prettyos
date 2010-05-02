@@ -47,7 +47,7 @@ struct cdi_scsi_driver {
     struct cdi_driver drv;
 
     /* Sendet ein SCSI-Paket an das Geraet.
-	   return: SCSI-Fehlerstatus nach der Ausfuehrung des Befehls */
+       return: SCSI-Fehlerstatus nach der Ausfuehrung des Befehls */
     int (*request)(struct cdi_scsi_device *device, struct cdi_scsi_packet *packet);
 };
 

@@ -528,11 +528,11 @@
 				Name="User-Tools"
 				>
 				<File
-					RelativePath="..\user\user_tools\my_stdarg.h"
+					RelativePath="..\user\user_tools\start.asm"
 					>
 				</File>
 				<File
-					RelativePath="..\user\user_tools\start.asm"
+					RelativePath="..\user\user_tools\types.h"
 					>
 				</File>
 				<File

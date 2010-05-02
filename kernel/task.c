@@ -341,10 +341,10 @@ void* task_grow_userheap(uint32_t increase)
     increase = alignUp(increase, PAGESIZE);
 
     if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_HEAP_END) ||
-	   !paging_alloc(ODA.curTask->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
-	{
-		return NULL;
-	}
+        !paging_alloc(ODA.curTask->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
+    {
+        return NULL;
+    }
 
     ODA.curTask->heap_top += increase;
     return old_heap_top;
@@ -352,19 +352,19 @@ void* task_grow_userheap(uint32_t increase)
 
 void task_log(task_t* t)
 {
-    settextcolor(5,0);
+    textColor(0x05);
     printf("\npid: %d ", t->pid);           // Process ID
     printf("esp: %X ",t->esp);              // Stack pointer
     printf("eip: %X ",t->eip);              // Instruction pointer
     printf("PD: %X ", t->page_directory);   // Page directory.
     printf("k_stack: %X ",t->kernel_stack); // Kernel stack location.
     printf("next: %X\n",  t->next);         // The next task in a linked list.
-    settextcolor(15,0);
+    textColor(0x0F);
 }
 
 void TSS_log(tss_entry_t* tssEntry)
 {
-    settextcolor(6,0);
+    textColor(0x06);
     //printf("\nprev_tss: %x ", tssEntry->prev_tss);
     printf("esp0: %X ", tssEntry->esp0);
     printf("ss0: %X ", tssEntry->ss0);

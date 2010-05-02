@@ -100,7 +100,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
 
                 mouse_x = mouse_x+mouse_byte[1];
                 mouse_y = mouse_y+mouse_byte[2];
-				writeInfo(1, "Mouse: X:%d Y:%d Z:No Mousewheel found LM:%d MM:%d RM:%d id:%y\n",
+                writeInfo(1, "Mouse: X:%d Y:%d Z:No Mousewheel found LM:%d MM:%d RM:%d id:%y\n",
                     mouse_x, mouse_y,
                     mouse_lm, mouse_mm, mouse_rm,
                     mouseid);
@@ -186,12 +186,12 @@ inline void mouse_write(int8_t a_write)
     mouse_wait(1);
     // Finally write
     outportb(0x60, a_write);
-	// If necessary, wait for ACK
-	if (a_write != 0xEB && a_write != 0xEC && a_write != 0xF2 && a_write != 0xFF) {
-		if (mouse_read() != 0xFA) {
-			// No ACK!!!!
-		}
-	}
+    // If necessary, wait for ACK
+    if (a_write != 0xEB && a_write != 0xEC && a_write != 0xF2 && a_write != 0xFF) {
+        if (mouse_read() != 0xFA) {
+            // No ACK!!!!
+        }
+    }
 }
 
 char mouse_read()

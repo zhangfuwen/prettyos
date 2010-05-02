@@ -15,17 +15,17 @@ struct cdi_storage_driver {
     struct cdi_driver   drv;
     
     /* Liest Blocks ein
-	   start:  Blocknummer des ersten zu lesenden Blockes (angefangen bei 0).
-	   count:  Anzahl der zu lesenden Blocks
-	   buffer: Puffer in dem die Daten abgelegt werden sollen
-	   return: 0 bei Erfolg, -1 im Fehlerfall. */
+       start:  Blocknummer des ersten zu lesenden Blockes (angefangen bei 0).
+       count:  Anzahl der zu lesenden Blocks
+       buffer: Puffer in dem die Daten abgelegt werden sollen
+       return: 0 bei Erfolg, -1 im Fehlerfall. */
     int (*read_blocks)(struct cdi_storage_device* device, uint64_t start, uint64_t count, void* buffer);
     
     /* Schreibt Blocks
-	   start:  Blocknummer des ersten zu schreibenden Blockes (angefangen bei 0).
-	   count:  Anzahl der zu schreibenden Blocks
-	   buffer: Puffer aus dem die Daten gelesen werden sollen
-	   return: 0 bei Erfolg, -1 im Fehlerfall */
+       start:  Blocknummer des ersten zu schreibenden Blockes (angefangen bei 0).
+       count:  Anzahl der zu schreibenden Blocks
+       buffer: Puffer aus dem die Daten gelesen werden sollen
+       return: 0 bei Erfolg, -1 im Fehlerfall */
     int (*write_blocks)(struct cdi_storage_device* device, uint64_t start, uint64_t count, void* buffer);
 };
 

@@ -21,7 +21,7 @@ void kernel_console_init()
     console_init(current_console, "");
     reachableConsoles[KERNELCONSOLE_ID] = current_console;
     current_console->SCROLL_END = 42;
-	current_console->showInfobar = true;
+    current_console->showInfobar = true;
 }
 
 void console_init(console_t* console, const char* name)
@@ -33,7 +33,7 @@ void console_init(console_t* console, const char* name)
     console->attrib       = 0x0F;
     //console->SCROLL_BEGIN = 0;
     console->SCROLL_END   = USER_LINES;
-	console->showInfobar = false;
+    console->showInfobar = false;
     strcpy(console->name, name);
     memsetw (console->vidmem, 0x20 | (console->attrib << 8), COLUMNS * USER_LINES);
     // Setup the keyqueue
@@ -64,13 +64,13 @@ void setScrollField(uint8_t begin, uint8_t end)
 {
     //current_console->SCROLL_BEGIN = begin;
     current_console->SCROLL_END = end;
-	scroll();
+    scroll();
 }
 
 void showInfobar(bool show)
 {
-	current_console->showInfobar = show;
-	current_console->SCROLL_END = min(current_console->SCROLL_END, 42);
+    current_console->showInfobar = show;
+    current_console->SCROLL_END = min(current_console->SCROLL_END, 42);
     refreshUserScreen();
 }
 
@@ -87,10 +87,9 @@ void clear_console(uint8_t backcolor)
     }
 }
 
-void settextcolor(uint8_t forecolor, uint8_t backcolor)
+void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
 {
-    // Hi 4 bit: background, low 4 bit: foreground
-    current_console->attrib = (backcolor << 4) | (forecolor & 0x0F);
+    current_console->attrib = color;
 }
 
 void move_cursor_right()
@@ -262,7 +261,7 @@ void printf(const char* args, ...)
 {
     va_list ap;
     va_start (ap, args);
-	vprintf(args, ap);
+    vprintf(args, ap);
 }
 
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)

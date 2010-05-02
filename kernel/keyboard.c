@@ -145,7 +145,7 @@ uint8_t ScanToASCII()
         addEvent(&VIDEO_SCREENSHOT);
         return 0;
     }
-	if (CtrlKeyDown && (retchar == 't')) // If you want to test something
+    if (CtrlKeyDown && (retchar == 't')) // If you want to test something
     {
         return 0;
     }
@@ -178,7 +178,7 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
 
    if (current_console->KQ.count_write > current_console->KQ.count_read)
    {
-	   cli();
+       cli();
        uint8_t KEY = *current_console->KQ.pHead;
        ++current_console->KQ.count_read;
 
@@ -190,7 +190,7 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
        {
            current_console->KQ.pHead = current_console->KQ.buffer + KQSIZE - 1;
        }
-	   sti();
+       sti();
        return KEY;
    }
    return 0;

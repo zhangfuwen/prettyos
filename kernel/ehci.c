@@ -45,16 +45,16 @@ extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
 static void waitForKeyStroke()
 {
-   settextcolor(13,0);
+   textColor(0x0D);
    printf("\n>>> Press key to go on with USB-Test. <<<");
-   settextcolor(15,0);
+   textColor(0x0F);
    while(!keyboard_getChar());
    printf("\n");
 }
 
 void ehci_install(uint32_t num, uint32_t i)
 {
-	uintptr_t bar_phys = pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0;
+    uintptr_t bar_phys = pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0;
 
     uintptr_t bar = (uintptr_t) paging_acquire_pcimem(bar_phys);
     uintptr_t offset = bar_phys%PAGESIZE;
@@ -186,7 +186,7 @@ void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t t
     void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
     memset(data,0,PAGESIZE);
 
-	SetupQTDpage0  = (uintptr_t)data;
+    SetupQTDpage0  = (uintptr_t)data;
 
     struct ehci_request* request = (struct ehci_request*)data;
     request->type    = type;
@@ -204,7 +204,7 @@ void* createQTD_MSD(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t t
     td->buffer4 = 0x0;
     td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
-	return address;
+    return address;
 }
 
 void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
@@ -306,9 +306,9 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
 
     MSDStatusQTDpage0  = (uintptr_t)data;
     (*(((uint32_t*)MSDStatusQTDpage0)+0)) = 0x53425355; // magic USBS
-	(*(((uint32_t*)MSDStatusQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
-	(*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA; //
-	(*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA; //
+    (*(((uint32_t*)MSDStatusQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
+    (*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA; //
+    (*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA; //
     
     uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
     td->buffer0 = dataPhysical;
@@ -330,9 +330,9 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
     #endif
     for (uint32_t c=0; c<size; c++)
     {
-        settextcolor(3,0);
+        textColor(0x03);
         printf("%y ", *((uint8_t*)virtAddrBuf0+c));
-        settextcolor(15,0);
+        textColor(0x0F);
     }
     printf("\n");
 }
@@ -344,7 +344,7 @@ void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
     #endif
     for (uint32_t c=0; c<size; c++)
     {
-        settextcolor(15,0);
+        textColor(0x0F);
         if ( (*((uint8_t*)virtAddrBuf0+c)>=0x20) && (*((uint8_t*)virtAddrBuf0+c)<=0x7E) )
         {
             printf("%c", *((uint8_t*)virtAddrBuf0+c));
@@ -355,41 +355,41 @@ void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
 
 void showStatusbyteQTD(void* addressQTD)
 {
-    settextcolor(15,0);
+    textColor(0x0F);
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
     printf("\nqTD Status: %y\t", statusbyte);
 
-	// analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
+    // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
     
     // Status not OK
-    settextcolor(14,0);
-    if (statusbyte & (1<<7)) { printf("Active - HC transactions enabled");                                     }
-    if (statusbyte & (1<<6)) { printf("Halted - serious error at the device/endpoint");                        }
-    if (statusbyte & (1<<5)) { printf("Data Buffer Error (overrun or underrun)");                              }
-    if (statusbyte & (1<<4)) { printf("Babble (fatal error leads to Halted)");                                 }
-    if (statusbyte & (1<<3)) { printf("Transaction Error (XactErr)- host received no valid response device");  }
-    if (statusbyte & (1<<2)) { printf("Missed Micro-Frame");                                                   }
-    if (statusbyte & (1<<1)) { printf("Do Complete Split");                                                    }
-    if (statusbyte & (1<<0)) { printf("Do Ping");                                                              }
-    settextcolor(10,0);
+    textColor(0x0E);
+    if (statusbyte & (1<<7)) { printf("Active - HC transactions enabled"); }
+    if (statusbyte & (1<<6)) { printf("Halted - serious error at the device/endpoint"); }
+    if (statusbyte & (1<<5)) { printf("Data Buffer Error (overrun or underrun)"); }
+    if (statusbyte & (1<<4)) { printf("Babble (fatal error leads to Halted)"); }
+    if (statusbyte & (1<<3)) { printf("Transaction Error (XactErr)- host received no valid response device"); }
+    if (statusbyte & (1<<2)) { printf("Missed Micro-Frame"); }
+    if (statusbyte & (1<<1)) { printf("Do Complete Split"); }
+    if (statusbyte & (1<<0)) { printf("Do Ping"); }
+    textColor(0x0A);
     
     // Status OK
-    if (statusbyte == 0)     { printf("OK (no bit set)");                                                                                 }
-    settextcolor(15,0);
+    if (statusbyte == 0)     { printf("OK (no bit set)"); }
+    textColor(0x0F);
 }
 
 void ehci_handler(registers_t* r)
 {
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
     {
-      settextcolor(9,0);
+      textColor(0x09);
       printf("\nehci_handler: ");
-      settextcolor(15,0);
+      textColor(0x0F);
     }
 
-	settextcolor(14,0);
+    textColor(0x0E);
 
-	if (pOpRegs->USBSTS & STS_USBINT)
+    if (pOpRegs->USBSTS & STS_USBINT)
     {
         USBINTflag = true; // is asked by polling
         // printf("USB Interrupt");
@@ -404,9 +404,9 @@ void ehci_handler(registers_t* r)
 
     if (pOpRegs->USBSTS & STS_PORT_CHANGE)
     {
-        settextcolor(9,0);
+        textColor(0x09);
         printf("Port Change");
-        settextcolor(15,0);
+        textColor(0x0F);
 
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
 
@@ -424,17 +424,17 @@ void ehci_handler(registers_t* r)
 
     if (pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)
     {
-        settextcolor(4,0);
+        textColor(0x04);
         printf("Host System Error");
-        settextcolor(15,0);
+        textColor(0x0F);
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         analyzeHostSystemError(ODA.pciEHCInumber);
-        settextcolor(14,0);
+        textColor(0x0E);
         printf("\n>>> Init EHCI after fatal error:           <<<");
          printf("\n>>> Press key for EHCI (re)initialization. <<<");
         while(!keyboard_getChar());
-        settextcolor(15,0);
+        textColor(0x0F);
         addEvent(&EHCI_INIT);
     }
 
@@ -508,9 +508,9 @@ void resetHostController()
         timeout--;
         if (timeout<=0)
         {
-            settextcolor(4,0);
+            textColor(0x04);
             printf("Error: HC Reset-Bit still set to 1\n");
-            settextcolor(15,0);
+            textColor(0x0F);
             break;
         }
     }
@@ -518,9 +518,9 @@ void resetHostController()
 
 void startHostController(uint32_t num)
 {
-    settextcolor(9,0);
+    textColor(0x09);
     printf("\n>>> >>> function: startHostController (reset HC)");
-    settextcolor(15,0);
+    textColor(0x0F);
 
     resetHostController();
 
@@ -568,9 +568,9 @@ void startHostController(uint32_t num)
 
 int32_t initEHCIHostController()
 {
-    settextcolor(9,0);
+    textColor(0x09);
     printf("\n>>> >>> function: initEHCIHostController");
-    settextcolor(15,0);
+    textColor(0x0F);
 
     // pci bus data
     uint32_t num = ODA.pciEHCInumber;
@@ -610,17 +610,17 @@ int32_t initEHCIHostController()
 
     if (!(pOpRegs->USBSTS & STS_HCHALTED)) // TEST
     {
-         // settextcolor(2,0);
+         // textColor(0x02);
          // printf("\nHCHalted bit set to 0 (OK), ports can be enabled now.");
          enablePorts();
-         // settextcolor(15,0);
+         // textColor(0x0F);
     }
     else // not OK
     {
-         settextcolor(4,0);
+         textColor(0x04);
          printf("\nHCHalted bit set to 1 (Not OK!), fatal Error --> Ports cannot be enabled");
          showUSBSTS();
-         settextcolor(15,0);
+         textColor(0x0F);
          return -1;
     }
     return 0;
@@ -628,9 +628,9 @@ int32_t initEHCIHostController()
 
 void enablePorts()
 {
-    settextcolor(9,0);
+    textColor(0x09);
     printf("\n>>> >>> function: enablePorts");
-    settextcolor(15,0);
+    textColor(0x0F);
 
     for (uint8_t j=0; j<numPorts; j++)
     {
@@ -640,16 +640,16 @@ void enablePorts()
          //if ( pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)  ) // high speed idle, enabled, SE0
          if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
          {
-             settextcolor(14,0);
+             textColor(0x0E);
              printf("Port %d: high speed enabled, device attached\n",j+1);
-             settextcolor(15,0);
+             textColor(0x0F);
 
              /*
-			 if (USBtransferFlag)
+             if (USBtransferFlag)
              {
                  // only port change activated for USB transfer
              }
-			 */
+             */
          }
     }
     enabledPortFlag = true;
@@ -657,9 +657,9 @@ void enablePorts()
 
 void resetPort(uint8_t j)
 {
-    settextcolor(9,0);
+    textColor(0x09);
     printf("\n>>> >>> function: resetPort %d  ",j+1);
-    settextcolor(15,0);
+    textColor(0x0F);
 
     pOpRegs->PORTSC[j] |=  PSTS_POWERON;
 
@@ -683,10 +683,10 @@ void resetPort(uint8_t j)
     */
     if (pOpRegs->USBSTS & STS_HCHALTED) // TEST
     {
-         settextcolor(4,0);
+         textColor(0x04);
          printf("\nHCHalted set to 1 (Not OK!)");
          showUSBSTS();
-         settextcolor(15,0);
+         textColor(0x0F);
     }
 
     pOpRegs->USBINTR = 0;
@@ -702,9 +702,9 @@ void resetPort(uint8_t j)
         timeout--;
         if (timeout <= 0)
         {
-            settextcolor(4,0);
+            textColor(0x04);
             printf("\nerror: port %d did not reset! ",j+1);
-            settextcolor(15,0);
+            textColor(0x0F);
             printf("PortStatus: %X",pOpRegs->PORTSC[j]);
             break;
         }
@@ -750,28 +750,28 @@ void showPORTSC()
 void portCheck()
 {
     showInfobar(true); // protect console against info area
-	showPORTSC(); // with resetPort(j) and checkPortLineStatus(j), if PORTSC: 1005h
-    settextcolor(13,0);
+    showPORTSC(); // with resetPort(j) and checkPortLineStatus(j), if PORTSC: 1005h
+    textColor(0x0D);
     printf("\n>>> Press key to close this console. <<<");
-    settextcolor(15,0);
+    textColor(0x0F);
     while(!keyboard_getChar());
 }
 
 void startEHCI()
 {
     initEHCIHostController();
-    settextcolor(13,0);
+    textColor(0x0D);
     printf("\n>>> Press key to close this console. <<<");
-    settextcolor(15,0);
+    textColor(0x0F);
     while(!keyboard_getChar());
 }
 
 void showUSBSTS()
 {
     printf("\nUSB status: ");
-    settextcolor(2,0);
+    textColor(0x02);
     printf("%X",pOpRegs->USBSTS);
-    settextcolor(14,0);
+    textColor(0x0E);
     if (pOpRegs->USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
     if (pOpRegs->USBSTS & STS_USBERRINT)          { printf("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
     if (pOpRegs->USBSTS & STS_PORT_CHANGE)        { printf("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
@@ -782,102 +782,102 @@ void showUSBSTS()
     if (pOpRegs->USBSTS & STS_RECLAMATION)        { printf("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
     if (pOpRegs->USBSTS & STS_PERIODIC_ENABLED)   { printf("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
     if (pOpRegs->USBSTS & STS_ASYNC_ENABLED)      { printf("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
-    settextcolor(15,0);
+    textColor(0x0F);
 }
 
 void checkPortLineStatus(uint8_t j)
 {
-    settextcolor(14,0);
+    textColor(0x0E);
     if (j<numPorts)
     // if (j==PORTRESET) // ??
     {
       //check line status
-      settextcolor(11,0);
+      textColor(0x0B);
       printf("\nport %d: %X, line: %y  ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
-      settextcolor(14,0);
+      textColor(0x0E);
       if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
       {
-        settextcolor(11,0);
+        textColor(0x0B);
         printf("SE0");
         if ((pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
         {
-             settextcolor(14,0);
+             textColor(0x0E);
              printf(",power on, enabled, EHCI owned");
-             settextcolor(15,0);
+             textColor(0x0F);
 
              if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
              {
                  uint8_t devAddr = usbTransferEnumerate(j);
 
-               #ifdef _USB_DIAGNOSIS_
-				 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
-               #endif
+                 #ifdef _USB_DIAGNOSIS_
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
+                 #endif
 
                  usbTransferDevice(devAddr); // device address, endpoint=0
 
-               #ifdef _USB_DIAGNOSIS_
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 #ifdef _USB_DIAGNOSIS_
+                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-               #endif
+                 #endif
 
                  usbTransferConfig(devAddr); // device address, endpoint 0
 
-               #ifdef _USB_DIAGNOSIS_
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO   : "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-               #endif
-
-				 usbTransferString(devAddr); // device address, endpoint 0
-
-               #ifdef _USB_DIAGNOSIS_
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-               #endif
-
-			     for(int k=1; k<4;k++) // fetch 3 strings
-				 {
-   				   #ifdef _USB_DIAGNOSIS_
-       	             waitForKeyStroke();
-                   #endif
-
-					 usbTransferStringUnicode(devAddr,k);
-
-                   #ifdef _USB_DIAGNOSIS_
-					 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                     printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-                   #endif
-				 }
-
-				 usbTransferSetConfiguration(devAddr, 1); // set first configuration
                  #ifdef _USB_DIAGNOSIS_
-				    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO   : "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+                 #endif
+
+                 usbTransferString(devAddr); // device address, endpoint 0
+
+                 #ifdef _USB_DIAGNOSIS_
+                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\nIO   : "); showStatusbyteQTD(DataQTD);
+                 #endif
+
+                 for(int k=1; k<4;k++) // fetch 3 strings
+                 {
+                     #ifdef _USB_DIAGNOSIS_
+                     waitForKeyStroke();
+                     #endif
+
+                     usbTransferStringUnicode(devAddr,k);
+
+                     #ifdef _USB_DIAGNOSIS_
+                     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                     printf("\nIO   : "); showStatusbyteQTD(DataQTD);
+                     #endif
+                 }
+
+                 usbTransferSetConfiguration(devAddr, 1); // set first configuration
+                 #ifdef _USB_DIAGNOSIS_
+                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  #endif
 
                  printf(" %d",usbTransferGetConfiguration(devAddr)); // check configuration
 
                  #ifdef _USB_DIAGNOSIS_
-				 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-				 printf("\ndata packet: ");  showPacket(DataQTDpage0, 1); printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+                 printf("\ndata packet: ");  showPacket(DataQTDpage0, 1); printf("\nIO:    "); showStatusbyteQTD(DataQTD);
                  waitForKeyStroke();
                  #endif
 
-				 /// device, interface, endpoints, and maxLUN (0 for USB-sticks)
+                 /// device, interface, endpoints, and maxLUN (0 for USB-sticks)
                  usbDevices[devAddr].maxLUN = 0;
                  // usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
                  
-			     printf("\ndev: %d interface: %d endpOUT: %d  endpIN: %d",devAddr, usbDevices[devAddr].numInterfaceMSD, 
+                 printf("\ndev: %d interface: %d endpOUT: %d  endpIN: %d",devAddr, usbDevices[devAddr].numInterfaceMSD, 
                                              usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
                  // printf("\nMax. Logical Unit Numbers (LUN): %d",usbDevices[devAddr].maxLUN);
 
                  usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
-       ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
+               ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
                  
                  int32_t timeout = 5; 
                  uint8_t statusByte;
                  do
                  {        
-                     settextcolor(9,0); printf("\n>>> SCSI: test unit ready"); settextcolor(15,0);
+                     textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
                      usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
                      statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
@@ -892,9 +892,9 @@ void checkPortLineStatus(uint8_t j)
                                   
                  if (statusByte != 0x00)
                  {
-                     settextcolor(12,0);
+                     textColor(0x0C);
                      printf("\n\nCommand Block Status Values not in \"good status\"\n");
-                     settextcolor(15,0);
+                     textColor(0x0F);
                  }
                  else                 
                  {
@@ -904,16 +904,16 @@ void checkPortLineStatus(uint8_t j)
                      //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
                  
-                     settextcolor(9,0); printf("\n>>> SCSI: read capacity"); settextcolor(15,0);
-				     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+                     textColor(0x09); printf("\n>>> SCSI: read capacity"); textColor(0x0F);
+                     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
                      uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + (*((uint8_t*)DataQTDpage0+2)) * 256 + (*((uint8_t*)DataQTDpage0+3));
                      uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 16777216 + (*((uint8_t*)DataQTDpage0+5)) * 65536 + (*((uint8_t*)DataQTDpage0+6)) * 256 + (*((uint8_t*)DataQTDpage0+7));
                      uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
 
-                     settextcolor(14,0);
+                     textColor(0x0E);
                      printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
-                     settextcolor(15,0);
-				     waitForKeyStroke();
+                     textColor(0x0F);
+                     waitForKeyStroke();
                   
 
                    ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
@@ -922,9 +922,9 @@ void checkPortLineStatus(uint8_t j)
                      
                      uint32_t length = 512; // number of byte to be read
                      
-                     for(uint32_t sector=0; sector < 10; sector++)
+                     for(uint32_t sector=1055; sector < 1060; sector++)
                      {
-                         settextcolor(9,0); printf("\n>>> SCSI: read(10)"); settextcolor(15,0);
+                         textColor(0x09); printf("\n>>> SCSI: read(10)"); textColor(0x0F);
                          usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 
                                         0x28, sector, length, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
                          waitForKeyStroke();                     
@@ -939,23 +939,23 @@ void checkPortLineStatus(uint8_t j)
 
       if (((pOpRegs->PORTSC[j]>>10)&3) == 1) // K_STATE
       {
-        settextcolor(14,0);
+        textColor(0x0E);
         printf("K-State");
       }
 
       if (((pOpRegs->PORTSC[j]>>10)&3) == 2) // J_STATE
       {
-        settextcolor(14,0);
+        textColor(0x0E);
         printf("J-state");
       }
 
       if (((pOpRegs->PORTSC[j]>>10)&3) == 3) // undefined
       {
-        settextcolor(12,0);
+        textColor(0x0C);
         printf("undefined");
       }
     }
-    settextcolor(15,0);
+    textColor(0x0F);
 }
 
 void DeactivateLegacySupport(uint32_t num)
@@ -1045,9 +1045,9 @@ void DeactivateLegacySupport(uint32_t num)
         }
         else
         {
-                settextcolor(10,0);
+                textColor(0x0A);
                 printf("\nBIOS did not own the EHCI. No action needed.\n");
-                settextcolor(15,0);
+                textColor(0x0F);
         }
     }
     else
@@ -1057,7 +1057,7 @@ void DeactivateLegacySupport(uint32_t num)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

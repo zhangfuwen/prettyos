@@ -20,7 +20,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.425";
+const char* version = "0.0.0.426";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -41,7 +41,7 @@ static void init()
     // set .bss to zero
     memset(&_bss_start, 0x0, (uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
 
-	// descriptors
+    // descriptors
     gdt_install();
     idt_install(); // cf. interrupts.asm
 
@@ -83,7 +83,7 @@ void showMemorySize()
 
 void* ramdisk_install(size_t size)
 {
-    kdebug(-1, "rd_start: ");
+    kdebug(0x00, "rd_start: ");
 
     void* ramdisk_start = malloc(size, PAGESIZE);
     // shell via incbin in data.asm
@@ -102,7 +102,7 @@ void main()
     create_cthread(&bootscreen, "Booting ...");
     ODA.ts_flag = true;        // start task switch
 
-    kdebug(-1, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
+    kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
     floppy_install(); // detect FDDs
@@ -150,9 +150,9 @@ void main()
 
     if (! shell_found)
     {
-        settextcolor(4,0);
+        textColor(0x04);
         printf("Program not found.\n");
-        settextcolor(15,0);
+        textColor(0x0F);
     }
 
     const char* progress = "|/-\\";
@@ -180,9 +180,9 @@ void main()
             uint32_t RdtscKCountsLo = RdtscKCounts & 0xFFFFFFFF;
 
             if (RdtscKCountsHi == 0)
-			{
-				ODA.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
-			}
+            {
+                ODA.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
+            }
 
             // draw status bar with date & time and frequency
             getCurrentDateAndTime(DateAndTime);

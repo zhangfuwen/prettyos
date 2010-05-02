@@ -21,12 +21,12 @@ typedef struct usb2_Device
     uint8_t  productStringID;
     uint8_t  serNumberStringID;
     uint8_t  numConfigurations;
-	uint8_t  maxLUN;
+    uint8_t  maxLUN;
 
-	// MSD specific
-	uint8_t  numInterfaceMSD;
+    // MSD specific
+    uint8_t  numInterfaceMSD;
     uint8_t  numEndpointInMSD;
-	uint8_t  numEndpointOutMSD;
+    uint8_t  numEndpointOutMSD;
 }
 usb2_Device_t;
 
@@ -101,11 +101,11 @@ struct usb2_CommandBlockWrapper
 {
     uint32_t CBWSignature;
     uint32_t CBWTag;
-	uint32_t CBWDataTransferLength;
-	uint8_t  CBWFlags;
-	uint8_t  CBWLUN;           // only bits 3:0
-	uint8_t  CBWCBLength;      // only bits 4:0
-	uint8_t  commandByte[16];
+    uint32_t CBWDataTransferLength;
+    uint8_t  CBWFlags;
+    uint8_t  CBWLUN;           // only bits 3:0
+    uint8_t  CBWCBLength;      // only bits 4:0
+    uint8_t  commandByte[16];
 } __attribute__((packed));
 
 uint8_t usbTransferEnumerate(uint8_t j);

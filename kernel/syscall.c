@@ -14,11 +14,11 @@
 
 DEFN_SYSCALL1(puts,                       0, const char*)
 DEFN_SYSCALL1(putch,                      1, char)
-DEFN_SYSCALL2(settextcolor,               2, uint8_t, uint8_t)
+DEFN_SYSCALL1(textColor,               2, uint8_t)
 DEFN_SYSCALL0(getpid,                     3)
 DEFN_SYSCALL0(nop,                        4)
 DEFN_SYSCALL0(switch_context,             5)
-DEFN_SYSCALL0(keyboard_getChar,              6)
+DEFN_SYSCALL0(keyboard_getChar,           6)
 DEFN_SYSCALL0(flpydsk_read_directory,     7)
 DEFN_SYSCALL3(cprintf,                    8, const char*, uint32_t, uint8_t)
 DEFN_SYSCALL0(getCurrentSeconds,          9)
@@ -39,7 +39,7 @@ static void* syscalls[] =
 {
     &puts,
     &putch,
-    &settextcolor,
+    &textColor,
     &getpid,
     &nop,
     &switch_context,

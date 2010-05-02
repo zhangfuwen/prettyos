@@ -528,12 +528,12 @@ uint32_t search_file_first_cluster(const char* name, const char* ext, struct fil
        {
            break; // filter empty entry, no further entries expected
        }
-       settextcolor(14,0);
+       textColor(0x0E);
        printf("root dir entry: %c%c%c%c%c%c%c%c.%c%c%c\n",
                    (&entry)->Filename[0],(&entry)->Filename[1],(&entry)->Filename[2],(&entry)->Filename[3],
                    (&entry)->Filename[4],(&entry)->Filename[5],(&entry)->Filename[6],(&entry)->Filename[7],
                    (&entry)->Extension[0],(&entry)->Extension[1],(&entry)->Extension[2]);
-       settextcolor(2,0);
+       textColor(0x02);
 
        for (uint8_t j=0;j<3;j++)
        {
@@ -552,9 +552,9 @@ uint32_t search_file_first_cluster(const char* name, const char* ext, struct fil
            break;
        }
     }
-    settextcolor(14,0);
+    textColor(0x0E);
     printf("rootdir search finished.\n\n");
-    settextcolor(2,0);
+    textColor(0x02);
 
     f->size = (&entry)->FileSize;
     f->firstCluster = FORM_SHORT((&entry)->FstClusLO,(&entry)->FstClusHI);

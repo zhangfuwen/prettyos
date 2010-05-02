@@ -175,8 +175,8 @@ void writeInfo(uint8_t line, char* args, ...)
 {
     va_list ap;
     va_start(ap, args);
-	vsnprintf(infoBar[line], 81, args, ap);
-	refreshUserScreen();
+    vsnprintf(infoBar[line], 81, args, ap);
+    refreshUserScreen();
 }
 
 void refreshUserScreen()
@@ -186,7 +186,7 @@ void refreshUserScreen()
     csr_y = 0;
 
     if (displayedConsole == KERNELCONSOLE_ID)
-	{
+    {
         csr_x = COLUMNS - 5;
         kputs("Shell");
     }
@@ -198,21 +198,21 @@ void refreshUserScreen()
         kputs(Buffer);
     }
     kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
-	if(reachableConsoles[displayedConsole]->showInfobar)
-	{
-		// copying content of visible console to the video-ram
-		memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * (USER_LINES-4) * 2);
-		memsetw(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS); // Clearing info-area
-		kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
-		kprintf(infoBar[0], 45, 14);
-		kprintf(infoBar[1], 46, 14);
-		kprintf(infoBar[2], 47, 14);
-	}
-	else
-	{
-		// copying content of visible console to the video-ram
-		memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * USER_LINES*2);
-	}
+    if(reachableConsoles[displayedConsole]->showInfobar)
+    {
+        // copying content of visible console to the video-ram
+        memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * (USER_LINES-4) * 2);
+        memsetw(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS); // Clearing info-area
+        kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
+        kprintf(infoBar[0], 45, 14);
+        kprintf(infoBar[1], 46, 14);
+        kprintf(infoBar[2], 47, 14);
+    }
+    else
+    {
+        // copying content of visible console to the video-ram
+        memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * USER_LINES*2);
+    }
     kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
     update_cursor();
 }
@@ -227,8 +227,8 @@ void screenshot()
 {
    int32_t NewLine = 0;
 
-	// buffer for video screen
-	uint8_t* videoscreen = malloc(4000+98, PAGESIZE); // only signs, no attributes, 49 times CR LF at line end
+    // buffer for video screen
+    uint8_t* videoscreen = malloc(4000+98, PAGESIZE); // only signs, no attributes, 49 times CR LF at line end
 
     for (uint16_t i=0; i<4000;i++)
     {
@@ -247,7 +247,7 @@ void screenshot()
     char timeStr[10];
     snprintf(timeStr, 10, "TIME%s", timeBuffer);
     flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4098);
-	free(videoscreen);
+    free(videoscreen);
 }
 
 /*

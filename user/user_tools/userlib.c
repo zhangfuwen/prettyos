@@ -4,8 +4,6 @@
 */
 
 #include "userlib.h"
-#include "my_stdarg.h"
-
 
 /// Syscalls
 
@@ -19,9 +17,9 @@ void putch(unsigned char val)
     __asm__ volatile("int $0x7F" : : "a"(1), "b"(val));
 }
 
-void settextcolor(unsigned int foreground, unsigned int background)
+void textColor(uint8_t color)
 {
-    __asm__ volatile("int $0x7F" : : "a"(2), "b"(foreground), "c"(background));
+    __asm__ volatile("int $0x7F" : : "a"(2), "b"(color));
 }
 
 unsigned char getch()
@@ -356,7 +354,7 @@ char* gets(char* s)
     do
     {
         c = getch();
-        //settextcolor(i,0);///TEST
+        //textColor(i,0);///TEST
         if (c=='\b')  // Backspace
         {
            if (i>0)
@@ -387,7 +385,7 @@ char* gets(char* s)
     s[i]='\0';
 
 /*
-    settextcolor(15,0);
+    textColor(0x0F);
     int j;
     for (j=0;j<15;j++)
     {

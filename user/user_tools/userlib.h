@@ -1,22 +1,7 @@
 #ifndef USERLIB_H
 #define USERLIB_H
 
-typedef unsigned int        size_t;
-typedef unsigned long long  uint64_t;
-typedef unsigned long       uint32_t;
-typedef unsigned short      uint16_t;
-typedef unsigned char       uint8_t;
-typedef signed long long    int64_t;
-typedef signed long         int32_t;
-typedef signed short        int16_t;
-typedef signed char         int8_t;
-typedef uint32_t            uintptr_t;
-typedef _Bool               bool;
-#define true   1
-#define false  0
-#define __bool_true_false_are_defined 1
-
-#define NULL (void*)0
+#include "types.h"
 
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
@@ -25,7 +10,7 @@ typedef _Bool               bool;
 #define islower(character) ((character) >= 'a' && (character) <= 'z')
 
 // syscalls
-void settextcolor(unsigned int foreground, unsigned int background);
+void textColor(uint8_t color);
 void putch(unsigned char val);
 void puts(const char* pString);
 unsigned char getch();
