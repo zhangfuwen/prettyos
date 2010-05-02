@@ -26,7 +26,7 @@ static void performAsyncScheduler()
         timeout--;
         if(timeout>0)
         {
-            delay(2000000);
+            delay(5000000);
             settextcolor(13,0);
             printf("#");
             settextcolor(15,0);
@@ -249,7 +249,8 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
+    void* next = createQTD_HS(IN);
+    //void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
 
     // Create QH
@@ -268,6 +269,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
+    //void* next = createQTD_HS(OUT);
     void* next = createQTD_IO(0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 1);  // IN DATA1, 1 byte
 	SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 8, 0, 0, 0, 1); // SETUP DATA0, 8 byte, request type, GET_CONFIGURATION(9), hi, lo, index=0, length=1
@@ -425,8 +427,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), cmdQTD,  1, device, endpointOut, 512);
     
     // IN qTDs
-    // void* next   = createQTD_IO(0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    void* next = createQTD_HS(OUT); // Handshake  <---- correct??
+    // void* next   = createQTD_IO(0x1, IN, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    void* next = createQTD_HS(IN); // Handshake  <---- correct??
     
     if (MSDStatus==true)
     {

@@ -873,7 +873,6 @@ void checkPortLineStatus(uint8_t j)
 
        ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
                  
-                 /*
                  int32_t timeout = 5; 
                  uint8_t statusByte;
                  do
@@ -897,8 +896,7 @@ void checkPortLineStatus(uint8_t j)
                      printf("\n\nCommand Block Status Values not in \"good status\"\n");
                      settextcolor(15,0);
                  }
-                 else
-                 */
+                 else                 
                  {
 
                    ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
