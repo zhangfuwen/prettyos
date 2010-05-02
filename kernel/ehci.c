@@ -384,7 +384,7 @@ void ehci_handler(registers_t* r)
     {
         USBINTflag = true; // is asked by polling
         // printf("USB Interrupt");
-        pOpRegs->USBSTS |= STS_USBINT;
+        pOpRegs->USBSTS |= STS_USBINT; // reset interrupt
     }
 
     if (pOpRegs->USBSTS & STS_USBERRINT)
@@ -853,11 +853,10 @@ void checkPortLineStatus(uint8_t j)
                  #endif
 
 
-                 // device, interface, endpoints
-                 printf("\ndev: %d interface: %d endpOUT: %d  endpIN: %d",devAddr, usbDevices[devAddr].numInterfaceMSD, 
+                // device, interface, endpoints
+                printf("\ndev: %d interface: %d endpOUT: %d  endpIN: %d",devAddr, usbDevices[devAddr].numInterfaceMSD, 
                                              usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
-                 
-                 testMSD(devAddr);
+                testMSD(devAddr);                   
              }
         }
       }

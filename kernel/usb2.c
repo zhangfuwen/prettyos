@@ -24,6 +24,8 @@ static void waitForKeyStroke()
 
 static void performAsyncScheduler()
 {
+    // Disable Periodic...
+    pOpRegs->USBCMD &= ~CMD_PERIODIC_ENABLE;
     // Enable Async...
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
@@ -35,7 +37,7 @@ static void performAsyncScheduler()
         timeout--;
         if(timeout>0)
         {
-            delay(5000000);
+            delay(3000000);
             textColor(0x0D);
             printf("#");
             textColor(0x0F);
@@ -51,8 +53,7 @@ static void performAsyncScheduler()
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-
-    delay(300000);
+    delay(1000000);
 }
 
 uint8_t usbTransferEnumerate(uint8_t j)
@@ -64,7 +65,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
     uint8_t new_address = j+1; // indicated port number
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
@@ -85,7 +86,7 @@ void usbTransferDevice(uint32_t device)
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(              0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -110,7 +111,7 @@ void usbTransferConfig(uint32_t device)
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -203,7 +204,7 @@ void usbTransferString(uint32_t device)
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -228,7 +229,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -255,7 +256,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
     //#endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_HS(IN);
@@ -275,7 +276,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     //#endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_HS(OUT);
@@ -300,7 +301,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // bulk transfer
     // Create QTDs (in reversed order)
@@ -326,7 +327,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // bulk transfer
     // Create QTDs (in reversed order)
@@ -348,7 +349,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
 {
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     void* QH1              = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
     
     // OUT qTD
     void* cmdQTD  = createQTD_IO(0x01, OUT, 0, 31); // OUT DATA0, 31 byte
@@ -789,7 +790,7 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // bulk transfer
     // Create QTDs (in reversed order)
@@ -892,7 +893,7 @@ int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // bulk transfer
     // Create QTDs (in reversed order)
@@ -940,7 +941,7 @@ void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     uint8_t oppositeInOut;
     if(InOut==OUT){oppositeInOut=IN; }
