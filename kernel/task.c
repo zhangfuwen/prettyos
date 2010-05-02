@@ -11,7 +11,12 @@
 #include "kheap.h"
 #include "video.h"
 
-// The currently running and currently displayed task.
+
+bool task_switching;
+
+task_t* currentTask;
+
+// The currently displayed console
 console_t* current_console;
 
 // Some externs are needed
@@ -20,14 +25,17 @@ extern void irq_tail();
 
 uint32_t next_pid = 0; // The next available process ID.
 
+
+void set_fpu_cw(const uint16_t ctrlword); // fpu.c
+
 int32_t getpid()
 {
-    return(ODA.curTask->pid);
+    return(currentTask->pid);
 }
 
 void settaskflag(int32_t i)
 {
-    ODA.ts_flag = i;
+    task_switching = i;
 }
 
 void tasking_install()
@@ -35,21 +43,21 @@ void tasking_install()
     kdebug(3, "1st_task: ");
 
     cli();
-    ODA.curTask = initTaskQueue();
-    ODA.curTask->pid = next_pid++;
-    ODA.curTask->esp = 0;
-    ODA.curTask->eip = 0;
-    ODA.curTask->page_directory = kernel_pd;
-    ODA.curTask->privilege = 0;
-    ODA.curTask->FPU_ptr = (uintptr_t)NULL;
-    setNextTask(ODA.curTask, NULL); // last task in queue
-    ODA.curTask->console = current_console;
-    ODA.curTask->ownConsole = true;
+    currentTask = initTaskQueue();
+    currentTask->pid = next_pid++;
+    currentTask->esp = 0;
+    currentTask->eip = 0;
+    currentTask->page_directory = kernel_pd;
+    currentTask->privilege = 0;
+    currentTask->FPU_ptr = (uintptr_t)NULL;
+    setNextTask(currentTask, NULL); // last task in queue
+    currentTask->console = current_console;
+    currentTask->ownConsole = true;
     refreshUserScreen();
 
     kdebug(3, "1st_ks: ");
 
-    ODA.curTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     sti();
 }
 
@@ -173,9 +181,9 @@ task_t* create_thread(void(*entry)())
 
     cli();
     task_t* new_task = malloc(sizeof(task_t),0);
-    new_task->pid  = ODA.curTask->pid;
-    new_task->page_directory = ODA.curTask->page_directory;
-    new_task->privilege = ODA.curTask->privilege;
+    new_task->pid  = currentTask->pid;
+    new_task->page_directory = currentTask->page_directory;
+    new_task->privilege = currentTask->privilege;
     new_task->threadFlag = true;
 
     if (new_task->privilege == 3)
@@ -191,7 +199,7 @@ task_t* create_thread(void(*entry)())
 
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
     new_task->ownConsole = false;
-    new_task->console = ODA.curTask->console; // The thread uses the same console as the parent Task
+    new_task->console = currentTask->console; // The thread uses the same console as the parent Task
 
     new_task->FPU_ptr = (uintptr_t)NULL;
     setNextTask(new_task, NULL); // last task in queue
@@ -249,30 +257,30 @@ task_t* create_thread(void(*entry)())
 
 uint32_t task_switch (uint32_t esp)
 {
-    if (!ODA.curTask) return esp;
-    ODA.curTask->esp = esp;   // save esp
+    if (!currentTask) return esp;
+    currentTask->esp = esp;   // save esp
 
     // Dispatcher - task switch
-    ODA.curTask = ODA.curTask->next; // take the next task
-    if (!ODA.curTask)
+    currentTask = currentTask->next; // take the next task
+    if (!currentTask)
     {
-        ODA.curTask = getReadyTask();
+        currentTask = getReadyTask();
     }
 
-    current_console = ODA.curTask->console;
+    current_console = currentTask->console;
 
     // new_task
-    paging_switch (ODA.curTask->page_directory);
+    paging_switch (currentTask->page_directory);
     //tss.cr3 = ... TODO: Really unnecessary?
 
-    tss.esp  = ODA.curTask->esp;
-    tss.esp0 = (uintptr_t)ODA.curTask->kernel_stack;
-    tss.ss   = ODA.curTask->ss;
+    tss.esp  = currentTask->esp;
+    tss.esp0 = (uintptr_t)currentTask->kernel_stack;
+    tss.ss   = currentTask->ss;
 
     kdebug(3, "%d ",getpid());
 
     // set TS
-    if (ODA.curTask == ODA.TaskFPU)
+    if (currentTask == FPUTask)
     {
         __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
     }
@@ -283,7 +291,7 @@ uint32_t task_switch (uint32_t esp)
         cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
         __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
     }
-    return ODA.curTask->esp;  // return new task's esp
+    return currentTask->esp;  // return new task's esp
 }
 
 void switch_context() // switch to next task
@@ -299,14 +307,14 @@ void exit()
     #endif
 
     // finish current task and free occupied heap
-    void* pkernelstack = (void*) ((uint32_t) ODA.curTask->kernel_stack - KERNEL_STACK_SIZE);
-    task_t* ptask        = ODA.curTask;
+    void* pkernelstack = (void*) ((uint32_t) currentTask->kernel_stack - KERNEL_STACK_SIZE);
+    task_t* ptask        = currentTask;
 
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
-    if(ODA.curTask->ownConsole) {
+    if(currentTask->ownConsole) {
         for (uint8_t i = 0; i < 10; i++)
         {
-            if (ODA.curTask->console == reachableConsoles[i])
+            if (currentTask->console == reachableConsoles[i])
             {
                 if (i == displayedConsole)
                 {
@@ -316,11 +324,11 @@ void exit()
                 break;
             }
         }
-        console_exit(ODA.curTask->console);
-        free(ODA.curTask->console);
+        console_exit(currentTask->console);
+        free(currentTask->console);
     }
 
-    clearTask(ODA.curTask);
+    clearTask(currentTask);
 
     // free memory at heap
     free(pkernelstack);
@@ -337,16 +345,16 @@ void exit()
 
 void* task_grow_userheap(uint32_t increase)
 {
-    uint8_t* old_heap_top = ODA.curTask->heap_top;
+    uint8_t* old_heap_top = currentTask->heap_top;
     increase = alignUp(increase, PAGESIZE);
 
     if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_HEAP_END) ||
-        !paging_alloc(ODA.curTask->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
+        !paging_alloc(currentTask->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
     {
         return NULL;
     }
 
-    ODA.curTask->heap_top += increase;
+    currentTask->heap_top += increase;
     return old_heap_top;
 }
 

@@ -37,12 +37,10 @@ int32_t cacheTrack(uint32_t trackNum, void* addr) /// floppy
 
 int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO: make it general!
 {
-    int32_t retVal;
     struct file f;
-    uint32_t firstCluster = 0;
 
     flpydsk_control_motor(true);
-    retVal = cacheFirstTracks();
+    int32_t retVal = cacheFirstTracks();
     if (retVal)
     {
         textColor(0x0C);
@@ -56,7 +54,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     textColor(0x02);
     printf(" from floppy disk\n");
 
-    firstCluster = search_file_first_cluster(name,ext,&f); // now working with cache
+    uint32_t firstCluster = search_file_first_cluster(name,ext,&f); // now working with cache
     if (firstCluster==0)
     {
         textColor(0x04);
@@ -120,7 +118,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     {
         char Buffer[13];
         snprintf(Buffer, 13, "%s.%s", name, ext);
-        /// START TASK AND INCREASE TASKCOUNTER
+        // Start task
         if (elf_exec(file, f.size, Buffer)) // execute loaded file
         {
             free(file);
@@ -147,11 +145,11 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
 int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t size)
 {
     char bufName[8], bufExt[3];
-    strncpy(bufName,name,8);
-    strncpy(bufExt,ext, 3);
+    strncpy(bufName, name, 8);
+    strncpy(bufExt, ext, 3);
 
     // ensure that there is no zero in the string! Use 0x20 (SPACE).
-    for (int32_t i=0;i<8;i++)
+    for (uint8_t i = 0; i < 8; i++)
     {
         if (bufName[i]<0x20)
         {
@@ -159,7 +157,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
         }
     }
 
-    for (int32_t i=0;i<3;i++)
+    for (uint8_t i = 0; i < 3; i++)
     {
         if (bufExt[i]<0x20)
         {
@@ -167,13 +165,10 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
         }
     }
 
-    int32_t retVal=0;
     // struct file f;
-    uint32_t firstCluster = 0; // no valid value for a file
-    uint8_t  freeRootDirEntry = 0xFF;
 
     flpydsk_control_motor(true);
-    retVal = cacheFirstTracks();
+    int32_t retVal = cacheFirstTracks();
     if (retVal)
     {
         textColor(0x0C);
@@ -181,17 +176,14 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
         textColor(0x02);
     }
     // how many floppy disc sectors are needed?
-    uint32_t neededSectors=0;
-    if (size%512 == 0)
+    uint32_t neededSectors = size/512;
+    if (size%512 != 0)
     {
-        neededSectors = (size/512);
-    }
-    else
-    {
-        neededSectors = (size/512)+1;
+        neededSectors++;
     }
     printf("\nSave data to Floppy Disk: %d bytes, %d sectors needed.\n", size, neededSectors);
 
+    uint32_t firstCluster = 0; // no valid value for a file
     // search first free cluster
     //  whole FAT is read from index 2 to maximum FATMAXINDEX (= 2849 = 0xB21)
     for (uint32_t i=2;i<FATMAXINDEX;i++)
@@ -205,6 +197,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     }
 
     // search free place in root dir and write entry
+    uint8_t  freeRootDirEntry = 0xFF;
     uint32_t rootdirStart = ROOT_SEC*0x200;
     for (uint16_t i=0;i<ROOT_DIR_ENTRIES;i++)
     {

@@ -5,6 +5,9 @@
 
 #include "cmos.h"
 #include "console.h"
+#include "task.h"
+
+task_t* FPUTask;
 
 void set_fpu_cw(const uint16_t ctrlword)
 {
@@ -37,7 +40,7 @@ void fpu_install()
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
 
     // init TaskFPU in ODA
-    ODA.TaskFPU = NULL;
+    FPUTask = NULL;
 }
 
 /*

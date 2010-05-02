@@ -1,13 +1,5 @@
 #include "userlib.h"
 
-//Aus util.c
-void* memset(void* dest, char val, unsigned int count)
-{
-    char* temp = (char*)dest;
-    for( ; count != 0; count--) *temp++ = val;
-    return dest;
-}
-
 char replaceBuf[1000];
 char* replace(char* source, int Pos, int length, char* toBeInserted) {
 	char end[500];
@@ -21,12 +13,6 @@ char* replace(char* source, int Pos, int length, char* toBeInserted) {
 	strcat(replaceBuf, toBeInserted);
 	strcat(replaceBuf, end);
 	return(replaceBuf);
-}
-
-char GetLineBuf[1000];
-char* GetLine() {
-	memset(GetLineBuf, 0, 1000);
-	return(gets(GetLineBuf));
 }
 
 char GetPrevNumBuf[100];
@@ -78,7 +64,7 @@ int find_first(char* string, char* search) {
 	return(-1);
 }
 
-char* CalcTerm(char* term) {
+int32_t CalcTerm(char* term) {
 	char temp[100];
 	int point = 0;
 	int erg = 0;
@@ -108,25 +94,25 @@ char* CalcTerm(char* term) {
 		term = replace(term, getPrevNumberPos(point, term), getNextNumberPos(point, term) - getPrevNumberPos(point, term)+1, temp);
 		puts(term); putch('\n');
 	}
-	return(term);
+	return(atoi(term));
 }
 
 int main() {
-    settextcolor(11,0);
+    textColor(0x0B);
     puts("================================================================================\n");
-    puts("                              Mr.X Calculator  v0.3                             \n");
+    puts("                             Mr.X Calculator  v0.3.1                            \n");
     puts("--------------------------------------------------------------------------------\n\n");
 	puts("Please type in your term. Valid operators are: +-*/. The Calculator does not support floats at the moment. If you type in \"exit\", the programm will close.\n");
-	char* term = "";
+	char term[100];
 	for(;;) {
-		term = GetLine();
+		memset(term, 0, 100);
+		gets(term);
 		if(term[0] == 'e' && term[1] == 'x' && term[2] == 'i' && term[3] == 't') {
 			break;
 		}
-		term = CalcTerm(term);
-		puts("The result of your term is: ");
-		puts(term); putch('\n'); putch('\n');
+		int32_t Erg = CalcTerm(term);
+		printf("The result of your term is: %i\n\n", Erg);
 	}
-    settextcolor(15,0);
+    textColor(0x0F);
 	return(0);
 }

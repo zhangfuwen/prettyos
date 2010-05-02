@@ -29,6 +29,7 @@ void setScrollField(uint8_t top, uint8_t bottom);
 
 
 // user functions
+void* memset(void* dest, int8_t val, size_t count);
 void* memcpy(void* dest, const void* src, size_t count);
 void printf (const char *args, ...);
 void sprintf (char *buffer, const char *args, ...);

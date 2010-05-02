@@ -36,16 +36,12 @@ int32_t read_fat(int32_t* fat_entrypoint, int32_t index, int32_t st_sec, uint8_t
     //    read_fat(&fat_entry[i], i, FAT1_SEC, track0);
     // file_ia(fat_entry,firstCluster,file);
 
+    int32_t fat_index = (index*3)/2; // 0 -> 0, 1 -> 1
+                                     // 100 -> 150, 101 -> 151, 102 -> 153, 103 -> 154, 104 -> 156, ...
+                                     // 511 -> 766, 512 -> 768
 
-    int32_t fat_index;
-    int32_t fat1, fat2;
-
-    fat_index = (index*3)/2; // 0 -> 0, 1 -> 1
-                       // 100 -> 150, 101 -> 151, 102 -> 153, 103 -> 154, 104 -> 156, ...
-                       // 511 -> 766, 512 -> 768
-
-    fat1 = buffer[st_sec*512+fat_index]   & 0xFF;
-    fat2 = buffer[st_sec*512+fat_index+1] & 0xFF;
+    int32_t fat1 = buffer[st_sec*512+fat_index]   & 0xFF;
+    int32_t fat2 = buffer[st_sec*512+fat_index+1] & 0xFF;
 
     // combine two FAT-entries fat1 and fat2 to a 12-bit-value fat_entry
     parse_fat(fat_entrypoint,fat1,fat2,index);
@@ -62,58 +58,58 @@ buffer:    e.g. track0
 */
 int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer) /// FAT12
 {
-  int8_t fat1, fat2;       // first byte, second byte for one FAT entry at the FAT:
-                           // DAB efc --> AB cD ef or dab EFC --> ab Cd EF
-  uint8_t a[512], b[512];  // FAT data (sector-wise)
+    int8_t fat1, fat2;       // first byte, second byte for one FAT entry at the FAT:
+                             // DAB efc --> AB cD ef or dab EFC --> ab Cd EF
+    uint8_t a[512], b[512];  // FAT data (sector-wise)
 
-  int32_t fat_index = (index*3)/2; // cluster index ---> fat index
+    int32_t fat_index = (index*3)/2; // cluster index ---> fat index
 
-  // calculate sector and index from fat_index
-  st_sec = st_sec + fat_index/512;
-  fat_index = fat_index%512;
+    // calculate sector and index from fat_index
+    st_sec = st_sec + fat_index/512;
+    fat_index = fat_index%512;
 
-  // Read a[...] b[...] from track0[...] and insert new FAT entries
-  if (fat_index == 511) // spans sectors
-  {
-    memcpy((void*)a,(void*)&buffer[st_sec*512],512);
-    fat1 = a[511];
-    memcpy((void*)b,(void*)&buffer[(st_sec+1)*512],512);
-    fat2 = b[0];
-  }
-  else
-  {
-    memcpy((void*)a,(void*)&buffer[st_sec*512],512);
-    fat1 = a[fat_index];
-    fat2 = a[fat_index+1];
-  }
-
-  // even and odd cluster:
-  // DAB ... --> AB .D ..
-  // ... EFC --> .. C. EF
-  if (index%2 == 0)
-  {
-      fat1 = fat & 0x0FF;                           // .AB --> AB ..
-      fat2 = (fat2 & 0xF0) | ((fat & 0xF00) >> 8);  // D.. --> .. .D
-  }
-  else
-  {
-      fat1 = (fat1 & 0x0F) | ((fat & 0x00F) << 4); //  ..C --> C. ..
-      fat2 = (fat  & 0xFF0) >> 4;                   //  EF. --> .. EF
-  }
-
-  // Write back from a[...] b[...] to track0[...]
-    if (fat_index == 511)
+    // Read a[...] b[...] from track0[...] and insert new FAT entries
+    if (fat_index == 511) // spans sectors
     {
-      a[511] = fat1;
-      b[0]   = fat2;
-      memcpy((void*)&buffer[st_sec*512],(void*)a,512);
-      memcpy((void*)&buffer[(st_sec+1)*512],(void*)b,512);
+        memcpy((void*)a,(void*)&buffer[st_sec*512],512);
+        fat1 = a[511];
+        memcpy((void*)b,(void*)&buffer[(st_sec+1)*512],512);
+        fat2 = b[0];
     }
     else
     {
-      a[fat_index]   = fat1;
-      a[fat_index+1] = fat2;
-      memcpy((void*)&buffer[st_sec*512],(void*)a,512);
+        memcpy((void*)a,(void*)&buffer[st_sec*512],512);
+        fat1 = a[fat_index];
+        fat2 = a[fat_index+1];
+    }
+
+    // even and odd cluster:
+    // DAB ... --> AB .D ..
+    // ... EFC --> .. C. EF
+    if (index%2 == 0)
+    {
+        fat1 = fat & 0x0FF;                           // .AB --> AB ..
+        fat2 = (fat2 & 0xF0) | ((fat & 0xF00) >> 8);  // D.. --> .. .D
+    }
+    else
+    {
+        fat1 = (fat1 & 0x0F) | ((fat & 0x00F) << 4);  //  ..C --> C. ..
+        fat2 = (fat  & 0xFF0) >> 4;                   //  EF. --> .. EF
+    }
+
+    // Write back from a[...] b[...] to track0[...]
+    if (fat_index == 511)
+    {
+        a[511] = fat1;
+        b[0]   = fat2;
+        memcpy((void*)&buffer[st_sec*512],(void*)a,512);
+        memcpy((void*)&buffer[(st_sec+1)*512],(void*)b,512);
+    }
+    else
+    {
+        a[fat_index]   = fat1;
+        a[fat_index+1] = fat2;
+        memcpy((void*)&buffer[st_sec*512],(void*)a,512);
     }
     return 0;
 }
@@ -139,11 +135,10 @@ int32_t flpydsk_read_directory()
     for (uint8_t i=0;i<ROOT_DIR_ENTRIES;++i)       // 224 Entries * 32 Byte
     {
         if (
-            ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0x00) && /* free from here on           */
-            ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0xE5) && /* 0xE5 deleted = free         */
-            ((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) != 0x0F)    /* 0x0F part of long file name */
-)
-          {
+            ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0x00) && // free from here on
+            ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0xE5) && // 0xE5 deleted = free
+            ((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) != 0x0F))   // 0x0F part of long file name
+        {
             error = 0;
             int32_t start = DMA_BUFFER + i*32; // name
             int32_t count = 8;
@@ -151,7 +146,7 @@ int32_t flpydsk_read_directory()
             int8_t* end = (int8_t*)(start+count);
             for (; count != 0; --count)
             {
-                if (*(end-count) != 0x20) /* empty space in file name */
+                if (*(end-count) != 0x20) // empty space in file name
                 {
                     printf("%c",*(end-count));
                     letters++;
@@ -163,7 +158,7 @@ int32_t flpydsk_read_directory()
             if ((((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x08) == 0x08) ||  // volume label
                  ((*((uint8_t*) (start))   == 0x20) &&
                    (*((uint8_t*) (start+1)) == 0x20) &&
-                   (*((uint8_t*) (start+2)) == 0x20)))                          // extension == three 'space'
+                   (*((uint8_t*) (start+2)) == 0x20)))                         // extension == three 'space'
             {
                 // do nothing
             }
@@ -186,7 +181,7 @@ int32_t flpydsk_read_directory()
 
             // attributes
             printf("\t");
-            if (*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100)                   printf("\t");
+            if (*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100)               printf("\t");
             if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x08) == 0x08) printf(" (vol)");
             if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x10) == 0x10) printf(" (dir)");
             if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x01) == 0x01) printf(" (r/o)");
@@ -197,8 +192,8 @@ int32_t flpydsk_read_directory()
             // 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
             printf("  1st sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
             printf("\n"); // next root directory entry
-          }//if
-    }//for
+		}
+    }
     printf("\n");
     return error;
 }
@@ -211,7 +206,6 @@ int32_t flpydsk_read_directory()
 
 int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
 {
-    int32_t i;
     uint8_t a[512];
 
     int32_t retVal = flpydsk_read_ia(BOOT_SEC,a,SECTOR);
@@ -220,7 +214,7 @@ int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
         printf("\nread error: %d\n",retVal);
     }
 
-    i=0;
+    int32_t i=0;
     for (uint8_t j=0;j<3;j++)
     {
         a[j]=bs->jumpBoot[j];
@@ -364,14 +358,14 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
     b.Reserved1         =    0;
     b.ExtBootSignature  = 0x29;
 
-      /*
-      dt = form_date();
-      tm = form_time();
-      dt = ((dt & 0xff) << 8) | ((dt & 0xFF00) >> 8);
-      tm = ((tm & 0xff) << 8) | ((tm & 0xFF00) >> 8);
-      */
+    /*
+    dt = form_date();
+    tm = form_time();
+    dt = ((dt & 0xff) << 8) | ((dt & 0xFF00) >> 8);
+    tm = ((tm & 0xff) << 8) | ((tm & 0xFF00) >> 8);
+    */
     b.VolumeSerial = 0x12345678;
-    /* b.VolumeSerial = tm << 16 + dt; */
+    //b.VolumeSerial = tm << 16 + dt;
 
     for (uint8_t j=0;j<11;j++)
     {

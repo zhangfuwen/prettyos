@@ -60,9 +60,7 @@ void heap_install()
 
 static bool heap_grow(uint32_t size, uint8_t* heap_end)
 {
-    // We will have to append another region-object to our array if
-    //   we can't merge with the last region - check whether there
-    //   would be enough space to insert the region-object
+    // We will have to append another region-object to our array if we can't merge with the last region - check whether there would be enough space to insert the region-object
     if (region_count>0 && regions[region_count-1].reserved && region_count+1>region_max_count)
         return false;
 

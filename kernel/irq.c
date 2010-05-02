@@ -46,7 +46,7 @@ const char* exception_messages[] =
 uint32_t irq_handler(uint32_t esp)
 {
     registers_t* r = (registers_t*)esp;
-    task_t* pCurrentTask = ODA.curTask;
+    task_t* pCurrentTask = currentTask;
 
     if (r->int_no == 7) // exception #NM (number 7)
     {
@@ -56,14 +56,14 @@ uint32_t irq_handler(uint32_t esp)
         kdebug(3, "#NM: FPU is used. pCurrentTask: %X\n",pCurrentTask);
 
         // save FPU data ...
-        if (ODA.TaskFPU)
+        if (FPUTask)
         {
-            // fsave or fnsave to ODA.TaskFPU->FPU_ptr
-            __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(ODA.TaskFPU->FPU_ptr)));
+            // fsave or fnsave to FPUTask->FPU_ptr
+            __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(FPUTask->FPU_ptr)));
         }
 
         // store the last task using FPU
-        ODA.TaskFPU = pCurrentTask;
+        FPUTask = pCurrentTask;
 
         // restore FPU data ...
         if (pCurrentTask->FPU_ptr)
@@ -97,7 +97,7 @@ uint32_t irq_handler(uint32_t esp)
             __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_address)); // faulting address <== CR2 register
 
             // The error code gives us details of what happened.
-            int32_t present   = !(r->err_code & 0x1); // Page not present
+            int32_t present   =  !r->err_code & 0x1;  // Page not present
             int32_t rw        =   r->err_code & 0x2;  // Write operation?
             int32_t us        =   r->err_code & 0x4;  // Processor was in user-mode?
             int32_t reserved  =   r->err_code & 0x8;  // Overwritten CPU-reserved bits of page entry?
@@ -127,7 +127,7 @@ uint32_t irq_handler(uint32_t esp)
         for (;;);
     }
 
-    if (ODA.ts_flag && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_context
+    if (task_switching && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_context
         esp = task_switch (esp); // new task's esp
 
     interrupt_handler_t handler = irq_routines[r->int_no];

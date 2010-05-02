@@ -145,11 +145,10 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 
 void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
 {
-    size_t pos = 0;
     char m_buffer[32]; // Larger is not needed at the moment
-    buffer[0] = '\0';
+    memset(buffer, 0, length);
 
-    for (; *args && pos < length; args++)
+    for (size_t pos = 0; *args && pos < length; args++)
     {
         switch (*args)
         {
@@ -172,17 +171,17 @@ void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'X':
-                        i2hex(va_arg(ap, int32_t), m_buffer,8);
+                        i2hex(va_arg(ap, int32_t), m_buffer, 8);
                         strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'x':
-                        i2hex(va_arg(ap, int32_t), m_buffer,4);
+                        i2hex(va_arg(ap, int32_t), m_buffer, 4);
                         strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'y':
-                        i2hex(va_arg(ap, int32_t), m_buffer,2);
+                        i2hex(va_arg(ap, int32_t), m_buffer, 2);
                         strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
@@ -207,7 +206,6 @@ void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
                 break;
         }
         pos++;
-        buffer[pos] = '\0';
     }
 }
 void snprintf (char *buffer, size_t length, const char *args, ...)
@@ -245,9 +243,13 @@ char* strcpy(char* dest, const char* src)
    return save;
 }
 
-char* strncpy(char* dest, const char* src, unsigned int n) // okay?
+char* strncpy(char* dest, const char* src, size_t n)
 {
-    if (n != 0)
+    for(size_t i = 0; i < n && src[i] != 0; i++) {
+        dest[i] = src[i];
+    }
+    return(dest);
+/*  if (n != 0) // Big, not understandable and buggy? implementation
     {
         char* d       = dest;
         const char* s = src;
@@ -255,7 +257,7 @@ char* strncpy(char* dest, const char* src, unsigned int n) // okay?
         {
             if ((*d++ = *s++) == 0)
             {
-                /* NUL pad the remaining n-1 bytes */
+                // NUL pad the remaining n-1 bytes
                 while (--n != 0)
                    *d++ = 0;
                 break;
@@ -263,7 +265,7 @@ char* strncpy(char* dest, const char* src, unsigned int n) // okay?
         }
         while (--n != 0);
      }
-     return(dest);
+     return(dest);*/
 }
 
 
@@ -311,7 +313,7 @@ void itoa(int32_t n, char* s)
         n = -n;         // make n positive
     }
     i=0;
-    do /* generate digits in reverse order */
+    do // generate digits in reverse order
     {
         s[i++] = n % 10 + '0';  // get next digit
     }

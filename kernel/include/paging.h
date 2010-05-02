@@ -9,7 +9,7 @@
 // The page size must not be changed
 #define PAGESIZE 0x1000  // 4096 Byte = 4KByte
 
-// Memory Map //
+// Memory Map
 typedef struct
 {
     uint64_t base;   // The region's address
@@ -18,7 +18,7 @@ typedef struct
     uint32_t ext;    // Unimportant for us, but necessary! Do not take out!
 } __attribute__((packed)) mem_map_entry_t;
 
-// Paging //
+// Paging
 typedef struct
 {
     uint32_t pages[1024];
@@ -47,8 +47,6 @@ void     analyze_physical_addresses();
 
 bool paging_alloc( page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags );
 void paging_free ( page_directory_t* pd, void* virt_addr, uint32_t size );
-
-bool paging_do_idmapping( uint32_t phys_addr ); /// TODO: Delete
 
 void paging_switch( page_directory_t* pd  );
 page_directory_t* paging_create_user_pd();

@@ -1,21 +1,8 @@
 #include "userlib.h"
 
-void* memset(void* dest, char val, unsigned int count)
-{
-    char* temp = (char*)dest;
-    for( ; count != 0; count--) *temp++ = val;
-    return dest;
-}
-
 void Sleep(unsigned int Milliseconds) {
-	unsigned int Stoptime = getCurrentMilliseconds() + Milliseconds;
-	while(getCurrentMilliseconds() < Stoptime) {}
-}
-
-char buffer[1000];
-char* ReadLine() {
-	memset(buffer, 0, 1000);
-	return(gets(buffer));
+	unsigned int Stoptime = getCurrentSeconds()*1000 + Milliseconds;
+	while(getCurrentSeconds()*1000 < Stoptime) {}
 }
 
 
@@ -104,26 +91,26 @@ void Play(char* string) {
 }
 
 int main() {
-    settextcolor(11,0);
+    textColor(0x0B);
     puts("================================================================================\n");
-    puts("                     Mr.X Simple-Simple-Music-Creator  v0.4                     \n");
+    puts("                    Mr.X Simple-Simple-Music-Creator  v0.4.1                    \n");
     puts("--------------------------------------------------------------------------------\n\n");
 	puts("Please type in the duration of a full note or type in \"Alle meine Entchen\" or \"Hänschen klein\" to play that song and press ENTER.\n");
-	char* string1 = ReadLine();
-	char* string2;
+	char string1[100];
+	gets(string1);
 	if(strcmp(string1, "Alle meine Entchen") == 0) {
 		duration = 500;
-		string2 = "cdefg+g+aaaag++aaaag++ffffe+e+ddddc++\n";
+		Play("cdefg+g+aaaag++aaaag++ffffe+e+ddddc++\n");
 	}
 	if(strcmp(string1, "Hänschen klein\n") == 0) {
 		duration = 500;
-		string2 = "gee+fdd+cdefggg+gee+fdd+ceggc++dddddef+eeeeefg+gee+fdd+ceggc++\n";
+		Play("gee+fdd+cdefggg+gee+fdd+ceggc++dddddef+eeeeefg+gee+fdd+ceggc++\n");
 	}
 	else {
 		duration = atoi(string1);
 		puts("Please insert your notes (cdefgahCDEFGAH or 0 (break); speed controlled by --, -, nothing, +, ++) and press ENTER.\n");
-		string2 = ReadLine();
+		gets(string1);
+		Play(string1);
 	}
-	Play(string2);
-	return 0;
+	return(0);
 }

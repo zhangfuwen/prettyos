@@ -3,7 +3,6 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-
 // TODO: Apply multithreading safety
 
 #include "paging.h"
@@ -11,13 +10,12 @@
 #include "kheap.h"
 #include "console.h"
 
-
 page_directory_t* kernel_pd;
 
-// Memory Map //
+// Memory Map
 extern char _kernel_beg, _kernel_end; // defined in linker script
 
-// Physical Memory //
+// Physical Memory
 static const uint32_t MAX_DWORDS = 0x100000000ull / PAGESIZE / 32;
 
 static uint32_t* bittable;
@@ -29,7 +27,7 @@ uint32_t paging_install()
 {
     uint32_t ram_available = phys_init();
 
-    //// Setup the kernel page directory
+    // Setup the kernel page directory
     kernel_pd = malloc(sizeof(page_directory_t), PAGESIZE);
     memset(kernel_pd, 0, sizeof(page_directory_t));
     kernel_pd->pd_phys_addr = (uint32_t)kernel_pd;
@@ -141,12 +139,10 @@ static uint32_t phys_init()
         kdebug(3, "  %X -> %X %i\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }
 
-    // Prepare the memory map entries, since we work with max
-    //   4 GB only. The last entry in the entry-array has size==0.
+    // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size==0.
     for (mem_map_entry_t* entry=entries; entry->size; ++entry)
     {
-        // We will completely ignore memory above 4 GB, move following
-        //   entries backward by one then
+        // We will completely ignore memory above 4 GB, move following entries backward by one then
         if (entry->base >= FOUR_GB)
             for (mem_map_entry_t* e=entry; e->size; ++e)
                 *e = *(e+1);
@@ -169,7 +165,8 @@ static uint32_t phys_init()
         bittable[i] = 0xFFFFFFFF;
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
-    for (mem_map_entry_t* entry=entries; entry->size; ++entry) {
+    for (mem_map_entry_t* entry=entries; entry->size; ++entry)
+	{
         phys_set_bits(entry->base, entry->base+entry->size, !entry->type);
     }
 

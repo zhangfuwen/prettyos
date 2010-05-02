@@ -15,7 +15,7 @@ event_handler_t VIDEO_SCREENSHOT;
 
 void events_install()
 {
-    eventQueue = listCreate();
+    eventQueue = list_Create();
     // Init event-handlers
     EHCI_INIT.function = &ehci_init;
     EHCI_PORTCHECK.function = &ehci_portcheck;
@@ -24,19 +24,19 @@ void events_install()
 
 void handleEvents() {
     int i = 0;
-    for(; listGetElement(eventQueue, i) != 0; i++)
+    for(; list_GetElement(eventQueue, i) != 0; i++)
     {
-        ((event_handler_t*)listGetElement(eventQueue, i))->function();
+        ((event_handler_t*)list_GetElement(eventQueue, i))->function();
     }
     if(i > 0) {
-        listDeleteAll(eventQueue);
-        eventQueue = listCreate();
+        list_DeleteAll(eventQueue);
+        eventQueue = list_Create();
     }
 }
 
 void addEvent(event_handler_t* event)
 {
-    listAppend(eventQueue, event);
+    list_Append(eventQueue, event);
 }
 
 

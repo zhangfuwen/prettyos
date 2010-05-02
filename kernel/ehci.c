@@ -40,6 +40,8 @@ extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 bool USBtransferFlag; // switch on/off tests for USB-Transfer
 bool enabledPortFlag; // port enabled
 
+uint32_t pciEHCInumber = 0; // pci device number
+
 // usb devices list
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
@@ -53,9 +55,9 @@ void ehci_install(uint32_t num, uint32_t i)
 
     if (!EHCIflag) // only the first EHCI is used
     {
-        ODA.pciEHCInumber = num; /// TODO: implement for more than one EHCI
+        pciEHCInumber = num; /// TODO: implement for more than one EHCI
         EHCIflag = true; // only the first EHCI is used
-        if(ODA.pciEHCInumber)
+        if(pciEHCInumber)
         {
             addEvent(&EHCI_INIT);
         }
@@ -401,7 +403,7 @@ void ehci_handler(registers_t* r)
 
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
 
-        if (enabledPortFlag && ODA.pciEHCInumber)
+        if (enabledPortFlag && pciEHCInumber)
         {
             addEvent(&EHCI_PORTCHECK);
         }
@@ -420,7 +422,7 @@ void ehci_handler(registers_t* r)
         textColor(0x0F);
         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
-        analyzeHostSystemError(ODA.pciEHCInumber);
+        analyzeHostSystemError(pciEHCInumber);
         textColor(0x0E);
         printf("\n>>> Init EHCI after fatal error:           <<<");
          printf("\n>>> Press key for EHCI (re)initialization. <<<");
@@ -564,7 +566,7 @@ int32_t initEHCIHostController()
     textColor(0x0F);
 
     // pci bus data
-    uint32_t num = ODA.pciEHCInumber;
+    uint32_t num = pciEHCInumber;
     uint8_t bus  = pciDev_Array[num].bus;
     uint8_t dev  = pciDev_Array[num].device;
     uint8_t func = pciDev_Array[num].func;
@@ -884,7 +886,7 @@ void checkPortLineStatus(uint8_t j)
 
 void DeactivateLegacySupport(uint32_t num)
 {
-    bool failed = false;
+    //bool failed = false;
 
     // pci bus data
     uint8_t bus  = pciDev_Array[num].bus;
@@ -931,7 +933,7 @@ void DeactivateLegacySupport(uint32_t num)
         {
             printf("set OS-Semaphore.\n");
             pci_config_write_byte(bus, dev, func, OSownedSemaphore, 0x01);
-            failed = true;
+            //failed = true;
 
             int32_t timeout=200;
             // Wait for BIOS-Semaphore being not set
@@ -954,7 +956,7 @@ void DeactivateLegacySupport(uint32_t num)
             }
             if (pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore) & 0x01)
             {
-                failed = false;
+                //failed = false;
                 printf("OS-Semaphore being set.\n");
             }
 

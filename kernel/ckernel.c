@@ -20,7 +20,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.428";
+const char* version = "0.0.0.429";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -33,8 +33,11 @@ extern uintptr_t file_data_end;
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
-// Operatings system common Data Area
-oda_t ODA;
+// Informations about the system
+system_t system;
+
+
+void fpu_install(); // fpu.c
 
 static void init()
 {
@@ -50,7 +53,7 @@ static void init()
     clear_screen();
 
     // memory
-    ODA.Memory_Size = paging_install();
+    system.Memory_Size = paging_install();
     heap_install();
 
     // internal devices
@@ -71,13 +74,13 @@ static void init()
 
 void showMemorySize()
 {
-    if (ODA.Memory_Size > 0x100000)
+    if (system.Memory_Size > 0x100000)
     {
-        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", ODA.Memory_Size/0x100000, ODA.Memory_Size/1000000, ODA.Memory_Size);
+        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", system.Memory_Size/0x100000, system.Memory_Size/1000000, system.Memory_Size);
     }
     else
     {
-        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", ODA.Memory_Size/0x400, ODA.Memory_Size/1000, ODA.Memory_Size);
+        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", system.Memory_Size/0x400, system.Memory_Size/1000, system.Memory_Size);
     }
 }
 
@@ -95,12 +98,11 @@ void* ramdisk_install(size_t size)
 void main()
 {
     init();
-    EHCIflag          = false; // first EHCI device found?
-    ODA.pciEHCInumber = 0;     // pci number of first EHCI device
+    EHCIflag = false; // first EHCI device found?
 
     // Create Startup Screen
     create_cthread(&bootscreen, "Booting ...");
-    ODA.ts_flag = true;        // start task switch
+    task_switching = true;        // start task switch
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
@@ -181,12 +183,12 @@ void main()
 
             if (RdtscKCountsHi == 0)
             {
-                ODA.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
+                system.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
             }
 
             // draw status bar with date & time and frequency
             getCurrentDateAndTime(DateAndTime);
-            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, ODA.CPU_Frequency_kHz/1000); // output in status bar
+            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
         }
 
         // Handling Events

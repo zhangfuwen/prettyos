@@ -108,6 +108,13 @@ void setScrollField(uint8_t top, uint8_t bottom) {
 
 /// user functions
 
+void* memset(void* dest, int8_t val, size_t count)
+{
+    int8_t* temp = (int8_t*)dest;
+    for (; count != 0; count--) *temp++ = val;
+    return dest;
+}
+
 void* memcpy(void* dest, const void* src, size_t count)
 {
     const uint8_t* sp = (const uint8_t*)src;

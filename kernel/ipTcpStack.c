@@ -13,9 +13,6 @@
 //  Data  : A pointer to the Data
 //  Length: The Size of the Paket
 
-// Internal:
-//  TODO
-
 void ipTcpStack_recv(void* Data, uint32_t Length)
 {
     struct ethernet* eth;
@@ -96,7 +93,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
         }
         else
         {
-            // NOTE < here we ignore silently other packets that we don't know >
+            // here we ignore silently other packets that we don't know
         }
     }
     printf("--- TCP-IP stack ---\n"); 
@@ -104,7 +101,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

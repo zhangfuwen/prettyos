@@ -5,17 +5,6 @@ enum Feldstatus {Leer, X, O};
 uint8_t tictactoe[9];
 bool ende = false;
 
-//cf. util.c
-void* memset(void* dest, uint8_t val, size_t count)
-{
-    uint8_t* temp = (uint8_t*)dest;
-    for (; count != 0; count--)
-	{
-		*temp++ = val;
-	}
-    return dest;
-}
-
 void SetField(uint8_t x, uint8_t y, uint8_t Player)
 {
     gotoxy(x*4+2,y*2+15);
@@ -106,11 +95,11 @@ int32_t main()
     clearScreen(0);
 
     printLine("--------------------------------------------------------------------------------", 0, 0x0B);
-    printLine("                           Mr.X TicTacToe 3x3  v0.6.1                           ", 2, 0x0B);
+    printLine("                           Mr.X TicTacToe 3x3  v0.6.2                           ", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     gotoxy(0,6);
-    settextcolor(15,0);
+    textColor(0x0F);
     puts("*************\n| 0 | 1 | 2 |\n*************\n| 3 | 4 | 5 |\n*************\n| 6 | 7 | 8 |\n*************\n\n");
     puts("*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n\n");
 

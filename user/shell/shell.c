@@ -2,13 +2,6 @@
 #define MAX_CHAR_PER_LINE 70
 #define ENTRY_CACHE_SIZE 10
 
-void* memset(void* dest, int8_t val, size_t count)
-{
-    int8_t* temp = (int8_t*)dest;
-    for (; count != 0; count--) *temp++ = val;
-    return dest;
-}
-
 void eraseFirst(char* string)
 {
     strcpy(string, string+1);

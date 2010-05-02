@@ -103,12 +103,12 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
 
 void listPCI()
 {
-    listHead_t* pciDevList = listCreate();
+    listHead_t* pciDevList = list_Create();
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
         if (pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00))   // there is no vendor EE00h
         {
-            listAppend(pciDevList, (void*)(pciDev_Array+i));
+            list_Append(pciDevList, (void*)(pciDev_Array+i));
             textColor(0x02);
             printf("%X\t", pciDev_Array+i);
         }
@@ -116,7 +116,7 @@ void listPCI()
     putch('\n');
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
-        pciDev_t* element = (pciDev_t*)listGetElement(pciDevList, i);
+        pciDev_t* element = (pciDev_t*)list_GetElement(pciDevList, i);
         if (element)
         {
             textColor(0x02);

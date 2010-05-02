@@ -29,20 +29,17 @@ static inline void kdebug(uint8_t color, const char* args, ...)
 
 // keyboard map
 /// #define KEYMAP_US // US keyboard
-#define KEYMAP_GER   // German keyboard
+#define KEYMAP_GER    // German keyboard
 
 
 // PrettyOS Version string
 extern const char* version;
 
-// operatings system common data area
-extern oda_t ODA;
+// Informations about the system
+extern system_t system;
 
 
 // Declared here, because a header would be a waste of space
-// fpu.c
-void set_fpu_cw(const uint16_t ctrlword);
-void fpu_install();
 // elf.c
 bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programName);
 

@@ -33,8 +33,6 @@ typedef unsigned int dev_t; // Defined like in tyndur
 typedef unsigned int uid_t; // Defined like in tyndur
 typedef unsigned int gid_t; // Defined like in tyndur
 
-
-typedef struct task task_t;
 // This defines the operatings system common data area
 typedef struct
 {
@@ -43,19 +41,7 @@ typedef struct
 
     // RAM
     uint32_t Memory_Size;        // memory size in byte
-
-    //tasking
-    uint8_t  ts_flag;            // 0: taskswitch off  1: taskswitch on
-    task_t* curTask;             // Address of currentTask
-    task_t* TaskFPU;             // Address of Task using FPU
-
-    // floppy disk               // array index is number of floppy drive (0,1,2,3)
-    bool flpy_motor[4];          // 0: motor off  1: motor on
-    bool flpy_ReadWriteFlag[4];  // 0: ready      1: busy (blocked)
-
-    // EHCI
-    uint32_t pciEHCInumber;      // pci device number
-}__attribute__((packed)) oda_t;
+} system_t;
 
 // This defines what the stack looks like after an ISR was running
 typedef struct

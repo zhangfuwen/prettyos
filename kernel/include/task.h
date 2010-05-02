@@ -5,8 +5,8 @@
 #include "paging.h"
 #include "descriptor_tables.h"
 
-
 #define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
+
 
 struct task
 {
@@ -25,6 +25,12 @@ struct task
     struct task* next;                // The next task in a linked list
 } __attribute__((packed));
 
+typedef struct task task_t;
+
+extern task_t* FPUTask; // fpu.c
+
+extern bool task_switching;
+extern task_t* currentTask;
 extern console_t* current_console;
 
 void settaskflag(int32_t i);
@@ -34,7 +40,7 @@ uint32_t task_switch(uint32_t esp);
 int32_t getpid();
 task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege); // Creates task using kernels console
 task_t* create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* consoleName); // Creates task with own console
-task_t* create_thread(void(*entry)()); // Creates thread using ODA.curTasks console
+task_t* create_thread(void(*entry)()); // Creates thread using currentTasks console
 task_t* create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
 void switch_context();
 void exit();

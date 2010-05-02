@@ -85,7 +85,7 @@ void timer_uninstall()
 // delay in microseconds independent of timer interrupt but on rdtsc
 void delay (uint32_t microsec)
 {
-    uint64_t timeout = rdtsc() + (uint64_t)(((uint32_t)(microsec/1000)) * ODA.CPU_Frequency_kHz);
+    uint64_t timeout = rdtsc() + (uint64_t)(((uint32_t)(microsec/1000)) * system.CPU_Frequency_kHz);
 
     while (rdtsc()<timeout)
     {

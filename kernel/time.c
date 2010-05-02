@@ -7,8 +7,6 @@
 #include "util.h"
 #include "cmos.h"
 
-tm_t currentTime;
-
 // info from http://lowlevel.brainsware.org/wiki/index.php/CMOS
 
 tm_t* cmosTime(tm_t* ptm)
@@ -67,13 +65,13 @@ unsigned int calculateWeekday(uint16_t year, uint8_t month, uint32_t day) {
 
 char* getCurrentDateAndTime(char* pStr)
 {
-    // sourcecode of "Cuervo", "ehenkes" and "Mr X", PrettyOS team
-    tm_t* pct = cmosTime(&currentTime);
-    pct->weekday = calculateWeekday(2000+pct->year, pct->month, pct->dayofmonth);
+	tm_t pct;
+    cmosTime(&pct);
+    pct.weekday = calculateWeekday(2000+pct.year, pct.month, pct.dayofmonth);
 
     pStr[0]='\0'; // clear string
     char buf[32];
-    switch (pct->weekday)
+    switch (pct.weekday)
     {
         case 1: strcpy(pStr, "Sunday, ");    break;
         case 2: strcpy(pStr, "Monday, ");    break;
@@ -84,7 +82,7 @@ char* getCurrentDateAndTime(char* pStr)
         case 7: strcpy(pStr, "Saturday, ");  break;
     }
 
-    switch (pct->month)
+    switch (pct.month)
     {
         case 1:  strcat(pStr, "January ");   break;
         case 2:  strcat(pStr, "February ");  break;
@@ -100,26 +98,26 @@ char* getCurrentDateAndTime(char* pStr)
         case 12: strcat(pStr, "December ");  break;
     }
 
-    appendInt(pct->dayofmonth, pStr, buf);
+    appendInt(pct.dayofmonth, pStr, buf);
 
     strcat(pStr,", ");
 
-    itoa(pct->century, buf);
+    itoa(pct.century, buf);
     strcat(pStr, buf);
 
-    appendInt(pct->year, pStr, buf);
+    appendInt(pct.year, pStr, buf);
 
     strcat(pStr,", ");
 
-    appendInt(pct->hour, pStr, buf);
+    appendInt(pct.hour, pStr, buf);
 
     strcat(pStr,":");
 
-    appendInt(pct->minute, pStr, buf);
+    appendInt(pct.minute, pStr, buf);
 
     strcat(pStr,":");
 
-    appendInt(pct->second, pStr, buf);
+    appendInt(pct.second, pStr, buf);
 
     strcat(pStr, ""); // add '\0'
     return pStr;

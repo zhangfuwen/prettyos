@@ -4,12 +4,14 @@
 */
 
 #include "list.h"
-#include "kheap.h" // malloc and free
+#include "kheap.h"
 #include "console.h"
 
-listHead_t* listCreate()
+
+// List
+listHead_t* list_Create()
 {
-    listHead_t* hd = (listHead_t*)malloc(sizeof(listHead_t),0);
+    listHead_t* hd = (listHead_t*)malloc(sizeof(listHead_t), 0);
     if (hd)
     {
         hd->head = hd->tail = 0;
@@ -17,9 +19,9 @@ listHead_t* listCreate()
     return(hd);
 }
 
-bool listAppend(listHead_t* hd, void* data)
+bool list_Append(listHead_t* hd, void* data)
 {
-    element_t* ap = (element_t*)malloc(sizeof(element_t),0);
+    element_t* ap = (element_t*)malloc(sizeof(element_t), 0);
     if (ap)
     {
         ap->data = data;
@@ -29,7 +31,7 @@ bool listAppend(listHead_t* hd, void* data)
         {
             hd->head = ap;
         }
-        else   // there exist at least one list element
+        else // there exist at least one list element
         {
             hd->tail->next = ap;
         }
@@ -39,7 +41,7 @@ bool listAppend(listHead_t* hd, void* data)
     return(false);
 }
 
-void listDeleteAll(listHead_t* hd)
+void list_DeleteAll(listHead_t* hd)
 {
     element_t* cur = hd->head;
     element_t* nex;
@@ -53,7 +55,7 @@ void listDeleteAll(listHead_t* hd)
     free(hd);
 }
 
-void listShow(listHead_t* hd)
+void list_Show(listHead_t* hd)
 {
     printf("List elements:\n");
     element_t* cur = hd->head;
@@ -71,7 +73,7 @@ void listShow(listHead_t* hd)
     }
 }
 
-void* listGetElement(listHead_t* hd, uint32_t number)
+void* list_GetElement(listHead_t* hd, uint32_t number)
 {
     element_t* cur = hd->head;
     while (cur)
@@ -84,6 +86,45 @@ void* listGetElement(listHead_t* hd, uint32_t number)
         cur = cur->next;
     }
     return(0);
+}
+
+
+// Ring
+element_t* ring_Create()
+{
+	element_t* ring = malloc(sizeof(element_t), 0);
+	ring->data = 0;
+	ring->next = ring;
+	return(ring);
+}
+
+void ring_Insert(element_t* ring, void* data)
+{
+	element_t* item = malloc(sizeof(element_t), 0);
+	item->data = data;
+	item->next = ring->next;
+	ring->next = item;
+}
+
+bool ring_isEmpty(element_t* ring)
+{
+	return(ring->data == 0);
+}
+
+bool ring_DeleteFirst(element_t* ring, void* data)
+{
+	element_t* temp = ring;
+	for(; temp->next != ring; temp = temp->next)
+	{
+		if(temp->next->data == data)
+		{
+			ring = temp->next;
+			temp->next = ring->next;
+			free(ring);
+			return(true);
+		}
+	}
+	return(false);
 }
 
 

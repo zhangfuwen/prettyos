@@ -27,6 +27,9 @@ static volatile uint8_t ReceivedFloppyDiskIRQ  = false; // set when IRQ fires
 const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME      =   350; // waiting time in milliseconds (motor spin up)
 const int32_t WAITING_TIME                     =    10; // waiting time in milliseconds (for dynamic processes)
 
+bool flpy_motor[4];          // 0: motor off  1: motor on
+bool flpy_ReadWriteFlag[4];  // 0: ready      1: busy (blocked)
+
 // IO ports
 enum FLPYDSK_IO
 {
@@ -128,17 +131,17 @@ enum FLPYDSK_SECTOR_DTL
 };
 
 void floppy_install() {
-    if ((cmos_read(0x10)>>4) == 4)         // 1st floppy 1,44 MB: 0100....b
+    if ((cmos_read(0x10)>>4) == 4)          // 1st floppy 1,44 MB: 0100....b
     {
         printf("1.44 MB FDD device 0\n\n");
-        ODA.flpy_motor[0] = false;            // first floppy motor is off
+        flpy_motor[0] = false;              // first floppy motor is off
         flpydsk_set_working_drive(0);           // set drive 0 as current drive
         flpydsk_install(32+6);                  // floppy disk uses IRQ 6 // 32+6
         memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero
-        if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: 0100....b
+        if ((cmos_read(0x10) & 0xF) == 4)   // 2nd floppy 1,44 MB: 0100....b
         {
             printf("1.44 MB FDD device 1\n\n");
-            ODA.flpy_motor[1] = false;        // second floppy motor is off
+            flpy_motor[1] = false;          // second floppy motor is off
         }
     }
     else
@@ -228,7 +231,7 @@ void flpydsk_write_ccr(uint8_t val)
     outportb(FLPYDSK_CTRL, val); // write the configuation control
 }
 
-/**
+/*
 *    Interrupt Handling Routines
 */
 
@@ -253,7 +256,7 @@ void i86_flpy_irq(registers_t* r)
     ReceivedFloppyDiskIRQ = true; // irq fired. Set flag!
 }
 
-/**
+/*
 *    Controller Command Routines
 */
 
@@ -272,35 +275,24 @@ void flpydsk_control_motor(bool b)
     switch (_CurrentDrive) // select the correct mask based on current drive
     {
         case 0: motor = FLPYDSK_DOR_MASK_DRIVE0_MOTOR; break;
-        case 1:    motor = FLPYDSK_DOR_MASK_DRIVE1_MOTOR; break;
+        case 1: motor = FLPYDSK_DOR_MASK_DRIVE1_MOTOR; break;
         case 2: motor = FLPYDSK_DOR_MASK_DRIVE2_MOTOR; break;
-        case 3:    motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
+        case 3: motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
     }
 
     // turn on or off the motor of the current drive
-    if ((b==true) && (ODA.flpy_motor[_CurrentDrive]==false))
+    if ((b==true) && (flpy_motor[_CurrentDrive]==false))
     {
         flpydsk_write_dor(_CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
-        ODA.flpy_motor[_CurrentDrive]=true;
-        /*
-        textColor(0x0E);
-        printf("floppy motor on\n");
-        textColor(0x02);
-        */
+        flpy_motor[_CurrentDrive]=true;
     }
-    else if ((b==false) && (ODA.flpy_motor[_CurrentDrive]==true))
+    else if ((b==false) && (flpy_motor[_CurrentDrive]==true))
     {
         flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET); // motor off
-        ODA.flpy_motor[_CurrentDrive]=false;
-
-        /*
-        textColor(0x0E);
-        printf("floppy motor off\n");
-        textColor(0x02);
-        */
+        flpy_motor[_CurrentDrive]=false;
     }
     sti(); // important!
-    if ((b==true) && (ODA.flpy_motor[_CurrentDrive]==false))///TEST
+    if ((b==true) && (flpy_motor[_CurrentDrive]==false))///TEST
     {
         sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
     }
@@ -315,7 +307,7 @@ void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_
 {
     flpydsk_send_command(FDC_CMD_SPECIFY);
     flpydsk_send_command(((stepr & 0xF) << 4) | (unloadt & 0xF));
-    flpydsk_send_command((loadt << 1)        | (dma==false) ? 0 : 1);
+    flpydsk_send_command((loadt << 1)         | (dma==false) ? 0 : 1);
 }
 
 
@@ -348,9 +340,9 @@ void flpydsk_reset()
     flpydsk_write_ccr(0);              // transfer speed 500kb/s
     flpydsk_drive_data(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
 
-    flpydsk_control_motor(true);       //printf("reset.motor_on\n");
+    flpydsk_control_motor(true);
     flpydsk_calibrate(_CurrentDrive);  // calibrate the disk
-    flpydsk_control_motor(false);      // printf("reset.motor_off\n");
+    flpydsk_control_motor(false);
 }
 
 /*
@@ -478,7 +470,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     uint32_t st0, cyl;
 
     /// TEST
-    while ( ODA.flpy_ReadWriteFlag[_CurrentDrive] == true )
+    while ( flpy_ReadWriteFlag[_CurrentDrive] == true )
     {
         printf("waiting for Floppy Disk ");
         if (operation == 0)
@@ -499,7 +491,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
         break;
     }
 
-    ODA.flpy_ReadWriteFlag[_CurrentDrive] = true; // busy
+    flpy_ReadWriteFlag[_CurrentDrive] = true; // busy
     /// TEST
 
     flpydsk_initialize_dma();
@@ -543,7 +535,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     flpydsk_check_int(&st0,&cyl);    // inform FDC that we handled interrupt
 
     /// TEST
-    ODA.flpy_ReadWriteFlag[_CurrentDrive] = false; // ready
+    flpy_ReadWriteFlag[_CurrentDrive] = false; // ready
     /// TEST
 
     return retVal;
@@ -562,7 +554,6 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
     if (motor)
     {
         flpydsk_control_motor(true);
-        // printf("read_sector.motor_on\n");
     }
 
     int32_t head=0, track=0, sector=1;
@@ -605,11 +596,11 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
     flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
     // turn motor on and seek to track
-    flpydsk_control_motor(true);      // printf("write_sector.motor_on\n");
+    flpydsk_control_motor(true);
     if (flpydsk_seek (track, head)!=0)
     {
         printf("flpydsk_seek not ok. sector not written.\n");
-        flpydsk_control_motor(false); // printf("write_sector.motor_off\n");
+        flpydsk_control_motor(false);
         return -2;
     }
     else
@@ -617,7 +608,7 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
         // printf("flpydsk_seek ok\n");
 
         flpydsk_transfer_sector(head, track, sector, 1);
-        flpydsk_control_motor(false); // printf("write_sector.motor_off\n");
+        flpydsk_control_motor(false);
         return 0;
     }
 }
@@ -718,9 +709,9 @@ int32_t flpydsk_read_ia(int32_t i, void* a, int8_t option) /// floppy
             (*(uint8_t*)(DMA_BUFFER+ 4)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 5)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+ 6)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 7)==0x41) &&
             (*(uint8_t*)(DMA_BUFFER+ 8)==0x41) && (*(uint8_t*)(DMA_BUFFER+ 9)==0x41) &&
-            (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41)
-)
-          {memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
+            (*(uint8_t*)(DMA_BUFFER+10)==0x41) && (*(uint8_t*)(DMA_BUFFER+11)==0x41))
+          {
+			  memset((void*)DMA_BUFFER, 0x41, 0x2400); // 0x41 is in ASCII the 'A'
               textColor(0x04);
               printf("Floppy ---> DMA attempt no. %d failed.\n",n+1);
               if (n>=MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
@@ -732,11 +723,6 @@ int32_t flpydsk_read_ia(int32_t i, void* a, int8_t option) /// floppy
           }
           else
           {
-              /*
-              textColor(0x03);
-              printf("Floppy ---> DMA success.\n");
-              textColor(0x02);
-              */
               break;
           }
     }

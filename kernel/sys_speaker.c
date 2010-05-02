@@ -29,6 +29,7 @@ void noSound()
 void beep(uint32_t freq, uint32_t duration)
 {
     #ifdef _SOUND_
+	sti();
     sound(freq);
     sleepMilliSeconds(duration);
     noSound();
