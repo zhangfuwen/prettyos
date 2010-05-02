@@ -6,27 +6,29 @@
 // Switches changing the behaviour of PrettyOS
 /// #define _DIAGNOSIS_     // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _USB_DIAGNOSIS_ // only as transition state during implementation of USB 2.0 transfers
-#define _SOUND_         // Sound-Messages - activated per default, but they increase the boot-time.
+/// #define _SOUND_         // Sound-Messages - deactivated per default, because they increase the boot-time
 
 void settextcolor(uint8_t, uint8_t);
 void printf(const char*, ...);
 static inline void kdebug(int8_t color, const char* args, ...)
 {
     #ifdef _DIAGNOSIS_
-    if(color != -1) {
+    if(color != -1) 
+    {
         settextcolor(color, 0);
     }
     va_list ap;
     va_start (ap, args);
     vprintf(args, ap);
-    if(color != -1) {
+    if(color != -1) 
+    {
         settextcolor(15, 0);
     }
     #endif
 }
 
-/// keyboard map
-// #define KEYMAP_US // US keyboard
+// keyboard map
+/// #define KEYMAP_US // US keyboard
 #define KEYMAP_GER   // German keyboard
 
 

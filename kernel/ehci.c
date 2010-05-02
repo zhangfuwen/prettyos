@@ -266,7 +266,13 @@ void* createQTD_HS(uint8_t direction)
     td->token.bytes        = tokenBytes; // 0 for handshake
     td->token.dataToggle   = toggle;     // 1 for handshake
 
-    td->buffer0 = td->buffer1 = td->buffer2 = td->buffer3 = td->buffer4 = 0x0;
+    void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
+    memset(data,0,PAGESIZE);
+    
+    uint32_t dataPhysical = paging_get_phys_addr(kernel_pd, data);
+    
+    td->buffer0 = dataPhysical;
+    td->buffer1 = td->buffer2 = td->buffer3 = td->buffer4 = 0x0;
     td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
     return address;
@@ -863,12 +869,15 @@ void checkPortLineStatus(uint8_t j)
                                              usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
                  // printf("\nMax. Logical Unit Numbers (LUN): %d",usbDevices[devAddr].maxLUN);
 
+                 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+
        ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
+                 
+                 /*
                  int32_t timeout = 5; 
                  uint8_t statusByte;
                  do
-                 {                     
-                     usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+                 {        
                      settextcolor(9,0); printf("\n>>> SCSI: test unit ready"); settextcolor(15,0);
                      usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
                      statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
@@ -889,13 +898,14 @@ void checkPortLineStatus(uint8_t j)
                      settextcolor(15,0);
                  }
                  else
+                 */
                  {
 
                    ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
                      
-                     /*
-                     usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+                     //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
+                 
                      settextcolor(9,0); printf("\n>>> SCSI: read capacity"); settextcolor(15,0);
 				     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
                      uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + (*((uint8_t*)DataQTDpage0+2)) * 256 + (*((uint8_t*)DataQTDpage0+3));
@@ -906,11 +916,11 @@ void checkPortLineStatus(uint8_t j)
                      printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
                      settextcolor(15,0);
 				     waitForKeyStroke();
-                     */
+                  
 
                    ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
 
-                     // usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+                     //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
                      
                      uint32_t length = 512; // number of byte to be read
                      

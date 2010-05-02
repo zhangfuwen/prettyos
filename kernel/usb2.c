@@ -20,14 +20,16 @@ static void performAsyncScheduler()
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 
-    int8_t timeout=40;
+    int8_t timeout=10;
     while (!USBINTflag) // set by interrupt
     {
         timeout--;
         if(timeout>0)
         {
-            sleepMilliSeconds(20);
-            //printf("#");
+            delay(2000000);
+            settextcolor(13,0);
+            printf("#");
+            settextcolor(15,0);
         }
         else
         {
@@ -41,7 +43,7 @@ static void performAsyncScheduler()
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
 
-	sleepMilliSeconds(80);
+	delay(300000);
 }
 
 uint8_t usbTransferEnumerate(uint8_t j)
@@ -317,7 +319,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 
     // bulk transfer
 	// Create QTDs (in reversed order)
-    void* next      = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
+    void* next = (void*)0x1; //createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
     next = SetupQTD = createQTD_MSD((uintptr_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 00100001b     11111111b 0000h  Interface 0000h     none
@@ -423,7 +425,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), cmdQTD,  1, device, endpointOut, 512);
     
     // IN qTDs
-    void* next = createQTD_HS(OUT); // Handshake 
+    // void* next   = createQTD_IO(0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    void* next = createQTD_HS(OUT); // Handshake  <---- correct??
     
     if (MSDStatus==true)
     {
@@ -437,7 +440,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
             DataQTD = createQTD_MSDStatus((uintptr_t)next, 0); // next, toggle // IN 13 byte    
         }
     }    
-    else
+    
+    if (MSDStatus==false)
     { 
         if (TransferLength > 0)       
         {
