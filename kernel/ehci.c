@@ -43,15 +43,6 @@ bool enabledPortFlag; // port enabled
 // usb devices list
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
-static void waitForKeyStroke()
-{
-   textColor(0x0D);
-   printf("\n>>> Press key to go on with USB-Test. <<<");
-   textColor(0x0F);
-   while(!keyboard_getChar());
-   printf("\n");
-}
-
 void ehci_install(uint32_t num, uint32_t i)
 {
     uintptr_t bar_phys = pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0;
@@ -861,78 +852,12 @@ void checkPortLineStatus(uint8_t j)
                  waitForKeyStroke();
                  #endif
 
-                 /// device, interface, endpoints, and maxLUN (0 for USB-sticks)
-                 usbDevices[devAddr].maxLUN = 0;
-                 // usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);
-                 
+
+                 // device, interface, endpoints
                  printf("\ndev: %d interface: %d endpOUT: %d  endpIN: %d",devAddr, usbDevices[devAddr].numInterfaceMSD, 
                                              usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
-                 // printf("\nMax. Logical Unit Numbers (LUN): %d",usbDevices[devAddr].maxLUN);
-
-                 usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-
-               ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
                  
-                 int32_t timeout = 5; 
-                 uint8_t statusByte;
-                 do
-                 {        
-                     textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
-                     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
-                     statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
-
-                     timeout--;
-                     if (timeout <= 0) 
-                     {
-                         break;
-                     }
-                     waitForKeyStroke();
-                 }
-                 while (statusByte != 0x00); // 0x00 means: Command Passed ("good status")
-                                  
-                 if (statusByte != 0x00)
-                 {
-                     textColor(0x0C);
-                     printf("\n\nCommand Block Status Values not in \"good status\"\n");
-                     textColor(0x0F);
-                 }
-                 else                 
-                 {
-
-                   ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
-                     
-                     //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-
-                 
-                     textColor(0x09); printf("\n>>> SCSI: read capacity"); textColor(0x0F);
-                     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
-                     uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + (*((uint8_t*)DataQTDpage0+2)) * 256 + (*((uint8_t*)DataQTDpage0+3));
-                     uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 16777216 + (*((uint8_t*)DataQTDpage0+5)) * 65536 + (*((uint8_t*)DataQTDpage0+6)) * 256 + (*((uint8_t*)DataQTDpage0+7));
-                     uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
-
-                     textColor(0x0E);
-                     printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
-                     textColor(0x0F);
-                     waitForKeyStroke();
-                  
-
-                   ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
-
-                     //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-                     
-                     uint32_t length = 512; // number of byte to be read
-                     
-                     for(uint32_t sector=1055; sector < 1060; sector++)
-                     {
-                         textColor(0x09); printf("\n>>> SCSI: read(10)"); textColor(0x0F);
-                         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 
-                                        0x28, sector, length, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
-                         waitForKeyStroke();                     
-                     }
-
-                   ///////// Test Suite 4: ...
-                 }
-
+                 testMSD(devAddr);
              }
         }
       }

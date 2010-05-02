@@ -13,6 +13,15 @@
 
 usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
+static void waitForKeyStroke()
+{
+   textColor(0x0D);
+   printf("\n>>> Press key to go on with USB-Test. <<<");
+   textColor(0x0F);
+   while(!keyboard_getChar());
+   printf("\n");
+}
+
 static void performAsyncScheduler()
 {
     // Enable Async...
@@ -269,8 +278,8 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    //void* next = createQTD_HS(OUT);
-    void* next = createQTD_IO(0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
+    void* next = createQTD_HS(OUT);
+    //void* next = createQTD_IO(0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 1);  // IN DATA1, 1 byte
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 8, 0, 0, 0, 1); // SETUP DATA0, 8 byte, request type, GET_CONFIGURATION(9), hi, lo, index=0, length=1
 
@@ -295,7 +304,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 
     // bulk transfer
     // Create QTDs (in reversed order)
-    void* next      = createQTD_IO(             0x1,  OUT, 1, 0); // Handshake is the opposite direction of Data
+    void* next      = createQTD_HS(OUT); // Handshake is the opposite direction of Data
     next = DataQTD  = createQTD_IO( (uintptr_t)next, IN, 1, 1);  // IN DATA1, 1 byte
     next = SetupQTD = createQTD_MSD((uintptr_t)next, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
@@ -321,7 +330,8 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 
     // bulk transfer
     // Create QTDs (in reversed order)
-    void* next = (void*)0x1; //createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
+    void* next = createQTD_HS(IN);
+    //void* next = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
     next = SetupQTD = createQTD_MSD((uintptr_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 00100001b     11111111b 0000h  Interface 0000h     none
@@ -428,7 +438,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     
     // IN qTDs
     // void* next   = createQTD_IO(0x1, IN, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    void* next = createQTD_HS(IN); // Handshake  <---- correct??
+    void* next = createQTD_HS(OUT); // Handshake  
+    
     
     if (MSDStatus==true)
     {
@@ -490,51 +501,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     showStatusbyteQTD(DataQTD);     
 }
 
-int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
-{
-    #ifdef _USB_DIAGNOSIS_
-    textColor(0x0B); printf("\nUSB2: Command Block Wrapper Status, dev: %d endpoint: %d", device, endpointIn); textColor(0x0F);
-    #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
-
-    // bulk transfer
-    // Create QTDs (in reversed order)
-    //void* next = createQTD_IO(        0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
-    DataQTD = createQTD_IO(/*(uint32_t)next*/0x01, IN,  0, 13); // IN DATA0, 13 byte
-
-    (*(((uint32_t*)DataQTDpage0)+0)) = 0x53425355; // magic USBS
-    (*(((uint32_t*)DataQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
-    (*(((uint32_t*)DataQTDpage0)+2)) = 0xAAAAAAAA; //
-    (*(((uint32_t*)DataQTDpage0)+3)) = 0xFFFFFFAA; //
-
-    // Create QH
-    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
-
-    performAsyncScheduler();
-
-    printf("\n");
-    showPacket(DataQTDpage0,16); // three bytes more (FF) for control
-    textColor(0x09); printf("\nThis was the status answer"); textColor(0x0F);
-
-    int32_t retVal = 0;
-    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x0 )
-    {
-        printf("\nCommand Passed (\"good status\") "); retVal = 0;
-
-    }
-    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x1 )
-    {
-        printf("\nCommand failed"); retVal = 1;
-    }
-    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x2 )
-    {
-        printf("\nPhase Error"); retVal = 2;
-    }
-    printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
-    return retVal;
-}
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
 {
@@ -707,6 +674,76 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
     }
 }
 
+void testMSD(uint8_t devAddr)
+{
+     // maxLUN (0 for USB-sticks)
+     usbDevices[devAddr].maxLUN = 0;
+     // usbDevices[devAddr].maxLUN = usbTransferBulkOnlyGetMaxLUN(devAddr, usbDevices[devAddr].numInterfaceMSD);               
+     // printf("\nMax. Logical Unit Numbers (LUN): %d",usbDevices[devAddr].maxLUN);
+
+     usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+
+     ///////// Test Suite 1: send SCSI comamnd "test unit ready(6)"
+     
+     int32_t timeout = 5; 
+     uint8_t statusByte;
+     do
+     {        
+         textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
+         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+         statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
+
+         timeout--;
+         if (timeout <= 0) 
+         {
+             break;
+         }
+         waitForKeyStroke();
+     }
+     while (statusByte != 0x00); // 0x00 means: Command Passed ("good status")
+                      
+     if (statusByte != 0x00)
+     {
+         textColor(0x0C);
+         printf("\n\nCommand Block Status Values not in \"good status\"\n");
+         textColor(0x0F);
+     }
+     else                 
+     {
+         ///////// Test Suite 2: send SCSI comamnd "read capacity(10)"
+         
+         //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+     
+         textColor(0x09); printf("\n>>> SCSI: read capacity"); textColor(0x0F);
+         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+         uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 16777216 + (*((uint8_t*)DataQTDpage0+1)) * 65536 + (*((uint8_t*)DataQTDpage0+2)) * 256 + (*((uint8_t*)DataQTDpage0+3));
+         uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 16777216 + (*((uint8_t*)DataQTDpage0+5)) * 65536 + (*((uint8_t*)DataQTDpage0+6)) * 256 + (*((uint8_t*)DataQTDpage0+7));
+         uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
+
+         textColor(0x0E);
+         printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
+         textColor(0x0F);
+         waitForKeyStroke();
+      
+
+         ///////// Test Suite 3: send SCSI comamnd "read(10)", read 512 byte from LBA 0, and get Status
+
+         //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+         
+         uint32_t length = 512; // number of byte to be read
+         
+         for(uint32_t sector=1055; sector < 1060; sector++)
+         {
+             textColor(0x09); printf("\n>>> SCSI: read(10)"); textColor(0x0F);
+             usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 
+                            0x28, sector, length, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
+             waitForKeyStroke();                     
+         }
+
+         ///////// Test Suite 4: ...
+     }
+}
+
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
@@ -740,11 +777,11 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
 
 /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST /// TEST ///
 
+// Kann das wirklich schon weg?
 
-
-
-
+/*
 /// http://en.wikipedia.org/wiki/SCSI_command
+
 void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t SCSIcommand)
 {
     #ifdef _USB_DIAGNOSIS_
@@ -847,6 +884,53 @@ void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpointOut, uint8_t 
     showPacket(DataQTDpage0,31);
     printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 }
+
+int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpointIn)
+{
+    #ifdef _USB_DIAGNOSIS_
+    textColor(0x0B); printf("\nUSB2: Command Block Wrapper Status, dev: %d endpoint: %d", device, endpointIn); textColor(0x0F);
+    #endif
+
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+
+    // bulk transfer
+    // Create QTDs (in reversed order)
+    //void* next = createQTD_IO(        0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
+    DataQTD = createQTD_IO(0x01, IN,  0, 13); // IN DATA0, 13 byte
+
+    (*(((uint32_t*)DataQTDpage0)+0)) = 0x53425355; // magic USBS
+    (*(((uint32_t*)DataQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
+    (*(((uint32_t*)DataQTDpage0)+2)) = 0xAAAAAAAA; //
+    (*(((uint32_t*)DataQTDpage0)+3)) = 0xFFFFFFAA; //
+
+    // Create QH
+    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
+
+    performAsyncScheduler();
+
+    printf("\n");
+    showPacket(DataQTDpage0,16); // three bytes more (FF) for control
+    textColor(0x09); printf("\nThis was the status answer"); textColor(0x0F);
+
+    int32_t retVal = 0;
+    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x0 )
+    {
+        printf("\nCommand Passed (\"good status\") "); retVal = 0;
+
+    }
+    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x1 )
+    {
+        printf("\nCommand failed"); retVal = 1;
+    }
+    if( ( (*(((uint32_t*)DataQTDpage0)+3)) & 0x000000FF ) == 0x2 )
+    {
+        printf("\nPhase Error"); retVal = 2;
+    }
+    printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+    return retVal;
+}
+*/
 
 /*
 void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength)
