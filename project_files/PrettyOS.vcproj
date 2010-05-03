@@ -116,6 +116,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\kernel\include\ehciQHqTD.h"
+					>
+				</File>
+				<File
 					RelativePath="..\kernel\include\event_list.h"
 					>
 				</File>
@@ -220,6 +224,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\kernel\include\usb2_msd.h"
+					>
+				</File>
+				<File
 					RelativePath="..\kernel\include\usb_hc.h"
 					>
 				</File>
@@ -317,6 +325,10 @@
 				</File>
 				<File
 					RelativePath="..\kernel\ehci.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\ehciQHqTD.c"
 					>
 				</File>
 				<File
@@ -433,6 +445,10 @@
 				</File>
 				<File
 					RelativePath="..\kernel\usb2.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\usb2_msd.c"
 					>
 				</File>
 				<File

@@ -97,16 +97,7 @@ struct usb2_stringDescriptorUnicode
    uint8_t  widechar[30];      // n = 30 test-wise
 }__attribute__((packed));
 
-struct usb2_CommandBlockWrapper
-{
-    uint32_t CBWSignature;
-    uint32_t CBWTag;
-    uint32_t CBWDataTransferLength;
-    uint8_t  CBWFlags;
-    uint8_t  CBWLUN;           // only bits 3:0
-    uint8_t  CBWCBLength;      // only bits 4:0
-    uint8_t  commandByte[16];
-} __attribute__((packed));
+void performAsyncScheduler();
 
 uint8_t usbTransferEnumerate(uint8_t j);
 void usbTransferDevice(uint32_t device);
@@ -115,11 +106,6 @@ void usbTransferString(uint32_t device);
 void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex);
 void usbTransferSetConfiguration(uint32_t device, uint32_t configuration);
 uint8_t usbTransferGetConfiguration(uint32_t device);
-
-void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
-uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
-
-void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, bool MSDStatus);
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);
