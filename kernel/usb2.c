@@ -30,7 +30,7 @@ void performAsyncScheduler()
         timeout--;
         if(timeout>0)
         {
-            delay(1000000);
+            delay(500000);
             textColor(0x0D);
             printf("#");
             textColor(0x0F);
@@ -46,7 +46,7 @@ void performAsyncScheduler()
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    delay(500000);
+    delay(100000);
 }
 
 uint8_t usbTransferEnumerate(uint8_t j)
@@ -252,8 +252,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next = createQTD_HS(IN);
-    //void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
+    void* next = createQTD_Handshake(IN);
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
 
     // Create QH
@@ -272,8 +271,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next = createQTD_HS(OUT);
-    //void* next = createQTD_IO(0x1, OUT, 1,  0); // Handshake is the opposite direction of Data, therefore OUT after IN
+    void* next = createQTD_Handshake(OUT);
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 1);  // IN DATA1, 1 byte
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 8, 0, 0, 0, 1); // SETUP DATA0, 8 byte, request type, GET_CONFIGURATION(9), hi, lo, index=0, length=1
 
@@ -285,10 +283,6 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     uint8_t configuration = *((uint8_t*)DataQTDpage0);
     return configuration;
 }
-
-
-
-
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
 {
@@ -460,7 +454,6 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
        textColor(0x0F);
     }
 }
-
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

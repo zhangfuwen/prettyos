@@ -12,6 +12,8 @@
 
 void*     DataQTD;
 void*     SetupQTD;
+
+uintptr_t QTDpage0;
 uintptr_t DataQTDpage0;
 uintptr_t MSDStatusQTDpage0;
 uintptr_t SetupQTDpage0;
@@ -119,8 +121,13 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    DataQTDpage0 = allocQTDbuffer(td);
+    QTDpage0 = allocQTDbuffer(td);
 
+    if (tokenBytes > 0) // data are transferred, no handshake
+    {
+        DataQTDpage0 = QTDpage0;
+    }
+    
     return (void*)td;
 }
 
@@ -147,22 +154,9 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
     return (void*)td;
 }
 
-void* createQTD_HS(uint8_t direction)
+void* createQTD_Handshake(uint8_t direction)
 {
-    ehci_qtd_t* td = allocQTD(0x1);      // No next
-
-    td->next = 0x1;                      // No next, so T-Bit is set to 1
-    td->nextAlt = td->next;              // No alternative next, so T-Bit is set to 1
-    td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = direction;  // OUT = 0, IN = 1
-    td->token.errorCounter = 0x3;        // Written by the Host Controller.
-    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
-    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
-    td->token.bytes        = 0;          // 0 for handshake
-    td->token.dataToggle   = 1;          // 1 for handshake
-
-    allocQTDbuffer(td); // necessary?
-    return (void*)td;
+    return createQTD_IO(0x1, direction, 1,  0);
 }
 
 static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)

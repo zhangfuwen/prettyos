@@ -30,19 +30,18 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %d interface: %d", device, numInterface); textColor(0x0F);
     #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 
-    // bulk transfer
     // Create QTDs (in reversed order)
-    void* next      = createQTD_HS(OUT); // Handshake is the opposite direction of Data
+    void* next      = createQTD_Handshake(OUT); // Handshake is the opposite direction of Data
     next = DataQTD  = createQTD_IO( (uintptr_t)next, IN, 1, 1);  // IN DATA1, 1 byte
     next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 10100001b     11111110b 0000h  Interface 0001h     1 byte
 
     // Create QH
-    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
+    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler();
     printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
@@ -56,19 +55,17 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %d interface: %d", device, numInterface); textColor(0x0F);
     #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 
-    // bulk transfer
     // Create QTDs (in reversed order)
-    void* next = createQTD_HS(IN);
-    //void* next = createQTD_IO(0x1,  IN, 1, 0); // Handshake is the opposite direction of Data
+    void* next = createQTD_Handshake(IN);
     next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 00100001b     11111111b 0000h  Interface 0000h     none
 
     // Create QH
-    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
+    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler();
     printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
@@ -77,11 +74,14 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 /// cf. http://www.beyondlogic.org/usbnutshell/usb4.htm#Bulk
 void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, bool MSDStatus)
 {
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    void* QH1              = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
+    void* QH_Out = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH_In  = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
 
     // OUT qTD
+    // No handshake 
     void* cmdQTD  = createQTD_IO(0x01, OUT, 0, 31); // OUT DATA0, 31 byte
 
     // http://en.wikipedia.org/wiki/SCSI_CDB
@@ -142,7 +142,6 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
         cbw->commandByte[9] = 0;    // Control
         break;
 
-
     case 0x28: // read(10)
 
         cbw->CBWSignature          = 0x43425355; // magic
@@ -165,13 +164,10 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     }
 
     // OUT QH
-    createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, QH1), cmdQTD,  1, device, endpointOut, 512);
+    createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_In), cmdQTD,  1, device, endpointOut, 512);
 
     // IN qTDs
-    // void* next   = createQTD_IO(0x1, IN, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    void* next = createQTD_HS(OUT); // Handshake
-
-
+    void* next = createQTD_Handshake(OUT); // Handshake
     if (MSDStatus==true)
     {
         if (TransferLength > 0)
@@ -198,7 +194,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     }
 
     // IN QH
-    createQH(QH1, paging_get_phys_addr(kernel_pd, virtualAsyncList), DataQTD, 0, device, endpointIn, 512); // endpoint IN/OUT for MSD
+    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_Out), DataQTD, 0, device, endpointIn, 512); // endpoint IN/OUT for MSD
 
     performAsyncScheduler();
 
