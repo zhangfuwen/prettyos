@@ -30,7 +30,7 @@ void performAsyncScheduler()
         timeout--;
         if(timeout>0)
         {
-            delay(500000);
+            delay(2000000);
             textColor(0x0D);
             printf("#");
             textColor(0x0F);
@@ -46,7 +46,7 @@ void performAsyncScheduler()
     USBINTflag = false;
     pOpRegs->USBSTS |= STS_USBINT;
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    delay(100000);
+    delay(300000);
 }
 
 uint8_t usbTransferEnumerate(uint8_t j)

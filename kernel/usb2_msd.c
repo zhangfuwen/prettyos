@@ -12,6 +12,8 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
+const uint32_t CBWMagic = 0x43425355;
+
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
 static void waitForKeyStroke()
@@ -76,12 +78,12 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
 {
     void* QH_Out = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     void* QH_In  = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
 
     // OUT qTD
-    // No handshake 
+    // No handshake
     void* cmdQTD  = createQTD_IO(0x01, OUT, 0, 31); // OUT DATA0, 31 byte
 
     // http://en.wikipedia.org/wiki/SCSI_CDB
@@ -92,90 +94,92 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     {
     case 0x00: // test unit ready(6)
 
-        cbw->CBWSignature          = 0x43425355; // magic
-        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+        cbw->CBWSignature          = CBWMagic;      // magic
+        cbw->CBWTag                = 0x42424200;    // device echoes this field in the CSWTag field of the associated CSW
         cbw->CBWDataTransferLength = 0;
-        cbw->CBWFlags              = 0x00; // Out: 0x00  In: 0x80
-        cbw->CBWLUN                = 0;    // only bits 3:0
-        cbw->CBWCBLength           = 6;    // only bits 4:0
-        cbw->commandByte[0] = 0x00; // Operation code
-        cbw->commandByte[1] = 0;    // Reserved
-        cbw->commandByte[2] = 0;    // Reserved
-        cbw->commandByte[3] = 0;    // Reserved
-        cbw->commandByte[4] = 0;    // Reserved
-        cbw->commandByte[5] = 0;    // Control
+        cbw->CBWFlags              = 0x00;          // Out: 0x00  In: 0x80
+        cbw->CBWLUN                = 0;             // only bits 3:0
+        cbw->CBWCBLength           = 6;             // only bits 4:0
+        cbw->commandByte[0] = 0x00;                 // Operation code
+        cbw->commandByte[1] = 0;                    // Reserved
+        cbw->commandByte[2] = 0;                    // Reserved
+        cbw->commandByte[3] = 0;                    // Reserved
+        cbw->commandByte[4] = 0;                    // Reserved
+        cbw->commandByte[5] = 0;                    // Control
         break;
 
     case 0x03: // Request Sense(6)
 
-        cbw->CBWSignature          = 0x43425355; // magic
-        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+        cbw->CBWSignature          = CBWMagic;      // magic
+        cbw->CBWTag                = 0x42424203;    // device echoes this field in the CSWTag field of the associated CSW
         cbw->CBWDataTransferLength = 18;
-        cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
-        cbw->CBWLUN                = 0;    // only bits 3:0
-        cbw->CBWCBLength           = 6;    // only bits 4:0
-        cbw->commandByte[0] = 0x03; // Operation code
-        cbw->commandByte[1] = 0;    // Reserved
-        cbw->commandByte[2] = 0;    // Reserved
-        cbw->commandByte[3] = 0;    // Reserved
-        cbw->commandByte[4] = 18;   // Allocation length (max. bytes)
-        cbw->commandByte[5] = 0;    // Control
+        cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
+        cbw->CBWLUN                = 0;             // only bits 3:0
+        cbw->CBWCBLength           = 6;             // only bits 4:0
+        cbw->commandByte[0] = 0x03;                 // Operation code
+        cbw->commandByte[1] = 0;                    // Reserved
+        cbw->commandByte[2] = 0;                    // Reserved
+        cbw->commandByte[3] = 0;                    // Reserved
+        cbw->commandByte[4] = 18;                   // Allocation length (max. bytes)
+        cbw->commandByte[5] = 0;                    // Control
         break;
 
-    case 0x12: // Inquiry(6) 
+    case 0x12: // Inquiry(6)
 
-        cbw->CBWSignature          = 0x43425355; // magic
-        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
-        cbw->CBWDataTransferLength = 0x24;
-        cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
-        cbw->CBWLUN                = 0;    // only bits 3:0
-        cbw->CBWCBLength           = 6;    // only bits 4:0
-        cbw->commandByte[0] = 0x12; // Operation code
-        cbw->commandByte[1] = 0;    // Reserved
-        cbw->commandByte[2] = 0;    // Reserved
-        cbw->commandByte[3] = 0;    // Reserved
-        cbw->commandByte[4] = 0x24; // Allocation length (max. bytes)
-        cbw->commandByte[5] = 0;    // Control
+        cbw->CBWSignature          = CBWMagic;      // magic
+        cbw->CBWTag                = 0x42424212;    // device echoes this field in the CSWTag field of the associated CSW
+        cbw->CBWDataTransferLength = 36;
+        cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
+        cbw->CBWLUN                = 0;             // only bits 3:0
+        cbw->CBWCBLength           = 6;             // only bits 4:0
+        cbw->commandByte[0] = 0x12;                 // Operation code
+        cbw->commandByte[1] = 0;                    // Reserved
+        cbw->commandByte[2] = 0;                    // Reserved
+        cbw->commandByte[3] = 0;                    // Reserved
+        cbw->commandByte[4] = 36;                   // Allocation length (max. bytes)
+        cbw->commandByte[5] = 0;                    // Control
         break;
 
     case 0x25: // read capacity(10)
 
-        cbw->CBWSignature          = 0x43425355; // magic
-        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
+        cbw->CBWSignature          = CBWMagic;      // magic
+        cbw->CBWTag                = 0x42424225;    // device echoes this field in the CSWTag field of the associated CSW
         cbw->CBWDataTransferLength = 8;
-        cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
-        cbw->CBWLUN                =  0; // only bits 3:0
-        cbw->CBWCBLength           = 10; // only bits 4:0
-        cbw->commandByte[0] = 0x25; // Operation code
-        cbw->commandByte[1] = 0;    // 7:5 LUN  4:1 reserved  0 RelAddr
-        cbw->commandByte[2] = BYTE4(LBA);    // LBA MSB
-        cbw->commandByte[3] = BYTE3(LBA);    // LBA
-        cbw->commandByte[4] = BYTE2(LBA);    // LBA
-        cbw->commandByte[5] = BYTE1(LBA);    // LBA LSB
-        cbw->commandByte[6] = 0;    // Reserved
-        cbw->commandByte[7] = 0;    // Reserved
-        cbw->commandByte[8] = 0;    // 7:1 Reserved  0 PMI
-        cbw->commandByte[9] = 0;    // Control
+        cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
+        cbw->CBWLUN                =  0;            // only bits 3:0
+        cbw->CBWCBLength           = 10;            // only bits 4:0
+        cbw->commandByte[0] = 0x25;                 // Operation code
+        cbw->commandByte[1] = 0;                    // 7:5 LUN  4:1 reserved  0 RelAddr
+        cbw->commandByte[2] = BYTE4(LBA);           // LBA MSB
+        cbw->commandByte[3] = BYTE3(LBA);           // LBA
+        cbw->commandByte[4] = BYTE2(LBA);           // LBA
+        cbw->commandByte[5] = BYTE1(LBA);           // LBA LSB
+        cbw->commandByte[6] = 0;                    // Reserved
+        cbw->commandByte[7] = 0;                    // Reserved
+        cbw->commandByte[8] = 0;                    // 7:1 Reserved  0 PMI
+        cbw->commandByte[9] = 0;                    // Control
         break;
 
     case 0x28: // read(10)
 
-        cbw->CBWSignature          = 0x43425355; // magic
-        cbw->CBWTag                = 0x42424242; // device echoes this field in the CSWTag field of the associated CSW
-        cbw->CBWDataTransferLength = TransferLength;
-        cbw->CBWFlags              = 0x80; // Out: 0x00  In: 0x80
-        cbw->CBWLUN                =  0; // only bits 3:0
-        cbw->CBWCBLength           = 10; // only bits 4:0
-        cbw->commandByte[0] = 0x28; // Operation code
-        cbw->commandByte[1] = 0;    // Reserved
-        cbw->commandByte[2] = BYTE4(LBA);    // LBA MSB
-        cbw->commandByte[3] = BYTE3(LBA);    // LBA
-        cbw->commandByte[4] = BYTE2(LBA);    // LBA
-        cbw->commandByte[5] = BYTE1(LBA);    // LBA LSB
-        cbw->commandByte[6] = 0;    // Reserved
-        cbw->commandByte[7] = BYTE2(TransferLength);
-        cbw->commandByte[8] = BYTE1(TransferLength);
-        cbw->commandByte[9] = 0;    // Control
+        cbw->CBWSignature           = CBWMagic;             // magic
+        cbw->CBWTag                 = 0x42424228;           // device echoes this field in the CSWTag field of the associated CSW
+        cbw->CBWDataTransferLength  = TransferLength*512;   // byte = 512 * block
+        cbw->CBWFlags               = 0x80;                 // Out: 0x00  In: 0x80
+        cbw->CBWLUN                 =  0;                   // only bits 3:0
+        cbw->CBWCBLength            = 10;                   // only bits 4:0
+        cbw->commandByte[0]         = 0x28;                 // Operation code
+        cbw->commandByte[1]         = 0;                    // Reserved // RDPROTECT/DPO/FUA/FUA_NV
+        cbw->commandByte[2]         = BYTE4(LBA);           // LBA MSB
+        cbw->commandByte[3]         = BYTE3(LBA);           // LBA
+        cbw->commandByte[4]         = BYTE2(LBA);           // LBA
+        cbw->commandByte[5]         = BYTE1(LBA);           // LBA LSB
+        cbw->commandByte[6]         = 0;                    // Reserved
+        cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
+        cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
+        cbw->commandByte[9]         = 0;                    // Control
+
+        TransferLength *= 512; // byte = 512 * block
         break;
     }
 
@@ -255,7 +259,7 @@ void testMSD(uint8_t devAddr)
     ///////// step 1: send SCSI comamnd "inquiry"
 
     textColor(0x09); printf("\n>>> SCSI: inquiry"); textColor(0x0F);
-    usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x12, 0, 0x24, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
+    usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x12, 0, 36, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
     statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
     if (statusByte == 0x00)
@@ -263,7 +267,7 @@ void testMSD(uint8_t devAddr)
         textColor(0x02);
         printf("\n\nCommand Block Status Values in \"good status\"\n");
         textColor(0x0F);
-    }    
+    }
     waitForKeyStroke();
 
     ///////// step 2: send SCSI comamnd "test unit ready(6)"
@@ -321,7 +325,7 @@ void testMSD(uint8_t devAddr)
      textColor(0x0F);
     }
     waitForKeyStroke();
-     
+
     ///////// step 6: send SCSI comamnd "read capacity(10)"
 
     //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
@@ -338,15 +342,14 @@ void testMSD(uint8_t devAddr)
     waitForKeyStroke();
 
 
-    ///////// step 7: send SCSI comamnd "read(10)", read 512 byte from LBA ..., get Status
+    ///////// step 7: send SCSI comamnd "read(10)", read one block (512 byte) from LBA ..., get Status
 
-    uint32_t length = 512; // number of byte to be read
+    uint32_t length = 1; // number of blocks to be read
 
     for(uint32_t sector=0; sector<10; sector++)
     {
      textColor(0x09); printf("\n>>> SCSI: read(10)"); textColor(0x0F);
-     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, sector, length, false); // dev, endp, cmd, LBA, transfer length, MSDStatus
-     usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, sector, length, true); // dev, endp, cmd, LBA, transfer length, MSDStatus
      waitForKeyStroke();
     }
 }
