@@ -143,6 +143,16 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 
 /**********************************************************************/
 
+void waitForKeyStroke()
+{
+   textColor(0x0D);
+   printf("\n>>> Press key <<<");
+   textColor(0x0F);
+   while(!keyboard_getChar());
+}
+
+/**********************************************************************/
+
 void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
 {
     char m_buffer[32]; // Larger is not needed at the moment

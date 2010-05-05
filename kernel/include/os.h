@@ -5,7 +5,7 @@
 
 // Switches changing the behaviour of PrettyOS
 /// #define _DIAGNOSIS_     // Diagnosis-Output - activates prints to the screen about some details and memory use
-/// #define _USB_DIAGNOSIS_ // only as transition state during implementation of USB 2.0 transfers
+#define _USB_DIAGNOSIS_ // only as transition state during implementation of USB 2.0 transfers
 /// #define _SOUND_         // Sound-Messages - activated per default, although they increase the boot-time
 
 void textColor(uint8_t color);

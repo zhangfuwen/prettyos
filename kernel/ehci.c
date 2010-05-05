@@ -6,13 +6,15 @@
 #include "util.h"
 #include "timer.h"
 #include "pci.h"
-#include "ehci.h"
 #include "kheap.h"
 #include "task.h"
 #include "usb2.h"
 #include "event_list.h"
 #include "video.h"
 #include "irq.h"
+
+#include "ehciQHqTD.h"
+#include "ehci.h"
 
 /// TEST
 /// const uint8_t PORTRESET = 3; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port

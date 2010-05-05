@@ -18,14 +18,6 @@ void* StatusQTD;
 
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
-static void waitForKeyStroke()
-{
-   textColor(0x0D);
-   printf("\n>>> Press key <<<");
-   textColor(0x0F);
-   while(!keyboard_getChar());
-   printf("\n");
-}
 
 // Bulk-Only Mass Storage get maximum number of Logical Units
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
