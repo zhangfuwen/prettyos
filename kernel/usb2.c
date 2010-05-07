@@ -15,20 +15,20 @@
 
 usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
-void performAsyncScheduler()
+void performAsyncScheduler(bool stop)
 {
  	// Enable Async...
      USBINTflag = false;
      pOpRegs->USBSTS |= STS_USBINT;
      pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
-     
+
      int8_t timeout=20;
      while (!USBINTflag) // set by interrupt
      {
          timeout--;
          if(timeout>0)
          {
-             delay(200000);
+             delay(2000000);
              textColor(0x0D);
              printf("#");
              textColor(0x0F);
@@ -43,8 +43,11 @@ void performAsyncScheduler()
      };
      USBINTflag = false;
      pOpRegs->USBSTS |= STS_USBINT;
-     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-     delay(20000);     
+     if (stop)
+     {
+         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+     }
+     delay(200000);
 }
 
 uint8_t usbTransferEnumerate(uint8_t j)
@@ -65,7 +68,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0,64);
 
-    performAsyncScheduler();
+    performAsyncScheduler(true);
 
     return new_address; // new_address
 }
@@ -87,7 +90,7 @@ void usbTransferDevice(uint32_t device)
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler();
+    performAsyncScheduler(true);
     printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 
     // showPacket(DataQTDpage0,18);
@@ -112,7 +115,7 @@ void usbTransferConfig(uint32_t device)
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler();
+    performAsyncScheduler(true);
     printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 
     // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
@@ -205,7 +208,7 @@ void usbTransferString(uint32_t device)
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler();
+    performAsyncScheduler(true);
 
     #ifdef _USB_DIAGNOSIS_
       showPacket(DataQTDpage0,12);
@@ -230,7 +233,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler();
+    performAsyncScheduler(true);
 
     #ifdef _USB_DIAGNOSIS_
       showPacket(DataQTDpage0,64);
@@ -256,7 +259,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler();
+    performAsyncScheduler(true);
 }
 
 uint8_t usbTransferGetConfiguration(uint32_t device)
@@ -276,7 +279,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler();
+    performAsyncScheduler(true);
 
     uint8_t configuration = *((uint8_t*)DataQTDpage0);
     return configuration;

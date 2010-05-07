@@ -97,7 +97,7 @@ struct usb2_stringDescriptorUnicode
    uint8_t  widechar[30];      // n = 30 test-wise
 }__attribute__((packed));
 
-void performAsyncScheduler();
+void performAsyncScheduler(bool stop);
 
 uint8_t usbTransferEnumerate(uint8_t j);
 void usbTransferDevice(uint32_t device);

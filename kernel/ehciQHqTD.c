@@ -10,15 +10,19 @@
 #include "ehci.h"
 #include "ehciQHqTD.h"
 
-void*     DataQTD;
-void*     SetupQTD;
+void*     DataQTD;            // pointer to IO qTD transferring data
+void*     SetupQTD;           // pointer to Setup qTD transferring control transfer command
 
-uintptr_t QTDpage0;
-uintptr_t DataQTDpage0;
-uintptr_t MSDStatusQTDpage0;
-uintptr_t SetupQTDpage0;
+extern void* StatusQTD;       // pointer to IN qTD transferring CSW
 
-// Queue Head (QH)
+uintptr_t QTDpage0;           // pointer to qTD page0 (general)
+uintptr_t DataQTDpage0;       // pointer to qTD page0 (In/Out data)
+uintptr_t MSDStatusQTDpage0;  // pointer to qTD page0 (IN, mass storage device status)
+uintptr_t SetupQTDpage0;      // pointer to qTD page0 (OUT, setup control transfer)
+
+/////////////////////
+// Queue Head (QH) //
+/////////////////////
 
 void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
@@ -34,7 +38,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     head->H                      =   H;
     head->maxPacketLength        =   packetSize;     // It's 64 bytes for a control transfer to a high speed device.
     head->controlEndpointFlag    =   0;              // Only used if Endpoint is a control endpoint and not high speed
-    head->nakCountReload         =   0;              // This value is used by HC to reload the Nak Counter field.
+    head->nakCountReload         =   5;              // This value is used by HC to reload the Nak Counter field.
     head->interruptScheduleMask  =   0;              // not used for async schedule
     head->splitCompletionMask    =   0;              // unused if (not low/full speed and in periodic schedule)
     head->hubAddr                =   0;              // unused if high speed (Split transfer)
@@ -53,15 +57,17 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 }
 
 
-// Queue Element Transfer Descriptor (qTD)
+/////////////////////////////////////////////
+// Queue Element Transfer Descriptor (qTD) //
+/////////////////////////////////////////////
 
 ehci_qtd_t* allocQTD(uintptr_t next)
-{    
+{
     ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), 0x20); // 32 Byte alignment
 
     if (next != 0x1)
     {
-        td->next = paging_get_phys_addr(kernel_pd, (void*)next);         
+        td->next = paging_get_phys_addr(kernel_pd, (void*)next);
     }
     else
     {
@@ -73,7 +79,7 @@ ehci_qtd_t* allocQTD(uintptr_t next)
 uintptr_t allocQTDbuffer(ehci_qtd_t* td)
 {
     void* data = malloc(PAGESIZE, PAGESIZE); // Enough for a full page
-    memset(data,0,PAGESIZE);    
+    memset(data,0,PAGESIZE);
 
     td->buffer0 = paging_get_phys_addr(kernel_pd, data);
     td->buffer1 = td->buffer2 = td->buffer3 = td->buffer4 = 0x0;
@@ -86,7 +92,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
+    td->nextAlt            = 0x1;        // No alternative next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
     td->token.pid          = 0x2;        // SETUP = 2
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
@@ -112,7 +118,7 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt = td->next; /// 0x1;     // No alternative next, so T-Bit is set to 1
+    td->nextAlt            = 0x1;        // No alternative next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
     td->token.pid          = direction;  // OUT = 0, IN = 1
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
@@ -127,7 +133,7 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     {
         DataQTDpage0 = QTDpage0;
     }
-    
+
     return (void*)td;
 }
 
@@ -135,7 +141,7 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt = td->next;              // No alternative next, so T-Bit is set to 1
+    td->nextAlt            = 0x1;        // No alternative next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
     td->token.pid          = IN;         // OUT = 0, IN = 1
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
@@ -146,7 +152,7 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
 
     MSDStatusQTDpage0 = allocQTDbuffer(td);
 
-    (*(((uint32_t*)MSDStatusQTDpage0)+0)) = 0x53425355; // magic USBS 
+    (*(((uint32_t*)MSDStatusQTDpage0)+0)) = 0x53425355; // magic USBS
     (*(((uint32_t*)MSDStatusQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
     (*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA; //
     (*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA; //
@@ -158,6 +164,11 @@ void* createQTD_Handshake(uint8_t direction)
 {
     return createQTD_IO(0x1, direction, 1,  0);
 }
+
+
+////////////////////
+// analysis tools //
+////////////////////
 
 static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
 {
@@ -219,6 +230,20 @@ void showStatusbyteQTD(void* addressQTD)
     if (statusbyte == 0)     { printf("OK (no bit set)"); }
     textColor(0x0F);
 }
+
+
+void analyzeAsyncList()
+{
+    textColor(0x0F);
+    printf("\n\n>>> Analyze Async List <<<");
+    printf("\nasyncList: %X\t", pOpRegs->ASYNCLISTADDR);
+    showUSBSTS();
+    //printf("DataQTD:           %X",     DataQTD);
+    //printf("\nDataQTDpage0:      %X\t", DataQTDpage0);
+    //printf("MSDStatusQTDpage0: %X",     MSDStatusQTDpage0);
+}
+
+
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
