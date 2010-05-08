@@ -217,7 +217,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, 
     }
 
     // IN QH
-    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 0, device, endpointIn, 512); // endpoint IN for MSD
+    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
 
     performAsyncScheduler(true, true); 
 
