@@ -81,5 +81,7 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size);
 void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size);
 
 void analyzeAsyncList();
+void precheckAsyncScheduler();
+void performAsyncScheduler(bool stop);
 
 #endif

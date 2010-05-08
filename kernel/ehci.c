@@ -681,6 +681,10 @@ void DeactivateLegacySupport(uint32_t num)
     }
 }
 
+
+
+
+
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *

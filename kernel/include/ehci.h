@@ -192,5 +192,4 @@ void portCheck(); // for thread with own console
 void startEHCI(); // for thread with own console
 
 
-
 #endif

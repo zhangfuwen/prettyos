@@ -4,6 +4,7 @@
 */
 
 #include "util.h"
+#include "timer.h"
 #include "paging.h"
 #include "kheap.h"
 #include "usb2.h"
@@ -29,22 +30,24 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     struct ehci_qhd* head = (struct ehci_qhd*)address;
     memset(address, 0, sizeof(struct ehci_qhd));
 
-    head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1   00b iTD,   01b QH,   10b siTD,   11b FSTN
+                                                     // bit 31:5 Horizontal Link Pointer, bit 4:3 reserved, 
+    head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1  type:  00b iTD,   01b QH,   10b siTD,   11b FSTN   
+                                                     // bit 0    T-Bit: is set to zero
     head->deviceAddress          =   device;         // The device address
     head->inactive               =   0;
-    head->endpoint               =   endpoint;       // Endpoint 0 contains Device infos such as name
+    head->endpoint               =   endpoint;       // endpoint 0 contains Device infos such as name
     head->endpointSpeed          =   2;              // 00b = full speed; 01b = low speed; 10b = high speed
-    head->dataToggleControl      =   1;              // Get the Data Toggle bit out of the included qTD
-    head->H                      =   H;
-    head->maxPacketLength        =   packetSize;     // It's 64 bytes for a control transfer to a high speed device.
-    head->controlEndpointFlag    =   0;              // Only used if Endpoint is a control endpoint and not high speed
-    head->nakCountReload         =   5;              // This value is used by HC to reload the Nak Counter field.
+    head->dataToggleControl      =   1;              // get the Data Toggle bit out of the included qTD
+    head->H                      =   H;              // mark a queue head as being the head of the reclaim list
+    head->maxPacketLength        =   packetSize;     // 64 byte for a control transfer to a high speed device
+    head->controlEndpointFlag    =   0;              // only used if endpoint is a control endpoint and not high speed
+    head->nakCountReload         =   5;              // this value is used by EHCI to reload the Nak Counter field.
     head->interruptScheduleMask  =   0;              // not used for async schedule
     head->splitCompletionMask    =   0;              // unused if (not low/full speed and in periodic schedule)
     head->hubAddr                =   0;              // unused if high speed (Split transfer)
     head->portNumber             =   0;              // unused if high speed (Split transfer)
-    head->mult                   =   1;              // One transaction to be issued for this endpoint per micro-frame.
-                                                     // Maybe unused for non interrupt queue head in async list
+    head->mult                   =   1;              // 1-3 transaction to be issued for this endpoint per micro-frame (2 bit field): 
+                                                     // 0 undefined results
     if (firstQTD == NULL)
     {
         head->qtd.next = 0x1;
@@ -63,7 +66,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 
 ehci_qtd_t* allocQTD(uintptr_t next)
 {
-    ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), 0x20); // 32 Byte alignment
+    ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), PAGESIZE); // can be 32 byte alignment
 
     if (next != 0x1)
     {
@@ -236,13 +239,183 @@ void analyzeAsyncList()
 {
     textColor(0x0F);
     printf("\n\n>>> Analyze Async List <<<");
-    printf("\nasyncList: %X\t", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList (phys): %X\t", pOpRegs->ASYNCLISTADDR);
+    printf("DataQTD (phys): %X", paging_get_phys_addr(kernel_pd,DataQTD));
     showUSBSTS();
-    //printf("DataQTD:           %X",     DataQTD);
     //printf("\nDataQTDpage0:      %X\t", DataQTDpage0);
     //printf("MSDStatusQTDpage0: %X",     MSDStatusQTDpage0);
 }
 
+/////////////////////////////////////
+// Asynchronous schedule traversal //
+/////////////////////////////////////
+
+/*
+ehci spec 1.0, chapter 4.4 Schedule Traversal Rules:
+
+... , the host controller executes from the asynchronous schedule until the end of the micro-frame.
+When the host controller determines that it is time to execute from the asynchronous list, 
+it uses the operational register ASYNCLISTADDR to access the asynchronous schedule, see Figure 4-4.
+The ASYNCLISTADDR register contains a physical memory pointer to the next queue head. 
+When the host controller makes a transition to executing the asynchronous schedule, 
+it begins by reading the queue head referenced by the ASYNCLISTADDR register. 
+Software must set queue head horizontal pointer T-bits to a zero for queue heads in the asynchronous schedule. 
+
+ehci spec 1.0, chapter 4.8 Asynchronous Schedule:
+
+The Asynchronous schedule traversal is enabled or disabled via the Asynchronous Schedule Enable bit in the USBCMD register. 
+If the Asynchronous Schedule Enable bit is set to a zero, then the host controller simply does not try to access 
+the asynchronous schedule via the ASYNCLISTADDR register. Likewise, when the Asynchronous Schedule Enable bit is a one, 
+then the host controller does use the ASYNCLISTADDR register to traverse the asynchronous schedule. 
+
+Modifications to the Asynchronous Schedule Enable bit are not necessarily immediate. 
+Rather the new value of the bit will only be taken into consideration the next time the host controller needs to use 
+the value of the ASYNCLISTADDR register to get the next queue head.
+
+The Asynchronous Schedule Status bit in the USBSTS register indicates status of the asynchronous schedule. 
+System software enables (or disables) the asynchronous schedule by writing a one (or zero) to the
+Asynchronous Schedule Enable bit in the USBCMD register. Software then can poll the Asynchronous
+Schedule Status bit to determine when the asynchronous schedule has made the desired transition. 
+Software must not modify the Asynchronous Schedule Enable bit unless the value of the Asynchronous Schedule
+Enable bit equals that of the Asynchronous Schedule Status bit.
+
+The asynchronous schedule is used to manage all Control and Bulk transfers. Control and Bulk transfers are
+managed using queue head data structures. The asynchronous schedule is based at the ASYNCLISTADDR register. 
+The default value of the ASYNCLISTADDR register after reset is undefined and the schedule is
+disabled when the Asynchronous Schedule Enable bit is a zero.
+
+Software may only write this register with defined results when the schedule is disabled .e.g. Asynchronous
+Schedule Enable bit in the USBCMD and the Asynchronous Schedule Status bit in the USBSTS register are zero. 
+System software enables execution from the asynchronous schedule by writing a valid memory address
+(of a queue head) into this register. Then software enables the asychronous schedule by setting the
+Asynchronous Schedule Enable bit is set to one. The asynchronous schedule is actually enabled when the
+Asynchronous Schedule Status bit is a one.
+
+When the host controller begins servicing the asynchronous schedule, it begins by using the value of the
+ASYNCLISTADDR register. It reads the first referenced data structure and begins executing transactions and
+traversing the linked list as appropriate. When the host controller "completes" processing the asynchronous
+schedule, it retains the value of the last accessed queue head's horizontal pointer in the ASYNCLISTADDR register. 
+Next time the asynchronous schedule is accessed, this is the first data structure that will be serviced.
+This provides round-robin fairness for processing the asynchronous schedule.
+
+A host controller "completes" processing the asynchronous schedule when one of the following events occur:
+• The end of a micro-frame occurs.
+• The host controller detects an empty list condition (i.e. see Section 4.8.3)
+• The schedule has been disabled via the Asynchronous Schedule Enable bit in the USBCMD register.
+
+The queue heads in the asynchronous list are linked into a simple circular list as shown in Figure 4-4. 
+Queue head data structures are the only valid data structures that may be linked into the asynchronous schedule. 
+An isochronous transfer descriptor (iTD or siTD) in the asynchronous schedule yields undefined results.
+
+The maximum packet size field in a queue head is sized to accommodate the use of this data structure for all non-isochronous transfer types. 
+The USB Specification, Revision 2.0 specifies the maximum packet sizes for all transfer types and transfer speeds. 
+System software should always parameterize the queue head data structures according to the core specification requirements.
+
+ehci spec 1.0, chapter 4.8.3 Empty Asynchronous Schedule Detection
+The Enhanced Host Controller Interface uses two bits to detect when the asynchronous schedule is empty.
+The queue head data structure (see Figure 3-7) defines an H-bit in the queue head, which allows software to
+mark a queue head as being the head of the reclaim list. The Enhanced Host Controller Interface also keeps 
+a 1-bit flag in the USBSTS register (Reclamation) that is set to a zero when the Enhanced Interface Host
+Controller observes a queue head with the H-bit set to a one. The reclamation flag in the status register is set
+to one when any USB transaction from the asynchronous schedule is executed (or whenever the asynchronous schedule starts, see Section 4.8.5).
+If the Enhanced Host Controller Interface ever encounters an H-bit of one and a Reclamation bit of zero, 
+the EHCI controller simply stops traversal of the asynchronous schedule.
+*/
+
+void checkAsyncScheduler()
+{
+    // cf. ehci spec 1.0, Figure 3-7. Queue Head Structure Layout
+    
+    textColor(0x02);
+        
+    // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register  
+    void* virtASYNCLISTADDR = paging_acquire_pcimem(pOpRegs->ASYNCLISTADDR);    
+    printf("\naS: %X",paging_get_phys_addr(kernel_pd,virtASYNCLISTADDR));
+    
+    // Last accessed & next to access QH, DWORD 0
+    uintptr_t horizontalPointer = (*((uint32_t*)virtASYNCLISTADDR)) & 0xFFFFFFE0; // without last 5 bits
+    /*
+    uint32_t type = (BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x06) >> 1 ;       // bit 2:1
+    uint32_t Tbit =  BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x01;              // bit 0
+    */
+    printf("\tnextQH: %X ",horizontalPointer);
+    
+    //printf("\ntype: %d T-bit: %d",type,Tbit); 
+
+    // Last accessed & next to access QH, DWORD 1
+    /*
+    uint32_t deviceAddress               = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x7F);
+    uint32_t inactivateOnNextTransaction = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x80)>>7;
+    uint32_t endpoint                    = (BYTE2( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x0F);
+    uint32_t dataToggleControl           = (BYTE2( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x40)>>6;
+    uint32_t Hbit                        = (BYTE2( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x80)>>7;
+    uint32_t mult                        = (BYTE4( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0xC0)>>6;
+    
+    uint32_t maxPacket = (( BYTE4( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x07 ) << 8 ) +
+                            BYTE3( *( ((uint32_t*)virtASYNCLISTADDR)+1) );
+    
+    printf("\ndev: %d endp: %d inactivate: %d dtc: %d H: %d mult: %d maxPacket: %d", 
+             deviceAddress, endpoint, inactivateOnNextTransaction, dataToggleControl, Hbit, mult, maxPacket);
+    */
+    
+    // Last accessed & next to access QH, DWORD 2
+    // ...
+
+    // Last accessed & next to access QH, DWORD 3
+    uintptr_t firstQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+3)) & 0xFFFFFFE0; // without last 5 bits
+    printf("\ncurr qTD: %X",firstQTD);                       
+    
+    // Last accessed & next to access QH, DWORD 4
+    uintptr_t nextQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+4)) & 0xFFFFFFE0; // without last 5 bits
+    printf("\tnext qTD: %X",nextQTD); 
+
+    waitForKeyStroke();
+    textColor(0x0E);
+}
+
+void performAsyncScheduler(bool stop)
+{
+ 	// TEST
+    printf("\nbefore aS:");
+    checkAsyncScheduler();
+
+    // Enable Asynchronous Schdeuler
+     USBINTflag = false;
+     pOpRegs->USBSTS |= STS_USBINT;
+     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
+
+     int8_t timeout=5;
+     while (!USBINTflag) // set by interrupt
+     {
+         timeout--;
+         if(timeout>0)
+         {
+             delay(2000000);
+             textColor(0x0D);
+             printf("#");
+             textColor(0x0F);
+         }
+         else
+         {
+             textColor(0x0C);
+             printf("\ntimeout - no STS_USBINT set!");
+             textColor(0x0F);
+             break;
+         }
+     };
+     USBINTflag = false;
+     pOpRegs->USBSTS |= STS_USBINT;
+     if (stop)
+     {
+         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+     }
+     delay(200000);
+
+    
+    // TEST
+     printf("\nafter aS:");
+     checkAsyncScheduler();    
+}
 
 
 /*

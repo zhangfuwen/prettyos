@@ -15,40 +15,7 @@
 
 usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
-void performAsyncScheduler(bool stop)
-{
- 	// Enable Async...
-     USBINTflag = false;
-     pOpRegs->USBSTS |= STS_USBINT;
-     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 
-     int8_t timeout=20;
-     while (!USBINTflag) // set by interrupt
-     {
-         timeout--;
-         if(timeout>0)
-         {
-             delay(2000000);
-             textColor(0x0D);
-             printf("#");
-             textColor(0x0F);
-         }
-         else
-         {
-             textColor(0x0C);
-             printf("\ntimeout - no STS_USBINT set!");
-             textColor(0x0F);
-             break;
-         }
-     };
-     USBINTflag = false;
-     pOpRegs->USBSTS |= STS_USBINT;
-     if (stop)
-     {
-         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-     }
-     delay(200000);
-}
 
 uint8_t usbTransferEnumerate(uint8_t j)
 {
