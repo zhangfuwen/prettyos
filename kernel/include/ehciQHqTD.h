@@ -80,8 +80,7 @@ void showStatusbyteQTD(void* addressQTD);
 void showPacket(uint32_t virtAddrBuf0, uint32_t size);
 void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size);
 
-void analyzeAsyncList();
-void precheckAsyncScheduler();
-void performAsyncScheduler(bool stop);
+void checkAsyncScheduler();
+void performAsyncScheduler(bool stop, bool analyze);
 
 #endif

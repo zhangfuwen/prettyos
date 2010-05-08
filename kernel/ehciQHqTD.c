@@ -37,7 +37,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     head->inactive               =   0;
     head->endpoint               =   endpoint;       // endpoint 0 contains Device infos such as name
     head->endpointSpeed          =   2;              // 00b = full speed; 01b = low speed; 10b = high speed
-    head->dataToggleControl      =   1;              // get the Data Toggle bit out of the included qTD
+    head->dataToggleControl      =   0; //TEST   1;  // get the Data Toggle bit out of the included qTD
     head->H                      =   H;              // mark a queue head as being the head of the reclaim list
     head->maxPacketLength        =   packetSize;     // 64 byte for a control transfer to a high speed device
     head->controlEndpointFlag    =   0;              // only used if endpoint is a control endpoint and not high speed
@@ -232,19 +232,7 @@ void showStatusbyteQTD(void* addressQTD)
     // Status OK
     if (statusbyte == 0)     { printf("OK (no bit set)"); }
     textColor(0x0F);
-}
-
-
-void analyzeAsyncList()
-{
-    textColor(0x0F);
-    printf("\n\n>>> Analyze Async List <<<");
-    printf("\nasyncList (phys): %X\t", pOpRegs->ASYNCLISTADDR);
-    printf("DataQTD (phys): %X", paging_get_phys_addr(kernel_pd,DataQTD));
-    showUSBSTS();
-    //printf("\nDataQTDpage0:      %X\t", DataQTDpage0);
-    //printf("MSDStatusQTDpage0: %X",     MSDStatusQTDpage0);
-}
+}   
 
 /////////////////////////////////////
 // Asynchronous schedule traversal //
@@ -367,30 +355,34 @@ void checkAsyncScheduler()
     
     // Last accessed & next to access QH, DWORD 4
     uintptr_t nextQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+4)) & 0xFFFFFFE0; // without last 5 bits
-    printf("\tnext qTD: %X",nextQTD); 
-
-    waitForKeyStroke();
+    printf("\tnext qTD: %X",nextQTD);     
     textColor(0x0E);
 }
 
-void performAsyncScheduler(bool stop)
+void performAsyncScheduler(bool stop, bool analyze)
 {
- 	// TEST
-    printf("\nbefore aS:");
-    checkAsyncScheduler();
+    // TEST
+    if (analyze)
+    {
+        printf("\nbefore aS:");
+        checkAsyncScheduler();
+    }
 
     // Enable Asynchronous Schdeuler
-     USBINTflag = false;
      pOpRegs->USBSTS |= STS_USBINT;
+     USBINTflag = false;
+     
      pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 
-     int8_t timeout=5;
+     delay(1000000);
+
+     int8_t timeout=7;
      while (!USBINTflag) // set by interrupt
      {
          timeout--;
          if(timeout>0)
          {
-             delay(2000000);
+             delay(1000000);
              textColor(0x0D);
              printf("#");
              textColor(0x0F);
@@ -403,18 +395,22 @@ void performAsyncScheduler(bool stop)
              break;
          }
      };
-     USBINTflag = false;
+     
      pOpRegs->USBSTS |= STS_USBINT;
+     USBINTflag = false;
+
      if (stop)
      {
          pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
      }
      delay(200000);
 
-    
-    // TEST
-     printf("\nafter aS:");
-     checkAsyncScheduler();    
+     // TEST
+     if (analyze)
+     {
+         printf("\nafter aS:");
+         checkAsyncScheduler();    
+     }     
 }
 
 
