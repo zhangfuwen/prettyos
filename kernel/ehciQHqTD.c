@@ -41,7 +41,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     head->H                      =   H;              // mark a queue head as being the head of the reclaim list
     head->maxPacketLength        =   packetSize;     // 64 byte for a control transfer to a high speed device
     head->controlEndpointFlag    =   0;              // only used if endpoint is a control endpoint and not high speed
-    head->nakCountReload         =   5;              // this value is used by EHCI to reload the Nak Counter field.
+    head->nakCountReload         =  15;              // this value is used by EHCI to reload the Nak Counter field. 0=ignores NAK counter.
     head->interruptScheduleMask  =   0;              // not used for async schedule
     head->splitCompletionMask    =   0;              // unused if (not low/full speed and in periodic schedule)
     head->hubAddr                =   0;              // unused if high speed (Split transfer)
@@ -59,7 +59,6 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     }
 }
 
-
 /////////////////////////////////////////////
 // Queue Element Transfer Descriptor (qTD) //
 /////////////////////////////////////////////
@@ -67,6 +66,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 ehci_qtd_t* allocQTD(uintptr_t next)
 {
     ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), PAGESIZE); // can be 32 byte alignment
+    memset(td,0,PAGESIZE);
 
     if (next != 0x1)
     {
@@ -95,7 +95,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt            = 0x1;        // No alternative next, so T-Bit is set to 1
+    td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
     td->token.pid          = 0x2;        // SETUP = 2
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
@@ -121,7 +121,7 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt            = 0x1;        // No alternative next, so T-Bit is set to 1
+    td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
     td->token.pid          = direction;  // OUT = 0, IN = 1
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
@@ -144,7 +144,7 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt            = 0x1;        // No alternative next, so T-Bit is set to 1
+    td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
     td->token.pid          = IN;         // OUT = 0, IN = 1
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
@@ -318,7 +318,7 @@ void checkAsyncScheduler()
         
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register  
     void* virtASYNCLISTADDR = paging_acquire_pcimem(pOpRegs->ASYNCLISTADDR);    
-    printf("\naS: %X",paging_get_phys_addr(kernel_pd,virtASYNCLISTADDR));
+    printf("\ncurr QH: %X ",paging_get_phys_addr(kernel_pd,virtASYNCLISTADDR));
     
     // Last accessed & next to access QH, DWORD 0
     uintptr_t horizontalPointer = (*((uint32_t*)virtASYNCLISTADDR)) & 0xFFFFFFE0; // without last 5 bits
@@ -326,7 +326,7 @@ void checkAsyncScheduler()
     uint32_t type = (BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x06) >> 1 ;       // bit 2:1
     uint32_t Tbit =  BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x01;              // bit 0
     */
-    printf("\tnextQH: %X ",horizontalPointer);
+    printf("\tnext QH: %X ",horizontalPointer);
     
     //printf("\ntype: %d T-bit: %d",type,Tbit); 
 
@@ -356,6 +356,10 @@ void checkAsyncScheduler()
     // Last accessed & next to access QH, DWORD 4
     uintptr_t nextQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+4)) & 0xFFFFFFE0; // without last 5 bits
     printf("\tnext qTD: %X",nextQTD);     
+
+    // NAK counter in overlay area
+    uint32_t NakCtr = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+5) ) & 0x1E)>>1;
+    printf("\nNAK counter: %d",NakCtr);     
     textColor(0x0E);
 }
 
