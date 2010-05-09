@@ -255,41 +255,17 @@ char* strcpy(char* dest, const char* src)
 
 char* strncpy(char* dest, const char* src, size_t n)
 {
-    /*
-    // MrX's proposal: still buggy
-  	size_t i = 0;
+    size_t i = 0;
     for(; i < n && src[i] != 0; i++)
-	{
+    {
         dest[i] = src[i];
     }
-	for(; i < n && src[i] != 0; i++)
-	{
-		dest[i] = 0;
-	}
-    return(dest);
-    */
-
-    
-    if (n != 0) 
+    for(; i < n; i++)
     {
-        char* d       = dest;
-        const char* s = src;
-        do
-        {
-            if ((*d++ = *s++) == 0)
-            {
-                // NUL pad the remaining n-1 bytes
-                while (--n != 0)
-                   *d++ = 0;
-                break;
-            }
-        }
-        while (--n != 0);
-     }
-     return(dest);
-    
+        dest[i] = 0;
+    }
+    return(dest);
 }
-
 
 /// http://en.wikipedia.org/wiki/Strcat
 char* strcat(char* dest, const char* src)
