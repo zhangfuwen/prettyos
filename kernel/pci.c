@@ -130,10 +130,6 @@ void listPCI()
  void pciScan()
  {
     textColor(0x0F);
-
-    // uint32_t pciBar  = 0; // helper variable for memory size
-
-    // array of devices, PCIARRAYSIZE for first tests
     for (uint32_t i=0;i<PCIARRAYSIZE;++i)
     {
         pciDev_Array[i].number = i;

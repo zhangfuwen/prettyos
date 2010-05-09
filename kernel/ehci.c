@@ -417,6 +417,7 @@ void showPORTSC()
             if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED)
             {
                 strcpy(PortStatus,"attached");
+                writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
 
                 /*
                 resetPort(j);
@@ -429,11 +430,9 @@ void showPORTSC()
             else
             {
                 strcpy(PortStatus,"not attached");
+                writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
             }
-            pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
-
-            writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
-
+            pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt            
             // beep(1000,100);
         }
     }
@@ -442,7 +441,7 @@ void showPORTSC()
 void portCheck()
 {
     showInfobar(true); // protect console against info area
-    showPORTSC(); // with resetPort(j) and checkPortLineStatus(j), if PORTSC: 1005h
+    showPORTSC();      // with resetPort(j) and checkPortLineStatus(j)
     textColor(0x0D);
     printf("\n>>> Press key to close this console. <<<");
     textColor(0x0F);
