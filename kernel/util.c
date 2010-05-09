@@ -255,11 +255,22 @@ char* strcpy(char* dest, const char* src)
 
 char* strncpy(char* dest, const char* src, size_t n)
 {
-    for(size_t i = 0; i < n && src[i] != 0; i++) {
+    /*
+    // MrX's proposal: still buggy
+  	size_t i = 0;
+    for(; i < n && src[i] != 0; i++)
+	{
         dest[i] = src[i];
     }
+	for(; i < n && src[i] != 0; i++)
+	{
+		dest[i] = 0;
+	}
     return(dest);
-/*  if (n != 0) // Big, not understandable and buggy? implementation
+    */
+
+    
+    if (n != 0) 
     {
         char* d       = dest;
         const char* s = src;
@@ -275,7 +286,8 @@ char* strncpy(char* dest, const char* src, size_t n)
         }
         while (--n != 0);
      }
-     return(dest);*/
+     return(dest);
+    
 }
 
 
