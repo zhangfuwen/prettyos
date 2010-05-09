@@ -136,10 +136,13 @@ void usbTransferConfig(uint32_t device)
         }
 
         if ( ((*(uint8_t*)(addrPointer+1)) != 2 ) && ((*(uint8_t*)(addrPointer+1)) != 4 ) && ((*(uint8_t*)(addrPointer+1)) != 5 ) ) // length, type
-        {
-            textColor(0x09);
-            printf("\nlength: %d type: %d unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
-            textColor(0x0F);
+        {            
+            if ( (*(uint8_t*)addrPointer) > 0)
+            {
+                textColor(0x09);
+                printf("\nlength: %d type: %d unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
+                textColor(0x0F);
+            }            
             addrPointer += *(uint8_t*)addrPointer;
             found = true;
         }

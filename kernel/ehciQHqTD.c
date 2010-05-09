@@ -376,17 +376,37 @@ void performAsyncScheduler(bool stop, bool analyze)
      pOpRegs->USBSTS |= STS_USBINT;
      USBINTflag = false;
      
-     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
-
-     delay(1000000);
-
+     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE; // switch on
+     
      int8_t timeout=7;
+     while (!(pOpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
+     {
+             timeout--;
+             if(timeout>0)
+             {
+                 sleepMilliSeconds(20); 
+                 textColor(0x0D);
+                 printf(">");
+                 textColor(0x0F);
+             }
+             else
+             {
+                 textColor(0x0C);
+                 printf("\ntimeout - STS_ASYNC_ENABLED still not set!");
+                 textColor(0x0F);
+                 break;
+             }
+         }
+
+     sleepMilliSeconds(1000); 
+
+     timeout=7;
      while (!USBINTflag) // set by interrupt
      {
          timeout--;
          if(timeout>0)
          {
-             delay(1000000);
+             sleepMilliSeconds(20); 
              textColor(0x0D);
              printf("#");
              textColor(0x0F);
@@ -402,14 +422,32 @@ void performAsyncScheduler(bool stop, bool analyze)
      
      pOpRegs->USBSTS |= STS_USBINT;
      USBINTflag = false;
-
+     
      if (stop)
      {
-         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // switch off
+     
+         timeout=7;
+         while (pOpRegs->USBSTS & STS_ASYNC_ENABLED) // wait until it is really off
+         {
+             timeout--;
+             if(timeout>0)
+             {
+                 sleepMilliSeconds(20); 
+                 textColor(0x0D);
+                 printf("!");
+                 textColor(0x0F);
+             }
+             else
+             {
+                 textColor(0x0C);
+                 printf("\ntimeout - STS_ASYNC_ENABLED still set!");
+                 textColor(0x0F);
+                 break;
+             }
+         }
      }
-     delay(200000);
 
-     // TEST
      if (analyze)
      {
          printf("\nafter aS:");

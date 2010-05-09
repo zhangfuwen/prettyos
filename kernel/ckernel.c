@@ -20,7 +20,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.444";
+const char* version = "0.0.0.445";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -57,7 +57,7 @@ static void init()
     heap_install();
 
     // internal devices
-    timer_install(1000); // Sets system frequency to ... Hz
+    timer_install(100); // Sets system frequency to ... Hz
     fpu_install();
 
     // external devices
