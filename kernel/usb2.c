@@ -122,15 +122,17 @@ void usbTransferConfig(uint32_t device)
         {
             showEndpointDescriptor ((struct usb2_endpointDescriptor*)addrPointer);
 
-            // store endpoint numbers for IN/OUT mass storage transfers
-            if (((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80)
+            // store endpoint numbers for IN/OUT mass storage transfers, attributes must be 0x2, because there are also endpoints with attributes 0x3(interrupt)
+            if ( (((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80) && (((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2) )
             {
                 usbDevices[device].numEndpointInMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
             }
-            else
+            
+            if (!(((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80) && (((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2) )
             {
                 usbDevices[device].numEndpointOutMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
             }
+
             addrPointer += 7;
             found = true;
         }
