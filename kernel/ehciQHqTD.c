@@ -209,7 +209,7 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
     showData(virtAddrBuf0, size, false);
 }
 
-void showStatusbyteQTD(void* addressQTD)
+uint32_t showStatusbyteQTD(void* addressQTD)
 {
     textColor(0x0F);
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
@@ -232,6 +232,8 @@ void showStatusbyteQTD(void* addressQTD)
     // Status OK
     if (statusbyte == 0)     { printf("OK (no bit set)"); }
     textColor(0x0F);
+
+    return statusbyte;
 }   
 
 /////////////////////////////////////
@@ -376,7 +378,7 @@ void performAsyncScheduler(bool stop, bool analyze)
      pOpRegs->USBSTS |= STS_USBINT;
      USBINTflag = false;
      
-     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE; // switch on
+     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
      
      int8_t timeout=7;
      while (!(pOpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on

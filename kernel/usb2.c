@@ -257,6 +257,57 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     return configuration;
 }
 
+void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
+{
+    #ifdef _USB_DIAGNOSIS_
+    textColor(0x0B); printf("\nUSB2: usbClearFeatureHALT, endpoint: %d", endpoint); textColor(0x0F);
+    #endif
+
+    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
+
+    // Create QTDs (in reversed order)
+    void* next = createQTD_Handshake(IN);
+    next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x02, 1, 0, 0, endpoint, 0);
+    // bmRequestType bRequest  wValue   wIndex  wLength   Data
+    //     00000010b       1b   0000h endpoint    0000h   none
+
+    // Create QH
+    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint 
+
+    performAsyncScheduler(true, false);
+    printf("\nclear HALT at dev: %d endpoint: %d", device, endpoint);
+}
+
+uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
+{
+    textColor(0x0E); 
+    printf("\nusbGetStatus at device: %d endpoint: %d", device, endpoint); 
+    textColor(0x0F);
+    
+    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
+
+    // Create QTDs (in reversed order)
+    void* next = createQTD_Handshake(OUT);
+    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 2);  // IN DATA1, 2 byte
+    next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x02, 0, 0, 0, endpoint, 2);
+    // bmRequestType bRequest  wValue   wIndex  wLength   Data
+    //     00000010b       0b   0000h endpoint    0002h   2 byte
+
+    // Create QH
+    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint 
+
+    performAsyncScheduler(true, false);
+    uint16_t status = *((uint16_t*)DataQTDpage0);
+    return status;
+}
+
+
+
+
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
 {
     usbDev->usbSpec               = d->bcdUSB;

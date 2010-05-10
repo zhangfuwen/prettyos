@@ -76,7 +76,7 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
 void* createQTD_MSDStatus(uintptr_t next, bool toggle);
 void* createQTD_Handshake(uint8_t direction);
 
-void showStatusbyteQTD(void* addressQTD);
+uint32_t showStatusbyteQTD(void* addressQTD);
 void showPacket(uint32_t virtAddrBuf0, uint32_t size);
 void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size);
 

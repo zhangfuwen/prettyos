@@ -21,8 +21,10 @@ struct usb2_CommandBlockWrapper
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
 
-void usbSendSCSIcmd(uint32_t device, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength);
+void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength);
 
 void testMSD(uint8_t devAddr);
+
+void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
 
 #endif

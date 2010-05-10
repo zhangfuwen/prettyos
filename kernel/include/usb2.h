@@ -106,6 +106,9 @@ void usbTransferString(uint32_t device);
 void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex);
 void usbTransferSetConfiguration(uint32_t device, uint32_t configuration);
 uint8_t usbTransferGetConfiguration(uint32_t device);
+uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize);
+void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize);
+
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);
