@@ -82,7 +82,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
 
     // OUT qTD
-    // No handshake
+    // No handshake!
     cmdQTD = createQTD_IO(0x01, OUT, 0, 31); // OUT DATA0, 31 byte
     printf("\tCommandQTD: %X",paging_get_phys_addr(kernel_pd, (void*)cmdQTD));
 
@@ -196,15 +196,13 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     printf("\nasyncList: %X <-- QH_In", pOpRegs->ASYNCLISTADDR);
 
     // IN qTDs
+    // No handshake!
     void* QTD_In;
     void* next = NULL;
 
-    next = createQTD_Handshake(OUT); // Handshake
-    printf("\nhandshakeQTD: %X",paging_get_phys_addr(kernel_pd, (void*)next));
-
     if (TransferLength > 0)
     {
-        next = StatusQTD = createQTD_MSDStatus((uintptr_t)next, 1); // next, toggle // IN 13 byte
+        next = StatusQTD = createQTD_MSDStatus(0x1, 1); // next, toggle // IN 13 byte
         printf("\tStatusQTD: %X",paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
 
         QTD_In = DataQTD = createQTD_IO((uintptr_t)next, IN,  0, TransferLength); // IN/OUT DATA0, ... byte
@@ -212,7 +210,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     }
     else
     {
-        QTD_In = StatusQTD = createQTD_MSDStatus((uintptr_t)next, 0); // next, toggle // IN 13 byte
+        QTD_In = StatusQTD = createQTD_MSDStatus(0x1, 0); // next, toggle // IN 13 byte
         printf("\tStatusQTD: %X",paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
     }
 
@@ -263,6 +261,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     }
 }
 
+
+/*
 void testMSD(uint8_t devAddr, uint8_t config)
 {
     // maxLUN (0 for USB-sticks)
@@ -274,10 +274,25 @@ void testMSD(uint8_t devAddr, uint8_t config)
     ///////// send SCSI comamnd "inquiry (opcode: 0x12)"
 
     textColor(0x09); printf("\n>>> SCSI: inquiry"); textColor(0x0F);
-    usbTransferSetConfiguration(devAddr,config);     
+              
     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x12, 0, 36); // dev, endp, cmd, LBA, transfer length
-    statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
+    
+    /// Important TEST on correct usbSendSCSIcmd //////////////////////////////
+        uint8_t currConfig = usbTransferGetConfiguration(devAddr);
+        if (currConfig != config) 
+        {
+            usbTransferSetConfiguration(devAddr,config); // try 
+            currConfig = usbTransferGetConfiguration(devAddr);
+            if (currConfig != config) 
+            {
+                textColor(0x0C);
+                printf("Error! Current configuration: %d",currConfig); 
+                textColor(0x0F);
+            }
+        }
+    /// Important TEST ////////////////////////////////////////////////////////
 
+    statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
     if (statusByte == 0x00)
     {
         textColor(0x02);
@@ -287,18 +302,30 @@ void testMSD(uint8_t devAddr, uint8_t config)
     showUSBSTS();
     waitForKeyStroke();
 
-    ///////// send SCSI comamnd "test unit ready(6)"
-
-    int32_t timeout = 2;
-    int32_t sense = -1;
-    bool repeat = true;
-    
-    while (repeat)
+    for (int i=0; i<2; i++)
     {
+        ///////// send SCSI comamnd "test unit ready (opcode: 0x00)"
+        
         textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
-        usbTransferSetConfiguration(devAddr,config); 
-        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+
+        usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0); // dev, endp, cmd, LBA, transfer length
+        
+        /// Important TEST on correct usbSendSCSIcmd //////////////////////////////
+        currConfig = usbTransferGetConfiguration(devAddr);
+        if (currConfig != config) 
+        {
+            usbTransferSetConfiguration(devAddr,config); // try 
+            currConfig = usbTransferGetConfiguration(devAddr);
+            if (currConfig != config) 
+            {
+                textColor(0x0C);
+                printf("Error! Current configuration: %d",currConfig); 
+                textColor(0x0F);
+            }
+        }
+        /// Important TEST ////////////////////////////////////////////////////////
+        
         statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
         if (statusByte == 0x00)
@@ -309,14 +336,15 @@ void testMSD(uint8_t devAddr, uint8_t config)
         }
         showUSBSTS();
 
-        ///////// send SCSI comamnd "request sense"
+
+        ///////// send SCSI comamnd "request sense (opcode: 0x03)"
 
         textColor(0x09); printf("\n>>> SCSI: request sense"); textColor(0x0F);
-        usbTransferSetConfiguration(devAddr,config); 
-        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        
+        usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18); // dev, endp, cmd, LBA, transfer length
+       
         statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
-
         if (statusByte == 0x00)
         {
             textColor(0x02);
@@ -325,22 +353,32 @@ void testMSD(uint8_t devAddr, uint8_t config)
         }
         
         showUSBSTS();        
+        showResultsRequestSense();
+        waitForKeyStroke();
+    }
 
-        timeout--;
-        sense = showResultsRequestSense();
-
-        if ( (sense == 0) || (sense == 6) || (timeout <= 0) )
-        {
-            repeat = false;
-        }
-    }    
-
-    ///////// send SCSI comamnd "read capacity(10)"
+    ///////// send SCSI comamnd "read capacity (opcode: 0x25)"
 
     textColor(0x09); printf("\n>>> SCSI: read capacity"); textColor(0x0F);
-    usbTransferSetConfiguration(devAddr,config); 
-    //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+    
+    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8); // dev, endp, cmd, LBA, transfer length
+    
+    /// Important TEST on correct usbSendSCSIcmd //////////////////////////////
+        currConfig = usbTransferGetConfiguration(devAddr);
+        if (currConfig != config) 
+        {
+            usbTransferSetConfiguration(devAddr,config); // try 
+            currConfig = usbTransferGetConfiguration(devAddr);
+            if (currConfig != config) 
+            {
+                textColor(0x0C);
+                printf("Error! Current configuration: %d",currConfig); 
+                textColor(0x0F);
+            }
+        }
+    /// Important TEST ////////////////////////////////////////////////////////
+    
     uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+1)) * 0x10000 + (*((uint8_t*)DataQTDpage0+2)) * 0x100 + (*((uint8_t*)DataQTDpage0+3));
     uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+5)) * 0x10000 + (*((uint8_t*)DataQTDpage0+6)) * 0x100 + (*((uint8_t*)DataQTDpage0+7));
     uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
@@ -351,20 +389,180 @@ void testMSD(uint8_t devAddr, uint8_t config)
     showUSBSTS();
     waitForKeyStroke();
 
-    ///////// step 5: send SCSI comamnd "read(10)", read one block (512 byte) from LBA ..., get Status
+    ///////// send SCSI comamnd "read (opcode: 0x28)", read one block (512 byte) from LBA ..., get Status
 
     uint32_t blocks = 1; // number of blocks to be read
     for(uint32_t sector=0; sector<5; sector++)
     {
-        usbTransferSetConfiguration(devAddr,config); 
-        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-
-        textColor(0x09); printf("\n>>> SCSI: read(10)  sector: %d", sector); textColor(0x0F);
+        textColor(0x09); printf("\n>>> SCSI: read (opcode: 0x28) sector: %d", sector); textColor(0x0F);
+        
+        usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, sector, blocks); // dev, endp, cmd, LBA, transfer length
+        
+        /// Important TEST on correct usbSendSCSIcmd //////////////////////////////
+        currConfig = usbTransferGetConfiguration(devAddr);
+        if (currConfig != config) 
+        {
+            usbTransferSetConfiguration(devAddr,config); // try 
+            currConfig = usbTransferGetConfiguration(devAddr);
+            if (currConfig != config) 
+            {
+                textColor(0x0C);
+                printf("Error! Current configuration: %d",currConfig); 
+                textColor(0x0F);
+            }
+        }
+        /// Important TEST ////////////////////////////////////////////////////////
+        
         showUSBSTS();
         waitForKeyStroke();
     }
 }
+*/
+
+void testMSD(uint8_t devAddr, uint8_t config)
+
+{
+    // maxLUN (0 for USB-sticks)
+    usbDevices[devAddr].maxLUN = 0;
+    uint8_t statusByte;
+
+    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+
+    ///////// send SCSI comamnd "inquiry (opcode: 0x12)"
+
+    textColor(0x09); printf("\n>>> SCSI: inquiry"); textColor(0x0F);
+
+    /// TEST
+    uint8_t configOld = usbTransferGetConfiguration(devAddr);
+    printf(" %d",configOld); // check configuration
+    usbTransferSetConfiguration(devAddr,config);  
+    /// TEST
+
+    configOld = usbTransferGetConfiguration(devAddr);
+    printf(" %d",configOld); // check configuration
+    usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x12, 0, 36); // dev, endp, cmd, LBA, transfer length
+
+    configOld = usbTransferGetConfiguration(devAddr);
+    printf(" %d",configOld); // check configuration
+
+    statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
+
+    if (statusByte == 0x00)
+    {
+        textColor(0x02);
+        printf("\n\nCommand Block Status Values in \"good status\"\n");
+        textColor(0x0F);
+    }
+    showUSBSTS();
+    waitForKeyStroke();
+	configOld = usbTransferGetConfiguration(devAddr);
+    printf("Alte config2: %d",configOld); // check configuration
+
+    ///////// send SCSI comamnd "test unit ready(6)"
+
+    int32_t timeout = 2;
+    int32_t sense = -1;
+    bool repeat = true;
+
+    while (repeat)
+    {
+        textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
+
+        /// TEST
+        configOld = usbTransferGetConfiguration(devAddr);
+        printf(" %d",configOld); // check configuration
+        usbTransferSetConfiguration(devAddr,config); 
+
+        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0); // dev, endp, cmd, LBA, transfer length
+
+        statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
+
+        if (statusByte == 0x00)
+        {
+            textColor(0x02);
+            printf("\n\nCommand Block Status Values in \"good status\"\n");
+            textColor(0x0F);
+        }
+        showUSBSTS();
+
+
+        ///////// send SCSI comamnd "request sense"
+
+        textColor(0x09); printf("\n>>> SCSI: request sense"); textColor(0x0F);
+
+        /// TEST
+        configOld = usbTransferGetConfiguration(devAddr);
+        printf(" %d",configOld); // check configuration
+        usbTransferSetConfiguration(devAddr,config); 
+
+        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18); // dev, endp, cmd, LBA, transfer length
+
+        statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
+        if (statusByte == 0x00)
+        {
+            textColor(0x02);
+            printf("\n\nCommand Block Status Values in \"good status\"\n");
+            textColor(0x0F);
+        }
+
+        showUSBSTS();        
+        timeout--;
+
+        sense = showResultsRequestSense();
+        if ( (sense == 0) || (sense == 6) || (timeout <= 0) )
+        {
+            repeat = false;
+        }
+    }    
+
+
+    ///////// send SCSI comamnd "read capacity(10)"
+
+    textColor(0x09); printf("\n>>> SCSI: read capacity"); textColor(0x0F);
+
+    /// TEST
+    configOld = usbTransferGetConfiguration(devAddr);
+    printf(" %d",configOld); // check configuration
+    usbTransferSetConfiguration(devAddr,config); 
+
+    //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+    usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8); // dev, endp, cmd, LBA, transfer length
+
+    uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+1)) * 0x10000 + (*((uint8_t*)DataQTDpage0+2)) * 0x100 + (*((uint8_t*)DataQTDpage0+3));
+    uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+5)) * 0x10000 + (*((uint8_t*)DataQTDpage0+6)) * 0x100 + (*((uint8_t*)DataQTDpage0+7));
+    uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
+
+    textColor(0x0E);
+    printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
+    textColor(0x0F);
+
+    showUSBSTS();
+    waitForKeyStroke();
+
+
+    ///////// send SCSI comamnd "read(10)", read one block (512 byte) from LBA ..., get Status
+
+    uint32_t blocks = 1; // number of blocks to be read
+    for(uint32_t sector=0; sector<5; sector++)
+    {
+        /// TEST
+        configOld = usbTransferGetConfiguration(devAddr);
+        printf(" %d",configOld); // check configuration
+        usbTransferSetConfiguration(devAddr,config); 
+
+        textColor(0x09); printf("\n>>> SCSI: read(10)  sector: %d", sector); textColor(0x0F);
+
+        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, sector, blocks); // dev, endp, cmd, LBA, transfer length
+
+        showUSBSTS();
+        waitForKeyStroke();
+    }
+}
+
 
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN)
 {
