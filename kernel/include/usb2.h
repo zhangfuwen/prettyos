@@ -118,12 +118,4 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d);
 void showStringDescriptor(struct usb2_stringDescriptor* d);
 void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d);
 
-void testMSD(uint8_t devAddr);
-
-// substitute by one function // OK?
-// void usbTransferSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t SCSIcommand); /// TEST SCSI to MSD
-// void usbTransferAfterSCSIcommandToMSD(uint32_t device, uint32_t endpoint, uint8_t InOut, uint32_t TransferLength, bool MSDStatus);
-// int32_t usbTransferGetAnswerToCommandMSD(uint32_t device, uint32_t endpoint);
-
-
 #endif

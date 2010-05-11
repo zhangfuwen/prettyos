@@ -8,11 +8,12 @@
 #include "pci.h"
 #include "kheap.h"
 #include "task.h"
-#include "usb2.h"
 #include "event_list.h"
 #include "video.h"
 #include "irq.h"
 
+#include "usb2.h"
+#include "usb2_msd.h"
 #include "ehciQHqTD.h"
 #include "ehci.h"
 
@@ -544,7 +545,8 @@ void checkPortLineStatus(uint8_t j)
                  printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
                  #endif
 
-                 printf(" %d",usbTransferGetConfiguration(devAddr)); // check configuration
+                 uint8_t config = usbTransferGetConfiguration(devAddr);
+                 printf(" %d",config); // check configuration
 
                  #ifdef _USB_DIAGNOSIS_
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
@@ -556,7 +558,7 @@ void checkPortLineStatus(uint8_t j)
                 // device, interface, endpoints
                 printf("\ndev: %d interface: %d endpOUT: %d  endpIN: %d",devAddr, usbDevices[devAddr].numInterfaceMSD,
                                              usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
-                testMSD(devAddr);
+                testMSD(devAddr,config);
              }
         }
       }

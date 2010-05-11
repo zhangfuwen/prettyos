@@ -263,16 +263,18 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     }
 }
 
-void testMSD(uint8_t devAddr)
+void testMSD(uint8_t devAddr, uint8_t config)
 {
     // maxLUN (0 for USB-sticks)
     usbDevices[devAddr].maxLUN = 0;
     uint8_t statusByte;
+    
+    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
     ///////// send SCSI comamnd "inquiry (opcode: 0x12)"
 
     textColor(0x09); printf("\n>>> SCSI: inquiry"); textColor(0x0F);
-    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+    usbTransferSetConfiguration(devAddr,config);     
     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x12, 0, 36); // dev, endp, cmd, LBA, transfer length
     statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
@@ -294,7 +296,8 @@ void testMSD(uint8_t devAddr)
     while (repeat)
     {
         textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
-        usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        usbTransferSetConfiguration(devAddr,config); 
+        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0); // dev, endp, cmd, LBA, transfer length
         statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
@@ -309,7 +312,8 @@ void testMSD(uint8_t devAddr)
         ///////// send SCSI comamnd "request sense"
 
         textColor(0x09); printf("\n>>> SCSI: request sense"); textColor(0x0F);
-        usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        usbTransferSetConfiguration(devAddr,config); 
+        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18); // dev, endp, cmd, LBA, transfer length
         statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
@@ -334,7 +338,8 @@ void testMSD(uint8_t devAddr)
     ///////// send SCSI comamnd "read capacity(10)"
 
     textColor(0x09); printf("\n>>> SCSI: read capacity"); textColor(0x0F);
-    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+    usbTransferSetConfiguration(devAddr,config); 
+    //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x25, 0, 8); // dev, endp, cmd, LBA, transfer length
     uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+1)) * 0x10000 + (*((uint8_t*)DataQTDpage0+2)) * 0x100 + (*((uint8_t*)DataQTDpage0+3));
     uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+5)) * 0x10000 + (*((uint8_t*)DataQTDpage0+6)) * 0x100 + (*((uint8_t*)DataQTDpage0+7));
@@ -351,7 +356,8 @@ void testMSD(uint8_t devAddr)
     uint32_t blocks = 1; // number of blocks to be read
     for(uint32_t sector=0; sector<5; sector++)
     {
-        usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        usbTransferSetConfiguration(devAddr,config); 
+        //usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
         textColor(0x09); printf("\n>>> SCSI: read(10)  sector: %d", sector); textColor(0x0F);
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, sector, blocks); // dev, endp, cmd, LBA, transfer length
