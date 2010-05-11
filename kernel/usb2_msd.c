@@ -77,7 +77,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     void* QH_Out = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     void* QH_In  = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    
+
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
     printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
 
@@ -186,7 +186,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     // OUT QH
     createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
 
-    performAsyncScheduler(true, true); 
+    performAsyncScheduler(true, true);
 
     /***************************************************************************/
 
@@ -198,28 +198,28 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     // IN qTDs
     void* QTD_In;
     void* next = NULL;
-    
+
     next = createQTD_Handshake(OUT); // Handshake
     printf("\nhandshakeQTD: %X",paging_get_phys_addr(kernel_pd, (void*)next));
-    
+
     if (TransferLength > 0)
     {
         next = StatusQTD = createQTD_MSDStatus((uintptr_t)next, 1); // next, toggle // IN 13 byte
         printf("\tStatusQTD: %X",paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
-        
+
         QTD_In = DataQTD = createQTD_IO((uintptr_t)next, IN,  0, TransferLength); // IN/OUT DATA0, ... byte
         printf("\tDataQTD: %X",paging_get_phys_addr(kernel_pd, (void*)DataQTD));
     }
     else
     {
-        QTD_In = StatusQTD = createQTD_MSDStatus((uintptr_t)next, 0); // next, toggle // IN 13 byte  
+        QTD_In = StatusQTD = createQTD_MSDStatus((uintptr_t)next, 0); // next, toggle // IN 13 byte
         printf("\tStatusQTD: %X",paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
     }
 
     // IN QH
     createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
 
-    performAsyncScheduler(true, true); 
+    performAsyncScheduler(true, true);
 
     if (TransferLength) // byte
     {
@@ -259,8 +259,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     if ( (statusCommand & 0x40) || (statusData & 0x40) || (statusStatus & 0x40) )
     {
-        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);        
-    }    
+        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+    }
 }
 
 void testMSD(uint8_t devAddr)
@@ -269,10 +269,10 @@ void testMSD(uint8_t devAddr)
     usbDevices[devAddr].maxLUN = 0;
     uint8_t statusByte;
 
-    ///////// step 1: send SCSI comamnd "inquiry (opcode: 0x12)"
-    
+    ///////// send SCSI comamnd "inquiry (opcode: 0x12)"
+
     textColor(0x09); printf("\n>>> SCSI: inquiry"); textColor(0x0F);
-    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface   
+    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
     usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x12, 0, 36); // dev, endp, cmd, LBA, transfer length
     statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
@@ -283,74 +283,55 @@ void testMSD(uint8_t devAddr)
         textColor(0x0F);
     }
     showUSBSTS();
-    waitForKeyStroke();   
-
-    ///////// step 2: send SCSI comamnd "test unit ready(6)"
-
-    textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
-    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-    usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0); // dev, endp, cmd, LBA, transfer length
-    statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
-
-    if (statusByte == 0x00)
-    {
-        textColor(0x02);
-        printf("\n\nCommand Block Status Values in \"good status\"\n");
-        textColor(0x0F);
-    }
-    showUSBSTS();
     waitForKeyStroke();
 
-    ///////// step 3: send SCSI comamnd "request sense"
+    ///////// send SCSI comamnd "test unit ready(6)"
 
-    textColor(0x09); printf("\n>>> SCSI: request sense"); textColor(0x0F);
-    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-    usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18); // dev, endp, cmd, LBA, transfer length
-    statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
-
-    if (statusByte == 0x00)
-    {
-        textColor(0x02);
-        printf("\n\nCommand Block Status Values in \"good status\"\n");
-        textColor(0x0F);
-    }
-    showUSBSTS();
-    waitForKeyStroke();
-
-    ///////// step 4: send SCSI comamnd "test unit ready(6)"
-
-    textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
-    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface    
-    usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0); // dev, endp, cmd, LBA, transfer length
-
-    statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
-
-    if (statusByte == 0x00)
-    {
-        textColor(0x02);
-        printf("\n\nCommand Block Status Values in \"good status\"\n");
-        textColor(0x0F);
-    }
-    showUSBSTS();
-    waitForKeyStroke();
+    int32_t timeout = 2;
+    int32_t sense = -1;
+    bool repeat = true;
     
-    ///////// step 5: send SCSI comamnd "request sense"
-
-    textColor(0x09); printf("\n>>> SCSI: request sense"); textColor(0x0F);
-    usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
-    usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18); // dev, endp, cmd, LBA, transfer length
-    statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
-
-    if (statusByte == 0x00)
+    while (repeat)
     {
-     textColor(0x02);
-     printf("\n\nCommand Block Status Values in \"good status\"\n");
-     textColor(0x0F);
-    }
-    showUSBSTS();
-    waitForKeyStroke();
+        textColor(0x09); printf("\n>>> SCSI: test unit ready"); textColor(0x0F);
+        usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0); // dev, endp, cmd, LBA, transfer length
+        statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
 
-    ///////// step 6: send SCSI comamnd "read capacity(10)"
+        if (statusByte == 0x00)
+        {
+            textColor(0x02);
+            printf("\n\nCommand Block Status Values in \"good status\"\n");
+            textColor(0x0F);
+        }
+        showUSBSTS();
+
+        ///////// send SCSI comamnd "request sense"
+
+        textColor(0x09); printf("\n>>> SCSI: request sense"); textColor(0x0F);
+        usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
+        usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18); // dev, endp, cmd, LBA, transfer length
+        statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
+
+        if (statusByte == 0x00)
+        {
+            textColor(0x02);
+            printf("\n\nCommand Block Status Values in \"good status\"\n");
+            textColor(0x0F);
+        }
+        
+        showUSBSTS();        
+
+        timeout--;
+        sense = showResultsRequestSense();
+
+        if ( (sense == 0) || (sense == 6) || (timeout <= 0) )
+        {
+            repeat = false;
+        }
+    }    
+
+    ///////// send SCSI comamnd "read capacity(10)"
 
     textColor(0x09); printf("\n>>> SCSI: read capacity"); textColor(0x0F);
     usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
@@ -363,9 +344,9 @@ void testMSD(uint8_t devAddr)
     printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
     textColor(0x0F);
     showUSBSTS();
-    waitForKeyStroke();    
-    
-    ///////// step 7: send SCSI comamnd "read(10)", read one block (512 byte) from LBA ..., get Status
+    waitForKeyStroke();
+
+    ///////// step 5: send SCSI comamnd "read(10)", read one block (512 byte) from LBA ..., get Status
 
     uint32_t blocks = 1; // number of blocks to be read
     for(uint32_t sector=0; sector<5; sector++)
@@ -382,7 +363,7 @@ void testMSD(uint8_t devAddr)
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN)
 {
     // Reset Interface
-    usbTransferBulkOnlyMassStorageReset(device, Interface); 
+    usbTransferBulkOnlyMassStorageReset(device, Interface);
 
     // Clear Feature HALT to the Bulk-In  endpoint
     printf("\nGetStatus: %d", usbGetStatus(device, endpointIN, 512));
@@ -393,6 +374,118 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
     printf("\nGetStatus: %d", usbGetStatus(device, endpointOUT, 512));
     usbClearFeatureHALT(device, endpointOUT, 512);
     printf("\nGetStatus: %d", usbGetStatus(device, endpointOUT, 512));
+}
+
+int32_t showResultsRequestSense()
+{
+    uint32_t Valid        = ((*(((uint8_t*)DataQTDpage0)+0))&0x80)>>7; // byte 0, bit 7
+    uint32_t ResponseCode = ((*(((uint8_t*)DataQTDpage0)+0))&0x7F)>>0; // byte 0, bit 6:0
+    uint32_t SenseKey     = ((*(((uint8_t*)DataQTDpage0)+2))&0x0F)>>0; // byte 2, bit 3:0
+
+    char ValidStr[40];
+    char ResponseCodeStr[40];
+    char SenseKeyStr[80];
+
+    if (Valid == 0)
+    {
+        strcpy(ValidStr,"Sense data are not SCSI compliant");
+    }
+    else
+    {
+        strcpy(ValidStr,"Sense data are SCSI compliant");
+    }
+
+    switch (ResponseCode)
+    {
+        case 0x70:
+        strcpy(ResponseCodeStr,"Current errors, fixed format");
+        break;
+        case 0x71:
+        strcpy(ResponseCodeStr,"Deferred errors, fixed format");
+        break;
+        case 0x72:
+        strcpy(ResponseCodeStr,"Current error, descriptor format");
+        break;
+        case 0x73:
+        strcpy(ResponseCodeStr,"Deferred error, descriptor format");
+        break;
+
+        default:
+        strcpy(ResponseCodeStr,"No vaild response code!");
+        break;
+    }
+
+    switch (SenseKey)
+    {
+        case 0x0:
+        strcpy(SenseKeyStr,"No Sense");
+        break;
+        case 0x1:
+        strcpy(SenseKeyStr,"Recovered Error - last command completed with some recovery action");
+        break;
+        case 0x2:
+        strcpy(SenseKeyStr,"Not Ready - logical unit addressed cannot be accessed");
+        break;
+        case 0x3:
+        strcpy(SenseKeyStr,"Medium Error - command terminated with a non-recovered error condition");
+        break;
+        case 0x4:
+        strcpy(SenseKeyStr,"Hardware Error");
+        break;
+        case 0x5:
+        strcpy(SenseKeyStr,"Illegal Request - illegal parameter in the command descriptor block ");
+        break;
+        case 0x6:
+        strcpy(SenseKeyStr,"Unit Attention - disc drive may have been reset.");
+        break;
+        case 0x7:
+        strcpy(SenseKeyStr,"Data Protect - command read/write on a protected block");
+        break;
+        case 0x8:
+        strcpy(SenseKeyStr,"not defined");
+        break;
+        case 0x9:
+        strcpy(SenseKeyStr,"Firmware Error");
+        break;
+        case 0xA:
+        strcpy(SenseKeyStr,"not defined");
+        break;
+        case 0xB:
+        strcpy(SenseKeyStr,"Aborted Command - disc drive aborted the command");
+        break;
+        case 0xC:
+        strcpy(SenseKeyStr,"Equal - SEARCH DATA command has satisfied an equal comparison");
+        break;
+        case 0xD:
+        strcpy(SenseKeyStr,"Volume Overflow - buffered peripheral device has reached the end of medium partition");
+        break;
+        case 0xE:
+        strcpy(SenseKeyStr,"Miscompare - source data did not match the data read from the medium");
+        break;
+        case 0xF:
+        strcpy(SenseKeyStr,"not defined");
+        break;
+
+        default:
+        strcpy(SenseKeyStr,"sense key not known!");
+        break;
+    }
+
+    textColor(0x0E);
+    printf("\n\nResults of \"request sense\":");
+    if ( (ResponseCode >= 0x70) && (ResponseCode <= 0x73) )
+    {
+         textColor(0x0F);
+         printf("\nValid: \t\t%s \nResponse Code: \t%s \nSense Key: \t%s", ValidStr, ResponseCodeStr, SenseKeyStr);
+         return SenseKey;
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nNo vaild response code!");
+        textColor(0x0F);
+        return -1;
+    }
 }
 
 

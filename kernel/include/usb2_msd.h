@@ -27,4 +27,6 @@ void testMSD(uint8_t devAddr);
 
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
 
+int32_t showResultsRequestSense();
+
 #endif
