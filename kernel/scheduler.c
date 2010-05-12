@@ -10,14 +10,13 @@
 // The start of the task linked list.
 volatile task_t* ready_queue; /// TODO: clarify, whether volatile is necessary
 
-//void tasking_install()
-task_t* initTaskQueue()
+task_t* scheduler_install()
 {
     ready_queue = (task_t*)malloc(sizeof(task_t),0); // first task (kernel task)
     return (task_t*)ready_queue;
 }
 
-task_t* getReadyTask()
+task_t* scheduler_getNextTask()
 {
     return (task_t*)ready_queue;
 }
@@ -29,7 +28,7 @@ void setNextTask(task_t* task1, task_t* task2)
 
 task_t* getLastTask()
 {
-    task_t* tmp_task = getReadyTask();
+    task_t* tmp_task = scheduler_getNextTask();
     while (tmp_task->next)
     {
         tmp_task = tmp_task->next;
@@ -38,9 +37,9 @@ task_t* getLastTask()
 }
 
 // take task out of linked list
-void clearTask(task_t* task1)
+void scheduler_deleteTask(task_t* task1)
 {
-    task_t* tmp_task = getReadyTask();
+    task_t* tmp_task = scheduler_getNextTask();
     do
     {
         if (tmp_task->next == task1)
@@ -55,9 +54,9 @@ void clearTask(task_t* task1)
     while (tmp_task->next);
 }
 
-void log_task_list()
+void scheduler_log()
 {
-    task_t* tmp_task = getReadyTask();
+    task_t* tmp_task = scheduler_getNextTask();
     do
     {
         task_log(tmp_task);

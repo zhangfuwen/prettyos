@@ -13,11 +13,10 @@ uint32_t eticks = 0;
 
 void timer_install(uint16_t sysfreq)
 {
-    /* Installs 'timer_handler' to IRQ0 */
+    // Installs 'timer_handler' to IRQ0
     irq_install_handler(32+0, timer_handler);
 
-    systemfrequency = sysfreq;
-    systemTimer_setFrequency(systemfrequency); // x Hz, meaning a tick every 1000/x milliseconds
+    systemTimer_setFrequency(sysfreq); // x Hz, meaning a tick every 1000/x milliseconds
 }
 
 uint32_t getCurrentSeconds()
@@ -27,8 +26,6 @@ uint32_t getCurrentSeconds()
 
 void timer_handler(registers_t* r)
 {
-    kdebug(3, ".");
-
     ++timer_ticks;
     if (eticks>0)
     {
@@ -60,8 +57,8 @@ void sleepMilliSeconds (uint32_t ms)
 void systemTimer_setFrequency(uint32_t freq)
 {
     systemfrequency = freq;
-    uint32_t divisor = 1193180 / systemfrequency; //divisor must fit into 16 bits
-                                                  // PIT (programable interrupt timer)
+    uint32_t divisor = 1193180 / systemfrequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
+
     // Send the command byte
     // outportb(0x43, 0x36); // 0x36 -> Mode 3 : Square Wave Generator
     outportb(0x43, 0x34); // 0x34 -> Mode 2 : Rate Generator // idea of +gjm+
@@ -73,12 +70,12 @@ void systemTimer_setFrequency(uint32_t freq)
 
 uint16_t systemTimer_getFrequency()
 {
-    return systemfrequency;
+    return(systemfrequency);
 }
 
 void timer_uninstall()
 {
-    /* Uninstalls IRQ0 */
+    // Uninstalls IRQ0
     irq_uninstall_handler(32+0);
 }
 

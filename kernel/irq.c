@@ -46,14 +46,13 @@ const char* exception_messages[] =
 uint32_t irq_handler(uint32_t esp)
 {
     registers_t* r = (registers_t*)esp;
-    task_t* pCurrentTask = currentTask;
 
     if (r->int_no == 7) // exception #NM (number 7)
     {
         // set TS in cr0 to zero
         __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
 
-        kdebug(3, "#NM: FPU is used. pCurrentTask: %X\n",pCurrentTask);
+        kdebug(3, "#NM: FPU is used. pCurrentTask: %X\n", currentTask);
 
         // save FPU data ...
         if (FPUTask)
@@ -63,18 +62,18 @@ uint32_t irq_handler(uint32_t esp)
         }
 
         // store the last task using FPU
-        FPUTask = pCurrentTask;
+        FPUTask = currentTask;
 
         // restore FPU data ...
-        if (pCurrentTask->FPU_ptr)
+        if (currentTask->FPU_ptr)
         {
             // frstor from pCurrentTask->FPU_ptr
-            __asm__ volatile("frstor %0" :: "m" (*(uint8_t*)(pCurrentTask->FPU_ptr)));
+            __asm__ volatile("frstor %0" :: "m" (*(uint8_t*)(currentTask->FPU_ptr)));
         }
         else
         {
             // allocate memory to pCurrentTask->FPU_ptr
-            pCurrentTask->FPU_ptr = (uintptr_t)malloc(108,4);
+            currentTask->FPU_ptr = (uintptr_t)malloc(108,4);
         }
     }
 
@@ -131,7 +130,8 @@ uint32_t irq_handler(uint32_t esp)
         esp = task_switch (esp); // new task's esp
 
     interrupt_handler_t handler = irq_routines[r->int_no];
-    if (handler) { handler(r); }
+    if (handler)
+        handler(r);
 
     if (r->int_no >= 40)
         outportb(0xA0, 0x20);

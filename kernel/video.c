@@ -11,7 +11,7 @@
 #include "kheap.h"
 #include "timer.h"
 
-uint16_t* vidmem = (uint16_t*) 0xB8000;
+uint16_t* vidmem = (uint16_t*)0xB8000;
 
 char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 
@@ -25,7 +25,7 @@ uint8_t attrib = 0x0F; // white text on black ground
 
 void clear_screen()
 {
-    memsetw (vidmem, 0x20 | (0x00 << 8), COLUMNS * LINES);
+    memsetw(vidmem, 0x00, COLUMNS * LINES);
     update_cursor();
 }
 
@@ -183,7 +183,7 @@ void refreshUserScreen()
 {
     // Printing titlebar
     kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
-    csr_y = 0;
+    csr_y = reachableConsoles[displayedConsole]->csr_y;
 
     if (displayedConsole == KERNELCONSOLE_ID)
     {
@@ -214,6 +214,9 @@ void refreshUserScreen()
         memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * USER_LINES*2);
     }
     kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
+    
+    csr_y = reachableConsoles[displayedConsole]->csr_y;
+    csr_x = reachableConsoles[displayedConsole]->csr_x;
     update_cursor();
 }
 

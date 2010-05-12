@@ -5,16 +5,14 @@
 
 #include "kheap.h"
 #include "paging.h"
-#include "usb2.h"
 #include "console.h"
 #include "timer.h"
 #include "util.h"
-
 #include "ehci.h"
 #include "ehciQHqTD.h"
+#include "usb2.h"
 
 usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
-
 
 
 uint8_t usbTransferEnumerate(uint8_t j)
@@ -378,19 +376,19 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
        printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\n");
        textColor(0x0A);
        #ifdef _USB_DIAGNOSIS_
-       printf("length:               %d\t\t",  d->length);        // 9
-       printf("descriptor type:      %d\n",  d->descriptorType);    // 4
+       printf("length:               %d\t\t", d->length);          // 9
+       printf("descriptor type:      %d\n",   d->descriptorType);  // 4
        #endif
-       printf("interface number:     %d\t\t",  d->interfaceNumber);
+       printf("interface number:     %d\t\t", d->interfaceNumber);
        #ifdef _USB_DIAGNOSIS_
-       printf("alternate Setting:    %d\n",  d->alternateSetting);
+       printf("alternate Setting:    %d\n",   d->alternateSetting);
        #endif
-       printf("number of endpoints:  %d\n",  d->numEndpoints);
-       printf("interface class:      %d\n",  d->interfaceClass);
-       printf("interface subclass:   %d\n",  d->interfaceSubclass);
-       printf("interface protocol:   %d\n",  d->interfaceProtocol);
+       printf("number of endpoints:  %d\n",   d->numEndpoints);
+       printf("interface class:      %d\n",   d->interfaceClass);
+       printf("interface subclass:   %d\n",   d->interfaceSubclass);
+       printf("interface protocol:   %d\n",   d->interfaceProtocol);
        #ifdef _USB_DIAGNOSIS_
-       printf("interface:            %x\n",  d->interface);
+       printf("interface:            %x\n",   d->interface);
        #endif
        textColor(0x0F);
     }
@@ -404,7 +402,7 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
        printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\n");
        textColor(0x0A);
        #ifdef _USB_DIAGNOSIS_
-       printf("length:            %d\t\t",  d->length);       // 7
+       printf("length:            %d\t\t",  d->length);         // 7
        printf("descriptor type:   %d\n",    d->descriptorType); // 5
        #endif
        printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
@@ -480,7 +478,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -92,95 +92,58 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     switch (SCSIcommand)
     {
-    case 0x00: // test unit ready(6)
+        case 0x00: // test unit ready(6)
+            cbw->CBWSignature          = CBWMagic;      // magic
+            cbw->CBWTag                = 0x42424200;    // device echoes this field in the CSWTag field of the associated CSW
+            cbw->CBWFlags              = 0x00;          // Out: 0x00  In: 0x80
+            cbw->CBWCBLength           = 6;             // only bits 4:0
+            break;
+        case 0x03: // Request Sense(6)
+            cbw->CBWSignature          = CBWMagic;      // magic
+            cbw->CBWTag                = 0x42424203;    // device echoes this field in the CSWTag field of the associated CSW
+            cbw->CBWDataTransferLength = 18;
+            cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
+            cbw->CBWCBLength           = 6;             // only bits 4:0
+            cbw->commandByte[0]        = 0x03;          // Operation code
+            cbw->commandByte[4]        = 18;            // Allocation length (max. bytes)
+            break;
+        case 0x12: // Inquiry(6)
+            cbw->CBWSignature          = CBWMagic;      // magic
+            cbw->CBWTag                = 0x42424212;    // device echoes this field in the CSWTag field of the associated CSW
+            cbw->CBWDataTransferLength = 36;
+            cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
+            cbw->CBWCBLength           = 6;             // only bits 4:0
+            cbw->commandByte[0]        = 0x12;          // Operation code
+            cbw->commandByte[4]        = 36;            // Allocation length (max. bytes)
+            break;
+        case 0x25: // read capacity(10)
+            cbw->CBWSignature          = CBWMagic;      // magic
+            cbw->CBWTag                = 0x42424225;    // device echoes this field in the CSWTag field of the associated CSW
+            cbw->CBWDataTransferLength = 8;
+            cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
+            cbw->CBWCBLength           = 10;            // only bits 4:0
+            cbw->commandByte[0]        = 0x25;          // Operation code
+            cbw->commandByte[2]        = BYTE4(LBA);    // LBA MSB
+            cbw->commandByte[3]        = BYTE3(LBA);    // LBA
+            cbw->commandByte[4]        = BYTE2(LBA);    // LBA
+            cbw->commandByte[5]        = BYTE1(LBA);    // LBA LSB
+            break;
+        case 0x28: // read(10)
+            cbw->CBWSignature           = CBWMagic;              // magic
+            cbw->CBWTag                 = 0x42424228;            // device echoes this field in the CSWTag field of the associated CSW
+            cbw->CBWDataTransferLength  = TransferLength*512;    // byte = 512 * block
+            cbw->CBWFlags               = 0x80;                  // Out: 0x00  In: 0x80
+            cbw->CBWCBLength            = 10;                    // only bits 4:0
+            cbw->commandByte[0]         = 0x28;                  // Operation code
+            cbw->commandByte[2]         = BYTE4(LBA);            // LBA MSB
+            cbw->commandByte[3]         = BYTE3(LBA);            // LBA
+            cbw->commandByte[4]         = BYTE2(LBA);            // LBA
+            cbw->commandByte[5]         = BYTE1(LBA);            // LBA LSB
+            cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
+            cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
 
-        cbw->CBWSignature          = CBWMagic;      // magic
-        cbw->CBWTag                = 0x42424200;    // device echoes this field in the CSWTag field of the associated CSW
-        cbw->CBWDataTransferLength = 0;
-        cbw->CBWFlags              = 0x00;          // Out: 0x00  In: 0x80
-        cbw->CBWLUN                = 0;             // only bits 3:0
-        cbw->CBWCBLength           = 6;             // only bits 4:0
-        cbw->commandByte[0]        = 0x00;          // Operation code
-        cbw->commandByte[1]        = 0;             // Reserved
-        cbw->commandByte[2]        = 0;             // Reserved
-        cbw->commandByte[3]        = 0;             // Reserved
-        cbw->commandByte[4]        = 0;             // Reserved
-        cbw->commandByte[5]        = 0;             // Control
-        break;
-
-    case 0x03: // Request Sense(6)
-
-        cbw->CBWSignature          = CBWMagic;      // magic
-        cbw->CBWTag                = 0x42424203;    // device echoes this field in the CSWTag field of the associated CSW
-        cbw->CBWDataTransferLength = 18;
-        cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
-        cbw->CBWLUN                = 0;             // only bits 3:0
-        cbw->CBWCBLength           = 6;             // only bits 4:0
-        cbw->commandByte[0]        = 0x03;          // Operation code
-        cbw->commandByte[1]        = 0;             // Reserved
-        cbw->commandByte[2]        = 0;             // Reserved
-        cbw->commandByte[3]        = 0;             // Reserved
-        cbw->commandByte[4]        = 18;            // Allocation length (max. bytes)
-        cbw->commandByte[5]        = 0;             // Control
-        break;
-
-    case 0x12: // Inquiry(6)
-
-        cbw->CBWSignature          = CBWMagic;      // magic
-        cbw->CBWTag                = 0x42424212;    // device echoes this field in the CSWTag field of the associated CSW
-        cbw->CBWDataTransferLength = 36;
-        cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
-        cbw->CBWLUN                = 0;             // only bits 3:0
-        cbw->CBWCBLength           = 6;             // only bits 4:0
-        cbw->commandByte[0]        = 0x12;          // Operation code
-        cbw->commandByte[1]        = 0;             // Reserved
-        cbw->commandByte[2]        = 0;             // Reserved
-        cbw->commandByte[3]        = 0;             // Reserved
-        cbw->commandByte[4]        = 36;            // Allocation length (max. bytes)
-        cbw->commandByte[5]        = 0;             // Control
-        break;
-
-    case 0x25: // read capacity(10)
-
-        cbw->CBWSignature          = CBWMagic;      // magic
-        cbw->CBWTag                = 0x42424225;    // device echoes this field in the CSWTag field of the associated CSW
-        cbw->CBWDataTransferLength = 8;
-        cbw->CBWFlags              = 0x80;          // Out: 0x00  In: 0x80
-        cbw->CBWLUN                = 0;             // only bits 3:0
-        cbw->CBWCBLength           = 10;            // only bits 4:0
-        cbw->commandByte[0]        = 0x25;          // Operation code
-        cbw->commandByte[1]        = 0;             // 7:5 LUN  4:1 reserved  0 RelAddr
-        cbw->commandByte[2]        = BYTE4(LBA);    // LBA MSB
-        cbw->commandByte[3]        = BYTE3(LBA);    // LBA
-        cbw->commandByte[4]        = BYTE2(LBA);    // LBA
-        cbw->commandByte[5]        = BYTE1(LBA);    // LBA LSB
-        cbw->commandByte[6]        = 0;             // Reserved
-        cbw->commandByte[7]        = 0;             // Reserved
-        cbw->commandByte[8]        = 0;             // 7:1 Reserved  0 PMI
-        cbw->commandByte[9]        = 0;             // Control
-        break;
-
-    case 0x28: // read(10)
-
-        cbw->CBWSignature           = CBWMagic;             // magic
-        cbw->CBWTag                 = 0x42424228;           // device echoes this field in the CSWTag field of the associated CSW
-        cbw->CBWDataTransferLength  = TransferLength*512;   // byte = 512 * block
-        cbw->CBWFlags               = 0x80;                 // Out: 0x00  In: 0x80
-        cbw->CBWLUN                 = 0;                    // only bits 3:0
-        cbw->CBWCBLength            = 10;                   // only bits 4:0
-        cbw->commandByte[0]         = 0x28;                 // Operation code
-        cbw->commandByte[1]         = 0;                    // Reserved // RDPROTECT/DPO/FUA/FUA_NV
-        cbw->commandByte[2]         = BYTE4(LBA);           // LBA MSB
-        cbw->commandByte[3]         = BYTE3(LBA);           // LBA
-        cbw->commandByte[4]         = BYTE2(LBA);           // LBA
-        cbw->commandByte[5]         = BYTE1(LBA);           // LBA LSB
-        cbw->commandByte[6]         = 0;                    // Reserved
-        cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
-        cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
-        cbw->commandByte[9]         = 0;                    // Control
-
-        TransferLength *= 512; // byte = 512 * block
-        break;
+            TransferLength *= 512; // byte = 512 * block
+            break;
     }
 
     // OUT QH
@@ -456,7 +419,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
     }
     showUSBSTS();
     waitForKeyStroke();
-	configOld = usbTransferGetConfiguration(devAddr);
+    configOld = usbTransferGetConfiguration(devAddr);
     printf("Alte config2: %d",configOld); // check configuration
 
     ///////// send SCSI comamnd "test unit ready(6)"
@@ -602,77 +565,75 @@ int32_t showResultsRequestSense()
     switch (ResponseCode)
     {
         case 0x70:
-        strcpy(ResponseCodeStr,"Current errors, fixed format");
-        break;
+            strcpy(ResponseCodeStr,"Current errors, fixed format");
+            break;
         case 0x71:
-        strcpy(ResponseCodeStr,"Deferred errors, fixed format");
-        break;
+            strcpy(ResponseCodeStr,"Deferred errors, fixed format");
+            break;
         case 0x72:
-        strcpy(ResponseCodeStr,"Current error, descriptor format");
-        break;
+            strcpy(ResponseCodeStr,"Current error, descriptor format");
+            break;
         case 0x73:
-        strcpy(ResponseCodeStr,"Deferred error, descriptor format");
-        break;
-
+            strcpy(ResponseCodeStr,"Deferred error, descriptor format");
+            break;
         default:
-        strcpy(ResponseCodeStr,"No vaild response code!");
-        break;
+            strcpy(ResponseCodeStr,"No vaild response code!");
+            break;
     }
 
     switch (SenseKey)
     {
         case 0x0:
-        strcpy(SenseKeyStr,"No Sense");
-        break;
+            strcpy(SenseKeyStr,"No Sense");
+            break;
         case 0x1:
-        strcpy(SenseKeyStr,"Recovered Error - last command completed with some recovery action");
-        break;
+            strcpy(SenseKeyStr,"Recovered Error - last command completed with some recovery action");
+            break;
         case 0x2:
-        strcpy(SenseKeyStr,"Not Ready - logical unit addressed cannot be accessed");
-        break;
+            strcpy(SenseKeyStr,"Not Ready - logical unit addressed cannot be accessed");
+            break;
         case 0x3:
-        strcpy(SenseKeyStr,"Medium Error - command terminated with a non-recovered error condition");
-        break;
+            strcpy(SenseKeyStr,"Medium Error - command terminated with a non-recovered error condition");
+            break;
         case 0x4:
-        strcpy(SenseKeyStr,"Hardware Error");
-        break;
+            strcpy(SenseKeyStr,"Hardware Error");
+            break;
         case 0x5:
-        strcpy(SenseKeyStr,"Illegal Request - illegal parameter in the command descriptor block ");
-        break;
+            strcpy(SenseKeyStr,"Illegal Request - illegal parameter in the command descriptor block ");
+            break;
         case 0x6:
-        strcpy(SenseKeyStr,"Unit Attention - disc drive may have been reset.");
-        break;
+            strcpy(SenseKeyStr,"Unit Attention - disc drive may have been reset.");
+            break;
         case 0x7:
-        strcpy(SenseKeyStr,"Data Protect - command read/write on a protected block");
-        break;
+            strcpy(SenseKeyStr,"Data Protect - command read/write on a protected block");
+            break;
         case 0x8:
-        strcpy(SenseKeyStr,"not defined");
-        break;
+            strcpy(SenseKeyStr,"not defined");
+            break;
         case 0x9:
-        strcpy(SenseKeyStr,"Firmware Error");
-        break;
+            strcpy(SenseKeyStr,"Firmware Error");
+            break;
         case 0xA:
-        strcpy(SenseKeyStr,"not defined");
-        break;
+            strcpy(SenseKeyStr,"not defined");
+            break;
         case 0xB:
-        strcpy(SenseKeyStr,"Aborted Command - disc drive aborted the command");
-        break;
+            strcpy(SenseKeyStr,"Aborted Command - disc drive aborted the command");
+            break;
         case 0xC:
-        strcpy(SenseKeyStr,"Equal - SEARCH DATA command has satisfied an equal comparison");
-        break;
+            strcpy(SenseKeyStr,"Equal - SEARCH DATA command has satisfied an equal comparison");
+            break;
         case 0xD:
-        strcpy(SenseKeyStr,"Volume Overflow - buffered peripheral device has reached the end of medium partition");
-        break;
+            strcpy(SenseKeyStr,"Volume Overflow - buffered peripheral device has reached the end of medium partition");
+            break;
         case 0xE:
-        strcpy(SenseKeyStr,"Miscompare - source data did not match the data read from the medium");
-        break;
+            strcpy(SenseKeyStr,"Miscompare - source data did not match the data read from the medium");
+            break;
         case 0xF:
-        strcpy(SenseKeyStr,"not defined");
-        break;
-
+            strcpy(SenseKeyStr,"not defined");
+            break;
         default:
-        strcpy(SenseKeyStr,"sense key not known!");
-        break;
+            strcpy(SenseKeyStr,"sense key not known!");
+            break;
     }
 
     textColor(0x0E);
@@ -694,7 +655,7 @@ int32_t showResultsRequestSense()
 
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -33,9 +33,9 @@ void console_init(console_t* console, const char* name)
     console->attrib       = 0x0F;
     //console->SCROLL_BEGIN = 0;
     console->SCROLL_END   = USER_LINES;
-    console->showInfobar = false;
+    console->showInfobar  = false;
     strcpy(console->name, name);
-    memsetw (console->vidmem, 0x20 | (console->attrib << 8), COLUMNS * USER_LINES);
+    memsetw(console->vidmem, 0x00, COLUMNS * USER_LINES);
     // Setup the keyqueue
     memset(console->KQ.buffer, 0, KQSIZE);
     console->KQ.pHead = console->KQ.buffer;
@@ -78,7 +78,7 @@ void clear_console(uint8_t backcolor)
 {
     // Erasing the content of the active console
     current_console->attrib = (backcolor << 4) | 0x0F;
-    memsetw (current_console->vidmem, 0x20 | (current_console->attrib << 8), COLUMNS * USER_LINES);
+    memsetw(current_console->vidmem, 0x20 | (current_console->attrib << 8), COLUMNS * USER_LINES);
     current_console->csr_x = 0;
     current_console->csr_y = 0;
     if (current_console == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
@@ -95,10 +95,10 @@ void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
 void move_cursor_right()
 {
     ++current_console->csr_x;
-    if (current_console->csr_x>=COLUMNS)
+    if (current_console->csr_x >= COLUMNS)
     {
         ++current_console->csr_y;
-        current_console->csr_x=0;
+        current_console->csr_x = 0;
         scroll();
     }
 }
@@ -193,8 +193,8 @@ void scroll()
     if (scroll_flag && current_console->csr_y >= scroll_end)
     {
         uint8_t temp = current_console->csr_y - scroll_end + 1;
-        memcpy (current_console->vidmem, current_console->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
-        memsetw (current_console->vidmem + (scroll_end - temp) * COLUMNS, current_console->attrib << 8, COLUMNS);
+        memcpy(current_console->vidmem, current_console->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
+        memsetw(current_console->vidmem + (scroll_end - temp) * COLUMNS, current_console->attrib << 8, COLUMNS);
         current_console->csr_y = scroll_end - 1;
         refreshUserScreen();
     }

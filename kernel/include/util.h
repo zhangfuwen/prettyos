@@ -41,8 +41,7 @@ void*     memset(void* dest, int8_t val, size_t count);
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
 void*     memcpy(void* dest, const void* src, size_t count);
-
-void    waitForKeyStroke();
+void*     memmove(const void* source, void* destination, size_t size);
 
 void    vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
 void    snprintf (char *buffer, size_t length, const char *args, ...);
@@ -52,6 +51,8 @@ char*   strcpy(char* dest, const char* src);
 char*   strncpy(char* dest, const char* src, size_t n);
 char*   strcat(char* dest, const char* src);
 char*   strncat(char* dest, const char* src, size_t n);
+
+void    waitForKeyStroke();
 
 void reboot();
 
@@ -70,8 +71,8 @@ void   i2hex(uint32_t val, char* dest, int32_t len);
 
 uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 
-uint32_t alignUp( uint32_t val, uint32_t alignment );
-uint32_t alignDown( uint32_t val, uint32_t alignment );
+uint32_t alignUp(uint32_t val, uint32_t alignment);
+uint32_t alignDown(uint32_t val, uint32_t alignment);
 
 uint32_t max(uint32_t a, uint32_t b);
 uint32_t min(uint32_t a, uint32_t b);

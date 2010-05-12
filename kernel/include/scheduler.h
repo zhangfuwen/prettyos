@@ -3,11 +3,12 @@
 
 #include "task.h"
 
-task_t* initTaskQueue();
-task_t* getReadyTask();
-void setNextTask(task_t* task1, task_t* task2);
+task_t* scheduler_install();
+task_t* scheduler_getNextTask();
+void scheduler_deleteTask(task_t* task);
+void scheduler_log();
+
 task_t* getLastTask();
-void clearTask(task_t* task1);
-void log_task_list();
+void setNextTask(task_t* task1, task_t* task2);
 
 #endif

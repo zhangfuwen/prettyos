@@ -10,27 +10,21 @@
 
 
 /*
-The heap provides the malloc/free-functionality, i.e. dynamic allocation of
- memory. It manages a certain amount of continuous virtual memory, starting
- at "heap_start". Whenever more memory is requested than there is available,
- the heap expands.
-For expansion, the heap asks the paging module to map physical memory to the
- following virtual addresses and increases it's "heap_size" variable afterwards.
+The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory. It manages a certain amount of continuous
+   virtual memory, starting at "heap_start". Whenever more memory is requested than there is available, the heap expands.
+For expansion, the heap asks the paging module to map physical memory to the following virtual addresses and increases it's
+   "heap_size" variable afterwards.
 
-To manage the free and reserved (allocated) areas of the heap an array of
- "region" elements is held. Each region specifies it's size and whether it
- is reserved/allocated. Free regions always get merged. Regions don't store
- their addresses, the third region's address is calculated by adding the first
- and second region's size to "heap_start":
- region_3_addr = heap_start + regions[0].size + regions[1].size.
+To manage the free and reserved (allocated) areas of the heap an array of "region" elements is held. Each region specifies
+   it's size and whether it is reserved/allocated. Free regions always get merged. Regions don't store their addresses, the
+   third region's address is calculated by adding the first and second region's size to "heap_start":
+      region_3_addr = heap_start + regions[0].size + regions[1].size
 
-Before the heap is set up memory is allocated on a "placement address". This
- is an identity mapped area of continuous memory, the allocation just moves
- a pointer forward by the requested size and returns it's previous value.
+Before the heap is set up memory is allocated on a "placement address". This is an identity mapped area of continuous memory,
+   the allocation just moves a pointer forward by the requested size and returns it's previous value.
 
-The heap's management data is placed at this placement address, too. Since this
- area cannot grow, the heap has a maximum amount of region-objects
- ("region_max_count").
+The heap's management data is placed at this placement address, too. Since this area cannot grow, the heap has a maximum
+   amount of region-objects ("region_max_count").
 */
 
 

@@ -10,6 +10,7 @@
 #include "usb2.h"
 #include "ehci.h"
 #include "ehciQHqTD.h"
+#include "console.h"
 
 void*     DataQTD;            // pointer to IO qTD transferring data
 void*     SetupQTD;           // pointer to Setup qTD transferring control transfer command

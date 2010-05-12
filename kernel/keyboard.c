@@ -10,6 +10,7 @@
 #include "event_list.h"
 #include "video.h"
 #include "irq.h"
+#include "scheduler.h"
 
 #ifdef KEYMAP_GER
 #include "keyboard_GER.h"
@@ -147,6 +148,7 @@ uint8_t ScanToASCII()
     }
     if (CtrlKeyDown && (retchar == 't')) // If you want to test something
     {
+        scheduler_log();
         return 0;
     }
 

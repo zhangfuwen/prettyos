@@ -43,7 +43,7 @@ void tasking_install()
     kdebug(3, "1st_task: ");
 
     cli();
-    currentTask = initTaskQueue();
+    currentTask = scheduler_install();
     currentTask->pid = next_pid++;
     currentTask->esp = 0;
     currentTask->eip = 0;
@@ -264,7 +264,7 @@ uint32_t task_switch (uint32_t esp)
     currentTask = currentTask->next; // take the next task
     if (!currentTask)
     {
-        currentTask = getReadyTask();
+        currentTask = scheduler_getNextTask();
     }
 
     current_console = currentTask->console;
@@ -277,7 +277,7 @@ uint32_t task_switch (uint32_t esp)
     tss.esp0 = (uintptr_t)currentTask->kernel_stack;
     tss.ss   = currentTask->ss;
 
-    kdebug(3, "%d ",getpid());
+    kdebug(3, "%d ", currentTask->pid);
 
     // set TS
     if (currentTask == FPUTask)
@@ -328,7 +328,7 @@ void exit()
         free(currentTask->console);
     }
 
-    clearTask(currentTask);
+    scheduler_deleteTask(currentTask);
 
     // free memory at heap
     free(pkernelstack);
@@ -361,12 +361,11 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     textColor(0x05);
-    printf("\npid: %d ", t->pid);           // Process ID
-    printf("esp: %X ",t->esp);              // Stack pointer
-    printf("eip: %X ",t->eip);              // Instruction pointer
-    printf("PD: %X ", t->page_directory);   // Page directory.
-    printf("k_stack: %X ",t->kernel_stack); // Kernel stack location.
-    printf("next: %X\n",  t->next);         // The next task in a linked list.
+    printf("\npid: %d  ", t->pid);          // Process ID
+    printf("esp: %X  ", t->esp);            // Stack pointer
+    printf("eip: %X  ", t->eip);            // Instruction pointer
+    printf("PD: %X  ", t->page_directory);  // Page directory.
+    printf("k_stack: %X", t->kernel_stack); // Kernel stack location.
     textColor(0x0F);
 }
 

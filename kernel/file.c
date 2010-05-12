@@ -205,7 +205,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
         {
             printf("free root dir entry nr. %d\n\n",i);
             freeRootDirEntry = i;
-            memset((void*)&track1[(rootdirStart-9216)+i*0x20], 0x00,                32); // 32 times zero
+            memset((void*)&track1[(rootdirStart-9216)+i*0x20], 0x00,                   32); // 32 times zero
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20   ], (void*)bufName,       8); // write name
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+ 8], (void*)bufExt,        3); // write extension
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20+26], (void*)&firstCluster, 2); // write first cluster
@@ -297,11 +297,9 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
 int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// load file
 {
     uint8_t a[512];
-    uint32_t sectornumber;
-    uint32_t i, pos;  // i for FAT-index, pos for data position
 
     // copy first cluster
-    sectornumber = firstCluster+ADD;
+    uint32_t sectornumber = firstCluster+ADD;
     printf("\n\n1st sector: %d\n",sectornumber);
 
     uint32_t timeout = 2; // limit
@@ -317,16 +315,16 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// lo
             break;
         }
     }
-    if (retVal==0)
+    /*if (retVal==0)
     {
-        /// printf("success read_sector.\n");
-    }
+        printf("success read_sector.\n");
+    }*/
 
     memcpy((void*)fileData, (void*)a, 512);
 
     /// find second cluster and chain in fat /// FAT12 specific
-    pos=0;
-    i = firstCluster;
+    uint32_t pos=0; // Data position
+    uint32_t i = firstCluster; // FAT-Index
     while (fatEntry[i]!=0xFFF)
     {
         printf("\ni: %d FAT-entry: %x\t",i,fatEntry[i]);
@@ -354,10 +352,10 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// lo
                 break;
             }
         }
-        if (retVal==0)
+        /*if (retVal==0)
         {
-            /// printf("success read_sector.\n");
-        }
+            printf("success read_sector.\n");
+        }*/
 
         memcpy((void*)(fileData+pos*512), (void*)a, 512);
 
@@ -371,11 +369,10 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// lo
 /// does not work correct!
 int32_t file_ia_cache(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// load file
 {
-    uint32_t sectornumber;
-    uint32_t i, n, pos;  // i for FAT-index, n for index of cacheTrackNumber, pos for data position
+    uint32_t n; // index of cacheTrackNumber
 
     // copy first cluster
-    sectornumber  = firstCluster+ADD;
+    uint32_t sectornumber  = firstCluster+ADD;
     uint8_t sectorInTrack = sectornumber%18;
     printf("\n\n1st sector: %d\n",sectornumber);
 
@@ -388,8 +385,8 @@ int32_t file_ia_cache(int32_t* fatEntry, uint32_t firstCluster, void* fileData) 
     memcpy((void*)fileData, (void*)(uint32_t)(cache[n][sectorInTrack*0x200]),512);
 
     /// find second cluster and chain in fat /// FAT12 specific
-    pos=0;
-    i = firstCluster;
+    uint32_t pos = 0; // Data position
+    uint32_t i = firstCluster; // FAT-Index
     while (fatEntry[i]!=0xFFF)
     {
         printf("\ni: %d FAT-entry: %x\t",i,fatEntry[i]);

@@ -7,6 +7,7 @@
 #include "util.h"
 #include "pci.h"
 #include "ehci.h"
+#include "console.h"
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];

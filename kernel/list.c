@@ -92,39 +92,68 @@ void* list_GetElement(listHead_t* hd, uint32_t number)
 // Ring
 element_t* ring_Create()
 {
-	element_t* ring = malloc(sizeof(element_t), 0);
-	ring->data = 0;
-	ring->next = ring;
-	return(ring);
+    element_t* ring = malloc(sizeof(element_t), 0);
+    ring->data = 0;
+    ring->next = ring;
+    return(ring);
 }
 
 void ring_Insert(element_t* ring, void* data)
 {
-	element_t* item = malloc(sizeof(element_t), 0);
-	item->data = data;
-	item->next = ring->next;
-	ring->next = item;
+    if(ring->data == 0) // ring is empty
+    {
+        ring->data = data;
+    }
+    else
+    {
+        element_t* item = malloc(sizeof(element_t), 0);
+        item->data = data;
+        item->next = ring->next;
+        ring->next = item;
+    }
 }
 
 bool ring_isEmpty(element_t* ring)
 {
-	return(ring->data == 0);
+    return(ring->data == 0);
 }
 
+#include "video.h"
 bool ring_DeleteFirst(element_t* ring, void* data)
 {
-	element_t* temp = ring;
-	for(; temp->next != ring; temp = temp->next)
-	{
-		if(temp->next->data == data)
-		{
-			ring = temp->next;
-			temp->next = ring->next;
-			free(ring);
-			return(true);
-		}
-	}
-	return(false);
+    if (ring->next == ring) // If the ring contains only one element
+    {
+        if(ring->data == data)
+        {
+            //writeInfo(1, "hehe");
+            ring->data = 0; // "erase" it by setting data to 0
+        }
+        return(ring->data == data);
+    }
+    else
+    {
+        element_t* temp = ring;
+        while (temp->next != ring)
+        {
+            if (temp->next->data == data) // next element will be deleted
+            {
+                //writeInfo(0, "tätära");
+                ring = temp->next;
+                temp->next = temp->next->next;
+                free(ring);
+                return(true);
+            }
+            if (temp->next->next == ring && ring->data == data) // ring will be finished soon, first element of the ring will be deleted
+            {
+                //writeInfo(2, "törötörö");
+                temp->next = ring->next;
+                free(ring);
+                return(true);
+            }
+            temp = temp->next;
+        }
+        return(false);
+    }
 }
 
 

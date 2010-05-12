@@ -19,7 +19,7 @@ typedef struct
 
 
 listHead_t* list_Create();                                    // allocates memory for a list, returns a pointer to that list
-bool        list_Append(listHead_t* hd, void* data);          // Inserts a new (malloc) element at the end of the list
+bool        list_Append(listHead_t* hd, void* data);          // Inserts a new element at the end of the list
 void        list_DeleteAll(listHead_t* hd);                   // Deletes everything that has been allocated for this list.
 void        list_Show(listHead_t* hd);                        // prints the list on the Screen
 void*       list_GetElement(listHead_t* hd, uint32_t number); // Returns the data at the position "number"
