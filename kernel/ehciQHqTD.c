@@ -38,7 +38,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     head->inactive               =   0;
     head->endpoint               =   endpoint;       // endpoint 0 contains Device infos such as name
     head->endpointSpeed          =   2;              // 00b = full speed; 01b = low speed; 10b = high speed
-    head->dataToggleControl      =   0; //TEST   1;  // get the Data Toggle bit out of the included qTD
+    head->dataToggleControl      =   1;              // get the Data Toggle bit out of the included qTD
     head->H                      =   H;              // mark a queue head as being the head of the reclaim list
     head->maxPacketLength        =   packetSize;     // 64 byte for a control transfer to a high speed device
     head->controlEndpointFlag    =   0;              // only used if endpoint is a control endpoint and not high speed
