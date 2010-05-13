@@ -37,26 +37,26 @@
 
 struct boot_sector
 {
-    char    jumpBoot[3];
-    char    SysName[8];
-    int32_t charsPerSector;
-    char    SectorsPerCluster;
-    int32_t ReservedSectors;
-    char    FATcount;
-    int32_t MaxRootEntries;
-    int32_t TotalSectors1;
-    char    MediaDescriptor;
-    int32_t SectorsPerFAT;
-    int32_t SectorsPerTrack;
-    int32_t HeadCount;
-    int32_t HiddenSectors;
-    int32_t TotalSectors2;
-    char    DriveNumber;
-    char    Reserved1;
-    char    ExtBootSignature;
-    int32_t VolumeSerial;
-    char    VolumeLabel[11];
-    char    Reserved2[8];
+    char     jumpBoot[3];
+    char     SysName[8];
+    uint16_t charsPerSector;
+    uint8_t  SectorsPerCluster;
+    uint16_t ReservedSectors;
+    uint8_t  FATcount;
+    uint16_t MaxRootEntries;
+    uint16_t TotalSectors1;
+    uint8_t  MediaDescriptor;
+    uint16_t SectorsPerFAT;
+    uint16_t SectorsPerTrack;
+    uint16_t HeadCount;
+    uint32_t HiddenSectors;
+    uint32_t TotalSectors2;
+    uint8_t  DriveNumber;
+    uint8_t  Reserved1;
+    uint8_t  ExtBootSignature;
+    uint32_t VolumeSerial;
+    char     VolumeLabel[11];
+    char     Reserved2[8];
 }__attribute__((packed));
 
 struct dir_entry

@@ -12,6 +12,8 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
+#include "fat12.h" // for first tests only
+
 const uint32_t CBWMagic = 0x43425355;
 
 void* cmdQTD;
@@ -411,13 +413,42 @@ void testMSD(uint8_t devAddr, uint8_t config)
             textColor(0x09); printf("\n\n>>> SCSI: read   sector: %d", sector); textColor(0x0F);
 
             usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x28, sector, blocks); // dev, endp, cmd, LBA, transfer length
-
             showUSBSTS();
             waitForKeyStroke();
+            if (sector == 0)
+            {
+                analyzeBootSector((void*)DataQTDpage0); // for first tests only
+                waitForKeyStroke();
+            }
         }
     }// else    
 }
 
+void analyzeBootSector(void* addr) // for first tests only
+{
+    struct boot_sector* sec0 = (struct boot_sector*)addr;
+
+    char SysName[9];
+    char FATn[9];
+    strncpy(SysName, sec0->SysName,   8); 
+    strncpy(FATn,    sec0->Reserved2, 8);
+    SysName[8]=0;
+    FATn[8]   =0;
+    
+    printf("\nOEM name:           %s"    ,SysName);
+    printf("\tbyte per sector:        %d",sec0->charsPerSector); 
+    printf("\nsectors per cluster:    %d",sec0->SectorsPerCluster); 
+    printf("\tnumber of FAT copies:   %d",sec0->FATcount);
+    printf("\nmax root dir entries:   %d",sec0->MaxRootEntries);
+    printf("\ttotal sectors (<65536): %d",sec0->TotalSectors1);
+    printf("\nmedia Descriptor:       %y",sec0->MediaDescriptor);
+    printf("\tsectors per FAT:        %d",sec0->SectorsPerFAT);
+    printf("\nsectors per track:      %d",sec0->SectorsPerTrack);
+    printf("\theads/pages:            %d",sec0->HeadCount);
+    printf("\nhidden sectors:         %d",sec0->HiddenSectors);
+    printf("\ttotal sectors (>65535): %d",sec0->TotalSectors2);
+    printf("\nFAT 12/16:              %s",FATn); 
+}
 
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN)
 {
