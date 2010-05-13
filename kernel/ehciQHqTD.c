@@ -12,15 +12,14 @@
 #include "ehciQHqTD.h"
 #include "console.h"
 
-void*     DataQTD;            // pointer to IO qTD transferring data
-void*     SetupQTD;           // pointer to Setup qTD transferring control transfer command
+void*        DataQTD;            // pointer to IO qTD transferring data
+void*        SetupQTD;           // pointer to Setup qTD transferring control transfer command
+extern void* StatusQTD;          // pointer to IN qTD transferring CSW
 
-extern void* StatusQTD;       // pointer to IN qTD transferring CSW
-
-uintptr_t QTDpage0;           // pointer to qTD page0 (general)
-uintptr_t DataQTDpage0;       // pointer to qTD page0 (In/Out data)
-uintptr_t MSDStatusQTDpage0;  // pointer to qTD page0 (IN, mass storage device status)
-uintptr_t SetupQTDpage0;      // pointer to qTD page0 (OUT, setup control transfer)
+uintptr_t    QTDpage0;           // pointer to qTD page0 (general)
+uintptr_t    DataQTDpage0;       // pointer to qTD page0 (In/Out data)
+uintptr_t    MSDStatusQTDpage0;  // pointer to qTD page0 (IN, mass storage device status)
+uintptr_t    SetupQTDpage0;      // pointer to qTD page0 (OUT, setup control transfer)
 
 /////////////////////
 // Queue Head (QH) //
@@ -47,12 +46,9 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     head->splitCompletionMask    =   0;              // unused if (not low/full speed and in periodic schedule)
     head->hubAddr                =   0;              // unused if high speed (Split transfer)
     head->portNumber             =   0;              // unused if high speed (Split transfer)
-    head->mult                   =   1;              // 1-3 transaction to be issued for this endpoint per micro-frame (2 bit field): 
-                                                     // 0 undefined results
+    head->mult                   =   1;              // 1-3 transaction per micro-frame, 0 means undefined results
     if (firstQTD == NULL)
-    {
         head->qtd.next = 0x1;
-    }
     else
     {
         uint32_t physNext = paging_get_phys_addr(kernel_pd, firstQTD);
@@ -70,13 +66,10 @@ ehci_qtd_t* allocQTD(uintptr_t next)
     memset(td,0,PAGESIZE);
 
     if (next != 0x1)
-    {
         td->next = paging_get_phys_addr(kernel_pd, (void*)next);
-    }
     else
-    {
-        td->next = 0x1; // no next qTD
-    }
+        td->next = 0x1; 
+    
     return td;
 }
 
@@ -134,9 +127,7 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     QTDpage0 = allocQTDbuffer(td);
 
     if (tokenBytes > 0) // data are transferred, no handshake
-    {
         DataQTDpage0 = QTDpage0;
-    }
 
     return (void*)td;
 }
@@ -181,14 +172,11 @@ static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
     #endif
     for (uint32_t c=0; c<size; c++)
     {
-
         if (alphanumeric)
         {
             textColor(0x0F);
             if ( (*((uint8_t*)virtAddrBuf0+c)>=0x20) && (*((uint8_t*)virtAddrBuf0+c)<=0x7E) )
-            {
                 printf("%c", *((uint8_t*)virtAddrBuf0+c));
-            }
         }
         else
         {
@@ -399,7 +387,7 @@ void performAsyncScheduler(bool stop, bool analyze)
              }
          }
 
-     sleepMilliSeconds(1000); 
+     sleepMilliSeconds(200); 
 
      timeout=7;
      while (!USBINTflag) // set by interrupt

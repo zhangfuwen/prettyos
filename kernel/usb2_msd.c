@@ -167,21 +167,14 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     // http://en.wikipedia.org/wiki/SCSI_CDB
     struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
-    memset(cbw,0,sizeof(struct usb2_CommandBlockWrapper)); // zero of cbw
-
-    // SCSI commands
+    memset(cbw,0,sizeof(struct usb2_CommandBlockWrapper)); // zero of cbw    
     SCSIcmd(SCSIcommand, cbw, LBA, TransferLength);
     if (SCSIcommand == 0x28)   // read(10)        
-    {
         TransferLength *= 512; // byte = 512 * block
-    }
+    
+    createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_In), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
 
-    // OUT QH
-    createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
-
-    performAsyncScheduler(true, true);
-
-    /***************************************************************************/
+  /**************************************************************************************************************************************/
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nIN part");
@@ -231,8 +224,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
       #endif
     }
 
-    // IN QH
-    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
+    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_Out), QTD_In, 0, device, endpointIn, 512); // endpoint IN for MSD
 
     performAsyncScheduler(true, true);
 
@@ -295,6 +287,10 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     }
 }
 
+static uint8_t getStatusByte()
+{
+    return BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
+}
 
 void testMSD(uint8_t devAddr, uint8_t config)
 {
@@ -310,21 +306,17 @@ void testMSD(uint8_t devAddr, uint8_t config)
         // maxLUN (0 for USB-sticks)
         usbDevices[devAddr].maxLUN = 0;
 
-        // start with correct endpoint toggles 
-        usbDevices[devAddr].ToggleEndpointInMSD  = 0;
-        usbDevices[devAddr].ToggleEndpointOutMSD = 0;
-
-        uint8_t statusByte;
-
+        // start with correct endpoint toggles and reset interface
+        usbDevices[devAddr].ToggleEndpointInMSD = usbDevices[devAddr].ToggleEndpointOutMSD = 0;
         usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
-        ///////// send SCSI comamnd "inquiry (opcode: 0x12)"
+        ///////// send SCSI command "inquiry (opcode: 0x12)"
 
         textColor(0x09); printf("\n\n>>> SCSI: inquiry"); textColor(0x0F);
 
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x12, 0, 36); // dev, endp, cmd, LBA, transfer length
 
-        statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
+        uint8_t statusByte = getStatusByte();
 
         if (statusByte == 0x00)
         {
@@ -338,7 +330,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
         waitForKeyStroke();
         
 
-        ///////// send SCSI comamnd "test unit ready(6)"
+        ///////// send SCSI command "test unit ready(6)"
 
         int32_t timeout = 2;
         int32_t sense = -1;
@@ -350,36 +342,22 @@ void testMSD(uint8_t devAddr, uint8_t config)
 
             usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0); // dev, endp, cmd, LBA, transfer length
 
-            statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
-
-          #ifdef _USB_DIAGNOSIS_ 
-            textColor(0x02);
-            printf("\n\nCommand Block Status Values in \"good status\"\n");
-            textColor(0x0F);
-          #endif
-
+            uint8_t statusByteTestReady = getStatusByte();
             showUSBSTS();
             waitForKeyStroke();
 
-            ///////// send SCSI comamnd "request sense"
+            ///////// send SCSI command "request sense"
 
             textColor(0x09); printf("\n\n>>> SCSI: request sense"); textColor(0x0F);
 
             usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18); // dev, endp, cmd, LBA, transfer length
 
-            statusByte = BYTE1(*(((uint32_t*)MSDStatusQTDpage0)+3));
-          
-          #ifdef _USB_DIAGNOSIS_ 
-            textColor(0x02);
-            printf("\n\nCommand Block Status Values in \"good status\"\n");
-            textColor(0x0F);
-          #endif
-
+            statusByte = getStatusByte();
             showUSBSTS();        
             timeout--;
 
             sense = showResultsRequestSense();
-            if ( (sense == 0) || (sense == 6) || (timeout <= 0) )
+            if ( ((statusByteTestReady == 0) && ((sense == 0) || (sense == 6))) || (timeout <= 0) )
             {
                 repeat = false;
             }
@@ -387,7 +365,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
         }    
 
 
-        ///////// send SCSI comamnd "read capacity(10)"
+        ///////// send SCSI command "read capacity(10)"
 
         textColor(0x09); printf("\n\n>>> SCSI: read capacity"); textColor(0x0F);
      
@@ -405,7 +383,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
         waitForKeyStroke();
 
 
-        ///////// send SCSI comamnd "read(10)", read one block (512 byte) from LBA ..., get Status
+        ///////// send SCSI command "read(10)", read one block (512 byte) from LBA ..., get Status
 
         uint32_t blocks = 1; // number of blocks to be read
         for(uint32_t sector=0; sector<5; sector++)
