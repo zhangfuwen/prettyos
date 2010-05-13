@@ -11,6 +11,7 @@
 #include "event_list.h"
 #include "video.h"
 #include "irq.h"
+#include "sys_speaker.h"
 
 #include "usb2.h"
 #include "usb2_msd.h"
@@ -75,9 +76,11 @@ void ehci_handler(registers_t* r)
 {
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
     {
-      textColor(0x09);
-      printf("\nehci_handler: ");
-      textColor(0x0F);
+      #ifdef _USB_DIAGNOSIS_  
+        textColor(0x09);
+        printf("\nehci_handler: ");
+        textColor(0x0F);
+      #endif
     }
 
     textColor(0x0E);
@@ -120,12 +123,11 @@ void ehci_handler(registers_t* r)
         textColor(0x04);
         printf("Host System Error");
         textColor(0x0F);
-        pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // necessary?
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         analyzeHostSystemError(pciEHCInumber);
         textColor(0x0E);
         printf("\n>>> Init EHCI after fatal error:           <<<");
-         printf("\n>>> Press key for EHCI (re)initialization. <<<");
+        printf("\n>>> Press key for EHCI (re)initialization. <<<");
         while(!keyboard_getChar());
         textColor(0x0F);
         addEvent(&EHCI_INIT);
@@ -141,12 +143,9 @@ void ehci_handler(registers_t* r)
 void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 {
     bar += offset;
-
-    /// TEST
     uintptr_t bar_phys = (uintptr_t)paging_get_phys_addr(kernel_pd, (void*)bar);
     printf("EHCI bar get_phys_Addr: %X\n", bar_phys);
-    /// TEST
-
+    
     pCapRegs = (struct ehci_CapRegs*) bar;
     pOpRegs  = (struct ehci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
@@ -301,17 +300,14 @@ int32_t initEHCIHostController()
     enabledPortFlag = false;
     startHostController(num);
 
-    if (!(pOpRegs->USBSTS & STS_HCHALTED)) // TEST
+    if (!(pOpRegs->USBSTS & STS_HCHALTED)) 
     {
-         // textColor(0x02);
-         // printf("\nHCHalted bit set to 0 (OK), ports can be enabled now.");
          enablePorts();
-         // textColor(0x0F);
     }
-    else // not OK
+    else 
     {
          textColor(0x04);
-         printf("\nHCHalted bit set to 1 (Not OK!), fatal Error --> Ports cannot be enabled");
+         printf("\nFatal Error: Ports cannot be enabled. HCHalted set.");
          showUSBSTS();
          textColor(0x0F);
          return -1;
@@ -327,22 +323,13 @@ void enablePorts()
 
     for (uint8_t j=0; j<numPorts; j++)
     {
-         // resetPort(j);
          resetPort(PORTRESET);
 
-         //if ( pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)  ) // high speed idle, enabled, SE0
          if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
          {
              textColor(0x0E);
              printf("Port %d: high speed enabled, device attached\n",j+1);
              textColor(0x0F);
-
-             /*
-             if (USBtransferFlag)
-             {
-                 // only port change activated for USB transfer
-             }
-             */
          }
     }
     enabledPortFlag = true;
@@ -384,7 +371,7 @@ void resetPort(uint8_t j)
 
     pOpRegs->USBINTR = 0;
     pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
-    sleepMilliSeconds(250); // do not delete         // wait
+    sleepMilliSeconds(250);                 // do not delete this wait 
     pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
 
     // wait and check, whether really zero
@@ -409,21 +396,14 @@ void showPORTSC()
 {
     for (uint8_t j=0; j<numPorts; j++)
     {
-        //if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
         if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED_CHANGE)
         {
             char PortStatus[20];
 
-            // if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
             if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED)
             {
                 strcpy(PortStatus,"attached");
                 writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
-
-                /*
-                resetPort(j);
-                checkPortLineStatus(j);
-                */
                 resetPort(PORTRESET);
                 checkPortLineStatus(PORTRESET);
 
@@ -434,7 +414,7 @@ void showPORTSC()
                 writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
             }
             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt            
-            // beep(1000,100);
+            beep(1000,100);
         }
     }
 }
@@ -460,9 +440,11 @@ void startEHCI()
 
 void showUSBSTS()
 {
+  #ifdef _USB_DIAGNOSIS_
     printf("\nUSB status: ");
     textColor(0x02);
-    printf("%X",pOpRegs->USBSTS);
+    printf("%X",pOpRegs->USBSTS);    
+  #endif
     textColor(0x0E);
     if (pOpRegs->USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
     if (pOpRegs->USBSTS & STS_USBERRINT)          { printf("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
@@ -546,7 +528,9 @@ void checkPortLineStatus(uint8_t j)
                  #endif
 
                  uint8_t config = usbTransferGetConfiguration(devAddr);
+                 #ifdef _USB_DIAGNOSIS_
                  printf(" %d",config); // check configuration
+                 #endif
 
                  #ifdef _USB_DIAGNOSIS_
                  printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);

@@ -3,10 +3,10 @@
 
 #include "types.h"
 
-// Switches changing the behaviour of PrettyOS
+// Switches changing the behavior of PrettyOS
 /// #define _DIAGNOSIS_     // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _USB_DIAGNOSIS_ // only as transition state during implementation of USB 2.0 transfers
-#define _SOUND_         // Sound-Messages - activated per default, although they increase the boot-time
+/// #define _SOUND_         // Sound-Messages   - deactivated per default, because they increase the boot-time
 
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);

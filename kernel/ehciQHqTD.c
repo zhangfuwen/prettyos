@@ -214,26 +214,21 @@ uint32_t showStatusbyteQTD(void* addressQTD)
 {
     textColor(0x0F);
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
-    printf("\nqTD Status: %y\t", statusbyte);
-
-    // analyze status byte (cf. EHCI 1.0 spec, Table 3-16 Status in qTD Token)
-
-    // Status not OK
-    textColor(0x0E);
-    if (statusbyte & (1<<7)) { printf("Active - HC transactions enabled"); }
-    if (statusbyte & (1<<6)) { printf("Halted - serious error at the device/endpoint"); }
-    if (statusbyte & (1<<5)) { printf("Data Buffer Error (overrun or underrun)"); }
-    if (statusbyte & (1<<4)) { printf("Babble (fatal error leads to Halted)"); }
-    if (statusbyte & (1<<3)) { printf("Transaction Error (XactErr)- host received no valid response device"); }
-    if (statusbyte & (1<<2)) { printf("Missed Micro-Frame"); }
-    if (statusbyte & (1<<1)) { printf("Do Complete Split"); }
-    if (statusbyte & (1<<0)) { printf("Do Ping"); }
-    textColor(0x0A);
-
-    // Status OK
-    if (statusbyte == 0)     { printf("OK (no bit set)"); }
-    textColor(0x0F);
-
+    if (statusbyte != 0x00)
+    {        
+        textColor(0x0E);
+        if (statusbyte & (1<<7)) { printf("Active - HC transactions enabled"); }
+        textColor(0x0C);
+        if (statusbyte & (1<<6)) { printf("Halted - serious error at the device/endpoint"); }
+        if (statusbyte & (1<<5)) { printf("Data Buffer Error (overrun or underrun)"); }
+        if (statusbyte & (1<<4)) { printf("Babble (fatal error leads to Halted)"); }
+        if (statusbyte & (1<<3)) { printf("Transaction Error (XactErr)- host received no valid response device"); }
+        if (statusbyte & (1<<2)) { printf("Missed Micro-Frame"); }
+        textColor(0x0E);
+        if (statusbyte & (1<<1)) { printf("Do Complete Split"); }
+        if (statusbyte & (1<<0)) { printf("Do Ping"); }
+        textColor(0x0F);     
+    }
     return statusbyte;
 }   
 
@@ -368,11 +363,12 @@ void checkAsyncScheduler()
 
 void performAsyncScheduler(bool stop, bool analyze)
 {
-    // TEST
     if (analyze)
     {
+      #ifdef _USB_DIAGNOSIS_  
         printf("\nbefore aS:");
         checkAsyncScheduler();
+      #endif
     }
 
     // Enable Asynchronous Schdeuler
@@ -389,7 +385,9 @@ void performAsyncScheduler(bool stop, bool analyze)
              {
                  sleepMilliSeconds(20); 
                  textColor(0x0D);
+               #ifdef _USB_DIAGNOSIS_    
                  printf(">");
+               #endif
                  textColor(0x0F);
              }
              else
@@ -411,7 +409,10 @@ void performAsyncScheduler(bool stop, bool analyze)
          {
              sleepMilliSeconds(20); 
              textColor(0x0D);
+             
+           #ifdef _USB_DIAGNOSIS_  
              printf("#");
+           #endif 
              textColor(0x0F);
          }
          else
@@ -438,7 +439,9 @@ void performAsyncScheduler(bool stop, bool analyze)
              {
                  sleepMilliSeconds(20); 
                  textColor(0x0D);
+               #ifdef _USB_DIAGNOSIS_    
                  printf("!");
+               #endif
                  textColor(0x0F);
              }
              else
@@ -453,8 +456,10 @@ void performAsyncScheduler(bool stop, bool analyze)
 
      if (analyze)
      {
+       #ifdef _USB_DIAGNOSIS_  
          printf("\nafter aS:");
          checkAsyncScheduler();    
+       #endif
      }     
 }
 
