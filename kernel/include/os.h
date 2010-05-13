@@ -3,7 +3,8 @@
 
 #include "types.h"
 
-// Switches changing the behavior of PrettyOS
+// These switches change the behavior of PrettyOS, useful for analyzing tasks:
+
 /// #define _DIAGNOSIS_     // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _USB_DIAGNOSIS_ // only as transition state during implementation of USB 2.0 transfers
 /// #define _SOUND_         // Sound-Messages   - deactivated per default, because they increase the boot-time

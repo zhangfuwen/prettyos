@@ -5,12 +5,11 @@
 
 #include "task.h"
 #include "util.h"
-#include "scheduler.h"
 #include "paging.h"
 #include "descriptor_tables.h"
 #include "kheap.h"
 #include "video.h"
-
+#include "scheduler.h"
 
 bool task_switching;
 
@@ -302,9 +301,9 @@ void switch_context() // switch to next task
 void exit()
 {
     cli();
-    #ifdef _DIAGNOSIS_
-    log_task_list();
-    #endif
+  #ifdef _DIAGNOSIS_
+    scheduler_log();
+  #endif
 
     // finish current task and free occupied heap
     void* pkernelstack = (void*) ((uint32_t) currentTask->kernel_stack - KERNEL_STACK_SIZE);
@@ -334,9 +333,9 @@ void exit()
     free(pkernelstack);
     free(ptask);
 
-    #ifdef _DIAGNOSIS_
-    log_task_list();
-    #endif
+  #ifdef _DIAGNOSIS_
+    scheduler_log();
+  #endif
     sti();
     kdebug(3, "exit finished.\n");
 
