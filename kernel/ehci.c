@@ -76,11 +76,9 @@ void ehci_handler(registers_t* r)
 {
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
     {
-      #ifdef _USB_DIAGNOSIS_  
         textColor(0x09);
         printf("\nehci_handler: ");
         textColor(0x0F);
-      #endif
     }
 
     textColor(0x0E);

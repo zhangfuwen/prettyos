@@ -110,7 +110,9 @@ void usbTransferConfig(uint32_t device)
             if (((struct usb2_interfaceDescriptor*)addrPointer)->interfaceClass == 8)
             {
                 // store interface number for mass storage transfers
-                usbDevices[device].numInterfaceMSD = ((struct usb2_interfaceDescriptor*)addrPointer)->interfaceNumber;
+                usbDevices[device].numInterfaceMSD    = ((struct usb2_interfaceDescriptor*)addrPointer)->interfaceNumber;
+                usbDevices[device].InterfaceClass     = ((struct usb2_interfaceDescriptor*)addrPointer)->interfaceClass;
+                usbDevices[device].InterfaceSubclass  = ((struct usb2_interfaceDescriptor*)addrPointer)->interfaceSubclass;
             }
             addrPointer += 9;
             found = true;

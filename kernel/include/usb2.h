@@ -25,6 +25,8 @@ typedef struct usb2_Device
 
     // MSD specific
     uint8_t  numInterfaceMSD;
+    uint8_t  InterfaceClass;
+    uint8_t  InterfaceSubclass;
     uint8_t  numEndpointInMSD;
     uint8_t  numEndpointOutMSD;
     bool     ToggleEndpointInMSD;
