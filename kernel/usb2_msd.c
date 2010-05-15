@@ -283,7 +283,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     if ((statusCommand & 0x40) || (statusData & 0x40) || (statusStatus & 0x40))
     {
-        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+        // TODO: first check, seems not yet to be helpful ?!
+        // usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
     }
 }
 
@@ -412,20 +413,28 @@ void analyzeBootSector(void* addr) // for first tests only
     strncpy(FATn,    sec0->Reserved2, 8);
     SysName[8]=0;
     FATn[8]   =0;
-    
-    printf("\nOEM name:           %s"    ,SysName);
-    printf("\tbyte per sector:        %d",sec0->charsPerSector); 
-    printf("\nsectors per cluster:    %d",sec0->SectorsPerCluster); 
-    printf("\tnumber of FAT copies:   %d",sec0->FATcount);
-    printf("\nmax root dir entries:   %d",sec0->MaxRootEntries);
-    printf("\ttotal sectors (<65536): %d",sec0->TotalSectors1);
-    printf("\nmedia Descriptor:       %y",sec0->MediaDescriptor);
-    printf("\tsectors per FAT:        %d",sec0->SectorsPerFAT);
-    printf("\nsectors per track:      %d",sec0->SectorsPerTrack);
-    printf("\theads/pages:            %d",sec0->HeadCount);
-    printf("\nhidden sectors:         %d",sec0->HiddenSectors);
-    printf("\ttotal sectors (>65535): %d",sec0->TotalSectors2);
-    printf("\nFAT 12/16:              %s",FATn); 
+    if (sec0->charsPerSector == 0x200)
+    {
+        printf("\nOEM name:           %s"    ,SysName);
+        printf("\tbyte per sector:        %d",sec0->charsPerSector); 
+        printf("\nsectors per cluster:    %d",sec0->SectorsPerCluster); 
+        printf("\tnumber of FAT copies:   %d",sec0->FATcount);
+        printf("\nmax root dir entries:   %d",sec0->MaxRootEntries);
+        printf("\ttotal sectors (<65536): %d",sec0->TotalSectors1);
+        printf("\nmedia Descriptor:       %y",sec0->MediaDescriptor);
+        printf("\tsectors per FAT:        %d",sec0->SectorsPerFAT);
+        printf("\nsectors per track:      %d",sec0->SectorsPerTrack);
+        printf("\theads/pages:            %d",sec0->HeadCount);
+        printf("\nhidden sectors:         %d",sec0->HiddenSectors);
+        printf("\ttotal sectors (>65535): %d",sec0->TotalSectors2);
+        printf("\nFAT 12/16:              %s",FATn); 
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nThis seems to be no valid description of the FAT file system, could be MBR.");
+        textColor(0x0F);
+    }
 }
 
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN)

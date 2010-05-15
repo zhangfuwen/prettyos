@@ -56,7 +56,7 @@ void usbTransferDevice(uint32_t device)
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false);
-    printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+    printf("\n---------------------------------------------------------------------\n");
 
     // showPacket(DataQTDpage0,18);
     addDevice ( (struct usb2_deviceDescriptor*)DataQTDpage0, &usbDevices[device] );
@@ -81,7 +81,10 @@ void usbTransferConfig(uint32_t device)
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false);
-    printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+
+    textColor(0x07);
+    printf("\n---------------------------------------------------------------------\n");
+    textColor(0x0A);
 
     // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
     uintptr_t addrPointer = (uintptr_t)DataQTDpage0;
@@ -141,9 +144,11 @@ void usbTransferConfig(uint32_t device)
         {            
             if ( (*(uint8_t*)addrPointer) > 0)
             {
+              #ifdef _USB_DIAGNOSIS_
                 textColor(0x09);
                 printf("\nlength: %d type: %d unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
                 textColor(0x0F);
+              #endif
             }            
             addrPointer += *(uint8_t*)addrPointer;
             found = true;
@@ -151,15 +156,11 @@ void usbTransferConfig(uint32_t device)
 
         if (found == false)
         {
+          #ifdef _USB_DIAGNOSIS_
             printf("\nlength: %d type: %d not found\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
+          #endif
             break;
         }
-
-        textColor(0x0D);
-        printf("\n>>> Press key to go on with data analysis from config descriptor. <<<");
-        textColor(0x0F);
-        while(!keyboard_getChar());
-        printf("\n");
     }
 }
 
@@ -324,12 +325,19 @@ void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
 void showDevice(usb2_Device_t* usbDev)
 {
     textColor(0x0A);
-    printf("\nUSB specification: %d.%d\t\t",    usbDev->usbSpec>>8, usbDev->usbSpec&0xFF); // e.g. 0x0210 means 2.10
-    printf("USB class:         %x\n",           usbDev->usbClass);
-    printf("USB subclass:      %x\t",           usbDev->usbSubclass);
-    printf("USB protocol       %x\n",           usbDev->usbProtocol);
-    printf("max packet size:   %d\t\t",         usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
-
+    printf("\nUSB %d.%d\t",    usbDev->usbSpec>>8, usbDev->usbSpec&0xFF); // e.g. 0x0210 means 2.10
+    if (usbDev->usbClass == 0x00)
+    {
+        /* Use class code information from Interface Descriptors */
+    }
+    else if (usbDev->usbClass == 0x09)
+    {
+        printf("This is an USB Hub: ");
+        if (usbDev->usbProtocol == 0x00) printf("Full speed Hub");
+        if (usbDev->usbProtocol == 0x01) printf("Hi-speed hub with single TT");
+        if (usbDev->usbProtocol == 0x02) printf("Hi-speed hub with multiple TTs");
+    }
+    printf("\nendpoint 0 mps: %d byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
   #ifdef _USB_DIAGNOSIS_
     printf("vendor:            %x\n",           usbDev->vendor);
     printf("product:           %x\t",           usbDev->product);
@@ -340,6 +348,7 @@ void showDevice(usb2_Device_t* usbDev)
     printf("number of config.: %d\n",           usbDev->numConfigurations); // number of possible configurations
     printf("numInterfaceMSD:   %d\n",           usbDev->numInterfaceMSD);
   #endif
+    
     textColor(0x0F);
 }
 
@@ -347,16 +356,15 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
 {
     if (d->length)
     {
-        textColor(0x0A);
-        printf("\n");
+        textColor(0x0A);        
       #ifdef _USB_DIAGNOSIS_
         printf("length:               %d\t\t",  d->length);
         printf("descriptor type:      %d\n",  d->descriptorType);
-      #endif
         textColor(0x07);
         printf("total length:         %d\t",  d->totalLength);
+      #endif
         textColor(0x0A);
-        printf("number of interfaces: %d\n",  d->numInterfaces);
+        printf("Number of interfaces: %d",  d->numInterfaces);
       #ifdef _USB_DIAGNOSIS_
         printf("ID of config:         %x\t",  d->configurationValue);
         printf("ID of config name     %x\n",  d->configuration);
@@ -372,25 +380,122 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
 {
     if (d->length)
     {
-        textColor(0x0E);
-        printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\n");
+        textColor(0x07);
+        printf("\n---------------------------------------------------------------------\n");
         textColor(0x0A);
       #ifdef _USB_DIAGNOSIS_
         printf("length:               %d\t\t", d->length);          // 9
         printf("descriptor type:      %d\n",   d->descriptorType);  // 4
       #endif
-        printf("interface number:     %d\t\t", d->interfaceNumber);
-      #ifdef _USB_DIAGNOSIS_
-        printf("alternate Setting:    %d\n",   d->alternateSetting);
-      #endif
-        printf("number of endpoints:  %d\n",   d->numEndpoints);
+        if (d->numEndpoints == 0)
+        {
+               printf("\nInterface %d has no endpoint and belongs to class:\n", d->interfaceNumber);
+        }
+        else if (d->numEndpoints == 1)
+        {
+            printf("\nInterface %d has only one endpoint and belongs to class:\n", d->interfaceNumber);
+        }
+        else
+        {
+            printf("\nInterface %d has %d endpoints and belongs to class:\n", d->interfaceNumber, d->numEndpoints);
+        }
+        textColor(0x0E);
+        switch (d->interfaceClass)
+        {
+        case 0x01:
+            printf("Audio");
+            break;
+        case 0x02:
+            printf("Communications and CDC Control");
+            break;
+        case 0x03:
+            printf("HID (Human Interface Device)");
+            break;
+        case 0x05:
+            printf("Physical");
+            break;
+        case 0x06:
+            printf("Image");
+            break;
+        case 0x07:
+            printf("Printer");
+            break;
+        case 0x08:
+            printf("Mass Storage, ");
+            switch (d->interfaceSubclass)
+            {
+            case 0x01:
+                printf("Reduced Block Commands, ");
+                break;
+            case 0x02:
+                printf("SFF-8020i or MMC-2(ATAPI), ");
+                break;
+            case 0x03:
+                printf("QIC-157 (tape device), ");
+                break;
+            case 0x04:
+                printf("UFI (e.g. Floppy Disk), ");
+                break;
+            case 0x05:
+                printf("SFF-8070i (e.g. Floppy Disk), ");
+                break;
+            case 0x06:
+                printf("SCSI transparent command set, ");
+                break;
+            }
+            switch (d->interfaceProtocol)
+            {
+            case 0x00:
+                printf("CBI protocol with command completion interrupt.");
+                break;
+            case 0x01:
+                printf("CBI protocol without command completion interrupt.");
+                break;
+            case 0x50:
+                printf("Bulk-Only Transport protocol.");
+                break;
+            }
+            break;
+        case 0x0A:
+            printf("CDC-Data");
+            break;
+        case 0x0B:
+            printf("Smart Card");
+            break;
+        case 0x0D:
+            printf("Content Security");
+            break;
+        case 0x0E:
+            printf("Video");
+            break;
+        case 0x0F:
+            printf("Personal Healthcare");
+            break;
+        case 0xDC:
+            printf("Diagnostic Device");
+            break;
+        case 0xE0:
+            printf("Wireless Controller, subclass: %y protocol: %y.",d->interfaceSubclass,d->interfaceProtocol);
+            break;
+        case 0xEF:
+            printf("Miscellaneous");
+            break;
+        case 0xFE:
+            printf("Application Specific");
+            break;
+        case 0xFF:
+            printf("Vendor Specific");
+            break;
+        }
+     #ifdef _USB_DIAGNOSIS_
+        printf("\nalternate Setting:    %d\n",   d->alternateSetting);
         printf("interface class:      %d\n",   d->interfaceClass);
         printf("interface subclass:   %d\n",   d->interfaceSubclass);
         printf("interface protocol:   %d\n",   d->interfaceProtocol);
-      #ifdef _USB_DIAGNOSIS_
         printf("interface:            %x\n",   d->interface);
       #endif
         textColor(0x0F);
+        sleepSeconds(1); // wait to show data
     }
 }
 
@@ -398,23 +503,23 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
 {
     if (d->length)
     {
-        textColor(0x0E);
-        printf("\n''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\n");
+        textColor(0x07);
+        printf("\n---------------------------------------------------------------------\n");
         textColor(0x0A);
       #ifdef _USB_DIAGNOSIS_
         printf("length:            %d\t\t",  d->length);         // 7
         printf("descriptor type:   %d\n",    d->descriptorType); // 5
       #endif
-        printf("endpoint in/out:   %s\t\t",  d->endpointAddress & 0x80 ? "in" : "out");
-        printf("endpoint number:   %d\n",    d->endpointAddress & 0xF);
-        printf("attributes:        %y\t\t",  d->attributes); // bit 1:0 00 control    01 isochronous    10 bulk                         11 interrupt
-                                                            // bit 3:2 00 no sync    01 async          10 adaptive                     11 sync (only if isochronous)
-                                                            // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
+        printf("endpoint %d: %s, ", d->endpointAddress & 0xF, d->endpointAddress & 0x80 ? "IN " : "OUT");        
+      #ifdef _USB_DIAGNOSIS_      
+        printf("attributes:  %y\t\t",  d->attributes); // bit 1:0 00 control    01 isochronous    10 bulk                         11 interrupt
+                                                       // bit 3:2 00 no sync    01 async          10 adaptive                     11 sync (only if isochronous)
+      #endif                                           // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
         if (d->attributes == 2)
         {
-           printf("\nattributes: bulk - no sync - data endpoint\n");
+           printf(" bulk data,");
         }
-        printf("max packet size:   %d\n",  d->maxPacketSize);
+        printf(" mps: %d byte",  d->maxPacketSize);
       #ifdef _USB_DIAGNOSIS_
         printf("interval:          %d\n",  d->interval);
       #endif
@@ -433,19 +538,119 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
         printf("descriptor type:   %d\n",  d->descriptorType); //  3
       #endif
 
+        printf("\n\nlanguages: ");
         for(int i=0; i<10;i++)
         {
-           if (d->languageID[i])
-           {
-               if (d->languageID[i] == 0x409)
-               {
-                   printf("\nlanguage: German\t");
-               }
-               else
-               {
-                   printf("\nlanguage: %x\t", d->languageID[i]);
-               }
-           }
+            if ( (d->languageID[i] >=0x0400) && (d->languageID[i] <= 0x0465))
+            {
+                switch (d->languageID[i])
+                {
+                case 0x401: 
+                    printf("Arabic\t");
+                    break;
+                case 0x404: 
+                    printf("Chinese \t");
+                    break;
+                case 0x407: 
+                    printf("German\t");
+                    break;
+                case 0x409: 
+                    printf("English\t");
+                    break;
+                case 0x40A: 
+                    printf("Spanish\t");
+                    break;
+                case 0x40C: 
+                    printf("French\t");
+                    break;
+                case 0x410: 
+                    printf("Italian\t");
+                    break;
+                case 0x411: 
+                    printf("Japanese\t");
+                    break;
+                case 0x416: 
+                    printf("Portuguese\t");
+                    break;
+                case 0x419: 
+                    printf("Russian\t");
+                    break;
+                default:            
+                    printf("language code: %x\t", d->languageID[i]);
+                    break;
+                    /*
+                    ; Language Codes
+                    ; 0x400 Neutral 
+                    ; 0x401 Arabic 
+                    ; 0x402 Bulgarian 
+                    ; 0x403 Catalan  
+                    ; 0x404 Chinese 
+                    ; 0x405 Czech 
+                    ; 0x406 Danish 
+                    ; 0x407 German 
+                    ; 0x408 Greek 
+                    ; 0x409 English  
+                    ; 0x40a Spanish  
+                    ; 0x40b Finnish 
+                    ; 0x40c French 
+                    ; 0x40d Hebrew 
+                    ; 0x40e Hungarian 
+                    ; 0x40f Icelandic 
+                    ; 0x410 Italian  
+                    ; 0x411 Japanese 
+                    ; 0x412 Korean 
+                    ; 0x413 Dutch 
+                    ; 0x414 Norwegian 
+                    ; 0x415 Polish 
+                    ; 0x416 Portuguese 
+                    ; 0x418 Romanian 
+                    ; 0x419 Russian 
+                    ; 0x41a Croatian 
+                    ; 0x41a Serbian 
+                    ; 0x41b Slovak 
+                    ; 0x41c Albanian 
+                    ; 0x41d Swedish  
+                    ; 0x41e Thai 
+                    ; 0x41f Turkish  
+                    ; 0x420 Urdu 
+                    ; 0x421 Indonesian 
+                    ; 0x422 Ukrainian 
+                    ; 0x423 Belarusian 
+                    ; 0x424 Slovenian 
+                    ; 0x425 Estonian 
+                    ; 0x426 Latvian 
+                    ; 0x427 Lithuanian 
+                    ; 0x429 Farsi 
+                    ; 0x42a Vietnamese 
+                    ; 0x42b Armenian 
+                    ; 0x42c Azeri 
+                    ; 0x42d Basque 
+                    ; 0x42f Macedonian 
+                    ; 0x436 Afrikaans 
+                    ; 0x437 Georgian 
+                    ; 0x438 Faeroese 
+                    ; 0x439 Hindi 
+                    ; 0x43e Malay 
+                    ; 0x43f Kazak 
+                    ; 0x440 Kyrgyz 
+                    ; 0x441 Swahili 
+                    ; 0x443 Uzbek 
+                    ; 0x444 Tatar 
+                    ; 0x446 Punjabi 
+                    ; 0x447 Gujarati 
+                    ; 0x449 Tamil 
+                    ; 0x44a Telugu 
+                    ; 0x44b Kannada 
+                    ; 0x44e Marathi 
+                    ; 0x44f Sanskrit 
+                    ; 0x450 Mongolian 
+                    ; 0x456 Galician 
+                    ; 0x457 Konkani 
+                    ; 0x45a Syriac 
+                    ; 0x465 Divehi 
+                    */
+                }
+            }
         }
         printf("\n");
         textColor(0x0F);
@@ -472,7 +677,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
                 putch(d->widechar[i]);
             }
         }
-        printf("\n");
+        printf("\t");
         textColor(0x0F);
     }
 }

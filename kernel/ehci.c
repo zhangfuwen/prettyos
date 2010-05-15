@@ -465,16 +465,14 @@ void checkPortLineStatus(uint8_t j)
     {
       //check line status
       textColor(0x0B);
-      printf("\nport %d: %X, line: %y  ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
-      textColor(0x0E);
+      printf("\nport %d: %x, line: %y ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
       if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
       {
-        textColor(0x0B);
-        printf("SE0");
+        printf("SE0 ");
         if ((pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
         {
              textColor(0x0E);
-             printf(",power on, enabled, EHCI owned");
+             printf(", power on, enabled, EHCI owned");
              textColor(0x0F);
 
              if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
@@ -536,11 +534,15 @@ void checkPortLineStatus(uint8_t j)
                  waitForKeyStroke();
                  #endif
 
-
                 // device, interface, endpoints
-                printf("\ndev: %d interface: %d endpOUT: %d  endpIN: %d",devAddr, usbDevices[devAddr].numInterfaceMSD,
-                                             usbDevices[devAddr].numEndpointOutMSD,usbDevices[devAddr].numEndpointInMSD);
-                testMSD(devAddr,config);
+                textColor(0x07);
+                printf("\n\nMSD test now with device: %d  interface: %d  endpOUT: %d  endpIN: %d\n", 
+                                                        devAddr, usbDevices[devAddr].numInterfaceMSD,
+                                                        usbDevices[devAddr].numEndpointOutMSD,
+                                                        usbDevices[devAddr].numEndpointInMSD);
+                textColor(0x0F);
+                
+                testMSD(devAddr,config); // test with some SCSI commands 
              }
         }
       }

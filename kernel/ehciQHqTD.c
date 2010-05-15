@@ -180,7 +180,7 @@ static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
         }
         else
         {
-            textColor(0x03);
+            textColor(0x07);
             printf("%y ", *((uint8_t*)virtAddrBuf0+c));
             textColor(0x0F);
         }
@@ -195,7 +195,7 @@ void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
-    showData(virtAddrBuf0, size, false);
+    showData(virtAddrBuf0, size, false);    
 }
 
 uint32_t showStatusbyteQTD(void* addressQTD)
