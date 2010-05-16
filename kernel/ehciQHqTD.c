@@ -21,6 +21,8 @@ uintptr_t    DataQTDpage0;       // pointer to qTD page0 (In/Out data)
 uintptr_t    MSDStatusQTDpage0;  // pointer to qTD page0 (IN, mass storage device status)
 uintptr_t    SetupQTDpage0;      // pointer to qTD page0 (OUT, setup control transfer)
 
+const uint32_t CSWMagicNotOK = 0x01010101;
+
 /////////////////////
 // Queue Head (QH) //
 /////////////////////
@@ -147,7 +149,7 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
 
     MSDStatusQTDpage0 = allocQTDbuffer(td);
 
-    (*(((uint32_t*)MSDStatusQTDpage0)+0)) = 0x53425355; // magic USBS
+    (*(((uint32_t*)MSDStatusQTDpage0)+0)) = CSWMagicNotOK; // magic USBS 
     (*(((uint32_t*)MSDStatusQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
     (*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA; //
     (*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA; //

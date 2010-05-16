@@ -14,10 +14,16 @@
 
 #include "fat12.h" // for first tests only
 
-const uint32_t CBWMagic = 0x43425355;
+extern const uint32_t CSWMagicNotOK;
+const uint32_t CSWMagicOK    = 0x53425355; // USBS
+const uint32_t CBWMagic      = 0x43425355; // USBC
+
+uint8_t currCSWtag;
 
 void* cmdQTD;
 void* StatusQTD;
+
+
 
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
@@ -130,7 +136,9 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
             cbw->commandByte[8]         = BYTE1(TransferLength); // LSB    
             break;
-    }// switch    
+    }// switch   
+    
+    currCSWtag = SCSIcommand;
 }
 
 /// cf. http://www.beyondlogic.org/usbnutshell/usb4.htm#Bulk
@@ -238,30 +246,100 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         }
     }
 
+    // CSW Status
     printf("\n");
     showPacket(MSDStatusQTDpage0,13);
-
-    if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x0 )
+    
+    // check signature 0x53425355 // DWORD 0 (byte 0:3)
+    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0 
+    if (CSWsignature == CSWMagicOK)
     {
-      #ifdef _USB_DIAGNOSIS_   
+    //#ifdef _USB_DIAGNOSIS_ 
         textColor(0x0A);
-        printf("\nCommand Passed (\"good status\") ");
+        printf("\nCSW signature OK    "); 
         textColor(0x0F);
-      #endif
+    //#endif
     }
-    if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x1 )
+    else if (CSWsignature == CSWMagicNotOK)
     {
+        textColor(0x0C);
+        printf("\nCSW signature wrong (not processed)");
+        textColor(0x0F);
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nCSW signature wrong (processed, but wrong value)");
+        textColor(0x0F);
+    }
+
+    // check matching tag 
+    uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
+    if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
+    {
+    //#ifdef _USB_DIAGNOSIS_ 
+        textColor(0x0A);
+        printf("CSW tag %y OK    ",BYTE1(CSWtag));
+        textColor(0x0F);
+    //#endif
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nError: CSW tag wrong");
+        textColor(0x0F);
+    }
+    
+    // check CSWDataResidue
+    uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
+    if (CSWDataResidue == 0)
+    {
+    //#ifdef _USB_DIAGNOSIS_ 
+        textColor(0x0A);
+        printf("\tCSW data residue OK    ");
+        textColor(0x0F);
+    //#endif
+    }
+    else
+    {
+        textColor(0x06);
+        printf("\nCSW data residue: %d",CSWDataResidue);
+        textColor(0x0F);
+    }
+    
+    // check status byte // DWORD 3 (byte 12)
+    // uint8_t CSWstatusByte = (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF;
+    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
+
+    switch (CSWstatusByte)
+    {
+    case 0x00:
+    //#ifdef _USB_DIAGNOSIS_   
+        textColor(0x0A);
+        printf("\tCSW status OK");
+        textColor(0x0F);
+    //#endif
+    break;
+    case 0x01 :
         textColor(0x0C);
         printf("\nCommand failed");
         textColor(0x0F);
-    }
-    if( ( (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF ) == 0x2 )
-    {
+    break;
+    case 0x02:
+        textColor(0x0C);
         printf("\nPhase Error");
+        textColor(0x0F);
         usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
-    }    
+    break;
+    default:
+        textColor(0x0C);
+        printf("\nCSW status byte: undefined value (error)");
+        textColor(0x0F);
+        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+    break;
+    }
 
-    // transfer diagnosis
+    // transfer diagnosis (qTD status)
     uint32_t statusCommand = showStatusbyteQTD(cmdQTD);    
     if (statusCommand) 
     {
