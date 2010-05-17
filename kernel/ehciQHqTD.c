@@ -206,6 +206,7 @@ uint32_t showStatusbyteQTD(void* addressQTD)
     uint8_t statusbyte = *((uint8_t*)addressQTD+8);
     if (statusbyte != 0x00)
     {        
+        printf("\n");
         textColor(0x0E);
         if (statusbyte & (1<<7)) { printf("Active - HC transactions enabled"); }
         textColor(0x0C);
@@ -453,6 +454,22 @@ void performAsyncScheduler(bool stop, bool analyze)
      }     
 }
 
+void logBulkTransfer(usbBulkTransfer_t* bT)
+{
+    textColor(0x03);
+    printf("\nopcode: %y",     bT->SCSIopcode);
+    printf("  cmd: %s",     bT->successfulCommand ? "OK" : "Error");
+    if (bT->DataBytesToTransferOUT) 
+    {
+        printf("  data out: %s", bT->successfulDataOUT ? "OK" : "Error");
+    }
+    if (bT->DataBytesToTransferIN)  
+    {
+        printf("  data in: %s", bT->successfulDataIN  ? "OK" : "Error");
+    }
+    printf("  CSW: %s",     bT->successfulCSW     ? "OK" : "Error");
+    textColor(0x0F);
+}
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.

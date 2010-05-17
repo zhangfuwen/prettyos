@@ -4,6 +4,18 @@
 #include "os.h"
 #include "ehci.h"
 
+struct usbBulkTransfer
+{
+    uint8_t  SCSIopcode;
+    bool     successfulCommand;
+    bool     successfulDataOUT;
+    bool     successfulDataIN;
+    bool     successfulCSW;
+    uint32_t DataBytesToTransferOUT;
+    uint32_t DataBytesToTransferIN;
+}__attribute__((packed));
+typedef struct usbBulkTransfer usbBulkTransfer_t;
+
 struct qtd_token
 {
     uint8_t status;
@@ -82,5 +94,7 @@ void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size);
 
 void checkAsyncScheduler();
 void performAsyncScheduler(bool stop, bool analyze);
+
+void logBulkTransfer(usbBulkTransfer_t* bT);
 
 #endif
