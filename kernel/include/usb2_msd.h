@@ -2,6 +2,7 @@
 #define USB2_MSD_H
 
 #include "os.h"
+#include "ehciQHqTD.h"
 
 #define OUT   0
 #define IN    1

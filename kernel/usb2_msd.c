@@ -23,7 +23,7 @@ uint8_t currCSWtag;
 void* cmdQTD;
 void* StatusQTD;
 
-
+uint32_t startSectorPartition;
 
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
@@ -528,7 +528,10 @@ void testMSD(uint8_t devAddr, uint8_t config)
         ///////// send SCSI command "read(10)", read one block (512 byte) from LBA ..., get Status
 
         uint32_t blocks = 1; // number of blocks to be read
-        for(uint32_t sector=0; sector<5; sector++)
+
+        uint32_t start = 0;
+label1:        
+        for(uint32_t sector=start; sector<start+3; sector++)
         {
             textColor(0x09); printf("\n\n>>> SCSI: read   sector: %d", sector); textColor(0x0F);
 
@@ -546,11 +549,17 @@ void testMSD(uint8_t devAddr, uint8_t config)
             showUSBSTS();
             logBulkTransfer(&read);
             waitForKeyStroke();
-            if (sector == 0)
-            {
+            
+            if ( (sector == 0) || (sector == startSectorPartition))
+            {                
                 analyzeBootSector((void*)DataQTDpage0); // for first tests only
                 waitForKeyStroke();
             }
+        }
+        if (startSectorPartition)
+        {
+            start = startSectorPartition;
+            goto label1;
         }
     }// else    
 }
@@ -580,12 +589,59 @@ void analyzeBootSector(void* addr) // for first tests only
         printf("\nhidden sectors:         %d",sec0->HiddenSectors);
         printf("\ttotal sectors (>65535): %d",sec0->TotalSectors2);
         printf("\nFAT 12/16:              %s",FATn); 
+        
+        startSectorPartition = 0;
     }
     else
     {
-        textColor(0x0C);
-        printf("\nThis seems to be no valid description of the FAT file system, could be MBR.");
-        textColor(0x0F);
+        textColor(0x0E);
+        if ( ((*((uint8_t*)addr+510)) ==0x55) && ((*((uint8_t*)addr+511))==0xAA) )
+        {
+            printf("\nThis seems to be a Master Boot Record:"); 
+            textColor(0x0F);
+            uint32_t discSignature = *((uint32_t*)((uint8_t*)addr+440));
+            uint16_t twoBytesZero  = *((uint16_t*)((uint8_t*)addr+444));
+            printf("\n\nDisc Signature: %X\t",discSignature);
+            printf("Null: %x",twoBytesZero);
+
+            uint8_t partitionTable[4][16]; 
+            for (int i=0;i<4;i++) // four tables
+            {
+                for (int j=0;j<16;j++) // 16 bytes
+                {
+                    partitionTable[i][j] = *((uint8_t*)addr+446+i*j);                    
+                }
+            }
+            printf("\n");
+            for (int i=0;i<4;i++) // four tables
+            {
+                if (*((uint32_t*)(&partitionTable[i][0x0C]))) // number of sectors
+                {
+                    textColor(0x0E);
+                    printf("\npartition table %d:",i);                    
+                    if (partitionTable[i][0x00] == 0x80)
+                    {
+                        printf("  bootable");
+                    }
+                    else
+                    {
+                        printf("  not bootable");
+                    }                    
+                    textColor(0x0F);
+                    printf("\ntype:               %y", partitionTable[i][0x04]);
+                    textColor(0x07);
+                    printf("\nfirst sector (CHS): %d %d %d", partitionTable[i][0x01],partitionTable[i][0x02],partitionTable[i][0x03]);
+                    printf("\nlast  sector (CHS): %d %d %d", partitionTable[i][0x05],partitionTable[i][0x06],partitionTable[i][0x07]);
+                    textColor(0x0F);
+                    
+                    startSectorPartition = *((uint32_t*)(&partitionTable[i][0x08]));
+                    printf("\nstart sector:       %d", startSectorPartition);
+
+                    printf("\nnumber of sectors:  %d", *((uint32_t*)(&partitionTable[i][0x0C])));
+                    printf("\n");
+                }
+            }
+        }
     }
 }
 
