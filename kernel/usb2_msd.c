@@ -437,6 +437,90 @@ static void startLogBulkTransfer(usbBulkTransfer_t* pTransferLog, uint8_t SCSIop
         pTransferLog->DataBytesToTransferOUT = DataBytesToTransferOUT;
 }
 
+// http://en.wikipedia.org/wiki/SCSI_Inquiry_Command
+static void analyzeInquiry()
+{
+    uint8_t PeripheralDeviceType = ( *(((uint8_t*)DataQTDpage0)+0) & 0x1F) >> 0 ;
+    //uint8_t PeripheralQualifier  = ( *(((uint8_t*)DataQTDpage0)+0) & 0xE0) >> 5 ;
+    //uint8_t DeviceTypeModifier   = ( *(((uint8_t*)DataQTDpage0)+1) & 0x7F) >> 0 ;
+    uint8_t RMB                  = ( *(((uint8_t*)DataQTDpage0)+1) & 0x80) >> 7 ;
+    //uint8_t ANSIapprovedVersion  = ( *(((uint8_t*)DataQTDpage0)+2) & 0x07) >> 0 ;
+    //uint8_t ECMAversion          = ( *(((uint8_t*)DataQTDpage0)+2) & 0x38) >> 3 ;
+    //uint8_t ISOversion           = ( *(((uint8_t*)DataQTDpage0)+2) & 0xC0) >> 6 ;
+    //uint8_t ResponseDataFormat   = ( *(((uint8_t*)DataQTDpage0)+3) & 0x0F) >> 0 ;
+    //uint8_t Reserved1            = ( *(((uint8_t*)DataQTDpage0)+3) & 0x30) >> 4 ;
+    //uint8_t TrmIOP               = ( *(((uint8_t*)DataQTDpage0)+3) & 0x40) >> 6 ;
+    //uint8_t AEC                  = ( *(((uint8_t*)DataQTDpage0)+3) & 0x80) >> 7 ;
+    //uint8_t AdditionalLength     = ( *(((uint8_t*)DataQTDpage0)+4) & 0xFF) >> 0 ;
+    //uint8_t Reserved2            = ( *(((uint8_t*)DataQTDpage0)+5) & 0xFF) >> 0 ;
+    //uint8_t Reserved3            = ( *(((uint8_t*)DataQTDpage0)+6) & 0xFF) >> 0 ;
+    uint8_t SftRe                = ( *(((uint8_t*)DataQTDpage0)+7) & 0x01) >> 0 ;
+    uint8_t CmdQue               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x02) >> 1 ;
+    //uint8_t Reserved4            = ( *(((uint8_t*)DataQTDpage0)+7) & 0x04) >> 2 ;
+    uint8_t Linked               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x08) >> 3 ;
+    uint8_t Sync                 = ( *(((uint8_t*)DataQTDpage0)+7) & 0x10) >> 4 ;
+    //uint8_t WBus16               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x20) >> 5 ;
+    //uint8_t WBus32               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x40) >> 6 ;
+    //uint8_t RelAdr               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x80) >> 7 ;
+
+    char vendorID[9];
+    for (uint8_t i=0; i<8;i++)
+    {
+        vendorID[i]= *(((uint8_t*)DataQTDpage0)+i+8);
+    }
+    vendorID[8]=0;
+
+    char productID[17];
+    for (uint8_t i=0; i<16;i++)
+    {
+        productID[i]= *(((uint8_t*)DataQTDpage0)+i+16);
+    }
+    productID[16]=0;
+
+    char productRevisionLevel[5];
+    for (uint8_t i=0; i<4;i++)
+    {
+        productRevisionLevel[i]= *(((uint8_t*)DataQTDpage0)+i+32);
+    }
+    productRevisionLevel[4]=0;
+    
+    printf("\nVendor ID:  %s", vendorID);
+    printf("\nProduct ID: %s", productID);
+    printf("\nRevision:   %s", productRevisionLevel);
+    printf("\nRemovable device type:           %s", RMB    ? "yes" : "no");    
+    printf("\nSupports synchronous transfers:  %s", Sync   ? "yes" : "no"); 
+    printf("\nSupports linked commands:        %s", Linked ? "yes" : "no"); 
+    printf("\nSupports tagged command queuing: %s", CmdQue ? "yes" : "no"); 
+    printf("\nPerforms soft resets:            %s", SftRe  ? "yes" : "no");
+    
+    switch (PeripheralDeviceType)
+    {
+    case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");break;
+    case 0x01: printf("\nsequential-access device (e.g., magnetic tape)");break;
+    case 0x02: printf("\nprinter device");break;
+    case 0x03: printf("\nprocessor device");break;
+    case 0x04: printf("\nwrite-once device");break;
+    case 0x05: printf("\nCDROM device");break;
+    case 0x06: printf("\nscanner device");break;
+    case 0x07: printf("\noptical memory device (e.g., some optical disks)");break;
+    case 0x08: printf("\nmedium Changer (e.g. jukeboxes)");break;
+    case 0x09: printf("\ncommunications device");break;
+    case 0x0A: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");break;
+    case 0x0B: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");break;
+    case 0x0C: printf("\nStorage array controller device (e.g., RAID)");break;
+    case 0x0D: printf("\nEnclosure services device");break;
+    case 0x0E: printf("\nSimplified direct-access device (e.g., magnetic disk)");break;
+    case 0x0F: printf("\nOptical card reader/writer device");break;
+    case 0x10: printf("\nReserved for bridging expanders");break;
+    case 0x11: printf("\nObject-based Storage Device");break;
+    case 0x12: printf("\nAutomation/Drive Interface");break;
+    case 0x13: printf("\nReserved");break;
+    case 0x1D: printf("\nReserved");break;
+    case 0x1E: printf("\nWell known logical unit");break;
+    case 0x1F: printf("\nUnknown or no device type");break;
+    }
+}
+
 void testMSD(uint8_t devAddr, uint8_t config)
 {
     if (usbDevices[devAddr].InterfaceClass != 0x08)
@@ -470,17 +554,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
                        inquiry.DataBytesToTransferIN, 
                        &inquiry); 
 
-        uint8_t statusByte = getStatusByte();
-
-        if (statusByte == 0x00)
-        {
-          #ifdef _USB_DIAGNOSIS_ 
-            textColor(0x02);
-            printf("\n\nCommand Block Status Values in \"good status\"\n");
-            textColor(0x0F);
-          #endif
-            inquiry.successfulCSW = true;
-        }
+        analyzeInquiry();
         showUSBSTS();
         logBulkTransfer(&inquiry);
         waitForKeyStroke();
@@ -491,7 +565,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
         usbBulkTransfer_t testUnitReady, requestSense;
         startLogBulkTransfer(&testUnitReady, 0x00,  0, 0);
         startLogBulkTransfer(&requestSense,  0x03, 18, 0);
-        statusByte = testDeviceReady(devAddr, &testUnitReady, &requestSense);
+        testDeviceReady(devAddr, &testUnitReady, &requestSense);
         logBulkTransfer(&testUnitReady);
         logBulkTransfer(&requestSense);
 
@@ -550,7 +624,7 @@ label1:
             logBulkTransfer(&read);
             waitForKeyStroke();
             
-            if ( (sector == 0) || (sector == startSectorPartition))
+            if ( (sector == 0) || (sector == startSectorPartition) || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
             {                
                 analyzeBootSector((void*)DataQTDpage0); // for first tests only
                 waitForKeyStroke();
@@ -592,17 +666,17 @@ void analyzeBootSector(void* addr) // for first tests only
         
         startSectorPartition = 0;
     }
-    else
+    else if ( ( ((*((uint8_t*)addr)) == 0xF8) || ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
     {
         textColor(0x0E);
-        if ( ((*((uint8_t*)addr+510)) ==0x55) && ((*((uint8_t*)addr+511))==0xAA) )
+        if ( ((*((uint8_t*)addr+510))==0x55) && ((*((uint8_t*)addr+511))==0xAA) )
         {
             printf("\nThis seems to be a Master Boot Record:"); 
             textColor(0x0F);
             uint32_t discSignature = *((uint32_t*)((uint8_t*)addr+440));
             uint16_t twoBytesZero  = *((uint16_t*)((uint8_t*)addr+444));
             printf("\n\nDisc Signature: %X\t",discSignature);
-            printf("Null: %x",twoBytesZero);
+            printf("Null (check): %x",twoBytesZero);
 
             uint8_t partitionTable[4][16]; 
             for (int i=0;i<4;i++) // four tables
@@ -640,8 +714,20 @@ void analyzeBootSector(void* addr) // for first tests only
                     printf("\nnumber of sectors:  %d", *((uint32_t*)(&partitionTable[i][0x0C])));
                     printf("\n");
                 }
+                else
+                {
+                    textColor(0x0E);
+                    printf("\nno partition table %d",i);
+                    textColor(0x0F);
+                }
             }
         }
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nThis seems to be neither a FAT description nor a MBR."); 
+        textColor(0x0F);
     }
 }
 
