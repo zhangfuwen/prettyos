@@ -309,7 +309,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     
     // check status byte // DWORD 3 (byte 12)
     // uint8_t CSWstatusByte = (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF;
-    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
+    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)                            
 
     switch (CSWstatusByte)
     {
@@ -440,47 +440,56 @@ static void startLogBulkTransfer(usbBulkTransfer_t* pTransferLog, uint8_t SCSIop
 // http://en.wikipedia.org/wiki/SCSI_Inquiry_Command
 static void analyzeInquiry()
 {
-    uint8_t PeripheralDeviceType = ( *(((uint8_t*)DataQTDpage0)+0) & 0x1F) >> 0 ;
-    //uint8_t PeripheralQualifier  = ( *(((uint8_t*)DataQTDpage0)+0) & 0xE0) >> 5 ;
-    //uint8_t DeviceTypeModifier   = ( *(((uint8_t*)DataQTDpage0)+1) & 0x7F) >> 0 ;
-    uint8_t RMB                  = ( *(((uint8_t*)DataQTDpage0)+1) & 0x80) >> 7 ;
-    //uint8_t ANSIapprovedVersion  = ( *(((uint8_t*)DataQTDpage0)+2) & 0x07) >> 0 ;
-    //uint8_t ECMAversion          = ( *(((uint8_t*)DataQTDpage0)+2) & 0x38) >> 3 ;
-    //uint8_t ISOversion           = ( *(((uint8_t*)DataQTDpage0)+2) & 0xC0) >> 6 ;
-    //uint8_t ResponseDataFormat   = ( *(((uint8_t*)DataQTDpage0)+3) & 0x0F) >> 0 ;
-    //uint8_t Reserved1            = ( *(((uint8_t*)DataQTDpage0)+3) & 0x30) >> 4 ;
-    //uint8_t TrmIOP               = ( *(((uint8_t*)DataQTDpage0)+3) & 0x40) >> 6 ;
-    //uint8_t AEC                  = ( *(((uint8_t*)DataQTDpage0)+3) & 0x80) >> 7 ;
-    //uint8_t AdditionalLength     = ( *(((uint8_t*)DataQTDpage0)+4) & 0xFF) >> 0 ;
-    //uint8_t Reserved2            = ( *(((uint8_t*)DataQTDpage0)+5) & 0xFF) >> 0 ;
-    //uint8_t Reserved3            = ( *(((uint8_t*)DataQTDpage0)+6) & 0xFF) >> 0 ;
-    uint8_t SftRe                = ( *(((uint8_t*)DataQTDpage0)+7) & 0x01) >> 0 ;
-    uint8_t CmdQue               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x02) >> 1 ;
-    //uint8_t Reserved4            = ( *(((uint8_t*)DataQTDpage0)+7) & 0x04) >> 2 ;
-    uint8_t Linked               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x08) >> 3 ;
-    uint8_t Sync                 = ( *(((uint8_t*)DataQTDpage0)+7) & 0x10) >> 4 ;
-    //uint8_t WBus16               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x20) >> 5 ;
-    //uint8_t WBus32               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x40) >> 6 ;
-    //uint8_t RelAdr               = ( *(((uint8_t*)DataQTDpage0)+7) & 0x80) >> 7 ;
+    void* addr = (void*)DataQTDpage0;
 
+    uint8_t PeripheralDeviceType = getField(addr, 0, 0, 5); // byte, shift, len
+    // uint8_t PeripheralQualifier  = getField(addr, 0, 5, 3); 
+
+    // uint8_t DeviceTypeModifier   = getField(addr, 1, 0, 7);  
+    uint8_t RMB                  = getField(addr, 1, 7, 1); 
+    
+    // uint8_t ANSIapprovedVersion  = getField(addr, 2, 0, 3); 
+    // uint8_t ECMAversion          = getField(addr, 2, 3, 3); 
+    // uint8_t ISOversion           = getField(addr, 2, 6, 2); 
+
+    // uint8_t ResponseDataFormat   = getField(addr, 3, 0, 4);
+    // uint8_t Reserved1            = getField(addr, 3, 4, 2); 
+    // uint8_t TrmIOP               = getField(addr, 3, 6, 1); 
+    // uint8_t AENC                 = getField(addr, 3, 7, 1);   
+    
+    // uint8_t AdditionalLength     = getField(addr, 4, 0, 8);   
+    
+    // uint8_t Reserved2            = getField(addr, 5, 0, 8);   
+
+    // uint8_t Reserved3            = getField(addr, 6, 0, 8);   
+
+    uint8_t SftRe                = getField(addr, 7, 0, 1);
+    uint8_t CmdQue               = getField(addr, 7, 1, 1);
+    // uint8_t Reserved4            = getField(addr, 7, 2, 1); 
+    uint8_t Linked               = getField(addr, 7, 3, 1);
+    uint8_t Sync                 = getField(addr, 7, 4, 1);
+    // uint8_t WBus16               = getField(addr, 7, 5, 1); 
+    // uint8_t WBus32               = getField(addr, 7, 6, 1); 
+    // uint8_t RelAddr              = getField(addr, 7, 7, 1); 
+    
     char vendorID[9];
     for (uint8_t i=0; i<8;i++)
     {
-        vendorID[i]= *(((uint8_t*)DataQTDpage0)+i+8);
+        vendorID[i]= getField(addr, i+8, 0, 8);   
     }
     vendorID[8]=0;
 
     char productID[17];
     for (uint8_t i=0; i<16;i++)
     {
-        productID[i]= *(((uint8_t*)DataQTDpage0)+i+16);
+        productID[i]= getField(addr, i+16, 0, 8); 
     }
     productID[16]=0;
 
     char productRevisionLevel[5];
     for (uint8_t i=0; i<4;i++)
     {
-        productRevisionLevel[i]= *(((uint8_t*)DataQTDpage0)+i+32);
+        productRevisionLevel[i]= getField(addr, i+32, 0, 8); 
     }
     productRevisionLevel[4]=0;
     
@@ -666,7 +675,7 @@ void analyzeBootSector(void* addr) // for first tests only
         
         startSectorPartition = 0;
     }
-    else if ( ( ((*((uint8_t*)addr)) == 0xF8) || ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
+    else if ( ( ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
     {
         textColor(0x0E);
         if ( ((*((uint8_t*)addr+510))==0x55) && ((*((uint8_t*)addr+511))==0xAA) )
@@ -761,9 +770,11 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
 
 int32_t showResultsRequestSense()
 {
-    uint32_t Valid        = ((*(((uint8_t*)DataQTDpage0)+0))&0x80)>>7; // byte 0, bit 7
-    uint32_t ResponseCode = ((*(((uint8_t*)DataQTDpage0)+0))&0x7F)>>0; // byte 0, bit 6:0
-    uint32_t SenseKey     = ((*(((uint8_t*)DataQTDpage0)+2))&0x0F)>>0; // byte 2, bit 3:0
+    void* addr = (void*)DataQTDpage0;
+                            
+    uint32_t Valid        = getField(addr, 0, 7, 1); // byte 0, bit 7
+    uint32_t ResponseCode = getField(addr, 0, 0, 7); // byte 0, bit 6:0
+    uint32_t SenseKey     = getField(addr, 2, 0, 4); // byte 2, bit 3:0
 
     char ValidStr[40];
     char ResponseCodeStr[40];

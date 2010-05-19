@@ -203,7 +203,7 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 uint32_t showStatusbyteQTD(void* addressQTD)
 {
     textColor(0x0F);
-    uint8_t statusbyte = *((uint8_t*)addressQTD+8);
+    uint8_t statusbyte = getField(addressQTD, 8, 0, 8);
     if (statusbyte != 0x00)
     {        
         printf("\n");

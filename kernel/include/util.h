@@ -28,6 +28,8 @@ void     outportb(uint16_t port, uint8_t val);
 void     outportw(uint16_t port, uint16_t val);
 void     outportl(uint16_t port, uint32_t val);
 
+uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len);
+
 uint32_t fetchESP();
 uint32_t fetchEBP();
 uint32_t fetchSS();
