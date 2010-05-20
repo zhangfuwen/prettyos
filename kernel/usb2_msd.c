@@ -448,30 +448,20 @@ static void analyzeInquiry()
     // uint8_t DeviceTypeModifier   = getField(addr, 1, 0, 7);  
     uint8_t RMB                  = getField(addr, 1, 7, 1); 
     
-    // uint8_t ANSIapprovedVersion  = getField(addr, 2, 0, 3); 
+    uint8_t ANSIapprovedVersion  = getField(addr, 2, 0, 3); 
     // uint8_t ECMAversion          = getField(addr, 2, 3, 3); 
     // uint8_t ISOversion           = getField(addr, 2, 6, 2); 
 
-    // uint8_t ResponseDataFormat   = getField(addr, 3, 0, 4);
-    // uint8_t Reserved1            = getField(addr, 3, 4, 2); 
-    // uint8_t TrmIOP               = getField(addr, 3, 6, 1); 
-    // uint8_t AENC                 = getField(addr, 3, 7, 1);   
+    // Jan Axelson, USB Mass Storage, page 140
+    uint8_t ResponseDataFormat   = getField(addr, 3, 0, 4);
+    uint8_t HISUP                = getField(addr, 3, 4, 1); 
+    uint8_t NORMACA              = getField(addr, 3, 5, 1);   
     
     // uint8_t AdditionalLength     = getField(addr, 4, 0, 8);   
     
-    // uint8_t Reserved2            = getField(addr, 5, 0, 8);   
-
-    // uint8_t Reserved3            = getField(addr, 6, 0, 8);   
-
-    uint8_t SftRe                = getField(addr, 7, 0, 1);
     uint8_t CmdQue               = getField(addr, 7, 1, 1);
-    // uint8_t Reserved4            = getField(addr, 7, 2, 1); 
     uint8_t Linked               = getField(addr, 7, 3, 1);
-    uint8_t Sync                 = getField(addr, 7, 4, 1);
-    // uint8_t WBus16               = getField(addr, 7, 5, 1); 
-    // uint8_t WBus32               = getField(addr, 7, 6, 1); 
-    // uint8_t RelAddr              = getField(addr, 7, 7, 1); 
-    
+        
     char vendorID[9];
     for (uint8_t i=0; i<8;i++)
     {
@@ -496,12 +486,31 @@ static void analyzeInquiry()
     printf("\nVendor ID:  %s", vendorID);
     printf("\nProduct ID: %s", productID);
     printf("\nRevision:   %s", productRevisionLevel);
-    printf("\nRemovable device type:           %s", RMB    ? "yes" : "no");    
-    printf("\nSupports synchronous transfers:  %s", Sync   ? "yes" : "no"); 
-    printf("\nSupports linked commands:        %s", Linked ? "yes" : "no"); 
-    printf("\nSupports tagged command queuing: %s", CmdQue ? "yes" : "no"); 
-    printf("\nPerforms soft resets:            %s", SftRe  ? "yes" : "no");
     
+    // Jan Axelson, USB Mass Storage, page 140
+    // printf("\nVersion ANSI: %d  ECMA: %d  ISO: %d", ANSIapprovedVersion, ECMAversion, ISOversion);
+    printf("\nVersion: %d (4: SPC-2, 5: SPC-3)", ANSIapprovedVersion);
+
+    // Jan Axelson, USB Mass Storage, page 140
+    if (ResponseDataFormat == 2)
+    {
+        textColor(0x0A);
+        printf("\nResponse Data Format OK");
+        textColor(0x0F);
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nResponse Data Format is not OK: %d (should be 2)", ResponseDataFormat);
+        textColor(0x0F);
+    }
+    
+    printf("\nRemovable device type:            %s", RMB     ? "yes" : "no");  
+    printf("\nSupports hierarch. addr. support: %s", HISUP   ? "yes" : "no");
+    printf("\nSupports normal ACA bit support:  %s", NORMACA ? "yes" : "no");
+    printf("\nSupports linked commands:         %s", Linked  ? "yes" : "no"); 
+    printf("\nSupports tagged command queuing:  %s", CmdQue  ? "yes" : "no"); 
+        
     switch (PeripheralDeviceType)
     {
     case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");break;
@@ -509,9 +518,9 @@ static void analyzeInquiry()
     case 0x02: printf("\nprinter device");break;
     case 0x03: printf("\nprocessor device");break;
     case 0x04: printf("\nwrite-once device");break;
-    case 0x05: printf("\nCDROM device");break;
+    case 0x05: printf("\nCD/DVD device");break;
     case 0x06: printf("\nscanner device");break;
-    case 0x07: printf("\noptical memory device (e.g., some optical disks)");break;
+    case 0x07: printf("\noptical memory device (non-CD optical disk)");break;
     case 0x08: printf("\nmedium Changer (e.g. jukeboxes)");break;
     case 0x09: printf("\ncommunications device");break;
     case 0x0A: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");break;
@@ -525,7 +534,7 @@ static void analyzeInquiry()
     case 0x12: printf("\nAutomation/Drive Interface");break;
     case 0x13: printf("\nReserved");break;
     case 0x1D: printf("\nReserved");break;
-    case 0x1E: printf("\nWell known logical unit");break;
+    case 0x1E: printf("\nReduced block command (RBC) direct-access device");break;
     case 0x1F: printf("\nUnknown or no device type");break;
     }
 }

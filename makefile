@@ -36,7 +36,7 @@ SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.c $(U
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -O32 -f elf
-GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
+GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -Os -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common
 
 # targets to build one asm or c-file to an object file
