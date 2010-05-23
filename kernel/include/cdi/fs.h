@@ -2,6 +2,7 @@
 #define CDI_FS
 
 #include "os.h"
+#include "fat.h" // FILE FAT16/FAT32 perhaps FAT12 /// TODO: to be checked
 #include <cdi.h>
 #include <cdi/lists.h>
 #include <cdi/cache.h>

@@ -124,6 +124,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\kernel\include\fat.h"
+					>
+				</File>
+				<File
 					RelativePath="..\kernel\include\fat12.h"
 					>
 				</File>
@@ -337,6 +341,10 @@
 				</File>
 				<File
 					RelativePath="..\kernel\event_list.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\fat.c"
 					>
 				</File>
 				<File

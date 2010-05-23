@@ -352,7 +352,7 @@ void checkAsyncScheduler()
     textColor(0x0E);
 }
 
-void performAsyncScheduler(bool stop, bool analyze)
+void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
 {
     if (analyze)
     {
@@ -390,7 +390,7 @@ void performAsyncScheduler(bool stop, bool analyze)
              }
          }
 
-     sleepMilliSeconds(200); 
+     sleepMilliSeconds(200 + velocity * 200); 
 
      timeout=7;
      while (!USBINTflag) // set by interrupt

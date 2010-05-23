@@ -93,7 +93,7 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size);
 void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size);
 
 void checkAsyncScheduler();
-void performAsyncScheduler(bool stop, bool analyze);
+void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity);
 
 void logBulkTransfer(usbBulkTransfer_t* bT);
 

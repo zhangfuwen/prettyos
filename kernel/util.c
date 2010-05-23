@@ -358,6 +358,35 @@ char* strncat(char* dest, const char* src, size_t n)
 }
 
 /**********************************************************************/
+char toLower(char c)
+{
+    return isupper(c) ? ('a' - 'A') + c : c;
+}
+
+char toUpper(char c)
+{
+    return islower(c) ? ('A' - 'a') + c : c;
+}
+
+char* toupper(char* s)
+{
+    for (int i=0;i<strlen(s);i++)
+    {
+        s[i] = toUpper(s[i]);
+    }
+    return s;
+}
+
+char* tolower(char* s)
+{
+    for (int i=0;i<strlen(s);i++)
+    {
+        s[i] = toLower(s[i]);
+    }
+    return s;
+}
+
+/**********************************************************************/
 
 /// http://en.wikipedia.org/wiki/Itoa
 void reverse(char* s)

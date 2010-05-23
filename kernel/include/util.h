@@ -54,6 +54,11 @@ char*   strncpy(char* dest, const char* src, size_t n);
 char*   strcat(char* dest, const char* src);
 char*   strncat(char* dest, const char* src, size_t n);
 
+char toLower(char c);
+char toUpper(char c);
+char* toupper(char* s);
+char* tolower(char* s);
+
 void    waitForKeyStroke();
 
 void reboot();

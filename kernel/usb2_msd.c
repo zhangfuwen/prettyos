@@ -13,17 +13,22 @@
 #include "usb2_msd.h"
 
 #include "fat12.h" // for first tests only
+#include "fat.h"   // for first tests only
 
 extern const uint32_t CSWMagicNotOK;
-const uint32_t CSWMagicOK    = 0x53425355; // USBS
-const uint32_t CBWMagic      = 0x43425355; // USBC
+const uint32_t CSWMagicOK = 0x53425355; // USBS
+const uint32_t CBWMagic   = 0x43425355; // USBC
 
+uint8_t currentDevice;
 uint8_t currCSWtag;
 
 void* cmdQTD;
 void* StatusQTD;
 
 uint32_t startSectorPartition;
+
+DISK usbStick;
+uint32_t usbStickMaxLBA;
 
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
@@ -49,7 +54,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     // Create QH
     createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler(true, false);
+    performAsyncScheduler(true, false, 0);
     
     return *((uint8_t*)DataQTDpage0);
 }
@@ -74,7 +79,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     // Create QH
     createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler(true, false);    
+    performAsyncScheduler(true, false, 0);    
 }
 
 
@@ -234,7 +239,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_Out), QTD_In, 0, device, endpointIn, 512); // endpoint IN for MSD
 
-    performAsyncScheduler(true, true); 
+    performAsyncScheduler(true, true, TransferLength/200); // velocity is:  200 + (int)(TransferLength/200)*200 Milliseconds
 
     if (TransferLength) // byte
     {
@@ -441,24 +446,18 @@ static void startLogBulkTransfer(usbBulkTransfer_t* pTransferLog, uint8_t SCSIop
 static void analyzeInquiry()
 {
     void* addr = (void*)DataQTDpage0;
-
+    // cf. Jan Axelson, USB Mass Storage, page 140
     uint8_t PeripheralDeviceType = getField(addr, 0, 0, 5); // byte, shift, len
-    // uint8_t PeripheralQualifier  = getField(addr, 0, 5, 3); 
-
-    // uint8_t DeviceTypeModifier   = getField(addr, 1, 0, 7);  
+ // uint8_t PeripheralQualifier  = getField(addr, 0, 5, 3); 
+ // uint8_t DeviceTypeModifier   = getField(addr, 1, 0, 7);  
     uint8_t RMB                  = getField(addr, 1, 7, 1); 
-    
     uint8_t ANSIapprovedVersion  = getField(addr, 2, 0, 3); 
-    // uint8_t ECMAversion          = getField(addr, 2, 3, 3); 
-    // uint8_t ISOversion           = getField(addr, 2, 6, 2); 
-
-    // Jan Axelson, USB Mass Storage, page 140
+ // uint8_t ECMAversion          = getField(addr, 2, 3, 3); 
+ // uint8_t ISOversion           = getField(addr, 2, 6, 2); 
     uint8_t ResponseDataFormat   = getField(addr, 3, 0, 4);
     uint8_t HISUP                = getField(addr, 3, 4, 1); 
     uint8_t NORMACA              = getField(addr, 3, 5, 1);   
-    
-    // uint8_t AdditionalLength     = getField(addr, 4, 0, 8);   
-    
+ // uint8_t AdditionalLength     = getField(addr, 4, 0, 8);   
     uint8_t CmdQue               = getField(addr, 7, 1, 1);
     uint8_t Linked               = getField(addr, 7, 3, 1);
         
@@ -550,6 +549,8 @@ void testMSD(uint8_t devAddr, uint8_t config)
     }
     else
     {
+        currentDevice = devAddr; // now active usb msd 
+
         // maxLUN (0 for USB-sticks)
         usbDevices[devAddr].maxLUN = 0;
 
@@ -608,6 +609,8 @@ void testMSD(uint8_t devAddr, uint8_t config)
         uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+5)) * 0x10000 + (*((uint8_t*)DataQTDpage0+6)) * 0x100 + (*((uint8_t*)DataQTDpage0+7));
         uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
 
+        usbStickMaxLBA     =  lastLBA; 
+
         textColor(0x0E);
         printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
         textColor(0x0F);
@@ -623,7 +626,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
 
         uint32_t start = 0;
 label1:        
-        for(uint32_t sector=start; sector<start+3; sector++)
+        for(uint32_t sector=start; sector<start+1; sector++)
         {
             textColor(0x09); printf("\n\n>>> SCSI: read   sector: %d", sector); textColor(0x0F);
 
@@ -653,11 +656,53 @@ label1:
             start = startSectorPartition;
             goto label1;
         }
-    }// else    
+
+        testFAT(); // TEST FAT filesystem
+    }// else  
+}
+
+uint8_t usbRead(uint32_t sector, uint8_t* buffer)
+{
+    ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
+    uint8_t devAddr = currentDevice;
+    
+    uint32_t blocks = 1; // number of blocks to be read        
+    
+    textColor(0x09); printf("\n\n>>> SCSI: read   sector: %d", sector); textColor(0x0F);
+
+    usbBulkTransfer_t read;
+    startLogBulkTransfer(&read, 0x28, blocks, 0);
+
+    usbSendSCSIcmd(devAddr, 
+                   usbDevices[devAddr].numInterfaceMSD, 
+                   usbDevices[devAddr].numEndpointOutMSD, 
+                   usbDevices[devAddr].numEndpointInMSD, 
+                   read.SCSIopcode, 
+                   sector, // LBA
+                   read.DataBytesToTransferIN, 
+                   &read); 
+    
+    memcpy((void*)buffer,(void*)DataQTDpage0,512);
+    showUSBSTS();
+    logBulkTransfer(&read);
+    waitForKeyStroke(); 
+
+    return 0; // SUCCESS // TEST
 }
 
 void analyzeBootSector(void* addr) // for first tests only
 {
+    uint8_t  volume_type = FAT16; // start value       
+    uint8_t  volume_SecPerClus; 
+    uint16_t volume_maxroot;    
+    uint32_t volume_fatsize;    
+    uint8_t  volume_fatcopy;    
+    uint32_t volume_firstSector;     
+    uint32_t volume_fat;        
+    uint32_t volume_root;       
+    uint32_t volume_data;       
+    uint32_t volume_maxcls;     
+
     struct boot_sector* sec0 = (struct boot_sector*)addr;
 
     char SysName[9];
@@ -671,18 +716,80 @@ void analyzeBootSector(void* addr) // for first tests only
         printf("\nOEM name:           %s"    ,SysName);
         printf("\tbyte per sector:        %d",sec0->charsPerSector); 
         printf("\nsectors per cluster:    %d",sec0->SectorsPerCluster); 
-        printf("\tnumber of FAT copies:   %d",sec0->FATcount);
-        printf("\nmax root dir entries:   %d",sec0->MaxRootEntries);
-        printf("\ttotal sectors (<65536): %d",sec0->TotalSectors1);
-        printf("\nmedia Descriptor:       %y",sec0->MediaDescriptor);
-        printf("\tsectors per FAT:        %d",sec0->SectorsPerFAT);
-        printf("\nsectors per track:      %d",sec0->SectorsPerTrack);
-        printf("\theads/pages:            %d",sec0->HeadCount);
-        printf("\nhidden sectors:         %d",sec0->HiddenSectors);
-        printf("\ttotal sectors (>65535): %d",sec0->TotalSectors2);
-        printf("\nFAT 12/16:              %s",FATn); 
+        printf("\treserved sectors:       %d",sec0->ReservedSectors);
+        printf("\nnumber of FAT copies:   %d",sec0->FATcount);
+        printf("\tmax root dir entries:   %d",sec0->MaxRootEntries);
+        printf("\ntotal sectors (<65536): %d",sec0->TotalSectors1);
+        printf("\tmedia Descriptor:       %y",sec0->MediaDescriptor);
+        printf("\nsectors per FAT:        %d",sec0->SectorsPerFAT);
+        printf("\tsectors per track:      %d",sec0->SectorsPerTrack);
+        printf("\nheads/pages:            %d",sec0->HeadCount);
+        printf("\thidden sectors:         %d",sec0->HiddenSectors);
+        printf("\ntotal sectors (>65535): %d",sec0->TotalSectors2);
+        printf("\tFAT 12/16:              %s",FATn); 
         
+        volume_SecPerClus   = sec0->SectorsPerCluster;
+        volume_maxroot      = sec0->MaxRootEntries;
+        volume_fatsize      = sec0->SectorsPerFAT;
+        volume_fatcopy      = sec0->FATcount;    
+        volume_firstSector  = sec0->HiddenSectors;
+        volume_fat          = volume_firstSector + sec0->ReservedSectors;
+        volume_root         = volume_fat + volume_fatcopy * sec0->SectorsPerFAT; 
+        volume_data         = volume_root + sec0->MaxRootEntries/DIRENTRIES_PER_SECTOR;
+        volume_maxcls       = (usbStickMaxLBA - volume_data - sec0->HiddenSectors) / volume_SecPerClus; 
+
         startSectorPartition = 0;
+
+        if (FATn[0] != 'F') // FAT32
+        {
+            if ( (((uint8_t*)addr)[0x52] == 'F') && (((uint8_t*)addr)[0x53] == 'A') && (((uint8_t*)addr)[0x54] == 'T') 
+              && (((uint8_t*)addr)[0x55] == '3') && (((uint8_t*)addr)[0x56] == '2'))
+            {
+                printf("\nThis is a volume formated with FAT32.");
+                volume_type = FAT32;
+                
+                uint32_t rootCluster = ((uint32_t*)addr)[11]; // byte 44-47
+                printf("\nThe root dir starts at cluster(!) %d.", rootCluster);
+                // ??
+                volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
+                
+                printf("\nSectors per FAT: %d.",              ((uint32_t*)addr)[9]);  // byte 36-39
+                volume_fatsize    = ((uint32_t*)addr)[9];
+                volume_data       = sec0->HiddenSectors + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus; // HOTFIX: plus ein Cluster, cf. Cluster2Sector(...)
+                volume_root       = sec0->HiddenSectors + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus*(rootCluster-2); 
+            }
+        }
+        else // FAT12/16
+        {
+            if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '6') )
+            {
+                printf("\nThis is a volume formated with FAT16.");  
+                volume_type = FAT16;
+            }
+            else if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '2') )
+            {
+                printf("\nThis is a volume formated with FAT12.");
+                volume_type = FAT12;
+            }
+        }
+        
+        ///////////////////////////////////////////////////////
+        // store the determined volume data to DISK usbstick //
+        ///////////////////////////////////////////////////////
+
+        usbStick.buffer     = malloc(0x200000,PAGESIZE); // 2 MB
+        usbStick.type       = volume_type; 
+        usbStick.SecPerClus = volume_SecPerClus;
+        usbStick.maxroot    = volume_maxroot;
+        usbStick.fatsize    = volume_fatsize;
+        usbStick.fatcopy    = volume_fatcopy;        
+        usbStick.firsts     = volume_firstSector;
+        usbStick.fat        = volume_fat;           // reservedSectors
+        usbStick.root       = volume_root;          // reservedSectors + 2*SectorsPerFAT
+        usbStick.data       = volume_data;          // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR
+        usbStick.maxcls     = volume_maxcls; 
+        usbStick.mount      = true;
+
     }
     else if ( ( ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
     {
