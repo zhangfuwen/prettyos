@@ -212,7 +212,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
       showPacket(DataQTDpage0,64);
     #endif
 
-    showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0);
+    showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0, device, stringIndex);
 }
 
 // http://www.lowlevel.eu/wiki/USB#SET_CONFIGURATION
@@ -657,12 +657,12 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
     }
 }
 
-void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
+void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_t device, uint32_t stringIndex)
 {
     if (d->length)
     {
         textColor(0x0A);
-
+        
       #ifdef _USB_DIAGNOSIS_
         printf("\nlength:            %d\t\t",  d->length);
         printf("descriptor type:   %d\n",  d->descriptorType); // 3
@@ -670,15 +670,51 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d)
       #endif
 
         textColor(0x0E);
-        for(int i=0; i<(d->length-2);i+=2) // show only low value of Unicode character
+        for(uint8_t i=0; i<(d->length-2);i+=2) // show only low value of Unicode character
         {
             if (d->widechar[i])
             {
                 putch(d->widechar[i]);
+                d->asciichar[i/2] = d->widechar[i];
             }
         }
         printf("\t");
         textColor(0x0F);
+
+        if (stringIndex == 3) // serial number
+        {
+            // take the last 12 characters
+            
+            // find the last character
+            int16_t j=0; // start at the front
+            int16_t last=0;
+            while (d->asciichar[j]) // not '\0'
+            {
+                j++;     // go to the next character
+            }
+            last = j;    // store last position
+            j=j-12;      // step 12 characters backwards
+            if (j<0)     // but not below zero
+            {
+                j=0;
+            }
+            
+            for (uint16_t index=0; index<13; index++)
+            {
+                if (j+index>last)
+                {
+                    usbDevices[device].serialNumber[index] = 0;
+                    break;
+                }
+                else
+                {
+                    usbDevices[device].serialNumber[index] = d->asciichar[j+index];         
+                }
+            }
+
+            // check
+            printf(" ser. number: %s", usbDevices[device].serialNumber);  
+        }
     }
 }
 

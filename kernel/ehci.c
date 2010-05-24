@@ -510,7 +510,7 @@ void checkPortLineStatus(uint8_t j)
                      waitForKeyStroke();
                      #endif
 
-                     usbTransferStringUnicode(devAddr,k);
+                     usbTransferStringUnicode(devAddr,k);                     
 
                      #ifdef _USB_DIAGNOSIS_
                      printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);

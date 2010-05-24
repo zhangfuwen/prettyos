@@ -17,22 +17,22 @@
 
 #include "os.h"
 
+#define SUCCESS 0
+#define FAIL    1
+
+#define RAMread(a,f)    *(a+f)              // reads a byte at an address (a) plus an offset (f) in RAM
+#define RAMreadW(a,f)   *(uint16_t*)(a+f)
+#define RAMwrite(a,f,d) *(a+f)=d
+
 // Media
 
 #define SDC_SECTOR_SIZE    512
 
 // FAT Filesystem
 
-#define SUCCESS 0
-#define FAIL    1
-
 #define FAT12   1
 #define FAT16   2
 #define FAT32   3
-
-#define RAMread(a,f)    *(a+f)              // reads a byte at an address (a) plus an offset (f) in RAM
-#define RAMreadW(a,f)   *(uint16_t*)(a+f)
-#define RAMwrite(a,f,d) *(a+f)=d
 
 // File
 
@@ -40,10 +40,8 @@
 #define CLUSTER_FAIL         0xFFFF
 #define LAST_CLUSTER         0xFFF8
 #define LAST_CLUSTER_FAT16   0xFFF8
-
 #define CLUSTER_EMPTY        0x0000
 #define END_CLUSTER          0xFFFE
-
 #define ATTR_MASK            0x3F
 #define ATTR_HIDDEN          0x02
 #define ATTR_VOLUME          0x08
@@ -64,26 +62,25 @@
 
 // Volume with FAT Filesystem
 
-// Jan Axelson "USB Mass Storage", page 190
 typedef struct
 {
-    uint8_t* buffer;     // buffer equal to one sector
-    uint32_t firsts;     // LBA of 1st sector
-    uint32_t fat;        // LBA of FAT
-    uint32_t root;       // LBA of root directory
-    uint32_t data;       // LBA of data area
-    uint16_t maxroot;    // max entries in root dir
-    uint32_t maxcls;     // max data clusters
-    uint32_t fatsize;    // sectors in FAT
-    uint8_t  fatcopy;    // copies of FAT
-    uint8_t  SecPerClus; // sectors per cluster
-    uint8_t  type;       // FAT type (FAT16, FAT32)
-    bool     mount;      // 0: not mounted  1: mounted
+    uint8_t* buffer;          // buffer equal to one sector
+    uint32_t firsts;          // LBA of 1st sector
+    uint32_t fat;             // LBA of FAT
+    uint32_t root;            // LBA of root directory
+    uint32_t data;            // LBA of data area
+    uint16_t maxroot;         // max entries in root dir
+    uint32_t maxcls;          // max data clusters
+    uint32_t fatsize;         // sectors in FAT
+    uint8_t  fatcopy;         // copies of FAT
+    uint8_t  SecPerClus;      // sectors per cluster
+    uint8_t  type;            // FAT type (FAT16, FAT32)
+    bool     mount;           // 0: not mounted  1: mounted
+    char     serialNumber[4]; // serial number for identification
 } DISK; 
 
 // File
 
-// Jan Axelson "USB Mass Storage", page 191 // changed!!!
 typedef struct
 {
     bool write;          // file is opened for writing
@@ -110,7 +107,6 @@ typedef struct
     uint16_t dirccls;       // current cluster of the file's directory
 } FILE;
 typedef FILE*   FILEOBJ;
-
 
 typedef struct
 {
@@ -203,15 +199,18 @@ uint8_t sectorRead (uint32_t sector_addr, uint8_t* buffer);
 uint8_t sectorWrite(uint32_t sector_addr, uint8_t* buffer);
 
 // file handling
+uint8_t createFileEntry(FILEOBJ fo, uint16_t* fHandle);
+uint8_t fileDelete(FILEOBJ fo, uint16_t* fHandle, uint8_t EraseClusters);
 uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd);
 uint8_t fopen(FILEOBJ fo, uint16_t* fHandle, char type);
 uint8_t fclose(FILEOBJ fo);
 uint8_t fread(FILEOBJ fo, void* dest, uint16_t count);
 uint8_t fwrite(FILEOBJ fo, void* src, uint16_t count);
-uint8_t fileDelete(FILEOBJ fo, uint16_t* fHandle, uint8_t EraseClusters);
 
 // analysis functions
 void    showDirectoryEntry(DIRENTRY dir);
 void    testFAT();
 
+//additional functions
+uint32_t checksum(char* ShortFileName);
 #endif

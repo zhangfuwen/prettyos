@@ -21,9 +21,10 @@ typedef struct usb2_Device
     uint8_t  productStringID;
     uint8_t  serNumberStringID;
     uint8_t  numConfigurations;
-    uint8_t  maxLUN;
+    uint8_t  maxLUN;    
 
     // MSD specific
+    char     serialNumber[13];
     uint8_t  numInterfaceMSD;
     uint8_t  InterfaceClass;
     uint8_t  InterfaceSubclass;
@@ -99,6 +100,7 @@ struct usb2_stringDescriptorUnicode
    uint8_t  length;            // 2 + 2 * numUnicodeCharacters
    uint8_t  descriptorType;    // 3
    uint8_t  widechar[30];      // n = 30 test-wise
+   uint8_t  asciichar[30];
 }__attribute__((packed));
 
 
@@ -120,6 +122,6 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d);
 void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d);
 void showEndpointDescriptor(struct usb2_endpointDescriptor* d);
 void showStringDescriptor(struct usb2_stringDescriptor* d);
-void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d);
+void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_t device, uint32_t stringIndex);
 
 #endif

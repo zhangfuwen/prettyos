@@ -701,7 +701,8 @@ void analyzeBootSector(void* addr) // for first tests only
     uint32_t volume_fat;        
     uint32_t volume_root;       
     uint32_t volume_data;       
-    uint32_t volume_maxcls;     
+    uint32_t volume_maxcls; 
+    char     volume_serialNumber[4];
 
     struct boot_sector* sec0 = (struct boot_sector*)addr;
 
@@ -745,12 +746,18 @@ void analyzeBootSector(void* addr) // for first tests only
             if ( (((uint8_t*)addr)[0x52] == 'F') && (((uint8_t*)addr)[0x53] == 'A') && (((uint8_t*)addr)[0x54] == 'T') 
               && (((uint8_t*)addr)[0x55] == '3') && (((uint8_t*)addr)[0x56] == '2'))
             {
-                printf("\nThis is a volume formated with FAT32.");
+                printf("\nThis is a volume formated with FAT32 ");
                 volume_type = FAT32;
                 
+                for (int i=0; i<4; i++)
+                {
+                    volume_serialNumber[i] = ((char*)addr)[67+i]; // byte 67-70
+                }
+                printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
+                
                 uint32_t rootCluster = ((uint32_t*)addr)[11]; // byte 44-47
-                printf("\nThe root dir starts at cluster(!) %d.", rootCluster);
-                // ??
+                printf("\nThe root dir starts at cluster %d (expected: 2).", rootCluster);
+                
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
                 
                 printf("\nSectors per FAT: %d.",              ((uint32_t*)addr)[9]);  // byte 36-39
@@ -763,8 +770,16 @@ void analyzeBootSector(void* addr) // for first tests only
         {
             if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '6') )
             {
-                printf("\nThis is a volume formated with FAT16.");  
+                printf("\nThis is a volume formated with FAT16 ");  
                 volume_type = FAT16;
+
+                for (int i=0; i<4; i++)
+                {
+                    volume_serialNumber[i] = ((char*)addr)[39+i]; // byte 39-42
+                }
+                printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
+                
+                    
             }
             else if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '2') )
             {
@@ -777,19 +792,19 @@ void analyzeBootSector(void* addr) // for first tests only
         // store the determined volume data to DISK usbstick //
         ///////////////////////////////////////////////////////
 
-        usbStick.buffer     = malloc(0x200000,PAGESIZE); // 2 MB
-        usbStick.type       = volume_type; 
-        usbStick.SecPerClus = volume_SecPerClus;
-        usbStick.maxroot    = volume_maxroot;
-        usbStick.fatsize    = volume_fatsize;
-        usbStick.fatcopy    = volume_fatcopy;        
-        usbStick.firsts     = volume_firstSector;
-        usbStick.fat        = volume_fat;           // reservedSectors
-        usbStick.root       = volume_root;          // reservedSectors + 2*SectorsPerFAT
-        usbStick.data       = volume_data;          // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR
-        usbStick.maxcls     = volume_maxcls; 
-        usbStick.mount      = true;
-
+        usbStick.buffer         = malloc(0x200000,PAGESIZE); // 2 MB
+        usbStick.type           = volume_type; 
+        usbStick.SecPerClus     = volume_SecPerClus;
+        usbStick.maxroot        = volume_maxroot;
+        usbStick.fatsize        = volume_fatsize;
+        usbStick.fatcopy        = volume_fatcopy;        
+        usbStick.firsts         = volume_firstSector;
+        usbStick.fat            = volume_fat;    // reservedSectors
+        usbStick.root           = volume_root;   // reservedSectors + 2*SectorsPerFAT
+        usbStick.data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR
+        usbStick.maxcls         = volume_maxcls; 
+        usbStick.mount          = true;
+        strncpy(usbStick.serialNumber,volume_serialNumber,4); // ID of the partition
     }
     else if ( ( ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
     {

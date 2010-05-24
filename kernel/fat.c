@@ -86,7 +86,7 @@ static uint16_t fatRead(DISK* dsk, uint16_t ccls)
     return c;
 }
 
-/*
+
 static uint16_t fatReadQueued(DISK* dsk, uint16_t ccls)
 {
     printf("\n>>>>> fatReadQueued <<<<<!");
@@ -114,9 +114,9 @@ static uint16_t fatReadQueued(DISK* dsk, uint16_t ccls)
 
     return c;
 }
-*/
 
-/*
+
+
 static uint16_t fatWrite(DISK* dsk, uint16_t cls, uint16_t v)
 {
     printf("\n>>>>> fatWrite <<<<<!");
@@ -150,7 +150,7 @@ static uint16_t fatWrite(DISK* dsk, uint16_t cls, uint16_t v)
 
     return c;
 }
-*/
+
 
 static uint8_t fileSearchNextCluster(FILEOBJ fo, uint16_t n)
 {
@@ -188,7 +188,7 @@ static uint8_t fileSearchNextCluster(FILEOBJ fo, uint16_t n)
     return error;
 }
 
-/*
+
 static uint16_t fatFindEmptyCluster(FILEOBJ fo)
 {
     printf("\n>>>>> fatFindEmptyCluster <<<<<!");
@@ -235,10 +235,10 @@ static uint16_t fatFindEmptyCluster(FILEOBJ fo)
     }
     return c;
 }
-*/
 
-/*
-static uint32_t checksum(char* ShortFileName)
+
+
+uint32_t checksum(char* ShortFileName)
 {
     printf("\n>>>>> checksum <<<<<!");
     uint32_t Bit7, Character, Checksum=0;
@@ -260,7 +260,7 @@ static uint32_t checksum(char* ShortFileName)
     }
     return Checksum;
 }
-*/
+
 
 
 ///////////////
@@ -436,7 +436,7 @@ static void updateTimeStamp(DIRENTRY dir)
 ////  File Operations  ////
 ///////////////////////////
 
-/*
+
 static uint8_t eraseCluster(DISK* disk, uint16_t cluster)
 {
     printf("\n>>>>> eraseCluster <<<<<!");
@@ -454,9 +454,9 @@ static uint8_t eraseCluster(DISK* disk, uint16_t cluster)
     }
     return error;
 }
-*/
 
-/*
+
+
 static uint8_t fileCreateHeadCluster(FILEOBJ fo, uint16_t* cluster)
 {
     printf("\n>>>>> fileCreateHeadCluster <<<<<!");
@@ -484,9 +484,9 @@ static uint8_t fileCreateHeadCluster(FILEOBJ fo, uint16_t* cluster)
     }
     return error;
 }
-*/
 
-/*
+
+
 static uint8_t createFirstCluster(FILEOBJ fo)
 {
     printf("\n>>>>> createFirstCluster <<<<<!");
@@ -508,9 +508,9 @@ static uint8_t createFirstCluster(FILEOBJ fo)
     }
     return error;
 }
-*/
 
-/*
+
+
 static uint8_t fileAllocateNewCluster(FILEOBJ fo)
 {
     printf("\n>>>>> fileAllocateNewCluster <<<<<!");
@@ -531,7 +531,7 @@ static uint8_t fileAllocateNewCluster(FILEOBJ fo)
     fo->ccls = c;
     return CE_GOOD;
 }
-*/
+
 
 static uint8_t fillFileObject(FILEOBJ fo, uint16_t* fHandle)
 {
@@ -675,7 +675,7 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
     return statusB;
 }
 
-/*
+
 static uint8_t populateEntries(FILEOBJ fo, char* name, uint16_t* fHandle)
 {
     printf("\n>>>>> populateEntries <<<<<!");
@@ -705,9 +705,8 @@ static uint8_t populateEntries(FILEOBJ fo, char* name, uint16_t* fHandle)
     writeFileEntry(fo,fHandle);
     return error;
 }
-*/
 
-/*
+
 static uint8_t findEmptyEntry(FILEOBJ fo, uint16_t* fHandle)
 {
     printf("\n>>>>> findEmptyEntry <<<<<!");
@@ -770,39 +769,8 @@ static uint8_t findEmptyEntry(FILEOBJ fo, uint16_t* fHandle)
     if (status==FOUND) return (true);
     else               return (false); // also possible instead of if/else: return (!status);  
 }
-*/
 
-/*
-static uint8_t createFileEntry(FILEOBJ fo, uint16_t* fHandle)
-{
-    printf("\n>>>>> createFileEntry <<<<<!");
-    uint8_t error = CE_GOOD, index;
-    char name[DIR_NAMECOMP];
-    
-    for (index=0; index<FILE_NAME_SIZE; index++)
-    {
-        name[index] = fo->name[index];
-    }
-    if (error == CE_GOOD)
-    {
-        *fHandle = 0;
-        if (findEmptyEntry(fo,fHandle))
-        {
-            if ((error = populateEntries(fo, name, fHandle)) == CE_GOOD)
-            {
-                error = createFirstCluster(fo);
-            }
-        }
-        else
-        {
-            error = CE_DIR_FULL;
-        }
-    }
-    return error;
-}
-*/
 
-/*
 static uint8_t fatEraseClusterChain(uint16_t cluster, DISK* dsk)
 {
     printf("\n>>>>> fatEraseClusterChain <<<<<!");
@@ -853,9 +821,35 @@ static uint8_t fatEraseClusterChain(uint16_t cluster, DISK* dsk)
         return false;
     }
 }
-*/
 
-/*
+uint8_t createFileEntry(FILEOBJ fo, uint16_t* fHandle)
+{
+    printf("\n>>>>> createFileEntry <<<<<!");
+    uint8_t error = CE_GOOD, index;
+    char name[DIR_NAMECOMP];
+    
+    for (index=0; index<FILE_NAME_SIZE; index++)
+    {
+        name[index] = fo->name[index];
+    }
+    if (error == CE_GOOD)
+    {
+        *fHandle = 0;
+        if (findEmptyEntry(fo,fHandle))
+        {
+            if ((error = populateEntries(fo, name, fHandle)) == CE_GOOD)
+            {
+                error = createFirstCluster(fo);
+            }
+        }
+        else
+        {
+            error = CE_DIR_FULL;
+        }
+    }
+    return error;
+}
+
 uint8_t fileDelete(FILEOBJ fo, uint16_t* fHandle, uint8_t EraseClusters)
 {
     printf("\n>>>>> fileDelete <<<<<!");
@@ -900,7 +894,6 @@ uint8_t fileDelete(FILEOBJ fo, uint16_t* fHandle, uint8_t EraseClusters)
     } // END: a not empty entry was returned
     return status;
 }
-*/
 
 uint8_t fopen(FILEOBJ fo, uint16_t* fHandle, char type)
 {
@@ -1036,7 +1029,7 @@ uint8_t fread(FILEOBJ fo, void* dest, uint16_t count)
     return error;
 }
 
-/*
+
 uint8_t fwrite(FILEOBJ fo, void* src, uint16_t count)
 {
     printf("\n>>>>> fwrite <<<<<!");
@@ -1149,7 +1142,6 @@ uint8_t fwrite(FILEOBJ fo, void* src, uint16_t count)
     }
     return error;
 }
-*/
 
 void showDirectoryEntry(DIRENTRY dir)
 {
@@ -1181,14 +1173,16 @@ void testFAT()
     printf("\nroot:       %d", usbStick.root);
     printf("\ndata:       %d", usbStick.data);
     printf("\nmaxcls:     %d", usbStick.maxcls);
-    printf("\nmount:      %d", usbStick.mount);
+    printf("\nmount:      %d", usbStick.mount);    
+    printf("\nserial #:   %y %y %y %y", usbStick.serialNumber[0], usbStick.serialNumber[1], usbStick.serialNumber[2], usbStick.serialNumber[3]);  
+    
     textColor(0x0F);
     waitForKeyStroke();
 
     // file name
     FILE toCompare;
     FILEOBJ foCompareTo = &toCompare;            
-    strncpy(foCompareTo->name,"CLEAN   BAT",11); // <--------------- this file will be searched
+    strncpy(foCompareTo->name,"makefile   ",11); // <--------------- this file will be searched
     
     // file to search
     FILE dest;
