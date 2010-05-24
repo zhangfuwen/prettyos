@@ -11,7 +11,7 @@ struct element
     element_t* next;
 };
 
-typedef struct
+typedef struct listHead
 {
     element_t* head;
     element_t* tail;

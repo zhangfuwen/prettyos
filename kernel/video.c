@@ -183,7 +183,6 @@ void refreshUserScreen()
 {
     // Printing titlebar
     kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
-    csr_y = reachableConsoles[displayedConsole]->csr_y;
 
     if (displayedConsole == KERNELCONSOLE_ID)
     {

@@ -907,105 +907,100 @@ int32_t showResultsRequestSense()
     uint32_t ResponseCode = getField(addr, 0, 0, 7); // byte 0, bit 6:0
     uint32_t SenseKey     = getField(addr, 2, 0, 4); // byte 2, bit 3:0
 
-    char ValidStr[40];
-    char ResponseCodeStr[40];
-    char SenseKeyStr[80];
-
-    if (Valid == 0)
-    {
-        strcpy(ValidStr,"Sense data are not SCSI compliant");
-    }
-    else
-    {
-        strcpy(ValidStr,"Sense data are SCSI compliant");
-    }
-
-    switch (ResponseCode)
-    {
-        case 0x70:
-            strcpy(ResponseCodeStr,"Current errors, fixed format");
-            break;
-        case 0x71:
-            strcpy(ResponseCodeStr,"Deferred errors, fixed format");
-            break;
-        case 0x72:
-            strcpy(ResponseCodeStr,"Current error, descriptor format");
-            break;
-        case 0x73:
-            strcpy(ResponseCodeStr,"Deferred error, descriptor format");
-            break;
-        default:
-            strcpy(ResponseCodeStr,"No vaild response code!");
-            break;
-    }
-
-    switch (SenseKey)
-    {
-        case 0x0:
-            strcpy(SenseKeyStr,"No Sense");
-            break;
-        case 0x1:
-            strcpy(SenseKeyStr,"Recovered Error - last command completed with some recovery action");
-            break;
-        case 0x2:
-            strcpy(SenseKeyStr,"Not Ready - logical unit addressed cannot be accessed");
-            break;
-        case 0x3:
-            strcpy(SenseKeyStr,"Medium Error - command terminated with a non-recovered error condition");
-            break;
-        case 0x4:
-            strcpy(SenseKeyStr,"Hardware Error");
-            break;
-        case 0x5:
-            strcpy(SenseKeyStr,"Illegal Request - illegal parameter in the command descriptor block ");
-            break;
-        case 0x6:
-            strcpy(SenseKeyStr,"Unit Attention - disc drive may have been reset.");
-            break;
-        case 0x7:
-            strcpy(SenseKeyStr,"Data Protect - command read/write on a protected block");
-            break;
-        case 0x8:
-            strcpy(SenseKeyStr,"not defined");
-            break;
-        case 0x9:
-            strcpy(SenseKeyStr,"Firmware Error");
-            break;
-        case 0xA:
-            strcpy(SenseKeyStr,"not defined");
-            break;
-        case 0xB:
-            strcpy(SenseKeyStr,"Aborted Command - disc drive aborted the command");
-            break;
-        case 0xC:
-            strcpy(SenseKeyStr,"Equal - SEARCH DATA command has satisfied an equal comparison");
-            break;
-        case 0xD:
-            strcpy(SenseKeyStr,"Volume Overflow - buffered peripheral device has reached the end of medium partition");
-            break;
-        case 0xE:
-            strcpy(SenseKeyStr,"Miscompare - source data did not match the data read from the medium");
-            break;
-        case 0xF:
-            strcpy(SenseKeyStr,"not defined");
-            break;
-        default:
-            strcpy(SenseKeyStr,"sense key not known!");
-            break;
-    }
-
     textColor(0x0E);
-    printf("\n\nResults of \"request sense\":");
+    printf("\n\nResults of \"request sense\":\n");
     if ( (ResponseCode >= 0x70) && (ResponseCode <= 0x73) )
     {
-         textColor(0x0F);
-         printf("\nValid: \t\t%s \nResponse Code: \t%s \nSense Key: \t%s", ValidStr, ResponseCodeStr, SenseKeyStr);
-         return SenseKey;
+        textColor(0x0F);
+		printf("Valid: \t\t");
+		if (Valid == 0)
+		{
+			printf("Sense data are not SCSI compliant");
+		}
+		else
+		{
+			printf("Sense data are SCSI compliant");
+		}
+		printf("\nResponse Code: \t");
+		switch (ResponseCode)
+		{
+			case 0x70:
+				printf("Current errors, fixed format");
+				break;
+			case 0x71:
+				printf("Deferred errors, fixed format");
+				break;
+			case 0x72:
+				printf("Current error, descriptor format");
+				break;
+			case 0x73:
+				printf("Deferred error, descriptor format");
+				break;
+			default:
+				printf("No vaild response code!");
+				break;
+		}
+		printf("\nSense Key: \t");
+		switch (SenseKey)
+		{
+			case 0x0:
+				printf("No Sense");
+				break;
+			case 0x1:
+				printf("Recovered Error - last command completed with some recovery action");
+				break;
+			case 0x2:
+				printf("Not Ready - logical unit addressed cannot be accessed");
+				break;
+			case 0x3:
+				printf("Medium Error - command terminated with a non-recovered error condition");
+				break;
+			case 0x4:
+				printf("Hardware Error");
+				break;
+			case 0x5:
+				printf("Illegal Request - illegal parameter in the command descriptor block ");
+				break;
+			case 0x6:
+				printf("Unit Attention - disc drive may have been reset.");
+				break;
+			case 0x7:
+				printf("Data Protect - command read/write on a protected block");
+				break;
+			case 0x8:
+				printf("not defined");
+				break;
+			case 0x9:
+				printf("Firmware Error");
+				break;
+			case 0xA:
+				printf("not defined");
+				break;
+			case 0xB:
+				printf("Aborted Command - disc drive aborted the command");
+				break;
+			case 0xC:
+				printf("Equal - SEARCH DATA command has satisfied an equal comparison");
+				break;
+			case 0xD:
+				printf("Volume Overflow - buffered peripheral device has reached the end of medium partition");
+				break;
+			case 0xE:
+				printf("Miscompare - source data did not match the data read from the medium");
+				break;
+			case 0xF:
+				printf("not defined");
+				break;
+			default:
+				printf("sense key not known!");
+				break;
+		}
+        return SenseKey;
     }
     else
     {
         textColor(0x0C);
-        printf("\nNo vaild response code!");
+        printf("No vaild response code!");
         textColor(0x0F);
         return -1;
     }

@@ -4,19 +4,40 @@
 */
 
 #include "cdi/lists.h"
+#include "list.h"
+#include "kheap.h"
 
 
-cdi_list_t cdi_list_create();
+cdi_list_t cdi_list_create()
+{
+	return(list_Create());
+}
 
-void cdi_list_destroy(cdi_list_t list);
+void cdi_list_destroy(cdi_list_t list)
+{
+	list_DeleteAll(list);
+}
 
-cdi_list_t cdi_list_push(cdi_list_t list, void* value);
+cdi_list_t cdi_list_push(cdi_list_t list, void* value)
+{
+	list_Append(list, value); /// Probably not good... push maybe != append
+	return(list); /// Maybe wrong
+}
 
-void* cdi_list_pop(cdi_list_t list);
+void* cdi_list_pop(cdi_list_t list) {
+	void* retVal = list->head->data;
+	element_t* temp = list->head;
+	list->head = list->head->next;
+	free(temp);
+	return(retVal);
+}
 
 size_t cdi_list_empty(cdi_list_t list);
 
-void* cdi_list_get(cdi_list_t list, size_t index);
+void* cdi_list_get(cdi_list_t list, size_t index)
+{
+	return(list_GetElement(list, index));
+}
 
 cdi_list_t cdi_list_insert(cdi_list_t list, size_t index, void* value);
 

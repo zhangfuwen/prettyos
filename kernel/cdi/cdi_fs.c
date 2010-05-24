@@ -6,11 +6,44 @@
 #include "cdi/fs.h"
 
 
-void cdi_fs_driver_init(struct cdi_fs_driver* driver);
+struct cdi_fs_driver* the_one_and_only_driver = NULL;
 
-void cdi_fs_driver_destroy(struct cdi_fs_driver* driver);
+void cdi_fs_driver_init(struct cdi_fs_driver* driver)
+{
+    static int initialized = 0;
 
-void cdi_fs_driver_register(struct cdi_fs_driver* driver);
+    if (!initialized) {
+
+        ///lostio_init();
+        ///lostio_type_directory_use();
+        ///lostio_register_typehandle(&cdi_typehandle);
+        ///lostio_register_typehandle(&cdi_symlink_typehandle);
+        ///lostio_register_typehandle(&cdi_null_typehandle);
+
+
+        // Preopen-Handler fuer Verzeichnisse setzen
+        ///typehandle_t* typehandle = get_typehandle(LOSTIO_TYPES_DIRECTORY);
+        ///typehandle->pre_open = &lostio_pre_open_handler;
+        ///typehandle->not_found = &lostio_not_found_handler;
+        ///typehandle->post_open = NULL;
+        ///typehandle->unlink = &lostio_unlink_handler;
+
+        initialized = 1;
+    }
+}
+
+void cdi_fs_driver_destroy(struct cdi_fs_driver* driver)
+{
+}
+
+void cdi_fs_driver_register(struct cdi_fs_driver* driver)
+{
+    if (the_one_and_only_driver) {
+        return;
+    }
+
+    the_one_and_only_driver = driver;
+}
 
 size_t cdi_fs_data_read(struct cdi_fs_filesystem* fs, uint64_t start, size_t size, void* buffer);
 

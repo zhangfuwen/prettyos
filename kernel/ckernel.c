@@ -16,11 +16,12 @@
 #include "flpydsk.h"
 #include "ehci.h"
 #include "mouse.h"
+#include "cdi.h"
 
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.466";
+const char* version = "0.0.0.467";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -68,6 +69,8 @@ static void init()
     tasking_install();
     events_install();
     syscall_install();
+
+	cdi_init();
 
     sti();
 }

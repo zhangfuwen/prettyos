@@ -4,11 +4,18 @@
 */
 
 #include "cdi/pci.h"
+#include "kheap.h"
 
 
-void cdi_pci_get_all_devices(cdi_list_t list);
+void cdi_pci_get_all_devices(cdi_list_t list)
+{
+}
 
-void cdi_pci_device_destroy(struct cdi_pci_device* device);
+void cdi_pci_device_destroy(struct cdi_pci_device* device)
+{
+    // TODO Liste abbauen
+    free(device);
+}
 
 void cdi_pci_alloc_ioports(struct cdi_pci_device* device);
 

@@ -4,15 +4,52 @@
 */
 
 #include "cdi/storage.h"
+#include "kheap.h"
 
 
-void cdi_storage_driver_init(struct cdi_storage_driver* driver);
+void cdi_storage_driver_init(struct cdi_storage_driver* driver)
+{
+    driver->drv.type = CDI_STORAGE;
+    cdi_driver_init((struct cdi_driver*) driver);
+}
 
-void cdi_storage_driver_destroy(struct cdi_storage_driver* driver);
+void cdi_storage_driver_destroy(struct cdi_storage_driver* driver)
+{
+    cdi_driver_destroy((struct cdi_driver*) driver);
+}
 
-void cdi_storage_driver_register(struct cdi_storage_driver* driver);
+void cdi_storage_driver_register(struct cdi_storage_driver* driver)
+{
+    static int initialized = 0;
 
-void cdi_storage_device_init(struct cdi_storage_device* device);
+    if (initialized == 0) {
+        ///lostio_mst_if_init();
+        initialized = 1;
+	}
+}
+
+void cdi_storage_device_init(struct cdi_storage_device* device)
+{
+    cdi_list_t partitions;
+    struct partition* part;
+
+    // Geraeteknoten fuer LostIO erstellen
+    ///part = calloc(1, sizeof(*part));
+    ///part->dev       = device;
+    ///part->number    = (uint16_t) -1;
+    ///part->start     = 0;
+    ///part->size      = device->block_size * device->block_count;
+
+    ///lostio_mst_if_newdev(part);
+
+    // Partitionen suchen und Knoten erstellen
+    partitions = cdi_list_create();
+    ///cdi_tyndur_parse_partitions(device, partitions);
+    while ((part = cdi_list_pop(partitions))) {
+        ///lostio_mst_if_newdev(part);
+    }
+    cdi_list_destroy(partitions);
+}
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
