@@ -25,7 +25,7 @@ uint8_t currCSWtag;
 void* cmdQTD;
 void* StatusQTD;
 
-uint32_t startSectorPartition;
+uint32_t startSectorPartition = 0;
 
 DISK usbStick;
 uint32_t usbStickMaxLBA;
@@ -657,7 +657,11 @@ label1:
             goto label1;
         }
 
-        testFAT(); // TEST FAT filesystem
+        // testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!! 
+           testFAT("makefile.xxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!! 
+        // testFAT("makefile   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!! 
+        // test more!
+
     }// else  
 }
 
@@ -712,6 +716,9 @@ void analyzeBootSector(void* addr) // for first tests only
     strncpy(FATn,    sec0->Reserved2, 8);
     SysName[8]=0;
     FATn[8]   =0;
+    
+    
+    // This is a FAT description
     if (sec0->charsPerSector == 0x200)
     {
         printf("\nOEM name:           %s"    ,SysName);
@@ -733,13 +740,13 @@ void analyzeBootSector(void* addr) // for first tests only
         volume_maxroot      = sec0->MaxRootEntries;
         volume_fatsize      = sec0->SectorsPerFAT;
         volume_fatcopy      = sec0->FATcount;    
-        volume_firstSector  = sec0->HiddenSectors;
+        volume_firstSector  = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
         volume_fat          = volume_firstSector + sec0->ReservedSectors;
         volume_root         = volume_fat + volume_fatcopy * sec0->SectorsPerFAT; 
         volume_data         = volume_root + sec0->MaxRootEntries/DIRENTRIES_PER_SECTOR;
-        volume_maxcls       = (usbStickMaxLBA - volume_data - sec0->HiddenSectors) / volume_SecPerClus; 
+        volume_maxcls       = (usbStickMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus; 
 
-        startSectorPartition = 0;
+        startSectorPartition = 0; // important!
 
         if (FATn[0] != 'F') // FAT32
         {
@@ -761,9 +768,9 @@ void analyzeBootSector(void* addr) // for first tests only
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
                 
                 printf("\nSectors per FAT: %d.",              ((uint32_t*)addr)[9]);  // byte 36-39
-                volume_fatsize    = ((uint32_t*)addr)[9];
-                volume_data       = sec0->HiddenSectors + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus; // HOTFIX: plus ein Cluster, cf. Cluster2Sector(...)
-                volume_root       = sec0->HiddenSectors + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus*(rootCluster-2); 
+                volume_fatsize = ((uint32_t*)addr)[9];
+                volume_data    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus; // HOTFIX: plus ein Cluster, cf. Cluster2Sector(...)
+                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus*(rootCluster-2); 
             }
         }
         else // FAT12/16

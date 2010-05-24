@@ -209,7 +209,7 @@ uint8_t fwrite(FILEOBJ fo, void* src, uint16_t count);
 
 // analysis functions
 void    showDirectoryEntry(DIRENTRY dir);
-void    testFAT();
+void testFAT(char* filename);
 
 //additional functions
 uint32_t checksum(char* ShortFileName);

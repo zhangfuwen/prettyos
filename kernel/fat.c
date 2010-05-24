@@ -1151,7 +1151,7 @@ void showDirectoryEntry(DIRENTRY dir)
     printf("\nfilesize: %d",    dir->DIR_FileSize                               );
 }
 
-void testFAT()
+void testFAT(char* filename)
 {
     /////////////////////////////////////////////////////////////////
     ///                                                            //
@@ -1182,7 +1182,7 @@ void testFAT()
     // file name
     FILE toCompare;
     FILEOBJ foCompareTo = &toCompare;            
-    strncpy(foCompareTo->name,"makefile   ",11); // <--------------- this file will be searched
+    strncpy(foCompareTo->name,filename,11); // <--------------- this file will be searched
     
     // file to search
     FILE dest;
