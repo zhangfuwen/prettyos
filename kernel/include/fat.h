@@ -1,13 +1,13 @@
 /*
-*  This code is based on example code for the PIC18F4550 given in the book: 
+*  This code is based on example code for the PIC18F4550 given in the book:
 *  Jan Axelson, "USB Mass Storage Device" (2006), web site: www.Lvr.com
 *
 *  The copyright, page ii, tells:
-*  "No part of the book, except the program code, may be reproduced or transmitted in any form by any means 
-*  without the written permission of the publisher. The program code may be stored and executed in a computer system 
-*  and may be incorporated into computer programs developed by the reader." 
+*  "No part of the book, except the program code, may be reproduced or transmitted in any form by any means
+*  without the written permission of the publisher. The program code may be stored and executed in a computer system
+*  and may be incorporated into computer programs developed by the reader."
 *
-*  I am a reader and have bought this helpful book (Erhard Henkes). 
+*  I am a reader and have bought this helpful book (Erhard Henkes).
 *
 *  Commented code is not tested with PrettyOS at the time being
 */
@@ -77,7 +77,7 @@ typedef struct
     uint8_t  type;            // FAT type (FAT16, FAT32)
     bool     mount;           // 0: not mounted  1: mounted
     char     serialNumber[4]; // serial number for identification
-} DISK; 
+} PARTITION;
 
 // File
 
@@ -89,7 +89,7 @@ typedef struct
 
 typedef struct
 {
-    DISK*     dsk;          // volume containing the file
+    PARTITION* volume;      // volume containing the file
     uint16_t  cluster;      // first cluster
     uint16_t  ccls;         // current cluster
     uint16_t  sec;          // current sector in the current cluster
@@ -115,7 +115,7 @@ typedef struct
     uint8_t DIR_Attr;
     uint8_t DIR_NTRes;
     uint8_t DIR_CrtTimeTenth;  // tenths of second portion
-    uint16_t DIR_CrtTime;      // created 
+    uint16_t DIR_CrtTime;      // created
     uint16_t DIR_CrtDate;
     uint16_t DIR_LstAccDate;   // last access
     uint16_t DIR_FstClusHI;
@@ -138,7 +138,7 @@ typedef _DIRENTRY* DIRENTRY;
 #define CE_BAD_SECTOR_READ     8 // A bad read of a sector occured
 #define CE_WRITE_ERROR         9 // Could not write to a sector
 #define CE_INVALID_CLUSTER    10 // cluster number > maxcls
-#define CE_FILE_NOT_FOUND     11 // Could not find the file on the device 
+#define CE_FILE_NOT_FOUND     11 // Could not find the file on the device
 #define CE_DIR_FULL           20 // All root dir entry are taken
 #define CE_DISK_FULL          21 // All clusters in partition are taken
 #define CE_WRITE_PROTECTED    24 // Card is write protected
@@ -156,37 +156,37 @@ typedef enum _CETYPE
     CE_NOT_PRESENT,                 // No device was present
     CE_NOT_FORMATTED,               // The disk is of an unsupported format
     CE_BAD_PARTITION,               // The boot record is bad
-    
+
     CE_UNSUPPORTED_FS,              // The file system type is unsupported
     CE_INIT_ERROR,                  // An initialization error has occured
     CE_NOT_INIT,                    // An operation was performed on an uninitialized device
     CE_BAD_SECTOR_READ,             // A bad read of a sector occured
     CE_WRITE_ERROR,                 // Could not write to a sector
-    
+
     CE_INVALID_CLUSTER,             // Invalid cluster value > maxcls
     CE_FILE_NOT_FOUND,              // Could not find the file on the device
     CE_DIR_NOT_FOUND,               // Could not find the directory
     CE_BAD_FILE,                    // File is corrupted
     CE_DONE,                        // No more files in this directory
-    
+
     CE_COULD_NOT_GET_CLUSTER,       // Could not load/allocate next cluster in file
     CE_FILENAME_2_LONG,             // A specified file name is too long to use
     CE_FILENAME_EXISTS,             // A specified filename already exists on the device
     CE_INVALID_FILENAME,            // Invalid file name
     CE_DELETE_DIR,                  // The user tried to delete a directory with FSremove
-    
+
     CE_DIR_FULL,                    // All root dir entry are taken
     CE_DISK_FULL,                   // All clusters in partition are taken
     CE_DIR_NOT_EMPTY,               // This directory is not empty yet, remove files before deleting
     CE_NONSUPPORTED_SIZE,           // The disk is too big to format as FAT16
     CE_WRITE_PROTECTED,             // Card is write protected
-    
+
     CE_FILENOTOPENED,               // File not opened for the write
     CE_SEEK_ERROR,                  // File location could not be changed successfully
     CE_BADCACHEREAD,                // Bad cache read
     CE_CARDFAT32,                   // FAT 32 - card not supported
     CE_READONLY,                    // The file is read-only
-    
+
     CE_WRITEONLY,                   // The file is write-only
     CE_INVALID_ARGUMENT,            // Invalid argument
     CE_TOO_MANY_FILES_OPEN,         // Too many files are already open

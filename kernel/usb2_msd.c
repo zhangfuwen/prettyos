@@ -27,7 +27,7 @@ void* StatusQTD;
 
 uint32_t startSectorPartition = 0;
 
-DISK usbStick;
+PARTITION usbStick;
 uint32_t usbStickMaxLBA;
 
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
@@ -55,7 +55,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
-    
+
     return *((uint8_t*)DataQTDpage0);
 }
 
@@ -79,7 +79,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     // Create QH
     createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, 0, 64); // endpoint 0
 
-    performAsyncScheduler(true, false, 0);    
+    performAsyncScheduler(true, false, 0);
 }
 
 
@@ -93,7 +93,7 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->CBWFlags              = 0x00;          // Out: 0x00  In: 0x80
             cbw->CBWCBLength           = 6;             // only bits 4:0
             break;
-        
+
         case 0x03: // Request Sense(6)
             cbw->CBWSignature          = CBWMagic;      // magic
             cbw->CBWTag                = 0x42424203;    // device echoes this field in the CSWTag field of the associated CSW
@@ -103,7 +103,7 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[0]        = 0x03;          // Operation code
             cbw->commandByte[4]        = 18;            // Allocation length (max. bytes)
             break;
-        
+
         case 0x12: // Inquiry(6)
             cbw->CBWSignature          = CBWMagic;      // magic
             cbw->CBWTag                = 0x42424212;    // device echoes this field in the CSWTag field of the associated CSW
@@ -113,7 +113,7 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[0]        = 0x12;          // Operation code
             cbw->commandByte[4]        = 36;            // Allocation length (max. bytes)
             break;
-        
+
         case 0x25: // read capacity(10)
             cbw->CBWSignature          = CBWMagic;      // magic
             cbw->CBWTag                = 0x42424225;    // device echoes this field in the CSWTag field of the associated CSW
@@ -126,7 +126,7 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[4]        = BYTE2(LBA);    // LBA
             cbw->commandByte[5]        = BYTE1(LBA);    // LBA LSB
             break;
-        
+
         case 0x28: // read(10)
             cbw->CBWSignature           = CBWMagic;              // magic
             cbw->CBWTag                 = 0x42424228;            // device echoes this field in the CSWTag field of the associated CSW
@@ -139,10 +139,10 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[4]         = BYTE2(LBA);            // LBA
             cbw->commandByte[5]         = BYTE1(LBA);            // LBA LSB
             cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
-            cbw->commandByte[8]         = BYTE1(TransferLength); // LSB    
+            cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
             break;
-    }// switch   
-    
+    }// switch
+
     currCSWtag = SCSIcommand;
 }
 
@@ -157,14 +157,14 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     void* QH_In  = malloc(sizeof(ehci_qhd_t), PAGESIZE);
 
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
-    
+
   #ifdef _USB_DIAGNOSIS_
-    printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR); 
+    printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
   #endif
 
     // OUT qTD
     // No handshake!
-    
+
   #ifdef _USB_DIAGNOSIS_
      textColor(0x03);
      printf("\ntoggle OUT %d", usbDevices[device].ToggleEndpointOutMSD);
@@ -180,11 +180,11 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     // http://en.wikipedia.org/wiki/SCSI_CDB
     struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
-    memset(cbw,0,sizeof(struct usb2_CommandBlockWrapper)); // zero of cbw    
+    memset(cbw,0,sizeof(struct usb2_CommandBlockWrapper)); // zero of cbw
     SCSIcmd(SCSIcommand, cbw, LBA, TransferLength);
-    if (SCSIcommand == 0x28)   // read(10)        
+    if (SCSIcommand == 0x28)   // read(10)
         TransferLength *= 512; // byte = 512 * block
-    
+
     createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_In), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
 
   /**************************************************************************************************************************************/
@@ -194,8 +194,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
   #endif
 
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_In);
-    
-  #ifdef _USB_DIAGNOSIS_    
+
+  #ifdef _USB_DIAGNOSIS_
     printf("\nasyncList: %X <-- QH_In", pOpRegs->ASYNCLISTADDR);
   #endif
 
@@ -215,24 +215,24 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         next = StatusQTD = createQTD_MSDStatus(0x1, !(usbDevices[device].ToggleEndpointInMSD));   // next, toggle, IN 13 byte
         QTD_In = DataQTD = createQTD_IO((uintptr_t)next, IN, usbDevices[device].ToggleEndpointInMSD, TransferLength); // IN/OUT DATA0, ... byte
         /*do not switch toggle*/
-    
-      #ifdef _USB_DIAGNOSIS_    
+
+      #ifdef _USB_DIAGNOSIS_
         printf("\tStatusQTD: %X", paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
         printf("\tDataQTD: %X",   paging_get_phys_addr(kernel_pd, (void*)DataQTD));
       #endif
     }
     else
     {
-      #ifdef _USB_DIAGNOSIS_    
+      #ifdef _USB_DIAGNOSIS_
         textColor(0x03);
         printf("\ntoggle IN: status: %d", usbDevices[device].ToggleEndpointInMSD);
-        textColor(0x0F); 
+        textColor(0x0F);
       #endif
 
         QTD_In = StatusQTD = createQTD_MSDStatus(0x1, usbDevices[device].ToggleEndpointInMSD); // next, toggle, IN 13 byte
         usbDevices[device].ToggleEndpointInMSD = !(usbDevices[device].ToggleEndpointInMSD);    // switch toggle
-      
-      #ifdef _USB_DIAGNOSIS_    
+
+      #ifdef _USB_DIAGNOSIS_
         printf("\tStatusQTD: %X", paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
       #endif
     }
@@ -254,14 +254,14 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     // CSW Status
     printf("\n");
     showPacket(MSDStatusQTDpage0,13);
-    
+
     // check signature 0x53425355 // DWORD 0 (byte 0:3)
-    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0 
+    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
     if (CSWsignature == CSWMagicOK)
     {
-    //#ifdef _USB_DIAGNOSIS_ 
+    //#ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
-        printf("\nCSW signature OK    "); 
+        printf("\nCSW signature OK    ");
         textColor(0x0F);
     //#endif
     }
@@ -278,11 +278,11 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         textColor(0x0F);
     }
 
-    // check matching tag 
+    // check matching tag
     uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
     if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
     {
-    //#ifdef _USB_DIAGNOSIS_ 
+    //#ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("CSW tag %y OK    ",BYTE1(CSWtag));
         textColor(0x0F);
@@ -294,12 +294,12 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         printf("\nError: CSW tag wrong");
         textColor(0x0F);
     }
-    
+
     // check CSWDataResidue
     uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
     if (CSWDataResidue == 0)
     {
-    //#ifdef _USB_DIAGNOSIS_ 
+    //#ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\tCSW data residue OK    ");
         textColor(0x0F);
@@ -311,15 +311,15 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         printf("\nCSW data residue: %d",CSWDataResidue);
         textColor(0x0F);
     }
-    
+
     // check status byte // DWORD 3 (byte 12)
     // uint8_t CSWstatusByte = (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF;
-    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)                            
+    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
 
     switch (CSWstatusByte)
     {
     case 0x00:
-    //#ifdef _USB_DIAGNOSIS_   
+    //#ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\tCSW status OK");
         textColor(0x0F);
@@ -345,8 +345,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     }
 
     // transfer diagnosis (qTD status)
-    uint32_t statusCommand = showStatusbyteQTD(cmdQTD);    
-    if (statusCommand) 
+    uint32_t statusCommand = showStatusbyteQTD(cmdQTD);
+    if (statusCommand)
     {
         printf("<-- command"); // In/Out Data
         bulkTransfer->successfulCommand = false;
@@ -358,25 +358,25 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     else // OK
     {
         bulkTransfer->successfulCommand = true;
-    }    
-    
+    }
+
     uint32_t statusData = 0x00;
     if (TransferLength)
     {
-        statusData = showStatusbyteQTD(DataQTD);           
-        if (statusData) 
+        statusData = showStatusbyteQTD(DataQTD);
+        if (statusData)
         {
-            printf("<-- data");   // In/Out Data      
+            printf("<-- data");   // In/Out Data
         }
         {
             bulkTransfer->successfulDataIN = true; // TEST: currently only IN data are used
         }
     }
-    
-    uint32_t statusStatus = showStatusbyteQTD(StatusQTD);  
-    if (statusStatus) 
+
+    uint32_t statusStatus = showStatusbyteQTD(StatusQTD);
+    if (statusStatus)
     {
-        printf("<-- status");   // In CSW 
+        printf("<-- status");   // In CSW
     }
     else
     {
@@ -418,7 +418,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense); // dev, endp, cmd, LBA, transfer length
 
         statusByte = getStatusByte();
-        showUSBSTS();        
+        showUSBSTS();
         timeout--;
 
         sense = showResultsRequestSense();
@@ -427,7 +427,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
             repeat = false;
         }
         waitForKeyStroke();
-    }    
+    }
     return statusByte;
 }
 
@@ -448,44 +448,44 @@ static void analyzeInquiry()
     void* addr = (void*)DataQTDpage0;
     // cf. Jan Axelson, USB Mass Storage, page 140
     uint8_t PeripheralDeviceType = getField(addr, 0, 0, 5); // byte, shift, len
- // uint8_t PeripheralQualifier  = getField(addr, 0, 5, 3); 
- // uint8_t DeviceTypeModifier   = getField(addr, 1, 0, 7);  
-    uint8_t RMB                  = getField(addr, 1, 7, 1); 
-    uint8_t ANSIapprovedVersion  = getField(addr, 2, 0, 3); 
- // uint8_t ECMAversion          = getField(addr, 2, 3, 3); 
- // uint8_t ISOversion           = getField(addr, 2, 6, 2); 
+ // uint8_t PeripheralQualifier  = getField(addr, 0, 5, 3);
+ // uint8_t DeviceTypeModifier   = getField(addr, 1, 0, 7);
+    uint8_t RMB                  = getField(addr, 1, 7, 1);
+    uint8_t ANSIapprovedVersion  = getField(addr, 2, 0, 3);
+ // uint8_t ECMAversion          = getField(addr, 2, 3, 3);
+ // uint8_t ISOversion           = getField(addr, 2, 6, 2);
     uint8_t ResponseDataFormat   = getField(addr, 3, 0, 4);
-    uint8_t HISUP                = getField(addr, 3, 4, 1); 
-    uint8_t NORMACA              = getField(addr, 3, 5, 1);   
- // uint8_t AdditionalLength     = getField(addr, 4, 0, 8);   
+    uint8_t HISUP                = getField(addr, 3, 4, 1);
+    uint8_t NORMACA              = getField(addr, 3, 5, 1);
+ // uint8_t AdditionalLength     = getField(addr, 4, 0, 8);
     uint8_t CmdQue               = getField(addr, 7, 1, 1);
     uint8_t Linked               = getField(addr, 7, 3, 1);
-        
+
     char vendorID[9];
     for (uint8_t i=0; i<8;i++)
     {
-        vendorID[i]= getField(addr, i+8, 0, 8);   
+        vendorID[i]= getField(addr, i+8, 0, 8);
     }
     vendorID[8]=0;
 
     char productID[17];
     for (uint8_t i=0; i<16;i++)
     {
-        productID[i]= getField(addr, i+16, 0, 8); 
+        productID[i]= getField(addr, i+16, 0, 8);
     }
     productID[16]=0;
 
     char productRevisionLevel[5];
     for (uint8_t i=0; i<4;i++)
     {
-        productRevisionLevel[i]= getField(addr, i+32, 0, 8); 
+        productRevisionLevel[i]= getField(addr, i+32, 0, 8);
     }
     productRevisionLevel[4]=0;
-    
+
     printf("\nVendor ID:  %s", vendorID);
     printf("\nProduct ID: %s", productID);
     printf("\nRevision:   %s", productRevisionLevel);
-    
+
     // Jan Axelson, USB Mass Storage, page 140
     // printf("\nVersion ANSI: %d  ECMA: %d  ISO: %d", ANSIapprovedVersion, ECMAversion, ISOversion);
     printf("\nVersion: %d (4: SPC-2, 5: SPC-3)", ANSIapprovedVersion);
@@ -503,13 +503,13 @@ static void analyzeInquiry()
         printf("\nResponse Data Format is not OK: %d (should be 2)", ResponseDataFormat);
         textColor(0x0F);
     }
-    
-    printf("\nRemovable device type:            %s", RMB     ? "yes" : "no");  
+
+    printf("\nRemovable device type:            %s", RMB     ? "yes" : "no");
     printf("\nSupports hierarch. addr. support: %s", HISUP   ? "yes" : "no");
     printf("\nSupports normal ACA bit support:  %s", NORMACA ? "yes" : "no");
-    printf("\nSupports linked commands:         %s", Linked  ? "yes" : "no"); 
-    printf("\nSupports tagged command queuing:  %s", CmdQue  ? "yes" : "no"); 
-        
+    printf("\nSupports linked commands:         %s", Linked  ? "yes" : "no");
+    printf("\nSupports tagged command queuing:  %s", CmdQue  ? "yes" : "no");
+
     switch (PeripheralDeviceType)
     {
     case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");break;
@@ -549,7 +549,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
     }
     else
     {
-        currentDevice = devAddr; // now active usb msd 
+        currentDevice = devAddr; // now active usb msd
 
         // maxLUN (0 for USB-sticks)
         usbDevices[devAddr].maxLUN = 0;
@@ -563,24 +563,24 @@ void testMSD(uint8_t devAddr, uint8_t config)
         textColor(0x09); printf("\n\n>>> SCSI: inquiry"); textColor(0x0F);
         usbBulkTransfer_t inquiry;
         startLogBulkTransfer(&inquiry, 0x12, 36, 0);
-        
-        usbSendSCSIcmd(devAddr, 
-                       usbDevices[devAddr].numInterfaceMSD, 
-                       usbDevices[devAddr].numEndpointOutMSD, 
-                       usbDevices[devAddr].numEndpointInMSD, 
-                       inquiry.SCSIopcode, 
+
+        usbSendSCSIcmd(devAddr,
+                       usbDevices[devAddr].numInterfaceMSD,
+                       usbDevices[devAddr].numEndpointOutMSD,
+                       usbDevices[devAddr].numEndpointInMSD,
+                       inquiry.SCSIopcode,
                        0, // LBA
-                       inquiry.DataBytesToTransferIN, 
-                       &inquiry); 
+                       inquiry.DataBytesToTransferIN,
+                       &inquiry);
 
         analyzeInquiry();
         showUSBSTS();
         logBulkTransfer(&inquiry);
         waitForKeyStroke();
-        
+
 
         ///////// send SCSI command "test unit ready(6)"
-        
+
         usbBulkTransfer_t testUnitReady, requestSense;
         startLogBulkTransfer(&testUnitReady, 0x00,  0, 0);
         startLogBulkTransfer(&requestSense,  0x03, 18, 0);
@@ -592,24 +592,24 @@ void testMSD(uint8_t devAddr, uint8_t config)
         ///////// send SCSI command "read capacity(10)"
 
         textColor(0x09); printf("\n\n>>> SCSI: read capacity"); textColor(0x0F);
-     
+
         usbBulkTransfer_t readCapacity;
         startLogBulkTransfer(&readCapacity, 0x25, 8, 0);
-        
-        usbSendSCSIcmd(devAddr, 
-                       usbDevices[devAddr].numInterfaceMSD, 
-                       usbDevices[devAddr].numEndpointOutMSD, 
-                       usbDevices[devAddr].numEndpointInMSD, 
-                       readCapacity.SCSIopcode, 
+
+        usbSendSCSIcmd(devAddr,
+                       usbDevices[devAddr].numInterfaceMSD,
+                       usbDevices[devAddr].numEndpointOutMSD,
+                       usbDevices[devAddr].numEndpointInMSD,
+                       readCapacity.SCSIopcode,
                        0, // LBA
-                       readCapacity.DataBytesToTransferIN, 
-                       &readCapacity); 
+                       readCapacity.DataBytesToTransferIN,
+                       &readCapacity);
 
         uint32_t lastLBA    = (*((uint8_t*)DataQTDpage0+0)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+1)) * 0x10000 + (*((uint8_t*)DataQTDpage0+2)) * 0x100 + (*((uint8_t*)DataQTDpage0+3));
         uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+5)) * 0x10000 + (*((uint8_t*)DataQTDpage0+6)) * 0x100 + (*((uint8_t*)DataQTDpage0+7));
         uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
 
-        usbStickMaxLBA     =  lastLBA; 
+        usbStickMaxLBA     =  lastLBA;
 
         textColor(0x0E);
         printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
@@ -625,28 +625,28 @@ void testMSD(uint8_t devAddr, uint8_t config)
         uint32_t blocks = 1; // number of blocks to be read
 
         uint32_t start = 0;
-label1:        
+label1:
         for(uint32_t sector=start; sector<start+1; sector++)
         {
             textColor(0x09); printf("\n\n>>> SCSI: read   sector: %d", sector); textColor(0x0F);
 
             usbBulkTransfer_t read;
             startLogBulkTransfer(&read, 0x28, blocks, 0);
-        
-            usbSendSCSIcmd(devAddr, 
-                           usbDevices[devAddr].numInterfaceMSD, 
-                           usbDevices[devAddr].numEndpointOutMSD, 
-                           usbDevices[devAddr].numEndpointInMSD, 
-                           read.SCSIopcode, 
+
+            usbSendSCSIcmd(devAddr,
+                           usbDevices[devAddr].numInterfaceMSD,
+                           usbDevices[devAddr].numEndpointOutMSD,
+                           usbDevices[devAddr].numEndpointInMSD,
+                           read.SCSIopcode,
                            sector, // LBA
-                           read.DataBytesToTransferIN, 
-                           &read); 
+                           read.DataBytesToTransferIN,
+                           &read);
             showUSBSTS();
             logBulkTransfer(&read);
             waitForKeyStroke();
-            
+
             if ( (sector == 0) || (sector == startSectorPartition) || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
-            {                
+            {
                 analyzeBootSector((void*)DataQTDpage0); // for first tests only
                 waitForKeyStroke();
             }
@@ -657,73 +657,73 @@ label1:
             goto label1;
         }
 
-        // testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!! 
-           testFAT("makefile.xxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!! 
-        // testFAT("makefile   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!! 
+        testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        // testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        // testFAT("makefile   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
         // test more!
 
-    }// else  
+    }// else
 }
 
 uint8_t usbRead(uint32_t sector, uint8_t* buffer)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
     uint8_t devAddr = currentDevice;
-    
-    uint32_t blocks = 1; // number of blocks to be read        
-    
+
+    uint32_t blocks = 1; // number of blocks to be read
+
     textColor(0x09); printf("\n\n>>> SCSI: read   sector: %d", sector); textColor(0x0F);
 
     usbBulkTransfer_t read;
     startLogBulkTransfer(&read, 0x28, blocks, 0);
 
-    usbSendSCSIcmd(devAddr, 
-                   usbDevices[devAddr].numInterfaceMSD, 
-                   usbDevices[devAddr].numEndpointOutMSD, 
-                   usbDevices[devAddr].numEndpointInMSD, 
-                   read.SCSIopcode, 
+    usbSendSCSIcmd(devAddr,
+                   usbDevices[devAddr].numInterfaceMSD,
+                   usbDevices[devAddr].numEndpointOutMSD,
+                   usbDevices[devAddr].numEndpointInMSD,
+                   read.SCSIopcode,
                    sector, // LBA
-                   read.DataBytesToTransferIN, 
-                   &read); 
-    
+                   read.DataBytesToTransferIN,
+                   &read);
+
     memcpy((void*)buffer,(void*)DataQTDpage0,512);
     showUSBSTS();
     logBulkTransfer(&read);
-    waitForKeyStroke(); 
+    waitForKeyStroke();
 
     return 0; // SUCCESS // TEST
 }
 
 void analyzeBootSector(void* addr) // for first tests only
 {
-    uint8_t  volume_type = FAT16; // start value       
-    uint8_t  volume_SecPerClus; 
-    uint16_t volume_maxroot;    
-    uint32_t volume_fatsize;    
-    uint8_t  volume_fatcopy;    
-    uint32_t volume_firstSector;     
-    uint32_t volume_fat;        
-    uint32_t volume_root;       
-    uint32_t volume_data;       
-    uint32_t volume_maxcls; 
+    uint8_t  volume_type = FAT16; // start value
+    uint8_t  volume_SecPerClus;
+    uint16_t volume_maxroot;
+    uint32_t volume_fatsize;
+    uint8_t  volume_fatcopy;
+    uint32_t volume_firstSector;
+    uint32_t volume_fat;
+    uint32_t volume_root;
+    uint32_t volume_data;
+    uint32_t volume_maxcls;
     char     volume_serialNumber[4];
 
     struct boot_sector* sec0 = (struct boot_sector*)addr;
 
     char SysName[9];
     char FATn[9];
-    strncpy(SysName, sec0->SysName,   8); 
+    strncpy(SysName, sec0->SysName,   8);
     strncpy(FATn,    sec0->Reserved2, 8);
     SysName[8]=0;
     FATn[8]   =0;
-    
-    
+
+
     // This is a FAT description
     if (sec0->charsPerSector == 0x200)
     {
         printf("\nOEM name:           %s"    ,SysName);
-        printf("\tbyte per sector:        %d",sec0->charsPerSector); 
-        printf("\nsectors per cluster:    %d",sec0->SectorsPerCluster); 
+        printf("\tbyte per sector:        %d",sec0->charsPerSector);
+        printf("\nsectors per cluster:    %d",sec0->SectorsPerCluster);
         printf("\treserved sectors:       %d",sec0->ReservedSectors);
         printf("\nnumber of FAT copies:   %d",sec0->FATcount);
         printf("\tmax root dir entries:   %d",sec0->MaxRootEntries);
@@ -734,50 +734,50 @@ void analyzeBootSector(void* addr) // for first tests only
         printf("\nheads/pages:            %d",sec0->HeadCount);
         printf("\thidden sectors:         %d",sec0->HiddenSectors);
         printf("\ntotal sectors (>65535): %d",sec0->TotalSectors2);
-        printf("\tFAT 12/16:              %s",FATn); 
-        
+        printf("\tFAT 12/16:              %s",FATn);
+
         volume_SecPerClus   = sec0->SectorsPerCluster;
         volume_maxroot      = sec0->MaxRootEntries;
         volume_fatsize      = sec0->SectorsPerFAT;
-        volume_fatcopy      = sec0->FATcount;    
+        volume_fatcopy      = sec0->FATcount;
         volume_firstSector  = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
         volume_fat          = volume_firstSector + sec0->ReservedSectors;
-        volume_root         = volume_fat + volume_fatcopy * sec0->SectorsPerFAT; 
+        volume_root         = volume_fat + volume_fatcopy * sec0->SectorsPerFAT;
         volume_data         = volume_root + sec0->MaxRootEntries/DIRENTRIES_PER_SECTOR;
-        volume_maxcls       = (usbStickMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus; 
+        volume_maxcls       = (usbStickMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
 
         startSectorPartition = 0; // important!
 
         if (FATn[0] != 'F') // FAT32
         {
-            if ( (((uint8_t*)addr)[0x52] == 'F') && (((uint8_t*)addr)[0x53] == 'A') && (((uint8_t*)addr)[0x54] == 'T') 
+            if ( (((uint8_t*)addr)[0x52] == 'F') && (((uint8_t*)addr)[0x53] == 'A') && (((uint8_t*)addr)[0x54] == 'T')
               && (((uint8_t*)addr)[0x55] == '3') && (((uint8_t*)addr)[0x56] == '2'))
             {
                 printf("\nThis is a volume formated with FAT32 ");
                 volume_type = FAT32;
-                
+
                 for (int i=0; i<4; i++)
                 {
                     volume_serialNumber[i] = ((char*)addr)[67+i]; // byte 67-70
                 }
                 printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
-                
+
                 uint32_t rootCluster = ((uint32_t*)addr)[11]; // byte 44-47
                 printf("\nThe root dir starts at cluster %d (expected: 2).", rootCluster);
-                
+
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
-                
+
                 printf("\nSectors per FAT: %d.",              ((uint32_t*)addr)[9]);  // byte 36-39
                 volume_fatsize = ((uint32_t*)addr)[9];
                 volume_data    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus; // HOTFIX: plus ein Cluster, cf. Cluster2Sector(...)
-                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus*(rootCluster-2); 
+                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus*(rootCluster-2);
             }
         }
         else // FAT12/16
         {
             if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '6') )
             {
-                printf("\nThis is a volume formated with FAT16 ");  
+                printf("\nThis is a volume formated with FAT16 ");
                 volume_type = FAT16;
 
                 for (int i=0; i<4; i++)
@@ -785,8 +785,8 @@ void analyzeBootSector(void* addr) // for first tests only
                     volume_serialNumber[i] = ((char*)addr)[39+i]; // byte 39-42
                 }
                 printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
-                
-                    
+
+
             }
             else if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '2') )
             {
@@ -794,22 +794,22 @@ void analyzeBootSector(void* addr) // for first tests only
                 volume_type = FAT12;
             }
         }
-        
+
         ///////////////////////////////////////////////////////
         // store the determined volume data to DISK usbstick //
         ///////////////////////////////////////////////////////
 
         usbStick.buffer         = malloc(0x200000,PAGESIZE); // 2 MB
-        usbStick.type           = volume_type; 
+        usbStick.type           = volume_type;
         usbStick.SecPerClus     = volume_SecPerClus;
         usbStick.maxroot        = volume_maxroot;
         usbStick.fatsize        = volume_fatsize;
-        usbStick.fatcopy        = volume_fatcopy;        
+        usbStick.fatcopy        = volume_fatcopy;
         usbStick.firsts         = volume_firstSector;
         usbStick.fat            = volume_fat;    // reservedSectors
         usbStick.root           = volume_root;   // reservedSectors + 2*SectorsPerFAT
         usbStick.data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR
-        usbStick.maxcls         = volume_maxcls; 
+        usbStick.maxcls         = volume_maxcls;
         usbStick.mount          = true;
         strncpy(usbStick.serialNumber,volume_serialNumber,4); // ID of the partition
     }
@@ -818,19 +818,19 @@ void analyzeBootSector(void* addr) // for first tests only
         textColor(0x0E);
         if ( ((*((uint8_t*)addr+510))==0x55) && ((*((uint8_t*)addr+511))==0xAA) )
         {
-            printf("\nThis seems to be a Master Boot Record:"); 
+            printf("\nThis seems to be a Master Boot Record:");
             textColor(0x0F);
             uint32_t discSignature = *((uint32_t*)((uint8_t*)addr+440));
             uint16_t twoBytesZero  = *((uint16_t*)((uint8_t*)addr+444));
             printf("\n\nDisc Signature: %X\t",discSignature);
             printf("Null (check): %x",twoBytesZero);
 
-            uint8_t partitionTable[4][16]; 
+            uint8_t partitionTable[4][16];
             for (int i=0;i<4;i++) // four tables
             {
                 for (int j=0;j<16;j++) // 16 bytes
                 {
-                    partitionTable[i][j] = *((uint8_t*)addr+446+i*j);                    
+                    partitionTable[i][j] = *((uint8_t*)addr+446+i*j);
                 }
             }
             printf("\n");
@@ -839,7 +839,7 @@ void analyzeBootSector(void* addr) // for first tests only
                 if (*((uint32_t*)(&partitionTable[i][0x0C]))) // number of sectors
                 {
                     textColor(0x0E);
-                    printf("\npartition table %d:",i);                    
+                    printf("\npartition table %d:",i);
                     if (partitionTable[i][0x00] == 0x80)
                     {
                         printf("  bootable");
@@ -847,14 +847,14 @@ void analyzeBootSector(void* addr) // for first tests only
                     else
                     {
                         printf("  not bootable");
-                    }                    
+                    }
                     textColor(0x0F);
                     printf("\ntype:               %y", partitionTable[i][0x04]);
                     textColor(0x07);
                     printf("\nfirst sector (CHS): %d %d %d", partitionTable[i][0x01],partitionTable[i][0x02],partitionTable[i][0x03]);
                     printf("\nlast  sector (CHS): %d %d %d", partitionTable[i][0x05],partitionTable[i][0x06],partitionTable[i][0x07]);
                     textColor(0x0F);
-                    
+
                     startSectorPartition = *((uint32_t*)(&partitionTable[i][0x08]));
                     printf("\nstart sector:       %d", startSectorPartition);
 
@@ -873,7 +873,7 @@ void analyzeBootSector(void* addr) // for first tests only
     else
     {
         textColor(0x0C);
-        printf("\nThis seems to be neither a FAT description nor a MBR."); 
+        printf("\nThis seems to be neither a FAT description nor a MBR.");
         textColor(0x0F);
     }
 }
@@ -896,9 +896,9 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
     // set configuration to 1 and endpoint IN/OUT toggles to 0
     textColor(0x02);
     usbTransferSetConfiguration(device, 1); // set first configuration
-    printf("\nset configuration (1)"); 
+    printf("\nset configuration (1)");
     uint8_t config = usbTransferGetConfiguration(device);
-    printf("\tconfiguration: %d",config); 
+    printf("\tconfiguration: %d",config);
 
     // start with correct endpoint toggles and reset interface
     usbDevices[device].ToggleEndpointInMSD = usbDevices[device].ToggleEndpointOutMSD = 0;
@@ -909,7 +909,7 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
 int32_t showResultsRequestSense()
 {
     void* addr = (void*)DataQTDpage0;
-                            
+
     uint32_t Valid        = getField(addr, 0, 7, 1); // byte 0, bit 7
     uint32_t ResponseCode = getField(addr, 0, 0, 7); // byte 0, bit 6:0
     uint32_t SenseKey     = getField(addr, 2, 0, 4); // byte 2, bit 3:0
