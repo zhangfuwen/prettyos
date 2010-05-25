@@ -28,7 +28,7 @@ void handleEvents()
     int i=0;
     for(; list_GetElement(eventQueue, i) != 0; i++)
     {
-        ((event_handler_t*)list_GetElement(eventQueue, i))->function();
+        ((event_handler_t*)list_GetElement(eventQueue, i)->data)->function();
     }
     if (i>0) 
     {

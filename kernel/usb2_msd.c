@@ -318,30 +318,30 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     switch (CSWstatusByte)
     {
-    case 0x00:
-    //#ifdef _USB_DIAGNOSIS_
-        textColor(0x0A);
-        printf("\tCSW status OK");
-        textColor(0x0F);
-    //#endif
-    break;
-    case 0x01 :
-        textColor(0x0C);
-        printf("\nCommand failed");
-        textColor(0x0F);
-    break;
-    case 0x02:
-        textColor(0x0C);
-        printf("\nPhase Error");
-        textColor(0x0F);
-        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
-    break;
-    default:
-        textColor(0x0C);
-        printf("\nCSW status byte: undefined value (error)");
-        textColor(0x0F);
-        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
-    break;
+		case 0x00:
+		//#ifdef _USB_DIAGNOSIS_
+			textColor(0x0A);
+			printf("\tCSW status OK");
+			textColor(0x0F);
+		//#endif
+			break;
+		case 0x01 :
+			textColor(0x0C);
+			printf("\nCommand failed");
+			textColor(0x0F);
+			break;
+		case 0x02:
+			textColor(0x0C);
+			printf("\nPhase Error");
+			textColor(0x0F);
+			usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+			break;
+		default:
+			textColor(0x0C);
+			printf("\nCSW status byte: undefined value (error)");
+			textColor(0x0F);
+			usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+			break;
     }
 
     // transfer diagnosis (qTD status)

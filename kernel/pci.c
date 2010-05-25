@@ -116,11 +116,12 @@ void listPCI()
     putch('\n');
     for (int i=0;i<PCIARRAYSIZE;++i)
     {
-        pciDev_t* element = (pciDev_t*)list_GetElement(pciDevList, i);
-        if (element)
+        element_t* element = list_GetElement(pciDevList, i);
+        if (element && element->data)
         {
+			pciDev_t* data = (pciDev_t*)element->data;
             textColor(0x02);
-            printf("%X dev: %x vend: %x\t", element, element->deviceID, element->vendorID);
+            printf("%X dev: %x vend: %x\t", data, data->deviceID, data->vendorID);
             textColor(0x0F);
         }
     }

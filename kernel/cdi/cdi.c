@@ -10,7 +10,7 @@
 #include "cdi/fs.h"
 #include "console.h"
 
-static listHead_t* drivers = NULL;
+static cdi_list_t drivers = NULL;
 
 extern struct cdi_driver* _start_cdi_drivers; // Declared in kernel.ld
 extern struct cdi_driver* _stop_cdi_drivers;  // Declared in kernel.ld
@@ -31,7 +31,7 @@ static void cdi_tyndur_init_pci_devices(void)
     for (i = 0; (pci = cdi_list_get(pci_devices, i)); i++) {
 
         device = NULL;
-        for (j = 0; (driver = list_GetElement(drivers, j)); j++)
+        for (j = 0; (driver = cdi_list_get(drivers, j)); j++)
 		{
             if (driver->bus == CDI_PCI && driver->init_device)
 			{
@@ -73,7 +73,7 @@ static void cdi_tyndur_run_drivers()
     struct cdi_driver* driver;
     struct cdi_device* device;
     int i, j;
-    for (i = 0; (driver = list_GetElement(drivers, i)); i++)
+    for (i = 0; (driver = cdi_list_get(drivers, i)); i++)
 	{
         for (j = 0; (device = cdi_list_get(driver->devices, j)); j++)
 		{
@@ -99,7 +99,7 @@ void cdi_init()
     struct cdi_driver* drv;
 
     // Interne Strukturen initialisieren
-    drivers = list_Create();
+    drivers = cdi_list_create();
     ///atexit(cdi_destroy);
 
     ///lostio_init();
@@ -143,7 +143,7 @@ void cdi_driver_destroy(struct cdi_driver* driver)
 
 void cdi_driver_register(struct cdi_driver* driver)
 {
-    list_Append(drivers, driver);
+    cdi_list_push(drivers, driver);
 
     switch (driver->type)
 	{

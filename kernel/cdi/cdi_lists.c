@@ -36,7 +36,12 @@ size_t cdi_list_empty(cdi_list_t list);
 
 void* cdi_list_get(cdi_list_t list, size_t index)
 {
-	return(list_GetElement(list, index));
+	element_t* temp = list_GetElement(list, index);
+	if(temp == 0)
+	{
+		return(0);
+	}
+	return(temp->data);
 }
 
 cdi_list_t cdi_list_insert(cdi_list_t list, size_t index, void* value);

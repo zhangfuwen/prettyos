@@ -41,6 +41,28 @@ bool list_Append(listHead_t* hd, void* data)
     return(false);
 }
 
+void list_Delete(listHead_t* list, void* data)
+{
+	element_t* cur = list->head;
+	if(cur->data == data)
+	{
+		element_t* temp = cur;
+		cur = cur->next;
+		list->head = cur;
+		free(temp);
+	}
+	while(cur != 0)
+	{
+		if(cur->next->data == data)
+		{
+			element_t* temp = cur->next;
+			cur->next = cur->next->next;
+			free(temp);
+		}
+		cur = cur->next;
+	}
+}
+
 void list_DeleteAll(listHead_t* hd)
 {
     element_t* cur = hd->head;
@@ -73,19 +95,18 @@ void list_Show(listHead_t* hd)
     }
 }
 
-void* list_GetElement(listHead_t* hd, uint32_t number)
+element_t* list_GetElement(listHead_t* hd, uint32_t number)
 {
     element_t* cur = hd->head;
-    while (cur)
+    while (true)
     {
         if (number == 0)
         {
-            return(cur->data);
+            return(cur);
         }
         --number;
         cur = cur->next;
     }
-    return(0);
 }
 
 
