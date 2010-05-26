@@ -7,7 +7,7 @@
 
 /// #define _DIAGNOSIS_     // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _USB_DIAGNOSIS_ // only as transition state during implementation of USB 2.0 transfers
-#define _SOUND_         // Sound-Messages   - deactivated per default, because they increase the boot-time
+#define _SOUND_         // Sound-Messages  - deactivation makes sense during development, because of better boot-time
 
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);

@@ -90,8 +90,8 @@ typedef struct
 typedef struct
 {
     PARTITION* volume;      // volume containing the file
-    uint16_t  cluster;      // first cluster
-    uint16_t  ccls;         // current cluster
+    uint32_t  cluster;      // first cluster
+    uint32_t  ccls;         // current cluster
     uint16_t  sec;          // current sector in the current cluster
     uint16_t  pos;          // current byte in the current sectors
     uint32_t  seek;         // current byte in the file
@@ -103,8 +103,8 @@ typedef struct
     uint16_t entry;         // file's entry position in its directory
     uint16_t chk;           // checksum = ~(entry+name[0])
     uint16_t attributes;    // file's attributes
-    uint16_t dirclus;       // first cluster of the file's directory
-    uint16_t dirccls;       // current cluster of the file's directory
+    uint32_t dirclus;       // first cluster of the file's directory
+    uint32_t dirccls;       // current cluster of the file's directory
 } FILE;
 typedef FILE*   FILEOBJ;
 

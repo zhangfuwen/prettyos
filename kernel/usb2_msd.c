@@ -27,8 +27,8 @@ void* StatusQTD;
 
 uint32_t startSectorPartition = 0;
 
-PARTITION usbStick;
-uint32_t usbStickMaxLBA;
+PARTITION usbMSDVolume;
+uint32_t usbMSDVolumeMaxLBA;
 
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
@@ -512,29 +512,29 @@ static void analyzeInquiry()
 
     switch (PeripheralDeviceType)
     {
-    case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");break;
-    case 0x01: printf("\nsequential-access device (e.g., magnetic tape)");break;
-    case 0x02: printf("\nprinter device");break;
-    case 0x03: printf("\nprocessor device");break;
-    case 0x04: printf("\nwrite-once device");break;
-    case 0x05: printf("\nCD/DVD device");break;
-    case 0x06: printf("\nscanner device");break;
-    case 0x07: printf("\noptical memory device (non-CD optical disk)");break;
-    case 0x08: printf("\nmedium Changer (e.g. jukeboxes)");break;
-    case 0x09: printf("\ncommunications device");break;
-    case 0x0A: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");break;
-    case 0x0B: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");break;
-    case 0x0C: printf("\nStorage array controller device (e.g., RAID)");break;
-    case 0x0D: printf("\nEnclosure services device");break;
-    case 0x0E: printf("\nSimplified direct-access device (e.g., magnetic disk)");break;
-    case 0x0F: printf("\nOptical card reader/writer device");break;
-    case 0x10: printf("\nReserved for bridging expanders");break;
-    case 0x11: printf("\nObject-based Storage Device");break;
-    case 0x12: printf("\nAutomation/Drive Interface");break;
-    case 0x13: printf("\nReserved");break;
-    case 0x1D: printf("\nReserved");break;
-    case 0x1E: printf("\nReduced block command (RBC) direct-access device");break;
-    case 0x1F: printf("\nUnknown or no device type");break;
+    case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");            break;
+    case 0x01: printf("\nsequential-access device (e.g., magnetic tape)");        break;
+    case 0x02: printf("\nprinter device");                                        break;
+    case 0x03: printf("\nprocessor device");                                      break;
+    case 0x04: printf("\nwrite-once device");                                     break;
+    case 0x05: printf("\nCD/DVD device");                                         break;
+    case 0x06: printf("\nscanner device");                                        break;
+    case 0x07: printf("\noptical memory device (non-CD optical disk)");           break;
+    case 0x08: printf("\nmedium Changer (e.g. jukeboxes)");                       break;
+    case 0x09: printf("\ncommunications device");                                 break;
+    case 0x0A: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
+    case 0x0B: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
+    case 0x0C: printf("\nStorage array controller device (e.g., RAID)");          break;
+    case 0x0D: printf("\nEnclosure services device");                             break;
+    case 0x0E: printf("\nSimplified direct-access device (e.g., magnetic disk)"); break;
+    case 0x0F: printf("\nOptical card reader/writer device");                     break;
+    case 0x10: printf("\nReserved for bridging expanders");                       break;
+    case 0x11: printf("\nObject-based Storage Device");                           break;
+    case 0x12: printf("\nAutomation/Drive Interface");                            break;
+    case 0x13: printf("\nReserved");                                              break;
+    case 0x1D: printf("\nReserved");                                              break;
+    case 0x1E: printf("\nReduced block command (RBC) direct-access device");      break;
+    case 0x1F: printf("\nUnknown or no device type");                             break;
     }
 }
 
@@ -609,7 +609,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
         uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+5)) * 0x10000 + (*((uint8_t*)DataQTDpage0+6)) * 0x100 + (*((uint8_t*)DataQTDpage0+7));
         uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
 
-        usbStickMaxLBA     =  lastLBA;
+        usbMSDVolumeMaxLBA     =  lastLBA;
 
         textColor(0x0E);
         printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
@@ -622,44 +622,27 @@ void testMSD(uint8_t devAddr, uint8_t config)
 
         ///////// send SCSI command "read(10)", read one block (512 byte) from LBA ..., get Status
 
-        uint32_t blocks = 1; // number of blocks to be read
+        uint32_t start=0, sector;
 
-        uint32_t start = 0;
 label1:
-        for(uint32_t sector=start; sector<start+1; sector++)
+        sector=start;
+        usbRead(sector, usbMSDVolume.buffer);
+
+        if ( (sector == 0) || (sector == startSectorPartition) || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
         {
-            textColor(0x09); printf("\n\n>>> SCSI: read   sector: %d", sector); textColor(0x0F);
-
-            usbBulkTransfer_t read;
-            startLogBulkTransfer(&read, 0x28, blocks, 0);
-
-            usbSendSCSIcmd(devAddr,
-                           usbDevices[devAddr].numInterfaceMSD,
-                           usbDevices[devAddr].numEndpointOutMSD,
-                           usbDevices[devAddr].numEndpointInMSD,
-                           read.SCSIopcode,
-                           sector, // LBA
-                           read.DataBytesToTransferIN,
-                           &read);
-            showUSBSTS();
-            logBulkTransfer(&read);
+            analyzeBootSector((void*)DataQTDpage0); // for first tests only
             waitForKeyStroke();
-
-            if ( (sector == 0) || (sector == startSectorPartition) || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
-            {
-                analyzeBootSector((void*)DataQTDpage0); // for first tests only
-                waitForKeyStroke();
-            }
         }
+
         if (startSectorPartition)
         {
             start = startSectorPartition;
             goto label1;
         }
 
-        testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
-        // testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
-        // testFAT("makefile   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        //testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        //testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        testFAT("makefile   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
         // test more!
 
     }// else
@@ -744,7 +727,7 @@ void analyzeBootSector(void* addr) // for first tests only
         volume_fat          = volume_firstSector + sec0->ReservedSectors;
         volume_root         = volume_fat + volume_fatcopy * sec0->SectorsPerFAT;
         volume_data         = volume_root + sec0->MaxRootEntries/DIRENTRIES_PER_SECTOR;
-        volume_maxcls       = (usbStickMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
+        volume_maxcls       = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
 
         startSectorPartition = 0; // important!
 
@@ -799,19 +782,19 @@ void analyzeBootSector(void* addr) // for first tests only
         // store the determined volume data to DISK usbstick //
         ///////////////////////////////////////////////////////
 
-        usbStick.buffer         = malloc(0x200000,PAGESIZE); // 2 MB
-        usbStick.type           = volume_type;
-        usbStick.SecPerClus     = volume_SecPerClus;
-        usbStick.maxroot        = volume_maxroot;
-        usbStick.fatsize        = volume_fatsize;
-        usbStick.fatcopy        = volume_fatcopy;
-        usbStick.firsts         = volume_firstSector;
-        usbStick.fat            = volume_fat;    // reservedSectors
-        usbStick.root           = volume_root;   // reservedSectors + 2*SectorsPerFAT
-        usbStick.data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR
-        usbStick.maxcls         = volume_maxcls;
-        usbStick.mount          = true;
-        strncpy(usbStick.serialNumber,volume_serialNumber,4); // ID of the partition
+        usbMSDVolume.buffer         = malloc(0x200000,PAGESIZE); // 2 MB
+        usbMSDVolume.type           = volume_type;
+        usbMSDVolume.SecPerClus     = volume_SecPerClus;
+        usbMSDVolume.maxroot        = volume_maxroot;
+        usbMSDVolume.fatsize        = volume_fatsize;
+        usbMSDVolume.fatcopy        = volume_fatcopy;
+        usbMSDVolume.firsts         = volume_firstSector;
+        usbMSDVolume.fat            = volume_fat;    // reservedSectors
+        usbMSDVolume.root           = volume_root;   // reservedSectors + 2*SectorsPerFAT
+        usbMSDVolume.data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR
+        usbMSDVolume.maxcls         = volume_maxcls;
+        usbMSDVolume.mount          = true;
+        strncpy(usbMSDVolume.serialNumber,volume_serialNumber,4); // ID of the partition
     }
     else if ( ( ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
     {
