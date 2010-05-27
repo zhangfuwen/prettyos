@@ -544,6 +544,13 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
 {
     printf("\n>>>>> fileFind <<<<<!");
 
+    /// TEST
+    for (uint8_t i=0; i<DIR_NAMECOMP; i++)
+    {
+        foDest->name[i] = 0x20; // set name and extension to spaces 
+    }
+    /// TEST
+
 	uint8_t statusB = CE_FILE_NOT_FOUND;
     uint16_t fHandle=0;
 

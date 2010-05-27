@@ -46,10 +46,12 @@ extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 void ehci_install(uint32_t num, uint32_t i)
 {
     uintptr_t bar_phys = pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0;
+    uintptr_t bar      = (uintptr_t) paging_acquire_pcimem(bar_phys);
+    uintptr_t offset   = bar_phys%PAGESIZE;
 
-    uintptr_t bar = (uintptr_t) paging_acquire_pcimem(bar_phys);
-    uintptr_t offset = bar_phys%PAGESIZE;
+  #ifdef _USB_DIAGNOSIS_
     printf("\nEHCI_MMIO %X mapped to virt addr %X, offset: %x\n", bar_phys, bar, offset);
+  #endif
 
     if (!EHCIflag) // only the first EHCI is used
     {
@@ -63,147 +65,96 @@ void ehci_install(uint32_t num, uint32_t i)
     }
 }
 
-void ehci_init()
-{
-    create_cthread(&startEHCI, "EHCI");
-}
-void ehci_portcheck()
-{
-    create_cthread(&portCheck, "EHCI Ports");
-}
-
-void ehci_handler(registers_t* r)
-{
-    if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
-    {
-        textColor(0x09);
-        printf("\nehci_handler: ");
-        textColor(0x0F);
-    }
-
-    textColor(0x0E);
-
-    if (pOpRegs->USBSTS & STS_USBINT)
-    {
-        USBINTflag = true; // is asked by polling
-        // printf("USB Interrupt");
-        pOpRegs->USBSTS |= STS_USBINT; // reset interrupt
-    }
-
-    if (pOpRegs->USBSTS & STS_USBERRINT)
-    {
-        printf("USB Error Interrupt");
-        pOpRegs->USBSTS |= STS_USBERRINT;
-    }
-
-    if (pOpRegs->USBSTS & STS_PORT_CHANGE)
-    {
-        textColor(0x09);
-        printf("Port Change");
-        textColor(0x0F);
-
-        pOpRegs->USBSTS |= STS_PORT_CHANGE;
-
-        if (enabledPortFlag && pciEHCInumber)
-        {
-            addEvent(&EHCI_PORTCHECK);
-        }
-    }
-
-    if (pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER)
-    {
-        //printf("Frame List Rollover Interrupt");
-        pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
-    }
-
-    if (pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)
-    {
-        textColor(0x04);
-        printf("Host System Error");
-        textColor(0x0F);
-        pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
-        analyzeHostSystemError(pciEHCInumber);
-        textColor(0x0E);
-        printf("\n>>> Init EHCI after fatal error:           <<<");
-        printf("\n>>> Press key for EHCI (re)initialization. <<<");
-        while(!keyboard_getChar());
-        textColor(0x0F);
-        addEvent(&EHCI_INIT);
-    }
-
-    if (pOpRegs->USBSTS & STS_ASYNC_INT)
-    {
-        printf("Interrupt on Async Advance");
-        pOpRegs->USBSTS |= STS_ASYNC_INT;
-    }
-}
-
 void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 {
     bar += offset;
-    uintptr_t bar_phys = (uintptr_t)paging_get_phys_addr(kernel_pd, (void*)bar);
-    printf("EHCI bar get_phys_Addr: %X\n", bar_phys);
-    
+    uintptr_t bar_phys = (uintptr_t)NULL;
+    bar_phys = (uintptr_t)paging_get_phys_addr(kernel_pd, (void*)bar);
     pCapRegs = (struct ehci_CapRegs*) bar;
     pOpRegs  = (struct ehci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
+  #ifdef _USB_DIAGNOSIS_
+    printf("EHCI bar get_phys_Addr: %X\n", bar_phys);
     printf("HCIVERSION: %x ",  pCapRegs->HCIVERSION);               // Interface Version Number
     printf("HCSPARAMS: %X ",   pCapRegs->HCSPARAMS);                // Structural Parameters
     printf("Ports: %d ",       numPorts);                           // Number of Ports
     printf("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
     if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. "); // Extended Capabilities Pointer
     printf("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
+  #endif
 }
 
-void resetHostController()
+// start thread at kernel idle loop (ckernel.c)
+void ehci_init() { create_cthread( &startEHCI, "EHCI"       ); }
+
+void startEHCI()
 {
-    /*
-    Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
-    Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003
+    initEHCIHostController();
+    textColor(0x0D);
+    printf("\n>>> Press key to close this console. <<<");
+    textColor(0x0F);
+    while(!keyboard_getChar());
+}
 
-    To initiate a host controller reset
-    system software must:
-    */
+int32_t initEHCIHostController()
+{
+    textColor(0x09);
+    printf("\n>>> >>> function: initEHCIHostController");
+    textColor(0x0F);
 
-    // 1. Stop the host controller.
-    //    System software must program the USB2CMD.Run/Stop bit to 0 to stop the host controller.
-    pOpRegs->USBCMD &= ~CMD_RUN_STOP;            // set Run-Stop-Bit to 0
+    // pci bus data
+    uint32_t num = pciEHCInumber;
+    uint8_t bus  = pciDev_Array[num].bus;
+    uint8_t dev  = pciDev_Array[num].device;
+    uint8_t func = pciDev_Array[num].func;
+    uint8_t irq  = pciDev_Array[num].irq;
+    // prepare PCI command register // offset 0x04
+    // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
+    // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
+    uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
+    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register
+    uint16_t pciCapabilitiesList = pci_config_read(bus, dev, func, 0x0234);
 
-    /*
-    2. Wait for the host controller to halt.
-       To determine when the host controller has halted, system software must read the USB2STS.HCHalted bit;
-       the host controller will set this bit to 1 as soon as
-       it has successfully transitioned from a running state to a stopped state (halted).
-       Attempting to reset an actively running host controller will result in undefined behavior.
-    */
-    while (!(pOpRegs->USBSTS & STS_HCHALTED))
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nPCI Command Register before:          %x", pciCommandRegister);
+    printf("\nPCI Command Register plus bus master: %x", pci_config_read(bus, dev, func, 0x0204));
+    printf("\nPCI Capabilities List: first Pointer: %x", pciCapabilitiesList);
+  #endif
+
+    if (pciCapabilitiesList) // pointer != NULL
     {
-        sleepMilliSeconds(30); // wait at least 16 microframes (= 16*125 micro-sec = 2 ms)
-    }
+        uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
+        printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
 
-    // 3. Program the USB2CMD.HostControllerReset bit to a 1.
-    //    This will cause the host controller to begin the host controller reset.
-    pOpRegs->USBCMD |= CMD_HCRESET;              // set Reset-Bit to 1
-
-    // 4. Wait until the host controller has completed its reset.
-    // To determine when the reset is complete, system software must read the USB2CMD.HostControllerReset bit;
-    // the host controller will set this bit to 0 upon completion of the reset.
-
-    int32_t timeout=10;
-    while ((pOpRegs->USBCMD & CMD_HCRESET) != 0) // Reset-Bit still set to 1
-    {
-        printf("waiting for HC reset\n");
-        sleepMilliSeconds(20);
-        timeout--;
-        if (timeout<=0)
+        while (BYTE2(nextCapability)) // pointer != NULL
         {
-            textColor(0x04);
-            printf("Error: HC Reset-Bit still set to 1\n");
-            textColor(0x0F);
-            break;
+            nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
+            printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
         }
     }
+
+    irq_install_handler(32 + irq,   ehci_handler);
+    irq_install_handler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+
+    USBtransferFlag = true;
+    enabledPortFlag = false;
+
+    startHostController(num);
+
+    if (!(pOpRegs->USBSTS & STS_HCHALTED))
+    {
+         enablePorts();
+    }
+    else
+    {
+         textColor(0x0C);
+         printf("\nFatal Error: Ports cannot be enabled. HCHalted set.");
+         showUSBSTS();
+         textColor(0x0F);
+         return -1;
+    }
+    return 0;
 }
 
 void startHostController(uint32_t num)
@@ -256,316 +207,54 @@ void startHostController(uint32_t num)
     sleepMilliSeconds(100); // do not delete
 }
 
-int32_t initEHCIHostController()
+void resetHostController()
 {
-    textColor(0x09);
-    printf("\n>>> >>> function: initEHCIHostController");
-    textColor(0x0F);
+    /*
+    Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
+    Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003
 
-    // pci bus data
-    uint32_t num = pciEHCInumber;
-    uint8_t bus  = pciDev_Array[num].bus;
-    uint8_t dev  = pciDev_Array[num].device;
-    uint8_t func = pciDev_Array[num].func;
-    uint8_t irq  = pciDev_Array[num].irq;
-    // prepare PCI command register // offset 0x04
-    // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
-    // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
-    uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
-    printf("\nPCI Command Register before:          %x", pciCommandRegister);
-    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register
-    printf("\nPCI Command Register plus bus master: %x", pci_config_read(bus, dev, func, 0x0204));
+    To initiate a host controller reset
+    system software must:
+    */
 
-    uint16_t pciCapabilitiesList = pci_config_read(bus, dev, func, 0x0234);
-    printf("\nPCI Capabilities List: first Pointer: %x", pciCapabilitiesList);
-
-    if (pciCapabilitiesList) // pointer != NULL
-    {
-        uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
-        printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
-
-        while (BYTE2(nextCapability)) // pointer != NULL
-        {
-            nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
-            printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
-        }
-    }
-
-    irq_install_handler(32 + irq,   ehci_handler);
-    irq_install_handler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
-
-    USBtransferFlag = true;
-    enabledPortFlag = false;
-    startHostController(num);
-
-    if (!(pOpRegs->USBSTS & STS_HCHALTED)) 
-    {
-         enablePorts();
-    }
-    else 
-    {
-         textColor(0x04);
-         printf("\nFatal Error: Ports cannot be enabled. HCHalted set.");
-         showUSBSTS();
-         textColor(0x0F);
-         return -1;
-    }
-    return 0;
-}
-
-void enablePorts()
-{
-    textColor(0x09);
-    printf("\n>>> >>> function: enablePorts");
-    textColor(0x0F);
-
-    for (uint8_t j=0; j<numPorts; j++)
-    {
-         resetPort(PORTRESET);
-
-         if ( pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
-         {
-             textColor(0x0E);
-             printf("Port %d: high speed enabled, device attached\n",j+1);
-             textColor(0x0F);
-         }
-    }
-    enabledPortFlag = true;
-}
-
-void resetPort(uint8_t j)
-{
-    textColor(0x09);
-    printf("\n>>> >>> function: resetPort %d  ",j+1);
-    textColor(0x0F);
-
-    pOpRegs->PORTSC[j] |=  PSTS_POWERON;
+    // 1. Stop the host controller.
+    //    System software must program the USB2CMD.Run/Stop bit to 0 to stop the host controller.
+    pOpRegs->USBCMD &= ~CMD_RUN_STOP;            // set Run-Stop-Bit to 0
 
     /*
-     http://www.intel.com/technology/usb/download/ehci-r10.pdf
-     When software writes a one to this bit (from a zero),
-     the bus reset sequence as defined in the USB Specification Revision 2.0 is started.
-     Software writes a zero to this bit to terminate the bus reset sequence.
-     Software must keep this bit at a one long enough to ensure the reset sequence,
-     as specified in the USB Specification Revision 2.0, completes.
-     Note: when software writes this bit to a one,
-     it must also write a zero to the Port Enable bit.
+    2. Wait for the host controller to halt.
+       To determine when the host controller has halted, system software must read the USB2STS.HCHalted bit;
+       the host controller will set this bit to 1 as soon as
+       it has successfully transitioned from a running state to a stopped state (halted).
+       Attempting to reset an actively running host controller will result in undefined behavior.
     */
-    pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
-
-    /*
-     The HCHalted bit in the USBSTS register should be a zero
-     before software attempts to use this bit.
-     The host controller may hold Port Reset asserted to a one
-     when the HCHalted bit is a one.
-    */
-    if (pOpRegs->USBSTS & STS_HCHALTED) // TEST
+    while (!(pOpRegs->USBSTS & STS_HCHALTED))
     {
-         textColor(0x04);
-         printf("\nHCHalted set to 1 (Not OK!)");
-         showUSBSTS();
-         textColor(0x0F);
+        sleepMilliSeconds(30); // wait at least 16 microframes (= 16*125 micro-sec = 2 ms)
     }
 
-    pOpRegs->USBINTR = 0;
-    pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
-    sleepMilliSeconds(250);                 // do not delete this wait 
-    pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
+    // 3. Program the USB2CMD.HostControllerReset bit to a 1.
+    //    This will cause the host controller to begin the host controller reset.
+    pOpRegs->USBCMD |= CMD_HCRESET;              // set Reset-Bit to 1
 
-    // wait and check, whether really zero
-    uint32_t timeout=20;
-    while ((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
+    // 4. Wait until the host controller has completed its reset.
+    // To determine when the reset is complete, system software must read the USB2CMD.HostControllerReset bit;
+    // the host controller will set this bit to 0 upon completion of the reset.
+
+    int32_t timeout=10;
+    while ((pOpRegs->USBCMD & CMD_HCRESET) != 0) // Reset-Bit still set to 1
     {
+        printf("waiting for HC reset\n");
         sleepMilliSeconds(20);
         timeout--;
-        if (timeout <= 0)
+        if (timeout<=0)
         {
-            textColor(0x04);
-            printf("\nerror: port %d did not reset! ",j+1);
+            textColor(0x0C);
+            printf("Error: HC Reset-Bit still set to 1\n");
             textColor(0x0F);
-            printf("PortStatus: %X",pOpRegs->PORTSC[j]);
             break;
         }
     }
-    pOpRegs->USBINTR = STS_INTMASK;
-}
-
-void showPORTSC()
-{
-    for (uint8_t j=0; j<numPorts; j++)
-    {
-        if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED_CHANGE)
-        {
-            char PortStatus[20];
-
-            if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED)
-            {
-                strcpy(PortStatus,"attached");
-                writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
-                resetPort(PORTRESET);
-                checkPortLineStatus(PORTRESET);
-
-            }
-            else
-            {
-                strcpy(PortStatus,"not attached");
-                writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
-            }
-            pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt            
-            beep(1000,100);
-        }
-    }
-}
-
-void portCheck()
-{
-    showInfobar(true); // protect console against info area
-    showPORTSC();      // with resetPort(j) and checkPortLineStatus(j)
-    textColor(0x0D);
-    printf("\n>>> Press key to close this console. <<<");
-    textColor(0x0F);
-    while(!keyboard_getChar());
-}
-
-void startEHCI()
-{
-    initEHCIHostController();
-    textColor(0x0D);
-    printf("\n>>> Press key to close this console. <<<");
-    textColor(0x0F);
-    while(!keyboard_getChar());
-}
-
-void showUSBSTS()
-{
-  #ifdef _USB_DIAGNOSIS_
-    printf("\nUSB status: ");
-    textColor(0x02);
-    printf("%X",pOpRegs->USBSTS);    
-  #endif
-    textColor(0x0E);
-    if (pOpRegs->USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
-    if (pOpRegs->USBSTS & STS_USBERRINT)          { printf("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
-    if (pOpRegs->USBSTS & STS_PORT_CHANGE)        { printf("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
-    if (pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) { printf("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
-    if (pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)  { printf("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
-    if (pOpRegs->USBSTS & STS_ASYNC_INT)          { printf("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT;           }
-    if (pOpRegs->USBSTS & STS_HCHALTED)           { printf("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;            }
-    if (pOpRegs->USBSTS & STS_RECLAMATION)        { printf("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
-    if (pOpRegs->USBSTS & STS_PERIODIC_ENABLED)   { printf("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
-    if (pOpRegs->USBSTS & STS_ASYNC_ENABLED)      { printf("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
-    textColor(0x0F);
-}
-
-void checkPortLineStatus(uint8_t j)
-{
-    textColor(0x0E);
-    if (j<numPorts)
-    // if (j==PORTRESET) // ??
-    {
-      //check line status
-      textColor(0x0B);
-      printf("\nport %d: %x, line: %y ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
-      if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
-      {
-        printf("SE0 ");
-        if ((pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
-        {
-             textColor(0x0E);
-             printf(", power on, enabled, EHCI owned");
-             textColor(0x0F);
-
-             if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
-             {
-                 uint8_t devAddr = usbTransferEnumerate(j);
-
-                 #ifdef _USB_DIAGNOSIS_
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
-                 #endif
-
-                 usbTransferDevice(devAddr); // device address, endpoint=0
-
-                 #ifdef _USB_DIAGNOSIS_
-                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 #endif
-
-                 usbTransferConfig(devAddr); // device address, endpoint 0
-
-                 #ifdef _USB_DIAGNOSIS_
-                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO   : "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-                 #endif
-
-                 usbTransferString(devAddr); // device address, endpoint 0
-
-                 #ifdef _USB_DIAGNOSIS_
-                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-                 #endif
-
-                 for(int k=1; k<4;k++) // fetch 3 strings
-                 {
-                     #ifdef _USB_DIAGNOSIS_
-                     waitForKeyStroke();
-                     #endif
-
-                     usbTransferStringUnicode(devAddr,k);                     
-
-                     #ifdef _USB_DIAGNOSIS_
-                     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                     printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-                     #endif
-                 }
-
-                 usbTransferSetConfiguration(devAddr, 1); // set first configuration
-                 #ifdef _USB_DIAGNOSIS_
-                 printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 #endif
-
-                 uint8_t config = usbTransferGetConfiguration(devAddr);
-                 #ifdef _USB_DIAGNOSIS_
-                 printf(" %d",config); // check configuration
-                 #endif
-
-                 #ifdef _USB_DIAGNOSIS_
-                 printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-                 printf("\ndata packet: ");  showPacket(DataQTDpage0, 1); printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-                 waitForKeyStroke();
-                 #endif
-
-                // device, interface, endpoints
-                textColor(0x07);
-                printf("\n\nMSD test now with device: %d  interface: %d  endpOUT: %d  endpIN: %d\n", 
-                                                        devAddr, usbDevices[devAddr].numInterfaceMSD,
-                                                        usbDevices[devAddr].numEndpointOutMSD,
-                                                        usbDevices[devAddr].numEndpointInMSD);
-                textColor(0x0F);
-                
-                testMSD(devAddr,config); // test with some SCSI commands 
-             }
-        }
-      }
-
-      if (((pOpRegs->PORTSC[j]>>10)&3) == 1) // K_STATE
-      {
-        textColor(0x0E);
-        printf("K-State");
-      }
-
-      if (((pOpRegs->PORTSC[j]>>10)&3) == 2) // J_STATE
-      {
-        textColor(0x0E);
-        printf("J-state");
-      }
-
-      if (((pOpRegs->PORTSC[j]>>10)&3) == 3) // undefined
-      {
-        textColor(0x0C);
-        printf("undefined");
-      }
-    }
-    textColor(0x0F);
 }
 
 void DeactivateLegacySupport(uint32_t num)
@@ -666,9 +355,354 @@ void DeactivateLegacySupport(uint32_t num)
     }
 }
 
+void enablePorts()
+{
+    textColor(0x09);
+    printf("\n>>> >>> function: enablePorts");
+    textColor(0x0F);
+
+    for (uint8_t j=0; j<numPorts; j++)
+    {
+         resetPort(PORTRESET);
+         enabledPortFlag = true;
+
+         if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
+         {
+             textColor(0x0E);
+             printf("Port %d: high speed enabled, device attached\n",j+1);
+             textColor(0x0F);
+
+             setupUSBDevice(j); // TEST
+         }
+    }
+}
+
+void resetPort(uint8_t j)
+{
+    textColor(0x09);
+    printf("\n>>> >>> function: resetPort %d  ",j+1);
+    textColor(0x0F);
+
+    pOpRegs->PORTSC[j] |=  PSTS_POWERON;
+
+    /*
+     http://www.intel.com/technology/usb/download/ehci-r10.pdf
+     When software writes a one to this bit (from a zero),
+     the bus reset sequence as defined in the USB Specification Revision 2.0 is started.
+     Software writes a zero to this bit to terminate the bus reset sequence.
+     Software must keep this bit at a one long enough to ensure the reset sequence,
+     as specified in the USB Specification Revision 2.0, completes.
+     Note: when software writes this bit to a one,
+     it must also write a zero to the Port Enable bit.
+    */
+    pOpRegs->PORTSC[j] &= ~PSTS_ENABLED;
+
+    /*
+     The HCHalted bit in the USBSTS register should be a zero
+     before software attempts to use this bit.
+     The host controller may hold Port Reset asserted to a one
+     when the HCHalted bit is a one.
+    */
+    if (pOpRegs->USBSTS & STS_HCHALTED) // TEST
+    {
+         textColor(0x0C);
+         printf("\nHCHalted set to 1 (Not OK!)");
+         showUSBSTS();
+         textColor(0x0F);
+    }
+
+    pOpRegs->USBINTR = 0;
+    pOpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
+    sleepMilliSeconds(250);                 // do not delete this wait
+    pOpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
+
+    // wait and check, whether really zero
+    uint32_t timeout=20;
+    while ((pOpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
+    {
+        sleepMilliSeconds(20);
+        timeout--;
+        if (timeout <= 0)
+        {
+            textColor(0x0C);
+            printf("\nerror: port %d did not reset! ",j+1);
+            textColor(0x0F);
+            printf("PortStatus: %X",pOpRegs->PORTSC[j]);
+            break;
+        }
+    }
+    pOpRegs->USBINTR = STS_INTMASK;
+}
 
 
 
+/*******************************************************************************************************
+*                                                                                                      *
+*                                              ehci handler                                            *
+*                                                                                                      *
+*******************************************************************************************************/
+
+void ehci_handler(registers_t* r)
+{
+    if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
+    {
+        textColor(0x09);
+        printf("\nehci_handler: ");
+        textColor(0x0F);
+    }
+
+    textColor(0x0E);
+
+    if (pOpRegs->USBSTS & STS_USBINT)
+    {
+        USBINTflag = true; // is asked by polling
+        // printf("USB Interrupt");
+        pOpRegs->USBSTS |= STS_USBINT; // reset interrupt
+    }
+
+    if (pOpRegs->USBSTS & STS_USBERRINT)
+    {
+        printf("USB Error Interrupt");
+        pOpRegs->USBSTS |= STS_USBERRINT;
+    }
+
+    if (pOpRegs->USBSTS & STS_PORT_CHANGE)
+    {
+        textColor(0x09);
+        printf("Port Change");
+        textColor(0x0F);
+
+        pOpRegs->USBSTS |= STS_PORT_CHANGE;
+
+        if (enabledPortFlag && pciEHCInumber)
+        {
+            addEvent(&EHCI_PORTCHECK);
+        }
+    }
+
+    if (pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER)
+    {
+        //printf("Frame List Rollover Interrupt");
+        pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
+    }
+
+    if (pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)
+    {
+        textColor(0x0C);
+        printf("Host System Error");
+        textColor(0x0F);
+        pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
+        analyzeHostSystemError(pciEHCInumber);
+        textColor(0x0E);
+        printf("\n>>> Init EHCI after fatal error:           <<<");
+        printf("\n>>> Press key for EHCI (re)initialization. <<<");
+        while(!keyboard_getChar());
+        textColor(0x0F);
+        addEvent(&EHCI_INIT);
+    }
+
+    if (pOpRegs->USBSTS & STS_ASYNC_INT)
+    {
+        printf("Interrupt on Async Advance");
+        pOpRegs->USBSTS |= STS_ASYNC_INT;
+    }
+}
+
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                              PORT CHANGE                                             *
+*                                                                                                      *
+*******************************************************************************************************/
+
+// PORT_CHANGE via ehci_handler starts thread at kernel idle loop (ckernel.c)
+void ehci_portcheck() { create_cthread( &portCheck, "EHCI Ports" ); }
+
+void portCheck()
+{
+    showInfobar(true); // protect console against info area
+    showPORTSC();      // with resetPort(j) and checkPortLineStatus(j)
+    textColor(0x0D);
+    printf("\n>>> Press key to close this console. <<<");
+    textColor(0x0F);
+    while(!keyboard_getChar());
+}
+
+void showPORTSC()
+{
+    for (uint8_t j=0; j<numPorts; j++)
+    {
+        if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED_CHANGE)
+        {
+            char PortStatus[20];
+
+            if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED)
+            {
+                strcpy(PortStatus,"attached");
+                writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
+                resetPort(PORTRESET);
+                checkPortLineStatus(PORTRESET); // <----
+
+            }
+            else
+            {
+                strcpy(PortStatus,"not attached");
+                writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
+            }
+            pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
+            beep(1000,100);
+        }
+    }
+}
+
+void checkPortLineStatus(uint8_t j)
+{
+    textColor(0x0E);
+    if (j<numPorts)
+    // if (j==PORTRESET) // ??
+    {
+        //check line status
+        textColor(0x0B);
+        printf("\nport %d: %x, line: %y ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
+        if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
+        {
+            printf("SE0 ");
+
+            if ((pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
+            {
+                 textColor(0x0E); printf(", power on, enabled, EHCI owned"); textColor(0x0F);
+                 if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
+                 {
+                     setupUSBDevice(j);
+                 }
+            }
+        }
+    }
+    textColor(0x0E);
+    switch ((pOpRegs->PORTSC[j]>>10)&3)
+    {
+      case 1: // K_STATE
+          printf("K-State");
+      break;
+      case 2: // J_STATE
+          printf("J-state");
+      break;
+      default: // undefined
+          textColor(0x0C);
+          printf("undefined");
+      break;
+    }
+    textColor(0x0F);
+}
+
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                          Setup USB-Device                                            *
+*                                                                                                      *
+*******************************************************************************************************/
+
+void setupUSBDevice(uint8_t portNumber)
+{
+     uint8_t devAddr = usbTransferEnumerate(portNumber);
+
+   #ifdef _USB_DIAGNOSIS_
+     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
+   #endif
+
+     usbTransferDevice(devAddr); // device address, endpoint=0
+
+   #ifdef _USB_DIAGNOSIS_
+     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+     printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+   #endif
+
+     usbTransferConfig(devAddr); // device address, endpoint 0
+
+   #ifdef _USB_DIAGNOSIS_
+     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+     printf("\nIO   : "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+   #endif
+
+     usbTransferString(devAddr); // device address, endpoint 0
+
+   #ifdef _USB_DIAGNOSIS_
+     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+     printf("\nIO   : "); showStatusbyteQTD(DataQTD);
+   #endif
+
+     for(uint8_t i=1; i<4; i++) // fetch 3 strings
+     {
+       #ifdef _USB_DIAGNOSIS_
+         waitForKeyStroke();
+       #endif
+
+         usbTransferStringUnicode(devAddr,i);
+
+       #ifdef _USB_DIAGNOSIS_
+         printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+         printf("\nSETUP: ");        showStatusbyteQTD(SetupQTD);
+         printf("\nIO   : ");        showStatusbyteQTD(DataQTD);
+       #endif
+     }
+
+     usbTransferSetConfiguration(devAddr, 1); // set first configuration
+   #ifdef _USB_DIAGNOSIS_
+     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+   #endif
+
+     uint8_t config = usbTransferGetConfiguration(devAddr);
+   #ifdef _USB_DIAGNOSIS_
+     printf(" %d",config); // check configuration
+   #endif
+
+   #ifdef _USB_DIAGNOSIS_
+     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+     printf("\ndata packet: ");  showPacket(DataQTDpage0, 1); printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+     waitForKeyStroke();
+   #endif
+
+    // device, interface, endpoints
+    textColor(0x07);
+    printf("\n\nMSD test now with device: %d  interface: %d  endpOUT: %d  endpIN: %d\n",
+                                            devAddr, usbDevices[devAddr].numInterfaceMSD,
+                                            usbDevices[devAddr].numEndpointOutMSD,
+                                            usbDevices[devAddr].numEndpointInMSD);
+    textColor(0x0F);
+
+    testMSD(devAddr,config); // test with some SCSI commands
+}
+
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                          Status Analysis                                             *
+*                                                                                                      *
+*******************************************************************************************************/
+
+void showUSBSTS()
+{
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nUSB status: ");
+    textColor(0x02);
+    printf("%X",pOpRegs->USBSTS);
+  #endif
+    textColor(0x0E);
+    if (pOpRegs->USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
+    if (pOpRegs->USBSTS & STS_USBERRINT)          { printf("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
+    if (pOpRegs->USBSTS & STS_PORT_CHANGE)        { printf("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
+    if (pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) { printf("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
+    if (pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)  { printf("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
+    if (pOpRegs->USBSTS & STS_ASYNC_INT)          { printf("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT;           }
+    if (pOpRegs->USBSTS & STS_HCHALTED)           { printf("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;            }
+    if (pOpRegs->USBSTS & STS_RECLAMATION)        { printf("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
+    if (pOpRegs->USBSTS & STS_PERIODIC_ENABLED)   { printf("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
+    if (pOpRegs->USBSTS & STS_ASYNC_ENABLED)      { printf("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
+    textColor(0x0F);
+}
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.

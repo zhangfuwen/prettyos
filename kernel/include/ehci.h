@@ -41,7 +41,7 @@ extern struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 extern struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
 extern bool      EHCIflag;
-extern bool      USBINTflag; 
+extern bool      USBINTflag;
 
 extern void*     DataQTD;
 extern void*     SetupQTD;
@@ -175,21 +175,24 @@ extern uintptr_t SetupQTDpage0;
 
 
 void ehci_install(uint32_t num, uint32_t i);
-void ehci_init();
-void ehci_portcheck();
-void ehci_handler(registers_t* r);
 void analyzeEHCI(uintptr_t bar, uintptr_t offset);
-void resetHostController();
-void startHostController(uint32_t num);
+void ehci_init();
+void startEHCI(); // for thread with own console
 int32_t initEHCIHostController();
+void startHostController(uint32_t num);
+void resetHostController();
 void DeactivateLegacySupport(uint32_t num);
 void enablePorts();
-void showUSBSTS();
+void resetPort(uint8_t j);
+
+void ehci_handler(registers_t* r);
+void ehci_portcheck();
+void portCheck(); // for thread with own console
 void showPORTSC();
 void checkPortLineStatus(uint8_t j);
-void resetPort(uint8_t j);
-void portCheck(); // for thread with own console
-void startEHCI(); // for thread with own console
 
+void setupUSBDevice(uint8_t portNumber);
+
+void showUSBSTS();
 
 #endif

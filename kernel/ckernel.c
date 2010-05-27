@@ -21,7 +21,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.471";
+const char* version = "0.0.0.472";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -160,16 +160,14 @@ void main()
         textColor(0x0F);
     }
 
-    const char* progress = "|/-\\";
-
-    uint64_t LastRdtscValue = 0;
-
+    const char* progress    = "|/-\\";    // rotating asterisk
+    uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
-    char DateAndTime[81]; // String for Date&Time
+    char     DateAndTime[81];             // String for Date&Time
 
     while (true) // start of kernel idle loop
     {
-        // Show Rotating Asterisk
+        // show rotating asterisk
         *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
         if (! *++progress){ progress = "|/-\\"; }
 
@@ -180,13 +178,13 @@ void main()
             // all values 64 bit
             uint64_t RdtscDiffValue = rdtsc() - LastRdtscValue;
             LastRdtscValue = rdtsc();
-            uint64_t RdtscKCounts = RdtscDiffValue>>10; // divide by 1024
-            uint32_t RdtscKCountsHi = RdtscKCounts >> 32;
-            uint32_t RdtscKCountsLo = RdtscKCounts & 0xFFFFFFFF;
+            uint64_t RdtscKCounts   = RdtscDiffValue >> 10;         // division by 1024
+            uint32_t RdtscKCountsHi = RdtscKCounts   >> 32;         // high dword
+            uint32_t RdtscKCountsLo = RdtscKCounts   &  0xFFFFFFFF; // low dword
 
             if (RdtscKCountsHi == 0)
             {
-                system.CPU_Frequency_kHz = (RdtscKCountsLo/1000)<<10;
+                system.CPU_Frequency_kHz = (RdtscKCountsLo/1000) << 10;
             }
 
             // draw status bar with date & time and frequency

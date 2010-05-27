@@ -630,7 +630,11 @@ label1:
 
         if ( (sector == 0) || (sector == startSectorPartition) || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
         {
-            analyzeBootSector((void*)DataQTDpage0); // for first tests only
+            int32_t retVal = analyzeBootSector((void*)DataQTDpage0); // for first tests only
+            if (retVal == -1)
+            {
+                goto label2;
+            }
             waitForKeyStroke();
         }
 
@@ -641,11 +645,15 @@ label1:
         }
 
         //testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
-        //testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
-        testFAT("makefile   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        //testFAT("abc12345   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
         // test more!
 
     }// else
+
+label2:
+    printf("\nNeither MBR nor FAT, thus better leave.");
+    waitForKeyStroke();
 }
 
 uint8_t usbRead(uint32_t sector, uint8_t* buffer)
@@ -677,7 +685,7 @@ uint8_t usbRead(uint32_t sector, uint8_t* buffer)
     return 0; // SUCCESS // TEST
 }
 
-void analyzeBootSector(void* addr) // for first tests only
+int32_t analyzeBootSector(void* addr) // for first tests only
 {
     uint8_t  volume_type = FAT16; // start value
     uint8_t  volume_SecPerClus;
@@ -702,7 +710,7 @@ void analyzeBootSector(void* addr) // for first tests only
 
 
     // This is a FAT description
-    if (sec0->charsPerSector == 0x200)
+    if ((sec0->charsPerSector == 0x200) && (sec0->FATcount > 0)) // 512 byte per sector, at least one FAT
     {
         printf("\nOEM name:           %s"    ,SysName);
         printf("\tbyte per sector:        %d",sec0->charsPerSector);
@@ -857,8 +865,10 @@ void analyzeBootSector(void* addr) // for first tests only
     {
         textColor(0x0C);
         printf("\nThis seems to be neither a FAT description nor a MBR.");
+        return -1;
         textColor(0x0F);
     }
+    return 0;
 }
 
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN)

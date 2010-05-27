@@ -33,7 +33,7 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
 
 int32_t showResultsRequestSense();
 
-void analyzeBootSector(void* DataQTDpage0); // for first tests only
+int32_t analyzeBootSector(void* DataQTDpage0); // for first tests only
 
 void testFAT();
 
