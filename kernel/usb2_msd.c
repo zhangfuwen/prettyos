@@ -93,7 +93,6 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->CBWFlags              = 0x00;          // Out: 0x00  In: 0x80
             cbw->CBWCBLength           = 6;             // only bits 4:0
             break;
-
         case 0x03: // Request Sense(6)
             cbw->CBWSignature          = CBWMagic;      // magic
             cbw->CBWTag                = 0x42424203;    // device echoes this field in the CSWTag field of the associated CSW
@@ -103,7 +102,6 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[0]        = 0x03;          // Operation code
             cbw->commandByte[4]        = 18;            // Allocation length (max. bytes)
             break;
-
         case 0x12: // Inquiry(6)
             cbw->CBWSignature          = CBWMagic;      // magic
             cbw->CBWTag                = 0x42424212;    // device echoes this field in the CSWTag field of the associated CSW
@@ -113,7 +111,6 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[0]        = 0x12;          // Operation code
             cbw->commandByte[4]        = 36;            // Allocation length (max. bytes)
             break;
-
         case 0x25: // read capacity(10)
             cbw->CBWSignature          = CBWMagic;      // magic
             cbw->CBWTag                = 0x42424225;    // device echoes this field in the CSWTag field of the associated CSW
@@ -126,7 +123,6 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[4]        = BYTE2(LBA);    // LBA
             cbw->commandByte[5]        = BYTE1(LBA);    // LBA LSB
             break;
-
         case 0x28: // read(10)
             cbw->CBWSignature           = CBWMagic;              // magic
             cbw->CBWTag                 = 0x42424228;            // device echoes this field in the CSWTag field of the associated CSW
@@ -141,7 +137,7 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
             cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
             break;
-    }// switch
+    } // switch
 
     currCSWtag = SCSIcommand;
 }
@@ -262,21 +258,19 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     //#ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\nCSW signature OK    ");
-        textColor(0x0F);
     //#endif
     }
     else if (CSWsignature == CSWMagicNotOK)
     {
         textColor(0x0C);
         printf("\nCSW signature wrong (not processed)");
-        textColor(0x0F);
     }
     else
     {
         textColor(0x0C);
         printf("\nCSW signature wrong (processed, but wrong value)");
-        textColor(0x0F);
     }
+    textColor(0x0F);
 
     // check matching tag
     uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
@@ -285,15 +279,14 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     //#ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("CSW tag %y OK    ",BYTE1(CSWtag));
-        textColor(0x0F);
     //#endif
     }
     else
     {
         textColor(0x0C);
         printf("\nError: CSW tag wrong");
-        textColor(0x0F);
     }
+    textColor(0x0F);
 
     // check CSWDataResidue
     uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
@@ -302,15 +295,14 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     //#ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\tCSW data residue OK    ");
-        textColor(0x0F);
     //#endif
     }
     else
     {
         textColor(0x06);
         printf("\nCSW data residue: %d",CSWDataResidue);
-        textColor(0x0F);
     }
+    textColor(0x0F);
 
     // check status byte // DWORD 3 (byte 12)
     // uint8_t CSWstatusByte = (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF;
@@ -318,30 +310,30 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     switch (CSWstatusByte)
     {
-		case 0x00:
-		//#ifdef _USB_DIAGNOSIS_
-			textColor(0x0A);
-			printf("\tCSW status OK");
-			textColor(0x0F);
-		//#endif
-			break;
-		case 0x01 :
-			textColor(0x0C);
-			printf("\nCommand failed");
-			textColor(0x0F);
-			break;
-		case 0x02:
-			textColor(0x0C);
-			printf("\nPhase Error");
-			textColor(0x0F);
-			usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
-			break;
-		default:
-			textColor(0x0C);
-			printf("\nCSW status byte: undefined value (error)");
-			textColor(0x0F);
-			usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
-			break;
+        case 0x00:
+        //#ifdef _USB_DIAGNOSIS_
+            textColor(0x0A);
+            printf("\tCSW status OK");
+            textColor(0x0F);
+        //#endif
+            break;
+        case 0x01 :
+            textColor(0x0C);
+            printf("\nCommand failed");
+            textColor(0x0F);
+            break;
+        case 0x02:
+            textColor(0x0C);
+            printf("\nPhase Error");
+            textColor(0x0F);
+            usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+            break;
+        default:
+            textColor(0x0C);
+            printf("\nCSW status byte: undefined value (error)");
+            textColor(0x0F);
+            usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+            break;
     }
 
     // transfer diagnosis (qTD status)
@@ -349,11 +341,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     if (statusCommand)
     {
         printf("<-- command"); // In/Out Data
-        bulkTransfer->successfulCommand = false;
-        if (statusCommand == 0x01) // Do Ping
-        {
-            bulkTransfer->successfulCommand = true;
-        }
+        bulkTransfer->successfulCommand = (statusCommand == 0x01); // Do Ping
     }
     else // OK
     {
@@ -368,9 +356,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         {
             printf("<-- data");   // In/Out Data
         }
-        {
-            bulkTransfer->successfulDataIN = true; // TEST: currently only IN data are used
-        }
+        bulkTransfer->successfulDataIN = true; // TEST: currently only IN data are used
     }
 
     uint32_t statusStatus = showStatusbyteQTD(StatusQTD);
@@ -495,14 +481,13 @@ static void analyzeInquiry()
     {
         textColor(0x0A);
         printf("\nResponse Data Format OK");
-        textColor(0x0F);
     }
     else
     {
         textColor(0x0C);
         printf("\nResponse Data Format is not OK: %d (should be 2)", ResponseDataFormat);
-        textColor(0x0F);
     }
+    textColor(0x0F);
 
     printf("\nRemovable device type:            %s", RMB     ? "yes" : "no");
     printf("\nSupports hierarch. addr. support: %s", HISUP   ? "yes" : "no");
@@ -512,29 +497,29 @@ static void analyzeInquiry()
 
     switch (PeripheralDeviceType)
     {
-    case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");            break;
-    case 0x01: printf("\nsequential-access device (e.g., magnetic tape)");        break;
-    case 0x02: printf("\nprinter device");                                        break;
-    case 0x03: printf("\nprocessor device");                                      break;
-    case 0x04: printf("\nwrite-once device");                                     break;
-    case 0x05: printf("\nCD/DVD device");                                         break;
-    case 0x06: printf("\nscanner device");                                        break;
-    case 0x07: printf("\noptical memory device (non-CD optical disk)");           break;
-    case 0x08: printf("\nmedium Changer (e.g. jukeboxes)");                       break;
-    case 0x09: printf("\ncommunications device");                                 break;
-    case 0x0A: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
-    case 0x0B: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
-    case 0x0C: printf("\nStorage array controller device (e.g., RAID)");          break;
-    case 0x0D: printf("\nEnclosure services device");                             break;
-    case 0x0E: printf("\nSimplified direct-access device (e.g., magnetic disk)"); break;
-    case 0x0F: printf("\nOptical card reader/writer device");                     break;
-    case 0x10: printf("\nReserved for bridging expanders");                       break;
-    case 0x11: printf("\nObject-based Storage Device");                           break;
-    case 0x12: printf("\nAutomation/Drive Interface");                            break;
-    case 0x13: printf("\nReserved");                                              break;
-    case 0x1D: printf("\nReserved");                                              break;
-    case 0x1E: printf("\nReduced block command (RBC) direct-access device");      break;
-    case 0x1F: printf("\nUnknown or no device type");                             break;
+		case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");            break;
+		case 0x01: printf("\nsequential-access device (e.g., magnetic tape)");        break;
+		case 0x02: printf("\nprinter device");                                        break;
+		case 0x03: printf("\nprocessor device");                                      break;
+		case 0x04: printf("\nwrite-once device");                                     break;
+		case 0x05: printf("\nCD/DVD device");                                         break;
+		case 0x06: printf("\nscanner device");                                        break;
+		case 0x07: printf("\noptical memory device (non-CD optical disk)");           break;
+		case 0x08: printf("\nmedium Changer (e.g. jukeboxes)");                       break;
+		case 0x09: printf("\ncommunications device");                                 break;
+		case 0x0A: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
+		case 0x0B: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
+		case 0x0C: printf("\nStorage array controller device (e.g., RAID)");          break;
+		case 0x0D: printf("\nEnclosure services device");                             break;
+		case 0x0E: printf("\nSimplified direct-access device (e.g., magnetic disk)"); break;
+		case 0x0F: printf("\nOptical card reader/writer device");                     break;
+		case 0x10: printf("\nReserved for bridging expanders");                       break;
+		case 0x11: printf("\nObject-based Storage Device");                           break;
+		case 0x12: printf("\nAutomation/Drive Interface");                            break;
+		case 0x13: printf("\nReserved");                                              break;
+		case 0x1D: printf("\nReserved");                                              break;
+		case 0x1E: printf("\nReduced block command (RBC) direct-access device");      break;
+		case 0x1F: printf("\nUnknown or no device type");                             break;
     }
 }
 
@@ -609,7 +594,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
         uint32_t blocksize  = (*((uint8_t*)DataQTDpage0+4)) * 0x1000000 + (*((uint8_t*)DataQTDpage0+5)) * 0x10000 + (*((uint8_t*)DataQTDpage0+6)) * 0x100 + (*((uint8_t*)DataQTDpage0+7));
         uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
 
-        usbMSDVolumeMaxLBA     =  lastLBA;
+        usbMSDVolumeMaxLBA = lastLBA;
 
         textColor(0x0E);
         printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
@@ -705,8 +690,8 @@ int32_t analyzeBootSector(void* addr) // for first tests only
     char FATn[9];
     strncpy(SysName, sec0->SysName,   8);
     strncpy(FATn,    sec0->Reserved2, 8);
-    SysName[8]=0;
-    FATn[8]   =0;
+    SysName[8] = 0;
+    FATn[8]    = 0;
 
 
     // This is a FAT description
@@ -747,7 +732,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
                 printf("\nThis is a volume formated with FAT32 ");
                 volume_type = FAT32;
 
-                for (int i=0; i<4; i++)
+                for (uint8_t i=0; i<4; i++)
                 {
                     volume_serialNumber[i] = ((char*)addr)[67+i]; // byte 67-70
                 }
@@ -758,7 +743,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
 
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
 
-                printf("\nSectors per FAT: %d.",              ((uint32_t*)addr)[9]);  // byte 36-39
+                printf("\nSectors per FAT: %d.", ((uint32_t*)addr)[9]);  // byte 36-39
                 volume_fatsize = ((uint32_t*)addr)[9];
                 volume_data    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus; // HOTFIX: plus ein Cluster, cf. Cluster2Sector(...)
                 volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus*(rootCluster-2);
@@ -771,7 +756,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
                 printf("\nThis is a volume formated with FAT16 ");
                 volume_type = FAT16;
 
-                for (int i=0; i<4; i++)
+                for (uint8_t i=0; i<4; i++)
                 {
                     volume_serialNumber[i] = ((char*)addr)[39+i]; // byte 39-42
                 }
@@ -817,15 +802,15 @@ int32_t analyzeBootSector(void* addr) // for first tests only
             printf("Null (check): %x",twoBytesZero);
 
             uint8_t partitionTable[4][16];
-            for (int i=0;i<4;i++) // four tables
+            for (uint8_t i=0;i<4;i++) // four tables
             {
-                for (int j=0;j<16;j++) // 16 bytes
+                for (uint8_t j=0;j<16;j++) // 16 bytes
                 {
                     partitionTable[i][j] = *((uint8_t*)addr+446+i*j);
                 }
             }
             printf("\n");
-            for (int i=0;i<4;i++) // four tables
+            for (uint8_t i=0;i<4;i++) // four tables
             {
                 if (*((uint32_t*)(&partitionTable[i][0x0C]))) // number of sectors
                 {
@@ -919,89 +904,89 @@ int32_t showResultsRequestSense()
     if ( (ResponseCode >= 0x70) && (ResponseCode <= 0x73) )
     {
         textColor(0x0F);
-		printf("Valid: \t\t");
-		if (Valid == 0)
-		{
-			printf("Sense data are not SCSI compliant");
-		}
-		else
-		{
-			printf("Sense data are SCSI compliant");
-		}
-		printf("\nResponse Code: \t");
-		switch (ResponseCode)
-		{
-			case 0x70:
-				printf("Current errors, fixed format");
-				break;
-			case 0x71:
-				printf("Deferred errors, fixed format");
-				break;
-			case 0x72:
-				printf("Current error, descriptor format");
-				break;
-			case 0x73:
-				printf("Deferred error, descriptor format");
-				break;
-			default:
-				printf("No vaild response code!");
-				break;
-		}
-		printf("\nSense Key: \t");
-		switch (SenseKey)
-		{
-			case 0x0:
-				printf("No Sense");
-				break;
-			case 0x1:
-				printf("Recovered Error - last command completed with some recovery action");
-				break;
-			case 0x2:
-				printf("Not Ready - logical unit addressed cannot be accessed");
-				break;
-			case 0x3:
-				printf("Medium Error - command terminated with a non-recovered error condition");
-				break;
-			case 0x4:
-				printf("Hardware Error");
-				break;
-			case 0x5:
-				printf("Illegal Request - illegal parameter in the command descriptor block ");
-				break;
-			case 0x6:
-				printf("Unit Attention - disc drive may have been reset.");
-				break;
-			case 0x7:
-				printf("Data Protect - command read/write on a protected block");
-				break;
-			case 0x8:
-				printf("not defined");
-				break;
-			case 0x9:
-				printf("Firmware Error");
-				break;
-			case 0xA:
-				printf("not defined");
-				break;
-			case 0xB:
-				printf("Aborted Command - disc drive aborted the command");
-				break;
-			case 0xC:
-				printf("Equal - SEARCH DATA command has satisfied an equal comparison");
-				break;
-			case 0xD:
-				printf("Volume Overflow - buffered peripheral device has reached the end of medium partition");
-				break;
-			case 0xE:
-				printf("Miscompare - source data did not match the data read from the medium");
-				break;
-			case 0xF:
-				printf("not defined");
-				break;
-			default:
-				printf("sense key not known!");
-				break;
-		}
+        printf("Valid: \t\t");
+        if (Valid == 0)
+        {
+            printf("Sense data are not SCSI compliant");
+        }
+        else
+        {
+            printf("Sense data are SCSI compliant");
+        }
+        printf("\nResponse Code: \t");
+        switch (ResponseCode)
+        {
+            case 0x70:
+                printf("Current errors, fixed format");
+                break;
+            case 0x71:
+                printf("Deferred errors, fixed format");
+                break;
+            case 0x72:
+                printf("Current error, descriptor format");
+                break;
+            case 0x73:
+                printf("Deferred error, descriptor format");
+                break;
+            default:
+                printf("No vaild response code!");
+                break;
+        }
+        printf("\nSense Key: \t");
+        switch (SenseKey)
+        {
+            case 0x0:
+                printf("No Sense");
+                break;
+            case 0x1:
+                printf("Recovered Error - last command completed with some recovery action");
+                break;
+            case 0x2:
+                printf("Not Ready - logical unit addressed cannot be accessed");
+                break;
+            case 0x3:
+                printf("Medium Error - command terminated with a non-recovered error condition");
+                break;
+            case 0x4:
+                printf("Hardware Error");
+                break;
+            case 0x5:
+                printf("Illegal Request - illegal parameter in the command descriptor block ");
+                break;
+            case 0x6:
+                printf("Unit Attention - disc drive may have been reset.");
+                break;
+            case 0x7:
+                printf("Data Protect - command read/write on a protected block");
+                break;
+            case 0x8:
+                printf("not defined");
+                break;
+            case 0x9:
+                printf("Firmware Error");
+                break;
+            case 0xA:
+                printf("not defined");
+                break;
+            case 0xB:
+                printf("Aborted Command - disc drive aborted the command");
+                break;
+            case 0xC:
+                printf("Equal - SEARCH DATA command has satisfied an equal comparison");
+                break;
+            case 0xD:
+                printf("Volume Overflow - buffered peripheral device has reached the end of medium partition");
+                break;
+            case 0xE:
+                printf("Miscompare - source data did not match the data read from the medium");
+                break;
+            case 0xF:
+                printf("not defined");
+                break;
+            default:
+                printf("sense key not known!");
+                break;
+        }
         return SenseKey;
     }
     else

@@ -176,8 +176,8 @@ extern uintptr_t SetupQTDpage0;
 
 void ehci_install(uint32_t num, uint32_t i);
 void analyzeEHCI(uintptr_t bar, uintptr_t offset);
-void ehci_init();
-void startEHCI(); // for thread with own console
+void ehci_init(); // for thread with own console
+void startEHCI();
 int32_t initEHCIHostController();
 void startHostController(uint32_t num);
 void resetHostController();
@@ -186,8 +186,8 @@ void enablePorts();
 void resetPort(uint8_t j);
 
 void ehci_handler(registers_t* r);
-void ehci_portcheck();
-void portCheck(); // for thread with own console
+void ehci_portcheck(); // for thread with own console
+void portCheck();
 void showPORTSC();
 void checkPortLineStatus(uint8_t j);
 

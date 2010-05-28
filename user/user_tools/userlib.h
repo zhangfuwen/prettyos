@@ -32,18 +32,22 @@ void setScrollField(uint8_t top, uint8_t bottom);
 void* memset(void* dest, int8_t val, size_t count);
 void* memcpy(void* dest, const void* src, size_t count);
 void printf (const char *args, ...);
+void vprintf(const char* args, va_list ap);
 void sprintf (char *buffer, const char *args, ...);
+void snprintf (char *buffer, size_t length, const char *args, ...);
+void vsnprintf (char *buffer, size_t length, const char *args, va_list ap);
 
 char toLower(char c);
 char toUpper(char c);
 char* toupper(char* s);
 char* tolower(char* s);
 
-unsigned int strlen(const char* str);
+size_t strlen(const char* str);
 int strcmp(const char* s1, const char* s2);
 char* strcpy(char* dest, const char* src);
 char* strncpy(char* dest, const char* src, size_t n);
 char* strcat(char* dest, const char* src);
+char* strncat(char* dest, const char* src, size_t n);
 char* strchr(char* str, int character);
 
 char* gets(char* s);

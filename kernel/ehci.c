@@ -68,13 +68,12 @@ void ehci_install(uint32_t num, uint32_t i)
 void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 {
     bar += offset;
-    uintptr_t bar_phys = (uintptr_t)NULL;
-    bar_phys = (uintptr_t)paging_get_phys_addr(kernel_pd, (void*)bar);
     pCapRegs = (struct ehci_CapRegs*) bar;
     pOpRegs  = (struct ehci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
   #ifdef _USB_DIAGNOSIS_
+    uintptr_t bar_phys  = (uintptr_t)paging_get_phys_addr(kernel_pd, (void*)bar);
     printf("EHCI bar get_phys_Addr: %X\n", bar_phys);
     printf("HCIVERSION: %x ",  pCapRegs->HCIVERSION);               // Interface Version Number
     printf("HCSPARAMS: %X ",   pCapRegs->HCSPARAMS);                // Structural Parameters
@@ -86,7 +85,10 @@ void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 }
 
 // start thread at kernel idle loop (ckernel.c)
-void ehci_init() { create_cthread( &startEHCI, "EHCI"       ); }
+void ehci_init()
+{
+	create_cthread(&startEHCI, "EHCI");
+}
 
 void startEHCI()
 {
@@ -517,7 +519,10 @@ void ehci_handler(registers_t* r)
 *******************************************************************************************************/
 
 // PORT_CHANGE via ehci_handler starts thread at kernel idle loop (ckernel.c)
-void ehci_portcheck() { create_cthread( &portCheck, "EHCI Ports" ); }
+void ehci_portcheck()
+{
+	create_cthread(&portCheck, "EHCI Ports");
+}
 
 void portCheck()
 {

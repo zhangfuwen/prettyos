@@ -124,10 +124,13 @@ void* memcpy(void* dest, const void* src, size_t count)
 }
 
 // printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
-void printf (const char* args, ...)
-{
+void printf (const char* args, ...) {
     va_list ap;
     va_start (ap, args);
+    vprintf(args, ap);
+}
+void vprintf(const char* args, va_list ap)
+{
     char buffer[32]; // Larger is not needed at the moment
 
     for (; *args; args++)
@@ -176,7 +179,7 @@ void printf (const char* args, ...)
             }
             break;
         default:
-            putch(*args); //printf("%c",*(args+index));
+            putch(*args);
             break;
         }
     }
@@ -252,6 +255,79 @@ void sprintf (char *buffer, const char *args, ...)
     }
 }
 
+void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
+{
+    char m_buffer[32]; // Larger is not needed at the moment
+    memset(buffer, 0, length);
+
+    for (size_t pos = 0; *args && pos < length; args++)
+    {
+        switch (*args)
+        {
+            case '%':
+                switch (*(++args))
+                {
+                    case 'u':
+                        itoa(va_arg(ap, uint32_t), m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'f':
+                        ftoa(va_arg(ap, double), m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'i': case 'd':
+                        itoa(va_arg(ap, int32_t), m_buffer);
+                        strncat(buffer, m_buffer, length - pos - 1);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'X':
+                        i2hex(va_arg(ap, int32_t), m_buffer, 8);
+                        strncat(buffer, m_buffer, length - pos - 1);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'x':
+                        i2hex(va_arg(ap, int32_t), m_buffer, 4);
+                        strncat(buffer, m_buffer, length - pos - 1);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 'y':
+                        i2hex(va_arg(ap, int32_t), m_buffer, 2);
+                        strncat(buffer, m_buffer, length - pos - 1);
+                        pos += strlen(m_buffer) - 1;
+                        break;
+                    case 's':
+                        strncat(buffer, va_arg (ap, char*), length - pos - 1);
+                        pos = strlen(buffer) - 1;
+                        break;
+                    case 'c':
+                        buffer[pos] = (int8_t)va_arg(ap, int32_t);
+                        break;
+                    case '%':
+                        buffer[pos] = '%';
+                        break;
+                    default:
+                        --args;
+                        --pos;
+                        break;
+                    }
+                break;
+            default:
+                buffer[pos] = (*args);
+                break;
+        }
+        pos++;
+    }
+}
+
+void snprintf (char *buffer, size_t length, const char *args, ...)
+{
+    va_list ap;
+    va_start(ap, args);
+    vsnprintf(buffer, length, args, ap);
+}
+
 char toLower(char c)
 {
     return isupper(c) ? ('a' - 'A') + c : c;
@@ -264,7 +340,7 @@ char toUpper(char c)
 
 char* toupper(char* s)
 {
-    for (int i=0;i<strlen(s);i++)
+    for (size_t i = 0; i < strlen(s); i++)
     {
         s[i] = toUpper(s[i]);
     }
@@ -273,16 +349,16 @@ char* toupper(char* s)
 
 char* tolower(char* s)
 {
-    for (int i=0;i<strlen(s);i++)
+    for (size_t i = 0; i < strlen(s); i++)
     {
         s[i] = toLower(s[i]);
     }
     return s;
 }
 
-unsigned int strlen(const char* str)
+size_t strlen(const char* str)
 {
-    unsigned int retval;
+    size_t retval;
     for (retval = 0; *str != '\0'; ++str)
     {
         ++retval;
@@ -309,30 +385,30 @@ char* strcpy(char* dest, const char* src)
    return save;
 }
 
-char* strncpy(char* dest, const char* src, size_t n) // okay?
+char* strncpy(char* dest, const char* src, size_t n)
 {
-    if (n != 0)
+    size_t i = 0;
+    for(; i < n && src[i] != 0; i++)
     {
-        char* d = dest;
-        do
-        {
-            if ((*d++ = *src++) == 0)
-            {
-                /* NUL pad the remaining n-1 bytes */
-                while (--n != 0)
-                   *d++ = 0;
-                break;
-            }
-        }
-        while (--n != 0);
-     }
-     return (dest);
+        dest[i] = src[i];
+    }
+    for(; i < n; i++)
+    {
+        dest[i] = 0;
+    }
+    return(dest);
 }
 
 /// http://en.wikipedia.org/wiki/Strcat
 char* strcat(char* dest, const char* src)
 {
     strcpy(dest + strlen(dest), src);
+    return dest;
+}
+
+char* strncat(char* dest, const char* src, size_t n)
+{
+    strncpy(dest + strlen(dest), src, n);
     return dest;
 }
 
@@ -355,13 +431,11 @@ char* strchr(char* str, int character)
 
 char* gets(char* s)
 {
-    int i=0,flag=0;
-    char c;
-    //settaskflag(0);
+    int i = 0;
+	char c;
     do
     {
         c = getch();
-        //textColor(i,0);///TEST
         if (c=='\b')  // Backspace
         {
            if (i>0)
@@ -373,62 +447,27 @@ char* gets(char* s)
            else
            {
                beep(50,20);
-               if (flag==false)
-               {
-                   putch('\n');
-                   flag=true;
-               }
            }
         }
         else
         {
             s[i] = c;
             putch(c);
-            flag=false;
             i++;
         }
     }
     while (c!=10); // Linefeed
     s[i]='\0';
 
-/*
-    textColor(0x0F);
-    int j;
-    for (j=0;j<15;j++)
-    {
-        if (s[j]=='\b')
-        {
-            puts("backspace");
-        }
-        else if (s[j]=='\0')
-        {
-            puts("EOS");
-            putch('\n');
-            break;
-        }
-        else if (s[j]=='\n')
-        {
-            puts("NL");
-        }
-        else
-        {
-            putch(s[j]);
-        }
-        putch('\n');
-    }
-*/
-    //settaskflag(1);
     return s;
 }
 
 /// http://en.wikipedia.org/wiki/Itoa
 void reverse(char* s)
 {
-    char c;
-
-    for (int i=0,j=strlen(s)-1; i<j; i++, j--)
+    for (size_t i = 0, j = strlen(s)-1; i < j; i++, j--)
     {
-        c = s[i];
+        char c = s[i];
         s[i] = s[j];
         s[j] = c;
     }
@@ -437,19 +476,20 @@ void reverse(char* s)
 /// http://en.wikipedia.org/wiki/Itoa
 void itoa(int n, char* s)
 {
-    int sign;
-    if ((sign = n) < 0) // record sign
+    bool sign = false;
+    if (n < 0) // record sign
     {
         n = -n;         // make n positive
+		sign = true;
     }
-    int i=0;
+    int i = 0;
     do // generate digits in reverse order
     {
         s[i++] = n % 10 + '0'; // get next digit
     }
     while ((n /= 10) > 0);     // delete it
 
-    if (sign < 0)
+    if (sign)
     {
         s[i++] = '-';
     }
@@ -459,8 +499,9 @@ void itoa(int n, char* s)
 
 int atoi(const char* s)
 {
-    int num=0, flag=0;
-    for (int i=0; i<=strlen(s); i++)
+    int num = 0;
+	bool sign = false;
+    for (size_t i=0; i<=strlen(s); i++)
     {
         if (s[i] >= '0' && s[i] <= '9')
         {
@@ -468,16 +509,16 @@ int atoi(const char* s)
         }
         else if (s[0] == '-' && i==0)
         {
-            flag = 1;
+            sign = true;
         }
         else
         {
             break;
         }
     }
-    if (flag == 1)
+    if (sign)
     {
-        num = num * -1;
+        num *= -1;
     }
     return num;
 }
@@ -577,7 +618,7 @@ void showInfo(signed char val)
         char temp2 = line2[79];
         char temp3 = line3[79];
 
-        for (int i=79;i>0;--i)
+        for (uint8_t i=79;i>0;--i)
         {
             line1[i] = line1[i-1];
             line2[i] = line2[i-1];

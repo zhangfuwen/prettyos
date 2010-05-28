@@ -202,7 +202,6 @@ void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 
 uint32_t showStatusbyteQTD(void* addressQTD)
 {
-    textColor(0x0F);
     uint8_t statusbyte = getField(addressQTD, 8, 0, 8);
     if (statusbyte != 0x00)
     {        
@@ -399,12 +398,12 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
          if(timeout>0)
          {
              sleepMilliSeconds(20); 
-             textColor(0x0D);
              
-           #ifdef _USB_DIAGNOSIS_  
+           #ifdef _USB_DIAGNOSIS_
+             textColor(0x0D);
              printf("#");
-           #endif 
              textColor(0x0F);
+           #endif
          }
          else
          {
@@ -429,11 +428,11 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
              if(timeout>0)
              {
                  sleepMilliSeconds(20); 
-                 textColor(0x0D);
-               #ifdef _USB_DIAGNOSIS_    
+               #ifdef _USB_DIAGNOSIS_
+                 textColor(0x0D); 
                  printf("!");
-               #endif
                  textColor(0x0F);
+               #endif
              }
              else
              {
@@ -457,17 +456,17 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
 void logBulkTransfer(usbBulkTransfer_t* bT)
 {
     textColor(0x03);
-    printf("\nopcode: %y",     bT->SCSIopcode);
-    printf("  cmd: %s",     bT->successfulCommand ? "OK" : "Error");
+    printf("\nopcode: %y", bT->SCSIopcode);
+    printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
     if (bT->DataBytesToTransferOUT) 
     {
         printf("  data out: %s", bT->successfulDataOUT ? "OK" : "Error");
     }
     if (bT->DataBytesToTransferIN)  
     {
-        printf("  data in: %s", bT->successfulDataIN  ? "OK" : "Error");
+        printf("  data in: %s",  bT->successfulDataIN  ? "OK" : "Error");
     }
-    printf("  CSW: %s",     bT->successfulCSW     ? "OK" : "Error");
+    printf("  CSW: %s",    bT->successfulCSW     ? "OK" : "Error");
     textColor(0x0F);
 }
 

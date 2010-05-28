@@ -562,7 +562,7 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
     }
     else
     {
-		uint8_t  character, state, test;
+		uint8_t  state;
 		uint32_t attrib;
         while(true)
         {
@@ -595,22 +595,19 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
                     textColor(0x0A);printf("\n\nAn entry is found. Attributes OK for search");textColor(0x0F); /// TEST
 
                     statusB = CE_GOOD;
-                    character = (uint8_t)'m'; // random value
-                    for (uint8_t i = 0; (statusB==CE_GOOD)&&(i<DIR_NAMECOMP); i++)
+                    for (uint8_t i = 0; i < DIR_NAMECOMP; i++)
                     {
+                        uint8_t character = foDest->name[i];
 
-                        character = foDest->name[i];
+                        //textColor(0x0A);printf("\ncharacter value: %y", character); //TEST
 
-                        // textColor(0x0A);printf("\ncharacter value. %y",character); //TEST
+                        printf("\ni: %d character: %c test: %c", i, character, foCompareTo->name[i]); textColor(0x0F); /// TEST
 
-                        test = foCompareTo->name[i];
-
-                        printf("\ni: %d character: %c test: %c",i,character,test);textColor(0x0F); /// TEST
-
-                        if (toLower(character) != toLower(test))
+                        if (toLower(character) != toLower(foCompareTo->name[i]))
                         {
                             statusB = CE_FILE_NOT_FOUND;
                             textColor(0x0C);printf("\n\n %c <--- not equal", character);textColor(0x0F);
+							break;
                         }
                     }
                 } // END: An entry is found

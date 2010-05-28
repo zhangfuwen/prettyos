@@ -201,9 +201,10 @@ void scroll()
 }
 
 /// TODO: make it standardized !
-// vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
+// vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c and the PrettyOS-specific %v
 void vprintf(const char* args, va_list ap)
 {
+	uint8_t attribute = current_console->attrib;
     char buffer[32]; // Larger is not needed at the moment
 
     for (; *args; ++args)
@@ -243,6 +244,11 @@ void vprintf(const char* args, va_list ap)
                     case 'c':
                         putch((int8_t)va_arg(ap, int32_t));
                         break;
+                    case 'v':
+                        current_console->attrib = (attribute >> 4) | (attribute << 4);
+                        putch(*(++args));
+                        current_console->attrib = attribute;
+                        break;
                     case '%':
                         putch('%');
                         break;
@@ -274,60 +280,10 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     current_console->attrib = attribute;
     current_console->csr_x = 0; current_console->csr_y = line;
 
+	// Call usual printf routines
     va_list ap;
     va_start (ap, attribute);
-    char buffer[32]; // Larger is not needed at the moment
-
-    for (; *message; message++)
-    {
-        switch (*message)
-        {
-            case '%':
-                switch (*(++message))
-                {
-                    case 'u':
-                        itoa(va_arg(ap, uint32_t), buffer);
-                        puts(buffer);
-                        break;
-                    case 'f':
-                        ftoa(va_arg(ap, double), buffer);
-                        puts(buffer);
-                        break;
-                    case 'i': case 'd':
-                        itoa(va_arg(ap, int32_t), buffer);
-                        puts(buffer);
-                        break;
-                    case 'X':
-                        i2hex(va_arg(ap, int32_t), buffer, 8);
-                        puts(buffer);
-                        break;
-                    case 'x':
-                        i2hex(va_arg(ap, int32_t), buffer, 4);
-                        puts(buffer);
-                        break;
-                    case 'y':
-                        i2hex(va_arg(ap, int32_t), buffer, 2);
-                        puts(buffer);
-                        break;
-                    case 's':
-                        puts(va_arg (ap, char*));
-                        break;
-                    case 'c':
-                        putch((int8_t)va_arg(ap, int32_t));
-                        break;
-                    case '%':
-                        putch('%');
-                        break;
-                    default:
-                        --message;
-                        break;
-                }
-                break;
-            default:
-                putch(*message);
-                break;
-        }
-    }
+    vprintf(message, ap);
 
     scroll_flag = true;
     current_console->attrib = old_attrib;

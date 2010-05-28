@@ -362,8 +362,8 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
         printf("descriptor type:      %d\n",  d->descriptorType);
         textColor(0x07);
         printf("total length:         %d\t",  d->totalLength);
-      #endif
         textColor(0x0A);
+      #endif
         printf("Number of interfaces: %d",  d->numInterfaces);
       #ifdef _USB_DIAGNOSIS_
         printf("ID of config:         %x\t",  d->configurationValue);
@@ -389,7 +389,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
       #endif
         if (d->numEndpoints == 0)
         {
-               printf("\nInterface %d has no endpoint and belongs to class:\n", d->interfaceNumber);
+            printf("\nInterface %d has no endpoint and belongs to class:\n", d->interfaceNumber);
         }
         else if (d->numEndpoints == 1)
         {
@@ -402,90 +402,90 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
         textColor(0x0E);
         switch (d->interfaceClass)
         {
-        case 0x01:
-            printf("Audio");
-            break;
-        case 0x02:
-            printf("Communications and CDC Control");
-            break;
-        case 0x03:
-            printf("HID (Human Interface Device)");
-            break;
-        case 0x05:
-            printf("Physical");
-            break;
-        case 0x06:
-            printf("Image");
-            break;
-        case 0x07:
-            printf("Printer");
-            break;
-        case 0x08:
-            printf("Mass Storage, ");
-            switch (d->interfaceSubclass)
-            {
             case 0x01:
-                printf("Reduced Block Commands, ");
+                printf("Audio");
                 break;
             case 0x02:
-                printf("SFF-8020i or MMC-2(ATAPI), ");
+                printf("Communications and CDC Control");
                 break;
             case 0x03:
-                printf("QIC-157 (tape device), ");
-                break;
-            case 0x04:
-                printf("UFI (e.g. Floppy Disk), ");
+                printf("HID (Human Interface Device)");
                 break;
             case 0x05:
-                printf("SFF-8070i (e.g. Floppy Disk), ");
+                printf("Physical");
                 break;
             case 0x06:
-                printf("SCSI transparent command set, ");
+                printf("Image");
                 break;
-            }
-            switch (d->interfaceProtocol)
-            {
-            case 0x00:
-                printf("CBI protocol with command completion interrupt.");
+            case 0x07:
+                printf("Printer");
                 break;
-            case 0x01:
-                printf("CBI protocol without command completion interrupt.");
+            case 0x08:
+                printf("Mass Storage, ");
+                switch (d->interfaceSubclass)
+                {
+                    case 0x01:
+                        printf("Reduced Block Commands, ");
+                        break;
+                    case 0x02:
+                        printf("SFF-8020i or MMC-2(ATAPI), ");
+                        break;
+                    case 0x03:
+                        printf("QIC-157 (tape device), ");
+                        break;
+                    case 0x04:
+                        printf("UFI (e.g. Floppy Disk), ");
+                        break;
+                    case 0x05:
+                        printf("SFF-8070i (e.g. Floppy Disk), ");
+                        break;
+                    case 0x06:
+                        printf("SCSI transparent command set, ");
+                        break;
+                }
+                switch (d->interfaceProtocol)
+                {
+                    case 0x00:
+                        printf("CBI protocol with command completion interrupt.");
+                        break;
+                    case 0x01:
+                        printf("CBI protocol without command completion interrupt.");
+                        break;
+                    case 0x50:
+                        printf("Bulk-Only Transport protocol.");
+                        break;
+                }
                 break;
-            case 0x50:
-                printf("Bulk-Only Transport protocol.");
+            case 0x0A:
+                printf("CDC-Data");
                 break;
-            }
-            break;
-        case 0x0A:
-            printf("CDC-Data");
-            break;
-        case 0x0B:
-            printf("Smart Card");
-            break;
-        case 0x0D:
-            printf("Content Security");
-            break;
-        case 0x0E:
-            printf("Video");
-            break;
-        case 0x0F:
-            printf("Personal Healthcare");
-            break;
-        case 0xDC:
-            printf("Diagnostic Device");
-            break;
-        case 0xE0:
-            printf("Wireless Controller, subclass: %y protocol: %y.",d->interfaceSubclass,d->interfaceProtocol);
-            break;
-        case 0xEF:
-            printf("Miscellaneous");
-            break;
-        case 0xFE:
-            printf("Application Specific");
-            break;
-        case 0xFF:
-            printf("Vendor Specific");
-            break;
+            case 0x0B:
+                printf("Smart Card");
+                break;
+            case 0x0D:
+                printf("Content Security");
+                break;
+            case 0x0E:
+                printf("Video");
+                break;
+            case 0x0F:
+                printf("Personal Healthcare");
+                break;
+            case 0xDC:
+                printf("Diagnostic Device");
+                break;
+            case 0xE0:
+                printf("Wireless Controller, subclass: %y protocol: %y.",d->interfaceSubclass,d->interfaceProtocol);
+                break;
+            case 0xEF:
+                printf("Miscellaneous");
+                break;
+            case 0xFE:
+                printf("Application Specific");
+                break;
+            case 0xFF:
+                printf("Vendor Specific");
+                break;
         }
      #ifdef _USB_DIAGNOSIS_
         printf("\nalternate Setting:    %d\n",   d->alternateSetting);
@@ -539,116 +539,114 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
       #endif
 
         printf("\n\nlanguages: ");
-        for(int i=0; i<10;i++)
+        for(uint8_t i=0; i<10;i++)
         {
             if ( (d->languageID[i] >=0x0400) && (d->languageID[i] <= 0x0465))
             {
                 switch (d->languageID[i])
                 {
-                case 0x401: 
-                    printf("Arabic\t");
-                    break;
-                case 0x404: 
-                    printf("Chinese \t");
-                    break;
-                case 0x407: 
-                    printf("German\t");
-                    break;
-                case 0x409: 
-                    printf("English\t");
-                    break;
-                case 0x40A: 
-                    printf("Spanish\t");
-                    break;
-                case 0x40C: 
-                    printf("French\t");
-                    break;
-                case 0x410: 
-                    printf("Italian\t");
-                    break;
-                case 0x411: 
-                    printf("Japanese\t");
-                    break;
-                case 0x416: 
-                    printf("Portuguese\t");
-                    break;
-                case 0x419: 
-                    printf("Russian\t");
-                    break;
-                default:            
-                    printf("language code: %x\t", d->languageID[i]);
-                    break;
-                    /*
-                    ; Language Codes
-                    ; 0x400 Neutral 
-                    ; 0x401 Arabic 
-                    ; 0x402 Bulgarian 
-                    ; 0x403 Catalan  
-                    ; 0x404 Chinese 
-                    ; 0x405 Czech 
-                    ; 0x406 Danish 
-                    ; 0x407 German 
-                    ; 0x408 Greek 
-                    ; 0x409 English  
-                    ; 0x40a Spanish  
-                    ; 0x40b Finnish 
-                    ; 0x40c French 
-                    ; 0x40d Hebrew 
-                    ; 0x40e Hungarian 
-                    ; 0x40f Icelandic 
-                    ; 0x410 Italian  
-                    ; 0x411 Japanese 
-                    ; 0x412 Korean 
-                    ; 0x413 Dutch 
-                    ; 0x414 Norwegian 
-                    ; 0x415 Polish 
-                    ; 0x416 Portuguese 
-                    ; 0x418 Romanian 
-                    ; 0x419 Russian 
-                    ; 0x41a Croatian 
-                    ; 0x41a Serbian 
-                    ; 0x41b Slovak 
-                    ; 0x41c Albanian 
-                    ; 0x41d Swedish  
-                    ; 0x41e Thai 
-                    ; 0x41f Turkish  
-                    ; 0x420 Urdu 
-                    ; 0x421 Indonesian 
-                    ; 0x422 Ukrainian 
-                    ; 0x423 Belarusian 
-                    ; 0x424 Slovenian 
-                    ; 0x425 Estonian 
-                    ; 0x426 Latvian 
-                    ; 0x427 Lithuanian 
-                    ; 0x429 Farsi 
-                    ; 0x42a Vietnamese 
-                    ; 0x42b Armenian 
-                    ; 0x42c Azeri 
-                    ; 0x42d Basque 
-                    ; 0x42f Macedonian 
-                    ; 0x436 Afrikaans 
-                    ; 0x437 Georgian 
-                    ; 0x438 Faeroese 
-                    ; 0x439 Hindi 
-                    ; 0x43e Malay 
-                    ; 0x43f Kazak 
-                    ; 0x440 Kyrgyz 
-                    ; 0x441 Swahili 
-                    ; 0x443 Uzbek 
-                    ; 0x444 Tatar 
-                    ; 0x446 Punjabi 
-                    ; 0x447 Gujarati 
-                    ; 0x449 Tamil 
-                    ; 0x44a Telugu 
-                    ; 0x44b Kannada 
-                    ; 0x44e Marathi 
-                    ; 0x44f Sanskrit 
-                    ; 0x450 Mongolian 
-                    ; 0x456 Galician 
-                    ; 0x457 Konkani 
-                    ; 0x45a Syriac 
-                    ; 0x465 Divehi 
-                    */
+                    case 0x401: 
+                        printf("Arabic\t");
+                        break;
+                    case 0x404: 
+                        printf("Chinese \t");
+                        break;
+                    case 0x407: 
+                        printf("German\t");
+                        break;
+                    case 0x409: 
+                        printf("English\t");
+                        break;
+                    case 0x40A: 
+                        printf("Spanish\t");
+                        break;
+                    case 0x40C: 
+                        printf("French\t");
+                        break;
+                    case 0x410: 
+                        printf("Italian\t");
+                        break;
+                    case 0x411: 
+                        printf("Japanese\t");
+                        break;
+                    case 0x416: 
+                        printf("Portuguese\t");
+                        break;
+                    case 0x419: 
+                        printf("Russian\t");
+                        break;
+                    default:            
+                        printf("language code: %x\t", d->languageID[i]);
+                        /*Language Codes
+                        ; 0x400 Neutral 
+                        ; 0x401 Arabic 
+                        ; 0x402 Bulgarian 
+                        ; 0x403 Catalan  
+                        ; 0x404 Chinese 
+                        ; 0x405 Czech 
+                        ; 0x406 Danish 
+                        ; 0x407 German 
+                        ; 0x408 Greek 
+                        ; 0x409 English  
+                        ; 0x40a Spanish  
+                        ; 0x40b Finnish 
+                        ; 0x40c French 
+                        ; 0x40d Hebrew 
+                        ; 0x40e Hungarian 
+                        ; 0x40f Icelandic 
+                        ; 0x410 Italian  
+                        ; 0x411 Japanese 
+                        ; 0x412 Korean 
+                        ; 0x413 Dutch 
+                        ; 0x414 Norwegian 
+                        ; 0x415 Polish 
+                        ; 0x416 Portuguese 
+                        ; 0x418 Romanian 
+                        ; 0x419 Russian 
+                        ; 0x41a Croatian 
+                        ; 0x41a Serbian 
+                        ; 0x41b Slovak 
+                        ; 0x41c Albanian 
+                        ; 0x41d Swedish  
+                        ; 0x41e Thai 
+                        ; 0x41f Turkish  
+                        ; 0x420 Urdu 
+                        ; 0x421 Indonesian 
+                        ; 0x422 Ukrainian 
+                        ; 0x423 Belarusian 
+                        ; 0x424 Slovenian 
+                        ; 0x425 Estonian 
+                        ; 0x426 Latvian 
+                        ; 0x427 Lithuanian 
+                        ; 0x429 Farsi 
+                        ; 0x42a Vietnamese 
+                        ; 0x42b Armenian 
+                        ; 0x42c Azeri 
+                        ; 0x42d Basque 
+                        ; 0x42f Macedonian 
+                        ; 0x436 Afrikaans 
+                        ; 0x437 Georgian 
+                        ; 0x438 Faeroese 
+                        ; 0x439 Hindi 
+                        ; 0x43e Malay 
+                        ; 0x43f Kazak 
+                        ; 0x440 Kyrgyz 
+                        ; 0x441 Swahili 
+                        ; 0x443 Uzbek 
+                        ; 0x444 Tatar 
+                        ; 0x446 Punjabi 
+                        ; 0x447 Gujarati 
+                        ; 0x449 Tamil 
+                        ; 0x44a Telugu 
+                        ; 0x44b Kannada 
+                        ; 0x44e Marathi 
+                        ; 0x44f Sanskrit 
+                        ; 0x450 Mongolian 
+                        ; 0x456 Galician 
+                        ; 0x457 Konkani 
+                        ; 0x45a Syriac 
+                        ; 0x465 Divehi */
+                        break;
                 }
             }
         }
@@ -661,9 +659,9 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
 {
     if (d->length)
     {
-        textColor(0x0A);
         
       #ifdef _USB_DIAGNOSIS_
+        textColor(0x0A);
         printf("\nlength:            %d\t\t",  d->length);
         printf("descriptor type:   %d\n",  d->descriptorType); // 3
         printf("string: ");
@@ -687,12 +685,11 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
             
             // find the last character
             int16_t j=0; // start at the front
-            int16_t last=0;
             while (d->asciichar[j]) // not '\0'
             {
                 j++;     // go to the next character
             }
-            last = j;    // store last position
+            int16_t last = j; // store last position
             j=j-12;      // step 12 characters backwards
             if (j<0)     // but not below zero
             {
