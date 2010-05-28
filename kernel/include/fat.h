@@ -69,7 +69,7 @@ typedef struct
     uint32_t fat;             // LBA of FAT
     uint32_t root;            // LBA of root directory
     uint32_t data;            // LBA of data area
-    uint16_t maxroot;         // max entries in root dir
+    uint32_t maxroot;         // max entries in root dir
     uint32_t maxcls;          // max data clusters
     uint32_t fatsize;         // sectors in FAT
     uint8_t  fatcopy;         // copies of FAT
@@ -100,7 +100,7 @@ typedef struct
     uint16_t time;          // last update time
     uint16_t date;          // last update date
     char     name[FILE_NAME_SIZE];
-    uint16_t entry;         // file's entry position in its directory
+    uint32_t entry;         // file's entry position in its directory
     uint16_t chk;           // checksum = ~(entry+name[0])
     uint16_t attributes;    // file's attributes
     uint32_t dirclus;       // first cluster of the file's directory
@@ -195,21 +195,21 @@ typedef enum _CETYPE
 */
 
 // interface functions
-uint8_t sectorRead (uint32_t sector_addr, uint8_t* buffer);
-uint8_t sectorWrite(uint32_t sector_addr, uint8_t* buffer);
+uint8_t  sectorRead (uint32_t sector_addr, uint8_t* buffer);
+uint8_t  sectorWrite(uint32_t sector_addr, uint8_t* buffer);
 
 // file handling
-uint8_t createFileEntry(FILEOBJ fo, uint16_t* fHandle);
-uint8_t fileDelete(FILEOBJ fo, uint16_t* fHandle, uint8_t EraseClusters);
-uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd);
-uint8_t fopen(FILEOBJ fo, uint16_t* fHandle, char type);
-uint8_t fclose(FILEOBJ fo);
-uint8_t fread(FILEOBJ fo, void* dest, uint16_t count);
-uint8_t fwrite(FILEOBJ fo, void* src, uint16_t count);
+uint8_t  createFileEntry(FILEOBJ fo, uint32_t* fHandle);
+uint8_t  fileDelete(FILEOBJ fo, uint32_t* fHandle, uint8_t EraseClusters);
+uint8_t  fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd);
+uint8_t  fopen(FILEOBJ fo, uint32_t* fHandle, char type);
+uint8_t  fclose(FILEOBJ fo);
+uint8_t  fread(FILEOBJ fo, void* dest, uint32_t count);
+uint8_t  fwrite(FILEOBJ fo, void* src, uint32_t count);
 
 // analysis functions
-void    showDirectoryEntry(DIRENTRY dir);
-void testFAT(char* filename);
+void     showDirectoryEntry(DIRENTRY dir);
+void     testFAT(char* filename);
 
 //additional functions
 uint32_t checksum(char* ShortFileName);

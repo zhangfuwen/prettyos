@@ -26,7 +26,7 @@
 #define PLACEMENT_END     ((uint8_t*)0x1400000)     // 20 MB
 
 // User Heap management
-#define USER_HEAP_START   ((uint8_t*)0x1400000)     // 20 MB
+#define USER_HEAP_START   ((uint8_t*)0x1420000)                       // 20 MB plus 128 KB
 #define USER_HEAP_END     ((uint8_t*)(KERNEL_DATA_START - 0x1000000)) // 3 GB minus 16 MB
 
 // User Stack

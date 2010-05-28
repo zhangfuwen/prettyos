@@ -864,7 +864,14 @@ int32_t analyzeBootSector(void* addr) // for first tests only
     else
     {
         textColor(0x0C);
-        printf("\nThis seems to be neither a FAT description nor a MBR.");
+        if ( (((uint8_t*)addr)[0x3] == 'N') && (((uint8_t*)addr)[0x4] == 'T') && (((uint8_t*)addr)[0x5] == 'F') && (((uint8_t*)addr)[0x6] == 'S') )
+        {
+            printf("\nThis seems to be a volume formatted with NTFS.");
+        }
+        else
+        {
+            printf("\nThis seems to be neither a FAT description nor a MBR.");
+        }
         return -1;
         textColor(0x0F);
     }
