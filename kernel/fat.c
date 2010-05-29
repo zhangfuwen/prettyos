@@ -21,22 +21,21 @@ extern PARTITION usbMSDVolume;
 
 uint8_t sectorWrite(uint32_t sector_addr, uint8_t* buffer) // to implement
 {
-    textColor(0x0A);
-    printf("\n>>>>> sectorWrite not yet implemented <<<<<!");
-    textColor(0x0F);
-
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\n>>>>> sectorWrite <<<<<!");
+  #endif
+    textColor(0x0A); printf("\n>>>>> sectorWrite not yet implemented <<<<<!"); textColor(0x0F);
     uint8_t retVal = SUCCESS; // TEST
-
     return retVal;
 }
 
 uint8_t sectorRead(uint32_t sector_addr, uint8_t* buffer) // make it better!
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> sectorRead <<<<<!");
+  #endif
     uint8_t retVal = SUCCESS; // TEST
-
     usbRead(sector_addr, buffer); // until now only realized for USB 2.0 Mass Storage Device
-
     return retVal;
 }
 
@@ -58,14 +57,17 @@ static uint32_t cluster2sector(PARTITION* volume, uint32_t cluster)
             sector = volume->data + (cluster-3) * volume->SecPerClus; // HOTFIX for FAT32
         }
     }
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cluster2sector<<<<<    cluster: %d  sector %d", cluster, sector);
+  #endif
     return (sector);
 }
 
 static uint32_t fatRead(PARTITION* volume, uint32_t ccls)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatRead <<<<<!");
-
+  #endif
     uint32_t l = volume->fat + (ccls>>8);
 
     if ( sectorRead(l, volume->buffer) != SUCCESS )
@@ -86,8 +88,9 @@ static uint32_t fatRead(PARTITION* volume, uint32_t ccls)
 
 static uint32_t fatReadQueued(PARTITION* volume, uint32_t ccls)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatReadQueued <<<<<!");
-
+  #endif
     if ((ccls & 0xFF) == 0x00)
     {
         uint32_t l = volume->fat + (ccls>>8);
@@ -112,7 +115,9 @@ static uint32_t fatReadQueued(PARTITION* volume, uint32_t ccls)
 
 static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatWrite <<<<<!");
+  #endif
     uint32_t  c;
 
     uint32_t p = 2*cls;
@@ -146,7 +151,9 @@ static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v)
 
 static uint8_t fileSearchNextCluster(FILEOBJ fo, uint32_t n)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileSearchNextCluster <<<<<!");
+  #endif
     PARTITION* volume = fo->volume;
 
     do
@@ -180,7 +187,9 @@ static uint8_t fileSearchNextCluster(FILEOBJ fo, uint32_t n)
 
 static uint32_t fatFindEmptyCluster(FILEOBJ fo)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatFindEmptyCluster <<<<<!");
+  #endif
     uint32_t value = 0x0;
 
     PARTITION* volume = fo->volume;
@@ -226,7 +235,9 @@ static uint32_t fatFindEmptyCluster(FILEOBJ fo)
 
 uint32_t checksum(char* ShortFileName)
 {
+  #ifdef _FAT_DIAGNOSIS_   
     printf("\n>>>>> checksum <<<<<!");
+  #endif
     uint32_t Bit7, Checksum=0;
     for (uint32_t Character=0; Character<11; ++Character)
     {
@@ -255,7 +266,9 @@ uint32_t checksum(char* ShortFileName)
 
 static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %d ForceRead: %d", *curEntry, ForceRead);
+  #endif
     uint8_t    numofclus;
     uint32_t   ccls       = fo->dirccls;
 	uint32_t   cluster    = fo->dirclus;
@@ -343,8 +356,9 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
 
 static DIRENTRY loadDirectoryAttribute(FILEOBJ fo, uint32_t* fHandle)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> loadDirectoryAttribute <<<<<!");
-
+  #endif
     DIRENTRY dir = cacheFileEntry(fo,fHandle,true);
     uint8_t  a   = dir->DIR_Name[0];
     if (a == DIR_EMPTY)
@@ -373,8 +387,9 @@ static DIRENTRY loadDirectoryAttribute(FILEOBJ fo, uint32_t* fHandle)
 
 static uint8_t writeFileEntry(FILEOBJ fo, uint32_t* curEntry)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> writeFileEntry <<<<<!");
-
+  #endif
     PARTITION* volume  = fo->volume;
     uint32_t   ccls    = fo->dirccls;
     uint8_t    offset2 = (*curEntry>>4);
@@ -391,7 +406,9 @@ static uint8_t writeFileEntry(FILEOBJ fo, uint32_t* curEntry)
 
 static void updateTimeStamp(DIRENTRY dir)
 {
+  #ifdef _FAT_DIAGNOSIS_   
     printf("\n>>>>> updateTimeStamp not yet implemented, does nothing <<<<<!");
+  #endif
     // TODO
 }
 
@@ -402,8 +419,9 @@ static void updateTimeStamp(DIRENTRY dir)
 
 static uint8_t eraseCluster(PARTITION* volume, uint32_t cluster)
 {
+  #ifdef _FAT_DIAGNOSIS_  
     printf("\n>>>>> eraseCluster <<<<<!");
-
+  #endif
     uint32_t SectorAddress = cluster2sector(volume, cluster);
     memset(volume->buffer, 0x00, SDC_SECTOR_SIZE);
     for (uint8_t i=0; i<volume->SecPerClus; i++)
@@ -420,8 +438,9 @@ static uint8_t eraseCluster(PARTITION* volume, uint32_t cluster)
 
 static uint8_t fileCreateHeadCluster(FILEOBJ fo, uint32_t* cluster)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileCreateHeadCluster <<<<<!");
-
+  #endif
     PARTITION* volume = fo->volume;
     *cluster = fatFindEmptyCluster(fo);
 
@@ -443,7 +462,9 @@ static uint8_t fileCreateHeadCluster(FILEOBJ fo, uint32_t* cluster)
 
 static uint8_t createFirstCluster(FILEOBJ fo)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> createFirstCluster <<<<<!");
+  #endif
     uint8_t  error;
     uint32_t cluster;
 
@@ -465,8 +486,9 @@ static uint8_t createFirstCluster(FILEOBJ fo)
 
 static uint8_t fileAllocateNewCluster(FILEOBJ fo)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileAllocateNewCluster <<<<<!");
-
+  #endif
     PARTITION* volume  = fo->volume;
     uint32_t c         = fatFindEmptyCluster(fo);
 
@@ -485,14 +507,15 @@ static uint8_t fileAllocateNewCluster(FILEOBJ fo)
 
 static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fillFileObject <<<<<!");
-
+  #endif
     DIRENTRY dir = cacheFileEntry(fo,fHandle,false);
-
     // read first character of file name from the entry
     uint8_t a = dir->DIR_Name[0];
-    textColor(0x0E);printf("\n\nfirst character of file name from the entry: %c\n",a);textColor(0x0F); //TEST
-
+  #ifdef _FAT_DIAGNOSIS_
+    textColor(0x0E);printf("\n\nfirst character of file name from the entry: %c\n",a);textColor(0x0F); 
+  #endif
     if ((dir==(DIRENTRY)NULL) || (a == DIR_EMPTY))
     {
         return NO_MORE;
@@ -542,14 +565,14 @@ static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
 
 uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileFind <<<<<!");
-
-    /// TEST
+  #endif
+    
     for (uint8_t i=0; i<DIR_NAMECOMP; i++)
     {
         foDest->name[i] = 0x20; // set name and extension to spaces
-    }
-    /// TEST
+    }    
 
 	uint8_t statusB = CE_FILE_NOT_FOUND;
     uint32_t fHandle=0;
@@ -566,47 +589,42 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
 		uint32_t attrib;
         while(true)
         {
-            textColor(0x0E);printf("\n\nfHandle %d\n",fHandle);textColor(0x0F); /// TEST
-
+          #ifdef _FAT_DIAGNOSIS_
+            textColor(0x0E);printf("\n\nfHandle %d\n",fHandle);textColor(0x0F); 
+          #endif
             if (statusB != CE_GOOD)
             {
-                //textColor(0x0E);printf("\nstatusB != CE_GOOD");textColor(0x0F); /// TEST
                 state = fillFileObject(foDest, &fHandle);
-                if (state == NO_MORE)
-                {
-                    //textColor(0x0E);printf("\nstate == NO_MORE");textColor(0x0F); /// TEST
-                    break;
-                }
+                if (state == NO_MORE) { break; }
             }
-            else
-            {
-                break;
-            }
+            else { break; }
 
             if (state == FOUND)
             {
-                textColor(0x0A);printf("\n\nstate == FOUND");textColor(0x0F); /// TEST
-
+              #ifdef _FAT_DIAGNOSIS_
+                textColor(0x0A);printf("\n\nstate == FOUND");textColor(0x0F); 
+              #endif
                 attrib =  foDest->attributes;
                 attrib &= ATTR_MASK;
 
                 if ((attrib != ATTR_VOLUME) && ((attrib & ATTR_HIDDEN) != ATTR_HIDDEN))
                 {
+                  #ifdef _FAT_DIAGNOSIS_
                     textColor(0x0A);printf("\n\nAn entry is found. Attributes OK for search");textColor(0x0F); /// TEST
-
+                  #endif
                     statusB = CE_GOOD;
                     for (uint8_t i = 0; i < DIR_NAMECOMP; i++)
                     {
                         uint8_t character = foDest->name[i];
-
-                        //textColor(0x0A);printf("\ncharacter value: %y", character); //TEST
-
+                      #ifdef _FAT_DIAGNOSIS_   
                         printf("\ni: %d character: %c test: %c", i, character, foCompareTo->name[i]); textColor(0x0F); /// TEST
-
+                      #endif
                         if (toLower(character) != toLower(foCompareTo->name[i]))
                         {
                             statusB = CE_FILE_NOT_FOUND;
+                          #ifdef _FAT_DIAGNOSIS_                      
                             textColor(0x0C);printf("\n\n %c <--- not equal", character);textColor(0x0F);
+                          #endif
 							break;
                         }
                     }
@@ -631,7 +649,9 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
 
 static uint8_t populateEntries(FILEOBJ fo, char* name, uint32_t* fHandle)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> populateEntries <<<<<!");
+  #endif
 
     DIRENTRY dir = cacheFileEntry(fo, fHandle, true);
     strncpy(dir->DIR_Name,name,DIR_NAMECOMP);   /// TODO: check!
@@ -660,7 +680,9 @@ static uint8_t populateEntries(FILEOBJ fo, char* name, uint32_t* fHandle)
 
 static uint8_t findEmptyEntry(FILEOBJ fo, uint32_t* fHandle)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> findEmptyEntry <<<<<!");
+  #endif
     uint8_t  a, status = NOT_FOUND;
     uint32_t bHandle;
     DIRENTRY dir = cacheFileEntry(fo, fHandle, true);
@@ -722,7 +744,9 @@ static uint8_t findEmptyEntry(FILEOBJ fo, uint32_t* fHandle)
 
 static uint8_t fatEraseClusterChain(uint32_t cluster, PARTITION* volume)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatEraseClusterChain <<<<<!");
+  #endif
     uint32_t c, c2;
     enum _status{Good,Fail,Exit} status = Good;
 
@@ -765,7 +789,9 @@ static uint8_t fatEraseClusterChain(uint32_t cluster, PARTITION* volume)
 
 uint8_t createFileEntry(FILEOBJ fo, uint32_t* fHandle)
 {
+  #ifdef _FAT_DIAGNOSIS_    
     printf("\n>>>>> createFileEntry <<<<<!");
+  #endif
     char name[DIR_NAMECOMP];
 
     for (uint8_t i=0; i<FILE_NAME_SIZE; i++)
@@ -790,7 +816,9 @@ uint8_t createFileEntry(FILEOBJ fo, uint32_t* fHandle)
 
 uint8_t fileDelete(FILEOBJ fo, uint32_t* fHandle, uint8_t EraseClusters)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileDelete <<<<<!");
+  #endif
     uint8_t  status = CE_GOOD;
     uint32_t clus   = fo->dirclus;
     PARTITION* volume = fo->volume;
@@ -832,8 +860,9 @@ uint8_t fileDelete(FILEOBJ fo, uint32_t* fHandle, uint8_t EraseClusters)
 
 uint8_t fopen(FILEOBJ fo, uint32_t* fHandle, char type)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fopen <<<<<!");
-
+  #endif
     PARTITION* volume = (PARTITION*)(fo->volume);
     uint8_t error = CE_GOOD;
 
@@ -877,7 +906,9 @@ uint8_t fopen(FILEOBJ fo, uint32_t* fHandle, char type)
 
 uint8_t fclose(FILEOBJ fo)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fclose <<<<<!");
+  #endif
     uint8_t error = CE_GOOD;
     uint32_t fHandle;
     DIRENTRY dir;
@@ -903,7 +934,9 @@ uint8_t fclose(FILEOBJ fo)
 
 uint8_t fread(FILEOBJ fo, void* dest, uint32_t count)
 {
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fread <<<<<!");
+  #endif
     PARTITION* volume;
     uint8_t  error = CE_GOOD;
     uint32_t pos;
@@ -966,7 +999,9 @@ uint8_t fread(FILEOBJ fo, void* dest, uint32_t count)
 
 uint8_t fwrite(FILEOBJ fo, void* src, uint32_t count)
 {
+  #ifdef _FAT_DIAGNOSIS_  
     printf("\n>>>>> fwrite <<<<<!");
+  #endif
     PARTITION*    volume;
     bool     sectorloaded = false;
     uint8_t  error = CE_GOOD;
@@ -1082,7 +1117,7 @@ void showDirectoryEntry(DIRENTRY dir)
     printf("\nname.ext: %s.%s", dir->DIR_Name,dir->DIR_Extension                );
     printf("\nattrib.:  %y",    dir->DIR_Attr                                   );
     printf("\ncluster:  %d",    dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
-    printf("\nfilesize: %d",    dir->DIR_FileSize                               );
+    printf("\nfilesize: %d byte",    dir->DIR_FileSize                               );
 }
 
 void testFAT(char* filename)
@@ -1128,26 +1163,38 @@ void testFAT(char* filename)
     if (retVal == CE_GOOD)
     {
         textColor(0x0A);
-        printf("\n\nfileFind OK");
-        printf("\nfile name: %s", fo->name);
+        printf("\n\nThe file was found on the device:");
+        char strName[260];
+        char strExt[4];
+        strncpy(strName,fo->name,8);        
+        strName[8]='.'; // 0-7 short filename, 8: dot
+        strName[9]=0;   // terminate for strcat
+        strncpy(strExt,(fo->name)+8,3);
+        strExt[3]=0; // 0-2 short filename extension, 3: '\0' (end of string)
+        printf("\nfile name: ");
+        textColor(0x0E);
+        strcat(strName,strExt);
+        printf("%s", strName);
+
+        textColor(0x0A);
+        printf("\nnumber of entry in root dir: ");
+        textColor(0x0E); printf("%d",fo->entry); // number of file entry "searched.xxx"
+        textColor(0x0F);
+
+        fopen(fo, &(fo->entry), 'r');
+        waitForKeyStroke();
+
+        fread(fo, fo->volume->buffer, fo->size);
+        printf("\n");
+        memshow(fo->volume->buffer, fo->size);
+
+        fclose(fo);
     }
-    else
+    else if (retVal == CE_FILE_NOT_FOUND)
     {
         textColor(0x0C);
-        printf("\n\nfileFind not OK, error: %d", retVal);
+        printf("\n\nThe file could not be found on the device!", retVal);
+        textColor(0x0F);
     }
-    textColor(0x0F);
-
-    printf("\nNumber of entry: %d",fo->entry); // number of file entry "clean.bat"
-
-    fopen(fo, &(fo->entry), 'r');
-
-    waitForKeyStroke();
-
-    fread(fo, fo->volume->buffer, fo->size);
-    printf("\n");
-    memshow(  fo->volume->buffer, fo->size);
-    fclose(fo);
-
     waitForKeyStroke();
 }

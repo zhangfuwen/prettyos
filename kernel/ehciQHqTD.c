@@ -197,7 +197,9 @@ void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
+  #ifdef _USB_DIAGNOSIS_
     showData(virtAddrBuf0, size, false);    
+  #endif
 }
 
 uint32_t showStatusbyteQTD(void* addressQTD)

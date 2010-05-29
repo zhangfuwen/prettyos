@@ -710,7 +710,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
             }
 
             // check
-            printf(" ser. number: %s", usbDevices[device].serialNumber);  
+            printf(" serial: %s", usbDevices[device].serialNumber);  
         }
     }
 }
