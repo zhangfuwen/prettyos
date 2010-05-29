@@ -630,14 +630,14 @@ label1:
         }
 
         //testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
-        testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        //testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
         //testFAT("abc12345   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
-        // test more!
+        testFAT("ttt     elf"); 
 
     }// else
 
 label2:
-    printf("\nNeither MBR nor FAT, thus better leave.");
+    printf("\nNeither MBR nor FAT, thus better leave.");    
     waitForKeyStroke();
 }
 
@@ -775,7 +775,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         // store the determined volume data to DISK usbstick //
         ///////////////////////////////////////////////////////
 
-        usbMSDVolume.buffer         = malloc(0x200000,PAGESIZE); // 2 MB
+        usbMSDVolume.buffer         = malloc(0x10000,PAGESIZE); // 64 KiB
         usbMSDVolume.type           = volume_type;
         usbMSDVolume.SecPerClus     = volume_SecPerClus;
         usbMSDVolume.maxroot        = volume_maxroot;

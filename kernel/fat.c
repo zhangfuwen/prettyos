@@ -13,6 +13,8 @@
 */
 
 #include "util.h"
+#include "paging.h"
+#include "kheap.h"
 #include "usb2_msd.h"
 #include "console.h"
 #include "fat.h"
@@ -1184,10 +1186,16 @@ void testFAT(char* filename)
         fopen(fo, &(fo->entry), 'r');
         waitForKeyStroke();
 
-        fread(fo, fo->volume->buffer, fo->size);
+        void* filebuffer = malloc(fo->size,PAGESIZE);
+        fread(fo, filebuffer, fo->size);
         printf("\n");
-        memshow(fo->volume->buffer, fo->size);
-
+        
+        printf("\nstart of the file:");
+        memshow(filebuffer, 300 /*fo->size*/);
+        waitForKeyStroke();
+        
+        elf_exec(filebuffer, fo->size, fo->name); // try to execute
+ 
         fclose(fo);
     }
     else if (retVal == CE_FILE_NOT_FOUND)
