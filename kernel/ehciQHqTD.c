@@ -318,7 +318,7 @@ void checkAsyncScheduler()
     */
     printf("\tnext QH: %X ",horizontalPointer);
     
-    //printf("\ntype: %d T-bit: %d",type,Tbit); 
+    //printf("\ntype: %u T-bit: %u",type,Tbit); 
 
     // Last accessed & next to access QH, DWORD 1
     /*
@@ -332,7 +332,7 @@ void checkAsyncScheduler()
     uint32_t maxPacket = (( BYTE4( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x07 ) << 8 ) +
                             BYTE3( *( ((uint32_t*)virtASYNCLISTADDR)+1) );
     
-    printf("\ndev: %d endp: %d inactivate: %d dtc: %d H: %d mult: %d maxPacket: %d", 
+    printf("\ndev: %u endp: %u inactivate: %u dtc: %u H: %u mult: %u maxPacket: %u", 
              deviceAddress, endpoint, inactivateOnNextTransaction, dataToggleControl, Hbit, mult, maxPacket);
     */
     
@@ -349,7 +349,7 @@ void checkAsyncScheduler()
 
     // NAK counter in overlay area
     uint32_t NakCtr = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+5) ) & 0x1E)>>1;
-    printf("\nNAK counter: %d",NakCtr);     
+    printf("\nNAK counter: %u",NakCtr);     
     textColor(0x0E);
 }
 

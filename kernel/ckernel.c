@@ -21,7 +21,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.476";
+const char* version = "0.0.0.477";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -139,7 +139,7 @@ void main()
             char name[40];
             memset(name, 0, 40);
             memcpy(name, node->name, 35); // protection against wrong / too long filename
-            printf("%d \t%s\n",sz,name);
+            printf("%u \t%s\n",sz,name);
 
             if (strcmp(node->name, "shell") == 0)
             {

@@ -80,7 +80,7 @@ uint32_t paging_get_phys_addr(page_directory_t* pd, void* virt_addr)
     uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
     page_table_t* pt = pd->tables[pagenr/1024];
 
-    kdebug(3, "\nvirt-->phys: pagenr: %d ",pagenr);
+    kdebug(3, "\nvirt-->phys: pagenr: %u ",pagenr);
     kdebug(3, "pt: %X\n",pt);
 
     ASSERT(pt);
@@ -241,7 +241,7 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
 
         if (pd->tables[pagenr/1024] && pd->tables[pagenr/1024]->pages[pagenr%1024])
         {
-            kdebug(3, "pagenumber already allocated: %d\n",pagenr);
+            kdebug(3, "pagenumber already allocated: %u\n",pagenr);
             continue;
         }
 
@@ -279,7 +279,7 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
 
         if (flags & MEM_USER)
         {
-            kdebug(3, "pagenumber now allocated: %d phys: %X\n",pagenr,phys);
+            kdebug(3, "pagenumber now allocated: %u phys: %X\n",pagenr,phys);
         }
     }
     return true;

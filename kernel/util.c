@@ -16,7 +16,7 @@ void nop() { __asm__ volatile ("nop"); }  // Do nothing
 // fetch data field bitwise in byte "byte" from bit "shift" with "len" bits  
 uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len)
 {
-    return( (((uint8_t*)addr)[byte] >> shift) & ((1 << len) -1));
+    return ( ((uint8_t*)addr)[byte] >> shift ) & ( (1<<len) - 1 );
 }
 
 /**********************************************************************/
@@ -243,7 +243,8 @@ void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
                 switch (*(++args))
                 {
                     case 'u':
-                        itoa(va_arg(ap, uint32_t), m_buffer);
+                        utoa(va_arg(ap, uint32_t), m_buffer);
+                        //itoa(va_arg(ap, uint32_t), m_buffer);
                         strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
@@ -429,6 +430,29 @@ void itoa(int32_t n, char* s)
     }
     s[i] = '\0';
     reverse(s);
+}
+
+// TEST based onto http://users.powernet.co.uk/eton/kandr2/krx506.html
+char* utoa(uint32_t n, char* digits)
+{   
+    char* s = "0123456789abcdefghijklmnopqrstuvwxyz"; 
+    char* p;
+
+    if (digits == NULL)
+    {
+        return NULL;
+    }
+    if (n < 10) 
+    {
+        digits[0] = s[n];
+        digits[1] = '\0';
+    } 
+    else 
+    {
+        for (p = utoa( n/10, digits ); *p; p++);
+        utoa( n%10, p );
+    }
+    return digits;
 }
 
 void i2hex(uint32_t val, char* dest, int32_t len)

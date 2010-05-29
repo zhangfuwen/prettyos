@@ -135,9 +135,11 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
     }
     else
     {
+        /*
         textColor(0x0A);
-        printf("\nvalidation checks passed");
+        printf("\nvalidation checks passed"); // TEST
         textColor(0x0F);
+        */
     }   
 
     page_directory_t* pd = paging_create_user_pd();

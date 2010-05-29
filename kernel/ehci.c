@@ -77,7 +77,7 @@ void analyzeEHCI(uintptr_t bar, uintptr_t offset)
     printf("EHCI bar get_phys_Addr: %X\n", bar_phys);
     printf("HCIVERSION: %x ",  pCapRegs->HCIVERSION);               // Interface Version Number
     printf("HCSPARAMS: %X ",   pCapRegs->HCSPARAMS);                // Structural Parameters
-    printf("Ports: %d ",       numPorts);                           // Number of Ports
+    printf("Ports: %u ",       numPorts);                           // Number of Ports
     printf("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
     if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. "); // Extended Capabilities Pointer
     printf("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
@@ -335,7 +335,7 @@ void DeactivateLegacySupport(uint32_t num)
                 printf("OS-Semaphore being set.\n");
             }
 
-            printf("Check: BIOSownedSemaphore: %d OSownedSemaphore: %d\n",
+            printf("Check: BIOSownedSemaphore: %u OSownedSemaphore: %u\n",
                 pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore),
                 pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore));
 
@@ -371,7 +371,7 @@ void enablePorts()
          if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
          {
              textColor(0x0E);
-             printf("Port %d: high speed enabled, device attached\n",j+1);
+             printf("Port %u: high speed enabled, device attached\n",j+1);
              textColor(0x0F);
 
              setupUSBDevice(j); // TEST
@@ -382,7 +382,7 @@ void enablePorts()
 void resetPort(uint8_t j)
 {
     textColor(0x09);
-    printf("\n>>> >>> function: resetPort %d  ",j+1);
+    printf("\n>>> >>> function: resetPort %u  ",j+1);
     textColor(0x0F);
 
     pOpRegs->PORTSC[j] |=  PSTS_POWERON;
@@ -427,7 +427,7 @@ void resetPort(uint8_t j)
         if (timeout <= 0)
         {
             textColor(0x0C);
-            printf("\nerror: port %d did not reset! ",j+1);
+            printf("\nerror: port %u did not reset! ",j+1);
             textColor(0x0F);
             printf("PortStatus: %X",pOpRegs->PORTSC[j]);
             break;
@@ -569,7 +569,7 @@ void checkPortLineStatus(uint8_t j)
     {
         //check line status
         textColor(0x0B);
-        printf("\nport %d: %x, line: %y ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
+        printf("\nport %u: %x, line: %y ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
         if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
         {
             printf("SE0 ");
@@ -660,7 +660,7 @@ void setupUSBDevice(uint8_t portNumber)
 
      uint8_t config = usbTransferGetConfiguration(devAddr);
    #ifdef _USB_DIAGNOSIS_
-     printf(" %d",config); // check configuration
+     printf(" %u",config); // check configuration
    #endif
 
    #ifdef _USB_DIAGNOSIS_
@@ -671,7 +671,7 @@ void setupUSBDevice(uint8_t portNumber)
 
     // device, interface, endpoints
     textColor(0x07);
-    printf("\n\nMSD test now with device: %d  interface: %d  endpOUT: %d  endpIN: %d\n",
+    printf("\n\nMSD test now with device: %u  interface: %u  endpOUT: %u  endpIN: %u\n",
                                             devAddr, usbDevices[devAddr].numInterfaceMSD,
                                             usbDevices[devAddr].numEndpointOutMSD,
                                             usbDevices[devAddr].numEndpointInMSD);

@@ -94,7 +94,7 @@ int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO:
     /// ********************************** File memory prepared **************************************///
 
     uint8_t* file = malloc(f.size,PAGESIZE); /// TODO: free allocated memory, if program is finished
-    printf("FileSize: %d Byte, 1st Cluster: %d, Memory: %X\n",f.size, f.firstCluster, file);
+    printf("FileSize: %u Byte, 1st Cluster: %u, Memory: %X\n",f.size, f.firstCluster, file);
 
     // whole FAT is read from index 0 to FATMAXINDEX (= 2849 = 0xB21)
     for (uint32_t i=0;i<FATMAXINDEX;i++)
@@ -181,7 +181,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     {
         neededSectors++;
     }
-    printf("\nSave data to Floppy Disk: %d bytes, %d sectors needed.\n", size, neededSectors);
+    printf("\nSave data to Floppy Disk: %u bytes, %u sectors needed.\n", size, neededSectors);
 
     uint32_t firstCluster = 0; // no valid value for a file
     // search first free cluster
@@ -203,7 +203,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     {
         if ((track1[(rootdirStart-9216)+i*0x20]==0x00)||(track1[(rootdirStart-9216)+i*0x20]==0xE5)) // 00h: nothing in it E5h: deleted entry
         {
-            printf("free root dir entry nr. %d\n\n",i);
+            printf("free root dir entry nr. %u\n\n",i);
             freeRootDirEntry = i;
             memset((void*)&track1[(rootdirStart-9216)+i*0x20], 0x00,                   32); // 32 times zero
             memcpy((void*)&track1[(rootdirStart-9216)+i*0x20   ], (void*)bufName,       8); // write name
@@ -215,7 +215,7 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
         }
         else
         {
-            // printf("occupied root dir entry nr. %d first byte: %y\n",i,track1[(rootdirStart-9216/*track0*/)+i*0x20]);
+            // printf("occupied root dir entry nr. %u first byte: %y\n",i,track1[(rootdirStart-9216/*track0*/)+i*0x20]);
         }
     }
     if (freeRootDirEntry==0xFF)
@@ -263,11 +263,11 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
            retVal = flpydsk_write_ia(FileCluster[i]+ADD, (memory+i*0x200), SECTOR);
            if (retVal != 0)
            {
-               printf("error write_sector %d.\n", FileCluster[i]+ADD);
+               printf("error write_sector %u.\n", FileCluster[i]+ADD);
            }
            else
            {
-               // printf("success write_sector %d\t", FileCluster[i]+ADD);
+               // printf("success write_sector %u\t", FileCluster[i]+ADD);
            }
        }
     }
@@ -300,7 +300,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// lo
 
     // copy first cluster
     uint32_t sectornumber = firstCluster+ADD;
-    printf("\n\n1st sector: %d\n",sectornumber);
+    printf("\n\n1st sector: %u\n",sectornumber);
 
     uint32_t timeout = 2; // limit
     int32_t  retVal  = 0;
@@ -327,7 +327,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// lo
     uint32_t i = firstCluster; // FAT-Index
     while (fatEntry[i]!=0xFFF)
     {
-        printf("\ni: %d FAT-entry: %x\t",i,fatEntry[i]);
+        printf("\ni: %u FAT-entry: %x\t",i,fatEntry[i]);
         if ((fatEntry[i]<3) || (fatEntry[i]>MAX_BLOCK))
         {
             printf("FAT-error.\n");
@@ -337,7 +337,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// lo
         // copy data from chain
         pos++;
         sectornumber = fatEntry[i]+ADD;
-        printf("sector: %d\t",sectornumber);
+        printf("sector: %u\t",sectornumber);
 
         timeout = 2; // limit
         retVal  = 0;
@@ -345,7 +345,7 @@ int32_t file_ia(int32_t* fatEntry, uint32_t firstCluster, void* fileData) /// lo
         {
             retVal = -1;
             timeout--;
-            printf("error read_sector. attempts left: %d\n",timeout);
+            printf("error read_sector. attempts left: %u\n",timeout);
             if (timeout<=0)
             {
                 printf("timeout\n");
@@ -374,7 +374,7 @@ int32_t file_ia_cache(int32_t* fatEntry, uint32_t firstCluster, void* fileData) 
     // copy first cluster
     uint32_t sectornumber  = firstCluster+ADD;
     uint8_t sectorInTrack = sectornumber%18;
-    printf("\n\n1st sector: %d\n",sectornumber);
+    printf("\n\n1st sector: %u\n",sectornumber);
 
     // flpydsk_read_ia(sectornumber,a,SECTOR);
     for (n=0;n<5;n++)
@@ -389,7 +389,7 @@ int32_t file_ia_cache(int32_t* fatEntry, uint32_t firstCluster, void* fileData) 
     uint32_t i = firstCluster; // FAT-Index
     while (fatEntry[i]!=0xFFF)
     {
-        printf("\ni: %d FAT-entry: %x\t",i,fatEntry[i]);
+        printf("\ni: %u FAT-entry: %x\t",i,fatEntry[i]);
         if ((fatEntry[i]<3) || (fatEntry[i]>MAX_BLOCK))
         {
             printf("FAT-error.\n");
@@ -400,7 +400,7 @@ int32_t file_ia_cache(int32_t* fatEntry, uint32_t firstCluster, void* fileData) 
         pos++;
         sectornumber  = fatEntry[i]+ADD;
         sectorInTrack = sectornumber%18;
-        printf("sector: %d\t",sectornumber);
+        printf("sector: %u\t",sectornumber);
 
         //flpydsk_read_ia(sectornumber,a,SECTOR);
         for (n=0;n<5;n++)

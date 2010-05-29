@@ -122,7 +122,8 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 switch (*(++message))
                 {
                     case 'u':
-                        itoa(va_arg(ap, uint32_t), buffer);
+                        utoa(va_arg(ap, uint32_t), buffer); // TEST
+                        //itoa(va_arg(ap, uint32_t), buffer);
                         kputs(buffer);
                         break;
                     case 'f':
@@ -246,7 +247,7 @@ void screenshot()
     }
 
     char timeBuffer[20];
-    itoa(getCurrentSeconds(), timeBuffer);
+    utoa(getCurrentSeconds(), timeBuffer); // TEST utoa
     char timeStr[10];
     snprintf(timeStr, 10, "TIME%s", timeBuffer);
     flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4098);

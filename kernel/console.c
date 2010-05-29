@@ -215,7 +215,8 @@ void vprintf(const char* args, va_list ap)
                 switch (*(++args))
                 {
                     case 'u':
-                        itoa(va_arg(ap, uint32_t), buffer);
+                        utoa(va_arg(ap, uint32_t), buffer);
+                        //itoa(va_arg(ap, uint32_t), buffer);
                         puts(buffer);
                         break;
                     case 'f':

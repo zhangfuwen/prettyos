@@ -37,7 +37,7 @@ extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 {
     #ifdef _USB_DIAGNOSIS_
-    textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %d interface: %d", device, numInterface); textColor(0x0F);
+    textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %u interface: %u", device, numInterface); textColor(0x0F);
     #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
@@ -63,7 +63,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 {
     #ifdef _USB_DIAGNOSIS_
-    textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %d interface: %d", device, numInterface); textColor(0x0F);
+    textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %u interface: %u", device, numInterface); textColor(0x0F);
     #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
@@ -163,7 +163,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
   #ifdef _USB_DIAGNOSIS_
      textColor(0x03);
-     printf("\ntoggle OUT %d", usbDevices[device].ToggleEndpointOutMSD);
+     printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
      textColor(0x0F);
   #endif
 
@@ -204,7 +204,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     {
       #ifdef _USB_DIAGNOSIS_
         textColor(0x03);
-        printf("\ntoggles IN: data: %d  status: %d", usbDevices[device].ToggleEndpointInMSD, !(usbDevices[device].ToggleEndpointInMSD));
+        printf("\ntoggles IN: data: %u  status: %u", usbDevices[device].ToggleEndpointInMSD, !(usbDevices[device].ToggleEndpointInMSD));
         textColor(0x0F);
       #endif
 
@@ -221,7 +221,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     {
       #ifdef _USB_DIAGNOSIS_
         textColor(0x03);
-        printf("\ntoggle IN: status: %d", usbDevices[device].ToggleEndpointInMSD);
+        printf("\ntoggle IN: status: %u", usbDevices[device].ToggleEndpointInMSD);
         textColor(0x0F);
       #endif
 
@@ -473,8 +473,8 @@ static void analyzeInquiry()
     printf("\nRevision:   %s", productRevisionLevel);
 
     // Jan Axelson, USB Mass Storage, page 140
-    // printf("\nVersion ANSI: %d  ECMA: %d  ISO: %d", ANSIapprovedVersion, ECMAversion, ISOversion);
-    printf("\nVersion: %d (4: SPC-2, 5: SPC-3)", ANSIapprovedVersion);
+    // printf("\nVersion ANSI: %u  ECMA: %u  ISO: %u", ANSIapprovedVersion, ECMAversion, ISOversion);
+    printf("\nVersion: %u (4: SPC-2, 5: SPC-3)", ANSIapprovedVersion);
 
     // Jan Axelson, USB Mass Storage, page 140
     if (ResponseDataFormat == 2)
@@ -485,7 +485,7 @@ static void analyzeInquiry()
     else
     {
         textColor(0x0C);
-        printf("\nResponse Data Format is not OK: %d (should be 2)", ResponseDataFormat);
+        printf("\nResponse Data Format is not OK: %u (should be 2)", ResponseDataFormat);
     }
     textColor(0x0F);
 
@@ -597,7 +597,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
         usbMSDVolumeMaxLBA = lastLBA;
 
         textColor(0x0E);
-        printf("\nCapacity: %d MB, Last LBA: %d, block size %d\n", capacityMB, lastLBA, blocksize);
+        printf("\nCapacity: %u MB, Last LBA: %u, block size %u\n", capacityMB, lastLBA, blocksize);
         textColor(0x0F);
 
         showUSBSTS();
@@ -648,7 +648,7 @@ uint8_t usbRead(uint32_t sector, uint8_t* buffer)
 
     uint32_t blocks = 1; // number of blocks to be read
 
-    textColor(0x09); printf("\n\n>>> SCSI: read   sector: %d", sector); textColor(0x0F);
+    textColor(0x09); printf("\n\n>>> SCSI: read   sector: %u", sector); textColor(0x0F);
 
     usbBulkTransfer_t read;
     startLogBulkTransfer(&read, 0x28, blocks, 0);
@@ -698,18 +698,18 @@ int32_t analyzeBootSector(void* addr) // for first tests only
     if ((sec0->charsPerSector == 0x200) && (sec0->FATcount > 0)) // 512 byte per sector, at least one FAT
     {
         printf("\nOEM name:           %s"    ,SysName);
-        printf("\tbyte per sector:        %d",sec0->charsPerSector);
-        printf("\nsectors per cluster:    %d",sec0->SectorsPerCluster);
-        printf("\treserved sectors:       %d",sec0->ReservedSectors);
-        printf("\nnumber of FAT copies:   %d",sec0->FATcount);
-        printf("\tmax root dir entries:   %d",sec0->MaxRootEntries);
-        printf("\ntotal sectors (<65536): %d",sec0->TotalSectors1);
+        printf("\tbyte per sector:        %u",sec0->charsPerSector);
+        printf("\nsectors per cluster:    %u",sec0->SectorsPerCluster);
+        printf("\treserved sectors:       %u",sec0->ReservedSectors);
+        printf("\nnumber of FAT copies:   %u",sec0->FATcount);
+        printf("\tmax root dir entries:   %u",sec0->MaxRootEntries);
+        printf("\ntotal sectors (<65536): %u",sec0->TotalSectors1);
         printf("\tmedia Descriptor:       %y",sec0->MediaDescriptor);
-        printf("\nsectors per FAT:        %d",sec0->SectorsPerFAT);
-        printf("\tsectors per track:      %d",sec0->SectorsPerTrack);
-        printf("\nheads/pages:            %d",sec0->HeadCount);
-        printf("\thidden sectors:         %d",sec0->HiddenSectors);
-        printf("\ntotal sectors (>65535): %d",sec0->TotalSectors2);
+        printf("\nsectors per FAT:        %u",sec0->SectorsPerFAT);
+        printf("\tsectors per track:      %u",sec0->SectorsPerTrack);
+        printf("\nheads/pages:            %u",sec0->HeadCount);
+        printf("\thidden sectors:         %u",sec0->HiddenSectors);
+        printf("\ntotal sectors (>65535): %u",sec0->TotalSectors2);
         printf("\tFAT 12/16:              %s",FATn);
 
         volume_SecPerClus   = sec0->SectorsPerCluster;
@@ -739,11 +739,11 @@ int32_t analyzeBootSector(void* addr) // for first tests only
                 printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
 
                 uint32_t rootCluster = ((uint32_t*)addr)[11]; // byte 44-47
-                printf("\nThe root dir starts at cluster %d (expected: 2).", rootCluster);
+                printf("\nThe root dir starts at cluster %u (expected: 2).", rootCluster);
 
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
 
-                printf("\nSectors per FAT: %d.", ((uint32_t*)addr)[9]);  // byte 36-39
+                printf("\nSectors per FAT: %u.", ((uint32_t*)addr)[9]);  // byte 36-39
                 volume_fatsize = ((uint32_t*)addr)[9];
                 volume_data    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus; // HOTFIX: plus ein Cluster, cf. Cluster2Sector(...)
                 volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus*(rootCluster-2);
@@ -815,7 +815,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
                 if (*((uint32_t*)(&partitionTable[i][0x0C]))) // number of sectors
                 {
                     textColor(0x0E);
-                    printf("\npartition table %d:",i);
+                    printf("\npartition entry %u:",i);
                     if (partitionTable[i][0x00] == 0x80)
                     {
                         printf("  bootable");
@@ -827,20 +827,20 @@ int32_t analyzeBootSector(void* addr) // for first tests only
                     textColor(0x0F);
                     printf("\ntype:               %y", partitionTable[i][0x04]);
                     textColor(0x07);
-                    printf("\nfirst sector (CHS): %d %d %d", partitionTable[i][0x01],partitionTable[i][0x02],partitionTable[i][0x03]);
-                    printf("\nlast  sector (CHS): %d %d %d", partitionTable[i][0x05],partitionTable[i][0x06],partitionTable[i][0x07]);
+                    printf("\nfirst sector (CHS): %u %u %u", partitionTable[i][0x01],partitionTable[i][0x02],partitionTable[i][0x03]);
+                    printf("\nlast  sector (CHS): %u %u %u", partitionTable[i][0x05],partitionTable[i][0x06],partitionTable[i][0x07]);
                     textColor(0x0F);
 
                     startSectorPartition = *((uint32_t*)(&partitionTable[i][0x08]));
-                    printf("\nstart sector:       %d", startSectorPartition);
+                    printf("\nstart sector:       %u", startSectorPartition);
 
-                    printf("\nnumber of sectors:  %d", *((uint32_t*)(&partitionTable[i][0x0C])));
+                    printf("\nnumber of sectors:  %u", *((uint32_t*)(&partitionTable[i][0x0C])));
                     printf("\n");
                 }
                 else
                 {
                     textColor(0x0E);
-                    printf("\nno partition table %d",i);
+                    printf("\nno partition table %u",i);
                     textColor(0x0F);
                 }
             }
@@ -869,21 +869,21 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
     usbTransferBulkOnlyMassStorageReset(device, Interface);
 
     // Clear Feature HALT to the Bulk-In  endpoint
-    printf("\nGetStatus: %d", usbGetStatus(device, endpointIN, 512));
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 512));
     usbClearFeatureHALT(device, endpointIN,  512);
-    printf("\nGetStatus: %d", usbGetStatus(device, endpointIN, 512));
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 512));
 
     // Clear Feature HALT to the Bulk-Out endpoint
-    printf("\nGetStatus: %d", usbGetStatus(device, endpointOUT, 512));
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT, 512));
     usbClearFeatureHALT(device, endpointOUT, 512);
-    printf("\nGetStatus: %d", usbGetStatus(device, endpointOUT, 512));
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT, 512));
 
     // set configuration to 1 and endpoint IN/OUT toggles to 0
     textColor(0x02);
     usbTransferSetConfiguration(device, 1); // set first configuration
     printf("\nset configuration (1)");
     uint8_t config = usbTransferGetConfiguration(device);
-    printf("\tconfiguration: %d",config);
+    printf("\tconfiguration: %u",config);
 
     // start with correct endpoint toggles and reset interface
     usbDevices[device].ToggleEndpointInMSD = usbDevices[device].ToggleEndpointOutMSD = 0;

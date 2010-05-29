@@ -60,7 +60,7 @@ static uint32_t cluster2sector(PARTITION* volume, uint32_t cluster)
         }
     }
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> cluster2sector<<<<<    cluster: %d  sector %d", cluster, sector);
+    printf("\n>>>>> cluster2sector<<<<<    cluster: %u  sector %u", cluster, sector);
   #endif
     return (sector);
 }
@@ -269,7 +269,7 @@ uint32_t checksum(char* ShortFileName)
 static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %d ForceRead: %d", *curEntry, ForceRead);
+    printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
   #endif
     uint8_t    numofclus;
     uint32_t   ccls       = fo->dirccls;
@@ -592,7 +592,7 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
         while(true)
         {
           #ifdef _FAT_DIAGNOSIS_
-            textColor(0x0E);printf("\n\nfHandle %d\n",fHandle);textColor(0x0F); 
+            textColor(0x0E);printf("\n\nfHandle %u\n",fHandle);textColor(0x0F); 
           #endif
             if (statusB != CE_GOOD)
             {
@@ -619,7 +619,7 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
                     {
                         uint8_t character = foDest->name[i];
                       #ifdef _FAT_DIAGNOSIS_   
-                        printf("\ni: %d character: %c test: %c", i, character, foCompareTo->name[i]); textColor(0x0F); /// TEST
+                        printf("\ni: %u character: %c test: %c", i, character, foCompareTo->name[i]); textColor(0x0F); /// TEST
                       #endif
                         if (toLower(character) != toLower(foCompareTo->name[i]))
                         {
@@ -1118,8 +1118,8 @@ void showDirectoryEntry(DIRENTRY dir)
 {
     printf("\nname.ext: %s.%s", dir->DIR_Name,dir->DIR_Extension                );
     printf("\nattrib.:  %y",    dir->DIR_Attr                                   );
-    printf("\ncluster:  %d",    dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
-    printf("\nfilesize: %d byte",    dir->DIR_FileSize                               );
+    printf("\ncluster:  %u",    dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
+    printf("\nfilesize: %u byte",    dir->DIR_FileSize                               );
 }
 
 void testFAT(char* filename)
@@ -1134,17 +1134,17 @@ void testFAT(char* filename)
     // data determined in analyzeBootSector(...)
     textColor(0x03);
     printf("\nbuffer:     %X", usbMSDVolume.buffer);
-    printf("\ntype:       %d", usbMSDVolume.type);
-    printf("\nSecPerClus: %d", usbMSDVolume.SecPerClus);
-    printf("\nmaxroot:    %d", usbMSDVolume.maxroot);
-    printf("\nfatsize:    %d", usbMSDVolume.fatsize);
-    printf("\nfatcopy:    %d", usbMSDVolume.fatcopy);
-    printf("\nfirsts:     %d", usbMSDVolume.firsts);
-    printf("\nfat:        %d", usbMSDVolume.fat);
-    printf("\nroot:       %d", usbMSDVolume.root);
-    printf("\ndata:       %d", usbMSDVolume.data);
-    printf("\nmaxcls:     %d", usbMSDVolume.maxcls);
-    printf("\nmount:      %d", usbMSDVolume.mount);
+    printf("\ntype:       %u", usbMSDVolume.type);
+    printf("\nSecPerClus: %u", usbMSDVolume.SecPerClus);
+    printf("\nmaxroot:    %u", usbMSDVolume.maxroot);
+    printf("\nfatsize:    %u", usbMSDVolume.fatsize);
+    printf("\nfatcopy:    %u", usbMSDVolume.fatcopy);
+    printf("\nfirsts:     %u", usbMSDVolume.firsts);
+    printf("\nfat:        %u", usbMSDVolume.fat);
+    printf("\nroot:       %u", usbMSDVolume.root);
+    printf("\ndata:       %u", usbMSDVolume.data);
+    printf("\nmaxcls:     %u", usbMSDVolume.maxcls);
+    printf("\nmount:      %u", usbMSDVolume.mount);
     printf("\nserial #:   %y %y %y %y", usbMSDVolume.serialNumber[0], usbMSDVolume.serialNumber[1], usbMSDVolume.serialNumber[2], usbMSDVolume.serialNumber[3]);
 
     textColor(0x0F);
@@ -1180,7 +1180,7 @@ void testFAT(char* filename)
 
         textColor(0x0A);
         printf("\nnumber of entry in root dir: ");
-        textColor(0x0E); printf("%d",fo->entry); // number of file entry "searched.xxx"
+        textColor(0x0E); printf("%u",fo->entry); // number of file entry "searched.xxx"
         textColor(0x0F);
 
         fopen(fo, &(fo->entry), 'r');
