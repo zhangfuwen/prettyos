@@ -19,8 +19,6 @@
 #include "console.h"
 #include "fat.h"
 
-extern PARTITION usbMSDVolume;
-
 uint8_t sectorWrite(uint32_t sector_addr, uint8_t* buffer) // to implement
 {
   #ifdef _FAT_DIAGNOSIS_
@@ -1116,93 +1114,10 @@ uint8_t fwrite(FILEOBJ fo, void* src, uint32_t count)
 
 void showDirectoryEntry(DIRENTRY dir)
 {
-    printf("\nname.ext: %s.%s", dir->DIR_Name,dir->DIR_Extension                );
-    printf("\nattrib.:  %y",    dir->DIR_Attr                                   );
-    printf("\ncluster:  %u",    dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
-    printf("\nfilesize: %u byte",    dir->DIR_FileSize                               );
+    printf("\nname.ext: %s.%s",     dir->DIR_Name,dir->DIR_Extension                );
+    printf("\nattrib.:  %y",        dir->DIR_Attr                                   );
+    printf("\ncluster:  %u",        dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
+    printf("\nfilesize: %u byte",   dir->DIR_FileSize                               );
 }
 
-void testFAT(char* filename)
-{
-    /////////////////////////////////////////////////////////////////
-    ///                                                            //
-    ///   for tests with usb-MSD use FORMAT /FS:FAT or /FS:FAT32   //
-    ///                                                            //
-    /////////////////////////////////////////////////////////////////
 
-    // activate volume usbMSDVolume
-    // data determined in analyzeBootSector(...)
-    textColor(0x03);
-    printf("\nbuffer:     %X", usbMSDVolume.buffer);
-    printf("\ntype:       %u", usbMSDVolume.type);
-    printf("\nSecPerClus: %u", usbMSDVolume.SecPerClus);
-    printf("\nmaxroot:    %u", usbMSDVolume.maxroot);
-    printf("\nfatsize:    %u", usbMSDVolume.fatsize);
-    printf("\nfatcopy:    %u", usbMSDVolume.fatcopy);
-    printf("\nfirsts:     %u", usbMSDVolume.firsts);
-    printf("\nfat:        %u", usbMSDVolume.fat);
-    printf("\nroot:       %u", usbMSDVolume.root);
-    printf("\ndata:       %u", usbMSDVolume.data);
-    printf("\nmaxcls:     %u", usbMSDVolume.maxcls);
-    printf("\nmount:      %u", usbMSDVolume.mount);
-    printf("\nserial #:   %y %y %y %y", usbMSDVolume.serialNumber[0], usbMSDVolume.serialNumber[1], usbMSDVolume.serialNumber[2], usbMSDVolume.serialNumber[3]);
-
-    textColor(0x0F);
-    waitForKeyStroke();
-
-    // file name
-    FILE toCompare;
-    FILEOBJ foCompareTo = &toCompare;
-    strncpy(foCompareTo->name,filename,11); // <--------------- this file will be searched
-
-    // file to search
-    FILE dest;
-    FILEOBJ fo  = &dest;
-    fo->volume  = &usbMSDVolume;
-    fo->dirclus = 0;
-
-    uint8_t retVal = fileFind(fo, foCompareTo, 1); // fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
-    if (retVal == CE_GOOD)
-    {
-        textColor(0x0A);
-        printf("\n\nThe file was found on the device:");
-        char strName[260];
-        char strExt[4];
-        strncpy(strName,fo->name,8);        
-        strName[8]='.'; // 0-7 short filename, 8: dot
-        strName[9]=0;   // terminate for strcat
-        strncpy(strExt,(fo->name)+8,3);
-        strExt[3]=0; // 0-2 short filename extension, 3: '\0' (end of string)
-        printf("\nfile name: ");
-        textColor(0x0E);
-        strcat(strName,strExt);
-        printf("%s", strName);
-
-        textColor(0x0A);
-        printf("\nnumber of entry in root dir: ");
-        textColor(0x0E); printf("%u",fo->entry); // number of file entry "searched.xxx"
-        textColor(0x0F);
-
-        fopen(fo, &(fo->entry), 'r');
-        waitForKeyStroke();
-
-        void* filebuffer = malloc(fo->size,PAGESIZE);
-        fread(fo, filebuffer, fo->size);
-        printf("\n");
-        
-        printf("\nstart of the file:");
-        memshow(filebuffer, 300 /*fo->size*/);
-        waitForKeyStroke();
-        
-        elf_exec(filebuffer, fo->size, fo->name); // try to execute
- 
-        fclose(fo);
-    }
-    else if (retVal == CE_FILE_NOT_FOUND)
-    {
-        textColor(0x0C);
-        printf("\n\nThe file could not be found on the device!", retVal);
-        textColor(0x0F);
-    }
-    waitForKeyStroke();
-}

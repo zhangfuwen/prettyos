@@ -35,6 +35,6 @@ int32_t showResultsRequestSense();
 
 int32_t analyzeBootSector(void* DataQTDpage0); // for first tests only
 
-void testFAT();
+void testFAT(char* filename);
 
 #endif

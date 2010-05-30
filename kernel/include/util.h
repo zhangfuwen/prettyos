@@ -72,8 +72,8 @@ void nop();
 
 int8_t ctoi(char c);
 float  atof(const char* s);
-void   itoa(int32_t n, char* s);
-char*  utoa(uint32_t n, char* digits); // TEST
+char*  itoa(int32_t n,  char* s);
+char*  utoa(uint32_t n, char* s); 
 void   ftoa(float f, char* buffer);
 void   i2hex(uint32_t val, char* dest, int32_t len);
 

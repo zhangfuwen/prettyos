@@ -410,7 +410,7 @@ int8_t ctoi(char c) {
 }
 
 /// http://en.wikipedia.org/wiki/Itoa
-void itoa(int32_t n, char* s)
+char* itoa(int32_t n, char* s)
 {
     int32_t i, sign;
     if ((sign = n) < 0)  // record sign
@@ -430,29 +430,20 @@ void itoa(int32_t n, char* s)
     }
     s[i] = '\0';
     reverse(s);
+    return(s);
 }
 
-// TEST based onto http://users.powernet.co.uk/eton/kandr2/krx506.html
-char* utoa(uint32_t n, char* digits)
+char* utoa(uint32_t n, char* s)
 {   
-    char* s = "0123456789abcdefghijklmnopqrstuvwxyz"; 
-    char* p;
-
-    if (digits == NULL)
+    uint32_t i = 0;
+    do // generate digits in reverse order
     {
-        return NULL;
+        s[i++] = n % 10 + '0'; // get next digit
     }
-    if (n < 10) 
-    {
-        digits[0] = s[n];
-        digits[1] = '\0';
-    } 
-    else 
-    {
-        for (p = utoa( n/10, digits ); *p; p++);
-        utoa( n%10, p );
-    }
-    return digits;
+    while ((n /= 10) > 0);     // delete it
+    s[i] = '\0';
+    reverse(s);
+    return(s);
 }
 
 void i2hex(uint32_t val, char* dest, int32_t len)

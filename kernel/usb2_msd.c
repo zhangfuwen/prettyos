@@ -181,7 +181,9 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     if (SCSIcommand == 0x28)   // read(10)
         TransferLength *= 512; // byte = 512 * block
 
-    createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_In), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
+    createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
+
+    performAsyncScheduler(true, true, 0); // velocity: 200 Milliseconds
 
   /**************************************************************************************************************************************/
 
@@ -233,9 +235,9 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
       #endif
     }
 
-    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_Out), QTD_In, 0, device, endpointIn, 512); // endpoint IN for MSD
+    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
 
-    performAsyncScheduler(true, true, TransferLength/200); // velocity is:  200 + (int)(TransferLength/200)*200 Milliseconds
+    performAsyncScheduler(true, true, TransferLength/200); // velocity: 200 + (int)(TransferLength/200)*200 Milliseconds
 
     if (TransferLength) // byte
     {
@@ -382,35 +384,38 @@ static uint8_t getStatusByte()
 
 static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferTestUnitReady, usbBulkTransfer_t* bulkTransferRequestSense)
 {
-    int32_t timeout = 2;
+    const uint8_t maxTest = 3;
+    int32_t timeout = maxTest;
     int32_t sense = -1;
     bool repeat = true;
     uint8_t statusByte;
 
     while (repeat)
     {
+        timeout--;
         textColor(0x09); printf("\n\n>>> SCSI: test unit ready"); textColor(0x0F);
 
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady); // dev, endp, cmd, LBA, transfer length
 
         uint8_t statusByteTestReady = getStatusByte();
         showUSBSTS();
-        waitForKeyStroke();
-
-        ///////// send SCSI command "request sense"
-
-        textColor(0x09); printf("\n\n>>> SCSI: request sense"); textColor(0x0F);
-
-        usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense); // dev, endp, cmd, LBA, transfer length
-
-        statusByte = getStatusByte();
-        showUSBSTS();
-        timeout--;
-
-        sense = showResultsRequestSense();
-        if ( ((statusByteTestReady == 0) && ((sense == 0) || (sense == 6))) || (timeout <= 0) )
+        
+        if (timeout != (maxTest-1))
         {
-            repeat = false;
+            ///////// send SCSI command "request sense"
+
+            textColor(0x09); printf("\n\n>>> SCSI: request sense"); textColor(0x0F);
+
+            usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense); // dev, endp, cmd, LBA, transfer length
+
+            statusByte = getStatusByte();
+            showUSBSTS();
+        
+            sense = showResultsRequestSense();
+            if ( ((statusByteTestReady == 0) && ((sense == 0) || (sense == 6))) || (timeout <= 0) )
+            {
+                repeat = false;
+            }
         }
         waitForKeyStroke();
     }
@@ -562,8 +567,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
         showUSBSTS();
         logBulkTransfer(&inquiry);
         waitForKeyStroke();
-
-
+        
         ///////// send SCSI command "test unit ready(6)"
 
         usbBulkTransfer_t testUnitReady, requestSense;
@@ -572,7 +576,6 @@ void testMSD(uint8_t devAddr, uint8_t config)
         testDeviceReady(devAddr, &testUnitReady, &requestSense);
         logBulkTransfer(&testUnitReady);
         logBulkTransfer(&requestSense);
-
 
         ///////// send SCSI command "read capacity(10)"
 
@@ -603,7 +606,6 @@ void testMSD(uint8_t devAddr, uint8_t config)
         showUSBSTS();
         logBulkTransfer(&readCapacity);
         waitForKeyStroke();
-
 
         ///////// send SCSI command "read(10)", read one block (512 byte) from LBA ..., get Status
 
@@ -665,8 +667,7 @@ uint8_t usbRead(uint32_t sector, uint8_t* buffer)
     memcpy((void*)buffer,(void*)DataQTDpage0,512);
     showUSBSTS();
     logBulkTransfer(&read);
-    waitForKeyStroke();
-
+    
     return 0; // SUCCESS // TEST
 }
 
@@ -881,9 +882,13 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
     // set configuration to 1 and endpoint IN/OUT toggles to 0
     textColor(0x02);
     usbTransferSetConfiguration(device, 1); // set first configuration
-    printf("\nset configuration (1)");
     uint8_t config = usbTransferGetConfiguration(device);
-    printf("\tconfiguration: %u",config);
+    if (config != 1)
+    {
+        textColor(0x0C);
+        printf("\tconfiguration: %u (to be: 1)",config);
+        textColor(0x0F);
+    }
 
     // start with correct endpoint toggles and reset interface
     usbDevices[device].ToggleEndpointInMSD = usbDevices[device].ToggleEndpointOutMSD = 0;
@@ -998,6 +1003,84 @@ int32_t showResultsRequestSense()
     }
 }
 
+void testFAT(char* filename)
+{
+    /////////////////////////////////////////////////////////////////
+    ///                                                            //
+    ///   for tests with usb-MSD use FORMAT /FS:FAT or /FS:FAT32   //
+    ///                                                            //
+    /////////////////////////////////////////////////////////////////
+
+    // activate volume usbMSDVolume
+    // data determined in analyzeBootSector(...)
+    textColor(0x03);
+    printf("\nbuffer:     %X", usbMSDVolume.buffer);
+    printf("\ntype:       %u", usbMSDVolume.type);
+    printf("\nSecPerClus: %u", usbMSDVolume.SecPerClus);
+    printf("\nmaxroot:    %u", usbMSDVolume.maxroot);
+    printf("\nfatsize:    %u", usbMSDVolume.fatsize);
+    printf("\nfatcopy:    %u", usbMSDVolume.fatcopy);
+    printf("\nfirsts:     %u", usbMSDVolume.firsts);
+    printf("\nfat:        %u", usbMSDVolume.fat);
+    printf("\nroot:       %u", usbMSDVolume.root);
+    printf("\ndata:       %u", usbMSDVolume.data);
+    printf("\nmaxcls:     %u", usbMSDVolume.maxcls);
+    printf("\nmount:      %u", usbMSDVolume.mount);
+    printf("\nserial #:   %y %y %y %y", usbMSDVolume.serialNumber[0], usbMSDVolume.serialNumber[1], usbMSDVolume.serialNumber[2], usbMSDVolume.serialNumber[3]);
+
+    textColor(0x0F);
+    waitForKeyStroke();
+
+    // file name
+    FILE toCompare;
+    FILEOBJ foCompareTo = &toCompare;
+    strncpy(foCompareTo->name,filename,11); // <--------------- this file will be searched
+
+    // file to search
+    FILE dest;
+    FILEOBJ fo  = &dest;
+    fo->volume  = &usbMSDVolume;
+    fo->dirclus = 0;
+
+    uint8_t retVal = fileFind(fo, foCompareTo, 1); // fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
+    if (retVal == CE_GOOD)
+    {
+        textColor(0x0A);
+        printf("\n\nThe file was found on the device:");
+        char strName[260];
+        char strExt[4];
+        strncpy(strName,fo->name,8);        
+        strName[8]='.'; // 0-7 short filename, 8: dot
+        strName[9]=0;   // terminate for strcat
+        strncpy(strExt,(fo->name)+8,3);
+        strExt[3]=0; // 0-2 short filename extension, 3: '\0' (end of string)
+        printf("\nfile name: ");
+        textColor(0x0E);
+        strcat(strName,strExt);
+        printf("%s", strName);
+
+        textColor(0x0A);
+        printf("\nnumber of entry in root dir: ");
+        textColor(0x0E); printf("%u\n",fo->entry); // number of file entry "searched.xxx"
+        textColor(0x0F);
+
+        fopen(fo, &(fo->entry), 'r');
+        
+        void* filebuffer = malloc(fo->size,PAGESIZE);
+        fread(fo, filebuffer, fo->size);
+                
+        elf_exec(filebuffer, fo->size, fo->name); // try to execute
+ 
+        fclose(fo);
+    }
+    else if (retVal == CE_FILE_NOT_FOUND)
+    {
+        textColor(0x0C);
+        printf("\n\nThe file could not be found on the device!", retVal);
+        textColor(0x0F);
+    }
+    waitForKeyStroke();
+}
 
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.
