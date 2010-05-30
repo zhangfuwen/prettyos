@@ -258,6 +258,31 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     return configuration;
 }
 
+// new control transfer as TEST /////////////////////////////////////////////////
+// seems not to work correct, does not set HALT ???
+void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
+{
+  #ifdef _USB_DIAGNOSIS_
+    textColor(0x0B); printf("\nUSB2: usbSetFeatureHALT, endpoint: %u", endpoint); textColor(0x0F);
+  #endif
+
+    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
+
+    // Create QTDs (in reversed order)
+    void* next = createQTD_Handshake(IN);
+    next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x02, 3, 0, 0, endpoint, 0);
+    // bmRequestType bRequest  wValue   wIndex  wLength   Data
+    //     00000010b        3   0000h endpoint    0000h   none
+
+    // Create QH
+    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint 
+
+    performAsyncScheduler(true, false, 3);
+    printf("\nset HALT at dev: %u endpoint: %u", device, endpoint);
+}
+
 void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
   #ifdef _USB_DIAGNOSIS_
@@ -272,7 +297,7 @@ void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize
     void* next = createQTD_Handshake(IN);
     next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x02, 1, 0, 0, endpoint, 0);
     // bmRequestType bRequest  wValue   wIndex  wLength   Data
-    //     00000010b       1b   0000h endpoint    0000h   none
+    //     00000010b        1   0000h endpoint    0000h   none
 
     // Create QH
     createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint 

@@ -237,6 +237,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
 
+label1: /// TEST 
     performAsyncScheduler(true, true, TransferLength/200); // velocity: 200 + (int)(TransferLength/200)*200 Milliseconds
 
     if (TransferLength) // byte
@@ -266,6 +267,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     {
         textColor(0x0C);
         printf("\nCSW signature wrong (not processed)");
+        goto label1; /// TEST ///////////////////////////////////////////////////////////////////
     }
     else
     {
@@ -327,14 +329,14 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         case 0x02:
             textColor(0x0C);
             printf("\nPhase Error");
-            textColor(0x0F);
+            textColor(0x0E);
+            printf("\nReset recovery is needed"); 
             usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
             break;
         default:
             textColor(0x0C);
             printf("\nCSW status byte: undefined value (error)");
             textColor(0x0F);
-            usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
             break;
     }
 
@@ -373,6 +375,12 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     if ((statusCommand & 0x40) || (statusData & 0x40) || (statusStatus & 0x40))
     {
+        textColor(0x0C);
+        if (statusCommand & 0x40) { printf("\nCommand phase: HALT"); }
+        if (statusData    & 0x40) { printf("\nData    phase: HALT"); }
+        if (statusStatus  & 0x40) { printf("\nStatus  phase: HALT"); }
+        textColor(0x0E); 
+        printf("\nReset recovery is needed"); 
         usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
     }
 }
@@ -634,6 +642,7 @@ label1:
         //testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
         //testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
         //testFAT("abc12345   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        testFAT("pqeq    elf"); 
         testFAT("ttt     elf"); 
 
     }// else
@@ -869,6 +878,10 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
     // Reset Interface
     usbTransferBulkOnlyMassStorageReset(device, Interface);
 
+    // TEST ////////////////////////////////////
+    //usbSetFeatureHALT(device, endpointIN,  512); 
+    //usbSetFeatureHALT(device, endpointOUT, 512); 
+    
     // Clear Feature HALT to the Bulk-In  endpoint
     printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 512));
     usbClearFeatureHALT(device, endpointIN,  512);
