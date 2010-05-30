@@ -20,9 +20,10 @@
 #define SUCCESS 0
 #define FAIL    1
 
-#define RAMread(a,f)    *(a+f)              // reads a byte at an address (a) plus an offset (f) in RAM
-#define RAMreadW(a,f)   *(uint16_t*)(a+f)
-#define RAMwrite(a,f,d) *(a+f)=d
+#define RAMread(a,f)     *(a+f)              // reads a byte at an address (a) plus an offset (f) in RAM
+#define RAMreadW(a,f)    *(uint16_t*)(a+f)
+#define RAMreadLong(a,f) *(uint32_t*)(a+f)
+#define RAMwrite(a,f,d)  *(a+f)=d
 
 // Media
 
@@ -76,6 +77,7 @@ typedef struct
     uint8_t  SecPerClus;      // sectors per cluster
     uint8_t  type;            // FAT type (FAT16, FAT32)
     bool     mount;           // 0: not mounted  1: mounted
+    uint32_t ClustersPerRootDir;   // sectors needed for maximum root dir entries, important for FAT32
     char     serialNumber[4]; // serial number for identification
 } PARTITION;
 

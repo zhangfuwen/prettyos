@@ -54,7 +54,8 @@ static uint32_t cluster2sector(PARTITION* volume, uint32_t cluster)
         }
         else if (volume->type == FAT32)
         {
-            sector = volume->data + (cluster-3) * volume->SecPerClus; // HOTFIX for FAT32
+            
+            sector = volume->data + (cluster - ( 2 + volume->ClustersPerRootDir ) ) * volume->SecPerClus; 
         }
     }
   #ifdef _FAT_DIAGNOSIS_
@@ -68,18 +69,44 @@ static uint32_t fatRead(PARTITION* volume, uint32_t ccls)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatRead <<<<<!");
   #endif
-    uint32_t l = volume->fat + (ccls>>8);
+    uint32_t l=0;
+    if (volume->type == FAT16)
+    {
+        l = volume->fat + (ccls>>8); // sector contains 256 words
+    }
+    else if (volume->type == FAT32)
+    {
+        l = volume->fat + (ccls>>7); // sector contains 128 dwords
+    }
+
 
     if ( sectorRead(l, volume->buffer) != SUCCESS )
     {
         return(CLUSTER_FAIL);
     }
 
-    uint32_t c = RAMreadW(volume->buffer, ((ccls&0xFF)<<1));
+    uint32_t c=0;
 
-    if (c >= LAST_CLUSTER_FAT16)
+    if (volume->type == FAT16)
+    {
+        // To find the number of the next cluster,
+        // read 2 bytes in the buffer of retrieved data
+        // beginning at offset = low byte of current cluster's address << 1
+        // Shift left 1 (multiply by 2) because each entry is 2 bytes
+        c = RAMreadW(volume->buffer, ((ccls&0xFF)<<1));
+    }
+    else if (volume->type == FAT32)
+    {
+        c = RAMreadLong(volume->buffer, ((ccls&0x7F)<<2));
+    }
+
+    if ((volume->type == FAT16) && (c >= LAST_CLUSTER_FAT16))
     {
         return(LAST_CLUSTER);
+    }
+    else if (volume->type == FAT32)
+    {
+        /* what to do? */
     }
 
     return(c);
@@ -91,9 +118,19 @@ static uint32_t fatReadQueued(PARTITION* volume, uint32_t ccls)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatReadQueued <<<<<!");
   #endif
-    if ((ccls & 0xFF) == 0x00)
+
+    uint32_t l=0;
+
+    if ((ccls & 0xFF) == 0x00) // FAT16: if LSB of cluster number == 0 then a new sector starts
     {
-        uint32_t l = volume->fat + (ccls>>8);
+        if (volume->type == FAT16)
+        {
+            l = volume->fat + (ccls>>8); // sector contains 256 words
+        }
+        else if (volume->type == FAT32)
+        {
+            l = volume->fat + (ccls>>7); // sector contains 128 dwords
+        }
 
         if ( sectorRead(l,volume->buffer) != SUCCESS )
         {
@@ -101,14 +138,27 @@ static uint32_t fatReadQueued(PARTITION* volume, uint32_t ccls)
         }
     }
 
-    uint32_t c = RAMreadW(volume->buffer, ((ccls&0xFF)<<1));
+    uint32_t c=0;
 
-    if (c >= LAST_CLUSTER_FAT16)
+    if (volume->type == FAT16)
+    {
+        c = RAMreadW(volume->buffer, ((ccls&0xFF)<<1));
+    }
+    else if (volume->type == FAT32)
+    {
+        c = RAMreadLong(volume->buffer, ((ccls&0x7F)<<2));
+    }
+
+    if ((volume->type == FAT16) && (c >= LAST_CLUSTER_FAT16))
     {
         return(LAST_CLUSTER);
     }
+    else if (volume->type == FAT32)
+    {
+        /* what to do? */
+    }
 
-    return c;
+    return(c);
 }
 
 
@@ -269,13 +319,13 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
   #endif
-    uint8_t    numofclus;
+    uint32_t    numofclus;
     uint32_t   ccls       = fo->dirccls;
 	uint32_t   cluster    = fo->dirclus;
     PARTITION* volume     = fo->volume;
 
     // Get the number of the entry's sector within the root dir.
-    uint8_t offset2 = (*curEntry)/DIRENTRIES_PER_SECTOR;
+    uint32_t offset2 = (*curEntry)/DIRENTRIES_PER_SECTOR;
     if (cluster != 0)
     {
         offset2 = offset2 % (volume->SecPerClus);
@@ -392,7 +442,7 @@ static uint8_t writeFileEntry(FILEOBJ fo, uint32_t* curEntry)
   #endif
     PARTITION* volume  = fo->volume;
     uint32_t   ccls    = fo->dirccls;
-    uint8_t    offset2 = (*curEntry>>4);
+    uint32_t    offset2 = (*curEntry>>4);
 
     if (ccls != 0)
     {
@@ -424,7 +474,7 @@ static uint8_t eraseCluster(PARTITION* volume, uint32_t cluster)
   #endif
     uint32_t SectorAddress = cluster2sector(volume, cluster);
     memset(volume->buffer, 0x00, SDC_SECTOR_SIZE);
-    for (uint8_t i=0; i<volume->SecPerClus; i++)
+    for (uint32_t i=0; i<volume->SecPerClus; i++)
     {
         if (sectorWrite(SectorAddress++,volume->buffer) != SUCCESS)
         {
@@ -695,7 +745,7 @@ static uint8_t findEmptyEntry(FILEOBJ fo, uint32_t* fHandle)
     {
         while (status == NOT_FOUND)
         {
-            uint8_t amountfound=0;
+            uint32_t amountfound=0;
             bHandle = *fHandle;
             do
             {

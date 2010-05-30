@@ -732,6 +732,8 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         volume_data         = volume_root + sec0->MaxRootEntries/DIRENTRIES_PER_SECTOR;
         volume_maxcls       = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
 
+        uint32_t volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus);; // FAT12 and FAT16
+
         startSectorPartition = 0; // important!
 
         if (FATn[0] != 'F') // FAT32
@@ -752,11 +754,12 @@ int32_t analyzeBootSector(void* addr) // for first tests only
                 printf("\nThe root dir starts at cluster %u (expected: 2).", rootCluster);
 
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
+                volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus); 
 
                 printf("\nSectors per FAT: %u.", ((uint32_t*)addr)[9]);  // byte 36-39
                 volume_fatsize = ((uint32_t*)addr)[9];
-                volume_data    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus; // HOTFIX: plus ein Cluster, cf. Cluster2Sector(...)
-                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus*(rootCluster-2);
+                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus * (rootCluster-2);
+                volume_data    = volume_root + volume_SecPerClus * volume_ClustersPerRootDir;                 
             }
         }
         else // FAT12/16
@@ -764,7 +767,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
             if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '6') )
             {
                 printf("\nThis is a volume formated with FAT16 ");
-                volume_type = FAT16;
+                volume_type = FAT16;                
 
                 for (uint8_t i=0; i<4; i++)
                 {
@@ -797,6 +800,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         usbMSDVolume.data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR
         usbMSDVolume.maxcls         = volume_maxcls;
         usbMSDVolume.mount          = true;
+        usbMSDVolume.ClustersPerRootDir  = volume_ClustersPerRootDir;    
         strncpy(usbMSDVolume.serialNumber,volume_serialNumber,4); // ID of the partition
     }
     else if ( ( ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
