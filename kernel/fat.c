@@ -190,7 +190,7 @@ static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v)
         }
     }
 
-    if (c>= LAST_CLUSTER_FAT16)
+    if ((volume->type == FAT16) && (c>= LAST_CLUSTER_FAT16))
     {
         c = LAST_CLUSTER; /// Should return directly
     }
@@ -220,11 +220,13 @@ static uint8_t fileSearchNextCluster(FILEOBJ fo, uint32_t n)
             {
                 return  CE_INVALID_CLUSTER;
             }
-            c2 = LAST_CLUSTER;
-
-            if (c>=c2)
+            if (volume->type == FAT16)
             {
-                return  CE_FAT_EOF;
+                c2 = LAST_CLUSTER;
+                if (c>=c2)
+                {
+                    return  CE_FAT_EOF;
+                }
             }
         }
         fo->ccls = c;
@@ -258,7 +260,7 @@ static uint32_t fatFindEmptyCluster(FILEOBJ fo)
     {
         c++;
 
-        if ((value == END_CLUSTER) || (c >= volume->maxcls))
+        if ( ((volume->type == FAT16) && (value == END_CLUSTER)) || (c >= volume->maxcls))
         {
             c=2;
         }
@@ -319,31 +321,44 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
   #endif
-    uint32_t    numofclus;
-    uint32_t   ccls       = fo->dirccls;
-	uint32_t   cluster    = fo->dirclus;
+
+
+
+    uint32_t   numofclus  = 0;
+    uint32_t   ccls       = fo->dirccls; // directory's cluster to begin looking in // unused if ForceRead is true
+	uint32_t   cluster    = fo->dirclus; // first cluster of the file's directory 
     PARTITION* volume     = fo->volume;
+
+ 
 
     // Get the number of the entry's sector within the root dir.
     uint32_t offset2 = (*curEntry)/DIRENTRIES_PER_SECTOR;
-    if (cluster != 0)
+    
+    if ( ((volume->type == FAT16) && (cluster != 0)) || ((volume->type == FAT32) && (cluster != 2 /* where to get from exactly */)) ) // it is not the root directory (FAT16)
     {
-        offset2 = offset2 % (volume->SecPerClus);
+        if ((volume->type == FAT16)) { offset2 = offset2 % volume->SecPerClus; }
+        if ((volume->type == FAT32)) { offset2 = offset2 % (volume->SecPerClus * volume->ClustersPerRootDir); }
+
     }
 
     if (ForceRead || (((*curEntry) & 0xF) == 0))
     {
         if ( ((offset2 == 0) && ((*curEntry)>DIRENTRIES_PER_SECTOR)) || ForceRead )
         {
-            if (cluster == 0) // root dir
+            if ((cluster == 0) && (volume->type == FAT16) ) // root dir FAT16
             {
                 ccls = 0;
             }
-            else // not the root dir
+            else if ((cluster == 2) && (volume->type == FAT32) ) // root dir FAT16
+            {
+                ccls = 2;
+            }
+            else // not the root dir // ??? only first sector
             {
                 if (ForceRead)
                 {
-                    numofclus = (*curEntry)/(DIRENTRIES_PER_SECTOR * volume->SecPerClus); // changed!!!
+                    if (volume->type == FAT16) { numofclus = (*curEntry)/(DIRENTRIES_PER_SECTOR * volume->SecPerClus); }
+                    if (volume->type == FAT32) { numofclus = (*curEntry)/(DIRENTRIES_PER_SECTOR * volume->SecPerClus); } // ??
                 }
                 else
                 {
@@ -353,7 +368,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
                 while (numofclus)
                 {
                     ccls = fatRead(volume,ccls);
-                    if (ccls >= LAST_CLUSTER)
+                    if ((volume->type == FAT16) && (ccls >= LAST_CLUSTER))
                     {
                         break;
                     }
@@ -365,7 +380,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
             }
         } // END: read a cluster number from the FAT
 
-        if (ccls < LAST_CLUSTER)
+        if ( ((volume->type == FAT16) && (ccls < LAST_CLUSTER)) || (volume->type == FAT32) )
         {
             fo->dirccls = ccls;
             uint32_t sector = cluster2sector(volume,ccls);
@@ -427,7 +442,7 @@ static DIRENTRY loadDirectoryAttribute(FILEOBJ fo, uint32_t* fHandle)
             while(a==ATTR_LONG_NAME)
             {
                 (*fHandle)++;
-                dir = cacheFileEntry(fo,fHandle,false);
+                dir = cacheFileEntry(fo,fHandle,false); 
                 a = dir->DIR_Attr;
             }
         }
@@ -500,7 +515,7 @@ static uint8_t fileCreateHeadCluster(FILEOBJ fo, uint32_t* cluster)
     }
     else
     {
-        if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT16)==FAIL)
+        if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT16)==FAIL) // FAT16 // TODO: FAT32
         {
             return CE_WRITE_ERROR;
         }
@@ -522,7 +537,7 @@ static uint8_t createFirstCluster(FILEOBJ fo)
     {
 		uint32_t fHandle = fo->entry;
         DIRENTRY dir = loadDirectoryAttribute(fo, &fHandle);
-        dir->DIR_FstClusLO = cluster;
+        dir->DIR_FstClusLO = cluster; // FAT16 // TODO: FAT32
 
         if (writeFileEntry(fo,&fHandle) != true)
         {
@@ -547,7 +562,7 @@ static uint8_t fileAllocateNewCluster(FILEOBJ fo)
         return CE_DISK_FULL;
     }
 
-    fatWrite(volume,c,LAST_CLUSTER_FAT16);
+    fatWrite(volume,c,LAST_CLUSTER_FAT16); // FAT16 // TODO: FAT32
     uint32_t curcls = fo->ccls;
     fatWrite(volume,curcls,c);
     fo->ccls = c;
@@ -579,7 +594,7 @@ static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
         else
         {
 			uint8_t  character, test=0;
-			uint32_t temp;
+			
             for (uint8_t i=0; i<DIR_NAMESIZE; i++)
             {
                 character = dir->DIR_Name[i];
@@ -599,10 +614,8 @@ static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
             fo->entry = *fHandle;
             fo->size  = (dir->DIR_FileSize);
 
-            temp =  ((dir->DIR_FstClusHI)<<16);
-            temp |= dir->DIR_FstClusLO;
-            fo->cluster = temp;
-
+            fo->cluster = ((dir->DIR_FstClusHI)<<16) | dir->DIR_FstClusLO;
+            
             fo->time = (dir->DIR_WrtTime);
             fo->date = (dir->DIR_WrtDate);
 
@@ -625,11 +638,19 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
     }    
 
 	uint8_t statusB = CE_FILE_NOT_FOUND;
-    uint32_t fHandle=0;
-
     foDest->dirccls = foDest->dirclus;
+    if (foDest->volume->type == FAT32)
+    {
+        foDest->dirccls = 2; // TEST ???
+    }
 
-    if (cacheFileEntry(foDest, &fHandle, true) == NULL)
+    uint32_t fHandle=0;
+    bool read = true;
+
+label1: // TEST
+    printf("\nfHandle: %d",fHandle);    
+
+    if (cacheFileEntry(foDest, &fHandle, read) == NULL)
     {
         return CE_BADCACHEREAD;
     }
@@ -642,6 +663,7 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
           #ifdef _FAT_DIAGNOSIS_
             textColor(0x0E);printf("\n\nfHandle %u\n",fHandle);textColor(0x0F); 
           #endif
+
             if (statusB != CE_GOOD)
             {
                 state = fillFileObject(foDest, &fHandle);
@@ -684,12 +706,29 @@ uint8_t fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
             {
                 if (cmd == 2)
                 {
-                        statusB = CE_GOOD;
+                    statusB = CE_GOOD;
                 }
             }
             fHandle++;
+
+            /// TEST FAT32
+            if (foDest->volume->type == FAT32)
+            {
+                uint32_t oldCluster = foDest->dirccls;
+                foDest->dirccls += (fHandle-1)/(DIRENTRIES_PER_SECTOR * foDest->volume->SecPerClus); 
+                printf("\tfoDest->dirccls: %d",foDest->dirccls);
+                read = false;
+                if (foDest->dirccls > oldCluster)
+                {
+                    /* what to do ? */
+                }
+                goto label1;
+            }
+            /// TEST FAT32
+
         } // END: loop until found or end of directory
 
+        printf("\n>>> end of fileFind <<<");
         waitForKeyStroke(); //TEST
 
     } // END: cacheFileEntry is successful
@@ -820,10 +859,13 @@ static uint8_t fatEraseClusterChain(uint32_t cluster, PARTITION* volume)
                 }
                 else
                 {
-                    c2 = LAST_CLUSTER;
-                    if (c>=c2)
+                    if (volume->type == FAT16)
                     {
-                        status = Exit;
+                        c2 = LAST_CLUSTER;
+                        if (c>=c2)
+                        {
+                            status = Exit;
+                        }
                     }
                     if (fatWrite(volume,cluster, CLUSTER_EMPTY)==FAIL)
                     {
