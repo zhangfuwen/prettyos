@@ -16,7 +16,7 @@ void nop() { __asm__ volatile ("nop"); }  // Do nothing
 // fetch data field bitwise in byte "byte" from bit "shift" with "len" bits  
 uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len)
 {
-    return ( ((uint8_t*)addr)[byte] >> shift ) & ( (1<<len) - 1 );
+    return( ((uint8_t*)addr)[byte] >> shift) & ((1 << len) - 1);
 }
 
 /**********************************************************************/
@@ -244,7 +244,6 @@ void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
                 {
                     case 'u':
                         utoa(va_arg(ap, uint32_t), m_buffer);
-                        //itoa(va_arg(ap, uint32_t), m_buffer);
                         strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
@@ -412,19 +411,19 @@ int8_t ctoi(char c) {
 /// http://en.wikipedia.org/wiki/Itoa
 char* itoa(int32_t n, char* s)
 {
-    int32_t i, sign;
-    if ((sign = n) < 0)  // record sign
+    bool sign = n < 0;
+    if (sign)   // record sign
     {
-        n = -n;         // make n positive
+        n = -n; // make n positive
     }
-    i=0;
+    uint32_t i = 0;
     do // generate digits in reverse order
     {
-        s[i++] = n % 10 + '0';  // get next digit
+        s[i++] = n % 10 + '0'; // get next digit
     }
     while ((n /= 10) > 0);     // delete it
 
-    if (sign < 0)
+    if (sign)
     {
         s[i++] = '-';
     }

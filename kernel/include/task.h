@@ -10,7 +10,7 @@
 
 struct task
 {
-    bool threadFlag;                  // 0: process 1: thread
+    bool thread;                      // Indicates whether its a thread or a task
     console_t* console;               // Console used by this task
     bool ownConsole;
     uint32_t pid;                     // Process ID
@@ -22,7 +22,6 @@ struct task
     uint8_t* heap_top;                // user heap top
     void* kernel_stack;               // Kernel stack location
     uintptr_t FPU_ptr;                // pointer to FPU data
-    struct task* next;                // The next task in a linked list
 } __attribute__((packed));
 
 typedef struct task task_t;

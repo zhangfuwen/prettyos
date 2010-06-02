@@ -59,7 +59,7 @@ char toUpper(char c);
 char* toupper(char* s);
 char* tolower(char* s);
 
-void    waitForKeyStroke();
+void waitForKeyStroke();
 
 void reboot();
 
@@ -70,10 +70,11 @@ static inline void cli() { __asm__ volatile ("cli"); }  // Disable interrupts
 
 void nop();
 
+void   reverse(char* s);
 int8_t ctoi(char c);
 float  atof(const char* s);
 char*  itoa(int32_t n,  char* s);
-char*  utoa(uint32_t n, char* s); 
+char*  utoa(uint32_t n, char* s);
 void   ftoa(float f, char* buffer);
 void   i2hex(uint32_t val, char* dest, int32_t len);
 

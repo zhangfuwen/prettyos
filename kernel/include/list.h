@@ -25,9 +25,14 @@ void        list_Show(listHead_t* hd);                        // prints the list
 void        list_Delete(listHead_t* list, void* data);        // Deletes all elements with data from the list
 element_t*  list_GetElement(listHead_t* hd, uint32_t number); // Returns the data at the position "number"
 
-element_t* ring_Create();                                 // allocates memory for a ring, returns a pointer to it
-void       ring_Insert(element_t* ring, void* data);      // Inserts an element in the ring at the current position
-bool       ring_isEmpty(element_t* ring);                 // returns true, if the ring is empty (data == 0)
-bool       ring_DeleteFirst(element_t* ring, void* data); // Deletes the first element equal to data, returns true if an element has been deleted
+typedef struct {
+	element_t* begin;
+	element_t* current;
+} ring_t;
+
+ring_t* ring_Create();                              // allocates memory for a ring, returns a pointer to it
+void    ring_Insert(ring_t* ring, void* data);      // Inserts an element in the ring at the current position
+bool    ring_isEmpty(ring_t* ring);                 // returns true, if the ring is empty (data == 0)
+bool    ring_DeleteFirst(ring_t* ring, void* data); // Deletes the first element equal to data, returns true if an element has been deleted
 
 #endif

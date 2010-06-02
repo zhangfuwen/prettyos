@@ -6,68 +6,45 @@
 #include "task.h"
 #include "scheduler.h"
 #include "kheap.h"
+#include "list.h"
 
 // The start of the task linked list.
-volatile task_t* ready_queue; /// TODO: clarify, whether volatile is necessary
+ring_t* task_queue;
 
-task_t* scheduler_install()
+void scheduler_install()
 {
-    ready_queue = (task_t*)malloc(sizeof(task_t),0); // first task (kernel task)
-    return (task_t*)ready_queue;
+	task_queue = ring_Create();
 }
 
 task_t* scheduler_getNextTask()
 {
-    return (task_t*)ready_queue;
+	task_queue->current = task_queue->current->next;
+    return((task_t*)task_queue->current->data);
 }
 
-void setNextTask(task_t* task1, task_t* task2)
+void scheduler_insertTask(task_t* task)
 {
-    task1->next = task2;
+	ring_Insert(task_queue, task);
 }
 
-task_t* getLastTask()
+void scheduler_deleteTask(task_t* task)
 {
-    task_t* tmp_task = scheduler_getNextTask();
-    while (tmp_task->next)
-    {
-        tmp_task = tmp_task->next;
-    }
-    return tmp_task;
-}
-
-// take task out of linked list
-void scheduler_deleteTask(task_t* task1)
-{
-    task_t* tmp_task = scheduler_getNextTask();
-    do
-    {
-        if (tmp_task->next == task1)
-        {
-            tmp_task->next = task1->next;
-        }
-        if (tmp_task->next)
-        {
-            tmp_task = tmp_task->next;
-        }
-    }
-    while (tmp_task->next);
+    while(ring_DeleteFirst(task_queue, task));
 }
 
 void scheduler_log()
 {
-    task_t* tmp_task = scheduler_getNextTask();
+    element_t* temp = task_queue->current;
     do
     {
-        task_log(tmp_task);
-        tmp_task = tmp_task->next;
+        task_log((task_t*)temp->data);
+        temp = temp->next;
     }
-    while (tmp_task->next);
-    task_log(tmp_task);
+    while (temp != task_queue->current);
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

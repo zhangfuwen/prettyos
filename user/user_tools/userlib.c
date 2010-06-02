@@ -141,7 +141,7 @@ void vprintf(const char* args, va_list ap)
             switch (*(++args))
             {
             case 'u':
-                itoa(va_arg(ap, uint32_t), buffer);
+                utoa(va_arg(ap, uint32_t), buffer);
                 puts(buffer);
                 break;
             case 'f':
@@ -201,7 +201,7 @@ void sprintf (char *buffer, const char *args, ...)
                 switch (*(++args))
                 {
                     case 'u':
-                        itoa(va_arg(ap, uint32_t), m_buffer);
+                        utoa(va_arg(ap, uint32_t), m_buffer);
                         strcat(buffer, m_buffer);
                         pos += strlen(m_buffer) - 1;
                         break;
@@ -268,7 +268,7 @@ void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
                 switch (*(++args))
                 {
                     case 'u':
-                        itoa(va_arg(ap, uint32_t), m_buffer);
+                        utoa(va_arg(ap, uint32_t), m_buffer);
                         strncat(buffer, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
@@ -474,15 +474,14 @@ void reverse(char* s)
 }
 
 /// http://en.wikipedia.org/wiki/Itoa
-void itoa(int n, char* s)
+char* itoa(int32_t n, char* s)
 {
-    bool sign = false;
-    if (n < 0) // record sign
+    bool sign = n < 0;
+    if (sign)   // record sign
     {
-        n = -n;         // make n positive
-		sign = true;
+        n = -n; // make n positive
     }
-    int i = 0;
+    uint32_t i = 0;
     do // generate digits in reverse order
     {
         s[i++] = n % 10 + '0'; // get next digit
@@ -495,6 +494,20 @@ void itoa(int n, char* s)
     }
     s[i] = '\0';
     reverse(s);
+	return(s);
+}
+
+char* utoa(uint32_t n, char* s)
+{   
+    uint32_t i = 0;
+    do // generate digits in reverse order
+    {
+        s[i++] = n % 10 + '0';  // get next digit
+    }
+    while ((n /= 10) > 0);     // delete it
+    s[i] = '\0';
+    reverse(s);
+	return(s);
 }
 
 int atoi(const char* s)

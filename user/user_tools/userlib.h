@@ -52,13 +52,13 @@ char* strchr(char* str, int character);
 
 char* gets(char* s);
 
-void reverse(char* s);
-void itoa(int n, char* s);
-void ftoa(float f, char* buffer);
-int atoi(const char* s);
+void  reverse(char* s);
+char* itoa(int32_t n, char* s);
+char* utoa(uint32_t n, char* s);
+void  ftoa(float f, char* buffer);
+int   atoi(const char* s);
 float atof(const char* s);
-
-void i2hex(uint32_t val, char* dest, int32_t len);
+void  i2hex(uint32_t val, char* dest, int32_t len);
 
 void showInfo(signed char val);
 

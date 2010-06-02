@@ -42,54 +42,49 @@ void tasking_install()
     kdebug(3, "1st_task: ");
 
     cli();
-    currentTask = scheduler_install();
+	scheduler_install();
+    currentTask = malloc(sizeof(task_t), 0);
     currentTask->pid = next_pid++;
     currentTask->esp = 0;
     currentTask->eip = 0;
     currentTask->page_directory = kernel_pd;
     currentTask->privilege = 0;
     currentTask->FPU_ptr = (uintptr_t)NULL;
-    setNextTask(currentTask, NULL); // last task in queue
     currentTask->console = current_console;
     currentTask->ownConsole = true;
-    refreshUserScreen();
 
     kdebug(3, "1st_ks: ");
 
     currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+
+	scheduler_insertTask(currentTask);
+
     sti();
 }
 
-task_t* create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* programName)
+static void addConsole(task_t* task, const char* consoleName)
 {
-    task_t* new_task = create_task(directory, entry, privilege);
-    new_task->ownConsole = true;
-    new_task->console = malloc(sizeof(console_t), PAGESIZE);
-    console_init(new_task->console, programName);
+    task->ownConsole = true;
+    task->console = malloc(sizeof(console_t), PAGESIZE);
+    console_init(task->console, consoleName);
     for (uint8_t i = 0; i < 10; i++)
     { // The next free place in our console-list will be filled with the new console
         if (reachableConsoles[i] == 0)
         {
-            reachableConsoles[i] = new_task->console;
+            reachableConsoles[i] = task->console;
             changeDisplayedConsole(i); //Switching to the new console
             break;
         }
     }
-    return(new_task);
 }
 
-task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
+static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, void* entry, uint8_t privilege)
 {
-    kdebug(3, "cr_task: ");
-
-    cli();
-    task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
-    new_task->pid  = next_pid++;
+    new_task->pid = next_pid++;
     new_task->page_directory = directory;
     new_task->privilege = privilege;
-    new_task->threadFlag = false;
 
-    if (privilege == 3)
+    if (new_task->privilege == 3)
     {
         new_task->heap_top = (uint8_t*)USER_HEAP_START;
 
@@ -100,128 +95,33 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
 
     kdebug(3, "cr_task_ks: ");
 
-    new_task->kernel_stack = (void*)((uintptr_t)malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE);
-    new_task->FPU_ptr = (uintptr_t)NULL;
-    setNextTask(new_task, NULL); // last task in queue
+    new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
 
     new_task->ownConsole = false;
     new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
-    setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
-
-    uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
-    uint32_t code_segment=0x08, data_segment=0x10;
-
-    if (privilege == 3)
-    {
-        // general information: Intel 3A Chapter 5.12
-        *(--kernel_stack) = new_task->ss = 0x23;    // ss
-        *(--kernel_stack) = USER_STACK; // esp
-        code_segment = 0x1B; // 0x18|0x3=0x1B
-    }
-
-    *(--kernel_stack) = 0x0202; // eflags = interrupts activated and iopl = 0
-    *(--kernel_stack) = code_segment; // cs
-    *(--kernel_stack) = (uint32_t)entry; // eip
-    *(--kernel_stack) = 0; // error code
-
-    *(--kernel_stack) = 0; // interrupt nummer
-
-    // general purpose registers w/o esp
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-
-    if (privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
-
-    *(--kernel_stack) = data_segment;
-    *(--kernel_stack) = data_segment;
-    *(--kernel_stack) = data_segment;
-    *(--kernel_stack) = data_segment;
-
-    //setup task_t
-    new_task->esp = (uint32_t)kernel_stack;
-    new_task->eip = (uint32_t)irq_tail;
-    new_task->ss  = data_segment;
-
-    #ifdef _DIAGNOSIS_
-    task_log(new_task);
-    #endif
-
-    sti();
-    return new_task;
-}
-
-task_t* create_cthread(void(*entry)(), const char* consoleName)
-{
-    task_t* new_task = create_thread(entry);
-    new_task->ownConsole = true;
-    new_task->console = malloc(sizeof(console_t), PAGESIZE);
-    console_init(new_task->console, consoleName);
-    for (uint8_t i = 0; i < 10; i++)
-    { // The next free place in our console-list will be filled with the new console
-        if (reachableConsoles[i] == 0)
-        {
-            reachableConsoles[i] = new_task->console;
-            changeDisplayedConsole(i); //Switching to the new console
-            break;
-        }
-    }
-    return(new_task);
-}
-
-task_t* create_thread(void(*entry)())
-{
-    kdebug(3, "cr_thread: ");
-
-    cli();
-    task_t* new_task = malloc(sizeof(task_t),0);
-    new_task->pid  = currentTask->pid;
-    new_task->page_directory = currentTask->page_directory;
-    new_task->privilege = currentTask->privilege;
-    new_task->threadFlag = true;
-
-    if (new_task->privilege == 3)
-    {
-        new_task->heap_top = (uint8_t*)USER_HEAP_START;
-
-        kdebug(3, "task: %X. Alloc user-stack: \n",new_task);
-
-        paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
-    }
-
-    kdebug(3, "cr_thread_ks: ");
-
-    new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
-    new_task->ownConsole = false;
-    new_task->console = currentTask->console; // The thread uses the same console as the parent Task
-
     new_task->FPU_ptr = (uintptr_t)NULL;
-    setNextTask(new_task, NULL); // last task in queue
 
-    setNextTask(getLastTask(), new_task); // new _task is inserted as last task in queue
+    scheduler_insertTask(new_task); // new _task is inserted as last task in queue
 
-    uint32_t* kernel_stack = (uint32_t*) new_task->kernel_stack;
-    uint32_t code_segment=0x08, data_segment=0x10;
+    uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
+    uint32_t code_segment = 0x08, data_segment = 0x10;
 
-    *(--kernel_stack) = (uintptr_t)&exit;
+	if(new_task->thread)
+	    *(--kernel_stack) = (uintptr_t)&exit;
 
     if (new_task->privilege == 3)
     {
         // general information: Intel 3A Chapter 5.12
-        *(--kernel_stack) = new_task->ss = 0x23;    // ss
-        *(--kernel_stack) = USER_STACK; // esp
+        *(--kernel_stack) = new_task->ss = 0x23; // ss
+        *(--kernel_stack) = USER_STACK;          // esp
         code_segment = 0x1B; // 0x18|0x3=0x1B
     }
 
-    *(--kernel_stack) = 0x0202; // eflags = interrupts activated and iopl = 0
-    *(--kernel_stack) = code_segment; // cs
+    *(--kernel_stack) = 0x0202;          // eflags = interrupts activated and iopl = 0
+    *(--kernel_stack) = code_segment;    // cs
     *(--kernel_stack) = (uint32_t)entry; // eip
-    *(--kernel_stack) = 0; // error code
+    *(--kernel_stack) = 0;               // error code
 
     *(--kernel_stack) = 0; // interrupt nummer
 
@@ -249,6 +149,46 @@ task_t* create_thread(void(*entry)())
     #ifdef _DIAGNOSIS_
     task_log(new_task);
     #endif
+}
+
+task_t* create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* consoleName)
+{
+    task_t* new_task = create_task(directory, entry, privilege);
+	addConsole(new_task, consoleName);
+    return(new_task);
+}
+
+task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
+{
+    kdebug(3, "cr_task: ");
+
+    cli();
+    task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
+    new_task->thread = false;
+
+	createThreadTaskBase(new_task, directory, entry, privilege);
+	
+
+    sti();
+    return new_task;
+}
+
+task_t* create_cthread(void(*entry)(), const char* consoleName)
+{
+    task_t* new_task = create_thread(entry);
+	addConsole(new_task, consoleName);
+    return(new_task);
+}
+
+task_t* create_thread(void(*entry)())
+{
+    kdebug(3, "cr_thread: ");
+
+    cli();
+    task_t* new_task = malloc(sizeof(task_t),0);
+    new_task->thread = true;
+
+	createThreadTaskBase(new_task, currentTask->page_directory, entry, currentTask->privilege);
 
     sti();
     return new_task;
@@ -260,17 +200,12 @@ uint32_t task_switch (uint32_t esp)
     currentTask->esp = esp;   // save esp
 
     // Dispatcher - task switch
-    currentTask = currentTask->next; // take the next task
-    if (!currentTask)
-    {
-        currentTask = scheduler_getNextTask();
-    }
+    currentTask = scheduler_getNextTask();
 
     current_console = currentTask->console;
 
     // new_task
     paging_switch (currentTask->page_directory);
-    //tss.cr3 = ... TODO: Really unnecessary?
 
     tss.esp  = currentTask->esp;
     tss.esp0 = (uintptr_t)currentTask->kernel_stack;

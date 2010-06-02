@@ -111,70 +111,54 @@ element_t* list_GetElement(listHead_t* hd, uint32_t number)
 
 
 // Ring
-element_t* ring_Create()
+ring_t* ring_Create()
 {
-    element_t* ring = malloc(sizeof(element_t), 0);
-    ring->data = 0;
-    ring->next = ring;
+    ring_t* ring = malloc(sizeof(ring_t), 0);
+    ring->current = 0;
+    ring->begin = 0;
     return(ring);
 }
 
-void ring_Insert(element_t* ring, void* data)
+void ring_Insert(ring_t* ring, void* data)
 {
-    if(ring->data == 0) // ring is empty
+    if(ring->begin == 0) // ring is empty
     {
-        ring->data = data;
+		ring->begin = ring->current = malloc(sizeof(element_t), 0);
+		ring->current->next = ring->current;
+        ring->current->data = data;
     }
     else
     {
         element_t* item = malloc(sizeof(element_t), 0);
         item->data = data;
-        item->next = ring->next;
-        ring->next = item;
+        item->next = ring->current->next;
+        ring->current->next = item;
     }
 }
 
-bool ring_isEmpty(element_t* ring)
+bool ring_isEmpty(ring_t* ring)
 {
-    return(ring->data == 0);
+    return(ring->begin == 0);
 }
 
-#include "video.h"
-bool ring_DeleteFirst(element_t* ring, void* data)
+bool ring_DeleteFirst(ring_t* ring, void* data)
 {
-    if (ring->next == ring) // If the ring contains only one element
+    element_t* current = ring->current;
+	if(ring->begin == 0) return(false);
+    do
     {
-        if(ring->data == data)
+        if (current->next->data == data) // next element will be deleted
         {
-            //writeInfo(1, "hehe");
-            ring->data = 0; // "erase" it by setting data to 0
+            element_t* temp = current->next;
+			if(temp == ring->begin)   ring->begin   = ring->begin->next;
+			if(temp == ring->current) ring->current = ring->current->next;
+            current->next = current->next->next;
+            free(temp);
+            return(true);
         }
-        return(ring->data == data);
-    }
-    else
-    {
-        element_t* temp = ring;
-        while (temp->next != ring)
-        {
-            if (temp->next->data == data) // next element will be deleted
-            {
-                //writeInfo(0, "tätära");
-                ring = temp->next;
-                temp->next = temp->next->next;
-                free(ring);
-                return(true);
-            }
-            if (temp->next->next == ring && ring->data == data) // ring will be finished soon, first element of the ring will be deleted
-            {
-                //writeInfo(2, "törötörö");
-                temp->next = ring->next;
-                free(ring);
-                return(true);
-            }
-            temp = temp->next;
-        }
-        return(false);
-    }
+        current = current->next;
+    } while (current != ring->current);
+    return(false);
 }
 
 

@@ -122,8 +122,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 switch (*(++message))
                 {
                     case 'u':
-                        utoa(va_arg(ap, uint32_t), buffer); // TEST
-                        //itoa(va_arg(ap, uint32_t), buffer);
+                        utoa(va_arg(ap, uint32_t), buffer);
                         kputs(buffer);
                         break;
                     case 'f':
