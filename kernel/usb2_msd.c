@@ -682,7 +682,8 @@ uint8_t usbRead(uint32_t sector, uint8_t* buffer)
 
 int32_t analyzeBootSector(void* addr) // for first tests only
 {
-    uint8_t  volume_type = FAT16; // start value
+    uint32_t volume_bytePerSector;
+    uint8_t  volume_type = FAT32; 
     uint8_t  volume_SecPerClus;
     uint16_t volume_maxroot;
     uint32_t volume_fatsize;
@@ -722,15 +723,19 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         printf("\ntotal sectors (>65535): %u",sec0->TotalSectors2);
         printf("\tFAT 12/16:              %s",FATn);
 
-        volume_SecPerClus   = sec0->SectorsPerCluster;
-        volume_maxroot      = sec0->MaxRootEntries;
-        volume_fatsize      = sec0->SectorsPerFAT;
-        volume_fatcopy      = sec0->FATcount;
-        volume_firstSector  = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
-        volume_fat          = volume_firstSector + sec0->ReservedSectors;
-        volume_root         = volume_fat + volume_fatcopy * sec0->SectorsPerFAT;
-        volume_data         = volume_root + sec0->MaxRootEntries/DIRENTRIES_PER_SECTOR;
-        volume_maxcls       = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
+        volume_bytePerSector = sec0->charsPerSector;
+        volume_SecPerClus    = sec0->SectorsPerCluster;
+        volume_maxroot       = sec0->MaxRootEntries;
+        volume_fatsize       = sec0->SectorsPerFAT;
+        volume_fatcopy       = sec0->FATcount;
+        volume_firstSector   = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
+        volume_fat           = volume_firstSector + sec0->ReservedSectors;
+        volume_root          = volume_fat + volume_fatcopy * volume_fatsize;
+        volume_data          = volume_root + volume_maxroot /(volume_bytePerSector/NUMBER_OF_BYTES_IN_DIR_ENTRY);
+        volume_maxcls        = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
+        
+        
+        uint32_t volume_FatRootDirCluster = 0; // only FAT32
 
         uint32_t volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus);; // FAT12 and FAT16
 
@@ -750,16 +755,17 @@ int32_t analyzeBootSector(void* addr) // for first tests only
                 }
                 printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
 
-                uint32_t rootCluster = ((uint32_t*)addr)[11]; // byte 44-47
-                printf("\nThe root dir starts at cluster %u (expected: 2).", rootCluster);
+                volume_FatRootDirCluster = ((uint32_t*)addr)[11]; // byte 44-47
+                printf("\nThe root dir starts at cluster %u (expected: 2).", volume_FatRootDirCluster);
 
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
                 volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus); 
 
                 printf("\nSectors per FAT: %u.", ((uint32_t*)addr)[9]);  // byte 36-39
                 volume_fatsize = ((uint32_t*)addr)[9];
-                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus * (rootCluster-2);
-                volume_data    = volume_root + volume_SecPerClus * volume_ClustersPerRootDir;                 
+                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus * (volume_FatRootDirCluster-2);
+                volume_data    = volume_root;   
+                volume_maxcls  = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
             }
         }
         else // FAT12/16
@@ -790,6 +796,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
 
         usbMSDVolume.buffer         = malloc(0x10000,PAGESIZE); // 64 KiB
         usbMSDVolume.type           = volume_type;
+        usbMSDVolume.sectorSize     = volume_bytePerSector;
         usbMSDVolume.SecPerClus     = volume_SecPerClus;
         usbMSDVolume.maxroot        = volume_maxroot;
         usbMSDVolume.fatsize        = volume_fatsize;
@@ -797,10 +804,11 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         usbMSDVolume.firsts         = volume_firstSector;
         usbMSDVolume.fat            = volume_fat;    // reservedSectors
         usbMSDVolume.root           = volume_root;   // reservedSectors + 2*SectorsPerFAT
-        usbMSDVolume.data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR
+        usbMSDVolume.data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
         usbMSDVolume.maxcls         = volume_maxcls;
         usbMSDVolume.mount          = true;
         usbMSDVolume.ClustersPerRootDir  = volume_ClustersPerRootDir;    
+        usbMSDVolume.FatRootDirCluster   = volume_FatRootDirCluster; 
         strncpy(usbMSDVolume.serialNumber,volume_serialNumber,4); // ID of the partition
     }
     else if ( ( ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
@@ -1058,8 +1066,8 @@ void testFAT(char* filename)
     FILEOBJ fo  = &dest;
     fo->volume  = &usbMSDVolume;
     fo->dirclus = 0;
-
-    uint8_t retVal = fileFind(fo, foCompareTo, 1); // fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd)
+        
+    uint8_t retVal = fileFind(fo, foCompareTo, LOOK_FOR_MATCHING_ENTRY, 0); // fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd, uint8_t mode)
     if (retVal == CE_GOOD)
     {
         textColor(0x0A);

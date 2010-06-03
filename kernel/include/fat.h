@@ -38,34 +38,54 @@
 // File
 
 #define FILE_NAME_SIZE       11
-#define CLUSTER_FAIL         0xFFFF
-#define LAST_CLUSTER         0xFFF8
+
+#define END_CLUSTER_FAT12    0xFF7
+#define LAST_CLUSTER_FAT12   0xFF8
+
+#define END_CLUSTER_FAT16    0xFFFE
 #define LAST_CLUSTER_FAT16   0xFFF8
+#define CLUSTER_FAIL_FAT16   0xFFFF
+
+#define END_CLUSTER_FAT32    0x0FFFFFF7
+#define LAST_CLUSTER_FAT32   0x0FFFFFF8
+#define CLUSTER_FAIL_FAT32   0x0FFFFFFF
+
+#define MASK_MAX_FILE_ENTRY_LIMIT_BITS  0x0F // This is used to indicate to the Cache_File_Entry function that a new sector needs to be loaded.
+
 #define CLUSTER_EMPTY        0x0000
-#define END_CLUSTER          0xFFFE
+
 #define ATTR_MASK            0x3F
+#define ATTR_READ_ONLY       0x01
 #define ATTR_HIDDEN          0x02
+#define ATTR_SYSTEM          0x04
 #define ATTR_VOLUME          0x08
+#define ATTR_DIRECTORY       0x10
 #define ATTR_ARCHIVE         0x20
+#define ATTR_LONG_NAME       0x0F
+
 
 // Directory
 
-#define DIR_NAMESIZE          8
-#define DIR_EXTENSION         3
-#define DIRENTRIES_PER_SECTOR 0x10 // a sector can hold 16 32-byte dir entries
-#define ATTR_LONG_NAME        0x0F
-#define DIR_DEL               0xE5
-#define DIR_EMPTY             0
+#define NUMBER_OF_BYTES_IN_DIR_ENTRY    32
+
 #define FOUND                 0    // dir entry match
 #define NOT_FOUND             1    // dir entry not found
 #define NO_MORE               2    // no more files found
+
+#define DIR_NAMESIZE          8
+#define DIR_EXTENSION         3
 #define DIR_NAMECOMP         (DIR_NAMESIZE+DIR_EXTENSION)
+
+#define DIR_DEL               0xE5
+#define DIR_EMPTY             0
+
 
 // Volume with FAT Filesystem
 
 typedef struct
 {
     uint8_t* buffer;          // buffer equal to one sector
+    uint32_t sectorSize;      // byte per sector
     uint32_t firsts;          // LBA of 1st sector
     uint32_t fat;             // LBA of FAT
     uint32_t root;            // LBA of root directory
@@ -78,6 +98,7 @@ typedef struct
     uint8_t  type;            // FAT type (FAT16, FAT32)
     bool     mount;           // 0: not mounted  1: mounted
     uint32_t ClustersPerRootDir;   // sectors needed for maximum root dir entries, important for FAT32
+    uint32_t FatRootDirCluster;
     char     serialNumber[4]; // serial number for identification
 } PARTITION;
 
@@ -133,6 +154,13 @@ typedef _DIRENTRY* DIRENTRY;
 //
 // file operations
 //
+
+typedef 
+enum
+{
+    LOOK_FOR_EMPTY_ENTRY = 0,
+    LOOK_FOR_MATCHING_ENTRY
+} SEARCH_TYPE;
 
 #define CE_GOOD                0 // No error
 #define CE_ERASE_FAIL          1 // An erase failed
@@ -203,7 +231,7 @@ uint8_t  sectorWrite(uint32_t sector_addr, uint8_t* buffer);
 // file handling
 uint8_t  createFileEntry(FILEOBJ fo, uint32_t* fHandle);
 uint8_t  fileDelete(FILEOBJ fo, uint32_t* fHandle, uint8_t EraseClusters);
-uint8_t  fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd);
+uint8_t  fileFind( FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd, uint8_t mode);
 uint8_t  fopen(FILEOBJ fo, uint32_t* fHandle, char type);
 uint8_t  fclose(FILEOBJ fo);
 uint8_t  fread(FILEOBJ fo, void* dest, uint32_t count);
