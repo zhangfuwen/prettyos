@@ -794,9 +794,9 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         // store the determined volume data to DISK usbstick //
         ///////////////////////////////////////////////////////
 
-        usbMSDVolume.buffer         = malloc(0x10000,PAGESIZE); // 64 KiB
-        usbMSDVolume.type           = volume_type;
         usbMSDVolume.sectorSize     = volume_bytePerSector;
+        usbMSDVolume.buffer         = malloc(usbMSDVolume.sectorSize,PAGESIZE); 
+        usbMSDVolume.type           = volume_type;        
         usbMSDVolume.SecPerClus     = volume_SecPerClus;
         usbMSDVolume.maxroot        = volume_maxroot;
         usbMSDVolume.fatsize        = volume_fatsize;
@@ -807,7 +807,6 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         usbMSDVolume.data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
         usbMSDVolume.maxcls         = volume_maxcls;
         usbMSDVolume.mount          = true;
-        usbMSDVolume.ClustersPerRootDir  = volume_ClustersPerRootDir;    
         usbMSDVolume.FatRootDirCluster   = volume_FatRootDirCluster; 
         strncpy(usbMSDVolume.serialNumber,volume_serialNumber,4); // ID of the partition
     }
@@ -1066,6 +1065,10 @@ void testFAT(char* filename)
     FILEOBJ fo  = &dest;
     fo->volume  = &usbMSDVolume;
     fo->dirclus = 0;
+    if (fo->volume->type == FAT32)
+    {
+        fo->dirclus = fo->volume->FatRootDirCluster; 
+    }
         
     uint8_t retVal = fileFind(fo, foCompareTo, LOOK_FOR_MATCHING_ENTRY, 0); // fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd, uint8_t mode)
     if (retVal == CE_GOOD)

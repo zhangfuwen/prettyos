@@ -97,7 +97,6 @@ typedef struct
     uint8_t  SecPerClus;      // sectors per cluster
     uint8_t  type;            // FAT type (FAT16, FAT32)
     bool     mount;           // 0: not mounted  1: mounted
-    uint32_t ClustersPerRootDir;   // sectors needed for maximum root dir entries, important for FAT32
     uint32_t FatRootDirCluster;
     char     serialNumber[4]; // serial number for identification
 } PARTITION;

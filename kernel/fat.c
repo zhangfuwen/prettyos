@@ -34,6 +34,10 @@ static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v);
 
 static uint32_t cluster2sector(PARTITION* volume, uint32_t cluster)
 {
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\n>>>>> cluster2sector <<<<<!");
+  #endif
+
     uint32_t sector = 0;
 
     switch (volume->type)
@@ -117,10 +121,12 @@ uint8_t sectorRead(uint32_t sector_addr, uint8_t* buffer) // make it better!
     return retVal;
 }
 
-
-
 static uint32_t fatRead (PARTITION* volume, uint32_t ccls)
 {
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\n>>>>> fatRead <<<<<!");
+  #endif
+
     uint8_t q;
     uint32_t p, l;  // "l" is the sector Address
     uint32_t c = 0, d, ClusterFailValue, LastClusterLimit;   // ClusterEntries
@@ -151,105 +157,131 @@ static uint32_t fatRead (PARTITION* volume, uint32_t ccls)
     }
 
     l = volume->fat + (p / volume->sectorSize);  
+    
+    printf("\nline: %u, l = volume->fat + (p / volume->sectorSize): %u",__LINE__,l); //TEST  
+    
     p &= volume->sectorSize - 1;                 // Restrict 'p' within the FATbuffer size
+
+    printf("\nline: %u, p &= volume->sectorSize - 1 : %u",__LINE__,p); //TEST  
 
     // Check if the appropriate FAT sector is already loaded
     if (gLastFATSectorRead == l)
     {
+        printf("\ngLastFATSectorRead == l"); //TEST
+
         if (volume->type == FAT32)
+        {
             c = RAMreadLong (gFATBuffer, p);
-        else
-            if(volume->type == FAT16)
-                c = RAMreadW (gFATBuffer, p);
-            else if(volume->type == FAT12)
+            
+            printf("\nc = RAMreadLong (gFATBuffer, p) : %u",c); //TEST
+        }
+        else if(volume->type == FAT16)
+        {
+            c = RAMreadW (gFATBuffer, p);
+        }
+        else if(volume->type == FAT12)
+        {
+            c = RAMread (gFATBuffer, p);
+            if (q)
             {
-                c = RAMread (gFATBuffer, p);
-                if (q)
-                {
-                    c >>= 4;
-                }
-                // Check if the MSB is across the sector boundry
-                p = (p +1) & (volume->sectorSize-1);
-                if (p == 0)
-                {
-                    // Start by writing the sector we just worked on to the card
-                    // if we need to
-#ifdef ALLOW_WRITES
-                    if (gNeedFATWrite)
-                        if(fatWrite(volume, 0, 0, true))
-                            return ClusterFailValue;
-#endif
-                    if (!sectorRead (l+1, gFATBuffer))
-                    {
-                        gLastFATSectorRead = 0xFFFF;
+                c >>= 4;
+            }
+            // Check if the MSB is across the sector boundry
+            p = (p +1) & (volume->sectorSize-1);
+            if (p == 0)
+            {
+                // Start by writing the sector we just worked on to the card
+                // if we need to
+         #ifdef ALLOW_WRITES
+                if (gNeedFATWrite)
+                    if(fatWrite(volume, 0, 0, true))
                         return ClusterFailValue;
-                    }
-                    else
-                    {
-                        gLastFATSectorRead = l +1;
-                    }
-                }
-                d = RAMread (gFATBuffer, p);
-                if (q)
+         #endif
+                if (sectorRead (l+1, gFATBuffer) != SUCCESS)
                 {
-                    c += (d <<4);
+                    gLastFATSectorRead = 0xFFFF;
+                    return ClusterFailValue;
                 }
                 else
                 {
-                    c += ((d & 0x0F)<<8);
+                    gLastFATSectorRead = l+1;
                 }
             }
-        }
-        else
-        {
-            // If there's a currently open FAT sector,
-            // write it back before reading into the buffer
-#ifdef ALLOW_WRITES
-            if (gNeedFATWrite)
+            d = RAMread (gFATBuffer, p);
+            if (q)
             {
-                if(WriteFAT (volume, 0, 0, TRUE))
-                    return ClusterFailValue;
-            }
-#endif
-            if (!sectorRead (l, gFATBuffer))
-            {
-                gLastFATSectorRead = 0xFFFF;  // Note: It is Sector not Cluster.
-                return ClusterFailValue;
+                c += (d <<4);
             }
             else
             {
-                gLastFATSectorRead = l;
-                if (volume->type == FAT32)
-                    c = RAMreadLong (gFATBuffer, p);
-                else
-                    if(volume->type == FAT16)
-                        c = RAMreadW (gFATBuffer, p);
-                    else if (volume->type == FAT12)
-                    {
-                        c = RAMread (gFATBuffer, p);
-                        if (q)
-                        {
-                            c >>= 4;
-                        }
-                        p = (p +1) & (volume->sectorSize-1);
-                        d = RAMread (gFATBuffer, p);
-                        if (q)
-                        {
-                            c += (d <<4);
-                        }
-                        else
-                        {
-                            c += ((d & 0x0F)<<8);
-                        }
-                    }
+                c += ((d & 0x0F)<<8);
             }
+        }
+    }
+    else
+    {
+        printf("\nline: %u",__LINE__);
+
+        // If there's a currently open FAT sector,
+        // write it back before reading into the buffer
+#ifdef ALLOW_WRITES
+        if (gNeedFATWrite)
+        {
+            if(WriteFAT (volume, 0, 0, TRUE))
+                return ClusterFailValue;
+        }
+#endif
+        if ( sectorRead (l, gFATBuffer) != SUCCESS)
+        {
+            printf("\nline: %u",__LINE__);
+
+            gLastFATSectorRead = 0xFFFF;  // Note: It is Sector not Cluster.
+            return ClusterFailValue;
+        }
+        else
+        {
+            printf("\nline: %u",__LINE__);
+
+            gLastFATSectorRead = l;
+            if (volume->type == FAT32)
+            {
+                c = RAMreadLong (gFATBuffer, p);
+                printf("\nline: %u, c = RAMreadLong (gFATBuffer, p) : %u",__LINE__,c); //TEST
+            }
+            else
+            {
+                if(volume->type == FAT16)
+                {
+                    c = RAMreadW (gFATBuffer, p);
+                }
+                else if (volume->type == FAT12)
+                {
+                    c = RAMread (gFATBuffer, p);
+                    if (q)
+                    {
+                        c >>= 4;
+                    }
+                    p = (p +1) & (volume->sectorSize-1);
+                    d = RAMread (gFATBuffer, p);
+                    if (q)
+                    {
+                        c += (d <<4);
+                    }
+                    else
+                    {
+                        c += ((d & 0x0F)<<8);
+                    }
+                }
+            }
+        }
     }
 
     // Normalize it so 0xFFFF is an error
     if (c >= LastClusterLimit)
+    {
         c = LastClusterLimit;
-
-   return c;
+    }
+    return c;
 }
 
 /*
@@ -312,7 +344,7 @@ static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v)
     uint32_t l = volume->fat + (p>>9);
     p &= 0x1FF;
 
-    if (sectorRead(l,volume->buffer) != SUCCESS) // improve!
+    if (sectorRead(l,volume->buffer) != SUCCESS) 
     {
         return FAIL;
     }
@@ -926,11 +958,11 @@ label1: // TEST
                               #ifdef _FAT_DIAGNOSIS_
                                 textColor(0x0C); printf("\n\n %c <--- not equal", character); textColor(0x0F);
                               #endif
-							    break;
+							    break; // finish for loop
                             }
                         } // for loop
-                    } // not dir nor vol
-                    break;
+                    } 
+                    break; // end of case
                 
                 case 1:
                     // Check for attribute match
@@ -979,42 +1011,56 @@ label1: // TEST
                                 }
                             }
                         }
-
                     } // Attribute match
-
-                    break;
-                }
-            } // not found
+                    break; // end of case
+                } // while
+            } // not found // end of if (statusB != CE_BADCACHEREAD)
             else
             {
-                /*** looking for an empty/re-usable entry ***/
+                // looking for an empty/re-usable entry 
                 if ( cmd == LOOK_FOR_EMPTY_ENTRY)
+                {
                     statusB = CE_GOOD;
+                }
             } // found or not
-
             // increment it no matter what happened
             fHandle++;
 
-            /// TEST FAT32
+            // with FAT32 we have to find the next cluster of the root dir, if necessary  
             if (foDest->volume->type == FAT32)
             {
                 uint32_t oldCluster = foDest->dirccls;
-                //foDest->dirccls += (fHandle-1)/((foDest->volume->sectorSize/NUMBER_OF_BYTES_IN_DIR_ENTRY) * foDest->volume->SecPerClus);  //////////////////////////
                 if (fHandle > 0)
                 {
-                    foDest->dirccls += (fHandle-1)/(DirectoriesPerCluster);                                  //////////////////////////
+                    foDest->dirccls = foDest->dirccls + (fHandle-1)/DirectoriesPerCluster; // 128 --> 0, 129 --> 1    //////////////////////////
                     read = false;
                 }                
                 if (foDest->dirccls > oldCluster)
                 {
                     foDest->dirccls = fatRead(foDest->volume, oldCluster);
-                    printf("\tnext foDest->dirccls in cluster chain: %d",foDest->dirccls);
+                    
+                    printf("\nold  foDest->dirccls in cluster chain: %u == %X", oldCluster, oldCluster);
+                    printf("\nnext foDest->dirccls in cluster chain: %u == %X", foDest->dirccls, foDest->dirccls);
                     read = true;
+                    
+                    //fHandle = 1; // TEST ???
+                    
+                    waitForKeyStroke();
+                    if (foDest->dirccls == CLUSTER_FAIL_FAT32)
+                    {
+                        textColor(0x0C);
+                        printf("\nEnd of root dir cluster chain!");
+                        textColor(0x0F);
+                        statusB = CE_FILE_NOT_FOUND;
+                        waitForKeyStroke();
+                        break;
+                    }
                 }
-                goto label1;
+                if (fHandle > 0)
+                {
+                    goto label1;
+                }
             }
-            /// TEST FAT32
-
         }// while
     }
     return(statusB);
