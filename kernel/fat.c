@@ -9,7 +9,7 @@
 *
 *  I am a reader of this helpful book (Erhard Henkes).
 *
-*  We adapted this sourcecode to the needs of PrettyOS.
+*  We are adapting this sourcecode to the needs of PrettyOS.
 */
 
 #include "util.h"
@@ -30,7 +30,7 @@ bool     gNeedFATWrite       = false;      // Global variable indicating that th
 bool     gNeedDataWrite      = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
 
 // prototypes
-static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v);
+// static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v);
 
 static uint32_t cluster2sector(PARTITION* volume, uint32_t cluster)
 {
@@ -127,53 +127,48 @@ static uint32_t fatRead (PARTITION* volume, uint32_t ccls)
     printf("\n>>>>> fatRead <<<<<!");
   #endif
 
-    uint8_t q;
-    uint32_t p, l;  // "l" is the sector Address
-    uint32_t c = 0, d, ClusterFailValue, LastClusterLimit;   // ClusterEntries
+    uint8_t  q;
+    uint32_t p; // position (byte) in FAT 
+    uint32_t c = 0;
+    uint32_t d;
+    uint32_t sector;  
+    uint32_t ClusterFailValue;
+    uint32_t LastClusterLimit;   
     gBufferZeroed = false;
 
     switch (volume->type)
     {
-        case FAT32:
-            p = ccls * 4;
-            q = 0; // "q" not used for FAT32, only initialized to remove a warning
-            ClusterFailValue = CLUSTER_FAIL_FAT32;
-            LastClusterLimit = LAST_CLUSTER_FAT32;
-            break;
-        case FAT12:
-            p = (uint32_t) ccls *3;  // Mulby1.5 to find cluster pos in FAT
-            q = p&1;
-            p >>= 1;
-            ClusterFailValue = CLUSTER_FAIL_FAT16;
-            LastClusterLimit = LAST_CLUSTER_FAT12;
-            break;
-        case FAT16:
-        default:
-            p = (uint32_t)ccls *2;     // Mulby 2 to find cluster pos in FAT
-            q = 0; // "q" not used for FAT16, only initialized to remove a warning
-            ClusterFailValue = CLUSTER_FAIL_FAT16;
-            LastClusterLimit = LAST_CLUSTER_FAT16;
-            break;
+    case FAT32:
+        p = ccls * 4; // Multiply by 4 to find cluster pos in FAT
+        q = 0; // "q" not used for FAT32, only initialized to remove a warning
+        ClusterFailValue = CLUSTER_FAIL_FAT32;
+        LastClusterLimit = LAST_CLUSTER_FAT32;
+        break;
+    case FAT12:
+        p = (uint32_t) ccls * 3;  // Multiply by 1.5 to find cluster pos in FAT
+        q = p & 1;
+        p >>= 1;
+        ClusterFailValue = CLUSTER_FAIL_FAT16;
+        LastClusterLimit = LAST_CLUSTER_FAT12;
+        break;
+    case FAT16:
+    default:
+        p = (uint32_t)ccls *2;     // Multiply by 2 to find cluster pos in FAT
+        q = 0; // "q" not used for FAT16, only initialized to remove a warning
+        ClusterFailValue = CLUSTER_FAIL_FAT16;
+        LastClusterLimit = LAST_CLUSTER_FAT16;
+        break;
     }
 
-    l = volume->fat + (p / volume->sectorSize);  
-    
-    printf("\nline: %u, l = volume->fat + (p / volume->sectorSize): %u",__LINE__,l); //TEST  
-    
-    p &= volume->sectorSize - 1;                 // Restrict 'p' within the FATbuffer size
-
-    printf("\nline: %u, p &= volume->sectorSize - 1 : %u",__LINE__,p); //TEST  
+    sector = volume->fat + (p / volume->sectorSize);  
+    p &= volume->sectorSize - 1; // Restrict 'p' within the FATbuffer size
 
     // Check if the appropriate FAT sector is already loaded
-    if (gLastFATSectorRead == l)
+    if (gLastFATSectorRead == sector)
     {
-        printf("\ngLastFATSectorRead == l"); //TEST
-
         if (volume->type == FAT32)
         {
             c = RAMreadLong (gFATBuffer, p);
-            
-            printf("\nc = RAMreadLong (gFATBuffer, p) : %u",c); //TEST
         }
         else if(volume->type == FAT16)
         {
@@ -189,22 +184,24 @@ static uint32_t fatRead (PARTITION* volume, uint32_t ccls)
             // Check if the MSB is across the sector boundry
             p = (p +1) & (volume->sectorSize-1);
             if (p == 0)
-            {
-                // Start by writing the sector we just worked on to the card
-                // if we need to
-         #ifdef ALLOW_WRITES
+            {                
+              #ifdef ALLOW_WRITES // Start by writing the sector we just worked on to the card if we need to
                 if (gNeedFATWrite)
+                {
                     if(fatWrite(volume, 0, 0, true))
+                    {
                         return ClusterFailValue;
-         #endif
-                if (sectorRead (l+1, gFATBuffer) != SUCCESS)
+                    }
+                }
+              #endif
+                if (sectorRead (sector+1, gFATBuffer) != SUCCESS)
                 {
                     gLastFATSectorRead = 0xFFFF;
                     return ClusterFailValue;
                 }
                 else
                 {
-                    gLastFATSectorRead = l+1;
+                    gLastFATSectorRead = sector+1;
                 }
             }
             d = RAMread (gFATBuffer, p);
@@ -220,8 +217,6 @@ static uint32_t fatRead (PARTITION* volume, uint32_t ccls)
     }
     else
     {
-        printf("\nline: %u",__LINE__);
-
         // If there's a currently open FAT sector,
         // write it back before reading into the buffer
 #ifdef ALLOW_WRITES
@@ -231,22 +226,17 @@ static uint32_t fatRead (PARTITION* volume, uint32_t ccls)
                 return ClusterFailValue;
         }
 #endif
-        if ( sectorRead (l, gFATBuffer) != SUCCESS)
+        if ( sectorRead (sector, gFATBuffer) != SUCCESS)
         {
-            printf("\nline: %u",__LINE__);
-
             gLastFATSectorRead = 0xFFFF;  // Note: It is Sector not Cluster.
             return ClusterFailValue;
         }
         else
         {
-            printf("\nline: %u",__LINE__);
-
-            gLastFATSectorRead = l;
+            gLastFATSectorRead = sector;
             if (volume->type == FAT32)
             {
-                c = RAMreadLong (gFATBuffer, p);
-                printf("\nline: %u, c = RAMreadLong (gFATBuffer, p) : %u",__LINE__,c); //TEST
+                c = RAMreadLong (gFATBuffer, p);            
             }
             else
             {
@@ -283,91 +273,6 @@ static uint32_t fatRead (PARTITION* volume, uint32_t ccls)
     }
     return c;
 }
-
-/*
-static uint32_t fatRead(PARTITION* volume, uint32_t ccls)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatRead <<<<<!");
-  #endif
-    uint32_t l=0;
-    if (volume->type == FAT16)
-    {
-        l = volume->fat + (ccls>>8); // sector contains 256 words
-    }
-    else if (volume->type == FAT32)
-    {
-        l = volume->fat + (ccls>>7); // sector contains 128 uint32_t
-    }
-
-    if ( sectorRead(l, volume->buffer) != SUCCESS )
-    {
-        return(CLUSTER_FAIL);
-    }
-
-    uint32_t c=0;
-
-    if (volume->type == FAT16)
-    {
-        // To find the number of the next cluster,
-        // read 2 bytes in the buffer of retrieved data
-        // beginning at offset = low byte of current cluster's address << 1
-        // Shift left 1 (multiply by 2) because each entry is 2 bytes
-        c = RAMreadW(volume->buffer, ((ccls&0xFF)<<1));
-    }
-    else if (volume->type == FAT32)
-    {
-        c = RAMreadLong(volume->buffer, ((ccls&0x7F)<<2));
-    }
-
-    if ((volume->type == FAT16) && (c >= LAST_CLUSTER_FAT16))
-    {
-        return(LAST_CLUSTER);
-    }
-    else if (volume->type == FAT32)
-    {
-        // what to do? 
-    }
-
-    return(c);
-}
-*/
-
-static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatWrite <<<<<!");
-  #endif
-    uint32_t  c;
-
-    uint32_t p = 2*cls;
-    uint32_t l = volume->fat + (p>>9);
-    p &= 0x1FF;
-
-    if (sectorRead(l,volume->buffer) != SUCCESS) 
-    {
-        return FAIL;
-    }
-
-    RAMwrite(volume->buffer,p,v);
-    RAMwrite(volume->buffer,p+1,(v>>8));
-
-    for (uint32_t i=0; i<volume->fatcopy; i++)
-    {
-        if (sectorWrite(l,volume->buffer) != SUCCESS)
-        {
-            return FAIL;
-        }
-    }
-
-    if ((volume->type == FAT16) && (c>= LAST_CLUSTER_FAT16))
-    {
-        c = LAST_CLUSTER_FAT16; /// Should return directly
-    }
-
-    return c; /// Correct? c is uninitialized...
-}
-
 
 static uint8_t fileSearchNextCluster(FILEOBJ fo, uint32_t n)
 {
@@ -406,79 +311,6 @@ static uint8_t fileSearchNextCluster(FILEOBJ fo, uint32_t n)
     return CE_GOOD;
 }
 
-/*
-static uint32_t fatFindEmptyCluster(FILEOBJ fo)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatFindEmptyCluster <<<<<!");
-  #endif
-    uint32_t value = 0x0;
-
-    PARTITION* volume = fo->volume;
-    uint32_t c      = fo->ccls;
-
-    if (c<2)
-    {
-        c=2;
-    }
-
-    uint32_t curcls = c;
-
-    fatRead(volume,c);
-
-    while (c)
-    {
-        c++;
-
-        if ( ((volume->type == FAT16) && (value == END_CLUSTER)) || (c >= volume->maxcls))
-        {
-            c=2;
-        }
-
-        if (c == curcls)
-        {
-            return 0;
-        }
-
-        if ((value = fatReadQueued(volume,c)) == CLUSTER_FAIL_FAT16)
-        {
-            return 0;
-        }
-
-        if (value == CLUSTER_EMPTY)
-        {
-            break;
-        }
-    }
-    return c;
-}
-*/
-
-
-uint32_t checksum(char* ShortFileName)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> checksum <<<<<!");
-  #endif
-    uint32_t Bit7, Checksum=0;
-    for (uint32_t Character=0; Character<11; ++Character)
-    {
-        if (Checksum & 1)
-        {
-            Bit7 = 0x80;
-        }
-        else
-        {
-            Bit7 = 0x0;
-        }
-
-        Checksum = Checksum >> 1;
-        Checksum |= Bit7;
-        Checksum += ShortFileName[Character];
-        Checksum &= 0xFF;
-    }
-    return Checksum;
-}
 
 
 
@@ -571,12 +403,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
         
         if(ccls < LastClusterLimit) // do we have a valid cluster number?
         {
-            textColor(0x0E);
-            // printf("\ncacheFileEntry - current cluster: %u", ccls); /// TEST
-            textColor(0x0F);
-
             fo->dirccls = ccls; // write it back
-
             uint32_t sector = cluster2sector(volume,ccls);
 
             /* see if we are root and about to go pass our boundaries
@@ -588,19 +415,19 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
             }
             else
             {
-                textColor(0x0E);
-                // printf("\ncacheFileEntry - sectorRead, sector: %u offset2: %u", sector, offset2); /// TEST
-                textColor(0x0F);
-
               #ifdef ALLOW_WRITES
                 if (gNeedDataWrite)
-                    if (flushData())
+                {
+                    if ( flushData() )
+                    {
                         return NULL;
+                    }
+                }
               #endif
                 gBufferOwner  = NULL;
                 gBufferZeroed = false;
 
-                uint8_t retVal = sectorRead( sector + offset2, volume->buffer);
+                uint8_t retVal = sectorRead( sector + offset2, volume->buffer );
 
                 if ( retVal != SUCCESS ) // if FAIL: sector could not be read.
                 {
@@ -610,7 +437,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
                 {
                     if(ForceRead)    // Buffer holds all 16 root entry info. Point to the one required.
                     {
-                        return (DIRENTRY)((DIRENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector);   //////////////////////////
+                        waitForKeyStroke(); return (DIRENTRY)((DIRENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector);   //////////////////////////
                     }
                     else
                     {
@@ -621,16 +448,15 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
             } // END: read an entry
         } // END: a valid cluster is found
         else // invalid cluster number
-        {
-            //nextClusterIsLast = TRUE;
-            return((DIRENTRY)NULL);
+        {            
+            return((DIRENTRY)NULL); // nextClusterIsLast = TRUE;
         }
-
     }
     else
     {
         return (DIRENTRY)(((DIRENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector));  //////////////////////////
     }
+    textColor(0x0C); printf("UNCLEAN !!! END of cacheFileEntry"); textColor(0x0F); 
 } // Cache_File_Entry
 
 
@@ -639,7 +465,6 @@ static DIRENTRY loadDirectoryAttribute(FILEOBJ fo, uint32_t* fHandle)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> loadDirectoryAttribute <<<<<!");
   #endif    
-    // printf("\nline: %u",__LINE__); 
     DIRENTRY dir = cacheFileEntry(fo,fHandle,true);
     uint8_t  a   = dir->DIR_Name[0];
     if (a == DIR_EMPTY)
@@ -658,7 +483,6 @@ static DIRENTRY loadDirectoryAttribute(FILEOBJ fo, uint32_t* fHandle)
             while(a==ATTR_LONG_NAME)
             {
                 (*fHandle)++;
-                // printf("\nline: %u",__LINE__); 
                 dir = cacheFileEntry(fo,fHandle,false);
                 a = dir->DIR_Attr;
             }
@@ -667,24 +491,7 @@ static DIRENTRY loadDirectoryAttribute(FILEOBJ fo, uint32_t* fHandle)
     return dir;
 }
 
-static uint8_t writeFileEntry(FILEOBJ fo, uint32_t* curEntry)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> writeFileEntry <<<<<!");
-  #endif
-    PARTITION* volume  = fo->volume;
-    uint32_t   ccls    = fo->dirccls;
-    uint32_t    offset2 = (*curEntry>>4);
 
-    if (ccls != 0)
-    {
-        offset2 %= volume->SecPerClus;
-    }
-
-    uint32_t sector = cluster2sector(volume,ccls);
-
-    return (sectorWrite(sector+offset2,volume->buffer) == SUCCESS);
-}
 
 static void updateTimeStamp(DIRENTRY dir)
 {
@@ -699,93 +506,10 @@ static void updateTimeStamp(DIRENTRY dir)
 ///////////////////////////
 
 /*
-static uint8_t eraseCluster(PARTITION* volume, uint32_t cluster)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> eraseCluster <<<<<!");
-  #endif
-    uint32_t SectorAddress = cluster2sector(volume, cluster);
-    memset(volume->buffer, 0x00, SDC_SECTOR_SIZE);
-    for (uint32_t i=0; i<volume->SecPerClus; i++)
-    {
-        if (sectorWrite(SectorAddress++,volume->buffer) != SUCCESS)
-        {
-            return CE_WRITE_ERROR;
-        }
-    }
-    return CE_GOOD;
-}
-*/
-
-
-/*
-static uint8_t fileCreateHeadCluster(FILEOBJ fo, uint32_t* cluster)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fileCreateHeadCluster <<<<<!");
-  #endif
-    PARTITION* volume = fo->volume;
-    *cluster = fatFindEmptyCluster(fo);
-
-    if (*cluster == 0)
-    {
-        return CE_DISK_FULL;
-    }
-    else
-    {
-        if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT16)==FAIL) // FAT16 // TODO: FAT32
-        {
-            return CE_WRITE_ERROR;
-        }
-        return eraseCluster(volume,*cluster);
-    }
-}
-*/
-
-/*
-static uint8_t createFirstCluster(FILEOBJ fo)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> createFirstCluster <<<<<!");
-  #endif
-    uint8_t  error;
-    uint32_t cluster;
-
-    if ((error = fileCreateHeadCluster(fo,&cluster))==CE_GOOD)
-    {
-		uint32_t fHandle = fo->entry;
-        DIRENTRY dir = loadDirectoryAttribute(fo, &fHandle);
-        dir->DIR_FstClusLO = cluster; // FAT16 // TODO: FAT32
-
-        if (writeFileEntry(fo,&fHandle) != true)
-        {
-            return CE_WRITE_ERROR;
-        }
-    }
-    return error;
-}
-*/
-
-/*
-static uint8_t fileAllocateNewCluster(FILEOBJ fo)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fileAllocateNewCluster <<<<<!");
-  #endif
-    PARTITION* volume  = fo->volume;
-    uint32_t c         = fatFindEmptyCluster(fo);
-
-    if (c==0)
-    {
-        return CE_DISK_FULL;
-    }
-
-    fatWrite(volume,c,LAST_CLUSTER_FAT16); // FAT16 // TODO: FAT32
-    uint32_t curcls = fo->ccls;
-    fatWrite(volume,curcls,c);
-    fo->ccls = c;
-    return CE_GOOD;
-}
+ This function will cache the sector of directory entries in the directory 
+ pointed to by the dirclus value in the FILE object 'fo' 
+ that contains the entry that corresponds to the fHandle offset.  
+ It will then copy the file information for that entry into the 'fo' FILE object.
 */
 
 static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
@@ -800,12 +524,11 @@ static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
     if (((*fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) == 0) && (*fHandle != 0)) // 4-bit mask because 16 root entries max per sector
     {
         fo->dirccls = fo->dirclus;
-        // printf("\nline: %u",__LINE__); 
         dir = cacheFileEntry(fo, fHandle, true);
+        showDirectoryEntry(dir);
     }
     else
     {
-        // printf("\nline: %u",__LINE__); 
         dir = cacheFileEntry (fo, fHandle, false);
     }
 
@@ -815,7 +538,6 @@ static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
     }
     else
     {
-        // read first character of file name from the entry
         uint8_t a = dir->DIR_Name[0];
 
         if (a == DIR_DEL)
@@ -824,11 +546,11 @@ static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
         }
 		else if ( a == DIR_EMPTY)
 		{
-			return NO_MORE;
+            return NO_MORE;
 		}
         else
         {
-			uint8_t character, test=0;
+            uint8_t character, test=0;
 
             for (uint8_t i=0; i<DIR_NAMESIZE; i++)
             {
@@ -856,39 +578,37 @@ static uint8_t fillFileObject(FILEOBJ fo, uint32_t* fHandle)
 
             a = dir->DIR_Attr;
             fo->attributes = a;
-            return FOUND;
+            return FOUND; 
         } // END: the entry is not deleted
     } // END: an entry exists
 }
+
+/*
+    fileFind will sequentially cache directory entries within the current working directory 
+    into the foDest FILE object. If the cmd parameter is specified as LOOK_FOR_EMPTY_ENTRY 
+    the search will continue until an empty directory entry is found. 
+    If the cmd parameter is specified as LOOK_FOR_MATCHING_ENTRY these entries will be compared 
+    to the foCompareTo object until a match is found or there are no more entries in the current
+    working directory. 
+*/
 
 uint8_t fileFind( FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd, uint8_t mode) 
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileFind <<<<<!");
   #endif
-
-    for (uint8_t i=0; i<DIR_NAMECOMP; i++)
-    {
-        foDest->name[i] = 0x20; // set name and extension to spaces
-    }
-
-    uint32_t DirectoriesPerCluster = foDest->volume->sectorSize * foDest->volume->SecPerClus / NUMBER_OF_BYTES_IN_DIR_ENTRY;
+   
 	char character, test;
-    uint8_t statusB        = CE_FILE_NOT_FOUND;
-    
+    uint8_t statusB        = CE_FILE_NOT_FOUND;    
     foDest->dirccls        = foDest->dirclus; // reset the cluster
     uint16_t compareAttrib = 0xFFFF ^ foCompareTo->attributes;  
-
-    // uint32_t fHandle = foDest->entry; // current entry counter (code in original)
-    uint32_t fHandle = 0; 
+    uint32_t fHandle = foDest->entry; // current entry counter 
     bool read = true;
 
-label1: // TEST
-    printf("\nfHandle: %d",fHandle);  
-
+    for (uint8_t i=0; i<DIR_NAMECOMP; i++){foDest->name[i] = 0x20;}
+    textColor(0x0E); printf("\nfHandle (fileFind): %d",fHandle); textColor(0x0F);  
     if (fHandle == 0)
     {
-        // printf("\nline: %u",__LINE__); 
         if (cacheFileEntry(foDest, &fHandle, read) == NULL)
         {
             statusB = CE_BADCACHEREAD;
@@ -898,7 +618,6 @@ label1: // TEST
     {
         if ((fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) != 0) // Maximum 16 entries possible
         {
-            // printf("\nline: %u",__LINE__); 
             if (cacheFileEntry (foDest, &fHandle, read) == NULL)
             {
                 statusB = CE_BADCACHEREAD;
@@ -926,7 +645,7 @@ label1: // TEST
             }
             else // statusB == CE_GOOD then exit
             {
-                break;
+                break; 
             }
 
             if (state == FOUND)
@@ -937,6 +656,12 @@ label1: // TEST
                 attrib =  foDest->attributes;
                 attrib &= ATTR_MASK;
 
+                /*
+                If the mode is specified a '0' the attributes are irrelevant. 
+                If the mode is specified as '1' the attributes of the foDest entry must match 
+                the attributes specified in the foCompareTo file. 
+                Partial string search characters may bypass portions of the comparison.
+                */
                 switch (mode)
                 {
                 case 0:
@@ -995,12 +720,13 @@ label1: // TEST
                         {
                             for (uint16_t index = 8; index < DIR_NAMECOMP; index++)
                             {
-                                // Get the source character
-                                character = foDest->name[index];
-                                // Get the destination character
-                                test = foCompareTo->name[index];
+                                
+                                character = foDest->name[index]; // Get the source character
+                                test = foCompareTo->name[index]; // Get the destination character
                                 if (test == '*')
+                                {
                                     break;
+                                }
                                 if (test != '?')
                                 {
                                     if(toLower(character) != toLower(test))
@@ -1025,264 +751,9 @@ label1: // TEST
             } // found or not
             // increment it no matter what happened
             fHandle++;
-
-            // with FAT32 we have to find the next cluster of the root dir, if necessary  
-            if (foDest->volume->type == FAT32)
-            {
-                uint32_t oldCluster = foDest->dirccls;
-                if (fHandle > 0)
-                {
-                    foDest->dirccls = foDest->dirccls + (fHandle-1)/DirectoriesPerCluster; // 128 --> 0, 129 --> 1    //////////////////////////
-                    read = false;
-                }                
-                if (foDest->dirccls > oldCluster)
-                {
-                    foDest->dirccls = fatRead(foDest->volume, oldCluster);
-                    
-                    printf("\nold  foDest->dirccls in cluster chain: %u == %X", oldCluster, oldCluster);
-                    printf("\nnext foDest->dirccls in cluster chain: %u == %X", foDest->dirccls, foDest->dirccls);
-                    read = true;
-                    
-                    //fHandle = 1; // TEST ???
-                    
-                    waitForKeyStroke();
-                    if (foDest->dirccls == CLUSTER_FAIL_FAT32)
-                    {
-                        textColor(0x0C);
-                        printf("\nEnd of root dir cluster chain!");
-                        textColor(0x0F);
-                        statusB = CE_FILE_NOT_FOUND;
-                        waitForKeyStroke();
-                        break;
-                    }
-                }
-                if (fHandle > 0)
-                {
-                    goto label1;
-                }
-            }
         }// while
     }
     return(statusB);
-}
-
-/*
-static uint8_t populateEntries(FILEOBJ fo, char* name, uint32_t* fHandle)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> populateEntries <<<<<!");
-  #endif
-
-    DIRENTRY dir = cacheFileEntry(fo, fHandle, true);
-    strncpy(dir->DIR_Name,name,DIR_NAMECOMP);   /// TODO: check!
-    dir->DIR_Attr          = ATTR_ARCHIVE;
-    dir->DIR_NTRes         = 0x00;
-    dir->DIR_CrtTimeTenth  = 0x64;
-    dir->DIR_CrtTime       = 0x43C5;
-    dir->DIR_CrtDate       = 0x34B0;
-    dir->DIR_LstAccDate    = 0x34B0;
-    dir->DIR_FstClusHI     = 0x0000;
-    dir->DIR_WrtTime       = 0x43C6;
-    dir->DIR_WrtDate       = 0x34B0;
-    dir->DIR_FstClusLO     = 0x0000;
-    dir->DIR_FileSize      = 0x0000;
-
-    fo->size        = dir->DIR_FileSize;
-    fo->time        = dir->DIR_CrtTime;
-    fo->date        = dir->DIR_CrtDate;
-    fo->attributes  = dir->DIR_Attr;
-    fo->entry       = *fHandle;
-
-    writeFileEntry(fo,fHandle);
-    return CE_GOOD;
-}
-*/
-
-/*
-static uint8_t findEmptyEntry(FILEOBJ fo, uint32_t* fHandle)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> findEmptyEntry <<<<<!");
-  #endif
-    uint8_t  a, status = NOT_FOUND;
-    uint32_t bHandle;
-    DIRENTRY dir = cacheFileEntry(fo, fHandle, true);
-
-    if (dir==NULL)
-    {
-        status = CE_BADCACHEREAD;
-    }
-    else
-    {
-        while (status == NOT_FOUND)
-        {
-            uint32_t amountfound=0;
-            bHandle = *fHandle;
-            do
-            {
-                dir = cacheFileEntry(fo, fHandle, false);
-                a = dir->DIR_Name[0];
-                (*fHandle)++;
-            }
-            while( (a==DIR_DEL || a==DIR_EMPTY) && (dir!=(DIRENTRY)NULL) && (++amountfound<1));
-
-            if (dir==NULL)
-            {
-                a=fo->dirccls;
-                if (a==0)
-                {
-                    status = NO_MORE;
-                }
-                else
-                {
-                    fo->ccls = a;
-                    if (fileAllocateNewCluster(fo)==CE_DISK_FULL)
-                    {
-                        status = NO_MORE;
-                    }
-                    else
-                    {
-                        status = FOUND;
-                    }
-                }
-            } // END: it is the cluster's last entry
-            else
-            {
-                if(amountfound==1)
-                {
-                    status = FOUND;
-                }
-            }
-        } // END: while (status == NOT_FOUND)
-
-        *fHandle = bHandle;
-
-    } // END: search for an entrys
-
-    return(status==FOUND);
-}
-*/
-
-static uint8_t fatEraseClusterChain(uint32_t cluster, PARTITION* volume)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatEraseClusterChain <<<<<!");
-  #endif
-    uint32_t c, c2;
-    enum _status{Good,Fail,Exit} status = Good;
-
-    if (cluster <= 1)
-    {
-        status = Exit;
-    }
-    else
-    {
-        while(status == Good)
-        {
-            if ((c = fatRead(volume,cluster)) == FAIL)
-            {
-                status = Fail;
-            }
-            else
-            {
-                if (c <= 1)
-                {
-                    status = Exit;
-                }
-                else
-                {
-                    if (volume->type == FAT16)
-                    {
-                        c2 = LAST_CLUSTER_FAT16;
-                        if (c>=c2)
-                        {
-                            status = Exit;
-                        }
-                    }
-                    if (fatWrite(volume,cluster, CLUSTER_EMPTY)==FAIL)
-                    {
-                        status = Fail;
-                    }
-                    cluster = c;
-                }
-            }
-        } // END: while not the end of the chain and no error
-    }
-    return(status == Exit);
-}
-
-/*
-uint8_t createFileEntry(FILEOBJ fo, uint32_t* fHandle)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> createFileEntry <<<<<!");
-  #endif
-    char name[DIR_NAMECOMP];
-
-    for (uint8_t i=0; i<FILE_NAME_SIZE; i++)
-    {
-        name[i] = fo->name[i];
-    }
-
-    *fHandle = 0;
-    if (findEmptyEntry(fo,fHandle))
-    {
-        if (populateEntries(fo, name, fHandle) == CE_GOOD)
-        {
-            return createFirstCluster(fo);
-        }
-    }
-    else
-    {
-        return CE_DIR_FULL;
-    }
-    return CE_GOOD;
-}
-*/
-
-uint8_t fileDelete(FILEOBJ fo, uint32_t* fHandle, uint8_t EraseClusters)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fileDelete <<<<<!");
-  #endif
-    uint8_t  status = CE_GOOD;
-    uint32_t clus   = fo->dirclus;
-    PARTITION* volume = fo->volume;
-
-    fo->dirccls = clus;
-
-    // printf("\nline: %u",__LINE__); 
-    DIRENTRY dir = cacheFileEntry(fo, fHandle, true);
-    uint8_t a = dir->DIR_Name[0];
-    if (dir == (DIRENTRY)NULL || a==DIR_EMPTY)
-    {
-        return CE_FILE_NOT_FOUND;
-    }
-    else
-    {
-        if (a==DIR_DEL)
-        {
-            return CE_FILE_NOT_FOUND;
-        }
-        else
-        {
-            a = dir->DIR_Attr;
-            dir->DIR_Name[0] = DIR_DEL;
-            clus = dir->DIR_FstClusLO;
-            if (status != CE_GOOD || !(writeFileEntry(fo,fHandle)))
-            {
-                return CE_ERASE_FAIL;
-            }
-            else
-            {
-                if (EraseClusters)
-                {
-                    return((fatEraseClusterChain(clus,volume)) ? CE_GOOD : CE_ERASE_FAIL);
-                }
-            }
-        } // END: a not empty, not deleted entry was returned
-    } // END: a not empty entry was returned
-    return status;
 }
 
 uint8_t fopen(FILEOBJ fo, uint32_t* fHandle, char type)
@@ -1300,7 +771,6 @@ uint8_t fopen(FILEOBJ fo, uint32_t* fHandle, char type)
     }
     else
     {
-        // printf("\nline: %u",__LINE__); 
         cacheFileEntry(fo, fHandle, true);
         uint8_t r = fillFileObject(fo, fHandle);
         if (r != FOUND)
@@ -1347,6 +817,8 @@ uint8_t fclose(FILEOBJ fo)
         dir = loadDirectoryAttribute(fo, &fHandle);
         updateTimeStamp(dir);
         dir->DIR_FileSize = fo->size;
+        
+        /*
         if (writeFileEntry(fo,&fHandle))
         {
             error = CE_GOOD;
@@ -1355,6 +827,8 @@ uint8_t fclose(FILEOBJ fo)
         {
             error = CE_WRITE_ERROR;
         }
+        */
+
         fo->Flags.write = false;
     }
     return error;
@@ -1368,17 +842,17 @@ uint8_t fread(FILEOBJ fo, void* dest, uint32_t count)
     PARTITION* volume;
     uint8_t  error = CE_GOOD;
     uint32_t pos;
-    uint32_t l, seek, size, temp;
+    uint32_t sector, seek, size, temp;
 
-    volume  = (PARTITION*)fo->volume;
-    temp = count;
-    pos  = fo->pos;
-    seek = fo->seek;
-    size = fo->size;
+    volume  = fo->volume;
+    temp    = count;
+    pos     = fo->pos;
+    seek    = fo->seek;
+    size    = fo->size;
 
-    l = cluster2sector(volume,fo->ccls);
-    l += (uint32_t)fo->sec;
-    if (sectorRead(l,volume->buffer) != SUCCESS)
+    sector = cluster2sector(volume,fo->ccls);
+    sector += (uint32_t)fo->sec;
+    if (sectorRead(sector, volume->buffer) != SUCCESS)
     {
         error = CE_BAD_SECTOR_READ;
     }
@@ -1401,9 +875,9 @@ uint8_t fread(FILEOBJ fo, void* dest, uint32_t count)
                 }
                 if (error == CE_GOOD)
                 {
-                    l = cluster2sector(volume,fo->ccls);
-                    l += (uint32_t)fo->sec;
-                    if (sectorRead(l,volume->buffer) != SUCCESS)
+                    sector = cluster2sector(volume,fo->ccls);
+                    sector += (uint32_t)fo->sec;
+                    if (sectorRead(sector, volume->buffer) != SUCCESS)
                     {
                         error = CE_BAD_SECTOR_READ;
                     }
@@ -1412,7 +886,7 @@ uint8_t fread(FILEOBJ fo, void* dest, uint32_t count)
 
             if (error == CE_GOOD)
             {
-                *(uint8_t*)dest = RAMread(volume->buffer,pos++);
+                *(uint8_t*)dest = RAMread(volume->buffer, pos++);
                 dest += 1;
                 seek++;
                 (temp)--;
@@ -1424,123 +898,6 @@ uint8_t fread(FILEOBJ fo, void* dest, uint32_t count)
     return error;
 }
 
-/*
-uint8_t fwrite(FILEOBJ fo, void* src, uint32_t count)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fwrite <<<<<!");
-  #endif
-    PARTITION*    volume;
-    bool     sectorloaded = false;
-    uint8_t  error = CE_GOOD;
-    uint32_t pos, tempo;
-    uint32_t l, seek, size;
-    bool     IsWriteProtected = false;
-
-    if (fo->Flags.write)
-    {
-        if (!IsWriteProtected)
-        {
-            tempo = count;
-            volume   = fo->volume;
-            pos   = fo->pos;
-            seek  = fo->seek;
-
-            l = cluster2sector(volume,fo->ccls);
-            l += (uint32_t) fo->sec;
-            if (sectorRead(l,volume->buffer) != SUCCESS)
-            {
-                error = CE_BAD_SECTOR_READ;
-            }
-            sectorloaded = true;
-            size = fo->size;
-            while ((error == CE_GOOD) && (tempo>0))
-            {
-                if (seek == size)
-                {
-                    fo->Flags.FileWriteEOF = true;
-                }
-                if (pos == SDC_SECTOR_SIZE)
-                {
-                    if (sectorloaded)
-                    {
-                        if (sectorWrite(l,volume->buffer)!=SUCCESS)
-                        {
-                            error = CE_WRITE_ERROR;
-                        }
-                    }
-                    pos = 0;
-                    fo->sec++;
-
-                    if (fo->sec == volume->SecPerClus)
-                    {
-                        fo->sec = 0;
-                        if (fo->Flags.FileWriteEOF)
-                        {
-                            error = fileAllocateNewCluster(fo);
-                        }
-                        else
-                        {
-                            error = fileSearchNextCluster(fo,1);
-                        }
-                    }
-
-                    if (error == CE_DISK_FULL)
-                    {
-                        return error;
-                    }
-
-                    if (error == CE_GOOD)
-                    {
-                        l = cluster2sector(volume,fo->ccls);
-                        l += (uint32_t) fo->sec;
-
-                        if (sectorRead(l,volume->buffer) != SUCCESS)
-                        {
-                            error = CE_BAD_SECTOR_READ;
-                        }
-                        sectorloaded = true;
-                    }
-                } // END: write a sector and read the next sector
-
-                if (error == CE_GOOD)
-                {
-                    RAMwrite(volume->buffer, pos++, *(uint8_t*)src);
-                    src += 1;
-                    seek++;
-                    tempo--;
-                }
-                if (fo->Flags.FileWriteEOF)
-                {
-                    size++;
-                }
-            } // END: write to the file (except for the last sector)
-            if (error == CE_GOOD)
-            {
-                l = cluster2sector(volume,fo->ccls);
-                l += (uint32_t)fo->sec;
-                if (sectorWrite(l,volume->buffer) != SUCCESS)
-                {
-                    error = CE_WRITE_ERROR;
-                }
-            }
-            fo->pos  = pos;
-            fo->seek = seek;
-            fo->size = size;
-        }
-        else
-        {
-            return CE_WRITE_PROTECTED;
-        }
-    }
-    else
-    {
-        return CE_WRITE_ERROR;
-    }
-    return error;
-}
-*/
-
 void showDirectoryEntry(DIRENTRY dir)
 {
     printf("\nname.ext: %s.%s",     dir->DIR_Name,dir->DIR_Extension                );
@@ -1548,5 +905,3 @@ void showDirectoryEntry(DIRENTRY dir)
     printf("\ncluster:  %u",        dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
     printf("\nfilesize: %u byte",   dir->DIR_FileSize                               );
 }
-
-

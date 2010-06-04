@@ -640,11 +640,10 @@ label1:
         }
 
         //testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
-        //testFAT("makefilexxx"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
-        //testFAT("abc12345   "); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
+        //testFAT("makefilexxx"); 
+        //testFAT("abc12345   "); 
         testFAT("pqeq    elf"); 
         testFAT("ttt     elf"); 
-
     }// else
 
 label2:
@@ -1065,6 +1064,7 @@ void testFAT(char* filename)
     FILEOBJ fo  = &dest;
     fo->volume  = &usbMSDVolume;
     fo->dirclus = 0;
+    fo->entry   = 0;
     if (fo->volume->type == FAT32)
     {
         fo->dirclus = fo->volume->FatRootDirCluster; 
@@ -1074,7 +1074,7 @@ void testFAT(char* filename)
     if (retVal == CE_GOOD)
     {
         textColor(0x0A);
-        printf("\n\nThe file was found on the device:");
+        printf("\n\nThe file was found on the device: %s",usbMSDVolume.serialNumber);
         char strName[260];
         char strExt[4];
         strncpy(strName,fo->name,8);        
@@ -1107,6 +1107,13 @@ void testFAT(char* filename)
         printf("\n\nThe file could not be found on the device!", retVal);
         textColor(0x0F);
     }
+    else
+    {
+        textColor(0x0C);
+        printf("\n\nretVal of fileFind: %u",retVal);
+        textColor(0x0F);
+    }
+
     waitForKeyStroke();
 }
 
