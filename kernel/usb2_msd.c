@@ -809,7 +809,8 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         usbMSDVolume.FatRootDirCluster   = volume_FatRootDirCluster; 
         strncpy(usbMSDVolume.serialNumber,volume_serialNumber,4); // ID of the partition
     }
-    else if ( ( ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) )
+    // else if ( ( ((*((uint8_t*)addr)) == 0x00) || ((*((uint8_t*)addr)) == 0xEB) || ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) ) // could keep some MBR outside
+    else if   ( (*((uint16_t*)((uint8_t*)addr+444))) == 0x0000 )    
     {
         textColor(0x0E);
         if ( ((*((uint8_t*)addr+510))==0x55) && ((*((uint8_t*)addr+511))==0xAA) )

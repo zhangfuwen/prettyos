@@ -339,7 +339,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
     uint32_t   DirectoriesPerSector = volume->sectorSize/NUMBER_OF_BYTES_IN_DIR_ENTRY;
 
     // Get the number of the entry's sector within the root dir.
-    uint32_t offset2 = (*curEntry)/DirectoriesPerSector;                          //////////////////////////
+    uint32_t offset2 = (*curEntry)/DirectoriesPerSector;                           
     
     switch (volume->type)
     {
@@ -368,7 +368,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
     if ( ForceRead || ((*curEntry & MASK_MAX_FILE_ENTRY_LIMIT_BITS) == 0) ) // only 16 entries per sector
     {
         // see if we have to load a new cluster
-        if(((offset2 == 0) && ((*curEntry) >= DirectoriesPerSector)) || ForceRead)               //////////////////////////
+        if(((offset2 == 0) && ((*curEntry) >= DirectoriesPerSector)) || ForceRead)                
         {
             if (cluster == 0 )
             {
@@ -378,7 +378,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
             {
                 if (ForceRead) // If ForceRead, read the number of sectors from 0
                 {
-                    numofclus = (*curEntry)/(DirectoriesPerSector * volume->SecPerClus);           //////////////////////////
+                    numofclus = (*curEntry)/(DirectoriesPerSector * volume->SecPerClus);            
                 }
                 else // Otherwise just read the next sector
                 {
@@ -437,7 +437,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
                 {
                     if(ForceRead)    // Buffer holds all 16 root entry info. Point to the one required.
                     {
-                        waitForKeyStroke(); return (DIRENTRY)((DIRENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector);   //////////////////////////
+                        return (DIRENTRY)((DIRENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector);    
                     }
                     else
                     {
@@ -454,7 +454,7 @@ static DIRENTRY cacheFileEntry(FILEOBJ fo, uint32_t* curEntry, bool ForceRead)
     }
     else
     {
-        return (DIRENTRY)(((DIRENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector));  //////////////////////////
+        return (DIRENTRY)(((DIRENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector));   
     }
     textColor(0x0C); printf("UNCLEAN !!! END of cacheFileEntry"); textColor(0x0F); 
 } // Cache_File_Entry
@@ -900,7 +900,16 @@ uint8_t fread(FILEOBJ fo, void* dest, uint32_t count)
 
 void showDirectoryEntry(DIRENTRY dir)
 {
-    printf("\nname.ext: %s.%s",     dir->DIR_Name,dir->DIR_Extension                );
+    char strName[260];
+    char strExt[4];
+    strncpy(strName,dir->DIR_Name,8);        
+    strName[8]='.'; // 0-7 short filename, 8: dot
+    strName[9]=0;   // terminate for strcat
+    strncpy(strExt,dir->DIR_Extension,3);
+    strExt[3]=0; // 0-2 short filename extension, 3: '\0' (end of string)
+    strcat(strName,strExt);
+    
+    printf("\nname.ext: %s",        strName                                         );
     printf("\nattrib.:  %y",        dir->DIR_Attr                                   );
     printf("\ncluster:  %u",        dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
     printf("\nfilesize: %u byte",   dir->DIR_FileSize                               );
