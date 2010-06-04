@@ -457,19 +457,25 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
 
 void logBulkTransfer(usbBulkTransfer_t* bT)
 {
-    textColor(0x03);
-    printf("\nopcode: %y", bT->SCSIopcode);
-    printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
-    if (bT->DataBytesToTransferOUT) 
+    if ( !bT->successfulCommand || 
+         !bT->successfulCSW     ||
+         (bT->DataBytesToTransferOUT && !bT->successfulDataOUT) || 
+         (bT->DataBytesToTransferIN  && !bT->successfulDataIN) )
     {
-        printf("  data out: %s", bT->successfulDataOUT ? "OK" : "Error");
+        textColor(0x03);
+        printf("\nopcode: %y", bT->SCSIopcode);
+        printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
+        if (bT->DataBytesToTransferOUT) 
+        {
+            printf("  data out: %s", bT->successfulDataOUT ? "OK" : "Error");
+        }
+        if (bT->DataBytesToTransferIN)  
+        {
+            printf("  data in: %s",  bT->successfulDataIN  ? "OK" : "Error");
+        }
+        printf("  CSW: %s",    bT->successfulCSW     ? "OK" : "Error");
+        textColor(0x0F);
     }
-    if (bT->DataBytesToTransferIN)  
-    {
-        printf("  data in: %s",  bT->successfulDataIN  ? "OK" : "Error");
-    }
-    printf("  CSW: %s",    bT->successfulCSW     ? "OK" : "Error");
-    textColor(0x0F);
 }
 
 /*

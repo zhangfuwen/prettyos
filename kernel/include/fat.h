@@ -20,10 +20,9 @@
 #define SUCCESS 0
 #define FAIL    1
 
-#define RAMread(a,f)     *(a+f)              // reads a byte at an address (a) plus an offset (f) in RAM
-#define RAMreadW(a,f)    *(uint16_t*)(a+f)
-#define RAMreadLong(a,f) *(uint32_t*)(a+f)
-#define RAMwrite(a,f,d)  *(a+f)=d
+#define MemoryReadByte(a,f)     *(a+f)              // reads a byte at an address (a) plus an offset (f) in RAM
+#define MemoryReadWord(a,f) *(uint16_t*)(a+f)
+#define MemoryReadLong(a,f) *(uint32_t*)(a+f)
 
 // Media
 
@@ -128,7 +127,7 @@ typedef struct
     uint32_t dirclus;       // first cluster of the file's directory
     uint32_t dirccls;       // current cluster of the file's directory
 } FILE;
-typedef FILE*   FILEOBJ;
+typedef FILE*   FILEPTR;
 
 typedef struct
 {
@@ -145,8 +144,8 @@ typedef struct
     uint16_t DIR_WrtDate;
     uint16_t DIR_FstClusLO;
     uint32_t DIR_FileSize;
-} _DIRENTRY;
-typedef _DIRENTRY* DIRENTRY;
+} _FILEROOTDIRECTORYENTRY;
+typedef _FILEROOTDIRECTORYENTRY* FILEROOTDIRECTORYENTRY;
 
 
 /************************************************************************/
@@ -228,16 +227,15 @@ uint8_t  sectorRead (uint32_t sector_addr, uint8_t* buffer);
 uint8_t  sectorWrite(uint32_t sector_addr, uint8_t* buffer);
 
 // file handling
-uint8_t  createFileEntry(FILEOBJ fo, uint32_t* fHandle);
-uint8_t  fileDelete(FILEOBJ fo, uint32_t* fHandle, uint8_t EraseClusters);
-uint8_t  fileFind( FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd, uint8_t mode);
-uint8_t  fopen(FILEOBJ fo, uint32_t* fHandle, char type);
-uint8_t  fclose(FILEOBJ fo);
-uint8_t  fread(FILEOBJ fo, void* dest, uint32_t count);
-uint8_t  fwrite(FILEOBJ fo, void* src, uint32_t count);
+uint8_t  createFileEntry(FILEPTR fileptr, uint32_t* fHandle);
+uint8_t  searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
+uint8_t  fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
+uint8_t  fclose(FILEPTR fileptr);
+uint8_t  fread(FILEPTR fileptr, void* dest, uint32_t count);
+uint8_t  fwrite(FILEPTR fileptr, void* src, uint32_t count);
 
 // analysis functions
-void     showDirectoryEntry(DIRENTRY dir);
+void     showDirectoryEntry(FILEROOTDIRECTORYENTRY dir);
 
 //additional functions
 uint32_t checksum(char* ShortFileName);

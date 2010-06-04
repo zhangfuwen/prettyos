@@ -12,8 +12,8 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-#include "fat12.h" // for first tests only
-#include "fat.h"   // for first tests only
+#include "fat12.h" 
+#include "fat.h"   
 
 extern const uint32_t CSWMagicNotOK;
 const uint32_t CSWMagicOK = 0x53425355; // USBS
@@ -258,10 +258,10 @@ label1: /// TEST
     uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
     if (CSWsignature == CSWMagicOK)
     {
-    //#ifdef _USB_DIAGNOSIS_
+    #ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\nCSW signature OK    ");
-    //#endif
+    #endif
     }
     else if (CSWsignature == CSWMagicNotOK)
     {
@@ -280,10 +280,10 @@ label1: /// TEST
     uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
     if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
     {
-    //#ifdef _USB_DIAGNOSIS_
+    #ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("CSW tag %y OK    ",BYTE1(CSWtag));
-    //#endif
+    #endif
     }
     else
     {
@@ -296,10 +296,10 @@ label1: /// TEST
     uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
     if (CSWDataResidue == 0)
     {
-    //#ifdef _USB_DIAGNOSIS_
+    #ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\tCSW data residue OK    ");
-    //#endif
+    #endif
     }
     else
     {
@@ -315,11 +315,11 @@ label1: /// TEST
     switch (CSWstatusByte)
     {
         case 0x00:
-        //#ifdef _USB_DIAGNOSIS_
+        #ifdef _USB_DIAGNOSIS_
             textColor(0x0A);
             printf("\tCSW status OK");
             textColor(0x0F);
-        //#endif
+        #endif
             break;
         case 0x01 :
             textColor(0x0C);
@@ -809,19 +809,18 @@ int32_t analyzeBootSector(void* addr) // for first tests only
         usbMSDVolume.FatRootDirCluster   = volume_FatRootDirCluster; 
         strncpy(usbMSDVolume.serialNumber,volume_serialNumber,4); // ID of the partition
     }
-    // else if ( ( ((*((uint8_t*)addr)) == 0x00) || ((*((uint8_t*)addr)) == 0xEB) || ((*((uint8_t*)addr)) == 0xFA) || ((*((uint8_t*)addr)) == 0x33) )  && ((*((uint16_t*)((uint8_t*)addr+444))) == 0x0000) ) // could keep some MBR outside
-    else if   ( (*((uint16_t*)((uint8_t*)addr+444))) == 0x0000 )    
+    
+    else if ( (*((uint16_t*)((uint8_t*)addr+444))) == 0x0000 )    
     {
         textColor(0x0E);
         if ( ((*((uint8_t*)addr+510))==0x55) && ((*((uint8_t*)addr+511))==0xAA) )
         {
             printf("\nThis seems to be a Master Boot Record:");
+            
             textColor(0x0F);
             uint32_t discSignature = *((uint32_t*)((uint8_t*)addr+440));
-            uint16_t twoBytesZero  = *((uint16_t*)((uint8_t*)addr+444));
             printf("\n\nDisc Signature: %X\t",discSignature);
-            printf("Null (check): %x",twoBytesZero);
-
+            
             uint8_t partitionTable[4][16];
             for (uint8_t i=0;i<4;i++) // four tables
             {
@@ -833,7 +832,7 @@ int32_t analyzeBootSector(void* addr) // for first tests only
             printf("\n");
             for (uint8_t i=0;i<4;i++) // four tables
             {
-                if (*((uint32_t*)(&partitionTable[i][0x0C]))) // number of sectors
+                if ( (*((uint32_t*)(&partitionTable[i][0x0C])) != 0) && (*((uint32_t*)(&partitionTable[i][0x0C])) != 0x80808080) ) // number of sectors
                 {
                     textColor(0x0E);
                     printf("\npartition entry %u:",i);
@@ -1057,31 +1056,31 @@ void testFAT(char* filename)
 
     // file name
     FILE toCompare;
-    FILEOBJ foCompareTo = &toCompare;
-    strncpy(foCompareTo->name,filename,11); // <--------------- this file will be searched
+    FILEPTR fileptrTest = &toCompare;
+    strncpy(fileptrTest->name,filename,11); // <--------------- this file will be searched
 
     // file to search
     FILE dest;
-    FILEOBJ fo  = &dest;
-    fo->volume  = &usbMSDVolume;
-    fo->dirclus = 0;
-    fo->entry   = 0;
-    if (fo->volume->type == FAT32)
+    FILEPTR fileptr  = &dest;
+    fileptr->volume  = &usbMSDVolume;
+    fileptr->dirclus = 0;
+    fileptr->entry   = 0;
+    if (fileptr->volume->type == FAT32)
     {
-        fo->dirclus = fo->volume->FatRootDirCluster; 
+        fileptr->dirclus = fileptr->volume->FatRootDirCluster; 
     }
         
-    uint8_t retVal = fileFind(fo, foCompareTo, LOOK_FOR_MATCHING_ENTRY, 0); // fileFind(FILEOBJ foDest, FILEOBJ foCompareTo, uint8_t cmd, uint8_t mode)
+    uint8_t retVal = searchFile(fileptr, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode)
     if (retVal == CE_GOOD)
     {
         textColor(0x0A);
         printf("\n\nThe file was found on the device: %s",usbMSDVolume.serialNumber);
         char strName[260];
         char strExt[4];
-        strncpy(strName,fo->name,8);        
+        strncpy(strName,fileptr->name,8);        
         strName[8]='.'; // 0-7 short filename, 8: dot
         strName[9]=0;   // terminate for strcat
-        strncpy(strExt,(fo->name)+8,3);
+        strncpy(strExt,(fileptr->name)+8,3);
         strExt[3]=0; // 0-2 short filename extension, 3: '\0' (end of string)
         printf("\nfile name: ");
         textColor(0x0E);
@@ -1090,17 +1089,17 @@ void testFAT(char* filename)
 
         textColor(0x0A);
         printf("\nnumber of entry in root dir: ");
-        textColor(0x0E); printf("%u\n",fo->entry); // number of file entry "searched.xxx"
+        textColor(0x0E); printf("%u\n",fileptr->entry); // number of file entry "searched.xxx"
         textColor(0x0F);
 
-        fopen(fo, &(fo->entry), 'r');
+        fopen(fileptr, &(fileptr->entry), 'r');
         
-        void* filebuffer = malloc(fo->size,PAGESIZE);
-        fread(fo, filebuffer, fo->size);
+        void* filebuffer = malloc(fileptr->size,PAGESIZE);
+        fread(fileptr, filebuffer, fileptr->size);
                 
-        elf_exec(filebuffer, fo->size, fo->name); // try to execute
+        elf_exec(filebuffer, fileptr->size, fileptr->name); // try to execute
  
-        fclose(fo);
+        fclose(fileptr);
     }
     else if (retVal == CE_FILE_NOT_FOUND)
     {
@@ -1111,7 +1110,7 @@ void testFAT(char* filename)
     else
     {
         textColor(0x0C);
-        printf("\n\nretVal of fileFind: %u",retVal);
+        printf("\n\nretVal of searchFile: %u",retVal);
         textColor(0x0F);
     }
 
