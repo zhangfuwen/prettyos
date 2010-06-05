@@ -1,20 +1,26 @@
 # Define OS-dependant Tools
+NASM= nasm
+
 ifeq ($(OS),WINDOWS)
     RM= - del
     MV= cmd /c move /Y
-    NASM= nasm
     CC= i586-elf-gcc
     LD= i586-elf-ld
+    FLOPPYIMAGE= tools/CreateFloppyImage2
+    MKINITRD= tools/make_initrd
 else
     RM= rm -f
     MV= mv
-    NASM= nasm
     ifeq ($(OS),MACOSX)
         CC= i586-elf-gcc
         LD= i586-elf-ld
+        FLOPPYIMAGE= tools/osx_CreateFloppyImage2
+        MKINITRD= tools/osx_make_initrd
     else
         CC= gcc
         LD= ld
+        FLOPPYIMAGE= tools/linux_CreateFloppyImage2
+        MKINITRD= tools/linux_make_initrd
     endif
 endif
 
@@ -65,14 +71,14 @@ $(USERDIR)/$(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(SHELLDIR)/shell.map -o $(USERDIR)/$(SHELLDIR)/shell.elf
 
 $(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/shell.elf
-	tools/make_initrd $(USERDIR)/$(USERRDDIR)/info.txt info $(USERDIR)/$(SHELLDIR)/shell.elf shell
+	$(MKINITRD) $(USERDIR)/$(USERRDDIR)/info.txt info $(USERDIR)/$(SHELLDIR)/shell.elf shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
 FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
-	tools/CreateFloppyImage2 PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTESTC)/HELLO.ELF $(USERDIR)/$(USERTESTCPP)/CPP.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF $(USERDIR)/other_userprogs/PQEQ.ELF
+	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTESTC)/HELLO.ELF $(USERDIR)/$(USERTESTCPP)/CPP.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF $(USERDIR)/other_userprogs/PQEQ.ELF
 
 clean:
-# OS-dependant code because of different interpretation of "/" in Windows and UNIX-OS (Linux and Mac OS X)
+# OS-dependant code because of different interpretation of "/" in Windows and UNIX-Based OS (Linux and Mac OS X)
 ifeq ($(OS),WINDOWS)
 	$(RM) $(STAGE1DIR)\boot.bin
 	$(RM) $(STAGE2DIR)\BOOT2.BIN
