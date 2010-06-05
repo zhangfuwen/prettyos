@@ -22,7 +22,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.489";
+const char* version = "0.0.0.490";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -107,8 +107,6 @@ void main()
 
     void* ramdisk_start = ramdisk_install(0x200000); // initrd.c
 
-    showMSDAttached(); // TEST
-
     // search and load shell
     bool shell_found = false;
     uint8_t* buf = malloc(FILEBUFFERSIZE, 0);
@@ -148,6 +146,8 @@ void main()
         printf("Program not found.\n");
         textColor(0x0F);
     }
+
+    showMSDAttached(); // TEST
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter

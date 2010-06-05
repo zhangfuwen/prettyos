@@ -16,13 +16,14 @@ void MSDmanager_install()
 
 void addToMSDmanager(MSD_t* msd)
 {    
-    MSD_Array[globalMSD] = msd;    
+    MSD_Array[globalMSD] = msd;  
+    msd->globalMSD = globalMSD;
     globalMSD += 1; 
 }
 
 void deleteFromMSDmanager(MSD_t* msd)
 {
-    // TODO 
+    MSD_Array[msd->globalMSD] = NULL;
 }
 
 uint32_t getMSDVolumeNumber()
@@ -37,36 +38,52 @@ void showMSDAttached()
     printf("\nList of attached Mass Storage Devices:");
     for (uint8_t i=0; i<globalMSD; i++) 
     {
-        if ( MSD_Array[i]->connected )
-        {   
-            switch( MSD_Array[i]->type )
-            {    
-            case FLOPPYDISK:
-                printf("\nFDD:      ");
-                break;
-            case RAMDISK:
-                printf("\nRAM Disk: ");
-                break;
-            case USBMSD:
-                printf("\nUSB MSD:  ");
-                break;
-            }
+        if(MSD_Array[i] != NULL)
+        {
+            if ( MSD_Array[i]->connected )
+            {   
+                switch( MSD_Array[i]->type )
+                {    
+                case FLOPPYDISK:
+                    printf("\nFDD:      ");
+                    break;
+                case RAMDISK:
+                    printf("\nRAM Disk: ");
+                    break;
+                case USBMSD:
+                    printf("\nUSB MSD:  ");
+                    break;
+                }
 
-            for (uint8_t j=0; j<(MSD_Array[i]->numberOfPartitions); j++)
-            {
-                textColor(0x0E);
-                printf("Drive: %u: ", MSD_Array[i]->ptrPartition[j]->volumeNumber);
-                textColor(0x0F);
-                printf("partition: %d serial: %s ", j, (MSD_Array[i]->ptrPartition[j])->serialNumber);
-            }
+                for (uint8_t j=0; j<(MSD_Array[i]->numberOfPartitions); j++)
+                {
+                    textColor(0x0E);
+                    printf("Drive: %u: ", MSD_Array[i]->ptrPartition[j]->volumeNumber);
+                    textColor(0x0F);
+                    
+                    switch( MSD_Array[i]->type )
+                    {
+                    case FLOPPYDISK:
+                        printf("partition: %d serial: %s ", j, (MSD_Array[i]->ptrPartition[j])->serialNumber);
+                        break;
+                    case RAMDISK:
+                        printf("partition: %d serial: %s ", j, (MSD_Array[i]->ptrPartition[j])->serialNumber);
+                        break;
+                    case USBMSD:
+                        //printf("partition: %d serial: %s ", j, (MSD_Array[i]->ptrPartition[j])->serialNumber);
+                        printf("partition: %d serial: %s ", j, MSD_Array[i]->usb2Device->serialNumber); // serial of device
+                        break;
+                    }
+                }
 
-            if ( (MSD_Array[i]->portNumber) == 255 )
-            {
-                printf("(no usb msd)");
-            }
-            else
-            {
-                printf("(port %u)", MSD_Array[i]->portNumber); 
+                if ( (MSD_Array[i]->portNumber) == 255 )
+                {
+                    printf("(no usb msd)");
+                }
+                else
+                {
+                    printf("(port %u)", MSD_Array[i]->portNumber+1); 
+                }
             }
         }
     }

@@ -17,6 +17,7 @@
 #include "usb2_msd.h"
 #include "ehciQHqTD.h"
 #include "ehci.h"
+#include "devicemanager.h"
 
 /// TEST
 /// const uint8_t PORTRESET = 3; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port
@@ -32,7 +33,6 @@ bool      USBINTflag; // signals STS_USBINT reset by EHCI handler
 uint8_t   numPorts;
 uintptr_t eecp;
 
-
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 bool USBtransferFlag; // switch on/off tests for USB-Transfer
@@ -42,6 +42,11 @@ uint32_t pciEHCInumber = 0; // pci device number
 
 // usb devices list
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
+
+// Device Manager
+MSD_t usbDev[17];
+PARTITION usbDevVolume[17];
+
 
 void ehci_install(uint32_t num, uint32_t i)
 {
@@ -554,6 +559,11 @@ void showPORTSC()
             {
                 strcpy(PortStatus,"not attached");
                 writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
+
+                // Device Manager
+                deleteFromMSDmanager(&usbDev[j+1]);
+                showMSDAttached();
+                waitForKeyStroke();
             }
             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
             beep(1000,100);
@@ -611,7 +621,7 @@ void checkPortLineStatus(uint8_t j)
 
 void setupUSBDevice(uint8_t portNumber)
 {
-     uint8_t devAddr = usbTransferEnumerate(portNumber);
+    uint8_t devAddr = usbTransferEnumerate(portNumber);
 
    #ifdef _USB_DIAGNOSIS_
      printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
@@ -676,6 +686,30 @@ void setupUSBDevice(uint8_t portNumber)
                                             usbDevices[devAddr].numEndpointOutMSD,
                                             usbDevices[devAddr].numEndpointInMSD);
     textColor(0x0F);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    // device manager //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////
+
+    usbDevVolume[portNumber+1].buffer       = (uint8_t*)malloc(512,0);
+    strncpy(usbDevVolume[portNumber+1].serialNumber,"usb",12);  
+    usbDevVolume[portNumber+1].volumeNumber = getMSDVolumeNumber(); 
+    
+    usbDev[portNumber+1].type               = USBMSD;
+    usbDev[portNumber+1].connected          = true;        
+    usbDev[portNumber+1].numberOfPartitions = 1;
+    usbDev[portNumber+1].ptrPartition[0]    = &usbDevVolume[portNumber+1];
+    usbDev[portNumber+1].portNumber         = portNumber;
+    
+    usbDev[portNumber+1].usb2Device         = &usbDevices[devAddr]; 
+
+    addToMSDmanager(&usbDev[portNumber+1]);
+
+    showMSDAttached(); // TEST
+    waitForKeyStroke();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////
+
 
     testMSD(devAddr,config); // test with some SCSI commands
 }
