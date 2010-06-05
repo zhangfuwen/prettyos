@@ -17,19 +17,16 @@
 #include "ehci.h"
 #include "mouse.h"
 #include "cdi.h"
+#include "devicemanager.h"
 
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.488";
+const char* version = "0.0.0.489";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
 extern uintptr_t _kernel_end; // linker script
-
-// file and data going to RAM disk
-extern uintptr_t file_data_start;
-extern uintptr_t file_data_end;
 
 // pci devices list
 extern pciDev_t pciDev_Array[PCIARRAYSIZE];
@@ -87,38 +84,30 @@ void showMemorySize()
     }
 }
 
-void* ramdisk_install(size_t size)
-{
-    kdebug(0x00, "rd_start: ");
-
-    void* ramdisk_start = malloc(size, PAGESIZE);
-    // shell via incbin in data.asm
-    memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
-    fs_root = install_initrd(ramdisk_start);
-    return(ramdisk_start);
-}
-
 void main()
 {
     init();
-    EHCIflag = false; // first EHCI device found?
+    EHCIflag    = false; // first EHCI device found?
+    FLOPPYflag  = false; // at least one floppy disk device found?
+    RAMDISKflag = false; // at least one Ram disk found?
 
-    // Create Startup Screen
     create_cthread(&bootscreen, "Booting ...");
-    task_switching = true;        // start task switch
+    task_switching = true;
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
-    floppy_install(); // detect FDDs
-
-    pciScan(); // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
+    MSDmanager_install(); // device management for mass storage devices
+    floppy_install();     // detect FDDs
+    pciScan();            // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 
     #ifdef _DIAGNOSIS_
     listPCI();
     #endif
 
-    void* ramdisk_start = ramdisk_install(0x200000);
+    void* ramdisk_start = ramdisk_install(0x200000); // initrd.c
+
+    showMSDAttached(); // TEST
 
     // search and load shell
     bool shell_found = false;

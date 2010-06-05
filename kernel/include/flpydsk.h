@@ -10,6 +10,8 @@
 #define SECTOR 0
 #define TRACK  1
 
+extern bool FLOPPYflag;
+
 void floppy_install();
 
 void flpydsk_initialize_dma();

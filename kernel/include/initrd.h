@@ -3,6 +3,8 @@
 
 #include "fs.h"
 
+extern bool RAMDISKflag;
+
 typedef struct
 {
     uint32_t nfiles; // The number of files in the ramdisk.
@@ -17,6 +19,7 @@ typedef struct
 } initrd_file_header_t;
 
 // Installs the initial ramdisk. It gets passed the address, and returns a completed filesystem node.
+void* ramdisk_install(size_t size);
 fs_node_t* install_initrd(void* location);
 
 #endif

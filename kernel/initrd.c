@@ -7,6 +7,9 @@
 #include "util.h"
 #include "kheap.h"
 #include "paging.h"
+#include "devicemanager.h"
+#include "fat.h" 
+
 
 initrd_header_t*       initrd_header; // The header.
 initrd_file_header_t*  file_headers;  // The list of file headers.
@@ -16,6 +19,41 @@ fs_node_t*             root_nodes;    // List of file nodes.
 int                    nroot_nodes;   // Number of file nodes.
 
 struct dirent dirent;
+
+// file and data going to RAM disk
+extern uintptr_t file_data_start;
+extern uintptr_t file_data_end;
+
+MSD_t      RAMDisk;
+PARTITION  RAMDiskVolume;
+
+bool RAMDISKflag;
+
+void* ramdisk_install(size_t size)
+{
+    kdebug(0x00, "rd_start: ");
+
+    void* ramdisk_start = malloc(size, PAGESIZE);
+    // shell via incbin in data.asm
+    memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
+    fs_root = install_initrd(ramdisk_start);
+
+    RAMDISKflag = true; // at least one RAMDisk found
+        
+    RAMDiskVolume.buffer       = (uint8_t*)malloc(512,0); // necessary?
+    strncpy(RAMDiskVolume.serialNumber,"ramdisk",12);  
+    RAMDiskVolume.volumeNumber = getMSDVolumeNumber(); 
+    
+    RAMDisk.type               = RAMDISK;
+    RAMDisk.connected          = true;        
+    RAMDisk.numberOfPartitions = 1;
+    RAMDisk.ptrPartition[0]    = &RAMDiskVolume;
+    RAMDisk.portNumber         = 255; // no usb port
+    
+    addToMSDmanager(&RAMDisk);
+
+    return(ramdisk_start);
+}
 
 static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, char* buffer)
 {
