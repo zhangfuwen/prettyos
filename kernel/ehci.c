@@ -453,9 +453,11 @@ void ehci_handler(registers_t* r)
 {
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
     {
+      #ifdef _USB_DIAGNOSIS_
         textColor(0x09);
         printf("\nehci_handler: ");
         textColor(0x0F);
+      #endif
     }
 
     textColor(0x0E);
@@ -510,7 +512,9 @@ void ehci_handler(registers_t* r)
 
     if (pOpRegs->USBSTS & STS_ASYNC_INT)
     {
+      #ifdef _USB_DIAGNOSIS_
         printf("Interrupt on Async Advance");
+      #endif
         pOpRegs->USBSTS |= STS_ASYNC_INT;
     }
 }
@@ -679,20 +683,12 @@ void setupUSBDevice(uint8_t portNumber)
      waitForKeyStroke();
    #endif
 
-    // device, interface, endpoints
-    textColor(0x07);
-    printf("\n\nMSD test now with device: %u  interface: %u  endpOUT: %u  endpIN: %u\n",
-                                            devAddr, usbDevices[devAddr].numInterfaceMSD,
-                                            usbDevices[devAddr].numEndpointOutMSD,
-                                            usbDevices[devAddr].numEndpointInMSD);
-    textColor(0x0F);
-
     ////////////////////////////////////////////////////////////////////////////////////////////
     // device manager //////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////
 
     usbDevVolume[portNumber+1].buffer       = (uint8_t*)malloc(512,0);
-    strncpy(usbDevVolume[portNumber+1].serialNumber,"usb",12);  
+    strncpy(usbDevVolume[portNumber+1].serialNumber,"usb",12);  // ???
     usbDevVolume[portNumber+1].volumeNumber = getMSDVolumeNumber(); 
     
     usbDev[portNumber+1].type               = USBMSD;
@@ -710,6 +706,13 @@ void setupUSBDevice(uint8_t portNumber)
 
     ////////////////////////////////////////////////////////////////////////////////////////////
 
+    // device, interface, endpoints
+    textColor(0x07);
+    printf("\n\nMSD test now with device: %u  interface: %u  endpOUT: %u  endpIN: %u\n",
+                                            devAddr, usbDevices[devAddr].numInterfaceMSD,
+                                            usbDevices[devAddr].numEndpointOutMSD,
+                                            usbDevices[devAddr].numEndpointInMSD);
+    textColor(0x0F);
 
     testMSD(devAddr,config); // test with some SCSI commands
 }

@@ -5,6 +5,7 @@
 
 #include "devicemanager.h"
 #include "console.h"
+#include "util.h"
 
 MSD_t*   MSD_Array[MSDARRAYSIZE];
 uint8_t  globalMSD = 0;
@@ -12,13 +13,17 @@ uint8_t  globalMSD = 0;
 void MSDmanager_install()
 {
     printf("\nMass Storage Device Manager installed.\n");
+    for(uint8_t i=0; i<MSDARRAYSIZE; i++)
+    {
+        MSD_Array[i] = NULL;
+    }
 }
 
 void addToMSDmanager(MSD_t* msd)
-{    
-    MSD_Array[globalMSD] = msd;  
+{
+    MSD_Array[globalMSD] = msd;
     msd->globalMSD = globalMSD;
-    globalMSD++; 
+    globalMSD++;
 }
 
 void deleteFromMSDmanager(MSD_t* msd)
@@ -30,65 +35,76 @@ uint32_t getMSDVolumeNumber()
 {
 	// Should recognize MSDs. So it has to be "rewritten" later.
     static uint32_t globalMSDVolume = 0;
-    return ++globalMSDVolume; // 0 is reserved for the PrettyOS media
+    return ++globalMSDVolume; // volume 0 is reserved for the PrettyOS media
 }
 
 void showMSDAttached()
 {
-    printf("\nList of attached Mass Storage Devices:");
-    for (uint8_t i=0; i<globalMSD; i++) 
+    printf("\n\nAttached Mass Storage Devices:");
+    textColor(0x07);
+    printf("\n\nType\tDrive\tPart.\tSerial(device)\tPort");
+    printf("\n----------------------------------------------------------------------");
+    textColor(0x0F);
+
+    for (uint8_t i=0; i<globalMSD; i++)
     {
         if(MSD_Array[i] != NULL)
         {
             if ( MSD_Array[i]->connected )
-            {   
+            {
                 switch( MSD_Array[i]->type )
-                {    
+                {
                 case FLOPPYDISK:
-                    printf("\nFDD:      ");
+                    printf("\nFDD");
                     break;
                 case RAMDISK:
-                    printf("\nRAM Disk: ");
+                    printf("\nRAMdisk");
                     break;
                 case USBMSD:
-                    printf("\nUSB MSD:  ");
+                    printf("\nUSB MSD");
                     break;
                 }
 
                 for (uint8_t j = 0; j < MSD_Array[i]->numberOfPartitions; j++)
                 {
                     textColor(0x0E);
-                    printf("Drive: %u: ", MSD_Array[i]->Partition[j]->volumeNumber);
+                    printf("\t%u", MSD_Array[i]->Partition[j]->volumeNumber);
                     textColor(0x0F);
-                    
+
                     switch( MSD_Array[i]->type )
                     {
-                    case FLOPPYDISK:
-                        printf("partition: %d serial: %s ", j, MSD_Array[i]->Partition[j]->serialNumber);
+                    case FLOPPYDISK: // TODO: floppy disk device: use the current serials of the floppy disks
+                        printf("\t%d\t%s", j, (MSD_Array[i]->Partition[j])->serialNumber);
                         break;
                     case RAMDISK:
-                        printf("partition: %d serial: %s ", j, MSD_Array[i]->Partition[j]->serialNumber);
+                        printf("\t%d\t%s", j, (MSD_Array[i]->Partition[j])->serialNumber);
                         break;
-                    case USBMSD:
-                        //printf("partition: %d serial: %s ", j, MSD_Array[i]->Partition[j]->serialNumber);
-                        printf("partition: %d serial: %s ", j, MSD_Array[i]->usb2Device->serialNumber); // serial of device
+                    case USBMSD:                        
+                        printf("\t%d\t%s", j, MSD_Array[i]->usb2Device->serialNumber); // serial of device
+                        if (strlen(MSD_Array[i]->usb2Device->serialNumber) < 8) printf("\t");
                         break;
                     }
                 }
 
                 if ( (MSD_Array[i]->portNumber) == 255 )
                 {
-                    printf("(no usb msd)");
+                    // do nothing
                 }
                 else
                 {
-                    printf("(port %u)", MSD_Array[i]->portNumber+1); 
+                    printf("\t%u", MSD_Array[i]->portNumber+1);
                 }
             }
         }
+        else
+        {
+            textColor(0x07);
+            printf("\ndeleted"); // TEST
+            textColor(0x0F);
+        }
     }
     textColor(0x07);
-    printf("\n--------------------------------------------------------------------------------\n\n");
+    printf("\n----------------------------------------------------------------------\n");
     textColor(0x0F);
 }
 

@@ -97,7 +97,7 @@ typedef struct
     uint8_t  type;              // FAT type (FAT16, FAT32)
     bool     mount;             // 0: not mounted  1: mounted
     uint32_t FatRootDirCluster;
-    char     serialNumber[12];  // serial number for identification
+    char     serialNumber[13];  // serial number for identification
     uint16_t volumeNumber;      // PrettyOS internal number for user approach
 } PARTITION;
 

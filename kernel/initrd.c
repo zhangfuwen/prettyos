@@ -41,7 +41,7 @@ void* ramdisk_install(size_t size)
     RAMDISKflag = true; // at least one RAMDisk found
         
     RAMDiskVolume.buffer       = (uint8_t*)malloc(512,0); // necessary?
-    strncpy(RAMDiskVolume.serialNumber,"ramdisk",12);  
+    strncpy(RAMDiskVolume.serialNumber,"ramdisk",12); 
     RAMDiskVolume.volumeNumber = getMSDVolumeNumber(); 
     
     RAMDisk.type               = RAMDISK;

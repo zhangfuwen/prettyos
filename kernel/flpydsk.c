@@ -151,7 +151,8 @@ void floppy_install()
         flpy_ReadWriteFlag[0] = false;          // first floppy is not blocked
         
         floppyVolume1.buffer       = (uint8_t*)malloc(512,0);
-        strncpy(floppyVolume1.serialNumber,"floppy1",12);  
+        strncpy(floppyVolume1.serialNumber,"floppy1",12);
+        floppyVolume1.serialNumber[12]=0;
         floppyVolume1.volumeNumber = getMSDVolumeNumber(); 
         
         floppy1.type               = FLOPPYDISK;
@@ -169,7 +170,7 @@ void floppy_install()
             flpy_ReadWriteFlag[1] = false;      // second floppy is not blocked
             
             floppyVolume2.buffer = (uint8_t*)malloc(512,0);
-            strncpy(floppyVolume2.serialNumber,"floppy2",12);  
+            strncpy(floppyVolume2.serialNumber,"floppy2     ",12);
             floppyVolume2.volumeNumber = getMSDVolumeNumber();            
             
             floppy2.type = FLOPPYDISK;
