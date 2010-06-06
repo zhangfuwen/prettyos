@@ -16,8 +16,8 @@ uint16_t* vidmem = (uint16_t*)0xB8000;
 char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 
 static const uint8_t LINES      = 50;
-static const uint8_t USER_BEGIN =  2; // Reserving Titlebar +Separation
-static const uint8_t USER_END   = 48; // Reserving Statusbar+Separation
+static const uint8_t USER_BEGIN =  2; // Reserving  Titlebar + Separation
+static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
 
 uint8_t csr_x  = 0;
 uint8_t csr_y  = 0;
@@ -194,7 +194,7 @@ void refreshUserScreen()
         char Buffer[70];
         snprintf(Buffer, 70, "Console %i: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
         csr_x = COLUMNS - strlen(Buffer);
-		csr_y = 0;
+        csr_y = 0;
         kputs(Buffer);
     }
     kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation

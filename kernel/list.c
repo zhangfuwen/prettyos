@@ -43,24 +43,24 @@ bool list_Append(listHead_t* hd, void* data)
 
 void list_Delete(listHead_t* list, void* data)
 {
-	element_t* cur = list->head;
-	if(cur->data == data)
-	{
-		element_t* temp = cur;
-		cur = cur->next;
-		list->head = cur;
-		free(temp);
-	}
-	while(cur != 0)
-	{
-		if(cur->next->data == data)
-		{
-			element_t* temp = cur->next;
-			cur->next = cur->next->next;
-			free(temp);
-		}
-		cur = cur->next;
-	}
+    element_t* cur = list->head;
+    if(cur->data == data)
+    {
+        element_t* temp = cur;
+        cur = cur->next;
+        list->head = cur;
+        free(temp);
+    }
+    while(cur != 0)
+    {
+        if(cur->next->data == data)
+        {
+            element_t* temp = cur->next;
+            cur->next = cur->next->next;
+            free(temp);
+        }
+        cur = cur->next;
+    }
 }
 
 void list_DeleteAll(listHead_t* hd)
@@ -123,8 +123,8 @@ void ring_Insert(ring_t* ring, void* data)
 {
     if(ring->begin == 0) // ring is empty
     {
-		ring->begin = ring->current = malloc(sizeof(element_t), 0);
-		ring->current->next = ring->current;
+        ring->begin = ring->current = malloc(sizeof(element_t), 0);
+        ring->current->next = ring->current;
         ring->current->data = data;
     }
     else
@@ -144,14 +144,14 @@ bool ring_isEmpty(ring_t* ring)
 bool ring_DeleteFirst(ring_t* ring, void* data)
 {
     element_t* current = ring->current;
-	if(ring->begin == 0) return(false);
+    if(ring->begin == 0) return(false);
     do
     {
         if (current->next->data == data) // next element will be deleted
         {
             element_t* temp = current->next;
-			if(temp == ring->begin)   ring->begin   = ring->begin->next;
-			if(temp == ring->current) ring->current = ring->current->next;
+            if(temp == ring->begin)   ring->begin   = ring->begin->next;
+            if(temp == ring->current) ring->current = ring->current->next;
             current->next = current->next->next;
             free(temp);
             return(true);

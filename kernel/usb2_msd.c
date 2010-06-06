@@ -510,29 +510,29 @@ static void analyzeInquiry()
 
     switch (PeripheralDeviceType)
     {
-		case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");            break;
-		case 0x01: printf("\nsequential-access device (e.g., magnetic tape)");        break;
-		case 0x02: printf("\nprinter device");                                        break;
-		case 0x03: printf("\nprocessor device");                                      break;
-		case 0x04: printf("\nwrite-once device");                                     break;
-		case 0x05: printf("\nCD/DVD device");                                         break;
-		case 0x06: printf("\nscanner device");                                        break;
-		case 0x07: printf("\noptical memory device (non-CD optical disk)");           break;
-		case 0x08: printf("\nmedium Changer (e.g. jukeboxes)");                       break;
-		case 0x09: printf("\ncommunications device");                                 break;
-		case 0x0A: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
-		case 0x0B: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
-		case 0x0C: printf("\nStorage array controller device (e.g., RAID)");          break;
-		case 0x0D: printf("\nEnclosure services device");                             break;
-		case 0x0E: printf("\nSimplified direct-access device (e.g., magnetic disk)"); break;
-		case 0x0F: printf("\nOptical card reader/writer device");                     break;
-		case 0x10: printf("\nReserved for bridging expanders");                       break;
-		case 0x11: printf("\nObject-based Storage Device");                           break;
-		case 0x12: printf("\nAutomation/Drive Interface");                            break;
-		case 0x13: printf("\nReserved");                                              break;
-		case 0x1D: printf("\nReserved");                                              break;
-		case 0x1E: printf("\nReduced block command (RBC) direct-access device");      break;
-		case 0x1F: printf("\nUnknown or no device type");                             break;
+        case 0x00: printf("\ndirect-access device (e.g., magnetic disk)");            break;
+        case 0x01: printf("\nsequential-access device (e.g., magnetic tape)");        break;
+        case 0x02: printf("\nprinter device");                                        break;
+        case 0x03: printf("\nprocessor device");                                      break;
+        case 0x04: printf("\nwrite-once device");                                     break;
+        case 0x05: printf("\nCD/DVD device");                                         break;
+        case 0x06: printf("\nscanner device");                                        break;
+        case 0x07: printf("\noptical memory device (non-CD optical disk)");           break;
+        case 0x08: printf("\nmedium Changer (e.g. jukeboxes)");                       break;
+        case 0x09: printf("\ncommunications device");                                 break;
+        case 0x0A: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
+        case 0x0B: printf("\ndefined by ASC IT8 (Graphic arts pre-press devices)");   break;
+        case 0x0C: printf("\nStorage array controller device (e.g., RAID)");          break;
+        case 0x0D: printf("\nEnclosure services device");                             break;
+        case 0x0E: printf("\nSimplified direct-access device (e.g., magnetic disk)"); break;
+        case 0x0F: printf("\nOptical card reader/writer device");                     break;
+        case 0x10: printf("\nReserved for bridging expanders");                       break;
+        case 0x11: printf("\nObject-based Storage Device");                           break;
+        case 0x12: printf("\nAutomation/Drive Interface");                            break;
+        case 0x13: printf("\nReserved");                                              break;
+        case 0x1D: printf("\nReserved");                                              break;
+        case 0x1E: printf("\nReduced block command (RBC) direct-access device");      break;
+        case 0x1F: printf("\nUnknown or no device type");                             break;
     }
 }
 

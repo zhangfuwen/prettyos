@@ -432,7 +432,7 @@ char* strchr(char* str, int character)
 char* gets(char* s)
 {
     int i = 0;
-	char c;
+    char c;
     do
     {
         c = getch();
@@ -494,7 +494,7 @@ char* itoa(int32_t n, char* s)
     }
     s[i] = '\0';
     reverse(s);
-	return(s);
+    return(s);
 }
 
 char* utoa(uint32_t n, char* s)
@@ -507,13 +507,13 @@ char* utoa(uint32_t n, char* s)
     while ((n /= 10) > 0);     // delete it
     s[i] = '\0';
     reverse(s);
-	return(s);
+    return(s);
 }
 
 int atoi(const char* s)
 {
     int num = 0;
-	bool sign = false;
+    bool sign = false;
     for (size_t i=0; i<=strlen(s); i++)
     {
         if (s[i] >= '0' && s[i] <= '9')

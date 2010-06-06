@@ -204,7 +204,7 @@ void scroll()
 // vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c and the PrettyOS-specific %v
 void vprintf(const char* args, va_list ap)
 {
-	uint8_t attribute = current_console->attrib;
+    uint8_t attribute = current_console->attrib;
     char buffer[32]; // Larger is not needed at the moment
 
     for (; *args; ++args)
@@ -280,7 +280,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     current_console->attrib = attribute;
     current_console->csr_x = 0; current_console->csr_y = line;
 
-	// Call usual printf routines
+    // Call usual printf routines
     va_list ap;
     va_start (ap, attribute);
     vprintf(message, ap);

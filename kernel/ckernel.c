@@ -22,7 +22,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.490";
+const char* version = "0.0.0.491";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -67,20 +67,20 @@ static void init()
     events_install();
     syscall_install();
 
-	cdi_init();
+    cdi_init();
 
     sti();
 }
 
 void showMemorySize()
 {
-    if (system.Memory_Size > 0x100000)
+    if (system.Memory_Size >= 1048576)
     {
-        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", system.Memory_Size/0x100000, system.Memory_Size/1000000, system.Memory_Size);
+        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
     }
     else
     {
-        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", system.Memory_Size/0x400, system.Memory_Size/1000, system.Memory_Size);
+        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", system.Memory_Size>>10, system.Memory_Size/1000, system.Memory_Size);
     }
 }
 

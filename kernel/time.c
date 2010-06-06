@@ -65,7 +65,7 @@ unsigned int calculateWeekday(uint16_t year, uint8_t month, uint32_t day) {
 
 char* getCurrentDateAndTime(char* pStr)
 {
-	tm_t pct;
+    tm_t pct;
     cmosTime(&pct);
     pct.weekday = calculateWeekday(2000+pct.year, pct.month, pct.dayofmonth);
 

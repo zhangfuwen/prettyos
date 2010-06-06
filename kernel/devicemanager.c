@@ -18,7 +18,7 @@ void addToMSDmanager(MSD_t* msd)
 {    
     MSD_Array[globalMSD] = msd;  
     msd->globalMSD = globalMSD;
-    globalMSD += 1; 
+    globalMSD++; 
 }
 
 void deleteFromMSDmanager(MSD_t* msd)
@@ -28,13 +28,13 @@ void deleteFromMSDmanager(MSD_t* msd)
 
 uint32_t getMSDVolumeNumber()
 {
+	// Should recognize MSDs. So it has to be "rewritten" later.
     static uint32_t globalMSDVolume = 0;
     return ++globalMSDVolume; // 0 is reserved for the PrettyOS media
 }
 
 void showMSDAttached()
 {
-    
     printf("\nList of attached Mass Storage Devices:");
     for (uint8_t i=0; i<globalMSD; i++) 
     {
@@ -55,22 +55,22 @@ void showMSDAttached()
                     break;
                 }
 
-                for (uint8_t j=0; j<(MSD_Array[i]->numberOfPartitions); j++)
+                for (uint8_t j = 0; j < MSD_Array[i]->numberOfPartitions; j++)
                 {
                     textColor(0x0E);
-                    printf("Drive: %u: ", MSD_Array[i]->ptrPartition[j]->volumeNumber);
+                    printf("Drive: %u: ", MSD_Array[i]->Partition[j]->volumeNumber);
                     textColor(0x0F);
                     
                     switch( MSD_Array[i]->type )
                     {
                     case FLOPPYDISK:
-                        printf("partition: %d serial: %s ", j, (MSD_Array[i]->ptrPartition[j])->serialNumber);
+                        printf("partition: %d serial: %s ", j, MSD_Array[i]->Partition[j]->serialNumber);
                         break;
                     case RAMDISK:
-                        printf("partition: %d serial: %s ", j, (MSD_Array[i]->ptrPartition[j])->serialNumber);
+                        printf("partition: %d serial: %s ", j, MSD_Array[i]->Partition[j]->serialNumber);
                         break;
                     case USBMSD:
-                        //printf("partition: %d serial: %s ", j, (MSD_Array[i]->ptrPartition[j])->serialNumber);
+                        //printf("partition: %d serial: %s ", j, MSD_Array[i]->Partition[j]->serialNumber);
                         printf("partition: %d serial: %s ", j, MSD_Array[i]->usb2Device->serialNumber); // serial of device
                         break;
                     }

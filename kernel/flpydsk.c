@@ -157,7 +157,7 @@ void floppy_install()
         floppy1.type               = FLOPPYDISK;
         floppy1.connected          = true;        
         floppy1.numberOfPartitions = 1;
-        floppy1.ptrPartition[0]    = &floppyVolume1;
+        floppy1.Partition[0]    = &floppyVolume1;
         floppy1.portNumber         = 255; // no usb port
         
         addToMSDmanager(&floppy1);
@@ -175,7 +175,7 @@ void floppy_install()
             floppy2.type = FLOPPYDISK;
             floppy2.connected = true;
             floppy2.numberOfPartitions = 1;
-            floppy2.ptrPartition[0] = &floppyVolume2;
+            floppy2.Partition[0] = &floppyVolume2;
             floppy2.portNumber   = 255; // no usb port
 
             addToMSDmanager(&floppy2);

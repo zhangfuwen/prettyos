@@ -26,8 +26,8 @@ void        list_Delete(listHead_t* list, void* data);        // Deletes all ele
 element_t*  list_GetElement(listHead_t* hd, uint32_t number); // Returns the data at the position "number"
 
 typedef struct {
-	element_t* begin;
-	element_t* current;
+    element_t* begin;
+    element_t* current;
 } ring_t;
 
 ring_t* ring_Create();                              // allocates memory for a ring, returns a pointer to it

@@ -92,7 +92,7 @@ void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 // start thread at kernel idle loop (ckernel.c)
 void ehci_init()
 {
-	create_cthread(&startEHCI, "EHCI");
+    create_cthread(&startEHCI, "EHCI");
 }
 
 void startEHCI()
@@ -526,7 +526,7 @@ void ehci_handler(registers_t* r)
 // PORT_CHANGE via ehci_handler starts thread at kernel idle loop (ckernel.c)
 void ehci_portcheck()
 {
-	create_cthread(&portCheck, "EHCI Ports");
+    create_cthread(&portCheck, "EHCI Ports");
 }
 
 void portCheck()
@@ -698,7 +698,7 @@ void setupUSBDevice(uint8_t portNumber)
     usbDev[portNumber+1].type               = USBMSD;
     usbDev[portNumber+1].connected          = true;        
     usbDev[portNumber+1].numberOfPartitions = 1;
-    usbDev[portNumber+1].ptrPartition[0]    = &usbDevVolume[portNumber+1];
+    usbDev[portNumber+1].Partition[0]    = &usbDevVolume[portNumber+1];
     usbDev[portNumber+1].portNumber         = portNumber;
     
     usbDev[portNumber+1].usb2Device         = &usbDevices[devAddr]; 

@@ -112,6 +112,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\kernel\include\devicemanager.h"
+					>
+				</File>
+				<File
 					RelativePath="..\kernel\include\ehci.h"
 					>
 				</File>
@@ -325,6 +329,10 @@
 				</File>
 				<File
 					RelativePath="..\kernel\descriptor_tables.c"
+					>
+				</File>
+				<File
+					RelativePath="..\kernel\devicemanager.c"
 					>
 				</File>
 				<File
@@ -605,14 +613,6 @@
 				</File>
 			</Filter>
 		</Filter>
-		<File
-			RelativePath="..\kernel\devicemanager.c"
-			>
-		</File>
-		<File
-			RelativePath="..\kernel\include\devicemanager.h"
-			>
-		</File>
 		<File
 			RelativePath="..\makefile"
 			>

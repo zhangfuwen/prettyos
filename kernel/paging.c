@@ -166,7 +166,7 @@ static uint32_t phys_init()
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
     for (mem_map_entry_t* entry=entries; entry->size; ++entry)
-	{
+    {
         phys_set_bits(entry->base, entry->base+entry->size, !entry->type);
     }
 

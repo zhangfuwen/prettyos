@@ -39,25 +39,26 @@ void settaskflag(int32_t i)
 
 void tasking_install()
 {
-    kdebug(3, "1st_task: ");
+    #ifdef _TASKING_DIAGNOSIS_
+      textColor(0x03);
+      printf("Install tasking\n");
+    #endif
 
     cli();
-	scheduler_install();
+    scheduler_install();
     currentTask = malloc(sizeof(task_t), 0);
     currentTask->pid = next_pid++;
     currentTask->esp = 0;
     currentTask->eip = 0;
     currentTask->page_directory = kernel_pd;
     currentTask->privilege = 0;
-    currentTask->FPU_ptr = (uintptr_t)NULL;
+    currentTask->FPU_ptr = 0;
     currentTask->console = current_console;
     currentTask->ownConsole = true;
 
-    kdebug(3, "1st_ks: ");
-
     currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
 
-	scheduler_insertTask(currentTask);
+    scheduler_insertTask(currentTask);
 
     sti();
 }
@@ -83,32 +84,23 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
     new_task->pid = next_pid++;
     new_task->page_directory = directory;
     new_task->privilege = privilege;
+    new_task->FPU_ptr = 0;
 
     if (new_task->privilege == 3)
     {
-        new_task->heap_top = (uint8_t*)USER_HEAP_START;
-
-        kdebug(3, "task: %X. Alloc user-stack: \n",new_task);
+        new_task->heap_top = USER_HEAP_START;
 
         paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
     }
 
-    kdebug(3, "cr_task_ks: ");
-
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
 
-    new_task->ownConsole = false;
-    new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
-
-    new_task->FPU_ptr = (uintptr_t)NULL;
-
-    scheduler_insertTask(new_task); // new _task is inserted as last task in queue
 
     uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
     uint32_t code_segment = 0x08, data_segment = 0x10;
 
-	if(new_task->thread)
-	    *(--kernel_stack) = (uintptr_t)&exit;
+    if(new_task->thread)
+        *(--kernel_stack) = (uintptr_t)&exit;
 
     if (new_task->privilege == 3)
     {
@@ -146,7 +138,10 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
     new_task->eip = (uint32_t)irq_tail;
     new_task->ss  = data_segment;
 
-    #ifdef _DIAGNOSIS_
+
+    scheduler_insertTask(new_task); // new _task is inserted as last task in queue
+
+    #ifdef _TASKING_DIAGNOSIS_
     task_log(new_task);
     #endif
 }
@@ -154,20 +149,25 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
 task_t* create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* consoleName)
 {
     task_t* new_task = create_task(directory, entry, privilege);
-	addConsole(new_task, consoleName);
+    addConsole(new_task, consoleName);
     return(new_task);
 }
 
 task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
 {
-    kdebug(3, "cr_task: ");
+    #ifdef _TASKING_DIAGNOSIS_
+      textColor(0x03);
+      printf("create task");
+    #endif
 
     cli();
-    task_t* new_task = (task_t*)malloc(sizeof(task_t),0);
+    task_t* new_task = malloc(sizeof(task_t),0);
     new_task->thread = false;
 
-	createThreadTaskBase(new_task, directory, entry, privilege);
-	
+    createThreadTaskBase(new_task, directory, entry, privilege);
+
+    new_task->ownConsole = false;
+    new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
     sti();
     return new_task;
@@ -176,19 +176,25 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
 task_t* create_cthread(void(*entry)(), const char* consoleName)
 {
     task_t* new_task = create_thread(entry);
-	addConsole(new_task, consoleName);
+    addConsole(new_task, consoleName);
     return(new_task);
 }
 
 task_t* create_thread(void(*entry)())
 {
-    kdebug(3, "cr_thread: ");
+    #ifdef _TASKING_DIAGNOSIS_
+      textColor(0x03);
+      printf("create thread");
+    #endif
 
     cli();
     task_t* new_task = malloc(sizeof(task_t),0);
     new_task->thread = true;
 
-	createThreadTaskBase(new_task, currentTask->page_directory, entry, currentTask->privilege);
+    createThreadTaskBase(new_task, currentTask->page_directory, entry, currentTask->privilege);
+
+    new_task->ownConsole = false;
+    new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
     sti();
     return new_task;
@@ -211,7 +217,10 @@ uint32_t task_switch (uint32_t esp)
     tss.esp0 = (uintptr_t)currentTask->kernel_stack;
     tss.ss   = currentTask->ss;
 
-    kdebug(3, "%d ", currentTask->pid);
+    #ifdef _TASKING_DIAGNOSIS_
+      textColor(0x03);
+      printf("%i ", currentTask->pid);
+    #endif
 
     // set TS
     if (currentTask == FPUTask)
@@ -236,13 +245,14 @@ void switch_context() // switch to next task
 void exit()
 {
     cli();
-  #ifdef _DIAGNOSIS_
-    scheduler_log();
-  #endif
+
+    #ifdef _TASKING_DIAGNOSIS_
+      scheduler_log();
+    #endif
 
     // finish current task and free occupied heap
-    void* pkernelstack = (void*) ((uint32_t) currentTask->kernel_stack - KERNEL_STACK_SIZE);
-    task_t* ptask        = currentTask;
+    void* pkernelstack = (void*)((uintptr_t)currentTask->kernel_stack - KERNEL_STACK_SIZE);
+    task_t* ptask      = currentTask;
 
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
     if(currentTask->ownConsole) {
@@ -268,11 +278,13 @@ void exit()
     free(pkernelstack);
     free(ptask);
 
-  #ifdef _DIAGNOSIS_
-    scheduler_log();
-  #endif
     sti();
-    kdebug(3, "exit finished.\n");
+
+    #ifdef _TASKING_DIAGNOSIS_
+      textColor(0x03);
+      printf("exit finished.\n");
+      scheduler_log();
+    #endif
 
     switch_context(); // switch to next task
 }
@@ -283,7 +295,7 @@ void* task_grow_userheap(uint32_t increase)
     increase = alignUp(increase, PAGESIZE);
 
     if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_HEAP_END) ||
-        !paging_alloc(currentTask->page_directory, (void*)old_heap_top, increase, MEM_USER | MEM_WRITE))
+        !paging_alloc(currentTask->page_directory, old_heap_top, increase, MEM_USER | MEM_WRITE))
     {
         return NULL;
     }
@@ -295,24 +307,20 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     textColor(0x05);
-    printf("\npid: %d  ", t->pid);          // Process ID
-    printf("esp: %X  ", t->esp);            // Stack pointer
-    printf("eip: %X  ", t->eip);            // Instruction pointer
-    printf("PD: %X  ", t->page_directory);  // Page directory.
-    printf("k_stack: %X", t->kernel_stack); // Kernel stack location.
+    printf("\ntask %X:  ", t);
+    printf("pid: %d  ", t->pid);              // Process ID
+    printf("esp: %X  ", t->esp);              // Stack pointer
+    printf("eip: %X  ", t->eip);              // Instruction pointer
+    printf("PD: %X  ", t->page_directory);    // Page directory
+    printf("k_stack: %X\n", t->kernel_stack); // Kernel stack location
     textColor(0x0F);
 }
 
 void TSS_log(tss_entry_t* tssEntry)
 {
     textColor(0x06);
-    //printf("\nprev_tss: %x ", tssEntry->prev_tss);
     printf("esp0: %X ", tssEntry->esp0);
     printf("ss0: %X ", tssEntry->ss0);
-    //printf("esp1: %X ", tssEntry->esp1);
-    //printf("ss1: %X ", tssEntry->ss1);
-    //printf("esp2: %X ", tssEntry->esp2);
-    //printf("ss2: %X ", tssEntry->ss2);
     printf("cr3: %X ", tssEntry->cr3);
     printf("eip: %X ", tssEntry->eip);
     printf("eflags: %X ", tssEntry->eflags);
@@ -321,7 +329,6 @@ void TSS_log(tss_entry_t* tssEntry)
     printf("edx: %X ", tssEntry->edx);
     printf("ebx: %X ", tssEntry->ebx);
     printf("esp: %X ", tssEntry->esp);
-    // printf("ebp: %X ", tssEntry->ebp);
     printf("esi: %X ", tssEntry->esi);
     printf("edi: %X ", tssEntry->edi);
     printf("es: %X ", tssEntry->es);
@@ -329,10 +336,8 @@ void TSS_log(tss_entry_t* tssEntry)
     printf("ss: %X ", tssEntry->ss);
     printf("ds: %X ", tssEntry->ds);
     printf("fs: %X ", tssEntry->fs);
-    printf("gs: %X ", tssEntry->gs);
-    //printf("ldt: %X ", tssEntry->ldt);
-    //printf("trap: %X ", tssEntry->trap); //only 0 or 1
-    //printf("iomap_base: %X ", tssEntry->iomap_base);
+    printf("gs: %X\n", tssEntry->gs);
+    textColor(0x0F);
 }
 
 /*

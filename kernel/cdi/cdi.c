@@ -32,22 +32,22 @@ static void cdi_tyndur_init_pci_devices(void)
 
         device = NULL;
         for (j = 0; (driver = cdi_list_get(drivers, j)); j++)
-		{
+        {
             if (driver->bus == CDI_PCI && driver->init_device)
-			{
+            {
                 device = driver->init_device(&pci->bus_data);
                 break;
             }
         }
 
         if (device != NULL)
-		{
+        {
             cdi_list_push(driver->devices, device);
             printf("cdi: %x.%x.%x: Benutze Treiber %s\n",
                 pci->bus, pci->dev, pci->function, driver->name);
         }
-		else
-		{
+        else
+        {
             cdi_pci_device_destroy(pci);
         }
     }
@@ -74,21 +74,21 @@ static void cdi_tyndur_run_drivers()
     struct cdi_device* device;
     int i, j;
     for (i = 0; (driver = cdi_list_get(drivers, i)); i++)
-	{
+    {
         for (j = 0; (device = cdi_list_get(driver->devices, j)); j++)
-		{
+        {
             device->driver = driver;
         }
 
         if (driver->type != CDI_NETWORK)
-		{
+        {
             ///init_service_register((char*) driver->name);
         }
     }
 
     // Warten auf Ereignisse
     ///while (1)
-	///{
+    ///{
     ///    wait_for_rpc();
     ///}
 }
@@ -109,15 +109,15 @@ void cdi_init()
     // Alle in dieser Binary verfuegbaren Treiber aufsammeln
     pdrv = &_start_cdi_drivers;
     while (pdrv < &_stop_cdi_drivers)
-	{
+    {
         drv = *pdrv;
         if (drv->init != NULL)
-		{
+        {
             // FIXME Der Service muss registriert sein, wenn die Karte bei
             // tcpip registriert wird (fuer den Namen) und das passiert im
             // Moment in drv->init()
             if (drv->type == CDI_NETWORK)
-			{
+            {
                 ///init_service_register((char*) drv->name);
             }
 
@@ -146,7 +146,7 @@ void cdi_driver_register(struct cdi_driver* driver)
     cdi_list_push(drivers, driver);
 
     switch (driver->type)
-	{
+    {
         case CDI_STORAGE:
             cdi_storage_driver_register((struct cdi_storage_driver*) driver);
             break;

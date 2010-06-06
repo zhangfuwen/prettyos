@@ -7,15 +7,13 @@
 
 #define MSDARRAYSIZE 30 
 
-#define FLOPPYDISK   0
-#define RAMDISK      1
-#define USBMSD       2
+enum DEVICETYPE {FLOPPYDISK, RAMDISK, USBMSD};
 
 typedef struct MassStorageDevice
 {
     uint8_t         type;         // floppy, RAM disk, usbmsd, ...
     uint8_t         numberOfPartitions;
-    PARTITION*      ptrPartition[4]; // 4 primary partitions
+    PARTITION*      Partition[4]; // 4 primary partitions
     bool            connected;    // attached to PrettyOS
     uint8_t         portNumber;   // usb port: 0-15; 255: no usb port
     uint32_t        globalMSD;

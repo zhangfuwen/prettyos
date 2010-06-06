@@ -4,7 +4,7 @@ global _read_eip
 _read_eip:
     pop eax               ; Get the return address
     jmp eax               ; Return. Can't use RET because return
-                          ; address popped off the stack. 
+                          ; address popped off the stack.
 
 global _copy_page_physical
 _copy_page_physical:

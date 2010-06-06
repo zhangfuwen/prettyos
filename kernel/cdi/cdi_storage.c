@@ -25,7 +25,7 @@ void cdi_storage_driver_register(struct cdi_storage_driver* driver)
     if (initialized == 0) {
         ///lostio_mst_if_init();
         initialized = 1;
-	}
+    }
 }
 
 void cdi_storage_device_init(struct cdi_storage_device* device)

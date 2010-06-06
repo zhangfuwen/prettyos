@@ -5,26 +5,24 @@
 
 #include "task.h"
 #include "scheduler.h"
-#include "kheap.h"
 #include "list.h"
 
-// The start of the task linked list.
 ring_t* task_queue;
 
 void scheduler_install()
 {
-	task_queue = ring_Create();
+    task_queue = ring_Create();
 }
 
 task_t* scheduler_getNextTask()
 {
-	task_queue->current = task_queue->current->next;
+    task_queue->current = task_queue->current->next;
     return((task_t*)task_queue->current->data);
 }
 
 void scheduler_insertTask(task_t* task)
 {
-	ring_Insert(task_queue, task);
+    ring_Insert(task_queue, task);
 }
 
 void scheduler_deleteTask(task_t* task)

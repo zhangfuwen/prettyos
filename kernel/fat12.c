@@ -192,7 +192,7 @@ int32_t flpydsk_read_directory()
             // 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
             printf("  1st sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
             printf("\n"); // next root directory entry
-		}
+        }
     }
     printf("\n");
     return error;

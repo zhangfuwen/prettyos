@@ -47,7 +47,7 @@ void* ramdisk_install(size_t size)
     RAMDisk.type               = RAMDISK;
     RAMDisk.connected          = true;        
     RAMDisk.numberOfPartitions = 1;
-    RAMDisk.ptrPartition[0]    = &RAMDiskVolume;
+    RAMDisk.Partition[0]       = &RAMDiskVolume;
     RAMDisk.portNumber         = 255; // no usb port
     
     addToMSDmanager(&RAMDisk);
