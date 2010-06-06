@@ -17,6 +17,7 @@
 bool FLOPPYflag; // signals that at least one Floppy disk device was found
 
 // for device manager
+port_t portFloppy1, portFloppy2;
 disk_t floppy1, floppy2;
 partition_t floppyVolume1, floppyVolume2;
 
@@ -157,7 +158,13 @@ void floppy_install()
         floppy1.type               = FLOPPYDISK;
         floppy1.partition[0]       = &floppyVolume1;
         
-        attachDisk(&floppy1);
+        attachDisk(&floppy1); // disk == floppy disk
+
+        // port == floppy disk device (FDD)
+        portFloppy1.type = FDD; 
+        portFloppy1.insertedDisk = NULL; 
+        portFloppy1.data = (void*)1;
+        attachPort(&portFloppy1);
 
         if ((cmos_read(0x10) & 0xF) == 4)       // 2nd floppy 1,44 MB: 0100....b
         {
@@ -172,6 +179,12 @@ void floppy_install()
             floppy2.partition[0] = &floppyVolume2;
 
             attachDisk(&floppy2);
+
+            // port == floppy disk device (FDD)
+            portFloppy2.type = FDD; 
+            portFloppy2.insertedDisk = NULL; 
+            portFloppy2.data = (void*)2;
+            attachPort(&portFloppy2);
         }
         flpydsk_install(32+6);                  // floppy disk uses IRQ 6 // 32+6
         memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero

@@ -30,7 +30,9 @@ struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 bool      EHCIflag; // signals that one EHCI device was found /// TODO: manage more than one EHCI
 bool      USBINTflag; // signals STS_USBINT reset by EHCI handler
 
-uint8_t   numPorts;
+uint8_t   numPorts;  // maximum
+port_t    port[17];  // device manager
+
 uintptr_t eecp;
 
 // pci devices list
@@ -366,18 +368,22 @@ void enablePorts()
 {
     textColor(0x09);
     printf("\n>>> >>> function: enablePorts");
-    textColor(0x0F);
+    textColor(0x0F);   
 
     for (uint8_t j=0; j<numPorts; j++)
     {
          resetPort(PORTRESET);
          enabledPortFlag = true;
-
+          
+         port[j+1].type = USB; // device manager
+         port[j+1].data = (void*)(j+1);
+         attachPort(&port[j+1]);
+         
          if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
          {
              textColor(0x0E);
              printf("Port %u: high speed enabled, device attached\n",j+1);
-             textColor(0x0F);
+             textColor(0x0F);             
 
              setupUSBDevice(j); // TEST
          }
@@ -556,8 +562,7 @@ void showPORTSC()
                 strcpy(PortStatus,"attached");
                 writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
                 resetPort(PORTRESET);
-                checkPortLineStatus(PORTRESET); // <----
-
+                checkPortLineStatus(PORTRESET); 
             }
             else
             {
@@ -566,6 +571,9 @@ void showPORTSC()
 
                 // Device Manager
                 removeDisk(&usbDev[j+1]);
+                port[j+1].insertedDisk = NULL; 
+                
+                showPortList();
                 showDiskList();
                 waitForKeyStroke();
             }
@@ -687,16 +695,20 @@ void setupUSBDevice(uint8_t portNumber)
     // device manager //////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////
 
+    // Partition
     usbDevVolume[portNumber+1].buffer = (uint8_t*)malloc(512,0);
     strncpy(usbDevVolume[portNumber+1].serialNumber,"usb",12);  // ???
     
+    // Disk
     usbDev[portNumber+1].type         = USB_MSD;
     usbDev[portNumber+1].partition[0] = &usbDevVolume[portNumber+1];
-    
     usbDev[portNumber+1].data         = (void*)&usbDevices[devAddr]; 
-
     attachDisk(&usbDev[portNumber+1]);
 
+    // Port
+    port[portNumber+1].insertedDisk = &usbDev[portNumber+1];      
+    
+    showPortList(); // TEST
     showDiskList(); // TEST
     waitForKeyStroke();
 

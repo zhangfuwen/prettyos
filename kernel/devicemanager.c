@@ -26,7 +26,7 @@ void attachPort(port_t* port)
 {
 	for(uint8_t i=0; i<PORTARRAYSIZE; i++)
 	{
-		if(ports[i] != NULL)
+		if(ports[i] == NULL)
 		{
 			ports[i] = port;
 			return;
@@ -61,7 +61,58 @@ void removeDisk(disk_t* disk)
 
 void showPortList()
 {
-    printf("\n\nAvailable Ports:\nnot implemented. Help us!");
+    printf("\n\nAvailable Ports:");
+    textColor(0x07);
+    printf("\n\nType    \tnumber\tMedia"); 
+    printf("\n----------------------------------------------------------------------");
+    textColor(0x0F);
+
+    for (uint8_t i=0; i<PORTARRAYSIZE; i++)
+    {
+        if (ports[i] != NULL)
+        {
+            switch (ports[i]->type) // Type
+            {
+            case FDD: 
+                printf("\nFDD     \t%u",(uint32_t)(ports[i]->data));
+                
+                if (ports[i]->insertedDisk != NULL)
+                {
+                    printf("\tfloppy disk inserted");
+                }
+                else
+                {
+                    printf("\tNo floppy disk inserted");
+                }
+                break;
+            case RAM:
+                printf("\nRAMdisk \t---");
+                if (ports[i]->insertedDisk != NULL)
+                {
+                    printf("\tactive"); // only possibility
+                }
+                break;
+            case USB:
+                printf("\nUSB Port\t%u",(uint32_t)(ports[i]->data));
+                if (ports[i]->insertedDisk != NULL)
+                {
+                    printf("\tMSD attached");
+                }
+                else
+                {
+                   printf("\tNo MSD attached");
+                }
+                break;
+            }
+        }
+        else
+        {
+           // printf("\nnot implemented"); // TEST
+        }
+    }
+    textColor(0x07);
+    printf("\n----------------------------------------------------------------------\n");
+    textColor(0x0F);
 }
 
 void showDiskList()

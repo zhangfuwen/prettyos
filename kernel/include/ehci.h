@@ -49,6 +49,9 @@ extern uintptr_t DataQTDpage0;
 extern uintptr_t MSDStatusQTDpage0;
 extern uintptr_t SetupQTDpage0;
 
+
+
+
 /* ****** */
 /* USBCMD */
 /* ****** */
