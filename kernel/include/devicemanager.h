@@ -12,16 +12,18 @@
 enum PORTTYPE {FDD, USB, RAM};
 enum DISKTYPE {FLOPPYDISK, USB_MSD, RAMDISK};
 
-typedef struct {
+typedef struct 
+{
 	uint8_t      type;
-	partition_t* partition[PARTITIONARRAYSIZE]; // Zero if partition is not used
+	partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
 	void*        data;                          // Contains additional information depending on its type
 	uint32_t     serial;
 } disk_t;
 
-typedef struct {
+typedef struct 
+{
 	uint8_t type;
-	disk_t* insertedDisk; // Zero if no disk is inserted
+	disk_t* insertedDisk; // NULL if no disk is inserted
 	void*   data;         // Contains additional information depending on its type
 } port_t;
 

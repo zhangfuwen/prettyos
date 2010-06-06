@@ -12,11 +12,11 @@ port_t* ports[PORTARRAYSIZE];
 
 void deviceManager_install()
 {
-    for(uint8_t i = 0; i < PORTARRAYSIZE; i++)
+    for(uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
         disks[i] = NULL;
     }
-    for(uint8_t i = 0; i < DISKARRAYSIZE; i++)
+    for(uint8_t i=0; i<PORTARRAYSIZE; i++)
     {
         ports[i] = NULL;
     }
@@ -24,9 +24,9 @@ void deviceManager_install()
 
 void attachPort(port_t* port)
 {
-	for(uint8_t i = 0; i < PORTARRAYSIZE; i++)
+	for(uint8_t i=0; i<PORTARRAYSIZE; i++)
 	{
-		if(ports[i] != 0)
+		if(ports[i] != NULL)
 		{
 			ports[i] = port;
 			return;
@@ -37,9 +37,9 @@ void attachPort(port_t* port)
 void attachDisk(disk_t* disk)
 {
 	// Later: Searching correct ID in device-File
-	for(uint8_t i = 0; i < DISKARRAYSIZE; i++)
+	for(uint8_t i=0; i<DISKARRAYSIZE; i++)
 	{
-		if(disks[i] == 0)
+		if(disks[i] == NULL)
 		{
 			disks[i] = disk;
 			return;
@@ -49,11 +49,11 @@ void attachDisk(disk_t* disk)
 
 void removeDisk(disk_t* disk)
 {
-	for(uint8_t i = 0; i < DISKARRAYSIZE; i++)
+	for(uint8_t i=0; i<DISKARRAYSIZE; i++)
 	{
 		if(disks[i] == disk)
 		{
-			disks[i] = 0;
+			disks[i] = NULL;
 			return;
 		}
 	}
@@ -74,12 +74,12 @@ void showDiskList()
 
     for (uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
-        if(disks[i] != NULL)
+        if (disks[i] != NULL)
         {
-            switch(disks[i]->type) // Type
+            switch (disks[i]->type) // Type
             {
                 case FLOPPYDISK:
-                    printf("\nFDD");
+                    printf("\nFloppy");
                     break;
                 case RAMDISK:
                     printf("\nRAMdisk");
@@ -89,17 +89,17 @@ void showDiskList()
                     break;
             }
 
-            textColor(0x0E); // Number
-			printf("\t%u", i);
+            textColor(0x0E); 
+			printf("\t%u", i); // Number
             textColor(0x0F);
 
 			printf("\t%u", disks[i]->serial); // Serial of disk
 
             for (uint8_t j = 0; j < PARTITIONARRAYSIZE; j++)
             {
-				if(disks[i]->partition[j] == NULL) continue; // Empty
+				if (disks[i]->partition[j] == NULL) continue; // Empty
 
-				if(j != 0) printf("\n\t\t\t"); // Not first, indent
+				if (j!=0) printf("\n\t\t\t"); // Not first, indent
 
 				printf("\t%u", j); // Partition number
 
