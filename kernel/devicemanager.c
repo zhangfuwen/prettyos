@@ -7,100 +7,115 @@
 #include "console.h"
 #include "util.h"
 
-MSD_t*   MSD_Array[MSDARRAYSIZE];
-uint8_t  globalMSD = 0;
+disk_t* disks[DISKARRAYSIZE];
+port_t* ports[PORTARRAYSIZE];
 
-void MSDmanager_install()
+void deviceManager_install()
 {
-    printf("\nMass Storage Device Manager installed.\n");
-    for(uint8_t i=0; i<MSDARRAYSIZE; i++)
+    for(uint8_t i = 0; i < PORTARRAYSIZE; i++)
     {
-        MSD_Array[i] = NULL;
+        disks[i] = NULL;
+    }
+    for(uint8_t i = 0; i < DISKARRAYSIZE; i++)
+    {
+        ports[i] = NULL;
     }
 }
 
-void addToMSDmanager(MSD_t* msd)
+void attachPort(port_t* port)
 {
-    MSD_Array[globalMSD] = msd;
-    msd->globalMSD = globalMSD;
-    globalMSD++;
+	for(uint8_t i = 0; i < PORTARRAYSIZE; i++)
+	{
+		if(ports[i] != 0)
+		{
+			ports[i] = port;
+			return;
+		}
+	}
 }
 
-void deleteFromMSDmanager(MSD_t* msd)
+void attachDisk(disk_t* disk)
 {
-    MSD_Array[msd->globalMSD] = NULL;
+	// Later: Searching correct ID in device-File
+	for(uint8_t i = 0; i < DISKARRAYSIZE; i++)
+	{
+		if(disks[i] == 0)
+		{
+			disks[i] = disk;
+			return;
+		}
+	}
 }
 
-uint32_t getMSDVolumeNumber()
+void removeDisk(disk_t* disk)
 {
-	// Should recognize MSDs. So it has to be "rewritten" later.
-    static uint32_t globalMSDVolume = 0;
-    return ++globalMSDVolume; // volume 0 is reserved for the PrettyOS media
+	for(uint8_t i = 0; i < DISKARRAYSIZE; i++)
+	{
+		if(disks[i] == disk)
+		{
+			disks[i] = 0;
+			return;
+		}
+	}
 }
 
-void showMSDAttached()
+void showPortList()
 {
-    printf("\n\nAttached Mass Storage Devices:");
+    printf("\n\nAvailable Ports:\nnot implemented. Help us!");
+}
+
+void showDiskList()
+{
+    printf("\n\nAttached Disks:");
     textColor(0x07);
-    printf("\n\nType\tDrive\tPart.\tSerial(device)\tPort");
+    printf("\n\nType\tNumber\tSerial\tPart.\tSerial");
     printf("\n----------------------------------------------------------------------");
     textColor(0x0F);
 
-    for (uint8_t i=0; i<globalMSD; i++)
+    for (uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
-        if(MSD_Array[i] != NULL)
+        if(disks[i] != NULL)
         {
-            if ( MSD_Array[i]->connected )
+            switch(disks[i]->type) // Type
             {
-                switch( MSD_Array[i]->type )
-                {
                 case FLOPPYDISK:
                     printf("\nFDD");
                     break;
                 case RAMDISK:
                     printf("\nRAMdisk");
                     break;
-                case USBMSD:
+                case USB_MSD:
                     printf("\nUSB MSD");
                     break;
-                }
+            }
 
-                for (uint8_t j = 0; j < MSD_Array[i]->numberOfPartitions; j++)
+            textColor(0x0E); // Number
+			printf("\t%u", i);
+            textColor(0x0F);
+
+			printf("\t%u", disks[i]->serial); // Serial of disk
+
+            for (uint8_t j = 0; j < PARTITIONARRAYSIZE; j++)
+            {
+				if(disks[i]->partition[j] == NULL) continue; // Empty
+
+				if(j != 0) printf("\n\t\t\t"); // Not first, indent
+
+				printf("\t%u", j); // Partition number
+
+                switch(disks[i]->type)
                 {
-                    textColor(0x0E);
-                    printf("\t%u", MSD_Array[i]->Partition[j]->volumeNumber);
-                    textColor(0x0F);
-
-                    switch( MSD_Array[i]->type )
-                    {
                     case FLOPPYDISK: // TODO: floppy disk device: use the current serials of the floppy disks
-                        printf("\t%d\t%s", j, (MSD_Array[i]->Partition[j])->serialNumber);
+                        printf("\t%s", disks[i]->partition[j]->serialNumber);
                         break;
                     case RAMDISK:
-                        printf("\t%d\t%s", j, (MSD_Array[i]->Partition[j])->serialNumber);
+                        printf("\t%s", disks[i]->partition[j]->serialNumber);
                         break;
-                    case USBMSD:                        
-                        printf("\t%d\t%s", j, MSD_Array[i]->usb2Device->serialNumber); // serial of device
-                        if (strlen(MSD_Array[i]->usb2Device->serialNumber) < 8) printf("\t");
-                        break;
-                    }
-                }
-
-                if ( (MSD_Array[i]->portNumber) == 255 )
-                {
-                    // do nothing
-                }
-                else
-                {
-                    printf("\t%u", MSD_Array[i]->portNumber+1);
+                    case USB_MSD:                      
+                        printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber); // serial of device
+						break;
                 }
             }
-        }
-        else
-        {
-            textColor(0x07);
-            printf("\ndeleted"); // TEST
-            textColor(0x0F);
         }
     }
     textColor(0x07);

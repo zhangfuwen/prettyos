@@ -27,7 +27,7 @@ void* StatusQTD;
 
 uint32_t startSectorPartition = 0;
 
-PARTITION usbMSDVolume;
+partition_t usbMSDVolume;
 uint32_t usbMSDVolumeMaxLBA;
 
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used

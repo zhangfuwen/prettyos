@@ -30,9 +30,9 @@ bool     globalFATWriteNecessary       = false;      // Global variable indicati
 bool     globalDataWriteNecessary      = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
 
 // prototypes
-// static uint32_t fatWrite(PARTITION* volume, uint32_t cls, uint32_t v);
+// static uint32_t fatWrite(partition_t* volume, uint32_t cls, uint32_t v);
 
-static uint32_t cluster2sector(PARTITION* volume, uint32_t cluster)
+static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cluster2sector <<<<<!");
@@ -86,7 +86,7 @@ uint8_t sectorWrite(uint32_t sector_addr, uint8_t* buffer) // to implement
 #ifdef WRITE_IS_APPROVED
 static uint8_t flushData()
 {
-    PARTITION* volume;
+    partition_t* volume;
     FILEPTR fileptr = globalBufferUsedByFILEPTR;
     uint32_t sector;
     volume = fileptr->volume;
@@ -115,7 +115,7 @@ uint8_t sectorRead(uint32_t sector_addr, uint8_t* buffer) // make it better!
     return retVal;
 }
 
-static uint32_t fatRead (PARTITION* volume, uint32_t ccls)
+static uint32_t fatRead (partition_t* volume, uint32_t ccls)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatRead <<<<<!");
@@ -252,7 +252,7 @@ static uint8_t fileSearchNextCluster(FILEPTR fileptr, uint32_t n)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileSearchNextCluster <<<<<!");
   #endif
-    PARTITION* volume = fileptr->volume;
+    partition_t* volume = fileptr->volume;
 
     do
     {
@@ -294,7 +294,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
   #endif
-    PARTITION* volume     = fileptr->volume;
+    partition_t* volume     = fileptr->volume;
     uint32_t   LastClusterLimit, numofclus = 0;
     uint32_t   ccls       = fileptr->dirccls;
     uint32_t   cluster    = fileptr->dirclus;
@@ -660,7 +660,7 @@ uint8_t fopen(FILEPTR fileptr, uint32_t* fHandle, char type)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fopen <<<<<!");
   #endif
-    PARTITION* volume = (PARTITION*)(fileptr->volume);
+    partition_t* volume = (partition_t*)(fileptr->volume);
     uint8_t error = CE_GOOD;
 
     if (volume->mount == false)
@@ -738,7 +738,7 @@ uint8_t fread(FILEPTR fileptr, void* dest, uint32_t count)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fread <<<<<!");
   #endif
-    PARTITION* volume;
+    partition_t* volume;
     uint8_t  error = CE_GOOD;
     uint32_t pos;
     uint32_t sector, seek, size, temp;

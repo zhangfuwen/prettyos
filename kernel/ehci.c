@@ -44,8 +44,8 @@ uint32_t pciEHCInumber = 0; // pci device number
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
 // Device Manager
-MSD_t usbDev[17];
-PARTITION usbDevVolume[17];
+disk_t      usbDev[17];
+partition_t usbDevVolume[17];
 
 
 void ehci_install(uint32_t num, uint32_t i)
@@ -565,8 +565,8 @@ void showPORTSC()
                 writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
 
                 // Device Manager
-                deleteFromMSDmanager(&usbDev[j+1]);
-                showMSDAttached();
+                removeDisk(&usbDev[j+1]);
+                showDiskList();
                 waitForKeyStroke();
             }
             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
@@ -687,21 +687,17 @@ void setupUSBDevice(uint8_t portNumber)
     // device manager //////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////
 
-    usbDevVolume[portNumber+1].buffer       = (uint8_t*)malloc(512,0);
+    usbDevVolume[portNumber+1].buffer = (uint8_t*)malloc(512,0);
     strncpy(usbDevVolume[portNumber+1].serialNumber,"usb",12);  // ???
-    usbDevVolume[portNumber+1].volumeNumber = getMSDVolumeNumber(); 
     
-    usbDev[portNumber+1].type               = USBMSD;
-    usbDev[portNumber+1].connected          = true;        
-    usbDev[portNumber+1].numberOfPartitions = 1;
-    usbDev[portNumber+1].Partition[0]    = &usbDevVolume[portNumber+1];
-    usbDev[portNumber+1].portNumber         = portNumber;
+    usbDev[portNumber+1].type         = USB_MSD;
+    usbDev[portNumber+1].partition[0] = &usbDevVolume[portNumber+1];
     
-    usbDev[portNumber+1].usb2Device         = &usbDevices[devAddr]; 
+    usbDev[portNumber+1].data         = (void*)&usbDevices[devAddr]; 
 
-    addToMSDmanager(&usbDev[portNumber+1]);
+    attachDisk(&usbDev[portNumber+1]);
 
-    showMSDAttached(); // TEST
+    showDiskList(); // TEST
     waitForKeyStroke();
 
     ////////////////////////////////////////////////////////////////////////////////////////////

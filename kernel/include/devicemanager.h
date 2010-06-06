@@ -5,25 +5,31 @@
 #include "fat.h"
 #include "usb2.h"
 
-#define MSDARRAYSIZE 30 
+#define PORTARRAYSIZE 20
+#define DISKARRAYSIZE 20
+#define PARTITIONARRAYSIZE 4
 
-enum DEVICETYPE {FLOPPYDISK, RAMDISK, USBMSD};
+enum PORTTYPE {FDD, USB, RAM};
+enum DISKTYPE {FLOPPYDISK, USB_MSD, RAMDISK};
 
-typedef struct MassStorageDevice
-{
-    uint8_t         type;         // floppy, RAM disk, usbmsd, ...
-    uint8_t         numberOfPartitions;
-    PARTITION*      Partition[4]; // 4 primary partitions
-    bool            connected;    // attached to PrettyOS
-    uint8_t         portNumber;   // usb port: 0-15; 255: no usb port
-    uint32_t        globalMSD;
-    usb2_Device_t*  usb2Device;   
-} MSD_t;
+typedef struct {
+	uint8_t      type;
+	partition_t* partition[PARTITIONARRAYSIZE]; // Zero if partition is not used
+	void*        data;                          // Contains additional information depending on its type
+	uint32_t     serial;
+} disk_t;
 
-void MSDmanager_install();
-void addToMSDmanager(MSD_t* msd);
-void deleteFromMSDmanager(MSD_t* msd);
-uint32_t getMSDVolumeNumber();
-void showMSDAttached();
+typedef struct {
+	uint8_t type;
+	disk_t* insertedDisk; // Zero if no disk is inserted
+	void*   data;         // Contains additional information depending on its type
+} port_t;
+
+void deviceManager_install();
+void attachPort(port_t* port);
+void attachDisk(disk_t* disk);
+void removeDisk(disk_t* disk);
+void showPortList();
+void showDiskList();
 
 #endif

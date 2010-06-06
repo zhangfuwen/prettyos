@@ -22,7 +22,7 @@
 #define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.492";
+const char* version = "0.0.0.493";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -67,6 +67,8 @@ static void init()
     events_install();
     syscall_install();
 
+    deviceManager_install(); // device management for mass s6torage devices
+
     cdi_init();
 
     sti();
@@ -76,11 +78,11 @@ void showMemorySize()
 {
     if (system.Memory_Size >= 1048576)
     {
-        printf("Memory size: %u MiB / %u MB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
+        printf("\nMemory size: %u MiB / %u MB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
     }
     else
     {
-        printf("Memory size: %u KiB / %u KB  (%u Bytes)\n", system.Memory_Size>>10, system.Memory_Size/1000, system.Memory_Size);
+        printf("\nMemory size: %u KiB / %u KB  (%u Bytes)\n", system.Memory_Size>>10, system.Memory_Size/1000, system.Memory_Size);
     }
 }
 
@@ -97,9 +99,8 @@ void main()
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
-    MSDmanager_install(); // device management for mass storage devices
-    floppy_install();     // detect FDDs
-    pciScan();            // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
+    floppy_install();        // detect FDDs
+    pciScan();               // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 
     #ifdef _DIAGNOSIS_
     listPCI();
@@ -147,7 +148,7 @@ void main()
         textColor(0x0F);
     }
 
-    showMSDAttached(); // TEST
+    showDiskList(); // TEST
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter

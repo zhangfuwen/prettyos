@@ -17,8 +17,8 @@
 bool FLOPPYflag; // signals that at least one Floppy disk device was found
 
 // for device manager
-MSD_t floppy1, floppy2;
-PARTITION floppyVolume1, floppyVolume2;
+disk_t floppy1, floppy2;
+partition_t floppyVolume1, floppyVolume2;
 
 // detailed infos about FDC and FAT12:
 // http://www.isdaman.com/alsos/hardware/fdc/floppy.htm
@@ -146,48 +146,41 @@ void floppy_install()
     {
         FLOPPYflag = true; // at least one floppy found
 
-        printf("1.44 MB FDD device 0 found\n\n");
+        printf("1.44 MB FDD device 0 found\n");
         flpy_motor[0] = false;                  // first floppy motor is off
         flpy_ReadWriteFlag[0] = false;          // first floppy is not blocked
         
         floppyVolume1.buffer       = (uint8_t*)malloc(512,0);
         strncpy(floppyVolume1.serialNumber,"floppy1",12);
         floppyVolume1.serialNumber[12]=0;
-        floppyVolume1.volumeNumber = getMSDVolumeNumber(); 
         
         floppy1.type               = FLOPPYDISK;
-        floppy1.connected          = true;        
-        floppy1.numberOfPartitions = 1;
-        floppy1.Partition[0]    = &floppyVolume1;
-        floppy1.portNumber         = 255; // no usb port
+        floppy1.partition[0]       = &floppyVolume1;
         
-        addToMSDmanager(&floppy1);
+        attachDisk(&floppy1);
 
         if ((cmos_read(0x10) & 0xF) == 4)       // 2nd floppy 1,44 MB: 0100....b
         {
-            printf("1.44 MB FDD device 1 found\n\n");
+            printf("1.44 MB FDD device 1 found\n");
             flpy_motor[1] = false;              // second floppy motor is off
             flpy_ReadWriteFlag[1] = false;      // second floppy is not blocked
             
             floppyVolume2.buffer = (uint8_t*)malloc(512,0);
-            strncpy(floppyVolume2.serialNumber,"floppy2     ",12);
-            floppyVolume2.volumeNumber = getMSDVolumeNumber();            
+            strncpy(floppyVolume2.serialNumber,"floppy2     ",12);          
             
             floppy2.type = FLOPPYDISK;
-            floppy2.connected = true;
-            floppy2.numberOfPartitions = 1;
-            floppy2.Partition[0] = &floppyVolume2;
-            floppy2.portNumber   = 255; // no usb port
+            floppy2.partition[0] = &floppyVolume2;
 
-            addToMSDmanager(&floppy2);
+            attachDisk(&floppy2);
         }
         flpydsk_install(32+6);                  // floppy disk uses IRQ 6 // 32+6
         memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero
     }
     else
     {
-        printf("\n1.44 MB 1st floppy not shown by CMOS\n\n");
+        printf("\n1.44 MB 1st floppy not shown by CMOS\n");
     }
+	printf("\n");
 }
 
 /// DMA Routines

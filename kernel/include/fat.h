@@ -98,8 +98,7 @@ typedef struct
     bool     mount;             // 0: not mounted  1: mounted
     uint32_t FatRootDirCluster;
     char     serialNumber[13];  // serial number for identification
-    uint16_t volumeNumber;      // PrettyOS internal number for user approach
-} PARTITION;
+} partition_t;
 
 // File
 
@@ -111,7 +110,7 @@ typedef struct
 
 typedef struct
 {
-    PARTITION* volume;      // volume containing the file
+    partition_t* volume;      // volume containing the file
     uint32_t  cluster;      // first cluster
     uint32_t  ccls;         // current cluster
     uint16_t  sec;          // current sector in the current cluster
@@ -184,7 +183,7 @@ typedef enum _CETYPE
     CE_ERASE_FAIL,                  // An erase failed
     CE_NOT_PRESENT,                 // No device was present
     CE_NOT_FORMATTED,               // The disk is of an unsupported format
-    CE_BAD_PARTITION,               // The boot record is bad
+    CE_BAD_partition_t,               // The boot record is bad
 
     CE_UNSUPPORTED_FS,              // The file system type is unsupported
     CE_INIT_ERROR,                  // An initialization error has occured

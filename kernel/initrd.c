@@ -24,8 +24,8 @@ struct dirent dirent;
 extern uintptr_t file_data_start;
 extern uintptr_t file_data_end;
 
-MSD_t      RAMDisk;
-PARTITION  RAMDiskVolume;
+disk_t      RAMDisk;
+partition_t RAMDiskVolume;
 
 bool RAMDISKflag;
 
@@ -41,16 +41,12 @@ void* ramdisk_install(size_t size)
     RAMDISKflag = true; // at least one RAMDisk found
         
     RAMDiskVolume.buffer       = (uint8_t*)malloc(512,0); // necessary?
-    strncpy(RAMDiskVolume.serialNumber,"ramdisk",12); 
-    RAMDiskVolume.volumeNumber = getMSDVolumeNumber(); 
+    strncpy(RAMDiskVolume.serialNumber,"ramdisk",12);
     
     RAMDisk.type               = RAMDISK;
-    RAMDisk.connected          = true;        
-    RAMDisk.numberOfPartitions = 1;
-    RAMDisk.Partition[0]       = &RAMDiskVolume;
-    RAMDisk.portNumber         = 255; // no usb port
+    RAMDisk.partition[0]       = &RAMDiskVolume;
     
-    addToMSDmanager(&RAMDisk);
+    attachDisk(&RAMDisk);
 
     return(ramdisk_start);
 }
