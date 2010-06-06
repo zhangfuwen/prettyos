@@ -462,6 +462,32 @@ void i2hex(uint32_t val, char* dest, int32_t len)
     dest[len+1]='\0';
 }
 
+int atoi(const char* s)
+{
+    int num = 0;
+    bool sign = false;
+    for (size_t i=0; i<=strlen(s); i++)
+    {
+        if (s[i] >= '0' && s[i] <= '9')
+        {
+            num = num * 10 + s[i] -'0';
+        }
+        else if (s[0] == '-' && i==0)
+        {
+            sign = true;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (sign)
+    {
+        num *= -1;
+    }
+    return num;
+}
+
 float atof(const char* s)
 {
     int32_t i = 0;

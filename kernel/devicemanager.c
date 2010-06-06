@@ -9,54 +9,50 @@
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
+partition_t* systemPartition;
 
-void deviceManager_install()
+void deviceManager_install(/*partition_t* system*/)
 {
-    for(uint8_t i=0; i<DISKARRAYSIZE; i++)
-    {
-        disks[i] = NULL;
-    }
-    for(uint8_t i=0; i<PORTARRAYSIZE; i++)
-    {
-        ports[i] = NULL;
-    }
+    memset(disks, 0, DISKARRAYSIZE*sizeof(disks));
+    memset(ports, 0, PORTARRAYSIZE*sizeof(ports));
+	//systemPartition = system;
 }
 
 void attachPort(port_t* port)
 {
-	for(uint8_t i=0; i<PORTARRAYSIZE; i++)
-	{
-		if(ports[i] == NULL)
-		{
-			ports[i] = port;
-			return;
-		}
-	}
+    for(uint8_t i=0; i<PORTARRAYSIZE; i++)
+    {
+        if(ports[i] == NULL)
+        {
+            ports[i] = port;
+            return;
+        }
+    }
 }
 
 void attachDisk(disk_t* disk)
 {
-	// Later: Searching correct ID in device-File
-	for(uint8_t i=0; i<DISKARRAYSIZE; i++)
-	{
-		if(disks[i] == NULL)
-		{
-			disks[i] = disk;
-			return;
-		}
-	}
+    // Later: Searching correct ID in device-File
+    for(uint8_t i=0; i<DISKARRAYSIZE; i++)
+    {
+        if(disks[i] == NULL)
+        {
+            disks[i] = disk;
+            return;
+        }
+    }
 }
 
 void removeDisk(disk_t* disk)
 {
-	for(uint8_t i=0; i<DISKARRAYSIZE; i++)
-	{
-		if(disks[i] == disk)
-		{
-			disks[i] = NULL;
-			return;
-		}
-	}
+    for(uint8_t i=0; i<DISKARRAYSIZE; i++)
+    {
+        if(disks[i] == disk)
+        {
+            disks[i] = NULL;
+            return;
+        }
+    }
 }
 
 void showPortList()
@@ -74,7 +70,7 @@ void showPortList()
             switch (ports[i]->type) // Type
             {
             case FDD: 
-                printf("\nFDD     \t%u",(uint32_t)(ports[i]->data));
+                printf("\nFDD     \t%c", i+'A');
                 
                 if (ports[i]->insertedDisk != NULL)
                 {
@@ -93,7 +89,7 @@ void showPortList()
                 }
                 break;
             case USB:
-                printf("\nUSB Port\t%u",(uint32_t)(ports[i]->data));
+                printf("\nUSB Port\t%c", i+'A');
                 if (ports[i]->insertedDisk != NULL)
                 {
                     printf("\tMSD attached");
@@ -141,18 +137,18 @@ void showDiskList()
             }
 
             textColor(0x0E); 
-			printf("\t%u", i); // Number
+            printf("\t%u", i+1); // Number
             textColor(0x0F);
 
-			printf("\t%u", disks[i]->serial); // Serial of disk
+            printf("\t%u", disks[i]->serial); // Serial of disk
 
             for (uint8_t j = 0; j < PARTITIONARRAYSIZE; j++)
             {
-				if (disks[i]->partition[j] == NULL) continue; // Empty
+                if (disks[i]->partition[j] == NULL) continue; // Empty
 
-				if (j!=0) printf("\n\t\t\t"); // Not first, indent
+                if (j!=0) printf("\n\t\t\t"); // Not first, indent
 
-				printf("\t%u", j); // Partition number
+                printf("\t%u", j); // Partition number
 
                 switch(disks[i]->type)
                 {
@@ -164,7 +160,7 @@ void showDiskList()
                         break;
                     case USB_MSD:                      
                         printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber); // serial of device
-						break;
+                        break;
                 }
             }
         }
@@ -172,6 +168,66 @@ void showDiskList()
     textColor(0x07);
     printf("\n----------------------------------------------------------------------\n");
     textColor(0x0F);
+}
+
+partition_t* getPartition(const char* path)
+{
+    size_t length = strlen(path);
+    char Buffer[10];
+
+    int16_t PortID = -1;
+    int16_t DiskID = -1;
+    uint8_t PartitionID = 0;
+    for(size_t i = 0; i < length; i++)
+    {
+        if(path[i] == ':' || path[i] == '-')
+        {
+            strncpy(Buffer, path, i);
+            Buffer[i] = 0;
+            if(isalpha(Buffer[0]))
+            {
+                PortID = toUpper(Buffer[0]) - 'A';
+            }
+            else
+            {
+                DiskID = atoi(Buffer);
+            }
+            for(size_t j = i+1; j < length; j++)
+            {
+                if(path[j] == ':' || path[j] == '-')
+                {
+                    strncpy(Buffer, path+i+1, j-i-1);
+                    Buffer[j-i-1] = 0;
+                    PartitionID = atoi(Buffer);
+                    break;
+                }
+                if(!isdigit(path[j]) || path[j] == '/' || path[j] == '|' || path[j] == '\\')
+                {
+                    break;
+                }
+            }
+            break;
+        }
+        if(!isalnum(path[i]))
+        {
+            return(0);
+        }
+    }
+    if(PortID != -1)
+    {
+        return(ports[PortID]->insertedDisk->partition[PartitionID]);
+    }
+    else
+    {
+		if(DiskID == 0)
+		{
+			return(systemPartition);
+		}
+		else
+		{
+	        return(disks[DiskID]->partition[PartitionID-1]);
+		}
+    }
 }
 
 /*

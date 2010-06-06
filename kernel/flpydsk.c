@@ -193,7 +193,7 @@ void floppy_install()
     {
         printf("\n1.44 MB 1st floppy not shown by CMOS\n");
     }
-	printf("\n");
+    printf("\n");
 }
 
 /// DMA Routines

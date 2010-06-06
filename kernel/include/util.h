@@ -54,8 +54,8 @@ char*   strncpy(char* dest, const char* src, size_t n);
 char*   strcat(char* dest, const char* src);
 char*   strncat(char* dest, const char* src, size_t n);
 
-char toLower(char c);
-char toUpper(char c);
+char  toLower(char c);
+char  toUpper(char c);
 char* toupper(char* s);
 char* tolower(char* s);
 
@@ -72,6 +72,7 @@ void nop();
 
 void   reverse(char* s);
 int8_t ctoi(char c);
+int    atoi(const char* s);
 float  atof(const char* s);
 char*  itoa(int32_t n,  char* s);
 char*  utoa(uint32_t n, char* s);
