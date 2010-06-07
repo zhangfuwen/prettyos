@@ -26,6 +26,7 @@ void* cmdQTD;
 void* StatusQTD;
 
 uint32_t startSectorPartition = 0;
+int32_t  numberTries = 10; // repeats for IN-Transfer
 
 partition_t usbMSDVolume;
 uint32_t usbMSDVolumeMaxLBA;
@@ -237,7 +238,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
     createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
 
-label1: /// TEST 
+labelTransferIN: /// TEST 
+    
     performAsyncScheduler(true, true, TransferLength/200); // velocity: 200 + (int)(TransferLength/200)*200 Milliseconds
 
     if (TransferLength) // byte
@@ -267,7 +269,13 @@ label1: /// TEST
     {
         textColor(0x0C);
         printf("\nCSW signature wrong (not processed)");
-        goto label1; /// TEST ///////////////////////////////////////////////////////////////////
+        textColor(0x0F);
+        numberTries--;
+        if (numberTries >= 0) 
+        {
+            printf("\nIN-Transfer will be repeated: %u left",numberTries);
+            goto labelTransferIN; 
+        }        
     }
     else
     {
@@ -619,7 +627,7 @@ void testMSD(uint8_t devAddr, uint8_t config)
 
         uint32_t start=0, sector;
 
-label1:
+labelRead:
         sector=start;
         usbRead(sector, usbMSDVolume.buffer);
 
@@ -628,7 +636,7 @@ label1:
             int32_t retVal = analyzeBootSector((void*)DataQTDpage0); // for first tests only
             if (retVal == -1)
             {
-                goto label2;
+                goto labelLeave;
             }
             waitForKeyStroke();
         }
@@ -636,7 +644,7 @@ label1:
         if (startSectorPartition)
         {
             start = startSectorPartition;
-            goto label1;
+            goto labelRead;
         }
 
         //testFAT("clean   bat"); // TEST FAT filesystem filename: "prettyOSbat" without dot and with spaces in name!!!
@@ -646,7 +654,7 @@ label1:
         testFAT("ttt     elf"); 
     }// else
 
-label2:
+labelLeave:
     printf("\nNeither MBR nor FAT, thus better leave.");    
     waitForKeyStroke();
 }

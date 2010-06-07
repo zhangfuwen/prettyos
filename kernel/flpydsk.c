@@ -12,6 +12,7 @@
 #include "devicemanager.h"
 #include "kheap.h"
 #include "fat.h"
+#include "fat12.h"
 
 //
 bool FLOPPYflag; // signals that at least one Floppy disk device was found
@@ -152,7 +153,10 @@ void floppy_install()
         flpy_ReadWriteFlag[0] = false;          // first floppy is not blocked
         
         floppyVolume1.buffer       = (uint8_t*)malloc(512,0);
-        strncpy(floppyVolume1.serialNumber,"floppy1",12);
+        
+        char volumeName1[12];           
+        flpydsk_get_volumeName(volumeName1);       
+        strncpy(floppyVolume1.serialNumber,volumeName1,12);
         floppyVolume1.serialNumber[12]=0;
         
         floppy1.type               = FLOPPYDISK;
@@ -173,7 +177,11 @@ void floppy_install()
             flpy_ReadWriteFlag[1] = false;      // second floppy is not blocked
             
             floppyVolume2.buffer = (uint8_t*)malloc(512,0);
-            strncpy(floppyVolume2.serialNumber,"floppy2     ",12);          
+            
+            char volumeName2[12];           
+            flpydsk_get_volumeName(volumeName2);                   
+            strncpy(floppyVolume2.serialNumber,volumeName2,12); 
+            floppyVolume2.serialNumber[12]=0;
             
             floppy2.type = FLOPPYDISK;
             floppy2.partition[0] = &floppyVolume2;
@@ -572,7 +580,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
     int32_t retVal=0;
     if (flpydsk_seek (track, head) !=0)
     {
-        printf("flpydsk_seek not ok.\n");
+        // printf("flpydsk_seek not ok.\n");
         retVal=-2;
     }
 

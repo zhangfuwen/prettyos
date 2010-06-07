@@ -6,10 +6,14 @@
 #include "devicemanager.h"
 #include "console.h"
 #include "util.h"
+#include "fat12.h"
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
 partition_t* systemPartition;
+
+extern port_t portFloppy1, portFloppy2;
+extern disk_t floppy1, floppy2;
 
 void deviceManager_install(/*partition_t* system*/)
 {
@@ -71,10 +75,24 @@ void showPortList()
             {
             case FDD: 
                 printf("\nFDD     \t%c", i+'A');
+                char volumeName[12];                
+                flpydsk_get_volumeName(volumeName);
                 
-                if (ports[i]->insertedDisk != NULL)
+                // if (ports[i]->insertedDisk != NULL)
+                if (volumeName[0]!=0x20)
                 {
-                    printf("\tfloppy disk inserted");
+                    // TODO: attach floppy disk to FDD ///////////////////
+                    if (ports[i] == &portFloppy1) 
+                    {
+                        ports[i]->insertedDisk = &floppy1; // ???
+                    }
+                    if (ports[i] == &portFloppy2) 
+                    {
+                        ports[i]->insertedDisk = &floppy2; // ???
+                    }
+                    //////////////////////////////////////////////////////
+
+                    printf("\t%s", volumeName);
                 }
                 else
                 {

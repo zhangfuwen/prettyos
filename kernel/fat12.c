@@ -114,6 +114,33 @@ int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer) /
     return 0;
 }
 
+int32_t flpydsk_get_volumeName(char* str)
+{
+    memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
+
+    flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
+
+    /// TODO: change to read_ia(...)!
+    flpydsk_read_sector(19,1); // start at 0x2600: root directory (14 sectors)
+    int32_t retVal = flpydsk_read_sector(19,1); // start at 0x2600: root directory (14 sectors)
+    if (retVal != 0) { printf("\nread error: %d\n",retVal); }   
+
+    char volumeName[12];
+    volumeName[11] = 0; // end of string
+    
+    int32_t start = DMA_BUFFER; // name
+    int32_t count = 11;
+    int32_t letters = 0;
+    int8_t* end = (int8_t*)(start+count);
+    for (; count != 0; --count)
+    {
+        // printf("%c",*(end-count)); // TEST
+        volumeName[letters] = *(end-count); 
+        letters++;
+    }            
+    strncpy(str,volumeName,12);
+    return retVal;
+}
 
 int32_t flpydsk_read_directory()
 {
