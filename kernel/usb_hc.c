@@ -5,21 +5,17 @@
 
 #include "usb_hc.h"
 #include "util.h"
-#include "pci.h"
 #include "ehci.h"
 #include "console.h"
 
-// pci devices list
-extern pciDev_t pciDev_Array[PCIARRAYSIZE];
-
-void install_USB_HostController(uint32_t num)
+void install_USB_HostController(pciDev_t* PCIdev)
 {
-    uint8_t bus  = pciDev_Array[num].bus;
-    uint8_t dev  = pciDev_Array[num].device;
-    uint8_t func = pciDev_Array[num].func;
+    uint8_t bus  = PCIdev->bus;
+    uint8_t dev  = PCIdev->device;
+    uint8_t func = PCIdev->func;
 
     printf(" USB ");
-    switch(pciDev_Array[num].interfaceID)
+    switch(PCIdev->interfaceID)
     {
         case 0x00: printf("UHCI ");   break;
         case 0x10: printf("OHCI ");   break;
@@ -30,33 +26,33 @@ void install_USB_HostController(uint32_t num)
 
     for (uint8_t i = 0; i < 6; ++i) // check USB BARs
     {
-        pciDev_Array[num].bar[i].memoryType = pciDev_Array[num].bar[i].baseAddress & 0x01;
+        PCIdev->bar[i].memoryType = PCIdev->bar[i].baseAddress & 0x01;
 
-        if (pciDev_Array[num].bar[i].baseAddress) // check valid BAR
+        if (PCIdev->bar[i].baseAddress) // check valid BAR
         {
-            if (pciDev_Array[num].bar[i].memoryType == 0)
+            if (PCIdev->bar[i].memoryType == 0)
             {
-                printf("%X MMIO ", pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0);
+                printf("%X MMIO ", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
             }
-            else if (pciDev_Array[num].bar[i].memoryType == 1)
+            else if (PCIdev->bar[i].memoryType == 1)
             {
-                printf("%x I/O ",  pciDev_Array[num].bar[i].baseAddress & 0xFFFC);
+                printf("%x I/O ",  PCIdev->bar[i].baseAddress & 0xFFFC);
             }
 
             // check Memory Size
             cli();
             pci_config_write_dword(bus, dev, func, PCI_BAR0 + 4*i, 0xFFFFFFFF);
             uintptr_t pciBar = pci_config_read(bus, dev, func, PCI_BAR0 + 4*i);
-            pci_config_write_dword(bus, dev, func, PCI_BAR0 + 4*i, pciDev_Array[num].bar[i].baseAddress);
+            pci_config_write_dword(bus, dev, func, PCI_BAR0 + 4*i, PCIdev->bar[i].baseAddress);
             sti();
-            pciDev_Array[num].bar[i].memorySize = (~pciBar | 0x0F) + 1;
-            printf("sz:%d ", pciDev_Array[num].bar[i].memorySize);
+            PCIdev->bar[i].memorySize = (~pciBar | 0x0F) + 1;
+            printf("sz:%d ", PCIdev->bar[i].memorySize);
 
             // EHCI Data
-            if (pciDev_Array[num].interfaceID == 0x20   // EHCI
-               && pciDev_Array[num].bar[i].baseAddress) // valid BAR
+            if (PCIdev->interfaceID == 0x20   // EHCI
+               && PCIdev->bar[i].baseAddress) // valid BAR
             {
-                ehci_install(num,i);
+                ehci_install(PCIdev, i);
             }
         }
     }

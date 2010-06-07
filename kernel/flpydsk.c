@@ -12,9 +12,7 @@
 #include "devicemanager.h"
 #include "kheap.h"
 #include "fat.h"
-#include "fat12.h"
 
-//
 bool FLOPPYflag; // signals that at least one Floppy disk device was found
 
 // for device manager
@@ -33,14 +31,14 @@ partition_t floppyVolume1, floppyVolume2;
   of the OSDEV tutorial series at www.brokenthorn.com
 *****************************************************************************/
 
-const int32_t FLPY_SECTORS_PER_TRACK          =    18; // sectors per track
-static uint8_t CurrentDrive                   =     0; // current working drive, default: 0
-static volatile uint8_t ReceivedFloppyDiskIRQ = false; // set when IRQ fires
-const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME     =   350; // waiting time in milliseconds (motor spin up)
-const int32_t WAITING_TIME                    =    10; // waiting time in milliseconds (for dynamic processes)
+const int32_t FLPY_SECTORS_PER_TRACK       =    18; // sectors per track
+static uint8_t CurrentDrive                =     0; // current working drive, default: 0
+static volatile bool ReceivedFloppyDiskIRQ = false; // set when IRQ fires
+const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  =   350; // waiting time in milliseconds (motor spin up)
+const int32_t WAITING_TIME                 =    10; // waiting time in milliseconds (for dynamic processes)
 
-bool flpy_motor[4];          // 0: motor off  1: motor on
-bool flpy_ReadWriteFlag[4];  // 0: ready      1: busy (blocked)
+bool flpy_motor[2];          // 0: motor off  1: motor on
+bool flpy_ReadWriteFlag[2];  // 0: ready      1: busy (blocked)
 
 // IO ports
 enum FLPYDSK_IO
@@ -144,23 +142,20 @@ enum FLPYDSK_SECTOR_DTL
 
 void floppy_install() 
 {
-    if ((cmos_read(0x10)>>4) == 4)              // 1st floppy 1,44 MB: 0100....b
+    if ((cmos_read(0x10)>>4) == 4)     // 1st floppy 1,44 MB: 0100....b
     {
         FLOPPYflag = true; // at least one floppy found
 
         printf("1.44 MB FDD device 0 found\n");
-        flpy_motor[0] = false;                  // first floppy motor is off
-        flpy_ReadWriteFlag[0] = false;          // first floppy is not blocked
+        flpy_motor[0] = false;         // first floppy motor is off
+        flpy_ReadWriteFlag[0] = false; // first floppy is not blocked
         
-        floppyVolume1.buffer       = (uint8_t*)malloc(512,0);
-        
-        char volumeName1[12];           
-        flpydsk_get_volumeName(volumeName1);       
-        strncpy(floppyVolume1.serialNumber,volumeName1,12);
+        floppyVolume1.buffer = malloc(512,0);
+        strncpy(floppyVolume1.serialNumber,"floppy1",12);
         floppyVolume1.serialNumber[12]=0;
         
-        floppy1.type               = FLOPPYDISK;
-        floppy1.partition[0]       = &floppyVolume1;
+        floppy1.type = FLOPPYDISK;
+        floppy1.partition[0] = &floppyVolume1;
         
         attachDisk(&floppy1); // disk == floppy disk
 
@@ -170,18 +165,14 @@ void floppy_install()
         portFloppy1.data = (void*)1;
         attachPort(&portFloppy1);
 
-        if ((cmos_read(0x10) & 0xF) == 4)       // 2nd floppy 1,44 MB: 0100....b
+        if ((cmos_read(0x10) & 0xF) == 4)  // 2nd floppy 1,44 MB: 0100....b
         {
             printf("1.44 MB FDD device 1 found\n");
-            flpy_motor[1] = false;              // second floppy motor is off
-            flpy_ReadWriteFlag[1] = false;      // second floppy is not blocked
+            flpy_motor[1] = false;         // second floppy motor is off
+            flpy_ReadWriteFlag[1] = false; // second floppy is not blocked
             
             floppyVolume2.buffer = (uint8_t*)malloc(512,0);
-            
-            char volumeName2[12];           
-            flpydsk_get_volumeName(volumeName2);                   
-            strncpy(floppyVolume2.serialNumber,volumeName2,12); 
-            floppyVolume2.serialNumber[12]=0;
+            strncpy(floppyVolume2.serialNumber,"floppy2     ",12);          
             
             floppy2.type = FLOPPYDISK;
             floppy2.partition[0] = &floppyVolume2;
@@ -262,11 +253,13 @@ void flpydsk_send_command (uint8_t cmd)
 {
     // wait until data register is ready. We send commands to the data register
     for (uint16_t i = 0; i < 500; ++i)
+    {
         if (flpydsk_read_status() & FLPYDSK_MSR_MASK_DATAREG)
         {
             outportb(FLPYDSK_FIFO, cmd);
             return;
         }
+    }
 }
 
 // get data from fdc
@@ -392,7 +385,7 @@ void flpydsk_reset()
     flpydsk_drive_data(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
 
     flpydsk_control_motor(true);
-    flpydsk_calibrate(CurrentDrive);  // calibrate the disk
+    flpydsk_calibrate(CurrentDrive);   // calibrate the disk
     flpydsk_control_motor(false);
 }
 
@@ -580,7 +573,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
     int32_t retVal=0;
     if (flpydsk_seek (track, head) !=0)
     {
-        // printf("flpydsk_seek not ok.\n");
+        printf("flpydsk_seek not ok.\n");
         retVal=-2;
     }
 
@@ -748,11 +741,11 @@ int32_t flpydsk_read_ia(int32_t i, void* a, int8_t option)
 
     if (option == SECTOR)
     {
-        memcpy((void*)a, (void*)DMA_BUFFER, 0x200);
+        memcpy(a, (void*)DMA_BUFFER, 0x200);
     }
     else if (option == TRACK)
     {
-        memcpy((void*)a, (void*)DMA_BUFFER, 0x2400);
+        memcpy(a, (void*)DMA_BUFFER, 0x2400);
     }
     return retVal;
 }

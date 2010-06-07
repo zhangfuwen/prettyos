@@ -20,7 +20,7 @@ void kernel_console_init()
     current_console = malloc(sizeof(console_t), PAGESIZE); // Reserving space for the kernels console
     console_init(current_console, "");
     reachableConsoles[KERNELCONSOLE_ID] = current_console;
-    current_console->SCROLL_END = 42;
+    current_console->SCROLL_END = 39;
     current_console->showInfobar = true;
 }
 

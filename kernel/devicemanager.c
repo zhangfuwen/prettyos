@@ -19,7 +19,7 @@ void deviceManager_install(/*partition_t* system*/)
 {
     memset(disks, 0, DISKARRAYSIZE*sizeof(disks));
     memset(ports, 0, PORTARRAYSIZE*sizeof(ports));
-	//systemPartition = system;
+    //systemPartition = system;
 }
 
 void attachPort(port_t* port)
@@ -63,65 +63,61 @@ void showPortList()
 {
     printf("\n\nAvailable Ports:");
     textColor(0x07);
-    printf("\n\nType    \tnumber\tMedia"); 
+    printf("\n\nType    \tnumber\tMedia");
     printf("\n----------------------------------------------------------------------");
     textColor(0x0F);
 
-    for (uint8_t i=0; i<PORTARRAYSIZE; i++)
+    for (uint8_t i = 0; i < PORTARRAYSIZE; i++)
     {
         if (ports[i] != NULL)
         {
             switch (ports[i]->type) // Type
             {
-            case FDD: 
-                printf("\nFDD     \t%c", i+'A');
-                char volumeName[12];                
-                flpydsk_get_volumeName(volumeName);
-                
-                // if (ports[i]->insertedDisk != NULL)
-                if (volumeName[0]!=0x20)
-                {
-                    // TODO: attach floppy disk to FDD ///////////////////
-                    if (ports[i] == &portFloppy1) 
-                    {
-                        ports[i]->insertedDisk = &floppy1; // ???
-                    }
-                    if (ports[i] == &portFloppy2) 
-                    {
-                        ports[i]->insertedDisk = &floppy2; // ???
-                    }
-                    //////////////////////////////////////////////////////
+                case FDD:
+                    printf("\nFDD     \t%c", i+'A');
+                    char volumeName[12];
+                    flpydsk_get_volumeName(volumeName);
 
-                    printf("\t%s", volumeName);
-                }
-                else
-                {
-                    printf("\tNo floppy disk inserted");
-                }
-                break;
-            case RAM:
-                printf("\nRAMdisk \t---");
-                if (ports[i]->insertedDisk != NULL)
-                {
-                    printf("\tactive"); // only possibility
-                }
-                break;
-            case USB:
-                printf("\nUSB Port\t%c", i+'A');
-                if (ports[i]->insertedDisk != NULL)
-                {
-                    printf("\tMSD attached");
-                }
-                else
-                {
-                   printf("\tNo MSD attached");
-                }
-                break;
+                    // if (ports[i]->insertedDisk != NULL)
+                    if (volumeName[0]!=0x20)
+                    {
+                        // TODO: attach floppy disk to FDD ///////////////////
+                        if (ports[i] == &portFloppy1) 
+                        {
+                            ports[i]->insertedDisk = &floppy1; // ???
+                        }
+                        if (ports[i] == &portFloppy2) 
+                        {
+                            ports[i]->insertedDisk = &floppy2; // ???
+                        }
+                        //////////////////////////////////////////////////////
+
+                        printf("\t%s", volumeName);
+                    }
+                    else
+                    {
+                        printf("\tNo floppy disk inserted");
+                    }
+                    break;
+                case RAM:
+                    //printf("\nRAMdisk \t---");
+                    //if (ports[i]->insertedDisk != NULL)
+                    //{
+                    //    printf("\tactive"); // only possibility
+                    //}
+                    break;
+                case USB:
+                    printf("\nUSB Port\t%c", i+'A');
+                    if (ports[i]->insertedDisk != NULL)
+                    {
+                        printf("\tMSD attached");
+                    }
+                    else
+                    {
+                       printf("\tNo MSD attached");
+                    }
+                    break;
             }
-        }
-        else
-        {
-           // printf("\nnot implemented"); // TEST
         }
     }
     textColor(0x07);
@@ -237,14 +233,14 @@ partition_t* getPartition(const char* path)
     }
     else
     {
-		if(DiskID == 0)
-		{
-			return(systemPartition);
-		}
-		else
-		{
-	        return(disks[DiskID]->partition[PartitionID-1]);
-		}
+        if(DiskID == 0)
+        {
+            return(systemPartition);
+        }
+        else
+        {
+            return(disks[DiskID]->partition[PartitionID-1]);
+        }
     }
 }
 

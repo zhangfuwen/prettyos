@@ -2,7 +2,8 @@
 #define USB_HC_H
 
 #include "os.h"
+#include "pci.h"
 
-void install_USB_HostController(uint32_t num);
+void install_USB_HostController(pciDev_t* PCIdev);
 
 #endif

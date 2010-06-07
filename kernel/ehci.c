@@ -5,7 +5,6 @@
 
 #include "util.h"
 #include "timer.h"
-#include "pci.h"
 #include "kheap.h"
 #include "task.h"
 #include "event_list.h"
@@ -27,7 +26,7 @@
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-bool      EHCIflag; // signals that one EHCI device was found /// TODO: manage more than one EHCI
+bool      EHCIflag;   // signals that one EHCI device was found /// TODO: manage more than one EHCI
 bool      USBINTflag; // signals STS_USBINT reset by EHCI handler
 
 uint8_t   numPorts;  // maximum
@@ -35,12 +34,10 @@ port_t    port[17];  // device manager
 
 uintptr_t eecp;
 
-// pci devices list
-extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 bool USBtransferFlag; // switch on/off tests for USB-Transfer
 bool enabledPortFlag; // port enabled
 
-uint32_t pciEHCInumber = 0; // pci device number
+pciDev_t* PCIdevice = 0; // pci device
 
 // usb devices list
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
@@ -50,9 +47,9 @@ disk_t      usbDev[17];
 partition_t usbDevVolume[17];
 
 
-void ehci_install(uint32_t num, uint32_t i)
+void ehci_install(pciDev_t* PCIdev, uint32_t i)
 {
-    uintptr_t bar_phys = pciDev_Array[num].bar[i].baseAddress & 0xFFFFFFF0;
+    uintptr_t bar_phys = PCIdev->bar[i].baseAddress & 0xFFFFFFF0;
     uintptr_t bar      = (uintptr_t) paging_acquire_pcimem(bar_phys);
     uintptr_t offset   = bar_phys%PAGESIZE;
 
@@ -62,12 +59,11 @@ void ehci_install(uint32_t num, uint32_t i)
 
     if (!EHCIflag) // only the first EHCI is used
     {
-        pciEHCInumber = num; /// TODO: implement for more than one EHCI
+        PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
         EHCIflag = true; // only the first EHCI is used
-        if(pciEHCInumber)
-        {
-            addEvent(&EHCI_INIT);
-        }
+
+        addEvent(&EHCI_INIT);
+
         analyzeEHCI(bar,offset); // get data (capregs, opregs)
     }
 }
@@ -113,11 +109,10 @@ int32_t initEHCIHostController()
     textColor(0x0F);
 
     // pci bus data
-    uint32_t num = pciEHCInumber;
-    uint8_t bus  = pciDev_Array[num].bus;
-    uint8_t dev  = pciDev_Array[num].device;
-    uint8_t func = pciDev_Array[num].func;
-    uint8_t irq  = pciDev_Array[num].irq;
+    uint8_t bus  = PCIdevice->bus;
+    uint8_t dev  = PCIdevice->device;
+    uint8_t func = PCIdevice->func;
+    uint8_t irq  = PCIdevice->irq;
     // prepare PCI command register // offset 0x04
     // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
     // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
@@ -149,7 +144,7 @@ int32_t initEHCIHostController()
     USBtransferFlag = true;
     enabledPortFlag = false;
 
-    startHostController(num);
+    startHostController(PCIdevice);
 
     if (!(pOpRegs->USBSTS & STS_HCHALTED))
     {
@@ -166,7 +161,7 @@ int32_t initEHCIHostController()
     return 0;
 }
 
-void startHostController(uint32_t num)
+void startHostController(pciDev_t* PCIdev)
 {
     textColor(0x09);
     printf("\n>>> >>> function: startHostController (reset HC)");
@@ -184,7 +179,7 @@ void startHostController(uint32_t num)
     */
 
     // 1. Claim/request ownership of the EHCI. This process is described in detail in Section 5 - EHCI Ownership.
-    DeactivateLegacySupport(num);
+    DeactivateLegacySupport(PCIdev);
 
     // 2. Program the CTRLDSSEGMENT register. This value must be programmed since the ICH4/5 only uses 64bit addressing
     //    (See Section 4.3.3.1.2-HCCPARAMS – Host Controller Capability Parameters).
@@ -266,14 +261,12 @@ void resetHostController()
     }
 }
 
-void DeactivateLegacySupport(uint32_t num)
+void DeactivateLegacySupport(pciDev_t* PCIdev)
 {
-    //bool failed = false;
-
     // pci bus data
-    uint8_t bus  = pciDev_Array[num].bus;
-    uint8_t dev  = pciDev_Array[num].device;
-    uint8_t func = pciDev_Array[num].func;
+    uint8_t bus  = PCIdev->bus;
+    uint8_t dev  = PCIdev->device;
+    uint8_t func = PCIdev->func;
 
     eecp = BYTE2(pCapRegs->HCCPARAMS);
     printf("\nDeactivateLegacySupport: eecp = %x\n",eecp);
@@ -315,7 +308,6 @@ void DeactivateLegacySupport(uint32_t num)
         {
             printf("set OS-Semaphore.\n");
             pci_config_write_byte(bus, dev, func, OSownedSemaphore, 0x01);
-            //failed = true;
 
             int32_t timeout=200;
             // Wait for BIOS-Semaphore being not set
@@ -338,7 +330,6 @@ void DeactivateLegacySupport(uint32_t num)
             }
             if (pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore) & 0x01)
             {
-                //failed = false;
                 printf("OS-Semaphore being set.\n");
             }
 
@@ -489,7 +480,7 @@ void ehci_handler(registers_t* r)
 
         pOpRegs->USBSTS |= STS_PORT_CHANGE;
 
-        if (enabledPortFlag && pciEHCInumber)
+        if (enabledPortFlag && PCIdevice)
         {
             addEvent(&EHCI_PORTCHECK);
         }
@@ -507,7 +498,7 @@ void ehci_handler(registers_t* r)
         printf("Host System Error");
         textColor(0x0F);
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
-        analyzeHostSystemError(pciEHCInumber);
+        analyzeHostSystemError(PCIdevice);
         textColor(0x0E);
         printf("\n>>> Init EHCI after fatal error:           <<<");
         printf("\n>>> Press key for EHCI (re)initialization. <<<");

@@ -15,11 +15,11 @@
 
 pciDev_t pciDev_Array[PCIARRAYSIZE];
 
-void analyzeHostSystemError(uint32_t num)
+void analyzeHostSystemError(pciDev_t* pciDev)
 {
-     uint8_t bus  = pciDev_Array[num].bus;
-     uint8_t dev  = pciDev_Array[num].device;
-     uint8_t func = pciDev_Array[num].func;
+     uint8_t bus  = pciDev->bus;
+     uint8_t dev  = pciDev->device;
+     uint8_t func = pciDev->func;
 
      // check pci status register of the device
      uint32_t pciStatus = pci_config_read(bus, dev, func, PCI_STATUS);
@@ -185,7 +185,7 @@ void listPCI()
                     /// USB Host Controller
                     if ((pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03))
                     {
-                        install_USB_HostController(number);
+                        install_USB_HostController(&pciDev_Array[number]);
                     }
                     printf("\n");
 

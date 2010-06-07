@@ -18,6 +18,7 @@ typedef struct
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
     void*        data;                          // Contains additional information depending on its type
     uint32_t     serial;
+    char*        name;
 } disk_t;
 
 typedef struct 

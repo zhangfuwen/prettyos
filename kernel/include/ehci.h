@@ -2,6 +2,7 @@
 #define EHCI_H
 
 #include "os.h"
+#include "pci.h"
 
 struct ehci_CapRegs
 {
@@ -177,14 +178,14 @@ extern uintptr_t SetupQTDpage0;
 
 
 
-void ehci_install(uint32_t num, uint32_t i);
+void ehci_install(pciDev_t* PCIdev, uint32_t i);
 void analyzeEHCI(uintptr_t bar, uintptr_t offset);
 void ehci_init(); // for thread with own console
 void startEHCI();
 int32_t initEHCIHostController();
-void startHostController(uint32_t num);
+void startHostController(pciDev_t* PCIdev);
 void resetHostController();
-void DeactivateLegacySupport(uint32_t num);
+void DeactivateLegacySupport(pciDev_t* PCIdev);
 void enablePorts();
 void resetPort(uint8_t j);
 
