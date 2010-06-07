@@ -16,15 +16,16 @@ typedef struct
 {
     uint8_t      type;
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
-    void*        data;                          // Contains additional information depending on its type
-    uint32_t     serial;
-    char*        name;
+    char         name[15];
+    char         serial[15];    
+    void*        data; // Contains additional information depending on its type
 } disk_t;
 
 typedef struct 
 {
     uint8_t type;
     disk_t* insertedDisk; // NULL if no disk is inserted
+    char    name[15];
     void*   data;         // Contains additional information depending on its type
 } port_t;
 

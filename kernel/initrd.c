@@ -24,6 +24,7 @@ struct dirent dirent;
 extern uintptr_t file_data_start;
 extern uintptr_t file_data_end;
 
+port_t      RAMDiskPort;
 disk_t      RAMDisk;
 partition_t RAMDiskVolume;
 
@@ -40,13 +41,23 @@ void* ramdisk_install(size_t size)
 
     RAMDISKflag = true; // at least one RAMDisk found
         
+    // volume
     RAMDiskVolume.buffer       = (uint8_t*)malloc(512,0); // necessary?
-    strncpy(RAMDiskVolume.serialNumber,"ramdisk",12);
+    char str[12];
+    itoa(((uint32_t)(ramdisk_start)/PAGESIZE),str);
+    strncpy(RAMDiskVolume.serialNumber,str,12);
     
+    // disk
     RAMDisk.type               = RAMDISK;
     RAMDisk.partition[0]       = &RAMDiskVolume;
-    
+    strncpy(RAMDisk.name,"RAMDisk    ",11);
     attachDisk(&RAMDisk);
+
+    // port
+    RAMDiskPort.type = RAM;
+    strncpy(RAMDiskPort.name,"RAM        ",11);    
+    RAMDiskPort.insertedDisk  = &RAMDisk;
+    attachPort(&RAMDiskPort);
 
     return(ramdisk_start);
 }

@@ -146,34 +146,33 @@ void floppy_install()
     {
         FLOPPYflag = true; // at least one floppy found
 
-        printf("1.44 MB FDD device 0 found\n");
+        printf("1.44 MB FDD first device found\n");
         flpy_motor[0] = false;         // first floppy motor is off
         flpy_ReadWriteFlag[0] = false; // first floppy is not blocked
         
         floppyVolume1.buffer = malloc(512,0);
-        strncpy(floppyVolume1.serialNumber,"floppy1",12);
-        floppyVolume1.serialNumber[12]=0;
-        
+                
         floppy1.type = FLOPPYDISK;
         floppy1.partition[0] = &floppyVolume1;
-        
+
+        // disk == floppydisk
         attachDisk(&floppy1); // disk == floppy disk
 
         // port == floppy disk device (FDD)
         portFloppy1.type = FDD; 
-        portFloppy1.insertedDisk = NULL; 
+        portFloppy1.insertedDisk = &floppy1; 
+        strncpy(portFloppy1.name,"Floppy Dev 1",12);
         portFloppy1.data = (void*)1;
         attachPort(&portFloppy1);
 
         if ((cmos_read(0x10) & 0xF) == 4)  // 2nd floppy 1,44 MB: 0100....b
         {
-            printf("1.44 MB FDD device 1 found\n");
+            printf("1.44 MB FDD second device found\n");
             flpy_motor[1] = false;         // second floppy motor is off
             flpy_ReadWriteFlag[1] = false; // second floppy is not blocked
             
-            floppyVolume2.buffer = (uint8_t*)malloc(512,0);
-            strncpy(floppyVolume2.serialNumber,"floppy2     ",12);          
-            
+            floppyVolume2.buffer = (uint8_t*)malloc(512,0);            
+
             floppy2.type = FLOPPYDISK;
             floppy2.partition[0] = &floppyVolume2;
 
@@ -181,7 +180,8 @@ void floppy_install()
 
             // port == floppy disk device (FDD)
             portFloppy2.type = FDD; 
-            portFloppy2.insertedDisk = NULL; 
+            portFloppy2.insertedDisk = &floppy2;
+            strncpy(portFloppy2.name,"Floppy Dev 2",12);
             portFloppy2.data = (void*)2;
             attachPort(&portFloppy2);
         }
@@ -573,7 +573,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
     int32_t retVal=0;
     if (flpydsk_seek (track, head) !=0)
     {
-        printf("flpydsk_seek not ok.\n");
+        // printf("flpydsk_seek not ok.\n");
         retVal=-2;
     }
 

@@ -368,6 +368,11 @@ void enablePorts()
           
          port[j+1].type = USB; // device manager
          port[j+1].data = (void*)(j+1);
+         char name[14],portNum[3];
+         strcpy(name,"EHCI-Port ");
+         itoa(j+1,portNum);
+         strcat(name,portNum);
+         strncpy(port[j+1].name,name,14);
          attachPort(&port[j+1]);
          
          if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
@@ -694,6 +699,7 @@ void setupUSBDevice(uint8_t portNumber)
     usbDev[portNumber+1].type         = USB_MSD;
     usbDev[portNumber+1].partition[0] = &usbDevVolume[portNumber+1];
     usbDev[portNumber+1].data         = (void*)&usbDevices[devAddr]; 
+    strcpy(usbDev[portNumber+1].name,usbDevices[devAddr].serialNumber); // TODO: product name  <-------------- TODO ----------      
     attachDisk(&usbDev[portNumber+1]);
 
     // Port

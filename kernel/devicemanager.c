@@ -63,7 +63,7 @@ void showPortList()
 {
     printf("\n\nAvailable Ports:");
     textColor(0x07);
-    printf("\n\nType    \tnumber\tMedia");
+    printf("\n\nType\tNumber\tName\t\tMedia (attached)");
     printf("\n----------------------------------------------------------------------");
     textColor(0x0F);
 
@@ -74,7 +74,12 @@ void showPortList()
             switch (ports[i]->type) // Type
             {
                 case FDD:
-                    printf("\nFDD     \t%c", i+'A');
+                    printf("\nFDD ");
+                    textColor(0x0E);
+                    printf("\t%c", i+'A'); // type, number (letter)
+                    textColor(0x0F);
+                    printf("\t%s", ports[i]->name);
+                    
                     char volumeName[12];
                     flpydsk_get_volumeName(volumeName);
 
@@ -84,11 +89,11 @@ void showPortList()
                         // TODO: attach floppy disk to FDD ///////////////////
                         if (ports[i] == &portFloppy1) 
                         {
-                            ports[i]->insertedDisk = &floppy1; // ???
+                            ports[i]->insertedDisk = &floppy1; 
                         }
                         if (ports[i] == &portFloppy2) 
                         {
-                            ports[i]->insertedDisk = &floppy2; // ???
+                            ports[i]->insertedDisk = &floppy2; 
                         }
                         //////////////////////////////////////////////////////
 
@@ -100,17 +105,23 @@ void showPortList()
                     }
                     break;
                 case RAM:
-                    //printf("\nRAMdisk \t---");
-                    //if (ports[i]->insertedDisk != NULL)
-                    //{
-                    //    printf("\tactive"); // only possibility
-                    //}
+                    printf("\nRAM ");
+                    textColor(0x0E);
+                    printf("\t%c", i+'A');
+                    textColor(0x0F);
+                    printf("\t%s", ports[i]->name); 
+                    printf("\t%s", ports[i]->insertedDisk->name);  
                     break;
                 case USB:
-                    printf("\nUSB Port\t%c", i+'A');
+                    printf("\nusbPort");
+                    textColor(0x0E);
+                    printf("\t%c", i+'A');
+                    textColor(0x0F);
+                    printf("\t%s", ports[i]->name); 
+
                     if (ports[i]->insertedDisk != NULL)
                     {
-                        printf("\tMSD attached");
+                        printf("\t%s",ports[i]->insertedDisk->name);
                     }
                     else
                     {
@@ -129,7 +140,7 @@ void showDiskList()
 {
     printf("\n\nAttached Disks:");
     textColor(0x07);
-    printf("\n\nType\tNumber\tSerial\tPart.\tSerial");
+    printf("\n\nType\tNumber\tName\t\tPart.\tSerial");
     printf("\n----------------------------------------------------------------------");
     textColor(0x0F);
 
@@ -153,8 +164,23 @@ void showDiskList()
             textColor(0x0E); 
             printf("\t%u", i+1); // Number
             textColor(0x0F);
-
-            printf("\t%u", disks[i]->serial); // Serial of disk
+            
+            char volumeName[12];
+            switch (disks[i]->type)
+            {
+            case FLOPPYDISK:
+                flpydsk_get_volumeName(volumeName);
+                strncpy(disks[i]->name, volumeName,12);
+                printf("\t%s", disks[i]->name);
+                break;
+            case RAMDISK:
+            case USB_MSD:
+                printf("\t%s", disks[i]->name);   // Name of disk
+                if (strlen(disks[i]->name) < 8) { printf("\t"); }
+                break;
+            }
+            
+            // printf("\t%s", disks[i]->serial); // Serial of disk // does that make sense? <----- TODO
 
             for (uint8_t j = 0; j < PARTITIONARRAYSIZE; j++)
             {
@@ -167,6 +193,8 @@ void showDiskList()
                 switch(disks[i]->type)
                 {
                     case FLOPPYDISK: // TODO: floppy disk device: use the current serials of the floppy disks
+                        // flpydsk_get_volumeName(volumeName); // it already happened above
+                        strncpy(disks[i]->partition[j]->serialNumber, volumeName,12);
                         printf("\t%s", disks[i]->partition[j]->serialNumber);
                         break;
                     case RAMDISK:
