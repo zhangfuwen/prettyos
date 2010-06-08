@@ -130,7 +130,7 @@ void usbTransferConfig(uint32_t device)
             {
                 usbDevices[device].numEndpointInMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
             }
-            
+
             if (!(((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80) && (((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2) )
             {
                 usbDevices[device].numEndpointOutMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
@@ -141,7 +141,7 @@ void usbTransferConfig(uint32_t device)
         }
 
         if ( ((*(uint8_t*)(addrPointer+1)) != 2 ) && ((*(uint8_t*)(addrPointer+1)) != 4 ) && ((*(uint8_t*)(addrPointer+1)) != 5 ) ) // length, type
-        {            
+        {
             if ( (*(uint8_t*)addrPointer) > 0)
             {
               #ifdef _USB_DIAGNOSIS_
@@ -149,7 +149,7 @@ void usbTransferConfig(uint32_t device)
                 printf("\nlength: %u type: %u unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
                 textColor(0x0F);
               #endif
-            }            
+            }
             addrPointer += *(uint8_t*)addrPointer;
             found = true;
         }
@@ -277,7 +277,7 @@ void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
     //     00000010b        3   0000h endpoint    0000h   none
 
     // Create QH
-    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint 
+    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint
 
     performAsyncScheduler(true, false, 3);
     printf("\nset HALT at dev: %u endpoint: %u", device, endpoint);
@@ -300,7 +300,7 @@ void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize
     //     00000010b        1   0000h endpoint    0000h   none
 
     // Create QH
-    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint 
+    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint
 
     performAsyncScheduler(true, false, 3);
     printf("\nclear HALT at dev: %u endpoint: %u", device, endpoint);
@@ -308,10 +308,10 @@ void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize
 
 uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-    textColor(0x0E); 
-    printf("\nusbGetStatus at device: %u endpoint: %u", device, endpoint); 
+    textColor(0x0E);
+    printf("\nusbGetStatus at device: %u endpoint: %u", device, endpoint);
     textColor(0x0F);
-    
+
     void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
@@ -324,7 +324,7 @@ uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
     //     00000010b       0b   0000h endpoint    0002h   2 byte
 
     // Create QH
-    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint 
+    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint
 
     performAsyncScheduler(true, false, 0);
     uint16_t status = *((uint16_t*)DataQTDpage0);
@@ -366,14 +366,14 @@ void showDevice(usb2_Device_t* usbDev)
   #ifdef _USB_DIAGNOSIS_
     printf("vendor:            %x\n",           usbDev->vendor);
     printf("product:           %x\t",           usbDev->product);
-    printf("release number:    %u.%u\n",        usbDev->releaseNumber>>8, usbDev->releaseNumber&0xFF);  
+    printf("release number:    %u.%u\n",        usbDev->releaseNumber>>8, usbDev->releaseNumber&0xFF);
     printf("manufacturer:      %x\t",           usbDev->manufacturerStringID);
     printf("product:           %x\n",           usbDev->productStringID);
     printf("serial number:     %x\t",           usbDev->serNumberStringID);
     printf("number of config.: %u\n",           usbDev->numConfigurations); // number of possible configurations
     printf("numInterfaceMSD:   %u\n",           usbDev->numInterfaceMSD);
   #endif
-    
+
     textColor(0x0F);
 }
 
@@ -381,7 +381,7 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
 {
     if (d->length)
     {
-        textColor(0x0A);        
+        textColor(0x0A);
       #ifdef _USB_DIAGNOSIS_
         printf("length:               %u\t\t",  d->length);
         printf("descriptor type:      %u\n",  d->descriptorType);
@@ -535,8 +535,8 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
         printf("length:            %u\t\t",  d->length);         // 7
         printf("descriptor type:   %u\n",    d->descriptorType); // 5
       #endif
-        printf("endpoint %u: %s, ", d->endpointAddress & 0xF, d->endpointAddress & 0x80 ? "IN " : "OUT");        
-      #ifdef _USB_DIAGNOSIS_      
+        printf("endpoint %u: %s, ", d->endpointAddress & 0xF, d->endpointAddress & 0x80 ? "IN " : "OUT");
+      #ifdef _USB_DIAGNOSIS_
         printf("attributes:  %y\t\t",  d->attributes); // bit 1:0 00 control    01 isochronous    10 bulk                         11 interrupt
                                                        // bit 3:2 00 no sync    01 async          10 adaptive                     11 sync (only if isochronous)
       #endif                                           // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
@@ -570,106 +570,106 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
             {
                 switch (d->languageID[i])
                 {
-                    case 0x401: 
+                    case 0x401:
                         printf("Arabic\t");
                         break;
-                    case 0x404: 
+                    case 0x404:
                         printf("Chinese \t");
                         break;
-                    case 0x407: 
+                    case 0x407:
                         printf("German\t");
                         break;
-                    case 0x409: 
+                    case 0x409:
                         printf("English\t");
                         break;
-                    case 0x40A: 
+                    case 0x40A:
                         printf("Spanish\t");
                         break;
-                    case 0x40C: 
+                    case 0x40C:
                         printf("French\t");
                         break;
-                    case 0x410: 
+                    case 0x410:
                         printf("Italian\t");
                         break;
-                    case 0x411: 
+                    case 0x411:
                         printf("Japanese\t");
                         break;
-                    case 0x416: 
+                    case 0x416:
                         printf("Portuguese\t");
                         break;
-                    case 0x419: 
+                    case 0x419:
                         printf("Russian\t");
                         break;
-                    default:            
+                    default:
                         printf("language code: %x\t", d->languageID[i]);
                         /*Language Codes
-                        ; 0x400 Neutral 
-                        ; 0x401 Arabic 
-                        ; 0x402 Bulgarian 
-                        ; 0x403 Catalan  
-                        ; 0x404 Chinese 
-                        ; 0x405 Czech 
-                        ; 0x406 Danish 
-                        ; 0x407 German 
-                        ; 0x408 Greek 
-                        ; 0x409 English  
-                        ; 0x40a Spanish  
-                        ; 0x40b Finnish 
-                        ; 0x40c French 
-                        ; 0x40d Hebrew 
-                        ; 0x40e Hungarian 
-                        ; 0x40f Icelandic 
-                        ; 0x410 Italian  
-                        ; 0x411 Japanese 
-                        ; 0x412 Korean 
-                        ; 0x413 Dutch 
-                        ; 0x414 Norwegian 
-                        ; 0x415 Polish 
-                        ; 0x416 Portuguese 
-                        ; 0x418 Romanian 
-                        ; 0x419 Russian 
-                        ; 0x41a Croatian 
-                        ; 0x41a Serbian 
-                        ; 0x41b Slovak 
-                        ; 0x41c Albanian 
-                        ; 0x41d Swedish  
-                        ; 0x41e Thai 
-                        ; 0x41f Turkish  
-                        ; 0x420 Urdu 
-                        ; 0x421 Indonesian 
-                        ; 0x422 Ukrainian 
-                        ; 0x423 Belarusian 
-                        ; 0x424 Slovenian 
-                        ; 0x425 Estonian 
-                        ; 0x426 Latvian 
-                        ; 0x427 Lithuanian 
-                        ; 0x429 Farsi 
-                        ; 0x42a Vietnamese 
-                        ; 0x42b Armenian 
-                        ; 0x42c Azeri 
-                        ; 0x42d Basque 
-                        ; 0x42f Macedonian 
-                        ; 0x436 Afrikaans 
-                        ; 0x437 Georgian 
-                        ; 0x438 Faeroese 
-                        ; 0x439 Hindi 
-                        ; 0x43e Malay 
-                        ; 0x43f Kazak 
-                        ; 0x440 Kyrgyz 
-                        ; 0x441 Swahili 
-                        ; 0x443 Uzbek 
-                        ; 0x444 Tatar 
-                        ; 0x446 Punjabi 
-                        ; 0x447 Gujarati 
-                        ; 0x449 Tamil 
-                        ; 0x44a Telugu 
-                        ; 0x44b Kannada 
-                        ; 0x44e Marathi 
-                        ; 0x44f Sanskrit 
-                        ; 0x450 Mongolian 
-                        ; 0x456 Galician 
-                        ; 0x457 Konkani 
-                        ; 0x45a Syriac 
+                        ; 0x400 Neutral
+                        ; 0x401 Arabic
+                        ; 0x402 Bulgarian
+                        ; 0x403 Catalan
+                        ; 0x404 Chinese
+                        ; 0x405 Czech
+                        ; 0x406 Danish
+                        ; 0x407 German
+                        ; 0x408 Greek
+                        ; 0x409 English
+                        ; 0x40a Spanish
+                        ; 0x40b Finnish
+                        ; 0x40c French
+                        ; 0x40d Hebrew
+                        ; 0x40e Hungarian
+                        ; 0x40f Icelandic
+                        ; 0x410 Italian
+                        ; 0x411 Japanese
+                        ; 0x412 Korean
+                        ; 0x413 Dutch
+                        ; 0x414 Norwegian
+                        ; 0x415 Polish
+                        ; 0x416 Portuguese
+                        ; 0x418 Romanian
+                        ; 0x419 Russian
+                        ; 0x41a Croatian
+                        ; 0x41a Serbian
+                        ; 0x41b Slovak
+                        ; 0x41c Albanian
+                        ; 0x41d Swedish
+                        ; 0x41e Thai
+                        ; 0x41f Turkish
+                        ; 0x420 Urdu
+                        ; 0x421 Indonesian
+                        ; 0x422 Ukrainian
+                        ; 0x423 Belarusian
+                        ; 0x424 Slovenian
+                        ; 0x425 Estonian
+                        ; 0x426 Latvian
+                        ; 0x427 Lithuanian
+                        ; 0x429 Farsi
+                        ; 0x42a Vietnamese
+                        ; 0x42b Armenian
+                        ; 0x42c Azeri
+                        ; 0x42d Basque
+                        ; 0x42f Macedonian
+                        ; 0x436 Afrikaans
+                        ; 0x437 Georgian
+                        ; 0x438 Faeroese
+                        ; 0x439 Hindi
+                        ; 0x43e Malay
+                        ; 0x43f Kazak
+                        ; 0x440 Kyrgyz
+                        ; 0x441 Swahili
+                        ; 0x443 Uzbek
+                        ; 0x444 Tatar
+                        ; 0x446 Punjabi
+                        ; 0x447 Gujarati
+                        ; 0x449 Tamil
+                        ; 0x44a Telugu
+                        ; 0x44b Kannada
+                        ; 0x44e Marathi
+                        ; 0x44f Sanskrit
+                        ; 0x450 Mongolian
+                        ; 0x456 Galician
+                        ; 0x457 Konkani
+                        ; 0x45a Syriac
                         ; 0x465 Divehi */
                         break;
                 }
@@ -684,7 +684,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
 {
     if (d->length)
     {
-        
+
       #ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\nlength:            %u\t\t",  d->length);
@@ -704,10 +704,17 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
         printf("\t");
         textColor(0x0F);
 
+
+        if (stringIndex == 2) // product name
+        {
+            strncpy(usbDevices[device].productName, (char*)d->asciichar, 15);
+            // printf(" product name: %s", usbDevices[device].productName);
+        }
+
         if (stringIndex == 3) // serial number
         {
             // take the last 12 characters
-            
+
             // find the last character
             int16_t j=0; // start at the front
             while (d->asciichar[j]) // not '\0'
@@ -720,7 +727,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
             {
                 j=0;
             }
-            
+
             for (uint16_t index=0; index<13; index++)
             {
                 if (j+index>last)
@@ -730,12 +737,10 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
                 }
                 else
                 {
-                    usbDevices[device].serialNumber[index] = d->asciichar[j+index];         
+                    usbDevices[device].serialNumber[index] = d->asciichar[j+index];
                 }
             }
-
-            // check
-            printf(" serial: %s", usbDevices[device].serialNumber);  
+            // printf(" serial: %s", usbDevices[device].serialNumber);
         }
     }
 }

@@ -140,7 +140,7 @@ enum FLPYDSK_SECTOR_DTL
     FLPYDSK_SECTOR_DTL_1024 = 4
 };
 
-void floppy_install() 
+void floppy_install()
 {
     if ((cmos_read(0x10)>>4) == 4)     // 1st floppy 1,44 MB: 0100....b
     {
@@ -149,9 +149,9 @@ void floppy_install()
         printf("1.44 MB FDD first device found\n");
         flpy_motor[0] = false;         // first floppy motor is off
         flpy_ReadWriteFlag[0] = false; // first floppy is not blocked
-        
+
         floppyVolume1.buffer = malloc(512,0);
-                
+
         floppy1.type = FLOPPYDISK;
         floppy1.partition[0] = &floppyVolume1;
 
@@ -159,8 +159,8 @@ void floppy_install()
         attachDisk(&floppy1); // disk == floppy disk
 
         // port == floppy disk device (FDD)
-        portFloppy1.type = FDD; 
-        portFloppy1.insertedDisk = &floppy1; 
+        portFloppy1.type = FDD;
+        portFloppy1.insertedDisk = &floppy1;
         strncpy(portFloppy1.name,"Floppy Dev 1",12);
         portFloppy1.data = (void*)1;
         attachPort(&portFloppy1);
@@ -170,8 +170,8 @@ void floppy_install()
             printf("1.44 MB FDD second device found\n");
             flpy_motor[1] = false;         // second floppy motor is off
             flpy_ReadWriteFlag[1] = false; // second floppy is not blocked
-            
-            floppyVolume2.buffer = (uint8_t*)malloc(512,0);            
+
+            floppyVolume2.buffer = (uint8_t*)malloc(512,0);
 
             floppy2.type = FLOPPYDISK;
             floppy2.partition[0] = &floppyVolume2;
@@ -179,7 +179,7 @@ void floppy_install()
             attachDisk(&floppy2);
 
             // port == floppy disk device (FDD)
-            portFloppy2.type = FDD; 
+            portFloppy2.type = FDD;
             portFloppy2.insertedDisk = &floppy2;
             strncpy(portFloppy2.name,"Floppy Dev 2",12);
             portFloppy2.data = (void*)2;
@@ -569,7 +569,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
 
     int32_t head=0, track=0, sector=1;
     flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
-    
+
     int32_t retVal=0;
     if (flpydsk_seek (track, head) !=0)
     {
@@ -581,7 +581,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
     while (flpydsk_transfer_sector(head, track, sector, 0) == -1)
     {
         timeout--;
-        printf("error read_sector. left: %d\n",timeout);
+        // printf("error read_sector. left: %d\n",timeout);
         if (timeout<= 0)
         {
             printf("\nread_sector timeout: read error!\n");

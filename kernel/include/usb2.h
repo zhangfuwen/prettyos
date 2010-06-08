@@ -21,9 +21,10 @@ typedef struct usb2_Device
     uint8_t  productStringID;
     uint8_t  serNumberStringID;
     uint8_t  numConfigurations;
-    uint8_t  maxLUN;    
+    uint8_t  maxLUN;
 
     // MSD specific
+    char     productName[16];
     char     serialNumber[13];
     uint8_t  numInterfaceMSD;
     uint8_t  InterfaceClass;
@@ -114,7 +115,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration);
 uint8_t usbTransferGetConfiguration(uint32_t device);
 uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize);
 
-void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize); 
+void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize);
 void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize);
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
