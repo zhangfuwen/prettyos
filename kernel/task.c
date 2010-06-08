@@ -32,11 +32,6 @@ int32_t getpid()
     return(currentTask->pid);
 }
 
-void settaskflag(int32_t i)
-{
-    task_switching = i;
-}
-
 void tasking_install()
 {
     #ifdef _TASKING_DIAGNOSIS_

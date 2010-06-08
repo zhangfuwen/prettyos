@@ -32,8 +32,6 @@ extern bool task_switching;
 extern task_t* currentTask;
 extern console_t* current_console;
 
-void settaskflag(int32_t i);
-
 void tasking_install();
 uint32_t task_switch(uint32_t esp);
 int32_t getpid();

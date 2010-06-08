@@ -26,11 +26,11 @@
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
-bool      EHCIflag;   // signals that one EHCI device was found /// TODO: manage more than one EHCI
-bool      USBINTflag; // signals STS_USBINT reset by EHCI handler
+bool EHCIflag = false; // signals that one EHCI device was found /// TODO: manage more than one EHCI
+bool USBINTflag;       // signals STS_USBINT reset by EHCI handler
 
-uint8_t   numPorts;  // maximum
-port_t    port[17];  // device manager
+uint8_t numPorts; // maximum
+port_t  port[17]; // device manager
 
 uintptr_t eecp;
 

@@ -13,7 +13,7 @@
 #include "kheap.h"
 #include "fat.h"
 
-bool FLOPPYflag; // signals that at least one Floppy disk device was found
+bool FLOPPYflag = false; // signals that at least one Floppy disk device was found
 
 // for device manager
 port_t portFloppy1, portFloppy2;

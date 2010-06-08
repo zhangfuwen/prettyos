@@ -19,10 +19,10 @@
 #include "cdi.h"
 #include "devicemanager.h"
 
-#define ADDR_MEM_INFO    0x1000 // RAM Detection by Second Stage Bootloader
-#define FILEBUFFERSIZE   0x4000 // Buffer for User-Space Program, e.g. shell
+#define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
+#define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.499";
+const char* version = "0.0.0.500";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -67,7 +67,7 @@ static void init()
     events_install();
     syscall_install();
 
-    deviceManager_install(); // device management for mass s6torage devices
+    deviceManager_install(); // device management for mass storage devices
 
     cdi_init();
 
@@ -89,12 +89,9 @@ void showMemorySize()
 void main()
 {
     init();
-    EHCIflag    = false; // first EHCI device found?
-    FLOPPYflag  = false; // at least one floppy disk device found?
-    RAMDISKflag = false; // at least one Ram disk found?
 
-    create_cthread(&bootscreen, "Booting ...");
     task_switching = true;
+    create_cthread(&bootscreen, "Booting ...");
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
@@ -139,8 +136,6 @@ void main()
         }
     }
     free(buf);
-    putch('\n');
-
     if (! shell_found)
     {
         textColor(0x04);

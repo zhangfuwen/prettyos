@@ -20,13 +20,11 @@ unsigned int getCurrentSeconds();
 int floppy_format(char* volumeLabel);
 int floppy_load(const char* name, const char* ext);
 void exit();
-void settaskflag(int i);
 void beep(unsigned int frequency, unsigned int duration);
 void clearScreen(unsigned char backgroundColor);
 void gotoxy(unsigned char x, unsigned char y);
 void* grow_heap(unsigned increase);
 void setScrollField(uint8_t top, uint8_t bottom);
-
 
 // user functions
 void* memset(void* dest, int8_t val, size_t count);

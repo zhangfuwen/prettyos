@@ -65,7 +65,7 @@ int syscall_##fn(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) \
 
 DECL_SYSCALL1( puts, const char*                          )
 DECL_SYSCALL1( putch, char                                )
-DECL_SYSCALL1( textColor, uint8_t                      )
+DECL_SYSCALL1( textColor, uint8_t                         )
 DECL_SYSCALL0( getpid                                     )
 DECL_SYSCALL0( nop                                        )
 DECL_SYSCALL0( switch_context                             )
@@ -77,7 +77,7 @@ DECL_SYSCALL0( getCurrentMilliseconds                     ) // substitute
 DECL_SYSCALL1( flpydsk_format, char*                      )
 DECL_SYSCALL2( flpydsk_load, const char*, const char*     )
 DECL_SYSCALL0( exit                                       )
-DECL_SYSCALL1( settaskflag, int32_t                       )
+DECL_SYSCALL1( settaskflag, int32_t                       ) // substitute
 DECL_SYSCALL2( beep, uint32_t, uint32_t                   )
 DECL_SYSCALL0( getUserTaskNumber                          ) // substitute
 DECL_SYSCALL0( testch                                     ) // substitute

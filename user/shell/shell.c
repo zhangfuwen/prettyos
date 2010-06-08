@@ -100,7 +100,7 @@ int main()
                         curEntry = -1;
                     }
                     textColor(0x0B);
-                    printf("$> %s <--\n", entry);
+                    printf("\n$> %s <--\n", entry);
                     textColor(0x0F);
                     printLine("$>                                                                              ", 40, 0x0B);
                     goto EVALUATION;

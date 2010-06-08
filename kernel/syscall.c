@@ -26,7 +26,7 @@ DEFN_SYSCALL0(getCurrentMilliseconds,    10) // substitute
 DEFN_SYSCALL1(flpydsk_format,            11, char*)
 DEFN_SYSCALL2(flpydsk_load,              12, const char*, const char*)
 DEFN_SYSCALL0(exit,                      13)
-DEFN_SYSCALL1(settaskflag,               14, int32_t)
+DEFN_SYSCALL1(settaskflag,               14, int32_t) // substitute
 DEFN_SYSCALL2(beep,                      15, uint32_t, uint32_t)
 DEFN_SYSCALL0(getUserTaskNumber,         16) // substitute
 DEFN_SYSCALL0(testch,                    17) // substitute
@@ -51,7 +51,7 @@ static void* syscalls[] =
     &flpydsk_format,
     &flpydsk_load,
     &exit,
-    &settaskflag,
+    &nop,
     &beep,
     &nop, // substitute
     &nop, // substitute
