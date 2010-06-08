@@ -38,4 +38,7 @@ void showDiskList();
 
 partition_t* getPartition(const char* path);
 
+int32_t analyzeBootSector(void* buffer, partition_t* part); 
+void loadFile(char* filename, partition_t* part);
+
 #endif

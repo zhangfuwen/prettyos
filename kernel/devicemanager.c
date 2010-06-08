@@ -6,6 +6,8 @@
 #include "devicemanager.h"
 #include "console.h"
 #include "util.h"
+#include "paging.h"
+#include "kheap.h"
 #include "fat12.h"
 
 disk_t* disks[DISKARRAYSIZE];
@@ -14,6 +16,9 @@ partition_t* systemPartition;
 
 extern port_t portFloppy1, portFloppy2;
 extern disk_t floppy1, floppy2;
+
+uint32_t startSectorPartition = 0;
+extern uint32_t usbMSDVolumeMaxLBA;
 
 void deviceManager_install(/*partition_t* system*/)
 {
@@ -262,6 +267,293 @@ partition_t* getPartition(const char* path)
             return(disks[DiskID]->partition[PartitionID-1]);
         }
     }
+}
+
+void loadFile(char* filename, partition_t* part)
+{
+    textColor(0x03);
+    printf("\nbuffer:     %X", part->buffer);
+    printf("\ntype:       %u", part->type);
+    printf("\nSecPerClus: %u", part->SecPerClus);
+    printf("\nmaxroot:    %u", part->maxroot);
+    printf("\nfatsize:    %u", part->fatsize);
+    printf("\nfatcopy:    %u", part->fatcopy);
+    printf("\nfirsts:     %u", part->firsts);
+    printf("\nfat:        %u", part->fat);
+    printf("\nroot:       %u", part->root);
+    printf("\ndata:       %u", part->data);
+    printf("\nmaxcls:     %u", part->maxcls);
+    printf("\nmount:      %u", part->mount);
+    printf("\nserial #:   %y %y %y %y", part->serialNumber[0], part->serialNumber[1], part->serialNumber[2], part->serialNumber[3]);
+
+    textColor(0x0F);
+    waitForKeyStroke();
+
+    // file name
+    FILE toCompare;
+    FILEPTR fileptrTest = &toCompare;
+    strncpy(fileptrTest->name,filename,11); // <--------------- this file will be searched
+
+    // file to search
+    FILE dest;
+    FILEPTR fileptr  = &dest;
+    fileptr->volume  = part; /// <-------------------------------------- VOLUME ---------------------------<<<--------
+    fileptr->dirclus = 0;
+    fileptr->entry   = 0;
+    if (fileptr->volume->type == FAT32)
+    {
+        fileptr->dirclus = fileptr->volume->FatRootDirCluster; 
+    }
+        
+    uint8_t retVal = searchFile(fileptr, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode)
+    if (retVal == CE_GOOD)
+    {
+        textColor(0x0A);
+        printf("\n\nThe file was found on the device: %s",part->serialNumber);
+        char strName[260];
+        char strExt[4];
+        strncpy(strName,fileptr->name,8);        
+        strName[8]='.'; // 0-7 short filename, 8: dot
+        strName[9]=0;   // terminate for strcat
+        strncpy(strExt,(fileptr->name)+8,3);
+        strExt[3]=0; // 0-2 short filename extension, 3: '\0' (end of string)
+        printf("\nfile name: ");
+        textColor(0x0E);
+        strcat(strName,strExt);
+        printf("%s", strName);
+
+        textColor(0x0A);
+        printf("\nnumber of entry in root dir: ");
+        textColor(0x0E); printf("%u\n",fileptr->entry); // number of file entry "searched.xxx"
+        textColor(0x0F);
+
+        fopen(fileptr, &(fileptr->entry), 'r');
+        
+        void* filebuffer = malloc(fileptr->size,PAGESIZE);
+        fread(fileptr, filebuffer, fileptr->size);
+                
+        elf_exec(filebuffer, fileptr->size, fileptr->name); // try to execute
+ 
+        fclose(fileptr);
+    }
+    else if (retVal == CE_FILE_NOT_FOUND)
+    {
+        textColor(0x0C);
+        printf("\n\nThe file could not be found on the device!", retVal);
+        textColor(0x0F);
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\n\nretVal of searchFile: %u",retVal);
+        textColor(0x0F);
+    }
+
+    waitForKeyStroke();
+}
+
+int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests only
+{
+    uint32_t volume_bytePerSector;
+    uint8_t  volume_type = FAT32; 
+    uint8_t  volume_SecPerClus;
+    uint16_t volume_maxroot;
+    uint32_t volume_fatsize;
+    uint8_t  volume_fatcopy;
+    uint32_t volume_firstSector;
+    uint32_t volume_fat;
+    uint32_t volume_root;
+    uint32_t volume_data;
+    uint32_t volume_maxcls;
+    char     volume_serialNumber[4];
+
+    struct boot_sector* sec0 = (struct boot_sector*)buffer;
+
+    char SysName[9];
+    char FATn[9];
+    strncpy(SysName, sec0->SysName,   8);
+    strncpy(FATn,    sec0->Reserved2, 8);
+    SysName[8] = 0;
+    FATn[8]    = 0;
+
+
+    // This is a FAT description
+    if ((sec0->charsPerSector == 0x200) && (sec0->FATcount > 0)) // 512 byte per sector, at least one FAT
+    {
+        printf("\nOEM name:           %s"    ,SysName);
+        printf("\tbyte per sector:        %u",sec0->charsPerSector);
+        printf("\nsectors per cluster:    %u",sec0->SectorsPerCluster);
+        printf("\treserved sectors:       %u",sec0->ReservedSectors);
+        printf("\nnumber of FAT copies:   %u",sec0->FATcount);
+        printf("\tmax root dir entries:   %u",sec0->MaxRootEntries);
+        printf("\ntotal sectors (<65536): %u",sec0->TotalSectors1);
+        printf("\tmedia Descriptor:       %y",sec0->MediaDescriptor);
+        printf("\nsectors per FAT:        %u",sec0->SectorsPerFAT);
+        printf("\tsectors per track:      %u",sec0->SectorsPerTrack);
+        printf("\nheads/pages:            %u",sec0->HeadCount);
+        printf("\thidden sectors:         %u",sec0->HiddenSectors);
+        printf("\ntotal sectors (>65535): %u",sec0->TotalSectors2);
+        printf("\tFAT 12/16:              %s",FATn);
+
+        volume_bytePerSector = sec0->charsPerSector;
+        volume_SecPerClus    = sec0->SectorsPerCluster;
+        volume_maxroot       = sec0->MaxRootEntries;
+        volume_fatsize       = sec0->SectorsPerFAT;
+        volume_fatcopy       = sec0->FATcount;
+        volume_firstSector   = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
+        volume_fat           = volume_firstSector + sec0->ReservedSectors;
+        volume_root          = volume_fat + volume_fatcopy * volume_fatsize;
+        volume_data          = volume_root + volume_maxroot /(volume_bytePerSector/NUMBER_OF_BYTES_IN_DIR_ENTRY);
+        volume_maxcls        = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
+        
+        
+        uint32_t volume_FatRootDirCluster = 0; // only FAT32
+
+        uint32_t volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus);; // FAT12 and FAT16
+
+        startSectorPartition = 0; // important!
+
+        if (FATn[0] != 'F') // FAT32
+        {
+            if ( (((uint8_t*)buffer)[0x52] == 'F') && (((uint8_t*)buffer)[0x53] == 'A') && (((uint8_t*)buffer)[0x54] == 'T')
+              && (((uint8_t*)buffer)[0x55] == '3') && (((uint8_t*)buffer)[0x56] == '2'))
+            {
+                printf("\nThis is a volume formated with FAT32 ");
+                volume_type = FAT32;
+
+                for (uint8_t i=0; i<4; i++)
+                {
+                    volume_serialNumber[i] = ((char*)buffer)[67+i]; // byte 67-70
+                }
+                printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
+
+                volume_FatRootDirCluster = ((uint32_t*)buffer)[11]; // byte 44-47
+                printf("\nThe root dir starts at cluster %u (expected: 2).", volume_FatRootDirCluster);
+
+                volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
+                volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus); 
+
+                printf("\nSectors per FAT: %u.", ((uint32_t*)buffer)[9]);  // byte 36-39
+                volume_fatsize = ((uint32_t*)buffer)[9];
+                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus * (volume_FatRootDirCluster-2);
+                volume_data    = volume_root;   
+                volume_maxcls  = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
+            }
+        }
+        else // FAT12/16
+        {
+            if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '6') )
+            {
+                printf("\nThis is a volume formated with FAT16 ");
+                volume_type = FAT16;                
+
+                for (uint8_t i=0; i<4; i++)
+                {
+                    volume_serialNumber[i] = ((char*)buffer)[39+i]; // byte 39-42
+                }
+                printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
+
+
+            }
+            else if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '2') )
+            {
+                printf("\nThis is a volume formated with FAT12.");
+                volume_type = FAT12;
+            }
+        }
+
+        ///////////////////////////////////////////////////
+        // store the determined volume data to partition //
+        ///////////////////////////////////////////////////
+
+        part->sectorSize     = volume_bytePerSector;
+        part->buffer         = malloc(part->sectorSize,PAGESIZE); 
+        part->type           = volume_type;        
+        part->SecPerClus     = volume_SecPerClus;
+        part->maxroot        = volume_maxroot;
+        part->fatsize        = volume_fatsize;
+        part->fatcopy        = volume_fatcopy;
+        part->firsts         = volume_firstSector;
+        part->fat            = volume_fat;    // reservedSectors
+        part->root           = volume_root;   // reservedSectors + 2*SectorsPerFAT
+        part->data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
+        part->maxcls         = volume_maxcls;
+        part->mount          = true;
+        part->FatRootDirCluster   = volume_FatRootDirCluster; 
+        strncpy(part->serialNumber,volume_serialNumber,4); // ID of the partition
+    }
+    
+    else if ( (*((uint16_t*)((uint8_t*)buffer+444))) == 0x0000 )    
+    {
+        textColor(0x0E);
+        if ( ((*((uint8_t*)buffer+510))==0x55) && ((*((uint8_t*)buffer+511))==0xAA) )
+        {
+            printf("\nThis seems to be a Master Boot Record:");
+            
+            textColor(0x0F);
+            uint32_t discSignature = *((uint32_t*)((uint8_t*)buffer+440));
+            printf("\n\nDisc Signature: %X\t",discSignature);
+            
+            uint8_t partitionTable[4][16];
+            for (uint8_t i=0;i<4;i++) // four tables
+            {
+                for (uint8_t j=0;j<16;j++) // 16 bytes
+                {
+                    partitionTable[i][j] = *((uint8_t*)buffer+446+i*j);
+                }
+            }
+            printf("\n");
+            for (uint8_t i=0;i<4;i++) // four tables
+            {
+                if ( (*((uint32_t*)(&partitionTable[i][0x0C])) != 0) && (*((uint32_t*)(&partitionTable[i][0x0C])) != 0x80808080) ) // number of sectors
+                {
+                    textColor(0x0E);
+                    printf("\npartition entry %u:",i);
+                    if (partitionTable[i][0x00] == 0x80)
+                    {
+                        printf("  bootable");
+                    }
+                    else
+                    {
+                        printf("  not bootable");
+                    }
+                    textColor(0x0F);
+                    printf("\ntype:               %y", partitionTable[i][0x04]);
+                    textColor(0x07);
+                    printf("\nfirst sector (CHS): %u %u %u", partitionTable[i][0x01],partitionTable[i][0x02],partitionTable[i][0x03]);
+                    printf("\nlast  sector (CHS): %u %u %u", partitionTable[i][0x05],partitionTable[i][0x06],partitionTable[i][0x07]);
+                    textColor(0x0F);
+
+                    startSectorPartition = *((uint32_t*)(&partitionTable[i][0x08]));
+                    printf("\nstart sector:       %u", startSectorPartition);
+
+                    printf("\nnumber of sectors:  %u", *((uint32_t*)(&partitionTable[i][0x0C])));
+                    printf("\n");
+                }
+                else
+                {
+                    textColor(0x0E);
+                    printf("\nno partition table %u",i);
+                    textColor(0x0F);
+                }
+            }
+        }
+    }
+    else
+    {
+        textColor(0x0C);
+        if ( (((uint8_t*)buffer)[0x3] == 'N') && (((uint8_t*)buffer)[0x4] == 'T') && (((uint8_t*)buffer)[0x5] == 'F') && (((uint8_t*)buffer)[0x6] == 'S') )
+        {
+            printf("\nThis seems to be a volume formatted with NTFS.");
+        }
+        else
+        {
+            printf("\nThis seems to be neither a FAT description nor a MBR.");
+        }
+        return -1;
+        textColor(0x0F);
+    }
+    return 0;
 }
 
 /*
