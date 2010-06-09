@@ -79,6 +79,11 @@ void beep(unsigned int frequency, unsigned int duration)
     __asm__ volatile("int $0x7F" : : "a"(15), "b"(frequency), "c"(duration));
 }
 
+void execute(const char* path)
+{
+    __asm__ volatile("int $0x7F" : : "a"(16), "b"(path));
+}
+
 void clearScreen(unsigned char backgroundColor)
 {
     __asm__ volatile("int $0x7F" : : "a"(18), "b"(backgroundColor));

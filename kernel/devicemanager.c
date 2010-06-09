@@ -69,7 +69,7 @@ void showPortList()
     textColor(0x02);
     printf("\n\nAvailable ports:");
     textColor(0x07);
-    printf("\nType\tNumber\tName\t\tInserted disk");
+    printf("\n\nType\tNumber\tName\t\tInserted disk");
     printf("\n----------------------------------------------------------------------");
     textColor(0x0F);
 
@@ -209,6 +209,18 @@ void showDiskList()
     textColor(0x0F);
 }
 
+void execute(const char* path)
+{
+	partition_t* part = getPartition(path);
+	while(*path != '/' && *path != '|' && *path != '\'')
+	{
+		path++;
+	}
+	path++;
+	printf("\n\n%X  %s  %s\n\n", part, part->serialNumber, path);
+	loadFile(path, part);
+}
+
 partition_t* getPartition(const char* path)
 {
     size_t length = strlen(path);
@@ -264,12 +276,12 @@ partition_t* getPartition(const char* path)
         }
         else
         {
-            return(disks[DiskID]->partition[PartitionID-1]);
+            return(disks[DiskID-1]->partition[PartitionID]);
         }
     }
 }
 
-void loadFile(char* filename, partition_t* part)
+void loadFile(const char* filename, partition_t* part)
 {
     textColor(0x03);
     printf("\nbuffer:     %X", part->buffer);
@@ -331,7 +343,6 @@ void loadFile(char* filename, partition_t* part)
         
         void* filebuffer = malloc(fileptr->size,PAGESIZE);
         fread(fileptr, filebuffer, fileptr->size);
-                
         elf_exec(filebuffer, fileptr->size, fileptr->name); // try to execute
  
         fclose(fileptr);

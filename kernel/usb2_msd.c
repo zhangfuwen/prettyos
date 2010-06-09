@@ -646,9 +646,6 @@ labelRead:
             start = startSectorPartition;
             goto labelRead;
         }
-
-        loadFile("pqeq    elf",part); 
-        loadFile("ttt     elf",part); 
     }// else
 
 labelLeave:

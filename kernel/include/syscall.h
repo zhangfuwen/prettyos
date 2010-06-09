@@ -79,7 +79,7 @@ DECL_SYSCALL2( flpydsk_load, const char*, const char*     )
 DECL_SYSCALL0( exit                                       )
 DECL_SYSCALL1( settaskflag, int32_t                       ) // substitute
 DECL_SYSCALL2( beep, uint32_t, uint32_t                   )
-DECL_SYSCALL0( getUserTaskNumber                          ) // substitute
+DECL_SYSCALL0( execute                                    ) // substitute
 DECL_SYSCALL0( testch                                     ) // substitute
 DECL_SYSCALL1( clear_console, uint8_t                     )
 DECL_SYSCALL2( set_cursor, uint8_t, uint8_t               )

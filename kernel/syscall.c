@@ -11,6 +11,7 @@
 #include "sys_speaker.h"
 #include "timer.h"
 #include "irq.h"
+#include "devicemanager.h"
 
 DEFN_SYSCALL1(puts,                       0, const char*)
 DEFN_SYSCALL1(putch,                      1, char)
@@ -28,7 +29,7 @@ DEFN_SYSCALL2(flpydsk_load,              12, const char*, const char*)
 DEFN_SYSCALL0(exit,                      13)
 DEFN_SYSCALL1(settaskflag,               14, int32_t) // substitute
 DEFN_SYSCALL2(beep,                      15, uint32_t, uint32_t)
-DEFN_SYSCALL0(getUserTaskNumber,         16) // substitute
+DEFN_SYSCALL0(execute,                   16) // substitute
 DEFN_SYSCALL0(testch,                    17) // substitute
 DEFN_SYSCALL1(clear_console,             18, uint8_t)
 DEFN_SYSCALL2(set_cursor,                19, uint8_t, uint8_t)
@@ -53,7 +54,7 @@ static void* syscalls[] =
     &exit,
     &nop,
     &beep,
-    &nop, // substitute
+    &execute, // substitute
     &nop, // substitute
     &clear_console,
     &set_cursor,

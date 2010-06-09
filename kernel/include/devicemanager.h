@@ -17,7 +17,6 @@ typedef struct
     uint8_t      type;
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
     char         name[15];
-    char         serial[15];    
     void*        data; // Contains additional information depending on its type
 } disk_t;
 
@@ -36,9 +35,10 @@ void removeDisk(disk_t* disk);
 void showPortList();
 void showDiskList();
 
+void execute(const char* path);
 partition_t* getPartition(const char* path);
+void loadFile(const char* filename, partition_t* part);
 
-int32_t analyzeBootSector(void* buffer, partition_t* part); 
-void loadFile(char* filename, partition_t* part);
+int32_t analyzeBootSector(void* buffer, partition_t* part);
 
 #endif

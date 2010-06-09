@@ -183,7 +183,7 @@ typedef enum _CETYPE
     CE_ERASE_FAIL,                  // An erase failed
     CE_NOT_PRESENT,                 // No device was present
     CE_NOT_FORMATTED,               // The disk is of an unsupported format
-    CE_BAD_partition_t,               // The boot record is bad
+    CE_BAD_PARTITION,               // The boot record is bad
 
     CE_UNSUPPORTED_FS,              // The file system type is unsupported
     CE_INIT_ERROR,                  // An initialization error has occured
@@ -223,19 +223,19 @@ typedef enum _CETYPE
 */
 
 // interface functions
-uint8_t  sectorRead (uint32_t sector_addr, uint8_t* buffer);
-uint8_t  sectorWrite(uint32_t sector_addr, uint8_t* buffer);
+uint8_t sectorRead (uint32_t sector_addr, uint8_t* buffer);
+uint8_t sectorWrite(uint32_t sector_addr, uint8_t* buffer);
 
 // file handling
-uint8_t  createFileEntry(FILEPTR fileptr, uint32_t* fHandle);
-uint8_t  searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
-uint8_t  fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
-uint8_t  fclose(FILEPTR fileptr);
-uint8_t  fread(FILEPTR fileptr, void* dest, uint32_t count);
-uint8_t  fwrite(FILEPTR fileptr, void* src, uint32_t count);
+uint8_t createFileEntry(FILEPTR fileptr, uint32_t* fHandle);
+uint8_t searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
+uint8_t fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
+uint8_t fclose(FILEPTR fileptr);
+uint8_t fread(FILEPTR fileptr, void* dest, uint32_t count);
+uint8_t fwrite(FILEPTR fileptr, void* src, uint32_t count);
 
 // analysis functions
-void     showDirectoryEntry(FILEROOTDIRECTORYENTRY dir);
+void showDirectoryEntry(FILEROOTDIRECTORYENTRY dir);
 
 //additional functions
 uint32_t checksum(char* ShortFileName);
