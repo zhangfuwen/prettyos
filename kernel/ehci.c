@@ -674,10 +674,7 @@ void setupUSBDevice(uint8_t portNumber)
      usbTransferSetConfiguration(devAddr, 1); // set first configuration
    #ifdef _USB_DIAGNOSIS_
      printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-   #endif
-
      uint8_t config = usbTransferGetConfiguration(devAddr);
-   #ifdef _USB_DIAGNOSIS_
      printf(" %u",config); // check configuration
    #endif
 
@@ -719,7 +716,7 @@ void setupUSBDevice(uint8_t portNumber)
                                             usbDevices[devAddr].numEndpointInMSD);
     textColor(0x0F);
 
-    testMSD(devAddr,config); // test with some SCSI commands
+    testMSD(devAddr, usbDev[devAddr].partition[0]); // test with some SCSI commands
 }
 
 

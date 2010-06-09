@@ -29,7 +29,6 @@ void* StatusQTD;
 extern uint32_t startSectorPartition;
 int32_t  numberTries = 10; // repeats for IN-Transfer
 
-partition_t usbMSDVolume;
 uint32_t usbMSDVolumeMaxLBA;
 
 extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
@@ -545,7 +544,7 @@ static void analyzeInquiry()
     }
 }
 
-void testMSD(uint8_t devAddr, uint8_t config)
+void testMSD(uint8_t devAddr, partition_t* part)
 {
     if (usbDevices[devAddr].InterfaceClass != 0x08)
     {
@@ -630,11 +629,11 @@ void testMSD(uint8_t devAddr, uint8_t config)
 
 labelRead:
         sector=start;
-        usbRead(sector, usbMSDVolume.buffer);
+        usbRead(sector, part->buffer);
 
         if ( (sector == 0) || (sector == startSectorPartition) || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
         {
-            int32_t retVal = analyzeBootSector((void*)DataQTDpage0, &usbMSDVolume); // for first tests only
+            int32_t retVal = analyzeBootSector((void*)DataQTDpage0, part); // for first tests only
             if (retVal == -1)
             {
                 goto labelLeave;
@@ -648,8 +647,8 @@ labelRead:
             goto labelRead;
         }
 
-        loadFile("pqeq    elf",&usbMSDVolume); 
-        loadFile("ttt     elf",&usbMSDVolume); 
+        loadFile("pqeq    elf",part); 
+        loadFile("ttt     elf",part); 
     }// else
 
 labelLeave:
