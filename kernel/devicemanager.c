@@ -212,12 +212,12 @@ void showDiskList()
 void execute(const char* path)
 {
 	partition_t* part = getPartition(path);
-	while(*path != '/' && *path != '|' && *path != '\'')
+	if(part == 0) return;
+	while(*path != '/' && *path != '|' && *path != '\\' && *path)
 	{
 		path++;
 	}
 	path++;
-	printf("\n\n%X  %s  %s\n\n", part, part->serialNumber, path);
 	loadFile(path, part);
 }
 
@@ -229,7 +229,7 @@ partition_t* getPartition(const char* path)
     int16_t PortID = -1;
     int16_t DiskID = -1;
     uint8_t PartitionID = 0;
-    for(size_t i = 0; i < length; i++)
+    for(size_t i = 0; i < length && path[i]; i++)
     {
         if(path[i] == ':' || path[i] == '-')
         {
@@ -243,7 +243,7 @@ partition_t* getPartition(const char* path)
             {
                 DiskID = atoi(Buffer);
             }
-            for(size_t j = i+1; j < length; j++)
+            for(size_t j = i+1; j < length && path[j]; j++)
             {
                 if(path[j] == ':' || path[j] == '-')
                 {
@@ -264,7 +264,7 @@ partition_t* getPartition(const char* path)
             return(0);
         }
     }
-    if(PortID != -1)
+    if(PortID != -1 && PortID < PORTARRAYSIZE)
     {
         return(ports[PortID]->insertedDisk->partition[PartitionID]);
     }
@@ -274,11 +274,12 @@ partition_t* getPartition(const char* path)
         {
             return(systemPartition);
         }
-        else
+        if(DiskID > 0 && DiskID <= DISKARRAYSIZE)
         {
             return(disks[DiskID-1]->partition[PartitionID]);
         }
     }
+	return(0);
 }
 
 void loadFile(const char* filename, partition_t* part)

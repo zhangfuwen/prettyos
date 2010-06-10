@@ -222,10 +222,11 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 
 void waitForKeyStroke()
 {
-   textColor(0x07);
-   printf("\n             - - - - - - - - - - - press key - - - - - - - - - - -");
-   textColor(0x0F);
-   while(!keyboard_getChar());
+	sti();
+    textColor(0x07);
+    printf("\n             - - - - - - - - - - - press key - - - - - - - - - - -");
+    textColor(0x0F);
+    while(!keyboard_getChar());
 }
 
 /**********************************************************************/
