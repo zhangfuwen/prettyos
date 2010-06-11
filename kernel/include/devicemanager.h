@@ -9,12 +9,19 @@
 #define DISKARRAYSIZE 20
 #define PARTITIONARRAYSIZE 4
 
-enum PORTTYPE {FDD, USB, RAM};
-enum DISKTYPE {FLOPPYDISK, USB_MSD, RAMDISK};
+typedef enum
+{
+    FDD, USB, RAM
+} PORTTYPE;
+
+typedef enum
+{
+    FLOPPYDISK, USB_MSD, RAMDISK
+} DISKTYPE;
 
 typedef struct 
 {
-    uint8_t      type;
+    DISKTYPE     type;
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
     char         name[15];
     void*        data; // Contains additional information depending on its type
@@ -22,10 +29,10 @@ typedef struct
 
 typedef struct 
 {
-    uint8_t type;
-    disk_t* insertedDisk; // NULL if no disk is inserted
-    char    name[15];
-    void*   data;         // Contains additional information depending on its type
+    PORTTYPE type;
+    disk_t*  insertedDisk; // NULL if no disk is inserted
+    char     name[15];
+    void*    data;         // Contains additional information depending on its type
 } port_t;
 
 void deviceManager_install(/*partition_t* system*/);

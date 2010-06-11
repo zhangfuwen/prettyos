@@ -211,14 +211,21 @@ void showDiskList()
 
 void execute(const char* path)
 {
-	partition_t* part = getPartition(path);
-	if(part == 0) return;
-	while(*path != '/' && *path != '|' && *path != '\\' && *path)
-	{
-		path++;
-	}
-	path++;
-	loadFile(path, part);
+    partition_t* part = getPartition(path);
+    if(part == 0)
+    {
+        return;
+    }
+    while(*path != '/' && *path != '|' && *path != '\\')
+    {
+        path++;
+        if(*path == 0)
+        {
+            return;
+        }
+    }
+    path++;
+    loadFile(path, part);
 }
 
 partition_t* getPartition(const char* path)
@@ -279,7 +286,7 @@ partition_t* getPartition(const char* path)
             return(disks[DiskID-1]->partition[PartitionID]);
         }
     }
-	return(0);
+    return(0);
 }
 
 void loadFile(const char* filename, partition_t* part)
@@ -305,12 +312,28 @@ void loadFile(const char* filename, partition_t* part)
     // file name
     FILE toCompare;
     FILEPTR fileptrTest = &toCompare;
-    strncpy(fileptrTest->name,filename,11); // <--------------- this file will be searched
+
+    memset(fileptrTest->name, ' ', 11);
+
+    int j = 0;
+    for(; j < 8; j++) {
+        if(filename[j] == '.')
+        {
+            j++;
+            break;
+        }
+        if(filename[j] == 0) break;
+        fileptrTest->name[j] = filename[j];
+    }
+    for(int i = 8; j < 11; i++, j++) {
+        if(filename[j] == 0) break;
+        fileptrTest->name[i] = filename[j];
+    }
 
     // file to search
     FILE dest;
     FILEPTR fileptr  = &dest;
-    fileptr->volume  = part; /// <-------------------------------------- VOLUME ---------------------------<<<--------
+    fileptr->volume  = part;
     fileptr->dirclus = 0;
     fileptr->entry   = 0;
     if (fileptr->volume->type == FAT32)
@@ -323,27 +346,16 @@ void loadFile(const char* filename, partition_t* part)
     {
         textColor(0x0A);
         printf("\n\nThe file was found on the device: %s",part->serialNumber);
-        char strName[260];
-        char strExt[4];
-        strncpy(strName,fileptr->name,8);        
-        strName[8]='.'; // 0-7 short filename, 8: dot
-        strName[9]=0;   // terminate for strcat
-        strncpy(strExt,(fileptr->name)+8,3);
-        strExt[3]=0; // 0-2 short filename extension, 3: '\0' (end of string)
-        printf("\nfile name: ");
-        textColor(0x0E);
-        strcat(strName,strExt);
-        printf("%s", strName);
 
-        textColor(0x0A);
         printf("\nnumber of entry in root dir: ");
-        textColor(0x0E); printf("%u\n",fileptr->entry); // number of file entry "searched.xxx"
-        textColor(0x0F);
+        textColor(0x0E);
+        printf("%u\n",fileptr->entry); // number of file entry "searched.xxx"
 
         fopen(fileptr, &(fileptr->entry), 'r');
         
         void* filebuffer = malloc(fileptr->size,PAGESIZE);
         fread(fileptr, filebuffer, fileptr->size);
+
         elf_exec(filebuffer, fileptr->size, fileptr->name); // try to execute
  
         fclose(fileptr);
@@ -352,14 +364,13 @@ void loadFile(const char* filename, partition_t* part)
     {
         textColor(0x0C);
         printf("\n\nThe file could not be found on the device!", retVal);
-        textColor(0x0F);
     }
     else
     {
         textColor(0x0C);
-        printf("\n\nretVal of searchFile: %u",retVal);
-        textColor(0x0F);
+        printf("\n\nretVal of searchFile: %u", retVal);
     }
+    textColor(0x0F);
 
     waitForKeyStroke();
 }

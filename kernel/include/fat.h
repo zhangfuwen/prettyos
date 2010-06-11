@@ -104,13 +104,13 @@ typedef struct
 
 typedef struct
 {
-    bool write;          // file is opened for writing
+    bool write;        // file is opened for writing
     bool FileWriteEOF; // writing process has reached end of file
 } FileFlags;
 
 typedef struct
 {
-    partition_t* volume;      // volume containing the file
+    partition_t* volume;    // volume containing the file
     uint32_t  cluster;      // first cluster
     uint32_t  ccls;         // current cluster
     uint16_t  sec;          // current sector in the current cluster

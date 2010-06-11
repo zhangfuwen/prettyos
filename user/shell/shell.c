@@ -234,7 +234,7 @@ EVALUATION: // evaluation of entry
         }
         else
         {
-			execute(entry);
+            execute(entry);
             puts("file is being searched...\n");
 
             toupper(entry);
