@@ -684,39 +684,49 @@ void setupUSBDevice(uint8_t portNumber)
      waitForKeyStroke();
    #endif
 
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    // device manager //////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////
+    if (usbDevices[devAddr].InterfaceClass != 0x08)
+    {
+        textColor(0x0C);
+        printf("\nThis is no Mass Storage Device! MSD test and addition to device manager will not be carried out.");
+        textColor(0x0F);
+        waitForKeyStroke();
+    }
+    else
+    {     
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        // device manager //////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Partition
-    usbDevVolume[portNumber+1].buffer = (uint8_t*)malloc(512,0);
-    strncpy(usbDevVolume[portNumber+1].serialNumber, usbDevices[devAddr].serialNumber, 12);
+        // Partition
+        usbDevVolume[portNumber+1].buffer = (uint8_t*)malloc(512,0);
+        strncpy(usbDevVolume[portNumber+1].serialNumber, usbDevices[devAddr].serialNumber, 12);
 
-    // Disk
-    usbDev[portNumber+1].type         = USB_MSD;
-    usbDev[portNumber+1].partition[0] = &usbDevVolume[portNumber+1];
-    usbDev[portNumber+1].data         = (void*)&usbDevices[devAddr];
-    strcpy(usbDev[portNumber+1].name, usbDevices[devAddr].productName);
-    attachDisk(&usbDev[portNumber+1]);
+        // Disk
+        usbDev[portNumber+1].type         = USB_MSD;
+        usbDev[portNumber+1].partition[0] = &usbDevVolume[portNumber+1];
+        usbDev[portNumber+1].data         = (void*)&usbDevices[devAddr];
+        strcpy(usbDev[portNumber+1].name, usbDevices[devAddr].productName);
+        attachDisk(&usbDev[portNumber+1]);
 
-    // Port
-    port[portNumber+1].insertedDisk = &usbDev[portNumber+1];
+        // Port
+        port[portNumber+1].insertedDisk = &usbDev[portNumber+1];
 
-    showPortList(); // TEST
-    showDiskList(); // TEST
-    waitForKeyStroke();
+        showPortList(); // TEST
+        showDiskList(); // TEST
+        waitForKeyStroke();
 
-    ////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////
 
-    // device, interface, endpoints
-    textColor(0x07);
-    printf("\n\nMSD test now with device: %u  interface: %u  endpOUT: %u  endpIN: %u\n",
-                                            devAddr, usbDevices[devAddr].numInterfaceMSD,
-                                            usbDevices[devAddr].numEndpointOutMSD,
-                                            usbDevices[devAddr].numEndpointInMSD);
-    textColor(0x0F);
+        // device, interface, endpoints
+        textColor(0x07);
+        printf("\n\nMSD test now with device: %u  interface: %u  endpOUT: %u  endpIN: %u\n",
+                                                devAddr, usbDevices[devAddr].numInterfaceMSD,
+                                                usbDevices[devAddr].numEndpointOutMSD,
+                                                usbDevices[devAddr].numEndpointInMSD);
+        textColor(0x0F);
 
-    testMSD(devAddr, usbDev[devAddr].partition[0]); // test with some SCSI commands
+        testMSD(devAddr, usbDev[devAddr].partition[0]); // test with some SCSI commands
+    }
 }
 
 
