@@ -3,7 +3,6 @@
 
 #include "os.h"
 #include "fat.h"
-#include "usb2.h"
 
 #define PORTARRAYSIZE 20
 #define DISKARRAYSIZE 20
@@ -14,14 +13,19 @@ typedef enum
     FDD, USB, RAM
 } PORTTYPE;
 
-typedef enum
+typedef struct
 {
-    FLOPPYDISK, USB_MSD, RAMDISK
-} DISKTYPE;
+    int32_t (*readSector) (uint32_t, uint8_t*);
+    int32_t (*writeSector)(uint32_t, uint8_t*);
+} diskType_t;
+
+extern diskType_t FLOPPYDISK;
+extern diskType_t USB_MSD;
+extern diskType_t RAMDISK;
 
 typedef struct 
 {
-    DISKTYPE     type;
+    diskType_t*  type;
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
     char         name[15];
     void*        data; // Contains additional information depending on its type

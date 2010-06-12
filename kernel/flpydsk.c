@@ -9,16 +9,9 @@
 #include "cmos.h"
 #include "timer.h"
 #include "irq.h"
-#include "devicemanager.h"
 #include "kheap.h"
 #include "fat.h"
 
-bool FLOPPYflag = false; // signals that at least one Floppy disk device was found
-
-// for device manager
-port_t portFloppy1, portFloppy2;
-disk_t floppy1, floppy2;
-partition_t floppyVolume1, floppyVolume2;
 
 // detailed infos about FDC and FAT12:
 // http://www.isdaman.com/alsos/hardware/fdc/floppy.htm
@@ -31,14 +24,13 @@ partition_t floppyVolume1, floppyVolume2;
   of the OSDEV tutorial series at www.brokenthorn.com
 *****************************************************************************/
 
+floppy_t* floppyDrive[2];
+
 const int32_t FLPY_SECTORS_PER_TRACK       =    18; // sectors per track
-static uint8_t CurrentDrive                =     0; // current working drive, default: 0
+static floppy_t* CurrentDrive              =     0; // current working drive, default: 0
 static volatile bool ReceivedFloppyDiskIRQ = false; // set when IRQ fires
 const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  =   350; // waiting time in milliseconds (motor spin up)
 const int32_t WAITING_TIME                 =    10; // waiting time in milliseconds (for dynamic processes)
-
-bool flpy_motor[2];          // 0: motor off  1: motor on
-bool flpy_ReadWriteFlag[2];  // 0: ready      1: busy (blocked)
 
 // IO ports
 enum FLPYDSK_IO
@@ -140,57 +132,54 @@ enum FLPYDSK_SECTOR_DTL
     FLPYDSK_SECTOR_DTL_1024 = 4
 };
 
+static floppy_t* createFloppy(uint8_t ID)
+{
+    floppy_t* fdd = malloc(sizeof(floppy_t), 0);
+    fdd->ID       = ID;
+    fdd->motor    = false; // floppy motor is off
+    fdd->RW_Lock  = false; // floppy is not blocked
+
+    fdd->drive.insertedDisk = malloc(sizeof(disk_t), 0);
+    fdd->drive.insertedDisk->type = &FLOPPYDISK;
+    fdd->drive.insertedDisk->partition[0] = malloc(sizeof(partition_t), 0);
+    fdd->drive.insertedDisk->partition[0]->buffer = malloc(512, 0);
+
+    fdd->drive.type = FDD;
+    strncpy(fdd->drive.name, "Floppy Dev 1", 12);
+    fdd->drive.data = (void*)(ID+1);
+
+    attachDisk(fdd->drive.insertedDisk); // disk == floppy disk
+    attachPort(&fdd->drive);
+
+    return(fdd);
+}
+
 void floppy_install()
 {
-    if ((cmos_read(0x10)>>4) == 4)     // 1st floppy 1,44 MB: 0100....b
+    if ((cmos_read(0x10)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
     {
-        FLOPPYflag = true; // at least one floppy found
-
         printf("1.44 MB FDD first device found\n");
-        flpy_motor[0] = false;         // first floppy motor is off
-        flpy_ReadWriteFlag[0] = false; // first floppy is not blocked
+        floppyDrive[0] = createFloppy(0);
 
-        floppyVolume1.buffer = malloc(512,0);
-
-        floppy1.type = FLOPPYDISK;
-        floppy1.partition[0] = &floppyVolume1;
-
-        // disk == floppydisk
-        attachDisk(&floppy1); // disk == floppy disk
-
-        // port == floppy disk device (FDD)
-        portFloppy1.type = FDD;
-        portFloppy1.insertedDisk = &floppy1;
-        strncpy(portFloppy1.name,"Floppy Dev 1",12);
-        portFloppy1.data = (void*)1;
-        attachPort(&portFloppy1);
-
-        if ((cmos_read(0x10) & 0xF) == 4)  // 2nd floppy 1,44 MB: 0100....b
+        if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: 0100....b
         {
             printf("1.44 MB FDD second device found\n");
-            flpy_motor[1] = false;         // second floppy motor is off
-            flpy_ReadWriteFlag[1] = false; // second floppy is not blocked
-
-            floppyVolume2.buffer = (uint8_t*)malloc(512,0);
-
-            floppy2.type = FLOPPYDISK;
-            floppy2.partition[0] = &floppyVolume2;
-
-            attachDisk(&floppy2);
-
-            // port == floppy disk device (FDD)
-            portFloppy2.type = FDD;
-            portFloppy2.insertedDisk = &floppy2;
-            strncpy(portFloppy2.name,"Floppy Dev 2",12);
-            portFloppy2.data = (void*)2;
-            attachPort(&portFloppy2);
+            floppyDrive[1] = createFloppy(1);
         }
+        else
+        {
+            floppyDrive[1] = 0;
+        }
+
         flpydsk_install(32+6);                  // floppy disk uses IRQ 6 // 32+6
         memset((void*)DMA_BUFFER, 0x0, 0x2400); // set DMA memory buffer to zero
+
+        CurrentDrive = floppyDrive[0];
     }
     else
     {
         printf("\n1.44 MB 1st floppy not shown by CMOS\n");
+        floppyDrive[0] = 0;
     }
     printf("\n");
 }
@@ -317,26 +306,26 @@ void flpydsk_check_int(uint32_t* st0, uint32_t* cyl)
 void flpydsk_control_motor(bool b)
 {
     // turn on or off the motor of the current drive
-    if (b && !flpy_motor[CurrentDrive])
+    if (b && !CurrentDrive->motor)
     {
         uint32_t motor = 0;
-        switch (CurrentDrive) // select the correct mask based on current drive
+        switch (CurrentDrive->ID) // select the correct mask based on current drive
         {
             case 0: motor = FLPYDSK_DOR_MASK_DRIVE0_MOTOR; break;
             case 1: motor = FLPYDSK_DOR_MASK_DRIVE1_MOTOR; break;
             case 2: motor = FLPYDSK_DOR_MASK_DRIVE2_MOTOR; break;
             case 3: motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
         }
-        flpydsk_write_dor(CurrentDrive | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
-        flpy_motor[CurrentDrive] = true;
+        flpydsk_write_dor(CurrentDrive->ID | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
+        CurrentDrive->motor = true;
     }
-    else if (!b && flpy_motor[CurrentDrive])
+    else if (!b && CurrentDrive->motor)
     {
         flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET); // motor off
-        flpy_motor[CurrentDrive] = false;
+        CurrentDrive->motor = false;
     }
     sti(); // important!
-    if (b && !flpy_motor[CurrentDrive]) ///TEST
+    if (b && !CurrentDrive->motor) ///TEST
     {
         sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
     }
@@ -415,9 +404,9 @@ void flpydsk_install(int32_t irq)
 }
 
 // calibrate the drive
-int32_t flpydsk_calibrate(uint32_t drive)
+int32_t flpydsk_calibrate(floppy_t* drive)
 {
-    if (drive >= 4)
+    if (drive == 0)
     {
         return -2;
     }
@@ -427,7 +416,7 @@ int32_t flpydsk_calibrate(uint32_t drive)
     {
         // send command
         flpydsk_send_command(FDC_CMD_CALIBRATE);
-        flpydsk_send_command(drive);
+        flpydsk_send_command(drive->ID);
         flpydsk_wait_irq();
         flpydsk_check_int(&st0, &cyl);
 
@@ -443,7 +432,7 @@ int32_t flpydsk_calibrate(uint32_t drive)
 // seek to given track/cylinder
 int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
 {
-    if (CurrentDrive >= 4)
+    if (CurrentDrive == 0)
     {
         return -2;
     }
@@ -458,7 +447,7 @@ int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
     {
         // send the command
         flpydsk_send_command (FDC_CMD_SEEK);
-        flpydsk_send_command ((head) << 2 | CurrentDrive);
+        flpydsk_send_command ((head) << 2 | CurrentDrive->ID);
         flpydsk_send_command (cyl);
         // printf("i=%d ", i);
         flpydsk_wait_irq();
@@ -483,7 +472,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     uint32_t st0, cyl;
 
     /// TEST
-    while ( flpy_ReadWriteFlag[CurrentDrive] == true )
+    while (CurrentDrive->RW_Lock == true)
     {
         printf("waiting for Floppy Disk ");
         if (operation == 0)
@@ -504,7 +493,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
         break;
     }
 
-    flpy_ReadWriteFlag[CurrentDrive] = true; // busy
+    CurrentDrive->RW_Lock = true; // busy
     /// TEST
 
     flpydsk_initialize_dma();
@@ -520,7 +509,7 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
         flpydsk_send_command(FDC_CMD_WRITE_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY);
     }
 
-    flpydsk_send_command(head << 2 | CurrentDrive);
+    flpydsk_send_command(head << 2 | CurrentDrive->ID);
     flpydsk_send_command(track);
     flpydsk_send_command(head);
     flpydsk_send_command(sector);
@@ -548,16 +537,16 @@ int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uin
     flpydsk_check_int(&st0,&cyl); // inform FDC that we handled interrupt
 
     /// TEST
-    flpy_ReadWriteFlag[CurrentDrive] = false; // ready
+    CurrentDrive->RW_Lock = false; // ready
     /// TEST
 
     return retVal;
 }
 
 // read a sector
-int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
+int32_t flpydsk_read_sector(uint32_t sectorLBA, bool motor)
 {
-    if (CurrentDrive >= 4)
+    if (CurrentDrive == 0)
     {
         return -3; // floppies 0-3 possible
     }
@@ -601,7 +590,7 @@ int32_t flpydsk_read_sector(int32_t sectorLBA, int8_t motor)
 // write a sector
 int32_t flpydsk_write_sector(int32_t sectorLBA)
 {
-    if (CurrentDrive >= 4) return -1;
+    if (CurrentDrive == 0) return -1;
 
     // convert LBA sector to CHS
     int32_t head=0, track=0, sector=1;
@@ -628,7 +617,7 @@ int32_t flpydsk_write_sector(int32_t sectorLBA)
 // write a sector
 int32_t flpydsk_write_sector_wo_motor(int32_t sectorLBA)
 {
-    if (CurrentDrive >= 4) return -1;
+    if (CurrentDrive == 0) return -1;
 
     // convert LBA sector to CHS
     int32_t head=0, track=0, sector=1;
@@ -711,7 +700,7 @@ int32_t flpydsk_read_ia(int32_t i, void* a, int8_t option)
     int32_t retVal;
     for (uint8_t n = 0; n < MAX_ATTEMPTS_FLOPPY_DMA_BUFFER; n++)
     {
-        retVal = flpydsk_read_sector(val,0);
+        retVal = flpydsk_read_sector(val, false);
         if (retVal!=0)
         {
             printf("\nread error: %d\n", retVal);
@@ -748,6 +737,30 @@ int32_t flpydsk_read_ia(int32_t i, void* a, int8_t option)
         memcpy(a, (void*)DMA_BUFFER, 0x2400);
     }
     return retVal;
+}
+
+void flpydsk_refreshVolumeNames()
+{
+	floppy_t* currentDrive = CurrentDrive;
+
+	for(uint8_t i = 0; i < 2; i++)
+	{
+		if(floppyDrive[i] == 0) continue;
+
+		CurrentDrive = floppyDrive[i];
+
+		memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
+
+		flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA. TODO: Do we need it here?
+
+		/// TODO: change to read_ia(...)!
+		while(flpydsk_read_sector(19, true) != 0); // start at 0x2600: root directory (14 sectors) 
+
+		CurrentDrive->drive.insertedDisk->name[11] = 0; // end of string
+		strncpy(CurrentDrive->drive.insertedDisk->name, DMA_BUFFER, 11);
+	}
+
+	CurrentDrive = currentDrive;
 }
 
 /*

@@ -48,7 +48,7 @@ void* ramdisk_install(size_t size)
     strncpy(RAMDiskVolume.serialNumber,str,12);
     
     // disk
-    RAMDisk.type         = RAMDISK;
+    RAMDisk.type         = &RAMDISK;
     RAMDisk.partition[0] = &RAMDiskVolume;
     strncpy(RAMDisk.name, "RAMDisk    ", 11);
     attachDisk(&RAMDisk);

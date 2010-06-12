@@ -702,7 +702,7 @@ void setupUSBDevice(uint8_t portNumber)
         strncpy(usbDevVolume[portNumber+1].serialNumber, usbDevices[devAddr].serialNumber, 12);
 
         // Disk
-        usbDev[portNumber+1].type         = USB_MSD;
+        usbDev[portNumber+1].type         = &USB_MSD;
         usbDev[portNumber+1].partition[0] = &usbDevVolume[portNumber+1];
         usbDev[portNumber+1].data         = (void*)&usbDevices[devAddr];
         strcpy(usbDev[portNumber+1].name, usbDevices[devAddr].productName);

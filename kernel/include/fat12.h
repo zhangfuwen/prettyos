@@ -89,7 +89,6 @@ extern uint8_t track0[9216], track1[9216];
 // how to handle memory for the file?
 extern int32_t fat_entry[FATMAXINDEX];
 
-int32_t flpydsk_get_volumeName(char* str);
 int32_t flpydsk_read_directory();
 int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);
 int32_t flpydsk_format(char* vlab); // VolumeLabel

@@ -9,19 +9,28 @@
 #include "paging.h"
 #include "kheap.h"
 #include "fat12.h"
+#include "usb2_msd.h"
+#include "flpydsk.h"
+#include "usb2.h"
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
 partition_t* systemPartition;
 
-extern port_t portFloppy1, portFloppy2;
-extern disk_t floppy1, floppy2;
+extern floppy_t* floppyDrive[2];
 
 uint32_t startSectorPartition = 0;
 extern uint32_t usbMSDVolumeMaxLBA;
 
+diskType_t FLOPPYDISK;
+diskType_t USB_MSD;
+diskType_t RAMDISK;
+
 void deviceManager_install(/*partition_t* system*/)
 {
+    USB_MSD.readSector = &usbRead;
+    //FLOPPYDISK.readSector = &flpydsk_read_sector;
+
     memset(disks, 0, DISKARRAYSIZE*sizeof(disks));
     memset(ports, 0, PORTARRAYSIZE*sizeof(ports));
     //systemPartition = system;
@@ -81,32 +90,7 @@ void showPortList()
             {
                 case FDD:
                     printf("\nFDD ");
-                    
-                    /// Following Code should be moved to flpydsk.c and should be done when a disk is removed/inserted
-                    char volumeName[12];
-                    flpydsk_get_volumeName(volumeName);
-
-                    // if (ports[i]->insertedDisk != NULL)
-                    if (volumeName[0]!=0x20)
-                    {
-                        // TODO: attach floppy disk to FDD ///////////////////
-                        if (ports[i] == &portFloppy1) 
-                        {
-                            ports[i]->insertedDisk = &floppy1; 
-                        }
-                        if (ports[i] == &portFloppy2) 
-                        {
-                            ports[i]->insertedDisk = &floppy2; 
-                        }
-                        //////////////////////////////////////////////////////
-
-                        strncpy(ports[i]->insertedDisk->name, volumeName, 14);
-                        volumeName[14] = 0;
-                    }
-                    else
-                    {
-                        ports[i]->insertedDisk = 0;
-                    }
+                    flpydsk_refreshVolumeNames(); // Floppy workaround
                     break;
                 case RAM:
                     printf("\nRAM ");
@@ -117,13 +101,15 @@ void showPortList()
             }
             
             textColor(0x0E);
-            printf("\t%c", i+'A'); // number
+	        printf("\t%c", i+'A'); // number
             textColor(0x0F);
             printf("\t%s", ports[i]->name); // The ports name
 
             if (ports[i]->insertedDisk != NULL)
             {
-                printf("\t%s",ports[i]->insertedDisk->name); // Attached disk
+				if(ports[i]->type != FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
+					printf("\t%s",ports[i]->insertedDisk->name); // Attached disk
+				else putch('\t');
             }
             else
             {
@@ -149,29 +135,23 @@ void showDiskList()
     {
         if (disks[i] != NULL)
         {
-            switch (disks[i]->type) // Type
+            if(disks[i]->type == &FLOPPYDISK) /// Todo: Move to flpydsk.c, name set on floppy insertion
             {
-                case FLOPPYDISK:
-                    printf("\nFloppy");
-                    break;
-                case RAMDISK:
-                    printf("\nRAMdisk");
-                    break;
-                case USB_MSD:
-                    printf("\nUSB MSD");
-                    break;
+                flpydsk_refreshVolumeNames();
             }
+		    if(disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) continue; // Floppy workaround
+
+            if(disks[i]->type == &FLOPPYDISK) // Type
+                printf("\nFloppy");
+            else if(disks[i]->type == &RAMDISK)
+                printf("\nRAMdisk");
+            else if(disks[i]->type == &USB_MSD)
+                printf("\nUSB MSD");
 
             textColor(0x0E); 
             printf("\t%u", i+1); // Number
             textColor(0x0F);
             
-            if(disks[i]->type == FLOPPYDISK) /// Todo: Move to flpydsk.c, name set on floppy insertion
-            {
-                char volumeName[12];
-                flpydsk_get_volumeName(volumeName);
-                strncpy(disks[i]->name, volumeName,12);
-            }
             printf("\t%s", disks[i]->name);   // Name of disk
             if (strlen(disks[i]->name) < 8) { printf("\t"); }
             
@@ -183,23 +163,18 @@ void showDiskList()
 
                 if (j!=0) printf("\n\t\t\t\t"); // Not first, indent
 
-                printf("\t%u", j); // Partition number
+				printf("\t%u", j); // Partition number
 
-                switch(disks[i]->type)
-                {
-                    case FLOPPYDISK: // TODO: floppy disk device: use the current serials of the floppy disks
-                        // flpydsk_get_volumeName(volumeName); // it already happened above
-                        strncpy(disks[i]->partition[j]->serialNumber, disks[i]->name, 12);
-                        printf("\t%s", disks[i]->partition[j]->serialNumber);
-                        break;
-                    case RAMDISK:
-                        printf("\t%s", disks[i]->partition[j]->serialNumber);
-                        break;
-                    case USB_MSD:                      
-                        printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber);
-                        break;
+                if(disks[i]->type == &FLOPPYDISK)
+                { // Serial
+                    strncpy(disks[i]->partition[j]->serialNumber, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
+                    printf("\t%s", disks[i]->partition[j]->serialNumber);
                 }
-                /// Switch should changed to:
+                else if(disks[i]->type == &RAMDISK)
+                    printf("\t%s", disks[i]->partition[j]->serialNumber);
+                else if(disks[i]->type == &USB_MSD)
+                    printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber);
+                /// ifs should be changed to:
                 ///printf("\t%s", disks[i]->partition[j]->serialNumber); // serial of partition
             }
         }
@@ -316,7 +291,8 @@ void loadFile(const char* filename, partition_t* part)
     memset(fileptrTest->name, ' ', 11);
 
     int j = 0;
-    for(; j < 8; j++) {
+    for(; j < 8; j++)
+    {
         if(filename[j] == '.')
         {
             j++;
@@ -325,9 +301,14 @@ void loadFile(const char* filename, partition_t* part)
         if(filename[j] == 0) break;
         fileptrTest->name[j] = filename[j];
     }
-    for(int i = 8; j < 11; i++, j++) {
+    for(int i = 8; j < 11; i++, j++)
+    {
         if(filename[j] == 0) break;
         fileptrTest->name[i] = filename[j];
+    }
+    if(fileptrTest->name[8] == ' ' && fileptrTest->name[9] == ' ' && fileptrTest->name[10] == ' ')
+    {
+        fileptrTest->name[8] = 'E'; fileptrTest->name[9] = 'L'; fileptrTest->name[10] = 'F';
     }
 
     // file to search

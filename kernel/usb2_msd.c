@@ -653,7 +653,7 @@ labelLeave:
     waitForKeyStroke();
 }
 
-uint8_t usbRead(uint32_t sector, uint8_t* buffer)
+int32_t usbRead(uint32_t sector, uint8_t* buffer)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
     uint8_t devAddr = currentDevice;

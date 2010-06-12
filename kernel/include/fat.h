@@ -160,24 +160,8 @@ enum
     LOOK_FOR_MATCHING_ENTRY
 } SEARCH_TYPE;
 
-#define CE_GOOD                0 // No error
-#define CE_ERASE_FAIL          1 // An erase failed
-#define CE_NOT_INIT            7 // An operation was performed on an uninitialized device
-#define CE_BAD_SECTOR_READ     8 // A bad read of a sector occured
-#define CE_WRITE_ERROR         9 // Could not write to a sector
-#define CE_INVALID_CLUSTER    10 // cluster number > maxcls
-#define CE_FILE_NOT_FOUND     11 // Could not find the file on the device
-#define CE_DIR_FULL           20 // All root dir entry are taken
-#define CE_DISK_FULL          21 // All clusters in partition are taken
-#define CE_WRITE_PROTECTED    24 // Card is write protected
-#define CE_BADCACHEREAD       27 // Sector read failed
-
-#define CE_FAT_EOF            60 // Read try beyond FAT's EOF
-#define CE_EOF                61 // EOF
-
 // http://www.google.de/url?sa=t&source=web&ct=res&cd=2&ved=0CBwQFjAB&url=http%3A%2F%2Fwww.schmalzhaus.com%2FUBW32%2FFW%2FMicrochip_v2.5b%2FInclude%2FMDD%2520File%2520System%2FFSDefs.h&rct=j&q=%23define+CE_ERASE_FAIL&ei=X7L1S9XFN4f9OczL1dYI&usg=AFQjCNHZbqrCWoeIXQ2g6aZ2-jC1rfx7Ig
-/*
-typedef enum _CETYPE
+typedef enum
 {
     CE_GOOD = 0,                    // No error
     CE_ERASE_FAIL,                  // An erase failed
@@ -218,25 +202,28 @@ typedef enum _CETYPE
     CE_WRITEONLY,                   // The file is write-only
     CE_INVALID_ARGUMENT,            // Invalid argument
     CE_TOO_MANY_FILES_OPEN,         // Too many files are already open
-    CE_UNSUPPORTED_SECTOR_SIZE      // Unsupported sector size
-} CETYPE;
-*/
+    CE_UNSUPPORTED_SECTOR_SIZE,     // Unsupported sector size
+
+    CE_FAT_EOF = 60,                // Read try beyond FAT's EOF
+    CE_EOF                          // EOF
+} FS_ERROR;
 
 // interface functions
-uint8_t sectorRead (uint32_t sector_addr, uint8_t* buffer);
-uint8_t sectorWrite(uint32_t sector_addr, uint8_t* buffer);
+FS_ERROR sectorRead (uint32_t sector_addr, uint8_t* buffer);
+FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer);
 
 // file handling
-uint8_t createFileEntry(FILEPTR fileptr, uint32_t* fHandle);
-uint8_t searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
-uint8_t fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
-uint8_t fclose(FILEPTR fileptr);
-uint8_t fread(FILEPTR fileptr, void* dest, uint32_t count);
-uint8_t fwrite(FILEPTR fileptr, void* src, uint32_t count);
+FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t* fHandle);
+FS_ERROR searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
+FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
+FS_ERROR fclose(FILEPTR fileptr);
+FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count);
+FS_ERROR fwrite(FILEPTR fileptr, void* src, uint32_t count);
 
 // analysis functions
 void showDirectoryEntry(FILEROOTDIRECTORYENTRY dir);
 
 //additional functions
 uint32_t checksum(char* ShortFileName);
+
 #endif
