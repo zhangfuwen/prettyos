@@ -80,9 +80,10 @@
 
 
 // Volume with FAT Filesystem
-
+struct disk;
 typedef struct
 {
+    struct disk* disk;  // The disk on which the partition is
     uint8_t* buffer;            // buffer equal to one sector
     uint32_t sectorSize;        // byte per sector
     uint32_t firsts;            // LBA of 1st sector
@@ -209,8 +210,8 @@ typedef enum
 } FS_ERROR;
 
 // interface functions
-FS_ERROR sectorRead (uint32_t sector_addr, uint8_t* buffer);
-FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer);
+FS_ERROR sectorRead (uint32_t sector_addr, uint8_t* buffer, partition_t* part);
+FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part);
 
 // file handling
 FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t* fHandle);

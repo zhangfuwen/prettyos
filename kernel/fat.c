@@ -18,16 +18,17 @@
 #include "usb2_msd.h"
 #include "console.h"
 #include "fat.h"
+#include "devicemanager.h"
 
 // #define WRITE_IS_APPROVED <--- does not yet work!
 
-uint8_t  globalBufferFATSector[512];                  // The global FAT sector buffer
-bool     globalBufferMemSet0      = false;      // Global variable indicating that the data buffer contains all zeros
-FILEPTR  globalBufferUsedByFILEPTR        = NULL;       // Global variable indicating which file is using the data buffer
-uint32_t globalLastDataSectorRead = 0xFFFFFFFF; // Global variable indicating which data sector was read last
-uint32_t globalLastFATSectorRead  = 0xFFFFFFFF; // Global variable indicating which FAT sector was read last
-bool     globalFATWriteNecessary       = false;      // Global variable indicating that there is information that needs to be written to the FAT
-bool     globalDataWriteNecessary      = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
+uint8_t  globalBufferFATSector[512];             // The global FAT sector buffer
+bool     globalBufferMemSet0       = false;      // Global variable indicating that the data buffer contains all zeros
+FILEPTR  globalBufferUsedByFILEPTR = NULL;       // Global variable indicating which file is using the data buffer
+uint32_t globalLastDataSectorRead  = 0xFFFFFFFF; // Global variable indicating which data sector was read last
+uint32_t globalLastFATSectorRead   = 0xFFFFFFFF; // Global variable indicating which FAT sector was read last
+bool     globalFATWriteNecessary   = false;      // Global variable indicating that there is information that needs to be written to the FAT
+bool     globalDataWriteNecessary  = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
 
 // prototypes
 // static uint32_t fatWrite(partition_t* volume, uint32_t cls, uint32_t v);
@@ -73,13 +74,15 @@ static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
     return (sector);
 }
 
-FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer) // to implement
+FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> sectorWrite <<<<<!");
   #endif
     textColor(0x0A); printf("\n>>>>> sectorWrite not yet implemented <<<<<!"); textColor(0x0F);
-    return SUCCESS;
+
+    FS_ERROR retVal = part->disk->type->writeSector(sector_addr, buffer);
+    return retVal;
 }
 
 #ifdef WRITE_IS_APPROVED
@@ -103,13 +106,12 @@ static FS_ERROR flushData()
 }
 #endif
 
-FS_ERROR sectorRead(uint32_t sector_addr, uint8_t* buffer) // make it better!
+FS_ERROR sectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> sectorRead <<<<<!");
   #endif
-    FS_ERROR retVal = SUCCESS; // TEST
-    usbRead(sector_addr, buffer); // until now only realized for USB 2.0 Mass Storage Device
+    FS_ERROR retVal = part->disk->type->readSector(sector_addr, buffer);
     return retVal;
 }
 
@@ -160,13 +162,13 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
         switch(volume->type)
         {
             case FAT32:
-                c = MemoryReadLong (globalBufferFATSector, posFAT);
+                c = MemoryReadLong(globalBufferFATSector, posFAT);
                 break;
             case FAT16:
-                c = MemoryReadWord    (globalBufferFATSector, posFAT);
+                c = MemoryReadWord(globalBufferFATSector, posFAT);
                 break;
             case FAT12:
-                c = MemoryReadByte (globalBufferFATSector, posFAT);
+                c = MemoryReadByte(globalBufferFATSector, posFAT);
                 if (q)
                 {
                     c >>= 4;
@@ -183,7 +185,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
                         }
                     }
                   #endif
-                    if (sectorRead (sector+1, globalBufferFATSector) != SUCCESS)
+                    if (sectorRead(sector+1, globalBufferFATSector, volume) != SUCCESS)
                     {
                         globalLastFATSectorRead = 0xFFFF;
                         return ClusterFailValue;
@@ -214,7 +216,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
                 return ClusterFailValue;
         }
 #endif
-        if ( sectorRead (sector, globalBufferFATSector) != SUCCESS)
+        if (sectorRead(sector, globalBufferFATSector, volume) != SUCCESS)
         {
             globalLastFATSectorRead = 0xFFFF;
             return ClusterFailValue;
@@ -370,7 +372,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
                 globalBufferUsedByFILEPTR  = NULL;
                 globalBufferMemSet0= false;
 
-                uint8_t retVal = sectorRead( sector + offset2, volume->buffer );
+                uint8_t retVal = sectorRead(sector + offset2, volume->buffer, volume);
 
                 if ( retVal != SUCCESS )
                 {
@@ -526,7 +528,7 @@ FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint
     {
         if ((fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) != 0) // Maximum 16 entries possible
         {
-            if (cacheFileEntry (fileptrDest, &fHandle, read) == NULL){ statusB = CE_BADCACHEREAD; }
+            if (cacheFileEntry(fileptrDest, &fHandle, read) == NULL) { statusB = CE_BADCACHEREAD; }
         }
     }
 
@@ -680,7 +682,7 @@ FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type)
             fileptr->sec  = 0;
             fileptr->pos  = 0;
             uint32_t l = cluster2sector(volume,fileptr->ccls); // determine LBA of the file's current cluster
-            if (sectorRead(l,volume->buffer)!=SUCCESS)
+            if (sectorRead(l, volume->buffer, volume)!=SUCCESS)
             {
                 error = CE_BAD_SECTOR_READ;
             }
@@ -748,7 +750,7 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
 
     sector = cluster2sector(volume,fileptr->ccls);
     sector += (uint32_t)fileptr->sec;
-    if (sectorRead(sector, volume->buffer) != SUCCESS)
+    if (sectorRead(sector, volume->buffer, volume) != SUCCESS)
     {
         error = CE_BAD_SECTOR_READ;
     }
@@ -773,7 +775,7 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
                 {
                     sector = cluster2sector(volume,fileptr->ccls);
                     sector += (uint32_t)fileptr->sec;
-                    if (sectorRead(sector, volume->buffer) != SUCCESS)
+                    if (sectorRead(sector, volume->buffer, volume) != SUCCESS)
                     {
                         error = CE_BAD_SECTOR_READ;
                     }

@@ -210,9 +210,9 @@ int main()
                         drawEntry(entry);
                     }
                     break;
-            }//switch
+            } //switch
             drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
-        }//while
+        } //while
 
 EVALUATION: // evaluation of entry
         textColor(0x02);
@@ -234,53 +234,9 @@ EVALUATION: // evaluation of entry
         }
         else
         {
-            execute(entry);
             puts("file is being searched...\n");
-
-            toupper(entry);
-
-            uint8_t posPoint = 8;
-            for (uint8_t i = 0; i < 8; i++)
-            {
-                if (entry[i]=='.')
-                {
-                    posPoint = i; // search point position
-                }
-            }
-
-            char name[9];
-            memset(name, 0x20, 8); name[8] = '\0';
-            for (uint8_t i = 0; i < 8; i++)
-            {
-                if (i < posPoint && isalnum(entry[i]))
-                {
-                    name[i] = entry[i];
-                }
-                else
-                {
-                    name[i] = 0x20; // space
-                }
-            }
-
-            char ext[4];
-            memset(ext, '\0', 4);
-            for (uint8_t i = 0; i < 3; i++)
-            {
-                ext[i] = entry[i + posPoint + 1];
-            }
-
-            if (ext[0]==0 && ext[1]==0 && ext[2]==0)
-            {
-                ext[0] = 'E';
-                ext[1] = 'L';
-                ext[2] = 'F';
-            }
-
-            if (floppy_load(name,ext))
-            {
-                puts("<-- Sorry, PrettyOS does not know this command.\n");
-            }
-        }//else
-    }//while
+            execute(entry);
+        }
+    } //while
     return 0;
 }

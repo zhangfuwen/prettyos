@@ -23,7 +23,7 @@ extern diskType_t FLOPPYDISK;
 extern diskType_t USB_MSD;
 extern diskType_t RAMDISK;
 
-typedef struct 
+typedef struct disk
 {
     diskType_t*  type;
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used

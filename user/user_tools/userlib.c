@@ -62,13 +62,6 @@ int floppy_format(char* volumeLabel)
     return ret;
 }
 
-int floppy_load(const char* name, const char* ext)
-{
-    int ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(12), "b"(name), "c"(ext));
-    return ret;
-}
-
 void exit()
 {
     __asm__ volatile("int $0x7F" : : "a"(13));

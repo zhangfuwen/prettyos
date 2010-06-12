@@ -699,6 +699,7 @@ void setupUSBDevice(uint8_t portNumber)
 
         // Partition
         usbDevVolume[portNumber+1].buffer = (uint8_t*)malloc(512,0);
+        usbDevVolume[portNumber+1].disk = &usbDev[portNumber+1];
         strncpy(usbDevVolume[portNumber+1].serialNumber, usbDevices[devAddr].serialNumber, 12);
 
         // Disk

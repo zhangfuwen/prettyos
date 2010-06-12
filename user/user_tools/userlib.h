@@ -18,7 +18,6 @@ int floppy_dir();
 void printLine(const char* message, unsigned int line, unsigned char attribute);
 unsigned int getCurrentSeconds();
 int floppy_format(char* volumeLabel);
-int floppy_load(const char* name, const char* ext);
 void exit();
 void execute(const char* path);
 void beep(unsigned int frequency, unsigned int duration);

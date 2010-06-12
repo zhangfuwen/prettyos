@@ -75,7 +75,7 @@ DECL_SYSCALL3( cprintf, const char*, uint32_t, uint8_t    )
 DECL_SYSCALL0( getCurrentSeconds                          )
 DECL_SYSCALL0( getCurrentMilliseconds                     ) // substitute
 DECL_SYSCALL1( flpydsk_format, char*                      )
-DECL_SYSCALL2( flpydsk_load, const char*, const char*     )
+DECL_SYSCALL2( flpydsk_load, const char*, const char*     ) // substitute
 DECL_SYSCALL0( exit                                       )
 DECL_SYSCALL1( settaskflag, int32_t                       ) // substitute
 DECL_SYSCALL2( beep, uint32_t, uint32_t                   )

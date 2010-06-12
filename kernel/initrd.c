@@ -43,6 +43,7 @@ void* ramdisk_install(size_t size)
         
     // volume
     RAMDiskVolume.buffer = (uint8_t*)malloc(512,0); // necessary?
+    RAMDiskVolume.disk = &RAMDisk;
     char str[12];
     itoa(((uint32_t)(ramdisk_start)/PAGESIZE),str);
     strncpy(RAMDiskVolume.serialNumber,str,12);

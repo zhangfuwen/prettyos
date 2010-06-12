@@ -14,7 +14,7 @@
 uint8_t cache[5][9216];
 uint8_t cacheTrackNumber[5];
 
-int32_t cacheFirstTracks() /// floppy
+static int32_t cacheFirstTracks() /// floppy
 {
     int32_t retVal0 = flpydsk_read_ia(0,track0,TRACK);
     int32_t retVal1 = flpydsk_read_ia(1,track1,TRACK);
@@ -33,113 +33,6 @@ int32_t cacheTrack(uint32_t trackNum, void* addr) /// floppy
         return -1;
     else
         return 0;
-}
-
-int32_t flpydsk_load(const char* name, const char* ext) /// load file <--- TODO: make it general!
-{
-    struct file f;
-
-    flpydsk_control_motor(true);
-    int32_t retVal = cacheFirstTracks();
-    if (retVal)
-    {
-        textColor(0x0C);
-        printf("track0 & track1 read error.\n");
-        textColor(0x02);
-    }
-
-    printf("Load and execute ");
-    textColor(0x0E);
-    printf("-->%s.%s<--",name,ext);
-    textColor(0x02);
-    printf(" from floppy disk\n");
-
-    uint32_t firstCluster = search_file_first_cluster(name,ext,&f); // now working with cache
-    if (firstCluster==0)
-    {
-        textColor(0x04);
-        printf("file is not ok (no valid first cluster)\n");
-        textColor(0x0F);
-        flpydsk_control_motor(false);
-        return -1;
-    }
-
-    /*
-    // cache
-    cacheTrackNumber[0] = (firstCluster+ADD)/18;
-    cacheTrack(cacheTrackNumber[0],cache[0]); // read track
-
-    cacheTrackNumber[1] = cacheTrackNumber[0] + 1;
-    cacheTrack(cacheTrackNumber[1],cache[1]); // read track
-
-    if (f.size/0x2400 > 1)
-    {
-        cacheTrackNumber[2] = cacheTrackNumber[0] + 2;
-        cacheTrack(cacheTrackNumber[2],cache[2]); // read track
-    }
-
-    if (f.size/0x2400 > 2)
-    {
-        cacheTrackNumber[3] = cacheTrackNumber[0] + 3;
-        cacheTrack(cacheTrackNumber[3],cache[3]); // read track
-    }
-
-    if (f.size/0x2400 > 3)
-    {
-        cacheTrackNumber[4] = cacheTrackNumber[0] + 4;
-        cacheTrack(cacheTrackNumber[4],cache[4]); // read track
-    }
-    */
-
-    /// ********************************** File memory prepared **************************************///
-
-    uint8_t* file = malloc(f.size,PAGESIZE); /// TODO: free allocated memory, if program is finished
-    printf("FileSize: %u Byte, 1st Cluster: %u, Memory: %X\n",f.size, f.firstCluster, file);
-
-    // whole FAT is read from index 0 to FATMAXINDEX (= 2849 = 0xB21)
-    for (uint32_t i=0;i<FATMAXINDEX;i++)
-    {
-        read_fat(&fat_entry[i], i, FAT1_SEC, track0);
-    }
-
-    // load file to memory
-    // retVal = file_ia_cache(fat_entry,firstCluster,file); /// read sectors of file from cache
-    retVal = file_ia(fat_entry,firstCluster,file); /// read sectors of file
-
-    kdebug(0x00, "\nFile content (start of first 5 clusters): ");
-    kdebug(0x00, "\n1st sector:\n"); for (uint16_t i=   0;i<  20;i++) {kdebug(0x00, "%y ",file[i]);}
-    kdebug(0x00, "\n2nd sector:\n"); for (uint16_t i= 512;i< 532;i++) {kdebug(0x00, "%y ",file[i]);}
-    kdebug(0x00, "\n3rd sector:\n"); for (uint16_t i=1024;i<1044;i++) {kdebug(0x00, "%y ",file[i]);}
-    kdebug(0x00, "\n4th sector:\n"); for (uint16_t i=1536;i<1556;i++) {kdebug(0x00, "%y ",file[i]);}
-    kdebug(0x00, "\n5th sector:\n"); for (uint16_t i=2048;i<2068;i++) {kdebug(0x00, "%y ",file[i]);}
-    kdebug(0x00, "\n\n");
-
-    if (!retVal)
-    {
-        char Buffer[13];
-        snprintf(Buffer, 13, "%s.%s", name, ext);
-        // Start task
-        if (elf_exec(file, f.size, Buffer)) // execute loaded file
-        {
-            free(file);
-        }
-        else
-        {
-            textColor(0x0E);
-            printf("File has unknown format and will not be executed.\n");
-            textColor(0x0F);
-            // other actions?
-            free(file); // still needed in kernel?
-        }
-    }
-    else if (retVal==-1)
-    {
-        textColor(0x04);
-        printf("file was not executed due to FAT error.\n");
-        textColor(0x0F);
-    }
-    flpydsk_control_motor(false);
-    return 0;
 }
 
 int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t size)

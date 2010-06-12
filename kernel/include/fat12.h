@@ -90,7 +90,6 @@ extern uint8_t track0[9216], track1[9216];
 extern int32_t fat_entry[FATMAXINDEX];
 
 int32_t flpydsk_read_directory();
-int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs);
 int32_t flpydsk_format(char* vlab); // VolumeLabel
 int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer);
 int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer);

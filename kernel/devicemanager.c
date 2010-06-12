@@ -29,7 +29,7 @@ diskType_t RAMDISK;
 void deviceManager_install(/*partition_t* system*/)
 {
     USB_MSD.readSector = &usbRead;
-    //FLOPPYDISK.readSector = &flpydsk_read_sector;
+    FLOPPYDISK.readSector = &flpydsk_readSector;
 
     memset(disks, 0, DISKARRAYSIZE*sizeof(disks));
     memset(ports, 0, PORTARRAYSIZE*sizeof(ports));
@@ -101,15 +101,15 @@ void showPortList()
             }
             
             textColor(0x0E);
-	        printf("\t%c", i+'A'); // number
+            printf("\t%c", i+'A'); // number
             textColor(0x0F);
             printf("\t%s", ports[i]->name); // The ports name
 
             if (ports[i]->insertedDisk != NULL)
             {
-				if(ports[i]->type != FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
-					printf("\t%s",ports[i]->insertedDisk->name); // Attached disk
-				else putch('\t');
+                if(ports[i]->type != FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
+                    printf("\t%s",ports[i]->insertedDisk->name); // Attached disk
+                else putch('\t');
             }
             else
             {
@@ -139,7 +139,7 @@ void showDiskList()
             {
                 flpydsk_refreshVolumeNames();
             }
-		    if(disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) continue; // Floppy workaround
+            if(disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) continue; // Floppy workaround
 
             if(disks[i]->type == &FLOPPYDISK) // Type
                 printf("\nFloppy");
@@ -154,19 +154,17 @@ void showDiskList()
             
             printf("\t%s", disks[i]->name);   // Name of disk
             if (strlen(disks[i]->name) < 8) { printf("\t"); }
-            
-            // printf("\t%s", disks[i]->serial); // Serial of disk // does that make sense? <----- TODO
 
             for (uint8_t j = 0; j < PARTITIONARRAYSIZE; j++)
             {
                 if (disks[i]->partition[j] == NULL) continue; // Empty
 
-                if (j!=0) printf("\n\t\t\t\t"); // Not first, indent
+                if (j!=0) printf("\n\t\t\t"); // Not first, indent
 
-				printf("\t%u", j); // Partition number
+                printf("\t%u", j); // Partition number
 
-                if(disks[i]->type == &FLOPPYDISK)
-                { // Serial
+                if(disks[i]->type == &FLOPPYDISK) // Serial
+                {
                     strncpy(disks[i]->partition[j]->serialNumber, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
                     printf("\t%s", disks[i]->partition[j]->serialNumber);
                 }
@@ -321,7 +319,7 @@ void loadFile(const char* filename, partition_t* part)
     {
         fileptr->dirclus = fileptr->volume->FatRootDirCluster; 
     }
-        
+
     uint8_t retVal = searchFile(fileptr, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode)
     if (retVal == CE_GOOD)
     {

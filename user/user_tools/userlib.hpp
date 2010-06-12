@@ -21,7 +21,7 @@ extern "C" { // Functions from C-Userlib
     void printLine(const char* message, unsigned int line, unsigned char attribute);
     unsigned int getCurrentSeconds();
     int floppy_format(char* volumeLabel);
-    int floppy_load(const char* name, const char* ext);
+    void execute(const char* path);
     void exit();
     void beep(unsigned int frequency, unsigned int duration);
     void clearScreen(unsigned char backgroundColor);

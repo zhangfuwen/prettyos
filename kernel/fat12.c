@@ -203,7 +203,7 @@ int32_t flpydsk_read_directory()
   which was published in the year 2004 at http://www.dynacube.net
 *****************************************************************************/
 
-int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
+static int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
 {
     uint8_t a[512];
 
