@@ -757,7 +757,7 @@ void flpydsk_refreshVolumeNames()
 		while(flpydsk_read_sector(19, true) != 0); // start at 0x2600: root directory (14 sectors) 
 
 		CurrentDrive->drive.insertedDisk->name[11] = 0; // end of string
-		strncpy(CurrentDrive->drive.insertedDisk->name, DMA_BUFFER, 11);
+		strncpy(CurrentDrive->drive.insertedDisk->name, (char*)DMA_BUFFER, 11);
 	}
 
 	CurrentDrive = currentDrive;

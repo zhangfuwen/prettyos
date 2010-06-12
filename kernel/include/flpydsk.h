@@ -4,8 +4,8 @@
 #include "os.h"
 #include "devicemanager.h"
 
-#define DMA_BUFFER ((void*)0x1000) // start of dma tranfer buffer, end: 0x10000 (64KB border).
-                                   // It must be below 16MB = 0x1000000 and in identity mapped memory!
+#define DMA_BUFFER 0x1000 // start of dma tranfer buffer, end: 0x10000 (64KB border).
+                          // It must be below 16MB = 0x1000000 and in identity mapped memory!
 
 #define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 60
 #define SECTOR 0
