@@ -143,6 +143,10 @@ static floppy_t* createFloppy(uint8_t ID)
     fdd->drive.insertedDisk->type = &FLOPPYDISK;
     fdd->drive.insertedDisk->partition[0] = malloc(sizeof(partition_t), 0);
     fdd->drive.insertedDisk->partition[0]->buffer = malloc(512, 0);
+    
+    fdd->drive.insertedDisk->partition[1] = 0;
+    fdd->drive.insertedDisk->partition[2] = 0;
+    fdd->drive.insertedDisk->partition[3] = 0;
 
     fdd->drive.type = FDD;
     strncpy(fdd->drive.name, "Floppy Dev 1", 12);
@@ -754,12 +758,18 @@ void flpydsk_refreshVolumeNames()
 		flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA. TODO: Do we need it here?
 
 		/// TODO: change to read_ia(...)!
-		while(flpydsk_read_sector(19, true) != 0); // start at 0x2600: root directory (14 sectors) 
-
-		CurrentDrive->drive.insertedDisk->name[11] = 0; // end of string
+        while(flpydsk_read_sector(19, true) != 0); // start at 0x2600: root directory (14 sectors) 
+    
 		strncpy(CurrentDrive->drive.insertedDisk->name, (char*)DMA_BUFFER, 11);
+        /*
+        char* start = (char*)DMA_BUFFER; // name
+        for(uint8_t j = 0; j < 11; j++)
+        {
+             CurrentDrive->drive.insertedDisk->name[j] = *(start+j);
+        }
+        */
+        CurrentDrive->drive.insertedDisk->name[11] = 0; // end of string
 	}
-
 	CurrentDrive = currentDrive;
 }
 
