@@ -286,9 +286,26 @@ partition_t* getPartition(const char* path)
 
 void loadFile(const char* filename, partition_t* part)
 {
+    char partitionType[6];
+    switch(part->type)
+    {
+    case 1:
+        strcpy(partitionType,"FAT12");
+        break;
+    case 2:
+        strcpy(partitionType,"FAT16");
+        break;
+    case 3:
+        strcpy(partitionType,"FAT32");
+        break;
+    default:
+        strcpy(partitionType,"???");
+        break;
+    }
+
     textColor(0x03);
     printf("\nbuffer:     %X", part->buffer);
-    printf("\ntype:       %u", part->type);
+    printf("\ntype:       %s", partitionType);
     printf("\nSecPerClus: %u", part->SecPerClus);
     printf("\nmaxroot:    %u", part->maxroot);
     printf("\nfatsize:    %u", part->fatsize);
@@ -298,8 +315,8 @@ void loadFile(const char* filename, partition_t* part)
     printf("\nroot:       %u", part->root);
     printf("\ndata:       %u", part->data);
     printf("\nmaxcls:     %u", part->maxcls);
-    printf("\nmount:      %u", part->mount);
-    printf("\nserial #:   %y %y %y %y", part->serialNumber[0], part->serialNumber[1], part->serialNumber[2], part->serialNumber[3]);
+    printf("\nmount:      %s", part->mount ? "yes" : "no");
+    printf("\nserial:     %s", part->serialNumber);
 
     textColor(0x0F);
     waitForKeyStroke();
