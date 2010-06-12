@@ -6,6 +6,7 @@
 #include "devicemanager.h"
 #include "console.h"
 #include "util.h"
+#include "cmos.h"
 #include "paging.h"
 #include "kheap.h"
 #include "fat12.h"
@@ -185,8 +186,29 @@ void showDiskList()
 void execute(const char* path)
 {
     partition_t* part = getPartition(path);
-    if(part == 0)
+    if(part == NULL)
     {
+        textColor(0x0C);
+        printf("\nNo valid path for partition found!\n");
+        textColor(0x0F);
+        
+        if ((cmos_read(0x10)>>4) == 4 ) // first FDD implemented
+        {
+            if (path[0] == '1' && path[1]==':')
+            {
+                // do nothing
+            }
+            else
+            {
+                char newPath[40];
+                strcpy(newPath,"1:/");
+                strcat(newPath,path);
+                textColor(0x0E);
+                printf("\nFloppy found! PrettyOS now tries %s\n",newPath);
+                textColor(0x0F);        
+                execute(newPath);
+            }
+        }
         return;
     }
     while(*path != '/' && *path != '|' && *path != '\\')
@@ -459,7 +481,7 @@ int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests on
             }
             else if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '2') )
             {
-                printf("\nThis is a volume formated with FAT12.");
+                printf("\nThis is a volume formated with FAT12.\n");
                 volume_type = FAT12;
             }
         }

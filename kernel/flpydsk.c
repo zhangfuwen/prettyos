@@ -168,16 +168,18 @@ void floppy_install()
         printf("1.44 MB FDD first device found\n");
         floppyDrive[0] = createFloppy(0);
         strncpy(floppyDrive[0]->drive.name, "Floppy Dev 1", 12);
+        floppyDrive[0]->drive.name[12]=0; // terminate string
 
         if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: 0100....b
         {
             printf("1.44 MB FDD second device found\n");
             floppyDrive[1] = createFloppy(1);
             strncpy(floppyDrive[1]->drive.name, "Floppy Dev 2", 12);
+            floppyDrive[1]->drive.name[12]=0; // terminate string
         }
         else
         {
-            floppyDrive[1] = 0;
+            floppyDrive[1] = NULL;
         }
 
         flpydsk_install(32+6);                  // floppy disk uses IRQ 6 // 32+6
