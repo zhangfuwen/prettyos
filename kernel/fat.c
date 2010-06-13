@@ -20,7 +20,10 @@
 #include "fat.h"
 #include "devicemanager.h"
 
-// #define WRITE_IS_APPROVED <--- does not yet work!
+// prototypes
+static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite);
+
+#define WRITE_IS_APPROVED 
 
 uint8_t  globalBufferFATSector[512];             // The global FAT sector buffer
 bool     globalBufferMemSet0       = false;      // Global variable indicating that the data buffer contains all zeros
@@ -30,8 +33,6 @@ uint32_t globalLastFATSectorRead   = 0xFFFFFFFF; // Global variable indicating w
 bool     globalFATWriteNecessary   = false;      // Global variable indicating that there is information that needs to be written to the FAT
 bool     globalDataWriteNecessary  = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
 
-// prototypes
-// static uint32_t fatWrite(partition_t* volume, uint32_t cls, uint32_t v);
 
 static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 {
@@ -216,7 +217,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
 #ifdef WRITE_IS_APPROVED
         if (globalFATWriteNecessary)
         {
-            if(WriteFAT (volume, 0, 0, TRUE))
+            if(fatWrite (volume, 0, 0, true))
                 return ClusterFailValue;
         }
 #endif
@@ -825,3 +826,151 @@ void showDirectoryEntry(FILEROOTDIRECTORYENTRY dir)
     printf("\ncluster:  %u",        dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
     printf("\nfilesize: %u byte",   dir->DIR_FileSize                               );
 }
+
+/***********************************************************************************/
+
+static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite)
+{
+  #ifdef WRITE_IS_APPROVED
+    uint8_t  q, c;
+    uint32_t p, l, ClusterFailValue;
+
+    if ((volume->type != FAT32) && (volume->type != FAT16) && (volume->type != FAT12))
+    {
+        return CLUSTER_FAIL_FAT32;
+    }
+
+    if ((volume->type != FAT16) && (volume->type != FAT12))
+    {
+        return CLUSTER_FAIL_FAT16;
+    }
+    
+    switch (volume->type)
+    {
+    case FAT32:
+        ClusterFailValue = CLUSTER_FAIL_FAT32;
+        break;
+    case FAT12:
+    case FAT16:
+    default:
+        ClusterFailValue = CLUSTER_FAIL_FAT16;
+        break;
+    }
+
+    globalBufferMemSet0 = false;
+
+    if (forceWrite) // write the current FAT sector to the partition "volume"
+    {
+        for (uint8_t i=0, li=globalLastFATSectorRead; i<volume->fatcopy; i++, li+=volume->fatsize)
+        {   
+            if (sectorWrite(li, globalBufferFATSector, volume) != CE_GOOD)
+            {
+                return ClusterFailValue;
+            }
+        }
+        globalFATWriteNecessary = false;
+        return 0;
+    }
+
+    switch (volume->type)
+    {
+        case FAT32:
+            p = (uint32_t)ccls * 4;   // "p" is the position 
+            q = 0;      
+            break;
+        case FAT12:
+            p = (uint32_t) ccls * 3; // "p" is the position 
+            q = p & 1;   // Odd or even?
+            p >>= 1;
+            break;
+        case FAT16:
+        default:
+            p = (uint32_t) ccls * 2;   // "p" is the position 
+            q = 0;      
+            break;
+    }
+
+    l = volume->fat + (p / volume->sectorSize);     
+    p &= volume->sectorSize - 1;                 
+
+    if (globalLastFATSectorRead != l)
+    {
+        // If we are loading a new sector then write the current one to the volume if we need to
+        if (globalFATWriteNecessary)
+        {
+            for (uint8_t i=0, li=globalLastFATSectorRead; i<volume->fatcopy; i++, li+=volume->fatsize)
+            {
+                if (sectorWrite(li, globalBufferFATSector, volume) != CE_GOOD)
+                {
+                    return ClusterFailValue;
+                }
+            }
+            globalFATWriteNecessary = false;
+        }
+
+        // Load the new sector
+        if (sectorRead (l, globalBufferFATSector, volume) != CE_GOOD)
+        {
+            globalLastFATSectorRead = 0xFFFF;
+            return ClusterFailValue;
+        }
+        else
+        {
+            globalLastFATSectorRead = l;
+        }
+    }
+
+    if (volume->type == FAT32)  
+    {
+        MemoryWriteByte (globalBufferFATSector, p,   ((value & 0x000000FF)      ));         
+        MemoryWriteByte (globalBufferFATSector, p+1, ((value & 0x0000FF00) >>  8));
+        MemoryWriteByte (globalBufferFATSector, p+2, ((value & 0x00FF0000) >> 16));
+        MemoryWriteByte (globalBufferFATSector, p+3, ((value & 0x0F000000) >> 24));   
+    }
+    else
+    {
+        if (volume->type == FAT16)
+        {
+            MemoryWriteByte (globalBufferFATSector, p,     value);            
+            MemoryWriteByte (globalBufferFATSector, p+1, ((value&0x0000ff00) >> 8));    
+        }
+        else if (volume->type == FAT12)
+        {            
+            c = MemoryReadByte (globalBufferFATSector, p); 
+            if (q) { c = ((value & 0x0F) << 4) | ( c & 0x0F); }
+            else   { c = (value & 0xFF); }
+                        
+            MemoryWriteByte (globalBufferFATSector, p, c); // 
+
+            // crossing sectors possible, do we need to load a new sector?
+            p = (p +1) & (volume->sectorSize-1);
+            if (p == 0)
+            {
+                
+                if (fatWrite (volume, 0,0,true)) // call this function to update the FAT on the card
+                {
+                    return ClusterFailValue;
+                }
+
+                
+                if (sectorRead (l+1, globalBufferFATSector, volume)) // get the next sector
+                {
+                    globalLastFATSectorRead = 0xFFFF;
+                    return ClusterFailValue;
+                }
+                else
+                {
+                    globalLastFATSectorRead = l+1;
+                }
+            }            
+            c = MemoryReadByte(globalBufferFATSector, p); // Get the second byte of the table entry
+            if (q) { c = (value >> 4); }
+            else   { c = ((value >> 8) & 0x0F) | (c & 0xF0); }
+            MemoryWriteByte (globalBufferFATSector, p, c);
+        }
+    }
+    globalFATWriteNecessary = true;
+    return 0;
+  #endif
+}
+

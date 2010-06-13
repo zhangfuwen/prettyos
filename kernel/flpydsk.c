@@ -339,7 +339,7 @@ void flpydsk_control_motor(bool b)
     }
     else if(CurrentDrive->drive.insertedDisk->accessRemaining == 0 && CurrentDrive->accessRemaining == 0)
     {
-        flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET); // motor off
+        flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET); // motor off //////// TEST /////////////////////
         CurrentDrive->motor = false;
         sleepMilliSeconds(WAITING_TIME);
     }

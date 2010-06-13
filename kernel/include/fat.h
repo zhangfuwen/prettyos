@@ -20,9 +20,11 @@
 #define SUCCESS 0
 #define FAIL    1
 
-#define MemoryReadByte(a,f)     *(a+f)              // reads a byte at an address (a) plus an offset (f) in RAM
-#define MemoryReadWord(a,f) *(uint16_t*)(a+f)
-#define MemoryReadLong(a,f) *(uint32_t*)(a+f)
+#define MemoryReadByte(a,f)      *(a+f) // reads a byte at an address plus an offset in RAM
+#define MemoryReadWord(a,f)      *(uint16_t*)(a+f)
+#define MemoryReadLong(a,f)      *(uint32_t*)(a+f)
+
+#define MemoryWriteByte(a,f,d)   *(a+f)=d
 
 // Media
 
