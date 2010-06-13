@@ -113,7 +113,7 @@ void panic_assert(const char* file, uint32_t line, const char* desc) // why char
 
 /**********************************************************************/
 
-void memshow(void* start, size_t count)
+void memshow(const void* start, size_t count)
 {
     const uint8_t* end = (const uint8_t*)(start+count);
     for (; count != 0; count--) printf("%y ",*(end-count));

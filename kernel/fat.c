@@ -111,8 +111,12 @@ FS_ERROR sectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> sectorRead <<<<<!");
   #endif
-    FS_ERROR retVal = part->disk->type->readSector(sector_addr, buffer);
-    return retVal;
+    return part->disk->type->readSector(sector_addr, buffer);
+}
+FS_ERROR singleSectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
+{
+    part->disk->sectorsRemaining++;
+    return sectorRead(sector_addr, buffer, part);
 }
 
 static uint32_t fatRead (partition_t* volume, uint32_t ccls)
@@ -185,7 +189,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
                         }
                     }
                   #endif
-                    if (sectorRead(sector+1, globalBufferFATSector, volume) != SUCCESS)
+                    if(singleSectorRead(sector+1, globalBufferFATSector, volume) != SUCCESS)
                     {
                         globalLastFATSectorRead = 0xFFFF;
                         return ClusterFailValue;
@@ -216,7 +220,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
                 return ClusterFailValue;
         }
 #endif
-        if (sectorRead(sector, globalBufferFATSector, volume) != SUCCESS)
+        if (singleSectorRead(sector, globalBufferFATSector, volume) != SUCCESS)
         {
             globalLastFATSectorRead = 0xFFFF;
             return ClusterFailValue;
@@ -372,7 +376,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
                 globalBufferUsedByFILEPTR  = NULL;
                 globalBufferMemSet0= false;
 
-                uint8_t retVal = sectorRead(sector + offset2, volume->buffer, volume);
+                uint8_t retVal = singleSectorRead(sector + offset2, volume->buffer, volume);
 
                 if ( retVal != SUCCESS )
                 {
@@ -659,8 +663,9 @@ FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fopen <<<<<!");
   #endif
-    partition_t* volume = (partition_t*)(fileptr->volume);
+    partition_t* volume = fileptr->volume;
     FS_ERROR error = CE_GOOD;
+
 
     if (volume->mount == false)
     {
@@ -682,7 +687,7 @@ FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type)
             fileptr->sec  = 0;
             fileptr->pos  = 0;
             uint32_t l = cluster2sector(volume,fileptr->ccls); // determine LBA of the file's current cluster
-            if (sectorRead(l, volume->buffer, volume)!=SUCCESS)
+            if (singleSectorRead(l, volume->buffer, volume)!=SUCCESS)
             {
                 error = CE_BAD_SECTOR_READ;
             }
@@ -750,6 +755,11 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
 
     sector = cluster2sector(volume,fileptr->ccls);
     sector += (uint32_t)fileptr->sec;
+
+    uint32_t sectors = (size%512 == 0) ? size/512+1 : size/512;
+    volume->disk->sectorsRemaining += sectors;
+
+    sectors--;
     if (sectorRead(sector, volume->buffer, volume) != SUCCESS)
     {
         error = CE_BAD_SECTOR_READ;
@@ -775,6 +785,7 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
                 {
                     sector = cluster2sector(volume,fileptr->ccls);
                     sector += (uint32_t)fileptr->sec;
+                    sectors--;
                     if (sectorRead(sector, volume->buffer, volume) != SUCCESS)
                     {
                         error = CE_BAD_SECTOR_READ;
@@ -791,6 +802,9 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
             }
         } // END: if not EOF
     } // while no error and more bytes to copy
+    
+    volume->disk->sectorsRemaining -= sectors; // Subtract sectors which has not been read
+
     fileptr->pos  = pos;
     fileptr->seek = seek;
     return error;

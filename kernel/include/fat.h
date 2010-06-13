@@ -30,9 +30,7 @@
 
 // FAT Filesystem
 
-#define FAT12   1
-#define FAT16   2
-#define FAT32   3
+enum {FAT12 = 1, FAT16, FAT32};
 
 // File
 
@@ -210,8 +208,8 @@ typedef enum
 } FS_ERROR;
 
 // interface functions
-FS_ERROR sectorRead (uint32_t sector_addr, uint8_t* buffer, partition_t* part);
-FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part);
+FS_ERROR singleSectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* part);
+FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part);
 
 // file handling
 FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t* fHandle);

@@ -234,8 +234,28 @@ EVALUATION: // evaluation of entry
         }
         else
         {
-            puts("file is being searched...\n");
-            execute(entry);
+            puts("file is being searched...");
+            FS_ERROR error = execute(entry);
+            switch(error)
+            {
+                case CE_GOOD:
+                    puts("Successfull.\n");
+                    break;
+                case CE_INVALID_FILENAME:
+                    puts("The path was not formatted well.\n");
+                    break;
+                case CE_FILE_NOT_FOUND:
+                    puts("The file was not found. Trying now on 1:/.\n");
+                    char newPath[40];
+                    strcpy(newPath,"1:/");
+                    strcat(newPath, entry);      
+                    if(execute(newPath) != CE_GOOD)
+                        puts("Not found on 1:/.\n");
+                    break;
+                default:
+                    printf("File load was not successful. Error Code: %u\n", error);
+                    break;
+            }
         }
     } //while
     return 0;

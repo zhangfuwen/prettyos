@@ -6,13 +6,13 @@
 #include "devicemanager.h"
 #include "console.h"
 #include "util.h"
-#include "cmos.h"
 #include "paging.h"
 #include "kheap.h"
 #include "fat12.h"
 #include "usb2_msd.h"
 #include "flpydsk.h"
 #include "usb2.h"
+#include "timer.h"
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
@@ -183,44 +183,23 @@ void showDiskList()
     textColor(0x0F);
 }
 
-void execute(const char* path)
+FS_ERROR execute(const char* path)
 {
     partition_t* part = getPartition(path);
     if(part == NULL)
     {
-        textColor(0x0C);
-        printf("\nNo valid path for partition found!\n");
-        textColor(0x0F);
-        
-        if ((cmos_read(0x10)>>4) == 4 ) // first FDD implemented
-        {
-            if (path[0] == '1' && path[1]==':')
-            {
-                // do nothing
-            }
-            else
-            {
-                char newPath[40];
-                strcpy(newPath,"1:/");
-                strcat(newPath,path);
-                textColor(0x0E);
-                printf("\nFloppy found! PrettyOS now tries %s\n",newPath);
-                textColor(0x0F);        
-                execute(newPath);
-            }
-        }
-        return;
+        return(CE_FILE_NOT_FOUND);
     }
     while(*path != '/' && *path != '|' && *path != '\\')
     {
         path++;
         if(*path == 0)
         {
-            return;
+            return(CE_INVALID_FILENAME);
         }
     }
     path++;
-    loadFile(path, part);
+    return(loadFile(path, part));
 }
 
 partition_t* getPartition(const char* path)
@@ -284,23 +263,23 @@ partition_t* getPartition(const char* path)
     return(0);
 }
 
-void loadFile(const char* filename, partition_t* part)
+FS_ERROR loadFile(const char* filename, partition_t* part)
 {
     char partitionType[6];
     switch(part->type)
     {
-    case 1:
-        strcpy(partitionType,"FAT12");
-        break;
-    case 2:
-        strcpy(partitionType,"FAT16");
-        break;
-    case 3:
-        strcpy(partitionType,"FAT32");
-        break;
-    default:
-        strcpy(partitionType,"???");
-        break;
+        case 1:
+            strcpy(partitionType,"FAT12");
+            break;
+        case 2:
+            strcpy(partitionType,"FAT16");
+            break;
+        case 3:
+            strcpy(partitionType,"FAT32");
+            break;
+        default:
+            strcpy(partitionType,"???");
+            break;
     }
 
     textColor(0x03);
@@ -317,9 +296,9 @@ void loadFile(const char* filename, partition_t* part)
     printf("\nmaxcls:     %u", part->maxcls);
     printf("\nmount:      %s", part->mount ? "yes" : "no");
     printf("\nserial:     %s", part->serialNumber);
-
     textColor(0x0F);
-    waitForKeyStroke();
+
+    waitForKeyStroke(); /// Why does loading from USB fail, if its not there?
 
     // file name
     FILE toCompare;
@@ -350,47 +329,36 @@ void loadFile(const char* filename, partition_t* part)
 
     // file to search
     FILE dest;
-    FILEPTR fileptr  = &dest;
-    fileptr->volume  = part;
-    fileptr->dirclus = 0;
-    fileptr->entry   = 0;
-    if (fileptr->volume->type == FAT32)
+    dest.volume  = part;
+    dest.dirclus = 0;
+    dest.entry   = 0;
+    if (dest.volume->type == FAT32)
     {
-        fileptr->dirclus = fileptr->volume->FatRootDirCluster; 
+        dest.dirclus = dest.volume->FatRootDirCluster; 
     }
 
-    uint8_t retVal = searchFile(fileptr, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode)
+    uint8_t retVal = searchFile(&dest, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode)
     if (retVal == CE_GOOD)
     {
         textColor(0x0A);
-        printf("\n\nThe file was found on the device: %s",part->serialNumber);
+        printf("\n\nThe file was found on the device: %s", part->serialNumber);
 
         printf("\nnumber of entry in root dir: ");
         textColor(0x0E);
-        printf("%u\n",fileptr->entry); // number of file entry "searched.xxx"
+        printf("%u\n", dest.entry); // number of file entry "searched.xxx"
 
-        fopen(fileptr, &(fileptr->entry), 'r');
+        fopen(&dest, &(dest.entry), 'r');
         
-        void* filebuffer = malloc(fileptr->size,PAGESIZE);
-        fread(fileptr, filebuffer, fileptr->size);
+        void* filebuffer = malloc(dest.size,PAGESIZE);
+        fread(&dest, filebuffer, dest.size);
 
-        elf_exec(filebuffer, fileptr->size, fileptr->name); // try to execute
+        elf_exec(filebuffer, dest.size, dest.name); // try to execute
  
-        fclose(fileptr);
+        fclose(&dest);
     }
-    else if (retVal == CE_FILE_NOT_FOUND)
-    {
-        textColor(0x0C);
-        printf("\n\nThe file could not be found on the device!", retVal);
-    }
-    else
-    {
-        textColor(0x0C);
-        printf("\n\nretVal of searchFile: %u", retVal);
-    }
-    textColor(0x0F);
 
-    waitForKeyStroke();
+    waitForKeyStroke(); /// Why does a #PF appear without it?
+    return(retVal);
 }
 
 int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests only
@@ -524,10 +492,10 @@ int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests on
         strncpy(part->serialNumber,volume_serialNumber,4); // ID of the partition
     }
     
-    else if ( (*((uint16_t*)((uint8_t*)buffer+444))) == 0x0000 )    
+    else if ( *((uint16_t*)((uint8_t*)buffer+444)) == 0x0000 )    
     {
         textColor(0x0E);
-        if ( ((*((uint8_t*)buffer+510))==0x55) && ((*((uint8_t*)buffer+511))==0xAA) )
+        if ( *((uint8_t*)buffer+510)==0x55 && *((uint8_t*)buffer+511)==0xAA )
         {
             printf("\nThis seems to be a Master Boot Record:");
             

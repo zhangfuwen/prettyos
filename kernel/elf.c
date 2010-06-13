@@ -130,17 +130,9 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
         textColor(0x0C);
         printf("\n\nvalidation checks failed");
         textColor(0x0F);
-        memshow((void*)elf_file,512);        
+        memshow(elf_file, 512);        
         return false;
     }
-    else
-    {
-        /*
-        textColor(0x0A);
-        printf("\nvalidation checks passed"); // TEST
-        textColor(0x0F);
-        */
-    }   
 
     page_directory_t* pd = paging_create_user_pd();
 
@@ -191,11 +183,11 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
     // Execute the task
     if(strcmp("Shell", programName) == 0)
     {
-        create_task(pd, (void*)(header->entry), 3);
+        create_task(pd, (void*)header->entry, 3);
     }
     else
     {
-        create_ctask(pd, (void*)(header->entry), 3, programName);
+        create_ctask(pd, (void*)header->entry, 3, programName);
     }
 
     return true;

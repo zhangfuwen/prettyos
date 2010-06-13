@@ -38,7 +38,7 @@ uint32_t fetchDS();
 
 uint64_t rdtsc();
 
-void      memshow(void* start, size_t count);
+void      memshow(const void* start, size_t count);
 void*     memset(void* dest, int8_t val, size_t count);
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);

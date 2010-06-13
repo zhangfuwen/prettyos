@@ -19,7 +19,7 @@ void printLine(const char* message, unsigned int line, unsigned char attribute);
 unsigned int getCurrentSeconds();
 int floppy_format(char* volumeLabel);
 void exit();
-void execute(const char* path);
+FS_ERROR execute(const char* path);
 void beep(unsigned int frequency, unsigned int duration);
 void clearScreen(unsigned char backgroundColor);
 void gotoxy(unsigned char x, unsigned char y);

@@ -29,6 +29,7 @@ typedef struct disk
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
     char         name[15];
     void*        data; // Contains additional information depending on its type
+    uint32_t     sectorsRemaining; // Used to control motor
 } disk_t;
 
 typedef struct 
@@ -39,6 +40,7 @@ typedef struct
     void*    data;         // Contains additional information depending on its type
 } port_t;
 
+
 void deviceManager_install(/*partition_t* system*/);
 void attachPort(port_t* port);
 void attachDisk(disk_t* disk);
@@ -46,9 +48,9 @@ void removeDisk(disk_t* disk);
 void showPortList();
 void showDiskList();
 
-void execute(const char* path);
+FS_ERROR execute(const char* path);
+FS_ERROR loadFile(const char* filename, partition_t* part);
 partition_t* getPartition(const char* path);
-void loadFile(const char* filename, partition_t* part);
 
 int32_t analyzeBootSector(void* buffer, partition_t* part);
 

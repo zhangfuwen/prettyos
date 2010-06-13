@@ -50,7 +50,6 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
 
     // struct file f;
 
-    flpydsk_control_motor(true);
     int32_t retVal = cacheFirstTracks();
     if (retVal)
     {
@@ -170,9 +169,6 @@ int32_t flpydsk_write(const char* name, const char* ext, void* memory, uint32_t 
     flpydsk_write_ia(1, track1, TRACK);
 
     // free memory, if necessary
-
-    // motor off
-    flpydsk_control_motor(false);
 
     return 0;
 }

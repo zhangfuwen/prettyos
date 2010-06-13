@@ -312,7 +312,6 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
 
     // int32_t dt, tm; // for VolumeSerial
 
-    flpydsk_control_motor(true);
     printf("\n\nFormat process started.\n");
 
     for (i=0;i<11;i++)
@@ -413,7 +412,7 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
     }
 
     /// write track 0 & track 1
-    flpydsk_control_motor(true); printf("writing tracks 1 & 2\n");
+    printf("writing tracks 1 & 2\n");
     flpydsk_write_ia(0,track0,TRACK);
     flpydsk_write_ia(1,track1,TRACK);
     printf("Quickformat complete.\n\n");
