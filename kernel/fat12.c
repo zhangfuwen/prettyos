@@ -118,7 +118,6 @@ int32_t flpydsk_read_directory()
 {
     int32_t error = -1; // return value
 
-
     memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
 
     //flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
@@ -133,8 +132,7 @@ int32_t flpydsk_read_directory()
 
     for (uint8_t i=0;i<ROOT_DIR_ENTRIES;++i)       // 224 Entries * 32 Byte
     {
-        if (
-            ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0x00) && // free from here on
+        if (((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0x00) && // free from here on
             ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0xE5) && // 0xE5 deleted = free
             ((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) != 0x0F))   // 0x0F part of long file name
         {
@@ -417,143 +415,8 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
     flpydsk_write_ia(1,track1,TRACK);
     printf("Quickformat complete.\n\n");
 
-    ///TEST
-    printf("Content of Disc:\n");
-    struct dir_entry entry;
-    for (uint8_t j=0;j<ROOT_DIR_ENTRIES;j++)
-    {
-        read_dir(&entry, j, 19, false);
-        if (strcmp((&entry)->Filename,"")==0)
-        {
-            break;
-        }
-    }
-    printf("\n");
-    ///TEST
-
     return 0;
 }
-
-
-void parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs) /// FAT12
-{
-   int32_t i = (in %DIR_ENTRIES) * 32;
-
-   for (int32_t j=0;j<8;j++,i++)
-   {
-       rs->Filename[j] = a[i];
-   }
-
-   for (int32_t j=0;j<3;j++,i++)
-   {
-       rs->Extension[j] = a[i];
-   }
-
-   rs->Attributes   = a[i++];
-   rs->NTRes        = a[i++];
-   rs->CrtTimeTenth = a[i++];
-   rs->CrtTime      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
-   rs->CrtDate      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
-   rs->LstAccDate   = FORM_SHORT(a[i],a[i+1]);                  i+=2;
-   rs->FstClusHI    = FORM_SHORT(a[i],a[i+1]);                  i+=2;
-   rs->WrtTime      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
-   rs->WrtDate      = FORM_SHORT(a[i],a[i+1]);                  i+=2;
-   rs->FstClusLO    = FORM_SHORT(a[i],a[i+1]);                  i+=2;
-   rs->FileSize     = FORM_LONG(a[i],a[i+1],a[i+2],a[i+3]);     i+=4;
-}
-
-void print_dir(struct dir_entry* rs) /// FAT12
-{
-    if (strcmp(rs->Filename,"")!=0)
-    {
-        printf("File Name : ");
-        for (int32_t j=0;j<8;j++)
-        {
-            printf("%c",rs->Filename[j]);
-        }
-        printf("\n");
-        printf("Extension : ");
-        for (int32_t j=0;j<3;j++)
-        {
-            printf("%c",rs->Extension[j]);
-        }
-        printf("\n");
-        printf("Attributes   = %d\t %x\n",rs->Attributes,   rs->Attributes);
-        printf("NTRes        = %d\t %x\n",rs->NTRes,        rs->NTRes);
-        printf("CrtTimeTenth = %d\t %x\n",rs->CrtTimeTenth, rs->CrtTimeTenth);
-        printf("CrtTime      = %d\t %x\n",rs->CrtTime,      rs->CrtTime);
-        printf("CrtDate      = %d\t %x\n",rs->CrtDate,      rs->CrtDate);
-        printf("LstAccDate   = %d\t %x\n",rs->LstAccDate,   rs->LstAccDate);
-        printf("FstClusHI    = %d\t %x\n",rs->FstClusHI,    rs->FstClusHI);
-        printf("WrtTime      = %d\t %x\n",rs->WrtTime,      rs->WrtTime);
-        printf("WrtDate      = %d\t %x\n",rs->WrtDate,      rs->WrtDate);
-        printf("FstClusLO    = %d\t %x\n",rs->FstClusLO,    rs->FstClusLO);
-        printf("FileSize     = %d\t %x\n",rs->FileSize,     rs->FileSize);
-        printf("\n");
-    }
-}
-
-int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag) /// FAT12
-{
-   uint8_t a[512];
-   st_sec = st_sec + in/DIR_ENTRIES;
-
-   memcpy((void*)a,(void*)(track1+st_sec*512-9216),0x200); //copy data from cache to a[...]
-
-   parse_dir(a,in,rs);
-   if (flag==true)
-   {
-       print_dir(rs);
-   }
-   return 0;
-}
-
-uint32_t search_file_first_cluster(const char* name, const char* ext, struct file* f) /// FAT12
-{
-   struct dir_entry entry;
-   char buf1[10], buf2[5];
-
-   for (uint8_t i=0;i<ROOT_DIR_ENTRIES;i++)
-   {
-       read_dir(&entry, i, 19, false);
-       if ((&entry)->Filename[0] == 0)
-       {
-           break; // filter empty entry, no further entries expected
-       }
-       textColor(0x0E);
-       printf("root dir entry: %c%c%c%c%c%c%c%c.%c%c%c\n",
-                   (&entry)->Filename[0],(&entry)->Filename[1],(&entry)->Filename[2],(&entry)->Filename[3],
-                   (&entry)->Filename[4],(&entry)->Filename[5],(&entry)->Filename[6],(&entry)->Filename[7],
-                   (&entry)->Extension[0],(&entry)->Extension[1],(&entry)->Extension[2]);
-       textColor(0x02);
-
-       for (uint8_t j=0;j<3;j++)
-       {
-           buf1[j] = (&entry)->Filename[j];
-           buf2[j] = (&entry)->Extension[j];
-       }
-       for (uint8_t j=3;j<8;j++)
-       {
-           buf1[j] = (&entry)->Filename[j];
-       }
-       buf1[8]=0; //string termination Filename
-       buf2[3]=0; //string termination Extension
-
-       if ((strcmp(buf1,name)==0) && (strcmp(buf2,ext)==0))
-       {
-           break;
-       }
-    }
-    textColor(0x0E);
-    printf("rootdir search finished.\n\n");
-    textColor(0x02);
-
-    f->size = (&entry)->FileSize;
-    f->firstCluster = FORM_SHORT((&entry)->FstClusLO,(&entry)->FstClusHI);
-
-    return f->firstCluster;
-}
-
 
 // combine two FAT-entries fat1 and fat2 to a 12-bit-value fat_entry
 void parse_fat(int32_t* fat_entrypoint, int32_t fat1, int32_t fat2, int32_t in) /// FAT12

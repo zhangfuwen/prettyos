@@ -29,7 +29,7 @@ typedef struct disk
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
     char         name[15];
     void*        data; // Contains additional information depending on its type
-    uint32_t     sectorsRemaining; // Used to control motor
+    uint32_t     accessRemaining; // Used to control motor
 } disk_t;
 
 typedef struct 

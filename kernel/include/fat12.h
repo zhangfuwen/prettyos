@@ -93,10 +93,6 @@ int32_t flpydsk_read_directory();
 int32_t flpydsk_format(char* vlab); // VolumeLabel
 int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer);
 int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer);
-void    parse_dir(uint8_t* a, int32_t in, struct dir_entry* rs);
-void    print_dir(struct dir_entry* rs);
-int32_t read_dir(struct dir_entry* rs, int32_t in, int32_t st_sec, bool flag);
-uint32_t search_file_first_cluster(const char* name, const char* ext, struct file* f);
 void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in);
 
 #endif

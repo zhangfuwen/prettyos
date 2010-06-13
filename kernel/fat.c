@@ -115,7 +115,7 @@ FS_ERROR sectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 }
 FS_ERROR singleSectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 {
-    part->disk->sectorsRemaining++;
+    part->disk->accessRemaining++;
     return sectorRead(sector_addr, buffer, part);
 }
 
@@ -756,10 +756,10 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
     sector = cluster2sector(volume,fileptr->ccls);
     sector += (uint32_t)fileptr->sec;
 
-    uint32_t sectors = (size%512 == 0) ? size/512+1 : size/512;
-    volume->disk->sectorsRemaining += sectors;
+    uint32_t sectors = (size%512 == 0) ? size/512 : size/512+1;
+    volume->disk->accessRemaining += sectors;
 
-    sectors--;
+	sectors--;
     if (sectorRead(sector, volume->buffer, volume) != SUCCESS)
     {
         error = CE_BAD_SECTOR_READ;
@@ -803,8 +803,7 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
         } // END: if not EOF
     } // while no error and more bytes to copy
     
-    volume->disk->sectorsRemaining -= sectors; // Subtract sectors which has not been read
-
+    volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been read
     fileptr->pos  = pos;
     fileptr->seek = seek;
     return error;

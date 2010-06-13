@@ -22,7 +22,7 @@
 #define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.515";
+const char* version = "0.0.0.516";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -161,6 +161,7 @@ void main()
         {
             CurrentSeconds = getCurrentSeconds();
 
+
             // all values 64 bit
             uint64_t RdtscDiffValue = rdtsc() - LastRdtscValue;
             LastRdtscValue = rdtsc();
@@ -176,6 +177,8 @@ void main()
             // draw status bar with date & time and frequency
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
+
+			flpydsk_control_motor(false); // switch off motors if they are not neccessary, later replaced by generally switching off all motors not needed.
         }
 
         // Handling Events
