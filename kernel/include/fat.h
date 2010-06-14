@@ -28,7 +28,7 @@
 
 // Media
 
-#define SDC_SECTOR_SIZE    512
+#define SECTOR_SIZE    512
 
 // FAT Filesystem
 
@@ -219,7 +219,7 @@ FS_ERROR searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8
 FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
 FS_ERROR fclose(FILEPTR fileptr);
 FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count);
-FS_ERROR fwrite(FILEPTR fileptr, void* src, uint32_t count);
+uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILEPTR stream);
 
 // analysis functions
 void showDirectoryEntry(FILEROOTDIRECTORYENTRY dir);

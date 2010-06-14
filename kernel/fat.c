@@ -7,8 +7,6 @@
 *  without the written permission of the publisher. The program code may be stored and executed in a computer system
 *  and may be incorporated into computer programs developed by the reader."
 *
-*  I am a reader of this helpful book (Erhard Henkes).
-*
 *  We are adapting this sourcecode to the needs of PrettyOS.
 */
 
@@ -23,16 +21,16 @@
 // prototypes
 static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite);
 
-#define WRITE_IS_APPROVED 
+#define WRITE_IS_APPROVED
 
-uint8_t  globalBufferFATSector[512];             // The global FAT sector buffer
+uint8_t  globalBufferFATSector[SECTOR_SIZE]; // The global FAT sector buffer
 bool     globalBufferMemSet0       = false;      // Global variable indicating that the data buffer contains all zeros
 FILEPTR  globalBufferUsedByFILEPTR = NULL;       // Global variable indicating which file is using the data buffer
 uint32_t globalLastDataSectorRead  = 0xFFFFFFFF; // Global variable indicating which data sector was read last
 uint32_t globalLastFATSectorRead   = 0xFFFFFFFF; // Global variable indicating which FAT sector was read last
 bool     globalFATWriteNecessary   = false;      // Global variable indicating that there is information that needs to be written to the FAT
 bool     globalDataWriteNecessary  = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
-
+uint8_t  FSerrno;                                // Global error number?
 
 static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 {
@@ -44,8 +42,8 @@ static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 
     switch (volume->type)
     {
-        case FAT32: // In FAT32, there is no separate ROOT region. It is as well stored in DATA region 
-            if (cluster <= 1) 
+        case FAT32: // In FAT32, there is no separate ROOT region. It is as well stored in DATA region
+            if (cluster <= 1)
             {
                 sector = volume->data + cluster * volume->SecPerClus;
             }
@@ -86,9 +84,10 @@ FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
     return retVal;
 }
 
-#ifdef WRITE_IS_APPROVED
+
 static FS_ERROR flushData()
 {
+  #ifdef WRITE_IS_APPROVED
     partition_t* volume;
     FILEPTR fileptr = globalBufferUsedByFILEPTR;
     uint32_t sector;
@@ -96,16 +95,17 @@ static FS_ERROR flushData()
     sector = cluster2sector(volume,fileptr->ccls);
     sector += (uint16_t)fileptr->sec;
     if(sectorWrite( sector, volume->buffer, false) != SUCCESS)
-    { 
-        return CE_WRITE_ERROR; 
+    {
+        return CE_WRITE_ERROR;
     }
     else
     {
         globalDataWriteNecessary = false;
         return CE_GOOD;
     }
+  #endif
 }
-#endif
+
 
 FS_ERROR sectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 {
@@ -139,7 +139,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
     {
         case FAT32:
             posFAT = ccls * 4;
-            q = 0; 
+            q = 0;
             ClusterFailValue = CLUSTER_FAIL_FAT32;
             LastClusterLimit = LAST_CLUSTER_FAT32;
             break;
@@ -153,7 +153,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
         case FAT16:
         default:
             posFAT = (uint32_t)ccls *2;
-            q = 0; 
+            q = 0;
             ClusterFailValue = CLUSTER_FAIL_FAT16;
             LastClusterLimit = LAST_CLUSTER_FAT16;
             break;
@@ -181,7 +181,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
                 posFAT = (posFAT +1) & (volume->sectorSize-1);
                 if (posFAT == 0)
                 {
-                  #ifdef WRITE_IS_APPROVED 
+                  #ifdef WRITE_IS_APPROVED
                     if (globalFATWriteNecessary)
                     {
                         if(fatWrite(volume, 0, 0, true))
@@ -294,7 +294,7 @@ static FS_ERROR fileSearchNextCluster(FILEPTR fileptr, uint32_t n)
 // directory //
 ///////////////
 
-static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry, bool ForceRead) 
+static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry, bool ForceRead)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
@@ -324,10 +324,10 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
             break;
     }
 
-    if ( ForceRead || ((*curEntry & MASK_MAX_FILE_ENTRY_LIMIT_BITS) == 0) ) 
+    if ( ForceRead || ((*curEntry & MASK_MAX_FILE_ENTRY_LIMIT_BITS) == 0) )
     {
         // do we need to load the next cluster?
-        if(((offset2 == 0) && ((*curEntry) >= DirectoriesPerSector)) || ForceRead)                
+        if(((offset2 == 0) && ((*curEntry) >= DirectoriesPerSector)) || ForceRead)
         {
             if (cluster == 0 )
             {
@@ -335,16 +335,16 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
             }
             else
             {
-                if (ForceRead) 
+                if (ForceRead)
                 {
-                    numofclus = (*curEntry)/(DirectoriesPerSector * volume->SecPerClus);            
+                    numofclus = (*curEntry)/(DirectoriesPerSector * volume->SecPerClus);
                 }
-                else 
+                else
                 {
                     numofclus = 1;
                 }
 
-                while (numofclus) 
+                while (numofclus)
                 {
                     ccls = fatRead(volume,ccls);
 
@@ -359,10 +359,10 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
                 }
             }
         }
-        
-        if(ccls < LastClusterLimit) 
+
+        if(ccls < LastClusterLimit)
         {
-            fileptr->dirccls = ccls; 
+            fileptr->dirccls = ccls;
             uint32_t sector = cluster2sector(volume,ccls);
 
             if( (ccls == volume->FatRootDirCluster) && (((sector + offset2) >= volume->data)) && ((volume->type != FAT32)) )
@@ -383,11 +383,11 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
                 {
                     return ((FILEROOTDIRECTORYENTRY)NULL);
                 }
-                else 
+                else
                 {
                     if(ForceRead)
                     {
-                        return (FILEROOTDIRECTORYENTRY)((FILEROOTDIRECTORYENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector);    
+                        return (FILEROOTDIRECTORYENTRY)((FILEROOTDIRECTORYENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector);
                     }
                     else
                     {
@@ -398,16 +398,16 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
             } // END: read an entry
         } // END: a valid cluster is found
         else // invalid cluster number
-        {            
+        {
             return((FILEROOTDIRECTORYENTRY)NULL);
         }
     }
     else
     {
-        return (FILEROOTDIRECTORYENTRY)(((FILEROOTDIRECTORYENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector));   
+        return (FILEROOTDIRECTORYENTRY)(((FILEROOTDIRECTORYENTRY)volume->buffer) + ((*curEntry)%DirectoriesPerSector));
     }
-    textColor(0x0C); printf("UNCLEAN !!! END of cacheFileEntry"); textColor(0x0F); 
-} 
+    textColor(0x0C); printf("UNCLEAN !!! END of cacheFileEntry"); textColor(0x0F);
+}
 
 static FILEROOTDIRECTORYENTRY getFileAttribute(FILEPTR fileptr, uint32_t* fHandle)
 {
@@ -453,9 +453,9 @@ static void updateTimeStamp(FILEROOTDIRECTORYENTRY dir)
 ///////////////////////////
 
 /*
- This function will cache the sector of directory entries in the directory 
- pointed to by the dirclus value in the FILEPTR 'fileptr' 
- that contains the entry that corresponds to the fHandle offset.  
+ This function will cache the sector of directory entries in the directory
+ pointed to by the dirclus value in the FILEPTR 'fileptr'
+ that contains the entry that corresponds to the fHandle offset.
  It will then copy the file information for that entry into the 'fo' FILE object.
 */
 
@@ -510,7 +510,7 @@ static uint8_t fillFILEPTR(FILEPTR fileptr, uint32_t* fHandle)
     } // END: an entry exists
 }
 
-FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode) 
+FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> searchFile <<<<<!");
@@ -524,7 +524,7 @@ FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint
     bool read = true;
 
     for (uint8_t i=0; i<DIR_NAMECOMP; i++){fileptrDest->name[i] = 0x20;}
-    textColor(0x0E); printf("\nfHandle (searchFile): %d",fHandle); textColor(0x0F);  
+    textColor(0x0E); printf("\nfHandle (searchFile): %d",fHandle); textColor(0x0F);
     if (fHandle == 0)
     {
         if (cacheFileEntry(fileptrDest, &fHandle, read) == NULL){ statusB = CE_BADCACHEREAD; }
@@ -591,7 +591,7 @@ FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint
                                     break; // finish for loop
                                 }
                             } // for loop
-                        } 
+                        }
                         break; // end of case
                     case 1:
                         // Check for attribute match
@@ -601,10 +601,10 @@ FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint
                             character = (char)'m';             // random value
                             if (fileptrTest->name[0] != '*')   // If "*" is passed for comparion as 1st char then don't proceed. Go back, file alreay found.
                             {
-                                for (uint16_t index = 0; index < DIR_NAMESIZE; index++)
+                                for (uint16_t i=0; i<DIR_NAMESIZE; i++)
                                 {
-                                    character = fileptrDest->name[index]; 
-                                    test = fileptrTest->name[index]; 
+                                    character = fileptrDest->name[i];
+                                    test = fileptrTest->name[i];
                                     if (test == '*')
                                         break;
                                     if (test != '?')
@@ -621,11 +621,11 @@ FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint
                             // Before calling this "searchFile" fn, "formatfilename" must be called. Hence, extn always starts from position "8".
                             if ((fileptrTest->name[8] != '*') && (statusB == CE_GOOD))
                             {
-                                for (uint16_t index = 8; index < DIR_NAMECOMP; index++)
+                                for (uint16_t i=8; i<DIR_NAMECOMP; i++)
                                 {
-                                    
-                                    character = fileptrDest->name[index]; // Get the source character
-                                    test = fileptrTest->name[index]; // Get the destination character
+
+                                    character = fileptrDest->name[i]; // Get the source character
+                                    test = fileptrTest->name[i]; // Get the destination character
                                     if (test == '*')
                                     {
                                         break;
@@ -721,7 +721,7 @@ FS_ERROR fclose(FILEPTR fileptr)
         dir = getFileAttribute(fileptr, &fHandle);
         updateTimeStamp(dir);
         dir->DIR_FileSize = fileptr->size;
-        
+
         /*
         if (writeFileEntry(fileptr,&fHandle))
         {
@@ -773,7 +773,7 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
         }
         else
         {
-            if (pos == SDC_SECTOR_SIZE)
+            if (pos == SECTOR_SIZE)
             {
                 pos = 0;
                 fileptr->sec++;
@@ -803,7 +803,7 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
             }
         } // END: if not EOF
     } // while no error and more bytes to copy
-    
+
     volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been read
     fileptr->pos  = pos;
     fileptr->seek = seek;
@@ -820,20 +820,26 @@ void showDirectoryEntry(FILEROOTDIRECTORYENTRY dir)
     strncpy(strExt,dir->DIR_Extension,3);
     strExt[3]=0; // 0-2 short filename extension, 3: '\0' (end of string)
     strcat(strName,strExt);
-    
+
     printf("\nname.ext: %s",        strName                                         );
     printf("\nattrib.:  %y",        dir->DIR_Attr                                   );
     printf("\ncluster:  %u",        dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI );
     printf("\nfilesize: %u byte",   dir->DIR_FileSize                               );
 }
 
-/***********************************************************************************/
+
+//////////////////////////////
+// Write Files to Partition //
+//////////////////////////////
 
 static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite)
 {
   #ifdef WRITE_IS_APPROVED
-    uint8_t  q, c;
-    uint32_t p, l, ClusterFailValue;
+    uint8_t q;
+    uint8_t c;
+    uint32_t posFAT; // position (byte) in FAT
+    uint32_t sector;
+    uint32_t ClusterFailValue;
 
     if ((volume->type != FAT32) && (volume->type != FAT16) && (volume->type != FAT12))
     {
@@ -844,7 +850,7 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
     {
         return CLUSTER_FAIL_FAT16;
     }
-    
+
     switch (volume->type)
     {
     case FAT32:
@@ -862,7 +868,7 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
     if (forceWrite) // write the current FAT sector to the partition "volume"
     {
         for (uint8_t i=0, li=globalLastFATSectorRead; i<volume->fatcopy; i++, li+=volume->fatsize)
-        {   
+        {
             if (sectorWrite(li, globalBufferFATSector, volume) != CE_GOOD)
             {
                 return ClusterFailValue;
@@ -875,25 +881,25 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
     switch (volume->type)
     {
         case FAT32:
-            p = (uint32_t)ccls * 4;   // "p" is the position 
-            q = 0;      
+            posFAT = (uint32_t)ccls * 4;   
+            q = 0;
             break;
         case FAT12:
-            p = (uint32_t) ccls * 3; // "p" is the position 
-            q = p & 1;   // Odd or even?
-            p >>= 1;
+            posFAT = (uint32_t)ccls * 3; 
+            q      = posFAT  & 1; // odd/even
+            posFAT = posFAT >> 1;
             break;
         case FAT16:
         default:
-            p = (uint32_t) ccls * 2;   // "p" is the position 
-            q = 0;      
+            posFAT = (uint32_t)ccls * 2;   // "p" is the position
+            q = 0;
             break;
     }
 
-    l = volume->fat + (p / volume->sectorSize);     
-    p &= volume->sectorSize - 1;                 
+    sector = volume->fat + posFAT/volume->sectorSize;
+    posFAT &= volume->sectorSize - 1;
 
-    if (globalLastFATSectorRead != l)
+    if (globalLastFATSectorRead != sector)
     {
         // If we are loading a new sector then write the current one to the volume if we need to
         if (globalFATWriteNecessary)
@@ -909,68 +915,397 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
         }
 
         // Load the new sector
-        if (sectorRead (l, globalBufferFATSector, volume) != CE_GOOD)
+        if (sectorRead (sector, globalBufferFATSector, volume) != CE_GOOD)
         {
             globalLastFATSectorRead = 0xFFFF;
             return ClusterFailValue;
         }
         else
         {
-            globalLastFATSectorRead = l;
+            globalLastFATSectorRead = sector;
         }
     }
 
-    if (volume->type == FAT32)  
+    switch (volume->type)
     {
-        MemoryWriteByte (globalBufferFATSector, p,   ((value & 0x000000FF)      ));         
-        MemoryWriteByte (globalBufferFATSector, p+1, ((value & 0x0000FF00) >>  8));
-        MemoryWriteByte (globalBufferFATSector, p+2, ((value & 0x00FF0000) >> 16));
-        MemoryWriteByte (globalBufferFATSector, p+3, ((value & 0x0F000000) >> 24));   
-    }
-    else
-    {
-        if (volume->type == FAT16)
+    case FAT32:
+        MemoryWriteByte (globalBufferFATSector, posFAT,   ((value & 0x000000FF)      ));
+        MemoryWriteByte (globalBufferFATSector, posFAT+1, ((value & 0x0000FF00) >>  8));
+        MemoryWriteByte (globalBufferFATSector, posFAT+2, ((value & 0x00FF0000) >> 16));
+        MemoryWriteByte (globalBufferFATSector, posFAT+3, ((value & 0x0F000000) >> 24));
+        break;
+    case FAT16:        
+        MemoryWriteByte (globalBufferFATSector, posFAT,     value);
+        MemoryWriteByte (globalBufferFATSector, posFAT+1, ((value & 0xFF00) >> 8));
+        break;
+    case FAT12:
+        c = MemoryReadByte (globalBufferFATSector, posFAT);
+        if (q) { c = ((value & 0x0F) << 4) | ( c & 0x0F); }
+        else   { c = ( value & 0xFF); }
+
+        MemoryWriteByte (globalBufferFATSector, posFAT, c); //
+
+        // crossing sectors possible, do we need to load a new sector?
+        posFAT = (posFAT+1) & (volume->sectorSize-1);
+        if (posFAT == 0)
         {
-            MemoryWriteByte (globalBufferFATSector, p,     value);            
-            MemoryWriteByte (globalBufferFATSector, p+1, ((value&0x0000ff00) >> 8));    
-        }
-        else if (volume->type == FAT12)
-        {            
-            c = MemoryReadByte (globalBufferFATSector, p); 
-            if (q) { c = ((value & 0x0F) << 4) | ( c & 0x0F); }
-            else   { c = (value & 0xFF); }
-                        
-            MemoryWriteByte (globalBufferFATSector, p, c); // 
 
-            // crossing sectors possible, do we need to load a new sector?
-            p = (p +1) & (volume->sectorSize-1);
-            if (p == 0)
+            if (fatWrite (volume, 0, 0, true)) // update FAT 
             {
-                
-                if (fatWrite (volume, 0,0,true)) // call this function to update the FAT on the card
-                {
-                    return ClusterFailValue;
-                }
+                return ClusterFailValue;
+            }
 
-                
-                if (sectorRead (l+1, globalBufferFATSector, volume)) // get the next sector
-                {
-                    globalLastFATSectorRead = 0xFFFF;
-                    return ClusterFailValue;
-                }
-                else
-                {
-                    globalLastFATSectorRead = l+1;
-                }
-            }            
-            c = MemoryReadByte(globalBufferFATSector, p); // Get the second byte of the table entry
-            if (q) { c = (value >> 4); }
-            else   { c = ((value >> 8) & 0x0F) | (c & 0xF0); }
-            MemoryWriteByte (globalBufferFATSector, p, c);
+            if (sectorRead (sector+1, globalBufferFATSector, volume)) // next sector
+            {
+                globalLastFATSectorRead = 0xFFFF;
+                return ClusterFailValue;
+            }
+            else
+            {
+                globalLastFATSectorRead = sector+1;
+            }
         }
+        c = MemoryReadByte(globalBufferFATSector, posFAT); // second byte of the table entry
+        if (q) { c = (value >> 4); }
+        else   { c = ((value >> 8) & 0x0F) | (c & 0xF0); }
+        MemoryWriteByte (globalBufferFATSector, posFAT, c);
+        break;
     }
     globalFATWriteNecessary = true;
     return 0;
   #endif
 }
+
+
+static uint32_t fatFindEmptyCluster(FILEPTR fileptr)
+{
+  #ifdef WRITE_IS_APPROVED
+    partition_t *   volume;
+    uint32_t    value = 0x0;
+    uint32_t    c,curcls, EndClusterLimit, ClusterFailValue;
+
+    volume = fileptr->volume;
+    c = fileptr->ccls;
+
+    /* Settings based on FAT type */
+    switch (volume->type)
+    {
+#ifdef SUPPORT_FAT32 // If FAT32 supported.
+        case FAT32:
+            EndClusterLimit = END_CLUSTER_FAT32;
+            ClusterFailValue = CLUSTER_FAIL_FAT32;
+            break;
+#endif
+        case FAT12:
+            EndClusterLimit = END_CLUSTER_FAT12;
+            ClusterFailValue = CLUSTER_FAIL_FAT16;
+            break;
+        case FAT16:
+        default:
+            EndClusterLimit = END_CLUSTER_FAT16;
+            ClusterFailValue = CLUSTER_FAIL_FAT16;
+            break;
+    }
+
+    // just in case
+    if(c < 2)
+        c = 2;
+
+    curcls = c;
+    fatRead(volume, c);
+
+    // sequentially scan through the FAT looking for an empty cluster
+    while(c)
+    {
+        // look at its value
+        if ( (value = fatRead(volume, c)) == ClusterFailValue)
+        {
+            c = 0;
+            break;
+        }
+
+        // check if empty cluster found
+        if (value == CLUSTER_EMPTY)
+            break;
+
+        c++;    // check next cluster in FAT
+        // check if reached last cluster in FAT, re-start from top
+        if (value == EndClusterLimit || c >= (volume->maxcls+2))
+            c = 2;
+
+        // check if full circle done, disk full
+        if ( c == curcls)
+        {
+            c = 0;
+            break;
+        }
+    }  // scanning for an empty cluster
+
+    return(c);
+  #endif
+}
+
+static FS_ERROR eraseCluster(partition_t* volume, uint32_t cluster)
+{
+  #ifdef WRITE_IS_APPROVED
+    uint32_t SectorAddress;
+    FS_ERROR error = CE_GOOD;
+
+    SectorAddress = cluster2sector(volume,cluster);
+    if (globalDataWriteNecessary)
+        if (flushData())
+            return CE_WRITE_ERROR;
+
+    globalBufferUsedByFILEPTR = NULL;
+
+    if (globalBufferMemSet0 == false)
+    {
+        memset(volume->buffer, 0, SECTOR_SIZE);
+        globalBufferMemSet0 = true;
+    }
+
+    for(uint16_t i=0; i<volume->SecPerClus && error == CE_GOOD; i++)
+    {
+        if (sectorWrite( SectorAddress++, volume->buffer, volume) != CE_GOOD)
+        {
+            error = CE_WRITE_ERROR;
+        }
+    }
+    return(error);
+  #endif
+}
+
+static FS_ERROR fileAllocateNewCluster( FILEPTR fileptr, uint8_t mode)
+{
+  #ifdef WRITE_IS_APPROVED
+
+    partition_t* volume = fileptr->volume;
+    uint32_t curcls;
+    uint32_t c = fileptr->ccls;
+    c = fatFindEmptyCluster(fileptr); 
+    if (c == 0) { return CE_DISK_FULL; }
+
+    switch (volume->type)
+    {
+    case FAT12:
+        fatWrite( volume, c, LAST_CLUSTER_FAT12, false);
+        break;
+    case FAT16:
+        fatWrite( volume, c, LAST_CLUSTER_FAT16, false);
+        break;
+    case FAT32:
+        fatWrite( volume, c, LAST_CLUSTER_FAT32, false);
+        break;
+    }
+
+    curcls = fileptr->ccls;
+    fatWrite( volume, curcls, c, false);
+    fileptr->ccls = c;
+    if (mode == 1) return (eraseCluster(volume, c));
+    else return  CE_GOOD;
+  #endif
+}
+
+static FS_ERROR fileGetNextCluster(FILEPTR fileptr, uint32_t n)
+{
+    uint32_t         c, c2, ClusterFailValue, LastClustervalue;
+    FS_ERROR         error  = CE_GOOD;
+    partition_t*     volume = fileptr->volume;
+
+    switch (volume->type)
+    {
+        case FAT32:
+            LastClustervalue = LAST_CLUSTER_FAT32;
+            ClusterFailValue  = CLUSTER_FAIL_FAT32;
+            break;
+        case FAT12:
+            LastClustervalue = LAST_CLUSTER_FAT12;
+            ClusterFailValue  = CLUSTER_FAIL_FAT16;
+            break;
+        case FAT16:
+        default:
+            LastClustervalue = LAST_CLUSTER_FAT16;
+            ClusterFailValue  = CLUSTER_FAIL_FAT16;
+            break;
+    }
+
+    do
+    {
+        c2 = fileptr->ccls;
+        if ( (c = fatRead( volume, c2)) == ClusterFailValue)
+            error = CE_BAD_SECTOR_READ;
+        else
+        {
+            if ( c >= volume->maxcls)
+            {
+                error = CE_INVALID_CLUSTER;
+            }
+
+            if ( c >= LastClustervalue)    
+            {
+                error = CE_FAT_EOF;
+            }
+        }
+        fileptr->ccls = c;
+    } while (--n > 0 && error == CE_GOOD);
+    return(error);
+}
+
+// 'size' of one object, 'n' is the number of these objects
+uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILEPTR fileptr)
+{
+  #ifdef WRITE_IS_APPROVED
+    FS_ERROR      error = CE_GOOD;
+    partition_t*  volume;                 
+    uint32_t      count = size * n;
+    uint8_t*      src = (uint8_t*) ptr;
+    uint32_t      sector;                     
+    uint16_t      pos;
+    uint32_t      seek;
+    uint32_t      filesize;
+    uint16_t      writeCount = 0;
+
+    if(!(fileptr->Flags.write))
+    {
+        FSerrno = CE_READONLY;
+        error   = CE_WRITE_ERROR;
+        return 0;
+    }
+    if (!count){return 0;}
+    globalBufferMemSet0 = false;
+    volume  = fileptr->volume;
+    pos     = fileptr->pos; 
+    seek    = fileptr->seek;
+    sector  = cluster2sector(volume,fileptr->ccls);
+    sector += (uint16_t)fileptr->sec;
+
+    if (globalBufferUsedByFILEPTR != fileptr)
+    {
+        if (globalDataWriteNecessary)
+        {
+            if (flushData())
+            {
+                FSerrno = CE_WRITE_ERROR;
+                return 0;
+            }
+        }
+        globalBufferUsedByFILEPTR = fileptr;
+    }
+    if (globalLastDataSectorRead != sector)
+    {
+        if (globalDataWriteNecessary)
+        {
+            if (flushData())
+            {
+                FSerrno = CE_WRITE_ERROR;
+                return 0;
+            }
+        }
+
+        globalBufferMemSet0 = false;
+        if(sectorRead( sector, volume->buffer, volume) != CE_GOOD )
+        {
+            FSerrno = CE_BADCACHEREAD;
+            error   = CE_BAD_SECTOR_READ;
+        }
+        globalLastDataSectorRead = sector;
+    }
+
+    filesize = fileptr->size; 
+
+    while ((error==CE_GOOD) && (count>0)) 
+    {
+        if (seek==filesize)
+        {
+            fileptr->Flags.FileWriteEOF = true;
+        }
+
+        if (pos == volume->sectorSize)
+        {
+            uint8_t needRead = true;
+
+            if (globalDataWriteNecessary)
+                if (flushData())
+                {
+                    FSerrno = CE_WRITE_ERROR;
+                    return 0;
+                }
+
+            pos = 0; 
+            fileptr->sec++; 
+            if (fileptr->sec == volume->SecPerClus) 
+            {
+                fileptr->sec = 0;
+
+                if (fileptr->Flags.FileWriteEOF)
+                {
+                    error = fileAllocateNewCluster(fileptr, 0);    
+                    needRead = false;
+                }
+                else
+                {
+                    error = fileGetNextCluster( fileptr, 1);
+                }
+            }
+
+            if (error == CE_DISK_FULL)
+            {
+                FSerrno = CE_DISK_FULL;
+                return 0;
+            }
+
+            if(error == CE_GOOD)
+            {
+                sector = cluster2sector(volume,fileptr->ccls);
+                sector += (uint16_t)fileptr->sec;      
+                globalBufferUsedByFILEPTR = fileptr;
+                
+                if (needRead)
+                {
+                    if (sectorRead( sector, volume->buffer, volume) != CE_GOOD)
+                    {
+                        FSerrno = CE_BADCACHEREAD;
+                        error   = CE_BAD_SECTOR_READ;
+                        globalLastDataSectorRead = 0xFFFFFFFF;
+                        return 0;
+                    }
+                    else
+                    {
+                        globalLastDataSectorRead = sector;
+                    }
+                }
+                else
+                {
+                    globalLastDataSectorRead = sector;
+                }
+            }
+        } //  load new sector
+
+        if(error == CE_GOOD)
+        {
+            // Write one byte at a time
+            MemoryWriteByte(volume->buffer, pos++, *(uint8_t*)src);
+            src = src + 1; // compiler bug ???
+            seek++;
+            count--;
+            writeCount++;
+            if(fileptr->Flags.FileWriteEOF)
+            {
+                filesize++;
+            }
+            globalDataWriteNecessary = true;
+        }
+    } // while count
+
+    fileptr->pos = pos;       // save positon
+    fileptr->seek = seek;     // save seek
+    fileptr->size = filesize; // new filesize
+
+    return(writeCount/size);
+  #endif
+}
+
+
+
+
 
