@@ -31,7 +31,7 @@ floppy_t* floppyDrive[2];
 const int32_t FLPY_SECTORS_PER_TRACK       =    18; // sectors per track
 static floppy_t* CurrentDrive              =     0; // current working drive
 static volatile bool ReceivedFloppyDiskIRQ = false; // set when IRQ fires
-const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  =   350; // waiting time in milliseconds (motor spin up)
+const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME  =   300; // waiting time in milliseconds (motor spin up)
 const int32_t WAITING_TIME                 =    10; // waiting time in milliseconds (for dynamic processes)
 
 // IO ports
@@ -140,7 +140,7 @@ static floppy_t* createFloppy(uint8_t ID)
     fdd->ID       = ID;
     fdd->motor    = false; // floppy motor is off
     fdd->RW_Lock  = false; // floppy is not blocked
-	fdd->accessRemaining = 0;
+    fdd->accessRemaining = 0;
 
     fdd->drive.insertedDisk = malloc(sizeof(disk_t), 0);
     fdd->drive.insertedDisk->type = &FLOPPYDISK;
@@ -158,7 +158,8 @@ static floppy_t* createFloppy(uint8_t ID)
     attachPort(&fdd->drive);
 
     CurrentDrive = fdd;
-	while(flpydsk_read_sector(0, true));
+
+    while(flpydsk_read_sector(0, true));
     analyzeBootSector((void*)DMA_BUFFER, fdd->drive.insertedDisk->partition[0]);
 
     return(fdd);
@@ -339,9 +340,8 @@ void flpydsk_control_motor(bool b)
     }
     else if(CurrentDrive->drive.insertedDisk->accessRemaining == 0 && CurrentDrive->accessRemaining == 0)
     {
-        flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET); // motor off //////// TEST /////////////////////
+        flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET); // motor off
         CurrentDrive->motor = false;
-        sleepMilliSeconds(WAITING_TIME);
     }
 }
 
@@ -365,6 +365,7 @@ static void flpydsk_disable_controller()
 static void flpydsk_enable_controller()
 {
     flpydsk_write_dor(FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA);
+    CurrentDrive->motor = false; // Attention! The motor had been turned off, although flpydsk_control_motor was not called
 }
 
 // reset controller
@@ -383,7 +384,7 @@ static void flpydsk_reset()
     flpydsk_write_ccr(0);              // transfer speed 500kb/s
     flpydsk_drive_data(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
 
-	CurrentDrive->accessRemaining++;
+    CurrentDrive->accessRemaining++;
     flpydsk_calibrate(CurrentDrive);   // calibrate the disk
 }
 
@@ -417,7 +418,7 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
 {
     if (drive == 0)
     {
-		CurrentDrive->accessRemaining--;
+        CurrentDrive->accessRemaining--;
         return -2;
     }
 
@@ -434,12 +435,12 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
 
         if (!cyl) // did we find cylinder 0? if yes, calibration is correct
         {
-			CurrentDrive->accessRemaining--;
+            CurrentDrive->accessRemaining--;
             return(0);
         }
     }
-	
-	CurrentDrive->accessRemaining--;
+    
+    CurrentDrive->accessRemaining--;
     return(-1);
 }
 
@@ -448,11 +449,11 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
 {
     if (CurrentDrive == 0)
     {
-		CurrentDrive->accessRemaining--;
+        CurrentDrive->accessRemaining--;
         return -2;
     }
 
-	CurrentDrive->accessRemaining++;
+    CurrentDrive->accessRemaining++;
     flpydsk_calibrate(CurrentDrive);  // calibrate the disk ==> cyl. 0
 
     flpydsk_control_motor(true);
@@ -469,12 +470,12 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
         flpydsk_check_int(&st0,&cyl0);
         if (cyl0 == cyl) // found the cylinder?
         {
-			CurrentDrive->accessRemaining--;
+            CurrentDrive->accessRemaining--;
             return(0);
         }
     }
-	
-	CurrentDrive->accessRemaining--;
+    
+    CurrentDrive->accessRemaining--;
     return(-1);
 }
 
@@ -550,7 +551,7 @@ static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sect
     // printf("\n\n");
     flpydsk_check_int(&st0,&cyl); // inform FDC that we handled interrupt
 
-	CurrentDrive->accessRemaining--;
+    CurrentDrive->accessRemaining--;
 
     CurrentDrive->RW_Lock = false; // ready
 
@@ -578,7 +579,7 @@ int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single)
     flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
     int32_t retVal=0;
-	CurrentDrive->accessRemaining+=2;
+    CurrentDrive->accessRemaining+=2;
     if (flpydsk_seek (track, head) !=0)
     {
         retVal=-2;
@@ -595,7 +596,7 @@ int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single)
             retVal=-1;
             break;
         }
-		CurrentDrive->accessRemaining++;
+        CurrentDrive->accessRemaining++;
     }
     CurrentDrive->drive.insertedDisk->accessRemaining--;
 
@@ -606,9 +607,9 @@ int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single)
 int32_t flpydsk_write_sector(int32_t sectorLBA, bool single)
 {
     if (CurrentDrive == 0)
-	{
-		return -1;
-	}
+    {
+        return -1;
+    }
 
     // convert LBA sector to CHS
     int32_t head=0, track=0, sector=1;
@@ -617,10 +618,10 @@ int32_t flpydsk_write_sector(int32_t sectorLBA, bool single)
     // turn motor on and seek to track
     if(single) CurrentDrive->drive.insertedDisk->accessRemaining++;
 
-	CurrentDrive->accessRemaining+=2;
+    CurrentDrive->accessRemaining+=2;
     if (flpydsk_seek (track, head)!=0)
     {
-		CurrentDrive->accessRemaining--;
+        CurrentDrive->accessRemaining--;
         printf("flpydsk_seek not ok. sector not written.\n");
         CurrentDrive->drive.insertedDisk->accessRemaining--;
         return -2;
@@ -751,7 +752,7 @@ void flpydsk_refreshVolumeNames()
 
         /// TODO: change to read_ia(...)!
 
-        while(flpydsk_read_sector(19, true) != 0); // start at 0x2600: root directory (14 sectors) 
+        while(flpydsk_read_sector(19, true) != 0); // start at 0x2600: root directory (14 sectors)
 
         strncpy(CurrentDrive->drive.insertedDisk->name, (char*)DMA_BUFFER, 11);
         CurrentDrive->drive.insertedDisk->name[11] = 0; // end of string

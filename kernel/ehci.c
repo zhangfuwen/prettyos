@@ -605,16 +605,16 @@ void checkPortLineStatus(uint8_t j)
     textColor(0x0E);
     switch ((pOpRegs->PORTSC[j]>>10)&3)
     {
-      case 1: // K_STATE
-          printf("K-State");
-      break;
-      case 2: // J_STATE
-          printf("J-state");
-      break;
-      default: // undefined
-          textColor(0x0C);
-          printf("undefined");
-      break;
+        case 1:
+            printf("K-State");
+            break;
+        case 2:
+            printf("J-state");
+            break;
+        default:
+            textColor(0x0C);
+            printf("undefined");
+            break;
     }
     textColor(0x0F);
 }

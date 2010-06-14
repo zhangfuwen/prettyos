@@ -16,7 +16,7 @@ typedef struct {
     bool     motor;
     bool     RW_Lock;
     port_t   drive;
-	uint32_t accessRemaining;
+    uint32_t accessRemaining;
 } floppy_t;
 
 void floppy_install();

@@ -245,10 +245,11 @@ EVALUATION: // evaluation of entry
                     puts("The path was not formatted well.\n");
                     break;
                 case CE_FILE_NOT_FOUND:
-                    puts("The file was not found. Trying now on 1:/.\n");
+                    puts("The file was not found. ");
                     char newPath[40];
                     strcpy(newPath,"1:/");
-                    strcat(newPath, entry);      
+                    strcat(newPath, entry);
+                    printf("Trying now %s.\n", newPath);
                     if(execute(newPath) != CE_GOOD)
                         puts("Not found on 1:/.\n");
                     break;

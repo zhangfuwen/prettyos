@@ -760,7 +760,7 @@ FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
     uint32_t sectors = (size%512 == 0) ? size/512 : size/512+1;
     volume->disk->accessRemaining += sectors;
 
-	sectors--;
+    sectors--;
     if (sectorRead(sector, volume->buffer, volume) != SUCCESS)
     {
         error = CE_BAD_SECTOR_READ;
