@@ -1,5 +1,5 @@
 ;boot2.asm
-
+[map symbols boot2.map]
 [Bits 16]
 org 0x500
 jmp entry_point                  ; go to entry point
@@ -25,16 +25,18 @@ msgLoading db 0x0D, 0x0A, "Jumping to OS Kernel...", 0
 msgFailure db 0x0D, 0x0A, "Missing KERNEL.BIN", 0x0D, 0x0A, 0x0A, 0
 
 entry_point:
-    cli                  ; clear interrupts
+    cli                 
     xor ax, ax           ; null segments
     mov ds, ax
     mov es, ax
-
-    mov ax,0x1000 
+ 
+ ;=====================================================HOTFIX===ehenkes====
+    mov ax,0x3000 
     mov ss,ax            ; stack
     xor sp,sp
-    dec sp
-    sti                  ; enable interrupts
+    dec sp               ; stackpointer: 3FFFFh 
+ ;=====================================================HOTFIX===ehenkes====
+    sti                  
 
 A20:
     call EnableA20
