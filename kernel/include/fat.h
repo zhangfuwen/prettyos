@@ -17,13 +17,11 @@
 
 #include "os.h"
 
-#define SUCCESS 0
-#define FAIL    1
+// RAM read/write
 
 #define MemoryReadByte(a,f)      *(a+f) // reads a byte at an address plus an offset in RAM
 #define MemoryReadWord(a,f)      *(uint16_t*)(a+f)
 #define MemoryReadLong(a,f)      *(uint32_t*)(a+f)
-
 #define MemoryWriteByte(a,f,d)   *(a+f)=d
 
 // Media
@@ -65,6 +63,7 @@ enum {FAT12 = 1, FAT16, FAT32};
 
 // Directory
 
+#define DIRECTORY             0x12
 #define NUMBER_OF_BYTES_IN_DIR_ENTRY    32
 
 #define FOUND                 0    // dir entry match
@@ -214,7 +213,7 @@ FS_ERROR singleSectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* pa
 FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part);
 
 // file handling
-FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t* fHandle);
+FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t *fHandle, uint8_t mode);
 FS_ERROR searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
 FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
 FS_ERROR fclose(FILEPTR fileptr);
