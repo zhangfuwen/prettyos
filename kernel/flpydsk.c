@@ -603,8 +603,13 @@ int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single)
     return retVal;
 }
 
+int32_t flpydsk_writeSector(uint32_t sector, uint8_t* buffer)
+{
+    memcpy((void*)DMA_BUFFER, buffer, 512);
+    return(flpydsk_write_sector(sector, false));
+}
 // write a sector
-int32_t flpydsk_write_sector(int32_t sectorLBA, bool single)
+int32_t flpydsk_write_sector(uint32_t sectorLBA, bool single)
 {
     if (CurrentDrive == 0)
     {

@@ -18,8 +18,6 @@ disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
 partition_t* systemPartition;
 
-extern floppy_t* floppyDrive[2];
-
 uint32_t startSectorPartition = 0;
 extern uint32_t usbMSDVolumeMaxLBA;
 
@@ -31,6 +29,7 @@ void deviceManager_install(/*partition_t* system*/)
 {
     USB_MSD.readSector = &usbRead;
     FLOPPYDISK.readSector = &flpydsk_readSector;
+    FLOPPYDISK.writeSector = &flpydsk_writeSector;
 
     memset(disks, 0, DISKARRAYSIZE*sizeof(disks));
     memset(ports, 0, PORTARRAYSIZE*sizeof(ports));

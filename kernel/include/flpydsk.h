@@ -28,7 +28,8 @@ void flpydsk_refreshVolumeNames();
 
 int32_t flpydsk_readSector(uint32_t sector, uint8_t* buffer);
 int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single);
-int32_t flpydsk_write_sector(int32_t sectorLBA, bool single);
+int32_t flpydsk_writeSector(uint32_t sector, uint8_t* buffer);
+int32_t flpydsk_write_sector(uint32_t sectorLBA, bool single);
 
 int32_t flpydsk_read_ia (int32_t i, void* a, int8_t option);
 int32_t flpydsk_write_ia(int32_t i, void* a, int8_t option);
