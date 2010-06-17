@@ -358,6 +358,22 @@ char* strncat(char* dest, const char* src, size_t n)
     return dest;
 }
 
+char* strchr(char* str, int character)
+{
+    for (;;str++)
+    {
+        // the order here is important
+        if (*str == character)
+        {
+            return str;
+        }
+        if (*str == 0) // end of string
+        {
+            return NULL;
+        }
+    }
+}
+
 /**********************************************************************/
 char toLower(char c)
 {

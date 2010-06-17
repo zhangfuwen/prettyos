@@ -36,20 +36,6 @@ bool     globalFATWriteNecessary   = false;      // Global variable indicating t
 bool     globalDataWriteNecessary  = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
 uint8_t  FSerrno;                                // Global error number?
 
-// TEST
-static char* strchr( char* str, char c )
-{
-    for (uint32_t i=0; i<strlen(str); i++)
-    {
-        if (str[i] == c)
-        {
-            return str+i;
-        }
-    }
-    return NULL;
-}
-
-
 static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 {
   #ifdef _FAT_DIAGNOSIS_
