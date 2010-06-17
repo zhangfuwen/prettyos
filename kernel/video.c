@@ -11,6 +11,7 @@
 #include "kheap.h"
 #include "timer.h"
 #include "devicemanager.h"
+#include "fat.h"
 
 uint16_t* vidmem = (uint16_t*)0xB8000;
 
@@ -246,7 +247,7 @@ void screenshot()
         }
     }
 
-	FILEPTR file = fopenFileName("1:/screen.txt", "w+");
+    FILEPTR file = fopenFileName("1:/screen.txt", "w+"); printf("FILEPTR file: %X",file);
 	fwrite((void*)videoscreen, 4098, 1, file);
 	fclose(file);
 
