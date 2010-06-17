@@ -18,6 +18,12 @@
 #include "fat.h"
 #include "devicemanager.h"
 
+// fseek ???
+    #define SEEK_SET 0
+    #define SEEK_CUR 1
+    #define SEEK_END 2
+    #define EOF  ((int32_t)-1)
+
 // prototypes
 static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite);
 
@@ -29,6 +35,20 @@ uint32_t globalLastFATSectorRead   = 0xFFFFFFFF; // Global variable indicating w
 bool     globalFATWriteNecessary   = false;      // Global variable indicating that there is information that needs to be written to the FAT
 bool     globalDataWriteNecessary  = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
 uint8_t  FSerrno;                                // Global error number?
+
+// TEST
+static char* strchr( char* str, char c )
+{
+    for (uint32_t i=0; i<strlen(str); i++)
+    {
+        if (str[i] == c)
+        {
+            return str+i;
+        }
+    }
+    return NULL;
+}
+
 
 static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 {
@@ -658,52 +678,6 @@ FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint
     return(statusB);
 }
 
-FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fopen <<<<<!");
-  #endif
-    partition_t* volume = fileptr->volume;
-    FS_ERROR error = CE_GOOD;
-
-    if (volume->mount == false)
-    {
-        textColor(0x0C); printf("\nError: CE_NOT_INIT!"); textColor(0x0F); /// MESSAGE
-        return CE_NOT_INIT;
-    }
-    else
-    {
-        cacheFileEntry(fileptr, fHandle, true);
-        uint8_t r = fillFILEPTR(fileptr, fHandle);
-        if (r != FOUND)
-        {
-            return CE_FILE_NOT_FOUND;
-        }
-        else // a file was found
-        {
-            fileptr->seek = 0;
-            fileptr->ccls = fileptr->cluster;
-            fileptr->sec  = 0;
-            fileptr->pos  = 0;
-            uint32_t sector = cluster2sector(volume,fileptr->ccls); // determine LBA of the file's current cluster
-            if (singleSectorRead(sector, volume->buffer, volume) != CE_GOOD)
-            {
-                error = CE_BAD_SECTOR_READ;
-            }
-            fileptr->Flags.FileWriteEOF = false;
-            if (type == 'w' || type == 'a')
-            {
-                fileptr->Flags.write = true;
-            }
-            else
-            {
-                fileptr->Flags.write = 0;
-            }
-        } // END: a file was found
-    } // END: the media is available
-    return error;
-}
-
 FS_ERROR fclose(FILEPTR fileptr)
 {
   #ifdef _FAT_DIAGNOSIS_
@@ -986,7 +960,7 @@ static uint32_t fatFindEmptyCluster(FILEPTR fileptr)
             break;
     }
 
-    if(c < 2) 
+    if(c < 2)
         c = 2;
 
     uint32_t curcls = c;
@@ -1001,21 +975,21 @@ static uint32_t fatFindEmptyCluster(FILEPTR fileptr)
             c = 0;
             break;
         }
-    
+
         if (value == CLUSTER_EMPTY)
             break;
 
-        c++;    
-        
+        c++;
+
         if (value == EndClusterLimit || c >= (volume->maxcls+2))
             c = 2;
-        
+
         if ( c == curcls)
         {
             c = 0;
             break;
         }
-    }  
+    }
 
     return(c);
 }
@@ -1399,7 +1373,7 @@ static FS_ERROR PopulateEntries(FILEPTR fileptr, char *name , uint32_t *fHandle,
     dir->DIR_NTRes     =    0x00;        // nt reserved
     dir->DIR_FstClusHI =    0x0000;      // hiword of this entry's first cluster number
     dir->DIR_FstClusLO =    0x0000;      // loword of this entry's first cluster number
-    
+
    // time info as example
     dir->DIR_CrtTimeTenth = 0xB2;        // millisecond stamp
     dir->DIR_CrtTime =      0x7278;      // time created
@@ -1483,7 +1457,7 @@ uint8_t FindEmptyEntries(FILEPTR fileptr, uint32_t *fHandle)
                     else
                     {
                         *fHandle = bHandle;
-                        status = FOUND;     
+                        status = FOUND;
                     }
                 }
             }
@@ -1525,8 +1499,8 @@ static FILEROOTDIRECTORYENTRY loadDirAttrib(FILEPTR fo, uint32_t* fHandle)
                 dir = cacheFileEntry( fo, fHandle, false);
                 if (dir == NULL) return NULL;
                 a = dir->DIR_Attr;
-            } 
-        } 
+            }
+        }
     }
     return(dir);
 }
@@ -1619,4 +1593,493 @@ FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t *fHandle, uint8_t mode)
 
     FSerrno = error;
     return(error);
+}
+
+
+
+static bool ValidateChars( char * FileName , bool mode)
+{
+    bool radix = false;
+    uint16_t StrSz = strlen(FileName);
+    for( uint16_t i=0; i<StrSz; i++ )
+    {
+        if (((FileName[i] <= 0x20) &&  (FileName[i] != 0x05)) ||
+             (FileName[i] == 0x22) ||  (FileName[i] == 0x2B) ||
+             (FileName[i] == 0x2C) ||  (FileName[i] == 0x2F) ||
+             (FileName[i] == 0x3A) ||  (FileName[i] == 0x3B) ||
+             (FileName[i] == 0x3C) ||  (FileName[i] == 0x3D) ||
+             (FileName[i] == 0x3E) ||  (FileName[i] == 0x5B) ||
+             (FileName[i] == 0x5C) ||  (FileName[i] == 0x5D) ||
+             (FileName[i] == 0x7C) || ((FileName[i] == 0x2E) && radix == true))
+        {
+            return false;
+        }
+        else
+        {
+            if (mode == false)
+            {
+                if ((FileName[i] == '*') || (FileName[i] == '?'))
+                    return false;
+            }
+            if (FileName[i] == 0x2E)
+            {
+                radix = true;
+            }
+            // Convert lower-case to upper-case
+            if ((FileName[i] >= 0x61) && (FileName[i] <= 0x7A))
+                FileName[i] -= 0x20;
+        }
+    }
+    return true;
+}
+
+static bool FormatFileName( const char* fileName, char* fN2, bool mode)
+{
+    char * pExt;
+    uint16_t temp;
+    char szName[15];
+
+    for (uint8_t count=0; count<11; count++)
+    {
+        *(fN2 + count) = ' ';
+    }
+
+    if (fileName[0] == '.' || fileName[0] == 0)
+    {
+        return false;
+    }
+
+    temp = strlen( fileName );
+
+    if( temp <= FILE_NAME_SIZE+1 )
+        strcpy( szName, fileName );
+    else
+        return false; //long file name
+
+    if (!ValidateChars(szName, mode))
+    {
+        return false;
+    }
+
+    if ( (pExt = strchr( szName, '.' )) != 0 ) // <-------------- strchr
+    {
+        *pExt = 0;
+        pExt++;
+        if( strlen( pExt ) > 3 )
+            return false;
+    }
+
+    if (strlen(szName)>8)
+    {
+        return false;
+    }
+
+    for (uint8_t count=0; count<strlen(szName); count++)
+    {
+        *(fN2 + count) = *(szName + count);
+    }
+
+    if(pExt && *pExt )
+    {
+        for (uint8_t count=0; count<strlen(pExt); count++)
+        {
+            *(fN2 + count + 8) = *(pExt + count);
+        }
+    }
+
+    return true;
+}
+
+static void fileptrCopy(FILEPTR dest, FILEPTR source)
+{
+    uint8_t size = sizeof(FILE);
+    for(uint8_t i=0; i<size; i++)
+    {
+        dest[i] = source[i];
+    }
+}
+
+FS_ERROR fopen (FILEPTR fileptr, uint32_t* fHandle, char type)
+{
+    partition_t* volume;
+    bool r;
+    uint32_t l;
+    FS_ERROR error = CE_GOOD;
+
+    volume = (partition_t *)(fileptr->volume);
+    if (volume->mount == false)
+    {
+        error = CE_NOT_INIT;
+    }
+    else
+    {
+        fileptr->dirccls = fileptr->dirclus;
+        if (*fHandle == 0)
+        {
+            if (cacheFileEntry(fileptr, fHandle, true) == NULL)
+            {
+                error = CE_BADCACHEREAD;
+            }
+        }
+        else
+        {
+            if ((*fHandle & 0xf) != 0)
+            {
+                if (cacheFileEntry (fileptr, fHandle, true) == NULL)
+                {
+                    error = CE_BADCACHEREAD;
+                }
+            }
+        }
+
+        r = fillFILEPTR(fileptr, fHandle);
+        if (r != FOUND)
+        {
+            error = CE_FILE_NOT_FOUND;
+        }
+        else
+        {
+            fileptr->seek = 0;
+            fileptr->ccls = fileptr->cluster;
+            fileptr->sec  = 0;
+            fileptr->pos  = 0;
+
+            if  ( r == NOT_FOUND)
+            {
+                error = CE_FILE_NOT_FOUND;
+            }
+            else
+            {
+                l = cluster2sector(volume,fileptr->ccls);
+
+                if (globalDataWriteNecessary)
+                    if (flushData())
+                        return CE_WRITE_ERROR;
+
+                globalBufferUsedByFILEPTR = fileptr;
+                if (globalLastDataSectorRead != l)
+                {
+                    globalBufferMemSet0 = false;
+                    if ( sectorRead( l, volume->buffer, volume) != CE_GOOD)
+                    {
+                        error = CE_BAD_SECTOR_READ;
+                    }
+                    globalLastDataSectorRead = l;
+                }
+            }
+
+            fileptr->Flags.FileWriteEOF = false;
+
+            if (type == 'w' || type == 'a')
+            {
+                fileptr->Flags.write = 1;
+                fileptr->Flags.read = 0;
+            }
+            else
+            {
+                fileptr->Flags.write = 0;
+                fileptr->Flags.read = 1;
+
+            }
+
+        }
+    }
+    return (error);
+}
+
+int32_t fseek(FILEPTR fileptr, long offset, int whence) // return values should be adapted to FS_ERROR types
+{
+    uint32_t numsector, temp;
+    partition_t*   volume;
+    FS_ERROR test;
+    int32_t offset2 = offset;
+
+    volume = fileptr->volume;
+
+    switch(whence)
+    {
+        case SEEK_CUR:
+            offset2 += fileptr->seek;
+            break;
+        case SEEK_END:
+            offset2 = fileptr->size - offset2;
+            break;
+        case SEEK_SET:
+        default:
+            break;
+    }
+
+    if (globalDataWriteNecessary)
+    {
+       if (flushData())
+       {
+            FSerrno = CE_WRITE_ERROR;
+            return EOF; // int32_t-1
+       }
+    }
+
+    temp = fileptr->cluster;
+    fileptr->ccls = temp;
+    temp = fileptr->size;
+
+    if (offset2 > temp)
+    {
+        FSerrno = CE_INVALID_ARGUMENT;
+        return (-1);
+    }
+    else
+    {
+        fileptr->Flags.FileWriteEOF = false;
+        fileptr->seek = offset2;
+        numsector = offset2 / volume->sectorSize;
+        offset2 = offset2 - (numsector * volume->sectorSize);
+        fileptr->pos = offset2;
+        temp = numsector / volume->SecPerClus;
+        numsector = numsector - (volume->SecPerClus * temp);
+        fileptr->sec = numsector;
+
+        if (temp > 0)
+        {
+            test = fileGetNextCluster(fileptr, temp);
+            if (test != CE_GOOD)
+            {
+                if (test == CE_FAT_EOF)
+                {
+                    if (fileptr->Flags.write)
+                    {
+                        fileptr->ccls = fileptr->cluster;
+                        if (temp != 1)
+                        test = fileGetNextCluster(fileptr, temp-1);
+                        if (fileAllocateNewCluster(fileptr, 0) != CE_GOOD)
+                        {
+                            FSerrno = CE_COULD_NOT_GET_CLUSTER;
+                            return -1;
+                        }
+                    }
+                    else
+                    {
+                        fileptr->ccls = fileptr->cluster;
+                        test = fileGetNextCluster(fileptr, temp-1);
+                        if (test != CE_GOOD)
+                        {
+                            FSerrno = CE_COULD_NOT_GET_CLUSTER;
+                            return (-1);
+                        }
+                        fileptr->pos = volume->sectorSize;
+                        fileptr->sec = volume->SecPerClus - 1;
+                    }
+                }
+                else
+                {
+                    FSerrno = CE_COULD_NOT_GET_CLUSTER;
+                    return (-1);   // past the limits
+                }
+            }
+        }
+
+        temp = cluster2sector(volume,fileptr->ccls);
+        numsector = fileptr->sec;
+        temp += numsector;
+        globalBufferUsedByFILEPTR = NULL;
+        globalBufferMemSet0 = false;
+        if (sectorRead(temp, volume->buffer, volume) != CE_GOOD)
+        {
+            FSerrno = CE_BADCACHEREAD;
+            return (-1);   // Bad read
+        }
+        globalLastDataSectorRead = temp;
+    }
+    FSerrno = CE_GOOD;
+    return CE_GOOD;
+}
+
+FILEPTR fopenFileName(const char* fileName, const char* mode, partition_t* part)
+{
+    char       ModeC;
+    uint32_t   fHandle;
+    FS_ERROR   final;
+    FILEPTR filePtr = (FILEPTR) malloc(sizeof(FILE),PAGESIZE);
+
+    if( !FormatFileName(fileName, filePtr->name, 0) )
+    {
+        free(filePtr);
+        FSerrno = CE_INVALID_FILENAME;
+        return NULL;
+    }
+
+    ModeC = mode[0];
+
+    filePtr->volume  = part;
+    filePtr->cluster = 0;
+    filePtr->ccls    = 0;
+    filePtr->entry   = 0;
+    filePtr->attributes = ATTR_ARCHIVE;
+
+    filePtr->dirclus = 0; // FatRootDirClusterValue; ???
+    filePtr->dirccls = 0; // FatRootDirClusterValue; ???
+
+    FILE fileTemp;
+
+    fileptrCopy(&fileTemp, filePtr);
+
+    if (searchFile(filePtr, &fileTemp, LOOK_FOR_MATCHING_ENTRY, 0) == CE_GOOD)
+    {
+        switch(ModeC)
+        {
+            case 'w':
+            case 'W':
+            {
+                fHandle = filePtr->entry;
+                final = fileErase(filePtr, &fHandle, true);
+
+                if (final == CE_GOOD)
+                {
+                    final = createFileEntry (filePtr, &fHandle, 0);
+
+                    if (final == CE_GOOD)
+                    {
+                        final = fopen (filePtr, &fHandle, 'w');
+
+                        if (filePtr->attributes & ATTR_DIRECTORY)
+                        {
+                            FSerrno = CE_INVALID_ARGUMENT;
+                            final = 0xFF;
+                        }
+
+                        if (final == CE_GOOD)
+                        {
+                            final = fseek (filePtr, 0, SEEK_END);
+                            if (mode[1] == '+')
+                            {
+                                filePtr->Flags.read = true;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+
+            case 'A':
+            case 'a':
+            {
+                if(filePtr->size != 0)
+                {
+                    fHandle = filePtr->entry;
+
+                    final = fopen (filePtr, &fHandle, 'w');
+
+                    if (filePtr->attributes & ATTR_DIRECTORY)
+                    {
+                        FSerrno = CE_INVALID_ARGUMENT;
+                        final = 0xFF;
+                    }
+
+                    if (final == CE_GOOD)
+                    {
+                        final = fseek (filePtr, 0, SEEK_END);
+                        if (final != CE_GOOD)
+                            FSerrno = CE_SEEK_ERROR;
+                        else
+                            fatRead (part, filePtr->ccls);
+                        if (mode[1] == '+')
+                            filePtr->Flags.read = true;
+                    }
+                }
+                else
+                {
+                    fHandle = filePtr->entry;
+                    final = fileErase(filePtr, &fHandle, true);
+
+                    if (final == CE_GOOD)
+                    {
+                        // now create a new one
+                        final = createFileEntry (filePtr, &fHandle, 0);
+
+                        if (final == CE_GOOD)
+                        {
+                            final = fopen (filePtr, &fHandle, 'w');
+
+                            if (filePtr->attributes & ATTR_DIRECTORY)
+                            {
+                                FSerrno = CE_INVALID_ARGUMENT;
+                                final = 0xFF;
+                            }
+
+                            if (final == CE_GOOD)
+                            {
+                                final = fseek (filePtr, 0, SEEK_END);
+                                if (final != CE_GOOD)
+                                    FSerrno = CE_SEEK_ERROR;
+                                if (mode[1] == '+')
+                                    filePtr->Flags.read = true;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+
+            case 'R':
+            case 'r':
+            {
+                fHandle = filePtr->entry;
+
+                final = fopen (filePtr, &fHandle, 'r');
+
+                if ((mode[1] == '+') && !(filePtr->attributes & ATTR_DIRECTORY))
+                    filePtr->Flags.write = true;
+
+                break;
+            }
+
+            default:
+                FSerrno = CE_INVALID_ARGUMENT;
+                final = 0xFF;
+                break;
+        }
+    }
+    else
+    {
+        fileptrCopy(filePtr, &fileTemp);
+
+        if(ModeC == 'w' || ModeC == 'W' || ModeC == 'a' || ModeC == 'A')
+        {
+            fHandle = 0;
+            final = createFileEntry (filePtr, &fHandle, 0);
+
+            if (final == CE_GOOD)
+            {
+                final = fopen (filePtr, &fHandle, 'w');
+                if (filePtr->attributes & ATTR_DIRECTORY)
+                {
+                    FSerrno = CE_INVALID_ARGUMENT;
+                    final = 0xFF;
+                }
+
+                if (final == CE_GOOD)
+                {
+                    final = fseek (filePtr, 0, SEEK_END);
+                    if (final != CE_GOOD)
+                        FSerrno = CE_SEEK_ERROR;
+                    if (mode[1] == '+')
+                        filePtr->Flags.read = true;
+                }
+            }
+        }
+        else
+        {
+            final = CE_FILE_NOT_FOUND;
+        }
+    }
+
+    if( final != CE_GOOD )
+    {
+        free(filePtr);
+        filePtr = NULL;
+    }
+    else
+    {
+        FSerrno = CE_GOOD;
+    }
+    return filePtr;
 }

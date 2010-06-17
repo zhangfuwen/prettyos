@@ -105,6 +105,7 @@ typedef struct
 typedef struct
 {
     bool write;        // file is opened for writing
+    bool read;         // file is opened for reading
     bool FileWriteEOF; // writing process has reached end of file
 } FileFlags;
 
@@ -215,9 +216,11 @@ FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* p
 // file handling
 FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t *fHandle, uint8_t mode);
 FS_ERROR searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
+FILEPTR fopenFileName(const char* fileName, const char* mode, partition_t* part);
 FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
 FS_ERROR fclose(FILEPTR fileptr);
 FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count);
+int32_t fseek(FILEPTR fileptr, long offset, int whence); // return values should be adapted to FS_ERROR types
 uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILEPTR stream);
 
 // analysis functions
