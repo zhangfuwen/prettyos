@@ -45,17 +45,16 @@ void     analyze_frames_bitset(uint32_t sec);
 uint32_t show_physical_address(uint32_t virtual_address);
 void     analyze_physical_addresses();
 
-bool paging_alloc( page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags );
-void paging_free ( page_directory_t* pd, void* virt_addr, uint32_t size );
+bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags);
+void paging_free (page_directory_t* pd, void* virt_addr, uint32_t size);
 
-void paging_switch( page_directory_t* pd  );
+void paging_switch(page_directory_t* pd);
 page_directory_t* paging_create_user_pd();
-void paging_destroy_user_pd( page_directory_t* pd );
-void* paging_acquire_pcimem( uint32_t phys_addr );
+void paging_destroy_user_pd(page_directory_t* pd);
+void* paging_acquire_pcimem(uint32_t phys_addr);
 
-uint32_t paging_get_phys_addr( page_directory_t* pd, void* virt_addr );
+uint32_t paging_get_phys_addr(page_directory_t* pd, void* virt_addr);
 
 uint32_t paging_install();
-
 
 #endif

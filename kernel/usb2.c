@@ -99,14 +99,14 @@ void usbTransferConfig(uint32_t device)
     {
         bool found = false;
         // printf("addrPointer: %X\n",addrPointer); // test
-        if ( ((*(uint8_t*)addrPointer) == 9) && ((*(uint8_t*)(addrPointer+1)) == 2) ) // length, type
+        if (*(uint8_t*)addrPointer == 9 && *(uint8_t*)(addrPointer+1) == 2) // length, type
         {
             showConfigurationDescriptor((struct usb2_configurationDescriptor*)addrPointer);
             addrPointer += 9;
             found = true;
         }
 
-        if ( ((*(uint8_t*)addrPointer) == 9) && ((*(uint8_t*)(addrPointer+1)) == 4) ) // length, type
+        if (*(uint8_t*)addrPointer == 9 && *(uint8_t*)(addrPointer+1) == 4) // length, type
         {
             showInterfaceDescriptor((struct usb2_interfaceDescriptor*)addrPointer);
 
@@ -121,17 +121,17 @@ void usbTransferConfig(uint32_t device)
             found = true;
         }
 
-        if ( ((*(uint8_t*)addrPointer) == 7) && ((*(uint8_t*)(addrPointer+1)) == 5) ) // length, type
+        if (*(uint8_t*)addrPointer == 7 && *(uint8_t*)(addrPointer+1) == 5) // length, type
         {
             showEndpointDescriptor ((struct usb2_endpointDescriptor*)addrPointer);
 
             // store endpoint numbers for IN/OUT mass storage transfers, attributes must be 0x2, because there are also endpoints with attributes 0x3(interrupt)
-            if ( (((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80) && (((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2) )
+            if (((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80 && ((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2)
             {
                 usbDevices[device].numEndpointInMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
             }
 
-            if (!(((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80) && (((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2) )
+            if (!(((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80) && ((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2)
             {
                 usbDevices[device].numEndpointOutMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
             }
@@ -140,7 +140,7 @@ void usbTransferConfig(uint32_t device)
             found = true;
         }
 
-        if ( ((*(uint8_t*)(addrPointer+1)) != 2 ) && ((*(uint8_t*)(addrPointer+1)) != 4 ) && ((*(uint8_t*)(addrPointer+1)) != 5 ) ) // length, type
+        if (*(uint8_t*)(addrPointer+1) != 2 && *(uint8_t*)(addrPointer+1) != 4 && *(uint8_t*)(addrPointer+1) != 5) // length, type
         {
             if ( (*(uint8_t*)addrPointer) > 0)
             {
@@ -351,11 +351,11 @@ void showDevice(usb2_Device_t* usbDev)
 {
     textColor(0x0A);
     printf("\nUSB %u.%u\t",    usbDev->usbSpec>>8, usbDev->usbSpec&0xFF); // e.g. 0x0210 means 2.10
-    if (usbDev->usbClass == 0x00)
+    /*if (usbDev->usbClass == 0x00)
     {
-        /* Use class code information from Interface Descriptors */
+        // Use class code information from Interface Descriptors
     }
-    else if (usbDev->usbClass == 0x09)
+    else */if (usbDev->usbClass == 0x09)
     {
         printf("This is an USB Hub: ");
         if (usbDev->usbProtocol == 0x00) printf("Full speed Hub");
@@ -381,14 +381,14 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
 {
     if (d->length)
     {
-        textColor(0x0A);
       #ifdef _USB_DIAGNOSIS_
+        textColor(0x0A);
         printf("length:               %u\t\t",  d->length);
         printf("descriptor type:      %u\n",  d->descriptorType);
         textColor(0x07);
         printf("total length:         %u\t",  d->totalLength);
-        textColor(0x0A);
       #endif
+        textColor(0x0A);
         printf("Number of interfaces: %u",  d->numInterfaces);
       #ifdef _USB_DIAGNOSIS_
         printf("ID of config:         %x\t",  d->configurationValue);
@@ -566,7 +566,7 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
         printf("\n\nlanguages: ");
         for(uint8_t i=0; i<10;i++)
         {
-            if ( (d->languageID[i] >=0x0400) && (d->languageID[i] <= 0x0465))
+            if (d->languageID[i] >=0x0400 && d->languageID[i] <= 0x0465)
             {
                 switch (d->languageID[i])
                 {
@@ -704,7 +704,6 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
         printf("\t");
         textColor(0x0F);
 
-
         if (stringIndex == 2) // product name
         {
             strncpy(usbDevices[device].productName, (char*)d->asciichar, 15);
@@ -722,11 +721,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
                 j++;     // go to the next character
             }
             int16_t last = j; // store last position
-            j=j-12;      // step 12 characters backwards
-            if (j<0)     // but not below zero
-            {
-                j=0;
-            }
+            j = max(j-12, 0); // step 12 characters backwards, but not below zero
 
             for (uint16_t index=0; index<13; index++)
             {
@@ -744,6 +739,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
         }
     }
 }
+
 
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.

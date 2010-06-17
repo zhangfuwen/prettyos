@@ -9,7 +9,7 @@
 /// #define _USB_DIAGNOSIS_     // only as transition state during implementation of USB 2.0 transfers
 /// #define _FAT_DIAGNOSIS_     // only as transition state during implementation of FAT 16/32
 /// #define _TASKING_DIAGNOSIS_ // Provides optional output about tasking and scheduler
-/// #define _SOUND_             // Sound-Messages  - deactivation makes sense during development, because of better boot-time
+#define _SOUND_             // Sound-Messages  - deactivation makes sense during development, because of better boot-time
 
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);

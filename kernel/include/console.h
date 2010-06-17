@@ -14,7 +14,6 @@ typedef struct // Defines the User-Space of the display
     uint8_t SCROLL_END;
     uint8_t csr_x;
     uint8_t csr_y;
-    uint8_t attrib;
     keyqueue_t KQ; // Buffer storing keyboard input
 } console_t;
 

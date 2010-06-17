@@ -22,7 +22,7 @@
 #define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.524";
+const char* version = "0.0.0.525";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -67,9 +67,9 @@ static void init()
     events_install();
     syscall_install();
 
-    deviceManager_install(); // device management for mass storage devices
-
     cdi_init();
+
+    deviceManager_install(); // device management for mass storage devices
 
     sti();
 }
@@ -155,7 +155,7 @@ void main()
     {
         // show rotating asterisk
         *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
-        if (! *++progress){ progress = "|/-\\"; }
+        if (! *++progress) { progress = "|/-\\"; }
 
         if (getCurrentSeconds() != CurrentSeconds)
         {

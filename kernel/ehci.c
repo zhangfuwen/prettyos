@@ -18,11 +18,6 @@
 #include "ehci.h"
 #include "devicemanager.h"
 
-/// TEST
-/// const uint8_t PORTRESET = 3; /// TEST: only one port is reset!!! PORTRESET+1 is the indicated port
-#define PORTRESET j
-/// TEST
-
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
@@ -281,8 +276,8 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
     */
     // cf. http://wiki.osdev.org/PCI#PCI_Device_Structure
 
-    //               eecp       // RO  - This field identifies the extended capability.
-                                //       01h identifies the capability as Legacy Support.
+    //               eecp       // RO - This field identifies the extended capability.
+                                //      01h identifies the capability as Legacy Support.
     if (eecp >= 0x40)
     {
         int32_t eecp_id=0;
@@ -304,7 +299,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
         uint32_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
 
         // Legacy-Support-EC found? BIOS-Semaphore set?
-        if ((eecp_id == 1) && (pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore) & 0x01))
+        if (eecp_id == 1 && (pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore) & 0x01))
         {
             printf("set OS-Semaphore.\n");
             pci_config_write_byte(bus, dev, func, OSownedSemaphore, 0x01);
@@ -337,7 +332,6 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
                 pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore),
                 pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore));
 
-
             // USB SMI Enable R/W. 0=Default.
             // The OS tries to set SMI to disabled in case that BIOS bit satys at one.
             pci_config_write_dword(bus, dev, func, USBLEGCTLSTS, 0x0); // USB SMI disabled
@@ -363,7 +357,7 @@ void enablePorts()
 
     for (uint8_t j=0; j<numPorts; j++)
     {
-         resetPort(PORTRESET);
+         resetPort(j);
          enabledPortFlag = true;
 
          port[j+1].type = USB; // device manager
@@ -375,7 +369,7 @@ void enablePorts()
          strncpy(port[j+1].name,name,14);
          attachPort(&port[j+1]);
 
-         if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[PORTRESET] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
+         if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
          {
              textColor(0x0E);
              printf("Port %u: high speed enabled, device attached\n",j+1);
@@ -549,16 +543,16 @@ void showPORTSC()
 {
     for (uint8_t j=0; j<numPorts; j++)
     {
-        if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED_CHANGE)
+        if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
         {
             char PortStatus[20];
 
-            if (pOpRegs->PORTSC[PORTRESET] & PSTS_CONNECTED)
+            if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
                 strcpy(PortStatus,"attached");
                 writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
-                resetPort(PORTRESET);
-                checkPortLineStatus(PORTRESET);
+                resetPort(j);
+                checkPortLineStatus(j);
             }
             else
             {
@@ -583,7 +577,6 @@ void checkPortLineStatus(uint8_t j)
 {
     textColor(0x0E);
     if (j<numPorts)
-    // if (j==PORTRESET) // ??
     {
         //check line status
         textColor(0x0B);
@@ -631,58 +624,56 @@ void setupUSBDevice(uint8_t portNumber)
 {
     uint8_t devAddr = usbTransferEnumerate(portNumber);
 
-   #ifdef _USB_DIAGNOSIS_
-     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
-   #endif
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
+  #endif
 
-     usbTransferDevice(devAddr); // device address, endpoint=0
+    usbTransferDevice(devAddr); // device address, endpoint=0
 
-   #ifdef _USB_DIAGNOSIS_
-     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-     printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-   #endif
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+    printf("\nIO:    "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+  #endif
 
-     usbTransferConfig(devAddr); // device address, endpoint 0
+    usbTransferConfig(devAddr); // device address, endpoint 0
 
-   #ifdef _USB_DIAGNOSIS_
-     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-     printf("\nIO   : "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
-   #endif
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+    printf("\nIO   : "); showStatusbyteQTD(DataQTD); waitForKeyStroke();
+  #endif
 
-     usbTransferString(devAddr); // device address, endpoint 0
+    usbTransferString(devAddr); // device address, endpoint 0
 
-   #ifdef _USB_DIAGNOSIS_
-     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-     printf("\nIO   : "); showStatusbyteQTD(DataQTD);
-   #endif
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+    printf("\nIO   : "); showStatusbyteQTD(DataQTD);
+  #endif
 
-     for(uint8_t i=1; i<4; i++) // fetch 3 strings
-     {
-       #ifdef _USB_DIAGNOSIS_
-         waitForKeyStroke();
-       #endif
+    for(uint8_t i=1; i<4; i++) // fetch 3 strings
+    {
+      #ifdef _USB_DIAGNOSIS_
+        waitForKeyStroke();
+      #endif
 
-         usbTransferStringUnicode(devAddr,i);
+        usbTransferStringUnicode(devAddr,i);
 
-       #ifdef _USB_DIAGNOSIS_
-         printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-         printf("\nSETUP: ");        showStatusbyteQTD(SetupQTD);
-         printf("\nIO   : ");        showStatusbyteQTD(DataQTD);
-       #endif
-     }
+      #ifdef _USB_DIAGNOSIS_
+        printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
+        printf("\nSETUP: ");        showStatusbyteQTD(SetupQTD);
+        printf("\nIO   : ");        showStatusbyteQTD(DataQTD);
+      #endif
+    }
 
-     usbTransferSetConfiguration(devAddr, 1); // set first configuration
-   #ifdef _USB_DIAGNOSIS_
-     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-     uint8_t config = usbTransferGetConfiguration(devAddr);
-     printf(" %u",config); // check configuration
-   #endif
+    usbTransferSetConfiguration(devAddr, 1); // set first configuration
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+    uint8_t config = usbTransferGetConfiguration(devAddr);
+    printf(" %u",config); // check configuration
 
-   #ifdef _USB_DIAGNOSIS_
-     printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-     printf("\ndata packet: ");  showPacket(DataQTDpage0, 1); printf("\nIO:    "); showStatusbyteQTD(DataQTD);
-     waitForKeyStroke();
-   #endif
+    printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
+    printf("\ndata packet: ");  showPacket(DataQTDpage0, 1); printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+    waitForKeyStroke();
+  #endif
 
     if (usbDevices[devAddr].InterfaceClass != 0x08)
     {
@@ -692,7 +683,7 @@ void setupUSBDevice(uint8_t portNumber)
         waitForKeyStroke();
     }
     else
-    {     
+    {
         ////////////////////////////////////////////////////////////////////////////////////////////
         // device manager //////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////

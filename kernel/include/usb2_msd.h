@@ -4,7 +4,6 @@
 #include "os.h"
 #include "ehciQHqTD.h"
 #include "fat.h"
- 
 
 #define OUT   0
 #define IN    1
@@ -34,9 +33,5 @@ int32_t usbRead(uint32_t sector, uint8_t* buffer);
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
 
 int32_t showResultsRequestSense();
-
-
-
-
 
 #endif

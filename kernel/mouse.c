@@ -15,17 +15,17 @@
 #include "irq.h"
 
 char mouseid;
-uint32_t mouse_x=10;   // Mouse X
-uint32_t mouse_y=10;   // Mouse Y
-uint32_t mouse_z=0;    // Mouse Z (Mousewheel)
-char mouse_lm=0;       // Mouse Left Button
-char mouse_mm=0;       // Mouse Middle Button
-char mouse_rm=0;       // Mouse Right Button
-char mouse_b4=0;       // Mouse Button 4
-char mouse_b5=0;       // Mouse button 5
+int32_t mouse_x=10; // Mouse X
+int32_t mouse_y=10; // Mouse Y
+int32_t mouse_z=0;  // Mouse Z (Mousewheel)
+char mouse_lm=0;    // Mouse Left Button
+char mouse_mm=0;    // Mouse Middle Button
+char mouse_rm=0;    // Mouse Right Button
+char mouse_b4=0;    // Mouse Button 4
+char mouse_b5=0;    // Mouse button 5
 
-char mouse_cycle=0;    // MouseHandler help
-char mouse_byte[4];    // MouseHandler bytes
+char mouse_cycle=0; // MouseHandler help
+char mouse_byte[4]; // MouseHandler bytes
 
 
 void mouse_install()
@@ -227,8 +227,7 @@ void mouse_setsamples(uint8_t samples_per_second)
         case 200:
             mouse_write(0xC8);
             break;
-        default: // Sorry, mouse just has 10/20/40/60/80/100/200 Samples/sec, so
-                 // we go back to 80..
+        default: // Sorry, mouse just has 10/20/40/60/80/100/200 Samples/sec, so we go back to 80..
             mouse_setsamples(80);
             break;
     }

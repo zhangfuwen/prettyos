@@ -41,15 +41,16 @@ void tasking_install()
 
     cli();
     scheduler_install();
-    currentTask = malloc(sizeof(task_t), 0);
-    currentTask->pid = next_pid++;
-    currentTask->esp = 0;
-    currentTask->eip = 0;
+    currentTask                 = malloc(sizeof(task_t), 0);
+    currentTask->pid            = next_pid++;
+    currentTask->esp            = 0;
+    currentTask->eip            = 0;
     currentTask->page_directory = kernel_pd;
-    currentTask->privilege = 0;
-    currentTask->FPU_ptr = 0;
-    currentTask->console = current_console;
-    currentTask->ownConsole = true;
+    currentTask->privilege      = 0;
+    currentTask->FPU_ptr        = 0;
+    currentTask->console        = current_console;
+    currentTask->ownConsole     = true;
+    currentTask->attrib         = 0x0F;
 
     currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
 
@@ -76,10 +77,11 @@ static void addConsole(task_t* task, const char* consoleName)
 
 static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, void* entry, uint8_t privilege)
 {
-    new_task->pid = next_pid++;
+    new_task->pid            = next_pid++;
     new_task->page_directory = directory;
-    new_task->privilege = privilege;
-    new_task->FPU_ptr = 0;
+    new_task->privilege      = privilege;
+    new_task->FPU_ptr        = 0;
+    new_task->attrib         = 0x0F;
 
     if (new_task->privilege == 3)
     {

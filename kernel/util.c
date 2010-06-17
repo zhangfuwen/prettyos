@@ -10,8 +10,9 @@
 
 const int32_t INT_MAX = 2147483647;
 
-
-void nop() { __asm__ volatile ("nop"); }  // Do nothing
+void sti() { __asm__ volatile ("sti"); } // Enable interrupts
+void cli() { __asm__ volatile ("cli"); } // Disable interrupts
+void nop() { __asm__ volatile ("nop"); } // Do nothing
 
 // fetch data field bitwise in byte "byte" from bit "shift" with "len" bits  
 uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len)

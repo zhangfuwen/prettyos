@@ -10,10 +10,6 @@
 
 void install_USB_HostController(pciDev_t* PCIdev)
 {
-    uint8_t bus  = PCIdev->bus;
-    uint8_t dev  = PCIdev->device;
-    uint8_t func = PCIdev->func;
-
     printf(" USB ");
     switch(PCIdev->interfaceID)
     {
@@ -23,6 +19,10 @@ void install_USB_HostController(pciDev_t* PCIdev)
         case 0x80: printf("no HCI "); break;
         case 0xFE: printf("any ");    break;
     }
+
+    uint8_t bus  = PCIdev->bus;
+    uint8_t dev  = PCIdev->device;
+    uint8_t func = PCIdev->func;
 
     for (uint8_t i = 0; i < 6; ++i) // check USB BARs
     {

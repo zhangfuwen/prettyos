@@ -32,23 +32,23 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     struct ehci_qhd* head = (struct ehci_qhd*)address;
     memset(address, 0, sizeof(struct ehci_qhd));
 
-                                                     // bit 31:5 Horizontal Link Pointer, bit 4:3 reserved, 
-    head->horizontalPointer      =   horizPtr | 0x2; // bit 2:1  type:  00b iTD,   01b QH,   10b siTD,   11b FSTN   
-                                                     // bit 0    T-Bit: is set to zero
-    head->deviceAddress          =   device;         // The device address
-    head->inactive               =   0;
-    head->endpoint               =   endpoint;       // endpoint 0 contains Device infos such as name
-    head->endpointSpeed          =   2;              // 00b = full speed; 01b = low speed; 10b = high speed
-    head->dataToggleControl      =   1;              // get the Data Toggle bit out of the included qTD
-    head->H                      =   H;              // mark a queue head as being the head of the reclaim list
-    head->maxPacketLength        =   packetSize;     // 64 byte for a control transfer to a high speed device
-    head->controlEndpointFlag    =   0;              // only used if endpoint is a control endpoint and not high speed
-    head->nakCountReload         =  15;              // this value is used by EHCI to reload the Nak Counter field. 0=ignores NAK counter.
-    head->interruptScheduleMask  =   0;              // not used for async schedule
-    head->splitCompletionMask    =   0;              // unused if (not low/full speed and in periodic schedule)
-    head->hubAddr                =   0;              // unused if high speed (Split transfer)
-    head->portNumber             =   0;              // unused if high speed (Split transfer)
-    head->mult                   =   1;              // 1-3 transaction per micro-frame, 0 means undefined results
+                                                    // bit 31:5 Horizontal Link Pointer, bit 4:3 reserved,
+    head->horizontalPointer     =   horizPtr | 0x2; // bit 2:1  type:  00b iTD,   01b QH,   10b siTD,   11b FSTN
+                                                    // bit 0    T-Bit: is set to zero
+    head->deviceAddress         =   device;         // The device address
+    head->inactive              =   0;
+    head->endpoint              =   endpoint;       // endpoint 0 contains Device infos such as name
+    head->endpointSpeed         =   2;              // 00b = full speed; 01b = low speed; 10b = high speed
+    head->dataToggleControl     =   1;              // get the Data Toggle bit out of the included qTD
+    head->H                     =   H;              // mark a queue head as being the head of the reclaim list
+    head->maxPacketLength       =   packetSize;     // 64 byte for a control transfer to a high speed device
+    head->controlEndpointFlag   =   0;              // only used if endpoint is a control endpoint and not high speed
+    head->nakCountReload        =  15;              // this value is used by EHCI to reload the Nak Counter field. 0=ignores NAK counter.
+    head->interruptScheduleMask =   0;              // not used for async schedule
+    head->splitCompletionMask   =   0;              // unused if (not low/full speed and in periodic schedule)
+    head->hubAddr               =   0;              // unused if high speed (Split transfer)
+    head->portNumber            =   0;              // unused if high speed (Split transfer)
+    head->mult                  =   1;              // 1-3 transaction per micro-frame, 0 means undefined results
     if (firstQTD == NULL)
         head->qtd.next = 0x1;
     else
@@ -70,8 +70,8 @@ ehci_qtd_t* allocQTD(uintptr_t next)
     if (next != 0x1)
         td->next = paging_get_phys_addr(kernel_pd, (void*)next);
     else
-        td->next = 0x1; 
-    
+        td->next = 0x1;
+
     return td;
 }
 
@@ -138,28 +138,28 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
-    td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = IN;         // OUT = 0, IN = 1
-    td->token.errorCounter = 0x3;        // Written by the Host Controller.
-    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
-    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
-    td->token.bytes        = 13;         // dependent on transfer, here 13 byte status information
-    td->token.dataToggle   = toggle;     // Should be toggled every list entry
+    td->nextAlt            = 0x1;    // No alternate next, so T-Bit is set to 1
+    td->token.status       = 0x80;   // This will be filled by the Host Controller
+    td->token.pid          = IN;     // OUT = 0, IN = 1
+    td->token.errorCounter = 0x3;    // Written by the Host Controller.
+    td->token.currPage     = 0x0;    // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;    // We want an interrupt after complete transfer
+    td->token.bytes        = 13;     // dependent on transfer, here 13 byte status information
+    td->token.dataToggle   = toggle; // Should be toggled every list entry
 
     MSDStatusQTDpage0 = allocQTDbuffer(td);
 
-    (*(((uint32_t*)MSDStatusQTDpage0)+0)) = CSWMagicNotOK; // magic USBS 
+    (*(((uint32_t*)MSDStatusQTDpage0)+0)) = CSWMagicNotOK; // magic USBS
     (*(((uint32_t*)MSDStatusQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
-    (*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA; //
-    (*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA; //
+    (*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA;
+	(*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA;
 
     return (void*)td;
 }
 
 void* createQTD_Handshake(uint8_t direction)
 {
-    return createQTD_IO(0x1, direction, 1,  0);
+    return createQTD_IO(0x1, direction, 1, 0);
 }
 
 
@@ -198,7 +198,7 @@ void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
   #ifdef _USB_DIAGNOSIS_
-    showData(virtAddrBuf0, size, false);    
+    showData(virtAddrBuf0, size, false);
   #endif
 }
 
@@ -206,7 +206,7 @@ uint32_t showStatusbyteQTD(void* addressQTD)
 {
     uint8_t statusbyte = getField(addressQTD, 8, 0, 8);
     if (statusbyte != 0x00)
-    {        
+    {
         printf("\n");
         textColor(0x0E);
         if (statusbyte & (1<<7)) { printf("Active - HC transactions enabled"); }
@@ -219,10 +219,10 @@ uint32_t showStatusbyteQTD(void* addressQTD)
         textColor(0x0E);
         if (statusbyte & (1<<1)) { printf("Do Complete Split"); }
         if (statusbyte & (1<<0)) { printf("Do Ping"); }
-        textColor(0x0F);     
+        textColor(0x0F);
     }
     return statusbyte;
-}   
+}
 
 /////////////////////////////////////
 // Asynchronous schedule traversal //
@@ -303,13 +303,13 @@ the EHCI controller simply stops traversal of the asynchronous schedule.
 void checkAsyncScheduler()
 {
     // cf. ehci spec 1.0, Figure 3-7. Queue Head Structure Layout
-    
+
     textColor(0x02);
-        
+
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register  
     void* virtASYNCLISTADDR = paging_acquire_pcimem(pOpRegs->ASYNCLISTADDR);    
     printf("\ncurr QH: %X ",paging_get_phys_addr(kernel_pd,virtASYNCLISTADDR));
-    
+
     // Last accessed & next to access QH, DWORD 0
     uintptr_t horizontalPointer = (*((uint32_t*)virtASYNCLISTADDR)) & 0xFFFFFFE0; // without last 5 bits
     /*
@@ -317,7 +317,7 @@ void checkAsyncScheduler()
     uint32_t Tbit =  BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x01;              // bit 0
     */
     printf("\tnext QH: %X ",horizontalPointer);
-    
+
     //printf("\ntype: %u T-bit: %u",type,Tbit); 
 
     // Last accessed & next to access QH, DWORD 1
@@ -328,28 +328,28 @@ void checkAsyncScheduler()
     uint32_t dataToggleControl           = (BYTE2( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x40)>>6;
     uint32_t Hbit                        = (BYTE2( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x80)>>7;
     uint32_t mult                        = (BYTE4( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0xC0)>>6;
-    
+
     uint32_t maxPacket = (( BYTE4( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x07 ) << 8 ) +
                             BYTE3( *( ((uint32_t*)virtASYNCLISTADDR)+1) );
-    
+
     printf("\ndev: %u endp: %u inactivate: %u dtc: %u H: %u mult: %u maxPacket: %u", 
              deviceAddress, endpoint, inactivateOnNextTransaction, dataToggleControl, Hbit, mult, maxPacket);
     */
-    
+
     // Last accessed & next to access QH, DWORD 2
     // ...
 
     // Last accessed & next to access QH, DWORD 3
     uintptr_t firstQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+3)) & 0xFFFFFFE0; // without last 5 bits
-    printf("\ncurr qTD: %X",firstQTD);                       
-    
+    printf("\ncurr qTD: %X",firstQTD);
+
     // Last accessed & next to access QH, DWORD 4
     uintptr_t nextQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+4)) & 0xFFFFFFE0; // without last 5 bits
-    printf("\tnext qTD: %X",nextQTD);     
+    printf("\tnext qTD: %X",nextQTD);
 
     // NAK counter in overlay area
     uint32_t NakCtr = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+5) ) & 0x1E)>>1;
-    printf("\nNAK counter: %u",NakCtr);     
+    printf("\nNAK counter: %u",NakCtr);
     textColor(0x0E);
 }
 
@@ -357,110 +357,110 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
 {
     if (analyze)
     {
-      #ifdef _USB_DIAGNOSIS_  
+      #ifdef _USB_DIAGNOSIS_
         printf("\nbefore aS:");
         checkAsyncScheduler();
       #endif
     }
 
     // Enable Asynchronous Schdeuler
-     pOpRegs->USBSTS |= STS_USBINT;
-     USBINTflag = false;
-     
-     pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
-     
-     int8_t timeout=7;
-     while (!(pOpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
-     {
-             timeout--;
-             if(timeout>0)
-             {
-                 sleepMilliSeconds(20); 
-                 textColor(0x0D);
-               #ifdef _USB_DIAGNOSIS_    
-                 printf(">");
-               #endif
-                 textColor(0x0F);
-             }
-             else
-             {
-                 textColor(0x0C);
-                 printf("\ntimeout - STS_ASYNC_ENABLED still not set!");
-                 textColor(0x0F);
-                 break;
-             }
-         }
+    pOpRegs->USBSTS |= STS_USBINT;
+    USBINTflag = false;
 
-     sleepMilliSeconds(150 + velocity * 150); 
+    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
 
-     timeout=7;
-     while (!USBINTflag) // set by interrupt
-     {
-         timeout--;
-         if(timeout>0)
-         {
-             sleepMilliSeconds(20); 
-             
-           #ifdef _USB_DIAGNOSIS_
-             textColor(0x0D);
-             printf("#");
-             textColor(0x0F);
-           #endif
-         }
-         else
-         {
-             textColor(0x0C);
-             printf("\ntimeout - no STS_USBINT set!");
-             textColor(0x0F);
-             break;
-         }
-     };
-     
-     pOpRegs->USBSTS |= STS_USBINT;
-     USBINTflag = false;
-     
-     if (stop)
-     {
-         pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // switch off
-     
-         timeout=7;
-         while (pOpRegs->USBSTS & STS_ASYNC_ENABLED) // wait until it is really off
-         {
-             timeout--;
-             if(timeout>0)
-             {
-                 sleepMilliSeconds(20); 
-               #ifdef _USB_DIAGNOSIS_
-                 textColor(0x0D); 
-                 printf("!");
-                 textColor(0x0F);
-               #endif
-             }
-             else
-             {
-                 textColor(0x0C);
-                 printf("\ntimeout - STS_ASYNC_ENABLED still set!");
-                 textColor(0x0F);
-                 break;
-             }
-         }
-     }
+    int8_t timeout=7;
+    while (!(pOpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
+    {
+        timeout--;
+        if(timeout>0)
+        {
+            sleepMilliSeconds(20);
+          #ifdef _USB_DIAGNOSIS_
+            textColor(0x0D);
+            printf(">");
+            textColor(0x0F);
+          #endif
+       }
+       else
+       {
+            textColor(0x0C);
+            printf("\ntimeout - STS_ASYNC_ENABLED still not set!");
+            textColor(0x0F);
+            break;
+        }
+    }
 
-     if (analyze)
-     {
-       #ifdef _USB_DIAGNOSIS_  
-         printf("\nafter aS:");
-         checkAsyncScheduler();    
-       #endif
-     }     
+    sleepMilliSeconds(150 + velocity * 150);
+
+    timeout=7;
+    while (!USBINTflag) // set by interrupt
+    {
+        timeout--;
+        if(timeout>0)
+        {
+            sleepMilliSeconds(20);
+
+          #ifdef _USB_DIAGNOSIS_
+            textColor(0x0D);
+            printf("#");
+            textColor(0x0F);
+          #endif
+        }
+        else
+        {
+            textColor(0x0C);
+            printf("\ntimeout - no STS_USBINT set!");
+            textColor(0x0F);
+            break;
+        }
+    };
+
+	pOpRegs->USBSTS |= STS_USBINT;
+    USBINTflag = false;
+
+    if (stop)
+    {
+        pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // switch off
+
+        timeout=7;
+        while (pOpRegs->USBSTS & STS_ASYNC_ENABLED) // wait until it is really off
+        {
+            timeout--;
+            if(timeout>0)
+            {
+                sleepMilliSeconds(20); 
+              #ifdef _USB_DIAGNOSIS_
+                textColor(0x0D); 
+                printf("!");
+                textColor(0x0F);
+              #endif
+            }
+            else
+            {
+                textColor(0x0C);
+                printf("\ntimeout - STS_ASYNC_ENABLED still set!");
+                textColor(0x0F);
+                break;
+            }
+        }
+    }
+
+    if (analyze)
+    {
+      #ifdef _USB_DIAGNOSIS_
+        printf("\nafter aS:");
+        checkAsyncScheduler();
+      #endif
+    }
 }
 
 void logBulkTransfer(usbBulkTransfer_t* bT)
 {
-    if ( !bT->successfulCommand || 
-         !bT->successfulCSW     ||
-         (bT->DataBytesToTransferOUT && !bT->successfulDataOUT) || 
-         (bT->DataBytesToTransferIN  && !bT->successfulDataIN) )
+    if (!bT->successfulCommand ||
+        !bT->successfulCSW     ||
+        (bT->DataBytesToTransferOUT && !bT->successfulDataOUT) ||
+        (bT->DataBytesToTransferIN  && !bT->successfulDataIN))
     {
         textColor(0x03);
         printf("\nopcode: %y", bT->SCSIopcode);
@@ -469,7 +469,7 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
         {
             printf("  data out: %s", bT->successfulDataOUT ? "OK" : "Error");
         }
-        if (bT->DataBytesToTransferIN)  
+        if (bT->DataBytesToTransferIN)
         {
             printf("  data in: %s",  bT->successfulDataIN  ? "OK" : "Error");
         }

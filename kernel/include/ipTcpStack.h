@@ -29,30 +29,22 @@ struct ip
     uint8_t tos;
     uint8_t lenght[2];
 
-    //
     uint8_t identification[2];
 
     uint8_t flags_fragmentoffset0;
     uint8_t _fragmentoffset1;
 
-    //
     uint8_t ttl;
     uint8_t protocol;
     uint8_t checksum0[2];
 
-    //
     uint8_t src[4];
-
-    //
     uint8_t dst[4];
-
-    //
     uint8_t optn[4];
-    uint8_t pad; // padding
 
+    uint8_t pad; // padding
 } __attribute__((packed));
 
 void ipTcpStack_recv(void* Data, uint32_t Length);
 
 #endif
-

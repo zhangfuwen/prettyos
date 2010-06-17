@@ -35,7 +35,7 @@ uint32_t paging_install()
     kdebug(3, "\nkernel_pd (virt.): %X ",kernel_pd);
     kdebug(3, "kernel_pd (phys.): %X\n",kernel_pd->pd_phys_addr);
 
-    // Setup the page tables for 0MB-20MB, identity mapping
+    // Setup the page tables for 0 MiB-20 MiB, identity mapping
     uint32_t addr = 0;
     for (int i=0; i<5; ++i)
     {
@@ -152,10 +152,10 @@ static uint32_t phys_init()
             entry->size = FOUR_GB - entry->base;
     }
 
-    // Check that 16MB-20MB is free for use
+    // Check that 16 MiB-20 MiB is free for use
     if (! memorymap_availability(entries, 16*1024*1024, 20*1024*1024))
     {
-        printf("The memory between 16 MB and 20 MB is not free for use. OS haltet!\n");
+        printf("The memory between 16 MiB and 20 MiB is not free for use. OS haltet!\n");
         for (;;);
     }
 
@@ -170,7 +170,7 @@ static uint32_t phys_init()
         phys_set_bits(entry->base, entry->base+entry->size, !entry->type);
     }
 
-    // Reserve first 20 MB and the region of our kernel code
+    // Reserve first 20 MiB and the region of our kernel code
     phys_set_bits(0x00000000, 20*1024*1024, true);
 
     phys_set_bits((uint32_t)&_kernel_beg, (uint32_t)&_kernel_end, true);
@@ -181,7 +181,7 @@ static uint32_t phys_init()
         if (bittable[i] != 0xFFFFFFFF)
             dword_count = i+1;
 
-    // Exclude the first 16 MB from being allocated (they'll be needed for DMA later on)
+    // Exclude the first 16 MiB from being allocated (they'll be needed for DMA later on)
     first_free_dword = 16*1024*1024 / PAGESIZE / 32;
 
     kdebug(3, "Highest available RAM: %X\n", dword_count*32*4096);

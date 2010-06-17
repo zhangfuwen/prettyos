@@ -10,7 +10,7 @@ KernelStart:
     mov fs, ax
     mov gs, ax
 
-    mov esp, 0x190000 ; set stack below 2 MB limit
+    mov esp, 0x190000 ; set stack below 2 MiB limit
 
 extern _main     ; entry point in ckernel.c
     call _main   ; --> C-Kernel

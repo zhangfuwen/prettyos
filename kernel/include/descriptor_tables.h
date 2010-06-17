@@ -111,7 +111,6 @@ void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, ui
 void gdt_install();
 void idt_install();
 
-
 void write_tss(int32_t num, uint16_t ss0, uint32_t esp0);
 
 // asm functions in flush.asm

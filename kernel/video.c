@@ -10,6 +10,7 @@
 #include "video.h"
 #include "kheap.h"
 #include "timer.h"
+#include "devicemanager.h"
 
 uint16_t* vidmem = (uint16_t*)0xB8000;
 
@@ -245,11 +246,10 @@ void screenshot()
         }
     }
 
-    char timeBuffer[20];
-    utoa(getCurrentSeconds(), timeBuffer); // TEST utoa
-    char timeStr[10];
-    snprintf(timeStr, 10, "TIME%s", timeBuffer);
-    flpydsk_write(timeStr, "TXT", (void*)videoscreen, 4098);
+	FILEPTR file = fopenFileName("1:/screen.txt", "w+");
+	fwrite((void*)videoscreen, 4098, 1, file);
+	fclose(file);
+
     free(videoscreen);
 }
 

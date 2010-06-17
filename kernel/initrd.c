@@ -11,12 +11,12 @@
 #include "fat.h" 
 
 
-initrd_header_t*       initrd_header; // The header.
-initrd_file_header_t*  file_headers;  // The list of file headers.
-fs_node_t*             initrd_root;   // Our root directory node.
-fs_node_t*             initrd_dev;    // We also add a directory node for /dev, so we can mount devfs later on.
-fs_node_t*             root_nodes;    // List of file nodes.
-int                    nroot_nodes;   // Number of file nodes.
+initrd_header_t*      initrd_header; // The header.
+initrd_file_header_t* file_headers;  // The list of file headers.
+fs_node_t*            initrd_root;   // Our root directory node.
+fs_node_t*            initrd_dev;    // We also add a directory node for /dev, so we can mount devfs later on.
+fs_node_t*            root_nodes;    // List of file nodes.
+int                   nroot_nodes;   // Number of file nodes.
 
 struct dirent dirent;
 
@@ -28,8 +28,6 @@ port_t      RAMDiskPort;
 disk_t      RAMDisk;
 partition_t RAMDiskVolume;
 
-bool RAMDISKflag = false;
-
 void* ramdisk_install(size_t size)
 {
     kdebug(0x00, "rd_start: ");
@@ -38,15 +36,13 @@ void* ramdisk_install(size_t size)
     // shell via incbin in data.asm
     memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
-
-    RAMDISKflag = true; // at least one RAMDisk found
         
     // volume
-    RAMDiskVolume.buffer = (uint8_t*)malloc(512,0); // necessary?
+    RAMDiskVolume.buffer = malloc(512,0); // necessary?
     RAMDiskVolume.disk = &RAMDisk;
-    char str[12];
-    itoa(((uint32_t)(ramdisk_start)/PAGESIZE),str);
-    strncpy(RAMDiskVolume.serialNumber,str,12);
+
+    itoa(((uint32_t)(ramdisk_start)/PAGESIZE), RAMDiskVolume.serialNumber);
+    RAMDiskVolume.serialNumber[12] = 0;
     
     // disk
     RAMDisk.type         = &RAMDISK;
@@ -81,7 +77,7 @@ static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, cha
 
 static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 {
-    if ((node == initrd_root) && (index == 0))
+    if (node == initrd_root && index == 0)
     {
       strcpy(dirent.name, "dev");
       dirent.name[3] = 0; // NUL-terminate the string
@@ -118,13 +114,13 @@ static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
 fs_node_t* install_initrd(void* location)
 {
     // Initialise the main and file header pointers and populate the root directory.
-    initrd_header = (initrd_header_t*) location;
-    file_headers  = (initrd_file_header_t*) (location+sizeof(initrd_header_t));
+    initrd_header = (initrd_header_t*)location;
+    file_headers  = (initrd_file_header_t*)(location+sizeof(initrd_header_t));
 
     // Initialise the root directory.
     kdebug(3, "rd_root: ");
 
-    initrd_root = (fs_node_t*) malloc(sizeof(fs_node_t),PAGESIZE);
+    initrd_root          = malloc(sizeof(fs_node_t),PAGESIZE);
     strcpy(initrd_root->name, "dev");
     initrd_root->mask    = initrd_root->uid = initrd_root->gid = initrd_root->inode = initrd_root->length = 0;
     initrd_root->flags   = FS_DIRECTORY;
@@ -140,22 +136,22 @@ fs_node_t* install_initrd(void* location)
     // Initialise the /dev directory (required!)
     kdebug(3, "rd_dev: ");
 
-    initrd_dev = (fs_node_t*)malloc(sizeof(fs_node_t),PAGESIZE);
+    initrd_dev          = malloc(sizeof(fs_node_t),PAGESIZE);
     strcpy(initrd_dev->name, "ramdisk");
-    initrd_dev->mask     = initrd_dev->uid = initrd_dev->gid = initrd_dev->inode = initrd_dev->length = 0;
-    initrd_dev->flags    = FS_DIRECTORY;
-    initrd_dev->read     = 0;
-    initrd_dev->write    = 0;
-    initrd_dev->open     = 0;
-    initrd_dev->close    = 0;
-    initrd_dev->readdir  = &initrd_readdir;
-    initrd_dev->finddir  = &initrd_finddir;
-    initrd_dev->ptr      = 0;
-    initrd_dev->impl     = 0;
+    initrd_dev->mask    = initrd_dev->uid = initrd_dev->gid = initrd_dev->inode = initrd_dev->length = 0;
+    initrd_dev->flags   = FS_DIRECTORY;
+    initrd_dev->read    = 0;
+    initrd_dev->write   = 0;
+    initrd_dev->open    = 0;
+    initrd_dev->close   = 0;
+    initrd_dev->readdir = &initrd_readdir;
+    initrd_dev->finddir = &initrd_finddir;
+    initrd_dev->ptr     = 0;
+    initrd_dev->impl    = 0;
 
     kdebug(3, "root_nodes: ");
 
-    root_nodes = (fs_node_t*) malloc(sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
+    root_nodes  = malloc(sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
     nroot_nodes = initrd_header->nfiles;
 
     // For every file...

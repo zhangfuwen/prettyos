@@ -30,7 +30,6 @@ void console_init(console_t* console, const char* name)
     console->vidmem       = malloc(COLUMNS*USER_LINES*2, PAGESIZE);
     console->csr_x        = 0;
     console->csr_y        = 0;
-    console->attrib       = 0x0F;
     //console->SCROLL_BEGIN = 0;
     console->SCROLL_END   = USER_LINES;
     console->showInfobar  = false;
@@ -77,8 +76,8 @@ void showInfobar(bool show)
 void clear_console(uint8_t backcolor)
 {
     // Erasing the content of the active console
-    current_console->attrib = (backcolor << 4) | 0x0F;
-    memsetw(current_console->vidmem, 0x20 | (current_console->attrib << 8), COLUMNS * USER_LINES);
+    currentTask->attrib = (backcolor << 4) | 0x0F;
+    memsetw(current_console->vidmem, 0x20 | (currentTask->attrib << 8), COLUMNS * USER_LINES);
     current_console->csr_x = 0;
     current_console->csr_y = 0;
     if (current_console == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
@@ -89,7 +88,7 @@ void clear_console(uint8_t backcolor)
 
 void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
 {
-    current_console->attrib = color;
+    currentTask->attrib = color;
 }
 
 void move_cursor_right()
@@ -171,7 +170,7 @@ void putch(char c)
         default:
             if (uc != 0)
             {
-                uint32_t att = current_console->attrib << 8;
+                uint32_t att = currentTask->attrib << 8;
                 if (reachableConsoles[displayedConsole] == current_console) { //print to screen
                     *(vidmem + (current_console->csr_y+2) * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color
                 }
@@ -194,7 +193,7 @@ void scroll()
     {
         uint8_t temp = current_console->csr_y - scroll_end + 1;
         memcpy(current_console->vidmem, current_console->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
-        memsetw(current_console->vidmem + (scroll_end - temp) * COLUMNS, current_console->attrib << 8, COLUMNS);
+        memsetw(current_console->vidmem + (scroll_end - temp) * COLUMNS, currentTask->attrib << 8, COLUMNS);
         current_console->csr_y = scroll_end - 1;
         refreshUserScreen();
     }
@@ -204,7 +203,7 @@ void scroll()
 // vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c and the PrettyOS-specific %v
 void vprintf(const char* args, va_list ap)
 {
-    uint8_t attribute = current_console->attrib;
+    uint8_t attribute = currentTask->attrib;
     char buffer[32]; // Larger is not needed at the moment
 
     for (; *args; ++args)
@@ -245,9 +244,9 @@ void vprintf(const char* args, va_list ap)
                         putch((int8_t)va_arg(ap, int32_t));
                         break;
                     case 'v':
-                        current_console->attrib = (attribute >> 4) | (attribute << 4);
+                        currentTask->attrib = (attribute >> 4) | (attribute << 4);
                         putch(*(++args));
-                        current_console->attrib = attribute;
+                        currentTask->attrib = attribute;
                         break;
                     case '%':
                         putch('%');
@@ -272,12 +271,12 @@ void printf(const char* args, ...)
 
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
-    uint8_t old_attrib = current_console->attrib;
+    uint8_t old_attrib = currentTask->attrib;
     uint8_t c_x = current_console->csr_x;
     uint8_t c_y = current_console->csr_y;
     scroll_flag = false;
 
-    current_console->attrib = attribute;
+    currentTask->attrib = attribute;
     current_console->csr_x = 0; current_console->csr_y = line;
 
     // Call usual printf routines
@@ -286,7 +285,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     vprintf(message, ap);
 
     scroll_flag = true;
-    current_console->attrib = old_attrib;
+    currentTask->attrib = old_attrib;
     current_console->csr_x = c_x;
     current_console->csr_y = c_y;
 }

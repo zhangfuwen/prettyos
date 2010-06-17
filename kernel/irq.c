@@ -7,8 +7,7 @@
 #include "util.h"
 #include "task.h"
 #include "kheap.h"
-#include "flpydsk.h" // floppy motor off
-
+#include "flpydsk.h"
 
 typedef void(*interrupt_handler_t)(registers_t*);
 
@@ -76,8 +75,7 @@ uint32_t irq_handler(uint32_t esp)
             currentTask->FPU_ptr = (uintptr_t)malloc(108,4);
         }
     }
-
-    if ((r->int_no < 32) && (r->int_no != 7)) // exception w/o #NM
+    else if (r->int_no < 32) // exception w/o #NM
     {
         textColor(0x0C);
         flpydsk_control_motor(false); // floppy motor off

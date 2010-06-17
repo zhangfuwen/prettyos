@@ -216,7 +216,7 @@ FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* p
 // file handling
 FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t *fHandle, uint8_t mode);
 FS_ERROR searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
-FILEPTR fopenFileName(const char* fileName, const char* mode, partition_t* part);
+FILEPTR fopenFileName(const char* fileName, const char* mode);
 FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
 FS_ERROR fclose(FILEPTR fileptr);
 FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count);

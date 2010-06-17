@@ -52,7 +52,6 @@ extern uintptr_t SetupQTDpage0;
 
 
 
-
 /* ****** */
 /* USBCMD */
 /* ****** */
@@ -173,9 +172,6 @@ extern uintptr_t SetupQTDpage0;
 
 #define PSTS_CONNECTED_CHANGE          0x00000002 /* rwc */
 #define PSTS_CONNECTED                 0x00000001 /* ro */
-
-/***************************************************************/
-
 
 
 void ehci_install(pciDev_t* PCIdev, uint32_t i);

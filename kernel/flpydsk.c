@@ -26,7 +26,7 @@
 
 static int32_t flpydsk_calibrate(floppy_t* drive);
 
-floppy_t* floppyDrive[2];
+floppy_t* floppyDrive[MAX_FLOPPY];
 
 const int32_t FLPY_SECTORS_PER_TRACK       =    18; // sectors per track
 static floppy_t* CurrentDrive              =     0; // current working drive

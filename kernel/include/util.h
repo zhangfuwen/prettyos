@@ -66,9 +66,8 @@ void reboot();
 
 void bootscreen();
 
-static inline void sti() { __asm__ volatile ("sti"); }  // Enable interrupts
-static inline void cli() { __asm__ volatile ("cli"); }  // Disable interrupts
-
+void sti();
+void cli();
 void nop();
 
 void   reverse(char* s);

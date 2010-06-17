@@ -11,10 +11,8 @@
 #include "ehciQHqTD.h"
 #include "usb2.h"
 #include "usb2_msd.h"
-
 #include "devicemanager.h"
-
-#include "fat.h"   
+#include "fat.h"
 
 extern const uint32_t CSWMagicNotOK;
 const uint32_t CSWMagicOK = 0x53425355; // USBS
@@ -275,7 +273,7 @@ labelTransferIN: /// TEST
         {
             printf("\nIN-Transfer will be repeated: %u left",numberTries);
             goto labelTransferIN; 
-        }        
+        }
     }
     else
     {
@@ -320,33 +318,29 @@ labelTransferIN: /// TEST
     // uint8_t CSWstatusByte = (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF;
     uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
 
+    textColor(0x0C);
     switch (CSWstatusByte)
     {
         case 0x00:
         #ifdef _USB_DIAGNOSIS_
             textColor(0x0A);
             printf("\tCSW status OK");
-            textColor(0x0F);
         #endif
             break;
-        case 0x01 :
-            textColor(0x0C);
+        case 0x01:
             printf("\nCommand failed");
-            textColor(0x0F);
             break;
         case 0x02:
-            textColor(0x0C);
             printf("\nPhase Error");
             textColor(0x0E);
             printf("\nReset recovery is needed"); 
             usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
             break;
         default:
-            textColor(0x0C);
             printf("\nCSW status byte: undefined value (error)");
-            textColor(0x0F);
             break;
     }
+    textColor(0x0F);
 
     // transfer diagnosis (qTD status)
     uint32_t statusCommand = showStatusbyteQTD(cmdQTD);
@@ -403,10 +397,9 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
     const uint8_t maxTest = 3;
     int32_t timeout = maxTest;
     int32_t sense = -1;
-    bool repeat = true;
     uint8_t statusByte;
 
-    while (repeat)
+    while (true)
     {
         timeout--;
         textColor(0x09); printf("\n\n>>> SCSI: test unit ready"); textColor(0x0F);
@@ -416,7 +409,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
         uint8_t statusByteTestReady = getStatusByte();
         showUSBSTS();
         
-        if (timeout != (maxTest-1))
+        if (timeout != maxTest-1)
         {
             ///////// send SCSI command "request sense"
 
@@ -429,24 +422,26 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
         
             sense = showResultsRequestSense();
             if ( ((statusByteTestReady == 0) && ((sense == 0) || (sense == 6))) || (timeout <= 0) )
-            {
-                repeat = false;
+			{
+				break;
             }
         }
         waitForKeyStroke();
     }
+    waitForKeyStroke();
+
     return statusByte;
 }
 
 static void startLogBulkTransfer(usbBulkTransfer_t* pTransferLog, uint8_t SCSIopcode, uint32_t DataBytesToTransferIN, uint32_t DataBytesToTransferOUT)
 {
-        pTransferLog->SCSIopcode             = SCSIopcode;
-        pTransferLog->successfulCommand      = false;
-        pTransferLog->successfulDataOUT      = false;
-        pTransferLog->successfulDataIN       = false;
-        pTransferLog->successfulCSW          = false;
-        pTransferLog->DataBytesToTransferIN  = DataBytesToTransferIN;
-        pTransferLog->DataBytesToTransferOUT = DataBytesToTransferOUT;
+    pTransferLog->SCSIopcode             = SCSIopcode;
+    pTransferLog->successfulCommand      = false;
+    pTransferLog->successfulDataOUT      = false;
+    pTransferLog->successfulDataIN       = false;
+    pTransferLog->successfulCSW          = false;
+    pTransferLog->DataBytesToTransferIN  = DataBytesToTransferIN;
+    pTransferLog->DataBytesToTransferOUT = DataBytesToTransferOUT;
 }
 
 // http://en.wikipedia.org/wiki/SCSI_Inquiry_Command
@@ -825,7 +820,6 @@ int32_t showResultsRequestSense()
         return -1;
     }
 }
-
 
 
 /*

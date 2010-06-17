@@ -15,12 +15,8 @@
 
 void ipTcpStack_recv(void* Data, uint32_t Length)
 {
-    struct ethernet* eth;
-    struct arp*      arp;
-    struct ip*       ip;
-
     // first we cast our Data pointer into a pointer at our Ethernet-Frame
-    eth = (struct ethernet*)Data;
+    struct ethernet* eth = (struct ethernet*)Data;
     textColor(0x0E); printf("--- TCP-IP stack ---\n");
 
     // we dump the Data
@@ -53,8 +49,8 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     }
 
     // now we set our arp/ip pointer to the Ethernet-payload
-    arp = (struct arp*)((unsigned long)eth + sizeof(struct ethernet));
-    ip  = (struct ip*)((unsigned long)eth + sizeof(struct ethernet));
+    struct arp* arp = (struct arp*)((unsigned long)eth + sizeof(struct ethernet));
+    struct ip* ip  = (struct ip*)((unsigned long)eth + sizeof(struct ethernet));
 
     // to decide if it is an ip or an arp paket we just look at the ip-version
     if ((ip->version_ihl >> 4) == 4)
