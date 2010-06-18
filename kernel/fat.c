@@ -18,6 +18,9 @@
 #include "fat.h"
 #include "devicemanager.h"
 
+// TEST
+FILE globalFileTemp; // cf. fopenFileName
+
 // fseek ???
     #define SEEK_SET 0
     #define SEEK_CUR 1
@@ -1724,7 +1727,7 @@ static bool FormatFileName( const char* fileName, char* fN2, bool mode)
         return false;
     }
 
-    if ( (pExt = strchr( szName, '.' )) != 0 ) // <-------------- strchr
+    if ( (pExt = strchr( szName, '.' )) != 0 ) 
     {
         *pExt = 0;
         pExt++;
@@ -1972,7 +1975,7 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
     printf("\n>>>>> fopenFileName <<<<<");
   #endif  
 	
-    partition_t* part = getPartition(fileName);
+    partition_t* part = getPartition(fileName); printf("\npart from getPartition: %X",part);
     while(*fileName != '/' && *fileName != '|' && *fileName != '\\')
     {
         fileName++;
@@ -1981,7 +1984,7 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
             return(0);
         }
     }
-    fileName++;
+    fileName++; printf("\nfileName w/o Path: %s",fileName);
 
     char       ModeC;
     uint32_t   fHandle;
@@ -1994,6 +1997,8 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
         FSerrno = CE_INVALID_FILENAME;
         return NULL;
     }
+    printf("\nfileName formatted: %s",filePtr->name);
+    waitForKeyStroke();
 
     ModeC = mode[0];
 
@@ -2006,11 +2011,9 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
     filePtr->dirclus = 0; // FatRootDirClusterValue; ???
     filePtr->dirccls = 0; // FatRootDirClusterValue; ???
 
-    FILE fileTemp;
+    fileptrCopy(&globalFileTemp, filePtr);
 
-    fileptrCopy(&fileTemp, filePtr);
-
-    if (searchFile(filePtr, &fileTemp, LOOK_FOR_MATCHING_ENTRY, 0) == CE_GOOD)
+    if (searchFile(filePtr, &globalFileTemp, LOOK_FOR_MATCHING_ENTRY, 0) == CE_GOOD)
     {
         switch(ModeC)
         {
@@ -2131,7 +2134,7 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
     }
     else
     {
-        fileptrCopy(filePtr, &fileTemp);
+        fileptrCopy(filePtr, &globalFileTemp);
 
         if(ModeC == 'w' || ModeC == 'W' || ModeC == 'a' || ModeC == 'A')
         {
