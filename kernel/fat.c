@@ -73,7 +73,7 @@ static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 
 FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 {
-  #ifdef _FAT_DIAGNOSIS_
+  #ifdef _FAT_READ_WRITE_TO_SECTOR_DIAGNOSIS_
     textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<",sector_addr); textColor(0x0F);
   #endif
     return part->disk->type->writeSector(sector_addr, buffer);
@@ -86,8 +86,8 @@ FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* p
 
 FS_ERROR sectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 {
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> sectorRead <<<<<");
+  #ifdef _FAT_READ_WRITE_TO_SECTOR_DIAGNOSIS_
+    textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<",sector_addr); textColor(0x0F);
   #endif
     return part->disk->type->readSector(sector_addr, buffer);
 }
@@ -2049,7 +2049,6 @@ FILE* fopenFileName(const char* fileName, const char* mode)
                         if (final == CE_GOOD)
                         {
                             final = fseek (filePtr, 0, SEEK_END);
-                            printf("\nretVal fseek: %d line: %u",final,__LINE__);
                             if (mode[1] == '+')
                             {
                                 filePtr->Flags.read = true;
@@ -2078,7 +2077,6 @@ FILE* fopenFileName(const char* fileName, const char* mode)
                     if (final == CE_GOOD)
                     {
                         final = fseek (filePtr, 0, SEEK_END);
-                        printf("\nretVal fseek: %d line: %u",final,__LINE__);
                         if (final != CE_GOOD)
                             FSerrno = CE_SEEK_ERROR;
                         else
@@ -2110,7 +2108,6 @@ FILE* fopenFileName(const char* fileName, const char* mode)
                             if (final == CE_GOOD)
                             {
                                 final = fseek (filePtr, 0, SEEK_END);
-                                printf("\nretVal fseek: %d line: %u",final,__LINE__);
                                 if (final != CE_GOOD)
                                     FSerrno = CE_SEEK_ERROR;
                                 if (mode[1] == '+')
@@ -2162,21 +2159,20 @@ FILE* fopenFileName(const char* fileName, const char* mode)
                 if (final == CE_GOOD)
                 {
                     final = fseek (filePtr, 0, SEEK_END);
-                    printf("\nretVal fseek: %d line: %u",final,__LINE__);
                     if (final != CE_GOOD)
                     {
-                        FSerrno = CE_SEEK_ERROR; printf("\nline: %u",__LINE__);
+                        FSerrno = CE_SEEK_ERROR; 
                     }
                     if (mode[1] == '+')
                     {
-                        filePtr->Flags.read = true; printf("\nline: %u",__LINE__);
+                        filePtr->Flags.read = true; 
                     }
                 }
             }
         }
         else
         {
-            final = CE_FILE_NOT_FOUND; printf("\nline: %u",__LINE__);
+            final = CE_FILE_NOT_FOUND; 
         }
     }
 
@@ -2184,14 +2180,14 @@ FILE* fopenFileName(const char* fileName, const char* mode)
     {
         if(filePtr)
         {
-            free(filePtr); printf("\nline: %u",__LINE__);
-            filePtr = NULL; printf("\nline: %u",__LINE__);
+            free(filePtr); 
+            filePtr = NULL; 
         }
     }
     else
     {
-        FSerrno = CE_GOOD; printf("\nline: %u",__LINE__);
+        FSerrno = CE_GOOD; 
     }
-    printf("\nfilePtr: %X",filePtr);
+    
     return filePtr;
 }
