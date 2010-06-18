@@ -18,26 +18,23 @@
 #include "fat.h"
 #include "devicemanager.h"
 
-// TEST
-FILE globalFileTemp; // cf. fopenFileName
-
-// fseek ???
+// fseek 
     #define SEEK_SET 0
     #define SEEK_CUR 1
     #define SEEK_END 2
-    #define EOF  ((int32_t)-1)
+    #define EOF     ((int32_t)-1)
 
 // prototypes
 static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite);
 
-uint8_t  globalBufferFATSector[SECTOR_SIZE]; // The global FAT sector buffer
+uint8_t  globalBufferFATSector[SECTOR_SIZE];     // Global FAT sector buffer
 bool     globalBufferMemSet0       = false;      // Global variable indicating that the data buffer contains all zeros
-FILEPTR  globalBufferUsedByFILEPTR = NULL;       // Global variable indicating which file is using the data buffer
+FILE*  globalBufferUsedByFILEPTR = NULL;       // Global variable indicating which file is using the data buffer
 uint32_t globalLastDataSectorRead  = 0xFFFFFFFF; // Global variable indicating which data sector was read last
 uint32_t globalLastFATSectorRead   = 0xFFFFFFFF; // Global variable indicating which FAT sector was read last
 bool     globalFATWriteNecessary   = false;      // Global variable indicating that there is information that needs to be written to the FAT
 bool     globalDataWriteNecessary  = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
-uint8_t  FSerrno;                                // Global error number?
+uint8_t  FSerrno;                                // Global error number
 
 static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 {
@@ -77,7 +74,7 @@ static uint32_t cluster2sector(partition_t* volume, uint32_t cluster)
 FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> sectorWrite <<<<<");
+    textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<",sector_addr); textColor(0x0F);
   #endif
     return part->disk->type->writeSector(sector_addr, buffer);
 }
@@ -107,7 +104,7 @@ static FS_ERROR flushData()
     printf("\n>>>>> flushData <<<<<");
   #endif
     
-    FILEPTR fileptr     = globalBufferUsedByFILEPTR;
+    FILE* fileptr     = globalBufferUsedByFILEPTR;
     partition_t* volume = fileptr->volume;
     uint32_t sector     = cluster2sector(volume,fileptr->ccls) + (uint16_t)fileptr->sec;
     if(singleSectorWrite( sector, volume->buffer, volume) != CE_GOOD)
@@ -251,7 +248,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
     return c;
 }
 
-static FS_ERROR fileGetNextCluster(FILEPTR fileptr, uint32_t n)
+static FS_ERROR fileGetNextCluster(FILE* fileptr, uint32_t n)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileGetNextCluster <<<<<");
@@ -305,7 +302,7 @@ static FS_ERROR fileGetNextCluster(FILEPTR fileptr, uint32_t n)
 // directory //
 ///////////////
 
-static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry, bool ForceRead)
+static FILEROOTDIRECTORYENTRY cacheFileEntry(FILE* fileptr, uint32_t* curEntry, bool ForceRead)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
@@ -419,7 +416,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILEPTR fileptr, uint32_t* curEntry
     textColor(0x0C); printf("UNCLEAN !!! END of cacheFileEntry"); textColor(0x0F);
 }
 
-static FILEROOTDIRECTORYENTRY getFileAttribute(FILEPTR fileptr, uint32_t* fHandle)
+static FILEROOTDIRECTORYENTRY getFileAttribute(FILE* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> getFileAttribute <<<<<");
@@ -464,12 +461,12 @@ static void updateTimeStamp(FILEROOTDIRECTORYENTRY dir)
 
 /*
  This function will cache the sector of directory entries in the directory
- pointed to by the dirclus value in the FILEPTR 'fileptr'
+ pointed to by the dirclus value in the FILE* 'fileptr'
  that contains the entry that corresponds to the fHandle offset.
  It will then copy the file information for that entry into the 'fo' FILE object.
 */
 
-static uint8_t fillFILEPTR(FILEPTR fileptr, uint32_t* fHandle)
+static uint8_t fillFILEPTR(FILE* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fillFILEPTR <<<<<");
@@ -520,7 +517,7 @@ static uint8_t fillFILEPTR(FILEPTR fileptr, uint32_t* fHandle)
     } // END: an entry exists
 }
 
-FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode)
+FS_ERROR searchFile( FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> searchFile <<<<<");
@@ -669,7 +666,7 @@ FS_ERROR searchFile( FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint
     return(statusB);
 }
 
-FS_ERROR fclose(FILEPTR fileptr)
+FS_ERROR fclose(FILE* fileptr)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fclose <<<<<");
@@ -700,7 +697,7 @@ FS_ERROR fclose(FILEPTR fileptr)
     return error;
 }
 
-FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count)
+FS_ERROR fread(FILE* fileptr, void* dest, uint32_t count)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fread <<<<<");
@@ -790,7 +787,8 @@ void showDirectoryEntry(FILEROOTDIRECTORYENTRY dir)
 static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatWrite <<<<<");
+    printf("\n>>>>> fatWrite forceWrite: %d <<<<<",forceWrite);
+    if (forceWrite) waitForKeyStroke();
   #endif
 
     if ((volume->type != FAT32) && (volume->type != FAT16) && (volume->type != FAT12))
@@ -846,7 +844,7 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
             break;
         case FAT16:
         default:
-            posFAT = (uint32_t)ccls * 2;   // "p" is the position
+            posFAT = (uint32_t)ccls * 2;   
             q = 0;
             break;
     }
@@ -856,7 +854,6 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
 
     if (globalLastFATSectorRead != sector)
     {
-        // If we are loading a new sector then write the current one to the volume if we need to
         if (globalFATWriteNecessary)
         {
             for (uint8_t i=0, li=globalLastFATSectorRead; i<volume->fatcopy; i++, li+=volume->fatsize)
@@ -869,7 +866,6 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
             globalFATWriteNecessary = false;
         }
 
-        // Load the new sector
         if (singleSectorRead (sector, globalBufferFATSector, volume) != CE_GOOD)
         {
             globalLastFATSectorRead = 0xFFFF;
@@ -901,17 +897,15 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
 
 			MemoryWriteByte (globalBufferFATSector, posFAT, c); //
 
-			// crossing sectors possible, do we need to load a new sector?
 			posFAT = (posFAT+1) & (volume->sectorSize-1);
 			if (posFAT == 0)
 			{
-
-				if (fatWrite (volume, 0, 0, true)) // update FAT
+				if (fatWrite (volume, 0, 0, true) != CE_GOOD) // update FAT
 				{
 					return ClusterFailValue;
 				}
 
-				if (singleSectorRead (sector+1, globalBufferFATSector, volume)) // next sector
+				if (singleSectorRead (sector+1, globalBufferFATSector, volume) != CE_GOOD) // next sector
 				{
 					globalLastFATSectorRead = 0xFFFF;
 					return ClusterFailValue;
@@ -932,7 +926,7 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
 }
 
 
-static uint32_t fatFindEmptyCluster(FILEPTR fileptr)
+static uint32_t fatFindEmptyCluster(FILE* fileptr)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatFindEmptyCluster <<<<<");
@@ -1024,7 +1018,7 @@ static FS_ERROR eraseCluster(partition_t* volume, uint32_t cluster)
     return(CE_GOOD);
 }
 
-static FS_ERROR fileAllocateNewCluster( FILEPTR fileptr, uint8_t mode)
+static FS_ERROR fileAllocateNewCluster( FILE* fileptr, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileAllocateNewCluster <<<<<");
@@ -1056,7 +1050,7 @@ static FS_ERROR fileAllocateNewCluster( FILEPTR fileptr, uint8_t mode)
 }
 
 // 'size' of one object, 'n' is the number of these objects
-uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILEPTR fileptr)
+uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* fileptr)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fwrite <<<<<");
@@ -1227,7 +1221,7 @@ static uint32_t getFullClusterNumber(FILEROOTDIRECTORYENTRY entry)
     return TempFullClusterCalc;
 }
 
-static uint8_t writeFileEntry( FILEPTR fileptr, uint32_t* curEntry)
+static uint8_t writeFileEntry( FILE* fileptr, uint32_t* curEntry)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> writeFileEntry <<<<<");
@@ -1324,7 +1318,7 @@ static bool fatEraseClusterChain (uint32_t cluster, partition_t* volume)
 }
 
 
-FS_ERROR fileErase( FILEPTR fileptr, uint32_t* fHandle, uint8_t EraseClusters)
+FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, uint8_t EraseClusters)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileErase <<<<<");
@@ -1384,7 +1378,7 @@ FS_ERROR fileErase( FILEPTR fileptr, uint32_t* fHandle, uint8_t EraseClusters)
     return (status);
 }
 
-static FS_ERROR PopulateEntries(FILEPTR fileptr, char *name , uint32_t *fHandle, uint8_t mode)
+static FS_ERROR PopulateEntries(FILE* fileptr, char *name , uint32_t *fHandle, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> PopulateEntries <<<<<");
@@ -1433,7 +1427,7 @@ static FS_ERROR PopulateEntries(FILEPTR fileptr, char *name , uint32_t *fHandle,
     return(error);
 }
 
-uint8_t FindEmptyEntries(FILEPTR fileptr, uint32_t *fHandle)
+uint8_t FindEmptyEntries(FILE* fileptr, uint32_t *fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> FindEmptyEntries <<<<<");
@@ -1517,7 +1511,7 @@ uint8_t FindEmptyEntries(FILEPTR fileptr, uint32_t *fHandle)
     return(status == FOUND);
 }
 
-static FILEROOTDIRECTORYENTRY loadDirAttrib(FILEPTR fo, uint32_t* fHandle)
+static FILEROOTDIRECTORYENTRY loadDirAttrib(FILE* fo, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> loadDirAttrib <<<<<");
@@ -1552,7 +1546,7 @@ static FILEROOTDIRECTORYENTRY loadDirAttrib(FILEPTR fo, uint32_t* fHandle)
 }
 
 
-static FS_ERROR fileCreateHeadCluster( FILEPTR fo, uint32_t* cluster)
+static FS_ERROR fileCreateHeadCluster( FILE* fo, uint32_t* cluster)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileCreateHeadCluster <<<<<");
@@ -1593,7 +1587,7 @@ static FS_ERROR fileCreateHeadCluster( FILEPTR fo, uint32_t* cluster)
     }
 }
 
-static FS_ERROR CreateFirstCluster(FILEPTR fileptr)
+static FS_ERROR CreateFirstCluster(FILE* fileptr)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> CreateFirstCluster <<<<<");
@@ -1621,7 +1615,7 @@ static FS_ERROR CreateFirstCluster(FILEPTR fileptr)
     return(error);
 }
 
-FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t *fHandle, uint8_t mode)
+FS_ERROR createFileEntry(FILE* fileptr, uint32_t *fHandle, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> createFileEntry <<<<<");
@@ -1756,7 +1750,7 @@ static bool FormatFileName( const char* fileName, char* fN2, bool mode)
     return true;
 }
 
-static void fileptrCopy(FILEPTR dest, FILEPTR source)
+static void fileptrCopy(FILE* dest, FILE* source)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileptrCopy <<<<<");
@@ -1769,7 +1763,7 @@ static void fileptrCopy(FILEPTR dest, FILEPTR source)
     }
 }
 
-FS_ERROR fopen (FILEPTR fileptr, uint32_t* fHandle, char type)
+FS_ERROR fopen (FILE* fileptr, uint32_t* fHandle, char type)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fopen <<<<<");
@@ -1861,7 +1855,7 @@ FS_ERROR fopen (FILEPTR fileptr, uint32_t* fHandle, char type)
     return (error);
 }
 
-int32_t fseek(FILEPTR fileptr, int32_t offset, int whence) // return values should be adapted to FS_ERROR types
+int32_t fseek(FILE* fileptr, int32_t offset, int whence) // return values should be adapted to FS_ERROR types
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fseek <<<<<");
@@ -1969,13 +1963,18 @@ int32_t fseek(FILEPTR fileptr, int32_t offset, int whence) // return values shou
     return CE_GOOD;
 }
 
-FILEPTR fopenFileName(const char* fileName, const char* mode)
+FILE* fopenFileName(const char* fileName, const char* mode)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fopenFileName <<<<<");
   #endif  
 	
-    partition_t* part = getPartition(fileName); printf("\npart from getPartition: %X",part);
+    partition_t* part = getPartition(fileName); 
+  
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\npart from getPartition: %X",part);
+  #endif  
+
     while(*fileName != '/' && *fileName != '|' && *fileName != '\\')
     {
         fileName++;
@@ -1984,12 +1983,17 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
             return(0);
         }
     }
-    fileName++; printf("\nfileName w/o Path: %s",fileName);
+    fileName++; 
+    
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\nfileName w/o Path: %s",fileName);
+  #endif
 
     char       ModeC;
     uint32_t   fHandle;
     FS_ERROR   final;
-    FILEPTR filePtr = (FILEPTR) malloc(sizeof(FILE),PAGESIZE);
+    
+    FILE* filePtr = (FILE*) malloc(sizeof(FILE),PAGESIZE);
 
     if( !FormatFileName(fileName, filePtr->name, 0) )
     {
@@ -1997,8 +2001,11 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
         FSerrno = CE_INVALID_FILENAME;
         return NULL;
     }
-    printf("\nfileName formatted: %s",filePtr->name);
+  
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\nfileName formatted: ");for(uint8_t i = 0; i < 11; i++) putch(filePtr->name[i]);
     waitForKeyStroke();
+  #endif
 
     ModeC = mode[0];
 
@@ -2011,9 +2018,11 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
     filePtr->dirclus = 0; // FatRootDirClusterValue; ???
     filePtr->dirccls = 0; // FatRootDirClusterValue; ???
 
-    fileptrCopy(&globalFileTemp, filePtr);
+    FILE* filePtrTemp = (FILE*) malloc(sizeof(FILE),PAGESIZE);
 
-    if (searchFile(filePtr, &globalFileTemp, LOOK_FOR_MATCHING_ENTRY, 0) == CE_GOOD)
+    fileptrCopy(filePtrTemp, filePtr);
+
+    if (searchFile(filePtr, filePtrTemp, LOOK_FOR_MATCHING_ENTRY, 0) == CE_GOOD)
     {
         switch(ModeC)
         {
@@ -2134,7 +2143,7 @@ FILEPTR fopenFileName(const char* fileName, const char* mode)
     }
     else
     {
-        fileptrCopy(filePtr, &globalFileTemp);
+        fileptrCopy(filePtr, filePtrTemp);
 
         if(ModeC == 'w' || ModeC == 'W' || ModeC == 'a' || ModeC == 'A')
         {

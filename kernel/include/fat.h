@@ -128,7 +128,6 @@ typedef struct
     uint32_t dirclus;       // first cluster of the file's directory
     uint32_t dirccls;       // current cluster of the file's directory
 } FILE;
-typedef FILE*   FILEPTR;
 
 typedef struct
 {
@@ -214,14 +213,14 @@ FS_ERROR singleSectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* pa
 FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part);
 
 // file handling
-FS_ERROR createFileEntry(FILEPTR fileptr, uint32_t *fHandle, uint8_t mode);
-FS_ERROR searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode);
-FILEPTR fopenFileName(const char* fileName, const char* mode);
-FS_ERROR fopen(FILEPTR fileptr, uint32_t* fHandle, char type);
-FS_ERROR fclose(FILEPTR fileptr);
-FS_ERROR fread(FILEPTR fileptr, void* dest, uint32_t count);
-int32_t fseek(FILEPTR fileptr, long offset, int whence); // return values should be adapted to FS_ERROR types
-uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILEPTR stream);
+FS_ERROR createFileEntry(FILE* fileptr, uint32_t *fHandle, uint8_t mode);
+FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t mode);
+FILE* fopenFileName(const char* fileName, const char* mode);
+FS_ERROR fopen(FILE* fileptr, uint32_t* fHandle, char type);
+FS_ERROR fclose(FILE* fileptr);
+FS_ERROR fread(FILE* fileptr, void* dest, uint32_t count);
+int32_t fseek(FILE* fileptr, long offset, int whence); // return values should be adapted to FS_ERROR types
+uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* stream);
 
 // analysis functions
 void showDirectoryEntry(FILEROOTDIRECTORYENTRY dir);

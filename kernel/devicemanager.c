@@ -301,7 +301,7 @@ FS_ERROR loadFile(const char* filename, partition_t* part)
 
     // file name
     FILE toCompare;
-    FILEPTR fileptrTest = &toCompare;
+    FILE* fileptrTest = &toCompare;
 
     memset(fileptrTest->name, ' ', 11);
 
@@ -336,7 +336,7 @@ FS_ERROR loadFile(const char* filename, partition_t* part)
         dest.dirclus = dest.volume->FatRootDirCluster; 
     }
 
-    uint8_t retVal = searchFile(&dest, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FILEPTR fileptrDest, FILEPTR fileptrTest, uint8_t cmd, uint8_t mode)
+    uint8_t retVal = searchFile(&dest, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t mode)
     if (retVal == CE_GOOD)
     {
         textColor(0x0A);

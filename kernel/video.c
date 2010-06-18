@@ -247,7 +247,7 @@ void screenshot()
         }
     }
 
-    FILEPTR file = fopenFileName("1:/screen.txt", "w+"); printf("FILEPTR file: %X",file);
+    FILE* file = fopenFileName("1:/screen.txt", "w+"); printf("FILEPTR file: %X",file);
 	fwrite((void*)videoscreen, 4098, 1, file);
 	fclose(file);
 
