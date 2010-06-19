@@ -77,6 +77,11 @@ FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
   #ifdef _FAT_READ_WRITE_TO_SECTOR_DIAGNOSIS_
     textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<",sector_addr); textColor(0x0F);
   #endif
+
+    /// TEST
+    if ((sector_addr >= 19) && (sector_addr <= (19+14))) waitForKeyStroke();
+    /// TEST
+
     return part->disk->type->writeSector(sector_addr, buffer);
 }
 FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
@@ -295,7 +300,7 @@ static FS_ERROR fileGetNextCluster(FILE* fileptr, uint32_t n)
         }
         fileptr->ccls = c;
     } while (--n > 0 && error == CE_GOOD);
-    return(error);
+    return error;
 }
 
 
@@ -419,11 +424,11 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILE* fileptr, uint32_t* curEntry, 
 
 static FILEROOTDIRECTORYENTRY getFileAttribute(FILE* fileptr, uint32_t* fHandle)
 {
-  #ifdef _FAT_DIAGNOSIS_
+  //#ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> getFileAttribute <<<<<");
-  #endif
+  //#endif
     
-    fileptr->dirccls = fileptr->dirclus;
+    // fileptr->dirccls = fileptr->dirclus; // TEST
     FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fileptr,fHandle,true);
     if (dir == NULL) return NULL;
     
@@ -671,9 +676,9 @@ FS_ERROR searchFile( FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t 
 
 FS_ERROR fclose(FILE* fileptr)
 {
-  #ifdef _FAT_DIAGNOSIS_
+  //#ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fclose <<<<<");
-  #endif
+  //#endif
 
     FS_ERROR error = CE_GOOD;
     FSerrno = CE_GOOD;
@@ -690,7 +695,7 @@ FS_ERROR fclose(FILE* fileptr)
                 return CE_WRITE_ERROR;
             }
         }
-
+        
         fatWrite (fileptr->volume, 0, 0, true);
         dir = getFileAttribute(fileptr, &fHandle);
 
@@ -710,6 +715,7 @@ FS_ERROR fclose(FILE* fileptr)
         dir->DIR_FileSize = fileptr->size;
         dir->DIR_Attr     = fileptr->attributes;
         
+        printf("\nline: %u",__LINE__);
         if(writeFileEntry(fileptr,&fHandle))
         {
             error = CE_GOOD;
@@ -724,7 +730,7 @@ FS_ERROR fclose(FILE* fileptr)
     }
 
     free(fileptr);
-    return(error);
+    return error;
 } 
 
 FS_ERROR fread(FILE* fileptr, void* dest, uint32_t count)
@@ -1253,9 +1259,9 @@ static uint32_t getFullClusterNumber(FILEROOTDIRECTORYENTRY entry)
 
 static bool writeFileEntry( FILE* fileptr, uint32_t* curEntry)
 {
-  #ifdef _FAT_DIAGNOSIS_
+  //#ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> writeFileEntry <<<<<");
-  #endif  
+  //#endif  
     
     partition_t* volume = fileptr->volume;
     uint32_t ccls       = fileptr->dirccls;
@@ -1385,7 +1391,8 @@ FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, uint8_t EraseClusters)
             dir->DIR_Name[0] = DIR_DEL;
             clus = getFullClusterNumber(dir);
 
-            if ( (status != CE_GOOD) || ((writeFileEntry( fileptr, fHandle)) != CE_GOOD))
+            printf("\nline: %u",__LINE__);
+            if ( ((writeFileEntry( fileptr, fHandle)) != CE_GOOD) || (status != CE_GOOD) )
             {
                 status = CE_ERASE_FAIL;
             }
@@ -1450,11 +1457,12 @@ static FS_ERROR PopulateEntries(FILE* fileptr, char *name , uint32_t *fHandle, u
     fileptr->attributes  = dir->DIR_Attr;
     fileptr->entry       = *fHandle;
 
+    printf("\nline: %u",__LINE__);
     if (writeFileEntry(fileptr,fHandle) != true)
     {
         error = CE_WRITE_ERROR;
     }
-    return(error);
+    return error;
 }
 
 uint8_t FindEmptyEntries(FILE* fileptr, uint32_t *fHandle)
@@ -1575,19 +1583,19 @@ static FILEROOTDIRECTORYENTRY loadDirAttrib(FILE* fo, uint32_t* fHandle)
     return(dir);
 }
 
-
-static FS_ERROR fileCreateHeadCluster( FILE* fo, uint32_t* cluster)
+static FS_ERROR fileCreateHeadCluster( FILE* fileptr, uint32_t* cluster)
 {
-  #ifdef _FAT_DIAGNOSIS_
+  //#ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileCreateHeadCluster <<<<<");
-  #endif      
+  //#endif      
     
-    partition_t* volume = fo->volume;
-    *cluster = fatFindEmptyCluster(fo);
+    FS_ERROR error = CE_GOOD;
+    partition_t* volume = fileptr->volume;
+    *cluster = fatFindEmptyCluster(fileptr);
 
     if(*cluster == 0)
     {
-        return CE_DISK_FULL;
+        error = CE_DISK_FULL;
     }
     else
     {
@@ -1595,54 +1603,56 @@ static FS_ERROR fileCreateHeadCluster( FILE* fo, uint32_t* cluster)
         {
             if(fatWrite( volume, *cluster, LAST_CLUSTER_FAT12, false) == CLUSTER_FAIL_FAT16)
             {
-                return CE_WRITE_ERROR;
+                error = CE_WRITE_ERROR;
             }
         }
         else if(volume->type == FAT16)
         {
             if(fatWrite( volume, *cluster, LAST_CLUSTER_FAT16, false) == CLUSTER_FAIL_FAT16)
             {
-                return CE_WRITE_ERROR;
+                error = CE_WRITE_ERROR;
             }
         }
         else
         {
             if(fatWrite( volume, *cluster, LAST_CLUSTER_FAT32, false) == CLUSTER_FAIL_FAT32)
             {
-                return CE_WRITE_ERROR;
+                error = CE_WRITE_ERROR;
             }
         }
 
-        return eraseCluster(volume,*cluster);
+        if(error == CE_GOOD)
+        {
+           error = eraseCluster(volume,*cluster);
+        }
     }
+    return error;
 }
 
-static FS_ERROR CreateFirstCluster(FILE* fileptr)
+static FS_ERROR createFirstCluster(FILE* fileptr)
 {
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> CreateFirstCluster <<<<<");
-  #endif          
+  //#ifdef _FAT_DIAGNOSIS_
+    printf("\n>>>>> createFirstCluster <<<<<");
+  //#endif          
     
     uint32_t cluster;
     uint32_t fHandle = fileptr->entry;
-    FILEROOTDIRECTORYENTRY   dir;
+    FILEROOTDIRECTORYENTRY dir;
 
     FS_ERROR error = fileCreateHeadCluster(fileptr,&cluster);
     if(error == CE_GOOD)
     {
         dir = loadDirAttrib(fileptr, &fHandle);
+        dir->DIR_FstClusHI = (cluster & 0x0FFF0000) >> 16; // only 28 bits in FAT32
         dir->DIR_FstClusLO = (cluster & 0x0000FFFF);
-
-        uint32_t TempMsbCluster = (cluster & 0x0FFF0000); // only 28 bits in FAT32
-        TempMsbCluster = TempMsbCluster >> 16;
-        dir->DIR_FstClusHI = TempMsbCluster;
-
-        if(writeFileEntry(fileptr, &fHandle) != true)
+        
+        printf("\nline: %u",__LINE__);
+        if(writeFileEntry(fileptr, &fHandle) == false)
         {
             error = CE_WRITE_ERROR;
         }
     }
-    return(error);
+    return error;
 }
 
 FS_ERROR createFileEntry(FILE* fileptr, uint32_t *fHandle, uint8_t mode)
@@ -1665,7 +1675,7 @@ FS_ERROR createFileEntry(FILE* fileptr, uint32_t *fHandle, uint8_t mode)
     {
         if((error = PopulateEntries(fileptr, name ,fHandle, mode)) == CE_GOOD)
         {
-            error = CreateFirstCluster(fileptr);
+            error = createFirstCluster(fileptr);
         }
     }
     else
@@ -1674,7 +1684,7 @@ FS_ERROR createFileEntry(FILE* fileptr, uint32_t *fHandle, uint8_t mode)
     }
 
     FSerrno = error;
-    return(error);
+    return error;
 }
 
 
