@@ -662,7 +662,7 @@ FS_ERROR fclose(FILE* fileptr)
     FILEROOTDIRECTORYENTRY dir;
     
     if(fileptr->Flags.write)
-    {
+    {        
         if (globalDataWriteNecessary)
         {
             if (flushData() != CE_GOOD)
@@ -670,9 +670,22 @@ FS_ERROR fclose(FILE* fileptr)
                 FSerrno = CE_WRITE_ERROR;
                 return CE_WRITE_ERROR;
             }
+        }        
+
+        // fatWrite (fileptr->volume, 0, 0, true); // TEST <------------------------
+        uint32_t i, sectorFAT;
+        for (i=0, sectorFAT=globalLastFATSectorRead; i<1/*fileptr->volume->fatcopy*/; i++, sectorFAT+=fileptr->volume->fatsize)
+        {
+            printf("\ni: %u sectorFAT: %u", i,sectorFAT);
+            if (singleSectorWrite(sectorFAT, globalBufferFATSector, fileptr->volume) != CE_GOOD)
+            {
+                return CLUSTER_FAIL_FAT16;
+            }
         }
-        
-        fatWrite (fileptr->volume, 0, 0, true);
+        globalFATWriteNecessary = false;
+        waitForKeyStroke();
+
+
         dir = getFileAttribute(fileptr, &fHandle);
 
         if (dir == NULL)
@@ -681,7 +694,7 @@ FS_ERROR fclose(FILE* fileptr)
             error = EOF;
             return error;
         }
-
+        
         // update the time
         // ...
         // TODO
@@ -805,13 +818,8 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
 
     if ((volume->type != FAT32) && (volume->type != FAT16) && (volume->type != FAT12))
     {
-        return CLUSTER_FAIL_FAT32;
-    }
-
-    if ((volume->type != FAT16) && (volume->type != FAT12))
-    {
-        return CLUSTER_FAIL_FAT16;
-    }
+        return CLUSTER_FAIL_FAT32; // 32 not 16 ?
+    } 
 
     uint32_t ClusterFailValue;
     switch (volume->type)
@@ -830,9 +838,15 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
 
     if (forceWrite) // write the current FAT sector to the partition "volume"
     {
-        for (uint8_t i=0, li=globalLastFATSectorRead; i<volume->fatcopy; i++, li+=volume->fatsize)
+        //printf("\n"); memshow(globalBufferFATSector,512); waitForKeyStroke();
+        printf("\nfclose: globalLastFATSectorRead: %u",globalLastFATSectorRead);
+        printf("\nvolume->fatcopy: %u volume->fatsize: %u", volume->fatcopy, volume->fatsize);
+        
+        uint32_t i, sectorFAT;
+        for (i=0, sectorFAT=globalLastFATSectorRead; i<volume->fatcopy; i++, sectorFAT+=volume->fatsize)
         {
-            if (singleSectorWrite(li, globalBufferFATSector, volume) != CE_GOOD)
+            printf("\ni: %u sectorFAT: %u", i,sectorFAT);
+            if (singleSectorWrite(sectorFAT, globalBufferFATSector, volume) != CE_GOOD)
             {
                 return ClusterFailValue;
             }
