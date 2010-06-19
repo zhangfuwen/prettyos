@@ -26,6 +26,7 @@
 
 // prototypes
 static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite);
+static bool     writeFileEntry( FILE* fileptr, uint32_t* curEntry);
 
 uint8_t  globalBufferFATSector[SECTOR_SIZE];     // Global FAT sector buffer
 bool     globalBufferMemSet0       = false;      // Global variable indicating that the data buffer contains all zeros
@@ -421,27 +422,29 @@ static FILEROOTDIRECTORYENTRY getFileAttribute(FILE* fileptr, uint32_t* fHandle)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> getFileAttribute <<<<<");
   #endif
+    
+    fileptr->dirccls = fileptr->dirclus;
     FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fileptr,fHandle,true);
+    if (dir == NULL) return NULL;
+    
     uint8_t a = dir->DIR_Name[0];
     if (a == DIR_EMPTY)
     {
-        dir = NULL;
+        return NULL;
     }
-    if (dir != NULL)
+    else if (a == DIR_DEL)
     {
-        if (a == DIR_DEL)
+        return NULL;
+    }
+    else
+    {
+        a = dir->DIR_Attr;
+        while (a==ATTR_LONG_NAME)
         {
-            dir = NULL;
-        }
-        else
-        {
+            (*fHandle)++;
+            dir = cacheFileEntry(fileptr,fHandle,false);
+            if (dir == NULL) return NULL;
             a = dir->DIR_Attr;
-            while(a==ATTR_LONG_NAME)
-            {
-                (*fHandle)++;
-                dir = cacheFileEntry(fileptr,fHandle,false);
-                a = dir->DIR_Attr;
-            }
         }
     }
     return dir;
@@ -671,31 +674,58 @@ FS_ERROR fclose(FILE* fileptr)
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fclose <<<<<");
   #endif
+
     FS_ERROR error = CE_GOOD;
-    FILEROOTDIRECTORYENTRY dir;
+    FSerrno = CE_GOOD;
     uint32_t fHandle = fileptr->entry;
-
-    if (fileptr->Flags.write)
+    FILEROOTDIRECTORYENTRY dir;
+    
+    if(fileptr->Flags.write)
     {
-        dir = getFileAttribute(fileptr, &fHandle);
-        updateTimeStamp(dir);
-        dir->DIR_FileSize = fileptr->size;
+        if (globalDataWriteNecessary)
+        {
+            if (flushData() != CE_GOOD)
+            {
+                FSerrno = CE_WRITE_ERROR;
+                return CE_WRITE_ERROR;
+            }
+        }
 
-        /*
-        if (writeFileEntry(fileptr,&fHandle))
+        fatWrite (fileptr->volume, 0, 0, true);
+        dir = getFileAttribute(fileptr, &fHandle);
+
+        if (dir == NULL)
+        {
+            FSerrno = CE_BADCACHEREAD;
+            error = EOF;
+            return error;
+        }
+
+        // update the time
+        // ...
+        // TODO
+        // ...
+        updateTimeStamp(dir);
+
+        dir->DIR_FileSize = fileptr->size;
+        dir->DIR_Attr     = fileptr->attributes;
+        
+        if(writeFileEntry(fileptr,&fHandle))
         {
             error = CE_GOOD;
         }
         else
         {
-            error = CE_WRITE_ERROR;
+            FSerrno = CE_WRITE_ERROR;
+            error   = CE_WRITE_ERROR;
         }
-        */
-
+        
         fileptr->Flags.write = false;
     }
-    return error;
-}
+
+    free(fileptr);
+    return(error);
+} 
 
 FS_ERROR fread(FILE* fileptr, void* dest, uint32_t count)
 {
@@ -1221,7 +1251,7 @@ static uint32_t getFullClusterNumber(FILEROOTDIRECTORYENTRY entry)
     return TempFullClusterCalc;
 }
 
-static uint8_t writeFileEntry( FILE* fileptr, uint32_t* curEntry)
+static bool writeFileEntry( FILE* fileptr, uint32_t* curEntry)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> writeFileEntry <<<<<");
@@ -1236,16 +1266,16 @@ static uint8_t writeFileEntry( FILE* fileptr, uint32_t* curEntry)
 		case FAT32:
             offset2 = offset2 % (volume->SecPerClus);
             break;
-		case FAT12:
+		case FAT12:             
 		case FAT16:
-            if(ccls != 0)
+            if(ccls != 0) // != FatRootDirClusterValue
                 offset2 = offset2 % (volume->SecPerClus);
             break;
     }
 
     uint32_t sector = cluster2sector(volume,ccls);
 
-    return(singleSectorWrite(sector + offset2, volume->buffer, volume) == CE_GOOD);
+    return (singleSectorWrite(sector + offset2, volume->buffer, volume) == CE_GOOD);
 }
 
 
