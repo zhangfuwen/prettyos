@@ -79,10 +79,10 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 {
     if (node == initrd_root && index == 0)
     {
-      strcpy(dirent.name, "dev");
-      dirent.name[3] = 0; // NUL-terminate the string
-      dirent.ino     = 0;
-      return &dirent;
+        strcpy(dirent.name, "dev");
+        dirent.name[3] = 0; // NUL-terminate the string
+        dirent.ino     = 0;
+        return &dirent;
     }
 
     if (index-1 >= nroot_nodes)
@@ -97,7 +97,7 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 
 static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
 {
-    if ((node == initrd_root) && (!strcmp(name, "dev")))
+    if (node == initrd_root && !strcmp(name, "dev"))
     {
         return initrd_dev;
     }
