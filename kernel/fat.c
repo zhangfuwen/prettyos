@@ -76,12 +76,8 @@ FS_ERROR sectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
 {
   #ifdef _FAT_READ_WRITE_TO_SECTOR_DIAGNOSIS_
     textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<",sector_addr); textColor(0x0F);
+    if ((sector_addr >= 19) && (sector_addr <= (19+14))) waitForKeyStroke(); // root dir
   #endif
-
-    /// TEST
-    if ((sector_addr >= 19) && (sector_addr <= (19+14))) waitForKeyStroke();
-    /// TEST
-
     return part->disk->type->writeSector(sector_addr, buffer);
 }
 FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part)
@@ -709,7 +705,7 @@ FS_ERROR fclose(FILE* fileptr)
         fileptr->Flags.write = false;
     }
 
-    free(fileptr);
+    // free(fileptr); <--- TODO: check! With that line loaded user programs freeze!
     return error;
 } 
 
@@ -804,8 +800,7 @@ void showDirectoryEntry(FILEROOTDIRECTORYENTRY dir)
 static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bool forceWrite)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatWrite forceWrite: %d <<<<<",forceWrite);
-    if (forceWrite) waitForKeyStroke();
+    printf("\n>>>>> fatWrite forceWrite: %d <<<<<",forceWrite);    
   #endif
 
     if ((volume->type != FAT32) && (volume->type != FAT16) && (volume->type != FAT12))
@@ -1528,15 +1523,15 @@ uint8_t FindEmptyEntries(FILE* fileptr, uint32_t *fHandle)
     return(status == FOUND);
 }
 
-static FILEROOTDIRECTORYENTRY loadDirAttrib(FILE* fo, uint32_t* fHandle)
+static FILEROOTDIRECTORYENTRY loadDirAttrib(FILE* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> loadDirAttrib <<<<<");
   #endif  
     
-    fo->dirccls = fo->dirclus;
+    fileptr->dirccls = fileptr->dirclus;
     // Get the entry
-    FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fo, fHandle, true);
+    FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fileptr, fHandle, true);
 
     if (dir == NULL || dir->DIR_Name[0] == DIR_EMPTY || dir->DIR_Name[0] == DIR_DEL)
         return NULL;
@@ -1548,7 +1543,7 @@ static FILEROOTDIRECTORYENTRY loadDirAttrib(FILE* fo, uint32_t* fHandle)
     while(a == ATTR_LONG_NAME)
     {
         (*fHandle)++;
-        dir = cacheFileEntry(fo, fHandle, false);
+        dir = cacheFileEntry(fileptr, fHandle, false);
         if (dir == NULL) return NULL;
         a = dir->DIR_Attr;
     }
