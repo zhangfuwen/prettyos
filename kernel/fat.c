@@ -98,29 +98,6 @@ FS_ERROR singleSectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* pa
     return sectorRead(sector_addr, buffer, part);
 }
 
-/*
-static FS_ERROR flushData()
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> flushData <<<<<");
-  #endif
-        
-    if(singleSectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
-                          globalFilePtr->volume->buffer,                                                  // buffer
-                          globalFilePtr->volume)                                                          // partition
-                          != CE_GOOD)
-                          {
-                            return CE_WRITE_ERROR;
-                          }
-                          else
-                          {
-                            globalDataWriteNecessary = false;
-                            return CE_GOOD;
-                          }
-}
-*/
-
-
 static uint32_t fatRead (partition_t* volume, uint32_t ccls)
 {
   #ifdef _FAT_DIAGNOSIS_
@@ -400,9 +377,9 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILE* fileptr, uint32_t* curEntry, 
                 globalFilePtr = NULL;
                 globalBufferMemSet0 = false;
 
-                uint8_t retVal = singleSectorRead(sector + offset2, volume->buffer, volume);
+                uint8_t error = singleSectorRead(sector + offset2, volume->buffer, volume);
 
-                if ( retVal != CE_GOOD )
+                if ( error != CE_GOOD )
                 {
                     return NULL;
                 }
@@ -528,7 +505,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
     printf("\n>>>>> searchFile <<<<<");
   #endif
 
-    FS_ERROR retVal       = CE_FILE_NOT_FOUND;
+    FS_ERROR error       = CE_FILE_NOT_FOUND;
     fileptrDest->dirccls   = fileptrDest->dirclus;
     uint16_t compareAttrib = 0xFFFF ^ fileptrTest->attributes;
     uint32_t fHandle = fileptrDest->entry;
@@ -549,7 +526,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
     uint8_t  state=0;
     uint32_t attrib;
     char character, test;
-    while(retVal != CE_GOOD) // Loop until you reach the end or find the file
+    while(error != CE_GOOD) // Loop until you reach the end or find the file
     {
       #ifdef _FAT_DIAGNOSIS_
         textColor(0x0E); printf("\n\nfHandle %u\n",fHandle); textColor(0x0F);
@@ -579,7 +556,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                       #ifdef _FAT_DIAGNOSIS_
                         textColor(0x0A);printf("\n\nAn entry is found. Attributes OK for search");textColor(0x0F); /// TEST
                       #endif
-                        retVal = CE_GOOD;
+                        error = CE_GOOD;
                         for (uint8_t i = 0; i < DIR_NAMECOMP; i++)
                         {
                             character = fileptrDest->name[i];
@@ -588,7 +565,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                           #endif
                             if (toLower(character) != toLower(fileptrTest->name[i]))
                             {
-                                retVal = CE_FILE_NOT_FOUND;
+                                error = CE_FILE_NOT_FOUND;
                               #ifdef _FAT_DIAGNOSIS_
                                 textColor(0x0C); printf("\n\n %c <--- not equal", character); textColor(0x0F);
                               #endif
@@ -601,7 +578,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                     // Check for attribute match
                     if (((attrib & compareAttrib) == 0) && (attrib != ATTR_LONG_NAME))
                     {
-                        retVal = CE_GOOD;                 // Indicate the already filled file data is correct and go back
+                        error = CE_GOOD;                 // Indicate the already filled file data is correct and go back
                         character = (char)'m';             // random value
                         if (fileptrTest->name[0] != '*')   // If "*" is passed for comparion as 1st char then don't proceed. Go back, file alreay found.
                         {
@@ -615,7 +592,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                                 {
                                     if(toLower(character) != toLower(test))
                                     {
-                                        retVal = CE_FILE_NOT_FOUND; // it's not a match
+                                        error = CE_FILE_NOT_FOUND; // it's not a match
                                         break;
                                     }
                                 }
@@ -623,7 +600,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                         }
 
                         // Before calling this "searchFile" fn, "formatfilename" must be called. Hence, extn always starts from position "8".
-                        if ((fileptrTest->name[8] != '*') && (retVal == CE_GOOD))
+                        if ((fileptrTest->name[8] != '*') && (error == CE_GOOD))
                         {
                             for (uint16_t i=8; i<DIR_NAMECOMP; i++)
                             {
@@ -638,7 +615,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                                 {
                                     if(toLower(character) != toLower(test))
                                     {
-                                        retVal = CE_FILE_NOT_FOUND; // it's not a match
+                                        error = CE_FILE_NOT_FOUND; // it's not a match
                                         break;
                                     }
                                 }
@@ -647,19 +624,19 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                     } // Attribute match
                     break; // end of case
             } // while
-        } // not found // end of if (retVal != CE_BADCACHEREAD)
+        } // not found // end of if (error != CE_BADCACHEREAD)
         else
         {
             // looking for an empty/re-usable entry
             if ( cmd == LOOK_FOR_EMPTY_ENTRY)
             {
-                retVal = CE_GOOD;
+                error = CE_GOOD;
             }
         } // found or not
         // increment it no matter what happened
         fHandle++;
     } // while
-    return(retVal);
+    return(error);
 }
 
 FS_ERROR fclose(FILE* fileptr)
@@ -1323,7 +1300,7 @@ static bool writeFileEntry(FILE* fileptr, uint32_t* curEntry)
 
     uint32_t sector = cluster2sector(volume,ccls);
 
-    return(singleSectorWrite(sector + offset2, volume->buffer, volume) == CE_GOOD);
+    return ((singleSectorWrite(sector + offset2, volume->buffer, volume) == CE_GOOD ));
 }
 
 
@@ -1354,7 +1331,6 @@ static bool fatEraseClusterChain(uint32_t cluster, partition_t* volume)
 
     enum _status {Good, Fail, Exit} status = Good;
 
-    // Make sure there is actually a cluster assigned
     if(cluster <= 1)  // Cluster assigned can't be "0" and "1"
     {
         status = Exit;
@@ -1364,9 +1340,10 @@ static bool fatEraseClusterChain(uint32_t cluster, partition_t* volume)
         while(status == Good)
         {
             uint32_t c = fatRead(volume, cluster);
-            // Get the FAT entry
             if(c == ClusterFailValue)
+            {
                 status = Fail;
+            }
             else
             {
                 if(c <= 1)  // Cluster assigned can't be "0" and "1"
@@ -1375,80 +1352,72 @@ static bool fatEraseClusterChain(uint32_t cluster, partition_t* volume)
                 }
                 else
                 {
-                    // compare against max value of a cluster in FATxx
-                    // look for the last cluster in the chain
                     if (c >= c2)
+                    {
                         status = Exit;
-
-                    // Now erase this FAT entry
+                    }                    
                     if(fatWrite(volume, cluster, CLUSTER_EMPTY, false) == ClusterFailValue)
+                    {
                         status = Fail;
-
-                    // now update what the current cluster is
+                    }                    
                     cluster = c;
                 }
             }
-        }// while status
-    }// cluster == 0
+        }
+    }
 
     fatWrite(volume, 0, 0, true);
 
-    return(status == Exit);
+    return(status == Exit); // ??
 }
 
 
-FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, uint8_t EraseClusters)
+FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, bool EraseClusters)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileErase <<<<<");
   #endif  
     
-    FS_ERROR     status = CE_GOOD;
-    partition_t* volume = fileptr->volume;
-    uint32_t     clus   = fileptr->dirclus;
-    fileptr->dirccls    = clus;
-
+    FS_ERROR status  = CE_GOOD;
+    fileptr->dirccls = fileptr->dirclus;
+    
     FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fileptr, fHandle, true);
-
-    uint8_t a = dir->DIR_Name[0];
-
     if (dir == NULL)
     {
         status = CE_BADCACHEREAD;
     }
-    else if(a == DIR_EMPTY)
+
+    uint8_t a = dir->DIR_Name[0];
+    if(a == DIR_EMPTY)
+    {
+        status = CE_FILE_NOT_FOUND;
+    }
+    else if (a == DIR_DEL)
     {
         status = CE_FILE_NOT_FOUND;
     }
     else
     {
-        if (a == DIR_DEL)
+        a = dir->DIR_Attr;
+        dir->DIR_Name[0] = DIR_DEL;
+        uint32_t clus = getFullClusterNumber(dir);
+
+        if ( ((writeFileEntry( fileptr, fHandle)) == false) || (status != CE_GOOD) )
         {
-            status = CE_FILE_NOT_FOUND;
+            status = CE_ERASE_FAIL;
         }
         else
         {
-            a = dir->DIR_Attr;
-            dir->DIR_Name[0] = DIR_DEL;
-            clus = getFullClusterNumber(dir);
-
-            if ( ((writeFileEntry( fileptr, fHandle)) != CE_GOOD) || (status != CE_GOOD) )
+            if (clus != 0) // FatRootDirClusterValue = 0 ??? <<<------------------- CHECK
             {
-                status = CE_ERASE_FAIL;
-            }
-            else
-            {
-                if (clus != 0) // FatRootDirClusterValue = 0 ??? <<<------------------- CHECK
+                if(EraseClusters)
                 {
-                    if(EraseClusters)
-                    {
-                        status = ((fatEraseClusterChain(clus, volume)) ? CE_GOOD : CE_ERASE_FAIL);
-                    }
+                    fatEraseClusterChain(clus, fileptr->volume);                     
                 }
             }
         }
     }
-
+    
     if (status == CE_GOOD)  FSerrno = CE_GOOD;
     else                    FSerrno = CE_ERASE_FAIL;
 
@@ -1497,7 +1466,7 @@ static FS_ERROR PopulateEntries(FILE* fileptr, char *name , uint32_t *fHandle, u
     fileptr->attributes  = dir->DIR_Attr;
     fileptr->entry       = *fHandle;
 
-    if (writeFileEntry(fileptr,fHandle) != true)
+    if (writeFileEntry(fileptr,fHandle) == false)
     {
         error = CE_WRITE_ERROR;
     }
@@ -2028,10 +1997,6 @@ FILE* fopenFileName(const char* fileName, const char* mode)
 
     partition_t* part = getPartition(fileName); 
 
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\npart from getPartition: %X",part);
-  #endif
-
     while(*fileName != '/' && *fileName != '|' && *fileName != '\\')
     {
         fileName++;
@@ -2042,12 +2007,8 @@ FILE* fopenFileName(const char* fileName, const char* mode)
     }
     fileName++; 
     
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\nfileName w/o Path: %s",fileName);
-  #endif
-
     uint32_t fHandle;
-    FS_ERROR final;
+    FS_ERROR error;
 
     FILE* filePtr = (FILE*) malloc(sizeof(FILE),PAGESIZE);
 
@@ -2058,21 +2019,15 @@ FILE* fopenFileName(const char* fileName, const char* mode)
         return NULL;
     }
   
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\nfileName formatted: ");for(uint8_t i = 0; i < 11; i++) putch(filePtr->name[i]);
-    waitForKeyStroke();
-  #endif
-
-    filePtr->volume  = part;
-    filePtr->cluster = 0;
-    filePtr->ccls    = 0;
-    filePtr->entry   = 0;
+    filePtr->volume     = part;
+    filePtr->cluster    = 0;
+    filePtr->ccls       = 0;
+    filePtr->entry      = 0;
     filePtr->attributes = ATTR_ARCHIVE;
+    filePtr->dirclus    = 0; // FatRootDirClusterValue <-----------
+    filePtr->dirccls    = 0; // FatRootDirClusterValue <-----------
 
-    filePtr->dirclus = 0; // FatRootDirClusterValue; ???
-    filePtr->dirccls = 0; // FatRootDirClusterValue; ???
-
-    FILE* filePtrTemp = (FILE*) malloc(sizeof(FILE),PAGESIZE);
+    FILE* filePtrTemp = (FILE*) malloc(sizeof(FILE),PAGESIZE); // why?
 
     fileptrCopy(filePtrTemp, filePtr);
 
@@ -2084,25 +2039,25 @@ FILE* fopenFileName(const char* fileName, const char* mode)
             case 'W':
             {
                 fHandle = filePtr->entry;
-                final = fileErase(filePtr, &fHandle, true);
-
-                if (final == CE_GOOD)
+                error = fileErase(filePtr, &fHandle, true);
+                
+                if (error == CE_GOOD)
                 {
-                    final = createFileEntry (filePtr, &fHandle, 0);
-
-                    if (final == CE_GOOD)
+                    error = createFileEntry (filePtr, &fHandle, 0);
+                    
+                    if (error == CE_GOOD)
                     {
-                        final = fopen (filePtr, &fHandle, 'w');
-
+                        error = fopen (filePtr, &fHandle, 'w');
+                    
                         if (filePtr->attributes & ATTR_DIRECTORY)
                         {
                             FSerrno = CE_INVALID_ARGUMENT;
-                            final = 0xFF;
+                            error = 0xFF;
                         }
 
-                        if (final == CE_GOOD)
+                        if (error == CE_GOOD)
                         {
-                            final = fseek (filePtr, 0, SEEK_END);
+                            error = fseek (filePtr, 0, SEEK_END);
                             if (mode[1] == '+')
                             {
                                 filePtr->Flags.read = true;
@@ -2120,18 +2075,18 @@ FILE* fopenFileName(const char* fileName, const char* mode)
                 {
                     fHandle = filePtr->entry;
 
-                    final = fopen (filePtr, &fHandle, 'w');
+                    error = fopen (filePtr, &fHandle, 'w');
 
                     if (filePtr->attributes & ATTR_DIRECTORY)
                     {
                         FSerrno = CE_INVALID_ARGUMENT;
-                        final = 0xFF;
+                        error = 0xFF;
                     }
 
-                    if (final == CE_GOOD)
+                    if (error == CE_GOOD)
                     {
-                        final = fseek (filePtr, 0, SEEK_END);
-                        if (final != CE_GOOD)
+                        error = fseek (filePtr, 0, SEEK_END);
+                        if (error != CE_GOOD)
                             FSerrno = CE_SEEK_ERROR;
                         else
                             fatRead (part, filePtr->ccls);
@@ -2142,27 +2097,27 @@ FILE* fopenFileName(const char* fileName, const char* mode)
                 else
                 {
                     fHandle = filePtr->entry;
-                    final = fileErase(filePtr, &fHandle, true);
+                    error = fileErase(filePtr, &fHandle, true);
 
-                    if (final == CE_GOOD)
+                    if (error == CE_GOOD)
                     {
                         // now create a new one
-                        final = createFileEntry (filePtr, &fHandle, 0);
+                        error = createFileEntry (filePtr, &fHandle, 0);
 
-                        if (final == CE_GOOD)
+                        if (error == CE_GOOD)
                         {
-                            final = fopen (filePtr, &fHandle, 'w');
+                            error = fopen (filePtr, &fHandle, 'w');
 
                             if (filePtr->attributes & ATTR_DIRECTORY)
                             {
                                 FSerrno = CE_INVALID_ARGUMENT;
-                                final = 0xFF;
+                                error = 0xFF;
                             }
 
-                            if (final == CE_GOOD)
+                            if (error == CE_GOOD)
                             {
-                                final = fseek (filePtr, 0, SEEK_END);
-                                if (final != CE_GOOD)
+                                error = fseek (filePtr, 0, SEEK_END);
+                                if (error != CE_GOOD)
                                     FSerrno = CE_SEEK_ERROR;
                                 if (mode[1] == '+')
                                     filePtr->Flags.read = true;
@@ -2178,7 +2133,7 @@ FILE* fopenFileName(const char* fileName, const char* mode)
             {
                 fHandle = filePtr->entry;
 
-                final = fopen (filePtr, &fHandle, 'r');
+                error = fopen (filePtr, &fHandle, 'r');
 
                 if ((mode[1] == '+') && !(filePtr->attributes & ATTR_DIRECTORY))
                     filePtr->Flags.write = true;
@@ -2188,7 +2143,7 @@ FILE* fopenFileName(const char* fileName, const char* mode)
 
             default:
                 FSerrno = CE_INVALID_ARGUMENT;
-                final = 0xFF;
+                error = 0xFF;
                 break;
         }
     }
@@ -2199,21 +2154,21 @@ FILE* fopenFileName(const char* fileName, const char* mode)
         if(mode[0] == 'w' || mode[0] == 'W' || mode[0] == 'a' || mode[0] == 'A')
         {
             fHandle = 0;
-            final = createFileEntry (filePtr, &fHandle, 0);
+            error = createFileEntry (filePtr, &fHandle, 0);
 
-            if (final == CE_GOOD)
+            if (error == CE_GOOD)
             {
-                final = fopen (filePtr, &fHandle, 'w');
+                error = fopen (filePtr, &fHandle, 'w');
                 if (filePtr->attributes & ATTR_DIRECTORY)
                 {
                     FSerrno = CE_INVALID_ARGUMENT;
-                    final = 0xFF;
+                    error = 0xFF;
                 }
 
-                if (final == CE_GOOD)
+                if (error == CE_GOOD)
                 {
-                    final = fseek (filePtr, 0, SEEK_END);
-                    if (final != CE_GOOD)
+                    error = fseek (filePtr, 0, SEEK_END);
+                    if (error != CE_GOOD)
                     {
                         FSerrno = CE_SEEK_ERROR; 
                     }
@@ -2226,11 +2181,11 @@ FILE* fopenFileName(const char* fileName, const char* mode)
         }
         else
         {
-            final = CE_FILE_NOT_FOUND; 
+            error = CE_FILE_NOT_FOUND; 
         }
     }
 
-    if( final != CE_GOOD )
+    if( error != CE_GOOD )
     {
         if(filePtr)
         {

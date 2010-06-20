@@ -215,6 +215,7 @@ FS_ERROR singleSectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* pa
 FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* part);
 
 // file handling
+FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, bool EraseClusters);
 FS_ERROR createFileEntry(FILE* fileptr, uint32_t *fHandle, uint8_t mode);
 FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t mode);
 FILE* fopenFileName(const char* fileName, const char* mode);
