@@ -6,7 +6,6 @@
 #include "util.h"
 #include "console.h"
 #include "task.h"
-#include "file.h"
 #include "video.h"
 #include "kheap.h"
 #include "timer.h"
@@ -113,7 +112,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     csr_x = 0; csr_y = line;
 
     va_list ap;
-    va_start (ap, attribute);
+    va_start(ap, attribute);
     char buffer[32]; // Larger is not needed at the moment
 
     for (; *message; message++)

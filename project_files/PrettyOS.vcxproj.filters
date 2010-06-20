@@ -1,0 +1,435 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Bootloader stage 1">
+      <UniqueIdentifier>{888f4c7e-432c-453b-8cb4-3d07e607d830}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Bootloader stage 2">
+      <UniqueIdentifier>{c9f20a2f-d173-41c9-8218-51737954cb01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CKernel">
+      <UniqueIdentifier>{aa4e6b4d-846c-474c-a2a1-c51a09bf9a91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CKernel\include">
+      <UniqueIdentifier>{6fd599b8-53bc-4045-b009-3be2446ea7a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CKernel\include\cdi">
+      <UniqueIdentifier>{0c4a57ed-f22f-48a5-9181-313ec5f8b5b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CKernel\sources">
+      <UniqueIdentifier>{679fbde1-5cc7-41e2-89c7-50484c67ac04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CKernel\sources\cdi">
+      <UniqueIdentifier>{6253376d-c9ab-40aa-ac8e-3d6405b248aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="user">
+      <UniqueIdentifier>{c9a561f3-6db5-42bb-8732-5c334aa27066}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="user\Shell">
+      <UniqueIdentifier>{e8b9c490-c3cc-436c-b0c3-482c7b807fe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="user\User-Tools">
+      <UniqueIdentifier>{fdac2f75-9af7-4062-a3c3-0d9494ecfaea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="user\C-Userprog">
+      <UniqueIdentifier>{c93e1d15-5d72-4682-9797-25792e6c115a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="user\C++-Userprog">
+      <UniqueIdentifier>{70db3fa9-0b6f-42ab-8058-55e600978cc6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\stage1_bootloader\boot.asm">
+      <Filter>Bootloader stage 1</Filter>
+    </None>
+    <None Include="..\stage1_bootloader\Fat12_BPB.inc">
+      <Filter>Bootloader stage 1</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\A20.inc">
+      <Filter>Bootloader stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\boot2.asm">
+      <Filter>Bootloader stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\Fat12.inc">
+      <Filter>Bootloader stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\Fat12_BPB.inc">
+      <Filter>Bootloader stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\gdt.inc">
+      <Filter>Bootloader stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\GetMemoryMap.inc">
+      <Filter>Bootloader stage 2</Filter>
+    </None>
+    <None Include="..\kernel\kernel.ld">
+      <Filter>CKernel</Filter>
+    </None>
+    <None Include="..\kernel\data.asm">
+      <Filter>CKernel\sources</Filter>
+    </None>
+    <None Include="..\kernel\flush.asm">
+      <Filter>CKernel\sources</Filter>
+    </None>
+    <None Include="..\kernel\interrupts.asm">
+      <Filter>CKernel\sources</Filter>
+    </None>
+    <None Include="..\kernel\kernel.asm">
+      <Filter>CKernel\sources</Filter>
+    </None>
+    <None Include="..\kernel\process.asm">
+      <Filter>CKernel\sources</Filter>
+    </None>
+    <None Include="..\user\user_tools\start.asm">
+      <Filter>user\User-Tools</Filter>
+    </None>
+    <None Include="..\user\user_tools\user.ld">
+      <Filter>user\User-Tools</Filter>
+    </None>
+    <None Include="..\user\user_test_c\makefile">
+      <Filter>user\C-Userprog</Filter>
+    </None>
+    <None Include="..\user\user_test_cpp\makefile">
+      <Filter>user\C++-Userprog</Filter>
+    </None>
+    <None Include="..\makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\kernel\include\cdi-osdep.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cmos.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\console.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\descriptor_tables.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\devicemanager.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\ehci.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\ehciQHqTD.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\event_list.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\fat.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\fat12.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\flpydsk.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\fs.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\initrd.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\ipTcpStack.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\irq.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\keyboard.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\keyboard_GER.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\keyboard_US.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\kheap.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\list.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\mouse.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\os.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\paging.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\pci.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\rtl8139.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\scheduler.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\sys_speaker.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\syscall.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\task.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\time.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\timer.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\types.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\usb2.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\usb2_msd.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\usb_hc.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\util.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\video.h">
+      <Filter>CKernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\bios.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\cache.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\cmos.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\dma.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\fs.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\io.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\lists.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\mem.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\mempool.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\misc.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\net.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\pci.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\scsi.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\cdi\storage.h">
+      <Filter>CKernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\types.h">
+      <Filter>user\User-Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\userlib.h">
+      <Filter>user\User-Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\userlib.hpp">
+      <Filter>user\User-Tools</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\kernel\ckernel.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cmos.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\console.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\descriptor_tables.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\devicemanager.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ehci.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ehciQHqTD.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\elf.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\event_list.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\fat.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\fat12.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\flpydsk.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\fpu.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\fs.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\gdt.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\initrd.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ipTcpStack.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\irq.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\keyboard.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\kheap.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\list.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\mouse.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\paging.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\pci.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\rtl8139.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\scheduler.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\sys_speaker.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\syscall.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\task.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\time.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\timer.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\usb2.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\usb2_msd.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\usb_hc.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\util.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video.c">
+      <Filter>CKernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_bios.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_cache.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_cmos.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_dma.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_fs.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_io.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_lists.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_mem.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_mempool.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_misc.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_net.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_pci.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_scsi.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cdi\cdi_storage.c">
+      <Filter>CKernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\shell\shell.c">
+      <Filter>user\Shell</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_tools\userlib.c">
+      <Filter>user\User-Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_tools\userlib_cpp.cpp">
+      <Filter>user\User-Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_test_c\hello.c">
+      <Filter>user\C-Userprog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_test_cpp\cpp.cpp">
+      <Filter>user\C++-Userprog</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

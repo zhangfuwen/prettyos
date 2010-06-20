@@ -86,13 +86,7 @@ struct dir_entry
 // cache memory for tracks 0 and 1
 extern uint8_t track0[9216], track1[9216];
 
-// how to handle memory for the file?
-extern int32_t fat_entry[FATMAXINDEX];
-
 int32_t flpydsk_read_directory();
 int32_t flpydsk_format(char* vlab); // VolumeLabel
-int32_t read_fat(int32_t* fat_entry, int32_t index, int32_t st_sec, uint8_t* buffer);
-int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer);
-void parse_fat(int32_t* fat_entry, int32_t fat1, int32_t fat2, int32_t in);
 
 #endif

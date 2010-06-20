@@ -28,7 +28,6 @@ typedef __builtin_va_list va_list;
 
 
 // typedefs for CDI
-// typedef struct {} FILE;     /// Dummy: Please fix it (look at fat.h)
 typedef unsigned int dev_t; // Defined like in tyndur
 typedef unsigned int uid_t; // Defined like in tyndur
 typedef unsigned int gid_t; // Defined like in tyndur

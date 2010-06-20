@@ -7,7 +7,6 @@
 #include "util.h"
 #include "task.h"
 #include "fat12.h"
-#include "file.h"
 #include "sys_speaker.h"
 #include "timer.h"
 #include "irq.h"

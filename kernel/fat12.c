@@ -8,111 +8,8 @@
 #include "console.h"
 #include "util.h"
 
-
 // cache memory for tracks 0 and 1
 uint8_t track0[9216], track1[9216];
-
-// how to handle memory for the file?
-
-int32_t fat_entry[FATMAXINDEX];
-
-/*
-Links:
-http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html
-*/
-
-/*
-parameter:
-fat_entrypoint: array of cluster indices
-index:          counter variable 12-bit-FAT index
-st_sec:         sector
-buffer:         e.g. track0
-*/
-int32_t read_fat(int32_t* fat_entrypoint, int32_t index, int32_t st_sec, uint8_t* buffer) /// FAT12
-{
-    // example: //TODO: only necessary FAT entries and combine these tow steps:
-                //parse FAT & load file data
-    // for (i=0;i<FATMAXINDEX;i++)
-    //    read_fat(&fat_entry[i], i, FAT1_SEC, track0);
-    // file_ia(fat_entry,firstCluster,file);
-
-    int32_t fat_index = (index*3)/2; // 0 -> 0, 1 -> 1
-                                     // 100 -> 150, 101 -> 151, 102 -> 153, 103 -> 154, 104 -> 156, ...
-                                     // 511 -> 766, 512 -> 768
-
-    int32_t fat1 = buffer[st_sec*512+fat_index]   & 0xFF;
-    int32_t fat2 = buffer[st_sec*512+fat_index+1] & 0xFF;
-
-    // combine two FAT-entries fat1 and fat2 to a 12-bit-value fat_entry
-    parse_fat(fat_entrypoint,fat1,fat2,index);
-
-    return 0;
-}
-
-/*
-parameter:
-fat:       array of cluster indices
-index:     counter variable 12-bit-FAT index
-st_sec:    sector
-buffer:    e.g. track0
-*/
-int32_t write_fat(int32_t fat, int32_t index, int32_t st_sec, uint8_t* buffer) /// FAT12
-{
-    int8_t fat1, fat2;       // first byte, second byte for one FAT entry at the FAT:
-                             // DAB efc --> AB cD ef or dab EFC --> ab Cd EF
-    uint8_t a[512], b[512];  // FAT data (sector-wise)
-
-    int32_t fat_index = (index*3)/2; // cluster index ---> fat index
-
-    // calculate sector and index from fat_index
-    st_sec = st_sec + fat_index/512;
-    fat_index = fat_index%512;
-
-    // Read a[...] b[...] from track0[...] and insert new FAT entries
-    if (fat_index == 511) // spans sectors
-    {
-        memcpy((void*)a,(void*)&buffer[st_sec*512],512);
-        fat1 = a[511];
-        memcpy((void*)b,(void*)&buffer[(st_sec+1)*512],512);
-        fat2 = b[0];
-    }
-    else
-    {
-        memcpy((void*)a,(void*)&buffer[st_sec*512],512);
-        fat1 = a[fat_index];
-        fat2 = a[fat_index+1];
-    }
-
-    // even and odd cluster:
-    // DAB ... --> AB .D ..
-    // ... EFC --> .. C. EF
-    if (index%2 == 0)
-    {
-        fat1 = fat & 0x0FF;                           // .AB --> AB ..
-        fat2 = (fat2 & 0xF0) | ((fat & 0xF00) >> 8);  // D.. --> .. .D
-    }
-    else
-    {
-        fat1 = (fat1 & 0x0F) | ((fat & 0x00F) << 4);  //  ..C --> C. ..
-        fat2 = (fat  & 0xFF0) >> 4;                   //  EF. --> .. EF
-    }
-
-    // Write back from a[...] b[...] to track0[...]
-    if (fat_index == 511)
-    {
-        a[511] = fat1;
-        b[0]   = fat2;
-        memcpy((void*)&buffer[st_sec*512],(void*)a,512);
-        memcpy((void*)&buffer[(st_sec+1)*512],(void*)b,512);
-    }
-    else
-    {
-        a[fat_index]   = fat1;
-        a[fat_index+1] = fat2;
-        memcpy((void*)&buffer[st_sec*512],(void*)a,512);
-    }
-    return 0;
-}
 
 int32_t flpydsk_read_directory()
 {
@@ -418,22 +315,6 @@ int32_t flpydsk_format(char* vlab) /// VolumeLabel /// FAT12 and Floppy specific
     return 0;
 }
 
-// combine two FAT-entries fat1 and fat2 to a 12-bit-value fat_entry
-void parse_fat(int32_t* fat_entrypoint, int32_t fat1, int32_t fat2, int32_t in) /// FAT12
-{
-    int32_t fat;
-    if (in%2 == 0)
-    {
-        fat = ((fat2 & 0x0F) << 8) | fat1;
-    }
-    else
-    {
-        fat = (fat2 << 4) | ((fat1 &0x0F0) >> 4);
-    }
-    fat = fat & 0xFFF;
-    *fat_entrypoint = fat;
-    ///printf("%x ", fat);
-}
 
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.

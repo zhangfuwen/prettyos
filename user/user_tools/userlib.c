@@ -316,7 +316,7 @@ void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
     }
 }
 
-void snprintf (char *buffer, size_t length, const char *args, ...)
+void snprintf(char *buffer, size_t length, const char *args, ...)
 {
     va_list ap;
     va_start(ap, args);
