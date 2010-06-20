@@ -22,7 +22,7 @@
 #define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.537";
+const char* version = "0.0.0.538";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -96,8 +96,8 @@ void main()
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
-    floppy_install();        // detect FDDs
-    pciScan();               // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
+    floppy_install(); // detect FDDs
+    pciScan();        // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 
     #ifdef _DIAGNOSIS_
     listPCI();

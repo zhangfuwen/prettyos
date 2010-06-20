@@ -11,6 +11,7 @@
 #include "irq.h"
 #include "kheap.h"
 #include "fat.h"
+#include "video.h"
 
 // detailed infos about FDC and FAT12:
 // http://www.isdaman.com/alsos/hardware/fdc/floppy.htm
@@ -138,10 +139,11 @@ static floppy_t* createFloppy(uint8_t ID)
     fdd->accessRemaining = 0;
     fdd->receivedIRQ     = false;
 
+    fdd->drive.type               = FDD;
     fdd->drive.insertedDisk       = malloc(sizeof(disk_t), 0);
     fdd->drive.insertedDisk->type = &FLOPPYDISK;
-    fdd->drive.type               = FDD;
-    fdd->drive.data               = (void*)fdd;
+    fdd->drive.insertedDisk->data = (void*)fdd;
+    fdd->drive.insertedDisk->accessRemaining = 0;
 
     fdd->drive.insertedDisk->partition[0]         = malloc(sizeof(partition_t), 0);
     fdd->drive.insertedDisk->partition[1]         = 0;
@@ -316,6 +318,9 @@ static void flpydsk_check_int(uint32_t* st0, uint32_t* cyl)
 // turns the current floppy drives motor on/off
 void flpydsk_control_motor(bool b)
 {
+  #ifdef _FLOPPY_DIAGNOSIS_
+    writeInfo(0, "Floppy motor: Global-Access-Counter: %u   Internal counter: %u   Motor on: %u", CurrentDrive->drive.insertedDisk->accessRemaining, CurrentDrive->accessRemaining, CurrentDrive->motor);
+  #endif
     if(b == CurrentDrive->motor) return; // everything is already fine
 
     // turn on or off the motor of the current drive
@@ -547,19 +552,20 @@ static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sect
     return(-1);
 }
 
-int32_t flpydsk_readSector(uint32_t sector, uint8_t* buffer)
+FS_ERROR flpydsk_readSector(uint32_t sector, uint8_t* buffer, void* device)
 {
+    CurrentDrive = (floppy_t*)device;
     int32_t retVal = flpydsk_read_sector(sector, false);
     memcpy(buffer, (void*)DMA_BUFFER, 512);
     return(retVal);
 }
 
 // read a sector
-int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single)
+FS_ERROR flpydsk_read_sector(uint32_t sectorLBA, bool single)
 {
     if (CurrentDrive == 0)
     {
-        return -3;
+        return CE_NOT_PRESENT;
     }
 
     if(single) CurrentDrive->drive.insertedDisk->accessRemaining++;
@@ -567,11 +573,11 @@ int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single)
     int32_t head=0, track=0, sector=1;
     flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
-    int32_t retVal=0;
+    int32_t retVal = CE_GOOD;
     CurrentDrive->accessRemaining+=2;
     if (flpydsk_seek (track, head) !=0)
     {
-        retVal=-2;
+        retVal = CE_SEEK_ERROR;
     }
 
     uint32_t timeout = 2; // limit
@@ -581,7 +587,7 @@ int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single)
         if (timeout == 0)
         {
             printf("\nread_sector timeout: read error!\n");
-            retVal=-1;
+            retVal = CE_TIMEOUT;
             break;
         }
         CurrentDrive->accessRemaining++;
@@ -591,17 +597,18 @@ int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single)
     return retVal;
 }
 
-int32_t flpydsk_writeSector(uint32_t sector, uint8_t* buffer)
+FS_ERROR flpydsk_writeSector(uint32_t sector, uint8_t* buffer, void* device)
 {
+    CurrentDrive = (floppy_t*)device;
     memcpy((void*)DMA_BUFFER, buffer, 512);
     return(flpydsk_write_sector(sector, false));
 }
 // write a sector
-int32_t flpydsk_write_sector(uint32_t sectorLBA, bool single)
+FS_ERROR flpydsk_write_sector(uint32_t sectorLBA, bool single)
 {
     if (CurrentDrive == 0)
     {
-        return -1;
+        return(CE_NOT_PRESENT);
     }
 
     // convert LBA sector to CHS
@@ -616,14 +623,14 @@ int32_t flpydsk_write_sector(uint32_t sectorLBA, bool single)
     {
         printf("flpydsk_seek not ok. sector not written.\n");
         CurrentDrive->drive.insertedDisk->accessRemaining--;
-        return -2;
+        return CE_SEEK_ERROR;
     }
     else
     {
         CurrentDrive->accessRemaining++;
         flpydsk_transfer_sector(head, track, sector, 1);
         CurrentDrive->drive.insertedDisk->accessRemaining--;
-        return 0;
+        return CE_GOOD;
     }
 }
 

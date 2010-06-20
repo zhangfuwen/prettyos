@@ -422,8 +422,8 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
         
             sense = showResultsRequestSense();
             if ( ((statusByteTestReady == 0) && ((sense == 0) || (sense == 6))) || (timeout <= 0) )
-			{
-				break;
+            {
+                break;
             }
         }
         waitForKeyStroke();
@@ -624,7 +624,7 @@ void testMSD(uint8_t devAddr, partition_t* part)
 
 labelRead:
         sector=start;
-        usbRead(sector, part->buffer);
+        usbRead(sector, part->buffer, part->disk->data);
 
         if ( (sector == 0) || (sector == startSectorPartition) || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
         {
@@ -648,7 +648,7 @@ labelLeave:
     waitForKeyStroke();
 }
 
-int32_t usbRead(uint32_t sector, uint8_t* buffer)
+FS_ERROR usbRead(uint32_t sector, uint8_t* buffer, void* device)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
     uint8_t devAddr = currentDevice;
@@ -673,9 +673,13 @@ int32_t usbRead(uint32_t sector, uint8_t* buffer)
     showUSBSTS();
     logBulkTransfer(&read);
     
-    return 0; // SUCCESS // TEST
+    return(CE_GOOD); // SUCCESS // TEST
 }
 
+FS_ERROR usbWrite(uint32_t sector, uint8_t* buffer, void* device)
+{
+    return(CE_GOOD);
+}
 
 
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN)

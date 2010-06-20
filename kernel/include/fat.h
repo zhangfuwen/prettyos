@@ -82,7 +82,7 @@ enum {FAT12 = 1, FAT16, FAT32};
 struct disk;
 typedef struct
 {
-    struct disk* disk;  // The disk on which the partition is
+    struct disk* disk;          // The disk on which the partition is
     uint8_t* buffer;            // buffer equal to one sector
     uint32_t sectorSize;        // byte per sector
     uint32_t firsts;            // LBA of 1st sector
@@ -203,6 +203,8 @@ typedef enum
     CE_INVALID_ARGUMENT,            // Invalid argument
     CE_TOO_MANY_FILES_OPEN,         // Too many files are already open
     CE_UNSUPPORTED_SECTOR_SIZE,     // Unsupported sector size
+
+    CE_TIMEOUT,                     // Timout while trying to access
 
     CE_FAT_EOF = 60,                // Read try beyond FAT's EOF
     CE_EOF                          // EOF

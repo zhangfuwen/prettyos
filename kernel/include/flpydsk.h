@@ -30,10 +30,10 @@ void flpydsk_refreshVolumeNames();
 
 void flpydsk_initialize_dma();
 
-int32_t flpydsk_readSector(uint32_t sector, uint8_t* buffer);
-int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single);
-int32_t flpydsk_writeSector(uint32_t sector, uint8_t* buffer);
-int32_t flpydsk_write_sector(uint32_t sectorLBA, bool single);
+FS_ERROR flpydsk_readSector(uint32_t sector, uint8_t* buffer, void* device);
+FS_ERROR flpydsk_read_sector(uint32_t sectorLBA, bool single);
+FS_ERROR flpydsk_writeSector(uint32_t sector, uint8_t* buffer, void* device);
+FS_ERROR flpydsk_write_sector(uint32_t sectorLBA, bool single);
 
 int32_t flpydsk_read_ia (int32_t i, void* a, int8_t option);
 int32_t flpydsk_write_ia(int32_t i, void* a, int8_t option);

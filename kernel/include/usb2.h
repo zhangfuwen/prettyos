@@ -33,8 +33,7 @@ typedef struct usb2_Device
     uint8_t  numEndpointOutMSD;
     bool     ToggleEndpointInMSD;
     bool     ToggleEndpointOutMSD;
-}
-usb2_Device_t;
+} usb2_Device_t;
 
 struct usb2_deviceDescriptor
 {

@@ -15,8 +15,8 @@ typedef enum
 
 typedef struct
 {
-    int32_t (*readSector) (uint32_t, uint8_t*);
-    int32_t (*writeSector)(uint32_t, uint8_t*);
+    FS_ERROR (*readSector) (uint32_t, uint8_t*, void*);
+    FS_ERROR (*writeSector)(uint32_t, uint8_t*, void*);
 } diskType_t;
 
 extern diskType_t FLOPPYDISK;
@@ -28,8 +28,8 @@ typedef struct disk
     diskType_t*  type;
     partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
     char         name[15];
-    void*        data; // Contains additional information depending on its type
-    uint32_t     accessRemaining; // Used to control motor
+    void*        data;                          // Contains additional information depending on disk-type
+    uint32_t     accessRemaining;               // Used to control motor
 } disk_t;
 
 typedef struct 
