@@ -28,6 +28,8 @@ void i86_flpy_irq(registers_t* r);
 void flpydsk_control_motor(bool b);
 void flpydsk_refreshVolumeNames();
 
+void flpydsk_initialize_dma();
+
 int32_t flpydsk_readSector(uint32_t sector, uint8_t* buffer);
 int32_t flpydsk_read_sector(uint32_t sectorLBA, bool single);
 int32_t flpydsk_writeSector(uint32_t sector, uint8_t* buffer);

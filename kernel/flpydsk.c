@@ -201,7 +201,7 @@ void floppy_install()
    Because of this, the DMA is used for data transfers. */
 
 // initialize DMA to use physical address 84k-128k
-static void flpydsk_initialize_dma()
+void flpydsk_initialize_dma()
 {
     outportb(0x0a, 0x06);   // mask dma channel 2
     outportb(0xd8, 0xFF);   // reset master flip-flop

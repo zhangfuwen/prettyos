@@ -419,9 +419,9 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILE* fileptr, uint32_t* curEntry, 
 
 static FILEROOTDIRECTORYENTRY getFileAttribute(FILE* fileptr, uint32_t* fHandle)
 {
-  //#ifdef _FAT_DIAGNOSIS_
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> getFileAttribute <<<<<");
-  //#endif
+  #endif
     
     // fileptr->dirccls = fileptr->dirclus; // TEST
     FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fileptr,fHandle,true);
@@ -513,23 +513,28 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
     printf("\n>>>>> searchFile <<<<<");
   #endif
 
-    FS_ERROR statusB       = CE_FILE_NOT_FOUND;
+    FS_ERROR retVal       = CE_FILE_NOT_FOUND;
     fileptrDest->dirccls   = fileptrDest->dirclus;
     uint16_t compareAttrib = 0xFFFF ^ fileptrTest->attributes;
     uint32_t fHandle = fileptrDest->entry;
     bool read = true;
 
     memset(fileptrDest->name, 0x20, DIR_NAMECOMP);
-    textColor(0x0E); printf("\nfHandle (searchFile): %d",fHandle); textColor(0x0F);
-
+  #ifdef _FAT_DIAGNOSIS_
+	textColor(0x0E); printf("\nfHandle (searchFile): %d",fHandle); textColor(0x0F);
+  #endif
     if (fHandle == 0 || (fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) != 0) // Maximum 16 entries possible
+	{
         if (cacheFileEntry(fileptrDest, &fHandle, read) == NULL)
+		{
             return CE_BADCACHEREAD;
+		}
+	}
 
     uint8_t  state=0;
     uint32_t attrib;
     char character, test;
-    while(statusB != CE_GOOD) // Loop until you reach the end or find the file
+    while(retVal != CE_GOOD) // Loop until you reach the end or find the file
     {
       #ifdef _FAT_DIAGNOSIS_
         textColor(0x0E); printf("\n\nfHandle %u\n",fHandle); textColor(0x0F);
@@ -559,7 +564,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                       #ifdef _FAT_DIAGNOSIS_
                         textColor(0x0A);printf("\n\nAn entry is found. Attributes OK for search");textColor(0x0F); /// TEST
                       #endif
-                        statusB = CE_GOOD;
+                        retVal = CE_GOOD;
                         for (uint8_t i = 0; i < DIR_NAMECOMP; i++)
                         {
                             character = fileptrDest->name[i];
@@ -568,7 +573,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                           #endif
                             if (toLower(character) != toLower(fileptrTest->name[i]))
                             {
-                                statusB = CE_FILE_NOT_FOUND;
+                                retVal = CE_FILE_NOT_FOUND;
                               #ifdef _FAT_DIAGNOSIS_
                                 textColor(0x0C); printf("\n\n %c <--- not equal", character); textColor(0x0F);
                               #endif
@@ -581,7 +586,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                     // Check for attribute match
                     if (((attrib & compareAttrib) == 0) && (attrib != ATTR_LONG_NAME))
                     {
-                        statusB = CE_GOOD;                 // Indicate the already filled file data is correct and go back
+                        retVal = CE_GOOD;                 // Indicate the already filled file data is correct and go back
                         character = (char)'m';             // random value
                         if (fileptrTest->name[0] != '*')   // If "*" is passed for comparion as 1st char then don't proceed. Go back, file alreay found.
                         {
@@ -595,7 +600,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                                 {
                                     if(toLower(character) != toLower(test))
                                     {
-                                        statusB = CE_FILE_NOT_FOUND; // it's not a match
+                                        retVal = CE_FILE_NOT_FOUND; // it's not a match
                                         break;
                                     }
                                 }
@@ -603,7 +608,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                         }
 
                         // Before calling this "searchFile" fn, "formatfilename" must be called. Hence, extn always starts from position "8".
-                        if ((fileptrTest->name[8] != '*') && (statusB == CE_GOOD))
+                        if ((fileptrTest->name[8] != '*') && (retVal == CE_GOOD))
                         {
                             for (uint16_t i=8; i<DIR_NAMECOMP; i++)
                             {
@@ -618,7 +623,7 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                                 {
                                     if(toLower(character) != toLower(test))
                                     {
-                                        statusB = CE_FILE_NOT_FOUND; // it's not a match
+                                        retVal = CE_FILE_NOT_FOUND; // it's not a match
                                         break;
                                     }
                                 }
@@ -627,26 +632,26 @@ FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t m
                     } // Attribute match
                     break; // end of case
             } // while
-        } // not found // end of if (statusB != CE_BADCACHEREAD)
+        } // not found // end of if (retVal != CE_BADCACHEREAD)
         else
         {
             // looking for an empty/re-usable entry
             if ( cmd == LOOK_FOR_EMPTY_ENTRY)
             {
-                statusB = CE_GOOD;
+                retVal = CE_GOOD;
             }
         } // found or not
         // increment it no matter what happened
         fHandle++;
     } // while
-    return(statusB);
+    return(retVal);
 }
 
 FS_ERROR fclose(FILE* fileptr)
 {
-  //#ifdef _FAT_DIAGNOSIS_
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fclose <<<<<");
-  //#endif
+  #endif
 
     FS_ERROR error = CE_GOOD;
     FSerrno = CE_GOOD;
@@ -664,20 +669,19 @@ FS_ERROR fclose(FILE* fileptr)
             }
         }        
 
-        // fatWrite (fileptr->volume, 0, 0, true); // TEST <------------------------
-        uint32_t i, sectorFAT;
-        for (i=0, sectorFAT=globalLastFATSectorRead; i<1/*fileptr->volume->fatcopy*/; i++, sectorFAT+=fileptr->volume->fatsize)
+        fatWrite (fileptr->volume, 0, 0, true); // works correct with floppy only with HOTFIX there
+        /*
+		uint32_t i, sectorFAT;
+        for (i=0, sectorFAT=globalLastFATSectorRead; i<1; i++, sectorFAT+=fileptr->volume->fatsize)
         {
-            printf("\ni: %u sectorFAT: %u", i,sectorFAT);
             if (singleSectorWrite(sectorFAT, globalBufferFATSector, fileptr->volume) != CE_GOOD)
             {
                 return CLUSTER_FAIL_FAT16;
             }
         }
+		*/
         globalFATWriteNecessary = false;
-        waitForKeyStroke();
-
-
+        
         dir = getFileAttribute(fileptr, &fHandle);
 
         if (dir == NULL)
@@ -696,7 +700,6 @@ FS_ERROR fclose(FILE* fileptr)
         dir->DIR_FileSize = fileptr->size;
         dir->DIR_Attr     = fileptr->attributes;
         
-        printf("\nline: %u",__LINE__);
         if(writeFileEntry(fileptr,&fHandle))
         {
             error = CE_GOOD;
@@ -830,14 +833,17 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
 
     if (forceWrite) // write the current FAT sector to the partition "volume"
     {
-        //printf("\n"); memshow(globalBufferFATSector,512); waitForKeyStroke();
-        printf("\nfclose: globalLastFATSectorRead: %u",globalLastFATSectorRead);
-        printf("\nvolume->fatcopy: %u volume->fatsize: %u", volume->fatcopy, volume->fatsize);
-        
         uint32_t i, sectorFAT;
-        for (i=0, sectorFAT=globalLastFATSectorRead; i<volume->fatcopy; i++, sectorFAT+=volume->fatsize)
+        
+//======================= HOTFIX =============================ehenkes=============//
+		if (volume->type == FAT12)
+		{
+			volume->fatcopy = 1;
+		}
+//======================= HOTFIX =============================ehenkes=============//
+
+		for (i=0, sectorFAT=globalLastFATSectorRead; i<volume->fatcopy; i++, sectorFAT+=volume->fatsize)
         {
-            printf("\ni: %u sectorFAT: %u", i,sectorFAT);
             if (singleSectorWrite(sectorFAT, globalBufferFATSector, volume) != CE_GOOD)
             {
                 return ClusterFailValue;
@@ -1236,9 +1242,9 @@ static uint32_t getFullClusterNumber(FILEROOTDIRECTORYENTRY entry)
 
 static bool writeFileEntry(FILE* fileptr, uint32_t* curEntry)
 {
-  //#ifdef _FAT_DIAGNOSIS_
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> writeFileEntry <<<<<");
-  //#endif  
+  #endif  
     
     partition_t* volume = fileptr->volume;
     uint32_t ccls       = fileptr->dirccls;
@@ -1367,7 +1373,6 @@ FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, uint8_t EraseClusters)
             dir->DIR_Name[0] = DIR_DEL;
             clus = getFullClusterNumber(dir);
 
-            printf("\nline: %u",__LINE__);
             if ( ((writeFileEntry( fileptr, fHandle)) != CE_GOOD) || (status != CE_GOOD) )
             {
                 status = CE_ERASE_FAIL;
@@ -1433,7 +1438,6 @@ static FS_ERROR PopulateEntries(FILE* fileptr, char *name , uint32_t *fHandle, u
     fileptr->attributes  = dir->DIR_Attr;
     fileptr->entry       = *fHandle;
 
-    printf("\nline: %u",__LINE__);
     if (writeFileEntry(fileptr,fHandle) != true)
     {
         error = CE_WRITE_ERROR;
@@ -1549,9 +1553,9 @@ static FILEROOTDIRECTORYENTRY loadDirAttrib(FILE* fileptr, uint32_t* fHandle)
 
 static FS_ERROR fileCreateHeadCluster( FILE* fileptr, uint32_t* cluster)
 {
-  //#ifdef _FAT_DIAGNOSIS_
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fileCreateHeadCluster <<<<<");
-  //#endif      
+  #endif      
     
     partition_t* volume = fileptr->volume;
     *cluster = fatFindEmptyCluster(fileptr);
@@ -1582,9 +1586,9 @@ static FS_ERROR fileCreateHeadCluster( FILE* fileptr, uint32_t* cluster)
 
 static FS_ERROR createFirstCluster(FILE* fileptr)
 {
-  //#ifdef _FAT_DIAGNOSIS_
+  #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> createFirstCluster <<<<<");
-  //#endif          
+  #endif          
     
     uint32_t cluster;
     uint32_t fHandle = fileptr->entry;
@@ -1596,7 +1600,6 @@ static FS_ERROR createFirstCluster(FILE* fileptr)
         dir->DIR_FstClusHI = (cluster & 0x0FFF0000) >> 16; // only 28 bits in FAT32
         dir->DIR_FstClusLO = (cluster & 0x0000FFFF);
         
-        printf("\nline: %u",__LINE__);
         if(writeFileEntry(fileptr, &fHandle) == false)
         {
             return CE_WRITE_ERROR;
