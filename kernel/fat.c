@@ -30,7 +30,7 @@ static bool writeFileEntry(FILE* fileptr, uint32_t* curEntry);
 
 uint8_t  globalBufferFATSector[SECTOR_SIZE];     // Global FAT sector buffer
 bool     globalBufferMemSet0       = false;      // Global variable indicating that the data buffer contains all zeros
-FILE*    globalBufferUsedByFILEPTR = NULL;       // Global variable indicating which file is using the data buffer
+FILE*    globalFilePtr = NULL;                   // Global variable indicating which file is using the partition's data buffer
 uint32_t globalLastDataSectorRead  = 0xFFFFFFFF; // Global variable indicating which data sector was read last
 uint32_t globalLastFATSectorRead   = 0xFFFFFFFF; // Global variable indicating which FAT sector was read last
 bool     globalFATWriteNecessary   = false;      // Global variable indicating that there is information that needs to be written to the FAT
@@ -98,26 +98,27 @@ FS_ERROR singleSectorRead(uint32_t sector_addr, uint8_t* buffer, partition_t* pa
     return sectorRead(sector_addr, buffer, part);
 }
 
-
+/*
 static FS_ERROR flushData()
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> flushData <<<<<");
   #endif
-    
-    FILE* fileptr     = globalBufferUsedByFILEPTR;
-    partition_t* volume = fileptr->volume;
-    uint32_t sector     = cluster2sector(volume,fileptr->ccls) + (uint16_t)fileptr->sec;
-    if(singleSectorWrite( sector, volume->buffer, volume) != CE_GOOD)
-    {
-        return CE_WRITE_ERROR;
-    }
-    else
-    {
-        globalDataWriteNecessary = false;
-        return CE_GOOD;
-    }
+        
+    if(singleSectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                  globalFilePtr->volume->buffer,                                                  // buffer
+						  globalFilePtr->volume)                                                          // partition
+						  != CE_GOOD)
+						  {
+							return CE_WRITE_ERROR;
+						  }
+						  else
+						  {
+							globalDataWriteNecessary = false;
+							return CE_GOOD;
+						  }
 }
+*/
 
 
 static uint32_t fatRead (partition_t* volume, uint32_t ccls)
@@ -380,9 +381,23 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILE* fileptr, uint32_t* curEntry, 
             }
             else
             {
-                if (globalDataWriteNecessary) {if (flushData()) {return NULL;}}
+                if (globalDataWriteNecessary) 
+                {
+                    // former flushdata:
+                    if (singleSectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                                   globalFilePtr->volume->buffer,                                                  // buffer
+						                   globalFilePtr->volume))                      
+                    {
+                        FSerrno = CE_WRITE_ERROR;
+                        return NULL;
+                    }
+                    else
+                    {
+                        globalDataWriteNecessary = false; 
+                    }                
+                }
 
-                globalBufferUsedByFILEPTR = NULL;
+                globalFilePtr = NULL;
                 globalBufferMemSet0 = false;
 
                 uint8_t retVal = singleSectorRead(sector + offset2, volume->buffer, volume);
@@ -660,14 +675,21 @@ FS_ERROR fclose(FILE* fileptr)
     
     if(fileptr->Flags.write)
     {        
-        if (globalDataWriteNecessary)
+        if (globalDataWriteNecessary) 
         {
-            if (flushData() != CE_GOOD)
+            // former flushdata:
+            if (singleSectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                            globalFilePtr->volume->buffer,                                                  // buffer
+						            globalFilePtr->volume))                      
             {
                 FSerrno = CE_WRITE_ERROR;
                 return CE_WRITE_ERROR;
             }
-        }        
+            else
+            {
+                globalDataWriteNecessary = false; 
+            }                
+        }
 
         fatWrite (fileptr->volume, 0, 0, true); // works correct with floppy only with HOTFIX there
         /*
@@ -1017,11 +1039,23 @@ static FS_ERROR eraseCluster(partition_t* volume, uint32_t cluster)
     
     uint32_t SectorAddress = cluster2sector(volume,cluster);
 
-    if (globalDataWriteNecessary)
-        if (flushData())
+    if (globalDataWriteNecessary) 
+    {
+        // former flushdata:
+        if (singleSectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                        globalFilePtr->volume->buffer,                                                  // buffer
+						        globalFilePtr->volume))                      
+        {
+            FSerrno = CE_WRITE_ERROR;
             return CE_WRITE_ERROR;
+        }
+        else
+        {
+            globalDataWriteNecessary = false; 
+        }                
+    }
 
-    globalBufferUsedByFILEPTR = NULL;
+    globalFilePtr = NULL;
 
     if (globalBufferMemSet0 == false)
     {
@@ -1094,31 +1128,47 @@ uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* fileptr)
     uint32_t sectors    = (size%512 == 0) ? size/512 : size/512+1; // Number of sectors to be written
     volume->disk->accessRemaining += sectors;
 
-    if (globalBufferUsedByFILEPTR != fileptr)
+    if (globalFilePtr != fileptr)
     {
-        if (globalDataWriteNecessary)
+        
+        if (globalDataWriteNecessary) 
         {
             sectors--;
-            if (flushData())
+            // former flushdata:
+            if (sectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                            globalFilePtr->volume->buffer,                                           // buffer
+						            globalFilePtr->volume))                      
             {
-                FSerrno = CE_WRITE_ERROR;
                 volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been written
-                return 0;
+                FSerrno = CE_WRITE_ERROR;
+                return 0; // write count
             }
+            else
+            {
+                globalDataWriteNecessary = false; 
+            }                
         }
-        globalBufferUsedByFILEPTR = fileptr;
+
+        globalFilePtr = fileptr;
     }
     if (globalLastDataSectorRead != sector)
     {
-        if (globalDataWriteNecessary)
+        if (globalDataWriteNecessary) 
         {
             sectors--;
-            if (flushData())
+            // former flushdata:
+            if (sectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                            globalFilePtr->volume->buffer,                                           // buffer
+						            globalFilePtr->volume))                      
             {
-                FSerrno = CE_WRITE_ERROR;
                 volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been written
-                return 0;
+                FSerrno = CE_WRITE_ERROR;
+                return 0; // write count
             }
+            else
+            {
+                globalDataWriteNecessary = false; 
+            }                
         }
 
         globalBufferMemSet0 = false;
@@ -1145,16 +1195,25 @@ uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* fileptr)
         {
             uint8_t needRead = true;
 
-            if (globalDataWriteNecessary)
+            if (globalDataWriteNecessary) 
             {
                 sectors--;
-                if (flushData())
+                // former flushdata:
+                if (sectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                                globalFilePtr->volume->buffer,                                                  // buffer
+						                globalFilePtr->volume))                      
                 {
-                    FSerrno = CE_WRITE_ERROR;
                     volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been written
-                    return 0;
+                    FSerrno = CE_WRITE_ERROR;
+                    return 0; // write count
                 }
+                else
+                {
+                    globalDataWriteNecessary = false; 
+                }                
             }
+
+
             pos = 0;
             fileptr->sec++;
             if (fileptr->sec == volume->SecPerClus)
@@ -1183,7 +1242,7 @@ uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* fileptr)
             {
                 sector = cluster2sector(volume,fileptr->ccls);
                 sector += (uint16_t)fileptr->sec;
-                globalBufferUsedByFILEPTR = fileptr;
+                globalFilePtr = fileptr;
 
                 if (needRead)
                 {
@@ -1810,11 +1869,23 @@ FS_ERROR fopen(FILE* fileptr, uint32_t* fHandle, char type)
             {
                 uint32_t l = cluster2sector(volume,fileptr->ccls);
 
-                if (globalDataWriteNecessary)
-                    if (flushData())
+                if (globalDataWriteNecessary) 
+                {
+                    // former flushdata:
+                    if (singleSectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                                    globalFilePtr->volume->buffer,                                                  // buffer
+						                    globalFilePtr->volume))                      
+                    {
+                        FSerrno = CE_WRITE_ERROR;
                         return CE_WRITE_ERROR;
+                    }
+                    else
+                    {
+                        globalDataWriteNecessary = false; 
+                    }                
+                }
 
-                globalBufferUsedByFILEPTR = fileptr;
+                globalFilePtr = fileptr;
                 if (globalLastDataSectorRead != l)
                 {
                     globalBufferMemSet0 = false;
@@ -1857,14 +1928,22 @@ int32_t fseek(FILE* fileptr, int32_t offset, int whence) // return values should
             break;
     }
 
-    if (globalDataWriteNecessary)
+    if (globalDataWriteNecessary) 
     {
-       if (flushData() != CE_GOOD)
-       {
+        // former flushdata:
+        if (singleSectorWrite( cluster2sector(globalFilePtr->volume,globalFilePtr->ccls) + globalFilePtr->sec, // sector
+		                        globalFilePtr->volume->buffer,                                                  // buffer
+						        globalFilePtr->volume))                      
+        {
             FSerrno = CE_WRITE_ERROR;
             return EOF; // int32_t-1
-       }
+        }
+        else
+        {
+            globalDataWriteNecessary = false; 
+        }                
     }
+
 
     uint32_t temp = fileptr->cluster;
     fileptr->ccls = temp;
@@ -1928,7 +2007,7 @@ int32_t fseek(FILE* fileptr, int32_t offset, int whence) // return values should
         temp = cluster2sector(volume,fileptr->ccls);
         numsector = fileptr->sec;
         temp += numsector;
-        globalBufferUsedByFILEPTR = NULL;
+        globalFilePtr = NULL;
         globalBufferMemSet0 = false;
         if (singleSectorRead(temp, volume->buffer, volume) != CE_GOOD)
         {
