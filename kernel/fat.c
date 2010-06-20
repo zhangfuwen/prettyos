@@ -1784,10 +1784,10 @@ static void fileptrCopy(FILE* dest, FILE* source)
     }
 }
 
-FS_ERROR fopen(FILE* fileptr, uint32_t* fHandle, char type)
+FS_ERROR fdopen(FILE* fileptr, uint32_t* fHandle, char type)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fopen <<<<<");
+    printf("\n>>>>> fdopen <<<<<");
   #endif
 
     FS_ERROR error = CE_GOOD;
@@ -1989,10 +1989,10 @@ int32_t fseek(FILE* fileptr, int32_t offset, int whence) // return values should
     return CE_GOOD;
 }
 
-FILE* fopenFileName(const char* fileName, const char* mode)
+FILE* fopen(const char* fileName, const char* mode)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fopenFileName <<<<<");
+    printf("\n>>>>> fopen <<<<<");
   #endif
 
     partition_t* part = getPartition(fileName); 
@@ -2047,7 +2047,7 @@ FILE* fopenFileName(const char* fileName, const char* mode)
                     
                     if (error == CE_GOOD)
                     {
-                        error = fopen (filePtr, &fHandle, 'w');
+                        error = fdopen (filePtr, &fHandle, 'w');
                     
                         if (filePtr->attributes & ATTR_DIRECTORY)
                         {
@@ -2075,7 +2075,7 @@ FILE* fopenFileName(const char* fileName, const char* mode)
                 {
                     fHandle = filePtr->entry;
 
-                    error = fopen (filePtr, &fHandle, 'w');
+                    error = fdopen (filePtr, &fHandle, 'w');
 
                     if (filePtr->attributes & ATTR_DIRECTORY)
                     {
@@ -2106,7 +2106,7 @@ FILE* fopenFileName(const char* fileName, const char* mode)
 
                         if (error == CE_GOOD)
                         {
-                            error = fopen (filePtr, &fHandle, 'w');
+                            error = fdopen (filePtr, &fHandle, 'w');
 
                             if (filePtr->attributes & ATTR_DIRECTORY)
                             {
@@ -2133,7 +2133,7 @@ FILE* fopenFileName(const char* fileName, const char* mode)
             {
                 fHandle = filePtr->entry;
 
-                error = fopen (filePtr, &fHandle, 'r');
+                error = fdopen (filePtr, &fHandle, 'r');
 
                 if ((mode[1] == '+') && !(filePtr->attributes & ATTR_DIRECTORY))
                     filePtr->Flags.write = true;
@@ -2158,7 +2158,7 @@ FILE* fopenFileName(const char* fileName, const char* mode)
 
             if (error == CE_GOOD)
             {
-                error = fopen (filePtr, &fHandle, 'w');
+                error = fdopen (filePtr, &fHandle, 'w');
                 if (filePtr->attributes & ATTR_DIRECTORY)
                 {
                     FSerrno = CE_INVALID_ARGUMENT;

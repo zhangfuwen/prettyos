@@ -346,7 +346,7 @@ FS_ERROR loadFile(const char* filename, partition_t* part)
         textColor(0x0E);
         printf("%u\n", dest.entry); // number of file entry "searched.xxx"
 
-        fopen(&dest, &(dest.entry), 'r');
+        fdopen(&dest, &(dest.entry), 'r');
         
         void* filebuffer = malloc(dest.size,PAGESIZE);
         fread(&dest, filebuffer, dest.size);

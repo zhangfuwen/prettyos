@@ -218,8 +218,8 @@ FS_ERROR singleSectorWrite(uint32_t sector_addr, uint8_t* buffer, partition_t* p
 FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, bool EraseClusters);
 FS_ERROR createFileEntry(FILE* fileptr, uint32_t *fHandle, uint8_t mode);
 FS_ERROR searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t mode);
-FILE* fopenFileName(const char* fileName, const char* mode);
-FS_ERROR fopen(FILE* fileptr, uint32_t* fHandle, char type);
+FILE* fopen(const char* fileName, const char* mode);
+FS_ERROR fdopen(FILE* fileptr, uint32_t* fHandle, char type);
 FS_ERROR fclose(FILE* fileptr);
 FS_ERROR fread(FILE* fileptr, void* dest, uint32_t count);
 int32_t fseek(FILE* fileptr, long offset, int whence); // return values should be adapted to FS_ERROR types

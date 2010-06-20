@@ -246,7 +246,7 @@ void screenshot()
         }
     }
 
-    FILE* file = fopenFileName("1:/screen.txt", "w+"); // TEST to write to Floppy
+    FILE* file = fopen("1:/screen.txt", "a+"); // TEST to write to Floppy
     if (file) // check for NULL pointer, otherwise #PF
     {
         fwrite((void*)videoscreen, 4098, 1, file);
