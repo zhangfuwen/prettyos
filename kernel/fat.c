@@ -857,16 +857,7 @@ static uint32_t fatWrite (partition_t* volume, uint32_t ccls, uint32_t value, bo
 
     if (forceWrite) // write the current FAT sector to the partition "volume"
     {
-        uint32_t i, sectorFAT;
-
-//======================= HOTFIX =============================ehenkes=============//
-        if (volume->type == FAT12)
-        {
-            volume->fatcopy = 1;
-        }
-//======================= HOTFIX =============================ehenkes=============//
-
-        for (i=0, sectorFAT=globalLastFATSectorRead; i<volume->fatcopy; i++, sectorFAT+=volume->fatsize)
+        for (uint32_t i=0, sectorFAT=globalLastFATSectorRead; i<volume->fatcopy; i++, sectorFAT+=volume->fatsize)
         {
             if (singleSectorWrite(sectorFAT, globalBufferFATSector, volume) != CE_GOOD)
             {

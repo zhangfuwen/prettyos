@@ -519,7 +519,7 @@ static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sect
     if (operation == 1) // write a sector
     {
         flpydsk_dma_write();
-        flpydsk_send_command(FDC_CMD_WRITE_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY);
+        flpydsk_send_command(FDC_CMD_WRITE_SECT | FDC_CMD_EXT_DENSITY);
     }
 
     flpydsk_send_command(head << 2 | CurrentDrive->ID);
