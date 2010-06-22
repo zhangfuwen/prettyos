@@ -9,7 +9,7 @@
 
 // info from http://lowlevel.brainsware.org/wiki/index.php/CMOS
 
-tm_t* cmosTime(tm_t* ptm)
+static void cmosTime(tm_t* ptm)
 {
     ptm->second     = PackedBCD2Decimal(cmos_read(0x00));
     ptm->minute     = PackedBCD2Decimal(cmos_read(0x02));
@@ -18,19 +18,20 @@ tm_t* cmosTime(tm_t* ptm)
     ptm->month      = PackedBCD2Decimal(cmos_read(0x08));
     ptm->year       = PackedBCD2Decimal(cmos_read(0x09));
     ptm->century    = PackedBCD2Decimal(cmos_read(0x32));
-    return ptm;
 }
 
-static void appendInt(int val, char* dest, char* buf) {
+static void appendInt(uint16_t val, char* dest, char* buf)
+{
     if (val<10)
     {
-        strcat(dest,"0");
+        strcat(dest, "0");
     }
     itoa(val, buf);
     strcat(dest, buf);
 }
 
-unsigned int calculateWeekday(uint16_t year, uint8_t month, uint32_t day) {
+static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
+{
     day += 6; //1.1.2000 was Saturday
     day += (year-2000)*365.25;
     if (month > 11)
@@ -63,7 +64,7 @@ unsigned int calculateWeekday(uint16_t year, uint8_t month, uint32_t day) {
     return(day%7+1);
 }
 
-char* getCurrentDateAndTime(char* pStr)
+void getCurrentDateAndTime(char* pStr)
 {
     tm_t pct;
     cmosTime(&pct);
@@ -120,11 +121,10 @@ char* getCurrentDateAndTime(char* pStr)
     appendInt(pct.second, pStr, buf);
 
     strcat(pStr, ""); // add '\0'
-    return pStr;
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

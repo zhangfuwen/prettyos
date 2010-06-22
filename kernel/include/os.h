@@ -10,8 +10,8 @@
 /// #define _FAT_DIAGNOSIS_     // only as transition state during implementation of FAT 12/16/32
 /// #define _FAT_READ_WRITE_TO_SECTOR_DIAGNOSIS_ // only as transition state during implementation of FAT 12/16/32
 /// #define _TASKING_DIAGNOSIS_ // Provides optional output about tasking and scheduler
-#define _FLOPPY_DIAGNOSIS_  // Provides optional information about the floppy(-motor)
-/// #define _SOUND_             // Sound-Messages  - deactivation makes sense during development, because of better boot-time
+/// #define _FLOPPY_DIAGNOSIS_  // Provides optional information about the floppy(-motor)
+#define _SOUND_             // Sound-Messages - deactivation makes sense during development, because of better boot-time
 
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);
@@ -23,7 +23,7 @@ static inline void kdebug(uint8_t color, const char* args, ...)
         textColor(color);
     }
     va_list ap;
-    va_start (ap, args);
+    va_start(ap, args);
     vprintf(args, ap);
     if(color != 0x00)
     {

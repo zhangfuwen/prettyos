@@ -3,8 +3,6 @@
 
 #include "fs.h"
 
-extern bool RAMDISKflag;
-
 typedef struct
 {
     uint32_t nfiles; // The number of files in the ramdisk.

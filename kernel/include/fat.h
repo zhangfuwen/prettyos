@@ -147,14 +147,7 @@ typedef struct
 } _FILEROOTDIRECTORYENTRY;
 typedef _FILEROOTDIRECTORYENTRY* FILEROOTDIRECTORYENTRY;
 
-
-/************************************************************************/
-//
-// file operations
-//
-
-typedef
-enum
+typedef enum
 {
     LOOK_FOR_EMPTY_ENTRY = 0,
     LOOK_FOR_MATCHING_ENTRY
@@ -203,7 +196,6 @@ typedef enum
     CE_INVALID_ARGUMENT,            // Invalid argument
     CE_TOO_MANY_FILES_OPEN,         // Too many files are already open
     CE_UNSUPPORTED_SECTOR_SIZE,     // Unsupported sector size
-
     CE_TIMEOUT,                     // Timout while trying to access
 
     CE_FAT_EOF = 60,                // Read try beyond FAT's EOF
