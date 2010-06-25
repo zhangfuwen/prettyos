@@ -205,20 +205,20 @@ void floppy_install()
 // initialize DMA to use physical address 84k-128k
 void flpydsk_initialize_dma()
 {
-    outportb(0x0a, 0x06);   // mask dma channel 2
-    outportb(0xd8, 0xFF);   // reset master flip-flop
+    outportb(0x0A, 0x06);   // mask dma channel 2
+    // outportb(0x0C, 0xFF);   // reset flip-flop (controller 1, slave, channel 2)
     outportb(0x04, 0x00);   // DMA buffer address 0x1000
     outportb(0x04, 0x10);
-    outportb(0xd8, 0xFF);   // reset master flip-flop
-    outportb(0x05, 0xFF);   // count to 0x23FF (number of bytes in a 3.5" floppy disk track: 18*512)
+    // outportb(0x0C, 0xFF);   // reset flip-flop (controller 1, slave, channel 2)
+    outportb(0x05, 0xFF);   // count to 0x23FF (number of bytes in a 3.5" floppy disk track: 0 to 18*512)
     outportb(0x05, 0x23);
 
     outportb(0x81, 0x00);   // external page register = 0
-    outportb(0x0a, 0x02);   // unmask dma channel 2
+    outportb(0x0A, 0x02);   // unmask dma channel 2
 }
 
-/// autoinit (2^4 = 16 = 0x10) creates problems with MS Virtual PC and on real hardware!
-/// hence, it is not used here, but reinitialization is used before read/write
+// autoinit (2^4 = 16 = 0x10) creates problems with MS Virtual PC and on real hardware!
+// hence, it is not used here, but reinitialization is used before read/write
 // prepare the DMA for read transfer
 static void flpydsk_dma_read()
 {
