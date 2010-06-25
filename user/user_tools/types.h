@@ -74,5 +74,9 @@ typedef enum
     CE_EOF                          // EOF
 } FS_ERROR;
 
+typedef enum
+{
+	SHUTDOWN, REBOOT
+} SYSTEM_CONTROL;
 
 #endif

@@ -182,22 +182,32 @@ void showDiskList()
     textColor(0x0F);
 }
 
-FS_ERROR execute(const char* path)
+const char* getFilename(const char* path)
 {
-    partition_t* part = getPartition(path);
-    if(part == NULL)
-    {
-        return(CE_FILE_NOT_FOUND);
-    }
     while(*path != '/' && *path != '|' && *path != '\\')
     {
         path++;
         if(*path == 0)
         {
-            return(CE_INVALID_FILENAME);
+            return(0);
         }
     }
     path++;
+    return(path);
+}
+
+FS_ERROR executeFile(const char* path)
+{
+    partition_t* part = getPartition(path);
+    if(part == 0)
+    {
+        return(CE_FILE_NOT_FOUND);
+    }
+    path = getFilename(path);
+    if(path == 0)
+    {
+        return(CE_INVALID_FILENAME);
+    }
     return(loadFile(path, part));
 }
 
@@ -360,7 +370,7 @@ FS_ERROR loadFile(const char* filename, partition_t* part)
     return(retVal);
 }
 
-int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests only
+FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests only
 {
     uint32_t volume_bytePerSector;
     uint8_t  volume_type = FAT32; 
@@ -386,7 +396,7 @@ int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests on
 
 
     // This is a FAT description
-    if ((sec0->charsPerSector == 0x200) && (sec0->FATcount > 0)) // 512 byte per sector, at least one FAT
+    if (sec0->charsPerSector == 0x200 && sec0->FATcount > 0) // 512 byte per sector, at least one FAT
     {
         printf("\nOEM name:           %s"    ,SysName);
         printf("\tbyte per sector:        %u",sec0->charsPerSector);
@@ -423,8 +433,8 @@ int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests on
 
         if (FATn[0] != 'F') // FAT32
         {
-            if ( (((uint8_t*)buffer)[0x52] == 'F') && (((uint8_t*)buffer)[0x53] == 'A') && (((uint8_t*)buffer)[0x54] == 'T')
-              && (((uint8_t*)buffer)[0x55] == '3') && (((uint8_t*)buffer)[0x56] == '2'))
+            if ( ((uint8_t*)buffer)[0x52] == 'F' && ((uint8_t*)buffer)[0x53] == 'A' && ((uint8_t*)buffer)[0x54] == 'T' &&
+                 ((uint8_t*)buffer)[0x55] == '3' && ((uint8_t*)buffer)[0x56] == '2')
             {
                 printf("\nThis is a volume formated with FAT32 ");
                 volume_type = FAT32;
@@ -448,26 +458,23 @@ int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests on
                 volume_maxcls  = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
             }
         }
-        else // FAT12/16
+        else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '6') // FAT16
         {
-            if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '6') )
+            printf("\nThis is a volume formated with FAT16 ");
+            volume_type = FAT16;                
+
+            for (uint8_t i=0; i<4; i++)
             {
-                printf("\nThis is a volume formated with FAT16 ");
-                volume_type = FAT16;                
-
-                for (uint8_t i=0; i<4; i++)
-                {
-                    volume_serialNumber[i] = ((char*)buffer)[39+i]; // byte 39-42
-                }
-                printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
-
-
+                volume_serialNumber[i] = ((char*)buffer)[39+i]; // byte 39-42
             }
-            else if ( (FATn[0] == 'F') && (FATn[1] == 'A') && (FATn[2] == 'T') && (FATn[3] == '1') && (FATn[4] == '2') )
-            {
-                printf("\nThis is a volume formated with FAT12.\n");
-                volume_type = FAT12;
-            }
+            printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
+
+
+        }
+        else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '2')
+        {
+            printf("\nThis is a volume formated with FAT12.\n");
+            volume_type = FAT12;
         }
 
         ///////////////////////////////////////////////////
@@ -513,7 +520,7 @@ int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests on
             printf("\n");
             for (uint8_t i=0;i<4;i++) // four tables
             {
-                if ( (*((uint32_t*)(&partitionTable[i][0x0C])) != 0) && (*((uint32_t*)(&partitionTable[i][0x0C])) != 0x80808080) ) // number of sectors
+                if ( *((uint32_t*)(&partitionTable[i][0x0C])) != 0 && *((uint32_t*)(&partitionTable[i][0x0C])) != 0x80808080 ) // number of sectors
                 {
                     textColor(0x0E);
                     printf("\npartition entry %u:",i);
@@ -550,7 +557,7 @@ int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests on
     else
     {
         textColor(0x0C);
-        if ( (((uint8_t*)buffer)[0x3] == 'N') && (((uint8_t*)buffer)[0x4] == 'T') && (((uint8_t*)buffer)[0x5] == 'F') && (((uint8_t*)buffer)[0x6] == 'S') )
+        if ( ((uint8_t*)buffer)[0x3] == 'N' && ((uint8_t*)buffer)[0x4] == 'T' && ((uint8_t*)buffer)[0x5] == 'F' && ((uint8_t*)buffer)[0x6] == 'S' )
         {
             printf("\nThis seems to be a volume formatted with NTFS.");
         }
@@ -558,10 +565,10 @@ int32_t analyzeBootSector(void* buffer, partition_t* part) // for first tests on
         {
             printf("\nThis seems to be neither a FAT description nor a MBR.");
         }
-        return -1;
         textColor(0x0F);
+        return CE_UNSUPPORTED_FS;
     }
-    return 0;
+    return CE_GOOD;
 }
 
 /*

@@ -28,6 +28,7 @@ extern "C" { // Functions from C-Userlib
     void gotoxy(unsigned char x, unsigned char y);
     void* grow_heap(unsigned increase);
     void setScrollField(uint8_t top, uint8_t bottom);
+	void systemControl(SYSTEM_CONTROL todo);
 
     // user functions
     void* memset(void* dest, int8_t val, size_t count);

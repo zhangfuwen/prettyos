@@ -80,7 +80,7 @@ DECL_SYSCALL0(exit                                    )
 DECL_SYSCALL1(ettaskflag, int32_t                     ) // substitute
 DECL_SYSCALL2(beep, uint32_t, uint32_t                )
 DECL_SYSCALL1(execute, const char*                    )
-DECL_SYSCALL0(testch                                  ) // substitute
+DECL_SYSCALL0(systemControl                           )
 DECL_SYSCALL1(clear_console, uint8_t                  )
 DECL_SYSCALL2(set_cursor, uint8_t, uint8_t            )
 DECL_SYSCALL1(task_grow_userheap, uint32_t            )

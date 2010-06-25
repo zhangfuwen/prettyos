@@ -104,7 +104,7 @@ void outportl(uint16_t port, uint32_t val)
 
 /**********************************************************************/
 
-void panic_assert(const char* file, uint32_t line, const char* desc) // why char ?
+void panic_assert(const char* file, uint32_t line, const char* desc)
 {
     cli();
     printf("ASSERTION FAILED(%s) at %s:%i\nOPERATING SYSTEM HALTED\n", desc, file, line);
@@ -592,26 +592,35 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
 
 /**********************************************************************/
 
-void reboot()
+void systemControl(SYSTEM_CONTROL todo)
 {
-    int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
-    do //flush the keyboard controller
-    {
-       temp = inportb(0x64);
-       if (temp & 1)
-         inportb(0x60);
-    }
-    while (temp & 2);
+	switch(todo)
+	{
+		case REBOOT:
+		{
+			int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
+			do //flush the keyboard controller
+			{
+			   temp = inportb(0x64);
+			   if (temp & 1)
+				 inportb(0x60);
+			}
+			while (temp & 2);
 
-    // Reboot
-    outportb(0x64, 0xFE);
+			// Reboot
+			outportb(0x64, 0xFE);
+			break;
+		}
+		case SHUTDOWN:
+			puts("Shutdown not yet implemented.");
+			break;
+	}
 }
 
 // BOOTSCREEN
 void bootscreen() {
-    printf("\n\n\n\n\n\n\n\n");
     textColor(0x08);
-    printf("       ######                    ##    ##               #####       ####\n");
+    printf("\n\n\n\n\n\n\n\n       ######                    ##    ##               #####       ####\n");
     textColor(0x0F);
     printf("      ######");
     textColor(0x08);
@@ -920,8 +929,8 @@ void bootscreen() {
     printf("                                         ##\n");
     printf("\n\n");
     textColor(0x0E);
-    printf("                    Copyright (c) 2010  The PrettyOS Team\n");
-    printf("\n\n");
+    printf("                  Copyright (c) 2009-2010  The PrettyOS Team\n");
+    printf("\n\n\n                     ");
     textColor(0x0F);
     // Melody
     // C Es F G F Es
@@ -930,7 +939,7 @@ void bootscreen() {
     // http://www.flutepage.de/englisch/goodies/frequenz.shtml (English)
 
     beep(523,200); // C
-    printf("                     This");
+    printf("This");
     beep(622,200); // Es
     printf(" bootscreen");
     beep(689,200); // F

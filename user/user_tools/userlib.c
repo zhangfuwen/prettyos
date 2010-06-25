@@ -79,6 +79,11 @@ FS_ERROR execute(const char* path)
     return ret;
 }
 
+void systemControl(SYSTEM_CONTROL todo)
+{
+    __asm__ volatile("int $0x7F" : : "a"(17), "b"(todo));
+}
+
 void clearScreen(unsigned char backgroundColor)
 {
     __asm__ volatile("int $0x7F" : : "a"(18), "b"(backgroundColor));

@@ -216,22 +216,26 @@ int main()
 
 EVALUATION: // evaluation of entry
         textColor(0x02);
-        if ((strcmp(entry,"help") == 0) || (strcmp(entry,"?") == 0))
+        if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
-            puts("Implemented Instructions: hi  help ?  fdir  fformat\n");
+            puts("Implemented Instructions: hi, help, ?, fdir, fformat and reboot\n");
         }
-        else if (strcmp(entry,"hi") == 0)
+        else if(strcmp(entry, "hi") == 0)
         {
             puts("I am PrettyOS. Always at your service!\n");
         }
-        else if (strcmp(entry,"fdir") == 0)
+        else if(strcmp(entry, "fdir") == 0)
         {
             floppy_dir();
         }
-        else if (strcmp(entry,"fformat") == 0)
+        else if(strcmp(entry, "fformat") == 0)
         {
             floppy_format("PrettyOS");
         }
+		else if(strcmp(entry, "reboot") == 0)
+		{
+			systemControl(REBOOT);
+		}
         else
         {
             puts("file is being searched...");

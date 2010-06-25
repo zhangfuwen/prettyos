@@ -48,10 +48,12 @@ void removeDisk(disk_t* disk);
 void showPortList();
 void showDiskList();
 
-FS_ERROR execute(const char* path);
-FS_ERROR loadFile(const char* filename, partition_t* part);
 partition_t* getPartition(const char* path);
+const char*  getFilename (const char* path);
 
-int32_t analyzeBootSector(void* buffer, partition_t* part);
+FS_ERROR executeFile(const char* path);
+FS_ERROR loadFile(const char* filename, partition_t* part);
+
+FS_ERROR analyzeBootSector(void* buffer, partition_t* part);
 
 #endif

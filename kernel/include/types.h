@@ -51,4 +51,10 @@ typedef struct
     uint32_t eip, cs, eflags, useresp, ss;
 }__attribute__((packed)) registers_t;
 
+
+typedef enum
+{
+	SHUTDOWN, REBOOT
+} SYSTEM_CONTROL;
+
 #endif

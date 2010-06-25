@@ -626,10 +626,9 @@ labelRead:
         sector=start;
         usbRead(sector, part->buffer, part->disk->data);
 
-        if ( (sector == 0) || (sector == startSectorPartition) || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
+        if (sector == 0 || sector == startSectorPartition || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
         {
-            int32_t retVal = analyzeBootSector((void*)DataQTDpage0, part); // for first tests only
-            if (retVal == -1)
+            if (analyzeBootSector((void*)DataQTDpage0, part) != CE_GOOD) // for first tests only
             {
                 goto labelLeave;
             }

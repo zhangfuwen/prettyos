@@ -29,7 +29,7 @@ DEFN_SYSCALL0(exit,                      13)
 DEFN_SYSCALL1(settaskflag,               14, int32_t) // substitute
 DEFN_SYSCALL2(beep,                      15, uint32_t, uint32_t)
 DEFN_SYSCALL1(execute,                   16, const char*)
-DEFN_SYSCALL0(testch,                    17) // substitute
+DEFN_SYSCALL0(systemControl,             17)
 DEFN_SYSCALL1(clear_console,             18, uint8_t)
 DEFN_SYSCALL2(set_cursor,                19, uint8_t, uint8_t)
 DEFN_SYSCALL1(task_grow_userheap,        20, uint32_t)
@@ -53,8 +53,8 @@ static void* syscalls[] =
     &exit,
     &nop, // substitute
     &beep,
-    &execute,
-    &nop, // substitute
+    &executeFile,
+    &systemControl,
     &clear_console,
     &set_cursor,
     &task_grow_userheap,
