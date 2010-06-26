@@ -27,8 +27,9 @@ diskType_t RAMDISK;
 
 void deviceManager_install(/*partition_t* system*/)
 {
-    USB_MSD.readSector = &usbRead;
-    FLOPPYDISK.readSector = &flpydsk_readSector;
+    USB_MSD.readSector     = &usbRead;
+    USB_MSD.writeSector    = &usbWrite;
+    FLOPPYDISK.readSector  = &flpydsk_readSector;
     FLOPPYDISK.writeSector = &flpydsk_writeSector;
 
     memset(disks, 0, DISKARRAYSIZE*sizeof(disks));

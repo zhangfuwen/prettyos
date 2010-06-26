@@ -136,6 +136,21 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
             cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
             break;
+         case 0x2A: // write(10)
+            cbw->CBWSignature           = CBWMagic;              // magic
+            cbw->CBWTag                 = 0x4242422A;            // device echoes this field in the CSWTag field of the associated CSW
+            cbw->CBWDataTransferLength  = TransferLength*512;    // byte = 512 * block
+            cbw->CBWFlags               = 0x00;                  // Out: 0x00  In: 0x80
+            cbw->CBWCBLength            = 10;                    // only bits 4:0
+            cbw->commandByte[0]         = 0x2A;                  // Operation code
+            cbw->commandByte[2]         = BYTE4(LBA);            // LBA MSB
+            cbw->commandByte[3]         = BYTE3(LBA);            // LBA
+            cbw->commandByte[4]         = BYTE2(LBA);            // LBA
+            cbw->commandByte[5]         = BYTE1(LBA);            // LBA LSB
+            cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
+            cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
+            break;
+
     } // switch
 
     currCSWtag = SCSIcommand;
@@ -148,9 +163,11 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     printf("\nOUT part");
   #endif
 
+    // Two QHs: one for OUT and one for IN are established
     void* QH_Out = malloc(sizeof(ehci_qhd_t), PAGESIZE);
     void* QH_In  = malloc(sizeof(ehci_qhd_t), PAGESIZE);
 
+    // async list points to QH Out
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
 
   #ifdef _USB_DIAGNOSIS_
@@ -166,6 +183,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
      textColor(0x0F);
   #endif
 
+    // The qTD for the SCSI command is built
     cmdQTD = createQTD_IO(0x01, OUT, usbDevices[device].ToggleEndpointOutMSD, 31);        // OUT DATA0 or DATA1, 31 byte
     usbDevices[device].ToggleEndpointOutMSD = !(usbDevices[device].ToggleEndpointOutMSD); // switch toggle
 
@@ -173,16 +191,21 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     printf("\tCommandQTD: %X",paging_get_phys_addr(kernel_pd, (void*)cmdQTD));
   #endif
 
+    // implement cbw at DataQTDpage0
     // http://en.wikipedia.org/wiki/SCSI_CDB
     struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
     memset(cbw,0,sizeof(struct usb2_CommandBlockWrapper)); // zero of cbw
     SCSIcmd(SCSIcommand, cbw, LBA, TransferLength);
-    if (SCSIcommand == 0x28)   // read(10)
+    if (SCSIcommand == 0x28 || SCSIcommand == 0x2A)   // read(10) and write(10)
+    {
         TransferLength *= 512; // byte = 512 * block
+    }
 
+    // QH Out with command qTD
     createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
 
-    performAsyncScheduler(true, true, 0); // velocity: 200 Milliseconds
+    // Bulk Transfer to endpoint OUT
+    performAsyncScheduler(true, true, 0); 
 
   /**************************************************************************************************************************************/
 
@@ -190,6 +213,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     printf("\nIN part");
   #endif
 
+    // async list points to QH In
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_In);
 
   #ifdef _USB_DIAGNOSIS_
@@ -209,6 +233,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         textColor(0x0F);
       #endif
 
+        // Data and Status qTD 
         next = StatusQTD = createQTD_MSDStatus(0x1, !(usbDevices[device].ToggleEndpointInMSD));   // next, toggle, IN 13 byte
         QTD_In = DataQTD = createQTD_IO((uintptr_t)next, IN, usbDevices[device].ToggleEndpointInMSD, TransferLength); // IN/OUT DATA0, ... byte
         /*do not switch toggle*/
@@ -234,11 +259,12 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
       #endif
     }
 
+    // QH IN with data and status qTD, or with status qTD only
     createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
 
 labelTransferIN: /// TEST 
     
-    performAsyncScheduler(true, true, TransferLength/200); // velocity: 200 + (int)(TransferLength/200)*200 Milliseconds
+    performAsyncScheduler(true, true, TransferLength/200); 
 
     if (TransferLength) // byte
     {
@@ -385,6 +411,232 @@ labelTransferIN: /// TEST
         printf("\nReset recovery is needed"); 
         usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
     }
+}
+
+void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, uint8_t* buffer)
+{
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nOUT part");
+  #endif
+
+    // Two QHs: one for OUT and one for IN are established
+    void* QH_Out = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH_In  = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+
+    // async list points to QH Out
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
+
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
+  #endif
+
+    // OUT qTD
+    // No handshake!
+
+  #ifdef _USB_DIAGNOSIS_
+     textColor(0x03);
+     printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
+     textColor(0x0F);
+  #endif
+
+    if (SCSIcommand == 0x2A)   // write(10)
+    {
+        TransferLength *= 512; // byte = 512 * block
+    }
+
+    // The qTD for the SCSI command and data out is built
+    void* next = DataQTD = createQTD_IO_OUT(0x1, OUT, !(usbDevices[device].ToggleEndpointOutMSD), TransferLength, buffer); // IN/OUT DATA0, ... byte
+    cmdQTD               = createQTD_IO((uintptr_t)next, OUT, usbDevices[device].ToggleEndpointOutMSD, 31);                // OUT DATA0 or DATA1, 31 byte
+    /*do not switch toggle*/
+
+    // implement cbw at DataQTDpage0
+    // http://en.wikipedia.org/wiki/SCSI_CDB
+    struct usb2_CommandBlockWrapper* cbw = (struct usb2_CommandBlockWrapper*)DataQTDpage0;
+    memset(cbw,0,sizeof(struct usb2_CommandBlockWrapper)); // zero of cbw
+    if (SCSIcommand == 0x2A)   // write(10)
+    {
+        TransferLength /= 512; // block = byte/512
+    }    
+    SCSIcmd(SCSIcommand, cbw, LBA, TransferLength);    // block      
+
+  #ifdef _USB_DIAGNOSIS_
+    printf("\tCommandQTD: %X",paging_get_phys_addr(kernel_pd, (void*)cmdQTD));
+  #endif
+
+    // QH Out with command qTD
+    createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
+
+    // Bulk Transfer to endpoint OUT
+    performAsyncScheduler(true, true, TransferLength/200); 
+
+    printf("\nOUT (Data transfer) finished");
+    
+  /**************************************************************************************************************************************/
+
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nIN part");
+  #endif
+
+    // async list points to QH In
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_In);
+
+  #ifdef _USB_DIAGNOSIS_
+    printf("\nasyncList: %X <-- QH_In", pOpRegs->ASYNCLISTADDR);
+  #endif
+
+    // IN qTDs
+    // No handshake!
+    
+  #ifdef _USB_DIAGNOSIS_
+    textColor(0x03);
+    printf("\ntoggle IN: status: %u", usbDevices[device].ToggleEndpointInMSD);
+    textColor(0x0F);
+  #endif
+
+    StatusQTD = createQTD_MSDStatus(0x1, usbDevices[device].ToggleEndpointInMSD); // next, toggle, IN 13 byte
+    usbDevices[device].ToggleEndpointInMSD = !(usbDevices[device].ToggleEndpointInMSD);    // switch toggle
+
+  #ifdef _USB_DIAGNOSIS_
+    printf("\tStatusQTD: %X", paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
+  #endif
+
+    // QH IN with data and status qTD, or with status qTD only
+    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), StatusQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
+
+    performAsyncScheduler(true, true, 0); 
+    
+    printf("\nIN (Status) finished");
+    
+    /**************************************************************************************************************************************/
+
+    // CSW Status
+    printf("\n");
+    showPacket(MSDStatusQTDpage0,13);
+
+    // check signature 0x53425355 // DWORD 0 (byte 0:3)
+    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
+    if (CSWsignature == CSWMagicOK)
+    {
+    #ifdef _USB_DIAGNOSIS_
+        textColor(0x0A);
+        printf("\nCSW signature OK    ");
+    #endif
+    }
+    else if (CSWsignature == CSWMagicNotOK)
+    {
+        textColor(0x0C);
+        printf("\nCSW signature wrong (not processed)");
+        textColor(0x0F);
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nCSW signature wrong (processed, but wrong value)");
+    }
+    textColor(0x0F);
+
+    // check matching tag
+    uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
+    if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
+    {
+    #ifdef _USB_DIAGNOSIS_
+        textColor(0x0A);
+        printf("CSW tag %y OK    ",BYTE1(CSWtag));
+    #endif
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nError: CSW tag wrong");
+    }
+    textColor(0x0F);
+
+    // check CSWDataResidue
+    uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
+    if (CSWDataResidue == 0)
+    {
+    #ifdef _USB_DIAGNOSIS_
+        textColor(0x0A);
+        printf("\tCSW data residue OK    ");
+    #endif
+    }
+    else
+    {
+        textColor(0x06);
+        printf("\nCSW data residue: %d",CSWDataResidue);
+    }
+    textColor(0x0F);
+
+    // check status byte // DWORD 3 (byte 12)
+    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
+
+    textColor(0x0C);
+    switch (CSWstatusByte)
+    {
+        case 0x00:
+        #ifdef _USB_DIAGNOSIS_
+            textColor(0x0A);
+            printf("\tCSW status OK");
+        #endif
+            break;
+        case 0x01:
+            printf("\nCommand failed");
+            break;
+        case 0x02:
+            printf("\nPhase Error");
+            textColor(0x0E);
+            printf("\nReset recovery is needed"); 
+            usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+            break;
+        default:
+            printf("\nCSW status byte: undefined value (error)");
+            break;
+    }
+    textColor(0x0F);
+    
+    // transfer diagnosis (qTD status)
+    uint32_t statusCommand = showStatusbyteQTD(cmdQTD);
+    if (statusCommand)
+    {
+        printf("<-- command"); // In/Out Data
+        bulkTransfer->successfulCommand = (statusCommand == 0x01); // Do Ping
+    }
+    else // OK
+    {
+        bulkTransfer->successfulCommand = true;
+    }
+
+    uint32_t statusData = 0x00;
+    if (TransferLength)
+    {
+        statusData = showStatusbyteQTD(DataQTD);
+        if (statusData)
+        {
+            printf("<-- data");   // In/Out Data
+        }
+        bulkTransfer->successfulDataOUT = true; // Out Data
+    }
+
+    uint32_t statusStatus = showStatusbyteQTD(StatusQTD);
+    if (statusStatus)
+    {
+        printf("<-- status");   // In CSW
+    }
+    else
+    {
+        bulkTransfer->successfulCSW = true;
+    }
+
+    if ((statusCommand & 0x40) || (statusData & 0x40) || (statusStatus & 0x40))
+    {
+        textColor(0x0C);
+        if (statusCommand & 0x40) { printf("\nCommand phase: HALT"); }
+        if (statusData    & 0x40) { printf("\nData    phase: HALT"); }
+        if (statusStatus  & 0x40) { printf("\nStatus  phase: HALT"); }
+        textColor(0x0E); 
+        printf("\nReset recovery is needed"); 
+        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+    }  
 }
 
 static uint8_t getStatusByte()
@@ -677,6 +929,28 @@ FS_ERROR usbRead(uint32_t sector, uint8_t* buffer, void* device)
 
 FS_ERROR usbWrite(uint32_t sector, uint8_t* buffer, void* device)
 {
+        ///////// send SCSI command "write(10)", write one block to LBA ..., get Status
+    uint8_t devAddr = currentDevice;
+
+    uint32_t blocks = 1; // number of blocks to be written
+
+    textColor(0x09); printf("\n\n>>> SCSI: write   sector: %u", sector); textColor(0x0F);
+
+    usbBulkTransfer_t write;
+    startLogBulkTransfer(&write, 0x2A, 0, blocks);
+
+    usbSendSCSIcmdOUT(devAddr,
+                   usbDevices[devAddr].numInterfaceMSD,
+                   usbDevices[devAddr].numEndpointOutMSD,
+                   usbDevices[devAddr].numEndpointInMSD,
+                   write.SCSIopcode,
+                   sector, // LBA
+                   write.DataBytesToTransferOUT,
+                   &write, buffer);
+        
+    showUSBSTS();
+    logBulkTransfer(&write);
+    
     return(CE_GOOD);
 }
 

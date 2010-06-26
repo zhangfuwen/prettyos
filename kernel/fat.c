@@ -67,7 +67,6 @@ FS_ERROR sectorWrite(uint32_t lba, uint8_t* buffer, partition_t* part)
 {
   #ifdef _FAT_READ_WRITE_TO_SECTOR_DIAGNOSIS_
     textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<",lba); textColor(0x0F);
-    // if ((lba >= 19) && (lba <= (19+14))) waitForKeyStroke(); // testing write process to root dir
   #endif
     return part->disk->type->writeSector(lba, buffer, part->disk->data);
 }

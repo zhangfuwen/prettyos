@@ -134,6 +134,25 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     return (void*)td;
 }
 
+void* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint8_t* buffer)
+{
+    ehci_qtd_t* td = allocQTD(next);
+
+    td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
+    td->token.status       = 0x80;       // This will be filled by the Host Controller
+    td->token.pid          = direction;  // OUT = 0, IN = 1
+    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
+    td->token.bytes        = tokenBytes; // dependent on transfer
+    td->token.dataToggle   = toggle;     // Should be toggled every list entry
+
+    DataQTDpage0 = QTDpage0 = allocQTDbuffer(td);
+    memcpy((void*)QTDpage0,(void*)buffer,512);
+    
+    return (void*)td;
+}
+
 void* createQTD_MSDStatus(uintptr_t next, bool toggle)
 {
     ehci_qtd_t* td = allocQTD(next);
