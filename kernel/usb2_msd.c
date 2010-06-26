@@ -156,6 +156,140 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
     currCSWtag = SCSIcommand;
 }
 
+static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer) 
+{
+    // CSW Status
+    printf("\n");
+    showPacket(MSDStatusQTDpage0,13);
+
+    // check signature 0x53425355 // DWORD 0 (byte 0:3)
+    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
+    if (CSWsignature == CSWMagicOK)
+    {
+    #ifdef _USB_DIAGNOSIS_
+        textColor(0x0A);
+        printf("\nCSW signature OK    ");
+    #endif
+    }
+    else if (CSWsignature == CSWMagicNotOK)
+    {
+        textColor(0x0C);
+        printf("\nCSW signature wrong (not processed)");
+        textColor(0x0F);
+        return -1;
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nCSW signature wrong (processed, but wrong value)");
+    }
+    textColor(0x0F);
+
+    // check matching tag
+    uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
+    if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
+    {
+    #ifdef _USB_DIAGNOSIS_
+        textColor(0x0A);
+        printf("CSW tag %y OK    ",BYTE1(CSWtag));
+    #endif
+    }
+    else
+    {
+        textColor(0x0C);
+        printf("\nError: CSW tag wrong");
+    }
+    textColor(0x0F);
+
+    // check CSWDataResidue
+    uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
+    if (CSWDataResidue == 0)
+    {
+    #ifdef _USB_DIAGNOSIS_
+        textColor(0x0A);
+        printf("\tCSW data residue OK    ");
+    #endif
+    }
+    else
+    {
+        textColor(0x06);
+        printf("\nCSW data residue: %d",CSWDataResidue);
+    }
+    textColor(0x0F);
+
+    // check status byte // DWORD 3 (byte 12)
+    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
+
+    textColor(0x0C);
+    switch (CSWstatusByte)
+    {
+        case 0x00:
+        #ifdef _USB_DIAGNOSIS_
+            textColor(0x0A);
+            printf("\tCSW status OK");
+        #endif
+            break;
+        case 0x01:
+            printf("\nCommand failed");
+            break;
+        case 0x02:
+            printf("\nPhase Error");
+            textColor(0x0E);
+            printf("\nReset recovery is needed"); 
+            usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+            break;
+        default:
+            printf("\nCSW status byte: undefined value (error)");
+            break;
+    }
+    textColor(0x0F);
+    
+    // transfer diagnosis (qTD status)
+    uint32_t statusCommand = showStatusbyteQTD(cmdQTD);
+    if (statusCommand)
+    {
+        printf("<-- command"); // In/Out Data
+        bulkTransfer->successfulCommand = (statusCommand == 0x01); // Do Ping
+    }
+    else // OK
+    {
+        bulkTransfer->successfulCommand = true;
+    }
+
+    uint32_t statusData = 0x00;
+    if (TransferLength)
+    {
+        statusData = showStatusbyteQTD(DataQTD);
+        if (statusData)
+        {
+            printf("<-- data");   // In/Out Data
+        }
+        bulkTransfer->successfulDataOUT = true; // Out Data
+    }
+
+    uint32_t statusStatus = showStatusbyteQTD(StatusQTD);
+    if (statusStatus)
+    {
+        printf("<-- status");   // In CSW
+    }
+    else
+    {
+        bulkTransfer->successfulCSW = true;
+    }
+
+    if ((statusCommand & 0x40) || (statusData & 0x40) || (statusStatus & 0x40))
+    {
+        textColor(0x0C);
+        if (statusCommand & 0x40) { printf("\nCommand phase: HALT"); }
+        if (statusData    & 0x40) { printf("\nData    phase: HALT"); }
+        if (statusStatus  & 0x40) { printf("\nStatus  phase: HALT"); }
+        textColor(0x0E); 
+        printf("\nReset recovery is needed"); 
+        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
+    }
+    return 0;
+}
+
 /// cf. http://www.beyondlogic.org/usbnutshell/usb4.htm#Bulk
 void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer)
 {
@@ -276,140 +410,16 @@ labelTransferIN: /// TEST
         }
     }
 
-    // CSW Status
-    printf("\n");
-    showPacket(MSDStatusQTDpage0,13);
-
-    // check signature 0x53425355 // DWORD 0 (byte 0:3)
-    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
-    if (CSWsignature == CSWMagicOK)
+ /**************************************************************************************************************************************/  
+    
+    if (checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer) == -1)
     {
-    #ifdef _USB_DIAGNOSIS_
-        textColor(0x0A);
-        printf("\nCSW signature OK    ");
-    #endif
-    }
-    else if (CSWsignature == CSWMagicNotOK)
-    {
-        textColor(0x0C);
-        printf("\nCSW signature wrong (not processed)");
-        textColor(0x0F);
         numberTries--;
         if (numberTries >= 0) 
         {
             printf("\nIN-Transfer will be repeated: %u left",numberTries);
             goto labelTransferIN; 
         }
-    }
-    else
-    {
-        textColor(0x0C);
-        printf("\nCSW signature wrong (processed, but wrong value)");
-    }
-    textColor(0x0F);
-
-    // check matching tag
-    uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
-    if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
-    {
-    #ifdef _USB_DIAGNOSIS_
-        textColor(0x0A);
-        printf("CSW tag %y OK    ",BYTE1(CSWtag));
-    #endif
-    }
-    else
-    {
-        textColor(0x0C);
-        printf("\nError: CSW tag wrong");
-    }
-    textColor(0x0F);
-
-    // check CSWDataResidue
-    uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
-    if (CSWDataResidue == 0)
-    {
-    #ifdef _USB_DIAGNOSIS_
-        textColor(0x0A);
-        printf("\tCSW data residue OK    ");
-    #endif
-    }
-    else
-    {
-        textColor(0x06);
-        printf("\nCSW data residue: %d",CSWDataResidue);
-    }
-    textColor(0x0F);
-
-    // check status byte // DWORD 3 (byte 12)
-    // uint8_t CSWstatusByte = (*(((uint32_t*)MSDStatusQTDpage0)+3)) & 0x000000FF;
-    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
-
-    textColor(0x0C);
-    switch (CSWstatusByte)
-    {
-        case 0x00:
-        #ifdef _USB_DIAGNOSIS_
-            textColor(0x0A);
-            printf("\tCSW status OK");
-        #endif
-            break;
-        case 0x01:
-            printf("\nCommand failed");
-            break;
-        case 0x02:
-            printf("\nPhase Error");
-            textColor(0x0E);
-            printf("\nReset recovery is needed"); 
-            usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
-            break;
-        default:
-            printf("\nCSW status byte: undefined value (error)");
-            break;
-    }
-    textColor(0x0F);
-
-    // transfer diagnosis (qTD status)
-    uint32_t statusCommand = showStatusbyteQTD(cmdQTD);
-    if (statusCommand)
-    {
-        printf("<-- command"); // In/Out Data
-        bulkTransfer->successfulCommand = (statusCommand == 0x01); // Do Ping
-    }
-    else // OK
-    {
-        bulkTransfer->successfulCommand = true;
-    }
-
-    uint32_t statusData = 0x00;
-    if (TransferLength)
-    {
-        statusData = showStatusbyteQTD(DataQTD);
-        if (statusData)
-        {
-            printf("<-- data");   // In/Out Data
-        }
-        bulkTransfer->successfulDataIN = true; // TEST: currently only IN data are used
-    }
-
-    uint32_t statusStatus = showStatusbyteQTD(StatusQTD);
-    if (statusStatus)
-    {
-        printf("<-- status");   // In CSW
-    }
-    else
-    {
-        bulkTransfer->successfulCSW = true;
-    }
-
-    if ((statusCommand & 0x40) || (statusData & 0x40) || (statusStatus & 0x40))
-    {
-        textColor(0x0C);
-        if (statusCommand & 0x40) { printf("\nCommand phase: HALT"); }
-        if (statusData    & 0x40) { printf("\nData    phase: HALT"); }
-        if (statusStatus  & 0x40) { printf("\nStatus  phase: HALT"); }
-        textColor(0x0E); 
-        printf("\nReset recovery is needed"); 
-        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
     }
 }
 
@@ -509,134 +519,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     
     /**************************************************************************************************************************************/
 
-    // CSW Status
-    printf("\n");
-    showPacket(MSDStatusQTDpage0,13);
-
-    // check signature 0x53425355 // DWORD 0 (byte 0:3)
-    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
-    if (CSWsignature == CSWMagicOK)
-    {
-    #ifdef _USB_DIAGNOSIS_
-        textColor(0x0A);
-        printf("\nCSW signature OK    ");
-    #endif
-    }
-    else if (CSWsignature == CSWMagicNotOK)
-    {
-        textColor(0x0C);
-        printf("\nCSW signature wrong (not processed)");
-        textColor(0x0F);
-    }
-    else
-    {
-        textColor(0x0C);
-        printf("\nCSW signature wrong (processed, but wrong value)");
-    }
-    textColor(0x0F);
-
-    // check matching tag
-    uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
-    if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
-    {
-    #ifdef _USB_DIAGNOSIS_
-        textColor(0x0A);
-        printf("CSW tag %y OK    ",BYTE1(CSWtag));
-    #endif
-    }
-    else
-    {
-        textColor(0x0C);
-        printf("\nError: CSW tag wrong");
-    }
-    textColor(0x0F);
-
-    // check CSWDataResidue
-    uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
-    if (CSWDataResidue == 0)
-    {
-    #ifdef _USB_DIAGNOSIS_
-        textColor(0x0A);
-        printf("\tCSW data residue OK    ");
-    #endif
-    }
-    else
-    {
-        textColor(0x06);
-        printf("\nCSW data residue: %d",CSWDataResidue);
-    }
-    textColor(0x0F);
-
-    // check status byte // DWORD 3 (byte 12)
-    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
-
-    textColor(0x0C);
-    switch (CSWstatusByte)
-    {
-        case 0x00:
-        #ifdef _USB_DIAGNOSIS_
-            textColor(0x0A);
-            printf("\tCSW status OK");
-        #endif
-            break;
-        case 0x01:
-            printf("\nCommand failed");
-            break;
-        case 0x02:
-            printf("\nPhase Error");
-            textColor(0x0E);
-            printf("\nReset recovery is needed"); 
-            usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
-            break;
-        default:
-            printf("\nCSW status byte: undefined value (error)");
-            break;
-    }
-    textColor(0x0F);
-    
-    // transfer diagnosis (qTD status)
-    uint32_t statusCommand = showStatusbyteQTD(cmdQTD);
-    if (statusCommand)
-    {
-        printf("<-- command"); // In/Out Data
-        bulkTransfer->successfulCommand = (statusCommand == 0x01); // Do Ping
-    }
-    else // OK
-    {
-        bulkTransfer->successfulCommand = true;
-    }
-
-    uint32_t statusData = 0x00;
-    if (TransferLength)
-    {
-        statusData = showStatusbyteQTD(DataQTD);
-        if (statusData)
-        {
-            printf("<-- data");   // In/Out Data
-        }
-        bulkTransfer->successfulDataOUT = true; // Out Data
-    }
-
-    uint32_t statusStatus = showStatusbyteQTD(StatusQTD);
-    if (statusStatus)
-    {
-        printf("<-- status");   // In CSW
-    }
-    else
-    {
-        bulkTransfer->successfulCSW = true;
-    }
-
-    if ((statusCommand & 0x40) || (statusData & 0x40) || (statusStatus & 0x40))
-    {
-        textColor(0x0C);
-        if (statusCommand & 0x40) { printf("\nCommand phase: HALT"); }
-        if (statusData    & 0x40) { printf("\nData    phase: HALT"); }
-        if (statusStatus  & 0x40) { printf("\nStatus  phase: HALT"); }
-        textColor(0x0E); 
-        printf("\nReset recovery is needed"); 
-        usbResetRecoveryMSD(device, usbDevices[device].numInterfaceMSD, usbDevices[device].numEndpointOutMSD, usbDevices[device].numEndpointInMSD);
-    }  
+    checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer);
 }
 
 static uint8_t getStatusByte()

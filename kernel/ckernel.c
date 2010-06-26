@@ -23,7 +23,7 @@
 #define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.550";
+const char* version = "0.0.0.551";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -179,7 +179,7 @@ void main()
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
 
-            if ((cmos_read(0x10)>>4) == 4)
+            if ((cmos_read(0x10)>>4) == 4) // first FDD implemented
             {
                 flpydsk_control_motor(false); // switch off motors if they are not neccessary, later replaced by generally switching off all motors that are not needed.
             }
