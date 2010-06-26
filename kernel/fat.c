@@ -118,7 +118,7 @@ static uint32_t fatRead (partition_t* volume, uint32_t ccls)
             break;
         case FAT16:
         default:
-            posFAT = (uint32_t)ccls *2;
+            posFAT = ccls * 2;
             q = 0;
             ClusterFailValue = CLUSTER_FAIL_FAT16;
             LastClusterLimit = LAST_CLUSTER_FAT16;
@@ -1471,10 +1471,17 @@ static FS_ERROR fileCreateHeadCluster(FILE* fileptr, uint32_t* cluster)
     {
         return CE_DISK_FULL;
     }
-
-    if(volume->type == FAT12 || volume->type == FAT16)
+    
+    if(volume->type == FAT12)
     {
         if(fatWrite(volume, *cluster, LAST_CLUSTER_FAT12, false) == CLUSTER_FAIL_FAT16)
+        {
+            return CE_WRITE_ERROR;
+        }
+    }
+    else if(volume->type == FAT16)
+    {
+        if(fatWrite(volume, *cluster, LAST_CLUSTER_FAT16, false) == CLUSTER_FAIL_FAT16)
         {
             return CE_WRITE_ERROR;
         }
