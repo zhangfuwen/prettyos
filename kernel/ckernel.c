@@ -18,11 +18,12 @@
 #include "mouse.h"
 #include "cdi.h"
 #include "devicemanager.h"
+#include "cmos.h"
 
 #define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.547";
+const char* version = "0.0.0.548";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -178,11 +179,13 @@ void main()
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
 
-            flpydsk_control_motor(false); // switch off motors if they are not neccessary, later replaced by generally switching off all motors not needed.
+            if ((cmos_read(0x10)>>4) == 4)
+            {
+                flpydsk_control_motor(false); // switch off motors if they are not neccessary, later replaced by generally switching off all motors that are not needed.
+            }
         }
-
-        // Handling Events
-        handleEvents();
+                
+        handleEvents(); 
 
         __asm__ volatile ("hlt"); // HLT halts the CPU until the next external interrupt is fired.
     } // end of kernel idle loop

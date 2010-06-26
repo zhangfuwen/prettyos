@@ -1293,7 +1293,7 @@ FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, bool EraseClusters)
         return CE_ERASE_FAIL;
     }
 
-    if (clus != 0) // FatRootDirClusterValue = 0 ??? <<<------------------- CHECK
+    if (clus != fileptr->volume->FatRootDirCluster) // FatRootDirClusterValue = 0 ??? <<<------------------- CHECK
     {
         if(EraseClusters)
         {
@@ -1389,7 +1389,7 @@ uint8_t FindEmptyEntries(FILE* fileptr, uint32_t *fHandle)
             if(dir == NULL)
             {
                 b = fileptr->dirccls;
-                if(b == 0) // FatRootDirClusterValue = 0 ??? <<<------------------- CHECK
+                if(b == fileptr->volume->FatRootDirCluster) // FatRootDirClusterValue = 0 ??? <<<------------------- CHECK
                 {
                     if (fileptr->volume->type != FAT32)
                         status = NO_MORE;
@@ -1866,8 +1866,8 @@ FILE* fopen(const char* path, const char* mode)
     filePtr->ccls       = 0;
     filePtr->entry      = 0;
     filePtr->attributes = ATTR_ARCHIVE;
-    filePtr->dirclus    = 0; // FatRootDirClusterValue <-----------
-    filePtr->dirccls    = 0; // FatRootDirClusterValue <-----------
+    filePtr->dirclus    = filePtr->volume->FatRootDirCluster; // FatRootDirClusterValue <<<------------------- CHECK
+    filePtr->dirccls    = filePtr->volume->FatRootDirCluster; // FatRootDirClusterValue <<<------------------- CHECK
 
     FILE* filePtrTemp = malloc(sizeof(FILE),PAGESIZE); // why?
 
