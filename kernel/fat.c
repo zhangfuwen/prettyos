@@ -354,7 +354,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FILE* fileptr, uint32_t* curEntry, 
             globalFilePtr = NULL;
             globalBufferMemSet0 = false;
 
-            uint8_t error = singleSectorRead(sector + offset2, volume->buffer, volume);
+            FS_ERROR error = singleSectorRead(sector + offset2, volume->buffer, volume);
 
             if ( error != CE_GOOD )
             {
@@ -1019,7 +1019,7 @@ uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* fileptr)
     partition_t* volume = fileptr->volume;
     uint16_t pos        = fileptr->pos;
     uint32_t seek       = fileptr->seek;
-    uint32_t sector     = cluster2sector(volume,fileptr->ccls) + (uint16_t)fileptr->sec;
+    uint32_t sector     = cluster2sector(volume,fileptr->ccls) + fileptr->sec;
     uint32_t sectors    = (size%512 == 0) ? size/512 : size/512+1; // Number of sectors to be written
     volume->disk->accessRemaining += sectors;
 
@@ -1078,7 +1078,7 @@ uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* fileptr)
 
         if (pos == volume->sectorSize)
         {
-            uint8_t needRead = true;
+            bool needRead = true;
 
             if (globalDataWriteNecessary)
             {
@@ -1093,7 +1093,6 @@ uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* fileptr)
                 }
                 globalDataWriteNecessary = false;
             }
-
 
             pos = 0;
             fileptr->sec++;
@@ -1121,7 +1120,7 @@ uint32_t fwrite(const void* ptr, uint32_t size, uint32_t n, FILE* fileptr)
             if(error == CE_GOOD)
             {
                 sector = cluster2sector(volume,fileptr->ccls);
-                sector += (uint16_t)fileptr->sec;
+                sector += fileptr->sec;
                 globalFilePtr = fileptr;
 
                 if (needRead)
@@ -1214,7 +1213,7 @@ static bool fatEraseClusterChain(uint32_t cluster, partition_t* volume)
             c2 = LAST_CLUSTER_FAT32;
             break;
         case FAT12:
-            ClusterFailValue = CLUSTER_FAIL_FAT16; // FAT16 value itself
+            ClusterFailValue = CLUSTER_FAIL_FAT16; 
             c2 = LAST_CLUSTER_FAT12;
             break;
         case FAT16:
@@ -1293,7 +1292,7 @@ FS_ERROR fileErase( FILE* fileptr, uint32_t* fHandle, bool EraseClusters)
         return CE_ERASE_FAIL;
     }
 
-    if (clus != fileptr->volume->FatRootDirCluster) // FatRootDirClusterValue = 0 ??? <<<------------------- CHECK
+    if (clus != fileptr->volume->FatRootDirCluster) 
     {
         if(EraseClusters)
         {
@@ -1350,7 +1349,7 @@ static FS_ERROR PopulateEntries(FILE* fileptr, char *name , uint32_t *fHandle, u
     return CE_GOOD;
 }
 
-uint8_t FindEmptyEntries(FILE* fileptr, uint32_t *fHandle)
+uint8_t FindEmptyEntries(FILE* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> FindEmptyEntries <<<<<");
@@ -1358,7 +1357,7 @@ uint8_t FindEmptyEntries(FILE* fileptr, uint32_t *fHandle)
 
     uint8_t  status = NOT_FOUND;
     uint8_t  amountfound;
-    uint16_t bHandle;
+    uint32_t bHandle;
     uint32_t b;
     char a = ' ';
     FILEROOTDIRECTORYENTRY  dir;
@@ -1389,7 +1388,7 @@ uint8_t FindEmptyEntries(FILE* fileptr, uint32_t *fHandle)
             if(dir == NULL)
             {
                 b = fileptr->dirccls;
-                if(b == fileptr->volume->FatRootDirCluster) // FatRootDirClusterValue = 0 ??? <<<------------------- CHECK
+                if (b == fileptr->volume->FatRootDirCluster) 
                 {
                     if (fileptr->volume->type != FAT32)
                         status = NO_MORE;
@@ -1873,8 +1872,8 @@ FILE* fopen(const char* path, const char* mode)
     filePtr->ccls       = 0;
     filePtr->entry      = 0;
     filePtr->attributes = ATTR_ARCHIVE;
-    filePtr->dirclus    = filePtr->volume->FatRootDirCluster; // FatRootDirClusterValue <<<------------------- CHECK
-    filePtr->dirccls    = filePtr->volume->FatRootDirCluster; // FatRootDirClusterValue <<<------------------- CHECK
+    filePtr->dirclus    = filePtr->volume->FatRootDirCluster; 
+    filePtr->dirccls    = filePtr->volume->FatRootDirCluster; 
 
     FILE* filePtrTemp = malloc(sizeof(FILE),PAGESIZE); // why?
 
