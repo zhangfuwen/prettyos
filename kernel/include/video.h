@@ -2,6 +2,9 @@
 #define VIDEO_H
 
 #include "os.h"
+#include "devicemanager.h" // HACK
+
+extern diskType_t* ScreenDest; // HACK
 
 void refreshUserScreen();
 void clear_screen();

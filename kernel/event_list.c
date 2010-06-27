@@ -9,9 +9,7 @@
 
 listHead_t* eventQueue;
 
-event_handler_t EHCI_INIT;
-event_handler_t EHCI_PORTCHECK;
-event_handler_t VIDEO_SCREENSHOT;
+event_handler_t EHCI_INIT, EHCI_PORTCHECK, VIDEO_SCREENSHOT;
 
 void events_install()
 {

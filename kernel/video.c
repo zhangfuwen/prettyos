@@ -9,7 +9,6 @@
 #include "video.h"
 #include "kheap.h"
 #include "timer.h"
-#include "devicemanager.h"
 #include "fat.h"
 
 uint16_t* vidmem = (uint16_t*)0xB8000;
@@ -221,15 +220,17 @@ void refreshUserScreen()
     update_cursor();
 }
 
+diskType_t* ScreenDest = &FLOPPYDISK; // HACK
 void mt_screenshot()
 {
     printf("Screenshot (Thread)\n");
     create_thread(&screenshot);
 }
 
+extern disk_t* disks[DISKARRAYSIZE]; // HACK
 void screenshot()
 {
-   int32_t NewLine = 0;
+    int32_t NewLine = 0;
 
     // buffer for video screen
     uint8_t* videoscreen = malloc(4000+98, PAGESIZE); // only signs, no attributes, 49 times CR LF at line end
@@ -245,9 +246,18 @@ void screenshot()
             NewLine++;
         }
     }
-
-    // FILE* file = fopen("1:/screen.txt", "a+"); // TEST to write to Floppy
-    FILE* file = fopen("3:/screen.txt", "a+"); // TEST to write to usb-stick
+	
+	char Pfad[20];
+	for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
+	{
+		if(disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->type == FAT12 || disks[i]->partition[0]->type == FAT16 || disks[i]->partition[0]->type == FAT32))
+		{
+			snprintf(Pfad, 20, "%u:/screen.txt", i+1);
+			break;
+		}
+	}
+	printf(Pfad);
+    FILE* file = fopen(Pfad, "a+"); // TEST to write to usb-stick
     if (file) // check for NULL pointer, otherwise #PF
     {
         fwrite((void*)videoscreen, 4098, 1, file);

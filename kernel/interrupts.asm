@@ -36,7 +36,6 @@ extern _irq_handler
 
 
 
-
 section .text
 
 
@@ -84,11 +83,11 @@ ir_common_stub:
     mov fs, ax
     mov gs, ax
 
-    push esp              ; parameter of _irq_handler 
-    call _irq_handler    ;
+    push esp          ; parameter of _irq_handler
+    call _irq_handler
     global _irq_tail
     _irq_tail:
-    mov esp, eax          ; return value: changed or unchanged esp
+    mov esp, eax      ; return value: changed or unchanged esp
 
     pop gs
     pop fs

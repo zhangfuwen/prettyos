@@ -8,9 +8,7 @@ typedef struct {
 } event_handler_t;
 
 
-extern event_handler_t EHCI_INIT;
-extern event_handler_t EHCI_PORTCHECK;
-extern event_handler_t VIDEO_SCREENSHOT;
+extern event_handler_t EHCI_INIT, EHCI_PORTCHECK, VIDEO_SCREENSHOT;
 
 void events_install();
 void handleEvents();

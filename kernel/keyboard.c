@@ -11,7 +11,7 @@
 #include "video.h"
 #include "irq.h"
 #include "scheduler.h"
-#include "devicemanager.h"
+#include "devicemanager.h" // HACK
 
 #ifdef KEYMAP_GER
 #include "keyboard_GER.h"
@@ -142,22 +142,32 @@ uint8_t ScanToASCII()
         }
     }
 
-    if (CtrlKeyDown && retchar == 's') // Taking a screenshot; Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
-    {
-        addEvent(&VIDEO_SCREENSHOT);
-        return 0;
-    }
-    if (CtrlKeyDown && retchar == 'd') // Prints the Port- and Disklist
-    {
-        showPortList();
-        showDiskList();
-        return 0;
-    }
-    if (CtrlKeyDown && retchar == 't') // If you want to test something
-    {
-        scheduler_log();
-        return 0;
-    }
+	if(CtrlKeyDown)
+	{
+		if(retchar == 's') // Taking a screenshot (FLOPPY); Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
+		{
+			ScreenDest = &FLOPPYDISK; // HACK
+			addEvent(&VIDEO_SCREENSHOT);
+			return 0;
+		}
+		if(retchar == 'u') // Taking a screenshot (USB); Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
+		{
+			ScreenDest = &USB_MSD; // HACK
+			addEvent(&VIDEO_SCREENSHOT);
+			return 0;
+		}
+		if(retchar == 'd') // Prints the Port- and Disklist
+		{
+			showPortList();
+			showDiskList();
+			return 0;
+		}
+		if(retchar == 't') // If you want to test something
+		{
+			scheduler_log();
+			return 0;
+		}
+	}
 
     return retchar; // ASCII version
 }
