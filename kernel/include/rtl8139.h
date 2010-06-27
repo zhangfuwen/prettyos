@@ -4,6 +4,6 @@
 #include "os.h"
 
 void rtl8139_handler(registers_t* r);
-void install_RTL8139(uint32_t number);
+void install_RTL8139(pciDev_t* device);
 
 #endif

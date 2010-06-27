@@ -11,8 +11,6 @@
 #include "timer.h"
 #include "irq.h"
 
-extern pciDev_t pciDev_Array[PCIARRAYSIZE];
-
 uint8_t network_buffer[8192+16];  // TEST for network card
 uint32_t BaseAddressRTL8139_IO;
 uint32_t BaseAddressRTL8139_MMIO;
@@ -120,28 +118,28 @@ void rtl8139_handler(registers_t* r)
 }
 
 
-void install_RTL8139(uint32_t number)
+void install_RTL8139(pciDev_t* device)
 {
     for (uint8_t j=0;j<6;++j) // check network card BARs
     {
-        pciDev_Array[number].bar[j].memoryType = pciDev_Array[number].bar[j].baseAddress & 0x01;
+        device->bar[j].memoryType = device->bar[j].baseAddress & 0x01;
 
-        if (pciDev_Array[number].bar[j].baseAddress) // check valid BAR
+        if (device->bar[j].baseAddress) // check valid BAR
         {
-            if (pciDev_Array[number].bar[j].memoryType == 0)
+            if (device->bar[j].memoryType == 0)
             {
-                BaseAddressRTL8139_MMIO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFFFFF0;
+                BaseAddressRTL8139_MMIO = device->bar[j].baseAddress &= 0xFFFFFFF0;
 
             }
-            if (pciDev_Array[number].bar[j].memoryType == 1)
+            if (device->bar[j].memoryType == 1)
             {
-                BaseAddressRTL8139_IO = pciDev_Array[number].bar[j].baseAddress &= 0xFFFC;
+                BaseAddressRTL8139_IO = device->bar[j].baseAddress &= 0xFFFC;
             }
         }
     }
 
     //clear receiving buffer
-    memset((void*)network_buffer, 0x0, 8192+16);
+    memset(network_buffer, 0x0, 8192+16);
 
     kdebug(3, "RTL8139 MMIO: %X\n", BaseAddressRTL8139_MMIO);
 
@@ -211,7 +209,7 @@ void install_RTL8139(uint32_t number)
     *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFF; // all interrupts
     //*((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
 
-    irq_install_handler(32 + pciDev_Array[number].irq, rtl8139_handler);
+    irq_install_handler(32 + device->irq, rtl8139_handler);
 }
 
 

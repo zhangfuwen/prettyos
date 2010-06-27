@@ -9,8 +9,10 @@
 
 #define MAX_FLOPPY 2
 #define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 60
-#define SECTOR 0
-#define TRACK  1
+
+typedef enum {
+    SECTOR, TRACK
+} FLOPPY_MODE;
 
 typedef struct {
     uint8_t  ID;
@@ -21,21 +23,22 @@ typedef struct {
     uint32_t accessRemaining;
 } floppy_t;
 
-void floppy_install();
-void flpydsk_install(int32_t irq);
+void flpydsk_install();
 
 void i86_flpy_irq(registers_t* r);
-void flpydsk_control_motor(bool b);
-void flpydsk_refreshVolumeNames();
-
 void flpydsk_initialize_dma();
+
+void flpydsk_motorOn (void* drive);
+void flpydsk_motorOff(void* drive);
+
+void flpydsk_refreshVolumeNames();
 
 FS_ERROR flpydsk_readSector(uint32_t sector, uint8_t* buffer, void* device);
 FS_ERROR flpydsk_read_sector(uint32_t sectorLBA, bool single);
 FS_ERROR flpydsk_writeSector(uint32_t sector, uint8_t* buffer, void* device);
 FS_ERROR flpydsk_write_sector(uint32_t sectorLBA, bool single);
 
-int32_t flpydsk_read_ia (int32_t i, void* a, int8_t option);
-int32_t flpydsk_write_ia(int32_t i, void* a, int8_t option);
+FS_ERROR flpydsk_read_ia (int32_t i, void* a, FLOPPY_MODE option);
+FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option);
 
 #endif

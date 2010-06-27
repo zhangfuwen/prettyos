@@ -21,20 +21,34 @@ partition_t* systemPartition;
 uint32_t startSectorPartition = 0;
 extern uint32_t usbMSDVolumeMaxLBA;
 
-diskType_t FLOPPYDISK;
-diskType_t USB_MSD;
-diskType_t RAMDISK;
+portType_t FDD,        USB,     RAM;
+diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
 
 void deviceManager_install(/*partition_t* system*/)
 {
+    FDD.motorOff = &flpydsk_motorOff;
+    USB.motorOff = 0;
+    RAM.motorOff = 0;
+
     USB_MSD.readSector     = &usbRead;
     USB_MSD.writeSector    = &usbWrite;
     FLOPPYDISK.readSector  = &flpydsk_readSector;
     FLOPPYDISK.writeSector = &flpydsk_writeSector;
+    RAMDISK.readSector     = 0;
+    RAMDISK.writeSector    = 0;
 
-    memset(disks, 0, DISKARRAYSIZE*sizeof(disks));
-    memset(ports, 0, PORTARRAYSIZE*sizeof(ports));
+    memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
+    memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
     //systemPartition = system;
+}
+
+void deviceManager_checkDrives()
+{
+    for(int i = 0; i < PORTARRAYSIZE; i++)
+    {
+        if(ports[i] != 0 && ports[i]->type->motorOff != 0 && ports[i]->insertedDisk->accessRemaining == 0)
+            ports[i]->type->motorOff(ports[i]->data);
+    }
 }
 
 void attachPort(port_t* port)
@@ -87,28 +101,21 @@ void showPortList()
     {
         if (ports[i] != NULL)
         {
-            switch (ports[i]->type) // Type
-            {
-                case FDD:
+            if(ports[i]->type == &FDD) // Type
                     printf("\nFDD ");
-                    flpydsk_refreshVolumeNames(); // Floppy workaround
-                    break;
-                case RAM:
+            else if(ports[i]->type == &RAM)
                     printf("\nRAM ");
-                    break;
-                case USB:
+            else if(ports[i]->type == &USB)
                     printf("\nUSB 2.0");
-                    break;
-            }
             
             textColor(0x0E);
-            printf("\t%c", i+'A'); // number
+            printf("\t%c", 'A'+i); // number
             textColor(0x0F);
             printf("\t%s", ports[i]->name); // The ports name
 
             if (ports[i]->insertedDisk != NULL)
             {
-                if(ports[i]->type != FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
+                if(ports[i]->type != &FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
                     printf("\t%s",ports[i]->insertedDisk->name); // Attached disk
                 else putch('\t');
             }

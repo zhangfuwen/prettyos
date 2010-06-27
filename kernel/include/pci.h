@@ -26,18 +26,19 @@
 #define PCI_BAR5        0x0424
 #define PCI_IRQLINE     0x013C
 
-#define PCIARRAYSIZE      1024
+#define PCIBUSES      4     // we access only four busses of 256 possibles
+#define PCIDEVICES    32
+#define PCIFUNCS      8
+#define PCIARRAYSIZE  (PCIBUSES*PCIDEVICES*PCIFUNCS)
 
-struct pciBasicAddressRegister
+typedef struct
 {
     uint32_t baseAddress;
     size_t   memorySize;
     uint8_t  memoryType;
-}__attribute__((packed));
+}__attribute__((packed)) pciBar_t;
 
-typedef struct pciBasicAddressRegister pciBar_t;
-
-struct pciDev
+typedef struct
 {
    uint8_t   number;
    uint8_t   bus;
@@ -51,15 +52,13 @@ struct pciDev
    uint8_t   revID;
    uint8_t   irq;
    pciBar_t  bar[6];
-}__attribute__((packed));
-
-typedef struct pciDev pciDev_t;
+}__attribute__((packed)) pciDev_t;
 
 
 void analyzeHostSystemError(pciDev_t* pciDev);
-uint32_t pci_config_read( uint8_t bus, uint8_t device, uint8_t func, uint16_t content );
-void pci_config_write_byte(  uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint8_t  val );
-void pci_config_write_dword( uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val );
+uint32_t pci_config_read   (uint8_t bus, uint8_t device, uint8_t func, uint16_t content);
+void pci_config_write_byte (uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint8_t  val);
+void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val);
 void listPCI();
 void pciScan();
 

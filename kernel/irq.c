@@ -78,7 +78,7 @@ uint32_t irq_handler(uint32_t esp)
     else if (r->int_no < 32) // exception w/o #NM
     {
         textColor(0x0C);
-        flpydsk_control_motor(false); // floppy motor off
+        deviceManager_checkDrives(); // switch off motors
 
         if (r->int_no == 6 || r->int_no == 1) // Invalid Opcode
         {

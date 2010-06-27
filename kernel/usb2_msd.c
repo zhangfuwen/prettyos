@@ -492,12 +492,10 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nasyncList: %X <-- QH_In", pOpRegs->ASYNCLISTADDR);
-  #endif
 
     // IN qTDs
     // No handshake!
     
-  #ifdef _USB_DIAGNOSIS_
     textColor(0x03);
     printf("\ntoggle IN: status: %u", usbDevices[device].ToggleEndpointInMSD);
     textColor(0x0F);
@@ -761,7 +759,7 @@ labelRead:
         sector=start;
         usbRead(sector, part->buffer, part->disk->data);
 
-        if (sector == 0 || sector == startSectorPartition || (((*((uint8_t*)DataQTDpage0+510))==0x55)&&((*((uint8_t*)DataQTDpage0+511))==0xAA)) )
+        if (sector == 0 || sector == startSectorPartition || (*((uint8_t*)DataQTDpage0+510) == 0x55 && *((uint8_t*)DataQTDpage0+511) == 0xAA) )
         {
             if (analyzeBootSector((void*)DataQTDpage0, part) != CE_GOOD) // for first tests only
             {
@@ -775,7 +773,7 @@ labelRead:
             start = startSectorPartition;
             goto labelRead;
         }
-    }// else
+    } // else
 
 labelLeave:
     printf("\nNeither MBR nor FAT, thus better leave.");    
@@ -785,13 +783,13 @@ labelLeave:
 FS_ERROR usbRead(uint32_t sector, uint8_t* buffer, void* device)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
-    uint8_t devAddr = currentDevice;
-
-    uint32_t blocks = 1; // number of blocks to be read
 
     textColor(0x09); printf("\n\n>>> SCSI: read   sector: %u", sector); textColor(0x0F);
 
+    uint8_t           devAddr = currentDevice;
+    uint32_t          blocks  = 1; // number of blocks to be read
     usbBulkTransfer_t read;
+
     startLogBulkTransfer(&read, 0x28, blocks, 0);
 
     usbSendSCSIcmd(devAddr,
@@ -813,13 +811,13 @@ FS_ERROR usbRead(uint32_t sector, uint8_t* buffer, void* device)
 FS_ERROR usbWrite(uint32_t sector, uint8_t* buffer, void* device)
 {
         ///////// send SCSI command "write(10)", write one block to LBA ..., get Status
-    uint8_t devAddr = currentDevice;
-
-    uint32_t blocks = 1; // number of blocks to be written
 
     textColor(0x09); printf("\n\n>>> SCSI: write   sector: %u", sector); textColor(0x0F);
 
+    uint8_t           devAddr = currentDevice;
+    uint32_t          blocks  = 1; // number of blocks to be written
     usbBulkTransfer_t write;
+
     startLogBulkTransfer(&write, 0x2A, 0, blocks);
 
     usbSendSCSIcmdOUT(devAddr,
@@ -884,7 +882,7 @@ int32_t showResultsRequestSense()
 
     textColor(0x0E);
     printf("\n\nResults of \"request sense\":\n");
-    if ( (ResponseCode >= 0x70) && (ResponseCode <= 0x73) )
+    if (ResponseCode >= 0x70 && ResponseCode <= 0x73)
     {
         textColor(0x0F);
         printf("Valid: \t\t");
@@ -972,13 +970,11 @@ int32_t showResultsRequestSense()
         }
         return SenseKey;
     }
-    else
-    {
-        textColor(0x0C);
-        printf("No vaild response code!");
-        textColor(0x0F);
-        return -1;
-    }
+
+	textColor(0x0C);
+	printf("No vaild response code!");
+	textColor(0x0F);
+	return -1;
 }
 
 

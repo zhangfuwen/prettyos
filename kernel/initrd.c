@@ -51,9 +51,9 @@ void* ramdisk_install(size_t size)
     attachDisk(&RAMDisk);
 
     // port
-    RAMDiskPort.type = RAM;
-    strncpy(RAMDiskPort.name, "RAM        ", 11);    
+    RAMDiskPort.type         = &RAM; 
     RAMDiskPort.insertedDisk = &RAMDisk;
+    strncpy(RAMDiskPort.name, "RAM        ", 11);   
     attachPort(&RAMDiskPort);
 
     return(ramdisk_start);

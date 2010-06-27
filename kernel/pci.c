@@ -10,20 +10,15 @@
 #include "ehci.h"
 #include "list.h"
 #include "rtl8139.h"
-#include "event_list.h"
 #include "console.h"
+#include "kheap.h"
 
-pciDev_t pciDev_Array[PCIARRAYSIZE];
+pciDev_t* pciDev_Array[PCIARRAYSIZE];
 
 void analyzeHostSystemError(pciDev_t* pciDev)
 {
-     uint8_t bus  = pciDev->bus;
-     uint8_t dev  = pciDev->device;
-     uint8_t func = pciDev->func;
-
      // check pci status register of the device
-     uint32_t pciStatus = pci_config_read(bus, dev, func, PCI_STATUS);
-
+     uint32_t pciStatus = pci_config_read(pciDev->bus, pciDev->device, pciDev->func, PCI_STATUS);
 
      printf("\nPCI status word: %x\n",pciStatus);
      textColor(0x03);
@@ -104,22 +99,18 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
 void listPCI()
 {
     listHead_t* pciDevList = list_Create();
-    for (int i=0;i<PCIARRAYSIZE;++i)
+    for (int i=0;i<PCIARRAYSIZE;++i) // Create list
     {
-        if (pciDev_Array[i].vendorID && (pciDev_Array[i].vendorID != 0xFFFF) && (pciDev_Array[i].vendorID != 0xEE00))   // there is no vendor EE00h
+        if (pciDev_Array[i] && pciDev_Array[i]->vendorID != 0xEE00)   // there is no vendor EE00h
         {
-            list_Append(pciDevList, (void*)(pciDev_Array+i));
-            textColor(0x02);
-            printf("%X\t", pciDev_Array+i);
+            list_Append(pciDevList, pciDev_Array[i]); // insert Pointer to pciDev_t
         }
     }
-    putch('\n');
-    for (int i=0;i<PCIARRAYSIZE;++i)
+    for (element_t* e = pciDevList->head; e != 0; e = e->next) // Show list
     {
-        element_t* element = list_GetElement(pciDevList, i);
-        if (element && element->data)
+        if (e->data)
         {
-            pciDev_t* data = (pciDev_t*)element->data;
+            pciDev_t* data = (pciDev_t*)e->data;
             textColor(0x02);
             printf("%X dev: %x vend: %x\t", data, data->deviceID, data->vendorID);
             textColor(0x0F);
@@ -130,52 +121,49 @@ void listPCI()
 
  void pciScan()
  {
-    textColor(0x0F);
-    for (uint32_t i=0;i<PCIARRAYSIZE;++i)
-    {
-        pciDev_Array[i].number = i;
-    }
-
     int number=0;
-    for (uint8_t bus = 0; bus < 4; ++bus) // we scan only four busses of 256 possibles
+    for (uint8_t bus = 0; bus < PCIBUSES; ++bus)
     {
-        for (uint8_t device = 0; device < 32; ++device)
+        for (uint8_t device = 0; device < PCIDEVICES; ++device)
         {
-            for (uint8_t func = 0; func < 8; ++func)
+            for (uint8_t func = 0; func < PCIFUNCS; ++func)
             {
                 uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
-                if (vendorID && (vendorID != 0xFFFF))
+                if (vendorID && vendorID != 0xFFFF)
                 {
-                    pciDev_Array[number].vendorID           = vendorID;
-                    pciDev_Array[number].deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);
-                    pciDev_Array[number].classID            = pci_config_read(bus, device, func, PCI_CLASS);
-                    pciDev_Array[number].subclassID         = pci_config_read(bus, device, func, PCI_SUBCLASS);
-                    pciDev_Array[number].interfaceID        = pci_config_read(bus, device, func, PCI_INTERFACE);
-                    pciDev_Array[number].revID              = pci_config_read(bus, device, func, PCI_REVISION);
-                    pciDev_Array[number].irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
-                    pciDev_Array[number].bar[0].baseAddress = pci_config_read(bus, device, func, PCI_BAR0);
-                    pciDev_Array[number].bar[1].baseAddress = pci_config_read(bus, device, func, PCI_BAR1);
-                    pciDev_Array[number].bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
-                    pciDev_Array[number].bar[3].baseAddress = pci_config_read(bus, device, func, PCI_BAR3);
-                    pciDev_Array[number].bar[4].baseAddress = pci_config_read(bus, device, func, PCI_BAR4);
-                    pciDev_Array[number].bar[5].baseAddress = pci_config_read(bus, device, func, PCI_BAR5);
+					pciDev_Array[number] = malloc(sizeof(pciDev_t), 0);
+
+                    pciDev_Array[number]->vendorID           = vendorID;
+                    pciDev_Array[number]->deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);
+                    pciDev_Array[number]->classID            = pci_config_read(bus, device, func, PCI_CLASS);
+                    pciDev_Array[number]->subclassID         = pci_config_read(bus, device, func, PCI_SUBCLASS);
+                    pciDev_Array[number]->interfaceID        = pci_config_read(bus, device, func, PCI_INTERFACE);
+                    pciDev_Array[number]->revID              = pci_config_read(bus, device, func, PCI_REVISION);
+                    pciDev_Array[number]->irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
+                    pciDev_Array[number]->bar[0].baseAddress = pci_config_read(bus, device, func, PCI_BAR0);
+                    pciDev_Array[number]->bar[1].baseAddress = pci_config_read(bus, device, func, PCI_BAR1);
+                    pciDev_Array[number]->bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
+                    pciDev_Array[number]->bar[3].baseAddress = pci_config_read(bus, device, func, PCI_BAR3);
+                    pciDev_Array[number]->bar[4].baseAddress = pci_config_read(bus, device, func, PCI_BAR4);
+                    pciDev_Array[number]->bar[5].baseAddress = pci_config_read(bus, device, func, PCI_BAR5);
 
                     // Valid Device
-                    pciDev_Array[number].bus    = bus;
-                    pciDev_Array[number].device = device;
-                    pciDev_Array[number].func   = func;
+                    pciDev_Array[number]->bus    = bus;
+                    pciDev_Array[number]->device = device;
+                    pciDev_Array[number]->func   = func;
+					pciDev_Array[number]->number = bus*PCIDEVICES*PCIFUNCS + device*PCIFUNCS + func;
 
                     // output to screen
                     printf("#%d  %d:%d.%d\t dev:%x vend:%x",
                          number,
-                         pciDev_Array[number].bus, pciDev_Array[number].device,
-                         pciDev_Array[number].func,
-                         pciDev_Array[number].deviceID,
-                         pciDev_Array[number].vendorID);
+                         pciDev_Array[number]->bus, pciDev_Array[number]->device,
+                         pciDev_Array[number]->func,
+                         pciDev_Array[number]->deviceID,
+                         pciDev_Array[number]->vendorID);
 
-                    if (pciDev_Array[number].irq!=255)
+                    if (pciDev_Array[number]->irq!=255)
                     {
-                        printf(" IRQ:%d ", pciDev_Array[number].irq);
+                        printf(" IRQ:%d ", pciDev_Array[number]->irq);
                     }
                     else // "255 means "unknown" or "no connection" to the interrupt controller"
                     {
@@ -183,19 +171,23 @@ void listPCI()
                     }
 
                     /// USB Host Controller
-                    if ((pciDev_Array[number].classID==0x0C) && (pciDev_Array[number].subclassID==0x03))
+                    if (pciDev_Array[number]->classID==0x0C && pciDev_Array[number]->subclassID==0x03)
                     {
-                        install_USB_HostController(&pciDev_Array[number]);
+                        install_USB_HostController(pciDev_Array[number]);
                     }
                     printf("\n");
 
                     /// RTL 8139 network card
-                    if ((pciDev_Array[number].deviceID == 0x8139))
+                    if (pciDev_Array[number]->deviceID == 0x8139)
                     {
-                        install_RTL8139(number);
+                        install_RTL8139(pciDev_Array[number]);
                     }
                     ++number;
                 } // if pciVendor
+				else
+				{
+					pciDev_Array[number] = 0;
+				}
 
                 // Bit 7 in header type (Bit 23-16) --> multifunctional
                 if (!(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80))

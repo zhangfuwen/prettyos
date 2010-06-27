@@ -360,7 +360,7 @@ void enablePorts()
          resetPort(j);
          enabledPortFlag = true;
 
-         port[j+1].type = USB; // device manager
+         port[j+1].type = &USB; // device manager
          port[j+1].data = (void*)(j+1);
          char name[14],portNum[3];
          strcpy(name,"EHCI-Port ");

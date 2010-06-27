@@ -8,10 +8,10 @@
 #define DISKARRAYSIZE 20
 #define PARTITIONARRAYSIZE 4
 
-typedef enum
+typedef struct
 {
-    FDD, USB, RAM
-} PORTTYPE;
+    void (*motorOff)(void*);
+} portType_t;
 
 typedef struct
 {
@@ -19,9 +19,8 @@ typedef struct
     FS_ERROR (*writeSector)(uint32_t, uint8_t*, void*);
 } diskType_t;
 
-extern diskType_t FLOPPYDISK;
-extern diskType_t USB_MSD;
-extern diskType_t RAMDISK;
+extern portType_t FDD,        USB,     RAM;
+extern diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
 
 typedef struct disk
 {
@@ -34,14 +33,15 @@ typedef struct disk
 
 typedef struct 
 {
-    PORTTYPE type;
-    disk_t*  insertedDisk; // NULL if no disk is inserted
-    char     name[15];
-    void*    data;         // Contains additional information depending on its type
+    portType_t* type;
+    disk_t*     insertedDisk; // NULL if no disk is inserted
+    char        name[15];
+    void*       data;         // Contains additional information depending on its type
 } port_t;
 
 
 void deviceManager_install(/*partition_t* system*/);
+void deviceManager_checkDrives();
 void attachPort(port_t* port);
 void attachDisk(disk_t* disk);
 void removeDisk(disk_t* disk);

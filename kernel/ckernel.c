@@ -23,14 +23,11 @@
 #define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.0.551";
+const char* version = "0.0.0.552";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
 extern uintptr_t _kernel_end; // linker script
-
-// pci devices list
-extern pciDev_t pciDev_Array[PCIARRAYSIZE];
 
 // Informations about the system
 system_t system;
@@ -97,8 +94,8 @@ void main()
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
-    floppy_install(); // detect FDDs
-    pciScan();        // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
+    flpydsk_install(); // detect FDDs
+    pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 
     #ifdef _DIAGNOSIS_
     listPCI();
@@ -162,7 +159,6 @@ void main()
         {
             CurrentSeconds = getCurrentSeconds();
 
-
             // all values 64 bit
             uint64_t RdtscDiffValue = rdtsc() - LastRdtscValue;
             LastRdtscValue = rdtsc();
@@ -179,12 +175,9 @@ void main()
             getCurrentDateAndTime(DateAndTime);
             kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
 
-            if ((cmos_read(0x10)>>4) == 4) // first FDD implemented
-            {
-                flpydsk_control_motor(false); // switch off motors if they are not neccessary, later replaced by generally switching off all motors that are not needed.
-            }
+            deviceManager_checkDrives(); // switch off motors if they are not neccessary
         }
-                
+
         handleEvents(); 
 
         __asm__ volatile ("hlt"); // HLT halts the CPU until the next external interrupt is fired.
