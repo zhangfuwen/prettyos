@@ -264,7 +264,17 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
         {
             printf("<-- data");   // In/Out Data
         }
-        bulkTransfer->successfulDataOUT = true; // Out Data
+        else // OK
+        {
+            if (bulkTransfer->SCSIopcode == 0x2A) // write(10)
+            {
+                bulkTransfer->successfulDataOUT = true; // Out Data
+            }
+            else
+            {
+                bulkTransfer->successfulDataIN  = true; // In  Data
+            }
+        }
     }
 
     uint32_t statusStatus = showStatusbyteQTD(StatusQTD);
@@ -272,7 +282,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     {
         printf("<-- status");   // In CSW
     }
-    else
+    else // OK
     {
         bulkTransfer->successfulCSW = true;
     }
@@ -367,7 +377,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         textColor(0x0F);
       #endif
 
-        // Data and Status qTD 
+        // Data in and Status qTD 
         next = StatusQTD = createQTD_MSDStatus(0x1, !(usbDevices[device].ToggleEndpointInMSD));   // next, toggle, IN 13 byte
         QTD_In = DataQTD = createQTD_IO((uintptr_t)next, IN, usbDevices[device].ToggleEndpointInMSD, TransferLength); // IN/OUT DATA0, ... byte
         /*do not switch toggle*/
@@ -393,7 +403,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
       #endif
     }
 
-    // QH IN with data and status qTD, or with status qTD only
+    // QH IN with data and status qTD
     createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
 
 labelTransferIN: /// TEST 
@@ -473,13 +483,11 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     printf("\tCommandQTD: %X",paging_get_phys_addr(kernel_pd, (void*)cmdQTD));
   #endif
 
-    // QH Out with command qTD
+    // QH Out with command qTD and data out qTD
     createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
 
     // Bulk Transfer to endpoint OUT
-    performAsyncScheduler(true, true, TransferLength/200); 
-
-    printf("\nOUT (Data transfer) finished");
+    performAsyncScheduler(true, true, TransferLength/200);     
     
   /**************************************************************************************************************************************/
 
@@ -508,15 +516,9 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     printf("\tStatusQTD: %X", paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
   #endif
 
-    // QH IN with data and status qTD, or with status qTD only
+    // QH IN with status qTD only
     createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), StatusQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
-
     performAsyncScheduler(true, true, 0); 
-    
-    printf("\nIN (Status) finished");
-    
-    /**************************************************************************************************************************************/
-
     checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer);
 }
 
@@ -812,7 +814,7 @@ FS_ERROR usbWrite(uint32_t sector, uint8_t* buffer, void* device)
 {
         ///////// send SCSI command "write(10)", write one block to LBA ..., get Status
 
-    textColor(0x09); printf("\n\n>>> SCSI: write   sector: %u", sector); textColor(0x0F);
+    textColor(0x0E); printf("\n\n>>> SCSI: write  sector: %u", sector); textColor(0x0F);
 
     uint8_t           devAddr = currentDevice;
     uint32_t          blocks  = 1; // number of blocks to be written
