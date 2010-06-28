@@ -88,6 +88,10 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(USERDIR)\$(SHELLDIR)\*.o
 	$(RM) $(USERDIR)\$(SHELLDIR)\shell.elf
+	$(RM) boot2.map
+	$(RM) $(KERNELDIR)\initrd.dat
+	$(RM) $(KERNELDIR)\kernel.map
+	$(RM) $(USERDIR)\$(SHELLDIR)\shell.map
 else
 	$(RM) $(STAGE1DIR)/boot.bin
 	$(RM) $(STAGE2DIR)/BOOT2.BIN
@@ -97,4 +101,8 @@ else
 	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(USERDIR)/$(SHELLDIR)/*.o
 	$(RM) $(USERDIR)/$(SHELLDIR)/shell.elf
+	$(RM) boot2.map
+	$(RM) $(KERNELDIR)/initrd.dat
+	$(RM) $(KERNELDIR)/kernel.map
+	$(RM) $(USERDIR)/$(SHELLDIR)/shell.map
 endif
