@@ -26,7 +26,7 @@ DEFN_SYSCALL0(getCurrentMilliseconds,    10) // substitute
 DEFN_SYSCALL1(flpydsk_format,            11, char*)
 DEFN_SYSCALL2(flpydsk_load,              12, const char*, const char*) // substitute
 DEFN_SYSCALL0(exit,                      13)
-DEFN_SYSCALL1(settaskflag,               14, int32_t) // substitute
+DEFN_SYSCALL1(keyPressed,                14, uint8_t) 
 DEFN_SYSCALL2(beep,                      15, uint32_t, uint32_t)
 DEFN_SYSCALL1(execute,                   16, const char*)
 DEFN_SYSCALL0(systemControl,             17)

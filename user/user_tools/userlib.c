@@ -67,6 +67,13 @@ void exit()
     __asm__ volatile("int $0x7F" : : "a"(13));
 }
 
+bool keyPressed(VK key)
+{
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(14), "b"(key));
+    return ret;
+}
+
 void beep(unsigned int frequency, unsigned int duration)
 {
     __asm__ volatile("int $0x7F" : : "a"(15), "b"(frequency), "c"(duration));

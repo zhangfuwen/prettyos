@@ -27,6 +27,8 @@ bool KeyPressed   = false;  // variable for Key Pressed
 uint8_t curScan   = 0;      // current scan code from Keyboard
 uint8_t prevScan  = 0;      // previous scan code
 
+bool VKPressed[170]; // for monitoring pressed keys
+
 void keyboard_install()
 {
     irq_install_handler(32+1, keyboard_handler); // Installs 'keyboard_handler' to IRQ1
@@ -48,9 +50,10 @@ uint8_t FetchAndAnalyzeScancode()
     outportb(0x61,port_value &~ 0x80); // 1->0
 
     if (curScan & 0x80) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
-    {
-        KeyPressed = false;
+    {        
         curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
+        VKPressed[asciiNonShift[curScan]] = KeyPressed = false;
+        
         if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) // A key was released, shift key up?
         {
             ShiftKeyDown = false; // yes, it is up --> NonShift
@@ -69,8 +72,9 @@ uint8_t FetchAndAnalyzeScancode()
         }
     }
     else // Key was pressed
-    {
-        KeyPressed = true;
+    {   
+        VKPressed[asciiNonShift[curScan]] = KeyPressed = true;
+
         if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT)
         {
             ShiftKeyDown = true; // It is down, use asciiShift characters
@@ -95,7 +99,7 @@ uint8_t FetchAndAnalyzeScancode()
 uint8_t ScanToASCII()
 {
     curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
-
+    
     // filter Shift Key and Key Release
     if (((curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT)) || (KeyPressed == false))
     {
@@ -169,6 +173,8 @@ uint8_t ScanToASCII()
 		}
 	}
 
+
+
     return retchar; // ASCII version
 }
 
@@ -213,6 +219,11 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
        return KEY;
    }
    return 0;
+}
+
+bool keyPressed(VK Key) 
+{
+    return(VKPressed[Key]);
 }
 
 /*
