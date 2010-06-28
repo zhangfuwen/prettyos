@@ -23,7 +23,7 @@
 #define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.1.0001";
+const char* version = "0.0.1.2";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -178,7 +178,7 @@ void main()
             deviceManager_checkDrives(); // switch off motors if they are not neccessary
         }
 
-        handleEvents(); 
+        handleEvents();
 
         __asm__ volatile ("hlt"); // HLT halts the CPU until the next external interrupt is fired.
     } // end of kernel idle loop

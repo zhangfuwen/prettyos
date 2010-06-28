@@ -111,22 +111,22 @@ typedef struct
 
 typedef struct
 {
-    partition_t* volume;    // volume containing the file
-    uint32_t  cluster;      // first cluster
-    uint32_t  ccls;         // current cluster
-    uint16_t  sec;          // current sector in the current cluster
-    uint16_t  pos;          // current byte in the current sectors
-    uint32_t  seek;         // current byte in the file
-    uint32_t  size;         // file size
-    FileFlags Flags;        // write mode, EOF
-    uint16_t time;          // last update time
-    uint16_t date;          // last update date
+    partition_t* volume;        // volume containing the file
+    uint32_t  firstCluster;     // first cluster
+    uint32_t  currCluster;      // current cluster
+    uint16_t  sec;              // current sector in the current cluster
+    uint16_t  pos;              // current byte in the current sectors
+    uint32_t  seek;             // current byte in the file
+    uint32_t  size;             // file size
+    FileFlags Flags;            // write mode, EOF
+    uint16_t time;              // last update time
+    uint16_t date;              // last update date
     char     name[FILE_NAME_SIZE];
-    uint32_t entry;         // file's entry position in its directory
-    uint16_t chk;           // checksum = ~(entry+name[0])
-    uint16_t attributes;    // file's attributes
-    uint32_t dirclus;       // first cluster of the file's directory
-    uint32_t dirccls;       // current cluster of the file's directory
+    uint32_t entry;             // file's entry position in its directory
+    uint16_t chk;               // checksum = ~(entry+name[0])
+    uint16_t attributes;        // file's attributes
+    uint32_t dirfirstCluster;           // first cluster of the file's directory
+    uint32_t dircurrCluster;    // current cluster of the file's directory
 } FILE;
 
 typedef struct

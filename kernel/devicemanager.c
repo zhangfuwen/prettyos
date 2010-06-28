@@ -107,7 +107,7 @@ void showPortList()
                     printf("\nRAM ");
             else if(ports[i]->type == &USB)
                     printf("\nUSB 2.0");
-            
+
             textColor(0x0E);
             printf("\t%c", 'A'+i); // number
             textColor(0x0F);
@@ -156,10 +156,10 @@ void showDiskList()
             else if(disks[i]->type == &USB_MSD)
                 printf("\nUSB MSD");
 
-            textColor(0x0E); 
+            textColor(0x0E);
             printf("\t%u", i+1); // Number
             textColor(0x0F);
-            
+
             printf("\t%s", disks[i]->name);   // Name of disk
             if (strlen(disks[i]->name) < 8) { printf("\t"); }
 
@@ -346,12 +346,12 @@ FS_ERROR loadFile(const char* filename, partition_t* part)
 
     // file to search
     FILE dest;
-    dest.volume  = part;
-    dest.dirclus = 0;
-    dest.entry   = 0;
+    dest.volume           = part;
+    dest.dirfirstCluster  = 0;
+    dest.entry            = 0;
     if (dest.volume->type == FAT32)
     {
-        dest.dirclus = dest.volume->FatRootDirCluster; 
+        dest.dirfirstCluster = dest.volume->FatRootDirCluster;
     }
 
     uint8_t retVal = searchFile(&dest, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FILE* fileptrDest, FILE* fileptrTest, uint8_t cmd, uint8_t mode)
@@ -365,12 +365,12 @@ FS_ERROR loadFile(const char* filename, partition_t* part)
         printf("%u\n", dest.entry); // number of file entry "searched.xxx"
 
         fdopen(&dest, &(dest.entry), 'r');
-        
+
         void* filebuffer = malloc(dest.size,PAGESIZE);
         fread(&dest, filebuffer, dest.size);
 
         elf_exec(filebuffer, dest.size, dest.name); // try to execute
- 
+
         fclose(&dest);
     }
 
@@ -381,7 +381,7 @@ FS_ERROR loadFile(const char* filename, partition_t* part)
 FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests only
 {
     uint32_t volume_bytePerSector;
-    uint8_t  volume_type = FAT32; 
+    uint8_t  volume_type = FAT32;
     uint8_t  volume_SecPerClus;
     uint16_t volume_maxroot;
     uint32_t volume_fatsize;
@@ -431,8 +431,8 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         volume_root          = volume_fat + volume_fatcopy * volume_fatsize;
         volume_data          = volume_root + volume_maxroot /(volume_bytePerSector/NUMBER_OF_BYTES_IN_DIR_ENTRY);
         volume_maxcls        = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
-        
-        
+
+
         uint32_t volume_FatRootDirCluster = 0; // only FAT32
 
         uint32_t volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus);; // FAT12 and FAT16
@@ -457,19 +457,19 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
                 printf("\nThe root dir starts at cluster %u (expected: 2).", volume_FatRootDirCluster);
 
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
-                volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus); 
+                volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus);
 
                 printf("\nSectors per FAT: %u.", ((uint32_t*)buffer)[9]);  // byte 36-39
                 volume_fatsize = ((uint32_t*)buffer)[9];
                 volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus * (volume_FatRootDirCluster-2);
-                volume_data    = volume_root;   
+                volume_data    = volume_root;
                 volume_maxcls  = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
             }
         }
         else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '6') // FAT16
         {
             printf("\nThis is a volume formated with FAT16 ");
-            volume_type = FAT16;                
+            volume_type = FAT16;
 
             for (uint8_t i=0; i<4; i++)
             {
@@ -490,8 +490,8 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         ///////////////////////////////////////////////////
 
         part->sectorSize     = volume_bytePerSector;
-        part->buffer         = malloc(part->sectorSize,PAGESIZE); 
-        part->type           = volume_type;        
+        part->buffer         = malloc(part->sectorSize,PAGESIZE);
+        part->type           = volume_type;
         part->SecPerClus     = volume_SecPerClus;
         part->maxroot        = volume_maxroot;
         part->fatsize        = volume_fatsize;
@@ -502,21 +502,21 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         part->data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
         part->maxcls         = volume_maxcls;
         part->mount          = true;
-        part->FatRootDirCluster   = volume_FatRootDirCluster; 
+        part->FatRootDirCluster   = volume_FatRootDirCluster;
         strncpy(part->serialNumber,volume_serialNumber,4); // ID of the partition
     }
-    
-    else if ( *((uint16_t*)((uint8_t*)buffer+444)) == 0x0000 )    
+
+    else if ( *((uint16_t*)((uint8_t*)buffer+444)) == 0x0000 )
     {
         textColor(0x0E);
         if ( *((uint8_t*)buffer+510)==0x55 && *((uint8_t*)buffer+511)==0xAA )
         {
             printf("\nThis seems to be a Master Boot Record:");
-            
+
             textColor(0x0F);
             uint32_t discSignature = *((uint32_t*)((uint8_t*)buffer+440));
             printf("\n\nDisc Signature: %X\t",discSignature);
-            
+
             uint8_t partitionTable[4][16];
             for (uint8_t i=0;i<4;i++) // four tables
             {

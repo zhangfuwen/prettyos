@@ -12,8 +12,8 @@ jmp entry_point                  ; go to entry point
 %include "Fat12.inc"             ; FAT12 driver
 %include "GetMemoryMap.inc"      ; INT 0x15, eax = 0xE820
 
-%define IMAGE_PMODE_BASE 0x40000 ; where the kernel is to be loaded to in protected mode
-%define IMAGE_RMODE_BASE 0x3000  ; where the kernel is to be loaded to in real mode
+%define IMAGE_PMODE_BASE 0x100000 ; where the kernel is to be loaded to in protected mode
+%define IMAGE_RMODE_BASE 0x3000   ; where the kernel is to be loaded to in real mode
 
 ImageName     db "KERNEL  BIN"
 ImageSize     dd 0

@@ -3,7 +3,7 @@ OUTPUT_ARCH(i386)
 STARTUP(object_files/kernel/kernel.o)
 SECTIONS
 {
-    . = 0x00040000;
+    . = 0x00100000;
     __kernel_beg = .;
     .text   : { __code_start = .;                        }
     . = ALIGN(0x1000);
