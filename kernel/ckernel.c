@@ -16,6 +16,7 @@
 #include "flpydsk.h"
 #include "ehci.h"
 #include "mouse.h"
+#include "keyboard.h" // TEST
 #include "cdi.h"
 #include "devicemanager.h"
 #include "cmos.h"
@@ -87,13 +88,13 @@ void showMemorySize()
 void main()
 {
     init();
-
     task_switching = true;
     create_cthread(&bootscreen, "Booting ...");
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
+
     flpydsk_install(); // detect FDDs
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 

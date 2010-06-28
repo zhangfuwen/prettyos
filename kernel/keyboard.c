@@ -52,7 +52,7 @@ uint8_t FetchAndAnalyzeScancode()
     if (curScan & 0x80) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
     {        
         curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
-        VKPressed[asciiNonShift[curScan]] = KeyPressed = false;
+        VKPressed[asciiShift[curScan]] = KeyPressed = false;
         
         if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) // A key was released, shift key up?
         {
@@ -73,7 +73,7 @@ uint8_t FetchAndAnalyzeScancode()
     }
     else // Key was pressed
     {   
-        VKPressed[asciiNonShift[curScan]] = KeyPressed = true;
+        VKPressed[asciiShift[curScan]] = KeyPressed = true;
 
         if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT)
         {
