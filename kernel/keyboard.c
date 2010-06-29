@@ -50,13 +50,21 @@ uint8_t FetchAndAnalyzeScancode()
     outportb(0x61,port_value &~ 0x80); // 1->0
 
     if (curScan & 0x80) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
-    {        
+    {
         curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
-        VKPressed[asciiShift[curScan]] = KeyPressed = false;
-        
+        VKPressed[(uint8_t)toUpper(asciiNonShift[curScan])] = KeyPressed = false;
+
         if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) // A key was released, shift key up?
         {
-            ShiftKeyDown = false; // yes, it is up --> NonShift
+            VKPressed[VK_SHIFT] = ShiftKeyDown = KeyPressed; // yes, it is up --> NonShift
+            if (curScan == KRLEFT_SHIFT)
+            {
+                 VKPressed[VK_LSHIFT] = KeyPressed;
+            }
+            else
+            {
+                 VKPressed[VK_RSHIFT] = KeyPressed;
+            }
         }
         if ((curScan == 0x38) && (prevScan == 0x60))
         {
@@ -72,12 +80,20 @@ uint8_t FetchAndAnalyzeScancode()
         }
     }
     else // Key was pressed
-    {   
-        VKPressed[asciiShift[curScan]] = KeyPressed = true;
+    {
+        VKPressed[(uint8_t)toUpper(asciiNonShift[curScan])] = KeyPressed = true;
 
         if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT)
         {
-            ShiftKeyDown = true; // It is down, use asciiShift characters
+            VKPressed[VK_SHIFT] = ShiftKeyDown = KeyPressed; // It is down, use asciiShift characters
+            if (curScan == KRLEFT_SHIFT)
+            {
+                 VKPressed[VK_LSHIFT] = KeyPressed;
+            }
+            else
+            {
+                 VKPressed[VK_RSHIFT] = KeyPressed;
+            }
         }
         if ((curScan == 0x38) && (prevScan == 0x60))
         {
@@ -99,7 +115,7 @@ uint8_t FetchAndAnalyzeScancode()
 uint8_t ScanToASCII()
 {
     curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
-    
+
     // filter Shift Key and Key Release
     if (((curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT)) || (KeyPressed == false))
     {
@@ -221,7 +237,7 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
    return 0;
 }
 
-bool keyPressed(VK Key) 
+bool keyPressed(VK Key)
 {
     return(VKPressed[Key]);
 }

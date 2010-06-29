@@ -24,7 +24,7 @@
 #define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
 #define FILEBUFFERSIZE 0x4000 // Buffer for User-Space Program, e.g. shell
 
-const char* version = "0.0.1.3";
+const char* version = "0.0.1.4";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -152,6 +152,12 @@ void main()
 
     while (true) // start of kernel idle loop
     {
+        /// TEST
+        if (keyPressed('A') && keyPressed(VK_LSHIFT)) {printf("\nshiftleft+A"); }
+        if (keyPressed('D') && keyPressed(VK_RSHIFT)) {printf("\nshiftright+D");}
+        if (keyPressed('1')) {printf("\n1");}
+        /// TEST
+
         // show rotating asterisk
         *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
         if (! *++progress) { progress = "|/-\\"; }
