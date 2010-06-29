@@ -264,6 +264,9 @@
     <ClInclude Include="..\user\user_tools\userlib.hpp">
       <Filter>User\User-Tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\include\fsmanager.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\ckernel.c">
@@ -433,6 +436,9 @@
     </ClCompile>
     <ClCompile Include="..\user\user_test_cpp\cpp.cpp">
       <Filter>User\C++-Userprog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\fsmanager.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

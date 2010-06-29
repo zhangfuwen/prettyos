@@ -594,27 +594,27 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
 
 void systemControl(SYSTEM_CONTROL todo)
 {
-	switch(todo)
-	{
-		case REBOOT:
-		{
-			int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
-			do //flush the keyboard controller
-			{
-			   temp = inportb(0x64);
-			   if (temp & 1)
-				 inportb(0x60);
-			}
-			while (temp & 2);
+    switch(todo)
+    {
+        case REBOOT:
+        {
+            int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
+            do //flush the keyboard controller
+            {
+               temp = inportb(0x64);
+               if (temp & 1)
+                 inportb(0x60);
+            }
+            while (temp & 2);
 
-			// Reboot
-			outportb(0x64, 0xFE);
-			break;
-		}
-		case SHUTDOWN:
-			puts("Shutdown not yet implemented.");
-			break;
-	}
+            // Reboot
+            outportb(0x64, 0xFE);
+            break;
+        }
+        case SHUTDOWN:
+            puts("Shutdown not yet implemented.");
+            break;
+    }
 }
 
 // BOOTSCREEN

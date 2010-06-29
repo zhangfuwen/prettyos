@@ -23,7 +23,7 @@ struct task
     void* kernel_stack;               // Kernel stack location
     uintptr_t FPU_ptr;                // pointer to FPU data
 
-	// task specific graphical output settings
+    // task specific graphical output settings
     uint8_t attrib; // Color
 } __attribute__((packed));
 

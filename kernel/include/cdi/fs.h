@@ -2,7 +2,7 @@
 #define CDI_FS
 
 #include "os.h"
-#include "fat.h" // FILE FAT16/FAT32 perhaps FAT12 /// TODO: to be checked
+#include "fsmanager.h"
 #include <cdi.h>
 #include <cdi/lists.h>
 #include <cdi/cache.h>
@@ -41,7 +41,7 @@ struct cdi_fs_filesystem {
        sonstige Flags die das ganze Dateisystem betreffen... */
 
 
-    FILE*                  device; // OS-spezifisch: Deskriptor fuer den Datentraeger
+    file_t*                device; // OS-spezifisch: Deskriptor fuer den Datentraeger
     void*                  opaque; // Zeiger den der Treiber fuer eigene Daten zum Dateisystem benutzen kann
 };
 

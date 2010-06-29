@@ -182,6 +182,8 @@ void* malloc(uint32_t size, uint32_t alignment)
 
 void free(void* addr)
 {
+    if(addr == 0) return;
+
     // Walk the regions and find the correct one
     uint8_t* region_addr = heap_start;
     for (uint32_t i=0; i<region_count; ++i)

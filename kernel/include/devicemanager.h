@@ -2,7 +2,8 @@
 #define DEVICEMANAGER_H
 
 #include "os.h"
-#include "fat.h"
+#include "fsmanager.h"
+#include "fat.h" // obsolete
 
 #define PORTARRAYSIZE 20
 #define DISKARRAYSIZE 20
@@ -25,7 +26,7 @@ extern diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
 typedef struct disk
 {
     diskType_t*  type;
-    partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
+    FAT_partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
     char         name[15];
     void*        data;                          // Contains additional information depending on disk-type
     uint32_t     accessRemaining;               // Used to control motor
@@ -48,12 +49,16 @@ void removeDisk(disk_t* disk);
 void showPortList();
 void showDiskList();
 
-partition_t* getPartition(const char* path);
-const char*  getFilename (const char* path);
+FAT_partition_t* getPartition(const char* path);
+const char*      getFilename (const char* path);
 
 FS_ERROR executeFile(const char* path);
-FS_ERROR loadFile(const char* filename, partition_t* part);
 
-FS_ERROR analyzeBootSector(void* buffer, partition_t* part);
+FS_ERROR analyzeBootSector(void* buffer, FAT_partition_t* part);
+
+FS_ERROR sectorRead       (uint32_t sector, uint8_t* buffer, FAT_partition_t* part);
+FS_ERROR singleSectorRead (uint32_t sector, uint8_t* buffer, FAT_partition_t* part);
+FS_ERROR sectorWrite      (uint32_t sector, uint8_t* buffer, FAT_partition_t* part);
+FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, FAT_partition_t* part);
 
 #endif

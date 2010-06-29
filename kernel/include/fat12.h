@@ -1,9 +1,6 @@
 #ifndef _FAT12_H
 #define _FAT12_H
 
-// Error
-#define E_DISK -1
-
 // Attributes in Root Directory
 #define ATTR_READ_ONLY       0x01
 #define ATTR_HIDDEN          0x02
@@ -58,33 +55,6 @@ struct boot_sector
     char     VolumeLabel[11];
     char     Reserved2[8];
 }__attribute__((packed));
-
-struct dir_entry
-{
-    char    Filename[8];
-    char    Extension[3];
-    char    Attributes;
-    char    NTRes;
-    char    CrtTimeTenth;
-    int32_t CrtTime;
-    int32_t CrtDate;
-    int32_t LstAccDate;
-    int32_t FstClusHI;
-    int32_t WrtTime;
-    int32_t WrtDate;
-    int32_t FstClusLO;
-    int32_t FileSize;
- }__attribute__((packed));
-
- struct file
- {
-   uint32_t firstCluster;
-   uint32_t size;
- }__attribute__((packed));
-
-
-// cache memory for tracks 0 and 1
-extern uint8_t track0[9216], track1[9216];
 
 int32_t flpydsk_read_directory();
 int32_t flpydsk_format(char* vlab); // VolumeLabel

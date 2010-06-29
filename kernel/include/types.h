@@ -54,7 +54,7 @@ typedef struct
 
 typedef enum
 {
-	SHUTDOWN, REBOOT
+    SHUTDOWN, REBOOT
 } SYSTEM_CONTROL;
 
 #endif

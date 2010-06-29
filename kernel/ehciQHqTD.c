@@ -171,7 +171,7 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
     (*(((uint32_t*)MSDStatusQTDpage0)+0)) = CSWMagicNotOK; // magic USBS
     (*(((uint32_t*)MSDStatusQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
     (*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA;
-	(*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA;
+    (*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA;
 
     return (void*)td;
 }
@@ -435,7 +435,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         }
     };
 
-	pOpRegs->USBSTS |= STS_USBINT;
+    pOpRegs->USBSTS |= STS_USBINT;
     USBINTflag = false;
 
     if (stop)

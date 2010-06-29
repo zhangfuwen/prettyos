@@ -26,7 +26,7 @@ extern uintptr_t file_data_end;
 
 port_t      RAMDiskPort;
 disk_t      RAMDisk;
-partition_t RAMDiskVolume;
+FAT_partition_t RAMDiskVolume;
 
 void* ramdisk_install(size_t size)
 {

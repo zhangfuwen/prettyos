@@ -131,7 +131,7 @@ void listPCI()
                 uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
                 if (vendorID && vendorID != 0xFFFF)
                 {
-					pciDev_Array[number] = malloc(sizeof(pciDev_t), 0);
+                    pciDev_Array[number] = malloc(sizeof(pciDev_t), 0);
 
                     pciDev_Array[number]->vendorID           = vendorID;
                     pciDev_Array[number]->deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);
@@ -151,7 +151,7 @@ void listPCI()
                     pciDev_Array[number]->bus    = bus;
                     pciDev_Array[number]->device = device;
                     pciDev_Array[number]->func   = func;
-					pciDev_Array[number]->number = bus*PCIDEVICES*PCIFUNCS + device*PCIFUNCS + func;
+                    pciDev_Array[number]->number = bus*PCIDEVICES*PCIFUNCS + device*PCIFUNCS + func;
 
                     // output to screen
                     printf("#%d  %d:%d.%d\t dev:%x vend:%x",
@@ -184,10 +184,10 @@ void listPCI()
                     }
                     ++number;
                 } // if pciVendor
-				else
-				{
-					pciDev_Array[number] = 0;
-				}
+                else
+                {
+                    pciDev_Array[number] = 0;
+                }
 
                 // Bit 7 in header type (Bit 23-16) --> multifunctional
                 if (!(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80))

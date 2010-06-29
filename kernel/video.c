@@ -246,22 +246,22 @@ void screenshot()
             NewLine++;
         }
     }
-	
-	char Pfad[20];
-	for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
-	{
-		if(disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->type == FAT12 || disks[i]->partition[0]->type == FAT16 || disks[i]->partition[0]->type == FAT32))
-		{
-			snprintf(Pfad, 20, "%u:/screen.txt", i+1);
-			break;
-		}
-	}
-	printf(Pfad);
-    FILE* file = fopen(Pfad, "a+"); // TEST to write to usb-stick
+    
+    char Pfad[20];
+    for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
+    {
+        if(disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->type == FAT12 || disks[i]->partition[0]->type == FAT16 || disks[i]->partition[0]->type == FAT32))
+        {
+            snprintf(Pfad, 20, "%u:/screen.txt", i+1);
+            break;
+        }
+    }
+
+    FAT_file_t* file = FAT_fopen(Pfad, "a+"); // TEST to write to usb-stick
     if (file) // check for NULL pointer, otherwise #PF
     {
-        fwrite((void*)videoscreen, 4098, 1, file);
-        fclose(file);
+        FAT_fwrite((void*)videoscreen, 4098, 1, file);
+        FAT_fclose(file);
     }
     else
     {

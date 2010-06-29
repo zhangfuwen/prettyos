@@ -146,7 +146,7 @@ static floppy_t* createFloppy(uint8_t ID)
     fdd->drive.insertedDisk->type            = &FLOPPYDISK;
     fdd->drive.insertedDisk->data            = (void*)fdd;
     fdd->drive.insertedDisk->accessRemaining = 0;
-    fdd->drive.insertedDisk->partition[0]    = malloc(sizeof(partition_t), 0);
+    fdd->drive.insertedDisk->partition[0]    = malloc(sizeof(FAT_partition_t), 0);
     fdd->drive.insertedDisk->partition[1]    = 0;
     fdd->drive.insertedDisk->partition[2]    = 0;
     fdd->drive.insertedDisk->partition[3]    = 0;

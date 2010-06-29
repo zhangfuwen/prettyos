@@ -78,6 +78,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\include\fat12.h" />
     <ClInclude Include="..\kernel\include\flpydsk.h" />
     <ClInclude Include="..\kernel\include\fs.h" />
+    <ClInclude Include="..\kernel\include\fsmanager.h" />
     <ClInclude Include="..\kernel\include\initrd.h" />
     <ClInclude Include="..\kernel\include\ipTcpStack.h" />
     <ClInclude Include="..\kernel\include\irq.h" />
@@ -136,6 +137,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\flpydsk.c" />
     <ClCompile Include="..\kernel\fpu.c" />
     <ClCompile Include="..\kernel\fs.c" />
+    <ClCompile Include="..\kernel\fsmanager.c" />
     <ClCompile Include="..\kernel\gdt.c" />
     <ClCompile Include="..\kernel\initrd.c" />
     <ClCompile Include="..\kernel\ipTcpStack.c" />

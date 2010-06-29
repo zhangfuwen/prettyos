@@ -39,7 +39,7 @@ extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
 // Device Manager
 disk_t      usbDev[17];
-partition_t usbDevVolume[17];
+FAT_partition_t usbDevVolume[17];
 
 
 void ehci_install(pciDev_t* PCIdev, uint32_t i)

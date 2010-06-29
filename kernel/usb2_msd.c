@@ -674,7 +674,7 @@ static void analyzeInquiry()
     }
 }
 
-void testMSD(uint8_t devAddr, partition_t* part)
+void testMSD(uint8_t devAddr, FAT_partition_t* part)
 {
     if (usbDevices[devAddr].InterfaceClass != 0x08)
     {
@@ -973,10 +973,10 @@ int32_t showResultsRequestSense()
         return SenseKey;
     }
 
-	textColor(0x0C);
-	printf("No vaild response code!");
-	textColor(0x0F);
-	return -1;
+    textColor(0x0C);
+    printf("No vaild response code!");
+    textColor(0x0F);
+    return -1;
 }
 
 

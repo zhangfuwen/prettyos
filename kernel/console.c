@@ -26,7 +26,7 @@ void kernel_console_init()
 
 void console_init(console_t* console, const char* name)
 {
-    console->name         = malloc(strlen(name), PAGESIZE);
+    console->name         = malloc(strlen(name)+1, PAGESIZE);
     console->vidmem       = malloc(COLUMNS*USER_LINES*2, PAGESIZE);
     console->csr_x        = 0;
     console->csr_y        = 0;
