@@ -155,7 +155,7 @@ void main()
         /// TEST
         if (keyPressed('A') && keyPressed(VK_LSHIFT)) {printf("\nshiftleft+A"); }
         if (keyPressed('D') && keyPressed(VK_RSHIFT)) {printf("\nshiftright+D");}
-        if (keyPressed('1')) {printf("\n1");}
+        if (keyPressed('1') && keyPressed(VK_ESCAPE)) {printf("\nESC+1");}
         /// TEST
 
         // show rotating asterisk

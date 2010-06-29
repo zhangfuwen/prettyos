@@ -51,7 +51,7 @@ static void* syscalls[] =
     &flpydsk_format,
     &nop, // substitute
     &exit,
-    &nop, // substitute
+    &keyPressed, 
     &beep,
     &executeFile,
     &systemControl,
