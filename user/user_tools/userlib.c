@@ -761,6 +761,20 @@ double fabs(double x)
     return result;
 }
 
+/// random generator
+static uint32_t seed = 0; 
+
+void srand(unsigned int val)
+{
+    seed = val;
+}
+
+unsigned int rand()
+{
+    return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7FFF);
+}
+
+
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.

@@ -83,4 +83,7 @@ double sqrt(double x);
 
 double fabs(double x);
 
+void srand(unsigned int val);
+unsigned int rand();
+
 #endif

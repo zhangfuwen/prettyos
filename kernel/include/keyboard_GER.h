@@ -8,6 +8,8 @@
 #define RETURN    '\r'
 #define NEWLINE   ENTER
 
+// http://www.marjorie.de/ps2/scancode-set1.htm
+
 // Non-ASCII special scancodes // Esc in scancode is 1
 #define  KESC          1
 #define  KF1           0x80
