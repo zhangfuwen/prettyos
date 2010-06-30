@@ -82,22 +82,17 @@ enum {FAT12 = 1, FAT16, FAT32};
 struct disk;
 typedef struct
 {
-    struct disk* disk;          // The disk on which the partition is
-    uint8_t* buffer;            // buffer equal to one sector
+    partition_t* part;          // universal partition container (fsmanager)
     uint32_t sectorSize;        // byte per sector
-    uint32_t firsts;            // LBA of 1st sector
     uint32_t fat;               // LBA of FAT
     uint32_t root;              // LBA of root directory
-    uint32_t data;              // LBA of data area
+    uint32_t dataLBA;           // LBA of data area
     uint32_t maxroot;           // max entries in root dir
     uint32_t maxcls;            // max data clusters
     uint32_t fatsize;           // sectors in FAT
     uint8_t  fatcopy;           // copies of FAT
     uint8_t  SecPerClus;        // sectors per cluster
-    uint8_t  type;              // FAT type (FAT16, FAT32)
-    bool     mount;             // 0: not mounted  1: mounted
     uint32_t FatRootDirCluster;
-    char     serialNumber[13];  // serial number for identification
 } FAT_partition_t;
 
 // File
@@ -111,7 +106,7 @@ typedef struct
 
 typedef struct
 {
-    FAT_partition_t* volume;        // volume containing the file
+    FAT_partition_t* volume;    // volume containing the file
     uint32_t  firstCluster;     // first cluster
     uint32_t  currCluster;      // current cluster
     uint16_t  sec;              // current sector in the current cluster

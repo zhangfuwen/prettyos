@@ -674,7 +674,7 @@ static void analyzeInquiry()
     }
 }
 
-void testMSD(uint8_t devAddr, FAT_partition_t* part)
+void testMSD(uint8_t devAddr, partition_t* part)
 {
     if (usbDevices[devAddr].InterfaceClass != 0x08)
     {

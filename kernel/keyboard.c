@@ -33,7 +33,7 @@ void keyboard_install()
 {
     irq_install_handler(32+1, keyboard_handler); // Installs 'keyboard_handler' to IRQ1
 
-    while ( inportb(0x64) & 1 ) // wait until buffer is empty
+    while (inportb(0x64) & 1) // wait until buffer is empty
     {
         inportb(0x60);
     }

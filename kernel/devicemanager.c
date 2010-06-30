@@ -17,7 +17,7 @@
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
-FAT_partition_t* systemPartition;
+partition_t* systemPartition;
 
 uint32_t startSectorPartition = 0;
 extern uint32_t usbMSDVolumeMaxLBA;
@@ -116,6 +116,7 @@ void showPortList()
 
             if (ports[i]->insertedDisk != NULL)
             {
+                flpydsk_refreshVolumeNames();
                 if(ports[i]->type != &FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
                     printf("\t%s",ports[i]->insertedDisk->name); // Attached disk
                 else putch('\t');
@@ -174,15 +175,19 @@ void showDiskList()
 
                 if(disks[i]->type == &FLOPPYDISK) // Serial
                 {
-                    strncpy(disks[i]->partition[j]->serialNumber, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
-                    printf("\t%s", disks[i]->partition[j]->serialNumber);
+                    //HACK
+                    free(disks[i]->partition[j]->serial);
+                    disks[i]->partition[j]->serial = malloc(13, 0);
+                    disks[i]->partition[j]->serial[12] = 0;
+                    strncpy(disks[i]->partition[j]->serial, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
+                    printf("\t%s", disks[i]->partition[j]->serial);
                 }
                 else if(disks[i]->type == &RAMDISK)
-                    printf("\t%s", disks[i]->partition[j]->serialNumber);
+                    printf("\t%s", disks[i]->partition[j]->serial);
                 else if(disks[i]->type == &USB_MSD)
                     printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber);
                 /// ifs should be changed to:
-                ///printf("\t%s", disks[i]->partition[j]->serialNumber); // serial of partition
+                ///printf("\t%s", disks[i]->partition[j]->serial); // serial of partition
             }
         }
     }
@@ -205,10 +210,10 @@ const char* getFilename(const char* path)
     return(path);
 }
 
-FS_ERROR loadFile(const char* filename, FAT_partition_t* part);
+FS_ERROR loadFile(const char* filename, partition_t* part);
 FS_ERROR executeFile(const char* path)
 {
-    FAT_partition_t* part = getPartition(path);
+    partition_t* part = getPartition(path);
     if(part == 0)
     {
         return(CE_FILE_NOT_FOUND);
@@ -240,7 +245,7 @@ FS_ERROR executeFile(const char* path)
     return(CE_FILE_NOT_FOUND);
 }
 
-FAT_partition_t* getPartition(const char* path)
+partition_t* getPartition(const char* path)
 {
     size_t length = strlen(path);
     char Buffer[10];
@@ -301,105 +306,7 @@ FAT_partition_t* getPartition(const char* path)
     return(0);
 }
 
-//FS_ERROR loadFile(const char* filename, FAT_partition_t* part)
-//{
-//    char partitionType[6];
-//    switch(part->type)
-//    {
-//        case 1:
-//            strcpy(partitionType,"FAT12");
-//            break;
-//        case 2:
-//            strcpy(partitionType,"FAT16");
-//            break;
-//        case 3:
-//            strcpy(partitionType,"FAT32");
-//            break;
-//        default:
-//            strcpy(partitionType,"???");
-//            break;
-//    }
-//
-//    textColor(0x03);
-//    printf("\nbuffer:     %X", part->buffer);
-//    printf("\ntype:       %s", partitionType);
-//    printf("\nSecPerClus: %u", part->SecPerClus);
-//    printf("\nmaxroot:    %u", part->maxroot);
-//    printf("\nfatsize:    %u", part->fatsize);
-//    printf("\nfatcopy:    %u", part->fatcopy);
-//    printf("\nfirsts:     %u", part->firsts);
-//    printf("\nfat:        %u", part->fat);
-//    printf("\nroot:       %u", part->root);
-//    printf("\ndata:       %u", part->data);
-//    printf("\nmaxcls:     %u", part->maxcls);
-//    printf("\nmount:      %s", part->mount ? "yes" : "no");
-//    printf("\nserial:     %s", part->serialNumber);
-//    textColor(0x0F);
-//
-//    waitForKeyStroke(); /// Why does loading from USB fail, if its not there?
-//
-//    // file name
-//    FAT_file_t toCompare;
-//    FAT_file_t* fileptrTest = &toCompare;
-//
-//    memset(fileptrTest->name, ' ', 11);
-//
-//    int j = 0;
-//    for(; j < 8; j++)
-//    {
-//        if(filename[j] == '.')
-//        {
-//            j++;
-//            break;
-//        }
-//        if(filename[j] == 0) break;
-//        fileptrTest->name[j] = filename[j];
-//    }
-//    for(int i = 8; j < 11; i++, j++)
-//    {
-//        if(filename[j] == 0) break;
-//        fileptrTest->name[i] = filename[j];
-//    }
-//    if(fileptrTest->name[8] == ' ' && fileptrTest->name[9] == ' ' && fileptrTest->name[10] == ' ')
-//    {
-//        fileptrTest->name[8] = 'E'; fileptrTest->name[9] = 'L'; fileptrTest->name[10] = 'F';
-//    }
-//
-//    // file to search
-//    FAT_file_t dest;
-//    dest.volume           = part;
-//    dest.dirfirstCluster  = 0;
-//    dest.entry            = 0;
-//    if (dest.volume->type == FAT32)
-//    {
-//        dest.dirfirstCluster = dest.volume->FatRootDirCluster;
-//    }
-//
-//    uint8_t retVal = FAT_searchFile(&dest, fileptrTest, LOOK_FOR_MATCHING_ENTRY, 0); // searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_t cmd, uint8_t mode)
-//    if (retVal == CE_GOOD)
-//    {
-//        textColor(0x0A);
-//        printf("\n\nThe file was found on the device: %s", part->serialNumber);
-//
-//        printf("\nnumber of entry in root dir: ");
-//        textColor(0x0E);
-//        printf("%u\n", dest.entry); // number of file entry "searched.xxx"
-//
-//        FAT_fdopen(&dest, &(dest.entry), 'r');
-//
-//        void* filebuffer = malloc(dest.size,PAGESIZE);
-//        FAT_fread(&dest, filebuffer, dest.size);
-//
-//        elf_exec(filebuffer, dest.size, dest.name); // try to execute
-//
-//        FAT_fclose(&dest);
-//    }
-//
-//    waitForKeyStroke(); /// Why does a #PF appear without it?
-//    return(retVal);
-//}
-
-FS_ERROR analyzeBootSector(void* buffer, FAT_partition_t* part) // for first tests only
+FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests only
 {
     uint32_t volume_bytePerSector;
     uint8_t  volume_type = FAT32;
@@ -422,6 +329,11 @@ FS_ERROR analyzeBootSector(void* buffer, FAT_partition_t* part) // for first tes
     strncpy(FATn,    sec0->Reserved2, 8);
     SysName[8] = 0;
     FATn[8]    = 0;
+
+    //HACK
+    FAT_partition_t* FATpart = malloc(sizeof(FAT_partition_t), 0);
+    part->data = FATpart;
+    FATpart->part = part;
 
 
     // This is a FAT description
@@ -510,21 +422,26 @@ FS_ERROR analyzeBootSector(void* buffer, FAT_partition_t* part) // for first tes
         // store the determined volume data to partition //
         ///////////////////////////////////////////////////
 
-        part->sectorSize     = volume_bytePerSector;
-        part->buffer         = malloc(part->sectorSize,PAGESIZE);
-        part->type           = volume_type;
-        part->SecPerClus     = volume_SecPerClus;
-        part->maxroot        = volume_maxroot;
-        part->fatsize        = volume_fatsize;
-        part->fatcopy        = volume_fatcopy;
-        part->firsts         = volume_firstSector;
-        part->fat            = volume_fat;    // reservedSectors
-        part->root           = volume_root;   // reservedSectors + 2*SectorsPerFAT
-        part->data           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
-        part->maxcls         = volume_maxcls;
-        part->mount          = true;
-        part->FatRootDirCluster   = volume_FatRootDirCluster;
-        strncpy(part->serialNumber,volume_serialNumber,4); // ID of the partition
+        FATpart->sectorSize = volume_bytePerSector;
+        part->buffer        = malloc(volume_bytePerSector,PAGESIZE);
+        part->subtype       = volume_type;
+        FATpart->SecPerClus = volume_SecPerClus;
+        FATpart->maxroot    = volume_maxroot;
+        FATpart->fatsize    = volume_fatsize;
+        FATpart->fatcopy    = volume_fatcopy;
+        part->start         = volume_firstSector;
+        FATpart->fat        = volume_fat;    // reservedSectors
+        FATpart->root       = volume_root;   // reservedSectors + 2*SectorsPerFAT
+        FATpart->dataLBA    = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
+        FATpart->maxcls     = volume_maxcls;
+        part->mount         = true;
+        FATpart->FatRootDirCluster = volume_FatRootDirCluster;
+
+        //HACK
+        free(part->serial);
+        part->serial = malloc(5, 0);
+        part->serial[4] = 0;
+        strncpy(part->serial, volume_serialNumber, 4); // ID of the partition
     }
 
     else if ( *((uint16_t*)((uint8_t*)buffer+444)) == 0x0000 )
@@ -601,27 +518,27 @@ FS_ERROR analyzeBootSector(void* buffer, FAT_partition_t* part) // for first tes
 }
 
 
-FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, FAT_partition_t* part)
+FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
     textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<",lba); textColor(0x0F);
   #endif
     return part->disk->type->writeSector(sector, buffer, part->disk->data);
 }
-FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, FAT_partition_t* part)
+FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
     part->disk->accessRemaining++;
     return sectorWrite(sector, buffer, part);
 }
 
-FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, FAT_partition_t* part)
+FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<",lba); textColor(0x0F);
   #endif
     return part->disk->type->readSector(sector, buffer, part->disk->data);
 }
-FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, FAT_partition_t* part)
+FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
     part->disk->accessRemaining++;
     return sectorRead(sector, buffer, part);

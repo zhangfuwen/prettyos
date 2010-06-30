@@ -232,13 +232,20 @@ EVALUATION: // evaluation of entry
         {
             floppy_format("PrettyOS");
         }
-		else if(strcmp(entry, "reboot") == 0)
-		{
-			systemControl(REBOOT);
-		}
+        else if(strcmp(entry, "reboot") == 0)
+        {
+            systemControl(REBOOT);
+        }
         else
         {
             puts("file is being searched...");
+            
+            // Adding ending .elf
+            if(entry[strlen(entry)-4] != '.') // No ending, append ".elf"
+            {
+                strcat(entry, ".elf");
+            }
+
             FS_ERROR error = execute(entry);
             switch(error)
             {

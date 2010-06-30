@@ -250,7 +250,7 @@ void screenshot()
     char Pfad[20];
     for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
-        if(disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->type == FAT12 || disks[i]->partition[0]->type == FAT16 || disks[i]->partition[0]->type == FAT32))
+        if(disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->subtype == FAT12 || disks[i]->partition[0]->subtype == FAT16 || disks[i]->partition[0]->subtype == FAT32))
         {
             snprintf(Pfad, 20, "%u:/screen.txt", i+1);
             break;

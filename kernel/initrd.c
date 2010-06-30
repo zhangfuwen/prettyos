@@ -26,7 +26,7 @@ extern uintptr_t file_data_end;
 
 port_t      RAMDiskPort;
 disk_t      RAMDisk;
-FAT_partition_t RAMDiskVolume;
+partition_t RAMDiskVolume;
 
 void* ramdisk_install(size_t size)
 {
@@ -41,8 +41,11 @@ void* ramdisk_install(size_t size)
     RAMDiskVolume.buffer = malloc(512,0); // necessary?
     RAMDiskVolume.disk = &RAMDisk;
 
-    itoa(((uint32_t)(ramdisk_start)/PAGESIZE), RAMDiskVolume.serialNumber);
-    RAMDiskVolume.serialNumber[12] = 0;
+    //HACK
+    free(RAMDiskVolume.serial);
+    RAMDiskVolume.serial = malloc(13, 0);
+    itoa(((uint32_t)(ramdisk_start)/PAGESIZE), RAMDiskVolume.serial);
+    RAMDiskVolume.serial[12] = 0;
     
     // disk
     RAMDisk.type         = &RAMDISK;

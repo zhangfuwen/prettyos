@@ -39,7 +39,7 @@ extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
 // Device Manager
 disk_t      usbDev[17];
-FAT_partition_t usbDevVolume[17];
+partition_t usbDevVolume[17];
 
 
 void ehci_install(pciDev_t* PCIdev, uint32_t i)
@@ -689,9 +689,14 @@ void setupUSBDevice(uint8_t portNumber)
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         // Partition
-        usbDevVolume[portNumber+1].buffer = (uint8_t*)malloc(512,0);
+        usbDevVolume[portNumber+1].buffer = malloc(512,0);
         usbDevVolume[portNumber+1].disk = &usbDev[portNumber+1];
-        strncpy(usbDevVolume[portNumber+1].serialNumber, usbDevices[devAddr].serialNumber, 12);
+
+		//HACK
+		free(usbDevVolume[portNumber+1].serial);
+		usbDevVolume[portNumber+1].serial = malloc(13, 0);
+		usbDevVolume[portNumber+1].serial[12] = 0;
+        strncpy(usbDevVolume[portNumber+1].serial, usbDevices[devAddr].serialNumber, 12);
 
         // Disk
         usbDev[portNumber+1].type         = &USB_MSD;

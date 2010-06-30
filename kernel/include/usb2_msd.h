@@ -28,7 +28,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
 void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer);
 void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, uint8_t* buffer);
 
-void testMSD(uint8_t devAddr, FAT_partition_t* part);
+void testMSD(uint8_t devAddr, partition_t* part);
 FS_ERROR usbRead (uint32_t sector, uint8_t* buffer, void* device);
 FS_ERROR usbWrite(uint32_t sector, uint8_t* buffer, void* device);
 
