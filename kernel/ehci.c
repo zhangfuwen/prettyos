@@ -692,10 +692,9 @@ void setupUSBDevice(uint8_t portNumber)
         usbDevVolume[portNumber+1].buffer = malloc(512,0);
         usbDevVolume[portNumber+1].disk = &usbDev[portNumber+1];
 
-		//HACK
-		free(usbDevVolume[portNumber+1].serial);
-		usbDevVolume[portNumber+1].serial = malloc(13, 0);
-		usbDevVolume[portNumber+1].serial[12] = 0;
+        //HACK
+        usbDevVolume[portNumber+1].serial = malloc(13, 0);
+        usbDevVolume[portNumber+1].serial[12] = 0;
         strncpy(usbDevVolume[portNumber+1].serial, usbDevices[devAddr].serialNumber, 12);
 
         // Disk

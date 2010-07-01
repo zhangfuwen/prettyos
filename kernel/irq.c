@@ -44,6 +44,8 @@ const char* exception_messages[] =
 
 uint32_t irq_handler(uint32_t esp)
 {
+    uint8_t attr = currentTask->attrib;
+
     registers_t* r = (registers_t*)esp;
 
     if (r->int_no == 7) // exception #NM (number 7)
@@ -135,6 +137,7 @@ uint32_t irq_handler(uint32_t esp)
         outportb(0xA0, 0x20);
     outportb(0x20, 0x20);
 
+    currentTask->attrib = attr;
     return esp;
 }
 

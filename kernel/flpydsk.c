@@ -153,6 +153,7 @@ static floppy_t* createFloppy(uint8_t ID)
 
     fdd->drive.insertedDisk->partition[0]->buffer = malloc(512, 0);
     fdd->drive.insertedDisk->partition[0]->disk   = fdd->drive.insertedDisk;
+    fdd->drive.insertedDisk->partition[0]->serial = 0;
 
     attachDisk(fdd->drive.insertedDisk); // disk == floppy disk
     attachPort(&fdd->drive);

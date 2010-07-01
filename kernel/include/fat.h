@@ -106,22 +106,23 @@ typedef struct
 
 typedef struct
 {
-    FAT_partition_t* volume;    // volume containing the file
-    uint32_t  firstCluster;     // first cluster
-    uint32_t  currCluster;      // current cluster
-    uint16_t  sec;              // current sector in the current cluster
-    uint16_t  pos;              // current byte in the current sectors
-    uint32_t  seek;             // current byte in the file
-    uint32_t  size;             // file size
-    FileFlags Flags;            // write mode, EOF
-    uint16_t time;              // last update time
-    uint16_t date;              // last update date
+    FAT_partition_t* volume;  // volume containing the file
+    file_t*   file;           // universal file container (fsmanager)
+    uint32_t  firstCluster;   // first cluster
+    uint32_t  currCluster;    // current cluster
+    uint16_t  sec;            // current sector in the current cluster
+    uint16_t  pos;            // current byte in the current sectors
+    uint32_t  seek;           // current byte in the file
+    uint32_t  size;           // file size
+    FileFlags Flags;          // write mode, EOF
+    uint16_t time;            // last update time
+    uint16_t date;            // last update date
     char     name[FILE_NAME_SIZE];
-    uint32_t entry;             // file's entry position in its directory
-    uint16_t chk;               // checksum = ~(entry+name[0])
-    uint16_t attributes;        // file's attributes
-    uint32_t dirfirstCluster;           // first cluster of the file's directory
-    uint32_t dircurrCluster;    // current cluster of the file's directory
+    uint32_t entry;           // file's entry position in its directory
+    uint16_t chk;             // checksum = ~(entry+name[0])
+    uint16_t attributes;      // file's attributes
+    uint32_t dirfirstCluster; // first cluster of the file's directory
+    uint32_t dircurrCluster;  // current cluster of the file's directory
 } FAT_file_t;
 
 typedef struct
@@ -130,12 +131,12 @@ typedef struct
     char DIR_Extension[DIR_EXTENSION];
     uint8_t DIR_Attr;
     uint8_t DIR_NTRes;
-    uint8_t DIR_CrtTimeTenth;  // tenths of second portion
-    uint16_t DIR_CrtTime;      // created
+    uint8_t DIR_CrtTimeTenth; // tenths of second portion
+    uint16_t DIR_CrtTime;     // created
     uint16_t DIR_CrtDate;
-    uint16_t DIR_LstAccDate;   // last access
+    uint16_t DIR_LstAccDate;  // last access
     uint16_t DIR_FstClusHI;
-    uint16_t DIR_WrtTime;      // last update
+    uint16_t DIR_WrtTime;     // last update
     uint16_t DIR_WrtDate;
     uint16_t DIR_FstClusLO;
     uint32_t DIR_FileSize;
@@ -152,8 +153,7 @@ typedef enum
 FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseClusters);
 FS_ERROR FAT_createFileEntry(FAT_file_t* fileptr, uint32_t *fHandle, uint8_t mode);
 FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_t cmd, uint8_t mode);
-FAT_file_t* FAT_fopen(const char* path, const char* mode);
-FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type);
+FS_ERROR FAT_fopen(file_t* file, bool create, bool open);
 FS_ERROR FAT_fclose(FAT_file_t* fileptr);
 FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count);
 FS_ERROR FAT_fseek(FAT_file_t* fileptr, long offset, SEEK_ORIGIN whence);

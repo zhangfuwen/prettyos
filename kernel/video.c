@@ -233,7 +233,7 @@ void screenshot()
     int32_t NewLine = 0;
 
     // buffer for video screen
-    uint8_t* videoscreen = malloc(4000+98, PAGESIZE); // only signs, no attributes, 49 times CR LF at line end
+    uint8_t* videoscreen = malloc(4000+98, 0); // only signs, no attributes, 49 times CR LF at line end
 
     for (uint16_t i=0; i<4000;i++)
     {
@@ -257,7 +257,7 @@ void screenshot()
         }
     }
 
-    FAT_file_t* file = FAT_fopen(Pfad, "a+"); // TEST to write to usb-stick
+    FAT_file_t* file = fopen(Pfad, "a+")->data;
     if (file) // check for NULL pointer, otherwise #PF
     {
         FAT_fwrite((void*)videoscreen, 4098, 1, file);

@@ -123,7 +123,7 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
 
 void fsmanager_install()
 {
-    //FAT.fopen = &FAT_fopen;
+    FAT.fopen = &FAT_fopen;
     //FAT.fclose = &FAT_fclose;
     //FAT.fseek = &FAT_fseek;
 }
@@ -131,8 +131,8 @@ void fsmanager_install()
 // Partition functions
 void formatPartition(const char* path)
 {
-    //partition_t* part = getPartition(path);
-    //part->type->pformat(part);
+    partition_t* part = getPartition(path);
+    part->type->pformat(part);
 }
 
 void installPartition(partition_t* part)
@@ -145,7 +145,8 @@ file_t* fopen(const char* path, const char* mode)
 {
     file_t* file = malloc(sizeof(file_t), 0);
     file->seek   = 0;
-    //file->volume = getPartition(path);
+    file->volume = getPartition(path);
+	file->size   = 0; // Init with 0 but set in FS-specific fopen
     if(file->volume == 0)
     {
         free(file);
@@ -154,7 +155,12 @@ file_t* fopen(const char* path, const char* mode)
     file->EOF    = false;
     file->error  = CE_GOOD;
     file->name   = malloc(13, 0);
-    FormatFileName(getFilename(path), file->name, false);
+    if(!FormatFileName(getFilename(path), file->name, false))
+    {
+        free(file->name);
+        free(file);
+        return(0);
+    }
 
     bool appendMode = false; // Used to seek to end
     bool create = true;
@@ -190,7 +196,7 @@ file_t* fopen(const char* path, const char* mode)
 
     if(appendMode)
     {
-        fseek(file, 0, SEEK_END);
+        //fseek(file, 0, SEEK_END); // To be used later
     }
     return(file);
 }
@@ -203,20 +209,20 @@ void fclose(file_t* file)
 
 FS_ERROR remove(const char* path)
 {
-    partition_t* part = 0;// = getPartition(path);
+    partition_t* part = getPartition(path);
     return(part->type->remove(getFilename(path), part));
 }
 
 FS_ERROR rename(const char* oldpath, const char* newpath)
 {
-    /*partition_t* dpart = getPartition(newpath);
+    partition_t* dpart = getPartition(newpath);
     partition_t* spart = getPartition(oldpath);
 
     if(spart == dpart) // same partition
     {
         return(spart->type->rename(getFilename(oldpath), getFilename(newpath), spart));
     }
-    else*/
+    else
     {
         return(0xFFFFFFFF); // Needs to be implemented: create File at destination, write content of old file to it and remove old file
     }

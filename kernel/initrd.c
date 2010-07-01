@@ -32,7 +32,7 @@ void* ramdisk_install(size_t size)
 {
     kdebug(0x00, "rd_start: ");
 
-    void* ramdisk_start = malloc(size, PAGESIZE);
+    void* ramdisk_start = malloc(size, 0);
     // shell via incbin in data.asm
     memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
@@ -42,7 +42,6 @@ void* ramdisk_install(size_t size)
     RAMDiskVolume.disk = &RAMDisk;
 
     //HACK
-    free(RAMDiskVolume.serial);
     RAMDiskVolume.serial = malloc(13, 0);
     itoa(((uint32_t)(ramdisk_start)/PAGESIZE), RAMDiskVolume.serial);
     RAMDiskVolume.serial[12] = 0;
@@ -123,7 +122,7 @@ fs_node_t* install_initrd(void* location)
     // Initialise the root directory.
     kdebug(3, "rd_root: ");
 
-    initrd_root          = malloc(sizeof(fs_node_t),PAGESIZE);
+    initrd_root          = malloc(sizeof(fs_node_t), 0);
     strcpy(initrd_root->name, "dev");
     initrd_root->mask    = initrd_root->uid = initrd_root->gid = initrd_root->inode = initrd_root->length = 0;
     initrd_root->flags   = FS_DIRECTORY;
@@ -139,7 +138,7 @@ fs_node_t* install_initrd(void* location)
     // Initialise the /dev directory (required!)
     kdebug(3, "rd_dev: ");
 
-    initrd_dev          = malloc(sizeof(fs_node_t),PAGESIZE);
+    initrd_dev          = malloc(sizeof(fs_node_t), 0);
     strcpy(initrd_dev->name, "ramdisk");
     initrd_dev->mask    = initrd_dev->uid = initrd_dev->gid = initrd_dev->inode = initrd_dev->length = 0;
     initrd_dev->flags   = FS_DIRECTORY;
@@ -154,7 +153,7 @@ fs_node_t* install_initrd(void* location)
 
     kdebug(3, "root_nodes: ");
 
-    root_nodes  = malloc(sizeof(fs_node_t)*initrd_header->nfiles,PAGESIZE);
+    root_nodes  = malloc(sizeof(fs_node_t)*initrd_header->nfiles, 0);
     nroot_nodes = initrd_header->nfiles;
 
     // For every file...

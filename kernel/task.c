@@ -62,7 +62,7 @@ void tasking_install()
 static void addConsole(task_t* task, const char* consoleName)
 {
     task->ownConsole = true;
-    task->console = malloc(sizeof(console_t), PAGESIZE);
+    task->console = malloc(sizeof(console_t), 0);
     console_init(task->console, consoleName);
     for (uint8_t i = 0; i < 10; i++)
     { // The next free place in our console-list will be filled with the new console

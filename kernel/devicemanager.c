@@ -226,10 +226,10 @@ FS_ERROR executeFile(const char* path)
     // Load File
     waitForKeyStroke(); /// Why does loading from USB fail, if its not there?
 
-    FAT_file_t* file = FAT_fopen(path, "r");
+    FAT_file_t* file = fopen(path, "r")->data;
     if(file != 0)
     {
-        void* filebuffer = malloc(file->size, PAGESIZE);
+        void* filebuffer = malloc(file->size, 0);
         FAT_fread(file, filebuffer, file->size);
 
         char tempfilename[12];
@@ -334,6 +334,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
     FAT_partition_t* FATpart = malloc(sizeof(FAT_partition_t), 0);
     part->data = FATpart;
     FATpart->part = part;
+    part->type = &FAT;
 
 
     // This is a FAT description
@@ -423,7 +424,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         ///////////////////////////////////////////////////
 
         FATpart->sectorSize = volume_bytePerSector;
-        part->buffer        = malloc(volume_bytePerSector,PAGESIZE);
+        part->buffer        = malloc(volume_bytePerSector, 0);
         part->subtype       = volume_type;
         FATpart->SecPerClus = volume_SecPerClus;
         FATpart->maxroot    = volume_maxroot;

@@ -65,6 +65,9 @@ void showInfo(signed char val);
 void* malloc(size_t size);
 void free(void* mem);
 
+void srand(unsigned int val);
+unsigned int rand();
+
 // math functions
 
 #define NAN (__builtin_nanf (""))
@@ -82,8 +85,5 @@ double atan2(double x, double y);
 double sqrt(double x);
 
 double fabs(double x);
-
-void srand(unsigned int val);
-unsigned int rand();
 
 #endif

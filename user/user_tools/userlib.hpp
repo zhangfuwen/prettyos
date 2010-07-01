@@ -21,14 +21,15 @@ extern "C" { // Functions from C-Userlib
     void printLine(const char* message, unsigned int line, unsigned char attribute);
     unsigned int getCurrentSeconds();
     int floppy_format(char* volumeLabel);
-    FS_ERROR execute(const char* path);
     void exit();
+    bool keyPressed(VK key);
+    FS_ERROR execute(const char* path);
     void beep(unsigned int frequency, unsigned int duration);
     void clearScreen(unsigned char backgroundColor);
     void gotoxy(unsigned char x, unsigned char y);
     void* grow_heap(unsigned increase);
     void setScrollField(uint8_t top, uint8_t bottom);
-	void systemControl(SYSTEM_CONTROL todo);
+    void systemControl(SYSTEM_CONTROL todo);
 
     // user functions
     void* memset(void* dest, int8_t val, size_t count);
@@ -66,6 +67,9 @@ extern "C" { // Functions from C-Userlib
 
     void* malloc(size_t size);
     void free(void* mem);
+
+    void srand(unsigned int val);
+    unsigned int rand();
 
     // math functions
 
