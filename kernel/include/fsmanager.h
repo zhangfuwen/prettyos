@@ -70,7 +70,7 @@ typedef struct
     void     (*pformat) (struct partition*); // Partition
 
     FS_ERROR (*fopen) (struct file*, bool, bool);                    // File, create if not existant, overwrite file before opening
-    void     (*fclose)(struct file*);                                // File
+    FS_ERROR (*fclose)(struct file*);                                // File
     FS_ERROR (*fseek) (struct file*, int32_t, SEEK_ORIGIN);          // File, offset, origin
     void     (*fgets) (struct file*, char*, size_t);                 // File, buffer, count
     FS_ERROR (*fputs) (struct file*, const char*);                   // File, source

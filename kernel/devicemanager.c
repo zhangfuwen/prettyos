@@ -226,18 +226,18 @@ FS_ERROR executeFile(const char* path)
     // Load File
     waitForKeyStroke(); /// Why does loading from USB fail, if its not there?
 
-    FAT_file_t* file = fopen(path, "r")->data;
+    file_t* file = fopen(path, "r");
     if(file != 0)
     {
         void* filebuffer = malloc(file->size, 0);
-        FAT_fread(file, filebuffer, file->size);
+        FAT_fread(file->data, filebuffer, file->size);
 
         char tempfilename[12];
         tempfilename[11] = 0;
         strncpy(tempfilename, file->name, 11);
         elf_exec(filebuffer, file->size, tempfilename); // try to execute
 
-        FAT_fclose(file);
+        fclose(file);
 
         waitForKeyStroke(); /// Why does a #PF appear without it?
         return(CE_GOOD);

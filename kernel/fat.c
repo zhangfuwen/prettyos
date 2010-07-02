@@ -391,28 +391,25 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
     }
     else { dir = cacheFileEntry (fileptr, fHandle, false); }
 
-    if (dir == NULL) { return NO_MORE; }
+    if (dir == NULL)                   { return NO_MORE; }
     if (dir->DIR_Name[0] == DIR_DEL)   { return NOT_FOUND; }
     if (dir->DIR_Name[0] == DIR_EMPTY) { return NO_MORE;   }
 
-    uint8_t character, test=0;
+    uint8_t test=0;
     for (uint8_t i=0; i<DIR_NAMESIZE; i++)
     {
-        character = dir->DIR_Name[i];
-        fileptr->name[test++] = character;
+        fileptr->name[test++] = dir->DIR_Name[i];
     }
-    character = dir->DIR_Extension[0];
-    if (character != ' ')
+    if (dir->DIR_Extension[0] != ' ')
     {
         for (uint8_t i=0; i<DIR_EXTENSION; i++)
         {
-            character = dir->DIR_Extension[i];
-            fileptr->name[test++]=character;
+            fileptr->name[test++]=dir->DIR_Extension[i];
         }
     }
     fileptr->entry      = *fHandle;
-    fileptr->size       = dir->DIR_FileSize;
-    fileptr->firstCluster  = ((dir->DIR_FstClusHI)<<16) | dir->DIR_FstClusLO;
+    fileptr->file->size = dir->DIR_FileSize;
+    fileptr->firstCluster = ((dir->DIR_FstClusHI)<<16) | dir->DIR_FstClusLO;
     fileptr->time       = dir->DIR_WrtTime;
     fileptr->date       = dir->DIR_WrtDate;
     fileptr->attributes = dir->DIR_Attr;
@@ -425,11 +422,11 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
     printf("\n>>>>> searchFile <<<<<");
   #endif
 
-    FS_ERROR error       = CE_FILE_NOT_FOUND;
-    fileptrDest->dircurrCluster   = fileptrDest->dirfirstCluster;
-    uint16_t compareAttrib = 0xFFFF ^ fileptrTest->attributes;
-    uint32_t fHandle = fileptrDest->entry;
-    bool read = true;
+    FS_ERROR error              = CE_FILE_NOT_FOUND;
+    fileptrDest->dircurrCluster = fileptrDest->dirfirstCluster;
+    uint16_t compareAttrib      = 0xFFFF ^ fileptrTest->attributes;
+    uint32_t fHandle            = fileptrDest->entry;
+    bool read                   = true;
 
     memset(fileptrDest->name, 0x20, DIR_NAMECOMP);
   #ifdef _FAT_DIAGNOSIS_
@@ -559,17 +556,18 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
     return(error);
 }
 
-FS_ERROR FAT_fclose(FAT_file_t* fileptr)
+FS_ERROR FAT_fclose(file_t* file)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fclose <<<<<");
   #endif
 
-    FS_ERROR error   = CE_GOOD;
-    uint32_t fHandle = fileptr->entry;
+	FAT_file_t* FATfile = file->data;
+    FS_ERROR error      = CE_GOOD;
+    uint32_t fHandle    = FATfile->entry;
     FILEROOTDIRECTORYENTRY dir;
 
-    if (fileptr->Flags.write)
+    if (file->write)
     {
         if (globalDataWriteNecessary)
         {
@@ -583,7 +581,7 @@ FS_ERROR FAT_fclose(FAT_file_t* fileptr)
             globalDataWriteNecessary = false;
         }
 
-        fatWrite (fileptr->volume, 0, 0, true); // works correct with floppy only with HOTFIX there
+        fatWrite(FATfile->volume, 0, 0, true); // works correct with floppy only with HOTFIX there
         /*
         uint32_t i, sectorFAT;
         for (i=0, sectorFAT=globalLastFATSectorRead; i<1; i++, sectorFAT+=fileptr->volume->fatsize)
@@ -596,7 +594,7 @@ FS_ERROR FAT_fclose(FAT_file_t* fileptr)
         */
         globalFATWriteNecessary = false;
 
-        dir = getFileAttribute(fileptr, &fHandle);
+        dir = getFileAttribute(FATfile, &fHandle);
 
         if (dir == NULL)
         {
@@ -609,10 +607,10 @@ FS_ERROR FAT_fclose(FAT_file_t* fileptr)
         // ...
         updateTimeStamp(dir);
 
-        dir->DIR_FileSize = fileptr->size;
-        dir->DIR_Attr     = fileptr->attributes;
+        dir->DIR_FileSize = file->size;
+        dir->DIR_Attr     = FATfile->attributes;
 
-        if (writeFileEntry(fileptr,&fHandle))
+        if (writeFileEntry(FATfile, &fHandle))
         {
             error = CE_GOOD;
         }
@@ -621,10 +619,10 @@ FS_ERROR FAT_fclose(FAT_file_t* fileptr)
             error = CE_WRITE_ERROR;
         }
 
-        fileptr->Flags.write = false;
+        file->write = false;
     }
 
-    // free(fileptr); <--- //TODO check! With that line loaded user programs freeze!
+    free(FATfile);
     return error;
 }
 
@@ -637,8 +635,8 @@ FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count)
     partition_t* volume = fileptr->volume->part;
     uint32_t temp       = count;
     uint32_t pos        = fileptr->pos;
-    uint32_t seek       = fileptr->seek;
-    uint32_t size       = fileptr->size;
+    uint32_t seek       = fileptr->file->seek;
+    uint32_t size       = fileptr->file->size;
     uint32_t sector     = cluster2sector(volume->data, fileptr->currCluster) + fileptr->sec;
     uint32_t sectors    = (size%512 == 0) ? size/512 : size/512+1; // Number of sectors to be read
     volume->disk->accessRemaining += sectors;
@@ -690,7 +688,7 @@ FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count)
     volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been read
 
     fileptr->pos  = pos;
-    fileptr->seek = seek;
+    fileptr->file->seek = seek;
     return error;
 }
 
@@ -968,7 +966,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
     printf("\n>>>>> fwrite <<<<<");
   #endif
 
-    if (!fileptr->Flags.write)
+    if (!fileptr->file->write)
     {
         return 0;
     }
@@ -979,7 +977,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
     globalBufferMemSet0 = false;
     partition_t* volume = fileptr->volume->part;
     uint16_t pos        = fileptr->pos;
-    uint32_t seek       = fileptr->seek;
+    uint32_t seek       = fileptr->file->seek;
     uint32_t sector     = cluster2sector(volume->data, fileptr->currCluster) + fileptr->sec;
     uint32_t sectors    = (size%512 == 0) ? size/512 : size/512+1; // Number of sectors to be written
     volume->disk->accessRemaining += sectors;
@@ -1026,7 +1024,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
         globalLastDataSectorRead = sector;
     }
 
-    uint32_t filesize   = fileptr->size;
+    uint32_t filesize   = fileptr->file->size;
     uint8_t* src        = (uint8_t*)ptr;
     uint16_t writeCount = 0;
 
@@ -1034,7 +1032,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
     {
         if (seek==filesize)
         {
-            fileptr->Flags.FileWriteEOF = true;
+            fileptr->file->EOF = true;
         }
 
         if (pos == ((FAT_partition_t*)volume->data)->sectorSize)
@@ -1061,7 +1059,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
             {
                 fileptr->sec = 0;
 
-                if (fileptr->Flags.FileWriteEOF)
+                if (fileptr->file->EOF)
                 {
                     error = fileAllocateNewCluster(fileptr, 0);
                     needRead = false;
@@ -1106,7 +1104,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
             seek++;
             count--;
             writeCount++;
-            if (fileptr->Flags.FileWriteEOF)
+            if (fileptr->file->EOF)
             {
                 filesize++;
             }
@@ -1117,8 +1115,8 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
     volume->disk->accessRemaining -= sectors; // Subtract sectors that have not been written
 
     fileptr->pos  = pos;      // save positon
-    fileptr->seek = seek;     // save seek
-    fileptr->size = filesize; // new filesize
+    fileptr->file->seek = seek;     // save seek
+    fileptr->file->size = filesize; // new filesize
 
     return(writeCount/size);
 }
@@ -1297,7 +1295,7 @@ static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name , uint32_t *fHan
     dir->DIR_WrtTime =      0x7279;      // last update time
     dir->DIR_WrtDate =      0x32B0;      // last update date
 
-    fileptr->size        = dir->DIR_FileSize;
+    fileptr->file->size  = dir->DIR_FileSize;
     fileptr->time        = dir->DIR_CrtTime;
     fileptr->date        = dir->DIR_CrtDate;
     fileptr->attributes  = dir->DIR_Attr;
@@ -1517,14 +1515,10 @@ static void fileptrCopy(FAT_file_t* dest, FAT_file_t* source)
     printf("\n>>>>> fileptrCopy <<<<<");
   #endif
 
-    uint8_t size = sizeof(FAT_file_t);
-    for(uint8_t i=0; i<size; i++)
-    {
-        dest[i] = source[i];
-    }
+	memcpy(dest, source, sizeof(FAT_file_t));
 }
 
-FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
+static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fdopen <<<<<");
@@ -1562,7 +1556,7 @@ FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
     {
         return CE_FILE_NOT_FOUND;
     }
-    fileptr->seek = 0;
+    fileptr->file->seek = 0;
     fileptr->currCluster = fileptr->firstCluster;
     fileptr->sec  = 0;
     fileptr->pos  = 0;
@@ -1599,29 +1593,30 @@ FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
         }
     }
 
-    fileptr->Flags.FileWriteEOF = false;
+    fileptr->file->EOF = false;
 
-    fileptr->Flags.write = (type == 'w' || type == 'a');
-    fileptr->Flags.read  = !fileptr->Flags.write;
+    fileptr->file->write = (type == 'w' || type == 'a');
+    fileptr->file->read  = !fileptr->file->write;
 
     return(error);
 }
 
-FS_ERROR FAT_fseek(FAT_file_t* fileptr, int32_t offset, SEEK_ORIGIN whence)
+FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fseek<<<<<");
   #endif
 
-    FAT_partition_t* volume = fileptr->volume;
+	FAT_file_t* FATfile = file->data;
+    FAT_partition_t* volume = FATfile->volume;
 
     switch(whence)
     {
         case SEEK_CUR:
-            offset += fileptr->seek;
+            offset += file->seek;
             break;
         case SEEK_END:
-            offset = fileptr->size - offset;
+            offset = file->size - offset;
             break;
         default:
             break;
@@ -1639,51 +1634,51 @@ FS_ERROR FAT_fseek(FAT_file_t* fileptr, int32_t offset, SEEK_ORIGIN whence)
     }
 
 
-    uint32_t temp = fileptr->firstCluster;
-    fileptr->currCluster = temp;
-    temp = fileptr->size;
+    uint32_t temp = FATfile->firstCluster;
+    FATfile->currCluster = temp;
+    temp = file->size;
 
     if (offset > temp)
     {
         return CE_SEEK_ERROR;
     }
 
-    fileptr->Flags.FileWriteEOF = false;
-    fileptr->seek = offset;
+    file->EOF = false;
+    file->seek = offset;
     uint32_t numsector = offset / volume->sectorSize;
     offset -= (numsector * volume->sectorSize);
-    fileptr->pos = offset;
+    FATfile->pos = offset;
     temp = numsector / volume->SecPerClus;
     numsector -= (volume->SecPerClus * temp);
-    fileptr->sec = numsector;
+    FATfile->sec = numsector;
 
     if (temp > 0)
     {
-        FS_ERROR test = fileGetNextCluster(fileptr, temp);
+        FS_ERROR test = fileGetNextCluster(FATfile, temp);
         if (test != CE_GOOD)
         {
             if (test == CE_FAT_EOF)
             {
-                if (fileptr->Flags.write)
+                if (file->write)
                 {
-                    fileptr->currCluster = fileptr->firstCluster;
+                    FATfile->currCluster = FATfile->firstCluster;
                     if (temp != 1)
-                    test = fileGetNextCluster(fileptr, temp-1);
-                    if (fileAllocateNewCluster(fileptr, 0) != CE_GOOD)
+                    test = fileGetNextCluster(FATfile, temp-1);
+                    if (fileAllocateNewCluster(FATfile, 0) != CE_GOOD)
                     {
                         return CE_COULD_NOT_GET_CLUSTER;
                     }
                 }
                 else
                 {
-                    fileptr->currCluster = fileptr->firstCluster;
-                    test = fileGetNextCluster(fileptr, temp-1);
+                    FATfile->currCluster = FATfile->firstCluster;
+                    test = fileGetNextCluster(FATfile, temp-1);
                     if (test != CE_GOOD)
                     {
                         return CE_COULD_NOT_GET_CLUSTER;
                     }
-                    fileptr->pos = volume->sectorSize;
-                    fileptr->sec = volume->SecPerClus - 1;
+                    FATfile->pos = volume->sectorSize;
+                    FATfile->sec = volume->SecPerClus - 1;
                 }
             }
             else
@@ -1693,8 +1688,8 @@ FS_ERROR FAT_fseek(FAT_file_t* fileptr, int32_t offset, SEEK_ORIGIN whence)
         }
     }
 
-    temp = cluster2sector(volume,fileptr->currCluster);
-    numsector = fileptr->sec;
+    temp = cluster2sector(volume, FATfile->currCluster);
+    numsector = FATfile->sec;
     temp += numsector;
     globalFilePtr = NULL;
     globalBufferMemSet0 = false;
@@ -1719,11 +1714,6 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     
     //HACK
     strncpy(FATfile->name, file->name, 11);
-    FATfile->Flags.FileWriteEOF = file->EOF;
-    FATfile->Flags.write = file->write;
-    FATfile->Flags.read = file->read;
-    FATfile->size = file->size;
-    FATfile->seek = file->seek;
 
     FATfile->volume            = file->volume->data;
     FATfile->firstCluster      = 0;
@@ -1734,14 +1724,14 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     FATfile->dircurrCluster    = FATfile->volume->FatRootDirCluster;
 
 
-    FAT_file_t* filePtrTemp = malloc(sizeof(FAT_file_t),PAGESIZE); //TODO try to avoid
+    FAT_file_t fileTemp; //TODO try to avoid
 
     uint32_t fHandle;
     FS_ERROR error;
 
-    fileptrCopy(filePtrTemp, FATfile);
+    fileptrCopy(&fileTemp, FATfile);
 
-    if (FAT_searchFile(FATfile, filePtrTemp, LOOK_FOR_MATCHING_ENTRY, 0) == CE_GOOD)
+    if (FAT_searchFile(FATfile, &fileTemp, LOOK_FOR_MATCHING_ENTRY, 0) == CE_GOOD)
     {
         fHandle = FATfile->entry;
 
@@ -1763,7 +1753,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
                     }
 					else
 					{
-                        error = FAT_fseek(FATfile, 0, SEEK_END);
+                        error = FAT_fseek(file, 0, SEEK_END);
                     }
                 }
             }
@@ -1781,7 +1771,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
 
                 if (error == CE_GOOD)
                 {
-                    error = FAT_fseek(FATfile, 0, SEEK_END);
+                    error = FAT_fseek(file, 0, SEEK_END);
                     if (error != CE_GOOD)
                     {
                         error = CE_SEEK_ERROR; // correct ??
@@ -1811,7 +1801,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
                         }
 						else if(error == CE_GOOD)
                         {
-                            error = FAT_fseek(FATfile, 0, SEEK_END);
+                            error = FAT_fseek(file, 0, SEEK_END);
                             if (error != CE_GOOD)
                             {
                                 error = CE_SEEK_ERROR; // correct ??
@@ -1828,7 +1818,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     }
     else
     {
-        fileptrCopy(FATfile, filePtrTemp);
+        fileptrCopy(FATfile, &fileTemp);
 
         if(create)
         {
@@ -1844,7 +1834,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
                 }
                 else
                 {
-                    error = FAT_fseek(FATfile, 0, SEEK_END);
+                    error = FAT_fseek(file, 0, SEEK_END);
 
                     if (error != CE_GOOD)
                     {
@@ -1858,8 +1848,6 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
             error = CE_FILE_NOT_FOUND;
         }
     }
-    
-    free(filePtrTemp);
 
     if (error != CE_GOOD)
     {

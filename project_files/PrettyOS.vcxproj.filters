@@ -42,9 +42,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\kernel\kernel.ld">
-      <Filter>Kernel</Filter>
-    </None>
     <None Include="..\kernel\data.asm">
       <Filter>Kernel\sources</Filter>
     </None>
@@ -96,6 +93,9 @@
     </None>
     <None Include="..\stage2_bootloader\gdt.inc">
       <Filter>Bootloader\Stage 2</Filter>
+    </None>
+    <None Include="..\kernel\kernel.ld">
+      <Filter>Kernel</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

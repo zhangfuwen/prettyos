@@ -257,11 +257,11 @@ void screenshot()
         }
     }
 
-    FAT_file_t* file = fopen(Pfad, "a+")->data;
+    file_t* file = fopen(Pfad, "a+");
     if (file) // check for NULL pointer, otherwise #PF
     {
-        FAT_fwrite((void*)videoscreen, 4098, 1, file);
-        FAT_fclose(file);
+        FAT_fwrite((void*)videoscreen, 4098, 1, file->data);
+        fclose(file);
     }
     else
     {

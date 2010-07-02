@@ -22,14 +22,14 @@ static bool ValidateChars(char* FileName , bool mode)
     uint16_t StrSz = strlen(FileName);
     for(uint16_t i=0; i<StrSz; i++)
     {
-        if (((FileName[i] <= 0x20) &&  (FileName[i] != 0x05)) ||
-             (FileName[i] == 0x22) ||  (FileName[i] == 0x2B)  ||
-             (FileName[i] == 0x2C) ||  (FileName[i] == 0x2F)  ||
-             (FileName[i] == 0x3A) ||  (FileName[i] == 0x3B)  ||
-             (FileName[i] == 0x3C) ||  (FileName[i] == 0x3D)  ||
-             (FileName[i] == 0x3E) ||  (FileName[i] == 0x5B)  ||
-             (FileName[i] == 0x5C) ||  (FileName[i] == 0x5D)  ||
-             (FileName[i] == 0x7C) || ((FileName[i] == 0x2E)  && (radix == true)))
+        if ((FileName[i] <= 0x20 &&  FileName[i] != 0x05) ||
+             FileName[i] == 0x22 ||  FileName[i] == 0x2B  ||
+             FileName[i] == 0x2C ||  FileName[i] == 0x2F  ||
+             FileName[i] == 0x3A ||  FileName[i] == 0x3B  ||
+             FileName[i] == 0x3C ||  FileName[i] == 0x3D  ||
+             FileName[i] == 0x3E ||  FileName[i] == 0x5B  ||
+             FileName[i] == 0x5C ||  FileName[i] == 0x5D  ||
+             FileName[i] == 0x7C || (FileName[i] == 0x2E  && radix == true))
         {
             return false;
         }
@@ -37,18 +37,15 @@ static bool ValidateChars(char* FileName , bool mode)
         {
             if (mode == false)
             {
-                if ((FileName[i] == '*') || (FileName[i] == '?'))
+                if (FileName[i] == '*' || FileName[i] == '?')
                     return false;
             }
             if (FileName[i] == 0x2E)
             {
                 radix = true;
             }
-            // Convert lower-case to upper-case
-            if ((FileName[i] >= 0x61) && (FileName[i] <= 0x7A))
-            {
-                FileName[i] -= 0x20;
-            }
+
+			FileName[i] = toUpper(FileName[i]); // Convert lower-case to upper-case
         }
     }
     return true;
@@ -60,22 +57,16 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
   #endif
 
     char* pExt;
-    uint16_t temp;
     char szName[15];
 
-    for (uint8_t count=0; count<11; count++)
-    {
-        fN2[count] = ' ';
-    }
+	memset(fN2, ' ', 11);
 
     if (fileName[0] == '.' || fileName[0] == 0)
     {
         return false;
     }
 
-    temp = strlen(fileName);
-
-    if (temp <= FILE_NAME_SIZE+1)
+    if (strlen(fileName) <= FILE_NAME_SIZE+1)
     {
         strcpy(szName, fileName);
     }
@@ -93,7 +84,7 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
     {
         *pExt = 0;
         pExt++;
-        if (strlen(pExt) > 3)
+        if (strlen(pExt) > 3 || strlen(szName) > 8) // No 8.3-Format
         {
             return false;
         }
@@ -104,17 +95,11 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
         return false;
     }
 
-    for (uint8_t count=0; count<strlen(szName); count++)
-    {
-        fN2[count] = szName[count];
-    }
+	strncpy(fN2, szName, strlen(szName)); // Do not copy 0
 
-    if (pExt && *pExt)
+    if (pExt)
     {
-        for (uint8_t count=0; count<strlen(pExt); count++)
-        {
-            fN2[count + 8] = pExt[count];
-        }
+		strcpy(fN2+8, pExt);
     }
 
     return true;
@@ -124,8 +109,8 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
 void fsmanager_install()
 {
     FAT.fopen = &FAT_fopen;
-    //FAT.fclose = &FAT_fclose;
-    //FAT.fseek = &FAT_fseek;
+    FAT.fclose = &FAT_fclose;
+    FAT.fseek = &FAT_fseek;
 }
 
 // Partition functions
@@ -204,6 +189,8 @@ file_t* fopen(const char* path, const char* mode)
 void fclose(file_t* file)
 {
     file->volume->type->fclose(file);
+	free(file->name);
+	free(file);
 }
 
 
