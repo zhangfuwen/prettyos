@@ -130,7 +130,6 @@ void* memcpy(void* dest, const void* src, size_t count)
 
 void* memmove(const void* source, void* destination, size_t size)
 {
-
     // If source and destination point to the same memory area, coping something
     // is not necessary. It could be seen as a bug of the caller to pass the
     // same value for source and destination, but we decided to allow this and

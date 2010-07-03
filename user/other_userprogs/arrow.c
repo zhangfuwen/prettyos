@@ -2,28 +2,22 @@
 
 #define MAX 2000
 
-unsigned short timeout=MAX, row, col[10]; 
-bool point[80][42], result, chance;
-unsigned short fighterPosition;
+uint16_t timeout=MAX, col[10]; 
+bool point[80][43];
+uint8_t fighterPosition = 0;
 
-
-void Sleep(unsigned int Milliseconds) 
-{
-	unsigned int Stoptime = getCurrentSeconds()*1000 + Milliseconds;
-	while(getCurrentSeconds()*1000 < Stoptime) {}
-}
-
-void clearLine(unsigned int line)
+void clearLine(uint8_t line)
 {
     gotoxy(0,line);
-    for (unsigned short i=0; i<79; i++)
+    for (uint8_t i=0; i<79; i++)
     {        
         putch(' ');
     }
 }
 
-void setWeapon(unsigned short x, unsigned short y)
+void setWeapon(uint8_t x, uint8_t y)
 {
+    textColor(0x0F);
     point[x][y] = true;
     gotoxy(x,y-1);
     putch('|'); 
@@ -36,7 +30,7 @@ void generateWeapons()
     clearLine(1); 
     clearLine(2);
     
-    for (unsigned short i=0; i<1; i++)
+    for (uint8_t i=0; i<1; i++)
     {
         col[i] = rand()%79;
         if ((rand()%10 == 0))
@@ -48,11 +42,11 @@ void generateWeapons()
 
 void deleteWeapons()
 {
-    for (unsigned short i=0; i<1; i++)
+    for (uint8_t i=0; i<1; i++)
     {        
         col[i] = fighterPosition + 1 + rand()%(79-fighterPosition);
         point[col[i]][42] = false;
-        for (unsigned short j=42; j>0; j--)
+        for (uint8_t j=42; j>0; j--)
         {
             gotoxy(col[i],j);
             putch(' '); 
@@ -70,92 +64,73 @@ void generateFighter()
 
 void moveFighter()
 {
-    if (keyPressed('A'))
+    if (keyPressed('A') && fighterPosition > 0)
     {
-        gotoxy(fighterPosition,43);
-        putch(' ');
         fighterPosition--;
-        if (fighterPosition>=80)
-        {
-            fighterPosition = 0;
-        }
         gotoxy(fighterPosition,43);
-        putch(1);
+        putch(1); putch(' ');
     }
-    if(keyPressed('D'))
+    if(keyPressed('D') && fighterPosition<79)
     {
         gotoxy(fighterPosition,43);
-        putch(' ');
+        putch(' '); putch(1);
         fighterPosition++;
-        if (fighterPosition>79)
-        {
-            fighterPosition = 79;
-        }
-        gotoxy(fighterPosition,43);
-        putch(1);
     }
-    if(keyPressed('S') && (fighterPosition<79))
+    if(keyPressed('S') && fighterPosition<79 && timeout>0)
     {
         timeout--;
-        if ((timeout>=0) && (timeout<MAX))
-        {
-            deleteWeapons();
-            gotoxy(0,0);
-            printf("delete triers: %u /%u", MAX-timeout, MAX);
-        }
+        deleteWeapons();
+        gotoxy(0,0);
+        printf("trials: %u/%u", MAX-timeout, MAX);
+    }
+    if(keyPressed(VK_ESCAPE))
+    {
+        exit();
     }
 }
 
 bool checkCrash()
 {
-    if (point[fighterPosition][42] == true)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return(point[fighterPosition][42]);
 }
 
 bool checkWin()
 {
-    if (fighterPosition == 79)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return(fighterPosition >= 79);
 }
 
 int main()
 {
-    setScrollField(0, 43); // The train should not be destroyed by the output, so we shrink the scrolling area...
     srand(getCurrentSeconds()); // initialize random generator
-    
     clearScreen(0);
+    textColor(0x0F);
+    
+    for(uint8_t i = 0; i < 80; i++)
+    {
+        for(uint8_t j = 0; j < 43; j++)
+        {
+            point[i][j] = false;
+        }
+    }
+
     generateWeapons();
-    generateFighter(); 
-    setWeapon(10,42);
-    setWeapon(15,42);
-    setWeapon(20,42);
-    setWeapon(30,42);
-    setWeapon(40,42);
-    setWeapon(70,42);
+    generateFighter();
+
+    for(uint8_t i = 0; i < 6; i++)
+    {
+        setWeapon(rand()%75+5, 42);
+    }
 
     while(true)
     {
         gotoxy(25,0);
-        printf("\"ARROW ATTACK\" rev. 0.1 E. Henkes A/D=left/right, S=del"); 
+        printf("\"ARROW ATTACK\" 0.1   E. Henkes   A=left, R=right, S=del"); 
         generateWeapons();
-        for (unsigned short line=1; line<42; line++)
+        for (uint8_t line=1; line<42; line++)
         {
-            for (unsigned short column=0; column<79; column++)
+            for (uint8_t column=0; column<79; column++)
             {
-                chance = rand()%6;
-                if ( point[column][line] == true && chance == false)
+                if (point[column][line] == true && rand()%6 == 0)
                 {
                     gotoxy(column,line-2);
                     putch(' ');
@@ -169,30 +144,23 @@ int main()
                     point[column][line+1] = true;
                 }
             }
-            for (unsigned int i=0; i<200; i++){getCurrentSeconds();}
+            for (uint8_t i=0; i<200; i++){getCurrentSeconds();}
         }
         moveFighter();
         if (checkCrash())
         {
-            result = false;
+            gotoxy(29,42);
+            printf("GAME OVER - PLAYER LOST");
             break; 
         }
         if (checkWin())
         {
-            result = true;
+            gotoxy(34,42);
+            printf("PLAYER WINS");
             break;
         }
     }
-    gotoxy(39,42);
-    if (result == false)
-    {
-        printf("GAME OVER - PLAYER LOST");
-    }
-    else
-    {
-        printf("PLAYER WINS");
-    }   
     
-    Sleep(5000);
+    getch();
     return(0);
 }
