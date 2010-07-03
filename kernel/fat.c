@@ -1633,10 +1633,8 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
         globalDataWriteNecessary = false;
     }
 
-
-    uint32_t temp = FATfile->firstCluster;
-    FATfile->currCluster = temp;
-    temp = file->size;
+    FATfile->currCluster = FATfile->firstCluster;
+    uint32_t temp =  file->size;
 
     if (offset > temp)
     {
