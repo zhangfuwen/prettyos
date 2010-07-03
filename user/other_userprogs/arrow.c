@@ -118,13 +118,13 @@ int main()
 
     for(uint8_t i = 0; i < 6; i++)
     {
-        setWeapon(rand()%75+5, 42);
+        setWeapon( 5 + rand()%75, 42 );
     }
 
     while(true)
     {
         gotoxy(25,0);
-        printf("\"ARROW ATTACK\" 0.1   E. Henkes   A=left, R=right, S=del"); 
+        printf("\"ARROW ATTACK\" 0.11 E. Henkes  A=left, R=right, S=del"); 
         generateWeapons();
         for (uint8_t line=1; line<42; line++)
         {
@@ -149,18 +149,19 @@ int main()
         moveFighter();
         if (checkCrash())
         {
-            gotoxy(29,42);
-            printf("GAME OVER - PLAYER LOST");
+            gotoxy(9,42);
+            printf("GAME OVER - PLAYER LOST!  ");
             break; 
         }
         if (checkWin())
         {
-            gotoxy(34,42);
-            printf("PLAYER WINS");
+            gotoxy(14,42);
+            printf("PLAYER WINS!  ");
             break;
         }
     }
     
-    getch();
+    printf("Do you want to quit (Q)");
+    while (!keyPressed('Q'));
     return(0);
 }
