@@ -1855,10 +1855,11 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     return error;
 }
 
-FS_ERROR FAT_remove (const char* fileName, FAT_partition_t* part)
+FS_ERROR FAT_remove(const char* fileName, FAT_partition_t* part)
 { 
     FAT_file_t tempFile;
     FAT_file_t* fileptr = &tempFile; 
+    strcpy(fileptr->name, fileName); // must be 8+3 formatted first
     fileptr->volume = part;
     fileptr->firstCluster = 0;
     fileptr->currCluster  = 0;
@@ -1884,3 +1885,26 @@ FS_ERROR FAT_remove (const char* fileName, FAT_partition_t* part)
 
     return FAT_fileErase(fileptr, &fileptr->entry, true);    
 }
+
+FS_ERROR FAT_rewind(FAT_file_t* fileptr)
+{
+    if (globalDataWriteNecessary)
+    {
+        if (singleSectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
+                                globalFilePtr->volume->part->buffer,                                                 // buffer
+                                globalFilePtr->volume->part))                                                        // partition
+        {
+            return CE_WRITE_ERROR;
+        }
+        globalDataWriteNecessary = false;
+    }
+
+    // fileptr->seek = 0; // has to happen in FS manager
+    fileptr->pos = 0; 
+    fileptr->sec = 0;
+    fileptr->currCluster = fileptr->firstCluster;
+    globalFilePtr = NULL;    
+    return CE_GOOD;
+}
+
+
