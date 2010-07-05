@@ -148,6 +148,7 @@ FS_ERROR FAT_fclose(file_t* file);
 FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count);
 FS_ERROR FAT_fseek(file_t* file, long offset, SEEK_ORIGIN whence);
 uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* stream);
+FS_ERROR FAT_remove (const char* fileName, FAT_partition_t* part);
 
 // analysis functions
 void FAT_showDirectoryEntry(FILEROOTDIRECTORYENTRY dir);

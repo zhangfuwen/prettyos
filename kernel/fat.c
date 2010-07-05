@@ -1854,3 +1854,33 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
 
     return error;
 }
+
+FS_ERROR FAT_remove (const char* fileName, FAT_partition_t* part)
+{ 
+    FAT_file_t tempFile;
+    FAT_file_t* fileptr = &tempFile; 
+    fileptr->volume = part;
+    fileptr->firstCluster = 0;
+    fileptr->currCluster  = 0;
+    fileptr->entry = 0;
+    fileptr->attributes = ATTR_ARCHIVE;
+
+    // start at the root directory
+    fileptr->dirfirstCluster = part->FatRootDirCluster;
+    fileptr->dircurrCluster  = part->FatRootDirCluster;
+
+    fileptrCopy(globalFilePtr, fileptr); 
+    FS_ERROR result = FAT_searchFile(fileptr, globalFilePtr, LOOK_FOR_MATCHING_ENTRY, 0);
+
+    if (result != CE_GOOD)
+    {
+        return CE_FILE_NOT_FOUND;        
+    }
+
+    if (fileptr->attributes & ATTR_DIRECTORY)
+    {
+        return CE_DELETE_DIR;        
+    }
+
+    return FAT_fileErase(fileptr, &fileptr->entry, true);    
+}
