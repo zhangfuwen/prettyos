@@ -247,7 +247,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FAT_file_t* fileptr, uint32_t* curE
     uint32_t cluster              = fileptr->dirfirstCluster;
     uint32_t DirectoriesPerSector = volume->sectorSize/NUMBER_OF_BYTES_IN_DIR_ENTRY;
     uint32_t offset2              = (*curEntry)/DirectoriesPerSector;
-    uint32_t LastClusterLimit, numofclus = 0;
+    uint32_t LastClusterLimit;
 
     if (volume->part->subtype == FAT32)
     {
@@ -276,6 +276,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FAT_file_t* fileptr, uint32_t* curE
             }
             else
             {
+				uint32_t numofclus;
                 if (ForceRead)
                 {
                     numofclus = (*curEntry)/(DirectoriesPerSector * volume->SecPerClus);
@@ -1855,20 +1856,21 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     return error;
 }
 
-FS_ERROR FAT_remove(const char* fileName, FAT_partition_t* part)
-{ 
+FS_ERROR FAT_remove(const char* fileName, partition_t* part)
+{
+	// Probably a bug: FAT_file_t::file not initialised
     FAT_file_t tempFile;
     FAT_file_t* fileptr = &tempFile; 
     strcpy(fileptr->name, fileName); // must be 8+3 formatted first
-    fileptr->volume = part;
+    fileptr->volume = part->data;
     fileptr->firstCluster = 0;
     fileptr->currCluster  = 0;
     fileptr->entry = 0;
     fileptr->attributes = ATTR_ARCHIVE;
 
     // start at the root directory
-    fileptr->dirfirstCluster = part->FatRootDirCluster;
-    fileptr->dircurrCluster  = part->FatRootDirCluster;
+    fileptr->dirfirstCluster = ((FAT_partition_t*)part->data)->FatRootDirCluster;
+    fileptr->dircurrCluster  = ((FAT_partition_t*)part->data)->FatRootDirCluster;
 
     fileptrCopy(globalFilePtr, fileptr); 
     FS_ERROR result = FAT_searchFile(fileptr, globalFilePtr, LOOK_FOR_MATCHING_ENTRY, 0);
@@ -1885,26 +1887,3 @@ FS_ERROR FAT_remove(const char* fileName, FAT_partition_t* part)
 
     return FAT_fileErase(fileptr, &fileptr->entry, true);    
 }
-
-FS_ERROR FAT_rewind(FAT_file_t* fileptr)
-{
-    if (globalDataWriteNecessary)
-    {
-        if (singleSectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
-                                globalFilePtr->volume->part->buffer,                                                 // buffer
-                                globalFilePtr->volume->part))                                                        // partition
-        {
-            return CE_WRITE_ERROR;
-        }
-        globalDataWriteNecessary = false;
-    }
-
-    // fileptr->seek = 0; // has to happen in FS manager
-    fileptr->pos = 0; 
-    fileptr->sec = 0;
-    fileptr->currCluster = fileptr->firstCluster;
-    globalFilePtr = NULL;    
-    return CE_GOOD;
-}
-
-

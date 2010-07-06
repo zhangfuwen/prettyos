@@ -111,6 +111,7 @@ void fsmanager_install()
     FAT.fopen = &FAT_fopen;
     FAT.fclose = &FAT_fclose;
     FAT.fseek = &FAT_fseek;
+	FAT.remove = &FAT_remove;
 }
 
 // Partition functions
@@ -241,6 +242,11 @@ size_t ftell(file_t* file)
 FS_ERROR fseek(file_t* file, size_t offset, SEEK_ORIGIN origin)
 {
     return(file->volume->type->fseek(file, offset, origin));
+}
+
+FS_ERROR rewind(file_t* file)
+{
+	return(fseek(file, 0, SEEK_SET));
 }
 
 

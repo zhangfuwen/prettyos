@@ -31,11 +31,11 @@ void systemControl(SYSTEM_CONTROL todo);
 // user functions
 void* memset(void* dest, int8_t val, size_t count);
 void* memcpy(void* dest, const void* src, size_t count);
-void printf (const char *args, ...);
+void printf(const char *args, ...);
 void vprintf(const char* args, va_list ap);
-void sprintf (char *buffer, const char *args, ...);
-void snprintf (char *buffer, size_t length, const char *args, ...);
-void vsnprintf (char *buffer, size_t length, const char *args, va_list ap);
+void sprintf(char *buffer, const char *args, ...);
+void snprintf(char *buffer, size_t length, const char *args, ...);
+void vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
 
 char toLower(char c);
 char toUpper(char c);

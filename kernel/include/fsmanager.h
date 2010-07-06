@@ -144,8 +144,9 @@ char*    fgets (char* dest,      size_t num, file_t* file);
 FS_ERROR fputs (const char* src,             file_t* file);
 FS_ERROR fflush(file_t* file);
 
-size_t   ftell(file_t* file);
-FS_ERROR fseek(file_t* file, size_t offset, SEEK_ORIGIN origin);
+size_t   ftell (file_t* file);
+FS_ERROR fseek (file_t* file, size_t offset, SEEK_ORIGIN origin);
+FS_ERROR rewind(file_t* file);
 
 bool feof(file_t* file);
 
