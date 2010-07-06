@@ -33,6 +33,9 @@ uint8_t  globalBufferFATSector[SECTOR_SIZE];    // Global FAT sector buffer
 uint32_t globalLastFATSectorRead  = 0xFFFFFFFF; // Global variable indicating which FAT sector was read last
 bool     globalFATWriteNecessary  = false;      // Global variable indicating that there is information that needs to be written to the FAT
 
+// others
+uint8_t  globalNextClusterIsLast = false;       // Global variable indicating that the entries in a directory align with a cluster boundary
+
 static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
 {
     uint32_t sector;
@@ -1860,7 +1863,7 @@ FS_ERROR FAT_remove(const char* fileName, partition_t* part)
 {
 	FAT_file_t tempFile;
     FAT_file_t* fileptr = &tempFile; 
-    strcpy(fileptr->name, fileName); // must be 8+3 formatted first
+    strncpy(fileptr->name, fileName, 11); // must be 8+3 formatted first
     fileptr->volume = part->data;
     fileptr->firstCluster = 0;
     fileptr->currCluster  = 0;
@@ -1868,8 +1871,7 @@ FS_ERROR FAT_remove(const char* fileName, partition_t* part)
     fileptr->attributes = ATTR_ARCHIVE;
 
     // start at the root directory
-    fileptr->dirfirstCluster = ((FAT_partition_t*)part->data)->FatRootDirCluster;
-    fileptr->dircurrCluster  = ((FAT_partition_t*)part->data)->FatRootDirCluster;
+    fileptr->dirfirstCluster = fileptr->dircurrCluster = fileptr->volume->FatRootDirCluster;
 
     fileptrCopy(globalFilePtr, fileptr); 
     FS_ERROR result = FAT_searchFile(fileptr, globalFilePtr, LOOK_FOR_MATCHING_ENTRY, 0);
@@ -1885,4 +1887,132 @@ FS_ERROR FAT_remove(const char* fileName, partition_t* part)
     }
 
     return FAT_fileErase(fileptr, &fileptr->entry, true);    
+}
+
+static FS_ERROR FAT_fileRename (FAT_file_t* fileptr, const char* fileName)
+{
+    uint8_t j, k = 0;
+    char string[12];
+    uint32_t fHandle = 1, goodHandle;
+    FILEROOTDIRECTORYENTRY dir;
+
+    if (fileptr == NULL)
+    {        
+        return CE_FILENOTOPENED;
+    }
+    
+    strncpy(fileptr->name, fileName, 11); // must be 8+3 formatted first
+    
+    strncpy(string, fileptr->name, 11); 
+    goodHandle = fileptr->entry;
+    fHandle = 0;
+    
+    fileptr->dircurrCluster = fileptr->dirfirstCluster;
+    dir = cacheFileEntry (fileptr, &fHandle, true);
+    if (dir == NULL)
+    {
+        return CE_BADCACHEREAD;        
+    }
+    
+    for (j=0; j<11; j++)
+    {
+        if (dir->DIR_Name[j] != string[j])
+        {
+            k = 1;
+        }
+    }
+    if (k == 0)
+    {
+        return CE_FILENAME_EXISTS;        
+    }
+    else
+    {
+        k = 0;
+    }
+
+    globalNextClusterIsLast = false; 
+    while (true)
+    {   
+        dir = cacheFileEntry (fileptr, &fHandle, false);
+        if (dir == NULL)
+        {
+            if (globalNextClusterIsLast == true)
+            {
+                break;
+            }
+            else
+            {
+                return CE_BADCACHEREAD;                
+            }
+        }
+        if (dir->DIR_Name[0] == 0)
+        {
+            break;
+        }
+        
+        for (j=0; j<11; j++)
+        {
+            if (dir->DIR_Name[j] != string[j])
+            {
+                k = 1;
+            }
+        }
+        if (k == 0)
+        {
+            return CE_FILENAME_EXISTS;            
+        }
+        else
+        {
+            k = 0;
+        }
+        fHandle++;
+    }
+
+    fHandle = goodHandle;
+    fileptr->dircurrCluster = fileptr->dirfirstCluster;
+    dir = loadDirAttrib(fileptr, &fHandle);
+
+    if (dir == NULL)
+    {
+        return CE_BADCACHEREAD;        
+    }
+
+    for (j=0; j<11; j++)
+    {
+        dir->DIR_Name[j] = fileptr->name[j];
+    }
+
+    if (!writeFileEntry(fileptr,&fHandle))
+    {
+        return CE_WRITE_ERROR;        
+    }    
+
+    return CE_GOOD;
+}
+
+FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_t* part)
+{
+    printf("\n rename: fileNameOld: %s, fileNameNew: %s", fileNameOld, fileNameNew);
+    
+    FAT_file_t tempFile;
+    FAT_file_t* fileptr = &tempFile; 
+    strncpy(fileptr->name, fileNameOld, 11); // must be 8+3 formatted first
+    fileptr->volume = part->data;
+    fileptr->firstCluster = 0;
+    fileptr->currCluster  = 0;
+    fileptr->entry = 0;
+    fileptr->attributes = ATTR_ARCHIVE;
+
+    // start at the root directory
+    fileptr->dirfirstCluster = fileptr->dircurrCluster = fileptr->volume->FatRootDirCluster;      
+
+    fileptrCopy(globalFilePtr, fileptr); 
+    FS_ERROR result = FAT_searchFile(fileptr, globalFilePtr, LOOK_FOR_MATCHING_ENTRY, 0);
+
+    if (result != CE_GOOD)
+    {
+        return CE_FILE_NOT_FOUND;        
+    }
+
+    return FAT_fileRename (fileptr, fileNameNew);
 }

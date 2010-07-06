@@ -108,10 +108,11 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
 
 void fsmanager_install()
 {
-    FAT.fopen = &FAT_fopen;
+    FAT.fopen  = &FAT_fopen;
     FAT.fclose = &FAT_fclose;
-    FAT.fseek = &FAT_fseek;
+    FAT.fseek  = &FAT_fseek;
 	FAT.remove = &FAT_remove;
+    FAT.rename = &FAT_rename;
 }
 
 // Partition functions
@@ -198,19 +199,23 @@ void fclose(file_t* file)
 FS_ERROR remove(const char* path)
 {
     partition_t* part = getPartition(path);
-    char EightPlusThreeFileName[11];
+    char EightPlusThreeFileName[12];
     FormatFileName(getFilename(path), EightPlusThreeFileName, false);
     return(part->type->remove(EightPlusThreeFileName, part));
 }
 
 FS_ERROR rename(const char* oldpath, const char* newpath)
 {
-    partition_t* dpart = getPartition(newpath);
     partition_t* spart = getPartition(oldpath);
-
+    partition_t* dpart = getPartition(newpath);
+    char EightPlusThreeFileNameOld[12];
+    char EightPlusThreeFileNameNew[12];
+    FormatFileName(getFilename(oldpath), EightPlusThreeFileNameOld, false);
+    FormatFileName(getFilename(newpath), EightPlusThreeFileNameNew, false);        
+    
     if(spart == dpart) // same partition
     {
-        return(spart->type->rename(getFilename(oldpath), getFilename(newpath), spart));
+        return(spart->type->rename(EightPlusThreeFileNameOld, EightPlusThreeFileNameNew, spart));
     }
     else
     {

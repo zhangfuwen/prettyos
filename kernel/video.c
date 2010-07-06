@@ -269,12 +269,17 @@ void screenshot()
     }
     free(videoscreen);
     
-    /* 
-      // remove test 
-      waitForKeyStroke();
-      uint32_t error = remove(Pfad); 
-      printf("\nremove test: %s, error: %u", Pfad, error);
-      waitForKeyStroke();
+    /*
+    //rename test 
+    waitForKeyStroke();
+    uint32_t error = rename(Pfad,"1:/scrnew.txt"); 
+    printf("\nrename test: error: %u", error);
+
+    // remove test 
+    waitForKeyStroke();
+    error = remove(Pfad); 
+    printf("\nremove test: error: %u", error);
+    waitForKeyStroke();   
     */
 }
 
