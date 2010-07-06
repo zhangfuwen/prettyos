@@ -198,7 +198,9 @@ void fclose(file_t* file)
 FS_ERROR remove(const char* path)
 {
     partition_t* part = getPartition(path);
-    return(part->type->remove(getFilename(path), part));
+    char EightPlusThreeFileName[11];
+    FormatFileName(getFilename(path), EightPlusThreeFileName, false);
+    return(part->type->remove(EightPlusThreeFileName, part));
 }
 
 FS_ERROR rename(const char* oldpath, const char* newpath)

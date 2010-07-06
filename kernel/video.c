@@ -268,6 +268,14 @@ void screenshot()
         printf("\nError: file could not be opened!");
     }
     free(videoscreen);
+    
+    /* 
+      // remove test 
+      waitForKeyStroke();
+      uint32_t error = remove(Pfad); 
+      printf("\nremove test: %s, error: %u", Pfad, error);
+      waitForKeyStroke();
+    */
 }
 
 /*

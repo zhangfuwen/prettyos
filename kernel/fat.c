@@ -1858,8 +1858,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
 
 FS_ERROR FAT_remove(const char* fileName, partition_t* part)
 {
-	// Probably a bug: FAT_file_t::file not initialised
-    FAT_file_t tempFile;
+	FAT_file_t tempFile;
     FAT_file_t* fileptr = &tempFile; 
     strcpy(fileptr->name, fileName); // must be 8+3 formatted first
     fileptr->volume = part->data;
