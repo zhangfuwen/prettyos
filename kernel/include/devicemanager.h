@@ -50,7 +50,7 @@ void showPortList();
 void showDiskList();
 
 partition_t* getPartition(const char* path);
-const char*      getFilename (const char* path);
+const char*  getFilename (const char* path);
 
 FS_ERROR executeFile(const char* path);
 

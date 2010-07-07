@@ -107,7 +107,7 @@ typedef struct
     uint16_t  pos;            // current byte in the current sectors
     uint16_t time;            // last update time
     uint16_t date;            // last update date
-    char     name[FILE_NAME_SIZE]; // TODO: Remove
+    char     name[FILE_NAME_SIZE];
     uint32_t entry;           // file's entry position in its directory
     uint16_t chk;             // checksum = ~(entry+name[0])
     uint16_t attributes;      // file's attributes

@@ -12,100 +12,6 @@
 fileSystem_t FAT, INITRD;
 
 
-static bool ValidateChars(char* FileName , bool mode)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> ValidateChars <<<<<");
-  #endif
-
-    bool radix = false;
-    uint16_t StrSz = strlen(FileName);
-    for(uint16_t i=0; i<StrSz; i++)
-    {
-        if ((FileName[i] <= 0x20 &&  FileName[i] != 0x05) ||
-             FileName[i] == 0x22 ||  FileName[i] == 0x2B  ||
-             FileName[i] == 0x2C ||  FileName[i] == 0x2F  ||
-             FileName[i] == 0x3A ||  FileName[i] == 0x3B  ||
-             FileName[i] == 0x3C ||  FileName[i] == 0x3D  ||
-             FileName[i] == 0x3E ||  FileName[i] == 0x5B  ||
-             FileName[i] == 0x5C ||  FileName[i] == 0x5D  ||
-             FileName[i] == 0x7C || (FileName[i] == 0x2E  && radix == true))
-        {
-            return false;
-        }
-        else
-        {
-            if (mode == false)
-            {
-                if (FileName[i] == '*' || FileName[i] == '?')
-                    return false;
-            }
-            if (FileName[i] == 0x2E)
-            {
-                radix = true;
-            }
-
-			FileName[i] = toUpper(FileName[i]); // Convert lower-case to upper-case
-        }
-    }
-    return true;
-}
-static bool FormatFileName(const char* fileName, char* fN2, bool mode)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> FormatFileName <<<<<");
-  #endif
-
-    char* pExt;
-    char szName[15];
-
-	memset(fN2, ' ', 11);
-
-    if (fileName[0] == '.' || fileName[0] == 0)
-    {
-        return false;
-    }
-
-    if (strlen(fileName) <= FILE_NAME_SIZE+1)
-    {
-        strcpy(szName, fileName);
-    }
-    else
-    {
-        return false; //long file name
-    }
-
-    if (!ValidateChars(szName, mode))
-    {
-        return false;
-    }
-
-    if ((pExt = strchr(szName, '.')) != 0)
-    {
-        *pExt = 0;
-        pExt++;
-        if (strlen(pExt) > 3 || strlen(szName) > 8) // No 8.3-Format
-        {
-            return false;
-        }
-    }
-
-    if (strlen(szName)>8)
-    {
-        return false;
-    }
-
-	strncpy(fN2, szName, strlen(szName)); // Do not copy 0
-
-    if (pExt)
-    {
-		strcpy(fN2+8, pExt);
-    }
-
-    return true;
-}
-
-
 void fsmanager_install()
 {
     FAT.fopen  = &FAT_fopen;
@@ -141,13 +47,8 @@ file_t* fopen(const char* path, const char* mode)
     }
     file->EOF    = false;
     file->error  = CE_GOOD;
-    file->name   = malloc(13, 0);
-    if(!FormatFileName(getFilename(path), file->name, false))
-    {
-        free(file->name);
-        free(file);
-        return(0);
-    }
+    file->name   = malloc(strlen(getFilename(path))+1, 0);
+	strcpy(file->name, getFilename(path));
 
     bool appendMode = false; // Used to seek to end
     bool create = true;
@@ -199,23 +100,17 @@ void fclose(file_t* file)
 FS_ERROR remove(const char* path)
 {
     partition_t* part = getPartition(path);
-    char EightPlusThreeFileName[12];
-    FormatFileName(getFilename(path), EightPlusThreeFileName, false);
-    return(part->type->remove(EightPlusThreeFileName, part));
+    return(part->type->remove(getFilename(path), part));
 }
 
 FS_ERROR rename(const char* oldpath, const char* newpath)
 {
     partition_t* spart = getPartition(oldpath);
     partition_t* dpart = getPartition(newpath);
-    char EightPlusThreeFileNameOld[12];
-    char EightPlusThreeFileNameNew[12];
-    FormatFileName(getFilename(oldpath), EightPlusThreeFileNameOld, false);
-    FormatFileName(getFilename(newpath), EightPlusThreeFileNameNew, false);
 
-    if ( (spart == dpart) || (dpart == NULL) ) // same partition
+    if(spart == dpart || dpart == 0) // same partition
     {
-        return(spart->type->rename(EightPlusThreeFileNameOld, EightPlusThreeFileNameNew, spart));
+        return(spart->type->rename(getFilename(oldpath), getFilename(newpath), spart));
     }
     else
     {

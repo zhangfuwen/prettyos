@@ -61,6 +61,99 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
     return (sector);
 }
 
+static bool ValidateChars(char* FileName , bool mode)
+{
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\n>>>>> ValidateChars <<<<<");
+  #endif
+
+    bool radix = false;
+    uint16_t StrSz = strlen(FileName);
+    for(uint16_t i=0; i<StrSz; i++)
+    {
+        if ((FileName[i] <= 0x20 &&  FileName[i] != 0x05) ||
+             FileName[i] == 0x22 ||  FileName[i] == 0x2B  ||
+             FileName[i] == 0x2C ||  FileName[i] == 0x2F  ||
+             FileName[i] == 0x3A ||  FileName[i] == 0x3B  ||
+             FileName[i] == 0x3C ||  FileName[i] == 0x3D  ||
+             FileName[i] == 0x3E ||  FileName[i] == 0x5B  ||
+             FileName[i] == 0x5C ||  FileName[i] == 0x5D  ||
+             FileName[i] == 0x7C || (FileName[i] == 0x2E  && radix == true))
+        {
+            return false;
+        }
+        else
+        {
+            if (mode == false)
+            {
+                if (FileName[i] == '*' || FileName[i] == '?')
+                    return false;
+            }
+            if (FileName[i] == 0x2E)
+            {
+                radix = true;
+            }
+
+			FileName[i] = toUpper(FileName[i]); // Convert lower-case to upper-case
+        }
+    }
+    return true;
+}
+static bool FormatFileName(const char* fileName, char* fN2, bool mode)
+{
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\n>>>>> FormatFileName <<<<<");
+  #endif
+
+    char* pExt;
+    char szName[15];
+
+	memset(fN2, ' ', 11);
+
+    if (fileName[0] == '.' || fileName[0] == 0)
+    {
+        return false;
+    }
+
+    if (strlen(fileName) <= FILE_NAME_SIZE+1)
+    {
+        strcpy(szName, fileName);
+    }
+    else
+    {
+        return false; //long file name
+    }
+
+    if (!ValidateChars(szName, mode))
+    {
+        return false;
+    }
+
+    if ((pExt = strchr(szName, '.')) != 0)
+    {
+        *pExt = 0;
+        pExt++;
+        if (strlen(pExt) > 3 || strlen(szName) > 8) // No 8.3-Format
+        {
+            return false;
+        }
+    }
+
+    if (strlen(szName)>8)
+    {
+        return false;
+    }
+
+	strncpy(fN2, szName, strlen(szName)); // Do not copy 0
+
+    if (pExt)
+    {
+		strcpy(fN2+8, pExt);
+    }
+
+    return true;
+}
+
 static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
 {
   #ifdef _FAT_DIAGNOSIS_
@@ -1715,7 +1808,11 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     FATfile->file = file;
     
     //HACK
-    strncpy(FATfile->name, file->name, 11);
+    if(!FormatFileName(file->name, FATfile->name, false))
+	{
+		free(FATfile);
+		return(CE_INVALID_FILENAME);
+	}
 
     FATfile->volume            = file->volume->data;
     FATfile->firstCluster      = 0;
@@ -1863,7 +1960,7 @@ FS_ERROR FAT_remove(const char* fileName, partition_t* part)
 {
 	FAT_file_t tempFile;
     FAT_file_t* fileptr = &tempFile; 
-    strncpy(fileptr->name, fileName, 11); // must be 8+3 formatted first
+    FormatFileName(fileName, fileptr->name, false); // must be 8+3 formatted first
     fileptr->volume = part->data;
     fileptr->firstCluster = 0;
     fileptr->currCluster  = 0;
@@ -1889,7 +1986,7 @@ FS_ERROR FAT_remove(const char* fileName, partition_t* part)
     return FAT_fileErase(fileptr, &fileptr->entry, true);    
 }
 
-static FS_ERROR FAT_fileRename (FAT_file_t* fileptr, const char* fileName)
+static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
 {
     uint8_t j, k = 0;
     char string[12];
@@ -1901,7 +1998,7 @@ static FS_ERROR FAT_fileRename (FAT_file_t* fileptr, const char* fileName)
         return CE_FILENOTOPENED;
     }
     
-    strncpy(fileptr->name, fileName, 11); // must be 8+3 formatted first
+    FormatFileName(fileName, fileptr->name, false); // must be 8+3 formatted first
     
     strncpy(string, fileptr->name, 11); 
     goodHandle = fileptr->entry;
@@ -1996,7 +2093,7 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
     
     FAT_file_t tempFile;
     FAT_file_t* fileptr = &tempFile; 
-    strncpy(fileptr->name, fileNameOld, 11); // must be 8+3 formatted first
+    FormatFileName(fileNameOld, fileptr->name, false); // must be 8+3 formatted first
     fileptr->volume = part->data;
     fileptr->firstCluster = 0;
     fileptr->currCluster  = 0;
@@ -2014,5 +2111,5 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
         return CE_FILE_NOT_FOUND;        
     }
 
-    return FAT_fileRename (fileptr, fileNameNew);
+    return FAT_fileRename(fileptr, fileNameNew);
 }

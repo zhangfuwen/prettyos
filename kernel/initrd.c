@@ -8,8 +8,6 @@
 #include "kheap.h"
 #include "paging.h"
 #include "devicemanager.h"
-#include "fat.h" 
-
 
 initrd_header_t*      initrd_header; // The header.
 initrd_file_header_t* file_headers;  // The list of file headers.
@@ -24,44 +22,51 @@ struct dirent dirent;
 extern uintptr_t file_data_start;
 extern uintptr_t file_data_end;
 
-port_t      RAMDiskPort;
-disk_t      RAMDisk;
-partition_t RAMDiskVolume;
-
-void* ramdisk_install(size_t size)
+fs_node_t* install_initrd(void* location);
+disk_t* ramdisk_install()
 {
-    kdebug(0x00, "rd_start: ");
+	static port_t RAMport;
+	static disk_t RAMdisk;
+	RAMport.type = &RAM;
+	RAMport.insertedDisk = &RAMdisk;
+	RAMport.insertedDisk->type = &RAMDISK;
+	strcpy(RAMport.name, "RAM     ");
 
+	RAMdisk.type = &RAMDISK;
+	RAMdisk.partition[0] = 0;
+	RAMdisk.partition[1] = 0;
+	RAMdisk.partition[2] = 0;
+	RAMdisk.partition[3] = 0;
+	strcpy(RAMdisk.name, "RAMdisk");
+
+	attachPort(&RAMport);
+	attachDisk(&RAMdisk);
+
+	return(&RAMdisk);
+}
+
+void* initrd_install(disk_t* disk, size_t partitionID, size_t size)
+{
     void* ramdisk_start = malloc(size, 0);
     // shell via incbin in data.asm
     memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
-        
-    // volume
-    RAMDiskVolume.buffer = malloc(512,0); // necessary?
-    RAMDiskVolume.disk = &RAMDisk;
 
+	disk->partition[partitionID]         = malloc(sizeof(partition_t), 0);
+	disk->partition[partitionID]->disk   = disk;
+	disk->partition[partitionID]->data   = malloc(sizeof(INITRD_partition_t), 0);
+	disk->partition[partitionID]->mount  = true;
+	disk->partition[partitionID]->type   = &INITRD;
+	disk->partition[partitionID]->buffer = malloc(512, 0);
     //HACK
-    RAMDiskVolume.serial = malloc(13, 0);
-    itoa(((uint32_t)(ramdisk_start)/PAGESIZE), RAMDiskVolume.serial);
-    RAMDiskVolume.serial[12] = 0;
-    
-    // disk
-    RAMDisk.type         = &RAMDISK;
-    RAMDisk.partition[0] = &RAMDiskVolume;
-    strncpy(RAMDisk.name, "RAMDisk    ", 11);
-    attachDisk(&RAMDisk);
+    disk->partition[partitionID]->serial = malloc(13, 0);
+    itoa(((uint32_t)(ramdisk_start)/PAGESIZE), disk->partition[partitionID]->serial);
+    disk->partition[partitionID]->serial[12] = 0;
 
-    // port
-    RAMDiskPort.type         = &RAM; 
-    RAMDiskPort.insertedDisk = &RAMDisk;
-    strncpy(RAMDiskPort.name, "RAM        ", 11);   
-    attachPort(&RAMDiskPort);
-
-    return(ramdisk_start);
+	return(ramdisk_start);
 }
 
-static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, char* buffer)
+static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer)
 {
     initrd_file_header_t header = file_headers[node->inode];
     size = header.length;
@@ -116,7 +121,7 @@ static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
 fs_node_t* install_initrd(void* location)
 {
     // Initialise the main and file header pointers and populate the root directory.
-    initrd_header = (initrd_header_t*)location;
+	initrd_header = (initrd_header_t*)location;
     file_headers  = (initrd_file_header_t*)(location+sizeof(initrd_header_t));
 
     // Initialise the root directory.
@@ -170,7 +175,7 @@ fs_node_t* install_initrd(void* location)
         root_nodes[i].length  = file_headers[i].length;
         root_nodes[i].inode   = i;
         root_nodes[i].flags   = FS_FILE;
-        root_nodes[i].read    = (read_type_t) &initrd_read;
+        root_nodes[i].read    = &initrd_read;
         root_nodes[i].write   = 0;
         root_nodes[i].readdir = 0;
         root_nodes[i].finddir = 0;
