@@ -172,7 +172,7 @@ file_t* fopen(const char* path, const char* mode)
             file->write = false;
             break;
     }
-    
+
     if(file->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD)
     {
         // cleanup
@@ -211,9 +211,9 @@ FS_ERROR rename(const char* oldpath, const char* newpath)
     char EightPlusThreeFileNameOld[12];
     char EightPlusThreeFileNameNew[12];
     FormatFileName(getFilename(oldpath), EightPlusThreeFileNameOld, false);
-    FormatFileName(getFilename(newpath), EightPlusThreeFileNameNew, false);        
-    
-    if(spart == dpart) // same partition
+    FormatFileName(getFilename(newpath), EightPlusThreeFileNameNew, false);
+
+    if ( (spart == dpart) || (dpart == NULL) ) // same partition
     {
         return(spart->type->rename(EightPlusThreeFileNameOld, EightPlusThreeFileNameNew, spart));
     }

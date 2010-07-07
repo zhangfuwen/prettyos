@@ -214,7 +214,7 @@ void refreshUserScreen()
         memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * USER_LINES*2);
     }
     kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
-    
+
     csr_y = reachableConsoles[displayedConsole]->csr_y;
     csr_x = reachableConsoles[displayedConsole]->csr_x;
     update_cursor();
@@ -246,7 +246,7 @@ void screenshot()
             NewLine++;
         }
     }
-    
+
     char Pfad[20];
     for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
@@ -268,18 +268,18 @@ void screenshot()
         printf("\nError: file could not be opened!");
     }
     free(videoscreen);
-    
+
     /*
-    //rename test 
+    //rename test
     waitForKeyStroke();
-    uint32_t error = rename(Pfad,"1:/scrnew.txt"); 
+    uint32_t error = rename(Pfad,"scrnew.txt");
     printf("\nrename test: error: %u", error);
 
-    // remove test 
+    // remove test
     waitForKeyStroke();
-    error = remove(Pfad); 
+    error = remove(Pfad);
     printf("\nremove test: error: %u", error);
-    waitForKeyStroke();   
+    waitForKeyStroke();
     */
 }
 

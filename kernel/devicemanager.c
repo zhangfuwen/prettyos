@@ -25,6 +25,9 @@ extern uint32_t usbMSDVolumeMaxLBA;
 portType_t FDD,        USB,     RAM;
 diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
 
+// prototypes
+FS_ERROR loadFile(const char* filename, partition_t* part);
+
 void deviceManager_install(/*partition_t* system*/)
 {
     FDD.motorOff = &flpydsk_motorOff;
@@ -187,7 +190,7 @@ void showDiskList()
                 else if(disks[i]->type == &USB_MSD)
                     printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber);
                 /// ifs should be changed to:
-                ///printf("\t%s", disks[i]->partition[j]->serial); // serial of partition
+                /// printf("\t%s", disks[i]->partition[j]->serial); // serial of partition
             }
         }
     }
@@ -198,19 +201,26 @@ void showDiskList()
 
 const char* getFilename(const char* path)
 {
-    while(*path != '/' && *path != '|' && *path != '\\')
+    if (strchr((char*)path,'/')==NULL && strchr((char*)path,'|')==NULL && strchr((char*)path,'\\')==NULL)
     {
-        path++;
-        if(*path == 0)
-        {
-            return(0);
-        }
+        return path;
     }
-    path++;
-    return(path);
+    else
+    {
+        while(*path != '/' && *path != '|' && *path != '\\')
+        {
+            path++;
+            if(*path == 0)
+            {
+                return(0);
+            }
+        }
+        path++;
+        return(path);
+    }
 }
 
-FS_ERROR loadFile(const char* filename, partition_t* part);
+
 FS_ERROR executeFile(const char* path)
 {
     partition_t* part = getPartition(path);
@@ -253,9 +263,9 @@ partition_t* getPartition(const char* path)
     int16_t PortID = -1;
     int16_t DiskID = -1;
     uint8_t PartitionID = 0;
-    for(size_t i = 0; i < length && path[i]; i++)
+    for (size_t i = 0; i < length && path[i]; i++)
     {
-        if(path[i] == ':' || path[i] == '-')
+        if ((path[i] == ':') || (path[i] == '-'))
         {
             strncpy(Buffer, path, i);
             Buffer[i] = 0;
@@ -267,43 +277,44 @@ partition_t* getPartition(const char* path)
             {
                 DiskID = atoi(Buffer);
             }
-            for(size_t j = i+1; j < length && path[j]; j++)
+
+            for (size_t j = i+1; j < length && path[j]; j++)
             {
-                if(path[j] == ':' || path[j] == '-')
+                if ((path[j] == ':') || (path[j] == '-'))
                 {
                     strncpy(Buffer, path+i+1, j-i-1);
                     Buffer[j-i-1] = 0;
                     PartitionID = atoi(Buffer);
                     break;
                 }
-                if(!isdigit(path[j]) || path[j] == '/' || path[j] == '|' || path[j] == '\\')
+                if (!isdigit(path[j]) || (path[j] == '/') || (path[j] == '|') || (path[j] == '\\'))
                 {
                     break;
                 }
             }
             break;
         }
-        if(!isalnum(path[i]))
+        if (!isalnum(path[i]))
         {
-            return(0);
+            return(NULL);
         }
     }
-    if(PortID != -1 && PortID < PORTARRAYSIZE)
+    if ((PortID != -1) && (PortID < PORTARRAYSIZE))
     {
         return(ports[PortID]->insertedDisk->partition[PartitionID]);
     }
     else
     {
-        if(DiskID == 0)
+        if (DiskID == 0)
         {
             return(systemPartition);
         }
-        if(DiskID > 0 && DiskID <= DISKARRAYSIZE)
+        if (DiskID > 0 && DiskID <= DISKARRAYSIZE)
         {
             return(disks[DiskID-1]->partition[PartitionID]);
         }
     }
-    return(0);
+    return(NULL);
 }
 
 FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests only

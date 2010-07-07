@@ -100,7 +100,7 @@ void startEHCI()
 int32_t initEHCIHostController()
 {
     textColor(0x09);
-    printf("\n>>> >>> function: initEHCIHostController");
+    printf("\ninitEHCIHostController");
     textColor(0x0F);
 
     // pci bus data
@@ -159,7 +159,7 @@ int32_t initEHCIHostController()
 void startHostController(pciDev_t* PCIdev)
 {
     textColor(0x09);
-    printf("\n>>> >>> function: startHostController (reset HC)");
+    printf("\nstartHostController (reset HC)");
     textColor(0x0F);
 
     resetHostController();
@@ -352,7 +352,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
 void enablePorts()
 {
     textColor(0x09);
-    printf("\n>>> >>> function: enablePorts");
+    printf("\nenablePorts");
     textColor(0x0F);
 
     for (uint8_t j=0; j<numPorts; j++)
@@ -383,7 +383,7 @@ void enablePorts()
 void resetPort(uint8_t j)
 {
     textColor(0x09);
-    printf("\n>>> >>> function: resetPort %u  ",j+1);
+    printf("\nresetPort %u  ",j+1);
     textColor(0x0F);
 
     pOpRegs->PORTSC[j] |=  PSTS_POWERON;
