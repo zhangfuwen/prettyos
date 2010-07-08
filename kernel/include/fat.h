@@ -100,11 +100,11 @@ typedef struct
 typedef struct
 {
     FAT_partition_t* volume;  // volume containing the file
-    file_t*   file;           // universal file container (fsmanager)
-    uint32_t  firstCluster;   // first cluster
-    uint32_t  currCluster;    // current cluster
-    uint16_t  sec;            // current sector in the current cluster
-    uint16_t  pos;            // current byte in the current sectors
+    file_t*  file;            // universal file container (fsmanager)
+    uint32_t firstCluster;    // first cluster
+    uint32_t currCluster;     // current cluster
+    uint16_t sec;             // current sector in the current cluster
+    uint16_t pos;             // current byte in the current sectors
     uint16_t time;            // last update time
     uint16_t date;            // last update date
     char     name[FILE_NAME_SIZE];
@@ -141,13 +141,12 @@ typedef enum
 
 // file handling
 FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseClusters);
-FS_ERROR FAT_createFileEntry(FAT_file_t* fileptr, uint32_t *fHandle, uint8_t mode);
 FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_t cmd, uint8_t mode);
 FS_ERROR FAT_fopen(file_t* file, bool create, bool open);
 FS_ERROR FAT_fclose(file_t* file);
-FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count);
+char     FAT_fgetc(file_t* file);
+FS_ERROR FAT_fputc(file_t* file, char c);
 FS_ERROR FAT_fseek(file_t* file, long offset, SEEK_ORIGIN whence);
-uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* stream);
 FS_ERROR FAT_remove(const char* fileName, partition_t* part);
 FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_t* part);
 

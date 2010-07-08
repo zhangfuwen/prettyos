@@ -18,7 +18,7 @@ DEFN_SYSCALL1(textColor,                  2, uint8_t)
 DEFN_SYSCALL0(getpid,                     3)
 DEFN_SYSCALL0(nop,                        4)
 DEFN_SYSCALL0(switch_context,             5)
-DEFN_SYSCALL0(keyboard_getChar,           6)
+DEFN_SYSCALL0(getch,                      6)
 DEFN_SYSCALL0(flpydsk_read_directory,     7)
 DEFN_SYSCALL3(cprintf,                    8, const char*, uint32_t, uint8_t)
 DEFN_SYSCALL0(getCurrentSeconds,          9)
@@ -43,7 +43,7 @@ static void* syscalls[] =
     &getpid,
     &nop,
     &switch_context,
-    &keyboard_getChar,
+    &getch,
     &flpydsk_read_directory,
     &cprintf,
     &getCurrentSeconds,

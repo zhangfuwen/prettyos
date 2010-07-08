@@ -235,6 +235,18 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
    return 0;
 }
 
+char getch()
+{
+	char retVal = keyboard_getChar();
+	while(retVal == 0)
+	{
+		sti();
+		__asm__ volatile ("hlt");
+		retVal = keyboard_getChar();
+	}
+	return(retVal);
+}
+
 bool keyPressed(VK Key)
 {
     return(VKPressed[Key]);

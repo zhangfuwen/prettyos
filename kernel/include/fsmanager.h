@@ -72,8 +72,8 @@ typedef struct
     FS_ERROR (*fopen) (struct file*, bool, bool);                    // File, create if not existant, overwrite file before opening
     FS_ERROR (*fclose)(struct file*);                                // File
     FS_ERROR (*fseek) (struct file*, int32_t, SEEK_ORIGIN);          // File, offset, origin
-    void     (*fgets) (struct file*, char*, size_t);                 // File, buffer, count
-    FS_ERROR (*fputs) (struct file*, const char*);                   // File, source
+    char     (*fgetc) (struct file*);                                // File
+    FS_ERROR (*fputc) (struct file*, char);                          // File, source
     FS_ERROR (*fflush)(struct file*);                                // File
     FS_ERROR (*remove)(const char*, struct partition*);              // Path, partition
     FS_ERROR (*rename)(const char*, const char*, struct partition*); // Old path, new path, partition
@@ -140,8 +140,13 @@ void    fclose(file_t* file);
 FS_ERROR remove(const char* path);
 FS_ERROR rename(const char* oldpath, const char* newpath);
 
-char*    fgets (char* dest,      size_t num, file_t* file);
-FS_ERROR fputs (const char* src,             file_t* file);
+FS_ERROR fputc (char c,                                     file_t* file);
+char     fgetc (                                            file_t* file);
+char*    fgets (char* dest,      size_t num,                file_t* file);
+FS_ERROR fputs (const char* src,                            file_t* file);
+size_t   fread (void* dest,      size_t size, size_t count, file_t* file);
+size_t   fwrite(const void* src, size_t size, size_t count, file_t* file);
+
 FS_ERROR fflush(file_t* file);
 
 size_t   ftell (file_t* file);

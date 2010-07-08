@@ -240,7 +240,7 @@ FS_ERROR executeFile(const char* path)
     if(file != 0)
     {
         void* filebuffer = malloc(file->size, 0);
-        FAT_fread(file->data, filebuffer, file->size);
+        fread(filebuffer, 1, file->size, file);
 
         char tempfilename[12];
         tempfilename[11] = 0;
@@ -299,6 +299,7 @@ partition_t* getPartition(const char* path)
             return(NULL);
         }
     }
+
     if ((PortID != -1) && (PortID < PORTARRAYSIZE))
     {
         return(ports[PortID]->insertedDisk->partition[PartitionID]);

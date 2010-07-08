@@ -260,7 +260,7 @@ void screenshot()
     file_t* file = fopen(Pfad, "a+");
     if (file) // check for NULL pointer, otherwise #PF
     {
-        FAT_fwrite((void*)videoscreen, 4098, 1, file->data);
+        fwrite((void*)videoscreen, 4098, 1, file);
         fclose(file);
     }
     else
@@ -275,6 +275,7 @@ void screenshot()
     uint32_t error = rename(Pfad,"scrnew.txt");
     printf("\nrename test: error: %u", error);
 
+    
     // remove test
     waitForKeyStroke();
     error = remove(Pfad);

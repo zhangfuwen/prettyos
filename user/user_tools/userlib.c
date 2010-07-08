@@ -25,11 +25,7 @@ void textColor(uint8_t color)
 unsigned char getch()
 {
     unsigned char ret;
-    do
-    {
-        __asm__ volatile("int $0x7F" : "=a"(ret): "a"(6));
-    }
-    while (ret==0);
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(6));
     return ret;
 }
 

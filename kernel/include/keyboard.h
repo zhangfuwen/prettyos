@@ -36,6 +36,7 @@ uint8_t FetchAndAnalyzeScancode();
 uint8_t ScanToASCII();
 void    keyboard_handler(registers_t* r);
 uint8_t keyboard_getChar();
-bool keyPressed(VK Key); 
+char    getch();
+bool    keyPressed(VK Key); 
 
 #endif

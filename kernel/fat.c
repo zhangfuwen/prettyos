@@ -10,6 +10,15 @@
 *  We are adapting this sourcecode to the needs of PrettyOS.
 */
 
+/// TODO:
+/// To be removed:
+///     FAT_fread
+///     FAT_fwrite
+/// To be reimplemented (using caching and who do not depend on functions mentioned above):
+///     FAT_fgetc
+///     FAT_fputc
+
+
 #include "util.h"
 #include "paging.h"
 #include "kheap.h"
@@ -2112,4 +2121,19 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
     }
 
     return FAT_fileRename(fileptr, fileNameNew);
+}
+
+char FAT_fgetc(file_t* file)
+{
+	// HACK: not performant
+	char temp;
+	FAT_fread(file->data, &temp, 1);
+	return(temp);
+}
+
+FS_ERROR FAT_fputc(file_t* file, char c)
+{
+	// HACK: not performant
+	FAT_fwrite(&c, 1, 1, file->data);
+	return(CE_GOOD);
 }
