@@ -11,12 +11,11 @@
 */
 
 /// TODO:
-/// To be removed:
+/// To be checked:
 ///     FAT_fread
-///     FAT_fwrite
-/// To be reimplemented (using caching and who do not depend on functions mentioned above):
+/// To be checked (using cache):
 ///     FAT_fgetc
-///     FAT_fputc
+
 
 
 #include "util.h"
@@ -26,6 +25,8 @@
 #include "console.h"
 #include "fat.h"
 #include "devicemanager.h"
+
+
 
 // prototypes
 static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t value, bool forceWrite);
@@ -1815,7 +1816,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     FAT_file_t* FATfile = malloc(sizeof(FAT_file_t), 0);
     file->data = FATfile;
     FATfile->file = file;
-    
+
     //HACK
     if(!FormatFileName(file->name, FATfile->name, false))
 	{
@@ -1968,7 +1969,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
 FS_ERROR FAT_remove(const char* fileName, partition_t* part)
 {
 	FAT_file_t tempFile;
-    FAT_file_t* fileptr = &tempFile; 
+    FAT_file_t* fileptr = &tempFile;
     FormatFileName(fileName, fileptr->name, false); // must be 8+3 formatted first
     fileptr->volume = part->data;
     fileptr->firstCluster = 0;
@@ -1979,20 +1980,20 @@ FS_ERROR FAT_remove(const char* fileName, partition_t* part)
     // start at the root directory
     fileptr->dirfirstCluster = fileptr->dircurrCluster = fileptr->volume->FatRootDirCluster;
 
-    fileptrCopy(globalFilePtr, fileptr); 
+    fileptrCopy(globalFilePtr, fileptr);
     FS_ERROR result = FAT_searchFile(fileptr, globalFilePtr, LOOK_FOR_MATCHING_ENTRY, 0);
 
     if (result != CE_GOOD)
     {
-        return CE_FILE_NOT_FOUND;        
+        return CE_FILE_NOT_FOUND;
     }
 
     if (fileptr->attributes & ATTR_DIRECTORY)
     {
-        return CE_DELETE_DIR;        
+        return CE_DELETE_DIR;
     }
 
-    return FAT_fileErase(fileptr, &fileptr->entry, true);    
+    return FAT_fileErase(fileptr, &fileptr->entry, true);
 }
 
 static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
@@ -2003,23 +2004,23 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
     FILEROOTDIRECTORYENTRY dir;
 
     if (fileptr == NULL)
-    {        
+    {
         return CE_FILENOTOPENED;
     }
-    
+
     FormatFileName(fileName, fileptr->name, false); // must be 8+3 formatted first
-    
-    strncpy(string, fileptr->name, 11); 
+
+    strncpy(string, fileptr->name, 11);
     goodHandle = fileptr->entry;
     fHandle = 0;
-    
+
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
     dir = cacheFileEntry (fileptr, &fHandle, true);
     if (dir == NULL)
     {
-        return CE_BADCACHEREAD;        
+        return CE_BADCACHEREAD;
     }
-    
+
     for (j=0; j<11; j++)
     {
         if (dir->DIR_Name[j] != string[j])
@@ -2029,16 +2030,16 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
     }
     if (k == 0)
     {
-        return CE_FILENAME_EXISTS;        
+        return CE_FILENAME_EXISTS;
     }
     else
     {
         k = 0;
     }
 
-    globalNextClusterIsLast = false; 
+    globalNextClusterIsLast = false;
     while (true)
-    {   
+    {
         dir = cacheFileEntry (fileptr, &fHandle, false);
         if (dir == NULL)
         {
@@ -2048,14 +2049,14 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
             }
             else
             {
-                return CE_BADCACHEREAD;                
+                return CE_BADCACHEREAD;
             }
         }
         if (dir->DIR_Name[0] == 0)
         {
             break;
         }
-        
+
         for (j=0; j<11; j++)
         {
             if (dir->DIR_Name[j] != string[j])
@@ -2065,7 +2066,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
         }
         if (k == 0)
         {
-            return CE_FILENAME_EXISTS;            
+            return CE_FILENAME_EXISTS;
         }
         else
         {
@@ -2080,7 +2081,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
 
     if (dir == NULL)
     {
-        return CE_BADCACHEREAD;        
+        return CE_BADCACHEREAD;
     }
 
     for (j=0; j<11; j++)
@@ -2090,8 +2091,8 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
 
     if (!writeFileEntry(fileptr,&fHandle))
     {
-        return CE_WRITE_ERROR;        
-    }    
+        return CE_WRITE_ERROR;
+    }
 
     return CE_GOOD;
 }
@@ -2099,9 +2100,9 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
 FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_t* part)
 {
     printf("\n rename: fileNameOld: %s, fileNameNew: %s", fileNameOld, fileNameNew);
-    
+
     FAT_file_t tempFile;
-    FAT_file_t* fileptr = &tempFile; 
+    FAT_file_t* fileptr = &tempFile;
     FormatFileName(fileNameOld, fileptr->name, false); // must be 8+3 formatted first
     fileptr->volume = part->data;
     fileptr->firstCluster = 0;
@@ -2110,14 +2111,14 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
     fileptr->attributes = ATTR_ARCHIVE;
 
     // start at the root directory
-    fileptr->dirfirstCluster = fileptr->dircurrCluster = fileptr->volume->FatRootDirCluster;      
+    fileptr->dirfirstCluster = fileptr->dircurrCluster = fileptr->volume->FatRootDirCluster;
 
-    fileptrCopy(globalFilePtr, fileptr); 
+    fileptrCopy(globalFilePtr, fileptr);
     FS_ERROR result = FAT_searchFile(fileptr, globalFilePtr, LOOK_FOR_MATCHING_ENTRY, 0);
 
     if (result != CE_GOOD)
     {
-        return CE_FILE_NOT_FOUND;        
+        return CE_FILE_NOT_FOUND;
     }
 
     return FAT_fileRename(fileptr, fileNameNew);
@@ -2133,7 +2134,10 @@ char FAT_fgetc(file_t* file)
 
 FS_ERROR FAT_fputc(file_t* file, char c)
 {
-	// HACK: not performant
-	FAT_fwrite(&c, 1, 1, file->data);
-	return(CE_GOOD);
+	uint32_t retVal = FAT_fwrite(&c, 1, 1, file->data);
+	if (retVal == 1)
+	{
+	    return(CE_GOOD);
+	}
+	return CE_WRITE_ERROR;
 }
