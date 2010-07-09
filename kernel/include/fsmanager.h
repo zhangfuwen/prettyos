@@ -4,7 +4,8 @@
 #include "os.h"
 #include "list.h"
 
-typedef enum {
+typedef enum 
+{
     SEEK_SET, SEEK_CUR, SEEK_END
 } SEEK_ORIGIN;
 
@@ -116,7 +117,8 @@ typedef struct file
     
     uint32_t     seek;   // current byte in the file
     uint32_t     size;   // file size
-    char*        name;   // name of the node
+    // char*        name;   // name of the node // pointer ???
+    char     name[20];
 
     FS_ERROR     error;  // Error-value, 0 if no error
     bool         write;  // file is opened for writing

@@ -236,7 +236,7 @@ const char* getFilename(const char* path)
             path++;
             if(*path == 0)
             {
-                return(0);
+                return(NULL);
             }
         }
         path++;
@@ -594,7 +594,10 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
             static void* destOld   = NULL;
             static void* sourceOld = NULL;
 
+          #ifdef _DEVMGR_DIAGNOSIS_
             printf(" <--- RAM Cache");
+          #endif
+
             if (((void*)buffer == destOld) && ((void*)&globalReadcache[i*512] == sourceOld))
             {
                 // do nothing

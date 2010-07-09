@@ -176,6 +176,11 @@ void* malloc(uint32_t size, uint32_t alignment)
 
     kdebug(3, "%X ",address);
 
+    // debug
+    textColor(0x0E);
+    printf("\nmalloc: %X",address);
+    textColor(0x0F);
+
     return address;
 }
 
