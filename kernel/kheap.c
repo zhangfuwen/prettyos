@@ -195,7 +195,8 @@ void* malloc(uint32_t size, uint32_t alignment)
     else
     {
         textColor(0x0E);
-        printf("\nheap expanded: %u heap end: %u", to_grow, (uintptr_t)(heap_start + (uintptr_t)heap_size));
+        printf("\nheap expanded: %X heap end: %X", to_grow, (uintptr_t)(heap_start + (uintptr_t)heap_size));
+        waitForKeyStroke();
         textColor(0x0F);
     }
 
@@ -206,7 +207,7 @@ void* malloc(uint32_t size, uint32_t alignment)
 
     // debug
     textColor(0x0E);
-    printf("\nmalloc after recursive call (?): %X", address); // ??
+    printf("\nmalloc after heap expansion: %X", address); 
     textColor(0x0F);
 
     return address;
