@@ -86,9 +86,12 @@ static void logHeapRegions()
 {
     textColor(0x06);
     printf("\n\n---------------- HEAP REGIONS ----------------");
+    
+    uintptr_t region_addr = (uintptr_t)heap_start;
     for (uint32_t i=0; i<region_count; i++)
     {
-        printf("\nsize: %u, reserved: %s",regions[i].size, regions[i].reserved?"yes":"no");
+        region_addr += regions[i].size;
+        printf("\naddr: %X\tres.: %s\tsize: %X", region_addr, regions[i].reserved?"yes":"no", regions[i].size);
     }
     textColor(0x0F);
 }
@@ -279,7 +282,7 @@ void free(void* addr)
     }
 
     printf("Broken free: %X\n", addr);
-    ASSERT(false);
+    //ASSERT(false);
 }
 
 
