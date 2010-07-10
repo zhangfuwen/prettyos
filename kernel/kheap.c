@@ -38,7 +38,7 @@ static uint32_t       region_max_count = 0;
 static uint8_t* const heap_start = KERNEL_HEAP_START;
 static uint32_t       heap_size = 0;
 
-static const uint32_t HEAP_MIN_GROWTH = 0x10000;
+static const uint32_t HEAP_MIN_GROWTH = 0x40000;
 
 
 void heap_install()
@@ -88,7 +88,7 @@ static void logHeapRegions()
     printf("\n\n---------------- HEAP REGIONS ----------------");
     for (uint32_t i=0; i<region_count; i++)
     {
-        printf("\nsize: %X, reserved: %s",regions[i].size, regions[i].reserved?"yes":"no");
+        printf("\nsize: %u, reserved: %s",regions[i].size, regions[i].reserved?"yes":"no");
     }
     textColor(0x0F);
 }
