@@ -86,14 +86,15 @@ void* malloc(uint32_t size, uint32_t alignment)
     size = alignUp(size, 8);
 
     // If the heap is not set up..
-    //if (regions == NULL) // HACK
+    if (regions == NULL) 
     {
         // Do simple placement allocation
-        static uint8_t* addr = PLACEMENT_BEGIN;
-        addr = (uint8_t*) alignUp((uint32_t)addr, alignment);
-        uint8_t* ret = addr;
-        addr += size;
-        return ret;
+        static uint8_t* nextPlacement = PLACEMENT_BEGIN;
+        nextPlacement = (uint8_t*) alignUp((uint32_t)nextPlacement, alignment);
+        uint8_t* currPlacement = nextPlacement;
+        nextPlacement += size;
+        
+        return currPlacement;
     }
 
     // Walk the regions and find one being suitable
@@ -124,11 +125,15 @@ void* malloc(uint32_t size, uint32_t alignment)
             {
                 // Check whether we are able to expand
                 if (region_count+1 > region_max_count)
+                {
                     return NULL;
+                }
 
                 // Move all following regions ahead to get room for a new one
                 for (uint32_t j=region_count; j>i; --j)
+                {
                     regions[j] = regions[j-1];
+                }
                 ++region_count;
 
                 // Setup the regions
@@ -146,11 +151,15 @@ void* malloc(uint32_t size, uint32_t alignment)
             {
                 // Check whether we are able to expand
                 if (region_count+1 > region_max_count)
+                {
                     return NULL;
+                }
 
                 // Move all following regions ahead to get room for a new one
                 for (uint32_t j=region_count; j>i+1; --j)
+                {
                     regions[j] = regions[j-1];
+                }
                 ++region_count;
 
                 // Setup the regions
@@ -161,6 +170,12 @@ void* malloc(uint32_t size, uint32_t alignment)
 
             // Set the region to "reserved" and return its address
             regions[i].reserved = true;
+            
+            // debug
+            textColor(0x0E);
+            printf("\nmalloc: %X", region_addr);
+            textColor(0x0F);
+            
             return region_addr;
         }
         region_addr += regions[i].size;
@@ -168,17 +183,30 @@ void* malloc(uint32_t size, uint32_t alignment)
 
     // There is nothing free, try to expand the heap
     uint32_t to_grow = max(HEAP_MIN_GROWTH, alignUp(size*3/2,PAGESIZE));
-    if (! heap_grow(to_grow, (uint8_t*)(heap_start + (uintptr_t)heap_size)))
+    bool success = heap_grow(to_grow, (uint8_t*)(heap_start + (uintptr_t)heap_size));
+
+    if (!success)
+    {
+        textColor(0x0C);
+        printf("\nmalloc failed, heap could not be expanded!");
+        textColor(0x0F);     
         return NULL;
+    }
+    else
+    {
+        textColor(0x0E);
+        printf("\nheap expanded: %u heap end: %u", to_grow, (uintptr_t)(heap_start + (uintptr_t)heap_size));
+        textColor(0x0F);
+    }
 
     // Now there should be a region that is large enough
     void* address = malloc(size, alignment);
 
-    kdebug(3, "%X ",address);
+    kdebug(3, "%X ", address); // ?? 
 
     // debug
     textColor(0x0E);
-    printf("\nmalloc: %X",address);
+    printf("\nmalloc after recursive call (?): %X", address); // ??
     textColor(0x0F);
 
     return address;
@@ -187,7 +215,12 @@ void* malloc(uint32_t size, uint32_t alignment)
 
 void free(void* addr)
 {
-    /*if(addr == 0)*/ return; // HACK
+    // debug
+    textColor(0x07);
+    printf("\nfree:   %X", addr); 
+    textColor(0x0F);
+    
+    if(addr == 0) return; 
 
     // Walk the regions and find the correct one
     uint8_t* region_addr = heap_start;
