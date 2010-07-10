@@ -678,7 +678,6 @@ FS_ERROR FAT_fclose(file_t* file)
     {
         if (globalDataWriteNecessary)
         {
-
             if (singleSectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
                                   globalFilePtr->volume->part->buffer,                                                   // buffer
                                   globalFilePtr->volume->part))

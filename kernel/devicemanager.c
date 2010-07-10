@@ -266,12 +266,10 @@ FS_ERROR executeFile(const char* path)
         void* filebuffer = malloc(file->size, 0);
         fread(filebuffer, 1, file->size, file);
 
-        char tempfilename[12];
-        tempfilename[11] = 0;
-        strncpy(tempfilename, file->name, 11);
-        elf_exec(filebuffer, file->size, tempfilename); // try to execute
+        elf_exec(filebuffer, file->size, file->name); // try to execute
 
         fclose(file);
+		free(filebuffer);
 
         waitForKeyStroke(); /// Why does a #PF appear without it?
         return(CE_GOOD);
@@ -367,6 +365,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
     FATn[8]    = 0;
 
     //HACK
+	free(part->data);
     FAT_partition_t* FATpart = malloc(sizeof(FAT_partition_t), 0);
     part->data = FATpart;
     FATpart->part = part;

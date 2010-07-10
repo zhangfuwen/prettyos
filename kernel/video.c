@@ -260,7 +260,7 @@ void screenshot()
     file_t* file = fopen(Pfad, "a+");
     if (file) // check for NULL pointer, otherwise #PF
     {
-        fwrite((void*)videoscreen, 4098, 1, file);
+        fwrite((void*)videoscreen, 1, 4098, file);
         fclose(file);
     }
     else

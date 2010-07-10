@@ -50,7 +50,7 @@ file_t* fopen(const char* path, const char* mode)
     }
     file->EOF    = false;
     file->error  = CE_GOOD;
-    // file->name   = malloc(strlen(getFilename(path))+1, 0); 
+    file->name   = malloc(strlen(getFilename(path))+1, 0); 
 	strcpy(file->name, getFilename(path)); 
 
     bool appendMode = false; // Used to seek to end
@@ -80,7 +80,7 @@ file_t* fopen(const char* path, const char* mode)
     if(file->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD)
     {
         // cleanup
-        // free(file->name); 
+        free(file->name); 
         free(file); 
         return(NULL);
     }    
@@ -96,7 +96,7 @@ file_t* fopen(const char* path, const char* mode)
 void fclose(file_t* file)
 {
     file->volume->type->fclose(file);
-	// free(file->name);
+	free(file->name);
 	free(file);
 }
 

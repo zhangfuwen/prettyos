@@ -86,7 +86,7 @@ void* malloc(uint32_t size, uint32_t alignment)
     size = alignUp(size, 8);
 
     // If the heap is not set up..
-    if (regions == NULL)
+    //if (regions == NULL) // HACK
     {
         // Do simple placement allocation
         static uint8_t* addr = PLACEMENT_BEGIN;
@@ -187,7 +187,7 @@ void* malloc(uint32_t size, uint32_t alignment)
 
 void free(void* addr)
 {
-    if(addr == 0) return;
+    /*if(addr == 0)*/ return; // HACK
 
     // Walk the regions and find the correct one
     uint8_t* region_addr = heap_start;
