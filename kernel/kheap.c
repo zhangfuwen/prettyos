@@ -38,7 +38,7 @@ static uint32_t       region_max_count = 0;
 static uint8_t* const heap_start = KERNEL_HEAP_START;
 static uint32_t       heap_size = 0;
 
-static const uint32_t HEAP_MIN_GROWTH = 0x40000;
+static const uint32_t HEAP_MIN_GROWTH = 0x10000;
 
 
 void heap_install()
@@ -51,19 +51,22 @@ void heap_install()
     region_max_count = ((uintptr_t)PLACEMENT_END - (uintptr_t)regions) / sizeof(region_t);
 }
 
-
 static bool heap_grow(uint32_t size, uint8_t* heap_end)
 {
     // We will have to append another region-object to our array if we can't merge with the last region - check whether there would be enough space to insert the region-object
-    if (region_count>0 && regions[region_count-1].reserved && region_count+1>region_max_count)
+    if ((region_count > 0) && regions[region_count-1].reserved && (region_count+1 > region_max_count))
+    {
         return false;
+    }
 
     // Enhance the memory
-    if (! paging_alloc(kernel_pd, heap_end, size, MEM_KERNEL|MEM_WRITE))
+    if (!paging_alloc(kernel_pd, heap_end, size, MEM_KERNEL|MEM_WRITE))
+    {
         return false;
+    }
 
     // Maybe we can merge with the last region object?
-    if (region_count>0 && !regions[region_count-1].reserved)
+    if ((region_count > 0) && !regions[region_count-1].reserved)
     {
         regions[region_count-1].size += size;
     }
@@ -79,9 +82,21 @@ static bool heap_grow(uint32_t size, uint8_t* heap_end)
     return true;
 }
 
+static void logHeapRegions()
+{
+    textColor(0x06);
+    printf("\n\n---------------- HEAP REGIONS ----------------");
+    for (uint32_t i=0; i<region_count; i++)
+    {
+        printf("\nsize: %X, reserved: %s",regions[i].size, regions[i].reserved?"yes":"no");
+    }
+    textColor(0x0F);
+}
 
 void* malloc(uint32_t size, uint32_t alignment)
 {
+    // TODO: make it threadsafe 
+
     // Avoid odd addresses
     size = alignUp(size, 8);
 
@@ -171,10 +186,13 @@ void* malloc(uint32_t size, uint32_t alignment)
             // Set the region to "reserved" and return its address
             regions[i].reserved = true;
             
-            // debug
+            kdebug(3, "%X ", region_addr); 
+
+          #ifdef _MALLOC_FREE_
             textColor(0x0E);
             printf("\nmalloc: %X", region_addr);
             textColor(0x0F);
+          #endif
             
             return region_addr;
         }
@@ -194,21 +212,18 @@ void* malloc(uint32_t size, uint32_t alignment)
     }
     else
     {
+      #ifdef _MALLOC_FREE_
         textColor(0x0E);
         printf("\nheap expanded: %X heap end: %X", to_grow, (uintptr_t)(heap_start + (uintptr_t)heap_size));
         waitForKeyStroke();
+        logHeapRegions();
+        waitForKeyStroke();
         textColor(0x0F);
+      #endif
     }
 
     // Now there should be a region that is large enough
     void* address = malloc(size, alignment);
-
-    kdebug(3, "%X ", address); // ?? 
-
-    // debug
-    textColor(0x0E);
-    printf("\nmalloc after heap expansion: %X", address); 
-    textColor(0x0F);
 
     return address;
 }
@@ -216,10 +231,11 @@ void* malloc(uint32_t size, uint32_t alignment)
 
 void free(void* addr)
 {
-    // debug
+  #ifdef _MALLOC_FREE_
     textColor(0x07);
     printf("\nfree:   %X", addr); 
     textColor(0x0F);
+  #endif
     
     if(addr == 0) return; 
 
@@ -265,6 +281,7 @@ void free(void* addr)
     printf("Broken free: %X\n", addr);
     ASSERT(false);
 }
+
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
