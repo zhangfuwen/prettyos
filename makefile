@@ -75,7 +75,7 @@ $(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/shell.elf
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
 FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
-	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTESTC)/HELLO.ELF $(USERDIR)/$(USERTESTCPP)/CPP.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF $(USERDIR)/other_userprogs/ARROW.ELF $(USERDIR)/other_userprogs/PQEQ.ELF
+	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTESTC)/HELLO.ELF $(USERDIR)/$(USERTESTCPP)/CPP.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF $(USERDIR)/other_userprogs/ARROW.ELF $(USERDIR)/other_userprogs/PQEQ.ELF $(USERDIR)/other_userprogs/KEYSOUND.ELF
 
 clean:
 # OS-dependant code because of different interpretation of "/" in Windows and UNIX-Based OS (Linux and Mac OS X)
