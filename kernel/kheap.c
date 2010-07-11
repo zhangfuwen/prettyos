@@ -3,49 +3,47 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "kheap.h"
 #include "util.h"
-#include "paging.h"
 #include "console.h"
-
+#include "paging.h"
+#include "kheap.h"
 
 /*
-The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory. It manages a certain amount of continuous
-   virtual memory, starting at "heap_start". Whenever more memory is requested than there is available, the heap expands.
-For expansion, the heap asks the paging module to map physical memory to the following virtual addresses and increases it's
-   "heap_size" variable afterwards.
+   The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory. 
+   It manages a certain amount of continuous virtual memory, starting at "heap_start". 
+   Whenever more memory is requested than there is available, the heap expands.
+   For expansion, the heap asks the paging module to map physical memory to the following virtual addresses 
+   and increases its "heap_size" variable (but at least by "HEAP_MIN_GROWTH") afterwards.
 
-To manage the free and reserved (allocated) areas of the heap an array of "region" elements is held. Each region specifies
-   it's size and whether it is reserved/allocated. Free regions always get merged. Regions don't store their addresses, the
-   third region's address is calculated by adding the first and second region's size to "heap_start":
-      region_3_addr = heap_start + regions[0].size + regions[1].size
+   To manage the free and reserved (allocated) areas of the heap an array of "region" elements is kept. 
+   Each region specifies its size and reservation status. 
+   Free regions always get merged. Regions don't store their addresses. 
+   The third region address is calculated by adding the first and second region size to "heap_start":
+   region_3_addr = heap_start + regions[0].size + regions[1].size
 
-Before the heap is set up memory is allocated on a "placement address". This is an identity mapped area of continuous memory,
-   the allocation just moves a pointer forward by the requested size and returns it's previous value.
+   Before the heap is set up memory is allocated on a "placement address". 
+   This is an identity mapped area of continuous memory,
+   the allocation just moves a pointer forward by the requested size and returns its previous value.
 
-The heap's management data is placed at this placement address, too. Since this area cannot grow, the heap has a maximum
-   amount of region-objects ("region_max_count").
+   The heap's management data is placed at this placement address, too. 
+   Since this area cannot grow, the heap has a maximum amount of region objects ("region_max_count").
 */
 
-
 // TODO: Multithreading safety
-// TODO: Ensure the heap won't overflow (over 4 GB)
+// TODO: Ensure the heap will not overflow (over 4 GB)
 
-
-static region_t*      regions = NULL;
-static uint32_t       region_count = 0;
+static region_t*      regions          = NULL;
+static uint32_t       region_count     = 0;
 static uint32_t       region_max_count = 0;
-static uint8_t* const heap_start = KERNEL_HEAP_START;
-static uint32_t       heap_size = 0;
-
-static const uint32_t HEAP_MIN_GROWTH = 0x40000;
-
+static uint8_t* const heap_start       = KERNEL_HEAP_START;
+static uint32_t       heap_size        = 0;
+static const uint32_t HEAP_MIN_GROWTH  = 0x40000;
 
 void heap_install()
 {
     // This gets us the current placement address
     regions = malloc(0, 0);
-
+    
     // We take the rest of the placement area
     region_count = 0;
     region_max_count = ((uintptr_t)PLACEMENT_END - (uintptr_t)regions) / sizeof(region_t);
@@ -86,19 +84,20 @@ static void logHeapRegions()
 {
     textColor(0x06);
     printf("\n\n---------------- HEAP REGIONS ----------------");
+    printf("\naddress\t\treserved\tsize");
     
     uintptr_t region_addr = (uintptr_t)heap_start;
     for (uint32_t i=0; i<region_count; i++)
-    {
+    {        
+        printf("\n%X\t%s\t\t%X", region_addr, regions[i].reserved?"yes":"no", regions[i].size);
         region_addr += regions[i].size;
-        printf("\naddr: %X\tres.: %s\tsize: %X", region_addr, regions[i].reserved?"yes":"no", regions[i].size);
     }
     textColor(0x0F);
 }
 
 void* malloc(uint32_t size, uint32_t alignment)
 {
-    // TODO: make it threadsafe 
+    // TODO: make threadsafe 
 
     // Avoid odd addresses
     size = alignUp(size, 8);
@@ -119,20 +118,20 @@ void* malloc(uint32_t size, uint32_t alignment)
     uint8_t* region_addr = heap_start;
     for (uint32_t i=0; i<region_count; ++i)
     {
-        // Calculate aligned address and the how much more size is needed due to alignment
+        // Calculate aligned address and the additional size needed due to alignment
         uint8_t* aligned_addr = (uint8_t*)alignUp((uintptr_t)region_addr, alignment);
         uint32_t additional_size = aligned_addr - region_addr;
 
         // Check whether this region is free and big enough
-        if (!regions[i].reserved && regions[i].size>=(size+additional_size))
+        if (!regions[i].reserved && (regions[i].size >= size + additional_size))
         {
-            // We will split up this region...
+            // We will split up this region ...
             // +--------------------------------------------------------+
             // |                      Current Region                    |
             // +--------------------------------------------------------+
             //
-            // ...into three, the first and third remain free while the second
-            //   gets reserved and its address returned
+            // ... into three, the first and third remain free, 
+            // while the second gets reserved, and its address is returned
             //
             // +------------------+--------------------------+----------+
             // | Before Alignment | Aligned Destination Area | Leftover |
@@ -155,9 +154,9 @@ void* malloc(uint32_t size, uint32_t alignment)
                 ++region_count;
 
                 // Setup the regions
-                regions[i].size = aligned_addr - region_addr;
+                regions[i].size     = aligned_addr - region_addr;
                 regions[i].reserved = false;
-                regions[i+1].size -= regions[i].size;
+                regions[i+1].size  -= regions[i].size;
 
                 // "Aligned Destination Area" becomes the "current" region
                 region_addr += regions[i].size;
@@ -165,7 +164,7 @@ void* malloc(uint32_t size, uint32_t alignment)
             }
 
             // Split the leftover
-            if (regions[i].size > (size+additional_size))
+            if (regions[i].size > size + additional_size)
             {
                 // Check whether we are able to expand
                 if (region_count+1 > region_max_count)
@@ -181,9 +180,9 @@ void* malloc(uint32_t size, uint32_t alignment)
                 ++region_count;
 
                 // Setup the regions
-                regions[i+1].size = regions[i].size - size;
+                regions[i+1].size     = regions[i].size - size;
                 regions[i+1].reserved = false;
-                regions[i].size = size;
+                regions[i].size       = size;
             }
 
             // Set the region to "reserved" and return its address
@@ -198,7 +197,9 @@ void* malloc(uint32_t size, uint32_t alignment)
           #endif
             
             return region_addr;
-        }
+
+        } //region is free and big enough
+        
         region_addr += regions[i].size;
     }
 
@@ -240,7 +241,7 @@ void free(void* addr)
     textColor(0x0F);
   #endif
     
-    if(addr == 0) return; 
+    if (addr == 0) return; // NULL pointer
 
     // Walk the regions and find the correct one
     uint8_t* region_addr = heap_start;
@@ -248,17 +249,19 @@ void free(void* addr)
     {
         if (region_addr == addr)
         {
-            regions[i].reserved = false;
+            regions[i].reserved = false; // free the region
 
             // Check for a merge with the next region
-            if (i+1<region_count && !regions[i+1].reserved)
+            if ((i+1 < region_count) && !regions[i+1].reserved)
             {
-                // Adjust the size of the now-free region
-                regions[i].size += regions[i+1].size;
+                // Adjust the size of the now free region
+                regions[i].size += regions[i+1].size; // merge
 
                 // Move all following regions back by one
                 for (uint32_t j=i+1; j<region_count-1; ++j)
+                {
                     regions[j] = regions[j+1];
+                }
                 --region_count;
             }
 
@@ -266,22 +269,25 @@ void free(void* addr)
             if (i>0 && !regions[i-1].reserved)
             {
                 // Adjust the size of the previous region
-                regions[i-1].size += regions[i].size;
+                regions[i-1].size += regions[i].size; // merge
 
                 // Move all following regions back by one
                 for (uint32_t j=i; j<region_count-1; ++j)
+                {
                     regions[j] = regions[j+1];
+                }
                 --region_count;
             }
 
-            // We are done
             return;
         }
 
         region_addr += regions[i].size;
     }
 
+    textColor(0x0C);
     printf("Broken free: %X\n", addr);
+    textColor(0x0F);
     //ASSERT(false);
 }
 

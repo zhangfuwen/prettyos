@@ -5,26 +5,26 @@
 
 #include "util.h"
 #include "timer.h"
-#include "video.h"
+#include "cmos.h"
+#include "time.h"
 #include "kheap.h"
 #include "initrd.h"
+#include "flpydsk.h"
+#include "ehci.h"
+#include "mouse.h"
+#include "keyboard.h" 
+#include "video.h"
 #include "task.h"
 #include "event_list.h"
 #include "syscall.h"
 #include "pci.h"
-#include "time.h"
-#include "flpydsk.h"
-#include "ehci.h"
-#include "mouse.h"
-#include "keyboard.h" // TEST
 #include "cdi.h"
 #include "devicemanager.h"
-#include "cmos.h"
 
-#define ADDR_MEM_INFO  0x1000 // RAM Detection by Second Stage Bootloader
-#define FILEBUFFERSIZE 0x10000 // Buffer for User-Space Program, e.g. shell
+#define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
+#define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.27";
+const char* version = "0.0.1.28";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -32,7 +32,6 @@ extern uintptr_t _kernel_end; // linker script
 
 // Informations about the system
 system_t system;
-
 
 void fpu_install(); // fpu.c
 
@@ -99,9 +98,9 @@ void main()
     flpydsk_install(); // detect FDDs
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 
-    #ifdef _DIAGNOSIS_
+  #ifdef _DIAGNOSIS_
     listPCI();
-    #endif
+  #endif
 
     void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);
 
@@ -129,9 +128,12 @@ void main()
             if (strcmp(node->name, "shell") == 0)
             {
                 shell_found = true;
-
                 if (!elf_exec(buf, sz, "Shell"))
-                    printf("Cannot start shell!\n");
+                {
+                    textColor(0x04);
+                    printf("\nCannot start shell!\n");
+                    textColor(0x0F);
+                }
             }
         }
     }
@@ -139,19 +141,20 @@ void main()
     if (! shell_found)
     {
         textColor(0x04);
-        printf("Program not found.\n");
+        printf("\nProgram not found.\n");
         textColor(0x0F);
     }
 
-    showPortList(); // TEST
-    showDiskList(); // TEST
+    showPortList(); 
+    showDiskList(); 
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char     DateAndTime[81];             // String for Date&Time
 
-    while (true) // start of kernel idle loop
+    //////////////////////////// start of kernel idle loop ////////////////////////////
+    while (true) 
     {
         // show rotating asterisk
         *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
@@ -182,8 +185,9 @@ void main()
 
         handleEvents();
 
-        __asm__ volatile ("hlt"); // HLT halts the CPU until the next external interrupt is fired.
-    } // end of kernel idle loop
+        __asm__ volatile ("hlt"); // CPU is stopped until the next interrupt 
+    } 
+    ///////////////////////////// end of kernel idle loop /////////////////////////////
 }
 
 /*

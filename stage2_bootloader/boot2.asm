@@ -31,10 +31,10 @@ entry_point:
     mov es, ax
  
  ;=====================================================HOTFIX===ehenkes====
-    mov ax,0x3000 
+    mov ax,0x9000 
     mov ss,ax            ; stack
     xor sp,sp
-    dec sp               ; stackpointer: 3FFFFh 
+    dec sp               ; stackpointer: 9FFFFh 
  ;=====================================================HOTFIX===ehenkes====
     sti                  
 

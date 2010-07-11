@@ -12,7 +12,7 @@
 /// #define _DEVMGR_DIAGNOSIS_  // e.g. sectorRead, sectorWrite
 /// #define _TASKING_DIAGNOSIS_ // Provides optional output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_  // Provides optional information about the floppy(-motor)
-/// #define _SOUND_             // Sound-Messages - deactivation makes sense during development, because of better boot-time
+#define _SOUND_             // Sound-Messages - deactivation makes sense during development, because of better boot-time
 
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);

@@ -17,10 +17,8 @@ extern char _kernel_beg, _kernel_end; // defined in linker script
 
 // Physical Memory
 static const uint32_t MAX_DWORDS = 0x100000000ull / PAGESIZE / 32;
-
 static uint32_t* bittable;
 static uint32_t  first_free_dword;
-
 static uint32_t phys_init();
 
 uint32_t paging_install()
@@ -35,7 +33,7 @@ uint32_t paging_install()
     kdebug(3, "\nkernel_pd (virt.): %X ",kernel_pd);
     kdebug(3, "kernel_pd (phys.): %X\n",kernel_pd->pd_phys_addr);
 
-    // Setup the page tables for 0 MiB-20 MiB, identity mapping
+    // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;
     for (int i=0; i<5; ++i)
     {
@@ -52,8 +50,8 @@ uint32_t paging_install()
     }
 
     // Set the page which covers the video area (0xB8000) to writeable
-    //kernel_pd->codes[0] |= MEM_USER | MEM_WRITE;
-    //kernel_pd->tables[0]->pages[0xB8] |= MEM_USER | MEM_WRITE; // 184* 0x1000 = 0xB8000
+    // kernel_pd->codes[0]               |= MEM_USER | MEM_WRITE;
+    // kernel_pd->tables[0]->pages[0xB8] |= MEM_USER | MEM_WRITE; // 184 * 0x1000 = 0xB8000
 
     // Setup the page tables for the kernel heap (3GB-4GB), unmapped
     page_table_t* heap_pts = malloc(256*sizeof(page_table_t), PAGESIZE);
@@ -61,14 +59,14 @@ uint32_t paging_install()
     for (uint32_t i=0; i<256; ++i)
     {
         kernel_pd->tables[0x300+i] = &heap_pts[i];
-        kernel_pd->codes[0x300+i] = (uint32_t)kernel_pd->tables[0x300+i] | MEM_PRESENT | MEM_WRITE;
+        kernel_pd->codes[0x300+i]  = (uint32_t)kernel_pd->tables[0x300+i] | MEM_PRESENT | MEM_WRITE;
     }
 
-    // Enable paging
+    // Tell CPU to enable paging
     paging_switch (kernel_pd);
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-    cr0 |= 0x80000000; // set the paging bit in CR0 to enable paging
+    cr0 |= 0x80000000;                            // set the paging bit in CR0 
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
 
     return ram_available;
@@ -93,15 +91,25 @@ static bool memorymap_availability(const mem_map_entry_t* entries, uint64_t beg,
 {
     // There must not be an "reserved" entry which reaches into the specified area
     for (const mem_map_entry_t* entry=entries; entry->size; ++entry)
+    {
         if (entry->type!=1 && entry->base<end && (entry->base+entry->size)>beg)
+        {
             return false;
+        }
+    }
 
     // Check whether the "free" entries cover the whole specified area.
     uint64_t covered = beg;
     for (const mem_map_entry_t* outer_loop=entries; outer_loop->size; ++outer_loop)
+    {
         for (const mem_map_entry_t* entry=entries; entry->size; ++entry)
+        {
             if (entry->base<=covered && (entry->base+entry->size)>covered)
+            {
                 covered = entry->base + entry->size;
+            }
+        }
+    }
 
     // Return whether the whole area is covered by "free" entries
     return covered >= end;
@@ -110,11 +118,12 @@ static bool memorymap_availability(const mem_map_entry_t* entries, uint64_t beg,
 static void phys_set_bits(uint32_t addr_begin, uint32_t addr_end, bool reserved)
 {
     // Calculate the bit-numbers
-    uint32_t start = alignUp(addr_begin, PAGESIZE) / PAGESIZE;
-    uint32_t end =   alignDown(addr_end, PAGESIZE) / PAGESIZE;
+    uint32_t start = alignUp   (addr_begin, PAGESIZE) / PAGESIZE;
+    uint32_t end   = alignDown (addr_end,   PAGESIZE) / PAGESIZE;
 
     // Set all these bits
-    for (uint32_t j=start; j<end; ++j) {
+    for (uint32_t j=start; j<end; ++j) 
+    {
         if (reserved)
         {
             bittable[j/32] |= 1<<(j%32);
@@ -128,8 +137,7 @@ static void phys_set_bits(uint32_t addr_begin, uint32_t addr_end, bool reserved)
 
 static uint32_t phys_init()
 {
-    static const uint64_t FOUR_GB    = 0x100000000ull;
-
+    static const uint64_t FOUR_GB  = 0x100000000ull;
     mem_map_entry_t* const entries = (mem_map_entry_t*)MEMORY_MAP_ADDRESS;
 
     // Print the memory map
@@ -139,30 +147,39 @@ static uint32_t phys_init()
         kdebug(3, "  %X -> %X %i\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }
 
-    // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size==0.
+    // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size 0.
     for (mem_map_entry_t* entry=entries; entry->size; ++entry)
     {
         // We will completely ignore memory above 4 GB, move following entries backward by one then
         if (entry->base >= FOUR_GB)
+        {
             for (mem_map_entry_t* e=entry; e->size; ++e)
+            {
                 *e = *(e+1);
+            }
+        }
 
         // Eventually reduce the size so the the block doesn't exceed 4 GB
         else if (entry->base + entry->size >= FOUR_GB)
+        {
             entry->size = FOUR_GB - entry->base;
+        }
     }
 
-    // Check that 16 MiB-20 MiB is free for use
-    if (! memorymap_availability(entries, 16*1024*1024, 20*1024*1024))
+    // Check that 10 MiB-20 MiB is free for use
+    if (!memorymap_availability(entries, 10*1024*1024, 20*1024*1024))
     {
-        printf("The memory between 16 MiB and 20 MiB is not free for use. OS haltet!\n");
+        textColor(0x0C);
+        printf("The memory between 10 MiB and 20 MiB is not free for use. OS halted!\n");
         for (;;);
     }
 
     // We store our data here, initialize all bits to "reserved"
     bittable = malloc(128*1024, 0);
     for (uint32_t i=0; i<MAX_DWORDS; ++i)
+    {
         bittable[i] = 0xFFFFFFFF;
+    }
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
     for (mem_map_entry_t* entry=entries; entry->size; ++entry)
@@ -178,11 +195,15 @@ static uint32_t phys_init()
     // Find the number of dwords we can use, skipping the last, "reserved"-only ones
     uint32_t dword_count = 0;
     for (uint32_t i=0; i<MAX_DWORDS; ++i)
+    {
         if (bittable[i] != 0xFFFFFFFF)
+        {       
             dword_count = i+1;
+        }
+    }     
 
-    // Exclude the first 16 MiB from being allocated (they'll be needed for DMA later on)
-    first_free_dword = 16*1024*1024 / PAGESIZE / 32;
+    // Exclude the first 10 MiB from being allocated (they'll be needed for DMA later on)
+    first_free_dword = 10*1024*1024 / PAGESIZE / 32;
 
     kdebug(3, "Highest available RAM: %X\n", dword_count*32*4096);
 
@@ -194,19 +215,22 @@ static uint32_t phys_alloc()
 {
     // Search for a free uint32_t, i.e. one that not only contains ones
     for (; first_free_dword<MAX_DWORDS; ++first_free_dword)
+    {
         if (bittable[first_free_dword] != 0xFFFFFFFF)
         {
             // Find the number of a free bit
             uint32_t val = bittable[first_free_dword];
             uint32_t bitnr = 0;
             while (val & 1)
+            {
                 val>>=1, ++bitnr;
+            }
 
             // Set the page to "reserved" and return the frame's address
             bittable[first_free_dword] |= 1<<(bitnr%32);
             return (first_free_dword*32+bitnr) * PAGESIZE;
         }
-
+    }
     // No free page found
     return 0;
 }
@@ -218,13 +242,13 @@ static void phys_free(uint32_t addr)
 
     // Maybe the affected dword (which has a free bit now) is ahead of first_free_dword?
     if (bitnr/32 < first_free_dword)
+    {
         first_free_dword = bitnr/32;
+    }
 
     // Set the page to "free"
     bittable[bitnr/32] &= ~(1<<(bitnr%32));
 }
-
-
 
 bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags)
 {
@@ -256,11 +280,11 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
 
         // Get the page table
         page_table_t* pt = pd->tables[pagenr/1024];
-        if (! pt)
+        if (!pt)
         {
             // Allocate the page table
             pt = (page_table_t*) malloc(sizeof(page_table_t), PAGESIZE);
-            if (! pt)
+            if (!pt)
             {
                 // Undo the allocations and return an error
                 phys_free(phys);
@@ -312,13 +336,14 @@ page_directory_t* paging_create_user_pd()
     // Allocate memory for the page directory
     page_directory_t* pd = (page_directory_t*) malloc(sizeof(page_directory_t), PAGESIZE);
     if (!pd)
+    {
         return NULL;
+    }
 
     // Each user's page directory contains the same mapping as the kernel
     memcpy(pd, kernel_pd, sizeof(page_directory_t));
     pd->pd_phys_addr = paging_get_phys_addr(kernel_pd, pd->codes);
-
-
+    
     return pd;
 }
 
@@ -329,16 +354,21 @@ void paging_destroy_user_pd(page_directory_t* pd)
 
     // Free all memory that is not from the kernel
     for (uint32_t i=0; i<1024; ++i)
+    {
         if (pd->tables[i] && pd->tables[i]!=kernel_pd->tables[i])
         {
             for (uint32_t j=0; j<1024; ++j)
             {
                 uint32_t phys_addr = pd->tables[i]->pages[j] & 0xFFFFF000;
+                
                 if (phys_addr)
+                {
                     phys_free(phys_addr);
+                }
             }
             free(pd->tables[i]);
         }
+    }
 
     free(pd);
 }
@@ -351,8 +381,13 @@ void paging_switch (page_directory_t* pd)
 void* paging_acquire_pcimem(uint32_t phys_addr)
 {
     static uint8_t* virt = PCI_MEM_START;
+    
     if (virt == PCI_MEM_END)
-        panic_assert(__FILE__, __LINE__, "Not enough PCI-memory available");
+    {
+        textColor(0x0C);
+        panic_assert(__FILE__, __LINE__, "\nNot enough PCI-memory available");
+        textColor(0x0F);
+    }
 
     uint32_t pagenr = (uint32_t)virt/PAGESIZE;
 

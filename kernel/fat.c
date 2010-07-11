@@ -2125,7 +2125,6 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
 
 char FAT_fgetc(file_t* file)
 {
-	// HACK: not performant
 	char temp;
 	FAT_fread(file->data, &temp, 1);
 	return(temp);
