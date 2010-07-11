@@ -208,7 +208,7 @@ void vprintf(const char* args, va_list ap)
     uint8_t attribute = currentTask->attrib;
     char buffer[32]; // Larger is not needed at the moment
 
-    //semaphore_lock(currentTask->console->sp);
+    // semaphore_lock(currentTask->console->sp); // TEST
     for (; *args; ++args)
     {
         switch (*args)
@@ -264,7 +264,7 @@ void vprintf(const char* args, va_list ap)
                 break;
         }
     }
-    //semaphore_unlock(currentTask->console->sp);
+    // semaphore_unlock(currentTask->console->sp); // TEST
 }
 void printf(const char* args, ...)
 {

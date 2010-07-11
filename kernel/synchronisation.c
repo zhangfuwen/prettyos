@@ -20,6 +20,8 @@ semaphore_t* semaphore_create(uint16_t ressourceCount)
 
 void semaphore_lock(semaphore_t* obj)
 {
+    if(obj == 0) return;
+
     if(obj->freeRes == 0xFFFFFFFF) // blocked -> wait (busy wait is a HACK)
     {
         currentTask->blockType = BL_SEMAPHORE;
@@ -48,6 +50,8 @@ void semaphore_lock(semaphore_t* obj)
 
 void semaphore_unlock(semaphore_t* obj)
 {
+    if(obj == 0) return;
+
     for(int i = 0; i < obj->resCount; i++)
     {
         if(obj->ressources[i] == currentTask) // found -> delete

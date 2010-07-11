@@ -33,7 +33,7 @@ entry_point:
  ;==================================================== HOTFIX ==== ehenkes ====
     mov ax,0x9000
     mov ss,ax     ; stack
-    mov sp,0xfc00 ; stackpointer: 9FC00h 
+    mov sp,0xFC00 ; stackpointer: 9FC00h 
  ;==================================================== HOTFIX ==== ehenkes ====
     sti
 
