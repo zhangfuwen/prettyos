@@ -7,6 +7,7 @@
 #include "console.h"
 #include "paging.h"
 #include "kheap.h"
+#include "task.h"
 
 /*
    The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory. 
@@ -80,9 +81,11 @@ static bool heap_grow(uint32_t size, uint8_t* heap_end)
     return true;
 }
 
+#ifdef _MALLOC_FREE_
 static void logHeapRegions()
 {
-    textColor(0x06);
+    textColor(0x06);    
+    task_switching = false;
     printf("\n\n---------------- HEAP REGIONS ----------------");
     printf("\naddress\t\treserved\tsize");
     
@@ -92,8 +95,10 @@ static void logHeapRegions()
         printf("\n%X\t%s\t\t%X", region_addr, regions[i].reserved?"yes":"no", regions[i].size);
         region_addr += regions[i].size;
     }
+    task_switching = true;
     textColor(0x0F);
 }
+#endif
 
 void* malloc(uint32_t size, uint32_t alignment)
 {
@@ -192,7 +197,9 @@ void* malloc(uint32_t size, uint32_t alignment)
 
           #ifdef _MALLOC_FREE_
             textColor(0x0E);
+            task_switching = false;
             printf("\nmalloc: %X", region_addr);
+            task_switching = true;
             textColor(0x0F);
           #endif
             
@@ -218,7 +225,9 @@ void* malloc(uint32_t size, uint32_t alignment)
     {
       #ifdef _MALLOC_FREE_
         textColor(0x0E);
+        task_switching = false;
         printf("\nheap expanded: %X heap end: %X", to_grow, (uintptr_t)(heap_start + (uintptr_t)heap_size));
+        task_switching = true;
         waitForKeyStroke();
         logHeapRegions();
         waitForKeyStroke();
@@ -237,7 +246,9 @@ void free(void* addr)
 {
   #ifdef _MALLOC_FREE_
     textColor(0x07);
+    task_switching = false;
     printf("\nfree:   %X", addr); 
+    task_switching = true;
     textColor(0x0F);
   #endif
     

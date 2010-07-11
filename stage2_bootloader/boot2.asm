@@ -30,12 +30,11 @@ entry_point:
     mov ds, ax
     mov es, ax
  
- ;=====================================================HOTFIX===ehenkes====
+ ;==================================================== HOTFIX ==== ehenkes ====
     mov ax,0x9000 
-    mov ss,ax            ; stack
-    xor sp,sp
-    dec sp               ; stackpointer: 9FFFFh 
- ;=====================================================HOTFIX===ehenkes====
+    mov ss,ax     ; stack
+    mov sp,0xfc00 ; stackpointer: 9FC00h 
+ ;==================================================== HOTFIX ==== ehenkes ====
     sti                  
 
 A20:

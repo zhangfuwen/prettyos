@@ -6,7 +6,7 @@
 // These switches change the behavior of PrettyOS, useful for analyzing tasks:
 
 /// #define _DIAGNOSIS_         // Diagnosis-Output - activates prints to the screen about some details and memory use
-#define _MALLOC_FREE_           // shows information about malloc/free and heap expansion
+#define _MALLOC_FREE_       // shows information about malloc/free and heap expansion
 /// #define _USB_DIAGNOSIS_     // only as transition state during implementation of USB 2.0 transfers
 /// #define _FAT_DIAGNOSIS_     // only as transition state during implementation of FAT 12/16/32
 /// #define _DEVMGR_DIAGNOSIS_  // e.g. sectorRead, sectorWrite
