@@ -84,7 +84,7 @@ static bool heap_grow(uint32_t size, uint8_t* heap_end)
 #ifdef _MALLOC_FREE_
 static void logHeapRegions()
 {
-    textColor(0x06);    
+    textColor(0x06);
     task_switching = false;
     printf("\n\n---------------- HEAP REGIONS ----------------");
     printf("\naddress\t\treserved\tsize");
@@ -102,20 +102,20 @@ static void logHeapRegions()
 
 void* malloc(uint32_t size, uint32_t alignment)
 {
-    // TODO: make threadsafe 
+    // TODO: make threadsafe
 
     // Avoid odd addresses
     size = alignUp(size, 8);
 
     // If the heap is not set up..
-    if (regions == NULL) 
+    if (regions == NULL)
     {
         // Do simple placement allocation
         static uint8_t* nextPlacement = PLACEMENT_BEGIN;
         nextPlacement = (uint8_t*) alignUp((uint32_t)nextPlacement, alignment);
         uint8_t* currPlacement = nextPlacement;
         nextPlacement += size;
-        
+
         return currPlacement;
     }
 
@@ -218,7 +218,7 @@ void* malloc(uint32_t size, uint32_t alignment)
     {
         textColor(0x0C);
         printf("\nmalloc failed, heap could not be expanded!");
-        textColor(0x0F);     
+        textColor(0x0F);
         return NULL;
     }
     else
@@ -247,12 +247,12 @@ void free(void* addr)
   #ifdef _MALLOC_FREE_
     textColor(0x07);
     task_switching = false;
-    printf("\nfree:   %X", addr); 
+    printf("\nfree:   %X", addr);
     task_switching = true;
     textColor(0x0F);
   #endif
     
-    if (addr == 0) return; // NULL pointer
+    if (addr == 0) return;
 
     // Walk the regions and find the correct one
     uint8_t* region_addr = heap_start;

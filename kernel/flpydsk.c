@@ -296,10 +296,10 @@ static void flpydsk_write_ccr(uint8_t val)
 // wait for irq
 static void flpydsk_wait_irq()
 {
-    uint32_t timeout = getCurrentSeconds()+2;
+    uint32_t timeout = timer_getSeconds()+2;
     while (CurrentDrive->receivedIRQ == false) // wait for irq to fire
     {
-        if ((timeout-getCurrentSeconds()) <= 0)
+        if ((timeout-timer_getSeconds()) <= 0)
         {
             //printf("\ntimeout: IRQ not received!\n");
             break;

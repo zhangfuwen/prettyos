@@ -50,7 +50,7 @@ uint8_t AsciiToCP437(uint8_t ascii)
     }
 }
 
-void kputch(char c)
+static void kputch(char c)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
@@ -100,7 +100,7 @@ void kputch(char c)
     }
 }
 
-void kputs(const char* text)
+static void kputs(const char* text)
 {
     for (; *text; kputch(*text), ++text);
 }

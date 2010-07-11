@@ -44,7 +44,7 @@ void printLine(const char* message, unsigned int line, unsigned char attribute)
     }
 }
 
-unsigned int getCurrentSeconds()
+uint32_t getCurrentMilliseconds()
 {
     unsigned int ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(9));
@@ -110,6 +110,11 @@ void setScrollField(uint8_t top, uint8_t bottom) {
 
 
 /// user functions
+
+uint32_t getCurrentSeconds()
+{
+    return(getCurrentMilliseconds()/1000);
+}
 
 void* memset(void* dest, int8_t val, size_t count)
 {

@@ -15,6 +15,7 @@ typedef struct // Defines the User-Space of the display
     uint8_t csr_x;
     uint8_t csr_y;
     keyqueue_t KQ; // Buffer storing keyboard input
+    struct semaphore* sp;
 } console_t;
 
 extern console_t* reachableConsoles[11]; // All accessible consoles: up to 10 subconsoles + main console

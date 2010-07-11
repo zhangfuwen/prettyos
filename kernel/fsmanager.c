@@ -17,10 +17,10 @@ void fsmanager_install()
 {
     FAT.fopen  = &FAT_fopen;
     FAT.fclose = &FAT_fclose;
-	FAT.fgetc  = &FAT_fgetc;
-	FAT.fputc  = &FAT_fputc;
+    FAT.fgetc  = &FAT_fgetc;
+    FAT.fputc  = &FAT_fputc;
     FAT.fseek  = &FAT_fseek;
-	FAT.remove = &FAT_remove;
+    FAT.remove = &FAT_remove;
     FAT.rename = &FAT_rename;
 }
 
@@ -42,7 +42,7 @@ file_t* fopen(const char* path, const char* mode)
     file_t* file = malloc(sizeof(file_t), PAGESIZE); 
     file->seek   = 0; 
     file->volume = getPartition(path); 
-	file->size   = 0; // Init with 0 but set in FS-specific fopen
+    file->size   = 0; // Init with 0 but set in FS-specific fopen
     if(file->volume == NULL)
     {        
         free(file);  
@@ -51,7 +51,7 @@ file_t* fopen(const char* path, const char* mode)
     file->EOF    = false;
     file->error  = CE_GOOD;
     file->name   = malloc(strlen(getFilename(path))+1, 0); 
-	strcpy(file->name, getFilename(path)); 
+    strcpy(file->name, getFilename(path)); 
 
     bool appendMode = false; // Used to seek to end
     bool create = true;
@@ -96,8 +96,8 @@ file_t* fopen(const char* path, const char* mode)
 void fclose(file_t* file)
 {
     file->volume->type->fclose(file);
-	free(file->name);
-	free(file);
+    free(file->name);
+    free(file);
 }
 
 
@@ -124,59 +124,59 @@ FS_ERROR rename(const char* oldpath, const char* newpath)
 
 char fgetc(file_t* file)
 {
-	return(file->volume->type->fgetc(file));
+    return(file->volume->type->fgetc(file));
 }
 
 FS_ERROR fputc(char c, file_t* file)
 {
-	return(file->volume->type->fputc(file, c));
+    return(file->volume->type->fputc(file, c));
 }
 
 char* fgets(char* dest, size_t num, file_t* file)
 {
-	for(size_t i = 0; i < num; i++)
-	{
-		dest[i] = fgetc(file);
-		if(dest[i] == 0)
-			return(dest);
-	}
-	return(dest);
+    for(size_t i = 0; i < num; i++)
+    {
+        dest[i] = fgetc(file);
+        if(dest[i] == 0)
+            return(dest);
+    }
+    return(dest);
 }
 
 FS_ERROR fputs(const char* src, file_t* file)
 {
-	FS_ERROR retVal = CE_GOOD;
-	for(; *src != 0 && retVal == CE_GOOD; src++)
-	{
-		retVal = fputc(*src, file);
-	}
-	return(retVal);
+    FS_ERROR retVal = CE_GOOD;
+    for(; *src != 0 && retVal == CE_GOOD; src++)
+    {
+        retVal = fputc(*src, file);
+    }
+    return(retVal);
 }
 
 size_t fread(void* dest, size_t size, size_t count, file_t* file)
 {
-	size_t i = 0;
-	for(; i < count; i++)
-	{
-		for(int j = 0; j < size; j++)
-		{
-			((uint8_t*)dest)[i*size+j] = fgetc(file);
-		}
-	}
-	return(++i);
+    size_t i = 0;
+    for(; i < count; i++)
+    {
+        for(int j = 0; j < size; j++)
+        {
+            ((uint8_t*)dest)[i*size+j] = fgetc(file);
+        }
+    }
+    return(++i);
 }
 
 size_t fwrite(const void* src, size_t size, size_t count, file_t* file)
 {
-	size_t i = 0;
-	for(; i < count; i++)
-	{
-		for(int j = 0; j < size; j++)
-		{
-			fputc(((uint8_t*)src)[i*size+j], file);
-		}
-	}
-	return(++i);
+    size_t i = 0;
+    for(; i < count; i++)
+    {
+        for(int j = 0; j < size; j++)
+        {
+            fputc(((uint8_t*)src)[i*size+j], file);
+        }
+    }
+    return(++i);
 }
 
 
@@ -198,7 +198,7 @@ FS_ERROR fseek(file_t* file, size_t offset, SEEK_ORIGIN origin)
 
 FS_ERROR rewind(file_t* file)
 {
-	return(fseek(file, 0, SEEK_SET));
+    return(fseek(file, 0, SEEK_SET));
 }
 
 

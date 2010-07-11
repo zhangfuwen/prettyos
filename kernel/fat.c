@@ -104,7 +104,7 @@ static bool ValidateChars(char* FileName , bool mode)
                 radix = true;
             }
 
-			FileName[i] = toUpper(FileName[i]); // Convert lower-case to upper-case
+            FileName[i] = toUpper(FileName[i]); // Convert lower-case to upper-case
         }
     }
     return true;
@@ -118,7 +118,7 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
     char* pExt;
     char szName[15];
 
-	memset(fN2, ' ', 11);
+    memset(fN2, ' ', 11);
 
     if (fileName[0] == '.' || fileName[0] == 0)
     {
@@ -154,11 +154,11 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
         return false;
     }
 
-	strncpy(fN2, szName, strlen(szName)); // Do not copy 0
+    strncpy(fN2, szName, strlen(szName)); // Do not copy 0
 
     if (pExt)
     {
-		strcpy(fN2+8, pExt);
+        strcpy(fN2+8, pExt);
     }
 
     return true;
@@ -382,7 +382,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FAT_file_t* fileptr, uint32_t* curE
             }
             else
             {
-				uint32_t numofclus;
+                uint32_t numofclus;
                 if (ForceRead)
                 {
                     numofclus = (*curEntry)/(DirectoriesPerSector * volume->SecPerClus);
@@ -669,7 +669,7 @@ FS_ERROR FAT_fclose(file_t* file)
     printf("\n>>>>> fclose <<<<<");
   #endif
 
-	FAT_file_t* FATfile = file->data;
+    FAT_file_t* FATfile = file->data;
     FS_ERROR error      = CE_GOOD;
     uint32_t fHandle    = FATfile->entry;
     FILEROOTDIRECTORYENTRY dir;
@@ -1621,7 +1621,7 @@ static void fileptrCopy(FAT_file_t* dest, FAT_file_t* source)
     printf("\n>>>>> fileptrCopy <<<<<");
   #endif
 
-	memcpy(dest, source, sizeof(FAT_file_t));
+    memcpy(dest, source, sizeof(FAT_file_t));
 }
 
 static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
@@ -1713,7 +1713,7 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
     printf("\n>>>>> fseek<<<<<");
   #endif
 
-	FAT_file_t* FATfile = file->data;
+    FAT_file_t* FATfile = file->data;
     FAT_partition_t* volume = FATfile->volume;
 
     switch(whence)
@@ -1818,10 +1818,10 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
 
     //HACK
     if(!FormatFileName(file->name, FATfile->name, false))
-	{
-		free(FATfile);
-		return(CE_INVALID_FILENAME);
-	}
+    {
+        free(FATfile);
+        return(CE_INVALID_FILENAME);
+    }
 
     FATfile->volume            = file->volume->data;
     FATfile->firstCluster      = 0;
@@ -1859,8 +1859,8 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
                     {
                         error = 0xFF; // ??
                     }
-					else
-					{
+                    else
+                    {
                         error = FAT_fseek(file, 0, SEEK_END);
                     }
                 }
@@ -1907,7 +1907,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
                         {
                             error = 0xFF; // ??
                         }
-						else if(error == CE_GOOD)
+                        else if(error == CE_GOOD)
                         {
                             error = FAT_fseek(file, 0, SEEK_END);
                             if (error != CE_GOOD)
@@ -1967,7 +1967,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
 
 FS_ERROR FAT_remove(const char* fileName, partition_t* part)
 {
-	FAT_file_t tempFile;
+    FAT_file_t tempFile;
     FAT_file_t* fileptr = &tempFile;
     FormatFileName(fileName, fileptr->name, false); // must be 8+3 formatted first
     fileptr->volume = part->data;
@@ -2125,17 +2125,17 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
 
 char FAT_fgetc(file_t* file)
 {
-	char temp;
-	FAT_fread(file->data, &temp, 1);
-	return(temp);
+    char temp;
+    FAT_fread(file->data, &temp, 1);
+    return(temp);
 }
 
 FS_ERROR FAT_fputc(file_t* file, char c)
 {
-	uint32_t retVal = FAT_fwrite(&c, 1, 1, file->data);
-	if (retVal == 1)
-	{
-	    return(CE_GOOD);
-	}
-	return CE_WRITE_ERROR;
+    uint32_t retVal = FAT_fwrite(&c, 1, 1, file->data);
+    if (retVal == 1)
+    {
+        return(CE_GOOD);
+    }
+    return CE_WRITE_ERROR;
 }

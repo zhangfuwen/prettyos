@@ -93,6 +93,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\include\pci.h" />
     <ClInclude Include="..\kernel\include\rtl8139.h" />
     <ClInclude Include="..\kernel\include\scheduler.h" />
+    <ClInclude Include="..\kernel\include\synchronisation.h" />
     <ClInclude Include="..\kernel\include\sys_speaker.h" />
     <ClInclude Include="..\kernel\include\syscall.h" />
     <ClInclude Include="..\kernel\include\task.h" />
@@ -150,6 +151,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\pci.c" />
     <ClCompile Include="..\kernel\rtl8139.c" />
     <ClCompile Include="..\kernel\scheduler.c" />
+    <ClCompile Include="..\kernel\synchronisation.c" />
     <ClCompile Include="..\kernel\sys_speaker.c" />
     <ClCompile Include="..\kernel\syscall.c" />
     <ClCompile Include="..\kernel\task.c" />

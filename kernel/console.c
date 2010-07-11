@@ -6,7 +6,7 @@
 #include "console.h"
 #include "util.h"
 #include "kheap.h"
-#include "task.h"
+#include "synchronisation.h"
 #include "video.h"
 
 console_t* reachableConsoles[11]; // Mainconsole + up to KERNELCONSOLE_ID Subconsoles
@@ -33,6 +33,7 @@ void console_init(console_t* console, const char* name)
     //console->SCROLL_BEGIN = 0;
     console->SCROLL_END   = USER_LINES;
     console->showInfobar  = false;
+    console->sp = semaphore_create(1);
     strcpy(console->name, name);
     memsetw(console->vidmem, 0x00, COLUMNS * USER_LINES);
     // Setup the keyqueue
@@ -46,6 +47,7 @@ void console_exit(console_t* console)
 {
     free(console->vidmem);
     free(console->name);
+    semaphore_delete(console->sp);
 }
 
 bool changeDisplayedConsole(uint8_t ID)
@@ -206,6 +208,7 @@ void vprintf(const char* args, va_list ap)
     uint8_t attribute = currentTask->attrib;
     char buffer[32]; // Larger is not needed at the moment
 
+    //semaphore_lock(currentTask->console->sp);
     for (; *args; ++args)
     {
         switch (*args)
@@ -261,6 +264,7 @@ void vprintf(const char* args, va_list ap)
                 break;
         }
     }
+    //semaphore_unlock(currentTask->console->sp);
 }
 void printf(const char* args, ...)
 {

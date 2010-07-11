@@ -5,7 +5,7 @@ org 0x500
 jmp entry_point                  ; go to entry point
 
 ;*******************************************************
-;	Includes and Defines
+;    Includes and Defines
 ;*******************************************************
 %include "gdt.inc"               ; GDT definition
 %include "A20.inc"               ; A20 gate enabling
@@ -19,30 +19,30 @@ ImageName     db "KERNEL  BIN"
 ImageSize     dd 0
 
 ;*******************************************************
-;	Data Section
+;    Data Section
 ;*******************************************************
 msgLoading db 0x0D, 0x0A, "Jumping to OS Kernel...", 0
 msgFailure db 0x0D, 0x0A, "Missing KERNEL.BIN", 0x0D, 0x0A, 0x0A, 0
 
 entry_point:
-    cli                 
+    cli
     xor ax, ax           ; null segments
     mov ds, ax
     mov es, ax
  
  ;==================================================== HOTFIX ==== ehenkes ====
-    mov ax,0x9000 
+    mov ax,0x9000
     mov ss,ax     ; stack
     mov sp,0xfc00 ; stackpointer: 9FC00h 
  ;==================================================== HOTFIX ==== ehenkes ====
-    sti                  
+    sti
 
 A20:
     call EnableA20
 
 ;*******************************************************
-;	Determine physical memory INT 0x15, eax = 0xE820
-;	input: es:di -> destination buffer
+;    Determine physical memory INT 0x15, eax = 0xE820
+;    input: es:di -> destination buffer
 ;*******************************************************
 
 Get_Memory_Map:
@@ -81,7 +81,7 @@ Load_Root:
     xor ah, ah
 
 ;*******************************************************
-;	Switch from Real Mode (RM) to Protected Mode (PM)
+;    Switch from Real Mode (RM) to Protected Mode (PM)
 ;*******************************************************
 EnterProtectedMode:
     mov si, msgLoading
@@ -120,7 +120,7 @@ CopyImage:
     rep movsd                          ; copy image to its protected mode address
 
 ;*******************************************************
-;	Execute Kernel
+;    Execute Kernel
 ;*******************************************************
 EXECUTE:
     jmp DWORD CODE_DESC:IMAGE_PMODE_BASE
@@ -128,7 +128,7 @@ EXECUTE:
     hlt
 
 ;*******************************************************
-;	calls, e.g. print_string
+;    calls, e.g. print_string
 ;*******************************************************
 [BITS 16]
 print_string:

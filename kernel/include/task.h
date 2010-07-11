@@ -7,24 +7,31 @@
 
 #define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
 
+typedef enum {
+    BL_NONE, BL_TIME, BL_SEMAPHORE, BL_INTERRUPT
+} blockerType_t;
 
 struct task
 {
-    bool thread;                      // Indicates whether its a thread or a task
-    console_t* console;               // Console used by this task
-    bool ownConsole;
-    uint32_t pid;                     // Process ID
-    uint32_t esp;                     // Stack pointer
-    uint32_t eip;                     // Instruction pointer
-    uint32_t ss;                      // stack segment
+    bool              thread;         // Indicates whether its a thread or a task
+    uint32_t          pid;            // Process ID
+    uint32_t          esp;            // Stack pointer
+    uint32_t          eip;            // Instruction pointer
+    uint32_t          ss;             // stack segment
     page_directory_t* page_directory; // Page directory
-    uint8_t privilege;                // access privilege
-    uint8_t* heap_top;                // user heap top
-    void* kernel_stack;               // Kernel stack location
-    uintptr_t FPU_ptr;                // pointer to FPU data
+    uint8_t           privilege;      // access privilege
+    uint8_t*          heap_top;       // user heap top
+    void*             kernel_stack;   // Kernel stack location
+    uintptr_t         FPU_ptr;        // pointer to FPU data
+
+    // Information needed by scheduler
+    blockerType_t blockType; // Type of the blocking object
+    void*         blockData; // Object storing the blocker (TIME as integer (wakeup-time), SEMAPHORE as semaphore_t*)
 
     // task specific graphical output settings
-    uint8_t attrib; // Color
+    bool       ownConsole; // This task has an own console
+    console_t* console;    // Console used by this task
+    uint8_t    attrib;     // Color
 } __attribute__((packed));
 
 typedef struct task task_t;

@@ -19,9 +19,13 @@ void timer_install(uint16_t sysfreq)
     systemTimer_setFrequency(sysfreq); // x Hz, meaning a tick every 1000/x milliseconds
 }
 
-uint32_t getCurrentSeconds()
+uint32_t timer_getSeconds()
 {
-    return timer_ticks/systemfrequency;
+    return(timer_ticks/systemfrequency);
+}
+uint32_t timer_getMilliseconds()
+{
+    return((timer_ticks*1000)/systemfrequency);
 }
 
 void timer_handler(registers_t* r)

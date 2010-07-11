@@ -21,7 +21,7 @@ DEFN_SYSCALL0(switch_context,             5)
 DEFN_SYSCALL0(getch,                      6)
 DEFN_SYSCALL0(flpydsk_read_directory,     7)
 DEFN_SYSCALL3(cprintf,                    8, const char*, uint32_t, uint8_t)
-DEFN_SYSCALL0(getCurrentSeconds,          9)
+DEFN_SYSCALL0(getMilliseconds,            9)
 DEFN_SYSCALL0(getCurrentMilliseconds,    10) // substitute
 DEFN_SYSCALL1(flpydsk_format,            11, char*)
 DEFN_SYSCALL2(flpydsk_load,              12, const char*, const char*) // substitute
@@ -46,7 +46,7 @@ static void* syscalls[] =
     &getch,
     &flpydsk_read_directory,
     &cprintf,
-    &getCurrentSeconds,
+    &timer_getMilliseconds,
     &nop, // substitute
     &flpydsk_format,
     &nop, // substitute
@@ -91,7 +91,7 @@ void syscall_handler(registers_t* r)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

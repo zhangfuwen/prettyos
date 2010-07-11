@@ -24,7 +24,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.29";
+const char* version = "0.0.1.30 - Rev: 591";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -160,9 +160,9 @@ void main()
         *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
         if (! *++progress) { progress = "|/-\\"; }
 
-        if (getCurrentSeconds() != CurrentSeconds)
+        if (timer_getSeconds() != CurrentSeconds)
         {
-            CurrentSeconds = getCurrentSeconds();
+            CurrentSeconds = timer_getSeconds();
 
             // all values 64 bit
             uint64_t RdtscDiffValue = rdtsc() - LastRdtscValue;

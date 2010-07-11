@@ -27,10 +27,6 @@ disk_t* ramdisk_install()
 {
 	static port_t RAMport;
 	static disk_t RAMdisk;
-	RAMport.type = &RAM;
-	RAMport.insertedDisk = &RAMdisk;
-	RAMport.insertedDisk->type = &RAMDISK;
-	strcpy(RAMport.name, "RAM     ");
 
 	RAMdisk.type = &RAMDISK;
 	RAMdisk.partition[0] = 0;
@@ -38,9 +34,13 @@ disk_t* ramdisk_install()
 	RAMdisk.partition[2] = 0;
 	RAMdisk.partition[3] = 0;
 	strcpy(RAMdisk.name, "RAMdisk");
-
-	attachPort(&RAMport);
 	attachDisk(&RAMdisk);
+	
+	RAMport.type = &RAM;
+	RAMport.insertedDisk = &RAMdisk;
+	RAMport.insertedDisk->type = &RAMDISK;
+	strcpy(RAMport.name, "RAM     ");
+	attachPort(&RAMport);
 
 	return(&RAMdisk);
 }
@@ -121,7 +121,7 @@ static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
 fs_node_t* install_initrd(void* location)
 {
     // Initialise the main and file header pointers and populate the root directory.
-	initrd_header = (initrd_header_t*)location;
+    initrd_header = (initrd_header_t*)location;
     file_headers  = (initrd_file_header_t*)(location+sizeof(initrd_header_t));
 
     // Initialise the root directory.

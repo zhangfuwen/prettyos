@@ -51,6 +51,7 @@ void tasking_install()
     currentTask->console        = current_console;
     currentTask->ownConsole     = true;
     currentTask->attrib         = 0x0F;
+    currentTask->blockType      = BL_NONE;
 
     currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
 
@@ -82,6 +83,7 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
     new_task->privilege      = privilege;
     new_task->FPU_ptr        = 0;
     new_task->attrib         = 0x0F;
+    new_task->blockType      = BL_NONE;
 
     if (new_task->privilege == 3)
     {

@@ -267,6 +267,9 @@
     <ClInclude Include="..\kernel\include\fsmanager.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\include\synchronisation.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\ckernel.c">
@@ -438,6 +441,9 @@
       <Filter>User\C++-Userprog</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\fsmanager.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\synchronisation.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>

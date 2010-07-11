@@ -16,7 +16,7 @@ void puts(const char* pString);
 unsigned char getch();
 int floppy_dir();
 void printLine(const char* message, unsigned int line, unsigned char attribute);
-unsigned int getCurrentSeconds();
+uint32_t getCurrentMilliseconds();
 int floppy_format(char* volumeLabel);
 void exit();
 bool keyPressed(VK key);
@@ -29,6 +29,8 @@ void setScrollField(uint8_t top, uint8_t bottom);
 void systemControl(SYSTEM_CONTROL todo);
 
 // user functions
+uint32_t getCurrentSeconds();
+
 void* memset(void* dest, int8_t val, size_t count);
 void* memcpy(void* dest, const void* src, size_t count);
 void printf(const char *args, ...);
