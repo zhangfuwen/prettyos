@@ -233,7 +233,7 @@ void screenshot()
     int32_t NewLine = 0;
 
     // buffer for video screen
-    uint8_t* videoscreen = malloc(4000+98, 0); // only signs, no attributes, 49 times CR LF at line end
+    uint8_t* videoscreen = malloc(4000+98, 0, "vidscr-scrshot"); // only signs, no attributes, 49 times CR LF at line end
 
     for (uint16_t i=0; i<4000;i++)
     {

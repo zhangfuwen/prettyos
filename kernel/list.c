@@ -11,7 +11,7 @@
 // List
 listHead_t* list_Create()
 {
-    listHead_t* hd = (listHead_t*)malloc(sizeof(listHead_t), 0);
+    listHead_t* hd = (listHead_t*)malloc(sizeof(listHead_t), 0, "listHead");
     if (hd)
     {
         hd->head = hd->tail = 0;
@@ -21,7 +21,7 @@ listHead_t* list_Create()
 
 bool list_Append(listHead_t* hd, void* data)
 {
-    element_t* ap = (element_t*)malloc(sizeof(element_t), 0);
+    element_t* ap = (element_t*)malloc(sizeof(element_t), 0,"listElement");
     if (ap)
     {
         ap->data = data;
@@ -113,7 +113,7 @@ element_t* list_GetElement(listHead_t* hd, uint32_t number)
 // Ring
 ring_t* ring_Create()
 {
-    ring_t* ring = malloc(sizeof(ring_t), 0);
+    ring_t* ring = malloc(sizeof(ring_t), 0, "ring");
     ring->current = 0;
     ring->begin = 0;
     return(ring);
@@ -123,13 +123,13 @@ void ring_Insert(ring_t* ring, void* data)
 {
     if(ring->begin == 0) // ring is empty
     {
-        ring->begin = ring->current = malloc(sizeof(element_t), 0);
+        ring->begin = ring->current = malloc(sizeof(element_t), 0, "ring-begin");
         ring->current->next = ring->current;
         ring->current->data = data;
     }
     else
     {
-        element_t* item = malloc(sizeof(element_t), 0);
+        element_t* item = malloc(sizeof(element_t), 0, "ring-element");
         item->data = data;
         item->next = ring->current->next;
         ring->current->next = item;

@@ -131,7 +131,7 @@ void listPCI()
                 uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
                 if (vendorID && vendorID != 0xFFFF)
                 {
-                    pciDev_Array[number] = malloc(sizeof(pciDev_t), 0);
+                    pciDev_Array[number] = malloc(sizeof(pciDev_t), 0, "pciDev_Array");
 
                     pciDev_Array[number]->vendorID           = vendorID;
                     pciDev_Array[number]->deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);

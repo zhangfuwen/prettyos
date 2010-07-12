@@ -66,7 +66,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
 
 ehci_qtd_t* allocQTD(uintptr_t next)
 {
-    ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), ALIGNVALUE); // can be 32 byte alignment
+    ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), ALIGNVALUE, "qTD"); // can be 32 byte alignment
     memset(td,0,sizeof(ehci_qtd_t));
 
     if (next != 0x1)
@@ -79,7 +79,7 @@ ehci_qtd_t* allocQTD(uintptr_t next)
 
 uintptr_t allocQTDbuffer(ehci_qtd_t* td)
 {
-    void* data = malloc(PAGESIZE, ALIGNVALUE); // Enough for a full page
+    void* data = malloc(PAGESIZE, ALIGNVALUE, "qTD-buffer"); // Enough for a full page
     memset(data,0,PAGESIZE);
 
     td->buffer0 = paging_get_phys_addr(kernel_pd, data);

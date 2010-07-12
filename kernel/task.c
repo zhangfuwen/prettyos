@@ -41,7 +41,7 @@ void tasking_install()
 
     cli();
     scheduler_install();
-    currentTask                 = malloc(sizeof(task_t), 0);
+    currentTask                 = malloc(sizeof(task_t), 0, "task-currtask");
     currentTask->pid            = next_pid++;
     currentTask->esp            = 0;
     currentTask->eip            = 0;
@@ -53,7 +53,7 @@ void tasking_install()
     currentTask->attrib         = 0x0F;
     currentTask->blockType      = BL_NONE;
 
-    currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,4)+KERNEL_STACK_SIZE;
+    currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-currtask-kst")+KERNEL_STACK_SIZE;
 
     scheduler_insertTask(currentTask);
 
@@ -63,7 +63,7 @@ void tasking_install()
 static void addConsole(task_t* task, const char* consoleName)
 {
     task->ownConsole = true;
-    task->console = malloc(sizeof(console_t), 0);
+    task->console = malloc(sizeof(console_t), 0, "task-taskconsole");
     console_init(task->console, consoleName);
     for (uint8_t i = 0; i < 10; i++)
     { // The next free place in our console-list will be filled with the new console
@@ -92,7 +92,7 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
         paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
     }
 
-    new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4)+KERNEL_STACK_SIZE;
+    new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
 
 
     uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
@@ -160,7 +160,7 @@ task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege)
     #endif
 
     cli();
-    task_t* new_task = malloc(sizeof(task_t),0);
+    task_t* new_task = malloc(sizeof(task_t),0, "task-newtask");
     new_task->thread = false;
 
     createThreadTaskBase(new_task, directory, entry, privilege);
@@ -187,7 +187,7 @@ task_t* create_thread(void(*entry)())
     #endif
 
     cli();
-    task_t* new_task = malloc(sizeof(task_t),0);
+    task_t* new_task = malloc(sizeof(task_t),0, "task-newthread");
     new_task->thread = true;
 
     createThreadTaskBase(new_task, currentTask->page_directory, entry, currentTask->privilege);

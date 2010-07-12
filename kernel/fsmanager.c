@@ -39,7 +39,7 @@ void installPartition(partition_t* part)
 // File functions
 file_t* fopen(const char* path, const char* mode)
 {    
-    file_t* file = malloc(sizeof(file_t), 0); 
+    file_t* file = malloc(sizeof(file_t), 0, "fsmgr-file"); 
     file->seek   = 0; 
     file->volume = getPartition(path); 
     file->size   = 0; // Init with 0 but set in FS-specific fopen
@@ -50,7 +50,7 @@ file_t* fopen(const char* path, const char* mode)
     }
     file->EOF    = false;
     file->error  = CE_GOOD;
-    file->name   = malloc(strlen(getFilename(path))+1, 0); 
+    file->name   = malloc(strlen(getFilename(path))+1, 0, "fsmgr-filename"); 
     strcpy(file->name, getFilename(path)); 
 
     bool appendMode = false; // Used to seek to end

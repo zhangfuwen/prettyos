@@ -132,7 +132,7 @@ enum FLPYDSK_SECTOR_DTL
 
 static floppy_t* createFloppy(uint8_t ID)
 {
-    floppy_t* fdd        = malloc(sizeof(floppy_t), 0);
+    floppy_t* fdd        = malloc(sizeof(floppy_t), 0, "flpydsk-FDD");
     fdd->ID              = ID;
     fdd->motor           = false; // floppy motor is off
     fdd->RW_Lock         = false; // floppy is not blocked
@@ -141,17 +141,17 @@ static floppy_t* createFloppy(uint8_t ID)
 
     fdd->drive.type         = &FDD;
     fdd->drive.data         = (void*)fdd;
-    fdd->drive.insertedDisk = malloc(sizeof(disk_t), 0);
+    fdd->drive.insertedDisk = malloc(sizeof(disk_t), 0, "flpydsk-Disk");
 
     fdd->drive.insertedDisk->type            = &FLOPPYDISK;
     fdd->drive.insertedDisk->data            = (void*)fdd;
     fdd->drive.insertedDisk->accessRemaining = 0;
-    fdd->drive.insertedDisk->partition[0]    = malloc(sizeof(partition_t), 0);
+    fdd->drive.insertedDisk->partition[0]    = malloc(sizeof(partition_t), 0, "flpydsk-Part");
     fdd->drive.insertedDisk->partition[1]    = 0;
     fdd->drive.insertedDisk->partition[2]    = 0;
     fdd->drive.insertedDisk->partition[3]    = 0;
 
-    fdd->drive.insertedDisk->partition[0]->buffer = malloc(512, 0);
+    fdd->drive.insertedDisk->partition[0]->buffer = malloc(512, 0, "flpydsk-Partbuffer");
     fdd->drive.insertedDisk->partition[0]->disk   = fdd->drive.insertedDisk;
     fdd->drive.insertedDisk->partition[0]->serial = 0;
 

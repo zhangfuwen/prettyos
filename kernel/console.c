@@ -17,7 +17,7 @@ bool scroll_flag = true;
 
 void kernel_console_init()
 {
-    current_console = malloc(sizeof(console_t), 0); // Reserving space for the kernels console
+    current_console = malloc(sizeof(console_t), 0, "kernel-console"); // Reserving space for the kernels console
     console_init(current_console, "");
     reachableConsoles[KERNELCONSOLE_ID] = current_console;
     current_console->SCROLL_END = 39;
@@ -26,8 +26,8 @@ void kernel_console_init()
 
 void console_init(console_t* console, const char* name)
 {
-    console->name         = malloc(strlen(name)+1, 0);
-    console->vidmem       = malloc(COLUMNS*USER_LINES*2, 0);
+    console->name         = malloc(strlen(name)+1, 0, "console-name");
+    console->vidmem       = malloc(COLUMNS*USER_LINES*2, 0, "console-vidmem");
     console->csr_x        = 0;
     console->csr_y        = 0;
     //console->SCROLL_BEGIN = 0;

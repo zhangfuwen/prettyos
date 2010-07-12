@@ -24,7 +24,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.32 - Rev: 593";
+const char* version = "0.0.1.33 - Rev: 594";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -106,7 +106,7 @@ void main()
 
     // search and load shell
     bool shell_found = false;
-    uint8_t* buf = malloc(FILEBUFFERSIZE, 0);
+    uint8_t* buf = malloc(FILEBUFFERSIZE, 0,"Userprg-Filebuffer");
     struct dirent* node = 0;
     for (int i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
     {
@@ -184,6 +184,11 @@ void main()
         }
 
         handleEvents();
+
+        if (keyPressed(VK_ESCAPE) && keyPressed(VK_H))
+        {
+            logHeapRegions();
+        }
 
         __asm__ volatile ("hlt"); // CPU is stopped until the next interrupt 
     } 

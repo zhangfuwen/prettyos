@@ -10,9 +10,9 @@
 
 semaphore_t* semaphore_create(uint16_t resourceCount)
 {
-    semaphore_t* obj = malloc(sizeof(semaphore_t), 0);
+    semaphore_t* obj = malloc(sizeof(semaphore_t), 0, "sync-semaphor");
     obj->resCount = max(resourceCount, 1);
-    obj->resources = malloc(sizeof(task_t*) * obj->resCount, 0);
+    obj->resources = malloc(sizeof(task_t*) * obj->resCount, 0, "sync-resources");
     memsetl((uint32_t*)obj->resources, 0, obj->resCount);
     obj->freeRes = 0;
     return(obj);

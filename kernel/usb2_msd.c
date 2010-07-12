@@ -41,7 +41,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %u interface: %u", device, numInterface); textColor(0x0F);
     #endif
 
-    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-GetMaxLun");
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 
@@ -67,7 +67,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %u interface: %u", device, numInterface); textColor(0x0F);
     #endif
 
-    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-MSD-Reset");
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 
@@ -310,8 +310,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
   #endif
 
     // Two QHs: one for OUT and one for IN are established
-    void* QH_Out = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
-    void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
+    void* QH_Out = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiIN-QH_Out");
+    void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiIN-QH_In");
 
     // async list points to QH Out
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
@@ -442,8 +442,8 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
   #endif
 
     // Two QHs: one for OUT and one for IN are established
-    void* QH_Out = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
-    void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
+    void* QH_Out = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiOUT-QH_Out");
+    void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiOUT-QH_In");
 
     // async list points to QH Out
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);

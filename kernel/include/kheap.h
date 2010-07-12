@@ -36,12 +36,15 @@
 typedef struct
 {
     uint32_t size;
-    bool     reserved;    
+    bool     reserved; 
+    char     comment[21];
+    uint32_t number;
 } region_t;
 
 
 void  heap_install();
-void* malloc( uint32_t size, uint32_t alignment );
-void  free( void* mem );
+void* malloc(uint32_t size, uint32_t alignment, char* comment);
+void  free(void* mem);
+void logHeapRegions();
 
 #endif

@@ -26,7 +26,7 @@ uint32_t paging_install()
     uint32_t ram_available = phys_init();
 
     // Setup the kernel page directory
-    kernel_pd = malloc(sizeof(page_directory_t), PAGESIZE);
+    kernel_pd = malloc(sizeof(page_directory_t), PAGESIZE, "pag-kernelPD");
     memset(kernel_pd, 0, sizeof(page_directory_t));
     kernel_pd->pd_phys_addr = (uint32_t)kernel_pd;
 
@@ -38,7 +38,7 @@ uint32_t paging_install()
     for (int i=0; i<5; ++i)
     {
         // Page directory entry, virt=phys due to placement allocation in id-mapped area
-        kernel_pd->tables[i] = malloc(sizeof(page_table_t), PAGESIZE);
+        kernel_pd->tables[i] = malloc(sizeof(page_table_t), PAGESIZE, "pag-kernelPT");
         kernel_pd->codes[i] = (uint32_t)kernel_pd->tables[i] | MEM_PRESENT;
 
         // Page table entries, identity mapping
@@ -54,7 +54,7 @@ uint32_t paging_install()
     // kernel_pd->tables[0]->pages[0xB8] |= MEM_USER | MEM_WRITE; // 184 * 0x1000 = 0xB8000
 
     // Setup the page tables for the kernel heap (3GB-4GB), unmapped
-    page_table_t* heap_pts = malloc(256*sizeof(page_table_t), PAGESIZE);
+    page_table_t* heap_pts = malloc(256*sizeof(page_table_t), PAGESIZE, "pag-PTheap");
     memset(heap_pts, 0, 256*sizeof(page_table_t));
     for (uint32_t i=0; i<256; ++i)
     {
@@ -175,7 +175,7 @@ static uint32_t phys_init()
     }
 
     // We store our data here, initialize all bits to "reserved"
-    bittable = malloc(128*1024, 0);
+    bittable = malloc(128*1024, 0, "pag-bittable");
     for (uint32_t i=0; i<MAX_DWORDS; ++i)
     {
         bittable[i] = 0xFFFFFFFF;
@@ -283,7 +283,7 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
         if (!pt)
         {
             // Allocate the page table
-            pt = (page_table_t*) malloc(sizeof(page_table_t), PAGESIZE);
+            pt = (page_table_t*) malloc(sizeof(page_table_t), PAGESIZE, "pag-PT");
             if (!pt)
             {
                 // Undo the allocations and return an error
@@ -334,7 +334,7 @@ void paging_free(page_directory_t* pd, void* virt_addr, uint32_t size)
 page_directory_t* paging_create_user_pd()
 {
     // Allocate memory for the page directory
-    page_directory_t* pd = (page_directory_t*) malloc(sizeof(page_directory_t), PAGESIZE);
+    page_directory_t* pd = (page_directory_t*) malloc(sizeof(page_directory_t), PAGESIZE,"pag-userPD");
     if (!pd)
     {
         return NULL;

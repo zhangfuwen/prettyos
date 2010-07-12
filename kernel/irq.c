@@ -74,7 +74,7 @@ uint32_t irq_handler(uint32_t esp)
         else
         {
             // allocate memory to pCurrentTask->FPU_ptr
-            currentTask->FPU_ptr = (uintptr_t)malloc(108,4);
+            currentTask->FPU_ptr = (uintptr_t)malloc(108,4,"FPU_ptr");
         }
     }
     else if (r->int_no < 32) // exception w/o #NM

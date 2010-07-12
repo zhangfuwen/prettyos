@@ -43,7 +43,7 @@ static const uint32_t HEAP_MIN_GROWTH  = 0x40000;
 void heap_install()
 {
     // This gets us the current placement address
-    regions = malloc(0, 0);
+    regions = malloc(0, 0, "heap-start");
     
     // We take the rest of the placement area
     region_count = 0;
@@ -74,6 +74,9 @@ static bool heap_grow(uint32_t size, uint8_t* heap_end)
     {
         regions[region_count].reserved = false;
         regions[region_count].size = size;
+        strncpy(regions[region_count].comment,"free",5);
+        regions[region_count].number=0;
+
         ++region_count;
     }
 
@@ -81,28 +84,36 @@ static bool heap_grow(uint32_t size, uint8_t* heap_end)
     return true;
 }
 
-#ifdef _MALLOC_FREE_
-static void logHeapRegions()
+void logHeapRegions()
 {
-    textColor(0x06);
+    textColor(0x0E);
     task_switching = false;
     printf("\n\n---------------- HEAP REGIONS ----------------");
-    printf("\naddress\t\treserved\tsize");
-    
+    printf("\naddress\t\treserved\tsize\t\tnumber\tcomment");
     uintptr_t region_addr = (uintptr_t)heap_start;
     for (uint32_t i=0; i<region_count; i++)
-    {        
-        printf("\n%X\t%s\t\t%X", region_addr, regions[i].reserved?"yes":"no", regions[i].size);
+    {
+        static uint8_t linecounter = 0;
+        textColor(0x06);
+        printf("\n%X\t%s\t\t%X\t%u\t%s", region_addr, regions[i].reserved?"yes":"no", regions[i].size, regions[i].number, regions[i].comment);
+        linecounter++;
         region_addr += regions[i].size;
+        if (linecounter >= 35)
+        {
+            waitForKeyStroke();
+            linecounter = 0;
+        }
     }
     task_switching = true;
     textColor(0x0F);
 }
-#endif
 
-void* malloc(uint32_t size, uint32_t alignment)
+void* malloc(uint32_t size, uint32_t alignment, char* comment)
 {
     // TODO: make threadsafe
+
+    // consecutive number for detecting the sequence of mallocs at the heap
+    static uint32_t consecutiveNumber = 0; 
 
     // Avoid odd addresses
     size = alignUp(size, 8);
@@ -161,6 +172,8 @@ void* malloc(uint32_t size, uint32_t alignment)
                 // Setup the regions
                 regions[i].size     = aligned_addr - region_addr;
                 regions[i].reserved = false;
+                strncpy(regions[i].comment,"free",5);
+                
                 regions[i+1].size  -= regions[i].size;
 
                 // "Aligned Destination Area" becomes the "current" region
@@ -187,11 +200,16 @@ void* malloc(uint32_t size, uint32_t alignment)
                 // Setup the regions
                 regions[i+1].size     = regions[i].size - size;
                 regions[i+1].reserved = false;
+                strncpy(regions[i+1].comment,"free",5);
+                regions[i+1].number=0;
+                
                 regions[i].size       = size;
             }
 
             // Set the region to "reserved" and return its address
             regions[i].reserved = true;
+            strncpy(regions[i].comment, comment, 20);
+            regions[i].number   = ++consecutiveNumber;
             
             kdebug(3, "%X ", region_addr); 
 
@@ -236,7 +254,7 @@ void* malloc(uint32_t size, uint32_t alignment)
     }
 
     // Now there should be a region that is large enough
-    void* address = malloc(size, alignment);
+    void* address = malloc(size, alignment, comment);
 
     return address;
 }
@@ -261,6 +279,8 @@ void free(void* addr)
         if (region_addr == addr)
         {
             regions[i].reserved = false; // free the region
+            strncpy(regions[i].comment,"free",5);
+            regions[i].number = 0;
 
             // Check for a merge with the next region
             if ((i+1 < region_count) && !regions[i+1].reserved)

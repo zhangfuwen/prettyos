@@ -204,7 +204,7 @@ void showDiskList()
                 {
                     //HACK
                     free(disks[i]->partition[j]->serial);
-                    disks[i]->partition[j]->serial = malloc(13, 0);
+                    disks[i]->partition[j]->serial = malloc(13, 0,"devmgr-partserial");
                     disks[i]->partition[j]->serial[12] = 0;
                     strncpy(disks[i]->partition[j]->serial, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
                     printf("\t%s", disks[i]->partition[j]->serial);
@@ -263,7 +263,7 @@ FS_ERROR executeFile(const char* path)
     file_t* file = fopen(path, "r");
     if(file != 0)
     {
-        void* filebuffer = malloc(file->size, 0);
+        void* filebuffer = malloc(file->size, 0, "devmgr-filebuffer");
         fread(filebuffer, 1, file->size, file);
 
         elf_exec(filebuffer, file->size, file->name); // try to execute
@@ -366,7 +366,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
 
     //HACK
     free(part->data);
-    FAT_partition_t* FATpart = malloc(sizeof(FAT_partition_t), 0);
+    FAT_partition_t* FATpart = malloc(sizeof(FAT_partition_t), 0,"devmgr-FATpart");
     part->data = FATpart;
     FATpart->part = part;
     part->type = &FAT;
@@ -459,7 +459,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         ///////////////////////////////////////////////////
 
         FATpart->sectorSize = volume_bytePerSector;
-        part->buffer        = malloc(volume_bytePerSector, 0);
+        part->buffer        = malloc(volume_bytePerSector, 0,"devmgr-partbuffer");
         part->subtype       = volume_type;
         FATpart->SecPerClus = volume_SecPerClus;
         FATpart->maxroot    = volume_maxroot;
@@ -475,7 +475,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
 
         //HACK
         free(part->serial);
-        part->serial = malloc(5, 0);
+        part->serial = malloc(5, 0,"partserial");
         part->serial[4] = 0;
         strncpy(part->serial, volume_serialNumber, 4); // ID of the partition
     }

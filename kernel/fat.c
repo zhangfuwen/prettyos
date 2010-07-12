@@ -1812,7 +1812,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     printf("\n>>>>> fopen <<<<<");
   #endif
 
-    FAT_file_t* FATfile = malloc(sizeof(FAT_file_t), 0);
+    FAT_file_t* FATfile = malloc(sizeof(FAT_file_t), 0,"FAT_fopen-FATfile");
     file->data = FATfile;
     FATfile->file = file;
 
