@@ -14,6 +14,8 @@
 #include "devicemanager.h"
 #include "fat.h"
 
+extern const uint8_t ALIGNVALUE;
+
 extern const uint32_t CSWMagicNotOK;
 const uint32_t CSWMagicOK = 0x53425355; // USBS
 const uint32_t CBWMagic   = 0x43425355; // USBC
@@ -39,7 +41,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %u interface: %u", device, numInterface); textColor(0x0F);
     #endif
 
-    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 
@@ -65,7 +67,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     textColor(0x0B); printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %u interface: %u", device, numInterface); textColor(0x0F);
     #endif
 
-    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 
@@ -308,8 +310,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
   #endif
 
     // Two QHs: one for OUT and one for IN are established
-    void* QH_Out = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    void* QH_In  = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH_Out = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
+    void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
 
     // async list points to QH Out
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
@@ -440,8 +442,8 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
   #endif
 
     // Two QHs: one for OUT and one for IN are established
-    void* QH_Out = malloc(sizeof(ehci_qhd_t), PAGESIZE);
-    void* QH_In  = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH_Out = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
+    void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
 
     // async list points to QH Out
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);

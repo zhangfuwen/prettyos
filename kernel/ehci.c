@@ -46,7 +46,7 @@ void ehci_install(pciDev_t* PCIdev, uint32_t i)
 {
     uintptr_t bar_phys = PCIdev->bar[i].baseAddress & 0xFFFFFFF0;
     uintptr_t bar      = (uintptr_t) paging_acquire_pcimem(bar_phys);
-    uintptr_t offset   = bar_phys%PAGESIZE;
+    uintptr_t offset   = bar_phys % PAGESIZE;
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nEHCI_MMIO %X mapped to virt addr %X, offset: %x\n", bar_phys, bar, offset);

@@ -12,6 +12,8 @@
 #include "ehciQHqTD.h"
 #include "usb2.h"
 
+const uint8_t ALIGNVALUE = 32;
+
 usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
 
@@ -23,7 +25,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
 
     uint8_t new_address = j+1; // indicated port number
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
@@ -45,7 +47,7 @@ void usbTransferDevice(uint32_t device)
     textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR device, dev: %u endpoint: 0", device); textColor(0x0F);
     #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
@@ -72,13 +74,13 @@ void usbTransferConfig(uint32_t device)
       textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR config, dev: %u endpoint: 0", device); textColor(0x0F);
     #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, PAGESIZE);  // IN DATA1, 4096 byte
-    SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 2, 0, 0, PAGESIZE); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
+    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, ALIGNVALUE);  // IN DATA1, 4096 byte
+    SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 2, 0, 0, ALIGNVALUE); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
@@ -175,7 +177,7 @@ void usbTransferString(uint32_t device)
       textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 languageIDs", device); textColor(0x0F);
     #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
@@ -201,7 +203,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
       textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 stringIndex: %u", device, stringIndex); textColor(0x0F);
     #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
@@ -229,7 +231,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
     textColor(0x0B); printf("\nUSB2: SET_CONFIGURATION %u",configuration); textColor(0x0F);
   #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
@@ -249,7 +251,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
       textColor(0x0B); printf("\nUSB2: GET_CONFIGURATION"); textColor(0x0F);
   #endif
 
-    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, virtualAsyncList);
 
     // Create QTDs (in reversed order)
@@ -276,7 +278,7 @@ void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
     textColor(0x0B); printf("\nUSB2: usbSetFeatureHALT, endpoint: %u", endpoint); textColor(0x0F);
   #endif
 
-    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 
@@ -301,7 +303,7 @@ void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize
     textColor(0x0B); printf("\nUSB2: usbClearFeatureHALT, endpoint: %u", endpoint); textColor(0x0F);
   #endif
 
-    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 
@@ -326,7 +328,7 @@ uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
     printf("\nusbGetStatus at device: %u endpoint: %u", device, endpoint);
     textColor(0x0F);
 
-    void* QH = malloc(sizeof(ehci_qhd_t), PAGESIZE);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE);
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
 

@@ -143,8 +143,8 @@ typedef enum {
    cdi_fs_res dargestellt. Diese können beispielsweise sowohl regulaere Datei als auch Verzeichnis gleichzeitig darstellen. 
    Weiter gilt, dass Ressourcen, die zu keiner Klasse gehoeren, nicht persistent sind. */
 struct cdi_fs_res {
-    char*                   name; // Name of the ressource
-    cdi_fs_lock_t           lock; // Lock of the ressource
+    char*                   name; // Name of the resource
+    cdi_fs_lock_t           lock; // Lock of the resource
 
     /* Flag ob die Ressource geladen ist(1) oder nicht(0). Ist sie danicht,
        muss nur name und res definiert sein. In res darf nur load aufgerufen

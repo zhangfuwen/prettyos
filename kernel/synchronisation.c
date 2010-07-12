@@ -8,12 +8,12 @@
 #include "util.h"
 #include "sys_speaker.h"
 
-semaphore_t* semaphore_create(uint16_t ressourceCount)
+semaphore_t* semaphore_create(uint16_t resourceCount)
 {
     semaphore_t* obj = malloc(sizeof(semaphore_t), 0);
-    obj->resCount = max(ressourceCount, 1);
-    obj->ressources = malloc(sizeof(task_t*) * obj->resCount, 0);
-    memsetl((uint32_t*)obj->ressources, 0, obj->resCount);
+    obj->resCount = max(resourceCount, 1);
+    obj->resources = malloc(sizeof(task_t*) * obj->resCount, 0);
+    memsetl((uint32_t*)obj->resources, 0, obj->resCount);
     obj->freeRes = 0;
     return(obj);
 }
@@ -33,19 +33,19 @@ void semaphore_lock(semaphore_t* obj)
     
     for(int i = 0; i < obj->resCount; i++)
     {
-        if(obj->ressources[i] == currentTask) // Task is already blocking
+        if(obj->resources[i] == currentTask) // Task is already blocking
             return;
     }
     
-    obj->ressources[obj->freeRes++] = currentTask;
+    obj->resources[obj->freeRes++] = currentTask;
     for(; obj->freeRes < obj->resCount; obj->freeRes++)
     {
-        if(obj->ressources[obj->freeRes] == 0)
+        if(obj->resources[obj->freeRes] == 0)
         {
             return;
         }
     }
-    obj->freeRes = 0xFFFFFFFF; // All ressources blocked now
+    obj->freeRes = 0xFFFFFFFF; // All resources blocked now
 }
 
 void semaphore_unlock(semaphore_t* obj)
@@ -54,9 +54,9 @@ void semaphore_unlock(semaphore_t* obj)
 
     for(int i = 0; i < obj->resCount; i++)
     {
-        if(obj->ressources[i] == currentTask) // found -> delete
+        if(obj->resources[i] == currentTask) // found -> delete
         {
-            obj->ressources[i] = 0;
+            obj->resources[i] = 0;
             obj->freeRes = min(i, obj->freeRes);
             return;
         }
@@ -65,7 +65,7 @@ void semaphore_unlock(semaphore_t* obj)
 
 void semaphore_delete(semaphore_t* obj)
 {
-    free(obj->ressources);
+    free(obj->resources);
     free(obj);
 }
 

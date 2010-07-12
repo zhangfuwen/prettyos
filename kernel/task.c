@@ -53,7 +53,7 @@ void tasking_install()
     currentTask->attrib         = 0x0F;
     currentTask->blockType      = BL_NONE;
 
-    currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,4)+KERNEL_STACK_SIZE;
 
     scheduler_insertTask(currentTask);
 
@@ -92,7 +92,7 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
         paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
     }
 
-    new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,PAGESIZE)+KERNEL_STACK_SIZE;
+    new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4)+KERNEL_STACK_SIZE;
 
 
     uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;

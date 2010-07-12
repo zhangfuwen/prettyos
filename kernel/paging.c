@@ -253,8 +253,8 @@ static void phys_free(uint32_t addr)
 bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags)
 {
     // "virt_addr" and "size" must be page-aligned
-    ASSERT(((uint32_t)virt_addr)%PAGESIZE == 0);
-    ASSERT(size%PAGESIZE == 0);
+    ASSERT(((uint32_t)virt_addr) % PAGESIZE == 0);
+    ASSERT(size % PAGESIZE == 0);
 
     // We repeat allocating one page at once
     for (uint32_t done=0; done!=size/PAGESIZE; ++done)
@@ -312,8 +312,8 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
 void paging_free(page_directory_t* pd, void* virt_addr, uint32_t size)
 {
     // "virt_addr" and "size" must be page-aligned
-    ASSERT(((uint32_t)virt_addr)%PAGESIZE == 0);
-    ASSERT(size%PAGESIZE == 0);
+    ASSERT(((uint32_t)virt_addr) % PAGESIZE == 0);
+    ASSERT(size % PAGESIZE == 0);
 
     // Go through all pages and free them
     uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
