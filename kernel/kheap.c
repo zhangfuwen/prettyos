@@ -10,23 +10,23 @@
 #include "task.h"
 
 /*
-   The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory. 
-   It manages a certain amount of continuous virtual memory, starting at "heap_start". 
+   The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory.
+   It manages a certain amount of continuous virtual memory, starting at "heap_start".
    Whenever more memory is requested than there is available, the heap expands.
-   For expansion, the heap asks the paging module to map physical memory to the following virtual addresses 
+   For expansion, the heap asks the paging module to map physical memory to the following virtual addresses
    and increases its "heap_size" variable (but at least by "HEAP_MIN_GROWTH") afterwards.
 
-   To manage the free and reserved (allocated) areas of the heap an array of "region" elements is kept. 
-   Each region specifies its size and reservation status. 
-   Free regions always get merged. Regions don't store their addresses. 
+   To manage the free and reserved (allocated) areas of the heap an array of "region" elements is kept.
+   Each region specifies its size and reservation status.
+   Free regions always get merged. Regions don't store their addresses.
    The third region address is calculated by adding the first and second region size to "heap_start":
    region_3_addr = heap_start + regions[0].size + regions[1].size
 
-   Before the heap is set up memory is allocated on a "placement address". 
+   Before the heap is set up memory is allocated on a "placement address".
    This is an identity mapped area of continuous memory,
    the allocation just moves a pointer forward by the requested size and returns its previous value.
 
-   The heap's management data is placed at this placement address, too. 
+   The heap's management data is placed at this placement address, too.
    Since this area cannot grow, the heap has a maximum amount of region objects ("region_max_count").
 */
 
@@ -44,7 +44,7 @@ void heap_install()
 {
     // This gets us the current placement address
     regions = malloc(0, 0, "heap-start");
-    
+
     // We take the rest of the placement area
     region_count = 0;
     region_max_count = ((uintptr_t)PLACEMENT_END - (uintptr_t)regions) / sizeof(region_t);
@@ -95,7 +95,15 @@ void logHeapRegions()
     {
         static uint8_t linecounter = 0;
         textColor(0x06);
-        printf("\n%X\t%s\t\t%X\t%u\t%s", region_addr, regions[i].reserved?"yes":"no", regions[i].size, regions[i].number, regions[i].comment);
+        if (regions[i].reserved)
+        {
+            printf("\n%X\t%s\t\t%X\t%u\t%s",
+                    region_addr,
+                    regions[i].reserved ? "yes" : "no",
+                    regions[i].size,
+                    regions[i].number,
+                    regions[i].comment);
+        }
         linecounter++;
         region_addr += regions[i].size;
         if (linecounter >= 35)
@@ -113,7 +121,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     // TODO: make threadsafe
 
     // consecutive number for detecting the sequence of mallocs at the heap
-    static uint32_t consecutiveNumber = 0; 
+    static uint32_t consecutiveNumber = 0;
 
     // Avoid odd addresses
     size = alignUp(size, 8);
@@ -146,7 +154,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             // |                      Current Region                    |
             // +--------------------------------------------------------+
             //
-            // ... into three, the first and third remain free, 
+            // ... into three, the first and third remain free,
             // while the second gets reserved, and its address is returned
             //
             // +------------------+--------------------------+----------+
@@ -173,7 +181,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 regions[i].size     = aligned_addr - region_addr;
                 regions[i].reserved = false;
                 strncpy(regions[i].comment,"free",5);
-                
+
                 regions[i+1].size  -= regions[i].size;
 
                 // "Aligned Destination Area" becomes the "current" region
@@ -202,7 +210,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 regions[i+1].reserved = false;
                 strncpy(regions[i+1].comment,"free",5);
                 regions[i+1].number=0;
-                
+
                 regions[i].size       = size;
             }
 
@@ -210,21 +218,21 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             regions[i].reserved = true;
             strncpy(regions[i].comment, comment, 20);
             regions[i].number   = ++consecutiveNumber;
-            
-            kdebug(3, "%X ", region_addr); 
+
+            kdebug(3, "%X ", region_addr);
 
           #ifdef _MALLOC_FREE_
             textColor(0x0E);
             task_switching = false;
-            printf("\nmalloc: %X", region_addr);
+            printf("\nmalloc: %X %s", region_addr, comment);
             task_switching = true;
             textColor(0x0F);
           #endif
-            
+
             return region_addr;
 
         } //region is free and big enough
-        
+
         region_addr += regions[i].size;
     }
 
@@ -247,8 +255,6 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
         printf("\nheap expanded: %X heap end: %X", to_grow, (uintptr_t)(heap_start + (uintptr_t)heap_size));
         task_switching = true;
         waitForKeyStroke();
-        logHeapRegions();
-        waitForKeyStroke();
         textColor(0x0F);
       #endif
     }
@@ -269,7 +275,7 @@ void free(void* addr)
     task_switching = true;
     textColor(0x0F);
   #endif
-    
+
     if (addr == 0) return;
 
     // Walk the regions and find the correct one
@@ -278,6 +284,13 @@ void free(void* addr)
     {
         if (region_addr == addr)
         {
+          #ifdef _MALLOC_FREE_
+            textColor(0x07);
+            task_switching = false;
+            printf(" %s", regions[i].comment);
+            task_switching = true;
+            textColor(0x0F);
+          #endif
             regions[i].reserved = false; // free the region
             strncpy(regions[i].comment,"free",5);
             regions[i].number = 0;

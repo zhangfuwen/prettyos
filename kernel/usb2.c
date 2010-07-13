@@ -16,6 +16,8 @@ const uint8_t ALIGNVALUE = 32;
 
 usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
 
+extern void* globalqTD[3];
+extern void* globalqTDbuffer[3];
 
 uint8_t usbTransferEnumerate(uint8_t j)
 {
@@ -30,13 +32,20 @@ uint8_t usbTransferEnumerate(uint8_t j)
 
     // Create QTDs (in reversed order)
     void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x00, 5, 0, new_address, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
 
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, 0, 0,64);
 
     performAsyncScheduler(true, false, 0);
-    // free(virtualAsyncList);
+
+    free(virtualAsyncList);
+    for (uint8_t i=0; i<=1; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 
     return new_address; // new_address
 }
@@ -52,20 +61,28 @@ void usbTransferDevice(uint32_t device)
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(              0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 18);  // IN DATA1, 18 byte
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, device, lo, index, length
 
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false,0);
-    
+
     printf("\n---------------------------------------------------------------------\n");
 
     // showPacket(DataQTDpage0,18);
     addDevice ( (struct usb2_deviceDescriptor*)DataQTDpage0, &usbDevices[device] );
     showDevice( &usbDevices[device] );
-    // free(virtualAsyncList);
+
+    free(virtualAsyncList);
+    for (uint8_t i=0; i<=2; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 }
 
 void usbTransferConfig(uint32_t device)
@@ -79,14 +96,16 @@ void usbTransferConfig(uint32_t device)
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, ALIGNVALUE);  // IN DATA1, 4096 byte
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 2, 0, 0, ALIGNVALUE); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
-    
+
 
     textColor(0x07);
     printf("\n---------------------------------------------------------------------\n");
@@ -168,7 +187,13 @@ void usbTransferConfig(uint32_t device)
             break;
         }
     }
-    // free(virtualAsyncList);
+
+    free(virtualAsyncList);
+    for (uint8_t i=0; i<=2; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 }
 
 void usbTransferString(uint32_t device)
@@ -182,19 +207,27 @@ void usbTransferString(uint32_t device)
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 12);  // IN DATA1, 12 byte
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 3, 0, 0, 12); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
 
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
-    
+
     #ifdef _USB_DIAGNOSIS_
       showPacket(DataQTDpage0,12);
     #endif
     showStringDescriptor((struct usb2_stringDescriptor*)DataQTDpage0);
-    // free(virtualAsyncList);
+
+    free(virtualAsyncList);
+    for (uint8_t i=0; i<=2; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 }
 
 void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
@@ -208,20 +241,28 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 64);  // IN DATA1, 64 byte
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 64); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, stringIndex, languageID, length
 
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
-    
+
     #ifdef _USB_DIAGNOSIS_
       showPacket(DataQTDpage0,64);
     #endif
 
     showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0, device, stringIndex);
-    // free(virtualAsyncList);
+
+    free(virtualAsyncList);
+    for (uint8_t i=0; i<=2; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 }
 
 // http://www.lowlevel.eu/wiki/USB#SET_CONFIGURATION
@@ -236,13 +277,20 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
 
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
+
     free(virtualAsyncList);
+    for (uint8_t i=0; i<=1; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 }
 
 uint8_t usbTransferGetConfiguration(uint32_t device)
@@ -256,16 +304,24 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(OUT);
+    globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 1);  // IN DATA1, 1 byte
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 8, 0, 0, 0, 1); // SETUP DATA0, 8 byte, request type, GET_CONFIGURATION(9), hi, lo, index=0, length=1
 
     // Create QH
     createQH(virtualAsyncList, paging_get_phys_addr(kernel_pd, virtualAsyncList), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
-    
+
     uint8_t configuration = *((uint8_t*)DataQTDpage0);
-    // free(virtualAsyncList);
+
+    free(virtualAsyncList);
+    for (uint8_t i=0; i<=2; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 
     return configuration;
 }
@@ -284,6 +340,7 @@ void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x02, 3, 0, 0, endpoint, 0);
     // bmRequestType bRequest  wValue   wIndex  wLength   Data
     //     00000010b        3   0000h endpoint    0000h   none
@@ -292,9 +349,15 @@ void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
     createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint
 
     performAsyncScheduler(true, false, 3);
-    
+
     printf("\nset HALT at dev: %u endpoint: %u", device, endpoint);
-    // free(QH);
+
+    free(QH);
+    for (uint8_t i=0; i<=1; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 }
 
 void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
@@ -309,6 +372,7 @@ void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x02, 1, 0, 0, endpoint, 0);
     // bmRequestType bRequest  wValue   wIndex  wLength   Data
     //     00000010b        1   0000h endpoint    0000h   none
@@ -317,9 +381,15 @@ void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize
     createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint
 
     performAsyncScheduler(true, false, 3);
-    
+
     printf("\nclear HALT at dev: %u endpoint: %u", device, endpoint);
-    // free(QH);
+
+    free(QH);
+    for (uint8_t i=0; i<=1; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 }
 
 uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
@@ -334,7 +404,9 @@ uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(OUT);
+    globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 2);  // IN DATA1, 2 byte
+    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x02, 0, 0, 0, endpoint, 2);
     // bmRequestType bRequest  wValue   wIndex  wLength   Data
     //     00000010b       0b   0000h endpoint    0002h   2 byte
@@ -343,9 +415,15 @@ uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
     createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, endpoint, packetSize); // endpoint
 
     performAsyncScheduler(true, false, 0);
-    
+
     uint16_t status = *((uint16_t*)DataQTDpage0);
-    // free(QH);
+
+    free(QH);
+    for (uint8_t i=0; i<=2; i++)
+    {
+        free(globalqTD[i]);
+        free(globalqTDbuffer[i]);
+    }
 
     return status;
 }

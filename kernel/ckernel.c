@@ -12,7 +12,7 @@
 #include "flpydsk.h"
 #include "ehci.h"
 #include "mouse.h"
-#include "keyboard.h" 
+#include "keyboard.h"
 #include "video.h"
 #include "task.h"
 #include "event_list.h"
@@ -24,7 +24,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.33 - Rev: 594";
+const char* version = "0.0.1.34 - Rev: 595";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -145,8 +145,8 @@ void main()
         textColor(0x0F);
     }
 
-    showPortList(); 
-    showDiskList(); 
+    showPortList();
+    showDiskList();
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
@@ -154,7 +154,7 @@ void main()
     char     DateAndTime[81];             // String for Date&Time
 
     //////////////////////////// start of kernel idle loop ////////////////////////////
-    while (true) 
+    while (true)
     {
         // show rotating asterisk
         *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
@@ -190,8 +190,8 @@ void main()
             logHeapRegions();
         }
 
-        __asm__ volatile ("hlt"); // CPU is stopped until the next interrupt 
-    } 
+        __asm__ volatile ("hlt"); // CPU is stopped until the next interrupt
+    }
     ///////////////////////////// end of kernel idle loop /////////////////////////////
 }
 
