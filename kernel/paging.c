@@ -53,6 +53,15 @@ uint32_t paging_install()
     // kernel_pd->codes[0]               |= MEM_USER | MEM_WRITE;
     // kernel_pd->tables[0]->pages[0xB8] |= MEM_USER | MEM_WRITE; // 184 * 0x1000 = 0xB8000
 
+    // --------------------- VM86 Pages -------------------------------------------------------------------------------
+    kernel_pd->codes[0]               |= MEM_USER | MEM_WRITE;
+    kernel_pd->tables[0]->pages[0x00] |= MEM_USER | MEM_WRITE; // 0 * 0x1000 = 0x0000
+    for (uint32_t i=0; i<96; ++i)
+    {
+        kernel_pd->tables[0]->pages[0xA0+i] |= MEM_USER | MEM_WRITE; // 0xA0 * 0x1000 = 0xA0000 (until 0xFFFFF)
+    }
+    // --------------------- VM86 Pages -------------------------------------------------------------------------------
+
     // Setup the page tables for the kernel heap (3GB-4GB), unmapped
     page_table_t* heap_pts = malloc(256*sizeof(page_table_t), PAGESIZE, "pag-PTheap");
     memset(heap_pts, 0, 256*sizeof(page_table_t));
@@ -66,7 +75,7 @@ uint32_t paging_install()
     paging_switch (kernel_pd);
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-    cr0 |= 0x80000000;                            // set the paging bit in CR0 
+    cr0 |= 0x80000000;                            // set the paging bit in CR0
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
 
     return ram_available;
@@ -122,7 +131,7 @@ static void phys_set_bits(uint32_t addr_begin, uint32_t addr_end, bool reserved)
     uint32_t end   = alignDown (addr_end,   PAGESIZE) / PAGESIZE;
 
     // Set all these bits
-    for (uint32_t j=start; j<end; ++j) 
+    for (uint32_t j=start; j<end; ++j)
     {
         if (reserved)
         {
@@ -197,10 +206,10 @@ static uint32_t phys_init()
     for (uint32_t i=0; i<MAX_DWORDS; ++i)
     {
         if (bittable[i] != 0xFFFFFFFF)
-        {       
+        {
             dword_count = i+1;
         }
-    }     
+    }
 
     // Exclude the first 10 MiB from being allocated (they'll be needed for DMA later on)
     first_free_dword = 10*1024*1024 / PAGESIZE / 32;
@@ -343,7 +352,7 @@ page_directory_t* paging_create_user_pd()
     // Each user's page directory contains the same mapping as the kernel
     memcpy(pd, kernel_pd, sizeof(page_directory_t));
     pd->pd_phys_addr = paging_get_phys_addr(kernel_pd, pd->codes);
-    
+
     return pd;
 }
 
@@ -360,7 +369,7 @@ void paging_destroy_user_pd(page_directory_t* pd)
             for (uint32_t j=0; j<1024; ++j)
             {
                 uint32_t phys_addr = pd->tables[i]->pages[j] & 0xFFFFF000;
-                
+
                 if (phys_addr)
                 {
                     phys_free(phys_addr);
@@ -381,7 +390,7 @@ void paging_switch (page_directory_t* pd)
 void* paging_acquire_pcimem(uint32_t phys_addr)
 {
     static uint8_t* virt = PCI_MEM_START;
-    
+
     if (virt == PCI_MEM_END)
     {
         textColor(0x0C);

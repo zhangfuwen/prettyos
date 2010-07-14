@@ -57,4 +57,6 @@ void* task_grow_userheap( uint32_t increase );
 void task_log(task_t* t);
 void TSS_log(tss_entry_t* tss);
 
+task_t* create_vm86_task(page_directory_t* directory, void* entry);
+
 #endif

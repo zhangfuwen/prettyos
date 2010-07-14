@@ -24,11 +24,15 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.35 - Rev: 596";
+const char* version = "0.0.1.36 - Rev: 597";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
 extern uintptr_t _kernel_end; // linker script
+
+// vm86
+extern uintptr_t vm86_com_start;
+extern uintptr_t vm86_com_end;
 
 // Informations about the system
 system_t system;
@@ -92,6 +96,17 @@ void main()
     create_cthread(&bootscreen, "Booting ...");
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
+
+    // --------------------- VM86 -------------------------------------------------------------------------------
+    memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+    printf("\n\nvm86 binary code at 0x100: ");
+    memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); // TEST
+    waitForKeyStroke();
+
+    page_directory_t* pd = paging_create_user_pd();
+    create_vm86_task(pd, (void*)0x100);
+    waitForKeyStroke();
+    // --------------------- VM86 -------------------------------------------------------------------------------
 
     showMemorySize();
 

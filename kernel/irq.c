@@ -8,6 +8,7 @@
 #include "task.h"
 #include "kheap.h"
 #include "flpydsk.h"
+#include "vm86.h"
 
 typedef void(*interrupt_handler_t)(registers_t*);
 
@@ -112,6 +113,29 @@ uint32_t irq_handler(uint32_t esp)
             printf(") at %X - EIP: %X\n", faulting_address, r->eip);
         }
 
+        if (r->int_no == 13) // GPF
+        {
+            // --------------------- VM86 -------------------------------------------------------------------------------
+            context_v86_t context;
+            context_v86_t* ctx = &context;
+            ctx->cs     = r->cs;
+            ctx->eip    = r->eip;
+            ctx->ss     = r->ss;
+            ctx->eflags = r->eflags;
+            ctx->ds     = r->ds;
+            ctx->es     = r->es;
+            ctx->gs     = r->gs;
+            ctx->fs     = r->fs;
+            ctx->esp    = (uint32_t)r; // esp
+
+            if (true) // ???
+            {
+                bool retVal = i386V86Gpf(ctx); // vm86 handler
+                printf("\nretVal i386V86Gpf: %u\n", retVal);
+            }
+            // --------------------- VM86 -------------------------------------------------------------------------------
+        }
+
         printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
         printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
         printf("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
@@ -120,13 +144,18 @@ uint32_t irq_handler(uint32_t esp)
         printf("\n\n");
         textColor(0x0B);
         printf("%s!\n", exception_messages[r->int_no]);
+
+        waitForKeyStroke();
+
+        /*
         printf("| <Exception - System Halted> Press key for exit from the task! |");
         while(!keyboard_getChar());
         exit();
         for (;;);
+        */
     }
 
-    if (task_switching && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_context
+    if (task_switching && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_ctx
         esp = task_switch (esp); // new task's esp
 
     interrupt_handler_t handler = irq_routines[r->int_no];

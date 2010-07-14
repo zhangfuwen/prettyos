@@ -28,8 +28,8 @@ bool i386V86Gpf(context_v86_t* ctx)
     stack = (uint16_t*) FP_TO_LINEAR(ctx->ss, ctx->esp);
     stack32 = (uint32_t*) stack;
     is_operand32 = is_address32 = false;
-    
-    printf("i386V86Gpf: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->esp);
+
+    printf("\ni386V86Gpf: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->esp);
 
     while (true)
     {
@@ -48,7 +48,7 @@ bool i386V86Gpf(context_v86_t* ctx)
             ip++;
             ctx->eip = (uint16_t) (ctx->eip + 1);
             break;
-            
+
         case 0x9c:            /* PUSHF */
             printf("pushf\n");
 
@@ -93,7 +93,7 @@ bool i386V86Gpf(context_v86_t* ctx)
                 current->v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->esp = ((ctx->esp & 0xffff) + 2) & 0xffff;
             }
-            
+
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
@@ -137,7 +137,7 @@ bool i386V86Gpf(context_v86_t* ctx)
                 stack[0] = (uint16_t) (ctx->eip + 2);
                 stack[1] = ctx->cs;
                 stack[2] = (uint16_t) ctx->eflags;
-                
+
                 if (current->v86_if)
                     stack[2] |= EFLAG_IF;
                 else
