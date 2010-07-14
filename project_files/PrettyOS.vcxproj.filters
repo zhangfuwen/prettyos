@@ -270,6 +270,9 @@
     <ClInclude Include="..\kernel\include\synchronisation.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\include\vm86.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\ckernel.c">
@@ -444,6 +447,9 @@
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\synchronisation.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\vm86.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>

@@ -9,6 +9,6 @@ _file_data_end:
 global _vm86_com_start
 global _vm86_com_end
 _vm86_com_start:
-incbin "vidswtch.com"
+incbin "user/vm86/vidswtch.com"
 _vm86_com_end:
 ; --------------------- VM86 -------------------------------------------------------------------------------

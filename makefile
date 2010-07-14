@@ -30,15 +30,25 @@ STAGE1DIR= stage1_bootloader
 STAGE2DIR= stage2_bootloader
 KERNELDIR= kernel
 USERDIR= user
-SHELLDIR= shell
-USERRDDIR= init_rd_img
-USERTESTC= user_test_c
-USERTESTCPP= user_test_cpp
-USERTOOLS= user_tools
+ifeq ($(OS),WINDOWS)
+    SHELLDIR= $(USERDIR)\shell
+    USERPROGS= $(USERDIR)\other_userprogs
+    USERRDDIR= $(USERDIR)\init_rd_img
+    USERTESTC= $(USERDIR)\user_test_c
+    USERTESTCPP= $(USERDIR)\user_test_cpp
+    USERTOOLS= $(USERDIR)\user_tools
+else
+    SHELLDIR= $(USERDIR)/shell
+    USERPROGS= $(USERDIR)/other_userprogs
+    USERRDDIR= $(USERDIR)/init_rd_img
+    USERTESTC= $(USERDIR)/user_test_c
+    USERTESTCPP= $(USERDIR)/user_test_cpp
+    USERTOOLS= $(USERDIR)/user_tools
+endif
 
 # dependancies
 KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
-SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.c $(USERDIR)/$(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERDIR)/$(USERTOOLS)/*.asm))
+SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERTOOLS)/*.c $(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/*.asm))
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -O32 -f elf
@@ -48,7 +58,7 @@ LDFLAGS= -nostdlib --warn-common
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c 
-	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR)/include -I $(USERDIR)/$(USERTOOLS) -o $(OBJDIR)/$@
+	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR)/include -I $(USERTOOLS) -o $(OBJDIR)/$@
 %.o: %.asm
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
 
@@ -62,20 +72,23 @@ $(STAGE1DIR)/boot.bin:
 $(STAGE2DIR)/BOOT2.BIN:
 	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
-$(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(KERNEL_OBJECTS)
+$(USERDIR)/vm86/VIDSWTCH.COM:
+	$(NASM) $(USERDIR)/vm86/vidswtch.asm -o $(USERDIR)/vm86/VIDSWTCH.COM
+
+$(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(KERNEL_OBJECTS)
 #	because changes in the Shell should change data.o we build data.o everytimes
 	$(NASM) $(KERNELDIR)/data.asm $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$(KERNELDIR)/data.o
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 
-$(USERDIR)/$(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERDIR)/$(USERTOOLS)/user.ld -Map $(USERDIR)/$(SHELLDIR)/shell.map -o $(USERDIR)/$(SHELLDIR)/shell.elf
+$(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
+	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERTOOLS)/user.ld -Map $(SHELLDIR)/shell.map -o $(SHELLDIR)/shell.elf
 
-$(KERNELDIR)/initrd.dat: $(USERDIR)/$(SHELLDIR)/shell.elf
-	$(MKINITRD) $(USERDIR)/$(USERRDDIR)/info.txt info $(USERDIR)/$(SHELLDIR)/shell.elf shell
+$(KERNELDIR)/initrd.dat: $(SHELLDIR)/shell.elf
+	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/shell.elf shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
 FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
-	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERDIR)/$(USERTESTC)/HELLO.ELF $(USERDIR)/$(USERTESTCPP)/CPP.ELF $(USERDIR)/other_userprogs/CALC.ELF $(USERDIR)/other_userprogs/MUSIC.ELF $(USERDIR)/other_userprogs/README.ELF $(USERDIR)/other_userprogs/TTT.ELF $(USERDIR)/other_userprogs/ARROW.ELF $(USERDIR)/other_userprogs/PQEQ.ELF $(USERDIR)/other_userprogs/KEYSOUND.ELF
+	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERTESTC)/HELLO.ELF $(USERTESTCPP)/CPP.ELF $(USERPROGS)/CALC.ELF $(USERPROGS)/MUSIC.ELF $(USERPROGS)/README.ELF $(USERPROGS)/TTT.ELF $(USERPROGS)/ARROW.ELF $(USERPROGS)/PQEQ.ELF $(USERPROGS)/KEYSOUND.ELF
 
 clean:
 # OS-dependant code because of different interpretation of "/" in Windows and UNIX-Based OS (Linux and Mac OS X)
@@ -85,24 +98,24 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
 	$(RM) $(KERNELDIR)\KERNEL.BIN
 	$(RM) $(OBJDIR)\$(KERNELDIR)\cdi\*.o
-	$(RM) $(OBJDIR)\$(USERDIR)\$(USERTOOLS)\*.o
-	$(RM) $(OBJDIR)\$(USERDIR)\$(SHELLDIR)\*.o
-	$(RM) $(USERDIR)\$(SHELLDIR)\shell.elf
+	$(RM) $(OBJDIR)\$(USERTOOLS)\*.o
+	$(RM) $(OBJDIR)\$(SHELLDIR)\*.o
+	$(RM) $(SHELLDIR)\shell.elf
 	$(RM) boot2.map
 	$(RM) $(KERNELDIR)\initrd.dat
 	$(RM) $(KERNELDIR)\kernel.map
-	$(RM) $(USERDIR)\$(SHELLDIR)\shell.map
+	$(RM) $(SHELLDIR)\shell.map
 else
 	$(RM) $(STAGE1DIR)/boot.bin
 	$(RM) $(STAGE2DIR)/BOOT2.BIN
 	$(RM) $(OBJDIR)/$(KERNELDIR)/*.o
 	$(RM) $(KERNELDIR)/KERNEL.BIN
 	$(RM) $(OBJDIR)/$(KERNELDIR)/cdi/*.o
-	$(RM) $(OBJDIR)/$(USERDIR)/$(USERTOOLS)/*.o
-	$(RM) $(OBJDIR)/$(USERDIR)/$(SHELLDIR)/*.o
-	$(RM) $(USERDIR)/$(SHELLDIR)/shell.elf
+	$(RM) $(OBJDIR)/$(USERTOOLS)/*.o
+	$(RM) $(OBJDIR)/$(SHELLDIR)/*.o
+	$(RM) $(SHELLDIR)/shell.elf
 	$(RM) boot2.map
 	$(RM) $(KERNELDIR)/initrd.dat
 	$(RM) $(KERNELDIR)/kernel.map
-	$(RM) $(USERDIR)/$(SHELLDIR)/shell.map
+	$(RM) $(SHELLDIR)/shell.map
 endif

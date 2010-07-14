@@ -119,6 +119,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\include\cdi\pci.h" />
     <ClInclude Include="..\kernel\include\cdi\scsi.h" />
     <ClInclude Include="..\kernel\include\cdi\storage.h" />
+    <ClInclude Include="..\kernel\include\vm86.h" />
     <ClInclude Include="..\user\user_tools\types.h" />
     <ClInclude Include="..\user\user_tools\userlib.h" />
     <ClInclude Include="..\user\user_tools\userlib.hpp" />
@@ -177,6 +178,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\cdi\cdi_pci.c" />
     <ClCompile Include="..\kernel\cdi\cdi_scsi.c" />
     <ClCompile Include="..\kernel\cdi\cdi_storage.c" />
+    <ClCompile Include="..\kernel\vm86.c" />
     <ClCompile Include="..\user\shell\shell.c" />
     <ClCompile Include="..\user\user_tools\userlib.c" />
     <ClCompile Include="..\user\user_tools\userlib_cpp.cpp" />
