@@ -11,8 +11,8 @@ context_v86_t context;
 FARPTR i386LinearToFp(void *ptr)
 {
     unsigned seg, off;
-    off = (uintptr_t) ptr & 0xf;
-    seg = ((uintptr_t) ptr - ((uintptr_t) ptr & 0xf)) / 16;
+    off = (uintptr_t) ptr & 0xF;
+    seg = ((uintptr_t) ptr - ((uintptr_t) ptr & 0xF)) / 16;
     return MK_FP(seg, off);
 }
 
@@ -55,7 +55,7 @@ bool i386V86Gpf(context_v86_t* ctx)
 
             if (is_operand32)
             {
-                ctx->esp = ((ctx->esp & 0xffff) - 4) & 0xffff;
+                ctx->esp = ((ctx->esp & 0xFFFF) - 4) & 0xFFFF;
                 stack32--;
                 stack32[0] = ctx->eflags & VALID_FLAGS;
 
@@ -66,7 +66,7 @@ bool i386V86Gpf(context_v86_t* ctx)
             }
             else
             {
-                ctx->esp = ((ctx->esp & 0xffff) - 2) & 0xffff;
+                ctx->esp = ((ctx->esp & 0xFFFF) - 2) & 0xFFFF;
                 stack--;
                 stack[0] = (uint16_t) ctx->eflags;
 
@@ -86,13 +86,13 @@ bool i386V86Gpf(context_v86_t* ctx)
             {
                 ctx->eflags = EFLAG_IF | EFLAG_VM | (stack32[0] & VALID_FLAGS);
                 current->v86_if = (stack32[0] & EFLAG_IF) != 0;
-                ctx->esp = ((ctx->esp & 0xffff) + 4) & 0xffff;
+                ctx->esp = ((ctx->esp & 0xFFFF) + 4) & 0xFFFF;
             }
             else
             {
                 ctx->eflags = EFLAG_IF | EFLAG_VM | stack[0];
                 current->v86_if = (stack[0] & EFLAG_IF) != 0;
-                ctx->esp = ((ctx->esp & 0xffff) + 2) & 0xffff;
+                ctx->esp = ((ctx->esp & 0xFFFF) + 2) & 0xFFFF;
             }
 
             ctx->eip = (uint16_t) (ctx->eip + 1);
@@ -133,7 +133,7 @@ bool i386V86Gpf(context_v86_t* ctx)
 
             default:
                 stack -= 3;
-                ctx->esp = ((ctx->esp & 0xffff) - 6) & 0xffff;
+                ctx->esp = ((ctx->esp & 0xFFFF) - 6) & 0xFFFF;
 
                 stack[0] = (uint16_t) (ctx->eip + 2);
                 stack[1] = ctx->cs;
@@ -158,7 +158,7 @@ bool i386V86Gpf(context_v86_t* ctx)
             ctx->eflags = EFLAG_IF | EFLAG_VM | stack[2];
             current->v86_if = (stack[2] & EFLAG_IF) != 0;
 
-            ctx->esp = ((ctx->esp & 0xffff) + 6) & 0xffff;
+            ctx->esp = ((ctx->esp & 0xFFFF) + 6) & 0xFFFF;
             printf("%x:%x\n", ctx->cs, ctx->eip);
             return true;
 
@@ -175,7 +175,7 @@ bool i386V86Gpf(context_v86_t* ctx)
             return true;
 
         default:
-            printf("unhandled opcode %X\n", ip[0]);
+            printf("error: unhandled opcode %X\n", ip[0]);
             return false;
         }
     }

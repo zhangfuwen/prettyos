@@ -23,7 +23,7 @@ typedef uintptr_t FARPTR;
 #define FP_SEG(fp)        (((FARPTR) fp) >> 16)
 
 /* Extract the offset part of a FARPTR */
-#define FP_OFF(fp)        (((FARPTR) fp) & 0xffff)
+#define FP_OFF(fp)        (((FARPTR) fp) & 0xFFFF)
 
 /* Convert a segment:offset pair to a linear address */
 #define FP_TO_LINEAR(seg, off) ((void*) ((((uint16_t) (seg)) << 4) + ((uint16_t) (off))))
