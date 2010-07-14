@@ -414,7 +414,7 @@ task_t* create_vm86_task(page_directory_t* directory, void* entry)
     #endif
 
     cli();
-    task_t* new_task = malloc(sizeof(task_t),0, "task-newtask");
+    task_t* new_task = malloc(sizeof(task_t),0, "vm86-task-newtask");
     new_task->thread = false;
 
     create_vm86_ThreadTaskBase(new_task, directory, entry);

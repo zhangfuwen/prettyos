@@ -2,7 +2,7 @@
 NASM= nasm
 
 ifeq ($(OS),WINDOWS)
-    RM= - del
+    RM= - del 
     MV= cmd /c move /Y
     CC= i586-elf-gcc
     LD= i586-elf-ld
@@ -72,7 +72,7 @@ $(STAGE1DIR)/boot.bin:
 $(STAGE2DIR)/BOOT2.BIN:
 	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
-$(USERDIR)/vm86/VIDSWTCH.COM:
+$(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
 	$(NASM) $(USERDIR)/vm86/vidswtch.asm -o $(USERDIR)/vm86/VIDSWTCH.COM
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(KERNEL_OBJECTS)
