@@ -6,6 +6,7 @@
 current_t Current;             // TEST
 current_t* current = &Current; // TEST
 
+context_v86_t context; 
 
 FARPTR i386LinearToFp(void *ptr)
 {

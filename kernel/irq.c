@@ -12,6 +12,7 @@
 
 typedef void(*interrupt_handler_t)(registers_t*);
 
+extern context_v86_t context; // vm86.c
 
 // Array of function pointers handling custom ir handlers for a given ir
 interrupt_handler_t irq_routines[256-32];
@@ -116,43 +117,54 @@ uint32_t irq_handler(uint32_t esp)
         if (r->int_no == 13) // GPF
         {
             // --------------------- VM86 -------------------------------------------------------------------------------
-            context_v86_t context;
             context_v86_t* ctx = &context;
+
             ctx->cs     = r->cs;
             ctx->eip    = r->eip;
             ctx->ss     = r->ss;
             ctx->eflags = r->eflags;
             ctx->ds     = r->ds;
             ctx->es     = r->es;
-            ctx->gs     = r->gs;
             ctx->fs     = r->fs;
-            ctx->esp    = (uint32_t)r; // esp
+            ctx->gs     = r->gs;
+            ctx->esp    = esp;
 
-            if (true) // ???
+            if (r->eflags & 0x20000) // VM bit
             {
                 bool retVal = i386V86Gpf(ctx); // vm86 handler
                 printf("\nretVal i386V86Gpf: %u\n", retVal);
+
+                r->cs     = ctx->cs;
+                r->eip    = ctx->eip;
+                r->ss     = ctx->ss;
+                r->eflags = ctx->eflags;
+                r->ds     = ctx->ds;
+                r->es     = ctx->es;
+                r->fs     = ctx->fs;
+                r->gs     = ctx->gs;
+                // esp       = ctx->esp;
+
+                waitForKeyStroke();
             }
             // --------------------- VM86 -------------------------------------------------------------------------------
         }
 
-        printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
-        printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-        printf("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-        printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+        if (!(r->eflags & 0x20000)) // no VM bit
+        {
+            printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
+            printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+            printf("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+            printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
 
-        printf("\n\n");
-        textColor(0x0B);
-        printf("%s!\n", exception_messages[r->int_no]);
+            printf("\n\n");
+            textColor(0x0B);
+            printf("%s!\n", exception_messages[r->int_no]);
 
-        waitForKeyStroke();
-
-        /*
-        printf("| <Exception - System Halted> Press key for exit from the task! |");
-        while(!keyboard_getChar());
-        exit();
-        for (;;);
-        */
+            printf("| <Exception - System Halted> Press key for exit from the task! |");
+            while(!keyboard_getChar());
+            exit();
+            for (;;);
+        }
     }
 
     if (task_switching && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_ctx
