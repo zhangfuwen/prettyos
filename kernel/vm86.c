@@ -3,8 +3,8 @@
 #include "console.h"
 #include "vm86.h"
 
-current_t Current;             // TEST
-current_t* current = &Current; // TEST
+current_t Current;             
+current_t* current = &Current; 
 
 context_v86_t context; 
 
@@ -75,7 +75,6 @@ bool i386V86Gpf(context_v86_t* ctx)
                 else
                     stack[0] &= ~EFLAG_IF;
             }
-
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
@@ -94,10 +93,35 @@ bool i386V86Gpf(context_v86_t* ctx)
                 current->v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->esp = ((ctx->esp & 0xFFFF) + 2) & 0xFFFF;
             }
-
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
+        
+        case 0xEF: // outw 
+            printf("outportw(edx, eax) does not yet work\n");
+            // outportw(edx, eax); 
+            ctx->eip = (uint16_t) (ctx->eip + 1);
+            return true;
+
+        case 0xEE: // outb
+            printf("outportb(edx, eax) does not yet work\n");
+            // outportb(edx,eax);
+            ctx->eip = (uint16_t) (ctx->eip + 1);
+            return true;
+
+        case 0xED: // inw
+            printf("inportb(edx) does not yet work\n");
+            // eax = inportb(edx);
+            ctx->eip = (uint16_t) (ctx->eip + 1);
+            return true;
+
+        case 0xEC: // inb
+            printf("inportw(edx) does not yet work\n");
+            // eax = (eax & 0xFF00) + inportb(edx);
+            ctx->eip = (uint16_t) (ctx->eip + 1);
+            return true;
+        
+        
         case 0xcd:            /* INT n */
             printf("interrupt %X => ", ip[1]);
             switch (ip[1])

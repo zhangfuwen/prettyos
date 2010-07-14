@@ -5,13 +5,14 @@
 
 #include "os.h"
 
-#define VALID_FLAGS         0xDFF
+#define VALID_FLAGS  0x3FFFFF
+#define EFLAG_IF     1<<9
+#define EFLAG_VM     1<<17
 
-#define EFLAG_IF			0x00
 #define USER_FLAT_CODE		0x00
 #define USER_FLAT_DATA		0x00
 #define USER_THREAD_INFO	0x00
-#define EFLAG_VM			0x00
+
 
 /* segment:offset pair */
 typedef uintptr_t FARPTR;
