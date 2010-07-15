@@ -29,7 +29,7 @@ typedef uintptr_t FARPTR;
 /* Convert a segment:offset pair to a linear address */
 #define FP_TO_LINEAR(seg, off) ((void*) ((((uint16_t) (seg)) << 4) + ((uint16_t) (off))))
 
-typedef struct context 
+typedef struct context
 {
 	uint32_t cs;
 	uint32_t eip;
@@ -40,10 +40,15 @@ typedef struct context
 	uint32_t es;
 	uint32_t gs;
 	uint32_t fs;
+	uint32_t eax;
+	uint32_t ebx;
+	uint32_t ecx;
+	uint32_t edx;
+	uint32_t edi;
+	uint32_t esi;
 }context_t;
 
-
-typedef struct context_v86 
+typedef struct context_v86
 {
 	uint32_t cs;
 	uint32_t eip;
@@ -54,9 +59,15 @@ typedef struct context_v86
 	uint32_t es;
 	uint32_t gs;
 	uint32_t fs;
+	uint32_t eax;
+	uint32_t ebx;
+	uint32_t ecx;
+	uint32_t edx;
+	uint32_t edi;
+	uint32_t esi;
 }context_v86_t;
 
-typedef struct current 
+typedef struct current
 {
     uint32_t       v86_if;
     uint32_t       v86_in_handler;

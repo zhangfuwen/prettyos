@@ -84,12 +84,14 @@ uint32_t irq_handler(uint32_t esp)
         textColor(0x0C);
         deviceManager_checkDrives(); // switch off motors
 
-        if (r->int_no == 6 || r->int_no == 1) // Invalid Opcode
+        if (r->int_no == 6 /*|| r->int_no == 1*/) // Invalid Opcode
         {
-            printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
+            printf("\nInvalid Opcode err_code: %u address(eip): %X", r->err_code, r->eip);
+            /*
             printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-            printf("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-            printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+            printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+            printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+            */
         }
 
         if (r->int_no == 14) // Page Fault
@@ -128,11 +130,19 @@ uint32_t irq_handler(uint32_t esp)
             ctx->fs     = r->fs;
             ctx->gs     = r->gs;
             ctx->esp    = esp;
+            ctx->eax    = r->eax;
+            ctx->ebx    = r->ebx;
+            ctx->ecx    = r->ecx;
+            ctx->edx    = r->edx;
+            ctx->edi    = r->edi;
+            ctx->esi    = r->esi;
 
             if (r->eflags & 0x20000) // VM bit
             {
+                textColor(0x03);
                 bool retVal = i386V86Gpf(ctx); // vm86 handler
                 printf("\nretVal i386V86Gpf: %u\n", retVal);
+                textColor(0x0C);
 
                 r->cs     = ctx->cs;
                 r->eip    = ctx->eip;
@@ -142,7 +152,14 @@ uint32_t irq_handler(uint32_t esp)
                 r->es     = ctx->es;
                 r->fs     = ctx->fs;
                 r->gs     = ctx->gs;
-                // esp       = ctx->esp;
+                // esp       = ctx->esp; // ??
+                r->eax    = ctx->eax;
+                r->ebx    = ctx->ebx;
+                r->ecx    = ctx->ecx;
+                r->edx    = ctx->edx;
+                r->edi    = ctx->edi;
+                r->esi    = ctx->esi;
+
 
                 waitForKeyStroke();
             }
@@ -151,10 +168,10 @@ uint32_t irq_handler(uint32_t esp)
 
         if (!(r->eflags & 0x20000)) // no VM bit
         {
-            printf("err_code: %X address(eip): %X\n", r->err_code, r->eip);
+            printf("\nerr_code: %u address(eip): %X\n", r->err_code, r->eip);
             printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-            printf("cs: %X ds: %X es: %X fs: %X gs %X ss %X\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-            printf("int_no %d eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+            printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+            printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
 
             printf("\n\n");
             textColor(0x0B);

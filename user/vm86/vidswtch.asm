@@ -15,4 +15,6 @@ popf
 ; switch video mode
 mov ax, 0013h
 int 10h
+
+;exit
 int 3

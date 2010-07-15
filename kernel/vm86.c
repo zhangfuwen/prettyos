@@ -1,12 +1,24 @@
-// test from: http://osdev.berlios.de/v86.html
+// code derived on basic proposal at http://osdev.berlios.de/v86.html
+// cf. "The Intel® 64 and IA-32 Architectures Software Developer’s Manual, Volumes 3A", 17.2 VIRTUAL-8086 MODE
+/*
+17.2.7 Sensitive Instructions
+When an IA-32 processor is running in virtual-8086 mode, the CLI, STI, PUSHF, POPF, INT n,
+and IRET instructions are sensitive to IOPL. The IN, INS, OUT, and OUTS instructions,
+which are sensitive to IOPL in protected mode, are not sensitive in virtual-8086 mode.
+The CPL is always 3 while running in virtual-8086 mode; if the IOPL is less than 3, an
+attempt to use the IOPL-sensitive instructions listed above triggers a general-protection
+exception (#GP). These instructions are sensitive to IOPL to give the virtual-8086 monitor
+a chance to emulate the facilities they affect.
+*/
 
 #include "console.h"
 #include "vm86.h"
+#include "util.h"
 
-current_t Current;             
-current_t* current = &Current; 
+current_t Current;
+current_t* current = &Current;
 
-context_v86_t context; 
+context_v86_t context;
 
 FARPTR i386LinearToFp(void *ptr)
 {
@@ -32,25 +44,27 @@ bool i386V86Gpf(context_v86_t* ctx)
 
     printf("\ni386V86Gpf: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->esp);
 
+    // regarding opcodes, cf. "The Intel® 64 and IA-32 Architectures Software Developer’s Manual, Volumes 2A & 2B"
+
     while (true)
     {
         switch (ip[0])
         {
-        case 0x66:            /* O32 */
+        case 0x66:            // O32
             printf("o32 ");
             is_operand32 = true;
             ip++;
             ctx->eip = (uint16_t) (ctx->eip + 1);
             break;
 
-        case 0x67:            /* A32 */
+        case 0x67:            // A32
             printf("a32 ");
             is_address32 = true;
             ip++;
             ctx->eip = (uint16_t) (ctx->eip + 1);
             break;
 
-        case 0x9c:            /* PUSHF */
+        case 0x9C:            // PUSHF
             printf("pushf\n");
 
             if (is_operand32)
@@ -60,9 +74,13 @@ bool i386V86Gpf(context_v86_t* ctx)
                 stack32[0] = ctx->eflags & VALID_FLAGS;
 
                 if (current->v86_if)
+                {
                     stack32[0] |= EFLAG_IF;
+                }
                 else
+                {
                     stack32[0] &= ~EFLAG_IF;
+                }
             }
             else
             {
@@ -71,14 +89,18 @@ bool i386V86Gpf(context_v86_t* ctx)
                 stack[0] = (uint16_t) ctx->eflags;
 
                 if (current->v86_if)
+                {
                     stack[0] |= EFLAG_IF;
+                }
                 else
+                {
                     stack[0] &= ~EFLAG_IF;
+                }
             }
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
-        case 0x9d:            /* POPF */
+        case 0x9D:            // POPF
             printf("popf\n");
 
             if (is_operand32)
@@ -96,33 +118,33 @@ bool i386V86Gpf(context_v86_t* ctx)
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
-        
-        case 0xEF: // outw 
-            printf("outportw(edx, eax) does not yet work\n");
-            // outportw(edx, eax); 
+
+        case 0xEF: // OUT DX, AX and OUT DX, EAX
+            printf("outportw(edx, eax)\n");
+            outportw(ctx->edx, ctx->eax);
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
-        case 0xEE: // outb
-            printf("outportb(edx, eax) does not yet work\n");
-            // outportb(edx,eax);
+        case 0xEE: // OUT DX, AL
+            printf("outportb(edx, eax)\n");
+            outportb(ctx->edx, ctx->eax);
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
         case 0xED: // inw
-            printf("inportb(edx) does not yet work\n");
-            // eax = inportb(edx);
+            printf("inportb(edx)\n");
+            ctx->eax = inportb(ctx->edx);
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
         case 0xEC: // inb
-            printf("inportw(edx) does not yet work\n");
-            // eax = (eax & 0xFF00) + inportb(edx);
+            printf("inportw(edx)\n");
+            ctx->eax = (ctx->eax & 0xFF00) + inportb(ctx->edx);
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
-        
-        
-        case 0xcd:            /* INT n */
+
+
+        case 0xCD:          // INT imm8
             printf("interrupt %X => ", ip[1]);
             switch (ip[1])
             {
@@ -175,7 +197,7 @@ bool i386V86Gpf(context_v86_t* ctx)
             }
             break;
 
-        case 0xcf:            /* IRET */
+        case 0xCF:            // IRET
             printf("iret => ");
             ctx->eip = stack[0];
             ctx->cs = stack[1];
@@ -186,19 +208,19 @@ bool i386V86Gpf(context_v86_t* ctx)
             printf("%x:%x\n", ctx->cs, ctx->eip);
             return true;
 
-        case 0xfa:            /* CLI */
+        case 0xFA:            // CLI
             printf("cli\n");
             current->v86_if = false;
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
-        case 0xfb:            /* STI */
+        case 0xFB:            // STI
             printf("sti\n");
             current->v86_if = true;
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
-        default:
+        default: // should not happen!
             printf("error: unhandled opcode %X\n", ip[0]);
             return false;
         }

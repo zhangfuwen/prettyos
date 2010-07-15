@@ -426,6 +426,14 @@ task_t* create_vm86_task(page_directory_t* directory, void* entry)
     return new_task;
 }
 
+task_t* create_vm86_ctask(page_directory_t* directory, void* entry, const char* consoleName)
+{
+    task_t* new_task = create_vm86_task(directory, entry);
+    addConsole(new_task, consoleName);
+    return(new_task);
+}
+
+
 // --------------------- VM86 -------------------------------------------------------------------------------
 
 

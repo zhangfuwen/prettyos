@@ -24,7 +24,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.38 - Rev: 602";
+const char* version = "0.0.1.39 - Rev: 603";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -104,7 +104,7 @@ void main()
     waitForKeyStroke();
 
     page_directory_t* pd = paging_create_user_pd();
-    create_vm86_task(pd, (void*)0x100);
+    create_vm86_ctask(pd, (void*)0x100, "vm86-task");
     waitForKeyStroke();
     // --------------------- VM86 -------------------------------------------------------------------------------
 
