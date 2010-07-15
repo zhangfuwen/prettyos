@@ -186,14 +186,27 @@ bool i386V86Gpf(context_v86_t* ctx)
                 stack -= 3;
                 ctx->esp = ((ctx->esp & 0xFFFF) - 6) & 0xFFFF;
 
+                /*
                 stack[0] = (uint16_t) (ctx->eip + 2);
                 stack[1] = ctx->cs;
                 stack[2] = (uint16_t) ctx->eflags;
+                */
+
+                // wie bei tyndur:
+                stack[2] = (uint16_t) (ctx->eip + 2);
+                stack[1] = ctx->cs;
+                stack[0] = (uint16_t) ctx->eflags;
 
                 if (current->v86_if)
-                    stack[2] |= EFLAG_IF;
+                {
+                    // stack[2] |= EFLAG_IF;
+                    stack[0] |= EFLAG_IF;
+                }
                 else
-                    stack[2] &= ~EFLAG_IF;
+                {
+                    //stack[2] &= ~EFLAG_IF;
+                    stack[0] &= ~EFLAG_IF;
+                }
 
                 ctx->cs = ivt[ip[1] * 2 + 1];
                 ctx->eip = ivt[ip[1] * 2];
@@ -204,10 +217,20 @@ bool i386V86Gpf(context_v86_t* ctx)
 
         case 0xCF:            // IRET
             printf("iret => ");
+            
+            /*
             ctx->eip = stack[0];
             ctx->cs = stack[1];
             ctx->eflags = EFLAG_IF | EFLAG_VM | stack[2];
-            current->v86_if = (stack[2] & EFLAG_IF) != 0;
+            */
+            
+            ctx->eip = stack[2];
+            ctx->cs = stack[1];
+            ctx->eflags = EFLAG_IF | EFLAG_VM | stack[0];
+            
+            
+            // current->v86_if = (stack[2] & EFLAG_IF) != 0;
+            current->v86_if = (stack[0] & EFLAG_IF) != 0;
 
             ctx->esp = ((ctx->esp & 0xFFFF) + 6) & 0xFFFF;
             printf("%x:%x\n", ctx->cs, ctx->eip);
