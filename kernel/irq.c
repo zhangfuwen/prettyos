@@ -129,7 +129,7 @@ uint32_t irq_handler(uint32_t esp)
             ctx->es     = r->es;
             ctx->fs     = r->fs;
             ctx->gs     = r->gs;
-            ctx->esp    = esp;
+            ctx->esp    = r->useresp; 
             ctx->eax    = r->eax;
             ctx->ebx    = r->ebx;
             ctx->ecx    = r->ecx;
@@ -152,13 +152,13 @@ uint32_t irq_handler(uint32_t esp)
                 r->es     = ctx->es;
                 r->fs     = ctx->fs;
                 r->gs     = ctx->gs;
-                // esp       = ctx->esp; // ??
                 r->eax    = ctx->eax;
                 r->ebx    = ctx->ebx;
                 r->ecx    = ctx->ecx;
                 r->edx    = ctx->edx;
                 r->edi    = ctx->edi;
                 r->esi    = ctx->esi;
+                r->useresp = ctx->esp; 
 
 
                 waitForKeyStroke();

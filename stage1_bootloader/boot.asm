@@ -36,7 +36,7 @@ entry_point:
     mov ax, 0x1112
     xor bl, bl
     int 0x10
-
+	
 Load_Root_Directory_Table:
     ; compute size of root directory and store in "cx"
     xor cx, cx

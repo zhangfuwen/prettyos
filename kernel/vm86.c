@@ -30,17 +30,12 @@ FARPTR i386LinearToFp(void *ptr)
 
 bool i386V86Gpf(context_v86_t* ctx)
 {
-    uint8_t*  ip;
-    uint16_t* stack;
-    uint16_t* ivt;
-    uint32_t* stack32;
-    bool is_operand32, is_address32;
-
-    ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
-    ivt = (uint16_t*) 0;
-    stack = (uint16_t*) FP_TO_LINEAR(ctx->ss, ctx->esp);
-    stack32 = (uint32_t*) stack;
-    is_operand32 = is_address32 = false;
+    uint8_t*  ip      = FP_TO_LINEAR(ctx->cs, ctx->eip);
+    uint16_t* ivt     = NULL;
+    uint16_t* stack   = (uint16_t*) FP_TO_LINEAR(ctx->ss, ctx->esp);
+    uint32_t* stack32 = (uint32_t*) stack;
+    bool is_operand32 = false;
+    bool is_address32 = false;
 
     printf("\ni386V86Gpf: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->esp);
 
@@ -71,15 +66,17 @@ bool i386V86Gpf(context_v86_t* ctx)
             {
                 ctx->esp = ((ctx->esp & 0xFFFF) - 4) & 0xFFFF;
                 stack32--;
-                stack32[0] = ctx->eflags & VALID_FLAGS;
+                stack32[0] = ctx->eflags /*& VALID_FLAGS*/;
 
                 if (current->v86_if)
                 {
                     stack32[0] |= EFLAG_IF;
+                    printf(" stack32[0]: %X",stack32[0]);
                 }
                 else
                 {
                     stack32[0] &= ~EFLAG_IF;
+                    printf(" stack32[0]: %X",stack32[0]);
                 }
             }
             else
@@ -91,10 +88,12 @@ bool i386V86Gpf(context_v86_t* ctx)
                 if (current->v86_if)
                 {
                     stack[0] |= EFLAG_IF;
+                    printf(" stack[0]: %X",stack[0]);
                 }
                 else
                 {
                     stack[0] &= ~EFLAG_IF;
+                    printf(" stack[0]: %X",stack[0]);
                 }
             }
             ctx->eip = (uint16_t) (ctx->eip + 1);
@@ -105,16 +104,18 @@ bool i386V86Gpf(context_v86_t* ctx)
 
             if (is_operand32)
             {
-                ctx->eflags = EFLAG_IF | EFLAG_VM | (stack32[0] & VALID_FLAGS);
+                ctx->eflags = EFLAG_IF | EFLAG_VM | (stack32[0] /*& VALID_FLAGS*/);
                 current->v86_if = (stack32[0] & EFLAG_IF) != 0;
                 ctx->esp = ((ctx->esp & 0xFFFF) + 4) & 0xFFFF;
+                printf(" *(ctx->esp): %X  esp: %X if: %u", *((uint8_t*)(ctx->esp)), ctx->esp, current->v86_if);
             }
             else
             {
                 ctx->eflags = EFLAG_IF | EFLAG_VM | stack[0];
                 current->v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->esp = ((ctx->esp & 0xFFFF) + 2) & 0xFFFF;
-            }
+                printf(" *(ctx->esp): %X  esp: %X if: %u", *((uint8_t*)(ctx->esp)), ctx->esp, current->v86_if);
+            } 
             ctx->eip = (uint16_t) (ctx->eip + 1);
             return true;
 
@@ -160,6 +161,8 @@ bool i386V86Gpf(context_v86_t* ctx)
             case 0x20:
             case 0x21:
                 /*i386V86EmulateInt21(ctx);*/
+                
+                /*
                 if (current->v86_in_handler)
                 {
                     return false;
@@ -176,6 +179,8 @@ bool i386V86Gpf(context_v86_t* ctx)
                 ctx->fs = USER_THREAD_INFO | 3;
                 ctx->esp = current->user_stack_top;
                 return true;
+                */
+                return false;
 
             default:
                 stack -= 3;
