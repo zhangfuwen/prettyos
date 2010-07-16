@@ -63,6 +63,7 @@ clean.bat</NMakeCleanCommandLine>
     <None Include="..\user\user_test_c\makefile" />
     <None Include="..\user\user_test_cpp\makefile" />
     <None Include="..\makefile" />
+    <None Include="..\user\vm86\vidswtch.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\kernel\include\cdi-osdep.h" />
@@ -104,6 +105,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\include\usb2_msd.h" />
     <ClInclude Include="..\kernel\include\usb_hc.h" />
     <ClInclude Include="..\kernel\include\util.h" />
+    <ClInclude Include="..\kernel\include\vbe.h" />
     <ClInclude Include="..\kernel\include\video.h" />
     <ClInclude Include="..\kernel\include\cdi\bios.h" />
     <ClInclude Include="..\kernel\include\cdi\cache.h" />
@@ -162,6 +164,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\usb2_msd.c" />
     <ClCompile Include="..\kernel\usb_hc.c" />
     <ClCompile Include="..\kernel\util.c" />
+    <ClCompile Include="..\kernel\vbe.c" />
     <ClCompile Include="..\kernel\video.c" />
     <ClCompile Include="..\kernel\cdi\cdi.c" />
     <ClCompile Include="..\kernel\cdi\cdi_bios.c" />

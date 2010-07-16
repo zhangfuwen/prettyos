@@ -71,33 +71,33 @@ set up in realmode.
 
 typedef struct 
 {
-    uint8_t     VESASignature[4];       // 'VESA' 4 byte signature          
-    uint16_t VESAVersion;            // VBE version number               
+    uint8_t  VESASignature[4];         // VESA 4 byte signature          
+    uint16_t VESAVersion;              // VBE version number               
     
-    // char   _far *OEMStringPtr;   // Pointer to OEM string            
-	char*   OEMStringPtr;           // Pointer to OEM string            
-    long    Capabilities;           // Capabilities of video card       
+    // char _far* OEMStringPtr;        // Pointer to OEM string            
+    char*   OEMStringPtr;              // Pointer to OEM string            
+    long    Capabilities;              // Capabilities of video card       
     
-    // uint16_t   _far *VideoModePtr;  // Pointer to supported modes       
+    // uint16_t   _far* VideoModePtr;  // Pointer to supported modes       
 	uint16_t*  VideoModePtr;           // Pointer to supported modes       
     uint16_t   TotalMemory;            // Number of 64kb memory blocks     
-    uint8_t    reserved[236];             // Pad to 256 byte block size       
-} VgaInfoBlock;
+    uint8_t    reserved[236];          // Pad to 256 byte block size       
+} VgaInfoBlock_t;
 
 // SuperVGA mode information block 
 
 typedef struct 
 {
     uint16_t   ModeAttributes;         // Mode attributes                  
-    uint8_t       WinAAttributes;         // Window A attributes              
-    uint8_t       WinBAttributes;         // Window B attributes              
+    uint8_t    WinAAttributes;         // Window A attributes              
+    uint8_t    WinBAttributes;         // Window B attributes              
     uint16_t   WinGranularity;         // Window granularity in k          
     uint16_t   WinSize;                // Window size in k                 
     uint16_t   WinASegment;            // Window A segment                 
     uint16_t   WinBSegment;            // Window B segment                 
     
-    // void    _far *WinFuncPtr;    // Pointer to window function       
-	// void*   WinFuncPtr;          // Pointer to window function       
+    // void    _far *WinFuncPtr;       // Pointer to window function       
+	// void*   WinFuncPtr;             // Pointer to window function       
     uint16_t   BytesPerScanLine;       // Bytes per scanline               
     uint16_t   XResolution;            // Horizontal resolution            
     uint16_t   YResolution;            // Vertical resolution              
@@ -120,7 +120,7 @@ typedef struct
     uint8_t    RsvdFieldPosition;      // Bit posn of lsb of res mask      
     uint8_t    DirectColorModeInfo;    // Direct color mode attributes     
     uint8_t    res2[216];              // Pad to 256 byte block size       
-} ModeInfoBlock;
+} ModeInfoBlock_t;
 
 typedef enum 
 {
@@ -130,18 +130,18 @@ typedef enum
     memYUV      = 7,                // Direct color YUV memory model    
 } memModels;
 
-uint32_t getVgaInfo(VgaInfoBlock* vgaInfo);
-uint32_t getModeInfo(uint32_t mode, ModeInfoBlock* modeInfo);
+uint32_t getVgaInfo(VgaInfoBlock_t* vgaInfo);
+uint32_t getModeInfo(uint32_t mode, ModeInfoBlock_t* modeInfo);
 uint32_t getVBEMode(void);
 void setVBEMode(uint32_t mode);
 void setBank(uint32_t bank);
 
 void availableModes(void);
-void initGraphics(uint32_t x,uint32_t y);
+void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth);
 
 // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
 
-void putPixel(uint32_t x,uint32_t y,uint32_t color);
+void setPixel(uint32_t x,uint32_t y,uint32_t color);
 
 // rendering one of the character, given its font_data
 

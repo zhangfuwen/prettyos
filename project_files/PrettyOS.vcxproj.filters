@@ -40,6 +40,9 @@
     <Filter Include="User\C++-Userprog">
       <UniqueIdentifier>{70db3fa9-0b6f-42ab-8058-55e600978cc6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="User\vm86">
+      <UniqueIdentifier>{b47e1622-7958-4874-8775-a996e97fa113}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\kernel\data.asm">
@@ -96,6 +99,9 @@
     </None>
     <None Include="..\kernel\kernel.ld">
       <Filter>Kernel</Filter>
+    </None>
+    <None Include="..\user\vm86\vidswtch.asm">
+      <Filter>User\vm86</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -271,6 +277,9 @@
       <Filter>Kernel\include</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\include\vm86.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\include\vbe.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -450,6 +459,9 @@
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\vm86.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\vbe.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>

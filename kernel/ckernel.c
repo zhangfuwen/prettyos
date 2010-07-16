@@ -20,11 +20,12 @@
 #include "pci.h"
 #include "cdi.h"
 #include "devicemanager.h"
+#include "vbe.h"
 
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.44 - Rev: 609";
+const char* version = "0.0.1.46 - Rev: 612";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -109,9 +110,19 @@ void main()
   #endif
 
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-    // page_directory_t* pd = paging_create_user_pd();
-    create_vm86_ctask(NULL, (void*)0x100, "vm86-task");
+    create_vm86_ctask(NULL, (void*)0x100, "vm86-video");
     waitForKeyStroke();
+
+    initGraphics(320, 200, 8);
+    for (uint32_t i=0; i<320; i++)
+    {
+        setPixel(i, 100, 0x0E);
+    }
+    waitForKeyStroke();
+
+    create_vm86_ctask(NULL, (void*)0x3F0, "vm86-text");
+    waitForKeyStroke();
+
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
     
     flpydsk_install(); // detect FDDs
