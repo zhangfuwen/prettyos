@@ -114,6 +114,13 @@ uint32_t irq_handler(uint32_t esp)
             if (reserved) printf(" - overwritten CPU-reserved bits of page entry");
             if (id)       printf(" - caused by an instruction fetch");
             printf(") at %X - EIP: %X\n", faulting_address, r->eip);
+
+            printf("| <Exception - System Halted> Press key for exit from the task! |");
+            sti();
+            while(!keyboard_getChar());
+            textColor(0xF);
+            exit();
+            for (;;);
         }
 
         if (r->int_no == 13) // GPF
@@ -121,47 +128,57 @@ uint32_t irq_handler(uint32_t esp)
             // --------------------- VM86 -------------------------------------------------------------------------------
             context_v86_t* ctx = &context;
 
-            ctx->cs     = r->cs;
-            ctx->eip    = r->eip;
-            ctx->ss     = r->ss;
-            ctx->eflags = r->eflags;
-            ctx->ds     = r->ds;
-            ctx->es     = r->es;
-            ctx->fs     = r->fs;
-            ctx->gs     = r->gs;
-            ctx->esp    = r->useresp; 
-            ctx->eax    = r->eax;
-            ctx->ebx    = r->ebx;
-            ctx->ecx    = r->ecx;
-            ctx->edx    = r->edx;
-            ctx->edi    = r->edi;
-            ctx->esi    = r->esi;
+            ctx->cs      = r->cs;
+            ctx->eip     = r->eip;
+            ctx->ss      = r->ss;
+            ctx->eflags  = r->eflags;
+            ctx->ds      = r->ds;
+            ctx->es      = r->es;
+            ctx->fs      = r->fs;
+            ctx->gs      = r->gs;
+            ctx->useresp = r->useresp;
+            ctx->eax     = r->eax;
+            ctx->ebx     = r->ebx;
+            ctx->ecx     = r->ecx;
+            ctx->edx     = r->edx;
+            ctx->edi     = r->edi;
+            ctx->esi     = r->esi;
 
             if (r->eflags & 0x20000) // VM bit
             {
                 textColor(0x03);
-                bool retVal = i386V86Gpf(ctx); // vm86 handler
-                printf("\nretVal i386V86Gpf: %u\n", retVal);
+                bool retVal = vm86sensitiveOpcodehandler(ctx); // vm86 handler for sensitive opcode
+                if (retVal == true) // OK
+                {
+                  #ifdef _VM_DEBUG_
+                    printf("\nretVal i386V86Gpf: %u\n", retVal);
+                  #endif
+                }
+                else
+                {
+                    textColor(0x0C);
+                    printf("\nvm86: sensitive opcode error)\n");
+                }
+
                 textColor(0x0C);
 
-                r->cs     = ctx->cs;
-                r->eip    = ctx->eip;
-                r->ss     = ctx->ss;
-                r->eflags = ctx->eflags;
-                r->ds     = ctx->ds;
-                r->es     = ctx->es;
-                r->fs     = ctx->fs;
-                r->gs     = ctx->gs;
-                r->eax    = ctx->eax;
-                r->ebx    = ctx->ebx;
-                r->ecx    = ctx->ecx;
-                r->edx    = ctx->edx;
-                r->edi    = ctx->edi;
-                r->esi    = ctx->esi;
-                r->useresp = ctx->esp; 
+                r->cs      = ctx->cs;
+                r->eip     = ctx->eip;
+                r->ss      = ctx->ss;
+                r->eflags  = ctx->eflags;
+                r->ds      = ctx->ds;
+                r->es      = ctx->es;
+                r->fs      = ctx->fs;
+                r->gs      = ctx->gs;
+                r->eax     = ctx->eax;
+                r->ebx     = ctx->ebx;
+                r->ecx     = ctx->ecx;
+                r->edx     = ctx->edx;
+                r->edi     = ctx->edi;
+                r->esi     = ctx->esi;
+                r->useresp = ctx->useresp;
 
-
-                waitForKeyStroke();
+                // waitForKeyStroke(); // only for tests, because vm86 task does not work correctly
             }
             // --------------------- VM86 -------------------------------------------------------------------------------
         }

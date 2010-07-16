@@ -24,7 +24,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.41 - Rev: 605";
+const char* version = "0.0.1.42 - Rev: 606";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -97,18 +97,20 @@ void main()
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
-    // --------------------- VM86 -------------------------------------------------------------------------------
+    showMemorySize();
+
+
+    // --------------------- VM86 ----------- TEST ---------------------------------------------------------------
     memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
     printf("\n\nvm86 binary code at 0x100: ");
     memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); // TEST
     waitForKeyStroke();
 
+    memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
     page_directory_t* pd = paging_create_user_pd();
     create_vm86_ctask(pd, (void*)0x100, "vm86-task");
     waitForKeyStroke();
-    // --------------------- VM86 -------------------------------------------------------------------------------
-
-    showMemorySize();
+    // --------------------- VM86 ------------ TEST -------------------------------------------------------------
 
     flpydsk_install(); // detect FDDs
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
@@ -163,6 +165,7 @@ void main()
     showPortList();
     showDiskList();
 
+
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
@@ -204,6 +207,8 @@ void main()
         {
             logHeapRegions();
         }
+
+
 
         __asm__ volatile ("hlt"); // CPU is stopped until the next interrupt
     }
