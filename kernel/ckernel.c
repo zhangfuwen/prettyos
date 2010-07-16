@@ -116,7 +116,7 @@ void main()
     initGraphics(320, 200, 8);
     for (uint32_t i=0; i<320; i++)
     {
-        setPixel(i, 100, 0x0E);
+        setPixel(i, 13, 0x0A); // HACK due to qemu resolution in y direction
     }
     waitForKeyStroke();
 
