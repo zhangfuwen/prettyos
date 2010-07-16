@@ -164,11 +164,11 @@ mov ax, 0x1112
 xor bl, bl
 int 0x10
 
-;exit
-int 3
+hlt ; is translated as exit() at vm86.c
+jmp $ ; endless loop
 
 waiting_loop:                   
-       mov dl,0x0005  
+       mov dl,0x0009  
 L3:	   mov bl,0x00FF  
 L2:    mov cx,0xFFFF
 L1:    dec cx                   

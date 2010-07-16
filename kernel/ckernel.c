@@ -24,7 +24,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.43 - Rev: 607";
+const char* version = "0.0.1.44 - Rev: 608";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -99,19 +99,21 @@ void main()
 
     showMemorySize();
 
-
     // --------------------- VM86 ----------- TEST ---------------------------------------------------------------
     memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+    
+  #ifdef _VM_DIAGNOSIS_ 
     printf("\n\nvm86 binary code at 0x100: ");
     memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); // TEST
     waitForKeyStroke();
+  #endif
 
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-    page_directory_t* pd = paging_create_user_pd();
-    create_vm86_ctask(pd, (void*)0x100, "vm86-task");
+    // page_directory_t* pd = paging_create_user_pd();
+    create_vm86_ctask(NULL, (void*)0x100, "vm86-task");
     waitForKeyStroke();
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
-
+    
     flpydsk_install(); // detect FDDs
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 
