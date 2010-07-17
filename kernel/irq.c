@@ -150,7 +150,7 @@ uint32_t irq_handler(uint32_t esp)
                 bool retVal = vm86sensitiveOpcodehandler(ctx); // vm86 handler for sensitive opcode
                 if (retVal == true) // OK
                 {
-                  #ifdef _VM_DIAGNOSIS_
+                  #ifdef _VM_DEBUG_
                     printf("\nretVal i386V86Gpf: %u\n", retVal);
                   #endif
                 }
