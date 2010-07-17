@@ -14,6 +14,7 @@ a chance to emulate the facilities they affect.
 #include "console.h"
 #include "vm86.h"
 #include "util.h"
+#include "task.h"
 
 current_t Current;
 current_t* current = &Current;
@@ -210,6 +211,10 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             current->v86_if = true;
             ctx->eip = (uint16_t) (++(ctx->eip));
+            return true;
+
+        case 0xF4: // HLT
+            exit();
             return true;
 
         default: // should not happen!
