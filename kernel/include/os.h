@@ -12,7 +12,7 @@
 /// #define _DEVMGR_DIAGNOSIS_  // e.g. sectorRead, sectorWrite
 /// #define _TASKING_DIAGNOSIS_ // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_  // Provides information about the floppy(-motor)
-#define _VM_DIAGNOSIS_      // Provides information about the vm86 task 
+#define _VM_DIAGNOSIS_      // Provides information about the vm86 task, but critical 
 /// #define _SOUND_             // Sound-Messages - deactivation makes sense during development, because of better boot-time
 
 void textColor(uint8_t color);

@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.54 - Rev: 620";
+const char* version = "0.0.1.55 - Rev: 621";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -105,7 +105,7 @@ void main()
     
   #ifdef _VM_DIAGNOSIS_ 
     printf("\n\nvm86 binary code at 0x100: ");
-    memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); // TEST
+    memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); 
     waitForKeyStroke();
   #endif
 
@@ -116,9 +116,13 @@ void main()
     initGraphics(320, 200, 8);
     for (uint32_t i=0; i<320; i++)
     {
-        setPixel(i, 13, 0x0A); // HACK due to qemu resolution in y direction
+        setPixel(i, 100, 0x0A); // HACK due to qemu resolution in y direction
     }
     waitForKeyStroke();
+    for (uint32_t i=0; i<200; i++)
+    {
+        setPixel(i, 13, 0x0A); // HACK due to qemu resolution in y direction
+    }
 
     create_vm86_ctask(NULL, (void*)0x3F4, "vm86-text");
     waitForKeyStroke();
