@@ -92,6 +92,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 }
             }
             ctx->eip = (uint16_t) (++(ctx->eip));
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); //             
             return true;
 
         case 0x9D: // POPF
@@ -111,16 +112,27 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 current->v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->useresp = ((ctx->useresp & 0xFFFF) + 2) & 0xFFFF;
             }
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip = (uint16_t) (++(ctx->eip)); 
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip);             
             return true;
 
-
         case 0xEF: // OUT DX, AX and OUT DX, EAX
-          #ifdef _VM_DIAGNOSIS_
-            // printf("outw\n"); // vm86 critical
-          #endif
-            outportw(ctx->edx, ctx->eax);
+            if (!isOperand32)
+            {
+             #ifdef _VM_DIAGNOSIS_
+                // printf("outw\n"); // vm86 critical
+              #endif
+                outportw(ctx->edx, ctx->eax);
+            }
+            else
+            {
+              #ifdef _VM_DIAGNOSIS_
+                 // printf("outl(\n"); // vm86 critical
+              #endif
+                outportl(ctx->edx, ctx->eax);
+            }
             ctx->eip = (uint16_t) (++(ctx->eip));
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
             return true;
 
         case 0xEE: // OUT DX, AL
@@ -129,14 +141,26 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             outportb(ctx->edx, ctx->eax);
             ctx->eip = (uint16_t) (++(ctx->eip));
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
             return true;
 
         case 0xED: // IN AX,DX and IN EAX,DX
-          #ifdef _VM_DIAGNOSIS_
-            // printf("inportb(edx)\n"); // vm86 critical
-          #endif
-            ctx->eax = inportb(ctx->edx);
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            if (!isOperand32)
+            {
+              #ifdef _VM_DIAGNOSIS_
+                 // printf("inw\n"); // vm86 critical
+              #endif
+                ctx->eax = (ctx->eax & 0xFFFF0000) + inportw(ctx->edx);
+            }
+            else
+            {
+              #ifdef _VM_DIAGNOSIS_
+                 // printf("inl\n"); // vm86 critical
+              #endif
+                ctx->eax = inportl(ctx->edx);
+            }
+            ctx->eip++; 
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
             return true;
 
         case 0xEC: // IN AL,DX
@@ -145,6 +169,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             ctx->eax = (ctx->eax & 0xFF00) + inportb(ctx->edx);
             ctx->eip = (uint16_t) (++(ctx->eip));
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
             return true;
 
         case 0xCD: // INT imm8
@@ -180,6 +205,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 }
                 ctx->eip = ivt[2 * ip[1]    ];
                 ctx->cs  = ivt[2 * ip[1] + 1];
+                ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
               #ifdef _VM_DIAGNOSIS_
                 // printf("%x:%x\n", ctx->cs, ctx->eip); // vm86 critical 
               #endif
@@ -193,6 +219,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             ctx->eip    = stack[2];
             ctx->cs     = stack[1];
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             ctx->eflags = EFLAG_IF | EFLAG_VM | stack[0];
             ctx->useresp    = ((ctx->useresp & 0xFFFF) + 6) & 0xFFFF;
 
@@ -209,6 +236,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif  
             current->v86_if = false;
             ctx->eip = (uint16_t) (++(ctx->eip));
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
             return true;
 
         case 0xFB: // STI
@@ -217,6 +245,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             current->v86_if = true;
             ctx->eip = (uint16_t) (++(ctx->eip));
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
             return true;
 
         case 0xF4: // HLT
