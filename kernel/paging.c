@@ -56,7 +56,7 @@ uint32_t paging_install()
     // --------------------- VM86 Pages -------------------------------------------------------------------------------
     kernel_pd->codes[0]               |= MEM_USER | MEM_WRITE;
     
-    for (uint32_t i=0; i<1; ++i) 
+    for (uint32_t i=0; i<160; ++i) // 1045h for VMWare, real PC needs 9FC3Fh // ??
     {
         kernel_pd->tables[0]->pages[0x00+i] |= MEM_USER | MEM_WRITE; // 0 * 0x1000 = 0x0000
     }
