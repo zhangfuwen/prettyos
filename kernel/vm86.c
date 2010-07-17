@@ -92,6 +92,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 }
             }
             ctx->eip++;
+            ip++;
             return true;
 
         case 0x9D: // POPF
@@ -111,7 +112,8 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 current->v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->useresp = ((ctx->useresp & 0xFFFF) + 2) & 0xFFFF;
             }
-            ctx->eip++;
+            ctx->eip++; 
+            ip++;
             return true;
 
         case 0xEF: // OUT DX, AX and OUT DX, EAX
@@ -131,6 +133,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 outportl(ctx->edx, ctx->eax);
             }
             ctx->eip++;
+            ip++;
             return true;
 
         case 0xEE: // OUT DX, AL
@@ -139,6 +142,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             outportb(ctx->edx, ctx->eax);
             ctx->eip++;
+            ip++;
             return true;
 
         case 0xED: // IN AX,DX and IN EAX,DX
@@ -160,6 +164,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 ctx->eax = inportl(ctx->edx);
             }
             ctx->eip++;
+            ip++;
             return true;
 
         case 0xEC: // IN AL,DX
@@ -168,6 +173,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             ctx->eax = (ctx->eax & 0xFFFFFF00) + inportb(ctx->edx);
             ctx->eip++;
+            ip++;
             return true;
 
         case 0xCD: // INT imm8
@@ -230,6 +236,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             printf("cli\n");
             current->v86_if = false;
             ctx->eip++;
+            ip++;
             return true;
 
         case 0xFB: // STI
@@ -238,6 +245,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             current->v86_if = true;
             ctx->eip++;
+            ip++;
             return true;
 
         case 0xF4: // HLT
