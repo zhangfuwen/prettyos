@@ -39,13 +39,13 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
     {
         switch (ip[0])
         {
-        case 0x66:            // O32
+        case 0x66: // O32
           #ifdef _VM_DIAGNOSIS_
             printf("o32 ");
           #endif
             isOperand32 = true;
             ip++;
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             break;
 
         case 0x67: // A32
@@ -54,7 +54,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             isAddress32 = true;
             ip++;
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             break;
 
         case 0x9C: // PUSHF
@@ -91,7 +91,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                     stack[0] &= ~EFLAG_IF;
                 }
             }
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             return true;
 
         case 0x9D: // POPF
@@ -111,40 +111,63 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 current->v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->useresp = ((ctx->useresp & 0xFFFF) + 2) & 0xFFFF;
             }
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             return true;
 
-
         case 0xEF: // OUT DX, AX and OUT DX, EAX
-          #ifdef _VM_DIAGNOSIS_
-            printf("outportw(edx, ax)\n");
-          #endif
-            outportw((uint16_t)ctx->edx, (uint16_t)ctx->eax);
-            ctx->eip = (uint16_t) (++(ctx->eip));
+ 
+            if (!isOperand32)
+            {
+              #ifdef _VM_DIAGNOSIS_
+                printf("outportw(edx, ax)\n");
+              #endif
+                outportw(ctx->edx, ctx->eax);
+            }
+            else
+            {
+              #ifdef _VM_DIAGNOSIS_
+                printf("outportl(edx, eax)\n");
+              #endif
+                outportl(ctx->edx, ctx->eax);
+            }
+            ctx->eip++;
             return true;
 
         case 0xEE: // OUT DX, AL
           #ifdef _VM_DIAGNOSIS_
             printf("outportb(edx, al)\n");
           #endif
-            outportb((uint16_t)ctx->edx, (uint8_t)ctx->eax);
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            outportb(ctx->edx, ctx->eax);
+            ctx->eip++;
             return true;
 
-        case 0xED: // IN AX,DX
+        case 0xED: // IN AX,DX and IN EAX,DX
           #ifdef _VM_DIAGNOSIS_
             printf("inportw(edx)\n");
           #endif
-            ctx->eax = inportw((uint16_t)ctx->edx);
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            if (!isOperand32)
+            {
+              #ifdef _VM_DIAGNOSIS_
+                printf("inportw(edx)\n");
+              #endif
+                ctx->eax = (ctx->eax & 0xFFFF0000) + inportw(ctx->edx);
+            }
+            else
+            {
+              #ifdef _VM_DIAGNOSIS_
+                printf("inportl(edx)\n");
+              #endif
+                ctx->eax = inportl(ctx->edx);
+            }
+            ctx->eip++;
             return true;
 
         case 0xEC: // IN AL,DX
           #ifdef _VM_DIAGNOSIS_
             printf("inportb(edx)\n");
           #endif
-            ctx->eax = (ctx->eax & 0xFF00) + inportb((uint16_t)ctx->edx);
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eax = (ctx->eax & 0xFFFFFF00) + inportb(ctx->edx);
+            ctx->eip++;
             return true;
 
         case 0xCD: // INT imm8
@@ -206,7 +229,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
         case 0xFA: // CLI
             printf("cli\n");
             current->v86_if = false;
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             return true;
 
         case 0xFB: // STI
@@ -214,7 +237,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             printf("sti\n");
           #endif
             current->v86_if = true;
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             return true;
 
         case 0xF4: // HLT

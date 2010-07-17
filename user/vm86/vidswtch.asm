@@ -1,4 +1,4 @@
-[map symbols vidswtch.map]
+[map symbols vidswtch.map] ; use this for ckernel.c addresses
 [bits 16]
 [section .text]
 
@@ -155,6 +155,9 @@ video_mode:
 	mov word [3200+725], 14
 	mov word [3200+726], 14
 	mov word [3200+727], 14
+
+	xor ax, ax
+	mov ds, ax 
 
 	hlt     ; is translated as exit() at vm86.c
 	jmp $   ; endless loop
