@@ -55,11 +55,16 @@ uint32_t paging_install()
 
     // --------------------- VM86 Pages -------------------------------------------------------------------------------
     kernel_pd->codes[0]               |= MEM_USER | MEM_WRITE;
-    kernel_pd->tables[0]->pages[0x00] |= MEM_USER | MEM_WRITE; // 0 * 0x1000 = 0x0000
+    
+    for (uint32_t i=0; i<1; ++i) 
+    {
+        kernel_pd->tables[0]->pages[0x00+i] |= MEM_USER | MEM_WRITE; // 0 * 0x1000 = 0x0000
+    }
+
     for (uint32_t i=0; i<96; ++i)
     {
         kernel_pd->tables[0]->pages[0xA0+i] |= MEM_USER | MEM_WRITE; // 0xA0 * 0x1000 = 0xA0000 (until 0xFFFFF)
-    }
+    }    
     // --------------------- VM86 Pages -------------------------------------------------------------------------------
 
     // Setup the page tables for the kernel heap (3GB-4GB), unmapped

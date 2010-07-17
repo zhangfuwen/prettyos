@@ -116,31 +116,34 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
 
 
         case 0xEF: // OUT DX, AX and OUT DX, EAX
-            outportw(ctx->edx, ctx->eax);
+          #ifdef _VM_DIAGNOSIS_
+            printf("outportw(edx, ax)\n");
+          #endif
+            outportw((uint16_t)ctx->edx, (uint16_t)ctx->eax);
             ctx->eip = (uint16_t) (++(ctx->eip));
             return true;
 
         case 0xEE: // OUT DX, AL
           #ifdef _VM_DIAGNOSIS_
-            printf("outportb(edx, eax)\n");
+            printf("outportb(edx, al)\n");
           #endif
-            outportb(ctx->edx, ctx->eax);
+            outportb((uint16_t)ctx->edx, (uint8_t)ctx->eax);
             ctx->eip = (uint16_t) (++(ctx->eip));
             return true;
 
-        case 0xED: // inw
-          #ifdef _VM_DIAGNOSIS_
-            printf("inportb(edx)\n");
-          #endif
-            ctx->eax = inportb(ctx->edx);
-            ctx->eip = (uint16_t) (++(ctx->eip));
-            return true;
-
-        case 0xEC: // inb
+        case 0xED: // IN AX,DX
           #ifdef _VM_DIAGNOSIS_
             printf("inportw(edx)\n");
           #endif
-            ctx->eax = (ctx->eax & 0xFF00) + inportb(ctx->edx);
+            ctx->eax = inportw((uint16_t)ctx->edx);
+            ctx->eip = (uint16_t) (++(ctx->eip));
+            return true;
+
+        case 0xEC: // IN AL,DX
+          #ifdef _VM_DIAGNOSIS_
+            printf("inportb(edx)\n");
+          #endif
+            ctx->eax = (ctx->eax & 0xFF00) + inportb((uint16_t)ctx->edx);
             ctx->eip = (uint16_t) (++(ctx->eip));
             return true;
 
