@@ -163,6 +163,8 @@ video_mode:
 	jmp $   ; endless loop
 
 text_mode:
+	mov ax, 0x0002
+	int 0x10	
 	mov ax, 0x1112
 	xor bl, bl
 	int 0x10
