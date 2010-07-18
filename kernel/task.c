@@ -199,13 +199,15 @@ task_t* create_thread(void(*entry)())
     return new_task;
 }
 
-uint32_t task_switch (uint32_t esp)
+uint32_t task_switch(uint32_t esp)
 {
     if (!currentTask) return esp;
     currentTask->esp = esp;   // save esp
-
-    // Dispatcher - task switch
+    
+    task_t* oldTask = currentTask; // Save old task to check if its the same than the new one
     currentTask = scheduler_getNextTask();
+
+    if(oldTask == currentTask) return esp; // No task switch because old==new
 
     current_console = currentTask->console;
 

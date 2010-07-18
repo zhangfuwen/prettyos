@@ -25,24 +25,24 @@ extern uintptr_t file_data_end;
 fs_node_t* install_initrd(void* location);
 disk_t* ramdisk_install()
 {
-	static port_t RAMport;
-	static disk_t RAMdisk;
+    static port_t RAMport;
+    static disk_t RAMdisk;
 
-	RAMdisk.type = &RAMDISK;
-	RAMdisk.partition[0] = 0;
-	RAMdisk.partition[1] = 0;
-	RAMdisk.partition[2] = 0;
-	RAMdisk.partition[3] = 0;
-	strcpy(RAMdisk.name, "RAMdisk");
-	attachDisk(&RAMdisk);
-	
-	RAMport.type = &RAM;
-	RAMport.insertedDisk = &RAMdisk;
-	RAMport.insertedDisk->type = &RAMDISK;
-	strcpy(RAMport.name, "RAM     ");
-	attachPort(&RAMport);
+    RAMdisk.type = &RAMDISK;
+    RAMdisk.partition[0] = 0;
+    RAMdisk.partition[1] = 0;
+    RAMdisk.partition[2] = 0;
+    RAMdisk.partition[3] = 0;
+    strcpy(RAMdisk.name, "RAMdisk");
+    attachDisk(&RAMdisk);
+    
+    RAMport.type = &RAM;
+    RAMport.insertedDisk = &RAMdisk;
+    RAMport.insertedDisk->type = &RAMDISK;
+    strcpy(RAMport.name, "RAM     ");
+    attachPort(&RAMport);
 
-	return(&RAMdisk);
+    return(&RAMdisk);
 }
 
 void* initrd_install(disk_t* disk, size_t partitionID, size_t size)
@@ -52,18 +52,18 @@ void* initrd_install(disk_t* disk, size_t partitionID, size_t size)
     memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
     fs_root = install_initrd(ramdisk_start);
 
-	disk->partition[partitionID]         = malloc(sizeof(partition_t), 0, "initrd-part");
-	disk->partition[partitionID]->disk   = disk;
-	disk->partition[partitionID]->data   = malloc(sizeof(INITRD_partition_t), 0, "initrd-partdata");
-	disk->partition[partitionID]->mount  = true;
-	disk->partition[partitionID]->type   = &INITRD;
-	disk->partition[partitionID]->buffer = malloc(512, 0, "initrd-partbuffer");
+    disk->partition[partitionID]         = malloc(sizeof(partition_t), 0, "initrd-part");
+    disk->partition[partitionID]->disk   = disk;
+    disk->partition[partitionID]->data   = malloc(sizeof(INITRD_partition_t), 0, "initrd-partdata");
+    disk->partition[partitionID]->mount  = true;
+    disk->partition[partitionID]->type   = &INITRD;
+    disk->partition[partitionID]->buffer = malloc(512, 0, "initrd-partbuffer");
     //HACK
     disk->partition[partitionID]->serial = malloc(13, 0, "initrd-partserial");
     itoa(((uint32_t)(ramdisk_start)/PAGESIZE), disk->partition[partitionID]->serial);
     disk->partition[partitionID]->serial[12] = 0;
 
-	return(ramdisk_start);
+    return(ramdisk_start);
 }
 
 static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer)

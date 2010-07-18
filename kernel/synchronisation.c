@@ -22,24 +22,24 @@ semaphore_t* semaphore_create(uint16_t resourceCount)
 
 bool semaphore_locked(semaphore_t*obj, task_t* task)
 {
-	if(task == 0)
-	{
-		return(obj->freeRes == ALL_RESOURCES_USED);
-	}
-	else
-	{
-		for(int i = 0; i < obj->resCount; i++)
-		{
-			if(obj->resources[i] == task)
-				return(true);
-		}
-		return(false);
-	}
+    if(task == 0)
+    {
+        return(obj->freeRes == ALL_RESOURCES_USED);
+    }
+    else
+    {
+        for(int i = 0; i < obj->resCount; i++)
+        {
+            if(obj->resources[i] == task)
+                return(true);
+        }
+        return(false);
+    }
 }
 
 void semaphore_lock(semaphore_t* obj)
 {
-	if(obj == 0) return;
+    if(obj == 0) return;
     
     for(int i = 0; i < obj->resCount; i++)
     {
@@ -51,7 +51,7 @@ void semaphore_lock(semaphore_t* obj)
     {
         currentTask->blockType = BL_SEMAPHORE;
         currentTask->blockData = obj;
-		switch_context();
+        switch_context();
     }
     while(obj->freeRes == ALL_RESOURCES_USED) {nop();} // Waiting... HACK
     
@@ -68,7 +68,7 @@ void semaphore_lock(semaphore_t* obj)
 
 void semaphore_unlock(semaphore_t* obj)
 {
-	if(obj == 0) return;
+    if(obj == 0) return;
 
     for(int i = 0; i < obj->resCount; i++)
     {

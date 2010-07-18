@@ -2,26 +2,26 @@
 NASM= nasm
 
 ifeq ($(OS),WINDOWS)
-    RM= - del 
-    MV= cmd /c move /Y
-    CC= i586-elf-gcc
-    LD= i586-elf-ld
-    FLOPPYIMAGE= tools/CreateFloppyImage2
-    MKINITRD= tools/make_initrd
+	RM= - del 
+	MV= cmd /c move /Y
+	CC= i586-elf-gcc
+	LD= i586-elf-ld
+	FLOPPYIMAGE= tools/CreateFloppyImage2
+	MKINITRD= tools/make_initrd
 else
-    RM= rm -f
-    MV= mv
-    ifeq ($(OS),MACOSX)
-        CC= i586-elf-gcc
-        LD= i586-elf-ld
-        FLOPPYIMAGE= tools/osx_CreateFloppyImage2
-        MKINITRD= tools/osx_make_initrd
-    else
-        CC= gcc
-        LD= ld
-        FLOPPYIMAGE= tools/linux_CreateFloppyImage2
-        MKINITRD= tools/linux_make_initrd
-    endif
+	RM= rm -f
+	MV= mv
+	ifeq ($(OS),MACOSX)
+		CC= i586-elf-gcc
+		LD= i586-elf-ld
+		FLOPPYIMAGE= tools/osx_CreateFloppyImage2
+		MKINITRD= tools/osx_make_initrd
+	else
+		CC= gcc
+		LD= ld
+		FLOPPYIMAGE= tools/linux_CreateFloppyImage2
+		MKINITRD= tools/linux_make_initrd
+	endif
 endif
 
 # Folders
@@ -31,19 +31,19 @@ STAGE2DIR= stage2_bootloader
 KERNELDIR= kernel
 USERDIR= user
 ifeq ($(OS),WINDOWS)
-    SHELLDIR= $(USERDIR)\shell
-    USERPROGS= $(USERDIR)\other_userprogs
-    USERRDDIR= $(USERDIR)\init_rd_img
-    USERTESTC= $(USERDIR)\user_test_c
-    USERTESTCPP= $(USERDIR)\user_test_cpp
-    USERTOOLS= $(USERDIR)\user_tools
+	SHELLDIR= $(USERDIR)\shell
+	USERPROGS= $(USERDIR)\other_userprogs
+	USERRDDIR= $(USERDIR)\init_rd_img
+	USERTESTC= $(USERDIR)\user_test_c
+	USERTESTCPP= $(USERDIR)\user_test_cpp
+	USERTOOLS= $(USERDIR)\user_tools
 else
-    SHELLDIR= $(USERDIR)/shell
-    USERPROGS= $(USERDIR)/other_userprogs
-    USERRDDIR= $(USERDIR)/init_rd_img
-    USERTESTC= $(USERDIR)/user_test_c
-    USERTESTCPP= $(USERDIR)/user_test_cpp
-    USERTOOLS= $(USERDIR)/user_tools
+	SHELLDIR= $(USERDIR)/shell
+	USERPROGS= $(USERDIR)/other_userprogs
+	USERRDDIR= $(USERDIR)/init_rd_img
+	USERTESTC= $(USERDIR)/user_test_c
+	USERTESTCPP= $(USERDIR)/user_test_cpp
+	USERTOOLS= $(USERDIR)/user_tools
 endif
 
 # dependancies
@@ -105,6 +105,7 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(KERNELDIR)\initrd.dat
 	$(RM) $(KERNELDIR)\kernel.map
 	$(RM) $(SHELLDIR)\shell.map
+	$(RM) $(USERDIR)\vm86\VIDSWTCH.COM
 else
 	$(RM) $(STAGE1DIR)/boot.bin
 	$(RM) $(STAGE2DIR)/BOOT2.BIN
@@ -118,4 +119,5 @@ else
 	$(RM) $(KERNELDIR)/initrd.dat
 	$(RM) $(KERNELDIR)/kernel.map
 	$(RM) $(SHELLDIR)/shell.map
+	$(RM) $(USERDIR)/vm86/VIDSWTCH.COM
 endif

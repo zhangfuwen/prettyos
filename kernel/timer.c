@@ -6,6 +6,7 @@
 #include "util.h"
 #include "timer.h"
 #include "irq.h"
+#include "task.h"
 
 uint16_t systemfrequency; // system frequency
 uint32_t timer_ticks = 0;
@@ -41,7 +42,12 @@ void timer_wait (uint32_t ticks)
 {
     eticks = ticks;
 
-    // busy wait...
+    currentTask->blockType = BL_TIME;
+    currentTask->blockData = (void*)timer_ticks+ticks; // Wakeup-time casted to a pointer (32-bit integer)
+    sti();
+    switch_context();
+
+    // busy wait...; To be replaced in scheduler
     while (eticks>0)
     {
         nop();

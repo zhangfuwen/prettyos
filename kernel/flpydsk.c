@@ -329,7 +329,7 @@ static void flpydsk_check_int(uint32_t* st0, uint32_t* cyl)
 void flpydsk_motorOn(void* drive)
 {
     if(drive == 0 || ((floppy_t*)drive)->motor == true) return;
-    
+
     uint32_t motor = 0;
     switch (((floppy_t*)drive)->ID) // select the correct mask based on current drive
     {
@@ -338,9 +338,8 @@ void flpydsk_motorOn(void* drive)
         case 2: motor = FLPYDSK_DOR_MASK_DRIVE2_MOTOR; break;
         case 3: motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
     }
-    flpydsk_write_dor(((floppy_t*)drive)->ID | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
     ((floppy_t*)drive)->motor = true;
-    sti(); // important!
+    flpydsk_write_dor(((floppy_t*)drive)->ID | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
     sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
 }
 // turns the current floppy drives motor on
