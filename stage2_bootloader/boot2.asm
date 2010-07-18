@@ -2,18 +2,28 @@
 [map symbols boot2.map]
 [Bits 16]
 org 0x500
-jmp entry_point                  ; go to entry point
+jmp entry_point                   
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Memory Management:
+; org                   500 
+; data/extra segments     0
+; stack               9FC00
+; RM kernel            3000
+; PM kernel          100000
+; memory tables        1000
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;*******************************************************
 ;    Includes and Defines
 ;*******************************************************
-%include "gdt.inc"               ; GDT definition
-%include "A20.inc"               ; A20 gate enabling
-%include "Fat12.inc"             ; FAT12 driver
-%include "GetMemoryMap.inc"      ; INT 0x15, eax = 0xE820
+%include "gdt.inc"                ; GDT definition
+%include "A20.inc"                ; A20 gate enabling
+%include "Fat12.inc"              ; FAT12 driver
+%include "GetMemoryMap.inc"       ; INT 0x15, eax = 0xE820
 
-%define IMAGE_PMODE_BASE 0x100000 ; where the kernel is to be loaded to in protected mode
-%define IMAGE_RMODE_BASE 0x3000  ; where the kernel is to be loaded to in real mode
+%define IMAGE_PMODE_BASE 0x100000 ; final kernel location in Protected Mode
+%define IMAGE_RMODE_BASE 0x3000   ; intermediate kernel location in Real Mode
 
 ImageName     db "KERNEL  BIN"
 ImageSize     dd 0
@@ -26,15 +36,12 @@ msgFailure db 0x0D, 0x0A, "Missing KERNEL.BIN", 0x0D, 0x0A, 0x0A, 0
 
 entry_point:
     cli
-    xor ax, ax           ; null segments
+    xor ax, ax          
     mov ds, ax
     mov es, ax
- 
- ;==================================================== HOTFIX ==== ehenkes ====
-    mov ax,0x9000
-    mov ss,ax     ; stack
-    mov sp,0xFC00 ; stackpointer: 9FC00h 
- ;==================================================== HOTFIX ==== ehenkes ====
+    mov ax,0x9000       ; stack
+    mov ss,ax     
+    mov sp,0xFC00       ; stacksegment:stackpointer (linear): 9FC00h (below BIOS area)
     sti
 
 A20:
@@ -42,7 +49,7 @@ A20:
 
 ;*******************************************************
 ;    Determine physical memory INT 0x15, eax = 0xE820
-;    input: es:di -> destination buffer
+;    input: es:di (destination buffer)
 ;*******************************************************
 
 Get_Memory_Map:
@@ -64,14 +71,15 @@ Load_Root:
     mov ebp, IMAGE_RMODE_BASE
     mov esi, ImageName
 
-;=====================================================HOTFIX============
-    ; ES muß erstmal IMAGE_RMODE_BASE sein wg. call zu FindFile in Fat12.inc
+;===================================================== HOTFIX ============
+    ; extra segment ES has to be IMAGE_RMODE_BASE
+	; due to the call to FindFile in Fat12.inc
     mov bx,IMAGE_RMODE_BASE
     mov es,bx
     xor bx,bx
-;=====================================================HOTFIX============
+;===================================================== HOTFIX ============
 
-    call LoadFile                       ; FAT12.inc
+    call LoadFile                      ; FAT12.inc
 
     mov DWORD [ImageSize], ecx
     cmp ax, 0
@@ -94,10 +102,10 @@ EnterProtectedMode:
 
     ; switch to PM
     cli
-    mov eax, cr0                       ; set bit 0 in cr0 --> enter PM
+    mov eax, cr0                       ; bit 0 in CR0 has to be set for entering PM
     or eax, 1
     mov cr0, eax
-    jmp DWORD CODE_DESC:ProtectedMode  ; far jump to fix CS. Remember that the code selector is 0x8!
+    jmp DWORD CODE_DESC:ProtectedMode  ; far jump to code selector (cs = 0x08)
 
 [Bits 32]
 ProtectedMode:
@@ -132,11 +140,11 @@ EXECUTE:
 ;*******************************************************
 [BITS 16]
 print_string:
-    lodsb                              ; grab a byte from SI
-    or al, al                          ; logical or AL by itself
-    jz .done                           ; if the result is zero, get out
+    lodsb                         ; fetch a byte from SI
+    or al, al                     
+    jz .done                      ; if zero, leave
     mov ah, 0x0E
-    int 0x10                           ; otherwise, print out the character!
+    int 0x10                      ; else put character to sreen
     jmp print_string
 .done:
     ret

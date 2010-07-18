@@ -11,6 +11,7 @@ video_mode:
 	mov ax, 0xa000
 	mov ds, ax
 
+logo_PrettyOS:
 	; first row
 	mov word [700], 14 ; yellow pixel at x=60 and y=3
 	mov word [701], 14
