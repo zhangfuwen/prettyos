@@ -58,7 +58,7 @@ void task_log(task_t* t);
 void TSS_log(tss_entry_t* tss);
 
 // vm86
-task_t* create_vm86_task(page_directory_t* directory, void* entry);
-task_t* create_vm86_ctask(page_directory_t* directory, void* entry, const char* consoleName);
+task_t* create_vm86_task(void* entry);
+task_t* create_vm86_ctask(void* entry, const char* consoleName);
 
 #endif

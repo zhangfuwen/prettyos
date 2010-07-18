@@ -344,21 +344,16 @@ void TSS_log(tss_entry_t* tssEntry)
 
 // --------------------- VM86 -------------------------------------------------------------------------------
 
-static void create_vm86_ThreadTaskBase(task_t* new_task, page_directory_t* directory, void* entry)
+static void create_vm86_ThreadTaskBase(task_t* new_task, void* entry)
 {
     new_task->pid            = next_pid++;
-    // new_task->page_directory = directory;
     new_task->privilege      = 3;
     new_task->FPU_ptr        = 0;
     new_task->attrib         = 0x0F;
     new_task->blockType      = BL_NONE;
 
     new_task->heap_top = USER_HEAP_START;
-
-    // paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // ?
-
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
-
     uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
 
     if(new_task->thread)
@@ -368,13 +363,13 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, page_directory_t* direc
 
     *(--kernel_stack) = 0x23; // gs
     *(--kernel_stack) = 0x23; // fs
-    *(--kernel_stack) = 0x23; // regs->es; // es ????????
-    *(--kernel_stack) = 0x23; // regs->ds; // ds ????????
+    *(--kernel_stack) = 0x23; // es 
+    *(--kernel_stack) = 0x23; // ds 
     *(--kernel_stack) = new_task->ss = 0x0000; // ss
-    *(--kernel_stack) = 0 + 4096 - 6; // USER_STACK; // *(--kernel_stack) = 0 + 4096 - 6; tyndur
-    *(--kernel_stack) = 0x20202; // eflags = vm86 (bit 17) activated, interrupts activated, iopl = 0
-    *(--kernel_stack) = 0x00;    // cs  // get_ivt_entry(interrupt)[1]; // cs  tyndur
-    *(--kernel_stack) = (uint32_t)entry; // eip // get_ivt_entry(interrupt)[0]; // eip tyndur
+    *(--kernel_stack) = 4090;                  // USER_STACK; 
+    *(--kernel_stack) = 0x20202;               // eflags = vm86 (bit17), interrupts (bit9), iopl=0
+    *(--kernel_stack) = 0x00;                  // cs  
+    *(--kernel_stack) = (uint32_t)entry;       // eip 
 
     *(--kernel_stack) = 0; // error code
     *(--kernel_stack) = 0; // interrupt nummer
@@ -387,8 +382,7 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, page_directory_t* direc
     *(--kernel_stack) = 0;
     *(--kernel_stack) = 0;
     *(--kernel_stack) = 0;
-    //*(--kernel_stack) = 0; // ?? with or w/o esp
-
+    
     uint32_t data_segment = 0x23; // 0x20|0x3=0x23
 
     *(--kernel_stack) = data_segment;
@@ -408,7 +402,7 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, page_directory_t* direc
     #endif
 }
 
-task_t* create_vm86_task(page_directory_t* directory, void* entry)
+task_t* create_vm86_task(void* entry)
 {
     #ifdef _TASKING_DIAGNOSIS_
       textColor(0x03);
@@ -419,7 +413,7 @@ task_t* create_vm86_task(page_directory_t* directory, void* entry)
     task_t* new_task = malloc(sizeof(task_t),0, "vm86-task-newtask");
     new_task->thread = false;
 
-    create_vm86_ThreadTaskBase(new_task, directory, entry);
+    create_vm86_ThreadTaskBase(new_task, entry);
 
     new_task->ownConsole = false;
     new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
@@ -428,9 +422,9 @@ task_t* create_vm86_task(page_directory_t* directory, void* entry)
     return new_task;
 }
 
-task_t* create_vm86_ctask(page_directory_t* directory, void* entry, const char* consoleName)
+task_t* create_vm86_ctask(void* entry, const char* consoleName)
 {
-    task_t* new_task = create_vm86_task(directory, entry);
+    task_t* new_task = create_vm86_task(entry);
     addConsole(new_task, consoleName);
     return(new_task);
 }

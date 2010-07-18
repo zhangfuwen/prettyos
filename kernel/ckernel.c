@@ -110,23 +110,23 @@ void main()
   #endif
 
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-    create_vm86_ctask(NULL, (void*)0x100, "vm86-video");
+    create_vm86_ctask((void*)0x100, "vm86-video");
     waitForKeyStroke();
 
     initGraphics(320, 200, 8);
     for (uint32_t i=0; i<320; i++)
     {
-        setPixel(i, 100, i); 
+        setPixel(i, 100, 9); 
     }
     waitForKeyStroke();
     
     for (uint32_t i=0; i<200; i++)
     {
-        setPixel(160, i, i); 
+        setPixel(160, i, 9); 
     }
     waitForKeyStroke();
 
-    create_vm86_ctask(NULL, (void*)0x3F4, "vm86-text");
+    create_vm86_ctask((void*)0x3F4, "vm86-text");
     waitForKeyStroke();
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
