@@ -11,6 +11,11 @@
 ModeInfoBlock_t modeInfoBlock;
 ModeInfoBlock_t* mib = &modeInfoBlock;
 
+VgaInfoBlock_t vgaInfoBlock;
+VgaInfoBlock_t* vgaIB = &vgaInfoBlock;
+
+VgaInfoBlock_t* pVga 	= (VgaInfoBlock_t*) (0x1000);
+	
 uint8_t* SCREEN = (uint8_t*) 0xA0000;
 
 void switchToVideomode()
@@ -25,6 +30,17 @@ void switchToTextmode()
     create_vm86_task(VM86_SWITCH_TO_TEXT);
     waitForKeyStroke();
     refreshUserScreen();
+}
+void vgaDebug()
+{
+	printf("\ndebug: print VgaInfoBlock_t\n");
+	printf("debug: %s\n", pVga->VESASignature);
+	printf("debug: %i\n", pVga->VESAVersion);
+	printf("debug: %s\n", pVga->OEMStringPtr);
+	printf("debug: %i\n", pVga->Capabilities);
+	printf("debug: %i\n", pVga->VideoModePtr);
+	printf("debug: %i\n", pVga->TotalMemory);
+	printf("debug: %i\n", pVga->reserved[236]);
 }
 
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth)

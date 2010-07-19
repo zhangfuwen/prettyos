@@ -78,6 +78,8 @@ typedef struct
 void switchToVideomode();
 void switchToTextmode();
 
+void vgaDebug();
+
 uint32_t getVgaInfo(VgaInfoBlock_t* vgaInfo);
 uint32_t getModeInfo(uint32_t mode, ModeInfoBlock_t* modeInfo);
 uint32_t getVBEMode(void);

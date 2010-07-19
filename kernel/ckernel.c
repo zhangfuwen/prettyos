@@ -136,8 +136,11 @@ void main()
     waitForKeyStroke();
 
     switchToTextmode();
-
-    printf("\n\n");
+	waitForKeyStroke();
+	vgaDebug();
+	waitForKeyStroke();
+    
+	printf("\n\n");
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
     
