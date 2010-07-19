@@ -1001,6 +1001,16 @@ double fabs(double x)
     return result;
 }
 
+double sqrt(double x)
+{
+    if (x <  0.0)
+        return NAN;
+
+    double result;
+    __asm__ volatile("fsqrt" : "=t" (result) : "0" (x));
+    return result;
+}
+
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *

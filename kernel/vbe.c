@@ -130,6 +130,19 @@ void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t
   }
 }
 
+void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
+{
+    // http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
+    for (uint32_t i=0; i<=2*radius; i++)
+    {
+        uint32_t x  = xm - radius + i;
+        uint32_t y1 = ym + (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
+        uint32_t y2 = ym - (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
+        setPixel(x, y1, 9);
+        setPixel(x, y2, 9);
+    }
+}
+
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.
 *

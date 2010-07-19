@@ -91,6 +91,7 @@ uint32_t abs(uint32_t arg);
 
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);
+void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);
 
 // rendering one of the character, given its font_data
 

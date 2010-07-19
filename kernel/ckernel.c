@@ -25,7 +25,10 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.60 - Rev: 629";
+#define VM86_SWITCH_TO_VIDEO ((void*)0x100)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x118)
+
+const char* version = "0.0.1.61 - Rev: 630";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -102,35 +105,44 @@ void main()
 
 	// move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
     // --------------------- VM86 ----------- TEST ---------------------------------------------------------------
-    memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+    memcpy (VM86_SWITCH_TO_VIDEO, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
     
   #ifdef _VM_DIAGNOSIS_ 
     printf("\n\nvm86 binary code at 0x100: ");
-    memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); 
-    waitForKeyStroke();
+    memshow(VM86_SWITCH_TO_VIDEO, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); 
   #endif
+    waitForKeyStroke();
+  
 
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-    create_vm86_ctask((void*)0x100, "vm86-video");
+    create_vm86_ctask(VM86_SWITCH_TO_VIDEO, "vm86-video");
     waitForKeyStroke();
 
     initGraphics(320, 200, 8);
-	/*
+	
     for (uint32_t i=0; i<320; i++)
     {
         setPixel(i, 100, 9); 
-    }
-    waitForKeyStroke();
-    
+    }    
+        
     for (uint32_t i=0; i<200; i++)
     {
         setPixel(160, i, 9); 
-    }*/
+    }
+    waitForKeyStroke();
+    
 	// line(20, 30, 200, 40, 0x0A);
+
 	rect(40, 50, 80, 100, 0x0A);
     waitForKeyStroke();
 
-    create_vm86_ctask((void*)0x3F4, "vm86-text");
+    for (uint32_t i=20; i<100; i+=5)
+    {
+        drawCircle(160, 100, i, 9);
+    }
+    waitForKeyStroke();
+
+    create_vm86_ctask(VM86_SWITCH_TO_TEXT, "vm86-text");
     waitForKeyStroke();
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------

@@ -17,6 +17,9 @@
 #define BYTE3(a) (((a)>>16) & 0xFF)
 #define BYTE4(a) (((a)>>24) & 0xFF)
 
+#define NAN (__builtin_nanf (""))
+#define pi 3.1415926535897932384626433832795028841971693993
+
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b))
 void panic_assert(const char* file, uint32_t line, const char* desc);
 
@@ -88,5 +91,6 @@ uint32_t max(uint32_t a, uint32_t b);
 uint32_t min(uint32_t a, uint32_t b);
 int32_t  power(int32_t base, int32_t n);
 double   fabs(double x);
+double sqrt(double x);
 
 #endif
