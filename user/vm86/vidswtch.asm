@@ -17,13 +17,22 @@ logo_PrettyOS:
 	xor ax, ax
 	mov ds, ax 
 
-	getVBEInfo:
+VgaInfoBlock:
     xor ax, ax
 	mov es, ax
 	mov ax, 0x1000
 	mov di, ax
 	mov ax, 0x4F00
 	int 10h
+
+ModeInfoBlock:
+    xor ax, ax
+	mov es, ax
+	mov ax, 0x1300
+	mov di, ax
+	mov ax, 0x4F01
+	int 10h
+	;mov word [0x1300], ax
 
 	hlt     ; is translated as exit() at vm86.c
 	jmp $   ; endless loop

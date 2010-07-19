@@ -6,7 +6,7 @@
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
 
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x126)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x134)
 
 // SuperVGA information block
 typedef struct
@@ -20,7 +20,7 @@ typedef struct
     uint16_t*  VideoModePtr;   // Pointer to supported modes
     uint16_t   TotalMemory;    // Number of 64kb memory blocks
     uint8_t    reserved[236];  // Pad to 256 byte block size
-} VgaInfoBlock_t;
+}__attribute__((packed)) VgaInfoBlock_t;
 
 // SuperVGA mode information block 
 typedef struct 
@@ -56,7 +56,7 @@ typedef struct
     uint8_t    RsvdFieldPosition;      // Bit posn of lsb of res mask
     uint8_t    DirectColorModeInfo;    // Direct color mode attributes
     uint8_t    res2[216];              // Pad to 256 byte block size
-} ModeInfoBlock_t;
+}__attribute__((packed)) ModeInfoBlock_t;
 
 typedef enum
 {
@@ -82,6 +82,7 @@ void vgaDebug();
 
 uint32_t getVgaInfo(VgaInfoBlock_t* vgaInfo);
 uint32_t getModeInfo(uint32_t mode, ModeInfoBlock_t* modeInfo);
+
 uint32_t getVBEMode(void);
 void setVBEMode(uint32_t mode);
 void setBank(uint32_t bank);
