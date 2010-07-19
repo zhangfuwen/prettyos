@@ -6,16 +6,66 @@
 #include "task.h"
 #include "scheduler.h"
 #include "list.h"
+#include "util.h"
+#include "timer.h"
+#include "synchronisation.h"
 
 ring_t* task_queue;
+ring_t* blockedTasks;
+
+task_t* freetimeTask = 0;
+
+blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT;
+
+static void doNothing()
+{
+    switch_context();
+    while(true)
+    {
+        hlt();
+    }
+}
 
 void scheduler_install()
 {
     task_queue = ring_Create();
+    blockedTasks = ring_Create();
+
+    BL_TIME.unlock      = &timer_unlockTask;
+    BL_SEMAPHORE.unlock = &semaphore_unlockTask;
+    BL_INTERRUPT.unlock = 0;
+}
+
+static void checkBlocked()
+{
+    if(blockedTasks->begin == 0) return;
+
+    blockedTasks->current = blockedTasks->begin;
+    do
+    {
+        if(((task_t*)blockedTasks->current->data)->blocker.type->unlock == 0 || ((task_t*)blockedTasks->current->data)->blocker.type->unlock(blockedTasks->current->data)) // Either no unblock-function specified (avoid blocks) or the task should not be blocked any more
+        {
+            scheduler_insertTask(blockedTasks->current->data);
+            ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
+        }
+        blockedTasks->current = blockedTasks->current->next;
+    } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
 }
 
 task_t* scheduler_getNextTask()
 {
+    checkBlocked();
+
+    if(task_queue->begin == 0)
+    {
+        if(freetimeTask == 0) // the task has not been needed until now. Use spare time to create it.
+        {
+            freetimeTask = create_thread(&doNothing);
+            scheduler_deleteTask(freetimeTask);
+        }
+        return(freetimeTask);
+    }
+
     task_queue->current = task_queue->current->next;
     return((task_t*)task_queue->current->data);
 }
@@ -30,11 +80,37 @@ void scheduler_deleteTask(task_t* task)
     while(ring_DeleteFirst(task_queue, task));
 }
 
+void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
+{
+    currentTask->blocker.type = reason;
+    currentTask->blocker.data = data;
+
+    ring_Insert(blockedTasks, currentTask);
+    scheduler_deleteTask(currentTask);
+
+    sti();
+    switch_context();
+}
+
 void scheduler_log()
 {
-    element_t* temp = task_queue->current;
+    printf("\nblocked tasks:\n");
+    element_t* temp = blockedTasks->current;
     do
     {
+        if(temp == 0) break;
+
+        task_log((task_t*)temp->data);
+        temp = temp->next;
+    }
+    while (temp != blockedTasks->current);
+
+    printf("\nrunning tasks:\n");
+    temp = task_queue->current;
+    do
+    {
+        if(temp == 0) break;
+
         task_log((task_t*)temp->data);
         temp = temp->next;
     }

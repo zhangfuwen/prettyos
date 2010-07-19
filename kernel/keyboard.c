@@ -241,7 +241,7 @@ char getch()
     while(retVal == 0)
     {
         sti();
-        __asm__ volatile ("hlt");
+        hlt();
         retVal = keyboard_getChar();
     }
     return(retVal);

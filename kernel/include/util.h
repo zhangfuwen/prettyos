@@ -69,6 +69,7 @@ void systemControl(SYSTEM_CONTROL todo); // Reboot, Shutdown, ...
 
 void bootscreen();
 
+void hlt();
 void sti();
 void cli();
 void nop();

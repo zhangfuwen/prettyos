@@ -4,12 +4,9 @@
 #include "console.h"
 #include "paging.h"
 #include "descriptor_tables.h"
+#include "scheduler.h"
 
 #define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
-
-typedef enum {
-    BL_NONE, BL_TIME, BL_SEMAPHORE, BL_INTERRUPT
-} blockerType_t;
 
 struct task
 {
@@ -25,16 +22,13 @@ struct task
     uintptr_t         FPU_ptr;        // pointer to FPU data
 
     // Information needed by scheduler
-    blockerType_t blockType; // Type of the blocking object
-    void*         blockData; // Object storing the blocker (TIME as integer (wakeup-time), SEMAPHORE as semaphore_t*)
+    blocker_t blocker; // Object indicating reason and duration of blockade
 
     // task specific graphical output settings
     bool       ownConsole; // This task has an own console
     console_t* console;    // Console used by this task
     uint8_t    attrib;     // Color
 } __attribute__((packed));
-
-typedef struct task task_t;
 
 extern task_t* FPUTask; // fpu.c
 

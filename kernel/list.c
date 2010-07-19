@@ -150,9 +150,17 @@ bool ring_DeleteFirst(ring_t* ring, void* data)
         if (current->next->data == data) // next element will be deleted
         {
             element_t* temp = current->next;
-            if(temp == ring->begin)   ring->begin   = ring->begin->next;
-            if(temp == ring->current) ring->current = ring->current->next;
-            current->next = current->next->next;
+            if(ring->begin == ring->begin->next) // Just one element
+            {
+                ring->begin = 0;
+                ring->current = 0;
+            }
+            else
+            {
+                if(temp == ring->begin)   ring->begin   = ring->begin->next;
+                if(temp == ring->current) ring->current = ring->current->next;
+                current->next = current->next->next;
+            }
             free(temp);
             return(true);
         }

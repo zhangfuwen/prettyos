@@ -578,7 +578,7 @@ FS_ERROR flpydsk_read_sector(uint32_t sectorLBA, bool single)
 
     int32_t retVal = CE_GOOD;
     CurrentDrive->accessRemaining+=2;
-    if (flpydsk_seek (track, head) !=0)
+    if (flpydsk_seek(track, head) !=0)
     {
         retVal = CE_SEEK_ERROR;
     }

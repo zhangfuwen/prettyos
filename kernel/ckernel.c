@@ -25,10 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-#define VM86_SWITCH_TO_VIDEO ((void*)0x100)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x118)
-
-const char* version = "0.0.1.62 - Rev: 631";
+const char* version = "0.0.1.63 - Rev: 632";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -96,30 +93,26 @@ void showMemorySize()
 void main()
 {
     init();
-    task_switching = true;
     create_cthread(&bootscreen, "Booting ...");
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
 
-	// move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
+    // move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
     // --------------------- VM86 ----------- TEST ---------------------------------------------------------------
     memcpy (VM86_SWITCH_TO_VIDEO, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
-    
+
   #ifdef _VM_DIAGNOSIS_ 
     printf("\n\nvm86 binary code at 0x100: ");
     memshow(VM86_SWITCH_TO_VIDEO, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); 
   #endif
     waitForKeyStroke();
-  
 
-    memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-    create_vm86_task(VM86_SWITCH_TO_VIDEO);
-    waitForKeyStroke();
+    switchToVideomode();
 
     initGraphics(320, 200, 8);
-	
+    
     for (uint32_t i=0; i<320; i++)
     {
         setPixel(i, 100, 9); 
@@ -129,23 +122,22 @@ void main()
     {
         setPixel(160, i, 9); 
     }
-    waitForKeyStroke();
     
-	// line(20, 30, 200, 40, 0x0A); // problem: fabs (FPU)
+    // line(20, 30, 200, 40, 0x0A); // problem: fabs (FPU)
 
-	rect(40, 50, 80, 100, 0x0A);
-    waitForKeyStroke();
+    rect(40, 50, 80, 100, 0x0A);
+
 
     /*
     for (uint32_t i=20; i<100; i+=5)
     {
         drawCircle(160, 100, i, 9); // problem: sqrt (FPU)
-    }
+    }*/
     waitForKeyStroke();
-    */
-    
-    create_vm86_task(VM86_SWITCH_TO_TEXT);
-    waitForKeyStroke();
+
+    switchToTextmode();
+
+    printf("\n\n");
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
     
@@ -245,9 +237,7 @@ void main()
             logHeapRegions();
         }
 
-
-
-        __asm__ volatile ("hlt"); // CPU is stopped until the next interrupt
+        hlt(); // CPU is stopped until the next interrupt
     }
     ///////////////////////////// end of kernel idle loop /////////////////////////////
 }

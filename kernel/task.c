@@ -51,13 +51,14 @@ void tasking_install()
     currentTask->console        = current_console;
     currentTask->ownConsole     = true;
     currentTask->attrib         = 0x0F;
-    currentTask->blockType      = BL_NONE;
+    currentTask->blocker.type   = 0;
 
     currentTask->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-currtask-kst")+KERNEL_STACK_SIZE;
 
     scheduler_insertTask(currentTask);
 
     sti();
+    task_switching = true;
 }
 
 static void addConsole(task_t* task, const char* consoleName)
@@ -83,7 +84,7 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
     new_task->privilege      = privilege;
     new_task->FPU_ptr        = 0;
     new_task->attrib         = 0x0F;
-    new_task->blockType      = BL_NONE;
+    new_task->blocker.type   = 0;
 
     if (new_task->privilege == 3)
     {
@@ -350,7 +351,7 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, void* entry)
     new_task->privilege      = 3;
     new_task->FPU_ptr        = 0;
     new_task->attrib         = 0x0F;
-    new_task->blockType      = BL_NONE;
+    new_task->blocker.type   = 0;
 
     new_task->heap_top = USER_HEAP_START;
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;

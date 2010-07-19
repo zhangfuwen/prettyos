@@ -5,11 +5,27 @@
 
 #include "vbe.h"
 #include "util.h"
+#include "task.h"
+#include "video.h"
 
 ModeInfoBlock_t modeInfoBlock;
 ModeInfoBlock_t* mib = &modeInfoBlock;
 
 uint8_t* SCREEN = (uint8_t*) 0xA0000;
+
+void switchToVideomode()
+{
+    memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
+    create_vm86_task(VM86_SWITCH_TO_VIDEO);
+    waitForKeyStroke();
+}
+
+void switchToTextmode()
+{
+    create_vm86_task(VM86_SWITCH_TO_TEXT);
+    waitForKeyStroke();
+    refreshUserScreen();
+}
 
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth)
 {
@@ -36,9 +52,9 @@ float sgn(float x)
 
 uint32_t abs(uint32_t arg)
 {
-	if (arg < 0)
+    if (arg < 0)
     arg = -arg;
-	return (arg);
+    return (arg);
 }
 
 /* line  (DON`T USE IT, IT CRASH!)
@@ -94,7 +110,7 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
 }
 
 /* rect  
-*	Draws a rectangle by drawing all lines by itself.
+*    Draws a rectangle by drawing all lines by itself.
 *
 */
 

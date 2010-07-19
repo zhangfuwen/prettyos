@@ -25,6 +25,7 @@ void        list_Show(listHead_t* hd);                        // prints the list
 void        list_Delete(listHead_t* list, void* data);        // Deletes all elements with data from the list
 element_t*  list_GetElement(listHead_t* hd, uint32_t number); // Returns the data at the position "number"
 
+
 typedef struct {
     element_t* begin;
     element_t* current;

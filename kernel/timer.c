@@ -8,16 +8,15 @@
 #include "irq.h"
 #include "task.h"
 
-uint16_t systemfrequency; // system frequency
-uint32_t timer_ticks = 0;
-uint32_t eticks = 0;
+static uint16_t systemfrequency; // system frequency
+static uint32_t timer_ticks = 0;
 
 void timer_install(uint16_t sysfreq)
 {
     // Installs 'timer_handler' to IRQ0
     irq_install_handler(32+0, timer_handler);
 
-    systemTimer_setFrequency(sysfreq); // x Hz, meaning a tick every 1000/x milliseconds
+    timer_setFrequency(sysfreq); // x Hz, meaning a tick every 1000/x milliseconds
 }
 
 uint32_t timer_getSeconds()
@@ -32,39 +31,29 @@ uint32_t timer_getMilliseconds()
 void timer_handler(registers_t* r)
 {
     ++timer_ticks;
-    if (eticks>0)
-    {
-        --eticks;
-    }
 }
 
 void timer_wait (uint32_t ticks)
 {
-    eticks = ticks;
-
-    currentTask->blockType = BL_TIME;
-    currentTask->blockData = (void*)timer_ticks+ticks; // Wakeup-time casted to a pointer (32-bit integer)
-    sti();
-    switch_context();
-
-    // busy wait...; To be replaced in scheduler
-    while (eticks>0)
-    {
-        nop();
-    }
+    scheduler_blockCurrentTask(&BL_TIME, (void*)timer_ticks+ticks); // data: Wakeup-time casted to a pointer (32-bit integer)
 }
 
-void sleepSeconds (uint32_t seconds)
+bool timer_unlockTask(task_t* task)
+{
+    return((uint32_t)task->blocker.data <= timer_ticks);
+}
+
+void sleepSeconds(uint32_t seconds)
 {
     sleepMilliSeconds(1000*seconds);
 }
 
-void sleepMilliSeconds (uint32_t ms)
+void sleepMilliSeconds(uint32_t ms)
 {
     timer_wait(systemfrequency*ms/1000);
 }
 
-void systemTimer_setFrequency(uint32_t freq)
+void timer_setFrequency(uint32_t freq)
 {
     systemfrequency = freq;
     uint32_t divisor = 1193180 / systemfrequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
@@ -78,7 +67,7 @@ void systemTimer_setFrequency(uint32_t freq)
     outportb(0x40, (uint8_t)((divisor>>8) & 0xFF)); // high byte
 }
 
-uint16_t systemTimer_getFrequency()
+uint16_t timer_getFrequency()
 {
     return(systemfrequency);
 }
@@ -90,7 +79,7 @@ void timer_uninstall()
 }
 
 // delay in microseconds independent of timer interrupt but on rdtsc
-void delay (uint32_t microsec)
+void delay(uint32_t microsec)
 {
     uint64_t timeout = rdtsc() + (uint64_t)(((uint32_t)(microsec/1000)) * system.CPU_Frequency_kHz);
 

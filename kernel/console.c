@@ -6,6 +6,7 @@
 #include "console.h"
 #include "util.h"
 #include "kheap.h"
+#include "task.h"
 #include "synchronisation.h"
 #include "video.h"
 
