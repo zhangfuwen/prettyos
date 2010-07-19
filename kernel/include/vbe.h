@@ -5,70 +5,8 @@
 
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
 
-/*
-Once you have set vesa up you will find it as easy as vga modes to program for.
-First you test for vesa (in realmode) and set it up like this:
-Code:
-
-mov   dword [VESAInfo_Signature],'VBE2'
-mov   ax,4f00h   ; Is Vesa installed ?
-mov   di,VESA_Info    ; This is the address of our info block.
-int   10h
-
-cmp   ax,004Fh   ; Is vesa installed ?,
-jne   near NoVesa2    ; If not print a mesage & quit.
-
-mov   ax,4f01h   ; Get Vesa Mode information.
-mov   di,Mode_Info   ; This is the address of how info block.
-mov   cx,0x4101   ; 4112h = 32/24bit ; 0x4101 = 8bit ;4111h = 15bit (640*480)
-and   cx,0xfff
-int   10h
-
-cmp   dword [VESAInfo_Signature], 'VESA'
-jne   near NoVesa2
-
-cmp   byte [VESAInfo_Version+1], 2
-jb    NoVesa2   ; VESA version below 2.0
-
-The above code will test for vesa2 and set up 640x480 x 256color, or jump to
-error code to print a error message
-(error message is not included in the above code).
-If the above code is sucessfull it fills out the "VESA_Info" and "Mode_Info".
-
-Once in pmode to plot a pixel we do this
-Code:
-
-mov  edi,[ModeInfo_PhysBasePtr]   ; This is = to mov   edi,0xA0000 in vga
-add  edi, 640*6    ; This is = to x = 0, y = 6
-mov  al,0x09   ; Color of pixel
-stosb   ; Put whats in al at es:edi
-
-To fill the screen to white, we do this:
-Code:
-
-mov   edi,[ModeInfo_PhysBasePtr]
-mov   ecx,640*480   ; Size of screen
-mov   al,0xff   ; This is for the color of one pixel
-rep   stosb
-
-NOTE: we could make the above code a little faster by doing this
-Code:
-
-mov   edi,[ModeInfo_PhysBasePtr]
-mov   ecx,640*480/4   ; Size of screen
-mov   eax,0xffffffff    ; This is for the color of one pixel
-rep   stosd
-
-Here are some things to remember 
-1.  you should start like the above, but latter use off screen buffers, 
-2. if you use a 24bit mode some graphic cards use 24bit others use 32bit, 
-you need to test for this and use differant code. Also unless you can go 
-to real mode or call realmode int's you will be stuck in the vesa mode you
-set up in realmode.
-*/
 
 // SuperVGA information block
-
 typedef struct
 {
     uint8_t  VESASignature[4]; // VESA 4 byte signature
@@ -83,7 +21,6 @@ typedef struct
 } VgaInfoBlock_t;
 
 // SuperVGA mode information block 
-
 typedef struct 
 {
     uint16_t   ModeAttributes;         // Mode attributes
@@ -127,6 +64,16 @@ typedef enum
     memYUV  = 7,  // Direct color YUV memory model
 } memModels;
 
+// bitmap the structure 
+typedef struct               
+{
+  uint16_t width;
+  uint16_t height;
+  uint8_t palette[256*3];
+  uint8_t *data;
+} Bitmap_t;
+
+
 uint32_t getVgaInfo(VgaInfoBlock_t* vgaInfo);
 uint32_t getModeInfo(uint32_t mode, ModeInfoBlock_t* modeInfo);
 uint32_t getVBEMode(void);
@@ -137,6 +84,13 @@ void availableModes(void);
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth);
 
 void setPixel(uint32_t x, uint32_t y, uint32_t color);
+
+// should be in util.h, maybe later in math.h or something like that
+float sgn(float x);
+uint32_t abs(uint32_t arg);
+
+void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
+void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);
 
 // rendering one of the character, given its font_data
 

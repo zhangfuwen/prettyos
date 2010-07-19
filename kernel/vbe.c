@@ -4,6 +4,7 @@
 */
 
 #include "vbe.h"
+#include "util.h"
 
 ModeInfoBlock_t modeInfoBlock;
 ModeInfoBlock_t* mib = &modeInfoBlock;
@@ -23,6 +24,111 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
     SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
 }
 
+float sgn(float x)
+{
+  if (x < 0)
+    return -1;
+  else if (x > 0)
+    return 1;
+  else
+    return 0;
+}
+
+uint32_t abs(uint32_t arg)
+{
+	if (arg < 0)
+    arg = -arg;
+	return (arg);
+}
+
+/* line  (DON`T USE IT, IT CRASH!)
+*    draws a line using Bresenham's line-drawing algorithm, which uses 
+*    no multiplication or division.
+*/
+
+void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
+{
+  uint32_t i,dx,dy,sdx,sdy,dxabs,dyabs,x,y,px,py;
+
+  dx=x2-x1;      // the horizontal distance of the line
+  dy=y2-y1;      // the vertical distance of the line
+  dxabs=fabs(dx);
+  dyabs=fabs(dy);
+  sdx=sgn(dx);
+  sdy=sgn(dy);
+  x=dyabs>>1;
+  y=dxabs>>1;
+  px=x1;
+  py=y1;
+
+  SCREEN[(py<<8)+(py<<6)+px]=color;
+
+  if (dxabs>=dyabs) // the line is more horizontal than vertical
+  {
+    for(i=0;i<dxabs;i++)
+    {
+      y+=dyabs;
+      if (y>=dxabs)
+      {
+        y-=dxabs;
+        py+=sdy;
+      }
+      px+=sdx;
+      setPixel(px,py,color);
+    }
+  }
+  else // the line is more vertical than horizontal
+  {
+    for(i=0;i<dyabs;i++)
+    {
+      x+=dxabs;
+      if (x>=dyabs)
+      {
+        x-=dyabs;
+        px+=sdx;
+      }
+      py+=sdy;
+      setPixel(px,py,color);
+    }
+  }
+}
+
+/* rect  
+*	Draws a rectangle by drawing all lines by itself.
+*
+*/
+
+void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
+{
+  uint32_t top_offset,bottom_offset,i,temp; //word
+
+  if (top>bottom)
+  {
+    temp=top;
+    top=bottom;
+    bottom=temp;
+  }
+  if (left>right)
+  {
+    temp=left;
+    left=right;
+    right=temp;
+  }
+
+  top_offset=(top<<8)+(top<<6);
+  bottom_offset=(bottom<<8)+(bottom<<6);
+
+  for(i=left;i<=right;i++)
+  {
+    SCREEN[top_offset+i]=color;
+    SCREEN[bottom_offset+i]=color;
+  }
+  for(i=top_offset;i<=bottom_offset;i+=mib->XResolution) //SCREEN_WIDTH
+  {
+    SCREEN[left+i]=color;
+    SCREEN[right+i]=color;
+  }
+}
 
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.
