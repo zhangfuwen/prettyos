@@ -136,8 +136,8 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
     for (uint32_t i=0; i<=2*radius; i++)
     {
         uint32_t x  = xm - radius + i;
-        uint32_t y1 = ym + (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
-        uint32_t y2 = ym - (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
+        uint32_t y1 = ym + (uint32_t) sqrt(radius*radius - (x-xm)*(x-xm));
+        uint32_t y2 = ym - (uint32_t) sqrt(radius*radius - (x-xm)*(x-xm));
         setPixel(x, y1, 9);
         setPixel(x, y2, 9);
     }

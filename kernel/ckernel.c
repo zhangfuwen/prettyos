@@ -28,7 +28,7 @@
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
 #define VM86_SWITCH_TO_TEXT  ((void*)0x118)
 
-const char* version = "0.0.1.61 - Rev: 630";
+const char* version = "0.0.1.62 - Rev: 631";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -115,7 +115,7 @@ void main()
   
 
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-    create_vm86_ctask(VM86_SWITCH_TO_VIDEO, "vm86-video");
+    create_vm86_task(VM86_SWITCH_TO_VIDEO);
     waitForKeyStroke();
 
     initGraphics(320, 200, 8);
@@ -131,18 +131,20 @@ void main()
     }
     waitForKeyStroke();
     
-	// line(20, 30, 200, 40, 0x0A);
+	// line(20, 30, 200, 40, 0x0A); // problem: fabs (FPU)
 
 	rect(40, 50, 80, 100, 0x0A);
     waitForKeyStroke();
 
+    /*
     for (uint32_t i=20; i<100; i+=5)
     {
-        drawCircle(160, 100, i, 9);
+        drawCircle(160, 100, i, 9); // problem: sqrt (FPU)
     }
     waitForKeyStroke();
-
-    create_vm86_ctask(VM86_SWITCH_TO_TEXT, "vm86-text");
+    */
+    
+    create_vm86_task(VM86_SWITCH_TO_TEXT);
     waitForKeyStroke();
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
