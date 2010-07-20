@@ -550,14 +550,14 @@ void showPORTSC()
             if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
                 strcpy(PortStatus,"attached");
-                writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
+                writeInfo(0, "Port: %u, device %s", j+1, PortStatus);
                 resetPort(j);
                 checkPortLineStatus(j);
             }
             else
             {
                 strcpy(PortStatus,"not attached");
-                writeInfo(0, "Port: %i, device %s", j+1, PortStatus);
+                writeInfo(0, "Port: %u, device %s", j+1, PortStatus);
 
                 // Device Manager
                 removeDisk(&usbDev[j+1]);

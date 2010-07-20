@@ -154,7 +154,7 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
         printf("ELF file program header:\n");
         const char* types[] = { "NULL", "Loadable Segment", "Dynamic Linking Information",
                                 "Interpreter", "Note", "??", "Program Header" };
-        printf("  %s, offset %i, vaddr %X, paddr %X, filesz %i, memsz %i, flags %i, align %i\n",
+        printf("  %s, offset %u, vaddr %X, paddr %X, filesz %u, memsz %u, flags %u, align %u\n",
             types[ph->type], ph->offset, ph->vaddr, ph->paddr, ph->filesz, ph->memsz, ph->flags, ph->align);
         textColor(0x0F);
         #endif

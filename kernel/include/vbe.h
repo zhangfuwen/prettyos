@@ -6,7 +6,7 @@
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
 
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x134)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x137)
 
 // SuperVGA information block
 typedef struct

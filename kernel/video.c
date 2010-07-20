@@ -192,7 +192,7 @@ void refreshUserScreen()
     else
     {
         char Buffer[70];
-        snprintf(Buffer, 70, "Console %i: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
+        snprintf(Buffer, 70, "Console %u: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
         csr_x = COLUMNS - strlen(Buffer);
         csr_y = 0;
         kputs(Buffer);

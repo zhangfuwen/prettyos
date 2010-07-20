@@ -158,7 +158,7 @@ static uint32_t phys_init()
     kdebug(3, "Memory map:\n");
     for (mem_map_entry_t* entry=entries; entry->size; ++entry)
     {
-        kdebug(3, "  %X -> %X %i\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
+        kdebug(3, "  %X -> %X %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }
 
     // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size 0.

@@ -32,11 +32,11 @@ VgaInfoBlock:
 ModeInfoBlock:
     xor ax, ax
 	mov es, ax
-	mov ax, 0x1300
+	mov ax, 0x1200
 	mov di, ax
 	mov ax, 0x4F01
 	int 10h
-	;mov word [0x1300], ax
+	mov word [0x1300], ax
 	
 
 	hlt     ; is translated as exit() at vm86.c

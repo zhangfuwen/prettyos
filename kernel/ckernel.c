@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.67 - Rev: 636";
+const char* version = "0.0.1.68 - Rev: 637";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -137,7 +137,7 @@ void main()
     
     // line(20, 30, 200, 40, 0x0A); // problem: fabs (FPU)
 
-    rect(40, 50, 80, 100, 0x0A);
+    rect(40, 50, 80, 98, 0x0A);
 
 
     /*
@@ -247,7 +247,7 @@ void main()
 
             // draw status bar with date & time and frequency
             getCurrentDateAndTime(DateAndTime);
-            kprintf("%s   %i s runtime. CPU: %i MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
+            kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
 
             deviceManager_checkDrives(); // switch off motors if they are not neccessary
         }

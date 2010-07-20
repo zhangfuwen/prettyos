@@ -221,7 +221,7 @@ uint32_t task_switch(uint32_t esp)
 
     #ifdef _TASKING_DIAGNOSIS_
       textColor(0x03);
-      printf("%i ", currentTask->pid);
+      printf("%u ", currentTask->pid);
     #endif
 
     // set TS

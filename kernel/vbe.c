@@ -41,56 +41,63 @@ void switchToTextmode()
 void vgaDebug()
 {
 	memcpy((void*)vgaIB, (void*)pVga, sizeof(VgaInfoBlock_t));
-	memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));
-	 
+	memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));	 
 
-	printf("\nDEBUG print: VgaInfoBlock_t\n");
-	printf("sizeof VgaInfoBlock_t:        %X\n",sizeof (VgaInfoBlock_t));
-	
-	printf("VESASignature:          %s\n", vgaIB->VESASignature);
-	printf("VESAVersion:            %u\n", vgaIB->VESAVersion);
-	printf("OEMStringPtr:           %X\n", vgaIB->OEMStringPtr);
-	printf("Capabilities:           %u\n", vgaIB->Capabilities);
-	printf("VideoModePtr:           %u\n", vgaIB->VideoModePtr);
-	printf("TotalMemory:            %u\n", vgaIB->TotalMemory);
-	printf("reserved:               %u\n", vgaIB->reserved[236]);
+	printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));	
+	printf("VESA-Signature:         %s\n",     vgaIB->VESASignature);
+	printf("VESA-Version:           %u.%u\n", (vgaIB->VESAVersion&0xFF00)>>8,vgaIB->VESAVersion&0xFF);
+	printf("Capabilities:           %u\n",     vgaIB->Capabilities);
+	printf("Video Memory (MiB):     %u\n",     vgaIB->TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
+	printf("Reserved:               %u\n",     vgaIB->reserved[236]);
+    printf("OEM-String (address):   %X\n",     vgaIB->OEMStringPtr);
+    printf("Video Modes Ptr:        %X\n",     vgaIB->VideoModePtr);
 
-	
+    textColor(0x0E);
+    printf("\nVideo Modes:\n\n");
+    for (uint8_t i=0; i<16; i+=2)
+    {
+         printf("%x ", *(uint16_t*)vgaIB->VideoModePtr+i);
+    }
+    printf("\n");
+    for (uint8_t i=16; i<32; i+=2)
+    {
+         printf("%x ", *(uint16_t*)vgaIB->VideoModePtr+i);
+    }
+    printf("\n");
+    textColor(0x0F);
+
 	waitForKeyStroke();
 	
-	printf("\nDEBUG print: ModeInfoBlock_t\n");
-	printf("sizeof ModeInfoBlock_t:      %X\n",sizeof (ModeInfoBlock_t));
-	
-	printf("ModeAttributes:        %i\n", mib->ModeAttributes);
-	printf("WinAAttributes:        %i\n", mib->WinAAttributes);
-	printf("WinBAttributes:        %i\n", mib->WinBAttributes);
-	printf("WinGranularity:        %i\n", mib->WinGranularity);
-	printf("WinSize:               %i\n", mib->WinSize);
-	printf("WinASegment:           %i\n", mib->WinASegment);
-	printf("WinBSegment:           %i\n", mib->WinBSegment);
+	printf("\nDEBUG print: ModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));	
+    printf("WinAAttributes:        %u\n", mib->WinAAttributes);
+	printf("WinBAttributes:        %u\n", mib->WinBAttributes);
+	printf("WinGranularity:        %u\n", mib->WinGranularity);
+	printf("WinSize:               %u\n", mib->WinSize);
+	printf("WinASegment:           %u\n", mib->WinASegment);
+	printf("WinBSegment:           %u\n", mib->WinBSegment);
 	printf("WinFuncPtr:            %X\n", mib->WinFuncPtr);
-	printf("BytesPerScanLine:      %i\n", mib->BytesPerScanLine);
+	printf("BytesPerScanLine:      %u\n", mib->BytesPerScanLine);
 	printf("XResolution:           %u\n", mib->XResolution);
 	printf("YResolution:           %u\n", mib->YResolution);
 	printf("XCharSize:             %u\n", mib->XCharSize);
 	printf("YCharSize:             %u\n", mib->YCharSize);
-	printf("NumberOfPlanes:        %i\n", mib->NumberOfPlanes);
-	printf("BitsPerPixel:          %i\n", mib->BitsPerPixel);
-	printf("NumberOfBanks:         %i\n", mib->NumberOfBanks);
-	printf("MemoryModel:           %i\n", mib->MemoryModel);
-	printf("BankSize:              %i\n", mib->BankSize);
-	printf("NumberOfImagePages:    %i\n", mib->NumberOfImagePages);
-	printf("res1:                  %i\n", mib->res1);
-	printf("RedMaskSize:           %i\n", mib->RedMaskSize);
-	printf("RedFieldPosition:      %i\n", mib->RedFieldPosition);
-	printf("GreenMaskSize:         %i\n", mib->GreenMaskSize);
-	printf("GreenFieldPosition:    %i\n", mib->GreenFieldPosition);
-	printf("BlueMaskSize:          %i\n", mib->BlueMaskSize);
-	printf("BlueFieldPosition:     %i\n", mib->BlueFieldPosition);
-	printf("RsvdMaskSize:          %i\n", mib->RsvdMaskSize);
-	printf("RsvdFieldPosition:     %i\n", mib->RsvdFieldPosition);
-	printf("DirectColorModeInfo:   %i\n", mib->DirectColorModeInfo);
-	printf("res2:                  %i\n", mib->res2);
+	printf("NumberOfPlanes:        %u\n", mib->NumberOfPlanes);
+	printf("BitsPerPixel:          %u\n", mib->BitsPerPixel);
+	printf("NumberOfBanks:         %u\n", mib->NumberOfBanks);
+	printf("MemoryModel:           %u\n", mib->MemoryModel);
+	printf("BankSize:              %u\n", mib->BankSize);
+	printf("NumberOfImagePages:    %u\n", mib->NumberOfImagePages);
+	printf("res1:                  %u\n", mib->res1);
+	printf("RedMaskSize:           %u\n", mib->RedMaskSize);
+	printf("RedFieldPosition:      %u\n", mib->RedFieldPosition);
+	printf("GreenMaskSize:         %u\n", mib->GreenMaskSize);
+	printf("GreenFieldPosition:    %u\n", mib->GreenFieldPosition);
+	printf("BlueMaskSize:          %u\n", mib->BlueMaskSize);
+	printf("BlueFieldPosition:     %u\n", mib->BlueFieldPosition);
+	printf("RsvdMaskSize:          %u\n", mib->RsvdMaskSize);
+	printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
+	printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
+	printf("res2:                  %u\n", mib->res2);
 }
 
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth)
@@ -244,23 +251,22 @@ void bitmap()
 void bitmapDebug()
 {
 	memcpy((void*)bh, (void*)bh_get, sizeof(BitmapHeader_t));
-	printf("\nDEBUG print: BitmapHeader\n");
-	printf("sizeof BitmapHeader_t:      %X\n",sizeof (BitmapHeader_t));
-	printf("Type:                       %u\n", bh->Type);
-	printf("Reserved:                   %u\n", bh->Reserved);
-	printf("Offset:                     %u\n", bh->Offset);
-	printf("headerSize:                 %u\n", bh->headerSize);
-	printf("Width:                      %u\n", bh->Width);
-	printf("Height:                     %u\n", bh->Height);
-	printf("Planes:                     %u\n", bh->Planes);
-	printf("BitsPerPixel:               %u\n", bh->BitsPerPixel);
-	printf("Compression:                %u\n", bh->Compression);
-	printf("SizeImage:                  %u\n", bh->SizeImage);
-	printf("XPixelsPerMeter:            %u\n", bh->XPixelsPerMeter);
-	printf("YPixelsPerMeter:            %u\n", bh->YPixelsPerMeter);
-	printf("ColorsUsed:                 %u\n", bh->ColorsUsed);
-	printf("ColorsImportant:            %u\n", bh->ColorsImportant);
-
+	
+    printf("\nDEBUG print: BitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));	
+    printf("Type:                  %u\n", bh->Type);
+	printf("Reserved:              %u\n", bh->Reserved);
+	printf("Offset:                %u\n", bh->Offset);
+	printf("Header Size:           %u\n", bh->headerSize);
+	printf("Width:                 %u\n", bh->Width);
+	printf("Height:                %u\n", bh->Height);
+	printf("Planes:                %u\n", bh->Planes);
+	printf("Bits Per Pixel:        %u\n", bh->BitsPerPixel);
+	printf("Compression:           %u\n", bh->Compression);
+	printf("Image Size:            %u\n", bh->SizeImage);
+	printf("X-Pixels Per Meter:    %u\n", bh->XPixelsPerMeter);
+	printf("Y-Pixels Per Meter:    %u\n", bh->YPixelsPerMeter);
+	printf("Colors Used:           %u\n", bh->ColorsUsed);
+	printf("Colors Important:      %u\n", bh->ColorsImportant);
 }
 
 /*
