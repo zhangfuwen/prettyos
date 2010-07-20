@@ -7,7 +7,11 @@ org 0x100
 video_mode:
 	mov ax, 0013h
 	int 10h
-
+	;VESA entry point
+	;mov bx, 0x4111 ;0105h
+	;mov ax, 0x4F02
+	;int 10h
+	
 logo_PrettyOS:
 	mov ax, 0xa000
 	mov ds, ax
@@ -33,6 +37,7 @@ ModeInfoBlock:
 	mov ax, 0x4F01
 	int 10h
 	;mov word [0x1300], ax
+	
 
 	hlt     ; is translated as exit() at vm86.c
 	jmp $   ; endless loop

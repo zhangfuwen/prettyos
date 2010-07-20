@@ -17,6 +17,10 @@ VgaInfoBlock_t* vgaIB = &vgaInfoBlock;
 VgaInfoBlock_t* pVga 	= (VgaInfoBlock_t*) (0x1000);
 ModeInfoBlock_t* mob    = (ModeInfoBlock_t*) (0x1300);
 
+BitmapHeader_t bitmapHeader;
+BitmapHeader_t* bh = &bitmapHeader;
+
+BitmapHeader_t* bh_get	= (BitmapHeader_t*) (0x1500);
 
 uint8_t* SCREEN = (uint8_t*) 0xA0000;
 
@@ -40,53 +44,53 @@ void vgaDebug()
 	memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));
 	 
 
-	printf("\ndebug: print VgaInfoBlock_t\n");
+	printf("\nDEBUG print: VgaInfoBlock_t\n");
 	printf("sizeof VgaInfoBlock_t:        %X\n",sizeof (VgaInfoBlock_t));
 	
-	printf("debug VESASignature:          %s\n", vgaIB->VESASignature);
-	printf("debug VESAVersion:            %i\n", vgaIB->VESAVersion);
-	printf("debug OEMStringPtr:           %X\n", vgaIB->OEMStringPtr);
-	printf("debug Capabilities:           %i\n", vgaIB->Capabilities);
-	printf("debug VideoModePtr:           %i\n", vgaIB->VideoModePtr);
-	printf("debug TotalMemory:            %i\n", vgaIB->TotalMemory);
-	printf("debug reserved:               %i\n", vgaIB->reserved[236]);
+	printf("VESASignature:          %s\n", vgaIB->VESASignature);
+	printf("VESAVersion:            %u\n", vgaIB->VESAVersion);
+	printf("OEMStringPtr:           %X\n", vgaIB->OEMStringPtr);
+	printf("Capabilities:           %u\n", vgaIB->Capabilities);
+	printf("VideoModePtr:           %u\n", vgaIB->VideoModePtr);
+	printf("TotalMemory:            %u\n", vgaIB->TotalMemory);
+	printf("reserved:               %u\n", vgaIB->reserved[236]);
 
 	
 	waitForKeyStroke();
 	
-	printf("\ndebug: print ModeInfoBlock_t copied\n");
+	printf("\nDEBUG print: ModeInfoBlock_t\n");
 	printf("sizeof ModeInfoBlock_t:      %X\n",sizeof (ModeInfoBlock_t));
 	
-	printf("debug ModeAttributes:        %i\n", mib->ModeAttributes);
-	printf("debug WinAAttributes:        %i\n", mib->WinAAttributes);
-	printf("debug WinBAttributes:        %i\n", mib->WinBAttributes);
-	printf("debug WinGranularity:        %i\n", mib->WinGranularity);
-	printf("debug WinSize:               %i\n", mib->WinSize);
-	printf("debug WinASegment:           %i\n", mib->WinASegment);
-	printf("debug WinBSegment:           %i\n", mib->WinBSegment);
-	// printf("debug: %i\n", mib->
-	printf("debug BytesPerScanLine:      %i\n", mib->BytesPerScanLine);
-	printf("debug XResolution:           %i\n", mib->XResolution);
-	printf("debug YResolution:           %i\n", mib->YResolution);
-	printf("debug XCharSize:             %i\n", mib->XCharSize);
-	printf("debug YCharSize:             %i\n", mib->YCharSize);
-	printf("debug NumberOfPlanes:        %i\n", mib->NumberOfPlanes);
-	printf("debug BitsPerPixel:          %i\n", mib->BitsPerPixel);
-	printf("debug NumberOfBanks:         %i\n", mib->NumberOfBanks);
-	printf("debug MemoryModel:           %i\n", mib->MemoryModel);
-	printf("debug BankSize:              %i\n", mib->BankSize);
-	printf("debug NumberOfImagePages:    %i\n", mib->NumberOfImagePages);
-	printf("debug res1:                  %i\n", mib->res1);
-	printf("debug RedMaskSize:           %i\n", mib->RedMaskSize);
-	printf("debug RedFieldPosition:      %i\n", mib->RedFieldPosition);
-	printf("debug GreenMaskSize:         %i\n", mib->GreenMaskSize);
-	printf("debug GreenFieldPosition:    %i\n", mib->GreenFieldPosition);
-	printf("debug BlueMaskSize:          %i\n", mib->BlueMaskSize);
-	printf("debug BlueFieldPosition:     %i\n", mib->BlueFieldPosition);
-	printf("debug RsvdMaskSize:          %i\n", mib->RsvdMaskSize);
-	printf("debug RsvdFieldPosition:     %i\n", mib->RsvdFieldPosition);
-	printf("debug DirectColorModeInfo:   %i\n", mib->DirectColorModeInfo);
-	printf("debug res2:                  %i\n", mib->res2);
+	printf("ModeAttributes:        %i\n", mib->ModeAttributes);
+	printf("WinAAttributes:        %i\n", mib->WinAAttributes);
+	printf("WinBAttributes:        %i\n", mib->WinBAttributes);
+	printf("WinGranularity:        %i\n", mib->WinGranularity);
+	printf("WinSize:               %i\n", mib->WinSize);
+	printf("WinASegment:           %i\n", mib->WinASegment);
+	printf("WinBSegment:           %i\n", mib->WinBSegment);
+	printf("WinFuncPtr:            %X\n", mib->WinFuncPtr);
+	printf("BytesPerScanLine:      %i\n", mib->BytesPerScanLine);
+	printf("XResolution:           %u\n", mib->XResolution);
+	printf("YResolution:           %u\n", mib->YResolution);
+	printf("XCharSize:             %u\n", mib->XCharSize);
+	printf("YCharSize:             %u\n", mib->YCharSize);
+	printf("NumberOfPlanes:        %i\n", mib->NumberOfPlanes);
+	printf("BitsPerPixel:          %i\n", mib->BitsPerPixel);
+	printf("NumberOfBanks:         %i\n", mib->NumberOfBanks);
+	printf("MemoryModel:           %i\n", mib->MemoryModel);
+	printf("BankSize:              %i\n", mib->BankSize);
+	printf("NumberOfImagePages:    %i\n", mib->NumberOfImagePages);
+	printf("res1:                  %i\n", mib->res1);
+	printf("RedMaskSize:           %i\n", mib->RedMaskSize);
+	printf("RedFieldPosition:      %i\n", mib->RedFieldPosition);
+	printf("GreenMaskSize:         %i\n", mib->GreenMaskSize);
+	printf("GreenFieldPosition:    %i\n", mib->GreenFieldPosition);
+	printf("BlueMaskSize:          %i\n", mib->BlueMaskSize);
+	printf("BlueFieldPosition:     %i\n", mib->BlueFieldPosition);
+	printf("RsvdMaskSize:          %i\n", mib->RsvdMaskSize);
+	printf("RsvdFieldPosition:     %i\n", mib->RsvdFieldPosition);
+	printf("DirectColorModeInfo:   %i\n", mib->DirectColorModeInfo);
+	printf("res2:                  %i\n", mib->res2);
 }
 
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth)
@@ -219,6 +223,44 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
         setPixel(x, y1, 9);
         setPixel(x, y2, 9);
     }
+}
+
+// http://www.karig.net/os/001c.html
+void bitmap()
+{
+	// memcpy((void*)SCREEN, (void*)0x00117f99, 32000); // 64000 // sizeof(SCREEN));
+	// memcpy((void*)SCREEN, (void*)0x1540, 32000);
+	// memcpy((void*)SCREEN, (void*)0x1500, sizeof(BitmapHeader_t));
+	
+	/*
+	int x = 0, y = 0;
+	for(y=0;y<256;y++)
+	  for(x=0;x<128;x++)
+	   SCREEN[x+y*mib->XResolution]=(uint8_t*)0x00117f99+sizeof(BitmapHeader_t)[x+y*128];
+		// SCREEN[x+y*mib->XResolution]=bitmap[x+y*128];
+	*/
+}
+
+void bitmapDebug()
+{
+	memcpy((void*)bh, (void*)bh_get, sizeof(BitmapHeader_t));
+	printf("\nDEBUG print: BitmapHeader\n");
+	printf("sizeof BitmapHeader_t:      %X\n",sizeof (BitmapHeader_t));
+	printf("Type:                       %u\n", bh->Type);
+	printf("Reserved:                   %u\n", bh->Reserved);
+	printf("Offset:                     %u\n", bh->Offset);
+	printf("headerSize:                 %u\n", bh->headerSize);
+	printf("Width:                      %u\n", bh->Width);
+	printf("Height:                     %u\n", bh->Height);
+	printf("Planes:                     %u\n", bh->Planes);
+	printf("BitsPerPixel:               %u\n", bh->BitsPerPixel);
+	printf("Compression:                %u\n", bh->Compression);
+	printf("SizeImage:                  %u\n", bh->SizeImage);
+	printf("XPixelsPerMeter:            %u\n", bh->XPixelsPerMeter);
+	printf("YPixelsPerMeter:            %u\n", bh->YPixelsPerMeter);
+	printf("ColorsUsed:                 %u\n", bh->ColorsUsed);
+	printf("ColorsImportant:            %u\n", bh->ColorsImportant);
+
 }
 
 /*

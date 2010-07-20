@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.66 - Rev: 633";
+const char* version = "0.0.1.67 - Rev: 636";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -34,6 +34,10 @@ extern uintptr_t _kernel_end; // linker script
 // vm86
 extern uintptr_t vm86_com_start;
 extern uintptr_t vm86_com_end;
+
+// font_bin
+extern uintptr_t font_bin_start;
+extern uintptr_t font_bin_end;
 
 // Informations about the system
 system_t system;
@@ -100,7 +104,7 @@ void main()
     showMemorySize();
 
     // move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
-    // --------------------- VM86 ----------- TEST ---------------------------------------------------------------
+    // --------------------- VM86 ----------- TEST -----------------------------
     memcpy (VM86_SWITCH_TO_VIDEO, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
   #ifdef _VM_DIAGNOSIS_ 
@@ -108,12 +112,20 @@ void main()
     memshow(VM86_SWITCH_TO_VIDEO, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); 
   #endif
     waitForKeyStroke();
-
-    switchToVideomode();
+	printf("\n\nShow font.bin\n");
+	// memcpy((void*)0x00117f99, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
+	memcpy((void*)0x1500, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
+	// memshow((void*)0x00117f99, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
+	memshow((void*)0x1500, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
+	waitForKeyStroke();
+    
+	switchToVideomode();
 
     initGraphics(320, 200, 8);
+	
+    bitmap();
     
-    for (uint32_t i=0; i<320; i++)
+	for (uint32_t i=0; i<320; i++)
     {
         setPixel(i, 100, 9); 
     }    
@@ -136,10 +148,17 @@ void main()
     waitForKeyStroke();
 
     switchToTextmode();
+	
 	waitForKeyStroke();
+	
 	vgaDebug();
+	
 	waitForKeyStroke();
     
+	bitmapDebug();
+	
+	waitForKeyStroke();
+	
 	printf("\n\n");
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------

@@ -33,7 +33,7 @@ typedef struct
     uint16_t   WinASegment;            // Window A segment
     uint16_t   WinBSegment;            // Window B segment
 
-    // void*   WinFuncPtr;             // Pointer to window function
+    void*   WinFuncPtr;                // Pointer to window function
     uint16_t   BytesPerScanLine;       // Bytes per scanline
     uint16_t   XResolution;            // Horizontal resolution
     uint16_t   YResolution;            // Vertical resolution
@@ -75,6 +75,25 @@ typedef struct
   uint8_t *data;
 } Bitmap_t;
 
+typedef struct
+{
+	uint16_t Type;				// File type. Set to "BM."
+	uint32_t Size;				// Size in DWORDs of the file
+	uint32_t Reserved;			// Reserved. Set to zero.
+	uint32_t Offset;			// Offset to the data.
+	uint32_t headerSize;		// Size of rest of header. Set to 40.
+	uint32_t Width;				// Width of bitmap in pixels.
+	uint32_t Height;			// Height of bitmap in pixels.
+	uint16_t Planes;			// Number of Planes. Set to 1.
+	uint16_t BitsPerPixel;		// Number of bits per pixel.
+	uint32_t Compression;		// Compression. Usually set to 0.
+	uint32_t SizeImage;			// Size in bytes of the bitmap.
+	uint32_t XPixelsPerMeter;	// Horizontal pixels per meter.
+	uint32_t YPixelsPerMeter;	// Vertical pixels per meter.
+	uint32_t ColorsUsed;		// Number of colors used.
+	uint32_t ColorsImportant;	// Number of "important" colors.
+}__attribute__((packed)) BitmapHeader_t;
+
 void switchToVideomode();
 void switchToTextmode();
 
@@ -99,7 +118,8 @@ uint32_t abs(uint32_t arg);
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);
 void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);
-
+void bitmap();
+void bitmapDebug();
 // rendering one of the character, given its font_data
 
 //void draw_char(unsigned char* screen, where, font_char*);
