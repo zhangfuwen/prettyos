@@ -8,6 +8,10 @@
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
 #define VM86_SWITCH_TO_TEXT  ((void*)0x137)
 
+// Transfer segment and offset to a linear 32-bit pointer 
+#define MAKE_LINEAR_POINTER(segment, offset)  ((uintptr_t)(((uint32_t) (segment) << 16) | (uint16_t) (offset)))
+
+
 // SuperVGA information block
 typedef struct
 {
@@ -20,7 +24,7 @@ typedef struct
     uint16_t*  VideoModePtr;   // Pointer to supported modes
     uint16_t   TotalMemory;    // Number of 64kb memory blocks
     uint8_t    reserved[236];  // Pad to 256 byte block size
-}__attribute__((packed)) VgaInfoBlock_t;
+}__attribute__((packed)) VgaInfoBlock_t ;
 
 // SuperVGA mode information block 
 typedef struct 

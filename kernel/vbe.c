@@ -43,25 +43,31 @@ void vgaDebug()
 	memcpy((void*)vgaIB, (void*)pVga, sizeof(VgaInfoBlock_t));
 	memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));	 
 
-	printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));	
+    // uint16_t* VideoModePtrOld = vgaIB->VideoModePtr;
+    // correction
+	vgaIB->VideoModePtr = (uint16_t*) MAKE_LINEAR_POINTER(((uint32_t)vgaIB->VideoModePtr) >> 16, 0xFFFF & (uint32_t)vgaIB->VideoModePtr);
+    vgaIB->OEMStringPtr = (char*)     MAKE_LINEAR_POINTER(((uint32_t)vgaIB->OEMStringPtr) >> 16, 0xFFFF & (uint32_t)vgaIB->OEMStringPtr);
+    
+    printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));	
 	printf("VESA-Signature:         %s\n",     vgaIB->VESASignature);
 	printf("VESA-Version:           %u.%u\n", (vgaIB->VESAVersion&0xFF00)>>8,vgaIB->VESAVersion&0xFF);
 	printf("Capabilities:           %u\n",     vgaIB->Capabilities);
 	printf("Video Memory (MiB):     %u\n",     vgaIB->TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
 	printf("Reserved:               %u\n",     vgaIB->reserved[236]);
     printf("OEM-String (address):   %X\n",     vgaIB->OEMStringPtr);
+    //printf("Video Modes Ptr Old:    %X\n",     VideoModePtrOld);
     printf("Video Modes Ptr:        %X\n",     vgaIB->VideoModePtr);
 
     textColor(0x0E);
     printf("\nVideo Modes:\n\n");
-    for (uint8_t i=0; i<16; i+=2)
+    for (uint8_t i=0; i<8; i++)
     {
-         printf("%x ", *(uint16_t*)vgaIB->VideoModePtr+i);
+        printf("%x ", *(vgaIB->VideoModePtr+i));
     }
     printf("\n");
-    for (uint8_t i=16; i<32; i+=2)
+    for (uint8_t i=8; i<16; i++)
     {
-         printf("%x ", *(uint16_t*)vgaIB->VideoModePtr+i);
+         printf("%x ", *(vgaIB->VideoModePtr+i));
     }
     printf("\n");
     textColor(0x0F);
