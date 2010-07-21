@@ -24,7 +24,7 @@ typedef struct
     uint16_t*  VideoModePtr;   // Pointer to supported modes
     uint16_t   TotalMemory;    // Number of 64kb memory blocks
     uint8_t    reserved[236];  // Pad to 256 byte block size
-}__attribute__((packed)) VgaInfoBlock_t ;
+} __attribute__((packed)) VgaInfoBlock_t;
 
 // SuperVGA mode information block 
 typedef struct 
@@ -37,7 +37,7 @@ typedef struct
     uint16_t   WinASegment;            // Window A segment
     uint16_t   WinBSegment;            // Window B segment
 
-    void*   WinFuncPtr;                // Pointer to window function
+    void*      WinFuncPtr;             // Pointer to window function
     uint16_t   BytesPerScanLine;       // Bytes per scanline
     uint16_t   XResolution;            // Horizontal resolution
     uint16_t   YResolution;            // Vertical resolution
@@ -60,7 +60,7 @@ typedef struct
     uint8_t    RsvdFieldPosition;      // Bit posn of lsb of res mask
     uint8_t    DirectColorModeInfo;    // Direct color mode attributes
     uint8_t    res2[216];              // Pad to 256 byte block size
-}__attribute__((packed)) ModeInfoBlock_t;
+} __attribute__((packed)) ModeInfoBlock_t;
 
 typedef enum
 {
@@ -81,21 +81,21 @@ typedef struct
 
 typedef struct
 {
-	uint16_t Type;				// File type. Set to "BM."
-	uint32_t Size;				// Size in DWORDs of the file
-	uint32_t Reserved;			// Reserved. Set to zero.
-	uint32_t Offset;			// Offset to the data.
-	uint32_t headerSize;		// Size of rest of header. Set to 40.
-	uint32_t Width;				// Width of bitmap in pixels.
-	uint32_t Height;			// Height of bitmap in pixels.
-	uint16_t Planes;			// Number of Planes. Set to 1.
-	uint16_t BitsPerPixel;		// Number of bits per pixel.
-	uint32_t Compression;		// Compression. Usually set to 0.
-	uint32_t SizeImage;			// Size in bytes of the bitmap.
-	uint32_t XPixelsPerMeter;	// Horizontal pixels per meter.
-	uint32_t YPixelsPerMeter;	// Vertical pixels per meter.
-	uint32_t ColorsUsed;		// Number of colors used.
-	uint32_t ColorsImportant;	// Number of "important" colors.
+    uint16_t Type;            // File type. Set to "BM."
+    uint32_t Size;            // Size in DWORDs of the file
+    uint32_t Reserved;        // Reserved. Set to zero.
+    uint32_t Offset;          // Offset to the data.
+    uint32_t headerSize;      // Size of rest of header. Set to 40.
+    uint32_t Width;           // Width of bitmap in pixels.
+    uint32_t Height;          // Height of bitmap in pixels.
+    uint16_t Planes;          // Number of Planes. Set to 1.
+    uint16_t BitsPerPixel;    // Number of bits per pixel.
+    uint32_t Compression;     // Compression. Usually set to 0.
+    uint32_t SizeImage;       // Size in bytes of the bitmap.
+    uint32_t XPixelsPerMeter; // Horizontal pixels per meter.
+    uint32_t YPixelsPerMeter; // Vertical pixels per meter.
+    uint32_t ColorsUsed;      // Number of colors used.
+    uint32_t ColorsImportant; // Number of "important" colors.
 }__attribute__((packed)) BitmapHeader_t;
 
 void switchToVideomode();

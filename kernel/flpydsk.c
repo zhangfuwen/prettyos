@@ -261,7 +261,7 @@ static void flpydsk_write_dor(uint8_t val)
 }
 
 // send command byte to fdc
-static void flpydsk_send_command (uint8_t cmd)
+static void flpydsk_send_command(uint8_t cmd)
 {
     // wait until data register is ready. We send commands to the data register
     for (uint16_t i = 0; i < 500; ++i)
@@ -296,7 +296,7 @@ static void flpydsk_write_ccr(uint8_t val)
 // wait for irq
 static void flpydsk_wait_irq()
 {
-	sti();
+    sti();
     uint32_t timeout = timer_getSeconds()+2;
     while (CurrentDrive->receivedIRQ == false) // wait for irq to fire
     {

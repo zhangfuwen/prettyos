@@ -18,11 +18,11 @@ bool scroll_flag = true;
 
 void kernel_console_init()
 {
-    current_console = malloc(sizeof(console_t), 0, "kernel-console"); // Reserving space for the kernels console
-    console_init(current_console, "");
-    reachableConsoles[KERNELCONSOLE_ID] = current_console;
-    current_console->SCROLL_END = 39;
-    current_console->showInfobar = true;
+    currentConsole = malloc(sizeof(console_t), 0, "kernel-console"); // Reserving space for the kernels console
+    console_init(currentConsole, "");
+    reachableConsoles[KERNELCONSOLE_ID] = currentConsole;
+    currentConsole->SCROLL_END = 39;
+    currentConsole->showInfobar = true;
 }
 
 void console_init(console_t* console, const char* name)
@@ -64,15 +64,15 @@ bool changeDisplayedConsole(uint8_t ID)
 }
 void setScrollField(uint8_t begin, uint8_t end)
 {
-    //current_console->SCROLL_BEGIN = begin;
-    current_console->SCROLL_END = end;
+    //currentConsole->SCROLL_BEGIN = begin;
+    currentConsole->SCROLL_END = end;
     scroll();
 }
 
 void showInfobar(bool show)
 {
-    current_console->showInfobar = show;
-    current_console->SCROLL_END = min(current_console->SCROLL_END, 42);
+    currentConsole->showInfobar = show;
+    currentConsole->SCROLL_END = min(currentConsole->SCROLL_END, 42);
     refreshUserScreen();
 }
 
@@ -80,10 +80,10 @@ void clear_console(uint8_t backcolor)
 {
     // Erasing the content of the active console
     currentTask->attrib = (backcolor << 4) | 0x0F;
-    memsetw(current_console->vidmem, 0x20 | (currentTask->attrib << 8), COLUMNS * USER_LINES);
-    current_console->csr_x = 0;
-    current_console->csr_y = 0;
-    if (current_console == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
+    memsetw(currentConsole->vidmem, 0x20 | (currentTask->attrib << 8), COLUMNS * USER_LINES);
+    currentConsole->csr_x = 0;
+    currentConsole->csr_y = 0;
+    if (currentConsole == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
     {
         refreshUserScreen();
     }
@@ -96,41 +96,41 @@ void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
 
 void move_cursor_right()
 {
-    ++current_console->csr_x;
-    if (current_console->csr_x >= COLUMNS)
+    ++currentConsole->csr_x;
+    if (currentConsole->csr_x >= COLUMNS)
     {
-        ++current_console->csr_y;
-        current_console->csr_x = 0;
+        ++currentConsole->csr_y;
+        currentConsole->csr_x = 0;
         scroll();
     }
 }
 
 void move_cursor_left()
 {
-    if (current_console->csr_x)
-        --current_console->csr_x;
-    if (!current_console->csr_x && current_console->csr_y>0)
+    if (currentConsole->csr_x)
+        --currentConsole->csr_x;
+    else if (currentConsole->csr_y > 0)
     {
-        current_console->csr_x=COLUMNS-1;
-        --current_console->csr_y;
+        currentConsole->csr_x=COLUMNS-1;
+        --currentConsole->csr_y;
     }
 }
 
 void move_cursor_home()
 {
-    current_console->csr_x = 0;
+    currentConsole->csr_x = 0;
     update_cursor();
 }
 
 void move_cursor_end()
 {
-    current_console->csr_x = COLUMNS-1;
+    currentConsole->csr_x = COLUMNS-1;
     update_cursor();
 }
 
 void set_cursor(uint8_t x, uint8_t y)
 {
-    current_console->csr_x = x; current_console->csr_y = y;
+    currentConsole->csr_x = x; currentConsole->csr_y = y;
     update_cursor();
 }
 void putch(char c)
@@ -139,27 +139,16 @@ void putch(char c)
 
     switch (uc) {
         case 0x08: // backspace: move the cursor one space backwards and delete
-            if (current_console->csr_x)
-            {
-                --current_console->csr_x;
-                putch(' ');
-                --current_console->csr_x;
-            }
-            else if (current_console->csr_y > 0)
-            {
-                current_console->csr_x = COLUMNS-1;
-                --current_console->csr_y;
-                putch(' ');
-                current_console->csr_x = COLUMNS-1;
-                --current_console->csr_y;
-            }
+            move_cursor_left();
+            putch(' ');
+            move_cursor_left();
             break;
         case 0x09: // tab: increment csr_x (divisible by 8)
-            current_console->csr_x = (current_console->csr_x + 8) & ~(8 - 1);
-            if (current_console->csr_x>=COLUMNS)
+            currentConsole->csr_x = (currentConsole->csr_x + 8) & ~(8 - 1);
+            if (currentConsole->csr_x>=COLUMNS)
             {
-                ++current_console->csr_y;
-                current_console->csr_x=0;
+                ++currentConsole->csr_y;
+                currentConsole->csr_x=0;
                 scroll();
             }
             break;
@@ -167,17 +156,17 @@ void putch(char c)
             move_cursor_home();
             break;
         case '\n': // newline: like 'cr': cursor to the margin and increment csr_y
-            ++current_console->csr_y; scroll(); move_cursor_home();
+            ++currentConsole->csr_y; scroll(); move_cursor_home();
             scroll();
             break;
         default:
             if (uc != 0)
             {
                 uint32_t att = currentTask->attrib << 8;
-                if (reachableConsoles[displayedConsole] == current_console) { //print to screen
-                    *(vidmem + (current_console->csr_y+2) * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color
+                if (reachableConsoles[displayedConsole] == currentConsole) { //print to screen
+                    *(vidmem + (currentConsole->csr_y+2) * COLUMNS + currentConsole->csr_x) = uc | att; // character AND attributes: color
                 }
-                *(current_console->vidmem + current_console->csr_y * COLUMNS + current_console->csr_x) = uc | att; // character AND attributes: color
+                *(currentConsole->vidmem + currentConsole->csr_y * COLUMNS + currentConsole->csr_x) = uc | att; // character AND attributes: color
                 move_cursor_right();
             }
             break;
@@ -191,13 +180,13 @@ void puts(const char* text)
 
 void scroll()
 {
-    uint8_t scroll_end = min(USER_LINES, current_console->SCROLL_END);
-    if (scroll_flag && current_console->csr_y >= scroll_end)
+    uint8_t scroll_end = min(USER_LINES, currentConsole->SCROLL_END);
+    if (scroll_flag && currentConsole->csr_y >= scroll_end)
     {
-        uint8_t temp = current_console->csr_y - scroll_end + 1;
-        memcpy(current_console->vidmem, current_console->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
-        memsetw(current_console->vidmem + (scroll_end - temp) * COLUMNS, currentTask->attrib << 8, COLUMNS);
-        current_console->csr_y = scroll_end - 1;
+        uint8_t temp = currentConsole->csr_y - scroll_end + 1;
+        memcpy(currentConsole->vidmem, currentConsole->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
+        memsetw(currentConsole->vidmem + (scroll_end - temp) * COLUMNS, currentTask->attrib << 8, COLUMNS);
+        currentConsole->csr_y = scroll_end - 1;
         refreshUserScreen();
     }
 }
@@ -277,12 +266,12 @@ void printf(const char* args, ...)
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
     uint8_t old_attrib = currentTask->attrib;
-    uint8_t c_x = current_console->csr_x;
-    uint8_t c_y = current_console->csr_y;
+    uint8_t c_x = currentConsole->csr_x;
+    uint8_t c_y = currentConsole->csr_y;
     scroll_flag = false;
 
     currentTask->attrib = attribute;
-    current_console->csr_x = 0; current_console->csr_y = line;
+    currentConsole->csr_x = 0; currentConsole->csr_y = line;
 
     // Call usual printf routines
     va_list ap;
@@ -291,13 +280,13 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
     scroll_flag = true;
     currentTask->attrib = old_attrib;
-    current_console->csr_x = c_x;
-    current_console->csr_y = c_y;
+    currentConsole->csr_x = c_x;
+    currentConsole->csr_y = c_y;
 }
 
 void update_cursor()
 {
-    uint16_t position = (current_console->csr_y+2) * COLUMNS + current_console->csr_x;
+    uint16_t position = (currentConsole->csr_y+2) * COLUMNS + currentConsole->csr_x;
     // cursor HIGH port to vga INDEX register
     outportb(0x3D4, 0x0E);
     outportb(0x3D5, (uint8_t)((position>>8)&0xFF));

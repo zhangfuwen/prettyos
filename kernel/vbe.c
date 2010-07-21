@@ -14,23 +14,22 @@ ModeInfoBlock_t* mib = &modeInfoBlock;
 VgaInfoBlock_t vgaInfoBlock;
 VgaInfoBlock_t* vgaIB = &vgaInfoBlock;
 
-VgaInfoBlock_t* pVga 	= (VgaInfoBlock_t*) (0x1000);
-ModeInfoBlock_t* mob    = (ModeInfoBlock_t*) (0x1300);
+VgaInfoBlock_t*  pVga = (VgaInfoBlock_t*)0x1000;
+ModeInfoBlock_t* mob  = (ModeInfoBlock_t*)0x1300;
 
 BitmapHeader_t bitmapHeader;
 BitmapHeader_t* bh = &bitmapHeader;
 
-BitmapHeader_t* bh_get	= (BitmapHeader_t*) (0x1500);
+BitmapHeader_t* bh_get = (BitmapHeader_t*)0x1500;
 
-uint8_t* SCREEN = (uint8_t*) 0xA0000;
-// uint8_t* SCREEN = (uint8_t*) 0xE0000000; // video memory for supervga
-
+uint8_t* SCREEN = (uint8_t*)0xA0000;
+//uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 
 
 void switchToVideomode()
 {
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-	// memset((void*) 0xE0000000, 0, vgaIB->TotalMemory*0x10000 - 0xE0000000);
+    // memset((void*) 0xE0000000, 0, vgaIB->TotalMemory*0x10000 - 0xE0000000);
     create_vm86_task(VM86_SWITCH_TO_VIDEO);
     waitForKeyStroke();
 }
@@ -44,20 +43,20 @@ void switchToTextmode()
 
 void vgaDebug()
 {
-	memcpy((void*)vgaIB, (void*)pVga, sizeof(VgaInfoBlock_t));
-	memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));	 
+    memcpy((void*)vgaIB, (void*)pVga, sizeof(VgaInfoBlock_t));
+    memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));     
 
     // uint16_t* VideoModePtrOld = vgaIB->VideoModePtr;
     // correction
-	vgaIB->VideoModePtr = (uint16_t*) MAKE_LINEAR_POINTER(((uint32_t)vgaIB->VideoModePtr) >> 16, 0xFFFF & (uint32_t)vgaIB->VideoModePtr);
+    vgaIB->VideoModePtr = (uint16_t*) MAKE_LINEAR_POINTER(((uint32_t)vgaIB->VideoModePtr) >> 16, 0xFFFF & (uint32_t)vgaIB->VideoModePtr);
     vgaIB->OEMStringPtr = (char*)     MAKE_LINEAR_POINTER(((uint32_t)vgaIB->OEMStringPtr) >> 16, 0xFFFF & (uint32_t)vgaIB->OEMStringPtr);
     
-    printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));	
-	printf("VESA-Signature:         %s\n",     vgaIB->VESASignature);
-	printf("VESA-Version:           %u.%u\n", (vgaIB->VESAVersion&0xFF00)>>8,vgaIB->VESAVersion&0xFF);
-	printf("Capabilities:           %u\n",     vgaIB->Capabilities);
-	printf("Video Memory (MiB):     %u\n",     vgaIB->TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
-	printf("Reserved:               %u\n",     vgaIB->reserved[236]);
+    printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));    
+    printf("VESA-Signature:         %s\n",     vgaIB->VESASignature);
+    printf("VESA-Version:           %u.%u\n", (vgaIB->VESAVersion&0xFF00)>>8,vgaIB->VESAVersion&0xFF);
+    printf("Capabilities:           %u\n",     vgaIB->Capabilities);
+    printf("Video Memory (MiB):     %u\n",     vgaIB->TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
+    printf("Reserved:               %u\n",     vgaIB->reserved[236]);
     printf("OEM-String (address):   %X\n",     vgaIB->OEMStringPtr);
     //printf("Video Modes Ptr Old:    %X\n",     VideoModePtrOld);
     printf("Video Modes Ptr:        %X\n",     vgaIB->VideoModePtr);
@@ -76,38 +75,38 @@ void vgaDebug()
     printf("\n");
     textColor(0x0F);
 
-	waitForKeyStroke();
-	
-	printf("\nDEBUG print: ModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));	
+    waitForKeyStroke();
+    
+    printf("\nDEBUG print: ModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));    
     printf("WinAAttributes:        %u\n", mib->WinAAttributes);
-	printf("WinBAttributes:        %u\n", mib->WinBAttributes);
-	printf("WinGranularity:        %u\n", mib->WinGranularity);
-	printf("WinSize:               %u\n", mib->WinSize);
-	printf("WinASegment:           %u\n", mib->WinASegment);
-	printf("WinBSegment:           %u\n", mib->WinBSegment);
-	printf("WinFuncPtr:            %X\n", mib->WinFuncPtr);
-	printf("BytesPerScanLine:      %u\n", mib->BytesPerScanLine);
-	printf("XResolution:           %u\n", mib->XResolution);
-	printf("YResolution:           %u\n", mib->YResolution);
-	printf("XCharSize:             %u\n", mib->XCharSize);
-	printf("YCharSize:             %u\n", mib->YCharSize);
-	printf("NumberOfPlanes:        %u\n", mib->NumberOfPlanes);
-	printf("BitsPerPixel:          %u\n", mib->BitsPerPixel);
-	printf("NumberOfBanks:         %u\n", mib->NumberOfBanks);
-	printf("MemoryModel:           %u\n", mib->MemoryModel);
-	printf("BankSize:              %u\n", mib->BankSize);
-	printf("NumberOfImagePages:    %u\n", mib->NumberOfImagePages);
-	printf("res1:                  %u\n", mib->res1);
-	printf("RedMaskSize:           %u\n", mib->RedMaskSize);
-	printf("RedFieldPosition:      %u\n", mib->RedFieldPosition);
-	printf("GreenMaskSize:         %u\n", mib->GreenMaskSize);
-	printf("GreenFieldPosition:    %u\n", mib->GreenFieldPosition);
-	printf("BlueMaskSize:          %u\n", mib->BlueMaskSize);
-	printf("BlueFieldPosition:     %u\n", mib->BlueFieldPosition);
-	printf("RsvdMaskSize:          %u\n", mib->RsvdMaskSize);
-	printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
-	printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
-	printf("res2:                  %u\n", mib->res2);
+    printf("WinBAttributes:        %u\n", mib->WinBAttributes);
+    printf("WinGranularity:        %u\n", mib->WinGranularity);
+    printf("WinSize:               %u\n", mib->WinSize);
+    printf("WinASegment:           %u\n", mib->WinASegment);
+    printf("WinBSegment:           %u\n", mib->WinBSegment);
+    printf("WinFuncPtr:            %X\n", mib->WinFuncPtr);
+    printf("BytesPerScanLine:      %u\n", mib->BytesPerScanLine);
+    printf("XResolution:           %u\n", mib->XResolution);
+    printf("YResolution:           %u\n", mib->YResolution);
+    printf("XCharSize:             %u\n", mib->XCharSize);
+    printf("YCharSize:             %u\n", mib->YCharSize);
+    printf("NumberOfPlanes:        %u\n", mib->NumberOfPlanes);
+    printf("BitsPerPixel:          %u\n", mib->BitsPerPixel);
+    printf("NumberOfBanks:         %u\n", mib->NumberOfBanks);
+    printf("MemoryModel:           %u\n", mib->MemoryModel);
+    printf("BankSize:              %u\n", mib->BankSize);
+    printf("NumberOfImagePages:    %u\n", mib->NumberOfImagePages);
+    printf("res1:                  %u\n", mib->res1);
+    printf("RedMaskSize:           %u\n", mib->RedMaskSize);
+    printf("RedFieldPosition:      %u\n", mib->RedFieldPosition);
+    printf("GreenMaskSize:         %u\n", mib->GreenMaskSize);
+    printf("GreenFieldPosition:    %u\n", mib->GreenFieldPosition);
+    printf("BlueMaskSize:          %u\n", mib->BlueMaskSize);
+    printf("BlueFieldPosition:     %u\n", mib->BlueFieldPosition);
+    printf("RsvdMaskSize:          %u\n", mib->RsvdMaskSize);
+    printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
+    printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
+    printf("res2:                  %u\n", mib->res2);
 }
 
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth)
@@ -125,25 +124,24 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
 
 void setVideoMemory()
 {
-	// size_of_video_ram
-	paging_alloc(kernel_pd, (void*)0xE0000000, vgaIB->TotalMemory*0x10000, MEM_USER|MEM_WRITE);
+    // size_of_video_ram
+    paging_alloc(kernel_pd, (void*)0xE0000000, vgaIB->TotalMemory*0x10000, MEM_USER|MEM_WRITE);
 }
 
 float sgn(float x)
 {
   if (x < 0)
-    return -1;
-  else if (x > 0)
-    return 1;
-  else
-    return 0;
+      return -1;
+  if (x > 0)
+      return 1;
+  return 0;
 }
 
 uint32_t abs(uint32_t arg)
 {
     if (arg < 0)
-    arg = -arg;
-    return (arg);
+        arg = -arg;
+    return(arg);
 }
 
 /* line  (DON`T USE IT, IT CRASH!)
@@ -153,49 +151,49 @@ uint32_t abs(uint32_t arg)
 
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
 {
-  uint32_t i,dx,dy,sdx,sdy,dxabs,dyabs,x,y,px,py;
+    uint32_t i,dx,dy,sdx,sdy,dxabs,dyabs,x,y,px,py;
 
-  dx=x2-x1;      // the horizontal distance of the line
-  dy=y2-y1;      // the vertical distance of the line
-  dxabs=fabs(dx);
-  dyabs=fabs(dy);
-  sdx=sgn(dx);
-  sdy=sgn(dy);
-  x=dyabs>>1;
-  y=dxabs>>1;
-  px=x1;
-  py=y1;
+    dx=x2-x1;      // the horizontal distance of the line
+    dy=y2-y1;      // the vertical distance of the line
+    dxabs=fabs(dx);
+    dyabs=fabs(dy);
+    sdx=sgn(dx);
+    sdy=sgn(dy);
+    x=dyabs>>1;
+    y=dxabs>>1;
+    px=x1;
+    py=y1;
 
-  SCREEN[(py<<8)+(py<<6)+px]=color;
+    SCREEN[(py<<8)+(py<<6)+px]=color;
 
-  if (dxabs>=dyabs) // the line is more horizontal than vertical
-  {
-    for(i=0;i<dxabs;i++)
+    if (dxabs>=dyabs) // the line is more horizontal than vertical
     {
-      y+=dyabs;
-      if (y>=dxabs)
-      {
-        y-=dxabs;
-        py+=sdy;
-      }
-      px+=sdx;
-      setPixel(px,py,color);
+        for(i=0;i<dxabs;i++)
+        {
+            y+=dyabs;
+            if (y>=dxabs)
+            {
+                y-=dxabs;
+                py+=sdy;
+            }
+            px+=sdx;
+            setPixel(px,py,color);
+        }
     }
-  }
-  else // the line is more vertical than horizontal
-  {
-    for(i=0;i<dyabs;i++)
+    else // the line is more vertical than horizontal
     {
-      x+=dxabs;
-      if (x>=dyabs)
-      {
-        x-=dyabs;
-        px+=sdx;
-      }
-      py+=sdy;
-      setPixel(px,py,color);
+        for(i=0;i<dyabs;i++)
+        {
+            x+=dxabs;
+            if (x>=dyabs)
+            {
+                x-=dyabs;
+                px+=sdx;
+            }
+            py+=sdy;
+            setPixel(px,py,color);
+        }
     }
-  }
 }
 
 /* rect  
@@ -205,34 +203,34 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
 
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
 {
-  uint32_t top_offset,bottom_offset,i,temp; //word
+    uint32_t top_offset,bottom_offset,i,temp; //word
 
-  if (top>bottom)
-  {
-    temp=top;
-    top=bottom;
-    bottom=temp;
-  }
-  if (left>right)
-  {
-    temp=left;
-    left=right;
-    right=temp;
-  }
+    if (top>bottom)
+    {
+        temp=top;
+        top=bottom;
+        bottom=temp;
+    }
+    if (left>right)
+    {
+        temp=left;
+        left=right;
+        right=temp;
+    }
 
-  top_offset=(top<<8)+(top<<6);
-  bottom_offset=(bottom<<8)+(bottom<<6);
+    top_offset=(top<<8)+(top<<6);
+    bottom_offset=(bottom<<8)+(bottom<<6);
 
-  for(i=left;i<=right;i++)
-  {
-    SCREEN[top_offset+i]=color;
-    SCREEN[bottom_offset+i]=color;
-  }
-  for(i=top_offset;i<=bottom_offset;i+=mib->XResolution) //SCREEN_WIDTH
-  {
-    SCREEN[left+i]=color;
-    SCREEN[right+i]=color;
-  }
+    for(i=left;i<=right;i++)
+    {
+        SCREEN[top_offset+i]=color;
+        SCREEN[bottom_offset+i]=color;
+    }
+    for(i=top_offset;i<=bottom_offset;i+=mib->XResolution) //SCREEN_WIDTH
+    {
+        SCREEN[left+i]=color;
+        SCREEN[right+i]=color;
+    }
 }
 
 void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
@@ -253,43 +251,41 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 //bitmap don´t work...
 void bitmap()
 {
-	// memcpy((void*)SCREEN, (void*)0x00117f99, 32000); // 64000 // sizeof(SCREEN));
-	// memcpy((void*)SCREEN, (void*)0x1540, 32000);
-	// memcpy((void*)SCREEN, (void*)0x1500+sizeof(BitmapHeader_t), 32768);
-	
-	
-	int x = 0, y = 0, i = 0;
-	for(y=0;y<256;y++)
-	{
-	  for(x=0;x<128;x++)
-	  {
-		SCREEN[x+y*mib->XResolution* mib->BitsPerPixel/8]=(uint8_t)((0x1500+sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
-		i++;
-	  }
-	}
-		// SCREEN[x+y*mib->XResolution]=bitmap[x+y*128];
-	
+    // memcpy((void*)SCREEN, (void*)0x00117f99, 32000); // 64000 // sizeof(SCREEN));
+    // memcpy((void*)SCREEN, (void*)0x1540, 32000);
+    // memcpy((void*)SCREEN, (void*)0x1500+sizeof(BitmapHeader_t), 32768);
+
+    int x = 0, y = 0, i = 0;
+    for(y=0;y<256;y++)
+    {
+        for(x=0;x<128;x++)
+        {
+            SCREEN[x+y*mib->XResolution* mib->BitsPerPixel/8]=(uint8_t)((0x1500+sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
+            i++;
+        }
+    }
+    // SCREEN[x+y*mib->XResolution]=bitmap[x+y*128];
 }
 
 void bitmapDebug()
 {
-	memcpy((void*)bh, (void*)bh_get, sizeof(BitmapHeader_t));
-	
-    printf("\nDEBUG print: BitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));	
+    memcpy((void*)bh, (void*)bh_get, sizeof(BitmapHeader_t));
+    
+    printf("\nDEBUG print: BitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));    
     printf("Type:                  %u\n", bh->Type);
-	printf("Reserved:              %u\n", bh->Reserved);
-	printf("Offset:                %u\n", bh->Offset);
-	printf("Header Size:           %u\n", bh->headerSize);
-	printf("Width:                 %u\n", bh->Width);
-	printf("Height:                %u\n", bh->Height);
-	printf("Planes:                %u\n", bh->Planes);
-	printf("Bits Per Pixel:        %u\n", bh->BitsPerPixel);
-	printf("Compression:           %u\n", bh->Compression);
-	printf("Image Size:            %u\n", bh->SizeImage);
-	printf("X-Pixels Per Meter:    %u\n", bh->XPixelsPerMeter);
-	printf("Y-Pixels Per Meter:    %u\n", bh->YPixelsPerMeter);
-	printf("Colors Used:           %u\n", bh->ColorsUsed);
-	printf("Colors Important:      %u\n", bh->ColorsImportant);
+    printf("Reserved:              %u\n", bh->Reserved);
+    printf("Offset:                %u\n", bh->Offset);
+    printf("Header Size:           %u\n", bh->headerSize);
+    printf("Width:                 %u\n", bh->Width);
+    printf("Height:                %u\n", bh->Height);
+    printf("Planes:                %u\n", bh->Planes);
+    printf("Bits Per Pixel:        %u\n", bh->BitsPerPixel);
+    printf("Compression:           %u\n", bh->Compression);
+    printf("Image Size:            %u\n", bh->SizeImage);
+    printf("X-Pixels Per Meter:    %u\n", bh->XPixelsPerMeter);
+    printf("Y-Pixels Per Meter:    %u\n", bh->YPixelsPerMeter);
+    printf("Colors Used:           %u\n", bh->ColorsUsed);
+    printf("Colors Important:      %u\n", bh->ColorsImportant);
 }
 
 /*

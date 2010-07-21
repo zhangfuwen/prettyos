@@ -22,7 +22,8 @@ struct task
     uintptr_t         FPU_ptr;        // pointer to FPU data
 
     // Information needed by scheduler
-    blocker_t blocker; // Object indicating reason and duration of blockade
+    uint16_t  priority; // Indicates how often this task get the CPU
+    blocker_t blocker;  // Object indicating reason and duration of blockade
 
     // task specific graphical output settings
     bool       ownConsole; // This task has an own console
@@ -34,25 +35,25 @@ extern task_t* FPUTask; // fpu.c
 
 extern bool task_switching;
 extern task_t* currentTask;
-extern console_t* current_console;
+extern console_t* currentConsole;
 
 void tasking_install();
-uint32_t task_switch(uint32_t esp);
-int32_t getpid();
-task_t* create_task(page_directory_t* directory, void* entry, uint8_t privilege); // Creates task using kernels console
-task_t* create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* consoleName); // Creates task with own console
-task_t* create_thread(void(*entry)()); // Creates thread using currentTasks console
-task_t* create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
-void switch_context();
-void exit();
 
-void* task_grow_userheap( uint32_t increase );
+task_t*  create_task (page_directory_t* directory, void* entry, uint8_t privilege); // Creates task using kernels console
+task_t*  create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* consoleName); // Creates task with own console
+task_t*  create_thread (void(*entry)()); // Creates thread using currentTasks console
+task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
+task_t*  create_vm86_task (void* entry);
+task_t*  create_vm86_ctask(void* entry, const char* consoleName);
+void     switch_context();
+uint32_t task_switch(uint32_t esp);
+void     exit();
+
+int32_t getpid();
+
+void* task_grow_userheap(uint32_t increase);
 
 void task_log(task_t* t);
 void TSS_log(tss_entry_t* tss);
-
-// vm86
-task_t* create_vm86_task(void* entry);
-task_t* create_vm86_ctask(void* entry, const char* consoleName);
 
 #endif

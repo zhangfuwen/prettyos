@@ -15,8 +15,8 @@ bool task_switching;
 
 task_t* currentTask;
 
-// The currently displayed console
-console_t* current_console;
+// The console of the active task
+console_t* currentConsole;
 
 // Some externs are needed
 extern tss_entry_t tss;
@@ -48,7 +48,7 @@ void tasking_install()
     currentTask->page_directory = kernel_pd;
     currentTask->privilege      = 0;
     currentTask->FPU_ptr        = 0;
-    currentTask->console        = current_console;
+    currentTask->console        = currentConsole;
     currentTask->ownConsole     = true;
     currentTask->attrib         = 0x0F;
     currentTask->blocker.type   = 0;
@@ -210,7 +210,7 @@ uint32_t task_switch(uint32_t esp)
 
     if(oldTask == currentTask) return esp; // No task switch because old==new
 
-    current_console = currentTask->console;
+    currentConsole = currentTask->console;
 
     // new_task
     paging_switch (currentTask->page_directory);

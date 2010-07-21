@@ -117,7 +117,7 @@ uint8_t ScanToASCII()
     curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
 
     // filter Shift Key and Key Release
-    if (((curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT)) || (KeyPressed == false))
+    if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT || KeyPressed == false)
     {
         return 0;
     }
@@ -215,19 +215,19 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
 {
    /// TODO: should only return character, if keystroke was entered
 
-   if (current_console->KQ.count_write > current_console->KQ.count_read)
+   if (currentConsole->KQ.count_write > currentConsole->KQ.count_read)
    {
        cli();
-       uint8_t KEY = *current_console->KQ.pHead;
-       ++current_console->KQ.count_read;
+       uint8_t KEY = *currentConsole->KQ.pHead;
+       ++currentConsole->KQ.count_read;
 
-       if (current_console->KQ.pHead > current_console->KQ.buffer)
+       if (currentConsole->KQ.pHead > currentConsole->KQ.buffer)
        {
-           --current_console->KQ.pHead;
+           --currentConsole->KQ.pHead;
        }
-       if (current_console->KQ.pHead == current_console->KQ.buffer)
+       if (currentConsole->KQ.pHead == currentConsole->KQ.buffer)
        {
-           current_console->KQ.pHead = current_console->KQ.buffer + KQSIZE - 1;
+           currentConsole->KQ.pHead = currentConsole->KQ.buffer + KQSIZE - 1;
        }
        sti();
        return KEY;
