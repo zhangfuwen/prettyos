@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.72 - Rev: 641";
+const char* version = "0.0.1.73 - Rev: 642";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -114,19 +114,20 @@ void main()
 
     // printf("\n\nShow font.bin\n");
     // memcpy((void*)0x00117f99, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
-    memcpy((void*)0x1500, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
+    memcpy((void*)0x2400, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
     // memshow((void*)0x00117f99, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
-    // memshow((void*)0x1500+sizeof(BitmapHeader_t), (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
+    // memshow((void*)0x2400+sizeof(BitmapHeader_t), (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
     waitForKeyStroke();
 
+    setVideoMemory();
     switchToVideomode();
 
     printf("\nset video memory\n");
-    setVideoMemory();
+    
 
     // initGraphics(320, 200, 8);
     initGraphics(640, 480, 8);
-    // bitmap();
+    bitmap();
 
     for (uint32_t i=0; i<640; i++)
     {

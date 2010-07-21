@@ -20,7 +20,7 @@ ModeInfoBlock_t* mob  = (ModeInfoBlock_t*)0x1300;
 BitmapHeader_t bitmapHeader;
 BitmapHeader_t* bh = &bitmapHeader;
 
-BitmapHeader_t* bh_get = (BitmapHeader_t*)0x1500;
+BitmapHeader_t* bh_get = (BitmapHeader_t*)0x2400;
 
 uint8_t* SCREEN = (uint8_t*)0xA0000;
 //uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
@@ -253,18 +253,17 @@ void bitmap()
 {
     // memcpy((void*)SCREEN, (void*)0x00117f99, 32000); // 64000 // sizeof(SCREEN));
     // memcpy((void*)SCREEN, (void*)0x1540, 32000);
-    // memcpy((void*)SCREEN, (void*)0x1500+sizeof(BitmapHeader_t), 32768);
+    memcpy((void*)SCREEN, (void*)0x2400+sizeof(BitmapHeader_t), 32768);
 
     int x = 0, y = 0, i = 0;
     for(y=0;y<256;y++)
     {
         for(x=0;x<128;x++)
         {
-            SCREEN[x+y*mib->XResolution* mib->BitsPerPixel/8]=(uint8_t)((0x1500+sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
+            SCREEN[x+y*mib->XResolution* mib->BitsPerPixel/8]=(uint8_t)((0x2400+sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
             i++;
         }
-    }
-    // SCREEN[x+y*mib->XResolution]=bitmap[x+y*128];
+    }     
 }
 
 void bitmapDebug()
