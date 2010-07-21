@@ -6,7 +6,7 @@
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
 
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x137) // 0x13A for super vga modes
+#define VM86_SWITCH_TO_TEXT  ((void*)0x13A) // 0x13A for super vga modes
 
 // Transfer segment and offset to a linear 32-bit pointer 
 #define MAKE_LINEAR_POINTER(segment, offset)  ((uintptr_t)(((uint32_t) (segment) << 16) | (uint16_t) (offset)))
@@ -109,6 +109,7 @@ uint32_t getModeInfo(uint32_t mode, ModeInfoBlock_t* modeInfo);
 uint32_t getVBEMode(void);
 void setVBEMode(uint32_t mode);
 void setBank(uint32_t bank);
+void setVideoMemory();
 
 void availableModes(void);
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth);

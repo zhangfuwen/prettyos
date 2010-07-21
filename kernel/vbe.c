@@ -23,12 +23,14 @@ BitmapHeader_t* bh = &bitmapHeader;
 BitmapHeader_t* bh_get	= (BitmapHeader_t*) (0x1500);
 
 uint8_t* SCREEN = (uint8_t*) 0xA0000;
-// uint32_t* SCREEN = (uint32_t*) 0xE0000000;
+// uint8_t* SCREEN = (uint8_t*) 0xE0000000; // video memory for supervga
+
+
 
 void switchToVideomode()
 {
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-	// memset((void*) 0xE0000000, 0, (vgaIB->TotalMemory/0x10) - 0xE0000000);
+	// memset((void*) 0xE0000000, 0, vgaIB->TotalMemory*0x10000 - 0xE0000000);
     create_vm86_task(VM86_SWITCH_TO_VIDEO);
     waitForKeyStroke();
 }
@@ -119,6 +121,12 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
 {
     // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
     SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
+}
+
+void setVideoMemory()
+{
+	// size_of_video_ram
+	paging_alloc(kernel_pd, (void*)0xE0000000, vgaIB->TotalMemory*0x10000, MEM_USER|MEM_WRITE);
 }
 
 float sgn(float x)
@@ -241,6 +249,8 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 }
 
 // http://www.karig.net/os/001c.html
+
+//bitmap don´t work...
 void bitmap()
 {
 	// memcpy((void*)SCREEN, (void*)0x00117f99, 32000); // 64000 // sizeof(SCREEN));

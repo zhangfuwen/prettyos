@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.70 - Rev: 639";
+const char* version = "0.0.1.71 - Rev: 640";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -121,18 +121,23 @@ void main()
     
 	switchToVideomode();
 
-    initGraphics(320, 200, 8);
-	// initGraphics(640, 480, 8);
+	waitForKeyStroke();
+	printf("\nset video memory\n");
+	setVideoMemory();
+	
+	waitForKeyStroke();
+    // initGraphics(320, 200, 8);
+	initGraphics(640, 480, 8);
     // bitmap();
     
-	for (uint32_t i=0; i<320; i++)
+	for (uint32_t i=0; i<640; i++)
     {
-        setPixel(i, 100, 9); 
+        setPixel(i, 320, 9); 
     }    
         
-    for (uint32_t i=0; i<200; i++)
+    for (uint32_t i=0; i<480; i++)
     {
-        setPixel(160, i, 9); 
+        setPixel(240, i, 9); 
     }
     
     // line(20, 30, 200, 40, 0x0A); // problem: fabs (FPU)

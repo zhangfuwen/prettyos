@@ -5,17 +5,17 @@
 org 0x100
 
 video_mode:
-	mov ax, 0013h
-	int 10h
+	;mov ax, 0013h
+	;int 10h
 	;VESA entry point
 	;video memory to address 0xE0000000
-	;mov bx, 0x4101 ;0x4105 ;0x4111 ;0105h
-	;mov ax, 0x4F02
-	;int 10h
+	mov bx, 0x4101 ;0x4105 ;0x4111 ;0105h
+	mov ax, 0x4F02
+	int 10h
 	
 	
 logo_PrettyOS:
-	mov ax, 0xa0000 ;0xE0000000 ;0xa0000 ;0xa000 ? 16bits only
+	mov ax, 0xE0000000; 0xa0000 ;0xE0000000 ;0xa0000 ;0xa000 ? 16bits only
 	mov ds, ax
 	mov word [0], 0 ; black pixel at x=0 and y=0 
 	                ; this step is necessary. Why?
