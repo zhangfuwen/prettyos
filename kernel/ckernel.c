@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.69 - Rev: 638";
+const char* version = "0.0.1.70 - Rev: 639";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -112,18 +112,18 @@ void main()
     memshow(VM86_SWITCH_TO_VIDEO, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); 
   #endif
     waitForKeyStroke();
-	printf("\n\nShow font.bin\n");
+	// printf("\n\nShow font.bin\n");
 	// memcpy((void*)0x00117f99, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
 	memcpy((void*)0x1500, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
 	// memshow((void*)0x00117f99, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
-	memshow((void*)0x1500, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
+	// memshow((void*)0x1500+sizeof(BitmapHeader_t), (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
 	waitForKeyStroke();
     
 	switchToVideomode();
 
     initGraphics(320, 200, 8);
-	
-    bitmap();
+	// initGraphics(640, 480, 8);
+    // bitmap();
     
 	for (uint32_t i=0; i<320; i++)
     {
@@ -144,7 +144,9 @@ void main()
     for (uint32_t i=20; i<100; i+=5)
     {
         drawCircle(160, 100, i, 9); // problem: sqrt (FPU)
-    }*/
+    }
+	*/
+	
     waitForKeyStroke();
 
     switchToTextmode();
