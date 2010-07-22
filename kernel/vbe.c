@@ -16,7 +16,7 @@ VgaInfoBlock_t vgaInfoBlock;
 VgaInfoBlock_t* vgaIB = &vgaInfoBlock;
 
 VgaInfoBlock_t*  pVga = (VgaInfoBlock_t*)0x1000;
-ModeInfoBlock_t* mob  = (ModeInfoBlock_t*)0x1300;
+ModeInfoBlock_t* mob  = (ModeInfoBlock_t*)0x1200;
 
 BitmapHeader_t bitmapHeader;
 BitmapHeader_t* bh = &bitmapHeader;
@@ -129,7 +129,7 @@ void setVideoMemory()
 
     SCREEN = (uint8_t*) paging_acquire_pcimem(VIDEO_MEMORY);
     printf("\nSCREEN (virt): %X\n",SCREEN);
-    for (uint32_t i=VIDEO_MEMORY; i<(VIDEO_MEMORY+0x1000000);i=i+0x1000) // 4 MiB video ram
+    for (uint32_t i=VIDEO_MEMORY; i<(VIDEO_MEMORY+0x1000000);i=i+0x1000) // 16 MB video ram
     {
         printf("\t: %X",paging_acquire_pcimem(i));
     }

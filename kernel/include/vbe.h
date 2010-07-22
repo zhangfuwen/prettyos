@@ -11,7 +11,7 @@
 // Transfer segment and offset to a linear 32-bit pointer
 #define MAKE_LINEAR_POINTER(segment, offset)  ((uintptr_t)(((uint32_t) (segment) << 16) | (uint16_t) (offset)))
 
-#define VIDEO_MEMORY 0xE0000000
+#define VIDEO_MEMORY 0xF2000000 // qemu
 
 
 // SuperVGA information block
