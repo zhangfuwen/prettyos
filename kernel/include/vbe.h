@@ -8,8 +8,10 @@
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
 #define VM86_SWITCH_TO_TEXT  ((void*)0x13A) // 0x13A for super vga modes
 
-// Transfer segment and offset to a linear 32-bit pointer 
+// Transfer segment and offset to a linear 32-bit pointer
 #define MAKE_LINEAR_POINTER(segment, offset)  ((uintptr_t)(((uint32_t) (segment) << 16) | (uint16_t) (offset)))
+
+#define VIDEO_MEMORY 0xE0000000
 
 
 // SuperVGA information block
@@ -17,17 +19,17 @@ typedef struct
 {
     uint8_t  VESASignature[4]; // VESA 4 byte signature
     uint16_t VESAVersion;      // VBE version number
-             
+
     char*      OEMStringPtr;   // Pointer to OEM string
     long       Capabilities;   // Capabilities of video card
-    
+
     uint16_t*  VideoModePtr;   // Pointer to supported modes
     uint16_t   TotalMemory;    // Number of 64kb memory blocks
     uint8_t    reserved[236];  // Pad to 256 byte block size
 } __attribute__((packed)) VgaInfoBlock_t;
 
-// SuperVGA mode information block 
-typedef struct 
+// SuperVGA mode information block
+typedef struct
 {
     uint16_t   ModeAttributes;         // Mode attributes
     uint8_t    WinAAttributes;         // Window A attributes
@@ -59,7 +61,8 @@ typedef struct
     uint8_t    RsvdMaskSize;           // Size of direct color res mask
     uint8_t    RsvdFieldPosition;      // Bit posn of lsb of res mask
     uint8_t    DirectColorModeInfo;    // Direct color mode attributes
-    uint8_t    res2[216];              // Pad to 256 byte block size
+    uint32_t   PhysBasePtr;            // 32-bit physical memory address
+    uint8_t    res2[211];              // Pad to 256 byte block size
 } __attribute__((packed)) ModeInfoBlock_t;
 
 typedef enum
@@ -70,8 +73,8 @@ typedef enum
     memYUV  = 7,  // Direct color YUV memory model
 } memModels;
 
-// bitmap the structure 
-typedef struct               
+// bitmap the structure
+typedef struct
 {
   uint16_t width;
   uint16_t height;

@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.73 - Rev: 642";
+const char* version = "0.0.1.74 - Rev: 643";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -107,48 +107,32 @@ void main()
     // --------------------- VM86 ----------- TEST -----------------------------
     memcpy (VM86_SWITCH_TO_VIDEO, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
-  #ifdef _VM_DIAGNOSIS_ 
+  #ifdef _VM_DIAGNOSIS_
     printf("\n\nvm86 binary code at 0x100: ");
-    memshow(VM86_SWITCH_TO_VIDEO, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start); 
+    memshow(VM86_SWITCH_TO_VIDEO, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
   #endif
 
-    // printf("\n\nShow font.bin\n");
-    // memcpy((void*)0x00117f99, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
     memcpy((void*)0x2400, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
-    // memshow((void*)0x00117f99, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
-    // memshow((void*)0x2400+sizeof(BitmapHeader_t), (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
     waitForKeyStroke();
 
     setVideoMemory();
     switchToVideomode();
-
-    printf("\nset video memory\n");
-    
-
-    // initGraphics(320, 200, 8);
     initGraphics(640, 480, 8);
     bitmap();
 
-    for (uint32_t i=0; i<640; i++)
-    {
-        setPixel(i, 320, 9);
-    }
-
     for (uint32_t i=0; i<480; i++)
     {
-        setPixel(240, i, 9);
+        setPixel(i, 240, 9);
     }
 
-    //line(20, 30, 200, 40, 0x0A); // problem: fabs (FPU)
-
-    rect(40, 50, 80, 98, 0x0A);
-
-    /*
-    for (uint32_t i=20; i<100; i+=5)
+    for (uint32_t i=0; i<640; i++)
     {
-        drawCircle(160, 100, i, 9); // problem: sqrt (FPU)
+        setPixel(320, i, 9);
     }
-    */
+
+    rect(40, 50, 80, 398, 0x0A);
+    rect(42, 50, 80, 400, 0x0B);
+    rect(44, 50, 80, 402, 0x0C);
 
     waitForKeyStroke();
 
@@ -169,7 +153,7 @@ void main()
   #ifdef _DIAGNOSIS_
     listPCI();
   #endif
-    
+
     textColor(0x0F);
 
     void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);

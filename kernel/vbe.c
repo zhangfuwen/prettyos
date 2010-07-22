@@ -7,6 +7,7 @@
 #include "util.h"
 #include "task.h"
 #include "video.h"
+#include "paging.h"
 
 ModeInfoBlock_t modeInfoBlock;
 ModeInfoBlock_t* mib = &modeInfoBlock;
@@ -22,14 +23,13 @@ BitmapHeader_t* bh = &bitmapHeader;
 
 BitmapHeader_t* bh_get = (BitmapHeader_t*)0x2400;
 
-uint8_t* SCREEN = (uint8_t*)0xA0000;
-//uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
+uint8_t* SCREEN = (uint8_t*)VIDEO_MEMORY; // video memory for supervga
 
 
 void switchToVideomode()
 {
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-    // memset((void*) 0xE0000000, 0, vgaIB->TotalMemory*0x10000 - 0xE0000000);
+    memset((void*) VIDEO_MEMORY, 0, vgaIB->TotalMemory*0x10000);
     create_vm86_task(VM86_SWITCH_TO_VIDEO);
     waitForKeyStroke();
 }
@@ -44,14 +44,14 @@ void switchToTextmode()
 void vgaDebug()
 {
     memcpy((void*)vgaIB, (void*)pVga, sizeof(VgaInfoBlock_t));
-    memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));     
+    memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));
 
     // uint16_t* VideoModePtrOld = vgaIB->VideoModePtr;
     // correction
     vgaIB->VideoModePtr = (uint16_t*) MAKE_LINEAR_POINTER(((uint32_t)vgaIB->VideoModePtr) >> 16, 0xFFFF & (uint32_t)vgaIB->VideoModePtr);
     vgaIB->OEMStringPtr = (char*)     MAKE_LINEAR_POINTER(((uint32_t)vgaIB->OEMStringPtr) >> 16, 0xFFFF & (uint32_t)vgaIB->OEMStringPtr);
-    
-    printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));    
+
+    printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));
     printf("VESA-Signature:         %s\n",     vgaIB->VESASignature);
     printf("VESA-Version:           %u.%u\n", (vgaIB->VESAVersion&0xFF00)>>8,vgaIB->VESAVersion&0xFF);
     printf("Capabilities:           %u\n",     vgaIB->Capabilities);
@@ -76,8 +76,8 @@ void vgaDebug()
     textColor(0x0F);
 
     waitForKeyStroke();
-    
-    printf("\nDEBUG print: ModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));    
+
+    printf("\nDEBUG print: ModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));
     printf("WinAAttributes:        %u\n", mib->WinAAttributes);
     printf("WinBAttributes:        %u\n", mib->WinBAttributes);
     printf("WinGranularity:        %u\n", mib->WinGranularity);
@@ -106,6 +106,7 @@ void vgaDebug()
     printf("RsvdMaskSize:          %u\n", mib->RsvdMaskSize);
     printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
     printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
+    printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);
     printf("res2:                  %u\n", mib->res2);
 }
 
@@ -125,7 +126,14 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
 void setVideoMemory()
 {
     // size_of_video_ram
-    paging_alloc(kernel_pd, (void*)0xE0000000, vgaIB->TotalMemory*0x10000, MEM_USER|MEM_WRITE);
+
+    SCREEN = (uint8_t*) paging_acquire_pcimem(VIDEO_MEMORY);
+    printf("\nSCREEN (virt): %X\n",SCREEN);
+    for (uint32_t i=VIDEO_MEMORY; i<(VIDEO_MEMORY+0x1000000);i=i+0x1000) // 4 MiB video ram
+    {
+        printf("\t: %X",paging_acquire_pcimem(i));
+    }
+    waitForKeyStroke();
 }
 
 float sgn(float x)
@@ -145,7 +153,7 @@ uint32_t abs(uint32_t arg)
 }
 
 /* line  (DON`T USE IT, IT CRASH!)
-*    draws a line using Bresenham's line-drawing algorithm, which uses 
+*    draws a line using Bresenham's line-drawing algorithm, which uses
 *    no multiplication or division.
 */
 
@@ -196,7 +204,7 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
     }
 }
 
-/* rect  
+/* rect
 *    Draws a rectangle by drawing all lines by itself.
 *
 */
@@ -251,26 +259,24 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 //bitmap don´t work...
 void bitmap()
 {
-    // memcpy((void*)SCREEN, (void*)0x00117f99, 32000); // 64000 // sizeof(SCREEN));
-    // memcpy((void*)SCREEN, (void*)0x1540, 32000);
-    memcpy((void*)SCREEN, (void*)0x2400+sizeof(BitmapHeader_t), 32768);
+    // memcpy((void*)SCREEN, (void*)0x2400 + sizeof(BitmapHeader_t), 32768);
 
-    int x = 0, y = 0, i = 0;
+    uint32_t x = 0, y = 0, i = 0;
     for(y=0;y<256;y++)
     {
         for(x=0;x<128;x++)
         {
-            SCREEN[x+y*mib->XResolution* mib->BitsPerPixel/8]=(uint8_t)((0x2400+sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
+            SCREEN[x+y*mib->XResolution * mib->BitsPerPixel/8]=(uint8_t)((0x2400 + sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
             i++;
         }
-    }     
+    }
 }
 
 void bitmapDebug()
 {
     memcpy((void*)bh, (void*)bh_get, sizeof(BitmapHeader_t));
-    
-    printf("\nDEBUG print: BitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));    
+
+    printf("\nDEBUG print: BitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));
     printf("Type:                  %u\n", bh->Type);
     printf("Reserved:              %u\n", bh->Reserved);
     printf("Offset:                %u\n", bh->Offset);
