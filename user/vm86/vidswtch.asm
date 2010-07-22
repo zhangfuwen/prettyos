@@ -39,7 +39,63 @@ ModeInfoBlock:
 	mov ax, 0x4F01
 	int 10h
 	mov word [0x1300], ax
-	
+
+;SetBank:
+;	mov ax, 0x4F05 ;4F05h
+;	mov bx, 0
+;   mov dx, bank
+
+;GetBank:
+;	mov ax, 0x4F05 ;4F05h
+;	mov bx, 1
+;   mov dx, bank
+
+;SetScanLinePixel:
+;   mov ax, 0x4F06
+;   mov bl, 0
+
+;GetScanLinePixel:
+;	mov ax, 0x4F06
+;	mov bl, 1
+
+;SetScanLineBytes:
+;   mov ax, 0x4F06
+;   mov bl, 02
+
+;GetMAXScanLine:
+;	mov ax, 0x4F06
+;	mov bl, 3
+
+;SetDisplayStart:
+;	mov ax, 0x4F07
+;	mov bl, 0
+
+;GetDisplayStart:
+;	mov ax, 0x4F07
+;	mov bl, 1
+
+;SetDacPalette:
+;	mov ax, 0x4F08
+;	mov bl, 0
+
+;GetDacPalette:
+;	mov ax, 0x4F08
+;	mov bl, 1
+
+;SetPalette:
+;	mov ax, 0x4F09
+;	mov bl, 0			;=00h    Set palette data
+						;=02h    Set secondary palette data
+						;=80h    Set palette data during vertical retrace
+
+GetPalette:
+	mov ax, 0x4F09
+    mov bl, 1			;=01h    Get palette data
+	int 10h				;=03h    Get secondary palette data
+
+;GetProtectedModeInterface:
+;	mov ax, 0x4F0A
+;	mov bl, 0
 
 	hlt     ; is translated as exit() at vm86.c
 	jmp $   ; endless loop

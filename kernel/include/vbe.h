@@ -4,9 +4,15 @@
 #include "os.h"
 
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
+// http://poli.cs.vsb.cz/misc/rbint/text/1005.html
 
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x13A) // 0x13A for super vga modes
+#define VM86_VGAINFOBLOCK    ((void*)0x117)
+#define VM86_MODEINFOBlOCK   ((void*)0x125)
+#define VM86_GETPALETTE      ((void*)0x136)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x141)
+
+// #define DIRECT_BANKING
 
 // Transfer segment and offset to a linear 32-bit pointer
 #define MAKE_LINEAR_POINTER(segment, offset)  ((uintptr_t)(((uint32_t) (segment) << 16) | (uint16_t) (offset)))
@@ -73,6 +79,13 @@ typedef enum
     memYUV  = 7,  // Direct color YUV memory model
 } memModels;
 
+typedef struct
+{
+	char red;
+	char green;
+	char blue;
+}RGB_t;
+
 // bitmap the structure
 typedef struct
 {
@@ -101,6 +114,17 @@ typedef struct
     uint32_t ColorsImportant; // Number of "important" colors.
 }__attribute__((packed)) BitmapHeader_t;
 
+typedef struct
+{
+	unsigned char blue,green,red,rgbreserved;
+}__attribute__((packed)) RGBQuad_t;
+
+typedef struct
+{
+	BitmapHeader_t bmiheader;
+	RGBQuad_t bmicolors[256];
+}__attribute__((packed)) BMPInfo_t;
+
 void switchToVideomode();
 void switchToTextmode();
 
@@ -108,6 +132,8 @@ void vgaDebug();
 
 uint32_t getVgaInfo(VgaInfoBlock_t* vgaInfo);
 uint32_t getModeInfo(uint32_t mode, ModeInfoBlock_t* modeInfo);
+void setPalette();
+uint32_t getPalette();
 
 uint32_t getVBEMode(void);
 void setVBEMode(uint32_t mode);
@@ -119,7 +145,6 @@ void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth);
 
 void setPixel(uint32_t x, uint32_t y, uint32_t color);
 
-// should be in util.h, maybe later in math.h or something like that
 float sgn(float x);
 uint32_t abs(uint32_t arg);
 
@@ -127,10 +152,11 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);
 void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);
 void bitmap();
+char ISValidBitmap(char *fname);
+void showbitmap(char *infname,int xs,int ys);
 void bitmapDebug();
-// rendering one of the character, given its font_data
 
-//void draw_char(unsigned char* screen, where, font_char*);
-//void draw_string(unsigned char* screen, where, char* input);
+void draw_char(unsigned char* screen, unsigned char* where, unsigned char font_char);
+void draw_string(unsigned char* screen, unsigned char* where, char* input);
 
 #endif
