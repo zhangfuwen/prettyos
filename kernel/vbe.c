@@ -23,8 +23,7 @@ ModeInfoBlock_t* mob;
 BitmapHeader_t*  bh_get;
 
 uintptr_t video_memory = 0xE0000000;
-
-uint8_t* SCREEN;                            // video memory for supervga
+uint8_t*  SCREEN;                           // video memory for supervga
 
 int     xres,yres;                  		// Resolution of video mode used
 int     bytesperline;              			// Logical CRT scanline length
@@ -35,20 +34,16 @@ int     oldMode;                    		// Old video mode number
 
 void getVgaInfoBlock(VgaInfoBlock_t* VIB)
 {
-	// create_vm86_task(VM86_VGAINFOBLOCK);
 	memcpy((void*)vgaIB, (void*)VIB, sizeof(VgaInfoBlock_t));
 }
 
 void getModeInfoBlock(ModeInfoBlock_t* MIB)
 {
-	// create_vm86_task(VM86_MODEINFOBlOCK);
 	memcpy((void*)mib, (void*)MIB, sizeof(ModeInfoBlock_t));
 }
 
 void switchToVideomode()
 {
-    memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
-    memset((void*) video_memory, 0, vgaIB->TotalMemory*0x10000);
     create_vm86_task(VM86_SWITCH_TO_VIDEO);
     waitForKeyStroke();
 }
@@ -368,7 +363,7 @@ set_struc	struc
 void setVideoMemory()
 {
     // size_of_video_ram
-    SCREEN = (uint8_t*) paging_acquire_pcimem(video_memory);
+    SCREEN = (uint8_t*) paging_acquire_pcimem(mib->PhysBasePtr);
     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
     waitForKeyStroke();
