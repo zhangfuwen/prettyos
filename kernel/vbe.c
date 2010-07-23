@@ -45,13 +45,13 @@ void getModeInfoBlock(ModeInfoBlock_t* MIB)
 void switchToVideomode()
 {
     create_vm86_task(VM86_SWITCH_TO_VIDEO);
-    waitForKeyStroke();
+    waitForKeyStroke(); // do not delete
 }
 
 void switchToTextmode()
 {
     create_vm86_task(VM86_SWITCH_TO_TEXT);
-    waitForKeyStroke();
+    waitForKeyStroke(); // do not delete
     refreshUserScreen();
 }
 
@@ -248,6 +248,7 @@ Offset	Size	Description
 uint32_t getPalette()
 {
     create_vm86_task(VM86_GETPALETTE);
+    waitForKeyStroke(); // do not delete
 	return 0;
 }
 

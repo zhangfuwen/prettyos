@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.84 - Rev: 653";
+const char* version = "0.0.1.85 - Rev: 654";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -111,18 +111,17 @@ void main()
 
     // move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
     // --------------------- VM86 ----------- TEST -----------------------------
-    memcpy (VM86_SWITCH_TO_VIDEO, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+    memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
   #ifdef _VM_DIAGNOSIS_
     printf("\n\nvm86 binary code at 0x100: ");
-    memshow(VM86_SWITCH_TO_VIDEO, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+    memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
   #endif
 
     memcpy((void*)0x2400, &font_bin_start, (uintptr_t)&font_bin_end - (uintptr_t)&font_bin_start);
-    waitForKeyStroke();
-    
     bh_get = (BitmapHeader_t*)0x2400;
 
+    waitForKeyStroke();  // do not delete
     switchToVideomode(); 
     getVgaInfoBlock((VgaInfoBlock_t*)0x1000);
     getModeInfoBlock((ModeInfoBlock_t*)0x1200);
@@ -131,8 +130,6 @@ void main()
 	initGraphics(640, 480, 8);
 
     switchToVideomode();
-
-    
 
     for (uint32_t i=0; i<480; i++)
     {
@@ -147,11 +144,10 @@ void main()
     rect(40, 50, 80, 398, 0x0A);
     rect(42, 50, 80, 400, 0x0B);
     rect(44, 50, 80, 402, 0x0C);
-    waitForKeyStroke();    
-
+    
     bitmap();
     waitForKeyStroke();    
-
+    
     switchToTextmode();
     vgaDebug();
     waitForKeyStroke();
