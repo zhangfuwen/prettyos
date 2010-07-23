@@ -17,7 +17,7 @@
 // Transfer segment and offset to a linear 32-bit pointer
 #define MAKE_LINEAR_POINTER(segment, offset)  ((uintptr_t)(((uint32_t) (segment) << 16) | (uint16_t) (offset)))
 
-#define VIDEO_MEMORY 0xF2000000 // qemu
+#define VIDEO_MEMORY 0xE0000000// 0xF2000000 // qemu
 
 
 // SuperVGA information block
@@ -125,13 +125,14 @@ typedef struct
 	RGBQuad_t bmicolors[256];
 }__attribute__((packed)) BMPInfo_t;
 
+void getVgaInfoBlock(VgaInfoBlock_t* VIB);
+void getModeInfoBlock(ModeInfoBlock_t* MIB);
+
 void switchToVideomode();
 void switchToTextmode();
 
 void vgaDebug();
 
-uint32_t getVgaInfo(VgaInfoBlock_t* vgaInfo);
-uint32_t getModeInfo(uint32_t mode, ModeInfoBlock_t* modeInfo);
 void setPalette();
 uint32_t getPalette();
 

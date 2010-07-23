@@ -32,6 +32,18 @@ int     bankShift;                  		// Bank granularity adjust factor
 int     oldMode;                    		// Old video mode number
 // void    _far (*bankSwitch)(void);   		// Direct bank switching function
 
+void getVgaInfoBlock(VgaInfoBlock_t* VIB)
+{
+	// create_vm86_task(VM86_VGAINFOBLOCK);
+	memcpy((void*)vgaIB, (void*)VIB, sizeof(VgaInfoBlock_t));
+}
+
+void getModeInfoBlock(ModeInfoBlock_t* MIB)
+{
+	// create_vm86_task(VM86_MODEINFOBlOCK);
+	memcpy((void*)mib, (void*)MIB, sizeof(ModeInfoBlock_t));
+}
+
 void switchToVideomode()
 {
     memset((void*) 0xA0000, 0, 0xB8000 - 0xA0000);
@@ -49,8 +61,8 @@ void switchToTextmode()
 
 void vgaDebug()
 {
-    memcpy((void*)vgaIB, (void*)pVga, sizeof(VgaInfoBlock_t));
-    memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));
+    // memcpy((void*)vgaIB, (void*)pVga, sizeof(VgaInfoBlock_t));
+    // memcpy((void*)mib, (void*)mob, sizeof(ModeInfoBlock_t));
 
     // uint16_t* VideoModePtrOld = vgaIB->VideoModePtr;
     // correction
@@ -223,17 +235,6 @@ void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth)
     mib->YResolution  = y;
     mib->BitsPerPixel = pixelwidth; // 256 colors
 }
-uint32_t getVgaInfo(VgaInfoBlock_t* vgaInfo)
-{
-	memcpy((void*)vgaInfo, (void*)pVga, sizeof(VgaInfoBlock_t));
-	return 0;
-}
-
-uint32_t getModeInfo(uint32_t mode, ModeInfoBlock_t* modeInfo)
-{
-	memcpy((void*)modeInfo, (void*)mob, sizeof(ModeInfoBlock_t));
-	return 0;
-}
 
 void setPalette()
 {
@@ -368,7 +369,7 @@ void setVideoMemory()
     // size_of_video_ram
     SCREEN = (uint8_t*) paging_acquire_pcimem(VIDEO_MEMORY);
     printf("\nSCREEN (virt): %X\n",SCREEN);
-    for (uint32_t i=VIDEO_MEMORY; i<(VIDEO_MEMORY+0x400000);i=i+0x1000) // 4 MB video ram
+    for (uint32_t i=VIDEO_MEMORY; i<(mib->PhysBasePtr+0x400000);i=i+0x1000) // 4 MB video ram
     {
         printf("\t: %X",paging_acquire_pcimem(i));
     }
