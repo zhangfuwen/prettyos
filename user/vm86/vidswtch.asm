@@ -5,24 +5,10 @@
 org 0x100
 
 video_mode:
-	;mov ax, 0013h
-	;int 10h
-	;VESA entry point
-	;video memory to address 0xE0000000
 	mov bx, 0x4101 ;0x4105 ;0x4111 ;0105h
 	mov ax, 0x4F02
 	int 10h
 	
-	
-logo_PrettyOS:
-	mov ax, 0xE0000000; 0xa0000 ;0xE0000000 ;0xa0000 ;0xa000 ? 16bits only
-	mov ds, ax
-	mov word [0], 0 ; black pixel at x=0 and y=0 
-	                ; this step is necessary. Why?
-					
-	xor ax, ax
-	mov ds, ax 
-
 VgaInfoBlock:
     xor ax, ax
 	mov es, ax
@@ -37,8 +23,10 @@ ModeInfoBlock:
 	mov ax, 0x1200
 	mov di, ax
 	mov ax, 0x4F01
+	mov cx, 0x0101
 	int 10h
-	mov word [0x1300], ax
+
+	; mov word [0x1300], ax
 
 ;SetBank:
 ;	mov ax, 0x4F05 ;4F05h

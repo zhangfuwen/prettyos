@@ -18,9 +18,10 @@ VgaInfoBlock_t* vgaIB = &vgaInfoBlock;
 BitmapHeader_t bitmapHeader;
 BitmapHeader_t* bh = &bitmapHeader;
 
-VgaInfoBlock_t*  pVga = (VgaInfoBlock_t*)0x1000;
-ModeInfoBlock_t* mob  = (ModeInfoBlock_t*)0x1200;
-BitmapHeader_t* bh_get = (BitmapHeader_t*)0x2400;
+VgaInfoBlock_t*  pVga;
+ModeInfoBlock_t* mob;
+BitmapHeader_t*  bh_get;
+
 
 uint8_t* SCREEN = (uint8_t*)VIDEO_MEMORY; // video memory for supervga
 
@@ -94,7 +95,7 @@ void vgaDebug()
 				break;
 			case 0x106:
 				printf("= 1280x1024x16\n");
-				break;				
+				break;
 			case 0x107:
 				printf("= 1280x1024x256\n");
 				break;
@@ -109,7 +110,7 @@ void vgaDebug()
 				break;
 			case 0x10B:
 				printf("= 132x50 text\n");
-				break;				
+				break;
 			case 0x10C:
 				printf("= 132x60 text\n");
 				break;
@@ -143,7 +144,7 @@ void vgaDebug()
 				break;
 			case 0x113:
 				printf("= 800x600x32K\n");
-				break;				
+				break;
 			case 0x114:
 				printf("= 800x600x64K\n");
 				break;
@@ -158,13 +159,13 @@ void vgaDebug()
 				break;
 			case 0x118:
 				printf("= 1024x768x16M\n");
-				break;				
+				break;
 			case 0x119:
 				printf("= 1280x1024x32K\n");
 				break;
 			case 0x11A:
 				printf("= 1280x1024x64K\n");
-				break;				
+				break;
 			case 0x11B:
 				printf("= 1280x1024x16M\n");
 				break;
@@ -261,7 +262,7 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
 
     // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
     SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
-	
+
 }
 
 /*------------------------------------------------------------------------------
@@ -316,7 +317,7 @@ void putPixelP(int x, int y, int color)
 void setBank(int bank)
 {
     union REGS  regs;
-    if (bank == curBank) return;    // Bank is already active 
+    if (bank == curBank) return;    // Bank is already active
     curBank = bank;                 // Save current bank number
     bank <<= bankShift;             // Adjust to window granularity
 #ifdef  DIRECT_BANKING
@@ -336,7 +337,7 @@ asm {   mov bx,1;
 */
 
 
-/* Below is the Assembly Language module required for the direct bank switching. In 
+/* Below is the Assembly Language module required for the direct bank switching. In
 * Borland C or other C compilers, this can be converted to in-lin assembly code.
 */
 
@@ -365,10 +366,9 @@ set_struc	struc
 void setVideoMemory()
 {
     // size_of_video_ram
-
     SCREEN = (uint8_t*) paging_acquire_pcimem(VIDEO_MEMORY);
     printf("\nSCREEN (virt): %X\n",SCREEN);
-    for (uint32_t i=VIDEO_MEMORY; i<(VIDEO_MEMORY+0x1000000);i=i+0x1000) // 16 MB video ram
+    for (uint32_t i=VIDEO_MEMORY; i<(VIDEO_MEMORY+0x400000);i=i+0x1000) // 4 MB video ram
     {
         printf("\t: %X",paging_acquire_pcimem(i));
     }
@@ -536,7 +536,7 @@ char ISValidBitmap(char *fname)
 		printf("can't read the file: should not be a RLR encoded!!");
 		return 0;
 	}
-	
+
 	if(!bmpinfo.bmiheader.bibitcount==8)
 	{
 		printf("can't read the file: should be 8-bit per color format!!");
@@ -567,7 +567,7 @@ void showbitmap(char *infname,int xs,int ys)
 	fseek(fpt,bmpinfo.bmiheader.bfoffbits,SEEK_SET);
 	w = bmpinfo.bmiheader.biwidth;
 	h = bmpinfo.bmiheader.biheight;
-	
+
 	for(i=0;i<=255;i++)
 	{
 		pal[i].red = bmpinfo.bmicolors[i].red/4;
@@ -578,11 +578,11 @@ void showbitmap(char *infname,int xs,int ys)
 	vinitgraph(VGALOW);
 	setwidth(1000);
 	SetPalette(pal);
-	
+
 	for(i=0;i<h;i++)
 	{
 		fread(&byte[0],sizeof(unsigned char),w,fpt);
-		
+
 		for(j=0;j<w;j++)
 		{
 			c= (int ) byte[j];
@@ -601,7 +601,7 @@ void showbitmap(char *infname,int xs,int ys)
 			*(screenptr+(addr & 0xFFFF)) = (char ) c;
 		}
 	}
-	
+
 	fclose(fpt);
 	getch();
 	vclosegraph();

@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.76 - Rev: 645";
+const char* version = "0.0.1.77 - Rev: 646";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -38,6 +38,12 @@ extern uintptr_t vm86_com_end;
 // font_bin
 extern uintptr_t font_bin_start;
 extern uintptr_t font_bin_end;
+
+// vbe
+extern VgaInfoBlock_t*  pVga;
+extern ModeInfoBlock_t* mob;
+extern BitmapHeader_t*  bh_get;
+
 
 // Informations about the system
 system_t system;
@@ -117,6 +123,11 @@ void main()
 
     setVideoMemory();
     switchToVideomode();
+
+    pVga   = (VgaInfoBlock_t*)0x1000;
+    mob    = (ModeInfoBlock_t*)0x1200;
+    bh_get = (BitmapHeader_t*)0x2400;
+
     initGraphics(640, 480, 8);
     bitmap();
 

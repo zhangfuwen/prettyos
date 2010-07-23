@@ -7,10 +7,10 @@
 // http://poli.cs.vsb.cz/misc/rbint/text/1005.html
 
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
-#define VM86_VGAINFOBLOCK    ((void*)0x117)
-#define VM86_MODEINFOBlOCK   ((void*)0x125)
-#define VM86_GETPALETTE      ((void*)0x136)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x141)
+#define VM86_VGAINFOBLOCK    ((void*)0x108)
+#define VM86_MODEINFOBlOCK   ((void*)0x116)
+#define VM86_GETPALETTE      ((void*)0x127)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x132)
 
 // #define DIRECT_BANKING
 
@@ -68,7 +68,7 @@ typedef struct
     uint8_t    RsvdFieldPosition;      // Bit posn of lsb of res mask
     uint8_t    DirectColorModeInfo;    // Direct color mode attributes
     uint32_t   PhysBasePtr;            // 32-bit physical memory address
-    uint8_t    res2[211];              // Pad to 256 byte block size
+    uint8_t    res2[212];              // Pad to 256 byte block size
 } __attribute__((packed)) ModeInfoBlock_t;
 
 typedef enum
