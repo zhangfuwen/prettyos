@@ -995,6 +995,22 @@ int32_t power(int32_t base, int32_t n)
     return(p);
 }
 
+float sgn(float x)
+{
+    if (x < 0)
+        return -1;
+    if (x > 0)
+        return 1;
+    return 0;
+}
+
+uint32_t abs(uint32_t arg)
+{
+    if (arg < 0)
+        arg = -arg;
+    return(arg);
+}
+
 double fabs(double x)
 {
     double result;

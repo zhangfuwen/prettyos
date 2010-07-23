@@ -81,10 +81,10 @@ typedef enum
 
 typedef struct
 {
-	char red;
-	char green;
-	char blue;
-}RGB_t;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+} RGB_t;
 
 // bitmap the structure
 typedef struct
@@ -112,18 +112,18 @@ typedef struct
     uint32_t YPixelsPerMeter; // Vertical pixels per meter.
     uint32_t ColorsUsed;      // Number of colors used.
     uint32_t ColorsImportant; // Number of "important" colors.
-}__attribute__((packed)) BitmapHeader_t;
+} __attribute__((packed)) BitmapHeader_t;
 
 typedef struct
 {
-	unsigned char blue,green,red,rgbreserved;
-}__attribute__((packed)) RGBQuad_t;
+    uint8_t blue, green, red, rgbreserved;
+} __attribute__((packed)) RGBQuad_t;
 
 typedef struct
 {
-	BitmapHeader_t bmiheader;
-	RGBQuad_t bmicolors[256];
-}__attribute__((packed)) BMPInfo_t;
+    BitmapHeader_t bmiheader;
+    RGBQuad_t bmicolors[256];
+} __attribute__((packed)) BMPInfo_t;
 
 void getVgaInfoBlock(VgaInfoBlock_t* VIB);
 void getModeInfoBlock(ModeInfoBlock_t* MIB);
@@ -145,9 +145,6 @@ void availableModes(void);
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth);
 
 void setPixel(uint32_t x, uint32_t y, uint32_t color);
-
-float sgn(float x);
-uint32_t abs(uint32_t arg);
 
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);

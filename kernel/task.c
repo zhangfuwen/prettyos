@@ -22,7 +22,7 @@ console_t* currentConsole;
 extern tss_entry_t tss;
 extern void irq_tail();
 
-uint32_t next_pid = 0; // The next available process ID.
+static uint32_t next_pid = 0; // The next available process ID.
 
 
 void set_fpu_cw(const uint16_t ctrlword); // fpu.c
@@ -309,12 +309,12 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     textColor(0x05);
-    printf("\ntask %X:  ", t);
-    printf("pid: %d  ", t->pid);              // Process ID
-    printf("esp: %X  ", t->esp);              // Stack pointer
-    printf("eip: %X  ", t->eip);              // Instruction pointer
-    printf("PD: %X  ", t->page_directory);    // Page directory
-    printf("k_stack: %X\n", t->kernel_stack); // Kernel stack location
+    printf("\ntask %X:  ", t);              // Adress of the task_t object
+    printf("pid: %d  ", t->pid);            // Process ID
+    printf("esp: %X  ", t->esp);            // Stack pointer
+    printf("eip: %X  ", t->eip);            // Instruction pointer
+    printf("PD: %X  ", t->page_directory);  // Page directory
+    printf("k_stack: %X", t->kernel_stack); // Kernel stack location
     textColor(0x0F);
 }
 

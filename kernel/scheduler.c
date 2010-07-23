@@ -94,8 +94,11 @@ void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
 
 void scheduler_log()
 {
-    printf("\nblocked tasks:\n");
-    element_t* temp = blockedTasks->current;
+    printf("\ncurrent task:");
+    task_log(currentTask);
+
+    printf("\nrunning tasks:");
+    element_t* temp = task_queue->begin;
     do
     {
         if(temp == 0) break;
@@ -103,10 +106,10 @@ void scheduler_log()
         task_log((task_t*)temp->data);
         temp = temp->next;
     }
-    while (temp != blockedTasks->current);
+    while (temp != task_queue->begin);
 
-    printf("\nrunning tasks:\n");
-    temp = task_queue->current;
+    printf("\nblocked tasks:");
+    temp = blockedTasks->begin;
     do
     {
         if(temp == 0) break;
@@ -114,7 +117,9 @@ void scheduler_log()
         task_log((task_t*)temp->data);
         temp = temp->next;
     }
-    while (temp != task_queue->current);
+    while (temp != blockedTasks->begin);
+
+    printf("\n\n");
 }
 
 /*

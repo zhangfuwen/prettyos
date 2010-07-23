@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.85 - Rev: 654";
+const char* version = "0.0.1.86 - Rev: 655";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -218,8 +218,7 @@ void main()
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char     DateAndTime[81];             // String for Date&Time
 
-    //////////////////////////// start of kernel idle loop ////////////////////////////
-    while (true)
+    while (true) // start of kernel idle loop
     {
         // show rotating asterisk
         *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
@@ -256,8 +255,7 @@ void main()
         }
 
         hlt(); // CPU is stopped until the next interrupt
-    }
-    ///////////////////////////// end of kernel idle loop /////////////////////////////
+    } // end of kernel idle loop
 }
 
 /*

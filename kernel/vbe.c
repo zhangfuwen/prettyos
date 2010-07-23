@@ -23,23 +23,23 @@ ModeInfoBlock_t* mob;
 BitmapHeader_t*  bh_get;
 
 
-uint8_t*  SCREEN = (uint8_t*)0xE0000000;              // video memory for supervga
+uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 
-int     xres,yres;                  		// Resolution of video mode used
-int     bytesperline;              			// Logical CRT scanline length
-int     curBank;                    		// Current read/write bank
-int     bankShift;                  		// Bank granularity adjust factor
-int     oldMode;                    		// Old video mode number
-// void    _far (*bankSwitch)(void);   		// Direct bank switching function
+int     xres,yres;                  // Resolution of video mode used
+int     bytesperline;               // Logical CRT scanline length
+int     curBank;                    // Current read/write bank
+int     bankShift;                  // Bank granularity adjust factor
+int     oldMode;                    // Old video mode number
+//void    _far (*bankSwitch)(void); // Direct bank switching function
 
 void getVgaInfoBlock(VgaInfoBlock_t* VIB)
 {
-	memcpy((void*)vgaIB, (void*)VIB, sizeof(VgaInfoBlock_t));
+    memcpy(vgaIB, VIB, sizeof(VgaInfoBlock_t));
 }
 
 void getModeInfoBlock(ModeInfoBlock_t* MIB)
 {
-	memcpy((void*)mib, (void*)MIB, sizeof(ModeInfoBlock_t));
+    memcpy(mib, MIB, sizeof(ModeInfoBlock_t));
 }
 
 void switchToVideomode()
@@ -75,117 +75,117 @@ void vgaDebug()
     //printf("Video Modes Ptr Old:    %X\n",     VideoModePtrOld);
     printf("Video Modes Ptr:        %X\n",     vgaIB->VideoModePtr);
 
-	textColor(0x0E);
+    textColor(0x0E);
     printf("\nVideo Modes:\n\n");
-	printf("\nVESA Modes:\n");
+    printf("\nVESA Modes:\n");
     for (uint8_t i=0; i<8; i++)
     {
         printf("%x ", *(vgaIB->VideoModePtr+i));
-		switch(*(vgaIB->VideoModePtr+i))
-		{
-			case 0x100:
-				printf("= 640x400x256\n");
-				break;
-			case 0x101:
-				printf("= 640x480x256\n");
-				break;
-			case 0x102:
-				printf("= 800x600x16\n");
-				break;
-			case 0x103:
-				printf("= 800x600x256\n");
-				break;
-			case 0x104:
-				printf("= 1024x768x16\n");
-				break;
-			case 0x105:
-				printf("= 1024x768x256\n");
-				break;
-			case 0x106:
-				printf("= 1280x1024x16\n");
-				break;
-			case 0x107:
-				printf("= 1280x1024x256\n");
-				break;
-			case 0x108:
-				printf("= 80x60 text\n");
-				break;
-			case 0x109:
-				printf("= 132x25 text\n");
-				break;
-			case 0x10A:
-				printf("= 132x43 text\n");
-				break;
-			case 0x10B:
-				printf("= 132x50 text\n");
-				break;
-			case 0x10C:
-				printf("= 132x60 text\n");
-				break;
-			case 0x10D:
-				printf("= 320x200x32K\n");
-				break;
-			case 0x10E:
-				printf("= 320x200x64K\n");
-				break;
-			default:
-				break;
-		}
+        switch(*(vgaIB->VideoModePtr+i))
+        {
+            case 0x100:
+                printf("= 640x400x256\n");
+                break;
+            case 0x101:
+                printf("= 640x480x256\n");
+                break;
+            case 0x102:
+                printf("= 800x600x16\n");
+                break;
+            case 0x103:
+                printf("= 800x600x256\n");
+                break;
+            case 0x104:
+                printf("= 1024x768x16\n");
+                break;
+            case 0x105:
+                printf("= 1024x768x256\n");
+                break;
+            case 0x106:
+                printf("= 1280x1024x16\n");
+                break;
+            case 0x107:
+                printf("= 1280x1024x256\n");
+                break;
+            case 0x108:
+                printf("= 80x60 text\n");
+                break;
+            case 0x109:
+                printf("= 132x25 text\n");
+                break;
+            case 0x10A:
+                printf("= 132x43 text\n");
+                break;
+            case 0x10B:
+                printf("= 132x50 text\n");
+                break;
+            case 0x10C:
+                printf("= 132x60 text\n");
+                break;
+            case 0x10D:
+                printf("= 320x200x32K\n");
+                break;
+            case 0x10E:
+                printf("= 320x200x64K\n");
+                break;
+            default:
+                break;
+        }
     }
     printf("\nVBE Version 1.2 Modes:\n");
-	for (uint8_t i=8; i<16; i++)
+    for (uint8_t i=8; i<16; i++)
     {
-         printf("%x ", *(vgaIB->VideoModePtr+i));
-		 switch(*(vgaIB->VideoModePtr+i))
-		{
-			case 0x10F:
-				printf("= 320x200x16M\n");
-				break;
-			case 0x110:
-				printf("= 640x480x32K\n");
-				break;
-			case 0x111:
-				printf("= 640x480x64K\n");
-				break;
-			case 0x112:
-				printf("= 640x480x16M\n");
-				break;
-			case 0x113:
-				printf("= 800x600x32K\n");
-				break;
-			case 0x114:
-				printf("= 800x600x64K\n");
-				break;
-			case 0x115:
-				printf("= 800x600x16M\n");
-				break;
-			case 0x116:
-				printf("= 1024x768x32K\n");
-				break;
-			case 0x117:
-				printf("= 1024x768x64K\n");
-				break;
-			case 0x118:
-				printf("= 1024x768x16M\n");
-				break;
-			case 0x119:
-				printf("= 1280x1024x32K\n");
-				break;
-			case 0x11A:
-				printf("= 1280x1024x64K\n");
-				break;
-			case 0x11B:
-				printf("= 1280x1024x16M\n");
-				break;
-			default:
-				break;
-		}
-		/*
-		---VBE 2.0---
-		120h	1600x1200x256
-		121h	1600x1200x32K
-		122h	1600x1200x64K
-		*/
+        printf("%x ", *(vgaIB->VideoModePtr+i));
+        switch(*(vgaIB->VideoModePtr+i))
+        {
+            case 0x10F:
+                printf("= 320x200x16M\n");
+                break;
+            case 0x110:
+                printf("= 640x480x32K\n");
+                break;
+            case 0x111:
+                printf("= 640x480x64K\n");
+                break;
+            case 0x112:
+                printf("= 640x480x16M\n");
+                break;
+            case 0x113:
+                printf("= 800x600x32K\n");
+                break;
+            case 0x114:
+                printf("= 800x600x64K\n");
+                break;
+            case 0x115:
+                printf("= 800x600x16M\n");
+                break;
+            case 0x116:
+                printf("= 1024x768x32K\n");
+                break;
+            case 0x117:
+                printf("= 1024x768x64K\n");
+                break;
+            case 0x118:
+                printf("= 1024x768x16M\n");
+                break;
+            case 0x119:
+                printf("= 1280x1024x32K\n");
+                break;
+            case 0x11A:
+                printf("= 1280x1024x64K\n");
+                break;
+            case 0x11B:
+                printf("= 1280x1024x16M\n");
+                break;
+            default:
+                break;
+        }
+        /*
+        ---VBE 2.0---
+        120h    1600x1200x256
+        121h    1600x1200x32K
+        122h    1600x1200x64K
+        */
     }
     printf("\n");
     textColor(0x0F);
@@ -242,14 +242,13 @@ Offset	Size	Description
  02h	BYTE	blue
  03h	BYTE	alpha or alignment byte
 */
-
 }
 
 uint32_t getPalette()
 {
     create_vm86_task(VM86_GETPALETTE);
     waitForKeyStroke(); // do not delete
-	return 0;
+    return 0;
 }
 
 void setPixel(uint32_t x, uint32_t y, uint32_t color)
@@ -272,9 +271,9 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
 /*
 void initPlanner()
 {
-	outpw(0x3C4, 0x0F02);
-	outpw(0x3CE, 0x0003);
-	outpw(0x3CE, 0x0205);
+    outpw(0x3C4, 0x0F02);
+    outpw(0x3CE, 0x0003);
+    outpw(0x3CE, 0x0205);
 }
 */
 
@@ -284,8 +283,8 @@ void initPlanner()
 /*
 void setWriteMode0()
 {
-	outpw(0x3CE, 0xFF08);
-	outpw(0x3CE, 0x0005);
+    outpw(0x3CE, 0xFF08);
+    outpw(0x3CE, 0x0005);
 }
 */
 /* Plot a pixel in Planer mode */
@@ -294,14 +293,14 @@ void setWriteMode0()
 
 void putPixelP(int x, int y, int color)
 {
-	char dummy_read;
+    char dummy_read;
 
-	long addr = (long)y * bytesperline +(x/8));
-	setBank((int)(addr >> 16));
-	outp(0x3CE, 8);
-	outp(0x3CF, 0x80 >> (x & 7));
-	dummy_read = *(screenPtr +^(addr & 0xFFFF));
-	*(screenPtr + (addr & 0xFFFF)) = (char)color;
+    long addr = (long)y * bytesperline +(x/8));
+    setBank((int)(addr >> 16));
+    outp(0x3CE, 8);
+    outp(0x3CF, 0x80 >> (x & 7));
+    dummy_read = *(screenPtr +^(addr & 0xFFFF));
+    *(screenPtr + (addr & 0xFFFF)) = (char)color;
 }
 */
 //------------------------------------------------------------------------------
@@ -364,7 +363,7 @@ set_struc	struc
 void setVideoMemory()
 {
     // size_of_video_ram
-    SCREEN = (uint8_t*) paging_acquire_pcimem(mib->PhysBasePtr);
+    SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
     waitForKeyStroke();
@@ -376,47 +375,25 @@ void setVideoMemory()
     waitForKeyStroke();
 }
 
-float sgn(float x)
-{
-  if (x < 0)
-      return -1;
-  if (x > 0)
-      return 1;
-  return 0;
-}
-
-uint32_t abs(uint32_t arg)
-{
-    if (arg < 0)
-        arg = -arg;
-    return(arg);
-}
-
-/* line  (DON`T USE IT, IT CRASH!)
-*    draws a line using Bresenham's line-drawing algorithm, which uses
-*    no multiplication or division.
-*/
-
+// draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
 {
-    uint32_t i,dx,dy,sdx,sdy,dxabs,dyabs,x,y,px,py;
-
-    dx=x2-x1;      // the horizontal distance of the line
-    dy=y2-y1;      // the vertical distance of the line
-    dxabs=fabs(dx);
-    dyabs=fabs(dy);
-    sdx=sgn(dx);
-    sdy=sgn(dy);
-    x=dyabs>>1;
-    y=dxabs>>1;
-    px=x1;
-    py=y1;
+    uint32_t dx=x2-x1;      // the horizontal distance of the line
+    uint32_t dy=y2-y1;      // the vertical distance of the line
+    uint32_t dxabs=fabs(dx);
+    uint32_t dyabs=fabs(dy);
+    uint32_t sdx=sgn(dx);
+    uint32_t sdy=sgn(dy);
+    uint32_t x=dyabs>>1;
+    uint32_t y=dxabs>>1;
+    uint32_t px=x1;
+    uint32_t py=y1;
 
     SCREEN[(py<<8)+(py<<6)+px]=color;
 
     if (dxabs>=dyabs) // the line is more horizontal than vertical
     {
-        for(i=0;i<dxabs;i++)
+        for(uint32_t i=0;i<dxabs;i++)
         {
             y+=dyabs;
             if (y>=dxabs)
@@ -430,7 +407,7 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
     }
     else // the line is more vertical than horizontal
     {
-        for(i=0;i<dyabs;i++)
+        for(uint32_t i=0;i<dyabs;i++)
         {
             x+=dxabs;
             if (x>=dyabs)
@@ -444,14 +421,10 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
     }
 }
 
-/* rect
-*    Draws a rectangle by drawing all lines by itself.
-*
-*/
-
+// Draws a rectangle by drawing all lines by itself.
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
 {
-    uint32_t top_offset,bottom_offset,i,temp; //word
+    uint32_t top_offset,bottom_offset,temp; //word
 
     if (top>bottom)
     {
@@ -469,12 +442,12 @@ void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t
     top_offset=(top<<8)+(top<<6);
     bottom_offset=(bottom<<8)+(bottom<<6);
 
-    for(i=left;i<=right;i++)
+    for(uint32_t i=left;i<=right;i++)
     {
         SCREEN[top_offset+i]=color;
         SCREEN[bottom_offset+i]=color;
     }
-    for(i=top_offset;i<=bottom_offset;i+=mib->XResolution) //SCREEN_WIDTH
+    for(uint32_t i=top_offset;i<=bottom_offset;i+=mib->XResolution) //SCREEN_WIDTH
     {
         SCREEN[left+i]=color;
         SCREEN[right+i]=color;
@@ -487,8 +460,8 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
     for (uint32_t i=0; i<=2*radius; i++)
     {
         uint32_t x  = xm - radius + i;
-        uint32_t y1 = ym + (uint32_t) sqrt(radius*radius - (x-xm)*(x-xm));
-        uint32_t y2 = ym - (uint32_t) sqrt(radius*radius - (x-xm)*(x-xm));
+        uint32_t y1 = ym + (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
+        uint32_t y2 = ym - (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
         setPixel(x, y1, 9);
         setPixel(x, y2, 9);
     }
@@ -496,17 +469,17 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 
 // http://www.karig.net/os/001c.html
 
-//bitmap don´t work...
+//bitmap, don´t work...
 void bitmap()
 {
     // memcpy((void*)SCREEN, (void*)0x2400 + sizeof(BitmapHeader_t), 32768);
 
-    uint32_t x = 0, y = 0, i = 0;
-    for(y=0;y<256;y++)
+    uint32_t i = 0;
+    for(uint32_t y=0;y<256;y++)
     {
-        for(x=0;x<128;x++)
+        for(uint32_t x=0;x<128;x++)
         {
-            SCREEN[x+y*mib->XResolution * mib->BitsPerPixel/8]=(uint8_t)((0x2400 + sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
+            SCREEN[x+y*mib->XResolution * mib->BitsPerPixel/8] = (uint8_t)((0x2400 + sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
             i++;
         }
     }

@@ -91,7 +91,9 @@ uint32_t alignDown(uint32_t val, uint32_t alignment);
 uint32_t max(uint32_t a, uint32_t b);
 uint32_t min(uint32_t a, uint32_t b);
 int32_t  power(int32_t base, int32_t n);
+float    sgn(float x);
+uint32_t abs(uint32_t arg);
 double   fabs(double x);
-double sqrt(double x);
+double   sqrt(double x);
 
 #endif
