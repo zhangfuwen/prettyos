@@ -94,9 +94,11 @@ void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
 
 void scheduler_log()
 {
-    printf("\ncurrent task:");
-    task_log(currentTask);
-
+    textColor(0x0F);
+    printf("\ncurrent task: ");
+    textColor(0x05);
+    printf("pid: %u", currentTask->pid);
+    textColor(0x0F);
     printf("\nrunning tasks:");
     element_t* temp = task_queue->begin;
     do

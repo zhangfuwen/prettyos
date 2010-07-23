@@ -309,8 +309,7 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     textColor(0x05);
-    printf("\ntask %X:  ", t);              // Adress of the task_t object
-    printf("pid: %d  ", t->pid);            // Process ID
+    printf("\npid: %d  ", t->pid);            // Process ID
     printf("esp: %X  ", t->esp);            // Stack pointer
     printf("eip: %X  ", t->eip);            // Instruction pointer
     printf("PD: %X  ", t->page_directory);  // Page directory
