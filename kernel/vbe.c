@@ -371,8 +371,9 @@ void setVideoMemory()
     SCREEN = (uint8_t*) paging_acquire_pcimem(video_memory);
     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
-    
-    for (uint32_t i=video_memory; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000) 
+    waitForKeyStroke();
+
+    for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000) 
     {
         printf("\t: %X",paging_acquire_pcimem(i));
     }
