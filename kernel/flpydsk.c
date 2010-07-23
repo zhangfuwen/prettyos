@@ -329,6 +329,15 @@ static void flpydsk_check_int(uint32_t* st0, uint32_t* cyl)
 // turns the current floppy drives motor on
 void flpydsk_motorOn(void* drive)
 {
+  #ifdef _FLOPPY_DIAGNOSIS_
+    if(((floppy_t*)drive)->motor == false)
+    {
+        textColor(0x0A);
+        printf("\nflpydsk_motorOn drive: %u",((floppy_t*)drive)->ID);
+        textColor(0x0F);        
+    }
+  #endif
+    
     if(drive == 0 || ((floppy_t*)drive)->motor == true) return;
 
     uint32_t motor = 0;
@@ -346,6 +355,15 @@ void flpydsk_motorOn(void* drive)
 // turns the current floppy drives motor on
 void flpydsk_motorOff(void* drive)
 {
+  #ifdef _FLOPPY_DIAGNOSIS_
+    if(((floppy_t*)drive)->motor == true)
+    {    
+        textColor(0x0C);
+        printf("\nflpydsk_motorOff drive: %u",((floppy_t*)drive)->ID);
+        textColor(0x0F);        
+    }
+  #endif
+    
     if(drive == 0) return;
   #ifdef _FLOPPY_DIAGNOSIS_
     writeInfo(0, "Floppy motor: Global-Access-Counter: %u   Internal counter: %u   Motor on: %u", CurrentDrive->drive.insertedDisk->accessRemaining, CurrentDrive->accessRemaining, CurrentDrive->motor);
