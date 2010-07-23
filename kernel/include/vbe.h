@@ -6,11 +6,11 @@
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
 // http://poli.cs.vsb.cz/misc/rbint/text/1005.html
 
-#define VM86_VGAINFOBLOCK    ((void*)0x100)
-#define VM86_MODEINFOBLOCK   ((void*)0x10E)
-#define VM86_SWITCH_TO_VIDEO ((void*)0x125)
-#define VM86_GETPALETTE      ((void*)0x130)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x13A)
+#define VM86_SWITCH_TO_VIDEO ((void*)0x100)
+#define VM86_VGAINFOBLOCK    ((void*)0x108)
+#define VM86_MODEINFOBLOCK   ((void*)0x116)
+#define VM86_GETPALETTE      ((void*)0x12D)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x137)
 
 // #define DIRECT_BANKING
 
