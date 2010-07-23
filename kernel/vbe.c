@@ -22,8 +22,8 @@ VgaInfoBlock_t*  pVga;
 ModeInfoBlock_t* mob;
 BitmapHeader_t*  bh_get;
 
-uintptr_t video_memory = 0xE0000000;
-uint8_t*  SCREEN;                           // video memory for supervga
+
+uint8_t*  SCREEN = (uint8_t*)0xE0000000;              // video memory for supervga
 
 int     xres,yres;                  		// Resolution of video mode used
 int     bytesperline;              			// Logical CRT scanline length

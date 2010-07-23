@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.82 - Rev: 651";
+const char* version = "0.0.1.83 - Rev: 652";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -130,10 +130,17 @@ void main()
     getModeInfoBlock((ModeInfoBlock_t*)0x1200);
         
     setVideoMemory();  
-	
-    switchToVideomode();
-    initGraphics(640, 480, 8);
+	initGraphics(640, 480, 8);
 
+    printf("\nSTOP vor switchToVideoMode");
+    waitForKeyStroke();
+
+    switchToVideomode();
+
+    printf("\nSTOP nach switchToVideoMode");
+    waitForKeyStroke();
+
+   /*
     bitmap();
 
     for (uint32_t i=0; i<480; i++)
@@ -149,8 +156,9 @@ void main()
     rect(40, 50, 80, 398, 0x0A);
     rect(42, 50, 80, 400, 0x0B);
     rect(44, 50, 80, 402, 0x0C);
-    waitForKeyStroke();
-    
+    waitForKeyStroke();    
+   */
+
     switchToTextmode();
     vgaDebug();
     waitForKeyStroke();
