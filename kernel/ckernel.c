@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.96 - Rev: 665";
+const char* version = "0.0.1.97 - Rev: 666";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -144,7 +144,7 @@ void main()
 
     for (uint32_t i=0; i<y; i++)
     {
-        setPixel(i, (y/2), 9);
+        setPixel(i, (y/2+1), 9);
     }
 
     for (uint32_t i=0; i<x; i++)
@@ -156,7 +156,7 @@ void main()
     rect(342, 50, 380, 400, 0x0B);
     rect(344, 50, 380, 402, 0x0C);
 
-    bitmap(20, 20);
+    bitmap(0,0);
     waitForKeyStroke();  
 
     switchToTextmode();

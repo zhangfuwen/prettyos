@@ -124,6 +124,15 @@ typedef struct
 
 typedef struct
 {
+    uint8_t blue        : 2;
+    uint8_t green       : 2;
+    uint8_t red         : 2; 
+    uint8_t rgbreserved : 2;
+} __attribute__((packed)) RGBQuadPacked_t;
+
+
+typedef struct
+{
     BitmapHeader_t bmiheader;
     RGBQuad_t bmicolors[256];
 } __attribute__((packed)) BMPInfo_t;

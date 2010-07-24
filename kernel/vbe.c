@@ -248,9 +248,9 @@ uint32_t getPalette()
     waitForTask(create_vm86_task(VM86_GETPALETTE));
 	
 	printf("\nDEBUG: Palette output:\n");
-	printf("RED:   %u \n",  (uint8_t*)0x1400);
-	printf("GREEN: %u \n",  (uint8_t*)0x1401);
-	printf("BLUE:  %u \n",  (uint8_t*)0x1402);
+	printf("RED:   %u \n",  *(uint8_t*)0x1400);
+	printf("GREEN: %u \n",  *(uint8_t*)0x1401);
+	printf("BLUE:  %u \n",  *(uint8_t*)0x1402);
 	
     return 0;
 }
@@ -364,6 +364,8 @@ set_struc	struc
 	END
 */
 
+RGBQuadPacked_t* ScreenPal;
+
 void setVideoMemory()
 {
     // size_of_video_ram
@@ -372,7 +374,8 @@ void setVideoMemory()
 	// add the size of color (palette) to the screen
 	if(mib->BitsPerPixel == 8)
 	{	
-		SCREEN += 256;
+		ScreenPal = (RGBQuadPacked_t*)SCREEN;
+        SCREEN += 256;        
 	}
 	
     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
@@ -481,8 +484,20 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 void bitmap(uint32_t xpos, uint32_t ypos)
 {
     uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
-    uintptr_t bitmap_end   = bitmap_start + bh_get->Width*bh_get->Height; 
+    uintptr_t bitmap_end   = bitmap_start + bh_get->Width*bh_get->Height + 1024; 
 
+    if(mib->BitsPerPixel == 8)
+	{	
+        BMPInfo_t* bmpinfo = (BMPInfo_t*) 0x2400;
+        
+        for(uint8_t i=0;i<=255;i++)
+        {
+            ScreenPal[i].red    = (bmpinfo->bmicolors[i].red)   /64;
+            ScreenPal[i].green  = (bmpinfo->bmicolors[i].green) /64;
+            ScreenPal[i].blue   = (bmpinfo->bmicolors[i].blue)  /64;
+        }
+    }
+    
     uintptr_t i = bitmap_end;
     for(uint32_t y=0; y<bh_get->Height; y++)
     {
