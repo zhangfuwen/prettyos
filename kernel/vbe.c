@@ -472,17 +472,15 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 //bitmap, don´t work...
 void bitmap()
 {
-    // memcpy((void*)SCREEN, (void*)0x2400 + sizeof(BitmapHeader_t), 32768);
-
     uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
     uintptr_t bitmap_end   = bitmap_start + 256*128; 
 
-    uint32_t i = bitmap_end;
-    for(uint32_t y=0;y<256;y++)
+    uintptr_t i = bitmap_end;
+    for(uint32_t y=0;y<200;y++)
     {
-        for(uint32_t x=0;x<128;x++)
+        for(uint32_t x=0;x<320;x++)
         {
-            SCREEN[ x + y * mib->XResolution * mib->BitsPerPixel/8 ] = *(uint8_t*)(i * mib->BitsPerPixel/8 + bitmap_start); 
+            SCREEN[ x + y * 640 /* mib->XResolution * mib->BitsPerPixel/8 */ ] = *(uint8_t*)(i /* * mib->BitsPerPixel/8 */ + bitmap_start); 
             i--;
         }
     }    

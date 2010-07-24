@@ -14,11 +14,10 @@ incbin "user/vm86/VIDSWTCH.COM"
 _vm86_com_end:
 ; --------------------- VM86 ---------------------------------------------------
 
-;---------------------- font ---------------------------------------------------
-global _font_bin_start
-global _font_bin_end
-_font_bin_start:
-; incbin "user/vm86/font.bin"
-incbin "user/vm86/font.bmp"
-_font_bin_end:
-;---------------------- font ---------------------------------------------------
+;---------------------- bmp ----------------------------------------------------
+global _bmp_start
+global _bmp_end
+_bmp_start:
+incbin "user/vm86/bootscr.bmp"
+_bmp_end:
+;---------------------- bmp ----------------------------------------------------
