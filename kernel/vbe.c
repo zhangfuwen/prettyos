@@ -364,28 +364,61 @@ set_struc	struc
 	END
 */
 
-RGBQuadPacked_t* ScreenPal;
+RGBQuadPacked_t Pal[256];
+RGBQuadPacked_t* ScreenPal = &Pal[0];
 
 void setVideoMemory()
 {
-    // size_of_video_ram
-    SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
-	
-	// add the size of color (palette) to the screen
-	if(mib->BitsPerPixel == 8)
-	{	
-		ScreenPal = (RGBQuadPacked_t*)SCREEN;
-        SCREEN += 256;        
-	}
-	
-    printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
-    printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
+ 	// size_of_video_ram
+ 	SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
+ 	for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000)
+ 	{
+     	printf("\t: %X",paging_acquire_pcimem(i));
+ 	}
+   	printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
+ 	printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
 
-    for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000) 
-    {
-        printf("\t: %X",paging_acquire_pcimem(i));
+ 	// add the size of color (palette) to the screen
+ 	if(mib->BitsPerPixel == 8)
+ 	{
+ 	    ScreenPal = (RGBQuadPacked_t*)SCREEN;
+        SCREEN += 256*sizeof(RGBQuadPacked_t);  
+ 	} 	
+} 
+
+void bitmap(uint32_t xpos, uint32_t ypos)
+{
+ 	uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
+ 	uintptr_t bitmap_end = bitmap_start + bh_get->Width*bh_get->Height +1024;
+ 	
+    /*
+ 	if(mib->BitsPerPixel == 8)
+    {        
+        
+        BMPInfo_t* bmpinfo = (void*)0x2400;
+        
+        for(uint8_t j=0; j<256; j++)
+        {
+           // ScreenPal[i].red    = (bmpinfo->bmicolors[i].red)   >> 6;
+           // ScreenPal[i].green  = (bmpinfo->bmicolors[i].green) >> 6;
+           // ScreenPal[i].blue   = (bmpinfo->bmicolors[i].blue)  >> 6;
+        }
+
+        waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK  
     }
-}
+    */
+    
+    uintptr_t i = bitmap_end;
+ 	for(uint32_t y=0; y<bh_get->Height; y++)
+ 	{
+ 	    for(uint32_t x=bh_get->Width; x>0; x--)
+ 	    {
+     	    SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *(uint8_t*)(i * mib->BitsPerPixel/8 + bitmap_start);
+ 	        i--;
+ 	    }
+ 	}
+} 
+
 
 // draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
@@ -479,35 +512,7 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
     }
 }
 
-// http://www.karig.net/os/001c.html
 
-void bitmap(uint32_t xpos, uint32_t ypos)
-{
-    uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
-    uintptr_t bitmap_end   = bitmap_start + bh_get->Width*bh_get->Height + 1024; 
-
-    if(mib->BitsPerPixel == 8)
-	{	
-        BMPInfo_t* bmpinfo = (BMPInfo_t*) 0x2400;
-        
-        for(uint8_t i=0;i<=255;i++)
-        {
-            ScreenPal[i].red    = (bmpinfo->bmicolors[i].red)   /64;
-            ScreenPal[i].green  = (bmpinfo->bmicolors[i].green) /64;
-            ScreenPal[i].blue   = (bmpinfo->bmicolors[i].blue)  /64;
-        }
-    }
-    
-    uintptr_t i = bitmap_end;
-    for(uint32_t y=0; y<bh_get->Height; y++)
-    {
-        for(uint32_t x=bh_get->Width; x>0; x--)
-        {
-            SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *(uint8_t*)(i * mib->BitsPerPixel/8 + bitmap_start); 
-            i--;
-        }
-    }    
-}
 
 char ISValidBitmap(char *fname)
 {

@@ -9,8 +9,9 @@
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
 #define VM86_VGAINFOBLOCK    ((void*)0x10B)
 #define VM86_MODEINFOBLOCK   ((void*)0x119)
-#define VM86_GETPALETTE      ((void*)0x134)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x147)
+#define VM86_SETPALETTE      ((void*)0x134)
+#define VM86_GETPALETTE      ((void*)0x13E)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x151)
 
 // #define DIRECT_BANKING
 
@@ -119,15 +120,18 @@ typedef struct
 
 typedef struct
 {
-    uint8_t blue, green, red, rgbreserved;
+    uint8_t blue;
+    uint8_t green;
+    uint8_t red;
+    uint8_t rgbreserved;
 } __attribute__((packed)) RGBQuad_t;
 
 typedef struct
 {
     uint8_t blue        : 2;
     uint8_t green       : 2;
-    uint8_t red         : 2; 
-    uint8_t rgbreserved : 2;
+    uint8_t red         : 2;
+    uint8_t reserve     : 2;
 } __attribute__((packed)) RGBQuadPacked_t;
 
 

@@ -83,12 +83,13 @@ ModeInfoBlock:
 ;	mov bl, 1
 ; 	jmp exitvm86
 
-;SetPalette:
-;	mov ax, 0x4F09
-;	mov bl, 0			;=00h    Set palette data
+SetPalette:
+	mov ax, 0x4F09
+	mov bl, 0			;=00h    Set palette data
 						;=02h    Set secondary palette data
 						;=80h    Set palette data during vertical retrace
-;   jmp exitvm86
+   int 10h
+   jmp exitvm86
 
 GetPalette:
     xor ax, ax
