@@ -246,6 +246,12 @@ Offset	Size	Description
 uint32_t getPalette()
 {
     waitForTask(create_vm86_task(VM86_GETPALETTE));
+	
+	printf("\nDEBUG: Palette output:\n");
+	printf("RED:   %u \n",  (uint8_t*)0x1400);
+	printf("GREEN: %u \n",  (uint8_t*)0x1401);
+	printf("BLUE:  %u \n",  (uint8_t*)0x1402);
+	
     return 0;
 }
 
@@ -362,6 +368,13 @@ void setVideoMemory()
 {
     // size_of_video_ram
     SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
+	
+	// add the size of color (palette) to the screen
+	if(mib->BitsPerPixel == 8)
+	{	
+		SCREEN += 256;
+	}
+	
     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
 
@@ -465,7 +478,7 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 
 // http://www.karig.net/os/001c.html
 
-void bitmap()
+void bitmap(uint32_t xpos, uint32_t ypos)
 {
     uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
     uintptr_t bitmap_end   = bitmap_start + bh_get->Width*bh_get->Height; 
@@ -475,7 +488,7 @@ void bitmap()
     {
         for(uint32_t x=bh_get->Width; x>0; x--)
         {
-            SCREEN[ x + y * mib->XResolution * mib->BitsPerPixel/8 ] = *(uint8_t*)(i * mib->BitsPerPixel/8 + bitmap_start); 
+            SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *(uint8_t*)(i * mib->BitsPerPixel/8 + bitmap_start); 
             i--;
         }
     }    

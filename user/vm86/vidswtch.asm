@@ -91,6 +91,10 @@ ModeInfoBlock:
 ;   jmp exitvm86
 
 GetPalette:
+    xor ax, ax
+	mov es, ax
+	mov ax, 0x1400
+	mov di, ax
 	mov ax, 0x4F09
     mov bl, 1			;=01h    Get palette data
 	int 10h				;=03h    Get secondary palette data

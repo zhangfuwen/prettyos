@@ -10,7 +10,7 @@
 #define VM86_VGAINFOBLOCK    ((void*)0x10B)
 #define VM86_MODEINFOBLOCK   ((void*)0x119)
 #define VM86_GETPALETTE      ((void*)0x134)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x13E)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x147)
 
 // #define DIRECT_BANKING
 
@@ -153,7 +153,7 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color);
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);
 void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);
-void bitmap();
+void bitmap(uint32_t xpos, uint32_t ypos);
 char ISValidBitmap(char *fname);
 void showbitmap(char *infname,int xs,int ys);
 void bitmapDebug();
