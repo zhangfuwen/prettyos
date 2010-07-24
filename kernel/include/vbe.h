@@ -23,16 +23,19 @@
 // SuperVGA information block
 typedef struct
 {
-    uint8_t  VESASignature[4]; // VESA 4 byte signature
-    uint16_t VESAVersion;      // VBE version number
-
-    char*      OEMStringPtr;   // Pointer to OEM string
-    long       Capabilities;   // Capabilities of video card
-
-    uint16_t*  VideoModePtr;   // Pointer to supported modes
-    uint16_t   TotalMemory;    // Number of 64kb memory blocks
-    uint8_t    reserved[236];  // Pad to 256 byte block size
-} __attribute__((packed)) VgaInfoBlock_t;
+    uint8_t   VESASignature[4]     ;
+    uint16_t  VESAVersion          __attribute__ ((packed));
+    uintptr_t OEMStringPtr         __attribute__ ((packed));
+    uint8_t   Capabilities[4]      ;
+    uintptr_t VideoModePtr         __attribute__ ((packed));
+    uint16_t  TotalMemory          __attribute__ ((packed));
+    uint16_t  OemSoftwareRev       __attribute__ ((packed));
+    uintptr_t OemVendorNamePtr     __attribute__ ((packed));
+    uintptr_t OemProductNamePtr    __attribute__ ((packed));
+    uintptr_t OemProductRevPtr     __attribute__ ((packed));
+    uint8_t   Reserved[222]        ;
+    uint8_t   OemData[256]         ;
+} VgaInfoBlock_t;
 
 // SuperVGA mode information block
 typedef struct
@@ -67,7 +70,7 @@ typedef struct
     uint8_t    RsvdMaskSize;           // Size of direct color res mask
     uint8_t    RsvdFieldPosition;      // Bit posn of lsb of res mask
     uint8_t    DirectColorModeInfo;    // Direct color mode attributes
-    uint32_t   PhysBasePtr;            // 32-bit physical memory address
+    uintptr_t   PhysBasePtr;            // 32-bit physical memory address
     uint8_t    res2[212];              // Pad to 256 byte block size
 } __attribute__((packed)) ModeInfoBlock_t;
 
