@@ -8,6 +8,7 @@ video_mode:
 	mov ax, 0x4F02
 	mov bx, 0x4101 ; video mode 
 	int 10h	
+	jmp exitvm86
 
 VgaInfoBlock:
     xor ax, ax

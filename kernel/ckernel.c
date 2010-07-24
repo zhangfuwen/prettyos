@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.93 - Rev: 662";
+const char* version = "0.0.1.94 - Rev: 663";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -125,14 +125,16 @@ void main()
     memcpy((void*)0x2400, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
     bh_get = (BitmapHeader_t*)0x2400;
 
-    waitForKeyStroke();  // do not delete
+    waitForKeyStroke();  
     
-    //switchToVideomode(); 
     switchToVGA(); //TEST
 
     getVgaInfoBlock((VgaInfoBlock_t*)0x1000);
     getModeInfoBlock((ModeInfoBlock_t*)0x1200);
-        
+    
+    vgaDebug();
+    waitForKeyStroke(); 
+
     setVideoMemory();  
     initGraphics(x, y, c);
 
