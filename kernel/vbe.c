@@ -474,15 +474,18 @@ void bitmap()
 {
     // memcpy((void*)SCREEN, (void*)0x2400 + sizeof(BitmapHeader_t), 32768);
 
-    uint32_t i = 0;
+    uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
+    uintptr_t bitmap_end   = bitmap_start + 256*128; 
+
+    uint32_t i = bitmap_end;
     for(uint32_t y=0;y<256;y++)
     {
         for(uint32_t x=0;x<128;x++)
         {
-            SCREEN[x+y*mib->XResolution * mib->BitsPerPixel/8] = (uint8_t)((0x2400 + sizeof(BitmapHeader_t)) * mib->BitsPerPixel/8 + i); // x+y*256);
-            i++;
+            SCREEN[ x + y * mib->XResolution * mib->BitsPerPixel/8 ] = *(uint8_t*)(i * mib->BitsPerPixel/8 + bitmap_start); 
+            i--;
         }
-    }
+    }    
 }
 
 char ISValidBitmap(char *fname)

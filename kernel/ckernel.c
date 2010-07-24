@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.87 - Rev: 656";
+const char* version = "0.0.1.88 - Rev: 657";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -141,19 +141,20 @@ void main()
         setPixel(320, i, 9);
     }
 
-    rect(40, 50, 80, 398, 0x0A);
-    rect(42, 50, 80, 400, 0x0B);
-    rect(44, 50, 80, 402, 0x0C);
-    
+    rect(340, 50, 380, 398, 0x0A);
+    rect(342, 50, 380, 400, 0x0B);
+    rect(344, 50, 380, 402, 0x0C);
+
     bitmap();
-    waitForKeyStroke();    
-    
+    waitForKeyStroke();  
+
     switchToTextmode();
     vgaDebug();
     waitForKeyStroke();
     
     bitmapDebug();
     printf("\n\n");
+    waitForKeyStroke();
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
 
