@@ -391,23 +391,19 @@ void bitmap(uint32_t xpos, uint32_t ypos)
  	uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
  	uintptr_t bitmap_end = bitmap_start + bh_get->Width*bh_get->Height +1024;
  	
-    /*
- 	if(mib->BitsPerPixel == 8)
+    if(mib->BitsPerPixel == 8)
     {        
+        BMPInfo_t* bmpinfo = (BMPInfo_t*)0x2400;
         
-        BMPInfo_t* bmpinfo = (void*)0x2400;
-        
-        for(uint8_t j=0; j<256; j++)
+        for(uint8_t j=0; j<255; j++)
         {
-           // ScreenPal[i].red    = (bmpinfo->bmicolors[i].red)   >> 6;
-           // ScreenPal[i].green  = (bmpinfo->bmicolors[i].green) >> 6;
-           // ScreenPal[i].blue   = (bmpinfo->bmicolors[i].blue)  >> 6;
+           ScreenPal[j].red   = bmpinfo->bmicolors[j].red   >> 6;
+           ScreenPal[j].green = bmpinfo->bmicolors[j].green >> 6;
+           ScreenPal[j].blue  = bmpinfo->bmicolors[j].blue  >> 6;
         }
-
         waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK  
     }
-    */
-    
+        
     uintptr_t i = bitmap_end;
  	for(uint32_t y=0; y<bh_get->Height; y++)
  	{
