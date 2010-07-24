@@ -43,6 +43,11 @@ typedef enum {/*VK_LBUTTON=0x01, VK_RBUTTON, VK_CANCEL, VK_MBUTTON, VK_XBUTTON1,
               VK_LSHIFT=0xA0, VK_RSHIFT, VK_LCONTROL, VK_RCONTROL, VK_LMENU, VK_RMENU
 } VK;
 
+typedef enum 
+{
+    SEEK_SET, SEEK_CUR, SEEK_END
+} SEEK_ORIGIN;
+
 typedef enum
 {
     CE_GOOD = 0,                    // No error
@@ -94,5 +99,10 @@ typedef enum
 {
     SHUTDOWN, REBOOT
 } SYSTEM_CONTROL;
+
+typedef struct
+{ // HACK; Should be filled
+} file_t;
+typedef file_t FILE;
 
 #endif

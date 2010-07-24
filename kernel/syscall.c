@@ -12,53 +12,114 @@
 #include "irq.h"
 #include "devicemanager.h"
 
-DEFN_SYSCALL1(puts,                       0, const char*)
-DEFN_SYSCALL1(putch,                      1, char)
-DEFN_SYSCALL1(textColor,                  2, uint8_t)
-DEFN_SYSCALL0(getpid,                     3)
-DEFN_SYSCALL0(nop,                        4)
-DEFN_SYSCALL0(switch_context,             5)
-DEFN_SYSCALL0(getch,                      6)
-DEFN_SYSCALL0(flpydsk_read_directory,     7)
-DEFN_SYSCALL3(cprintf,                    8, const char*, uint32_t, uint8_t)
-DEFN_SYSCALL0(getMilliseconds,            9)
-DEFN_SYSCALL0(getCurrentMilliseconds,    10) // substitute
-DEFN_SYSCALL1(flpydsk_format,            11, char*)
-DEFN_SYSCALL2(flpydsk_load,              12, const char*, const char*) // substitute
-DEFN_SYSCALL0(exit,                      13)
-DEFN_SYSCALL1(keyPressed,                14, VK) 
-DEFN_SYSCALL2(beep,                      15, uint32_t, uint32_t)
-DEFN_SYSCALL1(execute,                   16, const char*)
-DEFN_SYSCALL0(systemControl,             17)
-DEFN_SYSCALL1(clear_console,             18, uint8_t)
-DEFN_SYSCALL2(set_cursor,                19, uint8_t, uint8_t)
-DEFN_SYSCALL1(task_grow_userheap,        20, uint32_t)
-DEFN_SYSCALL2(setScrollField,            21, uint8_t, uint8_t)
+// Overwiew to all syscalls in documentation/Syscalls.odt
 
 static void* syscalls[] =
 {
-    &puts,
-    &putch,
-    &textColor,
-    &getpid,
-    &nop,
-    &switch_context,
-    &getch,
+/*  0  */    &executeFile,
+/*  1  */    &nop, // createThread
+/*  2  */    &exit,
+/*  3  */    &nop, // semaphoreLock
+/*  4  */    &sleepMilliSeconds,
+/*  5  */    &nop, // waitForTask
+/*  6  */    &getpid,
+/*  7  */    &nop,
+/*  8  */    &nop,
+/*  9  */    &nop,
+
+/*  10 */    &task_grow_userheap,
+/*  11 */    &nop, // userheapFree
+/*  12 */    &nop,
+/*  13 */    &nop,
+/*  14 */    &nop,
+
+/*  15 */    &fopen,
+/*  16 */    &fgetc,
+/*  17 */    &fputc,
+/*  18 */    &fseek,
+/*  19 */    &fflush,
+/*  20 */    &nop, // fmove
+/*  21 */    &fclose,
+/*  22 */    &nop,
+/*  23 */    &nop,
+/*  24 */    &nop,
+
+/*  25 */    &nop, // ipc_getString
+/*  26 */    &nop, // ipc_setString
+/*  27 */    &nop, // ipc_getInt
+/*  28 */    &nop, // ipc_setInt
+/*  29 */    &nop, // ipc_getDouble
+/*  30 */    &nop, // ipc_setDouble
+/*  31 */    &nop, // ipc_deleteKey
+/*  32 */    &nop, // ipc_allowAccess
+/*  33 */    &nop,
+/*  34 */    &nop,
+/*  35 */    &nop,
+/*  36 */    &nop,
+/*  37 */    &nop,
+/*  38 */    &nop,
+/*  39 */    &nop,
+
+/*  40 */    &timer_getMilliseconds,
+/*  41 */    &nop,
+/*  42 */    &nop,
+/*  43 */    &nop,
+/*  44 */    &nop,
+/*  45 */    &nop,
+/*  46 */    &nop,
+/*  47 */    &nop,
+/*  48 */    &nop,
+/*  49 */    &nop,
+
+/*  50 */    &systemControl,
+/*  51 */    &nop, // systemRefresh
+/*  52 */    &nop,
+/*  53 */    &nop,
+/*  54 */    &nop,
+
+/*  55 */    &putch,
+/*  56 */    &textColor,
+/*  57 */    &setScrollField,
+/*  58 */    &set_cursor,
+/*  59 */    &nop, // getCursor
+/*  60 */    &nop, // readChar
+/*  61 */    &clear_console,
+/*  62 */    &nop,
+/*  63 */    &nop,
+/*  64 */    &nop,
+/*  65 */    &nop,
+/*  66 */    &nop,
+/*  67 */    &nop,
+/*  68 */    &nop,
+/*  69 */    &nop,
+
+/*  70 */    &getch,
+/*  71 */    &keyPressed,
+/*  72 */    &nop, // mousePressed
+/*  73 */    &nop, // getMousePosition
+/*  74 */    &nop, // setMousePosition
+/*  75 */    &nop,
+/*  76 */    &nop,
+/*  77 */    &nop,
+/*  78 */    &nop,
+/*  79 */    &nop,
+
+/*  80 */    &beep,
+/*  81 */    &nop,
+/*  82 */    &nop,
+/*  83 */    &nop,
+/*  84 */    &nop,
+
+/*  85 */    &nop, // connect
+/*  86 */    &nop, // receive
+/*  87 */    &nop, // send
+/*  88 */    &nop, // disconnect
+/*  89 */    &nop,
+
+// COMPATIBILITY (90-92); should be removed
     &flpydsk_read_directory,
     &cprintf,
-    &timer_getMilliseconds,
-    &nop, // substitute
     &flpydsk_format,
-    &nop, // substitute
-    &exit,
-    &keyPressed, 
-    &beep,
-    &executeFile,
-    &systemControl,
-    &clear_console,
-    &set_cursor,
-    &task_grow_userheap,
-    &setScrollField
 };
 
 void syscall_install()

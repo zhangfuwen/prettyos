@@ -8,7 +8,7 @@ int main()
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
     printLine("                                 ! Hello World !                                ", 7, 0x0C);
 
-	gotoxy(0, 10);
+	setCursor(0, 10);
     
     srand(getCurrentSeconds());
     for(uint16_t i = 0; i < 100; i++)

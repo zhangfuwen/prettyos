@@ -5,111 +5,156 @@
 
 #include "userlib.h"
 
-/// Syscalls
-
-void puts(const char* pString)
+// Syscalls
+FS_ERROR execute(const char* path)
 {
-    __asm__ volatile("int $0x7F" : : "a"(0), "b"(pString));
-}
-
-void putch(unsigned char val)
-{
-    __asm__ volatile("int $0x7F" : : "a"(1), "b"(val));
-}
-
-void textColor(uint8_t color)
-{
-    __asm__ volatile("int $0x7F" : : "a"(2), "b"(color));
-}
-
-unsigned char getch()
-{
-    unsigned char ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(6));
-    return ret;
-}
-
-int floppy_dir()
-{
-    int ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(7));
-    return ret;
-}
-
-void printLine(const char* message, unsigned int line, unsigned char attribute)
-{
-    if (line <= 45) // User may only write in his own area (size is 45)
-    {
-        __asm__ volatile("int $0x7F" : : "a"(8), "b"(message), "c"(line), "d"(attribute));
-    }
-}
-
-uint32_t getCurrentMilliseconds()
-{
-    unsigned int ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(9));
-    return ret;
-}
-
-int floppy_format(char* volumeLabel)
-{
-    int ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(11), "b"(volumeLabel));
+    FS_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(0), "b"(path));
     return ret;
 }
 
 void exit()
 {
-    __asm__ volatile("int $0x7F" : : "a"(13));
+    __asm__ volatile("int $0x7F" : : "a"(2));
 }
 
-bool keyPressed(VK key)
+void taskSleep(uint32_t duration); // implemented soon
+
+uint32_t getMyPID()
 {
-    bool ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(14), "b"(key));
+    uint32_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(6));
     return ret;
 }
 
-void beep(unsigned int frequency, unsigned int duration)
+void* userheapAlloc(size_t increase)
 {
-    __asm__ volatile("int $0x7F" : : "a"(15), "b"(frequency), "c"(duration));
+    uintptr_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(10), "b"(increase));
+    return (void*)ret;
 }
 
-FS_ERROR execute(const char* path)
+file_t* fopen(const char* path, const char* mode)
+{
+    file_t* ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(path), "c"(mode));
+    return ret;
+}
+
+char fgetc(file_t* file)
+{
+    char ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(file));
+    return ret;
+}
+
+FS_ERROR fputc(char value, file_t* file)
 {
     FS_ERROR ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(16), "b"(path));
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(value), "c"(file));
+    return ret;
+}
+
+FS_ERROR fseek(file_t* file, size_t offset, SEEK_ORIGIN origin)
+{
+    FS_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(file), "c"(offset), "d"(origin));
+    return ret;
+}
+
+FS_ERROR fflush(file_t* file)
+{
+    FS_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(file));
+    return ret;
+}
+
+FS_ERROR fclose(file_t* file)
+{
+    FS_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(21), "b"(file));
+    return ret;
+}
+
+uint32_t getCurrentMilliseconds()
+{
+    uint32_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(40));
     return ret;
 }
 
 void systemControl(SYSTEM_CONTROL todo)
 {
-    __asm__ volatile("int $0x7F" : : "a"(17), "b"(todo));
+    __asm__ volatile("int $0x7F" : : "a"(50), "b"(todo));
 }
 
-void clearScreen(unsigned char backgroundColor)
+void putch(char val)
 {
-    __asm__ volatile("int $0x7F" : : "a"(18), "b"(backgroundColor));
+    __asm__ volatile("int $0x7F" : : "a"(55), "b"(val));
 }
 
-void gotoxy(unsigned char x, unsigned char y)
+void textColor(uint8_t color)
 {
-    __asm__ volatile("int $0x7F" : : "a"(19), "b"(x), "c"(y));
+    __asm__ volatile("int $0x7F" : : "a"(56), "b"(color));
 }
 
-void* grow_heap(unsigned increase)
+void setScrollField(uint8_t top, uint8_t bottom)
+{
+    __asm__ volatile("int $0x7F" : : "a"(57), "b"(top), "c"(bottom));
+}
+
+void setCursor(uint8_t x, uint8_t y)
+{
+    __asm__ volatile("int $0x7F" : : "a"(58), "b"(x), "c"(y));
+}
+
+void clearScreen(uint8_t backgroundColor)
+{
+    __asm__ volatile("int $0x7F" : : "a"(61), "b"(backgroundColor));
+}
+
+char getch()
+{
+    char ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(70));
+    return ret;
+}
+
+bool keyPressed(VK key)
+{
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(71), "b"(key));
+    return ret;
+}
+
+void beep(unsigned int frequency, unsigned int duration)
+{
+    __asm__ volatile("int $0x7F" : : "a"(80), "b"(frequency), "c"(duration));
+}
+
+ // deprecated
+int floppy_dir()
 {
     int ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(20), "b"(increase));
-    return (void*)ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(90));
+    return ret;
+}
+void printLine(const char* message, unsigned int line, unsigned char attribute)
+{
+    if (line <= 45) // User may only write in his own area (size is 45)
+    {
+        __asm__ volatile("int $0x7F" : : "a"(91), "b"(message), "c"(line), "d"(attribute));
+    }
+}
+int floppy_format(char* volumeLabel)
+{
+    int ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(92), "b"(volumeLabel));
+    return ret;
 }
 
-void setScrollField(uint8_t top, uint8_t bottom) {
-    __asm__ volatile("int $0x7F" : : "a"(21), "b"(top), "c"(bottom));
-}
 
-
-/// user functions
+// user functions
 
 uint32_t getCurrentSeconds()
 {
@@ -131,6 +176,14 @@ void* memcpy(void* dest, const void* src, size_t count)
     return dest;
 }
 
+
+void puts(const char* pString)
+{
+    for(size_t i = 0; pString[i] != 0; i++)
+    {
+        putch(pString[i]);
+    }
+}
 // printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
 void printf (const char* args, ...) {
     va_list ap;
@@ -664,11 +717,11 @@ void* malloc(size_t size)
     size = (size+15) & ~15;
 
     // Heap not set up?
-    if (! cur)
+    if (!cur)
     {
         unsigned to_grow = (size+4095) & ~4095;
-        cur = grow_heap(to_grow);
-        if (! cur)
+        cur = userheapAlloc(to_grow);
+        if (!cur)
             return 0;
         top = cur + to_grow;
     }
@@ -676,7 +729,7 @@ void* malloc(size_t size)
     else if (top - cur < size)
     {
         unsigned to_grow = (size+4095) & ~4095;
-        if (! grow_heap(to_grow))
+        if (!userheapAlloc(to_grow))
             return 0;
         top += to_grow;
     }

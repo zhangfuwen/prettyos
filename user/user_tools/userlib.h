@@ -10,29 +10,47 @@
 #define islower(character) ((character) >= 'a' && (character) <= 'z')
 
 // syscalls
+FS_ERROR execute(const char* path);
+void exit();
+void taskSleep(uint32_t duration);
+uint32_t getMyPID();
+
+void* userheapAlloc(size_t increase);
+
+file_t* fopen(const char* path, const char* mode);
+char fgetc(file_t* file);
+FS_ERROR fputc(char value, file_t* file);
+FS_ERROR fseek(file_t* file, size_t offset, SEEK_ORIGIN origin);
+FS_ERROR fflush(file_t* file);
+FS_ERROR fclose(file_t* file);
+
+uint32_t getCurrentMilliseconds();
+
+void systemControl(SYSTEM_CONTROL todo);
+
+void putch(char val);
 void textColor(uint8_t color);
-void putch(unsigned char val);
-void puts(const char* pString);
-unsigned char getch();
+void setScrollField(uint8_t top, uint8_t bottom);
+void setCursor(uint8_t x, uint8_t y);
+void clearScreen(uint8_t backgroundColor);
+
+char getch();
+bool keyPressed(VK key);
+
+void beep(unsigned int frequency, unsigned int duration);
+
+ // deprecated
 int floppy_dir();
 void printLine(const char* message, unsigned int line, unsigned char attribute);
-uint32_t getCurrentMilliseconds();
 int floppy_format(char* volumeLabel);
-void exit();
-bool keyPressed(VK key);
-FS_ERROR execute(const char* path);
-void beep(unsigned int frequency, unsigned int duration);
-void clearScreen(unsigned char backgroundColor);
-void gotoxy(unsigned char x, unsigned char y);
-void* grow_heap(unsigned increase);
-void setScrollField(uint8_t top, uint8_t bottom);
-void systemControl(SYSTEM_CONTROL todo);
 
 // user functions
 uint32_t getCurrentSeconds();
 
 void* memset(void* dest, int8_t val, size_t count);
 void* memcpy(void* dest, const void* src, size_t count);
+
+void puts(const char* pString);
 void printf(const char *args, ...);
 void vprintf(const char* args, va_list ap);
 void sprintf(char *buffer, const char *args, ...);
