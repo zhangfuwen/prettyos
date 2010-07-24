@@ -9,8 +9,8 @@
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
 #define VM86_VGAINFOBLOCK    ((void*)0x108)
 #define VM86_MODEINFOBLOCK   ((void*)0x116)
-#define VM86_GETPALETTE      ((void*)0x12D)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x137)
+#define VM86_GETPALETTE      ((void*)0x131)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x13B)
 
 // #define DIRECT_BANKING
 
@@ -131,6 +131,7 @@ typedef struct
 void getVgaInfoBlock(VgaInfoBlock_t* VIB);
 void getModeInfoBlock(ModeInfoBlock_t* MIB);
 
+void switchToVGA();
 void switchToVideomode();
 void switchToTextmode();
 

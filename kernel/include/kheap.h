@@ -11,11 +11,9 @@
 // Where the kernel's private data is stored (virtual addresses)
 #define KERNEL_DATA_START ((uint8_t*)0x0C0000000)   // 3 GiB
 #define KERNEL_DATA_END   ((uint8_t*)0xE0000000)   // 3,75 GiB
-#define VIDEO_DATA_START ((uint8_t*)0xE0000000)    // 3,75 GiB
-#define VIDEO_DATA_END ((uint8_t*)0x10000000)      // 4 GiB
 
 // PCI/EHCI memory location for MMIO
-#define PCI_MEM_START     ((uint8_t*)0x0FF000000)
+#define PCI_MEM_START     ((uint8_t*)0x0E0000000)
 #define PCI_MEM_END       ((uint8_t*)0x100000000)   // 4 GiB
 
 // Virtual adress area for the kernel heap

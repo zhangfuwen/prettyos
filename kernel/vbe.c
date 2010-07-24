@@ -42,6 +42,11 @@ void getModeInfoBlock(ModeInfoBlock_t* MIB)
     memcpy(mib, MIB, sizeof(ModeInfoBlock_t));
 }
 
+void switchToVGA()
+{
+    waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
+}
+
 void switchToVideomode()
 {
     waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO));
@@ -63,7 +68,10 @@ void vgaDebug()
     printf("OEM-String (address):   %X\n",     vgaIB->OEMStringPtr);
     printf("Video Modes Ptr:        %X\n",     vgaIB->VideoModePtr);
 
-    //  TEST
+    // TEST Video Ram Paging
+    printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
+
+    // TEST
     // printf("OemVendorNamePtr:       %X\n",     vgaIB->OemVendorNamePtr);
     // printf("OemProductNamePtr:      %X\n",     vgaIB->OemProductNamePtr);
     // printf("OemProductRevPtr:       %X\n",     vgaIB->OemProductRevPtr);
@@ -204,7 +212,6 @@ void vgaDebug()
     printf("MemoryModel:           %u\n", mib->MemoryModel);
     printf("BankSize:              %u\n", mib->BankSize);
     printf("NumberOfImagePages:    %u\n", mib->NumberOfImagePages);
-    printf("res1:                  %u\n", mib->res1);
     printf("RedMaskSize:           %u\n", mib->RedMaskSize);
     printf("RedFieldPosition:      %u\n", mib->RedFieldPosition);
     printf("GreenMaskSize:         %u\n", mib->GreenMaskSize);
@@ -214,8 +221,7 @@ void vgaDebug()
     printf("RsvdMaskSize:          %u\n", mib->RsvdMaskSize);
     printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
     printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
-    printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);
-    printf("res2:                  %u\n", mib->res2);
+    printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);    
 }
 
 void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth)

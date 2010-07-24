@@ -6,7 +6,7 @@ org 0x100
 
 video_mode:	
 	mov ax, 0x4F02
-	mov bx, 0x4101 ; video mode 0x0101
+	mov bx, 0x4101 ; video mode 
 	int 10h	
 
 VgaInfoBlock:
@@ -23,9 +23,11 @@ ModeInfoBlock:
 	mov ax, 0x1200
 	mov di, ax
 	mov ax, 0x4F01
-	mov cx, 0x0101
+	mov cx, 0x4101 ; video mode 
 	int 10h
-	mov word [0x1300], ax
+	mov word [0x1300], ax ; return value
+	xor ax,ax
+	mov ds,ax
 	jmp exitvm86
 	
 ;SetBank:
