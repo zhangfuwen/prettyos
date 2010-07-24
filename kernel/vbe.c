@@ -469,18 +469,17 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 
 // http://www.karig.net/os/001c.html
 
-//bitmap, don´t work...
 void bitmap()
 {
     uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
-    uintptr_t bitmap_end   = bitmap_start + 256*128; 
+    uintptr_t bitmap_end   = bitmap_start + bh_get->Width*bh_get->Height; 
 
     uintptr_t i = bitmap_end;
-    for(uint32_t y=0;y<200;y++)
+    for(uint32_t y=0; y<bh_get->Height; y++)
     {
-        for(uint32_t x=0;x<320;x++)
+        for(uint32_t x=bh_get->Width; x>0; x--)
         {
-            SCREEN[ x + y * 640 /* mib->XResolution * mib->BitsPerPixel/8 */ ] = *(uint8_t*)(i /* * mib->BitsPerPixel/8 */ + bitmap_start); 
+            SCREEN[ x + y * mib->XResolution * mib->BitsPerPixel/8 ] = *(uint8_t*)(i * mib->BitsPerPixel/8 + bitmap_start); 
             i--;
         }
     }    
