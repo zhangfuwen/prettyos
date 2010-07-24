@@ -32,6 +32,11 @@ int32_t getpid()
     return(currentTask->pid);
 }
 
+void waitForTask(task_t* blockingTask)
+{
+    scheduler_blockCurrentTask(&BL_TASK, blockingTask);
+}
+
 void tasking_install()
 {
     #ifdef _TASKING_DIAGNOSIS_
@@ -274,11 +279,12 @@ void exit()
         free(currentTask->console);
     }
 
-    scheduler_deleteTask(currentTask);
 
     // free memory at heap
     free(pkernelstack);
     free(ptask);
+
+    scheduler_deleteTask(currentTask);
 
     sti();
 

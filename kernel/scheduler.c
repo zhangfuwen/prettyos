@@ -15,7 +15,7 @@ ring_t* blockedTasks;
 
 task_t* freetimeTask = 0;
 
-blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT;
+blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK;
 
 static void doNothing()
 {
@@ -31,9 +31,14 @@ void scheduler_install()
     task_queue = ring_Create();
     blockedTasks = ring_Create();
 
-    BL_TIME.unlock      = &timer_unlockTask;
-    BL_SEMAPHORE.unlock = &semaphore_unlockTask;
-    BL_INTERRUPT.unlock = 0;
+    BL_TIME.unlock          = &timer_unlockTask;
+    BL_TIME.eventBased      = false;
+    BL_SEMAPHORE.unlock     = &semaphore_unlockTask;
+    BL_SEMAPHORE.eventBased = false;
+    BL_INTERRUPT.unlock     = 0;
+    BL_INTERRUPT.eventBased = true;
+    BL_TASK.unlock          = 0;
+    BL_TASK.eventBased      = true;
 }
 
 static void checkBlocked()
@@ -43,10 +48,13 @@ static void checkBlocked()
     blockedTasks->current = blockedTasks->begin;
     do
     {
-        if(((task_t*)blockedTasks->current->data)->blocker.type->unlock == 0 || ((task_t*)blockedTasks->current->data)->blocker.type->unlock(blockedTasks->current->data)) // Either no unblock-function specified (avoid blocks) or the task should not be blocked any more
+        if(!((task_t*)blockedTasks->current->data)->blocker.type->eventBased) // eventBased blocks are not handled here
         {
-            scheduler_insertTask(blockedTasks->current->data);
-            ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
+            if((((task_t*)blockedTasks->current->data)->blocker.type->unlock == 0) || ((task_t*)blockedTasks->current->data)->blocker.type->unlock(blockedTasks->current->data)) // Either no unblock-function specified (avoid blocks) or the task should not be blocked any more.
+            {
+                scheduler_insertTask(blockedTasks->current->data);
+                ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
+            }
         }
         blockedTasks->current = blockedTasks->current->next;
     } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
@@ -61,7 +69,7 @@ task_t* scheduler_getNextTask()
         if(freetimeTask == 0) // the task has not been needed until now. Use spare time to create it.
         {
             freetimeTask = create_thread(&doNothing);
-            scheduler_deleteTask(freetimeTask);
+            while(ring_DeleteFirst(task_queue, freetimeTask));
         }
         return(freetimeTask);
     }
@@ -78,6 +86,20 @@ void scheduler_insertTask(task_t* task)
 void scheduler_deleteTask(task_t* task)
 {
     while(ring_DeleteFirst(task_queue, task));
+    
+    // Checked for tasks blocked with BL_TASK
+    if(blockedTasks->begin == 0) return;
+
+    blockedTasks->current = blockedTasks->begin;
+    do
+    {
+        if(((task_t*)blockedTasks->current->data)->blocker.type == &BL_TASK && ((task_t*)blockedTasks->current->data)->blocker.data == task) // blocked by the task deleted now
+        {
+            scheduler_insertTask(blockedTasks->current->data);
+            ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
+        }
+        blockedTasks->current = blockedTasks->current->next;
+    } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
 }
 
 void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
@@ -86,7 +108,7 @@ void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
     currentTask->blocker.data = data;
 
     ring_Insert(blockedTasks, currentTask);
-    scheduler_deleteTask(currentTask);
+    while(ring_DeleteFirst(task_queue, currentTask));
 
     sti();
     switch_context();

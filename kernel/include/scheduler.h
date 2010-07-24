@@ -6,10 +6,11 @@
 typedef struct task task_t;
 
 typedef struct {
+    bool eventBased;
     bool (*unlock)(task_t*);
 } blockerType_t;
 
-extern blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT;
+extern blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK;
 
 typedef struct
 {

@@ -49,6 +49,8 @@ void     switch_context();
 uint32_t task_switch(uint32_t esp);
 void     exit();
 
+void waitForTask(task_t* blockingTask);
+
 int32_t getpid();
 
 void* task_grow_userheap(uint32_t increase);

@@ -44,14 +44,12 @@ void getModeInfoBlock(ModeInfoBlock_t* MIB)
 
 void switchToVideomode()
 {
-    create_vm86_task(VM86_SWITCH_TO_VIDEO);
-    waitForKeyStroke(); // do not delete
+    waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO));
 }
 
 void switchToTextmode()
 {
-    create_vm86_task(VM86_SWITCH_TO_TEXT);
-    waitForKeyStroke(); // do not delete
+    waitForTask(create_vm86_task(VM86_SWITCH_TO_TEXT));
     refreshUserScreen();
 }
 
@@ -246,8 +244,7 @@ Offset	Size	Description
 
 uint32_t getPalette()
 {
-    create_vm86_task(VM86_GETPALETTE);
-    waitForKeyStroke(); // do not delete
+    waitForTask(create_vm86_task(VM86_GETPALETTE));
     return 0;
 }
 
@@ -366,13 +363,11 @@ void setVideoMemory()
     SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
-    waitForKeyStroke();
 
     for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000) 
     {
         printf("\t: %X",paging_acquire_pcimem(i));
     }
-    waitForKeyStroke();
 }
 
 // draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)

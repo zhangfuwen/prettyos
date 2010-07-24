@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.90 - Rev: 659";
+const char* version = "0.0.1.91 - Rev: 660";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -127,7 +127,7 @@ void main()
     getModeInfoBlock((ModeInfoBlock_t*)0x1200);
         
     setVideoMemory();  
-	initGraphics(640, 480, 8);
+    initGraphics(640, 480, 8);
 
     switchToVideomode();
 
@@ -154,7 +154,6 @@ void main()
     
     bitmapDebug();
     printf("\n\n");
-    waitForKeyStroke();
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
 
