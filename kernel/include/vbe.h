@@ -12,8 +12,8 @@
 #define VM86_SETDACPALETTE   ((void*)0x134)
 #define VM86_GETDACPALETTE   ((void*)0x141)
 #define VM86_SETPALETTE      ((void*)0x14B)
-// #define VM86_GETPALETTE      ((void*)0x150)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x164)
+#define VM86_GETPALETTE      ((void*)0x161)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x174)
 
 // #define DIRECT_BANKING
 
@@ -153,8 +153,11 @@ void switchToTextmode();
 
 void vgaDebug();
 
-void setPalette();
+void setPalette(RGBQuadPacked_t* RGB);
 uint32_t getPalette();
+
+void setDACPalette(RGBQuadPacked_t* RGB);
+uint32_t getDACPalette();
 
 uint32_t getVBEMode(void);
 void setVBEMode(uint32_t mode);

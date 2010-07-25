@@ -22,6 +22,8 @@ VgaInfoBlock_t*  pVga;
 ModeInfoBlock_t* mob;
 BitmapHeader_t*  bh_get;
 
+RGBQuadPacked_t Pal[256];
+RGBQuadPacked_t* ScreenPal = &Pal[0];
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 
@@ -229,7 +231,7 @@ void vgaDebug()
     printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);    
 }
 
-void setPalette()
+void setPalette(RGBQuadPacked_t* RGB)
 {
 /*
 Format of VESA VBE palette entry:
@@ -239,11 +241,13 @@ Offset	Size	Description
  02h	BYTE	blue
  03h	BYTE	alpha or alignment byte
 */
+    ScreenPal = RGB;
+	waitForTask(create_vm86_task(VM86_SETPALETTE));
 }
 
 uint32_t getPalette()
 {
-    waitForTask(create_vm86_task(VM86_GETDACPALETTE));
+    waitForTask(create_vm86_task(VM86_GETPALETTE));
 	
 	printf("\nDEBUG: Palette output:\n");
 	printf("RED:   %u \n",  *(uint8_t*)0x1400);
@@ -251,6 +255,16 @@ uint32_t getPalette()
 	printf("BLUE:  %u \n",  *(uint8_t*)0x1402);
 	
     return 0;
+}
+
+void setDACPalette(RGBQuadPacked_t* RGB)
+{
+
+}
+
+uint32_t getDACPalette()
+{
+	return 0;
 }
 
 void setPixel(uint32_t x, uint32_t y, uint32_t color)
@@ -362,9 +376,6 @@ set_struc	struc
 	END
 */
 
-RGBQuadPacked_t Pal[256];
-RGBQuadPacked_t* ScreenPal = &Pal[0];
-
 void setVideoMemory()
 {
  	// size_of_video_ram
@@ -380,7 +391,7 @@ void setVideoMemory()
  	if(mib->BitsPerPixel == 8)
  	{
  	    
-        SCREEN += 256; // ?? 
+        // SCREEN += 256; // ?? 
  	} 	
 } 
 
@@ -392,7 +403,7 @@ void bitmap(uint32_t xpos, uint32_t ypos)
     if(mib->BitsPerPixel == 8)
     {        
         BMPInfo_t* bmpinfo = (BMPInfo_t*)0x2400;
-        ScreenPal = (RGBQuadPacked_t*)(0x1500);
+        // ScreenPal = (RGBQuadPacked_t*)(0x1500);
         
         for(uint8_t j=0; j<255; j++)
         {
@@ -400,7 +411,8 @@ void bitmap(uint32_t xpos, uint32_t ypos)
            ScreenPal[j].green = bmpinfo->bmicolors[j].green >> 2;
            ScreenPal[j].blue  = bmpinfo->bmicolors[j].blue  >> 2;
         }
-        waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK  
+        // waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK
+		// setPalette(ScreenPal);
     }
         
     uintptr_t i = bitmap_end;
