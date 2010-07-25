@@ -62,7 +62,7 @@ void vgaDebug()
 {
     printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));
     printf("VESA-Signature:         %s\n",     vgaIB->VESASignature);
-    printf("VESA-Version:           %u.%u\n", (vgaIB->VESAVersion&0xFF00)>>8,vgaIB->VESAVersion&0xFF);
+    printf("VESA-Version:           %u.%u\n", (vgaIB->VESAVersion&0xFF00)>>8,vgaIB->VESAVersion&0xFF); // 01 02 ==> 1.2
     printf("Capabilities:           %X\n",     vgaIB->Capabilities);
     printf("Video Memory (MiB):     %u\n",     vgaIB->TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
     printf("OEM-String (address):   %X\n",     vgaIB->OEMStringPtr);
@@ -382,7 +382,7 @@ void setVideoMemory()
  	if(mib->BitsPerPixel == 8)
  	{
  	    ScreenPal = (RGBQuadPacked_t*)SCREEN;
-        SCREEN += 256*sizeof(RGBQuadPacked_t);  
+        SCREEN += 256; // ?? 
  	} 	
 } 
 
@@ -397,9 +397,9 @@ void bitmap(uint32_t xpos, uint32_t ypos)
         
         for(uint8_t j=0; j<255; j++)
         {
-           ScreenPal[j].red   = bmpinfo->bmicolors[j].red   >> 6;
-           ScreenPal[j].green = bmpinfo->bmicolors[j].green >> 6;
-           ScreenPal[j].blue  = bmpinfo->bmicolors[j].blue  >> 6;
+           ScreenPal[j].red   = bmpinfo->bmicolors[j].red   >> 2; // divide by 4
+           ScreenPal[j].green = bmpinfo->bmicolors[j].green >> 2;
+           ScreenPal[j].blue  = bmpinfo->bmicolors[j].blue  >> 2;
         }
         waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK  
     }

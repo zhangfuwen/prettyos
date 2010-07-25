@@ -84,12 +84,11 @@ ModeInfoBlock:
 ; 	jmp exitvm86
 
 SetPalette:
-	mov ax, 0x4F09
+	mov ax, 0x4F08      ;        Set/Get DAC Palette Format
 	mov bl, 0			;=00h    Set palette data
-						;=02h    Set secondary palette data
-						;=80h    Set palette data during vertical retrace
-   int 10h
-   jmp exitvm86
+	mov bx, 2											
+    int 10h
+    jmp exitvm86
 
 GetPalette:
     xor ax, ax
