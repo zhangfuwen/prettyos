@@ -120,20 +120,26 @@ typedef struct
     uint32_t ColorsImportant; // Number of "important" colors.
 } __attribute__((packed)) BitmapHeader_t;
 
+
+// Correct arrangement of palettes in bmp format: Blue Green Red Unused (mostly 0)  
+// The palettes are stored in backwards order in each palette entry
+// http://en.wikipedia.org/wiki/BMP_file_format#Color_palette
 typedef struct
 {
     uint8_t blue;
     uint8_t green;
     uint8_t red;
     uint8_t rgbreserved;
-} __attribute__((packed)) RGBQuad_t;
+} __attribute__((packed)) RGBQuad_t; 
 
 typedef struct
 {
+    // cf. vbe3.pdf, page 55
     uint8_t blue        : 6;
     uint8_t green       : 6;
     uint8_t red         : 6;
-    uint8_t reserve     : 6;
+    uint8_t pad         : 6;
+    uint8_t alignDword     ; // ???
 } __attribute__((packed)) RGBQuadPacked_t;
 
 

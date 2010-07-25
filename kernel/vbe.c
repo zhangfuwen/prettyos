@@ -20,7 +20,9 @@ BitmapHeader_t* bh = &bitmapHeader;
 
 VgaInfoBlock_t*  pVga;
 ModeInfoBlock_t* mob;
+
 BitmapHeader_t*  bh_get;
+BMPInfo_t* bmpinfo;
 
 RGBQuadPacked_t Pal[256];
 RGBQuadPacked_t* ScreenPal = &Pal[0];
@@ -259,12 +261,13 @@ uint32_t getPalette()
 
 void setDACPalette(RGBQuadPacked_t* RGB)
 {
-
+    waitForTask(create_vm86_task(VM86_SETDACPALETTE));
 }
 
 uint32_t getDACPalette()
 {
-	return 0;
+	waitForTask(create_vm86_task(VM86_GETDACPALETTE));
+    return 0;
 }
 
 void setPixel(uint32_t x, uint32_t y, uint32_t color)
@@ -389,9 +392,8 @@ void setVideoMemory()
 
  	// add the size of color (palette) to the screen
  	if(mib->BitsPerPixel == 8)
- 	{
- 	    
-        // SCREEN += 256; // ?? 
+ 	{ 	    
+        // SCREEN += 256; // only video mode 101h 
  	} 	
 } 
 
@@ -402,17 +404,17 @@ void bitmap(uint32_t xpos, uint32_t ypos)
  	
     if(mib->BitsPerPixel == 8)
     {        
-        BMPInfo_t* bmpinfo = (BMPInfo_t*)0x2400;
-        // ScreenPal = (RGBQuadPacked_t*)(0x1500);
+        bmpinfo = (BMPInfo_t*)0x2400;
+        ScreenPal = (RGBQuadPacked_t*)0x1500;
         
-        for(uint8_t j=0; j<255; j++)
+        for(uint32_t j=0; j<256; j++)
         {
-           ScreenPal[j].red   = bmpinfo->bmicolors[j].red   >> 2; // divide by 4
-           ScreenPal[j].green = bmpinfo->bmicolors[j].green >> 2;
-           ScreenPal[j].blue  = bmpinfo->bmicolors[j].blue  >> 2;
+           ScreenPal[j].red   = bmpinfo->bmicolors[255-j].red   >> 2; // divide by 4
+           ScreenPal[j].green = bmpinfo->bmicolors[255-j].green >> 2;
+           ScreenPal[j].blue  = bmpinfo->bmicolors[255-j].blue  >> 2;
         }
         // waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK
-		// setPalette(ScreenPal);
+		// setPalette(ScreenPal); // ??
     }
         
     uintptr_t i = bitmap_end;

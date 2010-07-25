@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.103 - Rev: 672";
+const char* version = "0.0.1.104 - Rev: 673";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -40,9 +40,8 @@ extern uintptr_t bmp_start;
 extern uintptr_t bmp_end;
 
 // vbe
-// extern VgaInfoBlock_t*  pVga;
-// extern ModeInfoBlock_t* mob;
 extern BitmapHeader_t*  bh_get;
+extern BMPInfo_t* bmpinfo;
 ModeInfoBlock_t* modeInfoBlock_user;
 
 // Informations about the system
@@ -140,7 +139,6 @@ void main()
     waitForKeyStroke(); 
 
     setVideoMemory();
-
     waitForKeyStroke();
 
     switchToVideomode();
@@ -165,11 +163,51 @@ void main()
     switchToTextmode();
     vgaDebug();
     waitForKeyStroke();
-    
+
     bitmapDebug();
-	waitForKeyStroke();
-	getPalette();
+    getPalette();
+    waitForKeyStroke();
+    
+    printf("\nBMP Paletten entries:");
+    for(uint32_t j=0; j<256+15; j++) // some dwords more are shown to show the limit of the palettes
+    {
+        if (j<256 && bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
+        {
+            textColor(0x0E);
+        }
+        if (bmpinfo->bmicolors[j].red == 255 && bmpinfo->bmicolors[j].green == 255 && bmpinfo->bmicolors[j].blue == 255)
+        {
+            textColor(0x0E);
+        }
+        if (bmpinfo->bmicolors[j].red == 255 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
+        {
+            textColor(0x0C);
+        }
+        if (bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 255 && bmpinfo->bmicolors[j].blue == 0)
+        {
+            textColor(0x0A);
+        }
+        if (bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 255)
+        {
+            textColor(0x09);
+        }
+        if (j>=256)
+        {
+            textColor(0x07);
+        }
+
+        printf("\n# %u\tr: %u\tg: %u\tb: %u\tres: %u", 
+            j, bmpinfo->bmicolors[j].red, bmpinfo->bmicolors[j].green, bmpinfo->bmicolors[j].blue, bmpinfo->bmicolors[j].rgbreserved);
+        
+        textColor(0x0F);
+        
+        if (j%15==0 && j) 
+        {
+            waitForKeyStroke();
+        }
+    }    
     printf("\n\n");
+    waitForKeyStroke();
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
 
