@@ -145,7 +145,7 @@ typedef struct
 
 typedef struct
 {
-    BitmapHeader_t bmiheader;
+    BitmapHeader_t *bmiheader;
     RGBQuad_t bmicolors[256];
 } __attribute__((packed)) BMPInfo_t;
 
@@ -158,12 +158,20 @@ void switchToVideomode();
 void switchToTextmode();
 
 void vgaDebug();
+void printPalette(RGBQuadPacked_t* RGB);
 
 void setPalette(RGBQuadPacked_t* RGB);
 uint32_t getPalette();
 
-void SetDAC(unsigned char DAC, unsigned char R, unsigned char G, unsigned char B);
+void SetDAC(uint8_t DAC, uint8_t R, uint8_t G, uint8_t B);
+
+void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette);
+void Set_DAC_C(uint8_t Color, uint8_t Red, uint8_t Green, uint8_t Blue);
+void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumberOfColors, uint8_t* Palette);
+// void Get_DAC_C(uint8_t Color, uint8_t &Red, uint8_t &Green, uint8_t &Blue);
+
 void setDACPalette(RGBQuadPacked_t* RGB);
+
 uint32_t getDACPalette();
 
 uint32_t getVBEMode(void);

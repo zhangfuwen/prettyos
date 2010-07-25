@@ -234,6 +234,23 @@ void vgaDebug()
     printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);    
 }
 
+void printPalette(RGBQuadPacked_t* RGB)
+{
+	uint32_t i =0;
+    for(uint32_t j=0; j<16; j++) 
+    {
+		for(uint32_t x = 0; x < 5; x++)
+		{
+			for(uint32_t y = 0; y < 5; y++)
+			{
+				// setPixel(x+i, y, 0x0A);
+				setPixel(x+i, y, (ScreenPal[j].red) + (ScreenPal[j].green) + (ScreenPal[j].blue));
+			}
+		}
+		i +=5;
+    }
+}
+
 void setPalette(RGBQuadPacked_t* RGB)
 {
 /*
@@ -261,14 +278,52 @@ uint32_t getPalette()
 }
 
 //This sets a DAC register to a specific Red Green Blue-value
-void SetDAC(unsigned char DAC, unsigned char R, unsigned char G, unsigned char B)
+void SetDAC(uint8_t DAC, uint8_t R, uint8_t G, uint8_t B)
 {
-  outportb (0x3C8, DAC);
-  outportb (0x3C9, R);
-  outportb (0x3C9, G);
-  outportb (0x3C9, B);
+  outportb(0x3C8, DAC);
+  outportb(0x3C9, R);
+  outportb(0x3C9, G);
+  outportb(0x3C9, B);
 }
 
+void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette)
+{
+	outportb(0x03C6,0xff);          //Mask all registers so we can update any of them
+	outportb(0x03C8,StartColor);    //1st color to input!
+	for(short i=0; i<NumOfColors*3; i++ )
+     {
+		outportb(0x03C9,Palette[i]<<2);
+     }
+}
+
+void Set_DAC_C(uint8_t Color, uint8_t Red, uint8_t Green, uint8_t Blue)
+{
+	outportb(0x03C6,0xff);     //Mask all registers even though we only need 1 of them
+	outportb(0x03C8,Color);    //Color to set
+	outportb(0x03C9,Red);
+	outportb(0x03C9,Green);
+	outportb(0x03C9,Blue);
+}
+
+void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palette)
+{
+	outportb(0x03C6,0xff);          //Mask all registers so we can update any of them
+	outportb(0x03C7,StartColor);    //1st color to read!
+	for(short i=0; i<NumOfColors*3; i++ )
+	{
+		Palette[i]=inportb(0x03C9);
+	}
+}
+/*
+void Get_DAC_C(uint8_t Color, uint8_t &Red, uint8_t &Green, uint8_t &Blue)
+{
+	outportb(0x03c6,0xff);
+	outportb(0x03c7,Color);
+	Red   = inportb(0x03c9);
+	Green = inportb(0x03c9);
+	Blue  = inportb(0x03c9);
+}
+*/
 void setDACPalette(RGBQuadPacked_t* RGB)
 {
     waitForTask(create_vm86_task(VM86_SETDACPALETTE));
@@ -409,8 +464,8 @@ void setVideoMemory()
 
 void bitmap(uint32_t xpos, uint32_t ypos)
 {
- 	uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
- 	uintptr_t bitmap_end = bitmap_start + bh_get->Width*bh_get->Height +1024;
+ 	uintptr_t bitmap_start = 0x2400 + sizeof(BMPInfo_t);
+ 	uintptr_t bitmap_end = bitmap_start + bh_get->Width*bh_get->Height+768;
  	
     if(mib->BitsPerPixel == 8)
     {
