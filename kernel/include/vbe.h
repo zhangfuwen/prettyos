@@ -97,7 +97,7 @@ typedef struct
 {
   uint16_t width;
   uint16_t height;
-  uint8_t  palette[256*3];
+  uint8_t  palette[256*4];
   uint8_t* data;
 } Bitmap_t;
 
@@ -145,7 +145,7 @@ typedef struct
 
 typedef struct
 {
-    BitmapHeader_t *bmiheader;
+    BitmapHeader_t bmiheader;
     RGBQuad_t bmicolors[256];
 } __attribute__((packed)) BMPInfo_t;
 

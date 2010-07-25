@@ -461,27 +461,29 @@ void setVideoMemory()
  	// add the size of color (palette) to the screen
  	if(mib->BitsPerPixel == 8)
  	{ 	    
-        // SCREEN += 256; // only video mode 101h 
+        // SCREEN += 256; // only video mode 101h ??
  	} 	
 } 
 
 void bitmap(uint32_t xpos, uint32_t ypos)
 {
- 	uintptr_t bitmap_start = 0x2400 + sizeof(BMPInfo_t);
- 	uintptr_t bitmap_end = bitmap_start + bh_get->Width*bh_get->Height+768;
- 	
-    if(mib->BitsPerPixel == 8)
+    uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
+ 	uintptr_t bitmap_end = bitmap_start + bh_get->Width*bh_get->Height +1024;
+    
+ 	if(mib->BitsPerPixel == 8)
     {
-		if(mib->DirectColorModeInfo == 1)
+        bmpinfo = (BMPInfo_t*)0x2400;
+
+        if(mib->DirectColorModeInfo == 1)
 		{
 			uint32_t  DAC;
 			uint8_t   Palette [256][3];			
 		
 			for(uint32_t j=0; j<(1<<mib->BitsPerPixel); j++)
 			{
-				Palette[j][0] = bmpinfo->bmicolors[(1<<mib->BitsPerPixel)-j-1].red;
-				Palette[j][1] = bmpinfo->bmicolors[(1<<mib->BitsPerPixel)-j-1].green;
-				Palette[j][2] = bmpinfo->bmicolors[(1<<mib->BitsPerPixel)-j-1].blue;
+				Palette[j][0] = bmpinfo->bmicolors[j].red;
+				Palette[j][1] = bmpinfo->bmicolors[j].green;
+				Palette[j][2] = bmpinfo->bmicolors[j].blue;
 			}
 			
 			for (DAC = 0; DAC<(1<<mib->BitsPerPixel); DAC++)
@@ -490,8 +492,7 @@ void bitmap(uint32_t xpos, uint32_t ypos)
 			}				
 		}
         else
-        {
-            bmpinfo = (BMPInfo_t*)0x2400;
+        {        
             for(uint32_t j=0; j<256; j++)
 			{
 				ScreenPal[j].red   = bmpinfo->bmicolors[255-j].red   >> 2; // divide by 4
