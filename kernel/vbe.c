@@ -260,6 +260,15 @@ uint32_t getPalette()
     return 0;
 }
 
+//This sets a DAC register to a specific Red Green Blue-value
+void SetDAC(unsigned char DAC, unsigned char R, unsigned char G, unsigned char B)
+{
+  outportb (0x3C8, DAC);
+  outportb (0x3C9, R);
+  outportb (0x3C9, G);
+  outportb (0x3C9, B);
+}
+
 void setDACPalette(RGBQuadPacked_t* RGB)
 {
     waitForTask(create_vm86_task(VM86_SETDACPALETTE));
@@ -404,18 +413,41 @@ void bitmap(uint32_t xpos, uint32_t ypos)
  	uintptr_t bitmap_end = bitmap_start + bh_get->Width*bh_get->Height +1024;
  	
     if(mib->BitsPerPixel == 8)
-    {        
-        bmpinfo = (BMPInfo_t*)0x2400;
-        
-        
-        for(uint32_t j=0; j<256; j++)
-        {
-           ScreenPal[j].red   = bmpinfo->bmicolors[255-j].red   >> 2; // divide by 4
-           ScreenPal[j].green = bmpinfo->bmicolors[255-j].green >> 2;
-           ScreenPal[j].blue  = bmpinfo->bmicolors[255-j].blue  >> 2;
-        }
-        waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK
-		// setPalette(ScreenPal); // ??
+    {
+		if(mib->DirectColorModeInfo == 1)
+		{
+			//Colour information
+			unsigned char        NumOfColours;
+			unsigned int         DAC;
+			unsigned char        Palette [256][3];
+			NumOfColours = (1 << mib->BitsPerPixel) - 1;
+		
+			// fread (Palette, 3, (NumOfColours + 1), GIFFile);
+			for(uint32_t j=0; j<256; j++)
+			{
+				Palette[j][0] = bmpinfo->bmicolors[255-j].red;
+				Palette[j][1] = bmpinfo->bmicolors[255-j].green;
+				Palette[j][2] = bmpinfo->bmicolors[255-j].blue;
+			}
+			
+			for (DAC = 0; DAC <= NumOfColours; DAC++)
+			{
+				SetDAC (DAC, Palette [DAC][0] >> 2, Palette [DAC][1] >> 2, Palette [DAC][2] >> 2);
+			}
+				
+		}else{
+		
+			bmpinfo = (BMPInfo_t*)0x2400;
+
+			for(uint32_t j=0; j<256; j++)
+			{
+				ScreenPal[j].red   = bmpinfo->bmicolors[255-j].red   >> 2; // divide by 4
+				ScreenPal[j].green = bmpinfo->bmicolors[255-j].green >> 2;
+				ScreenPal[j].blue  = bmpinfo->bmicolors[255-j].blue  >> 2;
+			}
+			waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK
+			// setPalette(ScreenPal); // ??
+		}
     }
         
     uintptr_t i = bitmap_end;

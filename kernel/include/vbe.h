@@ -162,6 +162,7 @@ void vgaDebug();
 void setPalette(RGBQuadPacked_t* RGB);
 uint32_t getPalette();
 
+void SetDAC(unsigned char DAC, unsigned char R, unsigned char G, unsigned char B);
 void setDACPalette(RGBQuadPacked_t* RGB);
 uint32_t getDACPalette();
 
