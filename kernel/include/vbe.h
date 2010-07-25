@@ -141,8 +141,9 @@ typedef struct
     RGBQuad_t bmicolors[256];
 } __attribute__((packed)) BMPInfo_t;
 
-void getVgaInfoBlock(VgaInfoBlock_t* VIB);
-void getModeInfoBlock(ModeInfoBlock_t* MIB);
+void setVgaInfoBlock(VgaInfoBlock_t* VIB);
+void setModeInfoBlock(ModeInfoBlock_t* MIB);
+ModeInfoBlock_t *getModeInfoBlock();
 
 void switchToVGA();
 void switchToVideomode();
@@ -159,7 +160,6 @@ void setBank(uint32_t bank);
 void setVideoMemory();
 
 void availableModes(void);
-void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth);
 
 void setPixel(uint32_t x, uint32_t y, uint32_t color);
 

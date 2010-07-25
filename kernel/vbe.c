@@ -32,14 +32,19 @@ int     bankShift;                  // Bank granularity adjust factor
 int     oldMode;                    // Old video mode number
 //void    _far (*bankSwitch)(void); // Direct bank switching function
 
-void getVgaInfoBlock(VgaInfoBlock_t* VIB)
+void setVgaInfoBlock(VgaInfoBlock_t* VIB)
 {
     memcpy(vgaIB, VIB, sizeof(VgaInfoBlock_t));
 }
 
-void getModeInfoBlock(ModeInfoBlock_t* MIB)
+void setModeInfoBlock(ModeInfoBlock_t* MIB)
 {
     memcpy(mib, MIB, sizeof(ModeInfoBlock_t));
+}
+
+ModeInfoBlock_t *getModeInfoBlock()
+{
+	return mib;
 }
 
 void switchToVGA()
@@ -222,13 +227,6 @@ void vgaDebug()
     printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
     printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
     printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);    
-}
-
-void initGraphics(uint32_t x, uint32_t y, uint32_t pixelwidth)
-{
-    mib->XResolution  = x;
-    mib->YResolution  = y;
-    mib->BitsPerPixel = pixelwidth; // 256 colors
 }
 
 void setPalette()

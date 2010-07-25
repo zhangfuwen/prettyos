@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.100 - Rev: 669";
+const char* version = "0.0.1.101 - Rev: 670";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -43,7 +43,7 @@ extern uintptr_t bmp_end;
 // extern VgaInfoBlock_t*  pVga;
 // extern ModeInfoBlock_t* mob;
 extern BitmapHeader_t*  bh_get;
-
+ModeInfoBlock_t* modeInfoBlock_user;
 
 // Informations about the system
 system_t system;
@@ -118,9 +118,7 @@ void main()
     memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
   #endif
 
-    uint32_t x = 640;
-    uint32_t y = 480;
-    uint32_t c = 8;
+
     
     memcpy((void*)0x2400, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
     bh_get = (BitmapHeader_t*)0x2400;
@@ -129,14 +127,19 @@ void main()
     
     switchToVGA(); //TEST
 
-    getVgaInfoBlock((VgaInfoBlock_t*)0x1000);
-    getModeInfoBlock((ModeInfoBlock_t*)0x1200);
+    setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
+    setModeInfoBlock((ModeInfoBlock_t*)0x1200);
     
+	modeInfoBlock_user = getModeInfoBlock();
+	
+    uint32_t x = modeInfoBlock_user->XResolution;
+    uint32_t y = modeInfoBlock_user->YResolution;
+    // uint32_t c = modeInfoBlock_user->BitsPerPixel;
+	
     vgaDebug();
     waitForKeyStroke(); 
 
-    setVideoMemory();  
-    initGraphics(x, y, c);
+    setVideoMemory();
 
     waitForKeyStroke();
 
