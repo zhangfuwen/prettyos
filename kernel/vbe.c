@@ -495,9 +495,9 @@ void bitmap(uint32_t xpos, uint32_t ypos)
         {        
             for(uint32_t j=0; j<256; j++)
 			{
-				ScreenPal[j].red   = bmpinfo->bmicolors[255-j].red   >> 2; // divide by 4
-				ScreenPal[j].green = bmpinfo->bmicolors[255-j].green >> 2;
-				ScreenPal[j].blue  = bmpinfo->bmicolors[255-j].blue  >> 2;
+				ScreenPal[j].red   = bmpinfo->bmicolors[j].red   >> 2; // divide by 4
+				ScreenPal[j].green = bmpinfo->bmicolors[j].green >> 2;
+				ScreenPal[j].blue  = bmpinfo->bmicolors[j].blue  >> 2;
 			}
 			waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK
 			// setPalette(ScreenPal); // ??
