@@ -277,7 +277,8 @@ uint32_t getPalette()
     return 0;
 }
 
-//This sets a DAC register to a specific Red Green Blue-value
+// This sets a DAC register to a specific Red Green Blue-value
+/*
 void SetDAC(uint8_t DAC, uint8_t R, uint8_t G, uint8_t B)
 {
   outportb(0x3C8, DAC);
@@ -285,6 +286,7 @@ void SetDAC(uint8_t DAC, uint8_t R, uint8_t G, uint8_t B)
   outportb(0x3C9, G);
   outportb(0x3C9, B);
 }
+*/
 
 void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette)
 {
@@ -296,6 +298,7 @@ void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palet
      }
 }
 
+// http://wiki.osdev.org/VGA_Hardware#VGA_Registers
 void Set_DAC_C(uint8_t Color, uint8_t Red, uint8_t Green, uint8_t Blue)
 {
 	outportb(0x03C6,0xff);     //Mask all registers even though we only need 1 of them
@@ -471,30 +474,25 @@ void bitmap(uint32_t xpos, uint32_t ypos)
     {
 		if(mib->DirectColorModeInfo == 1)
 		{
-			//Colour information
-			unsigned char        NumOfColours;
-			unsigned int         DAC;
-			unsigned char        Palette [256][3];
-			NumOfColours = (1 << mib->BitsPerPixel) - 1;
+			uint32_t  DAC;
+			uint8_t   Palette [256][3];			
 		
-			// fread (Palette, 3, (NumOfColours + 1), GIFFile);
-			for(uint32_t j=0; j<256; j++)
+			for(uint32_t j=0; j<(1<<mib->BitsPerPixel); j++)
 			{
-				Palette[j][0] = bmpinfo->bmicolors[255-j].red;
-				Palette[j][1] = bmpinfo->bmicolors[255-j].green;
-				Palette[j][2] = bmpinfo->bmicolors[255-j].blue;
+				Palette[j][0] = bmpinfo->bmicolors[(1<<mib->BitsPerPixel)-j-1].red;
+				Palette[j][1] = bmpinfo->bmicolors[(1<<mib->BitsPerPixel)-j-1].green;
+				Palette[j][2] = bmpinfo->bmicolors[(1<<mib->BitsPerPixel)-j-1].blue;
 			}
 			
-			for (DAC = 0; DAC <= NumOfColours; DAC++)
+			for (DAC = 0; DAC<(1<<mib->BitsPerPixel); DAC++)
 			{
-				SetDAC (DAC, Palette [DAC][0] >> 2, Palette [DAC][1] >> 2, Palette [DAC][2] >> 2);
-			}
-				
-		}else{
-		
-			bmpinfo = (BMPInfo_t*)0x2400;
-
-			for(uint32_t j=0; j<256; j++)
+				Set_DAC_C (DAC, Palette [DAC][0] >> 2, Palette [DAC][1] >> 2, Palette [DAC][2] >> 2);
+			}				
+		}
+        else
+        {
+            bmpinfo = (BMPInfo_t*)0x2400;
+            for(uint32_t j=0; j<256; j++)
 			{
 				ScreenPal[j].red   = bmpinfo->bmicolors[255-j].red   >> 2; // divide by 4
 				ScreenPal[j].green = bmpinfo->bmicolors[255-j].green >> 2;
