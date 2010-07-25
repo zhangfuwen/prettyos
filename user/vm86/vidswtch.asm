@@ -93,7 +93,8 @@ SetPalette:
 	xor dx, dx
 	xor ax, ax
 	mov es, ax
-	mov di, 0x1500
+	mov ax, 0x1600
+	mov di, ax
 	int 10h
 	jmp exitvm86
 	

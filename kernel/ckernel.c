@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.104 - Rev: 673";
+const char* version = "0.0.1.105 - Rev: 674";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -42,6 +42,8 @@ extern uintptr_t bmp_end;
 // vbe
 extern BitmapHeader_t*  bh_get;
 extern BMPInfo_t* bmpinfo;
+extern RGBQuadPacked_t* ScreenPal;
+
 ModeInfoBlock_t* modeInfoBlock_user;
 
 // Informations about the system
@@ -169,7 +171,7 @@ void main()
     waitForKeyStroke();
     
     printf("\nBMP Paletten entries:");
-    for(uint32_t j=0; j<256+15; j++) // some dwords more are shown to show the limit of the palettes
+    for(uint32_t j=0; j<256; j++) 
     {
         if (j<256 && bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
         {
@@ -205,7 +207,22 @@ void main()
         {
             waitForKeyStroke();
         }
-    }    
+    }
+
+    printf("\n\nScreenPal entries:");
+    for(uint32_t j=0; j<16; j++) 
+    {
+        printf("\n# %u\tr: %u\tg: %u\tb: %u", j, ScreenPal[j].red ,ScreenPal[j].green ,ScreenPal[j].blue);
+    }
+
+    printf("\n\nScreenPal entries at 1600h:");
+    for(uint32_t j=0; j<16; j++) 
+    {
+        printf("\n# %u\t%X", j, *(uint32_t*)(0x1600+4*j));
+        printf("\texpected: %X", (ScreenPal[j].blue) + (ScreenPal[j].green << 6) + (ScreenPal[j].red << 12));
+    }
+
+
     printf("\n\n");
     waitForKeyStroke();
 

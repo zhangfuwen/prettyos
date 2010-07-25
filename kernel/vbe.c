@@ -24,8 +24,9 @@ ModeInfoBlock_t* mob;
 BitmapHeader_t*  bh_get;
 BMPInfo_t* bmpinfo;
 
-RGBQuadPacked_t Pal[256];
-RGBQuadPacked_t* ScreenPal = &Pal[0];
+//RGBQuadPacked_t Pal[256];
+//RGBQuadPacked_t* ScreenPal = &Pal[0];
+RGBQuadPacked_t* ScreenPal = (RGBQuadPacked_t*)0x1600;
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 
@@ -405,7 +406,7 @@ void bitmap(uint32_t xpos, uint32_t ypos)
     if(mib->BitsPerPixel == 8)
     {        
         bmpinfo = (BMPInfo_t*)0x2400;
-        ScreenPal = (RGBQuadPacked_t*)0x1500;
+        
         
         for(uint32_t j=0; j<256; j++)
         {
@@ -413,7 +414,7 @@ void bitmap(uint32_t xpos, uint32_t ypos)
            ScreenPal[j].green = bmpinfo->bmicolors[255-j].green >> 2;
            ScreenPal[j].blue  = bmpinfo->bmicolors[255-j].blue  >> 2;
         }
-        // waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK
+        waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK
 		// setPalette(ScreenPal); // ??
     }
         

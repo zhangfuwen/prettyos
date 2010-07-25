@@ -12,8 +12,8 @@
 #define VM86_SETDACPALETTE   ((void*)0x134)
 #define VM86_GETDACPALETTE   ((void*)0x141)
 #define VM86_SETPALETTE      ((void*)0x14B)
-#define VM86_GETPALETTE      ((void*)0x161)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x174)
+#define VM86_GETPALETTE      ((void*)0x163)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x176)
 
 // #define DIRECT_BANKING
 
