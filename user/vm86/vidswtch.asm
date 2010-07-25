@@ -73,32 +73,40 @@ ModeInfoBlock:
 ;	mov bl, 1
 ; 	jmp exitvm86
 
-;SetDacPalette:
-;	mov ax, 0x4F08
-;	mov bl, 0
-; 	jmp exitvm86
+SetDacPalette:
+	mov ax, 0x4F08
+	mov bl, 0
+    mov bx, 6											
+    int 10h
+ 	jmp exitvm86
 
-;GetDacPalette:
-;	mov ax, 0x4F08
-;	mov bl, 1
-; 	jmp exitvm86
+GetDacPalette:
+	mov ax, 0x4F08
+	mov bl, 1
+    int 10h
+ 	jmp exitvm86
 
 SetPalette:
-	mov ax, 0x4F08      ;        Set/Get DAC Palette Format
+	mov ax, 0x4F09      ;        Set/Get DAC Palette Format
 	mov bl, 0			;=00h    Set palette data
-	mov bx, 2											
-    int 10h
+	mov bx, 6			; ??								
+    mov cx, 0xFF
+	xor dx, dx
+	xor ax, ax
+	mov es, ax
+	mov di, 0x1500
+	int 10h
     jmp exitvm86
 
-GetPalette:
-    xor ax, ax
-	mov es, ax
-	mov ax, 0x1400
-	mov di, ax
-	mov ax, 0x4F09
-    mov bl, 1			;=01h    Get palette data
-	int 10h				;=03h    Get secondary palette data
-	jmp exitvm86
+;GetPalette:
+;   xor ax, ax
+;	mov es, ax
+;	mov ax, 0x1400
+;	mov di, ax
+;	mov ax, 0x4F09
+;   mov bl, 1			;=01h    Get palette data
+;	int 10h				;=03h    Get secondary palette data
+;	jmp exitvm86
 
 ;GetProtectedModeInterface:
 ;	mov ax, 0x4F0A

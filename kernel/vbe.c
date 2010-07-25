@@ -243,7 +243,7 @@ Offset	Size	Description
 
 uint32_t getPalette()
 {
-    waitForTask(create_vm86_task(VM86_GETPALETTE));
+    waitForTask(create_vm86_task(VM86_GETDACPALETTE));
 	
 	printf("\nDEBUG: Palette output:\n");
 	printf("RED:   %u \n",  *(uint8_t*)0x1400);
@@ -379,7 +379,7 @@ void setVideoMemory()
  	// add the size of color (palette) to the screen
  	if(mib->BitsPerPixel == 8)
  	{
- 	    ScreenPal = (RGBQuadPacked_t*)SCREEN;
+ 	    
         SCREEN += 256; // ?? 
  	} 	
 } 
@@ -392,6 +392,7 @@ void bitmap(uint32_t xpos, uint32_t ypos)
     if(mib->BitsPerPixel == 8)
     {        
         BMPInfo_t* bmpinfo = (BMPInfo_t*)0x2400;
+        ScreenPal = (RGBQuadPacked_t*)(0x1500);
         
         for(uint8_t j=0; j<255; j++)
         {

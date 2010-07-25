@@ -9,9 +9,11 @@
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
 #define VM86_VGAINFOBLOCK    ((void*)0x10B)
 #define VM86_MODEINFOBLOCK   ((void*)0x119)
-#define VM86_SETPALETTE      ((void*)0x134)
-#define VM86_GETPALETTE      ((void*)0x141)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x154)
+#define VM86_SETDACPALETTE   ((void*)0x134)
+#define VM86_GETDACPALETTE   ((void*)0x141)
+#define VM86_SETPALETTE      ((void*)0x14B)
+// #define VM86_GETPALETTE      ((void*)0x150)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x164)
 
 // #define DIRECT_BANKING
 
