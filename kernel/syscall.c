@@ -80,8 +80,8 @@ static void* syscalls[] =
 /*  55 */    &putch,
 /*  56 */    &textColor,
 /*  57 */    &setScrollField,
-/*  58 */    &set_cursor,
-/*  59 */    &nop, // getCursor
+/*  58 */    &setCursor,
+/*  59 */    &getCursor,
 /*  60 */    &nop, // readChar
 /*  61 */    &clear_console,
 /*  62 */    &nop,

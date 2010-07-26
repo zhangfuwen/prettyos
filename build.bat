@@ -1,4 +1,3 @@
-cls
 del FloppyImage.img
 tools\mingw32-make FloppyImage.img OS=WINDOWS
 
@@ -19,6 +18,7 @@ IF [%1]==[] GOTO Continue
 		copy stage2_bootloader\boot2.bin A:\boot2.bin
 		copy kernel\kernel.bin A:\kernel.bin
 		copy user\user_test_c\*.elf A:
+		copy user\user_test_cpp\*.elf A:
 		copy user\other_userprogs\*.elf A:
 	)
 SHIFT

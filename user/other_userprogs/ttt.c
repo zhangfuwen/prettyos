@@ -7,11 +7,13 @@ bool ende = false;
 
 void SetField(uint8_t x, uint8_t y, uint8_t Player)
 {
-    setCursor(x*4+2,y*2+15);
-    if(Player == X) {
+    iSetCursor(x*4+2,y*2+15);
+    if(Player == X)
+	{
         putch('X');
     }
-    if(Player == O){
+    if(Player == O)
+	{
         putch('O');
     }
 }
@@ -58,12 +60,14 @@ void Zug(uint16_t Player)
 
     for(;;)
     {
-		setCursor(0, 24);
+		iSetCursor(0, 24);
 		gets(str);
-		if(*str != 0) {
+		if(*str != 0)
+		{
 			input = atoi(str);
 		}
-		else {
+		else
+		{
 			input = 9; // String is empty -> Input not useful
 		}
 
@@ -95,10 +99,10 @@ int32_t main()
     clearScreen(0);
 
     printLine("--------------------------------------------------------------------------------", 0, 0x0B);
-    printLine("                           Mr.X TicTacToe 3x3  v0.6.2                           ", 2, 0x0B);
+    printLine("                           Mr.X TicTacToe 3x3  v0.6.3                           ", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
-    setCursor(0,6);
+    iSetCursor(0,6);
     textColor(0x0F);
     puts("*************\n| 0 | 1 | 2 |\n*************\n| 3 | 4 | 5 |\n*************\n| 6 | 7 | 8 |\n*************\n\n");
     puts("*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n\n");
@@ -107,9 +111,10 @@ int32_t main()
 
     Zug(X);
     for(uint8_t i = 0; i < 4 && !ende; ++i)
-    {
+	{
         Zug(O);
-        if(ende) {
+        if(ende)
+		{
             break;
         }
         Zug(X);

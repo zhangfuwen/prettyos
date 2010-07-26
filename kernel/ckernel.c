@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.112 - Rev: 681";
+const char* version = "0.0.1.113 - Rev: 682";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -133,14 +133,13 @@ void main()
     setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
     setModeInfoBlock((ModeInfoBlock_t*)0x1200);
 
-	modeInfoBlock_user = getModeInfoBlock();
+    modeInfoBlock_user = getModeInfoBlock();
 
     uint32_t x = modeInfoBlock_user->XResolution;
     uint32_t y = modeInfoBlock_user->YResolution;
     // uint32_t c = modeInfoBlock_user->BitsPerPixel;
 
     vgaDebug();
-    waitForKeyStroke();
 
     setVideoMemory();
     waitForKeyStroke();
@@ -164,8 +163,8 @@ void main()
     bitmap(320,240,&font_start);
     waitForKeyStroke();
 
-	printPalette(ScreenPal);
-	waitForKeyStroke();
+    printPalette(ScreenPal);
+    waitForKeyStroke();
 
     switchToTextmode();
     vgaDebug();
@@ -208,7 +207,7 @@ void main()
 
         textColor(0x0F);
 
-        if (j%15==0 && j)
+        if (j%32==0 && j)
         {
             waitForKeyStroke();
         }
@@ -229,7 +228,6 @@ void main()
     */
 
     printf("\n\n");
-    waitForKeyStroke();
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------
 

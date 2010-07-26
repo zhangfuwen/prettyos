@@ -100,7 +100,7 @@ int32_t CalcTerm(char* term) {
 int main() {
     textColor(0x0B);
     puts("================================================================================\n");
-    puts("                             Mr.X Calculator  v0.3.1                            \n");
+    puts("                             Mr.X Calculator  v0.3.2                            \n");
     puts("--------------------------------------------------------------------------------\n\n");
 	puts("Please type in your term. Valid operators are: +-*/. The Calculator does not support floats at the moment. If you type in \"exit\", the programm will close.\n");
 	char term[100];

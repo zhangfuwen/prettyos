@@ -18,7 +18,10 @@ void exit()
     __asm__ volatile("int $0x7F" : : "a"(2));
 }
 
-void taskSleep(uint32_t duration); // implemented soon
+void taskSleep(uint32_t duration)
+{
+    __asm__ volatile("int $0x7F" : : "a"(4), "b"(duration));
+}
 
 uint32_t getMyPID()
 {
@@ -103,9 +106,16 @@ void setScrollField(uint8_t top, uint8_t bottom)
     __asm__ volatile("int $0x7F" : : "a"(57), "b"(top), "c"(bottom));
 }
 
-void setCursor(uint8_t x, uint8_t y)
+void setCursor(position_t pos)
 {
-    __asm__ volatile("int $0x7F" : : "a"(58), "b"(x), "c"(y));
+    __asm__ volatile("int $0x7F" : : "a"(58), "b"(pos));
+}
+
+position_t getCursor()
+{
+    position_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(59));
+    return ret;
 }
 
 void clearScreen(uint8_t backgroundColor)
@@ -155,6 +165,12 @@ int floppy_format(char* volumeLabel)
 
 
 // user functions
+void iSetCursor(uint16_t x, uint16_t y)
+{
+	position_t temp;
+	temp.x = x; temp.y = y;
+	setCursor(temp);
+}
 
 uint32_t getCurrentSeconds()
 {
@@ -187,7 +203,7 @@ void puts(const char* pString)
 // printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
 void printf (const char* args, ...) {
     va_list ap;
-    va_start (ap, args);
+    va_start(ap, args);
     vprintf(args, ap);
 }
 void vprintf(const char* args, va_list ap)
@@ -246,10 +262,8 @@ void vprintf(const char* args, va_list ap)
     }
 }
 
-void sprintf (char *buffer, const char *args, ...)
+void vsprintf(char *buffer, const char *args, va_list ap)
 {
-    va_list ap;
-    va_start (ap, args);
     int pos = 0;
     char m_buffer[32]; // Larger is not needed at the moment
     buffer[0] = '\0';
@@ -316,7 +330,14 @@ void sprintf (char *buffer, const char *args, ...)
     }
 }
 
-void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
+void sprintf(char *buffer, const char *args, ...)
+{
+    va_list ap;
+    va_start(ap, args);
+    vsprintf(buffer, args, ap);
+}
+
+void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
 {
     char m_buffer[32]; // Larger is not needed at the moment
     memset(buffer, 0, length);

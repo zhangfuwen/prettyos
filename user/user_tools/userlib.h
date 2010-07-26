@@ -31,7 +31,8 @@ void systemControl(SYSTEM_CONTROL todo);
 void putch(char val);
 void textColor(uint8_t color);
 void setScrollField(uint8_t top, uint8_t bottom);
-void setCursor(uint8_t x, uint8_t y);
+void setCursor(position_t pos);
+position_t getCursor();
 void clearScreen(uint8_t backgroundColor);
 
 char getch();
@@ -44,7 +45,9 @@ int floppy_dir();
 void printLine(const char* message, unsigned int line, unsigned char attribute);
 int floppy_format(char* volumeLabel);
 
+
 // user functions
+void iSetCursor(uint16_t x, uint16_t y);
 uint32_t getCurrentSeconds();
 
 void* memset(void* dest, int8_t val, size_t count);
@@ -54,6 +57,7 @@ void puts(const char* pString);
 void printf(const char *args, ...);
 void vprintf(const char* args, va_list ap);
 void sprintf(char *buffer, const char *args, ...);
+void vsprintf(char *buffer, const char *args, va_list ap);
 void snprintf(char *buffer, size_t length, const char *args, ...);
 void vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
 

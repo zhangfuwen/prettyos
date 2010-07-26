@@ -105,4 +105,8 @@ typedef struct
 } file_t;
 typedef file_t FILE;
 
+typedef struct {
+    uint16_t x, y;
+} position_t;
+
 #endif

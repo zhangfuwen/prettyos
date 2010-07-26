@@ -4,6 +4,10 @@
 #include "os.h"
 #include "devicemanager.h" // HACK
 
+typedef struct {
+    uint16_t x, y;
+} position_t;
+
 extern diskType_t* ScreenDest; // HACK
 
 void refreshUserScreen();

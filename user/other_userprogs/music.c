@@ -1,15 +1,9 @@
 #include "userlib.h"
 
-void Sleep(unsigned int Milliseconds) {
-	unsigned int Stoptime = getCurrentSeconds()*1000 + Milliseconds;
-	while(getCurrentSeconds()*1000 < Stoptime) {}
-}
-
-
 unsigned int duration = 400;
 void PlayTone(unsigned int Frequency, double DurFak) {
 	if(Frequency == 0) {
-		Sleep(duration*DurFak+10);
+		taskSleep(duration*DurFak);
 	}
 	else {
 		beep(Frequency, duration*DurFak);
@@ -93,7 +87,7 @@ void Play(char* string) {
 int main() {
     textColor(0x0B);
     puts("================================================================================\n");
-    puts("                    Mr.X Simple-Simple-Music-Creator  v0.4.1                    \n");
+    puts("                    Mr.X Simple-Simple-Music-Creator  v0.4.2                    \n");
     puts("--------------------------------------------------------------------------------\n\n");
 	puts("Please type in the duration of a full note or type in \"Alle meine Entchen\" or \"Hänschen klein\" to play that song and press ENTER.\n");
 	char string1[100];

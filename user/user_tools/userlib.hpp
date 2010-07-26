@@ -34,7 +34,8 @@ extern "C" { // Functions from C-Userlib
     void putch(char val);
     void textColor(uint8_t color);
     void setScrollField(uint8_t top, uint8_t bottom);
-    void setCursor(uint8_t x, uint8_t y);
+    void setCursor(position_t pos);
+    position_t getCursor();
     void clearScreen(uint8_t backgroundColor);
 
     char getch();
@@ -42,10 +43,11 @@ extern "C" { // Functions from C-Userlib
 
     void beep(unsigned int frequency, unsigned int duration);
 
- // deprecated
-int floppy_dir();
-void printLine(const char* message, unsigned int line, unsigned char attribute);
-int floppy_format(char* volumeLabel);
+    // deprecated
+    int floppy_dir();
+    void printLine(const char* message, unsigned int line, unsigned char attribute);
+    int floppy_format(char* volumeLabel);
+
 
     // user functions
     uint32_t getCurrentSeconds();
@@ -55,6 +57,7 @@ int floppy_format(char* volumeLabel);
     void printf(const char *args, ...);
     void vprintf(const char* args, va_list ap);
     void sprintf(char *buffer, const char *args, ...);
+    void vsprintf(char *buffer, const char *args, va_list ap);
     void snprintf(char *buffer, size_t length, const char *args, ...);
     void vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
 

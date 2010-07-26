@@ -8,7 +8,7 @@ uint8_t fighterPosition = 0;
 
 void clearLine(uint8_t line)
 {
-    setCursor(0,line);
+    iSetCursor(0,line);
     for (uint8_t i=0; i<79; i++)
     {        
         putch(' ');
@@ -19,9 +19,9 @@ void setWeapon(uint8_t x, uint8_t y)
 {
     textColor(0x0F);
     point[x][y] = true;
-    setCursor(x,y-1);
+    iSetCursor(x,y-1);
     putch('|'); 
-    setCursor(x,y);
+    iSetCursor(x,y);
     putch('v'); 
 }
 
@@ -48,7 +48,7 @@ void deleteWeapons()
         point[col[i]][42] = false;
         for (uint8_t j=42; j>0; j--)
         {
-            setCursor(col[i],j);
+            iSetCursor(col[i],j);
             putch(' '); 
         }        
     }
@@ -58,7 +58,7 @@ void generateFighter()
 {
     clearLine(43); 
     fighterPosition = 0;
-    setCursor(fighterPosition,43);
+    iSetCursor(fighterPosition,43);
     putch(1);
 }
 
@@ -67,12 +67,12 @@ void moveFighter()
     if (keyPressed('A') && fighterPosition > 0)
     {
         fighterPosition--;
-        setCursor(fighterPosition,43);
+        iSetCursor(fighterPosition,43);
         putch(1); putch(' ');
     }
     if(keyPressed('D') && fighterPosition<79)
     {
-        setCursor(fighterPosition,43);
+        iSetCursor(fighterPosition,43);
         putch(' '); putch(1);
         fighterPosition++;
     }
@@ -80,7 +80,7 @@ void moveFighter()
     {
         timeout--;
         deleteWeapons();
-        setCursor(0,0);
+        iSetCursor(0,0);
         printf("trials: %u/%u", MAX-timeout, MAX);
     }
     if(keyPressed(VK_ESCAPE))
@@ -123,8 +123,8 @@ int main()
 
     while(true)
     {
-        setCursor(25,0);
-        printf("\"ARROW ATTACK\" 0.11 E. Henkes  A=left, R=right, S=del"); 
+        iSetCursor(25,0);
+        printf("\"ARROW ATTACK\" 0.12 E. Henkes  A=left, R=right, S=del"); 
         generateWeapons();
         for (uint8_t line=1; line<42; line++)
         {
@@ -132,13 +132,13 @@ int main()
             {
                 if (point[column][line] == true && rand()%6 == 0)
                 {
-                    setCursor(column,line-2);
+                    iSetCursor(column,line-2);
                     putch(' ');
-                    setCursor(column,line-1);
+                    iSetCursor(column,line-1);
                     putch(' ');
-                    setCursor(column,line);
+                    iSetCursor(column,line);
                     putch('|');
-                    setCursor(column,line+1);
+                    iSetCursor(column,line+1);
                     putch('v');
                     point[column][line]   = false;
                     point[column][line+1] = true;
@@ -149,13 +149,13 @@ int main()
         moveFighter();
         if (checkCrash())
         {
-            setCursor(9,42);
+            iSetCursor(9,42);
             printf("GAME OVER - PLAYER LOST!  ");
             break; 
         }
         if (checkWin())
         {
-            setCursor(14,42);
+            iSetCursor(14,42);
             printf("PLAYER WINS!  ");
             break;
         }

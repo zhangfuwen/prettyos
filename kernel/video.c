@@ -18,9 +18,8 @@ char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 static const uint8_t LINES      = 50;
 static const uint8_t USER_BEGIN =  2; // Reserving  Titlebar + Separation
 static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
-
-uint8_t csr_x  = 0;
-uint8_t csr_y  = 0;
+ 
+position_t cursor;
 uint8_t attrib = 0x0F; // white text on black ground
 
 void clear_screen()
@@ -59,44 +58,44 @@ static void kputch(char c)
 
     switch (uc) {
         case 0x08: // backspace: move the cursor one space backwards and delete
-            if (csr_x)
+            if (cursor.x)
             {
-                --csr_x;
+                --cursor.x;
                 kputch(' ');
-                --csr_x;
+                --cursor.x;
             }
-            else if (csr_y>0)
+            else if (cursor.y>0)
             {
-                csr_x=COLUMNS-1;
-                --csr_y;
+                cursor.x=COLUMNS-1;
+                --cursor.y;
                 kputch(' ');
-                csr_x=COLUMNS-1;
-                --csr_y;
+                cursor.x=COLUMNS-1;
+                --cursor.y;
             }
             break;
         case 0x09: // tab: increment csr_x (divisible by 8)
-            csr_x = (csr_x + 8) & ~(8 - 1);
+            cursor.x = (cursor.x + 8) & ~(8 - 1);
             break;
         case '\r': // cr: cursor back to the margin
-            csr_x = 0;
+            cursor.x = 0;
             break;
         case '\n': // newline: like 'cr': cursor to the margin and increment csr_y
-            csr_x = 0; ++csr_y;
+            cursor.x = 0; ++cursor.y;
             break;
         default:
             if (uc != 0)
             {
-                pos = vidmem + (csr_y * COLUMNS + csr_x);
+                pos = vidmem + (cursor.y * COLUMNS + cursor.x);
                 *pos = uc | att; // character AND attributes: color
-                ++csr_x;
+                ++cursor.x;
             }
             break;
     }
 
-    if (csr_x >= COLUMNS) // cursor reaches edge of the screen's width, a new line is inserted
+    if (cursor.x >= COLUMNS) // cursor reaches edge of the screen's width, a new line is inserted
     {
-        csr_x = 0;
-        ++csr_y;
+        cursor.x = 0;
+        ++cursor.y;
     }
 }
 
@@ -108,7 +107,7 @@ static void kputs(const char* text)
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
     attrib = attribute;
-    csr_x = 0; csr_y = line;
+    cursor.x = 0; cursor.y = line;
 
     va_list ap;
     va_start(ap, attribute);
@@ -186,15 +185,15 @@ void refreshUserScreen()
 
     if (displayedConsole == KERNELCONSOLE_ID)
     {
-        csr_x = COLUMNS - 5;
+        cursor.x = COLUMNS - 5;
         kputs("Shell");
     }
     else
     {
         char Buffer[70];
         snprintf(Buffer, 70, "Console %u: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
-        csr_x = COLUMNS - strlen(Buffer);
-        csr_y = 0;
+        cursor.x = COLUMNS - strlen(Buffer);
+        cursor.y = 0;
         kputs(Buffer);
     }
     kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
@@ -215,8 +214,8 @@ void refreshUserScreen()
     }
     kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
 
-    csr_y = reachableConsoles[displayedConsole]->csr_y;
-    csr_x = reachableConsoles[displayedConsole]->csr_x;
+    cursor.y = reachableConsoles[displayedConsole]->cursor.y;
+    cursor.x = reachableConsoles[displayedConsole]->cursor.x;
     update_cursor();
 }
 

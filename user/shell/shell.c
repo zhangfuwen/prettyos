@@ -23,7 +23,7 @@ void drawEntry(const char* entry)
     memset(RenderBuffer, 0, 81);
     sprintf(RenderBuffer, "$> %s", entry);
     if(!(cursorPos == entryLength && entryLength < MAX_CHAR_PER_LINE)) {
-        insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;) )
+        //insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;) )
     }
     strcat(RenderBuffer, " ");
     printLine(RenderBuffer, 40, 0x0B);
@@ -58,7 +58,7 @@ int main()
             input = getch();
 
             switch (input) {
-                case 8:   // Backspace
+                case 8: // Backspace
                     if (cursorPos > 0)
                     {
                         if (curEntry != -1)
@@ -72,7 +72,7 @@ int main()
                         drawEntry(entry);
                     }
                     break;
-                case 10:  // Enter
+                case 10: // Enter
                     if(*(curEntry == -1 ? entry : entryCache[curEntry]) == 0)
                     {
                         break; // entry is empty

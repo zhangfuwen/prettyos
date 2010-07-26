@@ -2,6 +2,7 @@
 #define CONSOLE_H
 
 #include "keyboard.h"
+#include "video.h"
 
 #define KERNELCONSOLE_ID 10
 
@@ -12,8 +13,7 @@ typedef struct // Defines the User-Space of the display
     uint16_t* vidmem; // memory that stores the content of this console. Size is USER_LINES*COLUMNS
     //uint8_t SCROLL_BEGIN;
     uint8_t SCROLL_END;
-    uint8_t csr_x;
-    uint8_t csr_y;
+    position_t cursor;
     keyqueue_t KQ; // Buffer storing keyboard input
     struct semaphore* sp;
 } console_t;
@@ -37,7 +37,8 @@ void printf (const char* args, ...);
 void vprintf(const char* args, va_list ap);
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void scroll();
-void set_cursor(uint8_t x, uint8_t y);
+void setCursor(position_t pos);
+position_t getCursor();
 void update_cursor();
 bool changeDisplayedConsole(uint8_t ID);
 

@@ -28,11 +28,11 @@ RGBQuadPacked_t* ScreenPal = (RGBQuadPacked_t*)0x1600;
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 
-int     xres,yres;                  // Resolution of video mode used
-int     bytesperline;               // Logical CRT scanline length
-int     curBank;                    // Current read/write bank
-int     bankShift;                  // Bank granularity adjust factor
-int     oldMode;                    // Old video mode number
+int xres,yres;    // Resolution of video mode used
+int bytesperline; // Logical CRT scanline length
+int curBank;      // Current read/write bank
+int bankShift;    // Bank granularity adjust factor
+int oldMode;      // Old video mode number
 //void    _far (*bankSwitch)(void); // Direct bank switching function
 
 void setVgaInfoBlock(VgaInfoBlock_t* VIB)
@@ -47,7 +47,7 @@ void setModeInfoBlock(ModeInfoBlock_t* MIB)
 
 ModeInfoBlock_t *getModeInfoBlock()
 {
-	return mib;
+    return mib;
 }
 
 void switchToVGA()
@@ -68,8 +68,8 @@ void switchToTextmode()
 
 void printPalette(RGBQuadPacked_t* RGB)
 {
-	uint32_t xpos = 0;
-	uint32_t ypos = 0;
+    uint32_t xpos = 0;
+    uint32_t ypos = 0;
 
     for(uint32_t j=0; j<256; j++)
     {
@@ -81,20 +81,20 @@ void printPalette(RGBQuadPacked_t* RGB)
 
     for(uint32_t j=0; j<256; j++)
     {
-		for(uint32_t x = 0; x < 5; x++)
-		{
-			for(uint32_t y = 0; y < 5; y++)
-			{
-				// setPixel((x+xpos), (y+ypos), (ScreenPal[j].red) + (ScreenPal[j].green) + (ScreenPal[j].blue));
-				setPixel((x+xpos), (y+ypos), j);
-			}
-		}
-		xpos +=5;
-		if(xpos >= 255)
-		{
-			ypos += 5;
-			xpos = 0;
-		}
+        for(uint32_t x = 0; x < 5; x++)
+        {
+            for(uint32_t y = 0; y < 5; y++)
+            {
+                // setPixel((x+xpos), (y+ypos), (ScreenPal[j].red) + (ScreenPal[j].green) + (ScreenPal[j].blue));
+                setPixel((x+xpos), (y+ypos), j);
+            }
+        }
+        xpos +=5;
+        if(xpos >= 255)
+        {
+            ypos += 5;
+            xpos = 0;
+        }
     }
 }
 
@@ -102,24 +102,24 @@ void setPalette(RGBQuadPacked_t* RGB)
 {
 /*
 Format of VESA VBE palette entry:
-Offset	Size	Description
- 00h	BYTE	red
- 01h	BYTE	green
- 02h	BYTE	blue
- 03h	BYTE	alpha or alignment byte
+Offset    Size    Description
+ 00h      BYTE    red
+ 01h      BYTE    green
+ 02h      BYTE    blue
+ 03h      BYTE    alpha or alignment byte
 */
     ScreenPal = RGB;
-	waitForTask(create_vm86_task(VM86_SETPALETTE));
+    waitForTask(create_vm86_task(VM86_SETPALETTE));
 }
 
 uint32_t getPalette()
 {
     waitForTask(create_vm86_task(VM86_GETPALETTE));
 
-	printf("\nDEBUG: Palette output:\n");
-	printf("RED:   %u \n",  *(uint8_t*)0x1400);
-	printf("GREEN: %u \n",  *(uint8_t*)0x1401);
-	printf("BLUE:  %u \n",  *(uint8_t*)0x1402);
+    printf("\nDEBUG: Palette output:\n");
+    printf("RED:   %u \n",  *(uint8_t*)0x1400);
+    printf("GREEN: %u \n",  *(uint8_t*)0x1401);
+    printf("BLUE:  %u \n",  *(uint8_t*)0x1402);
 
     return 0;
 }
@@ -127,40 +127,40 @@ uint32_t getPalette()
 // http://wiki.osdev.org/VGA_Hardware#VGA_Registers
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t Blue)
 {
-	outportb(0x03C6,0xff);
-	outportb(0x03C8,PaletteColorNumber);
-	outportb(0x03C9,Red);
-	outportb(0x03C9,Green);
-	outportb(0x03C9,Blue);
+    outportb(0x03C6,0xff);
+    outportb(0x03C8,PaletteColorNumber);
+    outportb(0x03C9,Red);
+    outportb(0x03C9,Green);
+    outportb(0x03C9,Blue);
 }
 
 void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue)
 {
-	outportb(0x03c6,0xff);
-	outportb(0x03c7,PaletteColorNumber);
-	*Red   = inportb(0x03c9);
-	*Green = inportb(0x03c9);
-	*Blue  = inportb(0x03c9);
+    outportb(0x03c6,0xff);
+    outportb(0x03c7,PaletteColorNumber);
+    *Red   = inportb(0x03c9);
+    *Green = inportb(0x03c9);
+    *Blue  = inportb(0x03c9);
 }
 
 void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette)
 {
-	outportb(0x03C6,0xff);
-	outportb(0x03C8,StartColor);    // first color to be input
-	for(short i=0; i<NumOfColors*3; i++ )
+    outportb(0x03C6,0xff);
+    outportb(0x03C8,StartColor);    // first color to be input
+    for(short i=0; i<NumOfColors*3; i++ )
      {
-		outportb(0x03C9,Palette[i]<<2);
+        outportb(0x03C9,Palette[i]<<2);
      }
 }
 
 void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palette)
 {
-	outportb(0x03C6,0xff);
-	outportb(0x03C7,StartColor);    // first color to be read
-	for(short i=0; i<NumOfColors*3; i++ )
-	{
-		Palette[i]=inportb(0x03C9);
-	}
+    outportb(0x03C6,0xff);
+    outportb(0x03C7,StartColor);    // first color to be read
+    for(short i=0; i<NumOfColors*3; i++ )
+    {
+        Palette[i]=inportb(0x03C9);
+    }
 }
 
 void setDACPalette(RGBQuadPacked_t* RGB)
@@ -170,7 +170,7 @@ void setDACPalette(RGBQuadPacked_t* RGB)
 
 uint32_t getDACPalette()
 {
-	waitForTask(create_vm86_task(VM86_GETDACPALETTE));
+    waitForTask(create_vm86_task(VM86_GETDACPALETTE));
     return 0;
 }
 
@@ -190,28 +190,28 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
 
 void setVideoMemory()
 {
- 	// size_of_video_ram
- 	SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
- 	for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000)
- 	{
-     	printf("\t: %X",paging_acquire_pcimem(i));
- 	}
-   	printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
- 	printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
+     // size_of_video_ram
+     SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
+     for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000)
+     {
+         printf("\t: %X",paging_acquire_pcimem(i));
+     }
+       printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
+     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
 
- 	// add the size of color (palette) to the screen
- 	if(mib->BitsPerPixel == 8)
- 	{
+     // add the size of color (palette) to the screen
+     if(mib->BitsPerPixel == 8)
+     {
         // SCREEN += 256; // only video mode 101h ??
- 	}
+     }
 }
 
 void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 {
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
- 	uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
+     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
 
- 	if(mib->BitsPerPixel == 8)
+     if(mib->BitsPerPixel == 8)
     {
         bmpinfo = (BMPInfo_t*)bitmapMemStart;
         for(uint32_t j=0; j<256; j++)
@@ -224,14 +224,14 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
     }
 
     uint8_t* i = (uint8_t*)bitmap_end;
- 	for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
- 	{
- 	    for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
- 	    {
-     	    SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
- 	        i -= (mib->BitsPerPixel/8);
- 	    }
- 	}
+     for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
+     {
+         for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
+         {
+             SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
+             i -= (mib->BitsPerPixel/8);
+         }
+     }
 }
 
 
@@ -437,7 +437,7 @@ void vgaDebug()
             case 0x011B:
                 printf("= 1280x1024x16M\n");
                 break;
-			// VBE 2.0 modes
+            // VBE 2.0 modes
             case 0x0120:
                 printf("= 1600x1200x256\n");
                 break;
@@ -450,7 +450,8 @@ void vgaDebug()
             case 0xFFFF:
                 printf("= end of modelist\n");
                 break;
-			default:
+            default:
+                printf("\n");
                 break;
         }
     }
@@ -486,8 +487,8 @@ void vgaDebug()
     printf("BlueFieldPosition:     %u\n", mib->BlueFieldPosition);
     printf("RsvdMaskSize:          %u\n", mib->RsvdMaskSize);
     printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
-	printf("OffScreenMemOffset:    %u\n", mib->OffScreenMemOffset);
-	printf("OffScreenMemSize:      %u\n", mib->OffScreenMemSize);
+    printf("OffScreenMemOffset:    %u\n", mib->OffScreenMemOffset);
+    printf("OffScreenMemSize:      %u\n", mib->OffScreenMemSize);
     printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
     printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);
 }
@@ -495,99 +496,99 @@ void vgaDebug()
 char ISValidBitmap(char *fname)
 {
 /*
-	BMPINFO bmpinfo;
-	FILE *fp;
-	if((fp = fopen(fname,"rb+"))==NULL)
-	{
-		printf("Unable open the file %s",fname,"!!");
-		return 0;
-	}
+    BMPINFO bmpinfo;
+    FILE *fp;
+    if((fp = fopen(fname,"rb+"))==NULL)
+    {
+        printf("Unable open the file %s",fname,"!!");
+        return 0;
+    }
 
-	fread(&bmpinfo,sizeof(bmpinfo),1,fp);
-	fclose(fp);
-	if(!(bmpinfo.bmiheader.bftype[0]=='B' &&
-	bmpinfo.bmiheader.bftype[1]=='M'))
-	{
-		printf("can't read the file: not a valid BMP file!");
-		return 0;
-	}
+    fread(&bmpinfo,sizeof(bmpinfo),1,fp);
+    fclose(fp);
+    if(!(bmpinfo.bmiheader.bftype[0]=='B' &&
+    bmpinfo.bmiheader.bftype[1]=='M'))
+    {
+        printf("can't read the file: not a valid BMP file!");
+        return 0;
+    }
 
-	if(!bmpinfo.bmiheader.bicompression==0)
-	{
-		printf("can't read the file: should not be a RLR encoded!!");
-		return 0;
-	}
+    if(!bmpinfo.bmiheader.bicompression==0)
+    {
+        printf("can't read the file: should not be a RLR encoded!!");
+        return 0;
+    }
 
-	if(!bmpinfo.bmiheader.bibitcount==8)
-	{
-		printf("can't read the file: should be 8-bit per color format!!");
-		return 0;
-	}
+    if(!bmpinfo.bmiheader.bibitcount==8)
+    {
+        printf("can't read the file: should be 8-bit per color format!!");
+        return 0;
+    }
 */
-	return 1;
+    return 1;
 }
 
 void showbitmap(char *infname,int xs,int ys)
 {
 /*
-	BMPINFO bmpinfo;
-	RGB pal[256];
-	FILE *fpt;
-	int i,j,w,h,c,bank;
-	unsigned char byte[1056];
-	long addr;
-	unsigned int k;
-	if((fpt=fopen(infname,"rb+"))==NULL)
-	{
-		printf("Error opening file ");
-		getch();
-		return 1;
-	}
+    BMPINFO bmpinfo;
+    RGB pal[256];
+    FILE *fpt;
+    int i,j,w,h,c,bank;
+    unsigned char byte[1056];
+    long addr;
+    unsigned int k;
+    if((fpt=fopen(infname,"rb+"))==NULL)
+    {
+        printf("Error opening file ");
+        getch();
+        return 1;
+    }
 
-	fread(&bmpinfo,sizeof(bmpinfo),1,fpt);
-	fseek(fpt,bmpinfo.bmiheader.bfoffbits,SEEK_SET);
-	w = bmpinfo.bmiheader.biwidth;
-	h = bmpinfo.bmiheader.biheight;
+    fread(&bmpinfo,sizeof(bmpinfo),1,fpt);
+    fseek(fpt,bmpinfo.bmiheader.bfoffbits,SEEK_SET);
+    w = bmpinfo.bmiheader.biwidth;
+    h = bmpinfo.bmiheader.biheight;
 
-	for(i=0;i<=255;i++)
-	{
-		pal[i].red = bmpinfo.bmicolors[i].red/4;
-		pal[i].green = bmpinfo.bmicolors[i].green/4;
-		pal[i].blue = bmpinfo.bmicolors[i].blue/4;
-	}
+    for(i=0;i<=255;i++)
+    {
+        pal[i].red = bmpinfo.bmicolors[i].red/4;
+        pal[i].green = bmpinfo.bmicolors[i].green/4;
+        pal[i].blue = bmpinfo.bmicolors[i].blue/4;
+    }
 
-	vinitgraph(VGALOW);
-	setwidth(1000);
-	SetPalette(pal);
+    vinitgraph(VGALOW);
+    setwidth(1000);
+    SetPalette(pal);
 
-	for(i=0;i<h;i++)
-	{
-		fread(&byte[0],sizeof(unsigned char),w,fpt);
+    for(i=0;i<h;i++)
+    {
+        fread(&byte[0],sizeof(unsigned char),w,fpt);
 
-		for(j=0;j<w;j++)
-		{
-			c= (int ) byte[j];
-			addr= (long) (ys+h-i)*bytesperline+xs+j;
-			bank = (int ) (addr >>16);
-			if(curbank!= bank)
-			{
-				curbank =bank;
-				bank<<=bankshift;
-				_BX=0;
-				_DX=bank;
-				bankswitch();
-				_BX=1;
-				bankswitch();
-			}
-			*(screenptr+(addr & 0xFFFF)) = (char ) c;
-		}
-	}
+        for(j=0;j<w;j++)
+        {
+            c= (int ) byte[j];
+            addr= (long) (ys+h-i)*bytesperline+xs+j;
+            bank = (int ) (addr >>16);
+            if(curbank!= bank)
+            {
+                curbank =bank;
+                bank<<=bankshift;
+                _BX=0;
+                _DX=bank;
+                bankswitch();
+                _BX=1;
+                bankswitch();
+            }
+            *(screenptr+(addr & 0xFFFF)) = (char ) c;
+        }
+    }
 
-	fclose(fpt);
-	getch();
-	vclosegraph();
-	return 0;
-	*/
+    fclose(fpt);
+    getch();
+    vclosegraph();
+    return 0;
+    */
 }
 
 void bitmapDebug()
@@ -620,28 +621,28 @@ void draw_string(unsigned char* screen, unsigned char* where, char* input)
 {
 /*
 ; ------ Fill screen buffer with a color.
-		mov	eax, 0xFFFFFFFF ; white
-		mov	edi, buffer
-		mov	ecx, 640*480/2
-		rep	stosd
+        mov    eax, 0xFFFFFFFF ; white
+        mov    edi, buffer
+        mov    ecx, 640*480/2
+        rep    stosd
 
 ; ------ Print message using the font.
-		mov	edi, buffer
-		xor	ecx, ecx
-	.m:	mov	al, [msg1+ecx]
-		call	next_glyph
-		inc	ecx
-		cmp	ecx, len1
-		jl	.m
+        mov    edi, buffer
+        xor    ecx, ecx
+    .m:    mov    al, [msg1+ecx]
+        call    next_glyph
+        inc    ecx
+        cmp    ecx, len1
+        jl    .m
 
 ; ------ Copy screen buffer into video memory.
-		mov	esi, buffer
-		mov	edi, 0xE0000000
-		mov	ecx, 640*480/2
-		rep	movsd
+        mov    esi, buffer
+        mov    edi, 0xE0000000
+        mov    ecx, 640*480/2
+        rep    movsd
 
 ; ------ Hang computer.
-;		jmp	$
+;        jmp    $
 
 ; -------------------------------------------------------------------------
 ; SUBROUTINES
@@ -650,50 +651,50 @@ void draw_string(unsigned char* screen, unsigned char* where, char* input)
 next_2_pixels:
 ; Converts low 2 bits in EAX to 2 pixels on screen
 ; PASS eax=bits from font, edi=pointer into screen buffer
-		mov	ebx, eax
-		and	ebx, 0x03 ; leave only bits 0..1 (value 0..3)
-		mov	ebx, [colors+ebx*4]
-		shr	eax, 2
-		mov	[edi], ebx
-		lea	edi, [edi+4]
-		ret
+        mov    ebx, eax
+        and    ebx, 0x03 ; leave only bits 0..1 (value 0..3)
+        mov    ebx, [colors+ebx*4]
+        shr    eax, 2
+        mov    [edi], ebx
+        lea    edi, [edi+4]
+        ret
 
 next_scanline:
 ; Converts low 8 bits in EAX to 8 pixels on screen
 ; PASS eax=bits from font, edi=pointer into screen buffer
-		call	next_2_pixels
-		call	next_2_pixels
-		call	next_2_pixels
-		call	next_2_pixels
-		add	edi, 640*2-16
-		ret
+        call    next_2_pixels
+        call    next_2_pixels
+        call    next_2_pixels
+        call    next_2_pixels
+        add    edi, 640*2-16
+        ret
 
 next_4_scanlines:
 ; Converts 32 bits in EAX to 4 rows of 8 pixels on screen
 ; PASS esi=pointer into font, edi=pointer into screen buffer
-		mov	eax, [esi]   ; grab 4 bytes from font
-		call	next_scanline
-		call	next_scanline
-		call	next_scanline
-		call	next_scanline
-		lea	esi, [esi+4] ; move to next 4 bytes in font
-		ret
+        mov    eax, [esi]   ; grab 4 bytes from font
+        call    next_scanline
+        call    next_scanline
+        call    next_scanline
+        call    next_scanline
+        lea    esi, [esi+4] ; move to next 4 bytes in font
+        ret
 
 next_glyph:
 ; Prints character whose ASCII value is passed in AL (EAX)
 ; PASS eax=character, edi=pointer into screen buffer
-		push	edi
-		and	eax, 0xFF
-		shl	eax, 4    ; multiply by 16 (# bytes in font per char)
-		add	eax, font ; create offset into font
-		mov	esi, eax
-		call	next_4_scanlines
-		call	next_4_scanlines
-		call	next_4_scanlines
-		call	next_4_scanlines
-		pop	edi
-		add	edi, 16   ; width in bytes of one character
-		ret
+        push    edi
+        and    eax, 0xFF
+        shl    eax, 4    ; multiply by 16 (# bytes in font per char)
+        add    eax, font ; create offset into font
+        mov    esi, eax
+        call    next_4_scanlines
+        call    next_4_scanlines
+        call    next_4_scanlines
+        call    next_4_scanlines
+        pop    edi
+        add    edi, 16   ; width in bytes of one character
+        ret
 
 ; -------------------------------------------------------------------------
 black equ 0x0000
@@ -705,13 +706,13 @@ white equ 0xFFFF
 ; thus offset 01 leads to the "white, black" entry.
 
 colors:
-		dw	black, black ; bits 00
-		dw	white, black ; bits 10 -> 01
-		dw	black, white ; bits 01 -> 10
-		dw	white, white ; bits 11
+        dw    black, black ; bits 00
+        dw    white, black ; bits 10 -> 01
+        dw    black, white ; bits 01 -> 10
+        dw    white, white ; bits 11
 
-msg1:		db	"This is the system font that I will be using in Karig."
-len1:		equ	$-msg1
+msg1:        db    "This is the system font that I will be using in Karig."
+len1:        equ    $-msg1
 
 */
 }
@@ -796,22 +797,22 @@ asm {   mov bx,1;
 public _setbxdx
 .MODEL SMALL
 .CODE
-set_struc	struc
-	dw	?	;old bp
-	dd	?	; return addr ( always far call)
-	p_bx	dw	?	; reg bx value
-	p_dx	dw	?	; reg dx value
-	set_struc	ends
+set_struc    struc
+    dw    ?    ;old bp
+    dd    ?    ; return addr ( always far call)
+    p_bx    dw    ?    ; reg bx value
+    p_dx    dw    ?    ; reg dx value
+    set_struc    ends
 
-	_setbxdx	proc far	; must be far
-		push	bp
-		mov	bp, sp
-		mov	bx,[bp]+p_bx
-		mov	dx,[bp]+p_dx
-		pop	bp
-		ret
-	_setbxdx	endp
-	END
+    _setbxdx    proc far    ; must be far
+        push    bp
+        mov    bp, sp
+        mov    bx,[bp]+p_bx
+        mov    dx,[bp]+p_dx
+        pop    bp
+        ret
+    _setbxdx    endp
+    END
 */
 
 

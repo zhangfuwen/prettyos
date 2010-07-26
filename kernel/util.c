@@ -231,7 +231,7 @@ void waitForKeyStroke()
 
 /**********************************************************************/
 
-void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
+void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
 {
     char m_buffer[32]; // Larger is not needed at the moment
     memset(buffer, 0, length);
@@ -296,7 +296,7 @@ void vsnprintf (char *buffer, size_t length, const char *args, va_list ap)
         pos++;
     }
 }
-void snprintf (char *buffer, size_t length, const char *args, ...)
+void snprintf(char *buffer, size_t length, const char *args, ...)
 {
     va_list ap;
     va_start(ap, args);
