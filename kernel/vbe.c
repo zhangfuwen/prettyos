@@ -88,115 +88,111 @@ void vgaDebug()
     
     textColor(0x0E);
     printf("\nVideo Modes:\n\n");
-    printf("\nVESA Modes:\n");
-    for (uint8_t i=0; i<8; i++)
+    for (uint8_t i=0; i<16; i++)
     {
         printf("%x ", *((uint16_t*)(vgaIB->VideoModePtr)+i));
         switch(*((uint16_t*)(vgaIB->VideoModePtr)+i))
         {
-            case 0x100:
+            case 0x0100:
                 printf("= 640x400x256\n");
                 break;
-            case 0x101:
+            case 0x0101:
                 printf("= 640x480x256\n");
                 break;
-            case 0x102:
+            case 0x0102:
                 printf("= 800x600x16\n");
                 break;
-            case 0x103:
+            case 0x0103:
                 printf("= 800x600x256\n");
                 break;
-            case 0x104:
+            case 0x0104:
                 printf("= 1024x768x16\n");
                 break;
-            case 0x105:
+            case 0x0105:
                 printf("= 1024x768x256\n");
                 break;
-            case 0x106:
+            case 0x0106:
                 printf("= 1280x1024x16\n");
                 break;
-            case 0x107:
+            case 0x0107:
                 printf("= 1280x1024x256\n");
                 break;
-            case 0x108:
+            case 0x0108:
                 printf("= 80x60 text\n");
                 break;
-            case 0x109:
+            case 0x0109:
                 printf("= 132x25 text\n");
                 break;
-            case 0x10A:
+            case 0x010A:
                 printf("= 132x43 text\n");
                 break;
-            case 0x10B:
+            case 0x010B:
                 printf("= 132x50 text\n");
                 break;
-            case 0x10C:
+            case 0x010C:
                 printf("= 132x60 text\n");
                 break;
-            case 0x10D:
+            case 0x010D:
                 printf("= 320x200x32K\n");
                 break;
-            case 0x10E:
+            case 0x010E:
                 printf("= 320x200x64K\n");
                 break;
-            default:
-                break;
-        }
-    }
-    printf("\nVBE Version 1.2 Modes:\n");
-    for (uint8_t i=8; i<16; i++)
-    {
-        printf("%x ", *((uint16_t*)(vgaIB->VideoModePtr)+i));
-        switch(*((uint16_t*)(vgaIB->VideoModePtr)+i))
-        {
-            case 0x10F:
+            case 0x010F:
                 printf("= 320x200x16M\n");
                 break;
-            case 0x110:
+            case 0x0110:
                 printf("= 640x480x32K\n");
                 break;
-            case 0x111:
+            case 0x0111:
                 printf("= 640x480x64K\n");
                 break;
-            case 0x112:
+            case 0x0112:
                 printf("= 640x480x16M\n");
                 break;
-            case 0x113:
+            case 0x0113:
                 printf("= 800x600x32K\n");
                 break;
-            case 0x114:
+            case 0x0114:
                 printf("= 800x600x64K\n");
                 break;
-            case 0x115:
+            case 0x0115:
                 printf("= 800x600x16M\n");
                 break;
-            case 0x116:
+            case 0x0116:
                 printf("= 1024x768x32K\n");
                 break;
-            case 0x117:
+            case 0x0117:
                 printf("= 1024x768x64K\n");
                 break;
-            case 0x118:
+            case 0x0118:
                 printf("= 1024x768x16M\n");
                 break;
-            case 0x119:
+            case 0x0119:
                 printf("= 1280x1024x32K\n");
                 break;
-            case 0x11A:
+            case 0x011A:
                 printf("= 1280x1024x64K\n");
                 break;
-            case 0x11B:
+            case 0x011B:
                 printf("= 1280x1024x16M\n");
                 break;
-            default:
+			// VBE 2.0 modes
+            case 0x0120:
+                printf("= 1600x1200x256\n");
+                break;
+            case 0x0121:
+                printf("= 1600x1200x32K\n");
+                break;
+            case 0x0122:
+                printf("= 1600x1200x64K\n");
+                break;				
+            case 0xFFFF:
+                printf("= end of modelist\n");
+                break;
+			default:
                 break;
         }
-        /*
-        ---VBE 2.0---
-        120h    1600x1200x256
-        121h    1600x1200x32K
-        122h    1600x1200x64K
-        */
     }
     printf("\n");
     textColor(0x0F);
@@ -230,24 +226,48 @@ void vgaDebug()
     printf("BlueFieldPosition:     %u\n", mib->BlueFieldPosition);
     printf("RsvdMaskSize:          %u\n", mib->RsvdMaskSize);
     printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
+	printf("OffScreenMemOffset:    %u\n", mib->OffScreenMemOffset);
+	printf("OffScreenMemSize:      %u\n", mib->OffScreenMemSize);
     printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
     printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);    
 }
 
 void printPalette(RGBQuadPacked_t* RGB)
 {
-	uint32_t i =0;
-    for(uint32_t j=0; j<16; j++) 
+	uint32_t xpos = 0;
+	uint32_t ypos = 0;
+	// uint32_t color = 0;
+	uint32_t DAC;
+	uint8_t  Palette[256][3];			
+
+	for(uint32_t j=0; j<(1<<mib->BitsPerPixel); j++)
+	{
+		Palette[j][0] = bmpinfo->bmicolors[j].red;
+		Palette[j][1] = bmpinfo->bmicolors[j].green;
+		Palette[j][2] = bmpinfo->bmicolors[j].blue;
+	}
+	
+	for (DAC = 0; DAC<(1<<mib->BitsPerPixel); DAC++)
+	{
+		Set_DAC_C (DAC, Palette[DAC][0] >> 2, Palette[DAC][1] >> 2, Palette [DAC][2] >> 2);
+	}
+	
+    for(uint32_t j=0; j<256; j++) 
     {
 		for(uint32_t x = 0; x < 5; x++)
 		{
 			for(uint32_t y = 0; y < 5; y++)
 			{
-				// setPixel(x+i, y, 0x0A);
-				setPixel(x+i, y, (ScreenPal[j].red) + (ScreenPal[j].green) + (ScreenPal[j].blue));
+				// setPixel((x+xpos), (y+ypos), (ScreenPal[j].red) + (ScreenPal[j].green) + (ScreenPal[j].blue));
+				setPixel((x+xpos), (y+ypos), j);
 			}
 		}
-		i +=5;
+		xpos +=5;
+		if(xpos >= 255)
+		{
+			ypos += 5;
+			xpos = 0;
+		}
     }
 }
 

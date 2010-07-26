@@ -73,8 +73,10 @@ typedef struct
     uint8_t    RsvdMaskSize;           // Size of direct color res mask
     uint8_t    RsvdFieldPosition;      // Bit posn of lsb of res mask
     uint8_t    DirectColorModeInfo;    // Direct color mode attributes
-    uintptr_t   PhysBasePtr;            // 32-bit physical memory address
-    uint8_t    res2[212];              // Pad to 256 byte block size
+    uintptr_t  PhysBasePtr;            // 32-bit physical memory address
+	uint32_t   OffScreenMemOffset;     // pointer to start of off screen memory
+	uint16_t   OffScreenMemSize;	   // amount of off screen memory in 1k units
+    uint8_t    res2[206];              // Pad to 256 byte block size //212
 } __attribute__((packed)) ModeInfoBlock_t;
 
 typedef enum
