@@ -24,8 +24,6 @@ ModeInfoBlock_t* mob;
 BitmapHeader_t*  bh_get;
 BMPInfo_t* bmpinfo;
 
-//RGBQuadPacked_t Pal[256];
-//RGBQuadPacked_t* ScreenPal = &Pal[0];
 RGBQuadPacked_t* ScreenPal = (RGBQuadPacked_t*)0x1600;
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
@@ -68,6 +66,268 @@ void switchToTextmode()
     refreshUserScreen();
 }
 
+void printPalette(RGBQuadPacked_t* RGB)
+{
+	uint32_t xpos = 0;
+	uint32_t ypos = 0;
+
+    for(uint32_t j=0; j<256; j++)
+    {
+        // transfer from bitmap palette to packed RAMDAC palette
+        Set_DAC_C (j, bmpinfo->bmicolors[j].red   >> 2,
+                      bmpinfo->bmicolors[j].green >> 2,
+                      bmpinfo->bmicolors[j].blue  >> 2);
+    }
+
+    for(uint32_t j=0; j<256; j++)
+    {
+		for(uint32_t x = 0; x < 5; x++)
+		{
+			for(uint32_t y = 0; y < 5; y++)
+			{
+				// setPixel((x+xpos), (y+ypos), (ScreenPal[j].red) + (ScreenPal[j].green) + (ScreenPal[j].blue));
+				setPixel((x+xpos), (y+ypos), j);
+			}
+		}
+		xpos +=5;
+		if(xpos >= 255)
+		{
+			ypos += 5;
+			xpos = 0;
+		}
+    }
+}
+
+void setPalette(RGBQuadPacked_t* RGB)
+{
+/*
+Format of VESA VBE palette entry:
+Offset	Size	Description
+ 00h	BYTE	red
+ 01h	BYTE	green
+ 02h	BYTE	blue
+ 03h	BYTE	alpha or alignment byte
+*/
+    ScreenPal = RGB;
+	waitForTask(create_vm86_task(VM86_SETPALETTE));
+}
+
+uint32_t getPalette()
+{
+    waitForTask(create_vm86_task(VM86_GETPALETTE));
+
+	printf("\nDEBUG: Palette output:\n");
+	printf("RED:   %u \n",  *(uint8_t*)0x1400);
+	printf("GREEN: %u \n",  *(uint8_t*)0x1401);
+	printf("BLUE:  %u \n",  *(uint8_t*)0x1402);
+
+    return 0;
+}
+
+// http://wiki.osdev.org/VGA_Hardware#VGA_Registers
+void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t Blue)
+{
+	outportb(0x03C6,0xff);
+	outportb(0x03C8,PaletteColorNumber);
+	outportb(0x03C9,Red);
+	outportb(0x03C9,Green);
+	outportb(0x03C9,Blue);
+}
+
+void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue)
+{
+	outportb(0x03c6,0xff);
+	outportb(0x03c7,PaletteColorNumber);
+	*Red   = inportb(0x03c9);
+	*Green = inportb(0x03c9);
+	*Blue  = inportb(0x03c9);
+}
+
+void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette)
+{
+	outportb(0x03C6,0xff);
+	outportb(0x03C8,StartColor);    // first color to be input
+	for(short i=0; i<NumOfColors*3; i++ )
+     {
+		outportb(0x03C9,Palette[i]<<2);
+     }
+}
+
+void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palette)
+{
+	outportb(0x03C6,0xff);
+	outportb(0x03C7,StartColor);    // first color to be read
+	for(short i=0; i<NumOfColors*3; i++ )
+	{
+		Palette[i]=inportb(0x03C9);
+	}
+}
+
+void setDACPalette(RGBQuadPacked_t* RGB)
+{
+    waitForTask(create_vm86_task(VM86_SETDACPALETTE));
+}
+
+uint32_t getDACPalette()
+{
+	waitForTask(create_vm86_task(VM86_GETDACPALETTE));
+    return 0;
+}
+
+
+void setPixel(uint32_t x, uint32_t y, uint32_t color)
+{
+    // long addr = (long)y * bytesperline + x;
+    // setBank(addr >> 16);
+    // *(screenPtr + (addr & 0xFFFF)) = color;
+
+    // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
+    SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
+
+}
+
+
+
+void setVideoMemory()
+{
+ 	// size_of_video_ram
+ 	SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
+ 	for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000)
+ 	{
+     	printf("\t: %X",paging_acquire_pcimem(i));
+ 	}
+   	printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
+ 	printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
+
+ 	// add the size of color (palette) to the screen
+ 	if(mib->BitsPerPixel == 8)
+ 	{
+        // SCREEN += 256; // only video mode 101h ??
+ 	}
+}
+
+void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
+{
+    uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
+ 	uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
+
+ 	if(mib->BitsPerPixel == 8)
+    {
+        bmpinfo = (BMPInfo_t*)bitmapMemStart;
+        for(uint32_t j=0; j<256; j++)
+        {
+            // transfer from bitmap palette to packed RAMDAC palette
+            Set_DAC_C (j, bmpinfo->bmicolors[j].red   >> 2,
+                          bmpinfo->bmicolors[j].green >> 2,
+                          bmpinfo->bmicolors[j].blue  >> 2);
+        }
+    }
+
+    uint8_t* i = (uint8_t*)bitmap_end;
+ 	for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
+ 	{
+ 	    for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
+ 	    {
+     	    SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
+ 	        i -= (mib->BitsPerPixel/8);
+ 	    }
+ 	}
+}
+
+
+
+// draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)
+void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
+{
+    uint32_t dx=x2-x1;      // the horizontal distance of the line
+    uint32_t dy=y2-y1;      // the vertical distance of the line
+    uint32_t dxabs=fabs(dx);
+    uint32_t dyabs=fabs(dy);
+    uint32_t sdx=sgn(dx);
+    uint32_t sdy=sgn(dy);
+    uint32_t x=dyabs>>1;
+    uint32_t y=dxabs>>1;
+    uint32_t px=x1;
+    uint32_t py=y1;
+
+    SCREEN[(py<<8)+(py<<6)+px]=color;
+
+    if (dxabs>=dyabs) // the line is more horizontal than vertical
+    {
+        for(uint32_t i=0;i<dxabs;i++)
+        {
+            y+=dyabs;
+            if (y>=dxabs)
+            {
+                y-=dxabs;
+                py+=sdy;
+            }
+            px+=sdx;
+            setPixel(px,py,color);
+        }
+    }
+    else // the line is more vertical than horizontal
+    {
+        for(uint32_t i=0;i<dyabs;i++)
+        {
+            x+=dxabs;
+            if (x>=dyabs)
+            {
+                x-=dyabs;
+                px+=sdx;
+            }
+            py+=sdy;
+            setPixel(px,py,color);
+        }
+    }
+}
+
+// Draws a rectangle by drawing all lines by itself.
+void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
+{
+    uint32_t top_offset,bottom_offset,temp; //word
+
+    if (top>bottom)
+    {
+        temp=top;
+        top=bottom;
+        bottom=temp;
+    }
+    if (left>right)
+    {
+        temp=left;
+        left=right;
+        right=temp;
+    }
+
+    top_offset=(top<<8)+(top<<6);
+    bottom_offset=(bottom<<8)+(bottom<<6);
+
+    for(uint32_t i=left;i<=right;i++)
+    {
+        SCREEN[top_offset+i]=color;
+        SCREEN[bottom_offset+i]=color;
+    }
+    for(uint32_t i=top_offset;i<=bottom_offset;i+=mib->XResolution) //SCREEN_WIDTH
+    {
+        SCREEN[left+i]=color;
+        SCREEN[right+i]=color;
+    }
+}
+
+void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
+{
+    // http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
+    for (uint32_t i=0; i<=2*radius; i++)
+    {
+        uint32_t x  = xm - radius + i;
+        uint32_t y1 = ym + (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
+        uint32_t y2 = ym - (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
+        setPixel(x, y1, 9);
+        setPixel(x, y2, 9);
+    }
+}
+
 void vgaDebug()
 {
     printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));
@@ -85,7 +345,7 @@ void vgaDebug()
     // printf("OemVendorNamePtr:       %X\n",     vgaIB->OemVendorNamePtr);
     // printf("OemProductNamePtr:      %X\n",     vgaIB->OemProductNamePtr);
     // printf("OemProductRevPtr:       %X\n",     vgaIB->OemProductRevPtr);
-    
+
     textColor(0x0E);
     printf("\nVideo Modes:\n\n");
     for (uint8_t i=0; i<16; i++)
@@ -186,7 +446,7 @@ void vgaDebug()
                 break;
             case 0x0122:
                 printf("= 1600x1200x64K\n");
-                break;				
+                break;
             case 0xFFFF:
                 printf("= end of modelist\n");
                 break;
@@ -229,406 +489,8 @@ void vgaDebug()
 	printf("OffScreenMemOffset:    %u\n", mib->OffScreenMemOffset);
 	printf("OffScreenMemSize:      %u\n", mib->OffScreenMemSize);
     printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
-    printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);    
+    printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);
 }
-
-void printPalette(RGBQuadPacked_t* RGB)
-{
-	uint32_t xpos = 0;
-	uint32_t ypos = 0;
-	// uint32_t color = 0;
-	uint32_t DAC;
-	uint8_t  Palette[256][3];			
-
-	for(uint32_t j=0; j<(1<<mib->BitsPerPixel); j++)
-	{
-		Palette[j][0] = bmpinfo->bmicolors[j].red;
-		Palette[j][1] = bmpinfo->bmicolors[j].green;
-		Palette[j][2] = bmpinfo->bmicolors[j].blue;
-	}
-	
-	for (DAC = 0; DAC<(1<<mib->BitsPerPixel); DAC++)
-	{
-		Set_DAC_C (DAC, Palette[DAC][0] >> 2, Palette[DAC][1] >> 2, Palette [DAC][2] >> 2);
-	}
-	
-    for(uint32_t j=0; j<256; j++) 
-    {
-		for(uint32_t x = 0; x < 5; x++)
-		{
-			for(uint32_t y = 0; y < 5; y++)
-			{
-				// setPixel((x+xpos), (y+ypos), (ScreenPal[j].red) + (ScreenPal[j].green) + (ScreenPal[j].blue));
-				setPixel((x+xpos), (y+ypos), j);
-			}
-		}
-		xpos +=5;
-		if(xpos >= 255)
-		{
-			ypos += 5;
-			xpos = 0;
-		}
-    }
-}
-
-void setPalette(RGBQuadPacked_t* RGB)
-{
-/*
-Format of VESA VBE palette entry:
-Offset	Size	Description
- 00h	BYTE	red
- 01h	BYTE	green
- 02h	BYTE	blue
- 03h	BYTE	alpha or alignment byte
-*/
-    ScreenPal = RGB;
-	waitForTask(create_vm86_task(VM86_SETPALETTE));
-}
-
-uint32_t getPalette()
-{
-    waitForTask(create_vm86_task(VM86_GETPALETTE));
-	
-	printf("\nDEBUG: Palette output:\n");
-	printf("RED:   %u \n",  *(uint8_t*)0x1400);
-	printf("GREEN: %u \n",  *(uint8_t*)0x1401);
-	printf("BLUE:  %u \n",  *(uint8_t*)0x1402);
-	
-    return 0;
-}
-
-// This sets a DAC register to a specific Red Green Blue-value
-/*
-void SetDAC(uint8_t DAC, uint8_t R, uint8_t G, uint8_t B)
-{
-  outportb(0x3C8, DAC);
-  outportb(0x3C9, R);
-  outportb(0x3C9, G);
-  outportb(0x3C9, B);
-}
-*/
-
-void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette)
-{
-	outportb(0x03C6,0xff);          //Mask all registers so we can update any of them
-	outportb(0x03C8,StartColor);    //1st color to input!
-	for(short i=0; i<NumOfColors*3; i++ )
-     {
-		outportb(0x03C9,Palette[i]<<2);
-     }
-}
-
-// http://wiki.osdev.org/VGA_Hardware#VGA_Registers
-void Set_DAC_C(uint8_t Color, uint8_t Red, uint8_t Green, uint8_t Blue)
-{
-	outportb(0x03C6,0xff);     //Mask all registers even though we only need 1 of them
-	outportb(0x03C8,Color);    //Color to set
-	outportb(0x03C9,Red);
-	outportb(0x03C9,Green);
-	outportb(0x03C9,Blue);
-}
-
-void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palette)
-{
-	outportb(0x03C6,0xff);          //Mask all registers so we can update any of them
-	outportb(0x03C7,StartColor);    //1st color to read!
-	for(short i=0; i<NumOfColors*3; i++ )
-	{
-		Palette[i]=inportb(0x03C9);
-	}
-}
-/*
-void Get_DAC_C(uint8_t Color, uint8_t &Red, uint8_t &Green, uint8_t &Blue)
-{
-	outportb(0x03c6,0xff);
-	outportb(0x03c7,Color);
-	Red   = inportb(0x03c9);
-	Green = inportb(0x03c9);
-	Blue  = inportb(0x03c9);
-}
-*/
-void setDACPalette(RGBQuadPacked_t* RGB)
-{
-    waitForTask(create_vm86_task(VM86_SETDACPALETTE));
-}
-
-uint32_t getDACPalette()
-{
-	waitForTask(create_vm86_task(VM86_GETDACPALETTE));
-    return 0;
-}
-
-void setPixel(uint32_t x, uint32_t y, uint32_t color)
-{
-    // long addr = (long)y * bytesperline + x;
-    // setBank(addr >> 16);
-    // *(screenPtr + (addr & 0xFFFF)) = color;
-
-    // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
-    SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
-
-}
-
-/*------------------------------------------------------------------------------
-* The following commented-out routines are for Planar modes
-* outpw() is for word output, outp() is for byte output */
-
-/* Initialize Planar (Write mode 2)
-* Should be Called from initGraphics */
-/*
-void initPlanner()
-{
-    outpw(0x3C4, 0x0F02);
-    outpw(0x3CE, 0x0003);
-    outpw(0x3CE, 0x0205);
-}
-*/
-
-
-/* Reset to Write Mode 0
-* for BiOS default draw text */
-/*
-void setWriteMode0()
-{
-    outpw(0x3CE, 0xFF08);
-    outpw(0x3CE, 0x0005);
-}
-*/
-/* Plot a pixel in Planer mode */
-
-/*
-
-void putPixelP(int x, int y, int color)
-{
-    char dummy_read;
-
-    long addr = (long)y * bytesperline +(x/8));
-    setBank((int)(addr >> 16));
-    outp(0x3CE, 8);
-    outp(0x3CF, 0x80 >> (x & 7));
-    dummy_read = *(screenPtr +^(addr & 0xFFFF));
-    *(screenPtr + (addr & 0xFFFF)) = (char)color;
-}
-*/
-//------------------------------------------------------------------------------
-
-/* Set new read/write bank. We must set both Window A and Window B, as
- * many VBE's have these set as separately available read and write
- * windows. We also use a simple (but very effective) optimisation of
- * checking if the requested bank is currently active.
- */
- /*
-void setBank(int bank)
-{
-    union REGS  regs;
-    if (bank == curBank) return;    // Bank is already active
-    curBank = bank;                 // Save current bank number
-    bank <<= bankShift;             // Adjust to window granularity
-#ifdef  DIRECT_BANKING
-asm {   mov bx,0;
-        mov dx,bank; }
-    bankSwitch();
-asm {   mov bx,1;
-        mov dx,bank; }
-    bankSwitch();
-#else
-    regs.x.ax = 0x4F05; regs.x.bx = 0;  regs.x.dx = bank;
-    int86(0x10, &regs, &regs);
-    regs.x.ax = 0x4F05; regs.x.bx = 1;  regs.x.dx = bank;
-    int86(0x10, &regs, &regs);
-#endif
-}
-*/
-
-
-/* Below is the Assembly Language module required for the direct bank switching. In
-* Borland C or other C compilers, this can be converted to in-lin assembly code.
-*/
-
-/*
-public _setbxdx
-.MODEL SMALL
-.CODE
-set_struc	struc
-	dw	?	;old bp
-	dd	?	; return addr ( always far call)
-	p_bx	dw	?	; reg bx value
-	p_dx	dw	?	; reg dx value
-	set_struc	ends
-
-	_setbxdx	proc far	; must be far
-		push	bp
-		mov	bp, sp
-		mov	bx,[bp]+p_bx
-		mov	dx,[bp]+p_dx
-		pop	bp
-		ret
-	_setbxdx	endp
-	END
-*/
-
-void setVideoMemory()
-{
- 	// size_of_video_ram
- 	SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
- 	for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000)
- 	{
-     	printf("\t: %X",paging_acquire_pcimem(i));
- 	}
-   	printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
- 	printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
-
- 	// add the size of color (palette) to the screen
- 	if(mib->BitsPerPixel == 8)
- 	{ 	    
-        // SCREEN += 256; // only video mode 101h ??
- 	} 	
-} 
-
-void bitmap(uint32_t xpos, uint32_t ypos)
-{
-    uintptr_t bitmap_start = 0x2400 + sizeof(BitmapHeader_t);
- 	uintptr_t bitmap_end = bitmap_start + bh_get->Width*bh_get->Height +1024;
-    
- 	if(mib->BitsPerPixel == 8)
-    {
-        bmpinfo = (BMPInfo_t*)0x2400;
-
-        if(mib->DirectColorModeInfo == 1)
-		{
-			uint32_t  DAC;
-			uint8_t   Palette [256][3];			
-		
-			for(uint32_t j=0; j<(1<<mib->BitsPerPixel); j++)
-			{
-				Palette[j][0] = bmpinfo->bmicolors[j].red;
-				Palette[j][1] = bmpinfo->bmicolors[j].green;
-				Palette[j][2] = bmpinfo->bmicolors[j].blue;
-			}
-			
-			for (DAC = 0; DAC<(1<<mib->BitsPerPixel); DAC++)
-			{
-				Set_DAC_C (DAC, Palette [DAC][0] >> 2, Palette [DAC][1] >> 2, Palette [DAC][2] >> 2);
-			}				
-		}
-        else
-        {        
-            for(uint32_t j=0; j<256; j++)
-			{
-				ScreenPal[j].red   = bmpinfo->bmicolors[j].red   >> 2; // divide by 4
-				ScreenPal[j].green = bmpinfo->bmicolors[j].green >> 2;
-				ScreenPal[j].blue  = bmpinfo->bmicolors[j].blue  >> 2;
-			}
-			waitForTask(create_vm86_task(VM86_SETPALETTE));  // OK
-			// setPalette(ScreenPal); // ??
-		}
-    }
-        
-    uintptr_t i = bitmap_end;
- 	for(uint32_t y=0; y<bh_get->Height; y++)
- 	{
- 	    for(uint32_t x=bh_get->Width; x>0; x--)
- 	    {
-     	    SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *(uint8_t*)(i * mib->BitsPerPixel/8 + bitmap_start);
- 	        i--;
- 	    }
- 	}
-} 
-
-
-// draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)
-void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
-{
-    uint32_t dx=x2-x1;      // the horizontal distance of the line
-    uint32_t dy=y2-y1;      // the vertical distance of the line
-    uint32_t dxabs=fabs(dx);
-    uint32_t dyabs=fabs(dy);
-    uint32_t sdx=sgn(dx);
-    uint32_t sdy=sgn(dy);
-    uint32_t x=dyabs>>1;
-    uint32_t y=dxabs>>1;
-    uint32_t px=x1;
-    uint32_t py=y1;
-
-    SCREEN[(py<<8)+(py<<6)+px]=color;
-
-    if (dxabs>=dyabs) // the line is more horizontal than vertical
-    {
-        for(uint32_t i=0;i<dxabs;i++)
-        {
-            y+=dyabs;
-            if (y>=dxabs)
-            {
-                y-=dxabs;
-                py+=sdy;
-            }
-            px+=sdx;
-            setPixel(px,py,color);
-        }
-    }
-    else // the line is more vertical than horizontal
-    {
-        for(uint32_t i=0;i<dyabs;i++)
-        {
-            x+=dxabs;
-            if (x>=dyabs)
-            {
-                x-=dyabs;
-                px+=sdx;
-            }
-            py+=sdy;
-            setPixel(px,py,color);
-        }
-    }
-}
-
-// Draws a rectangle by drawing all lines by itself.
-void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
-{
-    uint32_t top_offset,bottom_offset,temp; //word
-
-    if (top>bottom)
-    {
-        temp=top;
-        top=bottom;
-        bottom=temp;
-    }
-    if (left>right)
-    {
-        temp=left;
-        left=right;
-        right=temp;
-    }
-
-    top_offset=(top<<8)+(top<<6);
-    bottom_offset=(bottom<<8)+(bottom<<6);
-
-    for(uint32_t i=left;i<=right;i++)
-    {
-        SCREEN[top_offset+i]=color;
-        SCREEN[bottom_offset+i]=color;
-    }
-    for(uint32_t i=top_offset;i<=bottom_offset;i+=mib->XResolution) //SCREEN_WIDTH
-    {
-        SCREEN[left+i]=color;
-        SCREEN[right+i]=color;
-    }
-}
-
-void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
-{
-    // http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
-    for (uint32_t i=0; i<=2*radius; i++)
-    {
-        uint32_t x  = xm - radius + i;
-        uint32_t y1 = ym + (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
-        uint32_t y2 = ym - (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
-        setPixel(x, y1, 9);
-        setPixel(x, y2, 9);
-    }
-}
-
-
 
 char ISValidBitmap(char *fname)
 {
@@ -853,6 +715,105 @@ len1:		equ	$-msg1
 
 */
 }
+
+/*------------------------------------------------------------------------------
+* The following commented-out routines are for Planar modes
+* outpw() is for word output, outp() is for byte output */
+
+/* Initialize Planar (Write mode 2)
+* Should be Called from initGraphics */
+/*
+void initPlanner()
+{
+    outpw(0x3C4, 0x0F02);
+    outpw(0x3CE, 0x0003);
+    outpw(0x3CE, 0x0205);
+}
+*/
+
+
+/* Reset to Write Mode 0
+* for BiOS default draw text */
+/*
+void setWriteMode0()
+{
+    outpw(0x3CE, 0xFF08);
+    outpw(0x3CE, 0x0005);
+}
+*/
+/* Plot a pixel in Planer mode */
+
+/*
+
+void putPixelP(int x, int y, int color)
+{
+    char dummy_read;
+
+    long addr = (long)y * bytesperline +(x/8));
+    setBank((int)(addr >> 16));
+    outp(0x3CE, 8);
+    outp(0x3CF, 0x80 >> (x & 7));
+    dummy_read = *(screenPtr +^(addr & 0xFFFF));
+    *(screenPtr + (addr & 0xFFFF)) = (char)color;
+}
+*/
+//------------------------------------------------------------------------------
+
+/* Set new read/write bank. We must set both Window A and Window B, as
+ * many VBE's have these set as separately available read and write
+ * windows. We also use a simple (but very effective) optimisation of
+ * checking if the requested bank is currently active.
+ */
+ /*
+void setBank(int bank)
+{
+    union REGS  regs;
+    if (bank == curBank) return;    // Bank is already active
+    curBank = bank;                 // Save current bank number
+    bank <<= bankShift;             // Adjust to window granularity
+#ifdef  DIRECT_BANKING
+asm {   mov bx,0;
+        mov dx,bank; }
+    bankSwitch();
+asm {   mov bx,1;
+        mov dx,bank; }
+    bankSwitch();
+#else
+    regs.x.ax = 0x4F05; regs.x.bx = 0;  regs.x.dx = bank;
+    int86(0x10, &regs, &regs);
+    regs.x.ax = 0x4F05; regs.x.bx = 1;  regs.x.dx = bank;
+    int86(0x10, &regs, &regs);
+#endif
+}
+*/
+
+
+/* Below is the Assembly Language module required for the direct bank switching. In
+* Borland C or other C compilers, this can be converted to in-lin assembly code.
+*/
+
+/*
+public _setbxdx
+.MODEL SMALL
+.CODE
+set_struc	struc
+	dw	?	;old bp
+	dd	?	; return addr ( always far call)
+	p_bx	dw	?	; reg bx value
+	p_dx	dw	?	; reg dx value
+	set_struc	ends
+
+	_setbxdx	proc far	; must be far
+		push	bp
+		mov	bp, sp
+		mov	bx,[bp]+p_bx
+		mov	dx,[bp]+p_dx
+		pop	bp
+		ret
+	_setbxdx	endp
+	END
+*/
+
 
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.

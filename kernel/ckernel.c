@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.111 - Rev: 680";
+const char* version = "0.0.1.112 - Rev: 681";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -38,6 +38,10 @@ extern uintptr_t vm86_com_end;
 // bmp
 extern uintptr_t bmp_start;
 extern uintptr_t bmp_end;
+
+// font
+extern uintptr_t font_start;
+extern uintptr_t font_end;
 
 // vbe
 extern BitmapHeader_t*  bh_get;
@@ -119,24 +123,24 @@ void main()
     memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
   #endif
 
-    memcpy((void*)0x2400, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
-    bh_get = (BitmapHeader_t*)0x2400;
+    // memcpy((void*)0x2400, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
+    bh_get = (BitmapHeader_t*)&bmp_start;
 
-    waitForKeyStroke();  
-    
+    waitForKeyStroke();
+
     switchToVGA(); //TEST
 
     setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
     setModeInfoBlock((ModeInfoBlock_t*)0x1200);
-    
+
 	modeInfoBlock_user = getModeInfoBlock();
-	
+
     uint32_t x = modeInfoBlock_user->XResolution;
     uint32_t y = modeInfoBlock_user->YResolution;
     // uint32_t c = modeInfoBlock_user->BitsPerPixel;
-	
+
     vgaDebug();
-    waitForKeyStroke(); 
+    waitForKeyStroke();
 
     setVideoMemory();
     waitForKeyStroke();
@@ -152,16 +156,17 @@ void main()
     {
         setPixel((x/2), i, 9);
     }
-
-    rect(340, 50, 380, 398, 0x0A);
-    rect(342, 50, 380, 400, 0x0B);
-    rect(344, 50, 380, 402, 0x0C);
-
-    bitmap(0,0);
     waitForKeyStroke();
+
+    bitmap(320,0,&bmp_start);
+    waitForKeyStroke();
+
+    bitmap(320,240,&font_start);
+    waitForKeyStroke();
+
 	printPalette(ScreenPal);
-	waitForKeyStroke();  
-	
+	waitForKeyStroke();
+
     switchToTextmode();
     vgaDebug();
     waitForKeyStroke();
@@ -169,9 +174,9 @@ void main()
     bitmapDebug();
     getPalette();
     waitForKeyStroke();
-    
+
     printf("\nBMP Paletten entries:");
-    for(uint32_t j=0; j<256; j++) 
+    for(uint32_t j=0; j<256; j++)
     {
         if (j<256 && bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
         {
@@ -198,30 +203,30 @@ void main()
             textColor(0x07);
         }
 
-        printf("\n# %u\tr: %u\tg: %u\tb: %u\tres: %u", 
+        printf("\n# %u\tr: %u\tg: %u\tb: %u\tres: %u",
             j, bmpinfo->bmicolors[j].red, bmpinfo->bmicolors[j].green, bmpinfo->bmicolors[j].blue, bmpinfo->bmicolors[j].rgbreserved);
-        
+
         textColor(0x0F);
-        
-        if (j%15==0 && j) 
+
+        if (j%15==0 && j)
         {
             waitForKeyStroke();
         }
     }
 
+    /*
     printf("\n\nScreenPal entries:");
-    for(uint32_t j=0; j<16; j++) 
+    for(uint32_t j=0; j<16; j++)
     {
         printf("\n# %u\tr: %u\tg: %u\tb: %u", j, ScreenPal[j].red ,ScreenPal[j].green ,ScreenPal[j].blue);
     }
-
     printf("\n\nScreenPal entries at 1600h:");
-    for(uint32_t j=0; j<16; j++) 
+    for(uint32_t j=0; j<16; j++)
     {
         printf("\n# %u\t%X", j, *(uint32_t*)(0x1600+4*j));
         printf("\texpected: %X", (ScreenPal[j].blue) + (ScreenPal[j].green << 6) + (ScreenPal[j].red << 12));
     }
-
+    */
 
     printf("\n\n");
     waitForKeyStroke();

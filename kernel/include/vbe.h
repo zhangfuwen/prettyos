@@ -20,8 +20,7 @@
 // Transfer segment and offset to a linear 32-bit pointer
 #define MAKE_LINEAR_POINTER(segment, offset)  ((uintptr_t)(((uint32_t) (segment) << 16) | (uint16_t) (offset)))
 
-// #define video_memory 0xE0000000// 0xF2000000 // qemu
-
+extern uintptr_t bmp_start;
 
 // SuperVGA information block
 typedef struct
@@ -123,7 +122,7 @@ typedef struct
 } __attribute__((packed)) BitmapHeader_t;
 
 
-// Correct arrangement of palettes in bmp format: Blue Green Red Unused (mostly 0)  
+// Correct arrangement of palettes in bmp format: Blue Green Red Unused (mostly 0)
 // The palettes are stored in backwards order in each palette entry
 // http://en.wikipedia.org/wiki/BMP_file_format#Color_palette
 typedef struct
@@ -132,7 +131,7 @@ typedef struct
     uint8_t green;
     uint8_t red;
     uint8_t rgbreserved;
-} __attribute__((packed)) RGBQuad_t; 
+} __attribute__((packed)) RGBQuad_t;
 
 typedef struct
 {
@@ -165,15 +164,13 @@ void printPalette(RGBQuadPacked_t* RGB);
 void setPalette(RGBQuadPacked_t* RGB);
 uint32_t getPalette();
 
-void SetDAC(uint8_t DAC, uint8_t R, uint8_t G, uint8_t B);
+void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t  Red, uint8_t  Green, uint8_t  Blue);
+void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue);
 
 void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette);
-void Set_DAC_C(uint8_t Color, uint8_t Red, uint8_t Green, uint8_t Blue);
 void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumberOfColors, uint8_t* Palette);
-// void Get_DAC_C(uint8_t Color, uint8_t &Red, uint8_t &Green, uint8_t &Blue);
 
 void setDACPalette(RGBQuadPacked_t* RGB);
-
 uint32_t getDACPalette();
 
 uint32_t getVBEMode(void);
@@ -188,7 +185,7 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color);
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);
 void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);
-void bitmap(uint32_t xpos, uint32_t ypos);
+void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);
 char ISValidBitmap(char *fname);
 void showbitmap(char *infname,int xs,int ys);
 void bitmapDebug();
