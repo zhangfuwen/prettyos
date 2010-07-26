@@ -136,10 +136,12 @@ typedef struct
 typedef struct
 {
     // cf. vbe3.pdf, page 55
-    uint8_t blue        : 6;
-    uint8_t green       : 6;
-    uint8_t red         : 6;
-    uint8_t pad         : 6;
+    uint32_t blue        : 6;
+    uint32_t blue_pad    : 2;
+    uint32_t green       : 6;
+    uint32_t green_pad   : 2;
+    uint32_t red         : 6;
+    uint32_t red_pad     : 2;
     uint8_t alignDword     ; // ???
 } __attribute__((packed)) RGBQuadPacked_t;
 
