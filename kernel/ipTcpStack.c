@@ -4,7 +4,7 @@
 */
 
 #include "ipTcpStack.h"
-#include "console.h"
+#include "video/console.h"
 
 // This is (normally) called from a Network-Card-Driver
 // It interprets the whole data (also the Ethernet-Header)

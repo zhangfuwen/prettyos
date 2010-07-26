@@ -6,12 +6,12 @@
 #include "keyboard.h"
 #include "util.h"
 #include "task.h"
-#include "console.h"
+#include "video/console.h"
 #include "event_list.h"
-#include "video.h"
+#include "video/video.h"
 #include "irq.h"
 #include "scheduler.h"
-#include "devicemanager.h" // HACK
+#include "storage/devicemanager.h" // HACK
 
 #ifdef KEYMAP_GER
 #include "keyboard_GER.h"

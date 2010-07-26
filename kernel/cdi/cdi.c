@@ -8,7 +8,7 @@
 #include "cdi/pci.h"
 #include "cdi/storage.h"
 #include "cdi/fs.h"
-#include "console.h"
+#include "video/console.h"
 
 static cdi_list_t drivers = NULL;
 

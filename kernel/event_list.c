@@ -4,8 +4,8 @@
 */
 
 #include "event_list.h"
-#include "ehci.h"
-#include "video.h"
+#include "storage/ehci.h"
+#include "video/video.h"
 
 listHead_t* eventQueue;
 

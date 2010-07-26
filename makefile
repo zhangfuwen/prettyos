@@ -47,18 +47,18 @@ else
 endif
 
 # dependancies
-KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
+KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c $(KERNELDIR)/video/*.c $(KERNELDIR)/storage/*.c $(KERNELDIR)/filesystem/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
 SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERTOOLS)/*.c $(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/*.asm))
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -O32 -f elf
-GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
+GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c 
-	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR)/include -I $(USERTOOLS) -o $(OBJDIR)/$@
+	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR) -I $(USERTOOLS) -o $(OBJDIR)/$@
 %.o: %.asm
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
 
@@ -98,6 +98,9 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
 	$(RM) $(KERNELDIR)\KERNEL.BIN
 	$(RM) $(OBJDIR)\$(KERNELDIR)\cdi\*.o
+	$(RM) $(OBJDIR)\$(KERNELDIR)\storage\*.o
+	$(RM) $(OBJDIR)\$(KERNELDIR)\filesystem\*.o
+	$(RM) $(OBJDIR)\$(KERNELDIR)\video\*.o
 	$(RM) $(OBJDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(SHELLDIR)\*.o
 	$(RM) $(SHELLDIR)\shell.elf
@@ -112,6 +115,9 @@ else
 	$(RM) $(OBJDIR)/$(KERNELDIR)/*.o
 	$(RM) $(KERNELDIR)/KERNEL.BIN
 	$(RM) $(OBJDIR)/$(KERNELDIR)/cdi/*.o
+	$(RM) $(OBJDIR)/$(KERNELDIR)/storage/*.o
+	$(RM) $(OBJDIR)/$(KERNELDIR)/filesystem/*.o
+	$(RM) $(OBJDIR)/$(KERNELDIR)/video/*.o
 	$(RM) $(OBJDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(SHELLDIR)/*.o
 	$(RM) $(SHELLDIR)/shell.elf

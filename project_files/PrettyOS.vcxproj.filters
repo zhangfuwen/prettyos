@@ -43,23 +43,26 @@
     <Filter Include="User\vm86">
       <UniqueIdentifier>{b47e1622-7958-4874-8775-a996e97fa113}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\sources\storage">
+      <UniqueIdentifier>{ac66fbfc-b33b-4f6b-aead-ad79c0757647}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\sources\filesystem">
+      <UniqueIdentifier>{fe3deba7-cdea-429a-82df-093b2d0893b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\sources\video">
+      <UniqueIdentifier>{067f8701-a829-4bf9-b7ce-fafee3154ee6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\include\video">
+      <UniqueIdentifier>{b17042ee-d7e0-4a81-94e4-760f5edbeb4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\include\storage">
+      <UniqueIdentifier>{eaba32ba-44a1-49b0-b207-82d5793f7e1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\include\filesystem">
+      <UniqueIdentifier>{51f0e996-d034-4179-b264-f98afb040091}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\kernel\data.asm">
-      <Filter>Kernel\sources</Filter>
-    </None>
-    <None Include="..\kernel\flush.asm">
-      <Filter>Kernel\sources</Filter>
-    </None>
-    <None Include="..\kernel\interrupts.asm">
-      <Filter>Kernel\sources</Filter>
-    </None>
-    <None Include="..\kernel\kernel.asm">
-      <Filter>Kernel\sources</Filter>
-    </None>
-    <None Include="..\kernel\process.asm">
-      <Filter>Kernel\sources</Filter>
-    </None>
     <None Include="..\user\user_tools\start.asm">
       <Filter>User\User-Tools</Filter>
     </None>
@@ -103,164 +106,23 @@
     <None Include="..\user\vm86\vidswtch.asm">
       <Filter>User\vm86</Filter>
     </None>
+    <None Include="..\kernel\data.asm">
+      <Filter>Kernel\sources</Filter>
+    </None>
+    <None Include="..\kernel\flush.asm">
+      <Filter>Kernel\sources</Filter>
+    </None>
+    <None Include="..\kernel\interrupts.asm">
+      <Filter>Kernel\sources</Filter>
+    </None>
+    <None Include="..\kernel\kernel.asm">
+      <Filter>Kernel\sources</Filter>
+    </None>
+    <None Include="..\kernel\process.asm">
+      <Filter>Kernel\sources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\kernel\include\cdi-osdep.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cmos.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\console.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\descriptor_tables.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\devicemanager.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\ehci.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\ehciQHqTD.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\event_list.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\fat.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\fat12.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\flpydsk.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\fs.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\initrd.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\ipTcpStack.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\irq.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\keyboard.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\keyboard_GER.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\keyboard_US.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\kheap.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\list.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\mouse.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\os.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\paging.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\pci.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\rtl8139.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\scheduler.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\sys_speaker.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\syscall.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\task.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\time.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\timer.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\types.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\usb2.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\usb2_msd.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\usb_hc.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\util.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\video.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\bios.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\cache.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\cmos.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\dma.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\fs.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\io.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\lists.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\mem.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\mempool.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\misc.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\net.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\pci.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\scsi.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\include\cdi\storage.h">
-      <Filter>Kernel\include\cdi</Filter>
-    </ClInclude>
     <ClInclude Include="..\user\user_tools\types.h">
       <Filter>User\User-Tools</Filter>
     </ClInclude>
@@ -270,128 +132,170 @@
     <ClInclude Include="..\user\user_tools\userlib.hpp">
       <Filter>User\User-Tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\include\fsmanager.h">
+    <ClInclude Include="..\kernel\filesystem\fat.h">
+      <Filter>Kernel\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\filesystem\fat12.h">
+      <Filter>Kernel\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\filesystem\fsmanager.h">
+      <Filter>Kernel\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\filesystem\initrd.h">
+      <Filter>Kernel\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\storage\devicemanager.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\storage\ehci.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\storage\ehciQHqTD.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\storage\flpydsk.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\storage\usb_hc.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\storage\usb2.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\storage\usb2_msd.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\video\console.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\video\vbe.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\video\video.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cmos.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\include\synchronisation.h">
+    <ClInclude Include="..\kernel\descriptor_tables.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\include\vm86.h">
+    <ClInclude Include="..\kernel\event_list.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\include\vbe.h">
+    <ClInclude Include="..\kernel\ipTcpStack.h">
       <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\irq.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\keyboard.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\keyboard_GER.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\keyboard_US.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\kheap.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\list.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\mouse.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\os.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\paging.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\pci.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\rtl8139.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\scheduler.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\synchronisation.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\sys_speaker.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\syscall.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\task.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\time.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\timer.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\types.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\util.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\vm86.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\bios.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\cache.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\cmos.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\dma.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\fs.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\io.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\lists.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\mem.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\mempool.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\misc.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\net.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\pci.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\scsi.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi\storage.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\filesystem\fs.h">
+      <Filter>Kernel\include\filesystem</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\kernel\ckernel.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\cmos.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\console.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\descriptor_tables.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\devicemanager.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\ehci.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\ehciQHqTD.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\elf.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\event_list.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\fat.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\fat12.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\flpydsk.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\fpu.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\fs.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\gdt.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\initrd.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\ipTcpStack.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\irq.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\keyboard.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\kheap.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\list.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\mouse.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\paging.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\pci.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\rtl8139.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\scheduler.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\sys_speaker.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\syscall.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\task.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\time.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\timer.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\usb2.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\usb2_msd.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\usb_hc.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\util.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\video.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\kernel\cdi\cdi.c">
       <Filter>Kernel\sources\cdi</Filter>
     </ClCompile>
@@ -452,17 +356,125 @@
     <ClCompile Include="..\user\user_test_cpp\cpp.cpp">
       <Filter>User\C++-Userprog</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\fsmanager.c">
+    <ClCompile Include="..\kernel\ckernel.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\cmos.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\descriptor_tables.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\elf.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\event_list.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\fpu.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\gdt.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ipTcpStack.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\irq.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\keyboard.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\kheap.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\list.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\mouse.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\paging.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\pci.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\rtl8139.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\scheduler.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\synchronisation.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\kernel\sys_speaker.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\syscall.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\task.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\time.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\timer.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\util.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\filesystem\fat.c">
+      <Filter>Kernel\sources\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\filesystem\fat12.c">
+      <Filter>Kernel\sources\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\filesystem\fsmanager.c">
+      <Filter>Kernel\sources\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\filesystem\initrd.c">
+      <Filter>Kernel\sources\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\console.c">
+      <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\vbe.c">
+      <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\video.c">
+      <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\storage\devicemanager.c">
+      <Filter>Kernel\sources\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\storage\ehci.c">
+      <Filter>Kernel\sources\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\storage\ehciQHqTD.c">
+      <Filter>Kernel\sources\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\storage\flpydsk.c">
+      <Filter>Kernel\sources\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\storage\usb_hc.c">
+      <Filter>Kernel\sources\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\storage\usb2.c">
+      <Filter>Kernel\sources\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\storage\usb2_msd.c">
+      <Filter>Kernel\sources\storage</Filter>
+    </ClCompile>
     <ClCompile Include="..\kernel\vm86.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\vbe.c">
-      <Filter>Kernel\sources</Filter>
+    <ClCompile Include="..\kernel\filesystem\fs.c">
+      <Filter>Kernel\sources\filesystem</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

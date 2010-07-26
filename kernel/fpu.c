@@ -4,7 +4,7 @@
 */
 
 #include "cmos.h"
-#include "console.h"
+#include "video/console.h"
 #include "task.h"
 
 task_t* FPUTask;

@@ -6,11 +6,11 @@
 #include "util.h"
 #include "pci.h"
 #include "paging.h"
-#include "usb_hc.h"
-#include "ehci.h"
+#include "storage/usb_hc.h"
+#include "storage/ehci.h"
 #include "list.h"
 #include "rtl8139.h"
-#include "console.h"
+#include "video/console.h"
 #include "kheap.h"
 
 pciDev_t* pciDev_Array[PCIARRAYSIZE];

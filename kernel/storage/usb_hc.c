@@ -6,7 +6,7 @@
 #include "usb_hc.h"
 #include "util.h"
 #include "ehci.h"
-#include "console.h"
+#include "video/console.h"
 
 void install_USB_HostController(pciDev_t* PCIdev)
 {

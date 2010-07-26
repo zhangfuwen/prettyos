@@ -2,7 +2,7 @@
 #define CDI_FS
 
 #include "os.h"
-#include "fsmanager.h"
+#include "filesystem/fsmanager.h"
 #include <cdi.h>
 #include <cdi/lists.h>
 #include <cdi/cache.h>

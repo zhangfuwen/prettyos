@@ -21,10 +21,10 @@
 #include "util.h"
 #include "paging.h"
 #include "kheap.h"
-#include "usb2_msd.h"
-#include "console.h"
-#include "fat.h"
-#include "devicemanager.h"
+#include "storage/usb2_msd.h"
+#include "video/console.h"
+#include "filesystem/fat.h"
+#include "storage/devicemanager.h"
 
 
 

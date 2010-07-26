@@ -5,13 +5,13 @@
 
 #include "flpydsk.h"
 #include "util.h"
-#include "console.h"
+#include "video/console.h"
 #include "cmos.h"
 #include "timer.h"
 #include "irq.h"
 #include "kheap.h"
-#include "fat.h"
-#include "video.h"
+#include "filesystem/fat.h"
+#include "video/video.h"
 
 // detailed infos about FDC and FAT12:
 // http://www.isdaman.com/alsos/hardware/fdc/floppy.htm

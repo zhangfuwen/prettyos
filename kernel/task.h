@@ -1,7 +1,7 @@
 #ifndef TASK_H
 #define TASK_H
 
-#include "console.h"
+#include "video/console.h"
 #include "paging.h"
 #include "descriptor_tables.h"
 #include "scheduler.h"

@@ -8,7 +8,7 @@
 #include "paging.h"
 #include "descriptor_tables.h"
 #include "kheap.h"
-#include "video.h"
+#include "video/video.h"
 #include "scheduler.h"
 
 bool task_switching;

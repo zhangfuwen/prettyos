@@ -4,11 +4,11 @@
 */
 
 #include "fsmanager.h"
-#include "devicemanager.h"
+#include "storage/devicemanager.h"
 #include "kheap.h"
 #include "paging.h"
 #include "util.h"
-#include "console.h"
+#include "video/console.h"
 
 fileSystem_t FAT, INITRD;
 

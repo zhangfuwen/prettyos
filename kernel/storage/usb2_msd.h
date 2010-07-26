@@ -3,7 +3,7 @@
 
 #include "os.h"
 #include "ehciQHqTD.h"
-#include "fat.h"
+#include "filesystem/fat.h"
 
 #define OUT   0
 #define IN    1

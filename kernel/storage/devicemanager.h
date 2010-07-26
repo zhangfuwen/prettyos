@@ -2,8 +2,8 @@
 #define DEVICEMANAGER_H
 
 #include "os.h"
-#include "fsmanager.h"
-#include "fat.h" // obsolete
+#include "filesystem/fsmanager.h"
+#include "filesystem/fat.h" // obsolete
 
 #define PORTARRAYSIZE 20
 #define DISKARRAYSIZE 20

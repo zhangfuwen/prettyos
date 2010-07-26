@@ -5,7 +5,7 @@
 
 #include "list.h"
 #include "kheap.h"
-#include "console.h"
+#include "video/console.h"
 
 
 // List

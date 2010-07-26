@@ -2,7 +2,7 @@
 #define VIDEO_H
 
 #include "os.h"
-#include "devicemanager.h" // HACK
+#include "storage/devicemanager.h" // HACK
 
 typedef struct {
     uint16_t x, y;

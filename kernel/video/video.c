@@ -9,7 +9,7 @@
 #include "video.h"
 #include "kheap.h"
 #include "timer.h"
-#include "fat.h"
+#include "filesystem/fat.h"
 
 uint16_t* vidmem = (uint16_t*)0xB8000;
 

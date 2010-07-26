@@ -11,7 +11,7 @@ exception (#GP). These instructions are sensitive to IOPL to give the virtual-80
 a chance to emulate the facilities they affect.
 */
 
-#include "console.h"
+#include "video/console.h"
 #include "vm86.h"
 #include "util.h"
 #include "task.h"

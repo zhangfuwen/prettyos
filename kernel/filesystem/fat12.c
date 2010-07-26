@@ -3,9 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "flpydsk.h"
+#include "storage/flpydsk.h"
 #include "fat12.h"
-#include "console.h"
+#include "video/console.h"
 #include "util.h"
 
 // cache memory for tracks 0 and 1

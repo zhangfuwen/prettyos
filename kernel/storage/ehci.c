@@ -8,7 +8,7 @@
 #include "kheap.h"
 #include "task.h"
 #include "event_list.h"
-#include "video.h"
+#include "video/video.h"
 #include "irq.h"
 #include "sys_speaker.h"
 

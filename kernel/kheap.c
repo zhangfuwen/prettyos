@@ -4,7 +4,7 @@
 */
 
 #include "util.h"
-#include "console.h"
+#include "video/console.h"
 #include "paging.h"
 #include "kheap.h"
 #include "task.h"

@@ -7,7 +7,7 @@
 #include "pci.h"
 #include "paging.h"
 #include "ipTcpStack.h"
-#include "console.h"
+#include "video/console.h"
 #include "timer.h"
 #include "irq.h"
 

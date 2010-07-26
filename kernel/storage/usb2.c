@@ -5,7 +5,7 @@
 
 #include "kheap.h"
 #include "paging.h"
-#include "console.h"
+#include "video/console.h"
 #include "timer.h"
 #include "util.h"
 #include "ehci.h"

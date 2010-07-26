@@ -4,7 +4,7 @@
 */
 
 #include "cdi/cmos.h"
-#include "cmos.h"
+#include "../cmos.h"
 
 
 uint8_t cdi_cmos_read(uint8_t index)

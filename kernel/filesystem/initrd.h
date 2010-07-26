@@ -3,7 +3,7 @@
 
 #include "fs.h"
 #include "fsmanager.h"
-#include "devicemanager.h"
+#include "storage/devicemanager.h"
 
 typedef struct
 {

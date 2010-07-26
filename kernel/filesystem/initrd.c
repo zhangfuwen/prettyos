@@ -7,7 +7,7 @@
 #include "util.h"
 #include "kheap.h"
 #include "paging.h"
-#include "devicemanager.h"
+#include "storage/devicemanager.h"
 
 initrd_header_t*      initrd_header; // The header.
 initrd_file_header_t* file_headers;  // The list of file headers.

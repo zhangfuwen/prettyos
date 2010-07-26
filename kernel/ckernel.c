@@ -8,24 +8,24 @@
 #include "cmos.h"
 #include "time.h"
 #include "kheap.h"
-#include "initrd.h"
-#include "flpydsk.h"
-#include "ehci.h"
+#include "filesystem/initrd.h"
+#include "storage/flpydsk.h"
+#include "storage/ehci.h"
 #include "mouse.h"
 #include "keyboard.h"
-#include "video.h"
+#include "video/video.h"
 #include "task.h"
 #include "event_list.h"
 #include "syscall.h"
 #include "pci.h"
 #include "cdi.h"
-#include "devicemanager.h"
-#include "vbe.h"
+#include "storage/devicemanager.h"
+#include "video/vbe.h"
 
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.113 - Rev: 682";
+const char* version = "0.0.1.113 - Rev: 683";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script

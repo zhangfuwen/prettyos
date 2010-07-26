@@ -4,8 +4,8 @@
 */
 
 #include "devicemanager.h"
-#include "fsmanager.h"
-#include "console.h"
+#include "filesystem/fsmanager.h"
+#include "video/console.h"
 #include "util.h"
 #include "paging.h"
 #include "kheap.h"
@@ -13,8 +13,8 @@
 #include "flpydsk.h"
 #include "usb2.h"
 #include "timer.h"
-#include "fat12.h"
-#include "fat.h"
+#include "filesystem/fat12.h"
+#include "filesystem/fat.h"
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];

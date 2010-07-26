@@ -10,8 +10,8 @@
 
 #include "mouse.h"
 #include "util.h"
-#include "console.h"
-#include "video.h"
+#include "video/console.h"
+#include "video/video.h"
 #include "irq.h"
 
 char mouseid;

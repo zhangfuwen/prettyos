@@ -6,11 +6,11 @@
 #include "syscall.h"
 #include "util.h"
 #include "task.h"
-#include "fat12.h"
+#include "filesystem/fat12.h"
 #include "sys_speaker.h"
 #include "timer.h"
 #include "irq.h"
-#include "devicemanager.h"
+#include "storage/devicemanager.h"
 
 // Overwiew to all syscalls in documentation/Syscalls.odt
 

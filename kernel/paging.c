@@ -8,7 +8,7 @@
 #include "paging.h"
 #include "util.h"
 #include "kheap.h"
-#include "console.h"
+#include "video/console.h"
 
 page_directory_t* kernel_pd;
 
