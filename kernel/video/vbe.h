@@ -192,7 +192,7 @@ char ISValidBitmap(char *fname);
 void showbitmap(char *infname,int xs,int ys);
 void bitmapDebug();
 
-void draw_char(unsigned char* screen, unsigned char* where, unsigned char font_char);
-void draw_string(unsigned char* screen, unsigned char* where, char* input);
+void draw_char(char font_char, void* bitmapMemStart);
+void draw_string(const char* text, void* bitmapMemStart);
 
 #endif

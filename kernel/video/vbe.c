@@ -613,208 +613,86 @@ void bitmapDebug()
 }
 
 
-void draw_char(unsigned char* screen, unsigned char* where, unsigned char font_char)
+void draw_char(char font_char, void* bitmapMemStart)
 {
+	uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
+
+    switch (uc) {
+        case 0x08: // backspace: move the cursor one space backwards and delete
+            // move_cursor_left();
+            // putch(' ');
+            // move_cursor_left();
+            break;
+        case 0x09: // tab: increment cursor.x (divisible by 8)
+            currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
+            if (currentConsole->cursor.x>=COLUMNS)
+            { 
+                ++currentConsole->cursor.y;
+                currentConsole->cursor.x=0;
+                scroll();
+            }
+            break;
+        case '\r': // cr: cursor back to the margin
+            // move_cursor_home();
+            break;
+        case '\n': // newline: like 'cr': cursor to the margin and increment cursor.y
+            //++currentConsole->cursor.y; scroll(); move_cursor_home();
+            // scroll();
+            break;
+        default:
+            if (uc != 0)
+            {
+				/*
+                uint32_t att = currentTask->attrib << 8;
+                if (reachableConsoles[displayedConsole] == currentConsole) { //print to screen
+                    *(vidmem + (currentConsole->cursor.y+2) * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
+                }
+                *(currentConsole->vidmem + currentConsole->cursor.y * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
+                move_cursor_right();*/
+				uint32_t xpos = 0, ypos = 0;
+				// uint32_t xFont = 8, yFont = 16;
+				
+				uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
+				uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
+
+				if(mib->BitsPerPixel == 8)
+				{
+					bmpinfo = (BMPInfo_t*)bitmapMemStart;
+					for(uint32_t j=0; j<256; j++)
+					{
+						// transfer from bitmap palette to packed RAMDAC palette
+						Set_DAC_C (j, bmpinfo->bmicolors[j].red   >> 2,
+									  bmpinfo->bmicolors[j].green >> 2,
+									  bmpinfo->bmicolors[j].blue  >> 2);
+					}
+				}
+
+				uint8_t *i = (uint8_t*)bitmap_end;
+				for(uint32_t y = 0; y < 16; y++)
+				{
+					for(uint32_t x=8*uc; x > (8*uc-8); x--)
+					{
+					 /*
+						for(uint32_t yFont=0; yFont < 16; yFont++)
+						{
+							for(uint32_t xFont=0; xFont > 8; xFont--)
+							{*/
+								//SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
+								SCREEN[ (xpos) + (ypos) * mib->XResolution * mib->BitsPerPixel/8 ] = *i; //[x+y*2048];
+								i -= (mib->BitsPerPixel/8);
+							/*}
+						}*/
+					}
+				}
+			}
+			break;
+	}
 }
 
-void draw_string(unsigned char* screen, unsigned char* where, char* input)
+void draw_string(const char* text, void* bitmapMemStart)
 {
-/*
-; ------ Fill screen buffer with a color.
-        mov    eax, 0xFFFFFFFF ; white
-        mov    edi, buffer
-        mov    ecx, 640*480/2
-        rep    stosd
-
-; ------ Print message using the font.
-        mov    edi, buffer
-        xor    ecx, ecx
-    .m:    mov    al, [msg1+ecx]
-        call    next_glyph
-        inc    ecx
-        cmp    ecx, len1
-        jl    .m
-
-; ------ Copy screen buffer into video memory.
-        mov    esi, buffer
-        mov    edi, 0xE0000000
-        mov    ecx, 640*480/2
-        rep    movsd
-
-; ------ Hang computer.
-;        jmp    $
-
-; -------------------------------------------------------------------------
-; SUBROUTINES
-; -------------------------------------------------------------------------
-
-next_2_pixels:
-; Converts low 2 bits in EAX to 2 pixels on screen
-; PASS eax=bits from font, edi=pointer into screen buffer
-        mov    ebx, eax
-        and    ebx, 0x03 ; leave only bits 0..1 (value 0..3)
-        mov    ebx, [colors+ebx*4]
-        shr    eax, 2
-        mov    [edi], ebx
-        lea    edi, [edi+4]
-        ret
-
-next_scanline:
-; Converts low 8 bits in EAX to 8 pixels on screen
-; PASS eax=bits from font, edi=pointer into screen buffer
-        call    next_2_pixels
-        call    next_2_pixels
-        call    next_2_pixels
-        call    next_2_pixels
-        add    edi, 640*2-16
-        ret
-
-next_4_scanlines:
-; Converts 32 bits in EAX to 4 rows of 8 pixels on screen
-; PASS esi=pointer into font, edi=pointer into screen buffer
-        mov    eax, [esi]   ; grab 4 bytes from font
-        call    next_scanline
-        call    next_scanline
-        call    next_scanline
-        call    next_scanline
-        lea    esi, [esi+4] ; move to next 4 bytes in font
-        ret
-
-next_glyph:
-; Prints character whose ASCII value is passed in AL (EAX)
-; PASS eax=character, edi=pointer into screen buffer
-        push    edi
-        and    eax, 0xFF
-        shl    eax, 4    ; multiply by 16 (# bytes in font per char)
-        add    eax, font ; create offset into font
-        mov    esi, eax
-        call    next_4_scanlines
-        call    next_4_scanlines
-        call    next_4_scanlines
-        call    next_4_scanlines
-        pop    edi
-        add    edi, 16   ; width in bytes of one character
-        ret
-
-; -------------------------------------------------------------------------
-black equ 0x0000
-white equ 0xFFFF
-
-; We take pixels two at a time and print both at once. Bit 0 becomes the
-; first pixel printed; bit 1, the second. If the two bits are 01 (bit 0 = 1
-; and bit 1 = 0), we want bit 0 done first, so we need to lay color 1 first,
-; thus offset 01 leads to the "white, black" entry.
-
-colors:
-        dw    black, black ; bits 00
-        dw    white, black ; bits 10 -> 01
-        dw    black, white ; bits 01 -> 10
-        dw    white, white ; bits 11
-
-msg1:        db    "This is the system font that I will be using in Karig."
-len1:        equ    $-msg1
-
-*/
+	for (; *text;draw_char(*text, bitmapMemStart), ++text);
 }
-
-/*------------------------------------------------------------------------------
-* The following commented-out routines are for Planar modes
-* outpw() is for word output, outp() is for byte output */
-
-/* Initialize Planar (Write mode 2)
-* Should be Called from initGraphics */
-/*
-void initPlanner()
-{
-    outpw(0x3C4, 0x0F02);
-    outpw(0x3CE, 0x0003);
-    outpw(0x3CE, 0x0205);
-}
-*/
-
-
-/* Reset to Write Mode 0
-* for BiOS default draw text */
-/*
-void setWriteMode0()
-{
-    outpw(0x3CE, 0xFF08);
-    outpw(0x3CE, 0x0005);
-}
-*/
-/* Plot a pixel in Planer mode */
-
-/*
-
-void putPixelP(int x, int y, int color)
-{
-    char dummy_read;
-
-    long addr = (long)y * bytesperline +(x/8));
-    setBank((int)(addr >> 16));
-    outp(0x3CE, 8);
-    outp(0x3CF, 0x80 >> (x & 7));
-    dummy_read = *(screenPtr +^(addr & 0xFFFF));
-    *(screenPtr + (addr & 0xFFFF)) = (char)color;
-}
-*/
-//------------------------------------------------------------------------------
-
-/* Set new read/write bank. We must set both Window A and Window B, as
- * many VBE's have these set as separately available read and write
- * windows. We also use a simple (but very effective) optimisation of
- * checking if the requested bank is currently active.
- */
- /*
-void setBank(int bank)
-{
-    union REGS  regs;
-    if (bank == curBank) return;    // Bank is already active
-    curBank = bank;                 // Save current bank number
-    bank <<= bankShift;             // Adjust to window granularity
-#ifdef  DIRECT_BANKING
-asm {   mov bx,0;
-        mov dx,bank; }
-    bankSwitch();
-asm {   mov bx,1;
-        mov dx,bank; }
-    bankSwitch();
-#else
-    regs.x.ax = 0x4F05; regs.x.bx = 0;  regs.x.dx = bank;
-    int86(0x10, &regs, &regs);
-    regs.x.ax = 0x4F05; regs.x.bx = 1;  regs.x.dx = bank;
-    int86(0x10, &regs, &regs);
-#endif
-}
-*/
-
-
-/* Below is the Assembly Language module required for the direct bank switching. In
-* Borland C or other C compilers, this can be converted to in-lin assembly code.
-*/
-
-/*
-public _setbxdx
-.MODEL SMALL
-.CODE
-set_struc    struc
-    dw    ?    ;old bp
-    dd    ?    ; return addr ( always far call)
-    p_bx    dw    ?    ; reg bx value
-    p_dx    dw    ?    ; reg dx value
-    set_struc    ends
-
-    _setbxdx    proc far    ; must be far
-        push    bp
-        mov    bp, sp
-        mov    bx,[bp]+p_bx
-        mov    dx,[bp]+p_dx
-        pop    bp
-        ret
-    _setbxdx    endp
-    END
-*/
-
 
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.

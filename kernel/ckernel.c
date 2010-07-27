@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.114 - Rev: 684";
+const char* version = "0.0.1.115 - Rev: 685";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -160,18 +160,21 @@ void main()
     bitmap(320,0,&bmp_start);
     waitForKeyStroke();
 
-    bitmap(320,240,&font_start);
-    waitForKeyStroke();
+    // bitmap(320,240,&font_start);
+    // waitForKeyStroke();
 
     printPalette(ScreenPal);
     waitForKeyStroke();
 
-    switchToTextmode();
+	draw_char('A', &font_start);
+	waitForKeyStroke();
+    
+	switchToTextmode();
     vgaDebug();
     waitForKeyStroke();
 
     bitmapDebug();
-    getPalette();
+    // getPalette();
     waitForKeyStroke();
 
     printf("\nBMP Paletten entries:");

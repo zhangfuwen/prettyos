@@ -13,7 +13,7 @@
 /// #define _TASKING_DIAGNOSIS_ // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_  // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_      // Provides information about the vm86 task, but critical
-#define _SOUND_             // Sound-Messages - activated per default, does not increase boot-time
+// #define _SOUND_             // Sound-Messages - activated per default, does not increase boot-time
 
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);
