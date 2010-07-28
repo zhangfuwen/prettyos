@@ -8,6 +8,7 @@
 #include "task.h"
 #include "video.h"
 #include "paging.h"
+#include "font.h"
 
 ModeInfoBlock_t modeInfoBlock;
 ModeInfoBlock_t* mib = &modeInfoBlock;
@@ -174,7 +175,6 @@ uint32_t getDACPalette()
     return 0;
 }
 
-
 void setPixel(uint32_t x, uint32_t y, uint32_t color)
 {
     // long addr = (long)y * bytesperline + x;
@@ -185,8 +185,6 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
     SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
 
 }
-
-
 
 void setVideoMemory()
 {
@@ -209,7 +207,7 @@ void setVideoMemory()
 void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 {
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
-     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
+    uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
 
      if(mib->BitsPerPixel == 8)
     {
@@ -233,8 +231,6 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
          }
      }
 }
-
-
 
 // draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
@@ -612,7 +608,6 @@ void bitmapDebug()
     printf("Colors Important:      %u\n", bh->ColorsImportant);
 }
 
-
 void draw_char(char font_char, void* bitmapMemStart)
 {
 	uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
@@ -649,7 +644,7 @@ void draw_char(char font_char, void* bitmapMemStart)
                 }
                 *(currentConsole->vidmem + currentConsole->cursor.y * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
                 move_cursor_right();*/
-				uint32_t xpos = 0, ypos = 0;
+				uint32_t xpos = 0, ypos = 300;
 				// uint32_t xFont = 8, yFont = 16;
 				
 				uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
@@ -670,18 +665,10 @@ void draw_char(char font_char, void* bitmapMemStart)
 				uint8_t *i = (uint8_t*)bitmap_end;
 				for(uint32_t y = 0; y < 16; y++)
 				{
-					for(uint32_t x=8*uc; x > (8*uc-8); x--)
+					for(uint32_t x=8; x > 0; x--)
 					{
-					 /*
-						for(uint32_t yFont=0; yFont < 16; yFont++)
-						{
-							for(uint32_t xFont=0; xFont > 8; xFont--)
-							{*/
-								//SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
-								SCREEN[ (xpos) + (ypos) * mib->XResolution * mib->BitsPerPixel/8 ] = *i; //[x+y*2048];
-								i -= (mib->BitsPerPixel/8);
-							/*}
-						}*/
+						SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x+(8*uc))+y*((BitmapHeader_t*)bitmapMemStart)->Width];
+						i -= (mib->BitsPerPixel/8);
 					}
 				}
 			}
