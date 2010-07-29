@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.116 - Rev: 686";
+const char* version = "0.0.1.117 - Rev: 687";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -123,7 +123,6 @@ void main()
     memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
   #endif
 
-    // memcpy((void*)0x2400, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
     bh_get = (BitmapHeader_t*)&bmp_start;
 
     waitForKeyStroke();
@@ -137,7 +136,6 @@ void main()
 
     uint32_t x = modeInfoBlock_user->XResolution;
     uint32_t y = modeInfoBlock_user->YResolution;
-    // uint32_t c = modeInfoBlock_user->BitsPerPixel;
 
     vgaDebug();
 
@@ -160,15 +158,15 @@ void main()
     bitmap(320,0,&bmp_start);
     waitForKeyStroke();
 
-    // bitmap(320,240,&font_start);
-    // waitForKeyStroke();
+    bitmap(0,240,&font_start);
+    waitForKeyStroke();
 
     printPalette(ScreenPal);
     waitForKeyStroke();
-	
-	draw_char('A', &font_start);
+
+	draw_string("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400, &font_start);
 	waitForKeyStroke();
-	
+
 	switchToTextmode();
     vgaDebug();
     waitForKeyStroke();
@@ -215,20 +213,6 @@ void main()
             waitForKeyStroke();
         }
     }
-
-    /*
-    printf("\n\nScreenPal entries:");
-    for(uint32_t j=0; j<16; j++)
-    {
-        printf("\n# %u\tr: %u\tg: %u\tb: %u", j, ScreenPal[j].red ,ScreenPal[j].green ,ScreenPal[j].blue);
-    }
-    printf("\n\nScreenPal entries at 1600h:");
-    for(uint32_t j=0; j<16; j++)
-    {
-        printf("\n# %u\t%X", j, *(uint32_t*)(0x1600+4*j));
-        printf("\texpected: %X", (ScreenPal[j].blue) + (ScreenPal[j].green << 6) + (ScreenPal[j].red << 12));
-    }
-    */
 
     printf("\n\n");
 

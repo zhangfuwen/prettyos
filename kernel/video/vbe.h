@@ -192,7 +192,7 @@ char ISValidBitmap(char *fname);
 void showbitmap(char *infname,int xs,int ys);
 void bitmapDebug();
 void draw_char2(char font_char, void* bitmapMemStart);
-void draw_char(char font_char, void* bitmapMemStart);
-void draw_string(const char* text, void* bitmapMemStart);
+void draw_char(char font_char, uint32_t xpos, uint32_t ypos, void* bitmapMemStart);
+void draw_string(const char* text, uint32_t xpos, uint32_t ypos, void* bitmapMemStart);
 
 #endif

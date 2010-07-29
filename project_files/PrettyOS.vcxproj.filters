@@ -294,6 +294,9 @@
     <ClInclude Include="..\kernel\filesystem\fs.h">
       <Filter>Kernel\include\filesystem</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\video\font.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">

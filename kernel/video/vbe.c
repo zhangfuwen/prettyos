@@ -608,11 +608,12 @@ void bitmapDebug()
     printf("Colors Important:      %u\n", bh->ColorsImportant);
 }
 
-void draw_char(char font_char, void* bitmapMemStart)
+void draw_char(char font_char, uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 {
 	uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
 
-    switch (uc) {
+    switch (uc)
+    {
         case 0x08: // backspace: move the cursor one space backwards and delete
             // move_cursor_left();
             // putch(' ');
@@ -621,7 +622,7 @@ void draw_char(char font_char, void* bitmapMemStart)
         case 0x09: // tab: increment cursor.x (divisible by 8)
             currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
             if (currentConsole->cursor.x>=COLUMNS)
-            { 
+            {
                 ++currentConsole->cursor.y;
                 currentConsole->cursor.x=0;
                 scroll();
@@ -637,16 +638,8 @@ void draw_char(char font_char, void* bitmapMemStart)
         default:
             if (uc != 0)
             {
-				/*
-                uint32_t att = currentTask->attrib << 8;
-                if (reachableConsoles[displayedConsole] == currentConsole) { //print to screen
-                    *(vidmem + (currentConsole->cursor.y+2) * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
-                }
-                *(currentConsole->vidmem + currentConsole->cursor.y * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
-                move_cursor_right();*/
-				uint32_t xpos = 0, ypos = 300;
-				// uint32_t xFont = 8, yFont = 16;
-				
+				uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
+
 				uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
 				uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
 
@@ -663,11 +656,11 @@ void draw_char(char font_char, void* bitmapMemStart)
 				}
 
 				uint8_t *i = (uint8_t*)bitmap_end;
-				for(uint32_t y = 0; y < 16; y++)
+				for(uint32_t y=0; y < yFont; y++)
 				{
-					for(uint32_t x=8; x > 0; x--)
+					for(uint32_t x=0; x<xFont; x++)
 					{
-						SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x+(8*uc))+y*((BitmapHeader_t*)bitmapMemStart)->Width];
+						SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x+(xFont*uc)) + (yFont-y-1) * ((BitmapHeader_t*)bitmapMemStart)->Width];
 						i -= (mib->BitsPerPixel/8);
 					}
 				}
@@ -676,9 +669,9 @@ void draw_char(char font_char, void* bitmapMemStart)
 	}
 }
 
-void draw_string(const char* text, void* bitmapMemStart)
+void draw_string(const char* text, uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 {
-	for (; *text;draw_char(*text, bitmapMemStart), ++text);
+	for (; *text; draw_char(*text, xpos, ypos, bitmapMemStart), ++text, xpos+=8);
 }
 
 /*

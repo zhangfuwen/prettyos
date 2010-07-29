@@ -117,6 +117,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\types.h" />
     <ClInclude Include="..\kernel\util.h" />
     <ClInclude Include="..\kernel\video\console.h" />
+    <ClInclude Include="..\kernel\video\font.h" />
     <ClInclude Include="..\kernel\video\vbe.h" />
     <ClInclude Include="..\kernel\video\video.h" />
     <ClInclude Include="..\kernel\vm86.h" />
