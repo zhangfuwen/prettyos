@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.117 - Rev: 687";
+const char* version = "0.0.1.118 - Rev: 688";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -38,10 +38,6 @@ extern uintptr_t vm86_com_end;
 // bmp
 extern uintptr_t bmp_start;
 extern uintptr_t bmp_end;
-
-// font
-extern uintptr_t font_start;
-extern uintptr_t font_end;
 
 // vbe
 extern BitmapHeader_t*  bh_get;
@@ -158,13 +154,10 @@ void main()
     bitmap(320,0,&bmp_start);
     waitForKeyStroke();
 
-    bitmap(0,240,&font_start);
-    waitForKeyStroke();
-
     printPalette(ScreenPal);
     waitForKeyStroke();
 
-	draw_string("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400, &font_start);
+	draw_string("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400);
 	waitForKeyStroke();
 
 	switchToTextmode();
@@ -174,7 +167,7 @@ void main()
     bitmapDebug();
     // getPalette();
     waitForKeyStroke();
-
+	/*
     printf("\nBMP Paletten entries:");
     for(uint32_t j=0; j<256; j++)
     {
@@ -213,7 +206,7 @@ void main()
             waitForKeyStroke();
         }
     }
-
+	*/
     printf("\n\n");
 
     // --------------------- VM86 ------------ TEST -------------------------------------------------------------

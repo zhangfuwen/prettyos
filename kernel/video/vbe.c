@@ -608,7 +608,7 @@ void bitmapDebug()
     printf("Colors Important:      %u\n", bh->ColorsImportant);
 }
 
-void draw_char(char font_char, uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
+void draw_char(char font_char, uint32_t xpos, uint32_t ypos)
 {
 	uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
 
@@ -640,12 +640,8 @@ void draw_char(char font_char, uint32_t xpos, uint32_t ypos, void* bitmapMemStar
             {
 				uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
 
-				uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
-				uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
-
 				if(mib->BitsPerPixel == 8)
 				{
-					bmpinfo = (BMPInfo_t*)bitmapMemStart;
 					for(uint32_t j=0; j<256; j++)
 					{
 						// transfer from bitmap palette to packed RAMDAC palette
@@ -655,13 +651,11 @@ void draw_char(char font_char, uint32_t xpos, uint32_t ypos, void* bitmapMemStar
 					}
 				}
 
-				uint8_t *i = (uint8_t*)bitmap_end;
 				for(uint32_t y=0; y < yFont; y++)
 				{
 					for(uint32_t x=0; x<xFont; x++)
 					{
-						SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x+(xFont*uc)) + (yFont-y-1) * ((BitmapHeader_t*)bitmapMemStart)->Width];
-						i -= (mib->BitsPerPixel/8);
+						SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x+(xFont*uc)) + (yFont-y-1) * 2048];
 					}
 				}
 			}
@@ -669,9 +663,9 @@ void draw_char(char font_char, uint32_t xpos, uint32_t ypos, void* bitmapMemStar
 	}
 }
 
-void draw_string(const char* text, uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
+void draw_string(const char* text, uint32_t xpos, uint32_t ypos)
 {
-	for (; *text; draw_char(*text, xpos, ypos, bitmapMemStart), ++text, xpos+=8);
+	for (; *text; draw_char(*text, xpos, ypos), ++text, xpos+=8);
 }
 
 /*
