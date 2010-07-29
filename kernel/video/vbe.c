@@ -29,12 +29,6 @@ RGBQuadPacked_t* ScreenPal = (RGBQuadPacked_t*)0x1600;
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 
-int xres,yres;    // Resolution of video mode used
-int bytesperline; // Logical CRT scanline length
-int curBank;      // Current read/write bank
-int bankShift;    // Bank granularity adjust factor
-int oldMode;      // Old video mode number
-//void    _far (*bankSwitch)(void); // Direct bank switching function
 
 void setVgaInfoBlock(VgaInfoBlock_t* VIB)
 {
@@ -65,6 +59,14 @@ void switchToTextmode()
 {
     waitForTask(create_vm86_task(VM86_SWITCH_TO_TEXT));
     refreshUserScreen();
+}
+
+uint32_t getDisplayStart()
+{
+    // outportb(0x0x4F07, 1); ?
+	// outportw(0x0x4F07, 1); ?
+	waitForTask(create_vm86_task(VM86_GETDISPLAYSTART));
+	return 0;
 }
 
 void printPalette(RGBQuadPacked_t* RGB)
@@ -101,14 +103,14 @@ void printPalette(RGBQuadPacked_t* RGB)
 
 void setPalette(RGBQuadPacked_t* RGB)
 {
-/*
-Format of VESA VBE palette entry:
-Offset    Size    Description
- 00h      BYTE    red
- 01h      BYTE    green
- 02h      BYTE    blue
- 03h      BYTE    alpha or alignment byte
-*/
+	/*
+	Format of VESA VBE palette entry:
+	Offset    Size    Description
+	00h      BYTE    red
+	01h      BYTE    green
+	02h      BYTE    blue
+	03h      BYTE    alpha or alignment byte
+	*/
     ScreenPal = RGB;
     waitForTask(create_vm86_task(VM86_SETPALETTE));
 }
@@ -177,18 +179,12 @@ uint32_t getDACPalette()
 
 void setPixel(uint32_t x, uint32_t y, uint32_t color)
 {
-    // long addr = (long)y * bytesperline + x;
-    // setBank(addr >> 16);
-    // *(screenPtr + (addr & 0xFFFF)) = color;
-
     // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
     SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
-
 }
 
 void setVideoMemory()
 {
-     // size_of_video_ram
      SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
      for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000)
      {

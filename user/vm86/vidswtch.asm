@@ -68,10 +68,10 @@ ModeInfoBlock:
 ;	mov bl, 0
 ; 	jmp exitvm86
 
-;GetDisplayStart:
-;	mov ax, 0x4F07
-;	mov bl, 1
-; 	jmp exitvm86
+GetDisplayStart:
+	mov ax, 0x4F07
+	mov bl, 1
+ 	jmp exitvm86
 
 SetDacPalette:
 	mov ax, 0x4F08		;Set DAC Palette Format

@@ -9,11 +9,12 @@
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
 #define VM86_VGAINFOBLOCK    ((void*)0x10B)
 #define VM86_MODEINFOBLOCK   ((void*)0x119)
-#define VM86_SETDACPALETTE   ((void*)0x134)
-#define VM86_GETDACPALETTE   ((void*)0x141)
-#define VM86_SETPALETTE      ((void*)0x14B)
-#define VM86_GETPALETTE      ((void*)0x163)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x176)
+#define VM86_GETDISPLAYSTART ((void*)0x134)
+#define VM86_SETDACPALETTE   ((void*)0x13C)
+#define VM86_GETDACPALETTE   ((void*)0x149)
+#define VM86_SETPALETTE      ((void*)0x153)
+#define VM86_GETPALETTE      ((void*)0x16B)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x17E)
 
 // #define DIRECT_BANKING
 
@@ -159,6 +160,7 @@ ModeInfoBlock_t *getModeInfoBlock();
 void switchToVGA();
 void switchToVideomode();
 void switchToTextmode();
+uint32_t getDisplayStart();
 
 void vgaDebug();
 void printPalette(RGBQuadPacked_t* RGB);
