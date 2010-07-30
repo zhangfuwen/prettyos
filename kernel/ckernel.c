@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.120 - Rev: 691";
+const char* version = "0.0.1.121 - Rev: 692";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
