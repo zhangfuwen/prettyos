@@ -199,7 +199,7 @@ void install_RTL8139(pciDev_t* device)
     *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
     // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
 
-    irq_install_handler(32 + device->irq, rtl8139_handler);
+    irq_installHandler(32 + device->irq, rtl8139_handler);
 }
 
 

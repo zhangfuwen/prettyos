@@ -18,13 +18,13 @@ extern context_v86_t context; // vm86.c
 interrupt_handler_t irq_routines[256-32];
 
 // Implement a custom ir handler for the given ir
-void irq_install_handler(int32_t ir, interrupt_handler_t handler)
+void irq_installHandler(int32_t ir, interrupt_handler_t handler)
 {
     irq_routines[ir] = handler;
 }
 
 // Clear the custom ir handler
-void irq_uninstall_handler(int32_t ir)
+void irq_uninstallHandler(int32_t ir)
 {
     irq_routines[ir] = 0;
 }
@@ -44,67 +44,72 @@ const char* exception_messages[] =
     "Reserved",                "Reserved",                      "Reserved",                  "Reserved"
 };
 
+static void quitTask()
+{
+    printf("| <Exception - Task Halted> Press key for exit! |");
+    sti();
+    while(!keyboard_getChar());
+    exit();
+    for (;;);
+}
+
 uint32_t irq_handler(uint32_t esp)
 {
     uint8_t attr = currentTask->attrib;
 
     registers_t* r = (registers_t*)esp;
 
-    if (r->int_no == 7) // exception #NM (number 7)
+    switch(r->int_no) // All Interrupts that are handled seperately
     {
-        // set TS in cr0 to zero
-        __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
-
-        kdebug(3, "#NM: FPU is used. pCurrentTask: %X\n", currentTask);
-
-        // save FPU data ...
-        if (FPUTask)
+        case 7: // Exeption #NM
         {
-            // fsave or fnsave to FPUTask->FPU_ptr
-            __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(FPUTask->FPU_ptr)));
-        }
+            // set TS in cr0 to zero
+            __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
 
-        // store the last task using FPU
-        FPUTask = currentTask;
+            kdebug(3, "#NM: FPU is used. pCurrentTask: %X\n", currentTask);
 
-        // restore FPU data ...
-        if (currentTask->FPU_ptr)
-        {
-            // frstor from pCurrentTask->FPU_ptr
-            __asm__ volatile("frstor %0" :: "m" (*(uint8_t*)(currentTask->FPU_ptr)));
-        }
-        else
-        {
-            // allocate memory to pCurrentTask->FPU_ptr
-            currentTask->FPU_ptr = (uintptr_t)malloc(108,4,"FPU_ptr");
-        }
-    }
-    else if (r->int_no < 32) // exception w/o #NM
-    {
-        textColor(0x0C);
-        deviceManager_checkDrives(); // switch off motors
+            // save FPU data ...
+            if (FPUTask)
+            {
+                // fsave or fnsave to FPUTask->FPU_ptr
+                __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(FPUTask->FPU_ptr)));
+            }
 
-        if (r->int_no == 6 /*|| r->int_no == 1*/) // Invalid Opcode
+            // store the last task using FPU
+            FPUTask = currentTask;
+
+            // restore FPU data ...
+            if (currentTask->FPU_ptr)
+            {
+                // frstor from pCurrentTask->FPU_ptr
+                __asm__ volatile("frstor %0" :: "m" (*(uint8_t*)(currentTask->FPU_ptr)));
+            }
+            else
+            {
+                // allocate memory to pCurrentTask->FPU_ptr
+                currentTask->FPU_ptr = (uintptr_t)malloc(108,4,"FPU_ptr"); // http://siyobik.info/index.php?module=x86&id=112
+            }
+            break;
+        }
+        case 6: // Invalid Opcode
         {
             printf("\nInvalid Opcode err_code: %u address(eip): %X", r->err_code, r->eip);
-            /*
-            printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+            /*printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
             printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-            printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
-            */
+            printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);*/
+            break;
         }
-
-        if (r->int_no == 14) // Page Fault
+        case 14: // Page Fault
         {
             uint32_t faulting_address;
             __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_address)); // faulting address <== CR2 register
 
             // The error code gives us details of what happened.
-            int32_t present   =  !r->err_code & 0x1;  // Page not present
-            int32_t rw        =   r->err_code & 0x2;  // Write operation?
-            int32_t us        =   r->err_code & 0x4;  // Processor was in user-mode?
-            int32_t reserved  =   r->err_code & 0x8;  // Overwritten CPU-reserved bits of page entry?
-            int32_t id        =   r->err_code & 0x10; // Caused by an instruction fetch?
+            int32_t present  = !r->err_code & 0x1;  // Page not present
+            int32_t rw       =  r->err_code & 0x2;  // Write operation?
+            int32_t us       =  r->err_code & 0x4;  // Processor was in user-mode?
+            int32_t reserved =  r->err_code & 0x8;  // Overwritten CPU-reserved bits of page entry?
+            int32_t id       =  r->err_code & 0x10; // Caused by an instruction fetch?
 
             // Output an error message.
             printf("\nPage Fault (");
@@ -115,52 +120,43 @@ uint32_t irq_handler(uint32_t esp)
             if (id)       printf(" - caused by an instruction fetch");
             printf(") at %X - EIP: %X\n", faulting_address, r->eip);
 
-            printf("| <Exception - System Halted> Press key for exit from the task! |");
-            sti();
-            while(!keyboard_getChar());
-            textColor(0xF);
-            exit();
-            for (;;);
+            quitTask();
+            break;
         }
-
-        if (r->int_no == 13) // GPF
+        case 13: // GPF -> VM86
         {
-            // --------------------- VM86 -------------------------------------------------------------------------------
-            context_v86_t* ctx = &context;
-
-            ctx->cs      = r->cs;
-            ctx->eip     = r->eip;
-            ctx->ss      = r->ss;
-            ctx->eflags  = r->eflags;
-            ctx->ds      = r->ds;
-            ctx->es      = r->es;
-            ctx->fs      = r->fs;
-            ctx->gs      = r->gs;
-            ctx->useresp = r->useresp;
-            ctx->eax     = r->eax;
-            ctx->ebx     = r->ebx;
-            ctx->ecx     = r->ecx;
-            ctx->edx     = r->edx;
-            ctx->edi     = r->edi;
-            ctx->esi     = r->esi;
-
-            if (r->eflags & 0x20000) // VM bit
+            if (r->eflags & 0x20000) // VM bit - its a VM86-task
             {
-                textColor(0x03);
-                bool retVal = vm86sensitiveOpcodehandler(ctx); // vm86 handler for sensitive opcode
-                if (retVal == true) // OK
+                context_v86_t* ctx = &context;
+
+                ctx->cs      = r->cs;
+                ctx->eip     = r->eip;
+                ctx->ss      = r->ss;
+                ctx->eflags  = r->eflags;
+                ctx->ds      = r->ds;
+                ctx->es      = r->es;
+                ctx->fs      = r->fs;
+                ctx->gs      = r->gs;
+                ctx->useresp = r->useresp;
+                ctx->eax     = r->eax;
+                ctx->ebx     = r->ebx;
+                ctx->ecx     = r->ecx;
+                ctx->edx     = r->edx;
+                ctx->edi     = r->edi;
+                ctx->esi     = r->esi;
+                textColor(0x0C);
+                if (vm86sensitiveOpcodehandler(ctx)) // OK
                 {
-                  #ifdef _VM_DIAGNOSIS_
-                    // printf("\nretVal i386V86Gpf: %u\n", retVal); // vm86 critical 
-                  #endif
+                    #ifdef _VM_DIAGNOSIS_
+                    textColor(0x03);
+                    //printf("\nretVal i386V86Gpf: %u\n", retVal); // vm86 critical 
+                    textColor(0x0C);
+                    #endif
                 }
                 else
                 {
-                    textColor(0x0C);
                     printf("\nvm86: sensitive opcode error)\n");
                 }
-
-                textColor(0x0C);
 
                 r->cs      = ctx->cs;
                 r->eip     = ctx->eip;
@@ -177,32 +173,29 @@ uint32_t irq_handler(uint32_t esp)
                 r->edi     = ctx->edi;
                 r->esi     = ctx->esi;
                 r->useresp = ctx->useresp;
-
-                // waitForKeyStroke(); // only for tests, because vm86 task does not work correctly
             }
-            // --------------------- VM86 -------------------------------------------------------------------------------
+            break;
         }
-
-        if (!(r->eflags & 0x20000)) // no VM bit
-        {
-            printf("\nerr_code: %u address(eip): %X\n", r->err_code, r->eip);
-            printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-            printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-            printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
-
-            printf("\n\n");
-            textColor(0x0B);
-            printf("%s!\n", exception_messages[r->int_no]);
-
-            printf("| <Exception - System Halted> Press key for exit from the task! |");
-            while(!keyboard_getChar());
-            exit();
-            for (;;);
-        }
+        case 0x20: case 0x7E: // timer interrupt or function switch_ctx
+            if(task_switching)
+                esp = task_switch(esp); // new task's esp
+            break;
     }
 
-    if (task_switching && (r->int_no==0x20 || r->int_no==0x7E)) // timer interrupt or function switch_ctx
-        esp = task_switch (esp); // new task's esp
+
+    if (r->int_no < 32 && r->int_no != 7 && !(r->eflags & 0x20000)) // no VM bit
+    {
+        printf("\nerr_code: %u address(eip): %X\n", r->err_code, r->eip);
+        printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+        printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+        printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+
+        printf("\n\n");
+        textColor(0x0B);
+        printf("%s!\n", exception_messages[r->int_no]);
+
+        quitTask();
+    }
 
     interrupt_handler_t handler = irq_routines[r->int_no];
     if (handler)

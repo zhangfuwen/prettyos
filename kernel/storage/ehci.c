@@ -133,8 +133,8 @@ int32_t initEHCIHostController()
         }
     }
 
-    irq_install_handler(32 + irq,   ehci_handler);
-    irq_install_handler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+    irq_installHandler(32 + irq,   ehci_handler);
+    irq_installHandler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     USBtransferFlag = true;
     enabledPortFlag = false;

@@ -190,7 +190,7 @@ void flpydsk_install()
             floppyDrive[1] = NULL;
         }
 
-        irq_install_handler(32+6, i86_flpy_irq); // floppy disk uses IRQ 6 // 32+6
+        irq_installHandler(32+6, i86_flpy_irq); // floppy disk uses IRQ 6 // 32+6
         flpydsk_initialize_dma();
         flpydsk_reset();
         flpydsk_drive_data(13, 1, 0xF, true);

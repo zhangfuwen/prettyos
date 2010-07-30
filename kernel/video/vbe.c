@@ -64,9 +64,9 @@ void switchToTextmode()
 uint32_t getDisplayStart()
 {
     waitForTask(create_vm86_task(VM86_GETDISPLAYSTART));
-	return (((*(uint16_t*)(0x1300))<<16) | (*(uint16_t*)(0x1302))); 
+    return (((*(uint16_t*)(0x1300))<<16) | (*(uint16_t*)(0x1302))); 
     // [0x1300]; First Displayed Scan Line
-	// [0x1302]; First Displayed Pixel in Scan Line
+    // [0x1302]; First Displayed Pixel in Scan Line
 }
 
 void printPalette(RGBQuadPacked_t* RGB)
@@ -103,14 +103,14 @@ void printPalette(RGBQuadPacked_t* RGB)
 
 void setPalette(RGBQuadPacked_t* RGB)
 {
-	/*
-	Format of VESA VBE palette entry:
-	Offset    Size    Description
-	00h      BYTE    red
-	01h      BYTE    green
-	02h      BYTE    blue
-	03h      BYTE    alpha or alignment byte
-	*/
+    /*
+    Format of VESA VBE palette entry:
+    Offset    Size    Description
+    00h      BYTE    red
+    01h      BYTE    green
+    02h      BYTE    blue
+    03h      BYTE    alpha or alignment byte
+    */
     ScreenPal = RGB;
     waitForTask(create_vm86_task(VM86_SETPALETTE));
 }
@@ -606,7 +606,7 @@ void bitmapDebug()
 
 void draw_char(char font_char, uint32_t xpos, uint32_t ypos)
 {
-	uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
+    uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
 
     switch (uc)
     {
@@ -634,34 +634,34 @@ void draw_char(char font_char, uint32_t xpos, uint32_t ypos)
         default:
             if (uc != 0)
             {
-				uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
+                uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
 
-				if(mib->BitsPerPixel == 8)
-				{
-					for(uint32_t j=0; j<256; j++)
-					{
-						// transfer from bitmap palette to packed RAMDAC palette
-						Set_DAC_C (j, bmpinfo->bmicolors[j].red   >> 2,
-									  bmpinfo->bmicolors[j].green >> 2,
-									  bmpinfo->bmicolors[j].blue  >> 2);
-					}
-				}
+                if(mib->BitsPerPixel == 8)
+                {
+                    for(uint32_t j=0; j<256; j++)
+                    {
+                        // transfer from bitmap palette to packed RAMDAC palette
+                        Set_DAC_C (j, bmpinfo->bmicolors[j].red   >> 2,
+                                      bmpinfo->bmicolors[j].green >> 2,
+                                      bmpinfo->bmicolors[j].blue  >> 2);
+                    }
+                }
 
-				for(uint32_t y=0; y < yFont; y++)
-				{
-					for(uint32_t x=0; x<xFont; x++)
-					{
-						SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x+(xFont*uc)) + (yFont-y-1) * 2048];
-					}
-				}
-			}
-			break;
-	}
+                for(uint32_t y=0; y < yFont; y++)
+                {
+                    for(uint32_t x=0; x<xFont; x++)
+                    {
+                        SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x+(xFont*uc)) + (yFont-y-1) * 2048];
+                    }
+                }
+            }
+            break;
+    }
 }
 
 void draw_string(const char* text, uint32_t xpos, uint32_t ypos)
 {
-	for (; *text; draw_char(*text, xpos, ypos), ++text, xpos+=8);
+    for (; *text; draw_char(*text, xpos, ypos), ++text, xpos+=8);
 }
 
 /*

@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.119 - Rev: 690";
+const char* version = "0.0.1.120 - Rev: 691";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -110,113 +110,116 @@ void main()
 
     showMemorySize();
 
-    // move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
-    // --------------------- VM86 ----------- TEST -----------------------------
-    memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
-
-  #ifdef _VM_DIAGNOSIS_
-    printf("\n\nvm86 binary code at 0x100: ");
-    memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
-  #endif
-
-    bh_get = (BitmapHeader_t*)&bmp_start;
-
-    waitForKeyStroke();
-
-    switchToVGA(); //TEST
-
-    setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
-    setModeInfoBlock((ModeInfoBlock_t*)0x1200);
-
-    modeInfoBlock_user = getModeInfoBlock();
-
-    uint32_t x = modeInfoBlock_user->XResolution;
-    uint32_t y = modeInfoBlock_user->YResolution;
-
-    vgaDebug();
-
-    setVideoMemory();
-    waitForKeyStroke();
-
-    switchToVideomode();
-
-    for (uint32_t i=0; i<x; i++)
+    textColor(0x09);
+    printf("\n\n       >>>>>   Press 's' to skip VBE-Test or any key to continue   <<<<<\n\n");
+    if(getch() != 's')
     {
-        setPixel(i, (y/2+1), 9);
-    }
+        // move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
+        // --------------------- VM86 ----------- TEST -----------------------------
+        memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
-    for (uint32_t i=0; i<y; i++)
-    {
-        setPixel((x/2), i, 9);
-    }
-    waitForKeyStroke();
+      #ifdef _VM_DIAGNOSIS_
+        printf("\n\nvm86 binary code at 0x100: ");
+        memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+      #endif
 
-    bitmap(320,0,&bmp_start);
-    waitForKeyStroke();
+        bh_get = (BitmapHeader_t*)&bmp_start;
 
-    printPalette(ScreenPal);
-    waitForKeyStroke();
+        switchToVGA(); //TEST
 
-	draw_string("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400);
-	waitForKeyStroke();
+        setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
+        setModeInfoBlock((ModeInfoBlock_t*)0x1200);
 
-    uint32_t displayStart = getDisplayStart();
+        modeInfoBlock_user = getModeInfoBlock();
+
+        uint32_t x = modeInfoBlock_user->XResolution;
+        uint32_t y = modeInfoBlock_user->YResolution;
+
+        vgaDebug();
+
+        setVideoMemory();
+        waitForKeyStroke();
+
+        switchToVideomode();
+
+        for (uint32_t i=0; i<x; i++)
+        {
+            setPixel(i, (y/2+1), 9);
+        }
+
+        for (uint32_t i=0; i<y; i++)
+        {
+            setPixel((x/2), i, 9);
+        }
+        waitForKeyStroke();
+
+        bitmap(320,0,&bmp_start);
+        waitForKeyStroke();
+
+        printPalette(ScreenPal);
+        waitForKeyStroke();
+
+        draw_string("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400);
+        waitForKeyStroke();
+
+        uint32_t displayStart = getDisplayStart();
     
-    switchToTextmode();
+        switchToTextmode();
     
-    printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
-    waitForKeyStroke();
+        printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
+        waitForKeyStroke();
     
-    vgaDebug();
-    waitForKeyStroke();
+        vgaDebug();
+        waitForKeyStroke();
 
-    bitmapDebug();
-    // getPalette();
-	// getDisplayStart();
-    waitForKeyStroke();
-	/*
-    printf("\nBMP Paletten entries:");
-    for(uint32_t j=0; j<256; j++)
-    {
-        if (j<256 && bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
+        bitmapDebug();
+        // getPalette();
+        // getDisplayStart();
+        waitForKeyStroke();
+        /*
+        printf("\nBMP Paletten entries:");
+        for(uint32_t j=0; j<256; j++)
         {
-            textColor(0x0E);
-        }
-        if (bmpinfo->bmicolors[j].red == 255 && bmpinfo->bmicolors[j].green == 255 && bmpinfo->bmicolors[j].blue == 255)
-        {
-            textColor(0x0E);
-        }
-        if (bmpinfo->bmicolors[j].red == 255 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
-        {
-            textColor(0x0C);
-        }
-        if (bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 255 && bmpinfo->bmicolors[j].blue == 0)
-        {
-            textColor(0x0A);
-        }
-        if (bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 255)
-        {
-            textColor(0x09);
-        }
-        if (j>=256)
-        {
-            textColor(0x07);
-        }
+            if (j<256 && bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
+            {
+                textColor(0x0E);
+            }
+            if (bmpinfo->bmicolors[j].red == 255 && bmpinfo->bmicolors[j].green == 255 && bmpinfo->bmicolors[j].blue == 255)
+            {
+                textColor(0x0E);
+            }
+            if (bmpinfo->bmicolors[j].red == 255 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
+            {
+                textColor(0x0C);
+            }
+            if (bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 255 && bmpinfo->bmicolors[j].blue == 0)
+            {
+                textColor(0x0A);
+            }
+            if (bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 255)
+            {
+                textColor(0x09);
+            }
+            if (j>=256)
+            {
+                textColor(0x07);
+            }
 
-        printf("\n# %u\tr: %u\tg: %u\tb: %u\tres: %u",
-            j, bmpinfo->bmicolors[j].red, bmpinfo->bmicolors[j].green, bmpinfo->bmicolors[j].blue, bmpinfo->bmicolors[j].rgbreserved);
+            printf("\n# %u\tr: %u\tg: %u\tb: %u\tres: %u",
+                j, bmpinfo->bmicolors[j].red, bmpinfo->bmicolors[j].green, bmpinfo->bmicolors[j].blue, bmpinfo->bmicolors[j].rgbreserved);
 
-        textColor(0x0F);
+            textColor(0x0F);
 
-        if (j%32==0 && j)
-        {
-            waitForKeyStroke();
+            if (j%32==0 && j)
+            {
+                waitForKeyStroke();
+            }
         }
+        */
+        printf("\n\n");
+
+        // --------------------- VM86 ------------ TEST -------------------------------------------------------------
     }
-	*/
-    printf("\n\n");
-
-    // --------------------- VM86 ------------ TEST -------------------------------------------------------------
 
     flpydsk_install(); // detect FDDs
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
