@@ -175,39 +175,29 @@ void install_RTL8139(pciDev_t* device)
                 *((uint8_t*)(BaseAddressRTL8139_MMIO)+4), *((uint8_t*)(BaseAddressRTL8139_MMIO)+5));
 
     // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
-    /*
-    Aktivieren des Transmitters und des Receivers: Setze Bits 2 und 3 (TE bzw. RE) im Befehlsregister (0x37, 1 Byte).
-    Dies darf angeblich nicht erst später geschehen, da die folgenden Befehle ansonsten ignoriert würden.
-    */
+    // activate transmitter and receiver: Set bit 2 (TE) and 3 (RE) in control register 0x37 (1 byte).
+    // this has to be done early, otherwise the following instructions will be ignored (??)
     *((uint8_t*)(BaseAddressRTL8139_MMIO + 0x37)) = 0x0C; // 1100b
 
-    /*
-    TCR (Transmit Configuration Register, 0x40, 4 Bytes) und RCR (Receive Configuration Register, 0x44, 4 Bytes) setzen.
-    An dieser Stelle nicht weiter kommentierter Vorschlag: TCR = 0x03000700, RCR = 0x0000070a
-    */
+    // set TCR (transmit configuration register, 0x40, 4 byte) and RCR (receive configuration register, 0x44, 4 byte).
     *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x40)) = 0x03000700; //TCR
     *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0x0000070a; //RCR
-    //*((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0xF;        //RCR pci.c in rev. 108 ??
-    /*0xF means AB+AM+APM+AAP*/
+    // *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0xF;        //RCR pci.c in rev. 108 ??
+    // 0xF means AB+AM+APM+AAP
 
     // first 65536 bytes are our sending buffer and the last bytes are our receiving buffer
     // set RBSTART to our buffer for the Receive Buffer
-    /*
-    Puffer für den Empfang (evtl auch zum Senden, das kann aber auch später passieren) initialisieren.
-    Wir brauchen bei den vorgeschlagenen Werten 8K + 16 Bytes für den Empfangspuffer und einen ausreichend großen Sendepuffer.
-    Was ausreichend bedeutet, ist dabei davon abhängig, welche Menge wir auf einmal absenden wollen.
-    Anschließend muss die physische(!) Adresse des Empfangspuffers nach RBSTART (0x30, 4 Bytes) geschrieben werden.
-    */
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x30)) = (uint32_t)network_buffer /* + 8192+16 */ ;
+    
+    // init buffer for receiving. 8 Kbyte + 16 byte for receive buffer and transmit buffer needed
+    // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x30)) = (uint32_t)network_buffer; // 8192+16 
 
-    // Sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
+    // sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
     // this allows us to get an interrupt if something happens...
-    /*
-    Interruptmaske setzen (0x3C, 2 Bytes). In diesem Register können die Ereignisse ausgewählt werden,
-    die einen IRQ auslösen sollen. Wir nehmen der Einfachkeit halber alle und setzen 0xffff.
-    */
-    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFF; // all interrupts
-    //*((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
+    
+    // set interrupt mask (0x3C, 2 byte). we choose all interrupts: 0xFFFF.
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
+    // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
 
     irq_install_handler(32 + device->irq, rtl8139_handler);
 }

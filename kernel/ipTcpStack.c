@@ -49,8 +49,8 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     }
 
     // now we set our arp/ip pointer to the Ethernet-payload
-    struct arp* arp = (struct arp*)((unsigned long)eth + sizeof(struct ethernet));
-    struct ip* ip  = (struct ip*)((unsigned long)eth + sizeof(struct ethernet));
+    struct arp* arp = (struct arp*)((uintptr_t)eth + sizeof(struct ethernet));
+    struct ip* ip   = (struct ip*) ((uintptr_t)eth + sizeof(struct ethernet));
 
     // to decide if it is an ip or an arp paket we just look at the ip-version
     if ((ip->version_ihl >> 4) == 4)
@@ -69,8 +69,8 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
         // now we check if it is really an ipv4 ARP paket
         if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
             (((arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1]) == 2048) &&
-            (arp->hardware_addresssize                                            ==    6) &&
-            (arp->protocol_addresssize                                            ==    4))
+              (arp->hardware_addresssize                                          ==    6) &&
+              (arp->protocol_addresssize                                          ==    4))
         {
             printf("ARP Paket.\n");
 

@@ -66,11 +66,17 @@ ModeInfoBlock:
 ;SetDisplayStart:
 ;	mov ax, 0x4F07
 ;	mov bl, 0
+;   int 10h
 ; 	jmp exitvm86
 
 GetDisplayStart:
 	mov ax, 0x4F07
 	mov bl, 1
+	int 10h
+	xor ax, ax
+	mov ds, ax
+	mov word [0x1300], dx ; First Displayed Scan Line
+	mov word [0x1302], cx ; First Displayed Pixel in Scan Line
  	jmp exitvm86
 
 SetDacPalette:

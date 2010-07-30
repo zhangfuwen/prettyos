@@ -25,7 +25,7 @@
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.118 - Rev: 689";
+const char* version = "0.0.1.119 - Rev: 690";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -160,7 +160,13 @@ void main()
 	draw_string("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400);
 	waitForKeyStroke();
 
-	switchToTextmode();
+    uint32_t displayStart = getDisplayStart();
+    
+    switchToTextmode();
+    
+    printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
+    waitForKeyStroke();
+    
     vgaDebug();
     waitForKeyStroke();
 

@@ -63,10 +63,10 @@ void switchToTextmode()
 
 uint32_t getDisplayStart()
 {
-    // outportb(0x0x4F07, 1); ?
-	// outportw(0x0x4F07, 1); ?
-	waitForTask(create_vm86_task(VM86_GETDISPLAYSTART));
-	return 0;
+    waitForTask(create_vm86_task(VM86_GETDISPLAYSTART));
+	return (((*(uint16_t*)(0x1300))<<16) | (*(uint16_t*)(0x1302))); 
+    // [0x1300]; First Displayed Scan Line
+	// [0x1302]; First Displayed Pixel in Scan Line
 }
 
 void printPalette(RGBQuadPacked_t* RGB)
