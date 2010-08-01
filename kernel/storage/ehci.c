@@ -107,7 +107,7 @@ int32_t initEHCIHostController()
     uint8_t bus  = PCIdevice->bus;
     uint8_t dev  = PCIdevice->device;
     uint8_t func = PCIdevice->func;
-    uint8_t irq  = PCIdevice->irq;
+    
     // prepare PCI command register // offset 0x04
     // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
     // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
@@ -133,8 +133,8 @@ int32_t initEHCIHostController()
         }
     }
 
-    irq_installHandler(32 + irq,   ehci_handler);
-    irq_installHandler(32 + irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+    irq_installHandler(32 + PCIdevice->irq,   ehci_handler);
+    // irq_installHandler(32 + PCIdevice->irq-1, ehci_handler); /// work-around for VirtualBox Bug!
 
     USBtransferFlag = true;
     enabledPortFlag = false;

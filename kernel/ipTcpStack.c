@@ -21,7 +21,16 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
 
     // we dump the Data
     textColor(0x03);
-    for (uint32_t c = 0; c < Length; c++)
+    uint32_t printlength;
+    if (Length<=80)
+    {
+        printlength = Length;
+    }
+    else
+    {
+        printlength = 80;
+    }
+    for (uint32_t c = 0; c < printlength; c++)
     {
         printf("%y ", ((char*)Data)[c]);
     }

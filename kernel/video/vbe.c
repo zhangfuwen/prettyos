@@ -188,9 +188,9 @@ void setVideoMemory()
      SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
      for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000)
      {
-         printf("\t: %X",paging_acquire_pcimem(i));
+         /*printf("\t: %X",*/ paging_acquire_pcimem(i) /*)*/ ;
      }
-       printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
+     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
      printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
 
      // add the size of color (palette) to the screen

@@ -17,42 +17,52 @@ uint32_t BaseAddressRTL8139_MMIO;
 
 // to set the WRAP bit, an 8K buffer must in fact be 8 KiB + 16 byte + 1.5 KiB
 // Rx buffer + header + largest potentially overflowing packet
-uint8_t network_buffer[8192+16+1536];  
+uint8_t   network_buffer[8192+16+1536]; 
+uintptr_t network_bufferPointer = 0;
 
 void rtl8139_handler(registers_t* r)
-{
-    /// TODO: ring buffer, we get always the first received data!
-
+{   
+    printf("\nrtl8139_handler:");
+    // printf("\nnetwork_bufferPointer: %u", network_bufferPointer);
+    waitForKeyStroke();
+   
     // read bytes 003Eh bis 003Fh, Interrupt Status Register
     uint16_t val = *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E));
-
     char str[80];
     strcpy(str,"");
-
-    if ((val & 0x1) == 0x1)
-    {
-        strcpy(str,"Receive OK,");
-    }
-    if ((val & 0x4) == 0x4)
-    {
-        strcpy(str,"Transfer OK,");
-    }
+    if (val & 1<<0)  { strcpy(str,"Receive OK"); }
+    if (val & 1<<1)  { strcpy(str,"Receive Error"); }
+    if (val & 1<<2)  { strcpy(str,"Transmit OK"); }
+    if (val & 1<<3)  { strcpy(str,"Transmit Error"); }
+    if (val & 1<<4)  { strcpy(str,"Rx Buffer Overflow");}
+    if (val & 1<<5)  { strcpy(str,"Packet Underrun / Link change");}
+    if (val & 1<<6)  { strcpy(str,"Rx FIFO Overflow");}
+    if (val & 1<<13) { strcpy(str,"Cable Length Change");}
+    if (val & 1<<14) { strcpy(str,"Time Out");}
+    if (val & 1<<15) { strcpy(str,"System Error");}
     textColor(0x03);
     printf("\n--------------------------------------------------------------------------------");
     textColor(0x0E);
-    printf("\nRTL8139 IRQ: %y, %s  ", val, str);
+    printf("\nRTL8139 Interrupt Status: %y, %s  ", val, str);
     textColor(0x03);
 
     // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
-    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E)) = val;
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E)) = 0xFFFF; 
+    
+    uint32_t length = (network_buffer[network_bufferPointer+3] << 8) + network_buffer[network_bufferPointer+2]; // Little Endian
+   
+    /*
+    if (network_bufferPointer < 8192)
+    {
+        network_bufferPointer += length + 4; // ring buffer
+    }
+    else
+    {
+        network_bufferPointer += (length + 4 - 8192); // ring buffer 
+    }
+    */
 
-    strcat(str,"   Receiving Buffer content:\n");
-    printf(str);
-
-    int32_t length = network_buffer[3]*0x100 + network_buffer[2]; // Little Endian
-    if (length>300)
-        length = 300;
-    int32_t ethernetType = network_buffer[16]*0x100 + network_buffer[17]; // Big Endian
+    uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
 
     // output receiving buffer
     textColor(0x0D);
@@ -60,32 +70,28 @@ void rtl8139_handler(registers_t* r)
     textColor(0x03);
     for (int8_t i = 0; i < 2; i++)
     {
-        printf("%y ",network_buffer[i]);
+        printf("%y ",network_buffer[network_bufferPointer+i]);
     }
-
-    // textColor(0x0D); printf("\tLength: "); textColor(0x03);
-    // for (i=2;i<4;i++) {printf("%y ",network_buffer[i]);}
-    uint32_t packet_length = (network_buffer[3] << 8) | network_buffer[2];
-
+        
     textColor(0x0D); printf("\tLength: ");
-    textColor(0x03);  printf("%d", packet_length);
+    textColor(0x03); printf("%d", length);
 
     textColor(0x0D); printf("\nMAC Receiver: "); textColor(0x03);
-    for (int8_t i = 4; i < 10; i++)
+    for (uint8_t i = 4; i < 10; i++)
     {
-        printf("%y ", network_buffer[i]);
+        printf("%y ", network_buffer[network_bufferPointer+i]);
     }
 
     textColor(0x0D); printf("MAC Transmitter: "); textColor(0x03);
-    for (int8_t i = 10; i < 16; i++)
+    for (uint8_t i = 10; i < 16; i++)
     {
-        printf("%y ", network_buffer[i]);
+        printf("%y ", network_buffer[network_bufferPointer+i]);
     }
 
     textColor(0x0D);
     printf("\nEthernet: ");
     textColor(0x03);
-    if (ethernetType <= 0x05DC)
+    if (ethernetType <= 0x05DC) // 0x05DC == 1500 
     {
         printf("type 1, ");
     }
@@ -104,21 +110,31 @@ void rtl8139_handler(registers_t* r)
         printf("Type: ");
     }
     textColor(0x03);
-    for (int8_t i = 16; i < 18; i++)
+    for (uint8_t i = 16; i < 18; i++)
     {
-        printf("%y ", network_buffer[i]);
+        printf("%y ", network_buffer[network_bufferPointer+i]);
+    }
+
+    uint32_t printlength;
+    if (length<=80)
+    {
+        printlength = length;
+    }
+    else
+    {
+        printlength = 80;
     }
 
     printf("\n");
-    for (int32_t i = 18; i <= length; i++)
+    for (uint32_t i = 18; i <= printlength; i++)
     {
-        printf("%y ", network_buffer[i]);
+        printf("%y ", network_buffer[network_bufferPointer+i]);
     }
     printf("\n--------------------------------------------------------------------------------\n");
     textColor(0x0F);
 
     // call to the IP-TCP Stack
-    ipTcpStack_recv((void*)(&(network_buffer[4])), packet_length);
+    ipTcpStack_recv((void*)(&(network_buffer[network_bufferPointer+4])), length);
 }
 
 
@@ -235,10 +251,9 @@ void install_RTL8139(pciDev_t* device)
     // sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
     // this allows us to get an interrupt if something happens...
     
-    // set interrupt mask (0x3C, 2 byte)
-    // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
-    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
-
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
+    // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
+    
     irq_installHandler(32 + device->irq, rtl8139_handler);
 }
 
