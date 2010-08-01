@@ -12,7 +12,7 @@
 #include "ipTcpStack.h"
 #include "rtl8139.h"
 
-#define NETWORK_BUFFER_SIZE (8192+16)
+#define NETWORK_BUFFER_SIZE   8192
 
 uint32_t BaseAddressRTL8139_IO;
 uint32_t BaseAddressRTL8139_MMIO;
@@ -64,7 +64,7 @@ void rtl8139_handler(registers_t* r)
     */
     // TEST
 
-    network_bufferPointer = *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3A));
+    network_bufferPointer = *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3A)) % NETWORK_BUFFER_SIZE;
     printf("network_bufferPointer: %u", network_bufferPointer);
     waitForKeyStroke();
 
@@ -253,8 +253,8 @@ void install_RTL8139(pciDev_t* device)
     // sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
     // this allows us to get an interrupt if something happens...
     
-    // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
-    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
+    // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
     
     irq_installHandler(device->irq, rtl8139_handler);
 }
