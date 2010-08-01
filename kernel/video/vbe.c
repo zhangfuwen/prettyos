@@ -19,9 +19,6 @@ VgaInfoBlock_t* vgaIB = &vgaInfoBlock;
 BitmapHeader_t bitmapHeader;
 BitmapHeader_t* bh = &bitmapHeader;
 
-VgaInfoBlock_t*  pVga;
-ModeInfoBlock_t* mob;
-
 BitmapHeader_t*  bh_get;
 BMPInfo_t* bmpinfo;
 
@@ -40,7 +37,7 @@ void setModeInfoBlock(ModeInfoBlock_t* MIB)
     memcpy(mib, MIB, sizeof(ModeInfoBlock_t));
 }
 
-ModeInfoBlock_t *getModeInfoBlock()
+ModeInfoBlock_t* getModeInfoBlock()
 {
     return mib;
 }
@@ -71,9 +68,6 @@ uint32_t getDisplayStart()
 
 void printPalette(RGBQuadPacked_t* RGB)
 {
-    uint32_t xpos = 0;
-    uint32_t ypos = 0;
-
     for(uint32_t j=0; j<256; j++)
     {
         // transfer from bitmap palette to packed RAMDAC palette
@@ -82,6 +76,8 @@ void printPalette(RGBQuadPacked_t* RGB)
                       bmpinfo->bmicolors[j].blue  >> 2);
     }
 
+    uint32_t xpos = 0;
+    uint32_t ypos = 0;
     for(uint32_t j=0; j<256; j++)
     {
         for(uint32_t x = 0; x < 5; x++)
@@ -130,37 +126,37 @@ uint32_t getPalette()
 // http://wiki.osdev.org/VGA_Hardware#VGA_Registers
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t Blue)
 {
-    outportb(0x03C6,0xff);
-    outportb(0x03C8,PaletteColorNumber);
-    outportb(0x03C9,Red);
-    outportb(0x03C9,Green);
-    outportb(0x03C9,Blue);
+    outportb(0x03C6, 0xFF);
+    outportb(0x03C8, PaletteColorNumber);
+    outportb(0x03C9, Red);
+    outportb(0x03C9, Green);
+    outportb(0x03C9, Blue);
 }
 
 void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue)
 {
-    outportb(0x03c6,0xff);
-    outportb(0x03c7,PaletteColorNumber);
-    *Red   = inportb(0x03c9);
-    *Green = inportb(0x03c9);
-    *Blue  = inportb(0x03c9);
+    outportb(0x03C6, 0xFF);
+    outportb(0x03C7, PaletteColorNumber);
+    *Red   = inportb(0x03C9);
+    *Green = inportb(0x03C9);
+    *Blue  = inportb(0x03C9);
 }
 
 void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette)
 {
-    outportb(0x03C6,0xff);
-    outportb(0x03C8,StartColor);    // first color to be input
-    for(short i=0; i<NumOfColors*3; i++ )
+    outportb(0x03C6, 0xFF);
+    outportb(0x03C8, StartColor); // first color to be input
+    for(uint32_t i=0; i<NumOfColors*3; i++)
      {
-        outportb(0x03C9,Palette[i]<<2);
+        outportb(0x03C9, Palette[i]<<2);
      }
 }
 
 void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palette)
 {
-    outportb(0x03C6,0xff);
-    outportb(0x03C7,StartColor);    // first color to be read
-    for(short i=0; i<NumOfColors*3; i++ )
+    outportb(0x03C6, 0xFF);
+    outportb(0x03C7, StartColor); // first color to be read
+    for(uint32_t i=0; i<NumOfColors*3; i++)
     {
         Palette[i]=inportb(0x03C9);
     }
@@ -186,18 +182,18 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
 void setVideoMemory()
 {
      SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
-     for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000);i=i+0x1000)
+     for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000); i=i+0x1000)
      {
-         /*printf("\t: %X",*/ paging_acquire_pcimem(i) /*)*/ ;
+         paging_acquire_pcimem(i);
      }
      printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
      printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
 
      // add the size of color (palette) to the screen
-     if(mib->BitsPerPixel == 8)
-     {
-        // SCREEN += 256; // only video mode 101h ??
-     }
+     //if(mib->BitsPerPixel == 8)
+     /*{
+         SCREEN += 256; // only video mode 101h ??
+     }*/
 }
 
 void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
@@ -205,7 +201,7 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
 
-     if(mib->BitsPerPixel == 8)
+    if(mib->BitsPerPixel == 8)
     {
         bmpinfo = (BMPInfo_t*)bitmapMemStart;
         for(uint32_t j=0; j<256; j++)
@@ -277,30 +273,28 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
 // Draws a rectangle by drawing all lines by itself.
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
 {
-    uint32_t top_offset,bottom_offset,temp; //word
-
     if (top>bottom)
     {
-        temp=top;
+        uint32_t temp=top;
         top=bottom;
         bottom=temp;
     }
     if (left>right)
     {
-        temp=left;
+        uint32_t temp=left;
         left=right;
         right=temp;
     }
 
-    top_offset=(top<<8)+(top<<6);
-    bottom_offset=(bottom<<8)+(bottom<<6);
+    uint32_t top_offset = (top<<8)+(top<<6);
+    uint32_t bottom_offset = (bottom<<8)+(bottom<<6);
 
-    for(uint32_t i=left;i<=right;i++)
+    for(uint32_t i=left; i<=right; i++)
     {
         SCREEN[top_offset+i]=color;
         SCREEN[bottom_offset+i]=color;
     }
-    for(uint32_t i=top_offset;i<=bottom_offset;i+=mib->XResolution) //SCREEN_WIDTH
+    for(uint32_t i=top_offset; i<=bottom_offset; i+=mib->XResolution) //SCREEN_WIDTH
     {
         SCREEN[left+i]=color;
         SCREEN[right+i]=color;
@@ -331,12 +325,12 @@ void vgaDebug()
     printf("Video Modes Ptr:        %X\n",     vgaIB->VideoModePtr);
 
     // TEST Video Ram Paging
-    printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
+    printf("\nSCREEN (phys): %X SCREEN (virt): %X\n", mib->PhysBasePtr, SCREEN);
 
     // TEST
-    // printf("OemVendorNamePtr:       %X\n",     vgaIB->OemVendorNamePtr);
-    // printf("OemProductNamePtr:      %X\n",     vgaIB->OemProductNamePtr);
-    // printf("OemProductRevPtr:       %X\n",     vgaIB->OemProductRevPtr);
+    //printf("OemVendorNamePtr:       %X\n",     vgaIB->OemVendorNamePtr);
+    //printf("OemProductNamePtr:      %X\n",     vgaIB->OemProductNamePtr);
+    //printf("OemProductRevPtr:       %X\n",     vgaIB->OemProductRevPtr);
 
     textColor(0x0E);
     printf("\nVideo Modes:\n\n");
@@ -583,7 +577,7 @@ void showbitmap(char *infname,int xs,int ys)
     */
 }
 
-void bitmapDebug()
+void bitmapDebug() // TODO: make it bitmap-specific 
 {
     memcpy((void*)bh, (void*)bh_get, sizeof(BitmapHeader_t));
 
@@ -604,32 +598,32 @@ void bitmapDebug()
     printf("Colors Important:      %u\n", bh->ColorsImportant);
 }
 
-void draw_char(char font_char, uint32_t xpos, uint32_t ypos)
+void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
 {
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
 
     switch (uc)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete
-            // move_cursor_left();
-            // putch(' ');
-            // move_cursor_left();
+            /*move_cursor_left();
+            putch(' ');
+            move_cursor_left();*/
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
-            currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
+            /*currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
             if (currentConsole->cursor.x>=COLUMNS)
             {
                 ++currentConsole->cursor.y;
                 currentConsole->cursor.x=0;
                 scroll();
-            }
+            }*/
             break;
         case '\r': // cr: cursor back to the margin
-            // move_cursor_home();
+            //move_cursor_home();
             break;
         case '\n': // newline: like 'cr': cursor to the margin and increment cursor.y
             //++currentConsole->cursor.y; scroll(); move_cursor_home();
-            // scroll();
+            //scroll();
             break;
         default:
             if (uc != 0)
@@ -651,7 +645,7 @@ void draw_char(char font_char, uint32_t xpos, uint32_t ypos)
                 {
                     for(uint32_t x=0; x<xFont; x++)
                     {
-                        SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x+(xFont*uc)) + (yFont-y-1) * 2048];
+                        SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
                     }
                 }
             }
@@ -659,9 +653,9 @@ void draw_char(char font_char, uint32_t xpos, uint32_t ypos)
     }
 }
 
-void draw_string(const char* text, uint32_t xpos, uint32_t ypos)
+void drawString(const char* text, uint32_t xpos, uint32_t ypos)
 {
-    for (; *text; draw_char(*text, xpos, ypos), ++text, xpos+=8);
+    for (; *text; drawChar(*text, xpos, ypos), ++text, xpos+=8);
 }
 
 /*

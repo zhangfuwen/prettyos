@@ -133,8 +133,7 @@ int32_t initEHCIHostController()
         }
     }
 
-    irq_installHandler(32 + PCIdevice->irq,   ehci_handler);
-    // irq_installHandler(32 + PCIdevice->irq-1, ehci_handler); /// work-around for VirtualBox Bug!
+    irq_installHandler(PCIdevice->irq,   ehci_handler);
 
     USBtransferFlag = true;
     enabledPortFlag = false;

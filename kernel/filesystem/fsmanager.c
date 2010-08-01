@@ -5,6 +5,7 @@
 
 #include "fsmanager.h"
 #include "storage/devicemanager.h"
+#include "fat.h"
 #include "kheap.h"
 #include "paging.h"
 #include "util.h"

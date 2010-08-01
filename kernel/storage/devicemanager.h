@@ -3,7 +3,6 @@
 
 #include "os.h"
 #include "filesystem/fsmanager.h"
-#include "filesystem/fat.h" // obsolete
 
 #define PORTARRAYSIZE 20
 #define DISKARRAYSIZE 20

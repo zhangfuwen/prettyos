@@ -14,7 +14,7 @@ static uint32_t timer_ticks = 0;
 void timer_install(uint16_t sysfreq)
 {
     // Installs 'timer_handler' to IRQ0
-    irq_installHandler(32+0, timer_handler);
+    irq_installHandler(0, timer_handler);
 
     timer_setFrequency(sysfreq); // x Hz, meaning a tick every 1000/x milliseconds
 }
@@ -75,7 +75,7 @@ uint16_t timer_getFrequency()
 void timer_uninstall()
 {
     // Uninstalls IRQ0
-    irq_uninstallHandler(32+0);
+    irq_uninstallHandler(0);
 }
 
 // delay in microseconds independent of timer interrupt but on rdtsc

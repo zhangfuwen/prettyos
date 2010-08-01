@@ -28,7 +28,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
     uint16_t* stack   = (uint16_t*)FP_TO_LINEAR(ctx->ss, ctx->useresp);
     uint32_t* stack32 = (uint32_t*)stack;
     bool isOperand32 = false;
-    bool isAddress32 = false;
+    //bool isAddress32 = false;
 
   #ifdef _VM_DIAGNOSIS_
     // printf("\nvm86sensitiveOpcodehandler: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->useresp); // vm86 critical
@@ -52,7 +52,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #ifdef _VM_DIAGNOSIS_
             // printf("a32 "); // vm86 critical
           #endif
-            isAddress32 = true;
+            //isAddress32 = true;
             ip++;
             ctx->eip = (uint16_t) (++(ctx->eip));
             break;

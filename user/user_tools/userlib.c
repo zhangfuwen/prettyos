@@ -201,7 +201,7 @@ void puts(const char* pString)
     }
 }
 // printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
-void printf (const char* args, ...) {
+void printf(const char* args, ...) {
     va_list ap;
     va_start(ap, args);
     vprintf(args, ap);
@@ -837,7 +837,7 @@ double fabs(double x)
 }
 
 /// random generator
-static uint32_t seed = 0; 
+static uint32_t seed = 0;
 
 void srand(unsigned int val)
 {

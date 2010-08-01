@@ -190,7 +190,7 @@ void flpydsk_install()
             floppyDrive[1] = NULL;
         }
 
-        irq_installHandler(32+6, i86_flpy_irq); // floppy disk uses IRQ 6 // 32+6
+        irq_installHandler(6, i86_flpy_irq); // floppy disk uses IRQ 6
         flpydsk_initialize_dma();
         flpydsk_reset();
         flpydsk_drive_data(13, 1, 0xF, true);
@@ -657,7 +657,7 @@ FS_ERROR flpydsk_write_sector(uint32_t sectorLBA, bool single)
 }
 
 
-///******************* block write and read *****************************///
+/// block write and read
 
 FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
 {

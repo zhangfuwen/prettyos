@@ -21,11 +21,12 @@
 #include "cdi.h"
 #include "storage/devicemanager.h"
 #include "video/vbe.h"
+#include "irq.h"
 
 #define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
 #define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
 
-const char* version = "0.0.1.122 - Rev: 693";
+const char* version = "0.0.1.123 - Rev: 694";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -55,6 +56,8 @@ static void init()
 {
     // set .bss to zero
     memset(&_bss_start, 0x0, (uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
+
+    isr_install();
 
     // descriptors
     gdt_install();
@@ -112,10 +115,10 @@ void main()
 
     textColor(0x09);
     printf("\n\n       >>>>>   Press 's' to skip VBE-Test or any key to continue   <<<<<\n\n");
+    textColor(0x0F);
     if(getch() != 's')
     {
-        // move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
-        // --------------------- VM86 ----------- TEST -----------------------------
+        // TODO: move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
         memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
       #ifdef _VM_DIAGNOSIS_
@@ -159,66 +162,17 @@ void main()
         printPalette(ScreenPal);
         waitForKeyStroke();
 
-        draw_string("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400);
+        drawString("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400);
         waitForKeyStroke();
 
         uint32_t displayStart = getDisplayStart();
-    
+
         switchToTextmode();
-    
+
         printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
-        waitForKeyStroke();
-    
+
         vgaDebug();
-        waitForKeyStroke();
-
-        bitmapDebug();
-        // getPalette();
-        // getDisplayStart();
-        waitForKeyStroke();
-        /*
-        printf("\nBMP Paletten entries:");
-        for(uint32_t j=0; j<256; j++)
-        {
-            if (j<256 && bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
-            {
-                textColor(0x0E);
-            }
-            if (bmpinfo->bmicolors[j].red == 255 && bmpinfo->bmicolors[j].green == 255 && bmpinfo->bmicolors[j].blue == 255)
-            {
-                textColor(0x0E);
-            }
-            if (bmpinfo->bmicolors[j].red == 255 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 0)
-            {
-                textColor(0x0C);
-            }
-            if (bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 255 && bmpinfo->bmicolors[j].blue == 0)
-            {
-                textColor(0x0A);
-            }
-            if (bmpinfo->bmicolors[j].red == 0 && bmpinfo->bmicolors[j].green == 0 && bmpinfo->bmicolors[j].blue == 255)
-            {
-                textColor(0x09);
-            }
-            if (j>=256)
-            {
-                textColor(0x07);
-            }
-
-            printf("\n# %u\tr: %u\tg: %u\tb: %u\tres: %u",
-                j, bmpinfo->bmicolors[j].red, bmpinfo->bmicolors[j].green, bmpinfo->bmicolors[j].blue, bmpinfo->bmicolors[j].rgbreserved);
-
-            textColor(0x0F);
-
-            if (j%32==0 && j)
-            {
-                waitForKeyStroke();
-            }
-        }
-        */
         printf("\n\n");
-
-        // --------------------- VM86 ------------ TEST -------------------------------------------------------------
     }
 
     flpydsk_install(); // detect FDDs

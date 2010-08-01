@@ -58,7 +58,7 @@ void mouse_install()
     mouse_read();
 
     // Setup the mouse handler
-    irq_installHandler(32+12, mouse_handler);
+    irq_installHandler(12, mouse_handler);
 }
 
 // Mouse functions
@@ -269,7 +269,7 @@ void mouse_initspecialfeatures()
 
 void mouse_uninstall()
 {
-    irq_uninstallHandler(32+12);
+    irq_uninstallHandler(12);
     mouse_write(0xFF);
 }
 

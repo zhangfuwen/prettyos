@@ -203,7 +203,7 @@ void vprintf(const char* args, va_list ap)
     uint8_t attribute = currentTask->attrib;
     char buffer[32]; // Larger is not needed at the moment
 
-    // semaphore_lock(currentTask->console->sp); // TEST
+    //semaphore_lock(currentTask->console->sp); // TEST
     for (; *args; ++args)
     {
         switch (*args)
@@ -259,12 +259,12 @@ void vprintf(const char* args, va_list ap)
                 break;
         }
     }
-    // semaphore_unlock(currentTask->console->sp); // TEST
+    //semaphore_unlock(currentTask->console->sp); // TEST
 }
 void printf(const char* args, ...)
 {
     va_list ap;
-    va_start (ap, args);
+    va_start(ap, args);
     vprintf(args, ap);
 }
 
@@ -280,7 +280,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
     // Call usual printf routines
     va_list ap;
-    va_start (ap, attribute);
+    va_start(ap, attribute);
     vprintf(message, ap);
 
     scroll_flag = true;
@@ -291,7 +291,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
 void update_cursor()
 {
-    uint16_t position = (currentConsole->cursor.y+2) * COLUMNS + currentConsole->cursor.x;
+    uint16_t position = (reachableConsoles[displayedConsole]->cursor.y+2) * COLUMNS + reachableConsoles[displayedConsole]->cursor.x;
     // cursor HIGH port to vga INDEX register
     outportb(0x3D4, 0x0E);
     outportb(0x3D5, (uint8_t)((position>>8)&0xFF));

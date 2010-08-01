@@ -31,7 +31,7 @@ bool VKPressed[170]; // for monitoring pressed keys
 
 void keyboard_install()
 {
-    irq_installHandler(32+1, keyboard_handler); // Installs 'keyboard_handler' to IRQ1
+    irq_installHandler(1, keyboard_handler); // Installs 'keyboard_handler' to IRQ1
 
     while (inportb(0x64) & 1) // wait until buffer is empty
     {

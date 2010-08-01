@@ -69,7 +69,7 @@ void tasking_install()
 static void addConsole(task_t* task, const char* consoleName)
 {
     task->ownConsole = true;
-    task->console = malloc(sizeof(console_t), 0, "task-taskconsole");
+    task->console = malloc(sizeof(console_t), 0, "task-console");
     console_init(task->console, consoleName);
     for (uint8_t i = 0; i < 10; i++)
     { // The next free place in our console-list will be filled with the new console
@@ -208,9 +208,10 @@ task_t* create_thread(void(*entry)())
 uint32_t task_switch(uint32_t esp)
 {
     if (!currentTask) return esp;
-    currentTask->esp = esp;   // save esp
-    
+
     task_t* oldTask = currentTask; // Save old task to check if its the same than the new one
+    oldTask->esp = esp;   // save esp
+    
     currentTask = scheduler_getNextTask();
 
     if(oldTask == currentTask) return esp; // No task switch because old==new
@@ -218,7 +219,7 @@ uint32_t task_switch(uint32_t esp)
     currentConsole = currentTask->console;
 
     // new_task
-    paging_switch (currentTask->page_directory);
+    paging_switch(currentTask->page_directory);
 
     tss.esp  = currentTask->esp;
     tss.esp0 = (uintptr_t)currentTask->kernel_stack;
@@ -262,7 +263,8 @@ void exit()
     task_t* ptask      = currentTask;
 
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
-    if(currentTask->ownConsole) {
+    if(currentTask->ownConsole)
+	{
         for (uint8_t i = 0; i < 10; i++)
         {
             if (currentTask->console == reachableConsoles[i])
@@ -278,7 +280,6 @@ void exit()
         console_exit(currentTask->console);
         free(currentTask->console);
     }
-
 
     // free memory at heap
     free(pkernelstack);

@@ -68,7 +68,7 @@ void rtl8139_handler(registers_t* r)
     textColor(0x0D);
     printf("Flags: ");
     textColor(0x03);
-    for (int8_t i = 0; i < 2; i++)
+    for (uint8_t i = 0; i < 2; i++)
     {
         printf("%y ",network_buffer[network_bufferPointer+i]);
     }
@@ -161,14 +161,14 @@ void install_RTL8139(pciDev_t* device)
     /*
     http://wiki.osdev.org/RTL8139
 
-    Offset (from IO base) 	Size 	Name 
+    Offset (from IO base)     Size     Name 
     --------------------------------------
-    0x00 	                6 	MAC0-5 
-    0x08 	                8 	MAR0-7 
-    0x30 	                4 	RBSTART 
-    0x37 	                1 	CMD 
-    0x3C 	                2 	IMR 
-    0x3E 	                2 	ISR
+    0x00                     6     MAC0-5 
+    0x08                     8     MAR0-7 
+    0x30                     4     RBSTART 
+    0x37                     1     CMD 
+    0x3C                     2     IMR 
+    0x3E                     2     ISR
 
     Turning on the RTL8139:
     Send 0x00 to the CONFIG_1 register (0x52) to set the LWAKE + LWPTN to active high. 
@@ -254,7 +254,7 @@ void install_RTL8139(pciDev_t* device)
     *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
     // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
     
-    irq_installHandler(32 + device->irq, rtl8139_handler);
+    irq_installHandler(device->irq, rtl8139_handler);
 }
 
 

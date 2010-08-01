@@ -8,7 +8,8 @@ void eraseFirst(char* string)
 }
 void insert(char* string, char c)
 {
-    for (int i = strlen(string)-1; i >= 0; i--) {
+    for (int i = strlen(string)-1; i >= 0; i--)
+    {
         string[i+1] = string[i];
     }
     *string = c;
@@ -22,10 +23,11 @@ void drawEntry(const char* entry)
 {
     memset(RenderBuffer, 0, 81);
     sprintf(RenderBuffer, "$> %s", entry);
-    if(!(cursorPos == entryLength && entryLength < MAX_CHAR_PER_LINE)) {
-        //insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;) )
+    if(!(cursorPos == entryLength && entryLength < MAX_CHAR_PER_LINE))
+    {
+        insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;) )
     }
-    strcat(RenderBuffer, " ");
+    strcat(RenderBuffer, "  ");
     printLine(RenderBuffer, 40, 0x0B);
 }
 
