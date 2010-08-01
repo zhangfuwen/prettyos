@@ -12,19 +12,21 @@
 #include "ipTcpStack.h"
 #include "rtl8139.h"
 
+#define NETWORK_BUFFER_SIZE (8192+16)
+
 uint32_t BaseAddressRTL8139_IO;
 uint32_t BaseAddressRTL8139_MMIO;
 
 // to set the WRAP bit, an 8K buffer must in fact be 8 KiB + 16 byte + 1.5 KiB
-// Rx buffer + header + largest potentially overflowing packet
-uint8_t   network_buffer[8192+16+1536]; 
+// Rx buffer + header + largest potentially overflowing packet, if WRAP is set
+uint8_t   network_buffer[NETWORK_BUFFER_SIZE]; // WRAP not set 
 uintptr_t network_bufferPointer = 0;
 
 void rtl8139_handler(registers_t* r)
 {   
-    printf("\nrtl8139_handler:");
-    // printf("\nnetwork_bufferPointer: %u", network_bufferPointer);
-    waitForKeyStroke();
+    textColor(0x03);
+    printf("\n--------------------------------------------------------------------------------");
+    printf("\nrtl8139_handler: network_bufferPointer: %u", network_bufferPointer);
    
     // read bytes 003Eh bis 003Fh, Interrupt Status Register
     uint16_t val = *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E));
@@ -45,28 +47,37 @@ void rtl8139_handler(registers_t* r)
     textColor(0x0E);
     printf("\nRTL8139 Interrupt Status: %y, %s  ", val, str);
     textColor(0x03);
+    waitForKeyStroke();
 
     // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
     *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E)) = 0xFFFF; 
     
     uint32_t length = (network_buffer[network_bufferPointer+3] << 8) + network_buffer[network_bufferPointer+2]; // Little Endian
    
-    /*
-    if (network_bufferPointer < 8192)
+    // TEST
+    textColor(0x09);
+    printf("\n");
+    for (uint32_t i=0; i<length+16; i++)
+    {
+        printf("%y ", network_buffer[network_bufferPointer+i]);
+    }
+    textColor(0x0F);
+    // TEST
+
+    if (network_bufferPointer < NETWORK_BUFFER_SIZE)
     {
         network_bufferPointer += length + 4; // ring buffer
     }
     else
     {
-        network_bufferPointer += (length + 4 - 8192); // ring buffer 
-    }
-    */
+        network_bufferPointer = (network_bufferPointer + length + 4) % NETWORK_BUFFER_SIZE ; // ring buffer starts overwriting the oldest data
+    }    
 
     uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
 
     // output receiving buffer
     textColor(0x0D);
-    printf("Flags: ");
+    printf("\nFlags: ");
     textColor(0x03);
     for (uint8_t i = 0; i < 2; i++)
     {
@@ -185,7 +196,7 @@ void install_RTL8139(pciDev_t* device)
     and send that variables memory location to the RBSTART register (0x30).
     */
     
-    memset(network_buffer, 0x0, 8192+16); //clear receiving buffer
+    memset(network_buffer, 0x0, NETWORK_BUFFER_SIZE); //clear receiving buffer
     kdebug(3, "RTL8139 MMIO: %X\n", BaseAddressRTL8139_MMIO);
     BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem(BaseAddressRTL8139_MMIO);
     printf("BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO);
@@ -226,33 +237,29 @@ void install_RTL8139(pciDev_t* device)
     // set TCR (transmit configuration register, 0x40, 4 byte) 
     *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x40)) = 0x03000700;       // TCR
     
+    // set RCR (receive configuration register, 0x44, 4 byte)
     /*
     bit4 AR  - Accept Runt 
     bit3 AB  - Accept Broadcast:      Accept broadcast packets sent to mac FF:FF:FF:FF:FF:FF
     bit2 AM  - Accept Multicast:      Accept multicast packets. 
     bit1 APM - Accept Physical Match: Accept packets send to NIC's MAC address. 
     bit0 AAP - Accept All Packets
-    */
-
+    */    
     // bit7 is the WRAP bit, 0xF is AB+AM+APM+AAP
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0xF | (1<<7); // RCR  
-        
-    // set RCR (receive configuration register, 0x44, 4 byte)
-    // *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0x0000070A; // RCR // ??? 
-    
+    // bit 12:11 defines the size of the Rx ring buffer length 
+    // 00: 8K + 16 byte 01: 16K + 16 byte 10: 32K + 16 byte 11: 64K + 16 byte 
 
-    // first 65536 bytes are our sending buffer and the last bytes are our receiving buffer
-    // set RBSTART to our buffer for the Receive Buffer
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0x0000070A; // RCR
+    //*((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0xF /* | (1<<7) */; // RCR  
     
-    // init buffer for receiving. 8 KiB + 16 byte + 1500 byte for receive buffer and transmit buffer needed
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
     *((uint32_t*)(BaseAddressRTL8139_MMIO + 0x30)) = paging_get_phys_addr(kernel_pd, (void*)network_buffer);  
 
     // sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
     // this allows us to get an interrupt if something happens...
     
-    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
-    // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
+    // *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0xFFFF; // all interrupts
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3C)) = 0x5; // only TOK and ROK
     
     irq_installHandler(device->irq, rtl8139_handler);
 }
