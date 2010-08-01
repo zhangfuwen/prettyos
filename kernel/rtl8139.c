@@ -26,7 +26,6 @@ void rtl8139_handler(registers_t* r)
 {   
     textColor(0x03);
     printf("\n--------------------------------------------------------------------------------");
-    printf("\nrtl8139_handler: network_bufferPointer: %u", network_bufferPointer);
    
     // read bytes 003Eh bis 003Fh, Interrupt Status Register
     uint16_t val = *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E));
@@ -47,14 +46,14 @@ void rtl8139_handler(registers_t* r)
     textColor(0x0E);
     printf("\nRTL8139 Interrupt Status: %y, %s  ", val, str);
     textColor(0x03);
-    waitForKeyStroke();
-
+    
     // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
     *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3E)) = 0xFFFF; 
     
     uint32_t length = (network_buffer[network_bufferPointer+3] << 8) + network_buffer[network_bufferPointer+2]; // Little Endian
    
     // TEST
+    /*
     textColor(0x09);
     printf("\n");
     for (uint32_t i=0; i<length+16; i++)
@@ -62,16 +61,12 @@ void rtl8139_handler(registers_t* r)
         printf("%y ", network_buffer[network_bufferPointer+i]);
     }
     textColor(0x0F);
+    */
     // TEST
 
-    if (network_bufferPointer < NETWORK_BUFFER_SIZE)
-    {
-        network_bufferPointer += length + 4; // ring buffer
-    }
-    else
-    {
-        network_bufferPointer = (network_bufferPointer + length + 4) % NETWORK_BUFFER_SIZE ; // ring buffer starts overwriting the oldest data
-    }    
+    network_bufferPointer = *((uint16_t*)(BaseAddressRTL8139_MMIO + 0x3A));
+    printf("network_bufferPointer: %u", network_bufferPointer);
+    waitForKeyStroke();
 
     uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
 
