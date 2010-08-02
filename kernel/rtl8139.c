@@ -50,11 +50,26 @@ void rtl8139_handler(registers_t* r)
 
     uint32_t length = (network_buffer[network_bufferPointer+3] << 8) + network_buffer[network_bufferPointer+2]; // Little Endian
 
-    network_bufferPointer = *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFHEAD)) % RTL8139_NETWORK_BUFFER_SIZE;
-    printf("network_bufferPointer: %u ", network_bufferPointer);
-    // printf("read Packet address: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
-    waitForKeyStroke();
+    // --------------------------- adapt buffer pointer ---------------------------------------------------
+    
+    // packets are 32 bit aligned
+    network_bufferPointer += length + 4; 
+    network_bufferPointer = (network_bufferPointer + 3) & ~0x3;
 
+    // handle wrap-around 
+    network_bufferPointer %= RTL8139_NETWORK_BUFFER_SIZE;
+
+    // set read pointer
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)) = network_bufferPointer - 0x10;
+
+    // --------------------------- adapt buffer pointer ---------------------------------------------------
+    
+    
+    
+    printf("network_bufferPointer: %u ", network_bufferPointer);
+    printf("read Packet address: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
+    waitForKeyStroke();
+    
     uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
 
     // output receiving buffer
@@ -189,7 +204,7 @@ void install_RTL8139(pciDev_t* device)
     *((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_CONFIG1)) = 0x00;
 
     // carry out reset of network card: set bit 4 at offset 0x37 (1 Byte)
-    *((uint8_t*)(BaseAddressRTL8139_MMIO + 0x37)) = 0x10;
+    *((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_CHIPCMD)) = RTL8139_CMD_RESET;
 
     // wait for the reset of the "reset flag"
     uint32_t k=0;
@@ -208,11 +223,7 @@ void install_RTL8139(pciDev_t* device)
             break;
         }
     }
-    kdebug(3, "mac address: %y-%y-%y-%y-%y-%y\n",
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+0), *((uint8_t*)(BaseAddressRTL8139_MMIO)+1),
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+2), *((uint8_t*)(BaseAddressRTL8139_MMIO)+3),
-                *((uint8_t*)(BaseAddressRTL8139_MMIO)+4), *((uint8_t*)(BaseAddressRTL8139_MMIO)+5));
-
+    
     // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
     // activate transmitter and receiver: Set bit 2 (TE) and 3 (RE) in control register 0x37 (1 byte).
     *((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_CHIPCMD)) = RTL8139_CMD_RX_ENABLE | RTL8139_CMD_TX_ENABLE; 
@@ -233,20 +244,23 @@ void install_RTL8139(pciDev_t* device)
     // 00: 8K + 16 byte 01: 16K + 16 byte 10: 32K + 16 byte 11: 64K + 16 byte
 
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0x0000070A; // RCR
-    //*((uint32_t*)(BaseAddressRTL8139_MMIO + 0x44)) = 0xF /* | (1<<7) */; // RCR
+    //*((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0xF /* | (1<<7) */; // RCR
 
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUF)) = paging_get_phys_addr(kernel_pd, (void*)network_buffer);
 
-    // sets the TOK (interrupt if tx ok) and ROK (interrupt if rx ok) bits high
-    // this allows us to get an interrupt if something happens...
-
+    // set interrupt mask
     *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_INTRMASK)) = 0xFFFF; // all interrupts
-    // *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_INTRMASK)) = 0x5; // only TOK and ROK
-
+    
     irq_installHandler(device->irq, rtl8139_handler);
-}
 
+    printf("\nnetwork card, mac-address: %y-%y-%y-%y-%y-%y\n", 
+        *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 0), *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 1), 
+        *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 2), *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 3), 
+        *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 4), *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 5));
+    
+    waitForKeyStroke();
+}
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.

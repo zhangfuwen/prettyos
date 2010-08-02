@@ -17,8 +17,10 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
 {
     // first we cast our Data pointer into a pointer at our Ethernet-Frame
     struct ethernet* eth = (struct ethernet*)Data;
-    textColor(0x0E); printf("--- TCP-IP stack ---\n");
-
+        
+    textColor(0x0E); 
+    printf("--- TCP-IP stack ---\n");
+    /*
     // we dump the Data
     textColor(0x03);
     uint32_t printlength;
@@ -32,11 +34,12 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     }
     for (uint32_t c = 0; c < printlength; c++)
     {
-        printf("%y ", ((char*)Data)[c]);
+       printf("%y ", ((char*)Data)[c]);
     }
 
     // we leave the transmitter-mac-addr and receiver-mac-addr unchanged
     // DEBUG < we just print them >
+    
     textColor(0x0E); printf("\n\nEthernet header:\n");
     textColor(0x0D); printf("MAC Transmitter: ");
     textColor(0x03);
@@ -44,6 +47,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     textColor(0x0D); printf("MAC Receiver:    ");
     textColor(0x03);
     printf("%y-%y-%y-%y-%y-%y\n", eth->recv_mac[0], eth->recv_mac[1], eth->recv_mac[2], eth->recv_mac[3], eth->recv_mac[4], eth->recv_mac[5]);
+    */
 
     textColor(0x0E);
     // now we check if it is Ethernet 1 or Ethernet 2
