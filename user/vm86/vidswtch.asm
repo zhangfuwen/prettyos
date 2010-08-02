@@ -32,13 +32,13 @@ ModeInfoBlock:
 	jmp exitvm86
 	
 ;SetBank:
-;	mov ax, 0x4F05 ;4F05h
+;	mov ax, 0x4F05
 ;	mov bx, 0
 ;   mov dx, bank
 ;	jmp exitvm86
 
 ;GetBank:
-;	mov ax, 0x4F05 ;4F05h
+;	mov ax, 0x4F05
 ;	mov bx, 1
 ;   mov dx, bank
 ;   jmp exitvm86
@@ -63,11 +63,15 @@ ModeInfoBlock:
 ;	mov bl, 3
 ;	jmp exitvm86
 
-;SetDisplayStart:
-;	mov ax, 0x4F07
-;	mov bl, 0
-;   int 10h
-; 	jmp exitvm86
+SetDisplayStart:
+	mov ax, 0x4F07
+	mov bl, 0
+	xor ax, ax
+	mov ds, ax
+	mov dx, word[0x1800] ; Set first Displayed Scan Line
+	mov cx, word[0x1802] ; Set first Displayed Pixel in Scan Line
+    int 10h
+ 	jmp exitvm86
 
 GetDisplayStart:
 	mov ax, 0x4F07

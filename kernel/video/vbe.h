@@ -9,12 +9,13 @@
 #define VM86_SWITCH_TO_VIDEO ((void*)0x100)
 #define VM86_VGAINFOBLOCK    ((void*)0x10B)
 #define VM86_MODEINFOBLOCK   ((void*)0x119)
-#define VM86_GETDISPLAYSTART ((void*)0x134)
-#define VM86_SETDACPALETTE   ((void*)0x14A)
-#define VM86_GETDACPALETTE   ((void*)0x157)
-#define VM86_SETPALETTE      ((void*)0x161)
-#define VM86_GETPALETTE      ((void*)0x179)
-#define VM86_SWITCH_TO_TEXT  ((void*)0x18C)
+#define VM86_SETDISPLAYSTART ((void*)0x134)
+#define VM86_GETDISPLAYSTART ((void*)0x14A)
+#define VM86_SETDACPALETTE   ((void*)0x160)
+#define VM86_GETDACPALETTE   ((void*)0x16D)
+#define VM86_SETPALETTE      ((void*)0x177)
+#define VM86_GETPALETTE      ((void*)0x18F)
+#define VM86_SWITCH_TO_TEXT  ((void*)0x1A2)
 
 // #define DIRECT_BANKING
 
@@ -160,6 +161,7 @@ ModeInfoBlock_t *getModeInfoBlock();
 void switchToVGA();
 void switchToVideomode();
 void switchToTextmode();
+void setDisplayStart(uint16_t *xpos, uint16_t *ypos);
 uint32_t getDisplayStart();
 
 void vgaDebug();

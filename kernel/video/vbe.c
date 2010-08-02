@@ -58,6 +58,13 @@ void switchToTextmode()
     refreshUserScreen();
 }
 
+void setDisplayStart(uint16_t *xpos, uint16_t *ypos)
+{
+	// memcpy(*(0x1800), xpos, sizeof(xpos));
+	// memcpy(*(0x1802), ypos, sizeof(ypos));
+	waitForTask(create_vm86_task(VM86_SETDISPLAYSTART));
+}
+
 uint32_t getDisplayStart()
 {
     waitForTask(create_vm86_task(VM86_GETDISPLAYSTART));
@@ -601,7 +608,11 @@ void bitmapDebug() // TODO: make it bitmap-specific
 void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
 {
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
-
+    uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
+	
+	// mib->XResolution;
+	// mib->YResolution;
+	
     switch (uc)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete
@@ -610,7 +621,8 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
             move_cursor_left();*/
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
-            /*currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
+            xpos += xFont*4;
+			/*currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
             if (currentConsole->cursor.x>=COLUMNS)
             {
                 ++currentConsole->cursor.y;
@@ -618,29 +630,18 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
                 scroll();
             }*/
             break;
-        case '\r': // cr: cursor back to the margin
+        // case '\r': // cr: cursor back to the margin
             //move_cursor_home();
-            break;
+        //    break;
         case '\n': // newline: like 'cr': cursor to the margin and increment cursor.y
             //++currentConsole->cursor.y; scroll(); move_cursor_home();
             //scroll();
+			xpos = 0;
+			ypos += yFont;
             break;
         default:
             if (uc != 0)
             {
-                uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
-
-                if(mib->BitsPerPixel == 8)
-                {
-                    for(uint32_t j=0; j<256; j++)
-                    {
-                        // transfer from bitmap palette to packed RAMDAC palette
-                        Set_DAC_C (j, bmpinfo->bmicolors[j].red   >> 2,
-                                      bmpinfo->bmicolors[j].green >> 2,
-                                      bmpinfo->bmicolors[j].blue  >> 2);
-                    }
-                }
-
                 for(uint32_t y=0; y < yFont; y++)
                 {
                     for(uint32_t x=0; x<xFont; x++)
