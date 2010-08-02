@@ -18,9 +18,10 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     // first we cast our Data pointer into a pointer at our Ethernet-Frame
     struct ethernet* eth = (struct ethernet*)Data;
         
+    /*
     textColor(0x0E); 
     printf("--- TCP-IP stack ---\n");
-    /*
+    
     // we dump the Data
     textColor(0x03);
     uint32_t printlength;
@@ -54,11 +55,11 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     // (but we just throw it away, because we can read the length of the data from the other Layers)
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
     {
-        printf("Ethernet 2 Packet.\n");
+        printf("Ethernet 2 Packet. ");
     }
     else
     {
-        printf("Ethernet 1 Packet.\n");
+        printf("Ethernet 1 Packet. ");
     }
 
     // now we set our arp/ip pointer to the Ethernet-payload
@@ -68,11 +69,11 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
     // to decide if it is an ip or an arp packet we just look at the ip-version
     if ((ip->version_ihl >> 4) == 4)
     {
-        printf("IPv4 Packet.\n");
+        printf("IPv4 Packet. ");
     }
     else if ((ip->version_ihl >> 4) == 6)
     {
-        printf("IPv6 Packet.\n");
+        printf("IPv6 Packet. ");
     }
     else
     {
@@ -85,7 +86,7 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
               (arp->hardware_addresssize                                          ==    6) &&
               (arp->protocol_addresssize                                          ==    4))
         {
-            printf("ARP packet.\n");
+            printf("ARP packet. ");
 
             // extract the operation
             uint16_t operation = (arp->operation[0] << 8) | arp->operation[1];
@@ -105,7 +106,8 @@ void ipTcpStack_recv(void* Data, uint32_t Length)
             // here we ignore silently other packets that we don't know
         }
     }
-    printf("--- TCP-IP stack ---\n"); 
+    printf("\n"); 
+    //printf("--- TCP-IP stack ---\n"); 
     textColor(0x0F);
 }
 

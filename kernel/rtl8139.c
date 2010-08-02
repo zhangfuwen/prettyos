@@ -64,11 +64,10 @@ void rtl8139_handler(registers_t* r)
 
     // --------------------------- adapt buffer pointer ---------------------------------------------------
     
+    printf("RXBUFTAIL: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
     
-    
-    printf("network_bufferPointer: %u ", network_bufferPointer);
-    printf("read Packet address: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
-    waitForKeyStroke();
+    //waitForKeyStroke();
+    sleepSeconds(1);
     
     uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
 
@@ -243,7 +242,7 @@ void install_RTL8139(pciDev_t* device)
     // bit 12:11 defines the size of the Rx ring buffer length
     // 00: 8K + 16 byte 01: 16K + 16 byte 10: 32K + 16 byte 11: 64K + 16 byte
 
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0x0000070A; // RCR
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR 
     //*((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0xF /* | (1<<7) */; // RCR
 
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
