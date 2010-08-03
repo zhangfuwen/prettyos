@@ -12,7 +12,7 @@
 
 void sound(uint32_t frequency)
 {
-  #ifdef _SOUND_ 
+  #ifdef _SOUND_
     outportb(0x43, 0xB6); // sending magic byte
     // writing frequency
     frequency = 1193180/frequency; // PIT (programable interrupt timer)
@@ -25,17 +25,17 @@ void sound(uint32_t frequency)
 
 void noSound()
 {
-  #ifdef _SOUND_ 
-    outportb(0x61, inportb(0x61) & ~3);
+  #ifdef _SOUND_
+    // outportb(0x61, inportb(0x61) & ~3);
   #endif
 }
 
 void beep(uint32_t freq, uint32_t duration)
-{    
+{
     sti();
     sound(freq);
     sleepMilliSeconds(duration);
-    noSound();    
+    noSound();
 }
 
 void msgbeep()

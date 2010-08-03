@@ -6,108 +6,80 @@
 #include "ipTcpStack.h"
 #include "video/console.h"
 
-// This is (normally) called from a Network-Card-Driver
-// It interprets the whole data (also the Ethernet-Header)
-
-// Parameters:
-//  Data  : A pointer to the Data
-//  Length: The Size of the packet
-
-void ipTcpStack_recv(void* Data, uint32_t Length)
+void ipTcpStack_recv(void* data, uint32_t length)
 {
-    // first we cast our Data pointer into a pointer at our Ethernet-Frame
-    struct ethernet* eth = (struct ethernet*)Data;
-        
-    /*
-    textColor(0x0E); 
-    printf("--- TCP-IP stack ---\n");
-    
-    // we dump the Data
-    textColor(0x03);
-    uint32_t printlength;
-    if (Length<=80)
-    {
-        printlength = Length;
-    }
-    else
-    {
-        printlength = 80;
-    }
-    for (uint32_t c = 0; c < printlength; c++)
-    {
-       printf("%y ", ((char*)Data)[c]);
-    }
-
-    // we leave the transmitter-mac-addr and receiver-mac-addr unchanged
-    // DEBUG < we just print them >
-    
-    textColor(0x0E); printf("\n\nEthernet header:\n");
-    textColor(0x0D); printf("MAC Transmitter: ");
-    textColor(0x03);
-    printf("%y-%y-%y-%y-%y-%y\n", eth->send_mac[0], eth->send_mac[1], eth->send_mac[2], eth->send_mac[3], eth->send_mac[4], eth->send_mac[5]);
-    textColor(0x0D); printf("MAC Receiver:    ");
-    textColor(0x03);
-    printf("%y-%y-%y-%y-%y-%y\n", eth->recv_mac[0], eth->recv_mac[1], eth->recv_mac[2], eth->recv_mac[3], eth->recv_mac[4], eth->recv_mac[5]);
-    */
+    // first we cast our data pointer into a pointer at our Ethernet-Frame
+    ethernet_t* eth = (ethernet_t*)data;
 
     textColor(0x0E);
-    // now we check if it is Ethernet 1 or Ethernet 2
-    // (but we just throw it away, because we can read the length of the data from the other Layers)
-    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
-    {
-        printf("Ethernet 2 Packet. ");
-    }
-    else
-    {
-        printf("Ethernet 1 Packet. ");
-    }
+    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) { printf("Ethernet 2. "); }
+    else                                                     { printf("Ethernet 1. "); }
 
     // now we set our arp/ip pointer to the Ethernet-payload
-    struct arp* arp = (struct arp*)((uintptr_t)eth + sizeof(struct ethernet));
-    struct ip* ip   = (struct ip*) ((uintptr_t)eth + sizeof(struct ethernet));
+    arp_t* arp = (arp_t*)((uintptr_t)eth + sizeof(ethernet_t));
+    ip_t* ip   = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
 
     // to decide if it is an ip or an arp packet we just look at the ip-version
-    if ((ip->version_ihl >> 4) == 4)
+    if ((ip->version >> 4) == 4)
     {
-        printf("IPv4 Packet. ");
+        printf("IPv4. ");
     }
-    else if ((ip->version_ihl >> 4) == 6)
+    else if ((ip->version >> 4) == 6)
     {
-        printf("IPv6 Packet. ");
+        printf("IPv6. ");
     }
     else
     {
-        // we decide _now_ that it could be an arp packet
-        // ASK < any other ideas to test for the type of the protocol? >
-
-        // now we check if it is really an ipv4 ARP packet
+        // check for ipv4 ARP packet
         if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
             (((arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1]) == 2048) &&
-              (arp->hardware_addresssize                                          ==    6) &&
-              (arp->protocol_addresssize                                          ==    4))
+              (arp->hardware_addresssize == 6) &&
+              (arp->protocol_addresssize == 4))
         {
-            printf("ARP packet. ");
+            printf("ARP. ");
 
             // extract the operation
-            uint16_t operation = (arp->operation[0] << 8) | arp->operation[1];
-
-            // print the operation
-            if (operation == 1) // it is an ARP-Request
+            switch ((arp->operation[0] << 8) | arp->operation[1])
             {
+            case 1: // ARP-Request
                 printf("Operation: Request\n");
-            }
-            else if (operation == 2) // it is an ARP-Response
-            {
+
+                textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
+                for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->source_mac[i]); }
+
+                textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
+                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->source_ip[i]); if (i<3) printf("."); }
+
+                textColor(0x0D); printf("\nMAC Searched:   "); textColor(0x07);
+                for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->dest_mac[i]);   }
+
+                textColor(0x0D); printf("  IP Searched:   "); textColor(0x03);
+                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->dest_ip[i]);   if (i<3) printf("."); }
+                break;
+
+            case 2: // ARP-Reply
                 printf("Operation: Response\n");
+
+                textColor(0x0D); printf("\nMAC Replying:   "); textColor(0x03);
+                for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->source_mac[i]); }
+
+                textColor(0x0D); printf("  IP Replying:   "); textColor(0x03);
+                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->source_ip[i]); if (i<3) printf("."); }
+
+                textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
+                for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->dest_mac[i]);   }
+
+                textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
+                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->dest_ip[i]);   if (i<3) printf("."); }
+                break;
             }
         }
         else
         {
-            // here we ignore silently other packets that we don't know
+            // TODO
         }
     }
-    printf("\n"); 
-    //printf("--- TCP-IP stack ---\n"); 
+    printf("\n");
     textColor(0x0F);
 }
 

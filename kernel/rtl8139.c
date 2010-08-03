@@ -66,8 +66,8 @@ void rtl8139_handler(registers_t* r)
     
     printf("RXBUFTAIL: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
     
-    //waitForKeyStroke();
-    sleepSeconds(1);
+    waitForKeyStroke();
+    // sleepSeconds(1);
     
     uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
 
@@ -131,16 +131,14 @@ void rtl8139_handler(registers_t* r)
     {
         printlength = 80;
     }
-
     printf("\n");
+    
     for (uint32_t i = 18; i <= printlength; i++)
     {
         printf("%y ", network_buffer[network_bufferPointer+i]);
     }
-    printf("\n--------------------------------------------------------------------------------\n");
     textColor(0x0F);
-
-    // call to the IP-TCP Stack
+    printf("\n");
     ipTcpStack_recv((void*)(&(network_buffer[network_bufferPointer+4])), length);
 }
 

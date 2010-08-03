@@ -3,14 +3,14 @@
 
 #include "os.h"
 
-struct ethernet
+typedef struct ethernet
 {
     uint8_t recv_mac[6];
     uint8_t send_mac[6];
     uint8_t type_len[2]; // Type(Ethernet 2) or Length(Ethernet 1)
-} __attribute__((packed));
+} __attribute__((packed)) ethernet_t;
 
-struct arp
+typedef struct arp
 {
     uint8_t hardware_addresstype[2];
     uint8_t protocol_addresstype[2];
@@ -19,32 +19,29 @@ struct arp
     uint8_t operation[2];
     uint8_t source_mac[6];
     uint8_t source_ip[4];
-    uint8_t dest_map[6];
+    uint8_t dest_mac[6];
     uint8_t dest_ip[4];
-} __attribute__((packed));
+} __attribute__((packed)) arp_t;
 
-struct ip
+typedef struct ip
 {
-    uint8_t version_ihl;
-    uint8_t tos;
-    uint8_t lenght[2];
-
+    uint8_t version           :1;
+    uint8_t ipHeaderLength    :4;
+    uint8_t typeOfService;
+    uint8_t length[2];
     uint8_t identification[2];
-
-    uint8_t flags_fragmentoffset0;
-    uint8_t _fragmentoffset1;
-
+    uint8_t flags             :3;
+    uint8_t fragmentoffset0   :5;
+    uint8_t fragmentoffset1;
     uint8_t ttl;
     uint8_t protocol;
-    uint8_t checksum0[2];
+    uint8_t checksum[2];
+    uint8_t source_ip[4];
+    uint8_t dest_ip[4];
+    uint8_t options[4];
+    uint8_t padding; 
+} __attribute__((packed)) ip_t;
 
-    uint8_t src[4];
-    uint8_t dst[4];
-    uint8_t optn[4];
-
-    uint8_t pad; // padding
-} __attribute__((packed));
-
-void ipTcpStack_recv(void* Data, uint32_t Length);
+void ipTcpStack_recv(void* data, uint32_t length);
 
 #endif
