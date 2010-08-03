@@ -23,7 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-const char* version = "0.0.1.132 - Rev: 703";
+const char* version = "0.0.1.133 - Rev: 704";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -172,17 +172,15 @@ void main()
     }
 
     flpydsk_install(); // detect FDDs
-    pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
+    void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);
 
+    pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
   #ifdef _DIAGNOSIS_
     listPCI();
   #endif
 
-    textColor(0x0F);
-
-    void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);
-
     // search and load shell
+    textColor(0x0F);
     bool shell_found = false;
     struct dirent* node = 0;
     for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
@@ -201,7 +199,7 @@ void main()
             {
                 shell_found = true;
 
-                uint8_t* buf = malloc(fsnode->length, 0, "MrX");
+                uint8_t* buf = malloc(fsnode->length, 0, "shell buffer");
                 uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
                 if (!elf_exec(buf, sz, "Shell"))
                 {
@@ -221,8 +219,7 @@ void main()
     }
 
     showPortList();
-    showDiskList();
-
+    showDiskList();    
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
@@ -263,9 +260,9 @@ void main()
         if (keyPressed(VK_ESCAPE) && keyPressed(VK_H))
         {
             logHeapRegions();
-        }
+        }        
 
-        switch_context(); // Switch to another task
+        hlt(); // switch_context(); // Switch to another task
     } // end of kernel idle loop
 }
 

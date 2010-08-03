@@ -46,9 +46,9 @@ const char* exception_messages[] =
 
 static void quitTask()
 {
-    printf("| <Exception - Task Halted> Press key for exit! |");
+    printf("| <Severe Failure - Task Halted> Press key for exit! |");
     sti();
-    while(!keyboard_getChar());
+    // while(!keyboard_getChar());
     exit();
     for (;;);
 }
@@ -94,7 +94,7 @@ static void NM(registers_t* r) // -> FPU
 
 static void GPF(registers_t* r) // -> VM86
 {
-    if (r->eflags & 0x20000) // VM bit - its a VM86-task
+    if (r->eflags & 0x20000) // VM bit - it is a VM86-task
     {
         context_v86_t* ctx = &context;
 
