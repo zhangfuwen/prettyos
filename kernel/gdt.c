@@ -31,7 +31,7 @@ void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, ui
 void gdt_install()
 {
     // Setup the GDT pointer and limit
-    gdt_register.limit = (sizeof(struct gdt_entry) * NUMBER_GDT_GATES)-1;
+    gdt_register.limit = (sizeof(gdt_entry_t) * NUMBER_GDT_GATES)-1;
     gdt_register.base  = (uint32_t) &gdt;
 
     // GDT GATES -  desriptors with pointers to the linear memory address

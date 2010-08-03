@@ -23,10 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-#define ADDR_MEM_INFO   0x1000 // RAM detection by second stage bootloader
-#define FILEBUFFERSIZE 0x10000 // intermediate buffer for user program, e.g. shell
-
-const char* version = "0.0.1.130 - Rev: 701";
+const char* version = "0.0.1.131 - Rev: 702";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -42,7 +39,6 @@ extern uintptr_t bmp_end;
 
 // vbe
 extern BitmapHeader_t*  bh_get;
-extern BMPInfo_t* bmpinfo;
 extern RGBQuadPacked_t* ScreenPal;
 
 ModeInfoBlock_t* modeInfoBlock_user;
@@ -119,7 +115,7 @@ void main()
     if(getch() != 's')
     {
         // TODO: move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
-        memcpy ((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+        memcpy((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
       #ifdef _VM_DIAGNOSIS_
         printf("\n\nvm86 binary code at 0x100: ");
@@ -188,9 +184,8 @@ void main()
 
     // search and load shell
     bool shell_found = false;
-    uint8_t* buf = malloc(FILEBUFFERSIZE, 0,"Userprg-Filebuffer");
     struct dirent* node = 0;
-    for (int i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
+    for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
     {
         fs_node_t* fsnode = finddir_fs(fs_root, node->name);
 
@@ -200,27 +195,25 @@ void main()
         }
         else
         {
-            uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
-
-            char name[40];
-            memset(name, 0, 40);
-            memcpy(name, node->name, 35); // protection against wrong / too long filename
-            printf("%u \t%s\n",sz,name);
+            printf("%u \t%s\n", fsnode->length, node->name);
 
             if (strcmp(node->name, "shell") == 0)
             {
                 shell_found = true;
+
+                uint8_t* buf = malloc(fsnode->length, 0, "MrX");
+                uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
                 if (!elf_exec(buf, sz, "Shell"))
                 {
                     textColor(0x04);
                     printf("\nCannot start shell!\n");
                     textColor(0x0F);
                 }
+                free(buf);
             }
         }
     }
-    free(buf);
-    if (! shell_found)
+    if (!shell_found)
     {
         textColor(0x04);
         printf("\nProgram not found.\n");
@@ -272,7 +265,7 @@ void main()
             logHeapRegions();
         }
 
-        hlt(); // CPU is stopped until the next interrupt
+        switch_context(); // Switch to another task
     } // end of kernel idle loop
 }
 

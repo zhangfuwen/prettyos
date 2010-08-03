@@ -39,7 +39,7 @@ void keyboard_install()
     }
 }
 
-uint8_t FetchAndAnalyzeScancode()
+static uint8_t FetchAndAnalyzeScancode()
 {
     if (inportb(0x64)&1)
         curScan = inportb(0x60);   // 0x60: get scan code from the keyboard

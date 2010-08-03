@@ -24,13 +24,12 @@ typedef struct
     uint32_t pages[1024];
 } page_table_t;
 
-struct page_directory_
+typedef struct
 {
     uint32_t       codes[1024];
     page_table_t* tables[1024];
     uint32_t      pd_phys_addr;
-} __attribute__((packed));
-typedef struct page_directory_ page_directory_t;
+} __attribute__((packed)) page_directory_t;
 
 
 static const uint32_t MEM_PRESENT  = 0x01;

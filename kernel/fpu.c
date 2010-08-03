@@ -9,7 +9,7 @@
 
 task_t* FPUTask;
 
-void set_fpu_cw(const uint16_t ctrlword)
+void fpu_setcw(uint16_t ctrlword)
 {
     // FLDCW = Load FPU Control Word
     __asm__ volatile("fldcw %0;"::"m"(ctrlword));
@@ -31,7 +31,7 @@ void fpu_install()
     // reload CR4, init FPU
     __asm__ volatile("mov %0, %%cr4; finit;" : : "r"(cr4));
 
-    set_fpu_cw(0x37F); // set the FPU Control Word
+    fpu_setcw(0x37F); // set the FPU Control Word
 
     // set TS in cr0
     uint32_t cr0;
@@ -39,7 +39,7 @@ void fpu_install()
     cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
 
-    // init TaskFPU in ODA
+    // init TaskFPU
     FPUTask = NULL;
 }
 

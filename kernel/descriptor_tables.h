@@ -51,8 +51,8 @@
 // segment_length_bit_16_19
 
 
-/* Defines a GDT entry */
-struct gdt_entry
+// Defines a GDT entry
+typedef struct
 {
     uint16_t limit_low;
     uint16_t base_low;
@@ -60,20 +60,17 @@ struct gdt_entry
     uint8_t  access;
     uint8_t  granularity;
     uint8_t  base_high;
-}__attribute__((packed));
+} __attribute__((packed)) gdt_entry_t;
 
-struct gdt_ptr
+typedef struct
 {
     uint16_t limit;
     uint32_t   base;
-}__attribute__((packed));
-
-typedef struct gdt_entry gdt_entry_t;
-typedef struct gdt_ptr   gdt_ptr_t;
+} __attribute__((packed)) gdt_ptr_t;
 
 
 // Task State Segment (TSS)
-struct tss_entry_struct
+typedef struct
 {
     uint32_t prev_tss;   // The previous TSS - if we used hardware task switching this would form a linked list.
     uint32_t esp0;       // The stack pointer to load when we change to kernel mode.
@@ -102,9 +99,7 @@ struct tss_entry_struct
     uint32_t ldt;        // Unused...
     uint16_t trap;
     uint16_t iomap_base;
-} __attribute__((packed));
-
-typedef struct tss_entry_struct tss_entry_t;
+} __attribute__((packed)) tss_entry_t;
 
 
 void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);

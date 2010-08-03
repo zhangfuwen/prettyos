@@ -27,19 +27,19 @@ extern uintptr_t bmp_start;
 // SuperVGA information block
 typedef struct
 {
-    uint8_t   VESASignature[4]     ;
-    uint16_t  VESAVersion          __attribute__ ((packed));
-    uintptr_t OEMStringPtr         __attribute__ ((packed));
-    uint8_t   Capabilities[4]      ;
-    uintptr_t VideoModePtr         __attribute__ ((packed));
-    uint16_t  TotalMemory          __attribute__ ((packed));
-    uint16_t  OemSoftwareRev       __attribute__ ((packed));
-    uintptr_t OemVendorNamePtr     __attribute__ ((packed));
-    uintptr_t OemProductNamePtr    __attribute__ ((packed));
-    uintptr_t OemProductRevPtr     __attribute__ ((packed));
-    uint8_t   Reserved[222]        ;
-    uint8_t   OemData[256]         ;
-} VgaInfoBlock_t;
+    uint8_t   VESASignature[4];
+    uint16_t  VESAVersion;
+    uintptr_t OEMStringPtr;
+    uint8_t   Capabilities[4];
+    uintptr_t VideoModePtr;
+    uint16_t  TotalMemory;
+    uint16_t  OemSoftwareRev;
+    uintptr_t OemVendorNamePtr;
+    uintptr_t OemProductNamePtr;
+    uintptr_t OemProductRevPtr;
+    uint8_t   Reserved[222];
+    uint8_t   OemData[256];
+} __attribute__ ((packed)) VgaInfoBlock_t;
 
 // SuperVGA mode information block
 typedef struct

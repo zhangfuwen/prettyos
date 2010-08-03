@@ -60,9 +60,9 @@ void switchToTextmode()
 
 void setDisplayStart(uint16_t *xpos, uint16_t *ypos)
 {
-	// memcpy(*(0x1800), xpos, sizeof(xpos));
-	// memcpy(*(0x1802), ypos, sizeof(ypos));
-	waitForTask(create_vm86_task(VM86_SETDISPLAYSTART));
+    // memcpy(*(0x1800), xpos, sizeof(xpos));
+    // memcpy(*(0x1802), ypos, sizeof(ypos));
+    waitForTask(create_vm86_task(VM86_SETDISPLAYSTART));
 }
 
 uint32_t getDisplayStart()
@@ -609,10 +609,10 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
 {
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
     uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
-	
-	// mib->XResolution;
-	// mib->YResolution;
-	
+    
+    // mib->XResolution;
+    // mib->YResolution;
+    
     switch (uc)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete
@@ -622,7 +622,7 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
             xpos += xFont*4;
-			/*currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
+            /*currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
             if (currentConsole->cursor.x>=COLUMNS)
             {
                 ++currentConsole->cursor.y;
@@ -636,8 +636,8 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
         case '\n': // newline: like 'cr': cursor to the margin and increment cursor.y
             //++currentConsole->cursor.y; scroll(); move_cursor_home();
             //scroll();
-			xpos = 0;
-			ypos += yFont;
+            xpos = 0;
+            ypos += yFont;
             break;
         default:
             if (uc != 0)
