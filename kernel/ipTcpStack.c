@@ -3,6 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+
+// http://www.rfc-editor.org/rfc/rfc793.txt <--- TRANSMISSION CONTROL PROTOCOL
+
 #include "ipTcpStack.h"
 #include "video/console.h"
 
@@ -83,6 +86,16 @@ void ipTcpStack_recv(void* data, uint32_t length)
     textColor(0x0F);
 }
 
+void ipTcpStack_send(void* data, uint32_t length)
+{
+	ethernet_t* eth = (ethernet_t*)data;
+	
+	textColor(0x0E);
+	
+    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) { printf("Ethernet 2. "); }
+    else   
+	{ printf("Ethernet 1. "); }
+}
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
