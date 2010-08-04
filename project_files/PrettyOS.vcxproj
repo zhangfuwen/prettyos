@@ -115,6 +115,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\time.h" />
     <ClInclude Include="..\kernel\timer.h" />
     <ClInclude Include="..\kernel\types.h" />
+    <ClInclude Include="..\kernel\udp.h" />
     <ClInclude Include="..\kernel\util.h" />
     <ClInclude Include="..\kernel\video\console.h" />
     <ClInclude Include="..\kernel\video\font.h" />
@@ -176,6 +177,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\task.c" />
     <ClCompile Include="..\kernel\time.c" />
     <ClCompile Include="..\kernel\timer.c" />
+    <ClCompile Include="..\kernel\udp.c" />
     <ClCompile Include="..\kernel\util.c" />
     <ClCompile Include="..\kernel\video\console.c" />
     <ClCompile Include="..\kernel\video\vbe.c" />

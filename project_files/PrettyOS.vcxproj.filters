@@ -297,6 +297,9 @@
     <ClInclude Include="..\kernel\video\font.h">
       <Filter>Kernel\include\video</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\udp.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -478,6 +481,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\filesystem\fs.c">
       <Filter>Kernel\sources\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\udp.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

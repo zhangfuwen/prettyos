@@ -40,28 +40,28 @@ void* userheapAlloc(size_t increase)
 file_t* fopen(const char* path, const char* mode)
 {
     file_t* ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(path), "c"(mode));
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(15), "b"(path), "c"(mode));
     return ret;
 }
 
 char fgetc(file_t* file)
 {
     char ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(file));
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(16), "b"(file));
     return ret;
 }
 
 FS_ERROR fputc(char value, file_t* file)
 {
     FS_ERROR ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(value), "c"(file));
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(17), "b"(value), "c"(file));
     return ret;
 }
 
 FS_ERROR fseek(file_t* file, size_t offset, SEEK_ORIGIN origin)
 {
     FS_ERROR ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(file), "c"(offset), "d"(origin));
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(18), "b"(file), "c"(offset), "d"(origin));
     return ret;
 }
 
@@ -137,28 +137,28 @@ bool keyPressed(VK key)
     return ret;
 }
 
-void beep(unsigned int frequency, unsigned int duration)
+void beep(uint32_t frequency, uint32_t duration)
 {
     __asm__ volatile("int $0x7F" : : "a"(80), "b"(frequency), "c"(duration));
 }
 
  // deprecated
-int floppy_dir()
+int32_t floppy_dir()
 {
-    int ret;
+    int32_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(90));
     return ret;
 }
-void printLine(const char* message, unsigned int line, unsigned char attribute)
+void printLine(const char* message, uint32_t line, uint8_t attribute)
 {
     if (line <= 45) // User may only write in his own area (size is 45)
     {
         __asm__ volatile("int $0x7F" : : "a"(91), "b"(message), "c"(line), "d"(attribute));
     }
 }
-int floppy_format(char* volumeLabel)
+int32_t floppy_format(char* volumeLabel)
 {
-    int ret;
+    int32_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(92), "b"(volumeLabel));
     return ret;
 }
@@ -193,11 +193,11 @@ void* memcpy(void* dest, const void* src, size_t count)
 }
 
 
-void puts(const char* pString)
+void puts(const char* str)
 {
-    for(size_t i = 0; pString[i] != 0; i++)
+    for (size_t i = 0; str[i] != 0; i++)
     {
-        putch(pString[i]);
+        putch(str[i]);
     }
 }
 // printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
@@ -449,7 +449,7 @@ size_t strlen(const char* str)
 }
 
 // Compare two strings. Returns -1 if str1 < str2, 0 if they are equal or 1 otherwise.
-int strcmp(const char* s1, const char* s2)
+int32_t strcmp(const char* s1, const char* s2)
 {
     while ((*s1) && (*s1 == *s2))
     {
@@ -494,7 +494,7 @@ char* strncat(char* dest, const char* src, size_t n)
     return dest;
 }
 
-char* strchr(char* str, int character)
+char* strchr(char* str, char character)
 {
     for (;;str++)
     {
@@ -513,7 +513,7 @@ char* strchr(char* str, int character)
 
 char* gets(char* s)
 {
-    int i = 0;
+    int32_t i = 0;
     char c;
     do
     {
@@ -580,7 +580,7 @@ char* itoa(int32_t n, char* s)
 }
 
 char* utoa(uint32_t n, char* s)
-{   
+{
     uint32_t i = 0;
     do // generate digits in reverse order
     {
@@ -592,9 +592,9 @@ char* utoa(uint32_t n, char* s)
     return(s);
 }
 
-int atoi(const char* s)
+int32_t atoi(const char* s)
 {
-    int num = 0;
+    int32_t num = 0;
     bool sign = false;
     for (size_t i=0; i<=strlen(s); i++)
     {
@@ -681,7 +681,7 @@ void ftoa(float f, char* buffer)
     *buffer   = '\0';
 }
 
-void i2hex(uint32_t val, char* dest, int32_t len)
+void i2hex(uint32_t val, char* dest, uint32_t len)
 {
     char* cp;
     char  x;
@@ -699,10 +699,7 @@ void i2hex(uint32_t val, char* dest, int32_t len)
 }
 
 
-
-
-
-void showInfo(signed char val)
+void showInfo(uint8_t val)
 {
     if (val==1)
     {
@@ -713,7 +710,7 @@ void showInfo(signed char val)
         char temp2 = line2[79];
         char temp3 = line3[79];
 
-        for (uint8_t i=79;i>0;--i)
+        for (uint8_t i=79; i>0; --i)
         {
             line1[i] = line1[i-1];
             line2[i] = line2[i-1];
@@ -740,7 +737,7 @@ void* malloc(size_t size)
     // Heap not set up?
     if (!cur)
     {
-        unsigned to_grow = (size+4095) & ~4095;
+        uint32_t to_grow = (size+4095) & ~4095;
         cur = userheapAlloc(to_grow);
         if (!cur)
             return 0;
@@ -749,7 +746,7 @@ void* malloc(size_t size)
     // Not enough space on heap?
     else if (top - cur < size)
     {
-        unsigned to_grow = (size+4095) & ~4095;
+        uint32_t to_grow = (size+4095) & ~4095;
         if (!userheapAlloc(to_grow))
             return 0;
         top += to_grow;
@@ -839,12 +836,12 @@ double fabs(double x)
 /// random generator
 static uint32_t seed = 0;
 
-void srand(unsigned int val)
+void srand(uint32_t val)
 {
     seed = val;
 }
 
-unsigned int rand()
+uint32_t rand()
 {
     return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7FFF);
 }

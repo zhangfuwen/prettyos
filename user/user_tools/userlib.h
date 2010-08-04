@@ -38,13 +38,12 @@ void clearScreen(uint8_t backgroundColor);
 char getch();
 bool keyPressed(VK key);
 
-void beep(unsigned int frequency, unsigned int duration);
+void beep(uint32_t frequency, uint32_t duration);
 
  // deprecated
-int floppy_dir();
-void printLine(const char* message, unsigned int line, unsigned char attribute);
-int floppy_format(char* volumeLabel);
-
+int32_t floppy_dir();
+int32_t floppy_format(char* volumeLabel);
+void printLine(const char* message, uint32_t line, uint8_t attribute);
 
 // user functions
 void iSetCursor(uint16_t x, uint16_t y);
@@ -67,30 +66,30 @@ char* toupper(char* s);
 char* tolower(char* s);
 
 size_t strlen(const char* str);
-int strcmp(const char* s1, const char* s2);
+int32_t strcmp(const char* s1, const char* s2);
 char* strcpy(char* dest, const char* src);
 char* strncpy(char* dest, const char* src, size_t n);
 char* strcat(char* dest, const char* src);
 char* strncat(char* dest, const char* src, size_t n);
-char* strchr(char* str, int character);
+char* strchr(char* str, char character);
 
 char* gets(char* s);
 
-void  reverse(char* s);
-char* itoa(int32_t n, char* s);
-char* utoa(uint32_t n, char* s);
-void  ftoa(float f, char* buffer);
-int   atoi(const char* s);
-float atof(const char* s);
-void  i2hex(uint32_t val, char* dest, int32_t len);
+void    reverse(char* s);
+char*   itoa(int32_t n, char* s);
+char*   utoa(uint32_t n, char* s);
+void    ftoa(float f, char* buffer);
+int32_t atoi(const char* s);
+float   atof(const char* s);
+void    i2hex(uint32_t val, char* dest, uint32_t len);
 
-void showInfo(signed char val);
+void showInfo(uint8_t val);
 
 void* malloc(size_t size);
-void free(void* mem);
+void  free(void* mem);
 
-void srand(unsigned int val);
-unsigned int rand();
+void srand(uint32_t val);
+uint32_t rand();
 
 // math functions
 
