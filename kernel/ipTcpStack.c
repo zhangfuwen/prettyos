@@ -6,8 +6,9 @@
 
 // http://www.rfc-editor.org/rfc/rfc793.txt <--- TRANSMISSION CONTROL PROTOCOL
 
-#include "ipTcpStack.h"
+#include "rtl8139.h"
 #include "video/console.h"
+#include "ipTcpStack.h"
 
 void ipTcpStack_recv(void* data, uint32_t length)
 {
@@ -86,16 +87,31 @@ void ipTcpStack_recv(void* data, uint32_t length)
     textColor(0x0F);
 }
 
-void ipTcpStack_send(void* data, uint32_t length)
+
+bool ipTcpStack_send(void* data, uint32_t length)
 {
-	ethernet_t* eth = (ethernet_t*)data;
-	
+	if (length > 0x700) 
+    {
+        return false; 
+    }
+
+    // TODO: check whether Tx buffer is already occupied
+
+    ethernet_t* eth = (ethernet_t*)data;
 	textColor(0x0E);
 	
-    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) { printf("Ethernet 2. "); }
-    else   
-	{ printf("Ethernet 1. "); }
+    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) 
+    { 
+        printf("\nEthernet 2. "); 
+    }
+    else
+	{ 
+        printf("Ethernet 1. "); 
+    }
+
+    return transferDataToTxBuffer(data, length);     
 }
+
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *

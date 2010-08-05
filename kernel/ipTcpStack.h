@@ -43,6 +43,6 @@ typedef struct ip
 } __attribute__((packed)) ip_t;
 
 void ipTcpStack_recv(void* data, uint32_t length);
-void ipTcpStack_send(void* data, uint32_t length);
+bool ipTcpStack_send(void* data, uint32_t length);
 
 #endif

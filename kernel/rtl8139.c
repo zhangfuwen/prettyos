@@ -19,6 +19,7 @@ uint32_t BaseAddressRTL8139_MMIO;
 // Rx buffer + header + largest potentially overflowing packet, if WRAP is set
 uint8_t   network_buffer[RTL8139_NETWORK_BUFFER_SIZE]; // WRAP not set
 uintptr_t network_bufferPointer = 0;
+uint8_t  curBuffer = 0; // Tx descriptor
 
 void rtl8139_handler(registers_t* r)
 {
@@ -257,6 +258,35 @@ void install_RTL8139(pciDev_t* device)
         *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 4), *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 5));
     
     waitForKeyStroke();
+}
+
+/*
+The process of transmitting a packet with RTL8139:
+1: copy the packet to a physically continuous buffer in memory.
+2: Write the descriptor which is functioning
+  (1). Fill in Start Address(physical address) of this buffer.
+  (2). Fill in Transmit Status: the size of this packet, the early transmit threshold, Clear OWN bit in TSD (this starts the PCI operation).
+3: As the number of data moved to FIFO meet early transmit threshold, the chip start to move data from FIFO to line..
+4: When the whole packet is moved to FIFO, the OWN bit is set to 1.
+5: When the whole packet is moved to line, the TOK(in TSD) is set to 1.
+6: If TOK(IMR) is set to 1 and TOK(ISR) is set then a interrupt is triggered.
+7: Interrupt service routine called, driver should clear TOK(ISR) State Diagram: (TOK,OWN)
+*/
+bool transferDataToTxBuffer(void* data, uint32_t length)
+{
+    memcpy((void*)network_buffer, data, length); // tx buffer
+    printf("Physical Address of Tx Buffer = %X\n", paging_get_phys_addr(kernel_pd, (void*)network_buffer));
+
+    // set address and size of the Tx buffer
+    // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXADDR0   + 4 * curBuffer)) = paging_get_phys_addr(kernel_pd, (void*)network_buffer); 
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXSTATUS0 + 4 * curBuffer)) = length;     
+    
+    curBuffer++;
+    curBuffer %= 4;
+ 
+    printf("packet sent.\n");
+    return true;
 }
 
 /*
