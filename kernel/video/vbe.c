@@ -186,6 +186,13 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
     SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
 }
 
+uint32_t getPixel(uint32_t x, uint32_t y)
+{
+	uint32_t color;
+	color = SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8];
+	return color;
+}
+
 void setVideoMemory()
 {
      SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
@@ -229,6 +236,46 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
              i -= (mib->BitsPerPixel/8);
          }
      }
+}
+
+//trying bilinear Bitmap scale
+void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
+{
+	int x;
+	int y;
+	
+	/*
+	unsigned char* dst_ptr
+	unsigned dst_slice
+	const unsigned char* src_ptr
+	unsigned src_slice
+	unsigned pixel
+	unsigned width
+	unsigned height
+	unsigned mx
+	unsigned my
+	*/
+	
+	uint32_t width = 320;
+	uint32_t height = 200;
+	uint32_t mx = 2;
+	uint32_t my = 2;
+	
+	for(y=0;y<height;++y) {
+		for(x=0;x<width;++x) {
+			// pixel_t E;
+			uint32_t E;
+			unsigned i,j;
+
+			// E = pixel_get(x, y, src_ptr, src_slice, pixel, width, height, 0);
+			E = getPixel(x,y);
+			
+			for(i=0;i<mx;++i)
+				for(j=0;j<my;++j)
+					// pixel_put(x*mx+i, y*my+j, dst_ptr, dst_slice, pixel, width*mx, height*my, E);
+					setPixel(x*mx+i, y*my+j, E);
+		}
+	}
 }
 
 // draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)

@@ -162,12 +162,14 @@ void main()
         waitForKeyStroke();
 
         uint32_t displayStart = getDisplayStart();
+		uint32_t color = getPixel(1,1);
 
-        switchToTextmode();
-
+		switchToTextmode();
+        
+		vgaDebug();
         printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
+		printf("\ngetPixel = %u\n", color);
 
-        vgaDebug();
         printf("\n\n");
     }
 
