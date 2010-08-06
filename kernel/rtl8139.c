@@ -282,7 +282,7 @@ bool transferDataToTxBuffer(void* data, uint32_t length)
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXADDR0   + 4 * curBuffer)) = paging_get_phys_addr(kernel_pd, (void*)network_buffer); 
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXADDR0   + 4 * curBuffer)) = paging_get_phys_addr(kernel_pd, (void*)Tx_network_buffer); 
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXSTATUS0 + 4 * curBuffer)) = length;     
     
     curBuffer++;
