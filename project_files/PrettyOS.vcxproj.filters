@@ -300,6 +300,9 @@
     <ClInclude Include="..\kernel\udp.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\rtl8139_eeprom.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -483,6 +486,9 @@
       <Filter>Kernel\sources\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\udp.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\rtl8139_eeprom.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>

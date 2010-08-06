@@ -23,6 +23,12 @@ typedef struct arp
     uint8_t dest_ip[4];
 } __attribute__((packed)) arp_t;
 
+typedef struct arpPacket
+{
+    ethernet_t eth;
+    arp_t      arp;
+} __attribute__((packed)) arpPacket_t;
+
 typedef struct ip
 {
     uint8_t version           :1;

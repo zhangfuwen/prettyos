@@ -59,6 +59,43 @@ void ipTcpStack_recv(void* data, uint32_t length)
 
                 textColor(0x0D); printf("  IP Searched:   "); textColor(0x03);
                 for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->dest_ip[i]);   if (i<3) printf("."); }
+
+                /// TEST
+                     arpPacket_t reply;
+                     for (uint32_t i = 0; i < 6; i++)
+                     {
+                        reply.eth.recv_mac[i]   = arp->source_mac[i];
+                        if (i == 0) reply.eth.send_mac[i]   = 0x00;
+                        if (i != 0) reply.eth.send_mac[i]   = 0x12;
+                     }
+                     reply.eth.type_len[0] = 0x08;  
+                     reply.eth.type_len[1] = 0x06; 
+
+                     for (uint32_t i = 0; i < 2; i++)
+                     {
+                         reply.arp.hardware_addresstype[i] = arp->hardware_addresstype[i]; 
+                         reply.arp.protocol_addresstype[i] = arp->protocol_addresstype[i];                         
+                     }
+                     reply.arp.operation[0]         = 2; // reply
+                     reply.arp.operation[1]         = 0;
+
+                     reply.arp.hardware_addresssize = arp->hardware_addresssize;
+                     reply.arp.protocol_addresssize = arp->protocol_addresssize;
+                     
+                     for (uint32_t i = 0; i < 6; i++)
+                     {
+                        reply.arp.dest_mac[i]   = arp->source_mac[i];
+                        reply.arp.source_mac[i] = arp->dest_mac[i];
+                     }
+                     
+                     for (uint32_t i = 0; i < 4; i++)
+                     {
+                        reply.arp.dest_ip[i]   = arp->source_ip[i];
+                        reply.arp.source_ip[i] = arp->dest_ip[i];
+                     }
+
+                     ipTcpStack_send((void*)&reply, eth->type_len[0] << 8 | eth->type_len[1] );
+                /// TEST
                 break;
 
             case 2: // ARP-Reply
@@ -90,24 +127,27 @@ void ipTcpStack_recv(void* data, uint32_t length)
 
 bool ipTcpStack_send(void* data, uint32_t length)
 {
-	if (length > 0x700) 
+	/*
+    if (length > 0x700) 
     {
         return false; 
     }
+    */
 
     // TODO: check whether Tx buffer is already occupied
 
     ethernet_t* eth = (ethernet_t*)data;
-	textColor(0x0E);
+	textColor(0x0C);
 	
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) 
     { 
-        printf("\nEthernet 2. "); 
+        printf("\nPacket now sent with Ethernet 2. "); 
     }
     else
 	{ 
-        printf("Ethernet 1. "); 
+        printf("\nPacket now sent with Ethernet 1. "); 
     }
+    textColor(0x0F);
 
     return transferDataToTxBuffer(data, length);     
 }
