@@ -241,30 +241,18 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 //trying bilinear Bitmap scale
 void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 {
-	// int x;
-	// int y;
-	
 	/*
 	unsigned char* dst_ptr
 	unsigned dst_slice
 	const unsigned char* src_ptr
 	unsigned src_slice
 	unsigned pixel
-	unsigned width
-	unsigned height
 	unsigned mx
 	unsigned my
 	*/
-	
-	// uint32_t width = 320;
-	// uint32_t height = 200;
-	uint32_t mx = 2;
-	uint32_t my = 2;
 
-	// pixel_t E;
-	// uint32_t E;
-	uint8_t E;
-	// unsigned i,j;
+	uint32_t mx = 3;
+	uint32_t my = 3;
 	uint32_t iloop, j;		
 	
 	uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
@@ -275,13 +263,13 @@ void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 		{
          for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
          {
-			E = *i; 
+
             i -= (mib->BitsPerPixel/8);
 			
 			for(iloop=0;iloop<mx;++iloop)
 				for(j=0;j<my;++j)
-					// SCREEN[ (xpos*mx+iloop) + (ypos*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
-					setPixel(x*mx+iloop, y*my+j, E);			
+					SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
+					// setPixel(x*mx+iloop, y*my+j, i);			
 		}
 	}
 }
