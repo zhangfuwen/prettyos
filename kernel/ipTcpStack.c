@@ -61,6 +61,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
                 for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->dest_ip[i]);   if (i<3) printf("."); }
 
                 /// TEST
+                     printf("\n Tx prepared:");
                      arpPacket_t reply;
                      for (uint32_t i = 0; i < 6; i++)
                      {
@@ -68,8 +69,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
                         if (i == 0) reply.eth.send_mac[i]   = 0x00;
                         if (i != 0) reply.eth.send_mac[i]   = 0x12;
                      }
-                     reply.eth.type_len[0] = 0x08;  
-                     reply.eth.type_len[1] = 0x06; 
+                     reply.eth.type_len[0] = 0x08; reply.eth.type_len[1] = 0x06; 
 
                      for (uint32_t i = 0; i < 2; i++)
                      {
@@ -85,9 +85,10 @@ void ipTcpStack_recv(void* data, uint32_t length)
                      for (uint32_t i = 0; i < 6; i++)
                      {
                         reply.arp.dest_mac[i]   = arp->source_mac[i];
-                        reply.arp.source_mac[i] = arp->dest_mac[i];
-                     }
-                     
+                        if (i == 0) reply.arp.source_mac[i]   = 0x00;
+                        if (i != 0) reply.arp.source_mac[i]   = 0x12;
+                     }                     
+
                      for (uint32_t i = 0; i < 4; i++)
                      {
                         reply.arp.dest_ip[i]   = arp->source_ip[i];

@@ -19,7 +19,10 @@ uint32_t BaseAddressRTL8139_MMIO;
 // Rx buffer + header + largest potentially overflowing packet, if WRAP is set
 uint8_t   network_buffer[RTL8139_NETWORK_BUFFER_SIZE]; // WRAP not set
 uintptr_t network_bufferPointer = 0;
+
+// Transmit
 uint8_t  curBuffer = 0; // Tx descriptor
+uint8_t  Tx_network_buffer[0x1000]; 
 
 void rtl8139_handler(registers_t* r)
 {
@@ -274,7 +277,7 @@ The process of transmitting a packet with RTL8139:
 */
 bool transferDataToTxBuffer(void* data, uint32_t length)
 {
-    memcpy((void*)network_buffer, data, length); // tx buffer
+    memcpy((void*)Tx_network_buffer, data, length); // tx buffer
     printf("Physical Address of Tx Buffer = %X\n", paging_get_phys_addr(kernel_pd, (void*)network_buffer));
 
     // set address and size of the Tx buffer
