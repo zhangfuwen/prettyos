@@ -292,6 +292,7 @@ bool transferDataToTxBuffer(void* data, uint32_t length)
     return true;
 }
 
+// ???
 /*
 int rtl8139_set_mac_address(struct net_device *dev, void *p)
 {

@@ -302,7 +302,7 @@ void exit()
 
     if(currentTask == kernelTask) // TODO: Handle termination of shellTask
     {
-        systemControl(REBOOT);
+       // systemControl(REBOOT);
     }
 
     sti();

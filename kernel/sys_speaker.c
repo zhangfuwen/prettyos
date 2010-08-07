@@ -26,7 +26,7 @@ void sound(uint32_t frequency)
 void noSound()
 {
   #ifdef _SOUND_
-    // outportb(0x61, inportb(0x61) & ~3);
+    outportb(0x61, inportb(0x61) & ~3);
   #endif
 }
 
