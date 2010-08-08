@@ -11,6 +11,7 @@
 #include "video/console.h"
 #include "netprotocol/ipTcpStack.h"
 #include "rtl8139.h"
+#include "myOwnData.h"
 
 uint32_t BaseAddressRTL8139_IO;
 uint32_t BaseAddressRTL8139_MMIO;
@@ -22,7 +23,11 @@ uintptr_t network_bufferPointer = 0;
 
 // Transmit
 uint8_t  curBuffer = 0; // Tx descriptor
-uint8_t  Tx_network_buffer[0x1000]; 
+uint8_t  Tx_network_buffer[0x1000];
+
+// IP and MAC address
+uint8_t IP_address[4];
+uint8_t MAC_address[6];
 
 void rtl8139_handler(registers_t* r)
 {
@@ -55,24 +60,24 @@ void rtl8139_handler(registers_t* r)
     uint32_t length = (network_buffer[network_bufferPointer+3] << 8) + network_buffer[network_bufferPointer+2]; // Little Endian
 
     // --------------------------- adapt buffer pointer ---------------------------------------------------
-    
+
     // packets are 32 bit aligned
-    network_bufferPointer += length + 4; 
+    network_bufferPointer += length + 4;
     network_bufferPointer = (network_bufferPointer + 3) & ~0x3;
 
-    // handle wrap-around 
+    // handle wrap-around
     network_bufferPointer %= RTL8139_NETWORK_BUFFER_SIZE;
 
     // set read pointer
     *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)) = network_bufferPointer - 0x10;
 
     // --------------------------- adapt buffer pointer ---------------------------------------------------
-    
+
     printf("RXBUFTAIL: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
-    
+
     waitForKeyStroke();
     // sleepSeconds(1);
-    
+
     uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
 
     // output receiving buffer
@@ -136,7 +141,7 @@ void rtl8139_handler(registers_t* r)
         printlength = 80;
     }
     printf("\n");
-    
+
     for (uint32_t i = 18; i <= printlength; i++)
     {
         printf("%y ", network_buffer[network_bufferPointer+i]);
@@ -224,10 +229,10 @@ void install_RTL8139(pciDev_t* device)
             break;
         }
     }
-    
+
     // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
     // activate transmitter and receiver: Set bit 2 (TE) and 3 (RE) in control register 0x37 (1 byte).
-    *((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_CHIPCMD)) = RTL8139_CMD_RX_ENABLE | RTL8139_CMD_TX_ENABLE; 
+    *((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_CHIPCMD)) = RTL8139_CMD_RX_ENABLE | RTL8139_CMD_TX_ENABLE;
 
     // set TCR (transmit configuration register, 0x40, 4 byte)
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXCONFIG)) = 0x03000700;       // TCR
@@ -244,7 +249,7 @@ void install_RTL8139(pciDev_t* device)
     // bit 12:11 defines the size of the Rx ring buffer length
     // 00: 8K + 16 byte 01: 16K + 16 byte 10: 32K + 16 byte 11: 64K + 16 byte
 
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR 
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR
     //*((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0xF /* | (1<<7) */; // RCR
 
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
@@ -252,14 +257,27 @@ void install_RTL8139(pciDev_t* device)
 
     // set interrupt mask
     *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_INTRMASK)) = 0xFFFF; // all interrupts
-    
+
     irq_installHandler(device->irq, rtl8139_handler);
 
-    printf("\nnetwork card, mac-address: %y-%y-%y-%y-%y-%y\n", 
-        *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 0), *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 1), 
-        *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 2), *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 3), 
-        *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 4), *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + 5));
-    
+    // set IP
+    IP_address[0] = (My_IP & 0xFF000000) >> 24;
+    IP_address[1] = (My_IP & 0x00FF0000) >> 16;
+    IP_address[2] = (My_IP & 0x0000FF00) >>  8;
+    IP_address[3] = (My_IP & 0x000000FF);
+
+    // MAC
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        MAC_address[i] =  *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + i);
+    }
+
+    textColor(0x0E);
+    printf("\nnetwork card, mac-address: %y-%y-%y-%y-%y-%y", MAC_address[0], MAC_address[1], MAC_address[2],
+                                                             MAC_address[3], MAC_address[4], MAC_address[5]);
+
+    printf("\nnetwork card, IP: %u.%u.%u.%u\n", IP_address[0], IP_address[1], IP_address[2], IP_address[3]);
+    textColor(0x0F);
     waitForKeyStroke();
 }
 
@@ -282,12 +300,12 @@ bool transferDataToTxBuffer(void* data, uint32_t length)
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXADDR0   + 4 * curBuffer)) = paging_get_phys_addr(kernel_pd, (void*)Tx_network_buffer); 
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXSTATUS0 + 4 * curBuffer)) = length;     
-    
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXADDR0   + 4 * curBuffer)) = paging_get_phys_addr(kernel_pd, (void*)Tx_network_buffer);
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXSTATUS0 + 4 * curBuffer)) = length;
+
     curBuffer++;
     curBuffer %= 4;
- 
+
     printf("packet sent.\n");
     return true;
 }

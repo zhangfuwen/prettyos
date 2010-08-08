@@ -11,6 +11,8 @@
 #include "ipTcpStack.h"
 
 extern uint32_t BaseAddressRTL8139_MMIO;
+extern uint8_t IP_address[4];
+extern uint8_t MAC_address[6];
 
 void ipTcpStack_recv(void* data, uint32_t length)
 {
@@ -36,6 +38,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
     }
     else
     {
+
         // check for ipv4 ARP packet
         if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
             (((arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1]) == 2048) &&
@@ -62,14 +65,17 @@ void ipTcpStack_recv(void* data, uint32_t length)
                 textColor(0x0D); printf("  IP Searched:   "); textColor(0x03);
                 for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->dest_ip[i]);   if (i<3) printf("."); }
 
-                /// TEST
+                // requested IP is our own IP?
+                if ( arp->dest_ip[0] == IP_address[0] && arp->dest_ip[1] == IP_address[1] &&
+                     arp->dest_ip[2] == IP_address[2] && arp->dest_ip[3] == IP_address[3])
+                {
                      printf("\n Tx prepared:");
                      arpPacket_t reply;
                      for (uint32_t i = 0; i < 6; i++)
                      {
                         reply.eth.recv_mac[i]   = arp->source_mac[i];
-                        if (i == 0) reply.eth.send_mac[i]   = 0x00;
-                        if (i != 0) reply.eth.send_mac[i]   = 0x12;
+                        reply.eth.send_mac[i]   = MAC_address[i];
+
                      }
                      reply.eth.type_len[0] = 0x08; reply.eth.type_len[1] = 0x06;
 
@@ -93,11 +99,11 @@ void ipTcpStack_recv(void* data, uint32_t length)
                      for (uint32_t i = 0; i < 4; i++)
                      {
                         reply.arp.dest_ip[i]   = arp->source_ip[i];
-                        reply.arp.source_ip[i] = arp->dest_ip[i];
+                        reply.arp.source_ip[i] = IP_address[i];
                      }
 
                      ipTcpStack_send((void*)&reply, length );
-                /// TEST
+                }
                 break;
 
             case 2: // ARP-Reply
