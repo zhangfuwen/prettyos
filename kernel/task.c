@@ -167,6 +167,7 @@ task_t* create_task(page_directory_t* directory, void(*entry)(), uint8_t privile
     printf("create task");
     #endif
 
+    cli(); // ??
     task_t* new_task = malloc(sizeof(task_t),0, "task-newtask");
     new_task->thread = false;
 
@@ -175,7 +176,7 @@ task_t* create_task(page_directory_t* directory, void(*entry)(), uint8_t privile
     new_task->ownConsole = false;
     new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
-    sti();
+    sti(); // ??
     return new_task;
 }
 
@@ -193,6 +194,7 @@ task_t* create_thread(void(*entry)())
     printf("create thread");
     #endif
 
+    cli(); // ??
     task_t* new_task = malloc(sizeof(task_t),0, "task-newthread");
     new_task->thread = true;
 
@@ -201,6 +203,7 @@ task_t* create_thread(void(*entry)())
     new_task->ownConsole = false;
     new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
+    sti(); // ??
     return new_task;
 }
 
@@ -293,6 +296,8 @@ void exit()
     free(ptask);
 
     scheduler_deleteTask(currentTask);
+    
+    sti(); // ?? 
 
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
@@ -302,7 +307,7 @@ void exit()
 
     if(currentTask == kernelTask) // TODO: Handle termination of shellTask
     {
-       // systemControl(REBOOT);
+       systemControl(REBOOT);
     }
 
     sti();
@@ -425,6 +430,7 @@ task_t* create_vm86_task(void(*entry)())
     printf("create task");
     #endif
 
+    cli(); // ??
     task_t* new_task = malloc(sizeof(task_t),0, "vm86-task-newtask");
     new_task->thread = false;
 
@@ -433,6 +439,7 @@ task_t* create_vm86_task(void(*entry)())
     new_task->ownConsole = false;
     new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
+    sti(); // ??
     return new_task;
 }
 
