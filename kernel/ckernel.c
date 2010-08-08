@@ -23,7 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-const char* version = "0.0.1.145 - Rev: 718";
+const char* version = "0.0.1.146 - Rev: 719";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -73,7 +73,7 @@ static void init()
 
     // external devices
     keyboard_install();
-    mouse_install();
+    mouse_install(); 
 
     // processes/threads, messaging and system calls
     tasking_install();

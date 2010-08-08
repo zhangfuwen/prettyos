@@ -32,7 +32,6 @@ struct task
 } __attribute__((packed));
 
 extern task_t* FPUTask; // fpu.c
-extern task_t* shellTask;
 
 extern bool task_switching;
 extern task_t* currentTask;
@@ -40,12 +39,12 @@ extern console_t* currentConsole;
 
 void tasking_install();
 
-task_t*  create_task (page_directory_t* directory, void(*entry)(), uint8_t privilege); // Creates task using kernels console
-task_t*  create_ctask(page_directory_t* directory, void(*entry)(), uint8_t privilege, const char* consoleName); // Creates task with own console
+task_t*  create_task (page_directory_t* directory, void* entry, uint8_t privilege); // Creates task using kernels console
+task_t*  create_ctask(page_directory_t* directory, void* entry, uint8_t privilege, const char* consoleName); // Creates task with own console
 task_t*  create_thread (void(*entry)()); // Creates thread using currentTasks console
 task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
-task_t*  create_vm86_task (void(*entry)());
-task_t*  create_vm86_ctask(void(*entry)(), const char* consoleName);
+task_t*  create_vm86_task (void* entry);
+task_t*  create_vm86_ctask(void* entry, const char* consoleName);
 void     switch_context();
 uint32_t task_switch(uint32_t esp);
 void     exit();
