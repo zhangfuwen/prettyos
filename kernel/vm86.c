@@ -45,7 +45,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             isOperand32 = true;
             ip++;
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             break;
 
         case 0x67: // A32
@@ -54,7 +54,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             //isAddress32 = true;
             ip++;
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             break;
 
         case 0x9C: // PUSHF
@@ -91,7 +91,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                     stack[0] &= ~EFLAG_IF;
                 }
             }
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
 
@@ -112,7 +112,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 current->v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->useresp = ((ctx->useresp & 0xFFFF) + 2) & 0xFFFF;
             }
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
 
@@ -131,7 +131,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
               #endif
                 outportl(ctx->edx, ctx->eax);
             }
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
             return true;
 
@@ -140,7 +140,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             // printf("outportb(edx, eax)\n"); // vm86 critical
           #endif
             outportb(ctx->edx, ctx->eax);
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
 
@@ -168,7 +168,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             // printf("inportw(edx)\n"); // vm86 critical
           #endif
             ctx->eax = (ctx->eax & 0xFF00) + inportb(ctx->edx);
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
             return true;
 
@@ -235,7 +235,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             // printf("cli\n"); // vm86 critical
           #endif  
             current->v86_if = false;
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
 
@@ -244,7 +244,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             // printf("sti\n"); // vm86 critical
           #endif
             current->v86_if = true;
-            ctx->eip = (uint16_t) (++(ctx->eip));
+            ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
 

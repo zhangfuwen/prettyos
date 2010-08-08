@@ -23,7 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-const char* version = "0.0.1.147 - Rev: 720";
+const char* version = "0.0.1.148 - Rev: 721";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -160,18 +160,18 @@ void main()
 
         drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
         waitForKeyStroke();
-		
-		scaleBitmap(0, 0, &bmp_start); // testing
-        waitForKeyStroke();
-		
-		uint32_t displayStart = getDisplayStart();
-		uint32_t color = getPixel(1,1);
-
-		switchToTextmode();
         
-		vgaDebug();
+        scaleBitmap(0, 0, &bmp_start); // testing
+        waitForKeyStroke();
+        
+        uint32_t displayStart = getDisplayStart();
+        uint32_t color = getPixel(1,1);
+
+        switchToTextmode();
+        
+        vgaDebug();
         printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
-		printf("\ngetPixel = %u\n", color);
+        printf("\ngetPixel = %u\n", color);
 
         printf("\n\n");
     }

@@ -48,7 +48,7 @@ static void quitTask()
 {
     printf("| <Severe Failure - Task Halted> Press key for exit! |");
     sti();
-    // while(!keyboard_getChar());
+    while(!keyboard_getChar());
     exit();
     for (;;);
 }
