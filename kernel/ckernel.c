@@ -23,7 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-const char* version = "0.0.1.146 - Rev: 719";
+const char* version = "0.0.1.147 - Rev: 720";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -158,7 +158,7 @@ void main()
         printPalette(ScreenPal);
         waitForKeyStroke();
 
-        drawString("PrettyOS started in March 2009. This hobby OS tries to be a possible access for beginners in this area.", 0, 400);
+        drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
         waitForKeyStroke();
 		
 		scaleBitmap(0, 0, &bmp_start); // testing

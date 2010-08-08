@@ -154,6 +154,10 @@ typedef struct
     RGBQuad_t bmicolors[256];
 } __attribute__((packed)) BMPInfo_t;
 
+typedef struct {
+    uint16_t x, y;
+} CursorPosition_t;
+
 void setVgaInfoBlock(VgaInfoBlock_t* VIB);
 void setModeInfoBlock(ModeInfoBlock_t* MIB);
 ModeInfoBlock_t *getModeInfoBlock();
