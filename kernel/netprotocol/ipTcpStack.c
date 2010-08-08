@@ -69,25 +69,25 @@ void ipTcpStack_recv(void* data, uint32_t length)
                         if (i == 0) reply.eth.send_mac[i]   = 0x00;
                         if (i != 0) reply.eth.send_mac[i]   = 0x12;
                      }
-                     reply.eth.type_len[0] = 0x08; reply.eth.type_len[1] = 0x06; 
+                     reply.eth.type_len[0] = 0x08; reply.eth.type_len[1] = 0x06;
 
                      for (uint32_t i = 0; i < 2; i++)
                      {
-                         reply.arp.hardware_addresstype[i] = arp->hardware_addresstype[i]; 
-                         reply.arp.protocol_addresstype[i] = arp->protocol_addresstype[i];                         
+                         reply.arp.hardware_addresstype[i] = arp->hardware_addresstype[i];
+                         reply.arp.protocol_addresstype[i] = arp->protocol_addresstype[i];
                      }
                      reply.arp.operation[0]         = 2; // reply
                      reply.arp.operation[1]         = 0;
 
                      reply.arp.hardware_addresssize = arp->hardware_addresssize;
                      reply.arp.protocol_addresssize = arp->protocol_addresssize;
-                     
+
                      for (uint32_t i = 0; i < 6; i++)
                      {
                         reply.arp.dest_mac[i]   = arp->source_mac[i];
                         if (i == 0) reply.arp.source_mac[i]   = 0x00;
                         if (i != 0) reply.arp.source_mac[i]   = 0x12;
-                     }                     
+                     }
 
                      for (uint32_t i = 0; i < 4; i++)
                      {
@@ -95,7 +95,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
                         reply.arp.source_ip[i] = arp->dest_ip[i];
                      }
 
-                     ipTcpStack_send((void*)&reply, eth->type_len[0] << 8 | eth->type_len[1] );
+                     ipTcpStack_send((void*)&reply, length );
                 /// TEST
                 break;
 
@@ -128,28 +128,32 @@ void ipTcpStack_recv(void* data, uint32_t length)
 
 bool ipTcpStack_send(void* data, uint32_t length)
 {
-	if (length > 0x700) 
+	if (length > 0x700)
     {
-        printf("\nerror: ipTcpStack_send: length > 0x700");
-        return false; 
-    }    
+        printf("\nerror: ipTcpStack_send: length: %u. This is more than (1792) 0x700",length);
+        return false;
+    }
+    else
+    {
+        printf("\nipTcpStack_send: length: %u.",length);
+    }
 
     // TODO: check whether Tx buffer is already occupied
 
     ethernet_t* eth = (ethernet_t*)data;
 	textColor(0x0C);
-	
-    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) 
-    { 
-        printf("\nPacket now sent with Ethernet 2. "); 
+
+    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
+    {
+        printf("\nPacket now sent with Ethernet 2. ");
     }
     else
-	{ 
-        printf("\nPacket now sent with Ethernet 1. "); 
+	{
+        printf("\nPacket now sent with Ethernet 1. ");
     }
     textColor(0x0F);
 
-    return transferDataToTxBuffer(data, length);     
+    return transferDataToTxBuffer(data, length);
 }
 
 /*

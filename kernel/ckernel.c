@@ -23,7 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-const char* version = "0.0.1.150 - Rev: 724";
+const char* version = "0.0.1.151 - Rev: 726";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -73,7 +73,7 @@ static void init()
 
     // external devices
     keyboard_install();
-    mouse_install(); 
+    mouse_install();
 
     // processes/threads, messaging and system calls
     tasking_install();
@@ -160,15 +160,15 @@ void main()
 
         drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
         waitForKeyStroke();
-        
+
         scaleBitmap(0, 0, &bmp_start); // testing
         waitForKeyStroke();
-        
+
         uint32_t displayStart = getDisplayStart();
         uint32_t color = getPixel(1,1);
 
         switchToTextmode();
-        
+
         vgaDebug();
         printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
         printf("\ngetPixel = %u\n", color);
@@ -224,7 +224,7 @@ void main()
     }
 
     showPortList();
-    showDiskList();    
+    showDiskList();
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
@@ -265,7 +265,7 @@ void main()
         if (keyPressed(VK_ESCAPE) && keyPressed(VK_H))
         {
             logHeapRegions();
-        }        
+        }
 
         hlt(); // switch_context(); // Switch to another task
     } // end of kernel idle loop

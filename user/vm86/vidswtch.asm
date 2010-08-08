@@ -130,8 +130,7 @@ text_mode:
 	xor bl, bl
 	int 0x10
 	jmp exitvm86
-
-
+	
 ; stop and leave vm86-task
 exitvm86:
 	hlt     ; is translated as exit() at vm86.c
