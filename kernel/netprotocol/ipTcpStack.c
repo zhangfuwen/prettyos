@@ -10,6 +10,8 @@
 #include "video/console.h"
 #include "ipTcpStack.h"
 
+extern uint32_t BaseAddressRTL8139_MMIO;
+
 void ipTcpStack_recv(void* data, uint32_t length)
 {
     // first we cast our data pointer into a pointer at our Ethernet-Frame
@@ -76,8 +78,8 @@ void ipTcpStack_recv(void* data, uint32_t length)
                          reply.arp.hardware_addresstype[i] = arp->hardware_addresstype[i];
                          reply.arp.protocol_addresstype[i] = arp->protocol_addresstype[i];
                      }
-                     reply.arp.operation[0]         = 2; // reply
-                     reply.arp.operation[1]         = 0;
+                     reply.arp.operation[0]         = 0;
+                     reply.arp.operation[1]         = 2; // reply
 
                      reply.arp.hardware_addresssize = arp->hardware_addresssize;
                      reply.arp.protocol_addresssize = arp->protocol_addresssize;
@@ -85,8 +87,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
                      for (uint32_t i = 0; i < 6; i++)
                      {
                         reply.arp.dest_mac[i]   = arp->source_mac[i];
-                        if (i == 0) reply.arp.source_mac[i]   = 0x00;
-                        if (i != 0) reply.arp.source_mac[i]   = 0x12;
+                        reply.arp.source_mac[i] = *((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + i));
                      }
 
                      for (uint32_t i = 0; i < 4; i++)
