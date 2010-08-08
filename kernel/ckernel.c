@@ -23,7 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-const char* version = "0.0.1.153 - Rev: 730";
+const char* version = "0.0.1.154 - Rev: 731";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script

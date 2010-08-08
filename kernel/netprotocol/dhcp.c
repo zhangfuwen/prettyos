@@ -3,25 +3,8 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-// http://www.rfc-editor.org/rfc/rfc768.txt <---  User Datagram Protocol
 
-#include "udp.h"
-#include "ipTcpStack.h"
-
-void UDPRecv(void* data)
-{
-    // udppacket_t* udp = (udppacket_t*)data;
-
-    // now we set our ip pointer to the Ethernet-payload
-    // ip_t* ip   = (ip_t*) ((uintptr_t)udp + sizeof(udp_t));
-}
-
-void UDPSend(void* data)
-{
-	// transferDataToTxBuffer(void* data, uint32_t length);
-}
-
-
+   
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
