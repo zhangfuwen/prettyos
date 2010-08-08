@@ -74,7 +74,7 @@ typedef struct dhcp
 	uint8_t sname[64];
 	uint8_t file[128];
 	uint8_t OPT[312];
-}__attribute__((packed)) dhcp_t;
+} __attribute__((packed)) dhcp_t;
 
 /*
 already in use; e.g., the server may probe the offered address

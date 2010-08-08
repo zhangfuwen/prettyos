@@ -26,4 +26,5 @@
 
 int read_eeprom(long ioaddr, int location, int addr_len);
 int write_eeprom(long ioaddr, int location, int addr_len);
+
 #endif

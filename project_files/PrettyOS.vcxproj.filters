@@ -61,6 +61,18 @@
     <Filter Include="Kernel\include\filesystem">
       <UniqueIdentifier>{51f0e996-d034-4179-b264-f98afb040091}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\include\network">
+      <UniqueIdentifier>{b6032731-2ab7-4186-9c6b-14476d5931df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\include\network\protocol">
+      <UniqueIdentifier>{cc10bf61-38fe-47cb-b2dc-90be4b0faf0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\sources\network">
+      <UniqueIdentifier>{545ef89b-747a-4a40-baef-9afffa2a806d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\sources\network\protocol">
+      <UniqueIdentifier>{90ec003f-5bf8-4988-b0b3-45bb367830a0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\user\user_tools\start.asm">
@@ -183,9 +195,6 @@
     <ClInclude Include="..\kernel\event_list.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\ipTcpStack.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\kernel\irq.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
@@ -214,9 +223,6 @@
       <Filter>Kernel\include</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\pci.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\rtl8139.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\scheduler.h">
@@ -297,10 +303,25 @@
     <ClInclude Include="..\kernel\video\font.h">
       <Filter>Kernel\include\video</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\udp.h">
-      <Filter>Kernel\include</Filter>
+    <ClInclude Include="..\kernel\netprotocol\dhcp.h">
+      <Filter>Kernel\include\network\protocol</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\rtl8139_eeprom.h">
+    <ClInclude Include="..\kernel\netprotocol\ipTcpStack.h">
+      <Filter>Kernel\include\network\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\netprotocol\udp.h">
+      <Filter>Kernel\include\network\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\network\rtl8139_eeprom.h">
+      <Filter>Kernel\include\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\network\rtl8139.h">
+      <Filter>Kernel\include\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\netprotocol\icmp.h">
+      <Filter>Kernel\include\network\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\myOwnData.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -386,9 +407,6 @@
     <ClCompile Include="..\kernel\gdt.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\ipTcpStack.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\kernel\irq.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
@@ -408,9 +426,6 @@
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\pci.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\rtl8139.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\scheduler.c">
@@ -485,11 +500,23 @@
     <ClCompile Include="..\kernel\filesystem\fs.c">
       <Filter>Kernel\sources\filesystem</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\udp.c">
-      <Filter>Kernel\sources</Filter>
+    <ClCompile Include="..\kernel\netprotocol\dhcp.c">
+      <Filter>Kernel\sources\network\protocol</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\rtl8139_eeprom.c">
-      <Filter>Kernel\sources</Filter>
+    <ClCompile Include="..\kernel\netprotocol\ipTcpStack.c">
+      <Filter>Kernel\sources\network\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\netprotocol\udp.c">
+      <Filter>Kernel\sources\network\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\network\rtl8139.c">
+      <Filter>Kernel\sources\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\network\rtl8139_eeprom.c">
+      <Filter>Kernel\sources\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\netprotocol\icmp.c">
+      <Filter>Kernel\sources\network\protocol</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

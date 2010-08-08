@@ -48,7 +48,6 @@ void tasking_install()
     textColor(0x0F);
     #endif
 
-    cli();
     scheduler_install();
     kernelTask                 = malloc(sizeof(task_t), 0, "task-kernelTask");
     kernelTask->pid            = next_pid++;
@@ -67,7 +66,6 @@ void tasking_install()
     scheduler_insertTask(kernelTask);
     currentTask = kernelTask;
 
-    sti();
     task_switching = true;
 }
 
@@ -171,7 +169,6 @@ task_t* create_task(page_directory_t* directory, void(*entry)(), uint8_t privile
     textColor(0x0F);
     #endif
 
-    cli();
     task_t* new_task = malloc(sizeof(task_t),0, "task-newtask");
     new_task->thread = false;
 
@@ -199,7 +196,6 @@ task_t* create_thread(void(*entry)())
     textColor(0x0F);
     #endif
 
-    cli();
     task_t* new_task = malloc(sizeof(task_t),0, "task-newthread");
     new_task->thread = true;
 
@@ -208,7 +204,6 @@ task_t* create_thread(void(*entry)())
     new_task->ownConsole = false;
     new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
-    sti();
     return new_task;
 }
 
@@ -263,7 +258,7 @@ void exit()
     cli();
 
     #ifdef _TASKING_DIAGNOSIS_
-      scheduler_log();
+    scheduler_log();
     #endif
 
     // finish current task and free occupied heap
@@ -295,8 +290,6 @@ void exit()
 
     scheduler_deleteTask(currentTask);
 
-    sti();
-
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
     printf("exit finished.\n");
@@ -308,6 +301,7 @@ void exit()
         systemControl(REBOOT);
     }
 
+    sti();
     switch_context(); // switch to next task
 }
 
@@ -373,7 +367,7 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, void(*entry)())
     new_task->heap_top = USER_HEAP_START;
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
     uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
-    
+
     if(new_task->thread)
     {
         *(--kernel_stack) = (uintptr_t)&exit;
@@ -391,7 +385,7 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, void(*entry)())
 
     *(--kernel_stack) = 0; // error code
     *(--kernel_stack) = 0; // interrupt nummer
-    
+
     // general purpose registers w/o esp
     *(--kernel_stack) = 0;
     *(--kernel_stack) = 0;
@@ -400,7 +394,7 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, void(*entry)())
     *(--kernel_stack) = 0;
     *(--kernel_stack) = 0;
     *(--kernel_stack) = 0;
-    
+
     uint32_t data_segment = 0x23; // 0x20|0x3=0x23
 
     *(--kernel_stack) = data_segment;
@@ -423,11 +417,11 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, void(*entry)())
 task_t* create_vm86_task(void(*entry)())
 {
     #ifdef _TASKING_DIAGNOSIS_
-      textColor(0x03);
-      printf("create task");
+    textColor(0x03);
+    printf("create task");
+    textColor(0x0F);
     #endif
 
-    cli();
     task_t* new_task = malloc(sizeof(task_t),0, "vm86-task-newtask");
     new_task->thread = false;
 
@@ -436,7 +430,6 @@ task_t* create_vm86_task(void(*entry)())
     new_task->ownConsole = false;
     new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
-    sti();
     return new_task;
 }
 
