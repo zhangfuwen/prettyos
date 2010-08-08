@@ -46,7 +46,8 @@ void tasking_install()
     textColor(0x03);
     printf("Install tasking\n");
     #endif
-
+    
+    cli(); // ??
     scheduler_install();
     kernelTask                 = malloc(sizeof(task_t), 0, "task-kerneltask");
     kernelTask->pid            = next_pid++;
@@ -61,10 +62,11 @@ void tasking_install()
     kernelTask->blocker.type   = 0;
 
     kernelTask->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-currtask-kst")+KERNEL_STACK_SIZE;
-
+    
     scheduler_insertTask(kernelTask);
     currentTask = kernelTask;
 
+    sti(); // ??
     task_switching = true;
 }
 
@@ -211,7 +213,7 @@ uint32_t task_switch(uint32_t esp)
 {
     if (!currentTask) return esp;
 
-    cli();
+    cli(); // ??
 
     task_t* oldTask = currentTask; // Save old task to check if its the same than the new one
     oldTask->esp = esp; // save esp
@@ -251,7 +253,7 @@ uint32_t task_switch(uint32_t esp)
         cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
         __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
     }
-    sti();
+    sti(); // ??
     return currentTask->esp; // return new task's esp
 }
 
@@ -262,7 +264,7 @@ void switch_context() // switch to next task
 
 void exit()
 {
-    cli();
+    cli(); // ??
 
     #ifdef _TASKING_DIAGNOSIS_
     scheduler_log();
@@ -297,8 +299,6 @@ void exit()
 
     scheduler_deleteTask(currentTask);
     
-    sti(); // ?? 
-
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
     printf("exit finished.\n");
@@ -310,7 +310,7 @@ void exit()
        systemControl(REBOOT);
     }
 
-    sti();
+    sti(); // ?? 
     switch_context(); // switch to next task
 }
 

@@ -128,12 +128,11 @@ void ipTcpStack_recv(void* data, uint32_t length)
 
 bool ipTcpStack_send(void* data, uint32_t length)
 {
-	/*
-    if (length > 0x700) 
+	if (length > 0x700) 
     {
+        printf("\nerror: ipTcpStack_send: length > 0x700");
         return false; 
-    }
-    */
+    }    
 
     // TODO: check whether Tx buffer is already occupied
 
