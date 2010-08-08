@@ -9,7 +9,7 @@
 #include "storage/usb_hc.h"
 #include "storage/ehci.h"
 #include "list.h"
-#include "rtl8139.h"
+#include "network/rtl8139.h"
 #include "video/console.h"
 #include "kheap.h"
 

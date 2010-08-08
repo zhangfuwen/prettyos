@@ -47,7 +47,7 @@ else
 endif
 
 # dependancies
-KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c $(KERNELDIR)/video/*.c $(KERNELDIR)/storage/*.c $(KERNELDIR)/filesystem/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
+KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c $(KERNELDIR)/video/*.c $(KERNELDIR)/storage/*.c $(KERNELDIR)/filesystem/*.c $(KERNELDIR)/network/*.c $(KERNELDIR)/netprotocol/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
 SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERTOOLS)/*.c $(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/*.asm))
 
 # Compiler-/Linker-Flags
@@ -101,6 +101,8 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\storage\*.o
 	$(RM) $(OBJDIR)\$(KERNELDIR)\filesystem\*.o
 	$(RM) $(OBJDIR)\$(KERNELDIR)\video\*.o
+	$(RM) $(OBJDIR)\$(KERNELDIR)\network\*.o
+	$(RM) $(OBJDIR)\$(KERNELDIR)\netprotocol\*.o
 	$(RM) $(OBJDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(SHELLDIR)\*.o
 	$(RM) $(SHELLDIR)\shell.elf
@@ -118,6 +120,8 @@ else
 	$(RM) $(OBJDIR)/$(KERNELDIR)/storage/*.o
 	$(RM) $(OBJDIR)/$(KERNELDIR)/filesystem/*.o
 	$(RM) $(OBJDIR)/$(KERNELDIR)/video/*.o
+	$(RM) $(OBJDIR)/$(KERNELDIR)/network/*.o
+	$(RM) $(OBJDIR)/$(KERNELDIR)/netprotocol/*.o
 	$(RM) $(OBJDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(SHELLDIR)/*.o
 	$(RM) $(SHELLDIR)/shell.elf
