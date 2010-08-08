@@ -23,7 +23,7 @@ jmp entry_point
 %include "GetMemoryMap.inc"       ; INT 0x15, eax = 0xE820
 
 %define IMAGE_PMODE_BASE 0x100000 ; final kernel location in Protected Mode
-%define IMAGE_RMODE_BASE 0x3000   ; intermediate kernel location in Real Mode
+;%define IMAGE_RMODE_BASE 0x3000   ; intermediate kernel location in Real Mode
 
 ImageName     db "KERNEL  BIN"
 ImageSize     dd 0
@@ -36,11 +36,11 @@ msgFailure db 0x0D, 0x0A, "Missing KERNEL.BIN", 0x0D, 0x0A, 0x0A, 0
 
 entry_point:
     cli
-    xor ax, ax          
+    xor ax, ax
     mov ds, ax
     mov es, ax
     mov ax,0x9000       ; stack
-    mov ss,ax     
+    mov ss,ax
     mov sp,0xFC00       ; stacksegment:stackpointer (linear): 9FC00h (below BIOS area)
     sti
 
@@ -62,22 +62,14 @@ Get_Memory_Map:
 
 Install_GDT:
     call InstallGDT
+    call EnterUnrealMode
     sti
 
 Load_Root:
 
     call LoadRoot
-    xor ebx, ebx
-    mov ebp, IMAGE_RMODE_BASE
+    mov edi, IMAGE_PMODE_BASE
     mov esi, ImageName
-
-;===================================================== HOTFIX ============
-    ; extra segment ES has to be IMAGE_RMODE_BASE
-	; due to the call to FindFile in Fat12.inc
-    mov bx,IMAGE_RMODE_BASE
-    mov es,bx
-    xor bx,bx
-;===================================================== HOTFIX ============
 
     call LoadFile                      ; FAT12.inc
 
@@ -115,18 +107,6 @@ ProtectedMode:
     mov es, ax
     mov esp, 0x9000
 
-CopyImage:
-    mov eax, DWORD [ImageSize]
-    movzx ebx, WORD  [BytesPerSec]
-    mul ebx
-    mov ebx, 4
-    div ebx
-    cld
-    mov esi, IMAGE_RMODE_BASE
-    mov edi, IMAGE_PMODE_BASE
-    mov ecx, eax
-    rep movsd                          ; copy image to its protected mode address
-
 ;*******************************************************
 ;    Execute Kernel
 ;*******************************************************
@@ -141,7 +121,7 @@ EXECUTE:
 [BITS 16]
 print_string:
     lodsb                         ; fetch a byte from SI
-    or al, al                     
+    or al, al
     jz .done                      ; if zero, leave
     mov ah, 0x0E
     int 0x10                      ; else put character to sreen

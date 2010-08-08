@@ -50,19 +50,24 @@ Convert_LBA_to_CHS:
 ; Read sectors
 ; CX      Number of sectors to read
 ; AX      Starting sector
-; ES:EBX  Buffer to read to
+; FS:EBX  Buffer to read to
 ;******************************************************************************
 
 ReadSectors:
+    push    edi
+    push    es
+    push    word 0x0F00                         ; enough space for up to 4096 byte sectors
+    pop     es
 .MAIN:
-    mov     di, 0x0005                          ; five retries for error
+    mov     bp, 0x0005                          ; five retries for error
 .SECTORLOOP:
     push    ax
-    push    bx
     push    cx
+    push    bx
     call    Convert_LBA_to_CHS                  ; convert starting sector to CHS
     mov     ah, 0x02                            ; BIOS read sector
     mov     al, 0x01                            ; read one sector
+    xor     bx, bx
     mov     ch, BYTE [Cylinder]                 ; track
     mov     cl, BYTE [Sector]                   ; sector
     mov     dh, BYTE [Head]                     ; head
@@ -71,28 +76,44 @@ ReadSectors:
     jnc     .SUCCESS                            ; test for read error
     xor     ax, ax                              ; BIOS reset disk
     int     0x13                                ; invoke BIOS
-    dec     di                                  ; decrement error counter
-    pop     cx
+    dec     bp                                  ; decrement error counter
     pop     bx
+    pop     cx
     pop     ax
     jnz     .SECTORLOOP                         ; attempt to read again
     int     0x18
 .SUCCESS:
-    pop     cx
     pop     bx
+    mov     edi, ebx                            ; copy to destination buffer
+    mov     cx, WORD [BytesPerSec]
+    shr     cx, 1
+    xor     si, si
+    .COPY_TO_DEST:
+        mov     ax, [es:si]
+        mov     [fs:edi], ax
+        add     si, 2
+        add     edi, 2
+        loop    .COPY_TO_DEST
+
+    movzx   eax, WORD [BytesPerSec]
+    add     ebx, eax                            ; queue next buffer
+    pop     cx
     pop     ax
-    add     bx, WORD [BytesPerSec]              ; queue next buffer
     inc     ax                                  ; queue next sector
     loop    .MAIN                               ; read next sector
+    pop     es
+    pop     edi
     ret
 
 ;******************************************************************************
 ;    Defines
 ;******************************************************************************
 
-%define ROOT_OFFSET  0x2e00
-%define FAT_SEG      0x02c0
-%define ROOT_SEG     0x02e0
+%define ROOT_OFFSET  0x02e00
+%define FAT_DEST     0x02c00
+%define FAT_SEG      0x002c0
+%define ROOT_DEST    0x02e00
+%define ROOT_SEG     0x002e0
 
 ;******************************************************************************
 ; LoadRoot ()
@@ -101,7 +122,6 @@ ReadSectors:
 
 LoadRoot:
     pusha
-    push es
 
     ; compute size of root directory and store in "cx"
     xor     cx, cx
@@ -119,11 +139,8 @@ LoadRoot:
     add     WORD [datasector], cx
 
     ; read root directory into 0x7e00
-      push    word ROOT_SEG
-    pop     es
-    mov     bx, 0                               ; copy root dir
-    call    ReadSectors                         ; read in directory table
-    pop     es
+    mov     ebx, ROOT_DEST
+    call    ReadSectors                         ; read directory table
     popa
     ret
 
@@ -135,7 +152,6 @@ LoadRoot:
 
 LoadFAT:
     pusha
-    push es
 
     ; compute size of FAT and store it into CX
     xor ax, ax
@@ -147,11 +163,8 @@ LoadFAT:
     mov ax, WORD [ReservedSec]
 
     ; read FAT into memory (Overwrite bootloader at 0x7c00)
-    push WORD FAT_SEG
-    pop es
-    xor bx, bx
+    mov ebx, FAT_DEST
     call ReadSectors
-    pop es
     popa
     ret
 
@@ -212,7 +225,7 @@ pop bx
 ;******************************************************************************
 ; LoadFile ()
 ; ES:SI   File to load
-; EBX:BP  Buffer to load file to
+; FS:EDI  Buffer to load file to
 ; AX      Return value: success 0, error -1
 ;******************************************************************************
 
@@ -220,6 +233,7 @@ pop bx
 LoadFile:
     xor  ecx, ecx               ; size of file in sectors
     push ecx
+    push edi
 
 .FIND_FILE:
 
@@ -238,6 +252,7 @@ push es
 pop es
 ;=====================================================HOTFIX============
     pop bx
+    pop edi
     pop ecx
     mov ax, -1
     ret
@@ -253,40 +268,22 @@ pop es
     mov WORD [cluster], dx          ; file's first cluster
     pop bx                          ; get location to write to so we dont screw up the stack
     pop es
-    push bx                         ; store location for later again
-    push es
     call LoadFAT
 
 .LOAD_IMAGE:
     ; load the cluster
     mov ax, WORD [cluster]          ; cluster to read
-    pop es                          ; bx:bp=es:bx
-    pop bx
     call Convert_Cluster_to_LBA
     xor cx, cx
     mov cl, BYTE [SecPerClus]
 
-;=====================================================HOTFIX============
-; ES has to be adapted, if BX is too large
-; -> different solutions possible, e.g.:
-cmp bx,0x4000
-jae .LAB0001
-jmp .LAB0005
-.LAB0001:
-mov bx,es
-add bx,0x0100
-mov es,bx
-mov bx,0x3000
-.LAB0005:
-;=====================================================HOTFIX============
-
+    pop ebx
     call ReadSectors
 
     pop ecx
     inc ecx
     push ecx
-    push bx
-    push es
+    push ebx
     mov ax, FAT_SEG                 ; start reading from fat
     mov es, ax
     xor bx, bx
@@ -297,7 +294,7 @@ mov bx,0x3000
     mov dx, ax                      ; copy current cluster
     shr dx, 1                       ; divide by two
     add cx, dx                      ; sum for (3/2)
-    mov bx, 0                       ; location of fat in memory
+    xor bx, bx                      ; location of fat in memory
     add bx, cx
     mov dx, WORD [es:bx]
     test ax, 1                      ; test for odd or even cluster
@@ -316,8 +313,7 @@ mov bx,0x3000
     jb .LOAD_IMAGE
 
 .SUCCESS:
-    pop es
-    pop bx
+    pop edi
     pop ecx
     xor ax, ax
     ret
