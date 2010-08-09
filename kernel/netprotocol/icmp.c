@@ -4,11 +4,12 @@
 */
 
 #include "icmp.h"
+#include "network/rtl8139.h"
 #include "types.h"
 
 // Compute Internet Checksum for "count" bytes beginning at location "addr".
 /*
-void internetChecksum()
+void internetChecksum(uint16_t addr, uint32_t count)
 {
     // register 
 	uint32_t sum = 0;
@@ -52,6 +53,18 @@ void internetChecksum()
 	checksum = ~sum;
 }
 */
+
+void ICMPAnswerPing()
+{
+	icmpheader_t icmp;
+	// icmppacket_t icmp;
+	
+	icmp.type = ECHO_REQUEST;
+	icmp.code = ECHO_REPLY;
+	icmp.checksum = 0x475c;
+	
+	transferDataToTxBuffer((void*)&icmp, sizeof(icmpheader_t));
+}
 
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.

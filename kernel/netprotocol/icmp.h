@@ -4,6 +4,7 @@
 // http://tools.ietf.org/html/rfc1071 <--- internet checksum 
 // http://de.wikipedia.org/wiki/Internet_Control_Message_Protocol <--- icmp Protocol
 
+#include "ipTcpStack.h"
 #include "types.h"
 
 #define ECHO_REPLY					0					// Echo Reply
@@ -47,6 +48,13 @@ typedef struct icmpheader
 	// uint16_t data;
 } __attribute__((packed)) icmpheader_t;
 
-void internetChecksum();
+typedef struct icmpPacket
+{
+	ethernet_t   eth; // ethernet_t or arp_t ???
+	// arp_t        arp;
+	icmpheader_t icmp;
+} __attribute__((packed)) icmppacket_t;
 
+void internetChecksum(uint16_t addr, uint32_t count);
+void ICMPAnswerPing();
 #endif

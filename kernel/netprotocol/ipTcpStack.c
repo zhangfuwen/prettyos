@@ -9,6 +9,7 @@
 #include "network/rtl8139.h"
 #include "video/console.h"
 #include "ipTcpStack.h"
+#include "icmp.h"
 
 extern uint32_t BaseAddressRTL8139_MMIO;
 extern uint8_t IP_address[4];
@@ -103,6 +104,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
                      }
 
                      ipTcpStack_send((void*)&reply, length );
+					 // ICMPAnswerPing();
                 }
                 break;
 
