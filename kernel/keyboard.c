@@ -240,7 +240,9 @@ char getch()
     char retVal = keyboard_getChar();
     while(retVal == 0)
     {
-        waitForIRQ(1);
+        sti();
+        hlt();
+        //waitForIRQ(1);
         retVal = keyboard_getChar();
     }
     return(retVal);

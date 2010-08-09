@@ -28,6 +28,25 @@ void ipTcpStack_recv(void* data, uint32_t length)
     arp_t* arp = (arp_t*)((uintptr_t)eth + sizeof(ethernet_t));
     ip_t* ip   = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
 
+	switch(ip->protocol)
+	{
+		case 1: // icmp
+			printf("ICMP Header\n");
+			ICMPAnswerPing((void*)&ip, length);	
+			break;
+		case 4: // ipv4
+			printf("IPv4 header\n");
+			break;
+		case 6: // tcp
+			break;
+		case 17: // udp
+			break;
+		case 41: // ipv6
+			break;
+		default:
+			break;
+	}
+	
     // to decide if it is an ip or an arp packet we just look at the ip-version
     if ((ip->version >> 4) == 4)
     {
@@ -103,8 +122,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
                         reply.arp.source_ip[i] = IP_address[i];
                      }
 
-                     // ipTcpStack_send((void*)&reply, length);
-                     ICMPAnswerPing((void*)&reply, length);
+                     ipTcpStack_send((void*)&reply, length);
                 }
                 break;
 
