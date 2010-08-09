@@ -104,7 +104,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
                      }
 
                      // ipTcpStack_send((void*)&reply, length);
-					 ICMPAnswerPing((void*)&reply, length);
+                     ICMPAnswerPing((void*)&reply, length);
                 }
                 break;
 
@@ -137,7 +137,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
 
 bool ipTcpStack_send(void* data, uint32_t length)
 {
-	if (length > 0x700)
+    if (length > 0x700)
     {
         printf("\nerror: ipTcpStack_send: length: %u. This is more than (1792) 0x700",length);
         return false;
@@ -150,14 +150,14 @@ bool ipTcpStack_send(void* data, uint32_t length)
     // TODO: check whether Tx buffer is already occupied
 
     ethernet_t* eth = (ethernet_t*)data;
-	textColor(0x0C);
+    textColor(0x0C);
 
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
     {
         printf("\nPacket now sent with Ethernet 2. ");
     }
     else
-	{
+    {
         printf("\nPacket now sent with Ethernet 1. ");
     }
     textColor(0x0F);

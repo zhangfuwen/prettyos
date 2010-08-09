@@ -18,17 +18,22 @@ extern context_v86_t context; // vm86.c
 static interrupt_handler_t int_routines[256];
 
 // Implement a custom ir handler for the given ir
-void irq_installHandler(int32_t irq, interrupt_handler_t handler)
+void irq_installHandler(IRQ_NUM_t irq, interrupt_handler_t handler)
 {
     int_routines[irq+32] = handler;
 }
 
 // Clear the custom ir handler
-void irq_uninstallHandler(int32_t irq)
+void irq_uninstallHandler(IRQ_NUM_t irq)
 {
     int_routines[irq+32] = 0;
 }
 
+
+void waitForIRQ(IRQ_NUM_t number)
+{
+    scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32));
+}
 
 
 // Message string corresponding to the exception number 0-31: exception_messages[interrupt_number]
@@ -173,10 +178,10 @@ static void PF(registers_t* r)
 void isr_install()
 {
     // Installing ISR-Routines
-    int_routines[6] = &invalidOpcode;
-    int_routines[7] = &NM;
-    int_routines[13] = &GPF;
-    int_routines[14] = &PF;
+    int_routines[ISR_invalidOpcode] = &invalidOpcode;
+    int_routines[ISR_NM] = &NM;
+    int_routines[ISR_GPF] = &GPF;
+    int_routines[ISR_PF] = &PF;
 }
 
 uint32_t irq_handler(uint32_t esp)
@@ -190,9 +195,7 @@ uint32_t irq_handler(uint32_t esp)
         if(task_switching)
             esp = task_switch(esp); // new task's esp
     }
-
-
-    if (r->int_no < 32 && r->int_no != 7 && !(r->eflags & 0x20000)) // no VM bit
+    else if (r->int_no < 32 && r->int_no != 7 && !(r->eflags & 0x20000)) // no VM86 bit
     {
         printf("\nerr_code: %u address(eip): %X\n", r->err_code, r->eip);
         printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
@@ -209,6 +212,8 @@ uint32_t irq_handler(uint32_t esp)
     interrupt_handler_t handler = int_routines[r->int_no];
     if (handler)
         handler(r);
+
+    scheduler_unblockEvent(&BL_INTERRUPT, (void*)r->int_no);
 
     if (r->int_no >= 40)
         outportb(0xA0, 0x20);

@@ -248,9 +248,15 @@ uint32_t task_switch(uint32_t esp)
     return currentTask->esp; // return new task's esp
 }
 
-void switch_context() // switch to next task
+void switch_context() // switch to next task (by interrupt)
 {
-    __asm__ volatile("int $0x7E");
+    if(scheduler_shouldSwitchTask()) // only switch task if the scheduler wants to switch ...
+        __asm__ volatile("int $0x7E");
+    else // ... otherwise save CPU-time with hlt and switch then (to avoid problems if the next interrupt is not a task-switching interrupt)
+    {
+        hlt();
+        __asm__ volatile("int $0x7E");
+    }
 }
 
 void exit()

@@ -16,9 +16,9 @@ extern uint8_t IP_address[4];
 void internetChecksum(uint16_t addr, uint32_t count)
 {
     // register 
-	uint32_t sum = 0;
-	uint32_t count, checksum;
-	uint16_t addr;
+    uint32_t sum = 0;
+    uint32_t count, checksum;
+    uint16_t addr;
     while( count > 1 )  
     {
         // This is the inner loop 
@@ -38,66 +38,66 @@ void internetChecksum(uint16_t addr, uint32_t count)
 /*
 void internetChecksum()
 {
-	register long sum = 0;
+    register long sum = 0;
 
-	while( count > 1 )  {
-	   //  This is the inner loop 
-		   sum += * (unsigned short) addr++;
-		   count -= 2;
-	}
+    while( count > 1 )  {
+       //  This is the inner loop 
+           sum += * (unsigned short) addr++;
+           count -= 2;
+    }
 
-	   // Add left-over byte, if any 
-	if( count > 0 )
-		   sum += * (unsigned char *) addr;
+       // Add left-over byte, if any 
+    if( count > 0 )
+           sum += * (unsigned char *) addr;
 
-	   //  Fold 32-bit sum to 16 bits 
-	while (sum>>16)
-	   sum = (sum & 0xffff) + (sum >> 16);
+       //  Fold 32-bit sum to 16 bits 
+    while (sum>>16)
+       sum = (sum & 0xffff) + (sum >> 16);
 
-	checksum = ~sum;
+    checksum = ~sum;
 }
 */
 
 void ICMPAnswerPing(void* data, uint32_t length)
 {
-	// icmpheader_t icmp;
-	icmppacket_t icmp;
-	
-	// first we cast our data pointer into a pointer at our Ethernet-Frame
+    // icmpheader_t icmp;
+    icmppacket_t icmp;
+    
+    // first we cast our data pointer into a pointer at our Ethernet-Frame
     ethernet_t* eth = (ethernet_t*)data;
 
     // now we set our ip pointer to the Ethernet-payload
     ip_t* ip   = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
 
-	for (uint32_t i = 0; i < 6; i++)
+    for (uint32_t i = 0; i < 6; i++)
     {
-		icmp.eth.recv_mac[i]   = eth->recv_mac[i]; // arp->source_mac[i];
-		icmp.eth.send_mac[i]   = MAC_address[i];
-	}
+        icmp.eth.recv_mac[i]   = eth->recv_mac[i]; // arp->source_mac[i];
+        icmp.eth.send_mac[i]   = MAC_address[i];
+    }
     
-	icmp.eth.type_len[0] = 0x08;
-	icmp.eth.type_len[1] = 0x06;
+    icmp.eth.type_len[0] = 0x08;
+    icmp.eth.type_len[1] = 0x06;
 /*
-	icmp.ip.dest_ip[0]	 = 192;
-	icmp.ip.dest_ip[1]	 = 168;
-	icmp.ip.dest_ip[2]	 = 10;
-	icmp.ip.dest_ip[3]	 = 5;
+    icmp.ip.dest_ip[0]     = 192;
+    icmp.ip.dest_ip[1]     = 168;
+    icmp.ip.dest_ip[2]     = 10;
+    icmp.ip.dest_ip[3]     = 5;
 */
-	for (uint32_t i = 0; i < 4; i++)
-	{
-		// reply.arp.dest_ip[i]   = arp->source_ip[i];
-		// reply.arp.source_ip[i] = IP_address[i];
-		icmp.ip.dest_ip[i]	 = ip->source_ip[i];
-		icmp.ip.source_ip[i] = IP_address[i];
-	}
-	
-	icmp.icmp.type = ECHO_REQUEST;
-	icmp.icmp.code = ECHO_REPLY;
-	icmp.icmp.checksum = 0x475c;
+    for (uint32_t i = 0; i < 4; i++)
+    {
+        // reply.arp.dest_ip[i]   = arp->source_ip[i];
+        // reply.arp.source_ip[i] = IP_address[i];
+        icmp.ip.dest_ip[i]     = ip->source_ip[i];
+        icmp.ip.source_ip[i] = IP_address[i];
+    }
+    
+    icmp.icmp.type = ECHO_REQUEST;
+    icmp.icmp.code = ECHO_REPLY;
+    icmp.icmp.checksum = 0x475c;
 
-	transferDataToTxBuffer((void*)&icmp, sizeof(icmpheader_t));
-	textColor(0x0D); printf("  ICMP Packet send!!! "); textColor(0x03);
-	textColor(0x0D); printf("  ICMP Packet: dest_ip: %u.%u.%u.%u", icmp.ip.dest_ip[0], icmp.ip.dest_ip[1], icmp.ip.dest_ip[2], icmp.ip.dest_ip[3]); textColor(0x03);
+    transferDataToTxBuffer((void*)&icmp, sizeof(icmpheader_t));
+    textColor(0x0D); printf("  ICMP Packet send!!! "); textColor(0x03);
+    textColor(0x0D); printf("  ICMP Packet: dest_ip: %u.%u.%u.%u", icmp.ip.dest_ip[0], icmp.ip.dest_ip[1], icmp.ip.dest_ip[2], icmp.ip.dest_ip[3]); textColor(0x03);
 }
 
 /*

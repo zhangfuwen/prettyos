@@ -23,7 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-const char* version = "0.0.1.157 - Rev: 735";
+const char* version = "0.0.1.158 - Rev: 736";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -267,7 +267,7 @@ void main()
             logHeapRegions();
         }
 
-        hlt(); // switch_context(); // Switch to another task
+        switch_context(); // Switch to another task
     } // end of kernel idle loop
 }
 

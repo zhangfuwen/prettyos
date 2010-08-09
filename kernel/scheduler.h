@@ -19,10 +19,13 @@ typedef struct
 } blocker_t;
 
 void    scheduler_install();
+bool    scheduler_shouldSwitchTask();
 task_t* scheduler_getNextTask();
 void    scheduler_insertTask(task_t* task);
 void    scheduler_deleteTask(task_t* task);
 void    scheduler_blockCurrentTask(blockerType_t* reason, void* data);
+void    scheduler_unblockEvent(blockerType_t* type, void* data);
 void    scheduler_log();
+
 
 #endif

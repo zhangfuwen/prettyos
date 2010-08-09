@@ -41,6 +41,23 @@ void scheduler_install()
     BL_TASK.eventBased      = true;
 }
 
+void scheduler_unblockEvent(blockerType_t* type, void* data) // eventBased blocks are handled here
+{
+    // Look for blocked tasks
+    if(blockedTasks->begin == 0) return;
+
+    blockedTasks->current = blockedTasks->begin;
+    do
+    {
+        if(((task_t*)blockedTasks->current->data)->blocker.type == type && ((task_t*)blockedTasks->current->data)->blocker.data == data) // The blocking interrupt appeared
+        {
+            scheduler_insertTask(blockedTasks->current->data);
+            ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
+        }
+        blockedTasks->current = blockedTasks->current->next;
+    } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
+}
+
 static void checkBlocked()
 {
     if(blockedTasks->begin == 0) return;
@@ -58,6 +75,11 @@ static void checkBlocked()
         }
         blockedTasks->current = blockedTasks->current->next;
     } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
+}
+
+bool scheduler_shouldSwitchTask()
+{
+    return(task_queue->begin != task_queue->begin->next);
 }
 
 task_t* scheduler_getNextTask()
@@ -86,20 +108,8 @@ void scheduler_insertTask(task_t* task)
 void scheduler_deleteTask(task_t* task)
 {
     while(ring_DeleteFirst(task_queue, task));
-    
-    // Checked for tasks blocked with BL_TASK
-    if(blockedTasks->begin == 0) return;
 
-    blockedTasks->current = blockedTasks->begin;
-    do
-    {
-        if(((task_t*)blockedTasks->current->data)->blocker.type == &BL_TASK && ((task_t*)blockedTasks->current->data)->blocker.data == task) // blocked by the task deleted now
-        {
-            scheduler_insertTask(blockedTasks->current->data);
-            ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
-        }
-        blockedTasks->current = blockedTasks->current->next;
-    } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
+    scheduler_unblockEvent(&BL_TASK, task);
 }
 
 void scheduler_blockCurrentTask(blockerType_t* reason, void* data)

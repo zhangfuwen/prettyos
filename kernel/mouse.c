@@ -58,7 +58,7 @@ void mouse_install()
     mouse_read();
 
     // Setup the mouse handler
-    irq_installHandler(12, mouse_handler);
+    irq_installHandler(IRQ_MOUSE, mouse_handler);
 }
 
 // Mouse functions
@@ -83,7 +83,6 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
             {
                 printf("Mouse sent unknown package!\n");
             }
-
             break;
         case 1:
             mouse_byte[1]=inportb(0x60);
@@ -110,7 +109,6 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
             {
                 mouse_cycle++;
             }
-
             break;
         case 3:
             mouse_byte[3]=inportb(0x60);
@@ -269,7 +267,7 @@ void mouse_initspecialfeatures()
 
 void mouse_uninstall()
 {
-    irq_uninstallHandler(12);
+    irq_uninstallHandler(IRQ_MOUSE);
     mouse_write(0xFF);
 }
 

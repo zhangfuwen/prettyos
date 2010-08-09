@@ -13,8 +13,8 @@ static uint32_t timer_ticks = 0;
 
 void timer_install(uint16_t sysfreq)
 {
-    // Installs 'timer_handler' to IRQ0
-    irq_installHandler(0, timer_handler);
+    // Installs 'timer_handler' to IRQ_TIMER
+    irq_installHandler(IRQ_TIMER, timer_handler);
 
     timer_setFrequency(sysfreq); // x Hz, meaning a tick every 1000/x milliseconds
 }
@@ -33,7 +33,7 @@ void timer_handler(registers_t* r)
     ++timer_ticks;
 }
 
-void timer_wait (uint32_t ticks)
+void timer_wait(uint32_t ticks)
 {
     scheduler_blockCurrentTask(&BL_TIME, (void*)timer_ticks+ticks); // data: Wakeup-time casted to a pointer (32-bit integer)
 }
@@ -74,8 +74,8 @@ uint16_t timer_getFrequency()
 
 void timer_uninstall()
 {
-    // Uninstalls IRQ0
-    irq_uninstallHandler(0);
+    // Uninstalls IRQ_TIMER
+    irq_uninstallHandler(IRQ_TIMER);
 }
 
 // delay in microseconds independent of timer interrupt but on rdtsc

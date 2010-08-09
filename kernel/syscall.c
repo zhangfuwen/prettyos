@@ -124,7 +124,7 @@ static void* syscalls[] =
 
 void syscall_install()
 {
-    irq_installHandler(95, syscall_handler);
+    irq_installHandler(IRQ_SYSCALL, syscall_handler);
 }
 
 void syscall_handler(registers_t* r)
