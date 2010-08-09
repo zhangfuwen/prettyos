@@ -103,8 +103,8 @@ void ipTcpStack_recv(void* data, uint32_t length)
                         reply.arp.source_ip[i] = IP_address[i];
                      }
 
-                     ipTcpStack_send((void*)&reply, length );
-					 // ICMPAnswerPing();
+                     // ipTcpStack_send((void*)&reply, length);
+					 ICMPAnswerPing((void*)&reply, length);
                 }
                 break;
 

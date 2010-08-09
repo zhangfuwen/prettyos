@@ -5,7 +5,11 @@
 
 #include "icmp.h"
 #include "network/rtl8139.h"
+#include "video/console.h"
 #include "types.h"
+
+extern uint8_t MAC_address[6];
+extern uint8_t IP_address[4];
 
 // Compute Internet Checksum for "count" bytes beginning at location "addr".
 /*
@@ -54,16 +58,46 @@ void internetChecksum()
 }
 */
 
-void ICMPAnswerPing()
+void ICMPAnswerPing(void* data, uint32_t length)
 {
-	icmpheader_t icmp;
-	// icmppacket_t icmp;
+	// icmpheader_t icmp;
+	icmppacket_t icmp;
 	
-	icmp.type = ECHO_REQUEST;
-	icmp.code = ECHO_REPLY;
-	icmp.checksum = 0x475c;
+	// first we cast our data pointer into a pointer at our Ethernet-Frame
+    ethernet_t* eth = (ethernet_t*)data;
+
+    // now we set our ip pointer to the Ethernet-payload
+    ip_t* ip   = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
+
+	for (uint32_t i = 0; i < 6; i++)
+    {
+		icmp.eth.recv_mac[i]   = eth->recv_mac[i]; // arp->source_mac[i];
+		icmp.eth.send_mac[i]   = MAC_address[i];
+	}
+    
+	icmp.eth.type_len[0] = 0x08;
+	icmp.eth.type_len[1] = 0x06;
+/*
+	icmp.ip.dest_ip[0]	 = 192;
+	icmp.ip.dest_ip[1]	 = 168;
+	icmp.ip.dest_ip[2]	 = 10;
+	icmp.ip.dest_ip[3]	 = 5;
+*/
+	for (uint32_t i = 0; i < 4; i++)
+	{
+		// reply.arp.dest_ip[i]   = arp->source_ip[i];
+		// reply.arp.source_ip[i] = IP_address[i];
+		icmp.ip.dest_ip[i]	 = ip->source_ip[i];
+		icmp.ip.source_ip[i] = IP_address[i];
+	}
 	
+	icmp.icmp.type = ECHO_REQUEST;
+	icmp.icmp.code = ECHO_REPLY;
+	icmp.icmp.checksum = 0x475c;
+
 	transferDataToTxBuffer((void*)&icmp, sizeof(icmpheader_t));
+	textColor(0x0D); printf("  ICMP Packet send!!! "); textColor(0x03);
+	textColor(0x0D); printf("  ICMP Packet: dest_ip: %u.%u.%u.%u", icmp.ip.dest_ip[0], icmp.ip.dest_ip[1], icmp.ip.dest_ip[2], icmp.ip.dest_ip[3]); textColor(0x03);
 }
 
 /*
