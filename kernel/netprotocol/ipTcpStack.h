@@ -3,6 +3,9 @@
 
 #include "os.h"
 
+#define htons(v) ((((v) >> 8) & 0xFF) | (((v) & 0xFF) << 8))
+#define htonl(v) ((((v) >> 24) & 0xFF) | (((v) >> 8) & 0xFF00) | (((v) & 0xFF00) << 8) | (((v) & 0xFF) << 24))
+
 typedef struct ethernet
 {
     uint8_t recv_mac[6];
@@ -31,21 +34,17 @@ typedef struct arpPacket
 
 typedef struct ip
 {
-    uint8_t version           :1;
     uint8_t ipHeaderLength    :4;
+    uint8_t version           :4;
     uint8_t typeOfService;
-    uint8_t length[2];
-    uint8_t identification[2];
-    uint8_t flags             :3;
-    uint8_t fragmentoffset0   :5;
-    uint8_t fragmentoffset1;
+    uint16_t length;
+    uint16_t identification;
+    uint16_t fragmentation;
     uint8_t ttl;
     uint8_t protocol;
-    uint8_t checksum[2];
+    uint16_t checksum;
     uint8_t source_ip[4];
     uint8_t dest_ip[4];
-    uint8_t options[4];
-    uint8_t padding; 
 } __attribute__((packed)) ip_t;
 
 void ipTcpStack_recv(void* data, uint32_t length);

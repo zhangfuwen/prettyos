@@ -32,7 +32,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
 	{
 		case 1: // icmp
 			printf("ICMP Header\n");
-			ICMPAnswerPing((void*)&ip, length);	
+			ICMPAnswerPing(data, length);
 			break;
 		case 4: // ipv4
 			printf("IPv4 header\n");

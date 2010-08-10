@@ -42,10 +42,11 @@
 
 typedef struct icmpheader
 {
-    uint32_t type;
-    uint32_t code;
+    uint8_t type;
+    uint8_t code;
     uint16_t checksum;
-    // uint16_t data;
+    uint16_t id;
+    uint16_t seqnumber;
 } __attribute__((packed)) icmpheader_t;
 
 typedef struct icmpPacket // eth:ip:icmp:data
@@ -55,6 +56,6 @@ typedef struct icmpPacket // eth:ip:icmp:data
     icmpheader_t icmp;
 } __attribute__((packed)) icmppacket_t;
 
-void internetChecksum(uint16_t addr, uint32_t count);
+int internetChecksum(void *addr, size_t count);
 void ICMPAnswerPing(void* data, uint32_t length);
 #endif
