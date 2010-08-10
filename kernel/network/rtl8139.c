@@ -27,6 +27,8 @@ uint8_t  curBuffer = 0; // Tx descriptor
 uint8_t MAC_address[6];
 uint8_t IP_address[4];
 
+uint8_t rtl8139_receiveBuffer[2048];
+
 void rtl8139_handler(registers_t* r)
 {
     textColor(0x03);
@@ -53,11 +55,18 @@ void rtl8139_handler(registers_t* r)
     textColor(0x03);
 
     // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
-    *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_INTRSTATUS)) = 0xFFFF;
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_INTRSTATUS)) = val;
+
+    if (!(val & RTL8139_INT_RX_OK))
+    {
+        return;
+    }
 
     uint32_t length = (network_buffer[network_bufferPointer+3] << 8) + network_buffer[network_bufferPointer+2]; // Little Endian
 
     // --------------------------- adapt buffer pointer ---------------------------------------------------
+
+    memcpy(rtl8139_receiveBuffer, &network_buffer[network_bufferPointer], length);
 
     // packets are DWORD aligned
     network_bufferPointer += length + 4;
@@ -73,7 +82,7 @@ void rtl8139_handler(registers_t* r)
 
     printf("RXBUFTAIL: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
 
-    uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
+    uint32_t ethernetType = (rtl8139_receiveBuffer[16] << 8) + rtl8139_receiveBuffer[17]; // Big Endian
 
     // output receiving buffer
     textColor(0x0D);
@@ -81,7 +90,7 @@ void rtl8139_handler(registers_t* r)
     textColor(0x03);
     for (uint8_t i = 0; i < 2; i++)
     {
-        printf("%y ",network_buffer[network_bufferPointer+i]);
+        printf("%y ",rtl8139_receiveBuffer[i]);
     }
 
     textColor(0x0D); printf("\tLength: ");
@@ -90,18 +99,18 @@ void rtl8139_handler(registers_t* r)
     textColor(0x0D); printf("\nMAC Receiver: "); textColor(0x03);
     for (uint8_t i = 4; i < 10; i++)
     {
-        printf("%y ", network_buffer[network_bufferPointer+i]);
+        printf("%y ", rtl8139_receiveBuffer[i]);
     }
 
     textColor(0x0D); printf("MAC Transmitter: "); textColor(0x03);
     for (uint8_t i = 10; i < 16; i++)
     {
-        printf("%y ", network_buffer[network_bufferPointer+i]);
+        printf("%y ", rtl8139_receiveBuffer[i]);
     }
 
     textColor(0x0D);
     printf("\nEthernet: ");
-    
+
     textColor(0x03);
     if (ethernetType <= 1500) { printf("type 1, "); }
     else                      { printf("type 2, "); }
@@ -109,11 +118,11 @@ void rtl8139_handler(registers_t* r)
     textColor(0x0D);
     if (ethernetType <= 1500) { printf("Length: "); }
     else                      { printf("Type: ");   }
-    
+
     textColor(0x03);
     for (uint8_t i = 16; i < 18; i++)
     {
-        printf("%y ", network_buffer[network_bufferPointer+i]);
+        printf("%y ", rtl8139_receiveBuffer[i]);
     }
 
     uint32_t printlength;
@@ -129,11 +138,11 @@ void rtl8139_handler(registers_t* r)
 
     for (uint32_t i = 18; i <= printlength; i++)
     {
-        printf("%y ", network_buffer[network_bufferPointer+i]);
+        printf("%y ", rtl8139_receiveBuffer[i]);
     }
     textColor(0x0F);
     printf("\n");
-    ipTcpStack_recv((void*)(&(network_buffer[network_bufferPointer+4])), length);
+    ipTcpStack_recv((void*)(&rtl8139_receiveBuffer[4]), length - 4);
 }
 
 
