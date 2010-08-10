@@ -16,18 +16,16 @@
 uint32_t BaseAddressRTL8139_IO;
 uint32_t BaseAddressRTL8139_MMIO;
 
-// to set the WRAP bit, an 8K buffer must in fact be 8 KiB + 16 byte + 1.5 KiB
-// Rx buffer + header + largest potentially overflowing packet, if WRAP is set
 uint8_t   network_buffer[RTL8139_NETWORK_BUFFER_SIZE]; // WRAP not set
 uintptr_t network_bufferPointer = 0;
 
 // Transmit
-uint8_t  curBuffer = 0; // Tx descriptor
 uint8_t  Tx_network_buffer[0x1000];
+uint8_t  curBuffer = 0; // Tx descriptor
 
-// IP and MAC address
-uint8_t IP_address[4];
+// MAC and IP address
 uint8_t MAC_address[6];
+uint8_t IP_address[4];
 
 void rtl8139_handler(registers_t* r)
 {
@@ -61,7 +59,7 @@ void rtl8139_handler(registers_t* r)
 
     // --------------------------- adapt buffer pointer ---------------------------------------------------
 
-    // packets are 32 bit aligned
+    // packets are DWORD aligned
     network_bufferPointer += length + 4;
     network_bufferPointer = (network_bufferPointer + 3) & ~0x3;
 
@@ -74,9 +72,6 @@ void rtl8139_handler(registers_t* r)
     // --------------------------- adapt buffer pointer ---------------------------------------------------
 
     printf("RXBUFTAIL: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
-
-    waitForKeyStroke();
-    // sleepSeconds(1);
 
     uint32_t ethernetType = (network_buffer[network_bufferPointer+16] << 8) + network_buffer[network_bufferPointer+17]; // Big Endian
 
@@ -106,25 +101,15 @@ void rtl8139_handler(registers_t* r)
 
     textColor(0x0D);
     printf("\nEthernet: ");
+    
     textColor(0x03);
-    if (ethernetType <= 0x05DC) // 0x05DC == 1500
-    {
-        printf("type 1, ");
-    }
-    else
-    {
-        printf("type 2, ");
-    }
+    if (ethernetType <= 1500) { printf("type 1, "); }
+    else                      { printf("type 2, "); }
 
     textColor(0x0D);
-    if (ethernetType <= 0x05DC)
-    {
-        printf("Length: ");
-    }
-    else
-    {
-        printf("Type: ");
-    }
+    if (ethernetType <= 1500) { printf("Length: "); }
+    else                      { printf("Type: ");   }
+    
     textColor(0x03);
     for (uint8_t i = 16; i < 18; i++)
     {
@@ -245,13 +230,13 @@ void install_RTL8139(pciDev_t* device)
     bit1 APM - Accept Physical Match: Accept packets send to NIC's MAC address.
     bit0 AAP - Accept All Packets
     */
-    // bit7 is the WRAP bit, 0xF is AB+AM+APM+AAP
+    
     // bit 12:11 defines the size of the Rx ring buffer length
-    // 00: 8K + 16 byte 01: 16K + 16 byte 10: 32K + 16 byte 11: 64K + 16 byte
+    // 00b:  8K + 16 byte       01b: 16K + 16 byte 
+    // 10b: 32K + 16 byte       11b: 64K + 16 byte
 
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR
-    //*((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0xF /* | (1<<7) */; // RCR
-
+    
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUF)) = paging_get_phys_addr(kernel_pd, (void*)network_buffer);
 
@@ -260,13 +245,11 @@ void install_RTL8139(pciDev_t* device)
 
     irq_installHandler(device->irq, rtl8139_handler);
 
-    // set IP
     IP_address[0] = (My_IP & 0xFF000000) >> 24;
     IP_address[1] = (My_IP & 0x00FF0000) >> 16;
     IP_address[2] = (My_IP & 0x0000FF00) >>  8;
     IP_address[3] = (My_IP & 0x000000FF);
 
-    // MAC
     for (uint8_t i = 0; i < 6; i++)
     {
         MAC_address[i] =  *(uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + i);

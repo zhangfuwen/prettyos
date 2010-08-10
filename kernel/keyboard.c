@@ -235,7 +235,7 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
    return 0;
 }
 
-char getch()
+char getch() // TODO: handle the HACK!
 {
     char retVal = keyboard_getChar();
     while(retVal == 0)

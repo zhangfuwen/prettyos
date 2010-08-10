@@ -17,7 +17,6 @@ extern uint8_t MAC_address[6];
 
 void ipTcpStack_recv(void* data, uint32_t length)
 {
-    // first we cast our data pointer into a pointer at our Ethernet-Frame
     ethernet_t* eth = (ethernet_t*)data;
 
     textColor(0x0E);
@@ -47,19 +46,11 @@ void ipTcpStack_recv(void* data, uint32_t length)
 			break;
 	}
 	
-    // to decide if it is an ip or an arp packet we just look at the ip-version
-    if ((ip->version >> 4) == 4)
-    {
-        printf("IPv4. ");
-    }
-    else if ((ip->version >> 4) == 6)
-    {
-        printf("IPv6. ");
-    }
+    // look at the ip-version to decide whether ip or arp packet
+    if      ((ip->version >> 4) == 4)    { printf("IPv4. ");  }
+    else if ((ip->version >> 4) == 6)    { printf("IPv6. ");  }
     else
-    {
-
-        // check for ipv4 ARP packet
+    {   // check for ipv4 ARP packet
         if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
             (((arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1]) == 2048) &&
               (arp->hardware_addresssize == 6) &&

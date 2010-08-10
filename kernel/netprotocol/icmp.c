@@ -12,83 +12,75 @@
 extern uint8_t MAC_address[6];
 extern uint8_t IP_address[4];
 
-// Compute Internet Checksum for "count" bytes beginning at location "addr".
-int internetChecksum(void *addr, size_t count)
-{
-    uint32_t sum = 0;
-    uint8_t *data = addr;
-
-    while (count > 1)
-    {
-        // This is the inner loop
-        sum += (data[0] << 8) | data[1]; // Use Big Endian
-        data += 2;
-        count -= 2;
-    }
-    // Add left-over byte, if any
-    if (count > 0)
-        sum += data[0] << 8;
-    // Fold 32-bit sum to 16 bits
-    while (sum >> 16)
-        sum = (sum & 0xFFFF) + (sum >> 16);
-
-    return ~sum & 0xFFFF;
-}
-
 void ICMPAnswerPing(void* data, uint32_t length)
 {
-    icmppacket_t *rec = data;
+    icmppacket_t*  rec = data;
     size_t icmp_data_length = ntohs(rec->ip.length) - (sizeof(rec->ip) + sizeof(rec->icmp));
     uint8_t pkt[sizeof(*rec) + icmp_data_length];
-    icmppacket_t *icmp = (icmppacket_t *)pkt;
+    icmppacket_t* icmp = (icmppacket_t*)pkt;
 
     for (uint32_t i = 0; i < 6; i++)
     {
-        icmp->eth.recv_mac[i]   = rec->eth.send_mac[i]; // arp->source_mac[i];
+        icmp->eth.recv_mac[i]   = rec->eth.send_mac[i]; 
         icmp->eth.send_mac[i]   = MAC_address[i];
     }
 
     icmp->eth.type_len[0] = 0x08;
     icmp->eth.type_len[1] = 0x00;
-/*
-    icmp.ip.dest_ip[0]     = 192;
-    icmp.ip.dest_ip[1]     = 168;
-    icmp.ip.dest_ip[2]     = 10;
-    icmp.ip.dest_ip[3]     = 5;
-*/
+
     for (uint32_t i = 0; i < 4; i++)
     {
-        // reply.arp.dest_ip[i]   = arp->source_ip[i];
-        // reply.arp.source_ip[i] = IP_address[i];
         icmp->ip.dest_ip[i]   = rec->ip.source_ip[i];
         icmp->ip.source_ip[i] = IP_address[i];
     }
 
-    icmp->ip.version = 4;
+    icmp->ip.version        = 4;
     icmp->ip.ipHeaderLength = sizeof(icmp->ip) / 4;
-    icmp->ip.typeOfService = 0;
-    icmp->ip.length = htons(sizeof(icmp->ip) + sizeof(icmp->icmp) + icmp_data_length);
+    icmp->ip.typeOfService  = 0;
+    icmp->ip.length         = htons(sizeof(icmp->ip) + sizeof(icmp->icmp) + icmp_data_length);
     icmp->ip.identification = 0;
-    icmp->ip.fragmentation = htons(0x4000);
-    icmp->ip.ttl = 128;
-    icmp->ip.protocol = 1;
-    icmp->ip.checksum = 0;
-
-    icmp->ip.checksum = htons(internetChecksum(&icmp->ip, sizeof(icmp->ip)));
-
-    icmp->icmp.type = ECHO_REPLY;
-    icmp->icmp.code = 0;
-    icmp->icmp.id = rec->icmp.id;
-    icmp->icmp.seqnumber = rec->icmp.seqnumber;
-    icmp->icmp.checksum = 0;
-
-    memcpy(&pkt[sizeof(*icmp)], (uint8_t *)data + sizeof(*rec), icmp_data_length);
+    icmp->ip.fragmentation  = htons(0x4000);
+    icmp->ip.ttl            = 128;
+    icmp->ip.protocol       = 1;
+    icmp->ip.checksum       = htons(internetChecksum(&icmp->ip, sizeof(icmp->ip)));
+    icmp->icmp.type         = ECHO_REPLY;
+    icmp->icmp.code         = 0;
+    icmp->icmp.id           = rec->icmp.id;
+    icmp->icmp.seqnumber    = rec->icmp.seqnumber;
+    
+    memcpy(&pkt[sizeof(*icmp)], (uint8_t*)data + sizeof(*rec), icmp_data_length);
 
     icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
 
     transferDataToTxBuffer(icmp, sizeof(*icmp) + icmp_data_length);
-    textColor(0x0D); printf("  ICMP Packet send!!! "); textColor(0x03);
-    textColor(0x0D); printf("  ICMP Packet: dest_ip: %u.%u.%u.%u", icmp->ip.dest_ip[0], icmp->ip.dest_ip[1], icmp->ip.dest_ip[2], icmp->ip.dest_ip[3]); textColor(0x03);
+    textColor(0x0D); printf("  ICMP Packet sent!!! "); textColor(0x03);
+    textColor(0x0D); printf("  Destination IP: %u.%u.%u.%u", icmp->ip.dest_ip[0], icmp->ip.dest_ip[1], icmp->ip.dest_ip[2], icmp->ip.dest_ip[3]); textColor(0x03);
+}
+
+// compute internet checksum for "count" bytes beginning at location "addr"
+int internetChecksum(void *addr, size_t count)
+{
+    uint32_t sum  = 0;
+    uint8_t* data = addr;
+
+    while (count > 1) // inner loop
+    {        
+        sum   += (data[0] << 8) | data[1]; // Big Endian
+        data  += 2;
+        count -= 2;
+    }
+        
+    if (count > 0) // add left-over byte, if any
+    {
+        sum += data[0] << 8;
+    }
+        
+    while (sum >> 16) // fold 32-bit sum to 16 bits
+    {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    return ~sum & 0xFFFF;
 }
 
 /*
