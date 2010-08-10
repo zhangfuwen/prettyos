@@ -7,6 +7,7 @@
 #include "network/rtl8139.h"
 #include "video/console.h"
 #include "types.h"
+#include "util.h"
 
 extern uint8_t MAC_address[6];
 extern uint8_t IP_address[4];
@@ -36,18 +37,19 @@ int internetChecksum(void *addr, size_t count)
 
 void ICMPAnswerPing(void* data, uint32_t length)
 {
-    // icmpheader_t icmp;
-    icmppacket_t icmp;
     icmppacket_t *rec = data;
+    size_t icmp_data_length = ntohs(rec->ip.length) - (sizeof(rec->ip) + sizeof(rec->icmp));
+    uint8_t pkt[sizeof(*rec) + icmp_data_length];
+    icmppacket_t *icmp = (icmppacket_t *)pkt;
 
     for (uint32_t i = 0; i < 6; i++)
     {
-        icmp.eth.recv_mac[i]   = rec->eth.send_mac[i]; // arp->source_mac[i];
-        icmp.eth.send_mac[i]   = MAC_address[i];
+        icmp->eth.recv_mac[i]   = rec->eth.send_mac[i]; // arp->source_mac[i];
+        icmp->eth.send_mac[i]   = MAC_address[i];
     }
 
-    icmp.eth.type_len[0] = 0x08;
-    icmp.eth.type_len[1] = 0x00;
+    icmp->eth.type_len[0] = 0x08;
+    icmp->eth.type_len[1] = 0x00;
 /*
     icmp.ip.dest_ip[0]     = 192;
     icmp.ip.dest_ip[1]     = 168;
@@ -58,33 +60,35 @@ void ICMPAnswerPing(void* data, uint32_t length)
     {
         // reply.arp.dest_ip[i]   = arp->source_ip[i];
         // reply.arp.source_ip[i] = IP_address[i];
-        icmp.ip.dest_ip[i]   = rec->ip.source_ip[i];
-        icmp.ip.source_ip[i] = IP_address[i];
+        icmp->ip.dest_ip[i]   = rec->ip.source_ip[i];
+        icmp->ip.source_ip[i] = IP_address[i];
     }
 
-    icmp.ip.version = 4;
-    icmp.ip.ipHeaderLength = sizeof(icmp.ip) / 4;
-    icmp.ip.typeOfService = 0;
-    icmp.ip.length = htons(sizeof(icmp.ip) + sizeof(icmp.icmp));
-    icmp.ip.identification = 0;
-    icmp.ip.fragmentation = htons(0x4000);
-    icmp.ip.ttl = 128;
-    icmp.ip.protocol = 1;
-    icmp.ip.checksum = 0;
+    icmp->ip.version = 4;
+    icmp->ip.ipHeaderLength = sizeof(icmp->ip) / 4;
+    icmp->ip.typeOfService = 0;
+    icmp->ip.length = htons(sizeof(icmp->ip) + sizeof(icmp->icmp) + icmp_data_length);
+    icmp->ip.identification = 0;
+    icmp->ip.fragmentation = htons(0x4000);
+    icmp->ip.ttl = 128;
+    icmp->ip.protocol = 1;
+    icmp->ip.checksum = 0;
 
-    icmp.ip.checksum = htons(internetChecksum(&icmp.ip, sizeof(icmp.ip)));
+    icmp->ip.checksum = htons(internetChecksum(&icmp->ip, sizeof(icmp->ip)));
 
-    icmp.icmp.type = ECHO_REPLY;
-    icmp.icmp.code = 0;
-    icmp.icmp.id = rec->icmp.id;
-    icmp.icmp.seqnumber = rec->icmp.seqnumber;
-    icmp.icmp.checksum = 0;
+    icmp->icmp.type = ECHO_REPLY;
+    icmp->icmp.code = 0;
+    icmp->icmp.id = rec->icmp.id;
+    icmp->icmp.seqnumber = rec->icmp.seqnumber;
+    icmp->icmp.checksum = 0;
 
-    icmp.icmp.checksum = htons(internetChecksum(&icmp.icmp, sizeof(icmp.icmp)));
+    memcpy(&pkt[sizeof(*icmp)], (uint8_t *)data + sizeof(*rec), icmp_data_length);
 
-    transferDataToTxBuffer(&icmp, sizeof(icmp));
+    icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
+
+    transferDataToTxBuffer(icmp, sizeof(*icmp) + icmp_data_length);
     textColor(0x0D); printf("  ICMP Packet send!!! "); textColor(0x03);
-    textColor(0x0D); printf("  ICMP Packet: dest_ip: %u.%u.%u.%u", icmp.ip.dest_ip[0], icmp.ip.dest_ip[1], icmp.ip.dest_ip[2], icmp.ip.dest_ip[3]); textColor(0x03);
+    textColor(0x0D); printf("  ICMP Packet: dest_ip: %u.%u.%u.%u", icmp->ip.dest_ip[0], icmp->ip.dest_ip[1], icmp->ip.dest_ip[2], icmp->ip.dest_ip[3]); textColor(0x03);
 }
 
 /*
