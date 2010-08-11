@@ -42,12 +42,15 @@ void ICMPAnswerPing(void* data, uint32_t length)
     icmp->ip.fragmentation  = htons(0x4000);
     icmp->ip.ttl            = 128;
     icmp->ip.protocol       = 1;
+    icmp->ip.checksum       = 0;
     icmp->ip.checksum       = htons(internetChecksum(&icmp->ip, sizeof(icmp->ip)));
+
     icmp->icmp.type         = ECHO_REPLY;
     icmp->icmp.code         = 0;
     icmp->icmp.id           = rec->icmp.id;
     icmp->icmp.seqnumber    = rec->icmp.seqnumber;
-    
+    icmp->icmp.checksum     = 0;
+
     memcpy(&pkt[sizeof(*icmp)], (uint8_t*)data + sizeof(*rec), icmp_data_length);
 
     icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
