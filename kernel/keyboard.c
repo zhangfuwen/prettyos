@@ -235,14 +235,12 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
    return 0;
 }
 
-char getch() // TODO: handle the HACK!
+char getch()
 {
     char retVal = keyboard_getChar();
     while(retVal == 0)
     {
-        sti();
-        hlt();
-        //waitForIRQ(1);
+        waitForIRQ(1);
         retVal = keyboard_getChar();
     }
     return(retVal);

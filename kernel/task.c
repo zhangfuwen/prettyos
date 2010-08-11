@@ -211,12 +211,18 @@ uint32_t task_switch(uint32_t esp)
 {
     if (!currentTask) return esp;
 
+    task_switching = false;
+
     task_t* oldTask = currentTask; // Save old task to check if its the same than the new one
     oldTask->esp = esp; // save esp
     
     currentTask = scheduler_getNextTask();
 
-    if(oldTask == currentTask) return esp; // No task switch because old==new
+    if(oldTask == currentTask)
+    {
+        task_switching = true;
+        return esp; // No task switch because old==new
+    }
 
     currentConsole = currentTask->console;
 
@@ -245,6 +251,8 @@ uint32_t task_switch(uint32_t esp)
         cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
         __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
     }
+
+    task_switching = true;
     return currentTask->esp; // return new task's esp
 }
 

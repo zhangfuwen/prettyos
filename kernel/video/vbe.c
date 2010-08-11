@@ -188,9 +188,9 @@ void setPixel(uint32_t x, uint32_t y, uint32_t color)
 
 uint32_t getPixel(uint32_t x, uint32_t y)
 {
-	uint32_t color;
-	color = SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8];
-	return color;
+    uint32_t color;
+    color = SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8];
+    return color;
 }
 
 void setVideoMemory()
@@ -241,37 +241,37 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 //trying bilinear Bitmap scale
 void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 {
-	/*
-	unsigned char* dst_ptr
-	unsigned dst_slice
-	const unsigned char* src_ptr
-	unsigned src_slice
-	unsigned pixel
-	unsigned mx
-	unsigned my
-	*/
+    /*
+    unsigned char* dst_ptr
+    unsigned dst_slice
+    const unsigned char* src_ptr
+    unsigned src_slice
+    unsigned pixel
+    unsigned mx
+    unsigned my
+    */
 
-	uint32_t mx = 3;
-	uint32_t my = 3;
-	uint32_t iloop, j;		
-	
-	uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
+    uint32_t mx = 3;
+    uint32_t my = 3;
+    uint32_t iloop, j;        
+
+    uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
     uint8_t* i = (uint8_t*)bitmap_end;
 
-		for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
-		{
+        for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
+        {
          for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
          {
 
             i -= (mib->BitsPerPixel/8);
-			
-			for(iloop=0;iloop<mx;++iloop)
-				for(j=0;j<my;++j)
-					SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
-					// setPixel(x*mx+iloop, y*my+j, i);			
-		}
-	}
+            
+            for(iloop=0;iloop<mx;++iloop)
+                for(j=0;j<my;++j)
+                    SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
+                    // setPixel(x*mx+iloop, y*my+j, i);            
+        }
+    }
 }
 
 // draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)
@@ -650,9 +650,9 @@ void bitmapDebug() // TODO: make it bitmap-specific
 
 void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
 {
-	curPos->x = xpos;
-	curPos->y = ypos;
-	
+    curPos->x = xpos;
+    curPos->y = ypos;
+    
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
     uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
     
@@ -668,7 +668,7 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
             // xpos += xFont*4;
-			curPos->x += xFont*4;
+            curPos->x += xFont*4;
             /*currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
             if (currentConsole->cursor.x>=COLUMNS)
             {
@@ -679,18 +679,18 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
             break;
         case '\r': // cr: cursor back to the margin
             //move_cursor_home();
-			curPos->x = 0;
-			curPos->y += yFont;
-			// xpos = 0;
+            curPos->x = 0;
+            curPos->y += yFont;
+            // xpos = 0;
             // ypos += yFont;
-			break;
+            break;
         case '\n': // newline: like 'cr': cursor to the margin and increment cursor.y
             //++currentConsole->cursor.y; scroll(); move_cursor_home();
             //scroll();
             // xpos = 0;
             // ypos += yFont;
-			curPos->x = 0;
-			curPos->y += yFont;
+            curPos->x = 0;
+            curPos->y += yFont;
             //break;
         default:
             if (uc != 0)
@@ -700,7 +700,7 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
                     for(uint32_t x=0; x<xFont; x++)
                     {
                         //SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
-						SCREEN[ (curPos->x+x) + (curPos->y+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
+                        SCREEN[ (curPos->x+x) + (curPos->y+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
                     }
                 }
             }

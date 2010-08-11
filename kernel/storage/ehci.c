@@ -45,7 +45,7 @@ partition_t usbDevVolume[17];
 void ehci_install(pciDev_t* PCIdev, uint32_t i)
 {
     uintptr_t bar_phys = PCIdev->bar[i].baseAddress & 0xFFFFFFF0;
-    uintptr_t bar      = (uintptr_t) paging_acquire_pcimem(bar_phys);
+    uintptr_t bar      = (uintptr_t)paging_acquire_pcimem(bar_phys);
     uintptr_t offset   = bar_phys % PAGESIZE;
 
   #ifdef _USB_DIAGNOSIS_
@@ -133,7 +133,7 @@ int32_t initEHCIHostController()
         }
     }
 
-    irq_installHandler(PCIdevice->irq,   ehci_handler);
+    irq_installHandler(PCIdevice->irq, ehci_handler);
 
     USBtransferFlag = true;
     enabledPortFlag = false;
@@ -337,9 +337,9 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
         }
         else
         {
-                textColor(0x0A);
-                printf("\nBIOS did not own the EHCI. No action needed.\n");
-                textColor(0x0F);
+            textColor(0x0A);
+            printf("\nBIOS did not own the EHCI. No action needed.\n");
+            textColor(0x0F);
         }
     }
     else

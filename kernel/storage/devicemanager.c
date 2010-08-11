@@ -265,10 +265,9 @@ FS_ERROR executeFile(const char* path)
     {
         void* filebuffer = malloc(file->size, 0, "devmgr-filebuffer");
         fread(filebuffer, 1, file->size, file);
+        fclose(file);
 
         elf_exec(filebuffer, file->size, file->name); // try to execute
-
-        fclose(file);
         free(filebuffer);
 
         waitForKeyStroke(); /// Why does a #PF appear without it?

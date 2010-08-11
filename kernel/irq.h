@@ -13,6 +13,7 @@ typedef enum {
 typedef enum {
     IRQ_TIMER    = 0,
     IRQ_KEYBOARD = 1,
+    IRQ_FLOPPY   = 6,
     IRQ_MOUSE    = 12,
     IRQ_SYSCALL  = 95
 } IRQ_NUM_t;

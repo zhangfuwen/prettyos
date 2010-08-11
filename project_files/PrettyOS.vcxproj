@@ -99,6 +99,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\netprotocol\dhcp.h" />
     <ClInclude Include="..\kernel\netprotocol\icmp.h" />
     <ClInclude Include="..\kernel\netprotocol\ipTcpStack.h" />
+    <ClInclude Include="..\kernel\netprotocol\tcp.h" />
     <ClInclude Include="..\kernel\netprotocol\udp.h" />
     <ClInclude Include="..\kernel\network\rtl8139.h" />
     <ClInclude Include="..\kernel\network\rtl8139_eeprom.h" />
@@ -166,6 +167,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\netprotocol\dhcp.c" />
     <ClCompile Include="..\kernel\netprotocol\icmp.c" />
     <ClCompile Include="..\kernel\netprotocol\ipTcpStack.c" />
+    <ClCompile Include="..\kernel\netprotocol\tcp.c" />
     <ClCompile Include="..\kernel\netprotocol\udp.c" />
     <ClCompile Include="..\kernel\network\rtl8139.c" />
     <ClCompile Include="..\kernel\network\rtl8139_eeprom.c" />

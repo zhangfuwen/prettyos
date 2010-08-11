@@ -119,7 +119,7 @@ ring_t* ring_Create()
     return(ring);
 }
 
-void ring_Insert(ring_t* ring, void* data)
+void ring_Insert(ring_t* ring, void* data, bool single)
 {
     if(ring->begin == 0) // ring is empty
     {
@@ -129,6 +129,15 @@ void ring_Insert(ring_t* ring, void* data)
     }
     else
     {
+        if(single) // check if an element with the same data is already in the ring
+        {
+            element_t* current = ring->current;
+            do
+            {
+                if(current->data == data) return;
+                current = current->next;
+            } while (current != ring->current);
+        }
         element_t* item = malloc(sizeof(element_t), 0, "ring-element");
         item->data = data;
         item->next = ring->current->next;
@@ -143,8 +152,9 @@ bool ring_isEmpty(ring_t* ring)
 
 bool ring_DeleteFirst(ring_t* ring, void* data)
 {
-    element_t* current = ring->current;
     if(ring->begin == 0) return(false);
+
+    element_t* current = ring->current;
     do
     {
         if (current->next->data == data) // next element will be deleted
@@ -157,9 +167,9 @@ bool ring_DeleteFirst(ring_t* ring, void* data)
             }
             else
             {
-                if(temp == ring->begin)   ring->begin   = ring->begin->next;
-                if(temp == ring->current) ring->current = ring->current->next;
-                current->next = current->next->next;
+                if(temp == ring->begin)   ring->begin   = temp->next;
+                if(temp == ring->current) ring->current = temp->next;
+                current->next = temp->next;
             }
             free(temp);
             return(true);

@@ -91,7 +91,7 @@ task_t* scheduler_getNextTask()
         if(freetimeTask == 0) // the task has not been needed until now. Use spare time to create it.
         {
             freetimeTask = create_thread(&doNothing);
-            while(ring_DeleteFirst(task_queue, freetimeTask));
+            ring_DeleteFirst(task_queue, freetimeTask);
         }
         return(freetimeTask);
     }
@@ -102,12 +102,12 @@ task_t* scheduler_getNextTask()
 
 void scheduler_insertTask(task_t* task)
 {
-    ring_Insert(task_queue, task);
+    ring_Insert(task_queue, task, true); // We only want to have a task one time in the ring, because we steer the priority (later) with multiple rings
 }
 
 void scheduler_deleteTask(task_t* task)
 {
-    while(ring_DeleteFirst(task_queue, task));
+    ring_DeleteFirst(task_queue, task);
 
     scheduler_unblockEvent(&BL_TASK, task);
 }
@@ -117,8 +117,8 @@ void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
     currentTask->blocker.type = reason;
     currentTask->blocker.data = data;
 
-    ring_Insert(blockedTasks, currentTask);
-    while(ring_DeleteFirst(task_queue, currentTask));
+    ring_Insert(blockedTasks, currentTask, true);
+    ring_DeleteFirst(task_queue, currentTask);
 
     sti();
     switch_context();

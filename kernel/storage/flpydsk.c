@@ -178,7 +178,7 @@ void flpydsk_install()
         strncpy(floppyDrive[0]->drive.name, "Floppy Dev 1", 12);
         floppyDrive[0]->drive.name[12]=0; // terminate string
 
-        if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: 0100....b
+        if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: ....0100b
         {
             printf("1.44 MB FDD second device found\n");
             floppyDrive[1] = createFloppy(1);
@@ -190,7 +190,7 @@ void flpydsk_install()
             floppyDrive[1] = NULL;
         }
 
-        irq_installHandler(6, i86_flpy_irq); // floppy disk uses IRQ 6
+        irq_installHandler(IRQ_FLOPPY, i86_flpy_irq); // floppy disk uses IRQ 6
         flpydsk_initialize_dma();
         flpydsk_reset();
         flpydsk_drive_data(13, 1, 0xF, true);
@@ -294,12 +294,13 @@ static void flpydsk_write_ccr(uint8_t val)
 /// Interrupt Handling Routines
 
 // wait for irq
-static void flpydsk_wait_irq()
+static void flpydsk_wait_irq() // TODO: Why do we get timeouts? (uncomment code below to see it)
 {
     sti();
     uint32_t timeout = timer_getSeconds()+2;
     while (CurrentDrive->receivedIRQ == false) // wait for irq to fire
     {
+        hlt();
         if ((timeout-timer_getSeconds()) <= 0)
         {
             //printf("\ntimeout: IRQ not received!\n");
@@ -355,17 +356,14 @@ void flpydsk_motorOn(void* drive)
 // turns the current floppy drives motor on
 void flpydsk_motorOff(void* drive)
 {
+    if(drive == 0) return;
   #ifdef _FLOPPY_DIAGNOSIS_
     if(((floppy_t*)drive)->motor == true)
-    {    
+    {
         textColor(0x0C);
         printf("\nflpydsk_motorOff drive: %u",((floppy_t*)drive)->ID);
         textColor(0x0F);        
     }
-  #endif
-    
-    if(drive == 0) return;
-  #ifdef _FLOPPY_DIAGNOSIS_
     writeInfo(0, "Floppy motor: Global-Access-Counter: %u   Internal counter: %u   Motor on: %u", CurrentDrive->drive.insertedDisk->accessRemaining, CurrentDrive->accessRemaining, CurrentDrive->motor);
   #endif
     if(((floppy_t*)drive)->motor == false) return; // everything is already fine
