@@ -58,4 +58,5 @@ typedef struct icmpPacket // eth:ip:icmp:data
 
 int internetChecksum(void *addr, size_t count);
 void ICMPAnswerPing(void* data, uint32_t length);
+void icmpDebug(void* data, uint32_t length);
 #endif

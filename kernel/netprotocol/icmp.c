@@ -83,6 +83,26 @@ int internetChecksum(void *addr, size_t count)
     return ~sum & 0xFFFF;
 }
 
+void icmpDebug(void* data, uint32_t length)
+{
+	icmppacket_t*  rec = data;
+    size_t icmp_data_length = ntohs(rec->ip.length) - (sizeof(rec->ip) + sizeof(rec->icmp));
+    uint8_t pkt[sizeof(*rec) + icmp_data_length];
+    icmppacket_t* icmp = (icmppacket_t*)pkt;
+	
+    icmp->icmp.type         = ECHO_REPLY;
+    icmp->icmp.code         = 0;
+	icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
+	
+	printf("\n");
+	printf("ICMP Header information:\n");
+	textColor(0x0E);
+	printf("+--------+--------+-------------+\n");
+	printf("|   %u   |   %u   |   %u      | (type, code, checksum)\n", icmp->icmp.type,icmp->icmp.code, icmp->icmp.checksum);
+	printf("+-------------------------------+\n");
+	printf("|          %u                | (data)\n", icmp->icmp.checksum);
+	printf("+-------------------------------+\n");
+}
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.
 *

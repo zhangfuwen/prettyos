@@ -10,6 +10,7 @@
 #include "video/console.h"
 #include "ipTcpStack.h"
 #include "icmp.h"
+#include "tcp.h"
 
 extern uint32_t BaseAddressRTL8139_MMIO;
 extern uint8_t IP_address[4];
@@ -26,15 +27,24 @@ void ipTcpStack_recv(void* data, uint32_t length)
     // now we set our arp/ip pointer to the Ethernet-payload
     arp_t* arp = (arp_t*)((uintptr_t)eth + sizeof(ethernet_t));
     ip_t* ip   = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
-
+	
 	switch(ip->protocol)
 	{
 		case 1: // icmp
 			printf("ICMP Header\n");
 			ICMPAnswerPing(data, length);
+			icmpDebug(data, length);
 			break;
 		case 4: // ipv4
 			printf("IPv4 header\n");
+			/*
+			tcpheader_t tcp; 
+			tcp.source_port = 1025;
+			tcp.destination_port = 80;
+			tcp.sequence_number = 1;
+			tcp.ACK = 1;
+			tcpDebug(&tcp);
+			*/
 			break;
 		case 6: // tcp
 			break;
