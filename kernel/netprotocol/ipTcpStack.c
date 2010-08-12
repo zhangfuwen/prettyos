@@ -72,7 +72,17 @@ void ipTcpStack_recv(void* data, uint32_t length)
             switch ((arp->operation[0] << 8) | arp->operation[1])
             {
             case 1: // ARP-Request
-                printf("Operation: Request\n");
+                if ((arp->source_ip[0]==arp->dest_ip[0])&&
+                    (arp->source_ip[1]==arp->dest_ip[1])&&
+                    (arp->source_ip[2]==arp->dest_ip[2])&&
+                    (arp->source_ip[3]==arp->dest_ip[3])) // IP requ. and searched is identical
+                {
+                    printf("Operation: Gratuitous Request\n");
+                }
+                else
+                {
+                    printf("Operation: Request\n");
+                }
 
                 textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
                 for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->source_mac[i]); }
