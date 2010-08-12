@@ -4,10 +4,10 @@
 
 org 0x100
 
-video_mode:	
+video_mode:
 	mov ax, 0x4F02
-	mov bx, 0x4105 ; video mode 
-	int 10h	
+	mov bx, 0x4105 ; video mode
+	int 10h
 	jmp exitvm86
 
 VgaInfoBlock:
@@ -17,20 +17,20 @@ VgaInfoBlock:
 	mov di, ax
 	mov ax, 0x4F00
 	int 10h
-		
+
 ModeInfoBlock:
     xor ax, ax
 	mov es, ax
 	mov ax, 0x1200
 	mov di, ax
 	mov ax, 0x4F01
-	mov cx, 0x4105 ; video mode 
+	mov cx, 0x4105 ; video mode
 	int 10h
 	mov word [0x1300], ax ; return value
 	xor ax,ax
 	mov ds,ax
 	jmp exitvm86
-	
+
 ;SetBank:
 ;	mov ax, 0x4F05
 ;	mov bx, 0
@@ -86,7 +86,7 @@ GetDisplayStart:
 SetDacPalette:
 	mov ax, 0x4F08		;Set DAC Palette Format
 	mov bl, 0
-    mov bx, 6											
+    mov bx, 6
     int 10h
  	jmp exitvm86
 
@@ -97,7 +97,7 @@ GetDacPalette:
  	jmp exitvm86
 
 SetPalette:
-	mov ax, 0x4F09      
+	mov ax, 0x4F09
 	mov bl, 0           ;=00h    Set palette data
 	mov cx, 0xFF
 	xor dx, dx
@@ -107,7 +107,7 @@ SetPalette:
 	mov di, ax
 	int 10h
 	jmp exitvm86
-	
+
 GetPalette:
 	xor ax, ax
 	mov es, ax
@@ -125,12 +125,12 @@ GetPalette:
 
 text_mode:
 	mov ax, 0x0002
-	int 0x10	
+	int 0x10
 	mov ax, 0x1112
 	xor bl, bl
 	int 0x10
 	jmp exitvm86
-	
+
 ; stop and leave vm86-task
 exitvm86:
 	hlt     ; is translated as exit() at vm86.c

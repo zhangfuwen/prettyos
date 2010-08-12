@@ -123,7 +123,7 @@ static void GPF(registers_t* r) // -> VM86
         {
             #ifdef _VM_DIAGNOSIS_
             textColor(0x03);
-            //printf("\nretVal i386V86Gpf: %u\n", retVal); // vm86 critical 
+            //printf("\nretVal i386V86Gpf: %u\n", retVal); // vm86 critical
             textColor(0x0C);
             #endif
         }
@@ -186,10 +186,11 @@ void isr_install()
 
 uint32_t irq_handler(uint32_t esp)
 {
-    uint8_t attr = currentTask->attrib;
+    uint8_t attr = currentTask->attrib;   // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
+    currentConsole = kernelTask->console; // The output should appear in the kernels console usually
 
     registers_t* r = (registers_t*)esp;
-    
+
     if(r->int_no == 0x20 || r->int_no == 0x7E) // timer interrupt or function switch_ctx
     {
         if(task_switching)
@@ -218,7 +219,8 @@ uint32_t irq_handler(uint32_t esp)
     if (r->int_no >= 40)
         outportb(0xA0, 0x20);
     outportb(0x20, 0x20);
-
+    
+    currentConsole = currentTask->console;
     currentTask->attrib = attr;
     return esp;
 }

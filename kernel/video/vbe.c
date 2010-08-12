@@ -68,7 +68,7 @@ void setDisplayStart(uint16_t *xpos, uint16_t *ypos)
 uint32_t getDisplayStart()
 {
     waitForTask(create_vm86_task(VM86_GETDISPLAYSTART));
-    return (((*(uint16_t*)(0x1300))<<16) | (*(uint16_t*)(0x1302))); 
+    return (((*(uint16_t*)(0x1300))<<16) | (*(uint16_t*)(0x1302)));
     // [0x1300]; First Displayed Scan Line
     // [0x1302]; First Displayed Pixel in Scan Line
 }
@@ -253,7 +253,7 @@ void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 
     uint32_t mx = 3;
     uint32_t my = 3;
-    uint32_t iloop, j;        
+    uint32_t iloop, j;
 
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
@@ -265,11 +265,11 @@ void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
          {
 
             i -= (mib->BitsPerPixel/8);
-            
+
             for(iloop=0;iloop<mx;++iloop)
                 for(j=0;j<my;++j)
                     SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
-                    // setPixel(x*mx+iloop, y*my+j, i);            
+                    // setPixel(x*mx+iloop, y*my+j, i);
         }
     }
 }
@@ -627,7 +627,7 @@ void showbitmap(char *infname,int xs,int ys)
     */
 }
 
-void bitmapDebug() // TODO: make it bitmap-specific 
+void bitmapDebug() // TODO: make it bitmap-specific
 {
     memcpy((void*)bh, (void*)bh_get, sizeof(BitmapHeader_t));
 
@@ -652,13 +652,13 @@ void drawChar(char font_char, uint32_t xpos, uint32_t ypos)
 {
     curPos->x = xpos;
     curPos->y = ypos;
-    
+
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
     uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
-    
+
     // mib->XResolution;
     // mib->YResolution;
-    
+
     switch (uc)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete

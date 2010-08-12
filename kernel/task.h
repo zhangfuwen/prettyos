@@ -32,7 +32,9 @@ struct task
 } __attribute__((packed));
 
 extern task_t* FPUTask; // fpu.c
+
 extern task_t* shellTask;
+extern task_t* kernelTask;
 
 extern bool task_switching;
 extern task_t* currentTask;

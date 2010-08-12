@@ -4,7 +4,7 @@
 #include "os.h"
 #include "list.h"
 
-typedef enum 
+typedef enum
 {
     SEEK_SET, SEEK_CUR, SEEK_END
 } SEEK_ORIGIN;
@@ -114,7 +114,7 @@ typedef struct file
     partition_t* volume; // volume containing the file
     folder_t*    folder; // Folder containing the file (parent-folder)
     void*        data;   // Additional information specific to fileSystem
-    
+
     uint32_t     seek;   // current byte in the file
     uint32_t     size;   // file size
     char*        name;   // name of the node

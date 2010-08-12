@@ -111,26 +111,26 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
 
     // validation checks
     bool validationFlag = true;
-    
+
     textColor(0x0C);
     printf("\n");
     if (header->ident[EI_MAG0]    != 0x7F        ) { validationFlag = false; printf("\nmagic 0x07           failed."); }
     if (header->ident[EI_MAG1]    != 'E'         ) { validationFlag = false; printf("\nmagic E              failed."); }
     if (header->ident[EI_MAG2]    != 'L'         ) { validationFlag = false; printf("\nmagic L              failed."); }
     if (header->ident[EI_MAG3]    != 'F'         ) { validationFlag = false; printf("\nmagic F              failed."); }
-    if (header->ident[EI_CLASS]   != ELFCLASS32  ) { validationFlag = false; printf("\nELFCLASS32           failed."); } 
-    if (header->ident[EI_DATA]    != ELFDATA2LSB ) { validationFlag = false; printf("\nELFDATA2LSB          failed."); } 
-    if (header->ident[EI_VERSION] != EV_CURRENT  ) { validationFlag = false; printf("\nEV_CURRENT           failed."); } 
-    if (header->type              != ET_EXEC     ) { validationFlag = false; printf("\nET_EXEC (type)       failed."); } 
-    if (header->machine           != EM_386      ) { validationFlag = false; printf("\nEM_386 (machine)     failed."); } 
+    if (header->ident[EI_CLASS]   != ELFCLASS32  ) { validationFlag = false; printf("\nELFCLASS32           failed."); }
+    if (header->ident[EI_DATA]    != ELFDATA2LSB ) { validationFlag = false; printf("\nELFDATA2LSB          failed."); }
+    if (header->ident[EI_VERSION] != EV_CURRENT  ) { validationFlag = false; printf("\nEV_CURRENT           failed."); }
+    if (header->type              != ET_EXEC     ) { validationFlag = false; printf("\nET_EXEC (type)       failed."); }
+    if (header->machine           != EM_386      ) { validationFlag = false; printf("\nEM_386 (machine)     failed."); }
     if (header->version           != EV_CURRENT  ) { validationFlag = false; printf("\nEV_CURRENT (version) failed."); }
-    
+
     if (validationFlag == false)
     {
         textColor(0x0C);
         printf("\n\nvalidation checks failed");
         textColor(0x0F);
-        memshow(elf_file, 512);        
+        memshow(elf_file, 512);
         return false;
     }
 

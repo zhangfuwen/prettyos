@@ -133,6 +133,7 @@ void syscall_handler(registers_t* r)
     if (r->eax >= sizeof(syscalls)/sizeof(*syscalls))
         return;
 
+    currentConsole = currentTask->console; // Syscall output should appear in the console of the task that caused the syscall
     void* addr = syscalls[r->eax];
 
     // We don't know how many parameters the function wants.
@@ -149,6 +150,7 @@ void syscall_handler(registers_t* r)
       add $20, %%esp; \
     " : "=a" (ret) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (addr));
     r->eax = ret;
+    currentConsole = kernelTask->console;
 }
 
 /*

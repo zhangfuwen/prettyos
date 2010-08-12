@@ -36,7 +36,7 @@
 typedef struct
 {
     uint32_t size;
-    bool     reserved; 
+    bool     reserved;
     char     comment[21];
     uint32_t number;
 } region_t;

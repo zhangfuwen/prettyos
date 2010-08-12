@@ -241,7 +241,7 @@ EVALUATION: // evaluation of entry
         else
         {
             puts("file is being searched...");
-            
+
             // Adding ending .elf
             if(entry[strlen(entry)-4] != '.') // No ending, append ".elf"
             {

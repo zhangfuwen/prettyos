@@ -1,0 +1,8 @@
+﻿Environment           Version       SCREEN (phys)    VBE  RTL8139  Sound  EHCI-Ports    Problems
+------------------------------------------------------------------------------------------------ 
+qemu-ehci (forum)     0.0.1.168     F2000000h        √    √        √      4             -
+VBox 3.2.8            0.0.1.168     E0000000h        √    x        x      8             -
+VMWare Player 3.0.1   0.0.1.166     -                x    x        -      6             invalid opcode at 1A70h if trying VBE 
+bochs 2.4.5           0.0.1.168     E0000000h        √    x        x      -             -
+VPC 6.0.192.0 and 6.1 0.0.1.168     -                x    x        √      -             #PF (err 0, addr 107BC4h) if trying VBE
+PC 1,4 GHz GeForce4   0.0.1.166     F4000000h        √    √        √      -             -

@@ -18,7 +18,7 @@ char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 static const uint8_t LINES      = 50;
 static const uint8_t USER_BEGIN =  2; // Reserving  Titlebar + Separation
 static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
- 
+
 position_t cursor;
 uint8_t attrib = 0x0F; // white text on black ground
 
@@ -274,7 +274,7 @@ void screenshot()
     uint32_t error = rename(Pfad,"scrnew.txt");
     printf("\nrename test: error: %u", error);
 
-    
+
     // remove test
     waitForKeyStroke();
     error = remove(Pfad);
