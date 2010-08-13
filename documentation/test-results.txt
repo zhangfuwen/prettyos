@@ -1,8 +1,12 @@
-﻿Environment           Version       SCREEN (phys)    VBE  RTL8139  Sound  EHCI-Ports    Problems
------------------------------------------------------------------------------------------------- 
-qemu-ehci (forum)     0.0.1.168     F2000000h        √    √        √      4             -
-VBox 3.2.8            0.0.1.168     E0000000h        √    x        x      8             -
-VMWare Player 3.0.1   0.0.1.166     -                x    x        -      6             invalid opcode at 1A70h if trying VBE 
-bochs 2.4.5           0.0.1.168     E0000000h        √    x        x      -             -
-VPC 6.0.192.0 and 6.1 0.0.1.168     -                x    x        √      -             #PF (err 0, addr 107BC4h) if trying VBE
-PC 1,4 GHz GeForce4   0.0.1.166     F4000000h        √    √        √      -             -
+﻿Environment                Version       SCREEN (phys)    VBE  RTL8139  Sound  EHCI-Ports    Problems
+----------------------------------------------------------------------------------------------------- 
+qemu-ehci (forum)          0.0.1.168     F2000000h        √    √        √      4             -
+VBox 3.2.8                 0.0.1.168     E0000000h        √    x        x      8             -
+VMWare Player 3.0.1        0.0.1.166     -                x    x        -      6             invalid opcode at 1A70h if trying VBE 
+bochs 2.4.5                0.0.1.168     E0000000h        √    x        x      -             -
+VPC 6.0.192.0 and 6.1      0.0.1.168     -                x    x        √      -             #PF (err 0, addr 107BC4h) if trying VBE
+PC 1,4 GHz GeForce4        0.0.1.166     F4000000h        √    √        √      -             -
+PC 800 MHz GeForce FX 5200 0.0.1.168     D0000000h        √    x        √      -             -
+PC K6-2 550 MHz            0.0.1.168     -                ?    ?        ?      -             reboot in/after bootloader
+PC K6-2 500 MHz            0.0.1.168     -                ?    ?        ?      -             reboot in/after bootloader
+PC am5x86-P75              0.0.1.168     -                ?    ?        ?      -             freeze in/after bootloader

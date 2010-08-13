@@ -40,7 +40,7 @@ void fpu_install()
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
 
     // init TaskFPU
-    FPUTask = NULL;
+    FPUTask = 0;
 }
 
 /*

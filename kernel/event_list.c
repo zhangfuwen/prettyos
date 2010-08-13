@@ -14,21 +14,21 @@ event_handler_t EHCI_INIT, EHCI_PORTCHECK, VIDEO_SCREENSHOT;
 void events_install()
 {
     eventQueue = list_Create();
-    
+
     // Init event-handlers
     EHCI_INIT.function        = &ehci_init;
     EHCI_PORTCHECK.function   = &ehci_portcheck;
     VIDEO_SCREENSHOT.function = &mt_screenshot;
 }
 
-void handleEvents() 
+void handleEvents()
 {
     int i=0;
     for(; list_GetElement(eventQueue, i) != 0; i++)
     {
         ((event_handler_t*)list_GetElement(eventQueue, i)->data)->function();
     }
-    if (i>0) 
+    if (i>0)
     {
         list_DeleteAll(eventQueue);
         eventQueue = list_Create();

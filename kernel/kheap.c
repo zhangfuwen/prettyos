@@ -33,7 +33,7 @@
 // TODO: Multithreading safety
 // TODO: Ensure the heap will not overflow (over 4 GB)
 
-static region_t*      regions          = NULL;
+static region_t*      regions          = 0;
 static uint32_t       region_count     = 0;
 static uint32_t       region_max_count = 0;
 static uint8_t* const heap_start       = KERNEL_HEAP_START;
@@ -131,7 +131,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     size = alignUp(size, 8);
 
     // If the heap is not set up..
-    if (regions == NULL)
+    if (regions == 0)
     {
         // Do simple placement allocation
         static uint8_t* nextPlacement = PLACEMENT_BEGIN;
@@ -171,7 +171,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 // Check whether we are able to expand
                 if (region_count+1 > region_max_count)
                 {
-                    return NULL;
+                    return 0;
                 }
 
                 // Move all following regions ahead to get room for a new one
@@ -199,7 +199,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 // Check whether we are able to expand
                 if (region_count+1 > region_max_count)
                 {
-                    return NULL;
+                    return 0;
                 }
 
                 // Move all following regions ahead to get room for a new one
@@ -253,7 +253,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
         textColor(0x0C);
         printf("\nmalloc failed, heap could not be expanded!");
         textColor(0x0F);
-        return NULL;
+        return 0;
     }
     else
     {

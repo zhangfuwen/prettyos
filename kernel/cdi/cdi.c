@@ -10,7 +10,7 @@
 #include "cdi/fs.h"
 #include "video/console.h"
 
-static cdi_list_t drivers = NULL;
+static cdi_list_t drivers = 0;
 
 extern struct cdi_driver* _start_cdi_drivers; // Declared in kernel.ld
 extern struct cdi_driver* _stop_cdi_drivers;  // Declared in kernel.ld
@@ -30,7 +30,7 @@ static void cdi_tyndur_init_pci_devices(void)
     // Fuer jedes Geraet einen Treiber suchen
     for (i = 0; (pci = cdi_list_get(pci_devices, i)); i++) {
 
-        device = NULL;
+        device = 0;
         for (j = 0; (driver = cdi_list_get(drivers, j)); j++)
         {
             if (driver->bus == CDI_PCI && driver->init_device)
@@ -40,7 +40,7 @@ static void cdi_tyndur_init_pci_devices(void)
             }
         }
 
-        if (device != NULL)
+        if (device != 0)
         {
             cdi_list_push(driver->devices, device);
             printf("cdi: %x.%x.%x: Benutze Treiber %s\n",
@@ -111,7 +111,7 @@ void cdi_init()
     while (pdrv < &_stop_cdi_drivers)
     {
         drv = *pdrv;
-        if (drv->init != NULL)
+        if (drv->init != 0)
         {
             // FIXME Der Service muss registriert sein, wenn die Karte bei
             // tcpip registriert wird (fuer den Namen) und das passiert im

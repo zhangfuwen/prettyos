@@ -25,20 +25,10 @@ console_t* currentConsole;
 extern tss_entry_t tss;
 extern void irq_tail();
 
-static uint32_t next_pid = 0; // The next available process ID.
-
+static uint32_t next_pid = 0; // The next available process ID. TODO: Reuse old pid
 
 void fpu_setcw(uint16_t ctrlword); // fpu.c
 
-int32_t getpid()
-{
-    return(currentTask->pid);
-}
-
-void waitForTask(task_t* blockingTask)
-{
-    scheduler_blockCurrentTask(&BL_TASK, blockingTask);
-}
 
 void tasking_install()
 {
@@ -59,14 +49,23 @@ void tasking_install()
     kernelTask->console        = currentConsole;
     kernelTask->ownConsole     = true;
     kernelTask->attrib         = 0x0F;
-    kernelTask->blocker.type   = 0;
-
-    kernelTask->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-currtask-kst")+KERNEL_STACK_SIZE;
+    kernelTask->blocker.type   = 0; // The task is not blocked (scheduler.h/c)
+    kernelTask->kernel_stack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
 
     scheduler_insertTask(kernelTask);
     currentTask = kernelTask;
 
     task_switching = true;
+}
+
+int32_t getpid()
+{
+    return(currentTask->pid);
+}
+
+void waitForTask(task_t* blockingTask)
+{
+    scheduler_blockCurrentTask(&BL_TASK, blockingTask);
 }
 
 static void addConsole(task_t* task, const char* consoleName)
@@ -107,7 +106,7 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
     uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
     uint32_t code_segment = 0x08, data_segment = 0x10;
 
-    if(new_task->thread)
+    if(new_task->type == THREAD)
         *(--kernel_stack) = (uintptr_t)&exit;
 
     if (new_task->privilege == 3)
@@ -147,7 +146,7 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
     new_task->ss  = data_segment;
 
 
-    scheduler_insertTask(new_task); // new _task is inserted as last task in queue
+    scheduler_insertTask(new_task); // new_task is inserted as last task in queue
 
     #ifdef _TASKING_DIAGNOSIS_
     task_log(new_task);
@@ -170,7 +169,7 @@ task_t* create_task(page_directory_t* directory, void(*entry)(), uint8_t privile
     #endif
 
     task_t* new_task = malloc(sizeof(task_t),0, "task-newtask");
-    new_task->thread = false;
+    new_task->type = TASK;
 
     createThreadTaskBase(new_task, directory, entry, privilege);
 
@@ -197,7 +196,7 @@ task_t* create_thread(void(*entry)())
     #endif
 
     task_t* new_task = malloc(sizeof(task_t),0, "task-newthread");
-    new_task->thread = true;
+    new_task->type = THREAD;
 
     createThreadTaskBase(new_task, currentTask->page_directory, entry, currentTask->privilege);
 
@@ -215,7 +214,7 @@ uint32_t task_switch(uint32_t esp)
 
     task_t* oldTask = currentTask; // Save old task to check if its the same than the new one
     oldTask->esp = esp; // save esp
-    
+
     currentTask = scheduler_getNextTask();
 
     if(oldTask == currentTask)
@@ -327,7 +326,7 @@ void* task_grow_userheap(uint32_t increase)
     if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_HEAP_END) ||
         !paging_alloc(currentTask->page_directory, old_heap_top, increase, MEM_USER | MEM_WRITE))
     {
-        return NULL;
+        return 0;
     }
 
     currentTask->heap_top += increase;
@@ -382,11 +381,6 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, void(*entry)())
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
     uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
 
-    if(new_task->thread)
-    {
-        *(--kernel_stack) = (uintptr_t)&exit;
-    }
-
     *(--kernel_stack) = 0x23; // gs
     *(--kernel_stack) = 0x23; // fs
     *(--kernel_stack) = 0x23; // es 
@@ -436,8 +430,8 @@ task_t* create_vm86_task(void(*entry)())
     textColor(0x0F);
     #endif
 
-    task_t* new_task = malloc(sizeof(task_t),0, "vm86-task-newtask");
-    new_task->thread = false;
+    task_t* new_task = malloc(sizeof(task_t),0, "vm86-task");
+    new_task->type = VM86;
 
     create_vm86_ThreadTaskBase(new_task, entry);
 
@@ -445,13 +439,6 @@ task_t* create_vm86_task(void(*entry)())
     new_task->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
 
     return new_task;
-}
-
-task_t* create_vm86_ctask(void(*entry)(), const char* consoleName)
-{
-    task_t* new_task = create_vm86_task(entry);
-    addConsole(new_task, consoleName);
-    return(new_task);
 }
 
 

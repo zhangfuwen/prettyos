@@ -18,8 +18,6 @@ typedef uint32_t            uintptr_t;
   #define __bool_true_false_are_defined 1
 #endif
 
-#define NULL (void*)0
-
 typedef __builtin_va_list va_list;
 #define va_start(ap, X)    __builtin_va_start(ap, X)
 #define va_arg(ap, type)   __builtin_va_arg(ap, type)

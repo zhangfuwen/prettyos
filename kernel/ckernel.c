@@ -23,7 +23,7 @@
 #include "video/vbe.h"
 #include "irq.h"
 
-const char* version = "0.0.1.170 - Rev: 749";
+const char* version = "0.0.1.171 - Rev: 750";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -71,12 +71,13 @@ static void init()
     timer_install(100); // Sets system frequency to ... Hz
     fpu_install();
 
+    tasking_install();
+
     // external devices
     keyboard_install();
     mouse_install();
 
-    // processes/threads, messaging and system calls
-    tasking_install();
+    // messaging and system calls
     events_install();
     syscall_install();
 

@@ -8,9 +8,13 @@
 
 #define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
 
+typedef enum {
+    TASK, THREAD, VM86
+} taskType_t;
+
 struct task
 {
-    bool              thread;         // Indicates whether its a thread or a task
+    taskType_t        type;           // Indicates whether its a thread or a task
     uint32_t          pid;            // Process ID
     uint32_t          esp;            // Stack pointer
     uint32_t          eip;            // Instruction pointer
@@ -46,8 +50,7 @@ task_t*  create_task (page_directory_t* directory, void(*entry)(), uint8_t privi
 task_t*  create_ctask(page_directory_t* directory, void(*entry)(), uint8_t privilege, const char* consoleName); // Creates task with own console
 task_t*  create_thread (void(*entry)()); // Creates thread using currentTasks console
 task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
-task_t*  create_vm86_task (void(*entry)());
-task_t*  create_vm86_ctask(void(*entry)(), const char* consoleName);
+task_t*  create_vm86_task(void(*entry)());
 void     switch_context();
 uint32_t task_switch(uint32_t esp);
 void     exit();

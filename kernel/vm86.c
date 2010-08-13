@@ -24,7 +24,7 @@ context_v86_t context;
 bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
 {
     uint8_t*  ip      = FP_TO_LINEAR(ctx->cs, ctx->eip);
-    uint16_t* ivt     = NULL;
+    uint16_t* ivt     = 0;
     uint16_t* stack   = (uint16_t*)FP_TO_LINEAR(ctx->ss, ctx->useresp);
     uint32_t* stack32 = (uint32_t*)stack;
     bool isOperand32 = false;
@@ -132,7 +132,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 outportl(ctx->edx, ctx->eax);
             }
             ctx->eip++;
-            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
 
         case 0xEE: // OUT DX, AL
@@ -159,7 +159,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
               #endif
                 ctx->eax = inportl(ctx->edx);
             }
-            ctx->eip++; 
+            ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
 
@@ -169,7 +169,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
           #endif
             ctx->eax = (ctx->eax & 0xFF00) + inportb(ctx->edx);
             ctx->eip++;
-            ip = FP_TO_LINEAR(ctx->cs, ctx->eip); 
+            ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
 
         case 0xCD: // INT imm8
@@ -231,9 +231,9 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             return true;
 
         case 0xFA: // CLI
-          #ifdef _VM_DIAGNOSIS_  
+          #ifdef _VM_DIAGNOSIS_
             // printf("cli\n"); // vm86 critical
-          #endif  
+          #endif
             current->v86_if = false;
             ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);

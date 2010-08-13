@@ -259,8 +259,8 @@ void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 
             for(iloop=0;iloop<mx;++iloop)
                 for(j=0;j<my;++j)
-					SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
-					// setPixel(x*mx+iloop, y*my+j, i);
+                    SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
+                    // setPixel(x*mx+iloop, y*my+j, i);
         }
     }
 }
@@ -525,7 +525,7 @@ char ISValidBitmap(char *fname)
 /*
     BMPINFO bmpinfo;
     FILE *fp;
-    if((fp = fopen(fname,"rb+"))==NULL)
+    if((fp = fopen(fname,"rb+"))==0)
     {
         printf("Unable open the file %s",fname,"!!");
         return 0;
@@ -565,7 +565,7 @@ void showbitmap(char *infname,int xs,int ys)
     unsigned char byte[1056];
     long addr;
     unsigned int k;
-    if((fpt=fopen(infname,"rb+"))==NULL)
+    if((fpt=fopen(infname,"rb+"))==0)
     {
         printf("Error opening file ");
         getch();

@@ -15,7 +15,7 @@ void sti() { __asm__ volatile ("sti"); } // Enable interrupts
 void cli() { __asm__ volatile ("cli"); } // Disable interrupts
 void nop() { __asm__ volatile ("nop"); } // Do nothing
 
-// fetch data field bitwise in byte "byte" from bit "shift" with "len" bits  
+// fetch data field bitwise in byte "byte" from bit "shift" with "len" bits
 uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len)
 {
     return( ((uint8_t*)addr)[byte] >> shift) & ((1 << len) - 1);
@@ -369,7 +369,7 @@ char* strchr(char* str, int character)
         }
         if (*str == 0) // end of string
         {
-            return NULL;
+            return 0;
         }
     }
 }
@@ -450,7 +450,7 @@ char* itoa(int32_t n, char* s)
 }
 
 char* utoa(uint32_t n, char* s)
-{   
+{
     uint32_t i = 0;
     do // generate digits in reverse order
     {

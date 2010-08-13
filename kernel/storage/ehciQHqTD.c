@@ -54,7 +54,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     head->hubAddr               =   0;              // unused if high speed (Split transfer)
     head->portNumber            =   0;              // unused if high speed (Split transfer)
     head->mult                  =   1;              // 1-3 transaction per micro-frame, 0 means undefined results
-    if (firstQTD == NULL)
+    if (firstQTD == 0)
         head->qtd.next = 0x1;
     else
     {

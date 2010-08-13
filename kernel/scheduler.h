@@ -5,7 +5,8 @@
 
 typedef struct task task_t;
 
-typedef struct {
+typedef struct
+{
     bool eventBased;
     bool (*unlock)(task_t*);
 } blockerType_t;

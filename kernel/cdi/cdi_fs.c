@@ -6,7 +6,7 @@
 #include "cdi/fs.h"
 
 
-struct cdi_fs_driver* the_one_and_only_driver = NULL;
+struct cdi_fs_driver* the_one_and_only_driver = 0;
 
 void cdi_fs_driver_init(struct cdi_fs_driver* driver)
 {
@@ -25,7 +25,7 @@ void cdi_fs_driver_init(struct cdi_fs_driver* driver)
         ///typehandle_t* typehandle = get_typehandle(LOSTIO_TYPES_DIRECTORY);
         ///typehandle->pre_open = &lostio_pre_open_handler;
         ///typehandle->not_found = &lostio_not_found_handler;
-        ///typehandle->post_open = NULL;
+        ///typehandle->post_open = 0;
         ///typehandle->unlink = &lostio_unlink_handler;
 
         initialized = 1;

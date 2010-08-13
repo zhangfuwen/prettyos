@@ -396,7 +396,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     // IN qTDs
     // No handshake!
     void* QTD_In;
-    void* next = NULL;
+    void* next = 0;
 
     if (TransferLength > 0)
     {

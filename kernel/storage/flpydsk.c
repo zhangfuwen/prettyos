@@ -187,7 +187,7 @@ void flpydsk_install()
         }
         else
         {
-            floppyDrive[1] = NULL;
+            floppyDrive[1] = 0;
         }
 
         irq_installHandler(IRQ_FLOPPY, i86_flpy_irq); // floppy disk uses IRQ 6

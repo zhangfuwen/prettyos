@@ -25,23 +25,29 @@ extern uint32_t usbMSDVolumeMaxLBA;
 
 // ReadCache
 #define NUMREADCACHE 10
-uint8_t  globalReadcache[NUMREADCACHE*512];  // NUMREADCACHE caches: NUMREADCACHE * 512 byte, offset = n*512 (n: 0 to NUMREADCACHE-1)
-uint32_t sectorReadCache[NUMREADCACHE][2];   // NUMREADCACHE caches: sector number and partition
-bool     sectorReadCacheValid[NUMREADCACHE]; // NUMREADCACHE caches: still valid == true
-uint8_t  currReadCache = 0;
+
+typedef struct {
+    uint8_t buffer[512];
+    bool valid;
+    partition_t* part;
+    uint32_t sector;
+} readcache_t;
+
+readcache_t readcaches[NUMREADCACHE];
+uint8_t     currCache = 0;
 
 static void fillReadCache(uint32_t sector, partition_t* part)
 {
     // printf("\nsector: %u part: %X currReadcache: %u", sector, part, currReadCache);
-    sectorReadCache[currReadCache][0]   = sector;
-    sectorReadCache[currReadCache][1]   = (uintptr_t)part;
-    sectorReadCacheValid[currReadCache] = true;
-    memcpy((void*)&globalReadcache[currReadCache*512], (void*)(part->buffer), 512); // cache
+    readcaches[currCache].sector = sector;
+    readcaches[currCache].part = part;
+    readcaches[currCache].valid = true;
+    memcpy(readcaches[currCache].buffer, part->buffer, 512); // cache
 
-    currReadCache++;
-    if (currReadCache >= NUMREADCACHE)
+    currCache++;
+    if (currCache >= NUMREADCACHE)
     {
-        currReadCache = 0;
+        currCache = 0;
     }
  }
 
@@ -82,7 +88,7 @@ void attachPort(port_t* port)
 {
     for(uint8_t i=0; i<PORTARRAYSIZE; i++)
     {
-        if(ports[i] == NULL)
+        if(ports[i] == 0)
         {
             ports[i] = port;
             return;
@@ -95,7 +101,7 @@ void attachDisk(disk_t* disk)
     // Later: Searching correct ID in device-File
     for(uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
-        if(disks[i] == NULL)
+        if(disks[i] == 0)
         {
             disks[i] = disk;
             return;
@@ -109,7 +115,7 @@ void removeDisk(disk_t* disk)
     {
         if(disks[i] == disk)
         {
-            disks[i] = NULL;
+            disks[i] = 0;
             return;
         }
     }
@@ -126,7 +132,7 @@ void showPortList()
 
     for (uint8_t i = 0; i < PORTARRAYSIZE; i++)
     {
-        if (ports[i] != NULL)
+        if (ports[i] != 0)
         {
             if(ports[i]->type == &FDD) // Type
                     printf("\nFDD ");
@@ -140,7 +146,7 @@ void showPortList()
             textColor(0x0F);
             printf("\t%s", ports[i]->name); // The ports name
 
-            if (ports[i]->insertedDisk != NULL)
+            if (ports[i]->insertedDisk != 0)
             {
                 flpydsk_refreshVolumeNames();
                 if(ports[i]->type != &FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
@@ -169,7 +175,7 @@ void showDiskList()
 
     for (uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
-        if (disks[i] != NULL)
+        if (disks[i] != 0)
         {
             if(disks[i]->type == &FLOPPYDISK) /// Todo: Move to flpydsk.c, name set on floppy insertion
             {
@@ -193,7 +199,7 @@ void showDiskList()
 
             for (uint8_t j = 0; j < PARTITIONARRAYSIZE; j++)
             {
-                if (disks[i]->partition[j] == NULL) continue; // Empty
+                if (disks[i]->partition[j] == 0) continue; // Empty
 
                 if (j!=0) printf("\n\t\t\t"); // Not first, indent
 
@@ -224,7 +230,7 @@ void showDiskList()
 
 const char* getFilename(const char* path)
 {
-    if (strchr((char*)path,'/')==NULL && strchr((char*)path,'|')==NULL && strchr((char*)path,'\\')==NULL)
+    if (strchr((char*)path,'/')==0 && strchr((char*)path,'|')==0 && strchr((char*)path,'\\')==0)
     {
         return path;
     }
@@ -235,7 +241,7 @@ const char* getFilename(const char* path)
             path++;
             if(*path == 0)
             {
-                return(NULL);
+                return(0);
             }
         }
         path++;
@@ -316,7 +322,7 @@ partition_t* getPartition(const char* path)
         }
         if (!isalnum(path[i]))
         {
-            return(NULL);
+            return(0);
         }
     }
 
@@ -335,7 +341,7 @@ partition_t* getPartition(const char* path)
             return(disks[DiskID-1]->partition[PartitionID]);
         }
     }
-    return(NULL);
+    return(0);
 }
 
 FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests only
@@ -559,9 +565,9 @@ FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)
     {
-        if ((sectorReadCache[i][0] == sector) && (sectorReadCache[i][1] == (uintptr_t)part))
+        if ((readcaches[i].part == part) && (readcaches[i].sector == sector))
         {
-            sectorReadCacheValid[i] = false;
+            readcaches[i].valid = false;
         }
     }
 
@@ -575,9 +581,6 @@ FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 }
 
 
-
-
-
 FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
@@ -589,7 +592,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)
     {
-        if ((sectorReadCache[i][0] == sector) && (sectorReadCache[i][1] == (uintptr_t)part) && (sectorReadCacheValid[i] == true))
+        if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true))
         {
             static void* destOld   = 0; 
             static void* sourceOld = 0;
@@ -598,26 +601,23 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
             printf(" <--- RAM Cache");
           #endif
 
-            if (((void*)buffer == destOld) && ((void*)&globalReadcache[i*512] == sourceOld))
+            if ((buffer == destOld) && (readcaches[i].buffer == sourceOld))
             {
                 // do nothing
             }
-            
-            /*
             else
             {
-                memcpy((void*)buffer,(void*)&globalReadcache[i*512],512);
-                destOld   = (void*)buffer;
-                sourceOld = (void*)&globalReadcache[i*512];
+                memcpy(buffer,readcaches[i].buffer,512);
+                destOld   = buffer;
+                sourceOld = readcaches[i].buffer;
             }
             readForce = false;
-            */
         }
     }
 
     if (readForce == true)
     {
-        error = part->disk->type->readSector(sector, buffer, part->disk->data);                
+        error = part->disk->type->readSector(sector, buffer, part->disk->data);
         fillReadCache(sector, part);
     }
 

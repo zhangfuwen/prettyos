@@ -107,7 +107,7 @@ int32_t initEHCIHostController()
     uint8_t bus  = PCIdevice->bus;
     uint8_t dev  = PCIdevice->device;
     uint8_t func = PCIdevice->func;
-    
+
     // prepare PCI command register // offset 0x04
     // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
     // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
@@ -121,12 +121,12 @@ int32_t initEHCIHostController()
     printf("\nPCI Capabilities List: first Pointer: %x", pciCapabilitiesList);
   #endif
 
-    if (pciCapabilitiesList) // pointer != NULL
+    if (pciCapabilitiesList) // pointer != 0
     {
         uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
         printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
 
-        while (BYTE2(nextCapability)) // pointer != NULL
+        while (BYTE2(nextCapability)) // pointer != 0
         {
             nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
             printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
@@ -560,7 +560,7 @@ void showPORTSC()
 
                 // Device Manager
                 removeDisk(&usbDev[j+1]);
-                port[j+1].insertedDisk = NULL;
+                port[j+1].insertedDisk = 0;
 
                 showPortList();
                 showDiskList();

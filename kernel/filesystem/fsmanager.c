@@ -44,10 +44,10 @@ file_t* fopen(const char* path, const char* mode)
     file->seek   = 0;
     file->volume = getPartition(path);
     file->size   = 0; // Init with 0 but set in FS-specific fopen
-    if(file->volume == NULL)
+    if(file->volume == 0)
     {
         free(file);
-        return(NULL);
+        return(0);
     }
     file->EOF    = false;
     file->error  = CE_GOOD;
@@ -83,7 +83,7 @@ file_t* fopen(const char* path, const char* mode)
         // cleanup
         free(file->name);
         free(file);
-        return(NULL);
+        return(0);
     }
 
     if(appendMode)

@@ -34,7 +34,7 @@ static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t
 static bool writeFileEntry(FAT_file_t* fileptr, uint32_t* curEntry);
 
 // data buffer
-FAT_file_t* globalFilePtr         = NULL;       // Global variable indicating which file is using the partition's data buffer
+FAT_file_t* globalFilePtr         = 0;          // Global variable indicating which file is using the partition's data buffer
 bool     globalBufferMemSet0      = false;      // Global variable indicating that the data buffer contains all zeros
 uint32_t globalLastDataSectorRead = 0xFFFFFFFF; // Global variable indicating which data sector was read last
 bool     globalDataWriteNecessary = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
@@ -414,7 +414,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FAT_file_t* fileptr, uint32_t* curE
 
             if ((currCluster == volume->FatRootDirCluster) && ((sector + offset2) >= volume->dataLBA) && (volume->part->subtype != FAT32))
             {
-                return NULL;
+                return 0;
             }
             if (globalDataWriteNecessary)
             {
@@ -422,19 +422,19 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FAT_file_t* fileptr, uint32_t* curE
                                       globalFilePtr->volume->part->buffer,                                                   // buffer
                                       globalFilePtr->volume->part))
                 {
-                    return NULL;
+                    return 0;
                 }
                 globalDataWriteNecessary = false;
             }
 
-            globalFilePtr = NULL;
+            globalFilePtr = 0;
             globalBufferMemSet0 = false;
 
             FS_ERROR error = singleSectorRead(sector + offset2, volume->part->buffer, volume->part);
 
             if (error != CE_GOOD)
             {
-                return NULL;
+                return 0;
             }
             if (ForceRead)
             {
@@ -443,7 +443,7 @@ static FILEROOTDIRECTORYENTRY cacheFileEntry(FAT_file_t* fileptr, uint32_t* curE
             return (FILEROOTDIRECTORYENTRY)volume->part->buffer;
         } // END: a valid cluster is found
 
-        return NULL; // invalid cluster number
+        return 0; // invalid cluster number
     }
 
     return (FILEROOTDIRECTORYENTRY)(((FILEROOTDIRECTORYENTRY)volume->part->buffer) + ((*curEntry)%DirectoriesPerSector));
@@ -458,12 +458,12 @@ static FILEROOTDIRECTORYENTRY getFileAttribute(FAT_file_t* fileptr, uint32_t* fH
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
     FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fileptr,fHandle,true);
 
-    if (dir == NULL || dir->DIR_Name[0] == DIR_EMPTY || dir->DIR_Name[0] == DIR_DEL)
+    if (dir == 0 || dir->DIR_Name[0] == DIR_EMPTY || dir->DIR_Name[0] == DIR_DEL)
     {
-        return NULL;
+        return 0;
     }
 
-    while (dir != NULL && dir->DIR_Attr == ATTR_LONG_NAME)
+    while (dir != 0 && dir->DIR_Attr == ATTR_LONG_NAME)
     {
         (*fHandle)++;
         dir = cacheFileEntry(fileptr, fHandle, false);
@@ -499,7 +499,7 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
     }
     else { dir = cacheFileEntry (fileptr, fHandle, false); }
 
-    if (dir == NULL)                   { return NO_MORE; }
+    if (dir == 0)                   { return NO_MORE; }
     if (dir->DIR_Name[0] == DIR_DEL)   { return NOT_FOUND; }
     if (dir->DIR_Name[0] == DIR_EMPTY) { return NO_MORE;   }
 
@@ -542,7 +542,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
   #endif
     if (fHandle == 0 || (fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) != 0) // Maximum 16 entries possible
     {
-        if (cacheFileEntry(fileptrDest, &fHandle, read) == NULL)
+        if (cacheFileEntry(fileptrDest, &fHandle, read) == 0)
         {
             return CE_BADCACHEREAD;
         }
@@ -703,7 +703,7 @@ FS_ERROR FAT_fclose(file_t* file)
 
         dir = getFileAttribute(FATfile, &fHandle);
 
-        if (dir == NULL)
+        if (dir == 0)
         {
             return CE_EOF;
         }
@@ -1017,7 +1017,7 @@ static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
         globalDataWriteNecessary = false;
     }
 
-    globalFilePtr = NULL;
+    globalFilePtr = 0;
 
     if (globalBufferMemSet0 == false)
     {
@@ -1341,7 +1341,7 @@ FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseCluster
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
 
     FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fileptr, fHandle, true);
-    if (dir == NULL)
+    if (dir == 0)
     {
         return CE_BADCACHEREAD;
     }
@@ -1377,7 +1377,7 @@ static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name , uint32_t *fHan
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
     FILEROOTDIRECTORYENTRY dir = cacheFileEntry( fileptr, fHandle, true);
 
-    if (dir == NULL) return CE_BADCACHEREAD;
+    if (dir == 0) return CE_BADCACHEREAD;
 
     strncpy(dir->DIR_Name,name,DIR_NAMECOMP);
     if (mode == DIRECTORY)
@@ -1429,7 +1429,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
     FILEROOTDIRECTORYENTRY  dir;
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
-    if ((dir = cacheFileEntry(fileptr, fHandle, true)) == NULL)
+    if ((dir = cacheFileEntry(fileptr, fHandle, true)) == 0)
     {
         status = CE_BADCACHEREAD;
     }
@@ -1443,15 +1443,15 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
             do
             {
                 dir = cacheFileEntry(fileptr, fHandle, false);
-                if (dir != NULL)
+                if (dir != 0)
                 {
                     a = dir->DIR_Name[0];
                 }
                 (*fHandle)++;
             }
-            while((a == DIR_DEL || a == DIR_EMPTY) && dir != NULL &&  ++amountfound < 1);
+            while((a == DIR_DEL || a == DIR_EMPTY) && dir != 0 &&  ++amountfound < 1);
 
-            if (dir == NULL)
+            if (dir == 0)
             {
                 b = fileptr->dircurrCluster;
                 if (b == fileptr->volume->FatRootDirCluster)
@@ -1509,12 +1509,12 @@ static FILEROOTDIRECTORYENTRY loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHand
     // Get the entry
     FILEROOTDIRECTORYENTRY dir = cacheFileEntry(fileptr, fHandle, true);
 
-    if (dir == NULL || dir->DIR_Name[0] == DIR_EMPTY || dir->DIR_Name[0] == DIR_DEL)
+    if (dir == 0 || dir->DIR_Name[0] == DIR_EMPTY || dir->DIR_Name[0] == DIR_DEL)
     {
-        return NULL;
+        return 0;
     }
 
-    while(dir != NULL && dir->DIR_Attr == ATTR_LONG_NAME)
+    while(dir != 0 && dir->DIR_Attr == ATTR_LONG_NAME)
     {
         (*fHandle)++;
         dir = cacheFileEntry(fileptr, fHandle, false);
@@ -1642,7 +1642,7 @@ static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
     if (*fHandle == 0)
     {
-        if (cacheFileEntry(fileptr, fHandle, true) == NULL)
+        if (cacheFileEntry(fileptr, fHandle, true) == 0)
         {
             error = CE_BADCACHEREAD;
         }
@@ -1651,7 +1651,7 @@ static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
     {
         if ((*fHandle & 0xf) != 0)
         {
-            if (cacheFileEntry(fileptr, fHandle, true) == NULL)
+            if (cacheFileEntry(fileptr, fHandle, true) == 0)
             {
                 error = CE_BADCACHEREAD;
             }
@@ -1796,7 +1796,7 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
     temp = cluster2sector(volume, FATfile->currCluster);
     numsector = FATfile->sec;
     temp += numsector;
-    globalFilePtr = NULL;
+    globalFilePtr = 0;
     globalBufferMemSet0 = false;
     if (singleSectorRead(temp, volume->part->buffer, volume->part) != CE_GOOD)
     {
@@ -2003,7 +2003,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
     uint32_t fHandle = 1, goodHandle;
     FILEROOTDIRECTORYENTRY dir;
 
-    if (fileptr == NULL)
+    if (fileptr == 0)
     {
         return CE_FILENOTOPENED;
     }
@@ -2016,7 +2016,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
     dir = cacheFileEntry (fileptr, &fHandle, true);
-    if (dir == NULL)
+    if (dir == 0)
     {
         return CE_BADCACHEREAD;
     }
@@ -2041,7 +2041,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
     while (true)
     {
         dir = cacheFileEntry (fileptr, &fHandle, false);
-        if (dir == NULL)
+        if (dir == 0)
         {
             if (globalNextClusterIsLast == true)
             {
@@ -2079,7 +2079,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
     dir = loadDirAttrib(fileptr, &fHandle);
 
-    if (dir == NULL)
+    if (dir == 0)
     {
         return CE_BADCACHEREAD;
     }
