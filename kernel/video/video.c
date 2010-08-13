@@ -227,6 +227,7 @@ void mt_screenshot()
 }
 
 extern disk_t* disks[DISKARRAYSIZE]; // HACK
+extern bool    readCacheFlag; // HACK
 void screenshot()
 {
     int32_t NewLine = 0;
@@ -246,6 +247,7 @@ void screenshot()
         }
     }
 
+    readCacheFlag = false; // TODO: solve this problem!
     char Pfad[20];
     for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
@@ -267,6 +269,7 @@ void screenshot()
         printf("\nError: file could not be opened!");
     }
     free(videoscreen);
+    readCacheFlag = true;
 
     /*
     //rename test
