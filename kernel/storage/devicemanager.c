@@ -30,14 +30,13 @@ uint32_t sectorReadCache[NUMREADCACHE][2];   // NUMREADCACHE caches: sector numb
 bool     sectorReadCacheValid[NUMREADCACHE]; // NUMREADCACHE caches: still valid == true
 uint8_t  currReadCache = 0;
 
-/*
-static void fillReadCache(uint32_t sector, uintptr_t part)
+static void fillReadCache(uint32_t sector, partition_t* part)
 {
     // printf("\nsector: %u part: %X currReadcache: %u", sector, part, currReadCache);
     sectorReadCache[currReadCache][0]   = sector;
-    sectorReadCache[currReadCache][1]   = part;
+    sectorReadCache[currReadCache][1]   = (uintptr_t)part;
     sectorReadCacheValid[currReadCache] = true;
-    memcpy((void*)&globalReadcache[currReadCache*512], (void*)(((partition_t*)part)->buffer), 512); // cache
+    memcpy((void*)&globalReadcache[currReadCache*512], (void*)(part->buffer), 512); // cache
 
     currReadCache++;
     if (currReadCache >= NUMREADCACHE)
@@ -45,7 +44,6 @@ static void fillReadCache(uint32_t sector, uintptr_t part)
         currReadCache = 0;
     }
  }
- */
 
 portType_t FDD,        USB,     RAM;
 diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
@@ -553,18 +551,6 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
     return CE_GOOD;
 }
 
-
-/// TEST
-FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
-{
- 	#ifdef _DEVMGR_DIAGNOSIS_
- 	textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<",lba); textColor(0x0F);
- 	#endif
- 	return part->disk->type->writeSector(sector, buffer, part->disk->data);
-}
-/// TEST
-
-/*
 FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
@@ -581,25 +567,17 @@ FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 
     return part->disk->type->writeSector(sector, buffer, part->disk->data);
 }
-*/
 
-/// TEST
 FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
     part->disk->accessRemaining++;
     return sectorWrite(sector, buffer, part);
 }
-/// TEST
 
-FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
-{
-    #ifdef _DEVMGR_DIAGNOSIS_
-    textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<",lba); textColor(0x0F);
-    #endif
-    return part->disk->type->readSector(sector, buffer, part->disk->data);
-} 
 
-/*
+
+
+
 FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
@@ -613,8 +591,8 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
     {
         if ((sectorReadCache[i][0] == sector) && (sectorReadCache[i][1] == (uintptr_t)part) && (sectorReadCacheValid[i] == true))
         {
-            static void* destOld   = NULL;
-            static void* sourceOld = NULL;
+            static void* destOld   = 0; 
+            static void* sourceOld = 0;
 
           #ifdef _DEVMGR_DIAGNOSIS_
             printf(" <--- RAM Cache");
@@ -624,6 +602,8 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
             {
                 // do nothing
             }
+            
+            /*
             else
             {
                 memcpy((void*)buffer,(void*)&globalReadcache[i*512],512);
@@ -631,18 +611,18 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
                 sourceOld = (void*)&globalReadcache[i*512];
             }
             readForce = false;
+            */
         }
     }
 
     if (readForce == true)
     {
-        error = part->disk->type->readSector(sector, buffer, part->disk->data);
-        fillReadCache(sector, (uintptr_t)part);
+        error = part->disk->type->readSector(sector, buffer, part->disk->data);                
+        fillReadCache(sector, part);
     }
 
     return error;
 }
-*/
 
 FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
