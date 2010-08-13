@@ -19,6 +19,7 @@
 
 
 #include "util.h"
+#include "timer.h" /// TEST
 #include "paging.h"
 #include "kheap.h"
 #include "storage/usb2_msd.h"
@@ -66,7 +67,7 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
     }
 
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> cluster2sector<<<<<    cluster: %u  sector %u", cluster, sector);
+    printf("\n>>>>> cluster2sector<<<<<    cluster: %u  sector %u", cluster, sector);  
   #endif
     return (sector);
 }
@@ -1249,8 +1250,8 @@ static bool writeFileEntry(FAT_file_t* fileptr, uint32_t* curEntry)
   #endif
 
     FAT_partition_t* volume = fileptr->volume;
-    uint32_t currCluster       = fileptr->dircurrCluster;
-    uint8_t offset2     = *curEntry / (volume->sectorSize/32);
+    uint32_t currCluster = fileptr->dircurrCluster;
+    uint8_t offset2 = *curEntry / (volume->sectorSize/32);
 
     if (volume->part->subtype == FAT32 || currCluster != 0)
     {
@@ -2133,8 +2134,26 @@ char FAT_fgetc(file_t* file)
 FS_ERROR FAT_fputc(file_t* file, char c)
 {
     uint32_t retVal = FAT_fwrite(&c, 1, 1, file->data);
+    
+    /// TEST
+    /*
+    static uint32_t i=0; 
+    i++;    
+    printf("\tfputc %u ",i);    
+    */
+    /// TEST
+
     if (retVal == 1)
     {
+        /// TEST
+        /*
+        printf("OK  ");  
+        if (i==4098)
+        {
+            waitForKeyStroke();
+        }
+        */
+        /// TEST
         return(CE_GOOD);
     }
     return CE_WRITE_ERROR;

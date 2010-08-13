@@ -30,6 +30,7 @@ uint32_t sectorReadCache[NUMREADCACHE][2];   // NUMREADCACHE caches: sector numb
 bool     sectorReadCacheValid[NUMREADCACHE]; // NUMREADCACHE caches: still valid == true
 uint8_t  currReadCache = 0;
 
+/*
 static void fillReadCache(uint32_t sector, uintptr_t part)
 {
     // printf("\nsector: %u part: %X currReadcache: %u", sector, part, currReadCache);
@@ -44,7 +45,7 @@ static void fillReadCache(uint32_t sector, uintptr_t part)
         currReadCache = 0;
     }
  }
-
+ */
 
 portType_t FDD,        USB,     RAM;
 diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
@@ -553,6 +554,17 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
 }
 
 
+/// TEST
+FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
+{
+ 	#ifdef _DEVMGR_DIAGNOSIS_
+ 	textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<",lba); textColor(0x0F);
+ 	#endif
+ 	return part->disk->type->writeSector(sector, buffer, part->disk->data);
+}
+/// TEST
+
+/*
 FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
@@ -569,13 +581,25 @@ FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 
     return part->disk->type->writeSector(sector, buffer, part->disk->data);
 }
+*/
 
+/// TEST
 FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
     part->disk->accessRemaining++;
     return sectorWrite(sector, buffer, part);
 }
+/// TEST
 
+FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
+{
+    #ifdef _DEVMGR_DIAGNOSIS_
+    textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<",lba); textColor(0x0F);
+    #endif
+    return part->disk->type->readSector(sector, buffer, part->disk->data);
+} 
+
+/*
 FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
@@ -618,6 +642,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 
     return error;
 }
+*/
 
 FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
