@@ -240,7 +240,8 @@ char getch()
     char retVal = keyboard_getChar();
     while(retVal == 0)
     {
-        waitForIRQ(1);
+        waitForIRQ(1); // not working on realPC ---> Broken Free
+		// sti();hlt();
         retVal = keyboard_getChar();
     }
     return(retVal);

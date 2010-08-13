@@ -45,7 +45,7 @@ void ICMPAnswerPing(void* data, uint32_t length)
     icmp->ip.checksum       = 0;
     icmp->ip.checksum       = htons(internetChecksum(&icmp->ip, sizeof(icmp->ip)));
 
-    icmp->icmp.type         = ECHO_REPLY;
+    icmp->icmp.type         = ICMP_ECHO_REPLY;
     icmp->icmp.code         = 0;
     icmp->icmp.id           = rec->icmp.id;
     icmp->icmp.seqnumber    = rec->icmp.seqnumber;
@@ -56,8 +56,6 @@ void ICMPAnswerPing(void* data, uint32_t length)
     icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
 
     transferDataToTxBuffer(icmp, sizeof(*icmp) + icmp_data_length);
-    textColor(0x0D); printf("  ICMP Packet sent!!! "); textColor(0x03);
-    textColor(0x0D); printf("  Destination IP: %u.%u.%u.%u", icmp->ip.dest_ip[0], icmp->ip.dest_ip[1], icmp->ip.dest_ip[2], icmp->ip.dest_ip[3]); textColor(0x03);
 }
 
 // compute internet checksum for "count" bytes beginning at location "addr"
@@ -93,17 +91,25 @@ void icmpDebug(void* data, uint32_t length)
     uint8_t pkt[sizeof(*rec) + icmp_data_length];
     icmppacket_t* icmp = (icmppacket_t*)pkt;
 	
-    icmp->icmp.type         = ECHO_REPLY;
+    icmp->icmp.type         = ICMP_ECHO_REPLY;
     icmp->icmp.code         = 0;
 	icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
 	
-	printf("\n");
+	icmp->icmp.id           = rec->icmp.id;
+    icmp->icmp.seqnumber    = rec->icmp.seqnumber;
+    icmp->icmp.checksum     = 0;
+
+    memcpy(&pkt[sizeof(*icmp)], (uint8_t*)data + sizeof(*rec), icmp_data_length);
+
+    icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
+	
+	printf("\n\n");
 	printf("ICMP Header information:\n");
 	textColor(0x0E);
 	printf("+--------+--------+-------------+\n");
-	printf("|   %u   |   %u   |   %u      | (type, code, checksum)\n", icmp->icmp.type,icmp->icmp.code, icmp->icmp.checksum);
+	printf("|   %u    |   %u    |     %u      | (type, code, checksum)\n", icmp->icmp.type, icmp->icmp.code, icmp->icmp.checksum);
 	printf("+-------------------------------+\n");
-	printf("|          %u                | (data)\n", icmp->icmp.checksum);
+	printf("|              %u                | (data)\n", icmp->icmp.checksum);
 	printf("+-------------------------------+\n");
 }
 /*

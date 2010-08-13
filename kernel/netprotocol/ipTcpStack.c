@@ -31,12 +31,10 @@ void ipTcpStack_recv(void* data, uint32_t length)
 	switch(ip->protocol)
 	{
 		case 1: // icmp
-			printf("ICMP Header\n");
 			ICMPAnswerPing(data, length);
 			icmpDebug(data, length);
 			break;
 		case 4: // ipv4
-			printf("IPv4 header\n");
 			/*
 			tcpheader_t tcp; 
 			tcp.source_port = 1025;

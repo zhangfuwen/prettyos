@@ -5,6 +5,7 @@
 // ftp://ftp.efo.ru/pub/wiznet/W5100_App%20note_DHCP.pdf
 
 // DCHP is running on PORT 67
+// DHCP packets are in Type 0x800 = IPv4
 
 /*
    DHCP clarifies the interpretation of the 'siaddr' field as the

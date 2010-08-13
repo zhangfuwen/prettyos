@@ -241,15 +241,6 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 //trying bilinear Bitmap scale
 void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 {
-    /*
-    unsigned char* dst_ptr
-    unsigned dst_slice
-    const unsigned char* src_ptr
-    unsigned src_slice
-    unsigned pixel
-    unsigned mx
-    unsigned my
-    */
 
     uint32_t mx = 3;
     uint32_t my = 3;
@@ -268,8 +259,8 @@ void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 
             for(iloop=0;iloop<mx;++iloop)
                 for(j=0;j<my;++j)
-                    SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
-                    // setPixel(x*mx+iloop, y*my+j, i);
+					SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
+					// setPixel(x*mx+iloop, y*my+j, i);
         }
     }
 }
