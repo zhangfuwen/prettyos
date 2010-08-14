@@ -11,6 +11,7 @@
 #include "ipTcpStack.h"
 #include "icmp.h"
 #include "tcp.h"
+#include "udp.h"
 
 extern uint32_t BaseAddressRTL8139_MMIO;
 extern uint8_t IP_address[4];
@@ -47,6 +48,8 @@ void ipTcpStack_recv(void* data, uint32_t length)
 		case 6: // tcp
 			break;
 		case 17: // udp
+			UDPRecv(data, length);
+			UDPDebug(data, length);
 			break;
 		case 41: // ipv6
 			break;

@@ -5,22 +5,47 @@
 
 // http://www.rfc-editor.org/rfc/rfc768.txt <---  User Datagram Protocol
 
+#include "video/console.h"
 #include "udp.h"
 #include "ipTcpStack.h"
 
-void UDPRecv(void* data)
+void UDPRecv(void* data, uint32_t length)
 {
-    // udppacket_t* udp = (udppacket_t*)data;
-
-    // now we set our ip pointer to the Ethernet-payload
-    // ip_t* ip   = (ip_t*) ((uintptr_t)udp + sizeof(udp_t));
+	
+    udppacket_t* rec = data;
+    size_t udp_data_length = ntohs(rec->ip.length) - (sizeof(rec->eth) + sizeof(rec->ip) + sizeof(rec->udp));
+    uint8_t pkt[sizeof(*rec) + udp_data_length];
+    udppacket_t* udp = (udppacket_t*)pkt;
+	
+	printf("\n");
+	printf("source port: %u\n", udp->udp.source_port);
+	printf("destination port: %u\n", udp->udp.destination_port);
 }
 
-void UDPSend(void* data)
+void UDPSend(void* data, uint32_t length)
 {
     // transferDataToTxBuffer(void* data, uint32_t length);
 }
 
+void UDPDebug(void* data, uint32_t length)
+{
+    udppacket_t* rec = data;
+    size_t udp_data_length = ntohs(rec->ip.length) - (sizeof(rec->eth) + sizeof(rec->ip) + sizeof(rec->udp));
+    uint8_t pkt[sizeof(*rec) + udp_data_length];
+    udppacket_t* udp = (udppacket_t*)pkt;
+	
+	printf("\n");
+	printf("UDP Header information:\n");
+	textColor(0x0E);
+	printf("+--------------+----------------+\n");
+	printf("|      %u       |      %u        | (source port, destination port)\n", udp->udp.source_port, udp->udp.destination_port);
+	printf("+-------------------------------+\n");
+	printf("|        %u     |      %u        | (length, checksum)\n", udp->udp.length, udp->udp.checksum);
+	printf("+-------------------------------+\n");
+	printf("|              data              | (data)\n", udp->udp.checksum);
+	printf("+-------------------------------+\n");
+
+}
 
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.
