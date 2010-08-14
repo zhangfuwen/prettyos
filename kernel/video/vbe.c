@@ -47,9 +47,9 @@ void switchToVGA()
     waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
 }
 
-void switchToVideomode()
+void switchToVideomode(uintptr_t* MODE)
 {
-    waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO));
+    waitForTask(create_vm86_task((void*)MODE));
 }
 
 void switchToTextmode()

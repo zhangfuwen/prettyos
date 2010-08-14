@@ -4,7 +4,19 @@
 
 org 0x100
 
-video_mode:
+video_mode_640_480_256:
+	mov ax, 0x4F02
+	mov bx, 0x4101 ; video mode
+	int 10h
+	jmp exitvm86
+
+video_mode_800_600_256:
+	mov ax, 0x4F02
+	mov bx, 0x4103 ; video mode
+	int 10h
+	jmp exitvm86
+
+video_mode_1024_768_256:
 	mov ax, 0x4F02
 	mov bx, 0x4105 ; video mode
 	int 10h
@@ -17,8 +29,35 @@ VgaInfoBlock:
 	mov di, ax
 	mov ax, 0x4F00
 	int 10h
+	jmp exitvm86
 
-ModeInfoBlock:
+ModeInfoBlock_640_480_256:
+    xor ax, ax
+	mov es, ax
+	mov ax, 0x1200
+	mov di, ax
+	mov ax, 0x4F01
+	mov cx, 0x4101 ; video mode
+	int 10h
+	mov word [0x1300], ax ; return value
+	xor ax,ax
+	mov ds,ax
+	jmp exitvm86
+
+ModeInfoBlock_800_600_256:
+    xor ax, ax
+	mov es, ax
+	mov ax, 0x1200
+	mov di, ax
+	mov ax, 0x4F01
+	mov cx, 0x4103 ; video mode
+	int 10h
+	mov word [0x1300], ax ; return value
+	xor ax,ax
+	mov ds,ax
+	jmp exitvm86
+
+ModeInfoBlock_1024_768_256:
     xor ax, ax
 	mov es, ax
 	mov ax, 0x1200
