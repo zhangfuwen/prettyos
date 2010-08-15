@@ -394,6 +394,9 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, void(*entry)())
     new_task->blocker.type   = 0;
     new_task->heap_top       = USER_HEAP_START;
 
+    new_task->page_directory = kernel_pd;
+    printf("\nvm86: new_task->page_directory: %X", new_task->page_directory); /// TEST
+    
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
     uint32_t* kernel_stack = new_task->kernel_stack;
 

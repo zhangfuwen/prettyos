@@ -86,8 +86,10 @@ uint32_t paging_install()
     return ram_available;
 }
 
-uint32_t paging_get_phys_addr(page_directory_t* pd, void* virt_addr)
+uint32_t paging_get_phys_addr(void* virt_addr)
 {
+    page_directory_t* pd = kernel_pd;
+
     // Find the page table
     uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
     page_table_t* pt = pd->tables[pagenr/1024];
@@ -309,7 +311,7 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
             pd->tables[pagenr/1024] = pt;
 
             // Set physical address and flags
-            pd->codes[pagenr/1024] = paging_get_phys_addr(kernel_pd,pt) | MEM_PRESENT | MEM_WRITE | (flags&MEM_USER? MEM_USER : 0);
+            pd->codes[pagenr/1024] = paging_get_phys_addr(pt) | MEM_PRESENT | MEM_WRITE | (flags&MEM_USER? MEM_USER : 0);
         }
 
         // Setup the page
@@ -356,7 +358,7 @@ page_directory_t* paging_create_user_pd()
 
     // Each user's page directory contains the same mapping as the kernel
     memcpy(pd, kernel_pd, sizeof(page_directory_t));
-    pd->pd_phys_addr = paging_get_phys_addr(kernel_pd, pd->codes);
+    pd->pd_phys_addr = paging_get_phys_addr(pd->codes);
 
     return pd;
 }

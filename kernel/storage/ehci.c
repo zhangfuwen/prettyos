@@ -71,7 +71,7 @@ void analyzeEHCI(uintptr_t bar, uintptr_t offset)
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
   #ifdef _USB_DIAGNOSIS_
-    uintptr_t bar_phys  = (uintptr_t)paging_get_phys_addr(kernel_pd, (void*)bar);
+    uintptr_t bar_phys  = (uintptr_t)paging_get_phys_addr((void*)bar);
     printf("EHCI bar get_phys_Addr: %X\n", bar_phys);
     printf("HCIVERSION: %x ",  pCapRegs->HCIVERSION);               // Interface Version Number
     printf("HCSPARAMS: %X ",   pCapRegs->HCSPARAMS);                // Structural Parameters

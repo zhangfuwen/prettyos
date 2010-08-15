@@ -247,7 +247,7 @@ void install_RTL8139(pciDev_t* device)
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR
 
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUF)) = paging_get_phys_addr(kernel_pd, (void*)network_buffer);
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUF)) = paging_get_phys_addr((void*)network_buffer);
 
     // set interrupt mask
     *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_INTRMASK)) = 0xFFFF; // all interrupts
@@ -288,11 +288,11 @@ The process of transmitting a packet with RTL8139:
 bool transferDataToTxBuffer(void* data, uint32_t length)
 {
     memcpy((void*)Tx_network_buffer, data, length); // tx buffer
-    printf("Physical Address of Tx Buffer = %X\n", paging_get_phys_addr(kernel_pd, (void*)network_buffer));
+    printf("Physical Address of Tx Buffer = %X\n", paging_get_phys_addr((void*)network_buffer));
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
-    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXADDR0   + 4 * curBuffer)) = paging_get_phys_addr(kernel_pd, (void*)Tx_network_buffer);
+    *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXADDR0   + 4 * curBuffer)) = paging_get_phys_addr((void*)Tx_network_buffer);
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_TXSTATUS0 + 4 * curBuffer)) = length;
 
     curBuffer++;

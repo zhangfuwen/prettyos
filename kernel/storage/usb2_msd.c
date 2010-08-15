@@ -48,7 +48,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-GetMaxLun");
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(QH);
 
     // Create QTDs (in reversed order)
     void* next      = createQTD_Handshake(OUT); // Handshake is the opposite direction of Data
@@ -60,7 +60,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     // 10100001b     11111110b 0000h  Interface 0001h     1 byte
 
     // Create QH
-    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, 0, 64); // endpoint 0
+    createQH(QH, paging_get_phys_addr(QH), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
 
@@ -85,7 +85,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-MSD-Reset");
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(QH);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
@@ -95,7 +95,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     // 00100001b     11111111b 0000h  Interface 0000h     none
 
     // Create QH
-    createQH(QH, paging_get_phys_addr(kernel_pd, QH), SetupQTD, 1, device, 0, 64); // endpoint 0
+    createQH(QH, paging_get_phys_addr(QH), SetupQTD, 1, device, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
 
@@ -337,7 +337,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiIN-QH_In");
 
     // async list points to QH Out
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(QH_Out);
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
@@ -357,7 +357,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     usbDevices[device].ToggleEndpointOutMSD = !(usbDevices[device].ToggleEndpointOutMSD); // switch toggle
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\tCommandQTD: %X",paging_get_phys_addr(kernel_pd, (void*)cmdQTD));
+    printf("\tCommandQTD: %X",paging_get_phys_addr((void*)cmdQTD));
   #endif
 
     // implement cbw at DataQTDpage0
@@ -371,7 +371,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     }
 
     // QH Out with command qTD
-    createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
+    createQH(QH_Out, paging_get_phys_addr(QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
 
     // Bulk Transfer to endpoint OUT
     performAsyncScheduler(true, true, 0);
@@ -387,7 +387,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
   #endif
 
     // async list points to QH In
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_In);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(QH_In);
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nasyncList: %X <-- QH_In", pOpRegs->ASYNCLISTADDR);
@@ -413,8 +413,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         /*do not switch toggle*/
 
       #ifdef _USB_DIAGNOSIS_
-        printf("\tStatusQTD: %X", paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
-        printf("\tDataQTD: %X",   paging_get_phys_addr(kernel_pd, (void*)DataQTD));
+        printf("\tStatusQTD: %X", paging_get_phys_addr((void*)StatusQTD));
+        printf("\tDataQTD: %X",   paging_get_phys_addr((void*)DataQTD));
       #endif
     }
     else
@@ -429,13 +429,13 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         usbDevices[device].ToggleEndpointInMSD = !(usbDevices[device].ToggleEndpointInMSD);    // switch toggle
 
       #ifdef _USB_DIAGNOSIS_
-        printf("\tStatusQTD: %X", paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
+        printf("\tStatusQTD: %X", paging_get_phys_addr((void*)StatusQTD));
       #endif
     }
 
 
     // QH IN with data and status qTD
-    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
+    createQH(QH_In, paging_get_phys_addr(QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
 
 labelTransferIN: /// TEST
 
@@ -490,7 +490,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiOUT-QH_In");
 
     // async list points to QH Out
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_Out);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(QH_Out);
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
@@ -527,11 +527,11 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     SCSIcmd(SCSIcommand, cbw, LBA, TransferLength);    // block
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\tCommandQTD: %X",paging_get_phys_addr(kernel_pd, (void*)cmdQTD));
+    printf("\tCommandQTD: %X",paging_get_phys_addr((void*)cmdQTD));
   #endif
 
     // QH Out with command qTD and data out qTD
-    createQH(QH_Out, paging_get_phys_addr(kernel_pd, QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
+    createQH(QH_Out, paging_get_phys_addr(QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
 
     // Bulk Transfer to endpoint OUT
     performAsyncScheduler(true, true, TransferLength/200);
@@ -550,7 +550,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
   #endif
 
     // async list points to QH In
-    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(kernel_pd, QH_In);
+    pOpRegs->ASYNCLISTADDR = paging_get_phys_addr(QH_In);
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nasyncList: %X <-- QH_In", pOpRegs->ASYNCLISTADDR);
@@ -567,11 +567,11 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     usbDevices[device].ToggleEndpointInMSD = !(usbDevices[device].ToggleEndpointInMSD);    // switch toggle
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\tStatusQTD: %X", paging_get_phys_addr(kernel_pd, (void*)StatusQTD));
+    printf("\tStatusQTD: %X", paging_get_phys_addr((void*)StatusQTD));
   #endif
 
     // QH IN with status qTD only
-    createQH(QH_In, paging_get_phys_addr(kernel_pd, QH_In), StatusQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
+    createQH(QH_In, paging_get_phys_addr(QH_In), StatusQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
     performAsyncScheduler(true, true, 0);
     checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer);
 

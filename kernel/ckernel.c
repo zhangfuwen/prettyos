@@ -24,7 +24,7 @@
 #include "irq.h"
 #include "serial.h"
 
-const char* version = "0.0.1.179 - Rev: 758";
+const char* version = "0.0.1.180 - Rev: 759";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
