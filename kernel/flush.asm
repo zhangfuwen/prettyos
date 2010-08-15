@@ -26,6 +26,6 @@ _tss_flush:
                      ; 0x28, as it is the 5th selector and each is 8 bytes
                      ; long, but we set the bottom two bits (making 0x2B)
                      ; so that it has an RPL of 3, not zero.
-   ltr ax            ; LTR loads the task register (TR) with a segment selector pointing to a Task State Segment (TSS). 
+   ltr ax            ; LTR loads the task register (TR) with a segment selector pointing to a Task State Segment (TSS).
                      ; The addressed TSS is marked busy, but no hardware task switch occurs.
    ret

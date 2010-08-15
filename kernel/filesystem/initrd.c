@@ -35,7 +35,7 @@ disk_t* ramdisk_install()
     RAMdisk.partition[3] = 0;
     strcpy(RAMdisk.name, "RAMdisk");
     attachDisk(&RAMdisk);
-    
+
     RAMport.type = &RAM;
     RAMport.insertedDisk = &RAMdisk;
     RAMport.insertedDisk->type = &RAMDISK;

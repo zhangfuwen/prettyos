@@ -24,7 +24,7 @@
 #include "irq.h"
 #include "serial.h"
 
-const char* version = "0.0.1.176 - Rev: 755";
+const char* version = "0.0.1.177 - Rev: 756";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -116,9 +116,6 @@ void main()
     textColor(0x0F);
     if(getch() != 's')
     {
-		uint8_t selectMode = 0;
-		uint32_t x = 0;
-		uint32_t y = 0;
         // TODO: move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
         memcpy((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
@@ -132,67 +129,53 @@ void main()
         switchToVGA(); //TEST
 
         setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
-		
-		textColor(0x0E);
-		printf("\nSelect Resolution (given by its number):\n");
-		textColor(0x0F);
-		printf("1. 640x480x256\n");
-		printf("2. 800x600x256\n");
-		printf("3. 1024x768x256 (Default mode WORKING!)\n");
-		selectMode = getch();
+        
+        uint32_t x = 0;
+        uint32_t y = 0;
+
+        textColor(0x0E);
+        printf("\nSelect Resolution (given by its number):\n");
+        textColor(0x0F);
+        printf("1. 640x480x256\n");
+        printf("2. 800x600x256\n");
+        printf("3. 1024x768x256 (Default mode WORKING!)\n");
+        uint8_t selectMode = getch();
         switch(selectMode)
         {
-			case '1':		
-				waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_640_480_256));
-				setModeInfoBlock((ModeInfoBlock_t*)0x1200);
-				modeInfoBlock_user = getModeInfoBlock();
-				x = modeInfoBlock_user->XResolution;
-				y = modeInfoBlock_user->YResolution;
-				break;
-			case '2':		
-				waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_800_600_256));
-				setModeInfoBlock((ModeInfoBlock_t*)0x1200);
-				modeInfoBlock_user = getModeInfoBlock();
-				x = modeInfoBlock_user->XResolution;
-				y = modeInfoBlock_user->YResolution;
-				break;
-			case '3':		
-				waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_256));
-				setModeInfoBlock((ModeInfoBlock_t*)0x1200);
-				modeInfoBlock_user = getModeInfoBlock();
-				x = modeInfoBlock_user->XResolution;
-				y = modeInfoBlock_user->YResolution;
-				break;				
-			default:
-				waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_256));
-				setModeInfoBlock((ModeInfoBlock_t*)0x1200);
-				modeInfoBlock_user = getModeInfoBlock();
-				x = modeInfoBlock_user->XResolution;
-				y = modeInfoBlock_user->YResolution;
-				break;
-		}
+            case '1':
+                waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_640_480_256));
+                break;
+            case '2':
+                waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_800_600_256));
+                break;
+			case '3': default:
+                waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_256));
+                break;
+        }
+
+        setModeInfoBlock((ModeInfoBlock_t*)0x1200);
+        modeInfoBlock_user = getModeInfoBlock();
+        x = modeInfoBlock_user->XResolution;
+        y = modeInfoBlock_user->YResolution;
 
         vgaDebug();
 
         setVideoMemory();
         waitForKeyStroke();
-		
+        
         switch(selectMode)
         {
-			case '1':
-				switchToVideomode(VM86_SWITCH_TO_VIDEO_640_480_256);
-				break;
-			case '2':
-				switchToVideomode(VM86_SWITCH_TO_VIDEO_800_600_256);
-				break;
-			case '3':
-				switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_256);
-				break;
-			default:
-				switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_256);
-				break;
-		}
-		
+            case '1':
+                switchToVideomode(VM86_SWITCH_TO_VIDEO_640_480_256);
+                break;
+            case '2':
+                switchToVideomode(VM86_SWITCH_TO_VIDEO_800_600_256);
+                break;
+            case '3': default:
+                switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_256);
+                break;
+        }
+        
         for (uint32_t i=0; i<x; i++)
         {
             setPixel(i, (y/2+1), 9);
@@ -236,10 +219,10 @@ void main()
     listPCI();
   #endif
 
-	printf("Initializing COM1 (3F8h)...");
-	init_serial(0x3F8);
-	printf("DONE!\n");
-	
+    printf("Initializing COM1 (3F8h)... ");
+    init_serial(0x3F8);
+    printf("DONE!\n");
+    
     // search and load shell
     textColor(0x0F);
     bool shell_found = false;
@@ -287,8 +270,8 @@ void main()
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char     DateAndTime[81];             // String for Date&Time
 
-	
-	
+    
+    
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
@@ -317,19 +300,19 @@ void main()
 
             deviceManager_checkDrives(); // switch off motors if they are not neccessary
         }
-		
-		
-		if (serial_recieved(0x3F8) != 0) {
-			printf("Serial message: \n");
-			while (serial_recieved(0x3F8) != 0) {
-				uint8_t sbyt=read_serial(0x3F8);
-				printf("0x%x ",sbyt);
-				sleepMilliSeconds(5);
-			}
-			printf("\n\n");
-		}
-		
-		
+        
+        
+        if (serial_recieved(0x3F8) != 0) {
+            printf("Serial message: \n");
+            while (serial_recieved(0x3F8) != 0) {
+                uint8_t sbyt=read_serial(0x3F8);
+                printf("0x%x ",sbyt);
+                sleepMilliSeconds(5);
+            }
+            printf("\n\n");
+        }
+        
+        
 
         handleEvents();
 

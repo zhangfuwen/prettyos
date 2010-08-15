@@ -46,7 +46,7 @@ bool semaphore_locked(semaphore_t*obj, task_t* task)
 void semaphore_lock(semaphore_t* obj)
 {
     if(obj == 0) return;
-    
+
     for(int i = 0; i < obj->resCount; i++)
     {
         if(obj->resources[i] == currentTask) // Task is already blocking
@@ -59,7 +59,7 @@ void semaphore_lock(semaphore_t* obj)
         switch_context();
     }
     while(obj->freeRes == ALL_RESOURCES_USED) {nop();} // Waiting... HACK
-    
+
     obj->resources[obj->freeRes++] = currentTask; // acquire resource
     for(; obj->freeRes < obj->resCount; obj->freeRes++) // incrementing counter until a free place has been found
     {

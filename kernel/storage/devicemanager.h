@@ -25,16 +25,16 @@ extern diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
 typedef struct disk
 {
     diskType_t*  type;
-    partition_t* partition[PARTITIONARRAYSIZE]; // NULL if partition is not used
+    partition_t* partition[PARTITIONARRAYSIZE]; // 0 if partition is not used
     char         name[15];
     void*        data;                          // Contains additional information depending on disk-type
     uint32_t     accessRemaining;               // Used to control motor
 } disk_t;
 
-typedef struct 
+typedef struct
 {
     portType_t* type;
-    disk_t*     insertedDisk; // NULL if no disk is inserted
+    disk_t*     insertedDisk; // 0 if no disk is inserted
     char        name[15];
     void*       data;         // Contains additional information depending on its type
 } port_t;

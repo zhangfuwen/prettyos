@@ -239,13 +239,13 @@ void install_RTL8139(pciDev_t* device)
     bit1 APM - Accept Physical Match: Accept packets send to NIC's MAC address.
     bit0 AAP - Accept All Packets
     */
-    
+
     // bit 12:11 defines the size of the Rx ring buffer length
-    // 00b:  8K + 16 byte       01b: 16K + 16 byte 
+    // 00b:  8K + 16 byte       01b: 16K + 16 byte
     // 10b: 32K + 16 byte       11b: 64K + 16 byte
 
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR
-    
+
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
     *((uint32_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUF)) = paging_get_phys_addr(kernel_pd, (void*)network_buffer);
 
@@ -306,25 +306,25 @@ bool transferDataToTxBuffer(void* data, uint32_t length)
 /*
 int rtl8139_set_mac_address(struct net_device *dev, void *p)
 {
-	struct rtl8139_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
-	struct sockaddr *addr = p;
+    struct rtl8139_private *tp = netdev_priv(dev);
+    void __iomem *ioaddr = tp->mmio_addr;
+    struct sockaddr *addr = p;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+    if (!is_valid_ether_addr(addr->sa_data))
+        return -EADDRNOTAVAIL;
 
-	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
+    memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
 
-	spin_lock_irq(&tp->lock);
+    spin_lock_irq(&tp->lock);
 
-	RTL_W8_F(Cfg9346, Cfg9346_Unlock);
-	RTL_W32_F(MAC0 + 0, cpu_to_le32 (*(u32 *) (dev->dev_addr + 0)));
-	RTL_W32_F(MAC0 + 4, cpu_to_le32 (*(u32 *) (dev->dev_addr + 4)));
-	RTL_W8_F(Cfg9346, Cfg9346_Lock);
+    RTL_W8_F(Cfg9346, Cfg9346_Unlock);
+    RTL_W32_F(MAC0 + 0, cpu_to_le32 (*(u32 *) (dev->dev_addr + 0)));
+    RTL_W32_F(MAC0 + 4, cpu_to_le32 (*(u32 *) (dev->dev_addr + 4)));
+    RTL_W8_F(Cfg9346, Cfg9346_Lock);
 
-	spin_unlock_irq(&tp->lock);
+    spin_unlock_irq(&tp->lock);
 
-	return 0;
+    return 0;
 }
 */
 

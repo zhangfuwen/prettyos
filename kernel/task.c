@@ -97,27 +97,42 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
     {
         new_task->heap_top = USER_HEAP_START;
 
-        paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
+        if(new_task->type != VM86)
+            paging_alloc(new_task->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
     }
 
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
+    uint32_t* kernel_stack = new_task->kernel_stack;
 
+    uint32_t code_segment = 0x08;
 
-    uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
-    uint32_t code_segment = 0x08, data_segment = 0x10;
-
-    if(new_task->type == THREAD)
-        *(--kernel_stack) = (uintptr_t)&exit;
-
-    if (new_task->privilege == 3)
+    if(new_task->type != VM86)
     {
-        // general information: Intel 3A Chapter 5.12
-        *(--kernel_stack) = new_task->ss = 0x23; // ss
-        *(--kernel_stack) = USER_STACK;          // esp
-        code_segment = 0x1B; // 0x18|0x3=0x1B
+        if(new_task->type == THREAD)
+            *(--kernel_stack) = (uintptr_t)&exit;
+
+        if (new_task->privilege == 3)
+        {
+            // general information: Intel 3A Chapter 5.12
+            *(--kernel_stack) = new_task->ss = 0x23; // ss
+            *(--kernel_stack) = USER_STACK;          // esp
+            code_segment = 0x1B; // 0x18|0x3=0x1B
+        }
+
+        *(--kernel_stack) = 0x0202; // eflags = interrupts activated and iopl = 0
+    }
+    else
+    {
+        code_segment = 0;
+        *(--kernel_stack) = 0x23; // gs
+        *(--kernel_stack) = 0x23; // fs
+        *(--kernel_stack) = 0x23; // es
+        *(--kernel_stack) = 0x23; // ds
+        *(--kernel_stack) = new_task->ss = 0x0000; // ss
+        *(--kernel_stack) = 4090;                  // USER_STACK;
+        *(--kernel_stack) = 0x20202;               // eflags = vm86 (bit17), interrupts (bit9), iopl=0
     }
 
-    *(--kernel_stack) = 0x0202;          // eflags = interrupts activated and iopl = 0
     *(--kernel_stack) = code_segment;    // cs
     *(--kernel_stack) = (uint32_t)entry; // eip
     *(--kernel_stack) = 0;               // error code
@@ -133,6 +148,7 @@ static void createThreadTaskBase(task_t* new_task, page_directory_t* directory, 
     *(--kernel_stack) = 0;
     *(--kernel_stack) = 0;
 
+    uint32_t data_segment = 0x10;
     if (new_task->privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
 
     *(--kernel_stack) = data_segment;
@@ -376,10 +392,10 @@ static void create_vm86_ThreadTaskBase(task_t* new_task, void(*entry)())
     new_task->FPU_ptr        = 0;
     new_task->attrib         = 0x0F;
     new_task->blocker.type   = 0;
+    new_task->heap_top       = USER_HEAP_START;
 
-    new_task->heap_top = USER_HEAP_START;
     new_task->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
-    uint32_t* kernel_stack = (uint32_t*)new_task->kernel_stack;
+    uint32_t* kernel_stack = new_task->kernel_stack;
 
     *(--kernel_stack) = 0x23; // gs
     *(--kernel_stack) = 0x23; // fs

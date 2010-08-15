@@ -8,7 +8,7 @@ SECTIONS
     .text   : { __code_start = .;                        }
     . = ALIGN(0x1000);
     .text1  : { object_files/kernel/data.o(.text)        }
-    .data   : { __data_start = .;   *(.data)             }    
+    .data   : { __data_start = .;   *(.data)             }
     .rodata : { __rodata_start = .; *(.rodata) *(.rdata) }
     .bss    : { __bss_start = .;    *(.bss) *(COMMON)    }
     __start_cdi_drivers = .;

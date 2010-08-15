@@ -21,6 +21,10 @@ disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
 partition_t* systemPartition;
 
+portType_t FDD,        USB,     RAM;
+diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
+
+
 uint32_t startSectorPartition = 0;
 extern uint32_t usbMSDVolumeMaxLBA;
 
@@ -39,54 +43,6 @@ typedef struct
 readcache_t readcaches[NUMREADCACHE];
 uint8_t     currReadCache = 0;
 
-#ifdef _DEVMGR_DIAGNOSIS_
-static void logReadCache()
-{
-    for (uint8_t i=0; i<NUMREADCACHE; i++)
-    {
-        if (readcaches[i].valid)
-        {
-            textColor(0x0A);
-        }
-        else
-        {
-            textColor(0x07);
-        }
-        printf("\nReadcache: %u \tpart: %X sector: %u \tvalid: %s", i, readcaches[i].part, readcaches[i].sector, readcaches[i].valid?"yes":"no");
-    }
-    textColor(0x07);
-    printf("\n-------------------------------------------------------------------------------");
-    sleepMilliSeconds(500);
-    textColor(0x0F);
-}
-#endif
-
-static void fillReadCache(uint32_t sector, partition_t* part)
-{
-    readcaches[currReadCache].sector = sector;
-    readcaches[currReadCache].part   = part;
-    readcaches[currReadCache].valid  = true;
-    
-    for (uint8_t i=0; i<NUMREADCACHE; i++)
-    {
-        if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true) && (i!=currReadCache)) 
-        {
-            readcaches[i].valid = false;
-        }
-    }
-
-    memcpy(readcaches[currReadCache].buffer, part->buffer, 512); // fill cache
-
-    currReadCache++;
-    currReadCache %= NUMREADCACHE;
-    
-  #ifdef _DEVMGR_DIAGNOSIS_
-    logReadCache();
-  #endif
- }
-
-portType_t FDD,        USB,     RAM;
-diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
 
 // prototypes
 FS_ERROR loadFile(const char* filename, partition_t* part);
@@ -591,6 +547,55 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
     return CE_GOOD;
 }
 
+
+
+
+#ifdef _DEVMGR_DIAGNOSIS_
+static void logReadCache()
+{
+    for (uint8_t i=0; i<NUMREADCACHE; i++)
+    {
+        if (readcaches[i].valid)
+        {
+            textColor(0x0A);
+        }
+        else
+        {
+            textColor(0x07);
+        }
+        printf("\nReadcache: %u \tpart: %X sector: %u \tvalid: %s", i, readcaches[i].part, readcaches[i].sector, readcaches[i].valid?"yes":"no");
+    }
+    textColor(0x07);
+    printf("\n-------------------------------------------------------------------------------");
+    sleepMilliSeconds(500);
+    textColor(0x0F);
+}
+#endif
+
+static void fillReadCache(uint32_t sector, partition_t* part)
+{
+    readcaches[currReadCache].sector = sector;
+    readcaches[currReadCache].part   = part;
+    readcaches[currReadCache].valid  = true;
+    
+    for (uint8_t i=0; i<NUMREADCACHE; i++)
+    {
+        if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true) && (i!=currReadCache)) 
+        {
+            readcaches[i].valid = false;
+        }
+    }
+
+    memcpy(readcaches[currReadCache].buffer, part->buffer, 512); // fill cache
+
+    currReadCache++;
+    currReadCache %= NUMREADCACHE;
+    
+  #ifdef _DEVMGR_DIAGNOSIS_
+    logReadCache();
+  #endif
+}
+
 FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
@@ -621,43 +626,35 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(0x0F);
   #endif
 
-    FS_ERROR error = CE_GOOD;
-    bool readForce = true;
-
     for (uint8_t i=0; i<NUMREADCACHE; i++)
     {
         if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true) && readCacheFlag)
         {
-            // static uint8_t* destOld = 0;
-            // static uint8_t* sourceOld = 0;
+            /*static uint8_t* destOld = 0;
+            static uint8_t* sourceOld = 0;
 
-        	/*
             if ((buffer == destOld) && (readcaches[i].buffer == sourceOld)) 
             {
                 // do nothing
             }
             else
-            */
-            {
-                  #ifdef _DEVMGR_DIAGNOSIS_
-                    printf("\nsector: %u <--- read from RAM Cache", readcaches[i].sector);
-                  #endif
-                    memcpy(buffer,readcaches[i].buffer,512); // use read cache
-                    
-                    // destOld = buffer;
- 	                // sourceOld = readcaches[i].buffer; 	             
-            }
-            readForce = false;            
+            {*/
+                #ifdef _DEVMGR_DIAGNOSIS_
+                printf("\nsector: %u <--- read from RAM Cache", readcaches[i].sector);
+                #endif
+                memcpy(buffer,readcaches[i].buffer,512); // use read cache
+
+                /*destOld = buffer;
+                 sourceOld = readcaches[i].buffer;
+            }*/
+            return(CE_GOOD);
         }
     }
 
-    if (readForce == true)
+    FS_ERROR error = part->disk->type->readSector(sector, buffer, part->disk->data);
+    if (error == CE_GOOD)
     {
-        error = part->disk->type->readSector(sector, buffer, part->disk->data);
-        if (error == CE_GOOD)
-        {
-            fillReadCache(sector, part);
-        }
+        fillReadCache(sector, part);
     }
 
     return error;

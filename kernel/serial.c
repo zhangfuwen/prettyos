@@ -4,7 +4,7 @@
 */
 
 
-//http://wiki.osdev.org/Serial_ports
+// http://wiki.osdev.org/Serial_ports
 // 'ported' and debugged by Cuervo
 
 
@@ -14,47 +14,50 @@
 
 
 /*
-COM Port	IO Port
-COM1		3F8h
-COM2		2F8h
-COM3		3E8h
-COM4		2E8h
+COM Port    IO Port
+COM1        3F8h
+COM2        2F8h
+COM3        3E8h
+COM4        2E8h
 */
 
 
-void init_serial(uint16_t comport) {
-	outportb(comport + 1, 0x00);    // Disable all interrupts
-	outportb(comport + 3, 0x80);    // Enable DLAB (set baud rate divisor)
-	outportb(comport + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud (DO NOT TRY 0!!!)
-	outportb(comport + 1, 0x00);    //                  (hi byte)
-	outportb(comport + 3, 0x03);    // 8 bits, no parity, one stop bit
-	outportb(comport + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
-	outportb(comport + 4, 0x0B);    // IRQs enabled, RTS/DSR set
+void init_serial(uint16_t comport)
+{
+    outportb(comport + 1, 0x00);    // Disable all interrupts
+    outportb(comport + 3, 0x80);    // Enable DLAB (set baud rate divisor)
+    outportb(comport + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud (DO NOT TRY 0!!!)
+    outportb(comport + 1, 0x00);    //                  (hi byte)
+    outportb(comport + 3, 0x03);    // 8 bits, no parity, one stop bit
+    outportb(comport + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
+    outportb(comport + 4, 0x0B);    // IRQs enabled, RTS/DSR set
 }
 
 
-int serial_recieved(uint16_t comport) {
-	return inportb(comport + 5) & 1;
+int serial_recieved(uint16_t comport)
+{
+    return inportb(comport + 5) & 1;
 }
 
-char read_serial(uint16_t comport) {
-	while (serial_recieved(comport) == 0);
-	
-	return inportb(comport);
-}
-
-
-int is_transmit_empty(uint16_t comport) {
-	return inportb(comport + 5) & 0x20;
-}
-
-void write_serial(uint16_t comport, char a) {
-	while (is_transmit_empty(comport) == 0);
-	
-	outportb(comport,a);
+char read_serial(uint16_t comport)
+{
+    while (serial_recieved(comport) == 0);
+    
+    return inportb(comport);
 }
 
 
+int is_transmit_empty(uint16_t comport)
+{
+    return inportb(comport + 5) & 0x20;
+}
+
+void write_serial(uint16_t comport, char a)
+{
+    while (is_transmit_empty(comport) == 0);
+    
+    outportb(comport,a);
+}
 
 
 /*

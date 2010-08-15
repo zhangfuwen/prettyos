@@ -45,7 +45,7 @@
 // RTL8139C interrupt status bits
 #define RTL8139_INT_PCIERR          0x8000        // PCI Bus error
 #define RTL8139_INT_TIMEOUT         0x4000        // Set when TCTR reaches TimerInt value
-#define RTL8139_INT_CABLE           0x2000        // Set when Cable Length Change 
+#define RTL8139_INT_CABLE           0x2000        // Set when Cable Length Change
 #define RTL8139_INT_RXFIFO_OVERFLOW 0x0040        // Rx FIFO overflow
 #define RTL8139_INT_RXFIFO_UNDERRUN 0x0020        // Packet underrun / link change
 #define RTL8139_INT_RXBUF_OVERFLOW  0x0010        // Rx BUFFER overflow

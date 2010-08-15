@@ -327,6 +327,9 @@
     <ClInclude Include="..\kernel\netprotocol\tcp.h">
       <Filter>Kernel\include\network\protocol</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\serial.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -523,6 +526,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\netprotocol\tcp.c">
       <Filter>Kernel\sources\network\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\serial.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

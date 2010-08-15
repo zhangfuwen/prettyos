@@ -15,7 +15,7 @@ typedef struct
 typedef struct
 {
     file_t* file;   // universal file container (fsmanager)
-    
+
     uint32_t magic; // Magic number, for error checking.
     uint32_t off;   // Offset in the initrd that the file starts.
 } INITRD_file_t;

@@ -36,7 +36,7 @@ entry_point:
     mov ax, 0x1112
     xor bl, bl
     int 0x10
-	
+
 Load_Root_Directory_Table:
     ; compute size of root directory and store in "cx"
     xor cx, cx
@@ -65,7 +65,7 @@ Load_Root_Directory_Table:
     mov di, 0x7E00                            ; locate first root entry
 .LOOP:
     push cx
-    mov cx, 0xB                               ; name has 11 characters 
+    mov cx, 0xB                               ; name has 11 characters
     mov si, ImageName                         ; look for this image name
     push di
     rep cmpsb                                 ; test for entry match
@@ -187,7 +187,7 @@ Convert_LBA_to_CHS:
     ret
 
 ;******************************************************************************
-;	Reads sectors 
+;	Reads sectors
 ;	CX     Number of sectors to read
 ;	AX     Starting sector
 ;	ES:BX  Buffer to read to
@@ -233,7 +233,7 @@ ReadSectors:
 ;******************************************************************************
 print_string:
     mov ah, 0x0E      ; BIOS function 0x0E: teletype
-.loop:   
+.loop:
     lodsb             ; grab a byte from SI
     test al, al       ; NUL?
     jz .done          ; if the result is zero: get out
