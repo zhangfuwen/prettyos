@@ -22,8 +22,9 @@
 #include "storage/devicemanager.h"
 #include "video/vbe.h"
 #include "irq.h"
+#include "serial.h"
 
-const char* version = "0.0.1.175 - Rev: 754";
+const char* version = "0.0.1.176 - Rev: 755";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -235,6 +236,10 @@ void main()
     listPCI();
   #endif
 
+	printf("Initializing COM1 (3F8h)...");
+	init_serial(0x3F8);
+	printf("DONE!\n");
+	
     // search and load shell
     textColor(0x0F);
     bool shell_found = false;
@@ -282,6 +287,8 @@ void main()
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char     DateAndTime[81];             // String for Date&Time
 
+	
+	
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
@@ -310,6 +317,19 @@ void main()
 
             deviceManager_checkDrives(); // switch off motors if they are not neccessary
         }
+		
+		
+		if (serial_recieved(0x3F8) != 0) {
+			printf("Serial message: \n");
+			while (serial_recieved(0x3F8) != 0) {
+				uint8_t sbyt=read_serial(0x3F8);
+				printf("0x%x ",sbyt);
+				sleepMilliSeconds(5);
+			}
+			printf("\n\n");
+		}
+		
+		
 
         handleEvents();
 
