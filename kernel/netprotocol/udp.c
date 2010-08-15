@@ -7,7 +7,7 @@
 
 #include "video/console.h"
 #include "udp.h"
-#include "ipTcpStack.h"
+#include "ethernet.h"
 
 void UDPRecv( void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP, uint32_t ipLength)
 {	

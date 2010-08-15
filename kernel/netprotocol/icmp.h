@@ -4,8 +4,8 @@
 // http://tools.ietf.org/html/rfc1071 <--- internet checksum 
 // http://de.wikipedia.org/wiki/Internet_Control_Message_Protocol <--- icmp Protocol
 
-#include "ipTcpStack.h"
 #include "types.h"
+#include "ethernet.h"
 
 #define ICMP_ECHO_REPLY                    0                     // Echo Reply
 #define ICMP_RESERVED_1                    1                     //  1-2 = Reserved

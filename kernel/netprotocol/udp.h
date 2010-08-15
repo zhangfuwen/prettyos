@@ -1,7 +1,7 @@
 #ifndef UDP_H
 #define UDP_H
 
-#include "ipTcpStack.h"
+#include "ethernet.h"
 
 #define MAX_UDP_PORTS 65536
 

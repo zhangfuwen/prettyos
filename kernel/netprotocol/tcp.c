@@ -12,7 +12,7 @@ void tcpDebug(tcpheader_t *tcp)
   printf("TCP Header information:\n");
   textColor(0x0E);
   printf("+--------------+----------------+\n");
-  printf("|      %u       |      %u        | (source port, destination port)\n", tcp->source_port, tcp->destination_port);
+  printf("|      %u       |      %u        | (source port, destination port)\n", tcp->sourcePort, tcp->destinationPort);
   printf("+-------------------------------+\n");
   printf("|              %u                | (sequence number)\n", tcp->sequence_number);
   printf("+-------------------------------+\n");

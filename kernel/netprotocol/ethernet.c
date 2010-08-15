@@ -8,7 +8,7 @@
 
 #include "network/rtl8139.h"
 #include "video/console.h"
-#include "ipTcpStack.h"
+#include "ethernet.h"
 #include "icmp.h"
 #include "tcp.h"
 #include "udp.h"
@@ -45,8 +45,8 @@ void EthernetRecv(void* data, uint32_t length)
 		case 4: // ipv4
 			/*
 			tcpheader_t tcp; 
-			tcp.source_port = 1025;
-			tcp.destination_port = 80;
+			tcp.sourcePort = 1025;
+			tcp.destinationPort = 80;
 			tcp.sequence_number = 1;
 			tcp.ACK = 1;
 			tcpDebug(&tcp);
@@ -55,7 +55,7 @@ void EthernetRecv(void* data, uint32_t length)
 		case 6: // tcp
 			break;
 		case 17: // udp
-			UDPRecv(  (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength, *(uint32_t*)ip->source_ip, *(uint32_t*)ip->dest_ip, ipHeaderLength);
+			UDPRecv(  (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP, ipHeaderLength);
 			UDPDebug( (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength);
 			break;
 		case 41: // ipv6
@@ -80,10 +80,10 @@ void EthernetRecv(void* data, uint32_t length)
             switch ((arp->operation[0] << 8) | arp->operation[1])
             {
             case 1: // ARP-Request
-                if ((arp->source_ip[0] == arp->dest_ip[0])&&
-                    (arp->source_ip[1] == arp->dest_ip[1])&&
-                    (arp->source_ip[2] == arp->dest_ip[2])&&
-                    (arp->source_ip[3] == arp->dest_ip[3])) // IP requ. and searched is identical
+                if ((arp->sourceIP[0] == arp->destIP[0])&&
+                    (arp->sourceIP[1] == arp->destIP[1])&&
+                    (arp->sourceIP[2] == arp->destIP[2])&&
+                    (arp->sourceIP[3] == arp->destIP[3])) // IP requ. and searched is identical
                 {
                     printf("Operation: Gratuitous Request\n");
                 }
@@ -96,17 +96,17 @@ void EthernetRecv(void* data, uint32_t length)
                 for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->source_mac[i]); }
 
                 textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
-                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->source_ip[i]); if (i<3) printf("."); }
+                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->sourceIP[i]); if (i<3) printf("."); }
 
                 textColor(0x0D); printf("\nMAC Searched:   "); textColor(0x07);
                 for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->dest_mac[i]);   }
 
                 textColor(0x0D); printf("  IP Searched:   "); textColor(0x03);
-                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->dest_ip[i]);   if (i<3) printf("."); }
+                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->destIP[i]);   if (i<3) printf("."); }
 
                 // requested IP is our own IP?
-                if ( arp->dest_ip[0] == IP_address[0] && arp->dest_ip[1] == IP_address[1] &&
-                     arp->dest_ip[2] == IP_address[2] && arp->dest_ip[3] == IP_address[3])
+                if ( arp->destIP[0] == IP_address[0] && arp->destIP[1] == IP_address[1] &&
+                     arp->destIP[2] == IP_address[2] && arp->destIP[3] == IP_address[3])
                 {
                      printf("\n Tx prepared:");
                      arpPacket_t reply;
@@ -137,8 +137,8 @@ void EthernetRecv(void* data, uint32_t length)
 
                      for (uint32_t i = 0; i < 4; i++)
                      {
-                        reply.arp.dest_ip[i]   = arp->source_ip[i];
-                        reply.arp.source_ip[i] = IP_address[i];
+                        reply.arp.destIP[i]   = arp->sourceIP[i];
+                        reply.arp.sourceIP[i] = IP_address[i];
                      }
 
                      EthernetSend((void*)&reply, length);
@@ -152,13 +152,13 @@ void EthernetRecv(void* data, uint32_t length)
                 for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->source_mac[i]); }
 
                 textColor(0x0D); printf("  IP Replying:   "); textColor(0x03);
-                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->source_ip[i]); if (i<3) printf("."); }
+                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->sourceIP[i]); if (i<3) printf("."); }
 
                 textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
                 for (uint8_t i = 0; i < 6; i++) { printf("%y ", arp->dest_mac[i]);   }
 
                 textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
-                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->dest_ip[i]);   if (i<3) printf("."); }
+                for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->destIP[i]);   if (i<3) printf("."); }
                 break;
             }
         }

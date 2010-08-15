@@ -23,9 +23,9 @@ typedef struct arp
     uint8_t protocol_addresssize;
     uint8_t operation[2];
     uint8_t source_mac[6];
-    uint8_t source_ip[4];
+    uint8_t sourceIP[4];
     uint8_t dest_mac[6];
-    uint8_t dest_ip[4];
+    uint8_t destIP[4];
 } __attribute__((packed)) arp_t;
 
 typedef struct arpPacket
@@ -45,8 +45,8 @@ typedef struct ip
     uint8_t  ttl;
     uint8_t  protocol;
     uint16_t checksum;
-    uint8_t  source_ip[4];
-    uint8_t  dest_ip[4];
+    uint8_t  sourceIP[4];
+    uint8_t  destIP[4];
 } __attribute__((packed)) ip_t;
 
 void EthernetRecv(void* data, uint32_t length);

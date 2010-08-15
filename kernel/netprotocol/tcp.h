@@ -3,13 +3,13 @@
 
 // http://tools.ietf.org/html/rfc793 <--- Transmission Control Protocol
 
-#include "ipTcpStack.h"
+#include "ethernet.h"
 #include "types.h"
 
 typedef struct tcpheader
 {
-	uint16_t source_port;
-	uint16_t destination_port;
+	uint16_t sourcePort;
+	uint16_t destinationPort;
 	uint32_t sequence_number;
 	uint32_t acknowledgment_number;
 	int8_t data_offset[4];

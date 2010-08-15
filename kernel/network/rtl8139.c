@@ -9,7 +9,7 @@
 #include "pci.h"
 #include "paging.h"
 #include "video/console.h"
-#include "netprotocol/ipTcpStack.h"
+#include "netprotocol/ethernet.h"
 #include "rtl8139.h"
 #include "myOwnData.h"
 

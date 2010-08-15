@@ -306,9 +306,6 @@
     <ClInclude Include="..\kernel\netprotocol\dhcp.h">
       <Filter>Kernel\include\network\protocol</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\netprotocol\ipTcpStack.h">
-      <Filter>Kernel\include\network\protocol</Filter>
-    </ClInclude>
     <ClInclude Include="..\kernel\netprotocol\udp.h">
       <Filter>Kernel\include\network\protocol</Filter>
     </ClInclude>
@@ -329,6 +326,9 @@
     </ClInclude>
     <ClInclude Include="..\kernel\serial.h">
       <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\netprotocol\ethernet.h">
+      <Filter>Kernel\include\network\protocol</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -509,9 +509,6 @@
     <ClCompile Include="..\kernel\netprotocol\dhcp.c">
       <Filter>Kernel\sources\network\protocol</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\netprotocol\ipTcpStack.c">
-      <Filter>Kernel\sources\network\protocol</Filter>
-    </ClCompile>
     <ClCompile Include="..\kernel\netprotocol\udp.c">
       <Filter>Kernel\sources\network\protocol</Filter>
     </ClCompile>
@@ -529,6 +526,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\serial.c">
       <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\netprotocol\ethernet.c">
+      <Filter>Kernel\sources\network\protocol</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

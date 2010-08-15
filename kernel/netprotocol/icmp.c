@@ -30,8 +30,8 @@ void ICMPAnswerPing(void* data, uint32_t length)
 
     for (uint32_t i = 0; i < 4; i++)
     {
-        icmp->ip.dest_ip[i]   = rec->ip.source_ip[i];
-        icmp->ip.source_ip[i] = IP_address[i];
+        icmp->ip.destIP[i]   = rec->ip.sourceIP[i];
+        icmp->ip.sourceIP[i] = IP_address[i];
     }
 
     icmp->ip.version        = 4;
