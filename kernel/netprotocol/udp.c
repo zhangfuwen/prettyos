@@ -9,17 +9,20 @@
 #include "udp.h"
 #include "ipTcpStack.h"
 
-void UDPRecv(void* data, uint32_t length)
-{
-	
-    udppacket_t* rec = data;
-    size_t udp_data_length = ntohs(rec->ip.length) - (sizeof(rec->eth) + sizeof(rec->ip) + sizeof(rec->udp));
-    uint8_t pkt[sizeof(*rec) + udp_data_length];
-    udppacket_t* udp = (udppacket_t*)pkt;
-	
-	printf("\n");
-	printf("source port: %u\n", udp->udp.source_port);
-	printf("destination port: %u\n", udp->udp.destination_port);
+void UDPRecv( void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP, uint32_t ipLength)
+{	
+    // sourceIP is big endian!
+    
+    // destIP is big endian!
+    
+    udpheader_t* udp = (udpheader_t*)data;
+	printf("\nsource port: %u dest.  port: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
+
+    // TODO: evaluate UDP data
+    
+    // uint32_t udpDataLength = ipLength - sizeof(ip_t) - sizeof(udpheader_t);
+    // uint8_t pkt[sizeof(udpheader_t) + udpDataLength];
+       
 }
 
 void UDPSend(void* data, uint32_t length)
@@ -29,22 +32,16 @@ void UDPSend(void* data, uint32_t length)
 
 void UDPDebug(void* data, uint32_t length)
 {
-    udppacket_t* rec = data;
-    size_t udp_data_length = ntohs(rec->ip.length) - (sizeof(rec->eth) + sizeof(rec->ip) + sizeof(rec->udp));
-    uint8_t pkt[sizeof(*rec) + udp_data_length];
-    udppacket_t* udp = (udppacket_t*)pkt;
+    udpheader_t* udp = (udpheader_t*)data;
 	
 	printf("\n");
 	printf("UDP Header information:\n");
 	textColor(0x0E);
 	printf("+--------------+----------------+\n");
-	printf("|      %u       |      %u        | (source port, destination port)\n", udp->udp.source_port, udp->udp.destination_port);
+	printf("|      %u      |      %u      | (source port, destination port)\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
 	printf("+-------------------------------+\n");
-	printf("|        %u     |      %u        | (length, checksum)\n", udp->udp.length, udp->udp.checksum);
+	printf("|      %u      |      %x    | (length, checksum)\n", ntohs(udp->length), ntohs(udp->checksum));
 	printf("+-------------------------------+\n");
-	printf("|              data              | (data)\n", udp->udp.checksum);
-	printf("+-------------------------------+\n");
-
 }
 
 /*

@@ -7,22 +7,23 @@
 
 typedef struct udpheader
 {
-	uint16_t source_port;
-	uint16_t destination_port;
+	uint16_t sourcePort;
+	uint16_t destPort;
 	uint16_t length;
 	uint16_t checksum;
 } __attribute__((packed)) udpheader_t;
 
+/*
 typedef struct udpPacket
-{
-	ethernet_t eth;
+{	ethernet_t eth;
 	ip_t ip;
 	udpheader_t udp;
 } __attribute__((packed)) udppacket_t;
+*/
 
 void UDPConnect();
 void UDPBind();
 void UDPSend(void* data, uint32_t length);
-void UDPRecv(void* data, uint32_t length);
+void UDPRecv( void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP, uint32_t ipLength);
 void UDPDebug(void* data, uint32_t length);
 #endif

@@ -17,7 +17,7 @@ extern uint32_t BaseAddressRTL8139_MMIO;
 extern uint8_t IP_address[4];
 extern uint8_t MAC_address[6];
 
-void ipTcpStack_recv(void* data, uint32_t length)
+void EthernetRecv(void* data, uint32_t length)
 {
     ethernet_t* eth = (ethernet_t*)data;
 
@@ -25,11 +25,18 @@ void ipTcpStack_recv(void* data, uint32_t length)
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) { printf("Ethernet 2. "); }
     else                                                     { printf("Ethernet 1. "); }
 
-    // now we set our arp/ip pointer to the Ethernet-payload
+    // now we set our arp/ip pointer to the Ethernet data (payload) behind the Ethernet header
     arp_t* arp = (arp_t*)((uintptr_t)eth + sizeof(ethernet_t));
-    ip_t* ip   = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
+    ip_t*  ip  = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
 	
-	switch(ip->protocol)
+	// IP protocol is parsed here and distributed in switch/case 
+    uint32_t ipHeaderLength = 4 * ip->ipHeaderLength; // is given as number of 32 bit pieces (4 byte) 
+    if ((ip->version == 4) || (ip->version == 6))
+    {
+        printf(" IP version: %u, IP Header Length: %u byte", ip->version, ipHeaderLength);
+    }
+    
+    switch(ip->protocol)
 	{
 		case 1: // icmp
 			ICMPAnswerPing(data, length);
@@ -48,8 +55,8 @@ void ipTcpStack_recv(void* data, uint32_t length)
 		case 6: // tcp
 			break;
 		case 17: // udp
-			UDPRecv(data, length);
-			UDPDebug(data, length);
+			UDPRecv(  (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength, *(uint32_t*)ip->source_ip, *(uint32_t*)ip->dest_ip, ipHeaderLength);
+			UDPDebug( (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength);
 			break;
 		case 41: // ipv6
 			break;
@@ -58,8 +65,8 @@ void ipTcpStack_recv(void* data, uint32_t length)
 	}
 	
     // look at the ip-version to decide whether ip or arp packet
-    if      ((ip->version >> 4) == 4)    { printf("IPv4. ");  }
-    else if ((ip->version >> 4) == 6)    { printf("IPv6. ");  }
+    if      (ip->version == 4)    { printf("IPv4. ");  }
+    else if (ip->version == 6)    { printf("IPv6. ");  }
     else
     {   // check for ipv4 ARP packet
         if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
@@ -73,10 +80,10 @@ void ipTcpStack_recv(void* data, uint32_t length)
             switch ((arp->operation[0] << 8) | arp->operation[1])
             {
             case 1: // ARP-Request
-                if ((arp->source_ip[0]==arp->dest_ip[0])&&
-                    (arp->source_ip[1]==arp->dest_ip[1])&&
-                    (arp->source_ip[2]==arp->dest_ip[2])&&
-                    (arp->source_ip[3]==arp->dest_ip[3])) // IP requ. and searched is identical
+                if ((arp->source_ip[0] == arp->dest_ip[0])&&
+                    (arp->source_ip[1] == arp->dest_ip[1])&&
+                    (arp->source_ip[2] == arp->dest_ip[2])&&
+                    (arp->source_ip[3] == arp->dest_ip[3])) // IP requ. and searched is identical
                 {
                     printf("Operation: Gratuitous Request\n");
                 }
@@ -134,7 +141,7 @@ void ipTcpStack_recv(void* data, uint32_t length)
                         reply.arp.source_ip[i] = IP_address[i];
                      }
 
-                     ipTcpStack_send((void*)&reply, length);
+                     EthernetSend((void*)&reply, length);
                 }
                 break;
 
@@ -165,16 +172,16 @@ void ipTcpStack_recv(void* data, uint32_t length)
 }
 
 
-bool ipTcpStack_send(void* data, uint32_t length)
+bool EthernetSend(void* data, uint32_t length)
 {
     if (length > 0x700)
     {
-        printf("\nerror: ipTcpStack_send: length: %u. This is more than (1792) 0x700",length);
+        printf("\nerror: EthernetSend: length: %u. This is more than (1792) 0x700",length);
         return false;
     }
     else
     {
-        printf("\nipTcpStack_send: length: %u.",length);
+        printf("\nEthernetSend: length: %u.",length);
     }
 
     // TODO: check whether Tx buffer is already occupied

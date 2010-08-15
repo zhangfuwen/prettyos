@@ -35,21 +35,21 @@ typedef struct arpPacket
 } __attribute__((packed)) arpPacket_t;
 
 typedef struct ip
-{
-    uint8_t ipHeaderLength    :4;
-    uint8_t version           :4;
-    uint8_t typeOfService;
+{    
+    uint8_t  ipHeaderLength   :4;
+    uint8_t  version          :4;
+    uint8_t  typeOfService;
     uint16_t length;
     uint16_t identification;
     uint16_t fragmentation;
-    uint8_t ttl;
-    uint8_t protocol;
+    uint8_t  ttl;
+    uint8_t  protocol;
     uint16_t checksum;
-    uint8_t source_ip[4];
-    uint8_t dest_ip[4];
+    uint8_t  source_ip[4];
+    uint8_t  dest_ip[4];
 } __attribute__((packed)) ip_t;
 
-void ipTcpStack_recv(void* data, uint32_t length);
-bool ipTcpStack_send(void* data, uint32_t length);
+void EthernetRecv(void* data, uint32_t length);
+bool EthernetSend(void* data, uint32_t length);
 
 #endif

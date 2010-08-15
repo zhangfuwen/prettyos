@@ -142,7 +142,7 @@ void rtl8139_handler(registers_t* r)
     }
     textColor(0x0F);
     printf("\n");
-    ipTcpStack_recv((void*)(&rtl8139_receiveBuffer[4]), length - 4);
+    EthernetRecv((void*)(&rtl8139_receiveBuffer[4]), length - 4);
 }
 
 
