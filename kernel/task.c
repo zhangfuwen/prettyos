@@ -363,7 +363,7 @@ static void kill(task_t* task)
     {
         for(element_t* e = task->threads->head; e != 0; e = e->next)
         {
-            kill(e->data);
+           // kill(e->data);  /// HOTFIX
         }
         list_DeleteAll(task->threads);
     }
