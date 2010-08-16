@@ -6,6 +6,7 @@
 
 #include "types.h"
 #include "ethernet.h"
+#include "ipv4.h"
 
 #define ICMP_ECHO_REPLY                    0                     // Echo Reply
 #define ICMP_RESERVED_1                    1                     //  1-2 = Reserved

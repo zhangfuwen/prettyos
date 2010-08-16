@@ -4,6 +4,7 @@
 // http://tools.ietf.org/html/rfc793 <--- Transmission Control Protocol
 
 #include "ethernet.h"
+#include "ipv4.h"
 #include "types.h"
 
 typedef struct tcpheader

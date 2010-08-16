@@ -5,6 +5,7 @@
 
 #include "icmp.h"
 #include "network/rtl8139.h"
+#include "ipv4.h"
 #include "video/console.h"
 #include "types.h"
 #include "util.h"

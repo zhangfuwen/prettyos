@@ -9,6 +9,8 @@
 #include "network/rtl8139.h"
 #include "video/console.h"
 #include "ethernet.h"
+#include "arp.h"
+#include "ipv4.h"
 #include "icmp.h"
 #include "tcp.h"
 #include "udp.h"
