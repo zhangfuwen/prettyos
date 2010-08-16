@@ -21,7 +21,7 @@ void ICMPAnswerPing(void* data, uint32_t length)
 
     for (uint32_t i = 0; i < 6; i++)
     {
-        icmp->eth.recv_mac[i]   = rec->eth.send_mac[i]; 
+        icmp->eth.recv_mac[i]   = rec->eth.send_mac[i];
         icmp->eth.send_mac[i]   = MAC_address[i];
     }
 
@@ -65,17 +65,17 @@ int internetChecksum(void *addr, size_t count)
     uint8_t* data = addr;
 
     while (count > 1) // inner loop
-    {        
+    {
         sum   += (data[0] << 8) | data[1]; // Big Endian
         data  += 2;
         count -= 2;
     }
-        
+
     if (count > 0) // add left-over byte, if any
     {
         sum += data[0] << 8;
     }
-        
+
     while (sum >> 16) // fold 32-bit sum to 16 bits
     {
         sum = (sum & 0xFFFF) + (sum >> 16);
@@ -86,31 +86,31 @@ int internetChecksum(void *addr, size_t count)
 
 void icmpDebug(void* data, uint32_t length)
 {
-	icmppacket_t*  rec = data;
+    icmppacket_t*  rec = data;
     size_t icmp_data_length = ntohs(rec->ip.length) - (sizeof(rec->ip) + sizeof(rec->icmp));
     uint8_t pkt[sizeof(*rec) + icmp_data_length];
     icmppacket_t* icmp = (icmppacket_t*)pkt;
-	
+
     icmp->icmp.type         = ICMP_ECHO_REPLY;
     icmp->icmp.code         = 0;
-	icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
-	
-	icmp->icmp.id           = rec->icmp.id;
+    icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
+
+    icmp->icmp.id           = rec->icmp.id;
     icmp->icmp.seqnumber    = rec->icmp.seqnumber;
     icmp->icmp.checksum     = 0;
 
     memcpy(&pkt[sizeof(*icmp)], (uint8_t*)data + sizeof(*rec), icmp_data_length);
 
     icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
-	
-	printf("\n\n");
-	printf("ICMP Header information:\n");
-	textColor(0x0E);
-	printf("+--------+--------+-------------+\n");
-	printf("|   %u    |   %u    |     %u      | (type, code, checksum)\n", icmp->icmp.type, icmp->icmp.code, icmp->icmp.checksum);
-	printf("+-------------------------------+\n");
-	printf("|              %u                | (data)\n", icmp->icmp.checksum);
-	printf("+-------------------------------+\n");
+    
+    printf("\n\n");
+    printf("ICMP Header information:\n");
+    textColor(0x0E);
+    printf("+--------+--------+-------------+\n");
+    printf("|   %u    |   %u    |     %u      | (type, code, checksum)\n", icmp->icmp.type, icmp->icmp.code, icmp->icmp.checksum);
+    printf("+-------------------------------+\n");
+    printf("|              %u                | (data)\n", icmp->icmp.checksum);
+    printf("+-------------------------------+\n");
 }
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.

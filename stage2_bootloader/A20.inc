@@ -11,19 +11,19 @@ EnableA20:
     in  al, 0x92      ; switch A20 gate via fast A20 port 92
     cmp al, 0xff      ; if 0xFF, nothing's implemented on this port
     je .no_fast_A20
-   
+
     or  al, 2         ; set A20_Gate_Bit (bit 1)
     and al, ~1        ; clear INIT_NOW bit (don't reset pc...)
     out 0x92, al
     jmp .A20_done
-   
+
 .no_fast_A20:         ; no fast shortcut -> use the slow kbc...
     call empty_8042
-   
+
     mov al, 0xD1      ; kbc command: write to output port
     out 0x64, al
     call empty_8042
-   
+
     mov al, 0xDF      ; writing this to kbc output port enables A20
     out 0x60, al
     call empty_8042
@@ -57,5 +57,5 @@ Waitingloop:
     dec bx
     jnz .loop_start
     ret
-    
+
 %endif

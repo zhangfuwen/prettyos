@@ -3,60 +3,72 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-
 // http://wiki.osdev.org/Serial_ports
-// 'ported' and debugged by Cuervo
-
+// 'ported' and debugged by Cuervo, bugfixed (VBox) and extended by MrX
 
 #include "serial.h"
 #include "util.h"
 #include "timer.h"
+#include "video/console.h"
+#include "cmos.h"
 
+static uint8_t serialPorts;
 
-/*
-COM Port    IO Port
-COM1        3F8h
-COM2        2F8h
-COM3        3E8h
-COM4        2E8h
-*/
+static uint16_t IOports[4]; // Contains the ports used to access 
 
-
-void init_serial(uint16_t comport)
+void serial_init()
 {
-    outportb(comport + 1, 0x00);    // Disable all interrupts
-    outportb(comport + 3, 0x80);    // Enable DLAB (set baud rate divisor)
-    outportb(comport + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud (DO NOT TRY 0!!!)
-    outportb(comport + 1, 0x00);    //                  (hi byte)
-    outportb(comport + 3, 0x03);    // 8 bits, no parity, one stop bit
-    outportb(comport + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
-    outportb(comport + 4, 0x0B);    // IRQs enabled, RTS/DSR set
+    serialPorts = (((*(uint16_t*)0x410)>>9)&0x7); // Read from BIOS Data Area (BDA)
+    IOports[0] = *((uint16_t*)0x400);
+    IOports[1] = *((uint16_t*)0x402);
+    IOports[2] = *((uint16_t*)0x404);
+    IOports[3] = *((uint16_t*)0x406);
+    for(uint8_t i = 0; i < serialPorts; i++)
+    {
+        outportb(IOports[i] + 1, 0x00); // Disable all interrupts
+        outportb(IOports[i] + 3, 0x80); // Enable DLAB (set baud rate divisor)
+        outportb(IOports[i] + 0, 0x03); // Set divisor to 3 (lo byte) 38400 baud (DO NOT TRY 0!!!)
+        outportb(IOports[i] + 1, 0x00); //                  (hi byte)
+        outportb(IOports[i] + 3, 0x03); // 8 bits, no parity, one stop bit
+        outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
+        outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
+        printf("COM%d (IO-port: %x) initialized\n", i, IOports[i]);
+    }
+    printf("\n");
+}
+
+int serial_recieved(uint8_t com)
+{
+    if(serialPorts > 0)
+        return inportb(IOports[com-1] + 5) & 1;
+    return(0);
+}
+
+char read_serial(uint8_t com)
+{
+    if(serialPorts > 0)
+    {
+        while (serial_recieved(IOports[com-1]) == 0);
+        return inportb(IOports[com-1]);
+    }
+    return(0); // Correct?
 }
 
 
-int serial_recieved(uint16_t comport)
+int is_transmit_empty(uint8_t com)
 {
-    return inportb(comport + 5) & 1;
+    if(serialPorts > 0)
+        return inportb(IOports[com-1] + 5) & 0x20;
+    return(0); // Correct?
 }
 
-char read_serial(uint16_t comport)
+void write_serial(uint8_t com, char a)
 {
-    while (serial_recieved(comport) == 0);
-    
-    return inportb(comport);
-}
-
-
-int is_transmit_empty(uint16_t comport)
-{
-    return inportb(comport + 5) & 0x20;
-}
-
-void write_serial(uint16_t comport, char a)
-{
-    while (is_transmit_empty(comport) == 0);
-    
-    outportb(comport,a);
+    if(serialPorts > 0)
+    {
+        while (is_transmit_empty(IOports[com-1]) == 0);
+        outportb(IOports[com-1],a);
+    }
 }
 
 

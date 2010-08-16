@@ -30,9 +30,9 @@ typedef struct tcpheader
 
 typedef struct tcppacket
 {
-	ethernet_t eth;
-	ip_t ip;
-	tcpheader_t tcp;
+    ethernet_t eth;
+    ip_t ip;
+    tcpheader_t tcp;
 } __attribute__((packed)) tcphpacket_t;
 
 

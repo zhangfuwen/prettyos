@@ -63,7 +63,7 @@ void EthernetRecv(void* data, uint32_t length)
 		default:
 			break;
 	}
-	
+
     // look at the ip-version to decide whether ip or arp packet
     if      (ip->version == 4)    { printf("IPv4. ");  }
     else if (ip->version == 6)    { printf("IPv6. ");  }
@@ -144,7 +144,6 @@ void EthernetRecv(void* data, uint32_t length)
                      EthernetSend((void*)&reply, length);
                 }
                 break;
-
             case 2: // ARP-Reply
                 printf("Operation: Response\n");
 

@@ -3,10 +3,10 @@
 
 #include "os.h"
 
-void init_serial(uint16_t comport);
-void write_serial(uint16_t comport, char a);
-int serial_recieved(uint16_t comport);
-char read_serial(uint16_t comport);
-int is_transmit_empty(uint16_t comport);
+void serial_init();
+void write_serial(uint8_t com, char a);
+int serial_recieved(uint8_t com);
+char read_serial(uint8_t com);
+int is_transmit_empty(uint8_t com);
 
 #endif

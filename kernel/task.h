@@ -24,6 +24,9 @@ struct task
     uint8_t*          heap_top;       // user heap top
     void*             kernel_stack;   // Kernel stack location
     uintptr_t         FPU_ptr;        // pointer to FPU data
+    void            (*entry)();       // entry point, used to resart the task
+    listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
+    task_t*           parent;         // task who created this thread (only used for threads)
 
     // Information needed by scheduler
     uint16_t  priority; // Indicates how often this task get the CPU
@@ -54,6 +57,8 @@ task_t*  create_vm86_task(void(*entry)());
 void     switch_context();
 uint32_t task_switch(uint32_t esp);
 void     exit();
+void     task_kill(uint32_t pid);
+void     task_restart(uint32_t pid);
 
 void waitForTask(task_t* blockingTask);
 

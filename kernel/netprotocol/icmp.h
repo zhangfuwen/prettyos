@@ -1,7 +1,7 @@
 #ifndef ICMP_H
 #define ICMP_H
 
-// http://tools.ietf.org/html/rfc1071 <--- internet checksum 
+// http://tools.ietf.org/html/rfc1071 <--- internet checksum
 // http://de.wikipedia.org/wiki/Internet_Control_Message_Protocol <--- icmp Protocol
 
 #include "types.h"
