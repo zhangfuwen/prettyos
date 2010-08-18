@@ -9,20 +9,21 @@
 #include "udp.h"
 #include "ethernet.h"
 
-void UDPRecv( void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP, uint32_t ipLength)
+void UDPRecv( void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP)
 {	
     // sourceIP is big endian!
     
     // destIP is big endian!
     
-    udpheader_t* udp = (udpheader_t*)data;
-	printf("\nsource port: %u dest.  port: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
+    // udpheader_t* udp = (udpheader_t*)data;
+	// printf("\nsource port: %u dest.  port: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
 
     // TODO: evaluate UDP data
     
     // uint32_t udpDataLength = ipLength - sizeof(ip_t) - sizeof(udpheader_t);
     // uint8_t pkt[sizeof(udpheader_t) + udpDataLength];
-       
+
+    UDPDebug(data, length);       
 }
 
 void UDPSend(void* data, uint32_t length)
@@ -42,6 +43,57 @@ void UDPDebug(void* data, uint32_t length)
 	printf("+-------------------------------+\n");
 	printf("|      %u      |      %x    | (length, checksum)\n", ntohs(udp->length), ntohs(udp->checksum));
 	printf("+-------------------------------+\n");
+
+    // http://www.iana.org/assignments/port-numbers
+    // http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+    switch(ntohs(udp->destPort))
+    {
+    case 20:
+        printf("FTP - data transfer\n");
+        break;    
+    case 21:
+        printf("FTP - control (command)\n");
+        break;  
+    case 22:
+        printf("Secure Shell (SSH)\n");
+        break;    
+    case 53:
+        printf("Domain Name System (DNS)\n");
+        break;
+    case 80:
+        printf("HTTP\n");
+        break;
+    case 137:
+        printf("NetBIOS Name Service\n");
+        break;
+    case 138:
+        printf("NetBIOS Datagram Service\n");
+        break;
+    case 139:
+        printf("NetBIOS Session Service\n");
+        break;
+    case 143:
+        printf("Internet Message Access Protocol (IMAP)\n");
+        break;
+    case 546:
+        printf("DHCPv6-client\n");
+        break;
+    case 547:
+        printf("DHCPv6-server\n");
+        break;
+    case 1257:
+        printf("shockwave2\n");
+        break;
+    case 1900:
+        printf("Simple Service Discovery Protocol (ssdp)\n");
+        break; 
+    case 3544:
+        printf("Teredo Tunneling\n");
+        break;
+    case 5355:
+        printf("Link-Local Multicast Name Resolution (llmnr)\n");
+        break;
+    }
 }
 
 /*

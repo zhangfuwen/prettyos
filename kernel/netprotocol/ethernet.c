@@ -36,41 +36,36 @@ void EthernetRecv(void* data, uint32_t length)
     if ((ip->version == 4) || (ip->version == 6))
     {
         printf(" IP version: %u, IP Header Length: %u byte", ip->version, ipHeaderLength);
-    }
     
-    switch(ip->protocol)
-	{
-		case 1: // icmp
-			ICMPAnswerPing(data, length);
-			icmpDebug(data, length);
-			break;
-		case 4: // ipv4
-			/*
-			tcpheader_t tcp; 
-			tcp.sourcePort = 1025;
-			tcp.destinationPort = 80;
-			tcp.sequence_number = 1;
-			tcp.ACK = 1;
-			tcpDebug(&tcp);
-			*/
-			break;
-		case 6: // tcp
-			break;
-		case 17: // udp
-			UDPRecv(  (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP, ipHeaderLength);
-			UDPDebug( (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength);
-			break;
-		case 41: // ipv6
-			break;
-		default:
-			break;
-	}
-
-    // look at the ip-version to decide whether ip or arp packet
-    if      (ip->version == 4)    { printf("IPv4. ");  }
-    else if (ip->version == 6)    { printf("IPv6. ");  }
-    else
-    {   // check for ipv4 ARP packet
+        switch(ip->protocol)
+	    {
+		    case 1: // icmp
+			    ICMPAnswerPing(data, length);
+			    icmpDebug(data, length);
+			    break;
+		    case 4: // ipv4
+			    /*
+			    tcpheader_t tcp; 
+			    tcp.sourcePort = 1025;
+			    tcp.destinationPort = 80;
+			    tcp.sequence_number = 1;
+			    tcp.ACK = 1;
+			    tcpDebug(&tcp);
+			    */
+			    break;
+		    case 6: // tcp
+			    break;
+		    case 17: // udp
+			    UDPRecv(  (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP);			
+			    break;
+		    case 41: // ipv6
+			    break;
+		    default:
+			    break;
+	    }
+    }
+    else // check for ARP packet
+    {   
         if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
             (((arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1]) == 2048) &&
               (arp->hardware_addresssize == 6) &&

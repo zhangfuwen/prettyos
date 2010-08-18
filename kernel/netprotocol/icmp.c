@@ -60,7 +60,7 @@ void ICMPAnswerPing(void* data, uint32_t length)
 }
 
 // compute internet checksum for "count" bytes beginning at location "addr"
-int internetChecksum(void *addr, size_t count)
+int internetChecksum(void* addr, size_t count)
 {
     uint32_t sum  = 0;
     uint8_t* data = addr;

@@ -97,9 +97,11 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\list.h" />
     <ClInclude Include="..\kernel\mouse.h" />
     <ClInclude Include="..\kernel\myOwnData.h" />
+    <ClInclude Include="..\kernel\netprotocol\arp.h" />
     <ClInclude Include="..\kernel\netprotocol\dhcp.h" />
     <ClInclude Include="..\kernel\netprotocol\icmp.h" />
     <ClInclude Include="..\kernel\netprotocol\ethernet.h" />
+    <ClInclude Include="..\kernel\netprotocol\ipv4.h" />
     <ClInclude Include="..\kernel\netprotocol\tcp.h" />
     <ClInclude Include="..\kernel\netprotocol\udp.h" />
     <ClInclude Include="..\kernel\network\rtl8139.h" />
@@ -167,9 +169,11 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\kheap.c" />
     <ClCompile Include="..\kernel\list.c" />
     <ClCompile Include="..\kernel\mouse.c" />
+    <ClCompile Include="..\kernel\netprotocol\arp.c" />
     <ClCompile Include="..\kernel\netprotocol\dhcp.c" />
     <ClCompile Include="..\kernel\netprotocol\icmp.c" />
     <ClCompile Include="..\kernel\netprotocol\ethernet.c" />
+    <ClCompile Include="..\kernel\netprotocol\ipv4.c" />
     <ClCompile Include="..\kernel\netprotocol\tcp.c" />
     <ClCompile Include="..\kernel\netprotocol\udp.c" />
     <ClCompile Include="..\kernel\network\rtl8139.c" />

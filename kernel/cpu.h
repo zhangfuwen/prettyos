@@ -3,14 +3,16 @@
 
 #include "os.h"
 
-typedef enum { // Uses bits larger than 5 because the bitnumber inside the registers can be 31 at maximum which needs the first 5 bits
+typedef enum 
+{ // Uses bits larger than 5 because the bitnumber inside the registers can be 31 at maximum which needs the first 5 bits
 	CR_EAX = 1 << 5,
 	CR_EBX = 1 << 6,
 	CR_ECX = 1 << 7,
 	CR_EDX = 1 << 8
 } CPU_REGISTER;
 
-typedef enum { // In this enum the last five bits contain the bit in the register, the other bits are the register (see above)
+typedef enum 
+{ // In this enum the last five bits contain the bit in the register, the other bits are the register (see above)
 	CF_FPU          = CR_EDX|0,
 	CF_VM86         = CR_EDX|1,
 	CF_IOBREAKPOINT = CR_EDX|2,
