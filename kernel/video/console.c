@@ -15,6 +15,13 @@ uint8_t displayedConsole = KERNELCONSOLE_ID; // Currently visible console (KERNE
 extern uint16_t* vidmem;
 bool scroll_flag = true;
 
+uint8_t getTextColor()
+{
+    if(currentTask == 0)
+        return(0x0F);
+    return(currentTask->attrib);
+}
+
 void kernel_console_init()
 {
     currentConsole = malloc(sizeof(console_t), 0, "kernel-console"); // Reserving space for the kernels console
@@ -78,8 +85,8 @@ void showInfobar(bool show)
 void clear_console(uint8_t backcolor)
 {
     // Erasing the content of the active console
-    currentTask->attrib = (backcolor << 4) | 0x0F;
-    memsetw(currentConsole->vidmem, 0x20 | (currentTask->attrib << 8), COLUMNS * USER_LINES);
+    textColor((backcolor << 4) | 0x0F);
+    memsetw(currentConsole->vidmem, 0x20 | (getTextColor() << 8), COLUMNS * USER_LINES);
     currentConsole->cursor.x = 0;
     currentConsole->cursor.y = 0;
     if (currentConsole == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
@@ -90,7 +97,8 @@ void clear_console(uint8_t backcolor)
 
 void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
 {
-    currentTask->attrib = color;
+    if(currentTask)
+        currentTask->attrib = color;
 }
 
 void move_cursor_right()
@@ -167,7 +175,7 @@ void putch(char c)
         default:
             if (uc != 0)
             {
-                uint32_t att = currentTask->attrib << 8;
+                uint32_t att = getTextColor() << 8;
                 if (reachableConsoles[displayedConsole] == currentConsole) { //print to screen
                     *(vidmem + (currentConsole->cursor.y+2) * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
                 }
@@ -190,7 +198,7 @@ void scroll()
     {
         uint8_t temp = currentConsole->cursor.y - scroll_end + 1;
         memcpy(currentConsole->vidmem, currentConsole->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
-        memsetw(currentConsole->vidmem + (scroll_end - temp) * COLUMNS, currentTask->attrib << 8, COLUMNS);
+        memsetw(currentConsole->vidmem + (scroll_end - temp) * COLUMNS, getTextColor() << 8, COLUMNS);
         currentConsole->cursor.y = scroll_end - 1;
         refreshUserScreen();
     }
@@ -200,7 +208,7 @@ void scroll()
 // vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c and the PrettyOS-specific %v
 void vprintf(const char* args, va_list ap)
 {
-    uint8_t attribute = currentTask->attrib;
+    uint8_t attribute = getTextColor();
     char buffer[32]; // Larger is not needed at the moment
 
     //semaphore_lock(currentTask->console->sp); // TEST
@@ -242,9 +250,9 @@ void vprintf(const char* args, va_list ap)
                         putch((int8_t)va_arg(ap, int32_t));
                         break;
                     case 'v':
-                        currentTask->attrib = (attribute >> 4) | (attribute << 4);
+                        textColor((attribute >> 4) | (attribute << 4));
                         putch(*(++args));
-                        currentTask->attrib = attribute;
+                        textColor(attribute);
                         break;
                     case '%':
                         putch('%');
@@ -270,12 +278,12 @@ void printf(const char* args, ...)
 
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
-    uint8_t old_attrib = currentTask->attrib;
+    uint8_t old_attrib = getTextColor();
     uint8_t c_x = currentConsole->cursor.x;
     uint8_t c_y = currentConsole->cursor.y;
     scroll_flag = false;
 
-    currentTask->attrib = attribute;
+    textColor(attribute);
     currentConsole->cursor.x = 0; currentConsole->cursor.y = line;
 
     // Call usual printf routines
@@ -284,7 +292,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     vprintf(message, ap);
 
     scroll_flag = true;
-    currentTask->attrib = old_attrib;
+    textColor(old_attrib);
     currentConsole->cursor.x = c_x;
     currentConsole->cursor.y = c_y;
 }

@@ -44,7 +44,7 @@ uint32_t paging_install()
         // Page table entries, identity mapping
         for (int j=0; j<1024; ++j)
         {
-            kernel_pd->tables[i]->pages[j] = addr | MEM_PRESENT;
+            kernel_pd->tables[i]->pages[j] = addr | MEM_PRESENT | MEM_WRITE;
             addr += PAGESIZE;
         }
     }

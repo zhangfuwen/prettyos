@@ -6,21 +6,21 @@
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
 // http://poli.cs.vsb.cz/misc/rbint/text/1005.html
 
-#define VM86_SWITCH_TO_VIDEO				((void*)0x100)
-#define VM86_SWITCH_TO_VIDEO_640_480_256	((void*)0x100)
-#define VM86_SWITCH_TO_VIDEO_800_600_256	((void*)0x10B)
-#define VM86_SWITCH_TO_VIDEO_1024_768_256	((void*)0x116)
-#define VM86_VGAINFOBLOCK    				((void*)0x121)
-#define VM86_MODEINFOBLOCK_640_480_256		((void*)0x132)
-#define VM86_MODEINFOBLOCK_800_600_256		((void*)0x14D)
-#define VM86_MODEINFOBLOCK_1024_768_256		((void*)0x168)
-#define VM86_SETDISPLAYSTART 				((void*)0x183)
-#define VM86_GETDISPLAYSTART 				((void*)0x199)
-#define VM86_SETDACPALETTE   				((void*)0x1AF)
-#define VM86_GETDACPALETTE   				((void*)0x1BC)
-#define VM86_SETPALETTE      				((void*)0x1C6)
-#define VM86_GETPALETTE      				((void*)0x1DE)
-#define VM86_SWITCH_TO_TEXT  				((void*)0x1F1)
+#define VM86_SWITCH_TO_VIDEO                ((void*)0x100)
+#define VM86_SWITCH_TO_VIDEO_640_480_256    ((void*)0x100)
+#define VM86_SWITCH_TO_VIDEO_800_600_256    ((void*)0x10B)
+#define VM86_SWITCH_TO_VIDEO_1024_768_256   ((void*)0x116)
+#define VM86_VGAINFOBLOCK                   ((void*)0x121)
+#define VM86_MODEINFOBLOCK_640_480_256      ((void*)0x132)
+#define VM86_MODEINFOBLOCK_800_600_256      ((void*)0x14D)
+#define VM86_MODEINFOBLOCK_1024_768_256     ((void*)0x168)
+#define VM86_SETDISPLAYSTART                ((void*)0x183)
+#define VM86_GETDISPLAYSTART                ((void*)0x199)
+#define VM86_SETDACPALETTE                  ((void*)0x1AF)
+#define VM86_GETDACPALETTE                  ((void*)0x1BC)
+#define VM86_SETPALETTE                     ((void*)0x1C6)
+#define VM86_GETPALETTE                     ((void*)0x1DE)
+#define VM86_SWITCH_TO_TEXT                 ((void*)0x1F1)
 
 // #define DIRECT_BANKING
 

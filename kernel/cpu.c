@@ -14,56 +14,56 @@ char cpu_vendor[13];
 
 void cpu_analyze()
 {
-	// TODO: Test if the CPU supports the CPUID-Command
+    // TODO: Test if the CPU supports the CPUID-Command
 
-	printf("CPU information:\n");
+    printf("CPU information:\n");
 
-	// Read out VendorID
-	((uint32_t*)cpu_vendor)[0] = cpu_idGetRegister(0, CR_EBX);
-	((uint32_t*)cpu_vendor)[1] = cpu_idGetRegister(0, CR_EDX);
-	((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
-	cpu_vendor[12] = 0;
-	printf("\tVendorID: %s\n", cpu_vendor);
+    // Read out VendorID
+    ((uint32_t*)cpu_vendor)[0] = cpu_idGetRegister(0, CR_EBX);
+    ((uint32_t*)cpu_vendor)[1] = cpu_idGetRegister(0, CR_EDX);
+    ((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
+    cpu_vendor[12] = 0;
+    printf("\tVendorID: %s\n", cpu_vendor);
 }
 
 bool cpu_supports(CPU_FEATURE feature)
 {
-	if(!cpuid_available) return(false);
-	CPU_REGISTER r = feature&~31;
-	return(cpu_idGetRegister(0x00000001, r) & (1<<(feature-r)));
+    if(!cpuid_available) return(false);
+    CPU_REGISTER r = feature&~31;
+    return(cpu_idGetRegister(0x00000001, r) & (1<<(feature-r)));
 }
 
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
 {
-	if(!cpuid_available) return(0);
+    if(!cpuid_available) return(0);
 
-	__asm__ ("movl %0, %%eax" : : "r"(function) : "%eax");
-	__asm__ ("cpuid");
-	switch(reg)
-	{
-		case CR_EAX:
-		{
-			register uint32_t temp __asm__("%eax");
-			return(temp);
-		}
-		case CR_EBX:
-		{
-			register uint32_t temp __asm__("%ebx");
-			return(temp);
-		}
-		case CR_ECX:
-		{
-			register uint32_t temp __asm__("%ecx");
-			return(temp);
-		}
-		case CR_EDX:
-		{
-			register uint32_t temp __asm__("%edx");
-			return(temp);
-		}
-		default:
-			return(0);
-	}
+    __asm__ ("movl %0, %%eax" : : "r"(function) : "%eax");
+    __asm__ ("cpuid");
+    switch(reg)
+    {
+        case CR_EAX:
+        {
+            register uint32_t temp __asm__("%eax");
+            return(temp);
+        }
+        case CR_EBX:
+        {
+            register uint32_t temp __asm__("%ebx");
+            return(temp);
+        }
+        case CR_ECX:
+        {
+            register uint32_t temp __asm__("%ecx");
+            return(temp);
+        }
+        case CR_EDX:
+        {
+            register uint32_t temp __asm__("%edx");
+            return(temp);
+        }
+        default:
+            return(0);
+    }
 }
 
 /*

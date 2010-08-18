@@ -7,17 +7,18 @@
 
 typedef struct udpheader
 {
-	uint16_t sourcePort;
-	uint16_t destPort;
-	uint16_t length;
-	uint16_t checksum;
+    uint16_t sourcePort;
+    uint16_t destPort;
+    uint16_t length;
+    uint16_t checksum;
 } __attribute__((packed)) udpheader_t;
 
 /*
 typedef struct udpPacket
-{	ethernet_t eth;
-	ip_t ip;
-	udpheader_t udp;
+{
+    ethernet_t eth;
+    ip_t ip;
+    udpheader_t udp;
 } __attribute__((packed)) udppacket_t;
 */
 

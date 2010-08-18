@@ -25,7 +25,7 @@
 #include "serial.h"
 #include "cpu.h"
 
-const char* version = "0.0.1.187 - Rev: 766";
+const char* version = "0.0.1.188 - Rev: 767";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -110,7 +110,7 @@ void main()
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
-	cpu_analyze();
+    cpu_analyze();
     showMemorySize();
 
     textColor(0x09);
@@ -310,12 +310,12 @@ void main()
                 printf("0x%x ",sbyt);
                 sleepMilliSeconds(8);
             }
-			write_serial(1,'P');
-			write_serial(1,'r');
-			write_serial(1,'e');
-			write_serial(1,'t');
-			write_serial(1,'t');
-			write_serial(1,'y');
+            write_serial(1,'P');
+            write_serial(1,'r');
+            write_serial(1,'e');
+            write_serial(1,'t');
+            write_serial(1,'t');
+            write_serial(1,'y');
             printf("\nAnswered with 'Pretty'!\n\n");
         }
 

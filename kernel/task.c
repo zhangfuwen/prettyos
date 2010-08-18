@@ -15,7 +15,7 @@ bool task_switching = false;
 
 task_t* kernelTask = 0; // Needed to find out when the kernel task is exited
 
-task_t* currentTask;
+task_t* currentTask = 0;
 listHead_t* tasks; // List of all tasks. Not sorted by pid
 
 static uint32_t next_pid = 0; // The next available process ID. TODO: Reuse old pid
@@ -135,8 +135,8 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
         *(--kernel_stack) = 0x23; // es
         *(--kernel_stack) = 0x23; // ds
         *(--kernel_stack) = newTask->ss = 0x0000; // ss
-        *(--kernel_stack) = 4090;                  // USER_STACK;
-        *(--kernel_stack) = 0x20202;               // eflags = vm86 (bit17), interrupts (bit9), iopl=0
+        *(--kernel_stack) = 4090;                 // USER_STACK;
+        *(--kernel_stack) = 0x20202;              // eflags = vm86 (bit17), interrupts (bit9), iopl=0
     }
 
     *(--kernel_stack) = code_segment;    // cs
@@ -327,14 +327,6 @@ static void kill(task_t* task)
     scheduler_log();
     #endif
 
-    // finish task and free occupied heap
-    void* pkernelstack = (void*)((uintptr_t)task->kernel_stack - KERNEL_STACK_SIZE);
-    task_t* ptask      = task;
-
-    // free memory at heap
-    free(pkernelstack);
-    free(ptask);
-
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
     if(task->ownConsole)
     {
@@ -382,7 +374,10 @@ static void kill(task_t* task)
         systemControl(REBOOT);
     }
 
-    if(task == currentTask)
+    free(task->kernel_stack - KERNEL_STACK_SIZE); // free kernelstack
+    free(task);
+
+    if(task == currentTask) // tasks adress is still saved, although its no longer valid so we can use it here
     {
         sti();
         switch_context(); // switch to next task

@@ -29,6 +29,7 @@ void console_exit(console_t* console);
 
 void clear_console(uint8_t backcolor);
 void textColor(uint8_t color); // bit 4-7: background; bit 1-3: foreground
+uint8_t getTextColor();
 void showInfobar(bool show);
 void setScrollField(uint8_t begin, uint8_t end);
 void putch(char c);

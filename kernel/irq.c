@@ -186,7 +186,7 @@ void isr_install()
 
 uint32_t irq_handler(uint32_t esp)
 {
-    uint8_t attr = currentTask->attrib;   // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
+    uint8_t attr = getTextColor();        // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
     currentConsole = kernelTask->console; // The output should appear in the kernels console usually
 
     registers_t* r = (registers_t*)esp;
@@ -221,7 +221,7 @@ uint32_t irq_handler(uint32_t esp)
     outportb(0x20, 0x20);
     
     currentConsole = currentTask->console;
-    currentTask->attrib = attr;
+    textColor(attr);
     return esp;
 }
 
