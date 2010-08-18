@@ -32,7 +32,7 @@ void serial_init()
         outportb(IOports[i] + 3, 0x03); // 8 bits, no parity, one stop bit
         outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
         outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
-        printf("COM%d (IO-port: %x) initialized\n", i, IOports[i]);
+        printf("COM%d (IO-port: %x) initialized\n", i+1, IOports[i]);
     }
     printf("\n");
 }
@@ -48,7 +48,7 @@ char read_serial(uint8_t com)
 {
     if(com <= serialPorts)
     {
-        while (serial_recieved(IOports[com-1]) == 0);
+        while (serial_recieved(com) == 0);
         return inportb(IOports[com-1]);
     }
     return(0); // Correct?
@@ -66,7 +66,7 @@ void write_serial(uint8_t com, char a)
 {
     if(com <= serialPorts)
     {
-        while (is_transmit_empty(IOports[com-1]) == 0);
+        while (is_transmit_empty(com) == 0);
         outportb(IOports[com-1],a);
     }
 }

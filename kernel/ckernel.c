@@ -25,7 +25,7 @@
 #include "serial.h"
 #include "cpu.h"
 
-const char* version = "0.0.1.185 - Rev: 764";
+const char* version = "0.0.1.186 - Rev: 765";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -308,9 +308,15 @@ void main()
             {
                 uint8_t sbyt=read_serial(1);
                 printf("0x%x ",sbyt);
-                sleepMilliSeconds(5);
+                sleepMilliSeconds(8);
             }
-            printf("\n\n");
+			write_serial(1,'P');
+			write_serial(1,'r');
+			write_serial(1,'e');
+			write_serial(1,'t');
+			write_serial(1,'t');
+			write_serial(1,'y');
+            printf("\nAnswered with 'Pretty'!\n\n");
         }
 
 
