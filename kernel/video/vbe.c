@@ -208,6 +208,14 @@ void setVideoMemory()
      /*{
          SCREEN += 256; // only video mode 101h ??
      }*/
+	 if(mib->BytesPerScanLine == 640)
+     {
+         SCREEN += 256; // only video mode 101h ??
+     }
+	 if(mib->BytesPerScanLine == 800)
+     {
+         SCREEN += 96; // only video mode 101h ??
+     }
 }
 
 void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
