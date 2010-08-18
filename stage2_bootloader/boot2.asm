@@ -2,11 +2,11 @@
 [map symbols boot2.map]
 [Bits 16]
 org 0x500
-jmp entry_point                   
+jmp entry_point
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Memory Management:
-; org                   500 
+; org                   500
 ; data/extra segments     0
 ; stack               9FC00
 ; RM kernel            3000

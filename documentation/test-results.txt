@@ -1,16 +1,16 @@
 ﻿Emulator             | Version    SCREEN (phys)  VBE  RTL8139  Sound  EHCI-Ports  Serial Port  Last tester  Annotations
 ---------------------|-------------------------------------------------------------------------------------------------
-qemu-ehci (forum)    | 0.0.1.177  F2000000h      √    √        √      4           -            MrX
-VBox 3.2.8           | 0.0.1.177  E0000000h      √    x        x      8           -            MrX
+qemu-ehci (forum)    | 0.0.1.184  F2000000h      √    √        √      4           -            MrX
+VBox 3.2.8           | 0.0.1.184  E0000000h      √    x        x      8           -            MrX
 VMWare Player 3.0.1  | 0.0.1.166  -              f    x        x      6           -            ehenkes      invalid opcode at 1A70h if trying VBE 
-bochs 2.4.5          | 0.0.1.177  E0000000h      √    x        x      x           -            MrX
-VPC 6.0.192.0 / 6.1  | 0.0.1.177  -              f    x        √      x           -            ehenkes/MrX  #PF (err 0, addr 107BC4h) if trying VBE
+bochs 2.4.5          | 0.0.1.184  E0000000h      √    x        x      x           -            MrX
+VPC 6.0.192.0 / 6.1  | 0.0.1.184  -              f    x        √      x           -            ehenkes/MrX  #PF (err 0, addr 107BC4h) if trying VBE
 
 
 CPU                 VGA              RAM     | Version    SCREEN (phys)  VBE  RTL8139  Sound  EHCI-Ports  Serial Port  Last tester  Annotations
 ---------------------------------------------|-------------------------------------------------------------------------------------------------
 AMD Athlon 1,4 GHz  GeForce4                 | 0.0.1.166  F4000000h      √    √        √      x           -            ehenkes
-AMD Duron 800       GeForce FX 5200  512 MiB | 0.0.1.168  D0000000h      √    x        √      x           -            MrX
+AMD Duron 800       GeForce FX 5200  512 MiB | 0.0.1.184  D0000000h      √    x        √      x           -            MrX
 AMD K6-2 550 MHz    ATI Rage Pro     ?       | 0.0.1.174  -              -    x        -      x           -            MrX          Reboot in/after bootloader, PF with Rev. 721 (old BL)
 AMD K6-2 500 MHz    ?                ?       | 0.0.1.168  -              -    x        -      x           -            MrX          Reboot in/after bootloader
 AMD am5x86-P75      ?                ?       | 0.0.1.168  -              -    x        -      x           -            MrX          Freeze in/after bootloader

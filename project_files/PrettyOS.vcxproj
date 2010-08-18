@@ -81,6 +81,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\cdi\scsi.h" />
     <ClInclude Include="..\kernel\cdi\storage.h" />
     <ClInclude Include="..\kernel\cmos.h" />
+    <ClInclude Include="..\kernel\cpu.h" />
     <ClInclude Include="..\kernel\descriptor_tables.h" />
     <ClInclude Include="..\kernel\event_list.h" />
     <ClInclude Include="..\kernel\filesystem\fat.h" />
@@ -150,6 +151,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\cdi\cdi_storage.c" />
     <ClCompile Include="..\kernel\ckernel.c" />
     <ClCompile Include="..\kernel\cmos.c" />
+    <ClCompile Include="..\kernel\cpu.c" />
     <ClCompile Include="..\kernel\descriptor_tables.c" />
     <ClCompile Include="..\kernel\elf.c" />
     <ClCompile Include="..\kernel\event_list.c" />

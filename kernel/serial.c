@@ -39,14 +39,14 @@ void serial_init()
 
 int serial_recieved(uint8_t com)
 {
-    if(serialPorts > 0)
+    if(com <= serialPorts)
         return inportb(IOports[com-1] + 5) & 1;
     return(0);
 }
 
 char read_serial(uint8_t com)
 {
-    if(serialPorts > 0)
+    if(com <= serialPorts)
     {
         while (serial_recieved(IOports[com-1]) == 0);
         return inportb(IOports[com-1]);
@@ -57,14 +57,14 @@ char read_serial(uint8_t com)
 
 int is_transmit_empty(uint8_t com)
 {
-    if(serialPorts > 0)
+    if(com <= serialPorts)
         return inportb(IOports[com-1] + 5) & 0x20;
     return(0); // Correct?
 }
 
 void write_serial(uint8_t com, char a)
 {
-    if(serialPorts > 0)
+    if(com <= serialPorts)
     {
         while (is_transmit_empty(IOports[com-1]) == 0);
         outportb(IOports[com-1],a);

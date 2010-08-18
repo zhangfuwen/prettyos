@@ -23,8 +23,9 @@
 #include "video/vbe.h"
 #include "irq.h"
 #include "serial.h"
+#include "cpu.h"
 
-const char* version = "0.0.1.183 - Rev: 762";
+const char* version = "0.0.1.184 - Rev: 763";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -109,6 +110,7 @@ void main()
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
+	cpu_analyze();
     showMemorySize();
 
     textColor(0x09);
