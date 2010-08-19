@@ -36,7 +36,7 @@ typedef struct
     uint16_t  VESAVersion;
     uintptr_t OEMStringPtr;
     uint8_t   Capabilities[4];
-    uintptr_t VideoModePtr;
+    uint16_t* VideoModePtr;
     uint16_t  TotalMemory;
     uint16_t  OemSoftwareRev;
     uintptr_t OemVendorNamePtr;
@@ -149,7 +149,7 @@ typedef struct
     uint32_t green_pad   : 2;
     uint32_t red         : 6;
     uint32_t red_pad     : 2;
-    uint8_t alignDword     ; // ???
+    uint8_t alignDword; // ???
 } __attribute__((packed)) RGBQuadPacked_t;
 
 
@@ -206,7 +206,7 @@ void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);
 char ISValidBitmap(char *fname);
 void showbitmap(char *infname,int xs,int ys);
 void bitmapDebug();
-void drawChar(char font_char, uint32_t xpos, uint32_t ypos);
+void drawChar(char font_char);
 void drawString(const char* text, uint32_t xpos, uint32_t ypos);
 
 #endif
