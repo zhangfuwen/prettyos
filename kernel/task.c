@@ -357,10 +357,10 @@ static void kill(task_t* task)
         {
            //kill(e->data);  /// HACK -> #PF on some systems
         }
-        list_DeleteAll(task->threads);
+        // list_DeleteAll(task->threads);
     }
 
-    list_Delete(tasks, task);
+    // list_Delete(tasks, task);
     scheduler_deleteTask(task);
 
     #ifdef _TASKING_DIAGNOSIS_
