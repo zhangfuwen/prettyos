@@ -204,8 +204,8 @@ void setVideoMemory()
      printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
 
      // add the size of color (palette) to the screen
-     //if(mib->BitsPerPixel == 8)
-     /*{
+     /*if(mib->BitsPerPixel == 8)
+     {
          SCREEN += 256; // only video mode 101h ??
      }*/
      if(mib->BytesPerScanLine == 640)

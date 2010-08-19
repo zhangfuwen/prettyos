@@ -76,7 +76,7 @@ CODE16_Desc:
     db    0
 
 end_of_gdt:
-gdt_limit_and_base: 
+gdt_limit_and_base:
     dw end_of_gdt - gdt_data - 1    ; limit (size/length of GDT)
     dd gdt_data                     ; base of GDT
 

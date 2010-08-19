@@ -44,7 +44,6 @@ readcache_t readcaches[NUMREADCACHE];
 uint8_t     currReadCache = 0;
 
 
-// prototypes
 FS_ERROR loadFile(const char* filename, partition_t* part);
 
 void deviceManager_install(/*partition_t* system*/)
