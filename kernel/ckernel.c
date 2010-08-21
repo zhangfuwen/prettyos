@@ -5,27 +5,23 @@
 
 #include "util.h"
 #include "timer.h"
-#include "cmos.h"
 #include "time.h"
 #include "kheap.h"
 #include "filesystem/initrd.h"
 #include "storage/flpydsk.h"
-#include "storage/ehci.h"
 #include "mouse.h"
 #include "keyboard.h"
-#include "video/video.h"
 #include "task.h"
 #include "event_list.h"
 #include "syscall.h"
 #include "pci.h"
 #include "cdi.h"
-#include "storage/devicemanager.h"
 #include "video/vbe.h"
 #include "irq.h"
 #include "serial.h"
 #include "cpu.h"
 
-const char* version = "0.0.1.193 - Rev: 772";
+const char* version = "0.0.1.194 - Rev: 773";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -74,7 +70,6 @@ static void init()
     // internal devices
     timer_install(100); // Sets system frequency to ... Hz
     if (cpu_supports(CF_FPU)) fpu_install();
-    
 
     tasking_install();
 
@@ -136,9 +131,6 @@ void main()
         switchToVGA(); //TEST
 
         setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
-        
-        uint32_t x = 0;
-        uint32_t y = 0;
 
         textColor(0x0E);
         printf("\nSelect Resolution (given by its number):\n");
@@ -162,8 +154,8 @@ void main()
 
         setModeInfoBlock((ModeInfoBlock_t*)0x1200);
         modeInfoBlock_user = getModeInfoBlock();
-        x = modeInfoBlock_user->XResolution;
-        y = modeInfoBlock_user->YResolution;
+        uint32_t x = modeInfoBlock_user->XResolution;
+        uint32_t y = modeInfoBlock_user->YResolution;
 
         vgaDebug();
 
@@ -270,16 +262,16 @@ void main()
     showPortList();
     showDiskList();
 
+
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char     DateAndTime[81];             // String for Date&Time
 
-
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
-        *((uint16_t*)(0xB8000 + sizeof(uint16_t)*(49*80 + 79))) = 0x0C00 | *progress;
+        ((uint16_t*)0xB8000)[49*80 + 79] = 0x0C00 | *progress; // Write the character directly to the video-memory. 0x0C00 is the color (red)
         if (! *++progress) { progress = "|/-\\"; }
 
         if (timer_getSeconds() != CurrentSeconds)

@@ -90,7 +90,7 @@ task_t* scheduler_getNextTask()
     {
         if(freetimeTask == 0) // the task has not been needed until now. Use spare time to create it.
         {
-            freetimeTask = create_thread(&doNothing);
+            freetimeTask = create_task(kernel_pd, &doNothing, 0);
             ring_DeleteFirst(task_queue, freetimeTask);
         }
         return(freetimeTask);
@@ -131,28 +131,36 @@ void scheduler_log()
     textColor(0x05);
     printf("pid: %u", currentTask->pid);
     textColor(0x0F);
-    printf("\nrunning tasks:");
-    element_t* temp = task_queue->begin;
-    do
+
+    if(task_queue->begin != 0)
     {
-        if(temp == 0) break;
-
-        task_log((task_t*)temp->data);
-        temp = temp->next;
+        printf("\nrunning tasks:");
+        element_t* temp = task_queue->begin;
+        do
+        {
+            task_log((task_t*)temp->data);
+            temp = temp->next;
+        }
+        while (temp && temp != task_queue->begin);
     }
-    while (temp != task_queue->begin);
 
-    printf("\nblocked tasks:");
-    temp = blockedTasks->begin;
-    do
+    if(blockedTasks->begin != 0)
     {
-        if(temp == 0) break;
-
-        task_log((task_t*)temp->data);
-        temp = temp->next;
+        printf("\nblocked tasks:");
+        element_t* temp = blockedTasks->begin;
+        do
+        {
+            task_log((task_t*)temp->data);
+            temp = temp->next;
+        }
+        while (temp && temp != blockedTasks->begin);
     }
-    while (temp != blockedTasks->begin);
 
+    if(freetimeTask)
+    {
+        printf("\nfreetime task:");
+        task_log(freetimeTask);
+    }
     printf("\n\n");
 }
 

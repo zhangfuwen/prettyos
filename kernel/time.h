@@ -13,7 +13,7 @@ typedef struct
     uint8_t month;       // month 1-12
     uint8_t year;        // year (2 digits)
     uint8_t century;     // century (2 digits)
-} __attribute__((packed)) tm_t;
+} tm_t;
 
 void getCurrentDateAndTime(char* pStr);
 

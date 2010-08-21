@@ -16,7 +16,7 @@ bool task_switching = false;
 task_t* kernelTask = 0; // Needed to find out when the kernel task is exited
 
 task_t* currentTask = 0;
-//listHead_t* tasks; // List of all tasks. Not sorted by pid
+listHead_t* tasks; // List of all tasks. Not sorted by pid
 
 static uint32_t next_pid = 0; // The next available process ID. TODO: Reuse old pid
 
@@ -36,9 +36,8 @@ void tasking_install()
     textColor(0x0F);
     #endif
 
-    //tasks = list_Create();
+    tasks = list_Create();
 
-    scheduler_install();
     kernelTask                 = malloc(sizeof(task_t), 0, "task-kernelTask");
     kernelTask->pid            = next_pid++;
     kernelTask->esp            = 0;
@@ -51,8 +50,11 @@ void tasking_install()
     kernelTask->attrib         = 0x0F;
     kernelTask->blocker.type   = 0; // The task is not blocked (scheduler.h/c)
     kernelTask->kernel_stack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
+    kernelTask->threads        = 0; // No threads associated with the task at the moment. created later if necessary
 
-    //list_Append(tasks, kernelTask);
+    list_Append(tasks, kernelTask);
+
+    scheduler_install();
     scheduler_insertTask(kernelTask);
     currentTask = kernelTask;
 
@@ -97,7 +99,7 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
     newTask->attrib         = 0x0F;
     newTask->blocker.type   = 0;
     newTask->entry          = entry;
-    //newTask->threads        = 0; // created later if necessary
+    newTask->threads        = 0; // No threads associated with the task at the moment. created later if necessary
 
     if (newTask->privilege == 3)
     {
@@ -223,10 +225,10 @@ task_t* create_thread(void(*entry)())
     createThreadTaskBase(newTask, currentTask->page_directory, entry, currentTask->privilege);
 
     // attach the thread with its parent
-    /*newTask->parent = currentTask;
+    newTask->parent = currentTask;
     if(currentTask->threads == 0)
         currentTask->threads = list_Create();
-    list_Append(currentTask->threads, newTask);*/
+    list_Append(currentTask->threads, newTask);
 
     newTask->ownConsole = false;
     newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
@@ -320,8 +322,7 @@ void switch_context() // switch to next task (by interrupt)
 
 static void kill(task_t* task)
 {
-    if(task == currentTask)
-        cli();
+	cli(); // TODO: Change to task_switching=false/true
 
     #ifdef _TASKING_DIAGNOSIS_
     scheduler_log();
@@ -347,7 +348,7 @@ static void kill(task_t* task)
     }
 
     // signalize the parent task that this task is exited
-    /*if(task->type == THREAD)
+    if(task->type == THREAD)
         list_Delete(task->parent->threads, task);
 
     // kill all child-threads of this task
@@ -355,12 +356,12 @@ static void kill(task_t* task)
     {
         for(element_t* e = task->threads->head; e != 0; e = e->next)
         {
-           // kill(e->data);  /// HACK -> #PF on some systems
+            kill(e->data);
         }
-        //list_DeleteAll(task->threads);
+        list_DeleteAll(task->threads);
     }
 
-    //list_Delete(tasks, task);*/
+    list_Delete(tasks, task);
     scheduler_deleteTask(task);
 
     #ifdef _TASKING_DIAGNOSIS_
@@ -377,58 +378,59 @@ static void kill(task_t* task)
     free(task->kernel_stack - KERNEL_STACK_SIZE); // free kernelstack
     free(task);
 
+	sti();
+
     if(task == currentTask) // tasks adress is still saved, although its no longer valid so we can use it here
     {
-        sti();
         switch_context(); // switch to next task
     }
 }
 
-//void task_kill(uint32_t pid)
-//{
-//    // Find out task by looking for the pid in the tasks-list
-//    for(element_t* e = tasks->head; e != 0; e = e->next)
-//    {
-//        if(((task_t*)e->data)->pid == pid)
-//        {
-//            kill(e->data);
-//            return;
-//        }
-//    }
-//}
+void task_kill(uint32_t pid)
+{
+    // Find out task by looking for the pid in the tasks-list
+    for(element_t* e = tasks->head; e != 0; e = e->next)
+    {
+        if(((task_t*)e->data)->pid == pid)
+        {
+            kill(e->data);
+            return;
+        }
+    }
+}
 
 void exit()
 {
     kill(currentTask);
 }
 
-//void task_restart(uint32_t pid)
-//{
-//    task_t* task = 0; // Find out task by looking for the pid in the tasks-list
-//    for(element_t* e = tasks->head; e != 0; e = e->next)
-//    {
-//        if(((task_t*)e->data)->pid == pid)
-//        {
-//            task = e->data;
-//            break;
-//        }
-//    }
-//    if(task == 0) return;
-//
-//    // Safe old properties
-//    page_directory_t* directory  = task->page_directory;
-//    void            (*entry)()   = task->entry;
-//    uint8_t           privilege  = task->privilege;
-//    bool              ownConsole = task->ownConsole;
-//
-//    kill(task); // Kill old task
-//
-//    // create a new one reusing old properties
-//    if(ownConsole)
-//        create_ctask(directory, entry, privilege, "restarted task"); // TODO: Safe old name or maybe reuse old console
-//    else
-//        create_task(directory, entry, privilege);
-//}
+void task_restart(uint32_t pid)
+{
+    task_t* task = 0; // Find out task by looking for the pid in the tasks-list
+    for(element_t* e = tasks->head; e != 0; e = e->next)
+    {
+        if(((task_t*)e->data)->pid == pid)
+        {
+            task = e->data;
+            break;
+        }
+    }
+    if(task == 0) return;
+
+    // Safe old properties
+    page_directory_t* directory  = task->page_directory;
+    void            (*entry)()   = task->entry;
+    uint8_t           privilege  = task->privilege;
+    bool              ownConsole = task->ownConsole;
+
+    kill(task); // Kill old task
+
+    // create a new one reusing old properties
+    if(ownConsole)
+        create_ctask(directory, entry, privilege, "restarted task"); // TODO: Safe old name or maybe reuse old console
+    else
+        create_task(directory, entry, privilege);
+}
 
 void* task_grow_userheap(uint32_t increase)
 {
@@ -453,6 +455,17 @@ void task_log(task_t* t)
     printf("eip: %X  ", t->eip);            // Instruction pointer
     printf("PD: %X  ", t->page_directory);  // Page directory
     printf("k_stack: %X", t->kernel_stack); // Kernel stack location
+    if(t->type == THREAD)
+        printf("\n\tparent: %u", t->parent->pid);
+    if(t->threads && t->threads->head)
+    {
+        if(t->type != THREAD) printf("\n\t");
+        printf("  child-threads:");
+        for(element_t* e = t->threads->head; e != 0; e = e->next)
+        {
+            printf(" %u", ((task_t*)e->data)->pid);
+        }
+    }
     textColor(0x0F);
 }
 

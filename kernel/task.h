@@ -25,7 +25,7 @@ struct task
     void*             kernel_stack;   // Kernel stack location
     uintptr_t         FPU_ptr;        // pointer to FPU data
     void            (*entry)();       // entry point, used to resart the task
-    //listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
+    listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
     task_t*           parent;         // task who created this thread (only used for threads)
 
     // Information needed by scheduler
@@ -36,7 +36,7 @@ struct task
     bool       ownConsole; // This task has an own console
     console_t* console;    // Console used by this task
     uint8_t    attrib;     // Color
-} __attribute__((packed));
+};
 
 extern task_t* FPUTask; // fpu.c
 
