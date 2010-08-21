@@ -26,7 +26,7 @@ void fpu_install()
     uint32_t cr4;
     __asm__ volatile("mov %%cr4, %0;" : "=r" (cr4));
 
-    cr4 |= 1<<9; // set OSFXSR (bit 9)
+    // cr4 |= 1<<9; // set OSFXSR (bit 9)
 
     // reload CR4, init FPU
     __asm__ volatile("mov %0, %%cr4; finit;" : : "r"(cr4));

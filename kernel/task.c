@@ -355,7 +355,7 @@ static void kill(task_t* task)
     {
         for(element_t* e = task->threads->head; e != 0; e = e->next)
         {
-           //kill(e->data);  /// HACK -> #PF on some systems
+           // kill(e->data);  /// HACK -> #PF on some systems
         }
         //list_DeleteAll(task->threads);
     }
