@@ -21,7 +21,7 @@
 #include "serial.h"
 #include "cpu.h"
 
-const char* version = "0.0.1.194 - Rev: 773";
+const char* version = "0.0.1.195 - Rev: 774";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -154,11 +154,7 @@ void main()
 
         setModeInfoBlock((ModeInfoBlock_t*)0x1200);
         modeInfoBlock_user = getModeInfoBlock();
-        uint32_t x = modeInfoBlock_user->XResolution;
-        uint32_t y = modeInfoBlock_user->YResolution;
-
         vgaDebug();
-
         setVideoMemory();
         waitForKeyStroke();
         
@@ -175,15 +171,11 @@ void main()
                 break;
         }
         
-        for (uint32_t i=0; i<x; i++)
-        {
-            setPixel(i, (y/2+1), 9);
-        }
+        line(0, modeInfoBlock_user->YResolution/2 + 1, modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution/2 + 1, 0x09); // FPU
+        line(modeInfoBlock_user->XResolution/2, 0, modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution, 0x09); // FPU
+        waitForKeyStroke();
 
-        for (uint32_t i=0; i<y; i++)
-        {
-            setPixel((x/2), i, 9);
-        }
+        drawCircle(modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution/2, modeInfoBlock_user->YResolution/2, 0x01); // FPU
         waitForKeyStroke();
 
         bitmap(320,0,&bmp_start);
