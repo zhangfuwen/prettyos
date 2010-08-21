@@ -25,7 +25,7 @@
 #include "serial.h"
 #include "cpu.h"
 
-const char* version = "0.0.1.192 - Rev: 771";
+const char* version = "0.0.1.193 - Rev: 772";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -49,25 +49,8 @@ ModeInfoBlock_t* modeInfoBlock_user;
 system_t system;
 
 void fpu_install(); // fpu.c
+void fpu_test();    // fpu.c
 
-static void fpu_test()
-{
-    double squareroot = sqrt(2.0);
-    squareroot = fabs(squareroot);
-    squareroot /= sqrt(2.0);
-    if (squareroot == 1.00) 
-    {
-        textColor(0x0A);
-        printf("\nFPU-test OK\n");
-        textColor(0x0F);
-    }
-    else
-    {
-       textColor(0x0C); 
-       printf("\nFPU-test ERROR\n");
-       textColor(0x0F);
-    }
-}
 
 static void init()
 {
@@ -90,7 +73,7 @@ static void init()
 
     // internal devices
     timer_install(100); // Sets system frequency to ... Hz
-    fpu_install();
+    if (cpu_supports(CF_FPU)) fpu_install();
     
 
     tasking_install();
@@ -133,7 +116,7 @@ void main()
     cpu_analyze();
     showMemorySize();
 
-    fpu_test(); /// TEST
+    if (cpu_supports(CF_FPU)) fpu_test();
 
     textColor(0x09);
     printf("\n\n       >>>>>   Press 's' to skip VBE-Test or any key to continue   <<<<<\n\n");

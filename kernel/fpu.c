@@ -4,12 +4,13 @@
 */
 
 #include "cmos.h"
+#include "util.h"
 #include "video/console.h"
 #include "task.h"
 
 task_t* FPUTask;
 
-void fpu_setcw(uint16_t ctrlword)
+static void fpu_setcw(uint16_t ctrlword)
 {
     // FLDCW = Load FPU Control Word
     __asm__ volatile("fldcw %0;"::"m"(ctrlword));
@@ -41,6 +42,25 @@ void fpu_install()
 
     // init TaskFPU
     FPUTask = 0;
+}
+
+void fpu_test()
+{
+    double squareroot = sqrt(2.0);
+    squareroot = fabs(squareroot);
+    squareroot /= sqrt(2.0);
+    if (squareroot == 1.00) 
+    {
+        textColor(0x0A);
+        printf("\nFPU-test OK\n");
+        textColor(0x0F);
+    }
+    else
+    {
+       textColor(0x0C); 
+       printf("\nFPU-test ERROR\n");
+       textColor(0x0F);
+    }
 }
 
 /*

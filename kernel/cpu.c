@@ -23,6 +23,11 @@ void cpu_analyze()
     ((uint32_t*)cpu_vendor)[1] = cpu_idGetRegister(0, CR_EDX);
     ((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
     cpu_vendor[12] = 0;
+
+    if (cpu_supports(CF_FPU)) 
+    {
+        printf("\tFPU: yes");
+    }
     printf("\tVendorID: %s\n", cpu_vendor);
 }
 
