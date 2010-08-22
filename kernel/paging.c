@@ -7,6 +7,7 @@
 
 #include "paging.h"
 #include "util.h"
+#include "task.h"
 #include "kheap.h"
 #include "video/console.h"
 
@@ -394,26 +395,39 @@ void paging_switch (page_directory_t* pd)
     __asm__ volatile("mov %0, %%cr3" : : "r" (pd->pd_phys_addr));
 }
 
-void* paging_acquire_pcimem(uint32_t phys_addr)
+void* paging_acquire_pcimem(uint32_t phys_addr, uint32_t numberOfPages)
 {
-    static uint8_t* virt = PCI_MEM_START;
+    static uint8_t* virt_addr = PCI_MEM_START;
+    uint8_t* retVal = 0;
+    task_switching  = false;
 
-    if (virt == PCI_MEM_END)
+    for (uint32_t i=0; i<numberOfPages; i++)
     {
-        textColor(0x0C);
-        panic_assert(__FILE__, __LINE__, "\nNot enough PCI-memory available");
-        textColor(0x0F);
+        if (virt_addr == PCI_MEM_END)
+        {
+            textColor(0x0C);
+            panic_assert(__FILE__, __LINE__, "\nNot enough PCI-memory available");
+            textColor(0x0F);
+        }
+
+        uint32_t pagenr = (uint32_t)virt_addr/PAGESIZE;
+
+        // Check the page table and setup the page
+        ASSERT(kernel_pd->tables[pagenr/1024]);
+        kernel_pd->tables[pagenr/1024]->pages[pagenr%1024] = phys_addr | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
+
+        if (i==0)
+        {
+            retVal = virt_addr;
+        }
+
+        // next page
+        virt_addr += PAGESIZE;
+        phys_addr += PAGESIZE;
     }
-
-    uint32_t pagenr = (uint32_t)virt/PAGESIZE;
-
-    // Check the page table and setup the page
-    ASSERT(kernel_pd->tables[pagenr/1024]);
-    kernel_pd->tables[pagenr/1024]->pages[pagenr%1024] = phys_addr | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
-
-    uint8_t* ret = virt;
-    virt += PAGESIZE;
-    return ret;
+    
+    task_switching = true;
+    return (void*)retVal;
 }
 
 

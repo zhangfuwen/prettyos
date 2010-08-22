@@ -45,7 +45,7 @@ partition_t usbDevVolume[17];
 void ehci_install(pciDev_t* PCIdev, uint32_t i)
 {
     uintptr_t bar_phys = PCIdev->bar[i].baseAddress & 0xFFFFFFF0;
-    uintptr_t bar      = (uintptr_t)paging_acquire_pcimem(bar_phys);
+    uintptr_t bar      = (uintptr_t)paging_acquire_pcimem(bar_phys,1);
     uintptr_t offset   = bar_phys % PAGESIZE;
 
   #ifdef _USB_DIAGNOSIS_

@@ -50,7 +50,7 @@ void paging_free (page_directory_t* pd, void* virt_addr, uint32_t size);
 void paging_switch(page_directory_t* pd);
 page_directory_t* paging_create_user_pd();
 void paging_destroy_user_pd(page_directory_t* pd);
-void* paging_acquire_pcimem(uint32_t phys_addr);
+void* paging_acquire_pcimem(uint32_t phys_addr, uint32_t numberOfPages);
 
 uint32_t paging_get_phys_addr(void* virt_addr);
 uint32_t paging_install();

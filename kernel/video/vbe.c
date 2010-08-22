@@ -195,27 +195,10 @@ uint32_t getPixel(uint32_t x, uint32_t y)
 
 void setVideoMemory()
 {
-     SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr);
-     for (uint32_t i=mib->PhysBasePtr; i<(mib->PhysBasePtr+vgaIB->TotalMemory*0x10000); i=i+0x1000)
-     {
-         paging_acquire_pcimem(i);
-     }
+     uint32_t numberOfPages = vgaIB->TotalMemory * 0x10000 / PAGESIZE;
+     SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr, numberOfPages);
      printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
-     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);
-
-     // add the size of color (palette) to the screen
-     /*if(mib->BitsPerPixel == 8)
-     {
-         SCREEN += 256; // only video mode 101h ??
-     }*/
-     if(mib->BytesPerScanLine == 640)
-     {
-         SCREEN += 256; // only video mode 101h ??
-     }
-     if(mib->BytesPerScanLine == 800)
-     {
-         SCREEN += 96; // only video mode 101h ??
-     }
+     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);     
 }
 
 void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)

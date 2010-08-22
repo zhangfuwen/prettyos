@@ -197,7 +197,7 @@ void install_RTL8139(pciDev_t* device)
 
     memset(network_buffer, 0x0, RTL8139_NETWORK_BUFFER_SIZE); //clear receiving buffer
     kdebug(3, "RTL8139 MMIO: %X\n", BaseAddressRTL8139_MMIO);
-    BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem(BaseAddressRTL8139_MMIO);
+    BaseAddressRTL8139_MMIO = (uint32_t) paging_acquire_pcimem(BaseAddressRTL8139_MMIO,1);
     printf("BaseAddressRTL8139_MMIO mapped to virtual address %X\n", BaseAddressRTL8139_MMIO);
 
     // "power on" the card

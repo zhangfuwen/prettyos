@@ -335,7 +335,7 @@ void checkAsyncScheduler()
     textColor(0x02);
 
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register
-    void* virtASYNCLISTADDR = paging_acquire_pcimem(pOpRegs->ASYNCLISTADDR);
+    void* virtASYNCLISTADDR = paging_acquire_pcimem(pOpRegs->ASYNCLISTADDR, 1);
     printf("\ncurr QH: %X ",paging_get_phys_addr(virtASYNCLISTADDR));
 
     // Last accessed & next to access QH, DWORD 0
