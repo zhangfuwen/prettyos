@@ -22,8 +22,10 @@
 #define KERNEL_HEAP_SIZE  ((uint8_t*)((uintptr_t)KERNEL_HEAP_END - (uintptr_t)KERNEL_HEAP_START))
 
 // Placement allocation
-#define PLACEMENT_BEGIN   ((uint8_t*) 0xA00000)     // 10 MiB // TEST   earlier 16 MiB
-#define PLACEMENT_END     ((uint8_t*) 0xE00000)     // 14 MiB // TEST   earlier 20 MiB
+// #define PLACEMENT_BEGIN   ((uint8_t*) 0xA00000)     // 10 MiB // TEST   earlier 16 MiB
+// #define PLACEMENT_END     ((uint8_t*) 0xE00000)     // 14 MiB // TEST   earlier 20 MiB
+#define PLACEMENT_BEGIN   ((uint8_t*) 0x1000000)     // 16 MiB
+#define PLACEMENT_END     ((uint8_t*) 0x1400000)     // 20 MiB
 
 // User Heap management
 #define USER_HEAP_START   ((uint8_t*)0x1420000)                       // 20 MiB plus 128 KiB

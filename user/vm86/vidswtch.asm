@@ -25,7 +25,7 @@ video_mode_1024_768_256:
 VgaInfoBlock:
     xor ax, ax
 	mov es, ax
-	mov ax, 0x1000
+	mov ax, 0x3400
 	mov di, ax
 	mov ax, 0x4F00
 	int 10h
@@ -34,7 +34,7 @@ VgaInfoBlock:
 ModeInfoBlock_640_480_256:
     xor ax, ax
 	mov es, ax
-	mov ax, 0x1200
+	mov ax, 0x3600
 	mov di, ax
 	mov ax, 0x4F01
 	mov cx, 0x4101 ; video mode
@@ -47,7 +47,7 @@ ModeInfoBlock_640_480_256:
 ModeInfoBlock_800_600_256:
     xor ax, ax
 	mov es, ax
-	mov ax, 0x1200
+	mov ax, 0x3600
 	mov di, ax
 	mov ax, 0x4F01
 	mov cx, 0x4103 ; video mode
@@ -60,7 +60,7 @@ ModeInfoBlock_800_600_256:
 ModeInfoBlock_1024_768_256:
     xor ax, ax
 	mov es, ax
-	mov ax, 0x1200
+	mov ax, 0x3600
 	mov di, ax
 	mov ax, 0x4F01
 	mov cx, 0x4105 ; video mode

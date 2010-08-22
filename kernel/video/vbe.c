@@ -727,7 +727,7 @@ void VBE_bootscreen()
 
     switchToVGA(); //TEST
 
-    setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
+    setVgaInfoBlock((VgaInfoBlock_t*)0x3400);
 
     textColor(0x0E);
     printf("Select Resolution (given by its number):\n");
@@ -749,7 +749,7 @@ void VBE_bootscreen()
             break;
     }
 
-    setModeInfoBlock((ModeInfoBlock_t*)0x1200);
+    setModeInfoBlock((ModeInfoBlock_t*)0x3600);
     modeInfoBlock_user = getModeInfoBlock();
 
     vgaDebug();
