@@ -209,4 +209,6 @@ void bitmapDebug();
 void drawChar(char font_char);
 void drawString(const char* text, uint32_t xpos, uint32_t ypos);
 
+void VBE_bootscreen();
+
 #endif

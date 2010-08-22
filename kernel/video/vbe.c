@@ -10,14 +10,9 @@
 #include "paging.h"
 #include "font.h"
 
-ModeInfoBlock_t modeInfoBlock;
-ModeInfoBlock_t* mib = &modeInfoBlock;
-
-VgaInfoBlock_t vgaInfoBlock;
-VgaInfoBlock_t* vgaIB = &vgaInfoBlock;
-
-BitmapHeader_t bitmapHeader;
-BitmapHeader_t* bh = &bitmapHeader;
+ModeInfoBlock_t mib;
+VgaInfoBlock_t  vgaIB;
+BitmapHeader_t  bh;
 
 BitmapHeader_t* bh_get;
 BMPInfo_t* bmpinfo;
@@ -27,19 +22,31 @@ RGBQuadPacked_t* ScreenPal = (RGBQuadPacked_t*)0x1600;
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 CursorPosition_t curPos;
 
+
+// vm86
+extern uintptr_t vm86_com_start;
+extern uintptr_t vm86_com_end;
+
+// bmp
+extern uintptr_t bmp_start;
+extern uintptr_t bmp_end;
+
+ModeInfoBlock_t* modeInfoBlock_user;
+
+
 void setVgaInfoBlock(VgaInfoBlock_t* VIB)
 {
-    memcpy(vgaIB, VIB, sizeof(VgaInfoBlock_t));
+    memcpy(&vgaIB, VIB, sizeof(VgaInfoBlock_t));
 }
 
 void setModeInfoBlock(ModeInfoBlock_t* MIB)
 {
-    memcpy(mib, MIB, sizeof(ModeInfoBlock_t));
+    memcpy(&mib, MIB, sizeof(ModeInfoBlock_t));
 }
 
 ModeInfoBlock_t* getModeInfoBlock()
 {
-    return mib;
+    return &mib;
 }
 
 void switchToVGA()
@@ -180,25 +187,26 @@ uint32_t getDACPalette()
     return 0;
 }
 
-void setPixel(uint32_t x, uint32_t y, uint32_t color)
+inline void setPixel(uint32_t x, uint32_t y, uint32_t color)
 {
     // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
-    SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8] = color;
+    SCREEN[y * mib.XResolution + x * mib.BitsPerPixel/8] = color;
 }
 
 uint32_t getPixel(uint32_t x, uint32_t y)
 {
     uint32_t color;
-    color = SCREEN[y * mib->XResolution + x * mib->BitsPerPixel/8];
+    color = SCREEN[y * mib.XResolution + x * mib.BitsPerPixel/8];
     return color;
 }
 
 void setVideoMemory()
 {
-     uint32_t numberOfPages = vgaIB->TotalMemory * 0x10000 / PAGESIZE;
-     SCREEN = (uint8_t*)paging_acquire_pcimem(mib->PhysBasePtr, numberOfPages);
-     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib->PhysBasePtr, SCREEN);
-     printf("\nVideo Ram %u MiB\n",vgaIB->TotalMemory/0x10);     
+     uint32_t numberOfPages = vgaIB.TotalMemory * 0x10000 / PAGESIZE;
+     SCREEN = (uint8_t*)paging_acquire_pcimem(mib.PhysBasePtr, numberOfPages);
+
+     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib.PhysBasePtr, SCREEN);
+     printf("\nVideo Ram %u MiB\n",vgaIB.TotalMemory/0x10);
 }
 
 void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
@@ -206,7 +214,7 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
 
-    if(mib->BitsPerPixel == 8)
+    if(mib.BitsPerPixel == 8)
     {
         bmpinfo = (BMPInfo_t*)bitmapMemStart;
         for(uint32_t j=0; j<256; j++)
@@ -223,36 +231,55 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
      {
          for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
          {
-             SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
-             i -= (mib->BitsPerPixel/8);
+             SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
+             i -= (mib.BitsPerPixel/8);
          }
      }
 }
 
 //trying bilinear Bitmap scale
-void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
+void scaleBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart)
 {
-
-    uint32_t mx = 3;
-    uint32_t my = 3;
-    uint32_t iloop, j;
-
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
-    uint8_t* i = (uint8_t*)bitmap_end;
+    uint8_t*  pixel = (uint8_t*)bitmap_end;
 
-        for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
+    uint8_t bytesPerPixel = mib.BitsPerPixel/8;
+
+    float FactorX = (float)newSizeX / (float)((BitmapHeader_t*)bitmapMemStart)->Width;
+    float FactorY = (float)newSizeY / (float)((BitmapHeader_t*)bitmapMemStart)->Height;
+
+    float OverflowX = 0, OverflowY = 0;
+    for(uint32_t y = 0; y < newSizeY; y += (uint32_t)FactorY)
+    {
+        for(int32_t x = newSizeX-1; x >= 0; x -= (int32_t)FactorX)
         {
-         for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
-         {
+            pixel -= bytesPerPixel; // We go through the image backwards
 
-            i -= (mib->BitsPerPixel/8);
+            uint16_t rowsX = (uint16_t)FactorX + (OverflowX >= 1 ? 1:0);
+            uint16_t rowsY = (uint16_t)FactorY + (OverflowY >= 1 ? 1:0);
+            for(uint16_t i = 0; i < rowsX; i++)
+            {
+                for(uint16_t j = 0; j < rowsY; j++)
+                {
+                    if(x-i > 0)
+                        setPixel(x-i, y+j, *pixel);
+                }
+            }
 
-            for(iloop=0;iloop<mx;++iloop)
-                for(j=0;j<my;++j)
-                    SCREEN[ (x*mx+iloop) + (y*my+j) * mib->XResolution * mib->BitsPerPixel/8 ] = *i;
-                    // setPixel(x*mx+iloop, y*my+j, i);
+            if(OverflowX >= 1)
+            {
+                OverflowX--;
+                x--;
+            }
+            OverflowX += FactorX-(int)FactorX;
         }
+        if(OverflowY >= 1)
+        {
+            OverflowY--;
+            y++;
+        }
+        OverflowY += FactorY-(int)FactorY;
     }
 }
 
@@ -326,7 +353,7 @@ void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t
         SCREEN[top_offset+i]=color;
         SCREEN[bottom_offset+i]=color;
     }
-    for(uint32_t i=top_offset; i<=bottom_offset; i+=mib->XResolution) //SCREEN_WIDTH
+    for(uint32_t i=top_offset; i<=bottom_offset; i+=mib.XResolution) //SCREEN_WIDTH
     {
         SCREEN[left+i]=color;
         SCREEN[right+i]=color;
@@ -349,27 +376,27 @@ void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 void vgaDebug()
 {
     printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));
-    printf("VESA-Signature:         %s\n",     vgaIB->VESASignature);
-    printf("VESA-Version:           %u.%u\n", (vgaIB->VESAVersion&0xFF00)>>8,vgaIB->VESAVersion&0xFF); // 01 02 ==> 1.2
-    printf("Capabilities:           %X\n",     vgaIB->Capabilities);
-    printf("Video Memory (MiB):     %u\n",     vgaIB->TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
-    printf("OEM-String (address):   %X\n",     vgaIB->OEMStringPtr);
-    printf("Video Modes Ptr:        %X\n",     vgaIB->VideoModePtr);
+    printf("VESA-Signature:         %s\n",     vgaIB.VESASignature);
+    printf("VESA-Version:           %u.%u\n", (vgaIB.VESAVersion&0xFF00)>>8,vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
+    printf("Capabilities:           %X\n",     vgaIB.Capabilities);
+    printf("Video Memory (MiB):     %u\n",     vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
+    printf("OEM-String (address):   %X\n",     vgaIB.OEMStringPtr);
+    printf("Video Modes Ptr:        %X\n",     vgaIB.VideoModePtr);
 
     // TEST Video Ram Paging
-    printf("\nSCREEN (phys): %X SCREEN (virt): %X\n", mib->PhysBasePtr, SCREEN);
+    printf("\nSCREEN (phys): %X SCREEN (virt): %X\n", mib.PhysBasePtr, SCREEN);
 
     // TEST
-    //printf("OemVendorNamePtr:       %X\n",     vgaIB->OemVendorNamePtr);
-    //printf("OemProductNamePtr:      %X\n",     vgaIB->OemProductNamePtr);
-    //printf("OemProductRevPtr:       %X\n",     vgaIB->OemProductRevPtr);
+    //printf("OemVendorNamePtr:       %X\n",     vgaIB.OemVendorNamePtr);
+    //printf("OemProductNamePtr:      %X\n",     vgaIB.OemProductNamePtr);
+    //printf("OemProductRevPtr:       %X\n",     vgaIB.OemProductRevPtr);
 
     textColor(0x0E);
     printf("\nVideo Modes:\n\n");
     for (uint8_t i=0; i<16; i++)
     {
-        printf("%x ", vgaIB->VideoModePtr[i]);
-        switch(vgaIB->VideoModePtr[i])
+        printf("%x ", vgaIB.VideoModePtr[i]);
+        switch(vgaIB.VideoModePtr[i])
         {
             case 0x0100:
                 printf("= 640x400x256\n");
@@ -479,36 +506,36 @@ void vgaDebug()
     waitForKeyStroke();
 
     printf("\nDEBUG print: ModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));
-    printf("WinAAttributes:        %u\n", mib->WinAAttributes);
-    printf("WinBAttributes:        %u\n", mib->WinBAttributes);
-    printf("WinGranularity:        %u\n", mib->WinGranularity);
-    printf("WinSize:               %u\n", mib->WinSize);
-    printf("WinASegment:           %u\n", mib->WinASegment);
-    printf("WinBSegment:           %u\n", mib->WinBSegment);
-    printf("WinFuncPtr:            %X\n", mib->WinFuncPtr);
-    printf("BytesPerScanLine:      %u\n", mib->BytesPerScanLine);
-    printf("XResolution:           %u\n", mib->XResolution);
-    printf("YResolution:           %u\n", mib->YResolution);
-    printf("XCharSize:             %u\n", mib->XCharSize);
-    printf("YCharSize:             %u\n", mib->YCharSize);
-    printf("NumberOfPlanes:        %u\n", mib->NumberOfPlanes);
-    printf("BitsPerPixel:          %u\n", mib->BitsPerPixel);
-    printf("NumberOfBanks:         %u\n", mib->NumberOfBanks);
-    printf("MemoryModel:           %u\n", mib->MemoryModel);
-    printf("BankSize:              %u\n", mib->BankSize);
-    printf("NumberOfImagePages:    %u\n", mib->NumberOfImagePages);
-    printf("RedMaskSize:           %u\n", mib->RedMaskSize);
-    printf("RedFieldPosition:      %u\n", mib->RedFieldPosition);
-    printf("GreenMaskSize:         %u\n", mib->GreenMaskSize);
-    printf("GreenFieldPosition:    %u\n", mib->GreenFieldPosition);
-    printf("BlueMaskSize:          %u\n", mib->BlueMaskSize);
-    printf("BlueFieldPosition:     %u\n", mib->BlueFieldPosition);
-    printf("RsvdMaskSize:          %u\n", mib->RsvdMaskSize);
-    printf("RsvdFieldPosition:     %u\n", mib->RsvdFieldPosition);
-    printf("OffScreenMemOffset:    %u\n", mib->OffScreenMemOffset);
-    printf("OffScreenMemSize:      %u\n", mib->OffScreenMemSize);
-    printf("DirectColorModeInfo:   %u\n", mib->DirectColorModeInfo);
-    printf("Physical Memory Base:  %X\n", mib->PhysBasePtr);
+    printf("WinAAttributes:        %u\n", mib.WinAAttributes);
+    printf("WinBAttributes:        %u\n", mib.WinBAttributes);
+    printf("WinGranularity:        %u\n", mib.WinGranularity);
+    printf("WinSize:               %u\n", mib.WinSize);
+    printf("WinASegment:           %u\n", mib.WinASegment);
+    printf("WinBSegment:           %u\n", mib.WinBSegment);
+    printf("WinFuncPtr:            %X\n", mib.WinFuncPtr);
+    printf("BytesPerScanLine:      %u\n", mib.BytesPerScanLine);
+    printf("XResolution:           %u\n", mib.XResolution);
+    printf("YResolution:           %u\n", mib.YResolution);
+    printf("XCharSize:             %u\n", mib.XCharSize);
+    printf("YCharSize:             %u\n", mib.YCharSize);
+    printf("NumberOfPlanes:        %u\n", mib.NumberOfPlanes);
+    printf("BitsPerPixel:          %u\n", mib.BitsPerPixel);
+    printf("NumberOfBanks:         %u\n", mib.NumberOfBanks);
+    printf("MemoryModel:           %u\n", mib.MemoryModel);
+    printf("BankSize:              %u\n", mib.BankSize);
+    printf("NumberOfImagePages:    %u\n", mib.NumberOfImagePages);
+    printf("RedMaskSize:           %u\n", mib.RedMaskSize);
+    printf("RedFieldPosition:      %u\n", mib.RedFieldPosition);
+    printf("GreenMaskSize:         %u\n", mib.GreenMaskSize);
+    printf("GreenFieldPosition:    %u\n", mib.GreenFieldPosition);
+    printf("BlueMaskSize:          %u\n", mib.BlueMaskSize);
+    printf("BlueFieldPosition:     %u\n", mib.BlueFieldPosition);
+    printf("RsvdMaskSize:          %u\n", mib.RsvdMaskSize);
+    printf("RsvdFieldPosition:     %u\n", mib.RsvdFieldPosition);
+    printf("OffScreenMemOffset:    %u\n", mib.OffScreenMemOffset);
+    printf("OffScreenMemSize:      %u\n", mib.OffScreenMemSize);
+    printf("DirectColorModeInfo:   %u\n", mib.DirectColorModeInfo);
+    printf("Physical Memory Base:  %X\n", mib.PhysBasePtr);
 }
 
 char ISValidBitmap(char *fname)
@@ -611,23 +638,23 @@ void showbitmap(char *infname,int xs,int ys)
 
 void bitmapDebug() // TODO: make it bitmap-specific
 {
-    memcpy((void*)bh, (void*)bh_get, sizeof(BitmapHeader_t));
+    memcpy(&bh, bh_get, sizeof(BitmapHeader_t));
 
     printf("\nDEBUG print: BitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));
-    printf("Type:                  %u\n", bh->Type);
-    printf("Reserved:              %u\n", bh->Reserved);
-    printf("Offset:                %u\n", bh->Offset);
-    printf("Header Size:           %u\n", bh->headerSize);
-    printf("Width:                 %u\n", bh->Width);
-    printf("Height:                %u\n", bh->Height);
-    printf("Planes:                %u\n", bh->Planes);
-    printf("Bits Per Pixel:        %u\n", bh->BitsPerPixel);
-    printf("Compression:           %u\n", bh->Compression);
-    printf("Image Size:            %u\n", bh->SizeImage);
-    printf("X-Pixels Per Meter:    %u\n", bh->XPixelsPerMeter);
-    printf("Y-Pixels Per Meter:    %u\n", bh->YPixelsPerMeter);
-    printf("Colors Used:           %u\n", bh->ColorsUsed);
-    printf("Colors Important:      %u\n", bh->ColorsImportant);
+    printf("Type:                  %u\n", bh.Type);
+    printf("Reserved:              %u\n", bh.Reserved);
+    printf("Offset:                %u\n", bh.Offset);
+    printf("Header Size:           %u\n", bh.headerSize);
+    printf("Width:                 %u\n", bh.Width);
+    printf("Height:                %u\n", bh.Height);
+    printf("Planes:                %u\n", bh.Planes);
+    printf("Bits Per Pixel:        %u\n", bh.BitsPerPixel);
+    printf("Compression:           %u\n", bh.Compression);
+    printf("Image Size:            %u\n", bh.SizeImage);
+    printf("X-Pixels Per Meter:    %u\n", bh.XPixelsPerMeter);
+    printf("Y-Pixels Per Meter:    %u\n", bh.YPixelsPerMeter);
+    printf("Colors Used:           %u\n", bh.ColorsUsed);
+    printf("Colors Important:      %u\n", bh.ColorsImportant);
 }
 
 void drawChar(char font_char)
@@ -635,8 +662,8 @@ void drawChar(char font_char)
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
     uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
 
-    // mib->XResolution;
-    // mib->YResolution;
+    // mib.XResolution;
+    // mib.YResolution;
 
     switch (uc)
     {
@@ -668,8 +695,8 @@ void drawChar(char font_char)
                 {
                     for(uint32_t x=0; x<xFont; x++)
                     {
-                        //SCREEN[ (xpos+x) + (ypos+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
-                        SCREEN[ (curPos.x+x) + (curPos.y+y) * mib->XResolution * mib->BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
+                        //SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
+                        SCREEN[ (curPos.x+x) + (curPos.y+y) * mib.XResolution * mib.BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
                     }
                 }
             }
@@ -683,6 +710,95 @@ void drawString(const char* text, uint32_t xpos, uint32_t ypos)
     curPos.x = xpos;
     curPos.y = ypos;
     for (; *text; drawChar(*text), ++text);
+}
+
+void VBE_bootscreen()
+{
+    // TODO: move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
+    memcpy((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+
+    #ifdef _VM_DIAGNOSIS_
+    printf("vm86 binary code at 0x100: ");
+    memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+    printf("\n");
+    #endif
+
+    bh_get = (BitmapHeader_t*)&bmp_start;
+
+    switchToVGA(); //TEST
+
+    setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
+
+    textColor(0x0E);
+    printf("Select Resolution (given by its number):\n");
+    textColor(0x0F);
+    printf("1. 640x480x256\n");
+    printf("2. 800x600x256\n");
+    printf("3. 1024x768x256 (Default mode WORKING!)\n");
+    uint8_t selectMode = getch();
+    switch(selectMode)
+    {
+        case '1':
+            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_640_480_256));
+            break;
+        case '2':
+            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_800_600_256));
+            break;
+        case '3': default:
+            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_256));
+            break;
+    }
+
+    setModeInfoBlock((ModeInfoBlock_t*)0x1200);
+    modeInfoBlock_user = getModeInfoBlock();
+
+    vgaDebug();
+
+    setVideoMemory();
+    waitForKeyStroke();
+        
+    switch(selectMode)
+    {
+        case '1':
+            switchToVideomode(VM86_SWITCH_TO_VIDEO_640_480_256);
+            break;
+        case '2':
+            switchToVideomode(VM86_SWITCH_TO_VIDEO_800_600_256);
+            break;
+        case '3': default:
+            switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_256);
+            break;
+    }
+
+    line(0, modeInfoBlock_user->YResolution/2 + 1, modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution/2 + 1, 0x09); // FPU
+    line(modeInfoBlock_user->XResolution/2, 0, modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution, 0x09); // FPU
+    waitForKeyStroke();
+
+    drawCircle(modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution/2, modeInfoBlock_user->YResolution/2, 0x01); // FPU
+    waitForKeyStroke();
+
+    bitmap(320,0,&bmp_start);
+    waitForKeyStroke();
+
+    printPalette(ScreenPal);
+    waitForKeyStroke();
+
+    drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
+    waitForKeyStroke();
+
+    scaleBitmap(modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution, &bmp_start); // testing
+    waitForKeyStroke();
+
+    uint32_t displayStart = getDisplayStart();
+    uint32_t color = getPixel(1,1);
+
+    switchToTextmode();
+
+    vgaDebug();
+    printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
+    printf("\ngetPixel = %u\n", color);
+
+    waitForKeyStroke();
 }
 
 /*

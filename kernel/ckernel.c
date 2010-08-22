@@ -21,25 +21,11 @@
 #include "serial.h"
 #include "cpu.h"
 
-const char* version = "0.0.1.197 - Rev: 776";
+const char* version = "0.0.1.198 - Rev: 777";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
 extern uintptr_t _kernel_end; // linker script
-
-// vm86
-extern uintptr_t vm86_com_start;
-extern uintptr_t vm86_com_end;
-
-// bmp
-extern uintptr_t bmp_start;
-extern uintptr_t bmp_end;
-
-// vbe
-extern BitmapHeader_t*  bh_get;
-extern RGBQuadPacked_t* ScreenPal;
-
-ModeInfoBlock_t* modeInfoBlock_user;
 
 // Informations about the system
 system_t system;
@@ -104,6 +90,7 @@ void showMemorySize()
 void main()
 {
     init();
+
     create_cthread(&bootscreen, "Booting ...");
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
@@ -118,88 +105,7 @@ void main()
     textColor(0x0F);
     if(getch() != 's')
     {
-        // TODO: move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
-        memcpy((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
-
-      #ifdef _VM_DIAGNOSIS_
-        printf("\n\nvm86 binary code at 0x100: ");
-        memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
-      #endif
-
-        bh_get = (BitmapHeader_t*)&bmp_start;
-
-        switchToVGA(); //TEST
-
-        setVgaInfoBlock((VgaInfoBlock_t*)0x1000);
-
-        textColor(0x0E);
-        printf("\nSelect Resolution (given by its number):\n");
-        textColor(0x0F);
-        printf("1. 640x480x256\n");
-        printf("2. 800x600x256\n");
-        printf("3. 1024x768x256 (Default mode WORKING!)\n");
-        uint8_t selectMode = getch();
-        switch(selectMode)
-        {
-            case '1':
-                waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_640_480_256));
-                break;
-            case '2':
-                waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_800_600_256));
-                break;
-            case '3': default:
-                waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_256));
-                break;
-        }
-
-        setModeInfoBlock((ModeInfoBlock_t*)0x1200);
-        modeInfoBlock_user = getModeInfoBlock();
-        vgaDebug();
-        setVideoMemory();
-        waitForKeyStroke();
-        
-        switch(selectMode)
-        {
-            case '1':
-                switchToVideomode(VM86_SWITCH_TO_VIDEO_640_480_256);
-                break;
-            case '2':
-                switchToVideomode(VM86_SWITCH_TO_VIDEO_800_600_256);
-                break;
-            case '3': default:
-                switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_256);
-                break;
-        }
-        
-        line(0, modeInfoBlock_user->YResolution/2 + 1, modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution/2 + 1, 0x09); // FPU
-        line(modeInfoBlock_user->XResolution/2, 0, modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution, 0x09); // FPU
-        waitForKeyStroke();
-
-        drawCircle(modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution/2, modeInfoBlock_user->YResolution/2, 0x01); // FPU
-        waitForKeyStroke();
-
-        bitmap(320,0,&bmp_start);
-        waitForKeyStroke();
-
-        printPalette(ScreenPal);
-        waitForKeyStroke();
-
-        drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
-        waitForKeyStroke();
-
-        scaleBitmap(0, 0, &bmp_start); // testing
-        waitForKeyStroke();
-
-        uint32_t displayStart = getDisplayStart();
-        uint32_t color = getPixel(1,1);
-
-        switchToTextmode();
-
-        vgaDebug();
-        printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
-        printf("\ngetPixel = %u\n", color);
-
-        printf("\n\n");
+        create_cthread(&VBE_bootscreen, "Booting ...");
     }
 
     flpydsk_install(); // detect FDDs

@@ -66,6 +66,8 @@ clean.bat</NMakeCleanCommandLine>
     <None Include="..\user\vm86\vidswtch.asm" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\kernel\cdi-osdep.h" />
+    <ClInclude Include="..\kernel\cdi.h" />
     <ClInclude Include="..\kernel\cdi\bios.h" />
     <ClInclude Include="..\kernel\cdi\cache.h" />
     <ClInclude Include="..\kernel\cdi\cmos.h" />

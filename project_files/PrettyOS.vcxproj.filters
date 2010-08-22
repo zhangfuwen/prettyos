@@ -339,6 +339,12 @@
     <ClInclude Include="..\kernel\netprotocol\ipv4.h">
       <Filter>Kernel\include\network\protocol</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\cdi.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\cdi-osdep.h">
+      <Filter>Kernel\include\cdi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
