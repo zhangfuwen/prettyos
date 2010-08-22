@@ -35,7 +35,7 @@ bool cpu_supports(CPU_FEATURE feature)
 {
     if(!cpuid_available) return(false);
     CPU_REGISTER r = feature&~31;
-    return(cpu_idGetRegister(0x00000001, r) & (1<<(feature-r)));
+    return(cpu_idGetRegister(0x00000001, r) & (BIT(feature-r)));
 }
 
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)

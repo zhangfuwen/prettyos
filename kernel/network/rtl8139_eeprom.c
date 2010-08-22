@@ -18,7 +18,7 @@ int read_eeprom(long ioaddr, int location, int addr_len)
     // Shift the read command bits out
     for (int i = 4 + addr_len; i >= 0; i--)
     {
-        int dataval = (read_cmd & (1 << i)) ? EE_DATA_WRITE : 0;
+        int dataval = (read_cmd & BIT(i)) ? EE_DATA_WRITE : 0;
         outportb(ee_addr, EE_ENB | dataval);
         eeprom_delay();
         outportb(ee_addr, EE_ENB | dataval | EE_SHIFT_CLK);

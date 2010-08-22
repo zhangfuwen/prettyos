@@ -68,7 +68,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
     {
         case 0:
             mouse_byte[0] = inportb(0x60);
-            if (mouse_byte[0] & (1<<3)) // Only if this is really the first Byte!
+            if (mouse_byte[0] & BIT(3)) // Only if this is really the first Byte!
             {
                 mouse_cycle++;
                 mouse_lm=(mouse_byte[0] & 0x1);//<< 0);

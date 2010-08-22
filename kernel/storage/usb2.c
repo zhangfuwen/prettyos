@@ -490,8 +490,8 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
       #ifdef _USB_DIAGNOSIS_
         printf("ID of config:         %x\t",  d->configurationValue);
         printf("ID of config name     %x\n",  d->configuration);
-        printf("remote wakeup:        %s\t",  d->attributes & (1<<5) ? "yes" : "no");
-        printf("self-powered:         %s\n",  d->attributes & (1<<6) ? "yes" : "no");
+        printf("remote wakeup:        %s\t",  d->attributes & BIT(5) ? "yes" : "no");
+        printf("self-powered:         %s\n",  d->attributes & BIT(6) ? "yes" : "no");
         printf("max power (mA):       %u\n",  d->maxPower*2); // 2 mA steps used
       #endif
         textColor(0x0F);

@@ -157,7 +157,7 @@ void install_RTL8139(pciDev_t* device)
     // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
     // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
     uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
-    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | 1<<2 /* bus master */); // resets status register, sets command register
+    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | BIT(2) /* bus master */); // resets status register, sets command register
 
     for (uint8_t j=0;j<6;++j) // check network card BARs
     {

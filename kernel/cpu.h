@@ -5,10 +5,10 @@
 
 typedef enum 
 { // Uses bits larger than 5 because the bitnumber inside the registers can be 31 at maximum which needs the first 5 bits
-    CR_EAX = 1 << 5,
-    CR_EBX = 1 << 6,
-    CR_ECX = 1 << 7,
-    CR_EDX = 1 << 8
+    CR_EAX = BIT(5),
+    CR_EBX = BIT(6),
+    CR_ECX = BIT(7),
+    CR_EDX = BIT(8)
 } CPU_REGISTER;
 
 typedef enum 

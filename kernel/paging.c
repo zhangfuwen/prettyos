@@ -142,11 +142,11 @@ static void phys_set_bits(uint32_t addr_begin, uint32_t addr_end, bool reserved)
     {
         if (reserved)
         {
-            bittable[j/32] |= 1<<(j%32);
+            bittable[j/32] |= BIT(j%32);
         }
         else
         {
-            bittable[j/32] &= ~(1<<(j%32));
+            bittable[j/32] &= ~BIT(j%32);
         }
     }
 }
@@ -243,7 +243,7 @@ static uint32_t phys_alloc()
             }
 
             // Set the page to "reserved" and return the frame's address
-            bittable[first_free_dword] |= 1<<(bitnr%32);
+            bittable[first_free_dword] |= BIT(bitnr%32);
             return (first_free_dword*32+bitnr) * PAGESIZE;
         }
     }
@@ -263,7 +263,7 @@ static void phys_free(uint32_t addr)
     }
 
     // Set the page to "free"
-    bittable[bitnr/32] &= ~(1<<(bitnr%32));
+    bittable[bitnr/32] &= ~BIT(bitnr%32);
 }
 
 bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags)

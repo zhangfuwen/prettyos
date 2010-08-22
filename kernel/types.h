@@ -25,6 +25,8 @@ typedef __builtin_va_list va_list;
 #define va_copy(dest,src)  __builtin_va_copy(dest,src)
 
 
+#define BIT(n) (1<<(n))
+
 // typedefs for CDI
 typedef unsigned int dev_t; // Defined like in tyndur
 typedef unsigned int uid_t; // Defined like in tyndur

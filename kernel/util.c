@@ -18,7 +18,7 @@ void nop() { __asm__ volatile ("nop"); } // Do nothing
 // fetch data field bitwise in byte "byte" from bit "shift" with "len" bits
 uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len)
 {
-    return( ((uint8_t*)addr)[byte] >> shift) & ((1 << len) - 1);
+    return (((uint8_t*)addr)[byte]>>shift) & (BIT(len)-1);
 }
 
 /**********************************************************************/

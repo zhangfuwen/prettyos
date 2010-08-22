@@ -18,7 +18,7 @@ static void fpu_setcw(uint16_t ctrlword)
 
 void fpu_install()
 {
-    if (! (cmos_read(0x14) & 1<<1) )
+    if (! (cmos_read(0x14) & BIT(1)) )
     {
         printf("Math Coprozessor not available\n");
         return;

@@ -237,16 +237,16 @@ uint32_t showStatusbyteQTD(void* addressQTD)
     {
         printf("\n");
         textColor(0x0E);
-        if (statusbyte & (1<<7)) { printf("Active - HC transactions enabled"); }
+        if (statusbyte & BIT(7)) { printf("Active - HC transactions enabled"); }
         textColor(0x0C);
-        if (statusbyte & (1<<6)) { printf("Halted - serious error at the device/endpoint"); }
-        if (statusbyte & (1<<5)) { printf("Data Buffer Error (overrun or underrun)"); }
-        if (statusbyte & (1<<4)) { printf("Babble (fatal error leads to Halted)"); }
-        if (statusbyte & (1<<3)) { printf("Transaction Error (XactErr)- host received no valid response device"); }
-        if (statusbyte & (1<<2)) { printf("Missed Micro-Frame"); }
+        if (statusbyte & BIT(6)) { printf("Halted - serious error at the device/endpoint"); }
+        if (statusbyte & BIT(5)) { printf("Data Buffer Error (overrun or underrun)"); }
+        if (statusbyte & BIT(4)) { printf("Babble (fatal error leads to Halted)"); }
+        if (statusbyte & BIT(3)) { printf("Transaction Error (XactErr)- host received no valid response device"); }
+        if (statusbyte & BIT(2)) { printf("Missed Micro-Frame"); }
         textColor(0x0E);
-        if (statusbyte & (1<<1)) { printf("Do Complete Split"); }
-        if (statusbyte & (1<<0)) { printf("Do Ping"); }
+        if (statusbyte & BIT(1)) { printf("Do Complete Split"); }
+        if (statusbyte & BIT(0)) { printf("Do Ping"); }
         textColor(0x0F);
     }
     return statusbyte;

@@ -23,19 +23,19 @@ void analyzeHostSystemError(pciDev_t* pciDev)
      printf("\nPCI status word: %x\n",pciStatus);
      textColor(0x03);
      // bits 0...2 reserved
-     if(pciStatus & 1<< 3) printf("Interrupt Status\n");
-     if(pciStatus & 1<< 4) printf("Capabilities List\n");
-     if(pciStatus & 1<< 5) printf("66 MHz Capable\n");
+     if(pciStatus & BIT(3))  printf("Interrupt Status\n");
+     if(pciStatus & BIT(4))  printf("Capabilities List\n");
+     if(pciStatus & BIT(5))  printf("66 MHz Capable\n");
      // bit 6 reserved
-     if(pciStatus & 1<< 7) printf("Fast Back-to-Back Transactions Capable\n");
+     if(pciStatus & BIT(7))  printf("Fast Back-to-Back Transactions Capable\n");
      textColor(0x0C);
-     if(pciStatus & 1<< 8) printf("Master Data Parity Error\n");
+     if(pciStatus & BIT(8))  printf("Master Data Parity Error\n");
      // DEVSEL Timing: bits 10:9
-     if(pciStatus & 1<<11) printf("Signalled Target-Abort\n");
-     if(pciStatus & 1<<12) printf("Received Target-Abort\n");
-     if(pciStatus & 1<<13) printf("Received Master-Abort\n");
-     if(pciStatus & 1<<14) printf("Signalled System Error\n");
-     if(pciStatus & 1<<15) printf("Detected Parity Error\n");
+     if(pciStatus & BIT(11)) printf("Signalled Target-Abort\n");
+     if(pciStatus & BIT(12)) printf("Received Target-Abort\n");
+     if(pciStatus & BIT(13)) printf("Received Master-Abort\n");
+     if(pciStatus & BIT(14)) printf("Signalled System Error\n");
+     if(pciStatus & BIT(15)) printf("Detected Parity Error\n");
      textColor(0x0F);
 }
 
