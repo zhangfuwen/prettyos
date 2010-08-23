@@ -13,9 +13,9 @@
 #include "video/console.h"
 #include "kheap.h"
 
-/// TEST
-#include "pciVendProdList.h" // http://www.pcidatabase.com/pci_c_header.php
-/// TEST
+#ifdef _PCI_VEND_PROD_LIST_
+  #include "pciVendProdList.h" // http://www.pcidatabase.com/pci_c_header.php
+#endif
 
 pciDev_t* pciDev_Array[PCIARRAYSIZE];
 
@@ -157,22 +157,50 @@ void listPCI()
                     pciDev_Array[number]->func   = func;
                     pciDev_Array[number]->number = bus*PCIDEVICES*PCIFUNCS + device*PCIFUNCS + func;
 
-                    // output to screen
-                    printf("#%d  %d:%d.%d\t dev:%x vend:%x",
-                         number,
-                         pciDev_Array[number]->bus, pciDev_Array[number]->device,
-                         pciDev_Array[number]->func,
-                         pciDev_Array[number]->deviceID,
-                         pciDev_Array[number]->vendorID);
-
+                 
+                    // Screen output
+                    printf("#%d %d:%d.%d",
+                        number,
+                        pciDev_Array[number]->bus,
+                        pciDev_Array[number]->device,
+                        pciDev_Array[number]->func);
+                    
                     if (pciDev_Array[number]->irq!=255)
                     {
-                        printf(" IRQ:%d ", pciDev_Array[number]->irq);
+                        printf(" IRQ:%d", pciDev_Array[number]->irq);
                     }
                     else // "255 means "unknown" or "no connection" to the interrupt controller"
                     {
-                        printf(" IRQ:-- ");
+                        printf(" IRQ:--");
+                    }                 
+
+                 #ifdef _PCI_VEND_PROD_LIST_
+                    bool DevFoundInList = false;
+                    for (uint32_t loop1=0; loop1<PCI_DEVTABLE_LEN; loop1++)
+                    {
+                        if ((PciDevTable[loop1].DevId == pciDev_Array[number]->deviceID) && (PciDevTable[loop1].VenId == pciDev_Array[number]->vendorID))
+                        {
+                            for (uint32_t loop2=0; loop2<PCI_VENTABLE_LEN; loop2++)
+                            {
+                                if (PciVenTable[loop2].VenId == pciDev_Array[number]->vendorID)
+                                {
+                                    printf("\t%s %s", PciVenTable[loop2].VenShort, PciDevTable[loop1].ChipDesc);
+                                }                                
+                            }
+                            DevFoundInList = true;
+                        }
                     }
+                    if (!DevFoundInList)
+                    {
+                        printf("\tvend:%x dev:%x",                            
+                            pciDev_Array[number]->vendorID,
+                            pciDev_Array[number]->deviceID);
+                    }                    
+                 #else
+                    printf("\tvend:%x dev:%x",                            
+                            pciDev_Array[number]->vendorID,
+                            pciDev_Array[number]->deviceID);
+                 #endif
 
                     /// USB Host Controller
                     if (pciDev_Array[number]->classID==0x0C && pciDev_Array[number]->subclassID==0x03)
@@ -201,6 +229,7 @@ void listPCI()
             } // for function
         } // for device
     } // for bus
+    waitForKeyStroke();
     printf("\n");
 }
 

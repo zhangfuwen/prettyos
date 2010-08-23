@@ -15,6 +15,7 @@
 /// #define _FLOPPY_DIAGNOSIS_  // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_      // Provides information about the vm86 task, but critical
 /// #define _SOUND_             // This is no sound, only "beep"
+#define _PCI_VEND_PROD_LIST_ // http://www.pcidatabase.com/pci_c_header.php
 
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);
