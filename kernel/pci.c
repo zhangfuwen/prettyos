@@ -13,6 +13,10 @@
 #include "video/console.h"
 #include "kheap.h"
 
+/// TEST
+#include "pciVendProdList.h" // http://www.pcidatabase.com/pci_c_header.php
+/// TEST
+
 pciDev_t* pciDev_Array[PCIARRAYSIZE];
 
 void analyzeHostSystemError(pciDev_t* pciDev)
