@@ -97,6 +97,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\keyboard_US.h" />
     <ClInclude Include="..\kernel\kheap.h" />
     <ClInclude Include="..\kernel\list.h" />
+    <ClInclude Include="..\kernel\memory.h" />
     <ClInclude Include="..\kernel\mouse.h" />
     <ClInclude Include="..\kernel\myOwnData.h" />
     <ClInclude Include="..\kernel\netprotocol\arp.h" />

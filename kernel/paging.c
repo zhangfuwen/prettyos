@@ -22,6 +22,12 @@ static uint32_t* bittable;
 static uint32_t  first_free_dword;
 static uint32_t phys_init();
 
+
+void paging_switch (page_directory_t* pd)
+{
+    __asm__ volatile("mov %0, %%cr3" : : "r" (pd->pd_phys_addr));
+}
+
 uint32_t paging_install()
 {
     uint32_t ram_available = phys_init();
@@ -87,22 +93,7 @@ uint32_t paging_install()
     return ram_available;
 }
 
-uint32_t paging_get_phys_addr(void* virt_addr)
-{
-    page_directory_t* pd = kernel_pd;
 
-    // Find the page table
-    uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
-    page_table_t* pt = pd->tables[pagenr/1024];
-
-    kdebug(3, "\nvirt-->phys: pagenr: %u ",pagenr);
-    kdebug(3, "pt: %X\n",pt);
-
-    ASSERT(pt);
-
-    // Read the address, cut off the flags, append the address' odd part
-    return (pt->pages[pagenr%1024]&0xFFFF000) + (((uint32_t)virt_addr)&0x00000FFF);
-}
 
 static bool memorymap_availability(const mem_map_entry_t* entries, uint64_t beg, uint64_t end)
 {
@@ -390,10 +381,7 @@ void paging_destroy_user_pd(page_directory_t* pd)
     free(pd);
 }
 
-void paging_switch (page_directory_t* pd)
-{
-    __asm__ volatile("mov %0, %%cr3" : : "r" (pd->pd_phys_addr));
-}
+
 
 void* paging_acquire_pcimem(uint32_t phys_addr, uint32_t numberOfPages)
 {
@@ -430,6 +418,22 @@ void* paging_acquire_pcimem(uint32_t phys_addr, uint32_t numberOfPages)
     return (void*)retVal;
 }
 
+uint32_t paging_get_phys_addr(void* virt_addr)
+{
+    page_directory_t* pd = kernel_pd;
+
+    // Find the page table
+    uint32_t pagenr = (uint32_t)virt_addr / PAGESIZE;
+    page_table_t* pt = pd->tables[pagenr/1024];
+
+    kdebug(3, "\nvirt-->phys: pagenr: %u ",pagenr);
+    kdebug(3, "pt: %X\n",pt);
+
+    ASSERT(pt);
+
+    // Read the address, cut off the flags, append the address' odd part
+    return (pt->pages[pagenr%1024]&0xFFFF000) + (((uint32_t)virt_addr)&0x00000FFF);
+}
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.

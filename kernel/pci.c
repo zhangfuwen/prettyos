@@ -11,7 +11,8 @@
 #include "list.h"
 #include "network/rtl8139.h"
 #include "video/console.h"
-#include "kheap.h"
+#include "kheap.h" // malloc
+
 
 #ifdef _PCI_VEND_PROD_LIST_
   #include "pciVendProdList.h" // http://www.pcidatabase.com/pci_c_header.php
