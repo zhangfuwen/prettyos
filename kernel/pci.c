@@ -159,61 +159,57 @@ void listPCI()
 
                  
                     // Screen output
-                    printf("#%d %d:%d.%d",
-                        number,
-                        pciDev_Array[number]->bus,
-                        pciDev_Array[number]->device,
-                        pciDev_Array[number]->func);
-                    
                     if (pciDev_Array[number]->irq!=255)
                     {
+                        printf("#%d %d:%d.%d",
+                            number,
+                            pciDev_Array[number]->bus,
+                            pciDev_Array[number]->device,
+                            pciDev_Array[number]->func);
+                    
                         printf(" IRQ:%d", pciDev_Array[number]->irq);
-                    }
-                    else // "255 means "unknown" or "no connection" to the interrupt controller"
-                    {
-                        printf(" IRQ:--");
-                    }                 
 
-                 #ifdef _PCI_VEND_PROD_LIST_
-                    bool DevFoundInList = false;
-                    for (uint32_t loop1=0; loop1<PCI_DEVTABLE_LEN; loop1++)
-                    {
-                        if ((PciDevTable[loop1].DevId == pciDev_Array[number]->deviceID) && (PciDevTable[loop1].VenId == pciDev_Array[number]->vendorID))
+                     #ifdef _PCI_VEND_PROD_LIST_
+                        bool DevFoundInList = false;
+                        for (uint32_t loop1=0; loop1<PCI_DEVTABLE_LEN; loop1++)
                         {
-                            for (uint32_t loop2=0; loop2<PCI_VENTABLE_LEN; loop2++)
+                            if ((PciDevTable[loop1].DevId == pciDev_Array[number]->deviceID) && (PciDevTable[loop1].VenId == pciDev_Array[number]->vendorID))
                             {
-                                if (PciVenTable[loop2].VenId == pciDev_Array[number]->vendorID)
+                                for (uint32_t loop2=0; loop2<PCI_VENTABLE_LEN; loop2++)
                                 {
-                                    printf("\t%s %s", PciVenTable[loop2].VenShort, PciDevTable[loop1].ChipDesc);
-                                }                                
+                                    if (PciVenTable[loop2].VenId == pciDev_Array[number]->vendorID)
+                                    {
+                                        printf("\t%s %s", PciVenTable[loop2].VenShort, PciDevTable[loop1].ChipDesc);
+                                    }                                
+                                }
+                                DevFoundInList = true;
                             }
-                            DevFoundInList = true;
                         }
-                    }
-                    if (!DevFoundInList)
-                    {
+                        if (!DevFoundInList)
+                        {
+                            printf("\tvend:%x dev:%x",                            
+                                pciDev_Array[number]->vendorID,
+                                pciDev_Array[number]->deviceID);
+                        }                    
+                     #else
                         printf("\tvend:%x dev:%x",                            
-                            pciDev_Array[number]->vendorID,
-                            pciDev_Array[number]->deviceID);
-                    }                    
-                 #else
-                    printf("\tvend:%x dev:%x",                            
-                            pciDev_Array[number]->vendorID,
-                            pciDev_Array[number]->deviceID);
-                 #endif
+                                pciDev_Array[number]->vendorID,
+                                pciDev_Array[number]->deviceID);
+                     #endif
 
-                    /// USB Host Controller
-                    if (pciDev_Array[number]->classID==0x0C && pciDev_Array[number]->subclassID==0x03)
-                    {
-                        install_USB_HostController(pciDev_Array[number]);
-                    }
-                    printf("\n");
+                        /// USB Host Controller
+                        if (pciDev_Array[number]->classID==0x0C && pciDev_Array[number]->subclassID==0x03)
+                        {
+                            install_USB_HostController(pciDev_Array[number]);
+                        }
+                        printf("\n");
 
-                    /// RTL 8139 network card
-                    if (pciDev_Array[number]->deviceID == 0x8139)
-                    {
-                        install_RTL8139(pciDev_Array[number]);
-                    }
+                        /// RTL 8139 network card
+                        if (pciDev_Array[number]->deviceID == 0x8139)
+                        {
+                            install_RTL8139(pciDev_Array[number]);
+                        }
+                    }// if irq != 255
                     ++number;
                 } // if pciVendor
                 else

@@ -21,7 +21,7 @@
 #include "serial.h"
 #include "cpu.h"
 
-const char* version = "0.0.1.201 - Rev: 780";
+const char* version = "0.0.1.202 - Rev: 781";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
