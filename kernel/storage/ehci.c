@@ -7,16 +7,12 @@
 #include "timer.h"
 #include "kheap.h"
 #include "task.h"
-#include "event_list.h"
-#include "video/video.h"
+#include "todo_list.h"
 #include "irq.h"
 #include "sys_speaker.h"
 
 #include "usb2.h"
 #include "usb2_msd.h"
-#include "ehciQHqTD.h"
-#include "ehci.h"
-#include "devicemanager.h"
 
 struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
@@ -57,7 +53,7 @@ void ehci_install(pciDev_t* PCIdev, uint32_t i)
         PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
         EHCIflag = true; // only the first EHCI is used
 
-        addEvent(&EHCI_INIT);
+        todoList_add(delayedInitTasks, &ehci_init);
 
         analyzeEHCI(bar,offset); // get data (capregs, opregs)
     }
@@ -480,7 +476,7 @@ void ehci_handler(registers_t* r)
 
         if (enabledPortFlag && PCIdevice)
         {
-            addEvent(&EHCI_PORTCHECK);
+            todoList_add(delayedInitTasks, &ehci_portcheck);
         }
     }
 
@@ -502,7 +498,7 @@ void ehci_handler(registers_t* r)
         printf("\n>>> Press key for EHCI (re)initialization. <<<");
         while(!keyboard_getChar());
         textColor(0x0F);
-        addEvent(&EHCI_INIT);
+        todoList_add(delayedInitTasks, &ehci_init);
     }
 
     if (pOpRegs->USBSTS & STS_ASYNC_INT)

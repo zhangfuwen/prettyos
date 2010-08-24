@@ -2,7 +2,6 @@
 #define INITRD_H
 
 #include "fs.h"
-#include "fsmanager.h"
 #include "storage/devicemanager.h"
 
 typedef struct

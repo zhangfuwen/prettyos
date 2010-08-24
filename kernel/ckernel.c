@@ -12,7 +12,7 @@
 #include "mouse.h"
 #include "keyboard.h"
 #include "task.h"
-#include "event_list.h"
+#include "todo_list.h"
 #include "syscall.h"
 #include "pci.h"
 #include "cdi.h"
@@ -20,8 +20,9 @@
 #include "irq.h"
 #include "serial.h"
 #include "cpu.h"
+#include "descriptor_tables.h"
 
-const char* version = "0.0.1.204 - Rev: 786";
+const char* version = "0.0.1.205 - Rev: 787";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -32,6 +33,9 @@ system_t system;
 
 void fpu_install(); // fpu.c
 void fpu_test();    // fpu.c
+
+
+todoList_t* delayedInitTasks; // HACK! Why is it needed? (RTL8139 generates interrupts (endless) if its not used for EHCI)
 
 
 static void init()
@@ -63,14 +67,15 @@ static void init()
     keyboard_install();
     mouse_install();
 
-    // messaging and system calls
-    events_install();
+    // system calls
     syscall_install();
 
     cdi_init();
 
     deviceManager_install(); // device management for mass storage devices
     fsmanager_install();
+
+    delayedInitTasks = todoList_create();
 
     sti();
 }
@@ -95,29 +100,24 @@ void main()
 
     kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
-    cpu_analyze();
     showMemorySize();
+    cpu_analyze();
 
     if (cpu_supports(CF_FPU)) fpu_test();
-
-    textColor(0x09);
-    printf("\n\n       >>>>>   Press 's' to skip VBE-Test or any key to continue   <<<<<\n\n");
-    textColor(0x0F);
-    if(getch() != 's')
-    {
-        create_cthread(&VBE_bootscreen, "Booting ...");
-    }
-
-    flpydsk_install(); // detect FDDs
-    void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);
+    
+    serial_init();
 
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
   #ifdef _DIAGNOSIS_
     listPCI();
   #endif
 
-    serial_init();
-    
+    flpydsk_install(); // detect FDDs
+    void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);
+
+    showPortList();
+    showDiskList();
+
     // search and load shell
     textColor(0x0F);
     bool shell_found = false;
@@ -128,7 +128,7 @@ void main()
 
         if ((fsnode->flags & 0x7) == FS_DIRECTORY)
         {
-            printf("<RAM Disk at %X DIR> %s\n", ramdisk_start, node->name);
+            printf("\n<RAMdisk (%X) - Root Directory>\n", ramdisk_start);
         }
         else
         {
@@ -157,9 +157,13 @@ void main()
         textColor(0x0F);
     }
 
-    showPortList();
-    showDiskList();
+    create_cthread(&VBE_bootscreen, "VBE");
 
+    textColor(0x05);
+    printf("\n-------------------------------------------------------------------------------");
+    printf("\n                                PrettyOS Booted");
+    printf("\n-------------------------------------------------------------------------------\n\n");
+    textColor(0x0F);
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
@@ -214,8 +218,7 @@ void main()
             printf("\nAnswered with 'Pretty'!\n\n");
         }
 
-
-        handleEvents();
+        todoList_execute(delayedInitTasks);
 
         if (keyPressed(VK_ESCAPE) && keyPressed(VK_H)) // kernel heap
         {

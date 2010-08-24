@@ -5,10 +5,8 @@
 
 #include "task.h"
 #include "util.h"
-#include "paging.h"
 #include "descriptor_tables.h"
 #include "kheap.h"
-#include "video/video.h"
 #include "scheduler.h"
 
 bool task_switching = false;
@@ -45,7 +43,7 @@ void tasking_install()
     kernelTask->page_directory = kernel_pd;
     kernelTask->privilege      = 0;
     kernelTask->FPU_ptr        = 0;
-    kernelTask->console        = currentConsole;
+    kernelTask->console        = (console_t*)currentConsole;
     kernelTask->ownConsole     = true;
     kernelTask->attrib         = 0x0F;
     kernelTask->blocker.type   = 0; // The task is not blocked (scheduler.h/c)
@@ -73,22 +71,6 @@ void waitForTask(task_t* blockingTask)
 
 
 /// Functions to create tasks
-
-static void addConsole(task_t* task, const char* consoleName)
-{
-    task->ownConsole = true;
-    task->console = malloc(sizeof(console_t), 0, "task-console");
-    console_init(task->console, consoleName);
-    for (uint8_t i = 0; i < 10; i++)
-    { // The next free place in our console-list will be filled with the new console
-        if (reachableConsoles[i] == 0)
-        {
-            reachableConsoles[i] = task->console;
-            changeDisplayedConsole(i); //Switching to the new console
-            break;
-        }
-    }
-}
 
 static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, void(*entry)(), uint8_t privilege)
 {
@@ -169,7 +151,7 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
     newTask->eip = (uint32_t)irq_tail;
     newTask->ss  = data_segment;
 
-    //list_Append(tasks, newTask);
+    list_Append(tasks, newTask);
     scheduler_insertTask(newTask); // newTask is inserted as last task in queue
 
     #ifdef _TASKING_DIAGNOSIS_
@@ -180,7 +162,9 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
 task_t* create_ctask(page_directory_t* directory, void(*entry)(), uint8_t privilege, const char* consoleName)
 {
     task_t* newTask = create_task(directory, entry, privilege);
-    addConsole(newTask, consoleName);
+    newTask->ownConsole = true;
+    newTask->console = malloc(sizeof(console_t), 0, "task-console");
+    console_init(newTask->console, consoleName);
     return(newTask);
 }
 
@@ -207,7 +191,9 @@ task_t* create_task(page_directory_t* directory, void(*entry)(), uint8_t privile
 task_t* create_cthread(void(*entry)(), const char* consoleName)
 {
     task_t* newTask = create_thread(entry);
-    addConsole(newTask, consoleName);
+    newTask->ownConsole = true;
+    newTask->console = malloc(sizeof(console_t), 0, "thread-console");
+    console_init(newTask->console, consoleName);
     return(newTask);
 }
 
@@ -225,7 +211,7 @@ task_t* create_thread(void(*entry)())
     createThreadTaskBase(newTask, currentTask->page_directory, entry, currentTask->privilege);
 
     // attach the thread with its parent
-    newTask->parent = currentTask;
+    newTask->parent = (task_t*)currentTask;
     if(currentTask->threads == 0)
         currentTask->threads = list_Create();
     list_Append(currentTask->threads, newTask);
@@ -264,7 +250,7 @@ uint32_t task_switch(uint32_t esp)
 
     task_switching = false;
 
-    task_t* oldTask = currentTask; // Save old task to check if its the same than the new one
+    task_t* oldTask = (task_t*)currentTask; // Save old task to check if its the same than the new one
     oldTask->esp = esp; // save esp
 
     currentTask = scheduler_getNextTask();
@@ -322,7 +308,7 @@ void switch_context() // switch to next task (by interrupt)
 
 static void kill(task_t* task)
 {
-	cli(); // TODO: Change to task_switching=false/true
+    cli(); // TODO: Change to task_switching=false/true
 
     #ifdef _TASKING_DIAGNOSIS_
     scheduler_log();
@@ -378,7 +364,7 @@ static void kill(task_t* task)
     free(task->kernel_stack - KERNEL_STACK_SIZE); // free kernelstack
     free(task);
 
-	sti();
+    sti();
 
     if(task == currentTask) // tasks adress is still saved, although its no longer valid so we can use it here
     {
@@ -401,7 +387,7 @@ void task_kill(uint32_t pid)
 
 void exit()
 {
-    kill(currentTask);
+    kill((task_t*)currentTask);
 }
 
 void task_restart(uint32_t pid)
@@ -466,30 +452,6 @@ void task_log(task_t* t)
             printf(" %u", ((task_t*)e->data)->pid);
         }
     }
-    textColor(0x0F);
-}
-
-void TSS_log(tss_entry_t* tssEntry)
-{
-    textColor(0x06);
-    printf("esp0: %X ", tssEntry->esp0);
-    printf("ss0: %X ", tssEntry->ss0);
-    printf("cr3: %X ", tssEntry->cr3);
-    printf("eip: %X ", tssEntry->eip);
-    printf("eflags: %X ", tssEntry->eflags);
-    printf("eax: %X ", tssEntry->eax);
-    printf("ecx: %X ", tssEntry->ecx);
-    printf("edx: %X ", tssEntry->edx);
-    printf("ebx: %X ", tssEntry->ebx);
-    printf("esp: %X ", tssEntry->esp);
-    printf("esi: %X ", tssEntry->esi);
-    printf("edi: %X ", tssEntry->edi);
-    printf("es: %X ", tssEntry->es);
-    printf("cs: %X ", tssEntry->cs);
-    printf("ss: %X ", tssEntry->ss);
-    printf("ds: %X ", tssEntry->ds);
-    printf("fs: %X ", tssEntry->fs);
-    printf("gs: %X\n", tssEntry->gs);
     textColor(0x0F);
 }
 

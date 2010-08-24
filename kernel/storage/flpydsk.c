@@ -10,8 +10,6 @@
 #include "timer.h"
 #include "irq.h"
 #include "kheap.h"
-#include "filesystem/fat.h"
-#include "video/video.h"
 
 // detailed infos about FDC and FAT12:
 // http://www.isdaman.com/alsos/hardware/fdc/floppy.htm
@@ -173,14 +171,14 @@ void flpydsk_install()
 {
     if ((cmos_read(0x10)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
     {
-        printf("1.44 MB FDD first device found\n");
+        printf("\n1.44 MB FDD first device found");
         floppyDrive[0] = createFloppy(0);
         strncpy(floppyDrive[0]->drive.name, "Floppy Dev 1", 12);
         floppyDrive[0]->drive.name[12]=0; // terminate string
 
         if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: ....0100b
         {
-            printf("1.44 MB FDD second device found\n");
+            printf("\n1.44 MB FDD second device found");
             floppyDrive[1] = createFloppy(1);
             strncpy(floppyDrive[1]->drive.name, "Floppy Dev 2", 12);
             floppyDrive[1]->drive.name[12]=0; // terminate string

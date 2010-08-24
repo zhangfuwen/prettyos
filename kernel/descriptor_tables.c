@@ -5,6 +5,7 @@
 
 #include "util.h"
 #include "descriptor_tables.h"
+#include "video/console.h"
 
 // ASM functions in flush.asm
 extern void gdt_flush(uint32_t);
@@ -40,6 +41,30 @@ void write_tss(int32_t num, uint16_t ss0, uint32_t esp0)
 void set_kernel_stack(uint32_t stack)
 {
     tss.esp0 = stack;
+}
+
+void TSS_log(tss_entry_t* tssEntry)
+{
+    textColor(0x06);
+    printf("esp0: %X ", tssEntry->esp0);
+    printf("ss0: %X ", tssEntry->ss0);
+    printf("cr3: %X ", tssEntry->cr3);
+    printf("eip: %X ", tssEntry->eip);
+    printf("eflags: %X ", tssEntry->eflags);
+    printf("eax: %X ", tssEntry->eax);
+    printf("ecx: %X ", tssEntry->ecx);
+    printf("edx: %X ", tssEntry->edx);
+    printf("ebx: %X ", tssEntry->ebx);
+    printf("esp: %X ", tssEntry->esp);
+    printf("esi: %X ", tssEntry->esi);
+    printf("edi: %X ", tssEntry->edi);
+    printf("es: %X ", tssEntry->es);
+    printf("cs: %X ", tssEntry->cs);
+    printf("ss: %X ", tssEntry->ss);
+    printf("ds: %X ", tssEntry->ds);
+    printf("fs: %X ", tssEntry->fs);
+    printf("gs: %X\n", tssEntry->gs);
+    textColor(0x0F);
 }
 
 /*

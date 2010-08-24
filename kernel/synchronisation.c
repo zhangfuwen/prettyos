@@ -7,7 +7,6 @@
 #include "kheap.h"
 #include "task.h"
 #include "util.h"
-#include "sys_speaker.h"
 
 #define ALL_RESOURCES_USED 0xFFFFFFFF
 
@@ -60,7 +59,7 @@ void semaphore_lock(semaphore_t* obj)
     }
     while(obj->freeRes == ALL_RESOURCES_USED) {nop();} // Waiting... HACK
 
-    obj->resources[obj->freeRes++] = currentTask; // acquire resource
+    obj->resources[obj->freeRes++] = (task_t*)currentTask; // acquire resource
     for(; obj->freeRes < obj->resCount; obj->freeRes++) // incrementing counter until a free place has been found
     {
         if(obj->resources[obj->freeRes] == 0)

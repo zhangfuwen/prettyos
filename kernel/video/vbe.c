@@ -713,6 +713,14 @@ void drawString(const char* text, uint32_t xpos, uint32_t ypos)
 
 void VBE_bootscreen()
 {
+    textColor(0x09);
+    printf("       >>>>>   Press 's' to skip VBE-Test or any key to continue   <<<<<\n\n");
+    textColor(0x0F);
+    if(getch() == 's')
+    {
+        return;
+    }
+
     memcpy((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
     #ifdef _VM_DIAGNOSIS_
@@ -754,7 +762,7 @@ void VBE_bootscreen()
 
     setVideoMemory();
     waitForKeyStroke();
-        
+
     switch(selectMode)
     {
         case '1':

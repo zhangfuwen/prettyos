@@ -4,11 +4,9 @@
 */
 
 #include "util.h"
-#include "console.h"
 #include "task.h"
 #include "video.h"
 #include "kheap.h"
-#include "timer.h"
 #include "filesystem/fat.h"
 
 uint16_t* vidmem = (uint16_t*)0xB8000;
@@ -220,12 +218,6 @@ void refreshUserScreen()
 }
 
 diskType_t* ScreenDest = &FLOPPYDISK; // HACK
-void mt_screenshot()
-{
-    printf("Screenshot (Thread)\n");
-    create_thread(&screenshot);
-}
-
 extern disk_t* disks[DISKARRAYSIZE]; // HACK
 extern bool    readCacheFlag; // HACK
 void screenshot()

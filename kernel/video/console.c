@@ -49,6 +49,16 @@ void console_init(console_t* console, const char* name)
     console->KQ.pTail = console->KQ.buffer;
     console->KQ.count_read  = 0;
     console->KQ.count_write = 0;
+
+    for (uint8_t i = 0; i < 10; i++)
+    { // The next free place in our console-list will be filled with the new console
+        if (reachableConsoles[i] == 0)
+        {
+            reachableConsoles[i] = console;
+            changeDisplayedConsole(i); //Switching to the new console
+            break;
+        }
+    }
 }
 void console_exit(console_t* console)
 {

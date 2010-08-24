@@ -3,41 +3,53 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "event_list.h"
-#include "storage/ehci.h"
-#include "video/video.h"
+#include "todo_list.h"
+#include "kheap.h"
 
-listHead_t* eventQueue;
-
-event_handler_t EHCI_INIT, EHCI_PORTCHECK, VIDEO_SCREENSHOT;
-
-void events_install()
+todoList_t* todoList_create()
 {
-    eventQueue = list_Create();
-
-    // Init event-handlers
-    EHCI_INIT.function        = &ehci_init;
-    EHCI_PORTCHECK.function   = &ehci_portcheck;
-    VIDEO_SCREENSHOT.function = &mt_screenshot;
+    todoList_t* list = malloc(sizeof(list), 0, "MrX");
+    list->queue = list_Create();
+    return(list);
 }
 
-void handleEvents()
+void todoList_add(todoList_t* list, void (*function)())
 {
-    int i=0;
-    for(; list_GetElement(eventQueue, i) != 0; i++)
+    list_Append(list->queue, function);
+}
+
+void todoList_clear(todoList_t* list)
+{
+    if(list->queue->head != 0)
     {
-        ((event_handler_t*)list_GetElement(eventQueue, i)->data)->function();
-    }
-    if (i>0)
-    {
-        list_DeleteAll(eventQueue);
-        eventQueue = list_Create();
+        list_DeleteAll(list->queue);
+        list->queue = list_Create();
     }
 }
 
-void addEvent(event_handler_t* event)
+void todoList_execute(todoList_t* list)
 {
-    list_Append(eventQueue, event);
+    for(element_t* e = list->queue->head; e != 0; e = e->next)
+    {
+        ((void (*)())e->data)();
+    }
+    todoList_clear(list);
+}
+
+void todoList_wait(todoList_t* list)
+{
+    scheduler_blockCurrentTask(&BL_TODOLIST, list);
+}
+
+bool todoList_unlockTask(task_t* task)
+{
+    return(((todoList_t*)task->blocker.data)->queue->head != 0);
+}
+
+void todoList_delete(todoList_t* list)
+{
+    list_DeleteAll(list->queue);
+    free(list);
 }
 
 

@@ -4,18 +4,13 @@
 */
 
 #include "devicemanager.h"
-#include "filesystem/fsmanager.h"
 #include "video/console.h"
 #include "util.h"
-#include "timer.h"
-#include "paging.h"
 #include "kheap.h"
 #include "usb2_msd.h"
 #include "flpydsk.h"
 #include "usb2.h"
-#include "timer.h"
 #include "filesystem/fat12.h"
-#include "filesystem/fat.h"
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
@@ -113,7 +108,7 @@ void removeDisk(disk_t* disk)
 void showPortList()
 {
     textColor(0x02);
-    printf("\n\nAvailable ports:");
+    printf("\nAvailable ports:");
     textColor(0x07);
     printf("\n\nType\tNumber\tName\t\tInserted disk");
     printf("\n----------------------------------------------------------------------");
@@ -156,7 +151,7 @@ void showPortList()
 void showDiskList()
 {
     textColor(0x02);
-    printf("\n\nAttached disks:");
+    printf("\nAttached disks:");
     textColor(0x07);
     printf("\n\nType\tNumber\tName\t\tPart.\tSerial");
     printf("\n----------------------------------------------------------------------");
@@ -368,6 +363,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
     // This is a FAT description
     if (sec0->charsPerSector == 0x200 && sec0->FATcount > 0) // 512 byte per sector, at least one FAT
     {
+        #ifdef _DEVMGR_DIAGNOSIS_
         printf("\nOEM name:           %s"    ,SysName);
         printf("\tbyte per sector:        %u",sec0->charsPerSector);
         printf("\nsectors per cluster:    %u",sec0->SectorsPerCluster);
@@ -382,6 +378,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         printf("\thidden sectors:         %u",sec0->HiddenSectors);
         printf("\ntotal sectors (>65535): %u",sec0->TotalSectors2);
         printf("\tFAT 12/16:              %s",FATn);
+        #endif
 
         volume_bytePerSector = sec0->charsPerSector;
         volume_SecPerClus    = sec0->SectorsPerCluster;
@@ -406,7 +403,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
             if ( ((uint8_t*)buffer)[0x52] == 'F' && ((uint8_t*)buffer)[0x53] == 'A' && ((uint8_t*)buffer)[0x54] == 'T' &&
                  ((uint8_t*)buffer)[0x55] == '3' && ((uint8_t*)buffer)[0x56] == '2')
             {
-                printf("\nThis is a volume formated with FAT32 ");
+                printf("\nDisk is formated with FAT32 ");
                 volume_type = FAT32;
 
                 for (uint8_t i=0; i<4; i++)
@@ -430,7 +427,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         }
         else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '6') // FAT16
         {
-            printf("\nThis is a volume formated with FAT16 ");
+            printf("\nDisk is formated with FAT16 ");
             volume_type = FAT16;
 
             for (uint8_t i=0; i<4; i++)
@@ -443,7 +440,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         }
         else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '2')
         {
-            printf("\nThis is a volume formated with FAT12.\n");
+            printf("\nDisk is formated with FAT12.\n");
             volume_type = FAT12;
         }
 

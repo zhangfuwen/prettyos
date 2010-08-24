@@ -9,13 +9,14 @@
 #include "util.h"
 #include "timer.h"
 #include "synchronisation.h"
+#include "todo_list.h"
 
 ring_t* task_queue;
 ring_t* blockedTasks;
 
 task_t* freetimeTask = 0;
 
-blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK;
+blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK, BL_TODOLIST;
 
 static void doNothing()
 {
@@ -35,6 +36,8 @@ void scheduler_install()
     BL_TIME.eventBased      = false;
     BL_SEMAPHORE.unlock     = &semaphore_unlockTask;
     BL_SEMAPHORE.eventBased = false;
+    BL_TODOLIST.unlock      = &todoList_unlockTask;
+    BL_TODOLIST.eventBased  = false;
     BL_INTERRUPT.unlock     = 0;
     BL_INTERRUPT.eventBased = true;
     BL_TASK.unlock          = 0;
@@ -117,8 +120,8 @@ void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
     currentTask->blocker.type = reason;
     currentTask->blocker.data = data;
 
-    ring_Insert(blockedTasks, currentTask, true);
-    ring_DeleteFirst(task_queue, currentTask);
+    ring_Insert(blockedTasks, (task_t*)currentTask, true);
+    ring_DeleteFirst(task_queue, (task_t*)currentTask);
 
     sti();
     switch_context();

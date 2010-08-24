@@ -6,12 +6,7 @@
 #include "keyboard.h"
 #include "util.h"
 #include "task.h"
-#include "video/console.h"
-#include "event_list.h"
-#include "video/video.h"
 #include "irq.h"
-#include "scheduler.h"
-#include "storage/devicemanager.h" // HACK
 
 #ifdef KEYMAP_GER
 #include "keyboard_GER.h"
@@ -167,13 +162,15 @@ uint8_t ScanToASCII()
         if(retchar == 's') // Taking a screenshot (FLOPPY); Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
         {
             ScreenDest = &FLOPPYDISK; // HACK
-            addEvent(&VIDEO_SCREENSHOT);
+            printf("Screenshot to Floppy (Thread)\n");
+            create_thread(&screenshot);
             return 0;
         }
         if(retchar == 'u') // Taking a screenshot (USB); Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
         {
             ScreenDest = &USB_MSD; // HACK
-            addEvent(&VIDEO_SCREENSHOT);
+            printf("Screenshot to USB (Thread)\n");
+            create_thread(&screenshot);
             return 0;
         }
         if(retchar == 'd') // Prints the Port- and Disklist

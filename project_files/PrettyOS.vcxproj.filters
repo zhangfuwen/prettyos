@@ -73,6 +73,12 @@
     <Filter Include="Kernel\sources\network\protocol">
       <UniqueIdentifier>{90ec003f-5bf8-4988-b0b3-45bb367830a0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\sources\audio">
+      <UniqueIdentifier>{b5b4c4aa-ce57-4077-9b50-bc798e00866e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\include\audio">
+      <UniqueIdentifier>{a9baddc4-aad5-46fa-a06c-7289b3b25b14}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\user\user_tools\start.asm">
@@ -190,9 +196,6 @@
       <Filter>Kernel\include</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\descriptor_tables.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\event_list.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\irq.h">
@@ -345,14 +348,17 @@
     <ClInclude Include="..\kernel\cdi-osdep.h">
       <Filter>Kernel\include\cdi</Filter>
     </ClInclude>
-    <ClInclude Include="pciVendProdList.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\kernel\pciVendProdList.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\memory.h">
       <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\todo_list.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\audio\sb16.h">
+      <Filter>Kernel\include\audio</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -426,9 +432,6 @@
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\elf.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\event_list.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\fpu.c">
@@ -562,6 +565,12 @@
     </ClCompile>
     <ClCompile Include="..\kernel\netprotocol\ipv4.c">
       <Filter>Kernel\sources\network\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\todo_list.c">
+      <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\audio\sb16.c">
+      <Filter>Kernel\sources\audio</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

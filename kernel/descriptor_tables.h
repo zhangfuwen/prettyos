@@ -108,6 +108,8 @@ void idt_install();
 
 void write_tss(int32_t num, uint16_t ss0, uint32_t esp0);
 
+void TSS_log(tss_entry_t* tss);
+
 // asm functions in flush.asm
 void gdt_flush(uint32_t);
 void tss_flush();

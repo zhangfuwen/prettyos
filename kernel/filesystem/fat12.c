@@ -25,7 +25,7 @@ int32_t flpydsk_read_directory()
     {
         printf("\nread error: %d\n",retVal);
     }
-    printf("<Floppy Disc Directory>\n");
+    printf("<Floppy Disk - Root Directory>\n");
 
     for (uint8_t i=0;i<ROOT_DIR_ENTRIES;++i)       // 224 Entries * 32 Byte
     {

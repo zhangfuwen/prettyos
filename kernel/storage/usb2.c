@@ -8,7 +8,6 @@
 #include "video/console.h"
 #include "timer.h"
 #include "util.h"
-#include "ehci.h"
 #include "ehciQHqTD.h"
 #include "usb2.h"
 

@@ -5,7 +5,7 @@
 
 #include "util.h"
 #include "sys_speaker.h"
-#include "task.h"
+#include "video/console.h"
 #include "timer.h"
 
 const int32_t INT_MAX = 2147483647;

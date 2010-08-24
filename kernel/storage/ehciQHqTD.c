@@ -8,7 +8,6 @@
 #include "paging.h"
 #include "kheap.h"
 #include "usb2.h"
-#include "ehci.h"
 #include "ehciQHqTD.h"
 #include "video/console.h"
 

@@ -3,7 +3,6 @@
 
 #include "video/console.h"
 #include "paging.h"
-#include "descriptor_tables.h"
 #include "scheduler.h"
 
 #define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
@@ -67,6 +66,5 @@ int32_t getpid();
 void* task_grow_userheap(uint32_t increase);
 
 void task_log(task_t* t);
-void TSS_log(tss_entry_t* tss);
 
 #endif

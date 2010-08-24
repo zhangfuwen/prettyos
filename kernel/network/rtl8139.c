@@ -6,7 +6,6 @@
 #include "util.h"
 #include "timer.h"
 #include "irq.h"
-#include "pci.h"
 #include "paging.h"
 #include "video/console.h"
 #include "netprotocol/ethernet.h"

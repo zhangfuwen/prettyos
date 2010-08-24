@@ -7,9 +7,7 @@
 #include "storage/devicemanager.h"
 #include "fat.h"
 #include "kheap.h"
-#include "paging.h"
 #include "util.h"
-#include "video/console.h"
 
 fileSystem_t FAT, INITRD;
 

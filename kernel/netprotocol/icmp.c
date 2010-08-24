@@ -7,7 +7,6 @@
 #include "network/rtl8139.h"
 #include "ipv4.h"
 #include "video/console.h"
-#include "types.h"
 #include "util.h"
 
 extern uint8_t MAC_address[6];

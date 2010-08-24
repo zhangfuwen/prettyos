@@ -7,12 +7,8 @@
 #include "kheap.h"
 #include "video/console.h"
 #include "util.h"
-#include "ehci.h"
-#include "ehciQHqTD.h"
 #include "usb2.h"
 #include "usb2_msd.h"
-#include "devicemanager.h"
-#include "filesystem/fat.h"
 
 extern const uint8_t ALIGNVALUE;
 

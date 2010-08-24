@@ -11,7 +11,6 @@
 #include "mouse.h"
 #include "util.h"
 #include "video/console.h"
-#include "video/video.h"
 #include "irq.h"
 
 char mouseid;

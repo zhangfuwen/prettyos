@@ -5,18 +5,16 @@
 
 #include "util.h"
 #include "pci.h"
-#include "paging.h"
-#include "storage/usb_hc.h"
-#include "storage/ehci.h"
 #include "list.h"
+#include "storage/usb_hc.h"
 #include "network/rtl8139.h"
 #include "video/console.h"
-#include "kheap.h" // malloc
-
+#include "kheap.h"
 
 #ifdef _PCI_VEND_PROD_LIST_
   #include "pciVendProdList.h" // http://www.pcidatabase.com/pci_c_header.php
 #endif
+
 
 pciDev_t* pciDev_Array[PCIARRAYSIZE];
 
@@ -124,8 +122,9 @@ void listPCI()
     puts("\n\n");
 }
 
- void pciScan()
- {
+void pciScan()
+{
+    printf("\n");
     int number=0;
     for (uint8_t bus = 0; bus < PCIBUSES; ++bus)
     {
@@ -226,8 +225,6 @@ void listPCI()
             } // for function
         } // for device
     } // for bus
-    waitForKeyStroke();
-    printf("\n");
 }
 
 /*

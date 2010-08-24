@@ -19,13 +19,10 @@
 
 
 #include "util.h"
-#include "timer.h" /// TEST
-#include "paging.h"
 #include "kheap.h"
 #include "storage/usb2_msd.h"
 #include "video/console.h"
 #include "filesystem/fat.h"
-#include "storage/devicemanager.h"
 
 
 

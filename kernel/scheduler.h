@@ -11,7 +11,7 @@ typedef struct
     bool (*unlock)(task_t*);
 } blockerType_t;
 
-extern blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK;
+extern blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK, BL_TODOLIST;
 
 typedef struct
 {

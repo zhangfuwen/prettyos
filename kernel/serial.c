@@ -8,9 +8,7 @@
 
 #include "serial.h"
 #include "util.h"
-#include "timer.h"
 #include "video/console.h"
-#include "cmos.h"
 
 static uint8_t serialPorts;
 
@@ -32,7 +30,7 @@ void serial_init()
         outportb(IOports[i] + 3, 0x03); // 8 bits, no parity, one stop bit
         outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
         outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
-        printf("COM%d (IO-port: %x) initialized\n", i+1, IOports[i]);
+        printf("\nCOM%d (IO-port: %x) initialized", i+1, IOports[i]);
     }
     printf("\n");
 }
