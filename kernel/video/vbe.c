@@ -282,7 +282,7 @@ void scaleBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart)
     }
 }
 
-// draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. (DON`T USE IT, IT CRASH!)
+// draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. 
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
 {
     uint32_t dx=x2-x1;      // the horizontal distance of the line
@@ -359,9 +359,9 @@ void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t
     }
 }
 
+// http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
 void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
-{
-    // http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
+{    
     for (uint32_t i=0; i<=2*radius; i++)
     {
         uint32_t x  = xm - radius + i;
@@ -537,7 +537,7 @@ void vgaDebug()
     printf("Physical Memory Base:  %X\n", mib.PhysBasePtr);
 }
 
-char ISValidBitmap(char *fname)
+char ISValidBitmap(char* fname)
 {
 /*
     BMPINFO bmpinfo;
@@ -572,7 +572,7 @@ char ISValidBitmap(char *fname)
     return 1;
 }
 
-void showbitmap(char *infname,int xs,int ys)
+void showbitmap(char* infname,int xs,int ys)
 {
 /*
     BMPINFO bmpinfo;
