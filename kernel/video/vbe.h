@@ -167,9 +167,16 @@ void setVgaInfoBlock(VgaInfoBlock_t* VIB);
 void setModeInfoBlock(ModeInfoBlock_t* MIB);
 ModeInfoBlock_t *getModeInfoBlock();
 
-void switchToVGA();
+// Change change it to a better matching function name...
+void switchToVGA(); 
+
+// Set the screen resolution and Colordepth
 void switchToVideomode(uintptr_t* MODE);
+
+// Return to Textmode
 void switchToTextmode();
+
+
 void setDisplayStart(uint16_t *xpos, uint16_t *ypos);
 uint32_t getDisplayStart();
 
@@ -179,36 +186,63 @@ void printPalette(RGBQuadPacked_t* RGB);
 void setPalette(RGBQuadPacked_t* RGB);
 uint32_t getPalette();
 
+// Set a Palette (old vga registers, need changed to the VBE Registers in vidswtch.asm)
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t  Red, uint8_t  Green, uint8_t  Blue);
 void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue);
-
 void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette);
 void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumberOfColors, uint8_t* Palette);
 
+// needs to be implemented in vidswtch.asm
 void setDACPalette(RGBQuadPacked_t* RGB);
 uint32_t getDACPalette();
 
+// Returns the VBEMode structure
 uint32_t getVBEMode(void);
+
+// 
 void setVBEMode(uint32_t mode);
-void setBank(uint32_t bank);
+
+// Allocate the videomemory from the graphiccard
 void setVideoMemory();
 
+// List the avalible screen resolutions and color depths
 void availableModes(void);
 
+// Set a pixel to screen
 void setPixel(uint32_t x, uint32_t y, uint32_t color);
+
+// Get a pixel from screen
 uint32_t getPixel(uint32_t x, uint32_t y);
 
+// Draws a line
 void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
+
+// Draws a rectancle
 void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);
+
+// Draws a circle
 void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);
+
+// Draws a bitmap, loaded from data.asm via incbin
 void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);
+
+// Draws a scaled Bitmap
 void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);
+
+// currently not used and not finished
 char ISValidBitmap(char *fname);
 void showbitmap(char *infname,int xs,int ys);
+
+// Shows Bitmap information
 void bitmapDebug();
+
+// Draws a character using font.h
 void drawChar(char font_char);
+
+// Draws a character string
 void drawString(const char* text, uint32_t xpos, uint32_t ypos);
 
+// VBE Testing area
 void VBE_bootscreen();
 
 #endif

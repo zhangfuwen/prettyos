@@ -237,7 +237,6 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
      }
 }
 
-//trying bilinear Bitmap scale
 void scaleBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart)
 {
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
@@ -714,7 +713,6 @@ void drawString(const char* text, uint32_t xpos, uint32_t ypos)
 
 void VBE_bootscreen()
 {
-    // TODO: move the VGA Testings in an external test programm! see user\other_userprogs\vgatest.c
     memcpy((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
     #ifdef _VM_DIAGNOSIS_
@@ -725,7 +723,7 @@ void VBE_bootscreen()
 
     bh_get = (BitmapHeader_t*)&bmp_start;
 
-    switchToVGA(); //TEST
+    switchToVGA(); // change it to a better matching function name...
 
     setVgaInfoBlock((VgaInfoBlock_t*)0x3400);
 
