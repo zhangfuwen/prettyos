@@ -21,7 +21,7 @@
 #include "serial.h"
 #include "cpu.h"
 
-const char* version = "0.0.1.203 - Rev: 783";
+const char* version = "0.0.1.204 - Rev: 784";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -217,9 +217,13 @@ void main()
 
         handleEvents();
 
-        if (keyPressed(VK_ESCAPE) && keyPressed(VK_H))
+        if (keyPressed(VK_ESCAPE) && keyPressed(VK_H)) // kernel heap
         {
             logHeapRegions();
+        }
+        if (keyPressed(VK_ESCAPE) && keyPressed(VK_P)) // physical memory
+        {
+            analyzeBitTable();
         }
 
         switch_context(); // Switch to another task

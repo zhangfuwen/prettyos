@@ -7,6 +7,7 @@
 
 #include "paging.h"
 #include "util.h"
+#include "timer.h"
 #include "task.h"
 #include "kheap.h"
 #include "video/console.h"
@@ -434,6 +435,64 @@ uint32_t paging_get_phys_addr(void* virt_addr)
     // Read the address, cut off the flags, append the address' odd part
     return (pt->pages[pagenr%1024]&0xFFFF000) + (((uint32_t)virt_addr)&0x00000FFF);
 }
+
+
+
+
+
+
+
+/******************** analysis tools *************************/
+
+void analyzeBitTable(uint32_t msec)
+{
+    uint32_t counter1=0;
+    uint32_t k=0, k_old=2;
+    uint32_t maximum = system.Memory_Size/PAGESIZE/32;
+    if (maximum > MAX_DWORDS)
+    {
+        maximum = MAX_DWORDS;
+    }
+
+    for (uint32_t index=0; index<maximum; ++index)
+    {
+        textColor(0x0F);
+        printf("\n%X: ",index*32*PAGESIZE);
+        ++counter1;
+
+        for (uint32_t offset=0; offset<32; ++offset)
+        {
+            if (!(bittable[index] & BIT(offset)))
+            {
+                textColor(0x0A);
+                putch('0');
+                if (offset == 31) 
+                {
+                    k_old = k; k=0;
+                }
+            }
+            else
+            {
+                textColor(0x07);
+                putch('1');                
+                if (offset == 31) 
+                {
+                    k_old = k; k=1;
+                }
+            }
+        }
+
+        if(k!=k_old)
+        {
+            sleepSeconds(5);
+        }
+
+    }
+    textColor(0x0F);
+}
+
+
+
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.

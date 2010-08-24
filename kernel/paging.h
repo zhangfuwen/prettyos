@@ -48,4 +48,6 @@ void paging_destroy_user_pd(page_directory_t* pd);
 void* paging_acquire_pcimem(uint32_t phys_addr, uint32_t numberOfPages);
 uint32_t paging_get_phys_addr(void* virt_addr);
 
+void analyzeBitTable();
+
 #endif
