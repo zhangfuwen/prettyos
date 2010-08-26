@@ -26,6 +26,10 @@ struct task
     void            (*entry)();       // entry point, used to resart the task
     listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
     task_t*           parent;         // task who created this thread (only used for threads)
+    
+    // user task specific stack data
+    void*             userStack;      // stack that is allocated by user tasks
+    uint32_t          userStackSize;  // size of user stack measured in PAGESIZE
 
     // Information needed by scheduler
     uint16_t  priority; // Indicates how often this task get the CPU

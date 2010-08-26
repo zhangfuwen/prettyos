@@ -88,7 +88,21 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
         newTask->heap_top = USER_HEAP_START;
 
         if(newTask->type != VM86)
-            paging_alloc(newTask->page_directory, (void*)(USER_STACK-10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE);
+        {
+            newTask->userStack = (void*)(USER_STACK-10*PAGESIZE);
+            newTask->userStackSize = 10;
+            paging_alloc(newTask->page_directory, newTask->userStack, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
+        }
+        else
+        {
+            newTask->userStack = 0;
+            newTask->userStackSize = 0;
+        }
+    }
+    else
+    {
+        newTask->userStack = 0;
+        newTask->userStackSize = 0;
     }
 
     newTask->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
@@ -315,7 +329,7 @@ static void kill(task_t* task)
     #endif
 
     // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
-    if(task->ownConsole)
+    if (task->ownConsole)
     {
         for (uint8_t i = 0; i < 10; i++)
         {
@@ -333,12 +347,20 @@ static void kill(task_t* task)
         free(task->console);
     }
 
+    // free memory for user stack 
+    if (task->userStack != 0)
+    {
+        paging_free (task->page_directory, task->userStack, task->userStackSize * PAGESIZE);
+    }
+
     // signalize the parent task that this task is exited
-    if(task->type == THREAD)
+    if (task->type == THREAD)
+    {
         list_Delete(task->parent->threads, task);
+    }
 
     // kill all child-threads of this task
-    if(task->threads)
+    if (task->threads)
     {
         for(element_t* e = task->threads->head; e != 0; e = e->next)
         {
