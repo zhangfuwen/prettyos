@@ -14,7 +14,7 @@
 /// #define _TASKING_DIAGNOSIS_ // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_  // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_      // Provides information about the vm86 task, but critical
-#define _SOUND_             // This is no sound, only "beep"
+/// #define _SOUND_             // This is no sound, only "beep". Better stop it! ^^
 #define _PCI_VEND_PROD_LIST_ // http://www.pcidatabase.com/pci_c_header.php
 
 void textColor(uint8_t color);
@@ -47,9 +47,7 @@ extern const char* version;
 // Informations about the system
 extern system_t system;
 
-
 extern struct todoList* delayedInitTasks; // HACK (see ckernel.c)
-
 
 // Declared here, because a header would be a waste of space
 // elf.c

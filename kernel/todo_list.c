@@ -8,7 +8,7 @@
 
 todoList_t* todoList_create()
 {
-    todoList_t* list = malloc(sizeof(list), 0, "MrX");
+    todoList_t* list = malloc(sizeof(list), 0, "todoList");
     list->queue = list_Create();
     return(list);
 }

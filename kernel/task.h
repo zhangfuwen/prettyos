@@ -30,6 +30,7 @@ struct task
     // user task specific stack data
     void*             userStack;      // stack that is allocated by user tasks
     uint32_t          userStackSize;  // size of user stack measured in PAGESIZE
+    void*             userPT;         // store the PT to free them later at the heap 
 
     // Information needed by scheduler
     uint16_t  priority; // Indicates how often this task get the CPU

@@ -25,6 +25,7 @@ console_t* currentConsole;
 extern tss_entry_t tss;
 void irq_tail();
 void fpu_setcw(uint16_t ctrlword); // fpu.c
+extern void* globalUserPT;
 
 void tasking_install()
 {
@@ -92,6 +93,7 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
             newTask->userStack = (void*)(USER_STACK-10*PAGESIZE);
             newTask->userStackSize = 10;
             paging_alloc(newTask->page_directory, newTask->userStack, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
+            newTask->userPT = globalUserPT;
         }
         else
         {
@@ -351,6 +353,11 @@ static void kill(task_t* task)
     if (task->userStack != 0)
     {
         paging_free (task->page_directory, task->userStack, task->userStackSize * PAGESIZE);
+        if (task->page_directory != kernel_pd)
+        {
+            free(task->page_directory); 
+            free(task->userPT);
+        }
     }
 
     // signalize the parent task that this task is exited

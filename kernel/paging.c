@@ -14,6 +14,8 @@
 
 page_directory_t* kernel_pd;
 
+void* globalUserPT; // for storage of a user task pagetable  // cf. paging_alloc
+
 // Memory Map
 extern char _kernel_beg, _kernel_end; // defined in linker script
 
@@ -279,8 +281,8 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
         }
 
         // Allocate physical memory
-        uint32_t phys = phys_alloc();
-        if (phys == 0)
+        uint32_t phys_addr = phys_alloc();
+        if (phys_addr == 0)
         {
             // Undo the allocations and return an error
             paging_free(pd, virt_addr, done*PAGESIZE);
@@ -292,11 +294,20 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
         if (!pt)
         {
             // Allocate the page table
-            pt = (page_table_t*) malloc(sizeof(page_table_t), PAGESIZE, "pag-PT");
+            if (pd == kernel_pd) 
+            {
+                pt = (page_table_t*) malloc(sizeof(page_table_t), PAGESIZE, "pag-PT");
+            }
+            else 
+            {
+                pt = (page_table_t*) malloc(sizeof(page_table_t), PAGESIZE, "pag-userPT");
+                globalUserPT = pt; 
+            }
+            
             if (!pt)
             {
                 // Undo the allocations and return an error
-                phys_free(phys);
+                phys_free(phys_addr);
                 paging_free(pd, virt_addr, done*PAGESIZE);
                 return false;
             }
@@ -308,11 +319,11 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
         }
 
         // Setup the page
-        pt->pages[pagenr%1024] = phys | flags | MEM_PRESENT;
+        pt->pages[pagenr%1024] = phys_addr | flags | MEM_PRESENT;
 
         if (flags & MEM_USER)
         {
-            kdebug(3, "pagenumber now allocated: %u phys: %X\n",pagenr,phys);
+            kdebug(3, "pagenumber now allocated: %u phys_addr: %X\n",pagenr,phys_addr);
         }
     }
     return true;
