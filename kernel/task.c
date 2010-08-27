@@ -25,7 +25,10 @@ console_t* currentConsole;
 extern tss_entry_t tss;
 void irq_tail();
 void fpu_setcw(uint16_t ctrlword); // fpu.c
+
 extern void* globalUserPT;
+extern void* globalUserProgAddr;
+extern uint32_t globalUserProgSize;
 
 void tasking_install()
 {
@@ -92,6 +95,9 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
         {
             newTask->userStack = (void*)(USER_STACK-10*PAGESIZE);
             newTask->userStackSize = 10;
+            newTask->userProgAddr = globalUserProgAddr;
+            newTask->userProgSize = globalUserProgSize;               
+
             paging_alloc(newTask->page_directory, newTask->userStack, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
             newTask->userPT = globalUserPT;
         }
@@ -353,6 +359,8 @@ static void kill(task_t* task)
     if (task->userStack != 0)
     {
         paging_free (task->page_directory, task->userStack, task->userStackSize * PAGESIZE);
+        paging_free (task->page_directory, task->userProgAddr, task->userProgSize);
+        
         if (task->page_directory != kernel_pd)
         {
             free(task->page_directory); 

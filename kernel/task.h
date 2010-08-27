@@ -7,7 +7,8 @@
 
 #define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
 
-typedef enum {
+typedef enum 
+{
     TASK, THREAD, VM86
 } taskType_t;
 
@@ -27,19 +28,21 @@ struct task
     listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
     task_t*           parent;         // task who created this thread (only used for threads)
     
-    // user task specific stack data
+    // user task specific program and stack memory data
+    void*             userProgAddr; 
+    uint32_t          userProgSize;
     void*             userStack;      // stack that is allocated by user tasks
     uint32_t          userStackSize;  // size of user stack measured in PAGESIZE
     void*             userPT;         // store the PT to free them later at the heap 
 
-    // Information needed by scheduler
-    uint16_t  priority; // Indicates how often this task get the CPU
-    blocker_t blocker;  // Object indicating reason and duration of blockade
+    // information needed by scheduler
+    uint16_t          priority; // Indicates how often this task get the CPU
+    blocker_t         blocker;  // Object indicating reason and duration of blockade
 
     // task specific graphical output settings
-    bool       ownConsole; // This task has an own console
-    console_t* console;    // Console used by this task
-    uint8_t    attrib;     // Color
+    bool              ownConsole; // This task has an own console
+    console_t*        console;    // Console used by this task
+    uint8_t           attrib;     // Color
 };
 
 extern task_t* FPUTask; // fpu.c

@@ -324,6 +324,7 @@ bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t
         if (flags & MEM_USER)
         {
             kdebug(3, "pagenumber now allocated: %u phys_addr: %X\n",pagenr,phys_addr);
+            printf("\nvirt addr: %X phys_addr: %X\n", virt_addr, phys_addr); /// TEST
         }
     }
     return true;

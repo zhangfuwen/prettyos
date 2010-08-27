@@ -6,6 +6,10 @@
 #include "util.h"
 #include "task.h"
 
+// in task.c used for paging_free of memory for user program
+void* globalUserProgAddr; 
+uint32_t globalUserProgSize;
+
 typedef enum
 {
     ET_NONE  = 0,
@@ -162,7 +166,10 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
 
         /// TODO: check read/write privileges (info in elf?)
         // Allocate code area for the user program
-        if (! paging_alloc(pd, (void*)(ph->vaddr), alignUp(ph->memsz,PAGESIZE), MEM_USER | MEM_WRITE))
+        
+        globalUserProgAddr = (void*)(ph->vaddr);
+        globalUserProgSize = alignUp(ph->memsz,PAGESIZE);
+        if (! paging_alloc(pd, globalUserProgAddr, globalUserProgSize, MEM_USER | MEM_WRITE))
         {
             return false;
         }
