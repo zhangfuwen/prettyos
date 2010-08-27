@@ -93,23 +93,23 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
 
         if(newTask->type != VM86)
         {
-            newTask->userStack = (void*)(USER_STACK-10*PAGESIZE);
+            newTask->userStackAddr = (void*)(USER_STACK-10*PAGESIZE);
             newTask->userStackSize = 10;
             newTask->userProgAddr = globalUserProgAddr;
             newTask->userProgSize = globalUserProgSize;               
 
-            paging_alloc(newTask->page_directory, newTask->userStack, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
+            paging_alloc(newTask->page_directory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
             newTask->userPT = globalUserPT;
         }
         else
         {
-            newTask->userStack = 0;
+            newTask->userStackAddr = 0;
             newTask->userStackSize = 0;
         }
     }
     else
     {
-        newTask->userStack = 0;
+        newTask->userStackAddr = 0;
         newTask->userStackSize = 0;
     }
 
@@ -356,9 +356,9 @@ static void kill(task_t* task)
     }
 
     // free memory for user stack 
-    if (task->userStack != 0)
+    if (task->userStackAddr != 0)
     {
-        paging_free (task->page_directory, task->userStack, task->userStackSize * PAGESIZE);
+        paging_free (task->page_directory, task->userStackAddr, task->userStackSize * PAGESIZE);
         paging_free (task->page_directory, task->userProgAddr, task->userProgSize);
         
         if (task->page_directory != kernel_pd)
