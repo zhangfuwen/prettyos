@@ -286,6 +286,7 @@ void printf(const char* args, ...)
     va_list ap;
     va_start(ap, args);
     vprintf(args, ap);
+    va_end(ap);
 }
 
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
