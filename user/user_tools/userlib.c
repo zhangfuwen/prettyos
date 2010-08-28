@@ -205,6 +205,7 @@ void printf(const char* args, ...) {
     va_list ap;
     va_start(ap, args);
     vprintf(args, ap);
+    va_end(ap);
 }
 void vprintf(const char* args, va_list ap)
 {
@@ -335,6 +336,7 @@ void sprintf(char *buffer, const char *args, ...)
     va_list ap;
     va_start(ap, args);
     vsprintf(buffer, args, ap);
+    va_end(ap);
 }
 
 void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
@@ -408,6 +410,7 @@ void snprintf(char *buffer, size_t length, const char *args, ...)
     va_list ap;
     va_start(ap, args);
     vsnprintf(buffer, length, args, ap);
+    va_end(ap);
 }
 
 char toLower(char c)

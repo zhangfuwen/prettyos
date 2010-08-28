@@ -166,6 +166,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 break;
         }
     }
+    va_end(ap);
 }
 
 void writeInfo(uint8_t line, char* args, ...)
@@ -173,6 +174,7 @@ void writeInfo(uint8_t line, char* args, ...)
     va_list ap;
     va_start(ap, args);
     vsnprintf(infoBar[line], 81, args, ap);
+    va_end(ap); 
     refreshUserScreen();
 }
 
