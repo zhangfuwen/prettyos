@@ -175,7 +175,7 @@ void writeInfo(uint8_t line, char* args, ...)
     va_start(ap, args);
     vsnprintf(infoBar[line], 81, args, ap);
     va_end(ap); 
-    refreshUserScreen();
+    // refreshUserScreen(); // HACK <--- leads to massive error in VBox and VMWare
 }
 
 void refreshUserScreen()

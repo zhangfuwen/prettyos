@@ -22,7 +22,7 @@
 #include "cpu.h"
 #include "descriptor_tables.h"
 
-const char* version = "0.0.1.213 - Rev: 795";
+const char* version = "0.0.1.214 - Rev: 796";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
