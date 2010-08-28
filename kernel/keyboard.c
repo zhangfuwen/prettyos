@@ -34,6 +34,14 @@ void keyboard_install()
     }
 }
 
+void keyboard_initKQ(keyqueue_t* KQ)
+{
+    memset(KQ->buffer, 0, KQSIZE);
+    KQ->pHead = KQ->buffer;
+    KQ->pTail = KQ->buffer;
+    KQ->count = 0;
+}
+
 static uint8_t FetchAndAnalyzeScancode()
 {
     if (inportb(0x64)&1)
@@ -195,7 +203,7 @@ void keyboard_handler(registers_t* r)
    if (KEY)
    {
        *reachableConsoles[displayedConsole]->KQ.pTail = KEY;
-       ++reachableConsoles[displayedConsole]->KQ.count_write;
+       ++reachableConsoles[displayedConsole]->KQ.count;
 
        if (reachableConsoles[displayedConsole]->KQ.pTail > reachableConsoles[displayedConsole]->KQ.buffer)
        {
@@ -212,11 +220,11 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
 {
    /// TODO: should only return character, if keystroke was entered
 
-   if (currentConsole->KQ.count_write > currentConsole->KQ.count_read)
+   if (currentConsole->KQ.count > 0)
    {
        cli();
        uint8_t KEY = *currentConsole->KQ.pHead;
-       ++currentConsole->KQ.count_read;
+       --currentConsole->KQ.count;
 
        if (currentConsole->KQ.pHead > currentConsole->KQ.buffer)
        {

@@ -11,15 +11,12 @@
 
 bool task_switching = false;
 
-task_t* kernelTask = 0; // Needed to find out when the kernel task is exited
+task_t kernelTask; // Needed to find out when the kernel task is exited
 
-task_t* currentTask = 0;
+task_t* currentTask = &kernelTask;
 listHead_t* tasks; // List of all tasks. Not sorted by pid
 
 static uint32_t next_pid = 0; // The next available process ID. TODO: Reuse old pid
-
-// The console of the active task
-console_t* currentConsole;
 
 // Some externs are needed
 extern tss_entry_t tss;
@@ -40,25 +37,23 @@ void tasking_install()
 
     tasks = list_Create();
 
-    kernelTask                 = malloc(sizeof(task_t), 0, "task-kernelTask");
-    kernelTask->pid            = next_pid++;
-    kernelTask->esp            = 0;
-    kernelTask->eip            = 0;
-    kernelTask->page_directory = kernel_pd;
-    kernelTask->privilege      = 0;
-    kernelTask->FPU_ptr        = 0;
-    kernelTask->console        = (console_t*)currentConsole;
-    kernelTask->ownConsole     = true;
-    kernelTask->attrib         = 0x0F;
-    kernelTask->blocker.type   = 0; // The task is not blocked (scheduler.h/c)
-    kernelTask->kernel_stack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
-    kernelTask->threads        = 0; // No threads associated with the task at the moment. created later if necessary
+    kernelTask.pid            = next_pid++;
+    kernelTask.esp            = 0;
+    kernelTask.eip            = 0;
+    kernelTask.page_directory = kernel_pd;
+    kernelTask.privilege      = 0;
+    kernelTask.FPU_ptr        = 0;
+    kernelTask.console        = (console_t*)currentConsole;
+    kernelTask.ownConsole     = true;
+    kernelTask.attrib         = 0x0F;
+    kernelTask.blocker.type   = 0; // The task is not blocked (scheduler.h/c)
+    kernelTask.kernel_stack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
+    kernelTask.threads        = 0; // No threads associated with the task at the moment. created later if necessary
 
-    list_Append(tasks, kernelTask);
+    list_Append(tasks, &kernelTask);
 
     scheduler_install();
-    scheduler_insertTask(kernelTask);
-    currentTask = kernelTask;
+    scheduler_insertTask(&kernelTask);
 
     task_switching = true;
 }
@@ -93,10 +88,10 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
 
         if(newTask->type != VM86)
         {
-            newTask->userStackAddr = (void*)(USER_STACK-10*PAGESIZE);
             newTask->userStackSize = 10;
+            newTask->userStackAddr = (void*)(USER_STACK-newTask->userStackSize*PAGESIZE);
             newTask->userProgAddr = globalUserProgAddr;
-            newTask->userProgSize = globalUserProgSize;               
+            newTask->userProgSize = globalUserProgSize;
 
             paging_alloc(newTask->page_directory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
             newTask->userPT = globalUserPT;
@@ -393,7 +388,7 @@ static void kill(task_t* task)
     scheduler_log();
     #endif
 
-    if(task == kernelTask) // TODO: Handle termination of shellTask
+    if(task == &kernelTask) // TODO: Handle termination of shellTask
     {
         systemControl(REBOOT);
     }

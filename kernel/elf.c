@@ -111,7 +111,7 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
     const uint8_t* elf_end = elf_beg + elf_file_size;
 
     // Read the header
-    const elf_header_t* header = (elf_header_t*) elf_beg;
+    const elf_header_t* header = (elf_header_t*)elf_beg;
 
     // validation checks
     bool validationFlag = true;
@@ -152,7 +152,6 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
 
         program_header_t* ph = (program_header_t*)header_pos;
 
-        ///
         #ifdef _DIAGNOSIS_
         textColor(0x02);
         printf("ELF file program header:\n");
@@ -162,14 +161,13 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
             types[ph->type], ph->offset, ph->vaddr, ph->paddr, ph->filesz, ph->memsz, ph->flags, ph->align);
         textColor(0x0F);
         #endif
-        ///
 
         /// TODO: check read/write privileges (info in elf?)
+
         // Allocate code area for the user program
-        
         globalUserProgAddr = (void*)(ph->vaddr);
         globalUserProgSize = alignUp(ph->memsz,PAGESIZE);
-        if (! paging_alloc(pd, globalUserProgAddr, globalUserProgSize, MEM_USER | MEM_WRITE))
+        if (!paging_alloc(pd, globalUserProgAddr, globalUserProgSize, MEM_USER | MEM_WRITE))
         {
             return false;
         }

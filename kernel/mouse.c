@@ -1,6 +1,6 @@
 /*
 *  license and disclaimer for the use of this source code as per statement below
-*  Lizenz und Haftungsausschluss fŸr die Verwendung dieses Sourcecodes siehe unten
+*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
 // http://houbysoft.com/download/ps2mouse.html
@@ -37,11 +37,11 @@ void mouse_install()
     mouse_wait(1);
     outportb(0x64, 0x20);
     mouse_wait(0);
-    uint8_t _status=(inportb(0x60) | 2);
+    uint8_t status = (inportb(0x60) | 2);
     mouse_wait(1);
     outportb(0x64, 0x60);
     mouse_wait(1);
-    outportb(0x60, _status);
+    outportb(0x60, status);
 
     // Tell the mouse to use default settings
     mouse_write(0xF6);
@@ -150,10 +150,10 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
 
 inline void mouse_wait(uint8_t a_type)
 {
-    unsigned int _time_out = 100000;
+    unsigned int time_out = 100000;
     if (a_type==0)
     {
-        while (_time_out--) // Data
+        while (time_out--) // Data
         {
             if ((inportb(0x64) & 1)==1)
             {
@@ -163,7 +163,7 @@ inline void mouse_wait(uint8_t a_type)
     }
     else
     {
-        while (_time_out--) // Signal
+        while (time_out--) // Signal
         {
             if ((inportb(0x64) & 2)==0)
             {

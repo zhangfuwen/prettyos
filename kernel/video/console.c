@@ -12,8 +12,13 @@
 console_t* reachableConsoles[11]; // Mainconsole + up to KERNELCONSOLE_ID Subconsoles
 uint8_t displayedConsole = KERNELCONSOLE_ID; // Currently visible console (KERNELCONSOLE_ID per default)
 
+console_t kernelConsole = {0, true, 0, 39, {0, 0}};
+
+// The console of the active task
+console_t* currentConsole = &kernelConsole;
+
 extern uint16_t* vidmem;
-bool scroll_flag = true;
+static bool scroll_flag = true;
 
 uint8_t getTextColor()
 {
@@ -24,31 +29,29 @@ uint8_t getTextColor()
 
 void kernel_console_init()
 {
-    currentConsole = malloc(sizeof(console_t), 0, "kernel-console"); // Reserving space for the kernels console
-    console_init(currentConsole, "");
-    reachableConsoles[KERNELCONSOLE_ID] = currentConsole;
-    currentConsole->SCROLL_END = 39;
-    currentConsole->showInfobar = true;
+    kernelConsole.SCROLL_END = 39;
+    kernelConsole.showInfobar = true;
+    kernelConsole.sp = semaphore_create(1);
+    memsetw(kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES);
+
+    keyboard_initKQ(&kernelConsole.KQ);
+
+    reachableConsoles[KERNELCONSOLE_ID] = &kernelConsole;
 }
 
 void console_init(console_t* console, const char* name)
 {
     console->name         = malloc(strlen(name)+1, 0, "console-name");
-    console->vidmem       = malloc(COLUMNS*USER_LINES*2, 0, "console-vidmem");
     console->cursor.x     = 0;
     console->cursor.y     = 0;
-    //console->SCROLL_BEGIN = 0;
+    console->SCROLL_BEGIN = 0;
     console->SCROLL_END   = USER_LINES;
     console->showInfobar  = false;
     console->sp = semaphore_create(1);
     strcpy(console->name, name);
     memsetw(console->vidmem, 0x00, COLUMNS * USER_LINES);
-    // Setup the keyqueue
-    memset(console->KQ.buffer, 0, KQSIZE);
-    console->KQ.pHead = console->KQ.buffer;
-    console->KQ.pTail = console->KQ.buffer;
-    console->KQ.count_read  = 0;
-    console->KQ.count_write = 0;
+
+    keyboard_initKQ(&console->KQ);
 
     for (uint8_t i = 0; i < 10; i++)
     { // The next free place in our console-list will be filled with the new console
@@ -62,7 +65,6 @@ void console_init(console_t* console, const char* name)
 }
 void console_exit(console_t* console)
 {
-    free(console->vidmem);
     free(console->name);
     semaphore_delete(console->sp);
 }

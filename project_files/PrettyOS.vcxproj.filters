@@ -234,9 +234,6 @@
     <ClInclude Include="..\kernel\synchronisation.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\sys_speaker.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\kernel\syscall.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
@@ -360,6 +357,9 @@
     <ClInclude Include="..\kernel\audio\sb16.h">
       <Filter>Kernel\include\audio</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\audio\sys_speaker.h">
+      <Filter>Kernel\include\audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -467,9 +467,6 @@
     <ClCompile Include="..\kernel\synchronisation.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\sys_speaker.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\kernel\syscall.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
@@ -570,6 +567,9 @@
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\audio\sb16.c">
+      <Filter>Kernel\sources\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\audio\sys_speaker.c">
       <Filter>Kernel\sources\audio</Filter>
     </ClCompile>
   </ItemGroup>

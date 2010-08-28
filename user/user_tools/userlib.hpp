@@ -111,4 +111,9 @@ extern "C" { // Functions from C-Userlib
     double fabs(double x);
 }
 
+void* operator new      (long unsigned int size);
+void* operator new[]    (long unsigned int);
+void  operator delete   (void* ptr);
+void  operator delete[] (void* ptr);
+
 #endif

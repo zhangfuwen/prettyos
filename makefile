@@ -47,11 +47,11 @@ else
 endif
 
 # dependancies
-KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c $(KERNELDIR)/video/*.c $(KERNELDIR)/storage/*.c $(KERNELDIR)/filesystem/*.c $(KERNELDIR)/network/*.c $(KERNELDIR)/netprotocol/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
+KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c $(KERNELDIR)/video/*.c $(KERNELDIR)/storage/*.c $(KERNELDIR)/filesystem/*.c $(KERNELDIR)/network/*.c $(KERNELDIR)/netprotocol/*.c $(KERNELDIR)/audio/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
 SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERTOOLS)/*.c $(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/*.asm))
 
 # Compiler-/Linker-Flags
-NASMFLAGS= -O32 -f elf
+NASMFLAGS= -Ox -f elf
 GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common
 
@@ -68,12 +68,12 @@ vpath %.o $(OBJDIR)
 all: FloppyImage.img
 
 $(STAGE1DIR)/boot.bin:
-	$(NASM) -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
+	$(NASM) -O1 -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
 $(STAGE2DIR)/BOOT2.BIN:
-	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
+	$(NASM) -Ox -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 $(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
-	$(NASM) $(USERDIR)/vm86/vidswtch.asm -o $(USERDIR)/vm86/VIDSWTCH.COM 
+	$(NASM) $(USERDIR)/vm86/vidswtch.asm -O1 -o $(USERDIR)/vm86/VIDSWTCH.COM 
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(KERNEL_OBJECTS)
 #	because changes in the Shell should change data.o we build data.o everytimes
@@ -103,6 +103,7 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\video\*.o
 	$(RM) $(OBJDIR)\$(KERNELDIR)\network\*.o
 	$(RM) $(OBJDIR)\$(KERNELDIR)\netprotocol\*.o
+	$(RM) $(OBJDIR)\$(KERNELDIR)\audio\*.o
 	$(RM) $(OBJDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(SHELLDIR)\*.o
 	$(RM) $(SHELLDIR)\shell.elf
@@ -122,6 +123,7 @@ else
 	$(RM) $(OBJDIR)/$(KERNELDIR)/video/*.o
 	$(RM) $(OBJDIR)/$(KERNELDIR)/network/*.o
 	$(RM) $(OBJDIR)/$(KERNELDIR)/netprotocol/*.o
+	$(RM) $(OBJDIR)/$(KERNELDIR)/audio/*.o
 	$(RM) $(OBJDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(SHELLDIR)/*.o
 	$(RM) $(SHELLDIR)/shell.elf

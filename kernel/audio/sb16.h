@@ -8,13 +8,10 @@
 	http://homepages.cae.wisc.edu/~brodskye/other/code.html#sb16snd
 
 
-/*
 CT1335	Sound Blaster 2.0 CD Interface Card
 CT1345	Sound Blaster Pro
 CT1745	Sound Blaster 16
-*/
 
-/*
 The Sound Blaster 16 DSP I/O Ports
 
 The SB16's DSP chip is programming using several I/O ports at a base I/O address 

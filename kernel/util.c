@@ -4,7 +4,7 @@
 */
 
 #include "util.h"
-#include "sys_speaker.h"
+#include "audio/sys_speaker.h"
 #include "video/console.h"
 #include "timer.h"
 

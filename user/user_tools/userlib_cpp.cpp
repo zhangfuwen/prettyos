@@ -5,6 +5,24 @@
 
 #include "userlib.hpp"
 
+void* operator new(long unsigned int size)
+{
+	return malloc(size);
+}
+void* operator new[](long unsigned int size)
+{
+	return malloc(size);
+}
+void operator delete(void* ptr)
+{
+	free(ptr);
+}
+void operator delete[](void* ptr)
+{
+	free(ptr);
+}
+
+
 /*
 * Copyright (c) 2009 The PrettyOS Project. All rights reserved.
 *

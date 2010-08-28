@@ -6,22 +6,24 @@
 
 #define KERNELCONSOLE_ID 10
 
+#define COLUMNS 80
+#define USER_LINES 46
+
 typedef struct // Defines the User-Space of the display
 {
     char* name;
     bool showInfobar;
-    uint16_t* vidmem; // memory that stores the content of this console. Size is USER_LINES*COLUMNS
-    //uint8_t SCROLL_BEGIN;
+    uint8_t SCROLL_BEGIN; // TODO: Make use of it
     uint8_t SCROLL_END;
     position_t cursor;
     keyqueue_t KQ; // Buffer storing keyboard input
     struct semaphore* sp;
-} console_t;
+    uint16_t vidmem[USER_LINES*COLUMNS]; // memory that stores the content of this console. Size is USER_LINES*COLUMNS
+} console_t; // ATTENTION: Do not change the order of the members without changing the order of initialization (console.c)
 
 extern console_t* reachableConsoles[11]; // All accessible consoles: up to 10 subconsoles + main console
 extern uint8_t displayedConsole;
-static const uint8_t COLUMNS = 80;
-static const uint8_t USER_LINES = 46;
+extern console_t* currentConsole;
 
 void kernel_console_init();
 void console_init(console_t* console, const char* name);

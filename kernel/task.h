@@ -48,11 +48,10 @@ struct task
 extern task_t* FPUTask; // fpu.c
 
 extern task_t* shellTask;
-extern task_t* kernelTask;
+extern task_t  kernelTask;
 
 extern bool task_switching;
 extern task_t* currentTask;
-extern console_t* currentConsole;
 
 void tasking_install();
 

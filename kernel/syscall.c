@@ -7,7 +7,7 @@
 #include "util.h"
 #include "task.h"
 #include "filesystem/fat12.h"
-#include "sys_speaker.h"
+#include "audio/sys_speaker.h"
 #include "timer.h"
 #include "irq.h"
 #include "storage/devicemanager.h"
@@ -150,7 +150,7 @@ void syscall_handler(registers_t* r)
       add $20, %%esp; \
     " : "=a" (ret) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (addr));
     r->eax = ret;
-    currentConsole = kernelTask->console;
+    currentConsole = kernelTask.console;
 }
 
 /*

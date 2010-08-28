@@ -24,14 +24,14 @@ typedef enum {/*VK_LBUTTON=0x01, VK_RBUTTON, VK_CANCEL, VK_MBUTTON, VK_XBUTTON1,
 
 typedef struct
 {
-    uint8_t buffer[KQSIZE];  // circular queue buffer
-    uint8_t* pHead;          // pointer to the head of valid data
-    uint8_t* pTail;          // pointer to the tail of valid data
-    uint32_t count_read;     // number of data read from queue buffer
-    uint32_t count_write;    // number of data put into queue buffer
+    uint8_t buffer[KQSIZE]; // circular queue buffer
+    uint8_t* pHead;         // pointer to the head of valid data
+    uint8_t* pTail;         // pointer to the tail of valid data
+    uint32_t count;         // number of keys in the queue
 } keyqueue_t;
 
 void    keyboard_install();
+void    keyboard_initKQ(keyqueue_t* KQ);
 uint8_t ScanToASCII();
 void    keyboard_handler(registers_t* r);
 uint8_t keyboard_getChar();

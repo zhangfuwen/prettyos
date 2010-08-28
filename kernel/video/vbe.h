@@ -171,7 +171,7 @@ ModeInfoBlock_t *getModeInfoBlock();
 void switchToVGA(); 
 
 // Set the screen resolution and Colordepth
-void switchToVideomode(uintptr_t* MODE);
+void switchToVideomode(void* MODE);
 
 // Return to Textmode
 void switchToTextmode();

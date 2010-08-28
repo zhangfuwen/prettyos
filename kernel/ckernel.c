@@ -22,7 +22,7 @@
 #include "cpu.h"
 #include "descriptor_tables.h"
 
-const char* version = "0.0.1.211 - Rev: 793";
+const char* version = "0.0.1.212 - Rev: 794";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -160,9 +160,9 @@ void main()
     create_cthread(&VBE_bootscreen, "VBE");
 
     textColor(0x05);
-    printf("\n-------------------------------------------------------------------------------");
-    printf("\n                                PrettyOS Booted");
-    printf("\n-------------------------------------------------------------------------------\n\n");
+    printf("\n--------------------------------------------------------------------------------");
+    printf(  "                                PrettyOS Booted");
+    printf("\n--------------------------------------------------------------------------------\n");
     textColor(0x0F);
 
     const char* progress    = "|/-\\";    // rotating asterisk

@@ -9,7 +9,7 @@
 #include "task.h"
 #include "todo_list.h"
 #include "irq.h"
-#include "sys_speaker.h"
+#include "audio/sys_speaker.h"
 
 #include "usb2.h"
 #include "usb2_msd.h"

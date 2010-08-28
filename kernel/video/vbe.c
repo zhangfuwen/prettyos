@@ -54,9 +54,9 @@ void switchToVGA()
     waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
 }
 
-void switchToVideomode(uintptr_t* MODE)
+void switchToVideomode(void* MODE)
 {
-    waitForTask(create_vm86_task((void*)MODE));
+    waitForTask(create_vm86_task(MODE));
 }
 
 void switchToTextmode()
@@ -688,6 +688,7 @@ void drawChar(char font_char)
             curPos.y += yFont;
             break;
         default:
+            if(curPos.x+xFont >= mib.XResolution) drawChar('\n');
             if (uc != 0)
             {
                 for(uint32_t y=0; y < yFont; y++)
@@ -695,7 +696,7 @@ void drawChar(char font_char)
                     for(uint32_t x=0; x<xFont; x++)
                     {
                         //SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
-                        SCREEN[ (curPos.x+x) + (curPos.y+y) * mib.XResolution * mib.BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
+                        setPixel(curPos.x+x, curPos.y+y, font[(x + xFont*uc) + (yFont-y-1) * 2048]);
                     }
                 }
             }

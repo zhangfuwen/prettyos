@@ -111,6 +111,7 @@ void scheduler_insertTask(task_t* task)
 void scheduler_deleteTask(task_t* task)
 {
     ring_DeleteFirst(task_queue, task);
+    ring_DeleteFirst(blockedTasks, task);
 
     scheduler_unblockEvent(&BL_TASK, task);
 }
