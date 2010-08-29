@@ -21,8 +21,10 @@
 #include "serial.h"
 #include "cpu.h"
 #include "descriptor_tables.h"
+#include "timer.h"
+#include "audio\sys_speaker.h"
 
-const char* version = "0.0.1.216 - Rev: 798";
+const char* version = "0.0.1.217 - Rev: 799";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -37,6 +39,19 @@ void fpu_test();    // fpu.c
 
 todoList_t* delayedInitTasks; // HACK! Why is it needed? (RTL8139 generates interrupts (endless) if its not used for EHCI)
 
+
+static void log(char* str)
+{
+    textColor(0x02);
+    printf("\n[DONE]");
+    textColor(0x07);
+    printf("\t%s",str);
+    textColor(0x0F);
+    for (uint32_t i=0; i<3000000; i++)
+    {
+        nop();
+    }
+}
 
 static void init()
 {
@@ -53,24 +68,24 @@ static void init()
     kernel_console_init();
     clear_screen();
 
-    // memory
-    system.Memory_Size = paging_install();
-    heap_install();
-
     // internal devices
-    timer_install(100); // Sets system frequency to ... Hz
-    if (cpu_supports(CF_FPU)) fpu_install();
+    timer_install(100); log("Timer");// Sets system frequency to ... Hz
+    if (cpu_supports(CF_FPU)) fpu_install(); log("FPU");
 
-    tasking_install();
+    // memory
+    system.Memory_Size = paging_install(); log("Paging");
+    heap_install(); log("Heap");
+    
+    tasking_install(); log("Multitasking");
 
     // external devices
-    keyboard_install();
-    mouse_install();
+    keyboard_install(); log("Keyboard");
+    mouse_install(); log("Mouse   ");
 
     // system calls
-    syscall_install();
+    syscall_install(); log("Syscalls");
 
-    cdi_init();
+    cdi_init(); log("CDI\n");
 
     deviceManager_install(); // device management for mass storage devices
     fsmanager_install();
@@ -78,6 +93,7 @@ static void init()
     delayedInitTasks = todoList_create();
 
     sti();
+    sleepMilliSeconds(500);
 }
 
 void showMemorySize()
