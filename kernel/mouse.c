@@ -12,6 +12,7 @@
 #include "util.h"
 #include "video/console.h"
 #include "irq.h"
+#include "video/vbe.h"
 
 char mouseid;
 int32_t mouse_x=10; // Mouse X
@@ -25,6 +26,8 @@ char mouse_b5=0;    // Mouse button 5
 
 char mouse_cycle=0; // MouseHandler help
 char mouse_byte[4]; // MouseHandler bytes
+
+uint8_t oldColor;
 
 
 void mouse_install()
@@ -70,9 +73,9 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
             if (mouse_byte[0] & BIT(3)) // Only if this is really the first Byte!
             {
                 mouse_cycle++;
-                mouse_lm=(mouse_byte[0] & 0x1);//<< 0);
-                mouse_rm=(mouse_byte[0] & 0x2);//<< 1);
-                mouse_mm=(mouse_byte[0] & 0x4);//<< 2);
+                mouse_lm = (mouse_byte[0] & 0x1);//<< 0);
+                mouse_rm = (mouse_byte[0] & 0x2);//<< 1);
+                mouse_mm = (mouse_byte[0] & 0x4);//<< 2);
                 if (mouse_rm==2)
                     mouse_rm=1;
                 if (mouse_mm==4)
@@ -95,13 +98,27 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                     mouse_byte[2] |= 0xFFFFFF00; // delta-y is a negative value
                 if (!(mouse_byte[0] & 0x10))
                     mouse_byte[1] |= 0xFFFFFF00; // delta-x is a negative value
-
-                mouse_x = mouse_x+mouse_byte[1];
-                mouse_y = mouse_y+mouse_byte[2];
-                writeInfo(1, "Mouse: X:%d Y:%d Z:No Mousewheel found LM:%d MM:%d RM:%d id:%y\n",
-                    mouse_x, mouse_y,
-                    mouse_lm, mouse_mm, mouse_rm,
-                    mouseid);
+                
+                if(videomode == VM_VBE)
+                {
+                    vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
+                }
+                mouse_x += mouse_byte[1];
+                mouse_y -= mouse_byte[2];
+                if(videomode == VM_VBE)
+                {
+                    mouse_x = max(0, min(mouse_x, getModeInfoBlock()->XResolution-1));
+                    mouse_y = max(0, min(mouse_y, getModeInfoBlock()->YResolution-1));
+                    oldColor = vbe_getPixel(mouse_x, mouse_y);
+                    vbe_setPixel(mouse_x, mouse_y, 0x09);
+                }
+                else
+                {
+                    writeInfo(1, "Mouse: X:%d Y:%d Z:No Mousewheel found LM:%d MM:%d RM:%d id:%y\n",
+                        mouse_x, mouse_y,
+                        mouse_lm, mouse_mm, mouse_rm,
+                        mouseid);
+                }
                 mouse_cycle=0;
             }
             else
@@ -117,38 +134,62 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 mouse_byte[1] |= 0xFFFFFF00; // delta-x is a negative value
             if (mouseid == 1) // Mouse has 'only' a scrollwheel
             {
-                mouse_x = mouse_x+mouse_byte[1];
-                mouse_y = mouse_y+mouse_byte[2];
-                mouse_z = mouse_z+mouse_byte[3];
-
-                writeInfo(1, "Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
-                       mouse_x, mouse_y, mouse_z,
-                       mouse_lm, mouse_mm, mouse_rm,
-                       mouseid);
-
+                if(videomode == VM_VBE)
+                {
+                    vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
+                }
+                mouse_x += mouse_byte[1];
+                mouse_y -= mouse_byte[2];
+                mouse_z += mouse_byte[3];
+                
+                if(videomode == VM_VBE)
+                {
+                    mouse_x = max(0, min(mouse_x, getModeInfoBlock()->XResolution-1));
+                    mouse_y = max(0, min(mouse_y, getModeInfoBlock()->YResolution-1));
+                    oldColor = vbe_getPixel(mouse_x, mouse_y);
+                    vbe_setPixel(mouse_x, mouse_y, 0x09);
+                }
+                else
+                {
+                    writeInfo(1, "Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
+                           mouse_x, mouse_y, mouse_z,
+                           mouse_lm, mouse_mm, mouse_rm,
+                           mouseid);
+                }
                 mouse_cycle=0;
             }
             else // Mouse has also Buttons 4+5
             {
+                if(videomode == VM_VBE)
+                {
+                    vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
+                }
                 mouse_b4 = mouse_byte[3] & 0x16;
                 mouse_b5 = mouse_byte[3] & 0x32;
-                mouse_x = mouse_x+mouse_byte[1];
-                mouse_y = mouse_y+mouse_byte[2];
-                mouse_z = mouse_z+(mouse_byte[3] & 0xF);
-                printf("%y: %y\n",mouse_byte[3],(mouse_byte[3] & 0xF));
-                /*
-                printf("Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
-                       mouse_x,mouse_y,mouse_z,
-                       mouse_lm,mouse_mm,mouse_rm,
-                       mouseid);
-                */
+                mouse_x += mouse_byte[1];
+                mouse_y -= mouse_byte[2];
+                mouse_z += (mouse_byte[3] & 0xF);
+                if(videomode == VM_VBE)
+                {
+                    mouse_x = max(0, min(mouse_x, getModeInfoBlock()->XResolution-1));
+                    mouse_y = max(0, min(mouse_y, getModeInfoBlock()->YResolution-1));
+                    oldColor = vbe_getPixel(mouse_x, mouse_y);
+                    vbe_setPixel(mouse_x, mouse_y, 0x09);
+                }
+                else
+                {
+                    writeInfo(1, "Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d B4:%d B5:%d id:%y\n",
+                           mouse_x, mouse_y, mouse_z,
+                           mouse_lm, mouse_mm, mouse_rm, mouse_b4, mouse_b5,
+                           mouseid);
+                }
                 mouse_cycle=0;
             }
             break;
     }
 }
 
-inline void mouse_wait(uint8_t a_type)
+void mouse_wait(uint8_t a_type)
 {
     unsigned int time_out = 100000;
     if (a_type==0)
@@ -173,7 +214,7 @@ inline void mouse_wait(uint8_t a_type)
     }
 }
 
-inline void mouse_write(int8_t a_write)
+void mouse_write(int8_t a_write)
 {
     // Wait to be able to send a command
     mouse_wait(1);

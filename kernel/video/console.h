@@ -16,7 +16,7 @@ typedef struct // Defines the User-Space of the display
     uint8_t SCROLL_BEGIN; // TODO: Make use of it
     uint8_t SCROLL_END;
     position_t cursor;
-    keyqueue_t KQ; // Buffer storing keyboard input
+    keyqueue_t KQ;
     struct semaphore* sp;
     uint16_t vidmem[USER_LINES*COLUMNS]; // memory that stores the content of this console. Size is USER_LINES*COLUMNS
 } console_t; // ATTENTION: Do not change the order of the members without changing the order of initialization (console.c)

@@ -14,8 +14,8 @@
 /// #define _TASKING_DIAGNOSIS_ // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_  // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_      // Provides information about the vm86 task, but critical
-/// #define _SOUND_             // This is no sound, only "beep". Better stop it! ^^
-#define _PCI_VEND_PROD_LIST_ // http://www.pcidatabase.com/pci_c_header.php
+#define _SOUND_             // Enables sound in PrettyOS. Enabled per default.
+#define _PCI_VEND_PROD_LIST_ // http://www.pcidatabase.com/pci_c_header.php - Increases the kernels size heavily
 
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);
@@ -29,11 +29,11 @@ static inline void kdebug(uint8_t color, const char* args, ...)
     va_list ap;
     va_start(ap, args);
     vprintf(args, ap);
+    va_end(ap);
     if(color != 0x00)
     {
         textColor(0x0F);
     }
-    va_end(ap);
     #endif
 }
 

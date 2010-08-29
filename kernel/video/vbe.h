@@ -2,11 +2,12 @@
 #define VBE_H
 
 #include "os.h"
+#include "video.h"
 
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
 // http://poli.cs.vsb.cz/misc/rbint/text/1005.html
 
-#define VM86_SWITCH_TO_VIDEO                ((void*)0x100)
+// This values are hardcoded adresses from vidswtch.map
 #define VM86_SWITCH_TO_VIDEO_640_480_256    ((void*)0x100)
 #define VM86_SWITCH_TO_VIDEO_800_600_256    ((void*)0x10B)
 #define VM86_SWITCH_TO_VIDEO_1024_768_256   ((void*)0x116)
@@ -22,12 +23,6 @@
 #define VM86_GETPALETTE                     ((void*)0x1DE)
 #define VM86_SWITCH_TO_TEXT                 ((void*)0x1F1)
 
-// #define DIRECT_BANKING
-
-// Transfer segment and offset to a linear 32-bit pointer
-#define MAKE_LINEAR_POINTER(segment, offset)  ((uintptr_t)(((uint32_t) (segment) << 16) | (uint16_t) (offset)))
-
-extern uintptr_t bmp_start;
 
 // SuperVGA information block
 typedef struct
@@ -85,20 +80,13 @@ typedef struct
     uint8_t    res2[206];              // Pad to 256 byte block size //212
 } __attribute__((packed)) ModeInfoBlock_t;
 
-typedef enum
+/*typedef enum
 {
     memPL   = 3,  // Planar memory model
     memPK   = 4,  // Packed pixel memory model
     memRGB  = 6,  // Direct color RGB memory model
     memYUV  = 7,  // Direct color YUV memory model
-} memModels;
-
-typedef struct
-{
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-} RGB_t;
+} memModels;*/
 
 // bitmap the structure
 typedef struct
@@ -129,6 +117,14 @@ typedef struct
 } __attribute__((packed)) BitmapHeader_t;
 
 
+typedef struct
+{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+    uint8_t alpha;
+} RGBA_t;
+
 // Correct arrangement of palettes in bmp format: Blue Green Red Unused (mostly 0)
 // The palettes are stored in backwards order in each palette entry
 // http://en.wikipedia.org/wiki/BMP_file_format#Color_palette
@@ -138,7 +134,7 @@ typedef struct
     uint8_t green;
     uint8_t red;
     uint8_t rgbreserved;
-} __attribute__((packed)) RGBQuad_t;
+} __attribute__((packed)) BGRQuad_t;
 
 typedef struct
 {
@@ -149,42 +145,35 @@ typedef struct
     uint32_t green_pad   : 2;
     uint32_t red         : 6;
     uint32_t red_pad     : 2;
-    uint8_t alignDword; // ???
-} __attribute__((packed)) RGBQuadPacked_t;
+    uint8_t alignDword;
+} __attribute__((packed)) BGRQuadPacked_t;
 
 
 typedef struct
 {
     BitmapHeader_t bmiheader;
-    RGBQuad_t bmicolors[256];
+    BGRQuad_t bmicolors[256];
 } __attribute__((packed)) BMPInfo_t;
 
-typedef struct {
-    uint16_t x, y;
-} CursorPosition_t;
+
+// Mode switch functions, will be later moved to a "video-manager" that switches between the modes
+void switchToVideomode(void* MODE); // Switches to a VBE Mode
+void switchToTextmode(); // Switches to the VGA Textmode
+
 
 void setVgaInfoBlock(VgaInfoBlock_t* VIB);
 void setModeInfoBlock(ModeInfoBlock_t* MIB);
-ModeInfoBlock_t *getModeInfoBlock();
+ModeInfoBlock_t* getModeInfoBlock();
 
-// Change change it to a better matching function name...
-void switchToVGA(); 
-
-// Set the screen resolution and Colordepth
-void switchToVideomode(void* MODE);
-
-// Return to Textmode
-void switchToTextmode();
-
+void getVgaIB();
 
 void setDisplayStart(uint16_t *xpos, uint16_t *ypos);
 uint32_t getDisplayStart();
 
-void vgaDebug();
-void printPalette(RGBQuadPacked_t* RGB);
+void setVideoMemory(); // Allocate the videomemory from the graphiccard
 
-void setPalette(RGBQuadPacked_t* RGB);
-uint32_t getPalette();
+void setPalette(BGRQuadPacked_t* RGB);
+void printPalette(BGRQuadPacked_t* RGB);
 
 // Set a Palette (old vga registers, need changed to the VBE Registers in vidswtch.asm)
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t  Red, uint8_t  Green, uint8_t  Blue);
@@ -192,57 +181,48 @@ void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t
 void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette);
 void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumberOfColors, uint8_t* Palette);
 
+// Basic drawing functionality
+void     vbe_setPixel(uint32_t x, uint32_t y, uint32_t color); // Sets a single pixel on the screen
+uint32_t vbe_getPixel(uint32_t x, uint32_t y);                 // Returns the color of a single pixel on the screen
+
+// Advanced and formatted drawing functionality
+void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);           // Draws a line
+void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color); // Draws a rectancle
+void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);                  // Draws a circle
+void vbe_drawChar(char c);                                                                       // Draws a character using font.h
+void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos);                             // Draws a string using vbe_drawChar
+void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);                         // Draws a bitmap, loaded from data.asm via incbin
+void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart);           // Scales a bitmap and draws it
+
+// Debugging information
+void bitmapDebug();
+void vgaDebug();
+
+// VBE Testing area
+void VBE_bootscreen();
+
+
+
+/// Unsuned functions
+
+/*
 // needs to be implemented in vidswtch.asm
-void setDACPalette(RGBQuadPacked_t* RGB);
+void setDACPalette(BGRQuadPacked_t* RGB);
 uint32_t getDACPalette();
 
-// Returns the VBEMode structure
-uint32_t getVBEMode(void);
-
-// 
-void setVBEMode(uint32_t mode);
-
-// Allocate the videomemory from the graphiccard
-void setVideoMemory();
-
-// List the avalible screen resolutions and color depths
-void availableModes(void);
-
-// Set a pixel to screen
-void setPixel(uint32_t x, uint32_t y, uint32_t color);
-
-// Get a pixel from screen
-uint32_t getPixel(uint32_t x, uint32_t y);
-
-// Draws a line
-void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
-
-// Draws a rectancle
-void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color);
-
-// Draws a circle
-void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);
-
-// Draws a bitmap, loaded from data.asm via incbin
-void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);
-
-// Draws a scaled Bitmap
-void scaleBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);
 
 // currently not used and not finished
 char ISValidBitmap(char *fname);
 void showbitmap(char *infname,int xs,int ys);
 
-// Shows Bitmap information
-void bitmapDebug();
 
-// Draws a character using font.h
-void drawChar(char font_char);
+// Returns the VBEMode structure
+uint32_t getVBEMode();
 
-// Draws a character string
-void drawString(const char* text, uint32_t xpos, uint32_t ypos);
+// 
+void setVBEMode(uint32_t mode);
 
-// VBE Testing area
-void VBE_bootscreen();
+// List the avalible screen resolutions and color depths
+void availableModes(void);*/
 
 #endif

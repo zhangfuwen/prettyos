@@ -303,6 +303,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     va_list ap;
     va_start(ap, attribute);
     vprintf(message, ap);
+    va_end(ap);
 
     scroll_flag = true;
     textColor(old_attrib);

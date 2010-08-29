@@ -972,16 +972,6 @@ void bootscreen() {
 }
 
 
-uint32_t max(uint32_t a, uint32_t b)
-{
-    return(a >= b ? a : b);
-}
-
-uint32_t min(uint32_t a, uint32_t b)
-{
-    return(a <= b ? a : b);
-}
-
 int32_t power(int32_t base, int32_t n)
 {
     if (n == 0 || base == 1)

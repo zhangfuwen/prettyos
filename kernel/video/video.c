@@ -11,6 +11,8 @@
 
 uint16_t* vidmem = (uint16_t*)0xB8000;
 
+VIDEOMODES videomode = VM_TEXT;
+
 char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 
 static const uint8_t LINES      = 50;
@@ -169,13 +171,25 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     va_end(ap);
 }
 
+static void refreshInfoBar()
+{
+    memsetw(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS); // Clearing info-area
+    kprintf(infoBar[0], 45, 14);
+    kprintf(infoBar[1], 46, 14);
+    kprintf(infoBar[2], 47, 14);
+}
+
 void writeInfo(uint8_t line, char* args, ...)
 {
     va_list ap;
     va_start(ap, args);
     vsnprintf(infoBar[line], 81, args, ap);
-    va_end(ap); 
-    // refreshUserScreen(); // HACK <--- leads to massive error in VBox and VMWare
+    va_end(ap);
+
+    if(reachableConsoles[displayedConsole]->showInfobar)
+    {
+        refreshInfoBar();
+    }
 }
 
 void refreshUserScreen()
@@ -203,9 +217,7 @@ void refreshUserScreen()
         memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * (USER_LINES-4) * 2);
         memsetw(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS); // Clearing info-area
         kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
-        kprintf(infoBar[0], 45, 14);
-        kprintf(infoBar[1], 46, 14);
-        kprintf(infoBar[2], 47, 14);
+        refreshInfoBar();
     }
     else
     {

@@ -6,7 +6,6 @@
 #include "vbe.h"
 #include "util.h"
 #include "task.h"
-#include "video.h"
 #include "paging.h"
 #include "font.h"
 
@@ -17,10 +16,10 @@ BitmapHeader_t  bh;
 BitmapHeader_t* bh_get;
 BMPInfo_t* bmpinfo;
 
-RGBQuadPacked_t* ScreenPal = (RGBQuadPacked_t*)0x1600;
+BGRQuadPacked_t* ScreenPal = (BGRQuadPacked_t*)0x1600;
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
-CursorPosition_t curPos;
+position_t curPos = {0, 0};
 
 
 // vm86
@@ -49,7 +48,7 @@ ModeInfoBlock_t* getModeInfoBlock()
     return &mib;
 }
 
-void switchToVGA()
+void getVgaIB()
 {
     waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
 }
@@ -57,30 +56,32 @@ void switchToVGA()
 void switchToVideomode(void* MODE)
 {
     waitForTask(create_vm86_task(MODE));
+    videomode = VM_VBE;
 }
 
 void switchToTextmode()
 {
     waitForTask(create_vm86_task(VM86_SWITCH_TO_TEXT));
+    videomode = VM_TEXT;
     refreshUserScreen();
 }
 
-void setDisplayStart(uint16_t *xpos, uint16_t *ypos)
-{
-    // memcpy(*(0x1800), xpos, sizeof(xpos));
-    // memcpy(*(0x1802), ypos, sizeof(ypos));
-    waitForTask(create_vm86_task(VM86_SETDISPLAYSTART));
-}
+//void setDisplayStart(uint16_t *xpos, uint16_t *ypos)
+//{
+//    // memcpy(*(0x1800), xpos, sizeof(xpos));
+//    // memcpy(*(0x1802), ypos, sizeof(ypos));
+//    waitForTask(create_vm86_task(VM86_SETDISPLAYSTART));
+//}
 
 uint32_t getDisplayStart()
 {
     waitForTask(create_vm86_task(VM86_GETDISPLAYSTART));
-    return (((*(uint16_t*)(0x1300))<<16) | (*(uint16_t*)(0x1302)));
+    return (*(uint32_t*)0x1300);
     // [0x1300]; First Displayed Scan Line
     // [0x1302]; First Displayed Pixel in Scan Line
 }
 
-void printPalette(RGBQuadPacked_t* RGB)
+void printPalette(BGRQuadPacked_t* RGB)
 {
     for(uint32_t j=0; j<256; j++)
     {
@@ -99,7 +100,7 @@ void printPalette(RGBQuadPacked_t* RGB)
             for(uint32_t y = 0; y < 5; y++)
             {
                 // setPixel((x+xpos), (y+ypos), (ScreenPal[j].red) + (ScreenPal[j].green) + (ScreenPal[j].blue));
-                setPixel((x+xpos), (y+ypos), j);
+                vbe_setPixel((x+xpos), (y+ypos), j);
             }
         }
         xpos +=5;
@@ -111,7 +112,7 @@ void printPalette(RGBQuadPacked_t* RGB)
     }
 }
 
-void setPalette(RGBQuadPacked_t* RGB)
+void setPalette(BGRQuadPacked_t* RGB)
 {
     /*
     Format of VESA VBE palette entry:
@@ -123,18 +124,6 @@ void setPalette(RGBQuadPacked_t* RGB)
     */
     ScreenPal = RGB;
     waitForTask(create_vm86_task(VM86_SETPALETTE));
-}
-
-uint32_t getPalette()
-{
-    waitForTask(create_vm86_task(VM86_GETPALETTE));
-
-    printf("\nDEBUG: Palette output:\n");
-    printf("RED:   %u \n",  *(uint8_t*)0x1400);
-    printf("GREEN: %u \n",  *(uint8_t*)0x1401);
-    printf("BLUE:  %u \n",  *(uint8_t*)0x1402);
-
-    return 0;
 }
 
 // http://wiki.osdev.org/VGA_Hardware#VGA_Registers
@@ -161,9 +150,9 @@ void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palet
     outportb(0x03C6, 0xFF);
     outportb(0x03C8, StartColor); // first color to be input
     for(uint32_t i=0; i<NumOfColors*3; i++)
-     {
+    {
         outportb(0x03C9, Palette[i]<<2);
-     }
+    }
 }
 
 void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palette)
@@ -176,7 +165,7 @@ void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palett
     }
 }
 
-void setDACPalette(RGBQuadPacked_t* RGB)
+/*void setDACPalette(BGRQuadPacked_t* RGB)
 {
     waitForTask(create_vm86_task(VM86_SETDACPALETTE));
 }
@@ -185,20 +174,7 @@ uint32_t getDACPalette()
 {
     waitForTask(create_vm86_task(VM86_GETDACPALETTE));
     return 0;
-}
-
-inline void setPixel(uint32_t x, uint32_t y, uint32_t color)
-{
-    // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
-    SCREEN[y * mib.XResolution + x * mib.BitsPerPixel/8] = color;
-}
-
-uint32_t getPixel(uint32_t x, uint32_t y)
-{
-    uint32_t color;
-    color = SCREEN[y * mib.XResolution + x * mib.BitsPerPixel/8];
-    return color;
-}
+}*/
 
 void setVideoMemory()
 {
@@ -209,7 +185,20 @@ void setVideoMemory()
      printf("\nVideo Ram %u MiB\n",vgaIB.TotalMemory/0x10);
 }
 
-void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
+inline void vbe_setPixel(uint32_t x, uint32_t y, uint32_t color)
+{
+    // unsigned uint8_t* pixel = vram + y*pitch + x*pixelwidth;
+    SCREEN[y * mib.XResolution + x * mib.BitsPerPixel/8] = color;
+}
+
+uint32_t vbe_getPixel(uint32_t x, uint32_t y)
+{
+    uint32_t color;
+    color = SCREEN[y * mib.XResolution + x * mib.BitsPerPixel/8];
+    return color;
+}
+
+void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
 {
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
@@ -227,17 +216,17 @@ void bitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
     }
 
     uint8_t* i = (uint8_t*)bitmap_end;
-     for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
-     {
-         for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
-         {
-             SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
-             i -= (mib.BitsPerPixel/8);
-         }
-     }
+    for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
+    {
+        for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
+        {
+            SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
+            i -= (mib.BitsPerPixel/8);
+        }
+    }
 }
 
-void scaleBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart)
+void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart)
 {
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
@@ -262,7 +251,7 @@ void scaleBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart)
                 for(uint16_t j = 0; j < rowsY; j++)
                 {
                     if(x-i > 0)
-                        setPixel(x-i, y+j, *pixel);
+                        vbe_setPixel(x-i, y+j, *pixel);
                 }
             }
 
@@ -283,7 +272,7 @@ void scaleBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart)
 }
 
 // draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division. 
-void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
+void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
 {
     uint32_t dx=x2-x1;      // the horizontal distance of the line
     uint32_t dy=y2-y1;      // the vertical distance of the line
@@ -309,7 +298,7 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
                 py+=sdy;
             }
             px+=sdx;
-            setPixel(px,py,color);
+            vbe_setPixel(px,py,color);
         }
     }
     else // the line is more vertical than horizontal
@@ -323,13 +312,13 @@ void line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
                 px+=sdx;
             }
             py+=sdy;
-            setPixel(px,py,color);
+            vbe_setPixel(px,py,color);
         }
     }
 }
 
 // Draws a rectangle by drawing all lines by itself.
-void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
+void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
 {
     if (top>bottom)
     {
@@ -360,15 +349,15 @@ void rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t
 }
 
 // http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
-void drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
+void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
 {    
     for (uint32_t i=0; i<=2*radius; i++)
     {
         uint32_t x  = xm - radius + i;
         uint32_t y1 = ym + (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
         uint32_t y2 = ym - (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
-        setPixel(x, y1, 9);
-        setPixel(x, y2, 9);
+        vbe_setPixel(x, y1, 9);
+        vbe_setPixel(x, y2, 9);
     }
 }
 
@@ -537,9 +526,9 @@ void vgaDebug()
     printf("Physical Memory Base:  %X\n", mib.PhysBasePtr);
 }
 
-char ISValidBitmap(char* fname)
+/*char ISValidBitmap(char* fname)
 {
-/*
+
     BMPINFO bmpinfo;
     FILE *fp;
     if((fp = fopen(fname,"rb+"))==0)
@@ -568,13 +557,13 @@ char ISValidBitmap(char* fname)
         printf("can't read the file: should be 8-bit per color format!!");
         return 0;
     }
-*/
-    return 1;
-}
 
-void showbitmap(char* infname,int xs,int ys)
+    return 1;
+}*/
+
+/*void showbitmap(char* infname,int xs,int ys)
 {
-/*
+
     BMPINFO bmpinfo;
     RGB pal[256];
     FILE *fpt;
@@ -632,8 +621,8 @@ void showbitmap(char* infname,int xs,int ys)
     getch();
     vclosegraph();
     return 0;
-    */
-}
+    
+}*/
 
 void bitmapDebug() // TODO: make it bitmap-specific
 {
@@ -656,7 +645,7 @@ void bitmapDebug() // TODO: make it bitmap-specific
     printf("Colors Important:      %u\n", bh.ColorsImportant);
 }
 
-void drawChar(char font_char)
+void vbe_drawChar(char font_char)
 {
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
     uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
@@ -688,7 +677,7 @@ void drawChar(char font_char)
             curPos.y += yFont;
             break;
         default:
-            if(curPos.x+xFont >= mib.XResolution) drawChar('\n');
+            if(curPos.x+xFont >= mib.XResolution) vbe_drawChar('\n');
             if (uc != 0)
             {
                 for(uint32_t y=0; y < yFont; y++)
@@ -696,7 +685,7 @@ void drawChar(char font_char)
                     for(uint32_t x=0; x<xFont; x++)
                     {
                         //SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
-                        setPixel(curPos.x+x, curPos.y+y, font[(x + xFont*uc) + (yFont-y-1) * 2048]);
+                        vbe_setPixel(curPos.x+x, curPos.y+y, font[(x + xFont*uc) + (yFont-y-1) * 2048]);
                     }
                 }
             }
@@ -705,11 +694,11 @@ void drawChar(char font_char)
     }
 }
 
-void drawString(const char* text, uint32_t xpos, uint32_t ypos)
+void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos)
 {
     curPos.x = xpos;
     curPos.y = ypos;
-    for (; *text; drawChar(*text), ++text);
+    for (; *text; vbe_drawChar(*text), ++text);
 }
 
 void VBE_bootscreen()
@@ -732,7 +721,7 @@ void VBE_bootscreen()
 
     bh_get = (BitmapHeader_t*)&bmp_start;
 
-    switchToVGA(); // change it to a better matching function name...
+    getVgaIB();
 
     setVgaInfoBlock((VgaInfoBlock_t*)0x3400);
 
@@ -777,27 +766,27 @@ void VBE_bootscreen()
             break;
     }
 
-    line(0, modeInfoBlock_user->YResolution/2 + 1, modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution/2 + 1, 0x09); // FPU
-    line(modeInfoBlock_user->XResolution/2, 0, modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution, 0x09); // FPU
+    vbe_drawLine(0, modeInfoBlock_user->YResolution/2 + 1, modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution/2 + 1, 0x09); // FPU
+    vbe_drawLine(modeInfoBlock_user->XResolution/2, 0, modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution, 0x09); // FPU
     waitForKeyStroke();
 
-    drawCircle(modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution/2, modeInfoBlock_user->YResolution/2, 0x01); // FPU
+    vbe_drawCircle(modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution/2, modeInfoBlock_user->YResolution/2, 0x01); // FPU
     waitForKeyStroke();
 
-    bitmap(320,0,&bmp_start);
+    vbe_drawBitmap(320,0,&bmp_start);
     waitForKeyStroke();
 
     printPalette(ScreenPal);
     waitForKeyStroke();
 
-    drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
+    vbe_drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
     waitForKeyStroke();
 
-    scaleBitmap(modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution, &bmp_start); // testing
+    vbe_drawScaledBitmap(modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution, &bmp_start); // testing
     waitForKeyStroke();
 
     uint32_t displayStart = getDisplayStart();
-    uint32_t color = getPixel(1,1);
+    uint32_t color = vbe_getPixel(1,1);
 
     switchToTextmode();
 

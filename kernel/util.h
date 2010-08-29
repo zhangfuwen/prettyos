@@ -17,6 +17,9 @@
 #define BYTE3(a) (((a)>>16) & 0xFF)
 #define BYTE4(a) (((a)>>24) & 0xFF)
 
+#define max(a, b) (a >= b ? a : b)
+#define min(a, b) (a <= b ? a : b)
+
 #define NAN (__builtin_nanf (""))
 #define pi 3.1415926535897932384626433832795028841971693993
 
@@ -88,8 +91,6 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 uint32_t alignUp(uint32_t val, uint32_t alignment);
 uint32_t alignDown(uint32_t val, uint32_t alignment);
 
-uint32_t max(uint32_t a, uint32_t b);
-uint32_t min(uint32_t a, uint32_t b);
 int32_t  power(int32_t base, int32_t n);
 float    sgn(float x);
 uint32_t abs(uint32_t arg);

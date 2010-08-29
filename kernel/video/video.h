@@ -8,6 +8,12 @@ typedef struct {
     uint16_t x, y;
 } position_t;
 
+typedef enum {
+    VM_TEXT, VM_VBE
+} VIDEOMODES;
+
+extern VIDEOMODES videomode;
+
 extern diskType_t* ScreenDest; // HACK
 
 void refreshUserScreen();
