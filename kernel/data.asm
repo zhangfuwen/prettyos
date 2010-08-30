@@ -21,3 +21,11 @@ _bmp_start:
 incbin "user/vm86/bootscr.bmp"
 _bmp_end:
 ;---------------------- bmp ----------------------------------------------------
+
+;---------------------- bmp cursor ---------------------------------------------
+global _cursor_start
+global _cursor_end
+_cursor_start:
+incbin "user/vm86/cursor.bmp"
+_cursor_end:
+;---------------------- bmp cursor ---------------------------------------------

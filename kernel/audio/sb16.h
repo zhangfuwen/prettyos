@@ -2,6 +2,7 @@
 #define SB16_H
 
 #include "os.h"
+#include "pci.h"
 
 /* Informationen zur Soundblaster16 Treiber Programmierung
 	http://www.inversereality.org/tutorials/sound%20programming/examples/soundblaster16example2.html
@@ -113,5 +114,7 @@ typedef struct
 	uint8_t trebleleft,trebleright;
 	uint8_t bassleft,bassright;
 }__attribute__ ((packed)) MixerStruct_t;
+
+void install_SB16(pciDev_t* device);
 
 #endif

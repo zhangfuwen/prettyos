@@ -15,6 +15,7 @@ BitmapHeader_t  bh;
 
 BitmapHeader_t* bh_get;
 BMPInfo_t* bmpinfo;
+BMPInfo_t* cursorBmpInfo;
 
 BGRQuadPacked_t* ScreenPal = (BGRQuadPacked_t*)0x1600;
 
@@ -226,6 +227,38 @@ void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
     }
 }
 
+void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
+{
+    uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
+    uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
+
+    if(mib.BitsPerPixel == 8)
+    {
+        cursorBmpInfo = (BMPInfo_t*)bitmapMemStart;
+        for(uint32_t j=0; j<256; j++)
+        {
+            // transfer from bitmap palette to packed RAMDAC palette
+            Set_DAC_C (j, cursorBmpInfo->bmicolors[j].red   >> 2,
+                          cursorBmpInfo->bmicolors[j].green >> 2,
+                          cursorBmpInfo->bmicolors[j].blue  >> 2);
+        }
+    }
+
+    uint8_t* i = (uint8_t*)bitmap_end;
+    for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
+    {
+        for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
+        {
+			if(0xF6 == (*i - mib.BitsPerPixel/8)) // 0xF6 == WHITE
+			{
+			}else{
+				SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
+				i -= (mib.BitsPerPixel/8);
+			}
+        }
+    }
+}
+
 void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart)
 {
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
@@ -346,6 +379,18 @@ void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, 
         SCREEN[left+i]=color;
         SCREEN[right+i]=color;
     }
+}
+
+// Draws a rectangle by drawing all lines by itself. Filled
+void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
+{
+	for(int i = left; i < right; i++)
+	{
+		for(int j = top; j < bottom; j++)
+		{
+			SCREEN[ (left+i) + (top+j) * mib.XResolution * mib.BitsPerPixel/8 ] = color;
+		}
+	}
 }
 
 // http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
@@ -773,9 +818,14 @@ void VBE_bootscreen()
     vbe_drawCircle(modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution/2, modeInfoBlock_user->YResolution/2, 0x01); // FPU
     waitForKeyStroke();
 
-    vbe_drawBitmap(320,0,&bmp_start);
+	// vbe_drawBitmap(320,0,&cursor_start);
+
+    vbe_drawBitmap(0, 0, &bmp_start);
     waitForKeyStroke();
 
+	// vbe_drawRectFilled(10, 340, 10+19, 320+19, 0xF6);
+    waitForKeyStroke();
+	
     printPalette(ScreenPal);
     waitForKeyStroke();
 

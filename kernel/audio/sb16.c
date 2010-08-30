@@ -4,6 +4,20 @@
 */
 
 #include "sb16.h"
+#include "util.h"
+
+void install_SB16(pciDev_t* device)
+{
+/*
+	uint8_t irq = device->irq;
+	uint8_t bus = device->bus;
+	uint8_t device = device->device;
+	uint8_t func = device->func;
+*/
+	cli();
+	
+	sti();
+}
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.

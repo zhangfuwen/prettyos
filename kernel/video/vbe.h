@@ -188,10 +188,12 @@ uint32_t vbe_getPixel(uint32_t x, uint32_t y);                 // Returns the co
 // Advanced and formatted drawing functionality
 void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);           // Draws a line
 void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color); // Draws a rectancle
+void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color); // Draw a rectancle filled
 void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);                  // Draws a circle
 void vbe_drawChar(char c);                                                                       // Draws a character using font.h
 void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos);                             // Draws a string using vbe_drawChar
 void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);                         // Draws a bitmap, loaded from data.asm via incbin
+void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);				 // Draws a bitmap, WHITE is for transparent
 void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart);           // Scales a bitmap and draws it
 
 // Debugging information
