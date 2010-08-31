@@ -204,8 +204,8 @@ void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
     uintptr_t bitmap_start = (uintptr_t)bitmapMemStart + sizeof(BMPInfo_t);
     uintptr_t bitmap_end = bitmap_start + ((BitmapHeader_t*)bitmapMemStart)->Width * ((BitmapHeader_t*)bitmapMemStart)->Height;
 
-    if(mib.BitsPerPixel == 8)
-    {
+    // if(mib.BitsPerPixel == 8)
+    //{
         bmpinfo = (BMPInfo_t*)bitmapMemStart;
         for(uint32_t j=0; j<256; j++)
         {
@@ -214,17 +214,19 @@ void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
                           bmpinfo->bmicolors[j].green >> 2,
                           bmpinfo->bmicolors[j].blue  >> 2);
         }
-    }
+    //}
 
-    uint8_t* i = (uint8_t*)bitmap_end;
-    for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
-    {
-        for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
-        {
-            SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
-            i -= (mib.BitsPerPixel/8);
-        }
-    }
+
+	uint8_t* i = (uint8_t*)bitmap_end;
+	for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
+	{
+		for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
+		{
+			SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
+			i -= (mib.BitsPerPixel/8);
+		}
+	}	
+	
 }
 
 void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
@@ -778,6 +780,7 @@ void VBE_bootscreen()
     printf("1. 640x480x256\n");
     printf("2. 800x600x256\n");
     printf("3. 1024x768x256 (Default mode WORKING!)\n");
+	printf("4. 1024x768x32k (TESTING!)\n");
     uint8_t selectMode = getch();
     switch(selectMode)
     {
@@ -787,10 +790,13 @@ void VBE_bootscreen()
         case '2':
             waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_800_600_256));
             break;
-        case '3': default:
+        case '3':
             waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_256));
             break;
-    }
+        case '4': default:
+            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_32k));
+            break;
+	}
 
     setModeInfoBlock((ModeInfoBlock_t*)0x3600);
     modeInfoBlock_user = getModeInfoBlock();
@@ -808,8 +814,11 @@ void VBE_bootscreen()
         case '2':
             switchToVideomode(VM86_SWITCH_TO_VIDEO_800_600_256);
             break;
-        case '3': default:
+        case '3':
             switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_256);
+            break;
+		case '4': default:
+            switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_32k);
             break;
     }
 
