@@ -16,8 +16,8 @@ a chance to emulate the facilities they affect.
 #include "util.h"
 #include "task.h"
 
-current_t Current;
-current_t* current = &Current;
+static current_t Current;
+static current_t* current = &Current;
 
 context_v86_t context;
 

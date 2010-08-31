@@ -22,7 +22,7 @@ USERTOOLS=../user_tools
 # dependancies
 
 # Compiler-/Linker-Flags
-NASMFLAGS= -O32 -f elf
+NASMFLAGS= -Ox -f elf
 GCCFLAGS= -c -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common -nmagic
 

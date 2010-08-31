@@ -249,12 +249,14 @@ void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, void* bitmapMemStar
     {
         for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
         {
-			if(0xF6 == (*i - mib.BitsPerPixel/8)) // 0xF6 == WHITE
-			{
-			}else{
-				SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
-				i -= (mib.BitsPerPixel/8);
-			}
+            if(0xF6 == (*i - mib.BitsPerPixel/8)) // 0xF6 == WHITE
+            {
+            }
+            else
+            {
+                SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
+                i -= (mib.BitsPerPixel/8);
+            }
         }
     }
 }
@@ -384,18 +386,18 @@ void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, 
 // Draws a rectangle by drawing all lines by itself. Filled
 void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
 {
-	for(int i = left; i < right; i++)
-	{
-		for(int j = top; j < bottom; j++)
-		{
-			SCREEN[ (left+i) + (top+j) * mib.XResolution * mib.BitsPerPixel/8 ] = color;
-		}
-	}
+    for(int i = left; i < right; i++)
+    {
+        for(int j = top; j < bottom; j++)
+        {
+            SCREEN[ (left+i) + (top+j) * mib.XResolution * mib.BitsPerPixel/8 ] = color;
+        }
+    }
 }
 
 // http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
 void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
-{    
+{
     for (uint32_t i=0; i<=2*radius; i++)
     {
         uint32_t x  = xm - radius + i;
@@ -818,21 +820,21 @@ void VBE_bootscreen()
     vbe_drawCircle(modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution/2, modeInfoBlock_user->YResolution/2, 0x01); // FPU
     waitForKeyStroke();
 
-	// vbe_drawBitmap(320,0,&cursor_start);
+    // vbe_drawBitmap(320,0,&cursor_start);
 
     vbe_drawBitmap(0, 0, &bmp_start);
     waitForKeyStroke();
 
-	// vbe_drawRectFilled(10, 340, 10+19, 320+19, 0xF6);
+    // vbe_drawRectFilled(10, 340, 10+19, 320+19, 0xF6);
     waitForKeyStroke();
-	
+    
     printPalette(ScreenPal);
     waitForKeyStroke();
 
     vbe_drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
     waitForKeyStroke();
 
-    vbe_drawScaledBitmap(modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution, &bmp_start); // testing
+    vbe_drawScaledBitmap(modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution, &bmp_start);
     waitForKeyStroke();
 
     uint32_t displayStart = getDisplayStart();

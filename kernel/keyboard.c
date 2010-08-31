@@ -14,15 +14,13 @@
 #include "keyboard_US.h"
 #endif
 
-bool ShiftKeyDown = false;  // variable for Shift Key Down
-bool CtrlKeyDown  = false;  // variable for Ctrl Key Down
-bool AltKeyDown   = false;  // variable for Alt Key Down
-bool AltGrKeyDown = false;  // variable for AltGr Key Down
-bool KeyPressed   = false;  // variable for Key Pressed
-uint8_t curScan   = 0;      // current scan code from Keyboard
-uint8_t prevScan  = 0;      // previous scan code
+static bool AltKeyDown   = false; // variable for Alt Key Down
+static bool AltGrKeyDown = false; // variable for AltGr Key Down
+static bool KeyPressed   = false; // variable for Key Pressed
+static uint8_t curScan   = 0;     // current scan code from Keyboard
+static uint8_t prevScan  = 0;     // previous scan code
 
-bool VKPressed[170]; // for monitoring pressed keys
+static bool VKPressed[170]; // for monitoring pressed keys
 
 void keyboard_install()
 {
@@ -42,6 +40,40 @@ void keyboard_initKQ(keyqueue_t* KQ)
     KQ->count = 0;
 }
 
+static void setKeyState(uint8_t scanCode, bool pressed)
+{
+    KeyPressed = pressed;
+
+    VKPressed[(uint8_t)toUpper(asciiNonShift[scanCode])] = pressed;
+    if (scanCode == KRLEFT_ALT || scanCode == KRRIGHT_ALT) // ALT: We do not differenciate between left and right
+    {
+        if(prevScan == 0x60)
+            AltGrKeyDown = KeyPressed;
+        else
+            AltKeyDown = KeyPressed;
+    }
+    else if (scanCode == KRLEFT_SHIFT) // SHIFT
+    {
+        VKPressed[VK_SHIFT] = KeyPressed;
+        VKPressed[VK_LSHIFT] = KeyPressed;
+    }
+    else if (scanCode == KRRIGHT_SHIFT)
+    {
+        VKPressed[VK_SHIFT] = KeyPressed;
+        VKPressed[VK_RSHIFT] = KeyPressed;
+    }
+    else if (scanCode == KRLEFT_CTRL) // CONTROL
+    {
+        VKPressed[VK_LCONTROL] = KeyPressed;
+        VKPressed[VK_CONTROL] = KeyPressed;
+    }
+    else if (scanCode == KRRIGHT_CTRL)
+    {
+        VKPressed[VK_RCONTROL] = KeyPressed;
+        VKPressed[VK_CONTROL] = KeyPressed;
+    }
+}
+
 static uint8_t FetchAndAnalyzeScancode()
 {
     if (inportb(0x64)&1)
@@ -49,67 +81,17 @@ static uint8_t FetchAndAnalyzeScancode()
 
     // ACK: toggle bit 7 at port 0x61
     uint8_t port_value = inportb(0x61);
-    outportb(0x61,port_value |  0x80); // 0->1
-    outportb(0x61,port_value &~ 0x80); // 1->0
+    outportb(0x61, port_value |  0x80); // 0->1
+    outportb(0x61, port_value &~ 0x80); // 1->0
 
     if (curScan & 0x80) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
     {
         curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
-        VKPressed[(uint8_t)toUpper(asciiNonShift[curScan])] = KeyPressed = false;
-
-        if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT) // A key was released, shift key up?
-        {
-            VKPressed[VK_SHIFT] = ShiftKeyDown = KeyPressed; // yes, it is up --> NonShift
-            if (curScan == KRLEFT_SHIFT)
-            {
-                 VKPressed[VK_LSHIFT] = KeyPressed;
-            }
-            else
-            {
-                 VKPressed[VK_RSHIFT] = KeyPressed;
-            }
-        }
-        if ((curScan == 0x38) && (prevScan == 0x60))
-        {
-            AltGrKeyDown = false;
-        }
-        else if (curScan == 0x38)
-        {
-            AltKeyDown = false;
-        }
-        if (curScan == 0x1D)
-        {
-            CtrlKeyDown = false;
-        }
+        setKeyState(curScan, false);
     }
     else // Key was pressed
     {
-        VKPressed[(uint8_t)toUpper(asciiNonShift[curScan])] = KeyPressed = true;
-
-        if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT)
-        {
-            VKPressed[VK_SHIFT] = ShiftKeyDown = KeyPressed; // It is down, use asciiShift characters
-            if (curScan == KRLEFT_SHIFT)
-            {
-                 VKPressed[VK_LSHIFT] = KeyPressed;
-            }
-            else
-            {
-                 VKPressed[VK_RSHIFT] = KeyPressed;
-            }
-        }
-        if ((curScan == 0x38) && (prevScan == 0x60))
-        {
-            AltGrKeyDown = true;
-        }
-        else if (curScan == 0x38)
-        {
-            AltKeyDown = true;
-        }
-        if (curScan == 0x1D)
-        {
-            CtrlKeyDown = true;
-        }
+        setKeyState(curScan, true);
     }
     prevScan = curScan;
     return curScan;
@@ -117,7 +99,7 @@ static uint8_t FetchAndAnalyzeScancode()
 
 uint8_t ScanToASCII()
 {
-    curScan = FetchAndAnalyzeScancode();  // Grab scancode, and get the position of the shift key
+    curScan = FetchAndAnalyzeScancode(); // Grab scancode, and get the position of the shift key
 
     // filter Shift Key and Key Release
     if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT || KeyPressed == false)
@@ -125,26 +107,26 @@ uint8_t ScanToASCII()
         return 0;
     }
 
-    uint8_t retchar = 0;  // The character that returns the scan code to ASCII code
+    uint8_t retchar = 0; // The character that returns the scan code to ASCII code
 
     if (AltGrKeyDown)
     {
-        if (ShiftKeyDown)
+        if (VKPressed[VK_SHIFT])
         {
             retchar = asciiShiftAltGr[curScan];
         }
-        if (!ShiftKeyDown || retchar == 0) // if just shift is pressed or if there is no key specified for ShiftAltGr
+        if (!VKPressed[VK_SHIFT] || retchar == 0) // if just shift is pressed or if there is no key specified for ShiftAltGr (so retchar is still 0)
         {
             retchar = asciiAltGr[curScan];
         }
     }
     if (!AltGrKeyDown || retchar == 0)
     {
-        if (ShiftKeyDown)
+        if (VKPressed[VK_SHIFT])
         {
             retchar = asciiShift[curScan];
         }
-        if (!ShiftKeyDown || retchar == 0)
+        if (!VKPressed[VK_SHIFT] || retchar == 0)
         {
             retchar = asciiNonShift[curScan]; // (Lower) Non-Shift Codes
         }
@@ -165,7 +147,7 @@ uint8_t ScanToASCII()
         }
     }
 
-    if(CtrlKeyDown)
+    if(VKPressed[VK_CONTROL]) // TODO: Probably everything accessed by Ctrl+Key can be moved into the shell when the needed syscalls and/or PrettyIPC are implemented
     {
         if(retchar == 's') // Taking a screenshot (FLOPPY); Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
         {
@@ -199,45 +181,45 @@ uint8_t ScanToASCII()
 
 void keyboard_handler(registers_t* r)
 {
-   uint8_t KEY = ScanToASCII();
-   if (KEY)
-   {
-       *reachableConsoles[displayedConsole]->KQ.pTail = KEY;
-       ++reachableConsoles[displayedConsole]->KQ.count;
+    uint8_t KEY = ScanToASCII();
+    if (KEY)
+    {
+        *reachableConsoles[displayedConsole]->KQ.pTail = KEY;
+        ++reachableConsoles[displayedConsole]->KQ.count;
 
-       if (reachableConsoles[displayedConsole]->KQ.pTail > reachableConsoles[displayedConsole]->KQ.buffer)
-       {
-           --reachableConsoles[displayedConsole]->KQ.pTail;
-       }
-       if (reachableConsoles[displayedConsole]->KQ.pTail == reachableConsoles[displayedConsole]->KQ.buffer)
-       {
-           reachableConsoles[displayedConsole]->KQ.pTail = reachableConsoles[displayedConsole]->KQ.buffer + KQSIZE - 1;
-       }
-   }
+        if (reachableConsoles[displayedConsole]->KQ.pTail > reachableConsoles[displayedConsole]->KQ.buffer)
+        {
+            --reachableConsoles[displayedConsole]->KQ.pTail;
+        }
+        if (reachableConsoles[displayedConsole]->KQ.pTail == reachableConsoles[displayedConsole]->KQ.buffer)
+        {
+            reachableConsoles[displayedConsole]->KQ.pTail = reachableConsoles[displayedConsole]->KQ.buffer + KQSIZE - 1;
+        }
+    }
 }
 
 uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
 {
-   /// TODO: should only return character, if keystroke was entered
+    /// TODO: should only return character, if keystroke was entered
 
-   if (currentConsole->KQ.count > 0)
-   {
-       cli();
-       uint8_t KEY = *currentConsole->KQ.pHead;
-       --currentConsole->KQ.count;
+    if (currentConsole->KQ.count > 0)
+    {
+        cli();
+        uint8_t KEY = *currentConsole->KQ.pHead;
+        --currentConsole->KQ.count;
 
-       if (currentConsole->KQ.pHead > currentConsole->KQ.buffer)
-       {
-           --currentConsole->KQ.pHead;
-       }
-       if (currentConsole->KQ.pHead == currentConsole->KQ.buffer)
-       {
-           currentConsole->KQ.pHead = currentConsole->KQ.buffer + KQSIZE - 1;
-       }
-       sti();
-       return KEY;
-   }
-   return 0;
+        if (currentConsole->KQ.pHead > currentConsole->KQ.buffer)
+        {
+            --currentConsole->KQ.pHead;
+        }
+        if (currentConsole->KQ.pHead == currentConsole->KQ.buffer)
+        {
+            currentConsole->KQ.pHead = currentConsole->KQ.buffer + KQSIZE - 1;
+        }
+        sti();
+        return KEY;
+    }
+    return 0;
 }
 
 char getch()

@@ -122,12 +122,14 @@ static void* syscalls[] =
     &flpydsk_format,
 };
 
+static void syscall_handler(registers_t* r);
+
 void syscall_install()
 {
     irq_installHandler(IRQ_SYSCALL, syscall_handler);
 }
 
-void syscall_handler(registers_t* r)
+static void syscall_handler(registers_t* r)
 {
     // Firstly, check if the requested syscall number is valid. The syscall number is found in EAX.
     if (r->eax >= sizeof(syscalls)/sizeof(*syscalls))

@@ -22,7 +22,7 @@ USERTOOLS=../user_tools
 # dependancies
 
 # Compiler-/Linker-Flags
-NASMFLAGS= -O32 -f elf
+NASMFLAGS= -Ox -f elf
 GCCFLAGS= -c -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common -nmagic
 
@@ -34,8 +34,8 @@ LDFLAGS= -nostdlib --warn-common -nmagic
 main:
 	$(NASM) $(USERTOOLS)/start.asm $(NASMFLAGS) -o start.o
 	$(GCC) -c $(USERTOOLS)/userlib.c -std=c99 $(GCCFLAGS)
-	$(GCC) -c $(USERTOOLS)/userlib_cpp.cpp $(GCCFLAGS) -fno-exceptions -fno-rtti -lgcc
-	$(GCC) -c *.cpp $(GCCFLAGS) -fno-exceptions -fno-rtti -lgcc -I$(USERTOOLS)
+	$(GCC) -c $(USERTOOLS)/userlib_cpp.cpp $(GCCFLAGS) -fno-exceptions -std=c++0x -fno-rtti -lgcc
+	$(GCC) -c *.cpp $(GCCFLAGS) -fno-exceptions -std=c++0x -fno-rtti -lgcc -I$(USERTOOLS)
 	$(LD) *.o -T $(USERTOOLS)/user.ld -Map user.map $(LDFLAGS) -o CPP.ELF
 	$(RM) *.o
 

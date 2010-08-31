@@ -12,7 +12,7 @@ void SetField(uint8_t x, uint8_t y, uint8_t Player)
 	{
         putch('X');
     }
-    if(Player == O)
+    else if(Player == O)
 	{
         putch('O');
     }
@@ -62,7 +62,7 @@ void Zug(uint16_t Player)
     {
 		iSetCursor(0, 24);
 		gets(str);
-		if(*str != 0)
+		if(isdigit(*str))
 		{
 			input = atoi(str);
 		}
@@ -74,7 +74,7 @@ void Zug(uint16_t Player)
 		printLine("                                                                                ", 24, 0x0F); // Clear Inputline
 		printLine("                                                                                ", 26, 0x0F); // Clear Messageline
 
-        if(input >= 9 || input < 0)
+        if(input >= 9)
         {
             printLine("Your Input was not useful.", 26, 0x0C);
         }

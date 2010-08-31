@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio\sys_speaker.h"
 
-const char* version = "0.0.1.218 - Rev: 800";
+const char* version = "0.0.1.219 - Rev: 801";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -43,14 +43,10 @@ todoList_t* delayedInitTasks; // HACK! Why is it needed? (RTL8139 generates inte
 static void log(char* str)
 {
     textColor(0x02);
-    printf("\n[DONE]");
+    printf("[DONE]");
     textColor(0x07);
-    printf("\t%s",str);
+    printf("\t%s\n",str);
     textColor(0x0F);
-    for (uint32_t i=0; i<3000000; i++)
-    {
-        nop();
-    }
 }
 
 static void init()
@@ -80,15 +76,15 @@ static void init()
 
     // external devices
     keyboard_install(); log("Keyboard");
-    mouse_install(); log("Mouse   ");
+    mouse_install(); log("Mouse");
 
     // system calls
     syscall_install(); log("Syscalls");
 
-    cdi_init(); log("CDI\n");
+    cdi_init(); log("CDI");
 
-    deviceManager_install(); // device management for mass storage devices
-    fsmanager_install();
+    deviceManager_install(); log("Devicemanager"); // device management for mass storage devices
+    fsmanager_install(); log("Filesystemmanager\n");
 
     delayedInitTasks = todoList_create();
 
@@ -98,13 +94,13 @@ static void init()
 
 void showMemorySize()
 {
-    if (system.Memory_Size >= 1048576)
+    if (system.Memory_Size >= 0x40000000) // More than 1 GiB
     {
-        printf("\nMemory size: %u MiB / %u MB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
+        printf("\nMemory size: %u GiB / %u GB  (%u MiB / %u MB, %u Bytes)\n", system.Memory_Size>>30, system.Memory_Size/1000000000, system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
     }
     else
     {
-        printf("\nMemory size: %u KiB / %u KB  (%u Bytes)\n", system.Memory_Size>>10, system.Memory_Size/1000, system.Memory_Size);
+        printf("\nMemory size: %u MiB / %u MB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
     }
 }
 
@@ -113,8 +109,6 @@ void main()
     init();
 
     create_cthread(&bootscreen, "Booting ...");
-
-    kdebug(0x00, ".bss from %X to %X set to zero.\n", &_bss_start, &_kernel_end);
 
     showMemorySize();
     cpu_analyze();

@@ -27,7 +27,7 @@ char mouse_b5=0;    // Mouse button 5
 char mouse_cycle=0; // MouseHandler help
 char mouse_byte[4]; // MouseHandler bytes
 
-uint8_t oldColor;
+static uint8_t oldColor; // Used to emulate transparency for mouse
 
 extern uintptr_t cursor_start;
 extern uintptr_t cursor_end;
@@ -104,7 +104,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-					vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
+                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
                 }
                 mouse_x += mouse_byte[1];
                 mouse_y -= mouse_byte[2];
@@ -114,7 +114,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                     mouse_y = max(0, min(mouse_y, getModeInfoBlock()->YResolution-1));
                     oldColor = vbe_getPixel(mouse_x, mouse_y);
                     // vbe_setPixel(mouse_x, mouse_y, 0x09);
-					vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
+                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
                 }
                 else
                 {
@@ -141,7 +141,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-					vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
+                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
                 }
                 mouse_x += mouse_byte[1];
                 mouse_y -= mouse_byte[2];
@@ -153,7 +153,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                     mouse_y = max(0, min(mouse_y, getModeInfoBlock()->YResolution-1));
                     oldColor = vbe_getPixel(mouse_x, mouse_y);
                     // vbe_setPixel(mouse_x, mouse_y, 0x09);
-					vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
+                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
                 }
                 else
                 {
@@ -169,7 +169,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-					vbe_drawBitmap(mouse_x, mouse_y, &cursor_start);
+                    vbe_drawBitmap(mouse_x, mouse_y, &cursor_start);
                 }
                 mouse_b4 = mouse_byte[3] & 0x16;
                 mouse_b5 = mouse_byte[3] & 0x32;
@@ -182,7 +182,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                     mouse_y = max(0, min(mouse_y, getModeInfoBlock()->YResolution-1));
                     oldColor = vbe_getPixel(mouse_x, mouse_y);
                     // vbe_setPixel(mouse_x, mouse_y, 0x09);
-					vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
+                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
                 }
                 else
                 {
@@ -233,8 +233,10 @@ void mouse_write(int8_t a_write)
     // Finally write
     outportb(0x60, a_write);
     // If necessary, wait for ACK
-    if (a_write != 0xEB && a_write != 0xEC && a_write != 0xF2 && a_write != 0xFF) {
-        if (mouse_read() != 0xFA) {
+    if (a_write != 0xEB && a_write != 0xEC && a_write != 0xF2 && a_write != 0xFF)
+    {
+        if (mouse_read() != 0xFA)
+        {
             // No ACK!!!!
         }
     }

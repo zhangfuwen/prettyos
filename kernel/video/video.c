@@ -13,14 +13,14 @@ uint16_t* vidmem = (uint16_t*)0xB8000;
 
 VIDEOMODES videomode = VM_TEXT;
 
-char infoBar[3][81]; // Infobar with 3 lines and 80 columns
+static char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 
 static const uint8_t LINES      = 50;
 static const uint8_t USER_BEGIN =  2; // Reserving  Titlebar + Separation
 static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
 
-position_t cursor;
-uint8_t attrib = 0x0F; // white text on black ground
+static position_t cursor;
+static uint8_t attrib = 0x0F; // white text on black ground
 
 void clear_screen()
 {

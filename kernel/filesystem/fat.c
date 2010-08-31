@@ -25,24 +25,23 @@
 #include "filesystem/fat.h"
 
 
-
 // prototypes
 static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t value, bool forceWrite);
 static bool writeFileEntry(FAT_file_t* fileptr, uint32_t* curEntry);
 
 // data buffer
-FAT_file_t* globalFilePtr         = 0;          // Global variable indicating which file is using the partition's data buffer
-bool     globalBufferMemSet0      = false;      // Global variable indicating that the data buffer contains all zeros
-uint32_t globalLastDataSectorRead = 0xFFFFFFFF; // Global variable indicating which data sector was read last
-bool     globalDataWriteNecessary = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
+static FAT_file_t* globalFilePtr         = 0;          // Global variable indicating which file is using the partition's data buffer
+static bool     globalBufferMemSet0      = false;      // Global variable indicating that the data buffer contains all zeros
+static uint32_t globalLastDataSectorRead = 0xFFFFFFFF; // Global variable indicating which data sector was read last
+static bool     globalDataWriteNecessary = false;      // Global variable indicating that there is data in the buffer that hasn't been written to the device.
 
 // FAT
-uint8_t  globalBufferFATSector[SECTOR_SIZE];    // Global FAT sector buffer
-uint32_t globalLastFATSectorRead  = 0xFFFFFFFF; // Global variable indicating which FAT sector was read last
-bool     globalFATWriteNecessary  = false;      // Global variable indicating that there is information that needs to be written to the FAT
+static uint8_t  globalBufferFATSector[SECTOR_SIZE];    // Global FAT sector buffer
+static uint32_t globalLastFATSectorRead  = 0xFFFFFFFF; // Global variable indicating which FAT sector was read last
+static bool     globalFATWriteNecessary  = false;      // Global variable indicating that there is information that needs to be written to the FAT
 
 // others
-uint8_t  globalNextClusterIsLast = false;       // Global variable indicating that the entries in a directory align with a cluster boundary
+static uint8_t  globalNextClusterIsLast = false;       // Global variable indicating that the entries in a directory align with a cluster boundary
 
 static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
 {

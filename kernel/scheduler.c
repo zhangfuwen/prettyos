@@ -11,10 +11,10 @@
 #include "synchronisation.h"
 #include "todo_list.h"
 
-ring_t* task_queue;
-ring_t* blockedTasks;
+static ring_t* task_queue;
+static ring_t* blockedTasks;
 
-task_t* freetimeTask = 0;
+static task_t* freetimeTask = 0;
 
 blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK, BL_TODOLIST;
 

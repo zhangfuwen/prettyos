@@ -16,7 +16,7 @@
 #endif
 
 
-pciDev_t* pciDev_Array[PCIARRAYSIZE];
+static pciDev_t* pciDev_Array[PCIARRAYSIZE];
 
 void analyzeHostSystemError(pciDev_t* pciDev)
 {

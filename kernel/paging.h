@@ -6,11 +6,7 @@
 #define PAGESIZE            0x1000  // size 
 #define MEMORY_MAP_ADDRESS  0x1000  // address
 
-static const uint32_t MEM_PRESENT  = 1;
-static const uint32_t MEM_READONLY = 0;
-static const uint32_t MEM_KERNEL   = 0;
-static const uint32_t MEM_WRITE    = 2;
-static const uint32_t MEM_USER     = 4;
+enum MEM_FLAGS {MEM_KERNEL = 0, MEM_PRESENT = 1, MEM_WRITE = 2, MEM_USER = 4};
 
 // Memory Map
 typedef struct
@@ -36,7 +32,7 @@ typedef struct
 
 extern page_directory_t* kernel_pd;
 
-void paging_switch (page_directory_t* pd);
+void paging_switch(page_directory_t* pd);
 uint32_t paging_install();
 
 bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags);
