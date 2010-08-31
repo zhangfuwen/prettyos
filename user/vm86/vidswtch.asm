@@ -22,9 +22,15 @@ video_mode_1024_768_256:
     int 10h
     jmp exitvm86
 
-video_mode_1024_768_32k:
+video_mode_1024_768_64k:
     mov ax, 0x4F02
     mov bx, 0x4117 ; video mode
+    int 10h
+    jmp exitvm86
+
+video_mode_1024_768_16M:
+    mov ax, 0x4F02
+    mov bx, 0x4118 ; video mode
     int 10h
     jmp exitvm86
 
@@ -76,7 +82,7 @@ ModeInfoBlock_1024_768_256:
     mov ds,ax
     jmp exitvm86
 
-ModeInfoBlock_1024_768_32k:
+ModeInfoBlock_1024_768_64k:
     xor ax, ax
     mov es, ax
     mov ax, 0x3600
@@ -88,6 +94,20 @@ ModeInfoBlock_1024_768_32k:
     xor ax,ax
     mov ds,ax
     jmp exitvm86
+
+ModeInfoBlock_1024_768_16M:
+    xor ax, ax
+    mov es, ax
+    mov ax, 0x3600
+    mov di, ax
+    mov ax, 0x4F01
+    mov cx, 0x4118 ; video mode
+    int 10h
+    mov word [0x1300], ax ; return value
+    xor ax,ax
+    mov ds,ax
+    jmp exitvm86
+
 ;SetBank:
 ;    mov ax, 0x4F05
 ;    mov bx, 0
