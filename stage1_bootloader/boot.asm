@@ -21,12 +21,10 @@ entry_point:
     xor     ax, ax                     ; set registers
     mov     ds, ax
     mov     es, ax
-    mov     fs, ax
-    mov     gs, ax
 
     mov     ax, 0x7C00                 ; set the stack
+        xor     sp, sp
     mov     ss, ax
-    xor     sp, sp
 
     mov  [bootdevice], dl              ; store boot device
     mov si, msgLoading
@@ -99,8 +97,8 @@ Load_FAT:
 
     ; read image file into memory (0500h)
     xor ax, ax
-    mov es, ax                         ; destination for image
     mov bx, 0x0500                     ; destination for image
+    mov es, ax                         ; destination for image
     push bx
 
 ;******************************************************************************
@@ -257,6 +255,5 @@ msgProgress    db "*", 0
 msgLoading     db "Loading Second Stage Bootloader", 0x0D, 0x0A, 0
 msgFailure     db 0x0D, 0x0A, "BOOT2.BIN MISSING", 0x0D, 0x0A, 0
 
-TIMES 510-($-$$) hlt                   ; fill bytes until boot signature
-db 0x55                                ; boot signature
-db 0xAA                                ; boot signature
+TIMES 510-($-$$) db 0                  ; fill bytes until boot signature
+dw 0xAA55                        ; boot signature
