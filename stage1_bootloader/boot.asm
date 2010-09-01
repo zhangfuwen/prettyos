@@ -23,8 +23,11 @@ entry_point:
     mov     es, ax
 
     mov     ax, 0x7C00                 ; set the stack
-        xor     sp, sp
-    mov     ss, ax
+    mov     ss, ax                     ; this instruction disables interrupts
+                                       ; for one instruction, thus no interrupt
+                                       ; can occur when the stack is "unstable"
+                                       ; (known ss, but unknown sp)
+    xor     sp, sp                     ; interrupts are disabled here
 
     mov  [bootdevice], dl              ; store boot device
     mov si, msgLoading
