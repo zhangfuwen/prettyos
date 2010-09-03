@@ -8,11 +8,11 @@
 #define NUMBER_GDT_GATES 6 // 0-5: Null, Kernel Code, Kernel Data, User Code, User Data, TSS
 
 // Our GDT, and finally our special GDT pointer
-gdt_entry_t gdt[NUMBER_GDT_GATES];
-gdt_ptr_t   gdt_register;
+GDTentry_t gdt[NUMBER_GDT_GATES];
+GDTptr_t   GDTregister;
 
 // Setup a descriptor in the Global Descriptor Table
-void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
+void GDTsetGate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
 {
     // Setup the descriptor base address
     gdt[num].base_low    =  base & 0xFFFF;
@@ -31,21 +31,21 @@ void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, ui
 void gdt_install()
 {
     // Setup the GDT pointer and limit
-    gdt_register.limit = (sizeof(gdt_entry_t) * NUMBER_GDT_GATES)-1;
-    gdt_register.base  = (uint32_t) &gdt;
+    GDTregister.limit = (sizeof(GDTentry_t) * NUMBER_GDT_GATES)-1;
+    GDTregister.base  = (uint32_t) &gdt;
 
     // GDT GATES -  desriptors with pointers to the linear memory address
-    gdt_set_gate(0,0,0,0,0); // NULL descriptor
+    GDTsetGate(0,0,0,0,0); // NULL descriptor
 
     //           num base limit    access                                               gran
-    gdt_set_gate(1, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32);
-    gdt_set_gate(2, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32);
-    gdt_set_gate(3, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32);
-    gdt_set_gate(4, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32);
+    GDTsetGate(1, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32);
+    GDTsetGate(2, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32);
+    GDTsetGate(3, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32);
+    GDTsetGate(4, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32);
 
-    write_tss(5, 0x10, 0x0); // num, ss0, esp0
-    gdt_flush((uint32_t)&gdt_register);
-    tss_flush();
+    TSSwrite(5, 0x10, 0x0); // num, ss0, esp0
+    GDTflush((uintptr_t) &GDTregister);
+    TSSflush();
 }
 
 /*

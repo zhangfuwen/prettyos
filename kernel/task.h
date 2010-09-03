@@ -19,19 +19,19 @@ struct task
     uint32_t          esp;            // Stack pointer
     uint32_t          eip;            // Instruction pointer
     uint32_t          ss;             // stack segment
-    pageDirectory_t* page_directory; // Page directory
+    pageDirectory_t*  pageDirectory;  // Page directory
     uint8_t           privilege;      // access privilege
     uint8_t*          heap_top;       // user heap top
-    void*             kernel_stack;   // Kernel stack location
-    uintptr_t         FPU_ptr;        // pointer to FPU data
-    void            (*entry)();       // entry point, used to resart the task
+    void*             kernelStack;    // Kernel stack location
+    uintptr_t         FPUptr;        // pointer to FPU data
+    void              (*entry)();     // entry point, used to resart the task
     listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
     task_t*           parent;         // task who created this thread (only used for threads)
     
     // user task specific program and stack memory data
     void*             userProgAddr; 
     uint32_t          userProgSize;
-    void*             userStackAddr;      // stack that is allocated by user tasks
+    void*             userStackAddr;  // stack that is allocated by user tasks
     uint32_t          userStackSize;  // size of user stack measured in PAGESIZE
     void*             userPT;         // store the PT to free them later at the heap 
 

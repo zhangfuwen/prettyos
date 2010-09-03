@@ -205,9 +205,7 @@ void bitmapDebug();
 void vgaDebug();
 
 // VBE Testing area
-void VBE_bootscreen();
-
-
+void vbe_bootscreen();
 
 /// Unsuned functions
 

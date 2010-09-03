@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio\sys_speaker.h"
 
-const char* version = "0.0.1.222 - Rev: 806";
+const char* version = "0.0.1.223 - Rev: 807";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -167,7 +167,7 @@ void main()
         textColor(0x0F);
     }
 
-    create_cthread(&VBE_bootscreen, "VBE");
+    create_cthread(&vbe_bootscreen, "VBE");
 
     textColor(0x05);
     printf("\n--------------------------------------------------------------------------------");

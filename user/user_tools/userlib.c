@@ -740,19 +740,19 @@ void* malloc(size_t size)
     // Heap not set up?
     if (!cur)
     {
-        uint32_t to_grow = (size+4095) & ~4095;
-        cur = userheapAlloc(to_grow);
+        uint32_t sizeToGrow = (size+4095) & ~4095;
+        cur = userheapAlloc(sizeToGrow);
         if (!cur)
             return 0;
-        top = cur + to_grow;
+        top = cur + sizeToGrow;
     }
     // Not enough space on heap?
     else if (top - cur < size)
     {
-        uint32_t to_grow = (size+4095) & ~4095;
-        if (!userheapAlloc(to_grow))
+        uint32_t sizeToGrow = (size+4095) & ~4095;
+        if (!userheapAlloc(sizeToGrow))
             return 0;
-        top += to_grow;
+        top += sizeToGrow;
     }
 
     void* ret = cur;

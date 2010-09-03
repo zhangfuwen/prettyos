@@ -22,9 +22,9 @@
 #define KERNEL_DATA_END   ((uint8_t*)0xE0000000)   // 3,75 GiB
 
 // Virtual adress area for the kernel heap
-#define KERNEL_HEAP_START KERNEL_DATA_START
-#define KERNEL_HEAP_END   PCI_MEM_START
-#define KERNEL_HEAP_SIZE  ((uint8_t*)((uintptr_t)KERNEL_HEAP_END - (uintptr_t)KERNEL_HEAP_START))
+#define KERNEL_heapStart KERNEL_DATA_START
+#define KERNEL_heapEnd   PCI_MEM_START
+#define KERNEL_heapSize  ((uint8_t*)((uintptr_t)KERNEL_heapEnd - (uintptr_t)KERNEL_heapStart))
 
 // memory location for MMIO of devices (networking card, EHCI, grafics card, ...)
 #define PCI_MEM_START     ((uint8_t*)0x0E0000000)
@@ -43,7 +43,7 @@
 #define USER_STACK 0x1420000
 
 // User Heap management
-#define USER_HEAP_START   ((uint8_t*)0x1420000)                       // 20 MiB plus 128 KiB
-#define USER_HEAP_END     ((uint8_t*)(KERNEL_DATA_START - 0x1000000)) //  3 GiB minus 16 MiB
+#define USER_heapStart   ((uint8_t*)0x1420000)                       // 20 MiB plus 128 KiB
+#define USER_heapEnd     ((uint8_t*)(KERNEL_DATA_START - 0x1000000)) //  3 GiB minus 16 MiB
 
 #endif

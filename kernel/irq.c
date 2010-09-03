@@ -14,18 +14,18 @@ typedef void(*interrupt_handler_t)(registers_t*);
 extern context_v86_t context; // vm86.c
 
 // Array of function pointers handling custom ir handlers for a given ir
-static interrupt_handler_t int_routines[256];
+static interrupt_handler_t interruptRoutines[256];
 
 // Implement a custom ir handler for the given ir
 void irq_installHandler(IRQ_NUM_t irq, interrupt_handler_t handler)
 {
-    int_routines[irq+32] = handler;
+    interruptRoutines[irq+32] = handler;
 }
 
 // Clear the custom ir handler
 void irq_uninstallHandler(IRQ_NUM_t irq)
 {
-    int_routines[irq+32] = 0;
+    interruptRoutines[irq+32] = 0;
 }
 
 
@@ -35,8 +35,8 @@ void waitForIRQ(IRQ_NUM_t number)
 }
 
 
-// Message string corresponding to the exception number 0-31: exception_messages[interrupt_number]
-const char* exception_messages[] =
+// Message string corresponding to the exception number 0-31: exceptionMessages[interrupt_number]
+const char* exceptionMessages[] =
 {
     "Division By Zero",        "Debug",                         "Non Maskable Interrupt",    "Breakpoint",
     "Into Detected Overflow",  "Out of Bounds",                 "Invalid Opcode",            "No Coprocessor",
@@ -76,23 +76,23 @@ static void NM(registers_t* r) // -> FPU
     // save FPU data ...
     if (FPUTask)
     {
-        // fsave or fnsave to FPUTask->FPU_ptr
-        __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(FPUTask->FPU_ptr)));
+        // fsave or fnsave to FPUTask->FPUptr
+        __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(FPUTask->FPUptr)));
     }
 
     // store the last task using FPU
     FPUTask = currentTask;
 
     // restore FPU data ...
-    if (currentTask->FPU_ptr)
+    if (currentTask->FPUptr)
     {
-        // frstor from pCurrentTask->FPU_ptr
-        __asm__ volatile("frstor %0" :: "m" (*(uint8_t*)(currentTask->FPU_ptr)));
+        // frstor from pCurrentTask->FPUptr
+        __asm__ volatile("frstor %0" :: "m" (*(uint8_t*)(currentTask->FPUptr)));
     }
     else
     {
-        // allocate memory to pCurrentTask->FPU_ptr
-        currentTask->FPU_ptr = (uintptr_t)malloc(108,4,"FPU_ptr"); // http://siyobik.info/index.php?module=x86&id=112
+        // allocate memory to pCurrentTask->FPUptr
+        currentTask->FPUptr = (uintptr_t)malloc(108,4,"FPUptr"); // http://siyobik.info/index.php?module=x86&id=112
     }
 }
 
@@ -177,13 +177,13 @@ static void PF(registers_t* r)
 void isr_install()
 {
     // Installing ISR-Routines
-    int_routines[ISR_invalidOpcode] = &invalidOpcode;
-    int_routines[ISR_NM] = &NM;
-    int_routines[ISR_GPF] = &GPF;
-    int_routines[ISR_PF] = &PF;
+    interruptRoutines[ISR_invalidOpcode] = &invalidOpcode;
+    interruptRoutines[ISR_NM] = &NM;
+    interruptRoutines[ISR_GPF] = &GPF;
+    interruptRoutines[ISR_PF] = &PF;
 }
 
-uint32_t irq_handler(uint32_t esp)
+uint32_t irq_handler(uintptr_t esp)
 {
     uint8_t attr = getTextColor();       // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
     currentConsole = kernelTask.console; // The output should appear in the kernels console usually
@@ -204,12 +204,12 @@ uint32_t irq_handler(uint32_t esp)
 
         printf("\n\n");
         textColor(0x0B);
-        printf("%s!\n", exception_messages[r->int_no]);
+        printf("%s!\n", exceptionMessages[r->int_no]);
 
         quitTask();
     }
 
-    interrupt_handler_t handler = int_routines[r->int_no];
+    interrupt_handler_t handler = interruptRoutines[r->int_no];
     if (handler)
         handler(r);
 

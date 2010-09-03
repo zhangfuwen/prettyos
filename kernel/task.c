@@ -19,7 +19,7 @@ listHead_t* tasks; // List of all tasks. Not sorted by pid
 static uint32_t next_pid = 0; // The next available process ID. TODO: Reuse old pid
 
 // Some externs are needed
-extern tss_entry_t tss;
+extern TSSentry_t tss;
 void irq_tail();
 void fpu_setcw(uint16_t ctrlword); // fpu.c
 
@@ -40,14 +40,14 @@ void tasking_install()
     kernelTask.pid            = next_pid++;
     kernelTask.esp            = 0;
     kernelTask.eip            = 0;
-    kernelTask.page_directory = kernelPageDirectory;
+    kernelTask.pageDirectory = kernelPageDirectory;
     kernelTask.privilege      = 0;
-    kernelTask.FPU_ptr        = 0;
+    kernelTask.FPUptr        = 0;
     kernelTask.console        = (console_t*)currentConsole;
     kernelTask.ownConsole     = true;
     kernelTask.attrib         = 0x0F;
     kernelTask.blocker.type   = 0; // The task is not blocked (scheduler.h/c)
-    kernelTask.kernel_stack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
+    kernelTask.kernelStack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
     kernelTask.threads        = 0; // No threads associated with the task at the moment. created later if necessary
 
     list_Append(tasks, &kernelTask);
@@ -74,9 +74,9 @@ void waitForTask(task_t* blockingTask)
 static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, void(*entry)(), uint8_t privilege)
 {
     newTask->pid            = next_pid++;
-    newTask->page_directory = directory;
+    newTask->pageDirectory = directory;
     newTask->privilege      = privilege;
-    newTask->FPU_ptr        = 0;
+    newTask->FPUptr        = 0;
     newTask->attrib         = 0x0F;
     newTask->blocker.type   = 0;
     newTask->entry          = entry;
@@ -84,7 +84,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
 
     if (newTask->privilege == 3)
     {
-        newTask->heap_top = USER_HEAP_START;
+        newTask->heap_top = USER_heapStart;
 
         if(newTask->type != VM86)
         {
@@ -93,7 +93,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
             newTask->userProgAddr = globalUserProgAddr;
             newTask->userProgSize = globalUserProgSize;
 
-            pagingAlloc(newTask->page_directory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
+            pagingAlloc(newTask->pageDirectory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
             newTask->userPT = globalUserPT;
         }
         else
@@ -108,63 +108,63 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
         newTask->userStackSize = 0;
     }
 
-    newTask->kernel_stack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
-    uint32_t* kernel_stack = newTask->kernel_stack;
+    newTask->kernelStack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
+    uint32_t* kernelStack = newTask->kernelStack;
 
     uint32_t code_segment = 0x08;
 
     if(newTask->type != VM86)
     {
         if(newTask->type == THREAD)
-            *(--kernel_stack) = (uintptr_t)&exit;
+            *(--kernelStack) = (uintptr_t)&exit;
 
         if (newTask->privilege == 3)
         {
             // general information: Intel 3A Chapter 5.12
-            *(--kernel_stack) = newTask->ss = 0x23; // ss
-            *(--kernel_stack) = USER_STACK;          // esp
+            *(--kernelStack) = newTask->ss = 0x23; // ss
+            *(--kernelStack) = USER_STACK;          // esp
             code_segment = 0x1B; // 0x18|0x3=0x1B
         }
 
-        *(--kernel_stack) = 0x0202; // eflags = interrupts activated and iopl = 0
+        *(--kernelStack) = 0x0202; // eflags = interrupts activated and iopl = 0
     }
     else
     {
         code_segment = 0;
-        *(--kernel_stack) = 0x23; // gs
-        *(--kernel_stack) = 0x23; // fs
-        *(--kernel_stack) = 0x23; // es
-        *(--kernel_stack) = 0x23; // ds
-        *(--kernel_stack) = newTask->ss = 0x0000; // ss
-        *(--kernel_stack) = 4090;                 // USER_STACK;
-        *(--kernel_stack) = 0x20202;              // eflags = vm86 (bit17), interrupts (bit9), iopl=0
+        *(--kernelStack) = 0x23; // gs
+        *(--kernelStack) = 0x23; // fs
+        *(--kernelStack) = 0x23; // es
+        *(--kernelStack) = 0x23; // ds
+        *(--kernelStack) = newTask->ss = 0x0000; // ss
+        *(--kernelStack) = 4090;                 // USER_STACK;
+        *(--kernelStack) = 0x20202;              // eflags = vm86 (bit17), interrupts (bit9), iopl=0
     }
 
-    *(--kernel_stack) = code_segment;    // cs
-    *(--kernel_stack) = (uint32_t)entry; // eip
-    *(--kernel_stack) = 0;               // error code
+    *(--kernelStack) = code_segment;    // cs
+    *(--kernelStack) = (uint32_t)entry; // eip
+    *(--kernelStack) = 0;               // error code
 
-    *(--kernel_stack) = 0; // interrupt nummer
+    *(--kernelStack) = 0; // interrupt nummer
 
     // general purpose registers w/o esp
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
-    *(--kernel_stack) = 0;
+    *(--kernelStack) = 0;
+    *(--kernelStack) = 0;
+    *(--kernelStack) = 0;
+    *(--kernelStack) = 0;
+    *(--kernelStack) = 0;
+    *(--kernelStack) = 0;
+    *(--kernelStack) = 0;
 
     uint32_t data_segment = 0x10;
     if (newTask->privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
 
-    *(--kernel_stack) = data_segment;
-    *(--kernel_stack) = data_segment;
-    *(--kernel_stack) = data_segment;
-    *(--kernel_stack) = data_segment;
+    *(--kernelStack) = data_segment;
+    *(--kernelStack) = data_segment;
+    *(--kernelStack) = data_segment;
+    *(--kernelStack) = data_segment;
 
     //setup task_t
-    newTask->esp = (uint32_t)kernel_stack;
+    newTask->esp = (uint32_t)kernelStack;
     newTask->eip = (uint32_t)irq_tail;
     newTask->ss  = data_segment;
 
@@ -225,7 +225,7 @@ task_t* create_thread(void(*entry)())
     task_t* newTask = malloc(sizeof(task_t),0, "task-newthread");
     newTask->type = THREAD;
 
-    createThreadTaskBase(newTask, currentTask->page_directory, entry, currentTask->privilege);
+    createThreadTaskBase(newTask, currentTask->pageDirectory, entry, currentTask->privilege);
 
     // attach the thread with its parent
     newTask->parent = (task_t*)currentTask;
@@ -280,10 +280,10 @@ uint32_t task_switch(uint32_t esp)
 
     currentConsole = currentTask->console;
 
-    paging_switch(currentTask->page_directory);
+    paging_switch(currentTask->pageDirectory);
 
     tss.esp  = currentTask->esp;
-    tss.esp0 = (uintptr_t)currentTask->kernel_stack;
+    tss.esp0 = (uintptr_t)currentTask->kernelStack;
     tss.ss   = currentTask->ss;
 
     #ifdef _TASKING_DIAGNOSIS_
@@ -351,10 +351,10 @@ static void kill(task_t* task)
     }
 
     // free memory
-    if (task->page_directory != kernelPageDirectory)
+    if (task->pageDirectory != kernelPageDirectory)
     {
-        paging_destroyUserPageDirectory(task->page_directory);
-        free(task->page_directory); 
+        paging_destroyUserPageDirectory(task->pageDirectory);
+        free(task->pageDirectory); 
         free(task->userPT);            
     }
 
@@ -388,7 +388,7 @@ static void kill(task_t* task)
         systemControl(REBOOT);
     }
 
-    free(task->kernel_stack - KERNEL_STACK_SIZE); // free kernelstack
+    free(task->kernelStack - KERNEL_STACK_SIZE); // free kernelstack
     free(task);
 
     sti();
@@ -431,7 +431,7 @@ void task_restart(uint32_t pid)
     if(task == 0) return;
 
     // Safe old properties
-    pageDirectory_t* directory  = task->page_directory;
+    pageDirectory_t* directory  = task->pageDirectory;
     void            (*entry)()   = task->entry;
     uint8_t           privilege  = task->privilege;
     bool              ownConsole = task->ownConsole;
@@ -450,8 +450,8 @@ void* task_grow_userheap(uint32_t increase)
     uint8_t* old_heap_top = currentTask->heap_top;
     increase = alignUp(increase, PAGESIZE);
 
-    if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_HEAP_END) ||
-        !pagingAlloc(currentTask->page_directory, old_heap_top, increase, MEM_USER | MEM_WRITE))
+    if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_heapEnd) ||
+        !pagingAlloc(currentTask->pageDirectory, old_heap_top, increase, MEM_USER | MEM_WRITE))
     {
         return 0;
     }
@@ -466,8 +466,8 @@ void task_log(task_t* t)
     printf("\npid: %d\t", t->pid);          // Process ID
     printf("esp: %X  ", t->esp);            // Stack pointer
     printf("eip: %X  ", t->eip);            // Instruction pointer
-    printf("PD: %X  ", t->page_directory);  // Page directory
-    printf("k_stack: %X", t->kernel_stack); // Kernel stack location
+    printf("PD: %X  ", t->pageDirectory);  // Page directory
+    printf("k_stack: %X", t->kernelStack); // Kernel stack location
     if(t->type == THREAD)
         printf("\n\tparent: %u", t->parent->pid);
     if(t->threads && t->threads->head)

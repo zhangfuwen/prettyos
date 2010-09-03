@@ -750,7 +750,7 @@ void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos)
     for (; *text; vbe_drawChar(*text), ++text);
 }
 
-void VBE_bootscreen()
+void vbe_bootscreen()
 {
     textColor(0x09);
     printf("       >>>>>   Press 's' to skip VBE-Test or any key to continue   <<<<<\n\n");

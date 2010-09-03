@@ -60,13 +60,13 @@ typedef struct
     uint8_t  access;
     uint8_t  granularity;
     uint8_t  base_high;
-} __attribute__((packed)) gdt_entry_t;
+} __attribute__((packed)) GDTentry_t;
 
 typedef struct
 {
     uint16_t limit;
     uint32_t   base;
-} __attribute__((packed)) gdt_ptr_t;
+} __attribute__((packed)) GDTptr_t;
 
 
 // Task State Segment (TSS)
@@ -99,22 +99,22 @@ typedef struct
     uint32_t ldt;        // Unused...
     uint16_t trap;
     uint16_t iomap_base;
-} __attribute__((packed)) tss_entry_t;
+} __attribute__((packed)) TSSentry_t;
 
 
-void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
+void GDTsetGate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 void gdt_install();
 void idt_install();
 
-void write_tss(int32_t num, uint16_t ss0, uint32_t esp0);
+void TSSwrite(int32_t num, uint16_t ss0, uint32_t esp0);
 
-void TSS_log(tss_entry_t* tss);
+void TSS_log(TSSentry_t* tss);
 
 // asm functions in flush.asm
-void gdt_flush(uint32_t);
-void tss_flush();
+void GDTflush(uint32_t);
+void TSSflush();
 
 // Allows the kernel stack in the TSS to be changed.
-void set_kernel_stack(uint32_t stack);
+void setKernelStack(uint32_t stack);
 
 #endif
