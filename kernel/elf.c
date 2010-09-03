@@ -6,7 +6,7 @@
 #include "util.h"
 #include "task.h"
 
-// in task.c used for paging_free of memory for user program
+// in task.c used for pagingFree of memory for user program
 void* globalUserProgAddr; 
 uint32_t globalUserProgSize;
 
@@ -138,7 +138,7 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
         return false;
     }
 
-    page_directory_t* pd = paging_create_user_pd();
+    pageDirectory_t* pd = paging_createUserPageDirectory();
 
     // Read all program headers
     const uint8_t* header_pos = elf_beg + header->phoff;
@@ -167,7 +167,7 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
         // Allocate code area for the user program
         globalUserProgAddr = (void*)(ph->vaddr);
         globalUserProgSize = alignUp(ph->memsz,PAGESIZE);
-        if (!paging_alloc(pd, globalUserProgAddr, globalUserProgSize, MEM_USER | MEM_WRITE))
+        if (!pagingAlloc(pd, globalUserProgAddr, globalUserProgSize, MEM_USER | MEM_WRITE))
         {
             return false;
         }
@@ -179,7 +179,7 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
         paging_switch(pd);
         memset((void*)ph->vaddr, 0, ph->memsz); // to set the bss (Block Started by Symbol) to zero
         memcpy((void*)ph->vaddr, elf_beg+ph->offset, ph->filesz);
-        paging_switch(kernel_pd);
+        paging_switch(kernelPageDirectory);
         sti();
 
         header_pos += header->phentrysize;

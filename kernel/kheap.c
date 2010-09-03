@@ -63,7 +63,7 @@ static bool heap_grow(uint32_t size, uint8_t* heap_end)
     }
 
     // Enhance the memory
-    if (!paging_alloc(kernel_pd, heap_end, size, MEM_KERNEL|MEM_WRITE))
+    if (!pagingAlloc(kernelPageDirectory, heap_end, size, MEM_KERNEL|MEM_WRITE))
     {
         return false;
     }

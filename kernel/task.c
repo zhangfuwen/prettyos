@@ -40,7 +40,7 @@ void tasking_install()
     kernelTask.pid            = next_pid++;
     kernelTask.esp            = 0;
     kernelTask.eip            = 0;
-    kernelTask.page_directory = kernel_pd;
+    kernelTask.page_directory = kernelPageDirectory;
     kernelTask.privilege      = 0;
     kernelTask.FPU_ptr        = 0;
     kernelTask.console        = (console_t*)currentConsole;
@@ -71,7 +71,7 @@ void waitForTask(task_t* blockingTask)
 
 /// Functions to create tasks
 
-static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, void(*entry)(), uint8_t privilege)
+static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, void(*entry)(), uint8_t privilege)
 {
     newTask->pid            = next_pid++;
     newTask->page_directory = directory;
@@ -93,7 +93,7 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
             newTask->userProgAddr = globalUserProgAddr;
             newTask->userProgSize = globalUserProgSize;
 
-            paging_alloc(newTask->page_directory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
+            pagingAlloc(newTask->page_directory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
             newTask->userPT = globalUserPT;
         }
         else
@@ -176,7 +176,7 @@ static void createThreadTaskBase(task_t* newTask, page_directory_t* directory, v
     #endif
 }
 
-task_t* create_ctask(page_directory_t* directory, void(*entry)(), uint8_t privilege, const char* consoleName)
+task_t* create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, const char* consoleName)
 {
     task_t* newTask = create_task(directory, entry, privilege);
     newTask->ownConsole = true;
@@ -185,7 +185,7 @@ task_t* create_ctask(page_directory_t* directory, void(*entry)(), uint8_t privil
     return(newTask);
 }
 
-task_t* create_task(page_directory_t* directory, void(*entry)(), uint8_t privilege)
+task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privilege)
 {
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
@@ -250,7 +250,7 @@ task_t* create_vm86_task(void(*entry)())
     task_t* newTask = malloc(sizeof(task_t),0, "vm86-task");
     newTask->type = VM86;
 
-    createThreadTaskBase(newTask, kernel_pd, entry, 3);
+    createThreadTaskBase(newTask, kernelPageDirectory, entry, 3);
 
     newTask->ownConsole = false;
     newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
@@ -350,17 +350,12 @@ static void kill(task_t* task)
         free(task->console);
     }
 
-    // free memory for user stack 
-    if (task->userStackAddr != 0)
+    // free memory
+    if (task->page_directory != kernelPageDirectory)
     {
-        paging_free (task->page_directory, task->userStackAddr, task->userStackSize * PAGESIZE);
-        paging_free (task->page_directory, task->userProgAddr, task->userProgSize);
-        
-        if (task->page_directory != kernel_pd)
-        {
-            free(task->page_directory); 
-            free(task->userPT);
-        }
+        paging_destroyUserPageDirectory(task->page_directory);
+        free(task->page_directory); 
+        free(task->userPT);            
     }
 
     // signalize the parent task that this task is exited
@@ -436,7 +431,7 @@ void task_restart(uint32_t pid)
     if(task == 0) return;
 
     // Safe old properties
-    page_directory_t* directory  = task->page_directory;
+    pageDirectory_t* directory  = task->page_directory;
     void            (*entry)()   = task->entry;
     uint8_t           privilege  = task->privilege;
     bool              ownConsole = task->ownConsole;
@@ -456,7 +451,7 @@ void* task_grow_userheap(uint32_t increase)
     increase = alignUp(increase, PAGESIZE);
 
     if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_HEAP_END) ||
-        !paging_alloc(currentTask->page_directory, old_heap_top, increase, MEM_USER | MEM_WRITE))
+        !pagingAlloc(currentTask->page_directory, old_heap_top, increase, MEM_USER | MEM_WRITE))
     {
         return 0;
     }

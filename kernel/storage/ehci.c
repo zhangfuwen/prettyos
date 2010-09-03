@@ -41,7 +41,7 @@ partition_t usbDevVolume[17];
 void ehci_install(pciDev_t* PCIdev, uint32_t i)
 {
     uintptr_t bar_phys = PCIdev->bar[i].baseAddress & 0xFFFFFFF0;
-    uintptr_t bar      = (uintptr_t)paging_acquire_pcimem(bar_phys,1);
+    uintptr_t bar      = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
     uintptr_t offset   = bar_phys % PAGESIZE;
 
   #ifdef _USB_DIAGNOSIS_
@@ -67,8 +67,8 @@ void analyzeEHCI(uintptr_t bar, uintptr_t offset)
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
   #ifdef _USB_DIAGNOSIS_
-    uintptr_t bar_phys  = (uintptr_t)paging_get_phys_addr((void*)bar);
-    printf("EHCI bar get_phys_Addr: %X\n", bar_phys);
+    uintptr_t bar_phys  = (uintptr_t)paging_getPhysAddr((void*)bar);
+    printf("EHCI bar get_physAddress: %X\n", bar_phys);
     printf("HCIVERSION: %x ",  pCapRegs->HCIVERSION);               // Interface Version Number
     printf("HCSPARAMS: %X ",   pCapRegs->HCSPARAMS);                // Structural Parameters
     printf("Ports: %u ",       numPorts);                           // Number of Ports

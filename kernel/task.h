@@ -19,7 +19,7 @@ struct task
     uint32_t          esp;            // Stack pointer
     uint32_t          eip;            // Instruction pointer
     uint32_t          ss;             // stack segment
-    page_directory_t* page_directory; // Page directory
+    pageDirectory_t* page_directory; // Page directory
     uint8_t           privilege;      // access privilege
     uint8_t*          heap_top;       // user heap top
     void*             kernel_stack;   // Kernel stack location
@@ -55,8 +55,8 @@ extern task_t* currentTask;
 
 void tasking_install();
 
-task_t*  create_task (page_directory_t* directory, void(*entry)(), uint8_t privilege); // Creates task using kernels console
-task_t*  create_ctask(page_directory_t* directory, void(*entry)(), uint8_t privilege, const char* consoleName); // Creates task with own console
+task_t*  create_task (pageDirectory_t* directory, void(*entry)(), uint8_t privilege); // Creates task using kernels console
+task_t*  create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, const char* consoleName); // Creates task with own console
 task_t*  create_thread (void(*entry)()); // Creates thread using currentTasks console
 task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
 task_t*  create_vm86_task(void(*entry)());

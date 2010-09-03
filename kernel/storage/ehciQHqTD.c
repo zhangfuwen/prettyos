@@ -57,7 +57,7 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
         head->qtd.next = 0x1;
     else
     {
-        uint32_t physNext = paging_get_phys_addr(firstQTD);
+        uint32_t physNext = paging_getPhysAddr(firstQTD);
         head->qtd.next = physNext;
     }
 }
@@ -72,7 +72,7 @@ ehci_qtd_t* allocQTD(uintptr_t next)
     memset(td,0,sizeof(ehci_qtd_t));
 
     if (next != 0x1)
-        td->next = paging_get_phys_addr((void*)next);
+        td->next = paging_getPhysAddr((void*)next);
     else
         td->next = 0x1;
 
@@ -86,7 +86,7 @@ uintptr_t allocQTDbuffer(ehci_qtd_t* td)
     void* data = malloc(PAGESIZE, ALIGNVALUE, "qTD-buffer"); // Enough for a full page
     memset(data,0,PAGESIZE);
 
-    td->buffer0 = paging_get_phys_addr(data);
+    td->buffer0 = paging_getPhysAddr(data);
     td->buffer1 = td->buffer2 = td->buffer3 = td->buffer4 = 0x0;
     td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
@@ -334,8 +334,8 @@ void checkAsyncScheduler()
     textColor(0x02);
 
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register
-    void* virtASYNCLISTADDR = paging_acquire_pcimem(pOpRegs->ASYNCLISTADDR, 1);
-    printf("\ncurr QH: %X ",paging_get_phys_addr(virtASYNCLISTADDR));
+    void* virtASYNCLISTADDR = paging_acquirePciMemory(pOpRegs->ASYNCLISTADDR, 1);
+    printf("\ncurr QH: %X ",paging_getPhysAddr(virtASYNCLISTADDR));
 
     // Last accessed & next to access QH, DWORD 0
     uintptr_t horizontalPointer = (*((uint32_t*)virtASYNCLISTADDR)) & 0xFFFFFFE0; // without last 5 bits

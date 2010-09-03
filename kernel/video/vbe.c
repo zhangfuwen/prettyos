@@ -180,7 +180,7 @@ uint32_t getDACPalette()
 void setVideoMemory()
 {
      uint32_t numberOfPages = vgaIB.TotalMemory * 0x10000 / PAGESIZE;
-     SCREEN = (uint8_t*)paging_acquire_pcimem(mib.PhysBasePtr, numberOfPages);
+     SCREEN = (uint8_t*)paging_acquirePciMemory(mib.PhysBasePtr, numberOfPages);
 
      printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib.PhysBasePtr, SCREEN);
      printf("\nVideo Ram %u MiB\n",vgaIB.TotalMemory/0x10);

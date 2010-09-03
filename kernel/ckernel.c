@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio\sys_speaker.h"
 
-const char* version = "0.0.1.221 - Rev: 805";
+const char* version = "0.0.1.222 - Rev: 806";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -236,7 +236,7 @@ void main()
         }
         if (keyPressed(VK_ESCAPE) && keyPressed(VK_P)) // physical memory
         {
-            analyzeBitTable();
+            paging_analyzeBitTable();
         }
 
         switch_context(); // Switch to another task

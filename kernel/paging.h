@@ -15,35 +15,35 @@ typedef struct
     uint64_t size;   // The region's size
     uint32_t type;   // Is "1" for "free"
     uint32_t ext;    // Unimportant for us, but necessary! Do not take out!
-} __attribute__((packed)) mem_map_entry_t;
+} __attribute__((packed)) memoryMapEntry_t;
 
 // Paging
 typedef struct
 {
     uint32_t pages[1024];
-} page_table_t;
+} pageTable_t;
 
 typedef struct
 {
-    uint32_t       codes[1024];
-    page_table_t* tables[1024];
-    uint32_t      pd_phys_addr;
-} __attribute__((packed)) page_directory_t;
+    uint32_t     codes[1024];
+    pageTable_t* tables[1024];
+    uint32_t     physAddr;
+} __attribute__((packed)) pageDirectory_t;
 
-extern page_directory_t* kernel_pd;
+extern pageDirectory_t* kernelPageDirectory;
 
-void paging_switch(page_directory_t* pd);
+void paging_switch(pageDirectory_t* pd);
 uint32_t paging_install();
 
-bool paging_alloc(page_directory_t* pd, void* virt_addr, uint32_t size, uint32_t flags);
-void paging_free (page_directory_t* pd, void* virt_addr, uint32_t size);
+bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t flags);
+void pagingFree (pageDirectory_t* pd, void* virtAddress, uint32_t size);
 
-page_directory_t* paging_create_user_pd();
-void paging_destroy_user_pd(page_directory_t* pd);
+pageDirectory_t* paging_createUserPageDirectory();
+void paging_destroyUserPageDirectory(pageDirectory_t* pd);
 
-void* paging_acquire_pcimem(uint32_t phys_addr, uint32_t numberOfPages);
-uint32_t paging_get_phys_addr(void* virt_addr);
+void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages);
+uint32_t paging_getPhysAddr(void* virtAddress);
 
-void analyzeBitTable();
+void paging_analyzeBitTable();
 
 #endif
