@@ -258,5 +258,5 @@ msgProgress    db "*", 0
 msgLoading     db "Loading Second Stage Bootloader", 0x0D, 0x0A, 0
 msgFailure     db 0x0D, 0x0A, "BOOT2.BIN MISSING", 0x0D, 0x0A, 0
 
-TIMES 510-($-$$) db 0                  ; fill bytes until boot signature
+TIMES 510-($-$$) db 0            ; fill bytes until boot signature
 dw 0xAA55                        ; boot signature

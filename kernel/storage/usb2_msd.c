@@ -839,7 +839,7 @@ labelLeave:
     waitForKeyStroke();
 }
 
-FS_ERROR usbRead(uint32_t sector, uint8_t* buffer, void* device)
+FS_ERROR usbRead(uint32_t sector, void* buffer, void* device)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
 
@@ -867,7 +867,7 @@ FS_ERROR usbRead(uint32_t sector, uint8_t* buffer, void* device)
     return(CE_GOOD); // SUCCESS // TEST
 }
 
-FS_ERROR usbWrite(uint32_t sector, uint8_t* buffer, void* device)
+FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device)
 {
         ///////// send SCSI command "write(10)", write one block to LBA ..., get Status
 

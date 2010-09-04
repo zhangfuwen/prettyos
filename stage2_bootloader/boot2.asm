@@ -122,10 +122,10 @@ EXECUTE:
 print_string:
     mov ah, 0x0E
     print_string.loop:
-    lodsb                         ; fetch a byte from SI
+    lodsb                       ; fetch a byte from SI
     or al, al
     jz .done                    ; if zero end loop
-    int 0x10                      ; put character to sreen
+    int 0x10                    ; put character to sreen
     jmp print_string.loop
     .done:
     ret

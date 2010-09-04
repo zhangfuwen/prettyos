@@ -9,32 +9,28 @@
 #include "util.h"
 
 // cache memory for tracks 0 and 1
-uint8_t track0[9216], track1[9216];
+static uint8_t track0[9216], track1[9216];
 
 int32_t flpydsk_read_directory()
 {
     int32_t error = -1; // return value
 
-    memset((void*)DMA_BUFFER, 0x0, 0x2400); // 18 sectors: 18 * 512 = 9216 = 0x2400
-
-    flpydsk_initialize_dma(); // important, if you do not use the unreliable autoinit bit of DMA
-
-    /// TODO: change to read_ia(...)!
-    int32_t retVal = flpydsk_read_sector(19, true); // start at 0x2600: root directory (14 sectors)
-    if (retVal != 0)
+    memset(track0, 0, 9216);
+    floppyDrive[0]->drive.insertedDisk->accessRemaining += 18;
+    for(int i = 0; i < 18; i++) // Read one track
     {
-        printf("\nread error: %d\n",retVal);
+        flpydsk_readSector(19+i, track0+i*0x200, floppyDrive[0]); // start at 0x2600: root directory (14 sectors)
     }
     printf("<Floppy Disk - Root Directory>\n");
 
     for (uint8_t i=0;i<ROOT_DIR_ENTRIES;++i)       // 224 Entries * 32 Byte
     {
-        if (((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0x00) && // free from here on
-            ((*((uint8_t*)(DMA_BUFFER + i*32)))      != 0xE5) && // 0xE5 deleted = free
-            ((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) != 0x0F))   // 0x0F part of long file name
+        if (((*((uint8_t*)(track0 + i*32)))      != 0x00) && // free from here on
+            ((*((uint8_t*)(track0 + i*32)))      != 0xE5) && // 0xE5 deleted = free
+            ((*((uint8_t*)(track0 + i*32 + 11))) != 0x0F))   // 0x0F part of long file name
         {
             error = 0;
-            int32_t start = DMA_BUFFER + i*32; // name
+            int32_t start = (uintptr_t)track0 + i*32; // name
             int32_t count = 8;
             int32_t letters = 0;
             int8_t* end = (int8_t*)(start+count);
@@ -47,12 +43,12 @@ int32_t flpydsk_read_directory()
                 }
             }            
 
-            start = DMA_BUFFER + i*32 + 8; // extension
+            start = (uintptr_t)track0 + i*32 + 8; // extension
 
-            if ((((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x08) == 0x08) ||  // volume label
-                 ((*((uint8_t*) (start))   == 0x20) &&
-                   (*((uint8_t*) (start+1)) == 0x20) &&
-                   (*((uint8_t*) (start+2)) == 0x20)))                         // extension == three 'space'
+            if ((((*((uint8_t*)(track0 + i*32 + 11))) & 0x08) == 0x08) || // volume label
+                 (((uint8_t*)start)[0] == 0x20 &&
+                  ((uint8_t*)start)[1] == 0x20 &&
+                  ((uint8_t*)start)[2] == 0x20))                          // extension == three 'space'
             {
                 // do nothing
             }
@@ -71,20 +67,20 @@ int32_t flpydsk_read_directory()
             if (letters<4) printf("\t"); 
 
             // filesize
-            printf("\t%d byte", *((uint32_t*)(DMA_BUFFER + i*32 + 28)));
+            printf("\t%d byte", *((uint32_t*)(track0 + i*32 + 28)));
 
             // attributes
             printf("\t");
-            if (*((uint32_t*)(DMA_BUFFER + i*32 + 28))<100)               printf("\t");
-            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x08) == 0x08) printf(" (vol)");
-            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x10) == 0x10) printf(" (dir)");
-            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x01) == 0x01) printf(" (r/o)");
-            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x02) == 0x02) printf(" (hid)");
-            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x04) == 0x04) printf(" (sys)");
-            if (((*((uint8_t*)(DMA_BUFFER + i*32 + 11))) & 0x20) == 0x20) printf(" (arc)");
+            if (*((uint32_t*)(track0 + i*32 + 28))<100)               printf("\t");
+            if (((*((uint8_t*)(track0 + i*32 + 11))) & 0x08) == 0x08) printf(" (vol)");
+            if (((*((uint8_t*)(track0 + i*32 + 11))) & 0x10) == 0x10) printf(" (dir)");
+            if (((*((uint8_t*)(track0 + i*32 + 11))) & 0x01) == 0x01) printf(" (r/o)");
+            if (((*((uint8_t*)(track0 + i*32 + 11))) & 0x02) == 0x02) printf(" (hid)");
+            if (((*((uint8_t*)(track0 + i*32 + 11))) & 0x04) == 0x04) printf(" (sys)");
+            if (((*((uint8_t*)(track0 + i*32 + 11))) & 0x20) == 0x20) printf(" (arc)");
 
             // 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
-            printf("  1st sector: %d", *((uint16_t*)(DMA_BUFFER + i*32 + 26))+31);
+            printf("  1st sector: %d", *((uint16_t*)(track0 + i*32 + 26))+31);
             printf("\n"); // next root directory entry
         }
     }
@@ -102,7 +98,7 @@ static int32_t flpydsk_prepare_boot_sector(struct boot_sector *bs) /// FAT12
 {
     uint8_t a[512];
 
-    int32_t retVal = flpydsk_read_ia(BOOT_SEC,a,SECTOR);
+    int32_t retVal = flpydsk_readSector(BOOT_SEC, a, floppyDrive[0]);
     if (retVal!=0)
     {
         printf("\nread error: %d\n",retVal);

@@ -15,8 +15,8 @@ typedef struct
 
 typedef struct
 {
-    FS_ERROR (*readSector) (uint32_t, uint8_t*, void*);
-    FS_ERROR (*writeSector)(uint32_t, uint8_t*, void*);
+    FS_ERROR (*readSector) (uint32_t, void*, void*);
+    FS_ERROR (*writeSector)(uint32_t, void*, void*);
 } diskType_t;
 
 extern portType_t FDD,        USB,     RAM;

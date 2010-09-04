@@ -29,8 +29,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, uint8_t* buffer);
 
 void testMSD(uint8_t devAddr, partition_t* part);
-FS_ERROR usbRead (uint32_t sector, uint8_t* buffer, void* device);
-FS_ERROR usbWrite(uint32_t sector, uint8_t* buffer, void* device);
+FS_ERROR usbRead (uint32_t sector, void* buffer, void* device);
+FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device);
 
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
 

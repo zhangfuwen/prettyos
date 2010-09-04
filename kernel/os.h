@@ -7,14 +7,14 @@
 
 /// #define _DIAGNOSIS_         // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _MALLOC_FREE_       // shows information about malloc/free and heap expansion
-#define _MEMLEAK_FIND_      // Provides a counter of all (successful) malloc and free calls showing memory leaks
+/// #define _MEMLEAK_FIND_      // Provides a counter of all (successful) malloc and free calls showing memory leaks
 /// #define _USB_DIAGNOSIS_     // only as transition state during implementation of USB 2.0 transfers
 /// #define _FAT_DIAGNOSIS_     // only as transition state during implementation of FAT 12/16/32
 /// #define _DEVMGR_DIAGNOSIS_  // e.g. sectorRead, sectorWrite
 /// #define _TASKING_DIAGNOSIS_ // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_  // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_      // Provides information about the vm86 task, but critical
-/// #define _BEEP_             // Enables beep in PrettyOS. Enabled per default.
+#define _BEEP_              // Enables sound with the pc-speaker in PrettyOS which is used in the bootscreen. Enabled per default.
 #define _PCI_VEND_PROD_LIST_ // http://www.pcidatabase.com/pci_c_header.php - Increases the kernels size heavily
 
 void textColor(uint8_t color);
