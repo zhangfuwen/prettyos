@@ -643,6 +643,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
                 /*destOld = buffer;
                  sourceOld = readcaches[i].buffer;
             }*/
+			part->disk->accessRemaining--;
             return(CE_GOOD);
         }
     }

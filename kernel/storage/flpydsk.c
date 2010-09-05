@@ -148,7 +148,6 @@ static floppy_t* createFloppy(uint8_t ID)
 }
 
 static void flpydsk_reset();
-static void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_t dma);
 // Looks for Floppy drives and installs them
 void flpydsk_install()
 {
@@ -424,23 +423,19 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
     flpydsk_motorOn(drive);
 
     uint32_t st0, cyl;
-    for (uint8_t i = 0; i < 10; ++i)
-    {
-        // send command
-        flpydsk_send_command(FDC_CMD_CALIBRATE);
-        flpydsk_send_command(drive->ID);
-        flpydsk_wait_irq();
-        flpydsk_check_int(&st0, &cyl);
+    flpydsk_send_command(FDC_CMD_CALIBRATE);
+    flpydsk_send_command(drive->ID);
+    flpydsk_wait_irq();
+    flpydsk_check_int(&st0, &cyl);
 
-        if (!cyl) // did we find cylinder 0? if yes, calibration is correct
-        {
-            CurrentDrive->accessRemaining--;
-            return(0);
-        }
-    }
+	if(!(st0 & 1 << 5))
+	{
+        CurrentDrive->accessRemaining++;
+		flpydsk_calibrate(drive);
+	}
 
     CurrentDrive->accessRemaining--;
-    return(-1);
+    return(0);
 }
 
 // seek to given track/cylinder
@@ -456,25 +451,22 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
 
     flpydsk_motorOn(CurrentDrive);
 
-    uint32_t st0, cyl0;
-    for (uint8_t i=0; i<10; ++i)
-    {
-        // send the command
-        flpydsk_send_command(FDC_CMD_SEEK);
-        flpydsk_send_command((head) << 2 | CurrentDrive->ID);
-        flpydsk_send_command(cyl);
+    // send the command
+    flpydsk_send_command(FDC_CMD_SEEK);
+    flpydsk_send_command((head) << 2 | CurrentDrive->ID);
+    flpydsk_send_command(cyl);
 
-        flpydsk_wait_irq();
-        flpydsk_check_int(&st0,&cyl0);
-        if (cyl0 == cyl) // found the cylinder?
-        {
-            CurrentDrive->accessRemaining--;
-            return(0);
-        }
-    }
+    flpydsk_wait_irq();
+	uint32_t st0, cyl0;
+    flpydsk_check_int(&st0,&cyl0);
+	if(!(st0 & 1 << 5))
+	{
+        CurrentDrive->accessRemaining++;
+		flpydsk_seek(cyl, head);
+	}
 
     CurrentDrive->accessRemaining--;
-    return(-1);
+    return(0);
 }
 
 
@@ -482,7 +474,7 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
 // read: operation = 0; write: operation = 1
 static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
 {
-    while (CurrentDrive->RW_Lock == true)
+    while (CurrentDrive->RW_Lock == true) // TODO: Replace with semaphore
     {
         printf("waiting for Floppy Disk ");
         if (operation == 0)
@@ -621,7 +613,7 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
 
     FS_ERROR retVal = CE_GOOD;
 
-    if(CurrentDrive->lastTrack != sector/18) // Needed Track is not in the cache -> Read it.
+    if(CurrentDrive->lastTrack != sector/18) // Needed Track is not in the cache -> Read it. TODO: Check if floppy has changed
     {
         CurrentDrive->lastTrack = sector/18;
 

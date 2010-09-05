@@ -429,115 +429,115 @@ void vgaDebug()
     //printf("OemProductRevPtr:       %X\n",     vgaIB.OemProductRevPtr);
 
     textColor(0x0E);
-    printf("\nVideo Modes:\n\n");
-    for (uint8_t i=0; i<16; i++)
+    printf("\nVideo Modes:\n");
+    for (uint16_t i=0; i < 256; i++)
     {
-        printf("%x ", vgaIB.VideoModePtr[i]);
+        printf("\n%x ", vgaIB.VideoModePtr[i]);
         switch(vgaIB.VideoModePtr[i])
         {
             case 0x0100:
-                printf("= 640x400x256\n");
+                printf("= 640x400x256");
                 break;
             case 0x0101:
-                printf("= 640x480x256\n");
+                printf("= 640x480x256");
                 break;
             case 0x0102:
-                printf("= 800x600x16\n");
+                printf("= 800x600x16");
                 break;
             case 0x0103:
-                printf("= 800x600x256\n");
+                printf("= 800x600x256");
                 break;
             case 0x0104:
-                printf("= 1024x768x16\n");
+                printf("= 1024x768x16");
                 break;
             case 0x0105:
-                printf("= 1024x768x256\n");
+                printf("= 1024x768x256");
                 break;
             case 0x0106:
-                printf("= 1280x1024x16\n");
+                printf("= 1280x1024x16");
                 break;
             case 0x0107:
-                printf("= 1280x1024x256\n");
+                printf("= 1280x1024x256");
                 break;
             case 0x0108:
-                printf("= 80x60 text\n");
+                printf("= 80x60 text");
                 break;
             case 0x0109:
-                printf("= 132x25 text\n");
+                printf("= 132x25 text");
                 break;
             case 0x010A:
-                printf("= 132x43 text\n");
+                printf("= 132x43 text");
                 break;
             case 0x010B:
-                printf("= 132x50 text\n");
+                printf("= 132x50 text");
                 break;
             case 0x010C:
-                printf("= 132x60 text\n");
+                printf("= 132x60 text");
                 break;
             case 0x010D:
-                printf("= 320x200x32K\n");
+                printf("= 320x200x32K");
                 break;
             case 0x010E:
-                printf("= 320x200x64K\n");
+                printf("= 320x200x64K");
                 break;
             case 0x010F:
-                printf("= 320x200x16M\n");
+                printf("= 320x200x16M");
                 break;
             case 0x0110:
-                printf("= 640x480x32K\n");
+                printf("= 640x480x32K");
                 break;
             case 0x0111:
-                printf("= 640x480x64K\n");
+                printf("= 640x480x64K");
                 break;
             case 0x0112:
-                printf("= 640x480x16M\n");
+                printf("= 640x480x16M");
                 break;
             case 0x0113:
-                printf("= 800x600x32K\n");
+                printf("= 800x600x32K");
                 break;
             case 0x0114:
-                printf("= 800x600x64K\n");
+                printf("= 800x600x64K");
                 break;
             case 0x0115:
-                printf("= 800x600x16M\n");
+                printf("= 800x600x16M");
                 break;
             case 0x0116:
-                printf("= 1024x768x32K\n");
+                printf("= 1024x768x32K");
                 break;
             case 0x0117:
-                printf("= 1024x768x64K\n");
+                printf("= 1024x768x64K");
                 break;
             case 0x0118:
-                printf("= 1024x768x16M\n");
+                printf("= 1024x768x16M");
                 break;
             case 0x0119:
-                printf("= 1280x1024x32K\n");
+                printf("= 1280x1024x32K");
                 break;
             case 0x011A:
-                printf("= 1280x1024x64K\n");
+                printf("= 1280x1024x64K");
                 break;
             case 0x011B:
-                printf("= 1280x1024x16M\n");
+                printf("= 1280x1024x16M");
                 break;
             // VBE 2.0 modes
             case 0x0120:
-                printf("= 1600x1200x256\n");
+                printf("= 1600x1200x256");
                 break;
             case 0x0121:
-                printf("= 1600x1200x32K\n");
+                printf("= 1600x1200x32K");
                 break;
             case 0x0122:
-                printf("= 1600x1200x64K\n");
+                printf("= 1600x1200x64K");
                 break;
             case 0xFFFF:
-                printf("= end of modelist\n");
-                break;
+                printf("= end of modelist");
+                goto END;
             default:
-                printf("\n");
                 break;
         }
     }
-    printf("\n");
+	END:
+    printf("\n\n");
     textColor(0x0F);
 
     waitForKeyStroke();
@@ -858,7 +858,6 @@ void vbe_bootscreen()
 
     switchToTextmode();
 
-    vgaDebug();
     printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
     printf("\ngetPixel = %u\n", color);
 

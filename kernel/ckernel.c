@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio\sys_speaker.h"
 
-const char* version = "0.0.1.224 - Rev: 808";
+const char* version = "0.0.1.225 - Rev: 809";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
