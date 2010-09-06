@@ -11,8 +11,8 @@
 #define VM86_SWITCH_TO_VIDEO_640_480_256    ((void*)0x100)
 #define VM86_SWITCH_TO_VIDEO_800_600_256    ((void*)0x10B)
 #define VM86_SWITCH_TO_VIDEO_1024_768_256   ((void*)0x116)
-#define VM86_SWITCH_TO_VIDEO_1024_768_64K	((void*)0x121)
-#define VM86_SWITCH_TO_VIDEO_1024_768_16M	((void*)0x12C)
+#define VM86_SWITCH_TO_VIDEO_1024_768_64K   ((void*)0x121)
+#define VM86_SWITCH_TO_VIDEO_1024_768_16M   ((void*)0x12C)
 #define VM86_VGAINFOBLOCK                   ((void*)0x137)
 #define VM86_MODEINFOBLOCK_640_480_256      ((void*)0x148)
 #define VM86_MODEINFOBLOCK_800_600_256      ((void*)0x163)
@@ -197,7 +197,7 @@ void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color); 
 void vbe_drawChar(char c);                                                                       // Draws a character using font.h
 void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos);                             // Draws a string using vbe_drawChar
 void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);                         // Draws a bitmap, loaded from data.asm via incbin
-void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);				 // Draws a bitmap, WHITE is for transparent
+void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);                 // Draws a bitmap, WHITE is for transparent
 void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart);           // Scales a bitmap and draws it
 
 // Debugging information

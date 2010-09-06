@@ -31,6 +31,11 @@ static const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME = 300; // waiting time in milli
 floppy_t* floppyDrive[MAX_FLOPPY];
 static floppy_t* CurrentDrive = 0; // current working drive
 
+typedef enum
+{
+    READ, WRITE
+} RW_OPERATION;
+
 // IO ports
 enum FLPYDSK_IO
 {
@@ -428,11 +433,11 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
     flpydsk_wait_irq();
     flpydsk_check_int(&st0, &cyl);
 
-	if(!(st0 & 1 << 5))
-	{
+    if(!(st0 & 1 << 5))
+    {
         CurrentDrive->accessRemaining++;
-		flpydsk_calibrate(drive);
-	}
+        flpydsk_calibrate(drive);
+    }
 
     CurrentDrive->accessRemaining--;
     return(0);
@@ -457,13 +462,13 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
     flpydsk_send_command(cyl);
 
     flpydsk_wait_irq();
-	uint32_t st0, cyl0;
+    uint32_t st0, cyl0;
     flpydsk_check_int(&st0,&cyl0);
-	if(!(st0 & 1 << 5))
-	{
+    if(!(st0 & 1 << 5))
+    {
         CurrentDrive->accessRemaining++;
-		flpydsk_seek(cyl, head);
-	}
+        flpydsk_seek(cyl, head);
+    }
 
     CurrentDrive->accessRemaining--;
     return(0);
@@ -472,7 +477,7 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
 
 // read or write a sector // http://www.isdaman.com/alsos/hardware/fdc/floppy_files/wrsec.gif
 // read: operation = 0; write: operation = 1
-static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t operation)
+static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t numberOfSectors, RW_OPERATION operation)
 {
     while (CurrentDrive->RW_Lock == true) // TODO: Replace with semaphore
     {
@@ -501,12 +506,12 @@ static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sect
 
     flpydsk_motorOn(CurrentDrive);
 
-    if (operation == 0) // read a sector
+    if (operation == READ)
     {
         flpydsk_dma_read();
-        flpydsk_send_command(FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY);
+        flpydsk_send_command(FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY);
     }
-    else if (operation == 1) // write a sector
+    else if (operation == WRITE)
     {
         flpydsk_dma_write();
         flpydsk_send_command(FDC_CMD_WRITE_SECT | FDC_CMD_EXT_DENSITY);
@@ -517,12 +522,12 @@ static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sect
     flpydsk_send_command(head);
     flpydsk_send_command(sector);
     flpydsk_send_command(FLPYDSK_SECTOR_DTL_512);
-    flpydsk_send_command(FLPY_SECTORS_PER_TRACK);
+    flpydsk_send_command(sector+numberOfSectors-1); // Last sector to be transfered
     flpydsk_send_command(FLPYDSK_GAP3_LENGTH_3_5);
     flpydsk_send_command(0xFF);
     flpydsk_wait_irq();
 
-    int32_t val;
+    int8_t val;
     for (uint8_t j=0; j<7; ++j)
     {
         val = flpydsk_read_data(); // read status info: ST0 ST1 ST2 C H S Size(2: 512 Byte)
@@ -542,7 +547,7 @@ static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sect
     return(-1);
 }
 
-static FS_ERROR flpydsk_read(uint32_t sectorLBA)
+static FS_ERROR flpydsk_read(uint32_t sectorLBA, uint8_t numberOfSectors)
 {
     if (CurrentDrive == 0)
     {
@@ -560,7 +565,7 @@ static FS_ERROR flpydsk_read(uint32_t sectorLBA)
     }
 
     uint32_t timeout = 2; // limit
-    while (flpydsk_transfer_sector(head, track, sector, 0) == -1)
+    while (flpydsk_transfer_sector(head, track, sector, numberOfSectors, READ) == -1)
     {
         timeout--;
         if (timeout == 0)
@@ -599,7 +604,7 @@ static FS_ERROR flpydsk_write_sector(uint32_t sectorLBA)
     else
     {
         CurrentDrive->accessRemaining++;
-        flpydsk_transfer_sector(head, track, sector, 1);
+        flpydsk_transfer_sector(head, track, sector, 1, WRITE);
         CurrentDrive->drive.insertedDisk->accessRemaining--;
         return CE_GOOD;
     }
@@ -621,8 +626,7 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
 
         for (uint8_t n = 0; n < MAX_ATTEMPTS_FLOPPY_DMA_BUFFER; n++)
         {
-            retVal = flpydsk_read(CurrentDrive->lastTrack*18); // Read the whole track. // BUG: Using this line instead of the following line causes error if saving screenshot
-            //retVal = flpydsk_read(sector); // Read the whole track.
+            retVal = flpydsk_read(CurrentDrive->lastTrack*18, FLPY_SECTORS_PER_TRACK); // Read the whole track.
 
             if (retVal != CE_GOOD)
             {
@@ -651,8 +655,7 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
 
         memcpy(CurrentDrive->trackBuffer, (void*)DMA_BUFFER, 0x2400); // Copy the track from the DMA_BUFFER to the buffer of the floppy drive
     }
-    memcpy(destBuffer, CurrentDrive->trackBuffer + 512*(sector%18), 512); // Copy the requested sector in the destination buffer // BUG: Using this line instead of the following line causes error if saving screenshot
-    //memcpy(destBuffer, CurrentDrive->trackBuffer, 512); // Copy the requested sector in the destination buffer
+    memcpy(destBuffer, CurrentDrive->trackBuffer + 512*(sector%18), 512); // Copy the requested sector in the destination buffer
 
     CurrentDrive->drive.insertedDisk->accessRemaining--;
     return(retVal);
@@ -669,7 +672,8 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
 {
     int32_t val=0;
     
-    CurrentDrive->lastTrack = 0xFFFFFFFF;
+    if(i/18 == CurrentDrive->lastTrack)
+        CurrentDrive->lastTrack = 0xFFFFFFFE;
 
     if (option == SECTOR)
     {

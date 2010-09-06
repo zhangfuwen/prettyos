@@ -217,16 +217,15 @@ void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
     //}
 
 
-	uint8_t* i = (uint8_t*)bitmap_end;
-	for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
-	{
-		for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
-		{
-			SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
-			i -= (mib.BitsPerPixel/8);
-		}
-	}	
-	
+    uint8_t* i = (uint8_t*)bitmap_end;
+    for(uint32_t y=0; y<((BitmapHeader_t*)bitmapMemStart)->Height; y++)
+    {
+        for(uint32_t x=((BitmapHeader_t*)bitmapMemStart)->Width; x>0; x--)
+        {
+            SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = *i;
+            i -= (mib.BitsPerPixel/8);
+        }
+    }
 }
 
 void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, void* bitmapMemStart)
@@ -536,7 +535,7 @@ void vgaDebug()
                 break;
         }
     }
-	END:
+    END:
     printf("\n\n");
     textColor(0x0F);
 
@@ -780,8 +779,8 @@ void vbe_bootscreen()
     printf("1. 640x480x256\n");
     printf("2. 800x600x256\n");
     printf("3. 1024x768x256 (Default mode WORKING!)\n");
-	printf("4. 1024x768x32k (TESTING!)\n");
-	printf("5. 1024x768x16M (TESTING!)\n");
+    printf("4. 1024x768x32k (TESTING!)\n");
+    printf("5. 1024x768x16M (TESTING!)\n");
     uint8_t selectMode = getch();
     switch(selectMode)
     {
@@ -800,7 +799,7 @@ void vbe_bootscreen()
         case '5': default:
             waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_16M));
             break;
-	}
+    }
 
     setModeInfoBlock((ModeInfoBlock_t*)0x3600);
     modeInfoBlock_user = getModeInfoBlock();
@@ -821,10 +820,10 @@ void vbe_bootscreen()
         case '3':
             switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_256);
             break;
-		case '4':
+        case '4':
             switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_64K);
             break;
-		case '5': default:
+        case '5': default:
             switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_16M);
             break;
     }
