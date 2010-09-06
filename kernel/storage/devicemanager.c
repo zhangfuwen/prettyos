@@ -12,6 +12,10 @@
 #include "usb2.h"
 #include "filesystem/fat12.h"
 
+#ifdef _DEVMGR_DIAGNOSIS_
+  #include "timer.h"
+#endif
+
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
 partition_t* systemPartition;
@@ -546,7 +550,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
 
 
 
-#ifdef _DEVMGR_DIAGNOSIS_
+#ifdef _READCACHE_DIAGNOSIS_
 static void logReadCache()
 {
     for (uint8_t i=0; i<NUMREADCACHE; i++)
@@ -587,7 +591,7 @@ static void fillReadCache(uint32_t sector, partition_t* part)
     currReadCache++;
     currReadCache %= NUMREADCACHE;
     
-  #ifdef _DEVMGR_DIAGNOSIS_
+  #ifdef _READCACHE_DIAGNOSIS_
     logReadCache();
   #endif
 }

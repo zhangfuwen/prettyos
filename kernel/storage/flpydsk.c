@@ -121,7 +121,7 @@ static floppy_t* createFloppy(uint8_t ID)
     fdd->accessRemaining = 0;
     fdd->receivedIRQ     = false;
     fdd->lastTrack       = 0xFFFFFFFF;
-    fdd->trackBuffer     = malloc(0x2400, 0, "MrX");
+    fdd->trackBuffer     = malloc(0x2400, 0, "flpydsk-TrackBuffer");
     memset(fdd->trackBuffer, 0x0, 0x2400);
 
     fdd->drive.type         = &FDD;
@@ -261,8 +261,12 @@ static uint8_t flpydsk_read_data()
 {
     // same as above function but returns data register for reading
     for (uint16_t i = 0; i < 500; ++i)
+    {
         if (flpydsk_read_status() & FLPYDSK_MSR_MASK_DATAREG)
+        {
             return inportb(FLPYDSK_FIFO);
+        }
+    }
     return 0;
 }
 
