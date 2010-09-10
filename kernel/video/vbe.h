@@ -155,7 +155,7 @@ typedef struct
 
 typedef struct
 {
-    BitmapHeader_t bmiheader;
+    BitmapHeader_t header;
     BGRQuad_t bmicolors[256];
 } __attribute__((packed)) BMPInfo_t;
 
@@ -196,9 +196,9 @@ void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bo
 void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);                  // Draws a circle
 void vbe_drawChar(char c);                                                                       // Draws a character using font.h
 void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos);                             // Draws a string using vbe_drawChar
-void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);                         // Draws a bitmap, loaded from data.asm via incbin
-void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, void* bitmapMemStart);                 // Draws a bitmap, WHITE is for transparent
-void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, void* bitmapMemStart);           // Scales a bitmap and draws it
+void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap);                            // Draws a bitmap, loaded from data.asm via incbin
+void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap);                 // Draws a bitmap, WHITE is for transparent
+void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, BMPInfo_t* bitmap);              // Scales a bitmap and draws it
 
 // Debugging information
 void bitmapDebug();

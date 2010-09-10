@@ -686,6 +686,7 @@ void setupUSBDevice(uint8_t portNumber)
         // Partition
         usbDevVolume[portNumber+1].buffer = malloc(512,0,"usbDevVol-buffer");
         usbDevVolume[portNumber+1].disk = &usbDev[portNumber+1];
+        usbDevVolume[portNumber+1].data = 0;
 
         //HACK
         usbDevVolume[portNumber+1].serial = malloc(13, 0,"usbDevVol-serial");

@@ -29,8 +29,8 @@ char mouse_byte[4]; // MouseHandler bytes
 
 static uint8_t oldColor; // Used to emulate transparency for mouse
 
-extern uintptr_t cursor_start;
-extern uintptr_t cursor_end;
+extern BMPInfo_t cursor_start;
+extern BMPInfo_t cursor_end;
 
 void mouse_install()
 {
@@ -104,7 +104,6 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
                 }
                 mouse_x += mouse_byte[1];
                 mouse_y -= mouse_byte[2];
@@ -141,7 +140,6 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
                 }
                 mouse_x += mouse_byte[1];
                 mouse_y -= mouse_byte[2];
@@ -169,7 +167,6 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-                    vbe_drawBitmap(mouse_x, mouse_y, &cursor_start);
                 }
                 mouse_b4 = mouse_byte[3] & 0x16;
                 mouse_b5 = mouse_byte[3] & 0x32;

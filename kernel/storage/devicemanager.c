@@ -123,11 +123,11 @@ void showPortList()
         if (ports[i] != 0)
         {
             if(ports[i]->type == &FDD) // Type
-                    printf("\nFDD ");
+                printf("\nFDD ");
             else if(ports[i]->type == &RAM)
-                    printf("\nRAM ");
+                printf("\nRAM ");
             else if(ports[i]->type == &USB)
-                    printf("\nUSB 2.0");
+                printf("\nUSB 2.0");
 
             textColor(0x0E);
             printf("\t%c", 'A'+i); // number
@@ -356,12 +356,14 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
     SysName[8] = 0;
     FATn[8]    = 0;
 
-    //HACK
-    free(part->data);
-    FAT_partition_t* FATpart = malloc(sizeof(FAT_partition_t), 0,"devmgr-FATpart");
-    part->data = FATpart;
-    FATpart->part = part;
+    if(part->data == 0)
+    {
+        part->data = malloc(sizeof(FAT_partition_t), 0,"devmgr-FATpart");
+        ((FAT_partition_t*)part->data)->part = part;
+    }
     part->type = &FAT;
+
+    FAT_partition_t* FATpart = part->data;
 
 
     // This is a FAT description
@@ -375,13 +377,13 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         printf("\nnumber of FAT copies:   %u",sec0->FATcount);
         printf("\tmax root dir entries:   %u",sec0->MaxRootEntries);
         printf("\ntotal sectors (<65536): %u",sec0->TotalSectors1);
-        printf("\tmedia Descriptor:       %y",sec0->MediaDescriptor);
-        printf("\nsectors per FAT:        %u",sec0->SectorsPerFAT);
-        printf("\tsectors per track:      %u",sec0->SectorsPerTrack);
-        printf("\nheads/pages:            %u",sec0->HeadCount);
-        printf("\thidden sectors:         %u",sec0->HiddenSectors);
-        printf("\ntotal sectors (>65535): %u",sec0->TotalSectors2);
-        printf("\tFAT 12/16:              %s",FATn);
+        printf("\ttotal sectors (>65535): %u",sec0->TotalSectors2);
+        printf("\nmedia Descriptor:       %y",sec0->MediaDescriptor);
+        printf("\tsectors per FAT:        %u",sec0->SectorsPerFAT);
+        printf("\nsectors per track:      %u",sec0->SectorsPerTrack);
+        printf("\theads/pages:            %u",sec0->HeadCount);
+        printf("\nhidden sectors:         %u",sec0->HiddenSectors);
+        printf("\tFormat:                 %s",FATn);
         #endif
 
         volume_bytePerSector = sec0->charsPerSector;
@@ -439,8 +441,6 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
                 volume_serialNumber[i] = ((char*)buffer)[39+i]; // byte 39-42
             }
             printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
-
-
         }
         else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '2')
         {
@@ -473,16 +473,15 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         part->serial[4] = 0;
         strncpy(part->serial, volume_serialNumber, 4); // ID of the partition
     }
-
-    else if ( *((uint16_t*)((uint8_t*)buffer+444)) == 0x0000 )
+    else if ( ((uint16_t*)buffer)[444/2] == 0x0000 )
     {
         textColor(0x0E);
-        if ( *((uint8_t*)buffer+510)==0x55 && *((uint8_t*)buffer+511)==0xAA )
+        if ( ((uint8_t*)buffer)[510]==0x55 && ((uint8_t*)buffer)[511]==0xAA )
         {
             printf("\nThis seems to be a Master Boot Record:");
 
             textColor(0x0F);
-            uint32_t discSignature = *((uint32_t*)((uint8_t*)buffer+440));
+            uint32_t discSignature = ((uint32_t*)buffer)[440/4];
             printf("\n\nDisc Signature: %X\t",discSignature);
 
             uint8_t partitionTable[4][16];
@@ -490,7 +489,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
             {
                 for (uint8_t j=0;j<16;j++) // 16 bytes
                 {
-                    partitionTable[i][j] = *((uint8_t*)buffer+446+i*j);
+                    partitionTable[i][j] = ((uint8_t*)buffer)[446+i*j];
                 }
             }
             printf("\n");
@@ -549,7 +548,6 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
 
 
 
-
 #ifdef _READCACHE_DIAGNOSIS_
 static void logReadCache()
 {
@@ -577,7 +575,7 @@ static void fillReadCache(uint32_t sector, partition_t* part)
     readcaches[currReadCache].sector = sector;
     readcaches[currReadCache].part   = part;
     readcaches[currReadCache].valid  = true;
-    
+
     for (uint8_t i=0; i<NUMREADCACHE; i++)
     {
         if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true) && (i!=currReadCache)) 
@@ -590,7 +588,7 @@ static void fillReadCache(uint32_t sector, partition_t* part)
 
     currReadCache++;
     currReadCache %= NUMREADCACHE;
-    
+
   #ifdef _READCACHE_DIAGNOSIS_
     logReadCache();
   #endif

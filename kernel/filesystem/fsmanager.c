@@ -47,9 +47,9 @@ file_t* fopen(const char* path, const char* mode)
         free(file);
         return(0);
     }
-    file->EOF    = false;
-    file->error  = CE_GOOD;
-    file->name   = malloc(strlen(getFilename(path))+1, 0, "fsmgr-filename");
+    file->EOF   = false;
+    file->error = CE_GOOD;
+    file->name  = malloc(strlen(getFilename(path))+1, 0, "fsmgr-filename");
     strcpy(file->name, getFilename(path));
 
     bool appendMode = false; // Used to seek to end
@@ -170,7 +170,7 @@ size_t fwrite(const void* src, size_t size, size_t count, file_t* file)
     size_t i = 0;
     for(; i < count; i++)
     {
-        for(int j = 0; j < size; j++)
+        for(size_t j = 0; j < size; j++)
         {
             fputc(((uint8_t*)src)[i*size+j], file);
         }

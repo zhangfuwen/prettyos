@@ -101,6 +101,7 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
 
 void listPCI()
 {
+    printf("\n\n");
     listHead_t* pciDevList = list_Create();
     for (int i=0;i<PCIARRAYSIZE;++i) // Create list
     {

@@ -130,8 +130,7 @@ typedef struct
     uint16_t DIR_WrtDate;
     uint16_t DIR_FstClusLO;
     uint32_t DIR_FileSize;
-} _FILEROOTDIRECTORYENTRY;
-typedef _FILEROOTDIRECTORYENTRY* FILEROOTDIRECTORYENTRY;
+} fileRootDirEntry_t;
 
 typedef enum
 {
@@ -151,9 +150,9 @@ FS_ERROR FAT_remove(const char* fileName, partition_t* part);
 FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_t* part);
 
 // analysis functions
-void FAT_showDirectoryEntry(FILEROOTDIRECTORYENTRY dir);
+void FAT_showDirectoryEntry(fileRootDirEntry_t* dir);
 
-//additional functions
+// additional functions
 uint32_t FAT_checksum(char* ShortFileName);
 
 #endif
