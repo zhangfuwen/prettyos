@@ -109,8 +109,8 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 mouse_y -= mouse_byte[2];
                 if(videomode == VM_VBE)
                 {
-                    mouse_x = max(0, min(mouse_x, getCurrentModeInfo()->XResolution-1));
-                    mouse_y = max(0, min(mouse_y, getCurrentModeInfo()->YResolution-1));
+                    mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1));
+                    mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1));
                     oldColor = vbe_getPixel(mouse_x, mouse_y);
                     // vbe_setPixel(mouse_x, mouse_y, 0x09);
                     vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
@@ -147,8 +147,8 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 
                 if(videomode == VM_VBE)
                 {
-                    mouse_x = max(0, min(mouse_x, getCurrentModeInfo()->XResolution-1));
-                    mouse_y = max(0, min(mouse_y, getCurrentModeInfo()->YResolution-1));
+                    mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1));
+                    mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1));
                     oldColor = vbe_getPixel(mouse_x, mouse_y);
                     // vbe_setPixel(mouse_x, mouse_y, 0x09);
                     vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
@@ -175,8 +175,8 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 mouse_z += (mouse_byte[3] & 0xF);
                 if(videomode == VM_VBE)
                 {
-                    mouse_x = max(0, min(mouse_x, getCurrentModeInfo()->XResolution-1));
-                    mouse_y = max(0, min(mouse_y, getCurrentModeInfo()->YResolution-1));
+                    mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1));
+                    mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1));
                     oldColor = vbe_getPixel(mouse_x, mouse_y);
                     // vbe_setPixel(mouse_x, mouse_y, 0x09);
                     vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);

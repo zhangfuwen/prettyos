@@ -66,6 +66,7 @@ char  toUpper(char c);
 char* toupper(char* s);
 char* tolower(char* s);
 
+void gets(char* s);
 void waitForKeyStroke();
 
 void systemControl(SYSTEM_CONTROL todo); // Reboot, Shutdown, ...

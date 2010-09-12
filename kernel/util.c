@@ -221,6 +221,33 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
 
 /**********************************************************************/
 
+void gets(char* s)
+{
+    int32_t i = 0;
+    char c;
+    do
+    {
+        c = getch();
+        if (c=='\b')  // Backspace
+        {
+           if (i>0)
+           {
+              putch(c);
+              s[i-1]='\0';
+              --i;
+           }
+        }
+        else
+        {
+            s[i] = c;
+            putch(c);
+            i++;
+        }
+    }
+    while (c!=10); // Linefeed
+    s[i]='\0';
+}
+
 void waitForKeyStroke()
 {
     textColor(0x07);

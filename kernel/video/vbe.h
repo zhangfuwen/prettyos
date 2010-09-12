@@ -19,14 +19,6 @@
 #define VM86_VGAINFOBLOCK      ((void*)0x182)
 #define VM86_MODEINFOBLOCK     ((void*)0x190)
 
-enum MODE {
-	MODE_640x480x8 = 0x101,
-	MODE_800x600x8 = 0x103,
-	MODE_1024x768x8 = 0x105,
-	MODE_1024x768x16 = 0x117,
-	MODE_1024x768x24 = 0x118,
-};
-
 
 // SuperVGA information block
 typedef struct
@@ -120,15 +112,6 @@ typedef struct
     uint32_t ColorsImportant; // Number of "important" colors.
 } __attribute__((packed)) BitmapHeader_t;
 
-
-typedef struct
-{
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    uint8_t alpha;
-} RGBA_t;
-
 // Correct arrangement of palettes in bmp format: Blue Green Red Unused (mostly 0)
 // The palettes are stored in backwards order in each palette entry
 // http://en.wikipedia.org/wiki/BMP_file_format#Color_palette
@@ -137,8 +120,8 @@ typedef struct
     uint8_t blue;
     uint8_t green;
     uint8_t red;
-    uint8_t rgbreserved;
-} __attribute__((packed)) BGRQuad_t;
+    uint8_t alpha; // Used to store 8-bit color equivalent at the moment
+} __attribute__((packed)) BGRA_t;
 
 typedef struct
 {
@@ -156,7 +139,7 @@ typedef struct
 typedef struct
 {
     BitmapHeader_t header;
-    BGRQuad_t bmicolors[256];
+    BGRA_t bmicolors[256];
 } __attribute__((packed)) BMPInfo_t;
 
 
@@ -164,44 +147,38 @@ typedef struct
 void switchToVideomode(uint16_t mode); // Switches to a VBE Mode
 void switchToTextmode(); // Switches to the VGA Textmode
 
-void getModeInfo(uint16_t mode);
-void setVgaInfoBlock(VgaInfoBlock_t* VIB);
-ModeInfoBlock_t* getCurrentModeInfo();
+void vbe_readVIB();
 
-void getVgaIB();
+void vbe_readMIB(uint16_t mode);
+ModeInfoBlock_t* getCurrentMIB();
 
 void setDisplayStart(uint16_t *xpos, uint16_t *ypos);
 uint32_t getDisplayStart();
 
 void setVideoMemory(); // Allocate the videomemory from the graphiccard
 
-void setPalette(BGRQuadPacked_t* RGB);
-void printPalette(BGRQuadPacked_t* RGB);
+void printPalette(BGRQuadPacked_t* BGR);
 
 // Set a Palette (old vga registers, need changed to the VBE Registers in vidswtch.asm)
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t  Red, uint8_t  Green, uint8_t  Blue);
-void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue);
+/*void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue);
 void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette);
-void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumberOfColors, uint8_t* Palette);
+void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumberOfColors, uint8_t* Palette);*/
 
 // Basic drawing functionality
-void     vbe_setPixel(uint32_t x, uint32_t y, uint32_t color); // Sets a single pixel on the screen
-uint32_t vbe_getPixel(uint32_t x, uint32_t y);                 // Returns the color of a single pixel on the screen
+void     vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color); // Sets a single pixel on the screen
+uint32_t vbe_getPixel(uint32_t x, uint32_t y);               // Returns the color of a single pixel on the screen
 
 // Advanced and formatted drawing functionality
-void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);           // Draws a line
-void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color); // Draws a rectancle
-void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color); // Draw a rectancle filled
-void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color);                  // Draws a circle
+void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, BGRA_t color);             // Draws a line
+void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, BGRA_t color);   // Draws a rectancle
+void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, BGRA_t color); // Draw a rectancle filled
+void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, BGRA_t color);                    // Draws a circle
 void vbe_drawChar(char c);                                                                       // Draws a character using font.h
 void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos);                             // Draws a string using vbe_drawChar
 void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap);                            // Draws a bitmap, loaded from data.asm via incbin
 void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap);                 // Draws a bitmap, WHITE is for transparent
 void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, BMPInfo_t* bitmap);              // Scales a bitmap and draws it
-
-// Debugging information
-void bitmapDebug();
-void vgaDebug();
 
 // VBE Testing area
 void vbe_bootscreen();
@@ -209,6 +186,8 @@ void vbe_bootscreen();
 /// Unsuned functions
 
 /*
+void setPalette(BGRQuadPacked_t* BGR);
+
 // needs to be implemented in vidswtch.asm
 void setDACPalette(BGRQuadPacked_t* RGB);
 uint32_t getDACPalette();

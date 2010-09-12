@@ -29,34 +29,49 @@ extern uintptr_t vm86_com_end;
 extern BMPInfo_t bmp_start;
 extern BMPInfo_t bmp_end;
 
-
-void setVgaInfoBlock(VgaInfoBlock_t* VIB)
+uint16_t BGRAtoBGR16(BGRA_t bgr)
 {
-    memcpy(&vgaIB, VIB, sizeof(VgaInfoBlock_t));
+    uint16_t b = bgr.blue >> 3;
+    uint16_t g = bgr.green >> 2;
+    uint16_t r = bgr.red >> 3;
+
+    return((r<<11) | (g<<5) | (b));
 }
 
-void getModeInfo(uint16_t mode)
+uint16_t BGRAtoBGR15(BGRA_t bgr)
+{
+    uint16_t b = bgr.blue >> 3;
+    uint16_t g = bgr.green >> 3;
+    uint16_t r = bgr.red >> 3;
+
+    return((r<<10) | (g<<5) | (b));
+}
+
+
+void vbe_readVIB()
+{
+    waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
+    memcpy(&vgaIB, (void*)0x3400, sizeof(VgaInfoBlock_t));
+}
+
+void vbe_readMIB(uint16_t mode)
 {
     *(uint16_t*)0x3600 = 0x4000|mode;
     waitForTask(create_vm86_task(VM86_MODEINFOBLOCK));
     memcpy(&mib, (void*)0x3600, sizeof(ModeInfoBlock_t));
 }
 
-ModeInfoBlock_t* getCurrentModeInfo()
+ModeInfoBlock_t* getCurrentMIB()
 {
     return(&mib);
-}
-
-void getVgaIB()
-{
-    waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
 }
 
 void switchToVideomode(uint16_t mode)
 {
     *(uint16_t*)0x3600 = 0x4000|mode;
     waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO));
-	getModeInfo(mode);
+    vbe_readMIB(mode);
+    setVideoMemory();
     videomode = VM_VBE;
 }
 
@@ -82,13 +97,14 @@ uint32_t getDisplayStart()
     // [0x1302]; First Displayed Pixel in Scan Line
 }
 
-void printPalette(BGRQuadPacked_t* RGB)
+void printPalette(BGRQuadPacked_t* BGR)
 {
     uint32_t xpos = 0;
     uint32_t ypos = 0;
     for(uint32_t j=0; j<256; j++)
     {
-        vbe_drawRectFilled(xpos, ypos, xpos+5, ypos+5, j);
+        BGRA_t temp = {BGR[j].blue, BGR[j].green, BGR[j].red, j};
+        vbe_drawRectFilled(xpos, ypos, xpos+5, ypos+5, temp);
         xpos +=5;
         if(xpos >= 255)
         {
@@ -98,19 +114,19 @@ void printPalette(BGRQuadPacked_t* RGB)
     }
 }
 
-void setPalette(BGRQuadPacked_t* RGB)
-{
-    /*
-    Format of VESA VBE palette entry:
-    Offset   Size    Description
-    00h      BYTE    red
-    01h      BYTE    green
-    02h      BYTE    blue
-    03h      BYTE    alpha or alignment byte
-    */
-    ScreenPal = RGB;
-    waitForTask(create_vm86_task(VM86_SETPALETTE));
-}
+//void setPalette(BGRQuadPacked_t* RGB)
+//{
+//    /*
+//    Format of VESA VBE palette entry:
+//    Offset   Size    Description
+//    00h      BYTE    red
+//    01h      BYTE    green
+//    02h      BYTE    blue
+//    03h      BYTE    alpha or alignment byte
+//    */
+//    ScreenPal = RGB;
+//    waitForTask(create_vm86_task(VM86_SETPALETTE));
+//}
 
 // http://wiki.osdev.org/VGA_Hardware#VGA_Registers
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t Blue)
@@ -122,7 +138,7 @@ void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t B
     outportb(0x03C9, Blue);
 }
 
-void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue)
+/*void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue)
 {
     outportb(0x03C6, 0xFF);
     outportb(0x03C7, PaletteColorNumber);
@@ -151,7 +167,7 @@ void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palett
     }
 }
 
-/*void setDACPalette(BGRQuadPacked_t* RGB)
+void setDACPalette(BGRQuadPacked_t* RGB)
 {
     waitForTask(create_vm86_task(VM86_SETDACPALETTE));
 }
@@ -171,12 +187,30 @@ void setVideoMemory()
      printf("\nVideo Ram %u MiB\n",vgaIB.TotalMemory/0x10);
 }
 
-inline void vbe_setPixel(uint32_t x, uint32_t y, uint32_t color)
+void vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color)
 {
-    SCREEN[(y * mib.XResolution + x) * mib.BitsPerPixel/8] = color;
+    switch(mib.BitsPerPixel)
+    {
+        case 15:
+            ((uint16_t*)SCREEN)[y * mib.XResolution + x] = BGRAtoBGR15(color);
+            break;
+        case 16:
+            ((uint16_t*)SCREEN)[y * mib.XResolution + x] = BGRAtoBGR16(color);
+            break;
+        case 24:
+            (*(uint16_t*)&SCREEN[(y * mib.XResolution + x) * 3]) = *(uint16_t*)&color; // Performance Hack - copying 16 bits should be faster than copying 8 bits twice
+            SCREEN[(y * mib.XResolution + x) * 3 + 2] = color.red;
+            break;
+        case 32:
+            ((uint32_t*)SCREEN)[y * mib.XResolution + x] = *(uint32_t*)&color&0xFFFFFF; // Do not use alpha, we need it for 8-bit compatibility
+            break;
+        case 8: default:
+            ((uint8_t*)SCREEN)[y * mib.XResolution + x] = color.alpha; // Workaround for 24 bit to 8 bit conversion
+            break;
+    }
 }
 
-uint32_t vbe_getPixel(uint32_t x, uint32_t y)
+uint32_t vbe_getPixel(uint32_t x, uint32_t y) // TODO: Fix it. It now ignores mib.BitsPerPixel
 {
     return SCREEN[(y * mib.XResolution + x) * mib.BitsPerPixel/8];
 }
@@ -199,16 +233,8 @@ void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap)
     {
         for(uint32_t x=bitmap->header.Width; x>0; x--)
         {
-            if(mib.BitsPerPixel/8 == 3)
-            {
-                SCREEN[((xpos+x) + (ypos+y) * mib.XResolution) * mib.BitsPerPixel/8 + 0] = bitmap->bmicolors[*pixel].red;
-                SCREEN[((xpos+x) + (ypos+y) * mib.XResolution) * mib.BitsPerPixel/8 + 1] = bitmap->bmicolors[*pixel].green;
-                SCREEN[((xpos+x) + (ypos+y) * mib.XResolution) * mib.BitsPerPixel/8 + 2] = bitmap->bmicolors[*pixel].blue;
-            }
-            else
-            {
-                vbe_setPixel(xpos+x, ypos+y, *pixel);
-            }
+            BGRA_t temp = {bitmap->bmicolors[*pixel].blue, bitmap->bmicolors[*pixel].green, bitmap->bmicolors[*pixel].red, *pixel};
+            vbe_setPixel(xpos+x, ypos+y, temp);
             pixel -= bitmap->header.BitsPerPixel/8;
         }
     }
@@ -234,16 +260,8 @@ void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap)
         {
             if(bitmap->bmicolors[*pixel].red != 255 && bitmap->bmicolors[*pixel].green != 255 && bitmap->bmicolors[*pixel].blue != 255) // 0xF6 == WHITE
             {
-                if(mib.BitsPerPixel/8 == 3)
-                {
-                    SCREEN[((xpos+x) + (ypos+y) * mib.XResolution) * mib.BitsPerPixel/8 + 0] = bitmap->bmicolors[*pixel].red;
-                    SCREEN[((xpos+x) + (ypos+y) * mib.XResolution) * mib.BitsPerPixel/8 + 1] = bitmap->bmicolors[*pixel].green;
-                    SCREEN[((xpos+x) + (ypos+y) * mib.XResolution) * mib.BitsPerPixel/8 + 2] = bitmap->bmicolors[*pixel].blue;
-                }
-                else
-                {
-                    vbe_setPixel(xpos+x, ypos+y, *pixel);
-                }
+                BGRA_t temp = {bitmap->bmicolors[*pixel].blue, bitmap->bmicolors[*pixel].green, bitmap->bmicolors[*pixel].red, *pixel};
+                vbe_setPixel(xpos+x, ypos+y, temp);
             }
             pixel -= bitmap->header.BitsPerPixel/8;
         }
@@ -283,16 +301,8 @@ void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, BMPInfo_t* bitma
                 {
                     if(x-i > 0)
                     {
-                        if(mib.BitsPerPixel/8 == 3)
-                        {
-                            SCREEN[((x-i) + (y+j) * mib.XResolution) * mib.BitsPerPixel/8 + 0] = bitmap->bmicolors[*pixel].red;
-                            SCREEN[((x-i) + (y+j) * mib.XResolution) * mib.BitsPerPixel/8 + 1] = bitmap->bmicolors[*pixel].green;
-                            SCREEN[((x-i) + (y+j) * mib.XResolution) * mib.BitsPerPixel/8 + 2] = bitmap->bmicolors[*pixel].blue;
-                        }
-                        else
-                        {
-                            vbe_setPixel(x-i, y+j, *pixel);
-                        }
+                        BGRA_t temp = {bitmap->bmicolors[*pixel].blue, bitmap->bmicolors[*pixel].green, bitmap->bmicolors[*pixel].red, *pixel};
+                        vbe_setPixel(x-i, y+j, temp);
                     }
                 }
             }
@@ -314,7 +324,7 @@ void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, BMPInfo_t* bitma
 }
 
 // draws a line using Bresenham's line-drawing algorithm, which uses no multiplication or division.
-void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
+void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, BGRA_t color)
 {
     uint32_t dx=x2-x1;      // the horizontal distance of the line
     uint32_t dy=y2-y1;      // the vertical distance of the line
@@ -327,7 +337,7 @@ void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t c
     uint32_t px=x1;
     uint32_t py=y1;
 
-    SCREEN[(py<<8)+(py<<6)+px]=color;
+    vbe_setPixel(px, py, color);
 
     if (dxabs>=dyabs) // the line is more horizontal than vertical
     {
@@ -360,7 +370,7 @@ void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t c
 }
 
 // Draws a rectangle by drawing all lines by itself.
-void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
+void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, BGRA_t color)
 {
     if (top>bottom)
     {
@@ -375,49 +385,46 @@ void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, 
         right=temp;
     }
 
-    uint32_t top_offset = (top<<8)+(top<<6);
-    uint32_t bottom_offset = (bottom<<8)+(bottom<<6);
-
     for(uint32_t i=left; i<=right; i++)
     {
-        SCREEN[top_offset+i]=color;
-        SCREEN[bottom_offset+i]=color;
+        vbe_setPixel(top, i, color);
+        vbe_setPixel(bottom, i, color);
     }
-    for(uint32_t i=top_offset; i<=bottom_offset; i+=mib.XResolution) //SCREEN_WIDTH
+    for(uint32_t i=top; i<=bottom; i+=mib.XResolution) //SCREEN_WIDTH
     {
-        SCREEN[left+i]=color;
-        SCREEN[right+i]=color;
+        vbe_setPixel(i, left, color);
+        vbe_setPixel(i, right, color);
     }
 }
 
 // Draws a rectangle by drawing all lines by itself. Filled
-void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t color)
+void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, BGRA_t color)
 {
     for(int i = left; i < right; i++)
     {
         for(int j = top; j < bottom; j++)
         {
-            SCREEN[(i + j * mib.XResolution) * mib.BitsPerPixel/8] = color;
+            vbe_setPixel(i, j, color);
         }
     }
 }
 
 // http://en.wikipedia.org/wiki/Circle#Cartesian_coordinates
-void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, uint32_t color)
+void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, BGRA_t color)
 {
     for (uint32_t i=0; i<=2*radius; i++)
     {
         uint32_t x  = xm - radius + i;
         uint32_t y1 = ym + (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
         uint32_t y2 = ym - (uint32_t)sqrt(radius*radius - (x-xm)*(x-xm));
-        vbe_setPixel(x, y1, 9);
-        vbe_setPixel(x, y2, 9);
+        vbe_setPixel(x, y1, color);
+        vbe_setPixel(x, y2, color);
     }
 }
 
-void vgaDebug()
+static void vgaDebug()
 {
-    printf("\nDEBUG print: VgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));
+    printf("\nVgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));
     printf("VESA-Signature:         %s\n",     vgaIB.VESASignature);
     printf("VESA-Version:           %u.%u\n", (vgaIB.VESAVersion&0xFF00)>>8,vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
     printf("Capabilities:           %X\n",     vgaIB.Capabilities);
@@ -425,29 +432,23 @@ void vgaDebug()
     printf("OEM-String (address):   %X\n",     vgaIB.OEMStringPtr);
     printf("Video Modes Ptr:        %X\n",     vgaIB.VideoModePtr);
 
-    // TEST Video Ram Paging
-    printf("\nSCREEN (phys): %X SCREEN (virt): %X\n", mib.PhysBasePtr, SCREEN);
-
-    // TEST
-    //printf("OemVendorNamePtr:       %X\n",     vgaIB.OemVendorNamePtr);
-    //printf("OemProductNamePtr:      %X\n",     vgaIB.OemProductNamePtr);
-    //printf("OemProductRevPtr:       %X\n",     vgaIB.OemProductRevPtr);
-
     textColor(0x0E);
     printf("\nVideo Modes:\n");
     for (uint16_t i=0; i < 256; i++)
     {
         if(vgaIB.VideoModePtr[i] == 0xFFFF) break; // End of modelist
-        getModeInfo(vgaIB.VideoModePtr[i]);
+        vbe_readMIB(vgaIB.VideoModePtr[i]);
         textColor(0x0E);
-        printf("\n%x = %ux%ux%u", vgaIB.VideoModePtr[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
+        printf("\n%u (%x) = %ux%ux%u", vgaIB.VideoModePtr[i], vgaIB.VideoModePtr[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
+        if(mib.ModeAttributes & BIT(4)) printf(" (textmode)");
     }
     printf("\n");
     textColor(0x0F);
+}
 
-    waitForKeyStroke();
-
-    printf("\nDEBUG print: ModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));
+static void modeDebug()
+{
+    printf("\nModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));
     printf("WinAAttributes:        %u\n", mib.WinAAttributes);
     printf("WinBAttributes:        %u\n", mib.WinBAttributes);
     printf("WinGranularity:        %u\n", mib.WinGranularity);
@@ -512,9 +513,9 @@ void vgaDebug()
     }
 
     return 1;
-}*/
+}
 
-/*void showbitmap(char* infname,int xs,int ys)
+void showbitmap(char* infname,int xs,int ys)
 {
     BMPINFO bmpinfo;
     RGB pal[256];
@@ -573,13 +574,13 @@ void vgaDebug()
     getch();
     vclosegraph();
     return 0;
-}*/
+}
 
-void bitmapDebug() // TODO: make it bitmap-specific
+static void bitmapDebug() // TODO: make it bitmap-specific
 {
     memcpy(&bh, bh_get, sizeof(BitmapHeader_t));
 
-    printf("\nDEBUG print: BitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));
+    printf("\nBitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));
     printf("Type:                  %u\n", bh.Type);
     printf("Reserved:              %u\n", bh.Reserved);
     printf("Offset:                %u\n", bh.Offset);
@@ -594,15 +595,12 @@ void bitmapDebug() // TODO: make it bitmap-specific
     printf("Y-Pixels Per Meter:    %u\n", bh.YPixelsPerMeter);
     printf("Colors Used:           %u\n", bh.ColorsUsed);
     printf("Colors Important:      %u\n", bh.ColorsImportant);
-}
+}*/
 
 void vbe_drawChar(char font_char)
 {
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
     uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
-
-    // mib.XResolution;
-    // mib.YResolution;
 
     switch (uc)
     {
@@ -635,8 +633,8 @@ void vbe_drawChar(char font_char)
                 {
                     for(uint32_t x=0; x<xFont; x++)
                     {
-                        //SCREEN[ (xpos+x) + (ypos+y) * mib.XResolution * mib.BitsPerPixel/8 ] = font[(x + xFont*uc) + (yFont-y-1) * 2048];
-                        vbe_setPixel(curPos.x+x, curPos.y+y, font[(x + xFont*uc) + (yFont-y-1) * 2048]);
+                        BGRA_t temp = {font[(x + xFont*uc) + (yFont-y-1) * 2048], font[(x + xFont*uc) + (yFont-y-1) * 2048], font[(x + xFont*uc) + (yFont-y-1) * 2048], font[(x + xFont*uc) + (yFont-y-1) * 2048]};
+                        vbe_setPixel(curPos.x+x, curPos.y+y, temp);
                     }
                 }
             }
@@ -672,68 +670,44 @@ void vbe_bootscreen()
 
     bh_get = (BitmapHeader_t*)&bmp_start;
 
-    getVgaIB();
-
-    setVgaInfoBlock((VgaInfoBlock_t*)0x3400);
-
-    textColor(0x0E);
-    printf("Select Resolution (given by its number):\n");
-    textColor(0x0F);
-    printf("1. 640x480x256\n");
-    printf("2. 800x600x256\n");
-    printf("3. 1024x768x256 (Default mode WORKING!)\n");
-    printf("4. 1024x768x32k (TESTING!)\n");
-    printf("5. 1024x768x16M (TESTING!)\n");
-    uint8_t selectMode = getch();
-    switch(selectMode)
-    {
-        case '1':
-            getModeInfo(MODE_640x480x8);
-            break;
-        case '2':
-            getModeInfo(MODE_800x600x8);
-            break;
-        case '3':
-            getModeInfo(MODE_1024x768x8);
-            break;
-        case '4':
-            getModeInfo(MODE_1024x768x16);
-            break;
-        case '5': default:
-            getModeInfo(MODE_1024x768x24);
-            break;
-    }
-
+    vbe_readVIB();
     vgaDebug();
 
-    setVideoMemory();
-
-    switch(selectMode)
+    printf("\n");
+    uint16_t modenumber = 0;
+    while(modenumber == 0)
     {
-        case '1':
-            switchToVideomode(MODE_640x480x8);
-            break;
-        case '2':
-            switchToVideomode(MODE_800x600x8);
-            break;
-        case '3':
-            switchToVideomode(MODE_1024x768x8);
-            break;
-        case '4':
-            switchToVideomode(MODE_1024x768x16);
-            break;
-        case '5': default:
-            switchToVideomode(MODE_1024x768x24);
-            break;
+        textColor(0x0E);
+        printf("Type in the mode number: ");
+        char temp[20];
+        gets(temp);
+        modenumber = atoi(temp);
+        bool valid = false;
+        for(uint16_t i = 0; i < 256; i++)
+        {
+            if(vgaIB.VideoModePtr[i] == modenumber)
+                valid = true;
+        }
+        if(!valid)
+            modenumber = 0;
     }
 
-    vbe_drawLine(0, mib.YResolution/2 + 1, mib.XResolution, mib.YResolution/2 + 1, 0x09); // FPU
-    vbe_drawLine(mib.XResolution/2, 0, mib.XResolution/2, mib.YResolution, 0x09); // FPU
+    vbe_readMIB(modenumber);
+    modeDebug();
 
-    vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2, 0x01); // FPU
     waitForKeyStroke();
 
-    // vbe_drawBitmap(320,0,&cursor_start);
+    switchToVideomode(modenumber);
+
+    uint32_t displayStart = getDisplayStart();
+    printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
+
+    BGRA_t bright_blue = {255, 100, 100, 0x09};
+    vbe_drawLine(0, mib.YResolution/2 + 1, mib.XResolution, mib.YResolution/2 + 1, bright_blue); // FPU
+    vbe_drawLine(mib.XResolution/2, 0, mib.XResolution/2, mib.YResolution, bright_blue); // FPU
+
+    vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2, bright_blue); // FPU
+    waitForKeyStroke();
 
     vbe_drawBitmap(0, 0, &bmp_start);
     waitForKeyStroke();
@@ -745,14 +719,9 @@ void vbe_bootscreen()
 
     vbe_drawScaledBitmap(mib.XResolution, mib.YResolution, (BMPInfo_t*)&bmp_start);
 
-    uint32_t displayStart = getDisplayStart();
     waitForKeyStroke();
 
     switchToTextmode();
-
-    printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
-
-    waitForKeyStroke();
 }
 
 /*
