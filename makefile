@@ -73,7 +73,7 @@ $(STAGE2DIR)/BOOT2.BIN:
 	$(NASM) -Ox -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 $(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
-	$(NASM) $(USERDIR)/vm86/vidswtch.asm -O1 -o $(USERDIR)/vm86/VIDSWTCH.COM 
+	$(NASM) $(USERDIR)/vm86/vidswtch.asm -Ox -o $(USERDIR)/vm86/VIDSWTCH.COM 
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(KERNEL_OBJECTS)
 #	because changes in the Shell should change data.o we build data.o everytimes

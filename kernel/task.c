@@ -73,14 +73,14 @@ void waitForTask(task_t* blockingTask)
 
 static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, void(*entry)(), uint8_t privilege)
 {
-    newTask->pid            = next_pid++;
+    newTask->pid           = next_pid++;
     newTask->pageDirectory = directory;
-    newTask->privilege      = privilege;
+    newTask->privilege     = privilege;
     newTask->FPUptr        = 0;
-    newTask->attrib         = 0x0F;
-    newTask->blocker.type   = 0;
-    newTask->entry          = entry;
-    newTask->threads        = 0; // No threads associated with the task at the moment. created later if necessary
+    newTask->attrib        = 0x0F;
+    newTask->blocker.type  = 0;
+    newTask->entry         = entry;
+    newTask->threads       = 0; // No threads associated with the task at the moment. created later if necessary
 
     if (newTask->privilege == 3)
     {
@@ -122,7 +122,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
         {
             // general information: Intel 3A Chapter 5.12
             *(--kernelStack) = newTask->ss = 0x23; // ss
-            *(--kernelStack) = USER_STACK;          // esp
+            *(--kernelStack) = USER_STACK;         // esp
             code_segment = 0x1B; // 0x18|0x3=0x1B
         }
 

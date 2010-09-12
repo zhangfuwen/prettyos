@@ -4,125 +4,21 @@
 
 org 0x100
 
-video_mode_640_480_256:
-    mov ax, 0x4F02
-    mov bx, 0x4101 ; video mode
-    int 10h
-    jmp exitvm86
-
-video_mode_800_600_256:
-    mov ax, 0x4F02
-    mov bx, 0x4103 ; video mode
-    int 10h
-    jmp exitvm86
-
-video_mode_1024_768_256:
-    mov ax, 0x4F02
-    mov bx, 0x4105 ; video mode
-    int 10h
-    jmp exitvm86
-
-video_mode_1024_768_64k:
-    mov ax, 0x4F02
-    mov bx, 0x4117 ; video mode
-    int 10h
-    jmp exitvm86
-
-video_mode_1024_768_16M:
-    mov ax, 0x4F02
-    mov bx, 0x4118 ; video mode
-    int 10h
-    jmp exitvm86
-
-VgaInfoBlock:
-    xor ax, ax
-    mov es, ax
-    mov ax, 0x3400
-    mov di, ax
-    mov ax, 0x4F00
-    int 10h
-    jmp exitvm86
-
-ModeInfoBlock_640_480_256:
-    xor ax, ax
-    mov es, ax
-    mov ax, 0x3600
-    mov di, ax
-    mov ax, 0x4F01
-    mov cx, 0x4101 ; video mode
-    int 10h
-    mov word [0x1300], ax ; return value
-    xor ax,ax
-    mov ds,ax
-    jmp exitvm86
-
-ModeInfoBlock_800_600_256:
-    xor ax, ax
-    mov es, ax
-    mov ax, 0x3600
-    mov di, ax
-    mov ax, 0x4F01
-    mov cx, 0x4103 ; video mode
-    int 10h
-    mov word [0x1300], ax ; return value
-    xor ax,ax
-    mov ds,ax
-    jmp exitvm86
-
-ModeInfoBlock_1024_768_256:
-    xor ax, ax
-    mov es, ax
-    mov ax, 0x3600
-    mov di, ax
-    mov ax, 0x4F01
-    mov cx, 0x4105 ; video mode
-    int 10h
-    mov word [0x1300], ax ; return value
-    xor ax,ax
-    mov ds,ax
-    jmp exitvm86
-
-ModeInfoBlock_1024_768_64k:
-    xor ax, ax
-    mov es, ax
-    mov ax, 0x3600
-    mov di, ax
-    mov ax, 0x4F01
-    mov cx, 0x4117 ; video mode
-    int 10h
-    mov word [0x1300], ax ; return value
-    xor ax,ax
-    mov ds,ax
-    jmp exitvm86
-
-ModeInfoBlock_1024_768_16M:
-    xor ax, ax
-    mov es, ax
-    mov ax, 0x3600
-    mov di, ax
-    mov ax, 0x4F01
-    mov cx, 0x4118 ; video mode
-    int 10h
-    mov word [0x1300], ax ; return value
-    xor ax,ax
-    mov ds,ax
-    jmp exitvm86
-
 ;SetBank:
 ;    mov ax, 0x4F05
 ;    mov bx, 0
-;   mov dx, bank
+;    mov dx, bank
 ;    jmp exitvm86
 
 ;GetBank:
 ;    mov ax, 0x4F05
 ;    mov bx, 1
-;   mov dx, bank
-;   jmp exitvm86
+;    mov dx, bank
+;    jmp exitvm86
 
 ;SetScanLinePixel:
-;   mov ax, 0x4F06
-;   mov bl, 0
+;    mov ax, 0x4F06
+;    mov bl, 0
 ;    jmp exitvm86
 
 ;GetScanLinePixel:
@@ -131,8 +27,8 @@ ModeInfoBlock_1024_768_16M:
 ;    jmp exitvm86
 
 ;SetScanLineBytes:
-;   mov ax, 0x4F06
-;   mov bl, 02
+;    mov ax, 0x4F06
+;    mov bl, 02
 ;     jmp exitvm86
 
 ;GetMAXScanLine:
@@ -148,7 +44,7 @@ SetDisplayStart:
     mov dx, word[0x1800] ; Set first Displayed Scan Line
     mov cx, word[0x1802] ; Set first Displayed Pixel in Scan Line
     int 10h
-     jmp exitvm86
+    jmp exitvm86
 
 GetDisplayStart:
     mov ax, 0x4F07
@@ -158,20 +54,20 @@ GetDisplayStart:
     mov ds, ax
     mov word [0x1300], dx ; First Displayed Scan Line
     mov word [0x1302], cx ; First Displayed Pixel in Scan Line
-     jmp exitvm86
+    jmp exitvm86
 
 SetDacPalette:
     mov ax, 0x4F08        ;Set DAC Palette Format
     mov bl, 0
     mov bx, 6
     int 10h
-     jmp exitvm86
+    jmp exitvm86
 
 GetDacPalette:
     mov ax, 0x4F08        ;Get DAC Palette Format
     mov bl, 1
     int 10h
-     jmp exitvm86
+    jmp exitvm86
 
 SetPalette:
     mov ax, 0x4F09
@@ -180,16 +76,14 @@ SetPalette:
     xor dx, dx
     xor ax, ax
     mov es, ax
-    mov ax, 0x1600
-    mov di, ax
+    mov di, 0x1600
     int 10h
     jmp exitvm86
 
 GetPalette:
     xor ax, ax
     mov es, ax
-    mov ax, 0x1400
-    mov di, ax
+    mov di, 0x1400
     mov ax, 0x4F09
     mov bl, 1            ;=01h    Get palette data
     int 10h                ;=03h    Get secondary palette data
@@ -206,6 +100,33 @@ text_mode:
     mov ax, 0x1112
     xor bl, bl
     int 0x10
+    jmp exitvm86
+
+video_mode:
+    xor ax, ax
+    mov ds, ax
+    mov ax, 0x4F02
+    mov bx, word [0x3600] ; video mode
+    int 10h
+    jmp exitvm86
+
+VgaInfoBlock:
+    xor ax, ax
+    mov es, ax
+    mov di, 0x3400
+    mov ax, 0x4F00
+    int 10h
+    jmp exitvm86
+
+ModeInfoBlock:
+    xor ax, ax
+    mov ds, ax
+    mov es, ax
+    mov di, 0x3600
+    mov ax, 0x4F01
+    mov cx, word [0x3600] ; video mode
+    int 10h
+    mov word [0x3600], ax ; return value
     jmp exitvm86
 
 ; stop and leave vm86-task

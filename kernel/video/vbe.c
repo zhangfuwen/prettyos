@@ -29,22 +29,22 @@ extern uintptr_t vm86_com_end;
 extern BMPInfo_t bmp_start;
 extern BMPInfo_t bmp_end;
 
-ModeInfoBlock_t* modeInfoBlock_user;
-
 
 void setVgaInfoBlock(VgaInfoBlock_t* VIB)
 {
     memcpy(&vgaIB, VIB, sizeof(VgaInfoBlock_t));
 }
 
-void setModeInfoBlock(ModeInfoBlock_t* MIB)
+void getModeInfo(uint16_t mode)
 {
-    memcpy(&mib, MIB, sizeof(ModeInfoBlock_t));
+    *(uint16_t*)0x3600 = 0x4000|mode;
+    waitForTask(create_vm86_task(VM86_MODEINFOBLOCK));
+    memcpy(&mib, (void*)0x3600, sizeof(ModeInfoBlock_t));
 }
 
-ModeInfoBlock_t* getModeInfoBlock()
+ModeInfoBlock_t* getCurrentModeInfo()
 {
-    return &mib;
+    return(&mib);
 }
 
 void getVgaIB()
@@ -52,9 +52,11 @@ void getVgaIB()
     waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
 }
 
-void switchToVideomode(void* MODE)
+void switchToVideomode(uint16_t mode)
 {
-    waitForTask(create_vm86_task(MODE));
+    *(uint16_t*)0x3600 = 0x4000|mode;
+    waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO));
+	getModeInfo(mode);
     videomode = VM_VBE;
 }
 
@@ -435,112 +437,12 @@ void vgaDebug()
     printf("\nVideo Modes:\n");
     for (uint16_t i=0; i < 256; i++)
     {
-        printf("\n%x ", vgaIB.VideoModePtr[i]);
-        switch(vgaIB.VideoModePtr[i])
-        {
-            case 0x0100:
-                printf("= 640x400x256");
-                break;
-            case 0x0101:
-                printf("= 640x480x256");
-                break;
-            case 0x0102:
-                printf("= 800x600x16");
-                break;
-            case 0x0103:
-                printf("= 800x600x256");
-                break;
-            case 0x0104:
-                printf("= 1024x768x16");
-                break;
-            case 0x0105:
-                printf("= 1024x768x256");
-                break;
-            case 0x0106:
-                printf("= 1280x1024x16");
-                break;
-            case 0x0107:
-                printf("= 1280x1024x256");
-                break;
-            case 0x0108:
-                printf("= 80x60 text");
-                break;
-            case 0x0109:
-                printf("= 132x25 text");
-                break;
-            case 0x010A:
-                printf("= 132x43 text");
-                break;
-            case 0x010B:
-                printf("= 132x50 text");
-                break;
-            case 0x010C:
-                printf("= 132x60 text");
-                break;
-            case 0x010D:
-                printf("= 320x200x32K");
-                break;
-            case 0x010E:
-                printf("= 320x200x64K");
-                break;
-            case 0x010F:
-                printf("= 320x200x16M");
-                break;
-            case 0x0110:
-                printf("= 640x480x32K");
-                break;
-            case 0x0111:
-                printf("= 640x480x64K");
-                break;
-            case 0x0112:
-                printf("= 640x480x16M");
-                break;
-            case 0x0113:
-                printf("= 800x600x32K");
-                break;
-            case 0x0114:
-                printf("= 800x600x64K");
-                break;
-            case 0x0115:
-                printf("= 800x600x16M");
-                break;
-            case 0x0116:
-                printf("= 1024x768x32K");
-                break;
-            case 0x0117:
-                printf("= 1024x768x64K");
-                break;
-            case 0x0118:
-                printf("= 1024x768x16M");
-                break;
-            case 0x0119:
-                printf("= 1280x1024x32K");
-                break;
-            case 0x011A:
-                printf("= 1280x1024x64K");
-                break;
-            case 0x011B:
-                printf("= 1280x1024x16M");
-                break;
-            // VBE 2.0 modes
-            case 0x0120:
-                printf("= 1600x1200x256");
-                break;
-            case 0x0121:
-                printf("= 1600x1200x32K");
-                break;
-            case 0x0122:
-                printf("= 1600x1200x64K");
-                break;
-            case 0xFFFF:
-                printf("= end of modelist");
-                goto END;
-            default:
-                break;
-        }
+        if(vgaIB.VideoModePtr[i] == 0xFFFF) break; // End of modelist
+        getModeInfo(vgaIB.VideoModePtr[i]);
+        textColor(0x0E);
+        printf("\n%x = %ux%ux%u", vgaIB.VideoModePtr[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
     }
-    END:
-    printf("\n\n");
+    printf("\n");
     textColor(0x0F);
 
     waitForKeyStroke();
@@ -786,24 +688,21 @@ void vbe_bootscreen()
     switch(selectMode)
     {
         case '1':
-            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_640_480_256));
+            getModeInfo(MODE_640x480x8);
             break;
         case '2':
-            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_800_600_256));
+            getModeInfo(MODE_800x600x8);
             break;
         case '3':
-            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_256));
+            getModeInfo(MODE_1024x768x8);
             break;
         case '4':
-            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_64K));
+            getModeInfo(MODE_1024x768x16);
             break;
         case '5': default:
-            waitForTask(create_vm86_task(VM86_MODEINFOBLOCK_1024_768_16M));
+            getModeInfo(MODE_1024x768x24);
             break;
     }
-
-    setModeInfoBlock((ModeInfoBlock_t*)0x3600);
-    modeInfoBlock_user = getModeInfoBlock();
 
     vgaDebug();
 
@@ -812,26 +711,26 @@ void vbe_bootscreen()
     switch(selectMode)
     {
         case '1':
-            switchToVideomode(VM86_SWITCH_TO_VIDEO_640_480_256);
+            switchToVideomode(MODE_640x480x8);
             break;
         case '2':
-            switchToVideomode(VM86_SWITCH_TO_VIDEO_800_600_256);
+            switchToVideomode(MODE_800x600x8);
             break;
         case '3':
-            switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_256);
+            switchToVideomode(MODE_1024x768x8);
             break;
         case '4':
-            switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_64K);
+            switchToVideomode(MODE_1024x768x16);
             break;
         case '5': default:
-            switchToVideomode(VM86_SWITCH_TO_VIDEO_1024_768_16M);
+            switchToVideomode(MODE_1024x768x24);
             break;
     }
 
-    vbe_drawLine(0, modeInfoBlock_user->YResolution/2 + 1, modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution/2 + 1, 0x09); // FPU
-    vbe_drawLine(modeInfoBlock_user->XResolution/2, 0, modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution, 0x09); // FPU
+    vbe_drawLine(0, mib.YResolution/2 + 1, mib.XResolution, mib.YResolution/2 + 1, 0x09); // FPU
+    vbe_drawLine(mib.XResolution/2, 0, mib.XResolution/2, mib.YResolution, 0x09); // FPU
 
-    vbe_drawCircle(modeInfoBlock_user->XResolution/2, modeInfoBlock_user->YResolution/2, modeInfoBlock_user->YResolution/2, 0x01); // FPU
+    vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2, 0x01); // FPU
     waitForKeyStroke();
 
     // vbe_drawBitmap(320,0,&cursor_start);
@@ -844,7 +743,7 @@ void vbe_bootscreen()
     vbe_drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
     waitForKeyStroke();
 
-    vbe_drawScaledBitmap(modeInfoBlock_user->XResolution, modeInfoBlock_user->YResolution, (BMPInfo_t*)&bmp_start);
+    vbe_drawScaledBitmap(mib.XResolution, mib.YResolution, (BMPInfo_t*)&bmp_start);
 
     uint32_t displayStart = getDisplayStart();
     waitForKeyStroke();

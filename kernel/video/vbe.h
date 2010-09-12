@@ -8,24 +8,24 @@
 // http://poli.cs.vsb.cz/misc/rbint/text/1005.html
 
 // This values are hardcoded adresses from vidswtch.map
-#define VM86_SWITCH_TO_VIDEO_640_480_256    ((void*)0x100)
-#define VM86_SWITCH_TO_VIDEO_800_600_256    ((void*)0x10B)
-#define VM86_SWITCH_TO_VIDEO_1024_768_256   ((void*)0x116)
-#define VM86_SWITCH_TO_VIDEO_1024_768_64K   ((void*)0x121)
-#define VM86_SWITCH_TO_VIDEO_1024_768_16M   ((void*)0x12C)
-#define VM86_VGAINFOBLOCK                   ((void*)0x137)
-#define VM86_MODEINFOBLOCK_640_480_256      ((void*)0x148)
-#define VM86_MODEINFOBLOCK_800_600_256      ((void*)0x163)
-#define VM86_MODEINFOBLOCK_1024_768_256     ((void*)0x17E)
-#define VM86_MODEINFOBLOCK_1024_768_64K     ((void*)0x199)
-#define VM86_MODEINFOBLOCK_1024_768_16M     ((void*)0x1B4)
-#define VM86_SETDISPLAYSTART                ((void*)0x1CF)
-#define VM86_GETDISPLAYSTART                ((void*)0x1E5)
-#define VM86_SETDACPALETTE                  ((void*)0x1FB)
-#define VM86_GETDACPALETTE                  ((void*)0x208)
-#define VM86_SETPALETTE                     ((void*)0x212)
-#define VM86_GETPALETTE                     ((void*)0x22A)
-#define VM86_SWITCH_TO_TEXT                 ((void*)0x23D)
+#define VM86_SETDISPLAYSTART   ((void*)0x100)
+#define VM86_GETDISPLAYSTART   ((void*)0x116)
+#define VM86_SETDACPALETTE     ((void*)0x12B)
+#define VM86_GETDACPALETTE     ((void*)0x137)
+#define VM86_SETPALETTE        ((void*)0x140)
+#define VM86_GETPALETTE        ((void*)0x155)
+#define VM86_SWITCH_TO_TEXT    ((void*)0x165)
+#define VM86_SWITCH_TO_VIDEO   ((void*)0x173)
+#define VM86_VGAINFOBLOCK      ((void*)0x182)
+#define VM86_MODEINFOBLOCK     ((void*)0x190)
+
+enum MODE {
+	MODE_640x480x8 = 0x101,
+	MODE_800x600x8 = 0x103,
+	MODE_1024x768x8 = 0x105,
+	MODE_1024x768x16 = 0x117,
+	MODE_1024x768x24 = 0x118,
+};
 
 
 // SuperVGA information block
@@ -161,13 +161,12 @@ typedef struct
 
 
 // Mode switch functions, will be later moved to a "video-manager" that switches between the modes
-void switchToVideomode(void* MODE); // Switches to a VBE Mode
+void switchToVideomode(uint16_t mode); // Switches to a VBE Mode
 void switchToTextmode(); // Switches to the VGA Textmode
 
-
+void getModeInfo(uint16_t mode);
 void setVgaInfoBlock(VgaInfoBlock_t* VIB);
-void setModeInfoBlock(ModeInfoBlock_t* MIB);
-ModeInfoBlock_t* getModeInfoBlock();
+ModeInfoBlock_t* getCurrentModeInfo();
 
 void getVgaIB();
 
