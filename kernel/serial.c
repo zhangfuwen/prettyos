@@ -10,8 +10,7 @@
 #include "util.h"
 #include "video/console.h"
 
-static uint8_t serialPorts;
-
+static uint8_t  serialPorts;
 static uint16_t IOports[4]; // Contains the ports used to access 
 
 void serial_init()
@@ -35,36 +34,38 @@ void serial_init()
     printf("\n");
 }
 
-int serial_recieved(uint8_t com)
-{
-    if(com <= serialPorts)
-        return inportb(IOports[com-1] + 5) & 1;
-    return(0);
-}
-
-char read_serial(uint8_t com)
+int32_t serial_received(uint8_t com)
 {
     if(com <= serialPorts)
     {
-        while (serial_recieved(com) == 0);
+        return inportb(IOports[com-1] + 5) & 1;
+    }
+    return 0;
+}
+
+char serial_read(uint8_t com)
+{
+    if(com <= serialPorts)
+    {
+        while (serial_received(com) == 0);
         return inportb(IOports[com-1]);
     }
-    return(0); // Correct?
+    return 0; // Correct?
 }
 
 
-int is_transmit_empty(uint8_t com)
+int32_t serial_isTransmitEmpty(uint8_t com)
 {
     if(com <= serialPorts)
         return inportb(IOports[com-1] + 5) & 0x20;
     return(0); // Correct?
 }
 
-void write_serial(uint8_t com, char a)
+void serial_write(uint8_t com, char a)
 {
     if(com <= serialPorts)
     {
-        while (is_transmit_empty(com) == 0);
+        while (serial_isTransmitEmpty(com) == 0);
         outportb(IOports[com-1],a);
     }
 }

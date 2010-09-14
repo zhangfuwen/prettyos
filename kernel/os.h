@@ -15,7 +15,7 @@
 /// #define _TASKING_DIAGNOSIS_    // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_     // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_         // Provides information about the vm86 task, but critical
-#define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS which is used in the bootscreen. Enabled per default.
+/// #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS which is used in the bootscreen. Enabled per default.
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the kernels size heavily
 
 void textColor(uint8_t color);

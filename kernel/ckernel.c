@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* version = "0.0.1.230 - Rev: 814";
+const char* version = "0.0.1.231 - Rev: 815";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -210,21 +210,21 @@ void main()
         }
 
 
-        if (serial_recieved(1) != 0)
+        if (serial_received(1) != 0)
         {
             printf("Serial message: \n");
-            while (serial_recieved(1) != 0)
+            while (serial_received(1) != 0)
             {
-                uint8_t sbyt=read_serial(1);
+                uint8_t sbyt=serial_read(1);
                 printf("0x%x ",sbyt);
                 sleepMilliSeconds(8);
             }
-            write_serial(1,'P');
-            write_serial(1,'r');
-            write_serial(1,'e');
-            write_serial(1,'t');
-            write_serial(1,'t');
-            write_serial(1,'y');
+            serial_write(1,'P');
+            serial_write(1,'r');
+            serial_write(1,'e');
+            serial_write(1,'t');
+            serial_write(1,'t');
+            serial_write(1,'y');
             printf("\nAnswered with 'Pretty'!\n\n");
         }
 
