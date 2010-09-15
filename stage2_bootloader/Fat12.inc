@@ -231,7 +231,7 @@ pop bx
 
 
 LoadFile:
-    xor  ecx, ecx               ; size of file in sectors
+	xor  ecx, ecx               ; size of file in sectors
     push ecx
     push edi
 

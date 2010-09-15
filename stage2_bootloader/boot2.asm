@@ -31,8 +31,12 @@ ImageSize     dd 0
 ;*******************************************************
 ;    Data Section
 ;*******************************************************
-msgLoading db 0x0D, 0x0A, "Jumping to OS Kernel...", 0
-msgFailure db 0x0D, 0x0A, "Missing KERNEL.BIN", 0x0D, 0x0A, 0x0A, 0
+msgGTD            db 0x0D, 0x0A, "GTD installed ...", 0
+msgUnrealMode     db 0x0D, 0x0A, "Unreal Mode entered ...", 0
+msgLoadKernel     db 0x0D, 0x0A, "Now loading Kernel ...", 0
+msgFloppyMotorOff db 0x0D, 0x0A, "Floppy Disk Motor switched off ...", 0
+msgSwitchToPM     db 0x0D, 0x0A, "Now switching to Protected Mode (PM) ...", 0
+msgFailure        db 0x0D, 0x0A, "Missing KERNEL.BIN (Fatal Error)", 0
 
 entry_point:
     cli
@@ -61,11 +65,21 @@ Get_Memory_Map:
     mov es, ax          ; important to null es!
 
 Install_GDT:
+ 
     call InstallGDT
+	mov si, msgGTD
+    call print_string
+ 
     call EnterUnrealMode
+	mov si, msgUnrealMode
+    call print_string
+
     sti
 
 Load_Root:
+
+    mov si, msgLoadKernel
+    call print_string
 
     call LoadRoot
     mov edi, IMAGE_PMODE_BASE
@@ -84,15 +98,17 @@ Load_Root:
 ;    Switch from Real Mode (RM) to Protected Mode (PM)
 ;*******************************************************
 EnterProtectedMode:
-    mov si, msgLoading
-    call print_string
 
     ; switch off floppy disk motor
     mov dx,0x3F2
     mov al,0x0C
     out dx,al
+	mov si, msgFloppyMotorOff
+    call print_string
 
     ; switch to PM
+	mov si, msgSwitchToPM
+    call print_string
     cli
     mov eax, cr0                       ; bit 0 in CR0 has to be set for entering PM
     or eax, 1
