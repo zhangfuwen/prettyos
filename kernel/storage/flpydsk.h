@@ -30,8 +30,6 @@ extern floppy_t* floppyDrive[MAX_FLOPPY];
 
 void flpydsk_install();
 
-void i86_flpy_irq(registers_t* r);
-
 void flpydsk_motorOn (void* drive);
 void flpydsk_motorOff(void* drive);
 

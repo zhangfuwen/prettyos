@@ -132,7 +132,7 @@ LoadRoot:
     xchg    ax, cx                              ; store in CX
 
     ; compute location of root directory and store in "ax"
-        mov     al, BYTE [NumFATs]              ; number of FATs
+    mov     al, BYTE [NumFATs]                  ; number of FATs
     mul     WORD [FATSize]                      ; sectors used by FATs
     add     ax, WORD [ReservedSec]
     mov     WORD [datasector], ax               ; base of root directory

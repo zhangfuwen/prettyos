@@ -50,15 +50,14 @@ char serial_read(uint8_t com)
         while (serial_received(com) == 0);
         return inportb(IOports[com-1]);
     }
-    return 0; // Correct?
+    return 0;
 }
-
 
 int32_t serial_isTransmitEmpty(uint8_t com)
 {
     if(com <= serialPorts)
         return inportb(IOports[com-1] + 5) & 0x20;
-    return(0); // Correct?
+    return(0);
 }
 
 void serial_write(uint8_t com, char a)

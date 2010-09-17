@@ -192,6 +192,75 @@ void* memcpy(void* dest, const void* src, size_t count)
     return dest;
 }
 
+void* memmove(const void* source, void* destination, size_t size)
+{
+    // If source and destination point to the same memory area, coping something
+    // is not necessary. It could be seen as a bug of the caller to pass the
+    // same value for source and destination, but we decided to allow this and
+    // just do nothing in this case.
+    if(source == destination)
+    {
+        return(destination);
+    }
+
+    // If size is 0, just return. It is not a bug to call this function with size set to 0.
+    if(size == 0)
+    {
+        return(destination);
+    }
+
+    // Check if either one of the memory regions is beyond the end of the
+    // address space. We think that trying to copy from or to beyond the end of
+    // the address space is a bug of the caller.
+    // In future versions of this function, an exception will be thrown in this
+    // case. For now, just return and do nothing.
+    // The subtraction used to calculate the value of "max" cannot produce an
+    // underflow because size can neither be greater than the maximum value of a
+    // variable of type uintp or 0.
+    const uintptr_t memMax = ~((uintptr_t)0) - (size - 1); // ~0 is the highest possible value of the variables type
+    if((uintptr_t)source > memMax || (uintptr_t)destination > memMax)
+    {
+        return(destination);
+    }
+
+    const uint8_t* source8 = (uint8_t*)source;
+    uint8_t* destination8 = (uint8_t*)destination;
+
+    // The source overlaps with the destination and the destination is after the
+    // source in memory. Coping from start to the end of source will overwrite
+    // the last (size - (destination - source)) bytes of source with the first
+    // ones. Therefore it is necessary to copy from the end to the start of
+    // source and destination. Let us look at an example. Each letter or space
+    // is one byte in memory.
+    // |source     |
+    // |      destination|
+    // source starts at 0. destination at 6. Coping from start to end will
+    // overwrite the last 5 bytes of the source.
+    if(source8 < destination8)
+    {
+        source8 += size - 1;
+        destination8 += size - 1;
+        while(size > 0)
+        {
+            *destination8 = *source8;
+            --destination8;
+            --source8;
+            --size;
+        }
+    }
+    else // In all other cases, it is ok to copy from the start to the end of source.
+    {
+        while(size > 0)
+        {
+            *destination8 = *source8;
+            ++destination8;
+            ++source8;
+            --size;
+        }
+    }
+    return(destination);
+}
+
 
 void puts(const char* str)
 {

@@ -111,7 +111,7 @@ EnterProtectedMode:
     call print_string
     cli
     mov eax, cr0                       ; bit 0 in CR0 has to be set for entering PM
-    or eax, 1
+    or al, 1
     mov cr0, eax
     jmp DWORD CODE_DESC:ProtectedMode  ; far jump to code selector (cs = 0x08)
 

@@ -118,7 +118,7 @@ void scheduler_deleteTask(task_t* task)
 
 void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
 {
-	cli();
+    cli();
     currentTask->blocker.type = reason;
     currentTask->blocker.data = data;
 

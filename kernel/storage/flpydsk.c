@@ -112,6 +112,7 @@ enum FLPYDSK_SECTOR_DTL
     FLPYDSK_SECTOR_DTL_1024 = 4
 };
 
+static void flpydsk_reset();
 static floppy_t* createFloppy(uint8_t ID)
 {
     floppy_t* fdd        = malloc(sizeof(floppy_t), 0, "flpydsk-FDD");
@@ -139,12 +140,14 @@ static floppy_t* createFloppy(uint8_t ID)
     fdd->drive.insertedDisk->partition[0]->buffer = malloc(512, 0, "flpydsk-Partbuffer");
     fdd->drive.insertedDisk->partition[0]->disk   = fdd->drive.insertedDisk;
     fdd->drive.insertedDisk->partition[0]->serial = 0;
-	fdd->drive.insertedDisk->partition[0]->data   = 0;
+    fdd->drive.insertedDisk->partition[0]->data   = 0;
 
     attachDisk(fdd->drive.insertedDisk); // disk == floppy disk
     attachPort(&fdd->drive);
 
     CurrentDrive = fdd;
+
+    flpydsk_reset();
 
     char buffer[512];
     flpydsk_readSector(0, buffer, fdd);
@@ -153,13 +156,13 @@ static floppy_t* createFloppy(uint8_t ID)
     return(fdd);
 }
 
-static void flpydsk_reset();
+static void flpydsk_handler(registers_t* r);
 // Looks for Floppy drives and installs them
 void flpydsk_install()
 {
     if ((cmos_read(0x10)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
     {
-        irq_installHandler(IRQ_FLOPPY, i86_flpy_irq); // floppy disk uses IRQ 6
+        irq_installHandler(IRQ_FLOPPY, flpydsk_handler); // floppy disk uses IRQ 6
 
         printf("\n1.44 MB FDD first device found");
         floppyDrive[0] = createFloppy(0);
@@ -177,8 +180,6 @@ void flpydsk_install()
         {
             floppyDrive[1] = 0;
         }
-
-        flpydsk_reset();
 
         CurrentDrive = floppyDrive[0];
     }
@@ -199,10 +200,10 @@ void flpydsk_install()
 static void flpydsk_initialize_dma()
 {
     outportb(0x0A, 0x06);   // mask dma channel 2
-    //outportb(0x0C, 0xFF);   // reset flip-flop (controller 1, slave, channel 2)
+    outportb(0x0C, 0xFF);   // reset flip-flop (controller 1, slave, channel 2)
     outportb(0x04, 0x00);   // DMA buffer address 0x1000
     outportb(0x04, 0x10);
-    //outportb(0x0C, 0xFF);   // reset flip-flop (controller 1, slave, channel 2)
+    outportb(0x0C, 0xFF);   // reset flip-flop (controller 1, slave, channel 2)
     outportb(0x05, 0xFF);   // count to 0x23FF (number of bytes in a 3.5" floppy disk track: 0 to 18*512)
     outportb(0x05, 0x23);
 
@@ -290,15 +291,14 @@ static void flpydsk_wait_irq()
         hlt();
         if ((timeout-timer_getSeconds()) <= 0)
         {
-            //printf("\ntimeout: IRQ not received!\n");
-            break;
+            break; // IRQ not received, but timeout.
         }
     }
     CurrentDrive->receivedIRQ = false;
 }
 
 // floppy disk irq handler
-void i86_flpy_irq(registers_t* r)
+static void flpydsk_handler(registers_t* r)
 {
     CurrentDrive->receivedIRQ = true; // irq fired. Set flag!
 }
@@ -432,20 +432,20 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
 
     flpydsk_motorOn(drive);
 
-	uint8_t st0, cyl, timeout = 10;
+    uint8_t st0, cyl, timeout = 10;
     do
     {
-		flpydsk_send_command(FDC_CMD_CALIBRATE);
-		flpydsk_send_command(drive->ID);
-		flpydsk_wait_irq();
-		flpydsk_check_int(&st0, &cyl);
+        flpydsk_send_command(FDC_CMD_CALIBRATE);
+        flpydsk_send_command(drive->ID);
+        flpydsk_wait_irq();
+        flpydsk_check_int(&st0, &cyl);
 
-		timeout--;
-		if(timeout == 0)
-		{
-			CurrentDrive->accessRemaining--;
-			return(-1);
-		}
+        timeout--;
+        if(timeout == 0)
+        {
+            CurrentDrive->accessRemaining--;
+            return(-1);
+        }
     } while(!(st0 & 1 << 5));
 
     CurrentDrive->accessRemaining--;
@@ -465,22 +465,22 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
 
     flpydsk_motorOn(CurrentDrive);
 
-	uint8_t st0, cyl0, timeout = 10;
+    uint8_t st0, cyl0, timeout = 10;
     do
     {
-		// send the command
-		flpydsk_send_command(FDC_CMD_SEEK);
-		flpydsk_send_command((head) << 2 | CurrentDrive->ID);
-		flpydsk_send_command(cyl);
-		flpydsk_wait_irq();
-		flpydsk_check_int(&st0,&cyl0);
+        // send the command
+        flpydsk_send_command(FDC_CMD_SEEK);
+        flpydsk_send_command((head) << 2 | CurrentDrive->ID);
+        flpydsk_send_command(cyl);
+        flpydsk_wait_irq();
+        flpydsk_check_int(&st0,&cyl0);
 
-		timeout--;
-		if(timeout == 0)
-		{
-			CurrentDrive->accessRemaining--;
-			return(-1);
-		}
+        timeout--;
+        if(timeout == 0)
+        {
+            CurrentDrive->accessRemaining--;
+            return(-1);
+        }
     } while(!(st0 & 1 << 5));
 
     CurrentDrive->accessRemaining--;
@@ -522,7 +522,7 @@ static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sect
     if (operation == READ)
     {
         flpydsk_dma_read();
-		flpydsk_send_command(FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY);
+        flpydsk_send_command(FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY);
     }
     else if (operation == WRITE)
     {
