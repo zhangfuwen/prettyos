@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* version = "0.0.1.233 - Rev: 818";
+const char* version = "0.0.1.234 - Rev: 819";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -35,7 +35,6 @@ system_t system;
 
 void fpu_install(); // fpu.c
 void fpu_test();    // fpu.c
-
 
 todoList_t* delayedInitTasks; // HACK! Why is it needed? (RTL8139 generates interrupts (endless) if its not used for EHCI)
 
