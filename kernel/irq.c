@@ -120,11 +120,11 @@ static void GPF(registers_t* r) // -> VM86
         textColor(0x0C);
         if (vm86sensitiveOpcodehandler(ctx)) // OK
         {
-            #ifdef _VM_DIAGNOSIS_
+            /*
             textColor(0x03);
             //printf("\nretVal i386V86Gpf: %u\n", retVal); // vm86 critical
             textColor(0x0C);
-            #endif
+            */
         }
         else
         {

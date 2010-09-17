@@ -9,12 +9,16 @@ int32_t  serial_received(uint8_t com);
 char     serial_read(uint8_t com);
 int32_t  serial_isTransmitEmpty(uint8_t com);
 
-static inline void serial_log(const char* msg)
+/*
+   VBox: implement serial interface with output to a file, e.g. called "serial1.txt"
+   Outputs are used in vm86
+*/
+static inline void serial_log(uint8_t com, const char* msg)
 {
     #ifdef _SERIAL_LOG_
-    while(*msg != 0)
+    while(*msg)
     {
-        serial_write(1, *msg);
+        serial_write(com, *msg);
         msg++;
     }
     #endif

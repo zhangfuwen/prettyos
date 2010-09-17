@@ -15,6 +15,7 @@ a chance to emulate the facilities they affect.
 #include "vm86.h"
 #include "util.h"
 #include "task.h"
+#include "serial.h"
 
 static current_t Current;
 static current_t* current = &Current;
@@ -31,7 +32,8 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
     //bool isAddress32 = false;
 
   #ifdef _VM_DIAGNOSIS_
-    // printf("\nvm86sensitiveOpcodehandler: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->useresp); // vm86 critical
+    // printf("\r\nvm86sensitiveOpcodehandler: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->useresp); // vm86 critical
+    // ...
   #endif
     // regarding opcodes, cf. "The Intel® 64 and IA-32 Architectures Software Developer’s Manual, Volumes 2A & 2B"
 
@@ -42,6 +44,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
         case 0x66: // O32
           #ifdef _VM_DIAGNOSIS_
             // printf("o32 "); // vm86 critical
+            serial_log(1, "o32 ");
           #endif
             isOperand32 = true;
             ip++;
@@ -51,6 +54,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
         case 0x67: // A32
           #ifdef _VM_DIAGNOSIS_
             // printf("a32 "); // vm86 critical
+            serial_log(1, "a32 ");
           #endif
             //isAddress32 = true;
             ip++;
@@ -59,7 +63,8 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
 
         case 0x9C: // PUSHF
           #ifdef _VM_DIAGNOSIS_
-            // printf("pushf\n"); // vm86 critical
+            // printf("pushf\r\n"); // vm86 critical
+            serial_log(1, "pushf\r\r\n");
           #endif
             if (isOperand32)
             {
@@ -97,7 +102,8 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
 
         case 0x9D: // POPF
           #ifdef _VM_DIAGNOSIS_
-            // printf("popf\n"); // vm86 critical
+            // printf("popf\r\r\n"); // vm86 critical
+            serial_log(1, "popf\r\r\n");
           #endif
 
             if (isOperand32)
@@ -120,14 +126,16 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             if (!isOperand32)
             {
              #ifdef _VM_DIAGNOSIS_
-                // printf("outw\n"); // vm86 critical
+                // printf("outw\r\r\n"); // vm86 critical
+                serial_log(1, "outw\r\r\n");
               #endif
                 outportw(ctx->edx, ctx->eax);
             }
             else
             {
               #ifdef _VM_DIAGNOSIS_
-                 // printf("outl(\n"); // vm86 critical
+                 // printf("outl(\r\r\n"); // vm86 critical
+                 serial_log(1, "outl\r\r\n");
               #endif
                 outportl(ctx->edx, ctx->eax);
             }
@@ -137,7 +145,8 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
 
         case 0xEE: // OUT DX, AL
           #ifdef _VM_DIAGNOSIS_
-            // printf("outportb(edx, eax)\n"); // vm86 critical
+            // printf("outportb(edx, eax)\r\r\n"); // vm86 critical
+            serial_log(1, "outportb(...)\r\n");
           #endif
             outportb(ctx->edx, ctx->eax);
             ctx->eip++;
@@ -148,14 +157,16 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             if (!isOperand32)
             {
               #ifdef _VM_DIAGNOSIS_
-                 // printf("inw\n"); // vm86 critical
+                 // printf("inw\r\n"); // vm86 critical
+                 serial_log(1, "inw\r\n");
               #endif
                 ctx->eax = (ctx->eax & 0xFFFF0000) + inportw(ctx->edx);
             }
             else
             {
               #ifdef _VM_DIAGNOSIS_
-                 // printf("inl\n"); // vm86 critical
+                 // printf("inl\r\n"); // vm86 critical
+                 serial_log(1, "inl\r\n");
               #endif
                 ctx->eax = inportl(ctx->edx);
             }
@@ -165,7 +176,8 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
 
         case 0xEC: // IN AL,DX
           #ifdef _VM_DIAGNOSIS_
-            // printf("inportw(edx)\n"); // vm86 critical
+            // printf("inportw(edx)\r\n"); // vm86 critical
+            serial_log(1, "inportw(...)\r\n");
           #endif
             ctx->eax = (ctx->eax & 0xFF00) + inportb(ctx->edx);
             ctx->eip++;
@@ -175,12 +187,14 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
         case 0xCD: // INT imm8
           #ifdef _VM_DIAGNOSIS_
             // printf("interrupt %X => ", ip[1]); // vm86 critical
+            serial_log(1, "interrupt ...\r\n");
           #endif
             switch (ip[1])
             {
             case 0x30:
               #ifdef _VM_DIAGNOSIS_
-                // printf("syscall\n"); // vm86 critical
+                // printf("syscall\r\n"); // vm86 critical
+                serial_log(1, "syscall\r\n");
               #endif
                 return true;
 
@@ -207,7 +221,8 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 ctx->cs  = ivt[2 * ip[1] + 1];
                 ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
               #ifdef _VM_DIAGNOSIS_
-                // printf("%x:%x\n", ctx->cs, ctx->eip); // vm86 critical
+                // printf("%x:%x\r\n", ctx->cs, ctx->eip); // vm86 critical
+                // ...
               #endif
                 return true;
             }
@@ -216,6 +231,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
         case 0xCF: // IRET
           #ifdef _VM_DIAGNOSIS_
             // printf("iret => "); // vm86 critical
+            serial_log(1, "iret\r\n");
           #endif
             ctx->eip    = stack[2];
             ctx->cs     = stack[1];
@@ -226,13 +242,15 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             current->v86_if = (stack[0] & EFLAG_IF) != 0;
 
           #ifdef _VM_DIAGNOSIS_
-            // printf("%x:%x\n", ctx->cs, ctx->eip); // vm86 critical
+            // printf("%x:%x\r\n", ctx->cs, ctx->eip); // vm86 critical
+            // ...
           #endif
             return true;
 
         case 0xFA: // CLI
           #ifdef _VM_DIAGNOSIS_
-            // printf("cli\n"); // vm86 critical
+            // printf("cli\r\n"); // vm86 critical
+            serial_log(1, "cli\r\n");
           #endif
             current->v86_if = false;
             ctx->eip++;
@@ -241,7 +259,8 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
 
         case 0xFB: // STI
           #ifdef _VM_DIAGNOSIS_
-            // printf("sti\n"); // vm86 critical
+            // printf("sti\r\n"); // vm86 critical
+            serial_log(1, "sti\r\n");
           #endif
             current->v86_if = true;
             ctx->eip++;
@@ -249,12 +268,16 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             return true;
 
         case 0xF4: // HLT
+          #ifdef _VM_DIAGNOSIS_
+            serial_log(1, "hlt\r\n");
+          #endif
             exit();
             return true;
 
         default: // should not happen!
           #ifdef _VM_DIAGNOSIS_
-            printf("error: unhandled opcode %X\n", ip[0]);
+            printf("error: unhandled opcode %X\r\n", ip[0]);
+            serial_log(1, "error: unhandled opcode\r\n");
           #endif
             return false;
         }

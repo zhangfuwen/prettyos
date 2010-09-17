@@ -662,12 +662,6 @@ void vbe_bootscreen()
 
     memcpy((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
 
-    #ifdef _VM_DIAGNOSIS_
-    printf("vm86 binary code at 0x100: ");
-    memshow((void*)0x100, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
-    printf("\n");
-    #endif
-
     bh_get = (BitmapHeader_t*)&bmp_start;
 
     vbe_readVIB();
