@@ -185,7 +185,8 @@ void isr_install()
 
 uint32_t irq_handler(uintptr_t esp)
 {
-    uint8_t attr = getTextColor();       // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
+    task_t* oldTask = currentTask;       // Save old task to be able to restore attr in case of task_switch
+    uint8_t attr = currentTask->attrib;  // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
     currentConsole = kernelTask.console; // The output should appear in the kernels console usually
 
     registers_t* r = (registers_t*)esp;
@@ -195,7 +196,7 @@ uint32_t irq_handler(uintptr_t esp)
         if(task_switching)
             esp = task_switch(esp); // new task's esp
     }
-    else if (r->int_no < 32 && r->int_no != 7 && !(r->eflags & 0x20000)) // no VM86 bit
+    else if (interruptRoutines[r->int_no] == 0 && r->int_no < 32 && r->int_no != 7 && !(r->eflags & 0x20000)) // no VM86 bit
     {
         printf("\nerr_code: %u address(eip): %X\n", r->err_code, r->eip);
         printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
@@ -220,7 +221,7 @@ uint32_t irq_handler(uintptr_t esp)
     outportb(0x20, 0x20);
     
     currentConsole = currentTask->console;
-    textColor(attr);
+    oldTask->attrib = attr;
     return esp;
 }
 

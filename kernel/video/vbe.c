@@ -148,7 +148,7 @@ void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t B
     }
 }
 
-/*void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue)
+void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue)
 {
     outportb(0x03C6, 0xFF);
     outportb(0x03C7, PaletteColorNumber);
@@ -156,37 +156,6 @@ void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t B
     *Green = inportb(0x03C9);
     *Blue  = inportb(0x03C9);
 }
-
-void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette)
-{
-    outportb(0x03C6, 0xFF);
-    outportb(0x03C8, StartColor); // first color to be input
-    for(uint32_t i=0; i<NumOfColors*3; i++)
-    {
-        outportb(0x03C9, Palette[i]<<2);
-    }
-}
-
-void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t* Palette)
-{
-    outportb(0x03C6, 0xFF);
-    outportb(0x03C7, StartColor); // first color to be read
-    for(uint32_t i=0; i<NumOfColors*3; i++)
-    {
-        Palette[i]=inportb(0x03C9);
-    }
-}
-
-void setDACPalette(BGRQuadPacked_t* RGB)
-{
-    waitForTask(create_vm86_task(VM86_SETDACPALETTE));
-}
-
-uint32_t getDACPalette()
-{
-    waitForTask(create_vm86_task(VM86_GETDACPALETTE));
-    return 0;
-}*/
 
 void setVideoMemory()
 {
@@ -428,22 +397,24 @@ void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, BGRA_t color)
 
 static void vgaDebug()
 {
-    printf("\nVgaInfoBlock, size: %x\n\n", sizeof(VgaInfoBlock_t));
-    printf("VESA-Signature:         %s\n",     vgaIB.VESASignature);
-    printf("VESA-Version:           %u.%u\n", (vgaIB.VESAVersion&0xFF00)>>8,vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
-    printf("Capabilities:           %X\n",     vgaIB.Capabilities);
-    printf("Video Memory (MiB):     %u\n",     vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
-    printf("OEM-String (address):   %X\n",     vgaIB.OEMStringPtr);
-    printf("Video Modes Ptr:        %X\n",     vgaIB.VideoModes);
+    textColor(0x0E);
+    printf("\nVgaInfoBlock:\n");
+    textColor(0x0F);
+    printf("VESA-Signature:  %s\n",     vgaIB.VESASignature);
+    printf("VESA-Version:    %u.%u\n",  vgaIB.VESAVersion>>8, vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
+    printf("Capabilities:    %X\n",     vgaIB.Capabilities);
+    printf("Video Memory:    %u MiB\n", vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
+    printf("OEM-String Ptr:  %X\n",     vgaIB.OEMStringPtr);
+    printf("Video Modes Ptr: %X\n",     vgaIB.VideoModes);
 
     textColor(0x0E);
-    printf("\nVideo Modes:\n");
+    printf("\nVideo Modes:");
+    textColor(0x0F);
     for (uint16_t i=0; i < 256; i++)
     {
         if(vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
         vbe_readMIB(vgaIB.VideoModes[i]);
         if(!(mib.ModeAttributes & BIT(0))) continue; // If bit 0 is not set, the mode is not supported due to the present hardware configuration
-        textColor(0x0E);
         printf("\n%u (%x) = %ux%ux%u", vgaIB.VideoModes[i], vgaIB.VideoModes[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
         if(!(mib.ModeAttributes & BIT(4))) printf(" (textmode)");
     }
@@ -453,7 +424,10 @@ static void vgaDebug()
 
 static void modeDebug()
 {
-    printf("\nModeInfoBlock, size: %x\n\n", sizeof(ModeInfoBlock_t));
+    textColor(0x0E);
+    printf("\nModeInfoBlock:\n");
+    textColor(0x0F);
+    printf("ModeAttributes:        %u\n", mib.ModeAttributes);
     printf("WinAAttributes:        %u\n", mib.WinAAttributes);
     printf("WinBAttributes:        %u\n", mib.WinBAttributes);
     printf("WinGranularity:        %u\n", mib.WinGranularity);
@@ -584,8 +558,10 @@ void showbitmap(char* infname,int xs,int ys)
 static void bitmapDebug() // TODO: make it bitmap-specific
 {
     memcpy(&bh, bh_get, sizeof(BitmapHeader_t));
-
-    printf("\nBitmapHeader, size: %x\n\n", sizeof(BitmapHeader_t));
+    
+    textColor(0x0E);
+    printf("\nBitmapHeader\n");
+    textColor(0x0F);
     printf("Type:                  %u\n", bh.Type);
     printf("Reserved:              %u\n", bh.Reserved);
     printf("Offset:                %u\n", bh.Offset);
@@ -605,7 +581,6 @@ static void bitmapDebug() // TODO: make it bitmap-specific
 void vbe_drawChar(char font_char)
 {
     uint8_t uc = AsciiToCP437((uint8_t)font_char); // no negative values
-    uint32_t xFont = 8, yFont = 16; // This info should be achievable from the font.h
 
     switch (uc)
     {
@@ -615,30 +590,25 @@ void vbe_drawChar(char font_char)
             move_cursor_left();*/
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
-            curPos.x = (curPos.x + xFont*8) & ~(xFont*8 - 1);
-            /*if (currentConsole->cursor.x>=COLUMNS)
-            {
-                ++currentConsole->cursor.y;
-                currentConsole->cursor.x=0;
-                scroll();
-            }*/
+            curPos.x = (curPos.x + fontWidth*8) & ~(fontWidth*8 - 1);
+            if(curPos.x+fontWidth >= mib.XResolution) vbe_drawChar('\n');
             break;
         case '\r': // r: cursor back to the margin
             curPos.x = 0;
             break;
         case '\n': // newline: like 'cr': cursor to the margin and increment cursor.y
             curPos.x = 0;
-            curPos.y += yFont;
+            curPos.y += fontHeight;
             break;
         default:
-            if(curPos.x+xFont >= mib.XResolution) vbe_drawChar('\n');
+            if(curPos.x+fontWidth >= mib.XResolution) vbe_drawChar('\n');
             if (uc != 0)
             {
-                for(uint32_t y=0; y < yFont; y++)
+                for(uint32_t y = 0; y < fontHeight; y++)
                 {
-                    for(uint32_t x=0; x<xFont; x++)
+                    for(uint32_t x = 0; x < fontWidth; x++)
                     {
-                        BGRA_t temp = {font[(x + xFont*uc) + (yFont-y-1) * 2048], font[(x + xFont*uc) + (yFont-y-1) * 2048], font[(x + xFont*uc) + (yFont-y-1) * 2048], font[(x + xFont*uc) + (yFont-y-1) * 2048]};
+                        BGRA_t temp = {font[(x + fontWidth*uc) + (fontHeight-y-1) * 2048], font[(x + fontWidth*uc) + (fontHeight-y-1) * 2048], font[(x + fontWidth*uc) + (fontHeight-y-1) * 2048], font[(x + fontWidth*uc) + (fontHeight-y-1) * 2048]};
                         vbe_setPixel(curPos.x+x, curPos.y+y, temp);
                     }
                 }

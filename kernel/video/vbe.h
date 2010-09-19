@@ -158,9 +158,7 @@ void printPalette(BGRQuadPacked_t* BGR);
 
 // Set a Palette (old vga registers, need changed to the VBE Registers in vidswtch.asm)
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t  Red, uint8_t  Green, uint8_t  Blue);
-/*void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue);
-void Write_DAC_C_Palette(uint8_t StartColor, uint8_t NumOfColors, uint8_t *Palette);
-void Read_DAC_C_Palette(uint8_t StartColor, uint8_t NumberOfColors, uint8_t* Palette);*/
+void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue);
 
 // Basic drawing functionality
 void     vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color); // Sets a single pixel on the screen
@@ -181,27 +179,7 @@ void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, BMPInfo_t* bitma
 void vbe_bootscreen();
 
 /// Unsuned functions
-
-/*
-void setPalette(BGRQuadPacked_t* BGR);
-
-// needs to be implemented in vidswtch.asm
-void setDACPalette(BGRQuadPacked_t* RGB);
-uint32_t getDACPalette();
-
-
-// currently not used and not finished
-char ISValidBitmap(char *fname);
-void showbitmap(char *infname,int xs,int ys);
-
-
-// Returns the VBEMode structure
-uint32_t getVBEMode();
-
-// 
-void setVBEMode(uint32_t mode);
-
-// List the avalible screen resolutions and color depths
-void availableModes(void);*/
+/*char ISValidBitmap(char *fname);
+void showbitmap(char *infname,int xs,int ys);*/
 
 #endif
