@@ -1,5 +1,5 @@
-;boot2.asm
-[map symbols boot2.map]
+; boot2.asm
+[map symbols documentation/boot2.map]
 [Bits 16]
 org 0x500
 jmp entry_point

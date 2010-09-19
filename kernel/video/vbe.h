@@ -9,15 +9,12 @@
 
 // This values are hardcoded adresses from vidswtch.map
 #define VM86_SETDISPLAYSTART   ((void*)0x100)
-#define VM86_GETDISPLAYSTART   ((void*)0x116)
-#define VM86_SETDACPALETTE     ((void*)0x12B)
-#define VM86_GETDACPALETTE     ((void*)0x137)
-#define VM86_SETPALETTE        ((void*)0x140)
-#define VM86_GETPALETTE        ((void*)0x155)
-#define VM86_SWITCH_TO_TEXT    ((void*)0x165)
-#define VM86_SWITCH_TO_VIDEO   ((void*)0x173)
-#define VM86_VGAINFOBLOCK      ((void*)0x182)
-#define VM86_MODEINFOBLOCK     ((void*)0x190)
+#define VM86_GETDISPLAYSTART   ((void*)0x113)
+#define VM86_SET8BITPALETTE    ((void*)0x128)
+#define VM86_SWITCH_TO_TEXT    ((void*)0x133)
+#define VM86_SWITCH_TO_VIDEO   ((void*)0x141)
+#define VM86_VGAINFOBLOCK      ((void*)0x150)
+#define VM86_MODEINFOBLOCK     ((void*)0x15E)
 
 
 // SuperVGA information block
@@ -27,7 +24,7 @@ typedef struct
     uint16_t  VESAVersion;
     uintptr_t OEMStringPtr;
     uint8_t   Capabilities[4];
-    uint16_t* VideoModePtr;
+    uint16_t* VideoModes;
     uint16_t  TotalMemory;
     uint16_t  OemSoftwareRev;
     uintptr_t OemVendorNamePtr;

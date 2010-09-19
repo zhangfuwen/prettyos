@@ -286,7 +286,6 @@ pop es
     push ebx
     mov ax, FAT_SEG                 ; start reading from fat
     mov es, ax
-    xor bx, bx
 
     ; get next cluster
     mov ax, WORD [cluster]          ; identify current cluster
@@ -294,8 +293,7 @@ pop es
     mov dx, ax                      ; copy current cluster
     shr dx, 1                       ; divide by two
     add cx, dx                      ; sum for (3/2)
-    xor bx, bx                      ; location of fat in memory
-    add bx, cx
+    mov bx, cx                      ; location of fat in memory
     mov dx, WORD [es:bx]
     test ax, 1                      ; test for odd or even cluster
     jnz .ODD_CLUSTER

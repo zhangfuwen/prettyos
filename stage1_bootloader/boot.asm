@@ -1,4 +1,5 @@
 ; boot.asm
+[map symbols documentation/boot.map]
 [Bits 16]
 org 0x7C00                             ; start address of bootloader
 jmp entry_point                        ; jump to bootloader entry point
@@ -162,7 +163,7 @@ FAILURE:
 ;******************************************************************************
 Convert_Cluster_to_LBA:
     sub ax, 2                          ; zero base cluster number
-    xor cx, cx
+    xor ch, ch
     mov cl, BYTE [SecPerClus]          ; convert byte to word
     mul cx
     add ax, WORD [datasector]          ; base data sector

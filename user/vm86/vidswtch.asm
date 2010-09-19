@@ -1,46 +1,12 @@
-[map symbols vidswtch.map] ; use this for ckernel.c addresses
+[map symbols documentation/vidswtch.map] ; use this for ckernel.c addresses
 [bits 16]
-[section .text]
 
 org 0x100
 
-;SetBank:
-;    mov ax, 0x4F05
-;    mov bx, 0
-;    mov dx, bank
-;    jmp exitvm86
-
-;GetBank:
-;    mov ax, 0x4F05
-;    mov bx, 1
-;    mov dx, bank
-;    jmp exitvm86
-
-;SetScanLinePixel:
-;    mov ax, 0x4F06
-;    mov bl, 0
-;    jmp exitvm86
-
-;GetScanLinePixel:
-;    mov ax, 0x4F06
-;    mov bl, 1
-;    jmp exitvm86
-
-;SetScanLineBytes:
-;    mov ax, 0x4F06
-;    mov bl, 02
-;     jmp exitvm86
-
-;GetMAXScanLine:
-;    mov ax, 0x4F06
-;    mov bl, 3
-;    jmp exitvm86
-
 SetDisplayStart:
     mov ax, 0x4F07
-    mov bl, 0
-    xor ax, ax
-    mov ds, ax
+    xor bx, bx           ; Set bl to 0 and use it to set ds to 0, too.
+    mov ds, bx
     mov dx, word[0x1800] ; Set first Displayed Scan Line
     mov cx, word[0x1802] ; Set first Displayed Pixel in Scan Line
     int 10h
@@ -56,45 +22,14 @@ GetDisplayStart:
     mov word [0x1302], cx ; First Displayed Pixel in Scan Line
     jmp exitvm86
 
-SetDacPalette:
-    mov ax, 0x4F08        ;Set DAC Palette Format
-    mov bl, 0
-    mov bx, 6
+Set8bitPalette:
+    mov ax, 0x4F08
+    xor bl, bl
+    mov bh, 8
     int 10h
     jmp exitvm86
 
-GetDacPalette:
-    mov ax, 0x4F08        ;Get DAC Palette Format
-    mov bl, 1
-    int 10h
-    jmp exitvm86
-
-SetPalette:
-    mov ax, 0x4F09
-    mov bl, 0           ;=00h    Set palette data
-    mov cx, 0xFF
-    xor dx, dx
-    xor ax, ax
-    mov es, ax
-    mov di, 0x1600
-    int 10h
-    jmp exitvm86
-
-GetPalette:
-    xor ax, ax
-    mov es, ax
-    mov di, 0x1400
-    mov ax, 0x4F09
-    mov bl, 1            ;=01h    Get palette data
-    int 10h                ;=03h    Get secondary palette data
-    jmp exitvm86
-
-;GetProtectedModeInterface:
-;    mov ax, 0x4F0A
-;    mov bl, 0
-;   jmp exitvm86
-
-text_mode:
+SwitchToTextMode:
     mov ax, 0x0002
     int 0x10
     mov ax, 0x1112
@@ -102,7 +37,7 @@ text_mode:
     int 0x10
     jmp exitvm86
 
-video_mode:
+SwitchToVideoMode:
     xor ax, ax
     mov ds, ax
     mov ax, 0x4F02
@@ -110,7 +45,7 @@ video_mode:
     int 10h
     jmp exitvm86
 
-VgaInfoBlock:
+GetVgaInfoBlock:
     xor ax, ax
     mov es, ax
     mov di, 0x3400
@@ -118,7 +53,7 @@ VgaInfoBlock:
     int 10h
     jmp exitvm86
 
-ModeInfoBlock:
+GetModeInfoBlock:
     xor ax, ax
     mov ds, ax
     mov es, ax
@@ -126,7 +61,6 @@ ModeInfoBlock:
     mov ax, 0x4F01
     mov cx, word [0x3600] ; video mode
     int 10h
-    mov word [0x3600], ax ; return value
     jmp exitvm86
 
 ; stop and leave vm86-task

@@ -99,30 +99,6 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
     outportl(PCI_CONFIGURATION_DATA, val);
 }
 
-void listPCI()
-{
-    printf("\n\n");
-    listHead_t* pciDevList = list_Create();
-    for (int i=0;i<PCIARRAYSIZE;++i) // Create list
-    {
-        if (pciDev_Array[i] && pciDev_Array[i]->vendorID != 0xEE00)   // there is no vendor EE00h
-        {
-            list_Append(pciDevList, pciDev_Array[i]); // insert Pointer to pciDev_t
-        }
-    }
-    for (element_t* e = pciDevList->head; e != 0; e = e->next) // Show list
-    {
-        if (e->data)
-        {
-            pciDev_t* data = (pciDev_t*)e->data;
-            textColor(0x02);
-            printf("%X dev: %x vend: %x\t", data, data->deviceID, data->vendorID);
-            textColor(0x0F);
-        }
-    }
-    puts("\n\n");
-}
-
 void pciScan()
 {
     printf("\n");
@@ -158,7 +134,7 @@ void pciScan()
                     pciDev_Array[number]->func   = func;
                     pciDev_Array[number]->number = bus*PCIDEVICES*PCIFUNCS + device*PCIFUNCS + func;
 
-                 
+
                     // Screen output
                     if (pciDev_Array[number]->irq!=255)
                     {
@@ -167,36 +143,46 @@ void pciScan()
                             pciDev_Array[number]->bus,
                             pciDev_Array[number]->device,
                             pciDev_Array[number]->func);
-                    
+
                         printf(" IRQ:%d", pciDev_Array[number]->irq);
 
-                     #ifdef _PCI_VEND_PROD_LIST_
-                        bool DevFoundInList = false;
-                        for (uint32_t loop1=0; loop1<PCI_DEVTABLE_LEN; loop1++)
+                      #ifdef _PCI_VEND_PROD_LIST_
+                        // Find Vendor
+                        bool found = false;
+                        for(uint32_t i = 0; i < PCI_VENTABLE_LEN; i++)
                         {
-                            if ((PciDevTable[loop1].DevId == pciDev_Array[number]->deviceID) && (PciDevTable[loop1].VenId == pciDev_Array[number]->vendorID))
+                            if (PciVenTable[i].VenId == pciDev_Array[number]->vendorID)
                             {
-                                for (uint32_t loop2=0; loop2<PCI_VENTABLE_LEN; loop2++)
-                                {
-                                    if (PciVenTable[loop2].VenId == pciDev_Array[number]->vendorID)
-                                    {
-                                        printf("\t%s %s", PciVenTable[loop2].VenShort, PciDevTable[loop1].ChipDesc);
-                                    }                                
-                                }
-                                DevFoundInList = true;
+                                printf("\t%s", PciVenTable[i].VenShort); // Found! Display name and break out
+                                found = true;
+                                break;
                             }
                         }
-                        if (!DevFoundInList)
+                        if(!found)
                         {
-                            printf("\tvend:%x dev:%x",                            
-                                pciDev_Array[number]->vendorID,
-                                pciDev_Array[number]->deviceID);
-                        }                    
-                     #else
-                        printf("\tvend:%x dev:%x",                            
-                                pciDev_Array[number]->vendorID,
-                                pciDev_Array[number]->deviceID);
-                     #endif
+                            printf("\tvend: %x", pciDev_Array[number]->vendorID); // Vendor not found, display ID
+                        }
+                        else
+                        {
+                            // Find Device
+                            found = false;
+                            for(uint32_t i = 0; i < PCI_DEVTABLE_LEN; i++)
+                            {
+                                if (PciDevTable[i].DevId == pciDev_Array[number]->deviceID && PciDevTable[i].VenId == pciDev_Array[number]->vendorID) // VendorID and DeviceID has to fit
+                                {
+                                    printf(" %s", PciDevTable[i].ChipDesc); // Found! Display name and break out
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!found)
+                        {
+                            printf(", dev: %x", pciDev_Array[number]->deviceID); // Device not found, display ID
+                        }
+                      #else
+                        printf("\tvend:%x dev:%x", pciDev_Array[number]->vendorID, pciDev_Array[number]->deviceID);
+                      #endif
 
                         /// USB Host Controller
                         if (pciDev_Array[number]->classID==0x0C && pciDev_Array[number]->subclassID==0x03)
@@ -210,7 +196,7 @@ void pciScan()
                         {
                             install_RTL8139(pciDev_Array[number]);
                         }
-                    }// if irq != 255
+                    } // if irq != 255
                     ++number;
                 } // if pciVendor
                 else

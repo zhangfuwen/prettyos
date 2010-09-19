@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* version = "0.0.1.234 - Rev: 819";
+const char* version = "0.0.1.235 - Rev: 820";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -117,9 +117,6 @@ void main()
     serial_init();
 
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
-  #ifdef _DIAGNOSIS_
-    listPCI();
-  #endif
 
     flpydsk_install(); // detect FDDs
     void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);

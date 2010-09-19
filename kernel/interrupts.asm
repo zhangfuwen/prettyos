@@ -117,8 +117,7 @@ _idt_install:
     mov [_idt_table+(%1)*8+6], cx
     %endmacro
 
-    ; Execute the macro to fill the interrupt table, unfilled entries
-    ;   remain zero.
+    ; Execute the macro to fill the interrupt table, unfilled entries remain zero.
     %assign COUNTER 0
     %rep 48
         DO_IDT_ENTRY COUNTER, 0x0008, 0x8E00
@@ -129,20 +128,23 @@ _idt_install:
     DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0xEE00
 
     ; Remap IRQ 0-15 to 32-47 (see http://wiki.osdev.org/PIC#Initialisation)
-    %macro putport 2
-        mov al, %2
-        out %1, al
-    %endmacro
-    putport 0x20, 0x11
-    putport 0xA0, 0x11
-    putport 0x21, 0x20
-    putport 0xA1, 0x28
-    putport 0x21, 0x04
-    putport 0xA1, 0x02
-    putport 0x21, 0x01
-    putport 0xA1, 0x01
-    putport 0x21, 0x00
-    putport 0xA1, 0x00
+	mov al, 0x11
+	out 0x20, al
+	out 0xA0, al
+	mov al, 0x20
+	out 0x21, al
+	mov al, 0x28
+	out 0xA1, al
+	mov al, 0x04
+	out 0x21, al
+	mov al, 0x02
+	out 0xA1, al
+	dec al              ; al is now one
+	out 0x21, al
+	out 0xA1, al
+	dec al              ; al is now zero
+	out 0x21, al
+	out 0xA1, al
 
     ; Perform the actual load operation
     lidt [idt_descriptor]

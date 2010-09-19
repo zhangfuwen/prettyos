@@ -2,7 +2,7 @@
 NASM= nasm
 
 ifeq ($(OS),WINDOWS)
-	RM= - del 
+	RM= - del
 	MV= cmd /c move /Y
 	CC= i586-elf-gcc
 	LD= i586-elf-ld
@@ -67,9 +67,9 @@ vpath %.o $(OBJDIR)
 
 all: FloppyImage.img
 
-$(STAGE1DIR)/boot.bin:
+$(STAGE1DIR)/boot.bin: $(STAGE1DIR)/boot.asm $(STAGE1DIR)/*.inc
 	$(NASM) -O1 -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
-$(STAGE2DIR)/BOOT2.BIN:
+$(STAGE2DIR)/BOOT2.BIN: $(STAGE2DIR)/boot2.asm $(STAGE2DIR)/*.inc
 	$(NASM) -Ox -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 $(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
@@ -78,10 +78,10 @@ $(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(KERNEL_OBJECTS)
 #	because changes in the Shell should change data.o we build data.o everytimes
 	$(NASM) $(KERNELDIR)/data.asm $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$(KERNELDIR)/data.o
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map $(KERNELDIR)/kernel.map -o $(KERNELDIR)/KERNEL.BIN
+	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map documentation/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 
 $(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERTOOLS)/user.ld -Map $(SHELLDIR)/shell.map -o $(SHELLDIR)/shell.elf
+	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERTOOLS)/user.ld -Map documentation/shell.map -o $(SHELLDIR)/shell.elf
 
 $(KERNELDIR)/initrd.dat: $(SHELLDIR)/shell.elf
 	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/shell.elf shell
@@ -107,11 +107,9 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(SHELLDIR)\*.o
 	$(RM) $(SHELLDIR)\shell.elf
-	$(RM) boot2.map
 	$(RM) $(KERNELDIR)\initrd.dat
-	$(RM) $(KERNELDIR)\kernel.map
-	$(RM) $(SHELLDIR)\shell.map
 	$(RM) $(USERDIR)\vm86\VIDSWTCH.COM
+	$(RM) documentation\*.map
 else
 	$(RM) $(STAGE1DIR)/boot.bin
 	$(RM) $(STAGE2DIR)/BOOT2.BIN
@@ -127,9 +125,7 @@ else
 	$(RM) $(OBJDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(SHELLDIR)/*.o
 	$(RM) $(SHELLDIR)/shell.elf
-	$(RM) boot2.map
 	$(RM) $(KERNELDIR)/initrd.dat
-	$(RM) $(KERNELDIR)/kernel.map
-	$(RM) $(SHELLDIR)/shell.map
 	$(RM) $(USERDIR)/vm86/VIDSWTCH.COM
+	$(RM) documentation/*.map
 endif

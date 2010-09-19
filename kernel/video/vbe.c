@@ -20,6 +20,7 @@ BGRQuadPacked_t* ScreenPal = (BGRQuadPacked_t*)0x1600;
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 position_t curPos = {0, 0};
 
+uint8_t paletteBitsPerColor = 0;
 
 // vm86
 extern uintptr_t vm86_com_start;
@@ -72,6 +73,7 @@ void switchToVideomode(uint16_t mode)
     waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO));
     vbe_readMIB(mode);
     setVideoMemory();
+    paletteBitsPerColor = 0; // Has to be reinitializated
     videomode = VM_VBE;
 }
 
@@ -114,28 +116,36 @@ void printPalette(BGRQuadPacked_t* BGR)
     }
 }
 
-//void setPalette(BGRQuadPacked_t* RGB)
-//{
-//    /*
-//    Format of VESA VBE palette entry:
-//    Offset   Size    Description
-//    00h      BYTE    red
-//    01h      BYTE    green
-//    02h      BYTE    blue
-//    03h      BYTE    alpha or alignment byte
-//    */
-//    ScreenPal = RGB;
-//    waitForTask(create_vm86_task(VM86_SETPALETTE));
-//}
-
 // http://wiki.osdev.org/VGA_Hardware#VGA_Registers
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t Blue)
 {
+    if(paletteBitsPerColor == 0)
+    {
+        if(vgaIB.Capabilities[0] & BIT(0)) // VGA can handle palette with 8 bits per color -> Use it
+        {
+            waitForTask(create_vm86_task(VM86_SET8BITPALETTE));
+            paletteBitsPerColor = 8;
+        }
+        else
+        {
+            printf("\n8-bit palette not supported");
+            paletteBitsPerColor = 6;
+        }
+    }
     outportb(0x03C6, 0xFF);
     outportb(0x03C8, PaletteColorNumber);
-    outportb(0x03C9, Red);
-    outportb(0x03C9, Green);
-    outportb(0x03C9, Blue);
+    if(paletteBitsPerColor == 8)
+    {
+        outportb(0x03C9, Red);
+        outportb(0x03C9, Green);
+        outportb(0x03C9, Blue);
+    }
+    else
+    {
+        outportb(0x03C9, Red   >> 2);
+        outportb(0x03C9, Green >> 2);
+        outportb(0x03C9, Blue  >> 2);
+    }
 }
 
 /*void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t* Blue)
@@ -222,9 +232,7 @@ void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap)
         for(uint32_t j=0; j<256; j++)
         {
             // transfer from bitmap palette to packed RAMDAC palette
-            Set_DAC_C(j, bitmap->bmicolors[j].red   >> 2,
-                         bitmap->bmicolors[j].green >> 2,
-                         bitmap->bmicolors[j].blue  >> 2);
+            Set_DAC_C(j, bitmap->bmicolors[j].red, bitmap->bmicolors[j].green, bitmap->bmicolors[j].blue);
         }
     }
 
@@ -247,9 +255,7 @@ void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap)
         for(uint32_t j=0; j<256; j++)
         {
             // transfer from bitmap palette to packed RAMDAC palette
-            Set_DAC_C (j, bitmap->bmicolors[j].red   >> 2,
-                          bitmap->bmicolors[j].green >> 2,
-                          bitmap->bmicolors[j].blue  >> 2);
+            Set_DAC_C(j, bitmap->bmicolors[j].red, bitmap->bmicolors[j].green, bitmap->bmicolors[j].blue);
         }
     }
 
@@ -275,9 +281,7 @@ void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, BMPInfo_t* bitma
         for(uint32_t j=0; j<256; j++)
         {
             // transfer from bitmap palette to packed RAMDAC palette
-            Set_DAC_C (j, bitmap->bmicolors[j].red   >> 2,
-                          bitmap->bmicolors[j].green >> 2,
-                          bitmap->bmicolors[j].blue  >> 2);
+            Set_DAC_C(j, bitmap->bmicolors[j].red, bitmap->bmicolors[j].green, bitmap->bmicolors[j].blue);
         }
     }
 
@@ -430,17 +434,18 @@ static void vgaDebug()
     printf("Capabilities:           %X\n",     vgaIB.Capabilities);
     printf("Video Memory (MiB):     %u\n",     vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
     printf("OEM-String (address):   %X\n",     vgaIB.OEMStringPtr);
-    printf("Video Modes Ptr:        %X\n",     vgaIB.VideoModePtr);
+    printf("Video Modes Ptr:        %X\n",     vgaIB.VideoModes);
 
     textColor(0x0E);
     printf("\nVideo Modes:\n");
     for (uint16_t i=0; i < 256; i++)
     {
-        if(vgaIB.VideoModePtr[i] == 0xFFFF) break; // End of modelist
-        vbe_readMIB(vgaIB.VideoModePtr[i]);
+        if(vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
+        vbe_readMIB(vgaIB.VideoModes[i]);
+        if(!(mib.ModeAttributes & BIT(0))) continue; // If bit 0 is not set, the mode is not supported due to the present hardware configuration
         textColor(0x0E);
-        printf("\n%u (%x) = %ux%ux%u", vgaIB.VideoModePtr[i], vgaIB.VideoModePtr[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
-        if(mib.ModeAttributes & BIT(4)) printf(" (textmode)");
+        printf("\n%u (%x) = %ux%ux%u", vgaIB.VideoModes[i], vgaIB.VideoModes[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
+        if(!(mib.ModeAttributes & BIT(4))) printf(" (textmode)");
     }
     printf("\n");
     textColor(0x0F);
@@ -679,7 +684,7 @@ void vbe_bootscreen()
         bool valid = false;
         for(uint16_t i = 0; i < 256; i++)
         {
-            if(vgaIB.VideoModePtr[i] == modenumber)
+            if(vgaIB.VideoModes[i] == modenumber)
                 valid = true;
         }
         if(!valid)
