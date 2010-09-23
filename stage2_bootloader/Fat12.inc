@@ -86,13 +86,13 @@ ReadSectors:
     pop     bx
     mov     edi, ebx                            ; copy to destination buffer
     mov     cx, WORD [BytesPerSec]
-    shr     cx, 1
-    xor     si, si
+    shr     cx, 2
+    xor     esi, esi
     .COPY_TO_DEST:
-        mov     ax, [es:si]
-        mov     [fs:edi], ax
-        add     si, 2
-        add     edi, 2
+        mov     eax, [es:esi]
+        mov     [fs:edi], eax
+        add     esi, 4
+        add     edi, 4
         loop    .COPY_TO_DEST
 
     movzx   eax, WORD [BytesPerSec]
