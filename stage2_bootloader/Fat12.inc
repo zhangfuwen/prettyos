@@ -63,7 +63,7 @@ ReadSectors:
 .SECTORLOOP:
     push    ax
     push    cx
-    push    bx
+    push    ebx
     call    Convert_LBA_to_CHS                  ; convert starting sector to CHS
     mov     ah, 0x02                            ; BIOS read sector
     mov     al, 0x01                            ; read one sector
@@ -77,26 +77,23 @@ ReadSectors:
     xor     ax, ax                              ; BIOS reset disk
     int     0x13                                ; invoke BIOS
     dec     bp                                  ; decrement error counter
-    pop     bx
+    pop     ebx
     pop     cx
     pop     ax
     jnz     .SECTORLOOP                         ; attempt to read again
     int     0x18
 .SUCCESS:
-    pop     bx
-    mov     edi, ebx                            ; copy to destination buffer
+    pop     ebx                                 ; copy to destination buffer
     mov     cx, WORD [BytesPerSec]
     shr     cx, 2
-    xor     esi, esi
+    xor     si, si
     .COPY_TO_DEST:
-        mov     eax, [es:esi]
-        mov     [fs:edi], eax
-        add     esi, 4
-        add     edi, 4
+        mov     eax, [es:si]
+        mov     [fs:ebx], eax
+        add     si, 4
+        add     ebx, 4
         loop    .COPY_TO_DEST
 
-    movzx   eax, WORD [BytesPerSec]
-    add     ebx, eax                            ; queue next buffer
     pop     cx
     pop     ax
     inc     ax                                  ; queue next sector
