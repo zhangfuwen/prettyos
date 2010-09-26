@@ -2,7 +2,7 @@
 [map symbols documentation/boot.map]
 [Bits 16]
 org 0x7C00                             ; start address of bootloader
-jmp entry_point                        ; jump to bootloader entry point
+jmp word entry_point                   ; jump to bootloader entry point
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Memory Management:
@@ -197,10 +197,10 @@ Convert_LBA_to_CHS:
 ReadSectors:
 .NEXTSECTOR:
     mov di, 5                          ; five retries for error
-.LOOP:
     push ax
     push bx
     push cx
+.LOOP:
     call Convert_LBA_to_CHS            ; convert starting sector from LBA to CHS
     mov  ah, 2                         ; INT 0x13, AH=2 --> read in CHS mode
     mov  al, 1                         ; read one sector
@@ -210,13 +210,13 @@ ReadSectors:
     mov  dl, BYTE [DriveNum]           ; drive
     int  0x13
     jnc  .SUCCESS                      ; check read error
-    xor  ax, ax                        ; INT 0x13, AH=0 --> reset floppy/hard disk
+    xor  ah, ah                        ; INT 0x13, AH=0 --> reset floppy/hard disk
     int  0x13
     dec  di                            ; decrement error counter
+    jnz  .LOOP                         ; read again
     pop  cx
     pop  bx
     pop  ax
-    jnz  .LOOP                         ; read again
     int  0x18
 .SUCCESS:
     mov  si, msgProgress

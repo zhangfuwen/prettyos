@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* version = "0.0.1.236 - Rev: 823";
+const char* version = "0.0.1.237 - Rev: 824";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -64,7 +64,7 @@ static void init()
     clear_screen();
 
     // internal devices
-    timer_install(100); log("Timer");// Sets system frequency to ... Hz
+    timer_install(100); log("Timer"); // Sets system frequency to ... Hz
     if (cpu_supports(CF_FPU)) fpu_install(); log("FPU");
 
     // memory

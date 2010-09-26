@@ -57,6 +57,19 @@ static void quitTask()
     for (;;);
 }
 
+static void defaultError(registers_t* r)
+{
+    if(r->eflags & 0x20000) return; // VM86
+    printf("\nerr_code: %u address(eip): %X\n", r->err_code, r->eip);
+    printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+    printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+    printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+
+    textColor(0x0B);
+    printf("\n\n%s!\n", exceptionMessages[r->int_no]);
+
+    quitTask();
+}
 
 static void invalidOpcode(registers_t* r)
 {
@@ -147,6 +160,8 @@ static void GPF(registers_t* r) // -> VM86
         r->esi     = ctx->esi;
         r->useresp = ctx->useresp;
     }
+    else
+        defaultError(r);
 }
 
 static void PF(registers_t* r)
@@ -176,6 +191,9 @@ static void PF(registers_t* r)
 
 void isr_install()
 {
+    for(uint8_t i = 0; i < 32; i++) interruptRoutines[i] = &defaultError; // If nothing else is specified, the default handler is called
+    for(uint16_t i = 32; i < 256; i++) interruptRoutines[i] = 0;
+
     // Installing ISR-Routines
     interruptRoutines[ISR_invalidOpcode] = &invalidOpcode;
     interruptRoutines[ISR_NM] = &NM;
@@ -196,30 +214,16 @@ uint32_t irq_handler(uintptr_t esp)
         if(task_switching)
             esp = task_switch(esp); // new task's esp
     }
-    else if (interruptRoutines[r->int_no] == 0 && r->int_no < 32 && r->int_no != 7 && !(r->eflags & 0x20000)) // no VM86 bit
-    {
-        printf("\nerr_code: %u address(eip): %X\n", r->err_code, r->eip);
-        printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-        printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-        printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
 
-        printf("\n\n");
-        textColor(0x0B);
-        printf("%s!\n", exceptionMessages[r->int_no]);
-
-        quitTask();
-    }
-
-    interrupt_handler_t handler = interruptRoutines[r->int_no];
-    if (handler)
-        handler(r);
+    if (interruptRoutines[r->int_no])
+        interruptRoutines[r->int_no](r); // Execute handler
 
     scheduler_unblockEvent(&BL_INTERRUPT, (void*)r->int_no);
 
     if (r->int_no >= 40)
         outportb(0xA0, 0x20);
     outportb(0x20, 0x20);
-    
+
     currentConsole = currentTask->console;
     oldTask->attrib = attr;
     return esp;

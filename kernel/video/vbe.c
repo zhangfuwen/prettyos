@@ -51,13 +51,17 @@ uint16_t BGRAtoBGR15(BGRA_t bgr)
 
 void vbe_readVIB()
 {
+    *(char*)0x3400 = 'V';
+    *(char*)0x3401 = 'B';
+    *(char*)0x3402 = 'E';
+    *(char*)0x3403 = '2';
     waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
     memcpy(&vgaIB, (void*)0x3400, sizeof(VgaInfoBlock_t));
 }
 
 void vbe_readMIB(uint16_t mode)
 {
-    *(uint16_t*)0x3600 = 0x4000|mode;
+    *(uint16_t*)0x3600 = mode;
     waitForTask(create_vm86_task(VM86_MODEINFOBLOCK));
     memcpy(&mib, (void*)0x3600, sizeof(ModeInfoBlock_t));
 }
@@ -69,10 +73,12 @@ ModeInfoBlock_t* getCurrentMIB()
 
 void switchToVideomode(uint16_t mode)
 {
-    *(uint16_t*)0x3600 = 0x4000|mode;
+    *(uint16_t*)0x3600 = 0xC1FF&(0xC000|mode); // Bits 9-13 may not be set, bits 14-15 should be set always
     waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO));
     vbe_readMIB(mode);
     setVideoMemory();
+    if(!(mode&BIT(15))) // We clear the Videoscreen manually, because the VGA is not reliable
+        memset(SCREEN, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
     paletteBitsPerColor = 0; // Has to be reinitializated
     videomode = VM_VBE;
 }
@@ -414,7 +420,7 @@ static void vgaDebug()
     {
         if(vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
         vbe_readMIB(vgaIB.VideoModes[i]);
-        if(!(mib.ModeAttributes & BIT(0))) continue; // If bit 0 is not set, the mode is not supported due to the present hardware configuration
+        if(!(mib.ModeAttributes & BIT(0)) || !(mib.ModeAttributes & BIT(7))) continue; // If bit 0 is not set, the mode is not supported due to the present hardware configuration, if bit 7 is not set, linear frame buffer is not supported
         printf("\n%u (%x) = %ux%ux%u", vgaIB.VideoModes[i], vgaIB.VideoModes[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
         if(!(mib.ModeAttributes & BIT(4))) printf(" (textmode)");
     }

@@ -60,10 +60,10 @@ ReadSectors:
     pop     es
 .MAIN:
     mov     bp, 0x0005                          ; five retries for error
-.SECTORLOOP:
     push    ax
     push    cx
     push    ebx
+.SECTORLOOP:
     call    Convert_LBA_to_CHS                  ; convert starting sector to CHS
     mov     ah, 0x02                            ; BIOS read sector
     mov     al, 0x01                            ; read one sector
@@ -77,10 +77,10 @@ ReadSectors:
     xor     ax, ax                              ; BIOS reset disk
     int     0x13                                ; invoke BIOS
     dec     bp                                  ; decrement error counter
+    jnz     .SECTORLOOP                         ; attempt to read again
     pop     ebx
     pop     cx
     pop     ax
-    jnz     .SECTORLOOP                         ; attempt to read again
     int     0x18
 .SUCCESS:
     pop     ebx                                 ; copy to destination buffer
@@ -173,19 +173,15 @@ LoadFAT:
 ;******************************************************************************
 
 FindFile:
-
-;=====================================================HOTFIX============
-; ES muß hier 0x0000 sein wg. "rep cmps" -> [ES:DI] !!!
-; und weil DI ungünstig initialisiert ist
-push bx
-xor bx,bx
-mov es,bx
-pop bx
-;=====================================================HOTFIX============
-
     push cx                     ; store registers
     push dx
     push bx
+;=====================================================HOTFIX============
+; ES has to be set to 0x0000 due to "rep cmps" -> [ES:DI] !!!
+; and because DI is not initialized usefully
+    xor  bx,bx
+    mov  es,bx
+;=====================================================HOTFIX============
     mov  bx, si                 ; copy filename for later
 
     ; browse root directory for binary image
@@ -237,7 +233,7 @@ LoadFile:
     push bx
 ;=====================================================HOTFIX============
 ;    push bp
-push es
+    push es
 ;=====================================================HOTFIX============
 
     call FindFile               ; find our file. ES:SI contains our filename
@@ -246,7 +242,7 @@ push es
 
 ;=====================================================HOTFIX============
 ;    pop bp
-pop es
+    pop es
 ;=====================================================HOTFIX============
     pop bx
     pop edi
@@ -259,9 +255,9 @@ pop es
     sub eax, ROOT_OFFSET
 
     ; get starting cluster
-    push word ROOT_SEG              ;root segment loc
+    push word ROOT_SEG              ; root segment loc
     pop es
-    mov dx, WORD [es:di + 0x001A]    ; DI points to file entry in root directory table. Refrence the table...
+    mov dx, WORD [es:di + 0x001A]   ; DI points to file entry in root directory table. Refrence the table...
     mov WORD [cluster], dx          ; file's first cluster
     pop bx                          ; get location to write to so we dont screw up the stack
     pop es
