@@ -37,6 +37,7 @@ main:
 	$(GCC) -c $(USERTOOLS)/userlib_cpp.cpp $(GCCFLAGS) -fno-exceptions -std=c++0x -fno-rtti -lgcc
 	$(GCC) -c *.cpp $(GCCFLAGS) -fno-exceptions -std=c++0x -fno-rtti -lgcc -I$(USERTOOLS)
 	$(LD) *.o -T $(USERTOOLS)/user.ld -Map user.map $(LDFLAGS) -o CPP.ELF
+	strip CPP.ELF
 	$(RM) *.o
 
 clean:

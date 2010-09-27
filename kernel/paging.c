@@ -13,6 +13,7 @@
 #include "video/console.h"
 
 pageDirectory_t* kernelPageDirectory;
+void* memoryMapAdress;
 
 void* globalUserPT; // for storage of a user task pagetable  // cf. pagingAlloc
 
@@ -149,11 +150,11 @@ static void physSetBits(uint32_t addr_begin, uint32_t addr_end, bool reserved)
 static uint32_t physMemInit()
 {
     static const uint64_t FOUR_GB  = 0x100000000ull;
-    memoryMapEntry_t* const entries = (memoryMapEntry_t*)MEMORY_MAP_ADDRESS;
+    memoryMapEntry_t* const entries = (memoryMapEntry_t*)memoryMapAdress;
 
     // Print the memory map
     kdebug(3, "Memory map:\n");
-    for (memoryMapEntry_t* entry=entries; entry->size; ++entry)
+    for (memoryMapEntry_t* entry=entries; entry->size; entry++)
     {
         kdebug(3, "  %X -> %X %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }

@@ -2,7 +2,7 @@
 ---------------------|--------------------------------------------------------------------------------------------------
 qemu-ehci (forum)    | 0.0.1.225  F2000000h      √    √        √      4           -             MrX
 VBox 3.2.8           | 0.0.1.225  E0000000h      √    x        x      8           -             MrX
-VMWare Player 3.0.1  | 0.0.1.166  -              f    x        x      6           -             ehenkes      invalid opcode at 1A70h if trying VBE 
+VMWare Player 3.0.1  | 0.0.1.237  -              √    x        x      6           -             ehenkes
 bochs 2.4.5          | 0.0.1.225  E0000000h      √    x        x      x           -             MrX
 VPC 6.0.192.0 / 6.1  | 0.0.1.225  00000000h      f    x        √      x           -             ehenkes/MrX  #PF (err 0, addr 107BC4h) if trying VBE
 

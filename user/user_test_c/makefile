@@ -36,6 +36,7 @@ main:
 	$(GCC) -c $(USERTOOLS)/userlib.c -std=c99 $(GCCFLAGS)
 	$(GCC) -c *.c -std=c99 $(GCCFLAGS) -I$(USERTOOLS)
 	$(LD) *.o -T $(USERTOOLS)/user.ld -Map user.map $(LDFLAGS) -o HELLO.ELF
+	strip HELLO.ELF
 	$(RM) *.o
 
 clean:

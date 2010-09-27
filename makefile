@@ -82,6 +82,7 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(
 
 $(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERTOOLS)/user.ld -Map documentation/shell.map -o $(SHELLDIR)/shell.elf
+	strip $(SHELLDIR)/shell.elf
 
 $(KERNELDIR)/initrd.dat: $(SHELLDIR)/shell.elf
 	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/shell.elf shell

@@ -3,18 +3,17 @@
 
 #include "os.h"
 
-#define PAGESIZE            0x1000  // size 
-#define MEMORY_MAP_ADDRESS  0x1000  // address
+#define PAGESIZE            0x1000  // size
 
 enum MEM_FLAGS {MEM_KERNEL = 0, MEM_PRESENT = 1, MEM_WRITE = 2, MEM_USER = 4};
 
 // Memory Map
 typedef struct
 {
+    uint32_t ext;    // Unimportant for us, but necessary! Do not take out!
     uint64_t base;   // The region's address
     uint64_t size;   // The region's size
     uint32_t type;   // Is "1" for "free"
-    uint32_t ext;    // Unimportant for us, but necessary! Do not take out!
 } __attribute__((packed)) memoryMapEntry_t;
 
 // Paging
@@ -31,6 +30,7 @@ typedef struct
 } __attribute__((packed)) pageDirectory_t;
 
 extern pageDirectory_t* kernelPageDirectory;
+extern void* memoryMapAdress; // Read from multiboot structure
 
 void paging_switch(pageDirectory_t* pd);
 uint32_t paging_install();

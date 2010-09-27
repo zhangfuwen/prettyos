@@ -1,4 +1,4 @@
-OUTPUT_FORMAT("binary")
+OUTPUT_FORMAT(binary)
 OUTPUT_ARCH(i386)
 STARTUP(object_files/kernel/kernel.o)
 SECTIONS

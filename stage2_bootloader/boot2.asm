@@ -123,6 +123,11 @@ ProtectedMode:
     mov es, ax
     mov esp, 0x9000
 
+PrepareMultiboot:
+    mov eax, 0x2BADB002     ; Magic number
+    mov ebx, 0x1000-0x58    ; 0x58 == sizeof(multiboot_t)
+    mov [ebx + 0x30], word 0x1000-4
+
 ;*******************************************************
 ;    Execute Kernel
 ;*******************************************************

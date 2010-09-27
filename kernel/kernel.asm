@@ -1,18 +1,23 @@
 [Bits 32]
-section .text    ; ld needs that for coff format
-
-KernelStart:
-    mov ax, 0x10
-    mov ds, ax   ; data descriptor --> data, stack and extra segment
-    mov ss, ax
-    mov es, ax
-    xor ax, ax   ; null desriptor --> FS and GS
-    mov fs, ax
-    mov gs, ax
-
-    mov esp, 0x190000 ; set stack below 2 MiB limit
 
 extern _main     ; entry point in ckernel.c
+
+GRUB_FLAGS           equ 10b                               ; Flags for GRUB header
+GRUB_MAGIC_NUMBER    equ 0x1BADB002                        ; Magic number for GRUB header
+GRUB_HEADER_CHECKSUM equ -(GRUB_MAGIC_NUMBER + GRUB_FLAGS) ; Checksum for GRUB header
+
+align 4
+MultiBootHeader:            ; This is a "multiboot" header for GRUB, this structure must be first (?)
+    dd GRUB_MAGIC_NUMBER
+    dd GRUB_FLAGS
+    dd GRUB_HEADER_CHECKSUM
+
+; This is an entry point for GRUB
+KernelStart:
+    mov esp, 0x190000
+
+    push ebx     ; EBX contains address of the "multiboot" structure
+
     call _main   ; --> C-Kernel
 
     cli

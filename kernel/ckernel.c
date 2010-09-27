@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* version = "0.0.1.237 - Rev: 824";
+const char* version = "0.0.1.238 - Rev: 825";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -38,6 +38,34 @@ void fpu_test();    // fpu.c
 
 todoList_t* delayedInitTasks; // HACK! Why is it needed? (RTL8139 generates interrupts (endless) if its not used for EHCI)
 
+typedef struct {
+    uint32_t flags;
+    uint32_t memLower;
+    uint32_t memUpper;
+    uint32_t bootdevice;
+    uint32_t cmdline;
+    uint32_t modsCount;
+    void*    mods;
+    uint32_t syms[4];
+    uint32_t mmapLength;
+    void*    mmap;
+    uint32_t drivesLength;
+    void*    drives;
+    uint32_t configTable;
+    uint32_t bootloaderName;
+    uint32_t apmTable;
+    uint32_t vbe_controlInfo;
+    uint32_t vbe_modeInfo;
+    uint16_t vbe_mode;
+    uint16_t vbe_interfaceSeg;
+    uint16_t vbe_interfaceOff;
+    uint16_t vbe_interfaceLen;
+} __attribute__((packed)) multiboot_t;
+
+static void useMultibootInformation(multiboot_t* mb_struct)
+{
+    memoryMapAdress = mb_struct->mmap;
+}
 
 static void log(char* str)
 {
@@ -48,10 +76,12 @@ static void log(char* str)
     textColor(0x0F);
 }
 
-static void init()
+static void init(multiboot_t* mb_struct)
 {
     // set .bss to zero
     memset(&_bss_start, 0x0, (uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
+
+    useMultibootInformation(mb_struct);
 
     isr_install();
 
@@ -88,7 +118,6 @@ static void init()
     delayedInitTasks = todoList_create();
 
     sti();
-    sleepMilliSeconds(500);
 }
 
 void showMemorySize()
@@ -103,9 +132,9 @@ void showMemorySize()
     }
 }
 
-void main()
+void main(multiboot_t* mb_struct)
 {
-    init();
+    init(mb_struct);
 
     create_cthread(&bootscreen, "Booting ...");
 
