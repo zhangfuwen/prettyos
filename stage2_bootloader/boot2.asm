@@ -38,6 +38,8 @@ msgFloppyMotorOff db 0x0D, 0x0A, "Floppy Disk Motor switched off ...", 0
 msgSwitchToPM     db 0x0D, 0x0A, "Now switching to Protected Mode (PM) ...", 0
 msgFailure        db 0x0D, 0x0A, "Missing KERNEL.BIN (Fatal Error)", 0
 
+msgBootLoaderName db "PrettyBL", 0
+
 entry_point:
     cli
     xor ax, ax
@@ -124,9 +126,19 @@ ProtectedMode:
     mov esp, 0x9000
 
 PrepareMultiboot:
-    mov eax, 0x2BADB002     ; Magic number
     mov ebx, 0x1000-0x58    ; 0x58 == sizeof(multiboot_t)
-    mov [ebx + 0x30], word 0x1000-4
+    mov [ebx + 0x00], DWORD 0b1001000001
+    mov [ebx + 0x04], DWORD 640
+    call convert_mmap
+    mov ecx, 18
+    imul ecx, eax
+    mov [ebx + 0x2C], ecx
+    mov eax, [ebp-16]
+    shr eax, 10
+    mov [ebx+0x08], eax
+    mov [ebx + 0x30], WORD 0x1100
+    mov [ebx + 0x40], DWORD msgBootLoaderName    
+    mov eax, 0x2BADB002     ; Magic number
 
 ;*******************************************************
 ;    Execute Kernel
@@ -150,3 +162,49 @@ print_string:
     jmp print_string.loop
     .done:
     ret
+
+[BITS 32]
+convert_mmap:
+	push	ebp
+	mov	ebp, esp
+	sub	esp, 16
+	mov	DWORD [ebp-4], 4352
+	mov	DWORD [ebp-8], 4096
+	mov	DWORD [ebp-12], 0
+	mov	DWORD [ebp-16], 4608
+	jmp	.L2
+.L3:
+	mov	eax, DWORD [ebp-8]
+	mov	eax, DWORD [eax]
+	mov	edx, 0
+	mov	ecx, DWORD [ebp-4]
+	mov	DWORD [ecx+4], eax
+	mov	DWORD [ecx+8], edx
+	mov	eax, DWORD [ebp-8]
+	mov	eax, DWORD [eax+8]
+	mov	edx, 0
+	mov	ecx, DWORD [ebp-4]
+	mov	DWORD [ecx+12], eax
+	mov	DWORD [ecx+16], edx
+	mov	eax, DWORD [ebp-8]
+	mov	edx, DWORD [eax+16]
+	mov	eax, DWORD [ebp-4]
+	mov	DWORD [eax+20], edx
+	mov	eax, DWORD [ebp-16]
+	mov	edx, DWORD [eax]
+	mov	eax, DWORD [ebp-8]
+	mov	eax, DWORD [eax+8]
+	add	edx, eax
+	mov	eax, DWORD [ebp-16]
+	mov	DWORD [eax], edx
+	add	DWORD [ebp-4], 24
+	add	DWORD [ebp-8], 24
+	add	DWORD [ebp-12], 1
+.L2:
+	mov	eax, DWORD [ebp-8]
+	mov	eax, DWORD [eax+8]
+	test	eax, eax
+	jne	.L3
+	mov	eax, DWORD [ebp-12]
+	leave
+	ret
