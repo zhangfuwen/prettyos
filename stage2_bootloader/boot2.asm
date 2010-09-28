@@ -133,7 +133,7 @@ PrepareMultiboot:
     mov ecx, 18
     imul ecx, eax
     mov [ebx + 0x2C], ecx
-    mov eax, [ebp-16]
+    mov eax, [0x1200]
     shr eax, 10
     mov [ebx+0x08], eax
     mov [ebx + 0x30], WORD 0x1100
