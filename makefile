@@ -6,6 +6,7 @@ ifeq ($(OS),WINDOWS)
 	MV= cmd /c move /Y
 	CC= i586-elf-gcc
 	LD= i586-elf-ld
+	STRIP= i586-elf-strip
 	FLOPPYIMAGE= tools/CreateFloppyImage2
 	MKINITRD= tools/make_initrd
 else
@@ -14,11 +15,13 @@ else
 	ifeq ($(OS),MACOSX)
 		CC= i586-elf-gcc
 		LD= i586-elf-ld
+		STRIP= i586-elf-strip
 		FLOPPYIMAGE= tools/osx_CreateFloppyImage2
 		MKINITRD= tools/osx_make_initrd
 	else
 		CC= gcc
 		LD= ld
+		STRIP= strip
 		FLOPPYIMAGE= tools/linux_CreateFloppyImage2
 		MKINITRD= tools/linux_make_initrd
 	endif
@@ -82,7 +85,7 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(
 
 $(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERTOOLS)/user.ld -Map documentation/shell.map -o $(SHELLDIR)/shell.elf
-	strip $(SHELLDIR)/shell.elf
+	$(STRIP) $(SHELLDIR)/shell.elf
 
 $(KERNELDIR)/initrd.dat: $(SHELLDIR)/shell.elf
 	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/shell.elf shell

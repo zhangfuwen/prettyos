@@ -154,7 +154,7 @@ uint32_t getDisplayStart();
 
 void setVideoMemory(); // Allocate the videomemory from the graphiccard
 
-void printPalette(BGRQuadPacked_t* BGR);
+void printPalette();
 
 // Set a Palette (old vga registers, need changed to the VBE Registers in vidswtch.asm)
 void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t  Red, uint8_t  Green, uint8_t  Blue);

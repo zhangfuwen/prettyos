@@ -23,5 +23,6 @@ uint8_t AsciiToCP437(uint8_t ascii);
 void writeInfo(uint8_t line, char* content, ...);
 void screenshot();
 void mt_screenshot();
+void update_cursor();
 
 #endif

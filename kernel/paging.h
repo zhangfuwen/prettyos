@@ -10,7 +10,7 @@ enum MEM_FLAGS {MEM_KERNEL = 0, MEM_PRESENT = 1, MEM_WRITE = 2, MEM_USER = 4};
 // Memory Map
 typedef struct
 {
-    uint32_t ext;    // Unimportant for us, but necessary! Do not take out!
+    uint32_t mysize; // Size of this entry
     uint64_t base;   // The region's address
     uint64_t size;   // The region's size
     uint32_t type;   // Is "1" for "free"
@@ -30,7 +30,8 @@ typedef struct
 } __attribute__((packed)) pageDirectory_t;
 
 extern pageDirectory_t* kernelPageDirectory;
-extern void* memoryMapAdress; // Read from multiboot structure
+extern memoryMapEntry_t* memoryMapAdress;
+extern memoryMapEntry_t* memoryMapEnd; // Read from multiboot structure
 
 void paging_switch(pageDirectory_t* pd);
 uint32_t paging_install();

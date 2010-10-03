@@ -102,7 +102,7 @@ element_t* list_GetElement(listHead_t* hd, uint32_t number)
     element_t* cur = hd->head;
     while (true)
     {
-        if (number == 0)
+        if (number == 0 || cur == 0)
         {
             return(cur);
         }

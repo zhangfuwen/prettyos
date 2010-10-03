@@ -69,11 +69,11 @@ Get_Memory_Map:
 Install_GDT:
  
     call InstallGDT
-	mov si, msgGTD
+    mov si, msgGTD
     call print_string
  
     call EnterUnrealMode
-	mov si, msgUnrealMode
+    mov si, msgUnrealMode
     call print_string
 
     sti
@@ -105,11 +105,11 @@ EnterProtectedMode:
     mov dx,0x3F2
     mov al,0x0C
     out dx,al
-	mov si, msgFloppyMotorOff
+    mov si, msgFloppyMotorOff
     call print_string
 
     ; switch to PM
-	mov si, msgSwitchToPM
+    mov si, msgSwitchToPM
     call print_string
     cli
     mov eax, cr0                       ; bit 0 in CR0 has to be set for entering PM
@@ -130,7 +130,7 @@ PrepareMultiboot:
     mov [ebx + 0x00], DWORD 0b1001000001
     mov [ebx + 0x04], DWORD 640
     call convert_mmap
-    mov ecx, 18
+    mov ecx, 24             ; Calculate size of mmap (24 == sizeof(mmap_entry))
     imul ecx, eax
     mov [ebx + 0x2C], ecx
     mov eax, [0x1200]
@@ -168,43 +168,43 @@ convert_mmap:
 	push	ebp
 	mov	ebp, esp
 	sub	esp, 16
-	mov	DWORD [ebp-4], 4352
-	mov	DWORD [ebp-8], 4096
+	mov	DWORD [ebp-4], 4096
+	mov	DWORD [ebp-8], 0x1100
 	mov	DWORD [ebp-12], 0
-	mov	DWORD [ebp-16], 4608
 	jmp	.L2
 .L3:
-	mov	eax, DWORD [ebp-8]
+	mov	eax, DWORD [ebp-4]
 	mov	eax, DWORD [eax]
 	mov	edx, 0
-	mov	ecx, DWORD [ebp-4]
+	mov	ecx, DWORD [ebp-8]
 	mov	DWORD [ecx+4], eax
 	mov	DWORD [ecx+8], edx
-	mov	eax, DWORD [ebp-8]
+	mov	eax, DWORD [ebp-4]
 	mov	eax, DWORD [eax+8]
 	mov	edx, 0
-	mov	ecx, DWORD [ebp-4]
+	mov	ecx, DWORD [ebp-8]
 	mov	DWORD [ecx+12], eax
 	mov	DWORD [ecx+16], edx
-	mov	eax, DWORD [ebp-8]
-	mov	edx, DWORD [eax+16]
 	mov	eax, DWORD [ebp-4]
-	mov	DWORD [eax+20], edx
-	mov	eax, DWORD [ebp-16]
-	mov	edx, DWORD [eax]
+	mov	edx, DWORD [eax+16]
 	mov	eax, DWORD [ebp-8]
-	mov	eax, DWORD [eax+8]
-	add	edx, eax
-	mov	eax, DWORD [ebp-16]
-	mov	DWORD [eax], edx
+	mov	DWORD [eax+20], edx
+	mov	eax, DWORD [ebp-8]
+	mov	DWORD [eax], 24
 	add	DWORD [ebp-4], 24
 	add	DWORD [ebp-8], 24
 	add	DWORD [ebp-12], 1
 .L2:
-	mov	eax, DWORD [ebp-8]
+	mov	eax, DWORD [ebp-4]
 	mov	eax, DWORD [eax+8]
 	test	eax, eax
 	jne	.L3
+	mov	edx, DWORD [ebp-12]
+	mov	eax, edx
+	add	eax, eax
+	add	eax, edx
+	sal	eax, 3
+	mov	DWORD [ebp-12], eax
 	mov	eax, DWORD [ebp-12]
 	leave
 	ret

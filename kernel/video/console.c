@@ -20,6 +20,8 @@ console_t* currentConsole = &kernelConsole;
 extern uint16_t* vidmem;
 static bool scroll_flag = true;
 
+static void scroll();
+
 uint8_t getTextColor()
 {
     if(currentTask == 0)
@@ -113,7 +115,7 @@ void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
         currentTask->attrib = color;
 }
 
-void move_cursor_right()
+static void move_cursor_right()
 {
     ++currentConsole->cursor.x;
     if (currentConsole->cursor.x >= COLUMNS)
@@ -124,7 +126,7 @@ void move_cursor_right()
     }
 }
 
-void move_cursor_left()
+static void move_cursor_left()
 {
     if (currentConsole->cursor.x)
         --currentConsole->cursor.x;
@@ -135,15 +137,9 @@ void move_cursor_left()
     }
 }
 
-void move_cursor_home()
+static void move_cursor_home()
 {
     currentConsole->cursor.x = 0;
-    update_cursor();
-}
-
-void move_cursor_end()
-{
-    currentConsole->cursor.x = COLUMNS-1;
     update_cursor();
 }
 
@@ -203,7 +199,7 @@ void puts(const char* text)
     for (; *text; putch(*text), ++text);
 }
 
-void scroll()
+static void scroll()
 {
     uint8_t scroll_end = min(USER_LINES, currentConsole->SCROLL_END);
     if (scroll_flag && currentConsole->cursor.y >= scroll_end)
@@ -309,17 +305,6 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     textColor(old_attrib);
     currentConsole->cursor.x = c_x;
     currentConsole->cursor.y = c_y;
-}
-
-void update_cursor()
-{
-    uint16_t position = (reachableConsoles[displayedConsole]->cursor.y+2) * COLUMNS + reachableConsoles[displayedConsole]->cursor.x;
-    // cursor HIGH port to vga INDEX register
-    outportb(0x3D4, 0x0E);
-    outportb(0x3D5, (uint8_t)((position>>8)&0xFF));
-    // cursor LOW port to vga INDEX register
-    outportb(0x3D4, 0x0F);
-    outportb(0x3D5, (uint8_t)(position&0xFF));
 }
 
 

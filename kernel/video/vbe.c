@@ -15,8 +15,6 @@ BitmapHeader_t  bh;
 
 BitmapHeader_t* bh_get;
 
-BGRQuadPacked_t* ScreenPal = (BGRQuadPacked_t*)0x1600;
-
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
 position_t curPos = {0, 0};
 
@@ -105,13 +103,15 @@ uint32_t getDisplayStart()
     // [0x1302]; First Displayed Pixel in Scan Line
 }
 
-void printPalette(BGRQuadPacked_t* BGR)
+void printPalette()
 {
+    if(mib.BitsPerPixel != 8) return;
+
     uint32_t xpos = 0;
     uint32_t ypos = 0;
     for(uint32_t j=0; j<256; j++)
     {
-        BGRA_t temp = {BGR[j].blue, BGR[j].green, BGR[j].red, j};
+        BGRA_t temp = {0,0,0, j};
         vbe_drawRectFilled(xpos, ypos, xpos+5, ypos+5, temp);
         xpos +=5;
         if(xpos >= 255)
@@ -166,7 +166,7 @@ void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t
 void setVideoMemory()
 {
      uint32_t numberOfPages = vgaIB.TotalMemory * 0x10000 / PAGESIZE;
-     SCREEN = (uint8_t*)paging_acquirePciMemory(mib.PhysBasePtr, numberOfPages);
+     SCREEN = paging_acquirePciMemory(mib.PhysBasePtr, numberOfPages);
 
      printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib.PhysBasePtr, SCREEN);
      printf("\nVideo Ram %u MiB\n",vgaIB.TotalMemory/0x10);
@@ -204,7 +204,7 @@ void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap)
 {
     if(mib.BitsPerPixel == 8)
     {
-        for(uint32_t j=0; j<256; j++)
+        for(uint16_t j=0; j<256; j++)
         {
             // transfer from bitmap palette to packed RAMDAC palette
             Set_DAC_C(j, bitmap->bmicolors[j].red, bitmap->bmicolors[j].green, bitmap->bmicolors[j].blue);
@@ -227,7 +227,7 @@ void vbe_drawBitmapTransparent(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap)
 {
     if(mib.BitsPerPixel == 8)
     {
-        for(uint32_t j=0; j<256; j++)
+        for(uint16_t j=0; j<256; j++)
         {
             // transfer from bitmap palette to packed RAMDAC palette
             Set_DAC_C(j, bitmap->bmicolors[j].red, bitmap->bmicolors[j].green, bitmap->bmicolors[j].blue);
@@ -253,7 +253,7 @@ void vbe_drawScaledBitmap(uint32_t newSizeX, uint32_t newSizeY, BMPInfo_t* bitma
 {
     if(mib.BitsPerPixel == 8)
     {
-        for(uint32_t j=0; j<256; j++)
+        for(uint16_t j=0; j<256; j++)
         {
             // transfer from bitmap palette to packed RAMDAC palette
             Set_DAC_C(j, bitmap->bmicolors[j].red, bitmap->bmicolors[j].green, bitmap->bmicolors[j].blue);
@@ -351,6 +351,7 @@ void vbe_drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, BGRA_t col
 // Draws a rectangle by drawing all lines by itself.
 void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, BGRA_t color)
 {
+    // Sort edges
     if (top>bottom)
     {
         uint32_t temp=top;
@@ -369,7 +370,7 @@ void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, 
         vbe_setPixel(top, i, color);
         vbe_setPixel(bottom, i, color);
     }
-    for(uint32_t i=top; i<=bottom; i+=mib.XResolution) //SCREEN_WIDTH
+    for(uint32_t i=top; i<=bottom; i++)
     {
         vbe_setPixel(i, left, color);
         vbe_setPixel(i, right, color);
@@ -379,9 +380,9 @@ void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, 
 // Draws a rectangle by drawing all lines by itself. Filled
 void vbe_drawRectFilled(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, BGRA_t color)
 {
-    for(int i = left; i < right; i++)
+    for(uint32_t i = left; i < right; i++)
     {
-        for(int j = top; j < bottom; j++)
+        for(uint32_t j = top; j < bottom; j++)
         {
             vbe_setPixel(i, j, color);
         }
@@ -406,12 +407,11 @@ static void vgaDebug()
     textColor(0x0E);
     printf("\nVgaInfoBlock:\n");
     textColor(0x0F);
-    printf("VESA-Signature:  %s\n",     vgaIB.VESASignature);
-    printf("VESA-Version:    %u.%u\n",  vgaIB.VESAVersion>>8, vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
-    printf("Capabilities:    %X\n",     vgaIB.Capabilities);
-    printf("Video Memory:    %u MiB\n", vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
-    printf("OEM-String Ptr:  %X\n",     vgaIB.OEMStringPtr);
-    printf("Video Modes Ptr: %X\n",     vgaIB.VideoModes);
+    printf("VESA-Signature:  %c%c%c%c\n", vgaIB.VESASignature[0], vgaIB.VESASignature[1], vgaIB.VESASignature[2], vgaIB.VESASignature[3]);
+    printf("VESA-Version:    %u.%u\n",    vgaIB.VESAVersion>>8, vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
+    printf("Capabilities:    %X\n",       vgaIB.Capabilities);
+    printf("Video Memory:    %u MiB\n",   vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
+    printf("Video Modes Ptr: %X\n",       vgaIB.VideoModes);
 
     textColor(0x0E);
     printf("\nVideo Modes:");
@@ -661,13 +661,18 @@ void vbe_bootscreen()
         for(uint16_t i = 0; i < 256; i++)
         {
             if(vgaIB.VideoModes[i] == modenumber)
-                valid = true;
+            {
+                vbe_readMIB(modenumber);
+                if((mib.ModeAttributes & BIT(0)) && (mib.ModeAttributes & BIT(4)) && (mib.ModeAttributes & BIT(7))) // supported && videomode && LFB
+                    valid = true;
+                break;
+            }
+            if(vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
         }
         if(!valid)
             modenumber = 0;
     }
 
-    vbe_readMIB(modenumber);
     modeDebug();
 
     waitForKeyStroke();
@@ -675,7 +680,7 @@ void vbe_bootscreen()
     switchToVideomode(modenumber);
 
     uint32_t displayStart = getDisplayStart();
-    printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", (displayStart & 0xFFFF0000)>>16, displayStart & 0xFFFF);
+    printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", displayStart >> 16, displayStart & 0xFFFF);
 
     BGRA_t bright_blue = {255, 100, 100, 0x09};
     vbe_drawLine(0, mib.YResolution/2 + 1, mib.XResolution, mib.YResolution/2 + 1, bright_blue); // FPU
@@ -687,12 +692,12 @@ void vbe_bootscreen()
     vbe_drawBitmap(0, 0, &bmp_start);
     waitForKeyStroke();
 
-    printPalette(ScreenPal);
+    printPalette();
 
     vbe_drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
     waitForKeyStroke();
 
-    vbe_drawScaledBitmap(mib.XResolution, mib.YResolution, (BMPInfo_t*)&bmp_start);
+    vbe_drawScaledBitmap(mib.XResolution, mib.YResolution, &bmp_start);
 
     waitForKeyStroke();
 

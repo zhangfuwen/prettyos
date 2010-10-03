@@ -231,6 +231,17 @@ void refreshUserScreen()
     update_cursor();
 }
 
+void update_cursor()
+{
+    uint16_t position = (reachableConsoles[displayedConsole]->cursor.y+2) * COLUMNS + reachableConsoles[displayedConsole]->cursor.x;
+    // cursor HIGH port to vga INDEX register
+    outportb(0x3D4, 0x0E);
+    outportb(0x3D5, (uint8_t)((position>>8)&0xFF));
+    // cursor LOW port to vga INDEX register
+    outportb(0x3D4, 0x0F);
+    outportb(0x3D5, (uint8_t)(position&0xFF));
+}
+
 diskType_t* ScreenDest = &FLOPPYDISK; // HACK
 extern disk_t* disks[DISKARRAYSIZE]; // HACK
 extern bool    readCacheFlag; // HACK

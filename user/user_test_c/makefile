@@ -4,15 +4,18 @@ ifeq ($(OS),WINDOWS)
     NASM= nasm
     GCC= i586-elf-gcc
     LD= i586-elf-ld
+	STRIP= i586-elf-strip
 else
     RM= rm -f
     NASM= nasm
     ifeq ($(OS),MACOSX)
         GCC= i586-elf-gcc
         LD= i586-elf-ld
+		STRIP= i586-elf-strip
     else
         GCC= gcc
         LD= ld
+		STRIP= strip
     endif
 endif
 
@@ -36,7 +39,7 @@ main:
 	$(GCC) -c $(USERTOOLS)/userlib.c -std=c99 $(GCCFLAGS)
 	$(GCC) -c *.c -std=c99 $(GCCFLAGS) -I$(USERTOOLS)
 	$(LD) *.o -T $(USERTOOLS)/user.ld -Map user.map $(LDFLAGS) -o HELLO.ELF
-	strip HELLO.ELF
+	$(STRIP) HELLO.ELF
 	$(RM) *.o
 
 clean:

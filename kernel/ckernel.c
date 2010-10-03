@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* version = "0.0.1.238 - Rev: 826";
+const char* version = "0.0.1.239 - Rev: 827";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -52,7 +52,7 @@ typedef struct {
     uint32_t drivesLength;
     void*    drives;
     uint32_t configTable;
-    uint32_t bootloaderName;
+    char*    bootloaderName;
     uint32_t apmTable;
     uint32_t vbe_controlInfo;
     uint32_t vbe_modeInfo;
@@ -65,6 +65,7 @@ typedef struct {
 static void useMultibootInformation(multiboot_t* mb_struct)
 {
     memoryMapAdress = mb_struct->mmap;
+    memoryMapEnd = (void*)((uintptr_t)mb_struct->mmap + mb_struct->mmapLength);
 }
 
 static void log(char* str)

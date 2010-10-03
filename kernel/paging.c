@@ -13,7 +13,8 @@
 #include "video/console.h"
 
 pageDirectory_t* kernelPageDirectory;
-void* memoryMapAdress;
+memoryMapEntry_t* memoryMapAdress;
+memoryMapEntry_t* memoryMapEnd;
 
 void* globalUserPT; // for storage of a user task pagetable  // cf. pagingAlloc
 
@@ -102,7 +103,7 @@ uint32_t paging_install()
 static bool isMemoryMapAvailable(const memoryMapEntry_t* entries, uint64_t beg, uint64_t end)
 {
     // There must not be an "reserved" entry which reaches into the specified area
-    for (const memoryMapEntry_t* entry=entries; entry->size; ++entry)
+    for (const memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
     {
         if ((entry->type != 1) && (entry->base < end) && ((entry->base + entry->size) > beg))
         {
@@ -112,9 +113,9 @@ static bool isMemoryMapAvailable(const memoryMapEntry_t* entries, uint64_t beg, 
 
     // Check whether the "free" entries cover the whole specified area.
     uint64_t covered = beg;
-    for (const memoryMapEntry_t* outer_loop=entries; outer_loop->size; ++outer_loop)
+    for (const memoryMapEntry_t* outer_loop=entries; outer_loop < memoryMapEnd; ++outer_loop)
     {
-        for (const memoryMapEntry_t* entry=entries; entry->size; ++entry)
+        for (const memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
         {
             if (entry->base<=covered && (entry->base+entry->size)>covered)
             {
@@ -150,22 +151,26 @@ static void physSetBits(uint32_t addr_begin, uint32_t addr_end, bool reserved)
 static uint32_t physMemInit()
 {
     static const uint64_t FOUR_GB  = 0x100000000ull;
-    memoryMapEntry_t* const entries = (memoryMapEntry_t*)memoryMapAdress;
+    memoryMapEntry_t* const entries = memoryMapAdress;
 
     // Print the memory map
-    kdebug(3, "Memory map:\n");
-    for (memoryMapEntry_t* entry=entries; entry->size; entry++)
+    #ifdef _DIAGNOSIS_
+    textColor(0x03);
+    printf("Memory map:\n");
+    for (memoryMapEntry_t* entry=entries; entry < emoryMapEnd; entry++)
     {
-        kdebug(3, "  %X -> %X %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
+        printf("  %X -> %X %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }
+    textColor(0x0F);
+    #endif
 
     // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size 0.
-    for (memoryMapEntry_t* entry=entries; entry->size; ++entry)
+    for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
     {
         // We will completely ignore memory above 4 GB, move following entries backward by one then
         if (entry->base >= FOUR_GB)
         {
-            for (memoryMapEntry_t* e=entry; e->size; ++e)
+            for (memoryMapEntry_t* e=entry; e < memoryMapEnd; ++e)
             {
                 *e = *(e+1);
             }
@@ -194,7 +199,7 @@ static uint32_t physMemInit()
     }
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
-    for (memoryMapEntry_t* entry=entries; entry->size; ++entry)
+    for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
     {
         physSetBits(entry->base, entry->base+entry->size, !entry->type);
     }

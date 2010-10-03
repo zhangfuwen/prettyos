@@ -1365,11 +1365,11 @@ static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name , uint32_t *fHan
   #endif
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
-    fileRootDirEntry_t* dir = cacheFileEntry( fileptr, fHandle, true);
+    fileRootDirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
 
     if (dir == 0) return CE_BADCACHEREAD;
 
-    strncpy(dir->DIR_Name,name,DIR_NAMECOMP);
+    strncpy(dir->DIR_Name,name,DIR_NAMECOMP); // HACK, accesses dir->DIR_Name and dir->DIR_Extension
     if (mode == DIRECTORY)
     {
         dir->DIR_Attr = ATTR_DIRECTORY;
@@ -2043,7 +2043,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
             break;
         }
 
-        for (uint8_t j=0; j<11; j++)
+        for (uint8_t j=0; j<11; j++) // HACK, accesses dir->DIR_Name and dir->DIR_Extension
         {
             if (dir->DIR_Name[j] != string[j])
             {

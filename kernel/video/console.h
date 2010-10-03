@@ -39,10 +39,8 @@ void puts(const char* text);
 void printf (const char* args, ...);
 void vprintf(const char* args, va_list ap);
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...);
-void scroll();
 void setCursor(position_t pos);
 position_t getCursor();
-void update_cursor();
 bool changeDisplayedConsole(uint8_t ID);
 
 #endif
