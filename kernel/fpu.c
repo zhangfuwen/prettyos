@@ -43,7 +43,7 @@ void fpu_test()
     double squareroot = sqrt(2.0);
     squareroot = fabs(squareroot);
     squareroot /= sqrt(2.0);
-    if (squareroot == 1.00) 
+    if (squareroot == 1.00)
     {
         textColor(0x0A);
         printf("\nFPU-test OK\n");
@@ -51,7 +51,7 @@ void fpu_test()
     }
     else
     {
-       textColor(0x0C); 
+       textColor(0x0C);
        printf("\nFPU-test ERROR\n");
        textColor(0x0F);
     }

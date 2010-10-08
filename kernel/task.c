@@ -93,7 +93,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
             newTask->userProgAddr = globalUserProgAddr;
             newTask->userProgSize = globalUserProgSize;
 
-            pagingAlloc(newTask->pageDirectory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);            
+            pagingAlloc(newTask->pageDirectory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);
             newTask->userPT = globalUserPT;
         }
         else
@@ -354,8 +354,8 @@ static void kill(task_t* task)
     if (task->pageDirectory != kernelPageDirectory)
     {
         paging_destroyUserPageDirectory(task->pageDirectory);
-        free(task->pageDirectory); 
-        free(task->userPT);            
+        free(task->pageDirectory);
+        free(task->userPT);
     }
 
     // signalize the parent task that this task is exited

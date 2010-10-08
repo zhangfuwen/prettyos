@@ -21,8 +21,8 @@ void ICMPAnswerPing(void* data, uint32_t length)
 
     for (uint32_t i = 0; i < 6; i++)
     {
-        icmp->eth.recv_mac[i]   = rec->eth.send_mac[i];
-        icmp->eth.send_mac[i]   = MAC_address[i];
+        icmp->eth.recv_mac[i] = rec->eth.send_mac[i];
+        icmp->eth.send_mac[i] = MAC_address[i];
     }
 
     icmp->eth.type_len[0] = 0x08;
@@ -102,7 +102,7 @@ void icmpDebug(void* data, uint32_t length)
     memcpy(&pkt[sizeof(*icmp)], (uint8_t*)data + sizeof(*rec), icmp_data_length);
 
     icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
-    
+
     printf("\n\n");
     printf("ICMP Header information:\n");
     textColor(0x0E);

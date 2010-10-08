@@ -3,7 +3,7 @@
 
 #include "os.h"
 
-typedef enum 
+typedef enum
 {
     ISR_invalidOpcode = 6,
     ISR_NM            = 7,
@@ -11,7 +11,7 @@ typedef enum
     ISR_PF            = 14,
 } ISR_NUM_t;
 
-typedef enum 
+typedef enum
 {
     IRQ_TIMER    = 0,
     IRQ_KEYBOARD = 1,

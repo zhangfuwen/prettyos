@@ -9,14 +9,11 @@
 void install_SB16(pciDev_t* device)
 {
 /*
-	uint8_t irq = device->irq;
-	uint8_t bus = device->bus;
-	uint8_t device = device->device;
-	uint8_t func = device->func;
+    uint8_t irq = device->irq;
+    uint8_t bus = device->bus;
+    uint8_t device = device->device;
+    uint8_t func = device->func;
 */
-	cli();
-	
-	sti();
 }
 
 /*

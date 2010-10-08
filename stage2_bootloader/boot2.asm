@@ -40,6 +40,7 @@ msgFailure        db 0x0D, 0x0A, "Missing KERNEL.BIN (Fatal Error)", 0
 
 msgBootLoaderName db "PrettyBL", 0
 
+[BITS 16]
 entry_point:
     cli
     xor ax, ax
@@ -67,11 +68,10 @@ Get_Memory_Map:
     mov es, ax          ; important to null es!
 
 Install_GDT:
- 
     call InstallGDT
     mov si, msgGTD
     call print_string
- 
+
     call EnterUnrealMode
     mov si, msgUnrealMode
     call print_string
@@ -137,7 +137,7 @@ PrepareMultiboot:
     shr eax, 10
     mov [ebx+0x08], eax
     mov [ebx + 0x30], WORD 0x1100
-    mov [ebx + 0x40], DWORD msgBootLoaderName    
+    mov [ebx + 0x40], DWORD msgBootLoaderName
     mov eax, 0x2BADB002     ; Magic number
 
 ;*******************************************************
@@ -162,49 +162,3 @@ print_string:
     jmp print_string.loop
     .done:
     ret
-
-[BITS 32]
-convert_mmap:
-	push	ebp
-	mov	ebp, esp
-	sub	esp, 16
-	mov	DWORD [ebp-4], 4096
-	mov	DWORD [ebp-8], 0x1100
-	mov	DWORD [ebp-12], 0
-	jmp	.L2
-.L3:
-	mov	eax, DWORD [ebp-4]
-	mov	eax, DWORD [eax]
-	mov	edx, 0
-	mov	ecx, DWORD [ebp-8]
-	mov	DWORD [ecx+4], eax
-	mov	DWORD [ecx+8], edx
-	mov	eax, DWORD [ebp-4]
-	mov	eax, DWORD [eax+8]
-	mov	edx, 0
-	mov	ecx, DWORD [ebp-8]
-	mov	DWORD [ecx+12], eax
-	mov	DWORD [ecx+16], edx
-	mov	eax, DWORD [ebp-4]
-	mov	edx, DWORD [eax+16]
-	mov	eax, DWORD [ebp-8]
-	mov	DWORD [eax+20], edx
-	mov	eax, DWORD [ebp-8]
-	mov	DWORD [eax], 24
-	add	DWORD [ebp-4], 24
-	add	DWORD [ebp-8], 24
-	add	DWORD [ebp-12], 1
-.L2:
-	mov	eax, DWORD [ebp-4]
-	mov	eax, DWORD [eax+8]
-	test	eax, eax
-	jne	.L3
-	mov	edx, DWORD [ebp-12]
-	mov	eax, edx
-	add	eax, eax
-	add	eax, edx
-	sal	eax, 3
-	mov	DWORD [ebp-12], eax
-	mov	eax, DWORD [ebp-12]
-	leave
-	ret

@@ -100,7 +100,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                     mouse_byte[2] |= 0xFFFFFF00; // delta-y is a negative value
                 if (!(mouse_byte[0] & 0x10))
                     mouse_byte[1] |= 0xFFFFFF00; // delta-x is a negative value
-                
+
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
@@ -144,7 +144,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 mouse_x += mouse_byte[1];
                 mouse_y -= mouse_byte[2];
                 mouse_z += mouse_byte[3];
-                
+
                 if(videomode == VM_VBE)
                 {
                     mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1));

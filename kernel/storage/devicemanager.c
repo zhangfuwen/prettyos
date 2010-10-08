@@ -31,7 +31,7 @@ extern uint32_t usbMSDVolumeMaxLBA;
 #define NUMREADCACHE 20
 bool    readCacheFlag = true;
 
-typedef struct 
+typedef struct
 {
     uint8_t buffer[512];
     bool valid;
@@ -334,17 +334,6 @@ partition_t* getPartition(const char* path)
 
 FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests only
 {
-    uint32_t volume_bytePerSector;
-    uint8_t  volume_type = FAT32;
-    uint8_t  volume_SecPerClus;
-    uint16_t volume_maxroot;
-    uint32_t volume_fatsize;
-    uint8_t  volume_fatcopy;
-    uint32_t volume_firstSector;
-    uint32_t volume_fat;
-    uint32_t volume_root;
-    uint32_t volume_data;
-    uint32_t volume_maxcls;
     char     volume_serialNumber[4];
 
     struct boot_sector* sec0 = (struct boot_sector*)buffer;
@@ -386,21 +375,19 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         printf("\tFormat:                 %s",FATn);
         #endif
 
-        volume_bytePerSector = sec0->charsPerSector;
-        volume_SecPerClus    = sec0->SectorsPerCluster;
-        volume_maxroot       = sec0->MaxRootEntries;
-        volume_fatsize       = sec0->SectorsPerFAT;
-        volume_fatcopy       = sec0->FATcount;
-        volume_firstSector   = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
-        volume_fat           = volume_firstSector + sec0->ReservedSectors;
-        volume_root          = volume_fat + volume_fatcopy * volume_fatsize;
-        volume_data          = volume_root + volume_maxroot /(volume_bytePerSector/NUMBER_OF_BYTES_IN_DIR_ENTRY);
-        volume_maxcls        = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
-
+        uint8_t  volume_type          = FAT32;
+        uint32_t volume_bytePerSector = sec0->charsPerSector;
+        uint8_t  volume_SecPerClus    = sec0->SectorsPerCluster;
+        uint16_t volume_maxroot       = sec0->MaxRootEntries;
+        uint32_t volume_fatsize       = sec0->SectorsPerFAT;
+        uint8_t  volume_fatcopy       = sec0->FATcount;
+        uint32_t volume_firstSector   = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
+        uint32_t volume_fat           = volume_firstSector + sec0->ReservedSectors;
+        uint32_t volume_root          = volume_fat + volume_fatcopy * volume_fatsize;
+        uint32_t volume_data          = volume_root + volume_maxroot /(volume_bytePerSector/NUMBER_OF_BYTES_IN_DIR_ENTRY);
+        uint32_t volume_maxcls        = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
 
         uint32_t volume_FatRootDirCluster = 0; // only FAT32
-
-        uint32_t volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus);; // FAT12 and FAT16
 
         startSectorPartition = 0; // important!
 
@@ -422,7 +409,6 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
                 printf("\nThe root dir starts at cluster %u (expected: 2).", volume_FatRootDirCluster);
 
                 volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
-                volume_ClustersPerRootDir = volume_maxroot/(16 * volume_SecPerClus);
 
                 printf("\nSectors per FAT: %u.", ((uint32_t*)buffer)[9]);  // byte 36-39
                 volume_fatsize = ((uint32_t*)buffer)[9];
@@ -578,7 +564,7 @@ static void fillReadCache(uint32_t sector, partition_t* part)
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)
     {
-        if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true) && (i!=currReadCache)) 
+        if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true) && (i!=currReadCache))
         {
             readcaches[i].valid = false;
         }
@@ -631,7 +617,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
             /*static uint8_t* destOld = 0;
             static uint8_t* sourceOld = 0;
 
-            if ((buffer == destOld) && (readcaches[i].buffer == sourceOld)) 
+            if ((buffer == destOld) && (readcaches[i].buffer == sourceOld))
             {
                 // do nothing
             }

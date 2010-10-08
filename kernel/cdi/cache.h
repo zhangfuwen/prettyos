@@ -43,7 +43,7 @@ int cdi_cache_sync(struct cdi_cache* cache);
    Block nicht freigegeben wird, solange er benutzt wird. Das heisst aber auch,
    dass der Block nach der Benutzung wieder freigegeben werden muss, da sonst
    die freien Blocks ausgehen.
-  
+
    cache:    Cache-Handle
    blocknum: Blocknummer
    noread:   Wenn != 0 wird der Block nicht eingelesen falls er noch nicht im Speicher ist. Kann benutzt werden, wenn der Block

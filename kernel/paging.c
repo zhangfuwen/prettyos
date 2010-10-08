@@ -204,7 +204,7 @@ static uint32_t physMemInit()
         physSetBits(entry->base, entry->base+entry->size, !entry->type);
     }
 
-    // Reserve first 20 MiB 
+    // Reserve first 20 MiB
     physSetBits(0x00000000, 20*1024*1024, true);
 
     // Reserve the region of the kernel code
@@ -301,16 +301,16 @@ bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t
         if (!pt)
         {
             // Allocate the page table
-            if (pd == kernelPageDirectory) 
+            if (pd == kernelPageDirectory)
             {
                 pt = (pageTable_t*) malloc(sizeof(pageTable_t), PAGESIZE, "pag-PT");
             }
-            else 
+            else
             {
                 pt = (pageTable_t*) malloc(sizeof(pageTable_t), PAGESIZE, "pag-userPT");
-                globalUserPT = pt; 
+                globalUserPT = pt;
             }
-            
+
             if (!pt)
             {
                 // Undo the allocations and return an error
@@ -330,7 +330,7 @@ bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t
 
         if (flags & MEM_USER)
         {
-            kdebug(3, "pagenumber now allocated: %u physAddress: %X\n",pagenr,physAddress);            
+            kdebug(3, "pagenumber now allocated: %u physAddress: %X\n",pagenr,physAddress);
         }
     }
     return true;
@@ -432,7 +432,7 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
         virtAddress += PAGESIZE;
         physAddress += PAGESIZE;
     }
-    
+
     task_switching = true;
     return (void*)retVal;
 }
@@ -484,7 +484,7 @@ void paging_analyzeBitTable(uint32_t msec)
             {
                 textColor(0x0A);
                 putch('0');
-                if (offset == 31) 
+                if (offset == 31)
                 {
                     k_old = k; k=0;
                 }
@@ -492,8 +492,8 @@ void paging_analyzeBitTable(uint32_t msec)
             else
             {
                 textColor(0x07);
-                putch('1');                
-                if (offset == 31) 
+                putch('1');
+                if (offset == 31)
                 {
                     k_old = k; k=1;
                 }

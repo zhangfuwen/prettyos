@@ -7,7 +7,7 @@
 
 #define KERNEL_STACK_SIZE 0x1000      // Use a 4 KB kernel stack
 
-typedef enum 
+typedef enum
 {
     TASK, THREAD, VM86
 } taskType_t;
@@ -27,13 +27,13 @@ struct task
     void              (*entry)();     // entry point, used to resart the task
     listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
     task_t*           parent;         // task who created this thread (only used for threads)
-    
+
     // user task specific program and stack memory data
-    void*             userProgAddr; 
+    void*             userProgAddr;
     uint32_t          userProgSize;
     void*             userStackAddr;  // stack that is allocated by user tasks
     uint32_t          userStackSize;  // size of user stack measured in PAGESIZE
-    void*             userPT;         // store the PT to free them later at the heap 
+    void*             userPT;         // store the PT to free them later at the heap
 
     // information needed by scheduler
     uint16_t          priority; // Indicates how often this task get the CPU

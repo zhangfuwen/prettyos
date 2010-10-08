@@ -60,7 +60,7 @@ LDFLAGS= -nostdlib --warn-common
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
-%.o: %.c 
+%.o: %.c
 	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR) -I $(USERTOOLS) -o $(OBJDIR)/$@
 %.o: %.asm
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
@@ -76,12 +76,13 @@ $(STAGE2DIR)/BOOT2.BIN: $(STAGE2DIR)/boot2.asm $(STAGE2DIR)/*.inc
 	$(NASM) -Ox -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 $(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
-	$(NASM) $(USERDIR)/vm86/vidswtch.asm -Ox -o $(USERDIR)/vm86/VIDSWTCH.COM 
+	$(NASM) $(USERDIR)/vm86/vidswtch.asm -Ox -o $(USERDIR)/vm86/VIDSWTCH.COM
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(KERNEL_OBJECTS)
 #	because changes in the Shell should change data.o we build data.o everytimes
 	$(NASM) $(KERNELDIR)/data.asm $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$(KERNELDIR)/data.o
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map documentation/kernel.map -o $(KERNELDIR)/KERNEL.BIN
+#	$(STRIP) $(KERNELDIR)/KERNEL.BIN
 
 $(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERTOOLS)/user.ld -Map documentation/shell.map -o $(SHELLDIR)/shell.elf

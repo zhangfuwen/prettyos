@@ -9,21 +9,21 @@
 #include "udp.h"
 #include "ethernet.h"
 
-void UDPRecv( void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP)
-{	
+void UDPRecv(void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP)
+{
     // sourceIP is big endian!
-    
+
     // destIP is big endian!
-    
+
     // udpheader_t* udp = (udpheader_t*)data;
-	// printf("\nsource port: %u dest.  port: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
+    // printf("\nsource port: %u dest.  port: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
 
     // TODO: evaluate UDP data
-    
+
     // uint32_t udpDataLength = ipLength - sizeof(ip_t) - sizeof(udpheader_t);
     // uint8_t pkt[sizeof(udpheader_t) + udpDataLength];
 
-    UDPDebug(data, length);       
+    UDPDebug(data, length);
 }
 
 void UDPSend(void* data, uint32_t length)
@@ -34,15 +34,15 @@ void UDPSend(void* data, uint32_t length)
 void UDPDebug(void* data, uint32_t length)
 {
     udpheader_t* udp = (udpheader_t*)data;
-	
-	printf("\n");
-	printf("UDP Header information:\n");
-	textColor(0x0E);
-	printf("+--------------+----------------+\n");
-	printf("|      %u      |      %u      | (source port, destination port)\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
-	printf("+-------------------------------+\n");
-	printf("|      %u      |      %x    | (length, checksum)\n", ntohs(udp->length), ntohs(udp->checksum));
-	printf("+-------------------------------+\n");
+
+    printf("\n");
+    printf("UDP Header information:\n");
+    textColor(0x0E);
+    printf("+--------------+----------------+\n");
+    printf("|      %u      |      %u      | (source port, destination port)\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
+    printf("+-------------------------------+\n");
+    printf("|      %u      |      %x    | (length, checksum)\n", ntohs(udp->length), ntohs(udp->checksum));
+    printf("+-------------------------------+\n");
 
     // http://www.iana.org/assignments/port-numbers
     // http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
@@ -50,13 +50,13 @@ void UDPDebug(void* data, uint32_t length)
     {
     case 20:
         printf("FTP - data transfer\n");
-        break;    
+        break;
     case 21:
         printf("FTP - control (command)\n");
-        break;  
+        break;
     case 22:
         printf("Secure Shell (SSH)\n");
-        break;    
+        break;
     case 53:
         printf("Domain Name System (DNS)\n");
         break;
@@ -86,7 +86,7 @@ void UDPDebug(void* data, uint32_t length)
         break;
     case 1900:
         printf("Simple Service Discovery Protocol (ssdp)\n");
-        break; 
+        break;
     case 3544:
         printf("Teredo Tunneling\n");
         break;

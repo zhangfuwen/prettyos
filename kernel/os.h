@@ -11,7 +11,7 @@
 /// #define _USB_DIAGNOSIS_        // only as transition state during implementation of USB 2.0 transfers
 /// #define _FAT_DIAGNOSIS_        // only as transition state during implementation of FAT 12/16/32
 /// #define _DEVMGR_DIAGNOSIS_     // e.g. sectorRead, sectorWrite
-/// #define _READCACHE_DIAGNOSIS_  // read cache logger 
+/// #define _READCACHE_DIAGNOSIS_  // read cache logger
 /// #define _TASKING_DIAGNOSIS_    // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_     // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_         // Provides information about the vm86 task, but critical

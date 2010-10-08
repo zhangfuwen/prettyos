@@ -7,7 +7,7 @@
 #include "task.h"
 
 // in task.c used for pagingFree of memory for user program
-void* globalUserProgAddr; 
+void* globalUserProgAddr;
 uint32_t globalUserProgSize;
 
 typedef enum

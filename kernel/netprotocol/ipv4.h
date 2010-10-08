@@ -4,7 +4,7 @@
 #include "os.h"
 
 typedef struct ip
-{    
+{
     uint8_t  ipHeaderLength   :4;
     uint8_t  version          :4;
     uint8_t  typeOfService;

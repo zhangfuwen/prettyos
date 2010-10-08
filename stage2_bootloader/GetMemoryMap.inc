@@ -53,4 +53,50 @@ get_memory_by_int15_e820:
     stc                             ; "function unsupported" error exit
     ret
 
+[BITS 32]
+convert_mmap:
+    push ebp
+    mov ebp, esp
+    sub esp, 16
+    mov DWORD [ebp-4], 4096
+    mov DWORD [ebp-8], 0x1100
+    mov DWORD [ebp-12], 0
+    jmp .L2
+.L3:
+    mov eax, DWORD [ebp-4]
+    mov eax, DWORD [eax]
+    xor edx, edx
+    mov ecx, DWORD [ebp-8]
+    mov DWORD [ecx+4], eax
+    mov DWORD [ecx+8], edx
+    mov eax, DWORD [ebp-4]
+    mov eax, DWORD [eax+8]
+    xor edx, edx
+    mov ecx, DWORD [ebp-8]
+    mov DWORD [ecx+12], eax
+    mov DWORD [ecx+16], edx
+    mov eax, DWORD [ebp-4]
+    mov edx, DWORD [eax+16]
+    mov eax, DWORD [ebp-8]
+    mov DWORD [eax+20], edx
+    mov eax, DWORD [ebp-8]
+    mov DWORD [eax], 24
+    add DWORD [ebp-4], 24
+    add DWORD [ebp-8], 24
+    add DWORD [ebp-12], 1
+.L2:
+    mov eax, DWORD [ebp-4]
+    mov eax, DWORD [eax+8]
+    test eax, eax
+    jne .L3
+    mov edx, DWORD [ebp-12]
+    mov eax, edx
+    add eax, eax
+    add eax, edx
+    sal eax, 3
+    mov DWORD [ebp-12], eax
+    mov eax, DWORD [ebp-12]
+    leave
+    ret
+
 %endif

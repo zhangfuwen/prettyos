@@ -11,7 +11,7 @@
 #include "video/console.h"
 
 static uint8_t  serialPorts;
-static uint16_t IOports[4]; // Contains the ports used to access 
+static uint16_t IOports[4]; // Contains the ports used to access
 
 void serial_init()
 {

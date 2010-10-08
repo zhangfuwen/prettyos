@@ -8,6 +8,7 @@
 #include "task.h"
 #include "paging.h"
 #include "font.h"
+#include "timer.h"
 
 ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
@@ -409,7 +410,7 @@ static void vgaDebug()
     textColor(0x0F);
     printf("VESA-Signature:  %c%c%c%c\n", vgaIB.VESASignature[0], vgaIB.VESASignature[1], vgaIB.VESASignature[2], vgaIB.VESASignature[3]);
     printf("VESA-Version:    %u.%u\n",    vgaIB.VESAVersion>>8, vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
-    printf("Capabilities:    %X\n",       vgaIB.Capabilities);
+    printf("Capabilities:    %y\n",       vgaIB.Capabilities[0]);
     printf("Video Memory:    %u MiB\n",   vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
     printf("Video Modes Ptr: %X\n",       vgaIB.VideoModes);
 
@@ -433,7 +434,7 @@ static void modeDebug()
     textColor(0x0E);
     printf("\nModeInfoBlock:\n");
     textColor(0x0F);
-    printf("ModeAttributes:        %u\n", mib.ModeAttributes);
+    printf("ModeAttributes:        %x\n", mib.ModeAttributes);
     printf("WinAAttributes:        %u\n", mib.WinAAttributes);
     printf("WinBAttributes:        %u\n", mib.WinBAttributes);
     printf("WinGranularity:        %u\n", mib.WinGranularity);
@@ -564,7 +565,7 @@ void showbitmap(char* infname,int xs,int ys)
 static void bitmapDebug() // TODO: make it bitmap-specific
 {
     memcpy(&bh, bh_get, sizeof(BitmapHeader_t));
-    
+
     textColor(0x0E);
     printf("\nBitmapHeader\n");
     textColor(0x0F);
@@ -682,11 +683,21 @@ void vbe_bootscreen()
     uint32_t displayStart = getDisplayStart();
     printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", displayStart >> 16, displayStart & 0xFFFF);
 
-    BGRA_t bright_blue = {255, 100, 100, 0x09};
+    uint16_t radius = mib.YResolution/2;
+    for(uint16_t i = 0; i < radius; i++)
+    {
+        BGRA_t color = {(i*128/radius)/2, (i*128/radius)*2, 128-(i*128/radius), (i*128/radius)};
+        vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, radius-i, color); // FPU
+        sleepMilliSeconds(1);
+    }
+
+    BGRA_t bright_blue = {255, 75, 75, 0x09};
+    vbe_drawLine(0, mib.YResolution/2, mib.XResolution, mib.YResolution/2, bright_blue); // FPU
     vbe_drawLine(0, mib.YResolution/2 + 1, mib.XResolution, mib.YResolution/2 + 1, bright_blue); // FPU
     vbe_drawLine(mib.XResolution/2, 0, mib.XResolution/2, mib.YResolution, bright_blue); // FPU
-
+    vbe_drawLine(mib.XResolution/2+1, 0, mib.XResolution/2+1, mib.YResolution, bright_blue); // FPU
     vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2, bright_blue); // FPU
+    vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2-1, bright_blue); // FPU
     waitForKeyStroke();
 
     vbe_drawBitmap(0, 0, &bmp_start);

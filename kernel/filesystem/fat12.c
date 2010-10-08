@@ -41,7 +41,7 @@ int32_t flpydsk_read_directory()
                     printf("%c",*(end-count));
                     letters++;
                 }
-            }            
+            }
 
             start = (uintptr_t)track0 + i*32 + 8; // extension
 
@@ -63,8 +63,8 @@ int32_t flpydsk_read_directory()
             {
                 printf("%c",*(end-count));
             }
-            
-            if (letters<4) printf("\t"); 
+
+            if (letters<4) printf("\t");
 
             // filesize
             printf("\t%d byte", *((uint32_t*)(track0 + i*32 + 28)));

@@ -594,7 +594,7 @@ static FS_ERROR flpydsk_read(uint32_t sectorLBA, uint8_t numberOfSectors)
 }
 
 // write a sector
-static FS_ERROR flpydsk_write_sector(uint32_t sectorLBA)
+static FS_ERROR flpydsk_write(uint32_t sectorLBA, uint8_t numberOfSectors)
 {
     if (CurrentDrive == 0)
     {
@@ -617,7 +617,7 @@ static FS_ERROR flpydsk_write_sector(uint32_t sectorLBA)
     else
     {
         CurrentDrive->accessRemaining++;
-        flpydsk_transfer_sector(head, track, sector, 1, WRITE);
+        flpydsk_transfer_sector(head, track, sector, numberOfSectors, WRITE);
         CurrentDrive->drive.insertedDisk->accessRemaining--;
         return CE_GOOD;
     }
@@ -684,8 +684,8 @@ FS_ERROR flpydsk_writeSector(uint32_t sector, void* buffer, void* device)
 FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
 {
     int32_t val=0;
-    
-    if(i/18 == CurrentDrive->lastTrack)
+
+    if(i/18 == CurrentDrive->lastTrack) // Clear cache if we change the track which is in the cache
         CurrentDrive->lastTrack = 0xFFFFFFFE;
 
     if (option == SECTOR)
@@ -700,10 +700,10 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
     }
 
     uint32_t timeout = 2; // limit
-    FS_ERROR retVal  = 0;
+    FS_ERROR retVal  = CE_GOOD;
 
     CurrentDrive->drive.insertedDisk->accessRemaining++;
-    while ((retVal = flpydsk_write_sector(val)) != 0)
+    while ((retVal = flpydsk_write(val, option==SECTOR?1:18)) != 0)
     {
         timeout--;
         printf("write error: attempts left: %d\n", timeout);

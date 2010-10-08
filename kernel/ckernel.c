@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* version = "0.0.1.239 - Rev: 827";
+const char* version = "0.0.1.240 - Rev: 829";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -101,7 +101,7 @@ static void init(multiboot_t* mb_struct)
     // memory
     system.Memory_Size = paging_install(); log("Paging");
     heap_install(); log("Heap");
-    
+
     tasking_install(); log("Multitasking");
 
     // external devices
@@ -143,7 +143,7 @@ void main(multiboot_t* mb_struct)
     cpu_analyze();
 
     if (cpu_supports(CF_FPU)) fpu_test();
-    
+
     serial_init();
 
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)

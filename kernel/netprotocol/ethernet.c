@@ -30,42 +30,42 @@ void EthernetRecv(void* data, uint32_t length)
     // now we set our arp/ip pointer to the Ethernet data (payload) behind the Ethernet header
     arp_t* arp = (arp_t*)((uintptr_t)eth + sizeof(ethernet_t));
     ip_t*  ip  = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
-	
-	// IP protocol is parsed here and distributed in switch/case 
-    uint32_t ipHeaderLength = 4 * ip->ipHeaderLength; // is given as number of 32 bit pieces (4 byte) 
+
+    // IP protocol is parsed here and distributed in switch/case
+    uint32_t ipHeaderLength = 4 * ip->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
     if ((ip->version == 4) || (ip->version == 6))
     {
         printf(" IP version: %u, IP Header Length: %u byte", ip->version, ipHeaderLength);
-    
+
         switch(ip->protocol)
-	    {
-		    case 1: // icmp
-			    ICMPAnswerPing(data, length);
-			    icmpDebug(data, length);
-			    break;
-		    case 4: // ipv4
-			    /*
-			    tcpheader_t tcp; 
-			    tcp.sourcePort = 1025;
-			    tcp.destinationPort = 80;
-			    tcp.sequence_number = 1;
-			    tcp.ACK = 1;
-			    tcpDebug(&tcp);
-			    */
-			    break;
-		    case 6: // tcp
-			    break;
-		    case 17: // udp
-			    UDPRecv(  (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP);			
-			    break;
-		    case 41: // ipv6
-			    break;
-		    default:
-			    break;
-	    }
+        {
+            case 1: // icmp
+                ICMPAnswerPing(data, length);
+                icmpDebug(data, length);
+                break;
+            case 4: // ipv4
+                /*
+                tcpheader_t tcp;
+                tcp.sourcePort = 1025;
+                tcp.destinationPort = 80;
+                tcp.sequence_number = 1;
+                tcp.ACK = 1;
+                tcpDebug(&tcp);
+                */
+                break;
+            case 6: // tcp
+                break;
+            case 17: // udp
+                UDPRecv(  (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP);
+                break;
+            case 41: // ipv6
+                break;
+            default:
+                break;
+        }
     }
     else // check for ARP packet
-    {   
+    {
         if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
             (((arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1]) == 2048) &&
               (arp->hardware_addresssize == 6) &&
@@ -105,40 +105,39 @@ void EthernetRecv(void* data, uint32_t length)
                 if ( arp->destIP[0] == IP_address[0] && arp->destIP[1] == IP_address[1] &&
                      arp->destIP[2] == IP_address[2] && arp->destIP[3] == IP_address[3])
                 {
-                     printf("\n Tx prepared:");
-                     arpPacket_t reply;
-                     for (uint32_t i = 0; i < 6; i++)
-                     {
+                    printf("\n Tx prepared:");
+                    arpPacket_t reply;
+                    for (uint32_t i = 0; i < 6; i++)
+                    {
                         reply.eth.recv_mac[i]   = arp->source_mac[i];
                         reply.eth.send_mac[i]   = MAC_address[i];
+                    }
+                    reply.eth.type_len[0] = 0x08; reply.eth.type_len[1] = 0x06;
 
-                     }
-                     reply.eth.type_len[0] = 0x08; reply.eth.type_len[1] = 0x06;
+                    for (uint32_t i = 0; i < 2; i++)
+                    {
+                        reply.arp.hardware_addresstype[i] = arp->hardware_addresstype[i];
+                        reply.arp.protocol_addresstype[i] = arp->protocol_addresstype[i];
+                    }
+                    reply.arp.operation[0] = 0;
+                    reply.arp.operation[1] = 2; // reply
 
-                     for (uint32_t i = 0; i < 2; i++)
-                     {
-                         reply.arp.hardware_addresstype[i] = arp->hardware_addresstype[i];
-                         reply.arp.protocol_addresstype[i] = arp->protocol_addresstype[i];
-                     }
-                     reply.arp.operation[0]         = 0;
-                     reply.arp.operation[1]         = 2; // reply
+                    reply.arp.hardware_addresssize = arp->hardware_addresssize;
+                    reply.arp.protocol_addresssize = arp->protocol_addresssize;
 
-                     reply.arp.hardware_addresssize = arp->hardware_addresssize;
-                     reply.arp.protocol_addresssize = arp->protocol_addresssize;
-
-                     for (uint32_t i = 0; i < 6; i++)
-                     {
+                    for (uint32_t i = 0; i < 6; i++)
+                    {
                         reply.arp.dest_mac[i]   = arp->source_mac[i];
                         reply.arp.source_mac[i] = *((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + i));
-                     }
+                    }
 
-                     for (uint32_t i = 0; i < 4; i++)
-                     {
+                    for (uint32_t i = 0; i < 4; i++)
+                    {
                         reply.arp.destIP[i]   = arp->sourceIP[i];
                         reply.arp.sourceIP[i] = IP_address[i];
-                     }
+                    }
 
-                     EthernetSend((void*)&reply, length);
+                    EthernetSend((void*)&reply, length);
                 }
                 break;
             case 2: // ARP-Reply

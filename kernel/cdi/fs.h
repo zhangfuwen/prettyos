@@ -140,7 +140,7 @@ typedef enum {
 } cdi_fs_lock_t;
 
 /* Das Dateisystem wird hier nur mit abstrakten Strukturen vom Typ
-   cdi_fs_res dargestellt. Diese können beispielsweise sowohl regulaere Datei als auch Verzeichnis gleichzeitig darstellen. 
+   cdi_fs_res dargestellt. Diese können beispielsweise sowohl regulaere Datei als auch Verzeichnis gleichzeitig darstellen.
    Weiter gilt, dass Ressourcen, die zu keiner Klasse gehoeren, nicht persistent sind. */
 struct cdi_fs_res {
     char*                   name; // Name of the resource
@@ -187,7 +187,7 @@ struct cdi_fs_res_res {
        return: Falls die Ressource erfolgreich geladen wurde 1, sonst 0 */
     int (*load)(struct cdi_fs_stream* stream);
 
-    /* Ressource entladen; Darf von der Implementation nur aufgerufen werden, wenn keine geladenen Kind-Ressourcen existieren. 
+    /* Ressource entladen; Darf von der Implementation nur aufgerufen werden, wenn keine geladenen Kind-Ressourcen existieren.
        Das gilt aber nur fuer Verzeichnisse. Wenn andere Kind-Eintraege existieren, werden die nicht beruecksichtigt.
        stream: Stream
        return: Falls die Ressource erfolgreich entladen wurde 1, sonst 0 */
@@ -219,7 +219,7 @@ struct cdi_fs_res_res {
         cdi_fs_res_class_t class);
 
     /* Diese Ressource aus einer Klasse entfernen. Diese Funktion wird nur aufgerufen, wenn die Ressource zu dieser Klasse gehoert.
-       Bei Verzeichnissen muss von der Implementierung garantiert werden, dass diese Funktion nicht aufgerufen wird, 
+       Bei Verzeichnissen muss von der Implementierung garantiert werden, dass diese Funktion nicht aufgerufen wird,
        solange das Verzeichnis noch Kindressourcen hat.
        stream: Stream
        class:  Konstante fuer den Typ der klasse, aus der die Ressource entfernt werden soll.

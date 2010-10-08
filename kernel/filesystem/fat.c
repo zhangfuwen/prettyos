@@ -62,7 +62,7 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
     }
 
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> cluster2sector<<<<<    cluster: %u  sector %u", cluster, sector);  
+    printf("\n>>>>> cluster2sector<<<<<    cluster: %u  sector %u", cluster, sector);
   #endif
     return (sector);
 }
@@ -1412,7 +1412,6 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
   #endif
 
     uint8_t  status = NOT_FOUND;
-    uint32_t bHandle;
     fileRootDirEntry_t*  dir;
     char a = ' ';
 
@@ -1423,6 +1422,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
     }
     else
     {
+        uint32_t bHandle;
         while (status == NOT_FOUND)
         {
             uint8_t amountfound = 0;
@@ -2120,7 +2120,7 @@ char FAT_fgetc(file_t* file)
 FS_ERROR FAT_fputc(file_t* file, char c)
 {
     uint32_t retVal = FAT_fwrite(&c, 1, 1, file->data);
-    
+
     /// TEST
     /*
     static uint32_t i=0;

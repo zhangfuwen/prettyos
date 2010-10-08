@@ -31,7 +31,7 @@ typedef struct
 } cdi_dma_osdep;
 
 // OS-specific data for memory areas.
-typedef struct 
+typedef struct
 {
 } cdi_mem_osdep;
 

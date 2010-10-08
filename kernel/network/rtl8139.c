@@ -35,23 +35,22 @@ void rtl8139_handler(registers_t* r)
 
     // read bytes 003Eh bis 003Fh, Interrupt Status Register
     uint16_t val = *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_INTRSTATUS));
-    char str[80];
-    strcpy(str,"");
-    if (val & RTL8139_INT_RX_OK)            { strcpy(str,"Receive OK"); }
-    if (val & RTL8139_INT_RX_ERR)           { strcpy(str,"Receive Error"); }
-    if (val & RTL8139_INT_TX_OK)            { strcpy(str,"Transmit OK"); }
-    if (val & RTL8139_INT_TX_ERR)           { strcpy(str,"Transmit Error"); }
-    if (val & RTL8139_INT_RXBUF_OVERFLOW)   { strcpy(str,"Rx Buffer Overflow");}
-    if (val & RTL8139_INT_RXFIFO_UNDERRUN)  { strcpy(str,"Packet Underrun / Link change");}
-    if (val & RTL8139_INT_RXFIFO_OVERFLOW)  { strcpy(str,"Rx FIFO Overflow");}
-    if (val & RTL8139_INT_CABLE)            { strcpy(str,"Cable Length Change");}
-    if (val & RTL8139_INT_TIMEOUT)          { strcpy(str,"Time Out");}
-    if (val & RTL8139_INT_PCIERR)           { strcpy(str,"System Error");}
     textColor(0x03);
     printf("\n--------------------------------------------------------------------------------");
     textColor(0x0E);
-    printf("\nRTL8139 Interrupt Status: %y, %s  ", val, str);
+    printf("\nRTL8139 Interrupt Status: %y, ", val);
     textColor(0x03);
+    if      (val & RTL8139_INT_RX_OK)           { puts("Receive OK"); }
+    else if (val & RTL8139_INT_RX_ERR)          { puts("Receive Error"); }
+    else if (val & RTL8139_INT_TX_OK)           { puts("Transmit OK"); }
+    else if (val & RTL8139_INT_TX_ERR)          { puts("Transmit Error"); }
+    else if (val & RTL8139_INT_RXBUF_OVERFLOW)  { puts("Rx Buffer Overflow");}
+    else if (val & RTL8139_INT_RXFIFO_UNDERRUN) { puts("Packet Underrun / Link change");}
+    else if (val & RTL8139_INT_RXFIFO_OVERFLOW) { puts("Rx FIFO Overflow");}
+    else if (val & RTL8139_INT_CABLE)           { puts("Cable Length Change");}
+    else if (val & RTL8139_INT_TIMEOUT)         { puts("Time Out");}
+    else if (val & RTL8139_INT_PCIERR)          { puts("System Error");}
+    puts("  ");
 
     // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
     *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_INTRSTATUS)) = val;
@@ -124,15 +123,7 @@ void rtl8139_handler(registers_t* r)
         printf("%y ", rtl8139_receiveBuffer[i]);
     }
 
-    uint32_t printlength;
-    if (length<=80)
-    {
-        printlength = length;
-    }
-    else
-    {
-        printlength = 80;
-    }
+    uint32_t printlength = max(length, 80);
     printf("\n");
 
     for (uint32_t i = 18; i <= printlength; i++)
