@@ -19,6 +19,8 @@ static const uint8_t LINES      = 50;
 static const uint8_t USER_BEGIN =  2; // Reserving  Titlebar + Separation
 static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
 
+static const uint16_t SCREENSHOT_BYTES  = 4102;
+
 static position_t cursor;
 static uint8_t attrib = 0x0F; // white text on black ground
 
@@ -242,27 +244,32 @@ void update_cursor()
     outportb(0x3D5, (uint8_t)(position&0xFF));
 }
 
-diskType_t* ScreenDest = &FLOPPYDISK; // HACK
-extern disk_t* disks[DISKARRAYSIZE]; // HACK
-extern bool    readCacheFlag; // HACK
+diskType_t*    ScreenDest = &FLOPPYDISK; // HACK
+extern disk_t* disks[DISKARRAYSIZE];     // HACK
+extern bool    readCacheFlag;            // HACK
+
 void screenshot()
 {
     int32_t NewLine = 0;
 
     // buffer for video screen
-    uint8_t* videoscreen = malloc(4000+98, 0, "vidscr-scrshot"); // only signs, no attributes, 49 times CR LF at line end
+    uint8_t* videoscreen = malloc(SCREENSHOT_BYTES, 0, "vidscr-scrshot"); // only signs, no attributes, 50 times CR LF at line end
 
-    for (uint16_t i=0; i<4000;i++)
+    for (uint16_t i=0; i<4000; i++)
     {
         uint16_t j=i+2*NewLine;
         videoscreen[j] = *(char*)(vidmem+i); // only signs, no attributes
-        if ((i%80 == 79) && (i!=3999)) // for last row no NewLine
+        if (i%80 == 79) 
         {
             videoscreen[j+1]= 0xD; // CR
             videoscreen[j+2]= 0xA; // LF
             NewLine++;
         }
     }
+
+    // additional newline at the end of the screenshot
+    videoscreen[SCREENSHOT_BYTES-2]= 0xD; // CR
+    videoscreen[SCREENSHOT_BYTES-1]= 0xA; // LF
 
     readCacheFlag = false; // TODO: solve this problem!
     char Pfad[20];
@@ -278,7 +285,7 @@ void screenshot()
     file_t* file = fopen(Pfad, "a+");
     if (file) // check for NULL pointer, otherwise #PF
     {
-        fwrite((void*)videoscreen, 1, 4098, file);
+        fwrite((void*)videoscreen, 1, SCREENSHOT_BYTES, file);
         fclose(file);
     }
     else
