@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* version = "0.0.1.241 - Rev: 830";
+const char* const version = "0.0.2.0 - Rev: 831";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -68,7 +68,7 @@ static void useMultibootInformation(multiboot_t* mb_struct)
     memoryMapEnd = (void*)((uintptr_t)mb_struct->mmap + mb_struct->mmapLength);
 }
 
-static void log(char* str)
+static void log(const char* str)
 {
     textColor(0x02);
     printf("[DONE]");
@@ -149,7 +149,11 @@ void main(multiboot_t* mb_struct)
     pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
 
     flpydsk_install(); // detect FDDs
+    #ifdef _RAMDISK_DIAGNOSIS_
     void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);
+    #else
+    initrd_install(ramdisk_install(), 0, 0x200000);
+    #endif
 
     showPortList();
     showDiskList();
@@ -164,11 +168,15 @@ void main(multiboot_t* mb_struct)
 
         if ((fsnode->flags & 0x7) == FS_DIRECTORY)
         {
+            #ifdef _RAMDISK_DIAGNOSIS_
             printf("\n<RAMdisk (%X) - Root Directory>\n", ramdisk_start);
+            #endif
         }
         else
         {
+            #ifdef _RAMDISK_DIAGNOSIS_
             printf("%u \t%s\n", fsnode->length, node->name);
+            #endif
 
             if (strcmp(node->name, "shell") == 0)
             {

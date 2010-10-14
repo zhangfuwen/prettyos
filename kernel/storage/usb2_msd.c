@@ -187,10 +187,10 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
     if (CSWsignature == CSWMagicOK)
     {
-    #ifdef _USB_DIAGNOSIS_
+      #ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\nCSW signature OK    ");
-    #endif
+      #endif
     }
     else if (CSWsignature == CSWMagicNotOK)
     {
@@ -210,10 +210,10 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
     if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
     {
-    #ifdef _USB_DIAGNOSIS_
+      #ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("CSW tag %y OK    ",BYTE1(CSWtag));
-    #endif
+      #endif
     }
     else
     {
@@ -447,15 +447,7 @@ labelTransferIN: /// TEST
         }
     }
 
-    uint8_t index;
-    if (TransferLength > 0)
-    {
-        index = 1;
-    }
-    else
-    {
-        index = 0;
-    }
+    uint8_t index = TransferLength > 0 ? 1 : 0;
 
     if (checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer) == -1)
     {
@@ -738,7 +730,6 @@ void testMSD(uint8_t devAddr, partition_t* part)
         textColor(0x0C);
         printf("\nThis is no Mass Storage Device! MSD test cannot be carried out.");
         textColor(0x0F);
-        waitForKeyStroke();
     }
     else
     {

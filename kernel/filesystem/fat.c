@@ -312,19 +312,19 @@ static FS_ERROR fileGetNextCluster(FAT_file_t* fileptr, uint32_t n)
     do
     {
         uint32_t c2 = fileptr->currCluster;
-        uint32_t c = fatRead( volume, c2);
+        uint32_t c = fatRead(volume, c2);
         if (c == ClusterFailValue)
         {
             error = CE_BAD_SECTOR_READ;
         }
         else
         {
-            if ( c >= volume->maxcls)
+            if (c >= volume->maxcls)
             {
                 error = CE_INVALID_CLUSTER;
             }
 
-            if ( c >= LastClustervalue)
+            if (c >= LastClustervalue)
             {
                 error = CE_FAT_EOF;
             }
@@ -645,7 +645,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
         else
         {
             // looking for an empty/re-usable entry
-            if ( cmd == LOOK_FOR_EMPTY_ENTRY)
+            if (cmd == LOOK_FOR_EMPTY_ENTRY)
             {
                 error = CE_GOOD;
             }
@@ -900,7 +900,7 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
             MemoryWriteByte (globalBufferFATSector, posFAT+1, ((value & 0xFF00) >> 8));
             break;
         case FAT12:
-            if (q) { c = ((value & 0x0F) << 4) | ( MemoryReadByte(globalBufferFATSector, posFAT) & 0x0F ); }
+            if (q) { c = ((value & 0x0F) << 4) | (MemoryReadByte(globalBufferFATSector, posFAT) & 0x0F ); }
             else   { c = ( value & 0xFF); }
 
             MemoryWriteByte(globalBufferFATSector, posFAT, c);
@@ -1163,7 +1163,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
                 }
                 else
                 {
-                    error = fileGetNextCluster( fileptr, 1);
+                    error = fileGetNextCluster(fileptr, 1);
                 }
             }
 

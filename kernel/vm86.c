@@ -18,7 +18,6 @@ a chance to emulate the facilities they affect.
 #include "serial.h"
 
 static current_t Current;
-static current_t* current = &Current;
 
 context_v86_t context;
 
@@ -72,7 +71,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 stack32--;
                 stack32[0] = ctx->eflags & VALID_FLAGS;
 
-                if (current->v86_if)
+                if (Current.v86_if)
                 {
                     stack32[0] |= EFLAG_IF;
                 }
@@ -87,7 +86,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 stack--;
                 stack[0] = (uint16_t) ctx->eflags;
 
-                if (current->v86_if)
+                if (Current.v86_if)
                 {
                     stack[0] |= EFLAG_IF;
                 }
@@ -109,13 +108,13 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             if (isOperand32)
             {
                 ctx->eflags = EFLAG_IF | EFLAG_VM | (stack32[0] & VALID_FLAGS);
-                current->v86_if = (stack32[0] & EFLAG_IF) != 0;
+                Current.v86_if = (stack32[0] & EFLAG_IF) != 0;
                 ctx->useresp = ((ctx->useresp & 0xFFFF) + 4) & 0xFFFF;
             }
             else
             {
                 ctx->eflags = EFLAG_IF | EFLAG_VM | stack[0];
-                current->v86_if = (stack[0] & EFLAG_IF) != 0;
+                Current.v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->useresp = ((ctx->useresp & 0xFFFF) + 2) & 0xFFFF;
             }
             ctx->eip++;
@@ -209,7 +208,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
                 stack[1] = ctx->cs;
                 stack[0] = (uint16_t) ctx->eflags;
 
-                if (current->v86_if)
+                if (Current.v86_if)
                 {
                     stack[0] |= EFLAG_IF;
                 }
@@ -239,7 +238,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             ctx->eflags = EFLAG_IF | EFLAG_VM | stack[0];
             ctx->useresp    = ((ctx->useresp & 0xFFFF) + 6) & 0xFFFF;
 
-            current->v86_if = (stack[0] & EFLAG_IF) != 0;
+            Current.v86_if = (stack[0] & EFLAG_IF) != 0;
 
           #ifdef _VM_DIAGNOSIS_
             // printf("%x:%x\r\n", ctx->cs, ctx->eip); // vm86 critical
@@ -252,7 +251,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             // printf("cli\r\n"); // vm86 critical
             serial_log(1, "cli\r\n");
           #endif
-            current->v86_if = false;
+            Current.v86_if = false;
             ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
@@ -262,7 +261,7 @@ bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
             // printf("sti\r\n"); // vm86 critical
             serial_log(1, "sti\r\n");
           #endif
-            current->v86_if = true;
+            Current.v86_if = true;
             ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;

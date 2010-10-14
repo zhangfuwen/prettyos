@@ -251,7 +251,7 @@ FS_ERROR executeFile(const char* path)
     }
 
     // Load File
-    waitForKeyStroke(); /// Why does loading from USB fail, if its not there?
+    waitForKeyStroke(); /// Why does loading from USB fails, if its not there?
 
     file_t* file = fopen(path, "r");
     if(file != 0)

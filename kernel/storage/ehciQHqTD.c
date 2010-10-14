@@ -90,7 +90,7 @@ uintptr_t allocQTDbuffer(ehci_qtd_t* td)
     td->buffer1 = td->buffer2 = td->buffer3 = td->buffer4 = 0x0;
     td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
-    globalqTDbuffer[0] = (void*)data; // save pointer for later free(pointer)
+    globalqTDbuffer[0] = data; // save pointer for later free(pointer)
 
     return (uintptr_t)data;
 }
@@ -382,13 +382,13 @@ void checkAsyncScheduler()
 
 void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
 {
+  #ifdef _USB_DIAGNOSIS_
     if (analyze)
     {
-      #ifdef _USB_DIAGNOSIS_
         printf("\nbefore aS:");
         checkAsyncScheduler();
-      #endif
     }
+  #endif
 
     // Enable Asynchronous Schdeuler
     pOpRegs->USBSTS |= STS_USBINT;
@@ -473,13 +473,13 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         }
     }
 
+  #ifdef _USB_DIAGNOSIS_
     if (analyze)
     {
-      #ifdef _USB_DIAGNOSIS_
         printf("\nafter aS:");
         checkAsyncScheduler();
-      #endif
     }
+  #endif
 }
 
 void logBulkTransfer(usbBulkTransfer_t* bT)
@@ -498,9 +498,9 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
         }
         if (bT->DataBytesToTransferIN)
         {
-            printf("  data in: %s",  bT->successfulDataIN  ? "OK" : "Error");
+            printf("  data in: %s", bT->successfulDataIN ? "OK" : "Error");
         }
-        printf("  CSW: %s",    bT->successfulCSW     ? "OK" : "Error");
+        printf("  CSW: %s", bT->successfulCSW ? "OK" : "Error");
         textColor(0x0F);
     }
 }

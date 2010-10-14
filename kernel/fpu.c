@@ -8,7 +8,7 @@
 #include "video/console.h"
 #include "task.h"
 
-task_t* FPUTask;
+task_t* FPUTask = 0;
 
 static void fpu_setcw(uint16_t ctrlword)
 {
@@ -31,11 +31,8 @@ void fpu_install()
     // set TS in cr0
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-    cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
+    cr0 |= BIT(3); // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
-
-    // init TaskFPU
-    FPUTask = 0;
 }
 
 void fpu_test()
@@ -46,13 +43,13 @@ void fpu_test()
     if (squareroot == 1.00)
     {
         textColor(0x0A);
-        printf("\nFPU-test OK\n");
+        printf(" (Test: OK)\n");
         textColor(0x0F);
     }
     else
     {
        textColor(0x0C);
-       printf("\nFPU-test ERROR\n");
+       printf(" (Test ERROR)\n");
        textColor(0x0F);
     }
 }

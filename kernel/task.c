@@ -37,18 +37,18 @@ void tasking_install()
 
     tasks = list_Create();
 
-    kernelTask.pid            = next_pid++;
-    kernelTask.esp            = 0;
-    kernelTask.eip            = 0;
+    kernelTask.pid           = next_pid++;
+    kernelTask.esp           = 0;
+    kernelTask.eip           = 0;
     kernelTask.pageDirectory = kernelPageDirectory;
-    kernelTask.privilege      = 0;
+    kernelTask.privilege     = 0;
     kernelTask.FPUptr        = 0;
-    kernelTask.console        = (console_t*)currentConsole;
-    kernelTask.ownConsole     = true;
-    kernelTask.attrib         = 0x0F;
-    kernelTask.blocker.type   = 0; // The task is not blocked (scheduler.h/c)
+    kernelTask.console       = (console_t*)currentConsole;
+    kernelTask.ownConsole    = true;
+    kernelTask.attrib        = 0x0F;
+    kernelTask.blocker.type  = 0; // The task is not blocked (scheduler.h/c)
     kernelTask.kernelStack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
-    kernelTask.threads        = 0; // No threads associated with the task at the moment. created later if necessary
+    kernelTask.threads       = 0; // No threads associated with the task at the moment. created later if necessary
 
     list_Append(tasks, &kernelTask);
 
@@ -301,7 +301,7 @@ uint32_t task_switch(uint32_t esp)
     {
         uint32_t cr0;
         __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-        cr0 |= 0x8; // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
+        cr0 |= BIT(3); // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
         __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
     }
 
@@ -388,6 +388,7 @@ static void kill(task_t* task)
         systemControl(REBOOT);
     }
 
+    free(task->FPUptr);
     free(task->kernelStack - KERNEL_STACK_SIZE); // free kernelstack
     free(task);
 

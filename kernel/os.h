@@ -16,14 +16,15 @@
 /// #define _FLOPPY_DIAGNOSIS_     // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_         // Provides information about the vm86 task, but critical
 /// #define _SERIAL_LOG_           // Enables Log information over the COM-Ports
+/// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
 #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS which is used in the bootscreen. Enabled per default.
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the kernels size heavily
 
 /// #define KEYMAP_US     // US keyboard
 #define KEYMAP_GER    // German keyboard
 
-extern const char* version;    // PrettyOS Version string
-extern system_t system;        // Informations about the operating system
+extern const char* const version; // PrettyOS Version string
+extern system_t system;           // Informations about the operating system
 extern struct todoList* delayedInitTasks; // HACK (see ckernel.c)
 
 static inline void kdebug(uint8_t color, const char* args, ...)

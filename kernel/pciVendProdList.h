@@ -1,8 +1,6 @@
 #ifndef PCI_VEND_PROD_LIST_H
 #define PCI_VEND_PROD_LIST_H
 
-#include "os.h"
-
 // This list was not ready for use. Thus, it is made error-free and kept up-to-date by the PrettyOS team.
 
 /*
@@ -37,7 +35,7 @@ typedef struct _PCI_VENTABLE
 	char *	VenFull ;
 }  PCI_VENTABLE, *PPCI_VENTABLE ;
 
-PCI_VENTABLE	PciVenTable [] =
+static const PCI_VENTABLE	PciVenTable [] =
 {
 	{ 0x0033, "Paradyne", "Paradyne Corp." } ,
 	{ 0x003D, "well", "master" } ,
@@ -1579,7 +1577,7 @@ typedef struct _PCI_DEVTABLE
 	char *	ChipDesc ;
 }  PCI_DEVTABLE, *PPCI_DEVTABLE ;
 
-PCI_DEVTABLE	PciDevTable [] =
+static const PCI_DEVTABLE	PciDevTable [] =
 {
 	{ 0x165C, 0x0002, "FT232BL", "FT232BL" } ,
 	{ 0x16AE, 0x1141, "SafeXcel-1141", "???" } ,
@@ -7910,7 +7908,7 @@ typedef struct _PCI_CLASSCODETABLE
 	char *		ProgDesc ;
 }  PCI_CLASSCODETABLE, *PPCI_CLASSCODETABLE ;
 
-PCI_CLASSCODETABLE PciClassCodeTable [] =
+static const PCI_CLASSCODETABLE PciClassCodeTable [] =
 {
 	{ 0x00, 0x00, 0x00, "Pre-2.0 PCI Specification Device", "Non-VGA","" } ,
 	{ 0x00, 0x01, 0x00, "Pre-2.0 PCI Specification Device", "VGA Compatible", "" } ,
@@ -7999,7 +7997,7 @@ PCI_CLASSCODETABLE PciClassCodeTable [] =
 // Use this value for loop control during searching:
 #define	PCI_CLASSCODETABLE_LEN	(sizeof(PciClassCodeTable)/sizeof(PCI_CLASSCODETABLE))
 
-char *	PciCommandFlags [] =
+const char* const PciCommandFlags [] =
 {
 	"I/O Access",
 	"Memory Access",
@@ -8023,7 +8021,7 @@ char *	PciCommandFlags [] =
 #define	PCI_COMMANDFLAGS_LEN	(sizeof(PciCommandFlags)/sizeof(char *))
 
 
-char *	PciStatusFlags [] =
+static const char* const PciStatusFlags [] =
 {
 	"Reserved 0",
 	"Reserved 1",
@@ -8047,7 +8045,7 @@ char *	PciStatusFlags [] =
 #define	PCI_STATUSFLAGS_LEN	(sizeof(PciStatusFlags)/sizeof(char *))
 
 
-char *	PciDevSelFlags [] =
+static const char* const PciDevSelFlags [] =
 {
 	"Fast Devsel Speed",     // TypeC
 	"Medium Devsel Speed",   // TypeB

@@ -755,15 +755,11 @@ void ftoa(float f, char* buffer)
 
 void i2hex(uint32_t val, char* dest, uint32_t len)
 {
-    char* cp;
-    char  x;
-    uint32_t n;
-    n = val;
-    cp = &dest[len];
+    char* cp = &dest[len];
     while (cp > dest)
     {
-        x = n & 0xF;
-        n >>= 4;
+        char x = val & 0xF;
+        val >>= 4;
         *--cp = x + ((x > 9) ? 'A' - 10 : '0');
     }
     dest[len]  ='h';

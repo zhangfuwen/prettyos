@@ -442,14 +442,13 @@ void resetPort(uint8_t j)
 
 void ehci_handler(registers_t* r)
 {
+  #ifdef _USB_DIAGNOSIS_
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
     {
-      #ifdef _USB_DIAGNOSIS_
         textColor(0x09);
         printf("\nehci_handler: ");
-        textColor(0x0F);
-      #endif
     }
+  #endif
 
     textColor(0x0E);
 
@@ -540,19 +539,15 @@ void showPORTSC()
     {
         if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
         {
-            char PortStatus[20];
-
             if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
-                strcpy(PortStatus,"attached");
-                writeInfo(0, "Port: %u, device %s", j+1, PortStatus);
+                writeInfo(0, "Port: %u, device attached", j+1);
                 resetPort(j);
                 checkPortLineStatus(j);
             }
             else
             {
-                strcpy(PortStatus,"not attached");
-                writeInfo(0, "Port: %u, device %s", j+1, PortStatus);
+                writeInfo(0, "Port: %u, device not attached", j+1);
 
                 // Device Manager
                 removeDisk(&usbDev[j+1]);
@@ -570,7 +565,6 @@ void showPORTSC()
 
 void checkPortLineStatus(uint8_t j)
 {
-    textColor(0x0E);
     if (j<numPorts)
     {
         //check line status

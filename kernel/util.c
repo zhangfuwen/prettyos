@@ -23,41 +23,6 @@ uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len)
 
 /**********************************************************************/
 
-uint32_t fetchESP()
-{
-    uint32_t esp;
-    __asm__ volatile("mov %%esp, %0" : "=r"(esp));
-    return esp;
-}
-
-uint32_t fetchEBP()
-{
-    uint32_t ebp;
-    __asm__ volatile("mov %%ebp, %0" : "=r"(ebp));
-    return ebp;
-}
-
-uint32_t fetchSS()
-{
-    register uint32_t eax __asm__("%eax");
-    __asm__ volatile ("movl %ss,%eax");
-    return eax;
-}
-
-uint32_t fetchCS()
-{
-    register uint32_t eax __asm__("%eax");
-    __asm__ volatile ("movl %cs,%eax");
-    return eax;
-}
-
-uint32_t fetchDS()
-{
-    register uint32_t eax __asm__("%eax");
-    __asm__ volatile ("movl %ds,%eax");
-    return eax;
-}
-
 uint64_t rdtsc()
 {
     uint64_t val;
@@ -492,15 +457,11 @@ char* utoa(uint32_t n, char* s)
 
 void i2hex(uint32_t val, char* dest, int32_t len)
 {
-    char* cp;
-    char  x;
-    uint32_t n;
-    n = val;
-    cp = &dest[len];
+    char* cp = &dest[len];
     while (cp > dest)
     {
-        x = n & 0xF;
-        n >>= 4;
+        char x = val & 0xF;
+        val >>= 4;
         *--cp = x + ((x > 9) ? 'A' - 10 : '0');
     }
     dest[len]  ='h';

@@ -20,7 +20,7 @@ void refreshUserScreen();
 void clear_screen();
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 uint8_t AsciiToCP437(uint8_t ascii);
-void writeInfo(uint8_t line, char* content, ...);
+void writeInfo(uint8_t line, const char* content, ...);
 void screenshot();
 void mt_screenshot();
 void update_cursor();

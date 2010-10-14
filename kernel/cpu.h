@@ -14,7 +14,7 @@ typedef enum
 typedef enum
 { // In this enum the last five bits contain the bit in the register, the other bits are the register (see above)
     CF_FPU          = CR_EDX|0,
-    CF_VM86         = CR_EDX|1,
+    CF_VME86        = CR_EDX|1,
     CF_IOBREAKPOINT = CR_EDX|2,
     CF_PAGES4MB     = CR_EDX|3,
     CF_RDTSC        = CR_EDX|4,

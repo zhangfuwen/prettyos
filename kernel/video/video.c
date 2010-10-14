@@ -181,7 +181,7 @@ static void refreshInfoBar()
     kprintf(infoBar[2], 47, 14);
 }
 
-void writeInfo(uint8_t line, char* args, ...)
+void writeInfo(uint8_t line, const char* args, ...)
 {
     va_list ap;
     va_start(ap, args);

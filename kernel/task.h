@@ -23,7 +23,7 @@ struct task
     uint8_t           privilege;      // access privilege
     uint8_t*          heap_top;       // user heap top
     void*             kernelStack;    // Kernel stack location
-    uintptr_t         FPUptr;        // pointer to FPU data
+    void*             FPUptr;         // pointer to FPU data
     void              (*entry)();     // entry point, used to resart the task
     listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
     task_t*           parent;         // task who created this thread (only used for threads)

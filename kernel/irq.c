@@ -36,7 +36,7 @@ void waitForIRQ(IRQ_NUM_t number)
 
 
 // Message string corresponding to the exception number 0-31: exceptionMessages[interrupt_number]
-const char* exceptionMessages[] =
+static const char* const exceptionMessages[] =
 {
     "Division By Zero",        "Debug",                         "Non Maskable Interrupt",    "Breakpoint",
     "Into Detected Overflow",  "Out of Bounds",                 "Invalid Opcode",            "No Coprocessor",
@@ -90,7 +90,7 @@ static void NM(registers_t* r) // -> FPU
     if (FPUTask)
     {
         // fsave or fnsave to FPUTask->FPUptr
-        __asm__ volatile("fsave %0" :: "m" (*(uint8_t*)(FPUTask->FPUptr)));
+        __asm__ volatile("fsave (%0)" :: "r" (FPUTask->FPUptr));
     }
 
     // store the last task using FPU
@@ -100,12 +100,12 @@ static void NM(registers_t* r) // -> FPU
     if (currentTask->FPUptr)
     {
         // frstor from pCurrentTask->FPUptr
-        __asm__ volatile("frstor %0" :: "m" (*(uint8_t*)(currentTask->FPUptr)));
+        __asm__ volatile("frstor (%0)" :: "r" (currentTask->FPUptr));
     }
     else
     {
-        // allocate memory to pCurrentTask->FPUptr
-        currentTask->FPUptr = (uintptr_t)malloc(108,4,"FPUptr"); // http://siyobik.info/index.php?module=x86&id=112
+        // allocate memory to save the content of the FPU registers
+        currentTask->FPUptr = malloc(108,4,"FPUptr"); // http://siyobik.info/index.php?module=x86&id=112
     }
 }
 

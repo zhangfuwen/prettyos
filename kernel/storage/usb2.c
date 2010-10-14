@@ -86,9 +86,9 @@ void usbTransferDevice(uint32_t device)
 
 void usbTransferConfig(uint32_t device)
 {
-    #ifdef _USB_DIAGNOSIS_
-      textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR config, dev: %u endpoint: 0", device); textColor(0x0F);
-    #endif
+  #ifdef _USB_DIAGNOSIS_
+    textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR config, dev: %u endpoint: 0", device); textColor(0x0F);
+  #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Config");
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
@@ -115,9 +115,9 @@ void usbTransferConfig(uint32_t device)
     uintptr_t lastByte    = addrPointer + (*(uint16_t*)(addrPointer+2)); // totalLength (WORD)
     // printf("\nlastByte: %X\n",lastByte); // test
 
-    #ifdef _USB_DIAGNOSIS_
-      showPacket(DataQTDpage0,(*(uint16_t*)(addrPointer+2)));
-    #endif
+  #ifdef _USB_DIAGNOSIS_
+    showPacket(DataQTDpage0,(*(uint16_t*)(addrPointer+2)));
+  #endif
 
     while(addrPointer<lastByte)
     {
@@ -166,14 +166,14 @@ void usbTransferConfig(uint32_t device)
 
         if (*(uint8_t*)(addrPointer+1) != 2 && *(uint8_t*)(addrPointer+1) != 4 && *(uint8_t*)(addrPointer+1) != 5) // length, type
         {
+          #ifdef _USB_DIAGNOSIS_
             if ( (*(uint8_t*)addrPointer) > 0)
             {
-              #ifdef _USB_DIAGNOSIS_
                 textColor(0x09);
                 printf("\nlength: %u type: %u unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
                 textColor(0x0F);
-              #endif
             }
+          #endif
             addrPointer += *(uint8_t*)addrPointer;
             found = true;
         }
@@ -197,9 +197,9 @@ void usbTransferConfig(uint32_t device)
 
 void usbTransferString(uint32_t device)
 {
-    #ifdef _USB_DIAGNOSIS_
-      textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 languageIDs", device); textColor(0x0F);
-    #endif
+  #ifdef _USB_DIAGNOSIS_
+    textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 languageIDs", device); textColor(0x0F);
+  #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-String");
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
@@ -216,9 +216,9 @@ void usbTransferString(uint32_t device)
 
     performAsyncScheduler(true, false, 0);
 
-    #ifdef _USB_DIAGNOSIS_
-      showPacket(DataQTDpage0,12);
-    #endif
+  #ifdef _USB_DIAGNOSIS_
+    showPacket(DataQTDpage0,12);
+  #endif
     showStringDescriptor((struct usb2_stringDescriptor*)DataQTDpage0);
 
     free(virtualAsyncList);
@@ -231,9 +231,9 @@ void usbTransferString(uint32_t device)
 
 void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 {
-    #ifdef _USB_DIAGNOSIS_
-      textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 stringIndex: %u", device, stringIndex); textColor(0x0F);
-    #endif
+  #ifdef _USB_DIAGNOSIS_
+    textColor(0x0B); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 stringIndex: %u", device, stringIndex); textColor(0x0F);
+  #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-wideStr");
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
@@ -250,9 +250,9 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 
     performAsyncScheduler(true, false, 0);
 
-    #ifdef _USB_DIAGNOSIS_
-      showPacket(DataQTDpage0,64);
-    #endif
+  #ifdef _USB_DIAGNOSIS_
+    showPacket(DataQTDpage0,64);
+  #endif
 
     showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0, device, stringIndex);
 
@@ -295,7 +295,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
 uint8_t usbTransferGetConfiguration(uint32_t device)
 {
   #ifdef _USB_DIAGNOSIS_
-      textColor(0x0B); printf("\nUSB2: GET_CONFIGURATION"); textColor(0x0F);
+    textColor(0x0B); printf("\nUSB2: GET_CONFIGURATION"); textColor(0x0F);
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-GetConf");
@@ -780,7 +780,6 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
 {
     if (d->length)
     {
-
       #ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
         printf("\nlength:            %u\t\t",  d->length);
@@ -805,8 +804,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
             strncpy(usbDevices[device].productName, (char*)d->asciichar, 15);
             // printf(" product name: %s", usbDevices[device].productName);
         }
-
-        if (stringIndex == 3) // serial number
+        else if (stringIndex == 3) // serial number
         {
             // take the last 12 characters
 
