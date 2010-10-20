@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="C++-Userprog">
+      <UniqueIdentifier>{39581b4e-3acb-484b-8413-65a1a188530e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C-Userprog">
+      <UniqueIdentifier>{48cacf7d-02cd-4a21-9604-84ddbe6a08b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shell">
+      <UniqueIdentifier>{c34e3206-b67e-478d-a690-434ede49b8c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="stdlibC">
+      <UniqueIdentifier>{673d79da-e7cb-4385-87cc-beee7ef5f463}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="stdlibC\include">
+      <UniqueIdentifier>{ea66ecac-84fa-4d2d-87f4-0aec34ad40cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="stdlibC\source">
+      <UniqueIdentifier>{f686fc1f-fb3c-4d82-87e7-c263461aaa5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="User-Tools">
+      <UniqueIdentifier>{aff53597-ca32-4672-9e95-3254f998432a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vm86">
+      <UniqueIdentifier>{d3a485e8-1333-4fa2-beee-d0cfee57759c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\user\user_tools\start.asm">
+      <Filter>User-Tools</Filter>
+    </None>
+    <None Include="..\user\user_tools\user.ld">
+      <Filter>User-Tools</Filter>
+    </None>
+    <None Include="..\user\user_test_c\makefile">
+      <Filter>C-Userprog</Filter>
+    </None>
+    <None Include="..\user\user_test_cpp\makefile">
+      <Filter>C++-Userprog</Filter>
+    </None>
+    <None Include="..\user\vm86\vidswtch.asm">
+      <Filter>vm86</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\user\user_tools\userlib.c">
+      <Filter>User-Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_tools\userlib_cpp.cpp">
+      <Filter>User-Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_test_c\hello.c">
+      <Filter>C-Userprog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_test_cpp\cpp.cpp">
+      <Filter>C++-Userprog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\assert.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\ctype.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\errno.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\locale.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\math.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\setjmp.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\signal.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\stdio.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\stdlib.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\string.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\time.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\shell\shell.c">
+      <Filter>Shell</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\user\user_tools\types.h">
+      <Filter>User-Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\userlib.h">
+      <Filter>User-Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\userlib.hpp">
+      <Filter>User-Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\assert.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\ctype.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\errno.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\float.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\iso646.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\limits.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\locale.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\math.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\setjmp.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\signal.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\stdarg.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\stdbool.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\stddef.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\stdint.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\stdio.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\stdlib.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\string.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\stdlibc\time.h">
+      <Filter>stdlibC\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -40,6 +40,7 @@ ifeq ($(OS),WINDOWS)
 	USERTESTC= $(USERDIR)\user_test_c
 	USERTESTCPP= $(USERDIR)\user_test_cpp
 	USERTOOLS= $(USERDIR)\user_tools
+	STDLIBC= $(USERDIR)\stdlibc
 else
 	SHELLDIR= $(USERDIR)/shell
 	USERPROGS= $(USERDIR)/other_userprogs
@@ -47,21 +48,22 @@ else
 	USERTESTC= $(USERDIR)/user_test_c
 	USERTESTCPP= $(USERDIR)/user_test_cpp
 	USERTOOLS= $(USERDIR)/user_tools
+	STDLIBC= $(USERDIR)/stdlibc
 endif
 
 # dependancies
 KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c $(KERNELDIR)/video/*.c $(KERNELDIR)/storage/*.c $(KERNELDIR)/filesystem/*.c $(KERNELDIR)/network/*.c $(KERNELDIR)/netprotocol/*.c $(KERNELDIR)/audio/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
-SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(USERTOOLS)/*.c $(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/*.asm))
+SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(STDLIBC)/*.c $(USERTOOLS)/*.c $(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/*.asm))
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
+GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c
-	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR) -I $(USERTOOLS) -o $(OBJDIR)/$@
+	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR) -I $(USERTOOLS) -I $(STDLIBC) -o $(OBJDIR)/$@
 %.o: %.asm
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
 

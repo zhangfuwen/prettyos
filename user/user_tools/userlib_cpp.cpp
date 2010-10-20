@@ -4,22 +4,23 @@
 */
 
 #include "userlib.hpp"
+#include "stdlib.h"
 
 void* operator new(long unsigned int size)
 {
-	return malloc(size);
+    return malloc(size);
 }
 void* operator new[](long unsigned int size)
 {
-	return malloc(size);
+    return malloc(size);
 }
 void operator delete(void* ptr)
 {
-	free(ptr);
+    free(ptr);
 }
 void operator delete[](void* ptr)
 {
-	free(ptr);
+    free(ptr);
 }
 
 

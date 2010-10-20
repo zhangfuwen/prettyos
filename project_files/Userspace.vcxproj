@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D153E847-23E9-49A7-845E-570F18D1FA40}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>..\user\user_tools;..\user\stdlibc;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="..\user\user_test_cpp\makefile">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\user\user_test_c\makefile">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\user\user_tools\start.asm">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\user\user_tools\user.ld">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\user\vm86\vidswtch.asm">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\user\shell\shell.c" />
+    <ClCompile Include="..\user\stdlibc\assert.c" />
+    <ClCompile Include="..\user\stdlibc\ctype.c" />
+    <ClCompile Include="..\user\stdlibc\errno.c" />
+    <ClCompile Include="..\user\stdlibc\locale.c" />
+    <ClCompile Include="..\user\stdlibc\math.c" />
+    <ClCompile Include="..\user\stdlibc\setjmp.c" />
+    <ClCompile Include="..\user\stdlibc\signal.c" />
+    <ClCompile Include="..\user\stdlibc\stdio.c" />
+    <ClCompile Include="..\user\stdlibc\stdlib.c" />
+    <ClCompile Include="..\user\stdlibc\string.c" />
+    <ClCompile Include="..\user\stdlibc\time.c" />
+    <ClCompile Include="..\user\user_test_cpp\cpp.cpp" />
+    <ClCompile Include="..\user\user_test_c\hello.c" />
+    <ClCompile Include="..\user\user_tools\userlib.c" />
+    <ClCompile Include="..\user\user_tools\userlib_cpp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\user\stdlibc\assert.h" />
+    <ClInclude Include="..\user\stdlibc\ctype.h" />
+    <ClInclude Include="..\user\stdlibc\errno.h" />
+    <ClInclude Include="..\user\stdlibc\float.h" />
+    <ClInclude Include="..\user\stdlibc\iso646.h" />
+    <ClInclude Include="..\user\stdlibc\limits.h" />
+    <ClInclude Include="..\user\stdlibc\locale.h" />
+    <ClInclude Include="..\user\stdlibc\math.h" />
+    <ClInclude Include="..\user\stdlibc\setjmp.h" />
+    <ClInclude Include="..\user\stdlibc\signal.h" />
+    <ClInclude Include="..\user\stdlibc\stdarg.h" />
+    <ClInclude Include="..\user\stdlibc\stdbool.h" />
+    <ClInclude Include="..\user\stdlibc\stddef.h" />
+    <ClInclude Include="..\user\stdlibc\stdint.h" />
+    <ClInclude Include="..\user\stdlibc\stdio.h" />
+    <ClInclude Include="..\user\stdlibc\stdlib.h" />
+    <ClInclude Include="..\user\stdlibc\string.h" />
+    <ClInclude Include="..\user\stdlibc\time.h" />
+    <ClInclude Include="..\user\user_tools\types.h" />
+    <ClInclude Include="..\user\user_tools\userlib.h" />
+    <ClInclude Include="..\user\user_tools\userlib.hpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

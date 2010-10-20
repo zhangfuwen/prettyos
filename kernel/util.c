@@ -75,6 +75,7 @@ void panic_assert(const char* file, uint32_t line, const char* desc)
     cli();
     printf("ASSERTION FAILED(%s) at %s:%u\nOPERATING SYSTEM HALTED\n", desc, file, line);
     // Halt by going into an infinite loop.
+    hlt();
     for (;;);
 }
 

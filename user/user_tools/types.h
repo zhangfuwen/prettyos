@@ -1,30 +1,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-typedef unsigned int        size_t;
-typedef unsigned long long  uint64_t;
-typedef unsigned long       uint32_t;
-typedef unsigned short      uint16_t;
-typedef unsigned char       uint8_t;
-typedef signed long long    int64_t;
-typedef signed long         int32_t;
-typedef signed short        int16_t;
-typedef signed char         int8_t;
-typedef uint32_t            uintptr_t;
-#ifndef __bool_true_false_are_defined
-  typedef _Bool             bool;
-  #define true  1
-  #define false 0
-  #define __bool_true_false_are_defined 1
-#endif
-
-#define NULL (void*)0
-
-typedef __builtin_va_list va_list;
-#define va_start(ap, X)    __builtin_va_start(ap, X)
-#define va_arg(ap, type)   __builtin_va_arg(ap, type)
-#define va_end(ap)         __builtin_va_end(ap)
-#define va_copy(dest,src)  __builtin_va_copy(dest,src)
+#include "stdint.h"
+#include "stdbool.h"
+#include "stddef.h"
+#include "stdarg.h"
 
 typedef enum {/*VK_LBUTTON=0x01, VK_RBUTTON, VK_CANCEL, VK_MBUTTON, VK_XBUTTON1, VK_XBUTTON2,*/
               VK_BACK=0x08,    VK_TAB,
@@ -42,11 +22,6 @@ typedef enum {/*VK_LBUTTON=0x01, VK_RBUTTON, VK_CANCEL, VK_MBUTTON, VK_XBUTTON1,
               VK_NUMLOCK=0x90, VK_SCROLL,
               VK_LSHIFT=0xA0, VK_RSHIFT, VK_LCONTROL, VK_RCONTROL, VK_LMENU, VK_RMENU
 } VK;
-
-typedef enum
-{
-    SEEK_SET, SEEK_CUR, SEEK_END
-} SEEK_ORIGIN;
 
 typedef enum
 {
@@ -99,11 +74,6 @@ typedef enum
 {
     SHUTDOWN, REBOOT
 } SYSTEM_CONTROL;
-
-typedef struct
-{ // HACK; Should be filled
-} file_t;
-typedef file_t FILE;
 
 typedef struct {
     uint16_t x, y;

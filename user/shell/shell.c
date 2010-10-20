@@ -1,4 +1,7 @@
 #include "userlib.h"
+#include "string.h"
+#include "stdio.h"
+
 #define MAX_CHAR_PER_LINE 70
 #define ENTRY_CACHE_SIZE 10
 
@@ -8,7 +11,7 @@ void eraseFirst(char* string)
 }
 void insert(char* string, char c)
 {
-    for (int i = strlen(string)-1; i >= 0; i--)
+    for (size_t i = strlen(string)-1; i >= 0; i--)
     {
         string[i+1] = string[i];
     }
@@ -57,7 +60,7 @@ int main()
         {
             showInfo(1); // the train goes on...
 
-            input = getch();
+            input = getchar();
 
             switch (input) {
                 case 8: // Backspace
@@ -142,7 +145,7 @@ int main()
                     {
                         for (; entryLength > 0; entryLength--)
                         {
-                            putch('\b'); //Clear row
+                            putchar('\b'); //Clear row
                         }
                         ++curEntry;
                         entryLength = strlen(entryCache[curEntry]);
@@ -155,7 +158,7 @@ int main()
                     {
                         for (; entryLength > 0; entryLength--)
                         {
-                            putch('\b'); //Clear row
+                            putchar('\b'); //Clear row
                         }
                         --curEntry;
                         if (curEntry == -1)
@@ -173,7 +176,7 @@ int main()
                     {
                         for (; entryLength > 0; entryLength--)
                         {
-                            putch('\b'); //Clear row
+                            putchar('\b'); //Clear row
                         }
                         memset(entry, 0, MAX_CHAR_PER_LINE);
                         cursorPos = 0;

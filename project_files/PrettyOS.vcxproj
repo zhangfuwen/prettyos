@@ -49,21 +49,32 @@ clean.bat</NMakeCleanCommandLine>
     <None Include="..\kernel\interrupts.asm" />
     <None Include="..\kernel\kernel.asm" />
     <None Include="..\kernel\process.asm" />
-    <None Include="..\stage1_bootloader\boot.asm" />
-    <None Include="..\stage1_bootloader\Fat12_BPB.inc" />
-    <None Include="..\stage2_bootloader\A20.inc" />
-    <None Include="..\stage2_bootloader\boot2.asm" />
-    <None Include="..\stage2_bootloader\Fat12.inc" />
-    <None Include="..\stage2_bootloader\Fat12_BPB.inc" />
-    <None Include="..\stage2_bootloader\gdt.inc" />
-    <None Include="..\stage2_bootloader\GetMemoryMap.inc" />
     <None Include="..\kernel\kernel.ld" />
-    <None Include="..\user\user_tools\start.asm" />
-    <None Include="..\user\user_tools\user.ld" />
-    <None Include="..\user\user_test_c\makefile" />
-    <None Include="..\user\user_test_cpp\makefile" />
     <None Include="..\makefile" />
-    <None Include="..\user\vm86\vidswtch.asm" />
+    <None Include="..\stage1_bootloader\boot.asm">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\stage1_bootloader\Fat12_BPB.inc">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\stage2_bootloader\A20.inc">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\stage2_bootloader\boot2.asm">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\stage2_bootloader\Fat12.inc">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\stage2_bootloader\Fat12_BPB.inc">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\stage2_bootloader\gdt.inc">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\stage2_bootloader\GetMemoryMap.inc">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\kernel\audio\sb16.h" />
@@ -136,9 +147,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\video\vbe.h" />
     <ClInclude Include="..\kernel\video\video.h" />
     <ClInclude Include="..\kernel\vm86.h" />
-    <ClInclude Include="..\user\user_tools\types.h" />
-    <ClInclude Include="..\user\user_tools\userlib.h" />
-    <ClInclude Include="..\user\user_tools\userlib.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\audio\sb16.c" />
@@ -206,11 +214,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\video\vbe.c" />
     <ClCompile Include="..\kernel\video\video.c" />
     <ClCompile Include="..\kernel\vm86.c" />
-    <ClCompile Include="..\user\shell\shell.c" />
-    <ClCompile Include="..\user\user_tools\userlib.c" />
-    <ClCompile Include="..\user\user_tools\userlib_cpp.cpp" />
-    <ClCompile Include="..\user\user_test_c\hello.c" />
-    <ClCompile Include="..\user\user_test_cpp\cpp.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

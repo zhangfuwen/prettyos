@@ -11,8 +11,6 @@
 
 typedef void(*interrupt_handler_t)(registers_t*);
 
-extern context_v86_t context; // vm86.c
-
 // Array of function pointers handling custom ir handlers for a given ir
 static interrupt_handler_t interruptRoutines[256];
 
@@ -82,7 +80,7 @@ static void invalidOpcode(registers_t* r)
 static void NM(registers_t* r) // -> FPU
 {
     // set TS in cr0 to zero
-    __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
+    __asm__ volatile ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
 
     kdebug(3, "#NM: FPU is used. pCurrentTask: %X\n", currentTask);
 
@@ -112,26 +110,8 @@ static void NM(registers_t* r) // -> FPU
 static void GPF(registers_t* r) // -> VM86
 {
     if (r->eflags & 0x20000) // VM bit - it is a VM86-task
-    {
-        context_v86_t* ctx = &context;
-
-        ctx->cs      = r->cs;
-        ctx->eip     = r->eip;
-        ctx->ss      = r->ss;
-        ctx->eflags  = r->eflags;
-        ctx->ds      = r->ds;
-        ctx->es      = r->es;
-        ctx->fs      = r->fs;
-        ctx->gs      = r->gs;
-        ctx->useresp = r->useresp;
-        ctx->eax     = r->eax;
-        ctx->ebx     = r->ebx;
-        ctx->ecx     = r->ecx;
-        ctx->edx     = r->edx;
-        ctx->edi     = r->edi;
-        ctx->esi     = r->esi;
-        textColor(0x0C);
-        if (vm86sensitiveOpcodehandler(ctx)) // OK
+    {   
+        if (vm86sensitiveOpcodehandler(r)) // OK
         {
             /*
             textColor(0x03);
@@ -141,24 +121,9 @@ static void GPF(registers_t* r) // -> VM86
         }
         else
         {
+            textColor(0x0C);
             printf("\nvm86: sensitive opcode error)\n");
         }
-
-        r->cs      = ctx->cs;
-        r->eip     = ctx->eip;
-        r->ss      = ctx->ss;
-        r->eflags  = ctx->eflags;
-        r->ds      = ctx->ds;
-        r->es      = ctx->es;
-        r->fs      = ctx->fs;
-        r->gs      = ctx->gs;
-        r->eax     = ctx->eax;
-        r->ebx     = ctx->ebx;
-        r->ecx     = ctx->ecx;
-        r->edx     = ctx->edx;
-        r->edi     = ctx->edi;
-        r->esi     = ctx->esi;
-        r->useresp = ctx->useresp;
     }
     else
         defaultError(r);

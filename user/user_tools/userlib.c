@@ -4,6 +4,9 @@
 */
 
 #include "userlib.h"
+#include "string.h"
+#include "stdio.h"
+#include "ctype.h"
 
 // Syscalls
 FS_ERROR execute(const char* path)
@@ -51,28 +54,28 @@ char fgetc(file_t* file)
     return ret;
 }
 
-FS_ERROR fputc(char value, file_t* file)
+int fputc(char value, file_t* file)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(17), "b"(value), "c"(file));
     return ret;
 }
 
-FS_ERROR fseek(file_t* file, size_t offset, SEEK_ORIGIN origin)
+int fseek(file_t* file, size_t offset, SEEK_ORIGIN origin)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(18), "b"(file), "c"(offset), "d"(origin));
     return ret;
 }
 
-FS_ERROR fflush(file_t* file)
+int fflush(file_t* file)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(file));
     return ret;
 }
 
-FS_ERROR fclose(file_t* file)
+int fclose(file_t* file)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(21), "b"(file));
@@ -91,9 +94,10 @@ void systemControl(SYSTEM_CONTROL todo)
     __asm__ volatile("int $0x7F" : : "a"(50), "b"(todo));
 }
 
-void putch(char val)
+int putchar(char val)
 {
     __asm__ volatile("int $0x7F" : : "a"(55), "b"(val));
+    return(0); // HACK
 }
 
 void textColor(uint8_t color)
@@ -123,7 +127,7 @@ void clearScreen(uint8_t backgroundColor)
     __asm__ volatile("int $0x7F" : : "a"(61), "b"(backgroundColor));
 }
 
-char getch()
+char getchar()
 {
     char ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(70));
@@ -175,237 +179,6 @@ void iSetCursor(uint16_t x, uint16_t y)
 uint32_t getCurrentSeconds()
 {
     return(getCurrentMilliseconds()/1000);
-}
-
-void* memset(void* dest, int8_t val, size_t count)
-{
-    int8_t* temp = (int8_t*)dest;
-    for (; count != 0; count--) *temp++ = val;
-    return dest;
-}
-
-void* memcpy(void* dest, const void* src, size_t count)
-{
-    const uint8_t* sp = (const uint8_t*)src;
-    uint8_t* dp = (uint8_t*)dest;
-    for (; count != 0; count--) *dp++ = *sp++;
-    return dest;
-}
-
-void* memmove(const void* source, void* destination, size_t size)
-{
-    // If source and destination point to the same memory area, coping something
-    // is not necessary. It could be seen as a bug of the caller to pass the
-    // same value for source and destination, but we decided to allow this and
-    // just do nothing in this case.
-    if(source == destination)
-    {
-        return(destination);
-    }
-
-    // If size is 0, just return. It is not a bug to call this function with size set to 0.
-    if(size == 0)
-    {
-        return(destination);
-    }
-
-    // Check if either one of the memory regions is beyond the end of the
-    // address space. We think that trying to copy from or to beyond the end of
-    // the address space is a bug of the caller.
-    // In future versions of this function, an exception will be thrown in this
-    // case. For now, just return and do nothing.
-    // The subtraction used to calculate the value of "max" cannot produce an
-    // underflow because size can neither be greater than the maximum value of a
-    // variable of type uintp or 0.
-    const uintptr_t memMax = ~((uintptr_t)0) - (size - 1); // ~0 is the highest possible value of the variables type
-    if((uintptr_t)source > memMax || (uintptr_t)destination > memMax)
-    {
-        return(destination);
-    }
-
-    const uint8_t* source8 = (uint8_t*)source;
-    uint8_t* destination8 = (uint8_t*)destination;
-
-    // The source overlaps with the destination and the destination is after the
-    // source in memory. Coping from start to the end of source will overwrite
-    // the last (size - (destination - source)) bytes of source with the first
-    // ones. Therefore it is necessary to copy from the end to the start of
-    // source and destination. Let us look at an example. Each letter or space
-    // is one byte in memory.
-    // |source     |
-    // |      destination|
-    // source starts at 0. destination at 6. Coping from start to end will
-    // overwrite the last 5 bytes of the source.
-    if(source8 < destination8)
-    {
-        source8 += size - 1;
-        destination8 += size - 1;
-        while(size > 0)
-        {
-            *destination8 = *source8;
-            --destination8;
-            --source8;
-            --size;
-        }
-    }
-    else // In all other cases, it is ok to copy from the start to the end of source.
-    {
-        while(size > 0)
-        {
-            *destination8 = *source8;
-            ++destination8;
-            ++source8;
-            --size;
-        }
-    }
-    return(destination);
-}
-
-
-void puts(const char* str)
-{
-    for (size_t i = 0; str[i] != 0; i++)
-    {
-        putch(str[i]);
-    }
-}
-// printf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c
-void printf(const char* args, ...) {
-    va_list ap;
-    va_start(ap, args);
-    vprintf(args, ap);
-    va_end(ap);
-}
-void vprintf(const char* args, va_list ap)
-{
-    char buffer[32]; // Larger is not needed at the moment
-
-    for (; *args; args++)
-    {
-        switch (*args)
-        {
-        case '%':
-            switch (*(++args))
-            {
-            case 'u':
-                utoa(va_arg(ap, uint32_t), buffer);
-                puts(buffer);
-                break;
-            case 'f':
-                ftoa(va_arg(ap, double), buffer);
-                puts(buffer);
-                break;
-            case 'i': case 'd':
-                itoa(va_arg(ap, int32_t), buffer);
-                puts(buffer);
-                break;
-            case 'X':
-                i2hex(va_arg(ap, int32_t), buffer,8);
-                puts(buffer);
-                break;
-            case 'x':
-                i2hex(va_arg(ap, int32_t), buffer,4);
-                puts(buffer);
-                break;
-            case 'y':
-                i2hex(va_arg(ap, int32_t), buffer,2);
-                puts(buffer);
-                break;
-            case 's':
-                puts(va_arg (ap, char*));
-                break;
-            case 'c':
-                putch((int8_t)va_arg(ap, int32_t));
-                break;
-            case '%':
-                putch('%');
-                break;
-            default:
-                --args;
-                break;
-            }
-            break;
-        default:
-            putch(*args);
-            break;
-        }
-    }
-}
-
-void vsprintf(char *buffer, const char *args, va_list ap)
-{
-    int pos = 0;
-    char m_buffer[32]; // Larger is not needed at the moment
-    buffer[0] = '\0';
-
-    for (; *args; args++)
-    {
-        switch (*args)
-        {
-            case '%':
-                switch (*(++args))
-                {
-                    case 'u':
-                        utoa(va_arg(ap, uint32_t), m_buffer);
-                        strcat(buffer, m_buffer);
-                        pos += strlen(m_buffer) - 1;
-                        break;
-                    case 'f':
-                        ftoa(va_arg(ap, double), m_buffer);
-                        strcat(buffer, m_buffer);
-                        pos += strlen(m_buffer) - 1;
-                        break;
-                    case 'i': case 'd':
-                        itoa(va_arg(ap, int32_t), m_buffer);
-                        strcat(buffer, m_buffer);
-                        pos += strlen(m_buffer) - 1;
-                        break;
-                    case 'X':
-                        i2hex(va_arg(ap, int32_t), m_buffer,8);
-                        strcat(buffer, m_buffer);
-                        pos += strlen(m_buffer) - 1;
-                        break;
-                    case 'x':
-                        i2hex(va_arg(ap, int32_t), m_buffer,4);
-                        strcat(buffer, m_buffer);
-                        pos += strlen(m_buffer) - 1;
-                        break;
-                    case 'y':
-                        i2hex(va_arg(ap, int32_t), m_buffer,2);
-                        strcat(buffer, m_buffer);
-                        pos += strlen(m_buffer) - 1;
-                        break;
-                    case 's':
-                        strcat(buffer, va_arg (ap, char*));
-                        pos = strlen(buffer) - 1;
-                        break;
-                    case 'c':
-                        buffer[pos] = (int8_t)va_arg(ap, int32_t);
-                        break;
-                    case '%':
-                        buffer[pos] = '%';
-                        break;
-                    default:
-                        --args;
-                        --pos;
-                        break;
-                    }
-                break;
-            default:
-                buffer[pos] = (*args);
-                break;
-        }
-        pos++;
-        buffer[pos] = '\0';
-    }
-}
-
-void sprintf(char *buffer, const char *args, ...)
-{
-    va_list ap;
-    va_start(ap, args);
-    vsprintf(buffer, args, ap);
-    va_end(ap);
 }
 
 void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
@@ -482,137 +255,21 @@ void snprintf(char *buffer, size_t length, const char *args, ...)
     va_end(ap);
 }
 
-char toLower(char c)
-{
-    return isupper(c) ? ('a' - 'A') + c : c;
-}
-
-char toUpper(char c)
-{
-    return islower(c) ? ('A' - 'a') + c : c;
-}
-
-char* toupper(char* s)
+char* stoupper(char* s)
 {
     for (size_t i = 0; i < strlen(s); i++)
     {
-        s[i] = toUpper(s[i]);
+        s[i] = toupper(s[i]);
     }
     return s;
 }
 
-char* tolower(char* s)
+char* stolower(char* s)
 {
     for (size_t i = 0; i < strlen(s); i++)
     {
-        s[i] = toLower(s[i]);
+        s[i] = tolower(s[i]);
     }
-    return s;
-}
-
-size_t strlen(const char* str)
-{
-    size_t retval;
-    for (retval = 0; *str != '\0'; ++str)
-    {
-        ++retval;
-    }
-    return retval;
-}
-
-// Compare two strings. Returns -1 if str1 < str2, 0 if they are equal or 1 otherwise.
-int32_t strcmp(const char* s1, const char* s2)
-{
-    while ((*s1) && (*s1 == *s2))
-    {
-        ++s1; ++s2;
-    }
-    return (*s1 - *s2);
-}
-
-/// http://en.wikipedia.org/wiki/Strcpy
-// Copy the NUL-terminated string src into dest, and return dest.
-char* strcpy(char* dest, const char* src)
-{
-   char* save = dest;
-   while ((*dest++ = *src++));
-   return save;
-}
-
-char* strncpy(char* dest, const char* src, size_t n)
-{
-    size_t i = 0;
-    for(; i < n && src[i] != 0; i++)
-    {
-        dest[i] = src[i];
-    }
-    for(; i < n; i++)
-    {
-        dest[i] = 0;
-    }
-    return(dest);
-}
-
-/// http://en.wikipedia.org/wiki/Strcat
-char* strcat(char* dest, const char* src)
-{
-    strcpy(dest + strlen(dest), src);
-    return dest;
-}
-
-char* strncat(char* dest, const char* src, size_t n)
-{
-    strncpy(dest + strlen(dest), src, n);
-    return dest;
-}
-
-char* strchr(char* str, char character)
-{
-    for (;;str++)
-    {
-        // the order here is important
-        if (*str == character)
-        {
-            return str;
-        }
-        if (*str == 0)
-        {
-            return 0;
-        }
-    }
-}
-
-
-char* gets(char* s)
-{
-    int32_t i = 0;
-    char c;
-    do
-    {
-        c = getch();
-        if (c=='\b')  // Backspace
-        {
-           if (i>0)
-           {
-              putch(c);
-              s[i-1]='\0';
-              --i;
-           }
-           else
-           {
-               beep(50,20);
-           }
-        }
-        else
-        {
-            s[i] = c;
-            putch(c);
-            i++;
-        }
-    }
-    while (c!=10); // Linefeed
-    s[i]='\0';
-
     return s;
 }
 
@@ -662,63 +319,6 @@ char* utoa(uint32_t n, char* s)
     s[i] = '\0';
     reverse(s);
     return(s);
-}
-
-int32_t atoi(const char* s)
-{
-    int32_t num = 0;
-    bool sign = false;
-    for (size_t i=0; i<=strlen(s); i++)
-    {
-        if (s[i] >= '0' && s[i] <= '9')
-        {
-            num = num * 10 + s[i] -'0';
-        }
-        else if (s[0] == '-' && i==0)
-        {
-            sign = true;
-        }
-        else
-        {
-            break;
-        }
-    }
-    if (sign)
-    {
-        num *= -1;
-    }
-    return num;
-}
-
-float atof(const char* s)
-{
-    int32_t i = 0;
-    int8_t sign = 1;
-    while(s[i] == ' ' || s[i] == '+' || s[i] == '-')
-    {
-        if(s[i] == '-')
-        {
-            sign *= -1;
-        }
-        i++;
-    }
-
-    float val;
-    for (val = 0.0; isdigit(s[i]); i++)
-    {
-        val = 10.0 * val + s[i] - '0';
-    }
-    if (s[i] == '.')
-    {
-        i++;
-    }
-    float pow;
-    for (pow = 1.0; isdigit(s[i]); i++)
-    {
-        val = 10.0 * val + s[i] - '0';
-        pow *= 10.0;
-    }
-    return(sign * val / pow);
 }
 
 void ftoa(float f, char* buffer)
@@ -791,127 +391,6 @@ void showInfo(uint8_t val)
         printLine(line2,44,0xE);
         printLine(line3,45,0xE);
     }
-}
-
-
-void* malloc(size_t size)
-{
-    static char* cur = 0;
-    static char* top = 0;
-
-    // Align
-    size = (size+15) & ~15;
-
-    // Heap not set up?
-    if (!cur)
-    {
-        uint32_t sizeToGrow = (size+4095) & ~4095;
-        cur = userheapAlloc(sizeToGrow);
-        if (!cur)
-            return 0;
-        top = cur + sizeToGrow;
-    }
-    // Not enough space on heap?
-    else if (top - cur < size)
-    {
-        uint32_t sizeToGrow = (size+4095) & ~4095;
-        if (!userheapAlloc(sizeToGrow))
-            return 0;
-        top += sizeToGrow;
-    }
-
-    void* ret = cur;
-    cur += size;
-    return ret;
-}
-
-void free(void* mem)
-{
-    // Nothing to do
-}
-
-
-/// math functions
-
-double cos(double x)
-{
-    double result;
-    __asm__ volatile("fcos;" : "=t" (result) : "0" (x));
-    return result;
-}
-
-double sin(double x)
-{
-    double result;
-    __asm__ volatile("fsin;" : "=t" (result) : "0" (x));
-    return result;
-}
-
-double tan(double x)
-{
-    double result;
-    __asm__ volatile("fptan; fstp %%st(0)": "=t" (result) : "0" (x));
-    return result;
-}
-
-double acos(double x)
-{
-    if (x < -1 || x > 1)
-        return NAN;
-
-    return(pi / 2 - asin(x));
-}
-
-double asin(double x)
-{
-    if (x < -1 || x > 1)
-        return NAN;
-
-    return(2 * atan(x / (1 + sqrt(1 - (x * x)))));
-}
-
-double atan(double x)
-{
-    double result;
-    __asm__ volatile("fld1; fpatan" : "=t" (result) : "0" (x));
-    return result;
-}
-
-double atan2(double x, double y)
-{
-    double result;
-    __asm__ volatile("fpatan" : "=t" (result) : "0" (y), "u" (x));
-    return result;
-}
-
-double sqrt(double x)
-{
-    if (x <  0.0)
-        return NAN;
-
-    double result;
-    __asm__ volatile("fsqrt" : "=t" (result) : "0" (x));
-    return result;
-}
-
-double fabs(double x)
-{
-    double result;
-    __asm__ volatile("fabs" : "=t" (result) : "0" (x));
-    return result;
-}
-
-/// random generator
-static uint32_t seed = 0;
-
-void srand(uint32_t val)
-{
-    seed = val;
-}
-
-uint32_t rand()
-{
-    return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7FFF);
 }
 
 

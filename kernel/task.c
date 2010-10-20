@@ -131,10 +131,10 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     else
     {
         code_segment = 0;
-        *(--kernelStack) = 0x23; // gs
-        *(--kernelStack) = 0x23; // fs
-        *(--kernelStack) = 0x23; // es
-        *(--kernelStack) = 0x23; // ds
+        //*(--kernelStack) = 0x23; // gs
+        //*(--kernelStack) = 0x23; // fs
+        //*(--kernelStack) = 0x23; // es
+        //*(--kernelStack) = 0x23; // ds
         *(--kernelStack) = newTask->ss = 0x0000; // ss
         *(--kernelStack) = 4090;                 // USER_STACK;
         *(--kernelStack) = 0x20202;              // eflags = vm86 (bit17), interrupts (bit9), iopl=0
@@ -295,7 +295,7 @@ uint32_t task_switch(uint32_t esp)
     // set TS
     if (currentTask == FPUTask)
     {
-        __asm__ ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
+        __asm__ volatile("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
     }
     else
     {

@@ -19,9 +19,7 @@ a chance to emulate the facilities they affect.
 
 static current_t Current;
 
-context_v86_t context;
-
-bool vm86sensitiveOpcodehandler(context_v86_t* ctx)
+bool vm86sensitiveOpcodehandler(registers_t* ctx)
 {
     uint8_t*  ip      = FP_TO_LINEAR(ctx->cs, ctx->eip);
     uint16_t* ivt     = 0;

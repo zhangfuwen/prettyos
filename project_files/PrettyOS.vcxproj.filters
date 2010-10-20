@@ -1,15 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Bootloader">
-      <UniqueIdentifier>{2ddc6f1b-9103-49ab-8033-8f2503e47923}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Bootloader\Stage 1">
-      <UniqueIdentifier>{325ce32d-412a-4891-8a4d-b1e56ec77f0e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Bootloader\Stage 2">
-      <UniqueIdentifier>{3150d275-2542-4922-8027-38ff01586521}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Kernel">
       <UniqueIdentifier>{aa4e6b4d-846c-474c-a2a1-c51a09bf9a91}</UniqueIdentifier>
     </Filter>
@@ -24,24 +15,6 @@
     </Filter>
     <Filter Include="Kernel\sources\cdi">
       <UniqueIdentifier>{6253376d-c9ab-40aa-ac8e-3d6405b248aa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="User">
-      <UniqueIdentifier>{c9a561f3-6db5-42bb-8732-5c334aa27066}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="User\Shell">
-      <UniqueIdentifier>{e8b9c490-c3cc-436c-b0c3-482c7b807fe0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="User\User-Tools">
-      <UniqueIdentifier>{fdac2f75-9af7-4062-a3c3-0d9494ecfaea}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="User\C-Userprog">
-      <UniqueIdentifier>{c93e1d15-5d72-4682-9797-25792e6c115a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="User\C++-Userprog">
-      <UniqueIdentifier>{70db3fa9-0b6f-42ab-8058-55e600978cc6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="User\vm86">
-      <UniqueIdentifier>{b47e1622-7958-4874-8775-a996e97fa113}</UniqueIdentifier>
     </Filter>
     <Filter Include="Kernel\sources\storage">
       <UniqueIdentifier>{ac66fbfc-b33b-4f6b-aead-ad79c0757647}</UniqueIdentifier>
@@ -79,50 +52,20 @@
     <Filter Include="Kernel\include\audio">
       <UniqueIdentifier>{a9baddc4-aad5-46fa-a06c-7289b3b25b14}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Bootloader">
+      <UniqueIdentifier>{c42cc963-f9b3-44d9-9f3d-c219df951ad9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Bootloader\Stage 2">
+      <UniqueIdentifier>{eb97703f-6c86-446d-8a7b-c8d1e2d45d18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Bootloader\Stage 1">
+      <UniqueIdentifier>{e01ef0f4-083a-4199-be62-1a6019c67209}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\user\user_tools\start.asm">
-      <Filter>User\User-Tools</Filter>
-    </None>
-    <None Include="..\user\user_tools\user.ld">
-      <Filter>User\User-Tools</Filter>
-    </None>
-    <None Include="..\user\user_test_c\makefile">
-      <Filter>User\C-Userprog</Filter>
-    </None>
-    <None Include="..\user\user_test_cpp\makefile">
-      <Filter>User\C++-Userprog</Filter>
-    </None>
     <None Include="..\makefile" />
-    <None Include="..\stage1_bootloader\boot.asm">
-      <Filter>Bootloader\Stage 1</Filter>
-    </None>
-    <None Include="..\stage1_bootloader\Fat12_BPB.inc">
-      <Filter>Bootloader\Stage 1</Filter>
-    </None>
-    <None Include="..\stage2_bootloader\A20.inc">
-      <Filter>Bootloader\Stage 2</Filter>
-    </None>
-    <None Include="..\stage2_bootloader\GetMemoryMap.inc">
-      <Filter>Bootloader\Stage 2</Filter>
-    </None>
-    <None Include="..\stage2_bootloader\boot2.asm">
-      <Filter>Bootloader\Stage 2</Filter>
-    </None>
-    <None Include="..\stage2_bootloader\Fat12.inc">
-      <Filter>Bootloader\Stage 2</Filter>
-    </None>
-    <None Include="..\stage2_bootloader\Fat12_BPB.inc">
-      <Filter>Bootloader\Stage 2</Filter>
-    </None>
-    <None Include="..\stage2_bootloader\gdt.inc">
-      <Filter>Bootloader\Stage 2</Filter>
-    </None>
     <None Include="..\kernel\kernel.ld">
       <Filter>Kernel</Filter>
-    </None>
-    <None Include="..\user\vm86\vidswtch.asm">
-      <Filter>User\vm86</Filter>
     </None>
     <None Include="..\kernel\data.asm">
       <Filter>Kernel\sources</Filter>
@@ -139,17 +82,32 @@
     <None Include="..\kernel\process.asm">
       <Filter>Kernel\sources</Filter>
     </None>
+    <None Include="..\stage2_bootloader\A20.inc">
+      <Filter>Bootloader\Stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\boot2.asm">
+      <Filter>Bootloader\Stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\Fat12.inc">
+      <Filter>Bootloader\Stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\Fat12_BPB.inc">
+      <Filter>Bootloader\Stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\gdt.inc">
+      <Filter>Bootloader\Stage 2</Filter>
+    </None>
+    <None Include="..\stage2_bootloader\GetMemoryMap.inc">
+      <Filter>Bootloader\Stage 2</Filter>
+    </None>
+    <None Include="..\stage1_bootloader\boot.asm">
+      <Filter>Bootloader\Stage 1</Filter>
+    </None>
+    <None Include="..\stage1_bootloader\Fat12_BPB.inc">
+      <Filter>Bootloader\Stage 1</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\user\user_tools\types.h">
-      <Filter>User\User-Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\user\user_tools\userlib.h">
-      <Filter>User\User-Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\user\user_tools\userlib.hpp">
-      <Filter>User\User-Tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\kernel\filesystem\fat.h">
       <Filter>Kernel\include\filesystem</Filter>
     </ClInclude>
@@ -406,21 +364,6 @@
     </ClCompile>
     <ClCompile Include="..\kernel\cdi\cdi_storage.c">
       <Filter>Kernel\sources\cdi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\shell\shell.c">
-      <Filter>User\Shell</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_tools\userlib.c">
-      <Filter>User\User-Tools</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_tools\userlib_cpp.cpp">
-      <Filter>User\User-Tools</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_test_c\hello.c">
-      <Filter>User\C-Userprog</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_test_cpp\cpp.cpp">
-      <Filter>User\C++-Userprog</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\ckernel.c">
       <Filter>Kernel\sources</Filter>
