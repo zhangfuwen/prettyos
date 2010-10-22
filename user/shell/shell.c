@@ -11,7 +11,7 @@ void eraseFirst(char* string)
 }
 void insert(char* string, char c)
 {
-    for (size_t i = strlen(string)-1; i >= 0; i--)
+    for (int i = strlen(string)-1; i >= 0; i--)
     {
         string[i+1] = string[i];
     }
