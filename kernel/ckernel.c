@@ -24,7 +24,7 @@
 #include "timer.h"
 #include "audio/sys_speaker.h"
 
-const char* const version = "0.0.2.2 - Rev: 833";
+const char* const version = "0.0.2.3 - Rev: 834";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -35,6 +35,12 @@ system_t system;
 
 void fpu_install(); // fpu.c
 void fpu_test();    // fpu.c
+
+// APIC
+void apic_install()
+{
+    // ...  // TODO: implement APIC functionality
+}
 
 todoList_t* delayedInitTasks; // HACK! Why is it needed? (RTL8139 generates interrupts (endless) if its not used for EHCI)
 
@@ -97,6 +103,9 @@ static void init(multiboot_t* mb_struct)
     // internal devices
     timer_install(100); log("Timer"); // Sets system frequency to ... Hz
     if (cpu_supports(CF_FPU)) fpu_install(); log("FPU");
+
+    // APIC
+    if (cpu_supports(CF_APIC)) apic_install(); log("APIC");
 
     // memory
     system.Memory_Size = paging_install(); log("Paging");
@@ -204,7 +213,7 @@ void main(multiboot_t* mb_struct)
     create_cthread(&vbe_bootscreen, "VBE");
 
     textColor(0x05);
-    printf("\n--------------------------------------------------------------------------------");
+    printf("--------------------------------------------------------------------------------");
     printf(  "                                PrettyOS Booted");
     printf("\n--------------------------------------------------------------------------------\n");
     textColor(0x0F);

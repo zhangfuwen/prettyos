@@ -25,6 +25,10 @@ void cpu_analyze()
     cpu_vendor[12] = 0;
 
     printf("\tVendorID: %s\n", cpu_vendor);
+    if (cpu_supports(CF_APIC))
+    {
+        printf("\tAPIC: yes");
+    }
     if (cpu_supports(CF_FPU))
     {
         printf("\tFPU: yes");
