@@ -23,14 +23,15 @@
 #include "descriptor_tables.h"
 #include "timer.h"
 #include "audio/sys_speaker.h"
+#include "power_management.h"
 
-const char* const version = "0.0.2.3 - Rev: 834";
+const char* const version = "0.0.2.4 - Rev: 835";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
 extern uintptr_t _kernel_end; // linker script
 
-// Informations about the system
+// Information about the system
 system_t system;
 
 void fpu_install(); // fpu.c
@@ -44,7 +45,8 @@ void apic_install()
 
 todoList_t* delayedInitTasks; // HACK! Why is it needed? (RTL8139 generates interrupts (endless) if its not used for EHCI)
 
-typedef struct {
+typedef struct // http://www.lowlevel.eu/wiki/Multiboot
+{
     uint32_t flags;
     uint32_t memLower;
     uint32_t memUpper;
@@ -103,8 +105,6 @@ static void init(multiboot_t* mb_struct)
     // internal devices
     timer_install(100); log("Timer"); // Sets system frequency to ... Hz
     if (cpu_supports(CF_FPU)) fpu_install(); log("FPU");
-
-    // APIC
     if (cpu_supports(CF_APIC)) apic_install(); log("APIC");
 
     // memory
@@ -116,6 +116,8 @@ static void init(multiboot_t* mb_struct)
     // external devices
     keyboard_install(); log("Keyboard");
     mouse_install(); log("Mouse");
+
+    pm_install(); log("Power Management");
 
     // system calls
     syscall_install(); log("Syscalls");
@@ -152,6 +154,7 @@ void main(multiboot_t* mb_struct)
     cpu_analyze();
 
     if (cpu_supports(CF_FPU)) fpu_test();
+    pm_log();
 
     serial_init();
 

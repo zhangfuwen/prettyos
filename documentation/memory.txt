@@ -1,5 +1,6 @@
 Start address | End address | Contains    | Annotations
 --------------|-------------|-------------|------------------------------------
+0x0           | 0x400       | IVT         | Interrupt Vector Table, needed in Real Mode and VM86
 0x400         | 0x500       | BDA         | Bios Data Area: http://www.lowlevel.eu/wiki/BIOS_Data_Area
 0x1000        | 0x3400      | DMA         | Buffer for ISA-DMA
               |             |             |

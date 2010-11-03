@@ -71,10 +71,12 @@ static void defaultError(registers_t* r)
 
 static void invalidOpcode(registers_t* r)
 {
-    printf("\nInvalid Opcode err_code: %u address(eip): %X", r->err_code, r->eip);
-    /*printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+    printf("\nInvalid Opcode err_code: %u address(eip): %X instruction: %y\n", r->err_code, r->eip, *(uint8_t*)FP_TO_LINEAR(r->cs, r->eip));
+    printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
     printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-    printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);*/
+    printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+
+    quitTask();
 }
 
 static void NM(registers_t* r) // -> FPU
@@ -122,7 +124,7 @@ static void GPF(registers_t* r) // -> VM86
         else
         {
             textColor(0x0C);
-            printf("\nvm86: sensitive opcode error)\n");
+            printf("\nvm86: sensitive opcode error\n");
         }
     }
     else

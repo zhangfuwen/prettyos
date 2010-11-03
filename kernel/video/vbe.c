@@ -22,8 +22,8 @@ position_t curPos = {0, 0};
 uint8_t paletteBitsPerColor = 0;
 
 // vm86
-extern uintptr_t vm86_com_start;
-extern uintptr_t vm86_com_end;
+extern uintptr_t vidswtch_com_start;
+extern uintptr_t vidswtch_com_end;
 
 // bmp
 extern BMPInfo_t bmp_start;
@@ -642,7 +642,7 @@ void vbe_bootscreen()
         return;
     }
 
-    memcpy((void*)0x100, &vm86_com_start, (uintptr_t)&vm86_com_end - (uintptr_t)&vm86_com_start);
+    memcpy((void*)0x100, &vidswtch_com_start, (uintptr_t)&vidswtch_com_end - (uintptr_t)&vidswtch_com_start);
 
     bh_get = (BitmapHeader_t*)&bmp_start;
 

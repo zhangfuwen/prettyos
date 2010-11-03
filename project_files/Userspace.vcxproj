@@ -41,6 +41,7 @@
     <None Include="..\user\user_tools\user.ld">
       <FileType>Document</FileType>
     </None>
+    <None Include="..\user\vm86\apm.asm" />
     <None Include="..\user\vm86\vidswtch.asm">
       <FileType>Document</FileType>
     </None>

@@ -241,6 +241,14 @@ EVALUATION: // evaluation of entry
         {
             systemControl(REBOOT);
         }
+        else if(strcmp(entry, "standby") == 0)
+        {
+            systemControl(STANDBY);
+        }
+        else if(strcmp(entry, "shutdown") == 0)
+        {
+            systemControl(SHUTDOWN);
+        }
         else
         {
             puts("file is being searched...");

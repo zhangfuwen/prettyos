@@ -72,7 +72,7 @@ typedef enum
 
 typedef enum
 {
-    SHUTDOWN, REBOOT
+    STANDBY, SHUTDOWN, REBOOT
 } SYSTEM_CONTROL;
 
 typedef struct {

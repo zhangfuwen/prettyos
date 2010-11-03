@@ -318,6 +318,9 @@
     <ClInclude Include="..\kernel\audio\sys_speaker.h">
       <Filter>Kernel\include\audio</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\power_management.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -514,6 +517,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\audio\sys_speaker.c">
       <Filter>Kernel\sources\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\power_management.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

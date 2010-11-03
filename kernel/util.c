@@ -7,6 +7,7 @@
 #include "audio/sys_speaker.h"
 #include "video/console.h"
 #include "timer.h"
+#include "power_management.h"
 
 const int32_t INT_MAX = 2147483647;
 
@@ -581,27 +582,21 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
 
 /**********************************************************************/
 
-void systemControl(SYSTEM_CONTROL todo)
+void systemControl(SYSTEM_CONTROL todo) // TODO: Improve it.
 {
     switch(todo)
     {
-        case REBOOT:
-        {
-            int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
-            do //flush the keyboard controller
-            {
-               temp = inportb(0x64);
-               if (temp & 1)
-                 inportb(0x60);
-            }
-            while (temp & 2);
-
-            // Reboot
-            outportb(0x64, 0xFE);
+        case STANDBY:
+            if(!pm_action(PM_STANDBY))
+                puts("Standby failed");
             break;
-        }
+        case REBOOT:
+            if(!pm_action(PM_REBOOT))
+                puts("Rebooting failed");
+            break;
         case SHUTDOWN:
-            puts("Shutdown not yet implemented.");
+            if(!pm_action(PM_SOFTOFF))
+                puts("Shutdown failed");
             break;
     }
 }

@@ -7,11 +7,16 @@ _file_data_end:
 ; --------------------- data for ramdisk ---------------------------------------
 
 ; --------------------- VM86 ---------------------------------------------------
-global _vm86_com_start
-global _vm86_com_end
-_vm86_com_start:
+global _vidswtch_com_start
+global _vidswtch_com_end
+global _apm_com_start
+global _apm_com_end
+_vidswtch_com_start:
 incbin "user/vm86/VIDSWTCH.COM"
-_vm86_com_end:
+_vidswtch_com_end:
+_apm_com_start:
+incbin "user/vm86/APM.COM"
+_apm_com_end:
 ; --------------------- VM86 ---------------------------------------------------
 
 ;---------------------- bmp ----------------------------------------------------

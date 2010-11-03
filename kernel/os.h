@@ -17,7 +17,7 @@
 /// #define _VM_DIAGNOSIS_         // Provides information about the vm86 task, but critical
 /// #define _SERIAL_LOG_           // Enables Log information over the COM-Ports
 /// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
-/// #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen. Disabled per default.
+#define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen. Disabled per default.
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 
 /// #define KEYMAP_US     // US keyboard

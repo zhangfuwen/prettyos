@@ -1,24 +1,26 @@
 [Bits 32]
 
-extern _main     ; entry point in ckernel.c
+jmp KernelStart
 
+; http://www.lowlevel.eu/wiki/Multiboot
 GRUB_FLAGS           equ 10b                               ; Flags for GRUB header
 GRUB_MAGIC_NUMBER    equ 0x1BADB002                        ; Magic number for GRUB header
 GRUB_HEADER_CHECKSUM equ -(GRUB_MAGIC_NUMBER + GRUB_FLAGS) ; Checksum for GRUB header
 
 align 4
-MultiBootHeader:            ; This is a "multiboot" header for GRUB, this structure must be first (?)
+MultiBootHeader:            ; This is the "multiboot" header for GRUB
     dd GRUB_MAGIC_NUMBER
     dd GRUB_FLAGS
     dd GRUB_HEADER_CHECKSUM
 
-; This is an entry point for GRUB
+
 KernelStart:
     mov esp, 0x190000
 
-    push ebx     ; EBX contains address of the "multiboot" structure
+    push ebx     ; EBX points to the multiboot structure created by the bootloader and containing e.g. the address of the memory map
 
-    call _main   ; --> C-Kernel
+    extern _main ; entry point in ckernel.c
+    call   _main
 
     cli
     hlt

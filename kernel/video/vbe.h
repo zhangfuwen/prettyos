@@ -7,7 +7,7 @@
 // http://www.petesqbsite.com/sections/tutorials/tuts/vbe3.pdf
 // http://poli.cs.vsb.cz/misc/rbint/text/1005.html
 
-// This values are hardcoded adresses from vidswtch.map
+// This values are hardcoded adresses from documentation/vidswtch.map
 #define VM86_SETDISPLAYSTART   ((void*)0x100)
 #define VM86_GETDISPLAYSTART   ((void*)0x113)
 #define VM86_SET8BITPALETTE    ((void*)0x128)

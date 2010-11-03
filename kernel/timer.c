@@ -56,7 +56,7 @@ void sleepMilliSeconds(uint32_t ms)
 void timer_setFrequency(uint32_t freq)
 {
     systemfrequency = freq;
-    uint16_t divisor = 1193180 / systemfrequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
+    uint16_t divisor = 1193182 / systemfrequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
 
     // Send the command byte
     // outportb(0x43, 0x36); // 0x36 -> Mode 3 : Square Wave Generator
