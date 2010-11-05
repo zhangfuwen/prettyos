@@ -1,7 +1,7 @@
 [map symbols documentation/apm.map] ; use this for ckernel.c addresses
 [bits 16]
 
-org 0x500
+org 0x200
 
 ConnectAPM:
 	; Disconnect first
@@ -9,10 +9,14 @@ ConnectAPM:
 	mov al, 0x04
 	xor bx, bx
 	int 0x15
+	jc .error1
+	.error1:
 
 	; Connect now
 	mov al, 0x01
 	int 0x15
+	jc .error2
+	.error2:
 	ret
 
 ActivateAPM:
@@ -21,6 +25,8 @@ ActivateAPM:
 	mov bx, 1
 	mov cx, 1
 	int 0x15
+	jc .error
+	.error:
 	ret
 
 

@@ -91,9 +91,6 @@
     <None Include="..\stage2_bootloader\Fat12.inc">
       <Filter>Bootloader\Stage 2</Filter>
     </None>
-    <None Include="..\stage2_bootloader\Fat12_BPB.inc">
-      <Filter>Bootloader\Stage 2</Filter>
-    </None>
     <None Include="..\stage2_bootloader\gdt.inc">
       <Filter>Bootloader\Stage 2</Filter>
     </None>

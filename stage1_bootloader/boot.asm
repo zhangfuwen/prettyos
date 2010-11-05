@@ -30,7 +30,7 @@ entry_point:
                                        ; (known ss, but unknown sp)
     xor     sp, sp                     ; interrupts are disabled here
 
-    mov  [bootdevice], dl              ; store boot device
+    mov [bootdevice], dl               ; store boot device
     mov si, msgLoading
     call print_string
 

@@ -3,14 +3,22 @@
 
 [BITS 16]
 
-%include "Fat12_BPB.inc"
-
 datasector  dw 0x0000
 cluster     dw 0x0000
 
 Sector      db 0x00
 Head        db 0x00
 Cylinder    db 0x00
+
+BytesPerSec  dw 512
+SecPerClus   db 1
+ReservedSec  dw 1
+NumFATs      db 2
+RootEntries  dw 224
+FATSize      dw 9
+SecPerTrack  dw 18
+NumHeads     dw 2
+DriveNum     db 0
 
 ;******************************************************************************
 ; Convert CHS to LBA

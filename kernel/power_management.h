@@ -4,16 +4,16 @@
 #include "os.h"
 
 typedef enum {
-	PM_NO, PM_APM, PM_ACPI, _PM_SYSTEMS_END
+    PM_NO, PM_APM, PM_ACPI, _PM_SYSTEMS_END
 } PM_SYSTEMS;
 
 typedef enum {
-	PM_STANDBY, PM_SOFTOFF, PM_REBOOT, _PM_STATES_END
+    PM_STANDBY, PM_SOFTOFF, PM_REBOOT, _PM_STATES_END
 } PM_STATES;
 
 typedef struct {
-	bool supported;            // Indicates wheter this power management system is supported or not.
-	bool (*action)(PM_STATES); // Executed when trying to enter to another powermanagemt state
+    bool supported;            // Indicates wheter this power management system is supported or not.
+    bool (*action)(PM_STATES); // Executed when trying to enter to another powermanagemt state
 
 } PM_SYSTEM_t;
 

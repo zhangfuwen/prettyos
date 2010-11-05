@@ -66,9 +66,6 @@ clean.bat</NMakeCleanCommandLine>
     <None Include="..\stage2_bootloader\Fat12.inc">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\stage2_bootloader\Fat12_BPB.inc">
-      <FileType>Document</FileType>
-    </None>
     <None Include="..\stage2_bootloader\gdt.inc">
       <FileType>Document</FileType>
     </None>

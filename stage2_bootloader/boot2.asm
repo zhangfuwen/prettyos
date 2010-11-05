@@ -23,7 +23,6 @@ jmp entry_point
 %include "GetMemoryMap.inc"       ; INT 0x15, eax = 0xE820
 
 %define IMAGE_PMODE_BASE 0x100000 ; final kernel location in Protected Mode
-;%define IMAGE_RMODE_BASE 0x3000   ; intermediate kernel location in Real Mode
 
 ImageName     db "KERNEL  BIN"
 ImageSize     dd 0
