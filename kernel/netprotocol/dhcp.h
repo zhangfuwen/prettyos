@@ -60,21 +60,21 @@
 
 typedef struct dhcp
 {
-    uint8_t op;         // DHCP_BOOTREQEUST or DHCP_BOOTREPLY
-    uint8_t htype;      // DHCP_HTYPE10MB
-    uint8_t hlen;       // DHCP_HLENETHERNET
-    uint8_t hops;       // DHCP_HOPS
+    uint8_t  op;        // DHCP_BOOTREQEUST or DHCP_BOOTREPLY
+    uint8_t  htype;     // DHCP_HTYPE10MB
+    uint8_t  hlen;      // DHCP_HLENETHERNET
+    uint8_t  hops;      // DHCP_HOPS
     uint32_t xid;       // DHCP_XID
     uint16_t secs;      // DHCP_SECS
     uint16_t flags;     // DHCP_FLAGSBROADCAST
-    uint8_t ciaddr[4];
-    uint8_t yiaddr[4];
-    uint8_t siaddr[4];
-    uint8_t giaddr[4];
-    uint8_t chaddr[16];
-    uint8_t sname[64];
-    uint8_t file[128];
-    uint8_t OPT[312];
+    uint8_t  ciaddr[4];
+    uint8_t  yiaddr[4];
+    uint8_t  siaddr[4];
+    uint8_t  giaddr[4];
+    uint8_t  chaddr[16];
+    char     sname[64];
+    char     file[128];
+    uint8_t  options[312];
 } __attribute__((packed)) dhcp_t;
 
 /*
