@@ -9,6 +9,7 @@
 #include "paging.h"
 #include "font.h"
 #include "timer.h"
+#include "gui_window.h"
 
 ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
@@ -631,6 +632,17 @@ void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos)
     curPos.y = ypos;
     for (; *text; vbe_drawChar(*text), ++text);
 }
+void vbe_clearScreen()
+{
+	BGRA_t color = { 0, 0, 0, 0 };
+	for(int y = 0; y < mib.YResolution; y++)
+	{
+		for(int x = 0; x < mib.XResolution; x++)
+		{
+			vbe_setPixel(x, y, color);
+		}
+	}
+}
 
 void vbe_bootscreen()
 {
@@ -682,7 +694,8 @@ void vbe_bootscreen()
 
     uint32_t displayStart = getDisplayStart();
     printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", displayStart >> 16, displayStart & 0xFFFF);
-
+	init_window_manager();
+	
     uint16_t radius = mib.YResolution/2;
     for(uint16_t i = 0; i < radius; i++)
     {
@@ -709,7 +722,20 @@ void vbe_bootscreen()
     waitForKeyStroke();
 
     vbe_drawScaledBitmap(mib.XResolution, mib.YResolution, &bmp_start);
+	
+	vbe_clearScreen();
+	waitForKeyStroke();
+	
+	CreateWindow("Window 1", 10, 10, 300, 200, 0);
+	waitForKeyStroke();
 
+	DestroyWindow(0);
+	waitForKeyStroke();
+	
+	CreateWindow("Window 2", 400, 10, 300, 200, 0);
+	waitForKeyStroke();
+	
+	CreateWindow("Window 3", 10, 400, 300, 200, 0);
     waitForKeyStroke();
 
     switchToTextmode();
