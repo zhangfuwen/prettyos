@@ -90,7 +90,7 @@ int puts(const char* str)
     {
         putchar(str[i]);
     }
-	return(0);
+    return(0);
 }
 
 int vprintf(const char* format, va_list arg)
@@ -147,7 +147,7 @@ int vprintf(const char* format, va_list arg)
             break;
         }
     }
-	return(0); // HACK
+    return(0); // HACK
 }
 
 int printf(const char* format, ...)
@@ -156,7 +156,7 @@ int printf(const char* format, ...)
     va_start(arg, format);
     vprintf(format, arg);
     va_end(arg);
-	return(0); // HACK
+    return(0); // HACK
 }
 
 
@@ -228,7 +228,7 @@ int vsprintf(char* dest, const char* format, va_list arg)
         pos++;
         dest[pos] = '\0';
     }
-	return(0); // HACK
+    return(0); // HACK
 }
 
 int sprintf(char* dest, const char* format, ...)
@@ -237,7 +237,7 @@ int sprintf(char* dest, const char* format, ...)
     va_start(arg, format);
     vsprintf(dest, format, arg);
     va_end(arg);
-	return(0); // HACK
+    return(0); // HACK
 }
 
 int sscanf(const char* src, const char* format, ...); /// TODO

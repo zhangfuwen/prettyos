@@ -31,11 +31,8 @@ rebuild.bat</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cd ..
 clean.bat</NMakeCleanCommandLine>
     <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../kernel;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
-    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
-    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../kernel;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <BuildLog>
@@ -142,6 +139,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\util.h" />
     <ClInclude Include="..\kernel\video\console.h" />
     <ClInclude Include="..\kernel\video\font.h" />
+    <ClInclude Include="..\kernel\video\gui_window.h" />
     <ClInclude Include="..\kernel\video\vbe.h" />
     <ClInclude Include="..\kernel\video\video.h" />
     <ClInclude Include="..\kernel\vm86.h" />
@@ -210,6 +208,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\todo_list.c" />
     <ClCompile Include="..\kernel\util.c" />
     <ClCompile Include="..\kernel\video\console.c" />
+    <ClCompile Include="..\kernel\video\gui_window.c" />
     <ClCompile Include="..\kernel\video\vbe.c" />
     <ClCompile Include="..\kernel\video\video.c" />
     <ClCompile Include="..\kernel\vm86.c" />

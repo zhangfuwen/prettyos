@@ -16,6 +16,7 @@ void install_USB_HostController(pciDev_t* PCIdev)
         case 0x00: printf("UHCI ");   break;
         case 0x10: printf("OHCI ");   break;
         case 0x20: printf("EHCI ");   break;
+        case 0x30: printf("xHCI ");   break;
         case 0x80: printf("no HCI "); break;
         case 0xFE: printf("any ");    break;
     }

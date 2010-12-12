@@ -318,6 +318,9 @@
     <ClInclude Include="..\kernel\power_management.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\video\gui_window.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -517,6 +520,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\power_management.c">
       <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\gui_window.c">
+      <Filter>Kernel\sources\video</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

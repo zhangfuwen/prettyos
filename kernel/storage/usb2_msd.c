@@ -30,7 +30,7 @@ int32_t  numberTries = 10; // repeats for IN-Transfer
 
 uint32_t usbMSDVolumeMaxLBA;
 
-extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
+extern usb2_Device_t usbDevices[16]; // ports 1-16
 
 
 // Bulk-Only Mass Storage get maximum number of Logical Units
@@ -38,7 +38,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 {
     #ifdef _USB_DIAGNOSIS_
     textColor(0x0B);
-    printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %u interface: %u", device, numInterface);
+    printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %u interface: %u", device+1, numInterface);
     textColor(0x0F);
     #endif
 
@@ -56,7 +56,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     // 10100001b     11111110b 0000h  Interface 0001h     1 byte
 
     // Create QH
-    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device, 0, 64); // endpoint 0
+    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
 
@@ -75,7 +75,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 {
     #ifdef _USB_DIAGNOSIS_
     textColor(0x0B);
-    printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %u interface: %u", device, numInterface);
+    printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %u interface: %u", device+1, numInterface);
     textColor(0x0F);
     #endif
 
@@ -91,7 +91,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     // 00100001b     11111111b 0000h  Interface 0000h     none
 
     // Create QH
-    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device, 0, 64); // endpoint 0
+    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
     performAsyncScheduler(true, false, 0);
 
@@ -337,12 +337,10 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
-  #endif
 
     // OUT qTD
     // No handshake!
 
-  #ifdef _USB_DIAGNOSIS_
      textColor(0x03);
      printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
      textColor(0x0F);
@@ -367,7 +365,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     }
 
     // QH Out with command qTD
-    createQH(QH_Out, paging_getPhysAddr(QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
+    createQH(QH_Out, paging_getPhysAddr(QH_Out), cmdQTD,  1, device+1, endpointOut, 512); // endpoint OUT for MSD
 
     // Bulk Transfer to endpoint OUT
     performAsyncScheduler(true, true, 0);
@@ -431,7 +429,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
 
     // QH IN with data and status qTD
-    createQH(QH_In, paging_getPhysAddr(QH_In), QTD_In, 1, device, endpointIn, 512); // endpoint IN for MSD
+    createQH(QH_In, paging_getPhysAddr(QH_In), QTD_In, 1, device+1, endpointIn, 512); // endpoint IN for MSD
 
 labelTransferIN: /// TEST
 
@@ -482,12 +480,10 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
 
   #ifdef _USB_DIAGNOSIS_
     printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
-  #endif
 
     // OUT qTD
     // No handshake!
 
-  #ifdef _USB_DIAGNOSIS_
      textColor(0x03);
      printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
      textColor(0x0F);
@@ -519,7 +515,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
   #endif
 
     // QH Out with command qTD and data out qTD
-    createQH(QH_Out, paging_getPhysAddr(QH_Out), cmdQTD,  1, device, endpointOut, 512); // endpoint OUT for MSD
+    createQH(QH_Out, paging_getPhysAddr(QH_Out), cmdQTD,  1, device+1, endpointOut, 512); // endpoint OUT for MSD
 
     // Bulk Transfer to endpoint OUT
     performAsyncScheduler(true, true, TransferLength/200);
@@ -559,7 +555,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
   #endif
 
     // QH IN with status qTD only
-    createQH(QH_In, paging_getPhysAddr(QH_In), StatusQTD, 1, device, endpointIn, 512); // endpoint IN for MSD
+    createQH(QH_In, paging_getPhysAddr(QH_In), StatusQTD, 1, device+1, endpointIn, 512); // endpoint IN for MSD
     performAsyncScheduler(true, true, 0);
     checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer);
 

@@ -141,17 +141,16 @@ static void syscall_handler(registers_t* r)
     // We don't know how many parameters the function wants.
     // Therefore, we push them all onto the stack in the correct order.
     // The function will use the number of parameters it wants.
-    int32_t ret;
-    __asm__ volatile (" \
-      push %1; \
+    __asm__ volatile (
+     "push %1; \
       push %2; \
       push %3; \
       push %4; \
       push %5; \
       call *%6; \
-      add $20, %%esp; \
-    " : "=a" (ret) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (addr));
-    r->eax = ret;
+      add $20, %%esp;"
+       : "=a" (r->eax) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (addr)); /*Ruinieren wir uns hier nicht den Stack? (Endloses Wachstum)*/
+
     currentConsole = kernelTask.console;
 }
 

@@ -21,7 +21,11 @@ bool EHCIflag = false; // signals that one EHCI device was found /// TODO: manag
 bool USBINTflag;       // signals STS_USBINT reset by EHCI handler
 
 uint8_t numPorts; // maximum
-port_t  port[17]; // device manager
+
+// Device Manager
+static disk_t      usbDev[16];
+static partition_t usbDevVolume[16];
+static port_t      port[16];
 
 uintptr_t eecp;
 
@@ -31,11 +35,8 @@ bool enabledPortFlag; // port enabled
 pciDev_t* PCIdevice = 0; // pci device
 
 // usb devices list
-extern usb2_Device_t usbDevices[17]; // ports 1-16 // 0 not used
+extern usb2_Device_t usbDevices[16]; // ports 1-16
 
-// Device Manager
-disk_t      usbDev[17];
-partition_t usbDevVolume[17];
 
 
 void ehci_install(pciDev_t* PCIdev, uint32_t i)
@@ -122,7 +123,7 @@ int32_t initEHCIHostController()
         uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
         printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
 
-        while (BYTE2(nextCapability)) // pointer != 0
+        while (BYTE2(nextCapability)) // pointer to next capability != 0
         {
             nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
             printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
@@ -355,14 +356,14 @@ void enablePorts()
          resetPort(j);
          enabledPortFlag = true;
 
-         port[j+1].type = &USB; // device manager
-         port[j+1].data = (void*)(j+1);
+         port[j].type = &USB; // device manager
+         port[j].data = (void*)(j+1);
          char name[14],portNum[3];
          strcpy(name,"EHCI-Port ");
          itoa(j+1,portNum);
          strcat(name,portNum);
-         strncpy(port[j+1].name,name,14);
-         attachPort(&port[j+1]);
+         strncpy(port[j].name,name,14);
+         attachPort(&port[j]);
 
          if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
          {
@@ -550,8 +551,8 @@ void showPORTSC()
                 writeInfo(0, "Port: %u, device not attached", j+1);
 
                 // Device Manager
-                removeDisk(&usbDev[j+1]);
-                port[j+1].insertedDisk = 0;
+                removeDisk(&usbDev[j]);
+                port[j].insertedDisk = 0;
 
                 showPortList();
                 showDiskList();
@@ -583,22 +584,22 @@ void checkPortLineStatus(uint8_t j)
                  }
             }
         }
+        textColor(0x0E);
+        switch ((pOpRegs->PORTSC[j]>>10)&3)
+        {
+            case 1:
+                printf("K-State");
+                break;
+            case 2:
+                printf("J-state");
+                break;
+            default:
+                textColor(0x0C);
+                printf("undefined");
+                break;
+        }
+        textColor(0x0F);
     }
-    textColor(0x0E);
-    switch ((pOpRegs->PORTSC[j]>>10)&3)
-    {
-        case 1:
-            printf("K-State");
-            break;
-        case 2:
-            printf("J-state");
-            break;
-        default:
-            textColor(0x0C);
-            printf("undefined");
-            break;
-    }
-    textColor(0x0F);
 }
 
 
@@ -678,24 +679,24 @@ void setupUSBDevice(uint8_t portNumber)
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         // Partition
-        usbDevVolume[portNumber+1].buffer = malloc(512,0,"usbDevVol-buffer");
-        usbDevVolume[portNumber+1].disk = &usbDev[portNumber+1];
-        usbDevVolume[portNumber+1].data = 0;
+        usbDevVolume[portNumber].buffer = malloc(512,0,"usbDevVol-buffer");
+        usbDevVolume[portNumber].disk = &usbDev[portNumber];
+        usbDevVolume[portNumber].data = 0;
 
         //HACK
-        usbDevVolume[portNumber+1].serial = malloc(13, 0,"usbDevVol-serial");
-        usbDevVolume[portNumber+1].serial[12] = 0;
-        strncpy(usbDevVolume[portNumber+1].serial, usbDevices[devAddr].serialNumber, 12);
+        usbDevVolume[portNumber].serial = malloc(13, 0,"usbDevVol-serial");
+        usbDevVolume[portNumber].serial[12] = 0;
+        strncpy(usbDevVolume[portNumber].serial, usbDevices[devAddr].serialNumber, 12);
 
         // Disk
-        usbDev[portNumber+1].type         = &USB_MSD;
-        usbDev[portNumber+1].partition[0] = &usbDevVolume[portNumber+1];
-        usbDev[portNumber+1].data         = (void*)&usbDevices[devAddr];
-        strcpy(usbDev[portNumber+1].name, usbDevices[devAddr].productName);
-        attachDisk(&usbDev[portNumber+1]);
+        usbDev[portNumber].type         = &USB_MSD;
+        usbDev[portNumber].partition[0] = &usbDevVolume[portNumber];
+        usbDev[portNumber].data         = (void*)&usbDevices[devAddr];
+        strcpy(usbDev[portNumber].name, usbDevices[devAddr].productName);
+        attachDisk(&usbDev[portNumber]);
 
         // Port
-        port[portNumber+1].insertedDisk = &usbDev[portNumber+1];
+        port[portNumber].insertedDisk = &usbDev[portNumber];
 
         showPortList(); // TEST
         showDiskList(); // TEST
@@ -706,7 +707,7 @@ void setupUSBDevice(uint8_t portNumber)
         // device, interface, endpoints
         textColor(0x07);
         printf("\n\nMSD test now with device: %u  interface: %u  endpOUT: %u  endpIN: %u\n",
-                                                devAddr, usbDevices[devAddr].numInterfaceMSD,
+                                                devAddr+1, usbDevices[devAddr].numInterfaceMSD,
                                                 usbDevices[devAddr].numEndpointOutMSD,
                                                 usbDevices[devAddr].numEndpointInMSD);
         textColor(0x0F);

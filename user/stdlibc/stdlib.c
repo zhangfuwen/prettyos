@@ -17,7 +17,7 @@ int atexit(void (*func)()); /// TODO
 int abs(int n); // -> math.c
 long labs(long n)
 {
-	return(abs(n)); // HACK?
+    return(abs(n)); // HACK?
 }
 
 
@@ -55,7 +55,7 @@ int atoi(const char* s)
 
 long atol(const char* s)
 {
-	return(atoi(s)); // HACK?
+    return(atoi(s)); // HACK?
 }
 
 float atof(const char* s) // TODO: Should return double
@@ -152,22 +152,22 @@ void* malloc(size_t size)
 
 void* calloc(size_t num, size_t size)
 {
-	void* ptr = malloc(num*size);
-	memset(ptr, 0, num*size);
-	return(ptr);
+    void* ptr = malloc(num*size);
+    memset(ptr, 0, num*size);
+    return(ptr);
 }
 
-void* realloc(void* ptr, size_t size); /// TODO
+void* realloc(void* ptr, size_t size); /// TODO (Impossible with placement)
 
 void free(void* ptr)
 {
-	// We do placement allocation at the moment -> Nothing to do.
+    // We do placement allocation at the moment -> Nothing to do.
 }
 
 
 
 char* getenv(const char* name)
 {
-	return(0); // We do not support any environment variables at the moment
+    return(0); // We do not support any environment variables at the moment
 }
 int system(const char* command); /// TODO
