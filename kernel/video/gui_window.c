@@ -74,23 +74,13 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
     window.data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
 
     // Fill
-    vbe_drawRectFilled(window.x, 10, window.width, window.height, WINDOW_COLOUR_BACKGROUND);
+    vbe_drawRectFilled(window.x, window.y+10, window.x+window.width, window.y+window.height, WINDOW_COLOUR_BACKGROUND);
 
     // Topbar
-    vbe_drawRectFilled(window.x, window.y, window.width, 10, WINDOW_COLOUR_TOPBAR);
+    vbe_drawRectFilled(window.x, window.y, window.x+window.width, 10, WINDOW_COLOUR_TOPBAR);
 
     // Border
-    for(uint16_t i=x; i<=window.width; i++)
-    {
-        vbe_setPixel(i, window.y, WINDOW_COLOUR_BORDER); // top
-        vbe_setPixel(i, window.height, WINDOW_COLOUR_BORDER); // bottom
-    }
-
-    for(uint16_t i=y; i<=window.height; i++)
-    {
-        vbe_setPixel(x, i, WINDOW_COLOUR_BORDER); // left
-        vbe_setPixel(window.width, i, WINDOW_COLOUR_BORDER); // right
-    }
+    vbe_drawRect(window.x, window.y, window.x+window.width, window.y+window.height, WINDOW_COLOUR_BORDER);
 
     // Title
     vbe_drawString(windowname, window.x, window.y);

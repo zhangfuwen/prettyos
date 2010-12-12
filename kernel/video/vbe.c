@@ -369,13 +369,13 @@ void vbe_drawRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, 
 
     for(uint32_t i=left; i<=right; i++)
     {
-        vbe_setPixel(top, i, color);
-        vbe_setPixel(bottom, i, color);
+        vbe_setPixel(i, top, color);
+        vbe_setPixel(i, bottom, color);
     }
     for(uint32_t i=top; i<=bottom; i++)
     {
-        vbe_setPixel(i, left, color);
-        vbe_setPixel(i, right, color);
+        vbe_setPixel(left, i, color);
+        vbe_setPixel(right, i, color);
     }
 }
 

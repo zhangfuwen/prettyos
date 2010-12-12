@@ -334,7 +334,7 @@ partition_t* getPartition(const char* path)
 
 FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests only
 {
-    char     volume_serialNumber[4];
+    char volume_serialNumber[4];
 
     struct boot_sector* sec0 = (struct boot_sector*)buffer;
 
