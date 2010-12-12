@@ -11,8 +11,8 @@ uint32_t* double_buffer;
 BGRA_t WINDOW_COLOUR = {2, 255, 57, 0};
 BGRA_t WINDOW_COLOUR_BACKGROUND = {191, 227, 197, 0};
 BGRA_t WINDOW_COLOUR_BORDER = { 2, 125, 57, 0};
-BGRA_t WINDOW_COLOUR_TOPBAR = {44, 95, 131, 0x00};
-BGRA_t WINDOW_COLOUR_FOCUS_TOPBAR = {127, 255, 0, 0x00};
+BGRA_t WINDOW_COLOUR_TOPBAR = {253, 100, 100, 0};
+BGRA_t WINDOW_COLOUR_FOCUS_TOPBAR = {127, 255, 0, 0};
 
 #define MAX_WINDOWS 256
 
@@ -74,16 +74,16 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
     window.data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
 
     // Fill
-    vbe_drawRectFilled(window.x, window.y+10, window.x+window.width, window.y+window.height, WINDOW_COLOUR_BACKGROUND);
+    vbe_drawRectFilled(window.x, window.y+20, window.x+window.width, window.y+window.height, WINDOW_COLOUR_BACKGROUND);
 
     // Topbar
-    vbe_drawRectFilled(window.x, window.y, window.x+window.width, 10, WINDOW_COLOUR_TOPBAR);
+    vbe_drawRectFilled(window.x, window.y, window.x+window.width, window.y+20, WINDOW_COLOUR_TOPBAR);
 
     // Border
     vbe_drawRect(window.x, window.y, window.x+window.width, window.y+window.height, WINDOW_COLOUR_BORDER);
 
     // Title
-    vbe_drawString(windowname, window.x, window.y);
+    vbe_drawString(windowname, window.x+1, window.y+1);
 
     // refresh_screen();
 

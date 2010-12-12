@@ -722,15 +722,15 @@ void vbe_bootscreen()
     waitForKeyStroke();
 
     vbe_drawScaledBitmap(mib.XResolution, mib.YResolution, &bmp_start);
-
-    vbe_clearScreen();
-    waitForKeyStroke();
+	waitForKeyStroke();
+    
+	vbe_clearScreen();
 
     CreateWindow("Window 1", 10, 10, 300, 200, 0);
     waitForKeyStroke();
 
-    DestroyWindow(0);
-    waitForKeyStroke();
+    // DestroyWindow(0);
+    // waitForKeyStroke();
 
     CreateWindow("Window 2", 400, 10, 300, 200, 0);
     waitForKeyStroke();
@@ -738,6 +738,9 @@ void vbe_bootscreen()
     CreateWindow("Window 3", 10, 400, 300, 200, 0);
     waitForKeyStroke();
 
+	CreateWindow("Window 4", 400, 400, 300, 200, 0);
+    waitForKeyStroke();
+	
     switchToTextmode();
 }
 
