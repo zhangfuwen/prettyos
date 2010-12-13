@@ -4,6 +4,8 @@
 
 extern ModeInfoBlock_t mib;
 
+extern BMPInfo_t bmp_start;
+extern BMPInfo_t bmp_end;
 
 uint32_t* double_buffer;
 // extern u32int* double_buffer;
@@ -72,7 +74,7 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
     window.id = getnewwid();
 
     window.data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
-
+	
     // Fill
     vbe_drawRectFilled(window.x, window.y+20, window.x+window.width, window.y+window.height, WINDOW_COLOUR_BACKGROUND);
 
@@ -85,9 +87,29 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
     // Title
     vbe_drawString(windowname, window.x+1, window.y+1);
 
-    // refresh_screen();
+	// Data
+	vbe_drawBitmap(window.x, window.y+20, (BMPInfo_t*)window_list[0].data);
+	// vbe_drawBitmap(window.x, window.y+20, &bmp_start);
 
     // And set window focus
     current_window = window;
     window_list[window.id] = current_window;
+}
+
+void reDrawWindow(uint16_t id)
+{
+	// Fill
+    vbe_drawRectFilled(window_list[id].x, window_list[id].y+20, window_list[id].x+window_list[id].width, window_list[id].y+window_list[id].height, WINDOW_COLOUR_BACKGROUND);
+
+    // Topbar
+    vbe_drawRectFilled(window_list[id].x, window_list[id].y, window_list[id].x+window_list[id].width, window_list[id].y+20, WINDOW_COLOUR_TOPBAR);
+
+    // Border
+    vbe_drawRect(window_list[id].x, window_list[id].y, window_list[id].x+window_list[id].width, window_list[id].y+window_list[id].height, WINDOW_COLOUR_BORDER);
+
+    // Title
+    vbe_drawString(window_list[id].name, window_list[id].x+1, window_list[id].y+1);
+
+	// Data
+	vbe_drawBitmap(window_list[id].x, window_list[id].y+20, (BMPInfo_t*)window_list[0].data);
 }

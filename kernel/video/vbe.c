@@ -15,6 +15,9 @@ ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
 BitmapHeader_t  bh;
 
+extern window_t* window_list;
+extern window_t current_window;
+
 BitmapHeader_t* bh_get;
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
@@ -726,21 +729,25 @@ void vbe_bootscreen()
     
 	vbe_clearScreen();
 
-    CreateWindow("Window 1", 10, 10, 300, 200, 0);
-    waitForKeyStroke();
+	memcpy(window_list[0].data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
+	// memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
+    CreateWindow("Window 1", 10, 10, 340, 250, 0);
 
-    // DestroyWindow(0);
-    // waitForKeyStroke();
-
-    CreateWindow("Window 2", 400, 10, 300, 200, 0);
-    waitForKeyStroke();
-
-    CreateWindow("Window 3", 10, 400, 300, 200, 0);
-    waitForKeyStroke();
-
-	CreateWindow("Window 4", 400, 400, 300, 200, 0);
     waitForKeyStroke();
 	
+	// reDrawWindow(1);
+    // DestroyWindow(0);
+    // waitForKeyStroke();
+	
+    CreateWindow("Window 2", 400, 10, 340, 250, 0);
+    waitForKeyStroke();
+
+    CreateWindow("Window 3", 10, 300, 340, 250, 0);
+    waitForKeyStroke();
+
+	CreateWindow("Window 4", 400, 300, 340, 250, 0);
+    waitForKeyStroke();
+
     switchToTextmode();
 }
 
