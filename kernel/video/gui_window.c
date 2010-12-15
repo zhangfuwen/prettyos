@@ -6,6 +6,8 @@ extern ModeInfoBlock_t mib;
 
 extern BMPInfo_t bmp_start;
 extern BMPInfo_t bmp_end;
+extern BMPInfo_t cursor_start;
+extern BMPInfo_t cursor_end;
 
 uint32_t* double_buffer;
 // extern u32int* double_buffer;
@@ -61,7 +63,7 @@ void DestroyWindow(uint16_t id)
     window_list[id].parentid = 0;
 }
 
-void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t parent)
+void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t parentid)
 {
     static window_t window;
     window.name = windowname;
@@ -70,7 +72,7 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
     window.z = 1;
     window.width = width;
     window.height = height;
-    window.parentid = parent;
+    window.parentid = parentid;
     window.id = getnewwid();
 
     window.data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
@@ -88,7 +90,7 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
     vbe_drawString(windowname, window.x+1, window.y+1);
 
 	// Data
-	vbe_drawBitmap(window.x, window.y+20, (BMPInfo_t*)window_list[0].data);
+	// vbe_drawBitmap(window.x, window.y+20, (BMPInfo_t*)window_list[0].data);
 	// vbe_drawBitmap(window.x, window.y+20, &bmp_start);
 
     // And set window focus
@@ -111,5 +113,6 @@ void reDrawWindow(uint16_t id)
     vbe_drawString(window_list[id].name, window_list[id].x+1, window_list[id].y+1);
 
 	// Data
-	vbe_drawBitmap(window_list[id].x, window_list[id].y+20, (BMPInfo_t*)window_list[0].data);
+	vbe_drawBitmap(window_list[id].x, window_list[id].y+20, (BMPInfo_t*)window_list[id].data);
+	vbe_drawString("redraw", window_list[id].x+30, window_list[id].y+20);
 }

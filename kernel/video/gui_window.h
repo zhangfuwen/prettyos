@@ -7,20 +7,21 @@
 
 typedef struct
 {
-    char* name;
+    char *name;
     uint16_t id;
     uint16_t parentid;
     uint16_t x;
     uint16_t y;
     uint16_t width;
     uint16_t height;
-    uint32_t* data;
+	uintptr_t *data;
+    // uint32_t* data;
 	// void* data;
     uint16_t z;
 } __attribute__((packed)) window_t;
 
 void init_window_manager();
-void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t parent);
+void CreateWindow(char *windowname, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t parentid);
 void DestroyWindow(uint16_t id);
 void reDrawWindow(uint16_t id);
 

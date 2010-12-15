@@ -33,6 +33,10 @@ extern uintptr_t vidswtch_com_end;
 extern BMPInfo_t bmp_start;
 extern BMPInfo_t bmp_end;
 
+// cursor
+extern BMPInfo_t cursor_start;
+extern BMPInfo_t cursor_end;
+
 uint16_t BGRAtoBGR16(BGRA_t bgr)
 {
     uint16_t b = bgr.blue >> 3;
@@ -729,13 +733,16 @@ void vbe_bootscreen()
     
 	vbe_clearScreen();
 
-	memcpy(window_list[0].data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
+	
+	CreateWindow("Window 1", 10, 10, 340, 250, 0);
+	waitForKeyStroke();
+	
+	memcpy(window_list[1].data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
 	// memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
-    CreateWindow("Window 1", 10, 10, 340, 250, 0);
+
 
     waitForKeyStroke();
-	
-	// reDrawWindow(1);
+	reDrawWindow(1);
     // DestroyWindow(0);
     // waitForKeyStroke();
 	
@@ -748,6 +755,11 @@ void vbe_bootscreen()
 	CreateWindow("Window 4", 400, 300, 340, 250, 0);
     waitForKeyStroke();
 
+	memcpy(window_list[4].data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);	
+	waitForKeyStroke();
+	reDrawWindow(4);
+	waitForKeyStroke();
+	
     switchToTextmode();
 }
 
