@@ -10,6 +10,7 @@
 #include "font.h"
 #include "timer.h"
 #include "gui_window.h"
+#include "gui_button.h"
 
 ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
@@ -701,8 +702,10 @@ void vbe_bootscreen()
 
     uint32_t displayStart = getDisplayStart();
     printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", displayStart >> 16, displayStart & 0xFFFF);
+	
     init_window_manager();
-
+	button_t button = CreateButton(250, 220, 80, 20, "close");
+	
     uint16_t radius = mib.YResolution/2;
     for(uint16_t i = 0; i < radius; i++)
     {
@@ -733,16 +736,15 @@ void vbe_bootscreen()
     
 	vbe_clearScreen();
 
-	
 	CreateWindow("Window 1", 10, 10, 340, 250, 0);
 	waitForKeyStroke();
 	
 	memcpy(window_list[1].data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
 	// memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
 
-
     waitForKeyStroke();
 	reDrawWindow(1);
+	DrawButton(button);
     // DestroyWindow(0);
     // waitForKeyStroke();
 	
