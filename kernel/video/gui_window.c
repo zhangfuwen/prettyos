@@ -1,6 +1,6 @@
 /*
 *  license and disclaimer for the use of this source code as per statement below
-*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+*  Lizenz und Haftungsausschluss fÃ¼r die Verwendung dieses Sourcecodes siehe unten
 */
 
 #include "gui_window.h"
@@ -14,38 +14,35 @@ extern BMPInfo_t bmp_end;
 extern BMPInfo_t cursor_start;
 extern BMPInfo_t cursor_end;
 
-uint32_t* double_buffer;
+BGRA_t* double_buffer;
 // extern u32int* double_buffer;
 
-BGRA_t WINDOW_COLOUR = {2, 255, 57, 0};
-BGRA_t WINDOW_COLOUR_BACKGROUND = {191, 227, 197, 0};
-BGRA_t WINDOW_COLOUR_BORDER = { 2, 125, 57, 0};
-BGRA_t WINDOW_COLOUR_TOPBAR = {253, 100, 100, 0};
-BGRA_t WINDOW_COLOUR_FOCUS_TOPBAR = {127, 255, 0, 0};
+static const BGRA_t WINDOW_COLOUR = {2, 255, 57, 0};
+static const BGRA_t WINDOW_COLOUR_BACKGROUND = {191, 227, 197, 0};
+static const BGRA_t WINDOW_COLOUR_BORDER = { 2, 125, 57, 0};
+static const BGRA_t WINDOW_COLOUR_TOPBAR = {253, 100, 100, 0};
+static const BGRA_t WINDOW_COLOUR_FOCUS_TOPBAR = {127, 255, 0, 0};
 
-#define MAX_WINDOWS 256
-
-volatile window_t current_window;
-volatile window_t* window_list;
+static volatile window_t* current_window = 0;
+volatile window_t* window_list[MAX_WINDOWS];
 
 void init_window_manager()
 {
+    window_t* desktop = malloc(sizeof(window_t), 0, "desktop window");
     // We need to initialise the Desktop
-    static window_t window;
-    window.name = "Desktop";
-    window.x = 0;
-    window.y = 0;
-    window.z = 0;
-    window.width = mib.XResolution;
-    window.height = mib.YResolution;
-    window.parentid = 0;
-    window.id = HWND_DESKTOP;
-    window.data = double_buffer;
+    desktop->name = "Desktop";
+    desktop->x = 0;
+    desktop->y = 0;
+    desktop->z = 0;
+    desktop->width = mib.XResolution;
+    desktop->height = mib.YResolution;
+    desktop->parentid = 0;
+    desktop->id = HWND_DESKTOP;
+    desktop->data = double_buffer;
 
-    current_window = window;
+    window_list[desktop->id] = desktop;
 
-    window_list = (window_t*)malloc(sizeof(window_t)*MAX_WINDOWS, 0, "Window List");
-    window_list[window.id] = current_window;
+    current_window = desktop;
 }
 
 static uint16_t getnewwid()
@@ -57,69 +54,50 @@ static uint16_t getnewwid()
 
 void DestroyWindow(uint16_t id)
 {
-    window_list[id].data = 0; // free(window_list[id].data)
-    window_list[id].name = 0;
-    window_list[id].id = 0;
-    window_list[id].x = 0;
-    window_list[id].y = 0;
-    window_list[id].z = 0;
-    window_list[id].width = 0;
-    window_list[id].height = 0;
-    window_list[id].parentid = 0;
+    if(id != HWND_DESKTOP)
+        free(window_list[id]->data);
+    free((void*)window_list[id]);
+    window_list[id] = 0;
 }
 
 void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t parentid)
 {
-    static window_t window;
-    window.name = windowname;
-    window.x = x;
-    window.y = y;
-    window.z = 1;
-    window.width = width;
-    window.height = height;
-    window.parentid = parentid;
-    window.id = getnewwid();
+    window_t* window = malloc(sizeof(window_t), 0, "window");
+    window->name = windowname;
+    window->x = x;
+    window->y = y;
+    window->z = 1;
+    window->width = width;
+    window->height = height;
+    window->parentid = parentid;
+    window->id = getnewwid();
 
-    window.data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
-	
-    // Fill
-    vbe_drawRectFilled(window.x, window.y+20, window.x+window.width, window.y+window.height, WINDOW_COLOUR_BACKGROUND);
+    window->data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
 
-    // Topbar
-    vbe_drawRectFilled(window.x, window.y, window.x+window.width, window.y+20, WINDOW_COLOUR_TOPBAR);
-
-    // Border
-    vbe_drawRect(window.x, window.y, window.x+window.width, window.y+window.height, WINDOW_COLOUR_BORDER);
-
-    // Title
-    vbe_drawString(windowname, window.x+1, window.y+1);
-
-	// Data
-	// vbe_drawBitmap(window.x, window.y+20, (BMPInfo_t*)window_list[0].data);
-	// vbe_drawBitmap(window.x, window.y+20, &bmp_start);
+    reDrawWindow(window->id);
 
     // And set window focus
     current_window = window;
-    window_list[window.id] = current_window;
+    window_list[window->id] = window;
 }
 
 void reDrawWindow(uint16_t id)
 {
-	// Fill
-    vbe_drawRectFilled(window_list[id].x, window_list[id].y+20, window_list[id].x+window_list[id].width, window_list[id].y+window_list[id].height, WINDOW_COLOUR_BACKGROUND);
+    // Fill
+    vbe_drawRectFilled(window_list[id]->x, window_list[id]->y+20, window_list[id]->x+window_list[id]->width, window_list[id]->y+window_list[id]->height, WINDOW_COLOUR_BACKGROUND);
 
     // Topbar
-    vbe_drawRectFilled(window_list[id].x, window_list[id].y, window_list[id].x+window_list[id].width, window_list[id].y+20, WINDOW_COLOUR_TOPBAR);
+    vbe_drawRectFilled(window_list[id]->x, window_list[id]->y, window_list[id]->x+window_list[id]->width, window_list[id]->y+20, WINDOW_COLOUR_TOPBAR);
 
     // Border
-    vbe_drawRect(window_list[id].x, window_list[id].y, window_list[id].x+window_list[id].width, window_list[id].y+window_list[id].height, WINDOW_COLOUR_BORDER);
+    vbe_drawRect(window_list[id]->x, window_list[id]->y, window_list[id]->x+window_list[id]->width, window_list[id]->y+window_list[id]->height, WINDOW_COLOUR_BORDER);
 
     // Title
-    vbe_drawString(window_list[id].name, window_list[id].x+1, window_list[id].y+1);
+    vbe_drawString(window_list[id]->name, window_list[id]->x+2, window_list[id]->y+2);
 
-	// Data
-	vbe_drawBitmap(window_list[id].x, window_list[id].y+20, (BMPInfo_t*)window_list[id].data);
-	vbe_drawString("redraw", window_list[id].x+30, window_list[id].y+20);
+    // Data
+    vbe_drawBitmap(window_list[id]->x, window_list[id]->y+20, (BMPInfo_t*)window_list[id]->data);
+    vbe_drawString("redraw", window_list[id]->x+30, window_list[id]->y+20);
 }
 
 /*

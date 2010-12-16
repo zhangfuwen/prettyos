@@ -16,7 +16,7 @@ ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
 BitmapHeader_t  bh;
 
-extern window_t* window_list;
+extern volatile window_t* window_list[MAX_WINDOWS];
 extern window_t current_window;
 
 BitmapHeader_t* bh_get;
@@ -739,7 +739,7 @@ void vbe_bootscreen()
 	CreateWindow("Window 1", 10, 10, 340, 250, 0);
 	waitForKeyStroke();
 	
-	memcpy(window_list[1].data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
+	memcpy(window_list[1]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
 	// memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
 
     waitForKeyStroke();
@@ -757,7 +757,7 @@ void vbe_bootscreen()
 	CreateWindow("Window 4", 400, 300, 340, 250, 0);
     waitForKeyStroke();
 
-	memcpy(window_list[4].data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);	
+	memcpy(window_list[4]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);	
 	waitForKeyStroke();
 	reDrawWindow(4);
 	waitForKeyStroke();

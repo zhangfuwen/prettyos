@@ -4,6 +4,7 @@
 #include "vbe.h"
 
 #define HWND_DESKTOP 0
+#define MAX_WINDOWS 256
 
 typedef struct
 {
@@ -14,9 +15,7 @@ typedef struct
     uint16_t y;
     uint16_t width;
     uint16_t height;
-	uintptr_t *data;
-    // uint32_t* data;
-	// void* data;
+    BGRA_t* data;
     uint16_t z;
 } __attribute__((packed)) window_t;
 
