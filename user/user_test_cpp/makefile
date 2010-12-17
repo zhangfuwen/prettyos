@@ -27,7 +27,7 @@ STDLIBC=../stdlibc
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-GCCFLAGS= -c -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude -I $(STDLIBC)
+GCCFLAGS= -c -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude -I $(STDLIBC)
 LDFLAGS= -nostdlib --warn-common -nmagic
 
 # targets to build one asm or c-file to an object file

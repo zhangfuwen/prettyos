@@ -4,16 +4,16 @@ STARTUP(object_files/kernel/kernel.o)
 SECTIONS
 {
     . = 0x00100000;
-    __kernel_beg = .;
-    .text   : { __code_start = .;                        }
+    _kernel_beg = .;
+    .text   : { _code_start = .;                        }
     . = ALIGN(0x1000);
-    .text1  : { object_files/kernel/data.o(.text)        }
-    .data   : { __data_start = .;   *(.data)             }
-    .rodata : { __rodata_start = .; *(.rodata) *(.rdata) }
-    .bss    : { __bss_start = .;    *(.bss) *(COMMON)    }
-    __start_cdi_drivers = .;
-    .cdi    : { __cdi_start = .;    *(.cdi)              }
-    __stop_cdi_drivers = .;
-    __kernel_end = .;
-    __end = .;
+    .text1  : { object_files/kernel/data.o(.text)       }
+    .data   : { _data_start = .;   *(.data)             }
+    .rodata : { _rodata_start = .; *(.rodata) *(.rdata) }
+    .bss    : { _bss_start = .;    *(.bss) *(COMMON)    }
+    _start_cdi_drivers = .;
+    .cdi    : { _cdi_start = .;    *(.cdi)              }
+    _stop_cdi_drivers = .;
+    _kernel_end = .;
+    _end = .;
 }

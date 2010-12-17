@@ -1,11 +1,11 @@
 ; start.asm
 
 [BITS 32]
-extern _main
-extern _exit
+extern main
+extern exit
 global _start
 
 _start:
-    call _main
-    call _exit
+    call main
+    call exit
     jmp  $

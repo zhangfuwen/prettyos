@@ -57,13 +57,13 @@ SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(STDLIBC)/*.c $(USERTOOLS)/*.c
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -fleading-underscore -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-common -Iinclude
+CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -nostdlib --warn-common
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c
-	$(CC) $< $(GCCFLAGS) -I $(KERNELDIR) -I $(USERTOOLS) -I $(STDLIBC) -o $(OBJDIR)/$@
+	$(CC) $< $(CCFLAGS) -I $(KERNELDIR) -I $(USERTOOLS) -I $(STDLIBC) -o $(OBJDIR)/$@
 %.o: %.asm
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
 
@@ -115,6 +115,7 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\audio\*.o
 	$(RM) $(OBJDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(SHELLDIR)\*.o
+	$(RM) $(OBJDIR)\$(STDLIBC)\*.o
 	$(RM) $(SHELLDIR)\shell.elf
 	$(RM) $(KERNELDIR)\initrd.dat
 	$(RM) $(USERDIR)\vm86\VIDSWTCH.COM
@@ -133,6 +134,7 @@ else
 	$(RM) $(OBJDIR)/$(KERNELDIR)/audio/*.o
 	$(RM) $(OBJDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(SHELLDIR)/*.o
+	$(RM) $(OBJDIR)/$(STDLIBC)/*.o
 	$(RM) $(SHELLDIR)/shell.elf
 	$(RM) $(KERNELDIR)/initrd.dat
 	$(RM) $(USERDIR)/vm86/VIDSWTCH.COM

@@ -88,7 +88,7 @@ uint32_t alignDown(uint32_t val, uint32_t alignment);
 
 int32_t  power(int32_t base, int32_t n);
 float    sgn(float x);
-uint32_t abs(uint32_t arg);
+uint32_t abs(int32_t arg);
 double   fabs(double x);
 double   sqrt(double x);
 

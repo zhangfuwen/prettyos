@@ -28,8 +28,8 @@
 ;        "remap" the IRQs from 0-15 to 32-48.
 ;      * Perform the actual "load" operation.
 
-global _idt_install
-extern _irq_handler
+global idt_install
+extern irq_handler
 
 %define CONTEXT_SWITCH_CALL 126
 %define SYSCALL_NUMBER 127
@@ -84,9 +84,9 @@ ir_common_stub:
     mov gs, ax
 
     push esp          ; parameter of _irq_handler
-    call _irq_handler
-    global _irq_tail
-    _irq_tail:
+    call irq_handler
+    global irq_tail
+    irq_tail:
     mov esp, eax      ; return value: changed or unchanged esp
 
     pop gs
@@ -107,7 +107,7 @@ ir_common_stub:
 
 
 ; Setup and load the IDT
-_idt_install:
+idt_install:
     %macro DO_IDT_ENTRY 3
     mov ecx, _ir%1
     mov [_idt_table+(%1)*8+0], cx

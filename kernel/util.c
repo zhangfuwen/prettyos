@@ -979,7 +979,7 @@ float sgn(float x)
     return 0;
 }
 
-uint32_t abs(uint32_t arg)
+uint32_t abs(int32_t arg)
 {
     if (arg < 0)
         arg = -arg;

@@ -7,10 +7,6 @@
 #include "descriptor_tables.h"
 #include "video/console.h"
 
-// ASM functions in flush.asm
-extern void GDTflush(uint32_t);
-extern void TSSflush();
-
 // Internal function prototypes.
 void TSSwrite(int32_t,uint16_t,uint32_t);
 

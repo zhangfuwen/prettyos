@@ -19,8 +19,8 @@ KernelStart:
 
     push ebx     ; EBX points to the multiboot structure created by the bootloader and containing e.g. the address of the memory map
 
-    extern _main ; entry point in ckernel.c
-    call   _main
+    extern main ; entry point in ckernel.c
+    call   main
 
     cli
     hlt
