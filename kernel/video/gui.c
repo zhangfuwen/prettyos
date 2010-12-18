@@ -25,48 +25,48 @@ extern window_t current_window;
 void StartGUI()
 {
     init_window_manager();
-	button_t button = CreateButton(250, 220, 80, 20, "close");
+    button_t button = CreateButton(250, 220, 80, 20, "close");
 
-	CreateWindow("Window 1", 10, 10, 340, 250, 0);
-	CreateWindow("Window 2", 400, 10, 340, 250, 0);
-	CreateWindow("Window 3", 10, 300, 340, 250, 0);
-	CreateWindow("Window 4", 400, 300, 340, 250, 0);
+    CreateWindow("Window 1", 10, 10, 340, 250, 0);
+    CreateWindow("Window 2", 400, 10, 340, 250, 0);
+    CreateWindow("Window 3", 10, 300, 340, 250, 0);
+    CreateWindow("Window 4", 400, 300, 340, 250, 0);
 
-	memcpy(window_list[1]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
-	// memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
-	memcpy(window_list[4]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);	
-	
-	while(!keyPressed(VK_ESCAPE))
-	{
-		if(mouse_lm == 1)
-		{
-			vbe_drawString("left Mouse Button Pressed", 10, 2);
-		}
-		
-		if(mouse_x > 250 && mouse_x < 320 && mouse_y > 220 && mouse_y < 240 && mouse_lm == 1)
-		{
-			DestroyWindow(1);
-			vbe_clearScreen();
-		}
+    memcpy(window_list[1]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
+    // memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
+    memcpy(window_list[4]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);    
 
-		if(window_list[1]->id == 1)
-		{
-			DrawWindow(1);
-			DrawButton(button);
-		}
+    while(!keyPressed(VK_ESCAPE))
+    {
+        if(mouse_lm == 1)
+        {
+            vbe_drawString("left Mouse Button Pressed", 10, 2);
+        }
 
-		DrawWindow(2);		
-		DrawWindow(3);
-		DrawWindow(4);
-		
-		vbe_drawString("Press ESC to Exit!", 10, 2);
+        if(mouse_x > 250 && mouse_x < 320 && mouse_y > 220 && mouse_y < 240 && mouse_lm == 1)
+        {
+            DestroyWindow(1);
+            vbe_clearScreen();
+        }
 
-	}
+        if(window_list[1])
+        {
+            DrawWindow(1);
+            DrawButton(&button);
+        }
+
+        DrawWindow(2);
+        DrawWindow(3);
+        DrawWindow(4);
+
+        vbe_drawString("Press ESC to Exit!", 10, 2);
+
+    }
 }
 
 void EndGUI()
 {
-	// DestroyWindow(window);
+    // DestroyWindow(window);
 }
 
 /*

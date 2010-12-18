@@ -45,7 +45,6 @@ clean.bat</NMakeCleanCommandLine>
     <None Include="..\kernel\flush.asm" />
     <None Include="..\kernel\interrupts.asm" />
     <None Include="..\kernel\kernel.asm" />
-    <None Include="..\kernel\process.asm" />
     <None Include="..\kernel\kernel.ld" />
     <None Include="..\makefile" />
     <None Include="..\stage1_bootloader\boot.asm">
@@ -139,6 +138,8 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\util.h" />
     <ClInclude Include="..\kernel\video\console.h" />
     <ClInclude Include="..\kernel\video\font.h" />
+    <ClInclude Include="..\kernel\video\gui.h" />
+    <ClInclude Include="..\kernel\video\gui_button.h" />
     <ClInclude Include="..\kernel\video\gui_window.h" />
     <ClInclude Include="..\kernel\video\vbe.h" />
     <ClInclude Include="..\kernel\video\video.h" />
@@ -208,6 +209,8 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\todo_list.c" />
     <ClCompile Include="..\kernel\util.c" />
     <ClCompile Include="..\kernel\video\console.c" />
+    <ClCompile Include="..\kernel\video\gui.c" />
+    <ClCompile Include="..\kernel\video\gui_button.c" />
     <ClCompile Include="..\kernel\video\gui_window.c" />
     <ClCompile Include="..\kernel\video\vbe.c" />
     <ClCompile Include="..\kernel\video\video.c" />

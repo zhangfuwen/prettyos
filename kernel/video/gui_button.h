@@ -11,10 +11,10 @@ typedef struct
     uint16_t y;
     uint16_t width;
     uint16_t height;
-	uintptr_t *data;
-} __attribute__((packed)) button_t;
+    uintptr_t *data;
+} button_t;
 
-button_t CreateButton(uint16_t x, uint16_t y, uint16_t width, uint16_t height, char *label);
-void DrawButton(button_t button);
+button_t CreateButton(uint16_t x, uint16_t y, uint16_t width, uint16_t height, char* label);
+void DrawButton(button_t* button);
 
 #endif

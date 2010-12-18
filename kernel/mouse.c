@@ -106,7 +106,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-					vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
+                    vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
                 }
                 mouse_x += mouse_byte[1];
                 mouse_y -= mouse_byte[2];
@@ -142,9 +142,8 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
             {
                 if(videomode == VM_VBE)
                 {
-                    // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor			
-					// vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
-
+                    // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
+                    // vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
                 }
                 mouse_x += mouse_byte[1];
                 mouse_y -= mouse_byte[2];
@@ -173,7 +172,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                 if(videomode == VM_VBE)
                 {
                     // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-					vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
+                    vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
                 }
                 mouse_b4 = mouse_byte[3] & 0x16;
                 mouse_b5 = mouse_byte[3] & 0x32;

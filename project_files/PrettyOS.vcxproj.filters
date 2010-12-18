@@ -79,9 +79,6 @@
     <None Include="..\kernel\kernel.asm">
       <Filter>Kernel\sources</Filter>
     </None>
-    <None Include="..\kernel\process.asm">
-      <Filter>Kernel\sources</Filter>
-    </None>
     <None Include="..\stage2_bootloader\A20.inc">
       <Filter>Bootloader\Stage 2</Filter>
     </None>
@@ -321,6 +318,12 @@
     <ClInclude Include="..\kernel\video\gui_window.h">
       <Filter>Kernel\include\video</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\video\gui.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\video\gui_button.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -522,6 +525,12 @@
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\video\gui_window.c">
+      <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\gui.c">
+      <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\gui_button.c">
       <Filter>Kernel\sources\video</Filter>
     </ClCompile>
   </ItemGroup>

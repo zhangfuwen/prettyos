@@ -9,24 +9,24 @@
 BGRA_t BUTTON_COLOUR = {128, 128, 128, 0};
 BGRA_t BUTTON_COLOUR_BORDER = {195, 195, 195, 0};
 
-button_t CreateButton(uint16_t x, uint16_t y, uint16_t width, uint16_t height, char *label)
+button_t CreateButton(uint16_t x, uint16_t y, uint16_t width, uint16_t height, char* label)
 {
-	button_t button;
-	button.x = x;
-	button.y = y;
-	button.width = width;
-	button.height = height;
-	// strcpy(button.label, label);
-	button.label = label;
-	
-	return button;
+    button_t button;
+    button.x = x;
+    button.y = y;
+    button.width = width;
+    button.height = height;
+    // strcpy(button.label, label);
+    button.label = label;
+
+    return button;
 }
 
-void DrawButton(button_t button)
+void DrawButton(button_t* button)
 {
-	vbe_drawRectFilled(button.x, button.y, button.x+button.width, button.y+button.height, BUTTON_COLOUR);
-	vbe_drawRect(button.x, button.y, button.x+button.width, button.y+button.height, BUTTON_COLOUR_BORDER);
-	vbe_drawString(button.label, button.x+5, button.y+2);
+    vbe_drawRectFilled(button->x, button->y, button->x+button->width, button->y+button->height, BUTTON_COLOUR);
+    vbe_drawRect(button->x, button->y, button->x+button->width, button->y+button->height, BUTTON_COLOUR_BORDER);
+    vbe_drawString(button->label, button->x+5, button->y+2);
 }
 
 /*
