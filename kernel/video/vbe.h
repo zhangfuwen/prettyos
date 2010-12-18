@@ -16,7 +16,6 @@
 #define VM86_VGAINFOBLOCK      ((void*)0x150)
 #define VM86_MODEINFOBLOCK     ((void*)0x15E)
 
-
 // SuperVGA information block
 typedef struct
 {

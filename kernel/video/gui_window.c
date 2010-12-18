@@ -75,27 +75,12 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
 
     window->data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
 
-    // Fill
-    vbe_drawRectFilled(window->x, window->y+20, window->x+window->width, window->y+window->height, WINDOW_COLOUR_BACKGROUND);
-
-    // Topbar
-    vbe_drawRectFilled(window->x, window->y, window->x+window->width, window->y+20, WINDOW_COLOUR_TOPBAR);
-
-    // Border
-    vbe_drawRect(window->x, window->y, window->x+window->width, window->y+window->height, WINDOW_COLOUR_BORDER);
-
-    // Title
-    vbe_drawString(window->name, window->x+2, window->y+2);
-
-    // TODO:
-    //reDrawWindow(window->id);
-
     // And set window focus
     current_window = window;
     window_list[window->id] = window;
 }
 
-void reDrawWindow(uint16_t id)
+void DrawWindow(uint16_t id)
 {
     // Fill
     vbe_drawRectFilled(window_list[id]->x, window_list[id]->y+20, window_list[id]->x+window_list[id]->width, window_list[id]->y+window_list[id]->height, WINDOW_COLOUR_BACKGROUND);

@@ -142,29 +142,9 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
             {
                 if(videomode == VM_VBE)
                 {
-                    // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-					
-					// Erase mouse cursor
-					for(int x = mouse_x; x < mouse_x+20; x++)
-					{
-						for(int y = mouse_y; y < mouse_y+20; y++)
-						{
-							uint32_t VBEoldColor = vbe_getPixel(x, y);
-							uint16_t b = VBEoldColor;
-							uint16_t g = VBEoldColor >> 8;
-							uint16_t r = VBEoldColor >> 16;
-							uint16_t a = VBEoldColor >> 24;
-							BGRA_t c = {b, g, r, a};
-							vbe_setPixel(x, y, c);
-						}
-					}
+                    // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor			
 					// vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
-					/*
-					if(mouse_x > 250 && mouse_x < 320 && mouse_y > 220 && mouse_y < 240 && mouse_lm == 1)
-					{
-						DestroyWindow(0);
-						reDrawWindow(0);
-					}*/
+
                 }
                 mouse_x += mouse_byte[1];
                 mouse_y -= mouse_byte[2];
@@ -177,10 +157,7 @@ void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just ther
                     oldColor = vbe_getPixel(mouse_x, mouse_y);
                     // vbe_setPixel(mouse_x, mouse_y, 0x09);
                     vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
-					if(mouse_lm == 1)
-					{
-						vbe_drawString("left Mouse Button Pressed", 10, 2);
-					}
+
                 }
                 else
                 {

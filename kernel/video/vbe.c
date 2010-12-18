@@ -9,15 +9,11 @@
 #include "paging.h"
 #include "font.h"
 #include "timer.h"
-#include "gui_window.h"
-#include "gui_button.h"
+#include "gui.h"
 
 ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
 BitmapHeader_t  bh;
-
-extern volatile window_t* window_list[MAX_WINDOWS];
-extern window_t current_window;
 
 BitmapHeader_t* bh_get;
 
@@ -33,10 +29,6 @@ extern uintptr_t vidswtch_com_end;
 // bmp
 extern BMPInfo_t bmp_start;
 extern BMPInfo_t bmp_end;
-
-// cursor
-extern BMPInfo_t cursor_start;
-extern BMPInfo_t cursor_end;
 
 uint16_t BGRAtoBGR16(BGRA_t bgr)
 {
@@ -55,7 +47,6 @@ uint16_t BGRAtoBGR15(BGRA_t bgr)
 
     return((r<<10) | (g<<5) | (b));
 }
-
 
 void vbe_readVIB()
 {
@@ -671,6 +662,7 @@ void vbe_bootscreen()
 
     printf("\n");
     uint16_t modenumber = 0;
+	
     while(modenumber == 0)
     {
         textColor(0x0E);
@@ -695,72 +687,65 @@ void vbe_bootscreen()
     }
 
     modeDebug();
-
     waitForKeyStroke();
+	
+    printf("\n");
+	uint16_t whatToStart = 0;
+	
+	while(whatToStart == 0)
+	{
+        textColor(0x0E);
+		printf("1. Start Graphical Tests\n");
+		printf("2. Start GUI\n");
+        printf("Type in the number: ");
+        char num[3];
+        gets(num);
+        whatToStart = atoi(num);
+	}
 
     switchToVideomode(modenumber);
-
     uint32_t displayStart = getDisplayStart();
     printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", displayStart >> 16, displayStart & 0xFFFF);
 	
-    init_window_manager();
-	button_t button = CreateButton(250, 220, 80, 20, "close");
+	if(whatToStart == 1)
+	{
+
+		uint16_t radius = mib.YResolution/2;
+		for(uint16_t i = 0; i < radius; i++)
+		{
+			BGRA_t color = {(i*128/radius)/2, (i*128/radius)*2, 128-(i*128/radius), (i*128/radius)};
+			vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, radius-i, color); // FPU
+			sleepMilliSeconds(1);
+		}
+
+		BGRA_t bright_blue = {255, 75, 75, 0x09};
+		vbe_drawLine(0, mib.YResolution/2, mib.XResolution, mib.YResolution/2, bright_blue); // FPU
+		vbe_drawLine(0, mib.YResolution/2 + 1, mib.XResolution, mib.YResolution/2 + 1, bright_blue); // FPU
+		vbe_drawLine(mib.XResolution/2, 0, mib.XResolution/2, mib.YResolution, bright_blue); // FPU
+		vbe_drawLine(mib.XResolution/2+1, 0, mib.XResolution/2+1, mib.YResolution, bright_blue); // FPU
+		vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2, bright_blue); // FPU
+		vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2-1, bright_blue); // FPU
+		waitForKeyStroke();
+
+		vbe_drawBitmap(0, 0, &bmp_start);
+		waitForKeyStroke();
+
+		printPalette();
+
+		vbe_drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
+		waitForKeyStroke();
+
+		vbe_drawScaledBitmap(mib.XResolution, mib.YResolution, &bmp_start);
+		waitForKeyStroke();
+		
+		vbe_clearScreen();
+		waitForKeyStroke();
+	}
 	
-    uint16_t radius = mib.YResolution/2;
-    for(uint16_t i = 0; i < radius; i++)
-    {
-        BGRA_t color = {(i*128/radius)/2, (i*128/radius)*2, 128-(i*128/radius), (i*128/radius)};
-        vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, radius-i, color); // FPU
-        sleepMilliSeconds(1);
-    }
-
-    BGRA_t bright_blue = {255, 75, 75, 0x09};
-    vbe_drawLine(0, mib.YResolution/2, mib.XResolution, mib.YResolution/2, bright_blue); // FPU
-    vbe_drawLine(0, mib.YResolution/2 + 1, mib.XResolution, mib.YResolution/2 + 1, bright_blue); // FPU
-    vbe_drawLine(mib.XResolution/2, 0, mib.XResolution/2, mib.YResolution, bright_blue); // FPU
-    vbe_drawLine(mib.XResolution/2+1, 0, mib.XResolution/2+1, mib.YResolution, bright_blue); // FPU
-    vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2, bright_blue); // FPU
-    vbe_drawCircle(mib.XResolution/2, mib.YResolution/2, mib.YResolution/2-1, bright_blue); // FPU
-    waitForKeyStroke();
-
-    vbe_drawBitmap(0, 0, &bmp_start);
-    waitForKeyStroke();
-
-    printPalette();
-
-    vbe_drawString("PrettyOS started in March 2009.\nThis hobby OS tries to be a possible access for beginners in this area.", 0, 400);
-    waitForKeyStroke();
-
-    vbe_drawScaledBitmap(mib.XResolution, mib.YResolution, &bmp_start);
-	waitForKeyStroke();
-    
-	vbe_clearScreen();
-
-	CreateWindow("Window 1", 10, 10, 340, 250, 0);
-	waitForKeyStroke();
-	
-	memcpy(window_list[1]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
-	// memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
-
-    waitForKeyStroke();
-	reDrawWindow(1);
-	DrawButton(button);
-    // DestroyWindow(0);
-    // waitForKeyStroke();
-	
-    CreateWindow("Window 2", 400, 10, 340, 250, 0);
-    waitForKeyStroke();
-
-    CreateWindow("Window 3", 10, 300, 340, 250, 0);
-    waitForKeyStroke();
-
-	CreateWindow("Window 4", 400, 300, 340, 250, 0);
-    waitForKeyStroke();
-
-	memcpy(window_list[4]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);	
-	waitForKeyStroke();
-	reDrawWindow(4);
-	waitForKeyStroke();
+	if(whatToStart == 2)
+	{
+		StartGUI();
+	}
 	
     switchToTextmode();
 }
