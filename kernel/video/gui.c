@@ -41,12 +41,12 @@ void StartGUI()
         if(mouse_lm == 1)
         {
             vbe_drawString("left Mouse Button Pressed", 10, 2);
-        }
 
-        if(mouse_x > 250 && mouse_x < 320 && mouse_y > 220 && mouse_y < 240 && mouse_lm == 1)
-        {
-            DestroyWindow(1);
-            vbe_clearScreen();
+            if(mouse_x > 250 && mouse_x < 320 && mouse_y > 220 && mouse_y < 240)
+            {
+                DestroyWindow(1);
+                vbe_clearScreen();
+            }
         }
 
         if(window_list[1])
@@ -60,7 +60,6 @@ void StartGUI()
         DrawWindow(4);
 
         vbe_drawString("Press ESC to Exit!", 10, 2);
-
     }
 }
 

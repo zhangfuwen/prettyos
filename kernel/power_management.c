@@ -85,7 +85,7 @@ void pm_install()
 {
     pm_systems[PM_NO].supported = true; // Always available
     pm_systems[PM_NO].action = &nopm_action;
-    pm_systems[PM_APM].supported = apm_install();
+    pm_systems[PM_APM].supported = false;//apm_install();
     pm_systems[PM_APM].action = &apm_action;
     pm_systems[PM_ACPI].supported = false; // Unsupported by PrettyOS
     pm_systems[PM_ACPI].action = 0;
