@@ -1,6 +1,7 @@
 #ifndef _FAT12_H
 #define _FAT12_H
 
+
 // Attributes in Root Directory
 #define ATTR_READ_ONLY       0x01
 #define ATTR_HIDDEN          0x02
@@ -15,21 +16,9 @@
 #define BOOT_SEC      0
 #define FAT1_SEC      1
 #define FAT2_SEC     10
-#define ROOT_SEC     19
-#define DATA_SEC     33
-#define MAX_BLOCK  2849
-#define MAX_SECTOR 2880
 
 // Numbers
-#define DIR_ENTRIES 16
 #define ROOT_DIR_ENTRIES 224
-#define MAX_DIR     10
-#define MAX_FILE    10
-#define FATMAXINDEX MAX_BLOCK ///TEST
-
-// FAT entries
-#define LAST_ENTRY_IN_FAT_CHAIN 0xFFF
-#define BAD_CLUSTER             0xFF7
 
 
 struct boot_sector
@@ -54,7 +43,7 @@ struct boot_sector
     uint32_t VolumeSerial;
     char     VolumeLabel[11];
     char     Reserved2[8];
-}__attribute__((packed));
+} __attribute__((packed));
 
 int32_t flpydsk_read_directory();
 int32_t flpydsk_format(char* vlab); // VolumeLabel

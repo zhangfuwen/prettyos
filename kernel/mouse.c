@@ -15,24 +15,26 @@
 #include "video/vbe.h"
 #include "video/gui_window.h"
 
-char mouseid;
+enum {NORMAL, WHEEL, WHEELS5BUTTON} mousetype = NORMAL;
+
 int32_t mouse_x=10; // Mouse X
 int32_t mouse_y=10; // Mouse Y
-int32_t mouse_z=0;  // Mouse Z (Mousewheel)
-char mouse_lm=0;    // Mouse Left Button
-char mouse_mm=0;    // Mouse Middle Button
-char mouse_rm=0;    // Mouse Right Button
-char mouse_b4=0;    // Mouse Button 4
-char mouse_b5=0;    // Mouse button 5
-
-char mouse_cycle=0; // MouseHandler help
-char mouse_byte[4]; // MouseHandler bytes
-
-static uint8_t oldColor; // Used to emulate transparency for mouse
+int32_t mouse_zv=0; // Mouse Zv (vertical mousewheel)
+int32_t mouse_zh=0; // Mouse Zh (horizontal mousewheel)
+bool mouse_lm=0;    // Mouse Left Button
+bool mouse_mm=0;    // Mouse Middle Button
+bool mouse_rm=0;    // Mouse Right Button
+bool mouse_b4=0;    // Mouse Button 4
+bool mouse_b5=0;    // Mouse button 5
 
 extern BMPInfo_t cursor_start;
 extern BMPInfo_t cursor_end;
-BGRA_t BLACK = {0, 0, 0, 255};
+
+
+static void mouse_wait(uint8_t a_type);
+static void mouse_write(int8_t a_write);
+static char mouse_read();
+
 
 void mouse_install()
 {
@@ -55,8 +57,25 @@ void mouse_install()
     mouse_read();
 
 
-    // Check mouse for special features (mousewheel (up/down), button 4+5)
-    mouse_initspecialfeatures();
+    // Wheel-Mode test
+    mouse_setsamples(200);
+    mouse_setsamples(100);
+    mouse_setsamples(80);
+    mouse_write(0xF2);
+    if (mouse_read() == 0x03)
+    {
+        mousetype = WHEEL;
+
+        // Wheels-and-5-Button-Mode test
+        mouse_setsamples(200);
+        mouse_setsamples(200);
+        mouse_setsamples(80);
+        mouse_write(0xF2);
+        if (mouse_read() == 0x04)
+        {
+            mousetype = WHEELS5BUTTON;
+        }
+    }
 
 
     // Enable the mouse
@@ -68,139 +87,109 @@ void mouse_install()
 }
 
 // Mouse functions
-void mouse_handler(registers_t* a_r) // struct regs *a_r (not used but just there)
+void mouse_handler(registers_t* a_r)
 {
-    switch (mouse_cycle)
+    static uint8_t bytecounter = 0;
+    static int8_t bytes[4];
+    
+    bytes[bytecounter] = inportb(0x60); // Receive byte
+    switch(bytecounter)
     {
-        case 0:
-            mouse_byte[0] = inportb(0x60);
-            if (mouse_byte[0] & BIT(3)) // Only if this is really the first Byte!
+        case 0: // First byte: Left Button | Right Button | Middle Button | 1 | X sign | Y sign | X overflow | Y overflow
+            if(bytes[0] & BIT(3)) // Only if this is really the first byte!
             {
-                mouse_cycle++;
-                mouse_lm = (mouse_byte[0] & 0x1);//<< 0);
-                mouse_rm = (mouse_byte[0] & 0x2);//<< 1);
-                mouse_mm = (mouse_byte[0] & 0x4);//<< 2);
-                if (mouse_rm==2)
-                    mouse_rm=1;
-                if (mouse_mm==4)
-                    mouse_mm=1;
+                mouse_lm = (bytes[0] & BIT(0));
+                mouse_rm = (bytes[0] & BIT(1))>>1;
+                mouse_mm = (bytes[0] & BIT(2))>>2;
             }
             else
             {
+                bytecounter--;
                 printf("Mouse sent unknown package!\n");
             }
             break;
-        case 1:
-            mouse_byte[1]=inportb(0x60);
-            mouse_cycle++;
+        case 1: // Second byte: X Movement (8 bits)
+            mouse_x += bytes[1];
             break;
-        case 2:
-            mouse_byte[2]=inportb(0x60);
-            if (mouseid == 0x0)
-            {
-                if (!(mouse_byte[0] & 0x20))
-                    mouse_byte[2] |= 0xFFFFFF00; // delta-y is a negative value
-                if (!(mouse_byte[0] & 0x10))
-                    mouse_byte[1] |= 0xFFFFFF00; // delta-x is a negative value
-
-                if(videomode == VM_VBE)
-                {
-                    // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-                    vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
-                }
-                mouse_x += mouse_byte[1];
-                mouse_y -= mouse_byte[2];
-                if(videomode == VM_VBE)
-                {
-                    mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1));
-                    mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1));
-                    oldColor = vbe_getPixel(mouse_x, mouse_y);
-                    // vbe_setPixel(mouse_x, mouse_y, 0x09);
-                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
-                }
-                else
-                {
-                    writeInfo(1, "Mouse: X:%d Y:%d Z:No Mousewheel found LM:%d MM:%d RM:%d id:%y\n",
-                        mouse_x, mouse_y,
-                        mouse_lm, mouse_mm, mouse_rm,
-                        mouseid);
-                }
-                mouse_cycle=0;
-            }
-            else
-            {
-                mouse_cycle++;
-            }
+        case 2: // Third byte: Y Movement (8 bits)
+            mouse_y -= bytes[2]; // Attention: Y-movement is counted from bottom!
             break;
-        case 3:
-            mouse_byte[3]=inportb(0x60);
-            if (!(mouse_byte[0] & 0x20))
-                mouse_byte[2] |= 0xFFFFFF00; // delta-y is a negative value
-            if (!(mouse_byte[0] & 0x10))
-                mouse_byte[1] |= 0xFFFFFF00; // delta-x is a negative value
-            if (mouseid == 1) // Mouse has 'only' a scrollwheel
+        case 3: // Fourth byte: Z movement (4 bits) | 4th Button | 5th Button | 0 | 0
+            switch(mousetype)
             {
-                if(videomode == VM_VBE)
-                {
-                    // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-                    // vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
-                }
-                mouse_x += mouse_byte[1];
-                mouse_y -= mouse_byte[2];
-                mouse_z += mouse_byte[3];
-
-                if(videomode == VM_VBE)
-                {
-                    mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1));
-                    mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1));
-                    oldColor = vbe_getPixel(mouse_x, mouse_y);
-                    // vbe_setPixel(mouse_x, mouse_y, 0x09);
-                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
-
-                }
-                else
-                {
-                    writeInfo(1, "Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d id:%y\n",
-                           mouse_x, mouse_y, mouse_z,
-                           mouse_lm, mouse_mm, mouse_rm,
-                           mouseid);
-                }
-                mouse_cycle=0;
-            }
-            else // Mouse has also Buttons 4+5
-            {
-                if(videomode == VM_VBE)
-                {
-                    // vbe_setPixel(mouse_x, mouse_y, oldColor); // Erase mouse cursor
-                    vbe_drawRectFilled(mouse_x, mouse_y, mouse_x+20, mouse_y+19, BLACK);
-                }
-                mouse_b4 = mouse_byte[3] & 0x16;
-                mouse_b5 = mouse_byte[3] & 0x32;
-                mouse_x += mouse_byte[1];
-                mouse_y -= mouse_byte[2];
-                mouse_z += (mouse_byte[3] & 0xF);
-                if(videomode == VM_VBE)
-                {
-                    mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1));
-                    mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1));
-                    oldColor = vbe_getPixel(mouse_x, mouse_y);
-                    // vbe_setPixel(mouse_x, mouse_y, 0x09);
-                    vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
-                }
-                else
-                {
-                    writeInfo(1, "Mouse: X:%d Y:%d Z:%d LM:%d MM:%d RM:%d B4:%d B5:%d id:%y\n",
-                           mouse_x, mouse_y, mouse_z,
-                           mouse_lm, mouse_mm, mouse_rm, mouse_b4, mouse_b5,
-                           mouseid);
-                }
-                mouse_cycle=0;
+                case WHEEL:
+                    mouse_zv += bytes[3];
+                    break;
+                case WHEELS5BUTTON:
+                    switch(bytes[3] & 0xF)
+                    {
+                        case 0xE:
+                            mouse_zh -= 1;
+                            break;
+                        case 0xF:
+                            mouse_zv -= 1;
+                            break;
+                        case 0x1:
+                            mouse_zv += 1;
+                            break;
+                        case 0x2:
+                            mouse_zh += 1;
+                            break;
+                    }
+                    mouse_b4 = (bytes[3] & BIT(4)) >> 4;
+                    mouse_b5 = (bytes[3] & BIT(5)) >> 5;
+                    break;
+                default: // We do not expect a fourth byte in this case
+                    bytecounter--;
+                    printf("Mouse sent unknown package!\n");
+                    break;
             }
             break;
     }
+
+
+    bytecounter++;
+    switch(mousetype) // reset packetcounter when received all expected packets
+    {
+        case WHEEL: case WHEELS5BUTTON:
+            if(bytecounter > 3)
+                bytecounter = 0;
+            break;
+        case NORMAL: default:
+            if(bytecounter > 2)
+                bytecounter = 0;
+            break;
+    }
+
+
+    // Print mouse on screen
+    if(videomode == VM_VBE)
+    {
+        mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1)); // clamp mouse position to width of screen
+        mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1)); // same with height
+        vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
+    }
+    else
+    {
+        switch(mousetype)
+        {
+            case NORMAL:
+                writeInfo(1, "Mouse: X: %d  Y: %d  Z: -   buttons: L: %d  M: %d  R: %d",
+                    mouse_x, mouse_y, mouse_lm, mouse_mm, mouse_rm);
+                break;
+            case WHEEL:
+                writeInfo(1, "Mouse: X: %d  Y: %d  Z: %d   buttons: L: %d  M: %d  R: %d",
+                    mouse_x, mouse_y, mouse_zv, mouse_lm, mouse_mm, mouse_rm);
+                break;
+            case WHEELS5BUTTON:
+                writeInfo(1, "Mouse: X: %d  Y: %d  Zv: %d  Zh: %d   buttons: L: %d  M: %d  R: %d  4th: %d  5th: %d",
+                    mouse_x, mouse_y, mouse_zv, mouse_zh, mouse_lm, mouse_mm, mouse_rm, mouse_b4, mouse_b5);
+                break;
+        }
+    }
 }
 
-void mouse_wait(uint8_t a_type)
+static void mouse_wait(uint8_t a_type)
 {
     unsigned int time_out = 100000;
     if (a_type==0)
@@ -225,7 +214,7 @@ void mouse_wait(uint8_t a_type)
     }
 }
 
-void mouse_write(int8_t a_write)
+static void mouse_write(int8_t a_write)
 {
     // Wait to be able to send a command
     mouse_wait(1);
@@ -245,9 +234,9 @@ void mouse_write(int8_t a_write)
     }
 }
 
-char mouse_read()
+static char mouse_read()
 {
-    // Get's response from mouse
+    // Get response from mouse
     mouse_wait(0);
     return inportb(0x60);
 }
@@ -284,78 +273,11 @@ void mouse_setsamples(uint8_t samples_per_second)
     }
 }
 
-void mouse_initspecialfeatures()
-{
-    // Wheel-Mode test
-    mouse_setsamples(200);
-    mouse_setsamples(100);
-    mouse_setsamples(80);
-    mouse_write(0xF2);
-    mouseid=mouse_read();
-    if (mouseid != 0x0)
-    {
-        mouseid=1;
-    }
-    else
-    {
-        return;
-    }
-
-    // Sorry, 5-Buttons does not work, so here we
-    return;
-
-    // Wheel-and-5-Button-Mode test
-    mouse_setsamples(200);
-    mouse_setsamples(200);
-    mouse_setsamples(80);
-    mouse_write(0xF2);
-    mouseid=mouse_read();
-    if (mouseid != 0x0 && mouseid != 0x01)
-    {
-        mouseid=2;
-    }
-
-    return;
-}
-
 void mouse_uninstall()
 {
     irq_uninstallHandler(IRQ_MOUSE);
     mouse_write(0xFF);
 }
-
-
-/*
-void mouse_handler(struct regs* r)
-{
-    //printf("Mouse_handler called!\n");
-    static unsigned char cycle = 0;
-    static char mouse_bytes[3];
-    mouse_bytes[cycle++] = inportb(0x60);
-
-    if (cycle == 3) { // if we have all the 3 bytes...
-        cycle = 0; // reset the counter
-        // do what you wish with the bytes, this is just a sample
-        if ((mouse_bytes[0] & 0x80) || (mouse_bytes[0] & 0x40))
-            return; // the mouse only sends information about overflowing, do not care about it and return
-        if (!(mouse_bytes[0] & 0x20))
-            mouse_bytes[2] |= 0xFFFFFF00; //delta-y is a negative value
-        if (!(mouse_bytes[0] & 0x10))
-            mouse_bytes[1] |= 0xFFFFFF00; //delta-x is a negative value
-        if (mouse_bytes[0] & 0x4)
-            printf("Middle button is pressed!\n");
-        if (mouse_bytes[0] & 0x2)
-            printf("Right button is pressed!\n");
-        if (mouse_bytes[0] & 0x1)
-            printf("Left button is pressed!\n");
-        // do what you want here, just replace the puts's to execute an action for each button
-        // to use the coordinate data, use mouse_bytes[1] for delta-x, and mouse_bytes[2] for delta-y
-        mouse_x=mouse_bytes[1];
-        mouse_y=mouse_bytes[2];
-        printf("Mouse_x: %d - Mouse_y: %d\n",mouse_x,mouse_y);
-  }
-}
-*/
 
 
 /*

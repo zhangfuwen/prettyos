@@ -9,8 +9,6 @@
 #define IN    1
 #define SETUP 2
 
-extern uint8_t currentDevice;
-
 struct usb2_CommandBlockWrapper
 {
     uint32_t CBWSignature;

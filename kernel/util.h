@@ -9,9 +9,6 @@
 #define isupper(c) ((c) >= 'A' && (c) <= 'Z')
 #define islower(c) ((c) >= 'a' && (c) <= 'z')
 
-#define FORM_SHORT(a,b) (((b)<<8)|a)
-#define FORM_LONG(a,b,c,d) (((d)<<24)|((c)<<16)|((b)<<8)|(a))
-
 #define BYTE1(a) ( (a)      & 0xFF)
 #define BYTE2(a) (((a)>> 8) & 0xFF)
 #define BYTE3(a) (((a)>>16) & 0xFF)

@@ -27,10 +27,6 @@ typedef __builtin_va_list va_list;
 
 #define BIT(n) (1<<(n))
 
-// typedefs for CDI
-typedef unsigned int dev_t; // Defined like in tyndur
-typedef unsigned int uid_t; // Defined like in tyndur
-typedef unsigned int gid_t; // Defined like in tyndur
 
 // This defines the operatings system common data area
 typedef struct
@@ -49,7 +45,7 @@ typedef struct
     uint32_t edi, esi, ebp, ebx, edx, ecx, eax;
     uint32_t int_no, err_code;
     uint32_t eip, cs, eflags, useresp, ss;
-}__attribute__((packed)) registers_t;
+} __attribute__((packed)) registers_t;
 
 
 typedef enum

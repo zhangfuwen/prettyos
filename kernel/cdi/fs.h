@@ -7,6 +7,13 @@
 #include <cdi/lists.h>
 #include <cdi/cache.h>
 
+
+// typedefs for CDI
+typedef unsigned int dev_t; // Defined like in tyndur
+typedef unsigned int uid_t; // Defined like in tyndur
+typedef unsigned int gid_t; // Defined like in tyndur
+
+
 struct cdi_fs_filesystem;
 // Diese Struktur wird fuer jeden Dateisystemtreiber einmal erstellt
 struct cdi_fs_driver {

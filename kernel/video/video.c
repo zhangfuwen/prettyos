@@ -21,7 +21,7 @@ static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
 
 static const uint16_t SCREENSHOT_BYTES  = 4102;
 
-static position_t cursor;
+static position_t cursor = {0, 0};
 static uint8_t attrib = 0x0F; // white text on black ground
 
 void clear_screen()
