@@ -3,7 +3,20 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+void DHCP_Discover()
+{
 
+}
+
+void DHCP_Request()
+{
+
+}
+
+void DHCP_AnalyzeServerMessage()
+{
+
+}
 
 /*
 * Copyright (c) 2010 The PrettyOS Project. All rights reserved.

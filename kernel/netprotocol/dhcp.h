@@ -78,14 +78,8 @@ typedef struct dhcp
 } __attribute__((packed)) dhcp_t;
 
 /*
-already in use; e.g., the server may probe the offered address
-      with an ICMP Echo Request.  Servers SHOULD be implemented so that
-      network administrators MAY choose to disable probes of newly
-      allocated addresses.  The server transmits the DHCPOFFER message
-      to the client, using the BOOTP relay agent if necessary.
-
    Message         Use
-   -------         ---
+   --------------------------------------------------------------------
 
    DHCPDISCOVER -  Client broadcast to locate available servers.
 
@@ -115,6 +109,25 @@ already in use; e.g., the server may probe the offered address
    DHCPINFORM   -  Client to server, asking only for local configuration
                    parameters; client already has externally configured
                    network address.
+*/
+
+void DHCP_AnalyzeServerMessage();
+void DHCP_Discover();
+void DHCP_Request();
+
+/*
+When a client is initialized for the first time after it is configured 
+to receive DHCP information, it initiates a conversation with the server.
+Below is a summary table of the conversation between client and server, 
+which is followed by a packet-level description of the process: 
+
+   Source     Dest        Source     Dest              Packet
+   MAC addr   MAC addr    IP addr    IP addr           Description
+   -----------------------------------------------------------------
+   Client     Broadcast   0.0.0.0    255.255.255.255   DHCP Discover
+   DHCPsrvr   Broadcast   DHCPsrvr   255.255.255.255   DHCP Offer
+   Client     Broadcast   0.0.0.0    255.255.255.255   DHCP Request
+   DHCPsrvr   Broadcast   DHCPsrvr   255.255.255.255   DHCP ACK
 */
 
 #endif

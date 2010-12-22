@@ -60,6 +60,12 @@ void UDPDebug(void* data, uint32_t length)
     case 53:
         printf("Domain Name System (DNS)\n");
         break;
+    case 67:
+        printf("UDP Bootstrap Protocol (BOOTP) Server, also used by DHCP Server\n");
+        break;
+    case 68:
+        printf("UDP Bootstrap Protocol (BOOTP) Client, also used by DHCP Client\n");
+        break;
     case 80:
         printf("HTTP\n");
         break;
@@ -76,10 +82,10 @@ void UDPDebug(void* data, uint32_t length)
         printf("Internet Message Access Protocol (IMAP)\n");
         break;
     case 546:
-        printf("DHCPv6-client\n");
+        printf("DHCPv6 Client\n");
         break;
     case 547:
-        printf("DHCPv6-server\n");
+        printf("DHCPv6 Server\n");
         break;
     case 1257:
         printf("shockwave2\n");
