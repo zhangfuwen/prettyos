@@ -10,6 +10,7 @@
 #include "font.h"
 #include "timer.h"
 #include "gui.h"
+#include "VBEShell.h"
 
 ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
@@ -18,6 +19,9 @@ BitmapHeader_t  bh;
 BitmapHeader_t* bh_get;
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
+
+// uint8_t* DOUBLEBUFFER = sizeof(vgaIB.TotalMemory * 0x10000 / PAGESIZE); // ???
+
 position_t curPos = {0, 0};
 
 uint8_t paletteBitsPerColor = 0;
@@ -697,6 +701,7 @@ void vbe_bootscreen()
         textColor(0x0E);
         printf("1. Start Graphical Tests\n");
         printf("2. Start GUI\n");
+		printf("3. Start VBE-Shell\n");
         printf("Type in the number: ");
         char num[3];
         gets(num);
@@ -743,6 +748,10 @@ void vbe_bootscreen()
     else if(whatToStart == 2)
     {
         StartGUI();
+    }
+	else if(whatToStart == 3)
+    {
+        startVBEShell();
     }
 
     switchToTextmode();
