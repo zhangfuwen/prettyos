@@ -71,12 +71,15 @@ char* gets(char* str)
         }
         else
         {
-            str[i] = c;
+            if(c != '\n')
+            {
+                str[i] = c;
+                i++;
+            }
             putchar(c);
-            i++;
         }
     }
-    while (c!=10); // Linefeed
+    while (c != '\n'); // Linefeed
     str[i]='\0';
 
     return str;

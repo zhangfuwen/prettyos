@@ -6,6 +6,12 @@
 
 typedef enum
 {
+    FS_FAT12=1, FS_FAT16, FS_FAT32,
+    FS_INITRD
+} FS_t;
+
+typedef enum
+{
     SEEK_SET, SEEK_CUR, SEEK_END
 } SEEK_ORIGIN;
 
@@ -68,7 +74,7 @@ typedef struct
 
     // Access-functions
     void     (*pinstall)(struct partition*); // Partition
-    void     (*pformat) (struct partition*); // Partition
+    FS_ERROR (*pformat) (struct partition*); // Partition
 
     FS_ERROR (*fopen) (struct file*, bool, bool);                    // File, create if not existant, overwrite file before opening
     FS_ERROR (*fclose)(struct file*);                                // File
@@ -94,8 +100,8 @@ typedef struct partition
     char*         serial;  // serial for identification
 
     uint8_t*      buffer;
-    uint32_t      start;   // First (sector)
-    uint32_t      end;     // Last (sector)
+    uint32_t      start;   // First sector
+    uint32_t      size;    // Total size of partition (in sectors)
     bool          mount;   // false: not mounted
 } partition_t;
 
@@ -131,8 +137,8 @@ extern fileSystem_t FAT, INITRD;
 void fsmanager_install();
 
 // Partition functions
-void formatPartition(const char* path);
-void installPartition(partition_t* part);
+FS_ERROR formatPartition(const char* path, FS_t type, const char* name);
+void     installPartition(partition_t* part);
 
 // File functions
 file_t* fopen (const char* path, const char* mode);

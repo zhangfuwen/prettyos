@@ -9,7 +9,7 @@
 #include "task.h"
 
 static uint16_t systemfrequency; // system frequency
-static uint32_t timer_ticks = 0;
+static volatile uint32_t timer_ticks = 0;
 
 void timer_install(uint16_t sysfreq)
 {

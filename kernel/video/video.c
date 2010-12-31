@@ -7,7 +7,7 @@
 #include "task.h"
 #include "video.h"
 #include "kheap.h"
-#include "filesystem/fat.h"
+#include "filesystem/fsmanager.h"
 
 uint16_t* vidmem = (uint16_t*)0xB8000;
 
@@ -275,7 +275,7 @@ void screenshot()
     char Pfad[20];
     for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
-        if(disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->subtype == FAT12 || disks[i]->partition[0]->subtype == FAT16 || disks[i]->partition[0]->subtype == FAT32))
+        if(disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->subtype == FS_FAT12 || disks[i]->partition[0]->subtype == FS_FAT16 || disks[i]->partition[0]->subtype == FS_FAT32))
         {
             snprintf(Pfad, 20, "%u:/screen.txt", i+1);
             break;

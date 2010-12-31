@@ -9,7 +9,7 @@
 
 // info from http://lowlevel.brainsware.org/wiki/index.php/CMOS
 
-static void cmosTime(tm_t* ptm)
+void cmosTime(tm_t* ptm)
 {
     ptm->second     = PackedBCD2Decimal(cmos_read(0x00));
     ptm->minute     = PackedBCD2Decimal(cmos_read(0x02));
@@ -20,19 +20,19 @@ static void cmosTime(tm_t* ptm)
     ptm->century    = PackedBCD2Decimal(cmos_read(0x32));
 }
 
-static void appendInt(uint16_t val, char* dest, char* buf)
+static void appendInt(uint16_t val, char* dest)
 {
     if (val<10)
     {
         strcat(dest, "0");
     }
-    itoa(val, buf);
-    strcat(dest, buf);
+    size_t temp = strlen(dest);
+    snprintf(dest+temp, 80-temp, "%u", val);
 }
 
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
 {
-    day += 6; //1.1.2000 was Saturday
+    day += 6; // 1.1.2000 was a saturday
     day += (year-2000)*365.25;
     if (month > 11)
         day+=334;
@@ -57,7 +57,8 @@ static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
     else if (month > 1)
         day+=31;
 
-    if (year%4 == 0 && (month < 2 || (month == 2 && day <= 28))) {
+    if (year%4 == 0 && (month < 2 || (month == 2 && day <= 28)))
+    {
         day--;
     }
 
@@ -99,26 +100,26 @@ void getCurrentDateAndTime(char* pStr)
         case 12: strcat(pStr, "December ");  break;
     }
 
-    appendInt(pct.dayofmonth, pStr, buf);
+    appendInt(pct.dayofmonth, pStr);
 
     strcat(pStr,", ");
 
     itoa(pct.century, buf);
     strcat(pStr, buf);
 
-    appendInt(pct.year, pStr, buf);
+    appendInt(pct.year, pStr);
 
     strcat(pStr,", ");
 
-    appendInt(pct.hour, pStr, buf);
+    appendInt(pct.hour, pStr);
 
     strcat(pStr,":");
 
-    appendInt(pct.minute, pStr, buf);
+    appendInt(pct.minute, pStr);
 
     strcat(pStr,":");
 
-    appendInt(pct.second, pStr, buf);
+    appendInt(pct.second, pStr);
 
     strcat(pStr, ""); // add '\0'
 }

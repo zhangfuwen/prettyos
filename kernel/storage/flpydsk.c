@@ -131,6 +131,10 @@ static floppy_t* createFloppy(uint8_t ID)
 
     fdd->drive.insertedDisk->type            = &FLOPPYDISK;
     fdd->drive.insertedDisk->data            = (void*)fdd;
+    fdd->drive.insertedDisk->headCount       = 2;
+    fdd->drive.insertedDisk->secPerTrack     = 18;
+    fdd->drive.insertedDisk->sectorSize      = 512;
+    fdd->drive.insertedDisk->headCount       = 2;
     fdd->drive.insertedDisk->accessRemaining = 1; // 1 because we will read one sector at the beginning
     fdd->drive.insertedDisk->partition[0]    = malloc(sizeof(partition_t), 0, "flpydsk-Part");
     fdd->drive.insertedDisk->partition[1]    = 0;
@@ -685,9 +689,6 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
 {
     int32_t val=0;
 
-    if(i/18 == CurrentDrive->lastTrack) // Clear cache if we change the track which is in the cache
-        CurrentDrive->lastTrack = 0xFFFFFFFE;
-
     if (option == SECTOR)
     {
         memcpy((void*)DMA_BUFFER, a, 0x200);
@@ -698,6 +699,9 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
         memcpy((void*)DMA_BUFFER, a, 0x2400);
         val = i*18;
     }
+    
+    if(val/18 == CurrentDrive->lastTrack) // Clear cache if we change the track which is in the cache
+        CurrentDrive->lastTrack = 0xFFFFFFFE;
 
     uint32_t timeout = 2; // limit
     FS_ERROR retVal  = CE_GOOD;

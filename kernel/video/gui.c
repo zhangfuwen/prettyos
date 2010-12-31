@@ -11,7 +11,7 @@
 #include "gui_window.h"
 #include "gui_button.h"
 
-extern char mouse_lm;
+extern char mouse_bl;
 extern int32_t mouse_x;
 extern int32_t mouse_y;
 
@@ -38,7 +38,7 @@ void StartGUI()
 
     while(!keyPressed(VK_ESCAPE))
     {
-        if(mouse_lm == 1)
+        if(mouse_bl == 1)
         {
             vbe_drawString("left Mouse Button Pressed", 10, 2);
 

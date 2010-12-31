@@ -13,7 +13,7 @@ bool task_switching = false;
 
 task_t kernelTask; // Needed to find out when the kernel task is exited
 
-task_t* currentTask = &kernelTask;
+volatile task_t* currentTask = &kernelTask;
 listHead_t* tasks; // List of all tasks. Not sorted by pid
 
 static uint32_t next_pid = 0; // The next available process ID. TODO: Reuse old pid

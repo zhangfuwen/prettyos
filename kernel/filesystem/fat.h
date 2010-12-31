@@ -26,11 +26,7 @@
 
 // Media
 
-#define SECTOR_SIZE    512
-
-// FAT Filesystem
-
-enum {FAT12 = 1, FAT16, FAT32};
+#define SECTOR_SIZE    512 // TODO: use sectorSize of disk_t
 
 // File
 
@@ -83,7 +79,6 @@ struct disk;
 typedef struct
 {
     partition_t* part;          // universal partition container (fsmanager)
-    uint32_t sectorSize;        // byte per sector
     uint32_t fat;               // LBA of FAT
     uint32_t root;              // LBA of root directory
     uint32_t dataLBA;           // LBA of data area
@@ -93,6 +88,7 @@ typedef struct
     uint8_t  fatcopy;           // copies of FAT
     uint8_t  SecPerClus;        // sectors per cluster
     uint32_t FatRootDirCluster;
+    uint32_t reservedSectors;
 } FAT_partition_t;
 
 // File
@@ -148,6 +144,7 @@ FS_ERROR FAT_fputc(file_t* file, char c);
 FS_ERROR FAT_fseek(file_t* file, long offset, SEEK_ORIGIN whence);
 FS_ERROR FAT_remove(const char* fileName, partition_t* part);
 FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_t* part);
+FS_ERROR FAT_format(partition_t* part);
 
 // analysis functions
 void FAT_showDirectoryEntry(fileRootDirEntry_t* dir);

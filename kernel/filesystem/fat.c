@@ -17,11 +17,12 @@
 ///     FAT_fgetc
 
 
+#include "fat.h"
 #include "util.h"
 #include "kheap.h"
 #include "storage/usb2_msd.h"
 #include "video/console.h"
-#include "fat.h"
+#include "time.h"
 
 
 // prototypes
@@ -47,7 +48,7 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
     uint32_t sector;
     if (cluster <= 1) // root dir
     {
-        if (volume->part->subtype == FAT32) // In FAT32, there is no separate ROOT region. It is as well stored in DATA region
+        if (volume->part->subtype == FS_FAT32) // In FAT32, there is no separate ROOT region. It is as well stored in DATA region
         {
             sector = volume->dataLBA + cluster * volume->SecPerClus;
         }
@@ -173,20 +174,20 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
 
     switch (volume->part->subtype)
     {
-        case FAT32:
+        case FS_FAT32:
             posFAT = currCluster * 4;
             q = 0;
             ClusterFailValue = CLUSTER_FAIL_FAT32;
             LastClusterLimit = LAST_CLUSTER_FAT32;
             break;
-        case FAT12:
+        case FS_FAT12:
             posFAT = currCluster * 3;
             q = posFAT & 1;
             posFAT >>= 1;
             ClusterFailValue = CLUSTER_FAIL_FAT16;
             LastClusterLimit = LAST_CLUSTER_FAT12;
             break;
-        case FAT16:
+        case FS_FAT16:
         default:
             posFAT = currCluster * 2;
             q = 0;
@@ -195,9 +196,9 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
             break;
     }
 
-    uint32_t sector = volume->fat + (posFAT / volume->sectorSize);
+    uint32_t sector = volume->fat + (posFAT / volume->part->disk->sectorSize);
 
-    posFAT &= volume->sectorSize - 1;
+    posFAT &= volume->part->disk->sectorSize - 1;
 
     uint32_t c = 0;
 
@@ -205,19 +206,19 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
     {
         switch(volume->part->subtype)
         {
-            case FAT32:
+            case FS_FAT32:
                 c = MemoryReadLong(globalBufferFATSector, posFAT);
                 break;
-            case FAT16:
+            case FS_FAT16:
                 c = MemoryReadWord(globalBufferFATSector, posFAT);
                 break;
-            case FAT12:
+            case FS_FAT12:
                 c = MemoryReadByte(globalBufferFATSector, posFAT);
                 if (q)
                 {
                     c >>= 4;
                 }
-                posFAT = (posFAT +1) & (volume->sectorSize-1);
+                posFAT = (posFAT +1) & (volume->part->disk->sectorSize-1);
                 if (posFAT == 0)
                 {
                     if (globalFATWriteNecessary)
@@ -262,16 +263,16 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
         globalLastFATSectorRead = sector;
         switch(volume->part->subtype)
         {
-            case FAT32:
+            case FS_FAT32:
                 c = MemoryReadLong(globalBufferFATSector, posFAT);
                 break;
-            case FAT16:
+            case FS_FAT16:
                 c = MemoryReadWord(globalBufferFATSector, posFAT);
                 break;
-            case FAT12:
+            case FS_FAT12:
                 c = MemoryReadByte(globalBufferFATSector, posFAT);
                 if (q) { c >>= 4; }
-                posFAT = (posFAT +1) & (volume->sectorSize-1);
+                posFAT = (posFAT +1) & (volume->part->disk->sectorSize-1);
                 uint32_t d = MemoryReadByte (globalBufferFATSector, posFAT);
                 if (q) { c += d <<4; }
                 else   { c += (d & 0x0F)<<8; }
@@ -294,15 +295,15 @@ static FS_ERROR fileGetNextCluster(FAT_file_t* fileptr, uint32_t n)
 
     switch (volume->part->subtype)
     {
-        case FAT32:
+        case FS_FAT32:
             LastClustervalue = LAST_CLUSTER_FAT32;
             ClusterFailValue = CLUSTER_FAIL_FAT32;
             break;
-        case FAT12:
+        case FS_FAT12:
             LastClustervalue = LAST_CLUSTER_FAT12;
             ClusterFailValue = CLUSTER_FAIL_FAT16;
             break;
-        case FAT16:
+        case FS_FAT16:
         default:
             LastClustervalue = LAST_CLUSTER_FAT16;
             ClusterFailValue = CLUSTER_FAIL_FAT16;
@@ -346,11 +347,11 @@ static fileRootDirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntr
   #endif
     FAT_partition_t* volume       = fileptr->volume;
     uint32_t cluster              = fileptr->dirfirstCluster;
-    uint32_t DirectoriesPerSector = volume->sectorSize/NUMBER_OF_BYTES_IN_DIR_ENTRY;
+    uint32_t DirectoriesPerSector = volume->part->disk->sectorSize/NUMBER_OF_BYTES_IN_DIR_ENTRY;
     uint32_t offset2              = (*curEntry)/DirectoriesPerSector;
     uint32_t LastClusterLimit;
 
-    if (volume->part->subtype == FAT32)
+    if (volume->part->subtype == FS_FAT32)
     {
         offset2  = offset2 % (volume->SecPerClus);
         LastClusterLimit = LAST_CLUSTER_FAT32;
@@ -406,7 +407,7 @@ static fileRootDirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntr
             fileptr->dircurrCluster = currCluster;
             uint32_t sector = cluster2sector(volume,currCluster);
 
-            if ((currCluster == volume->FatRootDirCluster) && ((sector + offset2) >= volume->dataLBA) && (volume->part->subtype != FAT32))
+            if ((currCluster == volume->FatRootDirCluster) && ((sector + offset2) >= volume->dataLBA) && (volume->part->subtype != FS_FAT32))
             {
                 return 0;
             }
@@ -815,13 +816,13 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
     printf("\n>>>>> fatWrite forceWrite: %d <<<<<",forceWrite);
   #endif
 
-    if ((volume->part->subtype != FAT32) && (volume->part->subtype != FAT16) && (volume->part->subtype != FAT12))
+    if ((volume->part->subtype != FS_FAT32) && (volume->part->subtype != FS_FAT16) && (volume->part->subtype != FS_FAT12))
     {
         return CLUSTER_FAIL_FAT32;
     }
 
     uint32_t ClusterFailValue;
-    if (volume->part->subtype == FAT32)
+    if (volume->part->subtype == FS_FAT32)
         ClusterFailValue = CLUSTER_FAIL_FAT32;
     else
         ClusterFailValue = CLUSTER_FAIL_FAT16;
@@ -845,24 +846,24 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
     uint8_t q;
     switch (volume->part->subtype)
     {
-        case FAT32:
+        case FS_FAT32:
             posFAT = currCluster * 4;
             q = 0;
             break;
-        case FAT12:
+        case FS_FAT12:
             posFAT = currCluster * 3;
             q      = posFAT  & 1; // odd/even
             posFAT = posFAT >> 1;
             break;
-        case FAT16:
+        case FS_FAT16:
         default:
             posFAT = currCluster * 2;
             q = 0;
             break;
     }
 
-    uint32_t sector = volume->fat + posFAT/volume->sectorSize;
-    posFAT &= volume->sectorSize - 1;
+    uint32_t sector = volume->fat + posFAT/volume->part->disk->sectorSize;
+    posFAT &= volume->part->disk->sectorSize - 1;
 
     if (globalLastFATSectorRead != sector)
     {
@@ -889,23 +890,23 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
     uint8_t c;
     switch (volume->part->subtype)
     {
-        case FAT32:
+        case FS_FAT32:
             MemoryWriteByte (globalBufferFATSector, posFAT,   ((value & 0x000000FF)      ));
             MemoryWriteByte (globalBufferFATSector, posFAT+1, ((value & 0x0000FF00) >>  8));
             MemoryWriteByte (globalBufferFATSector, posFAT+2, ((value & 0x00FF0000) >> 16));
             MemoryWriteByte (globalBufferFATSector, posFAT+3, ((value & 0x0F000000) >> 24));
             break;
-        case FAT16:
+        case FS_FAT16:
             MemoryWriteByte (globalBufferFATSector, posFAT,     value);
             MemoryWriteByte (globalBufferFATSector, posFAT+1, ((value & 0xFF00) >> 8));
             break;
-        case FAT12:
+        case FS_FAT12:
             if (q) { c = ((value & 0x0F) << 4) | (MemoryReadByte(globalBufferFATSector, posFAT) & 0x0F ); }
             else   { c = ( value & 0xFF); }
 
             MemoryWriteByte(globalBufferFATSector, posFAT, c);
 
-            posFAT = (posFAT+1) & (volume->sectorSize-1);
+            posFAT = (posFAT+1) & (volume->part->disk->sectorSize-1);
             if (posFAT == 0)
             {
                 if (fatWrite (volume, 0, 0, true) != CE_GOOD) // update FAT
@@ -943,15 +944,15 @@ static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
 
     switch (volume->part->subtype)
     {
-        case FAT32:
+        case FS_FAT32:
             EndClusterLimit = END_CLUSTER_FAT32;
             ClusterFailValue = CLUSTER_FAIL_FAT32;
             break;
-        case FAT12:
+        case FS_FAT12:
             EndClusterLimit = END_CLUSTER_FAT12;
             ClusterFailValue = CLUSTER_FAIL_FAT16;
             break;
-        case FAT16:
+        case FS_FAT16:
         default:
             EndClusterLimit = END_CLUSTER_FAT16;
             ClusterFailValue = CLUSTER_FAIL_FAT16;
@@ -1038,13 +1039,13 @@ static FS_ERROR fileAllocateNewCluster(FAT_file_t* fileptr, uint8_t mode)
 
     switch (volume->part->subtype)
     {
-        case FAT12:
+        case FS_FAT12:
             fatWrite(volume, c, LAST_CLUSTER_FAT12, false);
             break;
-        case FAT16:
+        case FS_FAT16:
             fatWrite(volume, c, LAST_CLUSTER_FAT16, false);
             break;
-        case FAT32:
+        case FS_FAT32:
             fatWrite(volume, c, LAST_CLUSTER_FAT32, false);
             break;
     }
@@ -1132,7 +1133,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
             fileptr->file->EOF = true;
         }
 
-        if (pos == ((FAT_partition_t*)volume->data)->sectorSize)
+        if (pos == volume->disk->sectorSize)
         {
             bool needRead = true;
 
@@ -1241,9 +1242,9 @@ static bool writeFileEntry(FAT_file_t* fileptr, uint32_t* curEntry)
 
     FAT_partition_t* volume = fileptr->volume;
     uint32_t currCluster = fileptr->dircurrCluster;
-    uint8_t offset2 = *curEntry / (volume->sectorSize/32);
+    uint8_t offset2 = *curEntry / (volume->part->disk->sectorSize/32);
 
-    if (volume->part->subtype == FAT32 || currCluster != 0)
+    if (volume->part->subtype == FS_FAT32 || currCluster != 0)
     {
         offset2 = offset2 % (volume->SecPerClus);
     }
@@ -1264,15 +1265,15 @@ static bool fatEraseClusterChain(uint32_t cluster, FAT_partition_t* volume)
 
     switch (volume->part->subtype)
     {
-        case FAT32:
+        case FS_FAT32:
             ClusterFailValue = CLUSTER_FAIL_FAT32;
             c2 = LAST_CLUSTER_FAT32;
             break;
-        case FAT12:
+        case FS_FAT12:
             ClusterFailValue = CLUSTER_FAIL_FAT16;
             c2 = LAST_CLUSTER_FAT12;
             break;
-        case FAT16:
+        case FS_FAT16:
         default:
             ClusterFailValue = CLUSTER_FAIL_FAT16;
             c2 = LAST_CLUSTER_FAT16;
@@ -1444,7 +1445,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
                 uint32_t b = fileptr->dircurrCluster;
                 if (b == fileptr->volume->FatRootDirCluster)
                 {
-                    if (fileptr->volume->part->subtype != FAT32)
+                    if (fileptr->volume->part->subtype != FS_FAT32)
                         status = NO_MORE;
                     else
                     {
@@ -1525,14 +1526,14 @@ static FS_ERROR fileCreateHeadCluster(FAT_file_t* fileptr, uint32_t* cluster)
         return CE_DISK_FULL;
     }
 
-    if (volume->part->subtype == FAT12)
+    if (volume->part->subtype == FS_FAT12)
     {
         if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT12, false) == CLUSTER_FAIL_FAT16)
         {
             return CE_WRITE_ERROR;
         }
     }
-    else if (volume->part->subtype == FAT16)
+    else if (volume->part->subtype == FS_FAT16)
     {
         if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT16, false) == CLUSTER_FAIL_FAT16)
         {
@@ -1738,8 +1739,8 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
 
     file->EOF = false;
     file->seek = offset;
-    uint32_t numsector = offset / volume->sectorSize;
-    offset -= (numsector * volume->sectorSize);
+    uint32_t numsector = offset / volume->part->disk->sectorSize;
+    offset -= (numsector * volume->part->disk->sectorSize);
     FATfile->pos = offset;
     temp = numsector / volume->SecPerClus;
     numsector -= (volume->SecPerClus * temp);
@@ -1770,7 +1771,7 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
                     {
                         return CE_COULD_NOT_GET_CLUSTER;
                     }
-                    FATfile->pos = volume->sectorSize;
+                    FATfile->pos = volume->part->disk->sectorSize;
                     FATfile->sec = volume->SecPerClus - 1;
                 }
             }
@@ -2143,4 +2144,163 @@ FS_ERROR FAT_fputc(file_t* file, char c)
         return(CE_GOOD);
     }
     return CE_WRITE_ERROR;
+}
+
+
+static void writeBootsector(partition_t* part, uint8_t* sector)
+{
+    // Prepare some temp data used later
+    tm_t time;
+    cmosTime(&time);
+    uint32_t compressedTime = (time.year << 24) | (time.month << 20) | (time.dayofmonth << 15) | (time.hour << 10) | (time.minute << 4) | time.second;
+
+    FAT_partition_t* fpart = part->data;
+
+    // Prepare boot sector
+    memset(sector, 0, 512);
+
+    // Jmp-Command to end of BIOS parameter block
+    sector[0] = 0xE9; // jmp
+    if(part->subtype == FS_FAT32)
+        sector[1] = 0x57;
+    else
+        sector[1] = 0x3B;
+    sector[2] = 0;
+
+    // BIOS parameter block
+    strncpy((char*)sector+3, "MSWIN4.1", 8); // OEM name
+    sector[0x0B] = BYTE1(part->disk->sectorSize); // Bytes per sector
+    sector[0x0C] = BYTE2(part->disk->sectorSize);
+    sector[0x0D] = fpart->SecPerClus; // Sectors per cluster
+    sector[0x0E] = BYTE1(fpart->reservedSectors); // Reserved sectors
+    sector[0x0F] = BYTE2(fpart->reservedSectors);
+    sector[0x10] = 2; // Number of FATs
+    sector[0x11] = BYTE1(fpart->maxroot); // Maximum of root entries
+    sector[0x12] = BYTE2(fpart->maxroot);
+    sector[0x13] = 0; // Number of sectors. We use the 32-bit field at 0x20 therefore.
+    sector[0x14] = 0;
+    if(part->disk->type == &FLOPPYDISK)
+        sector[0x15] = 0xF0; // Media descriptor (0xF0: Floppy with 80 tracks and 18 sectors per track)
+    else
+        sector[0x15] = 0xF8; // Media descriptor (0xF8: Hard disk)
+    if(part->subtype == FS_FAT32)
+    {
+        sector[0x16] = 0; // FAT size. 
+        sector[0x17] = 0;
+    }
+    else
+    {
+        sector[0x16] = BYTE1(fpart->fatsize); // Number of sectors for FAT12 and 16
+        sector[0x17] = BYTE2(fpart->fatsize);
+    }
+    sector[0x18] = BYTE1(part->disk->secPerTrack); // Sectors per track
+    sector[0x19] = BYTE2(part->disk->secPerTrack);
+    sector[0x1A] = BYTE1(part->disk->headCount); // Number of heads
+    sector[0x1B] = BYTE2(part->disk->headCount);
+    sector[0x1C] = BYTE1(part->start); // Hidden sectors
+    sector[0x1D] = BYTE2(part->start);
+    sector[0x1E] = BYTE3(part->start);
+    sector[0x1F] = BYTE4(part->start);
+    sector[0x20] = BYTE1(part->size); // Number of sectors
+    sector[0x21] = BYTE2(part->size);
+    sector[0x22] = BYTE3(part->size);
+    sector[0x23] = BYTE4(part->size);
+    if(part->subtype == FS_FAT32)
+    {
+        sector[0x24] = BYTE1(fpart->fatsize); // FAT size
+        sector[0x25] = BYTE2(fpart->fatsize);
+        sector[0x26] = BYTE3(fpart->fatsize);
+        sector[0x27] = BYTE4(fpart->fatsize);
+        sector[0x28] = 0; // FAT flags 
+        sector[0x29] = 0;
+        sector[0x2A] = 0; // FAT32 version
+        sector[0x2B] = 0;
+        sector[0x2C] = BYTE1(fpart->root); // First cluster of root
+        sector[0x2D] = BYTE2(fpart->root);
+        sector[0x2E] = BYTE3(fpart->root);
+        sector[0x2F] = BYTE4(fpart->root);
+        sector[0x30] = BYTE1(1); // Info sector
+        sector[0x31] = BYTE2(1);
+        sector[0x32] = BYTE1(6); // Sector of copy of bootsector
+        sector[0x33] = BYTE2(6);
+        memset(sector+0x34, 0, 12); // reserved
+        sector[0x40] = part->disk->BIOS_driveNum; // BIOS number of device. OS-specific, so set to 0 at the moment.
+        sector[0x41] = 0; // reserved
+        sector[0x42] = 0x29; // Extended boot signature
+        sector[0x43] = BYTE1(compressedTime); // Filesystem ID
+        sector[0x44] = BYTE2(compressedTime);
+        sector[0x45] = BYTE3(compressedTime);
+        sector[0x46] = BYTE4(compressedTime);
+        strncpyandfill((char*)sector+0x47, part->serial, 11, ' '); // Name of filesystem
+        strncpyandfill((char*)sector+0x36, "FAT32", 8, ' '); // FAT type
+    }
+    else
+    {
+        sector[0x24] = part->disk->BIOS_driveNum; // BIOS number of device. OS-specific, so set to 0 at the moment.
+        sector[0x25] = 0; // reserved
+        sector[0x26] = 0x29; // Extended boot signature
+        sector[0x27] = BYTE1(compressedTime); // Filesystem ID
+        sector[0x28] = BYTE2(compressedTime);
+        sector[0x29] = BYTE3(compressedTime);
+        sector[0x2A] = BYTE4(compressedTime);
+        strncpyandfill((char*)sector+0x2B, part->serial, 11, ' '); // Name of filesystem
+        if(part->subtype == FS_FAT12)
+            strncpyandfill((char*)sector+0x36, "FAT12", 8, ' '); // FAT type
+        else
+            strncpyandfill((char*)sector+0x36, "FAT16", 8, ' '); // FAT type
+    }
+    sector[510] = 0x55; // Boot signature
+    sector[511] = 0xAA;
+}
+
+
+// HACKs
+#define ROOT_DIR_ENTRIES 224
+#include "storage/flpydsk.h"
+
+FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependances. Make it working for FAT16 and FAT32.
+{
+    /*free(part->data);
+    FAT_partition_t* fpart = malloc(sizeof(FAT_partition_t), 0, "FAT_partition_t");
+    part->data = fpart;*/
+    FAT_partition_t* fpart = part->data; // HACK. Assuming that the partition was formatted with FAT before.
+
+    fpart->fatcopy = 2; // HACK? Keep old value here?
+    fpart->maxroot = ROOT_DIR_ENTRIES; // HACK? Keep old value here?
+    fpart->SecPerClus = 1; // HACK? Keep old value here?
+    fpart->fatsize = 9; // HACK? Only valid for FAT12? Keep old value here?
+    if(part->subtype == FS_FAT12 || part->subtype == FS_FAT16)
+        fpart->reservedSectors = 1; // HACK? Keep old value here?
+    else
+        fpart->reservedSectors = 32; // HACK? Keep old value here?
+    
+    /// Prepare track 0
+    static uint8_t track[9216];
+    /// Bootsector
+    writeBootsector(part, track);
+    /// FAT1 and FAT2
+    memset(track+512, 0, 9216-512);
+    uint32_t FAT1sec = fpart->reservedSectors;
+    uint32_t FAT2sec = FAT1sec+fpart->fatsize;
+    track[FAT1sec*512]   = 0xF0;
+    track[FAT2sec*512]   = 0xF0;
+    track[FAT1sec*512+1] = 0xFF;
+    track[FAT2sec*512+1] = 0xFF;
+    track[FAT1sec*512+2] = 0xFF;
+    track[FAT2sec*512+2] = 0xFF;
+    /// Write track 0
+    flpydsk_write_ia(0, track, TRACK); // HACK: floppy dependance
+    
+    /// Prepare track 1
+    /// Prepare root directory
+    memset(track, 0, 9216);
+    strncpyandfill((char*)track+512, part->serial, 11, ' '); // Volume label
+    track[512+11] = ATTR_VOLUME | ATTR_ARCHIVE; // Attribute
+    memset(track+7680, 0xF6, 9216-7680); // format ID of MS Windows
+    /// Write track 1
+    flpydsk_write_ia(1, track, TRACK); // HACK: floppy dependance
+
+    /// DONE
+    printf("Quickformat complete.\n");
+    return CE_GOOD;
 }

@@ -15,6 +15,7 @@ typedef struct
     uint8_t century;     // century (2 digits)
 } tm_t;
 
+void cmosTime(tm_t* ptm);
 void getCurrentDateAndTime(char* pStr);
 
 #endif

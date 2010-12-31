@@ -40,7 +40,7 @@ static void* syscalls[] =
 /*  19 */    &fflush,
 /*  20 */    &nop, // fmove
 /*  21 */    &fclose,
-/*  22 */    &nop,
+/*  22 */    &formatPartition,
 /*  23 */    &nop,
 /*  24 */    &nop,
 
@@ -118,8 +118,7 @@ static void* syscalls[] =
 
 // COMPATIBILITY (90-92); should be removed
     &flpydsk_read_directory,
-    &cprintf,
-    &flpydsk_format,
+    &cprintf
 };
 
 static void syscall_handler(registers_t* r);

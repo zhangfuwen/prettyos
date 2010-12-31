@@ -1,6 +1,7 @@
 #include "userlib.h"
 #include "string.h"
 #include "stdio.h"
+#include "stdlib.h"
 
 #define MAX_CHAR_PER_LINE 70
 #define ENTRY_CACHE_SIZE 10
@@ -223,7 +224,7 @@ EVALUATION: // evaluation of entry
         textColor(0x02);
         if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
-            puts("Implemented Instructions: hi, help, ?, fdir, fformat and reboot\n");
+            puts("Implemented Instructions: hi, help, ?, fdir, format and reboot\n");
         }
         else if(strcmp(entry, "hi") == 0)
         {
@@ -233,9 +234,19 @@ EVALUATION: // evaluation of entry
         {
             floppy_dir();
         }
-        else if(strcmp(entry, "fformat") == 0)
+        else if(strcmp(entry, "format") == 0)
         {
-            floppy_format("PrettyOS");
+            puts("Please enter the partition path: ");
+            char part[20];
+            gets(part);
+            puts("Please enter the filesystem type (1: FAT12, 2: FAT16, 3: FAT32): ");
+            char type[20];
+            gets(type);
+            puts("Please enter the volume label: ");
+            char label[20];
+            gets(label);
+            puts("\n");
+            partition_format(part, atoi(type), label);
         }
         else if(strcmp(entry, "reboot") == 0)
         {

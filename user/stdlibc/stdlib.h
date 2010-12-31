@@ -10,11 +10,11 @@
 
 
 typedef struct {
-	int quot, rem;
+    int quot, rem;
 } div_t;
 
 typedef struct {
-	long quot, rem;
+    long quot, rem;
 } ldiv_t;
 
 

@@ -701,7 +701,7 @@ void vbe_bootscreen()
         textColor(0x0E);
         printf("1. Start Graphical Tests\n");
         printf("2. Start GUI\n");
-		printf("3. Start VBE-Shell\n");
+        printf("3. Start VBE-Shell\n");
         printf("Type in the number: ");
         char num[3];
         gets(num);
@@ -749,7 +749,7 @@ void vbe_bootscreen()
     {
         StartGUI();
     }
-	else if(whatToStart == 3)
+    else if(whatToStart == 3)
     {
         startVBEShell();
     }

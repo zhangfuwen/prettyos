@@ -72,6 +72,12 @@ typedef enum
 
 typedef enum
 {
+    FS_FAT12=1, FS_FAT16, FS_FAT32,
+    FS_INITRD
+} FS_t;
+
+typedef enum
+{
     STANDBY, SHUTDOWN, REBOOT
 } SYSTEM_CONTROL;
 

@@ -29,6 +29,12 @@ typedef struct disk
     char         name[15];
     void*        data;                          // Contains additional information depending on disk-type
     uint32_t     accessRemaining;               // Used to control motor
+
+    // Technical data of the disk
+    uint32_t sectorSize;    // Bytes per sector
+    uint16_t secPerTrack;   // Number of sectors per track (if the disk is separated into tracks)
+    uint16_t headCount;     // Number of heads (if the disk is separated into heads)
+    uint8_t  BIOS_driveNum; // Number of this disk given by BIOS
 } disk_t;
 
 typedef struct

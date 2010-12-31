@@ -17,7 +17,7 @@ a chance to emulate the facilities they affect.
 #include "task.h"
 #include "serial.h"
 
-static current_t Current;
+static volatile current_t Current;
 
 bool vm86sensitiveOpcodehandler(registers_t* ctx)
 {

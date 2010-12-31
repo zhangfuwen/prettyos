@@ -21,9 +21,9 @@ int32_t mouse_x=10; // Mouse X
 int32_t mouse_y=10; // Mouse Y
 int32_t mouse_zv=0; // Mouse Zv (vertical mousewheel)
 int32_t mouse_zh=0; // Mouse Zh (horizontal mousewheel)
-bool mouse_lm=0;    // Mouse Left Button
-bool mouse_mm=0;    // Mouse Middle Button
-bool mouse_rm=0;    // Mouse Right Button
+bool mouse_bl=0;    // Mouse Left Button
+bool mouse_bm=0;    // Mouse Middle Button
+bool mouse_br=0;    // Mouse Right Button
 bool mouse_b4=0;    // Mouse Button 4
 bool mouse_b5=0;    // Mouse button 5
 
@@ -31,8 +31,8 @@ extern BMPInfo_t cursor_start;
 extern BMPInfo_t cursor_end;
 
 
-static void mouse_wait(uint8_t a_type);
-static void mouse_write(int8_t a_write);
+static void mouse_wait(uint8_t type);
+static void mouse_write(int8_t data);
 static char mouse_read();
 
 
@@ -78,12 +78,12 @@ void mouse_install()
     }
 
 
+    // Setup the mouse handler
+    irq_installHandler(IRQ_MOUSE, mouse_handler);
+
     // Enable the mouse
     mouse_write(0xF4);
     mouse_read();
-
-    // Setup the mouse handler
-    irq_installHandler(IRQ_MOUSE, mouse_handler);
 }
 
 // Mouse functions
@@ -98,9 +98,9 @@ void mouse_handler(registers_t* a_r)
         case 0: // First byte: Left Button | Right Button | Middle Button | 1 | X sign | Y sign | X overflow | Y overflow
             if(bytes[0] & BIT(3)) // Only if this is really the first byte!
             {
-                mouse_lm = (bytes[0] & BIT(0));
-                mouse_rm = (bytes[0] & BIT(1))>>1;
-                mouse_mm = (bytes[0] & BIT(2))>>2;
+                mouse_bl = (bytes[0] & BIT(0));
+                mouse_br = (bytes[0] & BIT(1)) >> 1;
+                mouse_bm = (bytes[0] & BIT(2)) >> 2;
             }
             else
             {
@@ -175,46 +175,34 @@ void mouse_handler(registers_t* a_r)
         {
             case NORMAL:
                 writeInfo(1, "Mouse: X: %d  Y: %d  Z: -   buttons: L: %d  M: %d  R: %d",
-                    mouse_x, mouse_y, mouse_lm, mouse_mm, mouse_rm);
+                    mouse_x, mouse_y, mouse_bl, mouse_bm, mouse_br);
                 break;
             case WHEEL:
                 writeInfo(1, "Mouse: X: %d  Y: %d  Z: %d   buttons: L: %d  M: %d  R: %d",
-                    mouse_x, mouse_y, mouse_zv, mouse_lm, mouse_mm, mouse_rm);
+                    mouse_x, mouse_y, mouse_zv, mouse_bl, mouse_bm, mouse_br);
                 break;
             case WHEELS5BUTTON:
                 writeInfo(1, "Mouse: X: %d  Y: %d  Zv: %d  Zh: %d   buttons: L: %d  M: %d  R: %d  4th: %d  5th: %d",
-                    mouse_x, mouse_y, mouse_zv, mouse_zh, mouse_lm, mouse_mm, mouse_rm, mouse_b4, mouse_b5);
+                    mouse_x, mouse_y, mouse_zv, mouse_zh, mouse_bl, mouse_bm, mouse_br, mouse_b4, mouse_b5);
                 break;
         }
     }
 }
 
-static void mouse_wait(uint8_t a_type)
+static void mouse_wait(uint8_t type) // Data: 0, Signal: 1
 {
     unsigned int time_out = 100000;
-    if (a_type==0)
+
+    while (time_out--) // Data
     {
-        while (time_out--) // Data
+        if ((inportb(0x64) & (type+1))==(type==0?1:0))
         {
-            if ((inportb(0x64) & 1)==1)
-            {
-                return;
-            }
-        }
-    }
-    else
-    {
-        while (time_out--) // Signal
-        {
-            if ((inportb(0x64) & 2)==0)
-            {
-                return;
-            }
+            return;
         }
     }
 }
 
-static void mouse_write(int8_t a_write)
+static void mouse_write(int8_t data)
 {
     // Wait to be able to send a command
     mouse_wait(1);
@@ -223,9 +211,9 @@ static void mouse_write(int8_t a_write)
     // Wait for the final part
     mouse_wait(1);
     // Finally write
-    outportb(0x60, a_write);
+    outportb(0x60, data);
     // If necessary, wait for ACK
-    if (a_write != 0xEB && a_write != 0xEC && a_write != 0xF2 && a_write != 0xFF)
+    if (data != 0xEB && data != 0xEC && data != 0xF2 && data != 0xFF)
     {
         if (mouse_read() != 0xFA)
         {

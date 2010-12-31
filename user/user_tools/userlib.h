@@ -11,6 +11,8 @@ uint32_t getMyPID();
 
 void* userheapAlloc(size_t increase);
 
+FS_ERROR partition_format(const char* path, FS_t type, const char* name);
+
 uint32_t getCurrentMilliseconds();
 
 void systemControl(SYSTEM_CONTROL todo);
@@ -27,7 +29,6 @@ void beep(uint32_t frequency, uint32_t duration);
 
  // deprecated
 int32_t floppy_dir();
-int32_t floppy_format(char* volumeLabel);
 void printLine(const char* message, uint32_t line, uint8_t attribute);
 
 // user functions

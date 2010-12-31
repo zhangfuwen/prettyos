@@ -82,6 +82,13 @@ int fclose(file_t* file)
     return ret;
 }
 
+FS_ERROR partition_format(const char* path, FS_t type, const char* name)
+{
+    FS_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(22), "b"(path), "c"(type), "d"(name));
+    return ret;
+}
+
 uint32_t getCurrentMilliseconds()
 {
     uint32_t ret;
@@ -160,20 +167,14 @@ void printLine(const char* message, uint32_t line, uint8_t attribute)
         __asm__ volatile("int $0x7F" : : "a"(91), "b"(message), "c"(line), "d"(attribute));
     }
 }
-int32_t floppy_format(char* volumeLabel)
-{
-    int32_t ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(92), "b"(volumeLabel));
-    return ret;
-}
 
 
 // user functions
 void iSetCursor(uint16_t x, uint16_t y)
 {
-	position_t temp;
-	temp.x = x; temp.y = y;
-	setCursor(temp);
+    position_t temp;
+    temp.x = x; temp.y = y;
+    setCursor(temp);
 }
 
 uint32_t getCurrentSeconds()

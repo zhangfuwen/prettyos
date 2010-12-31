@@ -692,6 +692,7 @@ void setupUSBDevice(uint8_t portNumber)
         usbDev[portNumber].type         = &USB_MSD;
         usbDev[portNumber].partition[0] = &usbDevVolume[portNumber];
         usbDev[portNumber].data         = (void*)&usbDevices[devAddr];
+        usbDev[portNumber].sectorSize   = 512;
         strcpy(usbDev[portNumber].name, usbDevices[devAddr].productName);
         attachDisk(&usbDev[portNumber]);
 

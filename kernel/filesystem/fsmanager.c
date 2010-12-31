@@ -14,25 +14,47 @@ fileSystem_t FAT, INITRD;
 
 void fsmanager_install()
 {
-    FAT.fopen  = &FAT_fopen;
-    FAT.fclose = &FAT_fclose;
-    FAT.fgetc  = &FAT_fgetc;
-    FAT.fputc  = &FAT_fputc;
-    FAT.fseek  = &FAT_fseek;
-    FAT.remove = &FAT_remove;
-    FAT.rename = &FAT_rename;
+    FAT.fopen    = &FAT_fopen;
+    FAT.fclose   = &FAT_fclose;
+    FAT.fgetc    = &FAT_fgetc;
+    FAT.fputc    = &FAT_fputc;
+    FAT.fseek    = &FAT_fseek;
+    FAT.remove   = &FAT_remove;
+    FAT.rename   = &FAT_rename;
+    FAT.pformat  = &FAT_format;
+    FAT.pinstall = 0;
+}
+
+
+static uint64_t getFSType(FS_t type) // BIT 0-31: subtype, BIT 32-63: fileSystem_t
+{
+    switch(type)
+    {
+        case FS_FAT12: case FS_FAT16: case FS_FAT32:
+            return(((uint64_t)(uintptr_t)&FAT << 32) | type);
+        case FS_INITRD:
+            return(((uint64_t)(uintptr_t)&INITRD << 32) | type);
+    }
+    return(0);
 }
 
 // Partition functions
-void formatPartition(const char* path)
+FS_ERROR formatPartition(const char* path, FS_t type, const char* name)
 {
     partition_t* part = getPartition(path);
+    uint64_t ptype = getFSType(type);
+    part->subtype = ptype;
+    part->type = (fileSystem_t*)(uintptr_t)(ptype>>32);
+    strcpy(part->serial, name);
     part->type->pformat(part);
+    installPartition(part);
+    return(CE_GOOD);
 }
 
 void installPartition(partition_t* part)
 {
-    part->type->pinstall(part);
+    if(part->type->pinstall)
+        part->type->pinstall(part);
 }
 
 // File functions

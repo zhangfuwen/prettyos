@@ -8,7 +8,7 @@
 #include "video/console.h"
 #include "task.h"
 
-task_t* FPUTask = 0;
+volatile task_t* FPUTask = 0;
 
 static void fpu_setcw(uint16_t ctrlword)
 {

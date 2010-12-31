@@ -214,7 +214,7 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
         }
         if (currentConsole->KQ.pHead == currentConsole->KQ.buffer)
         {
-            currentConsole->KQ.pHead = currentConsole->KQ.buffer + KQSIZE - 1;
+            currentConsole->KQ.pHead = (void*)currentConsole->KQ.buffer + KQSIZE - 1;
         }
         sti();
         return KEY;

@@ -48,6 +48,7 @@ size_t  strlen(const char* str);
 int32_t strcmp(const char* s1, const char* s2);
 char*   strcpy(char* dest, const char* src);
 char*   strncpy(char* dest, const char* src, size_t n);
+char*   strncpyandfill(char* dest, const char* src, size_t n, char val);
 char*   strcat(char* dest, const char* src);
 char*   strncat(char* dest, const char* src, size_t n);
 char*   strchr(char* str, int character);
@@ -57,8 +58,8 @@ char  toUpper(char c);
 char* toupper(char* s);
 char* tolower(char* s);
 
-void gets(char* s);
-void waitForKeyStroke();
+char* gets(char* s);
+void  waitForKeyStroke();
 
 void systemControl(SYSTEM_CONTROL todo); // Reboot, Shutdown, ...
 

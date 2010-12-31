@@ -22,8 +22,8 @@ typedef struct // Defines the User-Space of the display
 } console_t; // ATTENTION: Do not change the order of the members without changing the order of initialization (console.c)
 
 extern console_t* reachableConsoles[11]; // All accessible consoles: up to 10 subconsoles + main console
-extern uint8_t displayedConsole;
-extern console_t* currentConsole;
+extern volatile uint8_t displayedConsole;
+extern volatile console_t* currentConsole;
 
 void kernel_console_init();
 void console_init(console_t* console, const char* name);

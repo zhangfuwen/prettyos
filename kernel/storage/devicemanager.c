@@ -336,7 +336,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
 {
     char volume_serialNumber[4];
 
-    struct boot_sector* sec0 = (struct boot_sector*)buffer;
+    struct BPB1216* sec0 = (struct BPB1216*)buffer;
 
     char SysName[9];
     char FATn[9];
@@ -375,11 +375,10 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         printf("\tFormat:                 %s",FATn);
         #endif
 
-        uint8_t  volume_type          = FAT32;
         uint32_t volume_bytePerSector = sec0->charsPerSector;
         uint8_t  volume_SecPerClus    = sec0->SectorsPerCluster;
         uint16_t volume_maxroot       = sec0->MaxRootEntries;
-        uint32_t volume_fatsize       = sec0->SectorsPerFAT;
+        uint32_t volume_fatsize       = sec0->SectorsPerFAT16;
         uint8_t  volume_fatcopy       = sec0->FATcount;
         uint32_t volume_firstSector   = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
         uint32_t volume_fat           = volume_firstSector + sec0->ReservedSectors;
@@ -388,7 +387,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         uint32_t volume_maxcls        = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
 
         uint32_t volume_FatRootDirCluster = 0; // only FAT32
-
+        
         startSectorPartition = 0; // important!
 
         if (FATn[0] != 'F') // FAT32
@@ -397,7 +396,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
                  ((uint8_t*)buffer)[0x55] == '3' && ((uint8_t*)buffer)[0x56] == '2')
             {
                 printf("\nDisk is formated with FAT32 ");
-                volume_type = FAT32;
+                part->subtype = FS_FAT32;
 
                 for (uint8_t i=0; i<4; i++)
                 {
@@ -420,7 +419,7 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '6') // FAT16
         {
             printf("\nDisk is formated with FAT16 ");
-            volume_type = FAT16;
+            part->subtype = FS_FAT16;
 
             for (uint8_t i=0; i<4; i++)
             {
@@ -431,26 +430,30 @@ FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests o
         else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '2')
         {
             printf("\nDisk is formated with FAT12.\n");
-            volume_type = FAT12;
+            part->subtype = FS_FAT12;
         }
 
         ///////////////////////////////////////////////////
         // store the determined volume data to partition //
         ///////////////////////////////////////////////////
 
-        FATpart->sectorSize = volume_bytePerSector;
-        part->buffer        = malloc(volume_bytePerSector, 0,"devmgr-partbuffer");
-        part->subtype       = volume_type;
-        FATpart->SecPerClus = volume_SecPerClus;
-        FATpart->maxroot    = volume_maxroot;
-        FATpart->fatsize    = volume_fatsize;
-        FATpart->fatcopy    = volume_fatcopy;
-        part->start         = volume_firstSector;
-        FATpart->fat        = volume_fat;    // reservedSectors
-        FATpart->root       = volume_root;   // reservedSectors + 2*SectorsPerFAT
-        FATpart->dataLBA    = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
-        FATpart->maxcls     = volume_maxcls;
-        part->mount         = true;
+        part->disk->sectorSize = volume_bytePerSector;
+        part->buffer           = malloc(volume_bytePerSector, 0,"devmgr-partbuffer");
+        part->start            = volume_firstSector;
+        if(sec0->TotalSectors16 != 0)
+            part->size         = sec0->TotalSectors16;
+        else
+            part->size         = sec0->TotalSectors32;
+        part->mount            = true;
+        FATpart->reservedSectors   = sec0->ReservedSectors;
+        FATpart->SecPerClus        = volume_SecPerClus;
+        FATpart->maxroot           = volume_maxroot;
+        FATpart->fatsize           = volume_fatsize;
+        FATpart->fatcopy           = volume_fatcopy;
+        FATpart->fat               = volume_fat;    // reservedSectors
+        FATpart->root              = volume_root;   // reservedSectors + 2*SectorsPerFAT
+        FATpart->dataLBA           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
+        FATpart->maxcls            = volume_maxcls;
         FATpart->FatRootDirCluster = volume_FatRootDirCluster;
 
         //HACK
@@ -635,7 +638,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
             return(CE_GOOD);
         }
     }
-
+    
     FS_ERROR error = part->disk->type->readSector(sector, buffer, part->disk->data);
     if (error == CE_GOOD)
     {

@@ -10,12 +10,12 @@
 #include "synchronisation.h"
 
 console_t* reachableConsoles[11]; // Mainconsole + up to KERNELCONSOLE_ID Subconsoles
-uint8_t displayedConsole = KERNELCONSOLE_ID; // Currently visible console (KERNELCONSOLE_ID per default)
+volatile uint8_t displayedConsole = KERNELCONSOLE_ID; // Currently visible console (KERNELCONSOLE_ID per default)
 
 console_t kernelConsole = {0, true, 0, 39, {0, 0}};
 
 // The console of the active task
-console_t* currentConsole = &kernelConsole;
+volatile console_t* currentConsole = &kernelConsole;
 
 extern uint16_t* vidmem;
 static bool scroll_flag = true;
@@ -100,7 +100,7 @@ void clear_console(uint8_t backcolor)
 {
     // Erasing the content of the active console
     textColor((backcolor << 4) | 0x0F);
-    memsetw(currentConsole->vidmem, 0x20 | (getTextColor() << 8), COLUMNS * USER_LINES);
+    memsetw((uint16_t*)currentConsole->vidmem, 0x20 | (getTextColor() << 8), COLUMNS * USER_LINES);
     currentConsole->cursor.x = 0;
     currentConsole->cursor.y = 0;
     if (currentConsole == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
@@ -205,8 +205,8 @@ static void scroll()
     if (scroll_flag && currentConsole->cursor.y >= scroll_end)
     {
         uint8_t temp = currentConsole->cursor.y - scroll_end + 1;
-        memcpy(currentConsole->vidmem, currentConsole->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
-        memsetw(currentConsole->vidmem + (scroll_end - temp) * COLUMNS, getTextColor() << 8, COLUMNS);
+        memcpy((uint16_t*)currentConsole->vidmem, (uint16_t*)currentConsole->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
+        memsetw((uint16_t*)currentConsole->vidmem + (scroll_end - temp) * COLUMNS, getTextColor() << 8, COLUMNS);
         currentConsole->cursor.y = scroll_end - 1;
         refreshUserScreen();
     }

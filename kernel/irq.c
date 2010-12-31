@@ -170,9 +170,9 @@ void isr_install()
 
 uint32_t irq_handler(uintptr_t esp)
 {
-    task_t* oldTask = currentTask;       // Save old task to be able to restore attr in case of task_switch
-    uint8_t attr = currentTask->attrib;  // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
-    currentConsole = kernelTask.console; // The output should appear in the kernels console usually
+    task_t* oldTask = (task_t*)currentTask; // Save old task to be able to restore attr in case of task_switch
+    uint8_t attr = currentTask->attrib;     // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
+    currentConsole = kernelTask.console;    // The output should appear in the kernels console usually
 
     registers_t* r = (registers_t*)esp;
 
