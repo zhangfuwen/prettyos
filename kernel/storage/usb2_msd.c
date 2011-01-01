@@ -25,7 +25,6 @@ uint8_t currCSWtag;
 void* cmdQTD;
 void* StatusQTD;
 
-extern uint32_t startSectorPartition;
 int32_t  numberTries = 10; // repeats for IN-Transfer
 
 uint32_t usbMSDVolumeMaxLBA;
@@ -719,7 +718,7 @@ static void analyzeInquiry()
     }
 }
 
-void testMSD(uint8_t devAddr, partition_t* part)
+void testMSD(uint8_t devAddr, disk_t* disk)
 {
     if (usbDevices[devAddr].InterfaceClass != 0x08)
     {
@@ -797,32 +796,8 @@ void testMSD(uint8_t devAddr, partition_t* part)
         logBulkTransfer(&readCapacity);
         waitForKeyStroke();
 
-        ///////// send SCSI command "read(10)", read one block (512 byte) from LBA ..., get Status
-
-        uint32_t start=0, sector;
-
-labelRead:
-        sector=start;
-        usbRead(sector, part->buffer, part->disk->data);
-
-        if (sector == 0 || sector == startSectorPartition || (*((uint8_t*)DataQTDpage0+510) == 0x55 && *((uint8_t*)DataQTDpage0+511) == 0xAA) )
-        {
-            if (analyzeBootSector((void*)DataQTDpage0, part) != CE_GOOD) // for first tests only
-            {
-                goto labelLeave;
-            }
-            waitForKeyStroke();
-        }
-
-        if (startSectorPartition)
-        {
-            start = startSectorPartition;
-            goto labelRead;
-        }
+        analyzeDisk(disk);
     } // else
-
-labelLeave:
-    printf("\nNeither MBR nor FAT, thus better leave.");
     waitForKeyStroke();
 }
 

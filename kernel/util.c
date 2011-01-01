@@ -85,7 +85,12 @@ void panic_assert(const char* file, uint32_t line, const char* desc)
 void memshow(const void* start, size_t count)
 {
     const uint8_t* end = (const uint8_t*)(start+count);
-    for (; count != 0; count--) printf("%y ",*(end-count));
+    for (; count != 0; count--)
+    {
+        if(count%16 == 0)
+            printf("\n");
+        printf("%y ",*(end-count));
+    }
 }
 
 void* memcpy(void* dest, const void* src, size_t count)
@@ -979,19 +984,19 @@ void bootscreen() {
         printf("\n");
         printf("\n");
         printf("     ####################################################################      \n");
-        
+
         for(uint8_t bars = 0; bars < 4; bars++) {
             printf("     #");
             textColor(2);
-            
+
             for(uint8_t percs=0; percs<prog; percs++) {
                 printf("#");
             }
-            
+
             for(uint8_t spaces=0; spaces<(66-prog); spaces++) {
                 printf(" ");
             }
-            
+
             textColor(15);
             printf("#\n");
         }
@@ -1000,12 +1005,12 @@ void bootscreen() {
         printf("                                                                               \n");
         sleepMilliSeconds(30);
     }
-    
-    
-    
+
+
+
     // 2;10
-    
-    
+
+
     printf("\n\n");
     textColor(0x0E);
     printf("                  Copyright (c) 2009-2010  The PrettyOS Team\n");

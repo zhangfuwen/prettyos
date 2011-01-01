@@ -1,4 +1,9 @@
 /*
+*  license and disclaimer for the use of this source code as per statement below
+*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+*/
+
+/*
 *  This code is based on example code for the PIC18F4550 given in the book:
 *  Jan Axelson, "USB Mass Storage Device" (2006), web site: www.Lvr.com
 *
@@ -228,7 +233,7 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
                             return ClusterFailValue;
                         }
                     }
-                    if (singleSectorRead(sector+1, globalBufferFATSector, volume->part) != CE_GOOD)
+                    if (singleSectorRead(sector+1, globalBufferFATSector, volume->part->disk) != CE_GOOD)
                     {
                         globalLastFATSectorRead = 0xFFFF;
                         return ClusterFailValue;
@@ -254,7 +259,7 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
             if (fatWrite (volume, 0, 0, true))
                 return ClusterFailValue;
         }
-        if (singleSectorRead(sector, globalBufferFATSector, volume->part) != CE_GOOD)
+        if (singleSectorRead(sector, globalBufferFATSector, volume->part->disk) != CE_GOOD)
         {
             globalLastFATSectorRead = 0xFFFF;
             return ClusterFailValue;
@@ -415,7 +420,7 @@ static fileRootDirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntr
             {
                 if (singleSectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
                                       globalFilePtr->volume->part->buffer,                                                   // buffer
-                                      globalFilePtr->volume->part))
+                                      globalFilePtr->volume->part->disk))
                 {
                     return 0;
                 }
@@ -425,7 +430,7 @@ static fileRootDirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntr
             globalFilePtr = 0;
             globalBufferMemSet0 = false;
 
-            FS_ERROR error = singleSectorRead(sector + offset2, volume->part->buffer, volume->part);
+            FS_ERROR error = singleSectorRead(sector + offset2, volume->part->buffer, volume->part->disk);
 
             if (error != CE_GOOD)
             {
@@ -673,7 +678,7 @@ FS_ERROR FAT_fclose(file_t* file)
         {
             if (singleSectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
                                   globalFilePtr->volume->part->buffer,                                                   // buffer
-                                  globalFilePtr->volume->part))
+                                  globalFilePtr->volume->part->disk))
             {
                 return CE_WRITE_ERROR;
             }
@@ -740,7 +745,7 @@ FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count)
     volume->disk->accessRemaining += sectors;
 
     sectors--;
-    if (sectorRead(sector, volume->buffer, volume) != CE_GOOD)
+    if (sectorRead(sector, volume->buffer, volume->disk) != CE_GOOD)
     {
         error = CE_BAD_SECTOR_READ;
     }
@@ -766,7 +771,7 @@ FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count)
                     sector = cluster2sector(volume->data, fileptr->currCluster);
                     sector += fileptr->sec;
                     sectors--;
-                    if (sectorRead(sector, volume->buffer, volume) != CE_GOOD)
+                    if (sectorRead(sector, volume->buffer, volume->disk) != CE_GOOD)
                     {
                         error = CE_BAD_SECTOR_READ;
                     }
@@ -833,7 +838,7 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
     {
         for (uint32_t i=0, sectorFAT=globalLastFATSectorRead; i<volume->fatcopy; i++, sectorFAT+=volume->fatsize)
         {
-            if (singleSectorWrite(sectorFAT, globalBufferFATSector, volume->part) != CE_GOOD)
+            if (singleSectorWrite(sectorFAT, globalBufferFATSector, volume->part->disk) != CE_GOOD)
             {
                 return ClusterFailValue;
             }
@@ -871,7 +876,7 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
         {
             for (uint8_t i=0, lba=globalLastFATSectorRead; i<volume->fatcopy; i++, lba+=volume->fatsize)
             {
-                if (singleSectorWrite(lba, globalBufferFATSector, volume->part) != CE_GOOD)
+                if (singleSectorWrite(lba, globalBufferFATSector, volume->part->disk) != CE_GOOD)
                 {
                     return ClusterFailValue;
                 }
@@ -879,7 +884,7 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
             globalFATWriteNecessary = false;
         }
 
-        if (singleSectorRead(sector, globalBufferFATSector, volume->part) != CE_GOOD)
+        if (singleSectorRead(sector, globalBufferFATSector, volume->part->disk) != CE_GOOD)
         {
             globalLastFATSectorRead = 0xFFFF;
             return ClusterFailValue;
@@ -914,7 +919,7 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
                     return ClusterFailValue;
                 }
 
-                if (singleSectorRead(sector+1, globalBufferFATSector, volume->part) != CE_GOOD) // next sector
+                if (singleSectorRead(sector+1, globalBufferFATSector, volume->part->disk) != CE_GOOD) // next sector
                 {
                     globalLastFATSectorRead = 0xFFFF;
                     return ClusterFailValue;
@@ -1002,7 +1007,7 @@ static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
 
         if (singleSectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
                               globalFilePtr->volume->part->buffer,                                                   // buffer
-                              globalFilePtr->volume->part))
+                              globalFilePtr->volume->part->disk))
         {
             return CE_WRITE_ERROR;
         }
@@ -1019,7 +1024,7 @@ static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
 
     for(uint16_t i=0; i<volume->SecPerClus; i++)
     {
-        if (singleSectorWrite(SectorAddress++, volume->part->buffer, volume->part) != CE_GOOD)
+        if (singleSectorWrite(SectorAddress++, volume->part->buffer, volume->part->disk) != CE_GOOD)
         {
             return CE_WRITE_ERROR;
         }
@@ -1088,7 +1093,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
 
             if (sectorWrite(cluster2sector(globalFilePtr->volume, globalFilePtr->currCluster) + globalFilePtr->sec, // sector
                             globalFilePtr->volume->part->buffer,                                                    // buffer
-                            globalFilePtr->volume->part))
+                            globalFilePtr->volume->part->disk))
             {
                 volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been written
                 return 0; // write count
@@ -1106,7 +1111,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
 
             if (sectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
                             globalFilePtr->volume->part->buffer,                                                   // buffer
-                            globalFilePtr->volume->part))
+                            globalFilePtr->volume->part->disk))
             {
                 volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been written
                 return 0; // write count
@@ -1115,7 +1120,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
         }
 
         globalBufferMemSet0 = false;
-        if (singleSectorRead(sector, volume->buffer, volume) != CE_GOOD )
+        if (singleSectorRead(sector, volume->buffer, volume->disk) != CE_GOOD )
         {
             error = CE_BAD_SECTOR_READ;
         }
@@ -1143,7 +1148,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
 
                 if (sectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
                                 globalFilePtr->volume->part->buffer,                                                   // buffer
-                                globalFilePtr->volume->part))
+                                globalFilePtr->volume->part->disk))
                 {
                     volume->disk->accessRemaining -= sectors; // Subtract sectors that have not been written
                     return 0; // write count
@@ -1182,7 +1187,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
 
                 if (needRead)
                 {
-                    if (singleSectorRead(sector, volume->buffer, volume) != CE_GOOD)
+                    if (singleSectorRead(sector, volume->buffer, volume->disk) != CE_GOOD)
                     {
                         error   = CE_BAD_SECTOR_READ;
                         globalLastDataSectorRead = 0xFFFFFFFF;
@@ -1251,7 +1256,7 @@ static bool writeFileEntry(FAT_file_t* fileptr, uint32_t* curEntry)
 
     uint32_t sector = cluster2sector(volume,currCluster);
 
-    return (singleSectorWrite(sector + offset2, volume->part->buffer, volume->part) == CE_GOOD);
+    return (singleSectorWrite(sector + offset2, volume->part->buffer, volume->part->disk) == CE_GOOD);
 }
 
 
@@ -1670,7 +1675,7 @@ static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
 
             if (singleSectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec, // sector
                                   globalFilePtr->volume->part->buffer,                                                   // buffer
-                                  globalFilePtr->volume->part))
+                                  globalFilePtr->volume->part->disk))
             {
                 return CE_WRITE_ERROR;
             }
@@ -1681,7 +1686,7 @@ static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
         if (globalLastDataSectorRead != l)
         {
             globalBufferMemSet0 = false;
-            if (singleSectorRead(l, volume->buffer, volume) != CE_GOOD)
+            if (singleSectorRead(l, volume->buffer, volume->disk) != CE_GOOD)
             {
                 error = CE_BAD_SECTOR_READ;
             }
@@ -1722,7 +1727,7 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
     {
         if (singleSectorWrite(cluster2sector(globalFilePtr->volume,globalFilePtr->currCluster) + globalFilePtr->sec,
                               globalFilePtr->volume->part->buffer,
-                              globalFilePtr->volume->part))
+                              globalFilePtr->volume->part->disk))
         {
             return CE_EOF;
         }
@@ -1787,7 +1792,7 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
     temp += numsector;
     globalFilePtr = 0;
     globalBufferMemSet0 = false;
-    if (singleSectorRead(temp, volume->part->buffer, volume->part) != CE_GOOD)
+    if (singleSectorRead(temp, volume->part->buffer, volume->part->disk) != CE_GOOD)
     {
         return CE_BAD_SECTOR_READ;
     }
@@ -2185,7 +2190,7 @@ static void writeBootsector(partition_t* part, uint8_t* sector)
         sector[0x15] = 0xF8; // Media descriptor (0xF8: Hard disk)
     if(part->subtype == FS_FAT32)
     {
-        sector[0x16] = 0; // FAT size. 
+        sector[0x16] = 0; // FAT size
         sector[0x17] = 0;
     }
     else
@@ -2211,7 +2216,7 @@ static void writeBootsector(partition_t* part, uint8_t* sector)
         sector[0x25] = BYTE2(fpart->fatsize);
         sector[0x26] = BYTE3(fpart->fatsize);
         sector[0x27] = BYTE4(fpart->fatsize);
-        sector[0x28] = 0; // FAT flags 
+        sector[0x28] = 0; // FAT flags
         sector[0x29] = 0;
         sector[0x2A] = 0; // FAT32 version
         sector[0x2B] = 0;
@@ -2273,7 +2278,7 @@ FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependances. Make 
         fpart->reservedSectors = 1; // HACK? Keep old value here?
     else
         fpart->reservedSectors = 32; // HACK? Keep old value here?
-    
+
     /// Prepare track 0
     static uint8_t track[9216];
     /// Bootsector
@@ -2290,7 +2295,7 @@ FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependances. Make 
     track[FAT2sec*512+2] = 0xFF;
     /// Write track 0
     flpydsk_write_ia(0, track, TRACK); // HACK: floppy dependance
-    
+
     /// Prepare track 1
     /// Prepare root directory
     memset(track, 0, 9216);
@@ -2304,3 +2309,96 @@ FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependances. Make 
     printf("Quickformat complete.\n");
     return CE_GOOD;
 }
+
+extern uint32_t usbMSDVolumeMaxLBA; // HACK
+FS_ERROR FAT_pinstall(partition_t* part)
+{
+    FAT_partition_t* fpart = malloc(sizeof(FAT_partition_t), 0, "FAT_partition_t");
+    part->data = fpart;
+    fpart->part = part;
+
+    uint8_t buffer[512];
+    singleSectorRead(part->start, buffer, part->disk);
+
+    BPBbase_t* BPB = (BPBbase_t*)buffer;
+    BPB1216_t* BPB1216 = (BPB1216_t*)buffer;
+    BPB32_t* BPB32 = (BPB32_t*)buffer;
+    // Determine subtype (HACK: unrecommended way to determine type. cf. FAT specification)
+    if(BPB1216->FStype[0] == 'F' && BPB1216->FStype[1] == 'A' && BPB1216->FStype[2] == 'T' && BPB1216->FStype[3] == '1' && BPB1216->FStype[4] == '2')
+    {
+        printf("FAT12");
+        part->subtype = FS_FAT12;
+    }
+    else if(BPB1216->FStype[0] == 'F' && BPB1216->FStype[1] == 'A' && BPB1216->FStype[2] == 'T' && BPB1216->FStype[3] == '1' && BPB1216->FStype[4] == '6')
+    {
+        printf("FAT16");
+        part->subtype = FS_FAT16;
+    }
+    else
+    {
+        printf("FAT32");
+        part->subtype = FS_FAT32;
+    }
+
+
+    if(BPB->TotalSectors16 == 0)
+        part->size = BPB->TotalSectors32;
+    else
+        part->size = BPB->TotalSectors16;
+    fpart->fatcopy = BPB->FATcount;
+    fpart->SecPerClus = BPB->SectorsPerCluster;
+    fpart->maxroot = BPB->MaxRootEntries;
+    fpart->reservedSectors = BPB->ReservedSectors;
+    fpart->fat = part->start + BPB->ReservedSectors;
+    part->serial = malloc(5, 0, "part->serial");
+    part->serial[5] = 0;
+
+    if(part->subtype == FS_FAT32)
+    {
+        fpart->fatsize = BPB32->FATsize32;
+        fpart->FatRootDirCluster = BPB32->rootCluster;
+        fpart->root = fpart->fat + fpart->fatcopy*fpart->fatsize + fpart->SecPerClus*(fpart->FatRootDirCluster-2);
+        fpart->dataLBA = fpart->root;
+        memcpy(part->serial, &BPB32->VolID, 4);
+    }
+    else
+    {
+        fpart->fatsize = BPB->FATsize16;
+        fpart->root = fpart->fat + fpart->fatcopy*fpart->fatsize;
+        fpart->dataLBA = fpart->root + fpart->maxroot/(part->disk->sectorSize/NUMBER_OF_BYTES_IN_DIR_ENTRY);
+        memcpy(part->serial, &BPB1216->VolID, 4);
+    }
+    fpart->maxcls = (usbMSDVolumeMaxLBA - fpart->dataLBA - part->start) / fpart->SecPerClus;
+
+
+    return(CE_GOOD);
+}
+
+
+/*
+* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+*
+* http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
+*
+* Redistribution and use in source and binary forms, with or without modification,
+* are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice,
+*    this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/

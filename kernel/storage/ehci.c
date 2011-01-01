@@ -24,7 +24,6 @@ uint8_t numPorts; // maximum
 
 // Device Manager
 static disk_t      usbDev[16];
-static partition_t usbDevVolume[16];
 static port_t      port[16];
 
 uintptr_t eecp;
@@ -678,19 +677,8 @@ void setupUSBDevice(uint8_t portNumber)
         // device manager //////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////
 
-        // Partition
-        usbDevVolume[portNumber].buffer = malloc(512,0,"usbDevVol-buffer");
-        usbDevVolume[portNumber].disk = &usbDev[portNumber];
-        usbDevVolume[portNumber].data = 0;
-
-        //HACK
-        usbDevVolume[portNumber].serial = malloc(13, 0,"usbDevVol-serial");
-        usbDevVolume[portNumber].serial[12] = 0;
-        strncpy(usbDevVolume[portNumber].serial, usbDevices[devAddr].serialNumber, 12);
-
         // Disk
         usbDev[portNumber].type         = &USB_MSD;
-        usbDev[portNumber].partition[0] = &usbDevVolume[portNumber];
         usbDev[portNumber].data         = (void*)&usbDevices[devAddr];
         usbDev[portNumber].sectorSize   = 512;
         strcpy(usbDev[portNumber].name, usbDevices[devAddr].productName);
@@ -713,7 +701,7 @@ void setupUSBDevice(uint8_t portNumber)
                                                 usbDevices[devAddr].numEndpointInMSD);
         textColor(0x0F);
 
-        testMSD(devAddr, usbDev[devAddr].partition[0]); // test with some SCSI commands
+        testMSD(devAddr, &usbDev[devAddr]); // test with some SCSI commands
     }
 }
 

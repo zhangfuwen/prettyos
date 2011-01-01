@@ -91,7 +91,7 @@ void mouse_handler(registers_t* a_r)
 {
     static uint8_t bytecounter = 0;
     static int8_t bytes[4];
-    
+
     bytes[bytecounter] = inportb(0x60); // Receive byte
     switch(bytecounter)
     {

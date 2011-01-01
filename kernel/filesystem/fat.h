@@ -134,6 +134,54 @@ typedef enum
     LOOK_FOR_MATCHING_ENTRY
 } SEARCH_TYPE;
 
+typedef struct
+{
+    char     jumpBoot[3];
+    char     SysName[8];
+    uint16_t bytesPerSector;
+    uint8_t  SectorsPerCluster;
+    uint16_t ReservedSectors;
+    uint8_t  FATcount;
+    uint16_t MaxRootEntries;
+    uint16_t TotalSectors16;
+    uint8_t  MediaDescriptor;
+    uint16_t FATsize16;
+    uint16_t SectorsPerTrack;
+    uint16_t HeadCount;
+    uint32_t HiddenSectors;
+    uint32_t TotalSectors32;
+} __attribute__((packed)) BPBbase_t;
+
+typedef struct
+{
+    BPBbase_t base;
+    uint8_t   driveNum;
+    uint8_t   reserved;
+    uint8_t   BootSig;
+    uint32_t  VolID;
+    char      VolLabel[11];
+    char      FStype[8];
+} __attribute__((packed)) BPB1216_t;
+
+typedef struct
+{
+    BPBbase_t base;
+    uint32_t  FATsize32;
+    uint16_t  extFlags;
+    uint16_t  version;
+    uint32_t  rootCluster;
+    uint16_t  FSinfo;
+    uint16_t  BootSecCopy;
+    uint8_t   reserved1[12];
+    uint8_t   driveNum;
+    uint8_t   reserved2;
+    uint8_t   BootSig;
+    uint32_t  VolID;
+    char      VolLabel[11];
+    char      FStype[8];
+} __attribute__((packed)) BPB32_t;
+
+
 // file handling
 FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseClusters);
 FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_t cmd, uint8_t mode);
@@ -145,6 +193,7 @@ FS_ERROR FAT_fseek(file_t* file, long offset, SEEK_ORIGIN whence);
 FS_ERROR FAT_remove(const char* fileName, partition_t* part);
 FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_t* part);
 FS_ERROR FAT_format(partition_t* part);
+FS_ERROR FAT_pinstall(partition_t* part);
 
 // analysis functions
 void FAT_showDirectoryEntry(fileRootDirEntry_t* dir);

@@ -22,7 +22,7 @@ void fsmanager_install()
     FAT.remove   = &FAT_remove;
     FAT.rename   = &FAT_rename;
     FAT.pformat  = &FAT_format;
-    FAT.pinstall = 0;
+    FAT.pinstall = &FAT_pinstall;
 }
 
 
@@ -47,14 +47,33 @@ FS_ERROR formatPartition(const char* path, FS_t type, const char* name)
     part->type = (fileSystem_t*)(uintptr_t)(ptype>>32);
     strcpy(part->serial, name);
     part->type->pformat(part);
-    installPartition(part);
     return(CE_GOOD);
 }
 
-void installPartition(partition_t* part)
+FS_ERROR analyzePartition(partition_t* part)
 {
+    FS_ERROR e = CE_UNSUPPORTED_FS;
+
+    part->buffer = malloc(512, 0, "part->buffer");
+
+    // Determine type of the partition:
+    uint8_t buffer[512];
+    singleSectorRead(part->start, buffer, part->disk);
+
+    // Is it a BPB? -> FAT
+    BPBbase_t* BPB = (BPBbase_t*)buffer;
+    if(BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0)
+        part->type = &FAT;
+    else // We only know FAT at the moment
+        return(e);
+
     if(part->type->pinstall)
-        part->type->pinstall(part);
+        e = part->type->pinstall(part);
+
+    if(e == CE_GOOD)
+        part->mount = true;
+
+    return(e);
 }
 
 // File functions

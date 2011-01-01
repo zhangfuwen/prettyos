@@ -43,7 +43,7 @@ char RenderBufferVBE[81]; // mib.XResolution / 8
 
 void drawEntryVBE(const char* entry)
 {
-	
+
     memset(RenderBufferVBE, 0, 81);
     // sprintf(RenderBufferVBE, "$> %s", entry);
     if(!(cursorPos == entryLength && entryLength < MAX_CHAR_PER_LINE))
@@ -52,10 +52,10 @@ void drawEntryVBE(const char* entry)
     }
     strcat(RenderBufferVBE, "  ");
     // printLine(RenderBuffer, 40, 0x0B);
-	// vbe_drawString(RenderBufferVBE, cursorPos, 0);
-	// strcat((char*)entry, "\n");
-	vbe_drawString(entry, cursorPos, ypos);
-	// ypos += 16;
+    // vbe_drawString(RenderBufferVBE, cursorPos, 0);
+    // strcat((char*)entry, "\n");
+    vbe_drawString(entry, cursorPos, ypos);
+    // ypos += 16;
 }
 
 int startVBEShell()
@@ -77,7 +77,7 @@ int startVBEShell()
     {
         // textColor(0x0F);
         entryLength = 0;
-		cursorPos = 0;
+        cursorPos = 0;
         memset(entry, 0, MAX_CHAR_PER_LINE+1);
         drawEntryVBE(entry);
 
@@ -86,8 +86,8 @@ int startVBEShell()
             // showInfo(1); // the train goes on...
 
             // input = getchar();
-			input = keyboard_getChar();
-			
+            input = keyboard_getChar();
+
             switch (input) {
                 case 8: // Backspace
                     if (cursorPos > 0)
@@ -132,9 +132,9 @@ int startVBEShell()
                     }
                     // textColor(0x0B);
                     // printf("\n$> %s <--\n", entry);
-					// sprintf(entry, "\n$> %s <--\n"); 
-					vbe_drawString(entry, cursorPos, ypos);
-					ypos += 16;
+                    // sprintf(entry, "\n$> %s <--\n");
+                    vbe_drawString(entry, cursorPos, ypos);
+                    ypos += 16;
                     // textColor(0x0F);
                     // printLine("$>                                                                              ", 40, 0x0B);
                     goto EVALUATION;
@@ -206,8 +206,8 @@ int startVBEShell()
                         for (; entryLength > 0; entryLength--)
                         {
                             // putchar('\b'); //Clear row
-							vbe_drawString("\b", cursorPos, ypos);
-							ypos += 16;
+                            vbe_drawString("\b", cursorPos, ypos);
+                            ypos += 16;
                         }
                         memset(entry, 0, MAX_CHAR_PER_LINE);
                         cursorPos = 0;
@@ -255,49 +255,49 @@ EVALUATION: // evaluation of entry
         if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
             // puts("Implemented Instructions: hi, help, ?, fdir, fformat and reboot\n");
-			vbe_drawString("Implemented Instructions: hi, help, ?, fdir, fformat, exit and reboot\n", cursorPos, ypos);
-			ypos += 16;
+            vbe_drawString("Implemented Instructions: hi, help, ?, fdir, fformat, exit and reboot\n", cursorPos, ypos);
+            ypos += 16;
         }
         else if(strcmp(entry, "hi") == 0)
         {
             // puts("I am PrettyOS. Always at your service!\n");
-			vbe_drawString("I am PrettyOS. Always at your service!\n", cursorPos, ypos);
-			ypos += 16;
+            vbe_drawString("I am PrettyOS. Always at your service!\n", cursorPos, ypos);
+            ypos += 16;
         }
         else if(strcmp(entry, "fdir") == 0)
         {
             // floppy_dir();
-			ypos += 16;
+            ypos += 16;
         }
         else if(strcmp(entry, "fformat") == 0)
         {
             // floppy_format("PrettyOS");
-			ypos += 16;
+            ypos += 16;
         }
         else if(strcmp(entry, "reboot") == 0)
         {
             systemControl(REBOOT);
-			ypos += 16;
+            ypos += 16;
         }
         else if(strcmp(entry, "standby") == 0)
         {
             systemControl(STANDBY);
-			ypos += 16;
+            ypos += 16;
         }
         else if(strcmp(entry, "shutdown") == 0)
         {
             systemControl(SHUTDOWN);
-			ypos += 16;
+            ypos += 16;
         }
-		else if(strcmp(entry, "exit") == 0)
+        else if(strcmp(entry, "exit") == 0)
         {
             // return 1;
-			break;
+            break;
         }
         else
         {
             // puts("file is being searched...");
-			vbe_drawString("file is being searched...", cursorPos, ypos);
+            vbe_drawString("file is being searched...", cursorPos, ypos);
 
             // Adding ending .elf
             if(entry[strlen(entry)-4] != '.') // No ending, append ".elf"
@@ -310,31 +310,31 @@ EVALUATION: // evaluation of entry
             {
                 case CE_GOOD:
                     // puts("Successfull.\n");
-					vbe_drawString("Successfull.\n", cursorPos, ypos);
-					ypos += 16;
+                    vbe_drawString("Successfull.\n", cursorPos, ypos);
+                    ypos += 16;
                     break;
                 case CE_INVALID_FILENAME:
                     // puts("The path was not formatted well.\n");
-					vbe_drawString("The path was not formatted well.\n", cursorPos, ypos);
-					ypos += 16;
+                    vbe_drawString("The path was not formatted well.\n", cursorPos, ypos);
+                    ypos += 16;
                     break;
                 case CE_FILE_NOT_FOUND:
                     // puts("The file was not found. ");
-					vbe_drawString("The file was not found. ", cursorPos, ypos);
-					ypos += 16;
-                    
-					char newPath[40];
+                    vbe_drawString("The file was not found. ", cursorPos, ypos);
+                    ypos += 16;
+
+                    char newPath[40];
                     strcpy(newPath,"1:/");
                     strcat(newPath, entry);
                     // printf("Trying now %s.\n", newPath);
-					vbe_drawString("Trying now %s.\n", cursorPos, ypos);
+                    vbe_drawString("Trying now %s.\n", cursorPos, ypos);
                     // if(execute(newPath) != CE_GOOD)
                         // puts("Not found on 1:/.\n");
                     break;
                 default:
                     // printf("File load was not successful. Error Code: %u\n", error);
-					vbe_drawString("File load was not successful. Error Code: %u\n", cursorPos, ypos);
-					ypos += 16;
+                    vbe_drawString("File load was not successful. Error Code: %u\n", cursorPos, ypos);
+                    ypos += 16;
                     break;
             }
         }

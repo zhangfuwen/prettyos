@@ -119,6 +119,7 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(SHELLDIR)\shell.elf
 	$(RM) $(KERNELDIR)\initrd.dat
 	$(RM) $(USERDIR)\vm86\VIDSWTCH.COM
+	$(RM) $(USERDIR)\vm86\APM.COM
 	$(RM) documentation\*.map
 else
 	$(RM) $(STAGE1DIR)/boot.bin
@@ -138,5 +139,6 @@ else
 	$(RM) $(SHELLDIR)/shell.elf
 	$(RM) $(KERNELDIR)/initrd.dat
 	$(RM) $(USERDIR)/vm86/VIDSWTCH.COM
+	$(RM) $(USERDIR)/vm86/APM.COM
 	$(RM) documentation/*.map
 endif

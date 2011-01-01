@@ -25,7 +25,7 @@
 #include "audio/sys_speaker.h"
 #include "power_management.h"
 
-const char* const version = "0.0.2.18 - Rev: 856";
+const char* const version = "0.0.2.19 - Rev: 857";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script

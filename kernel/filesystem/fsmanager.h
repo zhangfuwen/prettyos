@@ -73,7 +73,7 @@ typedef struct
     uint8_t typeID;
 
     // Access-functions
-    void     (*pinstall)(struct partition*); // Partition
+    FS_ERROR (*pinstall)(struct partition*); // Partition
     FS_ERROR (*pformat) (struct partition*); // Partition
 
     FS_ERROR (*fopen) (struct file*, bool, bool);                    // File, create if not existant, overwrite file before opening
@@ -138,7 +138,7 @@ void fsmanager_install();
 
 // Partition functions
 FS_ERROR formatPartition(const char* path, FS_t type, const char* name);
-void     installPartition(partition_t* part);
+FS_ERROR analyzePartition(partition_t* part);
 
 // File functions
 file_t* fopen (const char* path, const char* mode);

@@ -10,7 +10,7 @@
 #include "usb2_msd.h"
 #include "flpydsk.h"
 #include "usb2.h"
-#include "filesystem/fat12.h"
+#include "filesystem/fat.h"
 
 #ifdef _DEVMGR_DIAGNOSIS_
   #include "timer.h"
@@ -23,10 +23,6 @@ partition_t* systemPartition;
 portType_t FDD,        USB,     RAM;
 diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
 
-
-uint32_t startSectorPartition = 0;
-extern uint32_t usbMSDVolumeMaxLBA;
-
 // ReadCache
 #define NUMREADCACHE 20
 bool    readCacheFlag = true;
@@ -35,7 +31,7 @@ typedef struct
 {
     uint8_t buffer[512];
     bool valid;
-    partition_t* part;
+    disk_t* disk;
     uint32_t sector;
 } readcache_t;
 
@@ -332,209 +328,64 @@ partition_t* getPartition(const char* path)
     return(0);
 }
 
-FS_ERROR analyzeBootSector(void* buffer, partition_t* part) // for first tests only
+struct partitionEntry
 {
-    char volume_serialNumber[4];
+    uint8_t  bootflag;
+    uint8_t  startCHS[3];
+    uint8_t  type;
+    uint8_t  endCHS[3];
+    uint32_t startLBA;
+    uint32_t sizeLBA;
+} __attribute__((packed));
 
-    struct BPB1216* sec0 = (struct BPB1216*)buffer;
+FS_ERROR analyzeDisk(disk_t* disk)
+{
+    uint8_t buffer[512];
+    singleSectorRead(0, buffer, disk);
 
-    char SysName[9];
-    char FATn[9];
-    strncpy(SysName, sec0->SysName,   8);
-    strncpy(FATn,    sec0->Reserved2, 8);
-    SysName[8] = 0;
-    FATn[8]    = 0;
-
-    if(part->data == 0)
+    BPBbase_t* BPB = (BPBbase_t*)buffer;
+    if(!(BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0 && BPB->bytesPerSector != 0) && // Data looks not like a BPB...
+            (buffer[510] == 0x55 && buffer[511] == 0xAA)) //...but like a MBR
     {
-        part->data = malloc(sizeof(FAT_partition_t), 0,"devmgr-FATpart");
-        ((FAT_partition_t*)part->data)->part = part;
-    }
-    part->type = &FAT;
-
-    FAT_partition_t* FATpart = part->data;
-
-
-    // This is a FAT description
-    if (sec0->charsPerSector == 0x200 && sec0->FATcount > 0) // 512 byte per sector, at least one FAT
-    {
-        #ifdef _DEVMGR_DIAGNOSIS_
-        printf("\nOEM name:           %s"    ,SysName);
-        printf("\tbyte per sector:        %u",sec0->charsPerSector);
-        printf("\nsectors per cluster:    %u",sec0->SectorsPerCluster);
-        printf("\treserved sectors:       %u",sec0->ReservedSectors);
-        printf("\nnumber of FAT copies:   %u",sec0->FATcount);
-        printf("\tmax root dir entries:   %u",sec0->MaxRootEntries);
-        printf("\ntotal sectors (<65536): %u",sec0->TotalSectors1);
-        printf("\ttotal sectors (>65535): %u",sec0->TotalSectors2);
-        printf("\nmedia Descriptor:       %y",sec0->MediaDescriptor);
-        printf("\tsectors per FAT:        %u",sec0->SectorsPerFAT);
-        printf("\nsectors per track:      %u",sec0->SectorsPerTrack);
-        printf("\theads/pages:            %u",sec0->HeadCount);
-        printf("\nhidden sectors:         %u",sec0->HiddenSectors);
-        printf("\tFormat:                 %s",FATn);
-        #endif
-
-        uint32_t volume_bytePerSector = sec0->charsPerSector;
-        uint8_t  volume_SecPerClus    = sec0->SectorsPerCluster;
-        uint16_t volume_maxroot       = sec0->MaxRootEntries;
-        uint32_t volume_fatsize       = sec0->SectorsPerFAT16;
-        uint8_t  volume_fatcopy       = sec0->FATcount;
-        uint32_t volume_firstSector   = startSectorPartition; // sec0->HiddenSectors; <--- not sure enough
-        uint32_t volume_fat           = volume_firstSector + sec0->ReservedSectors;
-        uint32_t volume_root          = volume_fat + volume_fatcopy * volume_fatsize;
-        uint32_t volume_data          = volume_root + volume_maxroot /(volume_bytePerSector/NUMBER_OF_BYTES_IN_DIR_ENTRY);
-        uint32_t volume_maxcls        = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
-
-        uint32_t volume_FatRootDirCluster = 0; // only FAT32
-        
-        startSectorPartition = 0; // important!
-
-        if (FATn[0] != 'F') // FAT32
+        // Read partitions from MBR
+        printf("\nFound MBR (DiskID: %x):", ((uint16_t*)buffer)[440/2]);
+        struct partitionEntry* entries = (struct partitionEntry*)(buffer+446);
+        for(uint8_t i = 0; i < 4; i++)
         {
-            if ( ((uint8_t*)buffer)[0x52] == 'F' && ((uint8_t*)buffer)[0x53] == 'A' && ((uint8_t*)buffer)[0x54] == 'T' &&
-                 ((uint8_t*)buffer)[0x55] == '3' && ((uint8_t*)buffer)[0x56] == '2')
+            printf("\npartition entry %u: ", i);
+            if(entries[i].type != 0) // valid entry
             {
-                printf("\nDisk is formated with FAT32 ");
-                part->subtype = FS_FAT32;
-
-                for (uint8_t i=0; i<4; i++)
-                {
-                    volume_serialNumber[i] = ((char*)buffer)[67+i]; // byte 67-70
-                }
-                printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
-
-                volume_FatRootDirCluster = ((uint32_t*)buffer)[11]; // byte 44-47
-                printf("\nThe root dir starts at cluster %u (expected: 2).", volume_FatRootDirCluster);
-
-                volume_maxroot = 512; // i did not find this info about the maxium root dir entries, but seems to be correct
-
-                printf("\nSectors per FAT: %u.", ((uint32_t*)buffer)[9]);  // byte 36-39
-                volume_fatsize = ((uint32_t*)buffer)[9];
-                volume_root    = volume_firstSector + sec0->ReservedSectors + volume_fatcopy * volume_fatsize + volume_SecPerClus * (volume_FatRootDirCluster-2);
-                volume_data    = volume_root;
-                volume_maxcls  = (usbMSDVolumeMaxLBA - volume_data - volume_firstSector) / volume_SecPerClus;
+                printf("start: %u\tsize: %u\t type: ", entries[i].startLBA, entries[i].sizeLBA);
+                disk->partition[i] = malloc(sizeof(partition_t), 0, "partition_t");
+                disk->partition[i]->start = entries[i].startLBA;
+                disk->partition[i]->size = entries[i].sizeLBA;
+                disk->partition[i]->disk = disk;
+                if(analyzePartition(disk->partition[i]) != CE_GOOD)
+                    printf("unknown");
             }
-        }
-        else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '6') // FAT16
-        {
-            printf("\nDisk is formated with FAT16 ");
-            part->subtype = FS_FAT16;
-
-            for (uint8_t i=0; i<4; i++)
+            else
             {
-                volume_serialNumber[i] = ((char*)buffer)[39+i]; // byte 39-42
-            }
-            printf("and serial number: %y %y %y %y", volume_serialNumber[0], volume_serialNumber[1], volume_serialNumber[2], volume_serialNumber[3]);
-        }
-        else if (FATn[0] == 'F' && FATn[1] == 'A' && FATn[2] == 'T' && FATn[3] == '1' && FATn[4] == '2')
-        {
-            printf("\nDisk is formated with FAT12.\n");
-            part->subtype = FS_FAT12;
-        }
-
-        ///////////////////////////////////////////////////
-        // store the determined volume data to partition //
-        ///////////////////////////////////////////////////
-
-        part->disk->sectorSize = volume_bytePerSector;
-        part->buffer           = malloc(volume_bytePerSector, 0,"devmgr-partbuffer");
-        part->start            = volume_firstSector;
-        if(sec0->TotalSectors16 != 0)
-            part->size         = sec0->TotalSectors16;
-        else
-            part->size         = sec0->TotalSectors32;
-        part->mount            = true;
-        FATpart->reservedSectors   = sec0->ReservedSectors;
-        FATpart->SecPerClus        = volume_SecPerClus;
-        FATpart->maxroot           = volume_maxroot;
-        FATpart->fatsize           = volume_fatsize;
-        FATpart->fatcopy           = volume_fatcopy;
-        FATpart->fat               = volume_fat;    // reservedSectors
-        FATpart->root              = volume_root;   // reservedSectors + 2*SectorsPerFAT
-        FATpart->dataLBA           = volume_data;   // reservedSectors + 2*SectorsPerFAT + MaxRootEntries/DIRENTRIES_PER_SECTOR <--- FAT16
-        FATpart->maxcls            = volume_maxcls;
-        FATpart->FatRootDirCluster = volume_FatRootDirCluster;
-
-        //HACK
-        free(part->serial);
-        part->serial = malloc(5, 0,"partserial");
-        part->serial[4] = 0;
-        strncpy(part->serial, volume_serialNumber, 4); // ID of the partition
-    }
-    else if ( ((uint16_t*)buffer)[444/2] == 0x0000 )
-    {
-        textColor(0x0E);
-        if ( ((uint8_t*)buffer)[510]==0x55 && ((uint8_t*)buffer)[511]==0xAA )
-        {
-            printf("\nThis seems to be a Master Boot Record:");
-
-            textColor(0x0F);
-            uint32_t discSignature = ((uint32_t*)buffer)[440/4];
-            printf("\n\nDisc Signature: %X\t",discSignature);
-
-            uint8_t partitionTable[4][16];
-            for (uint8_t i=0;i<4;i++) // four tables
-            {
-                for (uint8_t j=0;j<16;j++) // 16 bytes
-                {
-                    partitionTable[i][j] = ((uint8_t*)buffer)[446+i*j];
-                }
-            }
-            printf("\n");
-            for (uint8_t i=0;i<4;i++) // four tables
-            {
-                if ( *((uint32_t*)(&partitionTable[i][0x0C])) != 0 && *((uint32_t*)(&partitionTable[i][0x0C])) != 0x80808080 ) // number of sectors
-                {
-                    textColor(0x0E);
-                    printf("\npartition entry %u:",i);
-                    if (partitionTable[i][0x00] == 0x80)
-                    {
-                        printf("  bootable");
-                    }
-                    else
-                    {
-                        printf("  not bootable");
-                    }
-                    textColor(0x0F);
-                    printf("\ntype:               %y", partitionTable[i][0x04]);
-                    textColor(0x07);
-                    printf("\nfirst sector (CHS): %u %u %u", partitionTable[i][0x01],partitionTable[i][0x02],partitionTable[i][0x03]);
-                    printf("\nlast  sector (CHS): %u %u %u", partitionTable[i][0x05],partitionTable[i][0x06],partitionTable[i][0x07]);
-                    textColor(0x0F);
-
-                    startSectorPartition = *((uint32_t*)(&partitionTable[i][0x08]));
-                    printf("\nstart sector:       %u", startSectorPartition);
-
-                    printf("\nnumber of sectors:  %u", *((uint32_t*)(&partitionTable[i][0x0C])));
-                    printf("\n");
-                }
-                else
-                {
-                    textColor(0x0E);
-                    printf("\nno partition table %u",i);
-                    textColor(0x0F);
-                }
+                disk->partition[i] = 0;
+                printf("invalid");
             }
         }
     }
     else
     {
-        textColor(0x0C);
-        if ( ((uint8_t*)buffer)[0x3] == 'N' && ((uint8_t*)buffer)[0x4] == 'T' && ((uint8_t*)buffer)[0x5] == 'F' && ((uint8_t*)buffer)[0x6] == 'S' )
+        printf("\nFound single partition on disk. (type: ");
+        // Just one partition
+        disk->partition[0] = malloc(sizeof(partition_t), 0, "partition_t");
+        disk->partition[0]->start = 0;
+        disk->partition[0]->disk = disk;
+        if(analyzePartition(disk->partition[0]) != CE_GOOD)
         {
-            printf("\nThis seems to be a volume formatted with NTFS.");
+            printf("unknown)");
+            return(CE_NOT_FORMATTED);
         }
-        else
-        {
-            printf("\nThis seems to be neither a FAT description nor a MBR.");
-        }
-        textColor(0x0F);
-        return CE_UNSUPPORTED_FS;
+        printf(")");
     }
-    return CE_GOOD;
+    return(CE_GOOD);
 }
-
 
 
 #ifdef _READCACHE_DIAGNOSIS_
@@ -559,21 +410,21 @@ static void logReadCache()
 }
 #endif
 
-static void fillReadCache(uint32_t sector, partition_t* part)
+static void fillReadCache(uint32_t sector, disk_t* disk, uint8_t* buffer)
 {
     readcaches[currReadCache].sector = sector;
-    readcaches[currReadCache].part   = part;
+    readcaches[currReadCache].disk   = disk;
     readcaches[currReadCache].valid  = true;
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)
     {
-        if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true) && (i!=currReadCache))
+        if ((readcaches[i].sector == sector) && (readcaches[i].disk == disk) && (readcaches[i].valid == true) && (i!=currReadCache))
         {
             readcaches[i].valid = false;
         }
     }
 
-    memcpy(readcaches[currReadCache].buffer, part->buffer, 512); // fill cache
+    memcpy(readcaches[currReadCache].buffer, buffer, 512); // fill cache
 
     currReadCache++;
     currReadCache %= NUMREADCACHE;
@@ -583,7 +434,7 @@ static void fillReadCache(uint32_t sector, partition_t* part)
   #endif
 }
 
-FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
+FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
     textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<", sector); textColor(0x0F);
@@ -591,23 +442,23 @@ FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)
     {
-        if ((readcaches[i].part == part) && (readcaches[i].sector == sector))
+        if ((readcaches[i].disk == disk) && (readcaches[i].sector == sector))
         {
             readcaches[i].valid = false;
         }
     }
 
-    return part->disk->type->writeSector(sector, buffer, part->disk->data);
+    return disk->type->writeSector(sector, buffer, disk->data);
 }
 
-FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part)
+FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
 {
-    part->disk->accessRemaining++;
-    return sectorWrite(sector, buffer, part);
+    disk->accessRemaining++;
+    return sectorWrite(sector, buffer, disk);
 }
 
 
-FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
+FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(0x0F);
@@ -615,7 +466,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)
     {
-        if ((readcaches[i].sector == sector) && (readcaches[i].part == part) && (readcaches[i].valid == true) && readCacheFlag)
+        if ((readcaches[i].sector == sector) && (readcaches[i].disk == disk) && (readcaches[i].valid == true) && readCacheFlag)
         {
             /*static uint8_t* destOld = 0;
             static uint8_t* sourceOld = 0;
@@ -634,24 +485,24 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
                 /*destOld = buffer;
                  sourceOld = readcaches[i].buffer;
             }*/
-            part->disk->accessRemaining--;
+            disk->accessRemaining--;
             return(CE_GOOD);
         }
     }
-    
-    FS_ERROR error = part->disk->type->readSector(sector, buffer, part->disk->data);
+
+    FS_ERROR error = disk->type->readSector(sector, buffer, disk->data);
     if (error == CE_GOOD)
     {
-        fillReadCache(sector, part);
+        fillReadCache(sector, disk, buffer);
     }
 
     return error;
 }
 
-FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, partition_t* part)
+FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
 {
-    part->disk->accessRemaining++;
-    return sectorRead(sector, buffer, part);
+    disk->accessRemaining++;
+    return sectorRead(sector, buffer, disk);
 }
 
 /*

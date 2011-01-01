@@ -59,11 +59,11 @@ const char*  getFilename (const char* path);
 
 FS_ERROR executeFile(const char* path);
 
-FS_ERROR analyzeBootSector(void* buffer, partition_t* part);
+FS_ERROR analyzeDisk(disk_t* disk);
 
-FS_ERROR sectorRead       (uint32_t sector, uint8_t* buffer, partition_t* part);
-FS_ERROR singleSectorRead (uint32_t sector, uint8_t* buffer, partition_t* part);
-FS_ERROR sectorWrite      (uint32_t sector, uint8_t* buffer, partition_t* part);
-FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, partition_t* part);
+FS_ERROR sectorRead       (uint32_t sector, uint8_t* buffer, disk_t* disk);
+FS_ERROR singleSectorRead (uint32_t sector, uint8_t* buffer, disk_t* disk);
+FS_ERROR sectorWrite      (uint32_t sector, uint8_t* buffer, disk_t* disk);
+FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk);
 
 #endif

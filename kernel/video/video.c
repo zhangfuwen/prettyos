@@ -259,7 +259,7 @@ void screenshot()
     {
         uint16_t j=i+2*NewLine;
         videoscreen[j] = *(char*)(vidmem+i); // only signs, no attributes
-        if (i%80 == 79) 
+        if (i%80 == 79)
         {
             videoscreen[j+1]= 0xD; // CR
             videoscreen[j+2]= 0xA; // LF

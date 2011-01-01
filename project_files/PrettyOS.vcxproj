@@ -142,6 +142,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\video\gui_button.h" />
     <ClInclude Include="..\kernel\video\gui_window.h" />
     <ClInclude Include="..\kernel\video\vbe.h" />
+    <ClInclude Include="..\kernel\video\VBEShell.h" />
     <ClInclude Include="..\kernel\video\video.h" />
     <ClInclude Include="..\kernel\vm86.h" />
   </ItemGroup>
@@ -213,6 +214,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\video\gui_button.c" />
     <ClCompile Include="..\kernel\video\gui_window.c" />
     <ClCompile Include="..\kernel\video\vbe.c" />
+    <ClCompile Include="..\kernel\video\VBEShell.c" />
     <ClCompile Include="..\kernel\video\video.c" />
     <ClCompile Include="..\kernel\vm86.c" />
   </ItemGroup>
