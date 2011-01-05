@@ -11,6 +11,7 @@
 #include "timer.h"
 #include "gui.h"
 #include "VBEShell.h"
+#include "kheap.h"
 
 ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
@@ -19,8 +20,7 @@ BitmapHeader_t  bh;
 BitmapHeader_t* bh_get;
 
 uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
-
-// uint8_t* DOUBLEBUFFER = sizeof(vgaIB.TotalMemory * 0x10000 / PAGESIZE); // ???
+uint8_t* DOUBLEBUFFER;
 
 position_t curPos = {0, 0};
 
@@ -177,6 +177,41 @@ void setVideoMemory()
      printf("\nVideo Ram %u MiB\n",vgaIB.TotalMemory/0x10);
 }
 
+void allocDoubleBuffer()
+{
+	DOUBLEBUFFER = (uint8_t*) malloc(mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1), 0, "DoubleBuffer");
+}
+
+void vbe_flipScreen(uint8_t* Buffer)
+{
+	// SCREEN = Buffer;
+	memcpy(SCREEN, Buffer, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
+}
+
+void vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color)
+{
+    switch(mib.BitsPerPixel)
+    {
+        case 15:
+            ((uint16_t*)DOUBLEBUFFER)[y * mib.XResolution + x] = BGRAtoBGR15(color);
+            break;
+        case 16:
+            ((uint16_t*)DOUBLEBUFFER)[y * mib.XResolution + x] = BGRAtoBGR16(color);
+            break;
+        case 24:
+            (*(uint16_t*)&DOUBLEBUFFER[(y * mib.XResolution + x) * 3]) = *(uint16_t*)&color; // Performance Hack - copying 16 bits should be faster than copying 8 bits twice
+            DOUBLEBUFFER[(y * mib.XResolution + x) * 3 + 2] = color.red;
+            break;
+        case 32:
+            ((uint32_t*)DOUBLEBUFFER)[y * mib.XResolution + x] = *(uint32_t*)&color&0xFFFFFF; // Do not use alpha, we need it for 8-bit compatibility
+            break;
+        case 8: default:
+            ((uint8_t*)DOUBLEBUFFER)[y * mib.XResolution + x] = color.alpha; // Workaround for 24 bit to 8 bit conversion
+            break;
+    }
+}
+
+/*
 void vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color)
 {
     switch(mib.BitsPerPixel)
@@ -199,6 +234,7 @@ void vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color)
             break;
     }
 }
+*/
 
 uint32_t vbe_getPixel(uint32_t x, uint32_t y) // TODO: Fix it. It now ignores mib.BitsPerPixel
 {
@@ -707,7 +743,9 @@ void vbe_bootscreen()
         gets(num);
         whatToStart = atoi(num);
     }
-
+	
+	allocDoubleBuffer();
+	
     switchToVideomode(modenumber);
     uint32_t displayStart = getDisplayStart();
     printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", displayStart >> 16, displayStart & 0xFFFF);

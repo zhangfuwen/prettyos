@@ -152,6 +152,8 @@ void setDisplayStart(uint16_t *xpos, uint16_t *ypos);
 uint32_t getDisplayStart();
 
 void setVideoMemory(); // Allocate the videomemory from the graphiccard
+void allocDoubleBuffer(); //Allocate the Doublebuffer
+void vbe_flipScreen(uint8_t* Buffer);
 
 void printPalette();
 

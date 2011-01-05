@@ -11,6 +11,9 @@
 #include "gui_window.h"
 #include "gui_button.h"
 
+extern ModeInfoBlock_t mib;
+extern uint8_t* DOUBLEBUFFER;
+
 extern char mouse_bl;
 extern int32_t mouse_x;
 extern int32_t mouse_y;
@@ -38,13 +41,22 @@ void StartGUI()
 
     while(!keyPressed(VK_ESCAPE))
     {
+		memset(DOUBLEBUFFER, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
+		
         if(mouse_bl == 1)
         {
             vbe_drawString("left Mouse Button Pressed", 10, 2);
 
-            if(mouse_x > 250 && mouse_x < 320 && mouse_y > 220 && mouse_y < 240)
+            if(mouse_x > button.x && mouse_x < (button.x + button.width) && mouse_y > button.y && mouse_y < (button.y + button.height))
             {
                 DestroyWindow(1);
+                vbe_clearScreen();
+            }
+			
+			if(mouse_x > window_list[1]->x && mouse_x < (window_list[1]->x + window_list[1]->width) && mouse_y > (window_list[1]->y) && mouse_y < (window_list[1]->y + 20))
+            {
+				window_list[1]->x = mouse_x;
+				window_list[1]->y = mouse_y;
                 vbe_clearScreen();
             }
         }
@@ -60,6 +72,7 @@ void StartGUI()
         DrawWindow(4);
 
         vbe_drawString("Press ESC to Exit!", 10, 2);
+		vbe_flipScreen(DOUBLEBUFFER);
     }
 }
 
