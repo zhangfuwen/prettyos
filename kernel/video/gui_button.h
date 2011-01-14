@@ -3,7 +3,7 @@
 
 #include "vbe.h"
 
-typedef struct
+volatile typedef struct
 {
     char *label;
     uint16_t id;

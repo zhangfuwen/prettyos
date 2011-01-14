@@ -2,6 +2,7 @@
 #define GUI_WINDOW_H
 
 #include "vbe.h"
+#include "gui_button.h"
 
 #define HWND_DESKTOP 0
 #define MAX_WINDOWS 256
@@ -17,6 +18,8 @@ typedef struct
     uint16_t height;
     BGRA_t* data;
     uint16_t z;
+	button_t CloseButton;
+	
 } __attribute__((packed)) window_t;
 
 void init_window_manager();

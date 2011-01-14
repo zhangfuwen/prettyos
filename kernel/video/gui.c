@@ -52,7 +52,16 @@ void StartGUI()
                 DestroyWindow(1);
                 vbe_clearScreen();
             }
-			
+/*
+			for(int i = 0; i < 5; i++)
+			{
+				if(mouse_x > window_list[i]->CloseButton.x && mouse_x < (window_list[i]->CloseButton.x + window_list[i]->CloseButton.width) && mouse_y > button.y && mouse_y < (window_list[i]->CloseButton.y + window_list[i]->CloseButton.height))
+				{
+					DestroyWindow(i);
+					vbe_clearScreen();
+				}
+			}
+*/
 			if(mouse_x > window_list[1]->x && mouse_x < (window_list[1]->x + window_list[1]->width) && mouse_y > (window_list[1]->y) && mouse_y < (window_list[1]->y + 20))
             {
 				window_list[1]->x = mouse_x;
@@ -60,12 +69,21 @@ void StartGUI()
                 vbe_clearScreen();
             }
         }
-
-        if(window_list[1])
-        {
-            DrawWindow(1);
-            DrawButton(&button);
-        }
+/*		
+		for(int i = 0; i < 4; i++)
+		{
+			if(window_list[1])
+			{
+				DrawWindow(1);
+				DrawButton(&button);
+			}
+		}
+*/
+		if(window_list[1])
+		{
+			DrawWindow(1);
+			DrawButton(&button);
+		}
 
         DrawWindow(2);
         DrawWindow(3);
