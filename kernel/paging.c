@@ -28,7 +28,7 @@ static uint32_t  firstFreeDWORD;
 static uint32_t  physMemInit();
 
 
-void paging_switch (pageDirectory_t* pd)
+void paging_switch(pageDirectory_t* pd)
 {
     __asm__ volatile("mov %0, %%cr3" : : "r" (pd->physAddr));
 }

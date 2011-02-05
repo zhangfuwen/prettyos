@@ -9,7 +9,7 @@
 #include "kheap.h"
 #include "filesystem/fsmanager.h"
 
-uint16_t* vidmem = (uint16_t*)0xB8000;
+static uint16_t* vidmem = (uint16_t*)0xB8000;
 
 VIDEOMODES videomode = VM_TEXT;
 
@@ -23,6 +23,17 @@ static const uint16_t SCREENSHOT_BYTES  = 4102;
 
 static position_t cursor = {0, 0};
 static uint8_t attrib = 0x0F; // white text on black ground
+
+
+void video_install()
+{
+    vidmem = paging_acquirePciMemory(0xB8000, 2); // TODO: Are 2 pages enough/to much/correct?
+}
+
+void video_setPixel(uint8_t x, uint8_t y, uint16_t value)
+{
+    vidmem[y*COLUMNS + x] = value;
+}
 
 void clear_screen()
 {

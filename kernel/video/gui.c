@@ -41,8 +41,8 @@ void StartGUI()
 
     while(!keyPressed(VK_ESCAPE))
     {
-		memset(DOUBLEBUFFER, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
-		
+        memset(DOUBLEBUFFER, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
+
         if(mouse_bl == 1)
         {
             vbe_drawString("left Mouse Button Pressed", 10, 2);
@@ -53,44 +53,38 @@ void StartGUI()
                 vbe_clearScreen();
             }
 /*
-			for(int i = 0; i < 5; i++)
-			{
-				if(mouse_x > window_list[i]->CloseButton.x && mouse_x < (window_list[i]->CloseButton.x + window_list[i]->CloseButton.width) && mouse_y > button.y && mouse_y < (window_list[i]->CloseButton.y + window_list[i]->CloseButton.height))
-				{
-					DestroyWindow(i);
-					vbe_clearScreen();
-				}
-			}
-*/
-			if(mouse_x > window_list[1]->x && mouse_x < (window_list[1]->x + window_list[1]->width) && mouse_y > (window_list[1]->y) && mouse_y < (window_list[1]->y + 20))
+            for(int i = 0; i < 5; i++)
             {
-				window_list[1]->x = mouse_x;
-				window_list[1]->y = mouse_y;
+                if(mouse_x > window_list[i]->CloseButton.x && mouse_x < (window_list[i]->CloseButton.x + window_list[i]->CloseButton.width) && mouse_y > button.y && mouse_y < (window_list[i]->CloseButton.y + window_list[i]->CloseButton.height))
+                {
+                    DestroyWindow(i);
+                    vbe_clearScreen();
+                }
+            }
+*/
+            if(mouse_x > window_list[1]->x && mouse_x < (window_list[1]->x + window_list[1]->width) && mouse_y > (window_list[1]->y) && mouse_y < (window_list[1]->y + 20))
+            {
+                window_list[1]->x = mouse_x;
+                window_list[1]->y = mouse_y;
                 vbe_clearScreen();
             }
         }
-/*		
-		for(int i = 0; i < 4; i++)
-		{
-			if(window_list[1])
-			{
-				DrawWindow(1);
-				DrawButton(&button);
-			}
-		}
-*/
-		if(window_list[1])
-		{
-			DrawWindow(1);
-			DrawButton(&button);
-		}
 
-        DrawWindow(2);
-        DrawWindow(3);
-        DrawWindow(4);
+        for(uint32_t i = 1; i < 5; i++)
+        {
+            if(window_list[i])
+            {
+                DrawWindow(i);
+            }
+        }
+
+        if(window_list[1])
+        {
+            DrawButton(&button); // TODO: Associate Controls with a window. Draw all of them in the windows drawing function
+        }
 
         vbe_drawString("Press ESC to Exit!", 10, 2);
-		vbe_flipScreen(DOUBLEBUFFER);
+        vbe_flipScreen(DOUBLEBUFFER);
     }
 }
 

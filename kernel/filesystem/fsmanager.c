@@ -9,21 +9,8 @@
 #include "kheap.h"
 #include "util.h"
 
-fileSystem_t FAT, INITRD;
-
-
-void fsmanager_install()
-{
-    FAT.fopen    = &FAT_fopen;
-    FAT.fclose   = &FAT_fclose;
-    FAT.fgetc    = &FAT_fgetc;
-    FAT.fputc    = &FAT_fputc;
-    FAT.fseek    = &FAT_fseek;
-    FAT.remove   = &FAT_remove;
-    FAT.rename   = &FAT_rename;
-    FAT.pformat  = &FAT_format;
-    FAT.pinstall = &FAT_pinstall;
-}
+fileSystem_t FAT    = {.fopen = &FAT_fopen, .fclose = &FAT_fclose, .fgetc = &FAT_fgetc, .fputc = &FAT_fputc, .fseek = &FAT_fseek, .remove = &FAT_remove, .rename = &FAT_rename, .pformat = &FAT_format, .pinstall = &FAT_pinstall, .folderAccess = &FAT_folderAccess, .folderClose = &FAT_folderClose},
+             INITRD = {};
 
 
 static uint64_t getFSType(FS_t type) // BIT 0-31: subtype, BIT 32-63: fileSystem_t
@@ -80,17 +67,18 @@ FS_ERROR analyzePartition(partition_t* part)
 file_t* fopen(const char* path, const char* mode)
 {
     file_t* file = malloc(sizeof(file_t), 0, "fsmgr-file");
-    file->seek   = 0;
     file->volume = getPartition(path);
-    file->size   = 0; // Init with 0 but set in FS-specific fopen
     if(file->volume == 0)
-    {
+    {   // cleanup
         free(file);
         return(0);
     }
-    file->EOF   = false;
-    file->error = CE_GOOD;
-    file->name  = malloc(strlen(getFilename(path))+1, 0, "fsmgr-filename");
+    file->seek   = 0;
+    file->folder = file->volume->rootFolder; // HACK. Not all files are in the root folder
+    file->size   = 0; // Init with 0 but set in FS-specific fopen
+    file->EOF    = false;
+    file->error  = CE_GOOD;
+    file->name   = malloc(strlen(getFilename(path))+1, 0, "fsmgr-filename");
     strcpy(file->name, getFilename(path));
 
     bool appendMode = false; // Used to seek to end
@@ -118,8 +106,7 @@ file_t* fopen(const char* path, const char* mode)
     }
 
     if(file->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD)
-    {
-        // cleanup
+    {   // cleanup
         free(file->name);
         free(file);
         return(0);
@@ -256,6 +243,44 @@ FS_ERROR ferror(file_t* file)
 void clearerr(file_t* file)
 {
     file->error = CE_GOOD;
+}
+
+
+// Folder functions
+folder_t* folderAccess(const char* path, folderAccess_t mode)
+{
+    folder_t* folder = malloc(sizeof(folder_t), 0, "fsmgr-file");
+    folder->volume   = getPartition(path);
+    if(folder->volume == 0)
+    {   // cleanup
+        free(folder);
+        return(0);
+    }
+    folder->files     = list_Create();
+    folder->subfolder = list_Create();
+    folder->folder    = folder->volume->rootFolder; // HACK. Not all folders are in the root folder
+    folder->name      = malloc(strlen(getFilename(path))+1, 0, "fsmgr-foldername");
+    strcpy(folder->name, getFilename(path));
+
+    if(folder->volume->type->folderAccess(folder, mode) != CE_GOOD)
+    {   // cleanup
+        list_DeleteAll(folder->files);
+        list_DeleteAll(folder->subfolder);
+        free(folder->name);
+        free(folder);
+        return(0);
+    }
+
+    return(folder);
+}
+
+void folderClose(folder_t* folder)
+{
+    folder->volume->type->folderClose(folder);
+    list_DeleteAll(folder->files);
+    list_DeleteAll(folder->subfolder);
+    free(folder->name);
+    free(folder);
 }
 
 

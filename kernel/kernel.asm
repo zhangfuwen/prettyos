@@ -1,7 +1,5 @@
 [Bits 32]
 
-jmp KernelStart
-
 ; http://www.lowlevel.eu/wiki/Multiboot
 GRUB_FLAGS           equ 10b                               ; Flags for GRUB header
 GRUB_MAGIC_NUMBER    equ 0x1BADB002                        ; Magic number for GRUB header

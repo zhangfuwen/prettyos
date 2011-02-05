@@ -74,9 +74,9 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
     window->id = getnewwid();
 
     window->data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
-	
-	window->CloseButton = CreateButton((window->x + window->width - 20), (window->y + 1), 18, 18, "X");
-	
+
+    window->CloseButton = CreateButton((window->x + window->width - 20), (window->y + 1), 18, 18, "X");
+
     // And set window focus
     current_window = window;
     window_list[window->id] = window;
@@ -97,8 +97,8 @@ void DrawWindow(uint16_t id)
     vbe_drawString(window_list[id]->name, window_list[id]->x+2, window_list[id]->y+2);
 
     // Data
-	DrawButton(&window_list[id]->CloseButton);
-	
+    DrawButton(&window_list[id]->CloseButton);
+
     vbe_drawBitmap(window_list[id]->x, window_list[id]->y+20, (BMPInfo_t*)window_list[id]->data);
     vbe_drawString("redraw", window_list[id]->x+30, window_list[id]->y+20);
 }

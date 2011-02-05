@@ -171,7 +171,7 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
     printf("\n>>>>> fatRead <<<<<");
   #endif
 
-    uint8_t  q;
+    uint8_t  q = 0;
     uint32_t posFAT; // position (byte) in FAT
     uint32_t ClusterFailValue;
     uint32_t LastClusterLimit;
@@ -181,7 +181,6 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
     {
         case FS_FAT32:
             posFAT = currCluster * 4;
-            q = 0;
             ClusterFailValue = CLUSTER_FAIL_FAT32;
             LastClusterLimit = LAST_CLUSTER_FAT32;
             break;
@@ -195,7 +194,6 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
         case FS_FAT16:
         default:
             posFAT = currCluster * 2;
-            q = 0;
             ClusterFailValue = CLUSTER_FAIL_FAT16;
             LastClusterLimit = LAST_CLUSTER_FAT16;
             break;
@@ -294,8 +292,8 @@ static FS_ERROR fileGetNextCluster(FAT_file_t* fileptr, uint32_t n)
     printf("\n>>>>> fileGetNextCluster <<<<<");
   #endif
 
-    uint32_t         ClusterFailValue, LastClustervalue;
-    FS_ERROR         error  = CE_GOOD;
+    uint32_t ClusterFailValue, LastClustervalue;
+    FS_ERROR error  = CE_GOOD;
     FAT_partition_t* volume = fileptr->volume;
 
     switch (volume->part->subtype)
@@ -345,7 +343,7 @@ static FS_ERROR fileGetNextCluster(FAT_file_t* fileptr, uint32_t n)
 // directory //
 ///////////////
 
-static fileRootDirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, bool ForceRead)
+static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, bool ForceRead)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
@@ -438,32 +436,32 @@ static fileRootDirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntr
             }
             if (ForceRead)
             {
-                return (fileRootDirEntry_t*)volume->part->buffer + ((*curEntry)%DirectoriesPerSector);
+                return (FAT_dirEntry_t*)volume->part->buffer + ((*curEntry)%DirectoriesPerSector);
             }
-            return (fileRootDirEntry_t*)volume->part->buffer;
+            return (FAT_dirEntry_t*)volume->part->buffer;
         } // END: a valid cluster is found
 
         return 0; // invalid cluster number
     }
 
-    return (fileRootDirEntry_t*)(((fileRootDirEntry_t*)volume->part->buffer) + ((*curEntry)%DirectoriesPerSector));
+    return (FAT_dirEntry_t*)volume->part->buffer + ((*curEntry)%DirectoriesPerSector);
 }
 
-static fileRootDirEntry_t* getFileAttribute(FAT_file_t* fileptr, uint32_t* fHandle)
+static FAT_dirEntry_t* getFileAttribute(FAT_file_t* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> getFileAttribute <<<<<");
   #endif
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
-    fileRootDirEntry_t* dir = cacheFileEntry(fileptr,fHandle,true);
+    FAT_dirEntry_t* dir = cacheFileEntry(fileptr,fHandle,true);
 
-    if (dir == 0 || dir->DIR_Name[0] == DIR_EMPTY || dir->DIR_Name[0] == DIR_DEL)
+    if (dir == 0 || dir->Name[0] == DIR_EMPTY || dir->Name[0] == DIR_DEL)
     {
         return 0;
     }
 
-    while (dir != 0 && dir->DIR_Attr == ATTR_LONG_NAME)
+    while (dir != 0 && dir->Attr == ATTR_LONG_NAME)
     {
         (*fHandle)++;
         dir = cacheFileEntry(fileptr, fHandle, false);
@@ -471,7 +469,7 @@ static fileRootDirEntry_t* getFileAttribute(FAT_file_t* fileptr, uint32_t* fHand
     return dir;
 }
 
-static void updateTimeStamp(fileRootDirEntry_t* dir)
+static void updateTimeStamp(FAT_dirEntry_t* dir)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> updateTimeStamp not yet implemented, does nothing <<<<<");
@@ -489,7 +487,7 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
     printf("\n>>>>> fillFILEPTR <<<<<");
   #endif
 
-    fileRootDirEntry_t* dir;
+    FAT_dirEntry_t* dir;
 
     if ((*fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) == 0 && *fHandle != 0) // 4-bit mask because 16 root entries max per sector
     {
@@ -499,28 +497,28 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
     }
     else { dir = cacheFileEntry (fileptr, fHandle, false); }
 
-    if (dir == 0)                      { return NO_MORE; }
-    if (dir->DIR_Name[0] == DIR_DEL)   { return NOT_FOUND; }
-    if (dir->DIR_Name[0] == DIR_EMPTY) { return NO_MORE; }
+    if (dir == 0)                  { return NO_MORE; }
+    if (dir->Name[0] == DIR_DEL)   { return NOT_FOUND; }
+    if (dir->Name[0] == DIR_EMPTY) { return NO_MORE; }
 
     uint8_t test=0;
     for (uint8_t i=0; i<DIR_NAMESIZE; i++)
     {
-        fileptr->name[test++] = dir->DIR_Name[i];
+        fileptr->name[test++] = dir->Name[i];
     }
-    if (dir->DIR_Extension[0] != ' ')
+    if (dir->Extension[0] != ' ')
     {
         for (uint8_t i=0; i<DIR_EXTENSION; i++)
         {
-            fileptr->name[test++]=dir->DIR_Extension[i];
+            fileptr->name[test++]=dir->Extension[i];
         }
     }
-    fileptr->entry      = *fHandle;
-    fileptr->file->size = dir->DIR_FileSize;
-    fileptr->firstCluster = ((dir->DIR_FstClusHI)<<16) | dir->DIR_FstClusLO;
-    fileptr->time       = dir->DIR_WrtTime;
-    fileptr->date       = dir->DIR_WrtDate;
-    fileptr->attributes = dir->DIR_Attr;
+    fileptr->entry        = *fHandle;
+    fileptr->file->size   = dir->FileSize;
+    fileptr->firstCluster = ((dir->FstClusHI)<<16) | dir->FstClusLO;
+    fileptr->time         = dir->WrtTime;
+    fileptr->date         = dir->WrtDate;
+    fileptr->attributes   = dir->Attr;
     return FOUND;
 }
 
@@ -697,7 +695,7 @@ FS_ERROR FAT_fclose(file_t* file)
         */
         globalFATWriteNecessary = false;
 
-        fileRootDirEntry_t* dir = getFileAttribute(FATfile, &fHandle);
+        FAT_dirEntry_t* dir = getFileAttribute(FATfile, &fHandle);
 
         if (dir == 0)
         {
@@ -710,8 +708,8 @@ FS_ERROR FAT_fclose(file_t* file)
         // ...
         updateTimeStamp(dir);
 
-        dir->DIR_FileSize = file->size;
-        dir->DIR_Attr     = FATfile->attributes;
+        dir->FileSize = file->size;
+        dir->Attr     = FATfile->attributes;
 
         if (writeFileEntry(FATfile, &fHandle))
         {
@@ -795,19 +793,19 @@ FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count)
     return error;
 }
 
-void FAT_showDirectoryEntry(fileRootDirEntry_t* dir)
+void FAT_showDirectoryEntry(FAT_dirEntry_t* dir)
 {
     char name[9];
     name[8] = 0;
-    strncpy(name, dir->DIR_Name, 8);
+    strncpy(name, dir->Name, 8);
     char extension[4];
     extension[3] = 0;
-    strncpy(extension, dir->DIR_Extension, 3);
+    strncpy(extension, dir->Extension, 3);
 
-    printf("\nname.ext: %s.%s",     name, extension                                );
-    printf("\nattrib.:  %y",        dir->DIR_Attr                                  );
-    printf("\ncluster:  %u",        dir->DIR_FstClusLO + 0x10000*dir->DIR_FstClusHI);
-    printf("\nfilesize: %u byte",   dir->DIR_FileSize                              );
+    printf("\nname.ext: %s.%s",   name, extension                        );
+    printf("\nattrib.:  %y",      dir->Attr                              );
+    printf("\ncluster:  %u",      dir->FstClusLO + 0x10000*dir->FstClusHI);
+    printf("\nfilesize: %u byte", dir->FileSize                          );
 }
 
 
@@ -815,7 +813,7 @@ void FAT_showDirectoryEntry(fileRootDirEntry_t* dir)
 // Write Files to Partition //
 //////////////////////////////
 
-static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_t value, bool forceWrite)
+static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t value, bool forceWrite)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> fatWrite forceWrite: %d <<<<<",forceWrite);
@@ -848,12 +846,11 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
     }
 
     uint32_t posFAT; // position (byte) in FAT
-    uint8_t q;
+    uint8_t q = 0;
     switch (volume->part->subtype)
     {
         case FS_FAT32:
             posFAT = currCluster * 4;
-            q = 0;
             break;
         case FS_FAT12:
             posFAT = currCluster * 3;
@@ -863,7 +860,6 @@ static uint32_t fatWrite (FAT_partition_t* volume, uint32_t currCluster, uint32_
         case FS_FAT16:
         default:
             posFAT = currCluster * 2;
-            q = 0;
             break;
     }
 
@@ -1227,15 +1223,15 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
 
 /*******************************************************************************/
 
-static uint32_t getFullClusterNumber(fileRootDirEntry_t* entry)
+static uint32_t getFullClusterNumber(FAT_dirEntry_t* entry)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> getFullClusterNumber <<<<<");
   #endif
 
-    uint32_t TempFullClusterCalc = entry->DIR_FstClusHI;
+    uint32_t TempFullClusterCalc = entry->FstClusHI;
     TempFullClusterCalc = TempFullClusterCalc << 16;
-    TempFullClusterCalc |= entry->DIR_FstClusLO;
+    TempFullClusterCalc |= entry->FstClusLO;
     return TempFullClusterCalc;
 }
 
@@ -1336,17 +1332,17 @@ FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseCluster
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
 
-    fileRootDirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
+    FAT_dirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
     if (dir == 0)
     {
         return CE_BADCACHEREAD;
     }
-    if (dir->DIR_Name[0] == DIR_EMPTY || dir->DIR_Name[0] == DIR_DEL)
+    if (dir->Name[0] == DIR_EMPTY || dir->Name[0] == DIR_DEL)
     {
         return CE_FILE_NOT_FOUND;
     }
 
-    dir->DIR_Name[0] = DIR_DEL;
+    dir->Name[0] = DIR_DEL;
     uint32_t clus = getFullClusterNumber(dir);
 
     if ((writeFileEntry(fileptr, fHandle)) == false)
@@ -1371,37 +1367,37 @@ static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name , uint32_t *fHan
   #endif
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
-    fileRootDirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
+    FAT_dirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
 
     if (dir == 0) return CE_BADCACHEREAD;
 
-    strncpy(dir->DIR_Name,name,DIR_NAMECOMP); // HACK, accesses dir->DIR_Name and dir->DIR_Extension
+    strncpy(dir->Name,name,DIR_NAMECOMP); // HACK, accesses dir->Name and dir->Extension
     if (mode == DIRECTORY)
     {
-        dir->DIR_Attr = ATTR_DIRECTORY;
+        dir->Attr = ATTR_DIRECTORY;
     }
     else
     {
-        dir->DIR_Attr = ATTR_ARCHIVE;
+        dir->Attr = ATTR_ARCHIVE;
     }
 
-    dir->DIR_FileSize  =    0x0;         // file size in uint32_t
-    dir->DIR_NTRes     =    0x00;        // nt reserved
-    dir->DIR_FstClusHI =    0x0000;      // hiword of this entry's first cluster number
-    dir->DIR_FstClusLO =    0x0000;      // loword of this entry's first cluster number
+    dir->FileSize  =    0x0;     // file size in uint32_t
+    dir->NTRes     =    0x00;    // nt reserved
+    dir->FstClusHI =    0x0000;  // hiword of this entry's first cluster number
+    dir->FstClusLO =    0x0000;  // loword of this entry's first cluster number
 
    // time info as example
-    dir->DIR_CrtTimeTenth = 0xB2;        // millisecond stamp
-    dir->DIR_CrtTime =      0x7278;      // time created
-    dir->DIR_CrtDate =      0x32B0;      // date created
-    dir->DIR_LstAccDate =   0x32B0;      // Last access date
-    dir->DIR_WrtTime =      0x7279;      // last update time
-    dir->DIR_WrtDate =      0x32B0;      // last update date
+    dir->CrtTimeTenth = 0xB2;    // millisecond stamp
+    dir->CrtTime =      0x7278;  // time created
+    dir->CrtDate =      0x32B0;  // date created
+    dir->LstAccDate =   0x32B0;  // Last access date
+    dir->WrtTime =      0x7279;  // last update time
+    dir->WrtDate =      0x32B0;  // last update date
 
-    fileptr->file->size  = dir->DIR_FileSize;
-    fileptr->time        = dir->DIR_CrtTime;
-    fileptr->date        = dir->DIR_CrtDate;
-    fileptr->attributes  = dir->DIR_Attr;
+    fileptr->file->size  = dir->FileSize;
+    fileptr->time        = dir->CrtTime;
+    fileptr->date        = dir->CrtDate;
+    fileptr->attributes  = dir->Attr;
     fileptr->entry       = *fHandle;
 
     if (writeFileEntry(fileptr,fHandle) == false)
@@ -1418,7 +1414,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
   #endif
 
     uint8_t  status = NOT_FOUND;
-    fileRootDirEntry_t*  dir;
+    FAT_dirEntry_t* dir;
     char a = ' ';
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
@@ -1439,7 +1435,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
                 dir = cacheFileEntry(fileptr, fHandle, false);
                 if (dir != 0)
                 {
-                    a = dir->DIR_Name[0];
+                    a = dir->Name[0];
                 }
                 (*fHandle)++;
             }
@@ -1493,7 +1489,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
     return(status == FOUND);
 }
 
-static fileRootDirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
+static FAT_dirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> loadDirAttrib <<<<<");
@@ -1501,14 +1497,14 @@ static fileRootDirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
     // Get the entry
-    fileRootDirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
+    FAT_dirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
 
-    if (dir == 0 || dir->DIR_Name[0] == DIR_EMPTY || dir->DIR_Name[0] == DIR_DEL)
+    if (dir == 0 || dir->Name[0] == DIR_EMPTY || dir->Name[0] == DIR_DEL)
     {
         return 0;
     }
 
-    while(dir != 0 && dir->DIR_Attr == ATTR_LONG_NAME)
+    while(dir != 0 && dir->Attr == ATTR_LONG_NAME)
     {
         (*fHandle)++;
         dir = cacheFileEntry(fileptr, fHandle, false);
@@ -1531,27 +1527,22 @@ static FS_ERROR fileCreateHeadCluster(FAT_file_t* fileptr, uint32_t* cluster)
         return CE_DISK_FULL;
     }
 
-    if (volume->part->subtype == FS_FAT12)
+    switch(volume->part->subtype)
     {
-        if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT12, false) == CLUSTER_FAIL_FAT16)
-        {
-            return CE_WRITE_ERROR;
-        }
+        case FS_FAT12:
+            if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT12, false) == CLUSTER_FAIL_FAT16)
+                return CE_WRITE_ERROR;
+            break;
+        case FS_FAT16:
+            if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT16, false) == CLUSTER_FAIL_FAT16)
+                return CE_WRITE_ERROR;
+            break;
+        case FS_FAT32: default:
+            if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT32, false) == CLUSTER_FAIL_FAT32)
+                return CE_WRITE_ERROR;
+            break;
     }
-    else if (volume->part->subtype == FS_FAT16)
-    {
-        if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT16, false) == CLUSTER_FAIL_FAT16)
-        {
-            return CE_WRITE_ERROR;
-        }
-    }
-    else
-    {
-        if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT32, false) == CLUSTER_FAIL_FAT32)
-        {
-            return CE_WRITE_ERROR;
-        }
-    }
+
     return eraseCluster(volume,*cluster);
 }
 
@@ -1567,9 +1558,9 @@ static FS_ERROR createFirstCluster(FAT_file_t* fileptr)
     FS_ERROR error = fileCreateHeadCluster(fileptr,&cluster);
     if (error == CE_GOOD)
     {
-        fileRootDirEntry_t* dir = loadDirAttrib(fileptr, &fHandle);
-        dir->DIR_FstClusHI = (cluster & 0x0FFF0000) >> 16; // only 28 bits in FAT32
-        dir->DIR_FstClusLO = (cluster & 0x0000FFFF);
+        FAT_dirEntry_t* dir = loadDirAttrib(fileptr, &fHandle);
+        dir->FstClusHI = (cluster & 0x0FFF0000) >> 16; // only 28 bits in FAT32
+        dir->FstClusLO = (cluster & 0x0000FFFF);
 
         if (writeFileEntry(fileptr, &fHandle) == false)
         {
@@ -2006,7 +1997,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
     uint32_t fHandle = 0;
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
-    fileRootDirEntry_t* dir = cacheFileEntry(fileptr, &fHandle, true);
+    FAT_dirEntry_t* dir = cacheFileEntry(fileptr, &fHandle, true);
     if (dir == 0)
     {
         return CE_BADCACHEREAD;
@@ -2015,7 +2006,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
     uint8_t k = 0;
     for (uint8_t j=0; j<11; j++)
     {
-        if (dir->DIR_Name[j] != string[j])
+        if (dir->Name[j] != string[j])
         {
             k = 1;
         }
@@ -2044,14 +2035,14 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
                 return CE_BADCACHEREAD;
             }
         }
-        if (dir->DIR_Name[0] == 0)
+        if (dir->Name[0] == 0)
         {
             break;
         }
 
-        for (uint8_t j=0; j<11; j++) // HACK, accesses dir->DIR_Name and dir->DIR_Extension
+        for (uint8_t j=0; j<11; j++) // HACK, accesses dir->Name and dir->Extension
         {
-            if (dir->DIR_Name[j] != string[j])
+            if (dir->Name[j] != string[j])
             {
                 k = 1;
             }
@@ -2078,7 +2069,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
 
     for (uint8_t j=0; j<11; j++)
     {
-        dir->DIR_Name[j] = fileptr->name[j];
+        dir->Name[j] = fileptr->name[j];
     }
 
     if (!writeFileEntry(fileptr,&fHandle))
@@ -2127,25 +2118,8 @@ FS_ERROR FAT_fputc(file_t* file, char c)
 {
     uint32_t retVal = FAT_fwrite(&c, 1, 1, file->data);
 
-    /// TEST
-    /*
-    static uint32_t i=0;
-    i++;
-    printf("\tfputc %u ",i);
-    */
-    /// TEST
-
     if (retVal == 1)
     {
-        /// TEST
-        /*
-        printf("OK  ");
-        if (i==4098)
-        {
-            waitForKeyStroke();
-        }
-        */
-        /// TEST
         return(CE_GOOD);
     }
     return CE_WRITE_ERROR;
@@ -2372,6 +2346,17 @@ FS_ERROR FAT_pinstall(partition_t* part)
 
 
     return(CE_GOOD);
+}
+
+
+FS_ERROR FAT_folderAccess(folder_t* folder, folderAccess_t mode)
+{
+    // Read directory content. Analyze it as a FAT_dirEntry_t array. Put all valid entries into the already created subfolder and files lists.
+    return(CE_GOOD);
+}
+
+void FAT_folderClose(folder_t* folder)
+{
 }
 
 

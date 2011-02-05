@@ -15,6 +15,11 @@ typedef enum
     SEEK_SET, SEEK_CUR, SEEK_END
 } SEEK_ORIGIN;
 
+typedef enum
+{
+    FOLDER_OPEN, FOLDER_CREATE, FOLDER_DELETE
+} folderAccess_t;
+
 // http://www.google.de/url?sa=t&source=web&ct=res&cd=2&ved=0CBwQFjAB&url=http%3A%2F%2Fwww.schmalzhaus.com%2FUBW32%2FFW%2FMicrochip_v2.5b%2FInclude%2FMDD%2520File%2520System%2FFSDefs.h&rct=j&q=%23define+CE_ERASE_FAIL&ei=X7L1S9XFN4f9OczL1dYI&usg=AFQjCNHZbqrCWoeIXQ2g6aZ2-jC1rfx7Ig
 typedef enum
 {
@@ -85,16 +90,17 @@ typedef struct
     FS_ERROR (*remove)(const char*, struct partition*);              // Path, partition
     FS_ERROR (*rename)(const char*, const char*, struct partition*); // Old path, new path, partition
 
-    FS_ERROR (*folderOpen) (struct folder*, const char* path, const char*); // Folder, Base-Folder, mode ("c": Create if it does not exist, "d": Delete and close)
-    void     (*folderClose)(struct folder*);                                // Folder
+    FS_ERROR (*folderAccess)(struct folder*, folderAccess_t); // Folder, mode
+    void     (*folderClose) (struct folder*);                 // Folder
 } fileSystem_t;
 
 struct disk;
 typedef struct partition
 {
-    fileSystem_t* type;    // Type of the partition. 0 = unformated
-    uint32_t      subtype; // Example: To detect wether its a FAT12, FAT16 or FAT32 device although it uses the same driver
-    void*         data;    // data specific to partition-type
+    fileSystem_t*  type;       // Type of the partition. 0 = unformated
+    uint32_t       subtype;    // Example: To detect wether its a FAT12, FAT16 or FAT32 device although it uses the same driver
+    void*          data;       // data specific to partition-type
+    struct folder* rootFolder; // Root of the file tree
 
     struct disk*  disk;    // The disk containing the partition
     char*         serial;  // serial for identification
@@ -110,6 +116,8 @@ typedef struct folder
     partition_t*   volume;    // Partition containing the file
     struct folder* folder;    // Folder containing the file (parent-folder)
     void*          data;      // Additional information specific to fileSystem
+
+    char*          name;      // name of the node
 
     listHead_t*    subfolder; // All folders inside this folder
     listHead_t*    files;     // All files inside this folder
@@ -134,7 +142,6 @@ typedef struct file
 
 extern fileSystem_t FAT, INITRD;
 
-void fsmanager_install();
 
 // Partition functions
 FS_ERROR formatPartition(const char* path, FS_t type, const char* name);
@@ -166,5 +173,7 @@ FS_ERROR ferror  (file_t* file);
 void     clearerr(file_t* file);
 
 // Folder functions
+folder_t* folderAccess(const char* path, folderAccess_t mode);
+void      folderClose (folder_t* folder);
 
 #endif

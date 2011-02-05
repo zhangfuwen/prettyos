@@ -18,8 +18,8 @@ typedef struct
     uint16_t height;
     BGRA_t* data;
     uint16_t z;
-	button_t CloseButton;
-	
+    button_t CloseButton;
+
 } __attribute__((packed)) window_t;
 
 void init_window_manager();

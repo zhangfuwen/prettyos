@@ -25,7 +25,7 @@
 #include "audio/sys_speaker.h"
 #include "power_management.h"
 
-const char* const version = "0.0.2.21 - Rev: 859";
+const char* const version = "0.0.2.22 - Rev: 860";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -111,6 +111,8 @@ static void init(multiboot_t* mb_struct)
     system.Memory_Size = paging_install(); log("Paging");
     heap_install(); log("Heap");
 
+    video_install(); log("Video");
+
     tasking_install(); log("Multitasking");
 
     // external devices
@@ -125,7 +127,6 @@ static void init(multiboot_t* mb_struct)
     cdi_init(); log("CDI");
 
     deviceManager_install(); log("Devicemanager"); // device management for mass storage devices
-    fsmanager_install(); log("Filesystemmanager\n");
 
     delayedInitTasks = todoList_create();
 
@@ -229,7 +230,7 @@ void main(multiboot_t* mb_struct)
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
-        ((uint16_t*)0xB8000)[49*80 + 79] = 0x0C00 | *progress; // Write the character directly to the video-memory. 0x0C00 is the color (red)
+        video_setPixel(79, 49, 0x0C00 | *progress); // Write the character on the screen. 0x0C00 is the color (red)
         if (! *++progress) { progress = "|/-\\"; }
 
         if (timer_getSeconds() != CurrentSeconds)

@@ -17,7 +17,6 @@ console_t kernelConsole = {0, true, 0, 39, {0, 0}};
 // The console of the active task
 volatile console_t* currentConsole = &kernelConsole;
 
-extern uint16_t* vidmem;
 static bool scroll_flag = true;
 
 static void scroll();
@@ -185,7 +184,7 @@ void putch(char c)
             {
                 uint32_t att = getTextColor() << 8;
                 if (reachableConsoles[displayedConsole] == currentConsole) { //print to screen
-                    *(vidmem + (currentConsole->cursor.y+2) * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
+                    video_setPixel(currentConsole->cursor.x, currentConsole->cursor.y+2, uc | att); // character AND attributes: color
                 }
                 *(currentConsole->vidmem + currentConsole->cursor.y * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
                 move_cursor_right();

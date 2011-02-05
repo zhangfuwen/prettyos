@@ -179,13 +179,13 @@ void setVideoMemory()
 
 void allocDoubleBuffer()
 {
-	DOUBLEBUFFER = (uint8_t*) malloc(mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1), 0, "DoubleBuffer");
+    DOUBLEBUFFER = (uint8_t*) malloc(mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1), 0, "DoubleBuffer");
 }
 
 void vbe_flipScreen(uint8_t* Buffer)
 {
-	// SCREEN = Buffer;
-	memcpy(SCREEN, Buffer, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
+    // SCREEN = Buffer;
+    memcpy(SCREEN, Buffer, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
 }
 
 void vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color)
@@ -743,9 +743,9 @@ void vbe_bootscreen()
         gets(num);
         whatToStart = atoi(num);
     }
-	
-	allocDoubleBuffer();
-	
+
+    allocDoubleBuffer();
+
     switchToVideomode(modenumber);
     uint32_t displayStart = getDisplayStart();
     printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", displayStart >> 16, displayStart & 0xFFFF);

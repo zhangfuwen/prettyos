@@ -113,20 +113,20 @@ typedef struct
 
 typedef struct
 {
-    char DIR_Name[DIR_NAMESIZE];
-    char DIR_Extension[DIR_EXTENSION];
-    uint8_t DIR_Attr;
-    uint8_t DIR_NTRes;
-    uint8_t DIR_CrtTimeTenth; // tenths of second portion
-    uint16_t DIR_CrtTime;     // created
-    uint16_t DIR_CrtDate;
-    uint16_t DIR_LstAccDate;  // last access
-    uint16_t DIR_FstClusHI;
-    uint16_t DIR_WrtTime;     // last update
-    uint16_t DIR_WrtDate;
-    uint16_t DIR_FstClusLO;
-    uint32_t DIR_FileSize;
-} fileRootDirEntry_t;
+    char     Name[DIR_NAMESIZE];
+    char     Extension[DIR_EXTENSION];
+    uint8_t  Attr;
+    uint8_t  NTRes;
+    uint8_t  CrtTimeTenth; // tenths of second portion
+    uint16_t CrtTime;     // created
+    uint16_t CrtDate;
+    uint16_t LstAccDate;  // last access
+    uint16_t FstClusHI;
+    uint16_t WrtTime;     // last update
+    uint16_t WrtDate;
+    uint16_t FstClusLO;
+    uint32_t FileSize;
+} FAT_dirEntry_t;
 
 typedef enum
 {
@@ -195,8 +195,12 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
 FS_ERROR FAT_format(partition_t* part);
 FS_ERROR FAT_pinstall(partition_t* part);
 
+// folder handling
+FS_ERROR FAT_folderAccess(folder_t* folder, folderAccess_t mode);
+void     FAT_folderClose(folder_t* folder);
+
 // analysis functions
-void FAT_showDirectoryEntry(fileRootDirEntry_t* dir);
+void FAT_showDirectoryEntry(FAT_dirEntry_t* dir);
 
 // additional functions
 uint32_t FAT_checksum(char* ShortFileName);

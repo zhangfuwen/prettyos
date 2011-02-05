@@ -116,10 +116,10 @@ void DHCP_Discover();
 void DHCP_Request();
 
 /*
-When a client is initialized for the first time after it is configured 
+When a client is initialized for the first time after it is configured
 to receive DHCP information, it initiates a conversation with the server.
-Below is a summary table of the conversation between client and server, 
-which is followed by a packet-level description of the process: 
+Below is a summary table of the conversation between client and server,
+which is followed by a packet-level description of the process:
 
    Source     Dest        Source     Dest              Packet
    MAC addr   MAC addr    IP addr    IP addr           Description

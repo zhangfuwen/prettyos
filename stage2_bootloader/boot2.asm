@@ -143,7 +143,7 @@ PrepareMultiboot:
 ;    Execute Kernel
 ;*******************************************************
 EXECUTE:
-    jmp DWORD CODE_DESC:IMAGE_PMODE_BASE
+    jmp DWORD CODE_DESC:IMAGE_PMODE_BASE + 0x0C ; Jump behind multiboot header. TODO: Use other header size if flags are set
     cli
     hlt
 
