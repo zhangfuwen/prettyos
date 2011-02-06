@@ -22,6 +22,7 @@ extern uint8_t MAC_address[6];
 void EthernetRecv(void* data, uint32_t length)
 {
     ethernet_t* eth = (ethernet_t*)data;
+    void* udpData;
 
     textColor(0x0E);
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) { printf("Ethernet 2. "); }
@@ -32,10 +33,11 @@ void EthernetRecv(void* data, uint32_t length)
     ip_t*  ip  = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
 
     // IP protocol is parsed here and distributed in switch/case
-    uint32_t ipHeaderLength = 4 * ip->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
+    uint32_t ipHeaderLengthBytes = 4 * ip->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
+    
     if ((ip->version == 4) || (ip->version == 6))
     {
-        printf(" IP version: %u, IP Header Length: %u byte", ip->version, ipHeaderLength);
+        printf(" IP version: %u, IP Header Length: %u byte", ip->version, ipHeaderLengthBytes);
 
         switch(ip->protocol)
         {
@@ -56,7 +58,8 @@ void EthernetRecv(void* data, uint32_t length)
             case 6: // tcp
                 break;
             case 17: // udp
-                UDPRecv(  (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLength), length - ipHeaderLength, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP);
+                udpData = (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLengthBytes);
+                UDPRecv(udpData, length - ipHeaderLengthBytes, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP);
                 break;
             case 41: // ipv6
                 break;

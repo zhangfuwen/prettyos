@@ -27,14 +27,16 @@ typedef __builtin_va_list va_list;
 
 #define BIT(n) (1<<(n))
 
+// This defines macros typically needed for networking source code
+#define htons(v) ((((v) >> 8) & 0xFF) | (((v) & 0xFF) << 8))
+#define htonl(v) ((((v) >> 24) & 0xFF) | (((v) >> 8) & 0xFF00) | (((v) & 0xFF00) << 8) | (((v) & 0xFF) << 24))
+#define ntohs(v) htons(v)
+#define ntohl(v) htonl(v)
 
 // This defines the operatings system common data area
 typedef struct
 {
-    // CPU
     uint32_t CPU_Frequency_kHz;  // determined from rdtsc
-
-    // RAM
     uint32_t Memory_Size;        // memory size in byte
 } system_t;
 

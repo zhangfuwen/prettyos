@@ -10,23 +10,25 @@
 #include "video/console.h"
 #include "netprotocol/ethernet.h"
 #include "rtl8139.h"
-#include "myOwnData.h"
+#include "myOwnData.h" // IP address TODO: substitute with DHCP
 
 uint32_t BaseAddressRTL8139_IO;
 uint32_t BaseAddressRTL8139_MMIO;
 
-uint8_t   network_buffer[RTL8139_NETWORK_BUFFER_SIZE]; // WRAP not set
+// Network Buffer
+uint8_t   network_buffer[RTL8139_NETWORK_BUFFER_SIZE] __attribute__ ((aligned (4))); // WRAP not set
 uintptr_t network_bufferPointer = 0;
 
+// Receive 
+uint8_t Rx_network_buffer[2048] __attribute__ ((aligned (4)));
+
 // Transmit
-uint8_t  Tx_network_buffer[0x1000];
-uint8_t  curBuffer = 0; // Tx descriptor
+uint8_t Tx_network_buffer[4096] __attribute__ ((aligned (4)));
+uint8_t curBuffer = 0; // Tx descriptor
 
 // MAC and IP address
 uint8_t MAC_address[6];
 uint8_t IP_address[4];
-
-uint8_t rtl8139_receiveBuffer[2048];
 
 void rtl8139_handler(registers_t* r)
 {
@@ -61,26 +63,26 @@ void rtl8139_handler(registers_t* r)
     }
 
     uint32_t length = (network_buffer[network_bufferPointer+3] << 8) + network_buffer[network_bufferPointer+2]; // Little Endian
-
+        
     // --------------------------- adapt buffer pointer ---------------------------------------------------
 
-    memcpy(rtl8139_receiveBuffer, &network_buffer[network_bufferPointer], length);
+    memcpy(Rx_network_buffer, &network_buffer[network_bufferPointer], length);
 
     // packets are DWORD aligned
     network_bufferPointer += length + 4;
-    network_bufferPointer = (network_bufferPointer + 3) & ~0x3;
+    network_bufferPointer = (network_bufferPointer + 3) & ~0x3; // ~0x3 = 0xFFFFFFFC 
 
     // handle wrap-around
     network_bufferPointer %= RTL8139_NETWORK_BUFFER_SIZE;
 
     // set read pointer
-    *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)) = network_bufferPointer - 0x10;
+    *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)) = network_bufferPointer - 0x10; // 0x10 = 16
 
     // --------------------------- adapt buffer pointer ---------------------------------------------------
 
     printf("RXBUFTAIL: %u", *((uint16_t*)(BaseAddressRTL8139_MMIO + RTL8139_RXBUFTAIL)));
 
-    uint32_t ethernetType = (rtl8139_receiveBuffer[16] << 8) + rtl8139_receiveBuffer[17]; // Big Endian
+    uint32_t ethernetType = (Rx_network_buffer[16] << 8) + Rx_network_buffer[17]; // Big Endian
 
     // output receiving buffer
     textColor(0x0D);
@@ -88,7 +90,7 @@ void rtl8139_handler(registers_t* r)
     textColor(0x03);
     for (uint8_t i = 0; i < 2; i++)
     {
-        printf("%y ",rtl8139_receiveBuffer[i]);
+        printf("%y ",Rx_network_buffer[i]);
     }
 
     textColor(0x0D); printf("\tLength: ");
@@ -97,13 +99,13 @@ void rtl8139_handler(registers_t* r)
     textColor(0x0D); printf("\nMAC Receiver: "); textColor(0x03);
     for (uint8_t i = 4; i < 10; i++)
     {
-        printf("%y ", rtl8139_receiveBuffer[i]);
+        printf("%y ", Rx_network_buffer[i]);
     }
 
     textColor(0x0D); printf("MAC Transmitter: "); textColor(0x03);
     for (uint8_t i = 10; i < 16; i++)
     {
-        printf("%y ", rtl8139_receiveBuffer[i]);
+        printf("%y ", Rx_network_buffer[i]);
     }
 
     textColor(0x0D);
@@ -120,7 +122,7 @@ void rtl8139_handler(registers_t* r)
     textColor(0x03);
     for (uint8_t i = 16; i < 18; i++)
     {
-        printf("%y ", rtl8139_receiveBuffer[i]);
+        printf("%y ", Rx_network_buffer[i]);
     }
 
     uint32_t printlength = max(length, 80);
@@ -128,11 +130,11 @@ void rtl8139_handler(registers_t* r)
 
     for (uint32_t i = 18; i <= printlength; i++)
     {
-        printf("%y ", rtl8139_receiveBuffer[i]);
+        printf("%y ", Rx_network_buffer[i]);
     }
     textColor(0x0F);
     printf("\n");
-    EthernetRecv((void*)(&rtl8139_receiveBuffer[4]), length - 4);
+    EthernetRecv((void*)(&Rx_network_buffer[4]), length - 4);
 }
 
 
@@ -291,32 +293,6 @@ bool transferDataToTxBuffer(void* data, uint32_t length)
     printf("packet sent.\n");
     return true;
 }
-
-// ???
-/*
-int rtl8139_set_mac_address(struct net_device *dev, void *p)
-{
-    struct rtl8139_private *tp = netdev_priv(dev);
-    void __iomem *ioaddr = tp->mmio_addr;
-    struct sockaddr *addr = p;
-
-    if (!is_valid_ether_addr(addr->sa_data))
-        return -EADDRNOTAVAIL;
-
-    memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
-
-    spin_lock_irq(&tp->lock);
-
-    RTL_W8_F(Cfg9346, Cfg9346_Unlock);
-    RTL_W32_F(MAC0 + 0, cpu_to_le32 (*(u32 *) (dev->dev_addr + 0)));
-    RTL_W32_F(MAC0 + 4, cpu_to_le32 (*(u32 *) (dev->dev_addr + 4)));
-    RTL_W8_F(Cfg9346, Cfg9346_Lock);
-
-    spin_unlock_irq(&tp->lock);
-
-    return 0;
-}
-*/
 
 /*
 * Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
