@@ -9,8 +9,9 @@
 #include "paging.h"
 #include "video/console.h"
 #include "netprotocol/ethernet.h"
-#include "rtl8139.h"
-#include "myOwnData.h" // IP address TODO: substitute with DHCP
+#include "network/rtl8139.h"
+#include "netprotocol/dhcp.h" // for DHCP Discover etc.
+#include "myOwnData.h" // IP address, if DHCP does not deliver an IP address
 
 uint32_t BaseAddressRTL8139_IO;
 uint32_t BaseAddressRTL8139_MMIO;
@@ -259,6 +260,9 @@ void install_RTL8139(pciDev_t* device)
     textColor(0x0E);
     printf("\nnetwork card, mac-address: %y-%y-%y-%y-%y-%y", MAC_address[0], MAC_address[1], MAC_address[2],
                                                              MAC_address[3], MAC_address[4], MAC_address[5]);
+    // Try to get an IP by DHCP
+    DHCP_Discover();
+    // DHCP 
 
     printf("\nnetwork card, IP: %u.%u.%u.%u\n", IP_address[0], IP_address[1], IP_address[2], IP_address[3]);
     textColor(0x0F);

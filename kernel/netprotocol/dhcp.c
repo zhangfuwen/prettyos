@@ -3,9 +3,19 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "netprotocol/dhcp.h"
+#include "network/rtl8139.h"
+
+extern uint8_t MAC_address[6];
+extern uint8_t IP_address[4];
+
 void DHCP_Discover()
 {
-
+    printf("\nTODO: DHCP Discover\n");
+    
+    // void* data
+    // uint_32 length
+    // EthernetSend(data, length);
 }
 
 void DHCP_Request()

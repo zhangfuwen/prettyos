@@ -1,6 +1,8 @@
 #ifndef DHCP_H
 #define DHCP_H
 
+#include "video/console.h"
+
 // http://tools.ietf.org/html/rfc2131 <--- Dynamic Host Configuration Protocol
 // ftp://ftp.efo.ru/pub/wiznet/W5100_App%20note_DHCP.pdf
 
