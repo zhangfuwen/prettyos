@@ -327,6 +327,9 @@
     <ClInclude Include="..\kernel\video\VBEShell.h">
       <Filter>Kernel\include\video</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\dma.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -538,6 +541,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\video\VBEShell.c">
       <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\dma.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

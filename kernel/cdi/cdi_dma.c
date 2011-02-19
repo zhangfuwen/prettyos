@@ -4,18 +4,38 @@
 */
 
 #include "cdi/dma.h"
+#include "../dma.h"
 
 
-int cdi_dma_open(struct cdi_dma_handle* handle, uint8_t channel, uint8_t mode, size_t length, void* buffer);
+int cdi_dma_open(struct cdi_dma_handle* handle, uint8_t channel, uint8_t mode, size_t length, void* buffer)
+{
+    handle->buffer = buffer;
+    handle->channel = channel;
+    handle->mode = mode;
+    handle->length = length;
+    return(0);
+}
 
-int cdi_dma_read(struct cdi_dma_handle* handle);
+int cdi_dma_read(struct cdi_dma_handle* handle)
+{
+    dma_read(handle->buffer, handle->length, &dma_channel[handle->channel], handle->mode);
+    return(0);
+}
 
-int cdi_dma_write(struct cdi_dma_handle* handle);
+int cdi_dma_write(struct cdi_dma_handle* handle)
+{
+    dma_write(handle->buffer, handle->length, &dma_channel[handle->channel], handle->mode);
+    return(0);
+}
 
-int cdi_dma_close(struct cdi_dma_handle* handle);
+int cdi_dma_close(struct cdi_dma_handle* handle)
+{
+    return(0);
+}
+
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

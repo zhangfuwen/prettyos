@@ -129,8 +129,7 @@ PrepareMultiboot:
     mov [ebx + 0x00], DWORD 0b1001000001
     mov [ebx + 0x04], DWORD 640
     call convert_mmap
-    mov ecx, 24             ; Calculate size of mmap (24 == sizeof(mmap_entry))
-    imul ecx, eax
+    imul ecx, eax, 24       ; Calculate size of mmap (24 == sizeof(mmap_entry))
     mov [ebx + 0x2C], ecx
     mov eax, [0x1200]
     shr eax, 10

@@ -10,6 +10,7 @@
 #include "timer.h"
 #include "irq.h"
 #include "kheap.h"
+#include "dma.h"
 
 // detailed infos about FDC and FAT12:
 // http://www.isdaman.com/alsos/hardware/fdc/floppy.htm
@@ -22,8 +23,8 @@
   of the OSDEV tutorial series at www.brokenthorn.com
 *****************************************************************************/
 
-#define DMA_BUFFER 0x1000 // start of dma tranfer buffer, end: 0x10000 (64 KiB border).
-                          // It must be below 16 MiB = 0x1000000 and in identity mapped memory!
+// start of dma transfer buffer, end: 0x10000 (64 KiB border). It must be below 16 MiB = 0x1000000 and in identity mapped memory!
+static void* const DMA_BUFFER = (void*)0x1000;
 
 static const int32_t FLPY_SECTORS_PER_TRACK      =  18; // sectors per track
 static const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME = 300; // waiting time in milliseconds (motor spin up)
@@ -135,7 +136,7 @@ static floppy_t* createFloppy(uint8_t ID)
     fdd->drive.insertedDisk->secPerTrack     = 18;
     fdd->drive.insertedDisk->sectorSize      = 512;
     fdd->drive.insertedDisk->headCount       = 2;
-    fdd->drive.insertedDisk->accessRemaining = 1; // 1 because we will read one sector at the beginning
+    fdd->drive.insertedDisk->accessRemaining = 0;
 
     attachDisk(fdd->drive.insertedDisk); // disk == floppy disk
     attachPort(&fdd->drive);
@@ -182,44 +183,6 @@ void flpydsk_install()
         floppyDrive[0] = 0;
     }
     printf("\n");
-}
-
-/// DMA Routines
-/* The DMA (Direct Memory Access) controller allows the FDC to send data to the DMA, which can put the data in memory.
-   While the FDC can be programmed to not use DMA, it is not very well supported on emulators or virtual machines.
-   Because of this, the DMA is used for data transfers. */
-
-// initialize DMA to use physical address 84k-128k
-static void flpydsk_initialize_dma()
-{
-    outportb(0x0A, 0x06);   // mask dma channel 2
-    outportb(0x0C, 0xFF);   // reset flip-flop (controller 1, slave, channel 2)
-    outportb(0x04, 0x00);   // DMA buffer address 0x1000
-    outportb(0x04, 0x10);
-    outportb(0x0C, 0xFF);   // reset flip-flop (controller 1, slave, channel 2)
-    outportb(0x05, 0xFF);   // count to 0x23FF (number of bytes in a 3.5" floppy disk track: 0 to 18*512)
-    outportb(0x05, 0x23);
-
-    outportb(0x81, 0x00);   // external page register = 0
-    outportb(0x0A, 0x02);   // unmask dma channel 2
-}
-
-// autoinit (2^4 = 16 = 0x10) creates problems with MS Virtual PC and on real hardware!
-// hence, it is not used here, but reinitialization is used before read/write
-// prepare the DMA for read transfer
-static void flpydsk_dma_read()
-{
-    outportb(0x0a, 0x06); // mask dma channel 2
-    outportb(0x0b, 0x46); // single transfer, address increment, read, channel 2 // without autoinit
-    outportb(0x0a, 0x02); // unmask dma channel 2
-}
-
-// prepare the DMA for write transfer
-static void flpydsk_dma_write()
-{
-    outportb(0x0a, 0x06); // mask dma channel 2
-    outportb(0x0b, 0x4A); // single transfer, address increment, write, channel 2 // without autoinit
-    outportb(0x0a, 0x02); // unmask dma channel 2
 }
 
 
@@ -356,7 +319,7 @@ void flpydsk_motorOff(void* drive)
 }
 
 // configure drive
-static void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, int32_t dma)
+static void flpydsk_drive_data(uint32_t stepr, uint32_t loadt, uint32_t unloadt, bool dma)
 {
     flpydsk_send_command(FDC_CMD_SPECIFY);
     flpydsk_send_command(((stepr & 0xF) << 4) | (unloadt & 0xF));
@@ -436,12 +399,12 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
         timeout--;
         if(timeout == 0)
         {
-            CurrentDrive->accessRemaining--;
+            drive->accessRemaining--;
             return(-1);
         }
-    } while(!(st0 & 1 << 5));
+    } while(!(st0 & (BIT(4) | BIT(5))));
 
-    CurrentDrive->accessRemaining--;
+    drive->accessRemaining--;
     return(0);
 }
 
@@ -474,15 +437,14 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
             CurrentDrive->accessRemaining--;
             return(-1);
         }
-    } while(!(st0 & 1 << 5));
+    } while(!(st0 & BIT(5)));
 
     CurrentDrive->accessRemaining--;
     return(0);
 }
 
 
-// read or write a sector // http://www.isdaman.com/alsos/hardware/fdc/floppy_files/wrsec.gif
-// read: operation = 0; write: operation = 1
+// read or write a sector
 static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sector, uint8_t numberOfSectors, RW_OPERATION operation)
 {
     while (CurrentDrive->RW_Lock == true) // TODO: Replace with semaphore
@@ -508,18 +470,16 @@ static int32_t flpydsk_transfer_sector(uint8_t head, uint8_t track, uint8_t sect
 
     CurrentDrive->RW_Lock = true; // busy
 
-    flpydsk_initialize_dma();
-
     flpydsk_motorOn(CurrentDrive);
 
     if (operation == READ)
     {
-        flpydsk_dma_read();
+        dma_read(DMA_BUFFER, numberOfSectors*512, &dma_channel[2], DMA_SINGLE);
         flpydsk_send_command(FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_DENSITY);
     }
     else if (operation == WRITE)
     {
-        flpydsk_dma_write();
+        dma_write(DMA_BUFFER, numberOfSectors*512, &dma_channel[2], DMA_SINGLE);
         flpydsk_send_command(FDC_CMD_WRITE_SECT | FDC_CMD_EXT_DENSITY);
     }
 
@@ -565,7 +525,7 @@ static FS_ERROR flpydsk_read(uint32_t sectorLBA, uint8_t numberOfSectors)
 
     int32_t retVal = CE_GOOD;
     CurrentDrive->accessRemaining+=2;
-    if (flpydsk_seek(track, head) !=0)
+    if (flpydsk_seek(track, head) != 0)
     {
         retVal = CE_SEEK_ERROR;
     }
@@ -598,18 +558,18 @@ static FS_ERROR flpydsk_write(uint32_t sectorLBA, uint8_t numberOfSectors)
     int32_t head=0, track=0, sector=1;
     flpydsk_lba_to_chs(sectorLBA, &head, &track, &sector);
 
-    // turn motor on and seek to track
-    CurrentDrive->accessRemaining++;
+
+    CurrentDrive->accessRemaining+=2;
 
     if (flpydsk_seek(track, head)!=0)
     {
         printf("flpydsk_seek not ok. sector not written.\n");
+        CurrentDrive->accessRemaining--;
         CurrentDrive->drive.insertedDisk->accessRemaining--;
         return CE_SEEK_ERROR;
     }
     else
     {
-        CurrentDrive->accessRemaining++;
         flpydsk_transfer_sector(head, track, sector, numberOfSectors, WRITE);
         CurrentDrive->drive.insertedDisk->accessRemaining--;
         return CE_GOOD;

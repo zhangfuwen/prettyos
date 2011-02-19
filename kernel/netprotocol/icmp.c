@@ -14,7 +14,7 @@ extern uint8_t IP_address[4];
 
 void ICMPAnswerPing(void* data, uint32_t length)
 {
-    icmppacket_t*  rec = data;
+    icmppacket_t* rec = data;
     size_t icmp_data_length = ntohs(rec->ip.length) - (sizeof(rec->ip) + sizeof(rec->icmp));
     uint8_t pkt[sizeof(*rec) + icmp_data_length];
     icmppacket_t* icmp = (icmppacket_t*)pkt;

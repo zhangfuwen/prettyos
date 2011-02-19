@@ -161,9 +161,8 @@ void install_RTL8139(pciDev_t* device)
             if (device->bar[j].memoryType == 0)
             {
                 BaseAddressRTL8139_MMIO = device->bar[j].baseAddress &= 0xFFFFFFF0;
-
             }
-            if (device->bar[j].memoryType == 1)
+            else if (device->bar[j].memoryType == 1)
             {
                 BaseAddressRTL8139_IO = device->bar[j].baseAddress &= 0xFFFC;
             }

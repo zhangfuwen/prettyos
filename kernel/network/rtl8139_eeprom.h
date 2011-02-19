@@ -22,7 +22,7 @@
 #define EE_READ_CMD   (6)
 #define EE_ERASE_CMD  (7)
 
-#define Cfg9346 0x50 // this is allready in rtl8139.h
+#define Cfg9346 0x50 // this is already in rtl8139.h
 
 int read_eeprom(long ioaddr, int location, int addr_len);
 int write_eeprom(long ioaddr, int location, int addr_len);
