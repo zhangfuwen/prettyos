@@ -66,7 +66,7 @@ void     exit();
 void     task_kill(uint32_t pid);
 void     task_restart(uint32_t pid);
 
-void waitForTask(task_t* blockingTask);
+void waitForTask(task_t* blockingTask, uint32_t timeout);
 
 int32_t getpid();
 

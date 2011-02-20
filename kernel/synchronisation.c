@@ -54,7 +54,7 @@ void semaphore_lock(semaphore_t* obj)
 
     if(obj->freeRes == ALL_RESOURCES_USED) // blocked -> wait (busy wait is a HACK)
     {
-        scheduler_blockCurrentTask(&BL_SEMAPHORE, obj);
+        scheduler_blockCurrentTask(&BL_SEMAPHORE, obj, 0);
         switch_context();
     }
     while(obj->freeRes == ALL_RESOURCES_USED) {nop();} // Waiting... HACK

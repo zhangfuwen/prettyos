@@ -20,7 +20,7 @@ uint32_t BaseAddressRTL8139_MMIO;
 uint8_t   network_buffer[RTL8139_NETWORK_BUFFER_SIZE] __attribute__ ((aligned (4))); // WRAP not set
 uintptr_t network_bufferPointer = 0;
 
-// Receive 
+// Receive
 uint8_t Rx_network_buffer[2048] __attribute__ ((aligned (4)));
 
 // Transmit
@@ -64,14 +64,14 @@ void rtl8139_handler(registers_t* r)
     }
 
     uint32_t length = (network_buffer[network_bufferPointer+3] << 8) + network_buffer[network_bufferPointer+2]; // Little Endian
-        
+
     // --------------------------- adapt buffer pointer ---------------------------------------------------
 
     memcpy(Rx_network_buffer, &network_buffer[network_bufferPointer], length);
 
     // packets are DWORD aligned
     network_bufferPointer += length + 4;
-    network_bufferPointer = (network_bufferPointer + 3) & ~0x3; // ~0x3 = 0xFFFFFFFC 
+    network_bufferPointer = (network_bufferPointer + 3) & ~0x3; // ~0x3 = 0xFFFFFFFC
 
     // handle wrap-around
     network_bufferPointer %= RTL8139_NETWORK_BUFFER_SIZE;
@@ -261,7 +261,7 @@ void install_RTL8139(pciDev_t* device)
                                                              MAC_address[3], MAC_address[4], MAC_address[5]);
     // Try to get an IP by DHCP
     DHCP_Discover();
-    // DHCP 
+    // DHCP
 
     printf("\nnetwork card, IP: %u.%u.%u.%u\n", IP_address[0], IP_address[1], IP_address[2], IP_address[3]);
     textColor(0x0F);

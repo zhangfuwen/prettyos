@@ -25,6 +25,6 @@ uint32_t irq_handler(uintptr_t esp);
 void irq_installHandler(IRQ_NUM_t irq, void (*handler)(registers_t* r));
 void irq_uninstallHandler(IRQ_NUM_t irq);
 
-void waitForIRQ(IRQ_NUM_t number);
+void waitForIRQ(IRQ_NUM_t number, uint32_t timeout);
 
 #endif

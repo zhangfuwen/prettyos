@@ -7,8 +7,7 @@
 /* Registiert einen neuen IRQ-Handler.
    irq:    Nummer des zu reservierenden IRQ
    device: Geraet, das dem Handler als Parameter uebergeben werden soll */
-void cdi_register_irq(uint8_t irq, void (*handler)(struct cdi_device*),
-    struct cdi_device* device);
+void cdi_register_irq(uint8_t irq, void (*handler)(struct cdi_device*), struct cdi_device* device);
 
 /* Setzt den IRQ-Zaehler fuer cdi_wait_irq zurueck.
    irq:    Nummer des IRQ
@@ -22,7 +21,7 @@ int cdi_reset_wait_irq(uint8_t irq);
    -# cdi_wait_irq
    Der entsprechende IRQ muss zuvor mit cdi_register_irq registriert worden sein. Der registrierte Handler wird ausgeführt, bevor diese Funktion
    erfolgreich zurückkehrt.
-   irq      Nummer des IRQ auf den gewartet werden soll
+   irq:     Nummer des IRQ auf den gewartet werden soll
    timeout: Anzahl der Millisekunden, die maximal gewartet werden sollen
    return:  0 wenn der irq aufgerufen wurde, -1 sonst. */
 int cdi_wait_irq(uint8_t irq, uint32_t timeout);

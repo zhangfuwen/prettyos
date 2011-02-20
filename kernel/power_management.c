@@ -56,7 +56,7 @@ extern uintptr_t apm_com_end;
 bool apm_install()
 {
     memcpy((void*)0x200, &apm_com_start, (uintptr_t)&apm_com_end - (uintptr_t)&apm_com_start);
-    waitForTask(create_vm86_task(APM_CHECK));
+    waitForTask(create_vm86_task(APM_CHECK), 0);
     return(*((uint16_t*)0x1300) != 0);
 }
 
@@ -66,11 +66,11 @@ static bool apm_action(PM_STATES state)
     {
         case PM_STANDBY:
             *((uint16_t*)0x1300) = 2; // Suspend-Mode (turns more hardware off than standby)
-            waitForTask(create_vm86_task(APM_SETSTATE));
+            waitForTask(create_vm86_task(APM_SETSTATE), 0);
             return(*((uint16_t*)0x1300) != 0);
         case PM_SOFTOFF:
             *((uint16_t*)0x1300) = 3;
-            waitForTask(create_vm86_task(APM_SETSTATE));
+            waitForTask(create_vm86_task(APM_SETSTATE), 0);
             return(*((uint16_t*)0x1300) != 0);
             return(false);
         default: // Every other state is unreachable with APM

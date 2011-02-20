@@ -19,7 +19,7 @@ struct cdi_bios_registers {
 struct cdi_bios_memory {
     uintptr_t dest; // Virtual adress inside the memory of the 16bit-Processes. Has to be lower than 0xC0000.
 
-    /* Pointer to reserved memory for the data of this memory area. Will be used at start to initialize the area and contains the data after BIOS call. */
+    // Pointer to reserved memory for the data of this memory area. Will be used at start to initialize the area and contains the data after BIOS call.
     void *src;
 
     uint16_t size; // Length of memory area

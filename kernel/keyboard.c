@@ -227,8 +227,7 @@ char getch()
     char retVal = keyboard_getChar();
     while(retVal == 0)
     {
-        waitForIRQ(1); // not working on realPC ---> Broken Free
-        // sti();hlt();
+        waitForIRQ(IRQ_KEYBOARD, 0);
         retVal = keyboard_getChar();
     }
     return(retVal);

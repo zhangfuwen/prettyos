@@ -8,6 +8,7 @@
 #include "descriptor_tables.h"
 #include "kheap.h"
 #include "scheduler.h"
+#include "timer.h"
 
 bool task_switching = false;
 
@@ -63,9 +64,9 @@ int32_t getpid()
     return(currentTask->pid);
 }
 
-void waitForTask(task_t* blockingTask)
+void waitForTask(task_t* blockingTask, uint32_t timeout)
 {
-    scheduler_blockCurrentTask(&BL_TASK, blockingTask);
+    scheduler_blockCurrentTask(&BL_TASK, blockingTask, timer_millisecondsToTicks(timeout));
 }
 
 

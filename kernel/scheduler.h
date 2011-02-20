@@ -7,16 +7,16 @@ typedef struct task task_t;
 
 typedef struct
 {
-    bool eventBased;
-    bool (*unlock)(task_t*);
+    bool (*unlock)(task_t*); // if 0, the blocker is event based
 } blockerType_t;
 
-extern blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK, BL_TODOLIST;
+extern blockerType_t BL_SEMAPHORE, BL_INTERRUPT, BL_TASK, BL_TODOLIST;
 
 typedef struct
 {
     blockerType_t* type;
     void*          data;
+    uint32_t       timeout; // 0 if no timeout is defined
 } blocker_t;
 
 void    scheduler_install();
@@ -24,7 +24,7 @@ bool    scheduler_shouldSwitchTask();
 task_t* scheduler_getNextTask();
 void    scheduler_insertTask(task_t* task);
 void    scheduler_deleteTask(task_t* task);
-void    scheduler_blockCurrentTask(blockerType_t* reason, void* data);
+void    scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t timeout);
 void    scheduler_unblockEvent(blockerType_t* type, void* data);
 void    scheduler_log();
 

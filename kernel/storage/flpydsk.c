@@ -99,9 +99,10 @@ enum FLPYDSK_MSR_MASK
 // GAP 3 sizes
 enum FLPYDSK_GAP3_LENGTH
 {
-    FLPYDSK_GAP3_LENGTH_STD  = 42,
-    FLPYDSK_GAP3_LENGTH_5_14 = 32,
-    FLPYDSK_GAP3_LENGTH_3_5  = 27
+    FLPYDSK_GAP3_LENGTH_STD        = 42,
+    FLPYDSK_GAP3_LENGTH_5_14       = 32,
+    FLPYDSK_GAP3_LENGTH_3_5        = 27,
+    FLPYDSK_GAP3_LENGTH_3_5_FORMAT = 84
 };
 
 // Formula: 2^sector_number * 128
@@ -240,16 +241,12 @@ static void flpydsk_write_ccr(uint8_t val)
 // wait for irq
 static void flpydsk_wait_irq()
 {
-    sti();
-    uint32_t timeout = timer_getSeconds()+2;
-    while (CurrentDrive->receivedIRQ == false) // wait for irq to fire
+    cli();
+    if(!CurrentDrive->receivedIRQ) // Protection against FDCs fireing faster than our code
     {
-        hlt();
-        if ((timeout-timer_getSeconds()) <= 0)
-        {
-            break; // IRQ not received, but timeout.
-        }
+        waitForIRQ(IRQ_FLOPPY, 2000);
     }
+    sti();
     CurrentDrive->receivedIRQ = false;
 }
 

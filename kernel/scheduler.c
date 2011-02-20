@@ -16,7 +16,10 @@ static ring_t* blockedTasks;
 
 static task_t* freetimeTask = 0;
 
-blockerType_t BL_TIME, BL_SEMAPHORE, BL_INTERRUPT, BL_TASK, BL_TODOLIST;
+blockerType_t BL_SEMAPHORE = {&semaphore_unlockTask},
+              BL_INTERRUPT = {0},
+              BL_TASK      = {0},
+              BL_TODOLIST  = {&todoList_unlockTask};
 
 static void doNothing()
 {
@@ -31,17 +34,6 @@ void scheduler_install()
 {
     task_queue = ring_Create();
     blockedTasks = ring_Create();
-
-    BL_TIME.unlock          = &timer_unlockTask;
-    BL_TIME.eventBased      = false;
-    BL_SEMAPHORE.unlock     = &semaphore_unlockTask;
-    BL_SEMAPHORE.eventBased = false;
-    BL_TODOLIST.unlock      = &todoList_unlockTask;
-    BL_TODOLIST.eventBased  = false;
-    BL_INTERRUPT.unlock     = 0;
-    BL_INTERRUPT.eventBased = true;
-    BL_TASK.unlock          = 0;
-    BL_TASK.eventBased      = true;
 }
 
 void scheduler_unblockEvent(blockerType_t* type, void* data) // eventBased blocks are handled here
@@ -52,7 +44,8 @@ void scheduler_unblockEvent(blockerType_t* type, void* data) // eventBased block
     blockedTasks->current = blockedTasks->begin;
     do
     {
-        if(((task_t*)blockedTasks->current->data)->blocker.type == type && ((task_t*)blockedTasks->current->data)->blocker.data == data) // The blocking interrupt appeared
+        task_t* current = (task_t*)blockedTasks->current->data;
+        if(current->blocker.type == type && current->blocker.data == data) // The blocking event appeared
         {
             scheduler_insertTask(blockedTasks->current->data);
             ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
@@ -68,13 +61,12 @@ static void checkBlocked()
     blockedTasks->current = blockedTasks->begin;
     do
     {
-        if(!((task_t*)blockedTasks->current->data)->blocker.type->eventBased) // eventBased blocks are not handled here
+        task_t* current = (task_t*)blockedTasks->current->data;
+        if((current->blocker.type && current->blocker.type->unlock && current->blocker.type->unlock(blockedTasks->current->data)) || // unblock function specified and the task should not be blocked any more...
+            (current->blocker.timeout != 0 && current->blocker.timeout <= timer_getTicks())) // ...or timeout reached
         {
-            if((((task_t*)blockedTasks->current->data)->blocker.type->unlock == 0) || ((task_t*)blockedTasks->current->data)->blocker.type->unlock(blockedTasks->current->data)) // Either no unblock-function specified (avoid blocks) or the task should not be blocked any more.
-            {
-                scheduler_insertTask(blockedTasks->current->data);
-                ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
-            }
+            scheduler_insertTask(blockedTasks->current->data);
+            ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
         }
         blockedTasks->current = blockedTasks->current->next;
     } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
@@ -116,11 +108,15 @@ void scheduler_deleteTask(task_t* task)
     scheduler_unblockEvent(&BL_TASK, task);
 }
 
-void scheduler_blockCurrentTask(blockerType_t* reason, void* data)
+void scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t timeout)
 {
     cli();
     currentTask->blocker.type = reason;
     currentTask->blocker.data = data;
+    if(timeout == 0)
+        currentTask->blocker.timeout = 0;
+    else
+        currentTask->blocker.timeout = timer_getTicks()+timeout;
 
     ring_Insert(blockedTasks, (task_t*)currentTask, true);
     ring_DeleteFirst(task_queue, (task_t*)currentTask);

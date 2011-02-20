@@ -34,7 +34,7 @@ void EthernetRecv(void* data, uint32_t length)
 
     // IP protocol is parsed here and distributed in switch/case
     uint32_t ipHeaderLengthBytes = 4 * ip->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
-    
+
     if ((ip->version == 4) || (ip->version == 6))
     {
         printf(" IP version: %u, IP Header Length: %u byte", ip->version, ipHeaderLengthBytes);

@@ -8,6 +8,7 @@
 #include "task.h"
 #include "kheap.h"
 #include "vm86.h"
+#include "timer.h"
 
 typedef void(*interrupt_handler_t)(registers_t*);
 
@@ -27,9 +28,12 @@ void irq_uninstallHandler(IRQ_NUM_t irq)
 }
 
 
-void waitForIRQ(IRQ_NUM_t number)
+void waitForIRQ(IRQ_NUM_t number, uint32_t timeout)
 {
-    scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32));
+    if(timeout == 0)
+        scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32), 0);
+    else
+        scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32), timer_millisecondsToTicks(timeout));
 }
 
 

@@ -58,14 +58,14 @@ void vbe_readVIB()
     *(char*)0x3401 = 'B';
     *(char*)0x3402 = 'E';
     *(char*)0x3403 = '2';
-    waitForTask(create_vm86_task(VM86_VGAINFOBLOCK));
+    waitForTask(create_vm86_task(VM86_VGAINFOBLOCK), 0);
     memcpy(&vgaIB, (void*)0x3400, sizeof(VgaInfoBlock_t));
 }
 
 void vbe_readMIB(uint16_t mode)
 {
     *(uint16_t*)0x3600 = mode;
-    waitForTask(create_vm86_task(VM86_MODEINFOBLOCK));
+    waitForTask(create_vm86_task(VM86_MODEINFOBLOCK), 0);
     memcpy(&mib, (void*)0x3600, sizeof(ModeInfoBlock_t));
 }
 
@@ -77,7 +77,7 @@ ModeInfoBlock_t* getCurrentMIB()
 void switchToVideomode(uint16_t mode)
 {
     *(uint16_t*)0x3600 = 0xC1FF&(0xC000|mode); // Bits 9-13 may not be set, bits 14-15 should be set always
-    waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO));
+    waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO), 0);
     vbe_readMIB(mode);
     setVideoMemory();
     if(!(mode&BIT(15))) // We clear the Videoscreen manually, because the VGA is not reliable
@@ -88,7 +88,7 @@ void switchToVideomode(uint16_t mode)
 
 void switchToTextmode()
 {
-    waitForTask(create_vm86_task(VM86_SWITCH_TO_TEXT));
+    waitForTask(create_vm86_task(VM86_SWITCH_TO_TEXT), 0);
     videomode = VM_TEXT;
     refreshUserScreen();
 }
@@ -97,12 +97,12 @@ void switchToTextmode()
 //{
 //    // memcpy(*(0x1800), xpos, sizeof(xpos));
 //    // memcpy(*(0x1802), ypos, sizeof(ypos));
-//    waitForTask(create_vm86_task(VM86_SETDISPLAYSTART));
+//    waitForTask(create_vm86_task(VM86_SETDISPLAYSTART), 0);
 //}
 
 uint32_t getDisplayStart()
 {
-    waitForTask(create_vm86_task(VM86_GETDISPLAYSTART));
+    waitForTask(create_vm86_task(VM86_GETDISPLAYSTART), 0);
     return (*(uint32_t*)0x1300);
     // [0x1300]; First Displayed Scan Line
     // [0x1302]; First Displayed Pixel in Scan Line
@@ -134,7 +134,7 @@ void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t B
     {
         if(vgaIB.Capabilities[0] & BIT(0)) // VGA can handle palette with 8 bits per color -> Use it
         {
-            waitForTask(create_vm86_task(VM86_SET8BITPALETTE));
+            waitForTask(create_vm86_task(VM86_SET8BITPALETTE), 0);
             paletteBitsPerColor = 8;
         }
         else

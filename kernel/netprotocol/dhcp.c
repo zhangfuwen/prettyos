@@ -12,7 +12,7 @@ extern uint8_t IP_address[4];
 void DHCP_Discover()
 {
     printf("\nTODO: DHCP Discover\n");
-    
+
     // void* data
     // uint_32 length
     // EthernetSend(data, length);

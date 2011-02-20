@@ -27,6 +27,15 @@ uint32_t timer_getMilliseconds()
 {
     return((timer_ticks*1000)/systemfrequency);
 }
+uint64_t timer_getTicks()
+{
+    return(timer_ticks);
+}
+
+uint32_t timer_millisecondsToTicks(uint32_t milliseconds)
+{
+    return((milliseconds*systemfrequency)/1000);
+}
 
 void timer_handler(registers_t* r)
 {
@@ -35,12 +44,7 @@ void timer_handler(registers_t* r)
 
 void timer_wait(uint32_t ticks)
 {
-    scheduler_blockCurrentTask(&BL_TIME, (void*)timer_ticks+ticks); // data: Wakeup-time casted to a pointer (32-bit integer)
-}
-
-bool timer_unlockTask(task_t* task)
-{
-    return((uint32_t)task->blocker.data <= timer_ticks);
+    scheduler_blockCurrentTask(0, 0, ticks); // "abuse" timeout function
 }
 
 void sleepSeconds(uint32_t seconds)
