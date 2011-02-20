@@ -66,7 +66,7 @@ void     exit();
 void     task_kill(uint32_t pid);
 void     task_restart(uint32_t pid);
 
-void waitForTask(task_t* blockingTask, uint32_t timeout);
+bool waitForTask(task_t* blockingTask, uint32_t timeout); // Returns false in case of timeout. TODO: Can this function cause deadlocks?
 
 int32_t getpid();
 

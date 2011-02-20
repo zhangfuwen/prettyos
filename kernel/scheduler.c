@@ -10,20 +10,22 @@
 #include "timer.h"
 #include "synchronisation.h"
 #include "todo_list.h"
+#include "irq.h"
 
-static ring_t* task_queue;
+static ring_t* runningTasks;
 static ring_t* blockedTasks;
 
 static task_t* freetimeTask = 0;
 
 blockerType_t BL_SEMAPHORE = {&semaphore_unlockTask},
-              BL_INTERRUPT = {0},
+              BL_INTERRUPT = {&irq_unlockTask}, // Interrupts seem to be good for event based handling, but they are not, because we count interrupts occuring before the block was set.
               BL_TASK      = {0},
               BL_TODOLIST  = {&todoList_unlockTask};
 
+
+// Function for freetime task. Executed when the ring of running tasks is empty.
 static void doNothing()
 {
-    switch_context();
     while(true)
     {
         hlt();
@@ -32,83 +34,96 @@ static void doNothing()
 
 void scheduler_install()
 {
-    task_queue = ring_Create();
+    // Init scheduler rings
+    runningTasks = ring_Create();
     blockedTasks = ring_Create();
 }
 
-void scheduler_unblockEvent(blockerType_t* type, void* data) // eventBased blocks are handled here
+
+static void unblockTask(task_t* task, bool timeout)
 {
-    // Look for blocked tasks
-    if(blockedTasks->begin == 0) return;
+    // Write the reason for the unblock in the data field of the blocker (false in case of timeout)
+    task->blocker.data = (void*)(!timeout);
+
+    // Move task into the scheduler ring
+    scheduler_insertTask(task);
+    ring_DeleteFirst(blockedTasks, task);
+}
+
+void scheduler_unblockEvent(blockerType_t* type, void* data) // Event based blocks are handled here
+{
+    if(blockedTasks->begin == 0) return; // Ring is empty
 
     blockedTasks->current = blockedTasks->begin;
     do
     {
         task_t* current = (task_t*)blockedTasks->current->data;
-        if(current->blocker.type == type && current->blocker.data == data) // The blocking event appeared
+        if(current->blocker.type == type && current->blocker.data == data) // The blocking event this ring element is waiting for appeared -> unblock
         {
-            scheduler_insertTask(blockedTasks->current->data);
-            ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
+            unblockTask(current, false);
         }
-        blockedTasks->current = blockedTasks->current->next;
+        blockedTasks->current = blockedTasks->current->next; // Iterate through the ring
     } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
 }
 
-static void checkBlocked()
+static void checkBlocked() // Not event based blocks are handled here (polling)
 {
-    if(blockedTasks->begin == 0) return;
+    if(blockedTasks->begin == 0) return; // Ring is empty
 
     blockedTasks->current = blockedTasks->begin;
     do
     {
         task_t* current = (task_t*)blockedTasks->current->data;
-        if((current->blocker.type && current->blocker.type->unlock && current->blocker.type->unlock(blockedTasks->current->data)) || // unblock function specified and the task should not be blocked any more...
-            (current->blocker.timeout != 0 && current->blocker.timeout <= timer_getTicks())) // ...or timeout reached
+        if(current->blocker.type && current->blocker.type->unlock && current->blocker.type->unlock(current->blocker.data)) // Unblock function specified and the task should not be blocked any more...
         {
-            scheduler_insertTask(blockedTasks->current->data);
-            ring_DeleteFirst(blockedTasks, blockedTasks->current->data);
+            unblockTask(current, false);
         }
-        blockedTasks->current = blockedTasks->current->next;
+        else if(current->blocker.timeout != 0 && current->blocker.timeout <= timer_getTicks()) // ...or timeout reached
+        {
+            unblockTask(current, true);
+        }
+        blockedTasks->current = blockedTasks->current->next; // Iterate through the ring
     } while(blockedTasks->begin != 0 && blockedTasks->current != blockedTasks->begin);
 }
 
-bool scheduler_shouldSwitchTask()
+bool scheduler_shouldSwitchTask() // This function increases performance if there is just one task running by avoiding task switches
 {
-    return(task_queue->begin != task_queue->begin->next);
+    return(runningTasks->begin == 0 || runningTasks->begin != runningTasks->begin->next); // No running tasks or only one running task
 }
 
 task_t* scheduler_getNextTask()
 {
     checkBlocked();
 
-    if(task_queue->begin == 0)
+    if(runningTasks->begin == 0) // Ring is empty. Freetime for the CPU.
     {
-        if(freetimeTask == 0) // the task has not been needed until now. Use spare time to create it.
+        if(freetimeTask == 0) // The freetime task has not been needed until now. Use spare time to create it.
         {
             freetimeTask = create_task(kernelPageDirectory, &doNothing, 0);
-            ring_DeleteFirst(task_queue, freetimeTask);
+            ring_DeleteFirst(runningTasks, freetimeTask);
         }
         return(freetimeTask);
     }
 
-    task_queue->current = task_queue->current->next;
-    return((task_t*)task_queue->current->data);
+    runningTasks->current = runningTasks->current->next; // Take next task from the ring
+    return((task_t*)runningTasks->current->data);
 }
 
 void scheduler_insertTask(task_t* task)
 {
-    ring_Insert(task_queue, task, true); // We only want to have a task one time in the ring, because we steer the priority (later) with multiple rings
+    ring_Insert(runningTasks, task, true); // We only want to have a task one time in the ring, because we steer the priority (later) with multiple rings and not by inserting a task multiple times into the ring
 }
 
 void scheduler_deleteTask(task_t* task)
 {
-    ring_DeleteFirst(task_queue, task);
+    // Take task out of our rings
+    ring_DeleteFirst(runningTasks, task);
     ring_DeleteFirst(blockedTasks, task);
 
-    scheduler_unblockEvent(&BL_TASK, task);
+    scheduler_unblockEvent(&BL_TASK, task); // Unblock tasks waiting for the end of the given task
 }
 
-void scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t timeout)
+bool scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t timeout)
 {
     cli();
     currentTask->blocker.type = reason;
@@ -118,11 +133,14 @@ void scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t time
     else
         currentTask->blocker.timeout = timer_getTicks()+timeout;
 
+    // Move task into the ring of blocked tasks
     ring_Insert(blockedTasks, (task_t*)currentTask, true);
-    ring_DeleteFirst(task_queue, (task_t*)currentTask);
+    ring_DeleteFirst(runningTasks, (task_t*)currentTask);
 
     sti();
-    switch_context();
+    switch_context(); // Leave task. This task will not be called again until block ended.
+
+    return((bool)currentTask->blocker.data); // data field contains the reason for unblock after the block is released
 }
 
 void scheduler_log()
@@ -133,16 +151,16 @@ void scheduler_log()
     printf("pid: %u", currentTask->pid);
     textColor(0x0F);
 
-    if(task_queue->begin != 0)
+    if(runningTasks->begin != 0)
     {
         printf("\nrunning tasks:");
-        element_t* temp = task_queue->begin;
+        element_t* temp = runningTasks->begin;
         do
         {
             task_log((task_t*)temp->data);
             temp = temp->next;
         }
-        while (temp && temp != task_queue->begin);
+        while (temp && temp != runningTasks->begin);
     }
 
     if(blockedTasks->begin != 0)
@@ -166,7 +184,7 @@ void scheduler_log()
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

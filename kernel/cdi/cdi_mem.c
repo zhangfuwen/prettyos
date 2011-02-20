@@ -4,6 +4,7 @@
 */
 
 #include "cdi/mem.h"
+#include "util.h"
 
 
 struct cdi_mem_area* cdi_mem_alloc(size_t size, cdi_mem_flags_t flags);
@@ -14,11 +15,20 @@ void cdi_mem_free(struct cdi_mem_area* p);
 
 struct cdi_mem_area* cdi_mem_require_flags(struct cdi_mem_area* p, cdi_mem_flags_t flags);
 
-int cdi_mem_copy(struct cdi_mem_area* dest, struct cdi_mem_area* src);
+int cdi_mem_copy(struct cdi_mem_area* dest, struct cdi_mem_area* src)
+{
+    if (dest->size != src->size)
+        return -1;
+
+    if (dest->vaddr != src->vaddr)
+        memcpy(dest->vaddr, src->vaddr, dest->size);
+
+    return 0;
+}
 
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

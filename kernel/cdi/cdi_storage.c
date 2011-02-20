@@ -18,16 +18,6 @@ void cdi_storage_driver_destroy(struct cdi_storage_driver* driver)
     cdi_driver_destroy((struct cdi_driver*) driver);
 }
 
-void cdi_storage_driver_register(struct cdi_storage_driver* driver)
-{
-    static int initialized = 0;
-
-    if (initialized == 0) {
-        ///lostio_mst_if_init();
-        initialized = 1;
-    }
-}
-
 void cdi_storage_device_init(struct cdi_storage_device* device)
 {
     cdi_list_t partitions;
@@ -52,7 +42,7 @@ void cdi_storage_device_init(struct cdi_storage_device* device)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

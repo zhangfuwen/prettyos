@@ -148,7 +148,7 @@ void cdi_driver_register(struct cdi_driver* driver)
     switch (driver->type)
     {
         case CDI_STORAGE:
-            cdi_storage_driver_register((struct cdi_storage_driver*) driver);
+            //cdi_storage_driver_register((struct cdi_storage_driver*) driver);
             break;
         case CDI_FILESYSTEM:
             cdi_fs_driver_register((struct cdi_fs_driver*) driver);
@@ -169,7 +169,7 @@ int __attribute__((weak)) main(void)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

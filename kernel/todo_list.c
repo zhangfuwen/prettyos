@@ -41,9 +41,9 @@ void todoList_wait(todoList_t* list)
     scheduler_blockCurrentTask(&BL_TODOLIST, list, 0);
 }
 
-bool todoList_unlockTask(task_t* task)
+bool todoList_unlockTask(void* data)
 {
-    return(((todoList_t*)task->blocker.data)->queue->head != 0);
+    return(((todoList_t*)data)->queue->head != 0);
 }
 
 void todoList_delete(todoList_t* list)
@@ -54,7 +54,7 @@ void todoList_delete(todoList_t* list)
 
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

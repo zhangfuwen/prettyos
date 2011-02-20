@@ -7,6 +7,7 @@
 #include <cdi-osdep.h>
 #include <cdi/lists.h>
 
+// Describes a PCI device
 struct cdi_pci_device {
     struct cdi_bus_data bus_data;
 
@@ -25,41 +26,49 @@ struct cdi_pci_device {
 
     uint8_t     irq;
 
+    // List of I/O resources which belong to the device (content of the BARs, struct cdi_pci_ressource*)
     cdi_list_t resources;
 
     cdi_pci_device_osdep meta;
 };
 
+// Type of the resource described by a BAR
 typedef enum {
     CDI_PCI_MEMORY,
     CDI_PCI_IOPORTS
 } cdi_res_t;
 
+// Describes an I/O resource of a device (represents a BAR)
 struct cdi_pci_resource {
+    // Type of the resource (memory or ports)
     cdi_res_t    type;
+    // Base address of the resource (physical memory address or port number)
     uintptr_t    start;
+    // Size of the ressource in bytes
     size_t       length;
+    // Index of the BAR that belongs to the resource, starting with 0
     unsigned int index;
+    // Virtual address of the mapped MMIO memory (is set by cdi_pci_alloc_memory)
     void*        address;
 };
 
 
-// Gibt alle PCI-Geraete im System zurueck. Die Geraete werden dazu in die uebergebene Liste eingefuegt.
+// Queries all PCI devices in the machine. The devices (struct cdi_pci_device*) are inserted into a given list.
 void cdi_pci_get_all_devices(cdi_list_t list);
 
-// Gibt die Information zu einem PCI-Geraet frei
+// Frees the information for a PCI device
 void cdi_pci_device_destroy(struct cdi_pci_device* device);
 
-// Reserviert die IO-Ports des PCI-Geraets fuer den Treiber
+// Allocates the IO ports of the PCI device for the driver
 void cdi_pci_alloc_ioports(struct cdi_pci_device* device);
 
-// Gibt die IO-Ports des PCI-Geraets frei
+// Frees the IO ports of the PCI device
 void cdi_pci_free_ioports(struct cdi_pci_device* device);
 
-// Reserviert den MMIO-Speicher des PCI-Geraets fuer den Treiber
+// Maps the MMIO memory of the PCI device
 void cdi_pci_alloc_memory(struct cdi_pci_device* device);
 
-// Gibt den MMIO-Speicher des PCI-Geraets frei
+// Frees the MMIO memory of the PCI device
 void cdi_pci_free_memory(struct cdi_pci_device* device);
 
 // Indicates direct access to the PCI configuration space to CDI drivers

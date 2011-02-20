@@ -20,9 +20,9 @@ semaphore_t* semaphore_create(uint16_t resourceCount)
     return(obj);
 }
 
-bool semaphore_unlockTask(task_t* task)
+bool semaphore_unlockTask(void* data)
 {
-    return(((semaphore_t*)task->blocker.data)->freeRes != ALL_RESOURCES_USED);
+    return(((semaphore_t*)data)->freeRes != ALL_RESOURCES_USED);
 }
 
 bool semaphore_locked(semaphore_t*obj, task_t* task)
@@ -92,7 +92,7 @@ void semaphore_delete(semaphore_t* obj)
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

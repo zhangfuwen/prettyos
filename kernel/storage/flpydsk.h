@@ -15,7 +15,6 @@ typedef struct {
     uint8_t  ID;
     bool     motor;
     bool     RW_Lock;
-    bool     receivedIRQ;
     port_t   drive;
     uint32_t accessRemaining;
 

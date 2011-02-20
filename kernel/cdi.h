@@ -1,7 +1,7 @@
 /* The Core module contains the fundamental CDI data structures and functions
    on which the other modules are based.
 
-   \section Data structures
+   Data structures:
    CDI is based on three basic structures. The other modules extend these
    structures in a compatible way: For example, cdi_net_driver is a structure
    that contains a cdi_driver as its first element so that it can be cast to
@@ -21,20 +21,20 @@
      for initialisation of devices, i.e. when the device itself doesn't exist
      yet.
 
-   \section core_init Initialisation
 
+   Initialisation:
    Drivers are initialised in the following steps:
 
-   -# Initialisation of drivers: The init() callback of each driver is called.
-      After the driver has returned from there, it is registered with CDI and
-      the operating system. The driver needs not to be able to handle requests
-      before it has completed its init() call, but it must be prepared for them
-      immediately afterwards.
-   -# Search for and initialisation of devices: For each device init_device is
-      called in the available drivers until a driver accepts the device (or all
-      of the drivers reject it).
-      \n
-      @todo Call scan_bus for each device and initialise possible child devices */
+   - Initialisation of drivers: The init() callback of each driver is called.
+     After the driver has returned from there, it is registered with CDI and
+     the operating system. The driver needs not to be able to handle requests
+     before it has completed its init() call, but it must be prepared for them
+     immediately afterwards.
+   - Search for and initialisation of devices: For each device init_device is
+     called in the available drivers until a driver accepts the device (or all
+     of the drivers reject it).
+
+   todo: Call scan_bus for each device and initialise possible child devices */
 
 #ifndef CDI_H
 #define CDI_H

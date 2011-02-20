@@ -12,7 +12,7 @@ typedef struct semaphore
 } semaphore_t;
 
 semaphore_t* semaphore_create(uint16_t resourceCount);
-bool         semaphore_unlockTask(task_t* task);
+bool         semaphore_unlockTask(void* task);
 bool         semaphore_locked(semaphore_t*obj, task_t* task); // returns if this semaphore is locked or not. If you specify a task, this function only looks for this task as a locker
 void         semaphore_lock  (semaphore_t* obj);
 void         semaphore_unlock(semaphore_t* obj);

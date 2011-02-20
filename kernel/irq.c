@@ -10,30 +10,48 @@
 #include "vm86.h"
 #include "timer.h"
 
-typedef void(*interrupt_handler_t)(registers_t*);
+
+typedef struct {
+    size_t calls;
+    void (*handler)(registers_t*);
+} irq_handler_t;
 
 // Array of function pointers handling custom ir handlers for a given ir
-static interrupt_handler_t interruptRoutines[256];
+static irq_handler_t interrupts[256];
+
 
 // Implement a custom ir handler for the given ir
-void irq_installHandler(IRQ_NUM_t irq, interrupt_handler_t handler)
+void irq_installHandler(IRQ_NUM_t irq, void (*handler)(registers_t*))
 {
-    interruptRoutines[irq+32] = handler;
+    interrupts[irq+32].handler = handler;
 }
 
 // Clear the custom ir handler
 void irq_uninstallHandler(IRQ_NUM_t irq)
 {
-    interruptRoutines[irq+32] = 0;
+    interrupts[irq+32].handler = 0;
 }
 
 
-void waitForIRQ(IRQ_NUM_t number, uint32_t timeout)
+void irq_resetCounter(IRQ_NUM_t number)
 {
-    if(timeout == 0)
-        scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32), 0);
+    interrupts[number+32].calls = 0;
+}
+
+bool waitForIRQ(IRQ_NUM_t number, uint32_t timeout)
+{
+    if(timeout > 0)
+        return(scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32), max(1, timer_millisecondsToTicks(timeout))));
     else
-        scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32), timer_millisecondsToTicks(timeout));
+    {
+        scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32), 0);
+        return(true);
+    }
+}
+
+bool irq_unlockTask(void* data)
+{
+    return(interrupts[(size_t)data].calls > 0);
 }
 
 
@@ -162,14 +180,22 @@ static void PF(registers_t* r)
 
 void isr_install()
 {
-    for(uint8_t i = 0; i < 32; i++) interruptRoutines[i] = &defaultError; // If nothing else is specified, the default handler is called
-    for(uint16_t i = 32; i < 256; i++) interruptRoutines[i] = 0;
+    for(uint8_t i = 0; i < 32; i++)
+    {
+        interrupts[i].calls = 0;
+        interrupts[i].handler = &defaultError; // If nothing else is specified, the default handler is called
+    }
+    for(uint16_t i = 32; i < 256; i++)
+    {
+        interrupts[i].calls = 0;
+        interrupts[i].handler = 0;
+    }
 
     // Installing ISR-Routines
-    interruptRoutines[ISR_invalidOpcode] = &invalidOpcode;
-    interruptRoutines[ISR_NM] = &NM;
-    interruptRoutines[ISR_GPF] = &GPF;
-    interruptRoutines[ISR_PF] = &PF;
+    interrupts[ISR_invalidOpcode].handler = &invalidOpcode;
+    interrupts[ISR_NM].handler = &NM;
+    interrupts[ISR_GPF].handler = &GPF;
+    interrupts[ISR_PF].handler = &PF;
 }
 
 uint32_t irq_handler(uintptr_t esp)
@@ -186,8 +212,9 @@ uint32_t irq_handler(uintptr_t esp)
             esp = task_switch(esp); // new task's esp
     }
 
-    if (interruptRoutines[r->int_no])
-        interruptRoutines[r->int_no](r); // Execute handler
+    interrupts[r->int_no].calls++;
+    if (interrupts[r->int_no].handler)
+        interrupts[r->int_no].handler(r); // Execute handler
 
     scheduler_unblockEvent(&BL_INTERRUPT, (void*)r->int_no);
 
@@ -201,7 +228,7 @@ uint32_t irq_handler(uintptr_t esp)
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -8,12 +8,6 @@
 #include <cdi/cache.h>
 
 
-// typedefs for CDI
-typedef unsigned int dev_t; // Defined like in tyndur
-typedef unsigned int uid_t; // Defined like in tyndur
-typedef unsigned int gid_t; // Defined like in tyndur
-
-
 struct cdi_fs_filesystem;
 // Diese Struktur wird fuer jeden Dateisystemtreiber einmal erstellt
 struct cdi_fs_driver {
@@ -36,20 +30,19 @@ struct cdi_fs_driver {
 struct cdi_fs_res;
 // Diese Struktur wird fuer jedes eingebundene Dateisystem einmal erstellt.
 struct cdi_fs_filesystem {
-    struct cdi_fs_driver*  driver; // Treiber, dem das Dateisystem gehoert
-    struct cdi_fs_res*     root_res; // Wurzelverzeichnis des Dateisystems
+    struct cdi_fs_driver* driver; // Treiber, dem das Dateisystem gehoert
+    struct cdi_fs_res*    root_res; // Wurzelverzeichnis des Dateisystems
 
     /* Falls ein gravierender Fehler auftritt, wird diese Fehlernummer gesetzt.
        Wenn sie != 0 ist wird das Dateisystem fuer Schreibzugriffe gesperrt. */
-    int                    error;
-    int                    read_only; // Das Dateisystem darf nicht geschrieben werden. Damit schlaegt unter anderem cdi_fs_write_data fehl.
+    int                   error;
+    int                   read_only; // Das Dateisystem darf nicht geschrieben werden. Damit schlaegt unter anderem cdi_fs_write_data fehl.
 
     /* Hier sollte man wohl noch ein paar allgemeine Mount-Optionen oder
        sonstige Flags die das ganze Dateisystem betreffen... */
 
-
-    file_t*                device; // OS-spezifisch: Deskriptor fuer den Datentraeger
-    void*                  opaque; // Zeiger den der Treiber fuer eigene Daten zum Dateisystem benutzen kann
+    void*                 opaque; // Zeiger den der Treiber fuer eigene Daten zum Dateisystem benutzen kann
+    cdi_fs_osdep          osdep;  // OS-spezifische Daten
 };
 
 
@@ -321,13 +314,13 @@ struct cdi_fs_res_special {
        stream: Stream
        dev:    Pointer auf die Variable in der die Geraeteadresse gespeichert werden soll.
        return: Falls die Geraeteadresse erfolgreich gelesen wurde 1, sonst 0 */
-    int (*dev_read)(struct cdi_fs_stream* stream, dev_t* dev);
+    int (*dev_read)(struct cdi_fs_stream* stream, uint64_t* dev);
 
     /* Geraeteadresse der Spezialdatei Aendern
        stream: Stream
        dev:    Die neue Geraeteadresse
        return: Falls die Geraeteadresse erfolgreich geaendert wurde 1, sonst 0 */
-    int (*dev_write)(struct cdi_fs_stream* stream, dev_t dev);
+    int (*dev_write)(struct cdi_fs_stream* stream, uint64_t dev);
 };
 
 
@@ -351,7 +344,7 @@ struct cdi_fs_acl_entry {
 // Eintraege fuer die einzelnen ACL-Eintragstypen; see: struct cdi_fs_acl_entry
 struct cdi_fs_acl_entry_usr_num {
     struct cdi_fs_acl_entry entry;
-    uid_t                   user_id; // UserID
+    int                     user_id; // UserID
 };
 
 struct cdi_fs_acl_entry_usr_str {
@@ -361,7 +354,7 @@ struct cdi_fs_acl_entry_usr_str {
 
 struct cdi_fs_acl_entry_grp_num {
     struct cdi_fs_acl_entry entry;
-    gid_t                   group_id; // GroupID
+    int                     group_id; // GroupID
 };
 
 struct cdi_fs_acl_entry_grp_str {

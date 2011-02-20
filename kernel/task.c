@@ -44,12 +44,12 @@ void tasking_install()
     kernelTask.pageDirectory = kernelPageDirectory;
     kernelTask.privilege     = 0;
     kernelTask.FPUptr        = 0;
-    kernelTask.console       = (console_t*)currentConsole;
+    kernelTask.console       = (console_t*)currentConsole; // The current console, which is created earlier to be able to display information earlier, is associated with the kernel task
     kernelTask.ownConsole    = true;
     kernelTask.attrib        = 0x0F;
     kernelTask.blocker.type  = 0; // The task is not blocked (scheduler.h/c)
     kernelTask.kernelStack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
-    kernelTask.threads       = 0; // No threads associated with the task at the moment. created later if necessary
+    kernelTask.threads       = 0; // No threads associated with the task at the moment. List is created later if necessary
 
     list_Append(tasks, &kernelTask);
 
@@ -64,9 +64,15 @@ int32_t getpid()
     return(currentTask->pid);
 }
 
-void waitForTask(task_t* blockingTask, uint32_t timeout)
+bool waitForTask(task_t* blockingTask, uint32_t timeout)
 {
-    scheduler_blockCurrentTask(&BL_TASK, blockingTask, timer_millisecondsToTicks(timeout));
+    if(timeout > 0)
+        return(scheduler_blockCurrentTask(&BL_TASK, blockingTask, max(1, timer_millisecondsToTicks(timeout))));
+    else
+    {
+        scheduler_blockCurrentTask(&BL_TASK, blockingTask, 0);
+        return(true);
+    }
 }
 
 
@@ -132,10 +138,6 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     else
     {
         code_segment = 0;
-        //*(--kernelStack) = 0x23; // gs
-        //*(--kernelStack) = 0x23; // fs
-        //*(--kernelStack) = 0x23; // es
-        //*(--kernelStack) = 0x23; // ds
         *(--kernelStack) = newTask->ss = 0x0000; // ss
         *(--kernelStack) = 4090;                 // USER_STACK;
         *(--kernelStack) = 0x20202;              // eflags = vm86 (bit17), interrupts (bit9), iopl=0
@@ -312,13 +314,10 @@ uint32_t task_switch(uint32_t esp)
 
 void switch_context() // switch to next task (by interrupt)
 {
-    if(scheduler_shouldSwitchTask()) // only switch task if the scheduler wants to switch ...
-        __asm__ volatile("int $0x7E");
-    else // ... otherwise save CPU-time with hlt and switch then (to avoid problems if the next interrupt is not a task-switching interrupt)
-    {
-        hlt();
-        __asm__ volatile("int $0x7E");
-    }
+    if(!scheduler_shouldSwitchTask()) // If the scheduler does not want to switch the task ...
+        hlt(); // ... wait one cycle
+
+    __asm__ volatile("int $0x7E"); // call interrupt that will call task_switch.
 }
 
 
@@ -465,9 +464,9 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     textColor(0x05);
-    printf("\npid: %d\t", t->pid);          // Process ID
-    printf("esp: %X  ", t->esp);            // Stack pointer
-    printf("eip: %X  ", t->eip);            // Instruction pointer
+    printf("\npid: %d\t", t->pid);         // Process ID
+    printf("esp: %X  ", t->esp);           // Stack pointer
+    printf("eip: %X  ", t->eip);           // Instruction pointer
     printf("PD: %X  ", t->pageDirectory);  // Page directory
     printf("k_stack: %X", t->kernelStack); // Kernel stack location
     if(t->type == THREAD)
@@ -486,7 +485,7 @@ void task_log(task_t* t)
 
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

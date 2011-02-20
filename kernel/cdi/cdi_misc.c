@@ -10,12 +10,18 @@
 
 void cdi_register_irq(uint8_t irq, void (*handler)(struct cdi_device*), struct cdi_device* device);
 
-int cdi_reset_wait_irq(uint8_t irq);
+int cdi_reset_wait_irq(uint8_t irq)
+{
+    irq_resetCounter(irq);
+    return(0);
+}
 
 int cdi_wait_irq(uint8_t irq, uint32_t timeout)
 {
-    waitForIRQ(irq, timeout);
-    return(0); // HACK. Should return 1 in case of timeout
+    if(waitForIRQ(irq, timeout))
+        return(0);
+    else
+        return(-1);
 }
 
 int cdi_ioports_alloc(uint16_t start, uint16_t count);
@@ -28,7 +34,7 @@ void cdi_sleep_ms(uint32_t ms)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

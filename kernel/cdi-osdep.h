@@ -35,4 +35,9 @@ typedef struct
 {
 } cdi_mem_osdep;
 
+// OS-specific data for file systems
+typedef struct
+{
+} cdi_fs_osdep;
+
 #endif

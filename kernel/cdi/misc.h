@@ -16,9 +16,9 @@ int cdi_reset_wait_irq(uint8_t irq);
 
 /* Wartet bis der IRQ aufgerufen wurde. Der interne Zähler muss zuerst mit cdi_reset_wait_irq zurückgesetzt werden. Damit auch die IRQs abgefangen
    werden können, die kurz vor dem Aufruf von dieser Funktion aufgerufen werden, sieht der korrekte Ablauf wie folgt aus:
-   -# cdi_reset_wait_irq
-   -# Hardware ansprechen und Aktionen ausführen, die schließlich den IRQ auslösen
-   -# cdi_wait_irq
+   - cdi_reset_wait_irq
+   - Hardware ansprechen und Aktionen ausführen, die schließlich den IRQ auslösen
+   - cdi_wait_irq
    Der entsprechende IRQ muss zuvor mit cdi_register_irq registriert worden sein. Der registrierte Handler wird ausgeführt, bevor diese Funktion
    erfolgreich zurückkehrt.
    irq:     Nummer des IRQ auf den gewartet werden soll

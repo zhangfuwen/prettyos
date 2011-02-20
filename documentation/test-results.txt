@@ -1,25 +1,25 @@
 ﻿Emulator             | Version    SCREEN (phys)  VBE  RTL8139  Sound  EHCI-Ports  Serial Ports  Last tester  Annotations
 ---------------------|--------------------------------------------------------------------------------------------------
-qemu-ehci (forum)    | 0.0.2.0    F2000000h      √    √        √      4           -             MrX
-VBox 3.2.10          | 0.0.2.0    E0000000h      √    x        x      8           -             MrX
+qemu-ehci (forum)    | 0.0.2.27   F2000000h      √    √        √      4           -             MrX
+VBox 4.0.4           | 0.0.2.27   E0000000h      √    x        x      8           -             MrX
 VMWare Player 3.0.1  | 0.0.1.237  -              √    x        x      6           -             ehenkes
-bochs 2.4.5          | 0.0.2.0    E0000000h      √    x        x      x           -             MrX
-VPC 6.0.192.0 / 6.1  | 0.0.2.0    00000000h      f    x        √      x           -             ehenkes/MrX  #PF (err 0, addr 107BC4h) if trying VBE
+bochs 2.4.5          | 0.0.2.27   E0000000h      √    x        x      x           -             MrX
+VPC 6.0.192.0 / 6.1  | 0.0.2.27   00000000h      f    x        √      x           -             ehenkes/MrX  #PF (err 0, addr 107BC4h) if trying VBE
 
 
 CPU                 VGA              RAM     | Version    SCREEN (phys)  VBE  RTL8139  Sound  EHCI-Ports  Serial Ports  Last tester  Annotations
 ---------------------------------------------|--------------------------------------------------------------------------------------------------
 AMD Athlon 1,4 GHz  GeForce4         ?       | 0.0.1.166  F4000000h      √    √        √      x           -             ehenkes
-AMD Duron 800       GeForce FX 5200  512 MiB | 0.0.2.0    D0000000h      √    x        √      x           -             MrX
+AMD Duron 800       GeForce FX 5200  512 MiB | 0.0.2.27   D0000000h      √    x        √      x           -             MrX
                     SiS 6326 ? (AGP)         | 0.0.1.237  -              f    x        √      x                         MrX          VBE fails: Shows only obviously invalid modes. Some are textmodes, all have resolution 0x0x0. VGA claims to be VBE 2.0 compatible.
                     S3 Virge DX (PCI)        | 0.0.2.0    D4000000h      f    x        √      x                         MrX          VBE fails: No video modes displayed but switching to a default mode (tested with old revision) works. VGA claims to be VBE 2.0 compatible.
 AMD K6-2 550 MHz    ATI Rage Pro     128 MiB | 0.0.2.0    D0000000h      f    x        √      4           2             MrX          VBE fails: Monitor gets black when switching to videomode and Freezes. VGA claims to be VBE 2.0 compatible.
                     ELSA Erazor III          | 0.0.1.236  -              √    x        √      4           2             MrX
-AMD K6-2 500 MHz    NVidia Quadro 4  128 MiB | 0.0.2.0    D8000000h      √    x        √      x           2             MrX
+AMD K6-2 500 MHz    NVidia Quadro 4  128 MiB | 0.0.2.27   D8000000h      √    x        √      x           2             MrX
 AMD am5x86-P75      ?                32 MiB  | 0.0.2.0    -             (f)   x        √      x           -             MrX          Freezes with own BL (BL2), boots with GRUB. VGA only supports VBE 1.2 (invalid opcodes, most likely due to VBE 1.2)
 80468DX2 (Intel?)   Cirrus           16 MiB  | 0.0.1.240  -              -    x        √      x           -             MrX          Freezes with own BL (BL2). Has not enough Memory for PrettyOS
 Intel Pentium II    NeoMagic         256 MiB | 0.0.1.195  30000000h      f    x        x      x           1             MrX          VBE fails: Screen gets black and freezes. (Notebook)
-AMD Phenom x4 9550  ATI Radeon 4850  4 GiB   | 0.0.2.0    D0000000h      √    x        x      10          -             MrX          Does not boot if I try it with USB-Stick (Freeze before/in BL1)
+AMD Phenom x4 9550  ATI Radeon 4850  4 GiB   | 0.0.2.27   D0000000h      √    x        x      10          -             MrX          Does not boot if I try it with USB-Stick (Freeze before/in BL1)
 AMD Athlon x2 3800+ NVidia Quadro 4  1 GiB   | 0.0.1.226  -              -    x        x      -           -             MrX          Boots from USB-Stick. Have only testet if it boots or not.
 Via Nano 1300+      S3 Chrome 9 HC   1 GiB   | 0.0.1.226  -              -    x        -      -           -             MrX          Notebook; Booting from USB does not work (just displays BL1 and continues with loading Windows)
 Celeron 850 MHz     VIA CLE266       512 MiB | 0.0.1.226  -              -    -        -      -           -             MrX          Does not boot from USB ("BOOT2.BIN missing")

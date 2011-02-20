@@ -44,7 +44,7 @@ void timer_handler(registers_t* r)
 
 void timer_wait(uint32_t ticks)
 {
-    scheduler_blockCurrentTask(0, 0, ticks); // "abuse" timeout function
+    scheduler_blockCurrentTask(0, 0, max(1, ticks)); // "abuse" timeout function
 }
 
 void sleepSeconds(uint32_t seconds)

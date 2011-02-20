@@ -228,6 +228,7 @@ char getch()
     while(retVal == 0)
     {
         waitForIRQ(IRQ_KEYBOARD, 0);
+        irq_resetCounter(IRQ_KEYBOARD);
         retVal = keyboard_getChar();
     }
     return(retVal);
@@ -239,7 +240,7 @@ bool keyPressed(VK Key)
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
