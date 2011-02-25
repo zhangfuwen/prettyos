@@ -8,6 +8,7 @@
 #include "video.h"
 #include "kheap.h"
 #include "filesystem/fsmanager.h"
+#include "synchronisation.h"
 
 static uint16_t* vidmem = (uint16_t*)0xB8000;
 
@@ -24,9 +25,13 @@ static const uint16_t SCREENSHOT_BYTES  = 4102;
 static position_t cursor = {0, 0};
 static uint8_t attrib = 0x0F; // white text on black ground
 
+mutex_t* videoLock = 0;
+task_t* lockingTask = 0;
+
 
 void video_install()
 {
+    videoLock = mutex_create(1);
     vidmem = paging_acquirePciMemory(0xB8000, 2); // TODO: Are 2 pages enough/to much/correct?
 }
 
@@ -37,7 +42,9 @@ void video_setPixel(uint8_t x, uint8_t y, uint16_t value)
 
 void clear_screen()
 {
+    mutex_lock(videoLock);
     memsetw(vidmem, 0x00, COLUMNS * LINES);
+    mutex_unlock(videoLock);
     update_cursor();
 }
 
@@ -69,6 +76,7 @@ static void kputch(char c)
     uint16_t* pos;
     uint32_t att = attrib << 8;
 
+    mutex_lock(videoLock);
     switch (uc) {
         case 0x08: // backspace: move the cursor one space backwards and delete
             if (cursor.x)
@@ -110,11 +118,14 @@ static void kputch(char c)
         cursor.x = 0;
         ++cursor.y;
     }
+    mutex_unlock(videoLock);
 }
 
 static void kputs(const char* text)
 {
+    mutex_lock(videoLock);
     for (; *text; kputch(*text), ++text);
+    mutex_unlock(videoLock);
 }
 
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
@@ -126,6 +137,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     va_start(ap, attribute);
     char buffer[32]; // Larger is not needed at the moment
 
+    mutex_lock(videoLock);
     for (; *message; message++)
     {
         switch (*message)
@@ -181,6 +193,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 break;
         }
     }
+    mutex_unlock(videoLock);
     va_end(ap);
 }
 
@@ -207,6 +220,8 @@ void writeInfo(uint8_t line, const char* args, ...)
 
 void refreshUserScreen()
 {
+    mutex_lock(videoLock);
+
     // Printing titlebar
     kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
 
@@ -241,6 +256,7 @@ void refreshUserScreen()
 
     cursor.y = reachableConsoles[displayedConsole]->cursor.y;
     cursor.x = reachableConsoles[displayedConsole]->cursor.x;
+    mutex_unlock(videoLock);
     update_cursor();
 }
 
@@ -322,7 +338,7 @@ void screenshot()
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

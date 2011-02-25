@@ -26,6 +26,7 @@ typedef __builtin_va_list va_list;
 
 
 #define BIT(n) (1<<(n))
+#define IS_BIT_SET(value, pos) ((value>>pos)&1)
 
 // This defines macros typically needed for networking source code
 #define htons(v) ((((v) >> 8) & 0xFF) | (((v) & 0xFF) << 8))

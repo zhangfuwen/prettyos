@@ -8,88 +8,87 @@
 #include "task.h"
 #include "util.h"
 
-#define ALL_RESOURCES_USED 0xFFFFFFFF
 
+// Semaphore
 semaphore_t* semaphore_create(uint16_t resourceCount)
 {
-    semaphore_t* obj = malloc(sizeof(semaphore_t), 0, "sync-semaphor");
+    semaphore_t* obj = malloc(sizeof(semaphore_t), 0, "semaphore");
     obj->resCount = max(resourceCount, 1); // The number of resources is always larger or equal 1
-    obj->resources = malloc(sizeof(task_t*) * obj->resCount, 0, "semaphor-resources");
-    memsetl((uint32_t*)obj->resources, 0, obj->resCount);
-    obj->freeRes = 0;
+    obj->freeRes = obj->resCount;
     return(obj);
-}
-
-bool semaphore_unlockTask(void* data)
-{
-    return(((semaphore_t*)data)->freeRes != ALL_RESOURCES_USED);
-}
-
-bool semaphore_locked(semaphore_t*obj, task_t* task)
-{
-    if(task == 0)
-    {
-        return(obj->freeRes == ALL_RESOURCES_USED);
-    }
-    else
-    {
-        for(int i = 0; i < obj->resCount; i++)
-        {
-            if(obj->resources[i] == task)
-                return(true);
-        }
-        return(false);
-    }
 }
 
 void semaphore_lock(semaphore_t* obj)
 {
-    if(obj == 0) return;
+    if(obj == 0) return; // Invalid object
 
-    for(int i = 0; i < obj->resCount; i++)
-    {
-        if(obj->resources[i] == currentTask) // Task is already blocking
-            return;
-    }
+    while(obj->freeRes == 0) // blocked? -> wait. Do this in a loop to prevent two tasks locking a semaphore at the "same" time
+        scheduler_blockCurrentTask(&BL_SYNC, obj, 0);
 
-    if(obj->freeRes == ALL_RESOURCES_USED) // blocked -> wait (busy wait is a HACK)
-    {
-        scheduler_blockCurrentTask(&BL_SEMAPHORE, obj, 0);
-        switch_context();
-    }
-    while(obj->freeRes == ALL_RESOURCES_USED) {nop();} // Waiting... HACK
-
-    obj->resources[obj->freeRes++] = (task_t*)currentTask; // acquire resource
-    for(; obj->freeRes < obj->resCount; obj->freeRes++) // incrementing counter until a free place has been found
-    {
-        if(obj->resources[obj->freeRes] == 0)
-        {
-            return;
-        }
-    }
-    obj->freeRes = ALL_RESOURCES_USED; // All resources blocked now
+    if(obj->freeRes > 0) // Protection against underflow
+        obj->freeRes--; // aquire one resource
 }
 
 void semaphore_unlock(semaphore_t* obj)
 {
-    if(obj == 0) return;
+    if(obj == 0) return; // Invalid object
 
-    for(int i = 0; i < obj->resCount; i++)
-    {
-        if(obj->resources[i] == currentTask) // found -> delete
-        {
-            obj->resources[i] = 0;
-            obj->freeRes = min(i, obj->freeRes); // freeRes is the smallest possible number
-            return;
-        }
-    }
+    if(obj->freeRes < obj->resCount) // Protected against increasing the number of resources by unlocking it multiple times
+        obj->freeRes++; // free one resource
+
+    scheduler_unblockEvent(&BL_SYNC, obj); // Inform scheduler that this semaphore has been unlocked
 }
 
 void semaphore_delete(semaphore_t* obj)
 {
-    free(obj->resources);
+    if(obj->freeRes == 0) // There can be tasks that are blocked due to this semaphore. Unlock them to avoid deadlocks
+        scheduler_unblockEvent(&BL_SYNC, obj);
+
     free(obj);
 }
+
+
+// Mutex
+mutex_t* mutex_create()
+{
+    mutex_t* obj = malloc(sizeof(mutex_t), 0, "mutex");
+    obj->blocked = false;
+    return(obj);
+}
+
+void mutex_unlockTask(mutex_t* obj)
+{
+    obj->blocked = false;
+}
+
+void mutex_lock(mutex_t* obj)
+{
+    if(!obj || (obj->blocked && obj->blocker == currentTask)) return; // Invalid object or the mutex has been locked by this task.
+
+    while(obj->blocked)
+        scheduler_blockCurrentTask(&BL_SYNC, obj, 0); // Wait until the mutex is unlocked
+
+    obj->blocked = true;
+    obj->blocker = (task_t*)currentTask;
+}
+
+void mutex_unlock(mutex_t* obj)
+{
+    if(!obj) return; // Invalid object
+
+    obj->blocked = false;
+
+    scheduler_unblockEvent(&BL_SYNC, obj); // Inform scheduler that this mutex has been unlocked
+}
+
+void mutex_delete(mutex_t* obj)
+{
+    if(obj->blocked) // There can be tasks that are blocked due to this mutex. Unlock them to avoid deadlocks
+        scheduler_unblockEvent(&BL_SYNC, obj);
+
+    free(obj);
+}
+
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.

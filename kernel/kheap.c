@@ -40,12 +40,16 @@ static uint8_t* const heapStart       = KERNEL_heapStart;
 static uint32_t       heapSize        = 0;
 static const uint32_t HEAP_MIN_GROWTH = 0x40000;
 
+static mutex_t* mutex;
+
 #ifdef _MEMLEAK_FIND_
   static uint32_t counter = 0;
 #endif
 
 void heap_install()
 {
+    mutex = mutex_create(1);
+
     // This gets us the current placement address
     regions = malloc(0, 0, "heap-start");
 
@@ -122,8 +126,6 @@ void logHeapRegions()
 
 void* malloc(uint32_t size, uint32_t alignment, char* comment)
 {
-    // TODO: make threadsafe
-
     // consecutive number for detecting the sequence of mallocs at the heap
     static uint32_t consecutiveNumber = 0;
 
@@ -135,12 +137,14 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     {
         // Do simple placement allocation
         static uint8_t* nextPlacement = PLACEMENT_BEGIN;
-        nextPlacement = (uint8_t*) alignUp((uint32_t)nextPlacement, alignment);
+        nextPlacement = (uint8_t*)alignUp((uint32_t)nextPlacement, alignment);
         uint8_t* currPlacement = nextPlacement;
         nextPlacement += size;
 
         return currPlacement;
     }
+
+    mutex_lock(mutex); // In case of placement malloc we do not lock, because we assume that the tasking system is not ready then.
 
     // Walk the regions and find one being suitable
     uint8_t* regionAddress = heapStart;
@@ -171,6 +175,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 // Check whether we are able to expand
                 if (regionCount+1 > regionMaxCount)
                 {
+                    mutex_unlock(mutex);
                     return 0;
                 }
 
@@ -199,6 +204,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 // Check whether we are able to expand
                 if (regionCount+1 > regionMaxCount)
                 {
+                    mutex_unlock(mutex);
                     return 0;
                 }
 
@@ -237,6 +243,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             textColor(0x0F);
           #endif
 
+            mutex_unlock(mutex);
             return regionAddress;
 
         } //region is free and big enough
@@ -247,6 +254,8 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     // There is nothing free, try to expand the heap
     uint32_t sizeToGrow = max(HEAP_MIN_GROWTH, alignUp(size*3/2,PAGESIZE));
     bool success = heap_grow(sizeToGrow, (uint8_t*)(heapStart + (uintptr_t)heapSize));
+
+    mutex_unlock(mutex);
 
     if (!success)
     {
@@ -290,6 +299,8 @@ void free(void* addr)
     counter--;
     writeInfo(2, "Malloc - free: %u", counter);
   #endif
+
+    mutex_lock(mutex);
 
     // Walk the regions and find the correct one
     uint8_t* regionAddress = heapStart;
@@ -336,11 +347,14 @@ void free(void* addr)
                 --regionCount;
             }
 
+            mutex_unlock(mutex);
             return;
         }
 
         regionAddress += regions[i].size;
     }
+
+    mutex_unlock(mutex);
 
     textColor(0x0C);
     printf("Broken free: %X\n", addr);
@@ -350,7 +364,7 @@ void free(void* addr)
 
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -7,7 +7,6 @@
 #include "util.h"
 #include "kheap.h"
 #include "task.h"
-#include "synchronisation.h"
 
 console_t* reachableConsoles[11]; // Mainconsole + up to KERNELCONSOLE_ID Subconsoles
 volatile uint8_t displayedConsole = KERNELCONSOLE_ID; // Currently visible console (KERNELCONSOLE_ID per default)
@@ -32,7 +31,7 @@ void kernel_console_init()
 {
     kernelConsole.SCROLL_END = 39;
     kernelConsole.showInfobar = true;
-    kernelConsole.sp = semaphore_create(1);
+    kernelConsole.mutex = mutex_create(1);
     memsetw(kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES);
 
     keyboard_initKQ(&kernelConsole.KQ);
@@ -48,7 +47,7 @@ void console_init(console_t* console, const char* name)
     console->SCROLL_BEGIN = 0;
     console->SCROLL_END   = USER_LINES;
     console->showInfobar  = false;
-    console->sp = semaphore_create(1);
+    console->mutex        = mutex_create(1);
     strcpy(console->name, name);
     memsetw(console->vidmem, 0x00, COLUMNS * USER_LINES);
 
@@ -67,7 +66,7 @@ void console_init(console_t* console, const char* name)
 void console_exit(console_t* console)
 {
     free(console->name);
-    semaphore_delete(console->sp);
+    mutex_delete(console->mutex);
 }
 
 bool changeDisplayedConsole(uint8_t ID)
@@ -81,9 +80,10 @@ bool changeDisplayedConsole(uint8_t ID)
     refreshUserScreen();
     return(true);
 }
+
 void setScrollField(uint8_t begin, uint8_t end)
 {
-    //currentConsole->SCROLL_BEGIN = begin;
+    currentConsole->SCROLL_BEGIN = begin;
     currentConsole->SCROLL_END = end;
     scroll();
 }
@@ -97,6 +97,8 @@ void showInfobar(bool show)
 
 void clear_console(uint8_t backcolor)
 {
+    mutex_lock(currentConsole->mutex);
+
     // Erasing the content of the active console
     textColor((backcolor << 4) | 0x0F);
     memsetw((uint16_t*)currentConsole->vidmem, 0x20 | (getTextColor() << 8), COLUMNS * USER_LINES);
@@ -106,6 +108,7 @@ void clear_console(uint8_t backcolor)
     {
         refreshUserScreen();
     }
+    mutex_unlock(currentConsole->mutex);
 }
 
 void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
@@ -157,6 +160,7 @@ void putch(char c)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
+    mutex_lock(currentConsole->mutex);
     switch (uc) {
         case 0x08: // backspace: move the cursor one space backwards and delete
             move_cursor_left();
@@ -191,15 +195,19 @@ void putch(char c)
             }
             break;
     }
+    mutex_unlock(currentConsole->mutex);
 }
 
 void puts(const char* text)
 {
+    mutex_lock(currentConsole->mutex);
     for (; *text; putch(*text), ++text);
+    mutex_unlock(currentConsole->mutex);
 }
 
 static void scroll()
 {
+    mutex_lock(currentConsole->mutex);
     uint8_t scroll_end = min(USER_LINES, currentConsole->SCROLL_END);
     if (scroll_flag && currentConsole->cursor.y >= scroll_end)
     {
@@ -209,16 +217,18 @@ static void scroll()
         currentConsole->cursor.y = scroll_end - 1;
         refreshUserScreen();
     }
+    mutex_unlock(currentConsole->mutex);
 }
 
 /// TODO: make it standardized !
 // vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c and the PrettyOS-specific %v
 void vprintf(const char* args, va_list ap)
 {
+    mutex_lock(currentConsole->mutex);
+
     uint8_t attribute = getTextColor();
     char buffer[32]; // Larger is not needed at the moment
 
-    //semaphore_lock(currentTask->console->sp); // TEST
     for (; *args; ++args)
     {
         switch (*args)
@@ -274,7 +284,7 @@ void vprintf(const char* args, va_list ap)
                 break;
         }
     }
-    //semaphore_unlock(currentTask->console->sp); // TEST
+    mutex_unlock(currentConsole->mutex);
 }
 void printf(const char* args, ...)
 {
@@ -286,6 +296,7 @@ void printf(const char* args, ...)
 
 void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
+    mutex_lock(currentConsole->mutex);
     uint8_t old_attrib = getTextColor();
     uint8_t c_x = currentConsole->cursor.x;
     uint8_t c_y = currentConsole->cursor.y;
@@ -304,11 +315,12 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     textColor(old_attrib);
     currentConsole->cursor.x = c_x;
     currentConsole->cursor.y = c_y;
+    mutex_unlock(currentConsole->mutex);
 }
 
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

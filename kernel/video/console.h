@@ -3,6 +3,7 @@
 
 #include "keyboard.h"
 #include "video.h"
+#include "synchronisation.h"
 
 #define KERNELCONSOLE_ID 10
 
@@ -11,15 +12,15 @@
 
 typedef struct // Defines the User-Space of the display
 {
-    char* name;
-    bool showInfobar;
-    uint8_t SCROLL_BEGIN; // TODO: Make use of it
-    uint8_t SCROLL_END;
+    char*      name;
+    bool       showInfobar;
+    uint8_t    SCROLL_BEGIN; // TODO: Make use of it
+    uint8_t    SCROLL_END;
     position_t cursor;
     keyqueue_t KQ;
-    struct semaphore* sp;
-    uint16_t vidmem[USER_LINES*COLUMNS]; // memory that stores the content of this console. Size is USER_LINES*COLUMNS
-} console_t; // ATTENTION: Do not change the order of the members without changing the order of initialization (console.c)
+    mutex_t*   mutex;
+    uint16_t   vidmem[USER_LINES*COLUMNS]; // Memory that stores the content of this console. Size is USER_LINES*COLUMNS
+} console_t;
 
 extern console_t* reachableConsoles[11]; // All accessible consoles: up to 10 subconsoles + main console
 extern volatile uint8_t displayedConsole;

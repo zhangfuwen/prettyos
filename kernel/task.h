@@ -61,7 +61,8 @@ task_t*  create_thread (void(*entry)()); // Creates thread using currentTasks co
 task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
 task_t*  create_vm86_task(void(*entry)());
 void     switch_context();
-uint32_t task_switch(uint32_t esp);
+void     task_saveState(uint32_t esp);
+uint32_t task_switch(task_t* task);
 void     exit();
 void     task_kill(uint32_t pid);
 void     task_restart(uint32_t pid);

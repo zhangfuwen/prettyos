@@ -12,12 +12,12 @@
 #include "todo_list.h"
 #include "irq.h"
 
-static ring_t* runningTasks;
-static ring_t* blockedTasks;
+static ring_t* runningTasks = 0;
+static ring_t* blockedTasks = 0;
 
 static task_t* freetimeTask = 0;
 
-blockerType_t BL_SEMAPHORE = {&semaphore_unlockTask},
+blockerType_t BL_SYNC      = {0},
               BL_INTERRUPT = {&irq_unlockTask}, // Interrupts seem to be good for event based handling, but they are not, because we count interrupts occuring before the block was set.
               BL_TASK      = {0},
               BL_TODOLIST  = {&todoList_unlockTask};
@@ -39,7 +39,6 @@ void scheduler_install()
     blockedTasks = ring_Create();
 }
 
-
 static void unblockTask(task_t* task, bool timeout)
 {
     // Write the reason for the unblock in the data field of the blocker (false in case of timeout)
@@ -52,7 +51,7 @@ static void unblockTask(task_t* task, bool timeout)
 
 void scheduler_unblockEvent(blockerType_t* type, void* data) // Event based blocks are handled here
 {
-    if(blockedTasks->begin == 0) return; // Ring is empty
+    if(!blockedTasks || blockedTasks->begin == 0) return; // Ring is empty
 
     blockedTasks->current = blockedTasks->begin;
     do
@@ -91,7 +90,7 @@ bool scheduler_shouldSwitchTask() // This function increases performance if ther
     return(runningTasks->begin == 0 || runningTasks->begin != runningTasks->begin->next); // No running tasks or only one running task
 }
 
-task_t* scheduler_getNextTask()
+static task_t* scheduler_getNextTask()
 {
     checkBlocked();
 
@@ -107,6 +106,21 @@ task_t* scheduler_getNextTask()
 
     runningTasks->current = runningTasks->current->next; // Take next task from the ring
     return((task_t*)runningTasks->current->data);
+}
+
+uint32_t scheduler_taskSwitch(uint32_t esp)
+{
+    if(runningTasks == 0)
+        return(esp);
+
+    task_saveState(esp);
+
+    task_t* oldTask = (task_t*)currentTask;
+    task_t* newTask = scheduler_getNextTask();
+    if(oldTask == newTask) // No task switch needed
+        return(esp);
+
+    return(task_switch(newTask));
 }
 
 void scheduler_insertTask(task_t* task)

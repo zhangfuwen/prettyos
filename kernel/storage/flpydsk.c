@@ -32,6 +32,8 @@ static const int32_t MOTOR_SPIN_UP_TURN_OFF_TIME = 300; // waiting time in milli
 floppy_t* floppyDrive[MAX_FLOPPY];
 static floppy_t* CurrentDrive = 0; // current working drive
 
+static uint8_t flpydsk_version = 0; // Contains the result of the VERSION command of the FDC
+
 typedef enum
 {
     READ, WRITE
@@ -57,6 +59,7 @@ enum FLPYDSK_CMD
     FDC_CMD_CALIBRATE    =   7,
     FDC_CMD_CHECK_INT    =   8,
     FDC_CMD_FORMAT_TRACK = 0xD,
+    FDC_CMD_DUMPREG      = 0xE,
     FDC_CMD_SEEK         = 0xF,
     FDC_CMD_VERSION      = 0x10,
     FDC_CMD_CONFIGURE    = 0x13,
@@ -69,6 +72,14 @@ enum FLPYDSK_CMD_EXT
     FDC_CMD_EXT_SKIP       = 0x20,
     FDC_CMD_EXT_DENSITY    = 0x40,
     FDC_CMD_EXT_MULTITRACK = 0x80
+};
+
+// Flags for CONFIGURE command
+enum FLPYDSK_CONFIG
+{
+    FDC_CONFIG_EIS_ON   = BIT(6),
+    FDC_CONFIG_FIFO_OFF = BIT(5),
+    FDC_CONFIG_POLL_OFF = BIT(4),
 };
 
 // Digital Output Register (DOR)
@@ -123,7 +134,7 @@ static floppy_t* createFloppy(uint8_t ID)
     floppy_t* fdd        = malloc(sizeof(floppy_t), 0, "flpydsk-FDD");
     fdd->ID              = ID;
     fdd->motor           = false; // floppy motor is off
-    fdd->RW_Lock         = false; // floppy is not blocked
+    fdd->RW_Lock         = mutex_create(1);
     fdd->accessRemaining = 0;
     fdd->lastTrack       = 0xFFFFFFFF;
     fdd->trackBuffer     = malloc(0x2400, 0, "flpydsk-TrackBuffer");
@@ -153,11 +164,14 @@ static floppy_t* createFloppy(uint8_t ID)
     return(fdd);
 }
 
+void flpydsk_readVersion();
 // Looks for Floppy drives and installs them
 void flpydsk_install()
 {
     if ((cmos_read(0x10)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
     {
+        flpydsk_readVersion();
+
         printf("\n1.44 MB FDD first device found");
         floppyDrive[0] = createFloppy(0);
         strncpy(floppyDrive[0]->drive.name, "Floppy Dev 1", 12);
@@ -248,16 +262,20 @@ static void flpydsk_checkInt(uint8_t* st0, uint8_t* cyl)
 // turns the current floppy drives motor on
 void flpydsk_motorOn(void* drive)
 {
+    if(drive == 0) return;
+
+    floppy_t* fdrive = drive;
+
   #ifdef _FLOPPY_DIAGNOSIS_
-    if(((floppy_t*)drive)->motor == false)
+    if(fdrive->motor == false)
     {
         textColor(0x0A);
-        printf("\nflpydsk_motorOn drive: %u",((floppy_t*)drive)->ID);
+        printf("\nflpydsk_motorOn drive: %u", fdrive->ID);
         textColor(0x0F);
     }
   #endif
 
-    if(drive == 0 || ((floppy_t*)drive)->motor == true) return;
+    if(fdrive->motor == true) return;
 
     uint32_t motor = 0;
     switch (((floppy_t*)drive)->ID) // select the correct mask based on current drive
@@ -267,29 +285,33 @@ void flpydsk_motorOn(void* drive)
         case 2: motor = FLPYDSK_DOR_MASK_DRIVE2_MOTOR; break;
         case 3: motor = FLPYDSK_DOR_MASK_DRIVE3_MOTOR; break;
     }
-    ((floppy_t*)drive)->motor = true;
-    flpydsk_writeDOR(((floppy_t*)drive)->ID | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
+    fdrive->motor = true;
+    flpydsk_writeDOR(fdrive->ID | motor | FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA); // motor on
     sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
 }
 // turns the current floppy drives motor on
 void flpydsk_motorOff(void* drive)
 {
     if(drive == 0) return;
+
+    floppy_t* fdrive = drive;
+
   #ifdef _FLOPPY_DIAGNOSIS_
-    if(((floppy_t*)drive)->motor == true)
+    if(fdrive->motor == true)
     {
         textColor(0x0C);
-        printf("\nflpydsk_motorOff drive: %u",((floppy_t*)drive)->ID);
+        printf("\nflpydsk_motorOff drive: %u", fdrive->ID);
         textColor(0x0F);
     }
     writeInfo(0, "Floppy motor: Global-Access-Counter: %u   Internal counter: %u   Motor on: %u", CurrentDrive->drive.insertedDisk->accessRemaining, CurrentDrive->accessRemaining, CurrentDrive->motor);
   #endif
-    if(((floppy_t*)drive)->motor == false) return; // everything is already fine
 
-    if(((floppy_t*)drive)->accessRemaining == 0)
+    if(fdrive->motor == false) return; // everything is already fine
+
+    if(fdrive->accessRemaining == 0)
     {
         flpydsk_writeDOR(FLPYDSK_DOR_MASK_RESET); // motor off
-        ((floppy_t*)drive)->motor = false;
+        fdrive->motor = false;
     }
 }
 
@@ -301,6 +323,12 @@ static void flpydsk_driveData(uint32_t stepr, uint32_t loadt, uint32_t unloadt, 
     flpydsk_sendCommand((loadt << 1)         | (dma==false) ? 0 : 1);
 }
 
+void flpydsk_readVersion()
+{
+    flpydsk_sendCommand(FDC_CMD_VERSION);
+    flpydsk_version = flpydsk_readData();
+    printf("\nFDC version: %y", flpydsk_version);
+}
 
 
 // disable controller
@@ -368,6 +396,7 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
     do
     {
         irq_resetCounter(IRQ_FLOPPY);
+
         flpydsk_sendCommand(FDC_CMD_CALIBRATE);
         flpydsk_sendCommand(drive->ID);
         waitForIRQ(IRQ_FLOPPY, 2000);
@@ -379,7 +408,7 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
             drive->accessRemaining--;
             return(-1);
         }
-    } while(!(st0 & (BIT(4) | BIT(5))));
+    } while(!IS_BIT_SET(st0, 5));
 
     drive->accessRemaining--;
     return(0);
@@ -402,7 +431,7 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
     do
     {
         irq_resetCounter(IRQ_FLOPPY);
-        // send the command
+
         flpydsk_sendCommand(FDC_CMD_SEEK);
         flpydsk_sendCommand((head) << 2 | CurrentDrive->ID);
         flpydsk_sendCommand(cyl);
@@ -416,7 +445,7 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
             CurrentDrive->accessRemaining--;
             return(-1);
         }
-    } while(!(st0 & BIT(5)));
+    } while(!IS_BIT_SET(st0, 5));
 
     CurrentDrive->accessRemaining--;
     return(0);
@@ -426,33 +455,13 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
 // read or write a sector
 static int32_t flpydsk_transferSector(uint8_t head, uint8_t track, uint8_t sector, uint8_t numberOfSectors, RW_OPERATION operation)
 {
-    while (CurrentDrive->RW_Lock == true) // TODO: Replace with semaphore
-    {
-        printf("waiting for Floppy Disk ");
-        if (operation == 0)
-        {
-            printf("read ");
-        }
-        else if (operation == 1)
-        {
-            printf("write ");
-        }
-
-        for(uint8_t t = 0; t < 60; t++)
-        {
-             delay(1000000);
-             printf(".");
-        }
-        printf("\n");
-        break;
-    }
-
-    CurrentDrive->RW_Lock = true; // busy
+    mutex_lock(CurrentDrive->RW_Lock);
 
     flpydsk_motorOn(CurrentDrive);
 
     irq_resetCounter(IRQ_FLOPPY);
 
+    // Prepare DMA and send command
     if (operation == READ)
     {
         dma_read(DMA_BUFFER, numberOfSectors*512, &dma_channel[2], DMA_SINGLE);
@@ -484,8 +493,8 @@ static int32_t flpydsk_transferSector(uint8_t head, uint8_t track, uint8_t secto
     flpydsk_checkInt(&st0,&cyl); // inform FDC that we handled interrupt
 
     CurrentDrive->accessRemaining--;
-
-    CurrentDrive->RW_Lock = false; // ready
+    
+    mutex_unlock(CurrentDrive->RW_Lock);
 
     if(val == 2) // value 2 means 512 Byte
     {

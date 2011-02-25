@@ -135,15 +135,7 @@ static void GPF(registers_t* r) // -> VM86
 {
     if (r->eflags & 0x20000) // VM bit - it is a VM86-task
     {
-        if (vm86sensitiveOpcodehandler(r)) // OK
-        {
-            /*
-            textColor(0x03);
-            //printf("\nretVal i386V86Gpf: %u\n", retVal); // vm86 critical
-            textColor(0x0C);
-            */
-        }
-        else
+        if (!vm86sensitiveOpcodehandler(r))
         {
             textColor(0x0C);
             printf("\nvm86: sensitive opcode error\n");
@@ -206,10 +198,10 @@ uint32_t irq_handler(uintptr_t esp)
 
     registers_t* r = (registers_t*)esp;
 
-    if(r->int_no == 0x20 || r->int_no == 0x7E) // timer interrupt or function switch_ctx
+    if(r->int_no == 0x20 || r->int_no == 0x7E) // timer interrupt or function switch_contex
     {
         if(task_switching)
-            esp = task_switch(esp); // new task's esp
+            esp = scheduler_taskSwitch(esp); // get new task's esp from scheduler
     }
 
     interrupts[r->int_no].calls++;

@@ -3,6 +3,7 @@
 
 #include "os.h"
 #include "devicemanager.h"
+#include "synchronisation.h"
 
 #define MAX_FLOPPY 2
 #define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 25
@@ -14,7 +15,7 @@ typedef enum {
 typedef struct {
     uint8_t  ID;
     bool     motor;
-    bool     RW_Lock;
+    mutex_t* RW_Lock;
     port_t   drive;
     uint32_t accessRemaining;
 

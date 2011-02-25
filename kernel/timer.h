@@ -1,7 +1,7 @@
 #ifndef FLPYDSK_H
 #define FLPYDSK_H
 
-#include "scheduler.h"
+#include "os.h"
 
 void     timer_install(uint16_t sysfreq);
 void     timer_handler(registers_t* r);

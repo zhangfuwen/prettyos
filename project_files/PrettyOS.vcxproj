@@ -31,8 +31,8 @@ rebuild.bat</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cd ..
 clean.bat</NMakeCleanCommandLine>
     <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../kernel;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../kernel;$(IncludePath)</IncludePath>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../kernel</NMakeIncludeSearchPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../kernel</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <BuildLog>
