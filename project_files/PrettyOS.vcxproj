@@ -93,6 +93,8 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\cpu.h" />
     <ClInclude Include="..\kernel\descriptor_tables.h" />
     <ClInclude Include="..\kernel\dma.h" />
+    <ClInclude Include="..\kernel\elf.h" />
+    <ClInclude Include="..\kernel\executable.h" />
     <ClInclude Include="..\kernel\filesystem\fat.h" />
     <ClInclude Include="..\kernel\filesystem\fat12.h" />
     <ClInclude Include="..\kernel\filesystem\fs.h" />
@@ -173,6 +175,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\descriptor_tables.c" />
     <ClCompile Include="..\kernel\dma.c" />
     <ClCompile Include="..\kernel\elf.c" />
+    <ClCompile Include="..\kernel\executable.c" />
     <ClCompile Include="..\kernel\filesystem\fat.c" />
     <ClCompile Include="..\kernel\filesystem\fat12.c" />
     <ClCompile Include="..\kernel\filesystem\fs.c" />

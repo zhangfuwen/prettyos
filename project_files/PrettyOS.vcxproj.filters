@@ -333,6 +333,12 @@
     <ClInclude Include="..\kernel\cdi\audio.h">
       <Filter>Kernel\include\cdi</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\executable.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\elf.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -550,6 +556,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\cdi\cdi_audio.c">
       <Filter>Kernel\sources\cdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\executable.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

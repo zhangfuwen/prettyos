@@ -2,6 +2,7 @@
 #define KEYBOARD_H
 
 #include "os.h"
+#include "synchronisation.h"
 
 #define KQSIZE 20 // size of key queue
 
@@ -28,6 +29,7 @@ typedef struct
     uint8_t* pHead;         // pointer to the head of valid data
     uint8_t* pTail;         // pointer to the tail of valid data
     uint32_t count;         // number of keys in the queue
+    mutex_t* mutex;
 } keyqueue_t;
 
 void    keyboard_install();

@@ -262,7 +262,7 @@ EVALUATION: // evaluation of entry
         }
         else
         {
-            puts("file is being searched...");
+            puts("File is being searched... ");
 
             // Adding ending .elf
             if(entry[strlen(entry)-4] != '.') // No ending, append ".elf"
@@ -274,22 +274,24 @@ EVALUATION: // evaluation of entry
             switch(error)
             {
                 case CE_GOOD:
-                    puts("Successfull.\n");
+                    puts(" Successfull.\n");
                     break;
                 case CE_INVALID_FILENAME:
-                    puts("The path was not formatted well.\n");
+                    puts(" The path was not formatted well.\n");
                     break;
                 case CE_FILE_NOT_FOUND:
-                    puts("The file was not found. ");
+				{
                     char newPath[40];
                     strcpy(newPath,"1:/");
                     strcat(newPath, entry);
-                    printf("Trying now %s.\n", newPath);
                     if(execute(newPath) != CE_GOOD)
-                        puts("Not found on 1:/.\n");
+                        puts("File not found.\n");
+					else
+                        puts("Successfull.\n");
                     break;
+				}
                 default:
-                    printf("File load was not successful. Error Code: %u\n", error);
+                    printf(" File load was not successful. Error Code: %u\n", error);
                     break;
             }
         }

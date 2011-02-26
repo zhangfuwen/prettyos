@@ -234,37 +234,6 @@ const char* getFilename(const char* path)
 }
 
 
-FS_ERROR executeFile(const char* path)
-{
-    partition_t* part = getPartition(path);
-    if(part == 0)
-    {
-        return(CE_FILE_NOT_FOUND);
-    }
-    if(path == 0)
-    {
-        return(CE_INVALID_FILENAME);
-    }
-
-    // Load File
-    waitForKeyStroke(); /// Why does loading from USB fails, if its not there?
-
-    file_t* file = fopen(path, "r");
-    if(file != 0)
-    {
-        void* filebuffer = malloc(file->size, 0, "devmgr-filebuffer");
-        fread(filebuffer, 1, file->size, file);
-        fclose(file);
-
-        elf_exec(filebuffer, file->size, file->name); // try to execute
-        free(filebuffer);
-
-        waitForKeyStroke(); /// Why does a #PF appear without it?
-        return(CE_GOOD);
-    }
-    return(CE_FILE_NOT_FOUND);
-}
-
 partition_t* getPartition(const char* path)
 {
     size_t length = strlen(path);
@@ -506,7 +475,7 @@ FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -14,6 +14,7 @@
 #include "keyboard_US.h"
 #endif
 
+
 static bool AltKeyDown   = false; // variable for Alt Key Down
 static bool AltGrKeyDown = false; // variable for AltGr Key Down
 static bool KeyPressed   = false; // variable for Key Pressed
@@ -21,6 +22,7 @@ static uint8_t curScan   = 0;     // current scan code from Keyboard
 static uint8_t prevScan  = 0;     // previous scan code
 
 static bool VKPressed[170]; // for monitoring pressed keys
+
 
 void keyboard_install()
 {
@@ -38,6 +40,7 @@ void keyboard_initKQ(keyqueue_t* KQ)
     KQ->pHead = KQ->buffer;
     KQ->pTail = KQ->buffer;
     KQ->count = 0;
+    KQ->mutex = mutex_create();
 }
 
 static void setKeyState(uint8_t scanCode, bool pressed)
@@ -184,6 +187,7 @@ void keyboard_handler(registers_t* r)
     uint8_t KEY = ScanToASCII();
     if (KEY)
     {
+        mutex_lock(reachableConsoles[displayedConsole]->KQ.mutex);
         *reachableConsoles[displayedConsole]->KQ.pTail = KEY;
         ++reachableConsoles[displayedConsole]->KQ.count;
 
@@ -195,6 +199,7 @@ void keyboard_handler(registers_t* r)
         {
             reachableConsoles[displayedConsole]->KQ.pTail = reachableConsoles[displayedConsole]->KQ.buffer + KQSIZE - 1;
         }
+        mutex_unlock(reachableConsoles[displayedConsole]->KQ.mutex);
     }
 }
 
@@ -204,7 +209,7 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
 
     if (currentConsole->KQ.count > 0)
     {
-        cli();
+        mutex_lock(currentConsole->KQ.mutex);
         uint8_t KEY = *currentConsole->KQ.pHead;
         --currentConsole->KQ.count;
 
@@ -216,7 +221,7 @@ uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
         {
             currentConsole->KQ.pHead = (void*)currentConsole->KQ.buffer + KQSIZE - 1;
         }
-        sti();
+        mutex_unlock(currentConsole->KQ.mutex);
         return KEY;
     }
     return 0;

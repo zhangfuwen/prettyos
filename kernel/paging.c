@@ -89,7 +89,7 @@ uint32_t paging_install()
     }
 
     // Tell CPU to enable paging
-    paging_switch (kernelPageDirectory);
+    paging_switch(kernelPageDirectory);
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
     cr0 |= 0x80000000;                            // set the paging bit in CR0
@@ -131,8 +131,8 @@ static bool isMemoryMapAvailable(const memoryMapEntry_t* entries, uint64_t beg, 
 static void physSetBits(uint32_t addr_begin, uint32_t addr_end, bool reserved)
 {
     // Calculate the bit-numbers
-    uint32_t start = alignUp   (addr_begin, PAGESIZE) / PAGESIZE;
-    uint32_t end   = alignDown (addr_end,   PAGESIZE) / PAGESIZE;
+    uint32_t start = alignUp  (addr_begin, PAGESIZE) / PAGESIZE;
+    uint32_t end   = alignDown(addr_end,   PAGESIZE) / PAGESIZE;
 
     // Set all these bits
     for (uint32_t j=start; j<end; ++j)
@@ -405,7 +405,7 @@ void paging_destroyUserPageDirectory(pageDirectory_t* pd)
 void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
 {
     static uint8_t* virtAddress = PCI_MEM_START;
-    uint8_t* retVal = 0;
+    void* retVal = 0;
     task_switching  = false;
 
     for (uint32_t i=0; i<numberOfPages; i++)
@@ -434,7 +434,7 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
     }
 
     task_switching = true;
-    return (void*)retVal;
+    return retVal;
 }
 
 uint32_t paging_getPhysAddr(void* virtAddress)
@@ -453,9 +453,6 @@ uint32_t paging_getPhysAddr(void* virtAddress)
     // Read the address, cut off the flags, append the address' odd part
     return (pt->pages[pagenr%1024]&0xFFFF000) + (((uint32_t)virtAddress)&0x00000FFF);
 }
-
-
-
 
 
 
@@ -510,10 +507,8 @@ void paging_analyzeBitTable(uint32_t msec)
 }
 
 
-
-
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

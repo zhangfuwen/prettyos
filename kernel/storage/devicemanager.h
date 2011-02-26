@@ -57,8 +57,6 @@ void showDiskList();
 partition_t* getPartition(const char* path);
 const char*  getFilename (const char* path);
 
-FS_ERROR executeFile(const char* path);
-
 FS_ERROR analyzeDisk(disk_t* disk);
 
 FS_ERROR sectorRead       (uint32_t sector, uint8_t* buffer, disk_t* disk);

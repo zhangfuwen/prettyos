@@ -5,6 +5,7 @@
 
 #include "util.h"
 #include "task.h"
+#include "elf.h"
 
 // in task.c used for pagingFree of memory for user program
 void* globalUserProgAddr;
@@ -105,38 +106,39 @@ typedef struct
     uint32_t align;
 } program_header_t;
 
-bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programName)
+
+bool elf_filename(const char* filename)
+{
+    return(strcmp(filename+strlen(filename)-4, ".elf") == 0);
+}
+
+bool elf_header(file_t* file)
+{
+    elf_header_t header;
+    fread(&header, sizeof(elf_header_t), 1, file);
+
+    bool valid = true;
+    valid =          header.ident[EI_MAG0]    == 0x7F;
+    valid = valid && header.ident[EI_MAG1]    == 'E';
+    valid = valid && header.ident[EI_MAG2]    == 'L';
+    valid = valid && header.ident[EI_MAG3]    == 'F';
+    valid = valid && header.ident[EI_CLASS]   == ELFCLASS32;
+    valid = valid && header.ident[EI_DATA]    == ELFDATA2LSB;
+    valid = valid && header.ident[EI_VERSION] == EV_CURRENT;
+    valid = valid && header.type              == ET_EXEC;
+    valid = valid && header.machine           == EM_386;
+    valid = valid && header.version           == EV_CURRENT;
+
+    return(valid);
+}
+
+bool elf_exec(const void* elf_file, size_t elf_file_size, const char* programName)
 {
     const uint8_t* elf_beg = elf_file;
     const uint8_t* elf_end = elf_beg + elf_file_size;
 
     // Read the header
-    const elf_header_t* header = (elf_header_t*)elf_beg;
-
-    // validation checks
-    bool validationFlag = true;
-
-    textColor(0x0C);
-    printf("\n");
-    if (header->ident[EI_MAG0]    != 0x7F        ) { validationFlag = false; printf("\nmagic 0x07           failed."); }
-    if (header->ident[EI_MAG1]    != 'E'         ) { validationFlag = false; printf("\nmagic E              failed."); }
-    if (header->ident[EI_MAG2]    != 'L'         ) { validationFlag = false; printf("\nmagic L              failed."); }
-    if (header->ident[EI_MAG3]    != 'F'         ) { validationFlag = false; printf("\nmagic F              failed."); }
-    if (header->ident[EI_CLASS]   != ELFCLASS32  ) { validationFlag = false; printf("\nELFCLASS32           failed."); }
-    if (header->ident[EI_DATA]    != ELFDATA2LSB ) { validationFlag = false; printf("\nELFDATA2LSB          failed."); }
-    if (header->ident[EI_VERSION] != EV_CURRENT  ) { validationFlag = false; printf("\nEV_CURRENT           failed."); }
-    if (header->type              != ET_EXEC     ) { validationFlag = false; printf("\nET_EXEC (type)       failed."); }
-    if (header->machine           != EM_386      ) { validationFlag = false; printf("\nEM_386 (machine)     failed."); }
-    if (header->version           != EV_CURRENT  ) { validationFlag = false; printf("\nEV_CURRENT (version) failed."); }
-
-    if (validationFlag == false)
-    {
-        textColor(0x0C);
-        printf("\n\nvalidation checks failed");
-        textColor(0x0F);
-        memshow(elf_file, 512);
-        return false;
-    }
+    const elf_header_t* header = (elf_header_t*) elf_beg;
 
     pageDirectory_t* pd = paging_createUserPageDirectory();
 
@@ -177,9 +179,9 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
         // Copy the code, using the user's page directory
         cli();
         paging_switch(pd);
-        memset((void*)ph->vaddr, 0, ph->memsz); // to set the bss (Block Started by Symbol) to zero
         memcpy((void*)ph->vaddr, elf_beg+ph->offset, ph->filesz);
-        paging_switch(kernelPageDirectory);
+        memset((void*)ph->vaddr + ph->filesz, 0, ph->memsz - ph->filesz); // to set the bss (Block Started by Symbol) to zero
+        paging_switch(currentTask->pageDirectory);
         sti();
 
         header_pos += header->phentrysize;
@@ -199,7 +201,7 @@ bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programN
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

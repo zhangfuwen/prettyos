@@ -48,6 +48,5 @@ static inline void kdebug(uint8_t color, const char* args, ...)
 // Declared here, an adequate header has to be found
 void textColor(uint8_t color);
 void vprintf(const char*, va_list);
-bool elf_exec(const void* elf_file, uint32_t elf_file_size, const char* programName); // elf.c
 
 #endif

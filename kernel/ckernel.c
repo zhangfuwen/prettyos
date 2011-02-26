@@ -10,8 +10,6 @@
 #include "filesystem/initrd.h"
 #include "storage/flpydsk.h"
 #include "mouse.h"
-#include "keyboard.h"
-#include "task.h"
 #include "todo_list.h"
 #include "syscall.h"
 #include "pci.h"
@@ -21,11 +19,11 @@
 #include "serial.h"
 #include "cpu.h"
 #include "descriptor_tables.h"
-#include "timer.h"
-#include "audio/sys_speaker.h"
 #include "power_management.h"
+#include "elf.h"
 
-const char* const version = "0.0.2.28 - Rev: 866";
+
+const char* const version = "0.0.2.29 - Rev: 867";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
