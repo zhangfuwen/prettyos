@@ -1,4 +1,8 @@
 #include "userlib.h"
+#include "stdio.h"
+#include "string.h"
+#include "stdlib.h"
+
 
 unsigned int duration = 400;
 void PlayTone(unsigned int Frequency, double DurFak) {

@@ -29,12 +29,10 @@
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\user\user_test_cpp\makefile">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\user\user_test_c\makefile">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="..\user\dummy_cpp\makefile" />
+    <None Include="..\user\dummy_c\makefile" />
+    <None Include="..\user\other_userprogs\makefile" />
+    <None Include="..\user\shell\makefile" />
     <None Include="..\user\user_tools\start.asm">
       <FileType>Document</FileType>
     </None>
@@ -47,6 +45,16 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\user\dummy_cpp\dummy.cpp" />
+    <ClCompile Include="..\user\dummy_c\dummy.c" />
+    <ClCompile Include="..\user\other_userprogs\arrow.c" />
+    <ClCompile Include="..\user\other_userprogs\calc.c" />
+    <ClCompile Include="..\user\other_userprogs\hello.c" />
+    <ClCompile Include="..\user\other_userprogs\keysound.c" />
+    <ClCompile Include="..\user\other_userprogs\music.c" />
+    <ClCompile Include="..\user\other_userprogs\pqeq.c" />
+    <ClCompile Include="..\user\other_userprogs\readme.c" />
+    <ClCompile Include="..\user\other_userprogs\ttt.c" />
     <ClCompile Include="..\user\shell\shell.c" />
     <ClCompile Include="..\user\stdlibc\assert.c" />
     <ClCompile Include="..\user\stdlibc\ctype.c" />
@@ -59,8 +67,6 @@
     <ClCompile Include="..\user\stdlibc\stdlib.c" />
     <ClCompile Include="..\user\stdlibc\string.c" />
     <ClCompile Include="..\user\stdlibc\time.c" />
-    <ClCompile Include="..\user\user_test_cpp\cpp.cpp" />
-    <ClCompile Include="..\user\user_test_c\hello.c" />
     <ClCompile Include="..\user\user_tools\userlib.c" />
     <ClCompile Include="..\user\user_tools\userlib_cpp.cpp" />
   </ItemGroup>

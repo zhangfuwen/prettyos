@@ -13,7 +13,7 @@
 semaphore_t* semaphore_create(uint16_t resourceCount)
 {
     semaphore_t* obj = malloc(sizeof(semaphore_t), 0, "semaphore");
-    obj->resCount = max(resourceCount, 1); // The number of resources is always larger or equal 1
+    obj->resCount = resourceCount;
     obj->freeRes = obj->resCount;
     return(obj);
 }
@@ -25,15 +25,14 @@ void semaphore_lock(semaphore_t* obj)
     while(obj->freeRes == 0) // blocked? -> wait. Do this in a loop to prevent two tasks locking a semaphore at the "same" time
         scheduler_blockCurrentTask(&BL_SYNC, obj, 0);
 
-    if(obj->freeRes > 0) // Protection against underflow
-        obj->freeRes--; // aquire one resource
+    obj->freeRes--; // aquire one resource
 }
 
 void semaphore_unlock(semaphore_t* obj)
 {
     if(obj == 0) return; // Invalid object
 
-    if(obj->freeRes < obj->resCount) // Protected against increasing the number of resources by unlocking it multiple times
+    if(obj->resCount == 0 || obj->freeRes < obj->resCount) // Protected against increasing the number of resources by unlocking it multiple times
         obj->freeRes++; // free one resource
 
     scheduler_unblockEvent(&BL_SYNC, obj); // Inform scheduler that this semaphore has been unlocked
@@ -64,6 +63,7 @@ void mutex_unlockTask(mutex_t* obj)
 void mutex_lock(mutex_t* obj)
 {
     if(!obj || (obj->blocked && obj->blocker == currentTask)) return; // Invalid object or the mutex has been locked by this task.
+
 
     while(obj->blocked)
         scheduler_blockCurrentTask(&BL_SYNC, obj, 0); // Wait until the mutex is unlocked

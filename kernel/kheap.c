@@ -116,7 +116,7 @@ void logHeapRegions()
         regionAddress += regions[i].size;
         if (lineCounter >= 35)
         {
-            waitForKeyStroke();
+			waitForKeyStroke();
             lineCounter = 0;
         }
     }
@@ -271,7 +271,6 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
         task_switching = false;
         printf("\nheap expanded: %X heap end: %X", sizeToGrow, (uintptr_t)(heapStart + (uintptr_t)heapSize));
         task_switching = true;
-        waitForKeyStroke();
         textColor(0x0F);
       #endif
     }

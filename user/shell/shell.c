@@ -236,7 +236,7 @@ EVALUATION: // evaluation of entry
         }
         else if(strcmp(entry, "format") == 0)
         {
-            puts("Please enter the partition path: ");
+            puts("Please enter the partition path (for example: 'A:0:'): ");
             char part[20];
             gets(part);
             puts("Please enter the filesystem type (1: FAT12, 2: FAT16, 3: FAT32): ");

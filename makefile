@@ -35,7 +35,7 @@ KERNELDIR= kernel
 USERDIR= user
 ifeq ($(OS),WINDOWS)
 	SHELLDIR= $(USERDIR)\shell
-	USERPROGS= $(USERDIR)\other_userprogs
+	USERPROGDIR= $(USERDIR)\other_userprogs
 	USERRDDIR= $(USERDIR)\init_rd_img
 	USERTESTC= $(USERDIR)\user_test_c
 	USERTESTCPP= $(USERDIR)\user_test_cpp
@@ -43,7 +43,7 @@ ifeq ($(OS),WINDOWS)
 	STDLIBC= $(USERDIR)\stdlibc
 else
 	SHELLDIR= $(USERDIR)/shell
-	USERPROGS= $(USERDIR)/other_userprogs
+	USERPROGDIR= $(USERDIR)/other_userprogs
 	USERRDDIR= $(USERDIR)/init_rd_img
 	USERTESTC= $(USERDIR)/user_test_c
 	USERTESTCPP= $(USERDIR)/user_test_cpp
@@ -53,7 +53,6 @@ endif
 
 # dependancies
 KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/cdi/*.c $(KERNELDIR)/video/*.c $(KERNELDIR)/storage/*.c $(KERNELDIR)/filesystem/*.c $(KERNELDIR)/network/*.c $(KERNELDIR)/netprotocol/*.c $(KERNELDIR)/audio/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
-SHELL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(STDLIBC)/*.c $(USERTOOLS)/*.c $(SHELLDIR)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/*.asm))
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
@@ -63,24 +62,24 @@ LDFLAGS= -nostdlib --warn-common
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c
-	$(CC) $< $(CCFLAGS) -I $(KERNELDIR) -I $(USERTOOLS) -I $(STDLIBC) -o $(OBJDIR)/$@
+	$(CC) $< $(CCFLAGS) -I $(KERNELDIR) -o $(OBJDIR)/$@
 %.o: %.asm
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
 
 # targets to build PrettyOS
-.PHONY: clean all
+.PHONY: clean all shell other_userprogs
 
 all: FloppyImage.img
 
 $(STAGE1DIR)/boot.bin: $(STAGE1DIR)/boot.asm $(STAGE1DIR)/*.inc
-	$(NASM) -Ox -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
+	$(NASM) -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
 $(STAGE2DIR)/BOOT2.BIN: $(STAGE2DIR)/boot2.asm $(STAGE2DIR)/*.inc
-	$(NASM) -Ox -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
+	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
 $(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
-	$(NASM) $(USERDIR)/vm86/vidswtch.asm -Ox -o $(USERDIR)/vm86/VIDSWTCH.COM
+	$(NASM) $(USERDIR)/vm86/vidswtch.asm -o $(USERDIR)/vm86/VIDSWTCH.COM
 $(USERDIR)/vm86/APM.COM: $(USERDIR)/vm86/apm.asm
-	$(NASM) $(USERDIR)/vm86/apm.asm -Ox -o $(USERDIR)/vm86/APM.COM
+	$(NASM) $(USERDIR)/vm86/apm.asm -o $(USERDIR)/vm86/APM.COM
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(USERDIR)/vm86/APM.COM $(KERNEL_OBJECTS)
 #	because changes in the Shell should change data.o we build data.o everytimes
@@ -88,16 +87,18 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map documentation/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 #	$(STRIP) $(KERNELDIR)/KERNEL.BIN
 
-$(SHELLDIR)/shell.elf: $(SHELL_OBJECTS)
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(SHELL_OBJECTS)) -nmagic -T $(USERTOOLS)/user.ld -Map documentation/shell.map -o $(SHELLDIR)/shell.elf
-	$(STRIP) $(SHELLDIR)/shell.elf
+shell:
+	$(MAKE) -C $(SHELLDIR)
 
-$(KERNELDIR)/initrd.dat: $(SHELLDIR)/shell.elf
-	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/shell.elf shell
+other_userprogs:
+	$(MAKE) -C $(USERPROGDIR)
+
+$(KERNELDIR)/initrd.dat: shell
+	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/SHELL.ELF shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
-FloppyImage.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
-	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(USERTESTC)/HELLO.ELF $(USERTESTCPP)/CPP.ELF $(USERPROGS)/CALC.ELF $(USERPROGS)/MUSIC.ELF $(USERPROGS)/README.ELF $(USERPROGS)/TTT.ELF $(USERPROGS)/ARROW.ELF $(USERPROGS)/PQEQ.ELF $(USERPROGS)/KEYSOUND.ELF
+FloppyImage.img: other_userprogs $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
+	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(wildcard $(USERPROGDIR)/*.ELF)
 
 clean:
 # OS-dependant code because of different interpretation of "/" in Windows and UNIX-Based OS (Linux and Mac OS X)
@@ -116,7 +117,7 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(USERTOOLS)\*.o
 	$(RM) $(OBJDIR)\$(SHELLDIR)\*.o
 	$(RM) $(OBJDIR)\$(STDLIBC)\*.o
-	$(RM) $(SHELLDIR)\shell.elf
+	$(RM) $(SHELLDIR)\SHELL.ELF
 	$(RM) $(KERNELDIR)\initrd.dat
 	$(RM) $(USERDIR)\vm86\VIDSWTCH.COM
 	$(RM) $(USERDIR)\vm86\APM.COM
@@ -136,9 +137,11 @@ else
 	$(RM) $(OBJDIR)/$(USERTOOLS)/*.o
 	$(RM) $(OBJDIR)/$(SHELLDIR)/*.o
 	$(RM) $(OBJDIR)/$(STDLIBC)/*.o
-	$(RM) $(SHELLDIR)/shell.elf
+	$(RM) $(SHELLDIR)/SHELL.ELF
 	$(RM) $(KERNELDIR)/initrd.dat
 	$(RM) $(USERDIR)/vm86/VIDSWTCH.COM
 	$(RM) $(USERDIR)/vm86/APM.COM
 	$(RM) documentation/*.map
 endif
+	$(MAKE) -C $(SHELLDIR) clean
+	$(MAKE) -C $(USERPROGDIR) clean

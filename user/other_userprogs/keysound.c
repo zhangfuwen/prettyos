@@ -1,4 +1,5 @@
 #include "userlib.h"
+#include "stdio.h"
 
 int main() {
 	clearScreen(0);

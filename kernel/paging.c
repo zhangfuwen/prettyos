@@ -157,7 +157,7 @@ static uint32_t physMemInit()
     #ifdef _DIAGNOSIS_
     textColor(0x03);
     printf("Memory map:\n");
-    for (memoryMapEntry_t* entry=entries; entry < emoryMapEnd; entry++)
+    for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; entry++)
     {
         printf("  %X -> %X %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }

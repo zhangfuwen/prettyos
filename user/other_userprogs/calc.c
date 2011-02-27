@@ -1,4 +1,9 @@
 #include "userlib.h"
+#include "string.h"
+#include "stdio.h"
+#include "ctype.h"
+#include "stdlib.h"
+
 
 char replaceBuf[1000];
 char* replace(char* source, int Pos, int length, char* toBeInserted) {
@@ -79,7 +84,7 @@ int32_t CalcTerm(char* term) {
 		memset(temp, 0, 100);
 		itoa(erg, temp);
 		term = replace(term, getPrevNumberPos(point, term), getNextNumberPos(point, term) - getPrevNumberPos(point, term)+1, temp);
-		puts(term); putch('\n');
+		puts(term); putchar('\n');
 	}
 	while(find_first(term, "+-") != -1) {
 		point = find_first(term, "+-");
@@ -92,7 +97,7 @@ int32_t CalcTerm(char* term) {
 		memset(temp, 0, 100);
 		itoa(erg, temp);
 		term = replace(term, getPrevNumberPos(point, term), getNextNumberPos(point, term) - getPrevNumberPos(point, term)+1, temp);
-		puts(term); putch('\n');
+		puts(term); putchar('\n');
 	}
 	return(atoi(term));
 }

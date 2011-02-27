@@ -1,12 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="C++-Userprog">
-      <UniqueIdentifier>{39581b4e-3acb-484b-8413-65a1a188530e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="C-Userprog">
-      <UniqueIdentifier>{48cacf7d-02cd-4a21-9604-84ddbe6a08b2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shell">
       <UniqueIdentifier>{c34e3206-b67e-478d-a690-434ede49b8c5}</UniqueIdentifier>
     </Filter>
@@ -25,6 +19,15 @@
     <Filter Include="vm86">
       <UniqueIdentifier>{d3a485e8-1333-4fa2-beee-d0cfee57759c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="C-Dummy">
+      <UniqueIdentifier>{e82a4487-3267-4313-97fb-40af8ed14f04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C++-Dummy">
+      <UniqueIdentifier>{b479191c-6500-4091-b990-2f402c079bac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Other Userprogs">
+      <UniqueIdentifier>{23ec3ec3-1e1d-4e42-bdb4-0b7197431161}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\user\user_tools\start.asm">
@@ -33,17 +36,23 @@
     <None Include="..\user\user_tools\user.ld">
       <Filter>User-Tools</Filter>
     </None>
-    <None Include="..\user\user_test_c\makefile">
-      <Filter>C-Userprog</Filter>
-    </None>
-    <None Include="..\user\user_test_cpp\makefile">
-      <Filter>C++-Userprog</Filter>
-    </None>
     <None Include="..\user\vm86\vidswtch.asm">
       <Filter>vm86</Filter>
     </None>
     <None Include="..\user\vm86\apm.asm">
       <Filter>vm86</Filter>
+    </None>
+    <None Include="..\user\shell\makefile">
+      <Filter>Shell</Filter>
+    </None>
+    <None Include="..\user\dummy_cpp\makefile">
+      <Filter>C++-Dummy</Filter>
+    </None>
+    <None Include="..\user\dummy_c\makefile">
+      <Filter>C-Dummy</Filter>
+    </None>
+    <None Include="..\user\other_userprogs\makefile">
+      <Filter>Other Userprogs</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -52,12 +61,6 @@
     </ClCompile>
     <ClCompile Include="..\user\user_tools\userlib_cpp.cpp">
       <Filter>User-Tools</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_test_c\hello.c">
-      <Filter>C-Userprog</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_test_cpp\cpp.cpp">
-      <Filter>C++-Userprog</Filter>
     </ClCompile>
     <ClCompile Include="..\user\stdlibc\assert.c">
       <Filter>stdlibC\source</Filter>
@@ -94,6 +97,36 @@
     </ClCompile>
     <ClCompile Include="..\user\shell\shell.c">
       <Filter>Shell</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\dummy_cpp\dummy.cpp">
+      <Filter>C++-Dummy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\dummy_c\dummy.c">
+      <Filter>C-Dummy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\arrow.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\calc.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\hello.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\keysound.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\music.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\pqeq.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\readme.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\ttt.c">
+      <Filter>Other Userprogs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

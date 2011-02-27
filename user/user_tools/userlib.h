@@ -41,11 +41,11 @@ void vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
 char* stoupper(char* s);
 char* stolower(char* s);
 
-void    reverse(char* s);
-char*   itoa(int32_t n, char* s);
-char*   utoa(uint32_t n, char* s);
-void    ftoa(float f, char* buffer);
-void    i2hex(uint32_t val, char* dest, uint32_t len);
+void  reverse(char* s);
+char* itoa(int32_t n, char* s);
+char* utoa(uint32_t n, char* s);
+void  ftoa(float f, char* buffer);
+void  i2hex(uint32_t val, char* dest, uint32_t len);
 
 void showInfo(uint8_t val);
 

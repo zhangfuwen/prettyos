@@ -27,6 +27,10 @@ extern const char* const version; // PrettyOS Version string
 extern system_t system;           // Informations about the operating system
 extern struct todoList* delayedInitTasks; // HACK (see ckernel.c)
 
+
+void textColor(uint8_t color);
+void vprintf(const char*, va_list);
+
 static inline void kdebug(uint8_t color, const char* args, ...)
 {
     #ifdef _DIAGNOSIS_
@@ -44,9 +48,5 @@ static inline void kdebug(uint8_t color, const char* args, ...)
     }
     #endif
 }
-
-// Declared here, an adequate header has to be found
-void textColor(uint8_t color);
-void vprintf(const char*, va_list);
 
 #endif

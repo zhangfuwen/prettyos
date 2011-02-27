@@ -1,4 +1,6 @@
 #include "userlib.h"
+#include "stdio.h"
+#include "stdlib.h"
 
 #define MAX 2000
 
@@ -11,7 +13,7 @@ void clearLine(uint8_t line)
     iSetCursor(0,line);
     for (uint8_t i=0; i<79; i++)
     {        
-        putch(' ');
+        putchar(' ');
     }
 }
 
@@ -20,9 +22,9 @@ void setWeapon(uint8_t x, uint8_t y)
     textColor(0x0F);
     point[x][y] = true;
     iSetCursor(x,y-1);
-    putch('|'); 
+    putchar('|'); 
     iSetCursor(x,y);
-    putch('v'); 
+    putchar('v'); 
 }
 
 void generateWeapons()
@@ -49,7 +51,7 @@ void deleteWeapons()
         for (uint8_t j=42; j>0; j--)
         {
             iSetCursor(col[i],j);
-            putch(' '); 
+            putchar(' '); 
         }        
     }
 }
@@ -59,7 +61,7 @@ void generateFighter()
     clearLine(43); 
     fighterPosition = 0;
     iSetCursor(fighterPosition,43);
-    putch(1);
+    putchar(1);
 }
 
 void moveFighter()
@@ -68,12 +70,12 @@ void moveFighter()
     {
         fighterPosition--;
         iSetCursor(fighterPosition,43);
-        putch(1); putch(' ');
+        putchar(1); putchar(' ');
     }
     if(keyPressed('D') && fighterPosition<79)
     {
         iSetCursor(fighterPosition,43);
-        putch(' '); putch(1);
+        putchar(' '); putchar(1);
         fighterPosition++;
     }
     if(keyPressed('S') && fighterPosition<79 && timeout>0)
@@ -133,13 +135,13 @@ int main()
                 if (point[column][line] == true && rand()%6 == 0)
                 {
                     iSetCursor(column,line-2);
-                    putch(' ');
+                    putchar(' ');
                     iSetCursor(column,line-1);
-                    putch(' ');
+                    putchar(' ');
                     iSetCursor(column,line);
-                    putch('|');
+                    putchar('|');
                     iSetCursor(column,line+1);
-                    putch('v');
+                    putchar('v');
                     point[column][line]   = false;
                     point[column][line+1] = true;
                 }

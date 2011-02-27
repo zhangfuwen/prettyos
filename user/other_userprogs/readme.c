@@ -1,4 +1,5 @@
 #include "userlib.h"
+#include "stdio.h"
 
 int main() {
 	clearScreen(0);
@@ -11,6 +12,6 @@ int main() {
 	puts("Here should be inserted a bit more content ;-)\n");
 	puts("\nAt the moment, the developement-team consists of: Ehenkes (he founded PrettyOS), Badestrand (At the moment not developing), Cuervo and MrX.\n");
 	puts("You can find us under: http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html\n");
-	getch();
+	getchar();
 	return(0);
 }

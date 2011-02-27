@@ -14,11 +14,9 @@ IF [%1]==[] GOTO Continue
 		qemu-system-x86_64.exe -usbdevice mouse -fda FloppyImage.bin -boot a -localtime
 	)
 	IF [%1]==[disc] (
-		tools\dd if=stage1_bootloader/boot.bin of=\\.\A: bs=512 count=1 --progress
+		tools\dd if=stage1_bootloader\boot.bin of=\\.\A: bs=512 count=1 --progress
 		copy stage2_bootloader\boot2.bin A:\boot2.bin
 		copy kernel\kernel.bin A:\kernel.bin
-		copy user\user_test_c\*.elf A:
-		copy user\user_test_cpp\*.elf A:
 		copy user\other_userprogs\*.elf A:
 	)
 SHIFT

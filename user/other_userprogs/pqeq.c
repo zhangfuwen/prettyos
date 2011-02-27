@@ -1,4 +1,7 @@
 #include "userlib.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "math.h"
 
 int main()
 {
@@ -23,7 +26,7 @@ int main()
     printf("x1 = %f  x2 = %f\n\n", x1, x2);
 
     printf("Press key.");
-    if (getch());
+    getchar();
 
     return 0;
 }

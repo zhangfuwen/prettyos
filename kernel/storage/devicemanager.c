@@ -12,7 +12,7 @@
 #include "usb2.h"
 #include "filesystem/fat.h"
 
-#ifdef _DEVMGR_DIAGNOSIS_
+#ifdef _READCACHE_DIAGNOSIS_
   #include "timer.h"
 #endif
 
@@ -370,7 +370,7 @@ static void logReadCache()
         {
             textColor(0x07);
         }
-        printf("\nReadcache: %u \tpart: %X sector: %u \tvalid: %s", i, readcaches[i].part, readcaches[i].sector, readcaches[i].valid?"yes":"no");
+        printf("\nReadcache: %u \tpart: %X sector: %u \tvalid: %s", i, readcaches[i].disk, readcaches[i].sector, readcaches[i].valid?"yes":"no");
     }
     textColor(0x07);
     printf("\n-------------------------------------------------------------------------------");

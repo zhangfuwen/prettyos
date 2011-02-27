@@ -139,7 +139,6 @@ void scheduler_deleteTask(task_t* task)
 
 bool scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t timeout)
 {
-    cli();
     currentTask->blocker.type = reason;
     currentTask->blocker.data = data;
     if(timeout == 0)
@@ -147,11 +146,12 @@ bool scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t time
     else
         currentTask->blocker.timeout = timer_getTicks()+timeout;
 
+    cli();
     // Move task into the ring of blocked tasks
     ring_Insert(blockedTasks, (task_t*)currentTask, true);
     ring_DeleteFirst(runningTasks, (task_t*)currentTask);
-
     sti();
+
     switch_context(); // Leave task. This task will not be called again until block ended.
 
     return((bool)currentTask->blocker.data); // data field contains the reason for unblock after the block is released

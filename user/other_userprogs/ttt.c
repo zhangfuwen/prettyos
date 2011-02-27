@@ -1,4 +1,9 @@
 #include "userlib.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "ctype.h"
+#include "string.h"
+
 
 enum Feldstatus {Leer, X, O};
 
@@ -10,11 +15,11 @@ void SetField(uint8_t x, uint8_t y, uint8_t Player)
     iSetCursor(x*4+2,y*2+15);
     if(Player == X)
 	{
-        putch('X');
+        putchar('X');
     }
     else if(Player == O)
 	{
-        putch('O');
+        putchar('O');
     }
 }
 
@@ -121,7 +126,7 @@ int32_t main()
     }
 
 	printLine("Press a key to continue...", 28, 0x0F);
-	getch();
+	getchar();
 
     return 0;
 }
