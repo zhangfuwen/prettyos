@@ -23,31 +23,27 @@ endif
 ifeq ($(OS),WINDOWS)
     USERTOOLS= ..\user_tools
     STDLIBC= ..\stdlibc
-    OBJDIR= ..\..\object_files\user\dummy_c
+    OBJDIR= ..\..\object_files\user\dummy_cpp
 else
     USERTOOLS= ../user_tools
     STDLIBC= ../stdlibc
-    OBJDIR= ../../object_files/user/dummy_c
+    OBJDIR= ../../object_files/user/dummy_cpp
 endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-GCCFLAGS= -c -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
-LDFLAGS= -nostdlib --warn-common -nmagic
+GPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
+LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
 TARGET= CPPDUMMY.ELF
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
-%.o: %.c
-	$(GCC) $< $(GCCFLAGS) -std=c99 -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
 %.o: %.cpp
-	$(GCC) $< $(GCCFLAGS) -fno-exceptions -std=c++0x -fno-rtti -lgcc -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
-%.o: %.asm
-	$(NASM) $< $(NASMFLAGS) -o $(OBJDIR)/$@
+	$(GCC) $< $(GPPFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
 
 # dependancies
-TARGETOBJ := $(patsubst %.cpp, %.o, $(wildcard *.cpp $(USERTOOLS)/*.cpp)) $(patsubst %.c, %.o, $(wildcard *.c $(USERTOOLS)/*.c $(STDLIBC)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/start.asm))
+TARGETOBJ := $(patsubst %.cpp, %.o, $(wildcard *.cpp))
 
 # targets to build the userprog
 .PHONY: clean all
@@ -55,7 +51,7 @@ TARGETOBJ := $(patsubst %.cpp, %.o, $(wildcard *.cpp $(USERTOOLS)/*.cpp)) $(pats
 all: $(TARGET)
 
 $(TARGET): $(TARGETOBJ)
-	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $(TARGET)
+	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(USERTOOLS)/prettylib.a $(USERTOOLS)/prettylib++.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $(TARGET)
 	$(STRIP) $(TARGET)
 
 clean:

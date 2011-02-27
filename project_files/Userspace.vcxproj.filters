@@ -54,6 +54,12 @@
     <None Include="..\user\other_userprogs\makefile">
       <Filter>Other Userprogs</Filter>
     </None>
+    <None Include="..\user\user_tools\makefile">
+      <Filter>User-Tools</Filter>
+    </None>
+    <None Include="..\user\stdlibc\makefile">
+      <Filter>stdlibC</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\user\user_tools\userlib.c">

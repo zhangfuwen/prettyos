@@ -4,9 +4,9 @@ OUTPUT_ARCH(i386)
 SECTIONS
 {
     . = 0x1400000;
-    .text   : { __code_start = .;   *(.text*)         }
-    .data   : { __data_start = .;   *(.data)          }
-    .rodata : { __rodata_start = .; *(.rodata)        }
-    .bss    : { __bss_start = .;    *(.bss) *(COMMON) }
+    .text   : { __code_start = .;   *(.text*)  }
+    .data   : { __data_start = .;   *(.data)   }
+    .rodata : { __rodata_start = .; *(.rodata) }
+    .bss    : { __bss_start = .;    *(.bss)    }
      __end = .;
 }

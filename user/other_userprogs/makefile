@@ -32,22 +32,19 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -mtune=i386 -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
-LDFLAGS= -nostdlib --warn-common -nmagic
+GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
+LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c
 	$(GCC) $< $(GCCFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
-%.o: %.asm
-	$(NASM) $< $(NASMFLAGS) -o $(OBJDIR)/$@
-%.ELF: %.o $(LIBOBJ)
-	$(LD) $< $(addprefix $(OBJDIR)/,$(LIBOBJ)) -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $@
+%.ELF: %.o
+	$(LD) $< $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $@
 	$(STRIP) $@
 
 # dependancies
 TARGETOBJ := $(patsubst %.c, %.o, $(wildcard *.c))
-LIBOBJ := $(patsubst %.c, %.o, $(wildcard $(USERTOOLS)/*.c $(STDLIBC)/*.c)) $(patsubst %.asm, %.o, $(wildcard $(USERTOOLS)/start.asm))
 TARGETEXE := $(patsubst $(OBJDIR)/%.o, %.ELF, $(wildcard $(OBJDIR)/*.o))
 
 # targets to build the userprog

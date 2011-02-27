@@ -10,7 +10,7 @@ SECTIONS
     .text1  : { object_files/kernel/data.o(.text)       }
     .data   : { _data_start = .;   *(.data)             }
     .rodata : { _rodata_start = .; *(.rodata) *(.rdata) }
-    .bss    : { _bss_start = .;    *(.bss) *(COMMON)    }
+    .bss    : { _bss_start = .;    *(.bss)              }
     _start_cdi_drivers = .;
     .cdi    : { _cdi_start = .;    *(.cdi)              }
     _stop_cdi_drivers = .;

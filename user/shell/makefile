@@ -23,18 +23,19 @@ endif
 ifeq ($(OS),WINDOWS)
     USERTOOLS= ..\user_tools
     STDLIBC= ..\stdlibc
-    OBJDIR= ..\..\object_files\user\dummy_c
+    OBJDIR= ..\..\object_files\user\shell
 else
     USERTOOLS= ../user_tools
     STDLIBC= ../stdlibc
-    OBJDIR= ../../object_files/user/dummy_c
+    OBJDIR= ../../object_files/user/shell
 endif
 
 # Compiler-/Linker-Flags
+NASMFLAGS= -Ox -f elf
 GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
-TARGET= CDUMMY.ELF
+TARGET= SHELL.ELF
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
@@ -50,7 +51,7 @@ TARGETOBJ := $(patsubst %.c, %.o, $(wildcard *.c))
 all: $(TARGET)
 
 $(TARGET): $(TARGETOBJ)
-	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $(TARGET)
+	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(STDLIBC)/stdlibc.a $(USERTOOLS)/prettylib.a -T $(USERTOOLS)/user.ld -Map ../../documentation/shell.map $(LDFLAGS) -o $(TARGET)
 	$(STRIP) $(TARGET)
 
 clean:

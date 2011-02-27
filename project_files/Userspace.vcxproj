@@ -33,6 +33,8 @@
     <None Include="..\user\dummy_c\makefile" />
     <None Include="..\user\other_userprogs\makefile" />
     <None Include="..\user\shell\makefile" />
+    <None Include="..\user\stdlibc\makefile" />
+    <None Include="..\user\user_tools\makefile" />
     <None Include="..\user\user_tools\start.asm">
       <FileType>Document</FileType>
     </None>

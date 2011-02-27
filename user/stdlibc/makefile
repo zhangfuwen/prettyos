@@ -3,43 +3,36 @@ ifeq ($(OS),WINDOWS)
     RM= - del
     NASM= nasm
     GCC= i586-elf-gcc
-    LD= i586-elf-ld
-    STRIP= i586-elf-strip
+    AR= i586-elf-ar
 else
     RM= rm -f
     NASM= nasm
     ifeq ($(OS),MACOSX)
         GCC= i586-elf-gcc
-        LD= i586-elf-ld
-        STRIP= i586-elf-strip
+        AR= i586-elf-ar
     else
         GCC= gcc
-        LD= ld
-        STRIP= strip
+        AR= ar
     endif
 endif
 
 # Folders
 ifeq ($(OS),WINDOWS)
-    USERTOOLS= ..\user_tools
-    STDLIBC= ..\stdlibc
-    OBJDIR= ..\..\object_files\user\dummy_c
+    OBJDIR= ..\..\object_files\user\stdlibc
 else
-    USERTOOLS= ../user_tools
-    STDLIBC= ../stdlibc
-    OBJDIR= ../../object_files/user/dummy_c
+    OBJDIR= ../../object_files/user/stdlibc
 endif
 
 # Compiler-/Linker-Flags
 GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
-LDFLAGS= -u _start -nostdlib --warn-common -nmagic
+ARFLAGS= rs
 
-TARGET= CDUMMY.ELF
+TARGET= stdlibc.a
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c
-	$(GCC) $< $(GCCFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
+	$(GCC) $< $(GCCFLAGS) -o $(OBJDIR)/$@
 
 # dependancies
 TARGETOBJ := $(patsubst %.c, %.o, $(wildcard *.c))
@@ -50,8 +43,7 @@ TARGETOBJ := $(patsubst %.c, %.o, $(wildcard *.c))
 all: $(TARGET)
 
 $(TARGET): $(TARGETOBJ)
-	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $(TARGET)
-	$(STRIP) $(TARGET)
+	$(AR) $(ARFLAGS) $(TARGET) $(addprefix $(OBJDIR)/,$(TARGETOBJ))
 
 clean:
 ifeq ($(OS),WINDOWS)

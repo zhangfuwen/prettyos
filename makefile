@@ -67,7 +67,7 @@ vpath %.o $(OBJDIR)
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
 
 # targets to build PrettyOS
-.PHONY: clean all shell other_userprogs
+.PHONY: clean all shell other_userprogs userlibs
 
 all: FloppyImage.img
 
@@ -87,11 +87,15 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map documentation/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 #	$(STRIP) $(KERNELDIR)/KERNEL.BIN
 
-shell:
+shell: userlibs
 	$(MAKE) -C $(SHELLDIR)
 
-other_userprogs:
+other_userprogs: userlibs
 	$(MAKE) -C $(USERPROGDIR)
+
+userlibs:
+	$(MAKE) -C $(STDLIBC)
+	$(MAKE) -C $(USERTOOLS)
 
 $(KERNELDIR)/initrd.dat: shell
 	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/SHELL.ELF shell
@@ -114,10 +118,6 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\$(KERNELDIR)\network\*.o
 	$(RM) $(OBJDIR)\$(KERNELDIR)\netprotocol\*.o
 	$(RM) $(OBJDIR)\$(KERNELDIR)\audio\*.o
-	$(RM) $(OBJDIR)\$(USERTOOLS)\*.o
-	$(RM) $(OBJDIR)\$(SHELLDIR)\*.o
-	$(RM) $(OBJDIR)\$(STDLIBC)\*.o
-	$(RM) $(SHELLDIR)\SHELL.ELF
 	$(RM) $(KERNELDIR)\initrd.dat
 	$(RM) $(USERDIR)\vm86\VIDSWTCH.COM
 	$(RM) $(USERDIR)\vm86\APM.COM
@@ -134,10 +134,6 @@ else
 	$(RM) $(OBJDIR)/$(KERNELDIR)/network/*.o
 	$(RM) $(OBJDIR)/$(KERNELDIR)/netprotocol/*.o
 	$(RM) $(OBJDIR)/$(KERNELDIR)/audio/*.o
-	$(RM) $(OBJDIR)/$(USERTOOLS)/*.o
-	$(RM) $(OBJDIR)/$(SHELLDIR)/*.o
-	$(RM) $(OBJDIR)/$(STDLIBC)/*.o
-	$(RM) $(SHELLDIR)/SHELL.ELF
 	$(RM) $(KERNELDIR)/initrd.dat
 	$(RM) $(USERDIR)/vm86/VIDSWTCH.COM
 	$(RM) $(USERDIR)/vm86/APM.COM
@@ -145,3 +141,5 @@ else
 endif
 	$(MAKE) -C $(SHELLDIR) clean
 	$(MAKE) -C $(USERPROGDIR) clean
+	$(MAKE) -C $(STDLIBC) clean
+	$(MAKE) -C $(USERTOOLS) clean
