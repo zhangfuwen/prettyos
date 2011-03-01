@@ -38,7 +38,7 @@ void todoList_execute(todoList_t* list)
 
 void todoList_wait(todoList_t* list)
 {
-    scheduler_blockCurrentTask(&BL_TODOLIST, list, 0);
+    scheduler_blockCurrentTask(BL_TODOLIST, list, 0);
 }
 
 bool todoList_unlockTask(void* data)

@@ -105,7 +105,7 @@ int main()
                         strcpy(entryCache[0], entry);
                         curEntry = -1;
                     }
-                    textColor(0x0B);
+                    textColor(0x03);
                     printf("\n$> %s <--\n", entry);
                     textColor(0x0F);
                     printLine("$>                                                                              ", 40, 0x0B);
@@ -221,7 +221,6 @@ int main()
         } //while
 
 EVALUATION: // evaluation of entry
-        textColor(0x02);
         if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
             puts("Implemented Instructions: hi, help, ?, fdir, format and reboot\n");

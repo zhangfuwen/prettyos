@@ -17,11 +17,14 @@ static ring_t* blockedTasks = 0;
 
 static task_t* freetimeTask = 0;
 
-blockerType_t BL_SYNC      = {0},
-              BL_INTERRUPT = {&irq_unlockTask}, // Interrupts seem to be good for event based handling, but they are not, because we count interrupts occuring before the block was set.
-              BL_TASK      = {0},
-              BL_TODOLIST  = {&todoList_unlockTask};
-
+blockerType_t blocker[] =
+{
+    {0},                   // BL_TIME
+    {0},                   // BL_SYNC
+    {&irq_unlockTask},     // BL_INTERRUPT. Interrupts seem to be good for event based handling, but they are not, because we count interrupts occuring before the block was set.
+    {0},                   // BL_TASK, BL_TODOLIST
+    {&todoList_unlockTask} // BL_TODOLIST
+};
 
 // Function for freetime task. Executed when the ring of running tasks is empty.
 static void doNothing()
@@ -49,7 +52,7 @@ static void unblockTask(task_t* task, bool timeout)
     ring_DeleteFirst(blockedTasks, task);
 }
 
-void scheduler_unblockEvent(blockerType_t* type, void* data) // Event based blocks are handled here
+void scheduler_unblockEvent(BLOCKERTYPE type, void* data) // Event based blocks are handled here
 {
     if(!blockedTasks || blockedTasks->begin == 0) return; // Ring is empty
 
@@ -57,7 +60,7 @@ void scheduler_unblockEvent(blockerType_t* type, void* data) // Event based bloc
     do
     {
         task_t* current = (task_t*)blockedTasks->current->data;
-        if(current->blocker.type == type && current->blocker.data == data) // The blocking event this ring element is waiting for appeared -> unblock
+        if(current->blocker.type == &blocker[type] && current->blocker.data == data) // The blocking event this ring element is waiting for appeared -> unblock
         {
             unblockTask(current, false);
         }
@@ -134,12 +137,12 @@ void scheduler_deleteTask(task_t* task)
     ring_DeleteFirst(runningTasks, task);
     ring_DeleteFirst(blockedTasks, task);
 
-    scheduler_unblockEvent(&BL_TASK, task); // Unblock tasks waiting for the end of the given task
+    scheduler_unblockEvent(BL_TASK, (void*)task->pid); // Unblock tasks waiting for the end of the given task
 }
 
-bool scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t timeout)
+bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout)
 {
-    currentTask->blocker.type = reason;
+    currentTask->blocker.type = &blocker[reason];
     currentTask->blocker.data = data;
     if(timeout == 0)
         currentTask->blocker.timeout = 0;

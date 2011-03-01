@@ -56,6 +56,7 @@
     <ClCompile Include="..\user\other_userprogs\music.c" />
     <ClCompile Include="..\user\other_userprogs\pqeq.c" />
     <ClCompile Include="..\user\other_userprogs\readme.c" />
+    <ClCompile Include="..\user\other_userprogs\test.c" />
     <ClCompile Include="..\user\other_userprogs\ttt.c" />
     <ClCompile Include="..\user\shell\shell.c" />
     <ClCompile Include="..\user\stdlibc\assert.c" />

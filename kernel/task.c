@@ -67,10 +67,10 @@ int32_t getpid()
 bool waitForTask(task_t* blockingTask, uint32_t timeout)
 {
     if(timeout > 0)
-        return(scheduler_blockCurrentTask(&BL_TASK, blockingTask, max(1, timer_millisecondsToTicks(timeout))));
+        return(scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, max(1, timer_millisecondsToTicks(timeout))));
     else
     {
-        scheduler_blockCurrentTask(&BL_TASK, blockingTask, 0);
+        scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, 0);
         return(true);
     }
 }

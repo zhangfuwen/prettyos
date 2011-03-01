@@ -41,10 +41,10 @@ void irq_resetCounter(IRQ_NUM_t number)
 bool waitForIRQ(IRQ_NUM_t number, uint32_t timeout)
 {
     if(timeout > 0)
-        return(scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32), max(1, timer_millisecondsToTicks(timeout))));
+        return(scheduler_blockCurrentTask(BL_INTERRUPT, (void*)(number+32), max(1, timer_millisecondsToTicks(timeout))));
     else
     {
-        scheduler_blockCurrentTask(&BL_INTERRUPT, (void*)(number+32), 0);
+        scheduler_blockCurrentTask(BL_INTERRUPT, (void*)(number+32), 0);
         return(true);
     }
 }
@@ -194,7 +194,7 @@ uint32_t irq_handler(uintptr_t esp)
 {
     task_t* oldTask = (task_t*)currentTask; // Save old task to be able to restore attr in case of task_switch
     uint8_t attr = currentTask->attrib;     // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
-    currentConsole = kernelTask.console;    // The output should appear in the kernels console usually
+    currentConsole = kernelTask.console;    // The output should appear in the kernels console usually. Exception: Syscalls (cf. syscall.c)
 
     registers_t* r = (registers_t*)esp;
 
@@ -208,14 +208,13 @@ uint32_t irq_handler(uintptr_t esp)
     if (interrupts[r->int_no].handler)
         interrupts[r->int_no].handler(r); // Execute handler
 
-    scheduler_unblockEvent(&BL_INTERRUPT, (void*)r->int_no);
-
     if (r->int_no >= 40)
         outportb(0xA0, 0x20);
     outportb(0x20, 0x20);
 
     currentConsole = currentTask->console;
-    oldTask->attrib = attr;
+    if(r->int_no != 0x7F) // Syscalls (especially textColor) should be able to change color. HACK: Can this be solved nicer?
+        oldTask->attrib = attr;
     return esp;
 }
 

@@ -6,7 +6,7 @@
 // syscalls (only non-standard functions, because we do not want to include stdio.h here.
 FS_ERROR execute(const char* path);
 void exit();
-void taskSleep(uint32_t duration);
+bool wait(BLOCKERTYPE reason, void* data, uint32_t timeout);
 uint32_t getMyPID();
 
 void* userheapAlloc(size_t increase);
@@ -32,6 +32,9 @@ int32_t floppy_dir();
 void printLine(const char* message, uint32_t line, uint8_t attribute);
 
 // user functions
+void sleep(uint32_t milliseconds);
+bool waitForTask(uint32_t pid, uint32_t timeout);
+
 void iSetCursor(uint16_t x, uint16_t y);
 uint32_t getCurrentSeconds();
 

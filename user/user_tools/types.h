@@ -78,6 +78,11 @@ typedef enum
 
 typedef enum
 {
+    BL_TIME, BL_SYNC, BL_INTERRUPT, BL_TASK, BL_TODOLIST
+} BLOCKERTYPE;
+
+typedef enum
+{
     STANDBY, SHUTDOWN, REBOOT
 } SYSTEM_CONTROL;
 

@@ -23,7 +23,7 @@ void semaphore_lock(semaphore_t* obj)
     if(obj == 0) return; // Invalid object
 
     while(obj->freeRes == 0) // blocked? -> wait. Do this in a loop to prevent two tasks locking a semaphore at the "same" time
-        scheduler_blockCurrentTask(&BL_SYNC, obj, 0);
+        scheduler_blockCurrentTask(BL_SYNC, obj, 0);
 
     obj->freeRes--; // aquire one resource
 }
@@ -35,13 +35,13 @@ void semaphore_unlock(semaphore_t* obj)
     if(obj->resCount == 0 || obj->freeRes < obj->resCount) // Protected against increasing the number of resources by unlocking it multiple times
         obj->freeRes++; // free one resource
 
-    scheduler_unblockEvent(&BL_SYNC, obj); // Inform scheduler that this semaphore has been unlocked
+    scheduler_unblockEvent(BL_SYNC, obj); // Inform scheduler that this semaphore has been unlocked
 }
 
 void semaphore_delete(semaphore_t* obj)
 {
     if(obj->freeRes == 0) // There can be tasks that are blocked due to this semaphore. Unlock them to avoid deadlocks
-        scheduler_unblockEvent(&BL_SYNC, obj);
+        scheduler_unblockEvent(BL_SYNC, obj);
 
     free(obj);
 }
@@ -66,7 +66,7 @@ void mutex_lock(mutex_t* obj)
 
 
     while(obj->blocked)
-        scheduler_blockCurrentTask(&BL_SYNC, obj, 0); // Wait until the mutex is unlocked
+        scheduler_blockCurrentTask(BL_SYNC, obj, 0); // Wait until the mutex is unlocked
 
     obj->blocked = true;
     obj->blocker = (task_t*)currentTask;
@@ -78,13 +78,13 @@ void mutex_unlock(mutex_t* obj)
 
     obj->blocked = false;
 
-    scheduler_unblockEvent(&BL_SYNC, obj); // Inform scheduler that this mutex has been unlocked
+    scheduler_unblockEvent(BL_SYNC, obj); // Inform scheduler that this mutex has been unlocked
 }
 
 void mutex_delete(mutex_t* obj)
 {
     if(obj->blocked) // There can be tasks that are blocked due to this mutex. Unlock them to avoid deadlocks
-        scheduler_unblockEvent(&BL_SYNC, obj);
+        scheduler_unblockEvent(BL_SYNC, obj);
 
     free(obj);
 }

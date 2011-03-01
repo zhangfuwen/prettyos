@@ -23,10 +23,14 @@ endif
 ifeq ($(OS),WINDOWS)
     USERTOOLS= ..\user_tools
     STDLIBC= ..\stdlibc
+    PRETTYLIB= $(USERTOOLS)\prettylib.a
+    STDLIBCA= $(STDLIBC)\stdlibc.a
     OBJDIR= ..\..\object_files\user\other_userprogs
 else
     USERTOOLS= ../user_tools
     STDLIBC= ../stdlibc
+    PRETTYLIB= $(USERTOOLS)/prettylib.a
+    STDLIBCA= $(STDLIBC)/stdlibc.a
     OBJDIR= ../../object_files/user/other_userprogs
 endif
 
@@ -39,7 +43,7 @@ LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 vpath %.o $(OBJDIR)
 %.o: %.c
 	$(GCC) $< $(GCCFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
-%.ELF: %.o
+%.ELF: %.o $(PRETTYLIB) $(STDLIBCA)
 	$(LD) $< $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $@
 	$(STRIP) $@
 

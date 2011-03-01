@@ -20,9 +20,9 @@ static void* syscalls[] =
 /*  0  */    &executeFile,
 /*  1  */    &nop, // createThread
 /*  2  */    &exit,
-/*  3  */    &nop, // semaphoreLock
-/*  4  */    &sleepMilliSeconds,
-/*  5  */    &nop, // waitForTask
+/*  3  */    &scheduler_blockCurrentTask,
+/*  4  */    &nop, // createConsoleThread
+/*  5  */    &nop,
 /*  6  */    &getpid,
 /*  7  */    &nop,
 /*  8  */    &nop,

@@ -3,6 +3,7 @@
 
 #include "os.h"
 
+
 typedef struct task task_t;
 
 typedef struct
@@ -10,7 +11,10 @@ typedef struct
     bool (*unlock)(void*); // if 0, the blocker is event based
 } blockerType_t;
 
-extern blockerType_t BL_SYNC, BL_INTERRUPT, BL_TASK, BL_TODOLIST;
+typedef enum
+{
+    BL_TIME, BL_SYNC, BL_INTERRUPT, BL_TASK, BL_TODOLIST
+} BLOCKERTYPE;
 
 typedef struct
 {
@@ -19,13 +23,14 @@ typedef struct
     uint32_t       timeout; // 0 if no timeout is defined.
 } blocker_t;
 
+
 void     scheduler_install();
 bool     scheduler_shouldSwitchTask();
 uint32_t scheduler_taskSwitch(uint32_t esp);
 void     scheduler_insertTask(task_t* task);
 void     scheduler_deleteTask(task_t* task);
-bool     scheduler_blockCurrentTask(blockerType_t* reason, void* data, uint32_t timeout); // false in case of timeout
-void     scheduler_unblockEvent(blockerType_t* type, void* data);
+bool     scheduler_blockCurrentTask(BLOCKERTYPE, void* data, uint32_t timeout); // false in case of timeout
+void     scheduler_unblockEvent(BLOCKERTYPE type, void* data);
 void     scheduler_log();
 
 

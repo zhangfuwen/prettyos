@@ -23,10 +23,14 @@ endif
 ifeq ($(OS),WINDOWS)
     USERTOOLS= ..\user_tools
     STDLIBC= ..\stdlibc
+    PRETTYLIB= $(USERTOOLS)\prettylib.a
+    STDLIBCA= $(STDLIBC)\stdlibc.a
     OBJDIR= ..\..\object_files\user\shell
 else
     USERTOOLS= ../user_tools
     STDLIBC= ../stdlibc
+    PRETTYLIB= $(USERTOOLS)/prettylib.a
+    STDLIBCA= $(STDLIBC)/stdlibc.a
     OBJDIR= ../../object_files/user/shell
 endif
 
@@ -50,7 +54,7 @@ TARGETOBJ := $(patsubst %.c, %.o, $(wildcard *.c))
 
 all: $(TARGET)
 
-$(TARGET): $(TARGETOBJ)
+$(TARGET): $(TARGETOBJ) $(PRETTYLIB) $(STDLIBCA)
 	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(STDLIBC)/stdlibc.a $(USERTOOLS)/prettylib.a -T $(USERTOOLS)/user.ld -Map ../../documentation/shell.map $(LDFLAGS) -o $(TARGET)
 	$(STRIP) $(TARGET)
 

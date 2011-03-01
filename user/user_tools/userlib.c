@@ -21,9 +21,11 @@ void exit()
     __asm__ volatile("int $0x7F" : : "a"(2));
 }
 
-void taskSleep(uint32_t duration)
+bool wait(BLOCKERTYPE reason, void* data, uint32_t timeout)
 {
-    __asm__ volatile("int $0x7F" : : "a"(4), "b"(duration));
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(3), "b"(reason), "c"(data), "d"(timeout/10)); // HACK. Unbound it from system frequency. cf. scheduler.c
+    return ret;
 }
 
 uint32_t getMyPID()
@@ -170,6 +172,16 @@ void printLine(const char* message, uint32_t line, uint8_t attribute)
 
 
 // user functions
+void sleep(uint32_t milliseconds)
+{
+    wait(BL_TIME, 0, milliseconds);
+}
+
+bool waitForTask(uint32_t pid, uint32_t timeout)
+{
+    return(wait(BL_TASK, (void*)pid, timeout));
+}
+
 void iSetCursor(uint16_t x, uint16_t y)
 {
     position_t temp;

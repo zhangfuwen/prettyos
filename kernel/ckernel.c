@@ -23,7 +23,7 @@
 #include "elf.h"
 
 
-const char* const version = "0.0.2.30 - Rev: 869";
+const char* const version = "0.0.2.31 - Rev: 870";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
