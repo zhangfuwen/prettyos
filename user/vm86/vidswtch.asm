@@ -5,8 +5,9 @@ org 0x100
 
 SetDisplayStart:
     mov ax, 0x4F07
-    xor bx, bx           ; Set bl to 0 and use it to set ds to 0, too.
+    xor bx, bx           ; Set bh to 0 and use it to set ds to 0, too.
     mov ds, bx
+    mov bl, 0x00
     mov dx, word[0x1800] ; Set first Displayed Scan Line
     mov cx, word[0x1802] ; Set first Displayed Pixel in Scan Line
     int 10h

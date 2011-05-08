@@ -10,10 +10,9 @@
 
 #include "mouse.h"
 #include "util.h"
-#include "video/console.h"
 #include "irq.h"
+#include "video/console.h"
 #include "video/vbe.h"
-#include "video/gui_window.h"
 
 enum {NORMAL, WHEEL, WHEELS5BUTTON} mousetype = NORMAL;
 
@@ -26,9 +25,6 @@ bool mouse_bm=0;    // Mouse Middle Button
 bool mouse_br=0;    // Mouse Right Button
 bool mouse_b4=0;    // Mouse Button 4
 bool mouse_b5=0;    // Mouse button 5
-
-extern BMPInfo_t cursor_start;
-extern BMPInfo_t cursor_end;
 
 
 static void mouse_wait(uint8_t type);
@@ -167,7 +163,7 @@ void mouse_handler(registers_t* a_r)
     {
         mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1)); // clamp mouse position to width of screen
         mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1)); // same with height
-        vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
+        // In VBE mode the application draws the mouse to work in double buffer modes as well.
     }
     else
     {
@@ -269,7 +265,7 @@ void mouse_uninstall()
 
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

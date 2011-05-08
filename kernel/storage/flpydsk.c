@@ -493,7 +493,7 @@ static int32_t flpydsk_transferSector(uint8_t head, uint8_t track, uint8_t secto
     flpydsk_checkInt(&st0,&cyl); // inform FDC that we handled interrupt
 
     CurrentDrive->accessRemaining--;
-    
+
     mutex_unlock(CurrentDrive->RW_Lock);
 
     if(val == 2) // value 2 means 512 Byte

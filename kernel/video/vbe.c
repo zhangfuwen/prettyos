@@ -19,8 +19,9 @@ BitmapHeader_t  bh;
 
 BitmapHeader_t* bh_get;
 
-uint8_t* SCREEN = (uint8_t*)0xE0000000; // video memory for supervga
-uint8_t* DOUBLEBUFFER;
+static uint8_t* vidmem; // Memory to be written to. Either equal to buffer1 or to buffer2
+static uint8_t* buffer1;
+static uint8_t* buffer2;
 
 position_t curPos = {0, 0};
 
@@ -81,9 +82,12 @@ void switchToVideomode(uint16_t mode)
     vbe_readMIB(mode);
     setVideoMemory();
     if(!(mode&BIT(15))) // We clear the Videoscreen manually, because the VGA is not reliable
-        memset(SCREEN, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
+        memset(vidmem, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
     paletteBitsPerColor = 0; // Has to be reinitializated
     videomode = VM_VBE;
+
+    buffer1 = vidmem;
+    buffer2 = vidmem + mib.XResolution*mib.YResolution*(mib.BitsPerPixel/8 + (mib.BitsPerPixel % 8 == 0 ? 0 : 1)); // Set Double buffer pointer
 }
 
 void switchToTextmode()
@@ -93,12 +97,12 @@ void switchToTextmode()
     refreshUserScreen();
 }
 
-//void setDisplayStart(uint16_t *xpos, uint16_t *ypos)
-//{
-//    // memcpy(*(0x1800), xpos, sizeof(xpos));
-//    // memcpy(*(0x1802), ypos, sizeof(ypos));
-//    waitForTask(create_vm86_task(VM86_SETDISPLAYSTART), 0);
-//}
+void setDisplayStart(uint16_t xpos, uint16_t ypos)
+{
+    *(uint16_t*)0x1800 = ypos;
+    *(uint16_t*)0x1802 = xpos;
+    waitForTask(create_vm86_task(VM86_SETDISPLAYSTART), 0);
+}
 
 uint32_t getDisplayStart()
 {
@@ -171,21 +175,28 @@ void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t
 void setVideoMemory()
 {
      uint32_t numberOfPages = vgaIB.TotalMemory * 0x10000 / PAGESIZE;
-     SCREEN = paging_acquirePciMemory(mib.PhysBasePtr, numberOfPages);
+     vidmem = paging_acquirePciMemory(mib.PhysBasePtr, numberOfPages);
 
-     printf("\nSCREEN (phys): %X SCREEN (virt): %X\n",mib.PhysBasePtr, SCREEN);
+     printf("\nVidmem (phys): %X  Vidmem (virt): %X\n",mib.PhysBasePtr, vidmem);
      printf("\nVideo Ram %u MiB\n",vgaIB.TotalMemory/0x10);
 }
 
-void allocDoubleBuffer()
+void vbe_flipScreen()
 {
-    DOUBLEBUFFER = (uint8_t*) malloc(mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1), 0, "DoubleBuffer");
-}
+    while (  inportb(0x03da) & 0x08 ) {}
+    while (!(inportb(0x03da) & 0x08)) {}
 
-void vbe_flipScreen(uint8_t* Buffer)
-{
-    // SCREEN = Buffer;
-    memcpy(SCREEN, Buffer, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
+    if(vidmem == buffer1)
+    {
+        setDisplayStart(0, 0);
+        vidmem = buffer2;
+    }
+    else
+    {
+        setDisplayStart(0, mib.YResolution);
+        vidmem = buffer1;
+    }
+    vbe_clearScreen();
 }
 
 void vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color)
@@ -193,52 +204,27 @@ void vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color)
     switch(mib.BitsPerPixel)
     {
         case 15:
-            ((uint16_t*)DOUBLEBUFFER)[y * mib.XResolution + x] = BGRAtoBGR15(color);
+            ((uint16_t*)vidmem)[y * mib.XResolution + x] = BGRAtoBGR15(color);
             break;
         case 16:
-            ((uint16_t*)DOUBLEBUFFER)[y * mib.XResolution + x] = BGRAtoBGR16(color);
+            ((uint16_t*)vidmem)[y * mib.XResolution + x] = BGRAtoBGR16(color);
             break;
         case 24:
-            (*(uint16_t*)&DOUBLEBUFFER[(y * mib.XResolution + x) * 3]) = *(uint16_t*)&color; // Performance Hack - copying 16 bits should be faster than copying 8 bits twice
-            DOUBLEBUFFER[(y * mib.XResolution + x) * 3 + 2] = color.red;
+            (*(uint16_t*)&vidmem[(y * mib.XResolution + x) * 3]) = *(uint16_t*)&color; // Performance Hack - copying 16 bits at once should be faster than copying 8 bits twice
+            vidmem[(y * mib.XResolution + x) * 3 + 2] = color.red;
             break;
         case 32:
-            ((uint32_t*)DOUBLEBUFFER)[y * mib.XResolution + x] = *(uint32_t*)&color&0xFFFFFF; // Do not use alpha, we need it for 8-bit compatibility
+            ((uint32_t*)vidmem)[y * mib.XResolution + x] = *(uint32_t*)&color&0xFFFFFF; // Do not use alpha, we need it for 8-bit compatibility
             break;
         case 8: default:
-            ((uint8_t*)DOUBLEBUFFER)[y * mib.XResolution + x] = color.alpha; // Workaround for 24 bit to 8 bit conversion
+            ((uint8_t*)vidmem)[y * mib.XResolution + x] = color.alpha; // Workaround for 24 bit to 8 bit conversion
             break;
     }
 }
-
-/*
-void vbe_setPixel(uint32_t x, uint32_t y, BGRA_t color)
-{
-    switch(mib.BitsPerPixel)
-    {
-        case 15:
-            ((uint16_t*)SCREEN)[y * mib.XResolution + x] = BGRAtoBGR15(color);
-            break;
-        case 16:
-            ((uint16_t*)SCREEN)[y * mib.XResolution + x] = BGRAtoBGR16(color);
-            break;
-        case 24:
-            (*(uint16_t*)&SCREEN[(y * mib.XResolution + x) * 3]) = *(uint16_t*)&color; // Performance Hack - copying 16 bits should be faster than copying 8 bits twice
-            SCREEN[(y * mib.XResolution + x) * 3 + 2] = color.red;
-            break;
-        case 32:
-            ((uint32_t*)SCREEN)[y * mib.XResolution + x] = *(uint32_t*)&color&0xFFFFFF; // Do not use alpha, we need it for 8-bit compatibility
-            break;
-        case 8: default:
-            ((uint8_t*)SCREEN)[y * mib.XResolution + x] = color.alpha; // Workaround for 24 bit to 8 bit conversion
-            break;
-    }
-}
-*/
 
 uint32_t vbe_getPixel(uint32_t x, uint32_t y) // TODO: Fix it. It now ignores mib.BitsPerPixel
 {
-    return SCREEN[(y * mib.XResolution + x) * mib.BitsPerPixel/8];
+    return vidmem[(y * mib.XResolution + x) * mib.BitsPerPixel/8];
 }
 
 void vbe_drawBitmap(uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap)
@@ -671,6 +657,7 @@ void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos)
     curPos.y = ypos;
     for (; *text; vbe_drawChar(*text), ++text);
 }
+
 void vbe_clearScreen()
 {
     BGRA_t color = { 0, 0, 0, 0 };
@@ -744,8 +731,6 @@ void vbe_bootscreen()
         whatToStart = atoi(num);
     }
 
-    allocDoubleBuffer();
-
     switchToVideomode(modenumber);
     uint32_t displayStart = getDisplayStart();
     printf("\nFirst Displayed Scan Line: %u, First Displayed Pixel in Scan Line: %u", displayStart >> 16, displayStart & 0xFFFF);
@@ -796,7 +781,7 @@ void vbe_bootscreen()
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

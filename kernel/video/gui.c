@@ -8,11 +8,12 @@
 #include "mouse.h"
 #include "keyboard.h"
 #include "vbe.h"
+#include "gui.h"
 #include "gui_window.h"
 #include "gui_button.h"
 
+
 extern ModeInfoBlock_t mib;
-extern uint8_t* DOUBLEBUFFER;
 
 extern char mouse_bl;
 extern int32_t mouse_x;
@@ -22,8 +23,8 @@ extern int32_t mouse_y;
 extern BMPInfo_t cursor_start;
 extern BMPInfo_t cursor_end;
 
-extern volatile window_t* window_list[MAX_WINDOWS];
-extern window_t current_window;
+extern window_t* window_list[MAX_WINDOWS];
+
 
 void StartGUI()
 {
@@ -41,8 +42,6 @@ void StartGUI()
 
     while(!keyPressed(VK_ESCAPE))
     {
-        memset(DOUBLEBUFFER, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
-
         if(mouse_bl == 1)
         {
             vbe_drawString("left Mouse Button Pressed", 10, 2);
@@ -50,23 +49,22 @@ void StartGUI()
             if(mouse_x > button.x && mouse_x < (button.x + button.width) && mouse_y > button.y && mouse_y < (button.y + button.height))
             {
                 DestroyWindow(1);
-                vbe_clearScreen();
             }
-/*
-            for(int i = 0; i < 5; i++)
+
+            for(int i = 1; i < 5; i++)
             {
-                if(mouse_x > window_list[i]->CloseButton.x && mouse_x < (window_list[i]->CloseButton.x + window_list[i]->CloseButton.width) && mouse_y > button.y && mouse_y < (window_list[i]->CloseButton.y + window_list[i]->CloseButton.height))
+                if(window_list[i])
                 {
-                    DestroyWindow(i);
-                    vbe_clearScreen();
+                    if(mouse_x > window_list[i]->CloseButton.x && mouse_x < (window_list[i]->CloseButton.x + window_list[i]->CloseButton.width) && mouse_y > button.y && mouse_y < (window_list[i]->CloseButton.y + window_list[i]->CloseButton.height))
+                    {
+                        DestroyWindow(i);
+                    }
+                    else if(mouse_x > window_list[i]->x && mouse_x < (window_list[i]->x + window_list[i]->width) && mouse_y > (window_list[i]->y) && mouse_y < (window_list[i]->y + 20))
+                    {
+                        window_list[i]->x = mouse_x;
+                        window_list[i]->y = mouse_y;
+                    }
                 }
-            }
-*/
-            if(mouse_x > window_list[1]->x && mouse_x < (window_list[1]->x + window_list[1]->width) && mouse_y > (window_list[1]->y) && mouse_y < (window_list[1]->y + 20))
-            {
-                window_list[1]->x = mouse_x;
-                window_list[1]->y = mouse_y;
-                vbe_clearScreen();
             }
         }
 
@@ -84,17 +82,24 @@ void StartGUI()
         }
 
         vbe_drawString("Press ESC to Exit!", 10, 2);
-        vbe_flipScreen(DOUBLEBUFFER);
+        vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
+        vbe_flipScreen();
     }
+
+    EndGUI();
 }
 
 void EndGUI()
 {
-    // DestroyWindow(window);
+    for(int i = 1; i < MAX_WINDOWS; i++)
+    {
+        if(window_list[i] != 0)
+            DestroyWindow(i);
+    }
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

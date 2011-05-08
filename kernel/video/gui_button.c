@@ -5,6 +5,9 @@
 
 #include "gui_button.h"
 #include "vbe.h"
+#include "kheap.h"
+#include "util.h"
+
 
 BGRA_t BUTTON_COLOUR = {128, 128, 128, 0};
 BGRA_t BUTTON_COLOUR_BORDER = {195, 195, 195, 0};
@@ -16,8 +19,8 @@ button_t CreateButton(uint16_t x, uint16_t y, uint16_t width, uint16_t height, c
     button.y = y;
     button.width = width;
     button.height = height;
-    // strcpy(button.label, label);
-    button.label = label;
+    button.label = malloc(strlen(label), 0, "button.label");
+    strcpy(button.label, label);
 
     return button;
 }
@@ -30,7 +33,7 @@ void DrawButton(button_t* button)
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

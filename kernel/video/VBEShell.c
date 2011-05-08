@@ -21,7 +21,6 @@
 uint32_t ypos = 0;
 
 extern ModeInfoBlock_t mib;
-extern uint8_t* DOUBLEBUFFER;
 
 void eraseFirst(char* string)
 {
@@ -72,8 +71,6 @@ int startVBEShell()
     {
         memset(entryCache, 0, MAX_CHAR_PER_LINE+1);
     }
-
-    memset(DOUBLEBUFFER, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
 
     while (true)
     {
@@ -250,7 +247,7 @@ int startVBEShell()
                     break;
             } //switch
             drawEntryVBE((curEntry == -1 ? entry : entryCache[curEntry]));
-            vbe_flipScreen(DOUBLEBUFFER);
+            vbe_flipScreen();
         } //while
 
 EVALUATION: // evaluation of entry
@@ -260,14 +257,14 @@ EVALUATION: // evaluation of entry
             // puts("Implemented Instructions: hi, help, ?, fdir, fformat and reboot\n");
             vbe_drawString("Implemented Instructions: hi, help, ?, fdir, fformat, exit and reboot\n", 0, ypos);
             ypos += 16;
-            vbe_flipScreen(DOUBLEBUFFER);
+            vbe_flipScreen();
         }
         else if(strcmp(entry, "hi") == 0)
         {
             // puts("I am PrettyOS. Always at your service!\n");
             vbe_drawString("I am PrettyOS. Always at your service!\n", 0, ypos);
             ypos += 16;
-            vbe_flipScreen(DOUBLEBUFFER);
+            vbe_flipScreen();
         }
         else if(strcmp(entry, "fdir") == 0)
         {
@@ -303,7 +300,7 @@ EVALUATION: // evaluation of entry
         {
             // puts("file is being searched...");
             vbe_drawString("file is being searched...", 0, ypos);
-            vbe_flipScreen(DOUBLEBUFFER);
+            vbe_flipScreen();
             // Adding ending .elf
             if(entry[strlen(entry)-4] != '.') // No ending, append ".elf"
             {
@@ -317,13 +314,13 @@ EVALUATION: // evaluation of entry
                     // puts("Successfull.\n");
                     vbe_drawString("Successfull.\n", 0, ypos);
                     ypos += 16;
-                    vbe_flipScreen(DOUBLEBUFFER);
+                    vbe_flipScreen();
                     break;
                 case CE_INVALID_FILENAME:
                     // puts("The path was not formatted well.\n");
                     vbe_drawString("The path was not formatted well.\n", 0, ypos);
                     ypos += 16;
-                    vbe_flipScreen(DOUBLEBUFFER);
+                    vbe_flipScreen();
                     break;
                 case CE_FILE_NOT_FOUND:
                     // puts("The file was not found. ");
@@ -335,7 +332,7 @@ EVALUATION: // evaluation of entry
                     strcat(newPath, entry);
                     // printf("Trying now %s.\n", newPath);
                     vbe_drawString("Trying now %s.\n", 0, ypos);
-                    vbe_flipScreen(DOUBLEBUFFER);
+                    vbe_flipScreen();
                     // if(execute(newPath) != CE_GOOD)
                         // puts("Not found on 1:/.\n");
                     break;
@@ -343,7 +340,7 @@ EVALUATION: // evaluation of entry
                     // printf("File load was not successful. Error Code: %u\n", error);
                     vbe_drawString("File load was not successful. Error Code: %u\n", 0, ypos);
                     ypos += 16;
-                    vbe_flipScreen(DOUBLEBUFFER);
+                    vbe_flipScreen();
                     break;
             }
         }

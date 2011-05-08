@@ -8,6 +8,7 @@
 #include "kheap.h"
 #include "util.h"
 
+
 extern ModeInfoBlock_t mib;
 
 extern BMPInfo_t bmp_start;
@@ -15,8 +16,6 @@ extern BMPInfo_t bmp_end;
 extern BMPInfo_t cursor_start;
 extern BMPInfo_t cursor_end;
 
-BGRA_t* double_buffer;
-// extern u32int* double_buffer;
 
 static const BGRA_t WINDOW_COLOUR = {2, 255, 57, 0};
 static const BGRA_t WINDOW_COLOUR_BACKGROUND = {191, 227, 197, 0};
@@ -25,7 +24,8 @@ static const BGRA_t WINDOW_COLOUR_TOPBAR = {253, 100, 100, 0};
 static const BGRA_t WINDOW_COLOUR_FOCUS_TOPBAR = {127, 255, 0, 0};
 
 static volatile window_t* current_window = 0;
-volatile window_t* window_list[MAX_WINDOWS];
+window_t* window_list[MAX_WINDOWS];
+
 
 void init_window_manager()
 {
@@ -39,7 +39,7 @@ void init_window_manager()
     desktop->height = mib.YResolution;
     desktop->parentid = 0;
     desktop->id = HWND_DESKTOP;
-    desktop->data = double_buffer;
+    //desktop->data = double_buffer;
 
     window_list[desktop->id] = desktop;
 
@@ -104,7 +104,7 @@ void DrawWindow(uint16_t id)
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -9,12 +9,12 @@
 
 // This values are hardcoded adresses from documentation/vidswtch.map
 #define VM86_SETDISPLAYSTART   ((void*)0x100)
-#define VM86_GETDISPLAYSTART   ((void*)0x113)
-#define VM86_SET8BITPALETTE    ((void*)0x128)
-#define VM86_SWITCH_TO_TEXT    ((void*)0x133)
-#define VM86_SWITCH_TO_VIDEO   ((void*)0x141)
-#define VM86_VGAINFOBLOCK      ((void*)0x150)
-#define VM86_MODEINFOBLOCK     ((void*)0x15E)
+#define VM86_GETDISPLAYSTART   ((void*)0x115)
+#define VM86_SET8BITPALETTE    ((void*)0x12A)
+#define VM86_SWITCH_TO_TEXT    ((void*)0x135)
+#define VM86_SWITCH_TO_VIDEO   ((void*)0x143)
+#define VM86_VGAINFOBLOCK      ((void*)0x152)
+#define VM86_MODEINFOBLOCK     ((void*)0x160)
 
 // SuperVGA information block
 typedef struct
@@ -148,12 +148,11 @@ void vbe_readVIB();
 void vbe_readMIB(uint16_t mode);
 ModeInfoBlock_t* getCurrentMIB();
 
-void setDisplayStart(uint16_t *xpos, uint16_t *ypos);
+void setDisplayStart(uint16_t xpos, uint16_t ypos);
 uint32_t getDisplayStart();
 
 void setVideoMemory(); // Allocate the videomemory from the graphiccard
-void allocDoubleBuffer(); //Allocate the Doublebuffer
-void vbe_flipScreen(uint8_t* Buffer);
+void vbe_flipScreen();
 
 void printPalette();
 
