@@ -50,14 +50,48 @@ static bool nopm_action(PM_STATES state)
 extern uintptr_t apm_com_start;
 extern uintptr_t apm_com_end;
 // This values are hardcoded adresses from documentation/apm.map
-#define APM_CHECK    ((void*)0x220)
-#define APM_SETSTATE ((void*)0x240)
+#define APM_CHECK    ((void*)0x200)
+#define APM_INSTALL  ((void*)0x22A)
+#define APM_SETSTATE ((void*)0x282)
 
 bool apm_install()
 {
     memcpy((void*)0x200, &apm_com_start, (uintptr_t)&apm_com_end - (uintptr_t)&apm_com_start);
+
+    // Check for APM
     waitForTask(create_vm86_task(APM_CHECK), 0);
-    return(*((uint16_t*)0x1300) != 0);
+    if(*((uint8_t*)0x1300) != 0) // Error
+    {
+        printf("\nAPM: Not available");
+        return(false);
+    }
+    printf("\nAPM: Version: %u.%u, Control string: %c%c, Flags: %u", *((uint8_t*)0x1302), *((uint8_t*)0x1301), *((uint8_t*)0x1304), *((uint8_t*)0x1303), *((uint16_t*)0x1305));
+
+    // Activate APM
+    waitForTask(create_vm86_task(APM_INSTALL), 0);
+    switch(*((uint8_t*)0x1300)) {
+        case 0:
+            printf("\nAPM: Successfully activated");
+            return(true);
+            break;
+        case 1:
+            printf("\nAPM: Error while disconnecting, %y", *((uint8_t*)0x1301));
+            return(false);
+            break;
+        case 2:
+            printf("\nAPM: Error while connecting, %y", *((uint8_t*)0x1301));
+            return(false);
+            break;
+        case 3:
+            printf("\nAPM: Error while handling out APM version, %y", *((uint8_t*)0x1301));
+            return(false);
+            break;
+        case 4:
+            printf("\nAPM: Error while activating, %y", *((uint8_t*)0x1301));
+            return(false);
+            break;
+    }
+    return(false);
 }
 
 static bool apm_action(PM_STATES state)

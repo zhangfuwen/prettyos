@@ -20,8 +20,8 @@
 #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen. Disabled per default.
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 
-/// #define KEYMAP_US     // US keyboard
-#define KEYMAP_GER    // German keyboard
+/// #define KEYMAP US     // US keyboard
+#define KEYMAP GER    // German keyboard
 
 extern const char* const version; // PrettyOS Version string
 extern system_t system;           // Informations about the operating system

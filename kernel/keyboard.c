@@ -8,7 +8,7 @@
 #include "task.h"
 #include "irq.h"
 
-#ifdef KEYMAP_GER
+#if KEYMAP == GER
 #include "keyboard_GER.h"
 #else //US-Keyboard if nothing else is defined
 #include "keyboard_US.h"
@@ -41,6 +41,14 @@ void keyboard_initKQ(keyqueue_t* KQ)
     KQ->pTail = KQ->buffer;
     KQ->count = 0;
     KQ->mutex = mutex_create();
+}
+
+static uint8_t getScancode()
+{
+    uint8_t scancode = 0;
+    if (inportb(0x64)&1)
+        scancode = inportb(0x60);   // 0x60: get scan code from the keyboard
+    return(scancode);
 }
 
 static void setKeyState(uint8_t scanCode, bool pressed)
@@ -79,13 +87,7 @@ static void setKeyState(uint8_t scanCode, bool pressed)
 
 static uint8_t FetchAndAnalyzeScancode()
 {
-    if (inportb(0x64)&1)
-        curScan = inportb(0x60);   // 0x60: get scan code from the keyboard
-
-    // ACK: toggle bit 7 at port 0x61
-    uint8_t port_value = inportb(0x61);
-    outportb(0x61, port_value |  0x80); // 0->1
-    outportb(0x61, port_value &~ 0x80); // 1->0
+    curScan = getScancode();
 
     if (curScan & 0x80) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
     {
@@ -203,10 +205,8 @@ void keyboard_handler(registers_t* r)
     }
 }
 
-uint8_t keyboard_getChar() // get a character <--- TODO: make it POSIX like
+uint8_t keyboard_getChar()
 {
-    /// TODO: should only return character, if keystroke was entered
-
     if (currentConsole->KQ.count > 0)
     {
         mutex_lock(currentConsole->KQ.mutex);

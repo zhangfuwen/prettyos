@@ -1,8 +1,7 @@
 # Define OS-dependant Tools
 NASM= nasm
-
 ifeq ($(OS),WINDOWS)
-	RM= - del
+	RM= - del /s
 	MV= cmd /c move /Y
 	CC= i586-elf-gcc
 	LD= i586-elf-ld
@@ -37,16 +36,12 @@ ifeq ($(OS),WINDOWS)
 	SHELLDIR= $(USERDIR)\shell
 	USERPROGDIR= $(USERDIR)\other_userprogs
 	USERRDDIR= $(USERDIR)\init_rd_img
-	USERTESTC= $(USERDIR)\user_test_c
-	USERTESTCPP= $(USERDIR)\user_test_cpp
 	USERTOOLS= $(USERDIR)\user_tools
 	STDLIBC= $(USERDIR)\stdlibc
 else
 	SHELLDIR= $(USERDIR)/shell
 	USERPROGDIR= $(USERDIR)/other_userprogs
 	USERRDDIR= $(USERDIR)/init_rd_img
-	USERTESTC= $(USERDIR)/user_test_c
-	USERTESTCPP= $(USERDIR)/user_test_cpp
 	USERTOOLS= $(USERDIR)/user_tools
 	STDLIBC= $(USERDIR)/stdlibc
 endif
@@ -68,6 +63,7 @@ vpath %.o $(OBJDIR)
 
 # targets to build PrettyOS
 .PHONY: clean all shell other_userprogs userlibs
+.SILENT: shell other_userprogs userlibs
 
 all: FloppyImage.img
 
@@ -88,14 +84,14 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(
 #	$(STRIP) $(KERNELDIR)/KERNEL.BIN
 
 shell: userlibs
-	$(MAKE) -C $(SHELLDIR)
+	$(MAKE) --no-print-directory -C $(SHELLDIR)
 
 other_userprogs: userlibs
-	$(MAKE) -C $(USERPROGDIR)
+	$(MAKE) --no-print-directory -C $(USERPROGDIR)
 
 userlibs:
-	$(MAKE) -C $(STDLIBC)
-	$(MAKE) -C $(USERTOOLS)
+	$(MAKE) --no-print-directory -C $(STDLIBC)
+	$(MAKE) --no-print-directory -C $(USERTOOLS)
 
 $(KERNELDIR)/initrd.dat: shell
 	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/SHELL.ELF shell
@@ -109,37 +105,23 @@ clean:
 ifeq ($(OS),WINDOWS)
 	$(RM) $(STAGE1DIR)\boot.bin
 	$(RM) $(STAGE2DIR)\BOOT2.BIN
-	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
 	$(RM) $(KERNELDIR)\KERNEL.BIN
-	$(RM) $(OBJDIR)\$(KERNELDIR)\cdi\*.o
-	$(RM) $(OBJDIR)\$(KERNELDIR)\storage\*.o
-	$(RM) $(OBJDIR)\$(KERNELDIR)\filesystem\*.o
-	$(RM) $(OBJDIR)\$(KERNELDIR)\video\*.o
-	$(RM) $(OBJDIR)\$(KERNELDIR)\network\*.o
-	$(RM) $(OBJDIR)\$(KERNELDIR)\netprotocol\*.o
-	$(RM) $(OBJDIR)\$(KERNELDIR)\audio\*.o
 	$(RM) $(KERNELDIR)\initrd.dat
+	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
 	$(RM) $(USERDIR)\vm86\VIDSWTCH.COM
 	$(RM) $(USERDIR)\vm86\APM.COM
 	$(RM) documentation\*.map
 else
 	$(RM) $(STAGE1DIR)/boot.bin
 	$(RM) $(STAGE2DIR)/BOOT2.BIN
-	$(RM) $(OBJDIR)/$(KERNELDIR)/*.o
 	$(RM) $(KERNELDIR)/KERNEL.BIN
-	$(RM) $(OBJDIR)/$(KERNELDIR)/cdi/*.o
-	$(RM) $(OBJDIR)/$(KERNELDIR)/storage/*.o
-	$(RM) $(OBJDIR)/$(KERNELDIR)/filesystem/*.o
-	$(RM) $(OBJDIR)/$(KERNELDIR)/video/*.o
-	$(RM) $(OBJDIR)/$(KERNELDIR)/network/*.o
-	$(RM) $(OBJDIR)/$(KERNELDIR)/netprotocol/*.o
-	$(RM) $(OBJDIR)/$(KERNELDIR)/audio/*.o
 	$(RM) $(KERNELDIR)/initrd.dat
+	find $(OBJDIR)/$(KERNELDIR) -name '*.o' -delete
 	$(RM) $(USERDIR)/vm86/VIDSWTCH.COM
 	$(RM) $(USERDIR)/vm86/APM.COM
 	$(RM) documentation/*.map
 endif
-	$(MAKE) -C $(SHELLDIR) clean
-	$(MAKE) -C $(USERPROGDIR) clean
-	$(MAKE) -C $(STDLIBC) clean
-	$(MAKE) -C $(USERTOOLS) clean
+	$(MAKE) --no-print-directory -C $(SHELLDIR) clean
+	$(MAKE) --no-print-directory -C $(USERPROGDIR) clean
+	$(MAKE) --no-print-directory -C $(STDLIBC) clean
+	$(MAKE) --no-print-directory -C $(USERTOOLS) clean

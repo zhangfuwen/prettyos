@@ -15,5 +15,4 @@ SECTIONS
     .cdi    : { _cdi_start = .;    *(.cdi)              }
     _stop_cdi_drivers = .;
     _kernel_end = .;
-    _end = .;
 }

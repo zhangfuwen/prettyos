@@ -702,10 +702,6 @@ FS_ERROR FAT_fclose(file_t* file)
             return CE_EOF;
         }
 
-        // update the time
-        // ...
-        // TODO
-        // ...
         updateTimeStamp(dir);
 
         dir->FileSize = file->size;
@@ -755,7 +751,7 @@ FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count)
         }
         else
         {
-            if (pos == SECTOR_SIZE)
+            if (pos == volume->disk->sectorSize)
             {
                 pos = 0;
                 fileptr->sec++;
@@ -1014,7 +1010,7 @@ static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
 
     if (globalBufferMemSet0 == false)
     {
-        memset(volume->part->buffer, 0, SECTOR_SIZE);
+        memset(volume->part->buffer, 0, volume->part->disk->sectorSize);
         globalBufferMemSet0 = true;
     }
 
@@ -2237,7 +2233,7 @@ static void writeBootsector(partition_t* part, uint8_t* sector)
 #define ROOT_DIR_ENTRIES 224
 #include "storage/flpydsk.h"
 
-FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependances. Make it working for FAT16 and FAT32.
+FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependancies. Make it working for FAT16 and FAT32.
 {
     /*free(part->data);
     FAT_partition_t* fpart = malloc(sizeof(FAT_partition_t), 0, "FAT_partition_t");
