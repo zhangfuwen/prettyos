@@ -4,15 +4,12 @@
 */
 
 #include "icmp.h"
-#include "network/rtl8139.h"
-#include "ipv4.h"
+#include "network/network.h"
 #include "video/console.h"
 #include "util.h"
 
-extern uint8_t MAC_address[6];
-extern uint8_t IP_address[4];
 
-void ICMPAnswerPing(void* data, uint32_t length)
+void ICMPAnswerPing(network_adapter_t* adapter, void* data, uint32_t length)
 {
     icmppacket_t* rec = data;
     size_t icmp_data_length = ntohs(rec->ip.length) - (sizeof(rec->ip) + sizeof(rec->icmp));
@@ -22,7 +19,7 @@ void ICMPAnswerPing(void* data, uint32_t length)
     for (uint32_t i = 0; i < 6; i++)
     {
         icmp->eth.recv_mac[i] = rec->eth.send_mac[i];
-        icmp->eth.send_mac[i] = MAC_address[i];
+        icmp->eth.send_mac[i] = adapter->MAC_address[i];
     }
 
     icmp->eth.type_len[0] = 0x08;
@@ -31,7 +28,7 @@ void ICMPAnswerPing(void* data, uint32_t length)
     for (uint32_t i = 0; i < 4; i++)
     {
         icmp->ip.destIP[i]   = rec->ip.sourceIP[i];
-        icmp->ip.sourceIP[i] = IP_address[i];
+        icmp->ip.sourceIP[i] = adapter->IP_address[i];
     }
 
     icmp->ip.version        = 4;
@@ -55,7 +52,7 @@ void ICMPAnswerPing(void* data, uint32_t length)
 
     icmp->icmp.checksum = htons(internetChecksum(&icmp->icmp, sizeof(icmp->icmp) + icmp_data_length));
 
-    transferDataToTxBuffer(icmp, sizeof(*icmp) + icmp_data_length);
+    network_sendPacket(adapter, (void*)icmp, sizeof(*icmp) + icmp_data_length);
 }
 
 // compute internet checksum for "count" bytes beginning at location "addr"
@@ -113,7 +110,7 @@ void icmpDebug(void* data, uint32_t length)
     printf("+-------------------------------+\n");
 }
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

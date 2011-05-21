@@ -6,7 +6,7 @@
 
 // http://www.rfc-editor.org/rfc/rfc793.txt <--- TRANSMISSION CONTROL PROTOCOL
 
-#include "network/rtl8139.h"
+#include "network/network.h"
 #include "video/console.h"
 #include "ethernet.h"
 #include "arp.h"
@@ -15,11 +15,8 @@
 #include "tcp.h"
 #include "udp.h"
 
-extern uint32_t BaseAddressRTL8139_MMIO;
-extern uint8_t IP_address[4];
-extern uint8_t MAC_address[6];
 
-void EthernetRecv(void* data, uint32_t length)
+void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
 {
     ethernet_t* eth = (ethernet_t*)data;
     void* udpData;
@@ -42,7 +39,7 @@ void EthernetRecv(void* data, uint32_t length)
         switch(ip->protocol)
         {
             case 1: // icmp
-                ICMPAnswerPing(data, length);
+                ICMPAnswerPing(adapter, data, length);
                 icmpDebug(data, length);
                 break;
             case 4: // ipv4
@@ -105,19 +102,19 @@ void EthernetRecv(void* data, uint32_t length)
                 for (uint8_t i = 0; i < 4; i++) { printf("%u", arp->destIP[i]);   if (i<3) printf("."); }
 
                 // requested IP is our own IP?
-                if ( arp->destIP[0] == IP_address[0] && arp->destIP[1] == IP_address[1] &&
-                     arp->destIP[2] == IP_address[2] && arp->destIP[3] == IP_address[3])
+                if (arp->destIP[0] == adapter->IP_address[0] && arp->destIP[1] == adapter->IP_address[1] &&
+                    arp->destIP[2] == adapter->IP_address[2] && arp->destIP[3] == adapter->IP_address[3])
                 {
                     printf("\n Tx prepared:");
                     arpPacket_t reply;
-                    for (uint32_t i = 0; i < 6; i++)
+                    for (uint8_t i = 0; i < 6; i++)
                     {
-                        reply.eth.recv_mac[i]   = arp->source_mac[i];
-                        reply.eth.send_mac[i]   = MAC_address[i];
+                        reply.eth.recv_mac[i] = arp->source_mac[i];
+                        reply.eth.send_mac[i] = adapter->MAC_address[i];
                     }
                     reply.eth.type_len[0] = 0x08; reply.eth.type_len[1] = 0x06;
 
-                    for (uint32_t i = 0; i < 2; i++)
+                    for (uint8_t i = 0; i < 2; i++)
                     {
                         reply.arp.hardware_addresstype[i] = arp->hardware_addresstype[i];
                         reply.arp.protocol_addresstype[i] = arp->protocol_addresstype[i];
@@ -128,19 +125,19 @@ void EthernetRecv(void* data, uint32_t length)
                     reply.arp.hardware_addresssize = arp->hardware_addresssize;
                     reply.arp.protocol_addresssize = arp->protocol_addresssize;
 
-                    for (uint32_t i = 0; i < 6; i++)
+                    for (uint8_t i = 0; i < 6; i++)
                     {
                         reply.arp.dest_mac[i]   = arp->source_mac[i];
-                        reply.arp.source_mac[i] = *((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + i));
+                        reply.arp.source_mac[i] = adapter->MAC_address[i];//*((uint8_t*)(BaseAddressRTL8139_MMIO + RTL8139_IDR0 + i));
                     }
 
-                    for (uint32_t i = 0; i < 4; i++)
+                    for (uint8_t i = 0; i < 4; i++)
                     {
                         reply.arp.destIP[i]   = arp->sourceIP[i];
-                        reply.arp.sourceIP[i] = IP_address[i];
+                        reply.arp.sourceIP[i] = adapter->IP_address[i];
                     }
 
-                    EthernetSend((void*)&reply, length);
+                    EthernetSend(adapter, (void*)&reply, length);
                 }
                 break;
             case 2: // ARP-Reply
@@ -170,7 +167,7 @@ void EthernetRecv(void* data, uint32_t length)
 }
 
 
-bool EthernetSend(void* data, uint32_t length)
+bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length)
 {
     if (length > 0x700)
     {
@@ -197,11 +194,11 @@ bool EthernetSend(void* data, uint32_t length)
     }
     textColor(0x0F);
 
-    return transferDataToTxBuffer(data, length);
+    return network_sendPacket(adapter, data, length);
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

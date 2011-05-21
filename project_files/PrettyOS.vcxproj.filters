@@ -28,9 +28,6 @@
     <Filter Include="Kernel\include\video">
       <UniqueIdentifier>{b17042ee-d7e0-4a81-94e4-760f5edbeb4c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Kernel\include\storage">
-      <UniqueIdentifier>{eaba32ba-44a1-49b0-b207-82d5793f7e1c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Kernel\include\filesystem">
       <UniqueIdentifier>{51f0e996-d034-4179-b264-f98afb040091}</UniqueIdentifier>
     </Filter>
@@ -60,6 +57,9 @@
     </Filter>
     <Filter Include="Bootloader\Stage 1">
       <UniqueIdentifier>{e01ef0f4-083a-4199-be62-1a6019c67209}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\include\network\storage">
+      <UniqueIdentifier>{eaba32ba-44a1-49b0-b207-82d5793f7e1c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -115,25 +115,25 @@
       <Filter>Kernel\include\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\devicemanager.h">
-      <Filter>Kernel\include\storage</Filter>
+      <Filter>Kernel\include\network\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\ehci.h">
-      <Filter>Kernel\include\storage</Filter>
+      <Filter>Kernel\include\network\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\ehciQHqTD.h">
-      <Filter>Kernel\include\storage</Filter>
+      <Filter>Kernel\include\network\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\flpydsk.h">
-      <Filter>Kernel\include\storage</Filter>
+      <Filter>Kernel\include\network\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\usb_hc.h">
-      <Filter>Kernel\include\storage</Filter>
+      <Filter>Kernel\include\network\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\usb2.h">
-      <Filter>Kernel\include\storage</Filter>
+      <Filter>Kernel\include\network\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\usb2_msd.h">
-      <Filter>Kernel\include\storage</Filter>
+      <Filter>Kernel\include\network\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\video\console.h">
       <Filter>Kernel\include\video</Filter>
@@ -340,6 +340,12 @@
       <Filter>Kernel\include</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\network\pcnet.h">
+      <Filter>Kernel\include\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\network\network.h">
+      <Filter>Kernel\include\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\network\rtl8168.h">
       <Filter>Kernel\include\network</Filter>
     </ClInclude>
   </ItemGroup>
@@ -564,6 +570,12 @@
       <Filter>Kernel\sources</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\network\pcnet.c">
+      <Filter>Kernel\sources\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\network\rtl8168.c">
+      <Filter>Kernel\sources\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\network\network.c">
       <Filter>Kernel\sources\network</Filter>
     </ClCompile>
   </ItemGroup>

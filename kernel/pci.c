@@ -7,8 +7,7 @@
 #include "pci.h"
 #include "list.h"
 #include "storage/usb_hc.h"
-#include "network/rtl8139.h"
-#include "network/pcnet.h"
+#include "network/network.h"
 #include "video/console.h"
 #include "kheap.h"
 
@@ -193,14 +192,7 @@ void pciScan()
                         printf("\n");
 
                         /// network adapters
-                        if (pciDev_Array[number]->deviceID == 0x8139) // RTL 8139
-                        {
-                            install_RTL8139(pciDev_Array[number]);
-                        }
-                        if (pciDev_Array[number]->deviceID == 0x2000 && pciDev_Array[number]->vendorID == 0x1022) // AMD PCNet III (Am79C973)
-                        {
-                            install_AMDPCnet(pciDev_Array[number]);
-                        }
+                        network_installDevice(pciDev_Array[number]);
                     } // if irq != 255
                     ++number;
                 } // if pciVendor

@@ -1,7 +1,7 @@
 #ifndef DHCP_H
 #define DHCP_H
 
-#include "video/console.h"
+#include "network/network.h"
 
 // http://tools.ietf.org/html/rfc2131 <--- Dynamic Host Configuration Protocol
 // ftp://ftp.efo.ru/pub/wiznet/W5100_App%20note_DHCP.pdf
@@ -114,7 +114,7 @@ typedef struct dhcp
 */
 
 void DHCP_AnalyzeServerMessage();
-void DHCP_Discover();
+void DHCP_Discover(network_adapter_t* adapter);
 void DHCP_Request();
 
 /*

@@ -116,7 +116,7 @@ void logHeapRegions()
         regionAddress += regions[i].size;
         if (lineCounter >= 35)
         {
-			waitForKeyStroke();
+            waitForKeyStroke();
             lineCounter = 0;
         }
     }

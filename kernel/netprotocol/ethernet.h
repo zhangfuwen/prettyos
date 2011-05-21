@@ -1,7 +1,8 @@
 #ifndef IPTCPSTACK_H
 #define IPTCPSTACK_H
 
-#include "os.h"
+#include "network/network.h"
+
 
 typedef struct ethernet
 {
@@ -10,7 +11,9 @@ typedef struct ethernet
     uint8_t type_len[2]; // Type(Ethernet 2) or Length(Ethernet 1)
 } __attribute__((packed)) ethernet_t;
 
-void EthernetRecv(void* data, uint32_t length);
-bool EthernetSend(void* data, uint32_t length);
+
+void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length);
+bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length);
+
 
 #endif

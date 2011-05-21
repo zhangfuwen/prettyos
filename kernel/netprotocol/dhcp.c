@@ -3,33 +3,30 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "netprotocol/dhcp.h"
-#include "network/rtl8139.h"
+#include "dhcp.h"
+#include "video/console.h"
 
-extern uint8_t MAC_address[6];
-extern uint8_t IP_address[4];
 
-void DHCP_Discover()
+void DHCP_Discover(network_adapter_t* adapter)
 {
     printf("\nTODO: DHCP Discover\n");
 
     // void* data
-    // uint_32 length
+    // uint32_t length
     // EthernetSend(data, length);
 }
 
 void DHCP_Request()
 {
-
 }
 
 void DHCP_AnalyzeServerMessage()
 {
-
 }
 
+
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

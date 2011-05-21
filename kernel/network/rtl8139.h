@@ -1,8 +1,8 @@
 #ifndef RTL8139_H
 #define RTL8139_H
 
-#include "os.h"
-#include "pci.h"
+#include "network.h"
+
 
 // RTL8139C register definitions
 #define RTL8139_IDR0                0x00        // Mac address
@@ -78,10 +78,20 @@
 #define RTL8139_NETWORK_BUFFER_SIZE 0x2000        // 8 KiB
 
 
+typedef struct
+{
+    network_adapter_t* device;
+	uint8_t* TxBuffer;
+	uint8_t  TxBufferIndex;
+	uint8_t* RxBuffer;
+	uint32_t RxBufferPointer; // TODO: RxBufferPointer and TxBufferIndex do the same exept that one is for Rx and the other for Tx? Check this out and improve implementation if necessary
+} RTL8139_networkAdapter_t;
+
+
 // functions
-bool transferDataToTxBuffer(void* data, uint32_t length);
-void rtl8139_handler(registers_t* r);
-void install_RTL8139(pciDev_t* device);
+bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length);
+void install_RTL8139(network_adapter_t* device);
+void rtl8139_handler(registers_t* data);
 
 
 #endif

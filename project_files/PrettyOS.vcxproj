@@ -116,9 +116,11 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\netprotocol\ipv4.h" />
     <ClInclude Include="..\kernel\netprotocol\tcp.h" />
     <ClInclude Include="..\kernel\netprotocol\udp.h" />
+    <ClInclude Include="..\kernel\network\network.h" />
     <ClInclude Include="..\kernel\network\pcnet.h" />
     <ClInclude Include="..\kernel\network\rtl8139.h" />
     <ClInclude Include="..\kernel\network\rtl8139_eeprom.h" />
+    <ClInclude Include="..\kernel\network\rtl8168.h" />
     <ClInclude Include="..\kernel\os.h" />
     <ClInclude Include="..\kernel\paging.h" />
     <ClInclude Include="..\kernel\pci.h" />
@@ -196,9 +198,11 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\netprotocol\ipv4.c" />
     <ClCompile Include="..\kernel\netprotocol\tcp.c" />
     <ClCompile Include="..\kernel\netprotocol\udp.c" />
+    <ClCompile Include="..\kernel\network\network.c" />
     <ClCompile Include="..\kernel\network\pcnet.c" />
     <ClCompile Include="..\kernel\network\rtl8139.c" />
     <ClCompile Include="..\kernel\network\rtl8139_eeprom.c" />
+    <ClCompile Include="..\kernel\network\rtl8168.c" />
     <ClCompile Include="..\kernel\paging.c" />
     <ClCompile Include="..\kernel\pci.c" />
     <ClCompile Include="..\kernel\power_management.c" />

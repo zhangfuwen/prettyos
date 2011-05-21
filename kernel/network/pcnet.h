@@ -1,7 +1,7 @@
 #ifndef PCNET_H
 #define PCNET_H
 
-#include "pci.h"
+#include "network.h"
 
 
 typedef struct
@@ -18,7 +18,6 @@ typedef struct
     uint32_t transmit_descriptor;
 } __attribute__((packed)) PCNet_initBlock;
 
-
 typedef struct
 {
     uint32_t address;
@@ -27,22 +26,22 @@ typedef struct
     uint32_t avail;  // Can be used by OS. Stores the virtual address of the buffer.
 } __attribute__((packed)) PCNet_descriptor;
 
-
 typedef struct
 {
-	uint16_t          IO_base;
-	uint8_t           MAC_address[6];
-	bool              initialized;
-	PCNet_descriptor* receiveDesc;
-	uint8_t           currentRecDesc;
-	PCNet_descriptor* transmitDesc;
-	uint8_t           currentTransDesc;
-	void*             receiveBuf[8];
-	void*             transmitBuf[8];
+    network_adapter_t* device;
+    bool               initialized;
+    PCNet_descriptor*  receiveDesc;
+    uint8_t            currentRecDesc;
+    PCNet_descriptor*  transmitDesc;
+    uint8_t            currentTransDesc;
+    void*              receiveBuf[8];
+    void*              transmitBuf[8];
 } PCNet_card;
 
 
-void install_AMDPCnet(pciDev_t* dev);
+void install_AMDPCnet(network_adapter_t* dev);
+bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length);
+void PCNet_handler(registers_t* data);
 
 
 #endif
