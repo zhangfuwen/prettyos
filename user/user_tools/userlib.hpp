@@ -7,7 +7,7 @@ extern "C" {
 #include "userlib.h"
 
 void* operator new      (long unsigned int size);
-void* operator new[]    (long unsigned int);
+void* operator new[]    (long unsigned int size);
 void  operator delete   (void* ptr);
 void  operator delete[] (void* ptr);
 }

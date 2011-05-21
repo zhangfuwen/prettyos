@@ -8,6 +8,7 @@
 #include "list.h"
 #include "storage/usb_hc.h"
 #include "network/rtl8139.h"
+#include "network/pcnet.h"
 #include "video/console.h"
 #include "kheap.h"
 
@@ -191,10 +192,14 @@ void pciScan()
                         }
                         printf("\n");
 
-                        /// RTL 8139 network card
-                        if (pciDev_Array[number]->deviceID == 0x8139)
+                        /// network adapters
+                        if (pciDev_Array[number]->deviceID == 0x8139) // RTL 8139
                         {
                             install_RTL8139(pciDev_Array[number]);
+                        }
+                        if (pciDev_Array[number]->deviceID == 0x2000 && pciDev_Array[number]->vendorID == 0x1022) // AMD PCNet III (Am79C973)
+                        {
+                            install_AMDPCnet(pciDev_Array[number]);
                         }
                     } // if irq != 255
                     ++number;
@@ -215,7 +220,7 @@ void pciScan()
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

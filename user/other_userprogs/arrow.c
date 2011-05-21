@@ -4,7 +4,7 @@
 
 #define MAX 2000
 
-uint16_t timeout=MAX, col[10]; 
+uint16_t timeout=MAX, col[10];
 bool point[80][43];
 uint8_t fighterPosition = 0;
 
@@ -12,7 +12,7 @@ void clearLine(uint8_t line)
 {
     iSetCursor(0,line);
     for (uint8_t i=0; i<79; i++)
-    {        
+    {
         putchar(' ');
     }
 }
@@ -22,16 +22,16 @@ void setWeapon(uint8_t x, uint8_t y)
     textColor(0x0F);
     point[x][y] = true;
     iSetCursor(x,y-1);
-    putchar('|'); 
+    putchar('|');
     iSetCursor(x,y);
-    putchar('v'); 
+    putchar('v');
 }
 
 void generateWeapons()
 {
-    clearLine(1); 
+    clearLine(1);
     clearLine(2);
-    
+
     for (uint8_t i=0; i<1; i++)
     {
         col[i] = rand()%79;
@@ -45,20 +45,20 @@ void generateWeapons()
 void deleteWeapons()
 {
     for (uint8_t i=0; i<1; i++)
-    {        
+    {
         col[i] = fighterPosition + 1 + rand()%(79-fighterPosition);
         point[col[i]][42] = false;
         for (uint8_t j=42; j>0; j--)
         {
             iSetCursor(col[i],j);
-            putchar(' '); 
-        }        
+            putchar(' ');
+        }
     }
 }
 
 void generateFighter()
 {
-    clearLine(43); 
+    clearLine(43);
     fighterPosition = 0;
     iSetCursor(fighterPosition,43);
     putchar(1);
@@ -106,7 +106,7 @@ int main()
     srand(getCurrentSeconds()); // initialize random generator
     clearScreen(0);
     textColor(0x0F);
-    
+
     for(uint8_t i = 0; i < 80; i++)
     {
         for(uint8_t j = 0; j < 43; j++)
@@ -126,7 +126,7 @@ int main()
     while(true)
     {
         iSetCursor(25,0);
-        printf("\"ARROW ATTACK\" 0.12 E. Henkes  A=left, R=right, S=del"); 
+        printf("\"ARROW ATTACK\" 0.12 E. Henkes  A=left, R=right, S=del");
         generateWeapons();
         for (uint8_t line=1; line<42; line++)
         {
@@ -153,7 +153,7 @@ int main()
         {
             iSetCursor(9,42);
             printf("GAME OVER - PLAYER LOST!  ");
-            break; 
+            break;
         }
         if (checkWin())
         {
@@ -162,7 +162,7 @@ int main()
             break;
         }
     }
-    
+
     printf("Do you want to quit (Q)");
     while (!keyPressed('Q'));
     return(0);

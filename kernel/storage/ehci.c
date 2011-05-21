@@ -23,8 +23,8 @@ bool USBINTflag;       // signals STS_USBINT reset by EHCI handler
 uint8_t numPorts; // maximum
 
 // Device Manager
-static disk_t      usbDev[16];
-static port_t      port[16];
+static disk_t usbDev[16];
+static port_t port[16];
 
 uintptr_t eecp;
 

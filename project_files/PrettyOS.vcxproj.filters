@@ -339,6 +339,9 @@
     <ClInclude Include="..\kernel\elf.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\network\pcnet.h">
+      <Filter>Kernel\include\network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -559,6 +562,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\executable.c">
       <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\network\pcnet.c">
+      <Filter>Kernel\sources\network</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
