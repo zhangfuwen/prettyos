@@ -58,7 +58,7 @@
     <Filter Include="Bootloader\Stage 1">
       <UniqueIdentifier>{e01ef0f4-083a-4199-be62-1a6019c67209}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Kernel\include\network\storage">
+    <Filter Include="Kernel\include\storage">
       <UniqueIdentifier>{eaba32ba-44a1-49b0-b207-82d5793f7e1c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -115,25 +115,25 @@
       <Filter>Kernel\include\filesystem</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\devicemanager.h">
-      <Filter>Kernel\include\network\storage</Filter>
+      <Filter>Kernel\include\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\ehci.h">
-      <Filter>Kernel\include\network\storage</Filter>
+      <Filter>Kernel\include\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\ehciQHqTD.h">
-      <Filter>Kernel\include\network\storage</Filter>
+      <Filter>Kernel\include\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\flpydsk.h">
-      <Filter>Kernel\include\network\storage</Filter>
+      <Filter>Kernel\include\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\usb_hc.h">
-      <Filter>Kernel\include\network\storage</Filter>
+      <Filter>Kernel\include\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\usb2.h">
-      <Filter>Kernel\include\network\storage</Filter>
+      <Filter>Kernel\include\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\storage\usb2_msd.h">
-      <Filter>Kernel\include\network\storage</Filter>
+      <Filter>Kernel\include\storage</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\video\console.h">
       <Filter>Kernel\include\video</Filter>
@@ -269,9 +269,6 @@
     </ClInclude>
     <ClInclude Include="..\kernel\netprotocol\icmp.h">
       <Filter>Kernel\include\network\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kernel\myOwnData.h">
-      <Filter>Kernel\include</Filter>
     </ClInclude>
     <ClInclude Include="..\kernel\netprotocol\tcp.h">
       <Filter>Kernel\include\network\protocol</Filter>

@@ -13,7 +13,6 @@
 #include "video/console.h"
 #include "netprotocol/ethernet.h"
 #include "netprotocol/dhcp.h"
-#include "myOwnData.h" // IP address, if DHCP does not deliver an IP address
 
 
 typedef enum {
@@ -50,7 +49,10 @@ bool network_installDevice(pciDev_t* device)
     }
 
     if(driver == 0 || driver->install == 0) // PrettyOS does not know the card or the driver is not properly installed
+    {
+        textColor(0x0F);
         return(false);
+    }
 
     printf(" network adapter:");
 
@@ -83,13 +85,29 @@ bool network_installDevice(pciDev_t* device)
         }
     }
 
-    // Fill in IP address. TODO: Detect it via DHCP
-    adapter->IP_address[0] = (My_IP & 0xFF000000) >> 24;
-    adapter->IP_address[1] = (My_IP & 0x00FF0000) >> 16;
-    adapter->IP_address[2] = (My_IP & 0x0000FF00) >>  8;
-    adapter->IP_address[3] = (My_IP & 0x000000FF);
+    textColor(0x0F);
+    printf("\nPlease type in your IP address: ");
+    char temp[30];
+    gets(temp);
+    for(uint8_t i_start = 0, i_end = 0, byte = 0; i_end < 30 && byte < 4; i_end++) {
+        if(temp[i_end] == 0)
+        {
+            adapter->IP_address[byte] = atoi(temp+i_start);
+            break;
+        }
+        if(temp[i_end] == '.')
+        {
+            temp[i_end] = 0;
+            adapter->IP_address[byte] = atoi(temp+i_start);
+            i_start = i_end+1;
+            byte++;
+        }
+    }
 
     adapter->driver->install(adapter);
+
+    // Try to get an IP by DHCP
+    DHCP_Discover(adapter);
 
     textColor(0x0E);
     printf("\nMAC address: %y-%y-%y-%y-%y-%y", adapter->MAC_address[0], adapter->MAC_address[1], adapter->MAC_address[2],
@@ -97,9 +115,6 @@ bool network_installDevice(pciDev_t* device)
 
     printf("\t\tIP address: %u.%u.%u.%u\n", adapter->IP_address[0], adapter->IP_address[1], adapter->IP_address[2], adapter->IP_address[3]);
     textColor(0x0F);
-
-    // Try to get an IP by DHCP
-    DHCP_Discover(adapter);
 
     return(true);
 }

@@ -108,7 +108,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\list.h" />
     <ClInclude Include="..\kernel\memory.h" />
     <ClInclude Include="..\kernel\mouse.h" />
-    <ClInclude Include="..\kernel\myOwnData.h" />
     <ClInclude Include="..\kernel\netprotocol\arp.h" />
     <ClInclude Include="..\kernel\netprotocol\dhcp.h" />
     <ClInclude Include="..\kernel\netprotocol\icmp.h" />

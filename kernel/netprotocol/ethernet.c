@@ -22,30 +22,30 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
     void* udpData;
 
     textColor(0x0E);
-    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500) 
-    { 
-        printf("Ethernet 2. ");         
-        // cf. http://en.wikipedia.org/wiki/EtherType 
+    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
+    {
+        printf("Ethernet 2. ");
+        // cf. http://en.wikipedia.org/wiki/EtherType
         // and http://www.cavebear.com/archive/cavebear/Ethernet/type.html
-        
+
         // now we look for IP or ARP 
         if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IP
         {
             printf("Ethernet type: IP. "); 
             ip_t*  ip  = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
-            
+
             // IP protocol is parsed here and distributed in switch/case
             uint32_t ipHeaderLengthBytes = 4 * ip->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
             printf(" IP version: %u, IP Header Length: %u byte", ip->version, ipHeaderLengthBytes);
             switch(ip->protocol)
             {
                 case 1: // icmp
-                    printf("ICMP. "); 
+                    printf("ICMP. ");
                     ICMPAnswerPing(adapter, data, length);
                     icmpDebug(data, length);
                     break;
                 case 4: // ipv4
-                    printf("IPv4. "); 
+                    printf("IPv4. ");
                     /*
                     tcpheader_t tcp;
                     tcp.sourcePort = 1025;
@@ -56,27 +56,27 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
                     */
                     break;
                 case 6: // tcp
-                    printf("TCP. "); 
+                    printf("TCP. ");
                     break;
                 case 17: // udp
-                    printf("UDP. "); 
+                    printf("UDP. ");
                     udpData = (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLengthBytes);
                     UDPRecv(udpData, length - ipHeaderLengthBytes, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP);
                     break;
                 case 41: // ipv6
-                    printf("IPv6. "); 
+                    printf("IPv6. ");
                     break;
                 default:
-                    printf("other protocol behind IP. "); 
+                    printf("other protocol behind IP. ");
                     break;
             }
         } // end of IP
 
         else if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x06)) // ARP
         {
-            printf("Ethernet type: ARP. "); 
-            arp_t* arp = (arp_t*)((uintptr_t)eth + sizeof(ethernet_t));            
-    
+            printf("Ethernet type: ARP. ");
+            arp_t* arp = (arp_t*)((uintptr_t)eth + sizeof(ethernet_t));
+
             if ((((arp->hardware_addresstype[0] << 8) | arp->hardware_addresstype[1]) ==    1) &&
                 (((arp->protocol_addresstype[0] << 8) | arp->protocol_addresstype[1]) == 2048) &&
                   (arp->hardware_addresssize == 6) &&
@@ -168,9 +168,9 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
         {
             printf("Neither IP nor ARP\n");
             // TODO
-        }    
+        }
     } // end of ethernet 2
-    else                                                     
+    else
     { 
         printf("Ethernet 1. "); 
     }

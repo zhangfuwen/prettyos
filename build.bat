@@ -11,7 +11,7 @@ IF [%1]==[] GOTO Continue
 		qemu-system-x86_64.exe -usbdevice mouse -fda \\.\a: -boot a -localtime
 	)
 	IF [%1]==[qemuimage] (
-		qemu-system-x86_64.exe -usbdevice mouse -fda FloppyImage.bin -boot a -localtime
+		qemu-system-x86_64.exe -usbdevice mouse -fda FloppyImage.img -boot a -localtime
 	)
 	IF [%1]==[disc] (
 		tools\dd if=stage1_bootloader\boot.bin of=\\.\A: bs=512 count=1 --progress
