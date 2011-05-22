@@ -81,9 +81,10 @@ void install_RTL8139(network_adapter_t* dev)
 	device->RxBuffer = malloc(RTL8139_NETWORK_BUFFER_SIZE, 4, "RTL8139-RxBuf");
 	device->RxBufferPointer = 0;
     memset(device->RxBuffer, 0, RTL8139_NETWORK_BUFFER_SIZE); // clear receiving buffer
-	device->TxBuffer = malloc(4096, 4, "RTL8139-TxBuf");
-	device->TxBufferIndex = 0;
 	
+    device->TxBuffer = malloc(4096, 4, "RTL8139-TxBuf");
+	device->TxBufferIndex = 0;
+
 	Rx_tempBuffer = malloc(2048, 0, "RTL8139-TempBuf");
 
     /*
@@ -184,9 +185,12 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %X\n", paging_getPhysAddr(device->TxBuffer));
 
     // test on OWN bit
+    label:
     if (((*((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) >> 13 ) & 1) == false)
     {
         printf("OWN bit = 0. This is unexpected!\n");
+        *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) |= 1<<13; // set OWN bit (Tx config bit 13)     	
+        goto label;
     }
     else
     {
