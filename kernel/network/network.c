@@ -86,10 +86,15 @@ bool network_installDevice(pciDev_t* device)
     }
 
     textColor(0x0F);
+    
+    // Input makes #PF at some computers (gets is source of error #PF)
+    /*
     printf("\nPlease type in your IP address: ");
     char temp[30];
+    memset(temp, 0, 30);
     gets(temp);
-    for(uint8_t i_start = 0, i_end = 0, byte = 0; i_end < 30 && byte < 4; i_end++) {
+    for(uint8_t i_start = 0, i_end = 0, byte = 0; i_end < 30 && byte < 4; i_end++) 
+    {
         if(temp[i_end] == 0)
         {
             adapter->IP_address[byte] = atoi(temp+i_start);
@@ -103,6 +108,13 @@ bool network_installDevice(pciDev_t* device)
             byte++;
         }
     }
+    */
+    // Workaround: TODO
+    adapter->IP_address[0] =  10;
+    adapter->IP_address[1] =   0;
+    adapter->IP_address[2] =   2;
+    adapter->IP_address[3] =  15;
+    // ------------------------------
 
     adapter->driver->install(adapter);
 
