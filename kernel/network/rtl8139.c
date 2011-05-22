@@ -40,7 +40,7 @@ void rtl8139_handler(registers_t* data)
     else if (val & RTL8139_INT_PCIERR)          { puts("System Error");}
     puts("  ");
 
-    // reset interrupts by writing 1 to the bits of offset 003Eh bis 003Fh, Interrupt Status Register
+    // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
     *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS)) = val;
 
     if (!(val & RTL8139_INT_RX_OK))
@@ -132,7 +132,7 @@ void install_RTL8139(network_adapter_t* dev)
         }
     }
 
-    // now we set the RE and TE bits from the "Command Register" to Enable Reciving and Transmission
+    // now we set the RE and TE bits from the "Command Register" to Enable Receiving and Transmission
     // activate transmitter and receiver: Set bit 2 (TE) and 3 (RE) in control register 0x37 (1 byte).
     *((uint8_t*)(dev->MMIO_base + RTL8139_CHIPCMD)) = RTL8139_CMD_RX_ENABLE | RTL8139_CMD_TX_ENABLE;
 
@@ -181,12 +181,34 @@ The process of transmitting a packet with RTL8139:
 bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 {
     memcpy(device->TxBuffer, data, length); // tx buffer
-    printf("Physical Address of Tx Buffer = %X\n", paging_getPhysAddr(device->TxBuffer));
+    printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %X\n", paging_getPhysAddr(device->TxBuffer));
+
+    // test on OWN bit
+    if (((*((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) >> 13 ) & 1) == false)
+    {
+        printf("OWN bit = 0. This is unexpected!\n");
+    }
+    else
+    {
+        printf("OWN bit = 1. This is expected.\n");
+    }
+
+    printf("Transmission should be started now.\n");
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
     *((uint32_t*)(adapter->MMIO_base + RTL8139_TXADDR0   + 4 * device->TxBufferIndex)) = paging_getPhysAddr(device->TxBuffer);
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) = length;
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) = (length|0x3F0000)&0xFFFFDFFF; // bit 13 off, bits 16-21 on
+
+    // test on OWN bit
+    if (((*((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) >> 13 ) & 1) == false)
+    {
+        printf("OWN bit = 0. This starts the PCI operation.\n");
+    }
+    else
+    {
+        printf("OWN bit = 1. This is wrong!\n");
+    }
 
     device->TxBufferIndex++;
     device->TxBufferIndex %= 4;
