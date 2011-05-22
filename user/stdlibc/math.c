@@ -1,5 +1,47 @@
 #include "math.h"
 
+static double yMulLog(double x, double y)
+{
+    double result;
+    __asm__ volatile("fyl2x" : "=t" (result) : "0" (x) , "u" (y));
+    return result;
+}
+
+static double pow2x(double x)
+{
+    double rndResult;
+    double powResult = 1;
+    double result;
+    double fl = 0;
+    int i;
+
+    __asm__ volatile("frndint" : "=t" (rndResult) :"0"(x));
+
+    if(rndResult > x)
+    {
+        fl = x - (rndResult-1);
+        rndResult -=1.0;
+    }
+    else if( rndResult < x)
+    {
+        fl = x - rndResult;
+    }
+
+
+    for(i=1; i <= rndResult; i++)
+    {
+        powResult *= 2;
+    }
+    __asm__ volatile("f2xm1" : "=t" (result) : "0" (fl));
+
+    if(x >=0)
+    {
+        return( result + 1.0 ) * powResult;
+    }
+        return 1 / ( ( result + 1.0 ) * powResult);
+}
+
+
 int abs(int n)
 {
     return(n<0?-n:n);
@@ -11,9 +53,27 @@ double fabs(double x)
     return result;
 }
 
-double ceil(double x); /// TODO
-double floor(double x); /// TODO
+double ceil(double x)
+{
+    double result;
+    __asm__ volatile("frndint" :"=t" (result) : "0"(x));
+    if( result < x)
+    {
+        return result + 1;
+    }
+    return result;
+}
+double floor(double x)
+{
+    double result;
+    __asm__ volatile("frndint" :"=t" (result) : "0"(x));
+    if( result > x)
+    {
+        return result - 1;
+    }
 
+    return result;
+}
 double fmod(double numerator, double denominator); /// TODO
 
 double cos(double x)
@@ -76,13 +136,60 @@ double sqrt(double x)
     return result;
 }
 
-double exp(double x); /// TODO
-double frexp(double x, int* exp); /// TODO
-double ldexp(double x, int exp); /// TODO
+double exp(double x)
+{
+    double result;
+    __asm__ volatile("fldl2e": "=t" ( result) );
+    return pow(pow2x(result),x);
+}
 
-double log(double x); /// TODO
-double log10(double x); /// TODO
+double frexp(double x, int* exponent)
+{
+    int sign = 1;
+    if(x < 0)
+    {
+        x *=-1;
+        sign = -1;
+
+    }
+    double e = log(x);
+    int po2x;
+    *exponent =(int) ceil(e);
+    if(*exponent == e)
+    {
+        return 1.0;
+    }
+    po2x = (int) pow2x((double)*exponent);
+    return (x / po2x) *sign;
+}
+double ldexp(double x, int exponent); /// TODO
+
+double log(double x)
+{
+    if(x <= 0)
+    {
+        return NAN;
+    }
+    return yMulLog(x,1.0);
+}
+double log10(double x)
+{
+    if(x <= 0)
+    {
+        return NAN;
+    }
+    return (yMulLog(x,1.0) / yMulLog(10.0,1.0));
+}
 
 double modf(double x, double* intpart); /// TODO
 
-double pow(double base, double exponent); /// TODO
+double pow(double base, double exponent)
+{
+    int isOdd = 1;
+    if(base < 0)
+    {
+        isOdd = (int) floor(exponent) % 2 ? -1: 1;
+        base *=-1;
+    }
+    return isOdd * pow2x(yMulLog(base,exponent));
+}

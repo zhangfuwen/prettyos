@@ -32,8 +32,8 @@ double atan2(double x, double y);
 double sqrt(double x);
 
 double exp(double x);
-double frexp(double x, int* exp);
-double ldexp(double x, int exp);
+double frexp(double x, int* exponent);
+double ldexp(double x, int exponent);
 
 double log(double x);
 double log10(double x);
