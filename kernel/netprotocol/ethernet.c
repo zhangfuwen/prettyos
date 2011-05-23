@@ -28,10 +28,10 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
         // cf. http://en.wikipedia.org/wiki/EtherType
         // and http://www.cavebear.com/archive/cavebear/Ethernet/type.html
 
-        // now we look for IP or ARP 
+        // now we look for IP or ARP
         if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IP
         {
-            printf("Ethernet type: IP. "); 
+            printf("Ethernet type: IP. ");
             ip_t*  ip  = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
 
             // IP protocol is parsed here and distributed in switch/case
@@ -171,8 +171,8 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
         }
     } // end of ethernet 2
     else
-    { 
-        printf("Ethernet 1. "); 
+    {
+        printf("Ethernet 1. ");
     }
 
     printf("\n");

@@ -1,5 +1,6 @@
 #include "math.h"
 
+
 static double yMulLog(double x, double y)
 {
     double result;
@@ -38,7 +39,7 @@ static double pow2x(double x)
     {
         return( result + 1.0 ) * powResult;
     }
-        return 1 / ( ( result + 1.0 ) * powResult);
+    return 1 / ( ( result + 1.0 ) * powResult);
 }
 
 

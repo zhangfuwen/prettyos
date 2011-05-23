@@ -81,10 +81,10 @@
 typedef struct
 {
     network_adapter_t* device;
-	uint8_t* TxBuffer;
-	uint8_t  TxBufferIndex;
-	uint8_t* RxBuffer;
-	uint32_t RxBufferPointer; // TODO: RxBufferPointer and TxBufferIndex do the same exept that one is for Rx and the other for Tx? Check this out and improve implementation if necessary
+    uint8_t* TxBuffer;
+    uint8_t  TxBufferIndex;
+    uint8_t* RxBuffer;
+    uint32_t RxBufferPointer;
 } RTL8139_networkAdapter_t;
 
 

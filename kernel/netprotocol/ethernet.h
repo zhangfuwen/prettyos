@@ -4,7 +4,7 @@
 #include "network/network.h"
 
 
-typedef struct ethernet
+typedef struct
 {
     uint8_t recv_mac[6];
     uint8_t send_mac[6];

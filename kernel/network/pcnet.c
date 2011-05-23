@@ -153,10 +153,31 @@ static void PCNet_receive()
 
 bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 {
-	textColor(0x0C);
-	printf("\nPCNet: Send not implemented yet.");
-	textColor(0x0F);
-	return(true);
+    printf("\nPCNET SEND PACKET");
+    PCNet_card* pcnet = adapter->data;
+
+    //Achtung, Beginn eines kritischen Abschnitts!
+    cli();
+    if (pcnet->currentTransDesc > 7)
+        pcnet->currentTransDesc = 0;
+    uint8_t current_descriptor = pcnet->currentTransDesc++;
+    if (current_descriptor == 7) // pcnet->currentTransDesc ist also 8
+        pcnet->currentTransDesc = 0;
+    sti();
+    //Ende des Abschnitts
+
+    if (length > 1518) // Maximale Länge eines Ethernetframes
+        length = 1518;
+
+    //ncard->linear_transmit_buffer enthält die lineare Adresse des Puffers
+    memcpy(pcnet->transmitBuf[current_descriptor], data, length);
+    //Die physische Adresse (also ncard->physical_transmit_buffer[current_descriptor]) sollte schon bei der
+    //Initialisierung in das „address“-Feld geschrieben worden sein
+    pcnet->transmitDesc[current_descriptor].flags2 = 0;
+    pcnet->transmitDesc[current_descriptor].flags = 0x8030F000 | ((-length) & 0x7FF);
+    writeCSR(pcnet, 0, 0x48);
+
+    return(true);
 }
 
 void PCNet_handler(registers_t* data)
