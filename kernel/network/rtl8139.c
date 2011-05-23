@@ -186,10 +186,10 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 
     // test on OWN bit
     label:
-    if (((*((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) >> 13 ) & 1) == false)
+    if (((*((uint32_t*)( (uint32_t) adapter->MMIO_base + RTL8139_TXSTATUS0 + (device->TxBufferIndex << 2))) >> 13 ) & 1) == false)
     {
         printf("OWN bit = 0. This is unexpected!\n");
-        *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) |= 1<<13; // set OWN bit (Tx config bit 13)     	
+        *((uint32_t*)( (uint32_t) adapter->MMIO_base + RTL8139_TXSTATUS0 + (device->TxBufferIndex << 2))) |= 1<<13; // set OWN bit (Tx config bit 13)     	
         goto label;
     }
     else
@@ -201,11 +201,11 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXADDR0   + 4 * device->TxBufferIndex)) = paging_getPhysAddr(device->TxBuffer);
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) = (length|0x3F0000)&0xFFFFDFFF; // bit 13 off, bits 16-21 on
+    *((uint32_t*)( (uint32_t) adapter->MMIO_base + RTL8139_TXADDR0   + (device->TxBufferIndex << 2))) = paging_getPhysAddr(device->TxBuffer);
+    *((uint32_t*)( (uint32_t) adapter->MMIO_base + RTL8139_TXSTATUS0 + (device->TxBufferIndex << 2))) = length & (0x3F0000 | 256<<11); // bit 13 off, bits 16-21 setup
 
     // test on OWN bit
-    if (((*((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) >> 13 ) & 1) == false)
+    if (((*((uint32_t*)( (uint32_t) adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) >> 13 ) & 1) == false)
     {
         printf("OWN bit = 0. This starts the PCI operation.\n");
     }
