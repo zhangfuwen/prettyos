@@ -181,16 +181,18 @@ The process of transmitting a packet with RTL8139:
 */
 bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 {
-    memcpy(device->TxBuffer, data, length); // tx buffer
-    printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %X\n", paging_getPhysAddr(device->TxBuffer));
+    RTL8139_networkAdapter_t* rAdapter = adapter->data;
+
+    memcpy(rAdapter->TxBuffer, data, length); // tx buffer
+    printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %X\n", paging_getPhysAddr(rAdapter->TxBuffer));
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXADDR0   + 4 * device->TxBufferIndex)) = paging_getPhysAddr(device->TxBuffer);
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * device->TxBufferIndex)) = length & (0x3F0000 | 256<<11);
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXADDR0   + 4 * rAdapter->TxBufferIndex)) = paging_getPhysAddr(rAdapter->TxBuffer);
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * rAdapter->TxBufferIndex)) = length;
 
-    device->TxBufferIndex++;
-    device->TxBufferIndex %= 4;
+    rAdapter->TxBufferIndex++;
+    rAdapter->TxBufferIndex %= 4;
 
     printf("packet sent.\n");
     return true;
