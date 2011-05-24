@@ -14,11 +14,60 @@
 #include "icmp.h"
 #include "tcp.h"
 #include "udp.h"
+#include "util.h"
 
 
 void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
 {
     ethernet_t* eth = (ethernet_t*)data;
+
+    uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
+
+    // output ethernet packet
+
+    textColor(0x0D); printf("\tLength: ");
+    textColor(0x03); printf("%d", length);
+
+    textColor(0x0D); printf("\nMAC Receiver: "); textColor(0x03);
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        printf("%y ", eth->recv_mac[i]);
+    }
+
+    textColor(0x0D); printf("MAC Transmitter: "); textColor(0x03);
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        printf("%y ", eth->send_mac[i]);
+    }
+
+    textColor(0x0D);
+    printf("\nEthernet: ");
+
+    textColor(0x03);
+    if (ethernetType <= 1500) { printf("type 1, "); }
+    else                      { printf("type 2, "); }
+
+    textColor(0x0D);
+    if (ethernetType <= 1500) { printf("Length: "); }
+    else                      { printf("Type: ");   }
+
+    textColor(0x03);
+    for (uint8_t i = 0; i < 2; i++)
+    {
+        printf("%y ", eth->type_len[i]);
+    }
+
+    uint32_t printlength = max(length, 80);
+    printf("\n");
+
+    for (uint32_t i = sizeof(ethernet_t); i <= printlength; i++)
+    {
+        printf("%y ", ((uint8_t*)data)[i]);
+    }
+    textColor(0x0F);
+    printf("\n");
+
+
     void* udpData;
 
     textColor(0x0E);

@@ -138,59 +138,7 @@ bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t leng
 
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length) // Called by driver
 {
-    uint32_t ethernetType = (buffer[16] << 8) + buffer[17]; // Big Endian
-
-    // output receiving buffer
-    textColor(0x0D);
-    printf("\nFlags: ");
-    textColor(0x03);
-    for (uint8_t i = 0; i < 2; i++)
-    {
-        printf("%y ", buffer[i]);
-    }
-
-    textColor(0x0D); printf("\tLength: ");
-    textColor(0x03); printf("%d", length);
-
-    textColor(0x0D); printf("\nMAC Receiver: "); textColor(0x03);
-    for (uint8_t i = 4; i < 10; i++)
-    {
-        printf("%y ", buffer[i]);
-    }
-
-    textColor(0x0D); printf("MAC Transmitter: "); textColor(0x03);
-    for (uint8_t i = 10; i < 16; i++)
-    {
-        printf("%y ", buffer[i]);
-    }
-
-    textColor(0x0D);
-    printf("\nEthernet: ");
-
-    textColor(0x03);
-    if (ethernetType <= 1500) { printf("type 1, "); }
-    else                      { printf("type 2, "); }
-
-    textColor(0x0D);
-    if (ethernetType <= 1500) { printf("Length: "); }
-    else                      { printf("Type: ");   }
-
-    textColor(0x03);
-    for (uint8_t i = 16; i < 18; i++)
-    {
-        printf("%y ", buffer[i]);
-    }
-
-    uint32_t printlength = max(length, 80);
-    printf("\n");
-
-    for (uint32_t i = 18; i <= printlength; i++)
-    {
-        printf("%y ", buffer[i]);
-    }
-    textColor(0x0F);
-    printf("\n");
-    EthernetRecv(adapter, (void*)(&buffer[4]), length - 4);
+    EthernetRecv(adapter, buffer, length);
 }
 
 

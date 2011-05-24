@@ -50,10 +50,19 @@ void rtl8139_handler(registers_t* data)
 
     uint32_t length = (device->RxBuffer[device->RxBufferPointer+3] << 8) + device->RxBuffer[device->RxBufferPointer+2]; // Little Endian
 
-    // --------------------------- adapt buffer pointer ---------------------------------------------------
+    // Display RTL8139 specific data
+    textColor(0x0D);
+    printf("\nFlags: ");
+    textColor(0x03);
+    for (uint8_t i = 0; i < 2; i++)
+    {
+        printf("%y ", device->RxBuffer[device->RxBufferPointer+i]);
+    }
 
-    memcpy(Rx_tempBuffer, &device->RxBuffer[device->RxBufferPointer], length);
+    // Copy data to temporary buffer
+    memcpy(Rx_tempBuffer, &device->RxBuffer[device->RxBufferPointer]+4, length); // The data starts at offset 4
 
+    // Increase RxBufferPointer
     // packets are DWORD aligned
     device->RxBufferPointer += length + 4;
     device->RxBufferPointer = (device->RxBufferPointer + 3) & ~0x3; // ~0x3 = 0xFFFFFFFC
@@ -64,10 +73,9 @@ void rtl8139_handler(registers_t* data)
     // set read pointer
     *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)) = device->RxBufferPointer - 0x10; // 0x10 = 16
 
-    // --------------------------- adapt buffer pointer ---------------------------------------------------
-
     printf("RXBUFTAIL: %u", *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)));
 
+    // Inform network interface about the packet
     network_receivedPacket(device->device, Rx_tempBuffer, length);
 }
 
@@ -106,7 +114,7 @@ void install_RTL8139(network_adapter_t* dev)
     */
 
     kdebug(3, "RTL8139 MMIO: %X\n", dev->MMIO_base);
-    dev->MMIO_base = paging_acquirePciMemory((uint32_t)dev->MMIO_base,1);
+    dev->MMIO_base = paging_acquirePciMemory((uint32_t)dev->MMIO_base, 1);
     printf("MMIO base mapped to virtual address %X\n", dev->MMIO_base);
 
     // "power on" the card
@@ -184,6 +192,11 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     RTL8139_networkAdapter_t* rAdapter = adapter->data;
 
     memcpy(rAdapter->TxBuffer, data, length); // tx buffer
+    if(length < 60) // Fill buffer to a minimal length of 60
+    {
+        memset(device->TxBuffer, 0, 60-length);
+        length = 60;
+    }
     printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %X\n", paging_getPhysAddr(rAdapter->TxBuffer));
 
     // set address and size of the Tx buffer
