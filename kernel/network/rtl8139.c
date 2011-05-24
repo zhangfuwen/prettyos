@@ -201,8 +201,9 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
+    // set transmit FIFO threshhold to 48*32 = 1536 bytes to avoid tx underrun
     *((uint32_t*)(adapter->MMIO_base + RTL8139_TXADDR0   + 4 * rAdapter->TxBufferIndex)) = paging_getPhysAddr(rAdapter->TxBuffer);
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * rAdapter->TxBufferIndex)) = length;
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * rAdapter->TxBufferIndex)) = length | (48 << 16); 
 
     rAdapter->TxBufferIndex++;
     rAdapter->TxBufferIndex %= 4;
