@@ -4,7 +4,84 @@
 */
 
 #include "arp.h"
+#include "network/network.h"
 #include "video/console.h"
+#include "timer.h"
+#include "util.h"
+#include "kheap.h"
+
+
+static void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry)
+{
+    list_Delete(table->table, entry);
+}
+
+static void arp_checkTable(arpTable_t* table)
+{
+    if(table->lastCheck + 2*60 > timer_getSeconds()) // Check only every 2 minutes
+    {
+        table->lastCheck = timer_getSeconds();
+        for(element_t* e = table->table->head; e != 0; e = e->next)
+        {
+            if(((arpTableEntry_t*)e->data)->dynamic && ((arpTableEntry_t*)e->data)->seconds + 5*60 > timer_getSeconds()) // Entry is older than 5 minutes -> obsolete entry. Delete it.
+                arp_deleteTableEntry(table, (arpTableEntry_t*)e->data);
+        }
+    }
+}
+
+void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dynamic)
+{
+    arp_checkTable(table); // We check the table for obsolete entries.
+
+    arpTableEntry_t* entry = arp_findEntry(table, IP); // Check if there is already an entry with the same IP.
+    if(entry == 0) // No entry found. Create new one.
+    {
+        entry = malloc(sizeof(arpTableEntry_t), 0, "arp entry");
+        list_Append(table->table, entry);
+    }
+
+    memcpy(entry->IP, IP, 4);
+    memcpy(entry->MAC, MAC, 4);
+    entry->dynamic = dynamic;
+    entry->seconds = timer_getSeconds();
+
+}
+
+arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
+{
+    arp_checkTable(table); // We check the table for obsolete entries.
+
+    for(element_t* e = table->table->head; e != 0; e = e->next)
+    {
+        if(strncmp((char*)((arpTableEntry_t*)e->data)->IP, (char*)IP, 4) == 0)
+            return(e->data);
+    }
+    return(0);
+}
+
+void arp_showTable(arpTable_t* table)
+{
+    printf("\nIP\t\t\tMAC\t\t\tType");
+    for(element_t* e = table->table->head; e != 0; e = e->next)
+    {
+        arpTableEntry_t* entry = e->data;
+        printf("\n%u.%u.%u.%u\t\tMAC: %y-%y-%y-%y-%y-%y\t\t%s",
+            entry->IP[0], entry->IP[1], entry->IP[2], entry->IP[3], 
+            entry->MAC[0], entry->MAC[1], entry->MAC[2], entry->MAC[3], entry->MAC[4], entry->MAC[5], 
+            entry->dynamic?"dynamic":"static");
+    }
+}
+
+void arp_initTable(arpTable_t* table)
+{
+    table->table = list_Create();
+    table->lastCheck = timer_getSeconds();
+}
+
+void arp_deleteTable(arpTable_t* table)
+{
+    list_DeleteAll(table->table);
+}
 
 
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)

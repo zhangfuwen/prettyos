@@ -13,6 +13,7 @@
 #include "video/console.h"
 #include "netprotocol/ethernet.h"
 #include "netprotocol/dhcp.h"
+#include "list.h"
 
 
 typedef enum {
@@ -25,6 +26,8 @@ static network_driver_t drivers[ND_END] =
     {.install = &install_RTL8168, .interruptHandler = &rtl8168_handler, .sendPacket = 0},
     {.install = &install_AMDPCnet, .interruptHandler = &PCNet_handler, .sendPacket = &PCNet_send}
 };
+
+listHead_t* adapters = 0;
 
 
 bool network_installDevice(pciDev_t* device)
@@ -60,6 +63,8 @@ bool network_installDevice(pciDev_t* device)
     network_adapter_t* adapter = malloc(sizeof(network_adapter_t), 0, "network apdapter");
     adapter->driver = driver;
     adapter->PCIdev = device;
+
+    arp_initTable(&adapter->arpTable);
 
     // Set IRQ handler
     irq_installHandler(device->irq, driver->interruptHandler);
@@ -110,10 +115,10 @@ bool network_installDevice(pciDev_t* device)
     }
     */
     // Workaround: TODO
-    adapter->IP_address[0] = 192;
-    adapter->IP_address[1] = 168;
-    adapter->IP_address[2] =  10;
-    adapter->IP_address[3] =  97;
+    adapter->IP_address[0] = 10;
+    adapter->IP_address[1] = 0;
+    adapter->IP_address[2] =  2;
+    adapter->IP_address[3] =  15;
     // ------------------------------
 
     adapter->driver->install(adapter);
@@ -128,6 +133,10 @@ bool network_installDevice(pciDev_t* device)
     printf("\t\tIP address: %u.%u.%u.%u\n", adapter->IP_address[0], adapter->IP_address[1], adapter->IP_address[2], adapter->IP_address[3]);
     textColor(0x0F);
 
+    if(adapters == 0)
+        adapters = list_Create();
+    list_Append(adapters, adapter);
+
     return(true);
 }
 
@@ -139,6 +148,17 @@ bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t leng
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length) // Called by driver
 {
     EthernetRecv(adapter, buffer, length);
+}
+
+void network_displayArpTables()
+{
+    printf("\n\nARP Tables:");
+    uint8_t i = 0;
+    for(element_t* e = adapters->head; e != 0; e = e->next, i++)
+    {
+        printf("\n\nAdapter %u:", i);
+        arp_showTable(&((network_adapter_t*)e->data)->arpTable);
+    }
 }
 
 

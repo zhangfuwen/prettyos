@@ -7,6 +7,7 @@
 #include "util.h"
 #include "task.h"
 #include "irq.h"
+#include "network/network.h"
 
 #if KEYMAP == GER
 #include "keyboard_GER.h"
@@ -172,6 +173,11 @@ uint8_t ScanToASCII()
         {
             showPortList();
             showDiskList();
+            return 0;
+        }
+        if(retchar == 'a') // Display ARP tables of all network adapters
+        {
+            network_displayArpTables();
             return 0;
         }
         if(retchar == 't') // If you want to test something

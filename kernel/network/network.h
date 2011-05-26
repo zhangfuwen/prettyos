@@ -2,6 +2,7 @@
 #define NETWORK_H
 
 #include "pci.h"
+#include "netprotocol/arp.h"
 
 
 typedef struct network_adapter network_adapter_t;
@@ -21,12 +22,14 @@ struct network_adapter
     void*             MMIO_base;
     uint8_t           MAC_address[6];
     uint8_t           IP_address[4];
+    arpTable_t        arpTable;
 };
 
 
 bool network_installDevice(pciDev_t* device);
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length);
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length); // Called by driver
+void network_displayArpTables();
 
 
 #endif

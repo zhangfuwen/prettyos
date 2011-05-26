@@ -3,6 +3,7 @@
 
 #include "os.h"
 #include "ethernet.h"
+#include "list.h"
 
 
 typedef struct
@@ -25,7 +26,28 @@ typedef struct
 } __attribute__((packed)) arpPacket_t;
 
 
-void arp_received(network_adapter_t* adapter, arpPacket_t* packet);
+typedef struct
+{
+    listHead_t* table;
+    uint32_t    lastCheck;
+} arpTable_t;
+
+typedef struct
+{
+    uint8_t  MAC[6];
+    uint8_t  IP[4];
+    uint32_t seconds;
+    bool     dynamic;
+} arpTableEntry_t;
+
+
+struct network_adapter;
+
+void arp_initTable(arpTable_t* table);
+void arp_deleteTable(arpTable_t* table);
+arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4]);
+void arp_showTable(arpTable_t* table);
+void arp_received(struct network_adapter* adapter, arpPacket_t* packet);
 
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "os.h"
 
+
 #define PCI_CONFIGURATION_ADDRESS 0xCF8   // Address I/O Port
 #define PCI_CONFIGURATION_DATA    0xCFC   // Data    I/O Port
 
@@ -31,12 +32,13 @@
 #define PCIFUNCS      8
 #define PCIARRAYSIZE  (PCIBUSES*PCIDEVICES*PCIFUNCS)
 
+
 typedef struct
 {
     uint32_t baseAddress;
     size_t   memorySize;
     uint8_t  memoryType;
-}__attribute__((packed)) pciBar_t;
+} pciBar_t;
 
 typedef struct
 {
@@ -52,7 +54,7 @@ typedef struct
    uint8_t   revID;
    uint8_t   irq;
    pciBar_t  bar[6];
-}__attribute__((packed)) pciDev_t;
+} pciDev_t;
 
 
 void analyzeHostSystemError(pciDev_t* pciDev);
@@ -61,5 +63,6 @@ void pci_config_write_byte (uint8_t bus, uint8_t device, uint8_t func, uint8_t r
 void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val);
 void listPCI();
 void pciScan();
+
 
 #endif

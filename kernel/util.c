@@ -327,6 +327,17 @@ int32_t strcmp(const char* s1, const char* s2)
     return (*s1 - *s2);
 }
 
+int32_t strncmp(const char* s1, const char* s2, size_t n)
+{
+    while ((*s1) && n > 0 && (*s1 == *s2))
+    {
+        ++s1;
+        ++s2;
+        --n;
+    }
+    return (*s1 - *s2);
+}
+
 /// http://en.wikipedia.org/wiki/Strcpy
 // Copy the NUL-terminated string src into dest, and return dest.
 char* strcpy(char* dest, const char* src)

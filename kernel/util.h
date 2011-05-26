@@ -46,6 +46,7 @@ void    vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
 void    snprintf (char *buffer, size_t length, const char *args, ...);
 size_t  strlen(const char* str);
 int32_t strcmp(const char* s1, const char* s2);
+int32_t strncmp(const char* s1, const char* s2, size_t n);
 char*   strcpy(char* dest, const char* src);
 char*   strncpy(char* dest, const char* src, size_t n);
 char*   strncpyandfill(char* dest, const char* src, size_t n, char val);
