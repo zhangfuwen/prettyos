@@ -4,7 +4,8 @@
 #include "os.h"
 #include "ethernet.h"
 
-typedef struct arp
+
+typedef struct
 {
     uint8_t hardware_addresstype[2];
     uint8_t protocol_addresstype[2];
@@ -17,11 +18,14 @@ typedef struct arp
     uint8_t destIP[4];
 } __attribute__((packed)) arp_t;
 
-typedef struct arpPacket
+typedef struct
 {
     ethernet_t eth;
     arp_t      arp;
 } __attribute__((packed)) arpPacket_t;
+
+
+void arp_received(network_adapter_t* adapter, arpPacket_t* packet);
 
 
 #endif
