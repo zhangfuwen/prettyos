@@ -11,20 +11,24 @@
 #include "kheap.h"
 
 
-static void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry)
+void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry)
 {
     list_Delete(table->table, entry);
 }
 
 static void arp_checkTable(arpTable_t* table)
 {
-    if(table->lastCheck + 2*60 > timer_getSeconds()) // Check only every 2 minutes
+    if (timer_getSeconds() > (table->lastCheck + 2*60)) // Check only every 2 minutes
     {
         table->lastCheck = timer_getSeconds();
         for(element_t* e = table->table->head; e != 0; e = e->next)
         {
-            if(((arpTableEntry_t*)e->data)->dynamic && ((arpTableEntry_t*)e->data)->seconds + 5*60 > timer_getSeconds()) // Entry is older than 5 minutes -> obsolete entry. Delete it.
+            if( ((arpTableEntry_t*)e->data)->dynamic &&                             // Only dynamic entries should be killed 
+                ( timer_getSeconds() > ((arpTableEntry_t*)e->data)->seconds + 5*60) // Entry is older than 5 minutes -> obsolete entry. Delete it.
+              )
+            {
                 arp_deleteTableEntry(table, (arpTableEntry_t*)e->data);
+            }
         }
     }
 }
@@ -40,11 +44,10 @@ void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dy
         list_Append(table->table, entry);
     }
 
-    memcpy(entry->IP, IP, 4);
-    memcpy(entry->MAC, MAC, 4);
+    memcpy(entry->IP,  IP,  4);
+    memcpy(entry->MAC, MAC, 6);
     entry->dynamic = dynamic;
     entry->seconds = timer_getSeconds();
-
 }
 
 arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
@@ -61,11 +64,11 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
 
 void arp_showTable(arpTable_t* table)
 {
-    printf("\nIP\t\t\tMAC\t\t\tType");
+    printf("\nIP\t\t\tMAC\t\t\t\tType");
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
-        printf("\n%u.%u.%u.%u\t\tMAC: %y-%y-%y-%y-%y-%y\t\t%s",
+        printf("\n%u.%u.%u.%u\t\t%y-%y-%y-%y-%y-%y\t\t%s",
             entry->IP[0], entry->IP[1], entry->IP[2], entry->IP[3], 
             entry->MAC[0], entry->MAC[1], entry->MAC[2], entry->MAC[3], entry->MAC[4], entry->MAC[5], 
             entry->dynamic?"dynamic":"static");
@@ -106,6 +109,9 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             {
                 printf("Operation: Request\n");
             }
+
+            // ARP table entry 
+            arp_addTableEntry (&(adapter->arpTable), packet->arp.source_mac, packet->arp.sourceIP, true);
 
             textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
             for (uint8_t i = 0; i < 6; i++) { printf("%y ", packet->arp.source_mac[i]); }
@@ -155,6 +161,7 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
                 EthernetSend(adapter, (void*)&reply, sizeof(arpPacket_t));
             }
             break;
+        
         case 2: // ARP-Reply
             printf("Operation: Response\n");
 
@@ -169,6 +176,10 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 
             textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
             for (uint8_t i = 0; i < 4; i++) { printf("%u", packet->arp.destIP[i]);   if (i<3) printf("."); }
+            
+            // ARP table entry 
+            arp_addTableEntry (&(adapter->arpTable), packet->arp.source_mac, packet->arp.sourceIP, true);
+            
             break;
         } // switch
     } // if

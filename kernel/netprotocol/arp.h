@@ -45,8 +45,11 @@ struct network_adapter;
 
 void arp_initTable(arpTable_t* table);
 void arp_deleteTable(arpTable_t* table);
+void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dynamic);
+void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry);
 arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4]);
 void arp_showTable(arpTable_t* table);
+
 void arp_received(struct network_adapter* adapter, arpPacket_t* packet);
 
 
