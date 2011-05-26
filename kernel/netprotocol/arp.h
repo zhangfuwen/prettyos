@@ -5,6 +5,8 @@
 #include "ethernet.h"
 #include "list.h"
 
+#define ARP_TABLE_TIME_TO_CHECK   2    // time in minutes
+#define ARP_TABLE_TIME_TO_DELETE 10    // time in minutes
 
 typedef struct
 {

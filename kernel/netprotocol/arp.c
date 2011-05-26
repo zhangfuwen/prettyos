@@ -18,13 +18,13 @@ void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry)
 
 static void arp_checkTable(arpTable_t* table)
 {
-    if (timer_getSeconds() > (table->lastCheck + 2*60)) // Check only every 2 minutes
+    if (timer_getSeconds() > ( table->lastCheck + ARP_TABLE_TIME_TO_CHECK * 60 )) // Check only every ... minutes
     {
         table->lastCheck = timer_getSeconds();
         for(element_t* e = table->table->head; e != 0; e = e->next)
         {
-            if( ((arpTableEntry_t*)e->data)->dynamic &&                             // Only dynamic entries should be killed 
-                ( timer_getSeconds() > ((arpTableEntry_t*)e->data)->seconds + 5*60) // Entry is older than 5 minutes -> obsolete entry. Delete it.
+            if( ( (arpTableEntry_t*)e->data)->dynamic &&                             // Only dynamic entries should be killed. 
+                ( timer_getSeconds() > ( (arpTableEntry_t*)e->data)->seconds + ARP_TABLE_TIME_TO_DELETE * 60 ) // Entry is older than ... minutes -> Obsolete entry. Delete it.
               )
             {
                 arp_deleteTableEntry(table, (arpTableEntry_t*)e->data);
