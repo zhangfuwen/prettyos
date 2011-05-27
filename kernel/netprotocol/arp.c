@@ -9,6 +9,7 @@
 #include "timer.h"
 #include "util.h"
 #include "kheap.h"
+#include "audio/sys_speaker.h"
 
 
 void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry)
@@ -56,6 +57,10 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
     {
         if(strncmp((char*)((arpTableEntry_t*)e->data)->IP, (char*)IP, 4) == 0)
         {
+            /// TEST
+            printf("\nIPs are equal at time %u sec and will be updated", ((arpTableEntry_t*)e->data)->seconds);
+            msgbeep();
+            /// TEST
             ((arpTableEntry_t*)e->data)->seconds = timer_getSeconds(); // Update time stamp.
             return(e->data);
         }
@@ -65,14 +70,14 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
 
 void arp_showTable(arpTable_t* table)
 {
-    printf("\nIP\t\t\tMAC\t\t\t\tType");
+    printf("\nIP\t\tMAC\t\t\t\tType\tTime(sec)");
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
-        printf("\n%u.%u.%u.%u\t\t%y-%y-%y-%y-%y-%y\t\t%s",
+        printf("\n%u.%u.%u.%u\t%y-%y-%y-%y-%y-%y\t\t%s\t%u",
             entry->IP[0], entry->IP[1], entry->IP[2], entry->IP[3],
             entry->MAC[0], entry->MAC[1], entry->MAC[2], entry->MAC[3], entry->MAC[4], entry->MAC[5],
-            entry->dynamic?"dynamic":"static");
+            entry->dynamic?"dynamic":"static", entry->seconds);
     }
 }
 
