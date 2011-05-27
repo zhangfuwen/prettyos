@@ -41,12 +41,11 @@ void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dy
     {
         entry = malloc(sizeof(arpTableEntry_t), 0, "arp entry");
         list_Append(table->table, entry);
+        memcpy(entry->IP,  IP,  4);
+        memcpy(entry->MAC, MAC, 6);
+        entry->dynamic = dynamic;
+        entry->seconds = timer_getSeconds();
     }
-
-    memcpy(entry->IP,  IP,  4);
-    memcpy(entry->MAC, MAC, 6);
-    entry->dynamic = dynamic;
-    entry->seconds = timer_getSeconds();
 }
 
 arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
@@ -57,10 +56,6 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
     {
         if(strncmp((char*)((arpTableEntry_t*)e->data)->IP, (char*)IP, 4) == 0)
         {
-            /// TEST
-            printf("\nIPs are equal at time %u sec and will be updated", ((arpTableEntry_t*)e->data)->seconds);
-            msgbeep();
-            /// TEST
             ((arpTableEntry_t*)e->data)->seconds = timer_getSeconds(); // Update time stamp.
             return(e->data);
         }
