@@ -35,8 +35,6 @@ static void arp_checkTable(arpTable_t* table)
 
 void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dynamic)
 {
-    arp_checkTable(table); // We check the table for obsolete entries.
-
     arpTableEntry_t* entry = arp_findEntry(table, IP); // Check if there is already an entry with the same IP.
     if(entry == 0) // No entry found. Create new one.
     {
@@ -92,8 +90,9 @@ void arp_deleteTable(arpTable_t* table)
 
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 {
-    if ((((packet->arp.hardware_addresstype[0] << 8) | packet->arp.hardware_addresstype[1]) ==    1) &&
-        (((packet->arp.protocol_addresstype[0] << 8) | packet->arp.protocol_addresstype[1]) == 2048) &&
+    // 1 = Ethernet, 0x0800 = IPv4
+    if ((((packet->arp.hardware_addresstype[0] << 8) | packet->arp.hardware_addresstype[1]) ==      1) &&
+        (((packet->arp.protocol_addresstype[0] << 8) | packet->arp.protocol_addresstype[1]) == 0x0800) &&
         (packet->arp.hardware_addresssize == 6) &&
         (packet->arp.protocol_addresssize == 4))
     {
@@ -112,9 +111,6 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             {
                 printf("Operation: Request\n");
             }
-
-            // ARP table entry
-            arp_addTableEntry (&adapter->arpTable, packet->arp.source_mac, packet->arp.sourceIP, true);
 
             textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
             for (uint8_t i = 0; i < 6; i++) { printf("%y ", packet->arp.source_mac[i]); }
@@ -170,22 +166,20 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 
             textColor(0x0D); printf("\nMAC Replying:   "); textColor(0x03);
             for (uint8_t i = 0; i < 6; i++) { printf("%y ", packet->arp.source_mac[i]); }
-
             textColor(0x0D); printf("  IP Replying:   "); textColor(0x03);
             for (uint8_t i = 0; i < 4; i++) { printf("%u", packet->arp.sourceIP[i]); if (i<3) printf("."); }
-
             textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
             for (uint8_t i = 0; i < 6; i++) { printf("%y ", packet->arp.dest_mac[i]);   }
-
             textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
             for (uint8_t i = 0; i < 4; i++) { printf("%u", packet->arp.destIP[i]);   if (i<3) printf("."); }
-
-            // ARP table entry
-            arp_addTableEntry (&adapter->arpTable, packet->arp.source_mac, packet->arp.sourceIP, true);
-
             break;
-        } // switch
+        } // switch                
+        arp_addTableEntry (&adapter->arpTable, packet->arp.source_mac, packet->arp.sourceIP, true); // ARP table entry
     } // if
+    else
+    {
+        printf("No Ethernet and IPv4 - Unknown packet sent to ARP\n");
+    }
 }
 
 
