@@ -88,6 +88,7 @@ void arp_deleteTable(arpTable_t* table)
 }
 
 
+
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 {
     // 1 = Ethernet, 0x0800 = IPv4
@@ -132,7 +133,8 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
                     reply.eth.recv_mac[i] = packet->arp.source_mac[i];
                     reply.eth.send_mac[i] = adapter->MAC_address[i];
                 }
-                reply.eth.type_len[0] = 0x08; reply.eth.type_len[1] = 0x06;
+                reply.eth.type_len[0] = 0x08; 
+                reply.eth.type_len[1] = 0x06;
 
                 for (uint8_t i = 0; i < 2; i++)
                 {
@@ -182,6 +184,43 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
     }
 }
 
+void arp_sendGratitiousRequest(struct network_adapter* adapter)
+{
+    printf("\n Tx prepared:");
+    arpPacket_t gratRequest;
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        gratRequest.eth.recv_mac[i] = 0xFF; // Broadcast
+        gratRequest.eth.send_mac[i] = adapter->MAC_address[i];
+    }
+    
+    gratRequest.eth.type_len[0] = 0x08; 
+    gratRequest.eth.type_len[1] = 0x06;
+    gratRequest.arp.hardware_addresstype[0] = 0;    // Ethernet
+    gratRequest.arp.hardware_addresstype[1] = 1;
+    gratRequest.arp.protocol_addresstype[0] = 0x08; // IP
+    gratRequest.arp.protocol_addresstype[1] = 0x00;
+
+    gratRequest.arp.operation[0] = 0;
+    gratRequest.arp.operation[1] = 1; // Request
+
+    gratRequest.arp.hardware_addresssize = 6;
+    gratRequest.arp.protocol_addresssize = 4;
+
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        gratRequest.arp.dest_mac[i]   = 0xFF; // Broadcast
+        gratRequest.arp.source_mac[i] = adapter->MAC_address[i];
+    }
+
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        gratRequest.arp.destIP[i]   = adapter->IP_address[i];
+        gratRequest.arp.sourceIP[i] = adapter->IP_address[i];
+    }
+
+    EthernetSend(adapter, (void*)&gratRequest, sizeof(arpPacket_t));
+}
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.

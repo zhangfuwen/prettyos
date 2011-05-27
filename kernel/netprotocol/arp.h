@@ -53,6 +53,7 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4]);
 void arp_showTable(arpTable_t* table);
 
 void arp_received(struct network_adapter* adapter, arpPacket_t* packet);
+void arp_sendGratitiousRequest(struct network_adapter* adapter);
 
 
 #endif

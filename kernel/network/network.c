@@ -10,13 +10,16 @@
 #include "kheap.h"
 #include "irq.h"
 #include "util.h"
+#include "timer.h"
 #include "video/console.h"
 #include "netprotocol/ethernet.h"
 #include "netprotocol/dhcp.h"
 #include "list.h"
+#include "netprotocol/arp.h"
 
 
-typedef enum {
+typedef enum 
+{
     RTL8139, RTL8168, PCNET, ND_END
 } network_drivers;
 
@@ -28,7 +31,6 @@ static network_driver_t drivers[ND_END] =
 };
 
 listHead_t* adapters = 0;
-
 
 bool network_installDevice(pciDev_t* device)
 {
@@ -137,6 +139,11 @@ bool network_installDevice(pciDev_t* device)
         adapters = list_Create();
     list_Append(adapters, adapter);
 
+    for (int i=0; i<10; i++)
+    {
+        arp_sendGratitiousRequest(adapter); // show PrettyOS' IP and MAC to the LAN
+        sleepMilliSeconds(1000);
+    }
     return(true);
 }
 
@@ -154,7 +161,7 @@ void network_displayArpTables()
 {
     printf("\n\nARP Tables:");
     uint8_t i = 0;
-    for(element_t* e = adapters->head; e != 0; e = e->next, i++)
+    for (element_t* e = adapters->head; e != 0; e = e->next, i++)
     {
 		printf("\n\nAdapter %u:  %u.%u.%u.%u", i, ((network_adapter_t*)e->data)->IP_address[0], 
                                                   ((network_adapter_t*)e->data)->IP_address[1], 
