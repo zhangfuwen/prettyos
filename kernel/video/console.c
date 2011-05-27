@@ -156,6 +156,15 @@ position_t getCursor()
     return(currentConsole->cursor);
 }
 
+void console_setPixel(uint8_t x, uint8_t y, uint16_t value)
+{
+    mutex_lock(currentConsole->mutex);
+    currentConsole->vidmem[y*COLUMNS + x] = value;
+    mutex_unlock(currentConsole->mutex);
+    if (currentConsole == reachableConsoles[displayedConsole])
+        video_setPixel(x, y+2, value);
+}
+
 void putch(char c)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values

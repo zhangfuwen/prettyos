@@ -37,7 +37,9 @@ void video_install()
 
 void video_setPixel(uint8_t x, uint8_t y, uint16_t value)
 {
+    mutex_lock(videoLock);
     vidmem[y*COLUMNS + x] = value;
+    mutex_unlock(videoLock);
 }
 
 void clear_screen()

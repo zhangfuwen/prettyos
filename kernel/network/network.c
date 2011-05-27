@@ -115,10 +115,10 @@ bool network_installDevice(pciDev_t* device)
     }
     */
     // Workaround: TODO
-    adapter->IP_address[0] = 192;
-    adapter->IP_address[1] = 168;
-    adapter->IP_address[2] =  10;
-    adapter->IP_address[3] =  97;
+    adapter->IP_address[0] = 10;
+    adapter->IP_address[1] = 0;
+    adapter->IP_address[2] =  2;
+    adapter->IP_address[3] =  15;
     // ------------------------------
 
     adapter->driver->install(adapter);
@@ -156,10 +156,10 @@ void network_displayArpTables()
     uint8_t i = 0;
     for(element_t* e = adapters->head; e != 0; e = e->next, i++)
     {
-        printf("\n\nAdapter %u:  %u.%u.%u.%u", i, ((network_adapter_t*)e)->IP_address[0], 
-                                                  ((network_adapter_t*)e)->IP_address[1], 
-                                                  ((network_adapter_t*)e)->IP_address[2], 
-                                                  ((network_adapter_t*)e)->IP_address[3] );
+		printf("\n\nAdapter %u:  %u.%u.%u.%u", i, ((network_adapter_t*)e->data)->IP_address[0], 
+                                                  ((network_adapter_t*)e->data)->IP_address[1], 
+                                                  ((network_adapter_t*)e->data)->IP_address[2], 
+                                                  ((network_adapter_t*)e->data)->IP_address[3] );
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
     }
 }

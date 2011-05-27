@@ -18,7 +18,6 @@
 #define min(a, b) (a <= b ? a : b)
 
 #define NAN (__builtin_nanf (""))
-#define pi 3.1415926535897932384626433832795028841971693993
 
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b))
 void panic_assert(const char* file, uint32_t line, const char* desc);
@@ -85,7 +84,6 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 uint32_t alignUp(uint32_t val, uint32_t alignment);
 uint32_t alignDown(uint32_t val, uint32_t alignment);
 
-int32_t  power(int32_t base, int32_t n);
 float    sgn(float x);
 uint32_t abs(int32_t arg);
 double   fabs(double x);
