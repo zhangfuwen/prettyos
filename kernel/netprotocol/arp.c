@@ -65,11 +65,13 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
 
 void arp_showTable(arpTable_t* table)
 {
+    arp_checkTable(table); // We check the table for obsolete entries.
+
     printf("\nIP\t\tMAC\t\t\t\tType\tTime(sec)");
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
-        printf("\n%u.%u.%u.%u\t%y-%y-%y-%y-%y-%y\t\t%s\t%u",
+        printf("\n%u.%u.%u.%u \t%y-%y-%y-%y-%y-%y\t\t%s\t%u",
             entry->IP[0], entry->IP[1], entry->IP[2], entry->IP[3],
             entry->MAC[0], entry->MAC[1], entry->MAC[2], entry->MAC[3], entry->MAC[4], entry->MAC[5],
             entry->dynamic?"dynamic":"static", entry->seconds);
@@ -175,8 +177,8 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
             for (uint8_t i = 0; i < 4; i++) { printf("%u", packet->arp.destIP[i]);   if (i<3) printf("."); }
             break;
-        } // switch                
-        arp_addTableEntry (&adapter->arpTable, packet->arp.source_mac, packet->arp.sourceIP, true); // ARP table entry
+        } // switch
+        arp_addTableEntry(&adapter->arpTable, packet->arp.source_mac, packet->arp.sourceIP, true); // ARP table entry
     } // if
     else
     {

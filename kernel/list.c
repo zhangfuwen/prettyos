@@ -44,7 +44,7 @@ bool list_Append(listHead_t* hd, void* data)
 void list_Delete(listHead_t* list, void* data)
 {
     element_t* cur = list->head;
-    if(cur->data == data)
+    while(cur->data == data)
     {
         element_t* temp = cur;
         cur = cur->next;

@@ -82,8 +82,8 @@ void install_AMDPCnet(network_adapter_t* dev)
     // Setup descriptors, Init send and receive buffers
     device->currentRecDesc = 0;
     device->currentTransDesc = 0;
-    device->receiveDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: RecDesc");//malloc(2048*2, 16, "PCNet descriptors");
-    device->transmitDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: TransDesc");//(void*)(((uintptr_t)device->receiveDesc)+2048);
+    device->receiveDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: RecDesc");
+    device->transmitDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: TransDesc");
     for(uint8_t i = 0; i < 8; i++)
     {
         void* buffer = malloc(2048, 16, "PCnet receive buffer");
@@ -96,7 +96,7 @@ void install_AMDPCnet(network_adapter_t* dev)
         buffer = malloc(2048, 16, "PCnet tramsmit buffer");
         device->transmitBuf[i] = buffer;
         device->transmitDesc[i].address = paging_getPhysAddr(buffer);
-        device->transmitDesc[i].flags = 0;//0x0000F000;
+        device->transmitDesc[i].flags = 0;
         device->transmitDesc[i].flags2 = 0;
         device->transmitDesc[i].avail = (uint32_t)buffer;
     }
@@ -126,10 +126,6 @@ void install_AMDPCnet(network_adapter_t* dev)
 
 static void PCNet_receive()
 {
-    textColor(0x0E);
-    printf("\nPCNet: received packet");
-    textColor(0x0F);
-
     size_t size;
     while ((device->receiveDesc[device->currentRecDesc].flags & 0x80000000) == 0)
     {
@@ -156,26 +152,20 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     printf("\nPCNET SEND PACKET");
     PCNet_card* pcnet = adapter->data;
 
-    //Achtung, Beginn eines kritischen Abschnitts!
-    cli();
     if (pcnet->currentTransDesc > 7)
         pcnet->currentTransDesc = 0;
-    uint8_t current_descriptor = pcnet->currentTransDesc++;
-    if (current_descriptor == 7) // pcnet->currentTransDesc ist also 8
-        pcnet->currentTransDesc = 0;
-    sti();
-    //Ende des Abschnitts
 
-    if (length > 1518) // Maximale Länge eines Ethernetframes
-        length = 1518;
+    // Prepare buffer
+    memcpy(pcnet->transmitBuf[pcnet->currentTransDesc], data, length);
 
-    //ncard->linear_transmit_buffer enthält die lineare Adresse des Puffers
-    memcpy(pcnet->transmitBuf[current_descriptor], data, length);
-    //Die physische Adresse (also ncard->physical_transmit_buffer[current_descriptor]) sollte schon bei der
-    //Initialisierung in das „address“-Feld geschrieben worden sein
-    pcnet->transmitDesc[current_descriptor].flags2 = 0;
-    pcnet->transmitDesc[current_descriptor].flags = 0x8030F000 | ((-length) & 0x7FF);
+    // Prepare descriptor
+    pcnet->transmitDesc[pcnet->currentTransDesc].flags2 = 0;
+    pcnet->transmitDesc[pcnet->currentTransDesc].flags = 0x8300F000 | ((-length) & 0x7FF);
     writeCSR(pcnet, 0, 0x48);
+
+    pcnet->currentTransDesc++;
+    if (pcnet->currentTransDesc == 8)
+        pcnet->currentTransDesc = 0;
 
     return(true);
 }
@@ -183,33 +173,40 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 void PCNet_handler(registers_t* data)
 {
     uint16_t csr0 = readCSR(device, 0);
+
+    textColor(0x03);
+    printf("\n--------------------------------------------------------------------------------");
+    printf("\n--------------------------------------------------------------------------------");
+
+    textColor(0x0E);
+    printf("\nPCNet Interrupt Status: %y, ", csr0);
+    textColor(0x03);
+
     if(device->initialized == false)
     {
         device->initialized = true;
-        printf("\nPCNet: initialized.\n");
+        printf("\nInitialized");
     }
     else
     {
-        textColor(0x03);
-        printf("\n--------------------------------------------------------------------------------");
-        printf("\n--------------------------------------------------------------------------------");
-        textColor(0x0C);
-
         if(csr0 & 0x8000) // Error
         {
             if(csr0 & 0x2000)
-                printf("\nPCNet: Collision error");
+                printf("\nCollision error");
             else if(csr0 & 0x1000)
-                printf("\nPCNet: Missed frame error");
+                printf("\nMissed frame error");
             else if(csr0 & 0x800)
-                printf("\nPCNet: Memory error");
+                printf("\nMemory error");
             else
-                printf("\nPCNet: Undefined error.");
+                printf("\nUndefined error.");
         }
         else if(csr0 & 0x00000200)
-            printf("\nPCNet: transmit descriptor finished");
+            printf("\nTransmit descriptor finished");
         else if(csr0 & 0x00000400)
+        {
+            printf("\nReceived packet");
             PCNet_receive();
+        }
     }
     writeCSR(device, 0, csr0);
 }
