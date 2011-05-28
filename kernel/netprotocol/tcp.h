@@ -16,15 +16,20 @@ typedef struct tcpheader
     uint32_t sequenceNumber;
     uint32_t acknowledgmentNumber;
     uint8_t dataOffset : 4;
-    uint8_t reserved   : 6;
-    //Flags
-    uint8_t URG : 1;                           // Urgent 
-    uint8_t ACK : 1;                           // Acknowledgment 
-    uint8_t PSH : 1;                           // Push 
-    uint8_t RST : 1;                           // Reset 
+    uint8_t reserved   : 4;
+    
+	// Flags (6 Bit)
+    uint8_t FIN : 1;                           // No more data from sender    
     uint8_t SYN : 1;                           // Synchronize sequence numbers
-    uint8_t FIN : 1;                           // No more data from sender
-    uint16_t window;
+    uint8_t RST : 1;                           // Reset 
+	uint8_t PSH : 1;                           // Push 
+	uint8_t ACK : 1;                           // Acknowledgment 
+    uint8_t URG : 1;                           // Urgent 
+	// only shown in wireshark
+	uint8_t ECN : 1;                           // ECN (reserved)
+	uint8_t CWR : 1;                           // CWR (reserved) 
+	
+	uint16_t window;
     uint16_t checksum;
     uint16_t urgentPointer;
 } __attribute__((packed)) tcpheader_t;
