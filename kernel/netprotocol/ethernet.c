@@ -68,7 +68,7 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
     printf("\n");
 
 
-    void* udpData;
+    void* udpData; // TODO like tcppacket    
 
     textColor(0x0E);
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
@@ -105,7 +105,9 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
                     */
                     break;
                 case 6: // tcp
-                    printf("TCP. ");
+                    printf("\nTCP. ");
+                    tcppacket_t* packet = data;                    
+                    tcpDebug(&(packet->tcp));
                     break;
                 case 17: // udp
                     printf("UDP. ");

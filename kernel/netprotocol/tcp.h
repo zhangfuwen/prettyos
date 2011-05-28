@@ -14,17 +14,20 @@ typedef struct tcpheader
     uint32_t sequence_number;
     uint32_t acknowledgment_number;
     int8_t data_offset[4];
-    int8_t reserved[8];
-    bool URG;                           // Urgent Pointer field significant
-    bool ACK;                           // Acknowledgment field significant
-    bool PSH;                           // Push Function
-    bool RST;                           // Reset the connection
-    bool SYN;                           // Synchronize sequence numbers
-    bool FIN;                           // No more data from sender
+    int8_t reserved;
+    //Flags
+    bool CWR : 1;                           // Congestion Window Reduced 
+    bool ECN : 1;                           // ECN-Echo
+    bool URG : 1;                           // Urgent 
+    bool ACK : 1;                           // Acknowledgment 
+    bool PSH : 1;                           // Push 
+    bool RST : 1;                           // Reset 
+    bool SYN : 1;                           // Synchronize sequence numbers
+    bool FIN : 1;                           // No more data from sender
     uint16_t window;
     uint16_t checksum;
     uint16_t urgent_pointer;
-    int8_t options[24];
+    int8_t options[8];
     uint8_t padding[8];
     // uint32_t data;
 } __attribute__((packed)) tcpheader_t;
@@ -34,7 +37,7 @@ typedef struct tcppacket
     ethernet_t eth;
     ip_t ip;
     tcpheader_t tcp;
-} __attribute__((packed)) tcphpacket_t;
+} __attribute__((packed)) tcppacket_t;
 
 
 // Binds the connection to a local portnumber and IP address.
