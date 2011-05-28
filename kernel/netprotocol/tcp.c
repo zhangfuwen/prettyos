@@ -14,13 +14,13 @@ void tcpDebug(tcpheader_t *tcp)
   printf("+--------------+----------------+\n");
   printf("|      %u       |      %u        | (source port, destination port)\n", ntohs(tcp->sourcePort), ntohs(tcp->destinationPort));
   printf("+-------------------------------+\n");
-  printf("|              %u                | (sequence number)\n", ntohl(tcp->sequence_number));
+  printf("|              %u                | (sequence number)\n", ntohl(tcp->sequenceNumber));
   printf("+-------------------------------+\n");
-  printf("|              %u                | (acknowledgmentnumber)\n", ntohl(tcp->acknowledgment_number));
+  printf("|              %u                | (acknowledgmentnumber)\n", ntohl(tcp->acknowledgmentNumber));
   printf("+-------------------------------+\n");
-  printf("| |%u%u%u%u%u%u|    %u           | (flags (", tcp->URG, tcp->ACK, tcp->PSH, tcp->RST, tcp->SYN, tcp->FIN, ntohs(tcp->window)); printf("), window)\n");
+  printf("| |%u%u%u%u%u%u|      %u           | (flags (", tcp->URG, tcp->ACK, tcp->PSH, tcp->RST, tcp->SYN, tcp->FIN, ntohs(tcp->window)); printf("), window)\n");
   printf("+--------------+----------------+\n");
-  printf("|     %u        |      %u        | (checksum, urgent pointer)\n", ntohs(tcp->checksum), ntohs(tcp->urgent_pointer));
+  printf("|     %x        |      %u        | (checksum, urgent pointer)\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
   printf("+-------------------------------+\n");
 }
 
