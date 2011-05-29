@@ -1,5 +1,5 @@
-#ifndef FLPYDSK_DRIVER_H
-#define FLPYDSK_DRIVER_H
+#ifndef FLPYDSK_H
+#define FLPYDSK_H
 
 #include "os.h"
 #include "devicemanager.h"

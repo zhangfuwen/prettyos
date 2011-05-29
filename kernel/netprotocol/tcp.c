@@ -6,7 +6,8 @@
 #include "tcp.h"
 #include "video/console.h"
 
-void tcpDebug(tcpheader_t *tcp)
+
+void tcpDebug(tcpheader_t* tcp)
 {
   printf("\n");
   printf("TCP Header information:\n");
@@ -25,7 +26,7 @@ void tcpDebug(tcpheader_t *tcp)
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

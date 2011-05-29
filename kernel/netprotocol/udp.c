@@ -9,7 +9,8 @@
 #include "udp.h"
 #include "ethernet.h"
 
-void UDPRecv(void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP)
+
+void UDPRecv(udppacket_t* packet)
 {
     // sourceIP is big endian!
 
@@ -23,7 +24,7 @@ void UDPRecv(void* data, uint32_t length, uint32_t sourceIP, uint32_t destIP)
     // uint32_t udpDataLength = ipLength - sizeof(ip_t) - sizeof(udpheader_t);
     // uint8_t pkt[sizeof(udpheader_t) + udpDataLength];
 
-    UDPDebug(data, length);
+    UDPDebug(&packet->udp);
 }
 
 void UDPSend(void* data, uint32_t length)
@@ -31,10 +32,8 @@ void UDPSend(void* data, uint32_t length)
     // transferDataToTxBuffer(void* data, uint32_t length);
 }
 
-void UDPDebug(void* data, uint32_t length)
+void UDPDebug(udpheader_t* udp)
 {
-    udpheader_t* udp = (udpheader_t*)data;
-
     printf("\n");
     printf("UDP Header information:\n");
     textColor(0x0E);
@@ -103,7 +102,7 @@ void UDPDebug(void* data, uint32_t length)
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

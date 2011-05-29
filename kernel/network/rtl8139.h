@@ -36,7 +36,7 @@
 #define RTL8139_AS_LPAR             0x68        // Auto-negotiation link partner reg (16 bits)
 #define RTL8139_AS_EXPANSION        0x6A        // Auto-negotiation expansion reg (16 bits)
 
-// RTL8193C command bits
+// RTL8139C command bits
 #define RTL8139_CMD_RESET           0x10
 #define RTL8139_CMD_RX_ENABLE       0x08
 #define RTL8139_CMD_TX_ENABLE       0x04

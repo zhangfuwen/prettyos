@@ -55,22 +55,19 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
     for (uint8_t i = 0; i < 2; i++)
     {
         printf("%y ", eth->type_len[i]);
-    }    
-  
+    }
+
   #ifdef _NETWORK_DATA_
     uint32_t printlength = max(length, 80);
-    printf("\n");  
+    printf("\n");
     for (uint32_t i = sizeof(ethernet_t); i <= printlength; i++)
     {
         printf("%y ", ((uint8_t*)data)[i]);
     }
   #endif
-  
+
     textColor(0x0F);
     printf("\n");
-
-
-    void* udpData; // TODO like tcppacket    
 
     textColor(0x0E);
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
@@ -108,13 +105,13 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
                     break;
                 case 6: // tcp
                     printf("\nTCP. ");
-                    tcppacket_t* packet = data;                    
-                    tcpDebug(&(packet->tcp));
+                    tcppacket_t* tcpPacket = data;
+                    tcpDebug(&(tcpPacket->tcp));
                     break;
                 case 17: // udp
                     printf("UDP. ");
-                    udpData = (void*)((uintptr_t)data + sizeof(ethernet_t) + ipHeaderLengthBytes);
-                    UDPRecv(udpData, length - ipHeaderLengthBytes, *(uint32_t*)ip->sourceIP, *(uint32_t*)ip->destIP);
+                    udppacket_t* udpPacket = data;
+                    UDPRecv(udpPacket);
                     break;
                 case 41: // ipv6 ?? cf. below
                     printf("IPv6. ");
@@ -128,7 +125,7 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
         else if ((eth->type_len[0] == 0x86) && (eth->type_len[1] == 0xDD)) // IPv6
         {
             printf("Ethernet type: IPv6. Currently, not further analyzed. ");
-            // TODO analyze IPv6 
+            // TODO analyze IPv6
         }
 
         else if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x06)) // ARP

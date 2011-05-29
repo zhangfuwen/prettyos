@@ -16,7 +16,7 @@
 #define RTL8168_CHIPCMD             0x37        // Command register
 //#define RTL8139_RXBUFTAIL           0x38        // Current address of packet read (queue tail)
 //#define RTL8139_RXBUFHEAD           0x3A        // Current buffer address (queue head)
-//#define RTL8139_INTRMASK            0x3C        // Interrupt mask
+#define RTL8168_INTRMASK            0x3C        // Interrupt mask
 #define RTL8168_INTRSTATUS          0x3E        // Interrupt status
 #define RTL8168_TXCONFIG            0x40        // Tx config
 #define RTL8168_RXCONFIG            0x44        // Rx config
@@ -37,18 +37,19 @@
 //#define RTL8139_AS_LPAR             0x68        // Auto-negotiation link partner reg (16 bits)
 //#define RTL8139_AS_EXPANSION        0x6A        // Auto-negotiation expansion reg (16 bits)
 
-// RTL8193C command bits
+// RTL8168 command bits
 #define RTL8168_CMD_RESET           0x10
 #define RTL8168_CMD_RX_ENABLE       0x08
 #define RTL8168_CMD_TX_ENABLE       0x04
 
-// RTL8139C interrupt status bits
-//#define RTL8139_INT_PCIERR          0x8000        // PCI Bus error
-//#define RTL8139_INT_TIMEOUT         0x4000        // Set when TCTR reaches TimerInt value
-//#define RTL8139_INT_CABLE           0x2000        // Set when Cable Length Change
-//#define RTL8139_INT_RXFIFO_OVERFLOW 0x0040        // Rx FIFO overflow
-//#define RTL8139_INT_RXFIFO_UNDERRUN 0x0020        // Packet underrun / link change
-//#define RTL8139_INT_RXBUF_OVERFLOW  0x0010        // Rx BUFFER overflow
+// RTL8168 interrupt status bits
+#define RTL8168_INT_TIMEOUT         0x4000
+#define RTL8168_INT_RX_FIFO_EMPTY   0x0200
+#define RTL8168_INT_SOFTWARE_INT    0x0100
+#define RTL8168_INT_TXDESC_UNAVAIL  0x0080
+#define RTL8168_INT_RXFIFO_OVERFLOW 0x0040
+#define RTL8168_INT_LINK_CHANGE     0x0020
+#define RTL8168_INT_RXDESC_UNAVAIL  0x0010
 #define RTL8168_INT_TX_ERR          0x0008
 #define RTL8168_INT_TX_OK           0x0004
 #define RTL8168_INT_RX_ERR          0x0002
@@ -74,9 +75,6 @@
 //#define RTL8139_RX_FRAME_ALIGN      0x00000002    // Frame alignment error
 //#define RTL8139_RX_STATUS_OK        0x00000001    // Status ok: a good packet was received
 
-// Configuration definitions
-//#define RTL8139_NETWORK_BUFFER_SIZE 0x2000        // 8 KiB
-
 
 typedef struct
 {
@@ -89,9 +87,9 @@ typedef struct
 typedef struct
 {
     network_adapter_t* device;
-    RTL8168_Desc* Rx_Descriptors;
-    RTL8168_Desc* Tx_Descriptors;
-    uint8_t       RxBuffer[2048] __attribute__ ((aligned (4)));
+    RTL8168_Desc*      Rx_Descriptors;
+    RTL8168_Desc*      Tx_Descriptors;
+    uint8_t*           RxBuffer;
 } RTL8168_networkAdapter_t;
 
 

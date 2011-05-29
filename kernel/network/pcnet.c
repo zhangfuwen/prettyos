@@ -149,7 +149,7 @@ static void PCNet_receive()
 
 bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 {
-    printf("\nPCNET SEND PACKET");
+    printf("\nPCNet: Send packet");
     PCNet_card* pcnet = adapter->data;
 
     if (pcnet->currentTransDesc > 7)

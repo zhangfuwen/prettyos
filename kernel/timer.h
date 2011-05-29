@@ -1,5 +1,5 @@
-#ifndef FLPYDSK_H
-#define FLPYDSK_H
+#ifndef TIMER_H
+#define TIMER_H
 
 #include "os.h"
 
