@@ -55,15 +55,17 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
     for (uint8_t i = 0; i < 2; i++)
     {
         printf("%y ", eth->type_len[i]);
-    }
-
+    }    
+  
+  #ifdef _NETWORK_DATA_
     uint32_t printlength = max(length, 80);
-    printf("\n");
-
+    printf("\n");  
     for (uint32_t i = sizeof(ethernet_t); i <= printlength; i++)
     {
         printf("%y ", ((uint8_t*)data)[i]);
     }
+  #endif
+  
     textColor(0x0F);
     printf("\n");
 
