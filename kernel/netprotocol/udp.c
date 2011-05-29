@@ -7,29 +7,17 @@
 
 #include "video/console.h"
 #include "udp.h"
-#include "ethernet.h"
-
 
 void UDPRecv(udppacket_t* packet)
 {
-    // sourceIP is big endian!
-
-    // destIP is big endian!
-
-    // udpheader_t* udp = (udpheader_t*)data;
-    // printf("\nsource port: %u dest.  port: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
-
-    // TODO: evaluate UDP data
-
-    // uint32_t udpDataLength = ipLength - sizeof(ip_t) - sizeof(udpheader_t);
-    // uint8_t pkt[sizeof(udpheader_t) + udpDataLength];
-
+    // TODO: ...
+    
     UDPDebug(&packet->udp);
 }
 
-void UDPSend(void* data, uint32_t length)
+void UDPSend(struct network_adapter* adapter, void* data, uint32_t length)
 {
-    // transferDataToTxBuffer(void* data, uint32_t length);
+    EthernetSend(adapter, data, length);
 }
 
 void UDPDebug(udpheader_t* udp)

@@ -25,7 +25,7 @@ typedef struct
 
 void UDPConnect();
 void UDPBind();
-void UDPSend(void* data, uint32_t length);
+void UDPSend(struct network_adapter* adapter, void* data, uint32_t length);
 void UDPRecv(udppacket_t* packet);
 void UDPDebug(udpheader_t* upd);
 
