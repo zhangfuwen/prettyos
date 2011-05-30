@@ -1,12 +1,13 @@
 #ifndef IPV4_H
 #define IPV4_H
 
-#include "os.h"
+#include "network/network.h"
 
-typedef struct ip
+
+typedef struct
 {
-    uint8_t  ipHeaderLength   :4;
-    uint8_t  version          :4;
+    uint8_t  ipHeaderLength   : 4;
+    uint8_t  version          : 4;
     uint8_t  typeOfService;
     uint16_t length;
     uint16_t identification;
@@ -16,6 +17,11 @@ typedef struct ip
     uint16_t checksum;
     uint8_t  sourceIP[4];
     uint8_t  destIP[4];
-} __attribute__((packed)) ip_t;
+} __attribute__((packed)) ipv4Packet_t;
+
+
+void ipv4_received(network_adapter_t* adapter, ipv4Packet_t* packet, uint32_t length, uint8_t MAC[6]);
+void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint8_t IP[4]);
+
 
 #endif

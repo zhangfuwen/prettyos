@@ -3,9 +3,7 @@
 
 // http://tools.ietf.org/html/rfc793 <--- Transmission Control Protocol
 
-#include "ethernet.h"
-#include "ipv4.h"
-#include "types.h"
+#include "network/network.h"
 
 
 // http://de.wikipedia.org/wiki/Transmission_Control_Protocol#Erl.C3.A4uterung
@@ -33,14 +31,7 @@ typedef struct
     uint16_t window;
     uint16_t checksum;
     uint16_t urgentPointer;
-} __attribute__((packed)) tcpheader_t;
-
-typedef struct
-{
-    ethernet_t eth;
-    ip_t ip;
-    tcpheader_t tcp;
-} __attribute__((packed)) tcppacket_t;
+} __attribute__((packed)) tcpPacket_t;
 
 
 // Binds the connection to a local portnumber and IP address.
@@ -55,7 +46,7 @@ void tcpConnect();
 void tcpRecv();
 void tcpSend();
 
-void tcpDebug(tcpheader_t *tcp);
+void tcpDebug(tcpPacket_t* tcp);
 
 
 #endif

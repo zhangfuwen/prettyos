@@ -25,7 +25,7 @@ static void arp_checkTable(arpTable_t* table)
         for(element_t* e = table->table->head; e != 0; e = e->next)
         {
             arpTableEntry_t* entry = e->data;
-            if(entry->dynamic &&                                                    // Only dynamic entries should be killed. 
+            if(entry->dynamic &&                                                    // Only dynamic entries should be killed.
                timer_getSeconds() > entry->seconds + ARP_TABLE_TIME_TO_DELETE * 60) // Entry is older than ... minutes -> Obsolete entry. Delete it.
             {
                 arp_deleteTableEntry(table, entry);
@@ -90,7 +90,6 @@ void arp_deleteTable(arpTable_t* table)
 }
 
 
-
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 {
     // 1 = Ethernet, 0x0800 = IPv4
@@ -129,39 +128,32 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
                 packet->arp.destIP[2] == adapter->IP_address[2] && packet->arp.destIP[3] == adapter->IP_address[3])
             {
                 printf("\n Tx prepared:");
-                arpPacket_t reply;
-                for (uint8_t i = 0; i < 6; i++)
-                {
-                    reply.eth.recv_mac[i] = packet->arp.source_mac[i];
-                    reply.eth.send_mac[i] = adapter->MAC_address[i];
-                }
-                reply.eth.type_len[0] = 0x08; 
-                reply.eth.type_len[1] = 0x06;
+                arp_t reply;
 
                 for (uint8_t i = 0; i < 2; i++)
                 {
-                    reply.arp.hardware_addresstype[i] = packet->arp.hardware_addresstype[i];
-                    reply.arp.protocol_addresstype[i] = packet->arp.protocol_addresstype[i];
+                    reply.hardware_addresstype[i] = packet->arp.hardware_addresstype[i];
+                    reply.protocol_addresstype[i] = packet->arp.protocol_addresstype[i];
                 }
-                reply.arp.operation[0] = 0;
-                reply.arp.operation[1] = 2; // reply
+                reply.operation[0] = 0;
+                reply.operation[1] = 2; // reply
 
-                reply.arp.hardware_addresssize = packet->arp.hardware_addresssize;
-                reply.arp.protocol_addresssize = packet->arp.protocol_addresssize;
+                reply.hardware_addresssize = packet->arp.hardware_addresssize;
+                reply.protocol_addresssize = packet->arp.protocol_addresssize;
 
                 for (uint8_t i = 0; i < 6; i++)
                 {
-                    reply.arp.dest_mac[i]   = packet->arp.source_mac[i];
-                    reply.arp.source_mac[i] = adapter->MAC_address[i];
+                    reply.dest_mac[i]   = packet->arp.source_mac[i];
+                    reply.source_mac[i] = adapter->MAC_address[i];
                 }
 
                 for (uint8_t i = 0; i < 4; i++)
                 {
-                    reply.arp.destIP[i]   = packet->arp.sourceIP[i];
-                    reply.arp.sourceIP[i] = adapter->IP_address[i];
+                    reply.destIP[i]   = packet->arp.sourceIP[i];
+                    reply.sourceIP[i] = adapter->IP_address[i];
                 }
 
-                EthernetSend(adapter, (void*)&reply, sizeof(arpPacket_t));
+                EthernetSend(adapter, (void*)&reply, sizeof(arp_t), packet->arp.source_mac, 0x0806);
             }
             break;
 
@@ -189,39 +181,34 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 void arp_sendGratitiousRequest(struct network_adapter* adapter)
 {
     printf("\n Tx prepared:");
-    arpPacket_t gratRequest;
-    for (uint8_t i = 0; i < 6; i++)
-    {
-        gratRequest.eth.recv_mac[i] = 0xFF; // Broadcast
-        gratRequest.eth.send_mac[i] = adapter->MAC_address[i];
-    }
-    
-    gratRequest.eth.type_len[0] = 0x08; 
-    gratRequest.eth.type_len[1] = 0x06;
-    gratRequest.arp.hardware_addresstype[0] = 0;    // Ethernet
-    gratRequest.arp.hardware_addresstype[1] = 1;
-    gratRequest.arp.protocol_addresstype[0] = 0x08; // IP
-    gratRequest.arp.protocol_addresstype[1] = 0x00;
+    arp_t gratRequest;
 
-    gratRequest.arp.operation[0] = 0;
-    gratRequest.arp.operation[1] = 1; // Request
+    gratRequest.hardware_addresstype[0] = 0;    // Ethernet
+    gratRequest.hardware_addresstype[1] = 1;
+    gratRequest.protocol_addresstype[0] = 0x08; // IP
+    gratRequest.protocol_addresstype[1] = 0x00;
 
-    gratRequest.arp.hardware_addresssize = 6;
-    gratRequest.arp.protocol_addresssize = 4;
+    gratRequest.operation[0] = 0;
+    gratRequest.operation[1] = 1; // Request
+
+    gratRequest.hardware_addresssize = 6;
+    gratRequest.protocol_addresssize = 4;
 
     for (uint8_t i = 0; i < 6; i++)
     {
-        gratRequest.arp.dest_mac[i]   = 0xFF; // Broadcast
-        gratRequest.arp.source_mac[i] = adapter->MAC_address[i];
+        gratRequest.dest_mac[i]   = 0xFF; // Broadcast
+        gratRequest.source_mac[i] = adapter->MAC_address[i];
     }
 
     for (uint8_t i = 0; i < 4; i++)
     {
-        gratRequest.arp.destIP[i]   = adapter->IP_address[i];
-        gratRequest.arp.sourceIP[i] = adapter->IP_address[i];
+        gratRequest.destIP[i]   = adapter->IP_address[i];
+        gratRequest.sourceIP[i] = adapter->IP_address[i];
     }
 
-    EthernetSend(adapter, (void*)&gratRequest, sizeof(arpPacket_t));
+    uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+    EthernetSend(adapter, (void*)&gratRequest, sizeof(arp_t), destMAC, 0x0806);
 }
 
 /*

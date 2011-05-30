@@ -5,8 +5,6 @@
 // http://de.wikipedia.org/wiki/Internet_Control_Message_Protocol <--- icmp Protocol
 
 #include "network/network.h"
-#include "ethernet.h"
-#include "ipv4.h"
 
 #define ICMP_ECHO_REPLY                    0        // Echo Reply
 #define ICMP_RESERVED_1                    1        //  1-2 = Reserved
@@ -51,17 +49,8 @@ typedef struct icmpheader
     uint16_t seqnumber;
 } __attribute__((packed)) icmpheader_t;
 
-typedef struct icmpPacket // eth:ip:icmp:data
-{
-    ethernet_t   eth;
-    ip_t         ip;
-    icmpheader_t icmp;
-} __attribute__((packed)) icmppacket_t;
 
-
-int internetChecksum(void *addr, size_t count);
-void ICMPAnswerPing(network_adapter_t* adapter, void* data, uint32_t length);
-void icmpDebug(void* data, uint32_t length);
+void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* data, uint32_t length, uint8_t sourceMAC[6], uint8_t sourceIP[4]);
 
 
 #endif

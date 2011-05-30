@@ -606,6 +606,32 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
     return ((PackedBCDVal >> 4) * 10 + (PackedBCDVal & 0xF));
 }
 
+// compute internet checksum for "count" bytes beginning at location "addr"
+int internetChecksum(void* addr, size_t count)
+{
+    uint32_t sum  = 0;
+    uint8_t* data = addr;
+
+    while (count > 1) // inner loop
+    {
+        sum   += (data[0] << 8) | data[1]; // Big Endian
+        data  += 2;
+        count -= 2;
+    }
+
+    if (count > 0) // add left-over byte, if any
+    {
+        sum += data[0] << 8;
+    }
+
+    while (sum >> 16) // fold 32-bit sum to 16 bits
+    {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    return ~sum & 0xFFFF;
+}
+
 /**********************************************************************/
 
 void systemControl(SYSTEM_CONTROL todo) // TODO: Improve it.

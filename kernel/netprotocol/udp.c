@@ -8,19 +8,19 @@
 #include "video/console.h"
 #include "udp.h"
 
-void UDPRecv(udppacket_t* packet)
+void UDPRecv(udpPacket_t* packet)
 {
     // TODO: ...
     
-    UDPDebug(&packet->udp);
+    UDPDebug(packet);
 }
 
 void UDPSend(struct network_adapter* adapter, void* data, uint32_t length)
 {
-    EthernetSend(adapter, data, length);
+    //EthernetSend(adapter, data, length);
 }
 
-void UDPDebug(udpheader_t* udp)
+void UDPDebug(udpPacket_t* udp)
 {
     printf("\n");
     printf("UDP Header information:\n");

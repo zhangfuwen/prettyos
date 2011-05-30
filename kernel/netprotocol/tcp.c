@@ -7,7 +7,7 @@
 #include "video/console.h"
 
 
-void tcpDebug(tcpheader_t* tcp)
+void tcpDebug(tcpPacket_t* tcp)
 {
   printf("\n");
   printf("TCP Header information:\n");

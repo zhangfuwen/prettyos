@@ -14,8 +14,8 @@ typedef struct
 
 struct network_adapter;
 
-void EthernetRecv(struct network_adapter* adapter, void* data, uint32_t length);
-bool EthernetSend(struct network_adapter* adapter, void* data, uint32_t length);
+void EthernetRecv(struct network_adapter* adapter, ethernet_t* eth, uint32_t length);
+bool EthernetSend(struct network_adapter* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type);
 
 
 #endif

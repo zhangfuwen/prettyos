@@ -18,7 +18,7 @@
 #include "netprotocol/arp.h"
 
 
-typedef enum 
+typedef enum
 {
     RTL8139, RTL8168, PCNET, ND_END
 } network_drivers;
@@ -75,7 +75,7 @@ bool network_installDevice(pciDev_t* device)
     uint16_t pciCommandRegister = pci_config_read(device->bus, device->device, device->func, 0x0204);
     pci_config_write_dword(device->bus, device->device, device->func, 0x04, pciCommandRegister /*already set*/ | BIT(2) /*bus master*/); // resets status register, sets command register
 
-    for (uint8_t j=0;j<6;++j) // check network card BARs
+    for (uint8_t j = 0; j < 6; ++j) // check network card BARs
     {
         device->bar[j].memoryType = device->bar[j].baseAddress & 0x01;
 
@@ -154,7 +154,7 @@ bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t leng
 
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length) // Called by driver
 {
-    EthernetRecv(adapter, buffer, length);
+    EthernetRecv(adapter, (ethernet_t*)buffer, length);
 }
 
 void network_displayArpTables()
@@ -163,9 +163,9 @@ void network_displayArpTables()
     uint8_t i = 0;
     for (element_t* e = adapters->head; e != 0; e = e->next, i++)
     {
-        printf("\n\nAdapter %u:  %u.%u.%u.%u", i, ((network_adapter_t*)e->data)->IP_address[0], 
-                                                  ((network_adapter_t*)e->data)->IP_address[1], 
-                                                  ((network_adapter_t*)e->data)->IP_address[2], 
+        printf("\n\nAdapter %u:  %u.%u.%u.%u", i, ((network_adapter_t*)e->data)->IP_address[0],
+                                                  ((network_adapter_t*)e->data)->IP_address[1],
+                                                  ((network_adapter_t*)e->data)->IP_address[2],
                                                   ((network_adapter_t*)e->data)->IP_address[3] );
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
     }

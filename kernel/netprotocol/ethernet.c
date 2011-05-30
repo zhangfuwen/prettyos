@@ -11,16 +11,12 @@
 #include "ethernet.h"
 #include "arp.h"
 #include "ipv4.h"
-#include "icmp.h"
-#include "tcp.h"
-#include "udp.h"
+#include "kheap.h"
 #include "util.h"
 
 
-void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
+void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
-    ethernet_t* eth = (ethernet_t*)data;
-
     uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
 
     // output ethernet packet
@@ -80,47 +76,8 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
         if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IP
         {
             printf("Ethernet type: IP. ");
-            ip_t*  ip  = (ip_t*) ((uintptr_t)eth + sizeof(ethernet_t));
-
-            // IPv4 protocol is parsed here and distributed in switch/case
-            uint32_t ipHeaderLengthBytes = 4 * ip->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
-            printf(" IP version: %u, IP Header Length: %u byte", ip->version, ipHeaderLengthBytes);
-            switch(ip->protocol)
-            {
-                case 1: // icmp
-                    printf("ICMP. ");
-                    ICMPAnswerPing(adapter, data, length);
-                    icmpDebug(data, length);
-                    break;
-                case 4: // ipv4
-                    printf("IPv4. ");
-                    /*
-                    tcpheader_t tcp;
-                    tcp.sourcePort = 1025;
-                    tcp.destinationPort = 80;
-                    tcp.sequence_number = 1;
-                    tcp.ACK = 1;
-                    tcpDebug(&tcp);
-                    */
-                    break;
-                case 6: // tcp
-                    printf("\nTCP. ");
-                    tcppacket_t* tcpPacket = data;
-                    tcpDebug(&(tcpPacket->tcp));
-                    break;
-                case 17: // udp
-                    printf("UDP. ");
-                    udppacket_t* udpPacket = data;
-                    UDPRecv(udpPacket);
-                    break;
-                case 41: // ipv6 ?? cf. below
-                    printf("IPv6. ");
-                    break;
-                default:
-                    printf("other protocol based on IP. ");
-                    break;
-            }
-        } // end of IPv6
+            ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t), eth->send_mac);
+        }
 
         else if ((eth->type_len[0] == 0x86) && (eth->type_len[1] == 0xDD)) // IPv6
         {
@@ -149,8 +106,22 @@ void EthernetRecv(network_adapter_t* adapter, void* data, uint32_t length)
 }
 
 
-bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length)
+bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type)
 {
+    ethernet_t* packet = malloc(sizeof(ethernet_t)+length, 0, "ethernet packet");
+
+    memcpy(packet+1, data, length);
+    memcpy(packet->recv_mac, MAC, 6);
+    memcpy(packet->send_mac, adapter->MAC_address, 6);
+    *(uint16_t*)packet->type_len = ntohs(type);
+
+    bool retVal = network_sendPacket(adapter, (void*)packet, length+sizeof(ethernet_t));
+
+    free(packet);
+
+    return(retVal);
+
+    /*
     if (length > 0x700)
     {
         printf("\nerror: EthernetSend: length: %u. This is more than (1792) 0x700",length);
@@ -176,7 +147,7 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length)
     }
     textColor(0x0F);
 
-    return network_sendPacket(adapter, data, length);
+    return network_sendPacket(adapter, data, length);*/
 }
 
 /*
