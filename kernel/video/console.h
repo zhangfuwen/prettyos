@@ -14,7 +14,7 @@ typedef struct // Defines the User-Space of the display
 {
     char*      name;
     bool       showInfobar;
-    uint8_t    SCROLL_BEGIN; // TODO: Make use of it
+    uint8_t    SCROLL_BEGIN;
     uint8_t    SCROLL_END;
     position_t cursor;
     keyqueue_t KQ;

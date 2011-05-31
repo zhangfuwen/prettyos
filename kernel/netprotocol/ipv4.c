@@ -4,10 +4,10 @@
 */
 
 #include "ipv4.h"
-#include "ethernet.h"
 #include "tcp.h"
 #include "udp.h"
 #include "icmp.h"
+#include "ethernet.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"

@@ -98,23 +98,25 @@ Index    7    6    5    4    3    2    1    0
 
 typedef struct
 {
-    uint8_t masterleft,masterright;
-    uint8_t vocleft,vocright;
-    uint8_t midileft,midiright;
-    uint8_t cdleft,cdright;
-    uint8_t lineleft,lineright;
+    uint8_t masterleft, masterright;
+    uint8_t vocleft, vocright;
+    uint8_t midileft, midiright;
+    uint8_t cdleft ,cdright;
+    uint8_t lineleft, lineright;
     uint8_t micvolume;
     uint8_t pcspeaker;
     uint8_t outputswitches;
     uint8_t inputswitchesleft;
     uint8_t inputswitchesright;
-    uint8_t inputgainleft,inputgainright;
-    uint8_t outputgainleft,outputgainright;
+    uint8_t inputgainleft, inputgainright;
+    uint8_t outputgainleft, outputgainright;
     uint8_t agc;
-    uint8_t trebleleft,trebleright;
-    uint8_t bassleft,bassright;
-}__attribute__ ((packed)) MixerStruct_t;
+    uint8_t trebleleft, trebleright;
+    uint8_t bassleft, bassright;
+} __attribute__ ((packed)) sb16_mixer_t;
+
 
 void install_SB16(pciDev_t* device);
+
 
 #endif

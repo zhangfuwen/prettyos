@@ -6,7 +6,6 @@
 
 // http://www.rfc-editor.org/rfc/rfc793.txt <--- TRANSMISSION CONTROL PROTOCOL
 
-#include "network/network.h"
 #include "video/console.h"
 #include "ethernet.h"
 #include "arp.h"
@@ -88,7 +87,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         else if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x06)) // ARP
         {
             printf("Ethernet type: ARP. ");
-            arp_received(adapter, (void*)eth);
+            arp_received(adapter, (void*)(eth+1));
         }
         else
         {
@@ -108,6 +107,16 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 
 bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type)
 {
+    if (sizeof(ethernet_t)+length > 0x700)
+    {
+        printf("\nEthernetSend: length: %u. Error: This is more than (1792) 0x700",sizeof(ethernet_t)+length);
+        return false;
+    }
+    else
+    {
+        printf("\nEthernetSend: length: %u.", sizeof(ethernet_t)+length);
+    }
+
     ethernet_t* packet = malloc(sizeof(ethernet_t)+length, 0, "ethernet packet");
 
     memcpy(packet+1, data, length);
@@ -120,34 +129,6 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
     free(packet);
 
     return(retVal);
-
-    /*
-    if (length > 0x700)
-    {
-        printf("\nerror: EthernetSend: length: %u. This is more than (1792) 0x700",length);
-        return false;
-    }
-    else
-    {
-        printf("\nEthernetSend: length: %u.",length);
-    }
-
-    // TODO: check whether Tx buffer is already occupied
-
-    ethernet_t* eth = (ethernet_t*)data;
-    textColor(0x0C);
-
-    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
-    {
-        printf("\nPacket now sent with Ethernet 2. ");
-    }
-    else
-    {
-        printf("\nPacket now sent with Ethernet 1. ");
-    }
-    textColor(0x0F);
-
-    return network_sendPacket(adapter, data, length);*/
 }
 
 /*

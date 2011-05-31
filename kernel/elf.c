@@ -11,16 +11,16 @@
 void* globalUserProgAddr;
 uint32_t globalUserProgSize;
 
-typedef enum
+enum elf_headerType
 {
     ET_NONE  = 0,
     ET_REL   = 1,
     ET_EXEC  = 2,
     ET_DYN   = 3,
     ET_CORE  = 4
-} elf_header_type_t;
+};
 
-typedef enum
+enum elf_headerMachine
 {
     EM_NONE  = 0,
     EM_M32   = 1,
@@ -30,15 +30,15 @@ typedef enum
     EM_88K   = 5,
     EM_860   = 7,
     EM_MIPS  = 8
-} elf_header_machine_t;
+};
 
-typedef enum
+enum elf_headerVersion
 {
     EV_NONE    = 0,
     EV_CURRENT = 1
-} elf_header_version_t;
+};
 
-typedef enum
+enum elf_headerIdent
 {
     EI_MAG0    = 0,
     EI_MAG1    = 1,
@@ -48,21 +48,21 @@ typedef enum
     EI_DATA    = 5,
     EI_VERSION = 6,
     EI_PAD     = 7
-} elf_header_ident_t;
+};
 
-typedef enum
+enum elf_headerIdentClass
 {
     ELFCLASSNONE = 0,
     ELFCLASS32   = 1,
     ELFCLASS64   = 2
-} elf_header_ident_class_t;
+};
 
-typedef enum
+enum elf_headerIdentData
 {
     ELFDATANONE = 0,
     ELFDATA2LSB = 1,
     ELFDATA2MSB = 2
-} elf_header_ident_data_t;
+};
 
 typedef struct
 {
@@ -83,7 +83,7 @@ typedef struct
 } elf_header_t;
 
 
-typedef enum
+enum elf_programHeaderTypes
 {
     PT_NULL = 0,
     PT_LOAD,
@@ -92,7 +92,14 @@ typedef enum
     PT_NOTE,
     PT_SHLIB,
     PT_PHDR
-} program_header_flags_t;
+};
+
+enum elf_programHeaderFlags
+{
+    PF_X = 1,
+    PF_W = 2,
+    PF_R = 4
+};
 
 typedef struct
 {
@@ -104,7 +111,7 @@ typedef struct
     uint32_t memsz;
     uint32_t flags;
     uint32_t align;
-} program_header_t;
+} elf_programHeader_t;
 
 
 bool elf_filename(const char* filename)
@@ -132,27 +139,22 @@ bool elf_header(file_t* file)
     return(valid);
 }
 
-bool elf_exec(const void* elf_file, size_t elf_file_size, const char* programName)
+bool elf_exec(const void* file, size_t size, const char* programName)
 {
-    const uint8_t* elf_beg = elf_file;
-    const uint8_t* elf_end = elf_beg + elf_file_size;
-
     // Read the header
-    const elf_header_t* header = (elf_header_t*) elf_beg;
+    const elf_header_t* header = (elf_header_t*)file;
 
     pageDirectory_t* pd = paging_createUserPageDirectory();
 
     // Read all program headers
-    const uint8_t* header_pos = elf_beg + header->phoff;
-    for (uint32_t i=0; i<header->phnum; ++i)
+    const elf_programHeader_t* ph = file + header->phoff;
+    for (uint32_t i = 0; i < header->phnum; ++i)
     {
         // Check whether the entry exceeds the file
-        if (header_pos+sizeof(program_header_t) >= elf_end)
+        if ((void*)(ph+i) >= file+size)
         {
             return -1;
         }
-
-        program_header_t* ph = (program_header_t*)header_pos;
 
         #ifdef _DIAGNOSIS_
         textColor(0x02);
@@ -160,16 +162,19 @@ bool elf_exec(const void* elf_file, size_t elf_file_size, const char* programNam
         const char* types[] = { "NULL", "Loadable Segment", "Dynamic Linking Information",
                                 "Interpreter", "Note", "??", "Program Header" };
         printf("  %s, offset %u, vaddr %X, paddr %X, filesz %u, memsz %u, flags %u, align %u\n",
-            types[ph->type], ph->offset, ph->vaddr, ph->paddr, ph->filesz, ph->memsz, ph->flags, ph->align);
+            types[ph[i].type], ph[i].offset, ph[i].vaddr, ph[i].paddr, ph[i].filesz, ph[i].memsz, ph[i].flags, ph[i].align);
         textColor(0x0F);
         #endif
 
-        /// TODO: check read/write privileges (info in elf?)
+        // Read flags from header
+        uint32_t memFlags = MEM_USER;
+        if(ph[i].flags & PF_W)
+            memFlags |= MEM_WRITE;
 
         // Allocate code area for the user program
-        globalUserProgAddr = (void*)(ph->vaddr);
-        globalUserProgSize = alignUp(ph->memsz,PAGESIZE);
-        if (!pagingAlloc(pd, globalUserProgAddr, globalUserProgSize, MEM_USER | MEM_WRITE))
+        globalUserProgAddr = (void*)(ph[i].vaddr);
+        globalUserProgSize = alignUp(ph[i].memsz,PAGESIZE);
+        if (!pagingAlloc(pd, globalUserProgAddr, globalUserProgSize, memFlags))
         {
             return false;
         }
@@ -179,12 +184,10 @@ bool elf_exec(const void* elf_file, size_t elf_file_size, const char* programNam
         // Copy the code, using the user's page directory
         cli();
         paging_switch(pd);
-        memcpy((void*)ph->vaddr, elf_beg+ph->offset, ph->filesz);
-        memset((void*)ph->vaddr + ph->filesz, 0, ph->memsz - ph->filesz); // to set the bss (Block Started by Symbol) to zero
+        memcpy((void*)ph[i].vaddr, file + ph[i].offset, ph[i].filesz);
+        memset((void*)ph[i].vaddr + ph[i].filesz, 0, ph[i].memsz - ph[i].filesz); // to set the bss (Block Started by Symbol) to zero
         paging_switch(currentTask->pageDirectory);
         sti();
-
-        header_pos += header->phentrysize;
     }
 
     // Execute the task

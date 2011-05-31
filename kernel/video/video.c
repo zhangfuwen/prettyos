@@ -32,7 +32,7 @@ task_t* lockingTask = 0;
 void video_install()
 {
     videoLock = mutex_create(1);
-    vidmem = paging_acquirePciMemory(0xB8000, 2); // TODO: Are 2 pages enough/to much/correct?
+    vidmem = paging_acquirePciMemory(0xB8000, 2);
 }
 
 void video_setPixel(uint8_t x, uint8_t y, uint16_t value)

@@ -38,7 +38,6 @@ void rtl8139_handler(registers_t* data)
     else if (val & RTL8139_INT_CABLE)           { puts("Cable Length Change");}
     else if (val & RTL8139_INT_TIMEOUT)         { puts("Time Out");}
     else if (val & RTL8139_INT_PCIERR)          { puts("System Error");}
-    puts("  ");
 
     // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
     *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS)) = val;

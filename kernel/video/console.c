@@ -29,6 +29,7 @@ uint8_t getTextColor()
 
 void kernel_console_init()
 {
+    kernelConsole.SCROLL_BEGIN = 0;
     kernelConsole.SCROLL_END = 39;
     kernelConsole.showInfobar = true;
     kernelConsole.mutex = mutex_create(1);
@@ -85,7 +86,6 @@ void setScrollField(uint8_t begin, uint8_t end)
 {
     currentConsole->SCROLL_BEGIN = begin;
     currentConsole->SCROLL_END = end;
-    scroll();
 }
 
 void showInfobar(bool show)
@@ -189,7 +189,7 @@ void putch(char c)
             move_cursor_home();
             break;
         case '\n': // newline: like 'cr': cursor to the margin and increment cursor.y
-            ++currentConsole->cursor.y; scroll(); move_cursor_home();
+            ++currentConsole->cursor.y; move_cursor_home();
             scroll();
             break;
         default:
@@ -217,12 +217,13 @@ void puts(const char* text)
 static void scroll()
 {
     mutex_lock(currentConsole->mutex);
+    uint8_t scroll_begin = currentConsole->SCROLL_BEGIN;
     uint8_t scroll_end = min(USER_LINES, currentConsole->SCROLL_END);
     if (scroll_flag && currentConsole->cursor.y >= scroll_end)
     {
-        uint8_t temp = currentConsole->cursor.y - scroll_end + 1;
-        memcpy((uint16_t*)currentConsole->vidmem, (uint16_t*)currentConsole->vidmem + temp * COLUMNS, (scroll_end - temp) * COLUMNS * sizeof(uint16_t));
-        memsetw((uint16_t*)currentConsole->vidmem + (scroll_end - temp) * COLUMNS, getTextColor() << 8, COLUMNS);
+        uint8_t lines = currentConsole->cursor.y - scroll_end + 1;
+        memcpy((uint16_t*)currentConsole->vidmem + scroll_begin*COLUMNS, (uint16_t*)currentConsole->vidmem + scroll_begin*COLUMNS + lines * COLUMNS, (scroll_end - lines) * COLUMNS * sizeof(uint16_t));
+        memsetw((uint16_t*)currentConsole->vidmem + (scroll_end - lines) * COLUMNS, getTextColor() << 8, COLUMNS);
         currentConsole->cursor.y = scroll_end - 1;
         refreshUserScreen();
     }

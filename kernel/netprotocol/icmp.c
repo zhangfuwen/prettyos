@@ -4,7 +4,6 @@
 */
 
 #include "icmp.h"
-#include "network/network.h"
 #include "video/console.h"
 #include "ipv4.h"
 #include "util.h"

@@ -2,7 +2,6 @@
 #define ARP_H
 
 #include "os.h"
-#include "ethernet.h"
 #include "list.h"
 
 #define ARP_TABLE_TIME_TO_CHECK   2    // time in minutes
@@ -19,12 +18,6 @@ typedef struct
     uint8_t sourceIP[4];
     uint8_t dest_mac[6];
     uint8_t destIP[4];
-} __attribute__((packed)) arp_t;
-
-typedef struct
-{
-    ethernet_t eth;
-    arp_t      arp;
 } __attribute__((packed)) arpPacket_t;
 
 

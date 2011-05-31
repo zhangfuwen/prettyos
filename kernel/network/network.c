@@ -10,12 +10,10 @@
 #include "kheap.h"
 #include "irq.h"
 #include "util.h"
-#include "timer.h"
 #include "video/console.h"
 #include "netprotocol/ethernet.h"
 #include "netprotocol/dhcp.h"
 #include "list.h"
-#include "netprotocol/arp.h"
 
 
 typedef enum
