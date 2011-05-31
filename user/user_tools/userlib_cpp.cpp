@@ -6,6 +6,7 @@
 #include "userlib.hpp"
 #include "stdlib.h"
 
+#if __unix__
 void* operator new(size_t size)
 {
     return malloc(size);
@@ -22,6 +23,25 @@ void operator delete[](void* ptr)
 {
     free(ptr);
 }
+#else
+void* operator new(unsigned long size)
+{
+    return malloc(size);
+}
+void* operator new[](unsigned long size)
+{
+    return malloc(size);
+}
+void operator delete(void* ptr)
+{
+    free(ptr);
+}
+void operator delete[](void* ptr)
+{
+    free(ptr);
+}
+
+#endif
 
 
 /*

@@ -117,8 +117,8 @@ bool network_installDevice(pciDev_t* device)
     }
     */
     // Workaround: TODO
-    adapter->IP_address[0] =  10;
-    adapter->IP_address[1] =   0;
+    adapter->IP_address[0] =  192;
+    adapter->IP_address[1] =   168;
     adapter->IP_address[2] =   2;
     adapter->IP_address[3] =  15;
     // ------------------------------
