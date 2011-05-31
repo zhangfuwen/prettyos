@@ -29,11 +29,11 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     switch(packet->protocol)
     {
         case 1: // icmp
-            printf("ICMP. ");
+            printf("\nICMP. ");
             ICMPAnswerPing(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t), packet->sourceIP);
             break;
         case 4: // ipv4
-            printf("IPv4. ");
+            printf("\nIPv4. ");
             break;
         case 6: // tcp
             printf("\nTCP. ");
@@ -41,12 +41,12 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
             tcpDebug(tcpPacket);
             break;
         case 17: // udp
-            printf("UDP. ");
+            printf("\nUDP. ");
             udpPacket_t* udpPacket = (void*)(packet+1);
             UDPRecv(adapter,udpPacket,length-sizeof(ipv4Packet_t));
             break;
         default:
-            printf("other protocol based on IP. ");
+            printf("\nother protocol based on IP. ");
             break;
     }
 }

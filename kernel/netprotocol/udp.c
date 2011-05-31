@@ -3,82 +3,29 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-// http://www.rfc-editor.org/rfc/rfc768.txt <---  User Datagram Protocol
+// http://www.rfc-editor.org/rfc/rfc768.txt <---  User Datagram Protocol (UDP)
 
 #include "video/console.h"
 #include "udp.h"
 #include "types.h"
 #include "ipv4.h"
 
-uint16_t udpCalculateChecksum(udpPacket_t * p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4])
-{
-//http://www.faqs.org/rfcs/rfc1146.html
-        uint32_t calcSourceIp = 0;
-        uint32_t calcDestIp = 0;
-        uint32_t header[3];
-        uint16_t *data;
-        uint16_t checksum = 0;
-        size_t i = 0;
- 
-        calcSourceIp |= sourceIp[0];
-        calcSourceIp <<=(uint8_t)8;
-        calcSourceIp |= sourceIp[1];
-        calcSourceIp <<=(uint8_t)8;
-        calcSourceIp |= sourceIp[2];
-        calcSourceIp <<=(uint8_t)8;
-        calcSourceIp |= sourceIp[3];
- 
-        calcDestIp |= destinationIp[0];
-        calcDestIp <<=(uint8_t)8;
-        calcDestIp |= destinationIp[1];
-        calcDestIp <<=(uint8_t)8;
-        calcDestIp |= destinationIp[2];
-        calcDestIp <<=(uint8_t)8;
-        calcDestIp |= destinationIp[3];
- 
-        header[0] = calcSourceIp;
-        header[1] = calcDestIp;
-        header[3] = (htons(length) << 16) | ( 17 << 8);
-        data = (uint16_t*) &header[0];
-        for(; i < (6); i++)
-        {
-                checksum += data[i];
-        }
-	data = (uint16_t*)p;
-        for(i = 0; i < length / 2; i++)
-        {
-                if(i !=8)
-                {
-                        checksum += (uint8_t)data[i];
-                }
-        }
-        if((length %2) != 0)
-        {
-                checksum += (uint8_t)data[length-1];
-        }
- 
-        while((checksum >> 16) != 0)
-                checksum = (checksum &0xFFFF) + ( checksum >> 16);
- 
-        return ~checksum;
-}
+static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4]);
 
-void UDPRecv(struct network_adapter * adapter,udpPacket_t* packet,uint32_t length)
+void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
     // TODO: ...
-
     UDPDebug(packet);
 }
 
-void UDPSend(struct network_adapter* adapter, void* data, uint32_t length,
-        uint16_t srcPort,uint8_t srcIP[4],
-        uint16_t destPort,uint8_t destIP[4])
+void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  srcPort, uint8_t  srcIP[4], uint16_t destPort, uint8_t destIP[4])
 {
-	udpPacket_t * packet = (udpPacket_t*)((uintptr_t)data -sizeof(udpPacket_t));
-	packet->sourcePort = srcPort;
-	packet->destPort = destPort;
-	packet->length = length + sizeof(udpPacket_t);
-	packet->checksum = udpCalculateChecksum(packet,packet->length,srcIP,destIP);
+	udpPacket_t* packet = (udpPacket_t*)((uintptr_t)data -sizeof(udpPacket_t));
+	packet->sourcePort  = srcPort;
+	packet->destPort    = destPort;
+	packet->length      = length + sizeof(udpPacket_t);
+	packet->checksum    = udpCalculateChecksum(packet,packet->length,srcIP,destIP);
+
 	ipv4_send(adapter,packet,packet->length,destIP,17);
 }
 
@@ -150,6 +97,64 @@ void UDPDebug(udpPacket_t* udp)
         break;
     }
 }
+
+static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4])
+{
+//http://www.faqs.org/rfcs/rfc1146.html
+        uint32_t calcSourceIp = 0;
+        uint32_t calcDestIp = 0;
+        uint32_t header[3];
+        uint16_t *data;
+        uint16_t checksum = 0;
+        size_t i = 0;
+ 
+        calcSourceIp |= sourceIp[0];
+        calcSourceIp <<=(uint8_t)8;
+        calcSourceIp |= sourceIp[1];
+        calcSourceIp <<=(uint8_t)8;
+        calcSourceIp |= sourceIp[2];
+        calcSourceIp <<=(uint8_t)8;
+        calcSourceIp |= sourceIp[3];
+ 
+        calcDestIp |= destinationIp[0];
+        calcDestIp <<=(uint8_t)8;
+        calcDestIp |= destinationIp[1];
+        calcDestIp <<=(uint8_t)8;
+        calcDestIp |= destinationIp[2];
+        calcDestIp <<=(uint8_t)8;
+        calcDestIp |= destinationIp[3];
+ 
+        header[0] = calcSourceIp;
+        header[1] = calcDestIp;
+        header[3] = (htons(length) << 16) | ( 17 << 8);
+        data = (uint16_t*) &header[0];
+        
+        for(; i < (6); i++)
+        {
+            checksum += data[i];
+        }
+	    data = (uint16_t*)p;
+        
+        for(i = 0; i < length / 2; i++)
+        {
+            if(i != 8)
+            {
+                checksum += (uint8_t)data[i];
+            }
+        }
+        if((length %2) != 0)
+        {
+            checksum += (uint8_t)data[length-1];
+        }
+ 
+        while((checksum >> 16) != 0)
+        {
+            checksum = (checksum &0xFFFF) + ( checksum >> 16);
+        }
+ 
+        return ~checksum;
+}
+
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
