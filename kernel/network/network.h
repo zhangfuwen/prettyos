@@ -25,6 +25,13 @@ struct network_adapter
     arpTable_t        arpTable;
 };
 
+typedef struct
+{
+    network_adapter_t* adapter;
+    void*              data;
+    size_t             length;
+} networkBuffer_t;
+
 
 bool network_installDevice(pciDev_t* device);
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length);

@@ -13,8 +13,16 @@
 #include "util.h"
 
 
+static const uint8_t broadcast_IP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length, uint8_t MAC[6])
 {
+    if(strncmp((char*)packet->destIP, (char*)adapter->IP_address, 4) != 0 && strncmp((char*)packet->destIP, (char*)broadcast_IP, 4) != 0)
+    {
+        printf("\nIPv4 packet received. We are not the addressee.");
+        //return;
+    }
+
     // IPv4 protocol is parsed here and distributed in switch/case
     uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
     printf(" IP version: %u, IP Header Length: %u byte", packet->version, ipHeaderLengthBytes);

@@ -11,20 +11,23 @@
 #include "kheap.h"
 
 
-RTL8139_networkAdapter_t* device;
+#define RTL8139_RX_BUFFER_SIZE 0x2000 // 8 KiB
+#define RTL8139_TX_BUFFER_SIZE 4096
 
-// Receive
-static uint8_t* Rx_tempBuffer; // temporary buffer... TODO: Useful? Keep it global?
+
+RTL8139_networkAdapter_t* device;
 
 
 void rtl8139_handler(registers_t* data)
 {
+    #ifdef _NETWORK_DIAGNOSIS_
     textColor(0x03);
     printf("\n--------------------------------------------------------------------------------");
-    printf("\n--------------------------------------------------------------------------------");
+    #endif
 
     // read bytes 003Eh bis 003Fh, Interrupt Status Register
-    uint16_t val = *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS));
+    volatile uint16_t val = *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS));
+    #ifdef _NETWORK_DIAGNOSIS_
     textColor(0x0E);
     printf("\nRTL8139 Interrupt Status: %y, ", val);
     textColor(0x03);
@@ -38,6 +41,7 @@ void rtl8139_handler(registers_t* data)
     else if (val & RTL8139_INT_CABLE)           { puts("Cable Length Change");}
     else if (val & RTL8139_INT_TIMEOUT)         { puts("Time Out");}
     else if (val & RTL8139_INT_PCIERR)          { puts("System Error");}
+    #endif
 
     // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
     *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS)) = val;
@@ -50,6 +54,7 @@ void rtl8139_handler(registers_t* data)
     uint32_t length = (device->RxBuffer[device->RxBufferPointer+3] << 8) + device->RxBuffer[device->RxBufferPointer+2]; // Little Endian
 
     // Display RTL8139 specific data
+    #ifdef _NETWORK_DATA_
     textColor(0x0D);
     printf("\nFlags: ");
     textColor(0x03);
@@ -57,9 +62,10 @@ void rtl8139_handler(registers_t* data)
     {
         printf("%y ", device->RxBuffer[device->RxBufferPointer+i]);
     }
+    #endif
 
-    // Copy data to temporary buffer
-    memcpy(Rx_tempBuffer, &device->RxBuffer[device->RxBufferPointer]+4, length); // The data starts at offset 4
+    // Inform network interface about the packet
+    network_receivedPacket(device->device, &device->RxBuffer[device->RxBufferPointer]+4, length);
 
     // Increase RxBufferPointer
     // packets are DWORD aligned
@@ -67,15 +73,14 @@ void rtl8139_handler(registers_t* data)
     device->RxBufferPointer = (device->RxBufferPointer + 3) & ~0x3; // ~0x3 = 0xFFFFFFFC
 
     // handle wrap-around
-    device->RxBufferPointer %= RTL8139_NETWORK_BUFFER_SIZE;
+    device->RxBufferPointer %= RTL8139_RX_BUFFER_SIZE;
 
     // set read pointer
     *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)) = device->RxBufferPointer - 0x10; // 0x10 = 16
 
+    #ifdef _NETWORK_DIAGNOSIS_
     printf("RXBUFTAIL: %u", *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)));
-
-    // Inform network interface about the packet
-    network_receivedPacket(device->device, Rx_tempBuffer, length);
+    #endif
 }
 
 
@@ -85,14 +90,12 @@ void install_RTL8139(network_adapter_t* dev)
     device->device = dev;
     dev->data = device;
 
-    device->RxBuffer = malloc(RTL8139_NETWORK_BUFFER_SIZE, 4, "RTL8139-RxBuf");
+    device->RxBuffer = malloc(RTL8139_RX_BUFFER_SIZE, 4, "RTL8139-RxBuf");
     device->RxBufferPointer = 0;
-    memset(device->RxBuffer, 0, RTL8139_NETWORK_BUFFER_SIZE); // clear receiving buffer
+    memset(device->RxBuffer, 0, RTL8139_RX_BUFFER_SIZE); // clear receiving buffer
 
-    device->TxBuffer = malloc(4096, 4, "RTL8139-TxBuf");
+    device->TxBuffer = malloc(RTL8139_TX_BUFFER_SIZE, 4, "RTL8139-TxBuf");
     device->TxBufferIndex = 0;
-
-    Rx_tempBuffer = malloc(2048, 0, "RTL8139-TempBuf");
 
     /*
     http://wiki.osdev.org/RTL8139
@@ -202,7 +205,7 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
     // set transmit FIFO threshhold to 48*32 = 1536 bytes to avoid tx underrun
     *((uint32_t*)(adapter->MMIO_base + RTL8139_TXADDR0   + 4 * rAdapter->TxBufferIndex)) = paging_getPhysAddr(rAdapter->TxBuffer);
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * rAdapter->TxBufferIndex)) = length | (48 << 16); 
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * rAdapter->TxBufferIndex)) = length | (48 << 16);
 
     rAdapter->TxBufferIndex++;
     rAdapter->TxBufferIndex %= 4;

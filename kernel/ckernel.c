@@ -23,7 +23,7 @@
 #include "elf.h"
 
 
-const char* const version = "0.0.2.64 - Rev: 904";
+const char* const version = "0.0.2.65 - Rev: 905";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -42,6 +42,7 @@ void apic_install()
 }
 
 todoList_t* delayedInitTasks; // HACK! Why is it needed? (RTL8139 generates interrupts (endless) if its not used for EHCI)
+todoList_t* kernel_idleTasks;
 
 typedef struct // http://www.lowlevel.eu/wiki/Multiboot
 {
@@ -127,6 +128,7 @@ static void init(multiboot_t* mb_struct)
     deviceManager_install(); log("Devicemanager"); // device management for mass storage devices
 
     delayedInitTasks = todoList_create();
+    kernel_idleTasks = todoList_create();
 
     sti();
 }
@@ -274,6 +276,7 @@ void main(multiboot_t* mb_struct)
         }
 
         todoList_execute(delayedInitTasks);
+        todoList_execute(kernel_idleTasks);
 
         if (keyPressed(VK_ESCAPE) && keyPressed(VK_H)) // kernel heap
         {

@@ -11,7 +11,7 @@
 void UDPRecv(udpPacket_t* packet)
 {
     // TODO: ...
-    
+
     UDPDebug(packet);
 }
 

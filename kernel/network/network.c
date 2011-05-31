@@ -14,6 +14,7 @@
 #include "netprotocol/ethernet.h"
 #include "netprotocol/dhcp.h"
 #include "list.h"
+#include "todo_list.h"
 
 
 typedef enum
@@ -28,7 +29,8 @@ static network_driver_t drivers[ND_END] =
     {.install = &install_AMDPCnet, .interruptHandler = &PCNet_handler, .sendPacket = &PCNet_send}
 };
 
-listHead_t* adapters = 0;
+static listHead_t* adapters = 0;
+static listHead_t* RxBuffers = 0;
 
 bool network_installDevice(pciDev_t* device)
 {
@@ -150,9 +152,32 @@ bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t leng
     return(adapter->driver->sendPacket != 0 && adapter->driver->sendPacket(adapter, buffer, length));
 }
 
-void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length) // Called by driver
+static void network_handleReceivedBuffers()
 {
-    EthernetRecv(adapter, (ethernet_t*)buffer, length);
+    for(element_t* e = RxBuffers->head; e != 0;)
+    {
+        networkBuffer_t* buffer = e->data;
+        e = e->next;
+        EthernetRecv(buffer->adapter, (ethernet_t*)buffer->data, buffer->length);
+        free(buffer->data);
+        list_Delete(RxBuffers, buffer);
+        free(buffer);
+    }
+}
+
+void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t length) // Called by driver
+{
+    if(RxBuffers == 0)
+        RxBuffers = list_Create();
+
+    networkBuffer_t* buffer = malloc(sizeof(networkBuffer_t), 0, "network_buffer");
+    buffer->adapter = adapter;
+    buffer->length = length;
+    buffer->data = malloc(length, 0, "network buffer");
+    memcpy(buffer->data, data, length);
+    list_Append(RxBuffers, buffer);
+
+    todoList_add(kernel_idleTasks, &network_handleReceivedBuffers);
 }
 
 void network_displayArpTables()
@@ -164,7 +189,7 @@ void network_displayArpTables()
         printf("\n\nAdapter %u:  %u.%u.%u.%u", i, ((network_adapter_t*)e->data)->IP_address[0],
                                                   ((network_adapter_t*)e->data)->IP_address[1],
                                                   ((network_adapter_t*)e->data)->IP_address[2],
-                                                  ((network_adapter_t*)e->data)->IP_address[3] );
+                                                  ((network_adapter_t*)e->data)->IP_address[3]);
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
     }
 }

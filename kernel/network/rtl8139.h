@@ -74,9 +74,6 @@
 #define RTL8139_RX_FRAME_ALIGN      0x00000002    // Frame alignment error
 #define RTL8139_RX_STATUS_OK        0x00000001    // Status ok: a good packet was received
 
-// Configuration definitions
-#define RTL8139_NETWORK_BUFFER_SIZE 0x2000        // 8 KiB
-
 
 typedef struct
 {

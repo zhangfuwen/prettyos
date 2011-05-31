@@ -14,13 +14,22 @@
 #include "util.h"
 
 
+static const uint8_t broadcast_MAC1[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+static const uint8_t broadcast_MAC2[6] = {0, 0, 0, 0, 0, 0};
+
 void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
+    if(strncmp((char*)eth->recv_mac, (char*)adapter->MAC_address, 6) != 0 && strncmp((char*)eth->recv_mac, (char*)broadcast_MAC1, 6) != 0 && strncmp((char*)eth->recv_mac, (char*)broadcast_MAC2, 6) != 0)
+    {
+        printf("\nEthernet packet received. We are not the addressee.");
+        //return;
+    }
+
     uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
 
     // output ethernet packet
 
-    textColor(0x0D); printf("\tLength: ");
+    textColor(0x0D); printf("\nLength: ");
     textColor(0x03); printf("%d", length);
 
     textColor(0x0D); printf("\nMAC Receiver: "); textColor(0x03);
