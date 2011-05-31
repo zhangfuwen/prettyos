@@ -20,8 +20,8 @@ typedef struct
 } __attribute__((packed)) ipv4Packet_t;
 
 
-void ipv4_received(network_adapter_t* adapter, ipv4Packet_t* packet, uint32_t length, uint8_t MAC[6]);
-void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint8_t IP[4]);
+void ipv4_received(network_adapter_t* adapter, ipv4Packet_t* packet, uint32_t length);
+void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t IP[4],int protocol);
 
 
 #endif

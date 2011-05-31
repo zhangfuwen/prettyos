@@ -49,6 +49,7 @@ void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dy
 
 arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
 {
+
     arp_checkTable(table); // We check the table for obsolete entries.
 
     for(element_t* e = table->table->head; e != 0; e = e->next)

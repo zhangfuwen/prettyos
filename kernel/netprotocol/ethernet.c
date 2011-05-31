@@ -84,7 +84,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IP
         {
             printf("Ethernet type: IP. ");
-            ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t), eth->send_mac);
+            ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t));
         }
 
         else if ((eth->type_len[0] == 0x86) && (eth->type_len[1] == 0xDD)) // IPv6

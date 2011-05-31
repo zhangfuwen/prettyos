@@ -9,7 +9,7 @@
 #include "util.h"
 
 
-void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, uint8_t sourceMAC[6], uint8_t sourceIP[4])
+void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, uint8_t sourceIP[4])
 {
     size_t icmp_data_length = length-sizeof(icmpheader_t);
     uint8_t pkt[sizeof(icmpheader_t) + icmp_data_length];
@@ -35,7 +35,7 @@ void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t leng
     printf("|              %u                | (data)\n", icmp->checksum);
     printf("+-------------------------------+\n");
 
-    ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceMAC, sourceIP);
+    ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP,1);
 }
 
 

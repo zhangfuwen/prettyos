@@ -11,11 +11,11 @@
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
-
+#include "arp.h"
 
 static const uint8_t broadcast_IP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
-void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length, uint8_t MAC[6])
+void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
 {
     if(strncmp((char*)packet->destIP, (char*)adapter->IP_address, 4) != 0 && strncmp((char*)packet->destIP, (char*)broadcast_IP, 4) != 0)
     {
@@ -30,7 +30,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     {
         case 1: // icmp
             printf("ICMP. ");
-            ICMPAnswerPing(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t), MAC, packet->sourceIP);
+            ICMPAnswerPing(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t), packet->sourceIP);
             break;
         case 4: // ipv4
             printf("IPv4. ");
@@ -43,7 +43,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
         case 17: // udp
             printf("UDP. ");
             udpPacket_t* udpPacket = (void*)(packet+1);
-            UDPRecv(udpPacket);
+            UDPRecv(adapter,udpPacket,length-sizeof(ipv4Packet_t));
             break;
         default:
             printf("other protocol based on IP. ");
@@ -51,7 +51,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     }
 }
 
-void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint8_t IP[4])
+void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t IP[4],int protocol)
 {
     ipv4Packet_t* packet = malloc(sizeof(ipv4Packet_t)+length, 0, "ipv4 packet");
 
@@ -66,12 +66,33 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     packet->identification = 0;
     packet->fragmentation  = htons(0x4000);
     packet->ttl            = 128;
-    packet->protocol       = 1;
+    packet->protocol       = protocol;
     packet->checksum       = 0;
     packet->checksum       = htons(internetChecksum(packet, sizeof(ipv4Packet_t)));
 
-    EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), MAC, 0x0800);
 
+    /*
+    Todo: Tell routing table to route the ip address
+    */
+
+    arpTableEntry_t * entry = arp_findEntry( &adapter->arpTable,IP );
+    if(entry)
+    {
+        EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
+    }
+    else
+    {
+        arp_sendGratitiousRequest(adapter);
+        entry = arp_findEntry( &adapter->arpTable,IP );
+        if(entry)
+        {
+            EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);       
+	}
+	else
+	{
+	    printf("No default interface for the ip address\n");
+	}
+    }
     free(packet);
 }
 
