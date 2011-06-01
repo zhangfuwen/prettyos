@@ -54,12 +54,14 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
 
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
-        if(strncmp((char*)((arpTableEntry_t*)e->data)->IP, (char*)IP, 4) == 0)
-        {
+        #define IPCHECK(pos) ((arpTableEntry_t*)e->data)->IP[pos] == IP[pos]
+        if(IPCHECK(0) && IPCHECK(1) &&IPCHECK(2) &&IPCHECK(3)) 
+	{
             ((arpTableEntry_t*)e->data)->seconds = timer_getSeconds(); // Update time stamp.
             return(e->data);
         }
     }
+    #undef IPCHECK 
     return(0);
 }
 

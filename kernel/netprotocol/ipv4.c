@@ -74,7 +74,6 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     /*
     Todo: Tell routing table to route the ip address
     */
-
     arpTableEntry_t * entry = arp_findEntry( &adapter->arpTable,IP );
     if(entry)
     {
@@ -90,6 +89,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
 	}
 	else
 	{
+    	    printf("IP_ARP FAILURE: %d.%d.%d.%d\n",IP[0],IP[1],IP[2],IP[3]);
 	    printf("No default interface for the ip address\n");
 	}
     }
