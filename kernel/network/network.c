@@ -117,10 +117,10 @@ bool network_installDevice(pciDev_t* device)
     }
     */
     // Workaround: TODO
-    adapter->IP_address[0] =  192;
-    adapter->IP_address[1] =  168;
-    adapter->IP_address[2] =   10;
-    adapter->IP_address[3] =   97;
+    adapter->IP_address[0] =  IP_1;
+    adapter->IP_address[1] =  IP_2;
+    adapter->IP_address[2] =  IP_3;
+    adapter->IP_address[3] =  IP_4;
     // ------------------------------
 
     adapter->driver->install(adapter);
@@ -192,6 +192,20 @@ void network_displayArpTables()
                                                   ((network_adapter_t*)e->data)->IP_address[3]);
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
     }
+}
+
+network_adapter_t* network_getAdapter(uint8_t IP[4])
+{
+    if(adapters == 0) return(0);
+    for(element_t* e = adapters->head; e != 0; e = e->next)
+    {
+        network_adapter_t* adapter = e->data;
+        if(adapter->IP_address[0] == IP[0] && adapter->IP_address[1] == IP[1] && adapter->IP_address[2] == IP[2] && adapter->IP_address[3] == IP[3])
+        {
+            return(adapter);
+        }
+    }
+    return(0);
 }
 
 

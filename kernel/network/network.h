@@ -4,6 +4,10 @@
 #include "pci.h"
 #include "netprotocol/arp.h"
 
+#define IP_1 192
+#define IP_2 168
+#define IP_3  10
+#define IP_4  97
 
 typedef struct network_adapter network_adapter_t;
 typedef struct
@@ -32,11 +36,10 @@ typedef struct
     size_t             length;
 } networkBuffer_t;
 
-
 bool network_installDevice(pciDev_t* device);
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length);
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length); // Called by driver
 void network_displayArpTables();
-
+network_adapter_t* network_getAdapter(uint8_t IP[4]);
 
 #endif

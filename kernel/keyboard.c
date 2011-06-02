@@ -8,13 +8,13 @@
 #include "task.h"
 #include "irq.h"
 #include "network/network.h"
+#include "netprotocol\udp.h"
 
 #if KEYMAP == GER
 #include "keyboard_GER.h"
 #else //US-Keyboard if nothing else is defined
 #include "keyboard_US.h"
 #endif
-
 
 static bool AltKeyDown   = false; // variable for Alt Key Down
 static bool AltGrKeyDown = false; // variable for AltGr Key Down
@@ -183,6 +183,23 @@ uint8_t ScanToASCII()
         if(retchar == 't') // If you want to test something
         {
             scheduler_log();
+            return 0;
+        }
+        if(retchar == 'n') // If you want to test something in networking
+        {   
+            uint8_t sourceIP_address[4] ={192,168,10,97};
+            uint8_t   destIP_address[4] ={192,168,10,103};
+            
+            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            printf("network adapter: %X\n", adapter); // check
+            
+            uint16_t srcPort  = 40; // unassigend
+            uint16_t destPort = 40;
+            
+            if (adapter)
+            {
+                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);
+            }
             return 0;
         }
     }

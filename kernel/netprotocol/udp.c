@@ -21,12 +21,11 @@ void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  srcPort, uint8_t  srcIP[4], uint16_t destPort, uint8_t destIP[4])
 {
 	udpPacket_t* packet = (udpPacket_t*)((uintptr_t)data -sizeof(udpPacket_t));
-	packet->sourcePort  = srcPort;
-	packet->destPort    = destPort;
-	packet->length      = length + sizeof(udpPacket_t);
-	packet->checksum    = udpCalculateChecksum(packet,packet->length,srcIP,destIP);
-
-	ipv4_send(adapter,packet,packet->length,destIP,17);
+	packet->sourcePort  = htons(srcPort);
+	packet->destPort    = htons(destPort);
+	packet->length      = htons(length + sizeof(udpPacket_t));
+	packet->checksum    = packet->checksum  = udpCalculateChecksum(packet, length + sizeof(udpPacket_t), srcIP, destIP);
+	ipv4_send(adapter,packet,length + sizeof(udpPacket_t),destIP,17);
 }
 
 void UDPDebug(udpPacket_t* udp)
