@@ -19,10 +19,10 @@ static const uint8_t broadcast_MAC2[6] = {0, 0, 0, 0, 0, 0};
 
 void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
-    if(strncmp((char*)eth->recv_mac, (char*)adapter->MAC_address, 6) != 0 && strncmp((char*)eth->recv_mac, (char*)broadcast_MAC1, 6) != 0 && strncmp((char*)eth->recv_mac, (char*)broadcast_MAC2, 6) != 0)
+    if(memcmp(eth->recv_mac, adapter->MAC_address, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC1, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC2, 6) != 0)
     {
         printf("\nEthernet packet received. We are not the addressee.");
-        //return;
+        return;
     }
 
     uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian

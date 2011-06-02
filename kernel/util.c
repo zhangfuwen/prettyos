@@ -191,6 +191,20 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
     return dest;
 }
 
+int32_t memcmp(const void* s1, const void* s2, size_t n)
+{
+    if(n == 0) return(0);
+
+    const uint8_t* v1 = s1;
+    const uint8_t* v2 = s2;
+    for (; n > 1 && *v1 == *v2; n--)
+    {
+        ++v1;
+        ++v2;
+    }
+    return (*v1 - *v2);
+}
+
 /**********************************************************************/
 
 char* gets(char* s)
@@ -329,11 +343,12 @@ int32_t strcmp(const char* s1, const char* s2)
 
 int32_t strncmp(const char* s1, const char* s2, size_t n)
 {
-    while ((*s1) && (n > 0) && (*s1 == *s2))
+    if(n == 0) return(0);
+
+    for (; *s1 && n > 1 && *s1 == *s2; n--)
     {
         ++s1;
         ++s2;
-        --n;
     }
     return (*s1 - *s2);
 }

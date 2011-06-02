@@ -1,8 +1,32 @@
 #include "string.h"
 #include "stdint.h"
 
-void* memchr(const void* ptr, char value, size_t num); /// TODO
-int memcmp(const void* ptr1, const void* ptr2, size_t num); /// TODO
+void* memchr(void* ptr, char value, size_t num)
+{
+    char* str = ptr;
+    for (; num > 0; str++, num--)
+    {
+        if (*str == value)
+        {
+            return str;
+        }
+    }
+    return(0);
+}
+
+int memcmp(const void* ptr1, const void* ptr2, size_t num)
+{
+    if(num == 0) return(0);
+
+    const uint8_t* s1 = ptr1;
+    const uint8_t* s2 = ptr2;
+    for (; num > 1 && *s1 == *s2; num--)
+    {
+        ++s1;
+        ++s2;
+    }
+    return (*s1 - *s2);
+}
 
 void* memcpy(void* dest, const void* source, size_t num)
 {
@@ -85,11 +109,12 @@ int strcmp(const char* s1, const char* s2)
 
 int strncmp(const char* s1, const char* s2, size_t n)
 {
-    while ((*s1) && n > 0 && (*s1 == *s2))
+    if(n == 0) return(0);
+
+    for (; *s1 && n > 1 && *s1 == *s2; n--)
     {
         ++s1;
         ++s2;
-        --n;
     }
     return (*s1 - *s2);
 }

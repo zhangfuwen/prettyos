@@ -4,6 +4,7 @@
 #ifdef _cplusplus
 extern "C" {
 #endif
+
 int isalnum(int c);
 int isalpha(int c);
 int iscntrl(int c);

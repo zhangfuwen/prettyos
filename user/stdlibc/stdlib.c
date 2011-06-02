@@ -8,7 +8,11 @@
 void* userheapAlloc(size_t increase); // -> Syscall, Userlib
 
 
-void abort(); /// TODO
+void abort()
+{
+    exit();
+}
+
 void exit(); // -> Syscall
 int atexit(void (*func)()); /// TODO
 

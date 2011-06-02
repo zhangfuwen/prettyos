@@ -49,19 +49,17 @@ void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dy
 
 arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
 {
-
     arp_checkTable(table); // We check the table for obsolete entries.
 
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
-        #define IPCHECK(pos) ((arpTableEntry_t*)e->data)->IP[pos] == IP[pos]
-        if(IPCHECK(0) && IPCHECK(1) &&IPCHECK(2) &&IPCHECK(3)) 
-	{
-            ((arpTableEntry_t*)e->data)->seconds = timer_getSeconds(); // Update time stamp.
+        arpTableEntry_t* entry = e->data;
+        if(entry->IP[0] == IP[0] && entry->IP[1] == IP[1] && entry->IP[2] == IP[2] && entry->IP[3] == IP[3])
+        {
+            entry->seconds = timer_getSeconds(); // Update time stamp.
             return(e->data);
         }
     }
-    #undef IPCHECK 
     return(0);
 }
 

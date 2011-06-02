@@ -6,6 +6,6 @@ void (*SIG_DFL)(int) = (void*)1; // HACK, but maybe best way to solve the proble
 void (*SIG_IGN)(int) = &dummy;
 
 
-//void (*signal(int sig, void (*func)(int)))(int);
+void (*signal(int sig, void (*func)(int)))(int); /// TODO
 
-//int raise(signal sig); /// TODO
+int raise(int sig); /// TODO

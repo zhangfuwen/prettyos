@@ -10,14 +10,13 @@ extern void (*SIG_IGN)(int);
 
 typedef int sig_atomic_t;
 
-//extern void (*signal(int sig, void (*func)(int)))(int);
-
 
 #ifdef _cplusplus
 extern "C" {
 #endif
 
-//int raise(signal sig);
+void (*signal(int sig, void (*func)(int)))(int);
+int raise(int sig);
 
 #ifdef _cplusplus
 }

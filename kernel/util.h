@@ -40,6 +40,7 @@ uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
 void*     memcpy(void* dest, const void* src, size_t count);
 void*     memmove(const void* source, void* destination, size_t size);
+int32_t   memcmp(const void* s1, const void* s2, size_t n);
 
 void    vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
 void    snprintf (char *buffer, size_t length, const char *args, ...);

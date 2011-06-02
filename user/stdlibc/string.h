@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-void* memchr(const void* ptr, char value, size_t num);
+void* memchr(void* ptr, char value, size_t num);
 int memcmp(const void* ptr1, const void* ptr2, size_t num);
 void* memcpy(void* dest, const void* source, size_t num);
 void* memmove(void* dest, const void* source, size_t num);

@@ -13,14 +13,15 @@
 #include "util.h"
 #include "arp.h"
 
+
 static const uint8_t broadcast_IP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
 {
-    if(strncmp((char*)packet->destIP, (char*)adapter->IP_address, 4) != 0 && strncmp((char*)packet->destIP, (char*)broadcast_IP, 4) != 0)
+    if(memcmp(packet->destIP, adapter->IP_address, 4) != 0 && memcmp(packet->destIP, broadcast_IP, 4) != 0)
     {
         printf("\nIPv4 packet received. We are not the addressee.");
-        //return;
+        return;
     }
 
     // IPv4 protocol is parsed here and distributed in switch/case
@@ -85,13 +86,13 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
         entry = arp_findEntry( &adapter->arpTable,IP );
         if(entry)
         {
-            EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);       
-	}
-	else
-	{
-    	    printf("IP_ARP FAILURE: %d.%d.%d.%d\n",IP[0],IP[1],IP[2],IP[3]);
-	    printf("No default interface for the ip address\n");
-	}
+            EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
+        }
+        else
+        {
+            printf("IP_ARP FAILURE: %d.%d.%d.%d\n",IP[0],IP[1],IP[2],IP[3]);
+            printf("No default interface for the ip address\n");
+        }
     }
     free(packet);
 }
