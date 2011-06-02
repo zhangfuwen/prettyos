@@ -33,11 +33,15 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.sname[0] = 0;
     packet.file[0] = 0;
 
-    packet.options[0] = 99;
-    packet.options[1] = 130;
-    packet.options[2] = 83;
-    packet.options[3] = 99;
-    packet.options[53] = 0;
+    // options
+    packet.options[0] =  99;  // MAGIC 
+    packet.options[1] = 130;  // MAGIC
+    packet.options[2] =  83;  // MAGIC
+    packet.options[3] =  99;  // MAGIC
+    packet.options[4] =  53;  // DHCP message type
+    packet.options[5] =   1;  // Length
+    packet.options[6] =   1;  // (data)
+    packet.options[7] = 255;  // end 
 
     uint8_t srcIP[4] = {0,0,0,0};
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
