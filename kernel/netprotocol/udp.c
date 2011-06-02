@@ -9,6 +9,9 @@
 #include "udp.h"
 #include "types.h"
 #include "ipv4.h"
+#include "kheap.h"
+#include "util.h"
+
 
 static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4]);
 
@@ -18,14 +21,18 @@ void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
     UDPDebug(packet);
 }
 
-void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  srcPort, uint8_t  srcIP[4], uint16_t destPort, uint8_t destIP[4])
+void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4])
 {
-	udpPacket_t* packet = (udpPacket_t*)((uintptr_t)data -sizeof(udpPacket_t));
-	packet->sourcePort  = htons(srcPort);
-	packet->destPort    = htons(destPort);
-	packet->length      = htons(length + sizeof(udpPacket_t));
-	packet->checksum    = packet->checksum  = udpCalculateChecksum(packet, length + sizeof(udpPacket_t), srcIP, destIP);
-	ipv4_send(adapter,packet,length + sizeof(udpPacket_t),destIP,17);
+    udpPacket_t* packet = malloc(sizeof(udpPacket_t)+length, 0, "UDP packet");
+    memcpy(packet+1, data, length);
+
+    packet->sourcePort  = htons(srcPort);
+    packet->destPort    = htons(destPort);
+    packet->length      = htons(length + sizeof(udpPacket_t));
+    packet->checksum    = udpCalculateChecksum(packet, length + sizeof(udpPacket_t), srcIP, destIP);
+
+    ipv4_send(adapter, packet, length + sizeof(udpPacket_t), destIP, 17);
+    free(packet);
 }
 
 void UDPDebug(udpPacket_t* udp)

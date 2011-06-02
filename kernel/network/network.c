@@ -32,6 +32,7 @@ static network_driver_t drivers[ND_END] =
 static listHead_t* adapters = 0;
 static listHead_t* RxBuffers = 0;
 
+
 bool network_installDevice(pciDev_t* device)
 {
     textColor(0x0C);
@@ -125,6 +126,10 @@ bool network_installDevice(pciDev_t* device)
 
     adapter->driver->install(adapter);
 
+    if(adapters == 0)
+        adapters = list_Create();
+    list_Append(adapters, adapter);
+
     // Try to get an IP by DHCP
     DHCP_Discover(adapter);
 
@@ -134,10 +139,6 @@ bool network_installDevice(pciDev_t* device)
 
     printf("\t\tIP address: %u.%u.%u.%u\n", adapter->IP_address[0], adapter->IP_address[1], adapter->IP_address[2], adapter->IP_address[3]);
     textColor(0x0F);
-
-    if(adapters == 0)
-        adapters = list_Create();
-    list_Append(adapters, adapter);
 
     /*for (int i=0; i<10; i++)
     {

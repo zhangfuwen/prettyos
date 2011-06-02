@@ -4,16 +4,44 @@
 */
 
 #include "dhcp.h"
+#include "udp.h"
 #include "video/console.h"
 
 
 void DHCP_Discover(network_adapter_t* adapter)
 {
-    printf("\nTODO: DHCP Discover\n");
+    printf("\nDHCP Discover\n");
+    dhcp_t packet;
+    packet.op = 1;
+    packet.htype = 1;
+    packet.hlen = 6;
+    packet.hops = 0;
+    packet.xid = 0x000AFFE000;
+    packet.secs = 0;
+    packet.flags = 0;
+    for(uint8_t i = 0; i < 4; i++)
+    {
+        packet.ciaddr[i] = 0;
+        packet.yiaddr[i] = 0;
+        packet.siaddr[i] = 0;
+        packet.giaddr[i] = 0;
+    }
+    for(uint8_t i = 0; i < 6; i++)
+        packet.chaddr[i] = adapter->MAC_address[i];
+    for(uint8_t i = 6; i < 16; i++)
+        packet.chaddr[i] = 0;
+    packet.sname[0] = 0;
+    packet.file[0] = 0;
 
-    // void* data
-    // uint32_t length
-    // EthernetSend(data, length);
+    packet.options[0] = 99;
+    packet.options[1] = 130;
+    packet.options[2] = 83;
+    packet.options[3] = 99;
+    packet.options[53] = 0;
+
+    uint8_t srcIP[4] = {0,0,0,0};
+    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
 void DHCP_Request()

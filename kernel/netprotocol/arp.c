@@ -40,11 +40,11 @@ void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dy
     {
         entry = malloc(sizeof(arpTableEntry_t), 0, "arp entry");
         list_Append(table->table, entry);
-        memcpy(entry->IP,  IP,  4);
-        memcpy(entry->MAC, MAC, 6);
-        entry->dynamic = dynamic;
-        entry->seconds = timer_getSeconds();
     }
+    memcpy(entry->IP,  IP,  4);
+    memcpy(entry->MAC, MAC, 6);
+    entry->dynamic = dynamic;
+    entry->seconds = timer_getSeconds();
 }
 
 arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
@@ -57,7 +57,7 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
         if(entry->IP[0] == IP[0] && entry->IP[1] == IP[1] && entry->IP[2] == IP[2] && entry->IP[3] == IP[3])
         {
             entry->seconds = timer_getSeconds(); // Update time stamp.
-            return(e->data);
+            return(entry);
         }
     }
     return(0);
@@ -82,6 +82,10 @@ void arp_initTable(arpTable_t* table)
 {
     table->table = list_Create();
     table->lastCheck = timer_getSeconds();
+
+    // Create default entries
+    uint8_t broadcast[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    arp_addTableEntry(table, broadcast, broadcast, false);
 }
 
 void arp_deleteTable(arpTable_t* table)

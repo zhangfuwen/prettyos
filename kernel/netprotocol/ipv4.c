@@ -15,6 +15,7 @@
 
 
 static const uint8_t broadcast_IP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
 {
@@ -52,7 +53,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     }
 }
 
-void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t IP[4],int protocol)
+void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t IP[4], int protocol)
 {
     ipv4Packet_t* packet = malloc(sizeof(ipv4Packet_t)+length, 0, "ipv4 packet");
 
@@ -75,7 +76,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     /*
     Todo: Tell routing table to route the ip address
     */
-    arpTableEntry_t * entry = arp_findEntry( &adapter->arpTable,IP );
+    arpTableEntry_t * entry = arp_findEntry(&adapter->arpTable, IP);
     if(entry)
     {
         EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
@@ -83,15 +84,14 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     else
     {
         arp_sendGratitiousRequest(adapter);
-        entry = arp_findEntry( &adapter->arpTable,IP );
+        entry = arp_findEntry(&adapter->arpTable, IP);
         if(entry)
         {
             EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
         }
         else
         {
-            printf("IP_ARP FAILURE: %d.%d.%d.%d\n",IP[0],IP[1],IP[2],IP[3]);
-            printf("No default interface for the ip address\n");
+            printf("\nThe requested IP was not found in the ARP table: %d.%d.%d.%d",IP[0],IP[1],IP[2],IP[3]);
         }
     }
     free(packet);
