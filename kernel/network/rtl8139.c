@@ -174,9 +174,7 @@ void install_RTL8139(network_adapter_t* dev)
     for (uint8_t i = 0; i < 6; i++)
     {
         dev->MAC_address[i] =  *(uint8_t*)(dev->MMIO_base + RTL8139_IDR0 + i);        
-    }
-    
-    // dev->MAC_address[5] = 0xF; // TRICK
+    }    
 }
 
 /*

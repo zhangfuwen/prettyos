@@ -8,7 +8,8 @@
 #include "task.h"
 #include "irq.h"
 #include "network/network.h"
-#include "netprotocol\udp.h"
+#include "netprotocol/udp.h"
+#include "netprotocol/dhcp.h"
 
 #if KEYMAP == GER
 #include "keyboard_GER.h"
@@ -187,8 +188,8 @@ uint8_t ScanToASCII()
         }
         if(retchar == 'n') // If you want to test something in networking
         {
-            uint8_t sourceIP_address[4] ={192,168,10,97};
-            uint8_t   destIP_address[4] ={192,168,10,103};
+            uint8_t sourceIP_address[4] ={0,0,0,0};
+            uint8_t   destIP_address[4] ={255,255,255,255};
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
             printf("network adapter: %X\n", adapter); // check
@@ -199,6 +200,7 @@ uint8_t ScanToASCII()
             if (adapter)
             {
                 UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);
+                DHCP_Discover(adapter);
             }
             return 0;
         }

@@ -19,7 +19,7 @@
 /// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
 /// #define _NETWORK_DATA_         // Enables additional information about networking packets
 /// #define _NETWORK_DIAGNOSIS_    // Enables additional information about the network adapters
-#define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen. Disabled per default.
+/// #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen. Disabled per default.
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 
 /// #define KEYMAP US     // US keyboard
