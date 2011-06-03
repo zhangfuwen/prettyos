@@ -117,19 +117,19 @@ void install_RTL8139(network_adapter_t* dev)
 
     kdebug(3, "RTL8139 MMIO: %X\n", dev->MMIO_base);
     dev->MMIO_base = paging_acquirePciMemory((uint32_t)dev->MMIO_base, 1);
-    printf("MMIO base mapped to virtual address %X\n", dev->MMIO_base);
+    printf("MMIO base mapped to virt. addr. %X\n", dev->MMIO_base);
 
     // "power on" the card
     *((uint8_t*)(dev->MMIO_base + RTL8139_CONFIG1)) = 0x00;
-
+        
     // carry out reset of network card: set bit 4 at offset 0x37 (1 Byte)
     *((uint8_t*)(dev->MMIO_base + RTL8139_CHIPCMD)) = RTL8139_CMD_RESET;
 
     // wait for the reset of the "reset flag"
     uint32_t k=0;
     while (true)
-    {
-        sleepMilliSeconds(10);
+    {        
+        delay(10000);
         if (!(*((volatile uint8_t*)(dev->MMIO_base + RTL8139_CHIPCMD)) & RTL8139_CMD_RESET))
         {
             kdebug(3, "\nwaiting successful (%d).\n", k);
