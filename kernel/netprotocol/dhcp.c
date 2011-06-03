@@ -26,6 +26,7 @@ void DHCP_Discover(network_adapter_t* adapter)
         packet.siaddr[i] = 0;
         packet.giaddr[i] = 0;
     }
+
     for(uint8_t i = 0; i < 6; i++)
         packet.chaddr[i] = adapter->MAC_address[i];
     for(uint8_t i = 6; i < 16; i++)
@@ -34,14 +35,34 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.file[0] = 0;
 
     // options
-    packet.options[0] =  99;  // MAGIC 
-    packet.options[1] = 130;  // MAGIC
-    packet.options[2] =  83;  // MAGIC
-    packet.options[3] =  99;  // MAGIC
-    packet.options[4] =  53;  // DHCP message type
-    packet.options[5] =   1;  // Length
-    packet.options[6] =   1;  // (data)
-    packet.options[7] = 255;  // end 
+    for(uint16_t i = 0; i < 312; i++)
+        packet.options[i] = 0;
+      
+    packet.options[0]  =  99;  // MAGIC
+    packet.options[1]  = 130;  // MAGIC
+    packet.options[2]  =  83;  // MAGIC
+    packet.options[3]  =  99;  // MAGIC
+    
+    packet.options[4]  =  53;  // MESSAGE TYPE
+    packet.options[5]  =   1;  // Length
+    packet.options[6]  =   1;  // (data)
+
+    packet.options[7]  =  55;  // 
+    packet.options[8]  =   8;  // Length
+    packet.options[9]  =   1;  // SUBNET MASK 
+    packet.options[10] =   3;  // ROUTERS
+    packet.options[11] =   6;  // DOMAIN NAME SERVER
+    packet.options[12] =  15;  // DOMAIN NAME
+    packet.options[13] =  28;  // BROADCAST ADDRESS
+    packet.options[14] =  31;  // Perform Router Discover  
+    packet.options[15] =  33;  // Static Route
+    packet.options[16] =  42;  // Network Time Protocol (NTP) SERVERS
+    
+    packet.options[17] = 116; // DHCP Auto Configuration
+    packet.options[18] =   1; // Length 
+    packet.options[19] =   1; // 
+
+    packet.options[20] = 255;  // end
 
     uint8_t srcIP[4] = {0,0,0,0};
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};

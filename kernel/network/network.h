@@ -4,10 +4,25 @@
 #include "pci.h"
 #include "netprotocol/arp.h"
 
+/*
 #define IP_1 192
 #define IP_2 168
 #define IP_3  10
-#define IP_4  97
+#define IP_4  98
+*/
+
+/*
+//for qemu
+#define IP_1  10
+#define IP_2   0
+#define IP_3   2
+#define IP_4  15
+*/
+
+#define IP_1   0
+#define IP_2   0
+#define IP_3   0
+#define IP_4   0
 
 typedef struct network_adapter network_adapter_t;
 typedef struct
