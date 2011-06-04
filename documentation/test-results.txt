@@ -38,3 +38,10 @@ Leaving parts of a row in the components area free means, that you took the hard
 '√' means: Running well. If you set the '√' into brackets, you can express, that there is only a small bug that is avoidable without a real loss of functionality. Please mention the Bug in the Annotations.
 'f' means: Problems while testing (Please say, what happens)
 'x' means: Impossible to test because the machine does not have the hardware needed
+
+
+
+Special Problems:
+
+http://www.c-plusplus.de/forum/p2073041?sid=b120c1a633dd7cf195d1b69d4559ff9c#2073041 
+rtl8139.c: sleepMilliseconds hat to be subtituted by delay due to freeze during booting. Question: 100 Hz --> 250 Hz Is this the reason?

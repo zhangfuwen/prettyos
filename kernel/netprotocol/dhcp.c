@@ -12,10 +12,12 @@ void DHCP_Discover(network_adapter_t* adapter)
 {
     static uint32_t xid = 0x0000E0FF0A; // AFFE....
     xid += (1<<24);
-    printf("\nDHCP Discover\n");
+
+    printf("\nDHCP Discover sent.\n");
+    
     dhcp_t packet;
-    packet.op = 1;
-    packet.htype = 1;
+    packet.op = 1;    
+    packet.htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     packet.hlen = 6;
     packet.hops = 0;
     packet.xid = xid; // AFFExx
@@ -29,21 +31,18 @@ void DHCP_Discover(network_adapter_t* adapter)
         packet.giaddr[i] = 0;
     }
 
-    for(uint8_t i = 0; i < 6; i++)
-        packet.chaddr[i] = adapter->MAC_address[i];
-    for(uint8_t i = 6; i < 16; i++)
-        packet.chaddr[i] = 0;
-    packet.sname[0] = 0;
-    packet.file[0] = 0;
+    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
+    for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
+    for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
+    for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
 
     // options
-    for(uint16_t i = 0; i < 312; i++)
-        packet.options[i] = 0;
-      
     packet.options[0]  =  99;  // MAGIC
     packet.options[1]  = 130;  // MAGIC
     packet.options[2]  =  83;  // MAGIC
     packet.options[3]  =  99;  // MAGIC
+    for(uint16_t i = 4; i < 340; i++)
+        packet.options[i] = 255; // end
     
     packet.options[4]  =   1;  // SUBNET
     packet.options[5]  =   4;  // Length
@@ -67,24 +66,18 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.options[21] =  33;  // Static Route
     packet.options[22] =  42;  // Network Time Protocol (NTP) SERVERS
     
-    packet.options[23] =  61;  // Client Identifier
+    packet.options[23] =  61;  // Client Identifier - hardware type and client hardware address
     packet.options[24] =   7;  // Length
-    packet.options[25] =   1;  // Type
+    packet.options[25] =   1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     for(uint8_t i = 0; i < 6; i++)
         packet.options[26+i] = adapter->MAC_address[i];
 
-    packet.options[32] = 116; // DHCP Auto Configuration
-    packet.options[33] =   1; // Length 
-    packet.options[34] =   0; // 
-
-    packet.options[35]  =  50; // Requested IP
-    packet.options[36]  =   4; // Length
-    packet.options[37]  = 192; // 
-    packet.options[38]  = 168; // 
-    packet.options[39]  =  10; // 
-    packet.options[40]  =  98; // 
-
-    packet.options[41] = 255;  // end
+    packet.options[32]  =  50; // Requested IP
+    packet.options[33]  =   4; // Length
+    packet.options[34]  = 192; // 
+    packet.options[35]  = 168; // 
+    packet.options[36]  =  10; // 
+    packet.options[37]  =  98; // 
 
     uint8_t srcIP[4] = {0,0,0,0};
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};

@@ -23,7 +23,7 @@
 #include "elf.h"
 
 
-const char* const version = "0.0.2.77 - Rev: 916";
+const char* const version = "0.0.2.78 - Rev: 917";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -102,7 +102,7 @@ static void init(multiboot_t* mb_struct)
     clear_screen();
 
     // internal devices
-    timer_install(250); log("Timer"); // Sets system frequency to ... Hz
+    timer_install(100); log("Timer"); // Sets system frequency to ... Hz
     if (cpu_supports(CF_FPU)) fpu_install(); log("FPU");
     if (cpu_supports(CF_APIC)) apic_install(); log("APIC");
 
