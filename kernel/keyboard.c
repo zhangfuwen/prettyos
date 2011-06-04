@@ -195,14 +195,15 @@ uint8_t ScanToASCII()
             printf("network adapter: %X\n", adapter); // check
 
             // parameters for UDPSend(...)
-            // uint16_t srcPort  = 40; // unassigend
-            // uint16_t destPort = 40;
-            // uint8_t   destIP_address[4] ={255,255,255,255};
+            uint16_t srcPort  = 40; // unassigend
+            uint16_t destPort = 40;
+            uint8_t  destIP_address[4] ={255,255,255,255};
 
             if (adapter)
             {
-                // UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);
+                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);
                 DHCP_Discover(adapter);
+                DHCP_Inform(adapter);
             }
             return 0;
         }
