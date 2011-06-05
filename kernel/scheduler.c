@@ -48,10 +48,8 @@ static void unblockTask(task_t* task, bool timeout)
     task->blocker.data = (void*)(!timeout);
 
     // Move task into the scheduler ring
-    cli();
     scheduler_insertTask(task);
     ring_DeleteFirst(blockedTasks, task);
-    sti();
 }
 
 void scheduler_unblockEvent(BLOCKERTYPE type, void* data) // Event based blocks are handled here
@@ -116,7 +114,7 @@ static task_t* scheduler_getNextTask()
 uint32_t scheduler_taskSwitch(uint32_t esp)
 {
     if(runningTasks == 0)
-        return(esp);
+        return(esp); // Tasking seems to be not installed -> Don't switch task.
 
     task_saveState(esp);
 
