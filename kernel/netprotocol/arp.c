@@ -95,6 +95,7 @@ void arp_initTable(arpTable_t* table)
     table->lastCheck = timer_getSeconds();
 
     // Create default entries
+    // We use only the first 4 bytes of the array as IP, all 6 bytes are used as MAC
     uint8_t broadcast[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     arp_addTableEntry(table, broadcast, broadcast, false);
 }
@@ -103,7 +104,6 @@ void arp_deleteTable(arpTable_t* table)
 {
     list_DeleteAll(table->table);
 }
-
 
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 {

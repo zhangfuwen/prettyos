@@ -10,6 +10,8 @@
 #include "scheduler.h"
 #include "timer.h"
 
+// Kernel stack size
+static const uint32_t kernelStackSize = 0x1000; // Tasks get a 4 KB kernel stack
 
 // Some externs are needed
 extern TSSentry_t tss;
@@ -102,7 +104,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
         }
     }
 
-    newTask->kernelStack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
+    newTask->kernelStack = malloc(kernelStackSize,4, "task-kernelstack")+kernelStackSize;
     uint32_t* kernelStack = newTask->kernelStack;
 
     uint32_t code_segment = 0x08;
@@ -114,13 +116,13 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
 
         if (newTask->privilege == 3)
         {
-            // general information: Intel 3A Chapter 5.12
+            // General information: Intel 3A Chapter 5.12
             *(--kernelStack) = newTask->ss = 0x23; // ss
             *(--kernelStack) = USER_STACK;         // esp
             code_segment = 0x1B; // 0x18|0x3=0x1B
         }
 
-        *(--kernelStack) = 0x0202; // eflags = interrupts activated and iopl = 0
+        *(--kernelStack) = 0x0202; // eflags: interrupts activated, iopl = 0
     }
     else
     {
@@ -134,9 +136,9 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     *(--kernelStack) = (uint32_t)entry; // eip
     *(--kernelStack) = 0;               // error code
 
-    *(--kernelStack) = 0; // interrupt nummer
+    *(--kernelStack) = 0; // Interrupt nummer
 
-    // general purpose registers w/o esp
+    // General purpose registers w/o esp
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
@@ -153,7 +155,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     *(--kernelStack) = data_segment;
     *(--kernelStack) = data_segment;
 
-    //setup task_t
+    // Setup task_t
     newTask->esp = (uint32_t)kernelStack;
     newTask->eip = (uint32_t)irq_tail;
     newTask->ss  = data_segment;
@@ -217,7 +219,7 @@ task_t* create_thread(void(*entry)())
 
     createThreadTaskBase(newTask, currentTask->pageDirectory, entry, currentTask->privilege);
 
-    // attach the thread with its parent
+    // Attach the thread to its parent
     newTask->parent = (task_t*)currentTask;
     if(currentTask->threads == 0)
         currentTask->threads = list_Create();
@@ -243,7 +245,7 @@ task_t* create_vm86_task(void(*entry)())
     createThreadTaskBase(newTask, kernelPageDirectory, entry, 3);
 
     newTask->ownConsole = false;
-    newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
+    newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // Task uses the same console as the kernel
 
     return newTask;
 }
@@ -274,7 +276,7 @@ uint32_t task_switch(task_t* task)
     textColor(0x0F);
     #endif
 
-    // set TS
+    // Set TS
     if (currentTask == FPUTask)
     {
         __asm__ volatile("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
@@ -282,25 +284,25 @@ uint32_t task_switch(task_t* task)
     else
     {
         uint32_t cr0;
-        __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-        cr0 |= BIT(3); // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
-        __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+        __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // Read cr0
+        cr0 |= BIT(3); // Set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
+        __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // Write cr0
     }
 
     task_switching = true;
-    return currentTask->esp; // return new task's esp
+    return currentTask->esp; // Return new task's esp
 }
 
-void switch_context() // switch to next task (by interrupt)
+void switch_context() // Switch to next task (by interrupt)
 {
     if(!scheduler_shouldSwitchTask()) // If the scheduler does not want to switch the task ...
-        hlt(); // ... wait one cycle
+        hlt(); // Wait one cycle
 
-    __asm__ volatile("int $0x7E"); // call interrupt that will call task_switch.
+    __asm__ volatile("int $0x7E"); // Call interrupt that will call task_switch.
 }
 
 
-/// Functions to kill a task
+// Functions to kill a task
 
 static void kill(task_t* task)
 {
@@ -310,7 +312,7 @@ static void kill(task_t* task)
     scheduler_log();
     #endif
 
-    // Cleanup, delete current tasks console from list of our reachable consoles, if it is in that list and free memory
+    // Cleanup, delete current task's console from list of our reachable consoles, if it is in that list, and free memory
     if (task->ownConsole)
     {
         for (uint8_t i = 0; i < 10; i++)
@@ -329,19 +331,19 @@ static void kill(task_t* task)
         free(task->console);
     }
 
-    // free user memory
+    // Free user memory
     if (task->pageDirectory != kernelPageDirectory)
     {
         paging_destroyUserPageDirectory(task->pageDirectory);
     }
 
-    // signalize the parent task that this task is exited
+    // Inform the parent task that this task has exited
     if (task->type == THREAD)
     {
         list_Delete(task->parent->threads, task);
     }
 
-    // kill all child-threads of this task
+    // Kill all child-threads of this task
     if (task->threads)
     {
         for(element_t* e = task->threads->head; e != 0; e = e->next)
@@ -366,14 +368,14 @@ static void kill(task_t* task)
     }
 
     free(task->FPUptr);
-    free(task->kernelStack - KERNEL_STACK_SIZE); // free kernelstack
+    free(task->kernelStack - kernelStackSize); // Free kernelstack
     free(task);
 
     sti();
 
-    if(task == currentTask) // tasks adress is still saved, although its no longer valid so we can use it here
+    if(task == currentTask) // Tasks adress is still saved, although its no longer valid so we can use it here
     {
-        switch_context(); // switch to next task
+        switch_context(); // Switch to next task
     }
 }
 
@@ -416,7 +418,7 @@ void task_restart(uint32_t pid)
 
     kill(task); // Kill old task
 
-    // create a new one reusing old properties
+    // Create a new one reusing old properties
     if(ownConsole)
         create_ctask(directory, entry, privilege, "restarted task"); // TODO: Safe old name or maybe reuse old console
     else
