@@ -23,7 +23,7 @@
 #include "elf.h"
 
 
-const char* const version = "0.0.2.79 - Rev: 918";
+const char* const version = "0.0.2.80 - Rev: 919";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -148,8 +148,8 @@ void showMemorySize()
 void main(multiboot_t* mb_struct)
 {
     init(mb_struct);
-        
-    // create_cthread(&bootscreen, "Booting ...");
+
+    create_cthread(&bootscreen, "Booting ...");
 
     showMemorySize();
     cpu_analyze();

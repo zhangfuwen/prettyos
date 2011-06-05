@@ -68,6 +68,7 @@ void console_exit(console_t* console)
 {
     free(console->name);
     mutex_delete(console->mutex);
+    keyboard_destroyKQ(&console->KQ);
 }
 
 bool changeDisplayedConsole(uint8_t ID)

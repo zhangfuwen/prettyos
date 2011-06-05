@@ -48,8 +48,10 @@ static void unblockTask(task_t* task, bool timeout)
     task->blocker.data = (void*)(!timeout);
 
     // Move task into the scheduler ring
+    cli();
     scheduler_insertTask(task);
     ring_DeleteFirst(blockedTasks, task);
+    sti();
 }
 
 void scheduler_unblockEvent(BLOCKERTYPE type, void* data) // Event based blocks are handled here

@@ -149,11 +149,10 @@ static void PCNet_receive()
 
 bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 {
+    #ifdef _NETWORK_DIAGNOSIS_
     printf("\nPCNet: Send packet");
+    #endif
     PCNet_card* pcnet = adapter->data;
-
-    if (pcnet->currentTransDesc > 7)
-        pcnet->currentTransDesc = 0;
 
     // Prepare buffer
     memcpy(pcnet->transmitBuf[pcnet->currentTransDesc], data, length);
@@ -174,18 +173,21 @@ void PCNet_handler(registers_t* data)
 {
     uint16_t csr0 = readCSR(device, 0);
 
+    #ifdef _NETWORK_DIAGNOSIS_
     textColor(0x03);
-    printf("\n--------------------------------------------------------------------------------");
     printf("\n--------------------------------------------------------------------------------");
 
     textColor(0x0E);
     printf("\nPCNet Interrupt Status: %y, ", csr0);
     textColor(0x03);
+    #endif
 
     if(device->initialized == false)
     {
         device->initialized = true;
+        #ifdef _NETWORK_DIAGNOSIS_
         printf("\nInitialized");
+        #endif
     }
     else
     {
@@ -200,11 +202,12 @@ void PCNet_handler(registers_t* data)
             else
                 printf("\nUndefined error.");
         }
+        #ifdef _NETWORK_DIAGNOSIS_
         else if(csr0 & 0x00000200)
             printf("\nTransmit descriptor finished");
+        #endif
         else if(csr0 & 0x00000400)
         {
-            printf("\nReceived packet");
             PCNet_receive();
         }
     }

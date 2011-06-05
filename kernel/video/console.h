@@ -5,10 +5,12 @@
 #include "video.h"
 #include "synchronisation.h"
 
+
 #define KERNELCONSOLE_ID 10
 
 #define COLUMNS 80
 #define USER_LINES 46
+
 
 typedef struct // Defines the User-Space of the display
 {
@@ -22,9 +24,11 @@ typedef struct // Defines the User-Space of the display
     uint16_t   vidmem[USER_LINES*COLUMNS]; // Memory that stores the content of this console. Size is USER_LINES*COLUMNS
 } console_t;
 
+
 extern console_t* reachableConsoles[11]; // All accessible consoles: up to 10 subconsoles + main console
 extern volatile uint8_t displayedConsole;
 extern volatile console_t* currentConsole;
+
 
 void kernel_console_init();
 void console_init(console_t* console, const char* name);
@@ -44,5 +48,6 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void setCursor(position_t pos);
 position_t getCursor();
 bool changeDisplayedConsole(uint8_t ID);
+
 
 #endif

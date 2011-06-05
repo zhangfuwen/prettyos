@@ -31,9 +31,6 @@ struct task
     // user task specific program and stack memory data
     void*             userProgAddr;
     uint32_t          userProgSize;
-    void*             userStackAddr;  // stack that is allocated by user tasks
-    uint32_t          userStackSize;  // size of user stack measured in PAGESIZE
-    void*             userPT;         // store the PT to free them later at the heap
 
     // information needed by scheduler
     uint16_t          priority; // Indicates how often this task get the CPU
@@ -45,6 +42,7 @@ struct task
     uint8_t           attrib;     // Color
 };
 
+
 extern volatile task_t* FPUTask; // fpu.c
 
 extern task_t* shellTask;
@@ -52,6 +50,7 @@ extern task_t  kernelTask;
 
 extern bool task_switching;
 extern volatile task_t* currentTask;
+
 
 void tasking_install();
 
@@ -74,5 +73,6 @@ int32_t getpid();
 void* task_grow_userheap(uint32_t increase);
 
 void task_log(task_t* t);
+
 
 #endif

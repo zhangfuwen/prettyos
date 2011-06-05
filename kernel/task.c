@@ -10,23 +10,32 @@
 #include "scheduler.h"
 #include "timer.h"
 
-bool task_switching = false;
-
-task_t kernelTask; // Needed to find out when the kernel task is exited
-
-volatile task_t* currentTask = &kernelTask;
-listHead_t* tasks; // List of all tasks. Not sorted by pid
-
-static uint32_t next_pid = 0; // The next available process ID. TODO: Reuse old pid
 
 // Some externs are needed
 extern TSSentry_t tss;
 void irq_tail();
 void fpu_setcw(uint16_t ctrlword); // fpu.c
 
-extern void* globalUserPT;
 extern void* globalUserProgAddr;
 extern uint32_t globalUserProgSize;
+
+extern console_t kernelConsole;
+
+
+bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
+
+task_t kernelTask = { // Needed to find out when the kernel task is exited
+    .pid = 0, .esp = 0, .eip = 0, .privilege = 0, .FPUptr = 0, .console = &kernelConsole, .ownConsole = true, .attrib = 0x0F,
+    .blocker.type = 0, // The task is not blocked (scheduler.h/c)
+    .kernelStack = 0, // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
+    .threads = 0 // No threads associated with the task at the moment. List is created later if necessary
+};
+
+volatile task_t* currentTask = &kernelTask;
+listHead_t* tasks; // List of all tasks. Not sorted by pid
+
+static uint32_t next_pid = 1; // The next available process ID (kernel has 0, so we start with 1 here). TODO: Reuse old pid
+
 
 void tasking_install()
 {
@@ -38,18 +47,7 @@ void tasking_install()
 
     tasks = list_Create();
 
-    kernelTask.pid           = next_pid++;
-    kernelTask.esp           = 0;
-    kernelTask.eip           = 0;
     kernelTask.pageDirectory = kernelPageDirectory;
-    kernelTask.privilege     = 0;
-    kernelTask.FPUptr        = 0;
-    kernelTask.console       = (console_t*)currentConsole; // The current console, which is created earlier to be able to display information earlier, is associated with the kernel task
-    kernelTask.ownConsole    = true;
-    kernelTask.attrib        = 0x0F;
-    kernelTask.blocker.type  = 0; // The task is not blocked (scheduler.h/c)
-    kernelTask.kernelStack   = 0; // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
-    kernelTask.threads       = 0; // No threads associated with the task at the moment. List is created later if necessary
 
     list_Append(tasks, &kernelTask);
 
@@ -88,6 +86,8 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     newTask->blocker.type  = 0;
     newTask->entry         = entry;
     newTask->threads       = 0; // No threads associated with the task at the moment. created later if necessary
+    newTask->userProgAddr  = 0;
+    newTask->userProgSize  = 0;
 
     if (newTask->privilege == 3)
     {
@@ -95,24 +95,11 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
 
         if(newTask->type != VM86)
         {
-            newTask->userStackSize = 10;
-            newTask->userStackAddr = (void*)(USER_STACK-newTask->userStackSize*PAGESIZE);
             newTask->userProgAddr = globalUserProgAddr;
             newTask->userProgSize = globalUserProgSize;
 
-            pagingAlloc(newTask->pageDirectory, newTask->userStackAddr, newTask->userStackSize * PAGESIZE, MEM_USER|MEM_WRITE);
-            newTask->userPT = globalUserPT;
+            pagingAlloc(newTask->pageDirectory, (void*)(USER_STACK - 10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // Stack starts at USER_STACK-StackSize*PAGESIZE
         }
-        else
-        {
-            newTask->userStackAddr = 0;
-            newTask->userStackSize = 0;
-        }
-    }
-    else
-    {
-        newTask->userStackAddr = 0;
-        newTask->userStackSize = 0;
     }
 
     newTask->kernelStack = malloc(KERNEL_STACK_SIZE,4, "task-kernelstack")+KERNEL_STACK_SIZE;
@@ -342,12 +329,10 @@ static void kill(task_t* task)
         free(task->console);
     }
 
-    // free memory
+    // free user memory
     if (task->pageDirectory != kernelPageDirectory)
     {
         paging_destroyUserPageDirectory(task->pageDirectory);
-        free(task->pageDirectory);
-        free(task->userPT);
     }
 
     // signalize the parent task that this task is exited

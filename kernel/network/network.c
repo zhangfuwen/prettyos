@@ -71,7 +71,7 @@ bool network_installDevice(pciDev_t* device)
 
     // Set IRQ handler
     irq_installHandler(device->irq, driver->interruptHandler);
-    
+
     // Detect MMIO and IO space
     uint16_t pciCommandRegister = pci_config_read(device->bus, device->device, device->func, 0x0204);
     pci_config_write_dword(device->bus, device->device, device->func, 0x04, pciCommandRegister /*already set*/ | BIT(2) /*bus master*/); // resets status register, sets command register
@@ -129,7 +129,7 @@ bool network_installDevice(pciDev_t* device)
     if(adapters == 0)
         adapters = list_Create();
     list_Append(adapters, adapter);
-    
+
     // Try to get an IP by DHCP
     DHCP_Discover(adapter);
 

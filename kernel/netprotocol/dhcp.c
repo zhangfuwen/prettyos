@@ -10,7 +10,7 @@
 uint32_t xid = 0x0000E0FF0A; // AFFE.... Transaction Code for Identification
 
 void DHCP_Discover(network_adapter_t* adapter)
-{    
+{
     xid += (1<<24);
 
     printf("\nDHCP Discover sent.\n");
@@ -80,10 +80,10 @@ void DHCP_Discover(network_adapter_t* adapter)
 
     packet.options[32]  =  50; // Requested IP
     packet.options[33]  =   4; // Length
-    packet.options[34]  = RIP_1; 
-    packet.options[35]  = RIP_2; 
-    packet.options[36]  = RIP_3; 
-    packet.options[37]  = RIP_4; 
+    packet.options[34]  = RIP_1;
+    packet.options[35]  = RIP_2;
+    packet.options[36]  = RIP_3;
+    packet.options[37]  = RIP_4;
 
     uint8_t srcIP[4] = {0,0,0,0};
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};

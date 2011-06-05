@@ -121,14 +121,14 @@ void install_RTL8139(network_adapter_t* dev)
 
     // "power on" the card
     *((uint8_t*)(dev->MMIO_base + RTL8139_CONFIG1)) = 0x00;
-        
+
     // carry out reset of network card: set bit 4 at offset 0x37 (1 Byte)
     *((uint8_t*)(dev->MMIO_base + RTL8139_CHIPCMD)) = RTL8139_CMD_RESET;
 
     // wait for the reset of the "reset flag"
     uint32_t k=0;
     while (true)
-    {        
+    {
         delay(10000);
         if (!(*((volatile uint8_t*)(dev->MMIO_base + RTL8139_CHIPCMD)) & RTL8139_CMD_RESET))
         {
@@ -170,11 +170,11 @@ void install_RTL8139(network_adapter_t* dev)
 
     // set interrupt mask
     *((uint16_t*)(dev->MMIO_base + RTL8139_INTRMASK)) = 0xFFFF; // all interrupts
-    
+
     for (uint8_t i = 0; i < 6; i++)
     {
-        dev->MAC_address[i] =  *(uint8_t*)(dev->MMIO_base + RTL8139_IDR0 + i);        
-    }    
+        dev->MAC_address[i] =  *(uint8_t*)(dev->MMIO_base + RTL8139_IDR0 + i);
+    }
 }
 
 /*

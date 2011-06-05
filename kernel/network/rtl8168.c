@@ -18,9 +18,15 @@ static const uint16_t numOfDesc = 32; // Can be up to 1024
 
 void rtl8168_handler(registers_t* data)
 {
+    #ifdef _NETWORK_DIAGNOSIS_
     printf("IRQ: RTL8168");
-    uint32_t intStatus = *(uint32_t*)(RTL->device->MMIO_base + RTL8168_INTRSTATUS);
+    #endif
+
+    volatile uint32_t intStatus = *(uint32_t*)(RTL->device->MMIO_base + RTL8168_INTRSTATUS);
+    #ifdef _NETWORK_DIAGNOSIS_
     printf("\t\t Status: %X", intStatus);
+    #endif
+	*(uint32_t*)(RTL->device->MMIO_base + RTL8168_INTRSTATUS) = intStatus;
 }
 
 void setupDescriptors()

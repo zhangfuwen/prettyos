@@ -16,8 +16,6 @@ pageDirectory_t* kernelPageDirectory;
 memoryMapEntry_t* memoryMapAdress;
 memoryMapEntry_t* memoryMapEnd;
 
-void* globalUserPT; // for storage of a user task pagetable  // cf. pagingAlloc
-
 // Memory Map
 extern char _kernel_beg, _kernel_end; // defined in linker script
 
@@ -193,10 +191,7 @@ static uint32_t physMemInit()
 
     // We store our data here, initialize all bits to "reserved"
     bittable = malloc(128*1024, 0, "pag-bittable");
-    for (uint32_t i=0; i<MAX_DWORDS; ++i)
-    {
-        bittable[i] = 0xFFFFFFFF;
-    }
+	memsetl(bittable, 0xFFFFFFFF, MAX_DWORDS);
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
     for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
@@ -301,15 +296,7 @@ bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t
         if (!pt)
         {
             // Allocate the page table
-            if (pd == kernelPageDirectory)
-            {
-                pt = (pageTable_t*) malloc(sizeof(pageTable_t), PAGESIZE, "pag-PT");
-            }
-            else
-            {
-                pt = (pageTable_t*) malloc(sizeof(pageTable_t), PAGESIZE, "pag-userPT");
-                globalUserPT = pt;
-            }
+            pt = malloc(sizeof(pageTable_t), PAGESIZE, "pageTable");
 
             if (!pt)
             {

@@ -34,6 +34,7 @@ typedef struct
 
 void    keyboard_install();
 void    keyboard_initKQ(keyqueue_t* KQ);
+void    keyboard_destroyKQ(keyqueue_t* KQ);
 uint8_t ScanToASCII();
 void    keyboard_handler(registers_t* r);
 uint8_t keyboard_getChar();

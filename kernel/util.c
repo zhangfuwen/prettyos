@@ -1043,15 +1043,15 @@ void bootscreen() {
     printf("                                                                               \n");
     printf("                                                                               \n\n\n");
 
-	
-	for(uint8_t x = 6; x < 72; x++)
-	{
-	    sleepMilliSeconds(30);
-		console_setPixel(x, 23, 0x0200|'#');
-		console_setPixel(x, 24, 0x0200|'#');
-		console_setPixel(x, 25, 0x0200|'#');
-		console_setPixel(x, 26, 0x0200|'#');
-	}
+
+    for(uint8_t x = 6; x < 72; x++)
+    {
+        sleepMilliSeconds(30);
+        console_setPixel(x, 23, 0x0200|'#');
+        console_setPixel(x, 24, 0x0200|'#');
+        console_setPixel(x, 25, 0x0200|'#');
+        console_setPixel(x, 26, 0x0200|'#');
+    }
 
 
     textColor(0x0E);

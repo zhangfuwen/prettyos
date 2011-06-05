@@ -45,6 +45,11 @@ void keyboard_initKQ(keyqueue_t* KQ)
     KQ->mutex = mutex_create();
 }
 
+void keyboard_destroyKQ(keyqueue_t* KQ)
+{
+    mutex_delete(KQ->mutex);
+}
+
 static uint8_t getScancode()
 {
     uint8_t scancode = 0;
@@ -189,7 +194,7 @@ uint8_t ScanToASCII()
         if(retchar == 'n') // If you want to test something in networking
         {
             uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4};
-            
+
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
             printf("network adapter: %X\n", adapter); // check
