@@ -60,6 +60,8 @@
    be prepared to receive a message of up to 576 octets, the minimum IP
 */
 
+#define OPTIONSIZE 340 // results in size of 576
+
 typedef struct dhcp     // complete length: 576 (0x0240) 
 {
     uint8_t  op;        // DHCP_BOOTREQEUST or DHCP_BOOTREPLY
@@ -76,7 +78,7 @@ typedef struct dhcp     // complete length: 576 (0x0240)
     uint8_t  chaddr[16];
     char     sname[64];
     char     file[128];
-    uint8_t  options[340]; 
+    uint8_t  options[OPTIONSIZE]; 
 } __attribute__((packed)) dhcp_t;
 
 /*

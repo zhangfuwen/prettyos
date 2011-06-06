@@ -47,43 +47,17 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.options[1]  = 130;  // MAGIC
     packet.options[2]  =  83;  // MAGIC
     packet.options[3]  =  99;  // MAGIC
-    for(uint16_t i = 4; i < 340; i++)
-        packet.options[i] = 255; // end
+    for(uint16_t i = 4; i < OPTIONSIZE; i++)
+        packet.options[i] = 255; // fill with end token
 
-    packet.options[4]  =   1;  // SUBNET
-    packet.options[5]  =   4;  // Length
-    packet.options[6]  = 255;  //
-    packet.options[7]  = 255;  //
-    packet.options[8]  = 255;  //
-    packet.options[9]  =   0;  //
+    packet.options[4]  =  53;  // MESSAGE TYPE
+    packet.options[5]  =   1;  // Length
+    packet.options[6]  =   1;  // DISCOVER
 
-    packet.options[10]  = 53;  // MESSAGE TYPE
-    packet.options[11]  =  1;  // Length
-    packet.options[12]  =  1;  // DISCOVER
-
-    packet.options[13]  = 55;  //
-    packet.options[14]  =  8;  // Length
-    packet.options[15]  =  1;  // SUBNET MASK
-    packet.options[16] =   3;  // ROUTERS
-    packet.options[17] =   6;  // DOMAIN NAME SERVER
-    packet.options[18] =  15;  // DOMAIN NAME
-    packet.options[19] =  28;  // BROADCAST ADDRESS
-    packet.options[20] =  31;  // Perform Router Discover
-    packet.options[21] =  33;  // Static Route
-    packet.options[22] =  42;  // Network Time Protocol (NTP) SERVERS
-
-    packet.options[23] =  61;  // Client Identifier - hardware type and client hardware address
-    packet.options[24] =   7;  // Length
-    packet.options[25] =   1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    for(uint8_t i = 0; i < 6; i++)
-        packet.options[26+i] = adapter->MAC_address[i];
-
-    packet.options[32]  =  50; // Requested IP
-    packet.options[33]  =   4; // Length
-    packet.options[34]  = RIP_1;
-    packet.options[35]  = RIP_2;
-    packet.options[36]  = RIP_3;
-    packet.options[37]  = RIP_4;
+    packet.options[7]  =  57;  // MAX MESSAGE SIZE
+    packet.options[8]  =   2;  // Length
+    packet.options[9]  =   2;  // (data) 2*256 //
+    packet.options[10] =  64;  // (data)    64 // max size: 576
 
     uint8_t srcIP[4] = {0,0,0,0};
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};

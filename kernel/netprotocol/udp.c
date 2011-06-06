@@ -13,7 +13,7 @@
 #include "util.h"
 
 
-static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4]);
+// static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4]);
 
 void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
@@ -29,7 +29,7 @@ void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  
     packet->sourcePort  = htons(srcPort);
     packet->destPort    = htons(destPort);
     packet->length      = htons(length + sizeof(udpPacket_t));
-    packet->checksum    = udpCalculateChecksum(packet, length + sizeof(udpPacket_t), srcIP, destIP);
+    packet->checksum    = 0; //udpCalculateChecksum(packet, length + sizeof(udpPacket_t), srcIP, destIP);
 
     ipv4_send(adapter, packet, length + sizeof(udpPacket_t), destIP, 17);
     free(packet);
@@ -104,6 +104,7 @@ void UDPDebug(udpPacket_t* udp)
     }
 }
 
+/*
 static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4])
 {
     //http://www.faqs.org/rfcs/rfc1146.html
@@ -159,6 +160,7 @@ static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t source
 
     return ~checksum;
 }
+*/
 
 
 /*
