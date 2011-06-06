@@ -3,7 +3,6 @@
 
 #include "os.h"
 
-
 enum DMA_CHANNEL
 {
     DMA_CHANNEL_0 = 0,
@@ -25,19 +24,17 @@ typedef enum
 } DMA_TRANSFERMODE_t;
 
 
-typedef struct {
+typedef struct
+{
     uint8_t  portNum;
     uint16_t pagePort;
     uint16_t addressPort;
     uint16_t counterPort;
 } dma_channel_t;
 
+extern dma_channel_t dma_channel[4]; // dma.c
 
-extern dma_channel_t dma_channel[4];
-
-
-void dma_read(void* destination, uint16_t length, dma_channel_t* channel, DMA_TRANSFERMODE_t mode);
+void dma_read (void* dest,   uint16_t length, dma_channel_t* channel, DMA_TRANSFERMODE_t mode);
 void dma_write(void* source, uint16_t length, dma_channel_t* channel, DMA_TRANSFERMODE_t mode);
-
 
 #endif

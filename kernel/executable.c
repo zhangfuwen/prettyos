@@ -9,47 +9,47 @@
 #include "video/console.h"
 #include "elf.h"
 
-
-filetype_t filetypes[FT_END] = {
+filetype_t filetypes[FT_END] =
+{
     {&elf_filename, &elf_header, &elf_exec}, // ELF
 };
 
-
 FS_ERROR executeFile(const char* path)
 {
+    // Open file
     file_t* file = fopen(path, "r");
-    if(file == 0) // File not found
+    if (file == 0) // File not found
     {
         return(CE_FILE_NOT_FOUND);
     }
 
     // Find out fileformat
     size_t i = 0;
-    for(; i < FT_END; i++) // Check filename first and then filecontent
+    for (; i < FT_END; i++) // Check name and content of the file
     {
-        if(filetypes[i].filename != 0 && filetypes[i].filename(path))
+        if (filetypes[i].filename != 0 && filetypes[i].filename(path))
         {
             rewind(file);
-            if(filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
+            if (filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
             {
                 break; // found
             }
         }
     }
 
-    if(i == FT_END) // Not found, now do not look at filename, just filecontent
+    if (i == FT_END) // Not found, now do not look at filename, just content
     {
-        for(i = 0; i < FT_END; i++)
+        for (i = 0; i < FT_END; i++)
         {
             rewind(file);
-            if(filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
+            if (filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
             {
                 break; // found
             }
         }
     }
 
-    if(i == FT_END)
+    if (i == FT_END)
     {
         fclose(file);
         printf("The file has an unknown type so it cannot be executed.");
@@ -57,14 +57,13 @@ FS_ERROR executeFile(const char* path)
     }
 
     // Now execute
-
     size_t size = file->size;
-    void* buffer = malloc(size, 0, "MrX");
+    void* buffer = malloc(size, 0, "executeFile");
     rewind(file);
     fread(buffer, 1, size, file);
     fclose(file);
 
-    if(filetypes[i].execute != 0)
+    if (filetypes[i].execute != 0)
     {
         filetypes[i].execute(buffer, size, path);
     }
