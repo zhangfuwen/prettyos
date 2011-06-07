@@ -535,7 +535,7 @@ void DHCP_Inform(network_adapter_t* adapter)
 {
     xid += (1<<24);
 
-    printf("\nDHCP Discover sent.\n");
+    printf("\nDHCP Inform sent.\n");
 
     dhcp_t packet;
     packet.op = 1;

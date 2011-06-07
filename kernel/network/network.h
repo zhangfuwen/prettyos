@@ -16,7 +16,6 @@
 #define IP_2 168
 #define IP_3   1
 #define IP_4  97
-*/
 
 // server IP
 #define SIP_1 192
@@ -29,16 +28,17 @@
 #define RIP_2 168
 #define RIP_3   1
 #define RIP_4  97
+*/
 
-/*
+
+
 //for qemu
+/*
 #define IP_1   10
 #define IP_2    0
 #define IP_3    2
 #define IP_4   14
 */
-
-/*
 #define SIP_1  10
 #define SIP_2   0
 #define SIP_3   2
@@ -49,7 +49,6 @@
 #define RIP_2   0
 #define RIP_3   2
 #define RIP_4  15
-*/
 
 typedef struct network_adapter network_adapter_t;
 typedef struct
