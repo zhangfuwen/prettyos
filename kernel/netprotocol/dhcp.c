@@ -80,9 +80,9 @@ void DHCP_AnalyzeServerMessage(dhcp_t* dhcp)
     printf(" secs: %u", htons(dhcp->secs));
     printf(" flags: %x", htons(dhcp->flags));
     printf("\ncIP: %u.%u.%u.%u", dhcp->ciaddr[0], dhcp->ciaddr[1], dhcp->ciaddr[2], dhcp->ciaddr[3]);
-    printf(" yIP: %u.%u.%u.%u\n", dhcp->yiaddr[0], dhcp->yiaddr[1], dhcp->yiaddr[2], dhcp->yiaddr[3]);
+    printf(" yIP: %u.%u.%u.%u", dhcp->yiaddr[0], dhcp->yiaddr[1], dhcp->yiaddr[2], dhcp->yiaddr[3]);
     printf("\nsIP: %u.%u.%u.%u", dhcp->siaddr[0], dhcp->siaddr[1], dhcp->siaddr[2], dhcp->siaddr[3]);
-    printf(" gIP: %u.%u.%u.%u\n", dhcp->giaddr[0], dhcp->giaddr[1], dhcp->giaddr[2], dhcp->giaddr[3]);
+    printf(" gIP: %u.%u.%u.%u", dhcp->giaddr[0], dhcp->giaddr[1], dhcp->giaddr[2], dhcp->giaddr[3]);
     printf("\nMAC: %y-%y-%y-%y-%y-%y", dhcp->chaddr[0], dhcp->chaddr[1], dhcp->chaddr[2], 
                                        dhcp->chaddr[3], dhcp->chaddr[4], dhcp->chaddr[5]);
     DHCP_AnalyzeOptions(dhcp->options);
@@ -91,7 +91,18 @@ static uint16_t showOptionsBytes(uint8_t* opt, uint16_t count)
 {
     for (uint16_t i=0; i<opt[count+2]; i++)
     {
-        printf("%y ", opt[count+3+i]);
+        if (opt[count+1]==12 || opt[count+1]==14 || 
+            opt[count+1]==15 || opt[count+1]==17 || 
+            opt[count+1]==18 || opt[count+1]==40 || 
+            opt[count+1]==43
+            )
+        {
+            printf("%c", opt[count+3+i]);
+        }
+        else
+        {
+            printf("%u ", opt[count+3+i]);
+        }
     }
     return (count + 2 + opt[count+2]);
 }
