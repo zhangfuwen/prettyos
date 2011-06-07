@@ -68,8 +68,44 @@ void DHCP_Request()
 {
 }
 
-void DHCP_AnalyzeServerMessage()
+/*
+   uint8_t  op;        // DHCP_BOOTREQEUST or DHCP_BOOTREPLY
+    uint8_t  htype;     // DHCP_HTYPE10MB
+    uint8_t  hlen;      // DHCP_HLENETHERNET
+    uint8_t  hops;      // DHCP_HOPS
+    uint32_t xid;       // DHCP_XID
+    uint16_t secs;      // DHCP_SECS
+    uint16_t flags;     // DHCP_FLAGSBROADCAST
+    uint8_t  ciaddr[4];
+    uint8_t  yiaddr[4];
+    uint8_t  siaddr[4];
+    uint8_t  giaddr[4];
+    uint8_t  chaddr[16];
+    char     sname[64];
+    char     file[128];
+    uint8_t  options[OPTIONSIZE]; 
+*/
+
+void DHCP_AnalyzeServerMessage(dhcp_t* dhcp)
 {
+    printf("\nop: %u", dhcp->op);  
+    printf(" htype: %u", dhcp->htype);  
+    printf(" hlen: %u", dhcp->hlen);  
+    printf(" hops: %u", dhcp->hops);
+    printf(" xid: %X", htonl(dhcp->xid));
+    printf(" secs: %u", htons(dhcp->secs));
+    printf(" flags: %x", htons(dhcp->flags));
+    printf("\ncIP: %u.%u.%u.%u\n", dhcp->ciaddr[0], dhcp->ciaddr[1], dhcp->ciaddr[2], dhcp->ciaddr[3]);
+    printf(" yIP: %u.%u.%u.%u\n", dhcp->yiaddr[0], dhcp->yiaddr[1], dhcp->yiaddr[2], dhcp->yiaddr[3]);
+    printf("\nsIP: %u.%u.%u.%u\n", dhcp->siaddr[0], dhcp->siaddr[1], dhcp->siaddr[2], dhcp->siaddr[3]);
+    printf(" gIP: %u.%u.%u.%u\n", dhcp->giaddr[0], dhcp->giaddr[1], dhcp->giaddr[2], dhcp->giaddr[3]);
+    printf("\nMAC: %y-%y-%y-%y-%y-%y", dhcp->chaddr[0], dhcp->chaddr[1], dhcp->chaddr[2], 
+                                       dhcp->chaddr[3], dhcp->chaddr[4], dhcp->chaddr[5]);
+    printf("\n");
+    for (uint16_t i=0; i<60; i++)
+    {
+        printf("%y ",dhcp->options[i]);
+    }
 }
 
 void DHCP_Inform(network_adapter_t* adapter)

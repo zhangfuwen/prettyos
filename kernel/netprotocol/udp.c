@@ -5,15 +5,15 @@
 
 // http://www.rfc-editor.org/rfc/rfc768.txt <---  User Datagram Protocol (UDP)
 
-#include "video/console.h"
-#include "udp.h"
 #include "types.h"
-#include "ipv4.h"
+#include "video/console.h"
 #include "kheap.h"
 #include "util.h"
+#include "ipv4.h"
+#include "udp.h"
+#include "dhcp.h"
 
-
-// static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4]);
+static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4]);
 
 void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
@@ -29,7 +29,7 @@ void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  
     packet->sourcePort  = htons(srcPort);
     packet->destPort    = htons(destPort);
     packet->length      = htons(length + sizeof(udpPacket_t));
-    packet->checksum    = 0; //udpCalculateChecksum(packet, length + sizeof(udpPacket_t), srcIP, destIP);
+    packet->checksum    = udpCalculateChecksum(packet, length + sizeof(udpPacket_t), srcIP, destIP);
 
     ipv4_send(adapter, packet, length + sizeof(udpPacket_t), destIP, 17);
     free(packet);
@@ -50,6 +50,7 @@ void UDPDebug(udpPacket_t* udp)
     // http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
     switch(ntohs(udp->destPort))
     {
+        printf("Dest. Port: ");
     case 20:
         printf("FTP - data transfer\n");
         break;
@@ -63,10 +64,11 @@ void UDPDebug(udpPacket_t* udp)
         printf("Domain Name System (DNS)\n");
         break;
     case 67:
-        printf("UDP Bootstrap Protocol (BOOTP) Server, also used by DHCP Server\n");
+        printf("UDP BOOTP/DHCP Server\n");
         break;
     case 68:
-        printf("UDP Bootstrap Protocol (BOOTP) Client, also used by DHCP Client\n");
+        printf("UDP BOOTP/DHCP Client\n");
+        DHCP_AnalyzeServerMessage((dhcp_t*)(udp+1));
         break;
     case 80:
         printf("HTTP\n");
@@ -104,9 +106,12 @@ void UDPDebug(udpPacket_t* udp)
     }
 }
 
-/*
 static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4])
 {
+    // HACK
+    return 0;
+    
+    // Correct?
     //http://www.faqs.org/rfcs/rfc1146.html
     uint32_t calcSourceIp = 0;
     uint32_t calcDestIp = 0;
@@ -160,8 +165,6 @@ static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t source
 
     return ~checksum;
 }
-*/
-
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.

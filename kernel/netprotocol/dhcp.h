@@ -2,6 +2,7 @@
 #define DHCP_H
 
 #include "network/network.h"
+#include "udp.h"
 
 // http://tools.ietf.org/html/rfc2131 <--- Dynamic Host Configuration Protocol
 // ftp://ftp.efo.ru/pub/wiznet/W5100_App%20note_DHCP.pdf
@@ -115,7 +116,7 @@ typedef struct dhcp     // complete length: 576 (0x0240)
                    network address.
 */
 
-void DHCP_AnalyzeServerMessage();
+void DHCP_AnalyzeServerMessage(dhcp_t* dhcp);
 void DHCP_Discover(network_adapter_t* adapter);
 void DHCP_Request();
 void DHCP_Inform(network_adapter_t* adapter);
