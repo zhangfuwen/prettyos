@@ -53,7 +53,7 @@ void ehci_install(pciDev_t* PCIdev, uint32_t i)
         PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
         EHCIflag = true; // only the first EHCI is used
 
-        todoList_add(delayedInitTasks, &ehci_init);
+        todoList_add(kernel_idleTasks, &ehci_init); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
 
         analyzeEHCI(bar,offset); // get data (capregs, opregs)
     }
@@ -475,7 +475,7 @@ void ehci_handler(registers_t* r)
 
         if (enabledPortFlag && PCIdevice)
         {
-            todoList_add(delayedInitTasks, &ehci_portcheck);
+            todoList_add(kernel_idleTasks, &ehci_portcheck); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
         }
     }
 
@@ -497,7 +497,7 @@ void ehci_handler(registers_t* r)
         printf("\n>>> Press key for EHCI (re)initialization. <<<");
         while(!keyboard_getChar());
         textColor(0x0F);
-        todoList_add(delayedInitTasks, &ehci_init);
+        todoList_add(kernel_idleTasks, &ehci_init); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
     }
 
     if (pOpRegs->USBSTS & STS_ASYNC_INT)

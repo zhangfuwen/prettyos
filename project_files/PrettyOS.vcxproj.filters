@@ -407,9 +407,6 @@
     <ClCompile Include="..\kernel\fpu.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\gdt.c">
-      <Filter>Kernel\sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\kernel\irq.c">
       <Filter>Kernel\sources</Filter>
     </ClCompile>

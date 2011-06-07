@@ -14,7 +14,6 @@
 static const uint32_t kernelStackSize = 0x1000; // Tasks get a 4 KB kernel stack
 
 // Some externs are needed
-extern TSSentry_t tss;
 void irq_tail();
 void fpu_setcw(uint16_t ctrlword); // fpu.c
 
@@ -157,7 +156,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
 
     // Setup task_t
     newTask->esp = (uint32_t)kernelStack;
-    newTask->eip = (uint32_t)irq_tail;
+    newTask->eip = (uint32_t)&irq_tail;
     newTask->ss  = data_segment;
 
     list_Append(tasks, newTask);
@@ -257,18 +256,16 @@ void task_saveState(uint32_t esp)
     currentTask->esp = esp;
 }
 
-uint32_t task_switch(task_t* task)
+uint32_t task_switch(task_t* newTask)
 {
     task_switching = false;
 
-    currentTask = task;
-    currentConsole = currentTask->console;
+    if(newTask->pageDirectory != currentTask->pageDirectory) // Only switch page directory if the new task has a different one than the current task
+        paging_switch(newTask->pageDirectory);
 
-    paging_switch(currentTask->pageDirectory);
+    currentTask = newTask;
 
-    tss.esp  = currentTask->esp;
-    tss.esp0 = (uintptr_t)currentTask->kernelStack;
-    tss.ss   = currentTask->ss;
+    tss_switch((uintptr_t)currentTask->kernelStack, currentTask->esp, currentTask->ss); // esp0, esp, ss
 
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);

@@ -198,7 +198,7 @@ uint32_t irq_handler(uintptr_t esp)
 
     registers_t* r = (registers_t*)esp;
 
-    if(r->int_no == 0x20 || r->int_no == 0x7E) // timer interrupt or function switch_contex
+    if(r->int_no == 0x20 || r->int_no == 0x7E) // timer interrupt or function switch_context
     {
         if(task_switching)
             esp = scheduler_taskSwitch(esp); // get new task's esp from scheduler

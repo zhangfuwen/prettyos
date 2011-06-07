@@ -191,7 +191,7 @@ static uint32_t physMemInit()
 
     // We store our data here, initialize all bits to "reserved"
     bittable = malloc(128*1024, 0, "pag-bittable");
-	memsetl(bittable, 0xFFFFFFFF, MAX_DWORDS);
+    memsetl(bittable, 0xFFFFFFFF, MAX_DWORDS);
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
     for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)

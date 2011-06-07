@@ -184,7 +184,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\filesystem\fsmanager.c" />
     <ClCompile Include="..\kernel\filesystem\initrd.c" />
     <ClCompile Include="..\kernel\fpu.c" />
-    <ClCompile Include="..\kernel\gdt.c" />
     <ClCompile Include="..\kernel\irq.c" />
     <ClCompile Include="..\kernel\keyboard.c" />
     <ClCompile Include="..\kernel\kheap.c" />

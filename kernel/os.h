@@ -27,7 +27,6 @@
 
 extern const char* const version; // PrettyOS Version string
 extern system_t system;           // Informations about the operating system
-extern struct todoList* delayedInitTasks; // HACK (see ckernel.c)
 extern struct todoList* kernel_idleTasks;
 
 

@@ -5,6 +5,7 @@
 #include "paging.h"
 #include "scheduler.h"
 
+
 typedef enum
 {
     TASK, THREAD, VM86
@@ -31,7 +32,7 @@ struct task
     uint32_t          userProgSize;
 
     // Information needed by scheduler
-    uint16_t          priority; // Indicates how often this task get the CPU
+    uint16_t          priority; // Indicates how often this task gets the CPU
     blocker_t         blocker;  // Object indicating reason and duration of blockade
 
     // Task specific graphical output settings
@@ -53,7 +54,7 @@ task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a t
 task_t*  create_vm86_task(void(*entry)());
 void     switch_context();
 void     task_saveState(uint32_t esp);
-uint32_t task_switch(task_t* task);
+uint32_t task_switch(task_t* newTask);
 void     exit();
 void     task_kill(uint32_t pid);
 void     task_restart(uint32_t pid);
