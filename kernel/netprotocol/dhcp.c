@@ -25,17 +25,11 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.flags = 0;
     for(uint8_t i = 0; i < 4; i++)
     {
-        // packet.ciaddr[i] = 0;
+        packet.ciaddr[i] = 0;
         packet.yiaddr[i] = 0;
         packet.siaddr[i] = 0;
         packet.giaddr[i] = 0;
     }
-
-    // TEST
-    packet.ciaddr[0] = IP_1;
-    packet.ciaddr[1] = IP_2;
-    packet.ciaddr[2] = IP_3;
-    packet.ciaddr[3] = IP_4;
 
     for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
@@ -64,8 +58,72 @@ void DHCP_Discover(network_adapter_t* adapter)
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
-void DHCP_Request()
+void DHCP_Request(network_adapter_t* adapter)
 {
+    xid += (1<<24);
+
+    printf("\nDHCP Request sent.\n");
+
+    dhcp_t packet;
+    packet.op = 1;
+    packet.htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
+    packet.hlen = 6;
+    packet.hops = 0;
+    packet.xid = xid; // AFFExx
+    packet.secs = htons(0); // TEST
+    packet.flags = 0;
+    for(uint8_t i = 0; i < 4; i++)
+    {
+        packet.ciaddr[i] = 0;
+        packet.yiaddr[i] = 0;
+        packet.siaddr[i] = 0;
+        packet.giaddr[i] = 0;
+    }    
+
+    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
+    for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
+    for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
+    for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
+
+    // options
+    packet.options[0]  =  99;  // MAGIC
+    packet.options[1]  = 130;  // MAGIC
+    packet.options[2]  =  83;  // MAGIC
+    packet.options[3]  =  99;  // MAGIC
+    for(uint16_t i = 4; i < 340; i++)
+        packet.options[i] = 255; // end
+
+    packet.options[4]  = 53;  // MESSAGE TYPE
+    packet.options[5]  =  1;  // Length
+    packet.options[6]  =  3;  // REQUEST
+
+    packet.options[7]  = 55;  //
+    packet.options[8]  =  8;  // Length
+    packet.options[9]  =  1;  // SUBNET MASK
+    packet.options[10] =   3;  // ROUTERS
+    packet.options[11] =   6;  // DOMAIN NAME SERVER
+    packet.options[12] =  15;  // DOMAIN NAME
+    packet.options[13] =  28;  // BROADCAST ADDRESS
+    packet.options[14] =  31;  // Perform Router Discover
+    packet.options[15] =  33;  // Static Route
+    packet.options[16] =  42;  // Network Time Protocol (NTP) SERVERS
+
+    packet.options[17] =  61;  // Client Identifier - hardware type and client hardware address
+    packet.options[18] =   7;  // Length
+    packet.options[19] =   1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
+    for(uint8_t i = 0; i < 6; i++)
+        packet.options[20+i] = adapter->MAC_address[i];
+
+    packet.options[26] =  50;  // Requested IP
+    packet.options[27] =   4;  // Length
+    packet.options[28] = RIP_1;
+    packet.options[29] = RIP_2;
+    packet.options[30] = RIP_3;
+    packet.options[31] = RIP_4;
+
+    uint8_t srcIP[4] = {0,0,0,0};
+    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
 static void DHCP_AnalyzeOptions(uint8_t* opt);

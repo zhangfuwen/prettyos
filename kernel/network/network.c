@@ -15,6 +15,7 @@
 #include "netprotocol/dhcp.h"
 #include "list.h"
 #include "todo_list.h"
+#include "timer.h"
 
 
 typedef enum
@@ -131,7 +132,9 @@ bool network_installDevice(pciDev_t* device)
     list_Append(adapters, adapter);
 
     // Try to get an IP by DHCP
-    DHCP_Discover(adapter);
+    // DHCP_Discover(adapter);
+    // delay(1000000);
+    DHCP_Request(adapter);
 
     textColor(0x0E);
     printf("\nMAC address: %y-%y-%y-%y-%y-%y", adapter->MAC_address[0], adapter->MAC_address[1], adapter->MAC_address[2],
