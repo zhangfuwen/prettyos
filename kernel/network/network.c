@@ -17,7 +17,6 @@
 #include "todo_list.h"
 #include "timer.h"
 
-
 typedef enum
 {
     RTL8139, RTL8168, PCNET, ND_END
@@ -132,9 +131,10 @@ bool network_installDevice(pciDev_t* device)
     list_Append(adapters, adapter);
 
     // Try to get an IP by DHCP
-    // DHCP_Discover(adapter);
-    // delay(1000000);
-    DHCP_Request(adapter);
+    adapter->DHCP_State  = START;
+    DHCP_Discover(adapter);   
+
+    sleepSeconds(2);
 
     textColor(0x0E);
     printf("\nMAC address: %y-%y-%y-%y-%y-%y", adapter->MAC_address[0], adapter->MAC_address[1], adapter->MAC_address[2],

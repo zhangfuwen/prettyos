@@ -18,7 +18,7 @@ static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t source
 void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
     // TODO: ...
-    UDPDebug(packet);
+    UDPDebug(adapter, packet);
 }
 
 void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4])
@@ -35,7 +35,7 @@ void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  
     free(packet);
 }
 
-void UDPDebug(udpPacket_t* udp)
+void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp)
 {
     printf("\n");
     printf("UDP Header information:\n");
@@ -68,7 +68,7 @@ void UDPDebug(udpPacket_t* udp)
         break;
     case 68:
         printf("UDP BOOTP/DHCP Client\n");
-        DHCP_AnalyzeServerMessage((dhcp_t*)(udp+1));
+        DHCP_AnalyzeServerMessage(adapter, (dhcp_t*)(udp+1));
         break;
     case 80:
         printf("HTTP\n");

@@ -119,7 +119,7 @@ typedef struct dhcp     // complete length: 576 (0x0240)
 void DHCP_Discover(network_adapter_t* adapter);
 void DHCP_Request (network_adapter_t* adapter);
 void DHCP_Inform  (network_adapter_t* adapter);
-void DHCP_AnalyzeServerMessage(dhcp_t* dhcp);
+void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp);
 
 /*
 When a client is initialized for the first time after it is configured

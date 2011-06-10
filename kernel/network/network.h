@@ -6,16 +6,13 @@
 
 // own IP at start
 
-#define IP_1   0
-#define IP_2   0
-#define IP_3   0
-#define IP_4   0
 
-/*
-#define IP_1 192
-#define IP_2 168
-#define IP_3   1
-#define IP_4  97
+#define IP_1  192
+#define IP_2  168
+#define IP_3    1
+#define IP_4   97
+
+
 
 // server IP
 #define SIP_1 192
@@ -28,17 +25,11 @@
 #define RIP_2 168
 #define RIP_3   1
 #define RIP_4  97
-*/
 
 
 
 //for qemu
 /*
-#define IP_1   10
-#define IP_2    0
-#define IP_3    2
-#define IP_4   14
-*/
 #define SIP_1  10
 #define SIP_2   0
 #define SIP_3   2
@@ -49,6 +40,7 @@
 #define RIP_2   0
 #define RIP_3   2
 #define RIP_4  15
+*/
 
 typedef struct network_adapter network_adapter_t;
 typedef struct
@@ -57,6 +49,8 @@ typedef struct
     void (*interruptHandler)(registers_t*); // Device
     bool (*sendPacket)(network_adapter_t*, uint8_t*, size_t); // Device, buffer, length
 } network_driver_t;
+
+typedef enum {START, OFFER, ACK, NAK} DHCP_state;
 
 struct network_adapter
 {
@@ -68,6 +62,7 @@ struct network_adapter
     uint8_t           MAC_address[6];
     uint8_t           IP_address[4];
     arpTable_t        arpTable;
+    DHCP_state        DHCP_State;
 };
 
 typedef struct

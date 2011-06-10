@@ -206,14 +206,13 @@ uint8_t ScanToASCII()
 
             if (adapter)
             {
-                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);
-                DHCP_Discover(adapter);                
+                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);                              
             }
             return 0;
         }
         if(retchar == 'i') // DHCP Inform
         {
-            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4};
+            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
             printf("network adapter: %X\n", adapter); // check
@@ -223,20 +222,7 @@ uint8_t ScanToASCII()
                 DHCP_Inform(adapter);
             }
             return 0;
-        }
-        if(retchar == 'r') // DHCP Request
-        {
-            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4};
-
-            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
-            printf("network adapter: %X\n", adapter); // check
-
-            if (adapter)
-            {
-                DHCP_Request(adapter);
-            }
-            return 0;
-        }
+        }        
     }
 
     return retchar; // ASCII version
