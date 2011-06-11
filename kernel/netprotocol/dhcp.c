@@ -270,8 +270,11 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt);
 
 static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
 {
-    for(uint8_t i = 0; i < 4; i++)
-        adapter->IP_address[i] = dhcp->yiaddr[i];
+    if (dhcp->yiaddr[0] || dhcp->yiaddr[1] || dhcp->yiaddr[2] || dhcp->yiaddr[3])
+    {
+        for(uint8_t i = 0; i < 4; i++)
+            adapter->IP_address[i] = dhcp->yiaddr[i];
+    }
 }
 
 void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
