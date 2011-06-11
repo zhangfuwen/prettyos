@@ -6,19 +6,10 @@
 
 // own IP at start
 
-
 #define IP_1  192
 #define IP_2  168
 #define IP_3    1
 #define IP_4   97
-
-
-
-// server IP
-#define SIP_1 192
-#define SIP_2 168
-#define SIP_3   1
-#define SIP_4   1
 
 // requested IP
 #define RIP_1 192
@@ -26,15 +17,8 @@
 #define RIP_3   1
 #define RIP_4  97
 
-
-
 //for qemu
 /*
-#define SIP_1  10
-#define SIP_2   0
-#define SIP_3   2
-#define SIP_4   2
-
 // requested IP
 #define RIP_1  10
 #define RIP_2   0

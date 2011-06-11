@@ -200,8 +200,7 @@ uint8_t ScanToASCII()
         }
         if(retchar == 'n') // If you want to test something in networking
         {
-            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4};
-
+            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
             printf("network adapter: %Xh\n", adapter); // check
