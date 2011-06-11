@@ -86,24 +86,24 @@ void tss_switch(uint32_t esp0, uint32_t esp, uint32_t ss)
 void tss_log(TSSentry_t* tssEntry)
 {
     textColor(0x06);
-    printf("esp0: %X ", tssEntry->esp0);
-    printf("ss0: %X ", tssEntry->ss0);
-    printf("cr3: %X ", tssEntry->cr3);
-    printf("eip: %X ", tssEntry->eip);
-    printf("eflags: %X ", tssEntry->eflags);
-    printf("eax: %X ", tssEntry->eax);
-    printf("ecx: %X ", tssEntry->ecx);
-    printf("edx: %X ", tssEntry->edx);
-    printf("ebx: %X ", tssEntry->ebx);
-    printf("esp: %X ", tssEntry->esp);
-    printf("esi: %X ", tssEntry->esi);
-    printf("edi: %X ", tssEntry->edi);
-    printf("es: %X ", tssEntry->es);
-    printf("cs: %X ", tssEntry->cs);
-    printf("ss: %X ", tssEntry->ss);
-    printf("ds: %X ", tssEntry->ds);
-    printf("fs: %X ", tssEntry->fs);
-    printf("gs: %X\n", tssEntry->gs);
+    printf("esp0: %Xh ", tssEntry->esp0);
+    printf("ss0: %Xh ", tssEntry->ss0);
+    printf("cr3: %Xh ", tssEntry->cr3);
+    printf("eip: %Xh ", tssEntry->eip);
+    printf("eflags: %Xh ", tssEntry->eflags);
+    printf("eax: %Xh ", tssEntry->eax);
+    printf("ecx: %Xh ", tssEntry->ecx);
+    printf("edx: %Xh ", tssEntry->edx);
+    printf("ebx: %Xh ", tssEntry->ebx);
+    printf("esp: %Xh ", tssEntry->esp);
+    printf("esi: %Xh ", tssEntry->esi);
+    printf("edi: %Xh ", tssEntry->edi);
+    printf("es: %Xh ", tssEntry->es);
+    printf("cs: %Xh ", tssEntry->cs);
+    printf("ss: %Xh ", tssEntry->ss);
+    printf("ds: %Xh ", tssEntry->ds);
+    printf("fs: %Xh ", tssEntry->fs);
+    printf("gs: %Xh\n", tssEntry->gs);
     textColor(0x0F);
 }
 

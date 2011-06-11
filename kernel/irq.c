@@ -80,10 +80,10 @@ static void quitTask()
 static void defaultError(registers_t* r)
 {
     if(r->eflags & 0x20000) return; // VM86
-    printf("\nerr_code: %u address(eip): %X\n", r->err_code, r->eip);
-    printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-    printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-    printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+    printf("\nerr_code: %u address(eip): %Xh\n", r->err_code, r->eip);
+    printf("edi: %Xh esi: %Xh ebp: %Xh eax: %Xh ebx: %Xh ecx: %Xh edx: %Xh\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+    printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+    printf("int_no: %u eflags: %Xh useresp: %Xh\n", r->int_no, r->eflags, r->useresp);
 
     textColor(0x0B);
     printf("\n\n%s!\n", exceptionMessages[r->int_no]);
@@ -93,10 +93,10 @@ static void defaultError(registers_t* r)
 
 static void invalidOpcode(registers_t* r)
 {
-    printf("\nInvalid Opcode err_code: %u address(eip): %X instruction: %y\n", r->err_code, r->eip, *(uint8_t*)FP_TO_LINEAR(r->cs, r->eip));
-    printf("edi: %X esi: %X ebp: %X eax: %X ebx: %X ecx: %X edx: %X\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-    printf("cs: %x ds: %x es: %x fs: %x gs %x ss %x\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-    printf("int_no %u eflags %X useresp %X\n", r->int_no, r->eflags, r->useresp);
+    printf("\nInvalid Opcode err_code: %u address(eip): %Xh instruction: %yh\n", r->err_code, r->eip, *(uint8_t*)FP_TO_LINEAR(r->cs, r->eip));
+    printf("edi: %Xh esi: %Xh ebp: %Xh eax: %Xh ebx: %Xh ecx: %Xh edx: %Xh\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
+    printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+    printf("int_no: %u eflags: %Xh useresp: %Xh\n", r->int_no, r->eflags, r->useresp);
 
     quitTask();
 }
@@ -106,7 +106,7 @@ static void NM(registers_t* r) // -> FPU
     // set TS in cr0 to zero
     __asm__ volatile ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
 
-    kdebug(3, "#NM: FPU is used. pCurrentTask: %X\n", currentTask);
+    kdebug(3, "#NM: FPU is used. pCurrentTask: %Xh\n", currentTask);
 
     // save FPU data ...
     if (FPUTask)
@@ -164,7 +164,7 @@ static void PF(registers_t* r)
     if (us)       printf(" - user-mode");
     if (reserved) printf(" - overwritten CPU-reserved bits of page entry");
     if (id)       printf(" - caused by an instruction fetch");
-    printf(") at %X - EIP: %X\n", faulting_address, r->eip);
+    printf(") at %Xh - EIP: %Xh\n", faulting_address, r->eip);
 
     quitTask();
 }

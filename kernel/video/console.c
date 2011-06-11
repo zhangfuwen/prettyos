@@ -8,6 +8,7 @@
 #include "kheap.h"
 #include "task.h"
 
+
 console_t* reachableConsoles[11]; // Mainconsole + up to KERNELCONSOLE_ID Subconsoles
 volatile uint8_t displayedConsole = KERNELCONSOLE_ID; // Currently visible console (KERNELCONSOLE_ID per default)
 
@@ -19,6 +20,7 @@ volatile console_t* currentConsole = &kernelConsole;
 static bool scroll_flag = true;
 
 static void scroll();
+
 
 uint8_t getTextColor()
 {
@@ -233,14 +235,15 @@ static void scroll()
 
 /// TODO: make it standardized!
 // vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c, %% and the PrettyOS-specific %v, %I and %M
-void vprintf(const char* args, va_list ap)
+size_t vprintf(const char* args, va_list ap)
 {
     mutex_lock(currentConsole->mutex);
 
     uint8_t attribute = getTextColor();
     char buffer[32]; // Larger is not needed at the moment
 
-    for (; *args; ++args)
+    size_t pos;
+    for (pos = 0; *args; ++args)
     {
         switch (*args)
         {
@@ -250,74 +253,92 @@ void vprintf(const char* args, va_list ap)
                     case 'u':
                         utoa(va_arg(ap, uint32_t), buffer);
                         puts(buffer);
+                        pos += strlen(buffer);
                         break;
                     case 'f':
                         ftoa(va_arg(ap, double), buffer);
                         puts(buffer);
+                        pos += strlen(buffer);
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), buffer);
                         puts(buffer);
+                        pos += strlen(buffer);
                         break;
                     case 'X': /// TODO: make it standardized
                         i2hex(va_arg(ap, int32_t), buffer, 8);
                         puts(buffer);
+                        pos += strlen(buffer);
                         break;
                     case 'x':
                         i2hex(va_arg(ap, int32_t), buffer, 4);
                         puts(buffer);
+                        pos += strlen(buffer);
                         break;
                     case 'y':
                         i2hex(va_arg(ap, int32_t), buffer, 2);
                         puts(buffer);
+                        pos += strlen(buffer);
                         break;
                     case 's':
-                        puts(va_arg (ap, char*));
+                    {
+                        char* temp = va_arg(ap, char*);
+                        puts(temp);
+                        pos += strlen(temp);
                         break;
+                    }
                     case 'c':
                         putch((int8_t)va_arg(ap, int32_t));
+                        pos++;
                         break;
                     case 'v':
                         textColor((attribute >> 4) | (attribute << 4));
                         putch(*(++args));
                         textColor(attribute);
+                        pos++;
                         break;
                     case 'I': // IP address
                     {
                         uint8_t* IP = va_arg(ap, uint8_t*);
-                        printf("%u.%u.%u.%u", IP[0], IP[1], IP[2], IP[3]);
+                        pos += printf("%u.%u.%u.%u", IP[0], IP[1], IP[2], IP[3]);
                         break;
                     }
                     case 'M': // MAC address
                     {
                         uint8_t* MAC = va_arg(ap, uint8_t*);
-                        printf("%y-%y-%y-%y-%y-%y", MAC[0], MAC[1], MAC[2], MAC[3], MAC[4], MAC[5]);
+                        pos += printf("%y-%y-%y-%y-%y-%y", MAC[0], MAC[1], MAC[2], MAC[3], MAC[4], MAC[5]);
                         break;
                     }
                     case '%':
                         putch('%');
+                        pos++;
                         break;
                     default:
                         --args;
+                        --pos;
                         break;
                 }
                 break;
             default:
                 putch(*args);
+                pos++;
                 break;
         }
     }
     mutex_unlock(currentConsole->mutex);
+    return(pos);
 }
-void printf(const char* args, ...)
+
+size_t printf(const char* args, ...)
 {
     va_list ap;
     va_start(ap, args);
-    vprintf(args, ap);
+    size_t retval = vprintf(args, ap);
     va_end(ap);
+    return(retval);
 }
 
-void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
+size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
     mutex_lock(currentConsole->mutex);
     uint8_t old_attrib = getTextColor();
@@ -331,7 +352,7 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     // Call usual printf routines
     va_list ap;
     va_start(ap, attribute);
-    vprintf(message, ap);
+    size_t retval = vprintf(message, ap);
     va_end(ap);
 
     scroll_flag = true;
@@ -339,6 +360,8 @@ void cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     currentConsole->cursor.x = c_x;
     currentConsole->cursor.y = c_y;
     mutex_unlock(currentConsole->mutex);
+
+    return(retval);
 }
 
 

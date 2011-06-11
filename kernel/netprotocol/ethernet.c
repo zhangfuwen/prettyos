@@ -52,7 +52,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     textColor(0x03);
     for (uint8_t i = 0; i < 2; i++)
     {
-        printf("%y ", eth->type_len[i]);
+        printf("%yh ", eth->type_len[i]);
     }
 
   #ifdef _NETWORK_DATA_

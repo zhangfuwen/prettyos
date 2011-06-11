@@ -249,12 +249,13 @@ void waitForKeyStroke()
 
 /**********************************************************************/
 
-void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
+size_t vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
 {
     char m_buffer[32]; // Larger is not needed at the moment
     memset(buffer, 0, length);
 
-    for (size_t pos = 0; *args && pos < length; args++)
+    size_t pos;
+    for (pos = 0; *args && pos < length; args++)
     {
         switch (*args)
         {
@@ -313,13 +314,16 @@ void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
         }
         pos++;
     }
+    return(pos);
 }
-void snprintf(char *buffer, size_t length, const char *args, ...)
+
+size_t snprintf(char *buffer, size_t length, const char *args, ...)
 {
     va_list ap;
     va_start(ap, args);
-    vsnprintf(buffer, length, args, ap);
+    size_t retval = vsnprintf(buffer, length, args, ap);
     va_end(ap);
+    return(retval);
 }
 
 size_t strlen(const char* str)
@@ -507,8 +511,7 @@ void i2hex(uint32_t val, char* dest, int32_t len)
         val >>= 4;
         *--cp = x + ((x > 9) ? 'A' - 10 : '0');
     }
-    dest[len]  ='h';
-    dest[len+1]='\0';
+    dest[len]='\0';
 }
 
 int atoi(const char* s)
@@ -1132,7 +1135,7 @@ double sqrt(double x)
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

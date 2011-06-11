@@ -42,8 +42,8 @@ void*     memcpy(void* dest, const void* src, size_t count);
 void*     memmove(const void* source, void* destination, size_t size);
 int32_t   memcmp(const void* s1, const void* s2, size_t n);
 
-void    vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
-void    snprintf (char *buffer, size_t length, const char *args, ...);
+size_t vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
+size_t snprintf (char *buffer, size_t length, const char *args, ...);
 size_t  strlen(const char* str);
 int32_t strcmp(const char* s1, const char* s2);
 int32_t strncmp(const char* s1, const char* s2, size_t n);

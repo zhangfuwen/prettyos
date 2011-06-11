@@ -53,8 +53,15 @@ void keyboard_destroyKQ(keyqueue_t* KQ)
 static uint8_t getScancode()
 {
     uint8_t scancode = 0;
+
     if (inportb(0x64)&1)
         scancode = inportb(0x60);   // 0x60: get scan code from the keyboard
+
+    // ACK: toggle bit 7 at port 0x61
+    uint8_t port_value = inportb(0x61);
+    outportb(0x61, port_value |  0x80); // 0->1
+    outportb(0x61, port_value &~ 0x80); // 1->0
+
     return(scancode);
 }
 
@@ -197,7 +204,7 @@ uint8_t ScanToASCII()
 
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
-            printf("network adapter: %X\n", adapter); // check
+            printf("network adapter: %Xh\n", adapter); // check
 
             // parameters for UDPSend(...)
             uint16_t srcPort  = 40; // unassigend
@@ -215,7 +222,7 @@ uint8_t ScanToASCII()
             uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
-            printf("network adapter: %X\n", adapter); // check
+            printf("network adapter: %Xh\n", adapter); // check
 
             if (adapter)
             {
@@ -228,7 +235,7 @@ uint8_t ScanToASCII()
             uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
-            printf("network adapter: %X\n", adapter); // check
+            printf("network adapter: %Xh\n", adapter); // check
 
             if (adapter)
             {

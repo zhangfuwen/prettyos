@@ -187,9 +187,10 @@ void network_displayArpTables()
     uint8_t i = 0;
     for (element_t* e = adapters->head; e != 0; e = e->next, i++)
     {
-        printf("\n\nAdapter %u:  %I", i, ((network_adapter_t*)e->data)->IP_address);
+        printf("\n\nAdapter %u: %I", i, ((network_adapter_t*)e->data)->IP_address);
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
     }
+    printf("\n");
 }
 
 network_adapter_t* network_getAdapter(uint8_t IP[4])

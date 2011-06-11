@@ -441,10 +441,10 @@ void task_log(task_t* t)
 {
     textColor(0x05);
     printf("\npid: %d\t", t->pid);         // Process ID
-    printf("esp: %X  ", t->esp);           // Stack pointer
-    printf("eip: %X  ", t->eip);           // Instruction pointer
-    printf("PD: %X  ", t->pageDirectory);  // Page directory
-    printf("k_stack: %X", t->kernelStack); // Kernel stack location
+    printf("esp: %Xh  ", t->esp);           // Stack pointer
+    printf("eip: %Xh  ", t->eip);           // Instruction pointer
+    printf("PD: %Xh  ", t->pageDirectory);  // Page directory
+    printf("k_stack: %Xh", t->kernelStack); // Kernel stack location
     if(t->type == THREAD)
         printf("\n\tparent: %u", t->parent->pid);
     if(t->threads && t->threads->head)

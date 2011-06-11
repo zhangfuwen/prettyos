@@ -33,11 +33,11 @@ void install_USB_HostController(pciDev_t* PCIdev)
         {
             if (PCIdev->bar[i].memoryType == 0)
             {
-                printf("%X MMIO ", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+                printf("%Xh MMIO ", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
             }
             else if (PCIdev->bar[i].memoryType == 1)
             {
-                printf("%x I/O ",  PCIdev->bar[i].baseAddress & 0xFFFC);
+                printf("%xh I/O ",  PCIdev->bar[i].baseAddress & 0xFFFC);
             }
 
             // check Memory Size
@@ -60,7 +60,7 @@ void install_USB_HostController(pciDev_t* PCIdev)
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

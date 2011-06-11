@@ -6,9 +6,11 @@
 #include "dma.h"
 #include "util.h"
 
+
 /* The DMA (Direct Memory Access) controller allows the FDC to send data to the DMA, which can put the data in memory.
    While the FDC can be programmed to not use DMA, it is not very well supported on emulators or virtual machines.
    Because of this, the DMA is used for data transfers. */
+
 
 dma_channel_t dma_channel[4] = {{0, 0x87, 0x00, 0x01}, {1, 0x83, 0x02, 0x03}, {2, 0x81, 0x04, 0x05}, {3, 0x82, 0x06, 0x07}};
 
@@ -42,7 +44,7 @@ void dma_write(void* source, uint16_t length, dma_channel_t* channel, DMA_TRANSF
 
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

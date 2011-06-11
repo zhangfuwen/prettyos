@@ -29,7 +29,7 @@ void rtl8139_handler(registers_t* data)
     volatile uint16_t val = *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS));
     #ifdef _NETWORK_DIAGNOSIS_
     textColor(0x0E);
-    printf("\nRTL8139 Interrupt Status: %y, ", val);
+    printf("\nRTL8139 Interrupt Status: %yh, ", val);
     textColor(0x03);
     if      (val & RTL8139_INT_RX_OK)           { puts("Receive OK"); }
     else if (val & RTL8139_INT_RX_ERR)          { puts("Receive Error"); }
@@ -60,7 +60,7 @@ void rtl8139_handler(registers_t* data)
     textColor(0x03);
     for (uint8_t i = 0; i < 2; i++)
     {
-        printf("%y ", device->RxBuffer[device->RxBufferPointer+i]);
+        printf("%yh ", device->RxBuffer[device->RxBufferPointer+i]);
     }
     #endif
 
@@ -115,9 +115,9 @@ void install_RTL8139(network_adapter_t* dev)
     and send that variables memory location to the RBSTART register (0x30).
     */
 
-    kdebug(3, "RTL8139 MMIO: %X\n", dev->MMIO_base);
+    kdebug(3, "RTL8139 MMIO: %Xh\n", dev->MMIO_base);
     dev->MMIO_base = paging_acquirePciMemory((uint32_t)dev->MMIO_base, 1);
-    printf("MMIO base mapped to virt. addr. %X\n", dev->MMIO_base);
+    printf("MMIO base mapped to virt. addr. %Xh\n", dev->MMIO_base);
 
     // "power on" the card
     *((uint8_t*)(dev->MMIO_base + RTL8139_CONFIG1)) = 0x00;
@@ -199,7 +199,7 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
         memset(device->TxBuffer+length, 0, 60-length);
         length = 60;
     }
-    printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %X\n", paging_getPhysAddr(rAdapter->TxBuffer));
+    printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %Xh\n", paging_getPhysAddr(rAdapter->TxBuffer));
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit

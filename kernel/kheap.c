@@ -105,7 +105,7 @@ void logHeapRegions()
         textColor(0x06);
         if (regions[i].reserved)
         {
-            printf("\n%X\t%s\t\t%X\t%u\t%s",
+            printf("\n%Xh\t%s\t\t%Xh\t%u\t%s",
                     regionAddress,
                     regions[i].reserved ? "yes" : "no",
                     regions[i].size,
@@ -229,7 +229,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             strncpy(regions[i].comment, comment, 20);
             regions[i].number   = ++consecutiveNumber;
 
-            kdebug(3, "%X ", regionAddress);
+            kdebug(3, "%Xh ", regionAddress);
 
           #ifdef _MEMLEAK_FIND_
             counter++;
@@ -238,7 +238,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
           #ifdef _MALLOC_FREE_
             textColor(0x0E);
             task_switching = false;
-            printf("\nmalloc: %X %s", regionAddress, comment);
+            printf("\nmalloc: %Xh %s", regionAddress, comment);
             task_switching = true;
             textColor(0x0F);
           #endif
@@ -269,7 +269,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
       #ifdef _MALLOC_FREE_
         textColor(0x0E);
         task_switching = false;
-        printf("\nheap expanded: %X heap end: %X", sizeToGrow, (uintptr_t)(heapStart + (uintptr_t)heapSize));
+        printf("\nheap expanded: %Xh heap end: %Xh", sizeToGrow, (uintptr_t)(heapStart + (uintptr_t)heapSize));
         task_switching = true;
         textColor(0x0F);
       #endif
@@ -287,7 +287,7 @@ void free(void* addr)
   #ifdef _MALLOC_FREE_
     textColor(0x07);
     task_switching = false;
-    printf("\nfree:   %X", addr);
+    printf("\nfree:   %Xh", addr);
     task_switching = true;
     textColor(0x0F);
   #endif
@@ -356,7 +356,7 @@ void free(void* addr)
     mutex_unlock(mutex);
 
     textColor(0x0C);
-    printf("Broken free: %X\n", addr);
+    printf("Broken free: %Xh\n", addr);
     textColor(0x0F);
     //ASSERT(false);
 }

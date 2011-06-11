@@ -67,21 +67,13 @@ void arp_showTable(arpTable_t* table)
 {
     arp_checkTable(table); // We check the table for obsolete entries.
 
-    printf("\nIP\t\t\tMAC\t\t\t\tType\tTime(sec)");
+    printf("\nIP\t\t  MAC\t\t\tType\t  Time(sec)");
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
-        if(entry->IP[0]==255 && entry->IP[1]==255 && entry->IP[2]==255 && entry->IP[3]==255)
-        {
-            printf("\n%I \t%M\t\t%s\t%u", entry->IP, entry->MAC,
-                entry->dynamic?"dynamic":"static", entry->seconds);
-        }
-        else
-        {
-            printf("\n%I \t\t%M\t\t%s\t%u", entry->IP, entry->MAC,
-                entry->dynamic?"dynamic":"static", entry->seconds);
-        }
-
+        size_t length = printf("\n%I\t", entry->IP);
+        if(length < 10) printf("\t");
+        printf("  %M\t%s\t  %u", entry->MAC, entry->dynamic?"dynamic":"static", entry->seconds);
     }
 }
 

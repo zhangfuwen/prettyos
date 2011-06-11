@@ -799,7 +799,7 @@ void FAT_showDirectoryEntry(FAT_dirEntry_t* dir)
     strncpy(extension, dir->Extension, 3);
 
     printf("\nname.ext: %s.%s",   name, extension                        );
-    printf("\nattrib.:  %y",      dir->Attr                              );
+    printf("\nattrib.:  %yh",     dir->Attr                              );
     printf("\ncluster:  %u",      dir->FstClusLO + 0x10000*dir->FstClusHI);
     printf("\nfilesize: %u byte", dir->FileSize                          );
 }

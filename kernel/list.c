@@ -91,7 +91,7 @@ void list_Show(listHead_t* hd)
     {
         while (cur)
         {
-            printf("%X\t",cur);
+            printf("%Xh\t",cur);
             cur = cur->next;
         }
     }

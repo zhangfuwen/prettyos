@@ -375,8 +375,7 @@ void i2hex(uint32_t val, char* dest, uint32_t len)
         val >>= 4;
         *--cp = x + ((x > 9) ? 'A' - 10 : '0');
     }
-    dest[len]  ='h';
-    dest[len+1]='\0';
+    dest[len]='\0';
 }
 
 

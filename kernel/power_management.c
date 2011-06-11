@@ -78,19 +78,19 @@ bool apm_install()
             return(true);
             break;
         case 1:
-            printf("\nAPM: Error while disconnecting, %y", *((uint8_t*)0x1301));
+            printf("\nAPM: Error while disconnecting, %yh", *((uint8_t*)0x1301));
             return(false);
             break;
         case 2:
-            printf("\nAPM: Error while connecting, %y", *((uint8_t*)0x1301));
+            printf("\nAPM: Error while connecting, %yh", *((uint8_t*)0x1301));
             return(false);
             break;
         case 3:
-            printf("\nAPM: Error while handling out APM version, %y", *((uint8_t*)0x1301));
+            printf("\nAPM: Error while handling out APM version, %yh", *((uint8_t*)0x1301));
             return(false);
             break;
         case 4:
-            printf("\nAPM: Error while activating, %y", *((uint8_t*)0x1301));
+            printf("\nAPM: Error while activating, %yh", *((uint8_t*)0x1301));
             return(false);
             break;
     }

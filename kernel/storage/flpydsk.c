@@ -327,7 +327,7 @@ void flpydsk_readVersion()
 {
     flpydsk_sendCommand(FDC_CMD_VERSION);
     flpydsk_version = flpydsk_readData();
-    printf("\nFDC version: %y", flpydsk_version);
+    printf("\nFDC version: %yh", flpydsk_version);
 }
 
 

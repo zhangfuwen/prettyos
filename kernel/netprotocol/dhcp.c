@@ -60,7 +60,7 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.options[15] = RIP_3;
     packet.options[16] = RIP_4;
 
-    packet.options[17]  = 55;  //
+    packet.options[17]  = 55;  // Parameter request list
     packet.options[18]  =  4;  // Length
     packet.options[19]  =  1;  // SUBNET MASK
     packet.options[20] =   3;  // ROUTERS
@@ -111,7 +111,7 @@ void DHCP_Request(network_adapter_t* adapter)
     packet.options[5]  =  1;  // Length
     packet.options[6]  =  3;  // REQUEST
 
-    packet.options[7]  = 55;  //
+    packet.options[7]  = 55;  // Parameter request list
     packet.options[8]  =  4;  // Length
     packet.options[9]  =  1;  // SUBNET MASK
     packet.options[10] =  3;  // ROUTERS
@@ -215,9 +215,9 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
     printf(" htype: %u", dhcp->htype);
     printf(" hlen: %u", dhcp->hlen);
     printf(" hops: %u", dhcp->hops);
-    printf(" xid: %X", htonl(dhcp->xid));
+    printf(" xid: %Xh", htonl(dhcp->xid));
     printf(" secs: %u", htons(dhcp->secs));
-    printf(" flags: %x", htons(dhcp->flags));
+    printf(" flags: %xh", htons(dhcp->flags));
     */
     printf("\ncIP: %I", dhcp->ciaddr);
     printf(" yIP: %I", dhcp->yiaddr);
@@ -248,59 +248,58 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 {
     uint32_t leaseTime=0;
 
-    for (uint16_t i=0; i<opt[count+2]; i++)
+    switch(opt[count+1])
     {
-        if (opt[count+1]==12 || opt[count+1]==14 ||
-            opt[count+1]==15 || opt[count+1]==17 ||
-            opt[count+1]==18 || opt[count+1]==40 ||
-            opt[count+1]==43)
-        {
-            printf("%c", opt[count+3+i]);
-        }
-        else
-        {
-            printf("%u ", opt[count+3+i]);
-            if (opt[count+1]==51) // Release Time (sec)
+        case 12: case 14: case 15: case 17: case 18: case 40: case 43: // ASCII output
+            for(uint16_t i=0; i<opt[count+2]; i++)
+                printf("%c", opt[count+3+i]);
+            break;
+        case 51: // Lease time
+            for(uint16_t i=0; i<opt[count+2]; i++)
             {
+                printf("%u ", opt[count+3+i]);
                 leaseTime += ((opt[count+3+i])<<(24-8*i));
-                if (i==3) printf("  %u hours", leaseTime/3600);
             }
-        }
-
-        if (opt[count+1]==53) // Message Type
-        {
+            printf("  %u hours", leaseTime/3600);
+            break;
+        case 53:
+            for(uint16_t i=0; i<opt[count+2]; i++)
+                printf("%u ", opt[count+3+i]);
             switch (opt[count+3])
             {
-            case 1:
-                printf(" (DHCPDiscover)");
-                break;
-            case 2:
-                printf(" (DHCPOffer)");
-                adapter->DHCP_State = OFFER;
-                break;
-            case 3:
-                printf(" (DHCPRequest)");
-                break;
-            case 4:
-                printf(" (DHCPDecline)");
-                break;
-            case 5:
-                printf(" (DHCPAck)");
-                adapter->DHCP_State = ACK;
-                break;
-            case 6:
-                printf(" (DHCPNak)");
-                adapter->DHCP_State = NAK;
-                break;
-            case 7:
-                printf(" (DHCPRelease)");
-                break;
-            case 8:
-                printf(" (DHCPInform)");
-                break;
+                case 1:
+                    printf(" (DHCPDiscover)");
+                    break;
+                case 2:
+                    printf(" (DHCPOffer)");
+                    adapter->DHCP_State = OFFER;
+                    break;
+                case 3:
+                    printf(" (DHCPRequest)");
+                    break;
+                case 4:
+                    printf(" (DHCPDecline)");
+                    break;
+                case 5:
+                    printf(" (DHCPAck)");
+                    adapter->DHCP_State = ACK;
+                    break;
+                case 6:
+                    printf(" (DHCPNak)");
+                    adapter->DHCP_State = NAK;
+                    break;
+                case 7:
+                    printf(" (DHCPRelease)");
+                    break;
+                case 8:
+                    printf(" (DHCPInform)");
+                    break;
             }
-        }
-
+            break;
+        default:
+            for(uint16_t i=0; i<opt[count+2]; i++)
+                printf("%u ", opt[count+3+i]);
+            break;
     }
     return (count + 2 + opt[count+2]);
 }
@@ -326,34 +325,27 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
             break;
         case 1:
             printf("\nSubnet Mask: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 2:
             printf("Time Offset: ");
             break;
         case 3:
             printf("\nRouters: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 4:
             printf("\nTime Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 5:
             printf("\nName Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 6:
             printf("\nDNS IP: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 7:
             printf("\nLog Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 8:
             printf("\nQuote Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 9:
             printf("\nLPR Server: ");
@@ -363,369 +355,281 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
             break;
         case 11:
             printf("\nResource Location Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 12:
             printf("\nHost Name: ");
-            count = showOptionsBytes(adapter, opt, count); //ASCII
             break;
         case 13:
             printf("\nBoot File Size: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 14:
             printf("\nMerit Dump File: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 15:
             printf("\nDomain name: ");
-            count = showOptionsBytes(adapter, opt, count); //ASCII
             break;
         case 16:
             printf("\nSwap Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 17:
             printf("\nRoot Path: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 18:
             printf("\nExtensions Path: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 19:
             printf("\nIP Forwarding enable/disable: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 20:
             printf("\nNon-local Source Routing enable/disable: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 21:
             printf("\nPolicy Filter: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 22:
             printf("\nMaximum Datagram Reassembly Size: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 23:
             printf("\nDefault IP Time-to-live: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 24:
             printf("\nPath MTU Aging Timeout: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 25:
             printf("\nPath MTU Plateau Table:");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 26:
             printf("\nInterface MTU: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 27:
             printf("\nAll Subnets are Local: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 28:
             printf("\nBroadcast Address: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 29:
             printf("\nPerform Mask Discovery: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 30:
             printf("\nMask supplier: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 31:
             printf("\nPerform router discovery: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 32:
             printf("\nRouter solicitation address: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 33:
             printf("\nStatic routing table: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 34:
             printf("\nTrailer encapsulation: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 35:
             printf("\nARP cache timeout: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 36:
             printf("\nEthernet encapsulation: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 37:
             printf("\nDefault TCP TTL: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 38:
             printf("\nTCP keepalive interval: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 39:
             printf("\nTCP keepalive garbage: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 40:
             printf("\nNetwork Information Service Domain: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 41:
             printf("\nNetwork Information Servers: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 42:
             printf("\nNTP servers: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 43:
             printf("\nVendor specific info: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 44:
             printf("\nNetBIOS over TCP/IP Name Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 45:
             printf("\nNetBIOS over TCP/IP Datagram Distribution Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 46:
             printf("\nNetBIOS over TCP/IP Node Type: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 47:
             printf("\nNetBIOS over TCP/IP Scope: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 48:
             printf("\nX Window System Font Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 49:
             printf("\nX Window System Display Manager: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 50:
             printf("\nRequested IP Address: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 51:
             printf("\nIP address lease time: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 52:
             printf("\nOption overload: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 53:
             printf("\nMessage Type: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 54:
             printf("\nServer IP: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 55:
             printf("\nParameter request list: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 56:
             printf("\nMessage: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 57:
             printf("\nMaximum DHCP message size: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 58:
             printf("\nRenew time value: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 59:
             printf("\nRebinding time value: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 60:
             printf("\nClass-identifier: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 61:
             printf("\nClient-identifier: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 62:
             printf("\nNetWare/IP Domain Name: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 63:
             printf("\nNetWare/IP information: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 64:
             printf("\nNetwork Information Service Domain: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 65:
             printf("\nNetwork Information Service Servers:");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 66:
             printf("\nTFTP server name: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 67:
             printf("\nBootfile name: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 68:
             printf("\nMobile IP Home Agent: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 69:
             printf("\nSimple Mail Transport Protocol Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 70:
             printf("\nPost Office Protocol Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 71:
             printf("\nNetwork News Transport Protocol Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 72:
             printf("\nDefault World Wide Web Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 73:
             printf("\nDefault Finger Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 74:
             printf("\nDefault Internet Relay Chat Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 75:
             printf("\nStreetTalk Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 76:
             printf("\nStreetTalk Directory Assistance Server: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 77:
             printf("\nUser Class Information: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 78:
             printf("\nSLP Directory Agent: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 79:
             printf("\nSLP Service Scope: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 80:
             printf("\nRapid Commit: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 81:
             printf("\nFQDN, Fully Qualified Domain Name: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 82:
             printf("\nRelay Agent Information: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 83:
             printf("\nInternet Storage Name Service: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
-        case 84:
+/*      case 84:
             printf("\n???: ");
-            count = showOptionsBytes(adapter, opt, count);
-            break;
+            break;*/
         case 85:
             printf("\nNDS servers: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 86:
             printf("\nNDS tree name: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 87:
             printf("\nNDS context: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 88:
             printf("\nBCMCS Controller Domain Name list: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 89:
             printf("\nBCMCS Controller IPv4 address list: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 90:
             printf("\nAuthentication: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 91:
             printf("\nclient-last-transaction-time: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 92:
             printf("\nassociated-ip: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 93:
             printf("\nClient System Architecture Type: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 94:
             printf("\nClient Network Interface Identifier: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 95:
             printf("\nLDAP, Lightweight Directory Access Protocol: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
-        case 96:
+/*      case 96:
             printf("\n???: ");
-            count = showOptionsBytes(adapter, opt, count);
-            break;
+            break;*/
         case 97:
             printf("\nClient Machine Identifier: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 98:
             printf("\nOpen Group's User Authentication: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 99:
             printf("\nGEOCONF_CIVIC: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         case 100:
             printf("\nIEEE 1003.1 TZ String: ");
-            count = showOptionsBytes(adapter, opt, count);
             break;
         default:
-            printf("option number > 100");
+            printf("\nUnknown option: %u", opt[count+1]);
             break;
-        }//switch
-    }//while
+        } //switch
+        if(opt[count+1] != 0)
+            count = showOptionsBytes(adapter, opt, count);
+    } //while
     printf("\nEND OF OPTIONS\n");
 }
 
@@ -775,16 +679,16 @@ void DHCP_Inform(network_adapter_t* adapter)
 
     packet.options[4]  =   1;  // SUBNET
     packet.options[5]  =   4;  // Length
-    packet.options[6]  = 255;  //
-    packet.options[7]  = 255;  //
-    packet.options[8]  = 255;  //
-    packet.options[9]  =   0;  //
+    packet.options[6]  = 255;
+    packet.options[7]  = 255;
+    packet.options[8]  = 255;
+    packet.options[9]  =   0;
 
     packet.options[10]  = 53;  // MESSAGE TYPE
     packet.options[11]  =  1;  // Length
     packet.options[12]  =  8;  // INFORM
 
-    packet.options[13]  = 55;  //
+    packet.options[13]  = 55;  // Parameter Request List
     packet.options[14]  =  8;  // Length
     packet.options[15]  =  1;  // SUBNET MASK
     packet.options[16] =   3;  // ROUTERS

@@ -45,7 +45,7 @@ void ehci_install(pciDev_t* PCIdev, uint32_t i)
     uintptr_t offset   = bar_phys % PAGESIZE;
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\nEHCI_MMIO %X mapped to virt addr %X, offset: %x\n", bar_phys, bar, offset);
+    printf("\nEHCI_MMIO %Xh mapped to virt addr %Xh, offset: %xh\n", bar_phys, bar, offset);
   #endif
 
     if (!EHCIflag) // only the first EHCI is used
@@ -68,13 +68,13 @@ void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 
   #ifdef _USB_DIAGNOSIS_
     uintptr_t bar_phys  = (uintptr_t)paging_getPhysAddr((void*)bar);
-    printf("EHCI bar get_physAddress: %X\n", bar_phys);
-    printf("HCIVERSION: %x ",  pCapRegs->HCIVERSION);               // Interface Version Number
-    printf("HCSPARAMS: %X ",   pCapRegs->HCSPARAMS);                // Structural Parameters
+    printf("EHCI bar get_physAddress: %Xh\n", bar_phys);
+    printf("HCIVERSION: %xh ",  pCapRegs->HCIVERSION);               // Interface Version Number
+    printf("HCSPARAMS: %Xh ",   pCapRegs->HCSPARAMS);                // Structural Parameters
     printf("Ports: %u ",       numPorts);                           // Number of Ports
-    printf("\nHCCPARAMS: %X ", pCapRegs->HCCPARAMS);                // Capability Parameters
+    printf("\nHCCPARAMS: %Xh ", pCapRegs->HCCPARAMS);                // Capability Parameters
     if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. "); // Extended Capabilities Pointer
-    printf("\nOpRegs Address: %X ", pOpRegs);                       // Host Controller Operational Registers
+    printf("\nOpRegs Address: %Xh ", pOpRegs);                       // Host Controller Operational Registers
   #endif
 }
 
@@ -112,20 +112,20 @@ int32_t initEHCIHostController()
     uint16_t pciCapabilitiesList = pci_config_read(bus, dev, func, 0x0234);
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\nPCI Command Register before:          %x", pciCommandRegister);
-    printf("\nPCI Command Register plus bus master: %x", pci_config_read(bus, dev, func, 0x0204));
-    printf("\nPCI Capabilities List: first Pointer: %x", pciCapabilitiesList);
+    printf("\nPCI Command Register before:          %xh", pciCommandRegister);
+    printf("\nPCI Command Register plus bus master: %xh", pci_config_read(bus, dev, func, 0x0204));
+    printf("\nPCI Capabilities List: first Pointer: %xh", pciCapabilitiesList);
   #endif
 
     if (pciCapabilitiesList) // pointer != 0
     {
         uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
-        printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
+        printf("\nPCI Capabilities List: ID: %yh, next Pointer: %yh",BYTE1(nextCapability),BYTE2(nextCapability));
 
         while (BYTE2(nextCapability)) // pointer to next capability != 0
         {
             nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
-            printf("\nPCI Capabilities List: ID: %y, next Pointer: %y",BYTE1(nextCapability),BYTE2(nextCapability));
+            printf("\nPCI Capabilities List: ID: %yh, next Pointer: %yh",BYTE1(nextCapability),BYTE2(nextCapability));
         }
     }
 
@@ -259,7 +259,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
     uint8_t func = PCIdev->func;
 
     eecp = BYTE2(pCapRegs->HCCPARAMS);
-    printf("\nDeactivateLegacySupport: eecp = %x\n",eecp);
+    printf("\nDeactivateLegacySupport: eecp = %xh\n",eecp);
     /*
     cf. EHCI 1.0 spec, 2.2.4 HCCPARAMS - Capability Parameters, Bit 15:8 (BYTE2)
     EHCI Extended Capabilities Pointer (EECP). Default = Implementation Dependent.
@@ -281,9 +281,9 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
         {
             uint32_t NextEHCIExtCapPtr; // RO  - 00h indicates end of the ext. cap. list.
 
-            printf("eecp = %x, ",eecp);
+            printf("eecp = %xh, ",eecp);
             eecp_id = pci_config_read(bus, dev, func, 0x0100/*length 1 byte*/ | (eecp + 0));
-            printf("eecp_id = %x\n",eecp_id);
+            printf("eecp_id = %xh\n",eecp_id);
             if (eecp_id == 1)
                  break;
             NextEHCIExtCapPtr = eecp + 1;
@@ -425,7 +425,7 @@ void resetPort(uint8_t j)
             textColor(0x0C);
             printf("\nerror: port %u did not reset! ",j+1);
             textColor(0x0F);
-            printf("PortStatus: %X",pOpRegs->PORTSC[j]);
+            printf("PortStatus: %Xh",pOpRegs->PORTSC[j]);
             break;
         }
     }
@@ -569,7 +569,7 @@ void checkPortLineStatus(uint8_t j)
     {
         //check line status
         textColor(0x0B);
-        printf("\nport %u: %x, line: %y ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
+        printf("\nport %u: %xh, line: %yh ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
         if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
         {
             printf("SE0 ");
@@ -718,7 +718,7 @@ void showUSBSTS()
   #ifdef _USB_DIAGNOSIS_
     printf("\nUSB status: ");
     textColor(0x02);
-    printf("%X",pOpRegs->USBSTS);
+    printf("%Xh",pOpRegs->USBSTS);
   #endif
     textColor(0x0E);
     if (pOpRegs->USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }

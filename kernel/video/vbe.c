@@ -177,7 +177,7 @@ void setVideoMemory()
      uint32_t numberOfPages = vgaIB.TotalMemory * 0x10000 / PAGESIZE;
      vidmem = paging_acquirePciMemory(mib.PhysBasePtr, numberOfPages);
 
-     printf("\nVidmem (phys): %X  Vidmem (virt): %X\n",mib.PhysBasePtr, vidmem);
+     printf("\nVidmem (phys): %Xh  Vidmem (virt): %Xh\n",mib.PhysBasePtr, vidmem);
      printf("\nVideo Ram %u MiB\n",vgaIB.TotalMemory/0x10);
 }
 
@@ -436,9 +436,9 @@ static void vgaDebug()
     textColor(0x0F);
     printf("VESA-Signature:  %c%c%c%c\n", vgaIB.VESASignature[0], vgaIB.VESASignature[1], vgaIB.VESASignature[2], vgaIB.VESASignature[3]);
     printf("VESA-Version:    %u.%u\n",    vgaIB.VESAVersion>>8, vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
-    printf("Capabilities:    %y\n",       vgaIB.Capabilities[0]);
+    printf("Capabilities:    %yh\n",       vgaIB.Capabilities[0]);
     printf("Video Memory:    %u MiB\n",   vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
-    printf("Video Modes Ptr: %X\n",       vgaIB.VideoModes);
+    printf("Video Modes Ptr: %Xh\n",       vgaIB.VideoModes);
 
     textColor(0x0E);
     printf("\nVideo Modes:");
@@ -448,7 +448,7 @@ static void vgaDebug()
         if(vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
         vbe_readMIB(vgaIB.VideoModes[i]);
         if(!(mib.ModeAttributes & BIT(0)) || !(mib.ModeAttributes & BIT(7))) continue; // If bit 0 is not set, the mode is not supported due to the present hardware configuration, if bit 7 is not set, linear frame buffer is not supported
-        printf("\n%u (%x) = %ux%ux%u", vgaIB.VideoModes[i], vgaIB.VideoModes[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
+        printf("\n%u (%xh) = %ux%ux%u", vgaIB.VideoModes[i], vgaIB.VideoModes[i], mib.XResolution, mib.YResolution, mib.BitsPerPixel);
         if(!(mib.ModeAttributes & BIT(4))) printf(" (textmode)");
     }
     printf("\n");
@@ -460,14 +460,14 @@ static void modeDebug()
     textColor(0x0E);
     printf("\nModeInfoBlock:\n");
     textColor(0x0F);
-    printf("ModeAttributes:        %x\n", mib.ModeAttributes);
+    printf("ModeAttributes:        %xh\n", mib.ModeAttributes);
     printf("WinAAttributes:        %u\n", mib.WinAAttributes);
     printf("WinBAttributes:        %u\n", mib.WinBAttributes);
     printf("WinGranularity:        %u\n", mib.WinGranularity);
     printf("WinSize:               %u\n", mib.WinSize);
     printf("WinASegment:           %u\n", mib.WinASegment);
     printf("WinBSegment:           %u\n", mib.WinBSegment);
-    printf("WinFuncPtr:            %X\n", mib.WinFuncPtr);
+    printf("WinFuncPtr:            %Xh\n", mib.WinFuncPtr);
     printf("BytesPerScanLine:      %u\n", mib.BytesPerScanLine);
     printf("XResolution:           %u\n", mib.XResolution);
     printf("YResolution:           %u\n", mib.YResolution);
@@ -490,7 +490,7 @@ static void modeDebug()
     printf("OffScreenMemOffset:    %u\n", mib.OffScreenMemOffset);
     printf("OffScreenMemSize:      %u\n", mib.OffScreenMemSize);
     printf("DirectColorModeInfo:   %u\n", mib.DirectColorModeInfo);
-    printf("Physical Memory Base:  %X\n", mib.PhysBasePtr);
+    printf("Physical Memory Base:  %Xh\n", mib.PhysBasePtr);
 }
 
 /*char ISValidBitmap(char* fname)

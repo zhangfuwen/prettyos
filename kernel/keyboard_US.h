@@ -65,8 +65,6 @@
 #define  KRNUM_LOCK    0x45
 #define  KRDEL         0x53
 
-#define  MAXKEYBUFFER 64       // max keyboard buffer
-
 // Keymaps: US International
 
 // Non-Shifted scan codes to ASCII:

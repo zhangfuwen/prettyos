@@ -308,7 +308,7 @@ FS_ERROR analyzeDisk(disk_t* disk)
             (buffer[510] == 0x55 && buffer[511] == 0xAA)) //...but like a MBR
     {
         // Read partitions from MBR
-        printf("\nFound MBR (DiskID: %x):", ((uint16_t*)buffer)[440/2]);
+        printf("\nFound MBR (DiskID: %xh):", ((uint16_t*)buffer)[440/2]);
         struct partitionEntry* entries = (struct partitionEntry*)(buffer+446);
         for(uint8_t i = 0; i < 4; i++)
         {
@@ -361,7 +361,7 @@ static void logReadCache()
         {
             textColor(0x07);
         }
-        printf("\nReadcache: %u \tpart: %X sector: %u \tvalid: %s", i, readcaches[i].disk, readcaches[i].sector, readcaches[i].valid?"yes":"no");
+        printf("\nReadcache: %u \tpart: %Xh sector: %u \tvalid: %s", i, readcaches[i].disk, readcaches[i].sector, readcaches[i].valid?"yes":"no");
     }
     textColor(0x07);
     printf("\n-------------------------------------------------------------------------------");

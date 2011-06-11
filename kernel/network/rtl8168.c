@@ -24,7 +24,7 @@ void rtl8168_handler(registers_t* data)
 
     volatile uint32_t intStatus = *(uint32_t*)(RTL->device->MMIO_base + RTL8168_INTRSTATUS);
     #ifdef _NETWORK_DIAGNOSIS_
-    printf("\t\t Status: %X", intStatus);
+    printf("\t\t Status: %Xh", intStatus);
     #endif
     *(uint32_t*)(RTL->device->MMIO_base + RTL8168_INTRSTATUS) = intStatus;
 }
@@ -57,9 +57,9 @@ void install_RTL8168(network_adapter_t* device)
     RTL->device = device;
 
     // Acquire memory
-    printf("\nMMIO_base (phys): %X", device->MMIO_base);
+    printf("\nMMIO_base (phys): %Xh", device->MMIO_base);
     device->MMIO_base = paging_acquirePciMemory((uintptr_t)device->MMIO_base, 1);
-    printf("\t\tMMIO_base (virt): %X", device->MMIO_base);
+    printf("\t\tMMIO_base (virt): %Xh", device->MMIO_base);
     RTL->RxBuffer = malloc(2048, 8, "RTL8168 RxBuffer");
 
     // Reset card

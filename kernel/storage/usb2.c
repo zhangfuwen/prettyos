@@ -113,7 +113,7 @@ void usbTransferConfig(uint32_t device)
     // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
     uintptr_t addrPointer = (uintptr_t)DataQTDpage0;
     uintptr_t lastByte    = addrPointer + (*(uint16_t*)(addrPointer+2)); // totalLength (WORD)
-    // printf("\nlastByte: %X\n",lastByte); // test
+    // printf("\nlastByte: %Xh\n",lastByte); // test
 
   #ifdef _USB_DIAGNOSIS_
     showPacket(DataQTDpage0,(*(uint16_t*)(addrPointer+2)));
@@ -122,7 +122,7 @@ void usbTransferConfig(uint32_t device)
     while(addrPointer<lastByte)
     {
         bool found = false;
-        // printf("addrPointer: %X\n",addrPointer); // test
+        // printf("addrPointer: %Xh\n",addrPointer); // test
         if (*(uint8_t*)addrPointer == 9 && *(uint8_t*)(addrPointer+1) == 2) // length, type
         {
             showConfigurationDescriptor((struct usb2_configurationDescriptor*)addrPointer);
@@ -462,12 +462,12 @@ void showDevice(usb2_Device_t* usbDev)
     }
     printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
   #ifdef _USB_DIAGNOSIS_
-    printf("vendor:            %x\n",           usbDev->vendor);
-    printf("product:           %x\t",           usbDev->product);
+    printf("vendor:            %xh\n",           usbDev->vendor);
+    printf("product:           %xh\t",           usbDev->product);
     printf("release number:    %u.%u\n",        usbDev->releaseNumber>>8, usbDev->releaseNumber&0xFF);
-    printf("manufacturer:      %x\t",           usbDev->manufacturerStringID);
-    printf("product:           %x\n",           usbDev->productStringID);
-    printf("serial number:     %x\t",           usbDev->serNumberStringID);
+    printf("manufacturer:      %xh\t",           usbDev->manufacturerStringID);
+    printf("product:           %xh\n",           usbDev->productStringID);
+    printf("serial number:     %xh\t",           usbDev->serNumberStringID);
     printf("number of config.: %u\n",           usbDev->numConfigurations); // number of possible configurations
     printf("numInterfaceMSD:   %u\n",           usbDev->numInterfaceMSD);
   #endif
@@ -489,8 +489,8 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
         textColor(0x0A);
         printf("Number of interfaces: %u",  d->numInterfaces);
       #ifdef _USB_DIAGNOSIS_
-        printf("ID of config:         %x\t",  d->configurationValue);
-        printf("ID of config name     %x\n",  d->configuration);
+        printf("ID of config:         %xh\t",  d->configurationValue);
+        printf("ID of config name     %xh\n",  d->configuration);
         printf("remote wakeup:        %s\t",  d->attributes & BIT(5) ? "yes" : "no");
         printf("self-powered:         %s\n",  d->attributes & BIT(6) ? "yes" : "no");
         printf("max power (mA):       %u\n",  d->maxPower*2); // 2 mA steps used
@@ -597,7 +597,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
                 printf("Diagnostic Device");
                 break;
             case 0xE0:
-                printf("Wireless Controller, subclass: %y protocol: %y.",d->interfaceSubclass,d->interfaceProtocol);
+                printf("Wireless Controller, subclass: %yh protocol: %yh.",d->interfaceSubclass,d->interfaceProtocol);
                 break;
             case 0xEF:
                 printf("Miscellaneous");
@@ -614,7 +614,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
         printf("interface class:      %u\n",   d->interfaceClass);
         printf("interface subclass:   %u\n",   d->interfaceSubclass);
         printf("interface protocol:   %u\n",   d->interfaceProtocol);
-        printf("interface:            %x\n",   d->interface);
+        printf("interface:            %xh\n",   d->interface);
       #endif
         textColor(0x0F);
         sleepSeconds(1); // wait to show data
@@ -634,7 +634,7 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
       #endif
         printf("endpoint %u: %s, ", d->endpointAddress & 0xF, d->endpointAddress & 0x80 ? "IN " : "OUT");
       #ifdef _USB_DIAGNOSIS_
-        printf("attributes:  %y\t\t",  d->attributes); // bit 1:0 00 control    01 isochronous    10 bulk                         11 interrupt
+        printf("attributes:  %yh\t\t",  d->attributes); // bit 1:0 00 control    01 isochronous    10 bulk                         11 interrupt
                                                        // bit 3:2 00 no sync    01 async          10 adaptive                     11 sync (only if isochronous)
       #endif                                           // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
         if (d->attributes == 2)
@@ -698,7 +698,7 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
                         printf("Russian\t");
                         break;
                     default:
-                        printf("language code: %x\t", d->languageID[i]);
+                        printf("language code: %xh\t", d->languageID[i]);
                         /*Language Codes
                         ; 0x400 Neutral
                         ; 0x401 Arabic
@@ -837,7 +837,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
 
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -23,7 +23,7 @@
 #include "elf.h"
 
 
-const char* const version = "0.0.2.93 - Rev: 932";
+const char* const version = "0.0.2.94 - Rev: 933";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -186,7 +186,7 @@ void main(multiboot_t* mb_struct)
         if ((fsnode->flags & 0x7) == FS_DIRECTORY)
         {
             #ifdef _RAMDISK_DIAGNOSIS_
-            printf("\n<RAMdisk (%X) - Root Directory>\n", ramdisk_start);
+            printf("\n<RAMdisk (%Xh) - Root Directory>\n", ramdisk_start);
             #endif
         }
         else
@@ -222,8 +222,8 @@ void main(multiboot_t* mb_struct)
 
     textColor(0x05);
     printf("--------------------------------------------------------------------------------");
-    printf(  "                                PrettyOS Booted");
-    printf("\n--------------------------------------------------------------------------------\n");
+    printf("                                PrettyOS Booted\n");
+    printf("--------------------------------------------------------------------------------");
     textColor(0x0F);
 
     const char* progress    = "|/-\\";    // rotating asterisk
@@ -295,7 +295,7 @@ void main(multiboot_t* mb_struct)
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

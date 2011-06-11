@@ -55,7 +55,7 @@ void install_AMDPCnet(network_adapter_t* dev)
     device->device = dev;
     dev->data = device;
 
-    printf("\nIO: %x", dev->IO_base);
+    printf("\nIO: %xh", dev->IO_base);
 
     // Get MAC
     uint16_t temp = inportw(dev->IO_base + APROM0);
@@ -176,7 +176,7 @@ void PCNet_handler(registers_t* data)
     printf("\n--------------------------------------------------------------------------------");
 
     textColor(0x0E);
-    printf("\nPCNet Interrupt Status: %y, ", csr0);
+    printf("\nPCNet Interrupt Status: %yh, ", csr0);
     textColor(0x03);
     #endif
 

@@ -100,6 +100,7 @@ int vprintf(const char* format, va_list arg)
 {
     char buffer[32]; // Larger is not needed at the moment
 
+    int pos = 0;
     for (; *format; format++)
     {
         switch (*format)
@@ -110,56 +111,70 @@ int vprintf(const char* format, va_list arg)
             case 'u':
                 utoa(va_arg(arg, uint32_t), buffer);
                 puts(buffer);
+                pos += strlen(buffer);
                 break;
             case 'f':
                 ftoa(va_arg(arg, double), buffer);
                 puts(buffer);
+                pos += strlen(buffer);
                 break;
             case 'i': case 'd':
                 itoa(va_arg(arg, int32_t), buffer);
                 puts(buffer);
+                pos += strlen(buffer);
                 break;
             case 'X':
                 i2hex(va_arg(arg, int32_t), buffer,8);
                 puts(buffer);
+                pos += strlen(buffer);
                 break;
             case 'x':
                 i2hex(va_arg(arg, int32_t), buffer,4);
                 puts(buffer);
+                pos += strlen(buffer);
                 break;
             case 'y':
                 i2hex(va_arg(arg, int32_t), buffer,2);
                 puts(buffer);
+                pos += strlen(buffer);
                 break;
             case 's':
-                puts(va_arg (arg, char*));
+            {
+                char* temp = va_arg (arg, char*);
+                puts(temp);
+                pos += strlen(temp);
                 break;
+            }
             case 'c':
                 putchar((int8_t)va_arg(arg, int32_t));
+                pos++;
                 break;
             case '%':
                 putchar('%');
+                pos++;
                 break;
             default:
                 --format;
+                --pos;
                 break;
             }
             break;
         default:
             putchar(*format);
+            pos++;
             break;
         }
     }
-    return(0); // HACK
+    return(pos);
 }
 
 int printf(const char* format, ...)
 {
     va_list arg;
     va_start(arg, format);
-    vprintf(format, arg);
+    int retval = vprintf(format, arg);
     va_end(arg);
-    return(0); // HACK
+    return(retval);
 }
 
 
@@ -231,16 +246,16 @@ int vsprintf(char* dest, const char* format, va_list arg)
         pos++;
         dest[pos] = '\0';
     }
-    return(0); // HACK
+    return(pos);
 }
 
 int sprintf(char* dest, const char* format, ...)
 {
     va_list arg;
     va_start(arg, format);
-    vsprintf(dest, format, arg);
+    int retval = vsprintf(dest, format, arg);
     va_end(arg);
-    return(0); // HACK
+    return(retval);
 }
 
 int sscanf(const char* src, const char* format, ...); /// TODO

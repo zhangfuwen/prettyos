@@ -197,7 +197,7 @@ void* createQTD_Handshake(uint8_t direction)
 static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
 {
     #ifdef _USB_DIAGNOSIS_
-    printf("virtAddrBuf0 %X : ", virtAddrBuf0);
+    printf("virtAddrBuf0 %Xh : ", virtAddrBuf0);
     #endif
     for (uint32_t c=0; c<size; c++)
     {
@@ -335,7 +335,7 @@ void checkAsyncScheduler()
 
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register
     void* virtASYNCLISTADDR = paging_acquirePciMemory(pOpRegs->ASYNCLISTADDR, 1);
-    printf("\ncurr QH: %X ",paging_getPhysAddr(virtASYNCLISTADDR));
+    printf("\ncurr QH: %Xh ",paging_getPhysAddr(virtASYNCLISTADDR));
 
     // Last accessed & next to access QH, DWORD 0
     uintptr_t horizontalPointer = (*((uint32_t*)virtASYNCLISTADDR)) & 0xFFFFFFE0; // without last 5 bits
@@ -343,7 +343,7 @@ void checkAsyncScheduler()
     uint32_t type = (BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x06) >> 1 ;       // bit 2:1
     uint32_t Tbit =  BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x01;              // bit 0
     */
-    printf("\tnext QH: %X ",horizontalPointer);
+    printf("\tnext QH: %Xh ",horizontalPointer);
 
     //printf("\ntype: %u T-bit: %u",type,Tbit);
 
@@ -368,11 +368,11 @@ void checkAsyncScheduler()
 
     // Last accessed & next to access QH, DWORD 3
     uintptr_t firstQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+3)) & 0xFFFFFFE0; // without last 5 bits
-    printf("\ncurr qTD: %X",firstQTD);
+    printf("\ncurr qTD: %Xh",firstQTD);
 
     // Last accessed & next to access QH, DWORD 4
     uintptr_t nextQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+4)) & 0xFFFFFFE0; // without last 5 bits
-    printf("\tnext qTD: %X",nextQTD);
+    printf("\tnext qTD: %Xh",nextQTD);
 
     // NAK counter in overlay area
     uint32_t NakCtr = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+5) ) & 0x1E)>>1;
@@ -490,7 +490,7 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
         (bT->DataBytesToTransferIN  && !bT->successfulDataIN))
     {
         textColor(0x03);
-        printf("\nopcode: %y", bT->SCSIopcode);
+        printf("\nopcode: %yh", bT->SCSIopcode);
         printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
         if (bT->DataBytesToTransferOUT)
         {
@@ -506,7 +506,7 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

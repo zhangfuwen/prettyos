@@ -211,7 +211,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     {
       #ifdef _USB_DIAGNOSIS_
         textColor(0x0A);
-        printf("CSW tag %y OK    ",BYTE1(CSWtag));
+        printf("CSW tag %yh OK    ",BYTE1(CSWtag));
       #endif
     }
     else
@@ -335,7 +335,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_Out", pOpRegs->ASYNCLISTADDR);
 
     // OUT qTD
     // No handshake!
@@ -350,7 +350,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     usbDevices[device].ToggleEndpointOutMSD = !(usbDevices[device].ToggleEndpointOutMSD); // switch toggle
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\tCommandQTD: %X",paging_getPhysAddr((void*)cmdQTD));
+    printf("\tCommandQTD: %Xh",paging_getPhysAddr((void*)cmdQTD));
   #endif
 
     // implement cbw at DataQTDpage0
@@ -383,7 +383,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\nasyncList: %X <-- QH_In", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_In", pOpRegs->ASYNCLISTADDR);
   #endif
 
     // IN qTDs
@@ -406,8 +406,8 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         /*do not switch toggle*/
 
       #ifdef _USB_DIAGNOSIS_
-        printf("\tStatusQTD: %X", paging_getPhysAddr((void*)StatusQTD));
-        printf("\tDataQTD: %X",   paging_getPhysAddr((void*)DataQTD));
+        printf("\tStatusQTD: %Xh", paging_getPhysAddr((void*)StatusQTD));
+        printf("\tDataQTD: %Xh",   paging_getPhysAddr((void*)DataQTD));
       #endif
     }
     else
@@ -422,7 +422,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
         usbDevices[device].ToggleEndpointInMSD = !(usbDevices[device].ToggleEndpointInMSD);    // switch toggle
 
       #ifdef _USB_DIAGNOSIS_
-        printf("\tStatusQTD: %X", paging_getPhysAddr((void*)StatusQTD));
+        printf("\tStatusQTD: %Xh", paging_getPhysAddr((void*)StatusQTD));
       #endif
     }
 
@@ -478,7 +478,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\nasyncList: %X <-- QH_Out", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_Out", pOpRegs->ASYNCLISTADDR);
 
     // OUT qTD
     // No handshake!
@@ -510,7 +510,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     SCSIcmd(SCSIcommand, cbw, LBA, TransferLength);    // block
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\tCommandQTD: %X",paging_getPhysAddr((void*)cmdQTD));
+    printf("\tCommandQTD: %Xh",paging_getPhysAddr((void*)cmdQTD));
   #endif
 
     // QH Out with command qTD and data out qTD
@@ -536,7 +536,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\nasyncList: %X <-- QH_In", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_In", pOpRegs->ASYNCLISTADDR);
 
     // IN qTDs
     // No handshake!
@@ -550,7 +550,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     usbDevices[device].ToggleEndpointInMSD = !(usbDevices[device].ToggleEndpointInMSD);    // switch toggle
 
   #ifdef _USB_DIAGNOSIS_
-    printf("\tStatusQTD: %X", paging_getPhysAddr((void*)StatusQTD));
+    printf("\tStatusQTD: %Xh", paging_getPhysAddr((void*)StatusQTD));
   #endif
 
     // QH IN with status qTD only

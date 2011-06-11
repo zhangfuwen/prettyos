@@ -23,7 +23,7 @@ void analyzeHostSystemError(pciDev_t* pciDev)
      // check pci status register of the device
      uint32_t pciStatus = pci_config_read(pciDev->bus, pciDev->device, pciDev->func, PCI_STATUS);
 
-     printf("\nPCI status word: %x\n",pciStatus);
+     printf("\nPCI status word: %xh\n",pciStatus);
      textColor(0x03);
      // bits 0...2 reserved
      if(pciStatus & BIT(3))  printf("Interrupt Status\n");
@@ -160,7 +160,7 @@ void pciScan()
                         }
                         if(!found)
                         {
-                            printf("\tvend: %x", pciDev_Array[number]->vendorID); // Vendor not found, display ID
+                            printf("\tvend: %xh", pciDev_Array[number]->vendorID); // Vendor not found, display ID
                         }
                         else
                         {
@@ -178,10 +178,10 @@ void pciScan()
                         }
                         if(!found)
                         {
-                            printf(", dev: %x", pciDev_Array[number]->deviceID); // Device not found, display ID
+                            printf(", dev: %xh", pciDev_Array[number]->deviceID); // Device not found, display ID
                         }
                       #else
-                        printf("\tvend:%x dev:%x", pciDev_Array[number]->vendorID, pciDev_Array[number]->deviceID);
+                        printf("\tvend:%xh dev:%xh", pciDev_Array[number]->vendorID, pciDev_Array[number]->deviceID);
                       #endif
 
                         /// USB Host Controller

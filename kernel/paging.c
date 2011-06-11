@@ -40,8 +40,8 @@ uint32_t paging_install()
     memset(kernelPageDirectory, 0, sizeof(pageDirectory_t));
     kernelPageDirectory->physAddr = (uint32_t)kernelPageDirectory;
 
-    kdebug(3, "\nkernelPageDirectory (virt.): %X ",kernelPageDirectory);
-    kdebug(3, "kernelPageDirectory (phys.): %X\n",kernelPageDirectory->physAddr);
+    kdebug(3, "\nkernelPageDirectory (virt.): %Xh ",kernelPageDirectory);
+    kdebug(3, "kernelPageDirectory (phys.): %Xh\n",kernelPageDirectory->physAddr);
 
     // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;
@@ -157,7 +157,7 @@ static uint32_t physMemInit()
     printf("Memory map:\n");
     for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; entry++)
     {
-        printf("  %X -> %X %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
+        printf("  %Xh -> %Xh %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }
     textColor(0x0F);
     #endif
@@ -218,7 +218,7 @@ static uint32_t physMemInit()
     // Exclude the first 10 MiB from being allocated (they'll be needed for DMA later on)
     firstFreeDWORD = 10*1024*1024 / PAGESIZE / 32;
 
-    kdebug(3, "Highest available RAM: %X\n", dword_count*32*4096);
+    kdebug(3, "Highest available RAM: %Xh\n", dword_count*32*4096);
 
     // Return the amount of memory available (or rather the highest address)
     return dword_count*32*4096;
@@ -317,7 +317,7 @@ bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t
 
         if (flags & MEM_USER)
         {
-            kdebug(3, "pagenumber now allocated: %u physAddress: %X\n",pagenr,physAddress);
+            kdebug(3, "pagenumber now allocated: %u physAddress: %Xh\n",pagenr,physAddress);
         }
     }
     return true;
@@ -433,7 +433,7 @@ uint32_t paging_getPhysAddr(void* virtAddress)
     pageTable_t* pt = pd->tables[pagenr/1024];
 
     kdebug(3, "\nvirt-->phys: pagenr: %u ",pagenr);
-    kdebug(3, "pt: %X\n",pt);
+    kdebug(3, "pt: %Xh\n",pt);
 
     ASSERT(pt);
 
@@ -459,7 +459,7 @@ void paging_analyzeBitTable(uint32_t msec)
     for (uint32_t index=0; index<maximum; ++index)
     {
         textColor(0x0F);
-        printf("\n%X: ",index*32*PAGESIZE);
+        printf("\n%Xh: ",index*32*PAGESIZE);
         ++counter1;
 
         for (uint32_t offset=0; offset<32; ++offset)

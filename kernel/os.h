@@ -31,7 +31,7 @@ extern struct todoList* kernel_idleTasks;
 
 
 void textColor(uint8_t color);
-void vprintf(const char*, va_list);
+size_t vprintf(const char*, va_list);
 
 static inline void kdebug(uint8_t color, const char* args, ...)
 {
