@@ -22,7 +22,7 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.hops = 0;
     packet.xid = xid; // AFFExx
     packet.secs = htons(0);
-    packet.flags = 0;
+    packet.flags = BROADCAST; // TEST: broadcast
     for(uint8_t i = 0; i < 4; i++)
     {
         packet.ciaddr[i] = 0;
@@ -84,8 +84,8 @@ void DHCP_Request(network_adapter_t* adapter)
     packet.hlen = 6;
     packet.hops = 0;
     packet.xid = xid; // AFFExx
-    packet.secs = htons(0); // TEST
-    packet.flags = 0;
+    packet.secs = htons(0); 
+    packet.flags = BROADCAST; // TEST: broadcast
     for(uint8_t i = 0; i < 4; i++)
     {
         packet.ciaddr[i] = 0;
@@ -148,8 +148,8 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.hlen = 6;
     packet.hops = 0;
     packet.xid = xid; // AFFExx
-    packet.secs = htons(10); // TEST
-    packet.flags = 0;
+    packet.secs = 0; 
+    packet.flags = BROADCAST; // TEST: broadcast
     for(uint8_t i = 0; i < 4; i++)
     {
         packet.ciaddr[i] = adapter->IP_address[i];
@@ -222,8 +222,8 @@ void DHCP_Release(network_adapter_t* adapter)
     packet.hlen = 6;
     packet.hops = 0;
     packet.xid = xid; // AFFExx
-    packet.secs = htons(0); // TEST
-    packet.flags = 0;
+    packet.secs = htons(0); 
+    packet.flags = UNICAST ;
     for(uint8_t i = 0; i < 4; i++)
     {
         packet.ciaddr[i] = adapter->IP_address[i];
