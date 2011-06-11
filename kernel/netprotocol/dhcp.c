@@ -136,6 +136,76 @@ void DHCP_Request(network_adapter_t* adapter)
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
+void DHCP_Release(network_adapter_t* adapter)
+{
+    xid += (1<<24);
+
+    printf("\nDHCP Release sent.\n");
+
+    dhcp_t packet;
+    packet.op = 1;
+    packet.htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
+    packet.hlen = 6;
+    packet.hops = 0;
+    packet.xid = xid; // AFFExx
+    packet.secs = htons(0); // TEST
+    packet.flags = 0;
+    for(uint8_t i = 0; i < 4; i++)
+    {
+        packet.ciaddr[i] = adapter->IP_address[i];
+        packet.yiaddr[i] = 0;
+        packet.siaddr[i] = 0;
+        packet.giaddr[i] = 0;
+    }    
+        
+    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
+    for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
+    for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
+    for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
+
+    // options
+    packet.options[0]  =  99;  // MAGIC
+    packet.options[1]  = 130;  // MAGIC
+    packet.options[2]  =  83;  // MAGIC
+    packet.options[3]  =  99;  // MAGIC
+    for(uint16_t i = 4; i < 340; i++)
+        packet.options[i] = 255; // end
+
+    packet.options[4]  = 53;  // MESSAGE TYPE
+    packet.options[5]  =  1;  // Length
+    packet.options[6]  =  7;  // RELEASE
+
+    packet.options[7] = 61;  // Client Identifier - hardware type and client hardware address
+    packet.options[8] =  7;  // Length
+    packet.options[9] =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
+    for(uint8_t i = 0; i < 6; i++)
+        packet.options[10+i] = adapter->MAC_address[i];
+
+
+    packet.options[16] = 54;  // Server IP
+    packet.options[17] =  4;  // Length
+    packet.options[18] =  SIP_1;  
+    packet.options[19] =  SIP_2;  
+    packet.options[20] =  SIP_3;  
+    packet.options[21] =  SIP_4;  
+        
+    uint8_t srcIP[4];
+    for(uint8_t i = 0; i < 4; i++)
+    {
+        srcIP[i] = adapter->IP_address[i];        
+    }   
+    
+    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    /*
+    for(uint8_t i = 0; i < 4; i++)
+    {
+        destIP[i] = packet.options[18+i];        
+    }
+    */
+    
+    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
+}
+
 static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt);
 
 static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
@@ -170,6 +240,8 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
 
 static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint16_t count)
 {
+    uint32_t leaseTime=0;
+
     for (uint16_t i=0; i<opt[count+2]; i++)
     {
         if (opt[count+1]==12 || opt[count+1]==14 || 
@@ -183,6 +255,11 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
         else
         {
             printf("%u ", opt[count+3+i]);
+            if (opt[count+1]==51) // Release Time (sec)
+            {
+                leaseTime += ((opt[count+3+i])<<(24-8*i));
+                if (i==3) printf("  %u hours", leaseTime/3600);
+            }
         }
         
         if (opt[count+1]==53) // Message Type
@@ -372,7 +449,7 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
             count = showOptionsBytes(adapter, opt, count);
             break;
         case 34:
-            printf("\n	Trailer encapsulation: ");
+            printf("\nTrailer encapsulation: ");
             count = showOptionsBytes(adapter, opt, count);
             break;
         case 35:

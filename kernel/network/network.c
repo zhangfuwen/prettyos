@@ -134,8 +134,6 @@ bool network_installDevice(pciDev_t* device)
     adapter->DHCP_State  = START;
     DHCP_Discover(adapter);   
 
-    sleepSeconds(2);
-
     textColor(0x0E);
     printf("\nMAC address: %y-%y-%y-%y-%y-%y", adapter->MAC_address[0], adapter->MAC_address[1], adapter->MAC_address[2],
                                                adapter->MAC_address[3], adapter->MAC_address[4], adapter->MAC_address[5]);
@@ -143,11 +141,8 @@ bool network_installDevice(pciDev_t* device)
     printf("\t\tIP address: %u.%u.%u.%u\n", adapter->IP_address[0], adapter->IP_address[1], adapter->IP_address[2], adapter->IP_address[3]);
     textColor(0x0F);
 
-    /*for (int i=0; i<10; i++)
-    {
-        arp_sendGratitiousRequest(adapter); // show PrettyOS' IP and MAC to the LAN
-        sleepMilliSeconds(1000);
-    }*/
+    arp_sendGratitiousRequest(adapter); // show PrettyOS network adapter IP and MAC to the LAN
+    
     return(true);
 }
 

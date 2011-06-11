@@ -223,6 +223,19 @@ uint8_t ScanToASCII()
             }
             return 0;
         }        
+        if(retchar == 'f') // DHCP Inform
+        {
+            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+
+            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            printf("network adapter: %X\n", adapter); // check
+
+            if (adapter)
+            {
+                DHCP_Release(adapter);
+            }
+            return 0;
+        }        
     }
 
     return retchar; // ASCII version
