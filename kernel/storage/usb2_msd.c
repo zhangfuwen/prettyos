@@ -16,16 +16,16 @@ extern void* globalqTD[3];
 extern void* globalqTDbuffer[3];
 
 extern const uint32_t CSWMagicNotOK;
-const uint32_t CSWMagicOK = 0x53425355; // USBS
-const uint32_t CBWMagic   = 0x43425355; // USBC
+static const uint32_t CSWMagicOK = 0x53425355; // USBS
+static const uint32_t CBWMagic   = 0x43425355; // USBC
 
-uint8_t currentDevice;
-uint8_t currCSWtag;
+static uint8_t currentDevice;
+static uint8_t currCSWtag;
 
-void* cmdQTD;
-void* StatusQTD;
+static void* cmdQTD;
+static void* StatusQTD;
 
-int32_t  numberTries = 10; // repeats for IN-Transfer
+static int32_t numberTries = 10; // repeats for IN-Transfer
 
 uint32_t usbMSDVolumeMaxLBA;
 
@@ -999,7 +999,7 @@ int32_t showResultsRequestSense()
 
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

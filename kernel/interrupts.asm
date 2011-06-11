@@ -128,23 +128,23 @@ idt_install:
     DO_IDT_ENTRY CONTEXT_SWITCH_CALL, 0x0008, 0xEE00
 
     ; Remap IRQ 0-15 to 32-47 (see http://wiki.osdev.org/PIC#Initialisation)
-	mov al, 0x11
-	out 0x20, al
-	out 0xA0, al
-	mov al, 0x20
-	out 0x21, al
-	mov al, 0x28
-	out 0xA1, al
-	mov al, 0x04
-	out 0x21, al
-	mov al, 0x02
-	out 0xA1, al
-	dec al              ; al is now one
-	out 0x21, al
-	out 0xA1, al
-	dec al              ; al is now zero
-	out 0x21, al
-	out 0xA1, al
+    mov al, 0x11
+    out 0x20, al
+    out 0xA0, al
+    mov al, 0x20
+    out 0x21, al
+    mov al, 0x28
+    out 0xA1, al
+    mov al, 0x04
+    out 0x21, al
+    mov al, 0x02
+    out 0xA1, al
+    dec al              ; al is now one
+    out 0x21, al
+    out 0xA1, al
+    dec al              ; al is now zero
+    out 0x21, al
+    out 0xA1, al
 
     ; Perform the actual load operation
     lidt [idt_descriptor]

@@ -15,7 +15,7 @@
 #define RTL8139_TX_BUFFER_SIZE 4096
 
 
-RTL8139_networkAdapter_t* device;
+static RTL8139_networkAdapter_t* device;
 
 
 void rtl8139_handler(registers_t* data)
@@ -174,7 +174,7 @@ void install_RTL8139(network_adapter_t* dev)
     for (uint8_t i = 0; i < 6; i++)
     {
         dev->MAC_address[i] =  *(uint8_t*)(dev->MMIO_base + RTL8139_IDR0 + i);
-    }    
+    }
 }
 
 /*

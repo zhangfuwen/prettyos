@@ -110,7 +110,7 @@ static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t source
 {
     // HACK
     return 0;
-    
+
     // Correct?
     //http://www.faqs.org/rfcs/rfc1146.html
     uint32_t calcSourceIp = 0;

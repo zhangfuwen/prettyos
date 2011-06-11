@@ -4,9 +4,11 @@
 */
 
 #include "cmos.h"
+#include "cpu.h"
 #include "util.h"
 #include "video/console.h"
 #include "task.h"
+
 
 volatile task_t* FPUTask = 0;
 
@@ -16,12 +18,12 @@ static void fpu_setcw(uint16_t ctrlword)
     __asm__ volatile("fldcw %0;"::"m"(ctrlword));
 }
 
-void fpu_install()
+bool fpu_install()
 {
-    if (! (cmos_read(0x14) & BIT(1)) )
+    if (!(cmos_read(0x14) & BIT(1)) || !cpu_supports(CF_FPU))
     {
         printf("Math Coprozessor not available\n");
-        return;
+        return(false);
     }
 
     __asm__ volatile ("finit");
@@ -33,6 +35,8 @@ void fpu_install()
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
     cr0 |= BIT(3); // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+
+    return(true);
 }
 
 void fpu_test()
@@ -55,7 +59,7 @@ void fpu_test()
 }
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

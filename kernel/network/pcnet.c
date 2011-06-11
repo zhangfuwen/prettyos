@@ -67,8 +67,6 @@ void install_AMDPCnet(network_adapter_t* dev)
     temp = inportw(dev->IO_base + APROM4);
     dev->MAC_address[4] = temp;
     dev->MAC_address[5] = temp>>8;
-    printf("\t\tMAC-address: %y-%y-%y-%y-%y-%y", dev->MAC_address[0], dev->MAC_address[1], dev->MAC_address[2],
-                                                 dev->MAC_address[3], dev->MAC_address[4], dev->MAC_address[5]);
 
     // Reset
     inportw(dev->IO_base+RESET);

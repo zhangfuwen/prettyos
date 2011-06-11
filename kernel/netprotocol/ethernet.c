@@ -33,16 +33,10 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     textColor(0x03); printf("%d", length);
 
     textColor(0x0D); printf("\nMAC Receiver: "); textColor(0x03);
-    for (uint8_t i = 0; i < 6; i++)
-    {
-        printf("%y ", eth->recv_mac[i]);
-    }
+    printf("%M", eth->recv_mac);
 
     textColor(0x0D); printf("MAC Transmitter: "); textColor(0x03);
-    for (uint8_t i = 0; i < 6; i++)
-    {
-        printf("%y ", eth->send_mac[i]);
-    }
+    printf("%M", eth->send_mac);
 
     textColor(0x0D);
     printf("\nEthernet: ");

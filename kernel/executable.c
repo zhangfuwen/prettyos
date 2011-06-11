@@ -9,10 +9,12 @@
 #include "video/console.h"
 #include "elf.h"
 
-filetype_t filetypes[FT_END] =
+
+static filetype_t filetypes[FT_END] =
 {
     {&elf_filename, &elf_header, &elf_exec}, // ELF
 };
+
 
 FS_ERROR executeFile(const char* path)
 {

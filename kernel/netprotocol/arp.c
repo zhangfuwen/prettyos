@@ -73,17 +73,13 @@ void arp_showTable(arpTable_t* table)
         arpTableEntry_t* entry = e->data;
         if(entry->IP[0]==255 && entry->IP[1]==255 && entry->IP[2]==255 && entry->IP[3]==255)
         {
-            printf("\n%u.%u.%u.%u \t%y-%y-%y-%y-%y-%y\t\t%s\t%u",
-            entry->IP[0], entry->IP[1], entry->IP[2], entry->IP[3],
-            entry->MAC[0], entry->MAC[1], entry->MAC[2], entry->MAC[3], entry->MAC[4], entry->MAC[5],
-            entry->dynamic?"dynamic":"static", entry->seconds);
+            printf("\n%I \t%M\t\t%s\t%u", entry->IP, entry->MAC,
+                entry->dynamic?"dynamic":"static", entry->seconds);
         }
         else
         {
-            printf("\n%u.%u.%u.%u \t\t%y-%y-%y-%y-%y-%y\t\t%s\t%u",
-            entry->IP[0], entry->IP[1], entry->IP[2], entry->IP[3],
-            entry->MAC[0], entry->MAC[1], entry->MAC[2], entry->MAC[3], entry->MAC[4], entry->MAC[5],
-            entry->dynamic?"dynamic":"static", entry->seconds);
+            printf("\n%I \t\t%M\t\t%s\t%u", entry->IP, entry->MAC,
+                entry->dynamic?"dynamic":"static", entry->seconds);
         }
 
     }
@@ -130,13 +126,13 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             }
 
             textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
-            for (uint8_t i = 0; i < 6; i++) { printf("%y ", packet->source_mac[i]); }
+            printf("%M", packet->source_mac);
             textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
-            for (uint8_t i = 0; i < 4; i++) { printf("%u", packet->sourceIP[i]); if (i<3) printf("."); }
+            printf("%I", packet->sourceIP);
             textColor(0x0D); printf("\nMAC Searched:   "); textColor(0x07);
-            for (uint8_t i = 0; i < 6; i++) { printf("%y ", packet->dest_mac[i]);   }
+            printf("%M", packet->dest_mac);
             textColor(0x0D); printf("  IP Searched:   "); textColor(0x03);
-            for (uint8_t i = 0; i < 4; i++) { printf("%u", packet->destIP[i]);   if (i<3) printf("."); }
+            printf("%I", packet->destIP);
 
             // requested IP is our own IP?
             if (packet->destIP[0] == adapter->IP_address[0] && packet->destIP[1] == adapter->IP_address[1] &&
@@ -176,13 +172,13 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             printf("Operation: Response\n");
 
             textColor(0x0D); printf("\nMAC Replying:   "); textColor(0x03);
-            for (uint8_t i = 0; i < 6; i++) { printf("%y ", packet->source_mac[i]); }
+            printf("%M", packet->source_mac);
             textColor(0x0D); printf("  IP Replying:   "); textColor(0x03);
-            for (uint8_t i = 0; i < 4; i++) { printf("%u", packet->sourceIP[i]); if (i<3) printf("."); }
+            printf("%I", packet->sourceIP);
             textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
-            for (uint8_t i = 0; i < 6; i++) { printf("%y ", packet->dest_mac[i]);   }
+            printf("%M", packet->dest_mac);
             textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
-            for (uint8_t i = 0; i < 4; i++) { printf("%u", packet->destIP[i]);   if (i<3) printf("."); }
+            printf("%I", packet->destIP);
             break;
         } // switch
         arp_addTableEntry(&adapter->arpTable, packet->source_mac, packet->sourceIP, true); // ARP table entry

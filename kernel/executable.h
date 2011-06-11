@@ -3,6 +3,7 @@
 
 #include "filesystem/fsmanager.h"
 
+
 typedef struct
 {
     bool (*filename)(const char*);
@@ -12,8 +13,7 @@ typedef struct
 
 enum FILETYPES {FT_ELF, FT_END};
 
-extern filetype_t filetypes[FT_END];
-
 FS_ERROR executeFile(const char* path);
+
 
 #endif

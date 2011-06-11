@@ -11,21 +11,25 @@
 #include "flpydsk.h"
 #include "usb2.h"
 #include "filesystem/fat.h"
-
 #ifdef _READCACHE_DIAGNOSIS_
   #include "timer.h"
 #endif
+
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
 partition_t* systemPartition;
 
-portType_t FDD,        USB,     RAM;
-diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
+portType_t FDD = {.motorOff = &flpydsk_motorOff},
+           USB = {.motorOff = 0},
+           RAM = {.motorOff = 0};
+diskType_t FLOPPYDISK = {.readSector = &flpydsk_readSector, .writeSector = &flpydsk_writeSector},
+           USB_MSD    = {.readSector = &usbRead,            .writeSector = &usbWrite},
+           RAMDISK    = {.readSector = 0,                   .writeSector = 0};
 
 // ReadCache
 #define NUMREADCACHE 20
-bool    readCacheFlag = true;
+bool readCacheFlag = true;
 
 typedef struct
 {
@@ -35,25 +39,12 @@ typedef struct
     uint32_t sector;
 } readcache_t;
 
-readcache_t readcaches[NUMREADCACHE];
-uint8_t     currReadCache = 0;
+static readcache_t readcaches[NUMREADCACHE];
+static uint8_t     currReadCache = 0;
 
-
-FS_ERROR loadFile(const char* filename, partition_t* part);
 
 void deviceManager_install(/*partition_t* system*/)
 {
-    FDD.motorOff = &flpydsk_motorOff;
-    USB.motorOff = 0;
-    RAM.motorOff = 0;
-
-    USB_MSD.readSector     = &usbRead;
-    USB_MSD.writeSector    = &usbWrite;
-    FLOPPYDISK.readSector  = &flpydsk_readSector;
-    FLOPPYDISK.writeSector = &flpydsk_writeSector;
-    RAMDISK.readSector     = 0;
-    RAMDISK.writeSector    = 0;
-
     memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
     memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
     //systemPartition = system;

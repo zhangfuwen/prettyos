@@ -7,7 +7,7 @@
 #include "udp.h"
 #include "video/console.h"
 
-uint32_t xid = 0x0000E0FF0A; // AFFE.... Transaction Code for Identification
+static uint32_t xid = 0x0000E0FF0A; // AFFE.... Transaction Code for Identification
 
 void DHCP_Discover(network_adapter_t* adapter)
 {
@@ -92,7 +92,7 @@ void DHCP_Request(network_adapter_t* adapter)
         packet.yiaddr[i] = 0;
         packet.siaddr[i] = 0;
         packet.giaddr[i] = 0;
-    }    
+    }
 
     for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
@@ -117,7 +117,7 @@ void DHCP_Request(network_adapter_t* adapter)
     packet.options[10] =  3;  // ROUTERS
     packet.options[11] =  6;  // DOMAIN NAME SERVER
     packet.options[12] = 15;  // DOMAIN NAME
-   
+
     packet.options[13] = 61;  // Client Identifier - hardware type and client hardware address
     packet.options[14] =  7;  // Length
     packet.options[15] =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
@@ -156,8 +156,8 @@ void DHCP_Release(network_adapter_t* adapter)
         packet.yiaddr[i] = 0;
         packet.siaddr[i] = 0;
         packet.giaddr[i] = 0;
-    }    
-        
+    }
+
     for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
     for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
@@ -184,25 +184,19 @@ void DHCP_Release(network_adapter_t* adapter)
 
     packet.options[16] = 54;  // Server IP
     packet.options[17] =  4;  // Length
-    packet.options[18] =  SIP_1;  
-    packet.options[19] =  SIP_2;  
-    packet.options[20] =  SIP_3;  
-    packet.options[21] =  SIP_4;  
-        
+    packet.options[18] =  SIP_1;
+    packet.options[19] =  SIP_2;
+    packet.options[20] =  SIP_3;
+    packet.options[21] =  SIP_4;
+
     uint8_t srcIP[4];
     for(uint8_t i = 0; i < 4; i++)
     {
-        srcIP[i] = adapter->IP_address[i];        
-    }   
-    
-    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-    /*
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        destIP[i] = packet.options[18+i];        
+        srcIP[i] = adapter->IP_address[i];
     }
-    */
-    
+
+    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF}; // Alternative: SIP1...4
+
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
@@ -211,31 +205,43 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt);
 static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
 {
     for(uint8_t i = 0; i < 4; i++)
-        adapter->IP_address[i] = dhcp->yiaddr[i];    
+        adapter->IP_address[i] = dhcp->yiaddr[i];
 }
 
 void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
 {
     /*
-    printf("\nop: %u", dhcp->op);  
-    printf(" htype: %u", dhcp->htype);  
-    printf(" hlen: %u", dhcp->hlen);  
+    printf("\nop: %u", dhcp->op);
+    printf(" htype: %u", dhcp->htype);
+    printf(" hlen: %u", dhcp->hlen);
     printf(" hops: %u", dhcp->hops);
     printf(" xid: %X", htonl(dhcp->xid));
     printf(" secs: %u", htons(dhcp->secs));
     printf(" flags: %x", htons(dhcp->flags));
     */
-    printf("\ncIP: %u.%u.%u.%u", dhcp->ciaddr[0], dhcp->ciaddr[1], dhcp->ciaddr[2], dhcp->ciaddr[3]);
-    printf(" yIP: %u.%u.%u.%u", dhcp->yiaddr[0], dhcp->yiaddr[1], dhcp->yiaddr[2], dhcp->yiaddr[3]);
-    printf("\nsIP: %u.%u.%u.%u", dhcp->siaddr[0], dhcp->siaddr[1], dhcp->siaddr[2], dhcp->siaddr[3]);
-    printf(" gIP: %u.%u.%u.%u", dhcp->giaddr[0], dhcp->giaddr[1], dhcp->giaddr[2], dhcp->giaddr[3]);
-    printf("\nMAC: %y-%y-%y-%y-%y-%y", dhcp->chaddr[0], dhcp->chaddr[1], dhcp->chaddr[2], 
-                                       dhcp->chaddr[3], dhcp->chaddr[4], dhcp->chaddr[5]);
-    
+    printf("\ncIP: %I", dhcp->ciaddr);
+    printf(" yIP: %I", dhcp->yiaddr);
+    printf("\nsIP: %I", dhcp->siaddr);
+    printf(" gIP: %I", dhcp->giaddr);
+    printf("\nMAC: %M", dhcp->chaddr);
+
     DHCP_AnalyzeOptions(adapter, dhcp->options);
-    if(adapter->DHCP_State == OFFER) { printf("\n >>> PrettyOS got a DHCP OFFER. <<<"); DHCP_Request(adapter);     }
-    if(adapter->DHCP_State == ACK)   { printf("\n >>> PrettyOS got a DHCP ACK.   <<<"); useDHCP_IP(adapter, dhcp); }
-    if(adapter->DHCP_State == NAK)   { printf("\n >>> DHCP was not successful (NAK). <<<");                        } 
+    switch(adapter->DHCP_State)
+    {
+        case OFFER:
+            printf("\n >>> PrettyOS got a DHCP OFFER. <<<");
+            DHCP_Request(adapter);
+            break;
+        case ACK:
+            printf("\n >>> PrettyOS got a DHCP ACK.   <<<");
+            useDHCP_IP(adapter, dhcp);
+            break;
+        case NAK:
+            printf("\n >>> DHCP was not successful (NAK). <<<");
+            break;
+        default:
+            break;
+    }
 }
 
 static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint16_t count)
@@ -244,11 +250,10 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 
     for (uint16_t i=0; i<opt[count+2]; i++)
     {
-        if (opt[count+1]==12 || opt[count+1]==14 || 
-            opt[count+1]==15 || opt[count+1]==17 || 
-            opt[count+1]==18 || opt[count+1]==40 || 
-            opt[count+1]==43
-            )
+        if (opt[count+1]==12 || opt[count+1]==14 ||
+            opt[count+1]==15 || opt[count+1]==17 ||
+            opt[count+1]==18 || opt[count+1]==40 ||
+            opt[count+1]==43)
         {
             printf("%c", opt[count+3+i]);
         }
@@ -261,7 +266,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
                 if (i==3) printf("  %u hours", leaseTime/3600);
             }
         }
-        
+
         if (opt[count+1]==53) // Message Type
         {
             switch (opt[count+3])
@@ -303,12 +308,12 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
 {
     uint16_t count=0;
-    
+
     // check for magic number 63h 82h 53h 63h
     if (opt[0] == 0x63 && opt[1] == 0x82 && opt[2] == 0x53 && opt[3] == 0x63)
-        printf("\nMAGIC OK"); 
+        printf("\nMAGIC OK");
     else
-        printf("\nMAGIC NOT OK"); 
+        printf("\nMAGIC NOT OK");
     count=3;
 
     while (opt[count+1] != 0xFF) // no end token
@@ -316,11 +321,11 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
         switch (opt[count+1])
         {
         case 0:
-            printf("\nPadding"); 
+            printf("\nPadding");
             count++;
             break;
         case 1:
-            printf("\nSubnet Mask: "); 
+            printf("\nSubnet Mask: ");
             count = showOptionsBytes(adapter, opt, count);
             break;
         case 2:
@@ -358,7 +363,7 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
             break;
         case 11:
             printf("\nResource Location Server: ");
-            count = showOptionsBytes(adapter, opt, count); 
+            count = showOptionsBytes(adapter, opt, count);
             break;
         case 12:
             printf("\nHost Name: ");
@@ -526,7 +531,7 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
             break;
         case 53:
             printf("\nMessage Type: ");
-            count = showOptionsBytes(adapter, opt, count);            
+            count = showOptionsBytes(adapter, opt, count);
             break;
         case 54:
             printf("\nServer IP: ");
@@ -721,7 +726,7 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
             break;
         }//switch
     }//while
-    printf("\nEND OF OPTIONS\n");    
+    printf("\nEND OF OPTIONS\n");
 }
 
 void DHCP_Inform(network_adapter_t* adapter)
@@ -740,9 +745,7 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.flags = 0;
     for(uint8_t i = 0; i < 4; i++)
     {
-        // packet.ciaddr[i] = 0;
         packet.yiaddr[i] = 0;
-        // packet.siaddr[i] = 0;
         packet.giaddr[i] = 0;
     }
 

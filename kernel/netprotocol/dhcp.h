@@ -63,7 +63,7 @@
 
 #define OPTIONSIZE 340 // results in size of 576
 
-typedef struct dhcp     // complete length: 576 (0x0240) 
+typedef struct dhcp     // complete length: 576 (0x0240)
 {
     uint8_t  op;        // DHCP_BOOTREQEUST or DHCP_BOOTREPLY
     uint8_t  htype;     // DHCP_HTYPE10MB
@@ -79,7 +79,7 @@ typedef struct dhcp     // complete length: 576 (0x0240)
     uint8_t  chaddr[16];
     char     sname[64];
     char     file[128];
-    uint8_t  options[OPTIONSIZE]; 
+    uint8_t  options[OPTIONSIZE];
 } __attribute__((packed)) dhcp_t;
 
 /*

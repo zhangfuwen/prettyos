@@ -14,28 +14,28 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-struct ehci_CapRegs* pCapRegs; // = &CapRegs;
+
+static struct ehci_CapRegs* pCapRegs; // = &CapRegs;
 struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
 bool EHCIflag = false; // signals that one EHCI device was found /// TODO: manage more than one EHCI
 bool USBINTflag;       // signals STS_USBINT reset by EHCI handler
 
-uint8_t numPorts; // maximum
+static uint8_t numPorts; // maximum
 
 // Device Manager
 static disk_t usbDev[16];
 static port_t port[16];
 
-uintptr_t eecp;
+static uintptr_t eecp;
 
-bool USBtransferFlag; // switch on/off tests for USB-Transfer
-bool enabledPortFlag; // port enabled
+static bool USBtransferFlag; // switch on/off tests for USB-Transfer
+static bool enabledPortFlag; // port enabled
 
-pciDev_t* PCIdevice = 0; // pci device
+static pciDev_t* PCIdevice = 0; // pci device
 
 // usb devices list
 extern usb2_Device_t usbDevices[16]; // ports 1-16
-
 
 
 void ehci_install(pciDev_t* PCIdev, uint32_t i)
@@ -735,7 +735,7 @@ void showUSBSTS()
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

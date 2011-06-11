@@ -206,7 +206,7 @@ uint8_t ScanToASCII()
 
             if (adapter)
             {
-                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);                              
+                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);
             }
             return 0;
         }
@@ -222,7 +222,7 @@ uint8_t ScanToASCII()
                 DHCP_Inform(adapter);
             }
             return 0;
-        }        
+        }
         if(retchar == 'f') // DHCP Inform
         {
             uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
@@ -235,7 +235,7 @@ uint8_t ScanToASCII()
                 DHCP_Release(adapter);
             }
             return 0;
-        }        
+        }
     }
 
     return retchar; // ASCII version

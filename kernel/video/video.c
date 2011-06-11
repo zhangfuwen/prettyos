@@ -3,9 +3,10 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
-#include "task.h"
 #include "video.h"
+#include "console.h"
+#include "util.h"
+#include "paging.h"
 #include "kheap.h"
 #include "filesystem/fsmanager.h"
 #include "synchronisation.h"
@@ -25,8 +26,7 @@ static const uint16_t SCREENSHOT_BYTES  = 4102;
 static position_t cursor = {0, 0};
 static uint8_t attrib = 0x0F; // white text on black ground
 
-mutex_t* videoLock = 0;
-task_t* lockingTask = 0;
+static mutex_t* videoLock = 0;
 
 
 void video_install()

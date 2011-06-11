@@ -17,7 +17,8 @@ a chance to emulate the facilities they affect.
 #include "task.h"
 #include "serial.h"
 
-static volatile current_t Current;
+
+static volatile uint32_t v86_if;
 
 bool vm86sensitiveOpcodehandler(registers_t* ctx)
 {
@@ -26,7 +27,6 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
     uint16_t* stack   = (uint16_t*)FP_TO_LINEAR(ctx->ss, ctx->useresp);
     uint32_t* stack32 = (uint32_t*)stack;
     bool isOperand32 = false;
-    //bool isAddress32 = false;
 
   #ifdef _VM_DIAGNOSIS_
     // printf("\r\nvm86sensitiveOpcodehandler: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->useresp); // vm86 critical
@@ -69,7 +69,7 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
                 stack32--;
                 stack32[0] = ctx->eflags & VALID_FLAGS;
 
-                if (Current.v86_if)
+                if (v86_if)
                 {
                     stack32[0] |= EFLAG_IF;
                 }
@@ -84,7 +84,7 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
                 stack--;
                 stack[0] = (uint16_t) ctx->eflags;
 
-                if (Current.v86_if)
+                if (v86_if)
                 {
                     stack[0] |= EFLAG_IF;
                 }
@@ -106,13 +106,13 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
             if (isOperand32)
             {
                 ctx->eflags = EFLAG_IF | EFLAG_VM | (stack32[0] & VALID_FLAGS);
-                Current.v86_if = (stack32[0] & EFLAG_IF) != 0;
+                v86_if = (stack32[0] & EFLAG_IF) != 0;
                 ctx->useresp = ((ctx->useresp & 0xFFFF) + 4) & 0xFFFF;
             }
             else
             {
                 ctx->eflags = EFLAG_IF | EFLAG_VM | stack[0];
-                Current.v86_if = (stack[0] & EFLAG_IF) != 0;
+                v86_if = (stack[0] & EFLAG_IF) != 0;
                 ctx->useresp = ((ctx->useresp & 0xFFFF) + 2) & 0xFFFF;
             }
             ctx->eip++;
@@ -206,7 +206,7 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
                 stack[1] = ctx->cs;
                 stack[0] = (uint16_t) ctx->eflags;
 
-                if (Current.v86_if)
+                if (v86_if)
                 {
                     stack[0] |= EFLAG_IF;
                 }
@@ -236,7 +236,7 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
             ctx->eflags = EFLAG_IF | EFLAG_VM | stack[0];
             ctx->useresp    = ((ctx->useresp & 0xFFFF) + 6) & 0xFFFF;
 
-            Current.v86_if = (stack[0] & EFLAG_IF) != 0;
+            v86_if = (stack[0] & EFLAG_IF) != 0;
 
           #ifdef _VM_DIAGNOSIS_
             // printf("%x:%x\r\n", ctx->cs, ctx->eip); // vm86 critical
@@ -249,7 +249,7 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
             // printf("cli\r\n"); // vm86 critical
             serial_log(1, "cli\r\n");
           #endif
-            Current.v86_if = false;
+            v86_if = false;
             ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;
@@ -259,7 +259,7 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
             // printf("sti\r\n"); // vm86 critical
             serial_log(1, "sti\r\n");
           #endif
-            Current.v86_if = true;
+            v86_if = true;
             ctx->eip++;
             ip = FP_TO_LINEAR(ctx->cs, ctx->eip);
             return true;

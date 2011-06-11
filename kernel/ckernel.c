@@ -23,7 +23,7 @@
 #include "elf.h"
 
 
-const char* const version = "0.0.2.92 - Rev: 931";
+const char* const version = "0.0.2.93 - Rev: 932";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -32,13 +32,14 @@ extern uintptr_t _kernel_end; // linker script
 // Information about the system
 system_t system;
 
-void fpu_install(); // fpu.c
+bool fpu_install(); // fpu.c
 void fpu_test();    // fpu.c
 
 // APIC
-void apic_install()
+bool apic_install()
 {
-    // ...  // TODO: implement APIC functionality
+    // TODO: implement APIC functionality
+    return(false);
 }
 
 todoList_t* kernel_idleTasks;
@@ -90,20 +91,25 @@ static void init(multiboot_t* mb_struct)
 
     useMultibootInformation(mb_struct);
 
-    isr_install();
-
-    // descriptors
-    gdt_install();
-    idt_install(); // cf. interrupts.asm
-
     // video
     kernel_console_init();
     clear_screen();
 
+    // GDT
+    gdt_install();
+
+    // Interrupts
+    isr_install();
+    if(apic_install()) log("APIC");
+    else // PIC as fallback
+    {
+        idt_install(); // cf. interrupts.asm
+        log("PIC");
+    }
+
     // internal devices
     timer_install(100); log("Timer"); // Sets system frequency to ... Hz
-    if (cpu_supports(CF_FPU)) fpu_install(); log("FPU");
-    if (cpu_supports(CF_APIC)) apic_install(); log("APIC");
+    if(fpu_install()) log("FPU");
 
     // memory
     system.Memory_Size = paging_install(); log("Paging");

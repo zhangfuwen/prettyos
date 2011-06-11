@@ -231,8 +231,8 @@ static void scroll()
     mutex_unlock(currentConsole->mutex);
 }
 
-/// TODO: make it standardized !
-// vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c and the PrettyOS-specific %v
+/// TODO: make it standardized!
+// vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c, %% and the PrettyOS-specific %v, %I and %M
 void vprintf(const char* args, va_list ap)
 {
     mutex_lock(currentConsole->mutex);
@@ -282,6 +282,18 @@ void vprintf(const char* args, va_list ap)
                         putch(*(++args));
                         textColor(attribute);
                         break;
+                    case 'I': // IP address
+                    {
+                        uint8_t* IP = va_arg(ap, uint8_t*);
+                        printf("%u.%u.%u.%u", IP[0], IP[1], IP[2], IP[3]);
+                        break;
+                    }
+                    case 'M': // MAC address
+                    {
+                        uint8_t* MAC = va_arg(ap, uint8_t*);
+                        printf("%y-%y-%y-%y-%y-%y", MAC[0], MAC[1], MAC[2], MAC[3], MAC[4], MAC[5]);
+                        break;
+                    }
                     case '%':
                         putch('%');
                         break;

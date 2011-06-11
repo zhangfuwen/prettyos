@@ -91,7 +91,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
         }
         else
         {
-            printf("\nThe requested IP was not found in the ARP table: %d.%d.%d.%d",IP[0],IP[1],IP[2],IP[3]);
+            printf("\nThe requested IP was not found in the ARP table: I", IP);
         }
     }
     free(packet);

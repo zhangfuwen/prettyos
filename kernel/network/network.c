@@ -132,17 +132,16 @@ bool network_installDevice(pciDev_t* device)
 
     // Try to get an IP by DHCP
     adapter->DHCP_State  = START;
-    DHCP_Discover(adapter);   
+    DHCP_Discover(adapter);
 
     textColor(0x0E);
-    printf("\nMAC address: %y-%y-%y-%y-%y-%y", adapter->MAC_address[0], adapter->MAC_address[1], adapter->MAC_address[2],
-                                               adapter->MAC_address[3], adapter->MAC_address[4], adapter->MAC_address[5]);
+    printf("\nMAC address: %M", adapter->MAC_address);
 
-    printf("\t\tIP address: %u.%u.%u.%u\n", adapter->IP_address[0], adapter->IP_address[1], adapter->IP_address[2], adapter->IP_address[3]);
+    printf("\t\tIP address: %I\n", adapter->IP_address);
     textColor(0x0F);
 
     arp_sendGratitiousRequest(adapter); // show PrettyOS network adapter IP and MAC to the LAN
-    
+
     return(true);
 }
 
@@ -181,14 +180,14 @@ void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t le
 
 void network_displayArpTables()
 {
+    if(adapters == 0) // No adapters installed
+        return;
+
     printf("\n\nARP Tables:");
     uint8_t i = 0;
     for (element_t* e = adapters->head; e != 0; e = e->next, i++)
     {
-        printf("\n\nAdapter %u:  %u.%u.%u.%u", i, ((network_adapter_t*)e->data)->IP_address[0],
-                                                  ((network_adapter_t*)e->data)->IP_address[1],
-                                                  ((network_adapter_t*)e->data)->IP_address[2],
-                                                  ((network_adapter_t*)e->data)->IP_address[3]);
+        printf("\n\nAdapter %u:  %I", i, ((network_adapter_t*)e->data)->IP_address);
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
     }
 }
