@@ -100,6 +100,14 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
             newTask->userProgSize = globalUserProgSize;
 
             pagingAlloc(newTask->pageDirectory, (void*)(USER_STACK - 10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // Stack starts at USER_STACK-StackSize*PAGESIZE
+
+            // Write argc and argv to user stack
+            cli();
+            paging_switch(newTask->pageDirectory);
+            *((uint32_t*)USER_STACK-2) = argc;
+            *((uint32_t*)USER_STACK-1) = (uintptr_t)argv;
+            paging_switch(currentTask->pageDirectory);
+            sti();
         }
     }
 
@@ -117,7 +125,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
         {
             // General information: Intel 3A Chapter 5.12
             *(--kernelStack) = newTask->ss = 0x23; // ss
-            *(--kernelStack) = USER_STACK;         // esp
+            *(--kernelStack) = USER_STACK-8;       // esp-8 (Stack contains argv and argc, which have a size of 8 bytes)
             code_segment = 0x1B; // 0x18|0x3=0x1B
         }
 
@@ -138,8 +146,8 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     *(--kernelStack) = 0; // Interrupt nummer
 
     // General purpose registers w/o esp
-    *(--kernelStack) = argc;            // eax. Used to give argc to user programs.
-    *(--kernelStack) = (uintptr_t)argv; // ecx. Used to give argv to user programs.
+    *(--kernelStack) = 0;
+    *(--kernelStack) = 0;
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
