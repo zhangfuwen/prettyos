@@ -25,7 +25,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
     {
         return(CE_FILE_NOT_FOUND);
     }
- 
+
     // Find out fileformat
     size_t i = 0;
     for (; i < FT_END; i++) // Check name and content of the file
@@ -39,7 +39,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
             }
         }
     }
- 
+
     if (i == FT_END) // Not found, now do not look at filename, just content
     {
         for (i = 0; i < FT_END; i++)
@@ -51,26 +51,26 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
             }
         }
     }
- 
+
     if (i == FT_END)
     {
         fclose(file);
         printf("The file has an unknown type so it cannot be executed.");
         return(CE_BAD_FILE);
     }
- 
+
     // Now execute
     size_t size = file->size;
     void* buffer = malloc(size, 0, "executeFile");
     rewind(file);
     fread(buffer, 1, size, file);
     fclose(file);
- 
+
     if (filetypes[i].prepare != 0)
     {
         // Create page directory.
         pageDirectory_t* pd = paging_createUserPageDirectory();
- 
+
         // Prepare executable. Load it into memory.
         void* entry = filetypes[i].prepare(buffer, size, pd);
         if(entry == 0)
@@ -78,48 +78,48 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
             paging_destroyUserPageDirectory(pd);
             return(CE_BAD_FILE);
         }
- 
+
         // Copy argv to kernel PD (intermediate)
-                if(argc != 0)
-                {
-                        char** nArgv = malloc(sizeof(char*)*argc, 0, "");
-                        for(size_t index = 0; index < argc; index++)
-                        {
-                                size_t argsize = strlen(argv[index]) + 1;
-                                void* addr = malloc(argsize, 0, "");
-                                nArgv[index] = addr;
-                                memcpy(nArgv[index], argv[index], argsize);
-                        }
- 
-                        // Copy nArgv to user PD
-                        pagingAlloc(pd, (void*)USER_DATA_BUFFER, (uintptr_t)USER_heapStart - (uintptr_t)USER_DATA_BUFFER, MEM_USER | MEM_WRITE); // Allocate space in user PD (Pages between heap and dataBuffer)
-                        cli();
-                        paging_switch(pd); // Switch to user PD
-                        char** nnArgv = (void*)USER_DATA_BUFFER; // argv buffer
-                        void* addr = nnArgv + sizeof(char*)*argc; // argv* strings stored after argv array
-                        for(size_t index = 0; index < argc; index++)
-                        {
-                                size_t argsize = strlen(nArgv[index]) + 1;
-                                nnArgv[index] = addr;
-                                memcpy(nnArgv[index], nArgv[index], argsize);
-                                addr += argsize;
-                        }
-                        paging_switch(currentTask->pageDirectory); // Switch back to old PD
-                        sti();
- 
-                        // Free nArgv (allocated in kernelPD)
-                        for(size_t index = 0; index < argc; index++)
-                        {
-                                free(nArgv[index]);
-                        }
-                        free(nArgv);
-                        
-                        // Execute the task.
-                        create_ctask(pd, entry, 3, argc, nnArgv, path);
-                }
-                else
-                        // Execute the task.
-                        create_ctask(pd, entry, 3, 0, 0, path);
+        if(argc != 0)
+        {
+            char** nArgv = malloc(sizeof(char*)*argc, 0, "");
+            for(size_t index = 0; index < argc; index++)
+            {
+                size_t argsize = strlen(argv[index]) + 1;
+                void* addr = malloc(argsize, 0, "");
+                nArgv[index] = addr;
+                memcpy(nArgv[index], argv[index], argsize);
+            }
+
+            // Copy nArgv to user PD
+            pagingAlloc(pd, (void*)USER_DATA_BUFFER, (uintptr_t)USER_heapStart - (uintptr_t)USER_DATA_BUFFER, MEM_USER | MEM_WRITE); // Allocate space in user PD (Pages between heap and dataBuffer)
+            cli();
+            paging_switch(pd); // Switch to user PD
+            char** nnArgv = (void*)USER_DATA_BUFFER; // argv buffer
+            void* addr = nnArgv + sizeof(char*)*argc; // argv* strings stored after argv array
+            for(size_t index = 0; index < argc; index++)
+            {
+                size_t argsize = strlen(nArgv[index]) + 1;
+                nnArgv[index] = addr;
+                memcpy(nnArgv[index], nArgv[index], argsize);
+                addr += argsize;
+            }
+            paging_switch(currentTask->pageDirectory); // Switch back to old PD
+            sti();
+
+            // Free nArgv (allocated in kernelPD)
+            for(size_t index = 0; index < argc; index++)
+            {
+                free(nArgv[index]);
+            }
+            free(nArgv);
+
+            // Execute the task.
+            create_ctask(pd, entry, 3, argc, nnArgv, path);
+        }
+        else
+            // Execute the task.
+            create_ctask(pd, entry, 3, 0, 0, path);
     }
     else
     {
@@ -127,7 +127,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
         printf("Executing the file failed");
         return(CE_BAD_FILE);
     }
- 
+
     free(buffer);
     return(CE_GOOD);
 }

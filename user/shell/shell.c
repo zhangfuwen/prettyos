@@ -65,12 +65,11 @@ char* formatPath(char* opath)
         strcpy(npath, ".ELF");
     }
 
-    printf("\n%s\n",retval);
     return(retval);
 }
 
 
-int main()
+int main(size_t argcs, char* argvs[])
 {
     setScrollField(0, 39);
     char entry[MAX_CHAR_PER_LINE+1];

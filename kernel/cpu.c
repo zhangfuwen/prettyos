@@ -6,6 +6,7 @@
 #include "cpu.h"
 #include "video/console.h"
 
+
 // http://www.lowlevel.eu/wiki/Cpuid
 
 static bool cpuid_available = true;
@@ -14,9 +15,25 @@ char cpu_vendor[13];
 
 void cpu_analyze()
 {
-    // TODO: Test if the CPU supports the CPUID-Command
+    printf("CPU information:");
 
-    printf("CPU information:\n");
+    // Test if the CPU supports the CPUID-Command
+    __asm__ volatile ("pushfl\n\t"
+                      "pop %ecx\n\t"
+                      "mov %ecx, %eax\n\t"
+                      "xor %eax, 0x200000\n\t"
+                      "push %eax\n\t"
+                      "popfl\n\t"
+                      "pushfl\n\t"
+                      "pop %eax\n\t");
+    register uint32_t eax __asm__("%eax");
+    register uint32_t ecx __asm__("%ecx");
+    cpuid_available = (eax==ecx);
+    if(!cpuid_available)
+    {
+        printf(" CPU does not support cpuid instruction.\n");
+        return;
+    }
 
     // Read out VendorID
     ((uint32_t*)cpu_vendor)[0] = cpu_idGetRegister(0, CR_EBX);
@@ -24,20 +41,14 @@ void cpu_analyze()
     ((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
     cpu_vendor[12] = 0;
 
-    printf("\tVendorID: %s\n", cpu_vendor);
-    if (cpu_supports(CF_APIC))
-    {
-        printf("\tAPIC: yes");
-    }
-    if (cpu_supports(CF_FPU))
-    {
-        printf("\tFPU: yes");
-    }
+    printf(" VendorID: %s\n", cpu_vendor);
 }
 
 bool cpu_supports(CPU_FEATURE feature)
 {
+    if(feature == CF_CPUID) return(cpuid_available);
     if(!cpuid_available) return(false);
+
     CPU_REGISTER r = feature&~31;
     return(cpu_idGetRegister(0x00000001, r) & (BIT(feature-r)));
 }
@@ -75,8 +86,26 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
     }
 }
 
+uint64_t cpu_MSRread(uint32_t msr)
+{
+    uint32_t low, high;
+
+    __asm__ volatile ("rdmsr" : "=a" (low), "=d" (high) : "c" (msr));
+
+    return ((uint64_t)high << 32) | low;
+}
+
+void cpu_MSRwrite(uint32_t msr, uint64_t value)
+{
+    uint32_t low = value & 0xFFFFFFFF;
+    uint32_t high = value >> 32;
+
+    __asm__ __volatile__ ("wrmsr" :: "a"(low), "c"(msr), "d"(high));
+}
+
+
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -20,19 +20,19 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <_ProjectFileVersion>10.0.30319.311</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
-    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cd ..
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <NMakeBuildCommandLine>cd ..
 build.bat</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cd ..
+    <NMakeReBuildCommandLine>cd ..
 rebuild.bat</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cd ..
+    <NMakeCleanCommandLine>cd ..
 clean.bat</NMakeCleanCommandLine>
-    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../kernel</NMakeIncludeSearchPath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../kernel</IncludePath>
+    <NMakeOutput />
+    <NMakeIncludeSearchPath>$(SolutionDir)\..\kernel</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
+    <IncludePath />
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <BuildLog>

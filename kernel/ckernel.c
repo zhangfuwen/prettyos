@@ -25,7 +25,7 @@
 #include "executable.h"
 
 
-const char* const version = "0.0.2.99 - Rev: 938";
+const char* const version = "0.0.2.100 - Rev: 939";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -160,7 +160,7 @@ void main(multiboot_t* mb_struct)
     showMemorySize();
     cpu_analyze();
 
-    if (cpu_supports(CF_FPU)) fpu_test();
+    fpu_test();
     pm_log();
 
     serial_init();
@@ -178,8 +178,6 @@ void main(multiboot_t* mb_struct)
     showDiskList();
 
 
-    executeFile("1:/ttt.ELF", 0, 0); // TEST
-    /*
     // search and load shell
     textColor(0x0F);
     bool shell_found = false;
@@ -225,7 +223,7 @@ void main(multiboot_t* mb_struct)
         printf("\nProgram not found.\n");
         textColor(0x0F);
     }
-    */
+
 
     create_cthread(&vbe_bootscreen, "VBE");
 

@@ -23,8 +23,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <NMakeIncludeSearchPath>..\user\user_tools;..\user\stdlibc;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <IncludePath>..\user\user_tools;..\user\stdlibc;$(IncludePath)</IncludePath>
+    <NMakeIncludeSearchPath>$(SolutionDir)\..\user\user_tools;$(SolutionDir)\..\user\stdlibc</NMakeIncludeSearchPath>
+    <IncludePath>$(SolutionDir)\..\user\user_tools;$(SolutionDir)\..\user\stdlibc</IncludePath>
+    <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>

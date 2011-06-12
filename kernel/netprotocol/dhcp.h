@@ -8,7 +8,7 @@
 // ftp://ftp.efo.ru/pub/wiznet/W5100_App%20note_DHCP.pdf
 
 #define UNICAST      0
-#define BROADCAST  128 // 1....... ........ 
+#define BROADCAST  128 // 1....... ........
 #define OPTIONSIZE 340 // results in size of 576
 
 typedef struct dhcp     // complete length: 576 (0x0240)

@@ -74,7 +74,7 @@ void arp_showTable(arpTable_t* table)
         size_t length = printf("\n%I\t", entry->IP);
         if(length < 10) printf("\t");
         printf("  %M\t%s\t  %u", entry->MAC, entry->dynamic?"dynamic":"static", entry->seconds);
-    }    
+    }
 }
 
 void arp_initTable(arpTable_t* table)

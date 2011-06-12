@@ -95,7 +95,7 @@ void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
     packet.hlen = 6;
     packet.hops = 0;
     packet.xid = xid; // AFFExx
-    packet.secs = htons(0); 
+    packet.secs = htons(0);
     packet.flags = BROADCAST; // TEST: broadcast
     for(uint8_t i = 0; i < 4; i++)
     {
@@ -170,7 +170,7 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.hlen = 6;
     packet.hops = 0;
     packet.xid = xid; // AFFExx
-    packet.secs = 0; 
+    packet.secs = 0;
     packet.flags = BROADCAST; // TEST: broadcast
     for(uint8_t i = 0; i < 4; i++)
     {
@@ -225,10 +225,10 @@ void DHCP_Inform(network_adapter_t* adapter)
     for(uint8_t i = 0; i < 4; i++)
     {
         srcIP[i] = adapter->IP_address[i];
-    }    
-    
+    }
+
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-    
+
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
@@ -244,7 +244,7 @@ void DHCP_Release(network_adapter_t* adapter)
     packet.hlen = 6;
     packet.hops = 0;
     packet.xid = xid; // AFFExx
-    packet.secs = htons(0); 
+    packet.secs = htons(0);
     packet.flags = UNICAST ;
     for(uint8_t i = 0; i < 4; i++)
     {
@@ -283,7 +283,7 @@ void DHCP_Release(network_adapter_t* adapter)
         srcIP[i] = adapter->IP_address[i];
     }
 
-    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF}; 
+    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
@@ -327,7 +327,7 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             }
             else
             {
-                adapter->IP_address[0] = IP_1; 
+                adapter->IP_address[0] = IP_1;
                 adapter->IP_address[1] = IP_2;
                 adapter->IP_address[2] = IP_3;
                 adapter->IP_address[3] = IP_4;

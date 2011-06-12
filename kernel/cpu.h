@@ -3,6 +3,7 @@
 
 #include "os.h"
 
+
 typedef enum
 { // Uses bits larger than 5 because the bitnumber inside the registers can be 31 at maximum which needs the first 5 bits
     CR_EAX = BIT(5),
@@ -13,6 +14,8 @@ typedef enum
 
 typedef enum
 { // In this enum the last five bits contain the bit in the register, the other bits are the register (see above)
+    CF_CPUID        = 0,
+
     CF_FPU          = CR_EDX|0,
     CF_VME86        = CR_EDX|1,
     CF_IOBREAKPOINT = CR_EDX|2,
@@ -53,5 +56,8 @@ extern char cpu_vendor[13];
 void     cpu_analyze();
 bool     cpu_supports(CPU_FEATURE feature);
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg);
+uint64_t cpu_MSRread(uint32_t msr);
+void     cpu_MSRwrite(uint32_t msr, uint64_t value);
+
 
 #endif

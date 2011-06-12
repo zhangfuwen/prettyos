@@ -20,7 +20,7 @@ static void fpu_setcw(uint16_t ctrlword)
 
 bool fpu_install()
 {
-    if (!(cmos_read(0x14) & BIT(1)) || !cpu_supports(CF_FPU))
+    if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
     {
         printf("Math Coprozessor not available\n");
         return(false);
@@ -41,6 +41,9 @@ bool fpu_install()
 
 void fpu_test()
 {
+    if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
+        return;
+
     double squareroot = sqrt(2.0);
     squareroot = fabs(squareroot);
     squareroot /= sqrt(2.0);
