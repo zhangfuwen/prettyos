@@ -136,11 +136,8 @@ bool network_installDevice(pciDev_t* device)
 
     textColor(0x0E);
     printf("\nMAC address: %M", adapter->MAC_address);
-
-    printf("\t\tIP address: %I\n", adapter->IP_address);
-    textColor(0x0F);
-
-    arp_sendGratitiousRequest(adapter); // show PrettyOS network adapter IP and MAC to the LAN
+    printf(" IP address: %I\n", adapter->IP_address);
+    textColor(0x0F);    
 
     return(true);
 }
@@ -188,7 +185,7 @@ void network_displayArpTables()
     for (element_t* e = adapters->head; e != 0; e = e->next, i++)
     {
         printf("\n\nAdapter %u: %I", i, ((network_adapter_t*)e->data)->IP_address);
-        arp_showTable(&((network_adapter_t*)e->data)->arpTable);
+        arp_showTable(&((network_adapter_t*)e->data)->arpTable);        
     }
     printf("\n");
 }

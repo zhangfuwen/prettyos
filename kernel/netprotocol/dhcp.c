@@ -67,12 +67,23 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.options[21] =   6;  // DOMAIN NAME SERVER
     packet.options[22] =  15;  // DOMAIN NAME
 
+    packet.options[23] =  12;  // Hostname
+    packet.options[24] =   8;  // Length
+    packet.options[25] =  80;  // P
+    packet.options[26] = 114;  // r
+    packet.options[27] = 101;  // e
+    packet.options[28] = 116;  // t
+    packet.options[29] = 116;  // t
+    packet.options[30] = 121;  // y
+    packet.options[31] =  79;  // O
+    packet.options[32] =  83;  // S
+
     uint8_t srcIP[4] = {0,0,0,0};
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
-void DHCP_Request(network_adapter_t* adapter)
+void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
 {
     xid += (1<<24);
 
@@ -126,10 +137,21 @@ void DHCP_Request(network_adapter_t* adapter)
 
     packet.options[22] =  50;  // Requested IP
     packet.options[23] =   4;  // Length
-    packet.options[24] = RIP_1;
-    packet.options[25] = RIP_2;
-    packet.options[26] = RIP_3;
-    packet.options[27] = RIP_4;
+    packet.options[24] = requestedIP[0];
+    packet.options[25] = requestedIP[1];
+    packet.options[26] = requestedIP[2];
+    packet.options[27] = requestedIP[3];
+
+    packet.options[28] =  12;  // Hostname
+    packet.options[29] =   8;  // Length
+    packet.options[30] =  80;  // P
+    packet.options[31] = 114;  // r
+    packet.options[32] = 101;  // e
+    packet.options[33] = 116;  // t
+    packet.options[34] = 116;  // t
+    packet.options[35] = 121;  // y
+    packet.options[36] =  79;  // O
+    packet.options[37] =  83;  // S
 
     uint8_t srcIP[4] = {0,0,0,0};
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
@@ -289,9 +311,9 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
     printf(" flags: %xh", htons(dhcp->flags));
     */
     printf("\ncIP: %I", dhcp->ciaddr);
-    printf(" yIP: %I", dhcp->yiaddr);
+    printf(" yIP: %I",  dhcp->yiaddr);
     printf("\nsIP: %I", dhcp->siaddr);
-    printf(" gIP: %I", dhcp->giaddr);
+    printf(" gIP: %I",  dhcp->giaddr);
     printf("\nMAC: %M", dhcp->chaddr);
 
     DHCP_AnalyzeOptions(adapter, dhcp->options);
@@ -299,7 +321,17 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
     {
         case OFFER:
             printf("\n >>> PrettyOS got a DHCP OFFER. <<<");
-            DHCP_Request(adapter);
+            if (dhcp->yiaddr[0] || dhcp->yiaddr[1] || dhcp->yiaddr[2] || dhcp->yiaddr[3])
+            {
+                DHCP_Request(adapter, dhcp->yiaddr);
+            }
+            else
+            {
+                adapter->IP_address[0] = IP_1; 
+                adapter->IP_address[1] = IP_2;
+                adapter->IP_address[2] = IP_3;
+                adapter->IP_address[3] = IP_4;
+            }
             break;
         case ACK:
             printf("\n >>> PrettyOS got a DHCP ACK.   <<<");

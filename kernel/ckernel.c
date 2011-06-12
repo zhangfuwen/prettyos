@@ -22,8 +22,10 @@
 #include "power_management.h"
 #include "elf.h"
 
+#include "executable.h"
 
-const char* const version = "0.0.2.98 - Rev: 937";
+
+const char* const version = "0.0.2.99 - Rev: 938";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -175,6 +177,9 @@ void main(multiboot_t* mb_struct)
     showPortList();
     showDiskList();
 
+
+    executeFile("1:/ttt.ELF", 0, 0); // TEST
+    /*
     // search and load shell
     textColor(0x0F);
     bool shell_found = false;
@@ -220,6 +225,7 @@ void main(multiboot_t* mb_struct)
         printf("\nProgram not found.\n");
         textColor(0x0F);
     }
+    */
 
     create_cthread(&vbe_bootscreen, "VBE");
 
