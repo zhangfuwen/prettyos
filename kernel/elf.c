@@ -3,9 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "elf.h"
 #include "util.h"
 #include "task.h"
-#include "elf.h"
 
 // in task.c used for pagingFree of memory for user program
 void* globalUserProgAddr;
@@ -139,12 +139,10 @@ bool elf_header(file_t* file)
     return(valid);
 }
 
-bool elf_exec(const void* file, size_t size, const char* programName)
+void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
 {
     // Read the header
     const elf_header_t* header = (elf_header_t*)file;
-
-    pageDirectory_t* pd = paging_createUserPageDirectory();
 
     // Read all program headers
     const elf_programHeader_t* ph = file + header->phoff;
@@ -153,7 +151,7 @@ bool elf_exec(const void* file, size_t size, const char* programName)
         // Check whether the entry exceeds the file
         if ((void*)(ph+i) >= file+size)
         {
-            return -1;
+            return(0);
         }
 
         #ifdef _DIAGNOSIS_
@@ -176,7 +174,7 @@ bool elf_exec(const void* file, size_t size, const char* programName)
         globalUserProgSize = alignUp(ph[i].memsz,PAGESIZE);
         if (!pagingAlloc(pd, globalUserProgAddr, globalUserProgSize, memFlags))
         {
-            return false;
+            return(0);
         }
 
         /// TODO: check all sections, not only code
@@ -190,17 +188,7 @@ bool elf_exec(const void* file, size_t size, const char* programName)
         sti();
     }
 
-    // Execute the task
-    if(strcmp("Shell", programName) == 0)
-    {
-        create_task(pd, (void*)header->entry, 3);
-    }
-    else
-    {
-        create_ctask(pd, (void*)header->entry, 3, programName);
-    }
-
-    return true;
+    return((void*)header->entry);
 }
 
 /*

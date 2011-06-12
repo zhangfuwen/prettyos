@@ -4,7 +4,7 @@
 #include "types.h"
 
 // syscalls (only non-standard functions, because we do not want to include stdio.h here.
-FS_ERROR execute(const char* path);
+FS_ERROR execute(const char* path, size_t argc, char* argv[]);
 void exit();
 bool wait(BLOCKERTYPE reason, void* data, uint32_t timeout);
 uint32_t getMyPID();

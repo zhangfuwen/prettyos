@@ -23,7 +23,7 @@
 #include "elf.h"
 
 
-const char* const version = "0.0.2.97 - Rev: 936";
+const char* const version = "0.0.2.98 - Rev: 937";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -201,12 +201,15 @@ void main(multiboot_t* mb_struct)
 
                 uint8_t* buf = malloc(fsnode->length, 0, "shell buffer");
                 uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
-                if (!elf_exec(buf, sz, "Shell"))
+
+                pageDirectory_t* pd = paging_createUserPageDirectory();
+                void* entry = elf_prepare(buf, sz, pd);
+                if(entry == 0)
                 {
-                    textColor(0x04);
-                    printf("\nCannot start shell!\n");
-                    textColor(0x0F);
+                    printf("Cannot start Shell.\n");
+                    paging_destroyUserPageDirectory(pd);
                 }
+                create_task(pd, entry, 3, 0, 0);
                 free(buf);
             }
         }

@@ -39,22 +39,19 @@ NASMFLAGS= -Ox -f elf
 GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
 LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
-# targets to build one asm or c-file to an object file
-vpath %.o $(OBJDIR)
-%.o: %.c
-	$(GCC) $< $(GCCFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
-%.ELF: %.o $(PRETTYLIB) $(STDLIBCA)
-	$(LD) $< $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $@
+# targets to build an executable from a source file
+%.ELF: %.c
+	$(GCC) $< $(GCCFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$<.o
+	$(LD) $(OBJDIR)/$<.o $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $@
 	$(STRIP) $@
 
 # dependancies
-TARGETOBJ := $(patsubst %.c, %.o, $(wildcard *.c))
-TARGETEXE := $(patsubst $(OBJDIR)/%.o, %.ELF, $(wildcard $(OBJDIR)/*.o))
+TARGETEXE := $(patsubst %.c, %.ELF, $(wildcard *.c))
 
 # targets to build the userprog
 .PHONY: clean all
 
-all: $(TARGETOBJ) $(TARGETEXE)
+all: $(TARGETEXE)
 
 clean:
 ifeq ($(OS),WINDOWS)

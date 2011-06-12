@@ -6,17 +6,18 @@
 #include "executable.h"
 #include "util.h"
 #include "kheap.h"
+#include "task.h"
 #include "video/console.h"
 #include "elf.h"
 
 
 static filetype_t filetypes[FT_END] =
 {
-    {&elf_filename, &elf_header, &elf_exec}, // ELF
+    {&elf_filename, &elf_header, &elf_prepare}, // ELF
 };
 
 
-FS_ERROR executeFile(const char* path)
+FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
 {
     // Open file
     file_t* file = fopen(path, "r");
@@ -65,9 +66,54 @@ FS_ERROR executeFile(const char* path)
     fread(buffer, 1, size, file);
     fclose(file);
 
-    if (filetypes[i].execute != 0)
+    if (filetypes[i].prepare != 0)
     {
-        filetypes[i].execute(buffer, size, path);
+        // Create page directory.
+        pageDirectory_t* pd = paging_createUserPageDirectory();
+
+        // Prepare executable. Load it into memory.
+        void* entry = filetypes[i].prepare(buffer, size, pd);
+        if(entry == 0)
+        {
+            paging_destroyUserPageDirectory(pd);
+            return(CE_BAD_FILE);
+        }
+
+        // Copy argv to kernel PD (intermediate)
+        char** nArgv = malloc(sizeof(char*)*argc, 0, "");
+        for(size_t index = 0; index < argc; index++)
+        {
+            size_t argsize = strlen(argv[index]) + 1;
+            void* addr = malloc(argsize, 0, "");
+            nArgv[index] = addr;
+            memcpy(nArgv[index], argv[index], argsize);
+        }
+
+        // Copy nArgv to user PD
+        pagingAlloc(pd, (void*)USER_DATA_BUFFER, (uintptr_t)USER_heapStart - (uintptr_t)USER_DATA_BUFFER, MEM_USER | MEM_WRITE); // Allocate space in user PD (Pages between heap and dataBuffer)
+        cli();
+        paging_switch(pd); // Switch to user PD
+        char** nnArgv = (void*)USER_DATA_BUFFER; // argv buffer
+        void* addr = nnArgv + sizeof(char*)*argc; // argv* strings stored after argv array
+        for(size_t index = 0; index < argc; index++)
+        {
+            size_t argsize = strlen(nArgv[index]) + 1;
+            nnArgv[index] = addr;
+            memcpy(nnArgv[index], nArgv[index], argsize);
+            addr += argsize;
+        }
+        paging_switch(currentTask->pageDirectory); // Switch back to old PD
+        sti();
+
+        // Free nArgv (allocated in kernelPD)
+        for(size_t index = 0; index < argc; index++)
+        {
+            free(nArgv[index]);
+        }
+        free(nArgv);
+
+        // Execute the task.
+        create_ctask(pd, entry, 3, argc, nnArgv, path);
     }
     else
     {

@@ -35,6 +35,41 @@ void drawEntry(const char* entry)
     printLine(RenderBuffer, 40, 0x0B);
 }
 
+char* formatPath(char* opath)
+{
+    bool insertPartition = false;
+    bool insertELF = false;
+    size_t length = strlen(opath) + 1;
+    if(strchr(opath, ':') == 0)
+    {
+        length += 3;
+        insertPartition = true;
+    }
+    if(strcmp(stoupper(strchr(opath, '.')+1), "ELF") != 0) /// TODO: Do not use stoupper and strrchr instead of strchr
+    {
+        length += 4;
+        insertELF = true;
+    }
+
+    char* npath = calloc(length, 1);
+    char* retval = npath;
+    if(insertPartition)
+    {
+        strcpy(npath, "1:|");
+        npath += 3;
+    }
+    strcpy(npath, opath);
+    npath += strlen(opath);
+    if(insertELF)
+    {
+        strcpy(npath, ".ELF");
+    }
+
+    printf("\n%s\n",retval);
+    return(retval);
+}
+
+
 int main()
 {
     setScrollField(0, 39);
@@ -44,7 +79,7 @@ int main()
     bool insertMode = false;
     unsigned char input;
 
-    //Init Cache
+    // Init Cache
     for (unsigned int i = 0; i < ENTRY_CACHE_SIZE+1; i++)
     {
         memset(entryCache, 0, MAX_CHAR_PER_LINE+1);
@@ -263,36 +298,57 @@ EVALUATION: // evaluation of entry
         {
             puts("File is being searched... ");
 
-            // Adding ending .elf
-            if(entry[strlen(entry)-4] != '.') // No ending, append ".elf"
+            size_t argc = 1;
+            bool apostroph = false;
+            // Find out argc
+            for(size_t i = 0; entry[i] != 0; i++)
             {
-                strcat(entry, ".elf");
+                if(entry[i] == '"')
+                    apostroph = !apostroph;
+
+                if(entry[i] == ' ' && !apostroph) // argument end
+                    argc++;
             }
 
-            FS_ERROR error = execute(entry);
+            char** argv = malloc(sizeof(char*)*argc);
+            char* argstart = entry;
+            size_t j = 0;
+            for(size_t i = 0; entry[i] != 0; i++)
+            {
+                if(entry[i] == '"')
+                    apostroph = !apostroph;
+
+                if(entry[i] == ' ' && !apostroph) // argument end
+                {
+                    entry[i] = 0;
+                    argv[j] = argstart;
+                    argstart = entry+i+1;
+                    j++;
+                }
+            }
+            argv[j] = argstart;
+
+            argv[0] = formatPath(argv[0]);
+
+            FS_ERROR error = execute(argv[0], argc, argv);
             switch(error)
             {
                 case CE_GOOD:
                     puts(" Successfull.\n");
                     break;
                 case CE_INVALID_FILENAME:
-                    puts(" The path was not formatted well.\n");
+                    puts(" The path was malformed.\n");
                     break;
                 case CE_FILE_NOT_FOUND:
-				{
-                    char newPath[40];
-                    strcpy(newPath,"1:/");
-                    strcat(newPath, entry);
-                    if(execute(newPath) != CE_GOOD)
-                        puts("File not found.\n");
-					else
-                        puts("Successfull.\n");
+                    puts(" File not found.\n");
                     break;
-				}
                 default:
                     printf(" File load was not successful. Error Code: %u\n", error);
                     break;
             }
+
+            free(argv[0]);
+            free(argv);
         }
     } //while
     return 0;

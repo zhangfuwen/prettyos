@@ -8,11 +8,12 @@
 #include "stdio.h"
 #include "ctype.h"
 
+
 // Syscalls
-FS_ERROR execute(const char* path)
+FS_ERROR execute(const char* path, size_t argc, char* argv[])
 {
     FS_ERROR ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(0), "b"(path));
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(0), "b"(path), "c"(argc), "d"(argv));
     return ret;
 }
 
@@ -408,7 +409,7 @@ void showInfo(uint8_t val)
 
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

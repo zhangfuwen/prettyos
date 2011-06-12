@@ -77,7 +77,7 @@ bool waitForTask(task_t* blockingTask, uint32_t timeout)
 
 /// Functions to create tasks
 
-static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, void(*entry)(), uint8_t privilege)
+static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[])
 {
     newTask->pid           = next_pid++;
     newTask->pageDirectory = directory;
@@ -138,8 +138,8 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     *(--kernelStack) = 0; // Interrupt nummer
 
     // General purpose registers w/o esp
-    *(--kernelStack) = 0;
-    *(--kernelStack) = 0;
+    *(--kernelStack) = argc;            // eax. Used to give argc to user programs.
+    *(--kernelStack) = (uintptr_t)argv; // ecx. Used to give argv to user programs.
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
@@ -167,16 +167,16 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     #endif
 }
 
-task_t* create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, const char* consoleName)
+task_t* create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)
 {
-    task_t* newTask = create_task(directory, entry, privilege);
+    task_t* newTask = create_task(directory, entry, privilege, argc, argv);
     newTask->ownConsole = true;
     newTask->console = malloc(sizeof(console_t), 0, "task-console");
     console_init(newTask->console, consoleName);
     return(newTask);
 }
 
-task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privilege)
+task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[])
 {
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
@@ -187,7 +187,7 @@ task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privileg
     task_t* newTask = malloc(sizeof(task_t),0, "task-newtask");
     newTask->type = TASK;
 
-    createThreadTaskBase(newTask, directory, entry, privilege);
+    createThreadTaskBase(newTask, directory, entry, privilege, argc, argv);
 
     newTask->ownConsole = false;
     newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
@@ -216,7 +216,7 @@ task_t* create_thread(void(*entry)())
     task_t* newTask = malloc(sizeof(task_t),0, "task-newthread");
     newTask->type = THREAD;
 
-    createThreadTaskBase(newTask, currentTask->pageDirectory, entry, currentTask->privilege);
+    createThreadTaskBase(newTask, currentTask->pageDirectory, entry, currentTask->privilege, 0, 0);
 
     // Attach the thread to its parent
     newTask->parent = (task_t*)currentTask;
@@ -241,7 +241,7 @@ task_t* create_vm86_task(void(*entry)())
     task_t* newTask = malloc(sizeof(task_t),0, "vm86-task");
     newTask->type = VM86;
 
-    createThreadTaskBase(newTask, kernelPageDirectory, entry, 3);
+    createThreadTaskBase(newTask, kernelPageDirectory, entry, 3, 0, 0);
 
     newTask->ownConsole = false;
     newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // Task uses the same console as the kernel
@@ -409,17 +409,18 @@ void task_restart(uint32_t pid)
 
     // Safe old properties
     pageDirectory_t* directory  = task->pageDirectory;
-    void            (*entry)()   = task->entry;
-    uint8_t           privilege  = task->privilege;
-    bool              ownConsole = task->ownConsole;
+    void           (*entry)()   = task->entry;
+    uint8_t          privilege  = task->privilege;
+    bool             ownConsole = task->ownConsole;
 
     kill(task); // Kill old task
 
     // Create a new one reusing old properties
+    /// TODO?: Use correct argc/argv?
     if(ownConsole)
-        create_ctask(directory, entry, privilege, "restarted task"); // TODO: Safe old name or maybe reuse old console
+        create_ctask(directory, entry, privilege, 0, 0, "restarted task"); // TODO: Safe old name or maybe reuse old console
     else
-        create_task(directory, entry, privilege);
+        create_task(directory, entry, privilege, 0, 0);
 }
 
 void* task_grow_userheap(uint32_t increase)
