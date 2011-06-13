@@ -5,7 +5,6 @@
 #include "netprotocol/arp.h"
 
 // own IP at start
-
 #define IP_1  192
 #define IP_2  168
 #define IP_3    1
@@ -26,7 +25,12 @@
 #define RIP_4  15
 */
 
+typedef enum {START, OFFER, ACK, NAK} DHCP_state;
+typedef enum {CLOSED, LISTEN, SYN_SENT, SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, CLOSING, CLOSE_WAIT, LAST_ACK, TIME_WAIT} TCP_state;
+
+struct network_adapter;
 typedef struct network_adapter network_adapter_t;
+
 typedef struct
 {
     void (*install)(network_adapter_t*); // Device
@@ -34,7 +38,12 @@ typedef struct
     bool (*sendPacket)(network_adapter_t*, uint8_t*, size_t); // Device, buffer, length
 } network_driver_t;
 
-typedef enum {START, OFFER, ACK, NAK} DHCP_state;
+typedef struct
+{
+    network_adapter_t* adapter;
+    void*              data;
+    size_t             length;
+} networkBuffer_t;
 
 struct network_adapter
 {
@@ -47,19 +56,15 @@ struct network_adapter
     uint8_t           IP_address[4];
     arpTable_t        arpTable;
     DHCP_state        DHCP_State;
+    TCP_state         TCP_PrevState;
+    TCP_state         TCP_CurrState;
 };
-
-typedef struct
-{
-    network_adapter_t* adapter;
-    void*              data;
-    size_t             length;
-} networkBuffer_t;
 
 bool network_installDevice(pciDev_t* device);
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length);
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length); // Called by driver
 void network_displayArpTables();
 network_adapter_t* network_getAdapter(uint8_t IP[4]);
+uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], uint8_t destinationIp[4]);
 
 #endif

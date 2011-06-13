@@ -3,9 +3,6 @@
 
 #include "network/network.h"
 
-#define MAX_UDP_PORTS 65536
-
-
 typedef struct
 {
     uint16_t sourcePort;
@@ -15,9 +12,7 @@ typedef struct
 } __attribute__((packed)) udpPacket_t;
 
 
-void UDPConnect();
-void UDPBind();
-void UDPSend (network_adapter_t* adapter, void* data, uint32_t length,uint16_t srcPort,uint8_t srcIP[4],uint16_t destPort,uint8_t destIP[4]);
+void UDPSend (network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4]);
 void UDPRecv (network_adapter_t* adapter, udpPacket_t* packet, uint32_t length);
 void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp);
 

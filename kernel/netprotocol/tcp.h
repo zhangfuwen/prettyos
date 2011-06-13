@@ -1,21 +1,21 @@
 #ifndef TCP_H
 #define TCP_H
 
-// http://tools.ietf.org/html/rfc793 <--- Transmission Control Protocol
-
 #include "network/network.h"
 
+// http://tools.ietf.org/html/rfc793 
+// http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
 
-// http://de.wikipedia.org/wiki/Transmission_Control_Protocol#Erl.C3.A4uterung
+typedef enum {SYN_FLAG, SYN_ACK_FLAG, ACK_FLAG, FIN_FLAG, RST_FLAG} tcpFlags;
 
 typedef struct
 {
     uint16_t sourcePort;
-    uint16_t destinationPort;
+    uint16_t destPort;
     uint32_t sequenceNumber;
     uint32_t acknowledgmentNumber;
-    uint8_t dataOffset : 4;
     uint8_t reserved   : 4;
+    uint8_t dataOffset : 4;                    // The number of 32 bit words in the TCP Header
 
     // Flags (6 Bit)
     uint8_t FIN : 1;                           // No more data from sender
@@ -43,10 +43,8 @@ void tcpListen();
 // Connects to another host.
 void tcpConnect();
 
-void tcpRecv();
-void tcpSend();
-
-void tcpDebug(tcpPacket_t* tcp);
+void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4]);
+void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4], tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber);
 
 
 #endif

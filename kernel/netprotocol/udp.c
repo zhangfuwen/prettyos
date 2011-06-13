@@ -13,15 +13,13 @@
 #include "udp.h"
 #include "dhcp.h"
 
-static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4]);
-
 void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
     // TODO: ...
     UDPDebug(adapter, packet);
 }
 
-void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4])
+void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4])
 {
     udpPacket_t* packet = malloc(sizeof(udpPacket_t)+length, 0, "UDP packet");
     memcpy(packet+1, data, length);
@@ -29,7 +27,7 @@ void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t  
     packet->sourcePort  = htons(srcPort);
     packet->destPort    = htons(destPort);
     packet->length      = htons(length + sizeof(udpPacket_t));
-    packet->checksum    = udpCalculateChecksum(packet, length + sizeof(udpPacket_t), srcIP, destIP);
+    packet->checksum    = 0; // HACK for DHCP // udptcpCalculateChecksum((void*)packet, length + sizeof(udpPacket_t), srcIP, destIP);
 
     ipv4_send(adapter, packet, length + sizeof(udpPacket_t), destIP, 17);
     free(packet);
@@ -106,65 +104,7 @@ void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp)
     }
 }
 
-static uint16_t udpCalculateChecksum(udpPacket_t* p,size_t length,uint8_t sourceIp[4],uint8_t destinationIp[4])
-{
-    // HACK
-    return 0;
 
-    // Correct?
-    //http://www.faqs.org/rfcs/rfc1146.html
-    uint32_t calcSourceIp = 0;
-    uint32_t calcDestIp = 0;
-    uint32_t header[3];
-    uint16_t *data;
-    uint16_t checksum = 0;
-
-    calcSourceIp |= sourceIp[0];
-    calcSourceIp <<=(uint8_t)8;
-    calcSourceIp |= sourceIp[1];
-    calcSourceIp <<=(uint8_t)8;
-    calcSourceIp |= sourceIp[2];
-    calcSourceIp <<=(uint8_t)8;
-    calcSourceIp |= sourceIp[3];
-
-    calcDestIp |= destinationIp[0];
-    calcDestIp <<=(uint8_t)8;
-    calcDestIp |= destinationIp[1];
-    calcDestIp <<=(uint8_t)8;
-    calcDestIp |= destinationIp[2];
-    calcDestIp <<=(uint8_t)8;
-    calcDestIp |= destinationIp[3];
-
-    header[0] = calcSourceIp;
-    header[1] = calcDestIp;
-    header[3] = (htons(length) << 16) | ( 17 << 8);
-    data = (uint16_t*) &header[0];
-
-    for(uint8_t i = 0; i < 6; i++)
-    {
-        checksum += data[i];
-    }
-    data = (uint16_t*)p;
-
-    for(size_t i = 0; i < length / 2; i++)
-    {
-        if(i != 8)
-        {
-            checksum += (uint8_t)data[i];
-        }
-    }
-    if((length %2) != 0)
-    {
-        checksum += (uint8_t)data[length-1];
-    }
-
-    while((checksum >> 16) != 0)
-    {
-        checksum = (checksum &0xFFFF) + ( checksum >> 16);
-    }
-
-    return ~checksum;
-}
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.

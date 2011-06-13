@@ -134,6 +134,9 @@ bool network_installDevice(pciDev_t* device)
     adapter->DHCP_State  = START;
     DHCP_Discover(adapter);
 
+    // TCP State
+    adapter->TCP_CurrState = CLOSED;
+
     textColor(0x0E);
     printf("\nMAC address: %M", adapter->MAC_address);
     printf(" IP address: %I\n", adapter->IP_address);
@@ -202,6 +205,66 @@ network_adapter_t* network_getAdapter(uint8_t IP[4])
         }
     }
     return(0);
+}
+
+
+// Problem: this function produces #PF at tcp-/udpSend(...)
+uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], uint8_t destinationIp[4])
+{
+    // Correct?
+    //http://www.faqs.org/rfcs/rfc1146.html
+
+    uint32_t calcSourceIp = 0;
+    uint32_t calcDestIp = 0;
+    uint32_t header[3];
+    uint16_t *data;
+    uint16_t checksum = 0;
+
+    calcSourceIp |= sourceIp[0];
+    calcSourceIp <<=(uint8_t)8;
+    calcSourceIp |= sourceIp[1];
+    calcSourceIp <<=(uint8_t)8;
+    calcSourceIp |= sourceIp[2];
+    calcSourceIp <<=(uint8_t)8;
+    calcSourceIp |= sourceIp[3];
+
+    calcDestIp |= destinationIp[0];
+    calcDestIp <<=(uint8_t)8;
+    calcDestIp |= destinationIp[1];
+    calcDestIp <<=(uint8_t)8;
+    calcDestIp |= destinationIp[2];
+    calcDestIp <<=(uint8_t)8;
+    calcDestIp |= destinationIp[3];
+
+    header[0] = calcSourceIp;
+    header[1] = calcDestIp;
+    header[3] = (htons(length) << 16) | ( 17 << 8);
+    data = (uint16_t*) &header[0];
+
+    for(uint8_t i = 0; i < 6; i++)
+    {
+        checksum += data[i];
+    }
+    data = (uint16_t*)p;
+
+    for(size_t i = 0; i < length / 2; i++)
+    {
+        if(i != 8)
+        {
+            checksum += (uint8_t)data[i];
+        }
+    }
+    if((length %2) != 0)
+    {
+        checksum += (uint8_t)data[length-1];
+    }
+
+    while((checksum >> 16) != 0)
+    {
+        checksum = (checksum &0xFFFF) + ( checksum >> 16);
+    }
+
+    return ~checksum;
 }
 
 
