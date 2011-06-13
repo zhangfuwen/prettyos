@@ -255,7 +255,7 @@ size_t vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
     memset(buffer, 0, length);
 
     size_t pos;
-    for (pos = 0; *args && pos < length; args++)
+    for (pos = 0; *args && pos < length - 1; args++)
     {
         switch (*args)
         {
@@ -672,8 +672,8 @@ void systemControl(SYSTEM_CONTROL todo) // TODO: Improve it.
 }
 
 // BOOTSCREEN
-void bootscreen() {
-    clear_console(0);
+void bootscreen()
+{
     textColor(0x08);
     printf("                                                                               \n");
     printf("                                                                               \n");

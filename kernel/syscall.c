@@ -84,7 +84,7 @@ static void* syscalls[] =
 /*  58 */    &setCursor,
 /*  59 */    &getCursor,
 /*  60 */    &nop, // readChar
-/*  61 */    &clear_console,
+/*  61 */    &console_clear,
 /*  62 */    &nop,
 /*  63 */    &nop,
 /*  64 */    &nop,
@@ -135,7 +135,7 @@ static void syscall_handler(registers_t* r)
     if (r->eax >= sizeof(syscalls)/sizeof(*syscalls))
         return;
 
-    currentConsole = currentTask->console; // Syscall output should appear in the console of the task that caused the syscall
+    console_current = currentTask->console; // Syscall output should appear in the console of the task that caused the syscall
     void* addr = syscalls[r->eax];
 
     // We don't know how many parameters the function wants.
@@ -149,9 +149,9 @@ static void syscall_handler(registers_t* r)
       push %5; \
       call *%6; \
       add $20, %%esp;"
-       : "=a" (r->eax) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (addr)); /*Ruinieren wir uns hier nicht den Stack? (Endloses Wachstum)*/
+       : "=a" (r->eax) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (addr)); /*TODO: Ruinieren wir uns hier nicht den Stack? (Endloses Wachstum)*/
 
-    currentConsole = kernelTask.console;
+    console_current = kernelTask.console;
 }
 
 /*

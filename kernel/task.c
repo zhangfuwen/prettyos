@@ -20,8 +20,6 @@ void fpu_setcw(uint16_t ctrlword); // fpu.c
 extern void* globalUserProgAddr;
 extern uint32_t globalUserProgSize;
 
-extern console_t kernelConsole;
-
 
 bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
 
@@ -100,14 +98,6 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
             newTask->userProgSize = globalUserProgSize;
 
             pagingAlloc(newTask->pageDirectory, (void*)(USER_STACK - 10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // Stack starts at USER_STACK-StackSize*PAGESIZE
-
-            // Write argc and argv to user stack
-            cli();
-            paging_switch(newTask->pageDirectory);
-            *((uint32_t*)USER_STACK-2) = argc;
-            *((uint32_t*)USER_STACK-1) = (uintptr_t)argv;
-            paging_switch(currentTask->pageDirectory);
-            sti();
         }
     }
 
@@ -125,7 +115,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
         {
             // General information: Intel 3A Chapter 5.12
             *(--kernelStack) = newTask->ss = 0x23; // ss
-            *(--kernelStack) = USER_STACK-8;       // esp-8 (Stack contains argv and argc, which have a size of 8 bytes)
+            *(--kernelStack) = USER_STACK;         // esp
             code_segment = 0x1B; // 0x18|0x3=0x1B
         }
 
@@ -146,8 +136,8 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     *(--kernelStack) = 0; // Interrupt nummer
 
     // General purpose registers w/o esp
-    *(--kernelStack) = 0;
-    *(--kernelStack) = 0;
+    *(--kernelStack) = argc;            // eax. Used to give argc to user programs.
+    *(--kernelStack) = (uintptr_t)argv; // ecx. Used to give argv to user programs.
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
@@ -317,21 +307,24 @@ static void kill(task_t* task)
     scheduler_log();
     #endif
 
-    // Cleanup, delete current task's console from list of our reachable consoles, if it is in that list, and free memory
+    // Cleanup
     if (task->ownConsole)
     {
-        for (uint8_t i = 0; i < 10; i++)
+        // Delete current task's console from list of our reachable consoles, if it is in that list
+        for (uint8_t i = 1; i < 11; i++)
         {
             if (task->console == reachableConsoles[i])
             {
-                if (i == displayedConsole)
-                {
-                    changeDisplayedConsole(10);
-                }
                 reachableConsoles[i] = 0;
                 break;
             }
         }
+        // Switch back to kernel console if the tasks console is displayed at the moment
+        if (task->console == console_displayed)
+        {
+            console_display(KERNELCONSOLE_ID);
+        }
+        // Free memory
         console_exit(task->console);
         free(task->console);
     }

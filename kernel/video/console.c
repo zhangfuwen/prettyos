@@ -9,15 +9,13 @@
 #include "task.h"
 
 
-console_t* reachableConsoles[11]; // Mainconsole + up to KERNELCONSOLE_ID Subconsoles
-volatile uint8_t displayedConsole = KERNELCONSOLE_ID; // Currently visible console (KERNELCONSOLE_ID per default)
-
-console_t kernelConsole = {0, true, 0, 39, {0, 0}};
-
-// The console of the active task
-volatile console_t* currentConsole = &kernelConsole;
+console_t* reachableConsoles[11]; // Mainconsole + up to 10 subconsoles
+console_t kernelConsole = {.ID = KERNELCONSOLE_ID, .name = 0, .showInfobar = true, .scrollBegin = 0, .scrollEnd = 39, .cursor = {0, 0}, .mutex = 0}; // The console of the kernel task. It is a global variable because it should be initialized as fast as possible.
+volatile console_t* console_current   = &kernelConsole; // The console of the active task
+volatile console_t* console_displayed = &kernelConsole; // Currently visible console
 
 static bool scroll_flag = true;
+
 
 static void scroll();
 
@@ -29,42 +27,48 @@ uint8_t getTextColor()
     return(currentTask->attrib);
 }
 
+void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
+{
+    if(currentTask != 0)
+        currentTask->attrib = color;
+}
+
 void kernel_console_init()
 {
-    kernelConsole.SCROLL_BEGIN = 0;
-    kernelConsole.SCROLL_END = 39;
-    kernelConsole.showInfobar = true;
     kernelConsole.mutex = mutex_create(1);
-    memsetw(kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES);
+    memsetl((uint32_t*)kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES / 2);
 
     keyboard_initKQ(&kernelConsole.KQ);
 
     reachableConsoles[KERNELCONSOLE_ID] = &kernelConsole;
+    memsetl((uint32_t*)reachableConsoles+1, 0, 10);
 }
 
 void console_init(console_t* console, const char* name)
 {
-    console->name         = malloc(strlen(name)+1, 0, "console-name");
-    console->cursor.x     = 0;
-    console->cursor.y     = 0;
-    console->SCROLL_BEGIN = 0;
-    console->SCROLL_END   = USER_LINES;
-    console->showInfobar  = false;
-    console->mutex        = mutex_create(1);
+    console->name        = malloc(strlen(name)+1, 0, "console-name");
+    console->cursor.x    = 0;
+    console->cursor.y    = 0;
+    console->scrollBegin = 0;
+    console->scrollEnd   = USER_LINES;
+    console->showInfobar = false;
+    console->mutex       = mutex_create(1);
     strcpy(console->name, name);
-    memsetw(console->vidmem, 0x00, COLUMNS * USER_LINES);
+    memsetl((uint32_t*)console->vidmem, 0x00, COLUMNS * USER_LINES / 2);
 
     keyboard_initKQ(&console->KQ);
 
-    for (uint8_t i = 0; i < 10; i++)
+    for (uint8_t i = 1; i < 11; i++)
     { // The next free place in our console-list will be filled with the new console
         if (reachableConsoles[i] == 0)
         {
+            console->ID = i;
             reachableConsoles[i] = console;
-            changeDisplayedConsole(i); //Switching to the new console
-            break;
+            console_display(i); //Switching to the new console
+            return;
         }
     }
+    console->ID = 255;
 }
 void console_exit(console_t* console)
 {
@@ -73,98 +77,92 @@ void console_exit(console_t* console)
     keyboard_destroyKQ(&console->KQ);
 }
 
-bool changeDisplayedConsole(uint8_t ID)
+bool console_display(uint8_t ID)
 {
     // Changing visible console, returning false, if this console is not available.
     if (ID > 11 || reachableConsoles[ID] == 0)
     {
         return(false);
     }
-    displayedConsole = ID;
+    console_displayed = reachableConsoles[ID];
     refreshUserScreen();
     return(true);
 }
 
 void setScrollField(uint8_t begin, uint8_t end)
 {
-    currentConsole->SCROLL_BEGIN = begin;
-    currentConsole->SCROLL_END = end;
+    console_current->scrollBegin = begin;
+    console_current->scrollEnd = end;
 }
 
 void showInfobar(bool show)
 {
-    currentConsole->showInfobar = show;
-    currentConsole->SCROLL_END = min(currentConsole->SCROLL_END, 42);
+    console_current->showInfobar = show;
+    console_current->scrollEnd = min(console_current->scrollEnd, 42);
     refreshUserScreen();
 }
 
-void clear_console(uint8_t backcolor)
+void console_clear(uint8_t backcolor)
 {
-    mutex_lock(currentConsole->mutex);
+    mutex_lock(console_current->mutex);
 
     // Erasing the content of the active console
     textColor((backcolor << 4) | 0x0F);
-    memsetw((uint16_t*)currentConsole->vidmem, 0x20 | (getTextColor() << 8), COLUMNS * USER_LINES);
-    currentConsole->cursor.x = 0;
-    currentConsole->cursor.y = 0;
-    if (currentConsole == reachableConsoles[displayedConsole]) // If it is also displayed at the moment, refresh screen
+    memsetw((uint16_t*)console_current->vidmem, 0x20 | (getTextColor() << 8), COLUMNS * USER_LINES);
+    console_current->cursor.x = 0;
+    console_current->cursor.y = 0;
+    if (console_current == console_displayed) // If it is also displayed at the moment, refresh screen
     {
         refreshUserScreen();
     }
-    mutex_unlock(currentConsole->mutex);
-}
-
-void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
-{
-    if(currentTask)
-        currentTask->attrib = color;
+    mutex_unlock(console_current->mutex);
 }
 
 static void move_cursor_right()
 {
-    ++currentConsole->cursor.x;
-    if (currentConsole->cursor.x >= COLUMNS)
+    ++console_current->cursor.x;
+    if (console_current->cursor.x >= COLUMNS)
     {
-        ++currentConsole->cursor.y;
-        currentConsole->cursor.x = 0;
+        ++console_current->cursor.y;
+        console_current->cursor.x = 0;
         scroll();
     }
 }
 
 static void move_cursor_left()
 {
-    if (currentConsole->cursor.x)
-        --currentConsole->cursor.x;
-    else if (currentConsole->cursor.y > 0)
+    if (console_current->cursor.x)
+        --console_current->cursor.x;
+    else if (console_current->cursor.y > 0)
     {
-        currentConsole->cursor.x=COLUMNS-1;
-        --currentConsole->cursor.y;
+        console_current->cursor.x=COLUMNS-1;
+        --console_current->cursor.y;
     }
 }
 
 static void move_cursor_home()
 {
-    currentConsole->cursor.x = 0;
+    console_current->cursor.x = 0;
     update_cursor();
 }
 
 void setCursor(position_t pos)
 {
-    currentConsole->cursor = pos;
+    console_current->cursor = pos;
     update_cursor();
 }
 
 position_t getCursor()
 {
-    return(currentConsole->cursor);
+    return(console_current->cursor);
 }
 
 void console_setPixel(uint8_t x, uint8_t y, uint16_t value)
 {
-    mutex_lock(currentConsole->mutex);
-    currentConsole->vidmem[y*COLUMNS + x] = value;
-    mutex_unlock(currentConsole->mutex);
-    if (currentConsole == reachableConsoles[displayedConsole])
+    mutex_lock(console_current->mutex);
+    console_current->vidmem[y*COLUMNS + x] = value;
+    mutex_unlock(console_current->mutex);
+    if (console_current == console_displayed)
         video_setPixel(x, y+2, value);
 }
 
@@ -172,7 +170,7 @@ void putch(char c)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
-    mutex_lock(currentConsole->mutex);
+    mutex_lock(console_current->mutex);
     switch (uc) {
         case 0x08: // backspace: move the cursor one space backwards and delete
             move_cursor_left();
@@ -180,11 +178,11 @@ void putch(char c)
             move_cursor_left();
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
-            currentConsole->cursor.x = (currentConsole->cursor.x + 8) & ~(8 - 1);
-            if (currentConsole->cursor.x>=COLUMNS)
+            console_current->cursor.x = (console_current->cursor.x + 8) & ~(8 - 1);
+            if (console_current->cursor.x>=COLUMNS)
             {
-                ++currentConsole->cursor.y;
-                currentConsole->cursor.x=0;
+                ++console_current->cursor.y;
+                console_current->cursor.x=0;
                 scroll();
             }
             break;
@@ -192,52 +190,51 @@ void putch(char c)
             move_cursor_home();
             break;
         case '\n': // newline: like 'cr': cursor to the margin and increment cursor.y
-            ++currentConsole->cursor.y; move_cursor_home();
+            ++console_current->cursor.y; move_cursor_home();
             scroll();
             break;
         default:
             if (uc != 0)
             {
                 uint32_t att = getTextColor() << 8;
-                if (reachableConsoles[displayedConsole] == currentConsole) { //print to screen
-                    video_setPixel(currentConsole->cursor.x, currentConsole->cursor.y+2, uc | att); // character AND attributes: color
-                }
-                *(currentConsole->vidmem + currentConsole->cursor.y * COLUMNS + currentConsole->cursor.x) = uc | att; // character AND attributes: color
+                *(console_current->vidmem + console_current->cursor.y * COLUMNS + console_current->cursor.x) = uc | att; // character AND attributes: color
+                if (console_displayed == console_current) // Print to screen, if current console is displayed at the moment
+                    video_setPixel(console_current->cursor.x, console_current->cursor.y+2, uc | att); // character AND attributes: color
                 move_cursor_right();
             }
             break;
     }
-    mutex_unlock(currentConsole->mutex);
+    mutex_unlock(console_current->mutex);
 }
 
 void puts(const char* text)
 {
-    mutex_lock(currentConsole->mutex);
+    mutex_lock(console_current->mutex);
     for (; *text; putch(*text), ++text);
-    mutex_unlock(currentConsole->mutex);
+    mutex_unlock(console_current->mutex);
 }
 
 static void scroll()
 {
-    mutex_lock(currentConsole->mutex);
-    uint8_t scroll_begin = currentConsole->SCROLL_BEGIN;
-    uint8_t scroll_end = min(USER_LINES, currentConsole->SCROLL_END);
-    if (scroll_flag && currentConsole->cursor.y >= scroll_end)
+    mutex_lock(console_current->mutex);
+    uint8_t scroll_begin = console_current->scrollBegin;
+    uint8_t scroll_end = min(USER_LINES, console_current->scrollEnd);
+    if (scroll_flag && console_current->cursor.y >= scroll_end)
     {
-        uint8_t lines = currentConsole->cursor.y - scroll_end + 1;
-        memcpy((uint16_t*)currentConsole->vidmem + scroll_begin*COLUMNS, (uint16_t*)currentConsole->vidmem + scroll_begin*COLUMNS + lines * COLUMNS, (scroll_end - lines) * COLUMNS * sizeof(uint16_t));
-        memsetw((uint16_t*)currentConsole->vidmem + (scroll_end - lines) * COLUMNS, getTextColor() << 8, COLUMNS);
-        currentConsole->cursor.y = scroll_end - 1;
+        uint8_t lines = console_current->cursor.y - scroll_end + 1;
+        memcpy((uint16_t*)console_current->vidmem + scroll_begin*COLUMNS, (uint16_t*)console_current->vidmem + scroll_begin*COLUMNS + lines * COLUMNS, (scroll_end - lines) * COLUMNS * sizeof(uint16_t));
+        memsetw((uint16_t*)console_current->vidmem + (scroll_end - lines) * COLUMNS, getTextColor() << 8, COLUMNS);
+        console_current->cursor.y = scroll_end - 1;
         refreshUserScreen();
     }
-    mutex_unlock(currentConsole->mutex);
+    mutex_unlock(console_current->mutex);
 }
 
 /// TODO: make it standardized!
 // vprintf(...): supports %u, %d/%i, %f, %y/%x/%X, %s, %c, %% and the PrettyOS-specific %v, %I and %M
 size_t vprintf(const char* args, va_list ap)
 {
-    mutex_lock(currentConsole->mutex);
+    mutex_lock(console_current->mutex);
 
     uint8_t attribute = getTextColor();
     char buffer[32]; // Larger is not needed at the moment
@@ -325,7 +322,7 @@ size_t vprintf(const char* args, va_list ap)
                 break;
         }
     }
-    mutex_unlock(currentConsole->mutex);
+    mutex_unlock(console_current->mutex);
     return(pos);
 }
 
@@ -340,14 +337,14 @@ size_t printf(const char* args, ...)
 
 size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
-    mutex_lock(currentConsole->mutex);
+    mutex_lock(console_current->mutex);
     uint8_t old_attrib = getTextColor();
-    uint8_t c_x = currentConsole->cursor.x;
-    uint8_t c_y = currentConsole->cursor.y;
+    uint8_t c_x = console_current->cursor.x;
+    uint8_t c_y = console_current->cursor.y;
     scroll_flag = false;
 
     textColor(attribute);
-    currentConsole->cursor.x = 0; currentConsole->cursor.y = line;
+    console_current->cursor.x = 0; console_current->cursor.y = line;
 
     // Call usual printf routines
     va_list ap;
@@ -357,9 +354,9 @@ size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
     scroll_flag = true;
     textColor(old_attrib);
-    currentConsole->cursor.x = c_x;
-    currentConsole->cursor.y = c_y;
-    mutex_unlock(currentConsole->mutex);
+    console_current->cursor.x = c_x;
+    console_current->cursor.y = c_y;
+    mutex_unlock(console_current->mutex);
 
     return(retval);
 }

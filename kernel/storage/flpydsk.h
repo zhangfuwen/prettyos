@@ -6,7 +6,7 @@
 #include "synchronisation.h"
 
 #define MAX_FLOPPY 2
-#define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 25
+#define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 10
 
 typedef enum {
     SECTOR, TRACK

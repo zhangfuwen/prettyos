@@ -517,6 +517,7 @@ static FS_ERROR flpydsk_read(uint32_t sectorLBA, uint8_t numberOfSectors)
     CurrentDrive->accessRemaining+=2;
     if (flpydsk_seek(track, head) != 0)
     {
+        printf("\nseek error");
         retVal = CE_SEEK_ERROR;
     }
 
@@ -526,9 +527,8 @@ static FS_ERROR flpydsk_read(uint32_t sectorLBA, uint8_t numberOfSectors)
         timeout--;
         if (timeout == 0)
         {
-            printf("\nread_sector timeout: read error!\n");
-            retVal = CE_TIMEOUT;
-            break;
+            printf("\nread_sector timeout: read error!");
+            return CE_TIMEOUT;
         }
         CurrentDrive->accessRemaining++;
     }
@@ -551,7 +551,7 @@ static FS_ERROR flpydsk_write(uint32_t sectorLBA, uint8_t numberOfSectors)
 
     CurrentDrive->accessRemaining+=2;
 
-    if (flpydsk_seek(track, head)!=0)
+    if (flpydsk_seek(track, head) != 0)
     {
         printf("flpydsk_seek not ok. sector not written.\n");
         CurrentDrive->accessRemaining--;

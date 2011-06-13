@@ -156,12 +156,12 @@ uint8_t ScanToASCII()
     {
         if (retchar == 'm')
         {
-            changeDisplayedConsole(10);
+            console_display(KERNELCONSOLE_ID);
             return(0);
         }
         if (ctoi(retchar) != -1)
         {
-            changeDisplayedConsole(ctoi(retchar));
+            console_display(1+ctoi(retchar));
             return 0;
         }
     }
@@ -252,39 +252,39 @@ void keyboard_handler(registers_t* r)
     uint8_t KEY = ScanToASCII();
     if (KEY)
     {
-        mutex_lock(reachableConsoles[displayedConsole]->KQ.mutex);
-        *reachableConsoles[displayedConsole]->KQ.pTail = KEY;
-        ++reachableConsoles[displayedConsole]->KQ.count;
+        mutex_lock(console_displayed->KQ.mutex);
+        *console_displayed->KQ.pTail = KEY;
+        ++console_displayed->KQ.count;
 
-        if (reachableConsoles[displayedConsole]->KQ.pTail > reachableConsoles[displayedConsole]->KQ.buffer)
+        if (console_displayed->KQ.pTail > console_displayed->KQ.buffer)
         {
-            --reachableConsoles[displayedConsole]->KQ.pTail;
+            --console_displayed->KQ.pTail;
         }
-        if (reachableConsoles[displayedConsole]->KQ.pTail == reachableConsoles[displayedConsole]->KQ.buffer)
+        if (console_displayed->KQ.pTail == console_displayed->KQ.buffer)
         {
-            reachableConsoles[displayedConsole]->KQ.pTail = reachableConsoles[displayedConsole]->KQ.buffer + KQSIZE - 1;
+            console_displayed->KQ.pTail = (uint8_t*)console_displayed->KQ.buffer + KQSIZE - 1;
         }
-        mutex_unlock(reachableConsoles[displayedConsole]->KQ.mutex);
+        mutex_unlock(console_displayed->KQ.mutex);
     }
 }
 
 uint8_t keyboard_getChar()
 {
-    if (currentConsole->KQ.count > 0)
+    if (console_current->KQ.count > 0)
     {
-        mutex_lock(currentConsole->KQ.mutex);
-        uint8_t KEY = *currentConsole->KQ.pHead;
-        --currentConsole->KQ.count;
+        mutex_lock(console_current->KQ.mutex);
+        uint8_t KEY = *console_current->KQ.pHead;
+        --console_current->KQ.count;
 
-        if (currentConsole->KQ.pHead > currentConsole->KQ.buffer)
+        if (console_current->KQ.pHead > console_current->KQ.buffer)
         {
-            --currentConsole->KQ.pHead;
+            --console_current->KQ.pHead;
         }
-        if (currentConsole->KQ.pHead == currentConsole->KQ.buffer)
+        if (console_current->KQ.pHead == console_current->KQ.buffer)
         {
-            currentConsole->KQ.pHead = (void*)currentConsole->KQ.buffer + KQSIZE - 1;
+            console_current->KQ.pHead = (void*)console_current->KQ.buffer + KQSIZE - 1;
         }
-        mutex_unlock(currentConsole->KQ.mutex);
+        mutex_unlock(console_current->KQ.mutex);
         return KEY;
     }
     return 0;

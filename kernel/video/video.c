@@ -45,7 +45,7 @@ void video_setPixel(uint8_t x, uint8_t y, uint16_t value)
 void clear_screen()
 {
     mutex_lock(videoLock);
-    memsetw(vidmem, 0x00, COLUMNS * LINES);
+    memsetl((void*)vidmem, 0x00, COLUMNS * LINES / 2);
     mutex_unlock(videoLock);
     update_cursor();
 }
@@ -201,7 +201,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
 static void refreshInfoBar()
 {
-    memsetw(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS); // Clearing info-area
+    memsetl((uint32_t*)(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS), 0, 3 * COLUMNS / 2); // Clearing info-area
     kprintf(infoBar[0], 45, 14);
     kprintf(infoBar[1], 46, 14);
     kprintf(infoBar[2], 47, 14);
@@ -214,7 +214,7 @@ void writeInfo(uint8_t line, const char* args, ...)
     vsnprintf(infoBar[line], 81, args, ap);
     va_end(ap);
 
-    if(reachableConsoles[displayedConsole]->showInfobar)
+    if(console_displayed->showInfobar)
     {
         refreshInfoBar();
     }
@@ -227,7 +227,7 @@ void refreshUserScreen()
     // Printing titlebar
     kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
 
-    if (displayedConsole == KERNELCONSOLE_ID)
+    if (console_displayed->ID == KERNELCONSOLE_ID)
     {
         cursor.x = COLUMNS - 5;
         kputs("Shell");
@@ -235,36 +235,35 @@ void refreshUserScreen()
     else
     {
         char Buffer[70];
-        snprintf(Buffer, 70, "Console %u: %s", displayedConsole, reachableConsoles[displayedConsole]->name);
+        snprintf(Buffer, 70, "Console %u: %s", console_displayed->ID-1, console_displayed->name);
         cursor.x = COLUMNS - strlen(Buffer);
         cursor.y = 0;
         kputs(Buffer);
     }
     kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
-    if(reachableConsoles[displayedConsole]->showInfobar)
+    if(console_displayed->showInfobar)
     {
         // copying content of visible console to the video-ram
-        memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * (USER_LINES-4) * 2);
-        memsetw(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS); // Clearing info-area
+        memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_LINES-4) * 2);
         kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
         refreshInfoBar();
     }
     else
     {
         // copying content of visible console to the video-ram
-        memcpy(vidmem + USER_BEGIN * COLUMNS, reachableConsoles[displayedConsole]->vidmem, COLUMNS * USER_LINES*2);
+        memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * USER_LINES*2);
     }
     kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
 
-    cursor.y = reachableConsoles[displayedConsole]->cursor.y;
-    cursor.x = reachableConsoles[displayedConsole]->cursor.x;
+    cursor.y = console_displayed->cursor.y;
+    cursor.x = console_displayed->cursor.x;
     mutex_unlock(videoLock);
     update_cursor();
 }
 
 void update_cursor()
 {
-    uint16_t position = (reachableConsoles[displayedConsole]->cursor.y+2) * COLUMNS + reachableConsoles[displayedConsole]->cursor.x;
+    uint16_t position = (console_displayed->cursor.y+2) * COLUMNS + console_displayed->cursor.x;
     // cursor HIGH port to vga INDEX register
     outportb(0x3D4, 0x0E);
     outportb(0x3D5, (uint8_t)((position>>8)&0xFF));

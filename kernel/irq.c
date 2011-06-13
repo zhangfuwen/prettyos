@@ -79,7 +79,6 @@ static void quitTask()
 
 static void defaultError(registers_t* r)
 {
-    if(r->eflags & 0x20000) return; // VM86
     printf("\nerr_code: %u address(eip): %Xh\n", r->err_code, r->eip);
     printf("edi: %Xh esi: %Xh ebp: %Xh eax: %Xh ebx: %Xh ecx: %Xh edx: %Xh\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
     printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
@@ -194,7 +193,7 @@ uint32_t irq_handler(uintptr_t esp)
 {
     task_t* oldTask = (task_t*)currentTask; // Save old task to be able to restore attr in case of task_switch
     uint8_t attr = currentTask->attrib;     // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
-    currentConsole = kernelTask.console;    // The output should appear in the kernels console usually. Exception: Syscalls (cf. syscall.c)
+    console_current = kernelTask.console;    // The output should appear in the kernels console usually. Exception: Syscalls (cf. syscall.c)
 
     registers_t* r = (registers_t*)esp;
 
@@ -212,7 +211,7 @@ uint32_t irq_handler(uintptr_t esp)
         outportb(0xA0, 0x20);
     outportb(0x20, 0x20);
 
-    currentConsole = currentTask->console;
+    console_current = currentTask->console;
     if(r->int_no != 0x7F) // Syscalls (especially textColor) should be able to change color. HACK: Can this be solved nicer?
         oldTask->attrib = attr;
     return esp;

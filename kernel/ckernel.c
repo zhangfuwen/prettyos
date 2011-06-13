@@ -21,11 +21,10 @@
 #include "descriptor_tables.h"
 #include "power_management.h"
 #include "elf.h"
-
 #include "executable.h"
 
 
-const char* const version = "0.0.2.101 - Rev: 940";
+const char* const version = "0.0.2.102 - Rev: 941";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
