@@ -211,7 +211,7 @@ network_adapter_t* network_getAdapter(uint8_t IP[4])
 // Problem: this function produces #PF at tcp-/udpSend(...)
 uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], uint8_t destinationIp[4])
 {
-    // Correct?
+    // Not correct! (wireshark validation test)
     //http://www.faqs.org/rfcs/rfc1146.html
 
     uint32_t calcSourceIp = 0;
@@ -238,7 +238,7 @@ uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], ui
 
     header[0] = calcSourceIp;
     header[1] = calcDestIp;
-    header[3] = (htons(length) << 16) | ( 17 << 8);
+    header[2] = (htons(length) << 16) | ( 17 << 8);
     data = (uint16_t*) &header[0];
 
     for(uint8_t i = 0; i < 6; i++)

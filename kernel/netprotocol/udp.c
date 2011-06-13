@@ -27,7 +27,8 @@ void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t s
     packet->sourcePort  = htons(srcPort);
     packet->destPort    = htons(destPort);
     packet->length      = htons(length + sizeof(udpPacket_t));
-    packet->checksum    = 0; // HACK for DHCP // udptcpCalculateChecksum((void*)packet, length + sizeof(udpPacket_t), srcIP, destIP);
+    packet->checksum    = 0; // 0 necessary for successful DHCP Process   
+                          // udptcpCalculateChecksum((void*)packet, length + sizeof(udpPacket_t), srcIP, destIP);
 
     ipv4_send(adapter, packet, length + sizeof(udpPacket_t), destIP, 17);
     free(packet);

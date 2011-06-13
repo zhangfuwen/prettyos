@@ -16,14 +16,22 @@
 #define RIP_3   1
 #define RIP_4  97
 
-//for qemu
 /*
+//for qemu
+
+// own IP at start
+#define IP_1   10
+#define IP_2    0
+#define IP_3    2
+#define IP_4   15
+
 // requested IP
 #define RIP_1  10
 #define RIP_2   0
 #define RIP_3   2
 #define RIP_4  15
 */
+
 
 typedef enum {START, OFFER, ACK, NAK} DHCP_state;
 typedef enum {CLOSED, LISTEN, SYN_SENT, SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, CLOSING, CLOSE_WAIT, LAST_ACK, TIME_WAIT} TCP_state;
