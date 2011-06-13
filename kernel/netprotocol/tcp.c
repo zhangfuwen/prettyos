@@ -118,7 +118,7 @@ void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t s
     }
     
     packet->window = 65535; // TODO: Clarify
-    packet->checksum = udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), srcIP, destIP);
+    packet->checksum = udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), srcIP, destIP, 6);
 
     ipv4_send(adapter, packet, length + sizeof(tcpPacket_t), destIP, 6);
     free(packet);

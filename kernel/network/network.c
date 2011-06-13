@@ -207,9 +207,7 @@ network_adapter_t* network_getAdapter(uint8_t IP[4])
     return(0);
 }
 
-
-// Problem: this function produces #PF at tcp-/udpSend(...)
-uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], uint8_t destinationIp[4])
+uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], uint8_t destinationIp[4], uint16_t protocol)
 {
     // Not correct! (wireshark validation test)
     //http://www.faqs.org/rfcs/rfc1146.html
@@ -217,7 +215,6 @@ uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], ui
     uint32_t calcSourceIp = 0;
     uint32_t calcDestIp = 0;
     uint32_t header[3];
-    uint16_t *data;
     uint16_t checksum = 0;
 
     calcSourceIp |= sourceIp[0];
@@ -238,30 +235,28 @@ uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], ui
 
     header[0] = calcSourceIp;
     header[1] = calcDestIp;
-    header[2] = (htons(length) << 16) | ( 17 << 8);
-    data = (uint16_t*) &header[0];
-
+    header[2] = ( (htons(length) << 16) | ( protocol << 8) ); 
+    
     for(uint8_t i = 0; i < 6; i++)
     {
-        checksum += data[i];
+        checksum += ((uint16_t*) header)[i];
     }
-    data = (uint16_t*)p;
-
+    
     for(size_t i = 0; i < length / 2; i++)
     {
         if(i != 8)
         {
-            checksum += (uint8_t)data[i];
+            checksum += ((uint16_t*)p)[i];
         }
     }
     if((length %2) != 0)
     {
-        checksum += (uint8_t)data[length-1];
+        checksum += ((uint16_t*)p)[length-1];
     }
 
     while((checksum >> 16) != 0)
     {
-        checksum = (checksum &0xFFFF) + ( checksum >> 16);
+        checksum = (checksum & 0xFFFF) + ( checksum >> 16);
     }
 
     return ~checksum;
