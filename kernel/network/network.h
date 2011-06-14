@@ -73,6 +73,6 @@ bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t leng
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length); // Called by driver
 void network_displayArpTables();
 network_adapter_t* network_getAdapter(uint8_t IP[4]);
-uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], uint8_t destinationIp[4], uint16_t protocol);
+uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uint8_t destIP[4], uint16_t protocol);
 
 #endif

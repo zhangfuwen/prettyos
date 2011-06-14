@@ -24,7 +24,7 @@ void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t leng
 
     memcpy(&pkt[sizeof(*icmp)], (void*)(rec+1), icmp_data_length);
 
-    icmp->checksum = htons(internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length));
+    icmp->checksum = htons(internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0));
 
     printf("\n\n");
     printf("ICMP Header information:\n");

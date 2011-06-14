@@ -37,7 +37,7 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
     {
         tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
         adapter->TCP_PrevState = adapter->TCP_CurrState;
-        adapter->TCP_CurrState = SYN_RECEIVED;        
+        adapter->TCP_CurrState = SYN_RECEIVED;
     }
     if (tcp->SYN && tcp->ACK)  // SYN ACK
     {
@@ -62,7 +62,7 @@ void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t s
     packet->sequenceNumber = seqNumber;
     packet->acknowledgmentNumber = ackNumber;
     packet->dataOffset = sizeof(tcpPacket_t)>>2 ; // header length as number of DWORDS
-    packet->reserved = 0;    
+    packet->reserved = 0;
     switch (flags)
     {
     case SYN_FLAG:
@@ -116,9 +116,10 @@ void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t s
         packet->FIN = 0;
         break;
     }
-    
+
     packet->window = 65535; // TODO: Clarify
-    packet->checksum = udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), srcIP, destIP, 6);
+    packet->checksum = 0; // for checksum calculation
+    packet->checksum = htons(udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), srcIP, destIP, 6));
 
     ipv4_send(adapter, packet, length + sizeof(tcpPacket_t), destIP, 6);
     free(packet);

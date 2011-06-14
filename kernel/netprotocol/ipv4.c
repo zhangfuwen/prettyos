@@ -70,7 +70,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     packet->ttl            = 128;
     packet->protocol       = protocol;
     packet->checksum       = 0;
-    packet->checksum       = htons(internetChecksum(packet, sizeof(ipv4Packet_t)));
+    packet->checksum       = htons(internetChecksum(packet, sizeof(ipv4Packet_t), 0)); // util.c
 
 
     /*

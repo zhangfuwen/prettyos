@@ -207,59 +207,39 @@ network_adapter_t* network_getAdapter(uint8_t IP[4])
     return(0);
 }
 
-uint16_t udptcpCalculateChecksum(void* p, size_t length, uint8_t sourceIp[4], uint8_t destinationIp[4], uint16_t protocol)
+uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uint8_t destIP[4], uint16_t protocol)
 {
-    // Not correct! (wireshark validation test)
-    //http://www.faqs.org/rfcs/rfc1146.html
-
-    uint32_t calcSourceIp = 0;
-    uint32_t calcDestIp = 0;
+    uint16_t pseudoHeaderChecksum = 0;
+    uint32_t calcSourceIP = 0;
+    uint32_t calcDestIP   = 0;
     uint32_t header[3];
-    uint16_t checksum = 0;
 
-    calcSourceIp |= sourceIp[0];
-    calcSourceIp <<=(uint8_t)8;
-    calcSourceIp |= sourceIp[1];
-    calcSourceIp <<=(uint8_t)8;
-    calcSourceIp |= sourceIp[2];
-    calcSourceIp <<=(uint8_t)8;
-    calcSourceIp |= sourceIp[3];
+    uint8_t* data = (uint8_t*) header;
+    uint8_t  count = 12; // pseudo header contains 12 byte
 
-    calcDestIp |= destinationIp[0];
-    calcDestIp <<=(uint8_t)8;
-    calcDestIp |= destinationIp[1];
-    calcDestIp <<=(uint8_t)8;
-    calcDestIp |= destinationIp[2];
-    calcDestIp <<=(uint8_t)8;
-    calcDestIp |= destinationIp[3];
+    calcSourceIP |= srcIP[0]; calcSourceIP <<=8;
+    calcSourceIP |= srcIP[1]; calcSourceIP <<=8;
+    calcSourceIP |= srcIP[2]; calcSourceIP <<=8;
+    calcSourceIP |= srcIP[3];
 
-    header[0] = calcSourceIp;
-    header[1] = calcDestIp;
-    header[2] = ( (htons(length) << 16) | ( protocol << 8) ); 
-    
-    for(uint8_t i = 0; i < 6; i++)
+    calcDestIP |= destIP[0];  calcDestIP <<=8;
+    calcDestIP |= destIP[1];  calcDestIP <<=8;
+    calcDestIP |= destIP[2];  calcDestIP <<=8;
+    calcDestIP |= destIP[3];
+
+    header[0] = calcSourceIP;
+    header[1] = calcDestIP;
+    header[2] = (htons(length) << 16) | ( protocol << 8);
+
+    while (count > 1)
     {
-        checksum += ((uint16_t*) header)[i];
-    }
-    
-    for(size_t i = 0; i < length / 2; i++)
-    {
-        if(i != 8)
-        {
-            checksum += ((uint16_t*)p)[i];
-        }
-    }
-    if((length %2) != 0)
-    {
-        checksum += ((uint16_t*)p)[length-1];
+        // pseudo header contains 6 WORD
+        pseudoHeaderChecksum += (data[0] << 8) | data[1]; // Big Endian
+        data  += 2;
+        count -= 2;
     }
 
-    while((checksum >> 16) != 0)
-    {
-        checksum = (checksum & 0xFFFF) + ( checksum >> 16);
-    }
-
-    return ~checksum;
+    return internetChecksum(p, length, pseudoHeaderChecksum); // util.c
 }
 
 
