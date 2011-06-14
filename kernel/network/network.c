@@ -209,34 +209,31 @@ network_adapter_t* network_getAdapter(uint8_t IP[4])
 
 uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uint8_t destIP[4], uint16_t protocol)
 {
-    uint16_t pseudoHeaderChecksum = 0;
-    uint32_t calcSourceIP = 0;
-    uint32_t calcDestIP   = 0;
-    uint32_t header[3];
-
-    uint8_t* data = (uint8_t*) header;
+    uint32_t pseudoHeaderChecksum = 0;
+    uint8_t  header[12]; // Pseudo header
+    uint8_t* data = header;
     uint8_t  count = 12; // pseudo header contains 12 byte
 
-    calcSourceIP |= srcIP[0]; calcSourceIP <<=8;
-    calcSourceIP |= srcIP[1]; calcSourceIP <<=8;
-    calcSourceIP |= srcIP[2]; calcSourceIP <<=8;
-    calcSourceIP |= srcIP[3];
-
-    calcDestIP |= destIP[0];  calcDestIP <<=8;
-    calcDestIP |= destIP[1];  calcDestIP <<=8;
-    calcDestIP |= destIP[2];  calcDestIP <<=8;
-    calcDestIP |= destIP[3];
-
-    header[0] = htonl(calcSourceIP);
-    header[1] = htonl(calcDestIP);
-    header[2] = htonl( (length << 16) | ( protocol << 8) );
-
+    for (uint8_t i=0; i<4; i++)
+    {
+        header[i] = srcIP[i];
+    }
+    for (uint8_t i=4; i<8; i++)
+    {
+        header[i] = destIP[i-4];
+    }
+    
+    header[8]  = 0;
+    header[9]  = protocol;
+    header[10] = length & 0xFF;
+    header[11] = (length >> 8) & 0xFF;
+    
     while (count > 1)
     {
         // pseudo header contains 6 WORD
         pseudoHeaderChecksum += (data[0] << 8) | data[1]; // Big Endian
-        data  += 2;
-        count -= 2;
+        data   += 2;
+        count  -= 2;
     }
 
     return internetChecksum(p, length, pseudoHeaderChecksum); // util.c

@@ -82,7 +82,7 @@ void   i2hex(uint32_t val, char* dest, int32_t len);
 
 uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
 
-uint16_t internetChecksum(void* addr, size_t count, uint16_t pseudoHeaderChecksum);
+uint16_t internetChecksum(void* addr, size_t count, uint32_t pseudoHeaderChecksum);
 
 uint32_t alignUp(uint32_t val, uint32_t alignment);
 uint32_t alignDown(uint32_t val, uint32_t alignment);

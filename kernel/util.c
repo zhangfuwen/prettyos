@@ -625,7 +625,7 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
 }
 
 // compute internet checksum for "count" bytes beginning at location "addr"
-uint16_t internetChecksum(void* addr, size_t count, uint16_t pseudoHeaderChecksum)
+uint16_t internetChecksum(void* addr, size_t count, uint32_t pseudoHeaderChecksum)
 {
     uint32_t sum  = pseudoHeaderChecksum;
     uint8_t* data = addr;
