@@ -227,9 +227,9 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uin
     calcDestIP |= destIP[2];  calcDestIP <<=8;
     calcDestIP |= destIP[3];
 
-    header[0] = calcSourceIP;
-    header[1] = calcDestIP;
-    header[2] = (htons(length) << 16) | ( protocol << 8);
+    header[0] = htonl(calcSourceIP);
+    header[1] = htonl(calcDestIP);
+    header[2] = htonl( (length << 16) | ( protocol << 8) );
 
     while (count > 1)
     {
