@@ -33,6 +33,15 @@ typedef struct
     uint16_t urgentPointer;
 } __attribute__((packed)) tcpPacket_t;
 
+typedef struct 
+{
+        uint8_t src[4];
+        uint8_t dest[4];
+        uint8_t res;
+        uint8_t prot;
+        uint16_t length;
+} __attribute__((packed)) tcpPseudoHeader_t;
+
 
 // Binds the connection to a local portnumber and IP address.
 void tcpBind();

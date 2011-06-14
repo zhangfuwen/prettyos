@@ -13,6 +13,7 @@
 #include "video/console.h"
 #include "netprotocol/ethernet.h"
 #include "netprotocol/dhcp.h"
+#include "netprotocol/tcp.h"
 #include "list.h"
 #include "todo_list.h"
 #include "timer.h"
@@ -209,25 +210,21 @@ network_adapter_t* network_getAdapter(uint8_t IP[4])
 
 uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uint8_t destIP[4], uint16_t protocol)
 {
-    uint32_t pseudoHeaderChecksum = 0;
-    uint8_t  header[12]; // Pseudo header
-    uint8_t* data = header;
-    uint8_t  count = 12; // pseudo header contains 12 byte
-
+    tcpPseudoHeader_t pseudo;
     for (uint8_t i=0; i<4; i++)
     {
-        header[i] = srcIP[i];
+        pseudo.src[i] = srcIP[i];
+        pseudo.dest[i] = destIP[i];
     }
-    for (uint8_t i=4; i<8; i++)
-    {
-        header[i] = destIP[i-4];
-    }
-    
-    header[8]  = 0;
-    header[9]  = protocol;
-    header[10] = length & 0xFF;
-    header[11] = (length >> 8) & 0xFF;
-    
+    pseudo.length = htons(length);
+    pseudo.prot = protocol;
+    pseudo.res = 0;
+ 
+    uint32_t pseudoHeaderChecksum = 0;
+    uint8_t  count = 12; // pseudo header contains 12 byte
+ 
+    uint8_t* data = (uint8_t*)&pseudo;   
+ 
     while (count > 1)
     {
         // pseudo header contains 6 WORD
@@ -235,7 +232,7 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uin
         data   += 2;
         count  -= 2;
     }
-
+ 
     return internetChecksum(p, length, pseudoHeaderChecksum); // util.c
 }
 
