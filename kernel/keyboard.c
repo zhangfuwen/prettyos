@@ -10,6 +10,7 @@
 #include "network/network.h"
 #include "netprotocol/udp.h"
 #include "netprotocol/dhcp.h"
+#include "netprotocol/tcp.h"
 
 #if KEYMAP == GER
 #include "keyboard_GER.h"
@@ -229,7 +230,7 @@ uint8_t ScanToASCII()
             }
             return 0;
         }
-        if(retchar == 'f') // DHCP Inform
+        if(retchar == 'f') // DHCP Release
         {
             uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
@@ -239,6 +240,20 @@ uint8_t ScanToASCII()
             if (adapter)
             {
                 DHCP_Release(adapter);
+            }
+            return 0;
+        }
+        if(retchar == 'c') // Set TCP state to LISTEN
+        {
+            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+
+            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            printf("network adapter: %Xh\n", adapter); // check
+
+            if (adapter)
+            {
+                adapter->TCP_CurrState = CLOSED;
+                tcpListen(adapter);
             }
             return 0;
         }

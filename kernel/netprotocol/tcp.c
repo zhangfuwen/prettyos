@@ -130,7 +130,7 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
     if (tcp->SYN && !tcp->ACK) // SYN
     {
         adapter->TCP_PrevState = adapter->TCP_CurrState;
-        if (adapter->TCP_CurrState == CLOSED)
+        if (adapter->TCP_CurrState == CLOSED || adapter->TCP_CurrState == TIME_WAIT) // HACK, TODO: build sockes, use timeout (TIME_WAIT --> CLOSED)
         {   
             printf("TCP set from CLOSED to LISTEN.\n");
             tcpListen(adapter);
@@ -201,6 +201,13 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
         adapter->TCP_PrevState = adapter->TCP_CurrState;
 
         if (adapter->TCP_CurrState == FIN_WAIT_1)
+        {
+            tcpSend(adapter, 0, 0, tcp->destPort, adapter->IP_address, tcp->sourcePort, transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->TCP_CurrState = TIME_WAIT;
+        }
+        
+        // HACK due to observations in wireshark with telnet:
+        // w/o conditions
         {
             tcpSend(adapter, 0, 0, tcp->destPort, adapter->IP_address, tcp->sourcePort, transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
             adapter->TCP_CurrState = TIME_WAIT;
