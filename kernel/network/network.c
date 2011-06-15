@@ -66,7 +66,7 @@ bool network_installDevice(pciDev_t* device)
     // PrettyOS has a driver for this adapter. Install it.
     network_adapter_t* adapter = malloc(sizeof(network_adapter_t), 0, "network apdapter");
     adapter->driver = driver;
-    adapter->PCIdev = device;
+    adapter->PCIdev = device;    
 
     arp_initTable(&adapter->arpTable);
 

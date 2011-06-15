@@ -3,10 +3,10 @@
 
 #include "network/network.h"
 
-// http://tools.ietf.org/html/rfc793 
+// http://tools.ietf.org/html/rfc793
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
 
-typedef enum {SYN_FLAG, SYN_ACK_FLAG, ACK_FLAG, FIN_FLAG, RST_FLAG} tcpFlags;
+typedef enum {SYN_FLAG, SYN_ACK_FLAG, ACK_FLAG, FIN_FLAG, FIN_ACK_FLAG, RST_FLAG} tcpFlags;
 
 typedef struct
 {
@@ -33,7 +33,7 @@ typedef struct
     uint16_t urgentPointer;
 } __attribute__((packed)) tcpPacket_t;
 
-typedef struct 
+typedef struct
 {
         uint8_t src[4];
         uint8_t dest[4];
@@ -44,13 +44,15 @@ typedef struct
 
 
 // Binds the connection to a local portnumber and IP address.
-void tcpBind();
+void tcpBind(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4]);
 
 // Set the state of the connection to be LISTEN.
-void tcpListen();
+void tcpListen(network_adapter_t* adapter);
 
-// Connects to another host.
-void tcpConnect();
+// Connects to another host, and set the state of the connection to be SYN_SENT
+void tcpConnect(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4]);
+
+void tcpClose(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4]);
 
 void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4]);
 void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4], tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber);

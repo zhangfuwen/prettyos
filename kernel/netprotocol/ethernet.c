@@ -24,20 +24,22 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         printf("\nEthernet packet received. We are not the addressee.");
         return;
     }
-
+  #ifdef _NETWORK_DATA_  
     uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
+  #endif
 
     // output ethernet packet
 
     textColor(0x0D); printf("\nLength: ");
     textColor(0x03); printf("%d", length);
 
-    textColor(0x0D); printf("\nMAC Receiver: "); textColor(0x03);
+    textColor(0x0D); printf(" Rcv: "); textColor(0x03);
     printf("%M", eth->recv_mac);
 
-    textColor(0x0D); printf("MAC Transmitter: "); textColor(0x03);
+    textColor(0x0D); printf("  Transm.: "); textColor(0x03);
     printf("%M", eth->send_mac);
 
+  #ifdef _NETWORK_DATA_  
     textColor(0x0D);
     printf("\nEthernet: ");
 
@@ -55,7 +57,6 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         printf("%yh ", eth->type_len[i]);
     }
 
-  #ifdef _NETWORK_DATA_
     uint32_t printlength = max(length, 80);
     printf("\n");
     for (uint32_t i = sizeof(ethernet_t); i <= printlength; i++)
@@ -77,19 +78,19 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         // now we look for IPv4, IPv6, or ARP
         if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IP
         {
-            printf("Ethernet type: IP. ");
+            printf("Prot. type: IP. ");
             ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t));
         }
 
         else if ((eth->type_len[0] == 0x86) && (eth->type_len[1] == 0xDD)) // IPv6
         {
-            printf("Ethernet type: IPv6. Currently, not further analyzed. ");
+            printf("Prot. type: IPv6. Currently, not further analyzed. ");
             // TODO analyze IPv6
         }
 
         else if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x06)) // ARP
         {
-            printf("Ethernet type: ARP. ");
+            printf("Prot. type: ARP. ");
             arp_received(adapter, (void*)(eth+1));
         }
         else

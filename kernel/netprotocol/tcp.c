@@ -11,45 +11,263 @@
 
 static void tcpDebug(tcpPacket_t* tcp)
 {
-  printf("\n");
-  printf("TCP Header information:\n");
   textColor(0x0E);
-  printf("+--------------+----------------+\n");
-  printf("|      %u    |      %u          (source port, destination port)\n", ntohs(tcp->sourcePort), ntohs(tcp->destPort));
-  printf("+-------------------------------+\n");
-  printf("|      %Xh                  (sequence number)\n", ntohl(tcp->sequenceNumber));
-  printf("+-------------------------------+\n");
-  printf("|              %u                  (acknowledgmentnumber)\n", ntohl(tcp->acknowledgmentNumber));
-  printf("+-------------------------------+\n");
-  printf("| |%u%u%u%u%u%u|        %u           (flags: URG ACK PUSH RESET SYN FIN", /*tcp->CWR, tcp->ECN,*/ tcp->URG, tcp->ACK, tcp->PSH, tcp->RST, tcp->SYN, tcp->FIN, ntohs(tcp->window)); printf(", window)\n");
-  printf("+--------------+----------------+\n");
-  printf("|    %xh     |      %u           (checksum, urgent pointer)\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
-  printf("+-------------------------------+\n");
+  printf("src port: %u  dest port: %u ", ntohs(tcp->sourcePort), ntohs(tcp->destPort));
+  // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
+  textColor(0x0A);
+  printf("URG: %u ACK: %u PSH: %u RST: %u SYN: %u FIN: %u\n", tcp->URG, tcp->ACK, tcp->PSH, tcp->RST, tcp->SYN, tcp->FIN);
+  /*
+  printf("window: %u  ", ntohs(tcp->window));
+  printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
+  */
+  textColor(0x0F);
+}
+
+// Binds the connection to a local portnumber and IP address.
+void tcpBind(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4])
+{
+    // TODO
+}
+
+void tcpConnect(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4])
+{
+    adapter->TCP_PrevState = adapter->TCP_CurrState;
+
+    if (adapter->TCP_PrevState == CLOSED || adapter->TCP_PrevState == LISTEN)
+    {
+        tcpSend(adapter, 0, 0, htons(srcPort), adapter->IP_address, htons(destPort), destIP, SYN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
+        adapter->TCP_CurrState = SYN_SENT;
+    }
+}
+
+void tcpClose(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4])
+{
+    adapter->TCP_PrevState = adapter->TCP_CurrState;
+
+    if (adapter->TCP_PrevState == ESTABLISHED || adapter->TCP_PrevState == SYN_RECEIVED)
+    {
+        tcpSend(adapter, 0, 0, htons(srcPort), adapter->IP_address, htons(destPort), destIP, FIN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
+        adapter->TCP_CurrState = FIN_WAIT_1;
+    }
+    else if (adapter->TCP_PrevState == CLOSE_WAIT)
+    {
+        tcpSend(adapter, 0, 0, htons(srcPort), adapter->IP_address, htons(destPort), destIP, FIN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
+        adapter->TCP_CurrState = LAST_ACK;
+    }
+
+    else if (adapter->TCP_PrevState == SYN_SENT || adapter->TCP_PrevState == LISTEN)
+    {
+        // no send action
+        adapter->TCP_CurrState = CLOSED;
+    }
+}
+
+void tcpListen(network_adapter_t* adapter)
+{
+    adapter->TCP_PrevState = adapter->TCP_CurrState;
+    adapter->TCP_CurrState = LISTEN;
+
+    // TODO: more action needed?
 }
 
 void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4])
-{
+{   
     tcpDebug(tcp);
+    textColor(0x0D);
+    switch (adapter->TCP_CurrState) // later: prev. state
+    {
+        char tcpStateString[20];
+
+    case 0: 
+        strcpy(tcpStateString, "CLOSED");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 1: 
+        strcpy(tcpStateString, "LISTEN");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 2: 
+        strcpy(tcpStateString, "SYN_SENT");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 3: 
+        strcpy(tcpStateString, "SYN_RECEIVED");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 4: 
+        strcpy(tcpStateString, "ESTABLISHED");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;            
+    case 5: 
+        strcpy(tcpStateString, "FIN_WAIT_1");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 6: 
+        strcpy(tcpStateString, "FIN_WAIT_2");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 7: 
+        strcpy(tcpStateString, "CLOSING");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 8: 
+        strcpy(tcpStateString, "CLOSE_WAIT");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 9: 
+        strcpy(tcpStateString, "LAST_ACK");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+    case 10: 
+        strcpy(tcpStateString, "TIME_WAIT");
+        printf("TCP prev. state: %s\n", tcpStateString);
+        break;
+        textColor(0x0F);
+    }// switch
 
     // handshake: http://upload.wikimedia.org/wikipedia/commons/9/98/Tcp-handshake.svg
 
     if (tcp->SYN && !tcp->ACK) // SYN
     {
-        tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
         adapter->TCP_PrevState = adapter->TCP_CurrState;
-        adapter->TCP_CurrState = SYN_RECEIVED;
+        if (adapter->TCP_CurrState == CLOSED)
+        {   
+            printf("TCP set from CLOSED to LISTEN.\n");
+            tcpListen(adapter);
+        }
+        else if (adapter->TCP_CurrState == LISTEN)
+        {
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->TCP_CurrState = SYN_RECEIVED;
+        }
+        else if (adapter->TCP_CurrState == SYN_SENT)
+        {
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->TCP_CurrState = SYN_RECEIVED;
+        }
     }
     if (tcp->SYN && tcp->ACK)  // SYN ACK
     {
-        tcpSend(adapter, 0, 0, tcp->destPort, adapter->IP_address, tcp->sourcePort, transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
         adapter->TCP_PrevState = adapter->TCP_CurrState;
+
+        if (adapter->TCP_CurrState == SYN_SENT)
+        tcpSend(adapter, 0, 0, tcp->destPort, adapter->IP_address, tcp->sourcePort, transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
         adapter->TCP_CurrState = ESTABLISHED;
     }
-    if (!tcp->SYN && tcp->ACK) // ACK
+    if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
+    {
+        // no send action
+        adapter->TCP_PrevState = adapter->TCP_CurrState;
+
+        if (adapter->TCP_CurrState == SYN_RECEIVED)
+        {
+            adapter->TCP_CurrState = ESTABLISHED;
+        }
+        else if (adapter->TCP_CurrState == LAST_ACK)
+        {
+            adapter->TCP_CurrState = CLOSED;
+        }
+        else if (adapter->TCP_CurrState == FIN_WAIT_1)
+        {
+            adapter->TCP_CurrState = FIN_WAIT_2;
+        }
+        else if (adapter->TCP_CurrState == CLOSING)
+        {
+            adapter->TCP_CurrState = TIME_WAIT;
+        }
+    }
+    if (tcp->FIN && !tcp->ACK) // FIN
     {
         adapter->TCP_PrevState = adapter->TCP_CurrState;
-        adapter->TCP_CurrState = ESTABLISHED;
+
+        if (adapter->TCP_CurrState == ESTABLISHED)
+        {
+            tcpSend(adapter, 0, 0, tcp->destPort, adapter->IP_address, tcp->sourcePort, transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->TCP_CurrState = CLOSE_WAIT;
+        }
+        else if (adapter->TCP_CurrState == FIN_WAIT_2)
+        {
+            tcpSend(adapter, 0, 0, tcp->destPort, adapter->IP_address, tcp->sourcePort, transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->TCP_CurrState = TIME_WAIT;
+        }
+        else if (adapter->TCP_CurrState == FIN_WAIT_1)
+        {
+            tcpSend(adapter, 0, 0, tcp->destPort, adapter->IP_address, tcp->sourcePort, transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->TCP_CurrState = CLOSING;
+        }
     }
+    if (tcp->FIN && tcp->ACK) // FIN ACK
+    {
+        adapter->TCP_PrevState = adapter->TCP_CurrState;
+
+        if (adapter->TCP_CurrState == FIN_WAIT_1)
+        {
+            tcpSend(adapter, 0, 0, tcp->destPort, adapter->IP_address, tcp->sourcePort, transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->TCP_CurrState = TIME_WAIT;
+        }
+    }
+    if (tcp->RST) // RST
+    {
+        adapter->TCP_PrevState = adapter->TCP_CurrState;
+
+        if (adapter->TCP_CurrState == SYN_RECEIVED)
+        {
+            // no send action
+            adapter->TCP_CurrState = LISTEN;
+        }
+    }
+
+    textColor(0x0D);
+    switch (adapter->TCP_CurrState)
+    {
+        char tcpStateString[20];
+
+    case 0: 
+        strcpy(tcpStateString, "CLOSED");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 1: 
+        strcpy(tcpStateString, "LISTEN");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 2: 
+        strcpy(tcpStateString, "SYN_SENT");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 3: 
+        strcpy(tcpStateString, "SYN_RECEIVED");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 4: 
+        strcpy(tcpStateString, "ESTABLISHED");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;            
+    case 5: 
+        strcpy(tcpStateString, "FIN_WAIT_1");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 6: 
+        strcpy(tcpStateString, "FIN_WAIT_2");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 7: 
+        strcpy(tcpStateString, "CLOSING");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 8: 
+        strcpy(tcpStateString, "CLOSE_WAIT");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 9: 
+        strcpy(tcpStateString, "LAST_ACK");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+    case 10: 
+        strcpy(tcpStateString, "TIME_WAIT");
+        printf("TCP curr. state: %s\n", tcpStateString);
+        break;
+        textColor(0x0F);
+    }// switch
 }
 
 void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4], tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber)
@@ -100,6 +318,16 @@ void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t s
         packet->ECN = 0;
         packet->URG = 0;
         packet->ACK = 0;
+        packet->PSH = 0;
+        packet->RST = 0;
+        packet->SYN = 0;
+        packet->FIN = 1; // FIN
+        break;
+    case FIN_ACK_FLAG:
+        packet->CWR = 0;
+        packet->ECN = 0;
+        packet->URG = 0;
+        packet->ACK = 1; // ACK
         packet->PSH = 0;
         packet->RST = 0;
         packet->SYN = 0;

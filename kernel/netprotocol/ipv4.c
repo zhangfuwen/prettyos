@@ -38,7 +38,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
             printf("\nIPv4. ");
             break;
         case 6: // tcp
-            printf("\nTCP. ");
+            printf("\nTCP: ");
             tcpPacket_t* tcpPacket = (void*)(packet+1);
             tcpReceive(adapter, tcpPacket, packet->sourceIP);
             break;
