@@ -24,7 +24,7 @@
 #include "executable.h"
 
 
-const char* const version = "0.0.2.111 - Rev: 950";
+const char* const version = "0.0.2.112 - Rev: 951";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
