@@ -42,6 +42,41 @@ typedef struct
         uint16_t length;
 } __attribute__((packed)) tcpPseudoHeader_t;
 
+typedef struct
+{
+    uint32_t SND_UNA;   // Send Unacknowledged
+    uint32_t SND_NXT;   // Send Next
+    uint16_t SND_WND;   // Send Window
+    uint32_t SND_ISS;   // Initial send sequence number
+    uint32_t RCV_NXT;   // Sequence number of next received set
+    uint16_t RCV_WND;   // Receive Window
+    uint32_t RCV_IRS;   // Initial receive sequence number
+} __attribute__((packed)) tcpTransmissionControlBlock_t;
+
+typedef struct
+{
+    uint16_t port;
+    uint8_t  IP[4];
+    network_adapter_t* adapter;
+} __attribute__((packed)) tcpSocket_t;
+
+typedef struct
+{
+    tcpSocket_t localSocket;
+    tcpSocket_t remoteSocket;
+    tcpTransmissionControlBlock_t tcb;
+    TCP_state TCP_PrevState;
+    TCP_state TCP_CurrState;
+} __attribute__((packed)) tcpConnection_t;
+
+typedef struct
+{
+    uint32_t SEG_SEQ; // Sequence number
+    uint32_t SEG_ACK; // Acknoledgement number
+    uint32_t SEG_LEN; // segment length
+    uint32_t SEG_WND; // segment windows
+    tcpFlags SEG_CTL; // control bits
+}  __attribute__((packed)) tcpSegment_t;
 
 // Binds the connection to a local portnumber and IP address.
 void tcpBind(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4]);
