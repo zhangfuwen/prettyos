@@ -24,7 +24,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         printf("\nEthernet packet received. We are not the addressee.");
         return;
     }
-  #ifdef _NETWORK_DATA_  
+  #ifdef _NETWORK_DATA_
     uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
   #endif
 
@@ -39,7 +39,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     textColor(0x0D); printf("  Transm.: "); textColor(0x03);
     printf("%M", eth->send_mac);
 
-  #ifdef _NETWORK_DATA_  
+  #ifdef _NETWORK_DATA_
     textColor(0x0D);
     printf("\nEthernet: ");
 

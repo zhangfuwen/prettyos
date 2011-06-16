@@ -54,7 +54,7 @@ void tcpConnect(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort,
 
 void tcpClose(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4]);
 
-void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4]);
+void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length);
 void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4], tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber);
 
 

@@ -13,7 +13,7 @@ MultiBootHeader:            ; This is the "multiboot" header for GRUB
 
 
 KernelStart:
-    mov esp, 0x190000
+    mov esp, 0x1000000
 
     push ebx     ; EBX points to the multiboot structure created by the bootloader and containing e.g. the address of the memory map
 

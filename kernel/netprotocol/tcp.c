@@ -70,60 +70,18 @@ void tcpListen(network_adapter_t* adapter)
     // TODO: more action needed?
 }
 
-void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4])
+static const char* const tcpStates[] =
+{
+    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
+};
+
+void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length)
 {
     tcpDebug(tcp);
-    textColor(0x0D);
-    switch (adapter->TCP_CurrState) // later: prev. state
-    {
-        char tcpStateString[20];
 
-    case 0:
-        strcpy(tcpStateString, "CLOSED");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 1:
-        strcpy(tcpStateString, "LISTEN");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 2:
-        strcpy(tcpStateString, "SYN_SENT");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 3:
-        strcpy(tcpStateString, "SYN_RECEIVED");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 4:
-        strcpy(tcpStateString, "ESTABLISHED");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 5:
-        strcpy(tcpStateString, "FIN_WAIT_1");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 6:
-        strcpy(tcpStateString, "FIN_WAIT_2");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 7:
-        strcpy(tcpStateString, "CLOSING");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 8:
-        strcpy(tcpStateString, "CLOSE_WAIT");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 9:
-        strcpy(tcpStateString, "LAST_ACK");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-    case 10:
-        strcpy(tcpStateString, "TIME_WAIT");
-        printf("TCP prev. state: %s\n", tcpStateString);
-        break;
-        textColor(0x0F);
-    }// switch
+    textColor(0x0D);
+    printf("TCP prev. state: %s\n", tcpStates[adapter->TCP_CurrState]); // later: prev. state
+    textColor(0x0F);
 
     // handshake: http://upload.wikimedia.org/wikipedia/commons/9/98/Tcp-handshake.svg
 
@@ -146,7 +104,7 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
             adapter->TCP_CurrState = SYN_RECEIVED;
         }
     }
-    if (tcp->SYN && tcp->ACK)  // SYN ACK
+    else if (tcp->SYN && tcp->ACK)  // SYN ACK
     {
         adapter->TCP_PrevState = adapter->TCP_CurrState;
 
@@ -154,10 +112,10 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
         tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
         adapter->TCP_CurrState = ESTABLISHED;
     }
-    if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
+    else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
     {
-        adapter->TCP_PrevState = adapter->TCP_CurrState;    
-        
+        adapter->TCP_PrevState = adapter->TCP_CurrState;
+
         if (adapter->TCP_CurrState == ESTABLISHED) // ESTABLISHED --> DATA TRANSFER
         {
             uint32_t length_of_tcpData = 10; // TODO: find length of data !
@@ -187,7 +145,7 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
             adapter->TCP_CurrState = TIME_WAIT;
         }
     }
-    if (tcp->FIN && !tcp->ACK) // FIN
+    else if (tcp->FIN && !tcp->ACK) // FIN
     {
         adapter->TCP_PrevState = adapter->TCP_CurrState;
 
@@ -207,7 +165,7 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
             adapter->TCP_CurrState = CLOSING;
         }
     }
-    if (tcp->FIN && tcp->ACK) // FIN ACK
+    else if (tcp->FIN && tcp->ACK) // FIN ACK
     {
         adapter->TCP_PrevState = adapter->TCP_CurrState;
 
@@ -236,56 +194,8 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
     }
 
     textColor(0x0D);
-    switch (adapter->TCP_CurrState)
-    {
-        char tcpStateString[20];
-
-    case 0:
-        strcpy(tcpStateString, "CLOSED");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 1:
-        strcpy(tcpStateString, "LISTEN");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 2:
-        strcpy(tcpStateString, "SYN_SENT");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 3:
-        strcpy(tcpStateString, "SYN_RECEIVED");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 4:
-        strcpy(tcpStateString, "ESTABLISHED");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 5:
-        strcpy(tcpStateString, "FIN_WAIT_1");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 6:
-        strcpy(tcpStateString, "FIN_WAIT_2");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 7:
-        strcpy(tcpStateString, "CLOSING");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 8:
-        strcpy(tcpStateString, "CLOSE_WAIT");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 9:
-        strcpy(tcpStateString, "LAST_ACK");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-    case 10:
-        strcpy(tcpStateString, "TIME_WAIT");
-        printf("TCP curr. state: %s\n", tcpStateString);
-        break;
-        textColor(0x0F);
-    }// switch
+    printf("TCP curr. state: %s\n", tcpStates[adapter->TCP_CurrState]);
+    textColor(0x0F);
 }
 
 void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4], tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber)

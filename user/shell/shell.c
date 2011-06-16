@@ -69,7 +69,7 @@ char* formatPath(char* opath)
 }
 
 
-int main(size_t argcs, char* argvs[])
+int main()
 {
     setScrollField(0, 39);
     char entry[MAX_CHAR_PER_LINE+1];

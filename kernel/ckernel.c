@@ -24,7 +24,7 @@
 #include "executable.h"
 
 
-const char* const version = "0.0.2.112 - Rev: 951";
+const char* const version = "0.0.2.113 - Rev: 952";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -175,7 +175,6 @@ void main(multiboot_t* mb_struct)
 
     showPortList();
     showDiskList();
-
 
     // search and load shell
     textColor(0x0F);

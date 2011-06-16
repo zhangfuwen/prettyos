@@ -40,7 +40,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
         case 6: // tcp
             printf("\nTCP: ");
             tcpPacket_t* tcpPacket = (void*)(packet+1);
-            tcpReceive(adapter, tcpPacket, packet->sourceIP);
+            tcpReceive(adapter, tcpPacket, packet->sourceIP, length-sizeof(ipv4Packet_t));
             break;
         case 17: // udp
             printf("\nUDP. ");

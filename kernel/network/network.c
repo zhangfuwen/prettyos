@@ -66,7 +66,7 @@ bool network_installDevice(pciDev_t* device)
     // PrettyOS has a driver for this adapter. Install it.
     network_adapter_t* adapter = malloc(sizeof(network_adapter_t), 0, "network apdapter");
     adapter->driver = driver;
-    adapter->PCIdev = device;    
+    adapter->PCIdev = device;
 
     arp_initTable(&adapter->arpTable);
 
@@ -219,12 +219,12 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uin
     pseudo.length = htons(length);
     pseudo.prot = protocol;
     pseudo.res = 0;
- 
+
     uint32_t pseudoHeaderChecksum = 0;
     uint8_t  count = 12; // pseudo header contains 12 byte
- 
-    uint8_t* data = (uint8_t*)&pseudo;   
- 
+
+    uint8_t* data = (uint8_t*)&pseudo;
+
     while (count > 1)
     {
         // pseudo header contains 6 WORD
@@ -232,7 +232,7 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uin
         data   += 2;
         count  -= 2;
     }
- 
+
     return internetChecksum(p, length, pseudoHeaderChecksum); // util.c
 }
 
