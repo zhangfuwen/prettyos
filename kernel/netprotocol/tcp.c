@@ -118,13 +118,13 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
 
         if (adapter->TCP_CurrState == ESTABLISHED) // ESTABLISHED --> DATA TRANSFER
         {
-            uint32_t length_of_tcpData = 10; // TODO: find length of data !
+            uint32_t tcpDataLength = -4 /* frame ? */ + length - (tcp->dataOffset << 2);
             printf("\ntcp packet data:");
-            for (uint16_t i=0; i<length_of_tcpData; i++)
+            for (uint16_t i=0; i<tcpDataLength; i++)
             {
                 printf("%c", *(((uint8_t*)(tcp+1))+i) );
             }
-            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(length_of_tcpData) /*ackNumber*/);
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(tcpDataLength) /*ackNumber*/);
         }
 
         // no send action
