@@ -80,7 +80,7 @@ typedef struct
 }  __attribute__((packed)) tcpSegment_t;
 
 // Binds the connection to a local portnumber and IP address.
-void tcpBind(struct network_adapter* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4]);
+void tcpBind(network_adapter_t* adapter);
 
 // Set the state of the connection to be LISTEN.
 void tcpListen(struct network_adapter* adapter);

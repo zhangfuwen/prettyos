@@ -136,13 +136,8 @@ bool network_installDevice(pciDev_t* device)
     DHCP_Discover(adapter);
 
     // open TCP Server with State "LISTEN"
-    adapter->tcpConn = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
-    adapter->tcpConn->localSocket.port = getFreeSocket();
-    memcpy(adapter->tcpConn->localSocket.IP, adapter->IP_address, 4);
-    adapter->tcpConn->TCP_PrevState = CLOSED;
-    adapter->tcpConn->TCP_CurrState = LISTEN;
-    // TODO: ... 
-
+    tcpBind(adapter);
+    
     textColor(0x0E);
     printf("\nMAC address: %M", adapter->MAC_address);
     printf(" IP address: %I\n", adapter->IP_address);

@@ -24,9 +24,15 @@ static void tcpDebug(tcpPacket_t* tcp)
 }
 
 // Binds the connection to a local portnumber and IP address.
-void tcpBind(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4])
+void tcpBind(network_adapter_t* adapter)
 {
-    // TODO
+    // open TCP Server with State "LISTEN"
+    adapter->tcpConn = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
+    adapter->tcpConn->localSocket.port = getFreeSocket();
+    memcpy(adapter->tcpConn->localSocket.IP, adapter->IP_address, 4);
+    adapter->tcpConn->TCP_PrevState = CLOSED;
+    adapter->tcpConn->TCP_CurrState = LISTEN;
+    // TODO: ... 
 }
 
 void tcpConnect(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4])
@@ -62,7 +68,7 @@ void tcpClose(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, u
     }
 }
 
-void tcpListen(network_adapter_t* adapter)
+void tcpListen(network_adapter_t* adapter) // HACK, should be substituted by tcpBind
 {
     adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
     adapter->tcpConn->TCP_CurrState = LISTEN;
