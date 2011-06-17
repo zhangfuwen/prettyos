@@ -18,10 +18,9 @@ typedef struct listHead
 } listHead_t;
 
 
-listHead_t* list_Create();                                    // allocates memory for a list, returns a pointer to that list
+listHead_t* list_Create();                                    // Allocates memory for a list, returns a pointer to that list
 bool        list_Append(listHead_t* hd, void* data);          // Inserts a new element at the end of the list
 void        list_DeleteAll(listHead_t* hd);                   // Deletes everything that has been allocated for this list.
-void        list_Show(listHead_t* hd);                        // prints the list on the Screen
 void        list_Delete(listHead_t* list, void* data);        // Deletes all elements with data from the list
 element_t*  list_GetElement(listHead_t* hd, uint32_t number); // Returns the data at the position "number"
 
@@ -31,9 +30,9 @@ typedef struct {
     element_t* current;
 } ring_t;
 
-ring_t* ring_Create();                                      // allocates memory for a ring, returns a pointer to it
+ring_t* ring_Create();                                      // Allocates memory for a ring, returns a pointer to it
 void    ring_Insert(ring_t* ring, void* data, bool single); // Inserts an element in the ring at the current position. If single==true then it will be inserted only if its not already in the ring
-bool    ring_isEmpty(ring_t* ring);                         // returns true, if the ring is empty (data == 0)
+bool    ring_isEmpty(ring_t* ring);                         // Returns true, if the ring is empty (data == 0)
 bool    ring_DeleteFirst(ring_t* ring, void* data);         // Deletes the first element equal to data, returns true if an element has been deleted
 
 #endif

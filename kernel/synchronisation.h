@@ -2,7 +2,6 @@
 #define SYNCHRONISATION_H
 
 #include "scheduler.h"
-#include "os.h"
 
 
 typedef struct
@@ -19,8 +18,8 @@ void         semaphore_delete(semaphore_t* obj);
 
 typedef struct
 {
-    task_t* blocker; // Task that is blocking the mutex
-    bool    blocked; // Indicates whether this mutex is blocked at the moment or not
+    task_t*  blocker; // Task that is blocking the mutex
+    uint32_t blocks;  // Indicates whether this mutex is blocked at the moment or not. -> You have to call unlock as often as lock to unblock mutex.
 } mutex_t;
 
 mutex_t* mutex_create();

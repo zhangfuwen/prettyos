@@ -30,7 +30,10 @@ void serial_init()
         outportb(IOports[i] + 3, 0x03); // 8 bits, no parity, one stop bit
         outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
         outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
-        printf("\nCOM%d (IO-port: %xh) initialized", i+1, IOports[i]);
+        textColor(0x03);
+        printf("\nCOM%d: ", i+1);
+        textColor(0x0F);
+        printf("IO-port: %xh. Initialized.", IOports[i]);
     }
     printf("\n");
 }
@@ -72,7 +75,7 @@ void serial_write(uint8_t com, char a)
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

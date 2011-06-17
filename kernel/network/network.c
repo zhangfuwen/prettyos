@@ -36,7 +36,7 @@ static listHead_t* RxBuffers = 0;
 
 bool network_installDevice(pciDev_t* device)
 {
-    textColor(0x0C);
+    textColor(0x03);
 
     network_driver_t* driver = 0;
     if(device->deviceID == 0x8139 && device->vendorID == 0x10EC) // RTL 8139
@@ -62,6 +62,7 @@ bool network_installDevice(pciDev_t* device)
     }
 
     printf(" network adapter:");
+    textColor(0x0F);
 
     // PrettyOS has a driver for this adapter. Install it.
     network_adapter_t* adapter = malloc(sizeof(network_adapter_t), 0, "network apdapter");
@@ -140,7 +141,7 @@ bool network_installDevice(pciDev_t* device)
     
     textColor(0x0E);
     printf("\nMAC address: %M", adapter->MAC_address);
-    printf(" IP address: %I\n", adapter->IP_address);
+    printf(" IP address: %I\n\n", adapter->IP_address);
     textColor(0x0F);
 
     return(true);

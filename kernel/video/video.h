@@ -5,13 +5,22 @@
 #include "storage/devicemanager.h" // HACK
 
 
-typedef struct {
+typedef struct
+{
     uint16_t x, y;
 } position_t;
 
-typedef enum {
+typedef enum
+{
     VM_TEXT, VM_VBE
 } VIDEOMODES;
+
+enum COlORS
+{
+    BLACK, BLUE,        GREEN,       CYAN,       RED,       MAGENTA,       BROWN,  LIGHT_GRAY,
+    GRAY,  LIGHT_BLUE,  LIGHT_GREEN, LIGHT_CYAN, LIGHT_RED, LIGHT_MAGENTA, YELLOW, WHITE
+};
+
 
 extern VIDEOMODES videomode;
 

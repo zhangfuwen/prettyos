@@ -64,7 +64,7 @@ struct network_adapter
     uint8_t           IP_address[4];
     arpTable_t        arpTable;
     DHCP_state        DHCP_State;
-    tcpConnection_t*  tcpConn;    
+    tcpConnection_t*  tcpConn;
 };
 
 bool network_installDevice(pciDev_t* device);

@@ -27,10 +27,9 @@
 #define PCI_BAR5        0x0424
 #define PCI_IRQLINE     0x013C
 
-#define PCIBUSES      4     // we access only four busses of 256 possibles
+#define PCIBUSES      256
 #define PCIDEVICES    32
 #define PCIFUNCS      8
-#define PCIARRAYSIZE  (PCIBUSES*PCIDEVICES*PCIFUNCS)
 
 
 typedef struct
@@ -42,7 +41,6 @@ typedef struct
 
 typedef struct
 {
-   uint8_t   number;
    uint8_t   bus;
    uint8_t   device;
    uint8_t   func;
@@ -57,12 +55,11 @@ typedef struct
 } pciDev_t;
 
 
-void analyzeHostSystemError(pciDev_t* pciDev);
-uint32_t pci_config_read   (uint8_t bus, uint8_t device, uint8_t func, uint16_t content);
-void pci_config_write_byte (uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint8_t  val);
-void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val);
-void listPCI();
-void pciScan();
+void     pci_scan();
+uint32_t pci_config_read       (uint8_t bus, uint8_t device, uint8_t func, uint16_t content);
+void     pci_config_write_byte (uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint8_t  val);
+void     pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val);
+void     pci_analyzeHostSystemError(pciDev_t* pciDev);
 
 
 #endif

@@ -46,10 +46,6 @@ static uint16_t readCSR(PCNet_card* dev, uint8_t csr)
 
 void install_AMDPCnet(network_adapter_t* dev)
 {
-    textColor(0x0E);
-    printf("\nInstalling AMD PCNet Fast III:");
-    textColor(0x0F);
-
     device = malloc(sizeof(PCNet_card), 16, "PCNet_card");
     device->initialized = false;
     device->device = dev;

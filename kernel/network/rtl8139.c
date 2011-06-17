@@ -115,9 +115,9 @@ void install_RTL8139(network_adapter_t* dev)
     and send that variables memory location to the RBSTART register (0x30).
     */
 
-    kdebug(3, "RTL8139 MMIO: %Xh\n", dev->MMIO_base);
+    kdebug(3, "\nRTL8139 MMIO: %Xh", dev->MMIO_base);
     dev->MMIO_base = paging_acquirePciMemory((uint32_t)dev->MMIO_base, 1);
-    printf("MMIO base mapped to virt. addr. %Xh\n", dev->MMIO_base);
+    printf("\nMMIO base mapped to virt. addr. %Xh", dev->MMIO_base);
 
     // "power on" the card
     *((uint8_t*)(dev->MMIO_base + RTL8139_CONFIG1)) = 0x00;

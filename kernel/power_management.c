@@ -61,36 +61,39 @@ bool apm_install()
 {
     memcpy((void*)0x200, &apm_com_start, (uintptr_t)&apm_com_end - (uintptr_t)&apm_com_start);
 
+    textColor(0x03);
+    printf("\nAPM: ");
+    textColor(0x0F);
     // Check for APM
     waitForTask(create_vm86_task(APM_CHECK), 0);
     if(*((uint8_t*)0x1300) != 0) // Error
     {
-        printf("\nAPM: Not available");
+        printf("\nNot available.");
         return(false);
     }
-    printf("\nAPM: Version: %u.%u, Control string: %c%c, Flags: %u", *((uint8_t*)0x1302), *((uint8_t*)0x1301), *((uint8_t*)0x1304), *((uint8_t*)0x1303), *((uint16_t*)0x1305));
+    printf("\nVersion: %u.%u, Control string: %c%c, Flags: %u.", *((uint8_t*)0x1302), *((uint8_t*)0x1301), *((uint8_t*)0x1304), *((uint8_t*)0x1303), *((uint16_t*)0x1305));
 
     // Activate APM
     waitForTask(create_vm86_task(APM_INSTALL), 0);
     switch(*((uint8_t*)0x1300)) {
         case 0:
-            printf("\nAPM: Successfully activated");
+            printf("\nSuccessfully activated.");
             return(true);
             break;
         case 1:
-            printf("\nAPM: Error while disconnecting, %yh", *((uint8_t*)0x1301));
+            printf("\nError while disconnecting, %yh.", *((uint8_t*)0x1301));
             return(false);
             break;
         case 2:
-            printf("\nAPM: Error while connecting, %yh", *((uint8_t*)0x1301));
+            printf("\nError while connecting, %yh.", *((uint8_t*)0x1301));
             return(false);
             break;
         case 3:
-            printf("\nAPM: Error while handling out APM version, %yh", *((uint8_t*)0x1301));
+            printf("\nError while handling out APM version, %yh.", *((uint8_t*)0x1301));
             return(false);
             break;
         case 4:
-            printf("\nAPM: Error while activating, %yh", *((uint8_t*)0x1301));
+            printf("\nError while activating, %yh.", *((uint8_t*)0x1301));
             return(false);
             break;
     }
@@ -133,7 +136,14 @@ void pm_install()
 
 void pm_log()
 {
-    printf("\nAPM: %s \tACPI: %s\n", pm_systems[PM_APM].supported?"available":"not supported", "Not supported by PrettyOS");
+    textColor(0x03);
+    printf("\nAPM: ");
+    textColor(0x0F);
+    printf("%s.", pm_systems[PM_APM].supported?"Available":"Not supported");
+    textColor(0x03);
+    printf("\tACPI: ");
+    textColor(0x0F);
+    printf("%s.\n", "Not supported by PrettyOS");
 }
 
 bool pm_action(PM_STATES state)

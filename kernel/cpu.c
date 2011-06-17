@@ -15,7 +15,9 @@ char cpu_vendor[13];
 
 void cpu_analyze()
 {
-    printf("CPU information:");
+    textColor(0x03);
+    printf("CPU: ");
+    textColor(0x0F);
 
     // Test if the CPU supports the CPUID-Command
     __asm__ volatile ("pushfl\n\t"
@@ -31,7 +33,7 @@ void cpu_analyze()
     cpuid_available = (eax==ecx);
     if(!cpuid_available)
     {
-        printf(" CPU does not support cpuid instruction.\n");
+        printf("CPU does not support cpuid instruction.\n");
         return;
     }
 
@@ -41,7 +43,7 @@ void cpu_analyze()
     ((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
     cpu_vendor[12] = 0;
 
-    printf(" VendorID: %s\n", cpu_vendor);
+    printf("VendorID: %s", cpu_vendor);
 }
 
 bool cpu_supports(CPU_FEATURE feature)

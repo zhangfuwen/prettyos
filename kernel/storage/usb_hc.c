@@ -10,7 +10,7 @@
 
 void install_USB_HostController(pciDev_t* PCIdev)
 {
-    printf(" USB ");
+    printf(" - USB ");
     switch(PCIdev->interfaceID)
     {
         case 0x00: printf("UHCI ");   break;
@@ -47,7 +47,7 @@ void install_USB_HostController(pciDev_t* PCIdev)
             pci_config_write_dword(bus, dev, func, PCI_BAR0 + 4*i, PCIdev->bar[i].baseAddress);
             sti();
             PCIdev->bar[i].memorySize = (~pciBar | 0x0F) + 1;
-            printf("sz:%d ", PCIdev->bar[i].memorySize);
+            printf("sz: %d ", PCIdev->bar[i].memorySize);
 
             // EHCI Data
             if (PCIdev->interfaceID == 0x20   // EHCI

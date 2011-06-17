@@ -491,7 +491,7 @@ void ehci_handler(registers_t* r)
         printf("Host System Error");
         textColor(0x0F);
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
-        analyzeHostSystemError(PCIdevice);
+        pci_analyzeHostSystemError(PCIdevice);
         textColor(0x0E);
         printf("\n>>> Init EHCI after fatal error:           <<<");
         printf("\n>>> Press key for EHCI (re)initialization. <<<");

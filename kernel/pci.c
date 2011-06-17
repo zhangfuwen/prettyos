@@ -3,8 +3,8 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
 #include "pci.h"
+#include "util.h"
 #include "list.h"
 #include "storage/usb_hc.h"
 #include "network/network.h"
@@ -16,9 +16,9 @@
 #endif
 
 
-static pciDev_t* pciDev_Array[PCIARRAYSIZE];
+static listHead_t* devices = 0;
 
-void analyzeHostSystemError(pciDev_t* pciDev)
+void pci_analyzeHostSystemError(pciDev_t* pciDev)
 {
      // check pci status register of the device
      uint32_t pciStatus = pci_config_read(pciDev->bus, pciDev->device, pciDev->func, PCI_STATUS);
@@ -99,59 +99,60 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
     outportl(PCI_CONFIGURATION_DATA, val);
 }
 
-void pciScan()
+void pci_scan()
 {
-    printf("\n");
-    int number=0;
-    for (uint8_t bus = 0; bus < PCIBUSES; ++bus)
+    devices = list_Create();
+
+    textColor(0x03);
+    printf("\nPCI devices:\n");
+    textColor(0x0F);
+    for (uint16_t bus = 0; bus < PCIBUSES; ++bus)
     {
         for (uint8_t device = 0; device < PCIDEVICES; ++device)
         {
-            for (uint8_t func = 0; func < PCIFUNCS; ++func)
+            uint8_t funcCount = PCIFUNCS;
+            if (!(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80)) // Bit 7 in header type (Bit 23-16) --> multifunctional
+            {
+                funcCount = 1; // --> not multifunctional, only function 0 used
+            }
+
+            for (uint8_t func = 0; func < funcCount; ++func)
             {
                 uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
                 if (vendorID && vendorID != 0xFFFF)
                 {
-                    pciDev_Array[number] = malloc(sizeof(pciDev_t), 0, "pciDev_Array");
+                    pciDev_t* PCIdev = malloc(sizeof(pciDev_t), 0, "pciDev_t");
+                    list_Append(devices, PCIdev);
 
-                    pciDev_Array[number]->vendorID           = vendorID;
-                    pciDev_Array[number]->deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);
-                    pciDev_Array[number]->classID            = pci_config_read(bus, device, func, PCI_CLASS);
-                    pciDev_Array[number]->subclassID         = pci_config_read(bus, device, func, PCI_SUBCLASS);
-                    pciDev_Array[number]->interfaceID        = pci_config_read(bus, device, func, PCI_INTERFACE);
-                    pciDev_Array[number]->revID              = pci_config_read(bus, device, func, PCI_REVISION);
-                    pciDev_Array[number]->irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
-                    pciDev_Array[number]->bar[0].baseAddress = pci_config_read(bus, device, func, PCI_BAR0);
-                    pciDev_Array[number]->bar[1].baseAddress = pci_config_read(bus, device, func, PCI_BAR1);
-                    pciDev_Array[number]->bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
-                    pciDev_Array[number]->bar[3].baseAddress = pci_config_read(bus, device, func, PCI_BAR3);
-                    pciDev_Array[number]->bar[4].baseAddress = pci_config_read(bus, device, func, PCI_BAR4);
-                    pciDev_Array[number]->bar[5].baseAddress = pci_config_read(bus, device, func, PCI_BAR5);
+                    PCIdev->vendorID           = vendorID;
+                    PCIdev->deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);
+                    PCIdev->classID            = pci_config_read(bus, device, func, PCI_CLASS);
+                    PCIdev->subclassID         = pci_config_read(bus, device, func, PCI_SUBCLASS);
+                    PCIdev->interfaceID        = pci_config_read(bus, device, func, PCI_INTERFACE);
+                    PCIdev->revID              = pci_config_read(bus, device, func, PCI_REVISION);
+                    PCIdev->irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
+                    PCIdev->bar[0].baseAddress = pci_config_read(bus, device, func, PCI_BAR0);
+                    PCIdev->bar[1].baseAddress = pci_config_read(bus, device, func, PCI_BAR1);
+                    PCIdev->bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
+                    PCIdev->bar[3].baseAddress = pci_config_read(bus, device, func, PCI_BAR3);
+                    PCIdev->bar[4].baseAddress = pci_config_read(bus, device, func, PCI_BAR4);
+                    PCIdev->bar[5].baseAddress = pci_config_read(bus, device, func, PCI_BAR5);
 
-                    // Valid Device
-                    pciDev_Array[number]->bus    = bus;
-                    pciDev_Array[number]->device = device;
-                    pciDev_Array[number]->func   = func;
-                    pciDev_Array[number]->number = bus*PCIDEVICES*PCIFUNCS + device*PCIFUNCS + func;
-
+                    PCIdev->bus    = bus;
+                    PCIdev->device = device;
+                    PCIdev->func   = func;
 
                     // Screen output
-                    if (pciDev_Array[number]->irq!=255)
+                    if (PCIdev->irq != 255)
                     {
-                        printf("#%d %d:%d.%d",
-                            number,
-                            pciDev_Array[number]->bus,
-                            pciDev_Array[number]->device,
-                            pciDev_Array[number]->func);
-
-                        printf(" IRQ:%d", pciDev_Array[number]->irq);
+                        printf("%d:%d.%d\tIRQ: %d", PCIdev->bus, PCIdev->device, PCIdev->func, PCIdev->irq);
 
                       #ifdef _PCI_VEND_PROD_LIST_
                         // Find Vendor
                         bool found = false;
                         for(uint32_t i = 0; i < PCI_VENTABLE_LEN; i++)
                         {
-                            if (PciVenTable[i].VenId == pciDev_Array[number]->vendorID)
+                            if (PciVenTable[i].VenId == PCIdev->vendorID)
                             {
                                 printf("\t%s", PciVenTable[i].VenShort); // Found! Display name and break out
                                 found = true;
@@ -160,7 +161,7 @@ void pciScan()
                         }
                         if(!found)
                         {
-                            printf("\tvend: %xh", pciDev_Array[number]->vendorID); // Vendor not found, display ID
+                            printf("\tvend: %xh", PCIdev->vendorID); // Vendor not found, display ID
                         }
                         else
                         {
@@ -168,9 +169,9 @@ void pciScan()
                             found = false;
                             for(uint32_t i = 0; i < PCI_DEVTABLE_LEN; i++)
                             {
-                                if (PciDevTable[i].DevId == pciDev_Array[number]->deviceID && PciDevTable[i].VenId == pciDev_Array[number]->vendorID) // VendorID and DeviceID has to fit
+                                if (PciDevTable[i].DevId == PCIdev->deviceID && PciDevTable[i].VenId == PCIdev->vendorID) // VendorID and DeviceID have to fit
                                 {
-                                    printf(" %s", PciDevTable[i].ChipDesc); // Found! Display name and break out
+                                    printf(", %s", PciDevTable[i].ChipDesc); // Found! Display name and break out
                                     found = true;
                                     break;
                                 }
@@ -178,34 +179,23 @@ void pciScan()
                         }
                         if(!found)
                         {
-                            printf(", dev: %xh", pciDev_Array[number]->deviceID); // Device not found, display ID
+                            printf(", dev: %xh", PCIdev->deviceID); // Device not found, display ID
                         }
                       #else
-                        printf("\tvend:%xh dev:%xh", pciDev_Array[number]->vendorID, pciDev_Array[number]->deviceID);
+                        printf("\tvend:%xh, dev:%xh", PCIdev->vendorID, PCIdev->deviceID);
                       #endif
 
                         /// USB Host Controller
-                        if (pciDev_Array[number]->classID==0x0C && pciDev_Array[number]->subclassID==0x03)
+                        if (PCIdev->classID == 0x0C && PCIdev->subclassID == 0x03)
                         {
-                            install_USB_HostController(pciDev_Array[number]);
+                            install_USB_HostController(PCIdev);
                         }
                         printf("\n");
 
                         /// network adapters
-                        network_installDevice(pciDev_Array[number]);
+                        network_installDevice(PCIdev);
                     } // if irq != 255
-                    ++number;
                 } // if pciVendor
-                else
-                {
-                    pciDev_Array[number] = 0;
-                }
-
-                // Bit 7 in header type (Bit 23-16) --> multifunctional
-                if (!(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80))
-                {
-                    break; // --> not multifunctional, only function 0 used
-                }
             } // for function
         } // for device
     } // for bus

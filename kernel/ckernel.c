@@ -24,7 +24,7 @@
 #include "executable.h"
 
 
-const char* const version = "0.0.2.117 - Rev: 956";
+const char* const version = "0.0.2.118 - Rev: 957";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -140,13 +140,16 @@ static void init(multiboot_t* mb_struct)
 
 void showMemorySize()
 {
+    textColor(0x03);
+    printf("\nMemory: ");
+    textColor(0x0F);
     if (system.Memory_Size >= 0x40000000) // More than 1 GiB
     {
-        printf("\nMemory size: %u GiB / %u GB  (%u MiB / %u MB, %u Bytes)\n", system.Memory_Size>>30, system.Memory_Size/1000000000, system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
+        printf("%u GiB / %u GB  (%u MiB / %u MB, %u Bytes)\n", system.Memory_Size>>30, system.Memory_Size/1000000000, system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
     }
     else
     {
-        printf("\nMemory size: %u MiB / %u MB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
+        printf("%u MiB / %u MB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
     }
 }
 
@@ -164,7 +167,7 @@ void main(multiboot_t* mb_struct)
 
     serial_init();
 
-    pciScan();         // scan of pci bus; results go to: pciDev_t pciDev_Array[PCIARRAYSIZE]; (cf. pci.h)
+    pci_scan(); // Scan of PCI bus to detect PCI devices. (cf. pci.h)
 
     flpydsk_install(); // detect FDDs
     #ifdef _RAMDISK_DIAGNOSIS_
@@ -173,8 +176,10 @@ void main(multiboot_t* mb_struct)
     initrd_install(ramdisk_install(), 0, 0x200000);
     #endif
 
+    #ifdef _DEVMGR_DIAGNOSIS_
     showPortList();
     showDiskList();
+    #endif
 
     // search and load shell
     textColor(0x0F);
@@ -226,7 +231,7 @@ void main(multiboot_t* mb_struct)
     create_cthread(&vbe_bootscreen, "VBE");
 
     textColor(0x05);
-    printf("--------------------------------------------------------------------------------");
+    printf("\n\n--------------------------------------------------------------------------------");
     printf("                                PrettyOS Booted\n");
     printf("--------------------------------------------------------------------------------");
     textColor(0x0F);

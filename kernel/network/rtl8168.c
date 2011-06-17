@@ -50,8 +50,6 @@ void setupDescriptors()
 
 void install_RTL8168(network_adapter_t* device)
 {
-    printf("\nInstalling RTL8168");
-
     RTL = malloc(sizeof(RTL8168_networkAdapter_t), 0, "RTL8168");
     device->data = RTL;
     RTL->device = device;

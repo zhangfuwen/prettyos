@@ -51,24 +51,24 @@ void semaphore_delete(semaphore_t* obj)
 mutex_t* mutex_create()
 {
     mutex_t* obj = malloc(sizeof(mutex_t), 0, "mutex");
-    obj->blocked = false;
+    obj->blocks = 0;
     return(obj);
-}
-
-void mutex_unlockTask(mutex_t* obj)
-{
-    obj->blocked = false;
 }
 
 void mutex_lock(mutex_t* obj)
 {
-    if(!obj || (obj->blocked && obj->blocker == currentTask)) return; // Invalid object or the mutex has been locked by this task.
+    if(!obj) return; // Invalid object.
 
+    if(obj->blocks != 0 && obj->blocker == currentTask) // Mutex has already been locked by this task. Increase blocks counter.
+    {
+        obj->blocks++;
+        return;
+    }
 
-    while(obj->blocked)
+    while(obj->blocks != 0)
         scheduler_blockCurrentTask(BL_SYNC, obj, 0); // Wait until the mutex is unlocked
 
-    obj->blocked = true;
+    obj->blocks = 1;
     obj->blocker = (task_t*)currentTask;
 }
 
@@ -76,14 +76,14 @@ void mutex_unlock(mutex_t* obj)
 {
     if(!obj) return; // Invalid object
 
-    obj->blocked = false;
+    obj->blocks--; // Release one lock.
 
     scheduler_unblockEvent(BL_SYNC, obj); // Inform scheduler that this mutex has been unlocked
 }
 
 void mutex_delete(mutex_t* obj)
 {
-    if(obj->blocked) // There can be tasks that are blocked due to this mutex. Unlock them to avoid deadlocks
+    if(obj->blocks != 0) // There can be tasks that are blocked due to this mutex. Unlock them to avoid deadlocks
         scheduler_unblockEvent(BL_SYNC, obj);
 
     free(obj);

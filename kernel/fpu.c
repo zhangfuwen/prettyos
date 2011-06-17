@@ -44,21 +44,23 @@ void fpu_test()
     if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
         return;
 
+    textColor(0x03);
+    printf("\nFPU test: ");
+
     double squareroot = sqrt(2.0);
     squareroot = fabs(squareroot);
     squareroot /= sqrt(2.0);
     if (squareroot == 1.00)
     {
         textColor(0x0A);
-        printf(" (Test: OK)\n");
-        textColor(0x0F);
+        printf("OK.\n");
     }
     else
     {
        textColor(0x0C);
-       printf(" (Test ERROR)\n");
-       textColor(0x0F);
+       printf("ERROR.\n");
     }
+    textColor(0x0F);
 }
 
 /*

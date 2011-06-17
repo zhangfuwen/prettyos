@@ -2,12 +2,9 @@
 #define TCP_H
 
 #include "netprotocol/networktypes.h"
-#include "network/network.h"
-
 
 // http://tools.ietf.org/html/rfc793
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
-
 
 
 typedef struct
@@ -37,11 +34,11 @@ typedef struct
 
 typedef struct
 {
-        uint8_t src[4];
-        uint8_t dest[4];
-        uint8_t res;
-        uint8_t prot;
-        uint16_t length;
+    uint8_t src[4];
+    uint8_t dest[4];
+    uint8_t res;
+    uint8_t prot;
+    uint16_t length;
 } __attribute__((packed)) tcpPseudoHeader_t;
 
 typedef struct
@@ -58,7 +55,7 @@ typedef struct
 typedef struct
 {
     uint16_t port;
-    uint8_t  IP[4];    
+    uint8_t  IP[4];
 } __attribute__((packed)) tcpSocket_t;
 
 typedef struct
@@ -79,8 +76,9 @@ typedef struct
     tcpFlags SEG_CTL; // control bits
 }  __attribute__((packed)) tcpSegment_t;
 
+
 // Binds the connection to a local portnumber and IP address.
-void tcpBind(network_adapter_t* adapter);
+void tcpBind(struct network_adapter* adapter);
 
 // Set the state of the connection to be LISTEN.
 void tcpListen(struct network_adapter* adapter);
@@ -94,5 +92,6 @@ void tcpReceive(struct network_adapter* adapter, tcpPacket_t* tcp, uint8_t trans
 void tcpSend(struct network_adapter* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4], tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber);
 
 uint16_t getFreeSocket();
+
 
 #endif

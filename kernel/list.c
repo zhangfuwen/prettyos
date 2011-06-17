@@ -79,24 +79,6 @@ void list_DeleteAll(listHead_t* hd)
     free(hd);
 }
 
-void list_Show(listHead_t* hd)
-{
-    printf("List elements:\n");
-    element_t* cur = hd->head;
-    if (!cur)
-    {
-        printf("The list is empty.");
-    }
-    else
-    {
-        while (cur)
-        {
-            printf("%Xh\t",cur);
-            cur = cur->next;
-        }
-    }
-}
-
 element_t* list_GetElement(listHead_t* hd, uint32_t number)
 {
     element_t* cur = hd->head;
@@ -183,7 +165,7 @@ bool ring_DeleteFirst(ring_t* ring, void* data)
 
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

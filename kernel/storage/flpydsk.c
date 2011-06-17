@@ -164,22 +164,29 @@ static floppy_t* createFloppy(uint8_t ID)
     return(fdd);
 }
 
-void flpydsk_readVersion();
+static uint8_t flpydsk_readVersion();
 // Looks for Floppy drives and installs them
 void flpydsk_install()
 {
     if ((cmos_read(0x10)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
     {
-        flpydsk_readVersion();
+        textColor(0x03);
+        printf("\nFloppy Disk:");
+        textColor(0x0F);
 
-        printf("\n1.44 MB FDD first device found");
+        flpydsk_version = flpydsk_readVersion();
+        #ifdef _FLOPPY_DIAGNOSIS_
+        printf(" FDC version: %yh", flpydsk_version);
+        #endif
+
+        printf("\n1.44 MB FDD first device found.");
         floppyDrive[0] = createFloppy(0);
         strncpy(floppyDrive[0]->drive.name, "Floppy Dev 1", 12);
         floppyDrive[0]->drive.name[12]=0; // terminate string
 
         if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: ....0100b
         {
-            printf("\n1.44 MB FDD second device found");
+            printf("\n1.44 MB FDD second device found.");
             floppyDrive[1] = createFloppy(1);
             strncpy(floppyDrive[1]->drive.name, "Floppy Dev 2", 12);
             floppyDrive[1]->drive.name[12]=0; // terminate string
@@ -323,11 +330,10 @@ static void flpydsk_driveData(uint32_t stepr, uint32_t loadt, uint32_t unloadt, 
     flpydsk_sendCommand((loadt << 1)         | (dma==false) ? 0 : 1);
 }
 
-void flpydsk_readVersion()
+static uint8_t flpydsk_readVersion()
 {
     flpydsk_sendCommand(FDC_CMD_VERSION);
-    flpydsk_version = flpydsk_readData();
-    printf("\nFDC version: %yh", flpydsk_version);
+    return(flpydsk_readData());
 }
 
 
