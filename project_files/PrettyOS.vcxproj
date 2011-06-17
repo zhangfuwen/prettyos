@@ -113,6 +113,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\netprotocol\icmp.h" />
     <ClInclude Include="..\kernel\netprotocol\ethernet.h" />
     <ClInclude Include="..\kernel\netprotocol\ipv4.h" />
+    <ClInclude Include="..\kernel\netprotocol\networktypes.h" />
     <ClInclude Include="..\kernel\netprotocol\tcp.h" />
     <ClInclude Include="..\kernel\netprotocol\udp.h" />
     <ClInclude Include="..\kernel\network\network.h" />

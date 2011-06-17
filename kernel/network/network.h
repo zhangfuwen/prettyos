@@ -3,6 +3,8 @@
 
 #include "pci.h"
 #include "netprotocol/arp.h"
+#include "netprotocol/tcp.h"
+#include "netprotocol/networktypes.h"
 
 // own IP at start
 #define IP_1  192
@@ -33,8 +35,6 @@
 */
 
 
-typedef enum {START, OFFER, ACK, NAK} DHCP_state;
-typedef enum {CLOSED, LISTEN, SYN_SENT, SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, CLOSING, CLOSE_WAIT, LAST_ACK, TIME_WAIT} TCP_state;
 
 struct network_adapter;
 typedef struct network_adapter network_adapter_t;
@@ -64,8 +64,7 @@ struct network_adapter
     uint8_t           IP_address[4];
     arpTable_t        arpTable;
     DHCP_state        DHCP_State;
-    TCP_state         TCP_PrevState;
-    TCP_state         TCP_CurrState;
+    tcpConnection_t*  tcpConn;    
 };
 
 bool network_installDevice(pciDev_t* device);

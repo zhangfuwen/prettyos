@@ -31,41 +31,41 @@ void tcpBind(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, ui
 
 void tcpConnect(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4])
 {
-    adapter->TCP_PrevState = adapter->TCP_CurrState;
+    adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
 
-    if (adapter->TCP_PrevState == CLOSED || adapter->TCP_PrevState == LISTEN)
+    if (adapter->tcpConn->TCP_PrevState == CLOSED || adapter->tcpConn->TCP_PrevState == LISTEN)
     {
-        tcpSend(adapter, 0, 0, htons(srcPort), adapter->IP_address, htons(destPort), destIP, SYN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
-        adapter->TCP_CurrState = SYN_SENT;
+        tcpSend(adapter, 0, 0, htons(srcPort), adapter->tcpConn->localSocket.IP, htons(destPort), destIP, SYN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
+        adapter->tcpConn->TCP_CurrState = SYN_SENT;
     }
 }
 
 void tcpClose(network_adapter_t* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4])
 {
-    adapter->TCP_PrevState = adapter->TCP_CurrState;
+    adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
 
-    if (adapter->TCP_PrevState == ESTABLISHED || adapter->TCP_PrevState == SYN_RECEIVED)
+    if (adapter->tcpConn->TCP_PrevState == ESTABLISHED || adapter->tcpConn->TCP_PrevState == SYN_RECEIVED)
     {
-        tcpSend(adapter, 0, 0, htons(srcPort), adapter->IP_address, htons(destPort), destIP, FIN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
-        adapter->TCP_CurrState = FIN_WAIT_1;
+        tcpSend(adapter, 0, 0, htons(srcPort), adapter->tcpConn->localSocket.IP, htons(destPort), destIP, FIN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
+        adapter->tcpConn->TCP_CurrState = FIN_WAIT_1;
     }
-    else if (adapter->TCP_PrevState == CLOSE_WAIT)
+    else if (adapter->tcpConn->TCP_PrevState == CLOSE_WAIT)
     {
-        tcpSend(adapter, 0, 0, htons(srcPort), adapter->IP_address, htons(destPort), destIP, FIN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
-        adapter->TCP_CurrState = LAST_ACK;
+        tcpSend(adapter, 0, 0, htons(srcPort), adapter->tcpConn->localSocket.IP, htons(destPort), destIP, FIN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
+        adapter->tcpConn->TCP_CurrState = LAST_ACK;
     }
 
-    else if (adapter->TCP_PrevState == SYN_SENT || adapter->TCP_PrevState == LISTEN)
+    else if (adapter->tcpConn->TCP_PrevState == SYN_SENT || adapter->tcpConn->TCP_PrevState == LISTEN)
     {
         // no send action
-        adapter->TCP_CurrState = CLOSED;
+        adapter->tcpConn->TCP_CurrState = CLOSED;
     }
 }
 
 void tcpListen(network_adapter_t* adapter)
 {
-    adapter->TCP_PrevState = adapter->TCP_CurrState;
-    adapter->TCP_CurrState = LISTEN;
+    adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
+    adapter->tcpConn->TCP_CurrState = LISTEN;
 
     // TODO: more action needed?
 }
@@ -80,43 +80,43 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
     tcpDebug(tcp);
 
     textColor(0x0D);
-    printf("TCP prev. state: %s\n", tcpStates[adapter->TCP_CurrState]); // later: prev. state
+    printf("TCP prev. state: %s\n", tcpStates[adapter->tcpConn->TCP_CurrState]); // later: prev. state
     textColor(0x0F);
 
     // handshake: http://upload.wikimedia.org/wikipedia/commons/9/98/Tcp-handshake.svg
 
     if (tcp->SYN && !tcp->ACK) // SYN
     {
-        adapter->TCP_PrevState = adapter->TCP_CurrState;
-        if (adapter->TCP_CurrState == CLOSED || adapter->TCP_CurrState == TIME_WAIT) // HACK, TODO: build sockes, use timeout (TIME_WAIT --> CLOSED)
+        adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
+        if (adapter->tcpConn->TCP_CurrState == CLOSED || adapter->tcpConn->TCP_CurrState == TIME_WAIT) // HACK, TODO: build sockes, use timeout (TIME_WAIT --> CLOSED)
         {
             printf("TCP set from CLOSED to LISTEN.\n");
             tcpListen(adapter);
         }
-        else if (adapter->TCP_CurrState == LISTEN)
+        else if (adapter->tcpConn->TCP_CurrState == LISTEN)
         {
-            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
-            adapter->TCP_CurrState = SYN_RECEIVED;
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->tcpConn->localSocket.IP, htons(tcp->sourcePort), transmittingIP, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->tcpConn->TCP_CurrState = SYN_RECEIVED;
         }
-        else if (adapter->TCP_CurrState == SYN_SENT)
+        else if (adapter->tcpConn->TCP_CurrState == SYN_SENT)
         {
-            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
-            adapter->TCP_CurrState = SYN_RECEIVED;
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->tcpConn->localSocket.IP, htons(tcp->sourcePort), transmittingIP, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->tcpConn->TCP_CurrState = SYN_RECEIVED;
         }
     }
     else if (tcp->SYN && tcp->ACK)  // SYN ACK
     {
-        adapter->TCP_PrevState = adapter->TCP_CurrState;
+        adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
 
-        if (adapter->TCP_CurrState == SYN_SENT)
-        tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
-        adapter->TCP_CurrState = ESTABLISHED;
+        if (adapter->tcpConn->TCP_CurrState == SYN_SENT)
+        tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->tcpConn->localSocket.IP, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+        adapter->tcpConn->TCP_CurrState = ESTABLISHED;
     }
     else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
     {
-        adapter->TCP_PrevState = adapter->TCP_CurrState;
+        adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
 
-        if (adapter->TCP_CurrState == ESTABLISHED) // ESTABLISHED --> DATA TRANSFER
+        if (adapter->tcpConn->TCP_CurrState == ESTABLISHED) // ESTABLISHED --> DATA TRANSFER
         {
             uint32_t tcpDataLength = -4 /* frame ? */ + length - (tcp->dataOffset << 2);
             printf("\ntcp packet data:");
@@ -126,77 +126,77 @@ void tcpReceive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitti
                 printf("%c", *(((uint8_t*)(tcp+1))+i) );
             }
             textColor(0x0F);
-            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(tcpDataLength) /*ackNumber*/);
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->tcpConn->localSocket.IP, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(tcpDataLength) /*ackNumber*/);
         }
 
         // no send action
-        else if (adapter->TCP_CurrState == SYN_RECEIVED)
+        else if (adapter->tcpConn->TCP_CurrState == SYN_RECEIVED)
         {
-            adapter->TCP_CurrState = ESTABLISHED;
+            adapter->tcpConn->TCP_CurrState = ESTABLISHED;
         }
-        else if (adapter->TCP_CurrState == LAST_ACK)
+        else if (adapter->tcpConn->TCP_CurrState == LAST_ACK)
         {
-            adapter->TCP_CurrState = CLOSED;
+            adapter->tcpConn->TCP_CurrState = CLOSED;
         }
-        else if (adapter->TCP_CurrState == FIN_WAIT_1)
+        else if (adapter->tcpConn->TCP_CurrState == FIN_WAIT_1)
         {
-            adapter->TCP_CurrState = FIN_WAIT_2;
+            adapter->tcpConn->TCP_CurrState = FIN_WAIT_2;
         }
-        else if (adapter->TCP_CurrState == CLOSING)
+        else if (adapter->tcpConn->TCP_CurrState == CLOSING)
         {
-            adapter->TCP_CurrState = TIME_WAIT;
+            adapter->tcpConn->TCP_CurrState = TIME_WAIT;
         }
     }
     else if (tcp->FIN && !tcp->ACK) // FIN
     {
-        adapter->TCP_PrevState = adapter->TCP_CurrState;
+        adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
 
-        if (adapter->TCP_CurrState == ESTABLISHED)
+        if (adapter->tcpConn->TCP_CurrState == ESTABLISHED)
         {
-            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
-            adapter->TCP_CurrState = CLOSE_WAIT;
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->tcpConn->localSocket.IP, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->tcpConn->TCP_CurrState = CLOSE_WAIT;
         }
-        else if (adapter->TCP_CurrState == FIN_WAIT_2)
+        else if (adapter->tcpConn->TCP_CurrState == FIN_WAIT_2)
         {
             tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
-            adapter->TCP_CurrState = TIME_WAIT;
+            adapter->tcpConn->TCP_CurrState = TIME_WAIT;
         }
-        else if (adapter->TCP_CurrState == FIN_WAIT_1)
+        else if (adapter->tcpConn->TCP_CurrState == FIN_WAIT_1)
         {
-            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
-            adapter->TCP_CurrState = CLOSING;
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->tcpConn->localSocket.IP, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->tcpConn->TCP_CurrState = CLOSING;
         }
     }
     else if (tcp->FIN && tcp->ACK) // FIN ACK
     {
-        adapter->TCP_PrevState = adapter->TCP_CurrState;
+        adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
 
-        if (adapter->TCP_CurrState == FIN_WAIT_1)
+        if (adapter->tcpConn->TCP_CurrState == FIN_WAIT_1)
         {
-            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
-            adapter->TCP_CurrState = TIME_WAIT;
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->tcpConn->localSocket.IP, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->tcpConn->TCP_CurrState = TIME_WAIT;
         }
 
         // HACK due to observations in wireshark with telnet:
         // w/o conditions
         {
-            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->IP_address, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
-            adapter->TCP_CurrState = TIME_WAIT;
+            tcpSend(adapter, 0, 0, htons(tcp->destPort), adapter->tcpConn->localSocket.IP, htons(tcp->sourcePort), transmittingIP, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            adapter->tcpConn->TCP_CurrState = TIME_WAIT;
         }
     }
     if (tcp->RST) // RST
     {
-        adapter->TCP_PrevState = adapter->TCP_CurrState;
+        adapter->tcpConn->TCP_PrevState = adapter->tcpConn->TCP_CurrState;
 
-        if (adapter->TCP_CurrState == SYN_RECEIVED)
+        if (adapter->tcpConn->TCP_CurrState == SYN_RECEIVED)
         {
             // no send action
-            adapter->TCP_CurrState = LISTEN;
+            adapter->tcpConn->TCP_CurrState = LISTEN;
         }
     }
 
     textColor(0x0D);
-    printf("TCP curr. state: %s\n", tcpStates[adapter->TCP_CurrState]);
+    printf("TCP curr. state: %s\n", tcpStates[adapter->tcpConn->TCP_CurrState]);
     textColor(0x0F);
 }
 
@@ -283,6 +283,11 @@ void tcpSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t s
     free(packet);
 }
 
+uint16_t getFreeSocket()
+{
+    static uint16_t srcPort = 1024;
+    return srcPort++;
+}
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.

@@ -252,7 +252,7 @@ uint8_t ScanToASCII()
 
             if (adapter)
             {
-                adapter->TCP_CurrState = CLOSED;
+                adapter->tcpConn->TCP_CurrState = CLOSED;
                 tcpListen(adapter);
             }
             return 0;
