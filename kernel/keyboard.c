@@ -243,18 +243,19 @@ uint8_t ScanToASCII()
             }
             return 0;
         }
-        if(retchar == 'c') // Set TCP state to LISTEN
+
+        static tcpConnection_t* connection = 0;
+        if(retchar == 'b') // Create & Bind connection
         {
+            connection = tcp_createConnection();
+
             uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
             printf("network adapter: %Xh\n", adapter); // check
 
-            if (adapter)
-            {
-                adapter->tcpConn->TCP_CurrState = CLOSED;
-                tcpListen(adapter);
-            }
+            if(adapter)
+                tcp_bind(connection, adapter);
             return 0;
         }
     }

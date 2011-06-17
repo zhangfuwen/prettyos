@@ -1,7 +1,8 @@
 #ifndef TCP_H
 #define TCP_H
 
-#include "netprotocol/networktypes.h"
+#include "network/network.h"
+#include "networktypes.h"
 
 // http://tools.ietf.org/html/rfc793
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
@@ -56,16 +57,17 @@ typedef struct
 {
     uint16_t port;
     uint8_t  IP[4];
-} __attribute__((packed)) tcpSocket_t;
+} tcpSocket_t;
 
 typedef struct
 {
     tcpSocket_t localSocket;
     tcpSocket_t remoteSocket;
+    struct network_adapter* adapter;
     tcpTransmissionControlBlock_t tcb;
     TCP_state TCP_PrevState;
     TCP_state TCP_CurrState;
-} __attribute__((packed)) tcpConnection_t;
+} tcpConnection_t;
 
 typedef struct
 {
@@ -74,24 +76,22 @@ typedef struct
     uint32_t SEG_LEN; // segment length
     uint32_t SEG_WND; // segment windows
     tcpFlags SEG_CTL; // control bits
-}  __attribute__((packed)) tcpSegment_t;
+} __attribute__((packed)) tcpSegment_t;
 
 
-// Binds the connection to a local portnumber and IP address.
-void tcpBind(struct network_adapter* adapter);
+tcpConnection_t* tcp_createConnection();
+void tcp_deleteConnection(tcpConnection_t* connection);
 
-// Set the state of the connection to be LISTEN.
-void tcpListen(struct network_adapter* adapter);
+void tcp_bind(tcpConnection_t* connection, network_adapter_t* adapter);
+void tcp_listen(tcpConnection_t* connection); // Set the state of the connection to be LISTEN.
 
 // Connects to another host, and set the state of the connection to be SYN_SENT
-void tcpConnect(struct network_adapter* adapter, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4]);
+void tcp_connect(tcpConnection_t* connection);
 
-void tcpClose(struct network_adapter*, uint16_t srcPort, uint16_t destPort, uint8_t destIP[4]);
+void tcp_close(tcpConnection_t* connection);
 
-void tcpReceive(struct network_adapter* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length);
-void tcpSend(struct network_adapter* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4], tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber);
-
-uint16_t getFreeSocket();
+void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length);
+void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber);
 
 
 #endif

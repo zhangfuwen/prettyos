@@ -136,9 +136,6 @@ bool network_installDevice(pciDev_t* device)
     adapter->DHCP_State  = START;
     DHCP_Discover(adapter);
 
-    // open TCP Server with State "LISTEN"
-    tcpBind(adapter);
-    
     textColor(0x0E);
     printf("\nMAC address: %M", adapter->MAC_address);
     printf(" IP address: %I\n\n", adapter->IP_address);
