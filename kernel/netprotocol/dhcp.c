@@ -302,13 +302,13 @@ static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
 void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
 {
     /*
-    printf("\nop: %u", dhcp->op);
-    printf(" htype: %u", dhcp->htype);
-    printf(" hlen: %u", dhcp->hlen);
-    printf(" hops: %u", dhcp->hops);
-    printf(" xid: %Xh", htonl(dhcp->xid));
-    printf(" secs: %u", htons(dhcp->secs));
-    printf(" flags: %xh", htons(dhcp->flags));
+    printf("\nop: %u",    dhcp->op);
+    printf(" htype: %u",  dhcp->htype);
+    printf(" hlen: %u",   dhcp->hlen);
+    printf(" hops: %u",   dhcp->hops);
+    printf(" xid: %Xh",   ntohl(dhcp->xid));
+    printf(" secs: %u",   ntohs(dhcp->secs));
+    printf(" flags: %xh", ntohs(dhcp->flags));
     */
     printf("\ncIP: %I", dhcp->ciaddr);
     printf(" yIP: %I",  dhcp->yiaddr);

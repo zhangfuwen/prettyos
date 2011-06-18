@@ -64,9 +64,9 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     packet->version        = 4;
     packet->ipHeaderLength = sizeof(ipv4Packet_t) / 4;
     packet->typeOfService  = 0;
-    packet->length         = htons(sizeof(ipv4Packet_t) + length);
+    packet->length         = htons( sizeof(ipv4Packet_t) + length );
     packet->identification = 0;
-    packet->fragmentation  = htons(0x4000);
+    packet->fragmentation  = htons(0x4000); // do not fragment
     packet->ttl            = 128;
     packet->protocol       = protocol;
     packet->checksum       = 0;

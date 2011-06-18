@@ -126,12 +126,11 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
     memcpy(packet+1, data, length);
     memcpy(packet->recv_mac, MAC, 6);
     memcpy(packet->send_mac, adapter->MAC_address, 6);
-    *(uint16_t*)packet->type_len = ntohs(type);
+    *(uint16_t*)packet->type_len = htons(type);
 
     bool retVal = network_sendPacket(adapter, (void*)packet, length+sizeof(ethernet_t));
 
     free(packet);
-
     return(retVal);
 }
 
