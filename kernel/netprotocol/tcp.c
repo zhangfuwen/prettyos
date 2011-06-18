@@ -47,7 +47,8 @@ static void tcpDebug(tcpPacket_t* tcp)
 
 tcpConnection_t* tcp_createConnection()
 {
-    if(tcpConnections == 0) tcpConnections = list_Create();
+    if(tcpConnections == 0) 
+        tcpConnections = list_Create();
 
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
     connection->TCP_PrevState = CLOSED;
@@ -77,11 +78,13 @@ void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
 void tcp_connect(tcpConnection_t* connection)
 {
     connection->TCP_PrevState = connection->TCP_CurrState;
+    connection->localSocket.port = getFreeSocket();
 
-    if (connection->TCP_PrevState == CLOSED || connection->TCP_PrevState == LISTEN)
+    if (connection->TCP_PrevState == CLOSED || connection->TCP_PrevState == LISTEN || connection->TCP_PrevState == TIME_WAIT)
     {
         tcp_send(connection, 0, 0, SYN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
         connection->TCP_CurrState = SYN_SENT;
+        printf("TCP (\"active open\"): connection set from state CLOSED to state SYN_SENT by sending \"SYN\".\n");
     }
 }
 
@@ -338,17 +341,19 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     }
 
     packet->window = 65535; // TODO: Clarify
+    packet->urgentPointer = 0; // TODO: Clarify 
+
     packet->checksum = 0; // for checksum calculation
     packet->checksum = htons(udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
-
+    
     ipv4_send(connection->adapter, packet, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6);
     free(packet);
 }
 
 static uint16_t getFreeSocket()
 {
-    static uint16_t srcPort = 1024;
-    return ++srcPort;
+    static uint16_t srcPort = 1025;
+    return srcPort++;
 }
 
 /*

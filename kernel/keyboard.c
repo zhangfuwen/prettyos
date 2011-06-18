@@ -258,6 +258,26 @@ uint8_t ScanToASCII()
                 tcp_bind(connection, adapter);
             return 0;
         }
+
+        if(retchar == 'w') // Create & Bind connection
+        {
+            connection = tcp_createConnection();
+            uint8_t destIP_address[4] ={192,168,1,23}; 
+            memcpy(connection->remoteSocket.IP, destIP_address, 4);
+            connection->remoteSocket.port = 23;
+
+            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+
+            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            printf("network adapter: %Xh\n", adapter); // check
+            connection->adapter = adapter;
+            
+            if(adapter)
+            {            
+                tcp_connect(connection);  
+            }
+            return 0;
+        }
     }
 
     return retchar; // ASCII version
