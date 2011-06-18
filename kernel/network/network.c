@@ -211,7 +211,7 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uin
     tcpPseudoHeader_t pseudo;
     for (uint8_t i=0; i<4; i++)
     {
-        pseudo.src[i] = srcIP[i];
+        pseudo.src[i]  = srcIP[i];
         pseudo.dest[i] = destIP[i];
     }
     pseudo.length = htons(length);

@@ -267,6 +267,7 @@ uint8_t ScanToASCII()
             connection->remoteSocket.port = 23;
 
             uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+            memcpy(connection->localSocket.IP, sourceIP_address, 4);
 
             network_adapter_t* adapter = network_getAdapter(sourceIP_address);
             printf("network adapter: %Xh\n", adapter); // check

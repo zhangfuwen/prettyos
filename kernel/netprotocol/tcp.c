@@ -155,11 +155,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                 tcp_listen(connection);
                 break;
             case LISTEN:
-                tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , htonl(htonl(tcp->sequenceNumber)+1) /*ackNumber*/);
                 connection->TCP_CurrState = SYN_RECEIVED;
                 break;
             case SYN_SENT:
-                tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , htonl(htonl(tcp->sequenceNumber)+1) /*ackNumber*/);
                 connection->TCP_CurrState = SYN_RECEIVED;
                 break;
             default:
@@ -171,7 +171,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         connection->TCP_PrevState = connection->TCP_CurrState;
 
         if (connection->TCP_CurrState == SYN_SENT)
-        tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+        tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(htonl(tcp->sequenceNumber)+1) /*ackNumber*/);
         connection->TCP_CurrState = ESTABLISHED;
     }
     else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
@@ -190,7 +190,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                     printf("%c", *(((uint8_t*)(tcp+1))+i) );
                 }
                 textColor(0x0F);
-                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(tcpDataLength) /*ackNumber*/);
+                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(htonl(tcp->sequenceNumber)+tcpDataLength) /*ackNumber*/);
                 break;
             }
             // no send action
@@ -217,15 +217,15 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         switch(connection->TCP_CurrState)
         {
             case ESTABLISHED:
-                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(htonl(tcp->sequenceNumber)+1) /*ackNumber*/);
                 connection->TCP_CurrState = CLOSE_WAIT;
                 break;
             case FIN_WAIT_2:
-                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(htonl(tcp->sequenceNumber)+1) /*ackNumber*/);
                 connection->TCP_CurrState = TIME_WAIT;
                 break;
             case FIN_WAIT_1:
-                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(htonl(tcp->sequenceNumber)+1) /*ackNumber*/);
                 connection->TCP_CurrState = CLOSING;
                 break;
             default:
@@ -238,14 +238,14 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
 
         if (connection->TCP_CurrState == FIN_WAIT_1)
         {
-            tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(htonl(tcp->sequenceNumber)+1) /*ackNumber*/);
             connection->TCP_CurrState = TIME_WAIT;
         }
 
         // HACK due to observations in wireshark with telnet:
         // w/o conditions
         {
-            tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, tcp->sequenceNumber+htonl(1) /*ackNumber*/);
+            tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(htonl(tcp->sequenceNumber)+1) /*ackNumber*/);
             connection->TCP_CurrState = TIME_WAIT;
         }
     }
@@ -344,6 +344,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     packet->urgentPointer = 0; // TODO: Clarify 
 
     packet->checksum = 0; // for checksum calculation
+    
     packet->checksum = htons(udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
     
     ipv4_send(connection->adapter, packet, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6);
