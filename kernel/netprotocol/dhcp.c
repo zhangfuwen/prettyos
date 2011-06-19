@@ -3,6 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "util.h"
 #include "dhcp.h"
 #include "udp.h"
 #include "video/console.h"
@@ -125,35 +126,36 @@ void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
     packet.options[6]  =  3;  // REQUEST
 
     packet.options[7]  = 55;  // Parameter request list
-    packet.options[8]  =  4;  // Length
+    packet.options[8]  =  5;  // Length
     packet.options[9]  =  1;  // SUBNET MASK
     packet.options[10] =  3;  // ROUTERS
     packet.options[11] =  6;  // DOMAIN NAME SERVER
     packet.options[12] = 15;  // DOMAIN NAME
+    packet.options[13] = 54;  // Server IP
 
-    packet.options[13] = 61;  // Client Identifier - hardware type and client hardware address
-    packet.options[14] =  7;  // Length
-    packet.options[15] =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
+    packet.options[14] = 61;  // Client Identifier - hardware type and client hardware address
+    packet.options[15] =  7;  // Length
+    packet.options[16] =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     for(uint8_t i = 0; i < 6; i++)
-        packet.options[16+i] = adapter->MAC[i];
+        packet.options[17+i] = adapter->MAC[i];
 
-    packet.options[22] =  50;  // Requested IP
-    packet.options[23] =   4;  // Length
-    packet.options[24] = requestedIP[0];
-    packet.options[25] = requestedIP[1];
-    packet.options[26] = requestedIP[2];
-    packet.options[27] = requestedIP[3];
+    packet.options[23] =  50;  // Requested IP
+    packet.options[24] =   4;  // Length
+    packet.options[25] = requestedIP[0];
+    packet.options[26] = requestedIP[1];
+    packet.options[27] = requestedIP[2];
+    packet.options[28] = requestedIP[3];
 
-    packet.options[28] =  12;  // Hostname
-    packet.options[29] =   8;  // Length
-    packet.options[30] =  80;  // P
-    packet.options[31] = 114;  // r
-    packet.options[32] = 101;  // e
-    packet.options[33] = 116;  // t
+    packet.options[29] =  12;  // Hostname
+    packet.options[30] =   8;  // Length
+    packet.options[31] =  80;  // P
+    packet.options[32] = 114;  // r
+    packet.options[33] = 101;  // e
     packet.options[34] = 116;  // t
-    packet.options[35] = 121;  // y
-    packet.options[36] =  79;  // O
-    packet.options[37] =  83;  // S
+    packet.options[35] = 116;  // t
+    packet.options[36] = 121;  // y
+    packet.options[37] =  79;  // O
+    packet.options[38] =  83;  // S
 
     uint8_t srcIP[4] = {0,0,0,0};
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
@@ -297,7 +299,9 @@ static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
     if (dhcp->yiaddr[0] || dhcp->yiaddr[1] || dhcp->yiaddr[2] || dhcp->yiaddr[3])
     {
         for(uint8_t i = 0; i < 4; i++)
+        {
             adapter->IP[i] = dhcp->yiaddr[i];
+        }
     }
 }
 
@@ -338,6 +342,7 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
         case ACK:
             printf("\n >>> PrettyOS got a DHCP ACK.   <<<");
             useDHCP_IP(adapter, dhcp);
+            printf("\nGateway IP: %I", adapter->Gateway_IP);
             break;
         case NAK:
             printf("\n >>> DHCP was not successful (NAK). <<<");
@@ -351,7 +356,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 {
     uint32_t leaseTime=0;
 
-    switch(opt[count+1])
+    switch(opt[count+1]) // 1: message  2: length  3 to (2+length): data
     {
         case 12: case 14: case 15: case 17: case 18: case 40: case 43: // ASCII output
             for(uint16_t i=0; i<opt[count+2]; i++)
@@ -397,6 +402,17 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
                 case 8:
                     printf(" (DHCPInform)");
                     break;
+            }
+            break;
+        case 54: // Server Identifier
+            for(uint16_t i=0; i<opt[count+2]; i++)
+            {
+                printf("%u ", opt[count+3+i]);             
+            }
+            
+            if (opt[count+2] == 4)
+            {
+                memcpy(adapter->Gateway_IP, opt+count+3, 4);
             }
             break;
         default:

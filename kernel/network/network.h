@@ -68,6 +68,8 @@ struct network_adapter
     uint8_t           IP[4];
     arpTable_t        arpTable;
     DHCP_state        DHCP_State;
+    uint8_t           Gateway_IP[4];
+    uint8_t           Subnet[4]; 
 };
 
 
