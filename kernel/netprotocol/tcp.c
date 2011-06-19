@@ -7,6 +7,7 @@
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
+#include "timer.h"
 #include "network/netutils.h"
 #include "ipv4.h"
 #include "list.h"
@@ -173,6 +174,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         connection->TCP_PrevState = connection->TCP_CurrState;
 
         if (connection->TCP_CurrState == SYN_SENT)
+        
+        /// TEST
+        connection->tcb.SND_NXT = tcp->acknowledgmentNumber;             
+        connection->tcb.SND_UNA = htonl(ntohl(tcp->sequenceNumber)+1);
+        /// TEST
+        
         tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
         connection->TCP_CurrState = ESTABLISHED;
     }
@@ -208,6 +215,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                 break;
             case CLOSING:
                 connection->TCP_CurrState = TIME_WAIT;
+                /// TEST
+                delay(100000);
+                tcp_deleteConnection(connection);
+                /// TEST
                 break;
             default:
                 break;
@@ -225,7 +236,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                 break;
             case FIN_WAIT_2:
                 tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
-                connection->TCP_CurrState = TIME_WAIT;
+                connection->TCP_CurrState = TIME_WAIT;                
+                /// TEST
+                delay(100000);
+                tcp_deleteConnection(connection);
+                /// TEST
                 break;
             case FIN_WAIT_1:
                 tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
@@ -243,6 +258,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         {
             tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
             connection->TCP_CurrState = TIME_WAIT;
+            /// TEST
+            delay(100000);
+            tcp_deleteConnection(connection);
+            /// TEST
         }
 
         // HACK due to observations in wireshark with telnet:
@@ -250,6 +269,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         {
             tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
             connection->TCP_CurrState = TIME_WAIT;
+            /// TEST
+            delay(100000);
+            tcp_deleteConnection(connection);
+            /// TEST
         }
     }
     if (tcp->RST) // RST
