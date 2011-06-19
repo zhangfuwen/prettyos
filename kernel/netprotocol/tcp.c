@@ -11,6 +11,7 @@
 #include "network/netutils.h"
 #include "ipv4.h"
 #include "list.h"
+#include "timer.h"
 
 
 static listHead_t* tcpConnections = 0;
@@ -55,7 +56,10 @@ tcpConnection_t* tcp_createConnection()
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
     connection->TCP_PrevState = CLOSED;
     connection->TCP_CurrState = CLOSED;
-
+    srand(timer_getMilliseconds());
+    connection->tcb.SND_ISS = rand();
+    connection->tcb.SND_UNA = connection->tcb.SND_ISS;
+    connection->tcb.SND_NXT = connection->tcb.SND_ISS + 1;
     list_Append(tcpConnections, connection);
     return(connection);
 }
@@ -76,14 +80,14 @@ void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
     // TODO: ...
 }
 
-void tcp_connect(tcpConnection_t* connection)
+void tcp_connect(tcpConnection_t* connection) // ==> SYN-SENT
 {
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->localSocket.port = getFreeSocket();
 
     if (connection->TCP_PrevState == CLOSED || connection->TCP_PrevState == LISTEN || connection->TCP_PrevState == TIME_WAIT)
     {
-        tcp_send(connection, 0, 0, SYN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
+        tcp_send(connection, 0, 0, SYN_FLAG, connection->tcb.SND_ISS /*seqNumber*/ , 0 /*ackNumber*/);
         connection->TCP_CurrState = SYN_SENT;
         printf("\nTCP connection by \"active open\":  CLOSED --> SYN_SENT\n");
     }
@@ -174,11 +178,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         connection->TCP_PrevState = connection->TCP_CurrState;
 
         if (connection->TCP_CurrState == SYN_SENT)
-        
-        /// TEST
-        connection->tcb.SND_NXT = tcp->acknowledgmentNumber;             
-        connection->tcb.SND_UNA = htonl(ntohl(tcp->sequenceNumber)+1);
-        /// TEST
+        {
+            connection->tcb.SND_NXT = tcp->acknowledgmentNumber;            // HACK for keyboard.c       
+            connection->tcb.SND_UNA = htonl(ntohl(tcp->sequenceNumber)+1);  // HACK for keyboard.c      
+        }
         
         tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
         connection->TCP_CurrState = ESTABLISHED;

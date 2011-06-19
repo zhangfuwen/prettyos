@@ -281,7 +281,7 @@ uint8_t ScanToASCII()
         }
         if(retchar == 'x') // send data to the connection
         {
-            tcp_send(connection, "GET / HTTP/1.0\r\nHost: www.henkessoft.de\r\n\r\n", strlen("GET / HTTP/1.0\r\nHost: www.henkessoft.de\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
+            tcp_send(connection, "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n", strlen("GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
             return 0;
         }
     }

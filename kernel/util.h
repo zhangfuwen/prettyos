@@ -90,4 +90,7 @@ uint32_t abs(int32_t arg);
 double   fabs(double x);
 double   sqrt(double x);
 
+void srand(uint32_t val);
+uint32_t rand();
+
 #endif
