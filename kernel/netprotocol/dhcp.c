@@ -340,9 +340,11 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             }
             break;
         case ACK:
-            printf("\n >>> PrettyOS got a DHCP ACK.   <<<");
+            textColor(0x0A);
+            printf("\n>>> PrettyOS got a DHCP ACK.   <<<");
             useDHCP_IP(adapter, dhcp);
-            printf("\nGateway IP: %I", adapter->Gateway_IP);
+            printf("\nGateway IP: %I Subnet: %I", adapter->Gateway_IP, adapter->Subnet);
+            textColor(0x0F);
             break;
         case NAK:
             printf("\n >>> DHCP was not successful (NAK). <<<");
@@ -358,6 +360,18 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 
     switch(opt[count+1]) // 1: message  2: length  3 to (2+length): data
     {
+        case 1: // subnet mask
+            for(uint16_t i=0; i<opt[count+2]; i++)
+            {
+                printf("%u ", opt[count+3+i]);             
+            }
+            
+            if (opt[count+2] == 4)
+            {
+                memcpy(adapter->Subnet, opt+count+3, 4);
+            }
+            break;
+    
         case 12: case 14: case 15: case 17: case 18: case 40: case 43: // ASCII output
             for(uint16_t i=0; i<opt[count+2]; i++)
                 printf("%c", opt[count+3+i]);
@@ -370,7 +384,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             }
             printf("  %u hours", leaseTime/3600);
             break;
-        case 53:
+        case 53: // Message type
             for(uint16_t i=0; i<opt[count+2]; i++)
                 printf("%u ", opt[count+3+i]);
             switch (opt[count+3])
@@ -404,7 +418,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
                     break;
             }
             break;
-        case 54: // Server Identifier
+        case 54: // Server identifier
             for(uint16_t i=0; i<opt[count+2]; i++)
             {
                 printf("%u ", opt[count+3+i]);             
