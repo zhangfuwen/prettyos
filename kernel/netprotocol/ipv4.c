@@ -20,7 +20,7 @@ static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
 {
-    if(memcmp(packet->destIP, adapter->IP_address, 4) != 0 && memcmp(packet->destIP, broadcast_IP, 4) != 0)
+    if(memcmp(packet->destIP, adapter->IP, 4) != 0 && memcmp(packet->destIP, broadcast_IP, 4) != 0)
     {
         printf("\nIPv4 packet received. We are not the addressee.");
         return;
@@ -61,7 +61,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     memcpy(packet+1, data, length);
 
     memcpy(packet->destIP, IP, 4);
-    memcpy(packet->sourceIP, adapter->IP_address, 4);
+    memcpy(packet->sourceIP, adapter->IP, 4);
     packet->version        = 4;
     packet->ipHeaderLength = sizeof(ipv4Packet_t) / 4;
     packet->typeOfService  = 0;

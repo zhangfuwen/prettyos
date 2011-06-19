@@ -48,9 +48,9 @@ void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp)
 
     // http://www.iana.org/assignments/port-numbers
     // http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+    printf("Dest. Port: ");
     switch (ntohs(udp->destPort))
     {
-        printf("Dest. Port: ");
     case 20:
         printf("FTP - data transfer\n");
         break;

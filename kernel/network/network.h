@@ -57,8 +57,8 @@ struct network_adapter
     void*             data; // Drivers internal data
     uint16_t          IO_base;
     void*             MMIO_base;
-    uint8_t           MAC_address[6];
-    uint8_t           IP_address[4];
+    uint8_t           MAC[6];
+    uint8_t           IP[4];
     arpTable_t        arpTable;
     DHCP_state        DHCP_State;
 };

@@ -68,7 +68,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
 {
     // open TCP Server with State "LISTEN"
-    memcpy(connection->localSocket.IP, adapter->IP_address, 4);
+    memcpy(connection->localSocket.IP, adapter->IP, 4);
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = LISTEN;
     connection->adapter = adapter;
@@ -183,12 +183,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
             case ESTABLISHED: // ESTABLISHED --> DATA TRANSFER
             {
                 uint32_t tcpDataLength = -4 /* frame ? */ + length - (tcp->dataOffset << 2);
-                printf("\ndata:");
+                printf("data:");
                 textColor(0x0A);
                 for (uint16_t i=0; i<tcpDataLength; i++)
                 {
                     printf("%c", ((uint8_t*)(tcp+1))[i]);
                 }
+                putch('\n');
                 textColor(0x0F);
                 tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+tcpDataLength) /*ackNumber*/);
                 break;

@@ -201,27 +201,27 @@ uint8_t ScanToASCII()
         }
         if(retchar == 'n') // If you want to test something in networking
         {
-            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
-            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            network_adapter_t* adapter = network_getAdapter(sourceIP);
             printf("network adapter: %Xh\n", adapter); // check
 
             // parameters for UDPSend(...)
             uint16_t srcPort  = 40; // unassigend
             uint16_t destPort = 40;
-            uint8_t  destIP_address[4] ={255,255,255,255};
+            uint8_t  destIP[4] ={255,255,255,255};
 
             if (adapter)
             {
-                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP_address, destPort, destIP_address);
+                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, destIP);
             }
             return 0;
         }
         if(retchar == 'i') // DHCP Inform
         {
-            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
-            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            network_adapter_t* adapter = network_getAdapter(sourceIP);
             printf("network adapter: %Xh\n", adapter); // check
 
             if (adapter)
@@ -232,9 +232,9 @@ uint8_t ScanToASCII()
         }
         if(retchar == 'f') // DHCP Release
         {
-            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
-            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            network_adapter_t* adapter = network_getAdapter(sourceIP);
             printf("network adapter: %Xh\n", adapter); // check
 
             if (adapter)
@@ -249,9 +249,9 @@ uint8_t ScanToASCII()
         {
             connection = tcp_createConnection();
 
-            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
 
-            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            network_adapter_t* adapter = network_getAdapter(sourceIP);
             printf("network adapter: %Xh\n", adapter); // check
 
             if(adapter)
@@ -261,14 +261,14 @@ uint8_t ScanToASCII()
         if(retchar == 'w') // Create & Bind connection
         {
             connection = tcp_createConnection();
-            uint8_t destIP_address[4] ={192,168,1,23};
-            memcpy(connection->remoteSocket.IP, destIP_address, 4);
+            uint8_t destIP[4] ={192,168,1,23};
+            memcpy(connection->remoteSocket.IP, destIP, 4);
             connection->remoteSocket.port = 23;
 
-            uint8_t sourceIP_address[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-            memcpy(connection->localSocket.IP, sourceIP_address, 4);
+            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+            memcpy(connection->localSocket.IP, sourceIP, 4);
 
-            network_adapter_t* adapter = network_getAdapter(sourceIP_address);
+            network_adapter_t* adapter = network_getAdapter(sourceIP);
             printf("network adapter: %Xh\n", adapter); // check
             connection->adapter = adapter;
 

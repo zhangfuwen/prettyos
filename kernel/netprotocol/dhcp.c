@@ -33,7 +33,7 @@ void DHCP_Discover(network_adapter_t* adapter)
         packet.giaddr[i] = 0;
     }
 
-    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
+    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
     for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
     for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
@@ -107,7 +107,7 @@ void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
         packet.giaddr[i] = 0;
     }
 
-    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
+    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
     for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
     for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
@@ -135,7 +135,7 @@ void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
     packet.options[14] =  7;  // Length
     packet.options[15] =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     for(uint8_t i = 0; i < 6; i++)
-        packet.options[16+i] = adapter->MAC_address[i];
+        packet.options[16+i] = adapter->MAC[i];
 
     packet.options[22] =  50;  // Requested IP
     packet.options[23] =   4;  // Length
@@ -176,13 +176,13 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.flags = BROADCAST; // TEST: broadcast
     for(uint8_t i = 0; i < 4; i++)
     {
-        packet.ciaddr[i] = adapter->IP_address[i];
+        packet.ciaddr[i] = adapter->IP[i];
         packet.yiaddr[i] = 0;
         packet.siaddr[i] = 0;
         packet.giaddr[i] = 0;
     }
 
-    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
+    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
     for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
     for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
@@ -221,12 +221,12 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.options[24] =   7;  // Length
     packet.options[25] =   1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     for(uint8_t i = 0; i < 6; i++)
-        packet.options[26+i] = adapter->MAC_address[i];
+        packet.options[26+i] = adapter->MAC[i];
 
     uint8_t srcIP[4];
     for(uint8_t i = 0; i < 4; i++)
     {
-        srcIP[i] = adapter->IP_address[i];
+        srcIP[i] = adapter->IP[i];
     }
 
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
@@ -250,13 +250,13 @@ void DHCP_Release(network_adapter_t* adapter)
     packet.flags = UNICAST ;
     for(uint8_t i = 0; i < 4; i++)
     {
-        packet.ciaddr[i] = adapter->IP_address[i];
+        packet.ciaddr[i] = adapter->IP[i];
         packet.yiaddr[i] = 0;
         packet.siaddr[i] = 0;
         packet.giaddr[i] = 0;
     }
 
-    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC_address[i];
+    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
     for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
     for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
@@ -277,12 +277,12 @@ void DHCP_Release(network_adapter_t* adapter)
     packet.options[8]  =  7;  // Length
     packet.options[9]  =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     for(uint8_t i = 0; i < 6; i++)
-        packet.options[10+i] = adapter->MAC_address[i];
+        packet.options[10+i] = adapter->MAC[i];
 
     uint8_t srcIP[4];
     for(uint8_t i = 0; i < 4; i++)
     {
-        srcIP[i] = adapter->IP_address[i];
+        srcIP[i] = adapter->IP[i];
     }
 
     uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
@@ -297,7 +297,7 @@ static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
     if (dhcp->yiaddr[0] || dhcp->yiaddr[1] || dhcp->yiaddr[2] || dhcp->yiaddr[3])
     {
         for(uint8_t i = 0; i < 4; i++)
-            adapter->IP_address[i] = dhcp->yiaddr[i];
+            adapter->IP[i] = dhcp->yiaddr[i];
     }
 }
 
@@ -329,10 +329,10 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             }
             else
             {
-                adapter->IP_address[0] = IP_1;
-                adapter->IP_address[1] = IP_2;
-                adapter->IP_address[2] = IP_3;
-                adapter->IP_address[3] = IP_4;
+                adapter->IP[0] = IP_1;
+                adapter->IP[1] = IP_2;
+                adapter->IP[2] = IP_3;
+                adapter->IP[3] = IP_4;
             }
             break;
         case ACK:

@@ -81,7 +81,7 @@ void install_RTL8168(network_adapter_t* device)
     // Get MAC
     for (uint8_t i = 0; i < 6; i++)
     {
-        device->MAC_address[i] =  *(uint8_t*)(device->MMIO_base + RTL8168_IDR0 + i);
+        device->MAC[i] =  *(uint8_t*)(device->MMIO_base + RTL8168_IDR0 + i);
     }
 
     setupDescriptors();

@@ -20,7 +20,7 @@ static const uint8_t broadcast_MAC2[6] = {0, 0, 0, 0, 0, 0};
 
 void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
-    if(memcmp(eth->recv_mac, adapter->MAC_address, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC1, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC2, 6) != 0)
+    if(memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC1, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC2, 6) != 0)
     {
         printf("\nEthernet packet received. We are not the addressee.");
         return;
@@ -126,7 +126,7 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
 
     memcpy(packet+1, data, length);
     memcpy(packet->recv_mac, MAC, 6);
-    memcpy(packet->send_mac, adapter->MAC_address, 6);
+    memcpy(packet->send_mac, adapter->MAC, 6);
     *(uint16_t*)packet->type_len = htons(type);
 
     bool retVal = network_sendPacket(adapter, (void*)packet, length+sizeof(ethernet_t));

@@ -105,23 +105,23 @@ bool network_installDevice(pciDev_t* device)
     {
         if(temp[i_end] == 0)
         {
-            adapter->IP_address[byte] = atoi(temp+i_start);
+            adapter->IP[byte] = atoi(temp+i_start);
             break;
         }
         if(temp[i_end] == '.')
         {
             temp[i_end] = 0;
-            adapter->IP_address[byte] = atoi(temp+i_start);
+            adapter->IP[byte] = atoi(temp+i_start);
             i_start = i_end+1;
             byte++;
         }
     }
     */
     // Workaround: TODO
-    adapter->IP_address[0] =  IP_1;
-    adapter->IP_address[1] =  IP_2;
-    adapter->IP_address[2] =  IP_3;
-    adapter->IP_address[3] =  IP_4;
+    adapter->IP[0] =  IP_1;
+    adapter->IP[1] =  IP_2;
+    adapter->IP[2] =  IP_3;
+    adapter->IP[3] =  IP_4;
     // ------------------------------
 
     adapter->driver->install(adapter);
@@ -135,8 +135,8 @@ bool network_installDevice(pciDev_t* device)
     DHCP_Discover(adapter);
 
     textColor(0x0E);
-    printf("\nMAC: %M", adapter->MAC_address);
-    printf(" IP: %I\n\n", adapter->IP_address);
+    printf("\nMAC: %M", adapter->MAC);
+    printf(" IP: %I\n\n", adapter->IP);
     textColor(0x0F);
 
     return(true);
@@ -184,7 +184,7 @@ void network_displayArpTables()
     uint8_t i = 0;
     for (element_t* e = adapters->head; e != 0; e = e->next, i++)
     {
-        printf("\n\nAdapter %u: %I", i, ((network_adapter_t*)e->data)->IP_address);
+        printf("\n\nAdapter %u: %I", i, ((network_adapter_t*)e->data)->IP);
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
     }
     printf("\n");
@@ -196,7 +196,7 @@ network_adapter_t* network_getAdapter(uint8_t IP[4])
     for(element_t* e = adapters->head; e != 0; e = e->next)
     {
         network_adapter_t* adapter = e->data;
-        if(adapter->IP_address[0] == IP[0] && adapter->IP_address[1] == IP[1] && adapter->IP_address[2] == IP[2] && adapter->IP_address[3] == IP[3])
+        if(adapter->IP[0] == IP[0] && adapter->IP[1] == IP[1] && adapter->IP[2] == IP[2] && adapter->IP[3] == IP[3])
         {
             return(adapter);
         }

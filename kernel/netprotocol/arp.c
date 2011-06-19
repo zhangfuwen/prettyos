@@ -54,7 +54,7 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
-        if(entry->IP[0] == IP[0] && entry->IP[1] == IP[1] && entry->IP[2] == IP[2] && entry->IP[3] == IP[3])
+        if(memcmp(entry->IP, IP, 4) == 0)
         {
             entry->seconds = timer_getSeconds(); // Update time stamp.
             return(entry);
@@ -105,10 +105,7 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
         switch ((packet->operation[0] << 8) | packet->operation[1])
         {
         case 1: // ARP-Request
-            if ((packet->sourceIP[0] == packet->destIP[0]) &&
-                (packet->sourceIP[1] == packet->destIP[1]) &&
-                (packet->sourceIP[2] == packet->destIP[2]) &&
-                (packet->sourceIP[3] == packet->destIP[3])) // IP requ. and searched is identical
+            if (memcmp(packet->sourceIP, packet->destIP, 4) == 0) // IP requ. and searched is identical
             {
                 printf("ARP Gratuitous Request\n");
             }
@@ -127,8 +124,7 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             printf("%I", packet->destIP);
 
             // requested IP is our own IP?
-            if (packet->destIP[0] == adapter->IP_address[0] && packet->destIP[1] == adapter->IP_address[1] &&
-                packet->destIP[2] == adapter->IP_address[2] && packet->destIP[3] == adapter->IP_address[3])
+            if (memcmp(packet->destIP, adapter->IP, 4) == 0)
             {
                 printf("\n Tx prepared:");
                 arpPacket_t reply;
@@ -147,13 +143,13 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
                 for (uint8_t i = 0; i < 6; i++)
                 {
                     reply.dest_mac[i]   = packet->source_mac[i];
-                    reply.source_mac[i] = adapter->MAC_address[i];
+                    reply.source_mac[i] = adapter->MAC[i];
                 }
 
                 for (uint8_t i = 0; i < 4; i++)
                 {
                     reply.destIP[i]   = packet->sourceIP[i];
-                    reply.sourceIP[i] = adapter->IP_address[i];
+                    reply.sourceIP[i] = adapter->IP[i];
                 }
 
                 EthernetSend(adapter, (void*)&reply, sizeof(arpPacket_t), packet->source_mac, 0x0806);
@@ -200,13 +196,13 @@ void arp_sendGratitiousRequest(network_adapter_t* adapter)
     for (uint8_t i = 0; i < 6; i++)
     {
         gratRequest.dest_mac[i]   = 0xFF; // Broadcast
-        gratRequest.source_mac[i] = adapter->MAC_address[i];
+        gratRequest.source_mac[i] = adapter->MAC[i];
     }
 
     for (uint8_t i = 0; i < 4; i++)
     {
-        gratRequest.destIP[i]   = adapter->IP_address[i];
-        gratRequest.sourceIP[i] = adapter->IP_address[i];
+        gratRequest.destIP[i]   = adapter->IP[i];
+        gratRequest.sourceIP[i] = adapter->IP[i];
     }
 
     uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};

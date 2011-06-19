@@ -55,14 +55,14 @@ void install_AMDPCnet(network_adapter_t* dev)
 
     // Get MAC
     uint16_t temp = inportw(dev->IO_base + APROM0);
-    dev->MAC_address[0] = temp;
-    dev->MAC_address[1] = temp>>8;
+    dev->MAC[0] = temp;
+    dev->MAC[1] = temp>>8;
     temp = inportw(dev->IO_base + APROM2);
-    dev->MAC_address[2] = temp;
-    dev->MAC_address[3] = temp>>8;
+    dev->MAC[2] = temp;
+    dev->MAC[3] = temp>>8;
     temp = inportw(dev->IO_base + APROM4);
-    dev->MAC_address[4] = temp;
-    dev->MAC_address[5] = temp>>8;
+    dev->MAC[4] = temp;
+    dev->MAC[5] = temp>>8;
 
     // Reset
     inportw(dev->IO_base+RESET);
@@ -101,7 +101,7 @@ void install_AMDPCnet(network_adapter_t* dev)
     initBlock->mode = 0x8000; // Promiscuous mode
     initBlock->receive_length = 3;
     initBlock->transfer_length = 3;
-    initBlock->physical_address = *(uint64_t*)dev->MAC_address;
+    initBlock->physical_address = *(uint64_t*)dev->MAC;
     initBlock->receive_descriptor = paging_getPhysAddr(device->receiveDesc);
     initBlock->transmit_descriptor = paging_getPhysAddr(device->transmitDesc);
     uintptr_t phys_address = (uintptr_t)paging_getPhysAddr(initBlock);
