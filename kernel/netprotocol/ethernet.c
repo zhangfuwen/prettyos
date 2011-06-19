@@ -113,12 +113,12 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
 {
     if (sizeof(ethernet_t)+length > 0x700)
     {
-        printf("\nEthernetSend: length: %u. Error: This is more than (1792) 0x700",sizeof(ethernet_t)+length);
+        printf(" EthernetSend: length: %u. Error: This is more than (1792) 0x700\n",sizeof(ethernet_t)+length);
         return false;
     }
     else
     {
-        printf("\nEthernetSend: length: %u.", sizeof(ethernet_t)+length);
+        printf(" EthernetSend: length: %u.\n", sizeof(ethernet_t)+length);
     }
 
     ethernet_t* packet = malloc(sizeof(ethernet_t)+length, 0, "ethernet packet");

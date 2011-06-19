@@ -87,7 +87,7 @@ void install_AMDPCnet(network_adapter_t* dev)
         device->receiveDesc[i].flags2 = 0;
         device->receiveDesc[i].avail = (uint32_t)buffer;
 
-        buffer = malloc(2048, 16, "PCnet tramsmit buffer");
+        buffer = malloc(2048, 16, "PCnet transmit buffer");
         device->transmitBuf[i] = buffer;
         device->transmitDesc[i].address = paging_getPhysAddr(buffer);
         device->transmitDesc[i].flags = 0;

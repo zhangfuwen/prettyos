@@ -110,11 +110,11 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
                 (packet->sourceIP[2] == packet->destIP[2]) &&
                 (packet->sourceIP[3] == packet->destIP[3])) // IP requ. and searched is identical
             {
-                printf("Operation: Gratuitous Request\n");
+                printf("ARP Gratuitous Request\n");
             }
             else
             {
-                printf("Operation: Request\n");
+                printf("ARP Request\n");
             }
 
             textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
@@ -160,8 +160,8 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             }
             break;
 
-        case 2: // ARP-Reply
-            printf("Operation: Response\n");
+        case 2: // ARP-Response
+            printf("ARP Response\n");
 
             textColor(0x0D); printf("\nMAC Replying:   "); textColor(0x03);
             printf("%M", packet->source_mac);

@@ -131,7 +131,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     if(connection == 0)
     {
         textColor(0x0C);
-        printf("\nTCP packet received. No TCP connection connected to it.");
+        printf("\nTCP packet received that belongs to no TCP connection.");
         textColor(0x0F);
         return;
     }
@@ -184,7 +184,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
             {
                 uint32_t tcpDataLength = -4 /* frame ? */ + length - (tcp->dataOffset << 2);
                 printf("\ndata:");
-                textColor(0x0E);
+                textColor(0x0A);
                 for (uint16_t i=0; i<tcpDataLength; i++)
                 {
                     printf("%c", *(((uint8_t*)(tcp+1))+i) );

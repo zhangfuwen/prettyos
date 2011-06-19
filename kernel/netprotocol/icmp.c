@@ -24,17 +24,13 @@ void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t leng
 
     memcpy(&pkt[sizeof(*icmp)], (void*)(rec+1), icmp_data_length);
 
-    icmp->checksum = htons(internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0));
+    icmp->checksum = htons( internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0) );
 
     printf("\n\n");
     printf("ICMP Header information:\n");
     textColor(0x0E);
-    printf("+--------+--------+-------------+\n");
-    printf("|   %u    |   %u    |     %u      | (type, code, checksum)\n", icmp->type, icmp->code, icmp->checksum);
-    printf("+-------------------------------+\n");
-    printf("|              %u                | (data)\n", icmp->checksum);
-    printf("+-------------------------------+\n");
-
+    printf("type: %u  code: %u  checksum %u\n", icmp->type, icmp->code, icmp->checksum);
+    
     ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP,1);
 }
 

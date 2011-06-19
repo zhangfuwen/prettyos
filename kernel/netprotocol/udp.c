@@ -48,7 +48,7 @@ void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp)
 
     // http://www.iana.org/assignments/port-numbers
     // http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
-    switch(ntohs(udp->destPort))
+    switch (ntohs(udp->destPort))
     {
         printf("Dest. Port: ");
     case 20:
@@ -64,10 +64,10 @@ void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp)
         printf("Domain Name System (DNS)\n");
         break;
     case 67:
-        printf("UDP BOOTP/DHCP Server\n");
+        printf("DHCPv4 Server\n");
         break;
     case 68:
-        printf("UDP BOOTP/DHCP Client\n");
+        printf("DHCPv4 Client\n");
         DHCP_AnalyzeServerMessage(adapter, (dhcp_t*)(udp+1));
         break;
     case 80:
@@ -103,9 +103,11 @@ void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp)
     case 5355:
         printf("Link-Local Multicast Name Resolution (llmnr)\n");
         break;
+    default:
+        printf("%u\n", ntohs(udp->destPort));
+        break;
     }
 }
-
 
 
 /*
