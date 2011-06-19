@@ -84,7 +84,7 @@ void tcp_connect(tcpConnection_t* connection)
     {
         tcp_send(connection, 0, 0, SYN_FLAG, 0 /*seqNumber*/ , 0 /*ackNumber*/);
         connection->TCP_CurrState = SYN_SENT;
-        printf("TCP connection by \"active open\":  CLOSED --> SYN_SENT\n");
+        printf("\nTCP connection by \"active open\":  CLOSED --> SYN_SENT\n");
     }
 }
 

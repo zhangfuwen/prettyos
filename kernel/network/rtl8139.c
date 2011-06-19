@@ -213,7 +213,7 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     rAdapter->TxBufferIndex++;
     rAdapter->TxBufferIndex %= 4;
 
-    printf(">> Packet sent. <<\n");
+    printf(" >> Packet sent. <<\n");
     return true;
 }
 
