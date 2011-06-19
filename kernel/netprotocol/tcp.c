@@ -88,6 +88,8 @@ void tcp_connect(tcpConnection_t* connection)
     }
 }
 
+
+
 void tcp_close(tcpConnection_t* connection)
 {
     connection->TCP_PrevState = connection->TCP_CurrState;

@@ -260,8 +260,8 @@ uint8_t ScanToASCII()
         }
         if(retchar == 'w') // Create & Bind connection
         {
-            connection = tcp_createConnection();
-            uint8_t destIP[4] ={192,168,1,23};
+            connection = tcp_createConnection(); // 94.142.241.111 auf Port 23
+            uint8_t destIP[4] ={94,142,241,111}; 
             memcpy(connection->remoteSocket.IP, destIP, 4);
             connection->remoteSocket.port = 23;
 
@@ -276,6 +276,11 @@ uint8_t ScanToASCII()
             {
                 tcp_connect(connection);
             }
+            return 0;
+        }
+        if(retchar == 'x') // send data to the connection
+        {
+            tcp_send(connection, "GET / HTTP/1.0\nHost: www.henkessoft.de\n\n", strlen("GET / HTTP/1.0\nHost: www.henkessoft.de\n\n"), ACK_FLAG, 42, 0);
             return 0;
         }
     }

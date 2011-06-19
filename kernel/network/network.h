@@ -33,6 +33,13 @@
 #define RIP_4  15
 */
 
+// router MAC for routing to the internet
+#define MAC_1 0x00 
+#define MAC_2 0x22
+#define MAC_3 0xcf
+#define MAC_4 0x36
+#define MAC_5 0x9d
+#define MAC_6 0x1c
 
 typedef struct network_adapter network_adapter_t;
 

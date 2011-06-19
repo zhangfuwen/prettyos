@@ -92,7 +92,16 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
         }
         else
         {
+            /// TEST
+            uint8_t router_MAC[6] = {MAC_1, MAC_2, MAC_3, MAC_4, MAC_5, MAC_6};
+            /// TEST 
+            /// TODO: get it from DHCP ACK
+
             printf("\nThe requested IP was not found in the ARP table: %I", IP);
+            printf("\nWe deliver the packet to the MAC of your router.");
+            EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), router_MAC, 0x0800);
+
+            // printf("\nThe requested IP was not found in the ARP table: %I", IP);
         }
     }
     free(packet);
