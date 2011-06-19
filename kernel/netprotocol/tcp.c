@@ -3,11 +3,12 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "tcp.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
+#include "network/netutils.h"
 #include "ipv4.h"
-#include "tcp.h"
 #include "list.h"
 
 
@@ -24,7 +25,7 @@ static tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_ada
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        //if(connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0)
+        //if(connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0) /// HACK
             return(connection);
     }
 
@@ -47,7 +48,7 @@ static void tcpDebug(tcpPacket_t* tcp)
 
 tcpConnection_t* tcp_createConnection()
 {
-    if(tcpConnections == 0) 
+    if(tcpConnections == 0)
         tcpConnections = list_Create();
 
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
@@ -67,7 +68,6 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
 {
     // open TCP Server with State "LISTEN"
-    /*connection->localSocket.port = */getFreeSocket();
     memcpy(connection->localSocket.IP, adapter->IP_address, 4);
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = LISTEN;
@@ -150,7 +150,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         memcpy(connection->remoteSocket.IP, transmittingIP, 4);
         switch(connection->TCP_CurrState)
         {
-            case CLOSED: case TIME_WAIT: // HACK, TODO: build sockes, use timeout (TIME_WAIT --> CLOSED)
+            case CLOSED: case TIME_WAIT: // HACK, TODO: use timeout (TIME_WAIT --> CLOSED)
                 printf("TCP set from CLOSED to LISTEN.\n");
                 tcp_listen(connection);
                 break;
@@ -187,7 +187,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                 textColor(0x0A);
                 for (uint16_t i=0; i<tcpDataLength; i++)
                 {
-                    printf("%c", *(((uint8_t*)(tcp+1))+i) );
+                    printf("%c", ((uint8_t*)(tcp+1))[i]);
                 }
                 textColor(0x0F);
                 tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+tcpDataLength) /*ackNumber*/);
@@ -274,7 +274,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     packet->destPort   = htons(connection->remoteSocket.port);
     packet->sequenceNumber = seqNumber;
     packet->acknowledgmentNumber = ackNumber;
-    packet->dataOffset = sizeof(tcpPacket_t)>>2 ; // header length as number of DWORDS
+    packet->dataOffset = sizeof(tcpPacket_t)>>2; // header length as number of DWORDS
     packet->reserved = 0;
     switch (flags)
     {
@@ -341,12 +341,12 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     }
 
     packet->window = 65535; // TODO: Clarify
-    packet->urgentPointer = 0; // TODO: Clarify 
+    packet->urgentPointer = 0; // TODO: Clarify
 
     packet->checksum = 0; // for checksum calculation
     
     packet->checksum = htons(udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
-    
+
     ipv4_send(connection->adapter, packet, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6);
     free(packet);
 }

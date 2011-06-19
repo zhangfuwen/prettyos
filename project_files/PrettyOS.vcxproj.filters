@@ -345,8 +345,8 @@
     <ClInclude Include="..\kernel\network\rtl8168.h">
       <Filter>Kernel\include\network</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\netprotocol\networktypes.h">
-      <Filter>Kernel\include\network\protocol</Filter>
+    <ClInclude Include="..\kernel\network\netutils.h">
+      <Filter>Kernel\include\network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -573,6 +573,9 @@
       <Filter>Kernel\sources\network</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\network\network.c">
+      <Filter>Kernel\sources\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\network\netutils.c">
       <Filter>Kernel\sources\network</Filter>
     </ClCompile>
   </ItemGroup>

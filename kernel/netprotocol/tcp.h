@@ -2,11 +2,12 @@
 #define TCP_H
 
 #include "network/network.h"
-#include "networktypes.h"
 
 // http://tools.ietf.org/html/rfc793
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
 
+typedef enum {CLOSED, LISTEN, SYN_SENT, SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, CLOSING, CLOSE_WAIT, LAST_ACK, TIME_WAIT} TCP_state;
+typedef enum {SYN_FLAG, SYN_ACK_FLAG, ACK_FLAG, FIN_FLAG, FIN_ACK_FLAG, RST_FLAG} tcpFlags;
 
 typedef struct
 {
@@ -32,15 +33,6 @@ typedef struct
     uint16_t checksum;
     uint16_t urgentPointer;
 } __attribute__((packed)) tcpPacket_t;
-
-typedef struct
-{
-    uint8_t src[4];
-    uint8_t dest[4];
-    uint8_t res;
-    uint8_t prot;
-    uint16_t length;
-} __attribute__((packed)) tcpPseudoHeader_t;
 
 typedef struct
 {

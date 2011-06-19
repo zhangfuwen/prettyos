@@ -5,13 +5,13 @@
 
 // http://www.rfc-editor.org/rfc/rfc768.txt <---  User Datagram Protocol (UDP)
 
-#include "types.h"
+#include "udp.h"
+#include "network/netutils.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
 #include "ipv4.h"
-#include "udp.h"
-#include "dhcp.h"
+
 
 void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {

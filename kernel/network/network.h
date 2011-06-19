@@ -3,7 +3,7 @@
 
 #include "pci.h"
 #include "netprotocol/arp.h"
-#include "netprotocol/networktypes.h"
+#include "netprotocol/dhcp.h"
 
 // own IP at start
 #define IP_1  192
@@ -34,8 +34,6 @@
 */
 
 
-
-struct network_adapter;
 typedef struct network_adapter network_adapter_t;
 
 typedef struct
@@ -65,11 +63,12 @@ struct network_adapter
     DHCP_state        DHCP_State;
 };
 
+
 bool network_installDevice(pciDev_t* device);
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length);
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length); // Called by driver
 void network_displayArpTables();
 network_adapter_t* network_getAdapter(uint8_t IP[4]);
-uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uint8_t destIP[4], uint16_t protocol);
+
 
 #endif

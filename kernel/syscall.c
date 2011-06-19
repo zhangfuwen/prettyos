@@ -117,7 +117,7 @@ static void* syscalls[] =
 /*  88 */    &nop, // disconnect
 /*  89 */    &nop,
 
-// COMPATIBILITY (90-92); should be removed
+// COMPATIBILITY (90-91); should be removed
     &flpydsk_read_directory,
     &cprintf
 };
@@ -137,7 +137,7 @@ static void syscall_handler(registers_t* r)
 
     console_current = currentTask->console; // Syscall output should appear in the console of the task that caused the syscall
     void* addr = syscalls[r->eax];
-
+ 
     // We don't know how many parameters the function wants.
     // Therefore, we push them all onto the stack in the correct order.
     // The function will use the number of parameters it wants.
@@ -149,7 +149,7 @@ static void syscall_handler(registers_t* r)
       push %5; \
       call *%6; \
       add $20, %%esp;"
-       : "=a" (r->eax) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (addr)); /*TODO: Ruinieren wir uns hier nicht den Stack? (Endloses Wachstum)*/
+       : "=a" (r->eax) : "D" (r->edi), "S" (r->esi), "d" (r->edx), "c" (r->ecx), "b" (r->ebx), "a" (addr));
 
     console_current = kernelTask.console;
 }

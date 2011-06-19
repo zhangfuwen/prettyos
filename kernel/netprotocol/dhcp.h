@@ -1,8 +1,7 @@
 #ifndef DHCP_H
 #define DHCP_H
 
-#include "network/network.h"
-#include "udp.h"
+#include "types.h"
 
 // http://tools.ietf.org/html/rfc2131 <--- Dynamic Host Configuration Protocol
 // ftp://ftp.efo.ru/pub/wiznet/W5100_App%20note_DHCP.pdf
@@ -10,6 +9,8 @@
 #define UNICAST      0
 #define BROADCAST  128 // 1....... ........
 #define OPTIONSIZE 340 // results in size of 576
+
+typedef enum {START, OFFER, ACK, NAK} DHCP_state;
 
 typedef struct dhcp     // complete length: 576 (0x0240)
 {
@@ -64,11 +65,13 @@ typedef struct dhcp     // complete length: 576 (0x0240)
                    network address.
 */
 
-void DHCP_Discover(network_adapter_t* adapter);
-void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4]);
-void DHCP_Inform  (network_adapter_t* adapter);
-void DHCP_Release (network_adapter_t* adapter);
-void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp);
+struct network_adapter;
+
+void DHCP_Discover(struct network_adapter* adapter);
+void DHCP_Request(struct network_adapter* adapter, uint8_t requestedIP[4]);
+void DHCP_Inform  (struct network_adapter* adapter);
+void DHCP_Release (struct network_adapter* adapter);
+void DHCP_AnalyzeServerMessage(struct network_adapter* adapter, dhcp_t* dhcp);
 
 /*
 When a client is initialized for the first time after it is configured

@@ -6,6 +6,8 @@
 #include "dhcp.h"
 #include "udp.h"
 #include "video/console.h"
+#include "network/netutils.h"
+
 
 static uint32_t xid = 0x0000E0FF0A; // AFFE.... Transaction Code for Identification
 
@@ -733,8 +735,6 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
     } //while
     printf("\nEND OF OPTIONS\n");
 }
-
-
 
 
 /*

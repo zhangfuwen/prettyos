@@ -113,9 +113,9 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\netprotocol\icmp.h" />
     <ClInclude Include="..\kernel\netprotocol\ethernet.h" />
     <ClInclude Include="..\kernel\netprotocol\ipv4.h" />
-    <ClInclude Include="..\kernel\netprotocol\networktypes.h" />
     <ClInclude Include="..\kernel\netprotocol\tcp.h" />
     <ClInclude Include="..\kernel\netprotocol\udp.h" />
+    <ClInclude Include="..\kernel\network\netutils.h" />
     <ClInclude Include="..\kernel\network\network.h" />
     <ClInclude Include="..\kernel\network\pcnet.h" />
     <ClInclude Include="..\kernel\network\rtl8139.h" />
@@ -197,6 +197,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\netprotocol\ipv4.c" />
     <ClCompile Include="..\kernel\netprotocol\tcp.c" />
     <ClCompile Include="..\kernel\netprotocol\udp.c" />
+    <ClCompile Include="..\kernel\network\netutils.c" />
     <ClCompile Include="..\kernel\network\network.c" />
     <ClCompile Include="..\kernel\network\pcnet.c" />
     <ClCompile Include="..\kernel\network\rtl8139.c" />

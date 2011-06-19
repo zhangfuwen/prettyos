@@ -6,11 +6,12 @@
 
 // http://www.rfc-editor.org/rfc/rfc793.txt <--- TRANSMISSION CONTROL PROTOCOL
 
-#include "video/console.h"
 #include "ethernet.h"
+#include "video/console.h"
 #include "arp.h"
 #include "ipv4.h"
 #include "kheap.h"
+#include "network/netutils.h"
 #include "util.h"
 
 

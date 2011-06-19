@@ -17,14 +17,13 @@ static bool nopm_action(PM_STATES state)
     switch(state)
     {
         case PM_SOFTOFF: // Implemented by "hack", just as a fallback.
+            cli();
             clear_screen();
             kprintf("                                                                                ", 24, 0x20);
             kprintf("                     Your computer can now be switched off.                     ", 25, 0x20);
             kprintf("                                                                                ", 26, 0x20);
-            cli();
             hlt();
             return(false); // Hopefully not reached
-
         case PM_REBOOT: // We do not use the powermanagement here because its not necessary
         {
             int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
@@ -79,23 +78,18 @@ bool apm_install()
         case 0:
             printf("\nSuccessfully activated.");
             return(true);
-            break;
         case 1:
-            printf("\nError while disconnecting, %yh.", *((uint8_t*)0x1301));
+            printf("\nError while disconnecting: %yh.", *((uint8_t*)0x1301));
             return(false);
-            break;
         case 2:
-            printf("\nError while connecting, %yh.", *((uint8_t*)0x1301));
+            printf("\nError while connecting: %yh.", *((uint8_t*)0x1301));
             return(false);
-            break;
         case 3:
-            printf("\nError while handling out APM version, %yh.", *((uint8_t*)0x1301));
+            printf("\nError while handling out APM version: %yh.", *((uint8_t*)0x1301));
             return(false);
-            break;
         case 4:
-            printf("\nError while activating, %yh.", *((uint8_t*)0x1301));
+            printf("\nError while activating: %yh.", *((uint8_t*)0x1301));
             return(false);
-            break;
     }
     return(false);
 }
@@ -112,7 +106,6 @@ static bool apm_action(PM_STATES state)
             *((uint16_t*)0x1300) = 3;
             waitForTask(create_vm86_task(APM_SETSTATE), 0);
             return(*((uint16_t*)0x1300) != 0);
-            return(false);
         default: // Every other state is unreachable with APM
             return(false);
     }

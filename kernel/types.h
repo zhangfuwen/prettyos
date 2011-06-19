@@ -28,13 +28,6 @@ typedef __builtin_va_list va_list;
 #define BIT(n) (1<<(n))
 #define IS_BIT_SET(value, pos) ((value>>pos)&1)
 
-// This defines macros typically needed for networking source code
-// htonl = Host To Network Long  
-#define htons(v) ((((v) >> 8) & 0xFF) | (((v) & 0xFF) << 8))
-#define htonl(v) ((((v) >> 24) & 0xFF) | (((v) >> 8) & 0xFF00) | (((v) & 0xFF00) << 8) | (((v) & 0xFF) << 24))
-// ntohl = Network To Host Long
-#define ntohs(v) htons(v)
-#define ntohl(v) htonl(v)
 
 // This defines the operatings system common data area
 typedef struct

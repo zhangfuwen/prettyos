@@ -100,8 +100,9 @@ void mouse_handler(registers_t* a_r)
             }
             else
             {
-                bytecounter--;
+                bytecounter = 0;
                 printf("Mouse sent unknown package (%yh)!\n", bytes[0]);
+                return;
             }
             break;
         case 1: // Second byte: X Movement (8 bits)

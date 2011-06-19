@@ -7,11 +7,12 @@
 #include "tcp.h"
 #include "udp.h"
 #include "icmp.h"
+#include "arp.h"
 #include "ethernet.h"
+#include "network/netutils.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
-#include "arp.h"
 
 
 static const uint8_t broadcast_IP[4] = {0xFF, 0xFF, 0xFF, 0xFF};

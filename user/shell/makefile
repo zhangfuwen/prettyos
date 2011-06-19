@@ -36,7 +36,7 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
+GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
 LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
 TARGET= SHELL.ELF
