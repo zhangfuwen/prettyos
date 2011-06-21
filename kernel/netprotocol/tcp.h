@@ -78,6 +78,6 @@ void tcp_connect(tcpConnection_t* connection);
 void tcp_close(tcpConnection_t* connection);
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length);
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber);
-
+void tcp_showConnections();
 
 #endif

@@ -17,6 +17,7 @@
 static listHead_t* tcpConnections = 0;
 
 
+
 static uint16_t getFreeSocket();
 
 static tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_adapter_t* adapter)
@@ -32,6 +33,18 @@ static tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_ada
     }
 
     return(0);
+}
+
+void tcp_showConnections()
+{
+    if(tcpConnections == 0)
+        return;
+    
+    for(element_t* e = tcpConnections->head; e != 0; e = e->next)
+    {
+        tcpConnection_t* connection = e->data;
+        printf("IP: %I  srcPrt: %u  destPort: %u\n", connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port);
+    }
 }
 
 static void tcpDebug(tcpPacket_t* tcp)
@@ -97,18 +110,13 @@ void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
 {
     // open TCP Server with State "LISTEN"
     memcpy(connection->localSocket.IP, adapter->IP, 4);
-    connection->localSocket.port = 0;
+    connection->localSocket.port  = 0;
+    connection->remoteSocket.port = 0;
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = LISTEN;
     connection->adapter = adapter;
     
     tcpShowConnectionStatus(connection);
-    
-    /*
-    textColor(0x0D);
-    printf("\nTCP connection (LISTEN): %X\n", connection);
-    textColor(0x0F);
-    */
 }
 
 void tcp_connect(tcpConnection_t* connection) // ==> SYN-SENT
@@ -121,10 +129,7 @@ void tcp_connect(tcpConnection_t* connection) // ==> SYN-SENT
         tcp_send(connection, 0, 0, SYN_FLAG, connection->tcb.SND_ISS /*seqNumber*/ , 0 /*ackNumber*/);
         connection->TCP_CurrState = SYN_SENT;
         
-        tcpShowConnectionStatus(connection);
-        /*
-        printf("\nTCP connection (SYN_SENT): %X\n", connection);
-        */
+        tcpShowConnectionStatus(connection); 
     }
 }
 
@@ -313,12 +318,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     }
 
     tcpShowConnectionStatus(connection);
-    
-    /*
-    textColor(0x0D);
-    printf("TCP curr. state: %s  connection: %X\n", tcpStates[connection->TCP_CurrState], connection);
-    textColor(0x0F);
-    */
 }
 
 

@@ -284,6 +284,12 @@ uint8_t ScanToASCII()
             tcp_send(connection, "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n", strlen("GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
             return 0;
         }
+        if(retchar == 'c') // show tcp connections
+        {
+            printf("tcp connections:\n");
+            tcp_showConnections();
+            return 0;
+        }
     }
 
     return retchar; // ASCII version
