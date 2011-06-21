@@ -5,6 +5,7 @@
 #include "netprotocol/arp.h"
 #include "netprotocol/dhcp.h"
 
+
 // own IP at start
 #define IP_1  192
 #define IP_2  168
@@ -17,9 +18,9 @@
 #define RIP_3   1
 #define RIP_4  97
 
-/*
-//for qemu
 
+//for qemu
+/*
 // own IP at start
 #define IP_1   10
 #define IP_2    0

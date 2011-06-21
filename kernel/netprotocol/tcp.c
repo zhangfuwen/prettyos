@@ -48,6 +48,18 @@ static void tcpDebug(tcpPacket_t* tcp)
   textColor(0x0F);
 }
 
+static const char* const tcpStates[] =
+{
+    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
+};
+
+static void tcpShowConnectionStatus(tcpConnection_t* connection)
+{
+    textColor(0x0D);
+    printf("TCP curr. state: %s  connection: %X src port: %u\n", tcpStates[connection->TCP_CurrState], connection, connection->localSocket.port);
+    textColor(0x0F);
+}
+
 tcpConnection_t* tcp_createConnection()
 {
     if(tcpConnections == 0)
@@ -61,23 +73,42 @@ tcpConnection_t* tcp_createConnection()
     connection->tcb.SND_UNA = connection->tcb.SND_ISS;
     connection->tcb.SND_NXT = connection->tcb.SND_ISS + 1;
     list_Append(tcpConnections, connection);
+
+    textColor(0x0A);
+    printf("\nTCP connection created (CLOSED): %X\n", connection);
+    textColor(0x0F);
+
     return(connection);
 }
 
 void tcp_deleteConnection(tcpConnection_t* connection)
-{
+{    
+    connection->TCP_PrevState = connection->TCP_CurrState;
+    connection->TCP_CurrState = CLOSED;
+    textColor(0x0C);
+    printf("\nTCP connection deleted: %X\n", connection);
+    textColor(0x0F);
     list_Delete(tcpConnections, connection);
     free(connection);
+    connection = 0; // TEST
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
 {
     // open TCP Server with State "LISTEN"
     memcpy(connection->localSocket.IP, adapter->IP, 4);
+    connection->localSocket.port = 0;
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = LISTEN;
     connection->adapter = adapter;
-    // TODO: ...
+    
+    tcpShowConnectionStatus(connection);
+    
+    /*
+    textColor(0x0D);
+    printf("\nTCP connection (LISTEN): %X\n", connection);
+    textColor(0x0F);
+    */
 }
 
 void tcp_connect(tcpConnection_t* connection) // ==> SYN-SENT
@@ -89,7 +120,11 @@ void tcp_connect(tcpConnection_t* connection) // ==> SYN-SENT
     {
         tcp_send(connection, 0, 0, SYN_FLAG, connection->tcb.SND_ISS /*seqNumber*/ , 0 /*ackNumber*/);
         connection->TCP_CurrState = SYN_SENT;
-        printf("\nTCP connection by \"active open\":  CLOSED --> SYN_SENT\n");
+        
+        tcpShowConnectionStatus(connection);
+        /*
+        printf("\nTCP connection (SYN_SENT): %X\n", connection);
+        */
     }
 }
 
@@ -116,18 +151,7 @@ void tcp_close(tcpConnection_t* connection)
     }
 }
 
-void tcp_listen(tcpConnection_t* connection)
-{
-    connection->TCP_PrevState = connection->TCP_CurrState;
-    connection->TCP_CurrState = LISTEN;
 
-    // TODO: more action needed?
-}
-
-static const char* const tcpStates[] =
-{
-    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
-};
 
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length)
 {
@@ -144,10 +168,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     }
 
     textColor(0x0D);
-    printf("TCP prev. state: %s\n", tcpStates[connection->TCP_CurrState]); // later: prev. state
+    printf("TCP prev. state: %s  connection: %X\n", tcpStates[connection->TCP_CurrState], connection); // later: prev. state
     textColor(0x0F);
-
-    // handshake: http://upload.wikimedia.org/wikipedia/commons/9/98/Tcp-handshake.svg
 
     if (tcp->SYN && !tcp->ACK) // SYN
     {
@@ -157,9 +179,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         memcpy(connection->remoteSocket.IP, transmittingIP, 4);
         switch(connection->TCP_CurrState)
         {
-            case CLOSED: case TIME_WAIT: // HACK, TODO: use timeout (TIME_WAIT --> CLOSED)
-                printf("TCP set from CLOSED to LISTEN.\n");
-                tcp_listen(connection);
+            case CLOSED: 
+            case TIME_WAIT: // HACK, TODO: use timeout (TIME_WAIT --> CLOSED)
+                printf("TCP connection %X set from CLOSED to LISTEN.\n", connection);
+                connection->TCP_CurrState = LISTEN;
                 break;
             case LISTEN:
                 tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
@@ -289,13 +312,23 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         }
     }
 
+    tcpShowConnectionStatus(connection);
+    
+    /*
     textColor(0x0D);
-    printf("TCP curr. state: %s\n", tcpStates[connection->TCP_CurrState]);
+    printf("TCP curr. state: %s  connection: %X\n", tcpStates[connection->TCP_CurrState], connection);
     textColor(0x0F);
+    */
 }
+
+
 
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber)
 {
+    textColor(0x0B);
+    printf("TCP sends at connection: %X src port: %u.\n", connection, connection->localSocket.port);
+    textColor(0x0F);
+
     tcpPacket_t* packet = malloc(sizeof(tcpPacket_t)+length, 0, "TCP packet");
     memcpy(packet+1, data, length);
 
@@ -382,7 +415,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
 
 static uint16_t getFreeSocket()
 {
-    static uint16_t srcPort = 1025;
+    static uint16_t srcPort = 49152;
     return srcPort++;
 }
 

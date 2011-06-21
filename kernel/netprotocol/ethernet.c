@@ -119,7 +119,7 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
     }
     else
     {
-        printf("\nEthernetSend: length: %u. ", sizeof(ethernet_t)+length);
+        printf("\nEthernetSend: length: %u.\n", sizeof(ethernet_t)+length);
     }
 
     ethernet_t* packet = malloc(sizeof(ethernet_t)+length, 0, "ethernet packet");
