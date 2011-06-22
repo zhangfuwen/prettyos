@@ -348,6 +348,9 @@
     <ClInclude Include="..\kernel\network\netutils.h">
       <Filter>Kernel\include\network</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\events.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -577,6 +580,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\network\netutils.c">
       <Filter>Kernel\sources\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\events.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

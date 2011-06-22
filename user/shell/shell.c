@@ -72,17 +72,13 @@ char* formatPath(char* opath)
 int main()
 {
     setScrollField(0, 39);
+    event_enable(true);
     char entry[MAX_CHAR_PER_LINE+1];
     char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1];
     int curEntry = -1;
     bool insertMode = false;
-    unsigned char input;
 
-    // Init Cache
-    for (unsigned int i = 0; i < ENTRY_CACHE_SIZE+1; i++)
-    {
-        memset(entryCache, 0, MAX_CHAR_PER_LINE+1);
-    }
+    memset(entryCache, 0, ENTRY_CACHE_SIZE*(MAX_CHAR_PER_LINE+1));
 
     while (true)
     {
@@ -93,140 +89,20 @@ int main()
 
         while (true)
         {
-            showInfo(1); // the train goes on...
+            char buffer[4]; // We are only interested in TEXT_ENTERED and KEY_DOWN events. They send 4 bytes at maximum
+            EVENT_t ev = event_poll(buffer, 4, EVENT_NONE);
 
-            input = getchar();
+            switch(ev)
+            {
+                case EVENT_TEXT_ENTERED:
+                {
+                    showInfo(1); // the train goes on...
 
-            switch (input) {
-                case 8: // Backspace
-                    if (cursorPos > 0)
-                    {
-                        if (curEntry != -1)
-                        {
-                            strcpy(entry, entryCache[curEntry]);
-                            curEntry = -1;
-                        }
-                        eraseFirst(entry+cursorPos-1);
-                        --entryLength;
-                        --cursorPos;
-                        drawEntry(entry);
-                    }
-                    break;
-                case 10: // Enter
-                    if(*(curEntry == -1 ? entry : entryCache[curEntry]) == 0)
-                    {
-                        break; // entry is empty
-                    }
-                    cursorPos = entryLength+1;
-                    entry[entryLength]='\0';
-                    if (curEntry == -1)
-                    {
-                        //Insert entry
-                        for (int i = ENTRY_CACHE_SIZE-2; i >= 0; i--)
-                        {
-                            strncpy(entryCache[i+1], entryCache[i], MAX_CHAR_PER_LINE);
-                        }
-                        strcpy(entryCache[0], entry);
-                    }
-                    else
-                    {
-                        //Move entry to front
-                        strcpy(entry, entryCache[curEntry]);
-                        for (int i = curEntry-1; i >= 0; i--)
-                        {
-                            strcpy(entryCache[i+1], entryCache[i]);
-                        }
-                        strcpy(entryCache[0], entry);
-                        curEntry = -1;
-                    }
-                    textColor(0x03);
-                    printf("\n$> %s <--\n", entry);
-                    textColor(0x0F);
-                    printLine("$>                                                                              ", 40, 0x0B);
-                    goto EVALUATION;
-                case 144: // Insert
-                    insertMode = !insertMode;
-                    break;
-                case 145: // Delete
-                    if (cursorPos < entryLength)
-                    {
-                        if (curEntry != -1)
-                        {
-                            strcpy(entry, entryCache[curEntry]);
-                            curEntry = -1;
-                        }
-                        eraseFirst(entry+cursorPos);
-                        --entryLength;
-                        drawEntry(entry);
-                    }
-                    break;
-                case 146: // Pos 1
-                    cursorPos = 0;
-                    drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
-                    break;
-                case 147: // END
-                    cursorPos = entryLength;
-                    drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
-                    break;
-                case 150: // Left Arrow
-                    if (cursorPos > 0)
-                    {
-                        cursorPos--;
-                        drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
-                    }
-                    break;
-                case 151: // Up Arrow
-                    if (curEntry < ENTRY_CACHE_SIZE-1 && *entryCache[curEntry+1] != 0)
-                    {
-                        for (; entryLength > 0; entryLength--)
-                        {
-                            putchar('\b'); //Clear row
-                        }
-                        ++curEntry;
-                        entryLength = strlen(entryCache[curEntry]);
-                        cursorPos = entryLength;
-                        drawEntry(entryCache[curEntry]);
-                    }
-                    break;
-                case 152: // Down Arrow
-                    if (curEntry >= 0)
-                    {
-                        for (; entryLength > 0; entryLength--)
-                        {
-                            putchar('\b'); //Clear row
-                        }
-                        --curEntry;
-                        if (curEntry == -1)
-                        {
-                            entryLength = strlen(entry);
-                            cursorPos = entryLength;
-                        }
-                        else
-                        {
-                            entryLength = strlen(entryCache[curEntry]);
-                            cursorPos = entryLength;
-                        }
-                    }
-                    if (curEntry == -1)
-                    {
-                        for (; entryLength > 0; entryLength--)
-                        {
-                            putchar('\b'); //Clear row
-                        }
-                        memset(entry, 0, MAX_CHAR_PER_LINE);
-                        cursorPos = 0;
-                    }
-                    drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
-                    break;
-                case 153: // Right Arrow
-                    if (cursorPos < entryLength)
-                    {
-                        cursorPos++;
-                        drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));
-                    }
-                    break;
-                default:
-                    if (input >= 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <= MAX_CHAR_PER_LINE && cursorPos != entryLength)))
+                    if(keyPressed(KEY_ESC) || keyPressed(KEY_LCTRL) || keyPressed(KEY_RCTRL)) // To avoid conflicts with strg/esc shortcuts in kernel
+                        break;
+
+                    unsigned char text = buffer[0];
+                    if (text > 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <= MAX_CHAR_PER_LINE && cursorPos != entryLength)))
                     {
                         if (curEntry != -1)
                         {
@@ -235,7 +111,7 @@ int main()
                         }
                         if (insertMode)
                         {
-                            entry[cursorPos]=input;
+                            entry[cursorPos]=text;
                             if (cursorPos == entryLength)
                             {
                                 entryLength++;
@@ -243,12 +119,145 @@ int main()
                         }
                         else
                         {
-                            insert(entry+cursorPos, input);
+                            insert(entry+cursorPos, text);
                             ++entryLength;
                         }
                         ++cursorPos;
-                        drawEntry(entry);
                     }
+                    break;
+                }
+                case EVENT_KEY_DOWN:
+                {
+                    showInfo(1); // the train goes on...
+                    KEY_t key = *(KEY_t*)buffer;
+                    switch(key)
+                    {
+                        case KEY_BACK:
+                            if (cursorPos > 0)
+                            {
+                                if (curEntry != -1)
+                                {
+                                    strcpy(entry, entryCache[curEntry]);
+                                    curEntry = -1;
+                                }
+                                eraseFirst(entry+cursorPos-1);
+                                --entryLength;
+                                --cursorPos;
+                            }
+                            break;
+                        case KEY_ENTER:
+                            if(*(curEntry == -1 ? entry : entryCache[curEntry]) == 0)
+                            {
+                                break; // entry is empty
+                            }
+                            cursorPos = entryLength+1;
+                            entry[entryLength]='\0';
+                            if (curEntry == -1)
+                            {
+                                //Insert entry
+                                for (int i = ENTRY_CACHE_SIZE-2; i >= 0; i--)
+                                {
+                                    strncpy(entryCache[i+1], entryCache[i], MAX_CHAR_PER_LINE);
+                                }
+                                strcpy(entryCache[0], entry);
+                            }
+                            else
+                            {
+                                //Move entry to front
+                                strcpy(entry, entryCache[curEntry]);
+                                for (int i = curEntry-1; i >= 0; i--)
+                                {
+                                    strcpy(entryCache[i+1], entryCache[i]);
+                                }
+                                strcpy(entryCache[0], entry);
+                                curEntry = -1;
+                            }
+                            textColor(0x03);
+                            printf("\n$> %s <--\n", entry);
+                            textColor(0x0F);
+                            printLine("$>                                                                              ", 40, 0x0B);
+                            goto EVALUATION;
+                            break;
+                        case KEY_INS:
+                            insertMode = !insertMode;
+                            break;
+                        case KEY_DEL:
+                            if (cursorPos < entryLength)
+                            {
+                                if (curEntry != -1)
+                                {
+                                    strcpy(entry, entryCache[curEntry]);
+                                    curEntry = -1;
+                                }
+                                eraseFirst(entry+cursorPos);
+                                --entryLength;
+                            }
+                            break;
+                        case KEY_HOME:
+                            cursorPos = 0;
+                            break;
+                        case KEY_END:
+                            cursorPos = entryLength;
+                            break;
+                        case KEY_ARRL:
+                            if (cursorPos > 0)
+                            {
+                                cursorPos--;
+                            }
+                            break;
+                        case KEY_ARRR:
+                            if (cursorPos < entryLength)
+                            {
+                                cursorPos++;
+                            }
+                            break;
+                        case KEY_ARRU:
+                            if (curEntry < ENTRY_CACHE_SIZE-1 && *entryCache[curEntry+1] != 0)
+                            {
+                                for (; entryLength > 0; entryLength--)
+                                {
+                                    putchar('\b'); //Clear row
+                                }
+                                ++curEntry;
+                                entryLength = strlen(entryCache[curEntry]);
+                                cursorPos = entryLength;
+                            }
+                            break;
+                        case KEY_ARRD:
+                            if (curEntry >= 0)
+                            {
+                                for (; entryLength > 0; entryLength--)
+                                {
+                                    putchar('\b'); //Clear row
+                                }
+                                --curEntry;
+                                if (curEntry == -1)
+                                {
+                                    entryLength = strlen(entry);
+                                    cursorPos = entryLength;
+                                }
+                                else
+                                {
+                                    entryLength = strlen(entryCache[curEntry]);
+                                    cursorPos = entryLength;
+                                }
+                            }
+                            if (curEntry == -1)
+                            {
+                                for (; entryLength > 0; entryLength--)
+                                {
+                                    putchar('\b'); //Clear row
+                                }
+                                memset(entry, 0, MAX_CHAR_PER_LINE);
+                                cursorPos = 0;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                }
+                default:
                     break;
             } //switch
             drawEntry((curEntry == -1 ? entry : entryCache[curEntry]));

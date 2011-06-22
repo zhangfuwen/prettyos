@@ -24,7 +24,7 @@ extern uint32_t globalUserProgSize;
 bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
 
 task_t kernelTask = { // Needed to find out when the kernel task is exited
-    .pid = 0, .esp = 0, .eip = 0, .privilege = 0, .FPUptr = 0, .console = &kernelConsole, .ownConsole = true, .attrib = 0x0F,
+    .pid = 0, .esp = 0, .eip = 0, .privilege = 0, .FPUptr = 0, .console = &kernelConsole, .attrib = 0x0F, .eventQueue = 0,
     .blocker.type = 0, // The task is not blocked (scheduler.h/c)
     .kernelStack = 0, // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
     .threads = 0 // No threads associated with the task at the moment. List is created later if necessary
@@ -47,7 +47,9 @@ void tasking_install()
     tasks = list_Create();
 
     kernelTask.pageDirectory = kernelPageDirectory;
+    kernelTask.eventQueue = event_createQueue();
 
+    list_Append(kernelTask.console->tasks, &kernelTask);
     list_Append(tasks, &kernelTask);
 
     scheduler_install();
@@ -83,10 +85,10 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     newTask->FPUptr        = 0;
     newTask->attrib        = 0x0F;
     newTask->blocker.type  = 0;
-    newTask->entry         = entry;
     newTask->threads       = 0; // No threads associated with the task at the moment. created later if necessary
     newTask->userProgAddr  = 0;
     newTask->userProgSize  = 0;
+    newTask->eventQueue    = 0; // Event handling is disabled per default
 
     if (newTask->privilege == 3)
     {
@@ -168,9 +170,10 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
 task_t* create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)
 {
     task_t* newTask = create_task(directory, entry, privilege, argc, argv);
-    newTask->ownConsole = true;
+    list_Delete(newTask->console->tasks, newTask);
     newTask->console = malloc(sizeof(console_t), 0, "task-console");
     console_init(newTask->console, consoleName);
+    list_Append(newTask->console->tasks, newTask);
     return(newTask);
 }
 
@@ -187,19 +190,21 @@ task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privileg
 
     createThreadTaskBase(newTask, directory, entry, privilege, argc, argv);
 
-    newTask->ownConsole = false;
-    newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
+    newTask->console = currentTask->console; // task shares the console of the current task
+    list_Append(newTask->console->tasks, newTask);
+    newTask->eventQueue = event_createQueue(); // For tasks event handling is enabled per default
 
-    sti();
     return newTask;
 }
 
 task_t* create_cthread(void(*entry)(), const char* consoleName)
 {
     task_t* newTask = create_thread(entry);
-    newTask->ownConsole = true;
+    list_Delete(newTask->console->tasks, newTask);
     newTask->console = malloc(sizeof(console_t), 0, "thread-console");
     console_init(newTask->console, consoleName);
+    list_Append(newTask->console->tasks, newTask);
+    newTask->eventQueue = event_createQueue(); // Every thread with an own console gets an own eventQueue, because otherwise lots of input will never arrive.
     return(newTask);
 }
 
@@ -222,8 +227,8 @@ task_t* create_thread(void(*entry)())
         currentTask->threads = list_Create();
     list_Append(currentTask->threads, newTask);
 
-    newTask->ownConsole = false;
-    newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // task uses the same console as the kernel
+    newTask->console = currentTask->console; // task shares the console of the current task
+    list_Append(newTask->console->tasks, newTask);
 
     return newTask;
 }
@@ -241,8 +246,8 @@ task_t* create_vm86_task(void(*entry)())
 
     createThreadTaskBase(newTask, kernelPageDirectory, entry, 3, 0, 0);
 
-    newTask->ownConsole = false;
     newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // Task uses the same console as the kernel
+    list_Append(newTask->console->tasks, newTask);
 
     return newTask;
 }
@@ -298,7 +303,6 @@ void switch_context() // Switch to next task (by interrupt)
 
 
 // Functions to kill a task
-
 static void kill(task_t* task)
 {
     cli(); // TODO: Change to task_switching=false/true
@@ -308,7 +312,8 @@ static void kill(task_t* task)
     #endif
 
     // Cleanup
-    if (task->ownConsole)
+    list_Delete(task->console->tasks, task);
+    if(task->console->tasks->head == 0)
     {
         // Delete current task's console from list of our reachable consoles, if it is in that list
         for (uint8_t i = 1; i < 11; i++)
@@ -360,6 +365,9 @@ static void kill(task_t* task)
     scheduler_log();
     #endif
 
+    if(task->eventQueue != 0)
+        event_deleteQueue(task->eventQueue);
+
     if(task == &kernelTask) // TODO: Handle termination of shellTask
     {
         systemControl(REBOOT);
@@ -393,35 +401,6 @@ void task_kill(uint32_t pid)
 void exit()
 {
     kill((task_t*)currentTask);
-}
-
-void task_restart(uint32_t pid)
-{
-    task_t* task = 0; // Find out task by looking for the pid in the tasks-list
-    for(element_t* e = tasks->head; e != 0; e = e->next)
-    {
-        if(((task_t*)e->data)->pid == pid)
-        {
-            task = e->data;
-            break;
-        }
-    }
-    if(task == 0) return;
-
-    // Safe old properties
-    pageDirectory_t* directory  = task->pageDirectory;
-    void           (*entry)()   = task->entry;
-    uint8_t          privilege  = task->privilege;
-    bool             ownConsole = task->ownConsole;
-
-    kill(task); // Kill old task
-
-    // Create a new one reusing old properties
-    /// TODO?: Use correct argc/argv?
-    if(ownConsole)
-        create_ctask(directory, entry, privilege, 0, 0, "restarted task"); // TODO: Safe old name or maybe reuse old console
-    else
-        create_task(directory, entry, privilege, 0, 0);
 }
 
 void* task_grow_userheap(uint32_t increase)

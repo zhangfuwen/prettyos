@@ -66,26 +66,26 @@ void generateFighter()
 
 void moveFighter()
 {
-    if (keyPressed('A') && fighterPosition > 0)
+    if (keyPressed(KEY_A) && fighterPosition > 0)
     {
         fighterPosition--;
         iSetCursor(fighterPosition,43);
         putchar(1); putchar(' ');
     }
-    if(keyPressed('D') && fighterPosition<79)
+    if(keyPressed(KEY_D) && fighterPosition<79)
     {
         iSetCursor(fighterPosition,43);
         putchar(' '); putchar(1);
         fighterPosition++;
     }
-    if(keyPressed('S') && fighterPosition<79 && timeout>0)
+    if(keyPressed(KEY_S) && fighterPosition<79 && timeout>0)
     {
         timeout--;
         deleteWeapons();
         iSetCursor(0,0);
         printf("trials: %u/%u", MAX-timeout, MAX);
     }
-    if(keyPressed(VK_ESCAPE))
+    if(keyPressed(KEY_ESC))
     {
         exit();
     }
@@ -164,6 +164,6 @@ int main()
     }
 
     printf("Do you want to quit (Q)");
-    while (!keyPressed('Q'));
+    while (!keyPressed(KEY_Q));
     return(0);
 }

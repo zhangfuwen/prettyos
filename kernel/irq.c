@@ -9,6 +9,7 @@
 #include "kheap.h"
 #include "vm86.h"
 #include "timer.h"
+#include "keyboard.h"
 
 
 typedef struct {
@@ -72,7 +73,7 @@ static void quitTask()
 {
     printf("| <Severe Failure - Task Halted> Press key for exit! |");
     sti();
-    while(!keyboard_getChar());
+    getch();
     exit();
     for (;;);
 }

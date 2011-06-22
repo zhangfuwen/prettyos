@@ -48,8 +48,8 @@ void list_Delete(listHead_t* list, void* data)
     {
         element_t* temp = cur;
         cur = cur->next;
-        list->head = cur;
         if(list->head == list->tail) list->tail = 0;
+        list->head = cur;
         free(temp);
     }
     while(cur != 0 && cur->next != 0)

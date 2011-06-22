@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+
 // syscalls (only non-standard functions, because we do not want to include stdio.h here.
 FS_ERROR execute(const char* path, size_t argc, char* argv[]);
 void exit();
@@ -12,6 +13,8 @@ uint32_t getMyPID();
 void* userheapAlloc(size_t increase);
 
 FS_ERROR partition_format(const char* path, FS_t type, const char* name);
+void event_enable(bool b);
+EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter);
 
 uint32_t getCurrentMilliseconds();
 
@@ -20,16 +23,17 @@ void systemControl(SYSTEM_CONTROL todo);
 void textColor(uint8_t color);
 void setScrollField(uint8_t top, uint8_t bottom);
 void setCursor(position_t pos);
-position_t getCursor();
+void getCursor(position_t* pos);
 void clearScreen(uint8_t backgroundColor);
 
-bool keyPressed(VK key);
+bool keyPressed(KEY_t key);
 
 void beep(uint32_t frequency, uint32_t duration);
 
  // deprecated
 int32_t floppy_dir();
 void printLine(const char* message, uint32_t line, uint8_t attribute);
+
 
 // user functions
 void sleep(uint32_t milliseconds);
@@ -51,5 +55,6 @@ void  ftoa(float f, char* buffer);
 void  i2hex(uint32_t val, char* dest, uint32_t len);
 
 void showInfo(uint8_t val);
+
 
 #endif

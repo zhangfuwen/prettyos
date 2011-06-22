@@ -2,8 +2,8 @@
 #define CONSOLE_H
 
 #include "video.h"
-#include "keyboard.h"
 #include "synchronisation.h"
+#include "list.h"
 
 
 #define KERNELCONSOLE_ID 0
@@ -14,15 +14,15 @@
 
 typedef struct // Defines the User-Space of the display
 {
-    uint8_t    ID; // Number of the console. Used to access it via the reachableConsoles array
-    char*      name;
-    bool       showInfobar;
-    uint8_t    scrollBegin;
-    uint8_t    scrollEnd;
-    position_t cursor;
-    keyqueue_t KQ;
-    mutex_t*   mutex;
-    uint16_t   vidmem[USER_LINES*COLUMNS]; // Memory that stores the content of this console. Size is USER_LINES*COLUMNS
+    uint8_t     ID; // Number of the console. Used to access it via the reachableConsoles array
+    char*       name;
+    bool        showInfobar;
+    uint8_t     scrollBegin;
+    uint8_t     scrollEnd;
+    position_t  cursor;
+    mutex_t*    mutex;
+    listHead_t* tasks;
+    uint16_t    vidmem[USER_LINES*COLUMNS]; // Memory that stores the content of this console. Size is USER_LINES*COLUMNS
 } console_t;
 
 
@@ -49,7 +49,7 @@ size_t printf (const char* args, ...);
 size_t vprintf(const char* args, va_list ap);
 size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void setCursor(position_t pos);
-position_t getCursor();
+void getCursor(position_t* pos);
 
 
 #endif

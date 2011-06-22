@@ -4,6 +4,7 @@
 #include "video/console.h"
 #include "paging.h"
 #include "scheduler.h"
+#include "events.h"
 
 
 typedef enum
@@ -23,9 +24,9 @@ struct task
     uint8_t*          heap_top;       // User heap top
     void*             kernelStack;    // Kernel stack location
     void*             FPUptr;         // Pointer to FPU data
-    void              (*entry)();     // Entry point, used to restart the task
     listHead_t*       threads;        // All threads owned by this tasks - deleted if this task is exited
     task_t*           parent;         // Task that created this thread (only used for threads)
+    event_queue_t*    eventQueue;     // 0 if no event handling enabled. Points to queue otherwise.
 
     // User task specific program data
     void*             userProgAddr;
@@ -36,7 +37,6 @@ struct task
     blocker_t         blocker;  // Object indicating reason and duration of blockade
 
     // Task specific graphical output settings
-    bool              ownConsole; // This task has an own console
     console_t*        console;    // Console used by this task
     uint8_t           attrib;     // Color
 };
@@ -57,7 +57,6 @@ void     task_saveState(uint32_t esp);
 uint32_t task_switch(task_t* newTask);
 void     exit();
 void     task_kill(uint32_t pid);
-void     task_restart(uint32_t pid);
 bool     waitForTask(task_t* blockingTask, uint32_t timeout); // Returns false in case of timeout. TODO: Can this function cause deadlocks?
 int32_t  getpid();
 void*    task_grow_userheap(uint32_t increase);

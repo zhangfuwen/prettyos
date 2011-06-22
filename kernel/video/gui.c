@@ -40,7 +40,7 @@ void StartGUI()
     // memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
     memcpy(window_list[4]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
 
-    while(!keyPressed(VK_ESCAPE))
+    while(!keyPressed(KEY_ESC))
     {
         if(mouse_bl == 1)
         {

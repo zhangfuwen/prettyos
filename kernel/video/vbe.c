@@ -12,6 +12,8 @@
 #include "gui.h"
 #include "VBEShell.h"
 #include "kheap.h"
+#include "keyboard.h"
+
 
 ModeInfoBlock_t mib;
 VgaInfoBlock_t  vgaIB;
@@ -34,6 +36,7 @@ extern uintptr_t vidswtch_com_end;
 // bmp
 extern BMPInfo_t bmp_start;
 extern BMPInfo_t bmp_end;
+
 
 uint16_t BGRAtoBGR16(BGRA_t bgr)
 {

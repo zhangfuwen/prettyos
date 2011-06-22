@@ -8,6 +8,8 @@
 #include "video/console.h"
 #include "timer.h"
 #include "power_management.h"
+#include "keyboard.h"
+
 
 const int32_t INT_MAX = 2147483647;
 

@@ -10,7 +10,7 @@
 #include "todo_list.h"
 #include "irq.h"
 #include "audio/sys_speaker.h"
-
+#include "keyboard.h"
 #include "usb2.h"
 #include "usb2_msd.h"
 
@@ -90,7 +90,7 @@ void startEHCI()
     textColor(0x0D);
     printf("\n>>> Press key to close this console. <<<");
     textColor(0x0F);
-    while(!keyboard_getChar());
+    getch();
 }
 
 int32_t initEHCIHostController()
@@ -495,7 +495,7 @@ void ehci_handler(registers_t* r)
         textColor(0x0E);
         printf("\n>>> Init EHCI after fatal error:           <<<");
         printf("\n>>> Press key for EHCI (re)initialization. <<<");
-        while(!keyboard_getChar());
+        getch();
         textColor(0x0F);
         todoList_add(kernel_idleTasks, &ehci_init); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
     }
@@ -530,7 +530,7 @@ void portCheck()
     textColor(0x0D);
     printf("\n>>> Press key to close this console. <<<");
     textColor(0x0F);
-    while(!keyboard_getChar());
+    getch();
 }
 
 void showPORTSC()

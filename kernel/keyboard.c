@@ -7,25 +7,59 @@
 #include "util.h"
 #include "task.h"
 #include "irq.h"
-#include "network/network.h"
-#include "netprotocol/udp.h"
-#include "netprotocol/dhcp.h"
-#include "netprotocol/tcp.h"
 
-#if KEYMAP == GER
+#if KEYMAP  == GER
 #include "keyboard_GER.h"
 #else //US-Keyboard if nothing else is defined
 #include "keyboard_US.h"
 #endif
 
-static bool AltKeyDown   = false; // variable for Alt Key Down
-static bool AltGrKeyDown = false; // variable for AltGr Key Down
-static bool KeyPressed   = false; // variable for Key Pressed
-static uint8_t curScan   = 0;     // current scan code from Keyboard
-static uint8_t prevScan  = 0;     // previous scan code
+static const KEY_t scancodeToKey_default[] =
+{
+//  0  1  2  3  4  5  6  7
+    0, KEY_ESC, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, // 0
+    KEY_7, KEY_8, KEY_9, KEY_0, KEY_MINUS, KEY_EQUAL, KEY_BACK, KEY_TAB,
+    KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_U, KEY_I, // 1
+    KEY_O, KEY_P, KEY_OSQBRA, KEY_CSQBRA, KEY_ENTER, KEY_LCTRL, KEY_A, KEY_S,
+    KEY_D, KEY_F, KEY_G, KEY_H, KEY_J, KEY_K, KEY_L, KEY_SEMI, // 2
+    KEY_APPOS, KEY_ACC, KEY_LSHIFT, KEY_BACKSL, KEY_Z, KEY_X, KEY_C, KEY_V,
+    KEY_B, KEY_N, KEY_M, KEY_COMMA, KEY_DOT, KEY_SLASH, KEY_RSHIFT, KEY_KPMULT, // 3
+    KEY_LALT, KEY_SPACE, KEY_CAPS, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
+    KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_NUM, KEY_SCROLL, KEY_KP7, // 4
+    KEY_KP8, KEY_KP9, KEY_KPMIN, KEY_KP4, KEY_KP5, KEY_KP6, KEY_KPPLUS, KEY_KP1,
+    KEY_KP2, KEY_KP3, KEY_KP0, KEY_KPDOT, 0, 0, KEY_GER_ABRA, KEY_F11, // 5
+    KEY_F12, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, // 6
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, // 7
+    0, 0, 0, 0, 0, 0, 0, 0,
+};
 
-static bool VKPressed[170]; // for monitoring pressed keys
+static const KEY_t scancodeToKey_E0[] =
+{
+//  0  1  2  3  4  5  6  7
+    0, 0, 0, 0, 0, 0, 0, 0, // 0
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, // 1
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, // 2
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, KEY_PRINT, // 3
+    KEY_ALTGR, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, // 4
+    KEY_ARRU, 0, 0, KEY_ARRL, 0, KEY_ARRR, 0, 0,
+    KEY_ARRD, 0, 0, 0, 0, 0, 0, 0, // 5
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, // 6
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, // 7
+    0, 0, 0, 0, 0, 0, 0, 0,
+};
 
+static bool pressedKeys[__KEY_LAST]; // for monitoring pressed keys
+
+
+static void keyboard_handler(registers_t* r);
 
 void keyboard_install()
 {
@@ -37,23 +71,9 @@ void keyboard_install()
     }
 }
 
-void keyboard_initKQ(keyqueue_t* KQ)
-{
-    memset(KQ->buffer, 0, KQSIZE);
-    KQ->pHead = KQ->buffer;
-    KQ->pTail = KQ->buffer;
-    KQ->count = 0;
-    KQ->mutex = mutex_create();
-}
-
-void keyboard_destroyKQ(keyqueue_t* KQ)
-{
-    mutex_delete(KQ->mutex);
-}
-
 static uint8_t getScancode()
 {
-    uint8_t scancode = 0;
+    volatile uint8_t scancode = 0;
 
     if (inportb(0x64)&1)
         scancode = inportb(0x60);   // 0x60: get scan code from the keyboard
@@ -66,94 +86,78 @@ static uint8_t getScancode()
     return(scancode);
 }
 
-static void setKeyState(uint8_t scanCode, bool pressed)
+static KEY_t scancodeToKey(uint8_t scancode, bool* make)
 {
-    KeyPressed = pressed;
+    KEY_t key = __KEY_INVALID;
 
-    VKPressed[(uint8_t)toUpper(asciiNonShift[scanCode])] = pressed;
-    if (scanCode == KRLEFT_ALT || scanCode == KRRIGHT_ALT) // ALT: We do not differenciate between left and right
+    static uint8_t prevScancode = 0; // Stores the previous scancode. For E1 codes it stores always the first byte (0xE1).
+    static uint8_t byteCounter = 1; // Only needed for E1 codes
+
+    *make = !(scancode & 0x80); // make code
+
+    if(scancode == 0xE0) // First byte of E0 code
     {
-        if(prevScan == 0x60)
-            AltGrKeyDown = KeyPressed;
-        else
-            AltKeyDown = KeyPressed;
+        prevScancode = 0xE0;
     }
-    else if (scanCode == KRLEFT_SHIFT) // SHIFT
+    else if(scancode == 0xE1) // First byte of E1 code
     {
-        VKPressed[VK_SHIFT] = KeyPressed;
-        VKPressed[VK_LSHIFT] = KeyPressed;
+        prevScancode = 0xE1;
+        byteCounter = 1;
     }
-    else if (scanCode == KRRIGHT_SHIFT)
+    else
     {
-        VKPressed[VK_SHIFT] = KeyPressed;
-        VKPressed[VK_RSHIFT] = KeyPressed;
+        if(prevScancode == 0xE0) // Second byte of E0 code
+        {
+            prevScancode = 0; // Last scancode is not interesting in this case
+            key = scancodeToKey_E0[scancode & 0x7F];
+            pressedKeys[key] = !(scancode & 0x80);
+        }
+        else if(prevScancode == 0xE1) // Second or third byte of E1 code. HACK: We assume, that all E1 codes mean the pause key
+        {
+            byteCounter++;
+            if(byteCounter == 3)
+                return(KEY_PAUSE);
+        }
+        else // Default code
+        {
+            prevScancode = 0; // Last scancode is not interesting in this case
+            key = scancodeToKey_default[scancode & 0x7F];
+            pressedKeys[key] = !(scancode & 0x80);
+        }
     }
-    else if (scanCode == KRLEFT_CTRL) // CONTROL
-    {
-        VKPressed[VK_LCONTROL] = KeyPressed;
-        VKPressed[VK_CONTROL] = KeyPressed;
-    }
-    else if (scanCode == KRRIGHT_CTRL)
-    {
-        VKPressed[VK_RCONTROL] = KeyPressed;
-        VKPressed[VK_CONTROL] = KeyPressed;
-    }
+    return(key);
 }
 
-static uint8_t FetchAndAnalyzeScancode()
+static char keyToASCII(KEY_t key)
 {
-    curScan = getScancode();
-
-    if (curScan & 0x80) // Key released? Check bit 7 (10000000b = 0x80) of scan code for this
-    {
-        curScan &= 0x7F; // Key was released, compare only low seven bits: 01111111b = 0x7F
-        setKeyState(curScan, false);
-    }
-    else // Key was pressed
-    {
-        setKeyState(curScan, true);
-    }
-    prevScan = curScan;
-    return curScan;
-}
-
-uint8_t ScanToASCII()
-{
-    curScan = FetchAndAnalyzeScancode(); // Grab scancode, and get the position of the shift key
-
-    // filter Shift Key and Key Release
-    if (curScan == KRLEFT_SHIFT || curScan == KRRIGHT_SHIFT || KeyPressed == false)
-    {
-        return 0;
-    }
-
     uint8_t retchar = 0; // The character that returns the scan code to ASCII code
 
-    if (AltGrKeyDown)
+    // Fallback mechanism
+    if (pressedKeys[KEY_ALTGR])
     {
-        if (VKPressed[VK_SHIFT])
+        if (pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT])
         {
-            retchar = asciiShiftAltGr[curScan];
+            retchar = keyToASCII_shiftAltGr[key];
         }
-        if (!VKPressed[VK_SHIFT] || retchar == 0) // if just shift is pressed or if there is no key specified for ShiftAltGr (so retchar is still 0)
+        if (!(pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT]) || retchar == 0) // if shift is not pressed or if there is no key specified for ShiftAltGr (so retchar is still 0)
         {
-            retchar = asciiAltGr[curScan];
+            retchar = keyToASCII_altGr[key];
         }
     }
-    if (!AltGrKeyDown || retchar == 0)
+    if (!pressedKeys[KEY_ALTGR] || retchar == 0) // if AltGr is not pressed or if retchar is still 0
     {
-        if (VKPressed[VK_SHIFT])
+        if (pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT])
         {
-            retchar = asciiShift[curScan];
+            retchar = keyToASCII_shift[key];
         }
-        if (!VKPressed[VK_SHIFT] || retchar == 0)
+        if (!(pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT]) || retchar == 0) // if shift is not pressed or if retchar is still 0
         {
-            retchar = asciiNonShift[curScan]; // (Lower) Non-Shift Codes
+            retchar = keyToASCII_default[key];
         }
     }
 
-    // filter Special Keys
-    if (AltKeyDown) // Console-Switching
+    // filter special key combinations
+    if (pressedKeys[KEY_LALT]) // Console-Switching
     {
         if (retchar == 'm')
         {
@@ -167,192 +171,59 @@ uint8_t ScanToASCII()
         }
     }
 
-    if(VKPressed[VK_CONTROL]) // TODO: Probably everything accessed by Ctrl+Key can be moved into the shell when the needed syscalls and/or PrettyIPC are implemented
+    if(key == KEY_PRINT) // Save content of video memory.
     {
-        if(retchar == 's') // Taking a screenshot (FLOPPY); Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
-        {
-            ScreenDest = &FLOPPYDISK; // HACK
-            printf("Screenshot to Floppy (Thread)\n");
-            create_thread(&screenshot);
-            return 0;
-        }
-        if(retchar == 'u') // Taking a screenshot (USB); Should be changed to the Print-Screen-Key (not available because of bugs in keyboard-headers)
-        {
-            ScreenDest = &USB_MSD; // HACK
-            printf("Screenshot to USB (Thread)\n");
-            create_thread(&screenshot);
-            return 0;
-        }
-        if(retchar == 'd') // Prints the Port- and Disklist
-        {
-            showPortList();
-            showDiskList();
-            return 0;
-        }
-        if(retchar == 'a') // Display ARP tables of all network adapters
-        {
-            network_displayArpTables();
-            return 0;
-        }
-        if(retchar == 't') // If you want to test something
-        {
-            scheduler_log();
-            return 0;
-        }
-        if(retchar == 'n') // If you want to test something in networking
-        {
-            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-
-            network_adapter_t* adapter = network_getAdapter(sourceIP);
-            printf("network adapter: %Xh\n", adapter); // check
-
-            // parameters for UDPSend(...)
-            uint16_t srcPort  = 40; // unassigend
-            uint16_t destPort = 40;
-            uint8_t  destIP[4] ={255,255,255,255};
-
-            if (adapter)
-            {
-                UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, destIP);
-            }
-            return 0;
-        }
-        if(retchar == 'i') // DHCP Inform
-        {
-            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-
-            network_adapter_t* adapter = network_getAdapter(sourceIP);
-            printf("network adapter: %Xh\n", adapter); // check
-
-            if (adapter)
-            {
-                DHCP_Inform(adapter);
-            }
-            return 0;
-        }
-        if(retchar == 'f') // DHCP Release
-        {
-            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-
-            network_adapter_t* adapter = network_getAdapter(sourceIP);
-            printf("network adapter: %Xh\n", adapter); // check
-
-            if (adapter)
-            {
-                DHCP_Release(adapter);
-            }
-            return 0;
-        }
-
-        static tcpConnection_t* connection = 0;
-        if(retchar == 'b') // Create & Bind connection
-        {
-            connection = tcp_createConnection();
-
-            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-
-            network_adapter_t* adapter = network_getAdapter(sourceIP);
-            printf("network adapter: %Xh\n", adapter); // check
-
-            if(adapter)
-                tcp_bind(connection, adapter);
-            return 0;
-        }
-        if(retchar == 'w') // Create & Bind connection
-        {
-            connection = tcp_createConnection(); 
-            // uint8_t destIP[4] ={94,142,241,111}; // 94.142.241.111 at Port 23, starwars story
-            uint8_t destIP[4] = {82,100,220,68};  // www.henkessoft.de Port 80
-            memcpy(connection->remoteSocket.IP, destIP, 4);
-            connection->remoteSocket.port = 80;
-            
-            uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-            memcpy(connection->localSocket.IP, sourceIP, 4);
-
-            network_adapter_t* adapter = network_getAdapter(sourceIP);
-            printf("network adapter: %Xh\n", adapter); // check
-            connection->adapter = adapter;
-
-            if(adapter)
-            {
-                tcp_connect(connection);
-            }
-            return 0;
-        }
-        if(retchar == 'x') // send data to the connection
-        {
-            tcp_send(connection, "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n", strlen("GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
-            return 0;
-        }
-        if(retchar == 'c') // show tcp connections
-        {
-            printf("tcp connections:\n");
-            tcp_showConnections();
-            return 0;
-        }
+        takeScreenshot();
     }
 
-    return retchar; // ASCII version
+    return(retchar);
 }
 
-void keyboard_handler(registers_t* r)
+static void keyboard_handler(registers_t* r)
 {
-    uint8_t KEY = ScanToASCII();
-    if (KEY)
+    // Get scancode
+    uint8_t scancode = getScancode();
+    bool make = false;
+
+    // Find out key. Issue events.
+    KEY_t key = scancodeToKey(scancode, &make);
+    if(key == __KEY_INVALID)
+        return;
+
+    if(make)
+        for(element_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+            event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_DOWN, &key, sizeof(KEY_t));
+    else
     {
-        mutex_lock(console_displayed->KQ.mutex);
-        *console_displayed->KQ.pTail = KEY;
-        ++console_displayed->KQ.count;
-
-        if (console_displayed->KQ.pTail > console_displayed->KQ.buffer)
-        {
-            --console_displayed->KQ.pTail;
-        }
-        if (console_displayed->KQ.pTail == console_displayed->KQ.buffer)
-        {
-            console_displayed->KQ.pTail = (uint8_t*)console_displayed->KQ.buffer + KQSIZE - 1;
-        }
-        mutex_unlock(console_displayed->KQ.mutex);
+        for(element_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+            event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_UP, &key, sizeof(KEY_t));
+        return;
     }
-}
 
-uint8_t keyboard_getChar()
-{
-    if (console_current->KQ.count > 0)
-    {
-        mutex_lock(console_current->KQ.mutex);
-        uint8_t KEY = *console_current->KQ.pHead;
-        --console_current->KQ.count;
-
-        if (console_current->KQ.pHead > console_current->KQ.buffer)
-        {
-            --console_current->KQ.pHead;
-        }
-        if (console_current->KQ.pHead == console_current->KQ.buffer)
-        {
-            console_current->KQ.pHead = (void*)console_current->KQ.buffer + KQSIZE - 1;
-        }
-        mutex_unlock(console_current->KQ.mutex);
-        return KEY;
-    }
-    return 0;
+    // Find out ASCII representation of key. Issue events, put it to KQ.
+    char ascii = keyToASCII(key);
+    if(ascii != 0)
+        for(element_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+            event_issue(((task_t*)(e->data))->eventQueue, EVENT_TEXT_ENTERED, &ascii, sizeof(char));
 }
 
 char getch()
 {
-    char retVal = keyboard_getChar();
-    while(retVal == 0)
+    char ret = 0;
+    EVENT_t ev = event_poll(&ret, 1, EVENT_NONE);
+
+    while(ev != EVENT_TEXT_ENTERED)
     {
-        waitForIRQ(IRQ_KEYBOARD, 0);
-        irq_resetCounter(IRQ_KEYBOARD);
-        retVal = keyboard_getChar();
+        if(ev == EVENT_NONE)
+            scheduler_blockCurrentTask(BL_EVENT, (void*)EVENT_TEXT_ENTERED, 0);
+        ev = event_poll(&ret, 1, EVENT_NONE);
     }
-    return(retVal);
+    return(ret);
 }
 
-bool keyPressed(VK Key)
+bool keyPressed(KEY_t Key)
 {
-    return(VKPressed[Key]);
+    return(pressedKeys[Key]);
 }
 
 /*

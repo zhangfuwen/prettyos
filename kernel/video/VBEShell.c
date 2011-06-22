@@ -84,8 +84,7 @@ int startVBEShell()
         {
             // showInfo(1); // the train goes on...
 
-            // input = getchar();
-            input = keyboard_getChar();
+            input = getch();
 
             switch (input) {
                 case 8: // Backspace

@@ -14,11 +14,11 @@ void SetField(uint8_t x, uint8_t y, uint8_t Player)
 {
     iSetCursor(x*4+2,y*2+15);
     if(Player == X)
-	{
+    {
         putchar('X');
     }
     else if(Player == O)
-	{
+    {
         putchar('O');
     }
 }
@@ -61,23 +61,23 @@ void gewinnen()
 void Zug(uint16_t Player)
 {
     char str[80];
-	uint32_t input = 9;
+    uint32_t input = 9;
 
     for(;;)
     {
-		iSetCursor(0, 24);
-		gets(str);
-		if(isdigit(*str))
-		{
-			input = atoi(str);
-		}
-		else
-		{
-			input = 9; // String is empty -> Input not useful
-		}
+        iSetCursor(0, 24);
+        gets(str);
+        if(isdigit(*str))
+        {
+            input = atoi(str);
+        }
+        else
+        {
+            input = 9; // String is empty -> Input not useful
+        }
 
-		printLine("                                                                                ", 24, 0x0F); // Clear Inputline
-		printLine("                                                                                ", 26, 0x0F); // Clear Messageline
+        printLine("                                                                                ", 24, 0x0F); // Clear Inputline
+        printLine("                                                                                ", 26, 0x0F); // Clear Messageline
 
         if(input >= 9)
         {
@@ -98,13 +98,12 @@ void Zug(uint16_t Player)
     gewinnen();
 }
 
-int32_t main()
+int main()
 {
     memset(tictactoe, 0, sizeof(tictactoe));
-    clearScreen(0);
 
     printLine("--------------------------------------------------------------------------------", 0, 0x0B);
-    printLine("                           Mr.X TicTacToe 3x3  v0.6.3                           ", 2, 0x0B);
+    printLine("                           Mr.X TicTacToe 3x3  v0.6.4                           ", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     iSetCursor(0,6);
@@ -116,17 +115,17 @@ int32_t main()
 
     Zug(X);
     for(uint8_t i = 0; i < 4 && !ende; ++i)
-	{
+    {
         Zug(O);
         if(ende)
-		{
+        {
             break;
         }
         Zug(X);
     }
 
-	printLine("Press a key to continue...", 28, 0x0F);
-	getchar();
+    printLine("Press a key to continue...", 28, 0x0F);
+    getchar();
 
     return 0;
 }

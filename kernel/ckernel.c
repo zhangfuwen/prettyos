@@ -12,7 +12,6 @@
 #include "mouse.h"
 #include "todo_list.h"
 #include "syscall.h"
-#include "pci.h"
 #include "cdi.h"
 #include "video/vbe.h"
 #include "irq.h"
@@ -21,10 +20,12 @@
 #include "descriptor_tables.h"
 #include "power_management.h"
 #include "elf.h"
-#include "executable.h"
+#include "keyboard.h"
+#include "netprotocol/udp.h"
+#include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.134 - Rev: 972";
+const char* const version = "0.0.2.135 - Rev: 973";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -241,11 +242,192 @@ void main(multiboot_t* mb_struct)
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char     DateAndTime[81];             // String for Date&Time
 
+    bool ESC = false;
+    bool CTRL = false;
+    bool PRINT = false;
+    tcpConnection_t* connection = 0;
+
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
         video_setPixel(79, 49, 0x0C00 | *progress); // Write the character on the screen. 0x0C00 is the color (red)
         if (! *++progress) { progress = "|/-\\"; }
+
+        // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
+        char buffer[4];
+        EVENT_t ev = event_poll(buffer, 4, EVENT_NONE);
+        while(ev != EVENT_NONE)
+        {
+            switch(ev)
+            {
+                case EVENT_KEY_DOWN:
+                    // Detect CTRL and ESC
+                    switch(*(KEY_t*)buffer)
+                    {
+                        case KEY_ESC:
+                            ESC = true;
+                            break;
+                        case KEY_LCTRL: case KEY_RCTRL:
+                            CTRL = true;
+                            break;
+                        case KEY_PRINT: // Because of special behaviour of the PRINT key in emulators, we handle it different: After PRINT was pressed, next text entered event is taken as argument to PRINT.
+                            PRINT = true;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case EVENT_KEY_UP:
+                    // Detect CTRL and ESC
+                    switch(*(KEY_t*)buffer)
+                    {
+                        case KEY_ESC:
+                            ESC = false;
+                            break;
+                        case KEY_LCTRL: case KEY_RCTRL:
+                            CTRL = false;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case EVENT_TEXT_ENTERED:
+                    if(PRINT)
+                    {
+                        PRINT = false;
+                        switch(*(char*)buffer)
+                        {
+                            case 'f': // Taking a screenshot (Floppy)
+                                ScreenDest = &FLOPPYDISK; // HACK
+                                printf("Save screenshot to Floppy.");
+                                saveScreenshot();
+                                break;
+                            case 'u': // Taking a screenshot (USB)
+                                ScreenDest = &USB_MSD; // HACK
+                                printf("Save screenshot to USB.");
+                                saveScreenshot();
+                                break;
+                        }
+                    }
+                    if(ESC)
+                    {
+                        switch(*(char*)buffer)
+                        {
+                            case 'h':
+                                logHeapRegions();
+                                break;
+                            case 'p':
+                                paging_analyzeBitTable();
+                                break;
+                        }
+                    }
+                    else if(CTRL)
+                    {
+                        switch(*(char*)buffer)
+                        {
+                            case 'd':
+                                showPortList();
+                                showDiskList();
+                                break;
+                            case 'a':
+                                network_displayArpTables();
+                                break;
+                            case 't':
+                                scheduler_log();
+                                break;
+                            case 'n':
+                            {
+                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+
+                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                printf("network adapter: %Xh\n", adapter); // check
+
+                                if (adapter)
+                                {
+                                    // parameters for UDPSend(...)
+                                    uint16_t srcPort  = 40; // unassigend
+                                    uint16_t destPort = 40;
+                                    uint8_t  destIP[4] ={255,255,255,255};
+                                    UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, destIP);
+                                }
+                                break;
+                            }
+                            case 'i':
+                            {
+                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+
+                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                printf("network adapter: %Xh\n", adapter); // check
+
+                                if (adapter)
+                                {
+                                    DHCP_Inform(adapter);
+                                }
+                                break;
+                            }
+                            case 'f':
+                            {
+                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+
+                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                printf("network adapter: %Xh\n", adapter); // check
+
+                                if (adapter)
+                                {
+                                    DHCP_Release(adapter);
+                                }
+                                break;
+                            }
+                            case 'b':
+                            {
+                                connection = tcp_createConnection();
+
+                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+
+                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                printf("network adapter: %Xh\n", adapter); // check
+
+                                if(adapter)
+                                    tcp_bind(connection, adapter);
+                                break;
+                            }
+                            case 'c': // show tcp connections
+                                printf("tcp connections:\n");
+                                tcp_showConnections();
+                                break;
+                            case 'w':
+                            {
+                                connection = tcp_createConnection();
+                                // uint8_t destIP[4] ={94,142,241,111}; // 94.142.241.111 at Port 23, starwars story
+                                uint8_t destIP[4] = {82,100,220,68};  // www.henkessoft.de Port 80
+                                memcpy(connection->remoteSocket.IP, destIP, 4);
+                                connection->remoteSocket.port = 80;
+
+                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
+                                memcpy(connection->localSocket.IP, sourceIP, 4);
+
+                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                printf("network adapter: %Xh\n", adapter); // check
+                                connection->adapter = adapter;
+
+                                if(adapter)
+                                {
+                                    tcp_connect(connection);
+                                }
+                                break;
+                            }
+                            case 'x':
+                                tcp_send(connection, "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n",
+                                              strlen("GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
+                                break;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+            ev = event_poll(buffer, 4, EVENT_NONE);
+        }
 
         if (timer_getSeconds() != CurrentSeconds)
         {
@@ -290,15 +472,6 @@ void main(multiboot_t* mb_struct)
         }
 
         todoList_execute(kernel_idleTasks);
-
-        if (keyPressed(VK_ESCAPE) && keyPressed(VK_H)) // kernel heap
-        {
-            logHeapRegions();
-        }
-        if (keyPressed(VK_ESCAPE) && keyPressed(VK_P)) // physical memory
-        {
-            paging_analyzeBitTable();
-        }
 
         switch_context(); // Switch to another task
     } // end of kernel idle loop

@@ -11,6 +11,9 @@
 #include "filesystem/fsmanager.h"
 #include "synchronisation.h"
 
+#define SCREENSHOT_BYTES 4102
+
+
 static uint16_t* vidmem = (uint16_t*)0xB8000;
 
 VIDEOMODES videomode = VM_TEXT;
@@ -20,8 +23,6 @@ static char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 static const uint8_t LINES      = 50;
 static const uint8_t USER_BEGIN =  2; // Reserving  Titlebar + Separation
 static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
-
-static const uint16_t SCREENSHOT_BYTES  = 4102;
 
 static position_t cursor = {0, 0};
 static uint8_t attrib = 0x0F; // white text on black ground
@@ -50,6 +51,7 @@ void clear_screen()
     update_cursor();
 }
 
+// http://de.wikipedia.org/wiki/Codepage_437
 uint8_t AsciiToCP437(uint8_t ascii)
 {
     switch (ascii)
@@ -67,6 +69,24 @@ uint8_t AsciiToCP437(uint8_t ascii)
         case 0xB3:  return 0x00;  // ³ <-- not available
         case 0x80:  return 0xEE;  // € <-- Greek epsilon used
         case 0xB5:  return 0xE6;  // µ
+        case 0xB6:  return 0x14;  // ¶
+        case 0xC6:  return 0x92;  // æ
+        case 0xE6:  return 0x91;  // Æ
+        case 0xF1:  return 0xA4;  // ñ
+        case 0xD1:  return 0xA5;  // Ñ
+        case 0xE7:  return 0x87;  // ç
+        case 0xC7:  return 0x80;  // Ç
+        case 0xBF:  return 0xA8;  // ¿
+        case 0xA1:  return 0xAD;  // ¡
+        case 0xA2:  return 0x0B;  // ¢
+        case 0xA3:  return 0x9C;  // £
+        case 0xBD:  return 0xAB;  // ½
+        case 0xBC:  return 0xAC;  // ¼
+        case 0xA5:  return 0x9D;  // ¥
+        case 0xF7:  return 0xF6;  // ÷
+        case 0xAC:  return 0xAA;  // ¬
+        case 0xAB:  return 0xAE;  // «
+        case 0xBB:  return 0xAF;  // »
         default:    return ascii; // to be checked for more deviations
     }
 }
@@ -272,33 +292,36 @@ void update_cursor()
     outportb(0x3D5, (uint8_t)(position&0xFF));
 }
 
-diskType_t*    ScreenDest = &FLOPPYDISK; // HACK
-extern disk_t* disks[DISKARRAYSIZE];     // HACK
-extern bool    readCacheFlag;            // HACK
-
-void screenshot()
+static uint8_t screenCache[SCREENSHOT_BYTES];
+void takeScreenshot()
 {
+    printf("\nTake screenshot. ");
     int32_t NewLine = 0;
 
-    // buffer for video screen
-    uint8_t* videoscreen = malloc(SCREENSHOT_BYTES, 0, "vidscr-scrshot"); // only signs, no attributes, 50 times CR LF at line end
-
+    mutex_lock(videoLock);
     for (uint16_t i=0; i<4000; i++)
     {
         uint16_t j=i+2*NewLine;
-        videoscreen[j] = *(char*)(vidmem+i); // only signs, no attributes
+        screenCache[j] = *(char*)(vidmem+i); // only signs, no attributes
         if (i%80 == 79)
         {
-            videoscreen[j+1]= 0xD; // CR
-            videoscreen[j+2]= 0xA; // LF
+            screenCache[j+1]= 0xD; // CR
+            screenCache[j+2]= 0xA; // LF
             NewLine++;
         }
     }
+    mutex_unlock(videoLock);
 
     // additional newline at the end of the screenshot
-    videoscreen[SCREENSHOT_BYTES-2]= 0xD; // CR
-    videoscreen[SCREENSHOT_BYTES-1]= 0xA; // LF
+    screenCache[SCREENSHOT_BYTES-2]= 0xD; // CR
+    screenCache[SCREENSHOT_BYTES-1]= 0xA; // LF
+}
 
+extern disk_t* disks[DISKARRAYSIZE]; // HACK
+extern bool    readCacheFlag;        // HACK
+diskType_t*    ScreenDest = &FLOPPYDISK; // HACK
+void saveScreenshot()
+{
     readCacheFlag = false; // TODO: solve this problem!
     char Pfad[20];
     for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
@@ -313,29 +336,14 @@ void screenshot()
     file_t* file = fopen(Pfad, "a+");
     if (file) // check for NULL pointer, otherwise #PF
     {
-        fwrite((void*)videoscreen, 1, SCREENSHOT_BYTES, file);
+        fwrite(screenCache, 1, SCREENSHOT_BYTES, file);
         fclose(file);
     }
     else
     {
         printf("\nError: file could not be opened!");
     }
-    free(videoscreen);
     readCacheFlag = true;
-
-    /*
-    //rename test
-    waitForKeyStroke();
-    uint32_t error = rename(Pfad,"scrnew.txt");
-    printf("\nrename test: error: %u", error);
-
-
-    // remove test
-    waitForKeyStroke();
-    error = remove(Pfad);
-    printf("\nremove test: error: %u", error);
-    waitForKeyStroke();
-    */
 }
 
 /*

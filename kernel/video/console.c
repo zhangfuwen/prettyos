@@ -10,7 +10,7 @@
 
 
 console_t* reachableConsoles[11]; // Mainconsole + up to 10 subconsoles
-console_t kernelConsole = {.ID = KERNELCONSOLE_ID, .name = 0, .showInfobar = true, .scrollBegin = 0, .scrollEnd = 39, .cursor = {0, 0}, .mutex = 0}; // The console of the kernel task. It is a global variable because it should be initialized as fast as possible.
+console_t kernelConsole = {.ID = KERNELCONSOLE_ID, .name = 0, .showInfobar = true, .scrollBegin = 0, .scrollEnd = 39, .cursor = {0, 0}, .mutex = 0, .tasks = 0}; // The console of the kernel task. It is a global variable because it should be initialized as fast as possible.
 volatile console_t* console_current   = &kernelConsole; // The console of the active task
 volatile console_t* console_displayed = &kernelConsole; // Currently visible console
 
@@ -35,10 +35,9 @@ void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
 
 void kernel_console_init()
 {
+    kernelConsole.tasks = list_Create();
     kernelConsole.mutex = mutex_create(1);
     memsetl((uint32_t*)kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES / 2);
-
-    keyboard_initKQ(&kernelConsole.KQ);
 
     reachableConsoles[KERNELCONSOLE_ID] = &kernelConsole;
     memsetl((uint32_t*)reachableConsoles+1, 0, 10);
@@ -52,11 +51,10 @@ void console_init(console_t* console, const char* name)
     console->scrollBegin = 0;
     console->scrollEnd   = USER_LINES;
     console->showInfobar = false;
+    console->tasks       = list_Create();
     console->mutex       = mutex_create(1);
     strcpy(console->name, name);
     memsetl((uint32_t*)console->vidmem, 0x00, COLUMNS * USER_LINES / 2);
-
-    keyboard_initKQ(&console->KQ);
 
     for (uint8_t i = 1; i < 11; i++)
     { // The next free place in our console-list will be filled with the new console
@@ -73,8 +71,8 @@ void console_init(console_t* console, const char* name)
 void console_exit(console_t* console)
 {
     free(console->name);
+    list_DeleteAll(console->tasks);
     mutex_delete(console->mutex);
-    keyboard_destroyKQ(&console->KQ);
 }
 
 bool console_display(uint8_t ID)
@@ -152,9 +150,9 @@ void setCursor(position_t pos)
     update_cursor();
 }
 
-position_t getCursor()
+void getCursor(position_t* pos)
 {
-    return(console_current->cursor);
+    *pos = console_current->cursor;
 }
 
 void console_setPixel(uint8_t x, uint8_t y, uint16_t value)

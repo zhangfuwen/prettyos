@@ -12,6 +12,9 @@
 #include "irq.h"
 #include "storage/devicemanager.h"
 #include "executable.h"
+#include "events.h"
+#include "keyboard.h"
+
 
 // Overwiew to all syscalls in documentation/Syscalls.odt
 
@@ -58,8 +61,8 @@ static void* syscalls[] =
 /*  35 */    &nop,
 /*  36 */    &nop,
 /*  37 */    &nop,
-/*  38 */    &nop,
-/*  39 */    &nop,
+/*  38 */    &event_enable,
+/*  39 */    &event_poll,
 
 /*  40 */    &timer_getMilliseconds,
 /*  41 */    &nop,
@@ -94,7 +97,7 @@ static void* syscalls[] =
 /*  68 */    &nop,
 /*  69 */    &nop,
 
-/*  70 */    &getch,
+/*  70 */    0,
 /*  71 */    &keyPressed,
 /*  72 */    &nop, // mousePressed
 /*  73 */    &nop, // getMousePosition
@@ -137,7 +140,7 @@ static void syscall_handler(registers_t* r)
 
     console_current = currentTask->console; // Syscall output should appear in the console of the task that caused the syscall
     void* addr = syscalls[r->eax];
- 
+
     // We don't know how many parameters the function wants.
     // Therefore, we push them all onto the stack in the correct order.
     // The function will use the number of parameters it wants.

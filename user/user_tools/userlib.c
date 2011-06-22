@@ -8,6 +8,7 @@
 #include "stdio.h"
 #include "ctype.h"
 
+bool enabledEvents = false;
 
 // Syscalls
 FS_ERROR execute(const char* path, size_t argc, char* argv[])
@@ -92,6 +93,20 @@ FS_ERROR partition_format(const char* path, FS_t type, const char* name)
     return ret;
 }
 
+void event_enable(bool b)
+{
+    enabledEvents = b;
+    if(b)
+        __asm__ volatile("int $0x7F" : : "a"(38), "b"(b));
+}
+
+EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
+{
+    EVENT_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(39), "b"(destination), "c"(maxLength), "d"(filter));
+    return ret;
+}
+
 uint32_t getCurrentMilliseconds()
 {
     uint32_t ret;
@@ -125,11 +140,9 @@ void setCursor(position_t pos)
     __asm__ volatile("int $0x7F" : : "a"(58), "b"(pos));
 }
 
-position_t getCursor()
+void getCursor(position_t* pos)
 {
-    position_t ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(59));
-    return ret;
+    __asm__ volatile("int $0x7F" : : "a"(59), "b"(pos));
 }
 
 void clearScreen(uint8_t backgroundColor)
@@ -140,11 +153,18 @@ void clearScreen(uint8_t backgroundColor)
 char getchar()
 {
     char ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(70));
-    return ret;
+    EVENT_t ev = event_poll(&ret, 1, enabledEvents?EVENT_TEXT_ENTERED:EVENT_NONE);
+
+    while(ev != EVENT_TEXT_ENTERED)
+    {
+        if(ev == EVENT_NONE)
+            wait(BL_EVENT, (void*)EVENT_TEXT_ENTERED, 0);
+        ev = event_poll(&ret, 1, enabledEvents?EVENT_TEXT_ENTERED:EVENT_NONE);
+    }
+    return(ret);
 }
 
-bool keyPressed(VK key)
+bool keyPressed(KEY_t key)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(71), "b"(key));
