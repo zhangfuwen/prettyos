@@ -54,6 +54,7 @@ TARGETEXE := $(patsubst %.c, %.ELF, $(wildcard *.c))
 all: $(TARGETEXE)
 
 clean:
+	$(RM) *.ELF
 ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\*.o
 else

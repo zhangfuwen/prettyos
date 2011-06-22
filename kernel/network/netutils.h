@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-// htonl = Host To Network Long  
+// htonl = Host To Network Long
 #define htons(v) ((((v) >> 8) & 0xFF) | (((v) & 0xFF) << 8))
 #define htonl(v) ((((v) >> 24) & 0xFF) | (((v) >> 8) & 0xFF00) | (((v) & 0xFF00) << 8) | (((v) & 0xFF) << 24))
 // ntohl = Network To Host Long
