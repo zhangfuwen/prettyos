@@ -70,7 +70,7 @@ struct network_adapter
     arpTable_t        arpTable;
     DHCP_state        DHCP_State;
     uint8_t           Gateway_IP[4];
-    uint8_t           Subnet[4]; 
+    uint8_t           Subnet[4];
 };
 
 
@@ -79,6 +79,7 @@ bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t leng
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length); // Called by driver
 void network_displayArpTables();
 network_adapter_t* network_getAdapter(uint8_t IP[4]);
+network_adapter_t* network_getFirstAdapter();
 
 
 #endif

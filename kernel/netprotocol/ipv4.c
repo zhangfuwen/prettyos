@@ -15,7 +15,13 @@
 #include "util.h"
 
 
+bool isSubnet(uint8_t IP[4], uint8_t myIP[4], uint8_t subnet[4])
+{
+    return(((*(uint32_t*)IP)&(*(uint32_t*)subnet)) == ((*(uint32_t*)myIP)&(*(uint32_t*)subnet)));
+}
+
 static const uint8_t broadcast_IP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+static const uint8_t broadcast_IP2[4] = {0, 0, 0, 0};
 static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
@@ -77,41 +83,40 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     /*
     Todo: Tell routing table to route the ip address
     */
-    arpTableEntry_t * entry = arp_findEntry(&adapter->arpTable, IP);
-    if(entry)
+    if(memcmp(IP, broadcast_IP, 4) == 0 || memcmp(IP, broadcast_IP2, 4) == 0 || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
     {
+        arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, IP);
+        if(entry == 0) // Try to find IP by ARP request
+        {
+            printf("\nWe try to find %I", IP);
+            arp_sendRequest(adapter, IP);
+            if(arp_waitForReply(adapter, IP) == false)
+            {
+                printf("\nThe requested IP is in LAN but was not found.");
+                return;
+            }
+            entry = arp_findEntry(&adapter->arpTable, IP);
+        }
+
         EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
     }
-    else
+    else // IP is not in LAN. Send packet to server
     {
-        arp_sendGratitiousRequest(adapter);
-        entry = arp_findEntry(&adapter->arpTable, IP);
-        if(entry)
+        arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
+        if(entry == 0) // Try to find Server by ARP request
         {
-            EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
-        }
-        else
-        {
-            /// TEST
-            /// uint8_t router_MAC[6] = {MAC_1, MAC_2, MAC_3, MAC_4, MAC_5, MAC_6};
-            /// TEST 
-            /// TODO: get it from DHCP ACK
-
-            printf("\nThe requested IP was not found in the ARP table: %I", IP);
-            entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP); 
-            if (entry)
+            printf("\nWe try to find %I", adapter->Gateway_IP);
+            arp_sendRequest(adapter, adapter->Gateway_IP);
+            if(arp_waitForReply(adapter, adapter->Gateway_IP) == false)
             {
-                printf("\nWe try to deliver the packet to the gateway %I %M", adapter->Gateway_IP, entry->MAC);
-                EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
+                printf("\nThe server was not found");
+                return;
             }
-            else
-            {
-                printf("\nWe try to find %I", adapter->Gateway_IP);
-                arp_sendRequest(adapter, adapter->Gateway_IP);
-            }
-
-            // printf("\nThe requested IP was not found in the ARP table: %I", IP);
+            entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
         }
+
+        printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
+        EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
     }
     free(packet);
 }

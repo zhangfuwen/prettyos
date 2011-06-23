@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.136 - Rev: 975";
+const char* const version = "0.0.2.137 - Rev: 976";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -240,7 +240,7 @@ void main(multiboot_t* mb_struct)
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
-    char     DateAndTime[81];             // String for Date&Time
+    char     DateAndTime[50];             // String for Date&Time
 
     bool ESC = false;
     bool CTRL = false;
@@ -337,9 +337,7 @@ void main(multiboot_t* mb_struct)
                                 break;
                             case 'n':
                             {
-                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-
-                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                network_adapter_t* adapter = network_getFirstAdapter();
                                 printf("network adapter: %Xh\n", adapter); // check
 
                                 if (adapter)
@@ -354,9 +352,7 @@ void main(multiboot_t* mb_struct)
                             }
                             case 'i':
                             {
-                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-
-                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                network_adapter_t* adapter = network_getFirstAdapter();
                                 printf("network adapter: %Xh\n", adapter); // check
 
                                 if (adapter)
@@ -367,9 +363,7 @@ void main(multiboot_t* mb_struct)
                             }
                             case 'f':
                             {
-                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-
-                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                network_adapter_t* adapter = network_getFirstAdapter();
                                 printf("network adapter: %Xh\n", adapter); // check
 
                                 if (adapter)
@@ -382,9 +376,7 @@ void main(multiboot_t* mb_struct)
                             {
                                 connection = tcp_createConnection();
 
-                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-
-                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                network_adapter_t* adapter = network_getFirstAdapter();
                                 printf("network adapter: %Xh\n", adapter); // check
 
                                 if(adapter)
@@ -403,15 +395,14 @@ void main(multiboot_t* mb_struct)
                                 memcpy(connection->remoteSocket.IP, destIP, 4);
                                 connection->remoteSocket.port = 80;
 
-                                uint8_t sourceIP[4] ={IP_1,IP_2,IP_3,IP_4}; //HACK
-                                memcpy(connection->localSocket.IP, sourceIP, 4);
 
-                                network_adapter_t* adapter = network_getAdapter(sourceIP);
+                                network_adapter_t* adapter = network_getFirstAdapter();
                                 printf("network adapter: %Xh\n", adapter); // check
                                 connection->adapter = adapter;
 
                                 if(adapter)
                                 {
+                                    memcpy(connection->localSocket.IP, adapter->IP, 4);
                                     tcp_connect(connection);
                                 }
                                 break;
@@ -434,16 +425,14 @@ void main(multiboot_t* mb_struct)
             CurrentSeconds = timer_getSeconds();
 
             // all values 64 bit
-            uint64_t RdtscDiffValue = rdtsc() - LastRdtscValue;
-            LastRdtscValue = rdtsc();
-            uint64_t RdtscKCounts   = RdtscDiffValue >> 10;         // division by 1024
-            uint32_t RdtscKCountsHi = RdtscKCounts   >> 32;         // high dword
-            uint32_t RdtscKCountsLo = RdtscKCounts   &  0xFFFFFFFF; // low dword
+            uint64_t Rdtsc = rdtsc();
+            uint64_t RdtscKCounts   = (Rdtsc - LastRdtscValue);  // Build difference
+            uint32_t RdtscKCountsHi = RdtscKCounts >> 32;        // high dword
+            uint32_t RdtscKCountsLo = RdtscKCounts & 0xFFFFFFFF; // low dword
+            LastRdtscValue = Rdtsc;
 
             if (RdtscKCountsHi == 0)
-            {
-                system.CPU_Frequency_kHz = (RdtscKCountsLo/1000) << 10;
-            }
+                system.CPU_Frequency_kHz = RdtscKCountsLo/1000;
 
             // draw status bar with date, time and frequency
             getCurrentDateAndTime(DateAndTime);

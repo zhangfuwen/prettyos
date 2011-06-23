@@ -39,7 +39,7 @@
 #ifndef CDI_H
 #define CDI_H
 
-#include "os.h"
+#include "types.h"
 #include <cdi-osdep.h>
 #include <cdi/lists.h>
 

@@ -22,9 +22,10 @@ blockerType_t blocker[] =
     {0},                    // BL_TIME
     {0},                    // BL_SYNC
     {&irq_unlockTask},      // BL_INTERRUPT. Interrupts seem to be good for event based handling, but they are not, because we count interrupts occuring before the block was set.
-    {0},                    // BL_TASK, BL_TODOLIST
+    {0},                    // BL_TASK
     {&todoList_unlockTask}, // BL_TODOLIST
-    {0}                     // BL_EVENT
+    {0},                     // BL_EVENT
+    {0}                     // BL_NETPACKET
 };
 
 // Function for freetime task. Executed when the ring of running tasks is empty.

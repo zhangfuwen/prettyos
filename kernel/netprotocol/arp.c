@@ -9,6 +9,8 @@
 #include "timer.h"
 #include "util.h"
 #include "kheap.h"
+#include "scheduler.h"
+#include "network/netutils.h"
 
 
 void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry)
@@ -169,43 +171,12 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             break;
         } // switch
         arp_addTableEntry(&adapter->arpTable, packet->source_mac, packet->sourceIP, true); // ARP table entry
+        scheduler_unblockEvent(BL_NETPACKET, (void*)BL_NET_ARP);
     } // if
     else
     {
         printf("No Ethernet and IPv4 - Unknown packet sent to ARP\n");
     }
-}
-
-bool arp_sendGratitiousRequest(network_adapter_t* adapter)
-{
-    arpPacket_t gratRequest;
-
-    gratRequest.hardware_addresstype[0] = 0;    // Ethernet
-    gratRequest.hardware_addresstype[1] = 1;
-    gratRequest.protocol_addresstype[0] = 0x08; // IP
-    gratRequest.protocol_addresstype[1] = 0x00;
-
-    gratRequest.operation[0] = 0;
-    gratRequest.operation[1] = 1; // Request
-
-    gratRequest.hardware_addresssize = 6;
-    gratRequest.protocol_addresssize = 4;
-
-    for (uint8_t i = 0; i < 6; i++)
-    {
-        gratRequest.dest_mac[i]   = 0xFF; // Broadcast
-        gratRequest.source_mac[i] = adapter->MAC[i];
-    }
-
-    for (uint8_t i = 0; i < 4; i++)
-    {
-        gratRequest.destIP[i]   = adapter->IP[i];
-        gratRequest.sourceIP[i] = adapter->IP[i];
-    }
-
-    uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-    return EthernetSend(adapter, (void*)&gratRequest, sizeof(arpPacket_t), destMAC, 0x0806);
 }
 
 bool arp_sendRequest(network_adapter_t* adapter, uint8_t searchedIP[4])
@@ -225,19 +196,28 @@ bool arp_sendRequest(network_adapter_t* adapter, uint8_t searchedIP[4])
 
     for (uint8_t i = 0; i < 6; i++)
     {
-        request.dest_mac[i]   = 0x00; 
+        request.dest_mac[i]   = 0x00;
         request.source_mac[i] = adapter->MAC[i];
     }
 
     for (uint8_t i = 0; i < 4; i++)
     {
-        request.destIP[i]   = searchedIP[4]; // only difference to GratitiousRequest // TODO: combine
+        request.destIP[i]   = searchedIP[4];
         request.sourceIP[i] = adapter->IP[i];
     }
 
     uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
     return EthernetSend(adapter, (void*)&request, sizeof(arpPacket_t), destMAC, 0x0806);
+}
+
+bool arp_waitForReply(struct network_adapter* adapter, uint8_t searchedIP[4])
+{
+    bool b = scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, 1000);
+    while(b && arp_findEntry(&adapter->arpTable, searchedIP) == 0)
+        b = scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, 1000);
+
+    return(b);
 }
 
 /*

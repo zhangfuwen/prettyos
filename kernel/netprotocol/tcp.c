@@ -11,11 +11,9 @@
 #include "network/netutils.h"
 #include "ipv4.h"
 #include "list.h"
-#include "timer.h"
 
 
 static listHead_t* tcpConnections = 0;
-
 
 
 static uint16_t getFreeSocket();
@@ -39,7 +37,7 @@ void tcp_showConnections()
 {
     if(tcpConnections == 0)
         return;
-    
+
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
@@ -95,7 +93,7 @@ tcpConnection_t* tcp_createConnection()
 }
 
 void tcp_deleteConnection(tcpConnection_t* connection)
-{    
+{
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = CLOSED;
     textColor(0x0C);
@@ -115,7 +113,7 @@ void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = LISTEN;
     connection->adapter = adapter;
-    
+
     tcpShowConnectionStatus(connection);
 }
 
@@ -128,8 +126,8 @@ void tcp_connect(tcpConnection_t* connection) // ==> SYN-SENT
     {
         tcp_send(connection, 0, 0, SYN_FLAG, connection->tcb.SND_ISS /*seqNumber*/ , 0 /*ackNumber*/);
         connection->TCP_CurrState = SYN_SENT;
-        
-        tcpShowConnectionStatus(connection); 
+
+        tcpShowConnectionStatus(connection);
     }
 }
 
@@ -184,7 +182,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         memcpy(connection->remoteSocket.IP, transmittingIP, 4);
         switch(connection->TCP_CurrState)
         {
-            case CLOSED: 
+            case CLOSED:
             case TIME_WAIT: // HACK, TODO: use timeout (TIME_WAIT --> CLOSED)
                 printf("TCP connection %X set from CLOSED to LISTEN.\n", connection);
                 connection->TCP_CurrState = LISTEN;
@@ -207,10 +205,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
 
         if (connection->TCP_CurrState == SYN_SENT)
         {
-            connection->tcb.SND_NXT = tcp->acknowledgmentNumber;            // HACK for keyboard.c       
-            connection->tcb.SND_UNA = htonl(ntohl(tcp->sequenceNumber)+1);  // HACK for keyboard.c      
+            connection->tcb.SND_NXT = tcp->acknowledgmentNumber;            // HACK for keyboard.c
+            connection->tcb.SND_UNA = htonl(ntohl(tcp->sequenceNumber)+1);  // HACK for keyboard.c
         }
-        
+
         tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
         connection->TCP_CurrState = ESTABLISHED;
     }
@@ -267,7 +265,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                 break;
             case FIN_WAIT_2:
                 tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
-                connection->TCP_CurrState = TIME_WAIT;                
+                connection->TCP_CurrState = TIME_WAIT;
                 /// TEST
                 delay(100000);
                 tcp_deleteConnection(connection);
@@ -405,7 +403,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     packet->urgentPointer = 0; // TODO: Clarify
 
     packet->checksum = 0; // for checksum calculation
-    
+
     packet->checksum = htons(udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
 
     ipv4_send(connection->adapter, packet, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6);

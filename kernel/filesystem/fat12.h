@@ -1,7 +1,7 @@
 #ifndef _FAT12_H
 #define _FAT12_H
 
-#include "fat.h"
+#include "types.h"
 
 
 // Numbers

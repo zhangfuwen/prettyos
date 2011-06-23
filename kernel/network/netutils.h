@@ -11,6 +11,12 @@
 #define ntohl(v) htonl(v)
 
 
+enum
+{
+    BL_NET_ARP
+};
+
+
 uint16_t internetChecksum(void* addr, size_t count, uint32_t pseudoHeaderChecksum);
 uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uint8_t destIP[4], uint16_t protocol);
 

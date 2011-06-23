@@ -363,15 +363,15 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
         case 1: // subnet mask
             for(uint16_t i=0; i<opt[count+2]; i++)
             {
-                printf("%u ", opt[count+3+i]);             
+                printf("%u ", opt[count+3+i]);
             }
-            
+
             if (opt[count+2] == 4)
             {
                 memcpy(adapter->Subnet, opt+count+3, 4);
             }
             break;
-    
+
         case 12: case 14: case 15: case 17: case 18: case 40: case 43: // ASCII output
             for(uint16_t i=0; i<opt[count+2]; i++)
                 printf("%c", opt[count+3+i]);
@@ -421,14 +421,14 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
         case 54: // Server identifier
             for(uint16_t i=0; i<opt[count+2]; i++)
             {
-                printf("%u ", opt[count+3+i]);             
+                printf("%u ", opt[count+3+i]);
             }
-            
+
             if (opt[count+2] == 4)
             {
                 memcpy(adapter->Gateway_IP, opt+count+3, 4);
                 // arp_sendRequest(adapter, adapter->Gateway_IP); // ???
-            }            
+            }
             break;
         default:
             for(uint16_t i=0; i<opt[count+2]; i++)

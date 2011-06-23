@@ -63,6 +63,7 @@ static void keyboard_handler(registers_t* r);
 
 void keyboard_install()
 {
+    memset(pressedKeys, false, __KEY_LAST*sizeof(bool));
     irq_installHandler(IRQ_KEYBOARD, keyboard_handler); // Installs 'keyboard_handler' to IRQ_KEYBOARD
 
     while (inportb(0x64) & 1) // wait until buffer is empty

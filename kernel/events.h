@@ -2,6 +2,7 @@
 #define EVENTS_H
 
 #include "list.h"
+#include "synchronisation.h"
 
 
 #define MAX_EVENTS 20 // One queue stores at maximum xx events. If a queue is full, an EVENT_OVERFLOW event is appended and no further events are accepted
@@ -24,6 +25,7 @@ typedef struct
 {
     listHead_t* list;
     size_t      num;
+    mutex_t*    mutex;
 } event_queue_t;
 
 

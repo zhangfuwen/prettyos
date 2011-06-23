@@ -108,6 +108,7 @@ void install_AMDPCnet(network_adapter_t* dev)
     writeCSR(device, 1, phys_address); // Lower bits of initBlock address
     writeCSR(device, 2, phys_address>>16); // Higher bits of initBlock address
 
+    irq_resetCounter(device->device->PCIdev->irq);
     // Init card
     writeCSR(device, 0, 0x0041); // Initialize card, activate interrupts
     if(!waitForIRQ(device->device->PCIdev->irq, 1000))

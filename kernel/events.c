@@ -13,6 +13,7 @@ event_queue_t* event_createQueue()
 {
     event_queue_t* queue = malloc(sizeof(event_queue_t), 0, "event_queue");
     queue->num = 0;
+    queue->mutex = mutex_create();
     queue->list = list_Create();
     return(queue);
 }
@@ -22,6 +23,7 @@ void event_deleteQueue(event_queue_t* queue)
     for(element_t* e = queue->list->head; e != 0; e = e->next)
         free(e->data);
     list_DeleteAll(queue->list);
+    mutex_delete(queue->mutex);
     free(queue);
 }
 
@@ -37,8 +39,10 @@ void event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t le
         ev->data = 0;
         ev->length = 0;
         ev->type = EVENT_OVERFLOW;
+        mutex_lock(destination->mutex);
         list_Append(destination->list, ev);
         destination->num++;
+        mutex_unlock(destination->mutex);
     }
     else if(destination->num > MAX_EVENTS)
     {
@@ -52,8 +56,10 @@ void event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t le
         memcpy(ev->data, data, length);
         ev->length = length;
         ev->type = type;
+        mutex_lock(destination->mutex);
         list_Append(destination->list, ev);
         destination->num++;
+        mutex_unlock(destination->mutex);
     }
     scheduler_unblockEvent(BL_EVENT, (void*)type);
 }
@@ -69,6 +75,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
 
     event_t* ev = 0;
+    mutex_lock(task->eventQueue->mutex);
     if(filter == EVENT_NONE)
     {
         ev = task->eventQueue->list->head->data;
@@ -86,7 +93,10 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     }
 
     if(ev == 0)
+    {
+        mutex_unlock(task->eventQueue->mutex);
         return(EVENT_NONE);
+    }
 
     EVENT_t type = EVENT_NONE;
     if(ev->length > maxLength)
@@ -100,6 +110,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     }
     task->eventQueue->num--;
     list_Delete(task->eventQueue->list, ev);
+    mutex_unlock(task->eventQueue->mutex);
     free(ev->data);
     free(ev);
 

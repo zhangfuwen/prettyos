@@ -1,7 +1,6 @@
 #ifndef ARP_H
 #define ARP_H
 
-#include "types.h"
 #include "list.h"
 
 #define ARP_TABLE_TIME_TO_CHECK   2    // time in minutes
@@ -46,7 +45,7 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4]);
 void arp_showTable(arpTable_t* table);
 
 void arp_received(struct network_adapter* adapter, arpPacket_t* packet);
-bool arp_sendGratitiousRequest(struct network_adapter* adapter);
-bool arp_sendRequest(struct network_adapter* adapter, uint8_t searchedIP[4]);
+bool arp_sendRequest(struct network_adapter* adapter, uint8_t searchedIP[4]); // Pass adapter->IP to it, to issue a gratuitous request
+bool arp_waitForReply(struct network_adapter* adapter, uint8_t searchedIP[4]);
 
 #endif

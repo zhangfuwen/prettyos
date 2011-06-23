@@ -209,6 +209,13 @@ network_adapter_t* network_getAdapter(uint8_t IP[4])
     return(0);
 }
 
+network_adapter_t* network_getFirstAdapter()
+{
+    if(adapters == 0)
+        return(0);
+    return(adapters->head->data);
+}
+
 
 /*
 * Copyright (c) 2011 The PrettyOS Project. All rights reserved.

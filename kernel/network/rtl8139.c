@@ -199,7 +199,7 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
         memset(device->TxBuffer+length, 0, 60-length);
         length = 60;
     }
-  
+
   #ifdef _NETWORK_DIAGNOSIS_
     printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %Xh\n", paging_getPhysAddr(rAdapter->TxBuffer));
   #endif

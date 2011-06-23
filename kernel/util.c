@@ -9,6 +9,7 @@
 #include "timer.h"
 #include "power_management.h"
 #include "keyboard.h"
+#include "task.h"
 
 
 const int32_t INT_MAX = 2147483647;
@@ -38,32 +39,32 @@ uint64_t rdtsc()
 uint8_t inportb(uint16_t port)
 {
     uint8_t ret_val;
-    __asm__ volatile ("in %%dx,%%al" : "=a"(ret_val) : "d"(port));
+    __asm__ volatile ("inb %%dx,%%al" : "=a"(ret_val) : "d"(port));
     return ret_val;
 }
 
 uint16_t inportw(uint16_t port)
 {
     uint16_t ret_val;
-    __asm__ volatile ("in %%dx,%%ax" : "=a" (ret_val) : "d"(port));
+    __asm__ volatile ("inw %%dx,%%ax" : "=a" (ret_val) : "d"(port));
     return ret_val;
 }
 
 uint32_t inportl(uint16_t port)
 {
     uint32_t ret_val;
-    __asm__ volatile ("in %%dx,%%eax" : "=a" (ret_val) : "d"(port));
+    __asm__ volatile ("inl %%dx,%%eax" : "=a" (ret_val) : "d"(port));
     return ret_val;
 }
 
 void outportb(uint16_t port, uint8_t val)
 {
-    __asm__ volatile ("out %%al,%%dx" :: "a"(val), "d"(port));
+    __asm__ volatile ("outb %%al,%%dx" :: "a"(val), "d"(port));
 }
 
 void outportw(uint16_t port, uint16_t val)
 {
-    __asm__ volatile ("out %%ax,%%dx" :: "a"(val), "d"(port));
+    __asm__ volatile ("outw %%ax,%%dx" :: "a"(val), "d"(port));
 }
 
 void outportl(uint16_t port, uint32_t val)
@@ -75,10 +76,10 @@ void outportl(uint16_t port, uint32_t val)
 
 void panic_assert(const char* file, uint32_t line, const char* desc)
 {
-    cli();
-    printf("ASSERTION FAILED(%s) at %s:%u\nOPERATING SYSTEM HALTED\n", desc, file, line);
-    // Halt by going into an infinite loop.
-    hlt();
+    printf("\nASSERTION FAILED (%s) in file '%s', line %u\nTask Halted. Press key to exit!", desc, file, line);
+    sti();
+    getch();
+    exit();
     for (;;);
 }
 
