@@ -122,6 +122,11 @@ bool network_installDevice(pciDev_t* device)
     adapter->IP[1] =  IP_2;
     adapter->IP[2] =  IP_3;
     adapter->IP[3] =  IP_4;
+
+    adapter->Gateway_IP[0] = GW_IP_1;
+    adapter->Gateway_IP[1] = GW_IP_2;
+    adapter->Gateway_IP[2] = GW_IP_3;
+    adapter->Gateway_IP[3] = GW_IP_4;
     // ------------------------------
 
     adapter->driver->install(adapter);

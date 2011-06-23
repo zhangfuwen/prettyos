@@ -34,13 +34,13 @@
 #define RIP_4  15
 */
 
-// router MAC for routing to the internet
-#define MAC_1 0x00 
-#define MAC_2 0x22
-#define MAC_3 0xcf
-#define MAC_4 0x36
-#define MAC_5 0x9d
-#define MAC_6 0x1c
+
+// gateway IP for routing to the internet
+#define GW_IP_1 192
+#define GW_IP_2 168
+#define GW_IP_3   1
+#define GW_IP_4   1
+
 
 typedef struct network_adapter network_adapter_t;
 

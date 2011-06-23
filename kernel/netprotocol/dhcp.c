@@ -427,7 +427,8 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             if (opt[count+2] == 4)
             {
                 memcpy(adapter->Gateway_IP, opt+count+3, 4);
-            }
+                // arp_sendRequest(adapter, adapter->Gateway_IP); // ???
+            }            
             break;
         default:
             for(uint16_t i=0; i<opt[count+2]; i++)

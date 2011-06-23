@@ -126,7 +126,6 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             // requested IP is our own IP?
             if (memcmp(packet->destIP, adapter->IP, 4) == 0)
             {
-                printf("\n Tx prepared:");
                 arpPacket_t reply;
 
                 for (uint8_t i = 0; i < 2; i++)
@@ -177,9 +176,8 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
     }
 }
 
-void arp_sendGratitiousRequest(network_adapter_t* adapter)
+bool arp_sendGratitiousRequest(network_adapter_t* adapter)
 {
-    printf("\n Tx prepared:");
     arpPacket_t gratRequest;
 
     gratRequest.hardware_addresstype[0] = 0;    // Ethernet
@@ -207,7 +205,39 @@ void arp_sendGratitiousRequest(network_adapter_t* adapter)
 
     uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-    EthernetSend(adapter, (void*)&gratRequest, sizeof(arpPacket_t), destMAC, 0x0806);
+    return EthernetSend(adapter, (void*)&gratRequest, sizeof(arpPacket_t), destMAC, 0x0806);
+}
+
+bool arp_sendRequest(network_adapter_t* adapter, uint8_t searchedIP[4])
+{
+    arpPacket_t request;
+
+    request.hardware_addresstype[0] = 0;    // Ethernet
+    request.hardware_addresstype[1] = 1;
+    request.protocol_addresstype[0] = 0x08; // IP
+    request.protocol_addresstype[1] = 0x00;
+
+    request.operation[0] = 0;
+    request.operation[1] = 1; // Request
+
+    request.hardware_addresssize = 6;
+    request.protocol_addresssize = 4;
+
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        request.dest_mac[i]   = 0x00; 
+        request.source_mac[i] = adapter->MAC[i];
+    }
+
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        request.destIP[i]   = searchedIP[4]; // only difference to GratitiousRequest // TODO: combine
+        request.sourceIP[i] = adapter->IP[i];
+    }
+
+    uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+    return EthernetSend(adapter, (void*)&request, sizeof(arpPacket_t), destMAC, 0x0806);
 }
 
 /*
