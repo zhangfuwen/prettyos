@@ -193,7 +193,7 @@ bool arp_sendRequest(network_adapter_t* adapter, uint8_t searchedIP[4])
 
     request.hardware_addresssize = 6;
     request.protocol_addresssize = 4;
-
+    
     for (uint8_t i = 0; i < 6; i++)
     {
         request.dest_mac[i]   = 0x00;
@@ -202,22 +202,17 @@ bool arp_sendRequest(network_adapter_t* adapter, uint8_t searchedIP[4])
 
     for (uint8_t i = 0; i < 4; i++)
     {
-        request.destIP[i]   = searchedIP[4];
+        request.destIP[i]   = searchedIP[i];
         request.sourceIP[i] = adapter->IP[i];
-    }
-
+    }   
     uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
     return EthernetSend(adapter, (void*)&request, sizeof(arpPacket_t), destMAC, 0x0806);
 }
 
 bool arp_waitForReply(struct network_adapter* adapter, uint8_t searchedIP[4])
 {
-    bool b = scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, 1000);
-    while(b && arp_findEntry(&adapter->arpTable, searchedIP) == 0)
-        b = scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, 1000);
-
-    return(b);
+    while(arp_findEntry(&adapter->arpTable, searchedIP) == 0 && scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, 1000));
+    return(arp_findEntry(&adapter->arpTable, searchedIP) != 0);
 }
 
 /*
