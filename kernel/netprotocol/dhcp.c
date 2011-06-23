@@ -427,17 +427,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             if (opt[count+2] == 4)
             {
                 memcpy(adapter->Gateway_IP, opt+count+3, 4);
-                
-                // HACK for qemu:
-                if (adapter->Gateway_IP[0]==10 && adapter->Gateway_IP[1]==0 && adapter->Gateway_IP[2]==2 && adapter->Gateway_IP[3]==2)   
-                {
-                    adapter->Gateway_IP[0] = GW_IP_1; 
-                    adapter->Gateway_IP[1] = GW_IP_2;
-                    adapter->Gateway_IP[2] = GW_IP_3;
-                    adapter->Gateway_IP[3] = GW_IP_4;
-                }
-                
-                arp_sendRequest(adapter, adapter->Gateway_IP);                
+                arp_sendRequest(adapter, adapter->Gateway_IP); // send gateway IP/MAC to arp cache              
             }
             break;
         default:

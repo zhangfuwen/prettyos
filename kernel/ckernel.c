@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.139 - Rev: 978";
+const char* const version = "0.0.2.140 - Rev: 979";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -246,6 +246,7 @@ void main(multiboot_t* mb_struct)
     bool CTRL = false;
     bool PRINT = false;
     tcpConnection_t* connection = 0;
+    uint32_t connectionID = 0;
 
     while (true) // start of kernel idle loop
     {
@@ -390,11 +391,11 @@ void main(multiboot_t* mb_struct)
                             case 'w':
                             {
                                 connection = tcp_createConnection();
+                                connectionID = connection->ID;
                                 // uint8_t destIP[4] ={94,142,241,111}; // 94.142.241.111 at Port 23, starwars story
                                 uint8_t destIP[4] = {82,100,220,68};  // www.henkessoft.de Port 80
                                 memcpy(connection->remoteSocket.IP, destIP, 4);
                                 connection->remoteSocket.port = 80;
-
 
                                 network_adapter_t* adapter = network_getFirstAdapter();
                                 printf("network adapter: %Xh\n", adapter); // check
@@ -408,6 +409,7 @@ void main(multiboot_t* mb_struct)
                                 break;
                             }
                             case 'x':
+                                connection = findConnectionID(connectionID);
                                 tcp_send(connection, "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n",
                                               strlen("GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
                                 break;

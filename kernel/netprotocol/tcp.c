@@ -17,6 +17,22 @@ static listHead_t* tcpConnections = 0;
 
 
 static uint16_t getFreeSocket();
+static uint32_t getConnectionID();
+
+tcpConnection_t* findConnectionID(uint32_t ID)
+{
+    if(tcpConnections == 0)
+        return(0);
+
+    for(element_t* e = tcpConnections->head; e != 0; e = e->next)
+    {
+        tcpConnection_t* connection = e->data;
+        if(connection->ID == ID) 
+            return(connection);
+    }
+
+    return(0);
+}
 
 static tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_adapter_t* adapter)
 {
@@ -41,7 +57,9 @@ void tcp_showConnections()
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        printf("IP: %I  srcPrt: %u  destPort: %u\n", connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port);
+        textColor(0x7);
+        printf("ID: %u IP: %I src: %u dest: %u addr: %X\n", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection);
+        textColor(0xF);
     }
 }
 
@@ -74,9 +92,12 @@ static void tcpShowConnectionStatus(tcpConnection_t* connection)
 tcpConnection_t* tcp_createConnection()
 {
     if(tcpConnections == 0)
+    {
         tcpConnections = list_Create();
+    }
 
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
+    connection->ID = getConnectionID();
     connection->TCP_PrevState = CLOSED;
     connection->TCP_CurrState = CLOSED;
     srand(timer_getMilliseconds());
@@ -414,6 +435,12 @@ static uint16_t getFreeSocket()
 {
     static uint16_t srcPort = 49152;
     return srcPort++;
+}
+
+static uint32_t getConnectionID()
+{
+    static uint16_t ID = 1;
+    return ID++;
 }
 
 /*

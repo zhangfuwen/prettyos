@@ -5,6 +5,7 @@
 #include "netprotocol/arp.h"
 #include "netprotocol/dhcp.h"
 
+#define QEMU_HACK
 
 // own IP at start
 #define IP_1  192
@@ -18,29 +19,19 @@
 #define RIP_3   1
 #define RIP_4  97
 
-
-//for qemu
-/*
-// own IP at start
-#define IP_1   10
-#define IP_2    0
-#define IP_3    2
-#define IP_4   15
-
-// requested IP
-#define RIP_1  10
-#define RIP_2   0
-#define RIP_3   2
-#define RIP_4  15
-*/
-
-
 // gateway IP for routing to the internet
 #define GW_IP_1 192
 #define GW_IP_2 168
 #define GW_IP_3   1
 #define GW_IP_4   1
 
+// HACK for qemu, MAC of the external gateway (for TCP experiments)
+#define GW_MAC_1 0x00
+#define GW_MAC_2 0x22
+#define GW_MAC_3 0xcf
+#define GW_MAC_4 0x36
+#define GW_MAC_5 0x9d
+#define GW_MAC_6 0x1c
 
 typedef struct network_adapter network_adapter_t;
 
