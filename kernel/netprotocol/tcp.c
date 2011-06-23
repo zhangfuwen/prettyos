@@ -12,6 +12,10 @@
 #include "ipv4.h"
 #include "list.h"
 
+static const char* const tcpStates[] =
+{
+    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
+};
 
 static listHead_t* tcpConnections = 0;
 
@@ -28,7 +32,26 @@ tcpConnection_t* findConnectionID(uint32_t ID)
     {
         tcpConnection_t* connection = e->data;
         if(connection->ID == ID) 
+        {
             return(connection);
+        }
+    }
+
+    return(0);
+}
+
+static tcpConnection_t* findConnectionListen(network_adapter_t* adapter)
+{
+    if(tcpConnections == 0)
+        return(0);
+
+    for(element_t* e = tcpConnections->head; e != 0; e = e->next)
+    {
+        tcpConnection_t* connection = e->data;
+        if (connection->adapter == adapter && connection->TCP_CurrState == LISTEN) 
+        {
+            return(connection);
+        }
     }
 
     return(0);
@@ -42,8 +65,10 @@ static tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_ada
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        //if(connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0) /// HACK
+        if (connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0)
+        {
             return(connection);
+        }
     }
 
     return(0);
@@ -58,7 +83,7 @@ void tcp_showConnections()
     {
         tcpConnection_t* connection = e->data;
         textColor(0x7);
-        printf("ID: %u IP: %I src: %u dest: %u addr: %X\n", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection);
+        printf("ID: %u IP: %I src: %u dest: %u addr: %X state: %s", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
         textColor(0xF);
     }
 }
@@ -76,11 +101,6 @@ static void tcpDebug(tcpPacket_t* tcp)
   */
   textColor(0x0F);
 }
-
-static const char* const tcpStates[] =
-{
-    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
-};
 
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
 {
@@ -180,8 +200,15 @@ void tcp_close(tcpConnection_t* connection)
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length)
 {
     tcpDebug(tcp);
-
-    tcpConnection_t* connection = findConnection(transmittingIP, tcp->sourcePort, adapter);
+    tcpConnection_t* connection;
+    if (tcp->SYN && !tcp->ACK) // SYN
+    {
+        connection = findConnectionListen(adapter);
+    }
+    else
+    {
+        connection = findConnection(transmittingIP, ntohs(tcp->sourcePort), adapter);
+    }
 
     if(connection == 0)
     {
@@ -226,8 +253,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
 
         if (connection->TCP_CurrState == SYN_SENT)
         {
-            connection->tcb.SND_NXT = tcp->acknowledgmentNumber;            // HACK for keyboard.c
-            connection->tcb.SND_UNA = htonl(ntohl(tcp->sequenceNumber)+1);  // HACK for keyboard.c
+            connection->tcb.SND_NXT = tcp->acknowledgmentNumber;            // HACK for ckernel.c
+            connection->tcb.SND_UNA = htonl(ntohl(tcp->sequenceNumber)+1);  // HACK for ckernel.c
         }
 
         tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
