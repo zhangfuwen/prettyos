@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.141 - Rev: 980";
+const char* const version = "0.0.2.142 - Rev: 981";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -242,11 +242,14 @@ void main(multiboot_t* mb_struct)
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char     DateAndTime[50];             // String for Date&Time
 
-    bool ESC = false;
-    bool CTRL = false;
+    bool ESC   = false;
+    bool CTRL  = false;
     bool PRINT = false;
+    
     tcpConnection_t* connection = 0;
-    uint32_t connectionID = 0;
+    uint8_t destIP[4] = {82,100,220,68}; // homepage ehenkes at Port 80
+    // uint8_t destIP[4] ={94,142,241,111}; // 94.142.241.111 at Port 23, starwars story
+    
 
     while (true) // start of kernel idle loop
     {
@@ -346,8 +349,8 @@ void main(multiboot_t* mb_struct)
                                     // parameters for UDPSend(...)
                                     uint16_t srcPort  = 40; // unassigend
                                     uint16_t destPort = 40;
-                                    uint8_t  destIP[4] ={255,255,255,255};
-                                    UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, destIP);
+                                    uint8_t  IP[4] ={255,255,255,255};
+                                    UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, IP);
                                 }
                                 break;
                             }
@@ -391,9 +394,6 @@ void main(multiboot_t* mb_struct)
                             case 'w':
                             {
                                 connection = tcp_createConnection();
-                                connectionID = connection->ID;
-                                // uint8_t destIP[4] ={94,142,241,111}; // 94.142.241.111 at Port 23, starwars story
-                                uint8_t destIP[4] = {82,100,220,68};  // www.henkessoft.de Port 80
                                 memcpy(connection->remoteSocket.IP, destIP, 4);
                                 connection->remoteSocket.port = 80;
 
@@ -409,10 +409,25 @@ void main(multiboot_t* mb_struct)
                                 break;
                             }
                             case 'x':
-                                connection = findConnectionID(connectionID);
-                                tcp_send(connection, "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n",
-                                              strlen("GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
+                            {    
+                                network_adapter_t* adapter = network_getFirstAdapter();
+                                if (adapter)
+                                {
+                                    connection = findConnection(destIP, 80, adapter, true);
+                                    if (connection)
+                                    {
+                                        tcp_send(connection, "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n",
+                                                      strlen("GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
+                                    }
+                                    else
+                                    {
+                                        textColor(0x0C);
+                                        printf("No established HTTP connection to %I found.\n", destIP);
+                                        textColor(0x0F);
+                                    }
+                                }
                                 break;
+                            }
                         }
                     }
                     break;

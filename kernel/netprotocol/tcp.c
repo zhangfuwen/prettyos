@@ -57,7 +57,7 @@ static tcpConnection_t* findConnectionListen(network_adapter_t* adapter)
     return(0);
 }
 
-static tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_adapter_t* adapter)
+tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_adapter_t* adapter, bool established)
 {
     if(tcpConnections == 0)
         return(0);
@@ -65,9 +65,20 @@ static tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_ada
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        if (connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0)
+        
+        if (!established)
+        {        
+            if (connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0)
+            {
+                return(connection);
+            }
+        }
+        else // ESTABLISHED
         {
-            return(connection);
+            if (connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0 && connection->TCP_CurrState==ESTABLISHED)
+            {
+                return(connection);
+            }
         }
     }
 
@@ -82,8 +93,8 @@ void tcp_showConnections()
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        textColor(0x7);
-        printf("ID: %u IP: %I src: %u dest: %u addr: %X state: %s", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
+        textColor(0x9);
+        printf("ID: %u IP: %I src: %u dest: %u addr: %X state: %s\n", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
         textColor(0xF);
     }
 }
@@ -207,7 +218,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     }
     else
     {
-        connection = findConnection(transmittingIP, ntohs(tcp->sourcePort), adapter);
+        connection = findConnection(transmittingIP, ntohs(tcp->sourcePort), adapter, false);
     }
 
     if(connection == 0)
