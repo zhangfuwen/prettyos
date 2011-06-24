@@ -106,14 +106,14 @@ void tcp_showConnections()
 
 static void printFlag(uint8_t b, const char* s)
 {    
-    textColor(b ? GREEN : LIGHT_GRAY);
+    textColor(b ? LIGHT_GREEN : GRAY);
     printf("%s ", s);
 }
 
 static void tcpDebug(tcpPacket_t* tcp)
 {      
-    textColor(LIGHT_GRAY); printf("\nsrc port: ");   textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
-    textColor(LIGHT_GRAY); printf("  dest port: "); textColor(IMPORTANT); printf("%u ", ntohs(tcp->destPort));
+    textColor(LIGHT_GRAY); printf(" src port: ");   textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
+    textColor(LIGHT_GRAY); printf("  dest port: "); textColor(IMPORTANT); printf("%u   ", ntohs(tcp->destPort));
     // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
@@ -131,7 +131,7 @@ static void tcpShowConnectionStatus(tcpConnection_t* connection)
     textColor(IMPORTANT);
     puts(tcpStates[connection->TCP_CurrState]);
     textColor(TEXT);
-    printf("   connection: %X   src port: %u\n", connection, connection->localSocket.port);
+    printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
 }
 
 tcpConnection_t* tcp_createConnection()
@@ -152,7 +152,7 @@ tcpConnection_t* tcp_createConnection()
     list_Append(tcpConnections, connection);
 
     textColor(TEXT);
-    printf("\nTCP connection created (CLOSED): %X\n", connection);
+    printf("\nTCP conn. created, ID: %u\n", connection->ID);
 
     return(connection);
 }
@@ -165,7 +165,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
     free(connection);
 
     textColor(TEXT);
-    printf("\nTCP connection deleted: %X\n", connection);
+    printf("\nTCP conn. deleted, ID: %u\n", connection->ID);
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
@@ -235,13 +235,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     if(connection == 0)
     {
         textColor(RED);
-        printf("\nTCP packet received that belongs to no TCP connection.");
+        printf("\nTCP packet received that does not belong to a TCP connection.");
         textColor(TEXT);
         return;
     }
 
     textColor(TEXT);
-    printf("\nTCP prev. state: %s  connection: %X\n", tcpStates[connection->TCP_CurrState], connection); // later: prev. state
+    printf("\nTCP prev. state: %s  conn. ID: %u\n", tcpStates[connection->TCP_CurrState], connection->ID); // later: prev. state
 
     if (tcp->SYN && !tcp->ACK) // SYN
     {
@@ -253,7 +253,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         {
             case CLOSED:
             case TIME_WAIT: // HACK, TODO: use timeout (TIME_WAIT --> CLOSED)
-                printf("TCP connection %X set from CLOSED to LISTEN.\n", connection);
+                printf("TCP conn. ID %u set from CLOSED to LISTEN.\n", connection->ID);
                 connection->TCP_CurrState = LISTEN;
                 break;
             case LISTEN:
@@ -393,93 +393,95 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     textColor(HEADLINE);
     printf("\n\nTCP send: ");
     textColor(TEXT);
-    printf("ID: %u   connection: %X   ", connection->ID, connection);
+    printf("conn. ID: %u  ", connection->ID);
     textColor(IMPORTANT);
-    printf("%u ==> %u", connection->localSocket.port, connection->remoteSocket.port);
+    printf("%u ==> %u  ", connection->localSocket.port, connection->remoteSocket.port);
     textColor(TEXT);
 
-    tcpPacket_t* packet = malloc(sizeof(tcpPacket_t)+length, 0, "TCP packet");
-    memcpy(packet+1, data, length);
+    tcpPacket_t* tcp = malloc(sizeof(tcpPacket_t)+length, 0, "TCP packet");
+    memcpy(tcp+1, data, length);
 
-    packet->sourcePort = htons(connection->localSocket.port);
-    packet->destPort   = htons(connection->remoteSocket.port);
-    packet->sequenceNumber = seqNumber;
-    packet->acknowledgmentNumber = ackNumber;
-    packet->dataOffset = sizeof(tcpPacket_t)>>2; // header length as number of DWORDS
-    packet->reserved = 0;
+    tcp->sourcePort = htons(connection->localSocket.port);
+    tcp->destPort   = htons(connection->remoteSocket.port);
+    tcp->sequenceNumber = seqNumber;
+    tcp->acknowledgmentNumber = ackNumber;
+    tcp->dataOffset = sizeof(tcpPacket_t)>>2; // header length as number of DWORDS
+    tcp->reserved = 0;
     switch (flags)
     {
     case SYN_FLAG:
-        packet->CWR = 0;
-        packet->ECN = 0;
-        packet->URG = 0;
-        packet->ACK = 0;
-        packet->PSH = 0;
-        packet->RST = 0;
-        packet->SYN = 1; // SYN
-        packet->FIN = 0;
+        tcp->CWR = 0;
+        tcp->ECN = 0;
+        tcp->URG = 0;
+        tcp->ACK = 0;
+        tcp->PSH = 0;
+        tcp->RST = 0;
+        tcp->SYN = 1; // SYN
+        tcp->FIN = 0;
         break;
     case SYN_ACK_FLAG:
-        packet->CWR = 0;
-        packet->ECN = 0;
-        packet->URG = 0;
-        packet->ACK = 1; // ACK
-        packet->PSH = 0;
-        packet->RST = 0;
-        packet->SYN = 1; // SYN
-        packet->FIN = 0;
+        tcp->CWR = 0;
+        tcp->ECN = 0;
+        tcp->URG = 0;
+        tcp->ACK = 1; // ACK
+        tcp->PSH = 0;
+        tcp->RST = 0;
+        tcp->SYN = 1; // SYN
+        tcp->FIN = 0;
         break;
     case ACK_FLAG:
-        packet->CWR = 0;
-        packet->ECN = 0;
-        packet->URG = 0;
-        packet->ACK = 1; // ACK
-        packet->PSH = 0;
-        packet->RST = 0;
-        packet->SYN = 0;
-        packet->FIN = 0;
+        tcp->CWR = 0;
+        tcp->ECN = 0;
+        tcp->URG = 0;
+        tcp->ACK = 1; // ACK
+        tcp->PSH = 0;
+        tcp->RST = 0;
+        tcp->SYN = 0;
+        tcp->FIN = 0;
         break;
     case FIN_FLAG:
-        packet->CWR = 0;
-        packet->ECN = 0;
-        packet->URG = 0;
-        packet->ACK = 0;
-        packet->PSH = 0;
-        packet->RST = 0;
-        packet->SYN = 0;
-        packet->FIN = 1; // FIN
+        tcp->CWR = 0;
+        tcp->ECN = 0;
+        tcp->URG = 0;
+        tcp->ACK = 0;
+        tcp->PSH = 0;
+        tcp->RST = 0;
+        tcp->SYN = 0;
+        tcp->FIN = 1; // FIN
         break;
     case FIN_ACK_FLAG:
-        packet->CWR = 0;
-        packet->ECN = 0;
-        packet->URG = 0;
-        packet->ACK = 1; // ACK
-        packet->PSH = 0;
-        packet->RST = 0;
-        packet->SYN = 0;
-        packet->FIN = 1; // FIN
+        tcp->CWR = 0;
+        tcp->ECN = 0;
+        tcp->URG = 0;
+        tcp->ACK = 1; // ACK
+        tcp->PSH = 0;
+        tcp->RST = 0;
+        tcp->SYN = 0;
+        tcp->FIN = 1; // FIN
         break;
     case RST_FLAG:
-        packet->CWR = 0;
-        packet->ECN = 0;
-        packet->URG = 0;
-        packet->ACK = 0;
-        packet->PSH = 0;
-        packet->RST = 1; // RST
-        packet->SYN = 0;
-        packet->FIN = 0;
+        tcp->CWR = 0;
+        tcp->ECN = 0;
+        tcp->URG = 0;
+        tcp->ACK = 0;
+        tcp->PSH = 0;
+        tcp->RST = 1; // RST
+        tcp->SYN = 0;
+        tcp->FIN = 0;
         break;
     }
+    printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
+    printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
 
-    packet->window = 65535; // TODO: Clarify
-    packet->urgentPointer = 0; // TODO: Clarify
+    tcp->window = 65535; // TODO: Clarify
+    tcp->urgentPointer = 0; // TODO: Clarify
 
-    packet->checksum = 0; // for checksum calculation
+    tcp->checksum = 0; // for checksum calculation
 
-    packet->checksum = htons(udptcpCalculateChecksum((void*)packet, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
+    tcp->checksum = htons(udptcpCalculateChecksum((void*)tcp, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
 
-    ipv4_send(connection->adapter, packet, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6);
-    free(packet);
+    ipv4_send(connection->adapter, tcp, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6);
+    free(tcp);
 }
 
 static uint16_t getFreeSocket()

@@ -20,10 +20,13 @@ static const uint8_t broadcast_MAC2[6] = {0, 0, 0, 0, 0, 0};
 
 void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
-    textColor(TEXT);
-    printf("\n\n\n");
+    textColor(GREEN);
+    printf("\n\n>> Packet received. <<");
+    textColor(HEADLINE);
+    printf("\nEth: ");
     if(memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC1, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC2, 6) != 0)
     {
+        textColor(TEXT);
         printf("Ethernet packet received. We are not the addressee.");
         return;
     }
@@ -36,8 +39,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     textColor(0x03); printf("%d ", length);
   #endif
 
-    textColor(LIGHT_GRAY); printf("Rcv: "); textColor(IMPORTANT); printf("%M", eth->recv_mac);
-    textColor(LIGHT_GRAY); printf("  Transm.: "); textColor(IMPORTANT); printf("%M", eth->send_mac);
+    textColor(GRAY); printf(" %M\t<== %M", eth->recv_mac, eth->send_mac);
 
   #ifdef _NETWORK_DATA_
     textColor(LIGHT_MAGENTA);
@@ -102,13 +104,14 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     }
 }
 
-
 bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type)
 {
     textColor(HEADLINE);
-    printf("\nEthernet send: ");
+    printf("\nEth send:"); 
+    textColor(GRAY);
+    printf(" %M ==> %M", adapter->MAC, MAC);
     textColor(TEXT);
-    printf("length = %u.", sizeof(ethernet_t)+length);
+    printf("  length = %u.", sizeof(ethernet_t)+length);
     if (sizeof(ethernet_t)+length > 0x700)
     {
         textColor(ERROR);

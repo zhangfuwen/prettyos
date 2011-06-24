@@ -28,6 +28,8 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
 {
     textColor(HEADLINE);
     printf("\nIPv4:");
+    textColor(IMPORTANT);
+    printf(" %I\t<== %I", packet->destIP, packet->sourceIP);
     textColor(TEXT);
     if(memcmp(packet->destIP, adapter->IP, 4) != 0 && memcmp(packet->destIP, broadcast_IP, 4) != 0)
     {
@@ -39,20 +41,20 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     //uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
     switch(packet->protocol)
     {
-        case 1: // icmp
+        case  1: // icmp
             ICMPAnswerPing(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t), packet->sourceIP);
             break;
-        case 4: // ipv4
+        case  4: // ipv4
             printf(" IPv4.");
             break;
-        case 6: // tcp
+        case  6: // tcp
             tcp_receive(adapter, (void*)(packet+1), packet->sourceIP, length-sizeof(ipv4Packet_t));
             break;
         case 17: // udp
             UDPRecv(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t));
             break;
         default:
-            printf("\nUnknown protocol following IP packet.");
+            printf("\nUnknown protocol after IP packet.");
             break;
     }
 }
