@@ -15,6 +15,16 @@ typedef enum
     VM_TEXT, VM_VBE
 } VIDEOMODES;
 
+
+// These alias for colors are mandatory
+#define ERROR          LIGHT_RED 
+#define SUCCESS        LIGHT_GREEN 
+#define HEADLINE       CYAN 
+#define TABLE_HEADING  LIGHT_GRAY 
+#define DATA           BROWN 
+#define IMPORTANT      YELLOW 
+#define TEXT           WHITE
+
 enum COlORS
 {
     BLACK, BLUE,        GREEN,       CYAN,       RED,       MAGENTA,       BROWN,  LIGHT_GRAY,
