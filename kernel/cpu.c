@@ -17,7 +17,7 @@ void cpu_analyze()
 {
     textColor(0x03);
     printf("CPU: ");
-    textColor(0x0F);
+    textColor(WHITE);
 
     // Test if the CPU supports the CPUID-Command
     __asm__ volatile ("pushfl\n\t"

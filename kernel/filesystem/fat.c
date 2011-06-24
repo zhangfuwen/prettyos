@@ -536,7 +536,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
 
     memset(fileptrDest->name, 0x20, DIR_NAMECOMP);
   #ifdef _FAT_DIAGNOSIS_
-    textColor(0x0E); printf("\nfHandle (searchFile): %d",fHandle); textColor(0x0F);
+    textColor(YELLOW); printf("\nfHandle (searchFile): %d",fHandle); textColor(WHITE);
   #endif
     if (fHandle == 0 || (fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) != 0) // Maximum 16 entries possible
     {
@@ -550,7 +550,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
     while(error != CE_GOOD) // Loop until you reach the end or find the file
     {
       #ifdef _FAT_DIAGNOSIS_
-        textColor(0x0E); printf("\n\nfHandle %u\n",fHandle); textColor(0x0F);
+        textColor(YELLOW); printf("\n\nfHandle %u\n",fHandle); textColor(WHITE);
       #endif
 
         uint8_t state = fillFILEPTR(fileptrDest, &fHandle);
@@ -559,7 +559,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
         if (state == FOUND)
         {
           #ifdef _FAT_DIAGNOSIS_
-            textColor(0x0A);printf("\n\nstate == FOUND");textColor(0x0F);
+            textColor(GREEN);printf("\n\nstate == FOUND");textColor(WHITE);
           #endif
             uint32_t attrib =  fileptrDest->attributes;
             attrib &= ATTR_MASK;
@@ -575,20 +575,20 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
                     if ((attrib != ATTR_VOLUME) && ((attrib & ATTR_HIDDEN) != ATTR_HIDDEN))
                     {
                       #ifdef _FAT_DIAGNOSIS_
-                        textColor(0x0A);printf("\n\nAn entry is found. Attributes OK for search");textColor(0x0F); /// TEST
+                        textColor(GREEN);printf("\n\nAn entry is found. Attributes OK for search");textColor(WHITE); /// TEST
                       #endif
                         error = CE_GOOD;
                         for (uint8_t i=0; i<DIR_NAMECOMP; i++)
                         {
                             character = fileptrDest->name[i];
                           #ifdef _FAT_DIAGNOSIS_
-                            printf("\ni: %u character: %c test: %c", i, character, fileptrTest->name[i]); textColor(0x0F); /// TEST
+                            printf("\ni: %u character: %c test: %c", i, character, fileptrTest->name[i]); textColor(WHITE); /// TEST
                           #endif
                             if (toLower(character) != toLower(fileptrTest->name[i]))
                             {
                                 error = CE_FILE_NOT_FOUND;
                               #ifdef _FAT_DIAGNOSIS_
-                                textColor(0x0C); printf("\n\n %c <--- not equal", character); textColor(0x0F);
+                                textColor(RED); printf("\n\n %c <--- not equal", character); textColor(WHITE);
                               #endif
                                 break; // finish for loop
                             }

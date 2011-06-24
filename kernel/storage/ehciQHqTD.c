@@ -203,15 +203,15 @@ static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
     {
         if (alphanumeric)
         {
-            textColor(0x0F);
+            textColor(WHITE);
             if ( (*((uint8_t*)virtAddrBuf0+c)>=0x20) && (*((uint8_t*)virtAddrBuf0+c)<=0x7E) )
                 printf("%c", *((uint8_t*)virtAddrBuf0+c));
         }
         else
         {
-            textColor(0x07);
+            textColor(LIGHT_GRAY);
             printf("%y ", *((uint8_t*)virtAddrBuf0+c));
-            textColor(0x0F);
+            textColor(WHITE);
         }
     }
     printf("\n");
@@ -235,18 +235,18 @@ uint32_t showStatusbyteQTD(void* addressQTD)
     if (statusbyte != 0x00)
     {
         printf("\n");
-        textColor(0x0E);
+        textColor(YELLOW);
         if (statusbyte & BIT(7)) { printf("Active - HC transactions enabled"); }
-        textColor(0x0C);
+        textColor(RED);
         if (statusbyte & BIT(6)) { printf("Halted - serious error at the device/endpoint"); }
         if (statusbyte & BIT(5)) { printf("Data Buffer Error (overrun or underrun)"); }
         if (statusbyte & BIT(4)) { printf("Babble (fatal error leads to Halted)"); }
         if (statusbyte & BIT(3)) { printf("Transaction Error (XactErr)- host received no valid response device"); }
         if (statusbyte & BIT(2)) { printf("Missed Micro-Frame"); }
-        textColor(0x0E);
+        textColor(YELLOW);
         if (statusbyte & BIT(1)) { printf("Do Complete Split"); }
         if (statusbyte & BIT(0)) { printf("Do Ping"); }
-        textColor(0x0F);
+        textColor(WHITE);
     }
     return statusbyte;
 }
@@ -331,7 +331,7 @@ void checkAsyncScheduler()
 {
     // cf. ehci spec 1.0, Figure 3-7. Queue Head Structure Layout
 
-    textColor(0x02);
+    textColor(GREEN);
 
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register
     void* virtASYNCLISTADDR = paging_acquirePciMemory(pOpRegs->ASYNCLISTADDR, 1);
@@ -377,7 +377,7 @@ void checkAsyncScheduler()
     // NAK counter in overlay area
     uint32_t NakCtr = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+5) ) & 0x1E)>>1;
     printf("\nNAK counter: %u",NakCtr);
-    textColor(0x0E);
+    textColor(YELLOW);
 }
 
 void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
@@ -404,16 +404,16 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         {
             sleepMilliSeconds(20);
           #ifdef _USB_DIAGNOSIS_
-            textColor(0x0D);
+            textColor(LIGHT_MAGENTA);
             printf(">");
-            textColor(0x0F);
+            textColor(WHITE);
           #endif
        }
        else
        {
-            textColor(0x0C);
+            textColor(RED);
             printf("\ntimeout - STS_ASYNC_ENABLED still not set!");
-            textColor(0x0F);
+            textColor(WHITE);
             break;
         }
     }
@@ -429,16 +429,16 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
             sleepMilliSeconds(20);
 
           #ifdef _USB_DIAGNOSIS_
-            textColor(0x0D);
+            textColor(LIGHT_MAGENTA);
             printf("#");
-            textColor(0x0F);
+            textColor(WHITE);
           #endif
         }
         else
         {
-            textColor(0x0C);
+            textColor(RED);
             printf("\ntimeout - no STS_USBINT set!");
-            textColor(0x0F);
+            textColor(WHITE);
             break;
         }
     };
@@ -458,16 +458,16 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
             {
                 sleepMilliSeconds(20);
               #ifdef _USB_DIAGNOSIS_
-                textColor(0x0D);
+                textColor(LIGHT_MAGENTA);
                 printf("!");
-                textColor(0x0F);
+                textColor(WHITE);
               #endif
             }
             else
             {
-                textColor(0x0C);
+                textColor(RED);
                 printf("\ntimeout - STS_ASYNC_ENABLED still set!");
-                textColor(0x0F);
+                textColor(WHITE);
                 break;
             }
         }
@@ -501,7 +501,7 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
             printf("  data in: %s", bT->successfulDataIN ? "OK" : "Error");
         }
         printf("  CSW: %s", bT->successfulCSW ? "OK" : "Error");
-        textColor(0x0F);
+        textColor(WHITE);
     }
 }
 

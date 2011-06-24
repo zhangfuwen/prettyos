@@ -159,7 +159,7 @@ static uint32_t physMemInit()
     {
         printf("  %Xh -> %Xh %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }
-    textColor(0x0F);
+    textColor(WHITE);
     #endif
 
     // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size 0.
@@ -184,7 +184,7 @@ static uint32_t physMemInit()
     // Check that 10 MiB-20 MiB is free for use
     if (!isMemoryMapAvailable(entries, 10*1024*1024, 20*1024*1024))
     {
-        textColor(0x0C);
+        textColor(RED);
         printf("The memory between 10 MiB and 20 MiB is not free for use. OS halted!\n");
         for (;;);
     }
@@ -399,9 +399,9 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
     {
         if (virtAddress == PCI_MEM_END)
         {
-            textColor(0x0C);
+            textColor(RED);
             panic_assert(__FILE__, __LINE__, "\nNot enough PCI-memory available");
-            textColor(0x0F);
+            textColor(WHITE);
         }
 
         uint32_t pagenr = (uint32_t)virtAddress/PAGESIZE;
@@ -458,7 +458,7 @@ void paging_analyzeBitTable(uint32_t msec)
 
     for (uint32_t index=0; index<maximum; ++index)
     {
-        textColor(0x0F);
+        textColor(WHITE);
         printf("\n%Xh: ",index*32*PAGESIZE);
         ++counter1;
 
@@ -466,7 +466,7 @@ void paging_analyzeBitTable(uint32_t msec)
         {
             if (!(bittable[index] & BIT(offset)))
             {
-                textColor(0x0A);
+                textColor(GREEN);
                 putch('0');
                 if (offset == 31)
                 {
@@ -475,7 +475,7 @@ void paging_analyzeBitTable(uint32_t msec)
             }
             else
             {
-                textColor(0x07);
+                textColor(LIGHT_GRAY);
                 putch('1');
                 if (offset == 31)
                 {
@@ -490,7 +490,7 @@ void paging_analyzeBitTable(uint32_t msec)
         }
 
     }
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 

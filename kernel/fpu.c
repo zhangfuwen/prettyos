@@ -52,15 +52,15 @@ void fpu_test()
     squareroot /= sqrt(2.0);
     if (squareroot == 1.00)
     {
-        textColor(0x0A);
+        textColor(GREEN);
         printf("OK.\n");
     }
     else
     {
-       textColor(0x0C);
+       textColor(RED);
        printf("ERROR.\n");
     }
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 /*

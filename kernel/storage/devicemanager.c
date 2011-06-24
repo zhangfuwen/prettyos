@@ -98,12 +98,12 @@ void removeDisk(disk_t* disk)
 
 void showPortList()
 {
-    textColor(0x02);
+    textColor(GREEN);
     printf("\nAvailable ports:");
-    textColor(0x07);
+    textColor(LIGHT_GRAY);
     printf("\n\nType\tNumber\tName\t\tInserted disk");
     printf("\n----------------------------------------------------------------------");
-    textColor(0x0F);
+    textColor(WHITE);
 
     for (uint8_t i = 0; i < PORTARRAYSIZE; i++)
     {
@@ -116,9 +116,9 @@ void showPortList()
             else if(ports[i]->type == &USB)
                 printf("\nUSB 2.0");
 
-            textColor(0x0E);
+            textColor(YELLOW);
             printf("\t%c", 'A'+i); // number
-            textColor(0x0F);
+            textColor(WHITE);
             printf("\t%s", ports[i]->name); // The ports name
 
             if (ports[i]->insertedDisk != 0)
@@ -134,19 +134,19 @@ void showPortList()
             }
         }
     }
-    textColor(0x07);
+    textColor(LIGHT_GRAY);
     printf("\n----------------------------------------------------------------------\n");
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 void showDiskList()
 {
-    textColor(0x02);
+    textColor(GREEN);
     printf("\nAttached disks:");
-    textColor(0x07);
+    textColor(LIGHT_GRAY);
     printf("\n\nType\tNumber\tName\t\tPart.\tSerial");
     printf("\n----------------------------------------------------------------------");
-    textColor(0x0F);
+    textColor(WHITE);
 
     for (uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
@@ -165,9 +165,9 @@ void showDiskList()
             else if(disks[i]->type == &USB_MSD)
                 printf("\nUSB MSD");
 
-            textColor(0x0E);
+            textColor(YELLOW);
             printf("\t%u", i+1); // Number
-            textColor(0x0F);
+            textColor(WHITE);
 
             printf("\t%s", disks[i]->name);   // Name of disk
             if (strlen(disks[i]->name) < 8) { printf("\t"); }
@@ -198,9 +198,9 @@ void showDiskList()
             }
         }
     }
-    textColor(0x07);
+    textColor(LIGHT_GRAY);
     printf("\n----------------------------------------------------------------------\n");
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 const char* getFilename(const char* path)
@@ -355,18 +355,18 @@ static void logReadCache()
     {
         if (readcaches[i].valid)
         {
-            textColor(0x0A);
+            textColor(GREEN);
         }
         else
         {
-            textColor(0x07);
+            textColor(LIGHT_GRAY);
         }
         printf("\nReadcache: %u \tpart: %Xh sector: %u \tvalid: %s", i, readcaches[i].disk, readcaches[i].sector, readcaches[i].valid?"yes":"no");
     }
-    textColor(0x07);
+    textColor(LIGHT_GRAY);
     printf("\n-------------------------------------------------------------------------------");
     sleepMilliSeconds(500);
-    textColor(0x0F);
+    textColor(WHITE);
 }
 #endif
 
@@ -397,7 +397,7 @@ static void fillReadCache(uint32_t sector, disk_t* disk, uint8_t* buffer)
 FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
-    textColor(0x0E); printf("\n>>>>> sectorWrite: %u <<<<<", sector); textColor(0x0F);
+    textColor(YELLOW); printf("\n>>>>> sectorWrite: %u <<<<<", sector); textColor(WHITE);
   #endif
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)
@@ -421,7 +421,7 @@ FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
 FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
-    textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(0x0F);
+    textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(WHITE);
   #endif
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)

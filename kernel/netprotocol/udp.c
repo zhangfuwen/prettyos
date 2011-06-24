@@ -39,7 +39,7 @@ void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp)
 {
     printf("\n");
     printf("UDP Header information:\n");
-    textColor(0x0E);
+    textColor(YELLOW);
     printf("+--------------+----------------+\n");
     printf("|      %u      |      %u      | (source port, destination port)\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
     printf("+-------------------------------+\n");

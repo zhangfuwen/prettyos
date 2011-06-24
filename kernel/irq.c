@@ -85,7 +85,7 @@ static void defaultError(registers_t* r)
     printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
     printf("int_no: %u eflags: %Xh useresp: %Xh\n", r->int_no, r->eflags, r->useresp);
 
-    textColor(0x0B);
+    textColor(LIGHT_CYAN);
     printf("\n\n%s!\n", exceptionMessages[r->int_no]);
 
     quitTask();
@@ -137,7 +137,7 @@ static void GPF(registers_t* r) // -> VM86
     {
         if (!vm86sensitiveOpcodehandler(r))
         {
-            textColor(0x0C);
+            textColor(RED);
             printf("\nvm86: sensitive opcode error\n");
         }
     }

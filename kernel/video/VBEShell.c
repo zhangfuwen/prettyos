@@ -74,7 +74,7 @@ int startVBEShell()
 
     while (true)
     {
-        // textColor(0x0F);
+        // textColor(WHITE);
         entryLength = 0;
         cursorPos = 0;
         memset(entry, 0, MAX_CHAR_PER_LINE+1);
@@ -128,12 +128,12 @@ int startVBEShell()
                         strcpy(entryCache[0], entry);
                         curEntry = -1;
                     }
-                    // textColor(0x0B);
+                    // textColor(LIGHT_CYAN);
                     // printf("\n$> %s <--\n", entry);
                     // sprintf(entry, "\n$> %s <--\n");
                     vbe_drawString(entry, cursorPos, ypos);
                     ypos += 16;
-                    // textColor(0x0F);
+                    // textColor(WHITE);
                     // printLine("$>                                                                              ", 40, 0x0B);
                     goto EVALUATION;
                 case 144: // Insert
@@ -250,7 +250,7 @@ int startVBEShell()
         } //while
 
 EVALUATION: // evaluation of entry
-        // textColor(0x02);
+        // textColor(GREEN);
         if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
             // puts("Implemented Instructions: hi, help, ?, fdir, fformat and reboot\n");

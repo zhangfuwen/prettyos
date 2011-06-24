@@ -164,11 +164,11 @@ bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout
 
 void scheduler_log()
 {
-    textColor(0x0F);
+    textColor(WHITE);
     printf("\ncurrent task: ");
     textColor(0x05);
     printf("pid: %u", currentTask->pid);
-    textColor(0x0F);
+    textColor(WHITE);
 
     if(runningTasks->begin != 0)
     {

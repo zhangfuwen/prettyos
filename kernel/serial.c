@@ -32,7 +32,7 @@ void serial_init()
         outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
         textColor(0x03);
         printf("\nCOM%d: ", i+1);
-        textColor(0x0F);
+        textColor(WHITE);
         printf("IO-port: %xh. Initialized.", IOports[i]);
     }
     printf("\n");

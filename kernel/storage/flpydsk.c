@@ -172,7 +172,7 @@ void flpydsk_install()
     {
         textColor(0x03);
         printf("\nFloppy Disk:");
-        textColor(0x0F);
+        textColor(WHITE);
 
         flpydsk_version = flpydsk_readVersion();
         #ifdef _FLOPPY_DIAGNOSIS_
@@ -276,9 +276,9 @@ void flpydsk_motorOn(void* drive)
   #ifdef _FLOPPY_DIAGNOSIS_
     if(fdrive->motor == false)
     {
-        textColor(0x0A);
+        textColor(GREEN);
         printf("\nflpydsk_motorOn drive: %u", fdrive->ID);
-        textColor(0x0F);
+        textColor(WHITE);
     }
   #endif
 
@@ -306,9 +306,9 @@ void flpydsk_motorOff(void* drive)
   #ifdef _FLOPPY_DIAGNOSIS_
     if(fdrive->motor == true)
     {
-        textColor(0x0C);
+        textColor(RED);
         printf("\nflpydsk_motorOff drive: %u", fdrive->ID);
-        textColor(0x0F);
+        textColor(WHITE);
     }
     writeInfo(0, "Floppy motor: Global-Access-Counter: %u   Internal counter: %u   Motor on: %u", CurrentDrive->drive.insertedDisk->accessRemaining, CurrentDrive->accessRemaining, CurrentDrive->motor);
   #endif
@@ -598,9 +598,9 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
                      ((uint32_t*)DMA_BUFFER)[3] == 0x41414141 && ((uint32_t*)DMA_BUFFER)[4] == 0x41414141)
             {
                 #ifdef _FLOPPY_DIAGNOSIS_
-                textColor(0x04);
+                textColor(RED);
                 printf("\nDMA attempt no. %d failed.", n+1);
-                textColor(0x0F);
+                textColor(WHITE);
                 #endif
                 if (n >= MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
                 {

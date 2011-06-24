@@ -104,7 +104,7 @@ void tss_log(TSSentry_t* tssEntry)
     printf("ds: %Xh ", tssEntry->ds);
     printf("fs: %Xh ", tssEntry->fs);
     printf("gs: %Xh\n", tssEntry->gs);
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 

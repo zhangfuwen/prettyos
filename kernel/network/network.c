@@ -55,12 +55,12 @@ bool network_installDevice(pciDev_t* device)
 
     if(driver == 0 || driver->install == 0) // PrettyOS does not know the card or the driver is not properly installed
     {
-        textColor(0x0F);
+        textColor(WHITE);
         return(false);
     }
 
     printf(" network adapter:");
-    textColor(0x0F);
+    textColor(WHITE);
 
     // PrettyOS has a driver for this adapter. Install it.
     network_adapter_t* adapter = malloc(sizeof(network_adapter_t), 0, "network apdapter");
@@ -93,7 +93,7 @@ bool network_installDevice(pciDev_t* device)
         }
     }
 
-    textColor(0x0F);
+    textColor(WHITE);
 
     // Input makes #PF at some computers (gets is source of error #PF)
     /*
@@ -140,10 +140,10 @@ bool network_installDevice(pciDev_t* device)
   #ifndef QEMU_HACK
     DHCP_Discover(adapter);
   #endif
-    textColor(0x0E);
+    textColor(YELLOW);
     printf("\nMAC: %M", adapter->MAC);
     printf(" IP: %I\n\n", adapter->IP);
-    textColor(0x0F);
+    textColor(WHITE);
 
     return(true);
 }

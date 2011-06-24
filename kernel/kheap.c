@@ -94,7 +94,7 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
 
 void logHeapRegions()
 {
-    textColor(0x0E);
+    textColor(YELLOW);
     task_switching = false;
     printf("\n\n---------------- HEAP REGIONS ----------------");
     printf("\naddress\t\treserved\tsize\t\tnumber\tcomment");
@@ -121,7 +121,7 @@ void logHeapRegions()
         }
     }
     task_switching = true;
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 void* malloc(uint32_t size, uint32_t alignment, char* comment)
@@ -236,11 +236,11 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             writeInfo(2, "Malloc - free: %u", counter);
           #endif
           #ifdef _MALLOC_FREE_
-            textColor(0x0E);
+            textColor(YELLOW);
             task_switching = false;
             printf("\nmalloc: %Xh %s", regionAddress, comment);
             task_switching = true;
-            textColor(0x0F);
+            textColor(WHITE);
           #endif
 
             mutex_unlock(mutex);
@@ -259,19 +259,19 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
 
     if (!success)
     {
-        textColor(0x0C);
+        textColor(RED);
         printf("\nmalloc failed, heap could not be expanded!");
-        textColor(0x0F);
+        textColor(WHITE);
         return 0;
     }
     else
     {
       #ifdef _MALLOC_FREE_
-        textColor(0x0E);
+        textColor(YELLOW);
         task_switching = false;
         printf("\nheap expanded: %Xh heap end: %Xh", sizeToGrow, (uintptr_t)(heapStart + (uintptr_t)heapSize));
         task_switching = true;
-        textColor(0x0F);
+        textColor(WHITE);
       #endif
     }
 
@@ -285,11 +285,11 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
 void free(void* addr)
 {
   #ifdef _MALLOC_FREE_
-    textColor(0x07);
+    textColor(LIGHT_GRAY);
     task_switching = false;
     printf("\nfree:   %Xh", addr);
     task_switching = true;
-    textColor(0x0F);
+    textColor(WHITE);
   #endif
 
     if (addr == 0) return;
@@ -308,11 +308,11 @@ void free(void* addr)
         if (regionAddress == addr)
         {
           #ifdef _MALLOC_FREE_
-            textColor(0x07);
+            textColor(LIGHT_GRAY);
             task_switching = false;
             printf(" %s", regions[i].comment);
             task_switching = true;
-            textColor(0x0F);
+            textColor(WHITE);
           #endif
             regions[i].reserved = false; // free the region
             strncpy(regions[i].comment,"free",5);
@@ -355,9 +355,9 @@ void free(void* addr)
 
     mutex_unlock(mutex);
 
-    textColor(0x0C);
+    textColor(RED);
     printf("Broken free: %Xh\n", addr);
-    textColor(0x0F);
+    textColor(WHITE);
     //ASSERT(false);
 }
 

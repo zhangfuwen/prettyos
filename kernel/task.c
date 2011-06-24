@@ -41,7 +41,7 @@ void tasking_install()
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
     printf("Install tasking\n");
-    textColor(0x0F);
+    textColor(WHITE);
     #endif
 
     tasks = list_Create();
@@ -182,7 +182,7 @@ task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privileg
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
     printf("create task");
-    textColor(0x0F);
+    textColor(WHITE);
     #endif
 
     task_t* newTask = malloc(sizeof(task_t),0, "task-newtask");
@@ -213,7 +213,7 @@ task_t* create_thread(void(*entry)())
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
     printf("create thread");
-    textColor(0x0F);
+    textColor(WHITE);
     #endif
 
     task_t* newTask = malloc(sizeof(task_t),0, "task-newthread");
@@ -238,7 +238,7 @@ task_t* create_vm86_task(void(*entry)())
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
     printf("create task");
-    textColor(0x0F);
+    textColor(WHITE);
     #endif
 
     task_t* newTask = malloc(sizeof(task_t),0, "vm86-task");
@@ -273,7 +273,7 @@ uint32_t task_switch(task_t* newTask)
     #ifdef _TASKING_DIAGNOSIS_
     textColor(0x03);
     printf("%u ", currentTask->pid);
-    textColor(0x0F);
+    textColor(WHITE);
     #endif
 
     // Set TS
@@ -437,7 +437,7 @@ void task_log(task_t* t)
             printf(" %u", ((task_t*)e->data)->pid);
         }
     }
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 

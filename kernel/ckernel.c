@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.143 - Rev: 982";
+const char* const version = "0.0.2.143 - Rev: 983";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -79,11 +79,11 @@ static void useMultibootInformation(multiboot_t* mb_struct)
 
 static void log(const char* str)
 {
-    textColor(0x02);
+    textColor(GREEN);
     printf("[DONE]");
-    textColor(0x07);
+    textColor(LIGHT_GRAY);
     printf("\t%s\n",str);
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 static void init(multiboot_t* mb_struct)
@@ -141,9 +141,9 @@ static void init(multiboot_t* mb_struct)
 
 void showMemorySize()
 {
-    textColor(0x03);
+    textColor(CYAN);
     printf("\nMemory: ");
-    textColor(0x0F);
+    textColor(WHITE);
     if (system.Memory_Size >= 0x40000000) // More than 1 GiB
     {
         printf("%u GiB / %u GB  (%u MiB / %u MB, %u Bytes)\n", system.Memory_Size>>30, system.Memory_Size/1000000000, system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
@@ -183,7 +183,7 @@ void main(multiboot_t* mb_struct)
     #endif
 
     // search and load shell
-    textColor(0x0F);
+    textColor(WHITE);
     bool shell_found = false;
     struct dirent* node = 0;
     for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
@@ -223,9 +223,9 @@ void main(multiboot_t* mb_struct)
     }
     if (!shell_found)
     {
-        textColor(0x04);
+        textColor(RED);
         printf("\nProgram not found.\n");
-        textColor(0x0F);
+        textColor(WHITE);
     }
 
 
@@ -235,7 +235,7 @@ void main(multiboot_t* mb_struct)
     printf("\n\n--------------------------------------------------------------------------------");
     printf("                                PrettyOS Booted\n");
     printf("--------------------------------------------------------------------------------");
-    textColor(0x0F);
+    textColor(WHITE);
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
@@ -421,9 +421,9 @@ void main(multiboot_t* mb_struct)
                                     }
                                     else
                                     {
-                                        textColor(0x0C);
+                                        textColor(RED);
                                         printf("No established HTTP connection to %I found.\n", destIP);
-                                        textColor(0x0F);
+                                        textColor(WHITE);
                                     }
                                 }
                                 break;

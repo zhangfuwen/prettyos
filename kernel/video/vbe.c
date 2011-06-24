@@ -434,18 +434,18 @@ void vbe_drawCircle(uint32_t xm, uint32_t ym, uint32_t radius, BGRA_t color)
 
 static void vgaDebug()
 {
-    textColor(0x0E);
+    textColor(YELLOW);
     printf("\nVgaInfoBlock:\n");
-    textColor(0x0F);
+    textColor(WHITE);
     printf("VESA-Signature:  %c%c%c%c\n", vgaIB.VESASignature[0], vgaIB.VESASignature[1], vgaIB.VESASignature[2], vgaIB.VESASignature[3]);
     printf("VESA-Version:    %u.%u\n",    vgaIB.VESAVersion>>8, vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
     printf("Capabilities:    %yh\n",       vgaIB.Capabilities[0]);
     printf("Video Memory:    %u MiB\n",   vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
     printf("Video Modes Ptr: %Xh\n",       vgaIB.VideoModes);
 
-    textColor(0x0E);
+    textColor(YELLOW);
     printf("\nVideo Modes:");
-    textColor(0x0F);
+    textColor(WHITE);
     for (uint16_t i=0; i < 256; i++)
     {
         if(vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
@@ -455,14 +455,14 @@ static void vgaDebug()
         if(!(mib.ModeAttributes & BIT(4))) printf(" (textmode)");
     }
     printf("\n");
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 static void modeDebug()
 {
-    textColor(0x0E);
+    textColor(YELLOW);
     printf("\nModeInfoBlock:\n");
-    textColor(0x0F);
+    textColor(WHITE);
     printf("ModeAttributes:        %xh\n", mib.ModeAttributes);
     printf("WinAAttributes:        %u\n", mib.WinAAttributes);
     printf("WinBAttributes:        %u\n", mib.WinBAttributes);
@@ -595,9 +595,9 @@ static void bitmapDebug() // TODO: make it bitmap-specific
 {
     memcpy(&bh, bh_get, sizeof(BitmapHeader_t));
 
-    textColor(0x0E);
+    textColor(YELLOW);
     printf("\nBitmapHeader\n");
-    textColor(0x0F);
+    textColor(WHITE);
     printf("Type:                  %u\n", bh.Type);
     printf("Reserved:              %u\n", bh.Reserved);
     printf("Offset:                %u\n", bh.Offset);
@@ -675,9 +675,9 @@ void vbe_clearScreen()
 
 void vbe_bootscreen()
 {
-    textColor(0x09);
+    textColor(LIGHT_BLUE);
     printf("       >>>>>   Press 's' to skip VBE-Test or any key to continue   <<<<<\n\n");
-    textColor(0x0F);
+    textColor(WHITE);
     if(getch() == 's')
     {
         return;
@@ -695,7 +695,7 @@ void vbe_bootscreen()
 
     while(modenumber == 0)
     {
-        textColor(0x0E);
+        textColor(YELLOW);
         printf("Type in the mode number: ");
         char temp[20];
         gets(temp);
@@ -724,7 +724,7 @@ void vbe_bootscreen()
 
     while(whatToStart == 0)
     {
-        textColor(0x0E);
+        textColor(YELLOW);
         printf("1. Start Graphical Tests\n");
         printf("2. Start GUI\n");
         printf("3. Start VBE-Shell\n");

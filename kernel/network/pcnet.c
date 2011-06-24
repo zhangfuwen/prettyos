@@ -172,7 +172,7 @@ void PCNet_handler(registers_t* data)
     textColor(0x03);
     printf("\n--------------------------------------------------------------------------------");
 
-    textColor(0x0E);
+    textColor(YELLOW);
     printf("\nPCNet Interrupt Status: %yh, ", csr0);
     textColor(0x03);
     #endif

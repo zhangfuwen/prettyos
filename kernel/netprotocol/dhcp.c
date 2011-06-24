@@ -340,11 +340,11 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             }
             break;
         case ACK:
-            textColor(0x0A);
+            textColor(GREEN);
             printf("\n>>> PrettyOS got a DHCP ACK.   <<<");
             useDHCP_IP(adapter, dhcp);
             printf("\nGateway IP: %I Subnet: %I", adapter->Gateway_IP, adapter->Subnet);
-            textColor(0x0F);
+            textColor(WHITE);
             break;
         case NAK:
             printf("\n >>> DHCP was not successful (NAK). <<<");

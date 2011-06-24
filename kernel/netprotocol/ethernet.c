@@ -31,24 +31,24 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 
     // output ethernet packet
 
-    textColor(0x0D); printf("\nLength: ");
+    textColor(LIGHT_MAGENTA); printf("\nLength: ");
     textColor(0x03); printf("%d", length);
 
-    textColor(0x0D); printf(" Rcv: "); textColor(0x03);
+    textColor(LIGHT_MAGENTA); printf(" Rcv: "); textColor(0x03);
     printf("%M", eth->recv_mac);
 
-    textColor(0x0D); printf("  Transm.: "); textColor(0x03);
+    textColor(LIGHT_MAGENTA); printf("  Transm.: "); textColor(0x03);
     printf("%M", eth->send_mac);
 
   #ifdef _NETWORK_DATA_
-    textColor(0x0D);
+    textColor(LIGHT_MAGENTA);
     printf("\nEthernet: ");
 
     textColor(0x03);
     if (ethernetType <= 1500) { printf("type 1, "); }
     else                      { printf("type 2, "); }
 
-    textColor(0x0D);
+    textColor(LIGHT_MAGENTA);
     if (ethernetType <= 1500) { printf("Length: "); }
     else                      { printf("Type: ");   }
 
@@ -66,10 +66,10 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     }
   #endif
 
-    textColor(0x0F);
+    textColor(WHITE);
     printf("\n");
 
-    textColor(0x0E);
+    textColor(YELLOW);
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
     {
         printf("Ethernet 2. ");
@@ -106,7 +106,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     }
 
     printf("\n");
-    textColor(0x0F);
+    textColor(WHITE);
 }
 
 

@@ -28,7 +28,7 @@ void rtl8139_handler(registers_t* data)
     // read bytes 003Eh bis 003Fh, Interrupt Status Register
     volatile uint16_t val = *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS));
     #ifdef _NETWORK_DIAGNOSIS_
-    textColor(0x0E);
+    textColor(YELLOW);
     printf("\nRTL8139 Interrupt Status: %yh, ", val);
     textColor(0x03);
     if      (val & RTL8139_INT_RX_OK)           { puts("Receive OK"); }
@@ -55,7 +55,7 @@ void rtl8139_handler(registers_t* data)
 
     // Display RTL8139 specific data
     #ifdef _NETWORK_DATA_
-    textColor(0x0D);
+    textColor(LIGHT_MAGENTA);
     printf("\nFlags: ");
     textColor(0x03);
     for (uint8_t i = 0; i < 2; i++)

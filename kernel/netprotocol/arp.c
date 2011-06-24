@@ -116,13 +116,13 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
                 printf("ARP Request\n");
             }
 
-            textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
+            textColor(LIGHT_MAGENTA); printf("\nMAC Requesting: "); textColor(0x03);
             printf("%M", packet->source_mac);
-            textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
+            textColor(LIGHT_MAGENTA); printf("  IP Requesting: "); textColor(0x03);
             printf("%I", packet->sourceIP);
-            textColor(0x0D); printf("\nMAC Searched:   "); textColor(0x07);
+            textColor(LIGHT_MAGENTA); printf("\nMAC Searched:   "); textColor(LIGHT_GRAY);
             printf("%M", packet->dest_mac);
-            textColor(0x0D); printf("  IP Searched:   "); textColor(0x03);
+            textColor(LIGHT_MAGENTA); printf("  IP Searched:   "); textColor(0x03);
             printf("%I", packet->destIP);
 
             // requested IP is our own IP?
@@ -160,13 +160,13 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
         case 2: // ARP-Response
             printf("ARP Response\n");
 
-            textColor(0x0D); printf("\nMAC Replying:   "); textColor(0x03);
+            textColor(LIGHT_MAGENTA); printf("\nMAC Replying:   "); textColor(0x03);
             printf("%M", packet->source_mac);
-            textColor(0x0D); printf("  IP Replying:   "); textColor(0x03);
+            textColor(LIGHT_MAGENTA); printf("  IP Replying:   "); textColor(0x03);
             printf("%I", packet->sourceIP);
-            textColor(0x0D); printf("\nMAC Requesting: "); textColor(0x03);
+            textColor(LIGHT_MAGENTA); printf("\nMAC Requesting: "); textColor(0x03);
             printf("%M", packet->dest_mac);
-            textColor(0x0D); printf("  IP Requesting: "); textColor(0x03);
+            textColor(LIGHT_MAGENTA); printf("  IP Requesting: "); textColor(0x03);
             printf("%I", packet->destIP);
             break;
         } // switch
