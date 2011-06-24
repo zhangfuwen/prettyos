@@ -104,16 +104,16 @@ void tcp_showConnections()
     textColor(TEXT);
 }
 
-static void printFlag(bool b, const char* s)
-{
+static void printFlag(uint8_t b, const char* s)
+{    
     textColor(b ? GREEN : LIGHT_GRAY);
-    printf("%s ");
+    printf("%s ", s);
 }
 
 static void tcpDebug(tcpPacket_t* tcp)
-{
-    textColor(LIGHT_GRAY); printf("\nsrc port: "); textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
-    textColor(LIGHT_GRAY); printf("   dest port: "); textColor(IMPORTANT); printf("%u", ntohs(tcp->destPort));
+{      
+    textColor(LIGHT_GRAY); printf("\nsrc port: ");   textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
+    textColor(LIGHT_GRAY); printf("  dest port: "); textColor(IMPORTANT); printf("%u ", ntohs(tcp->destPort));
     // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
@@ -127,11 +127,11 @@ static void tcpDebug(tcpPacket_t* tcp)
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
 {
     textColor(TEXT);
-    printf("TCP curr. state: ");
+    printf("\nTCP curr. state: ", tcpStates[connection->TCP_CurrState]);
     textColor(IMPORTANT);
     puts(tcpStates[connection->TCP_CurrState]);
     textColor(TEXT);
-    printf("   connection: %X   src port: %u\n", tcpStates[connection->TCP_CurrState], connection, connection->localSocket.port);
+    printf("   connection: %X   src port: %u\n", connection, connection->localSocket.port);
 }
 
 tcpConnection_t* tcp_createConnection()
@@ -195,8 +195,6 @@ void tcp_connect(tcpConnection_t* connection) // ==> SYN-SENT
     }
 }
 
-
-
 void tcp_close(tcpConnection_t* connection)
 {
     connection->TCP_PrevState = connection->TCP_CurrState;
@@ -217,7 +215,6 @@ void tcp_close(tcpConnection_t* connection)
         connection->TCP_CurrState = CLOSED;
     }
 }
-
 
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length)
 {
@@ -244,7 +241,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     }
 
     textColor(TEXT);
-    printf("TCP prev. state: %s  connection: %X\n", tcpStates[connection->TCP_CurrState], connection); // later: prev. state
+    printf("\nTCP prev. state: %s  connection: %X\n", tcpStates[connection->TCP_CurrState], connection); // later: prev. state
 
     if (tcp->SYN && !tcp->ACK) // SYN
     {
@@ -391,7 +388,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     tcpShowConnectionStatus(connection);
 }
 
-
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber)
 {
     textColor(HEADLINE);
@@ -497,6 +493,7 @@ static uint32_t getConnectionID()
     static uint16_t ID = 1;
     return ID++;
 }
+
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
