@@ -152,8 +152,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
     printf("\nTCP connection deleted: %X\n", connection);
     textColor(0x0F);
     list_Delete(tcpConnections, connection);
-    free(connection);
-    connection = 0; // TEST
+    free(connection);    
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
