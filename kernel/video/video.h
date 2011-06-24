@@ -17,12 +17,14 @@ typedef enum
 
 // These alias for colors are mandatory
 #define ERROR          LIGHT_RED
-#define SUCCESS        LIGHT_GREEN
+#define SUCCESS        GREEN
 #define HEADLINE       CYAN
 #define TABLE_HEADING  LIGHT_GRAY
 #define DATA           BROWN
 #define IMPORTANT      YELLOW
 #define TEXT           WHITE
+#define FOOTNOTE       LIGHT_RED
+#define TITLEBAR       LIGHT_RED
 
 enum COLORS
 {

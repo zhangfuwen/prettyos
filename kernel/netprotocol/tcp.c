@@ -94,7 +94,7 @@ void tcp_showConnections()
     {
         tcpConnection_t* connection = e->data;
         textColor(0x9);
-        printf("ID: %u IP: %I src: %u dest: %u addr: %X state: %s\n", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
+        printf("\nID: %u IP: %I src: %u dest: %u addr: %X state: %s", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
         textColor(0xF);
     }
 }

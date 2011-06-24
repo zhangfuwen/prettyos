@@ -20,26 +20,27 @@ static listHead_t* devices = 0;
 
 void pci_analyzeHostSystemError(pciDev_t* pciDev)
 {
-     // check pci status register of the device
-     uint32_t pciStatus = pci_config_read(pciDev->bus, pciDev->device, pciDev->func, PCI_STATUS);
+    // check pci status register of the device
+    uint32_t pciStatus = pci_config_read(pciDev->bus, pciDev->device, pciDev->func, PCI_STATUS);
 
-     printf("\nPCI status word: %xh\n",pciStatus);
-     textColor(0x03);
-     // bits 0...2 reserved
-     if(pciStatus & BIT(3))  printf("Interrupt Status\n");
-     if(pciStatus & BIT(4))  printf("Capabilities List\n");
-     if(pciStatus & BIT(5))  printf("66 MHz Capable\n");
-     // bit 6 reserved
-     if(pciStatus & BIT(7))  printf("Fast Back-to-Back Transactions Capable\n");
-     textColor(RED);
-     if(pciStatus & BIT(8))  printf("Master Data Parity Error\n");
-     // DEVSEL Timing: bits 10:9
-     if(pciStatus & BIT(11)) printf("Signalled Target-Abort\n");
-     if(pciStatus & BIT(12)) printf("Received Target-Abort\n");
-     if(pciStatus & BIT(13)) printf("Received Master-Abort\n");
-     if(pciStatus & BIT(14)) printf("Signalled System Error\n");
-     if(pciStatus & BIT(15)) printf("Detected Parity Error\n");
-     textColor(WHITE);
+    textColor(HEADLINE);
+    printf("\nPCI status word: %xh\n",pciStatus);
+    textColor(TEXT);
+    // bits 0...2 reserved
+    if(pciStatus & BIT(3))  printf("Interrupt Status\n");
+    if(pciStatus & BIT(4))  printf("Capabilities List\n");
+    if(pciStatus & BIT(5))  printf("66 MHz Capable\n");
+    // bit 6 reserved
+    if(pciStatus & BIT(7))  printf("Fast Back-to-Back Transactions Capable\n");
+    textColor(ERROR);
+    if(pciStatus & BIT(8))  printf("Master Data Parity Error\n");
+    // DEVSEL Timing: bits 10:9
+    if(pciStatus & BIT(11)) printf("Signalled Target-Abort\n");
+    if(pciStatus & BIT(12)) printf("Received Target-Abort\n");
+    if(pciStatus & BIT(13)) printf("Received Master-Abort\n");
+    if(pciStatus & BIT(14)) printf("Signalled System Error\n");
+    if(pciStatus & BIT(15)) printf("Detected Parity Error\n");
+    textColor(TEXT);
 }
 
 uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t func, uint16_t content)
@@ -103,8 +104,11 @@ void pci_scan()
 {
     devices = list_Create();
 
-    textColor(0x03);
-    printf("\nPCI devices:\n");
+    textColor(HEADLINE);
+    printf("\nPCI devices:");
+    textColor(TABLE_HEADING);
+    printf("\nB:D:F\tIRQ\tDescription");
+    printf("\n--------------------------------------------------------------------------------");
     textColor(WHITE);
     for (uint16_t bus = 0; bus < PCIBUSES; ++bus)
     {
@@ -145,7 +149,7 @@ void pci_scan()
                     // Screen output
                     if (PCIdev->irq != 255)
                     {
-                        printf("%d:%d.%d\tIRQ: %d", PCIdev->bus, PCIdev->device, PCIdev->func, PCIdev->irq);
+                        printf("%d:%d.%d\t%d", PCIdev->bus, PCIdev->device, PCIdev->func, PCIdev->irq);
 
                       #ifdef _PCI_VEND_PROD_LIST_
                         // Find Vendor
@@ -190,7 +194,7 @@ void pci_scan()
                         {
                             install_USB_HostController(PCIdev);
                         }
-                        printf("\n");
+                        putch('\n');
 
                         /// network adapters
                         network_installDevice(PCIdev);
@@ -199,6 +203,9 @@ void pci_scan()
             } // for function
         } // for device
     } // for bus
+    textColor(TABLE_HEADING);
+    printf("--------------------------------------------------------------------------------\n");
+    textColor(WHITE);
 }
 
 /*

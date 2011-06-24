@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.145 - Rev: 985";
+const char* const version = "0.0.2.146 - Rev: 986";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -81,11 +81,11 @@ static void useMultibootInformation(multiboot_t* mb_struct)
 
 static void log(const char* str)
 {
-    textColor(GREEN);
+    textColor(SUCCESS);
     printf("[DONE]");
     textColor(LIGHT_GRAY);
-    printf("\t%s\n",str);
-    textColor(WHITE);
+    printf("\t%s\n", str);
+    textColor(TEXT);
 }
 
 void init(multiboot_t* mb_struct)
@@ -143,16 +143,16 @@ void init(multiboot_t* mb_struct)
 
 void showMemorySize()
 {
-    textColor(CYAN);
+    textColor(HEADLINE);
     printf("\nMemory: ");
-    textColor(WHITE);
+    textColor(TEXT);
     if (system.Memory_Size >= 0x40000000) // More than 1 GiB
     {
-        printf("%u GiB / %u GB  (%u MiB / %u MB, %u Bytes)\n", system.Memory_Size>>30, system.Memory_Size/1000000000, system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
+        printf("%u GiB  (%u MiB, %u Bytes)\n", system.Memory_Size>>30, system.Memory_Size>>20, system.Memory_Size);
     }
     else
     {
-        printf("%u MiB / %u MB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size/1000000, system.Memory_Size);
+        printf("%u MiB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size);
     }
 }
 
@@ -185,7 +185,6 @@ void main(multiboot_t* mb_struct)
     #endif
 
     // search and load shell
-    textColor(WHITE);
     bool shell_found = false;
     struct dirent* node = 0;
     for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
@@ -215,6 +214,7 @@ void main(multiboot_t* mb_struct)
                 void* entry = elf_prepare(buf, sz, pd);
                 if(entry == 0)
                 {
+                    textColor(ERROR);
                     printf("Cannot start Shell.\n");
                     paging_destroyUserPageDirectory(pd);
                 }
@@ -225,14 +225,14 @@ void main(multiboot_t* mb_struct)
     }
     if (!shell_found)
     {
-        textColor(RED);
+        textColor(ERROR);
         printf("\nProgram not found.\n");
-        textColor(WHITE);
+        textColor(TEXT);
     }
 
     create_cthread(&vbe_bootscreen, "VBE");
 
-    textColor(0x05);
+    textColor(SUCCESS);
     printf("\n\n--------------------------------------------------------------------------------");
     printf("                                PrettyOS Booted\n");
     printf("--------------------------------------------------------------------------------");
@@ -255,12 +255,12 @@ void main(multiboot_t* mb_struct)
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
-        video_setPixel(79, 49, 0x0C00 | *progress); // Write the character on the screen. 0x0C00 is the color (red)
+        video_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
         if (! *++progress) { progress = "|/-\\"; }
 
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
         char buffer[4];
-        EVENT_t ev = event_poll(buffer, 4, EVENT_NONE);
+        EVENT_t ev = event_poll(buffer, 4, EVENT_NONE); // Take one event from the event queue
         while(ev != EVENT_NONE)
         {
             switch(ev)
@@ -343,7 +343,6 @@ void main(multiboot_t* mb_struct)
                             case 'n':
                             {
                                 network_adapter_t* adapter = network_getFirstAdapter();
-                                printf("network adapter: %Xh\n", adapter); // check
 
                                 if (adapter)
                                 {
@@ -358,7 +357,6 @@ void main(multiboot_t* mb_struct)
                             case 'i':
                             {
                                 network_adapter_t* adapter = network_getFirstAdapter();
-                                printf("network adapter: %Xh\n", adapter); // check
 
                                 if (adapter)
                                 {
@@ -369,7 +367,6 @@ void main(multiboot_t* mb_struct)
                             case 'f':
                             {
                                 network_adapter_t* adapter = network_getFirstAdapter();
-                                printf("network adapter: %Xh\n", adapter); // check
 
                                 if (adapter)
                                 {
@@ -382,14 +379,15 @@ void main(multiboot_t* mb_struct)
                                 connection = tcp_createConnection();
 
                                 network_adapter_t* adapter = network_getFirstAdapter();
-                                printf("network adapter: %Xh\n", adapter); // check
 
                                 if(adapter)
                                     tcp_bind(connection, adapter);
                                 break;
                             }
                             case 'c': // show tcp connections
-                                printf("tcp connections:\n");
+                                textColor(HEADLINE);
+                                printf("\ntcp connections:");
+                                textColor(TEXT);
                                 tcp_showConnections();
                                 break;
                             case 'w':
@@ -399,7 +397,6 @@ void main(multiboot_t* mb_struct)
                                 connection->remoteSocket.port = 80;
 
                                 network_adapter_t* adapter = network_getFirstAdapter();
-                                printf("network adapter: %Xh\n", adapter); // check
                                 connection->adapter = adapter;
 
                                 if(adapter)
@@ -422,9 +419,9 @@ void main(multiboot_t* mb_struct)
                                     }
                                     else
                                     {
-                                        textColor(RED);
-                                        printf("No established HTTP connection to %I found.\n", destIP);
-                                        textColor(WHITE);
+                                        textColor(ERROR);
+                                        printf("\nNo established HTTP connection to %I found.", destIP);
+                                        textColor(TEXT);
                                     }
                                 }
                                 break;
@@ -454,7 +451,7 @@ void main(multiboot_t* mb_struct)
 
             // draw status bar with date, time and frequency
             getCurrentDateAndTime(DateAndTime);
-            kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, 0x0C, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
+            kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
 
             deviceManager_checkDrives(); // switch off motors if they are not neccessary
         }
@@ -462,7 +459,9 @@ void main(multiboot_t* mb_struct)
 
         if (serial_received(1) != 0)
         {
-            printf("Serial message: \n");
+            textColor(HEADLINE);
+            printf("\nSerial message:\n");
+            textColor(TEXT);
             do
             {
                 uint8_t sbyt=serial_read(1);
@@ -475,7 +474,7 @@ void main(multiboot_t* mb_struct)
             serial_write(1,'t');
             serial_write(1,'t');
             serial_write(1,'y');
-            printf("\nAnswered with 'Pretty'!\n\n");
+            printf("\nAnswered with 'Pretty'!\n");
         }
 
         todoList_execute(kernel_idleTasks);

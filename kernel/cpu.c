@@ -15,9 +15,9 @@ char cpu_vendor[13];
 
 void cpu_analyze()
 {
-    textColor(0x03);
+    textColor(HEADLINE);
     printf("CPU: ");
-    textColor(WHITE);
+    textColor(TEXT);
 
     // Test if the CPU supports the CPUID-Command
     __asm__ volatile ("pushfl\n\t"

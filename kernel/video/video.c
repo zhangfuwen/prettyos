@@ -240,7 +240,7 @@ void refreshUserScreen()
     mutex_lock(videoLock);
 
     // Printing titlebar
-    kprintf("PrettyOS [Version %s]                                                            ", 0, 0x0C, version);
+    kprintf("PrettyOS [Version %s]                                                            ", 0, TITLEBAR, version);
 
     if (console_displayed->ID == KERNELCONSOLE_ID)
     {
