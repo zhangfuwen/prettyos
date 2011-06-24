@@ -7,7 +7,6 @@
 #include "console.h"
 #include "util.h"
 #include "paging.h"
-#include "kheap.h"
 #include "filesystem/fsmanager.h"
 #include "synchronisation.h"
 
@@ -25,7 +24,6 @@ static const uint8_t USER_BEGIN =  2; // Reserving  Titlebar + Separation
 static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
 
 static position_t cursor = {0, 0};
-static uint8_t attrib = 0x0F; // white text on black ground
 
 static mutex_t* videoLock = 0;
 
@@ -48,7 +46,6 @@ void clear_screen()
     mutex_lock(videoLock);
     memsetl((void*)vidmem, 0x00, COLUMNS * LINES / 2);
     mutex_unlock(videoLock);
-    update_cursor();
 }
 
 // http://de.wikipedia.org/wiki/Codepage_437
@@ -91,27 +88,28 @@ uint8_t AsciiToCP437(uint8_t ascii)
     }
 }
 
-static void kputch(char c)
+static void kputch(char c, uint8_t attrib)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
     uint16_t* pos;
-    uint32_t att = attrib << 8;
+    uint16_t att = attrib << 8;
 
     mutex_lock(videoLock);
-    switch (uc) {
+    switch (uc)
+    {
         case 0x08: // backspace: move the cursor one space backwards and delete
             if (cursor.x)
             {
                 --cursor.x;
-                kputch(' ');
+                kputch(' ', attrib);
                 --cursor.x;
             }
             else if (cursor.y>0)
             {
                 cursor.x=COLUMNS-1;
                 --cursor.y;
-                kputch(' ');
+                kputch(' ', attrib);
                 cursor.x=COLUMNS-1;
                 --cursor.y;
             }
@@ -143,16 +141,15 @@ static void kputch(char c)
     mutex_unlock(videoLock);
 }
 
-static void kputs(const char* text)
+static void kputs(const char* text, uint8_t attrib)
 {
     mutex_lock(videoLock);
-    for (; *text; kputch(*text), ++text);
+    for (; *text; kputch(*text, attrib), ++text);
     mutex_unlock(videoLock);
 }
 
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
-    attrib = attribute;
     cursor.x = 0; cursor.y = line;
 
     va_list ap;
@@ -169,41 +166,39 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 {
                     case 'u':
                         utoa(va_arg(ap, uint32_t), buffer);
-                        kputs(buffer);
+                        kputs(buffer, attribute);
                         break;
                     case 'f':
                         ftoa(va_arg(ap, double), buffer);
-                        kputs(buffer);
+                        kputs(buffer, attribute);
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), buffer);
-                        kputs(buffer);
+                        kputs(buffer, attribute);
                         break;
                     case 'X': /// TODO: make it standardized
                         i2hex(va_arg(ap, int32_t), buffer, 8);
-                        kputs(buffer);
+                        kputs(buffer, attribute);
                         break;
                     case 'x':
                         i2hex(va_arg(ap, int32_t), buffer, 4);
-                        kputs(buffer);
+                        kputs(buffer, attribute);
                         break;
                     case 'y':
                         i2hex(va_arg(ap, int32_t), buffer, 2);
-                        kputs(buffer);
+                        kputs(buffer, attribute);
                         break;
                     case 's':
-                        kputs(va_arg (ap, char*));
+                        kputs(va_arg (ap, char*), attribute);
                         break;
                     case 'c':
-                        kputch((int8_t)va_arg(ap, int32_t));
+                        kputch((int8_t)va_arg(ap, int32_t), attribute);
                         break;
                     case 'v':
-                        attrib = (attribute >> 4) | (attribute << 4);
-                        kputch(*(++message));
-                        attrib = attribute;
+                        kputch(*(++message), (attribute >> 4) | (attribute << 4));
                         break;
                     case '%':
-                        kputch('%');
+                        kputch('%', attribute);
                         break;
                     default:
                         --message;
@@ -211,7 +206,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
                 }
                 break;
             default:
-                kputch(*message);
+                kputch(*message, attribute);
                 break;
         }
     }
@@ -250,7 +245,7 @@ void refreshUserScreen()
     if (console_displayed->ID == KERNELCONSOLE_ID)
     {
         cursor.x = COLUMNS - 5;
-        kputs("Shell");
+        kputs("Shell", 0x0C);
     }
     else
     {
@@ -258,7 +253,7 @@ void refreshUserScreen()
         snprintf(Buffer, 70, "Console %u: %s", console_displayed->ID-1, console_displayed->name);
         cursor.x = COLUMNS - strlen(Buffer);
         cursor.y = 0;
-        kputs(Buffer);
+        kputs(Buffer, 0x0C);
     }
     kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
     if(console_displayed->showInfobar)
@@ -278,10 +273,10 @@ void refreshUserScreen()
     cursor.y = console_displayed->cursor.y;
     cursor.x = console_displayed->cursor.x;
     mutex_unlock(videoLock);
-    update_cursor();
+    video_updateCursor();
 }
 
-void update_cursor()
+void video_updateCursor()
 {
     uint16_t position = (console_displayed->cursor.y+2) * COLUMNS + console_displayed->cursor.x;
     // cursor HIGH port to vga INDEX register
@@ -295,7 +290,7 @@ void update_cursor()
 static uint8_t screenCache[SCREENSHOT_BYTES];
 void takeScreenshot()
 {
-    printf("\nTake screenshot. ");
+    puts("\nTake screenshot. ");
     int32_t NewLine = 0;
 
     mutex_lock(videoLock);
@@ -341,7 +336,7 @@ void saveScreenshot()
     }
     else
     {
-        printf("\nError: file could not be opened!");
+        puts("\nError: file could not be opened!");
     }
     readCacheFlag = true;
 }

@@ -14,7 +14,6 @@
 static const uint32_t kernelStackSize = 0x1000; // Tasks get a 4 KB kernel stack
 
 // Some externs are needed
-void irq_tail();
 void fpu_setcw(uint16_t ctrlword); // fpu.c
 
 extern void* globalUserProgAddr;
@@ -24,7 +23,7 @@ extern uint32_t globalUserProgSize;
 bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
 
 task_t kernelTask = { // Needed to find out when the kernel task is exited
-    .pid = 0, .esp = 0, .eip = 0, .privilege = 0, .FPUptr = 0, .console = &kernelConsole, .attrib = 0x0F, .eventQueue = 0,
+    .pid = 0, .esp = 0, .privilege = 0, .FPUptr = 0, .console = &kernelConsole, .attrib = 0x0F, .eventQueue = 0, .type = TASK,
     .blocker.type = 0, // The task is not blocked (scheduler.h/c)
     .kernelStack = 0, // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
     .threads = 0 // No threads associated with the task at the moment. List is created later if necessary
@@ -103,7 +102,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
         }
     }
 
-    newTask->kernelStack = malloc(kernelStackSize,4, "task-kernelstack")+kernelStackSize;
+    newTask->kernelStack = malloc(kernelStackSize, 4, "task-kernelstack")+kernelStackSize;
     uint32_t* kernelStack = newTask->kernelStack;
 
     uint32_t code_segment = 0x08;
@@ -116,9 +115,9 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
         if (newTask->privilege == 3)
         {
             // General information: Intel 3A Chapter 5.12
-            *(--kernelStack) = newTask->ss = 0x23; // ss
-            *(--kernelStack) = USER_STACK;         // esp
-            code_segment = 0x1B; // 0x18|0x3=0x1B
+            *(--kernelStack) = 0x23;       // ss
+            *(--kernelStack) = USER_STACK; // esp
+            code_segment = 0x1B;           // 0x18|0x3=0x1B
         }
 
         *(--kernelStack) = 0x0202; // eflags: interrupts activated, iopl = 0
@@ -126,9 +125,9 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     else
     {
         code_segment = 0;
-        *(--kernelStack) = newTask->ss = 0x0000; // ss
-        *(--kernelStack) = 4090;                 // USER_STACK;
-        *(--kernelStack) = 0x20202;              // eflags = vm86 (bit17), interrupts (bit9), iopl=0
+        *(--kernelStack) = 0x0000;  // ss
+        *(--kernelStack) = 4090;    // USER_STACK;
+        *(--kernelStack) = 0x20202; // eflags = vm86 (bit17), interrupts (bit9), iopl=0
     }
 
     *(--kernelStack) = code_segment;    // cs
@@ -154,9 +153,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     *(--kernelStack) = data_segment;
     *(--kernelStack) = data_segment;
 
-    // Setup task_t
     newTask->esp = (uint32_t)kernelStack;
-    newTask->eip = (uint32_t)&irq_tail;
     newTask->ss  = data_segment;
 
     list_Append(tasks, newTask);
@@ -305,7 +302,7 @@ void switch_context() // Switch to next task (by interrupt)
 // Functions to kill a task
 static void kill(task_t* task)
 {
-    cli(); // TODO: Change to task_switching=false/true
+    task_switching = false; // There should not occur a task switch while we are exiting from a task, to avoid data corruption
 
     #ifdef _TASKING_DIAGNOSIS_
     scheduler_log();
@@ -334,8 +331,8 @@ static void kill(task_t* task)
         free(task->console);
     }
 
-    // Free user memory
-    if (task->pageDirectory != kernelPageDirectory)
+    // Free user memory, if this task has an own PD
+    if (task->type != THREAD && task->pageDirectory != kernelPageDirectory)
     {
         paging_destroyUserPageDirectory(task->pageDirectory);
     }
@@ -377,7 +374,7 @@ static void kill(task_t* task)
     free(task->kernelStack - kernelStackSize); // Free kernelstack
     free(task);
 
-    sti();
+    task_switching = true;
 
     if(task == currentTask) // Tasks adress is still saved, although its no longer valid so we can use it here
     {
@@ -420,21 +417,20 @@ void* task_grow_userheap(uint32_t increase)
 
 void task_log(task_t* t)
 {
-    textColor(0x05);
-    printf("\npid: %d\t", t->pid);         // Process ID
+    textColor(0x0D);
+    printf("\npid: %d\t", t->pid);          // Process ID
     printf("esp: %Xh  ", t->esp);           // Stack pointer
-    printf("eip: %Xh  ", t->eip);           // Instruction pointer
     printf("PD: %Xh  ", t->pageDirectory);  // Page directory
     printf("k_stack: %Xh", t->kernelStack); // Kernel stack location
     if(t->type == THREAD)
-        printf("\n\tparent: %u", t->parent->pid);
+        printf("  parent: %u", t->parent->pid);
     if(t->threads && t->threads->head)
     {
-        if(t->type != THREAD) printf("\n\t");
-        printf("  child-threads:");
+        printf("\n\t");
+        printf("child-threads:");
         for(element_t* e = t->threads->head; e != 0; e = e->next)
         {
-            printf(" %u", ((task_t*)e->data)->pid);
+            printf(" %u ", ((task_t*)e->data)->pid);
         }
     }
     textColor(WHITE);

@@ -31,7 +31,7 @@ tcpConnection_t* findConnectionID(uint32_t ID)
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        if(connection->ID == ID) 
+        if(connection->ID == ID)
         {
             return(connection);
         }
@@ -48,7 +48,7 @@ static tcpConnection_t* findConnectionListen(network_adapter_t* adapter)
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        if (connection->adapter == adapter && connection->TCP_CurrState == LISTEN) 
+        if (connection->adapter == adapter && connection->TCP_CurrState == LISTEN)
         {
             return(connection);
         }
@@ -65,9 +65,9 @@ tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_adapter_t*
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        
+
         if (!established)
-        {        
+        {
             if (connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0)
             {
                 return(connection);
@@ -152,7 +152,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
     printf("\nTCP connection deleted: %X\n", connection);
     textColor(WHITE);
     list_Delete(tcpConnections, connection);
-    free(connection);    
+    free(connection);
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)

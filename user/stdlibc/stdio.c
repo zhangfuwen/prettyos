@@ -196,37 +196,40 @@ int vsprintf(char* dest, const char* format, va_list arg)
                     case 'u':
                         utoa(va_arg(arg, uint32_t), m_buffer);
                         strcat(dest, m_buffer);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'f':
                         ftoa(va_arg(arg, double), m_buffer);
                         strcat(dest, m_buffer);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(arg, int32_t), m_buffer);
                         strcat(dest, m_buffer);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'X':
                         i2hex(va_arg(arg, int32_t), m_buffer,8);
                         strcat(dest, m_buffer);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'x':
                         i2hex(va_arg(arg, int32_t), m_buffer,4);
                         strcat(dest, m_buffer);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'y':
                         i2hex(va_arg(arg, int32_t), m_buffer,2);
                         strcat(dest, m_buffer);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 's':
-                        strcat(dest, va_arg(arg, char*));
-                        pos = strlen(dest) - 1;
+                    {
+                        char* buf = va_arg(arg, char*);
+                        strcat(dest, buf);
+                        pos += strlen(buf);
                         break;
+                    }
                     case 'c':
                         dest[pos] = (int8_t)va_arg(arg, int32_t);
                         break;
@@ -235,15 +238,14 @@ int vsprintf(char* dest, const char* format, va_list arg)
                         break;
                     default:
                         --format;
-                        --pos;
                         break;
                     }
                 break;
             default:
                 dest[pos] = (*format);
+                pos++;
                 break;
         }
-        pos++;
         dest[pos] = '\0';
     }
     return(pos);

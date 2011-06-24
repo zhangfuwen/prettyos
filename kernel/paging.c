@@ -186,7 +186,7 @@ static uint32_t physMemInit()
     {
         textColor(RED);
         printf("The memory between 10 MiB and 20 MiB is not free for use. OS halted!\n");
-        for (;;);
+        cli(); hlt();
     }
 
     // We store our data here, initialize all bits to "reserved"

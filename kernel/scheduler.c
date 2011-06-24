@@ -166,7 +166,7 @@ void scheduler_log()
 {
     textColor(WHITE);
     printf("\ncurrent task: ");
-    textColor(0x05);
+    textColor(0x0D);
     printf("pid: %u", currentTask->pid);
     textColor(WHITE);
 

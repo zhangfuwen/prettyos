@@ -268,54 +268,55 @@ size_t vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
                     case 'u':
                         utoa(va_arg(ap, uint32_t), m_buffer);
                         strncat(buffer, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'f':
                         ftoa(va_arg(ap, double), m_buffer);
                         strncat(buffer, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), m_buffer);
                         strncat(buffer, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'X':
                         i2hex(va_arg(ap, int32_t), m_buffer, 8);
                         strncat(buffer, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'x':
                         i2hex(va_arg(ap, int32_t), m_buffer, 4);
                         strncat(buffer, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 'y':
                         i2hex(va_arg(ap, int32_t), m_buffer, 2);
                         strncat(buffer, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer) - 1;
+                        pos += strlen(m_buffer);
                         break;
                     case 's':
                         strncat(buffer, va_arg(ap, char*), length - pos - 1);
-                        pos = strlen(buffer) - 1;
+                        pos = strlen(buffer);
                         break;
                     case 'c':
                         buffer[pos] = (int8_t)va_arg(ap, int32_t);
+                        pos++;
                         break;
                     case '%':
                         buffer[pos] = '%';
+                        pos++;
                         break;
                     default:
                         --args;
-                        --pos;
                         break;
                     }
                 break;
             default:
                 buffer[pos] = (*args);
+                pos++;
                 break;
         }
-        pos++;
     }
     return(pos);
 }

@@ -15,17 +15,16 @@ typedef enum
     VM_TEXT, VM_VBE
 } VIDEOMODES;
 
-
 // These alias for colors are mandatory
-#define ERROR          LIGHT_RED 
-#define SUCCESS        LIGHT_GREEN 
-#define HEADLINE       CYAN 
-#define TABLE_HEADING  LIGHT_GRAY 
-#define DATA           BROWN 
-#define IMPORTANT      YELLOW 
+#define ERROR          LIGHT_RED
+#define SUCCESS        LIGHT_GREEN
+#define HEADLINE       CYAN
+#define TABLE_HEADING  LIGHT_GRAY
+#define DATA           BROWN
+#define IMPORTANT      YELLOW
 #define TEXT           WHITE
 
-enum COlORS
+enum COLORS
 {
     BLACK, BLUE,        GREEN,       CYAN,       RED,       MAGENTA,       BROWN,  LIGHT_GRAY,
     GRAY,  LIGHT_BLUE,  LIGHT_GREEN, LIGHT_CYAN, LIGHT_RED, LIGHT_MAGENTA, YELLOW, WHITE
@@ -34,7 +33,6 @@ enum COlORS
 
 extern VIDEOMODES videomode;
 
-extern diskType_t* ScreenDest; // HACK
 
 void video_install();
 void video_setPixel(uint8_t x, uint8_t y, uint16_t value);
@@ -46,7 +44,7 @@ void writeInfo(uint8_t line, const char* content, ...);
 void saveScreenshot();
 void takeScreenshot();
 void mt_screenshot();
-void update_cursor();
+void video_updateCursor();
 
 
 #endif

@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.144 - Rev: 984";
+const char* const version = "0.0.2.145 - Rev: 985";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -36,6 +36,8 @@ system_t system;
 
 bool fpu_install(); // fpu.c
 void fpu_test();    // fpu.c
+
+extern diskType_t* ScreenDest; // HACK for screenshots
 
 // APIC
 bool apic_install()
@@ -86,7 +88,7 @@ static void log(const char* str)
     textColor(WHITE);
 }
 
-static void init(multiboot_t* mb_struct)
+void init(multiboot_t* mb_struct)
 {
     // set .bss to zero
     memset(&_bss_start, 0x0, (uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
@@ -228,7 +230,6 @@ void main(multiboot_t* mb_struct)
         textColor(WHITE);
     }
 
-
     create_cthread(&vbe_bootscreen, "VBE");
 
     textColor(0x05);
@@ -245,11 +246,11 @@ void main(multiboot_t* mb_struct)
     bool ESC   = false;
     bool CTRL  = false;
     bool PRINT = false;
-    
+
     tcpConnection_t* connection = 0;
     uint8_t destIP[4] = {82,100,220,68}; // homepage ehenkes at Port 80
     // uint8_t destIP[4] ={94,142,241,111}; // 94.142.241.111 at Port 23, starwars story
-    
+
 
     while (true) // start of kernel idle loop
     {
@@ -409,7 +410,7 @@ void main(multiboot_t* mb_struct)
                                 break;
                             }
                             case 'x':
-                            {    
+                            {
                                 network_adapter_t* adapter = network_getFirstAdapter();
                                 if (adapter)
                                 {

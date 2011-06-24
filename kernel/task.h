@@ -17,7 +17,6 @@ struct task
     taskType_t        type;           // Indicates whether it is a thread or a task
     uint32_t          pid;            // Process ID
     uint32_t          esp;            // Stack pointer
-    uint32_t          eip;            // Instruction pointer
     uint32_t          ss;             // Stack segment
     pageDirectory_t*  pageDirectory;  // Page directory
     uint8_t           privilege;      // Access privilege
@@ -37,8 +36,8 @@ struct task
     blocker_t         blocker;  // Object indicating reason and duration of blockade
 
     // Task specific graphical output settings
-    console_t*        console;    // Console used by this task
-    uint8_t           attrib;     // Color
+    console_t*        console; // Console used by this task
+    uint8_t           attrib;  // Color
 };
 
 extern volatile task_t* FPUTask; // fpu.c

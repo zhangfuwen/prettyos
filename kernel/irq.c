@@ -63,7 +63,7 @@ static const char* const exceptionMessages[] =
     "Into Detected Overflow",  "Out of Bounds",                 "Invalid Opcode",            "No Coprocessor",
     "Double Fault",            "Coprocessor Segment Overrun",   "Bad TSS",                   "Segment Not Present",
     "Stack Fault",             "General Protection Fault",      "Page Fault",                "Unknown Interrupt",
-    "Coprocessor Fault",       "Alignment Check",               "Machine Check",             "Reserved",
+    "Coprocessor Fault",       "Alignment Check",               "Machine Check",             "SIMD Esception",
     "Reserved",                "Reserved",                      "Reserved",                  "Reserved",
     "Reserved",                "Reserved",                      "Reserved",                  "Reserved",
     "Reserved",                "Reserved",                      "Reserved",                  "Reserved"
@@ -71,32 +71,77 @@ static const char* const exceptionMessages[] =
 
 static void quitTask()
 {
-    printf("| <Severe Failure - Task Halted> Press key for exit! |");
+    textColor(ERROR);
+    printf("\n| <Severe Failure - Task Halted> Press key for exit! |");
     sti();
     getch();
     exit();
     for (;;);
 }
 
+static void stackTrace(void* eip, void* ebp)
+{
+    textColor(HEADLINE);
+    printf("\nStack backtrace:");
+    textColor(TEXT);
+
+    struct stackFrame
+    {
+        struct stackFrame * ebp;
+        uintptr_t eip;
+    } *frame;
+
+    if (ebp != 0)
+    {
+        printf("\nebp: %X   eip: %X", ebp, eip);
+        frame = ebp;
+    }
+    else
+    {
+        __asm__ volatile ("mov %%ebp, %0" : "=r"(frame));
+    }
+
+    for(; frame != 0 && frame->ebp != 0; frame = frame->ebp)
+    {
+        printf("\nebp: %X   eip: %X", frame->ebp, frame->eip);
+        if (!paging_getPhysAddr(frame->ebp))
+        {
+            printf("   Not mapped. Backtrace finished.");
+            break;
+        }
+    }
+}
+
 static void defaultError(registers_t* r)
 {
+    textColor(ERROR);
+    printf("\n\n%s!", exceptionMessages[r->int_no]);
+    textColor(TEXT);
     printf("\nerr_code: %u address(eip): %Xh\n", r->err_code, r->eip);
     printf("edi: %Xh esi: %Xh ebp: %Xh eax: %Xh ebx: %Xh ecx: %Xh edx: %Xh\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
     printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-    printf("int_no: %u eflags: %Xh useresp: %Xh\n", r->int_no, r->eflags, r->useresp);
+    printf("eflags: %Xh useresp: %Xh\n", r->eflags, r->useresp);
 
-    textColor(LIGHT_CYAN);
-    printf("\n\n%s!\n", exceptionMessages[r->int_no]);
+    printf("\nPress 's' to display call stack.\n");
+    if(getch() == 's')
+        stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
 }
 
 static void invalidOpcode(registers_t* r)
 {
-    printf("\nInvalid Opcode err_code: %u address(eip): %Xh instruction: %yh\n", r->err_code, r->eip, *(uint8_t*)FP_TO_LINEAR(r->cs, r->eip));
+    textColor(ERROR);
+    printf("\n\n%s!", exceptionMessages[r->int_no]);
+    textColor(TEXT);
+    printf("\nerr_code: %u address(eip): %Xh instruction: %yh\n", r->err_code, r->eip, *(uint8_t*)FP_TO_LINEAR(r->cs, r->eip));
     printf("edi: %Xh esi: %Xh ebp: %Xh eax: %Xh ebx: %Xh ecx: %Xh edx: %Xh\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
     printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-    printf("int_no: %u eflags: %Xh useresp: %Xh\n", r->int_no, r->eflags, r->useresp);
+    printf("eflags: %Xh useresp: %Xh\n", r->eflags, r->useresp);
+
+    printf("\nPress 's' to display call stack.\n");
+    if(getch() == 's')
+        stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
 }
@@ -137,7 +182,7 @@ static void GPF(registers_t* r) // -> VM86
     {
         if (!vm86sensitiveOpcodehandler(r))
         {
-            textColor(RED);
+            textColor(0x0C);
             printf("\nvm86: sensitive opcode error\n");
         }
     }
@@ -158,13 +203,20 @@ static void PF(registers_t* r)
     int32_t id       =  r->err_code & 0x10; // Caused by an instruction fetch?
 
     // Output an error message.
-    printf("\nPage Fault (");
-    if (present)  printf("page not present");
-    if (rw)       printf(" - read-only - write operation");
-    if (us)       printf(" - user-mode");
-    if (reserved) printf(" - overwritten CPU-reserved bits of page entry");
-    if (id)       printf(" - caused by an instruction fetch");
-    printf(") at %Xh - EIP: %Xh\n", faulting_address, r->eip);
+    textColor(ERROR);
+    printf("\n\n%s!", exceptionMessages[r->int_no]);
+    textColor(IMPORTANT);
+    printf("\nAddress: %Xh   EIP: %Xh", faulting_address, r->eip);
+    textColor(TEXT);
+    if (present)  printf("\npage not present");
+    if (rw)       printf("\nread-only - write operation");
+    if (us)       printf("\nuser-mode");
+    if (reserved) printf("\noverwritten CPU-reserved bits of page entry");
+    if (id)       printf("\ncaused by an instruction fetch");
+
+    printf("\n\nPress 's' to display call stack.\n");
+    if(getch() == 's')
+        stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
 }

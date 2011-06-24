@@ -1,7 +1,7 @@
 #ifndef CDI_CACHE_H
 #define CDI_CACHE_H
 
-#include "os.h"
+#include "types.h"
 
 struct cdi_cache {
     size_t block_size; // Groesse der Blocks, die der Cache verwaltet

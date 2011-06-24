@@ -10,28 +10,28 @@
 // own IP at start
 #define IP_1  192
 #define IP_2  168
-#define IP_3    1
+#define IP_3    44
 #define IP_4   97
 
 // requested IP
 #define RIP_1 192
 #define RIP_2 168
-#define RIP_3   1
+#define RIP_3   44
 #define RIP_4  97
 
 // gateway IP for routing to the internet
 #define GW_IP_1 192
 #define GW_IP_2 168
-#define GW_IP_3   1
-#define GW_IP_4   1
+#define GW_IP_3   44
+#define GW_IP_4   29
 
 // HACK for qemu, MAC of the external gateway (for TCP experiments)
 #define GW_MAC_1 0x00
-#define GW_MAC_2 0x22
-#define GW_MAC_3 0xcf
-#define GW_MAC_4 0x36
-#define GW_MAC_5 0x9d
-#define GW_MAC_6 0x1c
+#define GW_MAC_2 0x40
+#define GW_MAC_3 0x63
+#define GW_MAC_4 0xE7
+#define GW_MAC_5 0xDA
+#define GW_MAC_6 0xDE
 
 typedef struct network_adapter network_adapter_t;
 

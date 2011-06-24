@@ -22,8 +22,6 @@ static void scroll();
 
 uint8_t getTextColor()
 {
-    if(currentTask == 0)
-        return(0x0F);
     return(currentTask->attrib);
 }
 
@@ -133,7 +131,7 @@ static void move_cursor_left()
         --console_current->cursor.x;
     else if (console_current->cursor.y > 0)
     {
-        console_current->cursor.x=COLUMNS-1;
+        console_current->cursor.x = COLUMNS-1;
         --console_current->cursor.y;
     }
 }
@@ -141,13 +139,13 @@ static void move_cursor_left()
 static void move_cursor_home()
 {
     console_current->cursor.x = 0;
-    update_cursor();
+    video_updateCursor();
 }
 
 void setCursor(position_t pos)
 {
     console_current->cursor = pos;
-    update_cursor();
+    video_updateCursor();
 }
 
 void getCursor(position_t* pos)
@@ -169,7 +167,8 @@ void putch(char c)
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
     mutex_lock(console_current->mutex);
-    switch (uc) {
+    switch (uc)
+    {
         case 0x08: // backspace: move the cursor one space backwards and delete
             move_cursor_left();
             putch(' ');
@@ -337,8 +336,7 @@ size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 {
     mutex_lock(console_current->mutex);
     uint8_t old_attrib = getTextColor();
-    uint8_t c_x = console_current->cursor.x;
-    uint8_t c_y = console_current->cursor.y;
+    position_t cOld = console_current->cursor;
     scroll_flag = false;
 
     textColor(attribute);
@@ -352,8 +350,7 @@ size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
     scroll_flag = true;
     textColor(old_attrib);
-    console_current->cursor.x = c_x;
-    console_current->cursor.y = c_y;
+    console_current->cursor = cOld;
     mutex_unlock(console_current->mutex);
 
     return(retval);

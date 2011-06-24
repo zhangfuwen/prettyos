@@ -85,8 +85,6 @@ ir_common_stub:
 
     push esp          ; parameter of _irq_handler
     call irq_handler
-    global irq_tail
-    irq_tail:
     mov esp, eax      ; return value: changed or unchanged esp
 
     pop gs
