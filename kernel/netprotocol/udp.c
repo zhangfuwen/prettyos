@@ -15,8 +15,19 @@
 
 void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
-    // TODO: ...
-    UDPDebug(adapter, packet);
+    textColor(HEADLINE);
+    printf("\nUDP:");
+    textColor(TEXT);
+    UDPDebug(packet);
+
+    switch (ntohs(packet->destPort))
+    {
+        case 68:
+            DHCP_AnalyzeServerMessage(adapter, (dhcp_t*)(packet+1));
+            break;
+        default:
+            break;
+    }
 }
 
 void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4])
@@ -35,78 +46,76 @@ void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t s
     free(packet);
 }
 
-void UDPDebug(network_adapter_t* adapter, udpPacket_t* udp)
+static void printUDPPortType(uint16_t port)
 {
-    printf("\n");
-    printf("UDP Header information:\n");
-    textColor(YELLOW);
-    printf("+--------------+----------------+\n");
-    printf("|      %u      |      %u      | (source port, destination port)\n", ntohs(udp->sourcePort), ntohs(udp->destPort));
-    printf("+-------------------------------+\n");
-    printf("|      %u      |      %xh    | (length, checksum)\n", ntohs(udp->length), ntohs(udp->checksum));
-    printf("+-------------------------------+\n");
-
     // http://www.iana.org/assignments/port-numbers
     // http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
-    printf("Dest. Port: ");
-    switch (ntohs(udp->destPort))
+    switch (port)
     {
     case 20:
-        printf("FTP - data transfer\n");
+        printf("FTP - data transfer");
         break;
     case 21:
-        printf("FTP - control (command)\n");
+        printf("FTP - control (command)");
         break;
     case 22:
-        printf("Secure Shell (SSH)\n");
+        printf("Secure Shell (SSH)");
         break;
     case 53:
-        printf("Domain Name System (DNS)\n");
+        printf("Domain Name System (DNS)");
         break;
     case 67:
-        printf("DHCPv4 Server\n");
+        printf("DHCPv4 Server");
         break;
     case 68:
-        printf("DHCPv4 Client\n");
-        DHCP_AnalyzeServerMessage(adapter, (dhcp_t*)(udp+1));
+        printf("DHCPv4 Client");
         break;
     case 80:
-        printf("HTTP\n");
+        printf("HTTP");
         break;
     case 137:
-        printf("NetBIOS Name Service\n");
+        printf("NetBIOS Name Service");
         break;
     case 138:
-        printf("NetBIOS Datagram Service\n");
+        printf("NetBIOS Datagram Service");
         break;
     case 139:
-        printf("NetBIOS Session Service\n");
+        printf("NetBIOS Session Service");
         break;
     case 143:
-        printf("Internet Message Access Protocol (IMAP)\n");
+        printf("Internet Message Access Protocol (IMAP)");
         break;
     case 546:
-        printf("DHCPv6 Client\n");
+        printf("DHCPv6 Client");
         break;
     case 547:
-        printf("DHCPv6 Server\n");
+        printf("DHCPv6 Server");
         break;
     case 1257:
-        printf("shockwave2\n");
+        printf("shockwave2");
         break;
     case 1900:
-        printf("Simple Service Discovery Protocol (ssdp)\n");
+        printf("Simple Service Discovery Protocol (ssdp)");
         break;
     case 3544:
-        printf("Teredo Tunneling\n");
+        printf("Teredo Tunneling");
         break;
     case 5355:
-        printf("Link-Local Multicast Name Resolution (llmnr)\n");
+        printf("Link-Local Multicast Name Resolution (llmnr)");
         break;
     default:
-        printf("%u\n", ntohs(udp->destPort));
+        printf("%u", port);
         break;
     }
+}
+
+void UDPDebug(udpPacket_t* udp)
+{
+    textColor(TEXT);
+    printf("\nSource port: %u    Dest port: %u    Length: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort), ntohs(udp->length));
+    textColor(IMPORTANT);
+    printUDPPortType(ntohs(udp->sourcePort)); printf(" ==> "); printUDPPortType(ntohs(udp->destPort));
+    textColor(TEXT);
 }
 
 

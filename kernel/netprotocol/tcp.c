@@ -90,34 +90,48 @@ void tcp_showConnections()
     if(tcpConnections == 0)
         return;
 
+    textColor(TABLE_HEADING);
+    printf("\nID\tIP\t\tSrc\tDest\tAddr\t\tState");
+    printf("\n--------------------------------------------------------------------------------");
+    textColor(TEXT);
     for(element_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
-        textColor(0x9);
-        printf("\nID: %u IP: %I src: %u dest: %u addr: %X state: %s", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
-        textColor(0xF);
+        printf("%u\t%I\t%u\t%u\t%X\t%s\n", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
     }
+    textColor(TABLE_HEADING);
+    printf("--------------------------------------------------------------------------------\n");
+    textColor(TEXT);
+}
+
+static void printFlag(bool b, const char* s)
+{
+    textColor(b ? GREEN : LIGHT_GRAY);
+    printf("%s ");
 }
 
 static void tcpDebug(tcpPacket_t* tcp)
 {
-  textColor(YELLOW);
-  printf("src port: %u  dest port: %u ", ntohs(tcp->sourcePort), ntohs(tcp->destPort));
-  // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
-  textColor(GREEN);
-  printf("URG: %u ACK: %u PSH: %u RST: %u SYN: %u FIN: %u\n", tcp->URG, tcp->ACK, tcp->PSH, tcp->RST, tcp->SYN, tcp->FIN);
-  /*
-  printf("window: %u  ", ntohs(tcp->window));
-  printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
-  */
-  textColor(WHITE);
+    textColor(LIGHT_GRAY); printf("\nsrc port: "); textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
+    textColor(LIGHT_GRAY); printf("   dest port: "); textColor(IMPORTANT); printf("%u", ntohs(tcp->destPort));
+    // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
+    printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
+    printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
+    textColor(TEXT);
+    /*
+    printf("window: %u  ", ntohs(tcp->window));
+    printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
+    */
 }
 
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
 {
-    textColor(LIGHT_MAGENTA);
-    printf("TCP curr. state: %s  connection: %X src port: %u\n", tcpStates[connection->TCP_CurrState], connection, connection->localSocket.port);
-    textColor(WHITE);
+    textColor(TEXT);
+    printf("TCP curr. state: ");
+    textColor(IMPORTANT);
+    puts(tcpStates[connection->TCP_CurrState]);
+    textColor(TEXT);
+    printf("   connection: %X   src port: %u\n", tcpStates[connection->TCP_CurrState], connection, connection->localSocket.port);
 }
 
 tcpConnection_t* tcp_createConnection()
@@ -137,9 +151,8 @@ tcpConnection_t* tcp_createConnection()
     connection->tcb.SND_NXT = connection->tcb.SND_ISS + 1;
     list_Append(tcpConnections, connection);
 
-    textColor(GREEN);
+    textColor(TEXT);
     printf("\nTCP connection created (CLOSED): %X\n", connection);
-    textColor(WHITE);
 
     return(connection);
 }
@@ -148,11 +161,11 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 {
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = CLOSED;
-    textColor(RED);
-    printf("\nTCP connection deleted: %X\n", connection);
-    textColor(WHITE);
     list_Delete(tcpConnections, connection);
     free(connection);
+
+    textColor(TEXT);
+    printf("\nTCP connection deleted: %X\n", connection);
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
@@ -206,10 +219,12 @@ void tcp_close(tcpConnection_t* connection)
 }
 
 
-
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length)
 {
+    textColor(HEADLINE);
+    printf("\nTCP:");
     tcpDebug(tcp);
+
     tcpConnection_t* connection;
     if (tcp->SYN && !tcp->ACK) // SYN
     {
@@ -224,13 +239,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     {
         textColor(RED);
         printf("\nTCP packet received that belongs to no TCP connection.");
-        textColor(WHITE);
+        textColor(TEXT);
         return;
     }
 
-    textColor(LIGHT_MAGENTA);
+    textColor(TEXT);
     printf("TCP prev. state: %s  connection: %X\n", tcpStates[connection->TCP_CurrState], connection); // later: prev. state
-    textColor(WHITE);
 
     if (tcp->SYN && !tcp->ACK) // SYN
     {
@@ -279,14 +293,15 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
             case ESTABLISHED: // ESTABLISHED --> DATA TRANSFER
             {
                 uint32_t tcpDataLength = -4 /* frame ? */ + length - (tcp->dataOffset << 2);
+                textColor(LIGHT_GRAY);
                 printf("data:");
-                textColor(GREEN);
+                textColor(DATA);
                 for (uint16_t i=0; i<tcpDataLength; i++)
                 {
                     printf("%c", ((uint8_t*)(tcp+1))[i]);
                 }
                 putch('\n');
-                textColor(WHITE);
+                textColor(TEXT);
                 tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+tcpDataLength) /*ackNumber*/);
                 break;
             }
@@ -377,12 +392,15 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
 }
 
 
-
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber)
 {
-    textColor(LIGHT_CYAN);
-    printf("TCP sends at connection: %X src port: %u.\n", connection, connection->localSocket.port);
-    textColor(WHITE);
+    textColor(HEADLINE);
+    printf("\n\nTCP send: ");
+    textColor(TEXT);
+    printf("ID: %u   connection: %X   ", connection->ID, connection);
+    textColor(IMPORTANT);
+    printf("%u ==> %u", connection->localSocket.port, connection->remoteSocket.port);
+    textColor(TEXT);
 
     tcpPacket_t* packet = malloc(sizeof(tcpPacket_t)+length, 0, "TCP packet");
     memcpy(packet+1, data, length);

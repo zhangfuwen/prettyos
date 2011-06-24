@@ -417,8 +417,9 @@ void* task_grow_userheap(uint32_t increase)
 
 void task_log(task_t* t)
 {
-    textColor(0x0D);
+    textColor(IMPORTANT);
     printf("\npid: %d\t", t->pid);          // Process ID
+    textColor(TEXT);
     printf("esp: %Xh  ", t->esp);           // Stack pointer
     printf("PD: %Xh  ", t->pageDirectory);  // Page directory
     printf("k_stack: %Xh", t->kernelStack); // Kernel stack location
@@ -433,7 +434,6 @@ void task_log(task_t* t)
             printf(" %u ", ((task_t*)e->data)->pid);
         }
     }
-    textColor(WHITE);
 }
 
 

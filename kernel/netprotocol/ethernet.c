@@ -20,25 +20,24 @@ static const uint8_t broadcast_MAC2[6] = {0, 0, 0, 0, 0, 0};
 
 void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
+    textColor(TEXT);
+    printf("\n\n\n");
     if(memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC1, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC2, 6) != 0)
     {
-        printf("\nEthernet packet received. We are not the addressee.");
+        printf("Ethernet packet received. We are not the addressee.");
         return;
     }
-  #ifdef _NETWORK_DATA_
-    uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
-  #endif
 
     // output ethernet packet
+  #ifdef _NETWORK_DATA_
+    uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
 
     textColor(LIGHT_MAGENTA); printf("\nLength: ");
-    textColor(0x03); printf("%d", length);
+    textColor(0x03); printf("%d ", length);
+  #endif
 
-    textColor(LIGHT_MAGENTA); printf(" Rcv: "); textColor(0x03);
-    printf("%M", eth->recv_mac);
-
-    textColor(LIGHT_MAGENTA); printf("  Transm.: "); textColor(0x03);
-    printf("%M", eth->send_mac);
+    textColor(LIGHT_GRAY); printf("Rcv: "); textColor(IMPORTANT); printf("%M", eth->recv_mac);
+    textColor(LIGHT_GRAY); printf("  Transm.: "); textColor(IMPORTANT); printf("%M", eth->send_mac);
 
   #ifdef _NETWORK_DATA_
     textColor(LIGHT_MAGENTA);
@@ -52,7 +51,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     if (ethernetType <= 1500) { printf("Length: "); }
     else                      { printf("Type: ");   }
 
-    textColor(0x03);
+    textColor(DATA);
     for (uint8_t i = 0; i < 2; i++)
     {
         printf("%yh ", eth->type_len[i]);
@@ -66,60 +65,55 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     }
   #endif
 
-    textColor(WHITE);
-    printf("\n");
-
-    textColor(YELLOW);
+    textColor(TEXT);
     if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
     {
-        printf("Ethernet 2. ");
         // cf. http://en.wikipedia.org/wiki/EtherType
         // and http://www.cavebear.com/archive/cavebear/Ethernet/type.html
 
         // now we look for IPv4, IPv6, or ARP
         if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IP
         {
-            printf("Prot. type: IP. ");
             ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t));
         }
 
         else if ((eth->type_len[0] == 0x86) && (eth->type_len[1] == 0xDD)) // IPv6
         {
-            printf("Prot. type: IPv6. Currently, not further analyzed. ");
+          #ifdef _NETWORK_DATA_
+            printf("Protocol type: IPv6. Currently, not further analyzed. ");
+          #endif
             // TODO analyze IPv6
         }
 
         else if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x06)) // ARP
         {
-            printf("Prot. type: ARP. ");
             arp_received(adapter, (void*)(eth+1));
         }
         else
         {
-            printf("Neither IP nor ARP\n");
-            // TODO
+          #ifdef _NETWORK_DATA_
+            printf("Protocol type: Neither IP nor ARP.");
+          #endif
         }
     } // end of ethernet 2
     else
     {
         printf("Ethernet 1. ");
     }
-
-    printf("\n");
-    textColor(WHITE);
 }
 
 
 bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type)
 {
+    textColor(HEADLINE);
+    printf("\nEthernet send: ");
+    textColor(TEXT);
+    printf("length = %u.", sizeof(ethernet_t)+length);
     if (sizeof(ethernet_t)+length > 0x700)
     {
-        printf("\nEthernetSend: length: %u. Error: This is more than (1792) 0x700\n",sizeof(ethernet_t)+length);
+        textColor(ERROR);
+        printf(" Error: This is more than (1792) 0x700\n",sizeof(ethernet_t)+length);
         return false;
-    }
-    else
-    {
-        printf("\nEthernetSend: length: %u.\n", sizeof(ethernet_t)+length);
     }
 
     ethernet_t* packet = malloc(sizeof(ethernet_t)+length, 0, "ethernet packet");

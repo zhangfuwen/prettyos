@@ -12,6 +12,9 @@
 
 void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, uint8_t sourceIP[4])
 {
+    textColor(HEADLINE);
+    printf("\nICMP:");
+
     size_t icmp_data_length = length-sizeof(icmpheader_t);
     uint8_t pkt[sizeof(icmpheader_t) + icmp_data_length];
 
@@ -27,10 +30,8 @@ void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t leng
 
     icmp->checksum = htons( internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0) );
 
-    printf("\n\n");
-    printf("ICMP Header information:\n");
-    textColor(YELLOW);
-    printf("type: %u  code: %u  checksum %u\n", icmp->type, icmp->code, icmp->checksum);
+    textColor(TEXT);
+    printf(" type: %u  code: %u  checksum %u\n", icmp->type, icmp->code, icmp->checksum);
 
     ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP,1);
 }

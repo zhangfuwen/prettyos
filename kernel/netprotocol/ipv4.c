@@ -26,36 +26,33 @@ static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
 {
+    textColor(HEADLINE);
+    printf("\nIPv4:");
+    textColor(TEXT);
     if(memcmp(packet->destIP, adapter->IP, 4) != 0 && memcmp(packet->destIP, broadcast_IP, 4) != 0)
     {
-        printf("\nIPv4 packet received. We are not the addressee.");
+        printf("\nWe are not the addressee.");
         return;
     }
 
     // IPv4 protocol is parsed here and distributed in switch/case
-    uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
-    printf(" IP version: %u, IP Header Length: %u byte", packet->version, ipHeaderLengthBytes);
+    //uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
     switch(packet->protocol)
     {
         case 1: // icmp
-            printf("\nICMP: ");
             ICMPAnswerPing(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t), packet->sourceIP);
             break;
         case 4: // ipv4
-            printf("\nIPv4: ");
+            printf(" IPv4.");
             break;
         case 6: // tcp
-            printf("\nTCP: ");
-            tcpPacket_t* tcpPacket = (void*)(packet+1);
-            tcp_receive(adapter, tcpPacket, packet->sourceIP, length-sizeof(ipv4Packet_t));
+            tcp_receive(adapter, (void*)(packet+1), packet->sourceIP, length-sizeof(ipv4Packet_t));
             break;
         case 17: // udp
-            printf("\nUDP: ");
-            udpPacket_t* udpPacket = (void*)(packet+1);
-            UDPRecv(adapter,udpPacket,length-sizeof(ipv4Packet_t));
+            UDPRecv(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t));
             break;
         default:
-            printf("\nother protocol following IP packet. ");
+            printf("\nUnknown protocol following IP packet.");
             break;
     }
 }

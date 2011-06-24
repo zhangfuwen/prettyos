@@ -140,6 +140,7 @@ bool network_installDevice(pciDev_t* device)
   #ifndef QEMU_HACK
     DHCP_Discover(adapter);
   #endif
+    DHCP_Discover(adapter);
     textColor(YELLOW);
     printf("\nMAC: %M", adapter->MAC);
     printf(" IP: %I\n\n", adapter->IP);

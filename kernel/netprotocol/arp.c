@@ -69,14 +69,19 @@ void arp_showTable(arpTable_t* table)
 {
     arp_checkTable(table); // We check the table for obsolete entries.
 
+    textColor(TABLE_HEADING);
     printf("\nIP\t\t  MAC\t\t\tType\t  Time(sec)");
+    printf("\n--------------------------------------------------------------------------------");
+    textColor(TEXT);
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
-        size_t length = printf("\n%I\t", entry->IP);
-        if(length < 10) printf("\t");
-        printf("  %M\t%s\t  %u", entry->MAC, entry->dynamic?"dynamic":"static", entry->seconds);
+        size_t length = printf("%I\t", entry->IP);
+        if(length < 9) printf("\t");
+        printf("  %M\t%s\t  %u\n", entry->MAC, entry->dynamic?"dynamic":"static", entry->seconds);
     }
+    textColor(TABLE_HEADING);
+    printf("--------------------------------------------------------------------------------");
 }
 
 void arp_initTable(arpTable_t* table)
@@ -107,22 +112,22 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
         switch ((packet->operation[0] << 8) | packet->operation[1])
         {
         case 1: // ARP-Request
+            textColor(HEADLINE);
             if (memcmp(packet->sourceIP, packet->destIP, 4) == 0) // IP requ. and searched is identical
             {
-                printf("ARP Gratuitous Request\n");
+                printf("\nARP Gratuitous Request:");
             }
             else
             {
-                printf("ARP Request\n");
+                printf("\nARP Request:");
             }
-
-            textColor(LIGHT_MAGENTA); printf("\nMAC Requesting: "); textColor(0x03);
+            textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT);
             printf("%M", packet->source_mac);
-            textColor(LIGHT_MAGENTA); printf("  IP Requesting: "); textColor(0x03);
+            textColor(LIGHT_GRAY); printf("  IP Requesting: "); textColor(IMPORTANT);
             printf("%I", packet->sourceIP);
-            textColor(LIGHT_MAGENTA); printf("\nMAC Searched:   "); textColor(LIGHT_GRAY);
+            textColor(LIGHT_GRAY); printf("\nMAC Searched:   "); textColor(IMPORTANT);
             printf("%M", packet->dest_mac);
-            textColor(LIGHT_MAGENTA); printf("  IP Searched:   "); textColor(0x03);
+            textColor(LIGHT_GRAY); printf("  IP Searched:   "); textColor(IMPORTANT);
             printf("%I", packet->destIP);
 
             // requested IP is our own IP?
@@ -158,15 +163,16 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             break;
 
         case 2: // ARP-Response
-            printf("ARP Response\n");
+            textColor(HEADLINE);
+            printf("\nARP Response\n");
 
-            textColor(LIGHT_MAGENTA); printf("\nMAC Replying:   "); textColor(0x03);
+            textColor(LIGHT_GRAY); printf("\nMAC Replying:   "); textColor(IMPORTANT);
             printf("%M", packet->source_mac);
-            textColor(LIGHT_MAGENTA); printf("  IP Replying:   "); textColor(0x03);
+            textColor(LIGHT_GRAY); printf("  IP Replying:   "); textColor(IMPORTANT);
             printf("%I", packet->sourceIP);
-            textColor(LIGHT_MAGENTA); printf("\nMAC Requesting: "); textColor(0x03);
+            textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT);
             printf("%M", packet->dest_mac);
-            textColor(LIGHT_MAGENTA); printf("  IP Requesting: "); textColor(0x03);
+            textColor(LIGHT_GRAY); printf("  IP Requesting: "); textColor(IMPORTANT);
             printf("%I", packet->destIP);
             break;
         } // switch
@@ -175,7 +181,8 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
     } // if
     else
     {
-        printf("No Ethernet and IPv4 - Unknown packet sent to ARP\n");
+        textColor(ERROR);
+        printf("\nNo Ethernet and IPv4 - Unknown packet sent to ARP.");
     }
 }
 

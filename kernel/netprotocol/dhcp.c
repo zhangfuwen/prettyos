@@ -16,7 +16,9 @@ void DHCP_Discover(network_adapter_t* adapter)
 {
     xid += (1<<24);
 
-    printf("\nDHCP Discover sent.\n");
+    textColor(IMPORTANT);
+    printf("\nDHCP Discover sent.");
+    textColor(TEXT);
 
     dhcp_t packet;
     packet.op = 1;
@@ -90,7 +92,9 @@ void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
 {
     xid += (1<<24);
 
-    printf("\nDHCP Request sent.\n");
+    textColor(IMPORTANT);
+    printf("\nDHCP Request sent.");
+    textColor(TEXT);
 
     dhcp_t packet;
     packet.op = 1;
@@ -166,7 +170,9 @@ void DHCP_Inform(network_adapter_t* adapter)
 {
     xid += (1<<24);
 
-    printf("\nDHCP Inform sent.\n");
+    textColor(IMPORTANT);
+    printf("\nDHCP Inform sent.");
+    textColor(TEXT);
 
     dhcp_t packet;
     packet.op = 1;
@@ -240,7 +246,9 @@ void DHCP_Release(network_adapter_t* adapter)
 {
     xid += (1<<24);
 
-    printf("\nDHCP Release sent.\n");
+    textColor(IMPORTANT);
+    printf("\nDHCP Release sent.");
+    textColor(TEXT);
 
     dhcp_t packet;
     packet.op = 1;
@@ -307,26 +315,20 @@ static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
 
 void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
 {
-    /*
-    printf("\nop: %u",    dhcp->op);
-    printf(" htype: %u",  dhcp->htype);
-    printf(" hlen: %u",   dhcp->hlen);
-    printf(" hops: %u",   dhcp->hops);
-    printf(" xid: %Xh",   ntohl(dhcp->xid));
-    printf(" secs: %u",   ntohs(dhcp->secs));
-    printf(" flags: %xh", ntohs(dhcp->flags));
-    */
-    printf("\ncIP: %I", dhcp->ciaddr);
-    printf(" yIP: %I",  dhcp->yiaddr);
-    printf("\nsIP: %I", dhcp->siaddr);
-    printf(" gIP: %I",  dhcp->giaddr);
-    printf("\nMAC: %M", dhcp->chaddr);
+    textColor(HEADLINE);
+    printf("\nDHCP:");
+
+    textColor(LIGHT_GRAY); printf("\ncIP: "); textColor(IMPORTANT); printf("%I", dhcp->ciaddr);
+    textColor(LIGHT_GRAY); printf("\tyIP: "); textColor(IMPORTANT); printf("%I", dhcp->yiaddr);
+    textColor(LIGHT_GRAY); printf("\tsIP: "); textColor(IMPORTANT); printf("%I", dhcp->siaddr);
+    textColor(LIGHT_GRAY); printf("\tgIP: "); textColor(IMPORTANT); printf("%I", dhcp->giaddr);
+    textColor(LIGHT_GRAY); printf("\nMAC: "); textColor(IMPORTANT); printf("%M\n", dhcp->chaddr);
 
     DHCP_AnalyzeOptions(adapter, dhcp->options);
     switch(adapter->DHCP_State)
     {
         case OFFER:
-            printf("\n >>> PrettyOS got a DHCP OFFER. <<<");
+            printf("\n >>> PrettyOS got a DHCP OFFER. <<<\n");
             if (dhcp->yiaddr[0] || dhcp->yiaddr[1] || dhcp->yiaddr[2] || dhcp->yiaddr[3])
             {
                 DHCP_Request(adapter, dhcp->yiaddr);
@@ -340,14 +342,14 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             }
             break;
         case ACK:
-            textColor(GREEN);
-            printf("\n>>> PrettyOS got a DHCP ACK.   <<<");
+            textColor(SUCCESS);
+            printf("\n >>> PrettyOS got a DHCP ACK.   <<<\n");
+            textColor(TEXT);
             useDHCP_IP(adapter, dhcp);
             printf("\nGateway IP: %I Subnet: %I", adapter->Gateway_IP, adapter->Subnet);
-            textColor(WHITE);
             break;
         case NAK:
-            printf("\n >>> DHCP was not successful (NAK). <<<");
+            printf("\n >>> DHCP was not successful (NAK). <<<\n");
             break;
         default:
             break;
@@ -358,13 +360,16 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 {
     uint32_t leaseTime=0;
 
+    textColor(TEXT);
     switch(opt[count+1]) // 1: message  2: length  3 to (2+length): data
     {
         case 1: // subnet mask
+          #ifdef _NETWORK_DATA_
             for(uint16_t i=0; i<opt[count+2]; i++)
             {
                 printf("%u ", opt[count+3+i]);
             }
+          #endif
 
             if (opt[count+2] == 4)
             {
@@ -373,56 +378,78 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             break;
 
         case 12: case 14: case 15: case 17: case 18: case 40: case 43: // ASCII output
+          #ifdef _NETWORK_DATA_
             for(uint16_t i=0; i<opt[count+2]; i++)
                 printf("%c", opt[count+3+i]);
+          #endif
             break;
         case 51: // Lease time
             for(uint16_t i=0; i<opt[count+2]; i++)
             {
+              #ifdef _NETWORK_DATA_
                 printf("%u ", opt[count+3+i]);
+              #endif
                 leaseTime += ((opt[count+3+i])<<(24-8*i));
             }
+          #ifdef _NETWORK_DATA_
             printf("  %u hours", leaseTime/3600);
+          #endif
             break;
         case 53: // Message type
+          #ifdef _NETWORK_DATA_
             for(uint16_t i=0; i<opt[count+2]; i++)
                 printf("%u ", opt[count+3+i]);
+          #endif
             switch (opt[count+3])
             {
+              #ifdef _NETWORK_DATA_
                 case 1:
                     printf(" (DHCPDiscover)");
                     break;
+              #endif
                 case 2:
+              #ifdef _NETWORK_DATA_
                     printf(" (DHCPOffer)");
+              #endif
                     adapter->DHCP_State = OFFER;
                     break;
+              #ifdef _NETWORK_DATA_
                 case 3:
                     printf(" (DHCPRequest)");
                     break;
                 case 4:
                     printf(" (DHCPDecline)");
                     break;
+              #endif
                 case 5:
+              #ifdef _NETWORK_DATA_
                     printf(" (DHCPAck)");
+              #endif
                     adapter->DHCP_State = ACK;
                     break;
                 case 6:
+              #ifdef _NETWORK_DATA_
                     printf(" (DHCPNak)");
+              #endif
                     adapter->DHCP_State = NAK;
                     break;
+              #ifdef _NETWORK_DATA_
                 case 7:
                     printf(" (DHCPRelease)");
                     break;
                 case 8:
                     printf(" (DHCPInform)");
                     break;
+              #endif
             }
             break;
         case 54: // Server identifier
+          #ifdef _NETWORK_DATA_
             for(uint16_t i=0; i<opt[count+2]; i++)
             {
                 printf("%u ", opt[count+3+i]);
             }
+          #endif
 
             if (opt[count+2] == 4)
             {
@@ -431,8 +458,10 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             }
             break;
         default:
+          #ifdef _NETWORK_DATA_
             for(uint16_t i=0; i<opt[count+2]; i++)
                 printf("%u ", opt[count+3+i]);
+          #endif
             break;
     }
     return (count + 2 + opt[count+2]);
@@ -440,22 +469,23 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 
 static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
 {
-    uint16_t count=0;
-
     // check for magic number 63h 82h 53h 63h
-    if (opt[0] == 0x63 && opt[1] == 0x82 && opt[2] == 0x53 && opt[3] == 0x63)
-        printf("\nMAGIC OK");
-    else
+    if (opt[0] != 0x63 || opt[1] != 0x82 || opt[2] != 0x53 || opt[3] != 0x63)
+    {
+        textColor(ERROR);
         printf("\nMAGIC NOT OK");
-    count=3;
+        return;
+    }
+
+    uint16_t count = 3;
 
     while (opt[count+1] != 0xFF) // no end token
     {
+      #ifdef _NETWORK_DATA_
         switch (opt[count+1])
         {
         case 0:
             printf("\nPadding");
-            count++;
             break;
         case 1:
             printf("\nSubnet Mask: ");
@@ -706,9 +736,6 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
         case 83:
             printf("\nInternet Storage Name Service: ");
             break;
-/*      case 84:
-            printf("\n???: ");
-            break;*/
         case 85:
             printf("\nNDS servers: ");
             break;
@@ -742,9 +769,6 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
         case 95:
             printf("\nLDAP, Lightweight Directory Access Protocol: ");
             break;
-/*      case 96:
-            printf("\n???: ");
-            break;*/
         case 97:
             printf("\nClient Machine Identifier: ");
             break;
@@ -761,10 +785,15 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
             printf("\nUnknown option: %u", opt[count+1]);
             break;
         } //switch
+      #endif
+
         if(opt[count+1] != 0)
             count = showOptionsBytes(adapter, opt, count);
+        else count++;
     } //while
+  #ifdef _NETWORK_DATA_
     printf("\nEND OF OPTIONS\n");
+  #endif
 }
 
 

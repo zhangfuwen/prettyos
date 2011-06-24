@@ -164,15 +164,16 @@ bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout
 
 void scheduler_log()
 {
-    textColor(WHITE);
+    textColor(HEADLINE);
     printf("\ncurrent task: ");
-    textColor(0x0D);
+    textColor(TEXT);
     printf("pid: %u", currentTask->pid);
-    textColor(WHITE);
 
     if(runningTasks->begin != 0)
     {
+        textColor(HEADLINE);
         printf("\nrunning tasks:");
+        textColor(TEXT);
         element_t* temp = runningTasks->begin;
         do
         {
@@ -184,7 +185,9 @@ void scheduler_log()
 
     if(blockedTasks->begin != 0)
     {
+        textColor(HEADLINE);
         printf("\nblocked tasks:");
+        textColor(TEXT);
         element_t* temp = blockedTasks->begin;
         do
         {
@@ -196,7 +199,9 @@ void scheduler_log()
 
     if(freetimeTask)
     {
+        textColor(HEADLINE);
         printf("\nfreetime task:");
+        textColor(TEXT);
         task_log(freetimeTask);
     }
     printf("\n\n");

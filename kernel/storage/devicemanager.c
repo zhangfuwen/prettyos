@@ -98,12 +98,12 @@ void removeDisk(disk_t* disk)
 
 void showPortList()
 {
-    textColor(GREEN);
+    textColor(HEADLINE);
     printf("\nAvailable ports:");
-    textColor(LIGHT_GRAY);
-    printf("\n\nType\tNumber\tName\t\tInserted disk");
+    textColor(TABLE_HEADING);
+    printf("\nType\tNumber\tName\t\tInserted disk");
     printf("\n----------------------------------------------------------------------");
-    textColor(WHITE);
+    textColor(TEXT);
 
     for (uint8_t i = 0; i < PORTARRAYSIZE; i++)
     {
@@ -116,9 +116,9 @@ void showPortList()
             else if(ports[i]->type == &USB)
                 printf("\nUSB 2.0");
 
-            textColor(YELLOW);
+            textColor(IMPORTANT);
             printf("\t%c", 'A'+i); // number
-            textColor(WHITE);
+            textColor(TEXT);
             printf("\t%s", ports[i]->name); // The ports name
 
             if (ports[i]->insertedDisk != 0)
@@ -134,19 +134,19 @@ void showPortList()
             }
         }
     }
-    textColor(LIGHT_GRAY);
+    textColor(TABLE_HEADING);
     printf("\n----------------------------------------------------------------------\n");
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 void showDiskList()
 {
-    textColor(GREEN);
+    textColor(HEADLINE);
     printf("\nAttached disks:");
-    textColor(LIGHT_GRAY);
-    printf("\n\nType\tNumber\tName\t\tPart.\tSerial");
+    textColor(TABLE_HEADING);
+    printf("\nType\tNumber\tName\t\tPart.\tSerial");
     printf("\n----------------------------------------------------------------------");
-    textColor(WHITE);
+    textColor(TEXT);
 
     for (uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
@@ -165,9 +165,9 @@ void showDiskList()
             else if(disks[i]->type == &USB_MSD)
                 printf("\nUSB MSD");
 
-            textColor(YELLOW);
+            textColor(IMPORTANT);
             printf("\t%u", i+1); // Number
-            textColor(WHITE);
+            textColor(TEXT);
 
             printf("\t%s", disks[i]->name);   // Name of disk
             if (strlen(disks[i]->name) < 8) { printf("\t"); }
@@ -198,9 +198,9 @@ void showDiskList()
             }
         }
     }
-    textColor(LIGHT_GRAY);
+    textColor(TABLE_HEADING);
     printf("\n----------------------------------------------------------------------\n");
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 const char* getFilename(const char* path)

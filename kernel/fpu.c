@@ -44,7 +44,7 @@ void fpu_test()
     if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
         return;
 
-    textColor(0x03);
+    textColor(HEADLINE);
     printf("\nFPU test: ");
 
     double squareroot = sqrt(2.0);
@@ -52,15 +52,15 @@ void fpu_test()
     squareroot /= sqrt(2.0);
     if (squareroot == 1.00)
     {
-        textColor(GREEN);
+        textColor(SUCCESS);
         printf("OK.\n");
     }
     else
     {
-       textColor(RED);
+       textColor(ERROR);
        printf("ERROR.\n");
     }
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 /*

@@ -1,8 +1,7 @@
 #ifndef CDI_FS
 #define CDI_FS
 
-#include "os.h"
-#include "filesystem/fsmanager.h"
+#include "types.h"
 #include <cdi.h>
 #include <cdi/lists.h>
 #include <cdi/cache.h>

@@ -1,7 +1,7 @@
 #ifndef CDI_IO_H
 #define CDI_IO_H
 
-#include "os.h"
+#include "types.h"
 #include "util.h"
 
 static inline uint16_t cdi_inw(uint16_t _port)
