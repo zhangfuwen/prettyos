@@ -102,7 +102,7 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
     packet.hops = 0;
     packet.xid = xid; // AFFExx
     packet.secs = htons(0);
-    packet.flags = UNICAST; 
+    packet.flags = BROADCAST; 
     packet.ciaddr.iIP = 0;
     packet.yiaddr.iIP = 0;
     packet.siaddr.iIP = 0;
@@ -157,14 +157,9 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
     packet.options[37] =  79;  // O
     packet.options[38] =  83;  // S
 
-    IP_t srcIP = {.iIP = 0};
-    
-  #ifdef QEMU_HACK
-    IP_t destIP = adapter->Gateway_IP;
-  #else
-    IP_t destIP = lastPacket.IP;
-  #endif
-
+    IP_t srcIP  = {.iIP = 0x00000000};
+    IP_t destIP = {.iIP = 0xFFFFFFFF};
+  
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
