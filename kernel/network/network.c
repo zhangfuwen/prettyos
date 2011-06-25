@@ -16,6 +16,7 @@
 #include "list.h"
 #include "todo_list.h"
 
+
 typedef enum
 {
     RTL8139, RTL8168, PCNET, ND_END
@@ -27,6 +28,8 @@ static network_driver_t drivers[ND_END] =
     {.install = &install_RTL8168, .interruptHandler = &rtl8168_handler, .sendPacket = 0},
     {.install = &install_AMDPCnet, .interruptHandler = &PCNet_handler, .sendPacket = &PCNet_send}
 };
+
+Packet_t lastPacket; // save data during packet receive thru the protocols
 
 static listHead_t* adapters = 0;
 static listHead_t* RxBuffers = 0;

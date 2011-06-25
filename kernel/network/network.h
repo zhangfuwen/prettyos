@@ -65,6 +65,11 @@ struct network_adapter
     IP_t              Subnet;
 };
 
+typedef struct 
+{
+    IP_t IP;
+    uint8_t MAC[6];
+} Packet_t;
 
 bool network_installDevice(pciDev_t* device);
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length);

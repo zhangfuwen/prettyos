@@ -20,6 +20,8 @@ bool isSubnet(IP_t IP, IP_t myIP, IP_t subnet)
     return((IP.iIP & subnet.iIP) == (myIP.iIP & subnet.iIP));
 }
 
+extern Packet_t lastPacket; // network.c
+
 static const IP_t broadcast_IP = {.iIP = 0xFFFFFFFF};
 static const IP_t broadcast_IP2 = {.iIP = 0};
 static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -36,6 +38,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
         printf("\nWe are not the addressee.");
         return;
     }
+    memcpy(lastPacket.IP.IP, packet->sourceIP.IP, 4); // save sender IP
 
     // IPv4 protocol is parsed here and distributed in switch/case
     //uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)

@@ -14,6 +14,7 @@
 #include "network/netutils.h"
 #include "util.h"
 
+extern Packet_t lastPacket; // network.c
 
 static const uint8_t broadcast_MAC1[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 static const uint8_t broadcast_MAC2[6] = {0, 0, 0, 0, 0, 0};
@@ -30,6 +31,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         printf("Ethernet packet received. We are not the addressee.");
         return;
     }
+    memcpy(lastPacket.MAC, eth->send_mac, 6); // save sender 
 
     // output ethernet packet
   #ifdef _NETWORK_DATA_

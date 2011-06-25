@@ -12,6 +12,8 @@
 
 static uint32_t xid = 0x0000E0FF0A; // AFFE.... Transaction Code for Identification
 
+extern Packet_t lastPacket; // network.c
+
 void DHCP_Discover(network_adapter_t* adapter)
 {
     xid += (1<<24);
@@ -100,7 +102,7 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
     packet.hops = 0;
     packet.xid = xid; // AFFExx
     packet.secs = htons(0);
-    packet.flags = BROADCAST; // TEST: broadcast
+    packet.flags = UNICAST; 
     packet.ciaddr.iIP = 0;
     packet.yiaddr.iIP = 0;
     packet.siaddr.iIP = 0;
@@ -156,7 +158,13 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
     packet.options[38] =  83;  // S
 
     IP_t srcIP = {.iIP = 0};
-    IP_t destIP = {.iIP = 0xFFFFFFFF};
+    
+  #ifdef QEMU_HACK
+    IP_t destIP = adapter->Gateway_IP;
+  #else
+    IP_t destIP = lastPacket.IP;
+  #endif
+
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
@@ -303,6 +311,9 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             printf("\n >>> PrettyOS got a DHCP OFFER. <<<\n");
             if (dhcp->yiaddr.iIP != 0)
             {
+              #ifndef QEMU_HACK
+                arp_addTableEntry(&adapter->arpTable, lastPacket.MAC, lastPacket.IP, false);
+              #endif    
                 DHCP_Request(adapter, dhcp->yiaddr);
             }
             else
