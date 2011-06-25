@@ -76,11 +76,10 @@ void outportl(uint16_t port, uint32_t val)
 
 void panic_assert(const char* file, uint32_t line, const char* desc)
 {
-    printf("\nASSERTION FAILED (%s) in file '%s', line %u\nTask Halted. Press key to exit!", desc, file, line);
-    sti();
-    getch();
-    exit();
-    for (;;);
+    textColor(ERROR);
+    printf("\nASSERTION FAILED (%s) in file '%s', line %u\nOPERATING SYSTEM HALTED!", desc, file, line);
+    cli();
+    hlt();
 }
 
 /**********************************************************************/

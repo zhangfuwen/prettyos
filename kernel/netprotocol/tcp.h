@@ -48,7 +48,7 @@ typedef struct
 typedef struct
 {
     uint16_t port;
-    uint8_t  IP[4];
+    IP_t     IP;
 } tcpSocket_t;
 
 typedef struct
@@ -77,10 +77,10 @@ void tcp_deleteConnection(tcpConnection_t* connection);
 void tcp_bind(tcpConnection_t* connection, network_adapter_t* adapter);
 void tcp_connect(tcpConnection_t* connection);
 void tcp_close(tcpConnection_t* connection);
-void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length);
+void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length);
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber);
 void tcp_showConnections();
 tcpConnection_t* findConnectionID(uint32_t ID);
-tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_adapter_t* adapter, bool established);
+tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, bool established);
 
 #endif

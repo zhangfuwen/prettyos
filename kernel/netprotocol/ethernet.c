@@ -107,7 +107,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type)
 {
     textColor(HEADLINE);
-    printf("\nEth send:"); 
+    printf("\nEth send:");
     textColor(GRAY);
     printf(" %M ==> %M", adapter->MAC, MAC);
     textColor(TEXT);

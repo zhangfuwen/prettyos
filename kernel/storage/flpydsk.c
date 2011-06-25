@@ -651,7 +651,6 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
     uint32_t timeout = 2; // limit
     FS_ERROR retVal  = CE_GOOD;
 
-    CurrentDrive->drive.insertedDisk->accessRemaining++;
     while ((retVal = flpydsk_write(val, option==SECTOR?1:18)) != 0)
     {
         timeout--;

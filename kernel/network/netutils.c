@@ -8,8 +8,8 @@
 
 typedef struct
 {
-    uint8_t src[4];
-    uint8_t dest[4];
+    IP_t src;
+    IP_t dest;
     uint8_t res;
     uint8_t prot;
     uint16_t length;
@@ -42,14 +42,11 @@ uint16_t internetChecksum(void* addr, size_t count, uint32_t pseudoHeaderChecksu
     return ~sum & 0xFFFF;
 }
 
-uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uint8_t destIP[4], uint16_t protocol)
+uint16_t udptcpCalculateChecksum(void* p, uint16_t length, IP_t srcIP, IP_t destIP, uint16_t protocol)
 {
     updtcpPseudoHeader_t pseudo;
-    for (uint8_t i=0; i<4; i++)
-    {
-        pseudo.src[i]  = srcIP[i];
-        pseudo.dest[i] = destIP[i];
-    }
+    pseudo.src.iIP = srcIP.iIP;
+    pseudo.dest.iIP = destIP.iIP;
     pseudo.length = htons(length);
     pseudo.prot = protocol;
     pseudo.res = 0;

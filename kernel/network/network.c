@@ -118,15 +118,15 @@ bool network_installDevice(pciDev_t* device)
     }
     */
     // Workaround: TODO
-    adapter->IP[0] =  IP_1;
-    adapter->IP[1] =  IP_2;
-    adapter->IP[2] =  IP_3;
-    adapter->IP[3] =  IP_4;
+    adapter->IP.IP[0] =  IP_1;
+    adapter->IP.IP[1] =  IP_2;
+    adapter->IP.IP[2] =  IP_3;
+    adapter->IP.IP[3] =  IP_4;
 
-    adapter->Gateway_IP[0] = GW_IP_1;
-    adapter->Gateway_IP[1] = GW_IP_2;
-    adapter->Gateway_IP[2] = GW_IP_3;
-    adapter->Gateway_IP[3] = GW_IP_4;
+    adapter->Gateway_IP.IP[0] = GW_IP_1;
+    adapter->Gateway_IP.IP[1] = GW_IP_2;
+    adapter->Gateway_IP.IP[2] = GW_IP_3;
+    adapter->Gateway_IP.IP[3] = GW_IP_4;
     // ------------------------------
 
     adapter->driver->install(adapter);
@@ -197,13 +197,13 @@ void network_displayArpTables()
     printf("\n");
 }
 
-network_adapter_t* network_getAdapter(uint8_t IP[4])
+network_adapter_t* network_getAdapter(IP_t IP)
 {
     if(adapters == 0) return(0);
     for(element_t* e = adapters->head; e != 0; e = e->next)
     {
         network_adapter_t* adapter = e->data;
-        if(adapter->IP[0] == IP[0] && adapter->IP[1] == IP[1] && adapter->IP[2] == IP[2] && adapter->IP[3] == IP[3])
+        if(adapter->IP.iIP == IP.iIP)
         {
             return(adapter);
         }

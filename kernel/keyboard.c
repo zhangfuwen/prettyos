@@ -172,7 +172,7 @@ static char keyToASCII(KEY_t key)
         }
     }
 
-    if(key == KEY_PRINT) // Save content of video memory.
+    if(key == KEY_PRINT || key == KEY_F12) // Save content of video memory. F12 is alias for PrintScreen due to problems in some emulators
     {
         takeScreenshot();
     }
@@ -201,7 +201,7 @@ static void keyboard_handler(registers_t* r)
         return;
     }
 
-    // Find out ASCII representation of key. Issue events, put it to KQ.
+    // Find out ASCII representation of key. Issue events.
     char ascii = keyToASCII(key);
     if(ascii != 0)
         for(element_t* e = console_displayed->tasks->head; e != 0; e = e->next)

@@ -30,7 +30,7 @@ void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
     }
 }
 
-void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, uint8_t srcIP[4], uint16_t destPort, uint8_t destIP[4])
+void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, IP_t srcIP, uint16_t destPort, IP_t destIP)
 {
     udpPacket_t* packet = malloc(sizeof(udpPacket_t)+length, 0, "UDP packet");
     memcpy(packet+1, data, length);

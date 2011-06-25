@@ -176,10 +176,10 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
 
     MSDStatusQTDpage0 = allocQTDbuffer(td);
 
-    (*(((uint32_t*)MSDStatusQTDpage0)+0)) = CSWMagicNotOK; // magic USBS
-    (*(((uint32_t*)MSDStatusQTDpage0)+1)) = 0xAAAAAAAA; // CSWTag
-    (*(((uint32_t*)MSDStatusQTDpage0)+2)) = 0xAAAAAAAA;
-    (*(((uint32_t*)MSDStatusQTDpage0)+3)) = 0xFFFFFFAA;
+    ((uint32_t*)MSDStatusQTDpage0)[0] = CSWMagicNotOK; // magic USBS
+    ((uint32_t*)MSDStatusQTDpage0)[1] = 0xAAAAAAAA;    // CSWTag
+    ((uint32_t*)MSDStatusQTDpage0)[2] = 0xAAAAAAAA;
+    ((uint32_t*)MSDStatusQTDpage0)[3] = 0xFFFFFFAA;
 
     return (void*)td;
 }
@@ -201,17 +201,15 @@ static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
     #endif
     for (uint32_t c=0; c<size; c++)
     {
+        textColor(DATA);
         if (alphanumeric)
         {
-            textColor(WHITE);
             if ( (*((uint8_t*)virtAddrBuf0+c)>=0x20) && (*((uint8_t*)virtAddrBuf0+c)<=0x7E) )
-                printf("%c", *((uint8_t*)virtAddrBuf0+c));
+                putch(((char*)virtAddrBuf0)[c]);
         }
         else
         {
-            textColor(LIGHT_GRAY);
-            printf("%y ", *((uint8_t*)virtAddrBuf0+c));
-            textColor(WHITE);
+            printf("%y ", ((uint8_t*)virtAddrBuf0)[c]);
         }
     }
     printf("\n");

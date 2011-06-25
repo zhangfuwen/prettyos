@@ -3,7 +3,7 @@
 #ifndef CDI_SCSI_H
 #define CDI_SCSI_H
 
-#include "os.h"
+#include "types.h"
 #include <cdi.h>
 
 // SCSI-Paket

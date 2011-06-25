@@ -70,8 +70,6 @@ void usbTransferDevice(uint32_t device)
 
     performAsyncScheduler(true, false,0);
 
-    printf("\n---------------------------------------------------------------------\n");
-
     // showPacket(DataQTDpage0,18);
     addDevice ( (struct usb2_deviceDescriptor*)DataQTDpage0, &usbDevices[device] );
     showDevice( &usbDevices[device] );
@@ -105,10 +103,11 @@ void usbTransferConfig(uint32_t device)
 
     performAsyncScheduler(true, false, 0);
 
-
+  #ifdef _USB_DIAGNOSIS_
     textColor(LIGHT_GRAY);
     printf("\n---------------------------------------------------------------------\n");
     textColor(GREEN);
+  #endif
 
     // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
     uintptr_t addrPointer = (uintptr_t)DataQTDpage0;
@@ -147,7 +146,7 @@ void usbTransferConfig(uint32_t device)
 
         if (*(uint8_t*)addrPointer == 7 && *(uint8_t*)(addrPointer+1) == 5) // length, type
         {
-            showEndpointDescriptor ((struct usb2_endpointDescriptor*)addrPointer);
+            showEndpointDescriptor((struct usb2_endpointDescriptor*)addrPointer);
 
             // store endpoint numbers for IN/OUT mass storage transfers, attributes must be 0x2, because there are also endpoints with attributes 0x3(interrupt)
             if (((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80 && ((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2)
@@ -460,16 +459,16 @@ void showDevice(usb2_Device_t* usbDev)
             case 2: printf("Hi-speed hub with multiple TTs"); break;
         }
     }
-    printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
   #ifdef _USB_DIAGNOSIS_
-    printf("vendor:            %xh\n",           usbDev->vendor);
-    printf("product:           %xh\t",           usbDev->product);
-    printf("release number:    %u.%u\n",        usbDev->releaseNumber>>8, usbDev->releaseNumber&0xFF);
-    printf("manufacturer:      %xh\t",           usbDev->manufacturerStringID);
-    printf("product:           %xh\n",           usbDev->productStringID);
-    printf("serial number:     %xh\t",           usbDev->serNumberStringID);
-    printf("number of config.: %u\n",           usbDev->numConfigurations); // number of possible configurations
-    printf("numInterfaceMSD:   %u\n",           usbDev->numInterfaceMSD);
+    printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
+    printf("vendor:            %xh\n",   usbDev->vendor);
+    printf("product:           %xh\t",   usbDev->product);
+    printf("release number:    %u.%u\n", usbDev->releaseNumber>>8, usbDev->releaseNumber&0xFF);
+    printf("manufacturer:      %xh\t",   usbDev->manufacturerStringID);
+    printf("product:           %xh\n",   usbDev->productStringID);
+    printf("serial number:     %xh\t",   usbDev->serNumberStringID);
+    printf("number of config.: %u\n",    usbDev->numConfigurations); // number of possible configurations
+    printf("numInterfaceMSD:   %u\n",    usbDev->numInterfaceMSD);
   #endif
 
     textColor(WHITE);
@@ -487,7 +486,7 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
         printf("total length:         %u\t",  d->totalLength);
       #endif
         textColor(GREEN);
-        printf("Number of interfaces: %u",  d->numInterfaces);
+        printf("\nNumber of interfaces: %u",  d->numInterfaces);
       #ifdef _USB_DIAGNOSIS_
         printf("ID of config:         %xh\t",  d->configurationValue);
         printf("ID of config name     %xh\n",  d->configuration);
@@ -503,22 +502,26 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
 {
     if (d->length)
     {
+        putch('\n');
+      #ifdef _USB_DIAGNOSIS_
         textColor(LIGHT_GRAY);
-        printf("\n---------------------------------------------------------------------\n");
+        printf("---------------------------------------------------------------------\n");
+      #endif
         textColor(GREEN);
       #ifdef _USB_DIAGNOSIS_
         printf("length:               %u\t\t", d->length);          // 9
         printf("descriptor type:      %u\n",   d->descriptorType);  // 4
       #endif
-        switch(d->numEndpoints) {
+        switch(d->numEndpoints)
+        {
             case 0:
-                printf("\nInterface %u has no endpoint and belongs to class:\n", d->interfaceNumber);
+                printf("Interface %u has no endpoint and belongs to class:\n", d->interfaceNumber);
                 break;
             case 1:
-                printf("\nInterface %u has only one endpoint and belongs to class:\n", d->interfaceNumber);
+                printf("Interface %u has only one endpoint and belongs to class:\n", d->interfaceNumber);
                 break;
             default:
-                printf("\nInterface %u has %u endpoints and belongs to class:\n", d->interfaceNumber, d->numEndpoints);
+                printf("Interface %u has %u endpoints and belongs to class:\n", d->interfaceNumber, d->numEndpoints);
                 break;
         }
         textColor(YELLOW);
@@ -623,30 +626,27 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
 
 void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
 {
+  #ifdef _USB_DIAGNOSIS_
     if (d->length)
     {
         textColor(LIGHT_GRAY);
         printf("\n---------------------------------------------------------------------\n");
         textColor(GREEN);
-      #ifdef _USB_DIAGNOSIS_
         printf("length:            %u\t\t",  d->length);         // 7
         printf("descriptor type:   %u\n",    d->descriptorType); // 5
-      #endif
         printf("endpoint %u: %s, ", d->endpointAddress & 0xF, d->endpointAddress & 0x80 ? "IN " : "OUT");
-      #ifdef _USB_DIAGNOSIS_
         printf("attributes:  %yh\t\t",  d->attributes); // bit 1:0 00 control    01 isochronous    10 bulk                         11 interrupt
-                                                       // bit 3:2 00 no sync    01 async          10 adaptive                     11 sync (only if isochronous)
-      #endif                                           // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
+                                                        // bit 3:2 00 no sync    01 async          10 adaptive                     11 sync (only if isochronous)
+                                                        // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
         if (d->attributes == 2)
         {
            printf(" bulk data,");
         }
         printf(" mps: %u byte",  d->maxPacketSize);
-      #ifdef _USB_DIAGNOSIS_
         printf("interval:          %u\n",  d->interval);
-      #endif
         textColor(WHITE);
     }
+  #endif
 }
 
 void showStringDescriptor(struct usb2_stringDescriptor* d)
@@ -668,37 +668,37 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
                 switch (d->languageID[i])
                 {
                     case 0x401:
-                        printf("Arabic\t");
+                        printf("Arabic");
                         break;
                     case 0x404:
-                        printf("Chinese \t");
+                        printf("Chinese");
                         break;
                     case 0x407:
-                        printf("German\t");
+                        printf("German");
                         break;
                     case 0x409:
-                        printf("English\t");
+                        printf("English");
                         break;
                     case 0x40A:
-                        printf("Spanish\t");
+                        printf("Spanish");
                         break;
                     case 0x40C:
-                        printf("French\t");
+                        printf("French");
                         break;
                     case 0x410:
-                        printf("Italian\t");
+                        printf("Italian");
                         break;
                     case 0x411:
-                        printf("Japanese\t");
+                        printf("Japanese");
                         break;
                     case 0x416:
-                        printf("Portuguese\t");
+                        printf("Portuguese");
                         break;
                     case 0x419:
-                        printf("Russian\t");
+                        printf("Russian");
                         break;
                     default:
-                        printf("language code: %xh\t", d->languageID[i]);
+                        printf("language code: %xh", d->languageID[i]);
                         /*Language Codes
                         ; 0x400 Neutral
                         ; 0x401 Arabic

@@ -7,6 +7,7 @@
 #include "util.h"
 #include "kheap.h"
 #include "task.h"
+#include "network/netutils.h"
 
 
 console_t* reachableConsoles[11]; // Mainconsole + up to 10 subconsoles
@@ -293,8 +294,8 @@ size_t vprintf(const char* args, va_list ap)
                         break;
                     case 'I': // IP address
                     {
-                        uint8_t* IP = va_arg(ap, uint8_t*);
-                        pos += printf("%u.%u.%u.%u", IP[0], IP[1], IP[2], IP[3]);
+                        IP_t IP = va_arg(ap, IP_t);
+                        pos += printf("%u.%u.%u.%u", IP.IP[0], IP.IP[1], IP.IP[2], IP.IP[3]);
                         break;
                     }
                     case 'M': // MAC address

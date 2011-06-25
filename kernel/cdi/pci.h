@@ -1,7 +1,7 @@
 #ifndef CDI_PCI_H
 #define CDI_PCI_H
 
-#include "os.h"
+#include "types.h"
 
 #include <cdi.h>
 #include <cdi-osdep.h>

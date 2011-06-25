@@ -16,9 +16,15 @@ enum
     BL_NET_ARP
 };
 
+typedef union
+{
+    uint8_t IP[4];
+    uint32_t iIP;
+} __attribute__((packed)) IP_t;
+
 
 uint16_t internetChecksum(void* addr, size_t count, uint32_t pseudoHeaderChecksum);
-uint16_t udptcpCalculateChecksum(void* p, uint16_t length, uint8_t srcIP[4], uint8_t destIP[4], uint16_t protocol);
+uint16_t udptcpCalculateChecksum(void* p, uint16_t length, IP_t srcIP, IP_t destIP, uint16_t protocol);
 
 
 #endif

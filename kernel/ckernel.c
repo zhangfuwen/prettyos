@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.150 - Rev: 990";
+const char* const version = "0.0.2.151 - Rev: 991";
 
 // .bss
 extern uintptr_t _bss_start;  // linker script
@@ -248,8 +248,8 @@ void main(multiboot_t* mb_struct)
     bool PRINT = false;
 
     tcpConnection_t* connection = 0;
-    uint8_t destIP[4] = {82,100,220,68}; // homepage ehenkes at Port 80
-    // uint8_t destIP[4] ={94,142,241,111}; // 94.142.241.111 at Port 23, starwars story
+    IP_t destIP = {.IP = {82,100,220,68}}; // homepage ehenkes at Port 80
+    // IP_t destIP = {.IP = {94,142,241,111}}; // 94.142.241.111 at Port 23, starwars story
 
 
     while (true) // start of kernel idle loop
@@ -275,7 +275,7 @@ void main(multiboot_t* mb_struct)
                         case KEY_LCTRL: case KEY_RCTRL:
                             CTRL = true;
                             break;
-                        case KEY_PRINT: // Because of special behaviour of the PRINT key in emulators, we handle it different: After PRINT was pressed, next text entered event is taken as argument to PRINT.
+                        case KEY_PRINT: case KEY_F12: // Because of special behaviour of the PRINT key in emulators, we handle it different: After PRINT was pressed, next text entered event is taken as argument to PRINT. F12 is alias for PrintScreen due to problems in some emulators
                             PRINT = true;
                             break;
                         default:
@@ -349,7 +349,7 @@ void main(multiboot_t* mb_struct)
                                     // parameters for UDPSend(...)
                                     uint16_t srcPort  = 40; // unassigend
                                     uint16_t destPort = 40;
-                                    uint8_t  IP[4] ={255,255,255,255};
+                                    IP_t IP = {.iIP = 0xFFFFFFFF};
                                     UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, IP);
                                 }
                                 break;
@@ -393,7 +393,7 @@ void main(multiboot_t* mb_struct)
                             case 'w':
                             {
                                 connection = tcp_createConnection();
-                                memcpy(connection->remoteSocket.IP, destIP, 4);
+                                connection->remoteSocket.IP.iIP = destIP.iIP;
                                 connection->remoteSocket.port = 80;
 
                                 network_adapter_t* adapter = network_getFirstAdapter();
@@ -401,7 +401,7 @@ void main(multiboot_t* mb_struct)
 
                                 if(adapter)
                                 {
-                                    memcpy(connection->localSocket.IP, adapter->IP, 4);
+                                    connection->localSocket.IP.iIP = adapter->IP.iIP;
                                     tcp_connect(connection);
                                 }
                                 break;

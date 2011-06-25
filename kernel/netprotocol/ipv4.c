@@ -15,13 +15,13 @@
 #include "util.h"
 
 
-bool isSubnet(uint8_t IP[4], uint8_t myIP[4], uint8_t subnet[4])
+bool isSubnet(IP_t IP, IP_t myIP, IP_t subnet)
 {
-    return(((*(uint32_t*)IP)&(*(uint32_t*)subnet)) == ((*(uint32_t*)myIP)&(*(uint32_t*)subnet)));
+    return((IP.iIP & subnet.iIP) == (myIP.iIP & subnet.iIP));
 }
 
-static const uint8_t broadcast_IP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-static const uint8_t broadcast_IP2[4] = {0, 0, 0, 0};
+static const IP_t broadcast_IP = {.iIP = 0xFFFFFFFF};
+static const IP_t broadcast_IP2 = {.iIP = 0};
 static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
@@ -31,7 +31,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     textColor(IMPORTANT);
     printf(" %I\t<== %I", packet->destIP, packet->sourceIP);
     textColor(TEXT);
-    if(memcmp(packet->destIP, adapter->IP, 4) != 0 && memcmp(packet->destIP, broadcast_IP, 4) != 0)
+    if(packet->destIP.iIP != adapter->IP.iIP && packet->destIP.iIP != broadcast_IP.iIP)
     {
         printf("\nWe are not the addressee.");
         return;
@@ -59,14 +59,14 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     }
 }
 
-void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t IP[4], int protocol)
+void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP, int protocol)
 {
     ipv4Packet_t* packet = malloc(sizeof(ipv4Packet_t)+length, 0, "ipv4 packet");
 
     memcpy(packet+1, data, length);
 
-    memcpy(packet->destIP, IP, 4);
-    memcpy(packet->sourceIP, adapter->IP, 4);
+    packet->destIP.iIP = IP.iIP;
+    packet->sourceIP.iIP = adapter->IP.iIP;
     packet->version        = 4;
     packet->ipHeaderLength = sizeof(ipv4Packet_t) / 4;
     packet->typeOfService  = 0;
@@ -83,7 +83,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t 
     Todo: Tell routing table to route the ip address
     */
 
-    if(memcmp(IP, broadcast_IP, 4) == 0 || memcmp(IP, broadcast_IP2, 4) == 0 || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
+    if(IP.iIP == broadcast_IP.iIP || IP.iIP == broadcast_IP2.iIP || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
     {
   #ifdef QEMU_HACK
      uint8_t gatewayMAC[6] = {GW_MAC_1, GW_MAC_2, GW_MAC_3, GW_MAC_4, GW_MAC_5, GW_MAC_6}; // HACK for TCP with qemu

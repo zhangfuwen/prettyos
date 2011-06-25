@@ -184,7 +184,7 @@ static uint32_t physMemInit()
     // Check that 10 MiB-20 MiB is free for use
     if (!isMemoryMapAvailable(entries, 10*1024*1024, 20*1024*1024))
     {
-        textColor(RED);
+        textColor(ERROR);
         printf("The memory between 10 MiB and 20 MiB is not free for use. OS halted!\n");
         cli(); hlt();
     }
@@ -399,9 +399,10 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
     {
         if (virtAddress == PCI_MEM_END)
         {
-            textColor(RED);
-            panic_assert(__FILE__, __LINE__, "\nNot enough PCI-memory available");
-            textColor(WHITE);
+            textColor(ERROR);
+            printf("\nNot enough PCI-memory available");
+            textColor(TEXT);
+            return(0);
         }
 
         uint32_t pagenr = (uint32_t)virtAddress/PAGESIZE;

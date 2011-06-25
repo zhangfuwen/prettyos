@@ -69,12 +69,12 @@ void analyzeEHCI(uintptr_t bar, uintptr_t offset)
   #ifdef _USB_DIAGNOSIS_
     uintptr_t bar_phys  = (uintptr_t)paging_getPhysAddr((void*)bar);
     printf("EHCI bar get_physAddress: %Xh\n", bar_phys);
-    printf("HCIVERSION: %xh ",  pCapRegs->HCIVERSION);               // Interface Version Number
-    printf("HCSPARAMS: %Xh ",   pCapRegs->HCSPARAMS);                // Structural Parameters
+    printf("HCIVERSION: %xh ",  pCapRegs->HCIVERSION);              // Interface Version Number
+    printf("HCSPARAMS: %Xh ",   pCapRegs->HCSPARAMS);               // Structural Parameters
     printf("Ports: %u ",       numPorts);                           // Number of Ports
-    printf("\nHCCPARAMS: %Xh ", pCapRegs->HCCPARAMS);                // Capability Parameters
+    printf("\nHCCPARAMS: %Xh ", pCapRegs->HCCPARAMS);               // Capability Parameters
     if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. "); // Extended Capabilities Pointer
-    printf("\nOpRegs Address: %Xh ", pOpRegs);                       // Host Controller Operational Registers
+    printf("\nOpRegs Address: %Xh ", pOpRegs);                      // Host Controller Operational Registers
   #endif
 }
 
@@ -88,16 +88,15 @@ void startEHCI()
 {
     initEHCIHostController();
     textColor(LIGHT_MAGENTA);
-    printf("\n>>> Press key to close this console. <<<");
-    textColor(WHITE);
+    printf("\n\n>>> Press key to close this console. <<<");
     getch();
 }
 
 int32_t initEHCIHostController()
 {
-    textColor(LIGHT_BLUE);
-    printf("\ninitEHCIHostController");
-    textColor(WHITE);
+    textColor(HEADLINE);
+    printf("Initialize EHCI Host Controller:");
+    textColor(TEXT);
 
     // pci bus data
     uint8_t bus  = PCIdevice->bus;
@@ -120,12 +119,16 @@ int32_t initEHCIHostController()
     if (pciCapabilitiesList) // pointer != 0
     {
         uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
+      #ifdef _USB_DIAGNOSIS_
         printf("\nPCI Capabilities List: ID: %yh, next Pointer: %yh",BYTE1(nextCapability),BYTE2(nextCapability));
+      #endif
 
         while (BYTE2(nextCapability)) // pointer to next capability != 0
         {
             nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
+          #ifdef _USB_DIAGNOSIS_
             printf("\nPCI Capabilities List: ID: %yh, next Pointer: %yh",BYTE1(nextCapability),BYTE2(nextCapability));
+          #endif
         }
     }
 
@@ -153,9 +156,8 @@ int32_t initEHCIHostController()
 
 void startHostController(pciDev_t* PCIdev)
 {
-    textColor(LIGHT_BLUE);
-    printf("\nstartHostController (reset HC)");
-    textColor(WHITE);
+    textColor(TEXT);
+    printf("\nStart Host Controller (reset HC).");
 
     resetHostController();
 
@@ -333,22 +335,26 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
         }
         else
         {
+          #ifdef _USB_DIAGNOSIS_
             textColor(GREEN);
             printf("\nBIOS did not own the EHCI. No action needed.\n");
             textColor(WHITE);
+          #endif
         }
     }
     else
     {
+      #ifdef _USB_DIAGNOSIS_
         printf("No valid eecp found.\n");
+      #endif
     }
 }
 
 void enablePorts()
 {
-    textColor(LIGHT_BLUE);
-    printf("\nenablePorts");
-    textColor(WHITE);
+    textColor(HEADLINE);
+    printf("\nEnable ports:\n");
+    textColor(TEXT);
 
     for (uint8_t j=0; j<numPorts; j++)
     {
@@ -357,11 +363,7 @@ void enablePorts()
 
          port[j].type = &USB; // device manager
          port[j].data = (void*)(j+1);
-         char name[14],portNum[3];
-         strcpy(name,"EHCI-Port ");
-         itoa(j+1,portNum);
-         strcat(name,portNum);
-         strncpy(port[j].name,name,14);
+         snprintf(port[j].name, 14, "EHCI-Port %u", j+1);
          attachPort(&port[j]);
 
          if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
@@ -377,9 +379,7 @@ void enablePorts()
 
 void resetPort(uint8_t j)
 {
-    textColor(LIGHT_BLUE);
-    printf("\nresetPort %u  ",j+1);
-    textColor(WHITE);
+    printf("Reset port %u\n", j+1);
 
     pOpRegs->PORTSC[j] |=  PSTS_POWERON;
 
@@ -555,7 +555,6 @@ void showPORTSC()
 
                 showPortList();
                 showDiskList();
-                waitForKeyStroke();
             }
             pOpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
             beep(1000,100);
@@ -568,15 +567,22 @@ void checkPortLineStatus(uint8_t j)
     if (j<numPorts)
     {
         //check line status
+
+      #ifdef _USB_DIAGNOSIS_
         textColor(LIGHT_CYAN);
         printf("\nport %u: %xh, line: %yh ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
+      #endif
         if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
         {
+          #ifdef _USB_DIAGNOSIS_
             printf("SE0 ");
+          #endif
 
             if ((pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
             {
+              #ifdef _USB_DIAGNOSIS_
                  textColor(YELLOW); printf(", power on, enabled, EHCI owned"); textColor(WHITE);
+              #endif
                  if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
                  {
                      setupUSBDevice(j);
@@ -673,10 +679,6 @@ void setupUSBDevice(uint8_t portNumber)
     }
     else
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////
-        // device manager //////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////////////////////////////
-
         // Disk
         usbDev[portNumber].type         = &USB_MSD;
         usbDev[portNumber].data         = (void*)&usbDevices[devAddr];
@@ -691,15 +693,13 @@ void setupUSBDevice(uint8_t portNumber)
         showDiskList(); // TEST
         waitForKeyStroke();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////
-
         // device, interface, endpoints
-        textColor(LIGHT_GRAY);
+        textColor(HEADLINE);
         printf("\n\nMSD test now with device: %u  interface: %u  endpOUT: %u  endpIN: %u\n",
                                                 devAddr+1, usbDevices[devAddr].numInterfaceMSD,
                                                 usbDevices[devAddr].numEndpointOutMSD,
                                                 usbDevices[devAddr].numEndpointInMSD);
-        textColor(WHITE);
+        textColor(TEXT);
 
         testMSD(devAddr, &usbDev[devAddr]); // test with some SCSI commands
     }

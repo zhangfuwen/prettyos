@@ -35,7 +35,7 @@ static void arp_checkTable(arpTable_t* table)
     }
 }
 
-void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dynamic)
+void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], IP_t IP, bool dynamic)
 {
     arpTableEntry_t* entry = arp_findEntry(table, IP); // Check if there is already an entry with the same IP.
     if(entry == 0) // No entry found. Create new one.
@@ -43,20 +43,20 @@ void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], uint8_t IP[4], bool dy
         entry = malloc(sizeof(arpTableEntry_t), 0, "arp entry");
         list_Append(table->table, entry);
     }
-    memcpy(entry->IP,  IP,  4);
+    entry->IP.iIP = IP.iIP;
     memcpy(entry->MAC, MAC, 6);
     entry->dynamic = dynamic;
     entry->seconds = timer_getSeconds();
 }
 
-arpTableEntry_t* arp_findEntry(arpTable_t* table, uint8_t IP[4])
+arpTableEntry_t* arp_findEntry(arpTable_t* table, IP_t IP)
 {
     arp_checkTable(table); // We check the table for obsolete entries.
 
     for(element_t* e = table->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
-        if(memcmp(entry->IP, IP, 4) == 0)
+        if(entry->IP.iIP == IP.iIP)
         {
             entry->seconds = timer_getSeconds(); // Update time stamp.
             return(entry);
@@ -92,7 +92,8 @@ void arp_initTable(arpTable_t* table)
     // Create default entries
     // We use only the first 4 bytes of the array as IP, all 6 bytes are used as MAC
     uint8_t broadcast[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    arp_addTableEntry(table, broadcast, broadcast, false);
+    IP_t broadcastIP = {.iIP = 0xFFFFFFFF};
+    arp_addTableEntry(table, broadcast, broadcastIP, false);
 }
 
 void arp_deleteTable(arpTable_t* table)
@@ -113,7 +114,7 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
         {
         case 1: // ARP-Request
             textColor(HEADLINE);
-            if (memcmp(packet->sourceIP, packet->destIP, 4) == 0) // IP requ. and searched is identical
+            if (packet->sourceIP.iIP == packet->destIP.iIP) // IP requ. and searched is identical
             {
                 printf("\nARP Gratuitous Request:");
             }
@@ -131,7 +132,7 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             printf("%I", packet->destIP);
 
             // requested IP is our own IP?
-            if (memcmp(packet->destIP, adapter->IP, 4) == 0)
+            if (packet->destIP.iIP == adapter->IP.iIP)
             {
                 arpPacket_t reply;
 
@@ -152,11 +153,8 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
                     reply.source_mac[i] = adapter->MAC[i];
                 }
 
-                for (uint8_t i = 0; i < 4; i++)
-                {
-                    reply.destIP[i]   = packet->sourceIP[i];
-                    reply.sourceIP[i] = adapter->IP[i];
-                }
+                reply.destIP.iIP   = packet->sourceIP.iIP;
+                reply.sourceIP.iIP = adapter->IP.iIP;
 
                 EthernetSend(adapter, (void*)&reply, sizeof(arpPacket_t), packet->source_mac, 0x0806);
             }
@@ -186,7 +184,7 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
     }
 }
 
-bool arp_sendRequest(network_adapter_t* adapter, uint8_t searchedIP[4])
+bool arp_sendRequest(network_adapter_t* adapter, IP_t searchedIP)
 {
     arpPacket_t request;
 
@@ -207,16 +205,14 @@ bool arp_sendRequest(network_adapter_t* adapter, uint8_t searchedIP[4])
         request.source_mac[i] = adapter->MAC[i];
     }
 
-    for (uint8_t i = 0; i < 4; i++)
-    {
-        request.destIP[i]   = searchedIP[i];
-        request.sourceIP[i] = adapter->IP[i];
-    }
+    request.destIP.iIP   = searchedIP.iIP;
+    request.sourceIP.iIP = adapter->IP.iIP;
+
     uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     return EthernetSend(adapter, (void*)&request, sizeof(arpPacket_t), destMAC, 0x0806);
 }
 
-bool arp_waitForReply(struct network_adapter* adapter, uint8_t searchedIP[4])
+bool arp_waitForReply(struct network_adapter* adapter, IP_t searchedIP)
 {
     while(arp_findEntry(&adapter->arpTable, searchedIP) == 0 && scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, 1000));
     return(arp_findEntry(&adapter->arpTable, searchedIP) != 0);

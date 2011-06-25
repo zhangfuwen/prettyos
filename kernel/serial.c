@@ -30,9 +30,9 @@ void serial_init()
         outportb(IOports[i] + 3, 0x03); // 8 bits, no parity, one stop bit
         outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
         outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
-        textColor(0x03);
+        textColor(HEADLINE);
         printf("\nCOM%d: ", i+1);
-        textColor(WHITE);
+        textColor(TEXT);
         printf("IO-port: %xh. Initialized.", IOports[i]);
     }
     printf("\n");

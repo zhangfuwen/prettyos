@@ -75,7 +75,7 @@ struct cdi_device {
     // Bus specific data for the device
     struct cdi_bus_data*    bus_data;
 
-    // tyndur-spezifisch
+    // PrettyOS specific
     void*               backdev;
 };
 

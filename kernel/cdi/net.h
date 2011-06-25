@@ -3,20 +3,20 @@
 #ifndef CDI_NET_H
 #define CDI_NET_H
 
-#include "os.h"
+#include "types.h"
 #include <cdi.h>
 
-struct cdi_net_device {
-    struct cdi_device   dev;
-    uint64_t            mac : 48;
-    int                 number;
+struct cdi_net_device
+{
+    struct cdi_device dev;
+    uint64_t          mac : 48;
+    int               number;
 };
 
-struct cdi_net_driver {
-    struct cdi_driver   drv;
-
-    void (*send_packet)
-        (struct cdi_net_device* device, void* data, size_t size);
+struct cdi_net_driver
+{
+    struct cdi_driver drv;
+    void (*send_packet)(struct cdi_net_device* device, void* data, size_t size);
 };
 
 // Initialisiert die Datenstrukturen fuer einen Netzerktreiber (erzeugt die devices-Liste)

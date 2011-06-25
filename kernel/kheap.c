@@ -30,7 +30,6 @@
    Since this area cannot grow, the heap has a maximum amount of region objects ("regionMaxCount").
 */
 
-// TODO: Multithreading safety
 // TODO: Ensure the heap will not overflow (over 4 GB)
 
 static region_t*      regions         = 0;
@@ -40,7 +39,7 @@ static uint8_t* const heapStart       = KERNEL_heapStart;
 static uint32_t       heapSize        = 0;
 static const uint32_t HEAP_MIN_GROWTH = 0x40000;
 
-static mutex_t* mutex;
+static mutex_t* mutex = 0;
 
 #ifdef _MEMLEAK_FIND_
   static uint32_t counter = 0;
@@ -66,9 +65,11 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
         return false;
     }
 
+    mutex_lock(mutex);
     // Enhance the memory
     if (!pagingAlloc(kernelPageDirectory, heapEnd, size, MEM_KERNEL|MEM_WRITE))
     {
+        mutex_unlock(mutex);
         return false;
     }
 
@@ -89,13 +90,13 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
     }
 
     heapSize += size;
+    mutex_unlock(mutex);
     return true;
 }
 
 void logHeapRegions()
 {
     textColor(YELLOW);
-    task_switching = false;
     printf("\n\n---------------- HEAP REGIONS ----------------");
     printf("\naddress\t\treserved\tsize\t\tnumber\tcomment");
     uintptr_t regionAddress = (uintptr_t)heapStart;
@@ -120,7 +121,6 @@ void logHeapRegions()
             lineCounter = 0;
         }
     }
-    task_switching = true;
     textColor(WHITE);
 }
 
@@ -132,6 +132,8 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     // Avoid odd addresses
     size = alignUp(size, 8);
 
+    mutex_lock(mutex);
+
     // If the heap is not set up..
     if (regions == 0)
     {
@@ -141,10 +143,9 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
         uint8_t* currPlacement = nextPlacement;
         nextPlacement += size;
 
+        mutex_unlock(mutex);
         return currPlacement;
     }
-
-    mutex_lock(mutex); // In case of placement malloc we do not lock, because we assume that the tasking system is not ready then.
 
     // Walk the regions and find one being suitable
     uint8_t* regionAddress = heapStart;

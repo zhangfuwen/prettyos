@@ -12,6 +12,7 @@
 #include "ipv4.h"
 #include "list.h"
 
+
 static const char* const tcpStates[] =
 {
     "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
@@ -57,7 +58,7 @@ static tcpConnection_t* findConnectionListen(network_adapter_t* adapter)
     return(0);
 }
 
-tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_adapter_t* adapter, bool established)
+tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, bool established)
 {
     if(tcpConnections == 0)
         return(0);
@@ -68,14 +69,14 @@ tcpConnection_t* findConnection(uint8_t IP[4], uint16_t port, network_adapter_t*
 
         if (!established)
         {
-            if (connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0)
+            if (connection->adapter == adapter && connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP)
             {
                 return(connection);
             }
         }
         else // ESTABLISHED
         {
-            if (connection->adapter == adapter && connection->remoteSocket.port == port && memcmp(connection->remoteSocket.IP, IP, 4) == 0 && connection->TCP_CurrState==ESTABLISHED)
+            if (connection->adapter == adapter && connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP && connection->TCP_CurrState==ESTABLISHED)
             {
                 return(connection);
             }
@@ -105,13 +106,13 @@ void tcp_showConnections()
 }
 
 static void printFlag(uint8_t b, const char* s)
-{    
+{
     textColor(b ? LIGHT_GREEN : GRAY);
     printf("%s ", s);
 }
 
 static void tcpDebug(tcpPacket_t* tcp)
-{      
+{
     textColor(LIGHT_GRAY); printf(" src port: ");   textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
     textColor(LIGHT_GRAY); printf("  dest port: "); textColor(IMPORTANT); printf("%u   ", ntohs(tcp->destPort));
     // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
@@ -171,7 +172,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter)
 {
     // open TCP Server with State "LISTEN"
-    memcpy(connection->localSocket.IP, adapter->IP, 4);
+    connection->localSocket.IP.iIP = adapter->IP.iIP;
     connection->localSocket.port  = 0;
     connection->remoteSocket.port = 0;
     connection->TCP_PrevState = connection->TCP_CurrState;
@@ -216,7 +217,7 @@ void tcp_close(tcpConnection_t* connection)
     }
 }
 
-void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmittingIP[4], size_t length)
+void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length)
 {
     textColor(HEADLINE);
     printf("\nTCP:");
@@ -248,7 +249,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         connection->TCP_PrevState = connection->TCP_CurrState;
         connection->remoteSocket.port = ntohs(tcp->sourcePort);
         connection->localSocket.port = ntohs(tcp->destPort);
-        memcpy(connection->remoteSocket.IP, transmittingIP, 4);
+        connection->remoteSocket.IP.iIP = transmittingIP.iIP;
         switch(connection->TCP_CurrState)
         {
             case CLOSED:

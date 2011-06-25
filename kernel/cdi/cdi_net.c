@@ -4,6 +4,7 @@
 */
 
 #include "cdi/net.h"
+#include "network/network.h"
 
 
 void cdi_net_driver_init(struct cdi_net_driver* driver);
@@ -12,10 +13,13 @@ void cdi_net_driver_destroy(struct cdi_net_driver* driver);
 
 void cdi_net_device_init(struct cdi_net_device* device);
 
-void cdi_net_receive(struct cdi_net_device* device, void* buffer, size_t size);
+void cdi_net_receive(struct cdi_net_device* device, void* buffer, size_t size)
+{
+	network_receivedPacket(device->dev.backdev, buffer, size);
+}
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

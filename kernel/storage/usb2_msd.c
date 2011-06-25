@@ -170,7 +170,6 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
             cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
             break;
-
     }
 
     currCSWtag = SCSIcommand;
@@ -581,7 +580,9 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
     while (true)
     {
         timeout--;
+      #ifdef _USB_DIAGNOSIS_
         textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: test unit ready"); textColor(WHITE);
+      #endif
 
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady); // dev, endp, cmd, LBA, transfer length
 
@@ -592,7 +593,9 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
         {
             ///////// send SCSI command "request sense"
 
+          #ifdef _USB_DIAGNOSIS_
             textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(WHITE);
+          #endif
 
             usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense); // dev, endp, cmd, LBA, transfer length
 
@@ -605,7 +608,6 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
                 break;
             }
         }
-        waitForKeyStroke();
     }
     waitForKeyStroke();
 
@@ -632,7 +634,9 @@ static void analyzeInquiry()
  // uint8_t PeripheralQualifier  = getField(addr, 0, 5, 3);
  // uint8_t DeviceTypeModifier   = getField(addr, 1, 0, 7);
     uint8_t RMB                  = getField(addr, 1, 7, 1);
+  #ifdef _USB_DIAGNOSIS_
     uint8_t ANSIapprovedVersion  = getField(addr, 2, 0, 3);
+  #endif
  // uint8_t ECMAversion          = getField(addr, 2, 3, 3);
  // uint8_t ISOversion           = getField(addr, 2, 6, 2);
     uint8_t ResponseDataFormat   = getField(addr, 3, 0, 4);
@@ -656,30 +660,35 @@ static void analyzeInquiry()
     }
     productID[16]=0;
 
+  #ifdef _USB_DIAGNOSIS_
     char productRevisionLevel[5];
     for (uint8_t i=0; i<4;i++)
     {
         productRevisionLevel[i]= getField(addr, i+32, 0, 8);
     }
     productRevisionLevel[4]=0;
+  #endif
 
     printf("\nVendor ID:  %s", vendorID);
     printf("\nProduct ID: %s", productID);
+
+  #ifdef _USB_DIAGNOSIS_
     printf("\nRevision:   %s", productRevisionLevel);
 
     // Jan Axelson, USB Mass Storage, page 140
     // printf("\nVersion ANSI: %u  ECMA: %u  ISO: %u", ANSIapprovedVersion, ECMAversion, ISOversion);
     printf("\nVersion: %u (4: SPC-2, 5: SPC-3)", ANSIapprovedVersion);
+  #endif
 
     // Jan Axelson, USB Mass Storage, page 140
     if (ResponseDataFormat == 2)
     {
-        textColor(GREEN);
+        textColor(SUCCESS);
         printf("\nResponse Data Format OK");
     }
     else
     {
-        textColor(RED);
+        textColor(ERROR);
         printf("\nResponse Data Format is not OK: %u (should be 2)", ResponseDataFormat);
     }
     textColor(WHITE);
@@ -738,8 +747,9 @@ void testMSD(uint8_t devAddr, disk_t* disk)
         usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
         ///////// send SCSI command "inquiry (opcode: 0x12)"
-
+      #ifdef _USB_DIAGNOSIS_
         textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: inquiry"); textColor(WHITE);
+      #endif
         usbBulkTransfer_t inquiry;
         startLogBulkTransfer(&inquiry, 0x12, 36, 0);
 
@@ -755,7 +765,6 @@ void testMSD(uint8_t devAddr, disk_t* disk)
         analyzeInquiry();
         showUSBSTS();
         logBulkTransfer(&inquiry);
-        waitForKeyStroke();
 
         ///////// send SCSI command "test unit ready(6)"
 
@@ -767,8 +776,9 @@ void testMSD(uint8_t devAddr, disk_t* disk)
         logBulkTransfer(&requestSense);
 
         ///////// send SCSI command "read capacity(10)"
-
+      #ifdef _USB_DIAGNOSIS_
         textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read capacity"); textColor(WHITE);
+      #endif
 
         usbBulkTransfer_t readCapacity;
         startLogBulkTransfer(&readCapacity, 0x25, 8, 0);
@@ -794,18 +804,17 @@ void testMSD(uint8_t devAddr, disk_t* disk)
 
         showUSBSTS();
         logBulkTransfer(&readCapacity);
-        waitForKeyStroke();
 
         analyzeDisk(disk);
     } // else
-    waitForKeyStroke();
 }
 
 FS_ERROR usbRead(uint32_t sector, void* buffer, void* device)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
-
+  #ifdef _USB_DIAGNOSIS_
     textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read   sector: %u", sector); textColor(WHITE);
+  #endif
 
     uint8_t           devAddr = currentDevice;
     uint32_t          blocks  = 1; // number of blocks to be read

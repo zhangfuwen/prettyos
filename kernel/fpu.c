@@ -12,12 +12,6 @@
 
 volatile task_t* FPUTask = 0;
 
-static void fpu_setcw(uint16_t ctrlword)
-{
-    // FLDCW = Load FPU Control Word
-    __asm__ volatile("fldcw %0;"::"m"(ctrlword));
-}
-
 bool fpu_install()
 {
     if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
@@ -28,13 +22,14 @@ bool fpu_install()
 
     __asm__ volatile ("finit");
 
-    fpu_setcw(0x37F); // set the FPU Control Word
+    uint16_t ctrlword = 0x37F;
+    __asm__ volatile("fldcw %0"::"m"(ctrlword)); // Set the FPU Control Word. FLDCW = Load FPU Control Word
 
     // set TS in cr0
     uint32_t cr0;
-    __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
-    cr0 |= BIT(3); // set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
-    __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write cr0
+    __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // Read cr0
+    cr0 |= BIT(3); // Set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
+    __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // Write cr0
 
     return(true);
 }

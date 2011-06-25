@@ -28,13 +28,10 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.xid = xid; // AFFExx
     packet.secs = htons(0);
     packet.flags = BROADCAST; // TEST: broadcast
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        packet.ciaddr[i] = 0;
-        packet.yiaddr[i] = 0;
-        packet.siaddr[i] = 0;
-        packet.giaddr[i] = 0;
-    }
+    packet.ciaddr.iIP = 0;
+    packet.yiaddr.iIP = 0;
+    packet.siaddr.iIP = 0;
+    packet.giaddr.iIP = 0;
 
     for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
@@ -82,13 +79,13 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.options[30] = 121;  // y
     packet.options[31] =  79;  // O
     packet.options[32] =  83;  // S
-
-    uint8_t srcIP[4] = {0,0,0,0};
-    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    
+    IP_t srcIP = {.iIP = 0};
+    IP_t destIP = {.iIP = 0xFFFFFFFF};
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
-void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
+void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
 {
     xid += (1<<24);
 
@@ -104,13 +101,10 @@ void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
     packet.xid = xid; // AFFExx
     packet.secs = htons(0);
     packet.flags = BROADCAST; // TEST: broadcast
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        packet.ciaddr[i] = 0;
-        packet.yiaddr[i] = 0;
-        packet.siaddr[i] = 0;
-        packet.giaddr[i] = 0;
-    }
+    packet.ciaddr.iIP = 0;
+    packet.yiaddr.iIP = 0;
+    packet.siaddr.iIP = 0;
+    packet.giaddr.iIP = 0;
 
     for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
@@ -145,10 +139,10 @@ void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
 
     packet.options[23] =  50;  // Requested IP
     packet.options[24] =   4;  // Length
-    packet.options[25] = requestedIP[0];
-    packet.options[26] = requestedIP[1];
-    packet.options[27] = requestedIP[2];
-    packet.options[28] = requestedIP[3];
+    packet.options[25] = requestedIP.IP[0];
+    packet.options[26] = requestedIP.IP[1];
+    packet.options[27] = requestedIP.IP[2];
+    packet.options[28] = requestedIP.IP[3];
 
     packet.options[29] =  12;  // Hostname
     packet.options[30] =   8;  // Length
@@ -161,8 +155,8 @@ void DHCP_Request(network_adapter_t* adapter, uint8_t requestedIP[4])
     packet.options[37] =  79;  // O
     packet.options[38] =  83;  // S
 
-    uint8_t srcIP[4] = {0,0,0,0};
-    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    IP_t srcIP = {.iIP = 0};
+    IP_t destIP = {.iIP = 0xFFFFFFFF};
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
@@ -182,13 +176,10 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.xid = xid; // AFFExx
     packet.secs = 0;
     packet.flags = BROADCAST; // TEST: broadcast
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        packet.ciaddr[i] = adapter->IP[i];
-        packet.yiaddr[i] = 0;
-        packet.siaddr[i] = 0;
-        packet.giaddr[i] = 0;
-    }
+    packet.ciaddr.iIP = adapter->IP.iIP;
+    packet.yiaddr.iIP = 0;
+    packet.siaddr.iIP = 0;
+    packet.giaddr.iIP = 0;
 
     for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
@@ -230,16 +221,9 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.options[25] =   1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     for(uint8_t i = 0; i < 6; i++)
         packet.options[26+i] = adapter->MAC[i];
-
-    uint8_t srcIP[4];
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        srcIP[i] = adapter->IP[i];
-    }
-
-    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-
-    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
+    
+    IP_t destIP = {.iIP = 0xFFFFFFFF};
+    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, adapter->IP, 67, destIP);
 }
 
 void DHCP_Release(network_adapter_t* adapter)
@@ -258,13 +242,10 @@ void DHCP_Release(network_adapter_t* adapter)
     packet.xid = xid; // AFFExx
     packet.secs = htons(0);
     packet.flags = UNICAST ;
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        packet.ciaddr[i] = adapter->IP[i];
-        packet.yiaddr[i] = 0;
-        packet.siaddr[i] = 0;
-        packet.giaddr[i] = 0;
-    }
+    packet.ciaddr.iIP = adapter->IP.iIP;
+    packet.yiaddr.iIP = 0;
+    packet.siaddr.iIP = 0;
+    packet.giaddr.iIP = 0;
 
     for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
     for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
@@ -289,27 +270,18 @@ void DHCP_Release(network_adapter_t* adapter)
     for(uint8_t i = 0; i < 6; i++)
         packet.options[10+i] = adapter->MAC[i];
 
-    uint8_t srcIP[4];
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        srcIP[i] = adapter->IP[i];
-    }
+    IP_t destIP = {.iIP = 0xFFFFFFFF};
 
-    uint8_t destIP[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-
-    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
+    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, adapter->IP, 67, destIP);
 }
 
 static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt);
 
 static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
 {
-    if (dhcp->yiaddr[0] || dhcp->yiaddr[1] || dhcp->yiaddr[2] || dhcp->yiaddr[3])
+    if (dhcp->yiaddr.iIP != 0)
     {
-        for(uint8_t i = 0; i < 4; i++)
-        {
-            adapter->IP[i] = dhcp->yiaddr[i];
-        }
+        adapter->IP.iIP = dhcp->yiaddr.iIP;
     }
 }
 
@@ -329,16 +301,16 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
     {
         case OFFER:
             printf("\n >>> PrettyOS got a DHCP OFFER. <<<\n");
-            if (dhcp->yiaddr[0] || dhcp->yiaddr[1] || dhcp->yiaddr[2] || dhcp->yiaddr[3])
+            if (dhcp->yiaddr.iIP != 0)
             {
                 DHCP_Request(adapter, dhcp->yiaddr);
             }
             else
             {
-                adapter->IP[0] = IP_1;
-                adapter->IP[1] = IP_2;
-                adapter->IP[2] = IP_3;
-                adapter->IP[3] = IP_4;
+                adapter->IP.IP[0] = IP_1;
+                adapter->IP.IP[1] = IP_2;
+                adapter->IP.IP[2] = IP_3;
+                adapter->IP.IP[3] = IP_4;
             }
             break;
         case ACK:
@@ -373,7 +345,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 
             if (opt[count+2] == 4)
             {
-                memcpy(adapter->Subnet, opt+count+3, 4);
+                memcpy(adapter->Subnet.IP, opt+count+3, 4);
             }
             break;
 
@@ -453,7 +425,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 
             if (opt[count+2] == 4)
             {
-                memcpy(adapter->Gateway_IP, opt+count+3, 4);
+                memcpy(adapter->Gateway_IP.IP, opt+count+3, 4);
                 arp_sendRequest(adapter, adapter->Gateway_IP); // send gateway IP/MAC to arp cache
             }
             break;

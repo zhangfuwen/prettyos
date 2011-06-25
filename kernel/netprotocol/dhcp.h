@@ -2,6 +2,7 @@
 #define DHCP_H
 
 #include "types.h"
+#include "network/netutils.h"
 
 // http://tools.ietf.org/html/rfc2131 <--- Dynamic Host Configuration Protocol
 // ftp://ftp.efo.ru/pub/wiznet/W5100_App%20note_DHCP.pdf
@@ -21,10 +22,10 @@ typedef struct dhcp     // complete length: 576 (0x0240)
     uint32_t xid;       // DHCP_XID
     uint16_t secs;      // DHCP_SECS
     uint16_t flags;     // DHCP_FLAGSBROADCAST
-    uint8_t  ciaddr[4];
-    uint8_t  yiaddr[4];
-    uint8_t  siaddr[4];
-    uint8_t  giaddr[4];
+    IP_t     ciaddr;
+    IP_t     yiaddr;
+    IP_t     siaddr;
+    IP_t     giaddr;
     uint8_t  chaddr[16];
     char     sname[64];
     char     file[128];
@@ -68,7 +69,7 @@ typedef struct dhcp     // complete length: 576 (0x0240)
 struct network_adapter;
 
 void DHCP_Discover(struct network_adapter* adapter);
-void DHCP_Request(struct network_adapter* adapter, uint8_t requestedIP[4]);
+void DHCP_Request(struct network_adapter* adapter, IP_t requestedIP);
 void DHCP_Inform  (struct network_adapter* adapter);
 void DHCP_Release (struct network_adapter* adapter);
 void DHCP_AnalyzeServerMessage(struct network_adapter* adapter, dhcp_t* dhcp);

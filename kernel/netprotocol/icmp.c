@@ -10,7 +10,7 @@
 #include "network/netutils.h"
 
 
-void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, uint8_t sourceIP[4])
+void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, IP_t sourceIP)
 {
     textColor(HEADLINE);
     printf("\nICMP:");

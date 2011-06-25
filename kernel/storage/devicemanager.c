@@ -99,7 +99,7 @@ void removeDisk(disk_t* disk)
 void showPortList()
 {
     textColor(HEADLINE);
-    printf("\nAvailable ports:");
+    printf("\n\nAvailable ports:");
     textColor(TABLE_HEADING);
     printf("\nType\tNumber\tName\t\tInserted disk");
     printf("\n----------------------------------------------------------------------");
@@ -142,7 +142,7 @@ void showPortList()
 void showDiskList()
 {
     textColor(HEADLINE);
-    printf("\nAttached disks:");
+    printf("\n\nAttached disks:");
     textColor(TABLE_HEADING);
     printf("\nType\tNumber\tName\t\tPart.\tSerial");
     printf("\n----------------------------------------------------------------------");
