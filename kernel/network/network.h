@@ -9,22 +9,22 @@
 #define QEMU_HACK
 
 // own IP at start
-#define IP_1  192
-#define IP_2  168
-#define IP_3   44
-#define IP_4   97
+#define IP_1   10
+#define IP_2    0
+#define IP_3    2
+#define IP_4   15
 
 // requested IP
-#define RIP_1 192
-#define RIP_2 168
-#define RIP_3  44
-#define RIP_4  97
+#define RIP_1  10
+#define RIP_2   0
+#define RIP_3   2
+#define RIP_4  15
 
 // gateway IP for routing to the internet
-#define GW_IP_1 192
-#define GW_IP_2 168
-#define GW_IP_3  44
-#define GW_IP_4  29
+#define GW_IP_1  10
+#define GW_IP_2   0
+#define GW_IP_3   2
+#define GW_IP_4   2
 
 // HACK for qemu, MAC of qemu gateway (for TCP experiments)
 #define GW_MAC_1 0x52

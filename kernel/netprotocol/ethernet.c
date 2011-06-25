@@ -53,6 +53,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     if (ethernetType <= 1500) { printf("Length: "); }
     else                      { printf("Type: ");   }
 
+    /*
     textColor(DATA);
     for (uint8_t i = 0; i < 2; i++)
     {
@@ -63,8 +64,9 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     printf("\n");
     for (uint32_t i = sizeof(ethernet_t); i <= printlength; i++)
     {
-        printf("%y ", ((uint8_t*)data)[i]);
+        printf("%y ", eth[i]);
     }
+    */
   #endif
 
     textColor(TEXT);

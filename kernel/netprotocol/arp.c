@@ -122,14 +122,10 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             {
                 printf("\nARP Request:");
             }
-            textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT);
-            printf("%M", packet->source_mac);
-            textColor(LIGHT_GRAY); printf("  IP Requesting: "); textColor(IMPORTANT);
-            printf("%I", packet->sourceIP);
-            textColor(LIGHT_GRAY); printf("\nMAC Searched:   "); textColor(IMPORTANT);
-            printf("%M", packet->dest_mac);
-            textColor(LIGHT_GRAY); printf("  IP Searched:   "); textColor(IMPORTANT);
-            printf("%I", packet->destIP);
+            textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT); printf("%M", packet->source_mac);
+            textColor(LIGHT_GRAY); printf("  IP Requesting: ");  textColor(IMPORTANT); printf("%I", packet->sourceIP);
+            textColor(LIGHT_GRAY); printf("\nMAC Searched:   "); textColor(IMPORTANT); printf("%M", packet->dest_mac);
+            textColor(LIGHT_GRAY); printf("  IP Searched:   ");  textColor(IMPORTANT); printf("%I", packet->destIP);
 
             // requested IP is our own IP?
             if (packet->destIP.iIP == adapter->IP.iIP)
@@ -164,14 +160,10 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
             textColor(HEADLINE);
             printf("\nARP Response\n");
 
-            textColor(LIGHT_GRAY); printf("\nMAC Replying:   "); textColor(IMPORTANT);
-            printf("%M", packet->source_mac);
-            textColor(LIGHT_GRAY); printf("  IP Replying:   "); textColor(IMPORTANT);
-            printf("%I", packet->sourceIP);
-            textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT);
-            printf("%M", packet->dest_mac);
-            textColor(LIGHT_GRAY); printf("  IP Requesting: "); textColor(IMPORTANT);
-            printf("%I", packet->destIP);
+            textColor(LIGHT_GRAY); printf("\nMAC Replying:   "); textColor(IMPORTANT); printf("%M", packet->source_mac);
+            textColor(LIGHT_GRAY); printf("  IP Replying:   ");  textColor(IMPORTANT); printf("%I", packet->sourceIP);
+            textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT); printf("%M", packet->dest_mac);
+            textColor(LIGHT_GRAY); printf("  IP Requesting: ");  textColor(IMPORTANT); printf("%I", packet->destIP);
             break;
         } // switch
         arp_addTableEntry(&adapter->arpTable, packet->source_mac, packet->sourceIP, true); // ARP table entry
@@ -208,14 +200,19 @@ bool arp_sendRequest(network_adapter_t* adapter, IP_t searchedIP)
     request.destIP.iIP   = searchedIP.iIP;
     request.sourceIP.iIP = adapter->IP.iIP;
 
+    textColor(HEADLINE);
+    printf("\nARP Request sent:");
+    textColor(LIGHT_GRAY); printf(" IP Searched: "); textColor(IMPORTANT);  printf("%I", searchedIP);
+
     uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     return EthernetSend(adapter, (void*)&request, sizeof(arpPacket_t), destMAC, 0x0806);
 }
 
 bool arp_waitForReply(struct network_adapter* adapter, IP_t searchedIP)
 {
-    while(arp_findEntry(&adapter->arpTable, searchedIP) == 0 && scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, 1000));
-    return(arp_findEntry(&adapter->arpTable, searchedIP) != 0);
+    uint32_t timewait = 2000; // ms
+    while  (arp_findEntry(&adapter->arpTable, searchedIP) == 0 && scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, timewait));
+    return (arp_findEntry(&adapter->arpTable, searchedIP) != 0);
 }
 
 /*

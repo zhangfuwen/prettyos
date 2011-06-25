@@ -127,6 +127,11 @@ bool network_installDevice(pciDev_t* device)
     adapter->Gateway_IP.IP[1] = GW_IP_2;
     adapter->Gateway_IP.IP[2] = GW_IP_3;
     adapter->Gateway_IP.IP[3] = GW_IP_4;
+
+  #ifdef QEMU_HACK
+    uint8_t gatewayMAC[6] = {GW_MAC_1, GW_MAC_2, GW_MAC_3, GW_MAC_4, GW_MAC_5, GW_MAC_6}; // HACK for TCP with qemu
+    arp_addTableEntry(&(adapter->arpTable), gatewayMAC, adapter->Gateway_IP, false);
+  #endif  
     // ------------------------------
 
     adapter->driver->install(adapter);
@@ -137,10 +142,9 @@ bool network_installDevice(pciDev_t* device)
 
     // Try to get an IP by DHCP
     adapter->DHCP_State  = START;
-  #ifndef QEMU_HACK
+  //#ifndef QEMU_HACK
     DHCP_Discover(adapter);
-  #endif
-    DHCP_Discover(adapter);
+  //#endif
     textColor(YELLOW);
     printf("\nMAC: %M", adapter->MAC);
     printf(" IP: %I\n\n", adapter->IP);
