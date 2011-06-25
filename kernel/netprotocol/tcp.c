@@ -257,11 +257,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                 connection->TCP_CurrState = LISTEN;
                 break;
             case LISTEN:
-                tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
                 connection->TCP_CurrState = SYN_RECEIVED;
                 break;
             case SYN_SENT:
-                tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, SYN_ACK_FLAG, 0 /*seqNumber*/ , ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
                 connection->TCP_CurrState = SYN_RECEIVED;
                 break;
             default:
@@ -274,11 +274,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
 
         if (connection->TCP_CurrState == SYN_SENT)
         {
-            connection->tcb.SND_NXT = tcp->acknowledgmentNumber;            // HACK for ckernel.c
-            connection->tcb.SND_UNA = htonl(ntohl(tcp->sequenceNumber)+1);  // HACK for ckernel.c
+            connection->tcb.SND_NXT = ntohl(tcp->acknowledgmentNumber); // HACK for experiment at ckernel.c
+            connection->tcb.SND_UNA = ntohl(tcp->sequenceNumber)+1;     // HACK for experiment at ckernel.c
         }
 
-        tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
+        tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
         connection->TCP_CurrState = ESTABLISHED;
     }
     else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
@@ -299,7 +299,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                 }
                 putch('\n');
                 textColor(TEXT);
-                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+tcpDataLength) /*ackNumber*/);
+                tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+tcpDataLength /*ackNumber*/);
                 break;
             }
             // no send action
@@ -330,11 +330,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         switch(connection->TCP_CurrState)
         {
             case ESTABLISHED:
-                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
                 connection->TCP_CurrState = CLOSE_WAIT;
                 break;
             case FIN_WAIT_2:
-                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
                 connection->TCP_CurrState = TIME_WAIT;
                 /// TEST
                 delay(100000);
@@ -342,7 +342,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
                 /// TEST
                 break;
             case FIN_WAIT_1:
-                tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
+                tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
                 connection->TCP_CurrState = CLOSING;
                 break;
             default:
@@ -355,7 +355,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
 
         if (connection->TCP_CurrState == FIN_WAIT_1)
         {
-            tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
+            tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
             connection->TCP_CurrState = TIME_WAIT;
             /// TEST
             delay(100000);
@@ -366,7 +366,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
         // HACK due to observations in wireshark with telnet:
         // w/o conditions
         {
-            tcp_send(connection, 0, 0, ACK_FLAG, tcp->acknowledgmentNumber /*seqNumber*/, htonl(ntohl(tcp->sequenceNumber)+1) /*ackNumber*/);
+            tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
             connection->TCP_CurrState = TIME_WAIT;
             /// TEST
             delay(100000);
@@ -388,7 +388,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, uint8_t transmitt
     tcpShowConnectionStatus(connection);
 }
 
-void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags flags, uint32_t seqNumber, uint32_t ackNumber)
+void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags flags, uint32_t seqNumber /*HOST format*/, uint32_t ackNumber /*HOST format*/)
 {
     textColor(HEADLINE);
     printf("\n\nTCP send: ");
@@ -401,12 +401,13 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     tcpPacket_t* tcp = malloc(sizeof(tcpPacket_t)+length, 0, "TCP packet");
     memcpy(tcp+1, data, length);
 
-    tcp->sourcePort = htons(connection->localSocket.port);
-    tcp->destPort   = htons(connection->remoteSocket.port);
-    tcp->sequenceNumber = seqNumber;
-    tcp->acknowledgmentNumber = ackNumber;
-    tcp->dataOffset = sizeof(tcpPacket_t)>>2; // header length as number of DWORDS
-    tcp->reserved = 0;
+    tcp->sourcePort           = htons(connection->localSocket.port);
+    tcp->destPort             = htons(connection->remoteSocket.port);
+    tcp->sequenceNumber       = htonl(seqNumber);
+    tcp->acknowledgmentNumber = htonl(ackNumber);
+    tcp->dataOffset           = sizeof(tcpPacket_t)>>2; // header length has to be provided as number of DWORDS
+    tcp->reserved             = 0;
+    
     switch (flags)
     {
     case SYN_FLAG:
