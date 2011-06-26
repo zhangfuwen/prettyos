@@ -119,7 +119,7 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
     if (sizeof(ethernet_t)+length > 0x700)
     {
         textColor(ERROR);
-        printf(" Error: This is more than (1792) 0x700\n",sizeof(ethernet_t)+length);
+        printf("\nError: This is more than (1792) 0x700\n",sizeof(ethernet_t)+length);
         return false;
     }
 

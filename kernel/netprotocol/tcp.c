@@ -534,7 +534,7 @@ uint32_t tcp_uconnect(IP_t IP, uint16_t port)
     return(connection->ID);
 }
 
-void tcp_usend(uint32_t ID, size_t length, void* data)
+void tcp_usend(uint32_t ID, void* data, size_t length)
 {
     tcpConnection_t* connection = findConnectionID(ID);
     if(connection)

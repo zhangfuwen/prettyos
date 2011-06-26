@@ -51,6 +51,7 @@
     <ClCompile Include="..\user\dummy_cpp\dummy.cpp" />
     <ClCompile Include="..\user\dummy_c\dummy.c" />
     <ClCompile Include="..\user\other_userprogs\arrow.c" />
+    <ClCompile Include="..\user\other_userprogs\browser.c" />
     <ClCompile Include="..\user\other_userprogs\calc.c" />
     <ClCompile Include="..\user\other_userprogs\hello.c" />
     <ClCompile Include="..\user\other_userprogs\keysound.c" />
