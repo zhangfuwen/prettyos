@@ -2,6 +2,8 @@
 #define TCP_H
 
 #include "network/network.h"
+#include "events.h"
+
 
 // http://tools.ietf.org/html/rfc793
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
@@ -60,6 +62,7 @@ typedef struct
     tcpTransmissionControlBlock_t tcb;
     TCP_state TCP_PrevState;
     TCP_state TCP_CurrState;
+    task_t*   owner;
 } tcpConnection_t;
 
 typedef struct
@@ -70,6 +73,12 @@ typedef struct
     uint32_t SEG_WND; // segment windows
     tcpFlags SEG_CTL; // control bits
 } __attribute__((packed)) tcpSegment_t;
+
+typedef struct
+{
+    uint32_t connection;
+    size_t   length;
+} __attribute__((packed)) tcpReceivedEventHeader_t;
 
 
 tcpConnection_t* tcp_createConnection();
@@ -82,5 +91,11 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
 void tcp_showConnections();
 tcpConnection_t* findConnectionID(uint32_t ID);
 tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, bool established);
+
+// User functions
+uint32_t tcp_uconnect(IP_t IP, uint16_t port);
+void     tcp_usend(uint32_t ID, size_t length, void* data);
+void     tcp_uclose(uint32_t ID);
+
 
 #endif

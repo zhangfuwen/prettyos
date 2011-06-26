@@ -6,6 +6,7 @@
 #include "stddef.h"
 #include "stdarg.h"
 
+
 typedef enum
 {
     __KEY_INVALID,
@@ -26,7 +27,8 @@ typedef enum
 typedef enum
 {
     EVENT_NONE, EVENT_INVALID_ARGUMENTS, EVENT_OVERFLOW,
-    EVENT_KEY_DOWN, EVENT_KEY_UP, EVENT_TEXT_ENTERED
+    EVENT_KEY_DOWN, EVENT_KEY_UP, EVENT_TEXT_ENTERED,
+    EVENT_TCP_CONNECTED, EVENT_TCP_RECEIVED
 } EVENT_t;
 
 typedef enum
@@ -95,5 +97,18 @@ typedef enum
 typedef struct {
     uint16_t x, y;
 } position_t;
+
+typedef union
+{
+    uint8_t IP[4];
+    uint32_t iIP;
+} __attribute__((packed)) IP_t;
+
+typedef struct
+{
+    uint32_t connection;
+    size_t   length;
+} __attribute__((packed)) tcpReceivedEventHeader_t;
+
 
 #endif

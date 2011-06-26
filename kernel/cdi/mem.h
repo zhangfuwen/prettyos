@@ -1,7 +1,7 @@
 #ifndef CDI_MEM_H
 #define CDI_MEM_H
 
-#include "os.h"
+#include "types.h"
 #include "cdi.h"
 
 // Describes requirements for a memory area

@@ -3,7 +3,7 @@
 #ifndef CDI_LISTS
 #define CDI_LISTS
 
-#include "os.h"
+#include "types.h"
 
 /* Represents a list.
    The fields of this structure are implementation dependent. To access list elements, specific list functions must be used. */

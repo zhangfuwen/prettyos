@@ -11,6 +11,7 @@
 #include "network/netutils.h"
 #include "ipv4.h"
 #include "list.h"
+#include "task.h"
 
 
 static const char* const tcpStates[] =
@@ -143,6 +144,7 @@ tcpConnection_t* tcp_createConnection()
     }
 
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
+    connection->owner = (void*)currentTask;
     connection->ID = getConnectionID();
     connection->TCP_PrevState = CLOSED;
     connection->TCP_CurrState = CLOSED;
@@ -281,6 +283,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
         tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+1 /*ackNumber*/);
         connection->TCP_CurrState = ESTABLISHED;
+        event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
     }
     else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
     {
@@ -291,6 +294,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             case ESTABLISHED: // ESTABLISHED --> DATA TRANSFER
             {
                 uint32_t tcpDataLength = -4 /* frame ? */ + length - (tcp->dataOffset << 2);
+              #ifdef _NETWORK_DATA_
                 textColor(LIGHT_GRAY);
                 printf("data:");
                 textColor(DATA);
@@ -300,12 +304,26 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 }
                 putch('\n');
                 textColor(TEXT);
+              #endif
                 tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber) /*seqNumber*/, ntohl(tcp->sequenceNumber)+tcpDataLength /*ackNumber*/);
+
+                // Issue event
+                struct
+                {
+                    tcpReceivedEventHeader_t header;
+                    char buffer[tcpDataLength];
+                } __attribute__((packed)) event;
+
+                event.header.connection = connection->ID;
+                event.header.length = tcpDataLength;
+                memcpy(event.buffer, (void*)(tcp+1), tcpDataLength);
+                event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &event, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
                 break;
             }
             // no send action
             case SYN_RECEIVED:
                 connection->TCP_CurrState = ESTABLISHED;
+                event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
                 break;
             case LAST_ACK:
                 connection->TCP_CurrState = CLOSED;
@@ -496,6 +514,38 @@ static uint32_t getConnectionID()
 {
     static uint16_t ID = 1;
     return ID++;
+}
+
+
+uint32_t tcp_uconnect(IP_t IP, uint16_t port)
+{
+    tcpConnection_t* connection = tcp_createConnection();
+    connection->remoteSocket.IP.iIP = IP.iIP;
+    connection->remoteSocket.port = port;
+    connection->adapter = network_getFirstAdapter(); // Hack
+    if(connection->adapter)
+        connection->localSocket.IP.iIP = connection->adapter->IP.iIP;
+
+    if(IP.iIP == 0) // passive open
+        tcp_bind(connection, connection->adapter);
+    else
+        tcp_connect(connection);
+
+    return(connection->ID);
+}
+
+void tcp_usend(uint32_t ID, size_t length, void* data)
+{
+    tcpConnection_t* connection = findConnectionID(ID);
+    if(connection)
+        tcp_send(connection, data, length, ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
+}
+
+void tcp_uclose(uint32_t ID)
+{
+    tcpConnection_t* connection = findConnectionID(ID);
+    if(connection)
+        tcp_deleteConnection(connection);
 }
 
 

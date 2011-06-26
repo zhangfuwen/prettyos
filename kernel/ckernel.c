@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.155 - Rev: 996";
+const char* const version = "0.0.2.156 - Rev: 997";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -249,7 +249,6 @@ void main(multiboot_t* mb_struct)
 
     tcpConnection_t* connection = 0;
     IP_t destIP = {.IP = {82,100,220,68}}; // homepage ehenkes at Port 80
-    // IP_t destIP = {.IP = {94,142,241,111}}; // 94.142.241.111 at Port 23, starwars story
 
 
     while (true) // start of kernel idle loop

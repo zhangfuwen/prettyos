@@ -176,6 +176,23 @@ void beep(uint32_t frequency, uint32_t duration)
     __asm__ volatile("int $0x7F" : : "a"(80), "b"(frequency), "c"(duration));
 }
 
+uint32_t tcp_connect(IP_t IP, uint16_t port)
+{
+    uint32_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(85), "b"(IP), "c"(port));
+    return ret;
+}
+
+void tcp_send(uint32_t ID, void* data, size_t length)
+{
+    __asm__ volatile("int $0x7F" : : "a"(86), "b"(ID), "c"(data), "d"(length));
+}
+
+void tcp_close(uint32_t ID)
+{
+    __asm__ volatile("int $0x7F" : : "a"(87), "b"(ID));
+}
+
  // deprecated
 int32_t floppy_dir()
 {

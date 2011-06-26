@@ -85,14 +85,12 @@ void install_AMDPCnet(network_adapter_t* dev)
         device->receiveDesc[i].address = paging_getPhysAddr(buffer);
         device->receiveDesc[i].flags = 0x80000000 | 0x7FF | 0x0000F000; // Descriptor OWN | Buffer length | ?
         device->receiveDesc[i].flags2 = 0;
-        device->receiveDesc[i].avail = (uint32_t)buffer;
 
         buffer = malloc(2048, 16, "PCnet transmit buffer");
         device->transmitBuf[i] = buffer;
         device->transmitDesc[i].address = paging_getPhysAddr(buffer);
         device->transmitDesc[i].flags = 0;
         device->transmitDesc[i].flags2 = 0;
-        device->transmitDesc[i].avail = (uint32_t)buffer;
     }
 
     // Fill and register initialization block
@@ -121,17 +119,16 @@ void install_AMDPCnet(network_adapter_t* dev)
 
 static void PCNet_receive()
 {
-    size_t size;
     while ((device->receiveDesc[device->currentRecDesc].flags & 0x80000000) == 0)
     {
         if (!(device->receiveDesc[device->currentRecDesc].flags & 0x40000000) &&
             (device->receiveDesc[device->currentRecDesc].flags & 0x03000000) == 0x03000000)
         {
-            size = device->receiveDesc[device->currentRecDesc].flags2 & 0xFFFF;
+            size_t size = device->receiveDesc[device->currentRecDesc].flags2 & 0xFFFF;
             if (size > 64)
                 size -= 4; // Do not copy CRC32
 
-            network_receivedPacket(device->device, (void*)device->receiveDesc[device->currentRecDesc].avail, size);
+            network_receivedPacket(device->device, device->receiveBuf[device->currentRecDesc], size);
         }
         device->receiveDesc[device->currentRecDesc].flags = 0x8000F7FF; // Set OWN-Bit and default values
         device->receiveDesc[device->currentRecDesc].flags2 = 0;
