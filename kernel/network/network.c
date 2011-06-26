@@ -134,8 +134,7 @@ bool network_installDevice(pciDev_t* device)
   #ifdef QEMU_HACK
     uint8_t gatewayMAC[6] = {GW_MAC_1, GW_MAC_2, GW_MAC_3, GW_MAC_4, GW_MAC_5, GW_MAC_6}; // HACK for TCP with qemu
     arp_addTableEntry(&(adapter->arpTable), gatewayMAC, adapter->Gateway_IP, false);
-  #endif  
-    // ------------------------------
+  #endif
 
     adapter->driver->install(adapter);
 

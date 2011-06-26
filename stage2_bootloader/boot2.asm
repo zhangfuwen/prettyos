@@ -78,7 +78,6 @@ Install_GDT:
     sti
 
 Load_Root:
-
     mov si, msgLoadKernel
     call print_string
 
@@ -99,7 +98,6 @@ Load_Root:
 ;    Switch from Real Mode (RM) to Protected Mode (PM)
 ;*******************************************************
 EnterProtectedMode:
-
     ; switch off floppy disk motor
     mov dx,0x3F2
     mov al,0x0C
@@ -129,8 +127,7 @@ PrepareMultiboot:
     mov [ebx + 0x00], DWORD 0b1001000001
     mov [ebx + 0x04], DWORD 640
     call convert_mmap
-    imul ecx, eax, 24       ; Calculate size of mmap (24 == sizeof(mmap_entry))
-    mov [ebx + 0x2C], ecx
+    mov [ebx + 0x2C], eax   ; Store size of mmap
     mov eax, [0x1200]
     shr eax, 10
     mov [ebx+0x08], eax

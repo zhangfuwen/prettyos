@@ -152,7 +152,7 @@ void clearScreen(uint8_t backgroundColor)
 
 char getchar()
 {
-    char ret;
+    char ret = 0;
     EVENT_t ev = event_poll(&ret, 1, enabledEvents?EVENT_TEXT_ENTERED:EVENT_NONE);
 
     while(ev != EVENT_TEXT_ENTERED)

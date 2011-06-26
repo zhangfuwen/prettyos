@@ -3,14 +3,43 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
 #include "dhcp.h"
+#include "util.h"
 #include "udp.h"
 #include "video/console.h"
-#include "network/netutils.h"
 
 
 static uint32_t xid = 0x0000E0FF0A; // AFFE.... Transaction Code for Identification
+
+// Sets up basic data of a dhcp packet.
+static void DHCP_preparePacket(dhcp_t* packet, network_adapter_t* adapter)
+{
+    packet->op = 1;
+    packet->htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
+    packet->hlen = 6;
+    packet->hops = 0;
+    packet->xid  = xid; // AFFExx
+    packet->secs = htons(0);
+    packet->flags = BROADCAST; // TEST: broadcast
+    packet->ciaddr.iIP = 0;
+    packet->yiaddr.iIP = 0;
+    packet->siaddr.iIP = 0;
+    packet->giaddr.iIP = 0;
+
+    for(uint8_t i = 0; i <   6; i++)  packet->chaddr[i] = adapter->MAC[i];
+    for(uint8_t i = 6; i <  16; i++)  packet->chaddr[i] = 0;
+    for(uint8_t i = 0; i <  64; i++)  packet->sname[i]  = 0;
+    for(uint8_t i = 0; i < 128; i++)  packet->file[i]   = 0;
+
+    // options
+    packet->options[0]  =  99;  // MAGIC
+    packet->options[1]  = 130;  // MAGIC
+    packet->options[2]  =  83;  // MAGIC
+    packet->options[3]  =  99;  // MAGIC
+
+    for(uint16_t i = 4; i < OPTIONSIZE; i++)
+        packet->options[i] = 255; // fill with end token
+}
 
 extern Packet_t lastPacket; // network.c
 
@@ -23,30 +52,7 @@ void DHCP_Discover(network_adapter_t* adapter)
     textColor(TEXT);
 
     dhcp_t packet;
-    packet.op = 1;
-    packet.htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    packet.hlen = 6;
-    packet.hops = 0;
-    packet.xid = xid; // AFFExx
-    packet.secs = htons(0);
-    packet.flags = BROADCAST; // TEST: broadcast
-    packet.ciaddr.iIP = 0;
-    packet.yiaddr.iIP = 0;
-    packet.siaddr.iIP = 0;
-    packet.giaddr.iIP = 0;
-
-    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
-    for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
-    for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
-    for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
-
-    // options
-    packet.options[0]  =  99;  // MAGIC
-    packet.options[1]  = 130;  // MAGIC
-    packet.options[2]  =  83;  // MAGIC
-    packet.options[3]  =  99;  // MAGIC
-    for(uint16_t i = 4; i < OPTIONSIZE; i++)
-        packet.options[i] = 255; // fill with end token
+    DHCP_preparePacket(&packet, adapter);
 
     packet.options[4]  =  53;  // MESSAGE TYPE
     packet.options[5]  =   1;  // Length
@@ -81,7 +87,7 @@ void DHCP_Discover(network_adapter_t* adapter)
     packet.options[30] = 121;  // y
     packet.options[31] =  79;  // O
     packet.options[32] =  83;  // S
-    
+
     IP_t srcIP = {.iIP = 0};
     IP_t destIP = {.iIP = 0xFFFFFFFF};
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
@@ -96,30 +102,7 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
     textColor(TEXT);
 
     dhcp_t packet;
-    packet.op = 1;
-    packet.htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    packet.hlen = 6;
-    packet.hops = 0;
-    packet.xid = xid; // AFFExx
-    packet.secs = htons(0);
-    packet.flags = BROADCAST; 
-    packet.ciaddr.iIP = 0;
-    packet.yiaddr.iIP = 0;
-    packet.siaddr.iIP = 0;
-    packet.giaddr.iIP = 0;
-
-    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
-    for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
-    for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
-    for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
-
-    // options
-    packet.options[0]  =  99;  // MAGIC
-    packet.options[1]  = 130;  // MAGIC
-    packet.options[2]  =  83;  // MAGIC
-    packet.options[3]  =  99;  // MAGIC
-    for(uint16_t i = 4; i < 340; i++)
-        packet.options[i] = 255; // end
+    DHCP_preparePacket(&packet, adapter);
 
     packet.options[4]  = 53;  // MESSAGE TYPE
     packet.options[5]  =  1;  // Length
@@ -159,7 +142,7 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
 
     IP_t srcIP  = {.iIP = 0x00000000};
     IP_t destIP = {.iIP = 0xFFFFFFFF};
-  
+
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
@@ -172,30 +155,9 @@ void DHCP_Inform(network_adapter_t* adapter)
     textColor(TEXT);
 
     dhcp_t packet;
-    packet.op = 1;
-    packet.htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    packet.hlen = 6;
-    packet.hops = 0;
-    packet.xid = xid; // AFFExx
-    packet.secs = 0;
-    packet.flags = BROADCAST; // TEST: broadcast
+    DHCP_preparePacket(&packet, adapter);
+
     packet.ciaddr.iIP = adapter->IP.iIP;
-    packet.yiaddr.iIP = 0;
-    packet.siaddr.iIP = 0;
-    packet.giaddr.iIP = 0;
-
-    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
-    for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
-    for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
-    for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
-
-    // options
-    packet.options[0]  =  99;  // MAGIC
-    packet.options[1]  = 130;  // MAGIC
-    packet.options[2]  =  83;  // MAGIC
-    packet.options[3]  =  99;  // MAGIC
-    for(uint16_t i = 4; i < 340; i++)
-        packet.options[i] = 255; // end
 
     packet.options[4]  =   1;  // SUBNET
     packet.options[5]  =   4;  // Length
@@ -224,7 +186,7 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.options[25] =   1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     for(uint8_t i = 0; i < 6; i++)
         packet.options[26+i] = adapter->MAC[i];
-    
+
     IP_t destIP = {.iIP = 0xFFFFFFFF};
     UDPSend(adapter, &packet, sizeof(dhcp_t), 68, adapter->IP, 67, destIP);
 }
@@ -238,30 +200,10 @@ void DHCP_Release(network_adapter_t* adapter)
     textColor(TEXT);
 
     dhcp_t packet;
-    packet.op = 1;
-    packet.htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    packet.hlen = 6;
-    packet.hops = 0;
-    packet.xid = xid; // AFFExx
-    packet.secs = htons(0);
-    packet.flags = UNICAST ;
+    DHCP_preparePacket(&packet, adapter);
+
+    packet.flags = UNICAST;
     packet.ciaddr.iIP = adapter->IP.iIP;
-    packet.yiaddr.iIP = 0;
-    packet.siaddr.iIP = 0;
-    packet.giaddr.iIP = 0;
-
-    for(uint8_t i = 0; i <   6; i++)  packet.chaddr[i] = adapter->MAC[i];
-    for(uint8_t i = 6; i <  16; i++)  packet.chaddr[i] = 0;
-    for(uint8_t i = 0; i <  64; i++)  packet.sname[i]  = 0;
-    for(uint8_t i = 0; i < 128; i++)  packet.file[i]   = 0;
-
-    // options
-    packet.options[0]  =  99;  // MAGIC
-    packet.options[1]  = 130;  // MAGIC
-    packet.options[2]  =  83;  // MAGIC
-    packet.options[3]  =  99;  // MAGIC
-    for(uint16_t i = 4; i < 340; i++)
-        packet.options[i] = 255; // end
 
     packet.options[4]  = 53;  // MESSAGE TYPE
     packet.options[5]  =  1;  // Length
@@ -279,14 +221,6 @@ void DHCP_Release(network_adapter_t* adapter)
 }
 
 static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt);
-
-static void useDHCP_IP(network_adapter_t* adapter, dhcp_t* dhcp)
-{
-    if (dhcp->yiaddr.iIP != 0)
-    {
-        adapter->IP.iIP = dhcp->yiaddr.iIP;
-    }
-}
 
 void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
 {
@@ -308,7 +242,7 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             {
               #ifndef QEMU_HACK
                 arp_addTableEntry(&adapter->arpTable, lastPacket.MAC, lastPacket.IP, false);
-              #endif    
+              #endif
                 DHCP_Request(adapter, dhcp->yiaddr);
             }
             else
@@ -323,7 +257,10 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             textColor(SUCCESS);
             printf("\n >>> PrettyOS got a DHCP ACK.   <<<\n");
             textColor(TEXT);
-            useDHCP_IP(adapter, dhcp);
+
+            if (dhcp->yiaddr.iIP != 0)
+                adapter->IP.iIP = dhcp->yiaddr.iIP;
+
             printf("\nGateway IP: %I Subnet: %I", adapter->Gateway_IP, adapter->Subnet);
             break;
         case NAK:
@@ -355,12 +292,12 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             }
             break;
 
+      #ifdef _NETWORK_DATA_
         case 12: case 14: case 15: case 17: case 18: case 40: case 43: // ASCII output
-          #ifdef _NETWORK_DATA_
             for(uint16_t i=0; i<opt[count+2]; i++)
                 printf("%c", opt[count+3+i]);
-          #endif
             break;
+      #endif
         case 51: // Lease time
             for(uint16_t i=0; i<opt[count+2]; i++)
             {
@@ -384,39 +321,39 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
                 case 1:
                     printf(" (DHCPDiscover)");
                     break;
-              #endif
                 case 2:
-              #ifdef _NETWORK_DATA_
                     printf(" (DHCPOffer)");
-              #endif
                     adapter->DHCP_State = OFFER;
                     break;
-              #ifdef _NETWORK_DATA_
                 case 3:
                     printf(" (DHCPRequest)");
                     break;
                 case 4:
                     printf(" (DHCPDecline)");
                     break;
-              #endif
                 case 5:
-              #ifdef _NETWORK_DATA_
                     printf(" (DHCPAck)");
-              #endif
                     adapter->DHCP_State = ACK;
                     break;
                 case 6:
-              #ifdef _NETWORK_DATA_
                     printf(" (DHCPNak)");
-              #endif
                     adapter->DHCP_State = NAK;
                     break;
-              #ifdef _NETWORK_DATA_
                 case 7:
                     printf(" (DHCPRelease)");
                     break;
                 case 8:
                     printf(" (DHCPInform)");
+                    break;
+              #else
+                case 2:
+                    adapter->DHCP_State = OFFER;
+                    break;
+                case 5:
+                    adapter->DHCP_State = ACK;
+                    break;
+                case 6:
+                    adapter->DHCP_State = NAK;
                     break;
               #endif
             }
@@ -767,7 +704,7 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
 
         if(opt[count+1] != 0)
             count = showOptionsBytes(adapter, opt, count);
-        else count++;
+        else count++; // Padding
     } //while
   #ifdef _NETWORK_DATA_
     printf("\nEND OF OPTIONS\n");

@@ -408,7 +408,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     tcp->acknowledgmentNumber = htonl(ackNumber);
     tcp->dataOffset           = sizeof(tcpPacket_t)>>2; // header length has to be provided as number of DWORDS
     tcp->reserved             = 0;
-    
+
     switch (flags)
     {
     case SYN_FLAG:

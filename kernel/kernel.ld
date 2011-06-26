@@ -11,6 +11,7 @@ SECTIONS
     .data   : { _data_start = .;   *(.data)             }
     .rodata : { _rodata_start = .; *(.rodata) *(.rdata) }
     .bss    : { _bss_start = .;    *(.bss)              }
+    _bss_end = .;
     _start_cdi_drivers = .;
     .cdi    : { _cdi_start = .;    *(.cdi)              }
     _stop_cdi_drivers = .;

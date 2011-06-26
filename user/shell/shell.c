@@ -89,8 +89,8 @@ int main()
 
         while (true)
         {
-            char buffer[4]; // We are only interested in TEXT_ENTERED and KEY_DOWN events. They send 4 bytes at maximum
-            EVENT_t ev = event_poll(buffer, 4, EVENT_NONE);
+            union {char buffer[4]; KEY_t key;} buffer; // We are only interested in TEXT_ENTERED and KEY_DOWN events. They send 4 bytes at maximum
+            EVENT_t ev = event_poll(buffer.buffer, 4, EVENT_NONE);
 
             switch(ev)
             {
@@ -101,7 +101,7 @@ int main()
                     if(keyPressed(KEY_ESC) || keyPressed(KEY_LCTRL) || keyPressed(KEY_RCTRL)) // To avoid conflicts with strg/esc shortcuts in kernel
                         break;
 
-                    unsigned char text = buffer[0];
+                    unsigned char text = buffer.buffer[0];
                     if (text > 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <= MAX_CHAR_PER_LINE && cursorPos != entryLength)))
                     {
                         if (curEntry != -1)
@@ -129,8 +129,7 @@ int main()
                 case EVENT_KEY_DOWN:
                 {
                     showInfo(1); // the train goes on...
-                    KEY_t key = *(KEY_t*)buffer;
-                    switch(key)
+                    switch(buffer.key)
                     {
                         case KEY_BACK:
                             if (cursorPos > 0)

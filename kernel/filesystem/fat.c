@@ -1999,21 +1999,9 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
         return CE_BADCACHEREAD;
     }
 
-    uint8_t k = 0;
-    for (uint8_t j=0; j<11; j++)
-    {
-        if (dir->Name[j] != string[j])
-        {
-            k = 1;
-        }
-    }
-    if (k == 0)
+    if (memcmp(dir->Name, string, 11) == 0) // HACK, accesses dir->Name and dir->Extension
     {
         return CE_FILENAME_EXISTS;
-    }
-    else
-    {
-        k = 0;
     }
 
     globalNextClusterIsLast = false;
@@ -2036,20 +2024,9 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
             break;
         }
 
-        for (uint8_t j=0; j<11; j++) // HACK, accesses dir->Name and dir->Extension
-        {
-            if (dir->Name[j] != string[j])
-            {
-                k = 1;
-            }
-        }
-        if (k == 0)
+        if (memcmp(dir->Name, string, 11) == 0) // HACK, accesses dir->Name and dir->Extension
         {
             return CE_FILENAME_EXISTS;
-        }
-        else
-        {
-            k = 0;
         }
         fHandle++;
     }
@@ -2063,10 +2040,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
         return CE_BADCACHEREAD;
     }
 
-    for (uint8_t j=0; j<11; j++)
-    {
-        dir->Name[j] = fileptr->name[j];
-    }
+    memcpy(dir->Name, fileptr->name, 11); // HACK, accesses dir->Name and dir->Extension
 
     if (!writeFileEntry(fileptr,&fHandle))
     {

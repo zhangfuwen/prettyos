@@ -25,11 +25,11 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.154 - Rev: 995";
+const char* const version = "0.0.2.155 - Rev: 996";
 
 // .bss
-extern uintptr_t _bss_start;  // linker script
-extern uintptr_t _kernel_end; // linker script
+extern uintptr_t _bss_start; // linker script
+extern uintptr_t _bss_end;   // linker script
 
 // Information about the system
 system_t system;
@@ -91,7 +91,7 @@ static void log(const char* str)
 void init(multiboot_t* mb_struct)
 {
     // set .bss to zero
-    memset(&_bss_start, 0x0, (uintptr_t)&_kernel_end - (uintptr_t)&_bss_start);
+    memset(&_bss_start, 0x0, (uintptr_t)&_bss_end - (uintptr_t)&_bss_start);
 
     useMultibootInformation(mb_struct);
 

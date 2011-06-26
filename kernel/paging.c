@@ -12,18 +12,20 @@
 #include "kheap.h"
 #include "video/console.h"
 
+
 pageDirectory_t* kernelPageDirectory;
+
+// Memory Map
 memoryMapEntry_t* memoryMapAdress;
 memoryMapEntry_t* memoryMapEnd;
 
-// Memory Map
 extern char _kernel_beg, _kernel_end; // defined in linker script
 
 // Physical Memory
 static const uint32_t MAX_DWORDS = 0x100000000ull / PAGESIZE / 32;
 static uint32_t* bittable;
-static uint32_t  firstFreeDWORD;
-static uint32_t  physMemInit();
+static uint32_t firstFreeDWORD;
+static uint32_t physMemInit();
 
 
 void paging_switch(pageDirectory_t* pd)
@@ -40,8 +42,8 @@ uint32_t paging_install()
     memset(kernelPageDirectory, 0, sizeof(pageDirectory_t));
     kernelPageDirectory->physAddr = (uint32_t)kernelPageDirectory;
 
-    kdebug(3, "\nkernelPageDirectory (virt.): %Xh ",kernelPageDirectory);
-    kdebug(3, "kernelPageDirectory (phys.): %Xh\n",kernelPageDirectory->physAddr);
+    kdebug(3, "\nkernelPageDirectory (virt.): %Xh ", kernelPageDirectory);
+    kdebug(3, "kernelPageDirectory (phys.): %Xh\n", kernelPageDirectory->physAddr);
 
     // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;
@@ -64,7 +66,7 @@ uint32_t paging_install()
     // kernelPageDirectory->tables[0]->pages[0xB8] |= MEM_USER | MEM_WRITE; // 184 * 0x1000 = 0xB8000
 
     // --------------------- VM86 Pages -------------------------------------------------------------------------------
-    kernelPageDirectory->codes[0]               |= MEM_USER | MEM_WRITE;
+    kernelPageDirectory->codes[0] |= MEM_USER | MEM_WRITE;
 
     for (uint32_t i=0; i<160; ++i) // 1045h for VMWare, real PC needs 9FC3Fh // ??
     {
@@ -149,26 +151,25 @@ static void physSetBits(uint32_t addr_begin, uint32_t addr_end, bool reserved)
 static uint32_t physMemInit()
 {
     static const uint64_t FOUR_GB  = 0x100000000ull;
-    memoryMapEntry_t* const entries = memoryMapAdress;
 
     // Print the memory map
     #ifdef _DIAGNOSIS_
-    textColor(0x03);
-    printf("Memory map:\n");
+    textColor(HEADLINE);
+    printf("\nMemory map:");
+    textColor(TEXT);
     for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; entry++)
     {
-        printf("  %Xh -> %Xh %u\n", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
+        printf("\n  %Xh -> %Xh %u", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }
-    textColor(WHITE);
     #endif
 
     // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size 0.
-    for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
+    for (memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; ++entry)
     {
         // We will completely ignore memory above 4 GB, move following entries backward by one then
         if (entry->base >= FOUR_GB)
         {
-            for (memoryMapEntry_t* e=entry; e < memoryMapEnd; ++e)
+            for (memoryMapEntry_t* e = entry; e < memoryMapEnd; ++e)
             {
                 *e = *(e+1);
             }
@@ -182,7 +183,7 @@ static uint32_t physMemInit()
     }
 
     // Check that 10 MiB-20 MiB is free for use
-    if (!isMemoryMapAvailable(entries, 10*1024*1024, 20*1024*1024))
+    if (!isMemoryMapAvailable(memoryMapAdress, 10*1024*1024, 20*1024*1024))
     {
         textColor(ERROR);
         printf("The memory between 10 MiB and 20 MiB is not free for use. OS halted!\n");
@@ -194,7 +195,7 @@ static uint32_t physMemInit()
     memsetl(bittable, 0xFFFFFFFF, MAX_DWORDS);
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
-    for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
+    for (const memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; ++entry)
     {
         physSetBits(entry->base, entry->base+entry->size, !entry->type);
     }
@@ -444,10 +445,9 @@ uint32_t paging_getPhysAddr(void* virtAddress)
 
 
 
-
 /******************** analysis tools *************************/
 
-void paging_analyzeBitTable(uint32_t msec)
+void paging_analyzeBitTable()
 {
     uint32_t counter1=0;
     uint32_t k=0, k_old=2;

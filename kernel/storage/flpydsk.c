@@ -12,16 +12,11 @@
 #include "kheap.h"
 #include "dma.h"
 
-// detailed infos about FDC and FAT12:
+// detailed infos about FDC:
 // http://www.isdaman.com/alsos/hardware/fdc/floppy.htm
-// http://lowlevel.brainsware.org/wiki/index.php/FDC#Data_Address_Mark
+// http://lowlevel.brainsware.org/wiki/index.php/FDC
 // http://www.brokenthorn.com/Resources/OSDev20.html
-// http://www.eit.lth.se/fileadmin/eit/courses/eit015/FAT12Description.pdf
 
-/*****************************************************************************
-  This module is based on the open source code
-  of the OSDEV tutorial series at www.brokenthorn.com
-*****************************************************************************/
 
 // start of dma transfer buffer, end: 0x10000 (64 KiB border). It must be below 16 MiB = 0x1000000 and in identity mapped memory!
 static void* const DMA_BUFFER = (void*)0x1000;
@@ -40,7 +35,7 @@ typedef enum
 } RW_OPERATION;
 
 // IO ports
-enum FLPYDSK_IO
+enum
 {
     FLPYDSK_DOR  = 0x3F2,
     FLPYDSK_MSR  = 0x3F4,
@@ -49,7 +44,7 @@ enum FLPYDSK_IO
 };
 
 // Bits 0-4 of command byte
-enum FLPYDSK_CMD
+enum
 {
     FDC_CMD_READ_TRACK   =   2,
     FDC_CMD_SPECIFY      =   3,
@@ -67,7 +62,7 @@ enum FLPYDSK_CMD
 };
 
 // Additional command masks
-enum FLPYDSK_CMD_EXT
+enum
 {
     FDC_CMD_EXT_SKIP       = 0x20,
     FDC_CMD_EXT_DENSITY    = 0x40,
@@ -75,7 +70,7 @@ enum FLPYDSK_CMD_EXT
 };
 
 // Flags for CONFIGURE command
-enum FLPYDSK_CONFIG
+enum
 {
     FDC_CONFIG_EIS_ON   = BIT(6),
     FDC_CONFIG_FIFO_OFF = BIT(5),
@@ -83,7 +78,7 @@ enum FLPYDSK_CONFIG
 };
 
 // Digital Output Register (DOR)
-enum FLPYDSK_DOR_MASK
+enum
 {
     FLPYDSK_DOR_MASK_DRIVE0       =   0,
     FLPYDSK_DOR_MASK_DRIVE1       =   1,
@@ -97,8 +92,8 @@ enum FLPYDSK_DOR_MASK
     FLPYDSK_DOR_MASK_DRIVE3_MOTOR = 128
 };
 
-// Main Status Register
-enum FLPYDSK_MSR_MASK
+// Main Status Register (MSR)
+enum
 {
     FLPYDSK_MSR_MASK_DRIVE1_POS_MODE =   1,
     FLPYDSK_MSR_MASK_DRIVE2_POS_MODE =   2,
@@ -111,7 +106,7 @@ enum FLPYDSK_MSR_MASK
 };
 
 // GAP 3 sizes
-enum FLPYDSK_GAP3_LENGTH
+enum
 {
     FLPYDSK_GAP3_LENGTH_STD        = 42,
     FLPYDSK_GAP3_LENGTH_5_14       = 32,
@@ -120,7 +115,7 @@ enum FLPYDSK_GAP3_LENGTH
 };
 
 // Formula: 2^sector_number * 128
-enum FLPYDSK_SECTOR_DTL
+enum
 {
     FLPYDSK_SECTOR_DTL_128  = 0,
     FLPYDSK_SECTOR_DTL_256  = 1,
@@ -170,9 +165,9 @@ void flpydsk_install()
 {
     if ((cmos_read(0x10)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
     {
-        textColor(0x03);
+        textColor(HEADLINE);
         printf("\nFloppy Disk:");
-        textColor(WHITE);
+        textColor(TEXT);
 
         flpydsk_version = flpydsk_readVersion();
         #ifdef _FLOPPY_DIAGNOSIS_
@@ -276,9 +271,9 @@ void flpydsk_motorOn(void* drive)
   #ifdef _FLOPPY_DIAGNOSIS_
     if(fdrive->motor == false)
     {
-        textColor(GREEN);
+        textColor(IMPORTANT);
         printf("\nflpydsk_motorOn drive: %u", fdrive->ID);
-        textColor(WHITE);
+        textColor(TEXT);
     }
   #endif
 
@@ -306,9 +301,9 @@ void flpydsk_motorOff(void* drive)
   #ifdef _FLOPPY_DIAGNOSIS_
     if(fdrive->motor == true)
     {
-        textColor(RED);
+        textColor(IMPORTANT);
         printf("\nflpydsk_motorOff drive: %u", fdrive->ID);
-        textColor(WHITE);
+        textColor(TEXT);
     }
     writeInfo(0, "Floppy motor: Global-Access-Counter: %u   Internal counter: %u   Motor on: %u", CurrentDrive->drive.insertedDisk->accessRemaining, CurrentDrive->accessRemaining, CurrentDrive->motor);
   #endif
@@ -336,11 +331,63 @@ static uint8_t flpydsk_readVersion()
     return(flpydsk_readData());
 }
 
+static bool flpydsk_lock()
+{
+    flpydsk_sendCommand(FDC_CMD_LOCK);
+    return(flpydsk_readData() & BIT(4));
+}
+
+static void flpydsk_getDump()
+{
+    #ifdef _FLOPPY_DIAGNOSIS_
+    textColor(HEADLINE);
+    printf("\n\nFDC dump:");
+    textColor(TEXT);
+    flpydsk_sendCommand(FDC_CMD_DUMPREG);
+    uint8_t temp = flpydsk_readData();
+    printf("\n0. Cylinder: %u", temp);
+    temp = flpydsk_readData();
+    printf("     1. Cylinder: %u", temp);
+    temp = flpydsk_readData();
+    printf("     2. Cylinder: %u", temp);
+    temp = flpydsk_readData();
+    printf("     3. Cylinder: %u", temp);
+    temp = flpydsk_readData();
+    printf("\nSteprate: %u      Head unload time: %u", temp>>4, temp&0xF);
+    temp = flpydsk_readData();
+    printf("      Head load time: %u      DMA: %u", temp>>1, IS_BIT_SET(temp, 0));
+    temp = flpydsk_readData();
+    printf("\nSector/End of track: %u", temp);
+    temp = flpydsk_readData();
+    printf("      Lock: %u      D0: %u   D1: %u   D2: %u   D3: %u", IS_BIT_SET(temp, 7), IS_BIT_SET(temp, 2), IS_BIT_SET(temp, 3), IS_BIT_SET(temp, 4), IS_BIT_SET(temp, 5));
+    printf("\nGAP: %u      WGATE: %u", IS_BIT_SET(temp, 1), IS_BIT_SET(temp, 0));
+    temp = flpydsk_readData();
+    printf("      Implied seek: %u      FIFO: %u      Polling: %u", IS_BIT_SET(temp, 6), !IS_BIT_SET(temp, 5), !IS_BIT_SET(temp, 4));
+    printf("\nFIFO treshold: %u", temp&0xF);
+    temp = flpydsk_readData();
+    printf("      Precompensation track number: %u\n", temp);
+    #endif
+}
+
+static void flpydsk_configure()
+{
+    if(flpydsk_version == 0x90) // Enhanced FDC
+    {
+        flpydsk_getDump();
+        flpydsk_sendCommand(FDC_CMD_CONFIGURE);
+        flpydsk_sendCommand(0);
+        flpydsk_sendCommand(FDC_CONFIG_EIS_ON | FDC_CONFIG_POLL_OFF | 7); // Implied Seek, FIFO, no Polling, Treshold: 8 (7=8-1)
+        flpydsk_sendCommand(0);
+        flpydsk_lock(); // Lock the configuration. Then we do not have to repeat configure after every reset
+        flpydsk_getDump();
+    }
+}
 
 // disable controller
 static void flpydsk_disableController()
 {
     flpydsk_writeDOR(0);
+    CurrentDrive->motor = false; // Attention! The motor had been turned off, although flpydsk_control_motor was not called
 }
 
 // enable controller
@@ -348,8 +395,8 @@ static void flpydsk_enableController()
 {
     irq_resetCounter(IRQ_FLOPPY);
     flpydsk_writeDOR(FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA);
-    waitForIRQ(IRQ_FLOPPY, 2000);
     CurrentDrive->motor = false; // Attention! The motor had been turned off, although flpydsk_control_motor was not called
+    waitForIRQ(IRQ_FLOPPY, 2000);
 }
 
 static int32_t flpydsk_calibrate(floppy_t* drive);
@@ -359,17 +406,22 @@ static void flpydsk_reset()
     flpydsk_disableController();
     flpydsk_enableController();
 
-    uint8_t st0, cyl;
-    // send CHECK_INT/SENSE INTERRUPT command to all drives
-    for (uint8_t i=0; i<4; ++i)
-    {
-        flpydsk_checkInt(&st0,&cyl);
-    }
     flpydsk_writeCCR(0);              // transfer speed 500 kb/s
-    flpydsk_driveData(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
+    waitForIRQ(IRQ_FLOPPY, 2000);
 
-    CurrentDrive->accessRemaining++;
-    flpydsk_calibrate(CurrentDrive);   // calibrate the disk
+    if(flpydsk_version == 0x90)
+    {
+        uint8_t st0, cyl;
+        // send CHECK_INT/SENSE INTERRUPT command to all drives
+        for (uint8_t i=0; i<4; ++i)
+        {
+            flpydsk_checkInt(&st0,&cyl);
+        }
+    }
+
+    flpydsk_configure();
+
+    flpydsk_driveData(3,16,0xF,true); // pass mechanical drive info: steprate=3ms, load time=16ms, unload time=240ms (0xF bei 500K)
 }
 
 /*
@@ -405,7 +457,7 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
 
         flpydsk_sendCommand(FDC_CMD_CALIBRATE);
         flpydsk_sendCommand(drive->ID);
-        waitForIRQ(IRQ_FLOPPY, 2000);
+        waitForIRQ(IRQ_FLOPPY, 500);
         flpydsk_checkInt(&st0, &cyl);
 
         timeout--;
@@ -554,7 +606,6 @@ static FS_ERROR flpydsk_write(uint32_t sectorLBA, uint8_t numberOfSectors)
     int32_t head=0, track=0, sector=1;
     flpydsk_LBAtoCHS(sectorLBA, &head, &track, &sector);
 
-
     CurrentDrive->accessRemaining+=2;
 
     if (flpydsk_seek(track, head) != 0)
@@ -598,9 +649,9 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
                      ((uint32_t*)DMA_BUFFER)[3] == 0x41414141 && ((uint32_t*)DMA_BUFFER)[4] == 0x41414141)
             {
                 #ifdef _FLOPPY_DIAGNOSIS_
-                textColor(RED);
+                textColor(ERROR);
                 printf("\nDMA attempt no. %d failed.", n+1);
-                textColor(WHITE);
+                textColor(TEXT);
                 #endif
                 if (n >= MAX_ATTEMPTS_FLOPPY_DMA_BUFFER-1)
                 {

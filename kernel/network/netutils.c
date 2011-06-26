@@ -52,16 +52,12 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, IP_t srcIP, IP_t dest
     pseudo.res = 0;
 
     uint32_t pseudoHeaderChecksum = 0;
-    uint8_t  count = 12; // pseudo header contains 12 byte
-
     uint8_t* data = (uint8_t*)&pseudo;
 
-    while (count > 1)
+    for(uint8_t i = 0; i < sizeof(updtcpPseudoHeader_t); i+=2)
     {
         // pseudo header contains 6 WORD
-        pseudoHeaderChecksum += (data[0] << 8) | data[1]; // Big Endian
-        data   += 2;
-        count  -= 2;
+        pseudoHeaderChecksum += (data[i] << 8) | data[i+1]; // Big Endian
     }
 
     return internetChecksum(p, length, pseudoHeaderChecksum);

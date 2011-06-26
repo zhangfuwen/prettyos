@@ -31,7 +31,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         printf("Ethernet packet received. We are not the addressee.");
         return;
     }
-    memcpy(lastPacket.MAC, eth->send_mac, 6); // save sender 
+    memcpy(lastPacket.MAC, eth->send_mac, 6); // save sender
 
     // output ethernet packet
   #ifdef _NETWORK_DATA_
