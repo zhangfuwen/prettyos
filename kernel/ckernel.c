@@ -25,7 +25,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.157 - Rev: 998";
+const char* const version = "0.0.2.158 - Rev: 999";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -248,9 +248,7 @@ void main(multiboot_t* mb_struct)
     bool PRINT = false;
 
     tcpConnection_t* connection = 0;
-    IP_t destIP = {.IP = {82,100,220,68}}; // homepage ehenkes at Port 80
-
-
+    
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
@@ -353,16 +351,6 @@ void main(multiboot_t* mb_struct)
                                 }
                                 break;
                             }
-                            case 'i':
-                            {
-                                network_adapter_t* adapter = network_getFirstAdapter();
-
-                                if (adapter)
-                                {
-                                    DHCP_Inform(adapter);
-                                }
-                                break;
-                            }
                             case 'f':
                             {
                                 network_adapter_t* adapter = network_getFirstAdapter();
@@ -388,43 +376,7 @@ void main(multiboot_t* mb_struct)
                                 printf("\ntcp connections:");
                                 textColor(TEXT);
                                 tcp_showConnections();
-                                break;
-                            case 'w':
-                            {
-                                connection = tcp_createConnection();
-                                connection->remoteSocket.IP.iIP = destIP.iIP;
-                                connection->remoteSocket.port = 80;
-
-                                network_adapter_t* adapter = network_getFirstAdapter();
-                                connection->adapter = adapter;
-
-                                if(adapter)
-                                {
-                                    connection->localSocket.IP.iIP = adapter->IP.iIP;
-                                    tcp_connect(connection);
-                                }
-                                break;
-                            }
-                            case 'x':
-                            {
-                                network_adapter_t* adapter = network_getFirstAdapter();
-                                if (adapter)
-                                {
-                                    connection = findConnection(destIP, 80, adapter, true);
-                                    if (connection)
-                                    {
-                                        tcp_send(connection, "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n",
-                                                      strlen("GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n"), ACK_FLAG, connection->tcb.SND_NXT, connection->tcb.SND_UNA);
-                                    }
-                                    else
-                                    {
-                                        textColor(ERROR);
-                                        printf("\nNo established HTTP connection to %I found.", destIP);
-                                        textColor(TEXT);
-                                    }
-                                }
-                                break;
-                            }
+                                break;                            
                         }
                     }
                     break;

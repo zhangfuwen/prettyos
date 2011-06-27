@@ -38,13 +38,34 @@ typedef struct
 
 typedef struct
 {
-    uint32_t SND_UNA;   // Send Unacknowledged
-    uint32_t SND_NXT;   // Send Next
-    uint16_t SND_WND;   // Send Window
-    uint32_t SND_ISS;   // Initial send sequence number
-    uint32_t RCV_NXT;   // Sequence number of next received set
-    uint16_t RCV_WND;   // Receive Window
-    uint32_t RCV_IRS;   // Initial receive sequence number
+    uint32_t SEQ; // Sequence number
+    uint32_t ACK; // Acknoledgement number
+    uint32_t LEN; // segment length
+    uint32_t WND; // segment windows
+    tcpFlags CTL; // control bits
+} __attribute__((packed)) tcpSegment_t;
+
+typedef struct
+{
+    uint32_t UNA;   // Send Unacknowledged
+    uint32_t NXT;   // Send Next
+    uint16_t WND;   // Send Window
+    uint32_t ISS;   // Initial send sequence number
+} __attribute__((packed)) tcpSend_t;
+
+typedef struct
+{
+    uint32_t NXT;   // Sequence number of next received set
+    uint16_t WND;   // Receive Window
+    uint32_t IRS;   // Initial receive sequence number
+} __attribute__((packed)) tcpRcv_t;
+
+
+typedef struct
+{
+    tcpSend_t SND;
+    tcpRcv_t  RCV;
+    tcpSegment_t SEG;   // information about segment to be sent next
 } __attribute__((packed)) tcpTransmissionControlBlock_t;
 
 typedef struct
@@ -65,14 +86,6 @@ typedef struct
     task_t*   owner;
 } tcpConnection_t;
 
-typedef struct
-{
-    uint32_t SEG_SEQ; // Sequence number
-    uint32_t SEG_ACK; // Acknoledgement number
-    uint32_t SEG_LEN; // segment length
-    uint32_t SEG_WND; // segment windows
-    tcpFlags SEG_CTL; // control bits
-} __attribute__((packed)) tcpSegment_t;
 
 typedef struct
 {
