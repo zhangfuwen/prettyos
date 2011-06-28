@@ -95,6 +95,36 @@ element_t* list_GetElement(listHead_t* hd, uint32_t number)
 
 
 // Ring
+static void putIn(ring_t* ring, element_t* prev, element_t* elem)
+{
+    if(ring->begin == 0) // Ring is empty
+    {
+        ring->begin = elem;
+        ring->current = elem;
+        elem->next = elem;
+    }
+    else
+    {
+        elem->next = prev->next;
+        prev->next = elem;
+    }
+}
+
+static void takeOut(ring_t* ring, element_t* prev)
+{
+    if(prev->next == prev) // Just one element in ring
+    {
+        ring->begin = 0;
+        ring->current = 0;
+    }
+    else
+    {
+        if(prev->next == ring->begin)   ring->begin   = prev->next->next;
+        if(prev->next == ring->current) ring->current = prev->next->next;
+        prev->next = prev->next->next;
+    }
+}
+
 ring_t* ring_Create()
 {
     ring_t* ring = malloc(sizeof(ring_t), 0, "ring");
@@ -105,28 +135,18 @@ ring_t* ring_Create()
 
 void ring_Insert(ring_t* ring, void* data, bool single)
 {
-    if(ring->begin == 0) // ring is empty
+    if(single && ring->begin != 0) // check if an element with the same data is already in the ring
     {
-        ring->begin = ring->current = malloc(sizeof(element_t), 0, "ring-begin");
-        ring->current->next = ring->current;
-        ring->current->data = data;
-    }
-    else
-    {
-        if(single) // check if an element with the same data is already in the ring
+        element_t* current = ring->current;
+        do
         {
-            element_t* current = ring->current;
-            do
-            {
-                if(current->data == data) return;
-                current = current->next;
-            } while (current != ring->current);
-        }
-        element_t* item = malloc(sizeof(element_t), 0, "ring-element");
-        item->data = data;
-        item->next = ring->current->next;
-        ring->current->next = item;
+            if(current->data == data) return;
+            current = current->next;
+        } while (current != ring->current);
     }
+    element_t* item = malloc(sizeof(element_t), 0, "ring-element");
+    item->data = data;
+    putIn(ring, ring->current, item);
 }
 
 bool ring_isEmpty(ring_t* ring)
@@ -144,23 +164,36 @@ bool ring_DeleteFirst(ring_t* ring, void* data)
         if (current->next->data == data) // next element will be deleted
         {
             element_t* temp = current->next;
-            if(ring->begin == ring->begin->next) // Just one element
-            {
-                ring->begin = 0;
-                ring->current = 0;
-            }
-            else
-            {
-                if(temp == ring->begin)   ring->begin   = temp->next;
-                if(temp == ring->current) ring->current = temp->next;
-                current->next = temp->next;
-            }
+            takeOut(ring, current);
             free(temp);
             return(true);
         }
         current = current->next;
     } while (current != ring->current);
     return(false);
+}
+
+void ring_move(ring_t* dest, ring_t* source, void* data)
+{
+    if(source == 0 || dest == 0 || source->begin == 0) return;
+
+    element_t* prev = source->begin;
+    element_t* current = prev->next;
+    do
+    {
+        if(current->data == data) // Found. Take it out.
+        {
+            takeOut(source, prev);
+            break;
+        }
+        prev = current;
+        current = current->next;
+    } while (prev != source->begin);
+
+    if(current->data == data) // Found element. Insert it to dest ring.
+        putIn(dest, dest->current, current);
+    else // Create new element. Insert it to dest ring.
+        ring_Insert(dest, data, true);
 }
 
 

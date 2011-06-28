@@ -8,11 +8,11 @@ int main()
 {
     setScrollField(7, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                        Pretty Browser - Network test program!",                   2, 0x0B);
+    printLine("                     Pretty Browser - Network test program!",                      2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     iSetCursor(0, 7);
-    IP_t IP = {.IP = {82,100,220,68}}; // homepage ehenkes, HTTP 
+    IP_t IP = {.IP = {82,100,220,68}}; // homepage ehenkes, HTTP
     uint32_t connection = tcp_connect(IP, 80);
     printf("Connected (ID = %u). Wait until connection is established... ", connection);
 

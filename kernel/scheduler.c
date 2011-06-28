@@ -3,14 +3,14 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "task.h"
 #include "scheduler.h"
+#include "task.h"
 #include "list.h"
 #include "util.h"
 #include "timer.h"
-#include "synchronisation.h"
 #include "todo_list.h"
 #include "irq.h"
+
 
 static ring_t* runningTasks = 0;
 static ring_t* blockedTasks = 0;
@@ -27,6 +27,7 @@ blockerType_t blocker[] =
     {0},                    // BL_EVENT
     {0}                     // BL_NETPACKET
 };
+
 
 // Function for freetime task. Executed when the ring of running tasks is empty.
 static void doNothing()
@@ -50,8 +51,7 @@ static void unblockTask(task_t* task, bool timeout)
     task->blocker.data = (void*)(!timeout);
 
     // Move task into the scheduler ring
-    scheduler_insertTask(task);
-    ring_DeleteFirst(blockedTasks, task);
+    ring_move(runningTasks, blockedTasks, task);
 }
 
 void scheduler_unblockEvent(BLOCKERTYPE type, void* data) // Event based blocks are handled here
@@ -104,7 +104,7 @@ static task_t* scheduler_getNextTask()
         if(freetimeTask == 0) // The freetime task has not been needed until now. Use spare time to create it.
         {
             freetimeTask = create_task(kernelPageDirectory, &doNothing, 0, 0, 0);
-            ring_DeleteFirst(runningTasks, freetimeTask);
+            ring_DeleteFirst(runningTasks, freetimeTask); // The freetime task is special. It should not be run like a normal task scheduled by the runningTasks ring.
         }
         return(freetimeTask);
     }
@@ -152,9 +152,7 @@ bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout
         currentTask->blocker.timeout = timer_getTicks()+timeout;
 
     cli();
-    // Move task into the ring of blocked tasks
-    ring_Insert(blockedTasks, (task_t*)currentTask, true);
-    ring_DeleteFirst(runningTasks, (task_t*)currentTask);
+    ring_move(blockedTasks, runningTasks, (task_t*)currentTask);
     sti();
 
     switch_context(); // Leave task. This task will not be called again until block ended.

@@ -261,9 +261,6 @@
     <ClInclude Include="..\kernel\netprotocol\udp.h">
       <Filter>Kernel\include\network\protocol</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\network\rtl8139_eeprom.h">
-      <Filter>Kernel\include\network</Filter>
-    </ClInclude>
     <ClInclude Include="..\kernel\network\rtl8139.h">
       <Filter>Kernel\include\network</Filter>
     </ClInclude>
@@ -510,9 +507,6 @@
       <Filter>Kernel\sources\network\protocol</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\network\rtl8139.c">
-      <Filter>Kernel\sources\network</Filter>
-    </ClCompile>
-    <ClCompile Include="..\kernel\network\rtl8139_eeprom.c">
       <Filter>Kernel\sources\network</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\netprotocol\icmp.c">

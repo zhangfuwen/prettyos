@@ -5,6 +5,8 @@
 
 #include "todo_list.h"
 #include "kheap.h"
+#include "scheduler.h"
+
 
 todoList_t* todoList_create()
 {

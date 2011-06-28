@@ -43,7 +43,7 @@ typedef struct
     uint32_t LEN; // segment length
     uint32_t WND; // segment windows
     tcpFlags CTL; // control bits
-} __attribute__((packed)) tcpSegment_t;
+} tcpSegment_t;
 
 typedef struct
 {
@@ -51,14 +51,14 @@ typedef struct
     uint32_t NXT;   // Send Next
     uint16_t WND;   // Send Window
     uint32_t ISS;   // Initial send sequence number
-} __attribute__((packed)) tcpSend_t;
+} tcpSend_t;
 
 typedef struct
 {
     uint32_t NXT;   // Sequence number of next received set
     uint16_t WND;   // Receive Window
     uint32_t IRS;   // Initial receive sequence number
-} __attribute__((packed)) tcpRcv_t;
+} tcpRcv_t;
 
 
 typedef struct
@@ -66,7 +66,7 @@ typedef struct
     tcpSend_t SND;
     tcpRcv_t  RCV;
     tcpSegment_t SEG;   // information about segment to be sent next
-} __attribute__((packed)) tcpTransmissionControlBlock_t;
+} tcpTransmissionControlBlock_t;
 
 typedef struct
 {

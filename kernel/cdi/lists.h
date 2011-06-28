@@ -3,11 +3,12 @@
 #ifndef CDI_LISTS
 #define CDI_LISTS
 
-#include "types.h"
+#include "list.h"
+
 
 /* Represents a list.
    The fields of this structure are implementation dependent. To access list elements, specific list functions must be used. */
-typedef struct listHead* cdi_list_t;
+typedef listHead_t* cdi_list_t;
 
 /* Creates a new list.
    return: Returns a new list, or NULL if no memory could be allocated for the list. */
@@ -55,5 +56,6 @@ void* cdi_list_remove(cdi_list_t list, size_t index);
 /* Get the size (length) of a list
    list: The list whose length is to be returned */
 size_t cdi_list_size(cdi_list_t list);
+
 
 #endif

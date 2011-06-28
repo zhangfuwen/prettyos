@@ -19,13 +19,14 @@
 #include "cpu.h"
 #include "descriptor_tables.h"
 #include "power_management.h"
+#include "task.h"
 #include "elf.h"
 #include "keyboard.h"
 #include "netprotocol/udp.h"
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.163 - Rev: 1004";
+const char* const version = "0.0.2.164 - Rev: 1005";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -248,7 +249,7 @@ void main(multiboot_t* mb_struct)
     bool PRINT = false;
 
     tcpConnection_t* connection = 0;
-    
+
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
@@ -376,7 +377,7 @@ void main(multiboot_t* mb_struct)
                                 printf("\ntcp connections:");
                                 textColor(TEXT);
                                 tcp_showConnections();
-                                break;                            
+                                break;
                         }
                     }
                     break;

@@ -51,7 +51,7 @@ void* cdi_list_remove(cdi_list_t list, size_t index);
 size_t cdi_list_size(cdi_list_t list);
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
