@@ -219,7 +219,7 @@ void tcp_close(tcpConnection_t* connection)
         /*
         tcp_send(connection, 0, 0, FIN_FLAG, 0 , 0 );
         */ 
-/// correct ?????????????????????????        
+
         connection->tcb.SEG.CTL = FIN_FLAG;
         connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
         connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
@@ -323,14 +323,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         {
             connection->tcb.SEG.CTL = ACK_FLAG;
             connection->tcb.SEG.SEQ = connection->tcb.SND.NXT; 
-            /*
-            connection->tcb.SEG.ACK = connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;; // rev. 999
-            */
-/// correct ?????????????????????????
             connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
             connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;            
-/// correct ?????????????????????????
-            connection->tcb.SND.NXT = connection->tcb.SEG.SEQ + 1;
+            connection->tcb.SND.NXT = connection->tcb.SEG.SEQ; // for the ACK to SYN,ACK the seq# is not increased
             tcp_send(connection, 0, 0, connection->tcb.SEG.CTL, connection->tcb.SEG.SEQ , connection->tcb.SEG.ACK);
 
             connection->TCP_CurrState = ESTABLISHED;
@@ -363,19 +358,14 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 textColor(TEXT);
               #endif
 
-/// correct ????????????????????????? 
                 connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber);
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+tcpDataLength;
-                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK = ntohl(tcp->sequenceNumber); //connection->tcb.RCV.NXT;
                 connection->tcb.SEG.LEN = tcpDataLength;
+                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + connection->tcb.SEG.LEN;
+                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+                connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL = ACK_FLAG;
-                connection->tcb.SND.NXT = connection->tcb.SEG.SEQ + connection->tcb.SEG.LEN;
-                // tcp_send(connection, 0, 0, connection->tcb.SEG.CTL, connection->tcb.SEG.SEQ, connection->tcb.RCV.NXT); // falsch!
-                connection->tcb.SND.NXT += connection->tcb.SEG.LEN;
-/// correct ?????????????????????????
-                tcp_send(connection, 0, 0, ACK_FLAG, ntohl(tcp->acknowledgmentNumber), ntohl(tcp->sequenceNumber)+tcpDataLength); // Rev. 999
-                
+                tcp_send(connection, 0, 0, connection->tcb.SEG.CTL, connection->tcb.SEG.SEQ, connection->tcb.RCV.NXT);                 
+
 
                 // Issue event
                 struct
@@ -515,6 +505,11 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length, tcpFlags
     tcp->acknowledgmentNumber = htonl(ackNumber);
     tcp->dataOffset           = sizeof(tcpPacket_t)>>2; // header length has to be provided as number of DWORDS
     tcp->reserved             = 0;
+
+    if (connection->TCP_CurrState == ESTABLISHED)
+    {
+        connection->tcb.SND.NXT += length;
+    }
 
     switch (flags)
     {
