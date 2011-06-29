@@ -29,7 +29,6 @@ int main()
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
                 char* pStr = "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n";
-                printf("\nlen: %u", strlen(pStr));
                 tcp_send(connection, pStr, strlen(pStr));
                 break;
             case EVENT_TCP_RECEIVED:

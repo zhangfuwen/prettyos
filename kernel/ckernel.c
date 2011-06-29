@@ -26,7 +26,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.164 - Rev: 1005";
+const char* const version = "0.0.2.166 - Rev: 1007";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
