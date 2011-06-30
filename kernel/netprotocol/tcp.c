@@ -100,7 +100,7 @@ static void printFlag(uint8_t b, const char* s)
     printf("%s ", s);
 }
 
-static void tcpDebug(tcpPacket_t* tcp)
+static void tcp_debug(tcpPacket_t* tcp)
 {
     textColor(LIGHT_GRAY); printf(" src port: ");   textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
     textColor(LIGHT_GRAY); printf("  dest port: "); textColor(IMPORTANT); printf("%u   ", ntohs(tcp->destPort));
@@ -227,7 +227,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 {
     textColor(HEADLINE);
     printf("\nTCP:");
-    tcpDebug(tcp);
+    tcp_debug(tcp);
 
     tcpConnection_t* connection;
     if (tcp->SYN && !tcp->ACK) // SYN
@@ -493,12 +493,9 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
 	uint32_t seqNumber = connection->tcb.SEG.SEQ;
 	uint32_t ackNumber = connection->tcb.SEG.ACK;
 
-    textColor(HEADLINE);
-    printf("\n\nTCP send: ");
-    textColor(TEXT);
-    printf("conn. ID: %u  ", connection->ID);
-    textColor(IMPORTANT);
-    printf("%u ==> %u  ", connection->localSocket.port, connection->remoteSocket.port);
+    textColor(HEADLINE);  printf("\n\nTCP send: ");
+    textColor(TEXT);      printf("conn. ID: %u  ", connection->ID);
+    textColor(IMPORTANT); printf("%u ==> %u  ", connection->localSocket.port, connection->remoteSocket.port);
     textColor(TEXT);
 
     tcpPacket_t* tcp = malloc(sizeof(tcpPacket_t)+length, 0, "TCP packet");
@@ -535,17 +532,11 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
             tcp->RST = 1; // RST
             break;
     }
-    printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
-    printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
-	
+    
     tcp->window = htons(connection->tcb.SEG.WND);
-    textColor(TEXT); printf("  WND = %u  ", ntohs(tcp->window));
-
-	tcp->urgentPointer = 0;    
-
-    tcp->checksum = 0; // for checksum calculation
-
-    tcp->checksum = htons(udptcpCalculateChecksum((void*)tcp, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
+    tcp->urgentPointer = 0;    
+	tcp->checksum = 0; // for checksum calculation
+	tcp->checksum = htons(udptcpCalculateChecksum((void*)tcp, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
 
     ipv4_send(connection->adapter, tcp, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6);
     free(tcp);
@@ -555,6 +546,9 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     {
         connection->tcb.SND.NXT += length;
     }
+	
+	printf("\n"); 
+	tcp_debug(tcp);
 }
 
 static bool IsSegmentAcceptable (tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
@@ -643,6 +637,9 @@ void tcp_uclose(uint32_t ID)
     tcpConnection_t* connection = findConnectionID(ID);
     if(connection)
     {
+		connection->tcb.SEG.CTL = RST_FLAG;
+		connection->tcb.SEG.ACK = 0;
+        tcp_send(connection, 0, 0);    
         tcp_deleteConnection(connection);
     }
 }

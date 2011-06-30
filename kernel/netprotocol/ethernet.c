@@ -21,7 +21,7 @@ static const uint8_t broadcast_MAC2[6] = {0, 0, 0, 0, 0, 0};
 
 void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
-    textColor(GREEN);
+    textColor(LIGHT_BLUE);
     printf("\n\n>> Packet received. <<");
     textColor(HEADLINE);
     printf("\nEth: ");
