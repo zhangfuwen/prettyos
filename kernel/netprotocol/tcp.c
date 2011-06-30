@@ -12,6 +12,7 @@
 #include "list.h"
 #include "task.h"
 
+const uint16_t STARTWINDOWS = 8192;
 
 static const char* const tcpStates[] =
 {
@@ -107,10 +108,8 @@ static void tcpDebug(tcpPacket_t* tcp)
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
     textColor(TEXT);
-    /*
-    printf("window: %u  ", ntohs(tcp->window));
-    printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
-    */
+    printf("  WND = %u  ", ntohs(tcp->window));
+    // printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));    
 }
 
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
@@ -173,13 +172,15 @@ void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
     if (connection->TCP_PrevState == CLOSED || connection->TCP_PrevState == LISTEN || connection->TCP_PrevState == TIME_WAIT)
     {
         srand(timer_getMilliseconds());
-        connection->tcb.SND.ISS = rand();
-        connection->tcb.SEG.SEQ = connection->tcb.SND.ISS;
+        connection->tcb.SND.WND = STARTWINDOWS;
+		connection->tcb.SND.ISS = rand();
+		connection->tcb.SND.UNA = connection->tcb.SND.ISS;
+        connection->tcb.SND.NXT = connection->tcb.SND.ISS + 1; // CHECK!!!
+
+		connection->tcb.SEG.WND = connection->tcb.SND.WND;
+		connection->tcb.SEG.SEQ = connection->tcb.SND.ISS;
         connection->tcb.SEG.CTL = SYN_FLAG;
         connection->tcb.SEG.ACK = 0;
-
-        connection->tcb.SND.UNA = connection->tcb.SND.ISS;
-        connection->tcb.SND.NXT = connection->tcb.SND.ISS + 1; // CHECK!!!
 
         tcp_send(connection, 0, 0);
         connection->TCP_CurrState = SYN_SENT;
@@ -264,12 +265,15 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = LISTEN;
                 break;
             case LISTEN:
-                srand(timer_getMilliseconds());
+                connection->tcb.RCV.WND = ntohs(tcp->window);
+				connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
+				connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
+				srand(timer_getMilliseconds());
                 connection->tcb.SND.ISS  = rand();
                 connection->tcb.SEG.SEQ  = connection->tcb.SND.ISS;
                 connection->tcb.SND.NXT  = connection->tcb.SEG.SEQ;
                 connection->tcb.SND.UNA  = connection->tcb.SEG.SEQ;
-                connection->tcb.RCV.NXT  = ntohl(tcp->sequenceNumber) + 1;
+                
                 connection->tcb.SEG.ACK  = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL  = SYN_ACK_FLAG;
                 tcp_send(connection, 0, 0);
@@ -277,8 +281,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = SYN_RECEIVED;
                 break;
             case SYN_SENT:
+				connection->tcb.RCV.WND = ntohs(tcp->window);
+				connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
+				connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
                 connection->tcb.SEG.SEQ = connection->tcb.SND.NXT; // CHECK
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
                 connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL = SYN_ACK_FLAG;
                 tcp_send(connection, 0, 0);
@@ -295,11 +301,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
         if (connection->TCP_CurrState == SYN_SENT)
         {
-            connection->tcb.SEG.CTL = ACK_FLAG;
-            connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-            connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
+            connection->tcb.RCV.WND = ntohs(tcp->window);
+			connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
+			connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
             connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-            tcp_send(connection, 0, 0);
+            connection->tcb.SEG.CTL = ACK_FLAG;
+			tcp_send(connection, 0, 0);
 
             connection->TCP_CurrState = ESTABLISHED;
             event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
@@ -338,14 +345,20 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 putch('\n');
                 textColor(TEXT);
               #endif
-
-                connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber);
-                connection->tcb.SEG.LEN = tcpDataLength;
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + connection->tcb.SEG.LEN;
-                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-                connection->tcb.SEG.CTL = ACK_FLAG;
+				
+				connection->tcb.RCV.WND =  ntohs(tcp->window);
+				connection->tcb.SND.UNA =  ntohl(tcp->acknowledgmentNumber);
+                connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
+				
+				connection->tcb.SND.WND -= tcpDataLength; 
+                connection->tcb.SEG.SEQ =  connection->tcb.SND.NXT;
+                connection->tcb.SEG.ACK =  connection->tcb.RCV.NXT;
+				connection->tcb.SEG.LEN =  0; // send no data
+				connection->tcb.SEG.WND =  connection->tcb.SND.WND;
+                connection->tcb.SEG.CTL =  ACK_FLAG;
                 tcp_send(connection, 0, 0);
+
+				connection->tcb.SND.WND = STARTWINDOWS; // HACK TO FREE SND.WND: we deliver direct to user-app.
 
                 // Issue event
                 struct
@@ -389,35 +402,35 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         switch(connection->TCP_CurrState)
         {
             case ESTABLISHED:
-                connection->tcb.SEG.CTL = ACK_FLAG;
-				connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+                connection->tcb.RCV.WND = ntohs(tcp->window);
 				connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
+				connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
 				connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+				connection->tcb.SEG.CTL = ACK_FLAG;
 				tcp_send(connection, 0, 0);
-								
-                connection->TCP_CurrState = CLOSE_WAIT;
+				connection->TCP_CurrState = CLOSE_WAIT;
                 break;
             case FIN_WAIT_2:
-                connection->tcb.SEG.CTL = ACK_FLAG;
+				connection->tcb.RCV.WND = ntohs(tcp->window);
+                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
 				connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-				connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
 				connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+				connection->tcb.SEG.CTL = ACK_FLAG;
 				tcp_send(connection, 0, 0);
-								
-                connection->TCP_CurrState = TIME_WAIT;
+				connection->TCP_CurrState = TIME_WAIT;
                 /// TEST
                 delay(100000);
                 tcp_deleteConnection(connection);
                 /// TEST
                 break;
             case FIN_WAIT_1:
-                connection->tcb.SEG.CTL = ACK_FLAG;
-				connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+                connection->tcb.RCV.WND = ntohs(tcp->window);
 				connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
+				connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
 				connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+				connection->tcb.SEG.CTL = ACK_FLAG;
 				tcp_send(connection, 0, 0);
-				
-                connection->TCP_CurrState = CLOSING;
+				connection->TCP_CurrState = CLOSING;
                 break;
             default:
                 break;
@@ -429,14 +442,14 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
         if (connection->TCP_CurrState == FIN_WAIT_1)
         {
-            connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber);
+            connection->tcb.RCV.WND = ntohs(tcp->window);
+			connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
+			connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber);
             connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-            connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
             connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
             connection->tcb.SEG.CTL = ACK_FLAG;
             tcp_send(connection, 0, 0);
-
-            connection->TCP_CurrState = TIME_WAIT;
+			connection->TCP_CurrState = TIME_WAIT;
             /// TEST
             delay(100000);
             tcp_deleteConnection(connection);
@@ -446,14 +459,14 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         // HACK due to observations in wireshark:
         if (connection->TCP_CurrState == ESTABLISHED)
         {
-            connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber);
+			connection->tcb.RCV.WND = ntohs(tcp->window);           
+			connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
+			connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber);
             connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-            connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
             connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
             connection->tcb.SEG.CTL = ACK_FLAG;
             tcp_send(connection, 0, 0);
-
-            connection->TCP_CurrState = TIME_WAIT;
+			connection->TCP_CurrState = TIME_WAIT;
             /// TEST
             delay(100000);
             tcp_deleteConnection(connection);
@@ -524,9 +537,11 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     }
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
+	
+    tcp->window = htons(connection->tcb.SEG.WND);
+    textColor(TEXT); printf("  WND = %u  ", ntohs(tcp->window));
 
-    tcp->window = htons(8192); // TODO: Clarify
-    tcp->urgentPointer = 0;    // TODO: Clarify
+	tcp->urgentPointer = 0;    
 
     tcp->checksum = 0; // for checksum calculation
 
