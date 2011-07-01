@@ -102,8 +102,8 @@ static void printFlag(uint8_t b, const char* s)
 
 static void tcp_debug(tcpPacket_t* tcp)
 {
-    textColor(LIGHT_GRAY); printf(" src port: ");   textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
-    textColor(LIGHT_GRAY); printf("  dest port: "); textColor(IMPORTANT); printf("%u   ", ntohs(tcp->destPort));
+    textColor(LIGHT_GRAY); printf("src: ");   textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
+    textColor(LIGHT_GRAY); printf(" dest: "); textColor(IMPORTANT); printf("%u   ", ntohs(tcp->destPort));
     // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
@@ -120,6 +120,7 @@ static void tcpShowConnectionStatus(tcpConnection_t* connection)
     puts(tcpStates[connection->TCP_CurrState]);
     textColor(TEXT);
     printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
+	printf("SND.UNA = %u, SND.NXT = %u, SND.WND = %u", connection->tcb.SND.UNA, connection->tcb.SND.NXT, connection->tcb.SND.WND); 
 }
 
 tcpConnection_t* tcp_createConnection()
@@ -174,8 +175,8 @@ void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
         srand(timer_getMilliseconds());
         connection->tcb.SND.WND = STARTWINDOWS;
 		connection->tcb.SND.ISS = rand();
-		connection->tcb.SND.UNA = connection->tcb.SND.ISS;
-        connection->tcb.SND.NXT = connection->tcb.SND.ISS + 1; // CHECK!!!
+		connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, connection->tcb.SND.ISS);
+		connection->tcb.SND.NXT = connection->tcb.SND.ISS + 1; 
 
 		connection->tcb.SEG.WND = connection->tcb.SND.WND;
 		connection->tcb.SEG.SEQ = connection->tcb.SND.ISS;
@@ -274,7 +275,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     switch(connection->TCP_CurrState)
     {
         case CLOSED:
-
+			if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
+			{
+				// cf. plan (2) http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
+			}
           break;
 
         case LISTEN:
@@ -283,12 +287,14 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
                 connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
-                srand(timer_getMilliseconds());
+                
+				srand(timer_getMilliseconds());
                 connection->tcb.SND.ISS  = rand();
-                connection->tcb.SEG.SEQ  = connection->tcb.SND.ISS;
                 connection->tcb.SND.NXT  = connection->tcb.SEG.SEQ;
-                connection->tcb.SND.UNA  = connection->tcb.SEG.SEQ; // ??
-                connection->tcb.SEG.ACK  = connection->tcb.RCV.NXT;
+                connection->tcb.SND.UNA  = max(connection->tcb.SND.UNA, connection->tcb.SEG.SEQ); 
+                
+				connection->tcb.SEG.SEQ  = connection->tcb.SND.ISS;
+				connection->tcb.SEG.ACK  = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL  = SYN_ACK_FLAG;
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = SYN_RECEIVED;
@@ -354,7 +360,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
               #endif
 
                 connection->tcb.RCV.WND =  ntohs(tcp->window);
-                connection->tcb.SND.UNA =  ntohl(tcp->acknowledgmentNumber); // ??
+                connection->tcb.SND.UNA =  max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); 
                 connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
 
                 connection->tcb.SND.WND -= tcpDataLength;
@@ -383,7 +389,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
-                connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber); // ??
+                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); 
                 connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
                 connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL = ACK_FLAG;
@@ -394,7 +400,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
-                connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber); // ??
+                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); 
                 connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
                 connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL = ACK_FLAG;
@@ -422,7 +428,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
-                connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber); // ??
+                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); 
                 connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
                 connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL = ACK_FLAG;
@@ -477,7 +483,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             // send FIN                   NEW NEW NEW              CHECK CHECK CHECK
             connection->tcb.RCV.WND = ntohs(tcp->window);
             connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
-            connection->tcb.SND.UNA = ntohl(tcp->acknowledgmentNumber); // ??
+            connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); 
             connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
             connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
             connection->tcb.SEG.CTL = FIN_FLAG;

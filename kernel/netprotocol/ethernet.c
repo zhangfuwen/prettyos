@@ -16,8 +16,8 @@
 
 extern Packet_t lastPacket; // network.c
 
-static const uint8_t broadcast_MAC1[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-static const uint8_t broadcast_MAC2[6] = {0, 0, 0, 0, 0, 0};
+static const uint8_t broadcast_MAC_FF[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+static const uint8_t broadcast_MAC_00[6] = {0, 0, 0, 0, 0, 0};
 
 void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
@@ -25,7 +25,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     printf("\n\n>> Packet received. <<");
     textColor(HEADLINE);
     printf("\nEth: ");
-    if(memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC1, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC2, 6) != 0)
+    if (memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_FF, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_00, 6) != 0)
     {
         textColor(TEXT);
         printf("Ethernet packet received. We are not the addressee.");
@@ -78,7 +78,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
         // and http://www.cavebear.com/archive/cavebear/Ethernet/type.html
 
         // now we look for IPv4, IPv6, or ARP
-        if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IP
+        if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IPv4
         {
             ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t));
         }
@@ -115,11 +115,11 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
     textColor(GRAY);
     printf(" %M ==> %M", adapter->MAC, MAC);
     textColor(TEXT);
-    printf("  length = %u.", sizeof(ethernet_t)+length);
-    if (sizeof(ethernet_t)+length > 0x700)
+    printf("  length = %u.", sizeof(ethernet_t) + length);
+    if (sizeof(ethernet_t) + length > 0x700)
     {
         textColor(ERROR);
-        printf("\nError: This is more than (1792) 0x700\n",sizeof(ethernet_t)+length);
+        printf("\nError: This is more than (1792) 0x700\n", sizeof(ethernet_t) + length);
         return false;
     }
 
@@ -130,7 +130,7 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
     memcpy(packet->send_mac, adapter->MAC, 6);
     *(uint16_t*)packet->type_len = htons(type);
 
-    bool retVal = network_sendPacket(adapter, (void*)packet, length+sizeof(ethernet_t));
+    bool retVal = network_sendPacket(adapter, (void*)packet, length + sizeof(ethernet_t));
 
     free(packet);
     return(retVal);
