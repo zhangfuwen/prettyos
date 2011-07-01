@@ -289,10 +289,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
                 
 				srand(timer_getMilliseconds());
-                connection->tcb.SND.ISS  = rand();
+                connection->tcb.SND.WND  = STARTWINDOWS;
+				connection->tcb.SND.ISS  = rand();
                 connection->tcb.SND.NXT  = connection->tcb.SEG.SEQ;
                 connection->tcb.SND.UNA  = max(connection->tcb.SND.UNA, connection->tcb.SEG.SEQ); 
                 
+				connection->tcb.SEG.WND  = connection->tcb.SND.WND;
 				connection->tcb.SEG.SEQ  = connection->tcb.SND.ISS;
 				connection->tcb.SEG.ACK  = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL  = SYN_ACK_FLAG;
