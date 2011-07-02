@@ -95,7 +95,11 @@ struct network_adapter
 typedef struct 
 {
     IP_t IP;
-    uint8_t MAC[6];
+    uint8_t  MAC[6];
+	uint16_t ethLength;
+	uint16_t ipLength;
+	uint16_t tcpLength;
+	uint16_t tcpDataLength;
 } Packet_t;
 
 bool network_installDevice(pciDev_t* device);

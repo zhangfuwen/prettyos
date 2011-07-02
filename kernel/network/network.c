@@ -166,8 +166,8 @@ static void network_handleReceivedBuffers()
     {
         networkBuffer_t* buffer = e->data;
         e = e->next;
-        EthernetRecv(buffer->adapter, (ethernet_t*)buffer->data, buffer->length);
-        free(buffer->data);
+        EthernetRecv(buffer->adapter, (ethernet_t*)buffer->data, buffer->length);        
+		free(buffer->data);
         list_Delete(RxBuffers, buffer);
         free(buffer);
     }

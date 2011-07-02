@@ -12,6 +12,8 @@
 #include "list.h"
 #include "task.h"
 
+extern Packet_t lastPacket; // network.c
+
 const uint16_t STARTWINDOWS = 8192;
 bool tcp_PassiveOpen = true;
 
@@ -227,7 +229,9 @@ void tcp_close(tcpConnection_t* connection)
 
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length)
 {
-    textColor(HEADLINE);
+    lastPacket.tcpLength = length;
+	
+	textColor(HEADLINE);
     printf("\nTCP:");
     tcp_debug(tcp);
 
@@ -341,7 +345,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 // ESTABLISHED --> DATA TRANSFER
-                uint32_t tcpDataLength = -4 /* frame ? */ + length - (tcp->dataOffset << 2);
+				// http://upload.wikimedia.org/wikipedia/de/a/aa/Ethernetpaket.svg (cf. FCS field, CRC)
+                uint32_t tcpDataLength = -4 /* FCS */ + length - (tcp->dataOffset << 2);
+				lastPacket.tcpDataLength = tcpDataLength;
 
                 textColor(ERROR);
                 if (!IsSegmentAcceptable(tcp, connection, tcpDataLength))
@@ -360,6 +366,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 						printf("%c", ((uint8_t*)(tcp+1))[i]);
 					}
 					putch('\n');
+					
+					// Analysis
+					textColor(IMPORTANT);
+					printf("eth: %u  ip: %u  tcp: %u  tcpData: %u", lastPacket.ethLength, lastPacket.ipLength, lastPacket.tcpLength, lastPacket.tcpDataLength);
 					textColor(TEXT);
 				}
 				sleepMilliSeconds(2);
