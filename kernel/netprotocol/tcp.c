@@ -13,6 +13,7 @@
 #include "task.h"
 
 const uint16_t STARTWINDOWS = 8192;
+bool tcp_PassiveOpen = true;
 
 static const char* const tcpStates[] =
 {
@@ -175,7 +176,7 @@ void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
         srand(timer_getMilliseconds());
         connection->tcb.SND.WND = STARTWINDOWS;
 		connection->tcb.SND.ISS = rand();
-		connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, connection->tcb.SND.ISS);
+		connection->tcb.SND.UNA = connection->tcb.SND.ISS;
 		connection->tcb.SND.NXT = connection->tcb.SND.ISS + 1; 
 
 		connection->tcb.SEG.WND = connection->tcb.SND.WND;
@@ -291,9 +292,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 				srand(timer_getMilliseconds());
                 connection->tcb.SND.WND  = STARTWINDOWS;
 				connection->tcb.SND.ISS  = rand();
-                connection->tcb.SND.NXT  = connection->tcb.SEG.SEQ;
-                connection->tcb.SND.UNA  = max(connection->tcb.SND.UNA, connection->tcb.SEG.SEQ); 
-                
+                connection->tcb.SND.UNA = connection->tcb.SND.ISS;
+				connection->tcb.SND.NXT = connection->tcb.SND.ISS + 1; 
+
 				connection->tcb.SEG.WND  = connection->tcb.SND.WND;
 				connection->tcb.SEG.SEQ  = connection->tcb.SND.ISS;
 				connection->tcb.SEG.ACK  = connection->tcb.RCV.NXT;
@@ -349,18 +350,20 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 }
                 textColor(TEXT);
 
-              #ifdef _TCP_NETWORK_DATA_
-                textColor(LIGHT_GRAY);
-                printf("data:");
-                textColor(DATA);
-                for (uint16_t i=0; i<tcpDataLength; i++)
-                {
-                    printf("%c", ((uint8_t*)(tcp+1))[i]);
-                }
-                putch('\n');
-                textColor(TEXT);
-              #endif
-
+				if (tcp_PassiveOpen)
+				{
+					textColor(LIGHT_GRAY);
+					printf("data:");
+					textColor(DATA);
+					for (uint16_t i=0; i<tcpDataLength; i++)
+					{
+						printf("%c", ((uint8_t*)(tcp+1))[i]);
+					}
+					putch('\n');
+					textColor(TEXT);
+				}
+				sleepMilliSeconds(2);
+			
                 connection->tcb.RCV.WND =  ntohs(tcp->window);
                 connection->tcb.SND.UNA =  max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); 
                 connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
@@ -530,6 +533,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     {
         case SYN_FLAG:
             tcp->SYN = 1; // SYN
+			tcp_PassiveOpen = false;
             break;
         case SYN_ACK_FLAG:
             tcp->ACK = 1; // ACK
