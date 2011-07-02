@@ -38,9 +38,9 @@ static uint32_t next_pid = 1; // The next available process ID (kernel has 0, so
 void tasking_install()
 {
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(0x03);
+    textColor(TEXT);
     printf("Install tasking\n");
-    textColor(WHITE);
+    textColor(TEXT);
     #endif
 
     tasks = list_Create();
@@ -177,9 +177,9 @@ task_t* create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privile
 task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[])
 {
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(0x03);
+    textColor(TEXT);
     printf("create task");
-    textColor(WHITE);
+    textColor(TEXT);
     #endif
 
     task_t* newTask = malloc(sizeof(task_t),0, "task-newtask");
@@ -208,9 +208,9 @@ task_t* create_cthread(void(*entry)(), const char* consoleName)
 task_t* create_thread(void(*entry)())
 {
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(0x03);
+    textColor(TEXT);
     printf("create thread");
-    textColor(WHITE);
+    textColor(TEXT);
     #endif
 
     task_t* newTask = malloc(sizeof(task_t),0, "task-newthread");
@@ -233,9 +233,9 @@ task_t* create_thread(void(*entry)())
 task_t* create_vm86_task(void(*entry)())
 {
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(0x03);
+    textColor(TEXT);
     printf("create task");
-    textColor(WHITE);
+    textColor(TEXT);
     #endif
 
     task_t* newTask = malloc(sizeof(task_t),0, "vm86-task");
@@ -268,9 +268,9 @@ uint32_t task_switch(task_t* newTask)
     tss_switch((uintptr_t)currentTask->kernelStack, currentTask->esp, currentTask->ss); // esp0, esp, ss
 
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(0x03);
+    textColor(TEXT);
     printf("%u ", currentTask->pid);
-    textColor(WHITE);
+    textColor(TEXT);
     #endif
 
     // Set TS
@@ -357,7 +357,7 @@ static void kill(task_t* task)
     scheduler_deleteTask(task);
 
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(0x03);
+    textColor(TEXT);
     printf("exit finished.\n");
     scheduler_log();
     #endif

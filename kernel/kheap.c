@@ -121,7 +121,7 @@ void logHeapRegions()
             lineCounter = 0;
         }
     }
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 void* malloc(uint32_t size, uint32_t alignment, char* comment)
@@ -241,7 +241,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             task_switching = false;
             printf("\nmalloc: %Xh %s", regionAddress, comment);
             task_switching = true;
-            textColor(WHITE);
+            textColor(TEXT);
           #endif
 
             mutex_unlock(mutex);
@@ -262,7 +262,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     {
         textColor(RED);
         printf("\nmalloc failed, heap could not be expanded!");
-        textColor(WHITE);
+        textColor(TEXT);
         return 0;
     }
     else
@@ -272,7 +272,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
         task_switching = false;
         printf("\nheap expanded: %Xh heap end: %Xh", sizeToGrow, (uintptr_t)(heapStart + (uintptr_t)heapSize));
         task_switching = true;
-        textColor(WHITE);
+        textColor(TEXT);
       #endif
     }
 
@@ -290,7 +290,7 @@ void free(void* addr)
     task_switching = false;
     printf("\nfree:   %Xh", addr);
     task_switching = true;
-    textColor(WHITE);
+    textColor(TEXT);
   #endif
 
     if (addr == 0) return;
@@ -313,7 +313,7 @@ void free(void* addr)
             task_switching = false;
             printf(" %s", regions[i].comment);
             task_switching = true;
-            textColor(WHITE);
+            textColor(TEXT);
           #endif
             regions[i].reserved = false; // free the region
             strncpy(regions[i].comment,"free",5);
@@ -358,7 +358,7 @@ void free(void* addr)
 
     textColor(RED);
     printf("Broken free: %Xh\n", addr);
-    textColor(WHITE);
+    textColor(TEXT);
     //ASSERT(false);
 }
 

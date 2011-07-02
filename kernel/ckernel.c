@@ -26,7 +26,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.171 - Rev: 1011";
+const char* const version = "0.0.2.172 - Rev: 1012";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -237,7 +237,7 @@ void main(multiboot_t* mb_struct)
     printf("\n\n--------------------------------------------------------------------------------");
     printf("                                PrettyOS Booted\n");
     printf("--------------------------------------------------------------------------------");
-    textColor(WHITE);
+    textColor(TEXT);
 
     const char* progress    = "|/-\\";    // rotating asterisk
     uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter

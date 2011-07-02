@@ -22,7 +22,7 @@ static RTL8139_networkAdapter_t* device;
 void rtl8139_handler(registers_t* data)
 {
     #ifdef _NETWORK_DIAGNOSIS_
-    textColor(0x03);
+    textColor(HEADLINE);
     printf("\n--------------------------------------------------------------------------------");
     #endif
 
@@ -31,10 +31,10 @@ void rtl8139_handler(registers_t* data)
     #ifdef _NETWORK_DIAGNOSIS_
     textColor(YELLOW);
     printf("\nRTL8139 Interrupt Status: %yh, ", val);
-    textColor(0x03);
-    if      (val & RTL8139_INT_RX_OK)           { puts("Receive OK"); }
+    textColor(ERROR);
+    if      (val & RTL8139_INT_RX_OK)           { textColor(SUCCESS); puts("Receive OK"); }
     else if (val & RTL8139_INT_RX_ERR)          { puts("Receive Error"); }
-    else if (val & RTL8139_INT_TX_OK)           { puts("Transmit OK"); }
+    else if (val & RTL8139_INT_TX_OK)           { textColor(SUCCESS); puts("Transmit OK"); }
     else if (val & RTL8139_INT_TX_ERR)          { puts("Transmit Error"); }
     else if (val & RTL8139_INT_RXBUF_OVERFLOW)  { puts("Rx Buffer Overflow");}
     else if (val & RTL8139_INT_RXFIFO_UNDERRUN) { puts("Packet Underrun / Link change");}
@@ -42,6 +42,7 @@ void rtl8139_handler(registers_t* data)
     else if (val & RTL8139_INT_CABLE)           { puts("Cable Length Change");}
     else if (val & RTL8139_INT_TIMEOUT)         { puts("Time Out");}
     else if (val & RTL8139_INT_PCIERR)          { puts("System Error");}
+	textColor(TEXT);
     #endif
 
     // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
@@ -56,9 +57,9 @@ void rtl8139_handler(registers_t* data)
 
     // Display RTL8139 specific data
     #ifdef _NETWORK_DATA_
-    textColor(LIGHT_MAGENTA);
+    textColor(HEADLINE);
     printf("\nFlags: ");
-    textColor(0x03);
+    textColor(TEXT);
     for (uint8_t i = 0; i < 2; i++)
     {
         printf("%yh ", device->RxBuffer[device->RxBufferPointer+i]);

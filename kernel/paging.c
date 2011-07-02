@@ -459,7 +459,7 @@ void paging_analyzeBitTable()
 
     for (uint32_t index=0; index<maximum; ++index)
     {
-        textColor(WHITE);
+        textColor(TEXT);
         printf("\n%Xh: ",index*32*PAGESIZE);
         ++counter1;
 
@@ -491,7 +491,7 @@ void paging_analyzeBitTable()
         }
 
     }
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 

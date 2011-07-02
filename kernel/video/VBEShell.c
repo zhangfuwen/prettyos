@@ -74,7 +74,7 @@ int startVBEShell()
 
     while (true)
     {
-        // textColor(WHITE);
+        // textColor(TEXT);
         entryLength = 0;
         cursorPos = 0;
         memset(entry, 0, MAX_CHAR_PER_LINE+1);
@@ -133,7 +133,7 @@ int startVBEShell()
                     // sprintf(entry, "\n$> %s <--\n");
                     vbe_drawString(entry, cursorPos, ypos);
                     ypos += 16;
-                    // textColor(WHITE);
+                    // textColor(TEXT);
                     // printLine("$>                                                                              ", 40, 0x0B);
                     goto EVALUATION;
                 case 144: // Insert

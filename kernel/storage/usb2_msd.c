@@ -38,7 +38,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     #ifdef _USB_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %u interface: %u", device+1, numInterface);
-    textColor(WHITE);
+    textColor(TEXT);
     #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-GetMaxLun");
@@ -75,7 +75,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     #ifdef _USB_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %u interface: %u", device+1, numInterface);
-    textColor(WHITE);
+    textColor(TEXT);
     #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-MSD-Reset");
@@ -194,7 +194,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     {
         textColor(RED);
         printf("\nCSW signature wrong (not processed)");
-        textColor(WHITE);
+        textColor(TEXT);
         return -1;
     }
     else
@@ -202,7 +202,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
         textColor(RED);
         printf("\nCSW signature wrong (processed, but wrong value)");
     }
-    textColor(WHITE);
+    textColor(TEXT);
 
     // check matching tag
     uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
@@ -218,7 +218,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
         textColor(RED);
         printf("\nError: CSW tag wrong");
     }
-    textColor(WHITE);
+    textColor(TEXT);
 
     // check CSWDataResidue
     uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
@@ -234,7 +234,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
         textColor(0x06);
         printf("\nCSW data residue: %d",CSWDataResidue);
     }
-    textColor(WHITE);
+    textColor(TEXT);
 
     // check status byte // DWORD 3 (byte 12)
     uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
@@ -261,7 +261,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
             printf("\nCSW status byte: undefined value (error)");
             break;
     }
-    textColor(WHITE);
+    textColor(TEXT);
 
     // transfer diagnosis (qTD status)
     uint32_t statusCommand = showStatusbyteQTD(cmdQTD);
@@ -341,7 +341,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 
      textColor(0x03);
      printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
-     textColor(WHITE);
+     textColor(TEXT);
   #endif
 
     // The qTD for the SCSI command is built
@@ -395,7 +395,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
       #ifdef _USB_DIAGNOSIS_
         textColor(0x03);
         printf("\ntoggles IN: data: %u  status: %u", usbDevices[device].ToggleEndpointInMSD, !(usbDevices[device].ToggleEndpointInMSD));
-        textColor(WHITE);
+        textColor(TEXT);
       #endif
 
         // Data in and Status qTD
@@ -414,7 +414,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
       #ifdef _USB_DIAGNOSIS_
         textColor(0x03);
         printf("\ntoggle IN: status: %u", usbDevices[device].ToggleEndpointInMSD);
-        textColor(WHITE);
+        textColor(TEXT);
       #endif
 
         QTD_In = StatusQTD = createQTD_MSDStatus(0x1, usbDevices[device].ToggleEndpointInMSD); // next, toggle, IN 13 byte
@@ -484,7 +484,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
 
      textColor(0x03);
      printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
-     textColor(WHITE);
+     textColor(TEXT);
   #endif
 
     if (SCSIcommand == 0x2A)   // write(10)
@@ -542,7 +542,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
 
     textColor(0x03);
     printf("\ntoggle IN: status: %u", usbDevices[device].ToggleEndpointInMSD);
-    textColor(WHITE);
+    textColor(TEXT);
   #endif
 
     StatusQTD = createQTD_MSDStatus(0x1, usbDevices[device].ToggleEndpointInMSD); // next, toggle, IN 13 byte
@@ -581,7 +581,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
     {
         timeout--;
       #ifdef _USB_DIAGNOSIS_
-        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: test unit ready"); textColor(WHITE);
+        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: test unit ready"); textColor(TEXT);
       #endif
 
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady); // dev, endp, cmd, LBA, transfer length
@@ -594,7 +594,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
             ///////// send SCSI command "request sense"
 
           #ifdef _USB_DIAGNOSIS_
-            textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(WHITE);
+            textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(TEXT);
           #endif
 
             usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense); // dev, endp, cmd, LBA, transfer length
@@ -691,7 +691,7 @@ static void analyzeInquiry()
         textColor(ERROR);
         printf("\nResponse Data Format is not OK: %u (should be 2)", ResponseDataFormat);
     }
-    textColor(WHITE);
+    textColor(TEXT);
 
     printf("\nRemovable device type:            %s", RMB     ? "yes" : "no");
     printf("\nSupports hierarch. addr. support: %s", HISUP   ? "yes" : "no");
@@ -733,7 +733,7 @@ void testMSD(uint8_t devAddr, disk_t* disk)
     {
         textColor(RED);
         printf("\nThis is no Mass Storage Device! MSD test cannot be carried out.");
-        textColor(WHITE);
+        textColor(TEXT);
     }
     else
     {
@@ -748,7 +748,7 @@ void testMSD(uint8_t devAddr, disk_t* disk)
 
         ///////// send SCSI command "inquiry (opcode: 0x12)"
       #ifdef _USB_DIAGNOSIS_
-        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: inquiry"); textColor(WHITE);
+        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: inquiry"); textColor(TEXT);
       #endif
         usbBulkTransfer_t inquiry;
         startLogBulkTransfer(&inquiry, 0x12, 36, 0);
@@ -777,7 +777,7 @@ void testMSD(uint8_t devAddr, disk_t* disk)
 
         ///////// send SCSI command "read capacity(10)"
       #ifdef _USB_DIAGNOSIS_
-        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read capacity"); textColor(WHITE);
+        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read capacity"); textColor(TEXT);
       #endif
 
         usbBulkTransfer_t readCapacity;
@@ -800,7 +800,7 @@ void testMSD(uint8_t devAddr, disk_t* disk)
 
         textColor(YELLOW);
         printf("\nCapacity: %u MB, Last LBA: %u, block size %u\n", capacityMB, lastLBA, blocksize);
-        textColor(WHITE);
+        textColor(TEXT);
 
         showUSBSTS();
         logBulkTransfer(&readCapacity);
@@ -813,7 +813,7 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* device)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
   #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read   sector: %u", sector); textColor(WHITE);
+    textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read   sector: %u", sector); textColor(TEXT);
   #endif
 
     uint8_t           devAddr = currentDevice;
@@ -842,7 +842,7 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device)
 {
         ///////// send SCSI command "write(10)", write one block to LBA ..., get Status
 
-    textColor(YELLOW); printf("\n\n>>> SCSI: write  sector: %u", sector); textColor(WHITE);
+    textColor(YELLOW); printf("\n\n>>> SCSI: write  sector: %u", sector); textColor(TEXT);
 
     uint8_t           devAddr = currentDevice;
     uint32_t          blocks  = 1; // number of blocks to be written
@@ -892,13 +892,13 @@ void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointO
     {
         textColor(RED);
         printf("\tconfiguration: %u (to be: 1)",config);
-        textColor(WHITE);
+        textColor(TEXT);
     }
 
     // start with correct endpoint toggles and reset interface
     usbDevices[device].ToggleEndpointInMSD = usbDevices[device].ToggleEndpointOutMSD = 0;
     usbTransferBulkOnlyMassStorageReset(device, usbDevices[device].numInterfaceMSD); // Reset Interface
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 int32_t showResultsRequestSense()
@@ -913,7 +913,7 @@ int32_t showResultsRequestSense()
     printf("\n\nResults of \"request sense\":\n");
     if (ResponseCode >= 0x70 && ResponseCode <= 0x73)
     {
-        textColor(WHITE);
+        textColor(TEXT);
         printf("Valid: \t\t");
         if (Valid == 0)
         {
@@ -1002,7 +1002,7 @@ int32_t showResultsRequestSense()
 
     textColor(RED);
     printf("No vaild response code!");
-    textColor(WHITE);
+    textColor(TEXT);
     return -1;
 }
 

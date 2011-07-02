@@ -36,9 +36,8 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     // output ethernet packet
   #ifdef _NETWORK_DATA_
     uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
-
-    textColor(LIGHT_MAGENTA); printf("\nLength: ");
-    textColor(0x03); printf("%d ", length);
+    textColor(HEADLINE); printf("\nLength: ");
+    textColor(TEXT); printf("%d ", length);
   #endif
 
     textColor(GRAY); printf(" %M\t<== %M", eth->recv_mac, eth->send_mac);
@@ -47,11 +46,11 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     textColor(LIGHT_MAGENTA);
     printf("\nEthernet: ");
 
-    textColor(0x03);
+    textColor(HEADLINE);
     if (ethernetType <= 1500) { printf("type 1, "); }
     else                      { printf("type 2, "); }
 
-    textColor(LIGHT_MAGENTA);
+    textColor(TEXT);
     if (ethernetType <= 1500) { printf("Length: "); }
     else                      { printf("Type: ");   }
 

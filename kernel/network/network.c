@@ -58,12 +58,12 @@ bool network_installDevice(pciDev_t* device)
 
     if(driver == 0 || driver->install == 0) // PrettyOS does not know the card or the driver is not properly installed
     {
-        textColor(WHITE);
+        textColor(TEXT);
         return(false);
     }
 
     printf(" network adapter:");
-    textColor(WHITE);
+    textColor(TEXT);
 
     // PrettyOS has a driver for this adapter. Install it.
     network_adapter_t* adapter = malloc(sizeof(network_adapter_t), 0, "network apdapter");
@@ -96,7 +96,7 @@ bool network_installDevice(pciDev_t* device)
         }
     }
 
-    textColor(WHITE);
+    textColor(TEXT);
 
     // Input makes #PF at some computers (gets is source of error #PF)
     /*
@@ -150,7 +150,7 @@ bool network_installDevice(pciDev_t* device)
     textColor(YELLOW);
     printf("\nMAC: %M", adapter->MAC);
     printf(" IP: %I\n\n", adapter->IP);
-    textColor(WHITE);
+    textColor(TEXT);
 
     return(true);
 }

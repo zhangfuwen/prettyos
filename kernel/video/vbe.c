@@ -436,7 +436,7 @@ static void vgaDebug()
 {
     textColor(YELLOW);
     printf("\nVgaInfoBlock:\n");
-    textColor(WHITE);
+    textColor(TEXT);
     printf("VESA-Signature:  %c%c%c%c\n", vgaIB.VESASignature[0], vgaIB.VESASignature[1], vgaIB.VESASignature[2], vgaIB.VESASignature[3]);
     printf("VESA-Version:    %u.%u\n",    vgaIB.VESAVersion>>8, vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
     printf("Capabilities:    %yh\n",       vgaIB.Capabilities[0]);
@@ -445,7 +445,7 @@ static void vgaDebug()
 
     textColor(YELLOW);
     printf("\nVideo Modes:");
-    textColor(WHITE);
+    textColor(TEXT);
     for (uint16_t i=0; i < 256; i++)
     {
         if(vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
@@ -455,14 +455,14 @@ static void vgaDebug()
         if(!(mib.ModeAttributes & BIT(4))) printf(" (textmode)");
     }
     printf("\n");
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 static void modeDebug()
 {
     textColor(YELLOW);
     printf("\nModeInfoBlock:\n");
-    textColor(WHITE);
+    textColor(TEXT);
     printf("ModeAttributes:        %xh\n", mib.ModeAttributes);
     printf("WinAAttributes:        %u\n", mib.WinAAttributes);
     printf("WinBAttributes:        %u\n", mib.WinBAttributes);
@@ -597,7 +597,7 @@ static void bitmapDebug() // TODO: make it bitmap-specific
 
     textColor(YELLOW);
     printf("\nBitmapHeader\n");
-    textColor(WHITE);
+    textColor(TEXT);
     printf("Type:                  %u\n", bh.Type);
     printf("Reserved:              %u\n", bh.Reserved);
     printf("Offset:                %u\n", bh.Offset);
@@ -677,7 +677,7 @@ void vbe_bootscreen()
 {
     textColor(LIGHT_BLUE);
     printf("       >>>>>   Press 's' to skip VBE-Test or any key to continue   <<<<<\n\n");
-    textColor(WHITE);
+    textColor(TEXT);
     if(getch() == 's')
     {
         return;

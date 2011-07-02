@@ -161,7 +161,7 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
                                 "Interpreter", "Note", "??", "Program Header" };
         printf("  %s, offset %u, vaddr %Xh, paddr %Xh, filesz %u, memsz %u, flags %u, align %u\n",
             types[ph[i].type], ph[i].offset, ph[i].vaddr, ph[i].paddr, ph[i].filesz, ph[i].memsz, ph[i].flags, ph[i].align);
-        textColor(WHITE);
+        textColor(TEXT);
         #endif
 
         // Read flags from header

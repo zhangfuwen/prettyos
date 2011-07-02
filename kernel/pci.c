@@ -109,7 +109,7 @@ void pci_scan()
     textColor(TABLE_HEADING);
     printf("\nB:D:F\tIRQ\tDescription");
     printf("\n--------------------------------------------------------------------------------");
-    textColor(WHITE);
+    textColor(TEXT);
     for (uint16_t bus = 0; bus < PCIBUSES; ++bus)
     {
         for (uint8_t device = 0; device < PCIDEVICES; ++device)
@@ -205,7 +205,7 @@ void pci_scan()
     } // for bus
     textColor(TABLE_HEADING);
     printf("--------------------------------------------------------------------------------\n");
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 /*

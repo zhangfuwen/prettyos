@@ -244,7 +244,7 @@ uint32_t showStatusbyteQTD(void* addressQTD)
         textColor(YELLOW);
         if (statusbyte & BIT(1)) { printf("Do Complete Split"); }
         if (statusbyte & BIT(0)) { printf("Do Ping"); }
-        textColor(WHITE);
+        textColor(TEXT);
     }
     return statusbyte;
 }
@@ -404,14 +404,14 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
           #ifdef _USB_DIAGNOSIS_
             textColor(LIGHT_MAGENTA);
             printf(">");
-            textColor(WHITE);
+            textColor(TEXT);
           #endif
        }
        else
        {
             textColor(RED);
             printf("\ntimeout - STS_ASYNC_ENABLED still not set!");
-            textColor(WHITE);
+            textColor(TEXT);
             break;
         }
     }
@@ -429,14 +429,14 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
           #ifdef _USB_DIAGNOSIS_
             textColor(LIGHT_MAGENTA);
             printf("#");
-            textColor(WHITE);
+            textColor(TEXT);
           #endif
         }
         else
         {
             textColor(RED);
             printf("\ntimeout - no STS_USBINT set!");
-            textColor(WHITE);
+            textColor(TEXT);
             break;
         }
     };
@@ -458,14 +458,14 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
               #ifdef _USB_DIAGNOSIS_
                 textColor(LIGHT_MAGENTA);
                 printf("!");
-                textColor(WHITE);
+                textColor(TEXT);
               #endif
             }
             else
             {
                 textColor(RED);
                 printf("\ntimeout - STS_ASYNC_ENABLED still set!");
-                textColor(WHITE);
+                textColor(TEXT);
                 break;
             }
         }
@@ -499,7 +499,7 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
             printf("  data in: %s", bT->successfulDataIN ? "OK" : "Error");
         }
         printf("  CSW: %s", bT->successfulCSW ? "OK" : "Error");
-        textColor(WHITE);
+        textColor(TEXT);
     }
 }
 

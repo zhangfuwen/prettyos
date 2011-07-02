@@ -366,7 +366,7 @@ static void logReadCache()
     textColor(LIGHT_GRAY);
     printf("\n-------------------------------------------------------------------------------");
     sleepMilliSeconds(500);
-    textColor(WHITE);
+    textColor(TEXT);
 }
 #endif
 
@@ -397,7 +397,7 @@ static void fillReadCache(uint32_t sector, disk_t* disk, uint8_t* buffer)
 FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
-    textColor(YELLOW); printf("\n>>>>> sectorWrite: %u <<<<<", sector); textColor(WHITE);
+    textColor(YELLOW); printf("\n>>>>> sectorWrite: %u <<<<<", sector); textColor(TEXT);
   #endif
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)
@@ -421,7 +421,7 @@ FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
 FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
 {
   #ifdef _DEVMGR_DIAGNOSIS_
-    textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(WHITE);
+    textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(TEXT);
   #endif
 
     for (uint8_t i=0; i<NUMREADCACHE; i++)

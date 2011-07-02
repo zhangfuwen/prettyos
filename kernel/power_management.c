@@ -62,7 +62,7 @@ bool apm_install()
 
     textColor(0x03);
     printf("\nAPM: ");
-    textColor(WHITE);
+    textColor(TEXT);
     // Check for APM
     waitForTask(create_vm86_task(APM_CHECK), 0);
     if(*((uint8_t*)0x1300) != 0) // Error
@@ -131,11 +131,11 @@ void pm_log()
 {
     textColor(0x03);
     printf("\nAPM: ");
-    textColor(WHITE);
+    textColor(TEXT);
     printf("%s.", pm_systems[PM_APM].supported?"Available":"Not supported");
     textColor(0x03);
     printf("\tACPI: ");
-    textColor(WHITE);
+    textColor(TEXT);
     printf("%s.\n", "Not supported by PrettyOS");
 }
 

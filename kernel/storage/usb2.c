@@ -21,7 +21,7 @@ extern void* globalqTDbuffer[3];
 uint8_t usbTransferEnumerate(uint8_t j)
 {
     #ifdef _USB_DIAGNOSIS_
-      textColor(LIGHT_CYAN); printf("\nUSB2: SET_ADDRESS"); textColor(WHITE);
+      textColor(LIGHT_CYAN); printf("\nUSB2: SET_ADDRESS"); textColor(TEXT);
     #endif
 
     uint8_t new_address = j; // indicated port number
@@ -52,7 +52,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
 void usbTransferDevice(uint32_t device)
 {
     #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_CYAN); printf("\nUSB2: GET_DESCRIPTOR device, dev: %u endpoint: 0", device+1); textColor(WHITE);
+    textColor(LIGHT_CYAN); printf("\nUSB2: GET_DESCRIPTOR device, dev: %u endpoint: 0", device+1); textColor(TEXT);
     #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Device");
@@ -85,7 +85,7 @@ void usbTransferDevice(uint32_t device)
 void usbTransferConfig(uint32_t device)
 {
   #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_CYAN); printf("\nUSB2: GET_DESCRIPTOR config, dev: %u endpoint: 0", device+1); textColor(WHITE);
+    textColor(LIGHT_CYAN); printf("\nUSB2: GET_DESCRIPTOR config, dev: %u endpoint: 0", device+1); textColor(TEXT);
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Config");
@@ -170,7 +170,7 @@ void usbTransferConfig(uint32_t device)
             {
                 textColor(LIGHT_BLUE);
                 printf("\nlength: %u type: %u unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
-                textColor(WHITE);
+                textColor(TEXT);
             }
           #endif
             addrPointer += *(uint8_t*)addrPointer;
@@ -197,7 +197,7 @@ void usbTransferConfig(uint32_t device)
 void usbTransferString(uint32_t device)
 {
   #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_CYAN); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 languageIDs", device+1); textColor(WHITE);
+    textColor(LIGHT_CYAN); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 languageIDs", device+1); textColor(TEXT);
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-String");
@@ -231,7 +231,7 @@ void usbTransferString(uint32_t device)
 void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 {
   #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_CYAN); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 stringIndex: %u", device+1, stringIndex); textColor(WHITE);
+    textColor(LIGHT_CYAN); printf("\nUSB2: GET_DESCRIPTOR string, dev: %u endpoint: 0 stringIndex: %u", device+1, stringIndex); textColor(TEXT);
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-wideStr");
@@ -267,7 +267,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
 {
   #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_CYAN); printf("\nUSB2: SET_CONFIGURATION %u",configuration); textColor(WHITE);
+    textColor(LIGHT_CYAN); printf("\nUSB2: SET_CONFIGURATION %u",configuration); textColor(TEXT);
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-SetConf");
@@ -294,7 +294,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
 uint8_t usbTransferGetConfiguration(uint32_t device)
 {
   #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_CYAN); printf("\nUSB2: GET_CONFIGURATION"); textColor(WHITE);
+    textColor(LIGHT_CYAN); printf("\nUSB2: GET_CONFIGURATION"); textColor(TEXT);
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-GetConf");
@@ -329,7 +329,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
 void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
   #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_CYAN); printf("\nUSB2: usbSetFeatureHALT, endpoint: %u", endpoint); textColor(WHITE);
+    textColor(LIGHT_CYAN); printf("\nUSB2: usbSetFeatureHALT, endpoint: %u", endpoint); textColor(TEXT);
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-SetHalt");
@@ -361,7 +361,7 @@ void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
 void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
   #ifdef _USB_DIAGNOSIS_
-    textColor(LIGHT_CYAN); printf("\nUSB2: usbClearFeatureHALT, endpoint: %u", endpoint); textColor(WHITE);
+    textColor(LIGHT_CYAN); printf("\nUSB2: usbClearFeatureHALT, endpoint: %u", endpoint); textColor(TEXT);
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-ClrHalt");
@@ -394,7 +394,7 @@ uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
     textColor(YELLOW);
     printf("\nusbGetStatus at device: %u endpoint: %u", device+1, endpoint);
-    textColor(WHITE);
+    textColor(TEXT);
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-QH-getStatus");
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
@@ -471,7 +471,7 @@ void showDevice(usb2_Device_t* usbDev)
     printf("numInterfaceMSD:   %u\n",    usbDev->numInterfaceMSD);
   #endif
 
-    textColor(WHITE);
+    textColor(TEXT);
 }
 
 void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
@@ -494,7 +494,7 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
         printf("self-powered:         %s\n",  d->attributes & BIT(6) ? "yes" : "no");
         printf("max power (mA):       %u\n",  d->maxPower*2); // 2 mA steps used
       #endif
-        textColor(WHITE);
+        textColor(TEXT);
     }
 }
 
@@ -619,7 +619,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
         printf("interface protocol:   %u\n",   d->interfaceProtocol);
         printf("interface:            %xh\n",   d->interface);
       #endif
-        textColor(WHITE);
+        textColor(TEXT);
         sleepSeconds(1); // wait to show data
     }
 }
@@ -644,7 +644,7 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
         }
         printf(" mps: %u byte",  d->maxPacketSize);
         printf("interval:          %u\n",  d->interval);
-        textColor(WHITE);
+        textColor(TEXT);
     }
   #endif
 }
@@ -773,7 +773,7 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
             }
         }
         printf("\n");
-        textColor(WHITE);
+        textColor(TEXT);
     }
 }
 
@@ -798,7 +798,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
             }
         }
         printf("\t");
-        textColor(WHITE);
+        textColor(TEXT);
 
         if (stringIndex == 2) // product name
         {
