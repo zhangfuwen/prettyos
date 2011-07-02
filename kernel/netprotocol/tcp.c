@@ -349,7 +349,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 }
                 textColor(TEXT);
 
-              #ifdef _NETWORK_DATA_
+              #ifdef _TCP_NETWORK_DATA_
                 textColor(LIGHT_GRAY);
                 printf("data:");
                 textColor(DATA);
