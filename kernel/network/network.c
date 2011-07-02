@@ -192,7 +192,7 @@ void network_displayArpTables()
 {
     if(adapters == 0) // No adapters installed
         return;
-
+	textColor(TEXT);
     printf("\n\nARP Cache:");
     uint8_t i = 0;
     for (element_t* e = adapters->head; e != 0; e = e->next, i++)
