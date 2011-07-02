@@ -100,6 +100,7 @@ typedef struct
 	uint16_t ipLength;
 	uint16_t tcpLength;
 	uint16_t tcpDataLength;
+	uint8_t  tcpDataOffset;
 } Packet_t;
 
 bool network_installDevice(pciDev_t* device);

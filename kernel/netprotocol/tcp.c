@@ -348,6 +348,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 				// http://upload.wikimedia.org/wikipedia/de/a/aa/Ethernetpaket.svg (cf. FCS field, CRC)
                 uint32_t tcpDataLength = -4 /* FCS */ + length - (tcp->dataOffset << 2);
 				lastPacket.tcpDataLength = tcpDataLength;
+				lastPacket.tcpDataOffset = tcp->dataOffset; // DWORDs
 
                 textColor(ERROR);
                 if (!IsSegmentAcceptable(tcp, connection, tcpDataLength))
@@ -369,8 +370,17 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 					
 					// Analysis
 					textColor(IMPORTANT);
-					printf("eth: %u  ip: %u  tcp: %u  tcpData: %u", lastPacket.ethLength, lastPacket.ipLength, lastPacket.tcpLength, lastPacket.tcpDataLength);
+					printf("eth: %u  ip: %u  tcp: %u  tcpData: %u  tcpDataOff: %u", 
+						    lastPacket.ethLength, lastPacket.ipLength, lastPacket.tcpLength, 
+							lastPacket.tcpDataLength, lastPacket.tcpDataOffset);
+					textColor(LIGHT_BLUE);
+					printf("\n");
+					for (uint16_t i=0; i<(tcpDataLength+4); i++)
+					{
+						printf("%y ", *(uint8_t*)((uintptr_t)tcp + (tcp->dataOffset << 2) + i) );
+					}
 					textColor(TEXT);
+					waitForKeyStroke(); // STOP
 				}
 				sleepMilliSeconds(2);
 			
