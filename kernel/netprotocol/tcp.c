@@ -396,7 +396,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 						printf("%y ", *(uint8_t*)((uintptr_t)tcp + (tcp->dataOffset << 2) + i) );
 					}
 					textColor(TEXT);
-					waitForKeyStroke(); // STOP
+					// waitForKeyStroke(); // STOP
 				}
 				sleepMilliSeconds(2);
 			
