@@ -45,9 +45,8 @@ int main()
 				{						
 					if (strncmp(string+i,"PING",4)==0)
 					{
-						(string+i)[1] = 'O';
-						(string+i)[14] = 0x0A;
-						tcp_send(connection, (string+i), 15);
+						(string+i)[1] = 'O';						
+						tcp_send(connection, (string+i), header->length - i);
 					}					
 				}	
 				break;
@@ -67,6 +66,17 @@ int main()
 				if(*key == KEY_L)
 				{
 					tcp_send(connection, "JOIN #lost\r\n", strlen("JOIN #lost\r\n"));
+				}
+				if(*key == KEY_H)
+				{
+					printf("\nEnter message: ");
+					char str[200], msg[240];
+					gets(str);
+					strcpy(msg,"PRIVMSG #PrettyOS :");
+					const char* msgBehind = "\r\n";
+					strcat(msg, str);
+					strcat(msg, msgBehind);					
+					tcp_send(connection, msg, strlen(msg));
 				}
             }
             default:
