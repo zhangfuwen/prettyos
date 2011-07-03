@@ -545,8 +545,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
 {
+	if (connection->TCP_CurrState == ESTABLISHED)
+    {
+		connection->tcb.SEG.SEQ = connection->tcb.SND.NXT; // CHECK
+	}
+
 	tcpFlags flags     = connection->tcb.SEG.CTL;
-	uint32_t seqNumber = connection->tcb.SEG.SEQ;
+	uint32_t seqNumber = connection->tcb.SEG.SEQ; 
 	uint32_t ackNumber = connection->tcb.SEG.ACK;
 
     textColor(HEADLINE);  printf("\n\nTCP send: ");
