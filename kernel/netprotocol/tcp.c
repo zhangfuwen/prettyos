@@ -134,10 +134,12 @@ tcpConnection_t* tcp_createConnection()
     }
 
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
-    connection->owner = (void*)currentTask;
-    connection->ID = getConnectionID();
-    connection->TCP_PrevState = CLOSED;
-    connection->TCP_CurrState = CLOSED;
+	connection->inBuffer        = list_Create();
+	connection->outBuffer       = list_Create();
+    connection->owner           = (void*)currentTask;
+    connection->ID              = getConnectionID();
+    connection->TCP_PrevState   = CLOSED;
+    connection->TCP_CurrState   = CLOSED;
 
     list_Append(tcpConnections, connection);
     textColor(TEXT);
@@ -149,11 +151,13 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 {
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = CLOSED;
-    list_Delete(tcpConnections, connection);
+    // TODO: delete inBuffer
+	// TODO: delete outBuffer
+	list_Delete(tcpConnections, connection);
     free(connection);
 
     textColor(TEXT);
-    printf("\nTCP conn. deleted, ID: %u\n", connection->ID);
+    printf("\nTCP connection deleted, ID: %u\n", connection->ID);
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter) // passive open  ==> LISTEN
@@ -342,13 +346,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
           break;
 
         case ESTABLISHED:
-            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
-            {
-                // ESTABLISHED --> DATA TRANSFER
-                // http://upload.wikimedia.org/wikipedia/de/a/aa/Ethernetpaket.svg (cf. FCS == CRC)
-
-                uint32_t tcpDataLength = tcpDataLength = length - (tcp->dataOffset << 2); /* FCS */;
-                uint8_t PadCount = 0;
+            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK   // ***** ESTABLISHED --> DATA TRANSFER *****
+            {                
+                uint32_t tcpDataLength = tcpDataLength = length - (tcp->dataOffset << 2); 
+				uint8_t PadCount = 0; // http://upload.wikimedia.org/wikipedia/de/a/aa/Ethernetpaket.svg (cf. Padding at the end)
 
                 for (uint16_t i=tcpDataLength-1; i>=0; i--)
                 {
@@ -424,7 +425,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 event.header.connection = connection->ID;
                 event.header.length = tcpDataLength;
                 memcpy(event.buffer, (void*)(tcp+1), tcpDataLength);
-                event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &event, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+				event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &event, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+
+				list_Append(connection->inBuffer, event.buffer); // received data ==> inBuffer // CHECK TCP PROCESS
             }
             if (tcp->FIN && !tcp->ACK) // FIN
             {

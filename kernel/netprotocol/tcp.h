@@ -4,7 +4,6 @@
 #include "network/network.h"
 #include "events.h"
 
-
 // http://tools.ietf.org/html/rfc793
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
 
@@ -83,7 +82,9 @@ typedef struct
     tcpTransmissionControlBlock_t tcb;
     TCP_state TCP_PrevState;
     TCP_state TCP_CurrState;
-    task_t*   owner;
+    task_t* owner;
+	list_t* inBuffer;
+	list_t* outBuffer;
 } tcpConnection_t;
 
 

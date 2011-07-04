@@ -38,12 +38,12 @@ typedef struct
 
 struct network_adapter;
 
-void arp_initTable(arpTable_t* table);
-void arp_deleteTable(arpTable_t* table);
-void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], IP_t IP, bool dynamic);
-void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry);
-arpTableEntry_t* arp_findEntry(arpTable_t* table, IP_t IP);
-void arp_showTable(arpTable_t* table);
+void arp_initTable(arpTable_t* cache);
+void arp_deleteTable(arpTable_t* cache);
+void arp_addTableEntry(arpTable_t* cache, uint8_t MAC[6], IP_t IP, bool dynamic);
+void arp_deleteTableEntry(arpTable_t* cache, arpTableEntry_t* entry);
+arpTableEntry_t* arp_findEntry(arpTable_t* cache, IP_t IP);
+void arp_showTable(arpTable_t* cache);
 void arp_received(struct network_adapter* adapter, arpPacket_t* packet);
 bool arp_sendRequest(struct network_adapter* adapter, IP_t searchedIP); // Pass adapter->IP to it, to issue a gratuitous request
 bool arp_waitForReply(struct network_adapter* adapter, IP_t searchedIP);

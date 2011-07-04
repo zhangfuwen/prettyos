@@ -13,35 +13,35 @@
 #include "network/netutils.h"
 
 
-void arp_deleteTableEntry(arpTable_t* table, arpTableEntry_t* entry)
+void arp_deleteTableEntry(arpTable_t* cache, arpTableEntry_t* entry)
 {
-    list_Delete(table->table, entry);
+    list_Delete(cache->table, entry);
 }
 
-static void arp_checkTable(arpTable_t* table)
+static void arp_checkTable(arpTable_t* cache)
 {
-    if (timer_getSeconds() > (table->lastCheck + ARP_TABLE_TIME_TO_CHECK * 60 )) // Check only every ... minutes
+    if (timer_getSeconds() > (cache->lastCheck + ARP_TABLE_TIME_TO_CHECK * 60 )) // Check only every ... minutes
     {
-        table->lastCheck = timer_getSeconds();
-        for(element_t* e = table->table->head; e != 0; e = e->next)
+        cache->lastCheck = timer_getSeconds();
+        for(element_t* e = cache->table->head; e != 0; e = e->next)
         {
             arpTableEntry_t* entry = e->data;
             if(entry->dynamic &&                                                    // Only dynamic entries should be killed.
                timer_getSeconds() > entry->seconds + ARP_TABLE_TIME_TO_DELETE * 60) // Entry is older than ... minutes -> Obsolete entry. Delete it.
             {
-                arp_deleteTableEntry(table, entry);
+                arp_deleteTableEntry(cache, entry);
             }
         }
     }
 }
 
-void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], IP_t IP, bool dynamic)
+void arp_addTableEntry(arpTable_t* cache, uint8_t MAC[6], IP_t IP, bool dynamic)
 {
-    arpTableEntry_t* entry = arp_findEntry(table, IP); // Check if there is already an entry with the same IP.
+    arpTableEntry_t* entry = arp_findEntry(cache, IP); // Check if there is already an entry with the same IP.
     if(entry == 0) // No entry found. Create new one.
     {
         entry = malloc(sizeof(arpTableEntry_t), 0, "arp entry");
-        list_Append(table->table, entry);
+        list_Append(cache->table, entry);
     }
     entry->IP.iIP = IP.iIP;
     memcpy(entry->MAC, MAC, 6);
@@ -49,11 +49,11 @@ void arp_addTableEntry(arpTable_t* table, uint8_t MAC[6], IP_t IP, bool dynamic)
     entry->seconds = timer_getSeconds();
 }
 
-arpTableEntry_t* arp_findEntry(arpTable_t* table, IP_t IP)
+arpTableEntry_t* arp_findEntry(arpTable_t* cache, IP_t IP)
 {
-    arp_checkTable(table); // We check the table for obsolete entries.
+    arp_checkTable(cache); // We check the arp cache for obsolete entries.
 
-    for(element_t* e = table->table->head; e != 0; e = e->next)
+    for(element_t* e = cache->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
         if(entry->IP.iIP == IP.iIP)
@@ -65,15 +65,15 @@ arpTableEntry_t* arp_findEntry(arpTable_t* table, IP_t IP)
     return(0);
 }
 
-void arp_showTable(arpTable_t* table)
+void arp_showTable(arpTable_t* cache)
 {
-    arp_checkTable(table); // We check the table for obsolete entries.
+    arp_checkTable(cache); // We check the table for obsolete entries.
 
     textColor(TABLE_HEADING);
     printf("\nIP\t\t  MAC\t\t\tType\t  Time(sec)");
     printf("\n--------------------------------------------------------------------------------");
     textColor(TEXT);
-    for(element_t* e = table->table->head; e != 0; e = e->next)
+    for(element_t* e = cache->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
         size_t length = printf("%I\t", entry->IP);
@@ -84,21 +84,21 @@ void arp_showTable(arpTable_t* table)
     printf("--------------------------------------------------------------------------------");
 }
 
-void arp_initTable(arpTable_t* table)
+void arp_initTable(arpTable_t* cache)
 {
-    table->table = list_Create();
-    table->lastCheck = timer_getSeconds();
+    cache->table = list_Create();
+    cache->lastCheck = timer_getSeconds();
 
     // Create default entries
     // We use only the first 4 bytes of the array as IP, all 6 bytes are used as MAC
     uint8_t broadcast[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     IP_t broadcastIP = {.iIP = 0xFFFFFFFF};
-    arp_addTableEntry(table, broadcast, broadcastIP, false);
+    arp_addTableEntry(cache, broadcast, broadcastIP, false);
 }
 
-void arp_deleteTable(arpTable_t* table)
+void arp_deleteTable(arpTable_t* cache)
 {
-    list_DeleteAll(table->table);
+    list_DeleteAll(cache->table);
 }
 
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)

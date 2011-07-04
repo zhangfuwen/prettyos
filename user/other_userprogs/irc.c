@@ -67,12 +67,19 @@ int main()
 				{
 					tcp_send(connection, "JOIN #lost\r\n", strlen("JOIN #lost\r\n"));
 				}
-				if(*key == KEY_H)
+				if(*key == KEY_H || *key == KEY_I)
 				{
 					printf("\nEnter message: ");
 					char str[200], msg[240];
 					gets(str);
-					strcpy(msg,"PRIVMSG #PrettyOS :");
+					if(*key == KEY_H)
+					{
+						strcpy(msg,"PRIVMSG #PrettyOS :");
+					}
+					if(*key == KEY_I)
+					{
+						strcpy(msg,"PRIVMSG #lost :");
+					}
 					const char* msgBehind = "\r\n";
 					strcat(msg, str);
 					strcat(msg, msgBehind);					

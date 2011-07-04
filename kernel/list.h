@@ -19,11 +19,11 @@ typedef struct
     element_t* tail;
 } list_t;
 
-list_t*    list_Create();                                // Allocates memory for a list, returns a pointer to that list
-bool       list_Append(list_t* hd, void* data);          // Inserts a new element at the end of the list
-void       list_DeleteAll(list_t* hd);                   // Deletes everything that has been allocated for this list.
-void       list_Delete(list_t* list, void* data);        // Deletes all elements with data from the list
-element_t* list_GetElement(list_t* hd, uint32_t number); // Returns the data at the position "number"
+list_t*    list_Create();                                  // Allocates memory for a list, returns a pointer to that list
+bool       list_Append(list_t* list, void* data);          // Inserts a new element at the end of the list
+void       list_DeleteAll(list_t* hd);                     // Deletes everything that has been allocated for this list.
+void       list_Delete(list_t* list, void* data);          // Deletes all elements with data from the list
+element_t* list_GetElement(list_t* list, uint32_t number); // Returns the data at the position "number"
 
 
 typedef struct
