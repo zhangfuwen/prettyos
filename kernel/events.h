@@ -24,9 +24,9 @@ typedef struct
 
 typedef struct
 {
-    listHead_t* list;
-    size_t      num;
-    mutex_t*    mutex;
+    list_t*  list;
+    size_t   num;
+    mutex_t* mutex;
 } event_queue_t;
 
 

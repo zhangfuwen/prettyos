@@ -14,15 +14,15 @@
 
 typedef struct // Defines the User-Space of the display
 {
-    uint8_t     ID; // Number of the console. Used to access it via the reachableConsoles array
-    char*       name;
-    bool        showInfobar;
-    uint8_t     scrollBegin;
-    uint8_t     scrollEnd;
-    position_t  cursor;
-    mutex_t*    mutex;
-    listHead_t* tasks;
-    uint16_t    vidmem[USER_LINES*COLUMNS]; // Memory that stores the content of this console. Size is USER_LINES*COLUMNS
+    uint8_t    ID; // Number of the console. Used to access it via the reachableConsoles array
+    char*      name;
+    bool       showInfobar;
+    uint8_t    scrollBegin;
+    uint8_t    scrollEnd;
+    position_t cursor;
+    mutex_t*   mutex;
+    list_t*    tasks;
+    uint16_t   vidmem[USER_LINES*COLUMNS]; // Memory that stores the content of this console. Size is USER_LINES*COLUMNS
 } console_t;
 
 

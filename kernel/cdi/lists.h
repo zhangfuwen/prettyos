@@ -8,7 +8,7 @@
 
 /* Represents a list.
    The fields of this structure are implementation dependent. To access list elements, specific list functions must be used. */
-typedef listHead_t* cdi_list_t;
+typedef list_t* cdi_list_t;
 
 /* Creates a new list.
    return: Returns a new list, or NULL if no memory could be allocated for the list. */

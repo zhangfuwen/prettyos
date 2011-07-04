@@ -52,6 +52,7 @@ typedef struct
    uint8_t   revID;
    uint8_t   irq;
    pciBar_t  bar[6];
+   void*     data; // Pointer to internal data of associated driver.
 } pciDev_t;
 
 
@@ -60,6 +61,7 @@ uint32_t pci_config_read       (uint8_t bus, uint8_t device, uint8_t func, uint1
 void     pci_config_write_byte (uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint8_t  val);
 void     pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint32_t val);
 void     pci_analyzeHostSystemError(pciDev_t* pciDev);
+bool     pci_deviceSentInterrupt(pciDev_t* dev);
 
 
 #endif

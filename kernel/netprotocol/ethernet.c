@@ -23,7 +23,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
     lastPacket.ethLength = length;
 
-	textColor(LIGHT_BLUE);
+    textColor(LIGHT_BLUE);
     printf("\n\n>> Packet received. <<");
     textColor(HEADLINE);
     printf("\nEth: ");

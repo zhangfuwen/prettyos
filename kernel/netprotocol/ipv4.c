@@ -29,8 +29,8 @@ static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
 {
     lastPacket.ipLength = length;
-	
-	textColor(HEADLINE);
+
+    textColor(HEADLINE);
     printf("\nIPv4:");
     textColor(IMPORTANT);
     printf(" %I\t<== %I", packet->destIP, packet->sourceIP);

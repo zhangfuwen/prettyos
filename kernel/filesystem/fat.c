@@ -25,7 +25,6 @@
 #include "fat.h"
 #include "util.h"
 #include "kheap.h"
-#include "storage/usb2_msd.h"
 #include "video/console.h"
 #include "time.h"
 
@@ -68,7 +67,7 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
     }
 
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> cluster2sector<<<<<    cluster: %u  sector %u", cluster, sector);
+    printf("\n>>>>> cluster2sector <<<<<    cluster: %u  sector %u", cluster, sector);
   #endif
     return (sector);
 }
@@ -350,7 +349,7 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
   #endif
     FAT_partition_t* volume       = fileptr->volume;
     uint32_t cluster              = fileptr->dirfirstCluster;
-    uint32_t DirectoriesPerSector = volume->part->disk->sectorSize/NUMBER_OF_BYTES_IN_DIR_ENTRY;
+    uint32_t DirectoriesPerSector = volume->part->disk->sectorSize/sizeof(FAT_dirEntry_t);
     uint32_t offset2              = (*curEntry)/DirectoriesPerSector;
     uint32_t LastClusterLimit;
 
@@ -534,7 +533,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
     uint32_t fHandle            = fileptrDest->entry;
     bool read                   = true;
 
-    memset(fileptrDest->name, 0x20, DIR_NAMECOMP);
+    memset(fileptrDest->name, 0x20, FILE_NAME_SIZE);
   #ifdef _FAT_DIAGNOSIS_
     textColor(YELLOW); printf("\nfHandle (searchFile): %d",fHandle); textColor(TEXT);
   #endif
@@ -578,7 +577,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
                         textColor(GREEN);printf("\n\nAn entry is found. Attributes OK for search");textColor(TEXT); /// TEST
                       #endif
                         error = CE_GOOD;
-                        for (uint8_t i=0; i<DIR_NAMECOMP; i++)
+                        for (uint8_t i=0; i < FILE_NAME_SIZE; i++)
                         {
                             character = fileptrDest->name[i];
                           #ifdef _FAT_DIAGNOSIS_
@@ -623,7 +622,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
                         // Before calling this "searchFile" fn, "formatfilename" must be called. Hence, extn always starts from position "8".
                         if ((fileptrTest->name[8] != '*') && (error == CE_GOOD))
                         {
-                            for (uint16_t i=8; i<DIR_NAMECOMP; i++)
+                            for (uint8_t i=8; i<FILE_NAME_SIZE; i++)
                             {
 
                                 character = fileptrDest->name[i]; // Get the source character
@@ -683,16 +682,15 @@ FS_ERROR FAT_fclose(file_t* file)
             globalDataWriteNecessary = false;
         }
 
-        fatWrite(FATfile->volume, 0, 0, true); // works correct with floppy only with HOTFIX there
-        /*
-        for (uint32_t i=0, sectorFAT=globalLastFATSectorRead; i<1; i++, sectorFAT+=fileptr->volume->fatsize)
+        fatWrite(FATfile->volume, 0, 0, true); // Works correct with floppy only with HOTFIX there. TODO: Check it.
+        /*for (uint32_t i=0, sectorFAT=globalLastFATSectorRead; i<1; i++, sectorFAT+=FATfile->volume->fatsize)
         {
-            if (singleSectorWrite(sectorFAT, globalBufferFATSector, fileptr->volume) != CE_GOOD)
+            if (singleSectorWrite(sectorFAT, globalBufferFATSector, FATfile->volume->part->disk) != CE_GOOD)
             {
                 return CLUSTER_FAIL_FAT16;
             }
-        }
-        */
+        }*/
+
         globalFATWriteNecessary = false;
 
         FAT_dirEntry_t* dir = getFileAttribute(FATfile, &fHandle);
@@ -1367,7 +1365,7 @@ static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name , uint32_t *fHan
 
     if (dir == 0) return CE_BADCACHEREAD;
 
-    strncpy(dir->Name,name,DIR_NAMECOMP); // HACK, accesses dir->Name and dir->Extension
+    strncpy(dir->Name, name, FILE_NAME_SIZE); // HACK, accesses dir->Name and dir->Extension
     if (mode == DIRECTORY)
     {
         dir->Attr = ATTR_DIRECTORY;
@@ -2309,7 +2307,7 @@ FS_ERROR FAT_pinstall(partition_t* part)
     {
         fpart->fatsize = BPB->FATsize16;
         fpart->root = fpart->fat + fpart->fatcopy*fpart->fatsize;
-        fpart->dataLBA = fpart->root + fpart->maxroot/(part->disk->sectorSize/NUMBER_OF_BYTES_IN_DIR_ENTRY);
+        fpart->dataLBA = fpart->root + fpart->maxroot/(part->disk->sectorSize/sizeof(FAT_dirEntry_t));
         memcpy(part->serial, &BPB1216->VolID, 4);
     }
     fpart->maxcls = (usbMSDVolumeMaxLBA - fpart->dataLBA - part->start) / fpart->SecPerClus;
@@ -2331,7 +2329,7 @@ void FAT_folderClose(folder_t* folder)
 
 
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

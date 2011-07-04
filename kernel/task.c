@@ -30,7 +30,7 @@ task_t kernelTask = { // Needed to find out when the kernel task is exited
 };
 
 volatile task_t* currentTask = &kernelTask;
-listHead_t* tasks; // List of all tasks. Not sorted by pid
+list_t* tasks; // List of all tasks. Not sorted by pid
 
 static uint32_t next_pid = 1; // The next available process ID (kernel has 0, so we start with 1 here). TODO: Reuse old pid
 

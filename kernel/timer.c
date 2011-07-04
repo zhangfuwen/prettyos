@@ -76,12 +76,6 @@ uint16_t timer_getFrequency()
     return(systemfrequency);
 }
 
-void timer_uninstall()
-{
-    // Uninstalls IRQ_TIMER
-    irq_uninstallHandler(IRQ_TIMER);
-}
-
 // delay in microseconds independent of timer interrupt but on rdtsc
 void delay(uint32_t microsec)
 {
@@ -94,7 +88,7 @@ void delay(uint32_t microsec)
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

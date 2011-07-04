@@ -1,80 +1,26 @@
 #include "userlib.h"
 #include "stdlib.h"
 #include "stdio.h"
-#include "string.h"
-
 
 int main()
 {
-    setScrollField(7, 46);
+    setScrollField(0, 43); // The train should not be destroyed by the output, so we shrink the scrolling area...
     printLine("================================================================================", 0, 0x0B);
-    printLine("                     Pretty IRC - Network test program!",                          2, 0x0B);
+    printLine("                                C - Testprogramm!                               ", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
+    printLine("                                 ! Hello World !                                ", 7, 0x0C);
 
-    iSetCursor(0, 7);
-    IP_t IP = {.IP = {151,189,0,165}}; // euirc
-    uint32_t connection = tcp_connect(IP, 6667); // IRC
-    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
+    iSetCursor(0, 10);
 
-    event_enable(true);
-    char buffer[4096];
-    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
-		
-    for(;;)
+    srand(getCurrentSeconds());
+    for(uint16_t i = 0; i < 100; i++)
     {
-        switch(ev)
-        {
-            case EVENT_NONE:
-                //wait(BL_EVENT, (void*)EVENT_TEXT_ENTERED, 0); // TODO: Why does it cause problems?
-                break;
-            case EVENT_TCP_CONNECTED:
-                printf("ESTABLISHED.\n");
-                char* pStr = "NICK Pretty00001\r\nUSER Pretty00001 irc.bre.de.euirc.net servername : Pretty00001\r\n";
-                tcp_send(connection, pStr, strlen(pStr));
-				break;
-            case EVENT_TCP_RECEIVED:
-            {
-                tcpReceivedEventHeader_t* header = (void*)buffer;
-                char* data = (void*)(header+1);
-                data[header->length] = 0;
-                printf("\npacket received. Length = %u\n:%s", header->length, data);
-				sleep(2000);				
-				char string[header->length];
-				strncpy(string,data,header->length);
-                for (int i=0; i<header->length; i++)
-				{						
-					if (strncmp(string+i,"PING",4)==0)
-					{
-						(string+i)[1] = 'O';
-						(string+i)[14] = 0x0A;
-						tcp_send(connection, (string+i), 15);
-					}					
-				}	
-				break;
-            }
-            case EVENT_KEY_DOWN:
-            {
-                KEY_t* key = (void*)buffer;
-                if(*key == KEY_ESC)
-                {
-                    tcp_close(connection);
-                    return(0);
-                }
-				if(*key == KEY_P)
-				{
-					tcp_send(connection, "JOIN #PrettyOS\r\n", strlen("JOIN #PrettyOS\r\n"));
-				}
-				if(*key == KEY_L)
-				{
-					tcp_send(connection, "JOIN #lost\r\n", strlen("JOIN #lost\r\n"));
-				}
-            }
-            default:
-                break;
-        }
-        ev = event_poll(buffer, 4096, EVENT_NONE);
+        printf("%u\t", rand());
     }
 
-    tcp_close(connection);
+    for(;;)
+    {
+        showInfo(1);
+    }
     return(0);
 }

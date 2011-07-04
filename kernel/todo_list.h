@@ -6,7 +6,7 @@
 
 typedef struct todoList
 {
-    listHead_t* queue;
+    list_t* queue;
 } todoList_t;
 
 

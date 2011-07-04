@@ -16,7 +16,7 @@
 #endif
 
 
-static listHead_t* devices = 0;
+static list_t* devices = 0;
 
 void pci_analyzeHostSystemError(pciDev_t* pciDev)
 {
@@ -100,6 +100,13 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
     outportl(PCI_CONFIGURATION_DATA, val);
 }
 
+bool pci_deviceSentInterrupt(pciDev_t* dev)
+{
+    uint32_t statusRegister = pci_config_read(dev->bus, dev->device, dev->func, PCI_STATUS);
+    uint32_t commandRegister = pci_config_read(dev->bus, dev->device, dev->func, PCI_COMMAND);
+    return((statusRegister & BIT(3)) && !(commandRegister & BIT(10)));
+}
+
 void pci_scan()
 {
     devices = list_Create();
@@ -114,8 +121,9 @@ void pci_scan()
     {
         for (uint8_t device = 0; device < PCIDEVICES; ++device)
         {
+            uint8_t headerType = pci_config_read(bus, device, 0, PCI_HEADERTYPE);
             uint8_t funcCount = PCIFUNCS;
-            if (!(pci_config_read(bus, device, 0, PCI_HEADERTYPE) & 0x80)) // Bit 7 in header type (Bit 23-16) --> multifunctional
+            if (!(headerType & 0x80)) // Bit 7 in header type (Bit 23-16) --> multifunctional
             {
                 funcCount = 1; // --> not multifunctional, only function 0 used
             }
@@ -137,10 +145,13 @@ void pci_scan()
                     PCIdev->irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
                     PCIdev->bar[0].baseAddress = pci_config_read(bus, device, func, PCI_BAR0);
                     PCIdev->bar[1].baseAddress = pci_config_read(bus, device, func, PCI_BAR1);
-                    PCIdev->bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
-                    PCIdev->bar[3].baseAddress = pci_config_read(bus, device, func, PCI_BAR3);
-                    PCIdev->bar[4].baseAddress = pci_config_read(bus, device, func, PCI_BAR4);
-                    PCIdev->bar[5].baseAddress = pci_config_read(bus, device, func, PCI_BAR5);
+                    if(!(headerType & 0x01)) // Devices with header type 0x00 have 6 bars
+                    {
+                        PCIdev->bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
+                        PCIdev->bar[3].baseAddress = pci_config_read(bus, device, func, PCI_BAR3);
+                        PCIdev->bar[4].baseAddress = pci_config_read(bus, device, func, PCI_BAR4);
+                        PCIdev->bar[5].baseAddress = pci_config_read(bus, device, func, PCI_BAR5);
+                    }
 
                     PCIdev->bus    = bus;
                     PCIdev->device = device;

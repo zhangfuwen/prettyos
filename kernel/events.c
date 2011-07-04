@@ -67,7 +67,7 @@ void event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t le
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 {
     task_t* task = (task_t*)currentTask;
-    while(task && task->type == THREAD && task->eventQueue == 0)
+    while(task->parent && task->type == THREAD && task->eventQueue == 0)
         task = task->parent; // Use parents eventQueue, if the thread has no own queue.
 
     if(task->eventQueue == 0 || task->eventQueue->num == 0) // Event handling disabled or no events available

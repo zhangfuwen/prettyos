@@ -8,56 +8,56 @@
 
 #define QEMU_HACK
 
-// typical qemu.bat w/o EHCI: 
-// qemu.exe  -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139,addr=1A,macaddr=00:13:d4:12:12:12 
+// typical qemu.bat w/o EHCI:
+// qemu.exe  -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139,addr=1A,macaddr=00:13:d4:12:12:12
 // -net tap,ifname=TAP1 -localtime -redir tcp:5023::23 -net user -net dump,file=netdump.pcap
 
 // additional for EHCI: -usb -usbdevice disk:format=raw:dummy.bin
 
 #ifdef QEMU_HACK
-	// own IP at start
-	#define IP_1    10
-	#define IP_2     0
-	#define IP_3     2
-	#define IP_4    15
+    // own IP at start
+    #define IP_1    10
+    #define IP_2     0
+    #define IP_3     2
+    #define IP_4    15
 
-	// requested IP
-	#define RIP_1   10
-	#define RIP_2    0
-	#define RIP_3    2
-	#define RIP_4   15
+    // requested IP
+    #define RIP_1   10
+    #define RIP_2    0
+    #define RIP_3    2
+    #define RIP_4   15
 
-	// gateway IP for routing to the internet
-	#define GW_IP_1   10
-	#define GW_IP_2    0
-	#define GW_IP_3    2
-	#define GW_IP_4    2
+    // gateway IP for routing to the internet
+    #define GW_IP_1   10
+    #define GW_IP_2    0
+    #define GW_IP_3    2
+    #define GW_IP_4    2
 
-	// HACK for qemu, MAC of qemu gateway (for TCP experiments)
-	#define GW_MAC_1 0x52
-	#define GW_MAC_2 0x55
-	#define GW_MAC_3 0x0A
-	#define GW_MAC_4 0x00
-	#define GW_MAC_5 0x02
-	#define GW_MAC_6 0x02
+    // HACK for qemu, MAC of qemu gateway (for TCP experiments)
+    #define GW_MAC_1 0x52
+    #define GW_MAC_2 0x55
+    #define GW_MAC_3 0x0A
+    #define GW_MAC_4 0x00
+    #define GW_MAC_5 0x02
+    #define GW_MAC_6 0x02
 #else
-	// own IP at start
-	#define IP_1    192
-	#define IP_2    168
-	#define IP_3      1
-	#define IP_4     22
+    // own IP at start
+    #define IP_1    192
+    #define IP_2    168
+    #define IP_3      1
+    #define IP_4     22
 
-	// requested IP
-	#define RIP_1   192
-	#define RIP_2   168
-	#define RIP_3     1
-	#define RIP_4    22
+    // requested IP
+    #define RIP_1   192
+    #define RIP_2   168
+    #define RIP_3     1
+    #define RIP_4    22
 
-	// gateway IP for routing to the internet
-	#define GW_IP_1   192
-	#define GW_IP_2   168
-	#define GW_IP_3     1
-	#define GW_IP_4     1
+    // gateway IP for routing to the internet
+    #define GW_IP_1   192
+    #define GW_IP_2   168
+    #define GW_IP_3     1
+    #define GW_IP_4     1
 #endif
 
 
@@ -92,15 +92,15 @@ struct network_adapter
     IP_t              Subnet;
 };
 
-typedef struct 
+typedef struct
 {
     IP_t IP;
     uint8_t  MAC[6];
-	uint16_t ethLength;
-	uint16_t ipLength;
-	uint16_t tcpLength;
-	uint16_t tcpDataLength;
-	uint8_t  tcpDataOffset;
+    uint16_t ethLength;
+    uint16_t ipLength;
+    uint16_t tcpLength;
+    uint16_t tcpDataLength;
+    uint8_t  tcpDataOffset;
 } Packet_t;
 
 bool network_installDevice(pciDev_t* device);

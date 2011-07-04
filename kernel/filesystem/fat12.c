@@ -3,15 +3,16 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "storage/flpydsk.h"
 #include "fat12.h"
+#include "storage/flpydsk.h"
 #include "video/console.h"
 #include "util.h"
+#include "fat.h"
+
 
 int32_t flpydsk_read_directory()
 {
-    int32_t error = -1; // return value
-
+    // Read track
     static uint8_t track[9216]; // Cache for one track
     memset(track, 0, 9216);
     floppyDrive[0]->drive.insertedDisk->accessRemaining += 18;
@@ -19,76 +20,73 @@ int32_t flpydsk_read_directory()
     {
         flpydsk_readSector(19+i, track+i*0x200, floppyDrive[0]); // start at 0x2600: root directory (14 sectors)
     }
-    printf("<Floppy Disk - Root Directory>\n");
 
-    for (uint8_t i=0;i<ROOT_DIR_ENTRIES;++i)       // 224 Entries * 32 Byte
+    textColor(HEADLINE);
+    puts("\n<Floppy Disk - Root Directory>");
+    textColor(TABLE_HEADING);
+    puts("\nFile\t\tSize (Bytes)\tAttributes\n");
+    textColor(TEXT);
+
+    // Analyze root dir
+    FAT_dirEntry_t* dirEntry = (void*)track;
+    for (uint8_t i = 0; i < 224; i++) // 224 root directory entries in FAT12
     {
-        if (((*((uint8_t*)(track + i*32)))      != 0x00) && // free from here on
-            ((*((uint8_t*)(track + i*32)))      != 0xE5) && // 0xE5 deleted = free
-            ((*((uint8_t*)(track + i*32 + 11))) != 0x0F))   // 0x0F part of long file name
+        if(dirEntry[i].Name[0] == DIR_EMPTY) break; // free from here on
+
+        if( dirEntry[i].Name[0] != DIR_DEL &&                     // Entry is not deleted
+           (dirEntry[i].Attr & ATTR_LONG_NAME) != ATTR_LONG_NAME) // Entry is not part of long file name (VFAT)
         {
-            error = 0;
-            int32_t start = (uintptr_t)track + i*32; // name
-            int32_t count = 8;
-            int32_t letters = 0;
-            int8_t* end = (int8_t*)(start+count);
-            for (; count != 0; --count)
+            // Filename
+            size_t letters = 0;
+            for(uint8_t j = 0; j < 8; j++)
             {
-                if (*(end-count) != 0x20) // empty space in file name
+                if(dirEntry[i].Name[j] != 0x20) // Empty space
                 {
-                    printf("%c",*(end-count));
+                    putch(dirEntry[i].Name[j]);
+                    letters++;
+                }
+            }
+            if(!(dirEntry[i].Attr & ATTR_VOLUME) && // No volume label
+                 dirEntry[i].Extension[0] != 0x20 && dirEntry[i].Extension[1] != 0x20 && dirEntry[i].Extension[2] != 0x20) // Has extension
+            {
+                putch('.');
+            }
+
+            for(uint8_t j = 0; j < 3; j++)
+            {
+                if(dirEntry[i].Extension[j] != 0x20) // Empty space
+                {
+                    putch(dirEntry[i].Extension[j]);
                     letters++;
                 }
             }
 
-            start = (uintptr_t)track + i*32 + 8; // extension
+            if (letters < 7) putch('\t');
 
-            if ((((*((uint8_t*)(track + i*32 + 11))) & 0x08) == 0x08) || // volume label
-                 (((uint8_t*)start)[0] == 0x20 &&
-                  ((uint8_t*)start)[1] == 0x20 &&
-                  ((uint8_t*)start)[2] == 0x20))                          // extension == three 'space'
-            {
-                // do nothing
-            }
+            // Filesize
+            if(!(dirEntry[i].Attr & ATTR_VOLUME))
+                printf("\t%d\t\t", dirEntry[i].FileSize);
             else
-            {
-                printf("."); // usual separator between file name and file extension
-            }
+                puts("\t\t\t");
 
-            count = 3;
-            end = (int8_t*)(start+count);
-            for (; count!=0; --count)
-            {
-                printf("%c",*(end-count));
-            }
+            // Attributes
+            if(dirEntry[i].Attr & ATTR_VOLUME)    puts("(vol) ");
+            if(dirEntry[i].Attr & ATTR_DIRECTORY) puts("(dir) ");
+            if(dirEntry[i].Attr & ATTR_READ_ONLY) puts("(r/o) ");
+            if(dirEntry[i].Attr & ATTR_HIDDEN)    puts("(hid) ");
+            if(dirEntry[i].Attr & ATTR_SYSTEM)    puts("(sys) ");
+            if(dirEntry[i].Attr & ATTR_ARCHIVE)   puts("(arc) ");
 
-            if (letters<4) printf("\t");
-
-            // filesize
-            printf("\t%d byte", *((uint32_t*)(track + i*32 + 28)));
-
-            // attributes
-            printf("\t");
-            if (*((uint32_t*)(track + i*32 + 28))<100)               printf("\t");
-            if (((*((uint8_t*)(track + i*32 + 11))) & 0x08) == 0x08) printf(" (vol)");
-            if (((*((uint8_t*)(track + i*32 + 11))) & 0x10) == 0x10) printf(" (dir)");
-            if (((*((uint8_t*)(track + i*32 + 11))) & 0x01) == 0x01) printf(" (r/o)");
-            if (((*((uint8_t*)(track + i*32 + 11))) & 0x02) == 0x02) printf(" (hid)");
-            if (((*((uint8_t*)(track + i*32 + 11))) & 0x04) == 0x04) printf(" (sys)");
-            if (((*((uint8_t*)(track + i*32 + 11))) & 0x20) == 0x20) printf(" (arc)");
-
-            // 1st cluster: physical sector number  =  33  +  FAT entry number  -  2  =  FAT entry number  +  31
-            printf("  1st sector: %d", *((uint16_t*)(track + i*32 + 26))+31);
-            printf("\n"); // next root directory entry
+             putch('\n');
         }
     }
-    printf("\n");
-    return error;
+    putch('\n');
+    return 0;
 }
 
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

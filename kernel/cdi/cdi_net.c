@@ -15,7 +15,7 @@ void cdi_net_device_init(struct cdi_net_device* device);
 
 void cdi_net_receive(struct cdi_net_device* device, void* buffer, size_t size)
 {
-	network_receivedPacket(device->dev.backdev, buffer, size);
+    network_receivedPacket(device->dev.backdev, buffer, size);
 }
 
 /*

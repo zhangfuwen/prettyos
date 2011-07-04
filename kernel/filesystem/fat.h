@@ -12,8 +12,8 @@
 *  Commented code is not tested with PrettyOS at the time being
 */
 
-#ifndef _FAT_H
-#define _FAT_H
+#ifndef FAT_H
+#define FAT_H
 
 #include "fsmanager.h"
 
@@ -30,8 +30,6 @@
 
 // File
 
-#define FILE_NAME_SIZE       11
-
 #define END_CLUSTER_FAT12    0xFF7
 #define LAST_CLUSTER_FAT12   0xFF8
 
@@ -43,7 +41,7 @@
 #define LAST_CLUSTER_FAT32   0x0FFFFFF8
 #define CLUSTER_FAIL_FAT32   0x0FFFFFFF
 
-#define MASK_MAX_FILE_ENTRY_LIMIT_BITS  0x0F // This is used to indicate to the Cache_File_Entry function that a new sector needs to be loaded.
+#define MASK_MAX_FILE_ENTRY_LIMIT_BITS 0x0F // This is used to indicate to the Cache_File_Entry function that a new sector needs to be loaded.
 
 #define CLUSTER_EMPTY        0x0000
 
@@ -60,7 +58,6 @@
 // Directory
 
 #define DIRECTORY             0x12
-#define NUMBER_OF_BYTES_IN_DIR_ENTRY    32
 
 #define FOUND                 0    // dir entry match
 #define NOT_FOUND             1    // dir entry not found
@@ -68,14 +65,13 @@
 
 #define DIR_NAMESIZE          8
 #define DIR_EXTENSION         3
-#define DIR_NAMECOMP         (DIR_NAMESIZE+DIR_EXTENSION)
+#define FILE_NAME_SIZE        (DIR_NAMESIZE+DIR_EXTENSION)
 
 #define DIR_DEL               0xE5
 #define DIR_EMPTY             0
 
 
-// Volume with FAT Filesystem
-struct disk;
+// Volume with FAT filesystem
 typedef struct
 {
     partition_t* part;          // universal partition container (fsmanager)
@@ -92,7 +88,6 @@ typedef struct
 } FAT_partition_t;
 
 // File
-
 typedef struct
 {
     FAT_partition_t* volume;  // volume containing the file
@@ -111,6 +106,7 @@ typedef struct
     uint32_t dircurrCluster;  // current cluster of the file's directory
 } FAT_file_t;
 
+// Entry in directory
 typedef struct
 {
     char     Name[DIR_NAMESIZE];
@@ -118,15 +114,15 @@ typedef struct
     uint8_t  Attr;
     uint8_t  NTRes;
     uint8_t  CrtTimeTenth; // tenths of second portion
-    uint16_t CrtTime;     // created
+    uint16_t CrtTime;      // created
     uint16_t CrtDate;
-    uint16_t LstAccDate;  // last access
+    uint16_t LstAccDate;   // last access
     uint16_t FstClusHI;
-    uint16_t WrtTime;     // last update
+    uint16_t WrtTime;      // last update
     uint16_t WrtDate;
     uint16_t FstClusLO;
     uint32_t FileSize;
-} FAT_dirEntry_t;
+} __attribute__((packed)) FAT_dirEntry_t;
 
 typedef enum
 {
@@ -202,7 +198,5 @@ void     FAT_folderClose(folder_t* folder);
 // analysis functions
 void FAT_showDirectoryEntry(FAT_dirEntry_t* dir);
 
-// additional functions
-uint32_t FAT_checksum(char* ShortFileName);
 
 #endif

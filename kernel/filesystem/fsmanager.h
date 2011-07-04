@@ -119,8 +119,8 @@ typedef struct folder
 
     char*          name;      // name of the node
 
-    listHead_t*    subfolder; // All folders inside this folder
-    listHead_t*    files;     // All files inside this folder
+    list_t*        subfolder; // All folders inside this folder
+    list_t*        files;     // All files inside this folder
 } folder_t;
 
 typedef struct file

@@ -23,8 +23,8 @@ typedef struct
 
 typedef struct
 {
-    listHead_t* table;
-    uint32_t    lastCheck;
+    list_t*  table;
+    uint32_t lastCheck;
 } arpTable_t;
 
 typedef struct

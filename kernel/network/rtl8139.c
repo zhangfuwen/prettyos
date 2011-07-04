@@ -42,7 +42,7 @@ void rtl8139_handler(registers_t* data)
     else if (val & RTL8139_INT_CABLE)           { puts("Cable Length Change");}
     else if (val & RTL8139_INT_TIMEOUT)         { puts("Time Out");}
     else if (val & RTL8139_INT_PCIERR)          { puts("System Error");}
-	textColor(TEXT);
+    textColor(TEXT);
     #endif
 
     // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
@@ -67,7 +67,7 @@ void rtl8139_handler(registers_t* data)
     #endif
 
     // Inform network interface about the packet
-    network_receivedPacket(device->device, &device->RxBuffer[device->RxBufferPointer]+4, length);
+    network_receivedPacket(device->device, &device->RxBuffer[device->RxBufferPointer]+4, length - 4); // Strip CRC from packet.
 
     // Increase RxBufferPointer
     // packets are DWORD aligned

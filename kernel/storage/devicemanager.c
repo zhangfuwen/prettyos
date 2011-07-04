@@ -18,7 +18,7 @@
 
 disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
-partition_t* systemPartition;
+partition_t* systemPartition = 0;
 
 portType_t FDD = {.motorOff = &flpydsk_motorOff},
            USB = {.motorOff = 0},
