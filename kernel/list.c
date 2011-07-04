@@ -3,6 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "util.h"
 #include "list.h"
 #include "kheap.h"
 #include "video/console.h"
@@ -21,6 +22,7 @@ listHead_t* list_Create()
 
 bool list_Append(listHead_t* hd, void* data)
 {
+	ASSERT(hd);
     element_t* ap = (element_t*)malloc(sizeof(element_t), 0,"listElement");
     if (ap)
     {
@@ -41,15 +43,16 @@ bool list_Append(listHead_t* hd, void* data)
     return(false);
 }
 
-void list_Delete(listHead_t* list, void* data)
+void list_Delete(listHead_t* hd, void* data)
 {
-    element_t* cur = list->head;
+	ASSERT(hd);
+	element_t* cur = hd->head;
     while(cur != 0 && cur->data == data)
     {
         element_t* temp = cur;
         cur = cur->next;
-        if(list->head == list->tail) list->tail = 0;
-        list->head = cur;
+        if(hd->head == hd->tail) hd->tail = 0;
+        hd->head = cur;
         free(temp);
     }
     while(cur != 0 && cur->next != 0)
@@ -57,7 +60,7 @@ void list_Delete(listHead_t* list, void* data)
         if(cur->next->data == data)
         {
             element_t* temp = cur->next;
-            if(cur->next == list->tail) list->tail = cur;
+            if(cur->next == hd->tail) hd->tail = cur;
             cur->next = cur->next->next;
             free(temp);
         }
@@ -67,7 +70,8 @@ void list_Delete(listHead_t* list, void* data)
 
 void list_DeleteAll(listHead_t* hd)
 {
-    element_t* cur = hd->head;
+    ASSERT(hd);
+	element_t* cur = hd->head;
     element_t* nex;
 
     while (cur)
@@ -81,7 +85,8 @@ void list_DeleteAll(listHead_t* hd)
 
 element_t* list_GetElement(listHead_t* hd, uint32_t number)
 {
-    element_t* cur = hd->head;
+    ASSERT(hd);
+	element_t* cur = hd->head;
     while (true)
     {
         if (number == 0 || cur == 0)
@@ -95,9 +100,18 @@ element_t* list_GetElement(listHead_t* hd, uint32_t number)
 
 
 // Ring
+ring_t* ring_Create()
+{
+	ring_t* ring = malloc(sizeof(ring_t), 0, "ring");
+    ring->current = 0;
+    ring->begin = 0;
+    return(ring);
+}
+
 static void putIn(ring_t* ring, element_t* prev, element_t* elem)
 {
-    if(ring->begin == 0) // Ring is empty
+    ASSERT(ring);
+	if(ring->begin == 0) // Ring is empty
     {
         ring->begin = elem;
         ring->current = elem;
@@ -112,7 +126,8 @@ static void putIn(ring_t* ring, element_t* prev, element_t* elem)
 
 static void takeOut(ring_t* ring, element_t* prev)
 {
-    if(prev->next == prev) // Just one element in ring
+    ASSERT(ring);
+	if(prev->next == prev) // Just one element in ring
     {
         ring->begin = 0;
         ring->current = 0;
@@ -125,17 +140,10 @@ static void takeOut(ring_t* ring, element_t* prev)
     }
 }
 
-ring_t* ring_Create()
-{
-    ring_t* ring = malloc(sizeof(ring_t), 0, "ring");
-    ring->current = 0;
-    ring->begin = 0;
-    return(ring);
-}
-
 void ring_Insert(ring_t* ring, void* data, bool single)
 {
-    if(single && ring->begin != 0) // check if an element with the same data is already in the ring
+    ASSERT(ring);
+	if(single && ring->begin != 0) // check if an element with the same data is already in the ring
     {
         element_t* current = ring->current;
         do
@@ -151,12 +159,14 @@ void ring_Insert(ring_t* ring, void* data, bool single)
 
 bool ring_isEmpty(ring_t* ring)
 {
-    return(ring->begin == 0);
+    ASSERT(ring);
+	return(ring->begin == 0);
 }
 
 bool ring_DeleteFirst(ring_t* ring, void* data)
 {
-    if(ring->begin == 0) return(false);
+    ASSERT(ring);
+	if(ring->begin == 0) return(false);
 
     element_t* current = ring->current;
     do
@@ -175,7 +185,8 @@ bool ring_DeleteFirst(ring_t* ring, void* data)
 
 void ring_move(ring_t* dest, ring_t* source, void* data)
 {
-    if(source == 0 || dest == 0 || source->begin == 0) return;
+    
+	if(source == 0 || dest == 0 || source->begin == 0) return;
 
     element_t* prev = source->begin;
     element_t* current = prev->next;
