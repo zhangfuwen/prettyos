@@ -414,20 +414,29 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_send(connection, 0, 0);
 
                 connection->tcb.SND.WND = STARTWINDOWS; // HACK TO FREE SND.WND: we deliver direct to user-app.
+				                
+				if (tcpDataLength)
+				{
+					// Issue event
+					struct
+					{
+						tcpReceivedEventHeader_t header;
+						char buffer[tcpDataLength];						
+					} __attribute__((packed)) event;
 
-                // Issue event
-                struct
-                {
-                    tcpReceivedEventHeader_t header;
-                    char buffer[tcpDataLength];
-                } __attribute__((packed)) event;
+					event.header.connection = connection->ID;
+					event.header.length = tcpDataLength;
+					memcpy(event.buffer, (void*)(tcp+1), tcpDataLength);
+					event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &event, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);				
 
-                event.header.connection = connection->ID;
-                event.header.length = tcpDataLength;
-                memcpy(event.buffer, (void*)(tcp+1), tcpDataLength);
-				event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &event, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
-
-				list_Append(connection->inBuffer, event.buffer); // received data ==> inBuffer // CHECK TCP PROCESS
+					//Fill in-buffer list
+					tcpIn_t* In = malloc(sizeof(tcpIn_t),0,"tcp_InBuffer"); 				   
+					In->data    = malloc(tcpDataLength,0,"tcp_InBuffer->Data"); 
+					// memcpy(In->data, (void*)(tcp+1), tcpDataLength); // TOO SLOW for starwars data reception !!!!!!!!!!!!!!!   TODO
+					In->seq     = ntohl(tcp->sequenceNumber);
+					In->length  = tcpDataLength;
+					list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS				
+				}
             }
             if (tcp->FIN && !tcp->ACK) // FIN
             {
@@ -450,9 +459,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.SEG.CTL = ACK_FLAG;
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = TIME_WAIT; // CLOSED ??
-                /// TEST
+                
+				/// TEST
                 delay(100000);
-                tcp_deleteConnection(connection);
+				tcp_deleteConnection(connection);
                 /// TEST
             }
           break;
@@ -614,6 +624,23 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
 
     printf("\n");
     tcp_debug(tcp);
+}
+
+uint32_t tcp_showInBuffers(tcpConnection_t* connection)
+{
+	printf("\n\n");
+	uint32_t count = 0;
+	for (element_t* e = connection->inBuffer->head; e != 0; e = e->next)
+	{
+		count++;
+		tcpIn_t* inPacket = e->data;
+		printf("\n seq = %u \tlen = %u", inPacket->seq, inPacket->length);
+		for (uint32_t i=0; i<inPacket->length; i++)
+		{
+			// printf("%c", *(char*)(inPacket->data + i));			
+		}
+	}
+	return count;
 }
 
 static bool IsSegmentAcceptable (tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)

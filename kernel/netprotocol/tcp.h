@@ -94,6 +94,19 @@ typedef struct
     size_t   length;
 } __attribute__((packed)) tcpReceivedEventHeader_t;
 
+typedef struct  
+{
+    uint32_t  seq;
+    size_t    length;
+    void*     data;
+}__attribute__((packed)) tcpIn_t;
+
+typedef struct  
+{    
+    size_t    length;
+    void*     data;
+}__attribute__((packed)) tcpOut_t;
+
 
 tcpConnection_t* tcp_createConnection();
 void tcp_deleteConnection(tcpConnection_t* connection);
@@ -105,6 +118,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length);
 void tcp_showConnections();
 tcpConnection_t* findConnectionID(uint32_t ID);
 tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, bool established);
+uint32_t tcp_showInBuffers(tcpConnection_t* connection);
 
 // User functions
 uint32_t tcp_uconnect(IP_t IP, uint16_t port);
