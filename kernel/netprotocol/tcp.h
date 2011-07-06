@@ -83,8 +83,8 @@ typedef struct
     TCP_state TCP_PrevState;
     TCP_state TCP_CurrState;
     task_t* owner;
-	list_t* inBuffer;
-	list_t* outBuffer;
+    list_t* inBuffer;
+    list_t* outBuffer;
 } tcpConnection_t;
 
 
@@ -94,15 +94,15 @@ typedef struct
     size_t   length;
 } __attribute__((packed)) tcpReceivedEventHeader_t;
 
-typedef struct  
+typedef struct
 {
     uint32_t  seq;
     size_t    length;
     void*     data;
 }__attribute__((packed)) tcpIn_t;
 
-typedef struct  
-{    
+typedef struct
+{
     size_t    length;
     void*     data;
 }__attribute__((packed)) tcpOut_t;

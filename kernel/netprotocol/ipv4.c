@@ -9,7 +9,6 @@
 #include "icmp.h"
 #include "arp.h"
 #include "ethernet.h"
-#include "network/netutils.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
@@ -43,20 +42,20 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     memcpy(lastPacket.IP.IP, packet->sourceIP.IP, 4); // save sender IP
 
     // IPv4 protocol is parsed here and distributed in switch/case
-    //uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
+    uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
     switch(packet->protocol)
     {
-        case  1: // icmp
-            ICMPAnswerPing(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t), packet->sourceIP);
+        case 1: // icmp
+            ICMPAnswerPing(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length), packet->sourceIP);
             break;
-        case  4: // ipv4
+        case 4: // ipv4
             printf(" IPv4.");
             break;
-        case  6: // tcp
-            tcp_receive(adapter, (void*)(packet+1), packet->sourceIP, length-sizeof(ipv4Packet_t));
+        case 6: // tcp
+            tcp_receive(adapter, (void*)packet+ipHeaderLengthBytes, packet->sourceIP, ntohs(packet->length)-ipHeaderLengthBytes);
             break;
         case 17: // udp
-            UDPRecv(adapter, (void*)(packet+1), length-sizeof(ipv4Packet_t));
+            UDPRecv(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length)-ipHeaderLengthBytes);
             break;
         default:
             printf("\nUnknown protocol after IP packet.");

@@ -1,5 +1,4 @@
 #include "userlib.h"
-#include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
 
@@ -8,7 +7,7 @@ int main()
 {
     setScrollField(7, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                     Pretty IRC - Network test program!",                          2, 0x0B);
+    printLine("                       Pretty IRC - Network test program!",                        2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     iSetCursor(0, 7);
@@ -17,9 +16,10 @@ int main()
     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
     event_enable(true);
-    char buffer[4096];
-    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
-		
+    char buffer[2048];
+    EVENT_t ev = event_poll(buffer, 2048, EVENT_NONE);
+
+    bool ctrl = false;
     for(;;)
     {
         switch(ev)
@@ -29,63 +29,83 @@ int main()
                 break;
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
-                char* pStr = "NICK Pretty00001\r\nUSER Pretty00001 irc.bre.de.euirc.net servername : Pretty00001\r\n";
-                tcp_send(connection, pStr, strlen(pStr));
-				break;
+                const char* const pStr = "NICK Pretty00001\r\nUSER Pretty00001 irc.bre.de.euirc.net servername : Pretty00001\r\n";
+                tcp_send(connection, (void*)pStr, strlen(pStr));
+                break;
             case EVENT_TCP_RECEIVED:
             {
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
                 printf("\npacket received. Length = %u\n:%s", header->length, data);
-				sleep(2000);				
-				char string[header->length];
-				strncpy(string,data,header->length);
-                for (int i=0; i<header->length; i++)
-				{						
-					if (strncmp(string+i,"PING",4)==0)
-					{
-						(string+i)[1] = 'O';						
-						tcp_send(connection, (string+i), header->length - i);
-					}					
-				}	
-				break;
+                for (size_t i = 0; i < header->length; i++)
+                {
+                    if (strncmp(data+i, "PING", 4)==0)
+                    {
+                        data[i+1] = 'O';
+                        tcp_send(connection, data+i, header->length - i);
+                    }
+                }
+                break;
             }
             case EVENT_KEY_DOWN:
             {
-                KEY_t* key = (void*)buffer;
-                if(*key == KEY_ESC)
+                KEY_t* key = (KEY_t*)buffer;
+                switch(*key)
                 {
-                    tcp_close(connection);
-                    return(0);
+                    case KEY_LCTRL: case KEY_RCTRL:
+                        ctrl = true;
+                        break;
+                    case KEY_ESC:
+                        tcp_close(connection);
+                        return(0);
+                    case KEY_J:
+                    {
+                        if(ctrl)
+                        {
+                            printf("\nEnter Channel name: ");
+                            getchar(); // Ommit first character, because its a 'j'
+                            char str[50];
+                            gets(str);
+                            char msg[70];
+                            snprintf(msg, 70, "JOIN %s\r\n", str);
+                            tcp_send(connection, msg, strlen(msg));
+                        }
+                        break;
+                    }
+                    case KEY_P: case KEY_L:
+                    {
+                        if(ctrl)
+                        {
+                            printf("\nEnter message: ");
+                            getchar(); // Ommit first character, because its a 'p' or a 'l'
+                            char str[200], msg[240];
+                            gets(str);
+
+                            if(*key == KEY_P)
+                                snprintf(msg, 240, "PRIVMSG #PrettyOS :%s\r\n", str);
+                            else if(*key == KEY_L)
+                                snprintf(msg, 240, "PRIVMSG #lost :%s\r\n", str);
+
+                            tcp_send(connection, msg, strlen(msg));
+                        }
+                        break;
+                    }
+                    default:
+                        break;
                 }
-				if(*key == KEY_P)
-				{
-					tcp_send(connection, "JOIN #PrettyOS\r\n", strlen("JOIN #PrettyOS\r\n"));
-				}
-				if(*key == KEY_L)
-				{
-					tcp_send(connection, "JOIN #lost\r\n", strlen("JOIN #lost\r\n"));
-				}
-				if(*key == KEY_H || *key == KEY_I)
-				{
-					printf("\nEnter message: ");
-					char str[200], msg[240];
-					gets(str);
-					if(*key == KEY_H)
-					{
-						strcpy(msg,"PRIVMSG #PrettyOS :");
-					}
-					if(*key == KEY_I)
-					{
-						strcpy(msg,"PRIVMSG #lost :");
-					}
-					const char* msgBehind = "\r\n";
-					strcat(msg, str);
-					strcat(msg, msgBehind);					
-					tcp_send(connection, msg, strlen(msg));
-				}
+                break;
             }
+            case EVENT_KEY_UP:
+                switch(*(KEY_t*)buffer)
+                {
+                    case KEY_LCTRL: case KEY_RCTRL:
+                        ctrl = false;
+                        break;
+                    default:
+                        break;
+                }
+                break;
             default:
                 break;
         }

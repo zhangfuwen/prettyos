@@ -134,8 +134,8 @@ tcpConnection_t* tcp_createConnection()
     }
 
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
-	connection->inBuffer        = list_Create();
-	connection->outBuffer       = list_Create();
+    connection->inBuffer        = list_Create();
+    connection->outBuffer       = list_Create();
     connection->owner           = (void*)currentTask;
     connection->ID              = getConnectionID();
     connection->TCP_PrevState   = CLOSED;
@@ -152,8 +152,8 @@ void tcp_deleteConnection(tcpConnection_t* connection)
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = CLOSED;
     // TODO: delete inBuffer
-	// TODO: delete outBuffer
-	list_Delete(tcpConnections, connection);
+    // TODO: delete outBuffer
+    list_Delete(tcpConnections, connection);
     free(connection);
 
     textColor(TEXT);
@@ -262,7 +262,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         textColor(RED);
         printf("\nTCP packet received that does not belong to a TCP connection:");
         textColor(TEXT);
-        tcp_debug(tcp);
         return;
     }
 
@@ -288,7 +287,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 // cf. plan (2) http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
             }
-          break;
+            break;
 
         case LISTEN:
             if (tcp->SYN && !tcp->ACK) // SYN
@@ -310,7 +309,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = SYN_RECEIVED;
             }
-          break;
+            break;
 
         case SYN_RECEIVED:
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
@@ -318,7 +317,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = ESTABLISHED;
                 event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
             }
-          break;
+            break;
 
         case SYN_SENT:
             if (tcp->SYN && !tcp->ACK) // SYN
@@ -332,7 +331,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = SYN_RECEIVED;
             }
-            if (tcp->SYN && tcp->ACK)  // SYN ACK
+            else if (tcp->SYN && tcp->ACK)  // SYN ACK
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
@@ -343,26 +342,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = ESTABLISHED;
                 event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
             }
-          break;
+            break;
 
         case ESTABLISHED:
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK   // ***** ESTABLISHED --> DATA TRANSFER *****
-            {                
-                uint32_t tcpDataLength = tcpDataLength = length - (tcp->dataOffset << 2); 
-				uint8_t PadCount = 0; // http://upload.wikimedia.org/wikipedia/de/a/aa/Ethernetpaket.svg (cf. Padding at the end)
-
-                for (uint16_t i=tcpDataLength-1; i>=0; i--)
-                {
-                    if ( (*(uint8_t*)((uintptr_t)tcp + (tcp->dataOffset << 2) + i) ) == 0x00 )
-                    {
-                        PadCount++;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                tcpDataLength -= PadCount;
+            {
+                char* tcpData = (void*)tcp + tcp->dataOffset*4;
+                uint32_t tcpDataLength = length - (tcp->dataOffset << 2);
 
                 lastPacket.tcpDataLength = tcpDataLength;
                 lastPacket.tcpDataOffset = tcp->dataOffset; // DWORDs
@@ -377,24 +363,22 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 if (tcp_PassiveOpen)
                 {
                     textColor(LIGHT_GRAY);
-                    printf("data:");
+                    printf("data: ");
                     textColor(DATA);
                     for (uint16_t i=0; i<tcpDataLength; i++)
                     {
-                        printf("%c", ((uint8_t*)(tcp+1))[i]);
+                        putch(tcpData[i]);
                     }
-                    putch('\n');
 
                     // Analysis
                     textColor(IMPORTANT);
-                    printf("eth: %u  ip: %u  tcp: %u  tcpData: %u  tcpDataOff: %u PADs: %u",
+                    printf("\neth: %u  ip: %u  tcp: %u  tcpData: %u  tcpDataOff: %u\n",
                             lastPacket.ethLength, lastPacket.ipLength, lastPacket.tcpLength,
-                            lastPacket.tcpDataLength, lastPacket.tcpDataOffset, PadCount);
+                            lastPacket.tcpDataLength, lastPacket.tcpDataOffset);
                     textColor(LIGHT_BLUE);
-                    printf("\n");
-                    for (uint16_t i=0; i<(tcpDataLength+4); i++)
+                    for (uint16_t i=0; i<(tcpDataLength+4); i++) // TODO: Is tcpDataLength+4 really correct, or does it belong to the old CRC/Padding-HACK?
                     {
-                        printf("%y ", *(uint8_t*)((uintptr_t)tcp + (tcp->dataOffset << 2) + i) );
+                        printf("%y ", tcpData[i]);
                     }
                     textColor(TEXT);
                     // waitForKeyStroke(); // STOP
@@ -414,31 +398,31 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_send(connection, 0, 0);
 
                 connection->tcb.SND.WND = STARTWINDOWS; // HACK TO FREE SND.WND: we deliver direct to user-app.
-				                
-				if (tcpDataLength)
-				{
-					// Issue event
-					struct
-					{
-						tcpReceivedEventHeader_t header;
-						char buffer[tcpDataLength];						
-					} __attribute__((packed)) event;
 
-					event.header.connection = connection->ID;
-					event.header.length = tcpDataLength;
-					memcpy(event.buffer, (void*)(tcp+1), tcpDataLength);
-					event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &event, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);				
+                if (tcpDataLength)
+                {
+                    // Issue event
+                    struct
+                    {
+                        tcpReceivedEventHeader_t header;
+                        char buffer[tcpDataLength];
+                    } __attribute__((packed)) event;
 
-					//Fill in-buffer list
-					tcpIn_t* In = malloc(sizeof(tcpIn_t),0,"tcp_InBuffer"); 				   
-					In->data    = malloc(tcpDataLength,0,"tcp_InBuffer->Data"); 
-					// memcpy(In->data, (void*)(tcp+1), tcpDataLength); // TOO SLOW for starwars data reception !!!!!!!!!!!!!!!   TODO
-					In->seq     = ntohl(tcp->sequenceNumber);
-					In->length  = tcpDataLength;
-					list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS				
-				}
+                    event.header.connection = connection->ID;
+                    event.header.length = tcpDataLength;
+                    memcpy(event.buffer, tcpData, tcpDataLength);
+                    event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &event, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+
+                    //Fill in-buffer list
+                    tcpIn_t* In = malloc(sizeof(tcpIn_t),0,"tcp_InBuffer");
+                    In->data    = malloc(tcpDataLength,0,"tcp_InBuffer->Data");
+                    // memcpy(In->data, tcpData, tcpDataLength); // TOO SLOW for starwars data reception !!!!!!!!!!!!!!!   TODO
+                    In->seq     = ntohl(tcp->sequenceNumber);
+                    In->length  = tcpDataLength;
+                    list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
+                }
             }
-            if (tcp->FIN && !tcp->ACK) // FIN
+            else if (tcp->FIN && !tcp->ACK) // FIN
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
@@ -449,7 +433,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = CLOSE_WAIT;
             }
-            if (tcp->FIN && tcp->ACK) // FIN ACK
+            else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
@@ -459,13 +443,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.SEG.CTL = ACK_FLAG;
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = TIME_WAIT; // CLOSED ??
-                
-				/// TEST
+
+                /// TEST
                 delay(100000);
-				tcp_deleteConnection(connection);
+                tcp_deleteConnection(connection);
                 /// TEST
             }
-          break;
+            break;
 
         case FIN_WAIT_1:
             if (tcp->FIN && !tcp->ACK) // FIN
@@ -478,7 +462,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = CLOSING;
             }
-            if (tcp->FIN && tcp->ACK) // FIN ACK
+            else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
@@ -493,11 +477,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_deleteConnection(connection);
                 /// TEST
             }
-            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
+            else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = FIN_WAIT_2;
             }
-          break;
+            break;
 
         case FIN_WAIT_2:
             if (tcp->FIN && !tcp->ACK) // FIN
@@ -514,7 +498,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_deleteConnection(connection);
                 /// TEST
             }
-          break;
+            break;
 
         case CLOSING:
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
@@ -525,13 +509,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_deleteConnection(connection);
                 /// TEST
             }
-          break;
+            break;
 
         case TIME_WAIT:
             // HACK, TODO: use timeout (TIME_WAIT --> CLOSED)
             printf("TCP conn. ID %u set from CLOSED to LISTEN.\n", connection->ID);
             connection->TCP_CurrState = LISTEN; // CLOSED ??
-          break;
+            break;
 
         case CLOSE_WAIT:
             // send FIN                   NEW NEW NEW              CHECK CHECK CHECK
@@ -543,14 +527,14 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             connection->tcb.SEG.CTL = FIN_FLAG;
             tcp_send(connection, 0, 0);
             connection->TCP_CurrState = LAST_ACK;
-          break;
+            break;
 
         case LAST_ACK:
-        if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
-        {
-            connection->TCP_CurrState = CLOSED;
-        }
-          break;
+            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
+            {
+                connection->TCP_CurrState = CLOSED;
+            }
+            break;
     }//switch (connection->TCP_CurrState)
 
     tcpShowConnectionStatus(connection);
@@ -628,22 +612,22 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
 
 uint32_t tcp_showInBuffers(tcpConnection_t* connection)
 {
-	printf("\n\n");
-	uint32_t count = 0;
-	for (element_t* e = connection->inBuffer->head; e != 0; e = e->next)
-	{
-		count++;
-		tcpIn_t* inPacket = e->data;
-		printf("\n seq = %u \tlen = %u", inPacket->seq, inPacket->length);
-		for (uint32_t i=0; i<inPacket->length; i++)
-		{
-			// printf("%c", *(char*)(inPacket->data + i));			
-		}
-	}
-	return count;
+    printf("\n\n");
+    uint32_t count = 0;
+    for (element_t* e = connection->inBuffer->head; e != 0; e = e->next)
+    {
+        count++;
+        tcpIn_t* inPacket = e->data;
+        printf("\n seq = %u \tlen = %u", inPacket->seq, inPacket->length);
+        /*for (uint32_t i=0; i<inPacket->length; i++)
+        {
+            putch(((char*)inPacket->data)[i]);
+        }*/
+    }
+    return count;
 }
 
-static bool IsSegmentAcceptable (tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
+static bool IsSegmentAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
 {
     if (tcp->window == 0)
     {
@@ -693,14 +677,12 @@ uint32_t tcp_uconnect(IP_t IP, uint16_t port)
     connection->remoteSocket.port = port;
     connection->adapter = network_getFirstAdapter(); // Hack
 
-    if(connection->adapter)
-    {
-        connection->localSocket.IP.iIP = connection->adapter->IP.iIP;
-    }
-    else
+    if(connection->adapter == 0)
     {
         return 0;
     }
+
+    connection->localSocket.IP = connection->adapter->IP;
 
     if(IP.iIP == 0)
     {
