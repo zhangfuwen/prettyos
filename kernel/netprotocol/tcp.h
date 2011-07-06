@@ -96,9 +96,15 @@ typedef struct
 
 typedef struct
 {
+    tcpReceivedEventHeader_t header;
+    char* buffer;
+} __attribute__((packed)) tcpReceivedEvent_t;
+
+typedef struct
+{
     uint32_t  seq;
     size_t    length;
-    void*     data;
+    tcpReceivedEvent_t ev;
 }__attribute__((packed)) tcpIn_t;
 
 typedef struct

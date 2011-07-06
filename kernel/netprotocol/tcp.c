@@ -401,25 +401,19 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                 if (tcpDataLength)
                 {
-                    // Issue event
-                    struct
-                    {
-                        tcpReceivedEventHeader_t header;
-                        char buffer[tcpDataLength];
-                    } __attribute__((packed)) event;
-
-                    event.header.connection = connection->ID;
-                    event.header.length = tcpDataLength;
-                    memcpy(event.buffer, tcpData, tcpDataLength);
-                    event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &event, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
-
-                    //Fill in-buffer list
-                    tcpIn_t* In = malloc(sizeof(tcpIn_t),0,"tcp_InBuffer");
-                    In->data    = malloc(tcpDataLength,0,"tcp_InBuffer->Data");
-                    // memcpy(In->data, tcpData, tcpDataLength); // TOO SLOW for starwars data reception !!!!!!!!!!!!!!!   TODO
-                    In->seq     = ntohl(tcp->sequenceNumber);
-                    In->length  = tcpDataLength;
+					//Fill in-buffer list
+                    tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
+                    In->ev.buffer  = malloc(sizeof(tcpDataLength), 0, "tcp_InBuf_data");
+					memcpy(In->ev.buffer, tcpData, tcpDataLength); 
+                    In->seq        = ntohl(tcp->sequenceNumber);
+                    In->length     = tcpDataLength;
                     list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
+                    
+					// Issue event
+                    In->ev.header.connection = connection->ID;
+                    In->ev.header.length     = tcpDataLength;
+                    //memcpy(event.buffer, tcpData, tcpDataLength);
+					event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &(In->ev), sizeof(tcpReceivedEventHeader_t));                    
                 }
             }
             else if (tcp->FIN && !tcp->ACK) // FIN

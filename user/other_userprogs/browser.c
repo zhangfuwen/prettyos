@@ -33,10 +33,8 @@ int main()
                 break;
             case EVENT_TCP_RECEIVED:
             {
-                tcpReceivedEventHeader_t* header = (void*)buffer;
-                char* data = (void*)(header+1);
-                data[header->length] = 0;
-                printf("\npacket received. Length = %u\n:%s", header->length, data);
+                tcpReceivedEvent_t* evt = (void*)buffer;
+                printf("\npacket received. Length = %u\n:%s", evt->header.length, evt->buffer);
                 break;
             }
             case EVENT_KEY_DOWN:

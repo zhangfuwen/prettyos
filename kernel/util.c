@@ -95,6 +95,13 @@ void memshow(const void* start, size_t count)
     }
 }
 
+void* memcpy(void* dest, const void* src, size_t count) 
+{
+	__asm__ volatile ( "cld\n\t" "rep\n\t" "movsb" : : "S" (src), "D" (dest), "c" (count));
+	return dest;
+}
+
+/*
 void* memcpy(void* dest, const void* src, size_t count)
 {
     const uint8_t* sp = (const uint8_t*)src;
@@ -102,6 +109,7 @@ void* memcpy(void* dest, const void* src, size_t count)
     for (; count != 0; count--) *dp++ = *sp++;
     return dest;
 }
+*/
 
 void* memmove(const void* source, void* destination, size_t size)
 {

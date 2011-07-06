@@ -110,5 +110,10 @@ typedef struct
     size_t   length;
 } __attribute__((packed)) tcpReceivedEventHeader_t;
 
+typedef struct
+{
+    tcpReceivedEventHeader_t header;
+    char* buffer;
+} __attribute__((packed)) tcpReceivedEvent_t;
 
 #endif

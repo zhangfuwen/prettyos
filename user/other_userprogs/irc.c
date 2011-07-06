@@ -29,7 +29,7 @@ int main()
                 break;
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
-                const char* const pStr = "NICK Pretty00001\r\nUSER Pretty00001 irc.bre.de.euirc.net servername : Pretty00001\r\n";
+                const char* const pStr = "NICK Pretty00002\r\nUSER Pretty00002 irc.bre.de.euirc.net servername : Pretty00002\r\n";
                 tcp_send(connection, (void*)pStr, strlen(pStr));
                 break;
             case EVENT_TCP_RECEIVED:
