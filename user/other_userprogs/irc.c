@@ -1,6 +1,7 @@
 #include "userlib.h"
 #include "stdio.h"
 #include "string.h"
+#include "stdlib.h"
 
 
 int main()
@@ -12,7 +13,7 @@ int main()
 
     iSetCursor(0, 7);
     IP_t IP = {.IP = {151,189,0,165}}; // euirc
-    uint32_t connection = tcp_connect(IP, 6667); // IRC
+    uint32_t connection = tcp_connect(IP, 6667); // irc protocol
     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
     event_enable(true);
@@ -20,7 +21,13 @@ int main()
     EVENT_t ev = event_poll(buffer, 2048, EVENT_NONE);
 
     bool ctrl = false;
-    for(;;)
+	srand(getCurrentMilliseconds());
+	uint32_t x = rand();
+	char number[15];
+	itoa(x,number); 
+	printf("%u %s", x, number);
+
+	for(;;)
     {
         switch(ev)
         {
@@ -29,8 +36,16 @@ int main()
                 break;
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
-                const char* const pStr = "NICK Pretty00002\r\nUSER Pretty00002 irc.bre.de.euirc.net servername : Pretty00002\r\n";
-                tcp_send(connection, (void*)pStr, strlen(pStr));
+				char pStr[100] = {""};
+				strcat(pStr, "NICK Pretty");
+				strcat(pStr,number);
+				strcat(pStr,"\r\nUSER Pretty");
+				strcat(pStr,number);
+				strcat(pStr," irc.bre.de.euirc.net servername : Pretty");
+				strcat(pStr,number);
+				strcat(pStr,"\r\n");
+				printf("\n%s", pStr);
+				tcp_send(connection, (void*)pStr, strlen(pStr));
                 break;
             case EVENT_TCP_RECEIVED:
             {
