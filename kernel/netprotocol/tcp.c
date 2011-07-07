@@ -403,17 +403,16 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 {
 					//Fill in-buffer list
                     tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
-                    In->ev.buffer  = malloc(sizeof(tcpDataLength), 0, "tcp_InBuf_data");
-					memcpy(In->ev.buffer, tcpData, tcpDataLength); 
-                    In->seq        = ntohl(tcp->sequenceNumber);
+                    In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
+					memcpy(In->ev+1, tcpData, tcpDataLength);
+					In->seq        = ntohl(tcp->sequenceNumber);
                     In->length     = tcpDataLength;
                     list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
                     
 					// Issue event
-                    In->ev.header.connection = connection->ID;
-                    In->ev.header.length     = tcpDataLength;
-                    //memcpy(event.buffer, tcpData, tcpDataLength);
-					event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, &(In->ev), sizeof(tcpReceivedEventHeader_t));                    
+                    In->ev->connection = connection->ID;
+                    In->ev->length     = tcpDataLength;
+                    event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
                 }
             }
             else if (tcp->FIN && !tcp->ACK) // FIN

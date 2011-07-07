@@ -87,7 +87,6 @@ typedef struct
     list_t* outBuffer;
 } tcpConnection_t;
 
-
 typedef struct
 {
     uint32_t connection;
@@ -96,16 +95,10 @@ typedef struct
 
 typedef struct
 {
-    tcpReceivedEventHeader_t header;
-    char* buffer;
-} __attribute__((packed)) tcpReceivedEvent_t;
-
-typedef struct
-{
     uint32_t  seq;
     size_t    length;
-    tcpReceivedEvent_t ev;
-}__attribute__((packed)) tcpIn_t;
+    tcpReceivedEventHeader_t* ev;	
+} tcpIn_t;
 
 typedef struct
 {
