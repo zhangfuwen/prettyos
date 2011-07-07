@@ -106,7 +106,7 @@ typedef union
 
 typedef struct
 {
-    uint32_t connection;
+    uint32_t connectionID;
     size_t   length;
 } __attribute__((packed)) tcpReceivedEventHeader_t;
 

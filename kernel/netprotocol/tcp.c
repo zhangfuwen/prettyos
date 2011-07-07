@@ -406,12 +406,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
 					memcpy(In->ev+1, tcpData, tcpDataLength);
 					In->seq        = ntohl(tcp->sequenceNumber);
-                    In->length     = tcpDataLength;
+                    In->ev->length = tcpDataLength;
+					In->ev->connectionID = connection->ID;
                     list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
                     
 					// Issue event
-                    In->ev->connection = connection->ID;
-                    In->ev->length     = tcpDataLength;
                     event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
                 }
             }
@@ -436,6 +435,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.SEG.CTL = ACK_FLAG;
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = TIME_WAIT; // CLOSED ??
+
+				/// TEST
+				tcp_showInBuffers(connection, true);
 
                 /// TEST
                 delay(100000);
@@ -603,7 +605,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     tcp_debug(tcp);
 }
 
-uint32_t tcp_showInBuffers(tcpConnection_t* connection)
+uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData)
 {
     printf("\n\n");
     uint32_t count = 0;
@@ -611,11 +613,14 @@ uint32_t tcp_showInBuffers(tcpConnection_t* connection)
     {
         count++;
         tcpIn_t* inPacket = e->data;
-        printf("\n seq = %u \tlen = %u", inPacket->seq, inPacket->length);
-        /*for (uint32_t i=0; i<inPacket->length; i++)
-        {
-            putch(((char*)inPacket->data)[i]);
-        }*/
+        printf("\n seq = %u \tlen = %u\n", inPacket->seq, inPacket->ev->length);
+        if (showData)
+		{
+			for (uint32_t i=0; i<inPacket->ev->length; i++)
+			{
+				putch( ((char*)(inPacket->ev+1))[i] );
+			}
+		}
     }
     return count;
 }
