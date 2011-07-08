@@ -95,21 +95,14 @@ void memshow(const void* start, size_t count)
     }
 }
 
-void* memcpy(void* dest, const void* src, size_t count) 
-{
-	__asm__ volatile ( "cld\n\t" "rep\n\t" "movsb" : : "S" (src), "D" (dest), "c" (count));
-	return dest;
-}
-
-/*
 void* memcpy(void* dest, const void* src, size_t count)
 {
-    const uint8_t* sp = (const uint8_t*)src;
-    uint8_t* dp = (uint8_t*)dest;
-    for (; count != 0; count--) *dp++ = *sp++;
-    return dest;
+    size_t dwords = count>>2;
+    count %= 4;    
+    __asm__ volatile ( "cld\n\t" "rep movsb" : : "S" (src+dwords*4), "D" (dest+dwords*4), "c" (count)); // do not change order, first rest bytes, afterwards dwords
+    __asm__ volatile ( "cld\n\t" "rep movsl" : : "S" (src), "D" (dest), "c" (dwords));
+	return(dest);
 }
-*/
 
 void* memmove(const void* source, void* destination, size_t size)
 {
@@ -180,10 +173,13 @@ void* memmove(const void* source, void* destination, size_t size)
     return(destination);
 }
 
-void* memset(void* dest, int8_t val, size_t count)
+void* memset(void* dest, int8_t val, size_t bytes)
 {
-    int8_t* temp = (int8_t*)dest;
-    for (; count != 0; count--) *temp++ = val;
+    size_t dwords = bytes/4; // Number of dwords (4 Byte blocks) to be written
+    bytes %= 4;              // Remaining bytes
+    uint32_t dval = (val<<24)|(val<<16)|(val<<8)|val; // Create dword from byte value
+    __asm__ volatile ("cld\n\t" "rep stosb" : : "D"(dest+dwords*4), "al"(val), "c" (bytes));
+    __asm__ volatile ("rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
     return dest;
 }
 

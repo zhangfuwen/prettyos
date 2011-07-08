@@ -25,8 +25,7 @@ int main()
 	uint32_t x = rand();
 	char number[15];
 	itoa(x,number); 
-	printf("%u %s", x, number);
-
+	
 	for(;;)
     {
         switch(ev)
