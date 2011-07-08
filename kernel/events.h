@@ -5,7 +5,7 @@
 #include "synchronisation.h"
 
 
-#define MAX_EVENTS 2000 // One queue stores at maximum xx events. If a queue is full, an EVENT_OVERFLOW event is appended and no further events are accepted
+#define MAX_EVENTS 100 // One queue stores at maximum xx events. If a queue is full, an EVENT_OVERFLOW event is appended and no further events are accepted
 
 
 typedef enum
@@ -32,9 +32,8 @@ typedef struct
 
 event_queue_t* event_createQueue();
 void           event_deleteQueue(event_queue_t* queue);
-void           event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length); // Sends an event to an event queue
-EVENT_t        event_poll(void* destination, size_t maxLength, EVENT_t filter); // Takes an event from the event queue of the current task
 void           event_enable(bool b); // Enables/Disables event handling for the current task
-
+EVENT_t        event_poll(void* destination, size_t maxLength, EVENT_t filter); // Takes an event from the event queue of the current task
+uint8_t        event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length); // Sends an event to an event queue
 
 #endif

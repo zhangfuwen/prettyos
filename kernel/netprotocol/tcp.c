@@ -14,7 +14,11 @@
 
 extern Packet_t lastPacket; // network.c
 
-const uint16_t STARTWINDOWS = 8192;
+uint16_t STARTWINDOWS = 4000;
+uint16_t INCWINDOWS   =   50;
+uint16_t DECWINDOWS   =  100;
+uint16_t MINWINDOWS   = 1500;
+uint16_t MAXWINDOWS   = 6000;
 
 static const char* const tcpStates[] =
 {
@@ -412,7 +416,31 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
 
                     // Issue event
-                    event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+                    uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+					if (retVal==0)
+					{
+						textColor(SUCCESS);
+						printf("\nConn-ID. %u event_issue OK", In->ev->connectionID);
+						if (STARTWINDOWS <MAXWINDOWS)
+						{
+							STARTWINDOWS += INCWINDOWS;
+						}						
+					}
+					else
+					{
+						textColor(ERROR);
+						printf("\nConn-ID. %u event_issue error: %u", In->ev->connectionID, retVal);
+						if (STARTWINDOWS >400)
+						{
+							if (retVal == 1)
+								STARTWINDOWS  = 0; // ??
+							if (retVal == 2) 
+								STARTWINDOWS -= DECWINDOWS;
+							if (retVal == 3) 
+								STARTWINDOWS  = MINWINDOWS;
+						}
+					}
+					textColor(TEXT);
                 }
             }
             else if (tcp->FIN && !tcp->ACK) // FIN

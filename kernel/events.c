@@ -27,10 +27,14 @@ void event_deleteQueue(event_queue_t* queue)
     free(queue);
 }
 
-void event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length)
+uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length)
 {
-    if(destination == 0) // Event handling disabled
-        return;
+    int8_t retVal;
+	if(!destination) // Event handling disabled
+	{
+		retVal = 1;
+        return (retVal);
+	}
 
     if(destination->num == MAX_EVENTS)
     {
@@ -43,10 +47,13 @@ void event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t le
         list_Append(destination->list, ev);
         destination->num++;
         mutex_unlock(destination->mutex);
+		
+		retVal = 2;
     }
     else if(destination->num > MAX_EVENTS)
     {
         // Nothing to do. OVERFLOW event has already been added.
+		retVal = 3;
     }
     else
     {
@@ -60,8 +67,11 @@ void event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t le
         list_Append(destination->list, ev);
         destination->num++;
         mutex_unlock(destination->mutex);
+		
+		retVal = 0;
     }
     scheduler_unblockEvent(BL_EVENT, (void*)type);
+	return retVal;
 }
 
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
