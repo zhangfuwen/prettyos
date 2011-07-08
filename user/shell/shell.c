@@ -3,7 +3,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-#define MAX_CHAR_PER_LINE 70
+#define MAX_CHAR_PER_LINE 75
 #define ENTRY_CACHE_SIZE 10
 
 void eraseFirst(char* string)
@@ -25,13 +25,14 @@ static unsigned int entryLength;
 char RenderBuffer[81];
 void drawEntry(const char* entry)
 {
-    memset(RenderBuffer, 0, 81);
     sprintf(RenderBuffer, "$> %s", entry);
-    if(!(cursorPos == entryLength && entryLength < MAX_CHAR_PER_LINE))
+    if(strlen(RenderBuffer) < MAX_CHAR_PER_LINE)
+        memset(RenderBuffer+strlen(RenderBuffer), ' ', MAX_CHAR_PER_LINE-strlen(RenderBuffer));
+    RenderBuffer[80] = 0;
+    if(cursorPos < entryLength && entryLength < MAX_CHAR_PER_LINE)
     {
         insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;) )
     }
-    strcat(RenderBuffer, "  ");
     printLine(RenderBuffer, 40, 0x0B);
 }
 
@@ -102,7 +103,7 @@ int main()
                         break;
 
                     unsigned char text = buffer.buffer[0];
-                    if (text > 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <= MAX_CHAR_PER_LINE && cursorPos != entryLength)))
+                    if (text > 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <= MAX_CHAR_PER_LINE && cursorPos < entryLength)))
                     {
                         if (curEntry != -1)
                         {
@@ -174,7 +175,7 @@ int main()
                             textColor(0x03);
                             printf("\n$> %s <--\n", entry);
                             textColor(0x0F);
-                            printLine("$>                                                                              ", 40, 0x0B);
+                            drawEntry(entry);
                             goto EVALUATION;
                             break;
                         case KEY_INS:
@@ -213,10 +214,6 @@ int main()
                         case KEY_ARRU:
                             if (curEntry < ENTRY_CACHE_SIZE-1 && *entryCache[curEntry+1] != 0)
                             {
-                                for (; entryLength > 0; entryLength--)
-                                {
-                                    putchar('\b'); //Clear row
-                                }
                                 ++curEntry;
                                 entryLength = strlen(entryCache[curEntry]);
                                 cursorPos = entryLength;
@@ -225,30 +222,22 @@ int main()
                         case KEY_ARRD:
                             if (curEntry >= 0)
                             {
-                                for (; entryLength > 0; entryLength--)
-                                {
-                                    putchar('\b'); //Clear row
-                                }
                                 --curEntry;
                                 if (curEntry == -1)
                                 {
                                     entryLength = strlen(entry);
-                                    cursorPos = entryLength;
                                 }
                                 else
                                 {
                                     entryLength = strlen(entryCache[curEntry]);
-                                    cursorPos = entryLength;
                                 }
+                                cursorPos = entryLength;
                             }
-                            if (curEntry == -1)
+                            else
                             {
-                                for (; entryLength > 0; entryLength--)
-                                {
-                                    putchar('\b'); //Clear row
-                                }
                                 memset(entry, 0, MAX_CHAR_PER_LINE);
                                 cursorPos = 0;
+                                entryLength = 0;
                             }
                             break;
                         default:

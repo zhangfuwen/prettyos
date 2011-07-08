@@ -85,7 +85,7 @@ void switchToVideomode(uint16_t mode)
     vbe_readMIB(mode);
     setVideoMemory();
     if(!(mode&BIT(15))) // We clear the Videoscreen manually, because the VGA is not reliable
-        memset(vidmem, 0, mib.XResolution*mib.YResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
+        vbe_clearScreen();
     paletteBitsPerColor = 0; // Has to be reinitializated
     videomode = VM_VBE;
 
@@ -663,14 +663,7 @@ void vbe_drawString(const char* text, uint32_t xpos, uint32_t ypos)
 
 void vbe_clearScreen()
 {
-    BGRA_t color = { 0, 0, 0, 0 };
-    for(int y = 0; y < mib.YResolution; y++)
-    {
-        for(int x = 0; x < mib.XResolution; x++)
-        {
-            vbe_setPixel(x, y, color);
-        }
-    }
+    memset(vidmem, 0, mib.YResolution*mib.XResolution*(mib.BitsPerPixel % 8 == 0 ? mib.BitsPerPixel/8 : mib.BitsPerPixel/8 + 1));
 }
 
 void vbe_bootscreen()

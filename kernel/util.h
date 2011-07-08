@@ -3,6 +3,7 @@
 
 #include "os.h"
 
+
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #define isalnum(c) (isdigit(c) || isalpha(c))
@@ -35,9 +36,8 @@ uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len);
 uint64_t rdtsc();
 
 void      memshow(const void* start, size_t count);
-void*     memset(void* dest, int8_t val, size_t count);
-uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count);
-uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count);
+void*     memset(void* dest, int8_t val, size_t bytes);
+uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words);
 void*     memcpy(void* dest, const void* src, size_t count);
 void*     memmove(const void* source, void* destination, size_t size);
 int32_t   memcmp(const void* s1, const void* s2, size_t n);
@@ -92,5 +92,6 @@ double   sqrt(double x);
 
 void srand(uint32_t val);
 uint32_t rand();
+
 
 #endif

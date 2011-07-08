@@ -86,22 +86,21 @@ void panic_assert(const char* file, uint32_t line, const char* desc)
 
 void memshow(const void* start, size_t count)
 {
-    const uint8_t* end = (const uint8_t*)(start+count);
-    for (; count != 0; count--)
+    for (size_t i = 0; i < count; i++)
     {
-        if(count%16 == 0)
-            printf("\n");
-        printf("%y ",*(end-count));
+        if(i%16 == 0)
+            putch('\n');
+        printf("%y ", ((uint8_t*)start)[i]);
     }
 }
 
-void* memcpy(void* dest, const void* src, size_t count)
+void* memcpy(void* dest, const void* src, size_t bytes)
 {
-    size_t dwords = count>>2;
-    count %= 4;    
-    __asm__ volatile ( "cld\n\t" "rep movsb" : : "S" (src+dwords*4), "D" (dest+dwords*4), "c" (count)); // do not change order, first rest bytes, afterwards dwords
-    __asm__ volatile ( "cld\n\t" "rep movsl" : : "S" (src), "D" (dest), "c" (dwords));
-	return(dest);
+    size_t dwords = bytes/4;
+    bytes %= 4;
+    __asm__ volatile("cld\n" "rep movsb" : : "S" (src+dwords*4), "D" (dest+dwords*4), "c" (bytes));  // Do not change order, first rest bytes, afterwards dwords. Reason: Unknown.
+    __asm__ volatile(        "rep movsl" : : "S" (src), "D" (dest), "c" (dwords));
+    return(dest);
 }
 
 void* memmove(const void* source, void* destination, size_t size)
@@ -178,22 +177,18 @@ void* memset(void* dest, int8_t val, size_t bytes)
     size_t dwords = bytes/4; // Number of dwords (4 Byte blocks) to be written
     bytes %= 4;              // Remaining bytes
     uint32_t dval = (val<<24)|(val<<16)|(val<<8)|val; // Create dword from byte value
-    __asm__ volatile ("cld\n\t" "rep stosb" : : "D"(dest+dwords*4), "al"(val), "c" (bytes));
-    __asm__ volatile ("rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
+    __asm__ volatile("cld\n" "rep stosb" : : "D"(dest+dwords*4), "al"(val), "c" (bytes));
+    __asm__ volatile(        "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
     return dest;
 }
 
-uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t count)
+uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words)
 {
-    uint16_t* temp = dest;
-    for (; count != 0; count--) *temp++ = val;
-    return dest;
-}
-
-uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t count)
-{
-    uint32_t* temp = dest;
-    for (; count != 0; count--) *temp++ = val;
+    size_t dwords = words/2; // Number of dwords (4 Byte blocks) to be written
+    words %= 2;              // Remaining words
+    uint32_t dval = (val<<16)|val; // Create dword from byte value
+    __asm__ volatile("cld\n" "rep stosw" : : "D"(dest+dwords*2), "ax"(val), "c" (words));
+    __asm__ volatile(        "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
     return dest;
 }
 
@@ -335,8 +330,8 @@ size_t snprintf(char *buffer, size_t length, const char *args, ...)
 
 size_t strlen(const char* str)
 {
-    size_t retval;
-    for (retval = 0; *str != '\0'; ++str)
+    size_t retval = 0;
+    for (; *str != '\0'; ++str)
         ++retval;
     return retval;
 }

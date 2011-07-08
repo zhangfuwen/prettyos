@@ -28,12 +28,13 @@ int memcmp(const void* ptr1, const void* ptr2, size_t num)
     return (*s1 - *s2);
 }
 
-void* memcpy(void* dest, const void* source, size_t num)
+void* memcpy(void* dest, const void* source, size_t count)
 {
-    const uint8_t* sp = (const uint8_t*)source;
-    uint8_t* dp = (uint8_t*)dest;
-    for (; num != 0; num--) *dp++ = *sp++;
-    return dest;
+    size_t dwords = count/4;
+    count %= 4;
+    __asm__ volatile("cld\n" "rep movsb" : : "S" (source+dwords*4), "D" (dest+dwords*4), "c" (count));
+    __asm__ volatile(        "rep movsl" : : "S" (source), "D" (dest), "c" (dwords));
+    return(dest);
 }
 
 void* memmove(void* dest, const void* source, size_t num)
@@ -80,10 +81,13 @@ void* memmove(void* dest, const void* source, size_t num)
     return(dest);
 }
 
-void* memset(void* dest, char value, size_t num)
+void* memset(void* dest, char value, size_t bytes)
 {
-    char* temp = (char*)dest;
-    for (; num != 0; num--) *temp++ = value;
+    size_t dwords = bytes/4; // Number of dwords (4 Byte blocks) to be written
+    bytes %= 4;              // Remaining bytes
+    uint32_t dval = (value<<24)|(value<<16)|(value<<8)|value; // Create dword from byte value
+    __asm__ volatile("cld\n" "rep stosb" : : "D"(dest+dwords*4), "al"(value), "c" (bytes));
+    __asm__ volatile(        "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
     return dest;
 }
 
@@ -91,8 +95,8 @@ void* memset(void* dest, char value, size_t num)
 
 size_t strlen(const char* str)
 {
-    size_t retval;
-    for (retval = 0; *str != '\0'; ++str)
+    size_t retval = 0;
+    for (; *str != '\0'; ++str)
         ++retval;
     return retval;
 }

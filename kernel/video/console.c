@@ -36,10 +36,10 @@ void kernel_console_init()
 {
     kernelConsole.tasks = list_Create();
     kernelConsole.mutex = mutex_create(1);
-    memsetl((uint32_t*)kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES / 2);
+    memset(kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES * 2);
 
     reachableConsoles[KERNELCONSOLE_ID] = &kernelConsole;
-    memsetl((uint32_t*)reachableConsoles+1, 0, 10);
+    memset(reachableConsoles+1, 0, 10*sizeof(console_t*));
 }
 
 void console_init(console_t* console, const char* name)
@@ -53,7 +53,7 @@ void console_init(console_t* console, const char* name)
     console->tasks       = list_Create();
     console->mutex       = mutex_create(1);
     strcpy(console->name, name);
-    memsetl((uint32_t*)console->vidmem, 0x00, COLUMNS * USER_LINES / 2);
+    memset(console->vidmem, 0x00, COLUMNS * USER_LINES * 2);
 
     for (uint8_t i = 1; i < 11; i++)
     { // The next free place in our console-list will be filled with the new console
@@ -104,8 +104,7 @@ void console_clear(uint8_t backcolor)
     mutex_lock(console_current->mutex);
 
     // Erasing the content of the active console
-    textColor((backcolor << 4) | 0x0F);
-    memsetw((uint16_t*)console_current->vidmem, 0x20 | (getTextColor() << 8), COLUMNS * USER_LINES);
+    memsetw((uint16_t*)console_current->vidmem, 0x20 | (backcolor << 8), COLUMNS * USER_LINES);
     console_current->cursor.x = 0;
     console_current->cursor.y = 0;
     if (console_current == console_displayed) // If it is also displayed at the moment, refresh screen

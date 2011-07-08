@@ -21,12 +21,9 @@ int main()
     EVENT_t ev = event_poll(buffer, 2048, EVENT_NONE);
 
     bool ctrl = false;
-	srand(getCurrentMilliseconds());
-	uint32_t x = rand();
-	char number[15];
-	itoa(x,number); 
-	
-	for(;;)
+    srand(getCurrentMilliseconds());
+
+    for(;;)
     {
         switch(ev)
         {
@@ -35,16 +32,10 @@ int main()
                 break;
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
-				char pStr[100] = {""};
-				strcat(pStr, "NICK Pretty");
-				strcat(pStr,number);
-				strcat(pStr,"\r\nUSER Pretty");
-				strcat(pStr,number);
-				strcat(pStr," irc.bre.de.euirc.net servername : Pretty");
-				strcat(pStr,number);
-				strcat(pStr,"\r\n");
-				printf("\n%s", pStr);
-				tcp_send(connection, (void*)pStr, strlen(pStr));
+                char pStr[100];
+                uint32_t number = rand();
+                snprintf(pStr, 100, "NICK Pretty%u\r\nUSER Pretty%u irc.bre.de.euirc.net servername : Pretty%u\r\n", number, number, number);
+                tcp_send(connection, pStr, strlen(pStr));
                 break;
             case EVENT_TCP_RECEIVED:
             {
@@ -71,12 +62,12 @@ int main()
                         ctrl = true;
                         break;
                     case KEY_ESC:
-					{
+                    {
                         char* msgQuit = "QUIT\r\n";
-						tcp_send(connection, msgQuit, strlen(msgQuit));
-						tcp_close(connection);
+                        tcp_send(connection, msgQuit, strlen(msgQuit));
+                        tcp_close(connection);
                         return(0);
-					}
+                    }
                     case KEY_J:
                     {
                         if(ctrl)

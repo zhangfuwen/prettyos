@@ -44,7 +44,7 @@ void video_setPixel(uint8_t x, uint8_t y, uint16_t value)
 void clear_screen()
 {
     mutex_lock(videoLock);
-    memsetl((void*)vidmem, 0x00, COLUMNS * LINES / 2);
+    memset(vidmem, 0x00, COLUMNS * LINES * 2);
     mutex_unlock(videoLock);
 }
 
@@ -216,7 +216,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
 static void refreshInfoBar()
 {
-    memsetl((uint32_t*)(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS), 0, 3 * COLUMNS / 2); // Clearing info-area
+    memset(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS * 2); // Clearing info-area
     kprintf(infoBar[0], 45, 14);
     kprintf(infoBar[1], 46, 14);
     kprintf(infoBar[2], 47, 14);

@@ -15,7 +15,6 @@
 extern Packet_t lastPacket; // network.c
 
 const uint16_t STARTWINDOWS = 8192;
-bool tcp_PassiveOpen = true;
 
 static const char* const tcpStates[] =
 {
@@ -24,7 +23,7 @@ static const char* const tcpStates[] =
 
 static list_t* tcpConnections = 0;
 
-static bool IsSegmentAcceptable (tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
+static bool IsSegmentAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
 static uint16_t getFreeSocket();
 static uint32_t getConnectionID();
 
@@ -168,6 +167,7 @@ void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter) // p
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = LISTEN;
     connection->adapter = adapter;
+    connection->passive = true;
 
     tcpShowConnectionStatus(connection);
 }
@@ -176,6 +176,7 @@ void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
 {
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->localSocket.port = getFreeSocket();
+    connection->passive = false;
 
     if (connection->TCP_PrevState == CLOSED || connection->TCP_PrevState == LISTEN || connection->TCP_PrevState == TIME_WAIT)
     {
@@ -353,14 +354,14 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 lastPacket.tcpDataLength = tcpDataLength;
                 lastPacket.tcpDataOffset = tcp->dataOffset; // DWORDs
 
-                textColor(ERROR);
                 if (!IsSegmentAcceptable(tcp, connection, tcpDataLength))
                 {
+                    textColor(ERROR);
                     printf("tcp packet is not acceptable!");
+                    textColor(TEXT);
                 }
-                textColor(TEXT);
 
-                if (tcp_PassiveOpen)
+                if (connection->passive)
                 {
                     textColor(LIGHT_GRAY);
                     printf("data: ");
@@ -376,7 +377,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                             lastPacket.ethLength, lastPacket.ipLength, lastPacket.tcpLength,
                             lastPacket.tcpDataLength, lastPacket.tcpDataOffset);
                     textColor(LIGHT_BLUE);
-                    for (uint16_t i=0; i<(tcpDataLength+4); i++) // TODO: Is tcpDataLength+4 really correct, or does it belong to the old CRC/Padding-HACK?
+                    for (uint16_t i=0; i<tcpDataLength; i++) // TODO: Is tcpDataLength+4 really correct, or does it belong to the old CRC/Padding-HACK?
                     {
                         printf("%y ", tcpData[i]);
                     }
@@ -401,16 +402,16 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                 if (tcpDataLength)
                 {
-					//Fill in-buffer list
+                    //Fill in-buffer list
                     tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
                     In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
-					memcpy(In->ev+1, tcpData, tcpDataLength);
-					In->seq        = ntohl(tcp->sequenceNumber);
+                    memcpy(In->ev+1, tcpData, tcpDataLength);
+                    In->seq        = ntohl(tcp->sequenceNumber);
                     In->ev->length = tcpDataLength;
-					In->ev->connectionID = connection->ID;
+                    In->ev->connectionID = connection->ID;
                     list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
-                    
-					// Issue event
+
+                    // Issue event
                     event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
                 }
             }
@@ -436,8 +437,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = TIME_WAIT; // CLOSED ??
 
-				/// TEST
-				tcp_showInBuffers(connection, true);
+                /// TEST
+                tcp_showInBuffers(connection, true);
 
                 /// TEST
                 delay(100000);
@@ -566,7 +567,6 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     {
         case SYN_FLAG:
             tcp->SYN = 1; // SYN
-            tcp_PassiveOpen = false;
             break;
         case SYN_ACK_FLAG:
             tcp->ACK = 1; // ACK
@@ -615,12 +615,12 @@ uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData)
         tcpIn_t* inPacket = e->data;
         printf("\n seq = %u \tlen = %u\n", inPacket->seq, inPacket->ev->length);
         if (showData)
-		{
-			for (uint32_t i=0; i<inPacket->ev->length; i++)
-			{
-				putch( ((char*)(inPacket->ev+1))[i] );
-			}
-		}
+        {
+            for (uint32_t i=0; i<inPacket->ev->length; i++)
+            {
+                putch( ((char*)(inPacket->ev+1))[i] );
+            }
+        }
     }
     return count;
 }

@@ -85,6 +85,7 @@ typedef struct
     task_t* owner;
     list_t* inBuffer;
     list_t* outBuffer;
+    bool passive; // Used to enable output of incoming packets in the kernel console
 } tcpConnection_t;
 
 typedef struct
@@ -96,14 +97,14 @@ typedef struct
 typedef struct
 {
     uint32_t  seq;
-    tcpReceivedEventHeader_t* ev;	
+    tcpReceivedEventHeader_t* ev;
 } tcpIn_t;
 
 typedef struct
 {
     size_t    length;
     void*     data;
-}__attribute__((packed)) tcpOut_t;
+} tcpOut_t;
 
 
 tcpConnection_t* tcp_createConnection();
