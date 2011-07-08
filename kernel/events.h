@@ -35,5 +35,6 @@ void           event_deleteQueue(event_queue_t* queue);
 void           event_enable(bool b); // Enables/Disables event handling for the current task
 EVENT_t        event_poll(void* destination, size_t maxLength, EVENT_t filter); // Takes an event from the event queue of the current task
 uint8_t        event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length); // Sends an event to an event queue
+event_t*       event_peek(event_queue_t* eventQueue, uint32_t i);
 
 #endif

@@ -127,6 +127,13 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     return(type);
 }
 
+event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
+{
+	element_t* elem = list_GetElement(eventQueue->list, i);
+	if(elem == 0) return(0);
+	return(elem->data);
+}
+
 void event_enable(bool b)
 {
     if(b)

@@ -417,6 +417,23 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                     // Issue event
                     uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+					
+					uint32_t totalTCPdataSize = 0;
+					
+					mutex_lock(connection->owner->eventQueue->mutex);
+					for(size_t i = 0; ; i++)
+                    {
+                        event_t* ev = event_peek(connection->owner->eventQueue, i);
+                        if(ev == 0) break;
+						if(ev->type == EVENT_TCP_RECEIVED)
+                        {
+							totalTCPdataSize += ev->length - sizeof(tcpReceivedEventHeader_t);
+						}
+					}
+					mutex_unlock(connection->owner->eventQueue->mutex);
+					textColor(LIGHT_BLUE);
+					printf("\ntotalTCPdataSize: %u", totalTCPdataSize); 
+					textColor(TEXT);
 					if (retVal==0)
 					{
 						textColor(SUCCESS);
