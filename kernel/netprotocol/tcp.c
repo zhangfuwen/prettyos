@@ -431,31 +431,33 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 						}
 					}
 					mutex_unlock(connection->owner->eventQueue->mutex);
-					textColor(LIGHT_BLUE);
-					printf("\ntotalTCPdataSize: %u", totalTCPdataSize); 
+					textColor(MAGENTA);
+					printf("\ntotalTCPdataSize: %u ", totalTCPdataSize); 
 					textColor(TEXT);
-					if (retVal==0)
+					
+					if (retVal==0) 
 					{
 						textColor(SUCCESS);
-						printf("\nConn-ID. %u event_issue OK", In->ev->connectionID);
-						if (STARTWINDOWS <MAXWINDOWS)
+						printf("Conn-ID. %u event queue OK", In->ev->connectionID);
+						
+						if (totalTCPdataSize < 4000)
 						{
 							STARTWINDOWS += INCWINDOWS;
-						}						
-					}
+						}
+						if (totalTCPdataSize >= 4000)
+						{
+							STARTWINDOWS -= DECWINDOWS;
+						}
+						if (totalTCPdataSize >= 10000)
+						{
+							STARTWINDOWS = 0;
+						}												
+					}					
 					else
 					{
 						textColor(ERROR);
-						printf("\nConn-ID. %u event_issue error: %u", In->ev->connectionID, retVal);
-						if (STARTWINDOWS >400)
-						{
-							if (retVal == 1)
-								STARTWINDOWS  = 0; // ??
-							if (retVal == 2) 
-								STARTWINDOWS -= DECWINDOWS;
-							if (retVal == 3) 
-								STARTWINDOWS  = MINWINDOWS;
-						}
+						printf("Conn-ID. %u event queue error: %u", In->ev->connectionID, retVal);
+						STARTWINDOWS  = 0; 						
 					}
 					textColor(TEXT);
                 }

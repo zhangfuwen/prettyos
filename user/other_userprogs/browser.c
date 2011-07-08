@@ -14,7 +14,7 @@ int main()
     iSetCursor(0, 7);
     IP_t IP = {.IP = {82,100,220,68}}; // homepage ehenkes, HTTP
     uint32_t connection = tcp_connect(IP, 80);
-    printf("Connected (ID = %u). Wait until connection is established... ", connection);
+    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
     event_enable(true);
     char buffer[4096];

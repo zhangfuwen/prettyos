@@ -13,7 +13,7 @@ int main()
     iSetCursor(0, 7);
     IP_t IP = {.IP = {94,142,241,111}};
     uint32_t connection = tcp_connect(IP, 23);
-    printf("Connected (ID = %u). Wait until connection is established... ", connection);
+    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
     event_enable(true);
     char buffer[4096];
@@ -33,7 +33,7 @@ int main()
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
-                printf("\npacket received. Length = %u\n:%s", header->length, data);
+                printf("%s", data);
                 break;
             }
             case EVENT_KEY_DOWN:
