@@ -22,29 +22,30 @@ static const uint8_t broadcast_MAC_00[6] = {0, 0, 0, 0, 0, 0};
 void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
     lastPacket.ethLength = length;
-
+  
+  #ifdef _NETWORK_DATA_
     textColor(LIGHT_BLUE);
     printf("\n\n>> Packet received. <<");
     textColor(HEADLINE);
-    printf("\nEth: ");
-    if (memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_FF, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_00, 6) != 0)
+	printf("\nEth: ");
+  	if (memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_FF, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_00, 6) != 0)
     {
         textColor(TEXT);
         printf("Ethernet packet received. We are not the addressee.");
         return;
     }
-    memcpy(lastPacket.MAC, eth->send_mac, 6); // save sender
+  #endif
+  
+	memcpy(lastPacket.MAC, eth->send_mac, 6); // save sender
 
     // output ethernet packet
   #ifdef _NETWORK_DATA_
     uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
     textColor(HEADLINE); printf("\nLength: ");
     textColor(TEXT); printf("%d ", length);
-  #endif
+  
+    textColor(GRAY); printf(" %M\t<== %M", eth->recv_mac, eth->send_mac); // MAC adresses
 
-    textColor(GRAY); printf(" %M\t<== %M", eth->recv_mac, eth->send_mac);
-
-  #ifdef _NETWORK_DATA_
     textColor(LIGHT_MAGENTA);
     printf("\nEthernet: ");
 
@@ -105,22 +106,28 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     } // end of ethernet 2
     else
     {
+	  #ifdef _NETWORK_DATA_
         printf("Ethernet 1. ");
+      #endif
     }
 }
 
 bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type)
 {
-    textColor(HEADLINE);
+  #ifdef _NETWORK_DATA_
+	textColor(HEADLINE);
     printf("\nEth send:");
     textColor(GRAY);
     printf(" %M ==> %M", adapter->MAC, MAC);
     textColor(TEXT);
     printf("  length = %u.", sizeof(ethernet_t) + length);
+  #endif
     if (sizeof(ethernet_t) + length > 0x700)
     {
+	  #ifdef _NETWORK_DATA_
         textColor(ERROR);
         printf("\nError: This is more than (1792) 0x700\n", sizeof(ethernet_t) + length);
+      #endif
         return false;
     }
 

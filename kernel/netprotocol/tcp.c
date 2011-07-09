@@ -108,25 +108,26 @@ static void printFlag(uint8_t b, const char* s)
 
 static void tcp_debug(tcpPacket_t* tcp)
 {
-    textColor(LIGHT_GRAY); printf("src: ");   textColor(IMPORTANT); printf("%u", ntohs(tcp->sourcePort));
-    textColor(LIGHT_GRAY); printf(" dest: "); textColor(IMPORTANT); printf("%u   ", ntohs(tcp->destPort));
+    textColor(IMPORTANT); 
+	printf( "%u ==> %u   ", ntohs(tcp->sourcePort), ntohs(tcp->destPort) );
+	textColor(TEXT); 
     // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
-    textColor(TEXT);
+    textColor(LIGHT_GRAY);
     printf("  WND = %u  ", ntohs(tcp->window));
     // printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
+	textColor(TEXT);
 }
 
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
 {
-    textColor(TEXT);
-    printf("\nTCP curr. state: ", tcpStates[connection->TCP_CurrState]);
-    textColor(IMPORTANT);
-    puts(tcpStates[connection->TCP_CurrState]);
-    textColor(TEXT);
-    printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
+    // textColor(TEXT);    	printf("  state: "); 
+	textColor(IMPORTANT);   putch(' '); puts(tcpStates[connection->TCP_CurrState]);    textColor(TEXT);
+  #ifdef _NETWORK_DATA_
+	printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
     printf("SND.UNA = %u, SND.NXT = %u, SND.WND = %u", connection->tcb.SND.UNA, connection->tcb.SND.NXT, connection->tcb.SND.WND);
+  #endif
 }
 
 tcpConnection_t* tcp_createConnection()
@@ -241,7 +242,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     lastPacket.tcpLength = length;
 
     textColor(HEADLINE);
-    printf("\nTCP:");
+    printf("\n\nTCP rcvd: ");
     tcp_debug(tcp);
 
     // search connection
@@ -271,7 +272,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     }
 
     textColor(TEXT);
-    printf("\nTCP prev. state: %s  conn. ID: %u\n", tcpStates[connection->TCP_CurrState], connection->ID); // later: prev. state
+    // printf("\nPrev. state: %s  ID: %u\n", tcpStates[connection->TCP_CurrState], connection->ID); // later: prev. state
     connection->TCP_PrevState = connection->TCP_CurrState;
 
     if (tcp->RST) // RST
@@ -360,9 +361,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                 if (!IsSegmentAcceptable(tcp, connection, tcpDataLength))
                 {
-                    textColor(ERROR);
-                    printf("tcp packet is not acceptable!");
-                    textColor(TEXT);
+                    textColor(ERROR); printf("not acceptable!");  textColor(TEXT);
+					break;                                  // No ACK !!!
                 }
 
                 if (connection->passive)
@@ -438,7 +438,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 					if (retVal==0) 
 					{
 						textColor(SUCCESS);
-						printf("Conn-ID. %u event queue OK", In->ev->connectionID);
+						printf("ID. %u event queue OK", In->ev->connectionID);
 						
 						if (totalTCPdataSize < 4000)
 						{
@@ -456,7 +456,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 					else
 					{
 						textColor(ERROR);
-						printf("Conn-ID. %u event queue error: %u", In->ev->connectionID, retVal);
+						printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
 						STARTWINDOWS  = 0; 						
 					}
 					textColor(TEXT);
@@ -594,9 +594,9 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     uint32_t seqNumber = connection->tcb.SEG.SEQ;
     uint32_t ackNumber = connection->tcb.SEG.ACK;
 
-    textColor(HEADLINE);  printf("\n\nTCP send: ");
-    textColor(TEXT);      printf("conn. ID: %u  ", connection->ID);
-    textColor(IMPORTANT); printf("%u ==> %u  ", connection->localSocket.port, connection->remoteSocket.port);
+    textColor(HEADLINE);  printf("\nTCP send: ");
+    // textColor(TEXT);      printf("ID: %u  ", connection->ID);
+    // textColor(IMPORTANT); printf("%u ==> %u  ", connection->localSocket.port, connection->remoteSocket.port);
     textColor(TEXT);
 
     tcpPacket_t* tcp = malloc(sizeof(tcpPacket_t)+length, 0, "TCP packet");
@@ -648,7 +648,6 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
         connection->tcb.SND.NXT += length;
     }
 
-    printf("\n");
     tcp_debug(tcp);
 }
 

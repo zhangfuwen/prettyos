@@ -12,7 +12,8 @@
 #include "keyboard.h"
 
 
-typedef struct {
+typedef struct 
+{
     size_t calls;
     void (*handler)(registers_t*);
 } irq_handler_t;
@@ -32,7 +33,6 @@ void irq_uninstallHandler(IRQ_NUM_t irq)
 {
     interrupts[irq+32].handler = 0;
 }
-
 
 void irq_resetCounter(IRQ_NUM_t number)
 {
@@ -54,7 +54,6 @@ bool irq_unlockTask(void* data)
 {
     return(interrupts[(size_t)data].calls > 0);
 }
-
 
 // Message string corresponding to the exception number 0-31: exceptionMessages[interrupt_number]
 static const char* const exceptionMessages[] =
@@ -245,8 +244,8 @@ void isr_install()
 uint32_t irq_handler(uintptr_t esp)
 {
     task_t* oldTask = (task_t*)currentTask; // Save old task to be able to restore attr in case of task_switch
-    uint8_t attr = currentTask->attrib;     // Save the attrib so that we do not get color changes after the Interrupt if it changed the attrib
-    console_current = kernelTask.console;    // The output should appear in the kernels console usually. Exception: Syscalls (cf. syscall.c)
+    uint8_t attr    = currentTask->attrib;  // Save the attrib so that we do not get color changes after the interrupt, if it has changed the attrib
+    console_current = kernelTask.console;   // The output is expected to appear in the kernel's console. Exception: Syscalls (cf. syscall.c)
 
     registers_t* r = (registers_t*)esp;
 
