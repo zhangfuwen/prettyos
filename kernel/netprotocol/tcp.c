@@ -14,11 +14,10 @@
 
 extern Packet_t lastPacket; // network.c
 
-uint16_t STARTWINDOWS = 4000;
-uint16_t INCWINDOWS   =   50;
-uint16_t DECWINDOWS   =  100;
-uint16_t MINWINDOWS   = 1500;
-uint16_t MAXWINDOWS   = 6000;
+uint16_t STARTWINDOW =  4000;
+uint16_t INCWINDOW   =    50;
+uint16_t DECWINDOW   =   100;
+uint16_t MAXWINDOW   = 10000;
 
 static const char* const tcpStates[] =
 {
@@ -27,7 +26,7 @@ static const char* const tcpStates[] =
 
 static list_t* tcpConnections = 0;
 
-static bool IsSegmentAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
+static bool IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
 static uint16_t getFreeSocket();
 static uint32_t getConnectionID();
 
@@ -115,7 +114,7 @@ static void tcp_debug(tcpPacket_t* tcp)
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
     textColor(LIGHT_GRAY);
-    printf("  WND = %u  ", ntohs(tcp->window));
+    printf("  WND = %u  ", ntohs(tcp->window));	
     // printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
 	textColor(TEXT);
 }
@@ -186,7 +185,7 @@ void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
     if (connection->TCP_PrevState == CLOSED || connection->TCP_PrevState == LISTEN || connection->TCP_PrevState == TIME_WAIT)
     {
         srand(timer_getMilliseconds());
-        connection->tcb.SND.WND = STARTWINDOWS;
+        connection->tcb.SND.WND = STARTWINDOW;
         connection->tcb.SND.ISS = rand();
         connection->tcb.SND.UNA = connection->tcb.SND.ISS;
         connection->tcb.SND.NXT = connection->tcb.SND.ISS + 1;
@@ -303,7 +302,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
 
                 srand(timer_getMilliseconds());
-                connection->tcb.SND.WND  = STARTWINDOWS;
+                connection->tcb.SND.WND  = STARTWINDOW;
                 connection->tcb.SND.ISS  = rand();
                 connection->tcb.SND.UNA = connection->tcb.SND.ISS;
                 connection->tcb.SND.NXT = connection->tcb.SND.ISS + 1;
@@ -350,8 +349,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             break;
 
-        case ESTABLISHED:
-            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK   // ***** ESTABLISHED --> DATA TRANSFER *****
+        case ESTABLISHED: // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** 
+            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK   
             {
                 char* tcpData = (void*)tcp + tcp->dataOffset*4;
                 uint32_t tcpDataLength = length - (tcp->dataOffset << 2);
@@ -359,7 +358,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 lastPacket.tcpDataLength = tcpDataLength;
                 lastPacket.tcpDataOffset = tcp->dataOffset; // DWORDs
 
-                if (!IsSegmentAcceptable(tcp, connection, tcpDataLength))
+                if (!IsPacketAcceptable(tcp, connection, tcpDataLength))
                 {
                     textColor(ERROR); printf("not acceptable!");  textColor(TEXT);
 					break;                                  // No ACK !!!
@@ -402,7 +401,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.SEG.CTL =  ACK_FLAG;
                 tcp_send(connection, 0, 0);
 
-                connection->tcb.SND.WND = STARTWINDOWS; // HACK TO FREE SND.WND: we deliver direct to user-app.
+                connection->tcb.SND.WND = STARTWINDOW; // HACK TO FREE SND.WND: we deliver direct to user-app.
 
                 if (tcpDataLength)
                 {
@@ -435,29 +434,18 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 					printf("\ntotalTCPdataSize: %u ", totalTCPdataSize); 
 					textColor(TEXT);
 					
+					// setting sliding window
 					if (retVal==0) 
 					{
-						textColor(SUCCESS);
-						printf("ID. %u event queue OK", In->ev->connectionID);
-						
-						if (totalTCPdataSize < 4000)
-						{
-							STARTWINDOWS += INCWINDOWS;
-						}
-						if (totalTCPdataSize >= 4000)
-						{
-							STARTWINDOWS -= DECWINDOWS;
-						}
-						if (totalTCPdataSize >= 10000)
-						{
-							STARTWINDOWS = 0;
-						}												
+						textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
+						if (totalTCPdataSize <  STARTWINDOW)  {connection->tcb.SND.WND += INCWINDOW;}
+						if (totalTCPdataSize >= STARTWINDOW)  {connection->tcb.SND.WND -= DECWINDOW;}
+						if (totalTCPdataSize >= MAXWINDOW  )  {connection->tcb.SND.WND  =         0;}												
 					}					
 					else
 					{
-						textColor(ERROR);
-						printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
-						STARTWINDOWS  = 0; 						
+						textColor(ERROR); printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
+						connection->tcb.SND.WND  = 0; 						
 					}
 					textColor(TEXT);
                 }
@@ -483,9 +471,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.SEG.CTL = ACK_FLAG;
                 tcp_send(connection, 0, 0);
                 connection->TCP_CurrState = TIME_WAIT; // CLOSED ??
-
-                /// TEST
-                tcp_showInBuffers(connection, true);
 
                 /// TEST
                 delay(100000);
@@ -671,31 +656,31 @@ uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData)
     return count;
 }
 
-static bool IsSegmentAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
-{
-    if (tcp->window == 0)
+// http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf  page 41
+static bool IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
+{	
+    if (tcp->window != 0)
     {
         if (tcpDatalength)
         {
-            return false;
-        }
-        else
-        {
-            return (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT);
-        }
-    }
-    else // Receive Window > 0
-    {
-        if (tcpDatalength)
-        {
-            bool cond1 = ( ntohl(tcp->sequenceNumber) >= connection->tcb.RCV.NXT  &&  ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT + ntohs(tcp->window) );
-            bool cond2 = ( ntohl(tcp->sequenceNumber) + tcpDatalength >= connection->tcb.RCV.NXT ) && ( ( ntohl(tcp->sequenceNumber) + tcpDatalength ) < ( connection->tcb.RCV.NXT + ntohs(tcp->window) ) );
+            bool cond1 = ( ntohl(tcp->sequenceNumber) >=  connection->tcb.RCV.NXT  &&
+				           ntohl(tcp->sequenceNumber) <   connection->tcb.RCV.NXT + ntohs(tcp->window) );
+            bool cond2 = ( ntohl(tcp->sequenceNumber) + tcpDatalength >=   connection->tcb.RCV.NXT ) &&
+				           ntohl(tcp->sequenceNumber) + tcpDatalength  < ( connection->tcb.RCV.NXT + ntohs(tcp->window) );
             return ( cond1 || cond2 );
         }
         else // LEN = 0
         {
-            return ( ntohl(tcp->sequenceNumber) >= connection->tcb.RCV.NXT && ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT + ntohs(tcp->window) );
+            return ( ntohl(tcp->sequenceNumber) >= connection->tcb.RCV.NXT && 
+				     ntohl(tcp->sequenceNumber) < (connection->tcb.RCV.NXT + ntohs(tcp->window)) );
         }
+    }
+	else
+    {
+        if (tcpDatalength) 
+			return false;
+        else
+			return (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT);
     }
 }
 
@@ -710,7 +695,6 @@ static uint32_t getConnectionID()
     static uint16_t ID = 1;
     return ID++;
 }
-
 
 
 // User functions
