@@ -50,7 +50,8 @@ typedef struct icmpheader
 } __attribute__((packed)) icmpheader_t;
 
 
-void ICMPAnswerPing(network_adapter_t* adapter, icmpheader_t* data, uint32_t length, IP_t sourceIP);
+void ICMP_echoRequest (network_adapter_t* adapter, IP_t destIP);
+void ICMP_echoReply   (network_adapter_t* adapter, icmpheader_t* data, uint32_t length, IP_t sourceIP);
 
 
 #endif

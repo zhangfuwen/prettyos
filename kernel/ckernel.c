@@ -22,11 +22,13 @@
 #include "task.h"
 #include "elf.h"
 #include "keyboard.h"
+#include "network\network.h"
+#include "netprotocol/icmp.h"
 #include "netprotocol/udp.h"
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.195 - Rev: 1040";
+const char* const version = "0.0.2.196 - Rev: 1041";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -373,11 +375,29 @@ void main(multiboot_t* mb_struct)
                                 break;
                             }
                             case 'c': // show tcp connections
+							{
                                 textColor(HEADLINE);
                                 printf("\ntcp connections:");
                                 textColor(TEXT);
                                 tcp_showConnections();
                                 break;
+							}
+							case 'p':
+                            {
+								IP_t destIP; // www.henkessoft.de
+								destIP.IP[0] =    82;
+								destIP.IP[1] =   100;
+								destIP.IP[2] =   220;
+								destIP.IP[3] =    68;
+								
+								network_adapter_t* adapter = network_getFirstAdapter();
+
+                                if (adapter)
+                                {
+                                    ICMP_echoRequest(adapter, destIP);
+                                }
+                                break;
+                            }
                         }
                     }
                     break;
