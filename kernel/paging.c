@@ -98,10 +98,12 @@ uint32_t paging_install()
     return ram_available;
 }
 
-
+static const memoryMapEntry_t* Entries;
 
 static bool isMemoryMapAvailable(const memoryMapEntry_t* entries, uint64_t beg, uint64_t end)
 {
+	Entries = entries;
+
     // There must not be an "reserved" entry which reaches into the specified area
     for (const memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
     {
@@ -157,7 +159,7 @@ static uint32_t physMemInit()
     textColor(HEADLINE);
     printf("\nMemory map:");
     textColor(TEXT);
-    for (memoryMapEntry_t* entry=entries; entry < memoryMapEnd; entry++)
+    for (const memoryMapEntry_t* entry = Entries; entry < memoryMapEnd; entry++)
     {
         printf("\n  %Xh -> %Xh %u", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }

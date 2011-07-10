@@ -14,7 +14,7 @@
 
 extern Packet_t lastPacket; // network.c
 
-uint16_t STARTWINDOW =  4000;
+uint16_t STARTWINDOW =  6000;
 uint16_t INCWINDOW   =    50;
 uint16_t DECWINDOW   =   100;
 uint16_t MAXWINDOW   = 10000;
@@ -105,7 +105,7 @@ static void printFlag(uint8_t b, const char* s)
     printf("%s ", s);
 }
 
-static void tcp_debug(tcpPacket_t* tcp)
+static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
 {
     textColor(IMPORTANT);
     printf( "%u ==> %u   ", ntohs(tcp->sourcePort), ntohs(tcp->destPort) );
@@ -114,7 +114,10 @@ static void tcp_debug(tcpPacket_t* tcp)
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
     textColor(LIGHT_GRAY);
-    printf("  WND = %u  ", ntohs(tcp->window));
+    if (showWnd) 
+	{
+		printf("  WND = %u  ", ntohs(tcp->window));
+	}
     // printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
     textColor(TEXT);
 }
@@ -242,7 +245,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
     textColor(HEADLINE);
     printf("\n\nTCP rcvd: ");
-    tcp_debug(tcp);
+    tcp_debug(tcp, false);
 
     // search connection
     tcpConnection_t* connection;
@@ -399,9 +402,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.SEG.LEN =  0; // send no data
                 connection->tcb.SEG.WND =  connection->tcb.SND.WND;
                 connection->tcb.SEG.CTL =  ACK_FLAG;
-                tcp_send(connection, 0, 0);
-
-                connection->tcb.SND.WND = STARTWINDOW; // HACK TO FREE SND.WND: we deliver direct to user-app.
+                // connection->tcb.SND.WND = STARTWINDOW; // HACK TO FREE SND.WND: we deliver direct to user-app.
 
                 if (tcpDataLength)
                 {
@@ -416,6 +417,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                     // Issue event
                     uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+					connection->tcb.SND.WND += tcpDataLength; // delivered to application
 
                     uint32_t totalTCPdataSize = 0;
 
@@ -438,17 +440,21 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     if (retVal==0)
                     {
                         textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
-                        if (totalTCPdataSize <  STARTWINDOW)  {connection->tcb.SND.WND += INCWINDOW;}
-                        if (totalTCPdataSize >= STARTWINDOW)  {connection->tcb.SND.WND -= DECWINDOW;}
-                        if (totalTCPdataSize >= MAXWINDOW  )  {connection->tcb.SND.WND  =         0;}
+                        if (totalTCPdataSize <  STARTWINDOW && connection->tcb.SND.WND < MAXWINDOW)  
+						    {connection->tcb.SEG.WND = connection->tcb.SND.WND += INCWINDOW;}
+                        if (totalTCPdataSize >= STARTWINDOW)  
+						    {connection->tcb.SEG.WND = connection->tcb.SND.WND -= DECWINDOW;}
+                        if (totalTCPdataSize >= MAXWINDOW  )  
+						    {connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;}
                     }
                     else
                     {
                         textColor(ERROR); printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
-                        connection->tcb.SND.WND  = 0;
+                        connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;
                     }
                     textColor(TEXT);
                 }
+				tcp_send(connection, 0, 0);
             }
             else if (tcp->FIN && !tcp->ACK) // FIN
             {
@@ -633,7 +639,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
         connection->tcb.SND.NXT += length;
     }
 
-    tcp_debug(tcp);
+    tcp_debug(tcp, true);
 }
 
 uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData)

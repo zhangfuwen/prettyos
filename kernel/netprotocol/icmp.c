@@ -35,10 +35,12 @@ void icmp_Send_echoRequest (network_adapter_t* adapter, IP_t destIP)
 
 void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, IP_t sourceIP)
 {
-    if (rec->type == ICMP_ECHO_REPLY) 
+	textColor(HEADLINE);
+    printf("\n ICMP: ");
+	textColor(TEXT);
+	if (rec->type == ICMP_ECHO_REPLY) 
     {
-        textColor(HEADLINE);
-        printf("\nICMP_echoReply:");
+        printf("Echo Reply:");
 
         size_t icmp_data_length = length - sizeof(icmpheader_t);
         if (rec->code == 0)
@@ -55,85 +57,87 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
     }
 	else if(rec->type == ICMP_DESTINATION_UNREACHABLE) 
 	{
-		printf("\nDestination unreachable - ");
+		textColor(ERROR);
+		printf(" Destination unreachable - ");
 		switch (rec->code)
 		{
 			case 0:
-				printf("\ncode 0: Destination network unreachable");
+				printf("code 0: Destination network unreachable");
 				break;
 			case 1:
-				printf("\ncode 1: Destination host unreachable");
+				printf("code 1: Destination host unreachable");
 				break;
 			case 2:
-				printf("\ncode 2: Destination protocol unreachable");
+				printf("code 2: Destination protocol unreachable");
 				break;
 			case 3:
-				printf("\ncode 3: Destination port unreachable");
+				printf("code 3: Destination port unreachable");
 				break;
 			case 4:
-				printf("\ncode 4: Fragmentation required, and DF flag set");
+				printf("code 4: Fragmentation required, and DF flag set");
 				break;
 			case 5:
-				printf("\ncode 5: Source route failed");
+				printf("code 5: Source route failed");
 				break;
 			case 6:
-				printf("\ncode 6: Destination network unknown");
+				printf("code 6: Destination network unknown");
 				break;
 			case 7:
-				printf("\ncode 7: Destination host unknown");
+				printf("code 7: Destination host unknown");
 				break;
 			case 8:
-				printf("\ncode 8: Source host isolated");
+				printf("code 8: Source host isolated");
 				break;
 			case 9:
-				printf("\ncode 9: Network administratively prohibited");
+				printf("code 9: Network administratively prohibited");
 				break;
 			case 10:
-				printf("\ncode 10: Host administratively prohibited");
+				printf("code 10: Host administratively prohibited");
 				break;
 			case 11:
-				printf("\ncode 11: Network unreachable for TOS");
+				printf("code 11: Network unreachable for TOS");
 				break;
 			case 12:
-				printf("\ncode 12: Host unreachable for TOS");
+				printf("code 12: Host unreachable for TOS");
 				break;
 			case 13:
-				printf("\ncode 13: Communication administratively prohibited");
+				printf("code 13: Communication administratively prohibited");
 				break;
 		}
+		textColor(TEXT);
 	}
 	else if(rec->type == ICMP_SOURCE_QUENCH) 
 	{
-		printf("\nSource quench (congestion control)");		
+		printf(" Source quench (congestion control)");		
 	}
     else if(rec->type == ICMP_REDIRECT ) 
 	{
-		printf("\nRedirect - ");
+		printf(" Redirect - ");
 		switch (rec->code)
 		{
 			case 0:
-				printf("\ncode 0: Redirect Datagram for the Network");
+				printf("code 0: Redirect Datagram for the Network");
 				break;
 			case 1:
-				printf("\ncode 1: Redirect Datagram for the Host");
+				printf("code 1: Redirect Datagram for the Host");
 				break;
 		    case 2:
-				printf("\ncode 2: Redirect Datagram for the TOS & network");
+				printf("code 2: Redirect Datagram for the TOS & network");
 				break;
 			case 3:
-				printf("\ncode 3: Redirect Datagram for the TOS & host");
+				printf("code 3: Redirect Datagram for the TOS & host");
 				break;
 		}		
 	}
 	else if(rec->type == 6) 
 	{
-		printf("\nAlternate Host Address");		
+		printf(" Alternate Host Address");		
 	}
 	// 7 Reserved
 	else if (rec->type == ICMP_ECHO_REQUEST) 
     {
         textColor(HEADLINE);
-        printf("\nICMP_echoRequest:");
+        printf(" ICMP_echoRequest:");
 
         size_t icmp_data_length = length - sizeof(icmpheader_t);
         uint8_t pkt[sizeof(icmpheader_t) + icmp_data_length];
@@ -157,15 +161,16 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
     }
 	else if(rec->type == ICMP_ROUTER_ADVERTISEMENT) 
 	{
-		printf("\n	Router Advertisement");		
+		printf(" Router Advertisement");		
 	}
 	else if(rec->type == ICMP_ROUTER_SOLICITATION) 
 	{
-		printf("\nRouter discovery/selection/solicitation");		
+		printf(" Router discovery/selection/solicitation");		
 	}
 	else if(rec->type == ICMP_TIME_EXEEDED) 
 	{
-		printf("\nTime Exceeded - ");
+		textColor(ERROR);
+		printf(" Time Exceeded - ");
 		switch (rec->code)
 		{
 			case 0:
@@ -175,10 +180,12 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 				printf(" code 1: Fragment reassembly time exceeded");
 				break;            
 		}
+		textColor(TEXT);
 	}
     else if(rec->type == ICMP_PARAMETER_PROBLEM) 
 	{
-		printf("\nParameter Problem: Bad IP header - ");
+		textColor(ERROR);
+		printf(" Parameter Problem: Bad IP header - ");
 		switch (rec->code)
 		{
 			case 0:
@@ -188,80 +195,80 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 				printf(" code 1: Missing a required option");
 				break;            
 		}
+		textColor(TEXT);
 	}
     else if(rec->type == ICMP_TIMESTAMP) 
 	{
-		printf("Timestamp");
+		printf(" Timestamp");
 	}
     else if(rec->type == ICMP_TIMESTAMP_REPLY) 
 	{
-		printf("Timestamp reply");
+		printf(" Timestamp reply");
 	}
     else if(rec->type == ICMP_INFORMATION_REQUEST) 
 	{
-		printf("Information Request");
+		printf(" Information Request");
 	}
     else if(rec->type == ICMP_INFORMATION_REPLY ) 
 	{
-		printf("Information Reply");
+		printf(" Information Reply");
 	}
     else if(rec->type == ICMP_ADDRESS_MASK_REQUEST) 
 	{
-		printf("Address Mask Request");
+		printf(" Address Mask Request");
 	}
     else if(rec->type == ICMP_ADDRESS_MASK_REPLY) 
 	{
-		printf("Address Mask Reply");
+		printf(" Address Mask Reply");
 	}  
-	// 19 Reserved for security
-    // 20 through 29 Reserved for robustness experiment
+	// 19 Reserved for security, 20 through 29 Reserved for robustness experiment
     else if(rec->type == ICMP_TRACEROUTE) 
 	{
-		printf("Information Request");
+		printf(" Information Request");
 	}
     else if(rec->type == ICMP_DATAGRAM_CONVERSION_ERROR) 
 	{
-		printf("Datagram Conversion Error");
+		printf(" Datagram Conversion Error");
 	}
     else if(rec->type == ICMP_MOBILE_HOST_REDIRECT) 
 	{
-		printf("Mobile Host Redirect");
+		printf(" Mobile Host Redirect");
 	}
     else if(rec->type == ICMP_WHERE_ARE_YOU) 
 	{
-		printf("Where-Are-You (originally meant for IPv6)");
+		printf(" Where-Are-You (originally meant for IPv6)");
 	}
     else if(rec->type == ICMP_I_AM_HERE) 
 	{
-		printf("Here-I-Am (originally meant for IPv6)");
+		printf(" Here-I-Am (originally meant for IPv6)");
 	}
     else if(rec->type == ICMP_MOBILE_REGISTRATION_REQUEST) 
 	{
-		printf("Mobile Registration Request");
+		printf(" Mobile Registration Request");
 	}
     else if(rec->type == ICMP_MOBILE_REGISTRATION_REPLY) 
 	{
-		printf("Mobile Registration Reply");
+		printf(" Mobile Registration Reply");
 	}
     else if(rec->type == ICMP_DOMAIN_NAME_REQUEST) 
 	{
-		printf("Domain Name Request");
+		printf(" Domain Name Request");
 	}
     else if(rec->type == ICMP_DOMAIN_NAME_REPLY) 
 	{
-		printf("Domain Name Reply");
+		printf(" Domain Name Reply");
 	}
     else if(rec->type == ICMP_SKIP) 
 	{
-		printf("SKIP Algorithm Discovery Protocol, Simple Key-Management for Internet Protocol");
+		printf(" SKIP Algorithm Discovery Protocol, Simple Key-Management for Internet Protocol");
 	}
     else if(rec->type == ICMP_PHOTURIS) 
 	{
-		printf("Photuris, Security failures");
+		printf(" Photuris, Security failures");
 	}
     else if(rec->type == ICMP_SEAMOBY) 
 	{
-		printf("ICMP for experimental mobility protocols such as Seamoby [RFC4065]");
+		printf(" ICMP for experimental mobility protocols such as Seamoby [RFC4065]");
 	}
 	// 42 through 255 Reserved
 }

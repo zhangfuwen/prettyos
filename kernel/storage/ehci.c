@@ -615,6 +615,8 @@ void checkPortLineStatus(uint8_t j)
 *                                                                                                      *
 *******************************************************************************************************/
 
+extern uintptr_t SetupQTDpage0; // ehciQHqTD.c
+
 void setupUSBDevice(uint8_t portNumber)
 {
     uint8_t devAddr = usbTransferEnumerate(portNumber);

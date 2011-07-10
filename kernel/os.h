@@ -46,7 +46,7 @@ static inline void kdebug(uint8_t color, const char* args, ...)
     va_end(ap);
     if(color != 0x00)
     {
-        textColor(TEXT);
+        textColor(0xFF);
     }
     #endif
 }
