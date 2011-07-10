@@ -47,7 +47,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     switch(packet->protocol)
     {
         case 1:  // icmp
-            ICMP_echoReply(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length), packet->sourceIP);
+            icmp_Receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length), packet->sourceIP);
             break;
         case 6:  // tcp
             tcp_receive(adapter, (void*)packet+ipHeaderLengthBytes, packet->sourceIP, ntohs(packet->length)-ipHeaderLengthBytes);
