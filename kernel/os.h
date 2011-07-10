@@ -5,6 +5,7 @@
 
 // These switches change the behavior of PrettyOS, useful for analyzing tasks:
 
+/// #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen. 
 /// #define _DIAGNOSIS_            // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _MALLOC_FREE_          // shows information about malloc/free and heap expansion
 /// #define _MEMLEAK_FIND_         // Provides a counter of all (successful) malloc and free calls showing memory leaks
@@ -19,7 +20,6 @@
 /// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
 /// #define _NETWORK_DATA_         // Enables additional information about networking packets 
 /// #define _NETWORK_DIAGNOSIS_    // Enables additional information about the network adapters
-/// #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen. 
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 
 #define KEYMAP GER    // German keyboard

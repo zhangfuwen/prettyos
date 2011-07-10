@@ -35,7 +35,7 @@ void icmp_Send_echoRequest (network_adapter_t* adapter, IP_t destIP)
 
 void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, IP_t sourceIP)
 {
-    if (rec->type == 0) // Echo Reply
+    if (rec->type == ICMP_ECHO_REPLY) 
     {
         textColor(HEADLINE);
         printf("\nICMP_echoReply:");
@@ -53,8 +53,9 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
         }
         textColor(TEXT);
     }
-	else if(rec->type == 3) // Destination Unreachable
+	else if(rec->type == ICMP_DESTINATION_UNREACHABLE) 
 	{
+		printf("\nDestination unreachable - ");
 		switch (rec->code)
 		{
 			case 0:
@@ -101,12 +102,13 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 				break;
 		}
 	}
-	else if(rec->type == 4) // Source Quench  
+	else if(rec->type == ICMP_SOURCE_QUENCH) 
 	{
 		printf("\nSource quench (congestion control)");		
 	}
-    else if(rec->type == 5) // Redirect Message
+    else if(rec->type == ICMP_REDIRECT ) 
 	{
+		printf("\nRedirect - ");
 		switch (rec->code)
 		{
 			case 0:
@@ -128,7 +130,7 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 		printf("\nAlternate Host Address");		
 	}
 	// 7 Reserved
-	else if (rec->type == 8) // Echo Request
+	else if (rec->type == ICMP_ECHO_REQUEST) 
     {
         textColor(HEADLINE);
         printf("\nICMP_echoRequest:");
@@ -153,17 +155,17 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 
         ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP,1);
     }
-	else if(rec->type == 9) 
+	else if(rec->type == ICMP_ROUTER_ADVERTISEMENT) 
 	{
 		printf("\n	Router Advertisement");		
 	}
-	else if(rec->type == 10) 
+	else if(rec->type == ICMP_ROUTER_SOLICITATION) 
 	{
 		printf("\nRouter discovery/selection/solicitation");		
 	}
-	else if(rec->type == 11) // Time Exceeded 
+	else if(rec->type == ICMP_TIME_EXEEDED) 
 	{
-		printf("\nTime Exceeded ");
+		printf("\nTime Exceeded - ");
 		switch (rec->code)
 		{
 			case 0:
@@ -174,9 +176,9 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 				break;            
 		}
 	}
-    else if(rec->type == 12) 
+    else if(rec->type == ICMP_PARAMETER_PROBLEM) 
 	{
-		printf("\nParameter Problem: Bad IP header");
+		printf("\nParameter Problem: Bad IP header - ");
 		switch (rec->code)
 		{
 			case 0:
@@ -187,77 +189,77 @@ void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 				break;            
 		}
 	}
-    else if(rec->type == 13) 
+    else if(rec->type == ICMP_TIMESTAMP) 
 	{
 		printf("Timestamp");
 	}
-    else if(rec->type == 14) 
+    else if(rec->type == ICMP_TIMESTAMP_REPLY) 
 	{
 		printf("Timestamp reply");
 	}
-    else if(rec->type == 15) 
+    else if(rec->type == ICMP_INFORMATION_REQUEST) 
 	{
 		printf("Information Request");
 	}
-    else if(rec->type == 16) 
+    else if(rec->type == ICMP_INFORMATION_REPLY ) 
 	{
 		printf("Information Reply");
 	}
-    else if(rec->type == 17) 
+    else if(rec->type == ICMP_ADDRESS_MASK_REQUEST) 
 	{
 		printf("Address Mask Request");
 	}
-    else if(rec->type == 18) 
+    else if(rec->type == ICMP_ADDRESS_MASK_REPLY) 
 	{
 		printf("Address Mask Reply");
 	}  
 	// 19 Reserved for security
     // 20 through 29 Reserved for robustness experiment
-    else if(rec->type == 30) 
+    else if(rec->type == ICMP_TRACEROUTE) 
 	{
 		printf("Information Request");
 	}
-    else if(rec->type == 31) 
+    else if(rec->type == ICMP_DATAGRAM_CONVERSION_ERROR) 
 	{
 		printf("Datagram Conversion Error");
 	}
-    else if(rec->type == 32) 
+    else if(rec->type == ICMP_MOBILE_HOST_REDIRECT) 
 	{
 		printf("Mobile Host Redirect");
 	}
-    else if(rec->type == 33) 
+    else if(rec->type == ICMP_WHERE_ARE_YOU) 
 	{
 		printf("Where-Are-You (originally meant for IPv6)");
 	}
-    else if(rec->type == 34) 
+    else if(rec->type == ICMP_I_AM_HERE) 
 	{
 		printf("Here-I-Am (originally meant for IPv6)");
 	}
-    else if(rec->type == 35) 
+    else if(rec->type == ICMP_MOBILE_REGISTRATION_REQUEST) 
 	{
 		printf("Mobile Registration Request");
 	}
-    else if(rec->type == 36) 
+    else if(rec->type == ICMP_MOBILE_REGISTRATION_REPLY) 
 	{
 		printf("Mobile Registration Reply");
 	}
-    else if(rec->type == 37) 
+    else if(rec->type == ICMP_DOMAIN_NAME_REQUEST) 
 	{
 		printf("Domain Name Request");
 	}
-    else if(rec->type == 38) 
+    else if(rec->type == ICMP_DOMAIN_NAME_REPLY) 
 	{
 		printf("Domain Name Reply");
 	}
-    else if(rec->type == 39) 
+    else if(rec->type == ICMP_SKIP) 
 	{
 		printf("SKIP Algorithm Discovery Protocol, Simple Key-Management for Internet Protocol");
 	}
-    else if(rec->type == 40) 
+    else if(rec->type == ICMP_PHOTURIS) 
 	{
 		printf("Photuris, Security failures");
 	}
-    else if(rec->type == 41) 
+    else if(rec->type == ICMP_SEAMOBY) 
 	{
 		printf("ICMP for experimental mobility protocols such as Seamoby [RFC4065]");
 	}

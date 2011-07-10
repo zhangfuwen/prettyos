@@ -28,7 +28,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.198 - Rev: 1043";
+const char* const version = "0.0.2.199 - Rev: 1044";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -386,12 +386,16 @@ void main(multiboot_t* mb_struct)
                             {
 								network_adapter_t* adapter = network_getFirstAdapter();
 								IP_t destIP; // qemu subnet
-								destIP.IP[0] =     10;
-								destIP.IP[1] =      0;
-								destIP.IP[2] =      2;
-								destIP.IP[3] =     15;							
-								if (adapter)
-									icmp_Send_echoRequest(adapter, destIP);
+								
+								for (uint8_t i=0; i<255; i++)
+								{
+									destIP.IP[0] =      10;
+									destIP.IP[1] =       0;
+									destIP.IP[2] =       0;
+									destIP.IP[3] =       i;							
+									if (adapter)
+										icmp_Send_echoRequest(adapter, destIP);
+								}
 								break;
                             }
                         }
