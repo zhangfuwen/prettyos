@@ -33,7 +33,8 @@ int main()
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
-                printf("%s", data);
+                clearScreen(0x00); // black
+				printf("%s", data);
                 break;
             }
             case EVENT_KEY_DOWN:
