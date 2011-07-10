@@ -10,70 +10,70 @@
 #include "kheap.h"
 #include "network/netutils.h"
 
-void ICMP_echoRequest (network_adapter_t* adapter, IP_t destIP)
+void ICMP_echoRequest(network_adapter_t* adapter, IP_t destIP)
 {
-	static uint16_t count = 0;
-	count++;
+    static uint16_t count = 0;
+    count++;
 
-	char* data = "PrettyOS ist das Betriebssystem der Projektgruppe \"OS-Development\" im deutschsprachigen C++-Forum";
-	icmpheader_t* icmp = malloc(sizeof(icmpheader_t) + strlen(data), 0, "ICMP packet");
-	memcpy(icmp+1, (void*)data, strlen(data));
-	icmp->type         = 8; // echo request
+    char* data = "PrettyOS ist das Betriebssystem der Projektgruppe \"OS-Development\" im deutschsprachigen C++-Forum";
+    icmpheader_t* icmp = malloc(sizeof(icmpheader_t) + strlen(data), 0, "ICMP packet");
+    memcpy(icmp+1, (void*)data, strlen(data));
+    icmp->type         = 8; // echo request
     icmp->code         = 0;
-    icmp->id           = htons(0xAFFE); 
+    icmp->id           = htons(0xAFFE);
     icmp->seqnumber    = htons(count);
-	icmp->checksum     = 0;
-	icmp->checksum     = htons( internetChecksum(icmp, sizeof(icmpheader_t) + strlen(data), 0) );
-	
-	ipv4_send(adapter, icmp, sizeof(icmpheader_t) + strlen(data), destIP, 1);
+    icmp->checksum     = 0;
+    icmp->checksum     = htons( internetChecksum(icmp, sizeof(icmpheader_t) + strlen(data), 0) );
+
+    ipv4_send(adapter, icmp, sizeof(icmpheader_t) + strlen(data), destIP, 1);
     free(icmp);
 }
 
 void ICMP_echoReply(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, IP_t sourceIP)
 {
     if (rec->type == 8) // echoRequest
-	{
-		textColor(HEADLINE);
-		printf("\nICMP_echoRequest:");
+    {
+        textColor(HEADLINE);
+        printf("\nICMP_echoRequest:");
 
-		size_t icmp_data_length = length - sizeof(icmpheader_t);
-		uint8_t pkt[sizeof(icmpheader_t) + icmp_data_length];
+        size_t icmp_data_length = length - sizeof(icmpheader_t);
+        uint8_t pkt[sizeof(icmpheader_t) + icmp_data_length];
 
-		icmpheader_t* icmp = (icmpheader_t*)pkt;
+        icmpheader_t* icmp = (icmpheader_t*)pkt;
 
-		icmp->type         = ICMP_ECHO_REPLY;
-		icmp->code         = 0;
-		icmp->id           = rec->id;
-		icmp->seqnumber    = rec->seqnumber;
-		icmp->checksum     = 0;
+        icmp->type         = ICMP_ECHO_REPLY;
+        icmp->code         = 0;
+        icmp->id           = rec->id;
+        icmp->seqnumber    = rec->seqnumber;
+        icmp->checksum     = 0;
 
-		memcpy(&pkt[sizeof(*icmp)], (void*)(rec+1), icmp_data_length);
+        memcpy(&pkt[sizeof(*icmp)], (void*)(rec+1), icmp_data_length);
 
-		icmp->checksum = htons( internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0) );
+        icmp->checksum = htons( internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0) );
 
-		textColor(TEXT);
-		printf(" type: %u  code: %u  checksum %u\n", icmp->type, icmp->code, icmp->checksum);
+        textColor(TEXT);
+        printf(" type: %u  code: %u  checksum %u\n", icmp->type, icmp->code, icmp->checksum);
 
-		ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP,1);
-	}
-	else if (rec->type == 0) // echoReply
-	{
-		textColor(HEADLINE);
-		printf("\nICMP_echoReply:");
+        ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP,1);
+    }
+    else if (rec->type == 0) // echoReply
+    {
+        textColor(HEADLINE);
+        printf("\nICMP_echoReply:");
 
-		size_t icmp_data_length = length - sizeof(icmpheader_t);
-		if (rec->code == 0)
-		{	
-			textColor(TEXT);
-			printf("  ID: %x seq: %u\n", ntohs(rec->id), ntohs(rec->seqnumber));
-			char str[icmp_data_length+2];
-			strncpy(str, (char*)(rec+1), icmp_data_length);
-			str[icmp_data_length+1] = 0;
-			textColor(DATA);
-			printf("%s", str);
-		}		
-		textColor(TEXT);		
-	}
+        size_t icmp_data_length = length - sizeof(icmpheader_t);
+        if (rec->code == 0)
+        {
+            textColor(TEXT);
+            printf("  ID: %x seq: %u\n", ntohs(rec->id), ntohs(rec->seqnumber));
+            char str[icmp_data_length+2];
+            strncpy(str, (char*)(rec+1), icmp_data_length);
+            str[icmp_data_length+1] = 0;
+            textColor(DATA);
+            printf("%s", str);
+        }
+        textColor(TEXT);
+    }
 }
 
 

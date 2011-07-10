@@ -26,8 +26,17 @@ long labs(long n)
 
 
 
-div_t div(int numerator, int denominator); /// TODO
-ldiv_t ldiv(long numerator, long denominator); /// TODO
+div_t div(int numerator, int denominator)
+{
+    div_t d = {.quot = numerator/denominator, .rem = numerator%denominator};
+    return(d);
+}
+
+ldiv_t ldiv(long numerator, long denominator)
+{
+    ldiv_t d = {.quot = numerator/denominator, .rem = numerator%denominator};
+    return(d);
+}
 
 
 

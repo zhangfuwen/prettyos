@@ -47,6 +47,8 @@ void deviceManager_install(/*partition_t* system*/)
 {
     memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
     memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
+    for(uint16_t i = 0; i < NUMREADCACHE; i++) // Invalidate all read caches
+        readcaches[i].valid = false;
     //systemPartition = system;
 }
 
@@ -351,7 +353,7 @@ FS_ERROR analyzeDisk(disk_t* disk)
 #ifdef _READCACHE_DIAGNOSIS_
 static void logReadCache()
 {
-    for (uint8_t i=0; i<NUMREADCACHE; i++)
+    for (uint16_t i = 0; i < NUMREADCACHE; i++)
     {
         if (readcaches[i].valid)
         {
@@ -375,16 +377,15 @@ static void fillReadCache(uint32_t sector, disk_t* disk, uint8_t* buffer)
     readcaches[currReadCache].sector = sector;
     readcaches[currReadCache].disk   = disk;
     readcaches[currReadCache].valid  = true;
+    memcpy(readcaches[currReadCache].buffer, buffer, 512); // fill cache
 
-    for (uint8_t i=0; i<NUMREADCACHE; i++)
+    for (uint16_t i = 0; i < NUMREADCACHE; i++)
     {
-        if ((readcaches[i].sector == sector) && (readcaches[i].disk == disk) && (readcaches[i].valid == true) && (i!=currReadCache))
+        if (readcaches[i].sector == sector && readcaches[i].disk == disk && readcaches[i].valid && i!=currReadCache)
         {
             readcaches[i].valid = false;
         }
     }
-
-    memcpy(readcaches[currReadCache].buffer, buffer, 512); // fill cache
 
     currReadCache++;
     currReadCache %= NUMREADCACHE;
@@ -400,9 +401,9 @@ FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
     textColor(YELLOW); printf("\n>>>>> sectorWrite: %u <<<<<", sector); textColor(TEXT);
   #endif
 
-    for (uint8_t i=0; i<NUMREADCACHE; i++)
+    for (uint16_t i = 0; i < NUMREADCACHE; i++)
     {
-        if ((readcaches[i].disk == disk) && (readcaches[i].sector == sector))
+        if (readcaches[i].disk == disk && readcaches[i].sector == sector)
         {
             readcaches[i].valid = false;
         }
@@ -424,29 +425,21 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(TEXT);
   #endif
 
-    for (uint8_t i=0; i<NUMREADCACHE; i++)
+    if(readCacheFlag)
     {
-        if ((readcaches[i].sector == sector) && (readcaches[i].disk == disk) && (readcaches[i].valid == true) && readCacheFlag)
+        for (uint16_t i = 0; i < NUMREADCACHE; i++)
         {
-            /*static uint8_t* destOld = 0;
-            static uint8_t* sourceOld = 0;
-
-            if ((buffer == destOld) && (readcaches[i].buffer == sourceOld))
+            if (readcaches[i].valid && readcaches[i].sector == sector && readcaches[i].disk == disk)
             {
-                // do nothing
-            }
-            else
-            {*/
                 #ifdef _DEVMGR_DIAGNOSIS_
                 printf("\nsector: %u <--- read from RAM Cache", readcaches[i].sector);
                 #endif
-                memcpy(buffer,readcaches[i].buffer,512); // use read cache
 
-                /*destOld = buffer;
-                 sourceOld = readcaches[i].buffer;
-            }*/
-            disk->accessRemaining--;
-            return(CE_GOOD);
+                memcpy(buffer, readcaches[i].buffer, 512); // use read cache
+
+                disk->accessRemaining--;
+                return(CE_GOOD);
+            }
         }
     }
 

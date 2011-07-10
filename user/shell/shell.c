@@ -46,7 +46,8 @@ char* formatPath(char* opath)
         length += 3;
         insertPartition = true;
     }
-    if(strcmp(stoupper(strchr(opath, '.')+1), "ELF") != 0) /// TODO: Do not use stoupper and strrchr instead of strchr
+    char* pointpos = strrchr(opath, '.');
+    if(pointpos == 0 || strcmp(stoupper(pointpos+1), "ELF") != 0) /// TODO: Do not use stoupper
     {
         length += 4;
         insertELF = true;
@@ -175,7 +176,6 @@ int main()
                             textColor(0x03);
                             printf("\n$> %s <--\n", entry);
                             textColor(0x0F);
-                            drawEntry(entry);
                             goto EVALUATION;
                             break;
                         case KEY_INS:

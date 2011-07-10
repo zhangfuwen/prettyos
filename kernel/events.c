@@ -30,11 +30,11 @@ void event_deleteQueue(event_queue_t* queue)
 uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length)
 {
     int8_t retVal;
-	if(!destination) // Event handling disabled
-	{
-		retVal = 1;
+    if(!destination) // Event handling disabled
+    {
+        retVal = 1;
         return (retVal);
-	}
+    }
 
     if(destination->num == MAX_EVENTS)
     {
@@ -47,13 +47,13 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
         list_Append(destination->list, ev);
         destination->num++;
         mutex_unlock(destination->mutex);
-		
-		retVal = 2;
+
+        retVal = 2;
     }
     else if(destination->num > MAX_EVENTS)
     {
         // Nothing to do. OVERFLOW event has already been added.
-		retVal = 3;
+        retVal = 3;
     }
     else
     {
@@ -67,11 +67,11 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
         list_Append(destination->list, ev);
         destination->num++;
         mutex_unlock(destination->mutex);
-		
-		retVal = 0;
+
+        retVal = 0;
     }
     scheduler_unblockEvent(BL_EVENT, (void*)type);
-	return retVal;
+    return retVal;
 }
 
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
@@ -129,9 +129,9 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
 {
-	element_t* elem = list_GetElement(eventQueue->list, i);
-	if(elem == 0) return(0);
-	return(elem->data);
+    element_t* elem = list_GetElement(eventQueue->list, i);
+    if(elem == 0) return(0);
+    return(elem->data);
 }
 
 void event_enable(bool b)

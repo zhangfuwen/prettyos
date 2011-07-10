@@ -28,12 +28,13 @@ int memcmp(const void* ptr1, const void* ptr2, size_t num)
     return (*s1 - *s2);
 }
 
-void* memcpy(void* dest, const void* source, size_t count)
+void* memcpy(void* dest, const void* source, size_t bytes)
 {
-    size_t dwords = count/4;
-    count %= 4;
-    __asm__ volatile("cld\n" "rep movsb" : : "S" (source+dwords*4), "D" (dest+dwords*4), "c" (count));
-    __asm__ volatile(        "rep movsl" : : "S" (source), "D" (dest), "c" (dwords));
+    void* temp = dest;
+    size_t dwords = bytes/4;
+    bytes %= 4;
+    __asm__ volatile("cld\n" "rep movsl" : : "S" (source), "D" (temp), "c" (dwords));
+    __asm__ volatile(        "rep movsb" : : "c" (bytes));
     return(dest);
 }
 
@@ -83,11 +84,12 @@ void* memmove(void* dest, const void* source, size_t num)
 
 void* memset(void* dest, char value, size_t bytes)
 {
+    void* temp = dest;
     size_t dwords = bytes/4; // Number of dwords (4 Byte blocks) to be written
     bytes %= 4;              // Remaining bytes
     uint32_t dval = (value<<24)|(value<<16)|(value<<8)|value; // Create dword from byte value
-    __asm__ volatile("cld\n" "rep stosb" : : "D"(dest+dwords*4), "al"(value), "c" (bytes));
-    __asm__ volatile(        "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
+    __asm__ volatile("cld\n" "rep stosl" : : "D"(temp), "eax"(dval), "c" (dwords));
+    __asm__ volatile(        "rep stosb" : : "al"(value), "c" (bytes));
     return dest;
 }
 
@@ -172,11 +174,23 @@ char* strchr(char* str, char character)
     }
 }
 
+char* strrchr(char* str, char character)
+{
+    char* strend = str+strlen(str);
+    for (; strend != str; strend--)
+    {
+        if (*strend == character)
+        {
+            return strend;
+        }
+    }
+    return 0;
+}
+
 int strcoll(const char* str1, const char* str2); /// TODO
 size_t strcspn(const char* str1, const char* str2); /// TODO
 char* strerror(int errornum); /// TODO
 char* strpbrk(const char* str1, const char* str2); /// TODO
-char* strrchr(const char* str, char character); /// TODO
 size_t strspn(const char* str1, const char* str2); /// TODO
 char* strstr(const char* str1, const char* str2); /// TODO
 char* strtok(char* str, const char* delimiters); /// TODO

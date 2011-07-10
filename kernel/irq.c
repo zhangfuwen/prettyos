@@ -12,7 +12,7 @@
 #include "keyboard.h"
 
 
-typedef struct 
+typedef struct
 {
     size_t calls;
     void (*handler)(registers_t*);

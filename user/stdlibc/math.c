@@ -75,7 +75,11 @@ double floor(double x)
 
     return result;
 }
-double fmod(double numerator, double denominator); /// TODO
+
+double fmod(double numerator, double denominator)
+{
+    return(numerator - (double)((int)(numerator/denominator)) * denominator);
+}
 
 double cos(double x)
 {
@@ -163,7 +167,10 @@ double frexp(double x, int* exponent)
     po2x = (int) pow2x((double)*exponent);
     return (x / po2x) *sign;
 }
-double ldexp(double x, int exponent); /// TODO
+double ldexp(double x, int exponent)
+{
+    return(x*pow(2, exponent));
+}
 
 double log(double x)
 {
@@ -182,7 +189,11 @@ double log10(double x)
     return (yMulLog(x,1.0) / yMulLog(10.0,1.0));
 }
 
-double modf(double x, double* intpart); /// TODO
+double modf(double x, double* intpart)
+{
+    *intpart = (double)((int)x);
+    return(x-*intpart);
+}
 
 double pow(double base, double exponent)
 {

@@ -107,24 +107,24 @@ static void printFlag(uint8_t b, const char* s)
 
 static void tcp_debug(tcpPacket_t* tcp)
 {
-    textColor(IMPORTANT); 
-	printf( "%u ==> %u   ", ntohs(tcp->sourcePort), ntohs(tcp->destPort) );
-	textColor(TEXT); 
+    textColor(IMPORTANT);
+    printf( "%u ==> %u   ", ntohs(tcp->sourcePort), ntohs(tcp->destPort) );
+    textColor(TEXT);
     // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
     textColor(LIGHT_GRAY);
-    printf("  WND = %u  ", ntohs(tcp->window));	
+    printf("  WND = %u  ", ntohs(tcp->window));
     // printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
-	textColor(TEXT);
+    textColor(TEXT);
 }
 
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
 {
-    // textColor(TEXT);    	printf("  state: "); 
-	textColor(IMPORTANT);   putch(' '); puts(tcpStates[connection->TCP_CurrState]);    textColor(TEXT);
+    // textColor(TEXT);        printf("  state: ");
+    textColor(IMPORTANT);   putch(' '); puts(tcpStates[connection->TCP_CurrState]);    textColor(TEXT);
   #ifdef _NETWORK_DATA_
-	printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
+    printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
     printf("SND.UNA = %u, SND.NXT = %u, SND.WND = %u", connection->tcb.SND.UNA, connection->tcb.SND.NXT, connection->tcb.SND.WND);
   #endif
 }
@@ -349,8 +349,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             break;
 
-        case ESTABLISHED: // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** 
-            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK   
+        case ESTABLISHED: // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER *****
+            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 char* tcpData = (void*)tcp + tcp->dataOffset*4;
                 uint32_t tcpDataLength = length - (tcp->dataOffset << 2);
@@ -361,7 +361,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 if (!IsPacketAcceptable(tcp, connection, tcpDataLength))
                 {
                     textColor(ERROR); printf("not acceptable!");  textColor(TEXT);
-					break;                                  // No ACK !!!
+                    break;                                  // No ACK !!!
                 }
 
                 if (connection->passive)
@@ -416,38 +416,38 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                     // Issue event
                     uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
-					
-					uint32_t totalTCPdataSize = 0;
-					
-					mutex_lock(connection->owner->eventQueue->mutex);
-					for(size_t i = 0; ; i++)
+
+                    uint32_t totalTCPdataSize = 0;
+
+                    mutex_lock(connection->owner->eventQueue->mutex);
+                    for(size_t i = 0; ; i++)
                     {
                         event_t* ev = event_peek(connection->owner->eventQueue, i);
                         if(ev == 0) break;
-						if(ev->type == EVENT_TCP_RECEIVED)
+                        if(ev->type == EVENT_TCP_RECEIVED)
                         {
-							totalTCPdataSize += ev->length - sizeof(tcpReceivedEventHeader_t);
-						}
-					}
-					mutex_unlock(connection->owner->eventQueue->mutex);
-					textColor(MAGENTA);
-					printf("\ntotalTCPdataSize: %u ", totalTCPdataSize); 
-					textColor(TEXT);
-					
-					// setting sliding window
-					if (retVal==0) 
-					{
-						textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
-						if (totalTCPdataSize <  STARTWINDOW)  {connection->tcb.SND.WND += INCWINDOW;}
-						if (totalTCPdataSize >= STARTWINDOW)  {connection->tcb.SND.WND -= DECWINDOW;}
-						if (totalTCPdataSize >= MAXWINDOW  )  {connection->tcb.SND.WND  =         0;}												
-					}					
-					else
-					{
-						textColor(ERROR); printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
-						connection->tcb.SND.WND  = 0; 						
-					}
-					textColor(TEXT);
+                            totalTCPdataSize += ev->length - sizeof(tcpReceivedEventHeader_t);
+                        }
+                    }
+                    mutex_unlock(connection->owner->eventQueue->mutex);
+                    textColor(MAGENTA);
+                    printf("\ntotalTCPdataSize: %u ", totalTCPdataSize);
+                    textColor(TEXT);
+
+                    // setting sliding window
+                    if (retVal==0)
+                    {
+                        textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
+                        if (totalTCPdataSize <  STARTWINDOW)  {connection->tcb.SND.WND += INCWINDOW;}
+                        if (totalTCPdataSize >= STARTWINDOW)  {connection->tcb.SND.WND -= DECWINDOW;}
+                        if (totalTCPdataSize >= MAXWINDOW  )  {connection->tcb.SND.WND  =         0;}
+                    }
+                    else
+                    {
+                        textColor(ERROR); printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
+                        connection->tcb.SND.WND  = 0;
+                    }
+                    textColor(TEXT);
                 }
             }
             else if (tcp->FIN && !tcp->ACK) // FIN
@@ -658,29 +658,29 @@ uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData)
 
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf  page 41
 static bool IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
-{	
+{
     if (tcp->window != 0)
     {
         if (tcpDatalength)
         {
             bool cond1 = ( ntohl(tcp->sequenceNumber) >=  connection->tcb.RCV.NXT  &&
-				           ntohl(tcp->sequenceNumber) <   connection->tcb.RCV.NXT + ntohs(tcp->window) );
+                           ntohl(tcp->sequenceNumber) <   connection->tcb.RCV.NXT + ntohs(tcp->window) );
             bool cond2 = ( ntohl(tcp->sequenceNumber) + tcpDatalength >=   connection->tcb.RCV.NXT ) &&
-				           ntohl(tcp->sequenceNumber) + tcpDatalength  < ( connection->tcb.RCV.NXT + ntohs(tcp->window) );
+                           ntohl(tcp->sequenceNumber) + tcpDatalength  < ( connection->tcb.RCV.NXT + ntohs(tcp->window) );
             return ( cond1 || cond2 );
         }
         else // LEN = 0
         {
-            return ( ntohl(tcp->sequenceNumber) >= connection->tcb.RCV.NXT && 
-				     ntohl(tcp->sequenceNumber) < (connection->tcb.RCV.NXT + ntohs(tcp->window)) );
+            return ( ntohl(tcp->sequenceNumber) >= connection->tcb.RCV.NXT &&
+                     ntohl(tcp->sequenceNumber) < (connection->tcb.RCV.NXT + ntohs(tcp->window)) );
         }
     }
-	else
+    else
     {
-        if (tcpDatalength) 
-			return false;
+        if (tcpDatalength)
+            return false;
         else
-			return (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT);
+            return (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT);
     }
 }
 

@@ -1,9 +1,15 @@
 #include "time.h"
 
+
 char* asctime(const struct tm* timeptr); /// TODO
 clock_t clock(); /// TODO
 char* ctime(const time_t* time); /// TODO
-double difftime(time_t t1, time_t t2); /// TODO
+
+double difftime(time_t t1, time_t t2)
+{
+    return((double)t2 - (double)t1);
+}
+
 struct tm* gmtime(const time_t* timer); /// TODO
 struct tm* localtime(const time_t* timer); /// TODO
 time_t mktime(struct tm* timeptr); /// TODO

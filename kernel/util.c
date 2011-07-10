@@ -96,10 +96,11 @@ void memshow(const void* start, size_t count)
 
 void* memcpy(void* dest, const void* src, size_t bytes)
 {
+    void* temp = dest;
     size_t dwords = bytes/4;
     bytes %= 4;
-    __asm__ volatile("cld\n" "rep movsb" : : "S" (src+dwords*4), "D" (dest+dwords*4), "c" (bytes));  // Do not change order, first rest bytes, afterwards dwords. Reason: Unknown.
-    __asm__ volatile(        "rep movsl" : : "S" (src), "D" (dest), "c" (dwords));
+    __asm__ volatile("cld\n" "rep movsl" : : "S" (src), "D" (temp), "c" (dwords));
+    __asm__ volatile(        "rep movsb" : : "c" (bytes));
     return(dest);
 }
 
@@ -174,21 +175,23 @@ void* memmove(const void* source, void* destination, size_t size)
 
 void* memset(void* dest, int8_t val, size_t bytes)
 {
+    void* temp = dest;
     size_t dwords = bytes/4; // Number of dwords (4 Byte blocks) to be written
     bytes %= 4;              // Remaining bytes
     uint32_t dval = (val<<24)|(val<<16)|(val<<8)|val; // Create dword from byte value
-    __asm__ volatile("cld\n" "rep stosb" : : "D"(dest+dwords*4), "al"(val), "c" (bytes));
-    __asm__ volatile(        "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
+    __asm__ volatile("cld\n" "rep stosl" : : "D"(temp), "eax"(dval), "c" (dwords));
+    __asm__ volatile(        "rep stosb" : : "al"(val), "c" (bytes));
     return dest;
 }
 
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words)
 {
+    void* temp = dest;
     size_t dwords = words/2; // Number of dwords (4 Byte blocks) to be written
     words %= 2;              // Remaining words
     uint32_t dval = (val<<16)|val; // Create dword from byte value
-    __asm__ volatile("cld\n" "rep stosw" : : "D"(dest+dwords*2), "ax"(val), "c" (words));
-    __asm__ volatile(        "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
+    __asm__ volatile("cld\n" "rep stosl" : : "D"(temp), "eax"(dval), "c" (dwords));
+    __asm__ volatile(        "rep stosw" : : "ax"(val), "c" (words));
     return dest;
 }
 

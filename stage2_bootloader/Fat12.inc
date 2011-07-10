@@ -58,60 +58,55 @@ Convert_LBA_to_CHS:
 ; Read sectors
 ; CX      Number of sectors to read
 ; AX      Starting sector
-; FS:EBX  Buffer to read to
+; FS:EDI  Buffer to read to
 ;******************************************************************************
 
 ReadSectors:
-    push    edi
+    push    dx
+    push    bx
     push    es
-    push    word 0x0F00                         ; enough space for up to 4096 byte sectors
-    pop     es
+    mov     dx, 0x0F00                          ; enough space for up to 4096 byte sectors
+    mov     es, dx
 .MAIN:
-    mov     bp, 0x0005                          ; five retries for error
-    push    ax
-    push    cx
-    push    ebx
-.SECTORLOOP:
-    call    Convert_LBA_to_CHS                  ; convert starting sector to CHS
-    mov     ah, 0x02                            ; BIOS read sector
-    mov     al, 0x01                            ; read one sector
-    xor     bx, bx
-    mov     ch, BYTE [Cylinder]                 ; track
-    mov     cl, BYTE [Sector]                   ; sector
-    mov     dh, BYTE [Head]                     ; head
-    mov     dl, BYTE [DriveNum]                 ; drive
-    int     0x13                                ; invoke BIOS
-    jnc     .SUCCESS                            ; test for read error
-    xor     ax, ax                              ; BIOS reset disk
-    int     0x13                                ; invoke BIOS
-    dec     bp                                  ; decrement error counter
-    jnz     .SECTORLOOP                         ; attempt to read again
-    pop     ebx
-    pop     cx
-    pop     ax
-    int     0x18
-.SUCCESS:
-    pop     ebx                                 ; copy to destination buffer
-    mov     cx, WORD [BytesPerSec]
-    shr     cx, 2
-    xor     si, si
-    .COPY_TO_DEST:
-        mov     eax, [es:si]
-        mov     [fs:ebx], eax
-        add     si, 4
-        add     ebx, 4
-        loop    .COPY_TO_DEST
-
-    pop     cx
-    pop     ax
-    inc     ax                                  ; queue next sector
-    loop    .MAIN                               ; read next sector
+        mov     bp, 0x0005                      ; five retries for error
+        push    ax
+        push    cx
+        call    Convert_LBA_to_CHS              ; convert sector to CHS
+    .SECTORLOOP:
+            mov     ah, 0x02                    ; BIOS read sector
+            mov     al, 0x01                    ; read one sector
+            xor     bx, bx
+            mov     ch, BYTE [Cylinder]         ; track
+            mov     cl, BYTE [Sector]           ; sector
+            mov     dh, BYTE [Head]             ; head
+            mov     dl, BYTE [DriveNum]         ; drive
+            int     0x13                        ; invoke BIOS
+            jnc     .SUCCESS                    ; test for read error. If not, leave loop
+            xor     ax, ax                      ; ERROR case: BIOS reset disk
+            int     0x13                        ; invoke BIOS
+            dec     bp                          ; decrement error counter
+            jnz     .SECTORLOOP                 ; attempt to read again
+        int     0x18                            ; Indicate BOOT ERROR.
+    .SUCCESS:
+        mov     cx, WORD [BytesPerSec]
+        shr     cx, 2
+        xor     si, si
+        .COPY_TO_DEST:                          ; copy to destination buffer
+            es lodsd                            ; Load dword from es:esi and increment esi
+            mov     [fs:edi], eax
+            add     edi, 4
+            loop    .COPY_TO_DEST
+        pop     cx
+        pop     ax
+        inc     ax                              ; queue next sector
+        loop    .MAIN                           ; read next sector
     pop     es
-    pop     edi
+    pop     bx
+    pop     dx
     ret
 
 ;******************************************************************************
-;    Defines
+; Defines
 ;******************************************************************************
 
 %define ROOT_OFFSET  0x02e00
@@ -121,8 +116,8 @@ ReadSectors:
 %define ROOT_SEG     0x002e0
 
 ;******************************************************************************
-; LoadRoot ()
-; Transfers Root Directory Table into memory at 0x7e00
+; LoadRoot
+; Transfers Root Directory Table into memory at ROOT_DEST
 ;******************************************************************************
 
 LoadRoot:
@@ -143,15 +138,15 @@ LoadRoot:
     mov     WORD [datasector], ax               ; base of root directory
     add     WORD [datasector], cx
 
-    ; read root directory into 0x7e00
-    mov     ebx, ROOT_DEST
+    ; read root directory into ROOT_DEST
+    mov     edi, ROOT_DEST
     call    ReadSectors                         ; read directory table
     popa
     ret
 
 ;******************************************************************************
-; LoadFAT ()
-; Loads FAT table into memory at 0x7c00
+; LoadFAT
+; Loads FAT table into memory at FAT_DEST
 ; ES:DI Root Directory Table
 ;******************************************************************************
 
@@ -167,14 +162,14 @@ LoadFAT:
     ; compute location of FAT and store it into AX
     mov ax, WORD [ReservedSec]
 
-    ; read FAT into memory (Overwrite bootloader at 0x7c00)
-    mov ebx, FAT_DEST
+    ; read FAT into memory
+    mov edi, FAT_DEST
     call ReadSectors
     popa
     ret
 
 ;******************************************************************************
-; FindFile ()
+; FindFile
 ; Search for filename in root table
 ; DS:SI  File name
 ; AX     Return value: File index number in directory table (error: -1)
@@ -182,15 +177,6 @@ LoadFAT:
 
 FindFile:
     push cx                     ; store registers
-    push dx
-    push bx
-;=====================================================HOTFIX============
-; ES has to be set to 0x0000 due to "rep cmps" -> [ES:DI] !!!
-; and because DI is not initialized usefully
-    xor  bx,bx
-    mov  es,bx
-;=====================================================HOTFIX============
-    mov  bx, si                 ; copy filename for later
 
     ; browse root directory for binary image
     mov cx, WORD [RootEntries]  ; load loop counter
@@ -199,92 +185,67 @@ FindFile:
 
 .LOOP2:
     push cx
-    mov cx, 11                  ; eleven character name. Image name is in SI
-    mov si, bx                  ; image name is in BX
+    mov cx, 11                  ; eleven character name
+    push si                     ; image name is in SI
     push di
     rep cmpsb                   ; test for entry match
     pop di
+    pop si
     je .Found
     pop cx
     add di, 32                  ; queue next directory entry
     loop .LOOP2
 
 .NotFound:
-    pop bx                      ; restore registers and return
-    pop dx
-    pop cx
+    pop cx                      ; restore registers and return
     mov ax, -1                  ; set error code
     ret
 
 .Found:
     pop ax                      ; return value into AX contains entry of file
-    pop bx                      ; restore registers and return
-    pop dx
-    pop cx
+    pop cx                      ; restore registers and return
     ret
 
 ;******************************************************************************
-; LoadFile ()
+; LoadFile
 ; ES:SI   File to load
 ; FS:EDI  Buffer to load file to
 ; AX      Return value: success 0, error -1
 ;******************************************************************************
 
-
 LoadFile:
-	xor  ecx, ecx               ; size of file in sectors
-    push ecx
     push edi
 
 .FIND_FILE:
-
-    push bx
-;=====================================================HOTFIX============
-;    push bp
-    push es
-;=====================================================HOTFIX============
-
-    call FindFile               ; find our file. ES:SI contains our filename
+    call FindFile                   ; find our file. ES:SI contains our filename
     cmp ax, -1
     jne .LOAD_IMAGE_PRE
 
-;=====================================================HOTFIX============
-;    pop bp
-    pop es
-;=====================================================HOTFIX============
-    pop bx
     pop edi
-    pop ecx
-    mov ax, -1
+    mov ax, -1                      ; Error
     ret
 
 .LOAD_IMAGE_PRE:
     sub edi, ROOT_OFFSET
-    sub eax, ROOT_OFFSET
 
     ; get starting cluster
-    push word ROOT_SEG              ; root segment loc
-    pop es
-    mov dx, WORD [es:di + 0x001A]   ; DI points to file entry in root directory table. Refrence the table...
+    mov dx, word ROOT_SEG           ; root segment loc
+    mov es, dx
+    mov dx, WORD [es:di + 0x001A]   ; DI points to file entry in root directory table. Reference the table...
     mov WORD [cluster], dx          ; file's first cluster
-    pop bx                          ; get location to write to so we dont screw up the stack
-    pop es
     call LoadFAT
 
 .LOAD_IMAGE:
     ; load the cluster
     mov ax, WORD [cluster]          ; cluster to read
     call Convert_Cluster_to_LBA
-    xor cx, cx
+    xor ch, ch
     mov cl, BYTE [SecPerClus]
 
-    pop ebx
+    pop edi
     call ReadSectors
 
-    pop ecx
-    inc ecx
-    push ecx
-    push ebx
+    push edi
     mov ax, FAT_SEG                 ; start reading from fat
     mov es, ax
 
@@ -313,8 +274,7 @@ LoadFile:
 
 .SUCCESS:
     pop edi
-    pop ecx
-    xor ax, ax
+    xor ax, ax                      ; No error.
     ret
 
 %endif

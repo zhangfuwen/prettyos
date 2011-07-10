@@ -7,7 +7,7 @@ jmp entry_point
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Memory Management:
 ; org                   500
-; data/extra segments     0
+; data/extra segment      0
 ; stack               9FC00
 ; RM kernel            3000
 ; PM kernel          100000
@@ -24,31 +24,28 @@ jmp entry_point
 
 %define IMAGE_PMODE_BASE 0x100000 ; final kernel location in Protected Mode
 
-ImageName     db "KERNEL  BIN"
-ImageSize     dd 0
 
 ;*******************************************************
 ;    Data Section
 ;*******************************************************
-msgGTD            db 0x0D, 0x0A, "GTD installed ...", 0
+ImageName         db "KERNEL  BIN"
+msgBootLoaderName db "PrettyBL", 0
+msgGTD            db 0x0D, 0x0A, 0x0D, 0x0A, "GTD installed ...", 0
 msgUnrealMode     db 0x0D, 0x0A, "Unreal Mode entered ...", 0
 msgLoadKernel     db 0x0D, 0x0A, "Now loading Kernel ...", 0
 msgFloppyMotorOff db 0x0D, 0x0A, "Floppy Disk Motor switched off ...", 0
 msgSwitchToPM     db 0x0D, 0x0A, "Now switching to Protected Mode (PM) ...", 0
 msgFailure        db 0x0D, 0x0A, "Missing KERNEL.BIN (Fatal Error)", 0
 
-msgBootLoaderName db "PrettyBL", 0
 
 [BITS 16]
 entry_point:
-    cli
     xor ax, ax
     mov ds, ax
     mov es, ax
-    mov ax,0x9000       ; stack
-    mov ss,ax
-    mov sp,0xFC00       ; stacksegment:stackpointer (linear): 9FC00h (below BIOS area)
-    sti
+    mov ax, 0x9000       ; stack
+    mov ss, ax
+    mov sp, 0xFC00       ; stacksegment:stackpointer (linear): 9FC00h (below BIOS area)
 
 A20:
     call EnableA20
@@ -63,8 +60,6 @@ Get_Memory_Map:
     mov ds, ax
     mov di, 0x1000
     call get_memory_by_int15_e820
-    xor ax, ax
-    mov es, ax          ; important to null es!
 
 Install_GDT:
     call InstallGDT
@@ -85,9 +80,8 @@ Load_Root:
     mov edi, IMAGE_PMODE_BASE
     mov esi, ImageName
 
-    call LoadFile                      ; FAT12.inc
+    call LoadFile       ; c.f. FAT12.inc
 
-    mov DWORD [ImageSize], ecx
     cmp ax, 0
     je EnterProtectedMode
     mov si, msgFailure
@@ -123,17 +117,17 @@ ProtectedMode:
     mov esp, 0x9000
 
 PrepareMultiboot:
-    mov ebx, 0x1000-0x58    ; 0x58 == sizeof(multiboot_t)
+    mov ebx, 0x1000-0x58               ; 0x58 == sizeof(multiboot_t)
     mov [ebx + 0x00], DWORD 0b1001000001
     mov [ebx + 0x04], DWORD 640
     call convert_mmap
-    mov [ebx + 0x2C], eax   ; Store size of mmap
+    mov [ebx + 0x2C], eax              ; Store size of mmap
     mov eax, [0x1200]
     shr eax, 10
     mov [ebx+0x08], eax
     mov [ebx + 0x30], WORD 0x1100
     mov [ebx + 0x40], DWORD msgBootLoaderName
-    mov eax, 0x2BADB002     ; Magic number
+    mov eax, 0x2BADB002                ; Magic number
 
 ;*******************************************************
 ;    Execute Kernel
@@ -149,11 +143,11 @@ EXECUTE:
 [BITS 16]
 print_string:
     mov ah, 0x0E
-    print_string.loop:
-    lodsb                       ; fetch a byte from SI
-    or al, al
-    jz .done                    ; if zero end loop
-    int 0x10                    ; put character to sreen
-    jmp print_string.loop
+    .loop:
+        lodsb                       ; fetch a byte from SI
+        or al, al
+        jz .done                    ; if zero end loop
+        int 0x10                    ; put character to sreen
+        jmp .loop
     .done:
     ret

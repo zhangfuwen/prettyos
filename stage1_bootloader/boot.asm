@@ -16,12 +16,12 @@ jmp word entry_point                   ; jump to bootloader entry point
 %include "Fat12_BPB.inc"
 
 ;******************************************************************************
-;	bootloader entry point
+;    bootloader entry point
 ;******************************************************************************
 entry_point:
-    xor     ax, ax                     ; set registers
-    mov     ds, ax
-    mov     es, ax
+    xor     bx, bx                     ; set segment registers
+    mov     ds, bx
+    mov     es, bx
 
     mov     ax, 0x7C00                 ; set the stack
     mov     ss, ax                     ; this instruction disables interrupts
@@ -31,18 +31,16 @@ entry_point:
     xor     sp, sp                     ; interrupts are disabled here
 
     mov [bootdevice], dl               ; store boot device
+
+    mov ax, 0x1112
+    int 0x10                           ; set 80x50 text mode and 8x8 font
+
     mov si, msgLoading
     call print_string
-
-    ; set 80x50 text mode and 8x8 font
-    mov ax, 0x1112
-    xor bl, bl
-    int 0x10
 
 Load_Root_Directory_Table:
     ; compute size of root directory and store in "cx"
     xor cx, cx
-    xor dx, dx
     mov ax, 0x20                              ; 32 byte directory entry
     mul WORD [RootEntries]                    ; total size of directory
     div WORD [BytesPerSec]                    ; sectors used by directory
@@ -60,40 +58,41 @@ Load_Root_Directory_Table:
     call ReadSectors
 
 ;******************************************************************************
-;	Find stage2 bootloader
+;    Find stage2 bootloader
 ;******************************************************************************
     ; browse root directory for binary image
     mov cx, WORD [RootEntries]                ; load loop counter
     mov di, 0x7E00                            ; locate first root entry
 .LOOP:
-    push cx
-    mov cx, 0xB                               ; name has 11 characters
-    mov si, ImageName                         ; look for this image name
-    push di
-    rep cmpsb                                 ; test for entry match
-    pop di
-    je Load_FAT
-    pop cx
-    add di, 0x20                              ; queue next directory entry
-    loop .LOOP
+        push cx
+        push di
+        mov cx, 11                            ; name has 11 characters
+        mov si, ImageName                     ; look for this image name
+        rep cmpsb                             ; test for entry match
+        pop di
+        pop cx
+        je Load_FAT
+        add di, 0x20                          ; queue next directory entry
+        loop .LOOP
     jmp FAILURE
 
 ;******************************************************************************
-;	Load File Allocation Table (FAT)
+;    Load File Allocation Table (FAT)
 ;******************************************************************************
 Load_FAT:
     ; save starting cluster of boot image
     mov dx, WORD [di + 0x001A]
     mov WORD [cluster], dx                   ; file's first cluster
 
-    ; compute size of FAT and store in "cx"
-    xor ax, ax
+    ; compute location of FAT and store in "cx"
+    mov cx, WORD [ReservedSec]               ; adjust for bootsector
+
+    ; compute size of FAT and store in "ax" (because we need ax for the mul instruction)
+    xor ah, ah
     mov al, BYTE [NumFATs]                   ; number of FATs
     mul WORD [FATSize]                       ; sectors used by FATs
-    mov cx, ax
 
-    ; compute location of FAT and store in "ax"
-    mov ax, WORD [ReservedSec]               ; adjust for bootsector
+    xchg cx, ax                              ; Swap cx (FAT location) and ax (Size of FAT)
 
     ; read FAT into memory (7E00h)
     mov bx, 0x7E00                           ; copy FAT above bootcode
@@ -103,19 +102,16 @@ Load_FAT:
     xor ax, ax
     mov bx, 0x0500                     ; destination for image
     mov es, ax                         ; destination for image
-    push bx
 
 ;******************************************************************************
-;	Load stage2 bootloader
+;    Load stage2 bootloader
 ;******************************************************************************
 Load_Image:
     mov ax, WORD [cluster]             ; cluster to read
-    pop bx                             ; buffer to read into
     call Convert_Cluster_to_LBA        ; convert cluster to LBA
     xor cx, cx
     mov cl, BYTE [SecPerClus]          ; sectors to read
     call ReadSectors
-    push bx
 
     ; compute next cluster
     mov ax, WORD [cluster]             ; identify current cluster
@@ -123,9 +119,9 @@ Load_Image:
     mov dx, ax                         ; copy current cluster
     shr dx, 1                          ; divide by two
     add cx, dx                         ; sum for (3/2)
-    mov bx, 0x7E00                     ; location of FAT in memory
-    add bx, cx                         ; index into FAT
-    mov dx, WORD [bx]                  ; read two bytes from FAT
+    mov di, 0x7E00                     ; location of FAT in memory
+    add di, cx                         ; index into FAT
+    mov dx, WORD [di]                  ; read two bytes from FAT
     test ax, 1
     jnz .ODD_CLUSTER
 
@@ -142,12 +138,8 @@ Load_Image:
     jb Load_Image
 
 DONE:
-    mov si, msgCRLF
-    call print_string
     mov dl, [bootdevice]
-    push WORD 0x0000
-    push WORD 0x0500
-    retf
+    jmp 0x0000:0x0500
 
 FAILURE:
     mov si, msgFailure
@@ -158,8 +150,8 @@ FAILURE:
 
 
 ;******************************************************************************
-;	Convert CHS to LBA
-;	LBA = (cluster - 2) * sectors per cluster
+;    Convert CHS to LBA
+;    LBA = (cluster - 2) * sectors per cluster
 ;******************************************************************************
 Convert_Cluster_to_LBA:
     sub ax, 2                          ; zero base cluster number
@@ -170,12 +162,12 @@ Convert_Cluster_to_LBA:
     ret
 
 ;******************************************************************************
-;	Convert LBA to CHS
-;	AX    LBA Address to convert
+;    Convert LBA to CHS
+;    AX    LBA Address to convert
 ;
-;	sector = (logical sector / sectors per track) + 1
-;	head   = (logical sector / sectors per track) MOD number of heads
-;	track  = logical sector / (sectors per track * number of heads)
+;    sector = (logical sector / sectors per track) + 1
+;    head   = (logical sector / sectors per track) MOD number of heads
+;    track  = logical sector / (sectors per track * number of heads)
 ;******************************************************************************
 Convert_LBA_to_CHS:
     xor dx, dx                         ; prepare dx:ax for operation
@@ -189,49 +181,46 @@ Convert_LBA_to_CHS:
     ret
 
 ;******************************************************************************
-;	Reads sectors
-;	CX     Number of sectors to read
-;	AX     Starting sector
-;	ES:BX  Buffer to read to
+;    Reads sectors
+;    CX     Number of sectors to read
+;    AX     Starting sector
+;    ES:BX  Buffer to read to
 ;******************************************************************************
 ReadSectors:
 .NEXTSECTOR:
-    mov di, 5                          ; five retries for error
-    push ax
-    push bx
-    push cx
-.LOOP:
-    call Convert_LBA_to_CHS            ; convert starting sector from LBA to CHS
-    mov  ah, 2                         ; INT 0x13, AH=2 --> read in CHS mode
-    mov  al, 1                         ; read one sector
-    mov  ch, BYTE [Cylinder]           ; track/cylinder
-    mov  cl, BYTE [Sector]             ; sector
-    mov  dh, BYTE [Head]               ; head
-    mov  dl, BYTE [DriveNum]           ; drive
-    int  0x13
-    jnc  .SUCCESS                      ; check read error
-    xor  ah, ah                        ; INT 0x13, AH=0 --> reset floppy/hard disk
-    int  0x13
-    dec  di                            ; decrement error counter
-    jnz  .LOOP                         ; read again
-    pop  cx
-    pop  bx
-    pop  ax
-    int  0x18
-.SUCCESS:
-    mov  si, msgProgress
-    call print_string
-    pop  cx
-    pop  bx
-    pop  ax
-    add  bx, WORD [BytesPerSec]        ; queue next buffer
-    inc  ax                            ; queue next sector
-    loop .NEXTSECTOR                   ; read next sector
+        mov di, 5                      ; five retries for error
+        push ax
+        push bx
+        push cx
+        call Convert_LBA_to_CHS        ; convert starting sector from LBA to CHS
+    .LOOP:
+            mov  ah, 2                 ; INT 0x13, AH=2 --> read in CHS mode
+            mov  al, 1                 ; read one sector
+            mov  ch, BYTE [Cylinder]   ; track/cylinder
+            mov  cl, BYTE [Sector]     ; sector
+            mov  dh, BYTE [Head]       ; head
+            mov  dl, BYTE [DriveNum]   ; drive
+            int  0x13
+            jnc  .SUCCESS              ; check read error
+            xor  ah, ah                ; INT 0x13, AH=0 --> reset disk
+            int  0x13
+            dec  di                    ; decrement error counter
+            jnz  .LOOP                 ; read again
+        int  0x18
+    .SUCCESS:
+        mov  si, msgProgress
+        call print_string
+        pop  cx
+        pop  bx
+        pop  ax
+        add  bx, WORD [BytesPerSec]    ; queue next buffer
+        inc  ax                        ; queue next sector
+        loop .NEXTSECTOR               ; read next sector
     ret
 
 ;******************************************************************************
-;	Print String
-;	DS:SI   null-terminated string
+;    Print String
+;    DS:SI  null-terminated string
 ;******************************************************************************
 print_string:
     mov ah, 0x0E      ; BIOS function 0x0E: teletype
@@ -245,7 +234,7 @@ print_string:
     ret
 
 ;******************************************************************************
-;	Parameters
+;    Parameters
 ;******************************************************************************
 Sector         db 0
 Head           db 0
@@ -254,7 +243,6 @@ bootdevice     db 0
 datasector     dw 0
 cluster        dw 0
 ImageName      db "BOOT2   BIN"
-msgCRLF        db 0x0D, 0x0A, 0
 msgProgress    db "*", 0
 msgLoading     db "Loading Second Stage Bootloader", 0x0D, 0x0A, 0
 msgFailure     db 0x0D, 0x0A, "BOOT2.BIN MISSING", 0x0D, 0x0A, 0
