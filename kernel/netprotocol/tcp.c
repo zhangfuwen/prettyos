@@ -455,6 +455,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     textColor(TEXT);
                 }
 				tcp_send(connection, 0, 0);
+
+				/// TEST
+				tcp_showOutBuffers(connection,true);
+				/// TEST
             }
             else if (tcp->FIN && !tcp->ACK) // FIN
             {
@@ -673,10 +677,12 @@ uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
         printf("\n seq = %u\tack = %u\tlen = %u\n", outPacket->segment.SEQ, outPacket->segment.ACK, outPacket->segment.LEN);
         if (showData)
         {
+			textColor(DATA);
             for (uint32_t i=0; i<outPacket->segment.LEN; i++)
             {
                 putch( ((char*)(outPacket->data))[i] );
             }
+			textColor(WHITE);
         }
     }
     return count;
@@ -756,7 +762,7 @@ void tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
     tcpConnection_t* connection = findConnectionID(ID);
 
     tcpOut_t* Out = malloc(sizeof(tcpOut_t), 0, "tcp_OutBuffer");
-    Out->data    = malloc(sizeof(length),   0, "tcp_OutBuf_data");
+    Out->data     = malloc(length, 0, "tcp_OutBuf_data");
     memcpy(Out->data, data, length);
 
     Out->segment.SEQ = connection->tcb.SND.NXT;

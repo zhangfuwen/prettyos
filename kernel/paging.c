@@ -30,6 +30,11 @@ static uint32_t physMemInit();
 
 void paging_switch(pageDirectory_t* pd)
 {
+  #ifdef _PAGING_DIAGNOSIS_
+	textColor(MAGENTA);
+	printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X",pd, pd->physAddr);
+	textColor(TEXT);
+  #endif
     __asm__ volatile("mov %0, %%cr3" : : "r" (pd->physAddr));
 }
 
@@ -43,7 +48,7 @@ uint32_t paging_install()
     kernelPageDirectory->physAddr = (uint32_t)kernelPageDirectory;
 
     kdebug(3, "\nkernelPageDirectory (virt.): %Xh ", kernelPageDirectory);
-    kdebug(3, "kernelPageDirectory (phys.): %Xh\n", kernelPageDirectory->physAddr);
+    kdebug(3, "kernelPageDirectory (phys.): %Xh\n", kernelPageDirectory->physAddr); 
 
     // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;

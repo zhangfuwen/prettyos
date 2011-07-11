@@ -101,7 +101,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
             {
                 printf("\nThe requested IP is in LAN, but was not found.");
                 entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
-				printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
+				// printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
 				EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
 			}
             entry = arp_findEntry(&adapter->arpTable, IP);
@@ -131,9 +131,8 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
             entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
         }
 
-        printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
-
-
+        // printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
+		
         EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
   #endif
     }

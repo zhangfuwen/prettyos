@@ -13,7 +13,7 @@ void NetBIOS_Datagramm_Receive(network_adapter_t* adapter, NetBIOSDatagramHeader
 {
     printf("\nmessage type: %yh", NetBIOSdgm->messageType);
     printf(" flags: %yh",         NetBIOSdgm->flags);
-    printf(" ID: %u",             ntohs(NetBIOSdgm->ID));
+    printf(" ID: %x",             ntohs(NetBIOSdgm->ID));
     printf(" src IP: %I",         NetBIOSdgm->sourceIP);
     printf("\nsrc Port: %u",      ntohs(NetBIOSdgm->sourcePort));
     printf(" Length: %u",         ntohs(NetBIOSdgm->Length));
