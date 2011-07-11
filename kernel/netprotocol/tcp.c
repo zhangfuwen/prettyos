@@ -677,7 +677,11 @@ uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
         printf("\nID = %u\t seq = %u\tack = %u\tlen = %u\n", outPacket->connectionID, outPacket->segment.SEQ, outPacket->segment.ACK, outPacket->segment.LEN);
         if (showData)
         {
-			textColor(DATA);
+			if (outPacket->segment.SEQ <= connection->tcb.SND.UNA) 
+				textColor(GREEN);
+			else 
+				textColor(DATA);
+
             for (uint32_t i=0; i<outPacket->segment.LEN; i++)
             {
                 putch( ((char*)(outPacket->data))[i] );
