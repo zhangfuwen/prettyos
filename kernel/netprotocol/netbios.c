@@ -11,13 +11,28 @@
 
 void NetBIOS_Datagramm_Receive(network_adapter_t* adapter, NetBIOSDatagramHeader_t* NetBIOSdgm)
 {
-    printf("\nmessage type: %yh", NetBIOSdgm->messageType);
-    printf(" flags: %yh",         NetBIOSdgm->flags);
-    printf(" ID: %x",             ntohs(NetBIOSdgm->ID));
-    printf(" src IP: %I",         NetBIOSdgm->sourceIP);
-    printf("\nsrc Port: %u",      ntohs(NetBIOSdgm->sourcePort));
-    printf(" Length: %u",         ntohs(NetBIOSdgm->Length));
-    printf(" Packet Offset: %u",  ntohs(NetBIOSdgm->packetOffset));
+    textColor(HEADLINE);
+	printf("\nmessage type: ");
+	textColor(TEXT);
+
+	switch (NetBIOSdgm->messageType)
+	{
+		case 0x10: printf("Direct unique datagram");           break;
+		case 0x11: printf("Direct group datagram");            break;
+		case 0x12: printf("Broadcast datagram");               break;
+		case 0x13: printf("Datagram error");                   break;
+		case 0x14: printf("Datagram query request");           break;
+		case 0x15: printf("Datagram positive query response"); break;
+		case 0x16: printf("Datagram negative query response"); break;
+	}
+	textColor(GRAY);
+    printf("\nflags: %yh", NetBIOSdgm->flags);
+    printf(" ID: %xh",     ntohs(NetBIOSdgm->ID));
+    printf(" IP: %I",      NetBIOSdgm->sourceIP);
+    printf(" Port: %u",    ntohs(NetBIOSdgm->sourcePort));
+    printf(" Len: %u",     ntohs(NetBIOSdgm->Length));
+    printf(" Offset: %u",  ntohs(NetBIOSdgm->packetOffset));
+	textColor(TEXT);
 }
 
 

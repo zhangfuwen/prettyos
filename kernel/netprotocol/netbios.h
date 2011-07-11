@@ -3,7 +3,6 @@
 
 #include "network/network.h"
 
-
 typedef struct
 {
     uint8_t   messageType;

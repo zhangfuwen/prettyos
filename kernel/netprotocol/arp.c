@@ -210,7 +210,7 @@ bool arp_sendRequest(network_adapter_t* adapter, IP_t searchedIP)
 
 bool arp_waitForReply(struct network_adapter* adapter, IP_t searchedIP)
 {
-    uint32_t timewait = 1000; // ms
+    uint32_t timewait = 2000; // ms
     while  (arp_findEntry(&adapter->arpTable, searchedIP) == 0 && scheduler_blockCurrentTask(BL_NETPACKET, (void*)BL_NET_ARP, timewait));
     return (arp_findEntry(&adapter->arpTable, searchedIP) != 0);
 }

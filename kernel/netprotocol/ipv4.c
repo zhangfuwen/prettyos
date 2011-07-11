@@ -89,7 +89,6 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
 
     if(IP.iIP == broadcast_IP.iIP || IP.iIP == broadcast_IP2.iIP || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
     {
-		printf("\nIP: %I adapter->IP: %I adapter->Subnet: %I", IP, adapter->IP, adapter->Subnet);
 		printf("\nIP is in LAN");
   
         arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, IP);
