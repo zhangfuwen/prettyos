@@ -102,8 +102,8 @@ typedef struct
 
 typedef struct
 {
-    size_t    length;
-    void*     data;
+    void*        data;
+    tcpSegment_t segment;
 } tcpOut_t;
 
 
@@ -117,7 +117,8 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length);
 void tcp_showConnections();
 tcpConnection_t* findConnectionID(uint32_t ID);
 tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, bool established);
-uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData);
+uint32_t tcp_showInBuffers (tcpConnection_t* connection, bool showData);
+uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData);
 
 // User functions
 uint32_t tcp_uconnect(IP_t IP, uint16_t port);

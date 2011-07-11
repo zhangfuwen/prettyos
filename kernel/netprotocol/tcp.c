@@ -114,7 +114,7 @@ static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
     textColor(LIGHT_GRAY);
-    if (showWnd) 
+    if (showWnd)
 	{
 		printf("  WND = %u  ", ntohs(tcp->window));
 	}
@@ -440,11 +440,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     if (retVal==0)
                     {
                         textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
-                        if (totalTCPdataSize <  STARTWINDOW && connection->tcb.SND.WND < MAXWINDOW)  
+                        if (totalTCPdataSize <  STARTWINDOW && connection->tcb.SND.WND < MAXWINDOW)
 						    {connection->tcb.SEG.WND = connection->tcb.SND.WND += INCWINDOW;}
-                        if (totalTCPdataSize >= STARTWINDOW)  
+                        if (totalTCPdataSize >= STARTWINDOW)
 						    {connection->tcb.SEG.WND = connection->tcb.SND.WND -= DECWINDOW;}
-                        if (totalTCPdataSize >= MAXWINDOW  )  
+                        if (totalTCPdataSize >= MAXWINDOW  )
 						    {connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;}
                     }
                     else
@@ -662,6 +662,27 @@ uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData)
     return count;
 }
 
+uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
+{
+    printf("\n\n");
+    uint32_t count = 0;
+    for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
+    {
+        count++;
+        tcpOut_t* outPacket = e->data;
+        printf("\n seq = %u\tack = %u\tlen = %u\n", outPacket->segment.SEQ, outPacket->segment.ACK, outPacket->segment.LEN);
+        if (showData)
+        {
+            for (uint32_t i=0; i<outPacket->segment.LEN; i++)
+            {
+                putch( ((char*)(outPacket->data))[i] );
+            }
+        }
+    }
+    return count;
+}
+
+
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf  page 41
 static bool IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
 {
@@ -733,6 +754,19 @@ uint32_t tcp_uconnect(IP_t IP, uint16_t port)
 void tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state ESTABLISHED
 {
     tcpConnection_t* connection = findConnectionID(ID);
+
+    tcpOut_t* Out = malloc(sizeof(tcpOut_t), 0, "tcp_OutBuffer");
+    Out->data    = malloc(sizeof(length),   0, "tcp_OutBuf_data");
+    memcpy(Out->data, data, length);
+
+    Out->segment.SEQ = connection->tcb.SND.NXT;
+    Out->segment.ACK = connection->tcb.SEG.ACK;
+    Out->segment.LEN = length;
+    Out->segment.WND = connection->tcb.SEG.WND;
+    Out->segment.CTL = connection->tcb.SEG.CTL;
+
+    list_Append(connection->outBuffer, Out); // data to be sent ==> OutBuffer // CHECK TCP PROCESS
+
     if (connection && connection->TCP_CurrState == ESTABLISHED)
     {
         connection->tcb.SEG.CTL = ACK_FLAG;

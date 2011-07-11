@@ -28,7 +28,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.200 - Rev: 1046";
+const char* const version = "0.0.2.201 - Rev: 1047";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -391,7 +391,7 @@ void main(multiboot_t* mb_struct)
 								{
 									destIP.IP[0] =      10;
 									destIP.IP[1] =       0;
-									destIP.IP[2] =       0;
+									destIP.IP[2] =       2;
 									destIP.IP[3] =       i;							
 									if (adapter)
 										icmp_Send_echoRequest(adapter, destIP);

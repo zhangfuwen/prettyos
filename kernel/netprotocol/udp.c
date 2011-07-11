@@ -11,19 +11,23 @@
 #include "kheap.h"
 #include "util.h"
 #include "ipv4.h"
+#include "netbios.h"
 
 
 void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
     textColor(HEADLINE);
-    printf("\nUDP:");
+    printf("\nUDP: ");
     textColor(TEXT);
     UDPDebug(packet);
 
     switch (ntohs(packet->destPort))
     {
-        case 68:
+        case  68:
             DHCP_AnalyzeServerMessage(adapter, (dhcp_t*)(packet+1));
+            break;
+        case 138:
+            NetBIOS_Datagramm_Receive(adapter, (NetBIOSDatagramHeader_t*)(packet+1));
             break;
         default:
             break;
@@ -83,7 +87,7 @@ static void printUDPPortType(uint16_t port)
         printf("NetBIOS Session Service");
         break;
     case 143:
-        printf("Internet Message Access Protocol (IMAP)");
+        printf("IMAP)");
         break;
     case 546:
         printf("DHCPv6 Client");
@@ -95,24 +99,24 @@ static void printUDPPortType(uint16_t port)
         printf("shockwave2");
         break;
     case 1900:
-        printf("Simple Service Discovery Protocol (ssdp)");
+        printf("SSDP");
         break;
     case 3544:
         printf("Teredo Tunneling");
         break;
     case 5355:
-        printf("Link-Local Multicast Name Resolution (llmnr)");
+        printf("LLMNR)");
         break;
     default:
-        printf("%u", port);
+        printf("Port: %u", port);
         break;
     }
 }
 
 void UDPDebug(udpPacket_t* udp)
 {
-    textColor(TEXT);
-    printf("\nSource port: %u    Dest port: %u    Length: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort), ntohs(udp->length));
+    textColor(IMPORTANT);
+    printf("  %u ==> %u   Len: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort), ntohs(udp->length));
     textColor(IMPORTANT);
     printUDPPortType(ntohs(udp->sourcePort)); printf(" ==> "); printUDPPortType(ntohs(udp->destPort));
     textColor(TEXT);
