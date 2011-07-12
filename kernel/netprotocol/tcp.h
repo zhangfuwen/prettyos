@@ -65,6 +65,7 @@ typedef struct
     tcpSend_t SND;
     tcpRcv_t  RCV;
     tcpSegment_t SEG;   // information about segment to be sent next
+	bool retrans;
 } tcpTransmissionControlBlock_t;
 
 typedef struct
@@ -124,8 +125,8 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length);
 void tcp_showConnections();
 tcpConnection_t* findConnectionID(uint32_t ID);
 tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state);
-uint32_t tcp_showInBuffers (tcpConnection_t* connection, bool showData);
-uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData);
+uint32_t tcp_checkInBuffers (tcpConnection_t* connection, bool showData);
+uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData);
 
 // User functions
 uint32_t tcp_uconnect(IP_t IP, uint16_t port);

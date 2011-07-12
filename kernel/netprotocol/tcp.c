@@ -175,6 +175,7 @@ tcpConnection_t* tcp_createConnection()
     connection->TCP_PrevState   = CLOSED;
     connection->TCP_CurrState   = CLOSED;
 	connection->rto             = RTO_STARTVALUE; // for first calculation 
+	connection->tcb.retrans     = false; 
 
     list_Append(tcpConnections, connection);
     textColor(TEXT);
@@ -502,7 +503,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_send(connection, 0, 0);
 
                 /// TEST
-                tcp_showOutBuffers(connection,true);
+                tcp_checkOutBuffers(connection,true);
                 /// TEST
             }
             else if (tcp->FIN && !tcp->ACK) // FIN
@@ -685,7 +686,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     free(tcp);
 
     // increase SND.NXT
-    if (connection->TCP_CurrState == ESTABLISHED)
+    if (connection->TCP_CurrState == ESTABLISHED && connection->tcb.retrans == false)
     {
         connection->tcb.SND.NXT += length;
     }
@@ -693,7 +694,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     tcp_debug(tcp, true);
 }
 
-uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData)
+uint32_t tcp_checkInBuffers(tcpConnection_t* connection, bool showData)
 {
     printf("\n\n");
     uint32_t count = 0;
@@ -713,7 +714,7 @@ uint32_t tcp_showInBuffers(tcpConnection_t* connection, bool showData)
     return count;
 }
 
-uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
+uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 {
     printf("\n\n");
     uint32_t count = 0;
@@ -723,7 +724,7 @@ uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
         tcpOut_t* outPacket = e->data;
         if (outPacket->acknowledged)
         {
-            printf("\nID %u  seq %u  len %u  acked by %u (diff: %u)  RTT=%u ms RTO=%u ms\n",
+            printf("\nID %u  seq %u  len %u  acked by %u (diff: %u)  RTT=%u ms RTO=%u ms",
                 connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN, outPacket->remoteAck,
                 outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN),
                 outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted,
@@ -732,17 +733,45 @@ uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
         }
         else
         {
-            printf("\nID %u  seq %u len %u (not yet acknowledged)\n", connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN);
+            printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN);
             textColor(DATA);
         }
 
         if (showData)
         {
+			putch('\n');
             for (uint32_t i=0; i<outPacket->segment.LEN; i++)
             {
                 putch( ((char*)(outPacket->data))[i] );
             }
-        }
+        }		
+		
+		if (outPacket->acknowledged) // delete acknowledged list members 
+		{
+			list_Delete(connection->outBuffer, e->data);
+		}
+		else // check need for retransmission
+		{
+			if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->rto)
+			{
+				textColor(LIGHT_BLUE);
+				printf("\nretransmission done for seg=%u! RTO will be doubled afterwards.", outPacket->segment.SEQ);
+				connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
+                connection->tcb.SEG.ACK =  outPacket->segment.ACK;
+                connection->tcb.SEG.LEN =  outPacket->segment.LEN; 
+                connection->tcb.SEG.CTL =  ACK_FLAG;
+				connection->tcb.retrans = true;
+				tcp_send(connection, outPacket->data, connection->tcb.SEG.LEN);
+				outPacket->time_ms_transmitted = timer_getMilliseconds();
+				connection->tcb.retrans = false;
+				connection->rto *= 2;
+			}
+			else
+			{
+				textColor(TEXT);
+				printf("\nWe are still waiting for the ACK");
+			}
+		}
         textColor(TEXT);
     }
     return count;
