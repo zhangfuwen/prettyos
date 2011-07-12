@@ -752,10 +752,6 @@ uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 		}
 		else // check need for retransmission
 		{
-			/// TEST
-			connection->rto = 0;
-			/// TEST
-
 			if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->rto)
 			{
 				textColor(LIGHT_BLUE);
