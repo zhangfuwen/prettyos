@@ -399,12 +399,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
                 {
                     tcpOut_t* outPacket = e->data;
-                    if ( (outPacket->segment.SEQ + outPacket->segment.LEN) <= connection->tcb.SND.UNA)
+                    if ( ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber)) && (outPacket->segment.LEN > 0))
                     {
                          if(outPacket->acknowledged == false)
 						 {
 							 outPacket->time_ms_acknowledged = timer_getMilliseconds();
 							 outPacket->acknowledged = true;
+							 outPacket->remoteAck = ntohl(tcp->acknowledgmentNumber);
 						 }						 
                     }
                 }
@@ -691,17 +692,15 @@ uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
         tcpOut_t* outPacket = e->data;
         if (outPacket->acknowledged)
 		{
-		    printf("\nID=%u seq=%u ack=%u len=%u sent=%u ack=%u RTT=%u ms\n",
-			    connection->ID, outPacket->segment.SEQ, outPacket->segment.ACK, outPacket->segment.LEN,
-                outPacket->time_ms_transmitted, outPacket->time_ms_acknowledged, 
-				outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
+		    printf("\nID %u  seq %u  len %u  acked by %u (diff: %u)  RTT=%u ms\n",
+			    connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN, outPacket->remoteAck,
+				outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN),
+                outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
 			textColor(GREEN);    
 		}
 		else
 		{
-			printf("\nID=%u seq=%u ack=%u len=%u sent=%u (not acknowledged)\n",
-			    connection->ID, outPacket->segment.SEQ, outPacket->segment.ACK, outPacket->segment.LEN,
-                outPacket->time_ms_transmitted);
+			printf("\nID %u  seq %u len %u (not yet acknowledged)\n", connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN);
 			textColor(DATA);
 		}
 

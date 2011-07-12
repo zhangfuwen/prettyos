@@ -105,7 +105,8 @@ typedef struct
     void*        data;
     tcpSegment_t segment;
     uint32_t     time_ms_transmitted;
-    uint32_t     time_ms_acknowledged;
+	uint32_t     time_ms_acknowledged;
+	uint32_t     remoteAck;
 	bool         acknowledged;
 } tcpOut_t;
 
