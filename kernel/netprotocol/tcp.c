@@ -394,6 +394,21 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                 connection->tcb.RCV.WND =  ntohs(tcp->window);
                 connection->tcb.SND.UNA =  max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
+
+                // set ack time in tcp out-buffer packets
+                for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
+                {
+                    tcpOut_t* outPacket = e->data;
+                    if ( (outPacket->segment.SEQ + outPacket->segment.LEN) <= connection->tcb.SND.UNA)
+                    {
+                         if(outPacket->acknowledged == false)
+						 {
+							 outPacket->time_ms_acknowledged = timer_getMilliseconds();
+							 outPacket->acknowledged = true;
+						 }						 
+                    }
+                }
+
                 connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
 
                 connection->tcb.SND.WND -= tcpDataLength;
@@ -674,20 +689,30 @@ uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
     {
         count++;
         tcpOut_t* outPacket = e->data;
-        printf("\nID = %u\t seq = %u\tack = %u\tlen = %u\n", outPacket->connectionID, outPacket->segment.SEQ, outPacket->segment.ACK, outPacket->segment.LEN);
+        if (outPacket->acknowledged)
+		{
+		    printf("\nID=%u seq=%u ack=%u len=%u sent=%u ack=%u RTT=%u ms\n",
+			    connection->ID, outPacket->segment.SEQ, outPacket->segment.ACK, outPacket->segment.LEN,
+                outPacket->time_ms_transmitted, outPacket->time_ms_acknowledged, 
+				outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
+			textColor(GREEN);    
+		}
+		else
+		{
+			printf("\nID=%u seq=%u ack=%u len=%u sent=%u (not acknowledged)\n",
+			    connection->ID, outPacket->segment.SEQ, outPacket->segment.ACK, outPacket->segment.LEN,
+                outPacket->time_ms_transmitted);
+			textColor(DATA);
+		}
+
         if (showData)
         {
-			if (outPacket->segment.SEQ <= connection->tcb.SND.UNA) 
-				textColor(GREEN);
-			else 
-				textColor(DATA);
-
-            for (uint32_t i=0; i<outPacket->segment.LEN; i++)
+			for (uint32_t i=0; i<outPacket->segment.LEN; i++)
             {
                 putch( ((char*)(outPacket->data))[i] );
             }			
-			textColor(TEXT);
-        }		
+        }
+		textColor(TEXT);
     }
     return count;
 }
@@ -764,26 +789,27 @@ uint32_t tcp_uconnect(IP_t IP, uint16_t port)
 void tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state ESTABLISHED
 {
     tcpConnection_t* connection = findConnectionID(ID);
-	
+
     tcpOut_t* Out = malloc(sizeof(tcpOut_t), 0, "tcp_OutBuffer");
     Out->data     = malloc(length, 0, "tcp_OutBuf_data");
     memcpy(Out->data, data, length);
 
-	Out->connectionID = connection->ID;
-
-    Out->segment.SEQ = connection->tcb.SND.NXT;
+	Out->segment.SEQ = connection->tcb.SND.NXT;
     Out->segment.ACK = connection->tcb.SEG.ACK;
     Out->segment.LEN = length;
     Out->segment.WND = connection->tcb.SEG.WND;
     Out->segment.CTL = connection->tcb.SEG.CTL;
 
-    list_Append(connection->outBuffer, Out); // data to be sent ==> OutBuffer // CHECK TCP PROCESS
-
     if (connection && connection->TCP_CurrState == ESTABLISHED)
     {
-        connection->tcb.SEG.CTL = ACK_FLAG;
+        connection->tcb.SEG.CTL = ACK_FLAG; // necessary?
         tcp_send(connection, data, length);
     }
+    Out->time_ms_transmitted  = timer_getMilliseconds();
+    
+	Out->time_ms_acknowledged = 0; // not acknowledged
+	Out->acknowledged = false;     // not acknowledged
+    list_Append(connection->outBuffer, Out); // data to be acknowledged ==> OutBuffer // CHECK TCP PROCESS
 }
 
 void tcp_uclose(uint32_t ID)

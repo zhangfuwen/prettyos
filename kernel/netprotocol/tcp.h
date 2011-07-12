@@ -102,9 +102,11 @@ typedef struct
 
 typedef struct
 {
-    uint32_t	 connectionID;
-	void*        data;
+    void*        data;
     tcpSegment_t segment;
+    uint32_t     time_ms_transmitted;
+    uint32_t     time_ms_acknowledged;
+	bool         acknowledged;
 } tcpOut_t;
 
 
