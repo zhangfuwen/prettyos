@@ -11,9 +11,10 @@
 #define BROADCAST  128 // 1....... ........
 #define OPTIONSIZE 340 // results in size of 576
 
+
 typedef enum {START, OFFER, ACK, NAK} DHCP_state;
 
-typedef struct dhcp     // complete length: 576 (0x0240)
+typedef struct          // complete length: 576 (0x0240)
 {
     uint8_t  op;        // DHCP_BOOTREQEUST or DHCP_BOOTREPLY
     uint8_t  htype;     // DHCP_HTYPE10MB

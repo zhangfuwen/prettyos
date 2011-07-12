@@ -7,7 +7,7 @@
 // http://tools.ietf.org/html/rfc793
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
 
-typedef enum {CLOSED, LISTEN, SYN_SENT, SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, CLOSING, CLOSE_WAIT, LAST_ACK, TIME_WAIT} TCP_state;
+typedef enum {CLOSED, LISTEN, SYN_SENT, SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, CLOSING, CLOSE_WAIT, LAST_ACK, TIME_WAIT, TCP_ANY} TCP_state;
 typedef enum {SYN_FLAG, SYN_ACK_FLAG, ACK_FLAG, FIN_FLAG, FIN_ACK_FLAG, RST_FLAG} tcpFlags;
 
 typedef struct
@@ -105,9 +105,9 @@ typedef struct
     void*        data;
     tcpSegment_t segment;
     uint32_t     time_ms_transmitted;
-	uint32_t     time_ms_acknowledged;
-	uint32_t     remoteAck;
-	bool         acknowledged;
+    uint32_t     time_ms_acknowledged;
+    uint32_t     remoteAck;
+    bool         acknowledged;
 } tcpOut_t;
 
 
@@ -120,7 +120,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length);
 void tcp_showConnections();
 tcpConnection_t* findConnectionID(uint32_t ID);
-tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, bool established);
+tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state);
 uint32_t tcp_showInBuffers (tcpConnection_t* connection, bool showData);
 uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData);
 

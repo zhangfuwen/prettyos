@@ -90,7 +90,7 @@ void DHCP_Discover(network_adapter_t* adapter)
 
     IP_t srcIP = {.iIP = 0};
     IP_t destIP = {.iIP = 0xFFFFFFFF};
-    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
+    udp_send(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
 void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
@@ -143,7 +143,7 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
     IP_t srcIP  = {.iIP = 0x00000000};
     IP_t destIP = {.iIP = 0xFFFFFFFF};
 
-    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
+    udp_send(adapter, &packet, sizeof(dhcp_t), 68, srcIP, 67, destIP);
 }
 
 void DHCP_Inform(network_adapter_t* adapter)
@@ -188,7 +188,7 @@ void DHCP_Inform(network_adapter_t* adapter)
         packet.options[26+i] = adapter->MAC[i];
 
     IP_t destIP = {.iIP = 0xFFFFFFFF};
-    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, adapter->IP, 67, destIP);
+    udp_send(adapter, &packet, sizeof(dhcp_t), 68, adapter->IP, 67, destIP);
 }
 
 void DHCP_Release(network_adapter_t* adapter)
@@ -217,7 +217,7 @@ void DHCP_Release(network_adapter_t* adapter)
 
     IP_t destIP = {.iIP = 0xFFFFFFFF};
 
-    UDPSend(adapter, &packet, sizeof(dhcp_t), 68, adapter->IP, 67, destIP);
+    udp_send(adapter, &packet, sizeof(dhcp_t), 68, adapter->IP, 67, destIP);
 }
 
 static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt);

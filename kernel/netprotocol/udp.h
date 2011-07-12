@@ -3,6 +3,7 @@
 
 #include "network/network.h"
 
+
 typedef struct
 {
     uint16_t sourcePort;
@@ -12,9 +13,8 @@ typedef struct
 } __attribute__((packed)) udpPacket_t;
 
 
-void UDPSend (network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, IP_t srcIP, uint16_t destPort, IP_t destIP);
-void UDPRecv (network_adapter_t* adapter, udpPacket_t* packet, uint32_t length);
-void UDPDebug(udpPacket_t* udp);
+void udp_send(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, IP_t srcIP, uint16_t destPort, IP_t destIP);
+void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length);
 
 
 #endif

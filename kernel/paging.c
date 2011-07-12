@@ -31,9 +31,9 @@ static uint32_t physMemInit();
 void paging_switch(pageDirectory_t* pd)
 {
   #ifdef _PAGING_DIAGNOSIS_
-	textColor(MAGENTA);
-	printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X",pd, pd->physAddr);
-	textColor(TEXT);
+    textColor(MAGENTA);
+    printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X",pd, pd->physAddr);
+    textColor(TEXT);
   #endif
     __asm__ volatile("mov %0, %%cr3" : : "r" (pd->physAddr));
 }
@@ -48,7 +48,7 @@ uint32_t paging_install()
     kernelPageDirectory->physAddr = (uint32_t)kernelPageDirectory;
 
     kdebug(3, "\nkernelPageDirectory (virt.): %Xh ", kernelPageDirectory);
-    kdebug(3, "kernelPageDirectory (phys.): %Xh\n", kernelPageDirectory->physAddr); 
+    kdebug(3, "kernelPageDirectory (phys.): %Xh\n", kernelPageDirectory->physAddr);
 
     // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;
@@ -103,12 +103,9 @@ uint32_t paging_install()
     return ram_available;
 }
 
-static const memoryMapEntry_t* Entries;
 
 static bool isMemoryMapAvailable(const memoryMapEntry_t* entries, uint64_t beg, uint64_t end)
 {
-	Entries = entries;
-
     // There must not be an "reserved" entry which reaches into the specified area
     for (const memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
     {
@@ -164,7 +161,7 @@ static uint32_t physMemInit()
     textColor(HEADLINE);
     printf("\nMemory map:");
     textColor(TEXT);
-    for (const memoryMapEntry_t* entry = Entries; entry < memoryMapEnd; entry++)
+    for (const memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; entry++)
     {
         printf("\n  %Xh -> %Xh %u", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
     }

@@ -7,6 +7,7 @@
 #define ARP_TABLE_TIME_TO_CHECK   2    // time in minutes
 #define ARP_TABLE_TIME_TO_DELETE 10    // time in minutes
 
+
 typedef struct
 {
     uint8_t hardware_addresstype[2];
@@ -19,7 +20,6 @@ typedef struct
     uint8_t dest_mac[6];
     IP_t    destIP;
 } __attribute__((packed)) arpPacket_t;
-
 
 typedef struct
 {
@@ -47,5 +47,6 @@ void arp_showTable(arpTable_t* cache);
 void arp_received(struct network_adapter* adapter, arpPacket_t* packet);
 bool arp_sendRequest(struct network_adapter* adapter, IP_t searchedIP); // Pass adapter->IP to it, to issue a gratuitous request
 bool arp_waitForReply(struct network_adapter* adapter, IP_t searchedIP);
+
 
 #endif

@@ -5,7 +5,7 @@
 
 // These switches change the behavior of PrettyOS, useful for analyzing tasks:
 
-/// #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen. 
+#define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen.
 /// #define _PAGING_DIAGNOSIS_     // Diagnosis-Output about PD, PT etc.
 /// #define _DIAGNOSIS_            // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _MALLOC_FREE_          // shows information about malloc/free and heap expansion
@@ -19,7 +19,7 @@
 /// #define _VM_DIAGNOSIS_         // Provides information about the vm86 task, but critical
 /// #define _SERIAL_LOG_           // Enables Log information over the COM-Ports
 /// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
-/// #define _NETWORK_DATA_         // Enables additional information about networking packets 
+/// #define _NETWORK_DATA_         // Enables additional information about networking packets
 /// #define _NETWORK_DIAGNOSIS_    // Enables additional information about the network adapters
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 
@@ -47,7 +47,7 @@ static inline void kdebug(uint8_t color, const char* args, ...)
     va_end(ap);
     if(color != 0x00)
     {
-        textColor(0xFF);
+        textColor(0x0F);
     }
     #endif
 }

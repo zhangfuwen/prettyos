@@ -14,12 +14,14 @@
 #include "netbios.h"
 
 
-void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
+static void udp_debug(udpPacket_t* udp);
+
+void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
     textColor(HEADLINE);
     printf("\nUDP: ");
     textColor(TEXT);
-    UDPDebug(packet);
+    udp_debug(packet);
 
     switch (ntohs(packet->destPort))
     {
@@ -34,7 +36,7 @@ void UDPRecv(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
     }
 }
 
-void UDPSend(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, IP_t srcIP, uint16_t destPort, IP_t destIP)
+void udp_send(network_adapter_t* adapter, void* data, uint32_t length, uint16_t srcPort, IP_t srcIP, uint16_t destPort, IP_t destIP)
 {
     udpPacket_t* packet = malloc(sizeof(udpPacket_t)+length, 0, "UDP packet");
     memcpy(packet+1, data, length);
@@ -113,7 +115,7 @@ static void printUDPPortType(uint16_t port)
     }
 }
 
-void UDPDebug(udpPacket_t* udp)
+static void udp_debug(udpPacket_t* udp)
 {
     textColor(IMPORTANT);
     printf("  %u ==> %u   Len: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort), ntohs(udp->length));

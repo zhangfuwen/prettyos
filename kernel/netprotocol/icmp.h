@@ -6,6 +6,7 @@
 
 #include "network/network.h"
 
+
 #define ICMP_ECHO_REPLY                     0       // Echo Reply
 #define ICMP_DESTINATION_UNREACHABLE        3       // Destination Unreachable
 #define ICMP_SOURCE_QUENCH                  4       // Source Quench
@@ -35,7 +36,7 @@
 #define ICMP_SEAMOBY                       41       // ICMP messages utilized by experimental mobility protocols such as Seamoby
 
 
-typedef struct icmpheader
+typedef struct
 {
     uint8_t type;
     uint8_t code;
@@ -45,8 +46,8 @@ typedef struct icmpheader
 } __attribute__((packed)) icmpheader_t;
 
 
-void icmp_Send_echoRequest (network_adapter_t* adapter, IP_t destIP);
-void icmp_Receive (network_adapter_t* adapter, icmpheader_t* data, uint32_t length, IP_t sourceIP);
+void icmp_sendEchoRequest(network_adapter_t* adapter, IP_t destIP);
+void icmp_receive(network_adapter_t* adapter, icmpheader_t* data, uint32_t length, IP_t sourceIP);
 
 
 #endif

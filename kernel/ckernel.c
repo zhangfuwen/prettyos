@@ -28,7 +28,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.206 - Rev: 1052";
+const char* const version = "0.0.2.207 - Rev: 1053";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -350,7 +350,7 @@ void main(multiboot_t* mb_struct)
                                     uint16_t srcPort  = 40; // unassigend
                                     uint16_t destPort = 40;
                                     IP_t IP = {.iIP = 0xFFFFFFFF};
-                                    UDPSend(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, IP);
+                                    udp_send(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, IP);
                                 }
                                 break;
                             }
@@ -375,28 +375,28 @@ void main(multiboot_t* mb_struct)
                                 break;
                             }
                             case 'c': // show tcp connections
-							{
+                            {
                                 textColor(HEADLINE);
                                 printf("\ntcp connections:");
                                 textColor(TEXT);
                                 tcp_showConnections();
                                 break;
-							}
-							case 'p':
+                            }
+                            case 'p':
                             {
-								network_adapter_t* adapter = network_getFirstAdapter();
-								IP_t destIP; // qemu subnet
-								
-								for (uint8_t i=0; i<255; i++)
-								{
-									destIP.IP[0] =      10;
-									destIP.IP[1] =       0;
-									destIP.IP[2] =       2;
-									destIP.IP[3] =       i;							
-									if (adapter)
-										icmp_Send_echoRequest(adapter, destIP);
-								}
-								break;
+                                network_adapter_t* adapter = network_getFirstAdapter();
+                                IP_t destIP; // qemu subnet
+
+                                for (uint8_t i=0; i<255; i++)
+                                {
+                                    destIP.IP[0] =      10;
+                                    destIP.IP[1] =       0;
+                                    destIP.IP[2] =       2;
+                                    destIP.IP[3] =       i;
+                                    if (adapter)
+                                        icmp_sendEchoRequest(adapter, destIP);
+                                }
+                                break;
                             }
                         }
                     }

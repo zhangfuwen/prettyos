@@ -27,7 +27,6 @@ static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
 {
-    lastPacket.ipLength = length;
   #ifdef _NETWORK_DATA_
     textColor(HEADLINE);
     printf("\nIPv4:");
@@ -46,14 +45,14 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
     switch(packet->protocol)
     {
-        case 1:  // icmp
-            icmp_Receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length), packet->sourceIP);
+        case 1: // icmp
+            icmp_receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length), packet->sourceIP);
             break;
-        case 6:  // tcp
+        case 6: // tcp
             tcp_receive(adapter, (void*)packet+ipHeaderLengthBytes, packet->sourceIP, ntohs(packet->length)-ipHeaderLengthBytes);
             break;
         case 17: // udp
-            UDPRecv(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length)-ipHeaderLengthBytes);
+            udp_receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length)-ipHeaderLengthBytes);
             break;
         default:
             textColor(IMPORTANT);
@@ -89,20 +88,20 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
 
     if(IP.iIP == broadcast_IP.iIP || IP.iIP == broadcast_IP2.iIP || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
     {
-		printf("\nIP is in LAN");
-  
+        printf("\nIP is in LAN");
+
         arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, IP);
         if(entry == 0) // Try to find IP by ARP request
         {
-            printf("\nWe try to find %I", IP);
+            printf("\nWe try to find %I... ", IP);
             arp_sendRequest(adapter, IP);
             if(arp_waitForReply(adapter, IP) == false)
             {
-                printf("\nThe requested IP is in LAN, but was not found.");
+                printf("Not found.");
                 entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
-				// printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
-				EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
-			}
+                // printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
+                EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
+            }
             entry = arp_findEntry(&adapter->arpTable, IP);
         }
 
@@ -131,7 +130,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
         }
 
         // printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
-		
+
         EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
   #endif
     }

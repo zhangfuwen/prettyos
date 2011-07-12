@@ -8,269 +8,248 @@
 #include "ipv4.h"
 #include "util.h"
 #include "kheap.h"
-#include "network/netutils.h"
 
 
-void icmp_Send_echoRequest (network_adapter_t* adapter, IP_t destIP)
+void icmp_sendEchoRequest(network_adapter_t* adapter, IP_t destIP)
 {
     static uint16_t count = 0;
     count++;
 
-    char* data = "PrettyOS ist das Betriebssystem der Projektgruppe \"OS-Development\" im deutschsprachigen C++-Forum";
-    icmpheader_t* icmp = malloc(sizeof(icmpheader_t) + strlen(data), 0, "ICMP packet");
-    memcpy(icmp+1, (void*)data, strlen(data));
+    const char* data = "PrettyOS ist das Betriebssystem der Projektgruppe \"OS-Development\" im deutschsprachigen C++-Forum";
+    size_t packetSize = sizeof(icmpheader_t) + strlen(data);
+    char icmpPacket[packetSize];
+
+    icmpheader_t* icmp = (void*)icmpPacket;
+    strcpy((void*)(icmp+1), data);
     icmp->type         = 8; // echo request
     icmp->code         = 0;
     icmp->id           = htons(0xAFFE);
     icmp->seqnumber    = htons(count);
     icmp->checksum     = 0;
-    icmp->checksum     = htons( internetChecksum(icmp, sizeof(icmpheader_t) + strlen(data), 0) );
+    icmp->checksum     = htons( internetChecksum(icmp, packetSize, 0) );
 
-    ipv4_send(adapter, icmp, sizeof(icmpheader_t) + strlen(data), destIP, 1);
-    free(icmp);
-	textColor(HEADLINE);  printf("\nICMP: ");
-	textColor(TEXT);      printf("echo request (PING) send to ");
-	textColor(IMPORTANT); printf("%I", destIP);
+    ipv4_send(adapter, icmp, packetSize, destIP, 1);
+
+    textColor(HEADLINE);  printf("\nICMP: ");
+    textColor(TEXT);      printf("echo request (PING) send to ");
+    textColor(IMPORTANT); printf("%I", destIP);
 }
 
-void icmp_Receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, IP_t sourceIP)
+void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length, IP_t sourceIP)
 {
-	textColor(HEADLINE);
+    textColor(HEADLINE);
     printf("\n ICMP: ");
-	textColor(TEXT);
-	if (rec->type == ICMP_ECHO_REPLY) 
-    {
-        printf("Echo Reply:");
+    textColor(TEXT);
 
-        size_t icmp_data_length = length - sizeof(icmpheader_t);
-        if (rec->code == 0)
-        {
+    size_t icmp_data_length = length - sizeof(icmpheader_t);
+
+    switch(rec->type)
+    {
+        case ICMP_ECHO_REPLY:
+            printf("Echo Reply:");
+
+            if (rec->code == 0)
+            {
+                textColor(TEXT);
+                printf("  ID: %x seq: %u\n", ntohs(rec->id), ntohs(rec->seqnumber));
+                char str[icmp_data_length+2];
+                strncpy(str, (char*)(rec+1), icmp_data_length);
+                str[icmp_data_length+1] = 0;
+                textColor(DATA);
+                puts(str);
+                textColor(TEXT);
+            }
+            break;
+        case ICMP_DESTINATION_UNREACHABLE:
+            textColor(ERROR);
+            printf("Destination unreachable - code %u", rec->code);
+            switch (rec->code)
+            {
+                case 0:
+                    printf(": Destination network unreachable");
+                    break;
+                case 1:
+                    printf(": Destination host unreachable");
+                    break;
+                case 2:
+                    printf(": Destination protocol unreachable");
+                    break;
+                case 3:
+                    printf(": Destination port unreachable");
+                    break;
+                case 4:
+                    printf(": Fragmentation required, and DF flag set");
+                    break;
+                case 5:
+                    printf(": Source route failed");
+                    break;
+                case 6:
+                    printf(": Destination network unknown");
+                    break;
+                case 7:
+                    printf(": Destination host unknown");
+                    break;
+                case 8:
+                    printf(": Source host isolated");
+                    break;
+                case 9:
+                    printf(": Network administratively prohibited");
+                    break;
+                case 10:
+                    printf(": Host administratively prohibited");
+                    break;
+                case 11:
+                    printf(": Network unreachable for TOS");
+                    break;
+                case 12:
+                    printf(": Host unreachable for TOS");
+                    break;
+                case 13:
+                    printf(": Communication administratively prohibited");
+                    break;
+            }
             textColor(TEXT);
-            printf("  ID: %x seq: %u\n", ntohs(rec->id), ntohs(rec->seqnumber));
-            char str[icmp_data_length+2];
-            strncpy(str, (char*)(rec+1), icmp_data_length);
-            str[icmp_data_length+1] = 0;
-            textColor(DATA);
-            printf("%s", str);
+            break;
+        case ICMP_SOURCE_QUENCH:
+            printf("Source quench (congestion control)");
+            break;
+        case ICMP_REDIRECT:
+            printf("Redirect - code %u", rec->code);
+            switch (rec->code)
+            {
+                case 0:
+                    printf(": Redirect Datagram for the Network");
+                    break;
+                case 1:
+                    printf(": Redirect Datagram for the Host");
+                    break;
+                case 2:
+                    printf(": Redirect Datagram for the TOS & network");
+                    break;
+                case 3:
+                    printf(": Redirect Datagram for the TOS & host");
+                    break;
+            }
+            break;
+        case 6:
+            printf("Alternate Host Address");
+            break;
+        case ICMP_ECHO_REQUEST:
+        {
+            textColor(HEADLINE);
+            printf("ICMP_echoRequest:");
+
+            uint8_t pkt[sizeof(icmpheader_t) + icmp_data_length];
+
+            icmpheader_t* icmp = (icmpheader_t*)pkt;
+
+            icmp->type         = ICMP_ECHO_REPLY;
+            icmp->code         = 0;
+            icmp->id           = rec->id;
+            icmp->seqnumber    = rec->seqnumber;
+            icmp->checksum     = 0;
+
+            memcpy(icmp+1, rec+1, icmp_data_length);
+
+            icmp->checksum = htons( internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0) );
+
+            textColor(TEXT);
+            printf(" type: %u  code: %u  checksum %u\n", icmp->type, icmp->code, icmp->checksum);
+
+            ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP, 1);
+            break;
         }
-        textColor(TEXT);
+        case ICMP_ROUTER_ADVERTISEMENT:
+            printf("Router Advertisement");
+            break;
+        case ICMP_ROUTER_SOLICITATION:
+            printf("Router discovery/selection/solicitation");
+            break;
+        case ICMP_TIME_EXEEDED:
+            textColor(ERROR);
+            printf("Time Exceeded - code %u", rec->code);
+            switch (rec->code)
+            {
+                case 0:
+                    printf(": TTL expired in transit");
+                    break;
+                case 1:
+                    printf(": Fragment reassembly time exceeded");
+                    break;
+            }
+            textColor(TEXT);
+            break;
+        case ICMP_PARAMETER_PROBLEM:
+            textColor(ERROR);
+            printf("Parameter Problem: Bad IP header - code %u", rec->code);
+            switch (rec->code)
+            {
+                case 0:
+                    printf(": Pointer indicates the error");
+                    break;
+                case 1:
+                    printf(": Missing a required option");
+                    break;
+            }
+            textColor(TEXT);
+            break;
+        case ICMP_TIMESTAMP:
+            printf("Timestamp");
+            break;
+        case ICMP_TIMESTAMP_REPLY:
+            printf("Timestamp reply");
+            break;
+        case ICMP_INFORMATION_REQUEST:
+            printf("Information Request");
+            break;
+        case ICMP_INFORMATION_REPLY:
+            printf("Information Reply");
+            break;
+        case ICMP_ADDRESS_MASK_REQUEST:
+            printf("Address Mask Request");
+            break;
+        case ICMP_ADDRESS_MASK_REPLY:
+            printf("Address Mask Reply");
+            break;
+        case ICMP_TRACEROUTE:
+            printf("Information Request");
+            break;
+        case ICMP_DATAGRAM_CONVERSION_ERROR:
+            printf("Datagram Conversion Error");
+            break;
+        case ICMP_MOBILE_HOST_REDIRECT:
+            printf("Mobile Host Redirect");
+            break;
+        case ICMP_WHERE_ARE_YOU:
+            printf("Where-Are-You (originally meant for IPv6)");
+            break;
+        case ICMP_I_AM_HERE:
+            printf("Here-I-Am (originally meant for IPv6)");
+            break;
+        case ICMP_MOBILE_REGISTRATION_REQUEST:
+            printf("Mobile Registration Request");
+            break;
+        case ICMP_MOBILE_REGISTRATION_REPLY:
+            printf("Mobile Registration Reply");
+            break;
+        case ICMP_DOMAIN_NAME_REQUEST:
+            printf("Domain Name Request");
+            break;
+        case ICMP_DOMAIN_NAME_REPLY:
+            printf("Domain Name Reply");
+            break;
+        case ICMP_SKIP:
+            printf("SKIP Algorithm Discovery Protocol, Simple Key-Management for Internet Protocol");
+            break;
+        case ICMP_PHOTURIS:
+            printf("Photuris, Security failures");
+            break;
+        case ICMP_SEAMOBY:
+            printf("ICMP for experimental mobility protocols such as Seamoby [RFC4065]");
+            break;
+        default:
+            break;
     }
-	else if(rec->type == ICMP_DESTINATION_UNREACHABLE) 
-	{
-		textColor(ERROR);
-		printf(" Destination unreachable - ");
-		switch (rec->code)
-		{
-			case 0:
-				printf("code 0: Destination network unreachable");
-				break;
-			case 1:
-				printf("code 1: Destination host unreachable");
-				break;
-			case 2:
-				printf("code 2: Destination protocol unreachable");
-				break;
-			case 3:
-				printf("code 3: Destination port unreachable");
-				break;
-			case 4:
-				printf("code 4: Fragmentation required, and DF flag set");
-				break;
-			case 5:
-				printf("code 5: Source route failed");
-				break;
-			case 6:
-				printf("code 6: Destination network unknown");
-				break;
-			case 7:
-				printf("code 7: Destination host unknown");
-				break;
-			case 8:
-				printf("code 8: Source host isolated");
-				break;
-			case 9:
-				printf("code 9: Network administratively prohibited");
-				break;
-			case 10:
-				printf("code 10: Host administratively prohibited");
-				break;
-			case 11:
-				printf("code 11: Network unreachable for TOS");
-				break;
-			case 12:
-				printf("code 12: Host unreachable for TOS");
-				break;
-			case 13:
-				printf("code 13: Communication administratively prohibited");
-				break;
-		}
-		textColor(TEXT);
-	}
-	else if(rec->type == ICMP_SOURCE_QUENCH) 
-	{
-		printf(" Source quench (congestion control)");		
-	}
-    else if(rec->type == ICMP_REDIRECT ) 
-	{
-		printf(" Redirect - ");
-		switch (rec->code)
-		{
-			case 0:
-				printf("code 0: Redirect Datagram for the Network");
-				break;
-			case 1:
-				printf("code 1: Redirect Datagram for the Host");
-				break;
-		    case 2:
-				printf("code 2: Redirect Datagram for the TOS & network");
-				break;
-			case 3:
-				printf("code 3: Redirect Datagram for the TOS & host");
-				break;
-		}		
-	}
-	else if(rec->type == 6) 
-	{
-		printf(" Alternate Host Address");		
-	}
-	// 7 Reserved
-	else if (rec->type == ICMP_ECHO_REQUEST) 
-    {
-        textColor(HEADLINE);
-        printf(" ICMP_echoRequest:");
-
-        size_t icmp_data_length = length - sizeof(icmpheader_t);
-        uint8_t pkt[sizeof(icmpheader_t) + icmp_data_length];
-
-        icmpheader_t* icmp = (icmpheader_t*)pkt;
-
-        icmp->type         = ICMP_ECHO_REPLY;
-        icmp->code         = 0;
-        icmp->id           = rec->id;
-        icmp->seqnumber    = rec->seqnumber;
-        icmp->checksum     = 0;
-
-        memcpy(&pkt[sizeof(*icmp)], (void*)(rec+1), icmp_data_length);
-
-        icmp->checksum = htons( internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0) );
-
-        textColor(TEXT);
-        printf(" type: %u  code: %u  checksum %u\n", icmp->type, icmp->code, icmp->checksum);
-
-        ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP,1);
-    }
-	else if(rec->type == ICMP_ROUTER_ADVERTISEMENT) 
-	{
-		printf(" Router Advertisement");		
-	}
-	else if(rec->type == ICMP_ROUTER_SOLICITATION) 
-	{
-		printf(" Router discovery/selection/solicitation");		
-	}
-	else if(rec->type == ICMP_TIME_EXEEDED) 
-	{
-		textColor(ERROR);
-		printf(" Time Exceeded - ");
-		switch (rec->code)
-		{
-			case 0:
-				printf(" code 0: TTL expired in transit");
-				break;
-			case 1:
-				printf(" code 1: Fragment reassembly time exceeded");
-				break;            
-		}
-		textColor(TEXT);
-	}
-    else if(rec->type == ICMP_PARAMETER_PROBLEM) 
-	{
-		textColor(ERROR);
-		printf(" Parameter Problem: Bad IP header - ");
-		switch (rec->code)
-		{
-			case 0:
-				printf(" code 0: Pointer indicates the error");
-				break;
-			case 1:
-				printf(" code 1: Missing a required option");
-				break;            
-		}
-		textColor(TEXT);
-	}
-    else if(rec->type == ICMP_TIMESTAMP) 
-	{
-		printf(" Timestamp");
-	}
-    else if(rec->type == ICMP_TIMESTAMP_REPLY) 
-	{
-		printf(" Timestamp reply");
-	}
-    else if(rec->type == ICMP_INFORMATION_REQUEST) 
-	{
-		printf(" Information Request");
-	}
-    else if(rec->type == ICMP_INFORMATION_REPLY ) 
-	{
-		printf(" Information Reply");
-	}
-    else if(rec->type == ICMP_ADDRESS_MASK_REQUEST) 
-	{
-		printf(" Address Mask Request");
-	}
-    else if(rec->type == ICMP_ADDRESS_MASK_REPLY) 
-	{
-		printf(" Address Mask Reply");
-	}  
-	// 19 Reserved for security, 20 through 29 Reserved for robustness experiment
-    else if(rec->type == ICMP_TRACEROUTE) 
-	{
-		printf(" Information Request");
-	}
-    else if(rec->type == ICMP_DATAGRAM_CONVERSION_ERROR) 
-	{
-		printf(" Datagram Conversion Error");
-	}
-    else if(rec->type == ICMP_MOBILE_HOST_REDIRECT) 
-	{
-		printf(" Mobile Host Redirect");
-	}
-    else if(rec->type == ICMP_WHERE_ARE_YOU) 
-	{
-		printf(" Where-Are-You (originally meant for IPv6)");
-	}
-    else if(rec->type == ICMP_I_AM_HERE) 
-	{
-		printf(" Here-I-Am (originally meant for IPv6)");
-	}
-    else if(rec->type == ICMP_MOBILE_REGISTRATION_REQUEST) 
-	{
-		printf(" Mobile Registration Request");
-	}
-    else if(rec->type == ICMP_MOBILE_REGISTRATION_REPLY) 
-	{
-		printf(" Mobile Registration Reply");
-	}
-    else if(rec->type == ICMP_DOMAIN_NAME_REQUEST) 
-	{
-		printf(" Domain Name Request");
-	}
-    else if(rec->type == ICMP_DOMAIN_NAME_REPLY) 
-	{
-		printf(" Domain Name Reply");
-	}
-    else if(rec->type == ICMP_SKIP) 
-	{
-		printf(" SKIP Algorithm Discovery Protocol, Simple Key-Management for Internet Protocol");
-	}
-    else if(rec->type == ICMP_PHOTURIS) 
-	{
-		printf(" Photuris, Security failures");
-	}
-    else if(rec->type == ICMP_SEAMOBY) 
-	{
-		printf(" ICMP for experimental mobility protocols such as Seamoby [RFC4065]");
-	}
-	// 42 through 255 Reserved
 }
 
 

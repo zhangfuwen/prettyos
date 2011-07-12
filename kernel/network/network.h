@@ -12,8 +12,6 @@
 // qemu.exe  -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139,addr=1A,macaddr=00:13:d4:12:12:12
 // -net tap,ifname=TAP1 -localtime -redir tcp:5023::23 -net user -net dump,file=netdump.pcap
 
-// additional for EHCI: -usb -usbdevice disk:format=raw:dummy.bin
-
 #ifdef QEMU_HACK
     // own IP at start
     #define IP_1    10
@@ -96,11 +94,6 @@ typedef struct
 {
     IP_t IP;
     uint8_t  MAC[6];
-    uint16_t ethLength;
-    uint16_t ipLength;
-    uint16_t tcpLength;
-    uint16_t tcpDataLength;
-    uint8_t  tcpDataOffset;
 } Packet_t;
 
 bool network_installDevice(pciDev_t* device);
