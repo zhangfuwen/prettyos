@@ -628,7 +628,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
 {
-    if (connection->TCP_CurrState == ESTABLISHED)
+    if (connection->TCP_CurrState == ESTABLISHED && connection->tcb.retrans == false)
     {
         connection->tcb.SEG.SEQ = connection->tcb.SND.NXT; // CHECK
     }
@@ -752,6 +752,10 @@ uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 		}
 		else // check need for retransmission
 		{
+			/// TEST
+			connection->rto = 0;
+			/// TEST
+
 			if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->rto)
 			{
 				textColor(LIGHT_BLUE);
