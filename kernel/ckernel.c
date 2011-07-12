@@ -28,7 +28,7 @@
 #include "netprotocol/tcp.h"
 
 
-const char* const version = "0.0.2.207 - Rev: 1053";
+const char* const version = "0.0.2.208 - Rev: 1054";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -115,7 +115,7 @@ void init(multiboot_t* mb_struct)
     }
 
     // internal devices
-    timer_install(100); log("Timer"); // Sets system frequency to ... Hz
+    timer_install(SYSTEMFREQUENCY); log("Timer"); // Sets system frequency to ... Hz
     if(fpu_install()) log("FPU");
 
     // memory

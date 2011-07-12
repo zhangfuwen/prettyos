@@ -17,6 +17,40 @@ uint16_t INCWINDOW   =    50;
 uint16_t DECWINDOW   =   100;
 uint16_t MAXWINDOW   = 10000;
 
+
+// RTO constants
+const uint16_t RTO_STARTVALUE = 3000; // 3 sec // rfc 2988
+const uint8_t  K     = 4;
+const uint8_t  ALPHA = 8; // ALPHA = 1/alpha
+const uint8_t  BETA  = 4; // BETA  = 1/beta
+
+// RTO calculation (RFC 2988)
+static uint32_t calculateRTO(tcpConnection_t* connection, uint32_t rtt)
+{
+	if (connection->rto == RTO_STARTVALUE)
+	{
+		// first RTT measurement R (in msec): SRTT <- R	and RTTVAR <- R/2
+		connection->srtt   = rtt;
+		connection->rttvar = rtt/2;		
+	}
+	else
+	{
+		// subsequent RTT measurement R': RTTVAR <- (1 - beta) * RTTVAR + beta * |SRTT - R'|
+		connection->rttvar = connection->rttvar + (abs(connection->srtt - rtt) / BETA) -
+		                    (connection->rttvar + (abs(connection->srtt - rtt) / BETA) / BETA);
+
+		// SRTT <- (1 - alpha) * SRTT + alpha * R' 
+		connection->srtt = connection->srtt + rtt / ALPHA - (connection->srtt + rtt / ALPHA) / ALPHA;
+	}
+    
+	//     RTO <- SRTT + max (G, K*RTTVAR) where K = 4.
+    connection->rto = connection->srtt + max( 1000/timer_getFrequency(), K*connection->rttvar );
+    
+	//     if it is less than 1 second then the RTO SHOULD be rounded up to 1 second. 
+    connection->rto = max(connection->rto, 1000); // msec
+	return connection->rto;
+}
+
 static const char* const tcpStates[] =
 {
     "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
@@ -140,6 +174,7 @@ tcpConnection_t* tcp_createConnection()
     connection->ID              = getConnectionID();
     connection->TCP_PrevState   = CLOSED;
     connection->TCP_CurrState   = CLOSED;
+	connection->rto             = RTO_STARTVALUE; // for first calculation 
 
     list_Append(tcpConnections, connection);
     textColor(TEXT);
@@ -394,6 +429,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                              outPacket->time_ms_acknowledged = timer_getMilliseconds();
                              outPacket->acknowledged = true;
                              outPacket->remoteAck = ntohl(tcp->acknowledgmentNumber);
+
+							 // rto
+							 if (outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN) == 0)
+							 {
+								 calculateRTO(connection, outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
+							 }
                          }
                     }
                 }
@@ -682,10 +723,11 @@ uint32_t tcp_showOutBuffers(tcpConnection_t* connection, bool showData)
         tcpOut_t* outPacket = e->data;
         if (outPacket->acknowledged)
         {
-            printf("\nID %u  seq %u  len %u  acked by %u (diff: %u)  RTT=%u ms\n",
+            printf("\nID %u  seq %u  len %u  acked by %u (diff: %u)  RTT=%u ms RTO=%u ms\n",
                 connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN, outPacket->remoteAck,
                 outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN),
-                outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
+                outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted,
+				connection->rto);
             textColor(GREEN);
         }
         else

@@ -86,6 +86,9 @@ typedef struct
     list_t* inBuffer;
     list_t* outBuffer;
     bool passive; // Used to enable output of incoming packets in the kernel console
+	uint32_t rto; // retransmission timeout
+	uint32_t rttvar; 
+	uint32_t srtt; 
 } tcpConnection_t;
 
 typedef struct

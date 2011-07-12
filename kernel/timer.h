@@ -3,6 +3,8 @@
 
 #include "os.h"
 
+#define SYSTEMFREQUENCY 100
+
 void     timer_install(uint16_t sysfreq);
 void     timer_handler(registers_t* r);
 void     timer_setFrequency(uint32_t freq);
