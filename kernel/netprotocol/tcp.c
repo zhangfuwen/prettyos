@@ -11,6 +11,7 @@
 #include "ipv4.h"
 #include "list.h"
 #include "task.h"
+#include "serial.h"
 
 uint16_t STARTWINDOW =  6000;
 uint16_t INCWINDOW   =    50;
@@ -142,7 +143,6 @@ static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
     textColor(IMPORTANT);
     printf( "%u ==> %u   ", ntohs(tcp->sourcePort), ntohs(tcp->destPort) );
     textColor(TEXT);
-    // printf("seq: %X  ack: %X\n", ntohl(tcp->sequenceNumber), ntohl(tcp->acknowledgmentNumber));
     printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
     printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
     textColor(LIGHT_GRAY);
@@ -150,14 +150,15 @@ static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
     {
         printf("  WND = %u  ", ntohs(tcp->window));
     }
-    // printf("checksum: %x  urgent ptr: %X\n", ntohs(tcp->checksum), ntohs(tcp->urgentPointer));
     textColor(TEXT);
 }
 
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
-{
-    // textColor(TEXT);        printf("  state: ");
-    textColor(IMPORTANT);   putch(' '); puts(tcpStates[connection->TCP_CurrState]);    textColor(TEXT);
+{    
+    textColor(IMPORTANT); 
+    putch(' '); 
+    puts(tcpStates[connection->TCP_CurrState]);    
+    textColor(TEXT);
   #ifdef _NETWORK_DATA_
     printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
     printf("SND.UNA = %u, SND.NXT = %u, SND.WND = %u", connection->tcb.SND.UNA, connection->tcb.SND.NXT, connection->tcb.SND.WND);
@@ -394,6 +395,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
                 connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
+
                 connection->tcb.SEG.SEQ = connection->tcb.SND.NXT; // CHECK
                 connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL = SYN_ACK_FLAG;
@@ -402,6 +404,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else if (tcp->SYN && tcp->ACK)  // SYN ACK
             {
+                connection->tcb.RCV.WND = ntohs(tcp->window);
+                connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
+                connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
+                
                 tcp_send_ACK(connection, tcp, false);
                 connection->TCP_CurrState = ESTABLISHED;
                 event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
@@ -602,6 +608,25 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             break;
     }//switch (connection->TCP_CurrState)
 
+    /// LOG
+    char str[20];
+    serial_log(1,"recv: ");
+    if(tcp->FIN) serial_log(1," FIN");
+    if(tcp->SYN) serial_log(1," SYN");
+    if(tcp->ACK) serial_log(1," ACK");
+    if(tcp->RST) serial_log(1," RST");
+    if(tcp->PSH) serial_log(1," PSH");
+    if(tcp->URG) serial_log(1," URG");
+    serial_log(1,"\tseq:\t");           serial_log(1,utoa(ntohl(tcp->sequenceNumber)       -connection->tcb.RCV.IRS, str));
+    serial_log(1,"\trcv nxt:\t");       serial_log(1,utoa(connection->tcb.RCV.NXT          -connection->tcb.RCV.IRS, str));
+    if (tcp->ACK)
+    {
+        serial_log(1,"\tack:\t");       serial_log(1,utoa(ntohl(tcp->acknowledgmentNumber) -connection->tcb.SND.ISS, str));
+        serial_log(1,"\t\tSND.UNA:\t"); serial_log(1,utoa(connection->tcb.SND.UNA          -connection->tcb.SND.ISS, str));    
+    }
+    serial_log(1,"\r\n"); 
+    /// LOG
+
     tcpShowConnectionStatus(connection);
 }
 
@@ -662,6 +687,8 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     tcp->checksum = 0; // for checksum calculation
     tcp->checksum = htons(udptcpCalculateChecksum((void*)tcp, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
 
+    
+
     ipv4_send(connection->adapter, tcp, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6);
     free(tcp);
 
@@ -670,6 +697,23 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     {
         connection->tcb.SND.NXT += length;
     }
+    /// LOG
+    char str[20];
+    serial_log(1,"send: ");
+    if(tcp->FIN) serial_log(1," FIN");
+    if(tcp->SYN) serial_log(1," SYN");
+    if(tcp->ACK) serial_log(1," ACK");
+    if(tcp->RST) serial_log(1," RST");
+    if(tcp->PSH) serial_log(1," PSH");
+    if(tcp->URG) serial_log(1," URG");
+    serial_log(1,"\tseq:\t");      serial_log(1,utoa(ntohl(tcp->sequenceNumber)      -connection->tcb.SND.ISS, str));
+    serial_log(1,"\tseq nxt:\t");  serial_log(1,utoa(connection->tcb.SND.NXT         -connection->tcb.SND.ISS, str));
+    if (tcp->ACK)
+    {
+        serial_log(1,"\tack:\t");  serial_log(1,utoa(ntohl(tcp->acknowledgmentNumber)-connection->tcb.RCV.IRS, str));
+    }
+    serial_log(1,"\r\n"); 
+    /// LOG
 
     tcp_debug(tcp, true);
 }

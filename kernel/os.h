@@ -17,7 +17,7 @@
 /// #define _TASKING_DIAGNOSIS_    // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_     // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_         // Provides information about the vm86 task, but critical
-/// #define _SERIAL_LOG_           // Enables Log information over the COM-Ports
+#define _SERIAL_LOG_           // Enables Log information over the COM-Ports
 /// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
 /// #define _NETWORK_DATA_         // Enables additional information about networking packets
 /// #define _NETWORK_DIAGNOSIS_    // Enables additional information about the network adapters
