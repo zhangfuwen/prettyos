@@ -20,35 +20,41 @@ uint16_t MAXWINDOW   = 10000;
 
 // RTO constants
 const uint16_t RTO_STARTVALUE = 3000; // 3 sec // rfc 2988
-const uint8_t  K     = 4;
-const uint8_t  ALPHA = 8; // ALPHA = 1/alpha
-const uint8_t  BETA  = 4; // BETA  = 1/beta
 
 // RTO calculation (RFC 2988)
-static uint32_t calculateRTO(tcpConnection_t* connection, uint32_t rtt)
+// Variables: RTO  = retransmission timeout,   RTT    = round-trip time,
+//            SRTT = smoothed round-trip time, RTTVAR = round-trip time variation
+//
+static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
 {
+    uint32_t srtt, rttvar;
+
 	if (connection->rto == RTO_STARTVALUE)
 	{
 		// first RTT measurement R (in msec): SRTT <- R	and RTTVAR <- R/2
-		connection->srtt   = rtt;
-		connection->rttvar = rtt/2;		
+		srtt   = rtt;
+		rttvar = rtt/2;
 	}
 	else
 	{
-		// subsequent RTT measurement R': RTTVAR <- (1 - beta) * RTTVAR + beta * |SRTT - R'|
-		connection->rttvar = connection->rttvar + (abs(connection->srtt - rtt) / BETA) -
-		                    (connection->rttvar + (abs(connection->srtt - rtt) / BETA) / BETA);
+	    const uint8_t  ALPHA = 8; // ALPHA = 1/alpha
+        const uint8_t  BETA  = 4; // BETA  = 1/beta
 
-		// SRTT <- (1 - alpha) * SRTT + alpha * R' 
-		connection->srtt = connection->srtt + rtt / ALPHA - (connection->srtt + rtt / ALPHA) / ALPHA;
+		// subsequent RTT measurement R': RTTVAR <- (1 - beta) * RTTVAR + beta * |SRTT - R'|
+		rttvar = rttvar + (abs(srtt - rtt) / BETA) -
+		                    (rttvar + (abs(srtt - rtt) / BETA) / BETA);
+
+		// SRTT <- (1 - alpha) * SRTT + alpha * R'
+		srtt = srtt + rtt / ALPHA - (srtt + rtt / ALPHA) / ALPHA;
 	}
-    
+
 	//     RTO <- SRTT + max (G, K*RTTVAR) where K = 4.
-    connection->rto = connection->srtt + max( 1000/timer_getFrequency(), K*connection->rttvar );
-    
-	//     if it is less than 1 second then the RTO SHOULD be rounded up to 1 second. 
-    connection->rto = max(connection->rto, 1000); // msec
-	return connection->rto;
+	//     If it is less than 1 second then the RTO SHOULD be rounded up to 1 second.
+    connection->rto = max( srtt + /* max( 1000/timer_getFrequency(), */ 4 * rttvar /* ) */, 1000);
+
+    // A maximum value MAY be placed on RTO provided it is at least 60 seconds.
+    if (connection->rto > 60000)
+        connection->rto = 60000;
 }
 
 static const char* const tcpStates[] =
@@ -174,8 +180,8 @@ tcpConnection_t* tcp_createConnection()
     connection->ID              = getConnectionID();
     connection->TCP_PrevState   = CLOSED;
     connection->TCP_CurrState   = CLOSED;
-	connection->rto             = RTO_STARTVALUE; // for first calculation 
-	connection->tcb.retrans     = false; 
+	connection->rto             = RTO_STARTVALUE; // for first calculation
+	connection->tcb.retrans     = false;
 
     list_Append(tcpConnections, connection);
     textColor(TEXT);
@@ -266,9 +272,38 @@ void tcp_close(tcpConnection_t* connection)
     }
 }
 
+static void tcp_send_ACK(tcpConnection_t* connection, tcpPacket_t* tcp, bool set_SND_UNA)
+{
+    if (set_SND_UNA)
+    {
+        connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
+    }
+
+    connection->tcb.RCV.WND = ntohs(tcp->window);
+    connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
+    connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+    connection->tcb.SEG.CTL = ACK_FLAG;
+    tcp_send(connection, 0, 0);
+}
+
+static void tcp_send_FIN(tcpConnection_t* connection, tcpPacket_t* tcp, bool set_SND_UNA)
+{
+    if (set_SND_UNA)
+    {
+        connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
+    }
+
+    connection->tcb.RCV.WND = ntohs(tcp->window);
+    connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
+    connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+    connection->tcb.SEG.CTL = FIN_FLAG;
+    tcp_send(connection, 0, 0);
+}
+
 // This function has to be checked intensively!!!
 // cf. http://www.systems.ethz.ch/education/past-courses/fs10/operating-systems-and-networks/material/TCP-Spec.pdf
-
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length)
 {
     textColor(HEADLINE);
@@ -369,12 +404,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else if (tcp->SYN && tcp->ACK)  // SYN ACK
             {
-                connection->tcb.RCV.WND = ntohs(tcp->window);
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
-                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-                connection->tcb.SEG.CTL = ACK_FLAG;
-                tcp_send(connection, 0, 0);
+                tcp_send_ACK(connection, tcp, false);
                 connection->TCP_CurrState = ESTABLISHED;
                 event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
             }
@@ -425,13 +455,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     tcpOut_t* outPacket = e->data;
                     if ( ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber)) && (outPacket->segment.LEN > 0))
                     {
-                         if(outPacket->acknowledged == false)
+                         if(outPacket->time_ms_acknowledged == 0) // not acknowledged
                          {
-                             outPacket->time_ms_acknowledged = timer_getMilliseconds();
-                             outPacket->acknowledged = true;
+                             outPacket->time_ms_acknowledged = timer_getMilliseconds(); // acknowledged
                              outPacket->remoteAck = ntohl(tcp->acknowledgmentNumber);
 
-							 // rto
+							 // retransmission timeout (RTO)
 							 if (outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN) == 0)
 							 {
 								 calculateRTO(connection, outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
@@ -443,12 +472,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
 
                 connection->tcb.SND.WND -= tcpDataLength;
+
                 connection->tcb.SEG.SEQ =  connection->tcb.SND.NXT;
                 connection->tcb.SEG.ACK =  connection->tcb.RCV.NXT;
                 connection->tcb.SEG.LEN =  0; // send no data
                 connection->tcb.SEG.WND =  connection->tcb.SND.WND;
                 connection->tcb.SEG.CTL =  ACK_FLAG;
-                // connection->tcb.SND.WND = STARTWINDOW; // HACK TO FREE SND.WND: we deliver direct to user-app.
 
                 if (tcpDataLength)
                 {
@@ -508,58 +537,28 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else if (tcp->FIN && !tcp->ACK) // FIN
             {
-                connection->tcb.RCV.WND = ntohs(tcp->window);
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
-                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
-                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-                connection->tcb.SEG.CTL = ACK_FLAG;
-                tcp_send(connection, 0, 0);
+                tcp_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = CLOSE_WAIT;
             }
             else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
-                connection->tcb.RCV.WND = ntohs(tcp->window);
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
-                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
-                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-                connection->tcb.SEG.CTL = ACK_FLAG;
-                tcp_send(connection, 0, 0);
+                tcp_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = TIME_WAIT; // CLOSED ??
-
-                /// TEST
-                delay(100000);
                 tcp_deleteConnection(connection);
-                /// TEST
             }
             break;
 
         case FIN_WAIT_1:
             if (tcp->FIN && !tcp->ACK) // FIN
             {
-                connection->tcb.RCV.WND = ntohs(tcp->window);
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
-                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-                connection->tcb.SEG.CTL = ACK_FLAG;
-                tcp_send(connection, 0, 0);
+                tcp_send_ACK(connection, tcp, false);
                 connection->TCP_CurrState = CLOSING;
             }
             else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
-                connection->tcb.RCV.WND = ntohs(tcp->window);
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
-                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
-                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-                connection->tcb.SEG.CTL = ACK_FLAG;
-                tcp_send(connection, 0, 0);
+                tcp_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = TIME_WAIT;
-                /// TEST
-                delay(100000);
                 tcp_deleteConnection(connection);
-                /// TEST
             }
             else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
@@ -570,17 +569,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         case FIN_WAIT_2:
             if (tcp->FIN && !tcp->ACK) // FIN
             {
-                connection->tcb.RCV.WND = ntohs(tcp->window);
-                connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
-                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-                connection->tcb.SEG.CTL = ACK_FLAG;
-                tcp_send(connection, 0, 0);
+                tcp_send_ACK(connection, tcp, false);
                 connection->TCP_CurrState = TIME_WAIT;
-                /// TEST
-                delay(100000);
                 tcp_deleteConnection(connection);
-                /// TEST
             }
             break;
 
@@ -588,10 +579,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = TIME_WAIT;
-                /// TEST
-                delay(100000);
                 tcp_deleteConnection(connection);
-                /// TEST
             }
             break;
 
@@ -602,14 +590,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             break;
 
         case CLOSE_WAIT:
-            // send FIN                   NEW NEW NEW              CHECK CHECK CHECK
-            connection->tcb.RCV.WND = ntohs(tcp->window);
-            connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
-            connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
-            connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-            connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-            connection->tcb.SEG.CTL = FIN_FLAG;
-            tcp_send(connection, 0, 0);
+            tcp_send_FIN(connection, tcp, true);
             connection->TCP_CurrState = LAST_ACK;
             break;
 
@@ -628,11 +609,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
 {
+    // CHECK: to be deleted
     if (connection->TCP_CurrState == ESTABLISHED && connection->tcb.retrans == false)
     {
         connection->tcb.SEG.SEQ = connection->tcb.SND.NXT; // CHECK
     }
-
+    
     tcpFlags flags     = connection->tcb.SEG.CTL;
     uint32_t seqNumber = connection->tcb.SEG.SEQ;
     uint32_t ackNumber = connection->tcb.SEG.ACK;
@@ -722,7 +704,7 @@ uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
     {
         count++;
         tcpOut_t* outPacket = e->data;
-        if (outPacket->acknowledged)
+        if (outPacket->time_ms_acknowledged) // acknowledged
         {
             printf("\nID %u  seq %u  len %u  acked by %u (diff: %u)  RTT=%u ms RTO=%u ms",
                 connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN, outPacket->remoteAck,
@@ -744,9 +726,9 @@ uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
             {
                 putch( ((char*)(outPacket->data))[i] );
             }
-        }		
-		
-		if (outPacket->acknowledged) // delete acknowledged list members 
+        }
+
+		if (outPacket->time_ms_acknowledged) // delete acknowledged list members
 		{
 			list_Delete(connection->outBuffer, e->data);
 		}
@@ -758,13 +740,15 @@ uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 				printf("\nretransmission done for seg=%u! RTO will be doubled afterwards.", outPacket->segment.SEQ);
 				connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
                 connection->tcb.SEG.ACK =  outPacket->segment.ACK;
-                connection->tcb.SEG.LEN =  outPacket->segment.LEN; 
+                connection->tcb.SEG.LEN =  outPacket->segment.LEN;
                 connection->tcb.SEG.CTL =  ACK_FLAG;
 				connection->tcb.retrans = true;
 				tcp_send(connection, outPacket->data, connection->tcb.SEG.LEN);
 				outPacket->time_ms_transmitted = timer_getMilliseconds();
 				connection->tcb.retrans = false;
 				connection->rto *= 2;
+				if (connection->rto > 60000)
+                    connection->rto = 60000;
 			}
 			else
 			{
@@ -868,7 +852,6 @@ void tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
     Out->time_ms_transmitted  = timer_getMilliseconds();
 
     Out->time_ms_acknowledged = 0; // not acknowledged
-    Out->acknowledged = false;     // not acknowledged
     list_Append(connection->outBuffer, Out); // data to be acknowledged ==> OutBuffer // CHECK TCP PROCESS
 }
 

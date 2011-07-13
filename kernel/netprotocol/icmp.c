@@ -60,6 +60,8 @@ void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
                 textColor(TEXT);
             }
             break;
+
+      #ifdef _ICMP_DEBUG_
         case ICMP_DESTINATION_UNREACHABLE:
             textColor(ERROR);
             printf("Destination unreachable - code %u", rec->code);
@@ -134,6 +136,8 @@ void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
         case 6:
             printf("Alternate Host Address");
             break;
+      #endif
+
         case ICMP_ECHO_REQUEST:
         {
             textColor(HEADLINE);
@@ -159,6 +163,8 @@ void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
             ipv4_send(adapter, (void*)icmp, sizeof(icmpheader_t) + icmp_data_length, sourceIP, 1);
             break;
         }
+
+      #ifdef _ICMP_DEBUG_
         case ICMP_ROUTER_ADVERTISEMENT:
             printf("Router Advertisement");
             break;
@@ -247,6 +253,7 @@ void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
         case ICMP_SEAMOBY:
             printf("ICMP for experimental mobility protocols such as Seamoby [RFC4065]");
             break;
+     #endif
         default:
             break;
     }

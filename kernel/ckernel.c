@@ -3,32 +3,38 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
-#include "timer.h"
-#include "time.h"
-#include "kheap.h"
-#include "filesystem/initrd.h"
-#include "storage/flpydsk.h"
-#include "mouse.h"
-#include "todo_list.h"
-#include "syscall.h"
-#include "cdi.h"
-#include "video/vbe.h"
-#include "irq.h"
-#include "serial.h"
-#include "cpu.h"
-#include "descriptor_tables.h"
-#include "power_management.h"
-#include "task.h"
-#include "elf.h"
-#include "keyboard.h"
-#include "network\network.h"
-#include "netprotocol/icmp.h"
-#include "netprotocol/udp.h"
-#include "netprotocol/tcp.h"
+#include "util.h"               // sti, memset, strcmp, strlen, rdtsc, ...
+
+#include "cpu.h"                // cpu_analyze
+#include "timer.h"              // timer_install, timer_getSeconds, sleepMilliSeconds
+#include "time.h"               // getCurrentDateAndTime
+
+#include "keyboard.h"           // keyboard_install, KEY_...
+#include "mouse.h"              // mouse_install
+#include "video/vbe.h"          // bootscreen, vbe_bootscreen
+
+#include "serial.h"             // serial_init
+#include "cdi.h"                // cdi_init
+
+#include "descriptor_tables.h"  // idt_install, gdt_install
+#include "power_management.h"   // pm_install, pm_log
+#include "kheap.h"              // heap_install, malloc, free, logHeapRegions
+#include "filesystem/initrd.h"  // initrd_install, ramdisk_install, readdir_fs, read_fs, finddir_fs
+#include "storage/flpydsk.h"    // flpydsk_install
+
+#include "irq.h"                // isr_install
+#include "syscall.h"            // syscall_install
+#include "task.h"               // tasking_install & others
+#include "elf.h"                // elf_prepare
+#include "todo_list.h"          // todoList_execute
+
+// only for temporary tests     // TODO: implement user applications
+#include "netprotocol/icmp.h"   // send echo request (PING)
+#include "netprotocol/udp.h"    // udp_send (TEST)
+#include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.211 - Rev: 1057";
+const char* const version = "0.0.2.212 - Rev: 1058";
 
 // .bss
 extern uintptr_t _bss_start; // linker script

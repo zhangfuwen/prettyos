@@ -11,6 +11,7 @@
 
 void NetBIOS_Datagramm_Receive(network_adapter_t* adapter, NetBIOSDatagramHeader_t* NetBIOSdgm)
 {
+  #ifdef _NETBIOS_DEBUG_
     textColor(HEADLINE);
     printf("\nmessage type: ");
     textColor(TEXT);
@@ -33,6 +34,7 @@ void NetBIOS_Datagramm_Receive(network_adapter_t* adapter, NetBIOSDatagramHeader
     printf(" Len: %u",     ntohs(NetBIOSdgm->Length));
     printf(" Offset: %u",  ntohs(NetBIOSdgm->packetOffset));
     textColor(TEXT);
+  #endif
 }
 
 
