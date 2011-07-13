@@ -27,13 +27,11 @@ const uint16_t RTO_STARTVALUE = 3000; // 3 sec // rfc 2988
 //
 static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
 {
-    uint32_t srtt, rttvar;
-
-	if (connection->rto == RTO_STARTVALUE)
+    if (connection->rto == RTO_STARTVALUE)
 	{
 		// first RTT measurement R (in msec): SRTT <- R	and RTTVAR <- R/2
-		srtt   = rtt;
-		rttvar = rtt/2;
+		connection->srtt   = rtt;
+		connection->rttvar = rtt/2;
 	}
 	else
 	{
@@ -41,16 +39,16 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
         const uint8_t  BETA  = 4; // BETA  = 1/beta
 
 		// subsequent RTT measurement R': RTTVAR <- (1 - beta) * RTTVAR + beta * |SRTT - R'|
-		rttvar = rttvar + (abs(srtt - rtt) / BETA) -
-		                    (rttvar + (abs(srtt - rtt) / BETA) / BETA);
+		connection->rttvar = connection->rttvar + (abs(connection->srtt - rtt) / BETA) -
+		                    (connection->rttvar + (abs(connection->srtt - rtt) / BETA) / BETA);
 
 		// SRTT <- (1 - alpha) * SRTT + alpha * R'
-		srtt = srtt + rtt / ALPHA - (srtt + rtt / ALPHA) / ALPHA;
+		connection->srtt = connection->srtt + rtt / ALPHA - (connection->srtt + rtt / ALPHA) / ALPHA;
 	}
 
 	//     RTO <- SRTT + max (G, K*RTTVAR) where K = 4.
 	//     If it is less than 1 second then the RTO SHOULD be rounded up to 1 second.
-    connection->rto = max( srtt + /* max( 1000/timer_getFrequency(), */ 4 * rttvar /* ) */, 1000);
+    connection->rto = max( connection->srtt + /* max( 1000/timer_getFrequency(), */ 4 * connection->rttvar /* ) */, 1000);
 
     // A maximum value MAY be placed on RTO provided it is at least 60 seconds.
     if (connection->rto > 60000)
@@ -537,12 +535,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else if (tcp->FIN && !tcp->ACK) // FIN
             {
-                tcp_send_ACK(connection, tcp, true);
+                tcp_send_ACK(connection, tcp, false);
                 connection->TCP_CurrState = CLOSE_WAIT;
             }
             else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
-                tcp_send_ACK(connection, tcp, true);
+                tcp_send_ACK(connection, tcp, false);
                 connection->TCP_CurrState = TIME_WAIT; // CLOSED ??
                 tcp_deleteConnection(connection);
             }
@@ -556,7 +554,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
-                tcp_send_ACK(connection, tcp, true);
+                tcp_send_ACK(connection, tcp, false);
                 connection->TCP_CurrState = TIME_WAIT;
                 tcp_deleteConnection(connection);
             }
