@@ -16,19 +16,19 @@ typedef struct
     uint16_t destPort;
     uint32_t sequenceNumber;
     uint32_t acknowledgmentNumber;
-    uint8_t reserved   : 4;
-    uint8_t dataOffset : 4;                    // The number of 32 bit words in the TCP Header
+    uint8_t  reserved   : 4;
+    uint8_t  dataOffset : 4;                    // The number of 32 bit words in the TCP Header
 
     // Flags (6 Bit)
-    uint8_t FIN : 1;                           // No more data from sender
-    uint8_t SYN : 1;                           // Synchronize sequence numbers
-    uint8_t RST : 1;                           // Reset
-    uint8_t PSH : 1;                           // Push
-    uint8_t ACK : 1;                           // Acknowledgment
-    uint8_t URG : 1;                           // Urgent
+    uint8_t  FIN : 1;                           // No more data from sender
+    uint8_t  SYN : 1;                           // Synchronize sequence numbers
+    uint8_t  RST : 1;                           // Reset
+    uint8_t  PSH : 1;                           // Push
+    uint8_t  ACK : 1;                           // Acknowledgment
+    uint8_t  URG : 1;                           // Urgent
     // only shown in wireshark
-    uint8_t ECN : 1;                           // ECN (reserved)
-    uint8_t CWR : 1;                           // CWR (reserved)
+    uint8_t  ECN : 1;                           // ECN (reserved)
+    uint8_t  CWR : 1;                           // CWR (reserved)
 
     uint16_t window;
     uint16_t checksum;
@@ -59,13 +59,15 @@ typedef struct
     uint32_t IRS;   // Initial receive sequence number
 } tcpRcv_t;
 
-
 typedef struct
 {
-    tcpSend_t SND;
-    tcpRcv_t  RCV;
+    tcpSend_t    SND;
+    tcpRcv_t     RCV;
     tcpSegment_t SEG;   // information about segment to be sent next
-	bool retrans;
+	bool         retrans;
+	uint32_t     srtt;
+    uint32_t     rttvar;
+    uint32_t     rto;   // retransmission timeout
 } tcpTransmissionControlBlock_t;
 
 typedef struct
@@ -76,20 +78,17 @@ typedef struct
 
 typedef struct
 {
-    uint32_t ID;
-    tcpSocket_t localSocket;
-    tcpSocket_t remoteSocket;
-    struct network_adapter* adapter;
+    uint32_t                      ID;
+    tcpSocket_t                   localSocket;
+    tcpSocket_t                   remoteSocket;
+    struct network_adapter*       adapter;
     tcpTransmissionControlBlock_t tcb;
-    TCP_state TCP_PrevState;
-    TCP_state TCP_CurrState;
-    task_t* owner;
-    list_t* inBuffer;
-    list_t* outBuffer;
+    TCP_state                     TCP_PrevState;
+    TCP_state                     TCP_CurrState;
+    task_t*                       owner;
+    list_t*                       inBuffer;
+    list_t*                       outBuffer;
     bool passive; // Used to enable output of incoming packets in the kernel console
-	uint32_t srtt;
-    uint32_t rttvar;
-    uint32_t rto; // retransmission timeout
 } tcpConnection_t;
 
 typedef struct
