@@ -5,7 +5,9 @@
 
 #define PAGESIZE            0x1000  // size
 
-enum MEM_FLAGS {MEM_KERNEL = 0, MEM_PRESENT = 1, MEM_WRITE = 2, MEM_USER = 4};
+
+typedef enum {MEM_KERNEL = 0, MEM_PRESENT = 1, MEM_WRITE = 2, MEM_USER = 4} MEMFLAGS_t;
+
 
 // Memory Map
 typedef struct
@@ -29,22 +31,22 @@ typedef struct
     uint32_t     physAddr;
 } __attribute__((packed)) pageDirectory_t;
 
+
 extern pageDirectory_t* kernelPageDirectory;
 extern memoryMapEntry_t* memoryMapAdress;
 extern memoryMapEntry_t* memoryMapEnd; // Read from multiboot structure
 
-void paging_switch(pageDirectory_t* pd);
+
 uint32_t paging_install();
-
-bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t flags);
-void pagingFree (pageDirectory_t* pd, void* virtAddress, uint32_t size);
-
-pageDirectory_t* paging_createUserPageDirectory();
-void paging_destroyUserPageDirectory(pageDirectory_t* pd);
-
-void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages);
+void     paging_analyzeBitTable();
+bool     paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAGS_t flags);
+void     paging_free (pageDirectory_t* pd, void* virtAddress, uint32_t size);
+void*    paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages);
 uint32_t paging_getPhysAddr(void* virtAddress);
 
-void paging_analyzeBitTable();
+pageDirectory_t* paging_createUserPageDirectory();
+void             paging_destroyUserPageDirectory(pageDirectory_t* pd);
+void             paging_switch(pageDirectory_t* pd);
+
 
 #endif

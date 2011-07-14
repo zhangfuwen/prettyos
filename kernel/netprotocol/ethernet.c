@@ -72,37 +72,34 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
   #endif
 
     textColor(TEXT);
-    if (((eth->type_len[0] << 8) | eth->type_len[1]) > 1500)
+    if(ntohs(eth->type_len) > 1500) // Ethernet 2
     {
         // cf. http://en.wikipedia.org/wiki/EtherType
         // and http://www.cavebear.com/archive/cavebear/Ethernet/type.html
 
         // now we look for IPv4, IPv6, or ARP
-        if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x00)) // IPv4
+        switch(ntohs(eth->type_len))
         {
-            ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t));
+            case 0x0800: // IPv4
+                ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t));
+                break;
+            case 0x0806: // ARP
+                arp_received(adapter, (void*)(eth+1));
+                break;
+            case 0x86DD: // IPv6
+              #ifdef _NETWORK_DATA_
+                printf("Protocol type: IPv6. Currently, not further analyzed. ");
+              #endif
+                // TODO analyze IPv6
+                break;
+            default:
+              #ifdef _NETWORK_DATA_
+                printf("Protocol type: Neither IP nor ARP.");
+              #endif
+                break;
         }
-
-        else if ((eth->type_len[0] == 0x86) && (eth->type_len[1] == 0xDD)) // IPv6
-        {
-          #ifdef _NETWORK_DATA_
-            printf("Protocol type: IPv6. Currently, not further analyzed. ");
-          #endif
-            // TODO analyze IPv6
-        }
-
-        else if ((eth->type_len[0] == 0x08) && (eth->type_len[1] == 0x06)) // ARP
-        {
-            arp_received(adapter, (void*)(eth+1));
-        }
-        else
-        {
-          #ifdef _NETWORK_DATA_
-            printf("Protocol type: Neither IP nor ARP.");
-          #endif
-        }
-    } // end of ethernet 2
-    else
+    }
+    else // Ethernet 1
     {
       #ifdef _NETWORK_DATA_
         printf("Ethernet 1. ");
@@ -134,7 +131,7 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
     memcpy(packet+1, data, length);
     memcpy(packet->recv_mac, MAC, 6);
     memcpy(packet->send_mac, adapter->MAC, 6);
-    *(uint16_t*)packet->type_len = htons(type);
+    packet->type_len = htons(type);
 
     bool retVal = network_sendPacket(adapter, (void*)packet, length + sizeof(ethernet_t));
 

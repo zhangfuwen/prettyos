@@ -1,40 +1,42 @@
 /*
-*  license and disclaimer for the use of this source code as per statement below
-*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
-*/
+ *  license and disclaimer for the use of this source code as per statement below
+ *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+ */
 
+// Utilities
 #include "util.h"               // sti, memset, strcmp, strlen, rdtsc, ...
+#include "todo_list.h"          // todoList_execute
 
+// Internal devices
 #include "cpu.h"                // cpu_analyze
 #include "timer.h"              // timer_install, timer_getSeconds, sleepMilliSeconds
 #include "time.h"               // getCurrentDateAndTime
+#include "descriptor_tables.h"  // idt_install, gdt_install
+#include "irq.h"                // isr_install
+#include "power_management.h"   // pm_install, pm_log
 
+// Base system
+#include "kheap.h"              // heap_install, malloc, free, logHeapRegions
+#include "task.h"               // tasking_install & others
+#include "elf.h"                // elf_prepare
+#include "syscall.h"            // syscall_install
+
+// External devices
+#include "cdi.h"                // cdi_init
 #include "keyboard.h"           // keyboard_install, KEY_...
 #include "mouse.h"              // mouse_install
-#include "video/vbe.h"          // bootscreen, vbe_bootscreen
-
 #include "serial.h"             // serial_init
-#include "cdi.h"                // cdi_init
-
-#include "descriptor_tables.h"  // idt_install, gdt_install
-#include "power_management.h"   // pm_install, pm_log
-#include "kheap.h"              // heap_install, malloc, free, logHeapRegions
+#include "video/vbe.h"          // bootscreen, vbe_bootscreen
 #include "filesystem/initrd.h"  // initrd_install, ramdisk_install, readdir_fs, read_fs, finddir_fs
 #include "storage/flpydsk.h"    // flpydsk_install
 
-#include "irq.h"                // isr_install
-#include "syscall.h"            // syscall_install
-#include "task.h"               // tasking_install & others
-#include "elf.h"                // elf_prepare
-#include "todo_list.h"          // todoList_execute
-
-// only for temporary tests     // TODO: implement user applications
+// Network. Only for temporary tests. TODO: implement as user applications
 #include "netprotocol/icmp.h"   // send echo request (PING)
 #include "netprotocol/udp.h"    // udp_send (TEST)
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.215 - Rev: 1061";
+const char* const version = "0.0.2.216 - Rev: 1062";
 
 // .bss
 extern uintptr_t _bss_start; // linker script

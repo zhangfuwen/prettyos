@@ -216,7 +216,7 @@ char getch()
     while(ev != EVENT_TEXT_ENTERED)
     {
         if(ev == EVENT_NONE)
-            scheduler_blockCurrentTask(BL_EVENT, (void*)EVENT_TEXT_ENTERED, 0);
+            waitForEvent(0);
         ev = event_poll(&ret, 1, EVENT_NONE);
     }
     return(ret);

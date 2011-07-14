@@ -40,17 +40,19 @@ struct task
     uint8_t          attrib;  // Color
 };
 
+
 extern volatile task_t* FPUTask; // fpu.c
 extern task_t           kernelTask;
 extern bool             task_switching;
 extern volatile task_t* currentTask;
+
 
 void     tasking_install();
 task_t*  create_task (pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[]); // Creates task using kernels console
 task_t*  create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName); // Creates task with own console
 task_t*  create_thread (void(*entry)()); // Creates thread using currentTasks console
 task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
-task_t*  create_vm86_task(void(*entry)());
+task_t* create_vm86_task(pageDirectory_t* pd, void(*entry)());
 void     switch_context();
 void     task_saveState(uint32_t esp);
 uint32_t task_switch(task_t* newTask);
@@ -60,5 +62,6 @@ bool     waitForTask(task_t* blockingTask, uint32_t timeout); // Returns false i
 int32_t  getpid();
 void*    task_grow_userheap(uint32_t increase);
 void     task_log(task_t* t);
+
 
 #endif

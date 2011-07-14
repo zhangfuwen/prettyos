@@ -70,7 +70,6 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
 
         retVal = 0;
     }
-    scheduler_unblockEvent(BL_EVENT, (void*)type);
     return retVal;
 }
 
@@ -132,6 +131,16 @@ event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
     element_t* elem = list_GetElement(eventQueue->list, i);
     if(elem == 0) return(0);
     return(elem->data);
+}
+
+bool event_unlockTask(void* data)
+{
+    return(((event_queue_t*)data)->num > 0);
+}
+
+bool waitForEvent(uint32_t timeout)
+{
+    return(scheduler_blockCurrentTask(BL_EVENT, currentTask->eventQueue, timeout));
 }
 
 void event_enable(bool b)

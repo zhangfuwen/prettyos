@@ -1,5 +1,5 @@
-#ifndef IPTCPSTACK_H
-#define IPTCPSTACK_H
+#ifndef ETHERNET_H
+#define ETHERNET_H
 
 #include "network/network.h"
 
@@ -8,7 +8,7 @@ typedef struct
 {
     uint8_t recv_mac[6];
     uint8_t send_mac[6];
-    uint8_t type_len[2]; // Type(Ethernet 2) or Length(Ethernet 1)
+    uint16_t type_len; // Type(Ethernet 2) or Length(Ethernet 1)
 } __attribute__((packed)) ethernet_t;
 
 

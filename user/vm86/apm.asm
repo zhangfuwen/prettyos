@@ -1,7 +1,7 @@
 [map symbols documentation/apm.map] ; use this for ckernel.c addresses
 [bits 16]
 
-org 0x200
+org 0x100
 
 CheckAPM:
 	mov ah, 0x53

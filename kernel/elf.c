@@ -165,14 +165,14 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
         #endif
 
         // Read flags from header
-        uint32_t memFlags = MEM_USER;
+        MEMFLAGS_t memFlags = MEM_USER;
         if(ph[i].flags & PF_W)
             memFlags |= MEM_WRITE;
 
         // Allocate code area for the user program
         globalUserProgAddr = (void*)(ph[i].vaddr);
         globalUserProgSize = alignUp(ph[i].memsz,PAGESIZE);
-        if (!pagingAlloc(pd, globalUserProgAddr, globalUserProgSize, memFlags))
+        if (!paging_alloc(pd, globalUserProgAddr, globalUserProgSize, memFlags))
         {
             return(0);
         }

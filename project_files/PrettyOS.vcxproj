@@ -33,6 +33,7 @@ clean.bat</NMakeCleanCommandLine>
     <NMakeIncludeSearchPath>$(SolutionDir)\..\kernel</NMakeIncludeSearchPath>
     <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
     <IncludePath />
+    <SourcePath>..\kernel</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <BuildLog>
@@ -126,6 +127,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\paging.h" />
     <ClInclude Include="..\kernel\pci.h" />
     <ClInclude Include="..\kernel\pciVendProdList.h" />
+    <ClInclude Include="..\kernel\pe.h" />
     <ClInclude Include="..\kernel\power_management.h" />
     <ClInclude Include="..\kernel\scheduler.h" />
     <ClInclude Include="..\kernel\serial.h" />
@@ -207,6 +209,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\network\rtl8168.c" />
     <ClCompile Include="..\kernel\paging.c" />
     <ClCompile Include="..\kernel\pci.c" />
+    <ClCompile Include="..\kernel\pe.c" />
     <ClCompile Include="..\kernel\power_management.c" />
     <ClCompile Include="..\kernel\scheduler.c" />
     <ClCompile Include="..\kernel\serial.c" />

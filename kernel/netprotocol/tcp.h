@@ -64,8 +64,8 @@ typedef struct
     tcpSend_t    SND;
     tcpRcv_t     RCV;
     tcpSegment_t SEG;   // information about segment to be sent next
-	bool         retrans;
-	uint32_t     srtt;
+    bool         retrans;
+    uint32_t     srtt;
     uint32_t     rttvar;
     uint32_t     rto;   // retransmission timeout
 } tcpTransmissionControlBlock_t;
@@ -81,7 +81,7 @@ typedef struct
     uint32_t                      ID;
     tcpSocket_t                   localSocket;
     tcpSocket_t                   remoteSocket;
-    struct network_adapter*       adapter;
+    network_adapter_t*            adapter;
     tcpTransmissionControlBlock_t tcb;
     TCP_state                     TCP_PrevState;
     TCP_state                     TCP_CurrState;

@@ -24,33 +24,33 @@ int main()
         switch(ev)
         {
             case EVENT_NONE:
-                //wait(BL_EVENT, (void*)EVENT_TEXT_ENTERED, 0); // TODO: Why does it cause problems?
+                waitForEvent(0);
                 break;
             case EVENT_TCP_CONNECTED:
-			{
+            {
                 printf("ESTABLISHED.\n");
                 char* pStr = "GET /OS_Dev/PrettyOS.htm HTTP/1.1\r\nHost: www.henkessoft.de\r\nConnection: close\r\n\r\n";
                 tcp_send(connection, pStr, strlen(pStr));
                 break;
-			}
+            }
             case EVENT_TCP_RECEIVED:
-			{
+            {
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
                 printf("\npacket received. Length = %u\n:%s", header->length, data);
                 break;
-			}
+            }
             case EVENT_KEY_DOWN:
-			{
+            {
                 KEY_t* key = (void*)buffer;
                 if(*key == KEY_ESC)
                 {
                     tcp_close(connection);
                     return(0);
-				}
-				break;
-			}
+                }
+                break;
+            }
             default:
                 break;
         }

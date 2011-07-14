@@ -24,7 +24,7 @@ blockerType_t blocker[] =
     {&irq_unlockTask},      // BL_INTERRUPT. Interrupts seem to be good for event based handling, but they are not, because we count interrupts occuring before the block was set.
     {0},                    // BL_TASK
     {&todoList_unlockTask}, // BL_TODOLIST
-    {0},                    // BL_EVENT
+    {&event_unlockTask},    // BL_EVENT
     {0}                     // BL_NETPACKET
 };
 

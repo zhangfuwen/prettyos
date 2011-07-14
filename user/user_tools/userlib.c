@@ -93,6 +93,13 @@ FS_ERROR partition_format(const char* path, FS_t type, const char* name)
     return ret;
 }
 
+bool waitForEvent(uint32_t timeout)
+{
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(37), "b"(timeout));
+    return ret;
+}
+
 void event_enable(bool b)
 {
     enabledEvents = b;
@@ -158,7 +165,7 @@ char getchar()
     while(ev != EVENT_TEXT_ENTERED)
     {
         if(ev == EVENT_NONE)
-            wait(BL_EVENT, (void*)EVENT_TEXT_ENTERED, 0);
+            waitForEvent(0);
         ev = event_poll(&ret, 1, enabledEvents?EVENT_TEXT_ENTERED:EVENT_NONE);
     }
     return(ret);

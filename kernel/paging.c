@@ -32,7 +32,7 @@ void paging_switch(pageDirectory_t* pd)
 {
   #ifdef _PAGING_DIAGNOSIS_
     textColor(MAGENTA);
-    printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X",pd, pd->physAddr);
+    printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X", pd, pd->physAddr);
     textColor(TEXT);
   #endif
     __asm__ volatile("mov %0, %%cr3" : : "r" (pd->physAddr));
@@ -65,24 +65,6 @@ uint32_t paging_install()
             addr += PAGESIZE;
         }
     }
-
-    // Set the page which covers the video area (0xB8000) to writeable
-    // kernelPageDirectory->codes[0]               |= MEM_USER | MEM_WRITE;
-    // kernelPageDirectory->tables[0]->pages[0xB8] |= MEM_USER | MEM_WRITE; // 184 * 0x1000 = 0xB8000
-
-    // --------------------- VM86 Pages -------------------------------------------------------------------------------
-    kernelPageDirectory->codes[0] |= MEM_USER | MEM_WRITE;
-
-    for (uint32_t i=0; i<160; ++i) // 1045h for VMWare, real PC needs 9FC3Fh // ??
-    {
-        kernelPageDirectory->tables[0]->pages[0x00+i] |= MEM_USER | MEM_WRITE; // 0 * 0x1000 = 0x0000
-    }
-
-    for (uint32_t i=0; i<96; ++i)
-    {
-        kernelPageDirectory->tables[0]->pages[0xA0+i] |= MEM_USER | MEM_WRITE; // 0xA0 * 0x1000 = 0xA0000 (until 0xFFFFF)
-    }
-    // --------------------- VM86 Pages -------------------------------------------------------------------------------
 
     // Setup the page tables for the kernel heap (3GB-4GB), unmapped
     pageTable_t* heap_pts = malloc(256*sizeof(pageTable_t), PAGESIZE, "pag-PTheap");
@@ -269,7 +251,7 @@ static void physMemFree(uint32_t addr)
     bittable[bitnr/32] &= ~BIT(bitnr%32);
 }
 
-bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t flags)
+bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAGS_t flags)
 {
     // "virtAddress" and "size" must be page-aligned
     ASSERT(((uint32_t)virtAddress) % PAGESIZE == 0);
@@ -293,7 +275,7 @@ bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t
         if (physAddress == 0)
         {
             // Undo the allocations and return an error
-            pagingFree(pd, virtAddress, done*PAGESIZE);
+            paging_free(pd, virtAddress, done*PAGESIZE);
             return false;
         }
 
@@ -308,14 +290,14 @@ bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t
             {
                 // Undo the allocations and return an error
                 physMemFree(physAddress);
-                pagingFree(pd, virtAddress, done*PAGESIZE);
+                paging_free(pd, virtAddress, done*PAGESIZE);
                 return false;
             }
             memset(pt, 0, sizeof(pageTable_t));
             pd->tables[pagenr/1024] = pt;
 
             // Set physical address and flags
-            pd->codes[pagenr/1024] = paging_getPhysAddr(pt) | MEM_PRESENT | MEM_WRITE | (flags&MEM_USER? MEM_USER : 0);
+            pd->codes[pagenr/1024] = paging_getPhysAddr(pt) | MEM_PRESENT | MEM_WRITE | flags;
         }
 
         // Setup the page
@@ -323,13 +305,13 @@ bool pagingAlloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, uint32_t
 
         if (flags & MEM_USER)
         {
-            kdebug(3, "pagenumber now allocated: %u physAddress: %Xh\n",pagenr,physAddress);
+            kdebug(3, "pagenumber now allocated: %u physAddress: %Xh\n", pagenr, physAddress);
         }
     }
     return true;
 }
 
-void pagingFree(pageDirectory_t* pd, void* virtAddress, uint32_t size)
+void paging_free(pageDirectory_t* pd, void* virtAddress, uint32_t size)
 {
     // "virtAddress" and "size" must be page-aligned
     ASSERT(((uint32_t)virtAddress) % PAGESIZE == 0);

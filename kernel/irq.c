@@ -179,7 +179,7 @@ static void GPF(registers_t* r) // -> VM86
 {
     if (r->eflags & 0x20000) // VM bit - it is a VM86-task
     {
-        if (!vm86sensitiveOpcodehandler(r))
+        if (!vm86_sensitiveOpcodehandler(r))
         {
             textColor(0x0C);
             printf("\nvm86: sensitive opcode error\n");

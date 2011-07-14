@@ -8,6 +8,7 @@
 #include "video/video.h"
 #include "video/console.h"
 #include "task.h"
+#include "vm86.h"
 
 
 // No power management
@@ -52,19 +53,22 @@ static bool nopm_action(PM_STATES state)
 extern uintptr_t apm_com_start;
 extern uintptr_t apm_com_end;
 // This values are hardcoded adresses from documentation/apm.map
-#define APM_CHECK    ((void*)0x200)
-#define APM_INSTALL  ((void*)0x22A)
-#define APM_SETSTATE ((void*)0x282)
+#define APM_CHECK    ((void*)0x100)
+#define APM_INSTALL  ((void*)0x12A)
+#define APM_SETSTATE ((void*)0x182)
+
+static pageDirectory_t* apm_pd;
 
 bool apm_install()
 {
-    memcpy((void*)0x200, &apm_com_start, (uintptr_t)&apm_com_end - (uintptr_t)&apm_com_start);
+    apm_pd = paging_createUserPageDirectory();
+    vm86_initPageDirectory(apm_pd, (void*)0x100, &apm_com_start, (uintptr_t)&apm_com_end - (uintptr_t)&apm_com_start);
 
     textColor(0x03);
     printf("\nAPM: ");
     textColor(TEXT);
     // Check for APM
-    waitForTask(create_vm86_task(APM_CHECK), 0);
+    waitForTask(create_vm86_task(apm_pd, APM_CHECK), 0);
     if(*((uint8_t*)0x1300) != 0) // Error
     {
         printf("\nNot available.");
@@ -73,7 +77,7 @@ bool apm_install()
     printf("\nVersion: %u.%u, Control string: %c%c, Flags: %u.", *((uint8_t*)0x1302), *((uint8_t*)0x1301), *((uint8_t*)0x1304), *((uint8_t*)0x1303), *((uint16_t*)0x1305));
 
     // Activate APM
-    waitForTask(create_vm86_task(APM_INSTALL), 0);
+    waitForTask(create_vm86_task(apm_pd, APM_INSTALL), 0);
     switch(*((uint8_t*)0x1300)) {
         case 0:
             printf("\nSuccessfully activated.");
@@ -100,11 +104,11 @@ static bool apm_action(PM_STATES state)
     {
         case PM_STANDBY:
             *((uint16_t*)0x1300) = 2; // Suspend-Mode (turns more hardware off than standby)
-            waitForTask(create_vm86_task(APM_SETSTATE), 0);
+            waitForTask(create_vm86_task(apm_pd, APM_SETSTATE), 0);
             return(*((uint16_t*)0x1300) != 0);
         case PM_SOFTOFF:
             *((uint16_t*)0x1300) = 3;
-            waitForTask(create_vm86_task(APM_SETSTATE), 0);
+            waitForTask(create_vm86_task(apm_pd, APM_SETSTATE), 0);
             return(*((uint16_t*)0x1300) != 0);
         default: // Every other state is unreachable with APM
             return(false);

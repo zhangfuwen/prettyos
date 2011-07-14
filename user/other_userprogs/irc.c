@@ -28,7 +28,7 @@ int main()
         switch(ev)
         {
             case EVENT_NONE:
-                //wait(BL_EVENT, (void*)EVENT_TEXT_ENTERED, 0); // TODO: Why does it cause problems?
+                waitForEvent(0);
                 break;
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
@@ -42,7 +42,10 @@ int main()
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
-                printf("\npacket received. Length = %u\n:%s", header->length, data);
+                printf("\nPacket received (Length = %u):\n", header->length);
+                textColor(0x06);
+                puts(data);
+                textColor(0x0F);
                 for (size_t i = 0; i < header->length; i++)
                 {
                     if (strncmp(data+i, "PING", 4)==0)

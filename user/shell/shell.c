@@ -92,6 +92,7 @@ int main()
         while (true)
         {
             union {char buffer[4]; KEY_t key;} buffer; // We are only interested in TEXT_ENTERED and KEY_DOWN events. They send 4 bytes at maximum
+            waitForEvent(0);
             EVENT_t ev = event_poll(buffer.buffer, 4, EVENT_NONE);
 
             switch(ev)
@@ -324,8 +325,6 @@ EVALUATION: // evaluation of entry
             }
             argv[j] = argstart;
 
-            argv[0] = formatPath(argv[0]);
-
             FS_ERROR error = execute(argv[0], argc, argv);
             switch(error)
             {
@@ -336,7 +335,10 @@ EVALUATION: // evaluation of entry
                     puts(" The path was malformed.\n");
                     break;
                 case CE_FILE_NOT_FOUND:
-                    puts(" File not found.\n");
+                    argv[0] = formatPath(argv[0]);
+                    error = execute(argv[0], argc, argv);
+                    if(error != CE_GOOD)
+                        puts(" File not found.\n");
                     break;
                 default:
                     printf(" File load was not successful. Error Code: %u\n", error);

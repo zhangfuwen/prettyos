@@ -9,6 +9,7 @@ int main()
 
     while (!keyPressed(KEY_ESC))
     {
+        waitForEvent(0);
         for (KEY_t key = KEY_A; key <= KEY_Z; key++)
         {
             if (keyPressed(key))

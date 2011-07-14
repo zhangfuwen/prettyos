@@ -7,6 +7,7 @@
 #include "util.h"
 #include "task.h"
 #include "paging.h"
+#include "vm86.h"
 #include "font.h"
 #include "timer.h"
 #include "gui.h"
@@ -30,6 +31,7 @@ position_t curPos = {0, 0};
 uint8_t paletteBitsPerColor = 0;
 
 // vm86
+static pageDirectory_t* vbe_pd;
 extern uintptr_t vidswtch_com_start;
 extern uintptr_t vidswtch_com_end;
 
@@ -62,14 +64,14 @@ void vbe_readVIB()
     *(char*)0x3401 = 'B';
     *(char*)0x3402 = 'E';
     *(char*)0x3403 = '2';
-    waitForTask(create_vm86_task(VM86_VGAINFOBLOCK), 0);
+    waitForTask(create_vm86_task(vbe_pd, VM86_VGAINFOBLOCK), 0);
     memcpy(&vgaIB, (void*)0x3400, sizeof(VgaInfoBlock_t));
 }
 
 void vbe_readMIB(uint16_t mode)
 {
     *(uint16_t*)0x3600 = mode;
-    waitForTask(create_vm86_task(VM86_MODEINFOBLOCK), 0);
+    waitForTask(create_vm86_task(vbe_pd, VM86_MODEINFOBLOCK), 0);
     memcpy(&mib, (void*)0x3600, sizeof(ModeInfoBlock_t));
 }
 
@@ -81,7 +83,7 @@ ModeInfoBlock_t* getCurrentMIB()
 void switchToVideomode(uint16_t mode)
 {
     *(uint16_t*)0x3600 = 0xC1FF&(0xC000|mode); // Bits 9-13 may not be set, bits 14-15 should be set always
-    waitForTask(create_vm86_task(VM86_SWITCH_TO_VIDEO), 0);
+    waitForTask(create_vm86_task(vbe_pd, VM86_SWITCH_TO_VIDEO), 0);
     vbe_readMIB(mode);
     setVideoMemory();
     if(!(mode&BIT(15))) // We clear the Videoscreen manually, because the VGA is not reliable
@@ -95,7 +97,7 @@ void switchToVideomode(uint16_t mode)
 
 void switchToTextmode()
 {
-    waitForTask(create_vm86_task(VM86_SWITCH_TO_TEXT), 0);
+    waitForTask(create_vm86_task(vbe_pd, VM86_SWITCH_TO_TEXT), 0);
     videomode = VM_TEXT;
     refreshUserScreen();
 }
@@ -104,12 +106,12 @@ void setDisplayStart(uint16_t xpos, uint16_t ypos)
 {
     *(uint16_t*)0x1800 = ypos;
     *(uint16_t*)0x1802 = xpos;
-    waitForTask(create_vm86_task(VM86_SETDISPLAYSTART), 0);
+    waitForTask(create_vm86_task(vbe_pd, VM86_SETDISPLAYSTART), 0);
 }
 
 uint32_t getDisplayStart()
 {
-    waitForTask(create_vm86_task(VM86_GETDISPLAYSTART), 0);
+    waitForTask(create_vm86_task(vbe_pd, VM86_GETDISPLAYSTART), 0);
     return (*(uint32_t*)0x1300);
     // [0x1300]; First Displayed Scan Line
     // [0x1302]; First Displayed Pixel in Scan Line
@@ -141,7 +143,7 @@ void Set_DAC_C(uint8_t PaletteColorNumber, uint8_t Red, uint8_t Green, uint8_t B
     {
         if(vgaIB.Capabilities[0] & BIT(0)) // VGA can handle palette with 8 bits per color -> Use it
         {
-            waitForTask(create_vm86_task(VM86_SET8BITPALETTE), 0);
+            waitForTask(create_vm86_task(vbe_pd, VM86_SET8BITPALETTE), 0);
             paletteBitsPerColor = 8;
         }
         else
@@ -676,7 +678,8 @@ void vbe_bootscreen()
         return;
     }
 
-    memcpy((void*)0x100, &vidswtch_com_start, (uintptr_t)&vidswtch_com_end - (uintptr_t)&vidswtch_com_start);
+    vbe_pd = paging_createUserPageDirectory();
+    vm86_initPageDirectory(vbe_pd, (void*)0x100, &vidswtch_com_start, (uintptr_t)&vidswtch_com_end - (uintptr_t)&vidswtch_com_start);
 
     bh_get = (BitmapHeader_t*)&bmp_start;
 

@@ -67,7 +67,7 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
 
     mutex_lock(mutex);
     // Enhance the memory
-    if (!pagingAlloc(kernelPageDirectory, heapEnd, size, MEM_KERNEL|MEM_WRITE))
+    if (!paging_alloc(kernelPageDirectory, heapEnd, size, MEM_KERNEL|MEM_WRITE))
     {
         mutex_unlock(mutex);
         return false;

@@ -9,11 +9,13 @@
 #include "task.h"
 #include "video/console.h"
 #include "elf.h"
+#include "pe.h"
 
 
 static filetype_t filetypes[FT_END] =
 {
     {&elf_filename, &elf_header, &elf_prepare}, // ELF
+    {&pe_filename,  &pe_header,  &pe_prepare},  // PE
 };
 
 
@@ -21,38 +23,38 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
 {
     // Open file
     file_t* file = fopen(path, "r");
-    if (file == 0) // File not found
+    if(file == 0) // File not found
     {
         return(CE_FILE_NOT_FOUND);
     }
 
     // Find out fileformat
     size_t i = 0;
-    for (; i < FT_END; i++) // Check name and content of the file
+    for(; i < FT_END; i++) // Check name and content of the file
     {
-        if (filetypes[i].filename != 0 && filetypes[i].filename(path))
+        if(filetypes[i].filename != 0 && filetypes[i].filename(path))
         {
             rewind(file);
-            if (filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
+            if(filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
             {
                 break; // found
             }
         }
     }
 
-    if (i == FT_END) // Not found, now do not look at filename, just content
+    if(i == FT_END) // Not found, now do not look at filename, just content
     {
-        for (i = 0; i < FT_END; i++)
+        for(i = 0; i < FT_END; i++)
         {
             rewind(file);
-            if (filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
+            if(filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
             {
                 break; // found
             }
         }
     }
 
-    if (i == FT_END)
+    if(i == FT_END)
     {
         fclose(file);
         printf("The file has an unknown type so it cannot be executed.");
@@ -92,7 +94,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
             }
 
             // Copy nArgv to user PD
-            pagingAlloc(pd, (void*)USER_DATA_BUFFER, (uintptr_t)USER_heapStart - (uintptr_t)USER_DATA_BUFFER, MEM_USER | MEM_WRITE); // Allocate space in user PD (Pages between heap and dataBuffer)
+            paging_alloc(pd, (void*)USER_DATA_BUFFER, (uintptr_t)USER_heapStart - (uintptr_t)USER_DATA_BUFFER, MEM_USER | MEM_WRITE); // Allocate space in user PD (Pages between heap and dataBuffer)
             cli();
             paging_switch(pd); // Switch to user PD
             char** nnArgv = (void*)USER_DATA_BUFFER; // argv buffer

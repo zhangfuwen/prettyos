@@ -98,7 +98,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
             newTask->userProgAddr = globalUserProgAddr;
             newTask->userProgSize = globalUserProgSize;
 
-            pagingAlloc(newTask->pageDirectory, (void*)(USER_STACK - 10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // Stack starts at USER_STACK-StackSize*PAGESIZE
+            paging_alloc(newTask->pageDirectory, (void*)(USER_STACK - 10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // Stack starts at USER_STACK-StackSize*PAGESIZE
         }
     }
 
@@ -230,7 +230,7 @@ task_t* create_thread(void(*entry)())
     return newTask;
 }
 
-task_t* create_vm86_task(void(*entry)())
+task_t* create_vm86_task(pageDirectory_t* pd, void(*entry)())
 {
     #ifdef _TASKING_DIAGNOSIS_
     textColor(TEXT);
@@ -241,7 +241,7 @@ task_t* create_vm86_task(void(*entry)())
     task_t* newTask = malloc(sizeof(task_t),0, "vm86-task");
     newTask->type = VM86;
 
-    createThreadTaskBase(newTask, kernelPageDirectory, entry, 3, 0, 0);
+    createThreadTaskBase(newTask, pd, entry, 3, 0, 0);
 
     newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // Task uses the same console as the kernel
     list_Append(newTask->console->tasks, newTask);
@@ -332,7 +332,7 @@ static void kill(task_t* task)
     }
 
     // Free user memory, if this task has an own PD
-    if (task->type != THREAD && task->pageDirectory != kernelPageDirectory)
+    if (task->type != THREAD && task->type != VM86 && task->pageDirectory != kernelPageDirectory)
     {
         paging_destroyUserPageDirectory(task->pageDirectory);
     }
@@ -406,7 +406,7 @@ void* task_grow_userheap(uint32_t increase)
     increase = alignUp(increase, PAGESIZE);
 
     if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_heapEnd) ||
-        !pagingAlloc(currentTask->pageDirectory, old_heap_top, increase, MEM_USER | MEM_WRITE))
+        !paging_alloc(currentTask->pageDirectory, old_heap_top, increase, MEM_USER | MEM_WRITE))
     {
         return 0;
     }

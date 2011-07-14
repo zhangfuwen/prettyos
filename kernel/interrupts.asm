@@ -8,15 +8,17 @@
 ;  at division by zero, occurance of broken instruction code or access to a
 ;  disallowed memory area.
 ; Interrupts 32-256 are called "Interrupt ReQuests (IRQs)", some of them
-;  (no 32-48) are again triggered externally e.g. by the timer  chip or the
+;  (no 32-48) are again triggered externally e.g. by the timer chip or the
 ;  keyboard and the rest can be fired internally using an "int 0xXX" assembler
 ;  instruction.
 ;
 ; This file contains:
 ;  - Code for each interrupt routine we are using. The code is highly redundant
 ;    so we use NASM's macro facility to create the routines. Each routine
-;    disables the interrupts, eventually pushes an dummy error code, pushes
-;    it's interrupt number and jumps to a "common" routine which proceeds.
+;    eventually pushes an dummy error code, pushes it's interrupt number and
+;    jumps to a "common" routine which proceeds. Because all our IDT entries
+;    are set as "Interrupt gates", hardware interrupts are automatically
+;    disabled.
 ;
 ;  - The common routine which is invoked by each interrupt routine. It saves
 ;    the registers and jumps to some C-code which finally handles the
@@ -41,8 +43,7 @@ section .text
 
 ; Template for a single interrupt-routine:
 %macro IR_ROUTINE 1
-    _ir%1:
-    cli
+    ir%1:
     %if (%1!=8) && (%1<10 || %1>14)
     push dword 0    ; Dummy error code needs to be pushed on some interrupts
     %endif
@@ -107,12 +108,12 @@ ir_common_stub:
 ; Setup and load the IDT
 idt_install:
     %macro DO_IDT_ENTRY 3
-    mov ecx, _ir%1
-    mov [_idt_table+(%1)*8+0], cx
-    mov [_idt_table+(%1)*8+2], word %2
-    mov [_idt_table+(%1)*8+4], word %3
+    mov ecx, ir%1
+    mov [idt_table+(%1)*8+0], cx
+    mov [idt_table+(%1)*8+2], word %2
+    mov [idt_table+(%1)*8+4], word %3
     shr ecx, 16
-    mov [_idt_table+(%1)*8+6], cx
+    mov [idt_table+(%1)*8+6], cx
     %endmacro
 
     ; Execute the macro to fill the interrupt table, unfilled entries remain zero.
@@ -153,10 +154,10 @@ section .data
 
 ; Interrupt Descriptor Table
 ; Holds 256 entries each 8 bytes of size
-_idt_table:
+idt_table:
     times 256*8 db 0
 
 ; IDT Descriptor holds the IDT's size minus 1 and it's address
 idt_descriptor:
     dw 0x07FF
-    dd _idt_table
+    dd idt_table

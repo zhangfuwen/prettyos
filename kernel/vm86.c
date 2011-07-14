@@ -1,3 +1,8 @@
+/*
+*  license and disclaimer for the use of this source code as per statement below
+*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+*/
+
 // code derived on basic proposal at http://osdev.berlios.de/v86.html
 // cf. "The Intel® 64 and IA-32 Architectures Software Developer’s Manual, Volumes 3A", 17.2 VIRTUAL-8086 MODE
 /*
@@ -20,7 +25,7 @@ a chance to emulate the facilities they affect.
 
 static volatile uint32_t v86_if;
 
-bool vm86sensitiveOpcodehandler(registers_t* ctx)
+bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 {
     uint8_t*  ip      = FP_TO_LINEAR(ctx->cs, ctx->eip);
     uint16_t* ivt     = 0;
@@ -28,10 +33,6 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
     uint32_t* stack32 = (uint32_t*)stack;
     bool isOperand32 = false;
 
-  #ifdef _VM_DIAGNOSIS_
-    // printf("\r\nvm86sensitiveOpcodehandler: cs:ip = %x:%x ss:sp = %x:%x: ", ctx->cs, ctx->eip, ctx->ss, ctx->useresp); // vm86 critical
-    // ...
-  #endif
     // regarding opcodes, cf. "The Intel® 64 and IA-32 Architectures Software Developer’s Manual, Volumes 2A & 2B"
 
     while (true)
@@ -281,3 +282,51 @@ bool vm86sensitiveOpcodehandler(registers_t* ctx)
     }
     return false;
 }
+
+void vm86_initPageDirectory(pageDirectory_t* pd, void* address, void* data, size_t size)
+{
+    pd->codes[0] |= MEM_USER | MEM_WRITE;
+    for (uint16_t i=0; i<256; ++i) // Make first 1 MiB accessible
+    {
+        pd->tables[0]->pages[i] |= MEM_USER; // address = i*0x1000
+    }
+
+    // Allocate memory to store vm86 data
+    void* paddress = (void*)alignDown((uintptr_t)address, PAGESIZE);
+    size_t psize = alignUp(size, PAGESIZE);
+    paging_alloc(pd, paddress, psize, MEM_USER | MEM_WRITE);
+    // Copy vm86 data
+    cli();
+    paging_switch(pd);
+    memcpy(address, data, size);
+    paging_switch(currentTask->pageDirectory);
+    sti();
+}
+
+/*
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+*
+* http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
+*
+* Redistribution and use in source and binary forms, with or without modification,
+* are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice,
+*    this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/

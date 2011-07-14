@@ -23,7 +23,7 @@ int main()
         switch(ev)
         {
             case EVENT_NONE:
-                //wait(BL_EVENT, (void*)EVENT_TEXT_ENTERED, 0); // TODO: Why does it cause problems?
+                waitForEvent(0);
                 break;
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
@@ -34,7 +34,7 @@ int main()
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
                 clearScreen(0x00); // black
-				printf("%s", data);
+                puts(data);
                 break;
             }
             case EVENT_KEY_DOWN:
