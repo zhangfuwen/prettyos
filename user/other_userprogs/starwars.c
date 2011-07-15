@@ -33,8 +33,24 @@ int main()
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
-                clearScreen(0x00); // black
-                puts(data);
+                
+                for (size_t i = 0; data[i] != 0; i++)
+                {
+                    if (data[i]==27 /*ESC*/ && data[i+1]=='[' && data[i+2]=='H')
+                    {
+                        clearScreen(0x00); // black 
+                        i=i+3;
+                    } 
+                    else if (data[i]=='R' && data[i+1]=='U')
+                    {
+                        // do_nothing 
+                        i=i+2;
+                    }
+                    else
+                    {
+                        putchar(data[i]);
+                    }
+                }
                 break;
             }
             case EVENT_KEY_DOWN:

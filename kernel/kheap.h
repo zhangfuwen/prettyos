@@ -10,7 +10,7 @@ typedef struct
     bool     reserved;
     char     comment[21];
     uint32_t number;
-} region_t;
+} __attribute__((packed)) region_t;
 
 
 void  heap_install();
