@@ -39,12 +39,12 @@ int main()
                     if (data[i]==27 /*ESC*/ && data[i+1]=='[' && data[i+2]=='H')
                     {
                         clearScreen(0x00); // black 
-                        i=i+3;
+                        i=i+2;
                     } 
-                    else if (data[i]=='R' && data[i+1]=='U')
+                    else if (data[i]=='R' && data[i+1]=='U') // HACK: comes from qemu gateway MAC ???
                     {
                         // do_nothing 
-                        i=i+2;
+                        i=i+1;
                     }
                     else
                     {
