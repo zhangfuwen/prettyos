@@ -171,7 +171,7 @@ extern uintptr_t MSDStatusQTDpage0;
 #define PSTS_CONNECTED                 0x00000001 /* ro */
 
 
-void ehci_install(pciDev_t* PCIdev, uint32_t i);
+void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys);
 void analyzeEHCI(uintptr_t bar, uintptr_t offset);
 void ehci_init(); // for thread with own console
 void startEHCI();

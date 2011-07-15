@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.218 - Rev: 1064";
+const char* const version = "0.0.2.219 - Rev: 1065";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -327,7 +327,7 @@ void main(multiboot_t* mb_struct)
                         switch(*(char*)buffer)
                         {
                             case 'h':
-                                logHeapRegions();
+                                heap_logRegions();
                                 break;
                             case 'p':
                                 paging_analyzeBitTable();

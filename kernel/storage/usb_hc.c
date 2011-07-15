@@ -4,9 +4,9 @@
 */
 
 #include "usb_hc.h"
-#include "util.h"
 #include "ehci.h"
 #include "video/console.h"
+
 
 void install_USB_HostController(pciDev_t* PCIdev)
 {
@@ -21,40 +21,26 @@ void install_USB_HostController(pciDev_t* PCIdev)
         case 0xFE: printf("any ");    break;
     }
 
-    uint8_t bus  = PCIdev->bus;
-    uint8_t dev  = PCIdev->device;
-    uint8_t func = PCIdev->func;
-
     for (uint8_t i = 0; i < 6; ++i) // check USB BARs
     {
-        PCIdev->bar[i].memoryType = PCIdev->bar[i].baseAddress & 0x01;
-
-        if (PCIdev->bar[i].baseAddress) // check valid BAR
+        if (PCIdev->bar[i].memoryType == PCI_MMIO)
         {
-            if (PCIdev->bar[i].memoryType == 0)
-            {
-                printf("%Xh MMIO ", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
-            }
-            else if (PCIdev->bar[i].memoryType == 1)
-            {
-                printf("%xh I/O ",  PCIdev->bar[i].baseAddress & 0xFFFC);
-            }
+            printf("%Xh MMIO ", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+        }
+        else if (PCIdev->bar[i].memoryType == PCI_IO)
+        {
+            printf("%xh I/O ",  PCIdev->bar[i].baseAddress & 0xFFFC);
+        }
 
-            // check Memory Size
-            cli();
-            pci_config_write_dword(bus, dev, func, PCI_BAR0 + 4*i, 0xFFFFFFFF);
-            uintptr_t pciBar = pci_config_read(bus, dev, func, PCI_BAR0 + 4*i);
-            pci_config_write_dword(bus, dev, func, PCI_BAR0 + 4*i, PCIdev->bar[i].baseAddress);
-            sti();
-            PCIdev->bar[i].memorySize = (~pciBar | 0x0F) + 1;
+        if(PCIdev->bar[i].memoryType != PCI_INVALIDBAR)
+        {
             printf("sz: %d ", PCIdev->bar[i].memorySize);
 
-            // EHCI Data
-            if (PCIdev->interfaceID == 0x20   // EHCI
-               && PCIdev->bar[i].baseAddress) // valid BAR
+            if (PCIdev->interfaceID == 0x20) // EHCI
             {
-                ehci_install(PCIdev, i);
+                ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
             }
+            break;
         }
     }
 }

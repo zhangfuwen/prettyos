@@ -433,15 +433,15 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
-                char* tcpData = (char*)( (uintptr_t)tcp + 4 * tcp->dataOffset ); // dataOffset is given as number of DWORDs 
+                char* tcpData = (char*)( (uintptr_t)tcp + 4 * tcp->dataOffset ); // dataOffset is given as number of DWORDs
                 uint32_t tcpDataLength = length - (4 * tcp->dataOffset);
 
                 if (!IsPacketAcceptable(tcp, connection, tcpDataLength))
                 {
-                    textColor(ERROR); 
-                    printf("not acceptable!");  
+                    textColor(ERROR);
+                    printf("not acceptable!");
                     textColor(TEXT);
-                    break;                                  // No ACK !!!
+                    break; // No ACK !!!
                 }
 
                 if (connection->passive)
@@ -551,17 +551,16 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     textColor(TEXT);
                 }
                 tcp_sendFlag = true;
-                tcp_checkOutBuffers(connection,true);                
+                tcp_checkOutBuffers(connection,true);
             }
             else if (tcp->FIN) // FIN or FIN ACK
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = CLOSE_WAIT;
-            }            
+            }
             break;
         }
         case FIN_WAIT_1:
-        {
             if (tcp->FIN && !tcp->ACK) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
@@ -578,9 +577,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = FIN_WAIT_2;
             }
             break;
-        }
         case FIN_WAIT_2:
-        {
             if (tcp->FIN && !tcp->ACK) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
@@ -588,44 +585,33 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_deleteFlag = true;
             }
             break;
-        }
         case CLOSING:
-        {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = TIME_WAIT;
                 tcp_deleteFlag = true;
             }
             break;
-        }
         case TIME_WAIT:
-        {
             // HACK, TODO: use timeout (TIME_WAIT --> CLOSED)
             printf("TCP conn. ID %u set from CLOSED to LISTEN.\n", connection->ID);
             connection->TCP_CurrState = LISTEN; // CLOSED ??
             break;
-        }
         case CLOSE_WAIT:
-        { 
             tcp_sendFlag = tcp_prepare_send_FIN(connection, tcp, true);
             connection->TCP_CurrState = LAST_ACK;
             break;
-        }
         case LAST_ACK:
-        { 
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = CLOSED;
             }
             break;
-        }
         default:
-        { 
             textColor(ERROR);
             printf("This default state should not happen.");
             textColor(TEXT);
             break;
-        }
     }//switch (connection->TCP_CurrState)
 
     /// LOG
@@ -636,12 +622,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     if(tcp->RST) serial_log(1," RST");
     if(tcp->PSH) serial_log(1," PSH");
     if(tcp->URG) serial_log(1," URG");
-    serial_log(1,"\tseq:\t");           serial_logUINT(1,ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
-    serial_log(1,"\trcv nxt:\t");       serial_logUINT(1,connection->tcb.RCV.NXT    - connection->tcb.RCV.IRS);
+    serial_log(1,"\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+    serial_log(1,"\trcv nxt:\t%u", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
     if (tcp->ACK)
     {
-        serial_log(1,"\tack:\t");       serial_logUINT(1,ntohl(tcp->acknowledgmentNumber) - connection->tcb.SND.ISS);
-        serial_log(1,"\t\tSND.UNA:\t"); serial_logUINT(1,connection->tcb.SND.UNA          - connection->tcb.SND.ISS);
+        serial_log(1,"\tack:\t%u", ntohl(tcp->acknowledgmentNumber) - connection->tcb.SND.ISS);
+        serial_log(1,"\t\tSND.UNA:\t%u", connection->tcb.SND.UNA - connection->tcb.SND.ISS);
     }
     serial_log(1,"\r\n");
     /// LOG
@@ -728,11 +714,11 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     if(tcp->RST) serial_log(1," RST");
     if(tcp->PSH) serial_log(1," PSH");
     if(tcp->URG) serial_log(1," URG");
-    serial_log(1,"\tseq:\t");      serial_logUINT(1,ntohl(tcp->sequenceNumber) - connection->tcb.SND.ISS);
-    serial_log(1,"\tseq nxt:\t");  serial_logUINT(1,connection->tcb.SND.NXT    - connection->tcb.SND.ISS);
+    serial_log(1,"\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.SND.ISS);
+    serial_log(1,"\tseq nxt:\t%u", connection->tcb.SND.NXT - connection->tcb.SND.ISS);
     if (tcp->ACK)
     {
-        serial_log(1,"\tack:\t");  serial_logUINT(1,ntohl(tcp->acknowledgmentNumber)-connection->tcb.RCV.IRS);
+        serial_log(1,"\tack:\t%u", ntohl(tcp->acknowledgmentNumber) - connection->tcb.RCV.IRS);
     }
     serial_log(1,"\r\n");
     /// LOG

@@ -5,6 +5,7 @@
 
 #include "task.h"
 #include "util.h"
+#include "memory.h"
 #include "descriptor_tables.h"
 #include "kheap.h"
 #include "scheduler.h"
@@ -293,7 +294,10 @@ uint32_t task_switch(task_t* newTask)
 void switch_context() // Switch to next task (by interrupt)
 {
     if(!scheduler_shouldSwitchTask()) // If the scheduler does not want to switch the task ...
+	{
+		sti();
         hlt(); // Wait one cycle
+	}
 
     __asm__ volatile("int $0x7E"); // Call interrupt that will call task_switch.
 }

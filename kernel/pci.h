@@ -32,6 +32,11 @@
 #define PCIFUNCS      8
 
 
+enum
+{
+    PCI_MMIO, PCI_IO, PCI_INVALIDBAR
+};
+
 typedef struct
 {
     uint32_t baseAddress;

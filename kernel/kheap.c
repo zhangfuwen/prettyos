@@ -3,11 +3,11 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "kheap.h"
 #include "util.h"
+#include "memory.h"
 #include "video/console.h"
 #include "paging.h"
-#include "kheap.h"
-#include "task.h"
 
 /*
    The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory.
@@ -45,12 +45,15 @@ static mutex_t* mutex = 0;
   static uint32_t counter = 0;
 #endif
 
+static void* placementMalloc(uint32_t size, uint32_t alignment);
+
+
 void heap_install()
 {
-    mutex = mutex_create(1);
+    mutex = mutex_create();
 
     // This gets us the current placement address
-    regions = malloc(0, 0, "heap-start");
+    regions = placementMalloc(0, 0);
 
     // We take the rest of the placement area
     regionCount = 0;
@@ -83,8 +86,10 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
     {
         regions[regionCount].reserved = false;
         regions[regionCount].size = size;
-        strncpy(regions[regionCount].comment,"free",5);
+      #ifdef _MALLOC_FREE_
+        strcpy(regions[regionCount].comment, "free");
         regions[regionCount].number=0;
+      #endif
 
         ++regionCount;
     }
@@ -94,34 +99,21 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
     return true;
 }
 
-void logHeapRegions()
+static void* placementMalloc(uint32_t size, uint32_t alignment)
 {
-    textColor(YELLOW);
-    printf("\n\n---------------- HEAP REGIONS ----------------");
-    printf("\naddress\t\treserved\tsize\t\tnumber\tcomment");
-    uintptr_t regionAddress = (uintptr_t)heapStart;
-    for (uint32_t i=0; i<regionCount; i++)
-    {
-        static uint8_t lineCounter = 0;
-        textColor(0x06);
-        if (regions[i].reserved)
-        {
-            printf("\n%Xh\t%s\t\t%Xh\t%u\t%s",
-                    regionAddress,
-                    regions[i].reserved ? "yes" : "no",
-                    regions[i].size,
-                    regions[i].number,
-                    regions[i].comment);
-        }
-        lineCounter++;
-        regionAddress += regions[i].size;
-        if (lineCounter >= 35)
-        {
-            waitForKeyStroke();
-            lineCounter = 0;
-        }
-    }
-    textColor(TEXT);
+    mutex_lock(mutex);
+
+    // Avoid odd addresses
+    size = alignUp(size, 4);
+
+    // Do simple placement allocation
+    static void* nextPlacement = PLACEMENT_BEGIN;
+    nextPlacement = (void*)alignUp((uintptr_t)nextPlacement, alignment);
+    void* currPlacement = nextPlacement;
+    nextPlacement += size;
+
+    mutex_unlock(mutex);
+    return currPlacement;
 }
 
 void* malloc(uint32_t size, uint32_t alignment, char* comment)
@@ -129,24 +121,16 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     // consecutive number for detecting the sequence of mallocs at the heap
     static uint32_t consecutiveNumber = 0;
 
-    // Avoid odd addresses
-    size = alignUp(size, 8);
-
-    mutex_lock(mutex);
-
-    // If the heap is not set up..
+    // If the heap is not set up, do placement malloc
     if (regions == 0)
     {
-        // Do simple placement allocation
-        static uint8_t* nextPlacement = PLACEMENT_BEGIN;
-        nextPlacement = (uint8_t*)alignUp((uint32_t)nextPlacement, alignment);
-        uint8_t* currPlacement = nextPlacement;
-        nextPlacement += size;
-
-        mutex_unlock(mutex);
-        return currPlacement;
+        return placementMalloc(size, alignment);
     }
 
+    // Avoid odd addresses
+    size = alignUp(size, 4);
+
+    mutex_lock(mutex);
     // Walk the regions and find one being suitable
     uint8_t* regionAddress = heapStart;
     for (uint32_t i=0; i<regionCount; ++i)
@@ -190,7 +174,9 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 // Setup the regions
                 regions[i].size     = alignedAddress - regionAddress;
                 regions[i].reserved = false;
-                strncpy(regions[i].comment,"free",5);
+              #ifdef _MALLOC_FREE_
+                strcpy(regions[i].comment, "free");
+              #endif
 
                 regions[i+1].size  -= regions[i].size;
 
@@ -219,8 +205,10 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 // Setup the regions
                 regions[i+1].size     = regions[i].size - size;
                 regions[i+1].reserved = false;
-                strncpy(regions[i+1].comment,"free",5);
+              #ifdef _MALLOC_FREE_
+                strcpy(regions[i+1].comment, "free");
                 regions[i+1].number=0;
+              #endif
 
                 regions[i].size       = size;
             }
@@ -228,6 +216,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             // Set the region to "reserved" and return its address
             regions[i].reserved = true;
             strncpy(regions[i].comment, comment, 20);
+            regions[i].comment[20] = 0;
             regions[i].number   = ++consecutiveNumber;
 
             kdebug(3, "%Xh ", regionAddress);
@@ -314,10 +303,10 @@ void free(void* addr)
             printf(" %s", regions[i].comment);
             task_switching = true;
             textColor(TEXT);
+            strcpy(regions[i].comment, "free");
+            regions[i].number = 0;
           #endif
             regions[i].reserved = false; // free the region
-            strncpy(regions[i].comment,"free",5);
-            regions[i].number = 0;
 
             // Check for a merge with the next region
             if ((i+1 < regionCount) && !regions[i+1].reserved)
@@ -356,12 +345,41 @@ void free(void* addr)
 
     mutex_unlock(mutex);
 
-    textColor(RED);
+    textColor(ERROR);
     printf("Broken free: %Xh\n", addr);
     textColor(TEXT);
     //ASSERT(false);
 }
 
+void heap_logRegions()
+{
+    textColor(YELLOW);
+    printf("\n\n---------------- HEAP REGIONS ----------------");
+    printf("\naddress\t\tsize\t\tnumber\tcomment");
+    textColor(DATA);
+    uintptr_t regionAddress = (uintptr_t)heapStart;
+    for (uint32_t i=0; i<regionCount; i++)
+    {
+        static uint8_t lineCounter = 0;
+        if (regions[i].reserved)
+        {
+            printf("\n%Xh\t%Xh\t%u\t%s",
+                    regionAddress,
+                    regions[i].size,
+                    regions[i].number,
+                    regions[i].comment);
+        }
+        lineCounter++;
+        regionAddress += regions[i].size;
+        if (lineCounter >= 35)
+        {
+            waitForKeyStroke();
+            textColor(DATA);
+            lineCounter = 0;
+        }
+    }
+    textColor(TEXT);
+}
 
 /*
 * Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.

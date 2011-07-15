@@ -38,7 +38,7 @@ void serial_init()
     printf("\n");
 }
 
-int32_t serial_received(uint8_t com)
+char serial_received(uint8_t com)
 {
     if(com <= serialPorts)
     {
@@ -72,7 +72,6 @@ void serial_write(uint8_t com, char a)
         outportb(IOports[com-1],a);
     }
 }
-
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.

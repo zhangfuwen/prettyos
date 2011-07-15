@@ -2,7 +2,7 @@
 #define KHEAP_H
 
 #include "os.h"
-#include "memory.h"
+
 
 typedef struct
 {
@@ -16,6 +16,7 @@ typedef struct
 void  heap_install();
 void* malloc(uint32_t size, uint32_t alignment, char* comment);
 void  free(void* mem);
-void  logHeapRegions();
+void  heap_logRegions();
+
 
 #endif

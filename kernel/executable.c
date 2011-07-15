@@ -5,6 +5,7 @@
 
 #include "executable.h"
 #include "util.h"
+#include "memory.h"
 #include "kheap.h"
 #include "task.h"
 #include "video/console.h"

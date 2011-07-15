@@ -6,6 +6,7 @@
 // TODO: Apply multithreading safety
 
 #include "paging.h"
+#include "memory.h"
 #include "util.h"
 #include "timer.h"
 #include "task.h"

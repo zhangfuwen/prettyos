@@ -143,14 +143,33 @@ void pci_scan()
                     PCIdev->interfaceID        = pci_config_read(bus, device, func, PCI_INTERFACE);
                     PCIdev->revID              = pci_config_read(bus, device, func, PCI_REVISION);
                     PCIdev->irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
-                    PCIdev->bar[0].baseAddress = pci_config_read(bus, device, func, PCI_BAR0);
-                    PCIdev->bar[1].baseAddress = pci_config_read(bus, device, func, PCI_BAR1);
-                    if(!(headerType & 0x01)) // Devices with header type 0x00 have 6 bars
+                    // Read BARs
+                    for(uint8_t i = 0; i < 6; i++)
                     {
-                        PCIdev->bar[2].baseAddress = pci_config_read(bus, device, func, PCI_BAR2);
-                        PCIdev->bar[3].baseAddress = pci_config_read(bus, device, func, PCI_BAR3);
-                        PCIdev->bar[4].baseAddress = pci_config_read(bus, device, func, PCI_BAR4);
-                        PCIdev->bar[5].baseAddress = pci_config_read(bus, device, func, PCI_BAR5);
+                        if(i < 2 || !(headerType & 0x01)) // Devices with header type 0x00 have 6 bars
+                        {
+                            PCIdev->bar[i].baseAddress = pci_config_read(bus, device, func, PCI_BAR0+i*4);
+                            if(PCIdev->bar[i].baseAddress) // Valid bar
+                            {
+                                // Check memory type
+                                PCIdev->bar[i].memoryType = PCIdev->bar[i].baseAddress & 0x01;
+                                if(PCIdev->bar[i].memoryType == 0) // MMIO bar
+                                    PCIdev->bar[i].baseAddress &= 0xFFFFFFF0;
+                                else                               // IO bar
+                                    PCIdev->bar[i].baseAddress &= 0xFFFC;
+
+                                // Check Memory Size
+                                cli();
+                                pci_config_write_dword(bus, device, func, PCI_BAR0 + 4*i, 0xFFFFFFFF);
+                                PCIdev->bar[i].memorySize = (~(pci_config_read(bus, device, func, PCI_BAR0 + 4*i)) | 0x0F) + 1;
+                                pci_config_write_dword(bus, device, func, PCI_BAR0 + 4*i, PCIdev->bar[i].baseAddress);
+                                sti();
+                            }
+                            else
+                                PCIdev->bar[i].memoryType = PCI_INVALIDBAR;
+                        }
+                        else
+                            PCIdev->bar[i].memoryType = PCI_INVALIDBAR;
                     }
 
                     PCIdev->bus    = bus;
@@ -197,7 +216,7 @@ void pci_scan()
                             printf(", dev: %xh", PCIdev->deviceID); // Device not found, display ID
                         }
                       #else
-                        printf("\tvend:%xh, dev:%xh", PCIdev->vendorID, PCIdev->deviceID);
+                        printf("\tvend: %xh, dev: %xh", PCIdev->vendorID, PCIdev->deviceID);
                       #endif
 
                         /// USB Host Controller

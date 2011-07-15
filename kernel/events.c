@@ -21,7 +21,10 @@ event_queue_t* event_createQueue()
 void event_deleteQueue(event_queue_t* queue)
 {
     for(element_t* e = queue->list->head; e != 0; e = e->next)
+    {
+        free(((event_t*)e->data)->data);
         free(e->data);
+    }
     list_DeleteAll(queue->list);
     mutex_delete(queue->mutex);
     free(queue);
@@ -29,17 +32,15 @@ void event_deleteQueue(event_queue_t* queue)
 
 uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length)
 {
-    int8_t retVal;
     if(!destination) // Event handling disabled
     {
-        retVal = 1;
-        return (retVal);
+        return(1);
     }
 
     if(destination->num == MAX_EVENTS)
     {
         // Overflow
-        event_t* ev = malloc(sizeof(event_t), 0, "event(overflow)");
+        event_t* ev = malloc(sizeof(event_t), 0, "event (overflow)");
         ev->data = 0;
         ev->length = 0;
         ev->type = EVENT_OVERFLOW;
@@ -48,12 +49,12 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
         destination->num++;
         mutex_unlock(destination->mutex);
 
-        retVal = 2;
+        return(2);
     }
     else if(destination->num > MAX_EVENTS)
     {
         // Nothing to do. OVERFLOW event has already been added.
-        retVal = 3;
+        return(3);
     }
     else
     {
@@ -68,9 +69,8 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
         destination->num++;
         mutex_unlock(destination->mutex);
 
-        retVal = 0;
+        return(0);
     }
-    return retVal;
 }
 
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)

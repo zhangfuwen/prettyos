@@ -4,25 +4,24 @@
 */
 
 #include "network.h"
+#include "util.h"
+#include "list.h"
+#include "todo_list.h"
+#include "kheap.h"
+#include "irq.h"
+#include "video/console.h"
+#include "netprotocol/ethernet.h"
 #include "rtl8139.h"
 #include "rtl8168.h"
 #include "pcnet.h"
-#include "kheap.h"
-#include "irq.h"
-#include "util.h"
-#include "video/console.h"
-#include "netprotocol/ethernet.h"
-#include "netprotocol/dhcp.h"
-#include "list.h"
-#include "todo_list.h"
 
 
 typedef enum
 {
-    RTL8139, RTL8168, PCNET, ND_END
+    RTL8139, RTL8168, PCNET, ND_COUNT
 } network_drivers;
 
-static network_driver_t drivers[ND_END] =
+static network_driver_t drivers[ND_COUNT] =
 {
     {.install = &install_RTL8139, .interruptHandler = &rtl8139_handler, .sendPacket = &rtl8139_send},
     {.install = &install_RTL8168, .interruptHandler = &rtl8168_handler, .sendPacket = 0},
@@ -83,22 +82,11 @@ bool network_installDevice(pciDev_t* device)
 
     for (uint8_t j = 0; j < 6; ++j) // check network card BARs
     {
-        device->bar[j].memoryType = device->bar[j].baseAddress & 0x01;
-
-        if (device->bar[j].baseAddress) // check valid BAR
-        {
-            if (device->bar[j].memoryType == 0)
-            {
-                adapter->MMIO_base = (void*)(device->bar[j].baseAddress &= 0xFFFFFFF0);
-            }
-            else if (device->bar[j].memoryType == 1)
-            {
-                adapter->IO_base = device->bar[j].baseAddress &= 0xFFFC;
-            }
-        }
+        if(device->bar[j].memoryType == PCI_MMIO)
+            adapter->MMIO_base = (void*)(device->bar[j].baseAddress &= 0xFFFFFFF0);
+        else if(device->bar[j].memoryType == PCI_IO)
+            adapter->IO_base = device->bar[j].baseAddress &= 0xFFFC;
     }
-
-    textColor(TEXT);
 
     // Input makes #PF at some computers (gets is source of error #PF)
     /*

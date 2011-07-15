@@ -38,9 +38,8 @@ static pciDev_t* PCIdevice = 0; // pci device
 extern usb2_Device_t usbDevices[16]; // ports 1-16
 
 
-void ehci_install(pciDev_t* PCIdev, uint32_t i)
+void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 {
-    uintptr_t bar_phys = PCIdev->bar[i].baseAddress & 0xFFFFFFF0;
     uintptr_t bar      = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
     uintptr_t offset   = bar_phys % PAGESIZE;
 
