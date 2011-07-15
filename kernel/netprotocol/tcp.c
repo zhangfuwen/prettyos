@@ -430,14 +430,17 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             break;
 
         case ESTABLISHED: // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER *****
+        {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
-                char* tcpData = (void*)tcp + tcp->dataOffset*4;
-                uint32_t tcpDataLength = length - (tcp->dataOffset << 2);
+                char* tcpData = (char*)( (uintptr_t)tcp + 4 * tcp->dataOffset ); // dataOffset is given as number of DWORDs 
+                uint32_t tcpDataLength = length - (4 * tcp->dataOffset);
 
                 if (!IsPacketAcceptable(tcp, connection, tcpDataLength))
                 {
-                    textColor(ERROR); printf("not acceptable!");  textColor(TEXT);
+                    textColor(ERROR); 
+                    printf("not acceptable!");  
+                    textColor(TEXT);
                     break;                                  // No ACK !!!
                 }
 
@@ -548,25 +551,17 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     textColor(TEXT);
                 }
                 tcp_sendFlag = true;
-
-                /// TEST
-                tcp_checkOutBuffers(connection,true);
-                /// TEST
+                tcp_checkOutBuffers(connection,true);                
             }
-            else if (tcp->FIN && !tcp->ACK) // FIN
+            else if (tcp->FIN) // FIN or FIN ACK
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = CLOSE_WAIT;
-            }
-            else if (tcp->FIN && tcp->ACK) // FIN ACK
-            {
-                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                connection->TCP_CurrState = TIME_WAIT; // CLOSED ??
-                tcp_deleteFlag = true;
-            }
+            }            
             break;
-
+        }
         case FIN_WAIT_1:
+        {
             if (tcp->FIN && !tcp->ACK) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
@@ -583,8 +578,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = FIN_WAIT_2;
             }
             break;
-
+        }
         case FIN_WAIT_2:
+        {
             if (tcp->FIN && !tcp->ACK) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
@@ -592,34 +588,44 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_deleteFlag = true;
             }
             break;
-
+        }
         case CLOSING:
+        {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = TIME_WAIT;
                 tcp_deleteFlag = true;
             }
             break;
-
+        }
         case TIME_WAIT:
+        {
             // HACK, TODO: use timeout (TIME_WAIT --> CLOSED)
             printf("TCP conn. ID %u set from CLOSED to LISTEN.\n", connection->ID);
             connection->TCP_CurrState = LISTEN; // CLOSED ??
             break;
-
+        }
         case CLOSE_WAIT:
+        { 
             tcp_sendFlag = tcp_prepare_send_FIN(connection, tcp, true);
             connection->TCP_CurrState = LAST_ACK;
             break;
-
+        }
         case LAST_ACK:
+        { 
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = CLOSED;
             }
             break;
+        }
         default:
+        { 
+            textColor(ERROR);
+            printf("This default state should not happen.");
+            textColor(TEXT);
             break;
+        }
     }//switch (connection->TCP_CurrState)
 
     /// LOG
@@ -923,10 +929,13 @@ void tcp_uclose(uint32_t ID)
     tcpConnection_t* connection = findConnectionID(ID);
     if(connection)
     {
-        connection->tcb.SEG.CTL = RST_FLAG;
-        connection->tcb.SEG.ACK = 0;
-        tcp_send(connection, 0, 0);
-        tcp_deleteConnection(connection);
+        tcp_close(connection);
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("connection with ID %u could not be found and closed.", ID);
+        textColor(TEXT);
     }
 }
 
