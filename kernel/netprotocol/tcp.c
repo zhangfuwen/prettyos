@@ -629,7 +629,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     }//switch (connection->TCP_CurrState)
 
     /// LOG
-    char str[20];
     serial_log(1,"recv: ");
     if(tcp->FIN) serial_log(1," FIN");
     if(tcp->SYN) serial_log(1," SYN");
@@ -637,12 +636,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     if(tcp->RST) serial_log(1," RST");
     if(tcp->PSH) serial_log(1," PSH");
     if(tcp->URG) serial_log(1," URG");
-    serial_log(1,"\tseq:\t");           serial_log(1,utoa(ntohl(tcp->sequenceNumber)       -connection->tcb.RCV.IRS, str));
-    serial_log(1,"\trcv nxt:\t");       serial_log(1,utoa(connection->tcb.RCV.NXT          -connection->tcb.RCV.IRS, str));
+    serial_log(1,"\tseq:\t");           serial_logUINT(1,ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+    serial_log(1,"\trcv nxt:\t");       serial_logUINT(1,connection->tcb.RCV.NXT    - connection->tcb.RCV.IRS);
     if (tcp->ACK)
     {
-        serial_log(1,"\tack:\t");       serial_log(1,utoa(ntohl(tcp->acknowledgmentNumber) -connection->tcb.SND.ISS, str));
-        serial_log(1,"\t\tSND.UNA:\t"); serial_log(1,utoa(connection->tcb.SND.UNA          -connection->tcb.SND.ISS, str));
+        serial_log(1,"\tack:\t");       serial_logUINT(1,ntohl(tcp->acknowledgmentNumber) - connection->tcb.SND.ISS);
+        serial_log(1,"\t\tSND.UNA:\t"); serial_logUINT(1,connection->tcb.SND.UNA          - connection->tcb.SND.ISS);
     }
     serial_log(1,"\r\n");
     /// LOG
@@ -722,7 +721,6 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
         connection->tcb.SND.NXT += length;
     }
     /// LOG
-    char str[20];
     serial_log(1,"send: ");
     if(tcp->FIN) serial_log(1," FIN");
     if(tcp->SYN) serial_log(1," SYN");
@@ -730,11 +728,11 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     if(tcp->RST) serial_log(1," RST");
     if(tcp->PSH) serial_log(1," PSH");
     if(tcp->URG) serial_log(1," URG");
-    serial_log(1,"\tseq:\t");      serial_log(1,utoa(ntohl(tcp->sequenceNumber)      -connection->tcb.SND.ISS, str));
-    serial_log(1,"\tseq nxt:\t");  serial_log(1,utoa(connection->tcb.SND.NXT         -connection->tcb.SND.ISS, str));
+    serial_log(1,"\tseq:\t");      serial_logUINT(1,ntohl(tcp->sequenceNumber) - connection->tcb.SND.ISS);
+    serial_log(1,"\tseq nxt:\t");  serial_logUINT(1,connection->tcb.SND.NXT    - connection->tcb.SND.ISS);
     if (tcp->ACK)
     {
-        serial_log(1,"\tack:\t");  serial_log(1,utoa(ntohl(tcp->acknowledgmentNumber)-connection->tcb.RCV.IRS, str));
+        serial_log(1,"\tack:\t");  serial_logUINT(1,ntohl(tcp->acknowledgmentNumber)-connection->tcb.RCV.IRS);
     }
     serial_log(1,"\r\n");
     /// LOG
