@@ -578,7 +578,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             break;
         case FIN_WAIT_2:
-            if (tcp->FIN && !tcp->ACK) // FIN
+            if (tcp->FIN) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = TIME_WAIT;
@@ -842,7 +842,13 @@ static bool IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, ui
 
 static uint16_t getFreeSocket()
 {
-    static uint16_t srcPort = 49152;
+    static bool flag = false;
+    if(!flag)
+    {
+        srand(timer_getMilliseconds()); 
+        flag = true;
+    }
+    uint16_t srcPort = 49152 + rand()%(65536-49152);
     return srcPort++;
 }
 
