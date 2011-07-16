@@ -16,6 +16,7 @@
 #include "list.h"
 #include "task.h"
 #include "serial.h"
+#include "todo_list.h"
 
 
 static const uint16_t STARTWINDOW =  6000;
@@ -74,6 +75,11 @@ static uint16_t getFreeSocket();
 static uint32_t getConnectionID();
 static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection);
 static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection);
+
+static void scheduledDeleteConnection(void* data, size_t length)
+{
+    tcp_deleteConnection(*(tcpConnection_t**)data);    
+}
 
 tcpConnection_t* findConnectionID(uint32_t ID)
 {
@@ -198,7 +204,7 @@ tcpConnection_t* tcp_createConnection()
     connection->TCP_CurrState   = CLOSED;
     connection->tcb.rto         = RTO_STARTVALUE; // for first calculation
     connection->tcb.retrans     = false;
-    connection->tcb.msl         = 10; // 10 sec max. segment lifetime  // CHECK
+    connection->tcb.msl         = 10000; // 10 sec max. segment lifetime  // CHECK
 
     list_Append(tcpConnections, connection);
     textColor(TEXT);
@@ -572,10 +578,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                connection->TCP_CurrState = TIME_WAIT;
-                delay(2000000); // should be 2 * Maximum Segment Lifetime (MSL) // TODO: implement timer
-                connection->TCP_CurrState = CLOSED;
-                tcp_deleteFlag = true;
+                connection->TCP_CurrState = TIME_WAIT;                
+                
+                todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), connection->tcb.msl + timer_getMilliseconds());
             }
             else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
@@ -587,18 +592,16 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = TIME_WAIT;
-                delay(2000000); // should be 2 * Maximum Segment Lifetime (MSL) // TODO: implement timer
-                connection->TCP_CurrState = CLOSED;
-                tcp_deleteFlag = true;
+                
+                todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), connection->tcb.msl + timer_getMilliseconds());
             }
             break;
         case CLOSING:
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = TIME_WAIT;
-                delay(2000000); // should be 2 * Maximum Segment Lifetime (MSL) // TODO: implement timer
-                connection->TCP_CurrState = CLOSED;
-                tcp_deleteFlag = true;
+                
+                todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), connection->tcb.msl + timer_getMilliseconds());
             }
             break;
         case TIME_WAIT:

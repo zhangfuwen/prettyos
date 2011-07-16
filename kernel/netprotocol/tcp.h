@@ -63,12 +63,12 @@ typedef struct
 {
     tcpSend_t    SND;
     tcpRcv_t     RCV;
-    tcpSegment_t SEG;   // information about segment to be sent next
+    tcpSegment_t SEG;    // information about segment to be sent next
     bool         retrans;
-    uint32_t     srtt;
-    uint32_t     rttvar;
-    uint32_t     rto;   // retransmission timeout
-    uint32_t     msl;   // maximum segment lifetime
+    uint32_t     srtt;   // (milliseconds)
+    uint32_t     rttvar; // (milliseconds)
+    uint32_t     rto;    // retransmission timeout (milliseconds)
+    uint32_t     msl;    // maximum segment lifetime (milliseconds)
 } tcpTransmissionControlBlock_t;
 
 typedef struct
