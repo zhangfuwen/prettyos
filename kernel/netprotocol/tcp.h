@@ -68,6 +68,7 @@ typedef struct
     uint32_t     srtt;
     uint32_t     rttvar;
     uint32_t     rto;   // retransmission timeout
+    uint32_t     msl;   // maximum segment lifetime
 } tcpTransmissionControlBlock_t;
 
 typedef struct

@@ -3,6 +3,10 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+// TODO-LIST:
+// implement dup-ack (as receiver: receive 1,2,3,n. If n!=4 then send dup-ack for 3. as sender: if we get dup-ack, send segment behind that) 
+// implement waiting 2 * connection->tcb.msl, delete connection (TIME_WAIT ==> CLOSED)
+
 #include "tcp.h"
 #include "video/console.h"
 #include "kheap.h"
@@ -194,6 +198,7 @@ tcpConnection_t* tcp_createConnection()
     connection->TCP_CurrState   = CLOSED;
     connection->tcb.rto         = RTO_STARTVALUE; // for first calculation
     connection->tcb.retrans     = false;
+    connection->tcb.msl         = 10; // 10 sec max. segment lifetime  // CHECK  
 
     list_Append(tcpConnections, connection);
     textColor(TEXT);
