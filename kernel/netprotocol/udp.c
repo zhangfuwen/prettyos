@@ -119,7 +119,6 @@ static void udp_debug(udpPacket_t* udp)
 {
     textColor(IMPORTANT);
     printf("  %u ==> %u   Len: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort), ntohs(udp->length));
-    textColor(IMPORTANT);
     printUDPPortType(ntohs(udp->sourcePort)); printf(" ==> "); printUDPPortType(ntohs(udp->destPort));
     textColor(TEXT);
 }

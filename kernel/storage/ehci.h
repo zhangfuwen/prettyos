@@ -173,7 +173,7 @@ extern uintptr_t MSDStatusQTDpage0;
 
 void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys);
 void analyzeEHCI(uintptr_t bar, uintptr_t offset);
-void ehci_init(); // for thread with own console
+void ehci_init(void*, size_t); // for thread with own console
 void startEHCI();
 int32_t initEHCIHostController();
 void startHostController(pciDev_t* PCIdev);
@@ -183,7 +183,7 @@ void enablePorts();
 void resetPort(uint8_t j);
 
 void ehci_handler(registers_t* r);
-void ehci_portcheck(); // for thread with own console
+void ehci_portcheck(void*, size_t); // for thread with own console
 void portCheck();
 void showPORTSC();
 void checkPortLineStatus(uint8_t j);

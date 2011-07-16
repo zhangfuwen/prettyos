@@ -5,7 +5,9 @@
 
 #include "todo_list.h"
 #include "kheap.h"
+#include "util.h"
 #include "scheduler.h"
+#include "timer.h"
 
 
 todoList_t* todoList_create()
@@ -15,27 +17,32 @@ todoList_t* todoList_create()
     return(list);
 }
 
-void todoList_add(todoList_t* list, void (*function)())
+void todoList_add(todoList_t* list, void (*function)(void*, size_t), void* data, size_t length, uint32_t executionTime)
 {
-    list_Append(list->queue, function);
-}
-
-void todoList_clear(todoList_t* list)
-{
-    if(list->queue->head != 0)
-    {
-        list_DeleteAll(list->queue);
-        list->queue = list_Create();
-    }
+    todoList_task_t* task = malloc(sizeof(todoList_task_t), 0, "todoList_task_t");
+    if(length != 0)
+        task->data = malloc(length, 0, "todoList_task_t::data");
+    else
+        task->data = 0;
+    memcpy(task->data, data, length);
+    task->length = length;
+    task->timeToExecute = executionTime;
+    task->function = function;
+    list_Append(list->queue, task);
 }
 
 void todoList_execute(todoList_t* list)
 {
     for(element_t* e = list->queue->head; e != 0; e = e->next)
     {
-        ((void (*)())e->data)();
+        todoList_task_t* task = e->data;
+        if(task->timeToExecute == 0 || task->timeToExecute < timer_getMilliseconds())
+        {
+            task->function(task->data, task->length);
+            free(task->data);
+            list_Delete(list->queue, task);
+        }
     }
-    todoList_clear(list);
 }
 
 void todoList_wait(todoList_t* list)

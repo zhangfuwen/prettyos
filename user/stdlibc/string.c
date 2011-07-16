@@ -38,9 +38,24 @@ void* memcpy(void* dest, const void* source, size_t bytes)
     return(dest);
 }
 
+static void* memcpyr(void* dest, const void* src, size_t bytes)
+{
+    // Calculate starting addresses
+    void* temp = dest+bytes-1;
+    src += bytes-1;
+
+    size_t dwords = bytes/4;
+    bytes %= 4;
+
+    __asm__ volatile("std\n" "rep movsb"         : : "S" (src), "D" (temp), "c" (bytes));
+    __asm__ volatile("sub $3, %edi\n" "sub $3, %esi");
+    __asm__ volatile(        "rep movsl\n" "cld" : : "c" (dwords));
+    return(dest);
+}
+
 void* memmove(void* dest, const void* source, size_t num)
 {
-    if(source == dest || num == 0) // nothing to do
+    if(source == dest || num == 0) // Copying is not necessary. Calling memmove with source==destination or size==0 is not a bug.
     {
         return(dest);
     }
@@ -52,33 +67,15 @@ void* memmove(void* dest, const void* source, size_t num)
         return(dest);
     }
 
-    const uint8_t* source8 = (uint8_t*)source;
-    uint8_t* destination8 = (uint8_t*)dest;
-
     // Arrangement of the destination and source decides about the direction of copying
-    if(source8 < destination8)
+    if(source < dest)
     {
-        source8 += num - 1;
-        destination8 += num - 1;
-        while(num > 0)
-        {
-            *destination8 = *source8;
-            --destination8;
-            --source8;
-            --num;
-        }
+        memcpyr(dest, source, num);
     }
     else // In all other cases, it is ok to copy from the start to the end of source.
     {
-        while(num > 0)
-        {
-            *destination8 = *source8;
-            ++destination8;
-            ++source8;
-            --num;
-        }
+        memcpy(dest, source, num); // We assume, that memcpy does forward copy
     }
-
     return(dest);
 }
 

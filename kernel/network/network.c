@@ -156,7 +156,7 @@ bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t leng
     return(adapter->driver->sendPacket != 0 && adapter->driver->sendPacket(adapter, buffer, length));
 }
 
-static void network_handleReceivedBuffers()
+static void network_handleReceivedBuffers(void* data, size_t length)
 {
     mutex_lock(RxMutex);
     for(element_t* e = RxBuffers->head; e != 0;)
@@ -178,16 +178,16 @@ void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t le
     if(!RxMutex)
         RxMutex = mutex_create();
 
-    networkBuffer_t* buffer = malloc(sizeof(networkBuffer_t), 0, "network_buffer");
+    networkBuffer_t* buffer = malloc(sizeof(networkBuffer_t), 0, "networkBuffer_t");
     buffer->adapter = adapter;
     buffer->length = length;
-    buffer->data = malloc(length, 0, "network buffer");
+    buffer->data = malloc(length, 0, "networkBuffer_t::data");
     memcpy(buffer->data, data, length);
     mutex_lock(RxMutex);
     list_Append(RxBuffers, buffer);
     mutex_unlock(RxMutex);
 
-    todoList_add(kernel_idleTasks, &network_handleReceivedBuffers);
+    todoList_add(kernel_idleTasks, &network_handleReceivedBuffers, 0, 0, 0);
 }
 
 void network_displayArpTables()

@@ -104,19 +104,24 @@ void* memcpy(void* dest, const void* src, size_t bytes)
     return(dest);
 }
 
-void* memmove(const void* source, void* destination, size_t size)
+void* memcpyr(void* dest, const void* src, size_t bytes)
 {
-    // If source and destination point to the same memory area, coping something
-    // is not necessary. It could be seen as a bug of the caller to pass the
-    // same value for source and destination, but we decided to allow this and
-    // just do nothing in this case.
-    if(source == destination)
-    {
-        return(destination);
-    }
+    // Calculate starting addresses
+    void* temp = dest+bytes-1;
+    src += bytes-1;
 
-    // If size is 0, just return. It is not a bug to call this function with size set to 0.
-    if(size == 0)
+    size_t dwords = bytes/4;
+    bytes %= 4;
+
+    __asm__ volatile("std\n" "rep movsb"         : : "S" (src), "D" (temp), "c" (bytes));
+    __asm__ volatile("sub $3, %edi\n" "sub $3, %esi");
+    __asm__ volatile(        "rep movsl\n" "cld" : : "c" (dwords));
+    return(dest);
+}
+
+void* memmove(void* destination, const void* source, size_t size)
+{
+    if(source == destination || size == 0) // Copying is not necessary. Calling memmove with source==destination or size==0 is not a bug.
     {
         return(destination);
     }
@@ -135,9 +140,6 @@ void* memmove(const void* source, void* destination, size_t size)
         return(destination);
     }
 
-    const uint8_t* source8 = (uint8_t*)source;
-    uint8_t* destination8 = (uint8_t*)destination;
-
     // The source overlaps with the destination and the destination is after the
     // source in memory. Coping from start to the end of source will overwrite
     // the last (size - (destination - source)) bytes of source with the first
@@ -148,27 +150,13 @@ void* memmove(const void* source, void* destination, size_t size)
     // |      destination|
     // source starts at 0. destination at 6. Coping from start to end will
     // overwrite the last 5 bytes of the source.
-    if(source8 < destination8)
+    if(source < destination)
     {
-        source8 += size - 1;
-        destination8 += size - 1;
-        while(size > 0)
-        {
-            *destination8 = *source8;
-            --destination8;
-            --source8;
-            --size;
-        }
+        memcpyr(destination, source, size);
     }
     else // In all other cases, it is ok to copy from the start to the end of source.
     {
-        while(size > 0)
-        {
-            *destination8 = *source8;
-            ++destination8;
-            ++source8;
-            --size;
-        }
+        memcpy(destination, source, size); // We assume, that memcpy does forward copy
     }
     return(destination);
 }

@@ -165,10 +165,8 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 }
 
                 // Move all following regions ahead to get room for a new one
-                for (uint32_t j=regionCount; j>i; --j)
-                {
-                    regions[j] = regions[j-1];
-                }
+                memmove(regions + i+1, regions + i, (regionCount-i)*sizeof(region_t));
+
                 ++regionCount;
 
                 // Setup the regions
@@ -196,10 +194,8 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 }
 
                 // Move all following regions ahead to get room for a new one
-                for (uint32_t j=regionCount; j>i+1; --j)
-                {
-                    regions[j] = regions[j-1];
-                }
+                memmove(regions + i+2, regions + i+1, (regionCount-i-1)*sizeof(region_t));
+
                 ++regionCount;
 
                 // Setup the regions
@@ -315,10 +311,8 @@ void free(void* addr)
                 regions[i].size += regions[i+1].size; // merge
 
                 // Move all following regions back by one
-                for (uint32_t j=i+1; j<regionCount-1; ++j)
-                {
-                    regions[j] = regions[j+1];
-                }
+                memmove(regions + i+1, regions + i+2, (regionCount-1-i)*sizeof(region_t));
+
                 --regionCount;
             }
 
@@ -329,10 +323,8 @@ void free(void* addr)
                 regions[i-1].size += regions[i].size; // merge
 
                 // Move all following regions back by one
-                for (uint32_t j=i; j<regionCount-1; ++j)
-                {
-                    regions[j] = regions[j+1];
-                }
+                memmove(regions + i, regions + i+1, (regionCount-i)*sizeof(region_t));
+
                 --regionCount;
             }
 

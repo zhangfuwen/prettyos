@@ -39,7 +39,7 @@ void      memshow(const void* start, size_t count);
 void*     memset(void* dest, int8_t val, size_t bytes);
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words);
 void*     memcpy(void* dest, const void* src, size_t count);
-void*     memmove(const void* source, void* destination, size_t size);
+void*     memmove(void* destination, const void* source, size_t size);
 int32_t   memcmp(const void* s1, const void* s2, size_t n);
 
 size_t vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
