@@ -58,6 +58,7 @@ typedef struct
     uint16_t WND;   // Receive Window
     uint32_t IRS;   // Initial receive sequence number
     uint32_t dACK;  // duplicated ACK counter
+    uint32_t ACKforDupACK;
 } tcpRcv_t;
 
 typedef struct

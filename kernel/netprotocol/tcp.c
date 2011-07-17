@@ -315,11 +315,11 @@ static bool tcp_prepare_send_ACK(tcpConnection_t* connection, tcpPacket_t* tcp, 
 
 static void tcp_send_DupAck(tcpConnection_t* connection)
 {    
-    connection->tcb.SEG.ACK = connection->tcb.SND.UNA;
+    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
     connection->tcb.SEG.CTL = ACK_FLAG;
     serial_log(1,"We send now Dup-Ack:\r\n");
     serial_log(1,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
-    serial_log(1,"\tack:\t%u\r\n", connection->tcb.SEG.ACK - connection->tcb.RCV.IRS);
+    serial_log(1,"\tack:\t%u\r\n", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
     tcp_send(connection, 0, 0);
 }
 
@@ -548,17 +548,20 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                             // cf. ES3
                             // handle Out-of-Order RCV buffer (sorted --> RCV buffer)
                         }
-                        else
-                        {
-                            
+                        else if (ntohl(tcp->sequenceNumber) > connection->tcb.RCV.NXT)
+                        {                            
                             serial_log(1,"rcvd:\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS); 
-                            serial_log(1,"\r\nsend Dup-ACK!");
+                            serial_log(1," -> send Dup-ACK!");
                             tcp_send_DupAck(connection);
                             
                             // Add received data to the temporary Out-of-Order RCV Buffer <--------------------------------- TODO: OO RCV Buffer
 
                             connection->tcb.RCV.WND += tcpDataLength;
-                        }                        
+                        }
+                        else // ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT
+                        {
+                            nop(); // ??
+                        }
                     
                         if (connection->passive)
                         {
@@ -583,8 +586,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                         }
                         sleepMilliSeconds(2);
 
+
+                        // TEST: here corect place for getting last correct RCV.NXT: 
+                        connection->tcb.RCV.ACKforDupACK = connection->tcb.RCV.NXT; // TEST for Dup-ACK
                         
-                        // TO BE CHECKED:
+
                         connection->tcb.RCV.WND =  ntohs(tcp->window); // cf. receiving dup-ACK
                         connection->tcb.SND.UNA =  max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); // CHECK for unregular packets above
 
@@ -608,9 +614,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                             }
                         }
 
-                        connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
-
-                        connection->tcb.SND.WND -= tcpDataLength;
+                        if (tcpDataLength)
+                        {
+                            connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
+                            connection->tcb.SND.WND -= tcpDataLength;
+                        }
 
                         connection->tcb.SEG.SEQ =  connection->tcb.SND.NXT;
                         connection->tcb.SEG.ACK =  connection->tcb.RCV.NXT;
