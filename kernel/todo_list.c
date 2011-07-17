@@ -10,10 +10,10 @@
 #include "timer.h"
 
 
-todoList_t* todoList_create()
+todoList_t* todolist_create()
 {
     todoList_t* list = malloc(sizeof(list), 0, "todoList");
-    list->queue = list_Create();
+    list->queue = list_create();
     return(list);
 }
 
@@ -28,7 +28,7 @@ void todoList_add(todoList_t* list, void (*function)(void*, size_t), void* data,
     task->length = length;
     task->timeToExecute = executionTime;
     task->function = function;
-    list_Append(list->queue, task);
+    list_append(list->queue, task);
 }
 
 void todoList_execute(todoList_t* list)
@@ -40,7 +40,7 @@ void todoList_execute(todoList_t* list)
         {
             task->function(task->data, task->length);
             free(task->data);
-            list_Delete(list->queue, task);
+            list_delete(list->queue, task);
         }
     }
 }
@@ -55,9 +55,9 @@ bool todoList_unlockTask(void* data)
     return(((todoList_t*)data)->queue->head != 0);
 }
 
-void todoList_delete(todoList_t* list)
+void todolist_delete(todoList_t* list)
 {
-    list_DeleteAll(list->queue);
+    list_free(list->queue);
     free(list);
 }
 

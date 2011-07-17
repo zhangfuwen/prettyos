@@ -256,16 +256,16 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
         free(folder);
         return(0);
     }
-    folder->files     = list_Create();
-    folder->subfolder = list_Create();
+    folder->files     = list_create();
+    folder->subfolder = list_create();
     folder->folder    = folder->volume->rootFolder; // HACK. Not all folders are in the root folder
     folder->name      = malloc(strlen(getFilename(path))+1, 0, "fsmgr-foldername");
     strcpy(folder->name, getFilename(path));
 
     if(folder->volume->type->folderAccess(folder, mode) != CE_GOOD)
     {   // cleanup
-        list_DeleteAll(folder->files);
-        list_DeleteAll(folder->subfolder);
+        list_free(folder->files);
+        list_free(folder->subfolder);
         free(folder->name);
         free(folder);
         return(0);
@@ -277,8 +277,8 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
 void folderClose(folder_t* folder)
 {
     folder->volume->type->folderClose(folder);
-    list_DeleteAll(folder->files);
-    list_DeleteAll(folder->subfolder);
+    list_free(folder->files);
+    list_free(folder->subfolder);
     free(folder->name);
     free(folder);
 }

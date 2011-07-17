@@ -34,7 +34,7 @@ void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
 
 void kernel_console_init()
 {
-    kernelConsole.tasks = list_Create();
+    kernelConsole.tasks = list_create();
     kernelConsole.mutex = mutex_create(1);
     memset(kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES * 2);
 
@@ -50,7 +50,7 @@ void console_init(console_t* console, const char* name)
     console->scrollBegin = 0;
     console->scrollEnd   = USER_LINES;
     console->showInfobar = false;
-    console->tasks       = list_Create();
+    console->tasks       = list_create();
     console->mutex       = mutex_create(1);
     strcpy(console->name, name);
     memset(console->vidmem, 0x00, COLUMNS * USER_LINES * 2);
@@ -70,7 +70,7 @@ void console_init(console_t* console, const char* name)
 void console_exit(console_t* console)
 {
     free(console->name);
-    list_DeleteAll(console->tasks);
+    list_free(console->tasks);
     mutex_delete(console->mutex);
 }
 

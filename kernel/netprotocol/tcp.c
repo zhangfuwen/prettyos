@@ -192,11 +192,11 @@ tcpConnection_t* tcp_createConnection()
 {
     if(tcpConnections == 0)
     {
-        tcpConnections = list_Create();
+        tcpConnections = list_create();
     }
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
-    connection->inBuffer        = list_Create();
-    connection->outBuffer       = list_Create();
+    connection->inBuffer        = list_create();
+    connection->outBuffer       = list_create();
     connection->owner           = (void*)currentTask;
     connection->ID              = getConnectionID();
     connection->TCP_PrevState   = CLOSED;
@@ -206,7 +206,7 @@ tcpConnection_t* tcp_createConnection()
     connection->tcb.msl         = 10000; // 10 sec max. segment lifetime  // CHECK
     connection->tcb.RCV.dACK    = 0; // duplicate ACKs received
 
-    list_Append(tcpConnections, connection);
+    list_append(tcpConnections, connection);
     textColor(TEXT);
     printf("\nTCP conn. created, ID: %u\n", connection->ID);
     return(connection);
@@ -222,7 +222,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
     uint32_t countOUT = tcp_deleteOutBuffers(connection); // free
     uint32_t countIN  = tcp_deleteInBuffers (connection); // free
 
-    list_Delete(tcpConnections, connection);
+    list_delete(tcpConnections, connection);
     free(connection);
 
     serial_log(1,"\r\nTCP conn.ID: %u <--- deleted, del countIN: %u del countOUT (not acked): %u \n", connection->ID, countIN, countOUT);
@@ -627,7 +627,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                             In->seq        = ntohl(tcp->sequenceNumber);
                             In->ev->length = tcpDataLength;
                             In->ev->connectionID = connection->ID;
-                            list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
+                            list_append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
 
                             // Issue event
                             uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
@@ -877,7 +877,7 @@ static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection)
         free(inPacket->ev);
         free(inPacket);
     }
-    list_DeleteAll(connection->inBuffer);
+    list_free(connection->inBuffer);
     connection->inBuffer = 0;
 
     return count;
@@ -895,7 +895,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
         free(outPacket->data);
         free(outPacket);
     }
-    list_DeleteAll(connection->outBuffer);
+    list_free(connection->outBuffer);
     connection->outBuffer = 0;
 
     return count;
@@ -938,7 +938,7 @@ uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
             free(outPacket->data);
             free(outPacket);
             serial_log(1,"checkOutBuffers - delAckedOutPacket\r\n");
-            list_Delete(connection->outBuffer, e->data);
+            list_delete(connection->outBuffer, e->data);
         }
         else // check need for retransmission
         {
@@ -1068,7 +1068,7 @@ void tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
     Out->time_ms_transmitted  = timer_getMilliseconds();
 
     Out->time_ms_acknowledged = 0; // not acknowledged
-    list_Append(connection->outBuffer, Out); // data to be acknowledged ==> OutBuffer // CHECK TCP PROCESS
+    list_append(connection->outBuffer, Out); // data to be acknowledged ==> OutBuffer // CHECK TCP PROCESS
 }
 
 void tcp_uclose(uint32_t ID)

@@ -18,12 +18,12 @@ typedef struct todoList
 } todoList_t;
 
 
-todoList_t* todoList_create();                           // Allocates memory for a todoList_t and initializes it
+todoList_t* todolist_create();                           // Allocates memory for a todoList_t and initializes it
 void todoList_add(todoList_t* list, void (*function)(void*, size_t), void* data, size_t length, uint32_t executionTime); // Takes a functionpointer
 void todoList_execute(todoList_t* list);                 // Executes the content of the queue and clears the queue
 void todoList_wait(todoList_t* list);                    // Waits (using scheduler) until there is something to do
 bool todoList_unlockTask(void* task);                    // Used for scheduler. Returns true if there are exercises in the list that blocks the task
-void todoList_delete(todoList_t* list);                  // Frees memory of a todoList_t
+void todolist_delete(todoList_t* list);                  // Frees memory of a todoList_t
 
 
 #endif

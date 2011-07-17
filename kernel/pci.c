@@ -109,7 +109,7 @@ bool pci_deviceSentInterrupt(pciDev_t* dev)
 
 void pci_scan()
 {
-    devices = list_Create();
+    devices = list_create();
 
     textColor(HEADLINE);
     printf("\nPCI devices:");
@@ -134,7 +134,7 @@ void pci_scan()
                 if (vendorID && vendorID != 0xFFFF)
                 {
                     pciDev_t* PCIdev = malloc(sizeof(pciDev_t), 0, "pciDev_t");
-                    list_Append(devices, PCIdev);
+                    list_append(devices, PCIdev);
 
                     PCIdev->vendorID           = vendorID;
                     PCIdev->deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);

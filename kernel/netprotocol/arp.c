@@ -15,7 +15,7 @@
 
 void arp_deleteTableEntry(arpTable_t* cache, arpTableEntry_t* entry)
 {
-    list_Delete(cache->table, entry);
+    list_delete(cache->table, entry);
 }
 
 static void arp_checkTable(arpTable_t* cache)
@@ -41,7 +41,7 @@ void arp_addTableEntry(arpTable_t* cache, uint8_t MAC[6], IP_t IP, bool dynamic)
     if(entry == 0) // No entry found. Create new one.
     {
         entry = malloc(sizeof(arpTableEntry_t), 0, "arp entry");
-        list_Append(cache->table, entry);
+        list_append(cache->table, entry);
     }
     entry->IP.iIP = IP.iIP;
     memcpy(entry->MAC, MAC, 6);
@@ -86,7 +86,7 @@ void arp_showTable(arpTable_t* cache)
 
 void arp_initTable(arpTable_t* cache)
 {
-    cache->table = list_Create();
+    cache->table = list_create();
     cache->lastCheck = timer_getSeconds();
 
     // Create default entries
@@ -98,7 +98,7 @@ void arp_initTable(arpTable_t* cache)
 
 void arp_deleteTable(arpTable_t* cache)
 {
-    list_DeleteAll(cache->table);
+    list_free(cache->table);
 }
 
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)

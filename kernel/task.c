@@ -44,13 +44,13 @@ void tasking_install()
     textColor(TEXT);
     #endif
 
-    tasks = list_Create();
+    tasks = list_create();
 
     kernelTask.pageDirectory = kernelPageDirectory;
     kernelTask.eventQueue = event_createQueue();
 
-    list_Append(kernelTask.console->tasks, &kernelTask);
-    list_Append(tasks, &kernelTask);
+    list_append(kernelTask.console->tasks, &kernelTask);
+    list_append(tasks, &kernelTask);
 
     scheduler_install();
     scheduler_insertTask(&kernelTask);
@@ -157,7 +157,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     newTask->esp = (uint32_t)kernelStack;
     newTask->ss  = data_segment;
 
-    list_Append(tasks, newTask);
+    list_append(tasks, newTask);
     scheduler_insertTask(newTask); // newTask is inserted as last task in queue
 
     #ifdef _TASKING_DIAGNOSIS_
@@ -168,10 +168,10 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
 task_t* create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)
 {
     task_t* newTask = create_task(directory, entry, privilege, argc, argv);
-    list_Delete(newTask->console->tasks, newTask);
+    list_delete(newTask->console->tasks, newTask);
     newTask->console = malloc(sizeof(console_t), 0, "task-console");
     console_init(newTask->console, consoleName);
-    list_Append(newTask->console->tasks, newTask);
+    list_append(newTask->console->tasks, newTask);
     return(newTask);
 }
 
@@ -189,7 +189,7 @@ task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privileg
     createThreadTaskBase(newTask, directory, entry, privilege, argc, argv);
 
     newTask->console = currentTask->console; // task shares the console of the current task
-    list_Append(newTask->console->tasks, newTask);
+    list_append(newTask->console->tasks, newTask);
     newTask->eventQueue = event_createQueue(); // For tasks event handling is enabled per default
 
     return newTask;
@@ -198,10 +198,10 @@ task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privileg
 task_t* create_cthread(void(*entry)(), const char* consoleName)
 {
     task_t* newTask = create_thread(entry);
-    list_Delete(newTask->console->tasks, newTask);
+    list_delete(newTask->console->tasks, newTask);
     newTask->console = malloc(sizeof(console_t), 0, "thread-console");
     console_init(newTask->console, consoleName);
-    list_Append(newTask->console->tasks, newTask);
+    list_append(newTask->console->tasks, newTask);
     newTask->eventQueue = event_createQueue(); // Every thread with an own console gets an own eventQueue, because otherwise lots of input will never arrive.
     return(newTask);
 }
@@ -222,11 +222,11 @@ task_t* create_thread(void(*entry)())
     // Attach the thread to its parent
     newTask->parent = (task_t*)currentTask;
     if(currentTask->threads == 0)
-        currentTask->threads = list_Create();
-    list_Append(currentTask->threads, newTask);
+        currentTask->threads = list_create();
+    list_append(currentTask->threads, newTask);
 
     newTask->console = currentTask->console; // task shares the console of the current task
-    list_Append(newTask->console->tasks, newTask);
+    list_append(newTask->console->tasks, newTask);
 
     return newTask;
 }
@@ -245,7 +245,7 @@ task_t* create_vm86_task(pageDirectory_t* pd, void(*entry)())
     createThreadTaskBase(newTask, pd, entry, 3, 0, 0);
 
     newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // Task uses the same console as the kernel
-    list_Append(newTask->console->tasks, newTask);
+    list_append(newTask->console->tasks, newTask);
 
     return newTask;
 }
@@ -313,7 +313,7 @@ static void kill(task_t* task)
     #endif
 
     // Cleanup
-    list_Delete(task->console->tasks, task);
+    list_delete(task->console->tasks, task);
     if(task->console->tasks->head == 0)
     {
         // Delete current task's console from list of our reachable consoles, if it is in that list
@@ -344,7 +344,7 @@ static void kill(task_t* task)
     // Inform the parent task that this task has exited
     if (task->type == THREAD)
     {
-        list_Delete(task->parent->threads, task);
+        list_delete(task->parent->threads, task);
     }
 
     // Kill all child-threads of this task
@@ -354,10 +354,10 @@ static void kill(task_t* task)
         {
             kill(e->data);
         }
-        list_DeleteAll(task->threads);
+        list_free(task->threads);
     }
 
-    list_Delete(tasks, task);
+    list_delete(tasks, task);
     scheduler_deleteTask(task);
 
     #ifdef _TASKING_DIAGNOSIS_

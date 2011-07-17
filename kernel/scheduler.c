@@ -41,8 +41,8 @@ static void doNothing()
 void scheduler_install()
 {
     // Init scheduler rings
-    runningTasks = ring_Create();
-    blockedTasks = ring_Create();
+    runningTasks = ring_create();
+    blockedTasks = ring_create();
 }
 
 static void unblockTask(task_t* task, bool timeout)
@@ -104,7 +104,7 @@ static task_t* scheduler_getNextTask()
         if(freetimeTask == 0) // The freetime task has not been needed until now. Use spare time to create it.
         {
             freetimeTask = create_task(kernelPageDirectory, &doNothing, 0, 0, 0);
-            ring_DeleteFirst(runningTasks, freetimeTask); // The freetime task is special. It should not be run like a normal task scheduled by the runningTasks ring.
+            ring_deleteFirst(runningTasks, freetimeTask); // The freetime task is special. It should not be run like a normal task scheduled by the runningTasks ring.
             event_deleteQueue(freetimeTask->eventQueue);
             freetimeTask->eventQueue = 0;
         }
@@ -132,14 +132,14 @@ uint32_t scheduler_taskSwitch(uint32_t esp)
 
 void scheduler_insertTask(task_t* task)
 {
-    ring_Insert(runningTasks, task, true); // We only want to have a task one time in the ring, because we steer the priority (later) with multiple rings and not by inserting a task multiple times into the ring
+    ring_insert(runningTasks, task, true); // We only want to have a task one time in the ring, because we steer the priority (later) with multiple rings and not by inserting a task multiple times into the ring
 }
 
 void scheduler_deleteTask(task_t* task)
 {
     // Take task out of our rings
-    ring_DeleteFirst(runningTasks, task);
-    ring_DeleteFirst(blockedTasks, task);
+    ring_deleteFirst(runningTasks, task);
+    ring_deleteFirst(blockedTasks, task);
 
     scheduler_unblockEvent(BL_TASK, (void*)task->pid); // Unblock tasks waiting for the end of the given task
 }

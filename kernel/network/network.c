@@ -130,8 +130,8 @@ bool network_installDevice(pciDev_t* device)
     adapter->driver->install(adapter);
 
     if(adapters == 0)
-        adapters = list_Create();
-    list_Append(adapters, adapter);
+        adapters = list_create();
+    list_append(adapters, adapter);
 
     // Try to get an IP by DHCP
     adapter->DHCP_State  = START;
@@ -165,7 +165,7 @@ static void network_handleReceivedBuffers(void* data, size_t length)
         e = e->next;
         EthernetRecv(buffer->adapter, (ethernet_t*)buffer->data, buffer->length);
         free(buffer->data);
-        list_Delete(RxBuffers, buffer);
+        list_delete(RxBuffers, buffer);
         free(buffer);
     }
     mutex_unlock(RxMutex);
@@ -174,7 +174,7 @@ static void network_handleReceivedBuffers(void* data, size_t length)
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t length) // Called by driver
 {
     if(RxBuffers == 0)
-        RxBuffers = list_Create();
+        RxBuffers = list_create();
     if(!RxMutex)
         RxMutex = mutex_create();
 
@@ -184,7 +184,7 @@ void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t le
     buffer->data = malloc(length, 0, "networkBuffer_t::data");
     memcpy(buffer->data, data, length);
     mutex_lock(RxMutex);
-    list_Append(RxBuffers, buffer);
+    list_append(RxBuffers, buffer);
     mutex_unlock(RxMutex);
 
     todoList_add(kernel_idleTasks, &network_handleReceivedBuffers, 0, 0, 0);

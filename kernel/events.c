@@ -14,7 +14,7 @@ event_queue_t* event_createQueue()
     event_queue_t* queue = malloc(sizeof(event_queue_t), 0, "event_queue");
     queue->num = 0;
     queue->mutex = mutex_create();
-    queue->list = list_Create();
+    queue->list = list_create();
     return(queue);
 }
 
@@ -25,7 +25,7 @@ void event_deleteQueue(event_queue_t* queue)
         free(((event_t*)e->data)->data);
         free(e->data);
     }
-    list_DeleteAll(queue->list);
+    list_free(queue->list);
     mutex_delete(queue->mutex);
     free(queue);
 }
@@ -45,7 +45,7 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
         ev->length = 0;
         ev->type = EVENT_OVERFLOW;
         mutex_lock(destination->mutex);
-        list_Append(destination->list, ev);
+        list_append(destination->list, ev);
         destination->num++;
         mutex_unlock(destination->mutex);
 
@@ -65,7 +65,7 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
         ev->length = length;
         ev->type = type;
         mutex_lock(destination->mutex);
-        list_Append(destination->list, ev);
+        list_append(destination->list, ev);
         destination->num++;
         mutex_unlock(destination->mutex);
 
@@ -118,7 +118,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
         memcpy(destination, ev->data, ev->length);
     }
     task->eventQueue->num--;
-    list_Delete(task->eventQueue->list, ev);
+    list_delete(task->eventQueue->list, ev);
     mutex_unlock(task->eventQueue->mutex);
     free(ev->data);
     free(ev);
@@ -128,7 +128,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
 {
-    element_t* elem = list_GetElement(eventQueue->list, i);
+    element_t* elem = list_getElement(eventQueue->list, i);
     if(elem == 0) return(0);
     return(elem->data);
 }

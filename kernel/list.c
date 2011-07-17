@@ -10,7 +10,7 @@
 
 
 // List
-list_t* list_Create()
+list_t* list_create()
 {
     list_t* list = (list_t*)malloc(sizeof(list_t), 0, "listHead");
     if (list)
@@ -20,7 +20,7 @@ list_t* list_Create()
     return(list);
 }
 
-bool list_Append(list_t* list, void* data)
+bool list_append(list_t* list, void* data)
 {
     ASSERT(list);
     element_t* ap = (element_t*)malloc(sizeof(element_t), 0,"listElement");
@@ -29,7 +29,7 @@ bool list_Append(list_t* list, void* data)
         ap->data = data;
         ap->next = 0;
 
-        if (!list->head) // there exist no list element
+        if (list->head == 0) // there exist no list element
         {
             list->head = ap;
         }
@@ -43,7 +43,48 @@ bool list_Append(list_t* list, void* data)
     return(false);
 }
 
-void list_Delete(list_t* list, void* data)
+bool list_insert(list_t* list, element_t* next, void* data)
+{
+    ASSERT(list);
+    if (next == 0)
+    {
+        return (list_append(list, data));
+    }
+
+    if (next == list->head)
+    {
+        element_t* newElement = (element_t*)malloc(sizeof(element_t), 0,"listElement");
+        if (newElement)
+        {
+            newElement->next = list->head;
+            list->head = newElement;
+            newElement->data = data;
+            return true;
+        }
+    }
+
+    element_t* prev = 0;
+    element_t* cur  = list->head;
+    
+    while(cur != 0 && cur != next)
+    {
+        prev = cur;
+        cur  = cur->next;
+    }
+    
+    // insert left of next
+    element_t* newElement = (element_t*)malloc(sizeof(element_t), 0,"listElement");
+    if (newElement)
+    {
+        newElement->data = data;
+        newElement->next = next;
+        prev->next = newElement;
+        return true;
+    }
+    return false;
+}
+
+void list_delete(list_t* list, void* data)
 {
     ASSERT(list);
     element_t* cur = list->head;
@@ -68,7 +109,7 @@ void list_Delete(list_t* list, void* data)
     }
 }
 
-void list_DeleteAll(list_t* list)
+void list_free(list_t* list)
 {
     ASSERT(list);
     element_t* cur = list->head;
@@ -83,7 +124,7 @@ void list_DeleteAll(list_t* list)
     free(list);
 }
 
-element_t* list_GetElement(list_t* list, uint32_t number)
+element_t* list_getElement(list_t* list, uint32_t number)
 {
     ASSERT(list);
     element_t* cur = list->head;
@@ -100,7 +141,7 @@ element_t* list_GetElement(list_t* list, uint32_t number)
 
 
 // Ring
-ring_t* ring_Create()
+ring_t* ring_create()
 {
     ring_t* ring = malloc(sizeof(ring_t), 0, "ring");
     ring->current = 0;
@@ -140,7 +181,7 @@ static void takeOut(ring_t* ring, element_t* prev)
     }
 }
 
-void ring_Insert(ring_t* ring, void* data, bool single)
+bool ring_insert(ring_t* ring, void* data, bool single)
 {
     ASSERT(ring);
     if(single && ring->begin != 0) // check if an element with the same data is already in the ring
@@ -148,13 +189,22 @@ void ring_Insert(ring_t* ring, void* data, bool single)
         element_t* current = ring->current;
         do
         {
-            if(current->data == data) return;
+            if(current->data == data)
+            {
+                return false;
+            }
             current = current->next;
-        } while (current != ring->current);
+        } 
+        while (current != ring->current);
     }
     element_t* item = malloc(sizeof(element_t), 0, "ring-element");
-    item->data = data;
-    putIn(ring, ring->current, item);
+    if (item)
+    {
+        item->data = data;
+        putIn(ring, ring->current, item);
+        return true;
+    }
+    return false;
 }
 
 bool ring_isEmpty(ring_t* ring)
@@ -163,7 +213,7 @@ bool ring_isEmpty(ring_t* ring)
     return(ring->begin == 0);
 }
 
-bool ring_DeleteFirst(ring_t* ring, void* data)
+bool ring_deleteFirst(ring_t* ring, void* data)
 {
     ASSERT(ring);
     if(ring->begin == 0) return(false);
@@ -179,13 +229,14 @@ bool ring_DeleteFirst(ring_t* ring, void* data)
             return(true);
         }
         current = current->next;
-    } while (current != ring->current);
+    } 
+    while (current != ring->current);
+   
     return(false);
 }
 
 void ring_move(ring_t* dest, ring_t* source, void* data)
 {
-
     if(source == 0 || dest == 0 || source->begin == 0) return;
 
     element_t* prev = source->begin;
@@ -199,12 +250,17 @@ void ring_move(ring_t* dest, ring_t* source, void* data)
         }
         prev = current;
         current = current->next;
-    } while (prev != source->begin);
+    } 
+    while (prev != source->begin);
 
     if(current->data == data) // Found element. Insert it to dest ring.
+    {
         putIn(dest, dest->current, current);
+    }
     else // Create new element. Insert it to dest ring.
-        ring_Insert(dest, data, true);
+    {
+        ring_insert(dest, data, true);
+    }
 }
 
 
