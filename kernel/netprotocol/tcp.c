@@ -194,7 +194,6 @@ tcpConnection_t* tcp_createConnection()
     {
         tcpConnections = list_Create();
     }
-
     tcpConnection_t* connection = malloc(sizeof(tcpConnection_t), 0, "tcp connection");
     connection->inBuffer        = list_Create();
     connection->outBuffer       = list_Create();
@@ -205,6 +204,7 @@ tcpConnection_t* tcp_createConnection()
     connection->tcb.rto         = RTO_STARTVALUE; // for first calculation
     connection->tcb.retrans     = false;
     connection->tcb.msl         = 10000; // 10 sec max. segment lifetime  // CHECK
+    connection->tcb.RCV.dACK    = 0; // duplicate ACKs received
 
     list_Append(tcpConnections, connection);
     textColor(TEXT);
@@ -313,6 +313,26 @@ static bool tcp_prepare_send_ACK(tcpConnection_t* connection, tcpPacket_t* tcp, 
     return true;
 }
 
+static void tcp_send_DupAck(tcpConnection_t* connection)
+{    
+    connection->tcb.SEG.ACK = connection->tcb.SND.UNA;
+    connection->tcb.SEG.CTL = ACK_FLAG;
+    serial_log(1,"We send now Dup-Ack:\r\n");
+    serial_log(1,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
+    serial_log(1,"\tack:\t%u\r\n", connection->tcb.SEG.ACK - connection->tcb.RCV.IRS);
+    tcp_send(connection, 0, 0);
+}
+
+/*
+// TEST DUP_ACK
+if ( tcpDataLength && (tcp->sequenceNumber > connection->tcb.RCV.NXT) )
+{
+    serial_log(1,"rcvd:\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+    tcp_send_DupAck(connection);
+    return;
+}
+*/
+
 static bool tcp_prepare_send_FIN(tcpConnection_t* connection, tcpPacket_t* tcp, bool set_SND_UNA)
 {
     if (set_SND_UNA)
@@ -417,7 +437,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
                 connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
-                connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
+                connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;  
 
                 connection->tcb.SEG.SEQ = connection->tcb.SND.NXT; // CHECK
                 connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
@@ -440,133 +460,227 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
         case ESTABLISHED: // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER *****
         {
-            if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
+            char*    tcpData       = (char*)( (uintptr_t)tcp + 4 * tcp->dataOffset ); // dataOffset is given as number of DWORDs
+            uint32_t tcpDataLength = length - (4 * tcp->dataOffset);
+            
+            if (!IsPacketAcceptable(tcp, connection, tcpDataLength))
             {
-                char* tcpData = (char*)( (uintptr_t)tcp + 4 * tcp->dataOffset ); // dataOffset is given as number of DWORDs
-                uint32_t tcpDataLength = length - (4 * tcp->dataOffset);
+                textColor(ERROR); printf("not acceptable!"); textColor(TEXT);
+                // if RST is on, STOP.
+                // if RST is off, send segment from queue 
+                break; // return; // ??
+            }
 
-                if (!IsPacketAcceptable(tcp, connection, tcpDataLength))
+            if (tcp->RST || tcp->SYN) // RST or SYN
+            {
+                //if SYN, send segment from queue 
+                connection->TCP_CurrState = CLOSED;
+                tcp_deleteConnection(connection);
+                return;
+            }
+            
+            // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf  ES2  page 18
+            
+            if (!tcp->ACK)
+            {
+                return;
+            }            
+            else // ACK
+            {
+                if (! (ntohl(tcp->acknowledgmentNumber) > connection->tcb.SND.UNA && ntohl(tcp->acknowledgmentNumber) <= connection->tcb.SND.NXT))
                 {
-                    textColor(ERROR);
-                    printf("not acceptable!");
-                    textColor(TEXT);
-                    break; // No ACK !!!
-                }
+                    // This does not mean a new ACK
 
-                if (connection->passive)
-                {
-                    textColor(LIGHT_GRAY);
-                    printf("data: ");
-                    textColor(DATA);
-                    for (uint16_t i=0; i<tcpDataLength; i++)
+                    if (!(ntohl(tcp->acknowledgmentNumber) == connection->tcb.SND.UNA))
                     {
-                        putch(tcpData[i]);
-                    }
-
-                    // Analysis
-                    textColor(IMPORTANT);
-                    printf("\ntcp: %u  tcpData: %u  tcpDataOff: %u\n",
-                            length, tcpDataLength, tcp->dataOffset);
-                    textColor(LIGHT_BLUE);
-                    for (uint16_t i=0; i<tcpDataLength; i++) // TODO: Is tcpDataLength+4 really correct, or does it belong to the old CRC/Padding-HACK?
-                    {
-                        printf("%y ", tcpData[i]);
-                    }
-                    textColor(TEXT);
-                }
-                sleepMilliSeconds(2);
-
-                connection->tcb.RCV.WND =  ntohs(tcp->window);
-                connection->tcb.SND.UNA =  max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
-
-                // set ack time in tcp out-buffer packets
-                for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
-                {
-                    tcpOut_t* outPacket = e->data;
-                    if ( ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber)) && (outPacket->segment.LEN > 0))
-                    {
-                         if(outPacket->time_ms_acknowledged == 0) // not acknowledged
-                         {
-                             outPacket->time_ms_acknowledged = timer_getMilliseconds(); // acknowledged
-                             outPacket->remoteAck = ntohl(tcp->acknowledgmentNumber);
-
-                             // retransmission timeout (RTO)
-                             if (outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN) == 0)
-                             {
-                                 calculateRTO(connection, outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
-                             }
-                         }
-                    }
-                }
-
-                connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
-
-                connection->tcb.SND.WND -= tcpDataLength;
-
-                connection->tcb.SEG.SEQ =  connection->tcb.SND.NXT;
-                connection->tcb.SEG.ACK =  connection->tcb.RCV.NXT;
-                connection->tcb.SEG.LEN =  0; // send no data
-                connection->tcb.SEG.WND =  connection->tcb.SND.WND;
-                connection->tcb.SEG.CTL =  ACK_FLAG;
-
-                if (tcpDataLength)
-                {
-                    //Fill in-buffer list
-                    tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
-                    In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
-                    memcpy(In->ev+1, tcpData, tcpDataLength);
-                    In->seq        = ntohl(tcp->sequenceNumber);
-                    In->ev->length = tcpDataLength;
-                    In->ev->connectionID = connection->ID;
-                    list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
-
-                    // Issue event
-                    uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
-                    connection->tcb.SND.WND += tcpDataLength; // delivered to application
-
-                    uint32_t totalTCPdataSize = 0;
-
-                    mutex_lock(connection->owner->eventQueue->mutex);
-                    for(size_t i = 0; ; i++)
-                    {
-                        event_t* ev = event_peek(connection->owner->eventQueue, i);
-                        if(ev == 0) break;
-                        if(ev->type == EVENT_TCP_RECEIVED)
-                        {
-                            totalTCPdataSize += ev->length - sizeof(tcpReceivedEventHeader_t);
-                        }
-                    }
-                    mutex_unlock(connection->owner->eventQueue->mutex);
-                    textColor(MAGENTA);
-                    printf("\ntotalTCPdataSize: %u ", totalTCPdataSize);
-                    textColor(TEXT);
-
-                    // setting sliding window
-                    if (retVal==0)
-                    {
-                        textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
-                        if (totalTCPdataSize <  STARTWINDOW && connection->tcb.SND.WND < MAXWINDOW)
-                            {connection->tcb.SEG.WND = connection->tcb.SND.WND += INCWINDOW;}
-                        if (totalTCPdataSize >= STARTWINDOW)
-                            {connection->tcb.SEG.WND = connection->tcb.SND.WND -= DECWINDOW;}
-                        if (totalTCPdataSize >= MAXWINDOW  )
-                            {connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;}
+                        // invalid ACK, drop
+                        return;
                     }
                     else
                     {
-                        textColor(ERROR); printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
-                        connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;
+                        // valid Duplicate ACK
+                        connection->tcb.RCV.dACK++;
+
+                        if (connection->tcb.RCV.dACK == 1)
+                        {
+                            // ignore second duplicate ACK and continue!
+                            goto ES3;
+                        }
+                        else
+                        {
+                            if (connection->tcb.RCV.dACK == 2) //3rd duplicate ACK
+                            {
+                                // Release REXMT Timer
+                                
+                                // Retransmit Lost Segment
+
+                                // SSthresh = max (2, min(CWND, SND.WND/2)) ??
+                                goto ES3;
+                            }
+                            else
+                            {
+                                // ES4
+                                // ...
+                                goto ES3; // HACK
+                            }
+                        }
                     }
-                    textColor(TEXT);
                 }
-                tcp_sendFlag = true;
-                tcp_checkOutBuffers(connection,true);
-            }
-            else if (tcp->FIN) // FIN or FIN ACK
-            {
-                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                connection->TCP_CurrState = CLOSE_WAIT;
-            }
+                else // This means a new and valid ACK
+                {   
+                    // Window Update (??)
+
+                    // SND.WND = min(CWND, SSthresh, SEG.LEN)
+
+                    // Remove all ack'ed segments from the Rexmt Queue
+
+                    // SND.UNA = SEG.ACK
+                    // ExpBoff = 1 //??
+
+                    // Release REXMT Timer
+
+                    goto ES3; // only for documentation
+                
+
+                 ES3:
+                        if (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT)
+                        {
+                            // cf. ES3
+                            // handle Out-of-Order RCV buffer (sorted --> RCV buffer)
+                        }
+                        else
+                        {
+                            
+                            serial_log(1,"rcvd:\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS); 
+                            serial_log(1,"\r\nsend Dup-ACK!");
+                            tcp_send_DupAck(connection);
+                            
+                            // Add received data to the temporary Out-of-Order RCV Buffer <--------------------------------- TODO: OO RCV Buffer
+
+                            connection->tcb.RCV.WND += tcpDataLength;
+                        }                        
+                    
+                        if (connection->passive)
+                        {
+                            textColor(LIGHT_GRAY);
+                            printf("data: ");
+                            textColor(DATA);
+                            for (uint16_t i=0; i<tcpDataLength; i++)
+                            {
+                                putch(tcpData[i]);
+                            }
+
+                            // Analysis
+                            textColor(IMPORTANT);
+                            printf("\ntcp: %u  tcpData: %u  tcpDataOff: %u\n",
+                                    length, tcpDataLength, tcp->dataOffset);
+                            textColor(LIGHT_BLUE);
+                            for (uint16_t i=0; i<tcpDataLength; i++) // TODO: Is tcpDataLength+4 really correct, or does it belong to the old CRC/Padding-HACK?
+                            {
+                                printf("%y ", tcpData[i]);
+                            }
+                            textColor(TEXT);
+                        }
+                        sleepMilliSeconds(2);
+
+                        
+                        // TO BE CHECKED:
+                        connection->tcb.RCV.WND =  ntohs(tcp->window); // cf. receiving dup-ACK
+                        connection->tcb.SND.UNA =  max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); // CHECK for unregular packets above
+
+                        // set ack time in tcp out-buffer packets
+                        for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
+                        {
+                            tcpOut_t* outPacket = e->data;
+                            if ( ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber)) && (outPacket->segment.LEN > 0))
+                            {
+                                 if(outPacket->time_ms_acknowledged == 0) // not acknowledged
+                                 {
+                                     outPacket->time_ms_acknowledged = timer_getMilliseconds(); // acknowledged
+                                     outPacket->remoteAck = ntohl(tcp->acknowledgmentNumber);
+
+                                     // retransmission timeout (RTO)
+                                     if (outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN) == 0)
+                                     {
+                                         calculateRTO(connection, outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
+                                     }
+                                 }
+                            }
+                        }
+
+                        connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
+
+                        connection->tcb.SND.WND -= tcpDataLength;
+
+                        connection->tcb.SEG.SEQ =  connection->tcb.SND.NXT;
+                        connection->tcb.SEG.ACK =  connection->tcb.RCV.NXT;
+                        connection->tcb.SEG.LEN =  0; // send no data
+                        connection->tcb.SEG.WND =  connection->tcb.SND.WND;
+                        connection->tcb.SEG.CTL =  ACK_FLAG;
+
+                        if (tcpDataLength)
+                        {
+                            //Fill in-buffer list
+                            tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
+                            In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
+                            memcpy(In->ev+1, tcpData, tcpDataLength);
+                            In->seq        = ntohl(tcp->sequenceNumber);
+                            In->ev->length = tcpDataLength;
+                            In->ev->connectionID = connection->ID;
+                            list_Append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
+
+                            // Issue event
+                            uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+                            connection->tcb.SND.WND += tcpDataLength; // delivered to application
+
+                            uint32_t totalTCPdataSize = 0;
+
+                            mutex_lock(connection->owner->eventQueue->mutex);
+                            for(size_t i = 0; ; i++)
+                            {
+                                event_t* ev = event_peek(connection->owner->eventQueue, i);
+                                if(ev == 0) break;
+                                if(ev->type == EVENT_TCP_RECEIVED)
+                                {
+                                    totalTCPdataSize += ev->length - sizeof(tcpReceivedEventHeader_t);
+                                }
+                            }
+                            mutex_unlock(connection->owner->eventQueue->mutex);
+                            textColor(MAGENTA);
+                            printf("\ntotalTCPdataSize: %u ", totalTCPdataSize);
+                            textColor(TEXT);
+
+                            // setting sliding window
+                            if (retVal==0)
+                            {
+                                textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
+                                if (totalTCPdataSize <  STARTWINDOW && connection->tcb.SND.WND < MAXWINDOW)
+                                    {connection->tcb.SEG.WND = connection->tcb.SND.WND += INCWINDOW;}
+                                if (totalTCPdataSize >= STARTWINDOW)
+                                    {connection->tcb.SEG.WND = connection->tcb.SND.WND -= DECWINDOW;}
+                                if (totalTCPdataSize >= MAXWINDOW  )
+                                    {connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;}
+                            }
+                            else
+                            {
+                                textColor(ERROR); printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
+                                connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;
+                            }
+                            textColor(TEXT);
+                        }
+                
+                        tcp_sendFlag = true;
+                        tcp_checkOutBuffers(connection,true);
+                    }
+            
+                    /// ???
+                    if (tcp->FIN) // FIN or FIN ACK
+                    {
+                        tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
+                        connection->TCP_CurrState = CLOSE_WAIT;
+                    }
+                }
+
             break;
         }
         case FIN_WAIT_1:
