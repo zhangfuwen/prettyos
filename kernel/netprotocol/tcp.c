@@ -3,9 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-// TODO-LIST:
-// implement dup-ack (as receiver: receive 1,2,3,n. If n!=4 then send dup-ack for 3. as sender: if we get dup-ack, send segment behind that)
-// implement waiting 2 * connection->tcb.msl, delete connection (TIME_WAIT ==> CLOSED)
+/// state diagram: http://upload.wikimedia.org/wikipedia/commons/0/08/TCP_state_diagram.jpg
+/// EFSM/SDL:      http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
+
 
 #include "tcp.h"
 #include "video/console.h"
@@ -406,6 +406,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     switch(connection->TCP_CurrState)
     {
         case LISTEN:
+        {
             if (tcp->SYN && !tcp->ACK) // SYN
             {
                 connection->tcb.RCV.WND = ntohs(tcp->window);
@@ -426,6 +427,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = SYN_RECEIVED;
             }
             break;
+        }
 
         case SYN_RECEIVED:
         {
@@ -439,12 +441,12 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
         case SYN_SENT:
         {
+            connection->tcb.RCV.WND = ntohs(tcp->window);
+            connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
+            connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
+
             if (tcp->SYN && !tcp->ACK) // SYN
             {
-                connection->tcb.RCV.WND = ntohs(tcp->window);
-                connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
-                connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
-
                 connection->tcb.SEG.SEQ = connection->tcb.SND.NXT; // CHECK
                 connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
                 connection->tcb.SEG.CTL = SYN_ACK_FLAG;
@@ -453,10 +455,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else if (tcp->SYN && tcp->ACK)  // SYN ACK
             {
-                connection->tcb.RCV.WND = ntohs(tcp->window);
-                connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
-                connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
-
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = ESTABLISHED;
                 event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
@@ -708,6 +706,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             break;
         }
         case FIN_WAIT_1:
+        {
             if (tcp->FIN && !tcp->ACK) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
@@ -725,7 +724,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = FIN_WAIT_2;
             }
             break;
+        }
         case FIN_WAIT_2:
+        {
             if (tcp->FIN) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
@@ -734,7 +735,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), connection->tcb.msl + timer_getMilliseconds());
             }
             break;
+        }
         case CLOSING:
+        {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = TIME_WAIT;
@@ -742,29 +745,38 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), connection->tcb.msl + timer_getMilliseconds());
             }
             break;
+        }
         case TIME_WAIT:
+        {
             textColor(RED);
             printf("Packet received during state TIME_WAIT.");
             textColor(TEXT);
             break;
+        }
         case CLOSE_WAIT:
+        {
             tcp_sendFlag = tcp_prepare_send_FIN(connection, tcp, true);
             // connection->TCP_CurrState = LAST_ACK;
             connection->TCP_CurrState = CLOSED;
             tcp_deleteFlag = true;
             break;
+        }
         case LAST_ACK:
+        {
             if (tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = CLOSED;
                 tcp_deleteFlag = true;
             }
             break;
+        }
         default:
+        {
             textColor(ERROR);
             printf("This default state should not happen.");
             textColor(TEXT);
             break;
+        }
     }//switch (connection->TCP_CurrState)
 
     /// LOG
