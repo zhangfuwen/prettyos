@@ -90,6 +90,7 @@ typedef struct
     TCP_state                     TCP_CurrState;
     task_t*                       owner;
     list_t*                       inBuffer;
+    list_t*                       OutofOrderinBuffer;
     list_t*                       outBuffer;
     bool passive; // Used to enable output of incoming packets in the kernel console
 } tcpConnection_t;
