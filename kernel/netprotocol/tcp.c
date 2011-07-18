@@ -87,6 +87,9 @@ static void scheduledDeleteConnection(void* data, size_t length)
 static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t timeMilliseconds)
 {
     todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
+    textColor(LIGHT_BLUE);
+    printf("\nconnection ID %u will be deletetd at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
+    textColor(TEXT);
 }
 
 tcpConnection_t* findConnectionID(uint32_t ID)
@@ -298,11 +301,8 @@ void tcp_close(tcpConnection_t* connection)
             connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
             connection->tcb.SND.NXT = connection->tcb.SEG.SEQ + 1;
             tcp_send(connection, 0, 0);
-
-            // TODO: CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK CHECK
             connection->TCP_CurrState = LAST_ACK;
-            //connection->TCP_CurrState = CLOSED; // ??
-            //tcp_deleteConnection(connection);   // ??
+            tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);     
             break;
 
         case SYN_SENT:
@@ -310,6 +310,7 @@ void tcp_close(tcpConnection_t* connection)
             connection->TCP_CurrState = CLOSED;
             tcp_deleteConnection(connection);
             break;
+
         default:
             textColor(ERROR);
             printf("\nClose from unexpected state: %s", tcpStates[connection->TCP_PrevState]);
@@ -341,21 +342,6 @@ static void tcp_send_DupAck(tcpConnection_t* connection)
     serial_log(1,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
     serial_log(1,"\tack:\t%u\r\n", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
     tcp_send(connection, 0, 0);
-}
-
-static bool tcp_prepare_send_FIN(tcpConnection_t* connection, tcpPacket_t* tcp, bool set_SND_UNA)
-{
-    if (set_SND_UNA)
-    {
-        connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
-    }
-
-    connection->tcb.RCV.WND = ntohs(tcp->window);
-    connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber) + 1;
-    connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-    connection->tcb.SEG.CTL = FIN_FLAG;
-    return true;
 }
 
 // This function has to be checked intensively!!!
@@ -702,7 +688,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                         tcp_checkOutBuffers(connection,true);
                     }
 
-                    /// ???
                     if (tcp->FIN) // FIN or FIN ACK
                     {
                         tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
@@ -722,8 +707,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                connection->TCP_CurrState = TIME_WAIT;
                 tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                
+                connection->TCP_CurrState = TIME_WAIT;
             }
             else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
@@ -736,17 +721,17 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             if (tcp->FIN) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                connection->TCP_CurrState = TIME_WAIT;
                 tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                                
+                connection->TCP_CurrState = TIME_WAIT;
             }
             break;
         }
         case CLOSING:
         {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
-            {
-                connection->TCP_CurrState = TIME_WAIT;
+            {               
                 tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                               
+                connection->TCP_CurrState = TIME_WAIT;
             }
             break;
         }
@@ -761,9 +746,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         // Passive Close
         case CLOSE_WAIT:
         {
-            tcp_sendFlag = tcp_prepare_send_FIN(connection, tcp, true);
-            connection->TCP_CurrState = LAST_ACK;
-            tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // if last ack will not arrive               
+            printf("Packet received at CLOSE_WAIT?!");
             break;
         }
         case LAST_ACK:
@@ -772,7 +755,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 connection->TCP_CurrState = CLOSED;
                 tcp_deleteFlag = true;
-            }
+            }            
             break;
         }
 
@@ -1006,7 +989,7 @@ uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
             if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->tcb.rto)
             {
                 textColor(LIGHT_BLUE);
-                printf("\nretransmission done for seg=%u! RTO will be doubled afterwards.", outPacket->segment.SEQ);
+                printf("\nretransmission done for seg=%u! RTO will be doubled afterwards (max. 60 sec).", outPacket->segment.SEQ - connection->tcb.SND.ISS);
                 connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
                 connection->tcb.SEG.ACK =  outPacket->segment.ACK;
                 connection->tcb.SEG.LEN =  outPacket->segment.LEN;
