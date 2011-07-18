@@ -18,14 +18,16 @@
 #include "serial.h"
 #include "todo_list.h"
 
-
+// Sliding window
 static const uint16_t STARTWINDOW =  6000;
 static const uint16_t INCWINDOW   =    50;
 static const uint16_t DECWINDOW   =   100;
 static const uint16_t MAXWINDOW   = 10000;
 
+// MSL
+static const uint16_t MSL         = 10000; // 10 sec max. segment lifetime  // CHECK
 
-// RTO constants
+// RTO 
 static const uint16_t RTO_STARTVALUE = 3000; // 3 sec // rfc 2988
 
 // RTO calculation (RFC 2988)
@@ -80,6 +82,11 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection);
 static void scheduledDeleteConnection(void* data, size_t length)
 {
     tcp_deleteConnection(*(tcpConnection_t**)data);
+}
+
+static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t timeMilliseconds)
+{
+    todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
 }
 
 tcpConnection_t* findConnectionID(uint32_t ID)
@@ -205,7 +212,7 @@ tcpConnection_t* tcp_createConnection()
     connection->TCP_CurrState      = CLOSED;
     connection->tcb.rto            = RTO_STARTVALUE; // for first calculation
     connection->tcb.retrans        = false;
-    connection->tcb.msl            = 10000; // 10 sec max. segment lifetime  // CHECK
+    connection->tcb.msl            = MSL;
     connection->tcb.RCV.dACK       = 0; // duplicate ACKs received
 
     list_append(tcpConnections, connection);
@@ -716,8 +723,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = TIME_WAIT;
-
-                todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), connection->tcb.msl + timer_getMilliseconds());
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                
             }
             else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
@@ -731,8 +737,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
                 connection->TCP_CurrState = TIME_WAIT;
-
-                todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), connection->tcb.msl + timer_getMilliseconds());
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                                
             }
             break;
         }
@@ -741,8 +746,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = TIME_WAIT;
-
-                todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), connection->tcb.msl + timer_getMilliseconds());
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                               
             }
             break;
         }
@@ -753,12 +757,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             textColor(TEXT);
             break;
         }
+
+        // Passive Close
         case CLOSE_WAIT:
         {
             tcp_sendFlag = tcp_prepare_send_FIN(connection, tcp, true);
-            // connection->TCP_CurrState = LAST_ACK;
-            connection->TCP_CurrState = CLOSED;
-            tcp_deleteFlag = true;
+            connection->TCP_CurrState = LAST_ACK;
+            tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // if last ack will not arrive               
             break;
         }
         case LAST_ACK:
@@ -770,6 +775,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             break;
         }
+
+        // only for test reasons 
         default:
         {
             textColor(ERROR);
