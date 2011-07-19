@@ -27,7 +27,7 @@ static const uint16_t MAXWINDOW   = 10000;
 // MSL
 static const uint16_t MSL         = 10000; // 10 sec max. segment lifetime  // CHECK
 
-// RTO 
+// RTO
 static const uint16_t RTO_STARTVALUE = 3000; // 3 sec // rfc 2988
 
 // RTO calculation (RFC 2988)
@@ -279,46 +279,6 @@ void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
     }
 }
 
-void tcp_close(tcpConnection_t* connection)
-{
-    connection->TCP_PrevState = connection->TCP_CurrState;
-
-    switch (connection->TCP_PrevState)
-    {
-        case ESTABLISHED:
-        case SYN_RECEIVED:
-            connection->tcb.SEG.CTL = FIN_FLAG;
-            connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-            connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-            connection->tcb.SND.NXT = connection->tcb.SEG.SEQ + 1;
-            tcp_send(connection, 0, 0);
-            connection->TCP_CurrState = FIN_WAIT_1;
-            break;
-
-        case CLOSE_WAIT:
-            connection->tcb.SEG.CTL = FIN_FLAG;
-            connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-            connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-            connection->tcb.SND.NXT = connection->tcb.SEG.SEQ + 1;
-            tcp_send(connection, 0, 0);
-            connection->TCP_CurrState = LAST_ACK;
-            tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);     
-            break;
-
-        case SYN_SENT:
-        case LISTEN:
-            connection->TCP_CurrState = CLOSED;
-            tcp_deleteConnection(connection);
-            break;
-
-        default:
-            textColor(ERROR);
-            printf("\nClose from unexpected state: %s", tcpStates[connection->TCP_PrevState]);
-            textColor(TEXT);
-            break;
-    }
-}
-
 static bool tcp_prepare_send_ACK(tcpConnection_t* connection, tcpPacket_t* tcp, bool set_SND_UNA)
 {
     if (set_SND_UNA)
@@ -342,6 +302,47 @@ static void tcp_send_DupAck(tcpConnection_t* connection)
     serial_log(1,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
     serial_log(1,"\tack:\t%u\r\n", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
     tcp_send(connection, 0, 0);
+}
+
+static void tcp_sendFin(tcpConnection_t* connection)
+{
+    connection->tcb.SEG.CTL = FIN_FLAG;
+    connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+    connection->tcb.SND.NXT = connection->tcb.SEG.SEQ + 1;
+    tcp_send(connection, 0, 0);
+}
+
+void tcp_close(tcpConnection_t* connection)
+{
+    connection->TCP_PrevState = connection->TCP_CurrState;
+
+    switch (connection->TCP_PrevState)
+    {
+        case ESTABLISHED:
+        case SYN_RECEIVED:
+            tcp_sendFin(connection);
+            connection->TCP_CurrState = FIN_WAIT_1;
+            break;
+
+        case CLOSE_WAIT:
+            tcp_sendFin(connection);
+            connection->TCP_CurrState = LAST_ACK;
+            tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
+            break;
+
+        case SYN_SENT:
+        case LISTEN:
+            connection->TCP_CurrState = CLOSED;
+            tcp_deleteConnection(connection);
+            break;
+
+        default:
+            textColor(ERROR);
+            printf("\nClose from unexpected state: %s", tcpStates[connection->TCP_PrevState]);
+            textColor(TEXT);
+            break;
+    }
 }
 
 // This function has to be checked intensively!!!
@@ -707,7 +708,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             else if (tcp->FIN && tcp->ACK) // FIN ACK
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
                 connection->TCP_CurrState = TIME_WAIT;
             }
             else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
@@ -721,7 +722,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             if (tcp->FIN) // FIN
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                                
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
                 connection->TCP_CurrState = TIME_WAIT;
             }
             break;
@@ -729,8 +730,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         case CLOSING:
         {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
-            {               
-                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);                               
+            {
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
                 connection->TCP_CurrState = TIME_WAIT;
             }
             break;
@@ -755,11 +756,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 connection->TCP_CurrState = CLOSED;
                 tcp_deleteFlag = true;
-            }            
+            }
             break;
         }
 
-        // only for test reasons 
+        // only for test reasons
         default:
         {
             textColor(ERROR);
