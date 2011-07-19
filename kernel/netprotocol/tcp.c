@@ -711,8 +711,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
                 connection->TCP_CurrState = TIME_WAIT;
             }
-            else if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
+            else if (!tcp->SYN && !tcp->FIN && tcp->ACK && (length - 4*tcp->dataOffset == 0)) // ACK
             {
+                connection->TCP_CurrState = FIN_WAIT_2;
+            }
+            else if (!tcp->SYN && !tcp->FIN && tcp->ACK && (length - 4*tcp->dataOffset > 0)) // ACK with data
+            {
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // if there will not come a FIN at FIN_WAIT_2
                 connection->TCP_CurrState = FIN_WAIT_2;
             }
             break;
