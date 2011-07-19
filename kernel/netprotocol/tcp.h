@@ -125,10 +125,8 @@ void tcp_close(tcpConnection_t* connection);
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length);
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length);
 void tcp_showConnections();
-tcpConnection_t* findConnectionID(uint32_t ID);
-tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state);
-uint32_t tcp_checkInBuffers (tcpConnection_t* connection, bool showData);
-uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData);
+tcpConnection_t* tcp_findConnectionID(uint32_t ID);
+tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state);
 
 // User functions
 uint32_t tcp_uconnect(IP_t IP, uint16_t port);

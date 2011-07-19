@@ -72,12 +72,16 @@ static const char* const tcpStates[] =
 
 static list_t* tcpConnections = 0;
 
-static bool IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
-static uint16_t getFreeSocket();
-static uint32_t getConnectionID();
+static bool     tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
+static uint16_t tcp_getFreeSocket();
+static uint32_t tcp_getConnectionID();
 static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection);
 static uint32_t tcp_deleteOutofOrderInBuffers(tcpConnection_t* connection);
 static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection);
+static uint32_t tcp_checkInBuffers (tcpConnection_t* connection, bool showData);
+static uint32_t tcp_checkOutofOrderInBuffers(tcpConnection_t* connection, bool showData);
+static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData);
+
 
 static void scheduledDeleteConnection(void* data, size_t length)
 {
@@ -88,11 +92,11 @@ static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t ti
 {
     todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
     textColor(LIGHT_BLUE);
-    printf("\nconnection ID %u will be deletetd at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
+    printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
     textColor(TEXT);
 }
 
-tcpConnection_t* findConnectionID(uint32_t ID)
+tcpConnection_t* tcp_findConnectionID(uint32_t ID)
 {
     if(tcpConnections == 0)
         return(0);
@@ -109,7 +113,7 @@ tcpConnection_t* findConnectionID(uint32_t ID)
     return(0);
 }
 
-tcpConnection_t* findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state)
+tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state)
 {
     if(tcpConnections == 0)
         return(0);
@@ -210,7 +214,7 @@ tcpConnection_t* tcp_createConnection()
     connection->OutofOrderinBuffer = list_create();
     connection->outBuffer          = list_create();
     connection->owner              = (void*)currentTask;
-    connection->ID                 = getConnectionID();
+    connection->ID                 = tcp_getConnectionID();
     connection->TCP_PrevState      = CLOSED;
     connection->TCP_CurrState      = CLOSED;
     connection->tcb.rto            = RTO_STARTVALUE; // for first calculation
@@ -257,7 +261,7 @@ void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter) // p
 void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
 {
     connection->TCP_PrevState = connection->TCP_CurrState;
-    connection->localSocket.port = getFreeSocket(); // with srand(...)
+    connection->localSocket.port = tcp_getFreeSocket(); // with srand(...)
     connection->passive = false;
 
     if (connection->TCP_PrevState == CLOSED || connection->TCP_PrevState == LISTEN || connection->TCP_PrevState == TIME_WAIT)
@@ -360,7 +364,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     tcpConnection_t* connection = 0;
     if (tcp->SYN && !tcp->ACK) // SYN
     {
-        connection = findConnection(transmittingIP, ntohs(tcp->destPort), adapter, LISTEN);
+        connection = tcp_findConnection(transmittingIP, ntohs(tcp->destPort), adapter, LISTEN);
         if (connection)
         {
             connection->TCP_PrevState       = connection->TCP_CurrState;
@@ -371,7 +375,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     }
     else
     {
-        connection = findConnection(transmittingIP, ntohs(tcp->sourcePort), adapter, TCP_ANY);
+        connection = tcp_findConnection(transmittingIP, ntohs(tcp->sourcePort), adapter, TCP_ANY);
     }
 
     if(connection == 0)
@@ -462,7 +466,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             char*    tcpData       = (char*)( (uintptr_t)tcp + 4 * tcp->dataOffset ); // dataOffset is given as number of DWORDs
             uint32_t tcpDataLength = length - (4 * tcp->dataOffset);
 
-            if (!IsPacketAcceptable(tcp, connection, tcpDataLength))
+            if (!tcp_IsPacketAcceptable(tcp, connection, tcpDataLength))
             {
                 textColor(ERROR); printf("not acceptable!"); textColor(TEXT);
                 // if RST is on, STOP.
@@ -553,7 +557,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                             serial_log(1," -> send Dup-ACK!");
                             tcp_send_DupAck(connection);
 
-                            // Add received data to the temporary Out-of-Order RCV Buffer <--------------------------------- TODO: OO RCV Buffer
+                            // Add received data to the temporary Out-of-Order RCV Buffer <--------------------------------- OO IN Buffer
                             if (tcpDataLength)
                             {
                                 tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
@@ -562,8 +566,20 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                                 In->seq        = ntohl(tcp->sequenceNumber);
                                 In->ev->length = tcpDataLength;
                                 In->ev->connectionID = connection->ID;
+                                
                                 list_append(connection->OutofOrderinBuffer, In);
+                                serial_log(1,"seq %u send to OutofOrderinBuffer.\r\n", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
                                 connection->tcb.RCV.WND += tcpDataLength;
+
+                                if (tcp->FIN) // FIN or FIN ACK
+                                {
+                                    tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
+                                    connection->TCP_CurrState = CLOSE_WAIT;
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
                         }
                         else // ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT
@@ -877,28 +893,54 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     tcp_debug(tcp, true);
 }
 
-uint32_t tcp_checkInBuffers(tcpConnection_t* connection, bool showData)
+static uint32_t tcp_checkInBuffers(tcpConnection_t* connection, bool showData)
 {
-    printf("\n\n");
+    serial_log(1,"\r\n------------------------------------\r\n");
+    serial_log(1,"checkInBuffers:\r\n");
     uint32_t count = 0;
     for (element_t* e = connection->inBuffer->head; e != 0; e = e->next)
     {
         count++;
         tcpIn_t* inPacket = e->data;
-        printf("\n seq = %u \tlen = %u\n", inPacket->seq, inPacket->ev->length);
+        serial_log(1,"\r\n seq = %u\tlen = %u\tseq.nxt: %u", inPacket->seq - connection->tcb.RCV.IRS, inPacket->ev->length, inPacket->seq - connection->tcb.RCV.IRS + inPacket->ev->length);
         if (showData)
         {
             for (uint32_t i=0; i<inPacket->ev->length; i++)
             {
-                putch( ((char*)(inPacket->ev+1))[i] );
+                serial_write(1,((char*)(inPacket->ev+1))[i]);
             }
         }
     }
+    serial_log(1,"\r\n------------------------------------\r\n");
+    return count;
+}
+
+static uint32_t tcp_checkOutofOrderInBuffers(tcpConnection_t* connection, bool showData)
+{
+    serial_log(1,"\r\n------------------------------------\r\n");
+    serial_log(1,"checkOutofOrderInBuffers:\r\n");
+    uint32_t count = 0;
+    for (element_t* e = connection->OutofOrderinBuffer->head; e != 0; e = e->next)
+    {
+        count++;
+        tcpIn_t* inPacket = e->data;
+        serial_log(1,"\r\n seq = %u\tlen = %u\tseq.nxt: %u", inPacket->seq - connection->tcb.RCV.IRS, inPacket->ev->length, inPacket->seq - connection->tcb.RCV.IRS + inPacket->ev->length);
+        if (showData)
+        {
+            for (uint32_t i=0; i<inPacket->ev->length; i++)
+            {
+                serial_write(1,((char*)(inPacket->ev+1))[i]);
+            }
+        }
+    }
+    serial_log(1,"\r\n------------------------------------\r\n");
     return count;
 }
 
 static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection)
 {
+    tcp_checkInBuffers(connection, false); // --> COM1
+    
     serial_log(1,"\r\ntcp_deleteInBuffers");
 
     uint32_t count = 0;
@@ -917,6 +959,8 @@ static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection)
 
 static uint32_t tcp_deleteOutofOrderInBuffers(tcpConnection_t* connection)
 {
+    tcp_checkOutofOrderInBuffers(connection, false); // --> COM1
+
     serial_log(1,"\r\ntcp_deleteOutofOrderInInBuffers");
 
     uint32_t count = 0;
@@ -951,7 +995,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
     return count;
 }
 
-uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
+static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 {
     printf("\n\n");
     uint32_t count = 0;
@@ -1021,7 +1065,7 @@ uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 
 
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf  page 41
-static bool IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
+static bool tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength)
 {
     if (tcp->window != 0)
     {
@@ -1048,7 +1092,7 @@ static bool IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, ui
     }
 }
 
-static uint16_t getFreeSocket()
+static uint16_t tcp_getFreeSocket()
 {
     static bool flag = false;
     if(!flag)
@@ -1059,7 +1103,7 @@ static uint16_t getFreeSocket()
     return ( 0xC000 + rand()%(0xFFFF-0xC000) );
 }
 
-static uint32_t getConnectionID()
+static uint32_t tcp_getConnectionID()
 {
     static uint16_t ID = 1;
     return ID++;
@@ -1095,7 +1139,7 @@ uint32_t tcp_uconnect(IP_t IP, uint16_t port)
 
 void tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state ESTABLISHED
 {
-    tcpConnection_t* connection = findConnectionID(ID);
+    tcpConnection_t* connection = tcp_findConnectionID(ID);
 
     if(connection == 0)
         return;
@@ -1123,7 +1167,7 @@ void tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
 
 void tcp_uclose(uint32_t ID)
 {
-    tcpConnection_t* connection = findConnectionID(ID);
+    tcpConnection_t* connection = tcp_findConnectionID(ID);
     if(connection)
     {
         tcp_close(connection);
