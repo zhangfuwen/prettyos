@@ -190,14 +190,18 @@ uint32_t tcp_connect(IP_t IP, uint16_t port)
     return ret;
 }
 
-void tcp_send(uint32_t ID, void* data, size_t length)
+bool tcp_send(uint32_t ID, void* data, size_t length)
 {
-    __asm__ volatile("int $0x7F" : : "a"(86), "b"(ID), "c"(data), "d"(length));
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(86), "b"(ID), "c"(data), "d"(length));
+    return ret;
 }
 
-void tcp_close(uint32_t ID)
+bool tcp_close(uint32_t ID)
 {
-    __asm__ volatile("int $0x7F" : : "a"(87), "b"(ID));
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(87), "b"(ID));
+    return ret;
 }
 
  // deprecated
@@ -209,7 +213,7 @@ int32_t floppy_dir()
 }
 void printLine(const char* message, uint32_t line, uint8_t attribute)
 {
-    if (line <= 45) // User may only write in his own area (size is 45)
+    if (line <= 45) // User must not write outside of client area (size is 45)
     {
         __asm__ volatile("int $0x7F" : : "a"(91), "b"(message), "c"(line), "d"(attribute));
     }

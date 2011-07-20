@@ -130,8 +130,8 @@ tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* a
 
 // User functions
 uint32_t tcp_uconnect(IP_t IP, uint16_t port);
-void     tcp_usend(uint32_t ID, void* data, size_t length);
-void     tcp_uclose(uint32_t ID);
+bool     tcp_usend(uint32_t ID, void* data, size_t length);
+bool     tcp_uclose(uint32_t ID);
 
 
 #endif
