@@ -222,7 +222,7 @@ tcpConnection_t* tcp_createConnection()
 
 void tcp_deleteConnection(tcpConnection_t* connection)
 {
-    serial_log(1,"\r\ntcp_deleteConnection");
+    serial_log(1,"\r\n%u msec:\t tcp_deleteConnection", timer_getMilliseconds());
 
     connection->TCP_PrevState = connection->TCP_CurrState;
     connection->TCP_CurrState = CLOSED;
@@ -294,7 +294,7 @@ static void tcp_send_DupAck(tcpConnection_t* connection)
 {
     connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
     connection->tcb.SEG.CTL = ACK_FLAG;
-    serial_log(1,"We send now Dup-Ack:\r\n");
+    serial_log(1,"%u msec\tWe send now Dup-Ack:\r\n", timer_getMilliseconds());
     serial_log(1,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
     serial_log(1,"\tack:\t%u\r\n", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
     tcp_send(connection, 0, 0);
@@ -542,7 +542,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                         }
                         else if (ntohl(tcp->sequenceNumber) > connection->tcb.RCV.NXT)
                         {
-                            serial_log(1,"rcvd:\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+                            serial_log(1,"%u msec\trcvd:\tseq:\t%u", timer_getMilliseconds(), ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
                             serial_log(1," -> send Dup-ACK!");
                             tcp_send_DupAck(connection);
 
@@ -557,7 +557,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                                 In->ev->connectionID = connection->ID;
 
                                 list_append(connection->OutofOrderinBuffer, In);
-                                serial_log(1,"seq %u send to OutofOrderinBuffer.\r\n", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+                                serial_log(1,"%u msec\tseq %u send to OutofOrderinBuffer.\r\n", timer_getMilliseconds(), ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
                                 connection->tcb.RCV.WND += tcpDataLength;
 
                                 if (tcp->FIN) // FIN or FIN ACK
@@ -778,7 +778,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     }//switch (connection->TCP_CurrState)
 
     /// LOG
-    serial_log(1,"recv: ");
+    serial_log(1,"%u msec\trecv: ", timer_getMilliseconds());
     if(tcp->FIN) serial_log(1," FIN");
     if(tcp->SYN) serial_log(1," SYN");
     if(tcp->ACK) serial_log(1," ACK");
@@ -859,7 +859,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
         connection->tcb.SND.NXT += length;
     }
     /// LOG
-    serial_log(1,"send: ");
+    serial_log(1,"%u msec\tsend: ", timer_getMilliseconds());
     if(tcp->FIN) serial_log(1," FIN");
     if(tcp->SYN) serial_log(1," SYN");
     if(tcp->ACK) serial_log(1," ACK");
@@ -1044,7 +1044,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
         {
             free(outPacket->data);
             free(outPacket);
-            serial_log(1,"checkOutBuffers - delAckedOutPacket\r\n");
+            serial_log(1,"%u msec\tcheckOutBuffers - delAckedOutPacket\r\n", timer_getMilliseconds());
             list_delete(connection->outBuffer, e->data);
         }
         else // check need for retransmission
