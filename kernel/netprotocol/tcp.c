@@ -504,7 +504,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                             {
                                 // Release REXMT Timer
                                 // Retransmit Lost Segment
-                                tcp_retransOutBuffer(connection, ntohl(tcp->acknowledgmentNumber)); // NEW !!!   CHECK - CHECK - CHECK
+                                tcp_retransOutBuffer(connection, ntohl(tcp->acknowledgmentNumber)); // Retransmission
 
                                 // SSthresh = max (2, min(CWND, SND.WND/2)) ??
                                 goto ES3;
@@ -1049,6 +1049,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
         }
         else // check need for retransmission
         {
+            /*
             if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->tcb.rto)
             {
                 textColor(LIGHT_BLUE);
@@ -1068,6 +1069,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
                 textColor(TEXT);
                 printf("\nWe are still waiting for the ACK");
             }
+            */            
         }
         textColor(TEXT);
     }
