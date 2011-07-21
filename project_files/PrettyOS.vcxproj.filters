@@ -354,6 +354,12 @@
     <ClInclude Include="..\kernel\pe.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\video\videomanager.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\video\videoutils.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -589,6 +595,12 @@
     </ClCompile>
     <ClCompile Include="..\kernel\pe.c">
       <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\videoutils.c">
+      <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\videomanager.c">
+      <Filter>Kernel\sources\video</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

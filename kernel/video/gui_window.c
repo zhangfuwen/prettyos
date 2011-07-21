@@ -4,22 +4,12 @@
 */
 
 #include "gui_window.h"
-#include "vbe.h"
+#include "videoutils.h"
 #include "kheap.h"
-#include "util.h"
 
 
-extern ModeInfoBlock_t mib;
-
-extern BMPInfo_t bmp_start;
-extern BMPInfo_t bmp_end;
-extern BMPInfo_t cursor_start;
-extern BMPInfo_t cursor_end;
-
-
-static const BGRA_t WINDOW_COLOUR = {2, 255, 57, 0};
 static const BGRA_t WINDOW_COLOUR_BACKGROUND = {191, 227, 197, 0};
-static const BGRA_t WINDOW_COLOUR_BORDER = { 2, 125, 57, 0};
+static const BGRA_t WINDOW_COLOUR_BORDER = {2, 125, 57, 0};
 static const BGRA_t WINDOW_COLOUR_TOPBAR = {253, 100, 100, 0};
 static const BGRA_t WINDOW_COLOUR_FOCUS_TOPBAR = {127, 255, 0, 0};
 
@@ -35,11 +25,11 @@ void init_window_manager()
     desktop->x = 0;
     desktop->y = 0;
     desktop->z = 0;
-    desktop->width = mib.XResolution;
-    desktop->height = mib.YResolution;
+    desktop->renderDevice = video_currentMode->device;
+    desktop->width = video_currentMode->xRes;
+    desktop->height = video_currentMode->yRes;
     desktop->parentid = 0;
     desktop->id = HWND_DESKTOP;
-    //desktop->data = double_buffer;
 
     window_list[desktop->id] = desktop;
 
@@ -56,7 +46,7 @@ static uint16_t getnewwid()
 void DestroyWindow(uint16_t id)
 {
     if(id != HWND_DESKTOP)
-        free(window_list[id]->data);
+        video_freeDevice(window_list[id]->renderDevice);
     free((void*)window_list[id]);
     window_list[id] = 0;
 }
@@ -70,12 +60,13 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
     window->z = 1;
     window->width = width;
     window->height = height;
+    window->renderDevice = renderBuffer_create(width+4, height+24, 32)->device;
     window->parentid = parentid;
     window->id = getnewwid();
 
-    window->data = malloc((width*height)*(mib.BitsPerPixel/8), 0, "Window buffer"); // Creates buffer for window
+    video_clearScreen(window->renderDevice, WINDOW_COLOUR_BACKGROUND);
 
-    window->CloseButton = CreateButton((window->x + window->width - 20), (window->y + 1), 18, 18, "X");
+    CreateButton(&window->CloseButton, window->width - 17, 2, 17, 17, "X");
 
     // And set window focus
     current_window = window;
@@ -84,23 +75,21 @@ void CreateWindow(char* windowname, uint16_t x, uint16_t y, uint16_t width, uint
 
 void DrawWindow(uint16_t id)
 {
-    // Fill
-    vbe_drawRectFilled(window_list[id]->x, window_list[id]->y+20, window_list[id]->x+window_list[id]->width, window_list[id]->y+window_list[id]->height, WINDOW_COLOUR_BACKGROUND);
+    window_t* window = window_list[id];
+    // Border
+    video_drawRect(window->renderDevice, 1, 1, window->renderDevice->videoMode.xRes-2, window->renderDevice->videoMode.yRes-2, WINDOW_COLOUR_BORDER);
+    video_drawRect(window->renderDevice, 0, 0, window->renderDevice->videoMode.xRes-1, window->renderDevice->videoMode.yRes-1, WINDOW_COLOUR_BORDER);
 
     // Topbar
-    vbe_drawRectFilled(window_list[id]->x, window_list[id]->y, window_list[id]->x+window_list[id]->width, window_list[id]->y+20, WINDOW_COLOUR_TOPBAR);
-
-    // Border
-    vbe_drawRect(window_list[id]->x, window_list[id]->y, window_list[id]->x+window_list[id]->width, window_list[id]->y+window_list[id]->height, WINDOW_COLOUR_BORDER);
+    video_drawRectFilled(window->renderDevice, 2, 2, window->renderDevice->videoMode.xRes-3, 20, WINDOW_COLOUR_TOPBAR);
 
     // Title
-    vbe_drawString(window_list[id]->name, window_list[id]->x+2, window_list[id]->y+2);
+    video_drawString(window->renderDevice, window_list[id]->name, 3, 3);
 
     // Data
-    DrawButton(&window_list[id]->CloseButton);
+    DrawButton(window->renderDevice, &window_list[id]->CloseButton);
 
-    vbe_drawBitmap(window_list[id]->x, window_list[id]->y+20, (BMPInfo_t*)window_list[id]->data);
-    vbe_drawString("redraw", window_list[id]->x+30, window_list[id]->y+20);
+    renderBuffer_render(video_currentMode->device, window->renderDevice->data, window->x, window->y); // Check ->data
 }
 
 /*

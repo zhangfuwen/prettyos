@@ -63,7 +63,7 @@ void heap_install()
 static bool heap_grow(uint32_t size, uint8_t* heapEnd)
 {
     // We will have to append another region-object to our array if we can't merge with the last region - check whether there would be enough space to insert the region-object
-    if ((regionCount > 0) && regions[regionCount-1].reserved && (regionCount+1 > regionMaxCount))
+    if ((regionCount > 0) && regions[regionCount-1].reserved && (regionCount >= regionMaxCount))
     {
         return false;
     }
@@ -101,13 +101,16 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
 
 static void* placementMalloc(uint32_t size, uint32_t alignment)
 {
-    mutex_lock(mutex);
+    static void* nextPlacement = PLACEMENT_BEGIN;
 
     // Avoid odd addresses
     size = alignUp(size, 4);
 
+    if((uintptr_t)nextPlacement+size > (uintptr_t)PLACEMENT_END)
+        return(0);
+
+    mutex_lock(mutex);
     // Do simple placement allocation
-    static void* nextPlacement = PLACEMENT_BEGIN;
     nextPlacement = (void*)alignUp((uintptr_t)nextPlacement, alignment);
     void* currPlacement = nextPlacement;
     nextPlacement += size;
@@ -158,7 +161,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             if (alignedAddress != regionAddress)
             {
                 // Check whether we are able to expand
-                if (regionCount+1 > regionMaxCount)
+                if (regionCount >= regionMaxCount)
                 {
                     mutex_unlock(mutex);
                     return 0;
@@ -350,9 +353,9 @@ void heap_logRegions()
     printf("\naddress\t\tsize\t\tnumber\tcomment");
     textColor(DATA);
     uintptr_t regionAddress = (uintptr_t)heapStart;
+    uint8_t lineCounter = 0;
     for (uint32_t i=0; i<regionCount; i++)
     {
-        static uint8_t lineCounter = 0;
         if (regions[i].reserved)
         {
             printf("\n%Xh\t%Xh\t%u\t%s",
@@ -360,15 +363,15 @@ void heap_logRegions()
                     regions[i].size,
                     regions[i].number,
                     regions[i].comment);
+            lineCounter++;
+            if (lineCounter >= 35)
+            {
+                waitForKeyStroke();
+                textColor(DATA);
+                lineCounter = 0;
+            }
         }
-        lineCounter++;
         regionAddress += regions[i].size;
-        if (lineCounter >= 35)
-        {
-            waitForKeyStroke();
-            textColor(DATA);
-            lineCounter = 0;
-        }
     }
     textColor(TEXT);
 }

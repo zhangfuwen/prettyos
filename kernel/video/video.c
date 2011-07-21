@@ -28,13 +28,13 @@ static position_t cursor = {0, 0};
 static mutex_t* videoLock = 0;
 
 
-void video_install()
+void vga_install()
 {
     videoLock = mutex_create(1);
     vidmem = paging_acquirePciMemory(0xB8000, 2);
 }
 
-void video_setPixel(uint8_t x, uint8_t y, uint16_t value)
+void vga_setPixel(uint8_t x, uint8_t y, uint16_t value)
 {
     mutex_lock(videoLock);
     vidmem[y*COLUMNS + x] = value;

@@ -38,6 +38,7 @@ uint64_t rdtsc();
 void      memshow(const void* start, size_t count);
 void*     memset(void* dest, int8_t val, size_t bytes);
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words);
+uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t dwords);
 void*     memcpy(void* dest, const void* src, size_t count);
 void*     memmove(void* destination, const void* source, size_t size);
 int32_t   memcmp(const void* s1, const void* s2, size_t n);

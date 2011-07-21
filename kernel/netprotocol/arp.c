@@ -104,67 +104,62 @@ void arp_deleteTable(arpTable_t* cache)
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 {
     // 1 = Ethernet, 0x0800 = IPv4
-    if ((((packet->hardware_addresstype[0] << 8) | packet->hardware_addresstype[1]) ==      1) &&
-        (((packet->protocol_addresstype[0] << 8) | packet->protocol_addresstype[1]) == 0x0800) &&
-        (packet->hardware_addresssize == 6) &&
-        (packet->protocol_addresssize == 4))
+    if(ntohs(packet->hardware_addresstype) == 1 && ntohs(packet->protocol_addresstype) == 0x0800 &&
+        packet->hardware_addresssize == 6 && packet->protocol_addresssize == 4)
     {
         // extract the operation
-        switch ((packet->operation[0] << 8) | packet->operation[1])
+        switch(ntohs(packet->operation))
         {
-        case 1: // ARP-Request
-            textColor(HEADLINE);
-            if (packet->sourceIP.iIP == packet->destIP.iIP) // IP requ. and searched is identical
-            {
-                printf("\nARP Gratuitous Request:");
-            }
-            else
-            {
-                printf("\nARP Request:");
-            }
-            textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT); printf("%M", packet->source_mac);
-            textColor(LIGHT_GRAY); printf("  IP Requesting: ");  textColor(IMPORTANT); printf("%I", packet->sourceIP);
-            textColor(LIGHT_GRAY); printf("\nMAC Searched:   "); textColor(IMPORTANT); printf("%M", packet->dest_mac);
-            textColor(LIGHT_GRAY); printf("  IP Searched:   ");  textColor(IMPORTANT); printf("%I", packet->destIP);
-
-            // requested IP is our own IP?
-            if (packet->destIP.iIP == adapter->IP.iIP)
-            {
-                arpPacket_t reply;
-
-                for (uint8_t i = 0; i < 2; i++)
+            case 1: // ARP-Request
+                textColor(HEADLINE);
+                if (packet->sourceIP.iIP == packet->destIP.iIP) // IP requ. and searched is identical
                 {
-                    reply.hardware_addresstype[i] = packet->hardware_addresstype[i];
-                    reply.protocol_addresstype[i] = packet->protocol_addresstype[i];
+                    printf("\nARP Gratuitous Request:");
                 }
-                reply.operation[0] = 0;
-                reply.operation[1] = 2; // reply
-
-                reply.hardware_addresssize = packet->hardware_addresssize;
-                reply.protocol_addresssize = packet->protocol_addresssize;
-
-                for (uint8_t i = 0; i < 6; i++)
+                else
                 {
-                    reply.dest_mac[i]   = packet->source_mac[i];
-                    reply.source_mac[i] = adapter->MAC[i];
+                    printf("\nARP Request:");
                 }
+                textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT); printf("%M", packet->source_mac);
+                textColor(LIGHT_GRAY); printf("  IP Requesting: ");  textColor(IMPORTANT); printf("%I", packet->sourceIP);
+                textColor(LIGHT_GRAY); printf("\nMAC Searched:   "); textColor(IMPORTANT); printf("%M", packet->dest_mac);
+                textColor(LIGHT_GRAY); printf("  IP Searched:   ");  textColor(IMPORTANT); printf("%I", packet->destIP);
 
-                reply.destIP.iIP   = packet->sourceIP.iIP;
-                reply.sourceIP.iIP = adapter->IP.iIP;
+                // requested IP is our own IP?
+                if (packet->destIP.iIP == adapter->IP.iIP)
+                {
+                    arpPacket_t reply;
 
-                EthernetSend(adapter, (void*)&reply, sizeof(arpPacket_t), packet->source_mac, 0x0806);
-            }
-            break;
+                    reply.operation = htons(2); // reply
 
-        case 2: // ARP-Response
-            textColor(HEADLINE);
-            printf("\nARP Response\n");
+                    reply.hardware_addresstype = packet->hardware_addresstype;
+                    reply.protocol_addresstype = packet->protocol_addresstype;
 
-            textColor(LIGHT_GRAY); printf("\nMAC Replying:   "); textColor(IMPORTANT); printf("%M", packet->source_mac);
-            textColor(LIGHT_GRAY); printf("  IP Replying:   ");  textColor(IMPORTANT); printf("%I", packet->sourceIP);
-            textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT); printf("%M", packet->dest_mac);
-            textColor(LIGHT_GRAY); printf("  IP Requesting: ");  textColor(IMPORTANT); printf("%I", packet->destIP);
-            break;
+                    reply.hardware_addresssize = packet->hardware_addresssize;
+                    reply.protocol_addresssize = packet->protocol_addresssize;
+
+                    for (uint8_t i = 0; i < 6; i++)
+                    {
+                        reply.dest_mac[i]   = packet->source_mac[i];
+                        reply.source_mac[i] = adapter->MAC[i];
+                    }
+
+                    reply.destIP.iIP   = packet->sourceIP.iIP;
+                    reply.sourceIP.iIP = adapter->IP.iIP;
+
+                    EthernetSend(adapter, (void*)&reply, sizeof(arpPacket_t), packet->source_mac, 0x0806);
+                }
+                break;
+
+            case 2: // ARP-Response
+                textColor(HEADLINE);
+                printf("\nARP Response:");
+
+                textColor(LIGHT_GRAY); printf("\nMAC Replying:   "); textColor(IMPORTANT); printf("%M", packet->source_mac);
+                textColor(LIGHT_GRAY); printf("  IP Replying:   ");  textColor(IMPORTANT); printf("%I", packet->sourceIP);
+                textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT); printf("%M", packet->dest_mac);
+                textColor(LIGHT_GRAY); printf("  IP Requesting: ");  textColor(IMPORTANT); printf("%I", packet->destIP);
+                break;
         } // switch
         arp_addTableEntry(&adapter->arpTable, packet->source_mac, packet->sourceIP, true); // ARP table entry
         scheduler_unblockEvent(BL_NETPACKET, (void*)BL_NET_ARP);
@@ -180,13 +175,10 @@ bool arp_sendRequest(network_adapter_t* adapter, IP_t searchedIP)
 {
     arpPacket_t request;
 
-    request.hardware_addresstype[0] = 0;    // Ethernet
-    request.hardware_addresstype[1] = 1;
-    request.protocol_addresstype[0] = 0x08; // IP
-    request.protocol_addresstype[1] = 0x00;
+    request.operation = htons(1); // Request
 
-    request.operation[0] = 0;
-    request.operation[1] = 1; // Request
+    request.hardware_addresstype = htons(1); // Ethernet
+    request.protocol_addresstype = htons(0x0800); // IP
 
     request.hardware_addresssize = 6;
     request.protocol_addresssize = 4;

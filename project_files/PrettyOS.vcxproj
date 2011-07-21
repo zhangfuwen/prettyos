@@ -154,6 +154,8 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\video\vbe.h" />
     <ClInclude Include="..\kernel\video\VBEShell.h" />
     <ClInclude Include="..\kernel\video\video.h" />
+    <ClInclude Include="..\kernel\video\videomanager.h" />
+    <ClInclude Include="..\kernel\video\videoutils.h" />
     <ClInclude Include="..\kernel\vm86.h" />
   </ItemGroup>
   <ItemGroup>
@@ -234,6 +236,8 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\video\vbe.c" />
     <ClCompile Include="..\kernel\video\VBEShell.c" />
     <ClCompile Include="..\kernel\video\video.c" />
+    <ClCompile Include="..\kernel\video\videomanager.c" />
+    <ClCompile Include="..\kernel\video\videoutils.c" />
     <ClCompile Include="..\kernel\vm86.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

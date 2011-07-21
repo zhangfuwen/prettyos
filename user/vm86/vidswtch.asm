@@ -7,23 +7,12 @@ SetDisplayStart:
     mov ax, 0x4F07
     xor bx, bx           ; Set bh to 0 and use it to set ds to 0, too.
     mov ds, bx
-    mov bl, 0x00
     mov dx, word[0x1800] ; Set first Displayed Scan Line
     mov cx, word[0x1802] ; Set first Displayed Pixel in Scan Line
     int 10h
     jmp exitvm86
 
-GetDisplayStart:
-    mov ax, 0x4F07
-    mov bl, 1
-    int 10h
-    xor ax, ax
-    mov ds, ax
-    mov word [0x1300], dx ; First Displayed Scan Line
-    mov word [0x1302], cx ; First Displayed Pixel in Scan Line
-    jmp exitvm86
-
-Set8bitPalette:
+Enable8bitPalette:
     mov ax, 0x4F08
     xor bl, bl
     mov bh, 8
@@ -66,5 +55,5 @@ GetModeInfoBlock:
 
 ; stop and leave vm86-task
 exitvm86:
-    hlt     ; is translated as exit() at vm86.c
-    jmp $   ; endless loop
+    hlt          ; is translated as exit() at vm86.c
+    jmp exitvm86 ; endless loop

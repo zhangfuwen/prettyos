@@ -68,13 +68,6 @@ typedef struct
     bool (*sendPacket)(network_adapter_t*, uint8_t*, size_t); // Device, buffer, length
 } network_driver_t;
 
-typedef struct
-{
-    network_adapter_t* adapter;
-    void*              data;
-    size_t             length;
-} networkBuffer_t;
-
 struct network_adapter
 {
     pciDev_t*         PCIdev;

@@ -1,7 +1,7 @@
 #ifndef GUI_BUTTON_H
 #define GUI_BUTTON_H
 
-#include "vbe.h"
+#include "videomanager.h"
 
 
 typedef struct
@@ -15,8 +15,8 @@ typedef struct
     void* data;
 } button_t;
 
-button_t CreateButton(uint16_t x, uint16_t y, uint16_t width, uint16_t height, char* label);
-void DrawButton(button_t* button);
+void CreateButton(button_t* button, uint16_t x, uint16_t y, uint16_t width, uint16_t height, char* label);
+void DrawButton(videoDevice_t* device, button_t* button);
 
 
 #endif

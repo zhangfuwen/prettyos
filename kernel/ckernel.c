@@ -26,7 +26,7 @@
 #include "keyboard.h"           // keyboard_install, KEY_...
 #include "mouse.h"              // mouse_install
 #include "serial.h"             // serial_init
-#include "video/vbe.h"          // bootscreen, vbe_bootscreen
+#include "video/videomanager.h" // video_install, video_test
 #include "filesystem/initrd.h"  // initrd_install, ramdisk_install, readdir_fs, read_fs, finddir_fs
 #include "storage/flpydsk.h"    // flpydsk_install
 
@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.236 - Rev: 1083";
+const char* const version = "0.0.2.237 - Rev: 1084";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -99,7 +99,7 @@ static void log(const char* str)
     textColor(TEXT);
 }
 
-void init(multiboot_t* mb_struct)
+static void init(multiboot_t* mb_struct)
 {
     // set .bss to zero
     memset(&_bss_start, 0x0, (uintptr_t)&_bss_end - (uintptr_t)&_bss_start);
@@ -130,7 +130,7 @@ void init(multiboot_t* mb_struct)
     system.Memory_Size = paging_install(); log("Paging");
     heap_install(); log("Heap");
 
-    video_install(); log("Video");
+    vga_install(); log("Video");
 
     tasking_install(); log("Multitasking");
 
@@ -152,7 +152,7 @@ void init(multiboot_t* mb_struct)
     sti();
 }
 
-void showMemorySize()
+static void showMemorySize()
 {
     textColor(HEADLINE);
     printf("\nMemory: ");
@@ -241,7 +241,7 @@ void main(multiboot_t* mb_struct)
         textColor(TEXT);
     }
 
-    create_cthread(&vbe_bootscreen, "VBE");
+    create_cthread(&video_test, "VBE");
 
     textColor(SUCCESS);
     printf("\n\n--------------------------------------------------------------------------------");
@@ -263,7 +263,7 @@ void main(multiboot_t* mb_struct)
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
-        video_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
+        vga_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
         if (! *++progress) { progress = "|/-\\"; }
 
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.

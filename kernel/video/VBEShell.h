@@ -5,7 +5,7 @@
 void eraseFirst(char* string);
 void insertVBE(char* string, char c);
 void drawEntryVBE(const char* entry);
-int startVBEShell();
+void startVBEShell();
 
 
 #endif

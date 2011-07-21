@@ -21,8 +21,6 @@ bool isSubnet(IP_t IP, IP_t myIP, IP_t subnet)
 
 extern Packet_t lastPacket; // network.c
 
-static const IP_t broadcast_IP = {.iIP = 0xFFFFFFFF};
-static const IP_t broadcast_IP2 = {.iIP = 0};
 static const uint8_t broadcast_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32_t length)
@@ -73,7 +71,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
     packet->version        = 4;
     packet->ipHeaderLength = sizeof(ipv4Packet_t) / 4;
     packet->typeOfService  = 0;
-    packet->length         = htons( sizeof(ipv4Packet_t) + length );
+    packet->length         = htons(sizeof(ipv4Packet_t) + length);
     packet->identification = 0;
     packet->fragmentation  = htons(0x4000); // do not fragment
     packet->ttl            = 128;
@@ -86,7 +84,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
     Todo: Tell routing table to route the ip address
     */
 
-    if(IP.iIP == broadcast_IP.iIP || IP.iIP == broadcast_IP2.iIP || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
+    if(IP.iIP == 0 || IP.iIP == 0xFFFFFFFF || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
     {
         printf("\nIP is in LAN");
 

@@ -25,53 +25,31 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     textColor(LIGHT_BLUE);
     printf("\n\n>> Packet received. <<");
     textColor(HEADLINE);
-    printf("\nEth: ");
+    printf("\nEthernet: ");
+    textColor(TEXT);
     if (memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_FF, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_00, 6) != 0)
     {
-        textColor(TEXT);
-        printf("Ethernet packet received. We are not the addressee.");
+        printf("We are not the addressee.");
         return;
     }
+
+    printf("\nLength: %d", length);
+
+    textColor(GRAY); printf(" %M\t<== %M\n", eth->recv_mac, eth->send_mac); // MAC adresses
+
+    textColor(TEXT);
+    if(eth->type_len <= 1500)
+        printf("Type 1, Length: ");
+    else
+        printf("Type 2, Type: ");
+
+    textColor(DATA);
+    printf("%xh ", eth->type_len);
+    textColor(TEXT);
   #endif
 
     memcpy(lastPacket.MAC, eth->send_mac, 6); // save sender
 
-    // output ethernet packet
-  #ifdef _NETWORK_DATA_
-    uint16_t ethernetType = (eth->type_len[0] << 8) + eth->type_len[1]; // Big Endian
-    textColor(HEADLINE); printf("\nLength: ");
-    textColor(TEXT); printf("%d ", length);
-
-    textColor(GRAY); printf(" %M\t<== %M", eth->recv_mac, eth->send_mac); // MAC adresses
-
-    textColor(LIGHT_MAGENTA);
-    printf("\nEthernet: ");
-
-    textColor(HEADLINE);
-    if (ethernetType <= 1500) { printf("type 1, "); }
-    else                      { printf("type 2, "); }
-
-    textColor(TEXT);
-    if (ethernetType <= 1500) { printf("Length: "); }
-    else                      { printf("Type: ");   }
-
-    /*
-    textColor(DATA);
-    for (uint8_t i = 0; i < 2; i++)
-    {
-        printf("%yh ", eth->type_len[i]);
-    }
-
-    uint32_t printlength = max(length, 80);
-    printf("\n");
-    for (uint32_t i = sizeof(ethernet_t); i <= printlength; i++)
-    {
-        printf("%y ", eth[i]);
-    }
-    */
-  #endif
-
-    textColor(TEXT);
     if(ntohs(eth->type_len) > 1500) // Ethernet 2
     {
         // cf. http://en.wikipedia.org/wiki/EtherType
@@ -94,7 +72,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
                 break;
             default:
               #ifdef _NETWORK_DATA_
-                printf("Protocol type: Neither IP nor ARP.");
+                printf("Protocol type: %xh - Neither IP nor ARP.", eth->type_len);
               #endif
                 break;
         }

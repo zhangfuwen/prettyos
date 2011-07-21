@@ -162,8 +162,8 @@ void mouse_handler(registers_t* a_r)
     // Print mouse on screen
     if(videomode == VM_VBE)
     {
-        mouse_x = max(0, min(mouse_x, getCurrentMIB()->XResolution-1)); // clamp mouse position to width of screen
-        mouse_y = max(0, min(mouse_y, getCurrentMIB()->YResolution-1)); // same with height
+        mouse_x = max(0, min(mouse_x, video_currentMode->xRes-1)); // clamp mouse position to width of screen
+        mouse_y = max(0, min(mouse_y, video_currentMode->yRes-1)); // same with height
         // In VBE mode the application draws the mouse to work in double buffer modes as well.
     }
     else

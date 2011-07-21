@@ -60,8 +60,13 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
     {
         // Add event
         event_t* ev = malloc(sizeof(event_t), 0, "event");
-        ev->data = malloc(length, 0, "event->data");
-        memcpy(ev->data, data, length);
+        if(length > sizeof(ev->data)) // data does not fit in pointer
+        {
+            ev->data = malloc(length, 0, "event->data");
+            memcpy(ev->data, data, length);
+        }
+        else // Data fits in pointer: Optimization for small data, save data in pointer itself
+            memcpy(&ev->data, data, length);
         ev->length = length;
         ev->type = type;
         mutex_lock(destination->mutex);
@@ -111,16 +116,23 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     if(ev->length > maxLength)
     {
         type = EVENT_INVALID_ARGUMENTS;
+        if(ev->length > sizeof(ev->data)) // data does not fit in pointer
+            free(ev->data);
     }
     else
     {
         type = ev->type;
-        memcpy(destination, ev->data, ev->length);
+        if(ev->length > sizeof(ev->data)) // data does not fit in pointer
+        {
+            memcpy(destination, ev->data, ev->length);
+            free(ev->data);
+        }
+        else // Data fits in pointer: Optimization for small data, data saved in pointer itself
+            memcpy(destination, &ev->data, ev->length);
     }
     task->eventQueue->num--;
     list_delete(task->eventQueue->list, ev);
     mutex_unlock(task->eventQueue->mutex);
-    free(ev->data);
     free(ev);
 
     return(type);

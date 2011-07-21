@@ -4,7 +4,7 @@
 #include "os.h"
 
 
-typedef struct element element_t; 
+typedef struct element element_t;
 struct element
 {
     void*    data;

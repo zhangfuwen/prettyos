@@ -3,17 +3,14 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "kheap.h"
+#include "gui.h"
 #include "util.h"
 #include "mouse.h"
 #include "keyboard.h"
-#include "vbe.h"
-#include "gui.h"
+#include "videoutils.h"
 #include "gui_window.h"
 #include "gui_button.h"
 
-
-extern ModeInfoBlock_t mib;
 
 extern char mouse_bl;
 extern int32_t mouse_x;
@@ -21,7 +18,6 @@ extern int32_t mouse_y;
 
 // cursor
 extern BMPInfo_t cursor_start;
-extern BMPInfo_t cursor_end;
 
 extern window_t* window_list[MAX_WINDOWS];
 
@@ -29,22 +25,19 @@ extern window_t* window_list[MAX_WINDOWS];
 void StartGUI()
 {
     init_window_manager();
-    button_t button = CreateButton(250, 220, 80, 20, "close");
+    button_t button;
+    CreateButton(&button, 250, 220, 80, 20, "close");
 
-    CreateWindow("Window 1", 10, 10, 340, 250, 0);
-    CreateWindow("Window 2", 400, 10, 340, 250, 0);
-    CreateWindow("Window 3", 10, 300, 340, 250, 0);
-    CreateWindow("Window 4", 400, 300, 340, 250, 0);
-
-    memcpy(window_list[1]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
-    // memcpy(current_window.data, &bmp_start, (uintptr_t)&bmp_end - (uintptr_t)&bmp_start);
-    memcpy(window_list[4]->data, &cursor_start, (uintptr_t)&cursor_end - (uintptr_t)&cursor_start);
+    CreateWindow("Window 1", 10, 30, 340, 250, 0);
+    CreateWindow("Window 2", 400, 30, 340, 250, 0);
+    CreateWindow("Window 3", 10, 320, 340, 250, 0);
+    CreateWindow("Window 4", 400, 320, 340, 250, 0);
 
     while(!keyPressed(KEY_ESC))
     {
         if(mouse_bl == 1)
         {
-            vbe_drawString("left Mouse Button Pressed", 10, 2);
+            video_drawString(video_currentMode->device, "left Mouse Button Pressed", 10, 2);
 
             if(mouse_x > button.x && mouse_x < (button.x + button.width) && mouse_y > button.y && mouse_y < (button.y + button.height))
             {
@@ -68,7 +61,7 @@ void StartGUI()
             }
         }
 
-        for(uint32_t i = 1; i < 5; i++)
+        for(uint32_t i = 1; i < MAX_WINDOWS; i++)
         {
             if(window_list[i])
             {
@@ -78,12 +71,12 @@ void StartGUI()
 
         if(window_list[1])
         {
-            DrawButton(&button); // TODO: Associate Controls with a window. Draw all of them in the windows drawing function
+            DrawButton(video_currentMode->device, &button); // TODO: Associate Controls with a window. Draw all of them in the windows drawing function
         }
 
-        vbe_drawString("Press ESC to Exit!", 10, 2);
-        vbe_drawBitmapTransparent(mouse_x, mouse_y, &cursor_start);
-        vbe_flipScreen();
+        video_drawString(video_currentMode->device, "Press ESC to Exit!", 10, 2);
+        video_drawBitmapTransparent(video_currentMode->device, mouse_x, mouse_y, &cursor_start, white);
+        video_flipScreen(video_currentMode->device);
     }
 
     EndGUI();

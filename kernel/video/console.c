@@ -159,7 +159,7 @@ void console_setPixel(uint8_t x, uint8_t y, uint16_t value)
     console_current->vidmem[y*COLUMNS + x] = value;
     mutex_unlock(console_current->mutex);
     if (console_current == console_displayed)
-        video_setPixel(x, y+2, value);
+        vga_setPixel(x, y+2, value);
 }
 
 void putch(char c)
@@ -196,7 +196,7 @@ void putch(char c)
                 uint32_t att = getTextColor() << 8;
                 *(console_current->vidmem + console_current->cursor.y * COLUMNS + console_current->cursor.x) = uc | att; // character AND attributes: color
                 if (console_displayed == console_current) // Print to screen, if current console is displayed at the moment
-                    video_setPixel(console_current->cursor.x, console_current->cursor.y+2, uc | att); // character AND attributes: color
+                    vga_setPixel(console_current->cursor.x, console_current->cursor.y+2, uc | att); // character AND attributes: color
                 move_cursor_right();
             }
             break;

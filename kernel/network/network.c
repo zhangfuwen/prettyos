@@ -31,8 +31,6 @@ static network_driver_t drivers[ND_COUNT] =
 Packet_t lastPacket; // save data during packet receive thru the protocols
 
 static list_t*  adapters = 0;
-static list_t*  RxBuffers = 0;
-static mutex_t* RxMutex = 0;
 
 
 bool network_installDevice(pciDev_t* device)
@@ -156,38 +154,20 @@ bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t leng
     return(adapter->driver->sendPacket != 0 && adapter->driver->sendPacket(adapter, buffer, length));
 }
 
-static void network_handleReceivedBuffers(void* data, size_t length)
+static void network_handleReceivedBuffer(void* data, size_t length)
 {
-    mutex_lock(RxMutex);
-    for(element_t* e = RxBuffers->head; e != 0;)
-    {
-        networkBuffer_t* buffer = e->data;
-        e = e->next;
-        EthernetRecv(buffer->adapter, (ethernet_t*)buffer->data, buffer->length);
-        free(buffer->data);
-        list_delete(RxBuffers, buffer);
-        free(buffer);
-    }
-    mutex_unlock(RxMutex);
+    network_adapter_t* adapter = *(network_adapter_t**)data;
+    ethernet_t* eth = data + sizeof(adapter);
+    EthernetRecv(adapter, eth, length - sizeof(adapter));
 }
 
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t length) // Called by driver
 {
-    if(RxBuffers == 0)
-        RxBuffers = list_create();
-    if(!RxMutex)
-        RxMutex = mutex_create();
+    char buffer[length+sizeof(adapter)];
+    *(network_adapter_t**)buffer = adapter;
+    memcpy(buffer+sizeof(adapter), data, length);
 
-    networkBuffer_t* buffer = malloc(sizeof(networkBuffer_t), 0, "networkBuffer_t");
-    buffer->adapter = adapter;
-    buffer->length = length;
-    buffer->data = malloc(length, 0, "networkBuffer_t::data");
-    memcpy(buffer->data, data, length);
-    mutex_lock(RxMutex);
-    list_append(RxBuffers, buffer);
-    mutex_unlock(RxMutex);
-
-    todoList_add(kernel_idleTasks, &network_handleReceivedBuffers, 0, 0, 0);
+    todoList_add(kernel_idleTasks, &network_handleReceivedBuffer, buffer, length+sizeof(adapter), 0);
 }
 
 void network_displayArpTables()

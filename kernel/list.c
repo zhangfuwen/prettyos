@@ -61,17 +61,18 @@ bool list_insert(list_t* list, element_t* next, void* data)
             newElement->data = data;
             return true;
         }
+        return(false);
     }
 
     element_t* prev = 0;
     element_t* cur  = list->head;
-    
+
     while(cur != 0 && cur != next)
     {
         prev = cur;
         cur  = cur->next;
     }
-    
+
     // insert left of next
     element_t* newElement = (element_t*)malloc(sizeof(element_t), 0,"listElement");
     if (newElement)
@@ -194,8 +195,7 @@ bool ring_insert(ring_t* ring, void* data, bool single)
                 return false;
             }
             current = current->next;
-        } 
-        while (current != ring->current);
+        } while (current != ring->current);
     }
     element_t* item = malloc(sizeof(element_t), 0, "ring-element");
     if (item)
@@ -229,9 +229,8 @@ bool ring_deleteFirst(ring_t* ring, void* data)
             return(true);
         }
         current = current->next;
-    } 
-    while (current != ring->current);
-   
+    } while (current != ring->current);
+
     return(false);
 }
 
@@ -250,8 +249,7 @@ void ring_move(ring_t* dest, ring_t* source, void* data)
         }
         prev = current;
         current = current->next;
-    } 
-    while (prev != source->begin);
+    } while (prev != source->begin);
 
     if(current->data == data) // Found element. Insert it to dest ring.
     {

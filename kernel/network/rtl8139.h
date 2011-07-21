@@ -78,10 +78,11 @@
 typedef struct
 {
     network_adapter_t* device;
-    uint8_t* TxBuffer;
-    uint8_t  TxBufferIndex;
-    uint8_t* RxBuffer;
-    uint32_t RxBufferPointer;
+    uint8_t*  TxBuffer;
+    uintptr_t TxBufferPhys;
+    uint8_t   TxBufferIndex;
+    uint8_t*  RxBuffer;
+    uint32_t  RxBufferPointer;
 } RTL8139_networkAdapter_t;
 
 

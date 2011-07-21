@@ -24,6 +24,13 @@ static const uint16_t INCWINDOW      =    50;
 static const uint16_t DECWINDOW      =   100;
 static const uint16_t MAXWINDOW      = 10000;
 
+static const char* const tcpStates[] =
+{
+    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
+};
+
+static list_t* tcpConnections = 0;
+
 static const uint16_t MSL            = 10000; // 5 sec max. segment lifetime  // CHECK
 static const uint16_t RTO_STARTVALUE =  3000; // 3 sec // rfc 2988
 
@@ -61,13 +68,6 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
     if (connection->tcb.rto > 60000)
         connection->tcb.rto = 60000;
 }
-
-static const char* const tcpStates[] =
-{
-    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
-};
-
-static list_t* tcpConnections = 0;
 
 static bool     tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
 static uint16_t tcp_getFreeSocket();
@@ -128,19 +128,14 @@ tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* a
                     return(connection);
                 break;
             case LISTEN:
-                if (connection->TCP_CurrState == state &&
-                    connection->adapter == adapter &&
-                  ((connection->remoteSocket.port == port &&
-                    connection->remoteSocket.IP.iIP == IP.iIP) ||
-                   (connection->remoteSocket.port == 0 &&
-                    connection->remoteSocket.IP.iIP == 0)))
+                if (connection->TCP_CurrState == state && connection->adapter == adapter &&
+                  ((connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP) ||
+                   (connection->remoteSocket.port == 0 && connection->remoteSocket.IP.iIP == 0)))
                     return(connection);
                 break;
             default:
-                if (connection->adapter == adapter &&
-                    connection->remoteSocket.port == port &&
-                    connection->remoteSocket.IP.iIP == IP.iIP &&
-                    connection->TCP_CurrState == state)
+                if (connection->adapter == adapter && connection->TCP_CurrState == state &&
+                    connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP)
                     return(connection);
                 break;
         }
@@ -378,8 +373,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     if(connection == 0)
     {
         textColor(RED);
-        printf("\nTCP packet received that does not belong to a TCP connection:");
-        tcp_debug(tcp, false);
+        printf("\nTCP packet received that does not belong to a TCP connection.");
         textColor(TEXT);
         return;
     }
@@ -858,7 +852,6 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     tcp->checksum = htons(udptcpCalculateChecksum((void*)tcp, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
 
     ipv4_send(connection->adapter, tcp, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6); // tcp protocol: 6
-    free(tcp);
 
     // increase SND.NXT
     if (connection->TCP_CurrState == ESTABLISHED && connection->tcb.retrans == false)
@@ -883,6 +876,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     /// LOG
 
     tcp_debug(tcp, true);
+    free(tcp);
 }
 
 static uint32_t tcp_checkInBuffers(tcpConnection_t* connection, bool showData)

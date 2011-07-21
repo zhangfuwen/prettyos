@@ -22,10 +22,10 @@ typedef enum
 } KEY_t;
 
 
-void    keyboard_install();
+void keyboard_install();
 
-char    getch();
-bool    keyPressed(KEY_t key);
+char getch();
+bool keyPressed(KEY_t key);
 
 
 #endif

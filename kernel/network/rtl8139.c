@@ -45,44 +45,40 @@ void rtl8139_handler(registers_t* data)
     textColor(TEXT);
     #endif
 
-    // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
-    *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS)) = val;
-
-    if (!(val & RTL8139_INT_RX_OK))
+    if (val & RTL8139_INT_RX_OK)
     {
-        return;
+        uint32_t length = (device->RxBuffer[device->RxBufferPointer+3] << 8) + device->RxBuffer[device->RxBufferPointer+2]; // Little Endian
+
+        // Display RTL8139 specific data
+        #ifdef _NETWORK_DATA_
+        textColor(HEADLINE);
+        printf("\nFlags: ");
+        textColor(TEXT);
+        for (uint8_t i = 0; i < 2; i++)
+        {
+            printf("%yh ", device->RxBuffer[device->RxBufferPointer+i]);
+        }
+        #endif
+
+        // Inform network interface about the packet
+        network_receivedPacket(device->device, &device->RxBuffer[device->RxBufferPointer]+4, length - 4); // Strip CRC from packet.
+
+        *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
+
+        // Increase RxBufferPointer
+        device->RxBufferPointer += length+4;
+        device->RxBufferPointer = alignUp(device->RxBufferPointer, 4); // packets are DWORD aligned
+        device->RxBufferPointer %= RTL8139_RX_BUFFER_SIZE; // handle wrap-around
+
+        // set read pointer
+        *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)) = device->RxBufferPointer - 0x10; // 0x10 = 16
+
+        #ifdef _NETWORK_DIAGNOSIS_
+        printf("RXBUFTAIL: %u", *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)));
+        #endif
     }
-
-    uint32_t length = (device->RxBuffer[device->RxBufferPointer+3] << 8) + device->RxBuffer[device->RxBufferPointer+2]; // Little Endian
-
-    // Display RTL8139 specific data
-    #ifdef _NETWORK_DATA_
-    textColor(HEADLINE);
-    printf("\nFlags: ");
-    textColor(TEXT);
-    for (uint8_t i = 0; i < 2; i++)
-    {
-        printf("%yh ", device->RxBuffer[device->RxBufferPointer+i]);
-    }
-    #endif
-
-    // Inform network interface about the packet
-    network_receivedPacket(device->device, &device->RxBuffer[device->RxBufferPointer]+4, length - 4); // Strip CRC from packet.
-
-    // Increase RxBufferPointer
-    // packets are DWORD aligned
-    device->RxBufferPointer += length + 4;
-    device->RxBufferPointer = (device->RxBufferPointer + 3) & ~0x3; // ~0x3 = 0xFFFFFFFC
-
-    // handle wrap-around
-    device->RxBufferPointer %= RTL8139_RX_BUFFER_SIZE;
-
-    // set read pointer
-    *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)) = device->RxBufferPointer - 0x10; // 0x10 = 16
-
-    #ifdef _NETWORK_DIAGNOSIS_
-    printf("RXBUFTAIL: %u", *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)));
-    #endif
+    else
+        *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
 }
 
 
@@ -97,6 +93,7 @@ void install_RTL8139(network_adapter_t* dev)
     memset(device->RxBuffer, 0, RTL8139_RX_BUFFER_SIZE); // clear receiving buffer
 
     device->TxBuffer = malloc(RTL8139_TX_BUFFER_SIZE, 4, "RTL8139-TxBuf");
+    device->TxBufferPhys = paging_getPhysAddr(device->TxBuffer);
     device->TxBufferIndex = 0;
 
     /*
@@ -168,7 +165,7 @@ void install_RTL8139(network_adapter_t* dev)
     *((uint32_t*)(dev->MMIO_base + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR
 
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
-    *((uint32_t*)(dev->MMIO_base + RTL8139_RXBUF)) = paging_getPhysAddr((void*)device->RxBuffer);
+    *((uint32_t*)(dev->MMIO_base + RTL8139_RXBUF)) = paging_getPhysAddr(device->RxBuffer);
 
     // set interrupt mask
     *((uint16_t*)(dev->MMIO_base + RTL8139_INTRMASK)) = 0xFFFF; // all interrupts
@@ -203,13 +200,13 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     }
 
   #ifdef _NETWORK_DIAGNOSIS_
-    printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %Xh\n", paging_getPhysAddr(rAdapter->TxBuffer));
+    printf("\n\n>>> Transmission starts <<<\nPhysical Address of Tx Buffer = %Xh\n", rAdapter->TxBufferPhys);
   #endif
 
     // set address and size of the Tx buffer
     // reset OWN bit in TASD (REG_TRANSMIT_STATUS) starting transmit
     // set transmit FIFO threshhold to 48*32 = 1536 bytes to avoid tx underrun
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXADDR0   + 4 * rAdapter->TxBufferIndex)) = paging_getPhysAddr(rAdapter->TxBuffer);
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXADDR0   + 4 * rAdapter->TxBufferIndex)) = rAdapter->TxBufferPhys;
     *((uint32_t*)(adapter->MMIO_base + RTL8139_TXSTATUS0 + 4 * rAdapter->TxBufferIndex)) = length | (48 << 16);
 
     rAdapter->TxBufferIndex++;
