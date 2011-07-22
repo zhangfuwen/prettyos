@@ -12,7 +12,6 @@
 #include "util.h"
 #include "timer.h"
 #include "ipv4.h"
-#include "list.h"
 #include "task.h"
 #include "serial.h"
 #include "todo_list.h"
@@ -24,6 +23,9 @@ static const uint16_t INCWINDOW      =    50;
 static const uint16_t DECWINDOW      =   100;
 static const uint16_t MAXWINDOW      = 10000;
 
+static const uint16_t MSL            = 10000; // 5 sec max. segment lifetime  // CHECK
+static const uint16_t RTO_STARTVALUE =  3000; // 3 sec // rfc 2988
+
 static const char* const tcpStates[] =
 {
     "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
@@ -31,69 +33,26 @@ static const char* const tcpStates[] =
 
 static list_t* tcpConnections = 0;
 
-static const uint16_t MSL            = 10000; // 5 sec max. segment lifetime  // CHECK
-static const uint16_t RTO_STARTVALUE =  3000; // 3 sec // rfc 2988
 
-// RTO calculation (RFC 2988)
-// Variables: RTO  = retransmission timeout,   RTT    = round-trip time,
-//            SRTT = smoothed round-trip time, RTTVAR = round-trip time variation
-//
-static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
-{
-    if (connection->tcb.rto == RTO_STARTVALUE)
-    {
-        // first RTT measurement R (in msec): SRTT <- R    and RTTVAR <- R/2
-        connection->tcb.srtt    = rtt;
-        connection->tcb.rttvar  = rtt/2;
-    }
-    else
-    {
-        const uint8_t  ALPHA = 8; // ALPHA = 1/alpha
-        const uint8_t  BETA  = 4; // BETA  = 1/beta
-
-        // subsequent RTT measurement R': RTTVAR <- (1 - beta) * RTTVAR + beta * |SRTT - R'|
-        connection->tcb.rttvar = connection->tcb.rttvar + abs(connection->tcb.srtt - rtt) / BETA -
-                                (connection->tcb.rttvar + abs(connection->tcb.srtt - rtt) / BETA) / BETA;
-
-        // SRTT <- (1 - alpha) * SRTT + alpha * R'
-        connection->tcb.srtt = connection->tcb.srtt + rtt / ALPHA -
-                              (connection->tcb.srtt + rtt / ALPHA) / ALPHA;
-    }
-
-    //     RTO <- SRTT + max (G, K*RTTVAR) where K = 4.
-    //     If it is less than 1 second then the RTO SHOULD be rounded up to 1 second.
-    connection->tcb.rto = max( connection->tcb.srtt + /* max( 1000/timer_getFrequency(), */ 4 * connection->tcb.rttvar /* ) */, 1000);
-
-    // A maximum value MAY be placed on RTO provided it is at least 60 seconds.
-    if (connection->tcb.rto > 60000)
-        connection->tcb.rto = 60000;
-}
 
 static bool     tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
 static uint16_t tcp_getFreeSocket();
 static uint32_t tcp_getConnectionID();
-static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection);
-static uint32_t tcp_deleteOutofOrderInBuffers(tcpConnection_t* connection);
+static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection, list_t* list);
 static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection);
-static uint32_t tcp_checkInBuffers (tcpConnection_t* connection, bool showData);
-static uint32_t tcp_checkOutofOrderInBuffers(tcpConnection_t* connection, bool showData);
 static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData);
 static bool     tcp_retransOutBuffer(tcpConnection_t* connection, uint32_t seq);
+static void     tcpShowConnectionStatus(tcpConnection_t* connection);
+static void     tcp_debug(tcpPacket_t* tcp, bool showWnd);
+static uint32_t tcp_logBuffers(tcpConnection_t* connection, bool showData, list_t* list);
+static void     tcp_sendFin(tcpConnection_t* connection);
+static void     tcp_send_DupAck(tcpConnection_t* connection);
+static bool     tcp_prepare_send_ACK(tcpConnection_t* connection, tcpPacket_t* tcp);
+static void     calculateRTO(tcpConnection_t* connection, uint32_t rtt);
 
-static void scheduledDeleteConnection(void* data, size_t length)
-{
-    tcp_deleteConnection(*(tcpConnection_t**)data);
-}
 
-static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t timeMilliseconds)
-{
-    todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
-    textColor(LIGHT_BLUE);
-    printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
-    textColor(TEXT);
-}
 
-tcpConnection_t* tcp_findConnectionID(uint32_t ID)
+static tcpConnection_t* tcp_findConnectionID(uint32_t ID)
 {
     if(tcpConnections == 0)
         return(0);
@@ -121,78 +80,23 @@ tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* a
 
         switch(state)
         {
-            case TCP_ANY:
-                if (connection->adapter == adapter &&
-                    connection->remoteSocket.port == port &&
-                    connection->remoteSocket.IP.iIP == IP.iIP)
-                    return(connection);
-                break;
             case LISTEN:
                 if (connection->TCP_CurrState == state && connection->adapter == adapter &&
                   ((connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP) ||
                    (connection->remoteSocket.port == 0 && connection->remoteSocket.IP.iIP == 0)))
                     return(connection);
                 break;
+            case TCP_ANY:
+                if (connection->adapter == adapter && connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP)
+                    return(connection);
+                break;
             default:
-                if (connection->adapter == adapter && connection->TCP_CurrState == state &&
-                    connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP)
+                if (connection->adapter == adapter && connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP && connection->TCP_CurrState == state)
                     return(connection);
                 break;
         }
     }
     return(0);
-}
-
-void tcp_showConnections()
-{
-    if(tcpConnections == 0)
-        return;
-
-    textColor(TABLE_HEADING);
-    printf("\nID\tIP\t\tSrc\tDest\tAddr\t\tState");
-    printf("\n--------------------------------------------------------------------------------");
-    textColor(TEXT);
-    for(element_t* e = tcpConnections->head; e != 0; e = e->next)
-    {
-        tcpConnection_t* connection = e->data;
-        printf("%u\t%I\t%u\t%u\t%X\t%s\n", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
-    }
-    textColor(TABLE_HEADING);
-    printf("--------------------------------------------------------------------------------\n");
-    textColor(TEXT);
-}
-
-static void printFlag(uint8_t b, const char* s)
-{
-    textColor(b ? LIGHT_GREEN : GRAY);
-    printf("%s ", s);
-}
-
-static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
-{
-    textColor(IMPORTANT);
-    printf("%u ==> %u   ", ntohs(tcp->sourcePort), ntohs(tcp->destPort));
-    textColor(TEXT);
-    printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
-    printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
-    textColor(LIGHT_GRAY);
-    if (showWnd)
-    {
-        printf("  WND = %u  ", ntohs(tcp->window));
-    }
-    textColor(TEXT);
-}
-
-static void tcpShowConnectionStatus(tcpConnection_t* connection)
-{
-    textColor(IMPORTANT);
-    putch(' ');
-    puts(tcpStates[connection->TCP_CurrState]);
-    textColor(TEXT);
-  #ifdef _NETWORK_DATA_
-    printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
-    printf("SND.UNA = %u, SND.NXT = %u, SND.WND = %u", connection->tcb.SND.UNA, connection->tcb.SND.NXT, connection->tcb.SND.WND);
-  #endif
 }
 
 tcpConnection_t* tcp_createConnection()
@@ -228,13 +132,28 @@ void tcp_deleteConnection(tcpConnection_t* connection)
     connection->TCP_CurrState = CLOSED;
 
     uint32_t countOUT = tcp_deleteOutBuffers(connection); // free
-    uint32_t countIN  = tcp_deleteInBuffers (connection); // free
-    uint32_t countOutofOrderIN = tcp_deleteOutofOrderInBuffers (connection); // free
+	uint32_t countIN  = tcp_deleteInBuffers (connection, connection->inBuffer); // free
+	connection->inBuffer = 0;
+	uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
+	connection->OutofOrderinBuffer = 0;
 
     list_delete(tcpConnections, connection);
     free(connection);
 
     serial_log(1,"\r\nTCP conn.ID: %u <--- deleted, del countIN: %u del countOutofOrderIN: %u del countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
+}
+
+static void scheduledDeleteConnection(void* data, size_t length)
+{
+    tcp_deleteConnection(*(tcpConnection_t**)data);
+}
+
+static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t timeMilliseconds)
+{
+    todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
+    textColor(LIGHT_BLUE);
+    printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
+    textColor(TEXT);
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter) // passive open  ==> LISTEN
@@ -273,40 +192,6 @@ void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
 
         tcpShowConnectionStatus(connection);
     }
-}
-
-static bool tcp_prepare_send_ACK(tcpConnection_t* connection, tcpPacket_t* tcp, bool set_SND_UNA)
-{
-    if (set_SND_UNA)
-    {
-        connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
-    }
-
-    connection->tcb.RCV.WND = ntohs(tcp->window);
-    connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
-    connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-    connection->tcb.SEG.CTL = ACK_FLAG;
-    return true;
-}
-
-static void tcp_send_DupAck(tcpConnection_t* connection)
-{
-    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-    connection->tcb.SEG.CTL = ACK_FLAG;
-    serial_log(1,"%u msec\tWe send now Dup-Ack:\r\n", timer_getMilliseconds());
-    serial_log(1,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
-    serial_log(1,"\tack:\t%u\r\n", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
-    tcp_send(connection, 0, 0);
-}
-
-static void tcp_sendFin(tcpConnection_t* connection)
-{
-    connection->tcb.SEG.CTL = FIN_FLAG;
-    connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
-    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
-    connection->tcb.SND.NXT = connection->tcb.SEG.SEQ + 1;
-    tcp_send(connection, 0, 0);
 }
 
 void tcp_close(tcpConnection_t* connection)
@@ -394,7 +279,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     switch(connection->TCP_CurrState)
     {
         case LISTEN:
-        {
             if (tcp->SYN && !tcp->ACK) // SYN
             {
                 connection->tcb.RCV.WND  = ntohs(tcp->window);
@@ -414,20 +298,16 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 connection->TCP_CurrState = SYN_RECEIVED;
             }
             break;
-        }
 
         case SYN_RECEIVED:
-        {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = ESTABLISHED;
                 event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
             }
             break;
-        }
 
         case SYN_SENT:
-        {
             connection->tcb.RCV.WND = ntohs(tcp->window);
             connection->tcb.RCV.IRS = ntohl(tcp->sequenceNumber);
             connection->tcb.RCV.NXT = connection->tcb.RCV.IRS + 1;
@@ -442,12 +322,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else if (tcp->SYN && tcp->ACK)  // SYN ACK
             {
-                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
+                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
                 connection->TCP_CurrState = ESTABLISHED;
                 event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
             }
             break;
-        }
 
         // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER *************************
         case ESTABLISHED:
@@ -477,7 +356,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 if (tcp->FIN) // FIN
                 {
-                     tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
+                     tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
                      connection->TCP_CurrState = CLOSE_WAIT;
                 }
                 else
@@ -486,46 +365,38 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 }
 
             }
-            else if(tcp->ACK)// ACK
+            else // ACK
             {
-                if (! ((ntohl(tcp->acknowledgmentNumber) > connection->tcb.SND.UNA) && (ntohl(tcp->acknowledgmentNumber) <= connection->tcb.SND.NXT)))
+                if (! (ntohl(tcp->acknowledgmentNumber) > connection->tcb.SND.UNA && ntohl(tcp->acknowledgmentNumber) <= connection->tcb.SND.NXT))
                 {
                     // This does not mean a new ACK
 
-                    if (!(ntohl(tcp->acknowledgmentNumber) == connection->tcb.SND.UNA))
+                    if (ntohl(tcp->acknowledgmentNumber) != connection->tcb.SND.UNA)
+					{
+                        return; // invalid ACK, drop
+					}
+
+                    // valid Duplicate ACK
+                    connection->tcb.RCV.dACK++;
+
+                    if (connection->tcb.RCV.dACK == 1)
                     {
-                        // invalid ACK, drop
-                        return;
+                        // ignore second duplicate ACK and continue!
+                    }
+					else if (connection->tcb.RCV.dACK == 2) //3rd duplicate ACK
+                    {
+                        // Release REXMT Timer
+                        // Retransmit Lost Segment
+                        tcp_retransOutBuffer(connection, ntohl(tcp->acknowledgmentNumber)); // Retransmission
+
+                        // SSthresh = max (2, min(CWND, SND.WND/2)) ??
                     }
                     else
                     {
-                        // valid Duplicate ACK
-                        connection->tcb.RCV.dACK++;
-
-                        if (connection->tcb.RCV.dACK == 1)
-                        {
-                            // ignore second duplicate ACK and continue!
-                            goto ES3;
-                        }
-                        else
-                        {
-                            if (connection->tcb.RCV.dACK == 2) //3rd duplicate ACK
-                            {
-                                // Release REXMT Timer
-                                // Retransmit Lost Segment
-                                tcp_retransOutBuffer(connection, ntohl(tcp->acknowledgmentNumber)); // Retransmission
-
-                                // SSthresh = max (2, min(CWND, SND.WND/2)) ??
-                                goto ES3;
-                            }
-                            else
-                            {
-                                // ES4
-                                // ...
-                                goto ES3; // HACK
-                            }
-                        }
+                        // TODO: ES4
+                        // ...
                     }
+                    goto ES3;
                 }
                 else // This means a new and valid ACK
                 {
@@ -544,249 +415,231 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
 
                  ES3:
-                        if (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT)
-                        {
-                            // cf. ES3
-                            // handle Out-of-Order IN-Buffer (sorted --> RCV buffer --> app)
-                        }
-                        else if (ntohl(tcp->sequenceNumber) > connection->tcb.RCV.NXT)
-                        {
-                            serial_log(1,"%u msec\trcvd:\tseq:\t%u", timer_getMilliseconds(), ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
-                            serial_log(1," -> send Dup-ACK!");
-                            tcp_send_DupAck(connection);
+                    if (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT)
+                    {
+                        // cf. ES3
+                        // handle Out-of-Order IN-Buffer (sorted --> RCV buffer --> app)
+                    }
+                    else if (ntohl(tcp->sequenceNumber) > connection->tcb.RCV.NXT)
+                    {
+                        serial_log(1,"%u msec\trcvd:\tseq:\t%u", timer_getMilliseconds(), ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+                        serial_log(1," -> send Dup-ACK!");
+                        tcp_send_DupAck(connection);
 
-                            // Add received data to the temporary Out-of-Order In-Buffer
-                            if (tcpDataLength)
-                            {
-                                tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
-                                In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
-                                memcpy(In->ev+1, tcpData, tcpDataLength);
-                                In->seq        = ntohl(tcp->sequenceNumber);
-                                In->ev->length = tcpDataLength;
-                                In->ev->connectionID = connection->ID;
-
-                                list_append(connection->OutofOrderinBuffer, In);
-                                serial_log(1,"%u msec\tseq %u send to OutofOrderinBuffer.\r\n", timer_getMilliseconds(), ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
-                                connection->tcb.RCV.WND += tcpDataLength;
-
-                                if (tcp->FIN) // FIN ACK
-                                {
-                                    tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                                    connection->TCP_CurrState = CLOSE_WAIT;
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                        }
-                        else // ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT
-                        {
-                            nop(); // ??
-                        }
-
-                        if (connection->passive)
-                        {
-                            textColor(LIGHT_GRAY);
-                            printf("data: ");
-                            textColor(DATA);
-                            for (uint16_t i=0; i<tcpDataLength; i++)
-                            {
-                                putch(tcpData[i]);
-                            }
-
-                            // Analysis
-                            textColor(IMPORTANT);
-                            printf("\ntcp: %u  tcpData: %u  tcpDataOff: %u\n",
-                                    length, tcpDataLength, tcp->dataOffset);
-                            textColor(LIGHT_BLUE);
-                            for (uint16_t i=0; i<tcpDataLength; i++)
-                            {
-                                printf("%y ", tcpData[i]);
-                            }
-                            textColor(TEXT);
-                        }
-                        sleepMilliSeconds(2);
-
-                        connection->tcb.RCV.ACKforDupACK = connection->tcb.RCV.NXT; // TEST for Dup-ACK
-
-                        connection->tcb.RCV.WND =  ntohs(tcp->window); // cf. receiving dup-ACK
-                        connection->tcb.SND.UNA =  max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); // CHECK for unregular packets above
-
-                        // set ack time in tcp out-buffer packets
-                        for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
-                        {
-                            tcpOut_t* outPacket = e->data;
-                            if ( ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber)) && (outPacket->segment.LEN > 0))
-                            {
-                                 if(outPacket->time_ms_acknowledged == 0) // not acknowledged
-                                 {
-                                     outPacket->time_ms_acknowledged = timer_getMilliseconds(); // acknowledged
-                                     outPacket->remoteAck = ntohl(tcp->acknowledgmentNumber);
-
-                                     // retransmission timeout (RTO)
-                                     if (outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN) == 0)
-                                     {
-                                         calculateRTO(connection, outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted);
-                                     }
-                                 }
-                            }
-                        }
-
+                        // Add received data to the temporary Out-of-Order In-Buffer
                         if (tcpDataLength)
                         {
-                            connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
-                            connection->tcb.SND.WND -= tcpDataLength;
-                        }
-
-                        connection->tcb.SEG.SEQ =  connection->tcb.SND.NXT;
-                        connection->tcb.SEG.ACK =  connection->tcb.RCV.NXT;
-                        connection->tcb.SEG.LEN =  0; // send no data
-                        connection->tcb.SEG.WND =  connection->tcb.SND.WND;
-                        connection->tcb.SEG.CTL =  ACK_FLAG;
-
-                        if (tcpDataLength)
-                        {
-                            //Fill in-buffer list
                             tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
                             In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
                             memcpy(In->ev+1, tcpData, tcpDataLength);
                             In->seq        = ntohl(tcp->sequenceNumber);
                             In->ev->length = tcpDataLength;
                             In->ev->connectionID = connection->ID;
-                            list_append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
 
-                            // Issue event
-                            uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
-                            connection->tcb.SND.WND += tcpDataLength; // delivered to application
+                            list_append(connection->OutofOrderinBuffer, In);
+                            serial_log(1,"%u msec\tseq %u send to OutofOrderinBuffer.\r\n", timer_getMilliseconds(), ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+                            connection->tcb.RCV.WND += tcpDataLength;
 
-                            uint32_t totalTCPdataSize = 0;
-
-                            mutex_lock(connection->owner->eventQueue->mutex);
-                            for(size_t i = 0; ; i++)
+                            if (tcp->FIN) // FIN ACK
                             {
-                                event_t* ev = event_peek(connection->owner->eventQueue, i);
-                                if(ev == 0) break;
-                                if(ev->type == EVENT_TCP_RECEIVED)
-                                {
-                                    totalTCPdataSize += ev->length - sizeof(tcpReceivedEventHeader_t);
-                                }
-                            }
-                            mutex_unlock(connection->owner->eventQueue->mutex);
-                            textColor(MAGENTA);
-                            printf("\ntotalTCPdataSize: %u ", totalTCPdataSize);
-                            textColor(TEXT);
-
-                            // setting sliding window
-                            if (retVal==0)
-                            {
-                                textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
-                                if (totalTCPdataSize <  STARTWINDOW && connection->tcb.SND.WND < MAXWINDOW)
-                                    {connection->tcb.SEG.WND = connection->tcb.SND.WND += INCWINDOW;}
-                                if (totalTCPdataSize >= STARTWINDOW)
-                                    {connection->tcb.SEG.WND = connection->tcb.SND.WND -= DECWINDOW;}
-                                if (totalTCPdataSize >= MAXWINDOW  )
-                                    {connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;}
+                                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
+                                connection->TCP_CurrState = CLOSE_WAIT;
                             }
                             else
                             {
-                                textColor(ERROR); printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
-                                connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;
+                                break;
                             }
-                            textColor(TEXT);
+                        }
+                    }
+                    else // ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT
+                    {
+                    }
+
+                    if (connection->passive)
+                    {
+                        textColor(LIGHT_GRAY);
+                        printf("data: ");
+                        textColor(DATA);
+                        for (uint16_t i=0; i<tcpDataLength; i++)
+                        {
+                            putch(tcpData[i]);
                         }
 
-                        if (tcp->FIN) // FIN ACK
+                        // Analysis
+                        textColor(IMPORTANT);
+                        printf("\ntcp: %u  tcpData: %u  tcpDataOff: %u\n",
+                                length, tcpDataLength, tcp->dataOffset);
+                        textColor(LIGHT_BLUE);
+                        for (uint16_t i=0; i<tcpDataLength; i++)
                         {
-                            tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                            connection->TCP_CurrState = CLOSE_WAIT;
+                            printf("%y ", tcpData[i]);
                         }
-                        else // no FIN ACK
-                        {
-                            tcp_sendFlag = true;
-                            tcp_checkOutBuffers(connection,false);
+                        textColor(TEXT);
+                    }
+                    sleepMilliSeconds(2);
 
+                    connection->tcb.RCV.ACKforDupACK = connection->tcb.RCV.NXT; // TEST for Dup-ACK
+
+                    connection->tcb.RCV.WND = ntohs(tcp->window); // cf. receiving dup-ACK
+                    connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); // CHECK for unregular packets above
+
+                    // Remove all acked packets from the outBuffer
+                    for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
+                    {
+                        tcpOut_t* outPacket = e->data;
+                        if ( ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber)) && (outPacket->segment.LEN > 0))
+                        {
+                            // Refresh retransmission timeout (RTO)
+                            if (ntohl(tcp->acknowledgmentNumber) - (outPacket->segment.SEQ + outPacket->segment.LEN) == 0)
+                            {
+                                calculateRTO(connection, timer_getMilliseconds() - outPacket->time_ms_transmitted);
+                            }
+							list_delete(connection->outBuffer, e->data); // Remove packet.
                         }
-                    }// end of: This means a new and valid ACK
-                }// end of: ACK
+                    }
+
+                    if (tcpDataLength)
+                    {
+                        connection->tcb.RCV.NXT =  ntohl(tcp->sequenceNumber) + tcpDataLength;
+                        connection->tcb.SND.WND -= tcpDataLength;
+                    }
+
+                    connection->tcb.SEG.SEQ =  connection->tcb.SND.NXT;
+                    connection->tcb.SEG.ACK =  connection->tcb.RCV.NXT;
+                    connection->tcb.SEG.LEN =  0; // send no data
+                    connection->tcb.SEG.WND =  connection->tcb.SND.WND;
+                    connection->tcb.SEG.CTL =  ACK_FLAG;
+
+                    if (tcpDataLength)
+                    {
+                        //Fill in-buffer list
+                        tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
+                        In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
+                        memcpy(In->ev+1, tcpData, tcpDataLength);
+                        In->seq        = ntohl(tcp->sequenceNumber);
+                        In->ev->length = tcpDataLength;
+                        In->ev->connectionID = connection->ID;
+                        list_append(connection->inBuffer, In); // received data ==> inBuffer // CHECK TCP PROCESS
+
+                        // Issue event
+                        uint8_t retVal = event_issue(connection->owner->eventQueue, EVENT_TCP_RECEIVED, In->ev, sizeof(tcpReceivedEventHeader_t)+tcpDataLength);
+                        connection->tcb.SND.WND += tcpDataLength; // delivered to application
+
+                        uint32_t totalTCPdataSize = 0;
+
+                        mutex_lock(connection->owner->eventQueue->mutex);
+                        for(size_t i = 0; ; i++)
+                        {
+                            event_t* ev = event_peek(connection->owner->eventQueue, i);
+                            if(ev == 0) break;
+                            if(ev->type == EVENT_TCP_RECEIVED)
+                            {
+                                totalTCPdataSize += ev->length - sizeof(tcpReceivedEventHeader_t);
+                            }
+                        }
+                        mutex_unlock(connection->owner->eventQueue->mutex);
+                        textColor(MAGENTA);
+                        printf("\ntotalTCPdataSize: %u ", totalTCPdataSize);
+                        textColor(TEXT);
+
+                        // setting sliding window
+                        if (retVal==0)
+                        {
+                            textColor(SUCCESS); printf("ID. %u event queue OK", In->ev->connectionID);
+                            if (totalTCPdataSize <  STARTWINDOW && connection->tcb.SND.WND < MAXWINDOW)
+                                connection->tcb.SEG.WND = connection->tcb.SND.WND += INCWINDOW;
+                            else if (totalTCPdataSize >= MAXWINDOW)
+                                connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;
+                            else if (totalTCPdataSize >= STARTWINDOW)
+                                connection->tcb.SEG.WND = connection->tcb.SND.WND -= DECWINDOW;
+                        }
+                        else
+                        {
+                            textColor(ERROR); printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
+                            connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;
+                        }
+                        textColor(TEXT);
+                    }
+
+                    if (tcp->FIN) // FIN ACK
+                    {
+                        tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
+                        connection->TCP_CurrState = CLOSE_WAIT;
+                    }
+                    else // no FIN ACK
+                    {
+                        tcp_sendFlag = true;
+                        tcp_checkOutBuffers(connection, false);
+                    }
+                }// end of: This means a new and valid ACK
+            }// end of: ACK
             break;
         }
         case FIN_WAIT_1:
-        {
-            if (tcp->FIN && !tcp->ACK) // FIN
-            {
-                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                connection->TCP_CurrState = CLOSING;
-            }
-            else if (tcp->FIN && tcp->ACK) // FIN ACK
-            {
-                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
-                connection->TCP_CurrState = TIME_WAIT;
-            }
-            else if (!tcp->SYN && !tcp->FIN && tcp->ACK && (length - 4*tcp->dataOffset == 0)) // ACK
-            {
+			if(tcp->FIN) // FIN or FIN ACK
+			{
+				tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
+				if(tcp->ACK) // FIN ACK
+				{
+					tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
+					connection->TCP_CurrState = TIME_WAIT;
+				}
+				else // FIN
+				{
+					connection->TCP_CurrState = CLOSING;
+				}
+			}
+			else if(!tcp->SYN && tcp->ACK) // No FIN, no SYN, but ACK
+			{
+				if(length-4*tcp->dataOffset > 0) // ACK with data
+				{
+					tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // if there will not come a FIN at FIN_WAIT_2
+				}
                 connection->TCP_CurrState = FIN_WAIT_2;
-            }
-            else if (!tcp->SYN && !tcp->FIN && tcp->ACK && (length - 4*tcp->dataOffset > 0)) // ACK with data
-            {
-                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // if there will not come a FIN at FIN_WAIT_2
-                connection->TCP_CurrState = FIN_WAIT_2;
-            }
+			}
             break;
-        }
+
         case FIN_WAIT_2:
-        {
             if (tcp->FIN) // FIN
             {
-                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
+                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
                 tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
                 connection->TCP_CurrState = TIME_WAIT;
             }
             break;
-        }
+
         case CLOSING:
-        {
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
                 connection->TCP_CurrState = TIME_WAIT;
             }
             break;
-        }
+
         case TIME_WAIT:
-        {
             textColor(RED);
             printf("Packet received during state TIME_WAIT.");
             textColor(TEXT);
             break;
-        }
 
-        // Passive Close
-        case CLOSE_WAIT:
-        {
+        case CLOSE_WAIT: // Passive Close
             printf("Packet received at CLOSE_WAIT?!");
             break;
-        }
+
         case LAST_ACK:
-        {
             if (tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = CLOSED;
                 tcp_deleteFlag = true;
             }
             break;
-        }
 
-        // only for test reasons
-        default:
-        {
+        default: // only for test reasons
             textColor(ERROR);
             printf("This default state should not happen.");
             textColor(TEXT);
             break;
-        }
-    }//switch (connection->TCP_CurrState)
+    } // switch(connection->TCP_CurrState)
 
     /// LOG
     serial_log(1,"%u msec\trecv: ", timer_getMilliseconds());
@@ -815,6 +668,36 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     {
         tcp_deleteConnection(connection);
     }
+}
+
+static bool tcp_prepare_send_ACK(tcpConnection_t* connection, tcpPacket_t* tcp)
+{
+    connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
+    connection->tcb.RCV.WND = ntohs(tcp->window);
+    connection->tcb.RCV.NXT = ntohl(tcp->sequenceNumber)+1;
+    connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+    connection->tcb.SEG.CTL = ACK_FLAG;
+    return true;
+}
+
+static void tcp_send_DupAck(tcpConnection_t* connection)
+{
+    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+    connection->tcb.SEG.CTL = ACK_FLAG;
+    serial_log(1,"%u msec\tWe send now Dup-Ack:\r\n", timer_getMilliseconds());
+    serial_log(1,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
+    serial_log(1,"\tack:\t%u\r\n", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
+    tcp_send(connection, 0, 0);
+}
+
+static void tcp_sendFin(tcpConnection_t* connection)
+{
+    connection->tcb.SEG.CTL = FIN_FLAG;
+    connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+    connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
+    connection->tcb.SND.NXT = connection->tcb.SEG.SEQ + 1;
+    tcp_send(connection, 0, 0);
 }
 
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
@@ -860,7 +743,7 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     tcp->urgentPointer = 0;
 
     tcp->checksum = 0; // for checksum calculation
-    tcp->checksum = htons(udptcpCalculateChecksum((void*)tcp, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
+    tcp->checksum = htons(udptcpCalculateChecksum(tcp, length + sizeof(tcpPacket_t), connection->localSocket.IP, connection->remoteSocket.IP, 6));
 
     ipv4_send(connection->adapter, tcp, length + sizeof(tcpPacket_t), connection->remoteSocket.IP, 6); // tcp protocol: 6
 
@@ -890,86 +773,21 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
     free(tcp);
 }
 
-static uint32_t tcp_checkInBuffers(tcpConnection_t* connection, bool showData)
+static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection, list_t* list)
 {
-    serial_log(1,"\r\n------------------------------------\r\n");
-    serial_log(1,"checkInBuffers:\r\n");
-    uint32_t count = 0;
-    for (element_t* e = connection->inBuffer->head; e != 0; e = e->next)
-    {
-        count++;
-        tcpIn_t* inPacket = e->data;
-        serial_log(1,"\r\n seq = %u\tlen = %u\tseq.nxt: %u", inPacket->seq - connection->tcb.RCV.IRS, inPacket->ev->length, inPacket->seq - connection->tcb.RCV.IRS + inPacket->ev->length);
-        if (showData)
-        {
-            for (uint32_t i=0; i<inPacket->ev->length; i++)
-            {
-                serial_write(1,((char*)(inPacket->ev+1))[i]);
-            }
-        }
-    }
-    serial_log(1,"\r\n------------------------------------\r\n");
-    return count;
-}
-
-static uint32_t tcp_checkOutofOrderInBuffers(tcpConnection_t* connection, bool showData)
-{
-    serial_log(1,"\r\n------------------------------------\r\n");
-    serial_log(1,"checkOutofOrderInBuffers:\r\n");
-    uint32_t count = 0;
-    for (element_t* e = connection->OutofOrderinBuffer->head; e != 0; e = e->next)
-    {
-        count++;
-        tcpIn_t* inPacket = e->data;
-        serial_log(1,"\r\n seq = %u\tlen = %u\tseq.nxt: %u", inPacket->seq - connection->tcb.RCV.IRS, inPacket->ev->length, inPacket->seq - connection->tcb.RCV.IRS + inPacket->ev->length);
-        if (showData)
-        {
-            for (uint32_t i=0; i<inPacket->ev->length; i++)
-            {
-                serial_write(1,((char*)(inPacket->ev+1))[i]);
-            }
-        }
-    }
-    serial_log(1,"\r\n------------------------------------\r\n");
-    return count;
-}
-
-static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection)
-{
-    tcp_checkInBuffers(connection, false); // --> COM1
+	tcp_logBuffers(connection, false, list); // --> COM1
 
     serial_log(1,"\r\ntcp_deleteInBuffers");
 
     uint32_t count = 0;
-    for (element_t* e = connection->inBuffer->head; e != 0; e = e->next)
+    for (element_t* e = list->head; e != 0; e = e->next)
     {
         count++;
         tcpIn_t* inPacket = e->data;
         free(inPacket->ev);
         free(inPacket);
     }
-    list_free(connection->inBuffer);
-    connection->inBuffer = 0;
-
-    return count;
-}
-
-static uint32_t tcp_deleteOutofOrderInBuffers(tcpConnection_t* connection)
-{
-    tcp_checkOutofOrderInBuffers(connection, false); // --> COM1
-
-    serial_log(1,"\r\ntcp_deleteOutofOrderInInBuffers");
-
-    uint32_t count = 0;
-    for (element_t* e = connection->OutofOrderinBuffer->head; e != 0; e = e->next)
-    {
-        count++;
-        tcpIn_t* inPacket = e->data;
-        free(inPacket->ev);
-        free(inPacket);
-    }
-    list_free(connection->OutofOrderinBuffer);
-    connection->OutofOrderinBuffer = 0;
+    list_free(list);
 
     return count;
 }
@@ -1002,10 +820,10 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
             textColor(LIGHT_BLUE);
             printf("\ndup-ack triggered retransmission done for seq = %u.", outPacket->segment.SEQ - connection->tcb.SND.ISS);
             serial_log(1,"dup-ack triggered retransmission done for seq = %u.\r\n", outPacket->segment.SEQ - connection->tcb.SND.ISS);
-            connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
-            connection->tcb.SEG.ACK =  outPacket->segment.ACK;
-            connection->tcb.SEG.LEN =  outPacket->segment.LEN;
-            connection->tcb.SEG.CTL =  ACK_FLAG;
+            connection->tcb.SEG.SEQ = outPacket->segment.SEQ;
+            connection->tcb.SEG.ACK = outPacket->segment.ACK;
+            connection->tcb.SEG.LEN = outPacket->segment.LEN;
+            connection->tcb.SEG.CTL = ACK_FLAG;
             connection->tcb.retrans = true;
             tcp_send(connection, outPacket->data, connection->tcb.SEG.LEN);
             outPacket->time_ms_transmitted = timer_getMilliseconds();
@@ -1029,62 +847,41 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
     {
         count++;
         tcpOut_t* outPacket = e->data;
-        if (outPacket->time_ms_acknowledged) // acknowledged
-        {
-            printf("\nID %u  seq %u  len %u  acked by %u (diff: %u)  RTT=%u ms RTO=%u ms",
-                connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN, outPacket->remoteAck,
-                outPacket->remoteAck - (outPacket->segment.SEQ + outPacket->segment.LEN),
-                outPacket->time_ms_acknowledged - outPacket->time_ms_transmitted,
-                connection->tcb.rto);
-            textColor(GREEN);
-        }
-        else
-        {
-            printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN);
-            textColor(DATA);
-        }
+		
+		printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN);
 
         if (showData)
         {
+			textColor(DATA);
             putch('\n');
             for (uint32_t i=0; i<outPacket->segment.LEN; i++)
             {
-                putch( ((char*)(outPacket->data))[i] );
+                putch( ((char*)outPacket->data)[i] );
             }
+			textColor(TEXT);
         }
 
-        if (outPacket->time_ms_acknowledged) // delete acknowledged list members
+        /* check need for retransmission
+		if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->tcb.rto)
         {
-            free(outPacket->data);
-            free(outPacket);
-            serial_log(1,"%u msec\tcheckOutBuffers - delAckedOutPacket\r\n", timer_getMilliseconds());
-            list_delete(connection->outBuffer, e->data);
+            textColor(LIGHT_BLUE);
+            printf("\nretransmission done for seg=%u! RTO will be doubled afterwards (max. 60 sec).", outPacket->segment.SEQ - connection->tcb.SND.ISS);
+            connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
+            connection->tcb.SEG.ACK =  outPacket->segment.ACK;
+            connection->tcb.SEG.LEN =  outPacket->segment.LEN;
+            connection->tcb.SEG.CTL =  ACK_FLAG;
+            connection->tcb.retrans = true;
+            tcp_send(connection, outPacket->data, connection->tcb.SEG.LEN);
+            outPacket->time_ms_transmitted = timer_getMilliseconds();
+            connection->tcb.retrans = false;
+            connection->tcb.rto = min(2*connection->tcb.rto, 60000);
+			textColor(TEXT);
         }
-        else // check need for retransmission
+        else
         {
-            /*
-            if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->tcb.rto)
-            {
-                textColor(LIGHT_BLUE);
-                printf("\nretransmission done for seg=%u! RTO will be doubled afterwards (max. 60 sec).", outPacket->segment.SEQ - connection->tcb.SND.ISS);
-                connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
-                connection->tcb.SEG.ACK =  outPacket->segment.ACK;
-                connection->tcb.SEG.LEN =  outPacket->segment.LEN;
-                connection->tcb.SEG.CTL =  ACK_FLAG;
-                connection->tcb.retrans = true;
-                tcp_send(connection, outPacket->data, connection->tcb.SEG.LEN);
-                outPacket->time_ms_transmitted = timer_getMilliseconds();
-                connection->tcb.retrans = false;
-                connection->tcb.rto = min(2*connection->tcb.rto, 60000);
-            }
-            else
-            {
-                textColor(TEXT);
-                printf("\nWe are still waiting for the ACK");
-            }
-            */
-        }
-        textColor(TEXT);
+            textColor(TEXT);
+            printf("\nWe are still waiting for the ACK");
+        }*/
     }
     return count;
 }
@@ -1097,29 +894,57 @@ static bool tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection
     {
         if (tcpDatalength)
         {
-            bool cond1 = ( ntohl(tcp->sequenceNumber) >=  connection->tcb.RCV.NXT  &&
-                           ntohl(tcp->sequenceNumber) <   connection->tcb.RCV.NXT + ntohs(tcp->window) );
-            bool cond2 = ( ntohl(tcp->sequenceNumber) + tcpDatalength >=   connection->tcb.RCV.NXT ) &&
-                           ntohl(tcp->sequenceNumber) + tcpDatalength  < ( connection->tcb.RCV.NXT + ntohs(tcp->window) );
-            return ( cond1 || cond2 );
+            return( (ntohl(tcp->sequenceNumber) >=  connection->tcb.RCV.NXT  &&
+                         ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT + ntohs(tcp->window)) ||
+                    (ntohl(tcp->sequenceNumber) + tcpDatalength >= connection->tcb.RCV.NXT &&
+                         ntohl(tcp->sequenceNumber) + tcpDatalength < ( connection->tcb.RCV.NXT + ntohs(tcp->window))) );
         }
-        else // tcpDatalength == 0
-        {
-            return ( ntohl(tcp->sequenceNumber) >= connection->tcb.RCV.NXT &&
-                     ntohl(tcp->sequenceNumber) < (connection->tcb.RCV.NXT + ntohs(tcp->window)) );
-        }
+        
+		// tcpDatalength == 0
+		return ( ntohl(tcp->sequenceNumber) >= connection->tcb.RCV.NXT &&
+                 ntohl(tcp->sequenceNumber) < (connection->tcb.RCV.NXT + ntohs(tcp->window)) );
     }
-    else // tcp->window == 0
+    
+	// tcp->window == 0
+	if (tcpDatalength)
+        return false;
+	
+	// tcp->window == 0 && tcpDatalength == 0
+	return (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT);
+}
+
+// RTO calculation (RFC 2988)
+// Variables: RTO  = retransmission timeout,   RTT    = round-trip time,
+//            SRTT = smoothed round-trip time, RTTVAR = round-trip time variation
+static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
+{
+    if (connection->tcb.rto == RTO_STARTVALUE)
     {
-        if (tcpDatalength)
-        {
-            return false;
-        }
-        else // tcpDatalength == 0
-        {
-            return (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT);
-        }
+        // first RTT measurement R (in msec): SRTT <- R    and RTTVAR <- R/2
+        connection->tcb.srtt    = rtt;
+        connection->tcb.rttvar  = rtt/2;
     }
+    else
+    {
+        const uint8_t  ALPHA = 8; // ALPHA = 1/alpha
+        const uint8_t  BETA  = 4; // BETA  = 1/beta
+
+        // subsequent RTT measurement R': RTTVAR <- (1 - beta) * RTTVAR + beta * |SRTT - R'|
+        connection->tcb.rttvar = connection->tcb.rttvar + abs(connection->tcb.srtt - rtt) / BETA -
+                                (connection->tcb.rttvar + abs(connection->tcb.srtt - rtt) / BETA) / BETA;
+
+        // SRTT <- (1 - alpha) * SRTT + alpha * R'
+        connection->tcb.srtt = connection->tcb.srtt + rtt / ALPHA -
+                              (connection->tcb.srtt + rtt / ALPHA) / ALPHA;
+    }
+
+    //     RTO <- SRTT + max (G, K*RTTVAR) where K = 4.
+    //     If it is less than 1 second then the RTO SHOULD be rounded up to 1 second.
+    connection->tcb.rto = max( connection->tcb.srtt + /* max( 1000/timer_getFrequency(), */ 4 * connection->tcb.rttvar /* ) */, 1000);
+
+    // A maximum value MAY be placed on RTO provided it is at least 60 seconds.
+    if (connection->tcb.rto > 60000)
+        connection->tcb.rto = 60000;
 }
 
 static uint16_t tcp_getFreeSocket()
@@ -1137,6 +962,82 @@ static uint32_t tcp_getConnectionID()
 {
     static uint16_t ID = 1;
     return ID++;
+}
+
+
+// Debug functions
+void tcp_showConnections()
+{
+    if(tcpConnections == 0)
+        return;
+
+    textColor(TABLE_HEADING);
+    printf("\nID\tIP\t\tSrc\tDest\tAddr\t\tState");
+    printf("\n--------------------------------------------------------------------------------");
+    textColor(TEXT);
+    for(element_t* e = tcpConnections->head; e != 0; e = e->next)
+    {
+        tcpConnection_t* connection = e->data;
+        printf("%u\t%I\t%u\t%u\t%X\t%s\n", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
+    }
+    textColor(TABLE_HEADING);
+    printf("--------------------------------------------------------------------------------\n");
+    textColor(TEXT);
+}
+
+static void printFlag(uint8_t b, const char* s)
+{
+    textColor(b ? LIGHT_GREEN : GRAY);
+    printf("%s ", s);
+}
+
+static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
+{
+    textColor(IMPORTANT);
+    printf("%u ==> %u   ", ntohs(tcp->sourcePort), ntohs(tcp->destPort));
+    textColor(TEXT);
+    printFlag(tcp->URG, "URG"); printFlag(tcp->ACK, "ACK"); printFlag(tcp->PSH, "PSH");
+    printFlag(tcp->RST, "RST"); printFlag(tcp->SYN, "SYN"); printFlag(tcp->FIN, "FIN");
+    if (showWnd)
+    {
+		textColor(LIGHT_GRAY);
+        printf("  WND = %u  ", ntohs(tcp->window));
+		textColor(TEXT);
+    }
+}
+
+static void tcpShowConnectionStatus(tcpConnection_t* connection)
+{
+    textColor(IMPORTANT);
+    putch(' ');
+    puts(tcpStates[connection->TCP_CurrState]);
+    textColor(TEXT);
+  #ifdef _NETWORK_DATA_
+    printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
+    printf("SND.UNA = %u, SND.NXT = %u, SND.WND = %u", connection->tcb.SND.UNA, connection->tcb.SND.NXT, connection->tcb.SND.WND);
+  #endif
+}
+
+static uint32_t tcp_logBuffers(tcpConnection_t* connection, bool showData, list_t* list)
+{
+    serial_log(1,"\r\n------------------------------------\r\n");
+    serial_log(1,"tcp_logBuffers:\r\n");
+    uint32_t count = 0;
+    for (element_t* e = list->head; e != 0; e = e->next)
+    {
+        count++;
+        tcpIn_t* inPacket = e->data;
+        serial_log(1,"\r\n seq = %u\tlen = %u\tseq.nxt: %u", inPacket->seq - connection->tcb.RCV.IRS, inPacket->ev->length, inPacket->seq - connection->tcb.RCV.IRS + inPacket->ev->length);
+        if (showData)
+        {
+            for (uint32_t i=0; i<inPacket->ev->length; i++)
+            {
+                serial_write(1,((char*)(inPacket->ev+1))[i]);
+            }
+        }
+    }
+    serial_log(1,"\r\n------------------------------------\r\n");
+    return count;
 }
 
 
@@ -1199,8 +1100,7 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
     outPacket->segment.LEN = length;
     outPacket->segment.WND = connection->tcb.SEG.WND;
     outPacket->segment.CTL = connection->tcb.SEG.CTL;
-    outPacket->time_ms_transmitted  = timer_getMilliseconds();
-    outPacket->time_ms_acknowledged = 0; // not acknowledged
+    outPacket->time_ms_transmitted = timer_getMilliseconds();
     list_append(connection->outBuffer, outPacket); // sent data to be acknowledged ==> OutBuffer
     return true;
 }

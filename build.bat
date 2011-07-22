@@ -1,5 +1,5 @@
 del FloppyImage.img
-tools\mingw32-make FloppyImage.img OS=WINDOWS
+tools\mingw32-make --jobs FloppyImage.img OS=WINDOWS
 
 @echo off
 :Loop

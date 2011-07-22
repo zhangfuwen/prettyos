@@ -68,6 +68,7 @@ vpath %.o $(OBJDIR)
 # targets to build PrettyOS
 .PHONY: clean all shell other_userprogs userlibs
 .SILENT: shell other_userprogs userlibs
+.NOTPARALLEL: $(KERNELDIR)/initrd.dat
 
 all: FloppyImage.img
 

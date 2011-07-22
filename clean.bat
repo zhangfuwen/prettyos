@@ -1,1 +1,1 @@
-tools\mingw32-make clean OS=WINDOWS
+tools\mingw32-make --jobs clean OS=WINDOWS

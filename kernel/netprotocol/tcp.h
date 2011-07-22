@@ -112,8 +112,6 @@ typedef struct
     void*        data;
     tcpSegment_t segment;
     uint32_t     time_ms_transmitted;
-    uint32_t     time_ms_acknowledged;
-    uint32_t     remoteAck;
 } tcpOut_t;
 
 
@@ -125,7 +123,6 @@ void tcp_close(tcpConnection_t* connection);
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length);
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length);
 void tcp_showConnections();
-tcpConnection_t* tcp_findConnectionID(uint32_t ID);
 tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state);
 
 // User functions
