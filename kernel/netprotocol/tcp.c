@@ -23,7 +23,7 @@ static const uint16_t INCWINDOW      =    50;
 static const uint16_t DECWINDOW      =   100;
 static const uint16_t MAXWINDOW      = 10000;
 
-static const uint16_t MSL            = 10000; // 5 sec max. segment lifetime  // CHECK
+static const uint16_t MSL            =  5000; // 5 sec max. segment lifetime  // CHECK
 static const uint16_t RTO_STARTVALUE =  3000; // 3 sec // rfc 2988
 
 static const char* const tcpStates[] =
@@ -367,26 +367,31 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else // ACK
             {
-                if (! (ntohl(tcp->acknowledgmentNumber) > connection->tcb.SND.UNA && ntohl(tcp->acknowledgmentNumber) <= connection->tcb.SND.NXT))
+                if (! (ntohl(tcp->acknowledgmentNumber) >  connection->tcb.SND.UNA && ntohl(tcp->acknowledgmentNumber) <= connection->tcb.SND.NXT ))
                 {
                     // This does not mean a new ACK
 
                     if (ntohl(tcp->acknowledgmentNumber) != connection->tcb.SND.UNA)
 					{
+                        serial_log(1,"\r\ninvalid ack - drop!!!\r\n");
                         return; // invalid ACK, drop
 					}
 
-                    // valid Duplicate ACK
-                    connection->tcb.RCV.dACK++;
+                    // valid Duplicate ACK ?
+                    if(tcpDataLength==0 && !tcp->FIN) // react only to empty ACK, not to data exchange, not to FIN ACK
+                    {
+                        connection->tcb.RCV.dACK++;
+                    }
 
                     if (connection->tcb.RCV.dACK == 1)
                     {
-                        // ignore second duplicate ACK and continue!
+                        serial_log(1,"\r\nignore 1st duplicate ACK and continue!\r\n");                        
                     }
-					else if (connection->tcb.RCV.dACK == 2) //3rd duplicate ACK
+					else if (connection->tcb.RCV.dACK == 2) //2nd duplicate ACK
                     {
                         // Release REXMT Timer
                         // Retransmit Lost Segment
+                        serial_log(1,"\r\n2nd duplicate ACK\r\n");
                         tcp_retransOutBuffer(connection, ntohl(tcp->acknowledgmentNumber)); // Retransmission
 
                         // SSthresh = max (2, min(CWND, SND.WND/2)) ??
@@ -828,6 +833,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
             tcp_send(connection, outPacket->data, connection->tcb.SEG.LEN);
             outPacket->time_ms_transmitted = timer_getMilliseconds();
             connection->tcb.retrans = false;
+            connection->tcb.RCV.dACK = 0;
             connection->tcb.rto = min(2*connection->tcb.rto, 60000);
             return true;
         }
@@ -848,7 +854,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
         count++;
         tcpOut_t* outPacket = e->data;
 		
-		printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ, outPacket->segment.LEN);
+		printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->segment.LEN);
 
         if (showData)
         {
@@ -861,11 +867,12 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 			textColor(TEXT);
         }
 
-        /* check need for retransmission
+        /*
+        // check need for retransmission
 		if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->tcb.rto)
         {
             textColor(LIGHT_BLUE);
-            printf("\nretransmission done for seg=%u! RTO will be doubled afterwards (max. 60 sec).", outPacket->segment.SEQ - connection->tcb.SND.ISS);
+            printf("\nrto (%u msec) triggered retransmission done for seq=%u.", connection->tcb.rto, outPacket->segment.SEQ - connection->tcb.SND.ISS);
             connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
             connection->tcb.SEG.ACK =  outPacket->segment.ACK;
             connection->tcb.SEG.LEN =  outPacket->segment.LEN;
@@ -881,7 +888,8 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
         {
             textColor(TEXT);
             printf("\nWe are still waiting for the ACK");
-        }*/
+        }
+        */
     }
     return count;
 }
@@ -1084,6 +1092,14 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
     {
         textColor(ERROR);
         printf("Data are not sent outside from state ESTABLISHED.\n");
+        textColor(TEXT);
+        return false;
+    }
+
+    if (length == 0)
+    {
+        textColor(ERROR);
+        printf("No data (length == 0)!\n");
         textColor(TEXT);
         return false;
     }
