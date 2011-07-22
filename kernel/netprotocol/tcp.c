@@ -475,11 +475,20 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
             if (!tcp->ACK)
             {
-                return;
+                if (tcp->FIN) // FIN
+                {
+                     tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
+                     connection->TCP_CurrState = CLOSE_WAIT;
+                }
+                else
+                {
+                    return;
+                }
+
             }
-            else if(tcp->ACK && !tcp->SYN && !tcp->FIN)// ACK
+            else if(tcp->ACK)// ACK
             {
-                if (! (ntohl(tcp->acknowledgmentNumber) > connection->tcb.SND.UNA && ntohl(tcp->acknowledgmentNumber) <= connection->tcb.SND.NXT))
+                if (! ((ntohl(tcp->acknowledgmentNumber) > connection->tcb.SND.UNA) && (ntohl(tcp->acknowledgmentNumber) <= connection->tcb.SND.NXT)))
                 {
                     // This does not mean a new ACK
 
@@ -520,7 +529,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 }
                 else // This means a new and valid ACK
                 {
-                    // Window Update (??)
+                    // Window Update
 
                     // SND.WND = min(CWND, SSthresh, SEG.LEN)
 
@@ -560,7 +569,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                                 serial_log(1,"%u msec\tseq %u send to OutofOrderinBuffer.\r\n", timer_getMilliseconds(), ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
                                 connection->tcb.RCV.WND += tcpDataLength;
 
-                                if (tcp->FIN) // FIN or FIN ACK
+                                if (tcp->FIN) // FIN ACK
                                 {
                                     tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
                                     connection->TCP_CurrState = CLOSE_WAIT;
@@ -687,17 +696,19 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                             textColor(TEXT);
                         }
 
-                        tcp_sendFlag = true;
-                        tcp_checkOutBuffers(connection,false);
-                    }
+                        if (tcp->FIN) // FIN ACK
+                        {
+                            tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
+                            connection->TCP_CurrState = CLOSE_WAIT;
+                        }
+                        else // no FIN ACK
+                        {
+                            tcp_sendFlag = true;
+                            tcp_checkOutBuffers(connection,false);
 
-                    if (tcp->FIN) // FIN or FIN ACK
-                    {
-                        tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp, true);
-                        connection->TCP_CurrState = CLOSE_WAIT;
-                    }
-                }
-
+                        }
+                    }// end of: This means a new and valid ACK
+                }// end of: ACK
             break;
         }
         case FIN_WAIT_1:
@@ -989,7 +1000,8 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
         if (outPacket->segment.SEQ == seq) // searched packet found
         {
             textColor(LIGHT_BLUE);
-            printf("\nretransmission done for seg=%u! RTO will be doubled afterwards (max. 60 sec).", outPacket->segment.SEQ - connection->tcb.SND.ISS);
+            printf("\ndup-ack triggered retransmission done for seq = %u.", outPacket->segment.SEQ - connection->tcb.SND.ISS);
+            serial_log(1,"dup-ack triggered retransmission done for seq = %u.\r\n", outPacket->segment.SEQ - connection->tcb.SND.ISS);
             connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
             connection->tcb.SEG.ACK =  outPacket->segment.ACK;
             connection->tcb.SEG.LEN =  outPacket->segment.LEN;
@@ -1004,6 +1016,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
     }
     textColor(ERROR);
     printf("\nPacket for requested retransmission not found.");
+    serial_log(1,"Packet for requested retransmission not found.\r\n");
     textColor(TEXT);
     return false;
  }
@@ -1069,7 +1082,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
                 textColor(TEXT);
                 printf("\nWe are still waiting for the ACK");
             }
-            */            
+            */
         }
         textColor(TEXT);
     }
