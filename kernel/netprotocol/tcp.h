@@ -8,7 +8,7 @@
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf
 
 typedef enum {CLOSED, LISTEN, SYN_SENT, SYN_RECEIVED, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, CLOSING, CLOSE_WAIT, LAST_ACK, TIME_WAIT, TCP_ANY} TCP_state;
-typedef enum {SYN_FLAG, SYN_ACK_FLAG, ACK_FLAG, FIN_FLAG, FIN_ACK_FLAG, RST_FLAG} tcpFlags;
+typedef enum {SYN_FLAG, SYN_ACK_FLAG, ACK_FLAG, FIN_FLAG, FIN_ACK_FLAG, RST_FLAG, RST_ACK_FLAG} tcpFlags;
 
 typedef struct
 {

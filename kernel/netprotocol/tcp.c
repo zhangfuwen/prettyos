@@ -34,7 +34,6 @@ static const char* const tcpStates[] =
 static list_t* tcpConnections = 0;
 
 
-
 static bool     tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
 static uint16_t tcp_getFreeSocket();
 static uint32_t tcp_getConnectionID();
@@ -46,10 +45,10 @@ static void     tcpShowConnectionStatus(tcpConnection_t* connection);
 static void     tcp_debug(tcpPacket_t* tcp, bool showWnd);
 static uint32_t tcp_logBuffers(tcpConnection_t* connection, bool showData, list_t* list);
 static void     tcp_sendFin(tcpConnection_t* connection);
+static void     tcp_sendReset(tcpConnection_t* connection, tcpPacket_t* tcp, bool ack, uint32_t length);
 static void     tcp_send_DupAck(tcpConnection_t* connection);
 static bool     tcp_prepare_send_ACK(tcpConnection_t* connection, tcpPacket_t* tcp);
 static void     calculateRTO(tcpConnection_t* connection, uint32_t rtt);
-
 
 
 static tcpConnection_t* tcp_findConnectionID(uint32_t ID)
@@ -259,7 +258,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     {
         textColor(RED);
         printf("\nTCP packet received that does not belong to a TCP connection.");
-        textColor(TEXT);
+        textColor(TEXT);        
         return;
     }
 
@@ -337,15 +336,20 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             if (!tcp_IsPacketAcceptable(tcp, connection, tcpDataLength))
             {
                 textColor(ERROR); printf("not acceptable!"); textColor(TEXT);
-                // if RST is on, STOP.
-                // if RST is off, send segment from queue
-                break; // return; // ??
+                if (tcp->RST)
+                {
+                    return;
+                }
+                else
+                {
+                    tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
+                    break; 
+                }               
             }
 
             if (tcp->RST || tcp->SYN) // RST or SYN
             {
                 //if SYN, send segment from queue
-                connection->TCP_CurrState = CLOSED;
                 tcp_deleteConnection(connection);
                 return;
             }
@@ -358,6 +362,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 {
                      tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
                      connection->TCP_CurrState = CLOSE_WAIT;
+                     break;
                 }
                 else
                 {
@@ -639,6 +644,16 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             break;
 
+        case CLOSED:
+            if (tcp->ACK) // ACK
+            {
+                tcp_sendReset(connection, tcp, true, length);
+            }
+            else
+            {
+                tcp_sendReset(connection, tcp, false, length);
+            }
+
         default: // only for test reasons
             textColor(ERROR);
             printf("This default state should not happen.");
@@ -705,6 +720,23 @@ static void tcp_sendFin(tcpConnection_t* connection)
     tcp_send(connection, 0, 0);
 }
 
+static void tcp_sendReset(tcpConnection_t* connection, tcpPacket_t* tcp, bool ack, uint32_t length)
+{
+    if (ack) 
+    {
+        connection->tcb.SEG.SEQ = ntohl(tcp->acknowledgmentNumber);  
+        connection->tcb.SEG.CTL = RST_ACK_FLAG;
+    }
+    else
+    {
+        uint32_t tcpDataLength = length - (4 * tcp->dataOffset);
+        connection->tcb.SEG.SEQ = 0;  
+        connection->tcb.SEG.ACK = ntohl(tcp->sequenceNumber) + tcpDataLength; 
+        connection->tcb.SEG.CTL = RST_FLAG;
+    }      
+    tcp_send(connection, 0, 0);
+}
+
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
 {
     textColor(HEADLINE);
@@ -741,6 +773,9 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
             break;
         case RST_FLAG:
             tcp->RST = 1; // RST
+            break;
+        case RST_ACK_FLAG:
+            tcp->RST = tcp->ACK =1; // RST ACK
             break;
     }
 
