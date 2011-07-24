@@ -7,10 +7,6 @@
 #include "util.h"
 #include "task.h"
 
-// in task.c used for pagingFree of memory for user program
-void* globalUserProgAddr;
-uint32_t globalUserProgSize;
-
 enum elf_headerType
 {
     ET_NONE  = 0,
@@ -170,9 +166,7 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
             memFlags |= MEM_WRITE;
 
         // Allocate code area for the user program
-        globalUserProgAddr = (void*)(ph[i].vaddr);
-        globalUserProgSize = alignUp(ph[i].memsz,PAGESIZE);
-        if (!paging_alloc(pd, globalUserProgAddr, globalUserProgSize, memFlags))
+        if (!paging_alloc(pd, (void*)(ph[i].vaddr), alignUp(ph[i].memsz,PAGESIZE), memFlags))
         {
             return(0);
         }

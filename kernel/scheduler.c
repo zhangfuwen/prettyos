@@ -104,7 +104,6 @@ static task_t* scheduler_getNextTask()
         if(freetimeTask == 0) // The freetime task has not been needed until now. Use spare time to create it.
         {
             freetimeTask = create_task(kernelPageDirectory, &doNothing, 0, 0, 0);
-            ring_deleteFirst(runningTasks, freetimeTask); // The freetime task is special. It should not be run like a normal task scheduled by the runningTasks ring.
             event_deleteQueue(freetimeTask->eventQueue);
             freetimeTask->eventQueue = 0;
         }

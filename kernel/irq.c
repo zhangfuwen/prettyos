@@ -181,8 +181,10 @@ static void GPF(registers_t* r) // -> VM86
     {
         if (!vm86_sensitiveOpcodehandler(r))
         {
-            textColor(0x0C);
-            printf("\nvm86: sensitive opcode error\n");
+            textColor(ERROR);
+            uint8_t*  ip = FP_TO_LINEAR(r->cs, r->eip-1);
+            printf("\nvm86: sensitive opcode error: %y. (prefix: %y)\n", ip[0], ip[-1]);
+            quitTask();
         }
     }
     else

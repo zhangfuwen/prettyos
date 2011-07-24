@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.243 - Rev: 1090";
+const char* const version = "0.0.2.244 - Rev: 1091";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -171,7 +171,7 @@ void main(multiboot_t* mb_struct)
 {
     init(mb_struct);
 
-    create_cthread(&bootscreen, "Booting ...");
+    scheduler_insertTask(create_cthread(&bootscreen, "Booting ..."));
 
     showMemorySize();
     cpu_analyze();
@@ -229,7 +229,7 @@ void main(multiboot_t* mb_struct)
                     printf("Cannot start Shell.\n");
                     paging_destroyUserPageDirectory(pd);
                 }
-                create_task(pd, entry, 3, 0, 0);
+                scheduler_insertTask(create_task(pd, entry, 3, 0, 0));
                 free(buf);
             }
         }
@@ -241,7 +241,7 @@ void main(multiboot_t* mb_struct)
         textColor(TEXT);
     }
 
-    create_cthread(&video_test, "VBE");
+    scheduler_insertTask(create_cthread(&video_test, "VBE"));
 
     textColor(SUCCESS);
     printf("\n\n--------------------------------------------------------------------------------");

@@ -34,7 +34,7 @@ static unsigned int entryLength;
 
 void drawEntryVBE(const char* entry)
 {
-	char RenderBufferVBE[81];
+    char RenderBufferVBE[81];
     snprintf(RenderBufferVBE, 80, "$> %s", entry);
     if(strlen(RenderBufferVBE) < MAX_CHAR_PER_LINE)
         memset(RenderBufferVBE+strlen(RenderBufferVBE), ' ', MAX_CHAR_PER_LINE-strlen(RenderBufferVBE));
@@ -60,7 +60,7 @@ char* formatPath(char* opath)
     }
 
     char* npath = malloc(length, 0, "VBEShell: npath");
-	memset(npath, 0, length);
+    memset(npath, 0, length);
     char* retval = npath;
     if(insertPartition)
     {
@@ -95,7 +95,7 @@ void startVBEShell()
         memset(entry, 0, MAX_CHAR_PER_LINE+1);
         drawEntryVBE(entry);
 
-		while (!keyPressed(KEY_ESC))
+        while (!keyPressed(KEY_ESC))
         {
             union {char buffer[4]; KEY_t key;} buffer; // We are only interested in TEXT_ENTERED and KEY_DOWN events. They send 4 bytes at maximum
             waitForEvent(0);
@@ -181,7 +181,7 @@ void startVBEShell()
                             video_drawString(video_currentMode->device, "\n$> ", 0, ypos);
                             video_drawString(video_currentMode->device, entry, 3, ypos);
                             video_drawString(video_currentMode->device, "<--\n", strlen(entry)+5, ypos);
-							ypos += 16;
+                            ypos += 16;
                             textColor(0x0F);
                             goto EVALUATION;
                             break;
@@ -262,33 +262,33 @@ EVALUATION: // evaluation of entry
         if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
             video_drawString(video_currentMode->device, "Implemented Instructions: hi, help, ?, fdir, format and reboot\n", 0, ypos);
-			ypos += 16;
+            ypos += 16;
         }
         else if(strcmp(entry, "hi") == 0)
         {
             video_drawString(video_currentMode->device, "I am PrettyOS. Always at your service!\n", 0, ypos);
-			ypos += 16;
+            ypos += 16;
         }
         else if(strcmp(entry, "fdir") == 0)
         {
-			flpydsk_read_directory();
+            flpydsk_read_directory();
         }
         else if(strcmp(entry, "format") == 0)
         {
             video_drawString(video_currentMode->device, "Please enter the partition path (for example: 'A:0:'): ", 0, ypos);
-			ypos += 16;
+            ypos += 16;
             char part[20];
             gets(part);
             video_drawString(video_currentMode->device, "Please enter the filesystem type (1: FAT12, 2: FAT16, 3: FAT32): ", 0, ypos);
-			ypos += 16;
+            ypos += 16;
             char type[20];
             gets(type);
             video_drawString(video_currentMode->device, "Please enter the volume label: ", 0, ypos);
-			ypos += 16;
+            ypos += 16;
             char label[20];
             gets(label);
-			ypos += 16;
-			formatPartition(part, atoi(type), label);
+            ypos += 16;
+            formatPartition(part, atoi(type), label);
         }
         else if(strcmp(entry, "reboot") == 0)
         {
@@ -305,7 +305,7 @@ EVALUATION: // evaluation of entry
         else
         {
             video_drawString(video_currentMode->device, "File is being searched... ", 0, ypos);
-			ypos += 16;
+            ypos += 16;
 
             size_t argc = 1;
             bool apostroph = false;
@@ -337,27 +337,27 @@ EVALUATION: // evaluation of entry
             }
             argv[j] = argstart;
 
-			FS_ERROR error = executeFile(argv[0], argc, argv);
+            FS_ERROR error = executeFile(argv[0], argc, argv);
             switch(error)
             {
                 case CE_GOOD:
                     video_drawString(video_currentMode->device, " Successfull.\n", 0, ypos);
-					ypos += 16;
+                    ypos += 16;
                     break;
                 case CE_INVALID_FILENAME:
                     video_drawString(video_currentMode->device, " The path was malformed.\n", 0, ypos);
-					ypos += 16;
+                    ypos += 16;
                     break;
                 case CE_FILE_NOT_FOUND:
                     argv[0] = formatPath(argv[0]);
                     error = executeFile(argv[0], argc, argv);
                     if(error != CE_GOOD)
                         video_drawString(video_currentMode->device, " File not found.\n", 0, ypos);
-					ypos += 16;
+                    ypos += 16;
                     break;
                 default:
                     video_drawString(video_currentMode->device, " File load was not successful.\n", 0, ypos);
-					ypos += 16;
+                    ypos += 16;
                     break;
             }
 

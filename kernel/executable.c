@@ -118,11 +118,11 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
             free(nArgv);
 
             // Execute the task.
-            create_ctask(pd, entry, 3, argc, nnArgv, path);
+            scheduler_insertTask(create_ctask(pd, entry, 3, argc, nnArgv, path));
         }
         else
             // Execute the task.
-            create_ctask(pd, entry, 3, 0, 0, path);
+            scheduler_insertTask(create_ctask(pd, entry, 3, 0, 0, path));
     }
     else
     {

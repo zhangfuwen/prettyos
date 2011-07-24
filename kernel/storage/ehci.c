@@ -80,7 +80,7 @@ void analyzeEHCI(uintptr_t bar, uintptr_t offset)
 // start thread at kernel idle loop (ckernel.c)
 void ehci_init(void* data, size_t size)
 {
-    create_cthread(&startEHCI, "EHCI");
+    scheduler_insertTask(create_cthread(&startEHCI, "EHCI"));
 }
 
 void startEHCI()
@@ -519,7 +519,7 @@ void ehci_handler(registers_t* r)
 // PORT_CHANGE via ehci_handler starts thread at kernel idle loop (ckernel.c)
 void ehci_portcheck(void* data, size_t size)
 {
-    create_cthread(&portCheck, "EHCI Ports");
+    scheduler_insertTask(create_cthread(&portCheck, "EHCI Ports"));
 }
 
 void portCheck()

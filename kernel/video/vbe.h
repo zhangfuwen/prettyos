@@ -65,7 +65,7 @@ typedef struct
 typedef struct
 {
     videoDevice_t* device;
-	uint8_t        paletteBitsPerColor;
+    uint8_t        paletteBitsPerColor;
     void*          memory;
     uint8_t*       buffer1;
     uint8_t*       buffer2;

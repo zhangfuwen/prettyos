@@ -6,7 +6,6 @@ SECTIONS
     . = 0x00100000;
     _kernel_beg = .;
     .text   : { _code_start = .;                        }
-    . = ALIGN(0x1000);
     .text1  : { object_files/kernel/data.o(.text)       }
     .data   : { _data_start = .;   *(.data)             }
     .rodata : { _rodata_start = .; *(.rodata) *(.rdata) }

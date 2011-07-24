@@ -17,9 +17,6 @@ static const uint32_t kernelStackSize = 0x1000; // Tasks get a 4 KB kernel stack
 // Some externs are needed
 void fpu_setcw(uint16_t ctrlword); // fpu.c
 
-extern void* globalUserProgAddr;
-extern uint32_t globalUserProgSize;
-
 
 bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
 
@@ -86,21 +83,12 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     newTask->attrib        = 0x0F;
     newTask->blocker.type  = 0;
     newTask->threads       = 0; // No threads associated with the task at the moment. created later if necessary
-    newTask->userProgAddr  = 0;
-    newTask->userProgSize  = 0;
     newTask->eventQueue    = 0; // Event handling is disabled per default
 
-    if (newTask->privilege == 3)
+    if (newTask->privilege == 3 && newTask->type != VM86)
     {
         newTask->heap_top = USER_heapStart;
-
-        if(newTask->type != VM86)
-        {
-            newTask->userProgAddr = globalUserProgAddr;
-            newTask->userProgSize = globalUserProgSize;
-
-            paging_alloc(newTask->pageDirectory, (void*)(USER_STACK - 10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // Stack starts at USER_STACK-StackSize*PAGESIZE
-        }
+        paging_alloc(newTask->pageDirectory, (void*)(USER_STACK - 10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // Stack starts at USER_STACK-StackSize*PAGESIZE
     }
 
     newTask->kernelStack = malloc(kernelStackSize, 4, "task-kernelstack")+kernelStackSize;
@@ -111,7 +99,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     if(newTask->type != VM86)
     {
         if(newTask->type == THREAD)
-            *(--kernelStack) = (uintptr_t)&exit;
+            *(--kernelStack) = (uintptr_t)&exit; // When a thread is finished, exit is automatically called
 
         if (newTask->privilege == 3)
         {
@@ -146,8 +134,7 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
 
-    uint32_t data_segment = 0x10;
-    if (newTask->privilege == 3) data_segment = 0x23; // 0x20|0x3=0x23
+    uint32_t data_segment = newTask->privilege == 3 ? 0x23 : 0x10;
 
     *(--kernelStack) = data_segment;
     *(--kernelStack) = data_segment;
@@ -158,7 +145,6 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     newTask->ss  = data_segment;
 
     list_append(tasks, newTask);
-    scheduler_insertTask(newTask); // newTask is inserted as last task in queue
 
     #ifdef _TASKING_DIAGNOSIS_
     task_log(newTask);

@@ -54,8 +54,8 @@ extern uintptr_t apm_com_start;
 extern uintptr_t apm_com_end;
 // This values are hardcoded adresses from documentation/apm.map
 #define APM_CHECK    ((void*)0x100)
-#define APM_INSTALL  ((void*)0x12A)
-#define APM_SETSTATE ((void*)0x182)
+#define APM_INSTALL  ((void*)0x12B)
+#define APM_SETSTATE ((void*)0x1A7)
 
 static pageDirectory_t* apm_pd;
 
@@ -68,17 +68,18 @@ bool apm_install()
     printf("\nAPM: ");
     textColor(TEXT);
     // Check for APM
-    waitForTask(create_vm86_task(apm_pd, APM_CHECK), 0);
+    vm86_executeSync(apm_pd, APM_CHECK);
     if(*((uint8_t*)0x1300) != 0) // Error
     {
         printf("\nNot available.");
         return(false);
     }
-    printf("\nVersion: %u.%u, Control string: %c%c, Flags: %u.", *((uint8_t*)0x1302), *((uint8_t*)0x1301), *((uint8_t*)0x1304), *((uint8_t*)0x1303), *((uint16_t*)0x1305));
+    printf("\nVersion: %u.%u, Control string: %c%c, Flags: %x.", *((uint8_t*)0x1302), *((uint8_t*)0x1301), *((uint8_t*)0x1304), *((uint8_t*)0x1303), *((uint16_t*)0x1305));
 
     // Activate APM
-    waitForTask(create_vm86_task(apm_pd, APM_INSTALL), 0);
-    switch(*((uint8_t*)0x1300)) {
+    vm86_executeSync(apm_pd, APM_INSTALL);
+    switch(*((uint8_t*)0x1300))
+    {
         case 0:
             printf("\nSuccessfully activated.");
             return(true);
@@ -104,11 +105,11 @@ static bool apm_action(PM_STATES state)
     {
         case PM_STANDBY:
             *((uint16_t*)0x1300) = 2; // Suspend-Mode (turns more hardware off than standby)
-            waitForTask(create_vm86_task(apm_pd, APM_SETSTATE), 0);
+            vm86_executeSync(apm_pd, APM_SETSTATE);
             return(*((uint16_t*)0x1300) != 0);
         case PM_SOFTOFF:
             *((uint16_t*)0x1300) = 3;
-            waitForTask(create_vm86_task(apm_pd, APM_SETSTATE), 0);
+            vm86_executeSync(apm_pd, APM_SETSTATE);
             return(*((uint16_t*)0x1300) != 0);
         default: // Every other state is unreachable with APM
             return(false);
@@ -127,7 +128,7 @@ static PM_SYSTEM_t pm_systems[_PM_SYSTEMS_END] = {
 void pm_install()
 {
     pm_systems[PM_NO].supported = true; // Always available
-    pm_systems[PM_APM].supported = false;//apm_install();
+    pm_systems[PM_APM].supported = false;// = apm_install();
     pm_systems[PM_ACPI].supported = false; // Unsupported by PrettyOS
 }
 

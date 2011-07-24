@@ -5,7 +5,7 @@
 
 // These switches change the behavior of PrettyOS, useful for analyzing tasks:
 
-/// #define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen.
+#define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen.
 /// #define _PAGING_DIAGNOSIS_     // Diagnosis-Output about PD, PT etc.
 /// #define _DIAGNOSIS_            // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _MALLOC_FREE_          // shows information about malloc/free and heap expansion

@@ -19,7 +19,7 @@
 #define VM86_MODEINFOBLOCK     ((void*)0x149)
 
 
-VgaInfoBlock_t  vgaIB;
+VgaInfoBlock_t vgaIB;
 
 
 // vm86
@@ -34,14 +34,14 @@ static void vbe_readVIB()
     *(char*)0x3401 = 'B';
     *(char*)0x3402 = 'E';
     *(char*)0x3403 = '2';
-    waitForTask(create_vm86_task(vbe_pd, VM86_VGAINFOBLOCK), 0);
+    vm86_executeSync(vbe_pd, VM86_VGAINFOBLOCK);
     memcpy(&vgaIB, (void*)0x3400, sizeof(VgaInfoBlock_t));
 }
 
 static void vbe_readMIB(uint16_t mode, ModeInfoBlock_t* mib)
 {
     *(uint16_t*)0x3600 = mode;
-    waitForTask(create_vm86_task(vbe_pd, VM86_MODEINFOBLOCK), 0);
+    vm86_executeSync(vbe_pd, VM86_MODEINFOBLOCK);
     memcpy(mib, (void*)0x3600, sizeof(ModeInfoBlock_t));
 }
 
@@ -49,7 +49,7 @@ static void setDisplayStart(uint16_t xpos, uint16_t ypos)
 {
     *(uint16_t*)0x1800 = ypos;
     *(uint16_t*)0x1802 = xpos;
-    waitForTask(create_vm86_task(vbe_pd, VM86_SETDISPLAYSTART), 0);
+    vm86_executeSync(vbe_pd, VM86_SETDISPLAYSTART);
 }
 
 // Set a Palette entry
@@ -61,7 +61,7 @@ static void Set_DAC_C(videoDevice_t* device, uint8_t PaletteColorNumber, BGRA_t 
     {
         if(vgaIB.Capabilities[0] & BIT(0)) // VGA can handle palette with 8 bits per color -> Use it
         {
-            waitForTask(create_vm86_task(vbe_pd, VM86_ENABLE8BITPALETTE), 0);
+            vm86_executeSync(vbe_pd, VM86_ENABLE8BITPALETTE);
             vbeDevice->paletteBitsPerColor = 8;
         }
         else
@@ -240,7 +240,7 @@ void vbe_enterVideoMode(videoMode_t* mode)
 
     // Switch to video mode
     *(uint16_t*)0x3600 = 0xC1FF&(0xC000|modenumber); // Bits 9-13 may not be set, bits 14-15 should be set always
-    waitForTask(create_vm86_task(vbe_pd, VM86_SWITCH_TO_VIDEO), 0);
+    vm86_executeSync(vbe_pd, VM86_SWITCH_TO_VIDEO);
 
     if(!(modenumber&BIT(15))) // We clear the Videoscreen manually, because the VGA is not reliable
         memset(vbeDevice->memory, 0, mode->xRes*mode->yRes*(mode->colorMode % 8 == 0 ? mode->colorMode/8 : mode->colorMode/8 + 1));
@@ -254,7 +254,7 @@ void vbe_enterVideoMode(videoMode_t* mode)
 
 void vbe_leaveVideoMode(videoDevice_t* device)
 {
-    waitForTask(create_vm86_task(vbe_pd, VM86_SWITCH_TO_TEXT), 0); // Needed until VGA-Text driver is written
+    vm86_executeSync(vbe_pd, VM86_SWITCH_TO_TEXT); // Needed until VGA-Text driver is written
     videomode = VM_TEXT;
     refreshUserScreen();
 }

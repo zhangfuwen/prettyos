@@ -27,10 +27,6 @@ struct task
     task_t*          parent;         // Task that created this thread (only used for threads)
     event_queue_t*   eventQueue;     // 0 if no event handling enabled. Points to queue otherwise.
 
-    // User task specific program data
-    void*            userProgAddr;
-    uint32_t         userProgSize;
-
     // Information needed by scheduler
     uint16_t         priority; // Indicates how often this task gets the CPU
     blocker_t        blocker;  // Object indicating reason and duration of blockade
@@ -52,7 +48,7 @@ task_t*  create_task (pageDirectory_t* directory, void(*entry)(), uint8_t privil
 task_t*  create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName); // Creates task with own console
 task_t*  create_thread (void(*entry)()); // Creates thread using currentTasks console
 task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
-task_t* create_vm86_task(pageDirectory_t* pd, void(*entry)());
+task_t*  create_vm86_task(pageDirectory_t* pd, void(*entry)());
 void     switch_context();
 void     task_saveState(uint32_t esp);
 uint32_t task_switch(task_t* newTask);

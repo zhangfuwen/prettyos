@@ -264,10 +264,9 @@ bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAG
         uint32_t pagenr = (uint32_t)virtAddress/PAGESIZE + done;
 
         // Maybe there is already memory allocated?
-
         if (pd->tables[pagenr/1024] && pd->tables[pagenr/1024]->pages[pagenr%1024])
         {
-            kdebug(3, "pagenumber already allocated: %u\n",pagenr);
+            kdebug(3, "pagenumber already allocated: %u\n", pagenr);
             continue;
         }
 
@@ -380,8 +379,8 @@ void paging_destroyUserPageDirectory(pageDirectory_t* pd)
 
 void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
 {
-    static uint8_t* virtAddress = PCI_MEM_START;
-    void* retVal = 0;
+    static void* virtAddress = PCI_MEM_START;
+    void* retVal = virtAddress;
     task_switching  = false;
 
     for (uint32_t i=0; i<numberOfPages; i++)
@@ -391,19 +390,15 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
             textColor(ERROR);
             printf("\nNot enough PCI-memory available");
             textColor(TEXT);
+            task_switching = true;
             return(0);
         }
 
-        uint32_t pagenr = (uint32_t)virtAddress/PAGESIZE;
+        uint32_t pagenr = (uintptr_t)virtAddress/PAGESIZE;
 
         // Check the page table and setup the page
         ASSERT(kernelPageDirectory->tables[pagenr/1024]);
         kernelPageDirectory->tables[pagenr/1024]->pages[pagenr%1024] = physAddress | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
-
-        if (i==0)
-        {
-            retVal = virtAddress;
-        }
 
         // next page
         virtAddress += PAGESIZE;
@@ -437,19 +432,13 @@ uint32_t paging_getPhysAddr(void* virtAddress)
 
 void paging_analyzeBitTable()
 {
-    uint32_t counter1=0;
     uint32_t k=0, k_old=2;
-    uint32_t maximum = system.Memory_Size/PAGESIZE/32;
-    if (maximum > MAX_DWORDS)
-    {
-        maximum = MAX_DWORDS;
-    }
+    uint32_t maximum = min(system.Memory_Size/PAGESIZE/32, MAX_DWORDS);
 
     for (uint32_t index=0; index<maximum; ++index)
     {
         textColor(TEXT);
         printf("\n%Xh: ",index*32*PAGESIZE);
-        ++counter1;
 
         for (uint32_t offset=0; offset<32; ++offset)
         {

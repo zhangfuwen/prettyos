@@ -85,13 +85,15 @@ bool list_insert(list_t* list, element_t* next, void* data)
     return false;
 }
 
-void list_delete(list_t* list, void* data)
+element_t* list_delete(list_t* list, void* data)
 {
     ASSERT(list);
     element_t* cur = list->head;
+    element_t* retval = 0;
     while(cur != 0 && cur->data == data)
     {
         element_t* temp = cur;
+        if(!retval) retval = temp->next; // Save element behind the element we are going to delete
         cur = cur->next;
         if(list->head == list->tail) list->tail = 0;
         list->head = cur;
@@ -102,12 +104,14 @@ void list_delete(list_t* list, void* data)
         if(cur->next->data == data)
         {
             element_t* temp = cur->next;
+            if(!retval) retval = temp->next; // Save element behind the element we are going to delete
             if(cur->next == list->tail) list->tail = cur;
             cur->next = cur->next->next;
             free(temp);
         }
         cur = cur->next;
     }
+    return(retval);
 }
 
 void list_free(list_t* list)
