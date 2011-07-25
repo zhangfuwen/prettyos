@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.244 - Rev: 1091";
+const char* const version = "0.0.2.245 - Rev: 1092";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -229,7 +229,8 @@ void main(multiboot_t* mb_struct)
                     printf("Cannot start Shell.\n");
                     paging_destroyUserPageDirectory(pd);
                 }
-                scheduler_insertTask(create_task(pd, entry, 3, 0, 0));
+                else
+                    scheduler_insertTask(create_process(pd, entry, 3, 0, 0));
                 free(buf);
             }
         }

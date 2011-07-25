@@ -9,12 +9,12 @@
 
 typedef enum
 {
-    TASK, THREAD, VM86
+    PROCESS, THREAD, VM86
 } taskType_t;
 
 struct task
 {
-    taskType_t       type;           // Indicates whether it is a thread or a task
+    taskType_t       type;           // Indicates whether it is a thread or a process
     uint32_t         pid;            // Process ID
     uint32_t         esp;            // Stack pointer
     uint32_t         ss;             // Stack segment
@@ -44,18 +44,19 @@ extern volatile task_t* currentTask;
 
 
 void     tasking_install();
-task_t*  create_task (pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[]); // Creates task using kernels console
-task_t*  create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName); // Creates task with own console
-task_t*  create_thread (void(*entry)()); // Creates thread using currentTasks console
-task_t*  create_cthread(void(*entry)(), const char* consoleName); // Creates a thread with own console
-task_t*  create_vm86_task(pageDirectory_t* pd, void(*entry)());
+task_t*  create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(), uint8_t privilege, console_t* console, size_t argc, char* argv[]); // Creates a basic task
+task_t*  create_thread (void(*entry)());                                                                                                     // Creates thread using currentTasks console
+task_t*  create_cthread(void(*entry)(), const char* consoleName);                                                                            // Creates a thread with own console
+task_t*  create_process (pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[]);                          // Creates a process which uses currentTasks console
+task_t*  create_cprocess(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName); // Creates a process with an own console
+task_t*  create_vm86_task(pageDirectory_t* pd, void(*entry)());                                                                              // Creates a task running in VM86 mode
 void     switch_context();
 void     task_saveState(uint32_t esp);
 uint32_t task_switch(task_t* newTask);
 void     exit();
 void     task_kill(uint32_t pid);
 bool     waitForTask(task_t* blockingTask, uint32_t timeout); // Returns false in case of timeout. TODO: Can this function cause deadlocks?
-int32_t  getpid();
+uint32_t getpid();
 void*    task_grow_userheap(uint32_t increase);
 void     task_log(task_t* t);
 

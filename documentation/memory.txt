@@ -4,7 +4,8 @@ Start address | End address | Contains    | Annotations
 0x0           | 0x400       | IVT         | Interrupt Vector Table, needed in Real Mode and VM86
 0x400         | 0x500       | BDA         | Bios Data Area: http://www.lowlevel.eu/wiki/BIOS_Data_Area
 0x1000        | 0x3400      | DMA         | Buffer for ISA-DMA
-0x100000      | 0x200000    | Kernel      | Position of kernel executable
+0x100000      | ~~~~        | Kernel      | Position of kernel executable
+~~~~          | 0x1000000   | Kernelstack | Kernel Stack
 0x1000000     | 0x1400000   | Placement   | Contains with placement allocated memory
 
 
@@ -17,7 +18,7 @@ Start address | End address | Contains    | Annotations
 0x1000        | 0x3400      | DMA         | Buffer for ISA-DMA
               |             |             |
 0x100000      | ~~~~        | Kernel      | Position of kernel executable
-~~~~          | 0x1000000   | Stack       | Kernel Stack
+~~~~          | 0x1000000   | Kernelstack | Kernel Stack
 0x1000000     | 0x1400000   | Placement   | Contains with placement allocated memory
               |             |             |
 0x1410000     | 0xBF000000  | User        | User PD. Visible during syscalls
@@ -29,7 +30,8 @@ Start address | End address | Contains    | Annotations
 Virtual addresses - User:
 Start address | End address | Contains    | Annotations
 --------------|-------------|-------------|--------------------------------------------------------------
-0x1410000     | 0x1420000   | Stack       | User stack
+0x1400000     | ~~~~        | Userprog    | Position of the user programs executable
+~~~~          | 0x1420000   | Stack       | User stack
 0x1420000     | 0x1430000   | Data Buffer | Used to give parameters from kernel to new user program
 0x1430000     | 0xBF000000  | Heap        | User heap
 

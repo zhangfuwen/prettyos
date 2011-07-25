@@ -21,7 +21,7 @@ void fpu_setcw(uint16_t ctrlword); // fpu.c
 bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
 
 task_t kernelTask = { // Needed to find out when the kernel task is exited
-    .pid = 0, .esp = 0, .privilege = 0, .FPUptr = 0, .console = &kernelConsole, .attrib = 0x0F, .eventQueue = 0, .type = TASK,
+    .pid = 0, .esp = 0, .privilege = 0, .FPUptr = 0, .console = &kernelConsole, .attrib = 0x0F, .eventQueue = 0, .type = PROCESS,
     .blocker.type = 0, // The task is not blocked (scheduler.h/c)
     .kernelStack = 0, // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
     .threads = 0 // No threads associated with the task at the moment. List is created later if necessary
@@ -55,7 +55,7 @@ void tasking_install()
     task_switching = true;
 }
 
-int32_t getpid()
+uint32_t getpid()
 {
     return(currentTask->pid);
 }
@@ -73,9 +73,10 @@ bool waitForTask(task_t* blockingTask, uint32_t timeout)
 
 
 /// Functions to create tasks
-
-static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[])
+task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(), uint8_t privilege, console_t* console, size_t argc, char* argv[])
 {
+    task_t* newTask = malloc(sizeof(task_t), 0, "task_t");
+    newTask->type          = type;
     newTask->pid           = next_pid++;
     newTask->pageDirectory = directory;
     newTask->privilege     = privilege;
@@ -144,38 +145,40 @@ static void createThreadTaskBase(task_t* newTask, pageDirectory_t* directory, vo
     newTask->esp = (uint32_t)kernelStack;
     newTask->ss  = data_segment;
 
+    newTask->console = console;
+    list_append(console->tasks, newTask);
+
     list_append(tasks, newTask);
 
     #ifdef _TASKING_DIAGNOSIS_
     task_log(newTask);
     #endif
-}
-
-task_t* create_ctask(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)
-{
-    task_t* newTask = create_task(directory, entry, privilege, argc, argv);
-    list_delete(newTask->console->tasks, newTask);
-    newTask->console = malloc(sizeof(console_t), 0, "task-console");
-    console_init(newTask->console, consoleName);
-    list_append(newTask->console->tasks, newTask);
     return(newTask);
 }
 
-task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[])
+task_t* create_cprocess(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)
 {
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(TEXT);
-    printf("create task");
-    textColor(TEXT);
+    printf("create ctask");
     #endif
 
-    task_t* newTask = malloc(sizeof(task_t),0, "task-newtask");
-    newTask->type = TASK;
+    console_t* console = malloc(sizeof(console_t), 0, "task-console");
+    console_init(console, consoleName);
+    task_t* newTask = create_task(PROCESS, directory, entry, privilege, console, argc, argv);
 
-    createThreadTaskBase(newTask, directory, entry, privilege, argc, argv);
+    newTask->eventQueue = event_createQueue(); // For tasks event handling is enabled per default
 
-    newTask->console = currentTask->console; // task shares the console of the current task
-    list_append(newTask->console->tasks, newTask);
+    return newTask;
+}
+
+task_t* create_process(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[])
+{
+    #ifdef _TASKING_DIAGNOSIS_
+    printf("create task");
+    #endif
+
+    task_t* newTask = create_task(PROCESS, directory, entry, privilege, currentTask->console, argc, argv); // task shares the console of the current task
+
     newTask->eventQueue = event_createQueue(); // For tasks event handling is enabled per default
 
     return newTask;
@@ -183,27 +186,13 @@ task_t* create_task(pageDirectory_t* directory, void(*entry)(), uint8_t privileg
 
 task_t* create_cthread(void(*entry)(), const char* consoleName)
 {
-    task_t* newTask = create_thread(entry);
-    list_delete(newTask->console->tasks, newTask);
-    newTask->console = malloc(sizeof(console_t), 0, "thread-console");
-    console_init(newTask->console, consoleName);
-    list_append(newTask->console->tasks, newTask);
-    newTask->eventQueue = event_createQueue(); // Every thread with an own console gets an own eventQueue, because otherwise lots of input will never arrive.
-    return(newTask);
-}
-
-task_t* create_thread(void(*entry)())
-{
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(TEXT);
-    printf("create thread");
-    textColor(TEXT);
+    printf("create cthread");
     #endif
 
-    task_t* newTask = malloc(sizeof(task_t),0, "task-newthread");
-    newTask->type = THREAD;
-
-    createThreadTaskBase(newTask, currentTask->pageDirectory, entry, currentTask->privilege, 0, 0);
+    console_t* console = malloc(sizeof(console_t), 0, "thread-console");
+    console_init(console, consoleName);
+    task_t* newTask = create_task(THREAD, currentTask->pageDirectory, entry, currentTask->privilege, console, 0, 0);
 
     // Attach the thread to its parent
     newTask->parent = (task_t*)currentTask;
@@ -211,8 +200,24 @@ task_t* create_thread(void(*entry)())
         currentTask->threads = list_create();
     list_append(currentTask->threads, newTask);
 
-    newTask->console = currentTask->console; // task shares the console of the current task
-    list_append(newTask->console->tasks, newTask);
+    newTask->eventQueue = event_createQueue(); // Every thread with an own console gets an own eventQueue, because otherwise lots of input will never arrive.
+
+    return newTask;
+}
+
+task_t* create_thread(void(*entry)())
+{
+    #ifdef _TASKING_DIAGNOSIS_
+    printf("create thread");
+    #endif
+
+    task_t* newTask = create_task(THREAD, currentTask->pageDirectory, entry, currentTask->privilege, currentTask->console, 0, 0); // task shares the console of the current task
+
+    // Attach the thread to its parent
+    newTask->parent = (task_t*)currentTask;
+    if(currentTask->threads == 0)
+        currentTask->threads = list_create();
+    list_append(currentTask->threads, newTask);
 
     return newTask;
 }
@@ -220,18 +225,10 @@ task_t* create_thread(void(*entry)())
 task_t* create_vm86_task(pageDirectory_t* pd, void(*entry)())
 {
     #ifdef _TASKING_DIAGNOSIS_
-    textColor(TEXT);
-    printf("create task");
-    textColor(TEXT);
+    printf("create vm86 task");
     #endif
 
-    task_t* newTask = malloc(sizeof(task_t),0, "vm86-task");
-    newTask->type = VM86;
-
-    createThreadTaskBase(newTask, pd, entry, 3, 0, 0);
-
-    newTask->console = reachableConsoles[KERNELCONSOLE_ID]; // Task uses the same console as the kernel
-    list_append(newTask->console->tasks, newTask);
+    task_t* newTask = create_task(VM86, pd, entry, 3, currentTask->console, 0, 0); // task shares the console of the current task
 
     return newTask;
 }
