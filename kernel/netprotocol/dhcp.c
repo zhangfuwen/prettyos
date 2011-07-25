@@ -9,18 +9,18 @@
 #include "video/console.h"
 
 
-static uint32_t xid = 0x0000E0FF0A; // AFFE.... Transaction Code for Identification
+static uint32_t xid = 0x00E0FF0A; // AFFE.. Transaction Code for Identification
 
 // Sets up basic data of a dhcp packet.
 static void DHCP_preparePacket(dhcp_t* packet, network_adapter_t* adapter)
 {
-    packet->op = 1;
-    packet->htype = 1; // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    packet->hlen = 6;
-    packet->hops = 0;
-    packet->xid  = xid; // AFFExx
-    packet->secs = htons(0);
-    packet->flags = BROADCAST; // TEST: broadcast
+    packet->op         = 1;
+    packet->htype      = 1;         // type: for ethernet and 802.11 wireless clients, the hardware type is always 01
+    packet->hlen       = 6;
+    packet->hops       = 0;
+    packet->xid        = xid;       // AFFExx
+    packet->secs       = htons(0);  // must use the same value in Discover and Request
+    packet->flags      = BROADCAST;
     packet->ciaddr.iIP = 0;
     packet->yiaddr.iIP = 0;
     packet->siaddr.iIP = 0;
@@ -41,7 +41,7 @@ static void DHCP_preparePacket(dhcp_t* packet, network_adapter_t* adapter)
         packet->options[i] = 255; // fill with end token
 }
 
-extern Packet_t lastPacket; // network.c
+extern Packet_t lastPacket; // network.c    // TODO: should be eliminated on a long run
 
 void DHCP_Discover(network_adapter_t* adapter)
 {
@@ -54,7 +54,7 @@ void DHCP_Discover(network_adapter_t* adapter)
     dhcp_t packet;
     DHCP_preparePacket(&packet, adapter);
 
-    packet.options[4]  =  53;  // MESSAGE TYPE
+    packet.options[4]  =  53;  // MESSAGE TYPE  // must option
     packet.options[5]  =   1;  // Length
     packet.options[6]  =   1;  // DISCOVER
 
@@ -104,41 +104,47 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
     dhcp_t packet;
     DHCP_preparePacket(&packet, adapter);
 
-    packet.options[4]  = 53;  // MESSAGE TYPE
+    packet.options[4]  = 53;  // MESSAGE TYPE  // must option
     packet.options[5]  =  1;  // Length
     packet.options[6]  =  3;  // REQUEST
 
     packet.options[7]  = 55;  // Parameter request list
-    packet.options[8]  =  5;  // Length
+    packet.options[8]  =  4;  // Length
     packet.options[9]  =  1;  // SUBNET MASK
     packet.options[10] =  3;  // ROUTERS
     packet.options[11] =  6;  // DOMAIN NAME SERVER
     packet.options[12] = 15;  // DOMAIN NAME
+
     packet.options[13] = 54;  // Server IP
+    packet.options[14] =  4;  // Length
+    packet.options[15] =  adapter->Gateway_IP.IP[0]; /// TEST /////////////////////////////////////////////// TEST ///
+    packet.options[16] =  adapter->Gateway_IP.IP[1];
+    packet.options[17] =  adapter->Gateway_IP.IP[2];
+    packet.options[18] =  adapter->Gateway_IP.IP[3];
 
-    packet.options[14] = 61;  // Client Identifier - hardware type and client hardware address
-    packet.options[15] =  7;  // Length
-    packet.options[16] =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
+    packet.options[19] = 61;  // Client Identifier - hardware type and client hardware address
+    packet.options[20] =  7;  // Length
+    packet.options[21] =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
     for(uint8_t i = 0; i < 6; i++)
-        packet.options[17+i] = adapter->MAC[i];
+        packet.options[22+i] = adapter->MAC[i];
 
-    packet.options[23] =  50;  // Requested IP
-    packet.options[24] =   4;  // Length
-    packet.options[25] = requestedIP.IP[0];
-    packet.options[26] = requestedIP.IP[1];
-    packet.options[27] = requestedIP.IP[2];
-    packet.options[28] = requestedIP.IP[3];
+    packet.options[28] =  50;  // Requested IP
+    packet.options[29] =   4;  // Length
+    packet.options[30] = requestedIP.IP[0];
+    packet.options[31] = requestedIP.IP[1];
+    packet.options[32] = requestedIP.IP[2];
+    packet.options[33] = requestedIP.IP[3];
 
-    packet.options[29] =  12;  // Hostname
-    packet.options[30] =   8;  // Length
-    packet.options[31] =  80;  // P
-    packet.options[32] = 114;  // r
-    packet.options[33] = 101;  // e
-    packet.options[34] = 116;  // t
-    packet.options[35] = 116;  // t
-    packet.options[36] = 121;  // y
-    packet.options[37] =  79;  // O
-    packet.options[38] =  83;  // S
+    packet.options[34] =  12;  // Hostname
+    packet.options[35] =   8;  // Length
+    packet.options[36] =  80;  // P
+    packet.options[37] = 114;  // r
+    packet.options[38] = 101;  // e
+    packet.options[39] = 116;  // t
+    packet.options[40] = 116;  // t
+    packet.options[41] = 121;  // y
+    packet.options[42] =  79;  // O
+    packet.options[43] =  83;  // S
 
     IP_t srcIP  = {.iIP = 0x00000000};
     IP_t destIP = {.iIP = 0xFFFFFFFF};

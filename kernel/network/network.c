@@ -133,9 +133,8 @@ bool network_installDevice(pciDev_t* device)
 
     // Try to get an IP by DHCP
     adapter->DHCP_State  = START;
-  #ifndef QEMU_HACK
     DHCP_Discover(adapter);
-  #endif
+
     textColor(TEXT);
     printf("\nMAC: ");
     textColor(IMPORTANT);
