@@ -23,21 +23,22 @@ list_t* list_create()
 bool list_append(list_t* list, void* data)
 {
     ASSERT(list);
-    element_t* ap = (element_t*)malloc(sizeof(element_t), 0,"listElement");
-    if (ap)
+    element_t* newElement = (element_t*)malloc(sizeof(element_t),
+0,"listElement");
+    if (newElement)
     {
-        ap->data = data;
-        ap->next = 0;
+        newElement->data = data;
+        newElement->next = 0;
 
         if (list->head == 0) // there exist no list element
         {
-            list->head = ap;
+            list->head = list->tail = newElement;
         }
         else // there exist at least one list element
         {
-            list->tail->next = ap;
+            list->tail->next = newElement;
+            list->tail = newElement;
         }
-        list->tail = ap;
         return(true);
     }
     return(false);

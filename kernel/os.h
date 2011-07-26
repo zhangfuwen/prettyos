@@ -9,7 +9,7 @@
 /// #define _PAGING_DIAGNOSIS_     // Diagnosis-Output about PD, PT etc.
 /// #define _DIAGNOSIS_            // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _MALLOC_FREE_          // shows information about malloc/free and heap expansion
-#define _MEMLEAK_FIND_         // Provides a counter of all (successful) malloc and free calls showing memory leaks
+/// #define _MEMLEAK_FIND_         // Provides a counter of all (successful) malloc and free calls showing memory leaks
 /// #define _USB_DIAGNOSIS_        // only as transition state during implementation of USB 2.0 transfers
 /// #define _FAT_DIAGNOSIS_        // only as transition state during implementation of FAT 12/16/32
 /// #define _DEVMGR_DIAGNOSIS_     // e.g. sectorRead, sectorWrite
