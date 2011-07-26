@@ -360,6 +360,9 @@
     <ClInclude Include="..\kernel\video\videoutils.h">
       <Filter>Kernel\include\video</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\ring.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -601,6 +604,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\video\videomanager.c">
       <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ring.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

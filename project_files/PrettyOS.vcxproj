@@ -129,6 +129,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\pciVendProdList.h" />
     <ClInclude Include="..\kernel\pe.h" />
     <ClInclude Include="..\kernel\power_management.h" />
+    <ClInclude Include="..\kernel\ring.h" />
     <ClInclude Include="..\kernel\scheduler.h" />
     <ClInclude Include="..\kernel\serial.h" />
     <ClInclude Include="..\kernel\storage\devicemanager.h" />
@@ -213,6 +214,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\pci.c" />
     <ClCompile Include="..\kernel\pe.c" />
     <ClCompile Include="..\kernel\power_management.c" />
+    <ClCompile Include="..\kernel\ring.c" />
     <ClCompile Include="..\kernel\scheduler.c" />
     <ClCompile Include="..\kernel\serial.c" />
     <ClCompile Include="..\kernel\storage\devicemanager.c" />
