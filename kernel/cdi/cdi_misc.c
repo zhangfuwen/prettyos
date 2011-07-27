@@ -8,7 +8,10 @@
 #include "irq.h"
 
 
-void cdi_register_irq(uint8_t irq, void (*handler)(struct cdi_device*), struct cdi_device* device);
+void cdi_register_irq(uint8_t irq, void (*handler)(struct cdi_device*), struct cdi_device* device)
+{
+    irq_installCDIHandler(irq, handler, device);
+}
 
 int cdi_reset_wait_irq(uint8_t irq)
 {

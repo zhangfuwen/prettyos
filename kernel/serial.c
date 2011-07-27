@@ -33,7 +33,7 @@ void serial_init()
         textColor(HEADLINE);
         printf("\nCOM%d: ", i+1);
         textColor(TEXT);
-        printf("IO-port: %xh. Initialized.", IOports[i]);
+        printf("IO-port: %xh.", IOports[i]);
     }
     printf("\n");
 }

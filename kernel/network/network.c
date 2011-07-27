@@ -72,7 +72,7 @@ bool network_installDevice(pciDev_t* device)
     arp_initTable(&adapter->arpTable);
 
     // Set IRQ handler
-    irq_installHandler(device->irq, driver->interruptHandler);
+    irq_installPCIHandler(device->irq, driver->interruptHandler, device);
 
     // Detect MMIO and IO space
     uint16_t pciCommandRegister = pci_config_read(device->bus, device->device, device->func, PCI_COMMAND);

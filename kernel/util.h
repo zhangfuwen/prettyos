@@ -20,6 +20,9 @@
 
 #define NAN (__builtin_nanf (""))
 
+#define offsetof(st, m) ((size_t) ( (char *)&((st *)(0))->m - (char *)0 ))
+#define NULL 0
+
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b))
 void panic_assert(const char* file, uint32_t line, const char* desc);
 

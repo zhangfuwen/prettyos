@@ -10,63 +10,62 @@
 #include "kheap.h"
 #include "video/console.h"
 
-
-static RTL8168_networkAdapter_t* RTL; // HACK
-
 static const uint16_t numOfDesc = 32; // Can be up to 1024
 
 
-void rtl8168_handler(registers_t* data)
+void rtl8168_handler(registers_t* data, pciDev_t* device)
 {
+    network_adapter_t* adapter = device->data;
+
     #ifdef _NETWORK_DIAGNOSIS_
     printf("IRQ: RTL8168");
     #endif
 
-    volatile uint32_t intStatus = *(uint32_t*)(RTL->device->MMIO_base + RTL8168_INTRSTATUS);
+    volatile uint32_t intStatus = *(uint32_t*)(adapter->MMIO_base + RTL8168_INTRSTATUS);
     #ifdef _NETWORK_DIAGNOSIS_
     printf("\t\t Status: %Xh", intStatus);
     #endif
-    *(uint32_t*)(RTL->device->MMIO_base + RTL8168_INTRSTATUS) = intStatus;
+    *(uint32_t*)(adapter->MMIO_base + RTL8168_INTRSTATUS) = intStatus;
 }
 
-void setupDescriptors()
+void setupDescriptors(RTL8168_networkAdapter_t* rAdapter)
 {
-    RTL->Rx_Descriptors = malloc(numOfDesc*sizeof(RTL8168_Desc), 256, "Rx Desc");
-    RTL->Tx_Descriptors = malloc(numOfDesc*sizeof(RTL8168_Desc), 256, "Tx Desc");
+    rAdapter->Rx_Descriptors = malloc(numOfDesc*sizeof(RTL8168_Desc), 256, "Rx Desc");
+    rAdapter->Tx_Descriptors = malloc(numOfDesc*sizeof(RTL8168_Desc), 256, "Tx Desc");
     // rx_buffer_len is the size (in bytes) that is reserved for incoming packets
     unsigned int OWN = 0x80000000, EOR = 0x40000000; // bit offsets
     for(uint16_t i = 0; i < numOfDesc; i++)
     {
         if(i == (numOfDesc - 1)) // Last descriptor? if so, set the EOR bit
-            RTL->Rx_Descriptors[i].command = (OWN | EOR | (2048 & 0x3FFF));
+            rAdapter->Rx_Descriptors[i].command = (OWN | EOR | (2048 & 0x3FFF));
         else
-            RTL->Rx_Descriptors[i].command = (OWN | (2048 & 0x3FFF));
-        RTL->Rx_Descriptors[i].vlan = 0;
-        RTL->Rx_Descriptors[i].low_buf = paging_getPhysAddr(RTL->RxBuffer); // This is where the packet data will go. TODO: We will need more buffers...
-        RTL->Rx_Descriptors[i].high_buf = 0;
+            rAdapter->Rx_Descriptors[i].command = (OWN | (2048 & 0x3FFF));
+        rAdapter->Rx_Descriptors[i].vlan = 0;
+        rAdapter->Rx_Descriptors[i].low_buf = paging_getPhysAddr(rAdapter->RxBuffer); // This is where the packet data will go. TODO: We will need more buffers...
+        rAdapter->Rx_Descriptors[i].high_buf = 0;
     }
     printf("\nDescriptors are set up.");
 }
 
-void install_RTL8168(network_adapter_t* device)
+void install_RTL8168(network_adapter_t* adapter)
 {
-    RTL = malloc(sizeof(RTL8168_networkAdapter_t), 0, "RTL8168");
-    device->data = RTL;
-    RTL->device = device;
+    RTL8168_networkAdapter_t* rAdapter = malloc(sizeof(RTL8168_networkAdapter_t), 0, "RTL8168");
+    adapter->data = rAdapter;
+    rAdapter->device = adapter;
 
     // Acquire memory
-    printf("\nMMIO_base (phys): %Xh", device->MMIO_base);
-    device->MMIO_base = paging_acquirePciMemory((uintptr_t)device->MMIO_base, 1);
-    printf("\t\tMMIO_base (virt): %Xh", device->MMIO_base);
-    RTL->RxBuffer = malloc(2048, 8, "RTL8168 RxBuffer");
+    printf("\nMMIO_base (phys): %Xh", adapter->MMIO_base);
+    adapter->MMIO_base = paging_acquirePciMemory((uintptr_t)adapter->MMIO_base, 1);
+    printf("\t\tMMIO_base (virt): %Xh", adapter->MMIO_base);
+    rAdapter->RxBuffer = malloc(2048, 8, "RTL8168 RxBuffer");
 
     // Reset card
-    *((uint8_t*)(device->MMIO_base + RTL8168_CHIPCMD)) = RTL8168_CMD_RESET;
+    *((uint8_t*)(adapter->MMIO_base + RTL8168_CHIPCMD)) = RTL8168_CMD_RESET;
 
     for(uint8_t k = 0; ; k++) // wait for the reset of the "reset flag"
     {
         sleepMilliSeconds(10);
-        if (!(*((volatile uint8_t*)(device->MMIO_base + RTL8168_CHIPCMD)) & RTL8168_CMD_RESET))
+        if (!(*((volatile uint8_t*)(adapter->MMIO_base + RTL8168_CHIPCMD)) & RTL8168_CMD_RESET))
         {
             printf("\nwaiting successful (%d).\n", k);
             break;
@@ -81,24 +80,24 @@ void install_RTL8168(network_adapter_t* device)
     // Get MAC
     for (uint8_t i = 0; i < 6; i++)
     {
-        device->MAC[i] =  *(uint8_t*)(device->MMIO_base + RTL8168_IDR0 + i);
+        adapter->MAC[i] =  *(uint8_t*)(adapter->MMIO_base + RTL8168_IDR0 + i);
     }
 
-    setupDescriptors();
+    setupDescriptors(rAdapter);
 
-    *(uint8_t*)(device->MMIO_base + RTL8168_CFG9346) = 0xC0; // Unlock config registers
-    *(uint32_t*)(device->MMIO_base + RTL8168_RXCONFIG) = 0x0000E70F; // RxConfig = RXFTH: unlimited, MXDMA: unlimited, AAP: set (promisc. mode set)
-    *(uint32_t*)(device->MMIO_base + RTL8168_TXCONFIG) = 0x03000700; // TxConfig = IFG: normal, MXDMA: unlimited
-    *(uint16_t*)(device->MMIO_base + 0xDA) = 0x1FFF; // Max rx packet size
-    *(uint8_t*)(device->MMIO_base + 0xEC) = 0x3B; // max tx packet size
+    *(uint8_t*)(adapter->MMIO_base + RTL8168_CFG9346) = 0xC0; // Unlock config registers
+    *(uint32_t*)(adapter->MMIO_base + RTL8168_RXCONFIG) = 0x0000E70F; // RxConfig = RXFTH: unlimited, MXDMA: unlimited, AAP: set (promisc. mode set)
+    *(uint32_t*)(adapter->MMIO_base + RTL8168_TXCONFIG) = 0x03000700; // TxConfig = IFG: normal, MXDMA: unlimited
+    *(uint16_t*)(adapter->MMIO_base + 0xDA) = 0x1FFF; // Max rx packet size
+    *(uint8_t*)(adapter->MMIO_base + 0xEC) = 0x3B; // max tx packet size
 
-    *(uint32_t*)(device->MMIO_base + RTL8168_TXADDR0) = paging_getPhysAddr(RTL->Tx_Descriptors); // Tell the NIC where the first Tx descriptor is
-    *(uint32_t*)(device->MMIO_base + RTL8168_RXADDR0) = paging_getPhysAddr(RTL->Rx_Descriptors); // Tell the NIC where the first Rx descriptor is
+    *(uint32_t*)(adapter->MMIO_base + RTL8168_TXADDR0) = paging_getPhysAddr(rAdapter->Tx_Descriptors); // Tell the NIC where the first Tx descriptor is
+    *(uint32_t*)(adapter->MMIO_base + RTL8168_RXADDR0) = paging_getPhysAddr(rAdapter->Rx_Descriptors); // Tell the NIC where the first Rx descriptor is
 
-    *(uint16_t*)(device->MMIO_base + RTL8168_INTRMASK) = 0xC3FF; // Enable all interrupts
+    *(uint16_t*)(adapter->MMIO_base + RTL8168_INTRMASK) = 0xC3FF; // Enable all interrupts
 
-    *(uint8_t*)(device->MMIO_base + RTL8168_CHIPCMD) = 0x0C; // Enable Rx/Tx in the Command register
-    *(uint8_t*)(device->MMIO_base + RTL8168_CFG9346) = 0x00; // Lock config registers
+    *(uint8_t*)(adapter->MMIO_base + RTL8168_CHIPCMD) = 0x0C; // Enable Rx/Tx in the Command register
+    *(uint8_t*)(adapter->MMIO_base + RTL8168_CFG9346) = 0x00; // Lock config registers
 
     printf("\nRTL8168 configured");
 }

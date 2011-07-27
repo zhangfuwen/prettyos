@@ -25,72 +25,71 @@
 #define BDP    0x16
 
 
-static PCNet_card* device;
-
-
-static void writeBCR(PCNet_card* dev, uint16_t value)
+static void writeBCR(network_adapter_t* adapter, uint16_t value)
 {
-    outportw(dev->device->IO_base+RAP, BCR20); // Enable BCR20 register
-    outportw(dev->device->IO_base+BDP, value); // Write value to BCR20 register
+    outportw(adapter->IO_base+RAP, BCR20); // Enable BCR20 register
+    outportw(adapter->IO_base+BDP, value); // Write value to BCR20 register
 }
-static void writeCSR(PCNet_card* dev, uint8_t csr, uint16_t value)
+static void writeCSR(network_adapter_t* adapter, uint8_t csr, uint16_t value)
 {
-    outportw(dev->device->IO_base+RAP, csr);   // Enable CSR register
-    outportw(dev->device->IO_base+RDP, value); // Write value to CSR register
+    outportw(adapter->IO_base+RAP, csr);   // Enable CSR register
+    outportw(adapter->IO_base+RDP, value); // Write value to CSR register
 }
-static uint16_t readCSR(PCNet_card* dev, uint8_t csr)
+static uint16_t readCSR(network_adapter_t* adapter, uint8_t csr)
 {
-    outportw(dev->device->IO_base+RAP, csr);   // Enable CSR register
-    return inportw(dev->device->IO_base+RDP);  // Read value from CSR register
+    outportw(adapter->IO_base+RAP, csr);   // Enable CSR register
+    return inportw(adapter->IO_base+RDP);  // Read value from CSR register
 }
 
-void install_AMDPCnet(network_adapter_t* dev)
+void install_AMDPCnet(network_adapter_t* adapter)
 {
-    device = malloc(sizeof(PCNet_card), 16, "PCNet_card");
-    device->initialized = false;
-    device->device = dev;
-    dev->data = device;
+    PCNet_card* pAdapter = malloc(sizeof(PCNet_card), 16, "PCNet_card");
+    pAdapter->initialized = false;
+    pAdapter->device = adapter;
+    adapter->data = pAdapter;
 
-    printf("\nIO: %xh", dev->IO_base);
+    #ifdef _NETWORK_DIAGNOSIS_
+    printf("\nIO: %xh", adapter->IO_base);
+    #endif
 
     // Get MAC
-    uint16_t temp = inportw(dev->IO_base + APROM0);
-    dev->MAC[0] = temp;
-    dev->MAC[1] = temp>>8;
-    temp = inportw(dev->IO_base + APROM2);
-    dev->MAC[2] = temp;
-    dev->MAC[3] = temp>>8;
-    temp = inportw(dev->IO_base + APROM4);
-    dev->MAC[4] = temp;
-    dev->MAC[5] = temp>>8;
+    uint16_t temp = inportw(adapter->IO_base + APROM0);
+    adapter->MAC[0] = temp;
+    adapter->MAC[1] = temp>>8;
+    temp = inportw(adapter->IO_base + APROM2);
+    adapter->MAC[2] = temp;
+    adapter->MAC[3] = temp>>8;
+    temp = inportw(adapter->IO_base + APROM4);
+    adapter->MAC[4] = temp;
+    adapter->MAC[5] = temp>>8;
 
     // Reset
-    inportw(dev->IO_base+RESET);
-    outportw(dev->IO_base+RESET, 0); // Needed for NE2100LANCE adapters
+    inportw(adapter->IO_base+RESET);
+    outportw(adapter->IO_base+RESET, 0); // Needed for NE2100LANCE adapters
     sleepMilliSeconds(10);
-    writeBCR(device, 0x0102); // Enable 32-bit mode
+    writeBCR(adapter, 0x0102); // Enable 32-bit mode
 
     // Stop
-    writeCSR(device, 0, 0x04); // STOP-Reset
+    writeCSR(adapter, 0, 0x04); // STOP-Reset
 
     // Setup descriptors, Init send and receive buffers
-    device->currentRecDesc = 0;
-    device->currentTransDesc = 0;
-    device->receiveDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: RecDesc");
-    device->transmitDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: TransDesc");
+    pAdapter->currentRecDesc = 0;
+    pAdapter->currentTransDesc = 0;
+    pAdapter->receiveDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: RecDesc");
+    pAdapter->transmitDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: TransDesc");
     for(uint8_t i = 0; i < 8; i++)
     {
         void* buffer = malloc(2048, 16, "PCnet receive buffer");
-        device->receiveBuf[i] = buffer;
-        device->receiveDesc[i].address = paging_getPhysAddr(buffer);
-        device->receiveDesc[i].flags = 0x80000000 | 0x7FF | 0x0000F000; // Descriptor OWN | Buffer length | ?
-        device->receiveDesc[i].flags2 = 0;
+        pAdapter->receiveBuf[i] = buffer;
+        pAdapter->receiveDesc[i].address = paging_getPhysAddr(buffer);
+        pAdapter->receiveDesc[i].flags = 0x80000000 | 0x7FF | 0x0000F000; // Descriptor OWN | Buffer length | ?
+        pAdapter->receiveDesc[i].flags2 = 0;
 
         buffer = malloc(2048, 16, "PCnet transmit buffer");
-        device->transmitBuf[i] = buffer;
-        device->transmitDesc[i].address = paging_getPhysAddr(buffer);
-        device->transmitDesc[i].flags = 0;
-        device->transmitDesc[i].flags2 = 0;
+        pAdapter->transmitBuf[i] = buffer;
+        pAdapter->transmitDesc[i].address = paging_getPhysAddr(buffer);
+        pAdapter->transmitDesc[i].flags = 0;
+        pAdapter->transmitDesc[i].flags2 = 0;
     }
 
     // Fill and register initialization block
@@ -99,43 +98,47 @@ void install_AMDPCnet(network_adapter_t* dev)
     initBlock->mode = 0x8000; // Promiscuous mode
     initBlock->receive_length = 3;
     initBlock->transfer_length = 3;
-    initBlock->physical_address = *(uint64_t*)dev->MAC;
-    initBlock->receive_descriptor = paging_getPhysAddr(device->receiveDesc);
-    initBlock->transmit_descriptor = paging_getPhysAddr(device->transmitDesc);
+    initBlock->physical_address = *(uint64_t*)adapter->MAC;
+    initBlock->receive_descriptor = paging_getPhysAddr(pAdapter->receiveDesc);
+    initBlock->transmit_descriptor = paging_getPhysAddr(pAdapter->transmitDesc);
     uintptr_t phys_address = (uintptr_t)paging_getPhysAddr(initBlock);
-    writeCSR(device, 1, phys_address); // Lower bits of initBlock address
-    writeCSR(device, 2, phys_address>>16); // Higher bits of initBlock address
+    writeCSR(adapter, 1, phys_address); // Lower bits of initBlock address
+    writeCSR(adapter, 2, phys_address>>16); // Higher bits of initBlock address
 
-    irq_resetCounter(device->device->PCIdev->irq);
+    irq_resetCounter(adapter->PCIdev->irq);
     // Init card
-    writeCSR(device, 0, 0x0041); // Initialize card, activate interrupts
-    if(!waitForIRQ(device->device->PCIdev->irq, 1000))
+    writeCSR(adapter, 0, 0x0041); // Initialize card, activate interrupts
+    if(!waitForIRQ(adapter->PCIdev->irq, 1000))
+    {
+        textColor(ERROR);
         printf("\nIRQ did not occur.\n");
-    writeCSR(device, 4, 0x0C00 | readCSR(device, 4));
+        textColor(TEXT);
+    }
+    writeCSR(adapter, 4, 0x0C00 | readCSR(adapter, 4));
 
     // Activate card
-    writeCSR(device, 0, 0x0042);
+    writeCSR(adapter, 0, 0x0042);
 }
 
-static void PCNet_receive()
+static void PCNet_receive(PCNet_card* pAdapter)
 {
-    while ((device->receiveDesc[device->currentRecDesc].flags & 0x80000000) == 0)
+    while ((pAdapter->receiveDesc[pAdapter->currentRecDesc].flags & 0x80000000) == 0)
     {
-        if (!(device->receiveDesc[device->currentRecDesc].flags & 0x40000000) &&
-            (device->receiveDesc[device->currentRecDesc].flags & 0x03000000) == 0x03000000)
+        if (!(pAdapter->receiveDesc[pAdapter->currentRecDesc].flags & 0x40000000) &&
+            (pAdapter->receiveDesc[pAdapter->currentRecDesc].flags & 0x03000000) == 0x03000000)
         {
-            size_t size = device->receiveDesc[device->currentRecDesc].flags2 & 0xFFFF;
+            size_t size = pAdapter->receiveDesc[pAdapter->currentRecDesc].flags2 & 0xFFFF;
             if (size > 64)
                 size -= 4; // Do not copy CRC32
 
-            network_receivedPacket(device->device, device->receiveBuf[device->currentRecDesc], size);
+            network_receivedPacket(pAdapter->device, pAdapter->receiveBuf[pAdapter->currentRecDesc], size);
         }
-        device->receiveDesc[device->currentRecDesc].flags = 0x8000F7FF; // Set OWN-Bit and default values
-        device->receiveDesc[device->currentRecDesc].flags2 = 0;
+        pAdapter->receiveDesc[pAdapter->currentRecDesc].flags = 0x8000F7FF; // Set OWN-Bit and default values
+        pAdapter->receiveDesc[pAdapter->currentRecDesc].flags2 = 0;
 
-        device->currentRecDesc++; // Go to next descriptor
-        if (device->currentRecDesc == 8)
-            device->currentRecDesc = 0;
+        pAdapter->currentRecDesc++; // Go to next descriptor
+        if (pAdapter->currentRecDesc == 8)
+            pAdapter->currentRecDesc = 0;
     }
 }
 
@@ -144,26 +147,36 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     #ifdef _NETWORK_DIAGNOSIS_
     printf("\nPCNet: Send packet");
     #endif
-    PCNet_card* pcnet = adapter->data;
+    PCNet_card* pAdapter = adapter->data;
+    if(!pAdapter->initialized)
+    {
+        textColor(ERROR);
+        printf("\nPCNet not initialized. Packet can not be sent.");
+        textColor(TEXT);
+        return(false);
+    }
 
     // Prepare buffer
-    memcpy(pcnet->transmitBuf[pcnet->currentTransDesc], data, length);
+    memcpy(pAdapter->transmitBuf[pAdapter->currentTransDesc], data, length);
 
     // Prepare descriptor
-    pcnet->transmitDesc[pcnet->currentTransDesc].flags2 = 0;
-    pcnet->transmitDesc[pcnet->currentTransDesc].flags = 0x8300F000 | ((-length) & 0x7FF);
-    writeCSR(pcnet, 0, 0x48);
+    pAdapter->transmitDesc[pAdapter->currentTransDesc].flags2 = 0;
+    pAdapter->transmitDesc[pAdapter->currentTransDesc].flags = 0x8300F000 | ((-length) & 0x7FF);
+    writeCSR(adapter, 0, 0x48);
 
-    pcnet->currentTransDesc++;
-    if (pcnet->currentTransDesc == 8)
-        pcnet->currentTransDesc = 0;
+    pAdapter->currentTransDesc++;
+    if (pAdapter->currentTransDesc == 8)
+        pAdapter->currentTransDesc = 0;
 
     return(true);
 }
 
-void PCNet_handler(registers_t* data)
+void PCNet_handler(registers_t* data, pciDev_t* device)
 {
-    uint16_t csr0 = readCSR(device, 0);
+    network_adapter_t* adapter = device->data;
+    PCNet_card* pAdapter = adapter->data;
+
+    uint16_t csr0 = readCSR(adapter, 0);
 
     #ifdef _NETWORK_DIAGNOSIS_
     textColor(0x03);
@@ -174,9 +187,9 @@ void PCNet_handler(registers_t* data)
     textColor(0x03);
     #endif
 
-    if(device->initialized == false)
+    if(pAdapter->initialized == false)
     {
-        device->initialized = true;
+        pAdapter->initialized = true;
         #ifdef _NETWORK_DIAGNOSIS_
         printf("\nInitialized");
         #endif
@@ -185,6 +198,7 @@ void PCNet_handler(registers_t* data)
     {
         if(csr0 & 0x8000) // Error
         {
+            textColor(ERROR);
             if(csr0 & 0x2000)
                 printf("\nCollision error");
             else if(csr0 & 0x1000)
@@ -192,18 +206,19 @@ void PCNet_handler(registers_t* data)
             else if(csr0 & 0x800)
                 printf("\nMemory error");
             else
-                printf("\nUndefined error.");
+                printf("\nUndefined error: %x", csr0);
+            textColor(TEXT);
         }
         #ifdef _NETWORK_DIAGNOSIS_
-        else if(csr0 & 0x00000200)
+        else if(csr0 & 0x0200)
             printf("\nTransmit descriptor finished");
         #endif
-        else if(csr0 & 0x00000400)
+        else if(csr0 & 0x0400)
         {
-            PCNet_receive();
+            PCNet_receive(pAdapter);
         }
     }
-    writeCSR(device, 0, csr0);
+    writeCSR(adapter, 0, csr0);
 }
 
 

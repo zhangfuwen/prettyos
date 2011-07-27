@@ -5,15 +5,78 @@
 
 #include "cdi/mem.h"
 #include "util.h"
+#include "paging.h"
+#include "kheap.h"
 
 
-struct cdi_mem_area* cdi_mem_alloc(size_t size, cdi_mem_flags_t flags);
+struct cdi_mem_area* cdi_mem_alloc(size_t size, cdi_mem_flags_t flags) // TODO: Improve, make it conform with specification
+{
+    size_t alignment = 2 << ((flags & CDI_MEM_ALIGN_MASK) - 1);
 
-struct cdi_mem_area* cdi_mem_map(uintptr_t paddr, size_t size);
+    // Wir vergeben nur ganze Pages
+    size = (size + 0xFFF) & (~0xFFF);
 
-void cdi_mem_free(struct cdi_mem_area* p);
+    // Wenn die physische Adresse nicht intressiert, koennen wir das Alignment
+    // ignorieren.
+    if ((flags & CDI_MEM_VIRT_ONLY)) {
+        alignment = 0;
+    }
 
-struct cdi_mem_area* cdi_mem_require_flags(struct cdi_mem_area* p, cdi_mem_flags_t flags);
+    // Speicher holen
+    void* vaddr = malloc(size, alignment, "cdi_mem: vmem");
+    if(vaddr == 0)
+        return(0);
+    uintptr_t paddr = paging_getPhysAddr(vaddr);
+
+    // cdi_mem_area anlegen und befuellen
+    struct cdi_mem_sg_item* sg_item = malloc(sizeof(*sg_item), 0, "cdi_mem: sg_item");
+    sg_item->size = size;
+    sg_item->start = paddr;
+
+    struct cdi_mem_area* area = malloc(sizeof(*area), 0, "cdi_mem: area");
+    area->size = size;
+    area->vaddr = vaddr;
+    area->paddr.num = 1;
+    area->paddr.items = sg_item;
+
+    return area;
+}
+
+struct cdi_mem_area* cdi_mem_map(uintptr_t paddr, size_t size)
+{
+    void* vaddr = paging_acquirePciMemory(alignDown(paddr, PAGESIZE), alignUp(size, PAGESIZE)/PAGESIZE);
+
+    if(vaddr == 0)
+        return(0);
+
+    struct cdi_mem_sg_item* sg_item = malloc(sizeof(*sg_item), 0, "cdi_mem: sg_item");
+    sg_item->size = size;
+    sg_item->start = paddr;
+
+
+    struct cdi_mem_area* area = malloc(sizeof(*area), 0, "cdi_mem: area");
+    area->size = size;
+    area->paddr.items = sg_item;
+    area->paddr.num = 1;
+    area->vaddr = vaddr;
+
+    return(area);
+}
+
+void cdi_mem_free(struct cdi_mem_area* p)
+{
+    // TODO
+}
+
+struct cdi_mem_area* cdi_mem_require_flags(struct cdi_mem_area* p, cdi_mem_flags_t flags)
+{
+    struct cdi_mem_area* new = cdi_mem_alloc(p->size, flags);
+    if(new == 0)
+        return(0);
+
+    memcpy(new->vaddr, p->vaddr, new->size);
+    return(new);
+}
 
 int cdi_mem_copy(struct cdi_mem_area* dest, struct cdi_mem_area* src)
 {

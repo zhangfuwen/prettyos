@@ -64,7 +64,7 @@ typedef struct network_adapter network_adapter_t;
 typedef struct
 {
     void (*install)(network_adapter_t*); // Device
-    void (*interruptHandler)(registers_t*); // Device
+    void (*interruptHandler)(registers_t*, pciDev_t*); // Device
     bool (*sendPacket)(network_adapter_t*, uint8_t*, size_t); // Device, buffer, length
 } network_driver_t;
 

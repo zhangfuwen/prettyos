@@ -16,18 +16,18 @@
 #define RTL8139_TX_BUFFER_SIZE 4096
 
 
-static RTL8139_networkAdapter_t* device;
-
-
-void rtl8139_handler(registers_t* data)
+void rtl8139_handler(registers_t* data, pciDev_t* device)
 {
+    network_adapter_t* adapter = device->data;
+    RTL8139_networkAdapter_t* rAdapter = adapter->data;
+
     #ifdef _NETWORK_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n--------------------------------------------------------------------------------");
     #endif
 
     // read bytes 003Eh bis 003Fh, Interrupt Status Register
-    volatile uint16_t val = *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS));
+    volatile uint16_t val = *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRSTATUS));
     #ifdef _NETWORK_DIAGNOSIS_
     textColor(YELLOW);
     printf("\nRTL8139 Interrupt Status: %yh, ", val);
@@ -47,54 +47,54 @@ void rtl8139_handler(registers_t* data)
 
     if (val & RTL8139_INT_RX_OK)
     {
-        uint32_t length = (device->RxBuffer[device->RxBufferPointer+3] << 8) + device->RxBuffer[device->RxBufferPointer+2]; // Little Endian
+    uint32_t length = (rAdapter->RxBuffer[rAdapter->RxBufferPointer+3] << 8) + rAdapter->RxBuffer[rAdapter->RxBufferPointer+2]; // Little Endian.
 
-        // Display RTL8139 specific data
-        #ifdef _NETWORK_DATA_
-        textColor(HEADLINE);
-        printf("\nFlags: ");
-        textColor(TEXT);
-        for (uint8_t i = 0; i < 2; i++)
-        {
-            printf("%yh ", device->RxBuffer[device->RxBufferPointer+i]);
-        }
-        #endif
+    // Display RTL8139 specific data
+    #ifdef _NETWORK_DATA_
+    textColor(HEADLINE);
+    printf("\nFlags: ");
+    textColor(TEXT);
+    for (uint8_t i = 0; i < 2; i++)
+    {
+        printf("%yh ", rAdapter->RxBuffer[rAdapter->RxBufferPointer+i]);
+    }
+    #endif
 
-        // Inform network interface about the packet
-        network_receivedPacket(device->device, &device->RxBuffer[device->RxBufferPointer]+4, length - 4); // Strip CRC from packet.
+    // Inform network interface about the packet
+    network_receivedPacket(adapter, &rAdapter->RxBuffer[rAdapter->RxBufferPointer]+4, length - 4); // Strip CRC from packet.
 
-        *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
+    *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
 
-        // Increase RxBufferPointer
-        device->RxBufferPointer += length+4;
-        device->RxBufferPointer = alignUp(device->RxBufferPointer, 4); // packets are DWORD aligned
-        device->RxBufferPointer %= RTL8139_RX_BUFFER_SIZE; // handle wrap-around
+    // Increase RxBufferPointer
+    rAdapter->RxBufferPointer += length + 4;
+    rAdapter->RxBufferPointer = alignUp(rAdapter->RxBufferPointer, 4); // packets are DWORD aligned
+    rAdapter->RxBufferPointer %= RTL8139_RX_BUFFER_SIZE; // handle wrap-around
 
-        // set read pointer
-        *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)) = device->RxBufferPointer - 0x10; // 0x10 = 16
+    // set read pointer
+    *((uint16_t*)(adapter->MMIO_base + RTL8139_RXBUFTAIL)) = rAdapter->RxBufferPointer - 0x10; // 0x10 = 16
 
-        #ifdef _NETWORK_DIAGNOSIS_
-        printf("RXBUFTAIL: %u", *((uint16_t*)(device->device->MMIO_base + RTL8139_RXBUFTAIL)));
-        #endif
+    #ifdef _NETWORK_DIAGNOSIS_
+    printf("RXBUFTAIL: %u", *((uint16_t*)(adapter->MMIO_base + RTL8139_RXBUFTAIL)));
+    #endif
     }
     else
-        *((uint16_t*)(device->device->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
+        *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
 }
 
 
-void install_RTL8139(network_adapter_t* dev)
+void install_RTL8139(network_adapter_t* adapter)
 {
-    device = malloc(sizeof(RTL8139_networkAdapter_t), 0, "RTL8139");
-    device->device = dev;
-    dev->data = device;
+    RTL8139_networkAdapter_t* rAdapter = malloc(sizeof(RTL8139_networkAdapter_t), 0, "RTL8139");
+    rAdapter->device = adapter;
+    adapter->data = rAdapter;
 
-    device->RxBuffer = malloc(RTL8139_RX_BUFFER_SIZE, 4, "RTL8139-RxBuf");
-    device->RxBufferPointer = 0;
-    memset(device->RxBuffer, 0, RTL8139_RX_BUFFER_SIZE); // clear receiving buffer
+    rAdapter->RxBuffer = malloc(RTL8139_RX_BUFFER_SIZE, 4, "RTL8139-RxBuf");
+    rAdapter->RxBufferPointer = 0;
+    memset(rAdapter->RxBuffer, 0, RTL8139_RX_BUFFER_SIZE); // clear receiving buffer
 
-    device->TxBuffer = malloc(RTL8139_TX_BUFFER_SIZE, 4, "RTL8139-TxBuf");
-    device->TxBufferPhys = paging_getPhysAddr(device->TxBuffer);
-    device->TxBufferIndex = 0;
+    rAdapter->TxBuffer = malloc(RTL8139_TX_BUFFER_SIZE, 4, "RTL8139-TxBuf");
+    rAdapter->TxBufferPhys = paging_getPhysAddr(rAdapter->TxBuffer);
+    rAdapter->TxBufferIndex = 0;
 
     /*
     http://wiki.osdev.org/RTL8139
@@ -114,22 +114,22 @@ void install_RTL8139(network_adapter_t* dev)
     and send that variables memory location to the RBSTART register (0x30).
     */
 
-    kdebug(3, "\nRTL8139 MMIO: %Xh", dev->MMIO_base);
-    dev->MMIO_base = paging_acquirePciMemory((uint32_t)dev->MMIO_base, 1);
-    printf("\nMMIO base mapped to virt. addr. %Xh", dev->MMIO_base);
+    kdebug(3, "\nRTL8139 MMIO: %Xh", adapter->MMIO_base);
+    adapter->MMIO_base = paging_acquirePciMemory((uint32_t)adapter->MMIO_base, 1);
+    printf("\nMMIO base mapped to virt. addr. %Xh", adapter->MMIO_base);
 
     // "power on" the card
-    *((uint8_t*)(dev->MMIO_base + RTL8139_CONFIG1)) = 0x00;
+    *((uint8_t*)(adapter->MMIO_base + RTL8139_CONFIG1)) = 0x00;
 
     // carry out reset of network card: set bit 4 at offset 0x37 (1 Byte)
-    *((uint8_t*)(dev->MMIO_base + RTL8139_CHIPCMD)) = RTL8139_CMD_RESET;
+    *((uint8_t*)(adapter->MMIO_base + RTL8139_CHIPCMD)) = RTL8139_CMD_RESET;
 
     // wait for the reset of the "reset flag"
     uint32_t k=0;
     while (true)
     {
         delay(10000);
-        if (!(*((volatile uint8_t*)(dev->MMIO_base + RTL8139_CHIPCMD)) & RTL8139_CMD_RESET))
+        if (!(*((volatile uint8_t*)(adapter->MMIO_base + RTL8139_CHIPCMD)) & RTL8139_CMD_RESET))
         {
             kdebug(3, "\nwaiting successful (%d).\n", k);
             break;
@@ -144,10 +144,10 @@ void install_RTL8139(network_adapter_t* dev)
 
     // now we set the RE and TE bits from the "Command Register" to Enable Receiving and Transmission
     // activate transmitter and receiver: Set bit 2 (TE) and 3 (RE) in control register 0x37 (1 byte).
-    *((uint8_t*)(dev->MMIO_base + RTL8139_CHIPCMD)) = RTL8139_CMD_RX_ENABLE | RTL8139_CMD_TX_ENABLE;
+    *((uint8_t*)(adapter->MMIO_base + RTL8139_CHIPCMD)) = RTL8139_CMD_RX_ENABLE | RTL8139_CMD_TX_ENABLE;
 
     // set TCR (transmit configuration register, 0x40, 4 byte)
-    *((uint32_t*)(dev->MMIO_base + RTL8139_TXCONFIG)) = 0x03000700;       // TCR
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXCONFIG)) = 0x03000700;       // TCR
 
     // set RCR (receive configuration register, RTL8139_RXCONFIG, 4 byte)
     /*
@@ -162,17 +162,17 @@ void install_RTL8139(network_adapter_t* dev)
     // 00b:  8K + 16 byte       01b: 16K + 16 byte
     // 10b: 32K + 16 byte       11b: 64K + 16 byte
 
-    *((uint32_t*)(dev->MMIO_base + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_RXCONFIG)) = 0x0000071A; // 11100011010  // RCR
 
     // physical address of the receive buffer has to be written to RBSTART (0x30, 4 byte)
-    *((uint32_t*)(dev->MMIO_base + RTL8139_RXBUF)) = paging_getPhysAddr(device->RxBuffer);
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_RXBUF)) = paging_getPhysAddr(rAdapter->RxBuffer);
 
     // set interrupt mask
-    *((uint16_t*)(dev->MMIO_base + RTL8139_INTRMASK)) = 0xFFFF; // all interrupts
+    *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRMASK)) = 0xFFFF; // all interrupts
 
     for (uint8_t i = 0; i < 6; i++)
     {
-        dev->MAC[i] =  *(uint8_t*)(dev->MMIO_base + RTL8139_IDR0 + i);
+        adapter->MAC[i] =  *(uint8_t*)(adapter->MMIO_base + RTL8139_IDR0 + i);
     }
 }
 
@@ -195,7 +195,7 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     memcpy(rAdapter->TxBuffer, data, length); // tx buffer
     if(length < 60) // Fill buffer to a minimal length of 60
     {
-        memset(device->TxBuffer+length, 0, 60-length);
+        memset(rAdapter->TxBuffer+length, 0, 60-length);
         length = 60;
     }
 

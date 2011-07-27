@@ -12,27 +12,114 @@
 #include "keyboard.h"
 
 
+typedef enum
+{
+    IHT_DEFAULT, IHT_PCI, IHT_CDI
+} irq_handlerType_t;
+
 typedef struct
 {
-    size_t calls;
-    void (*handler)(registers_t*);
+    union
+    {
+        pciDev_t* pciDev;
+        struct cdi_device* cdiDev;
+    } data;
+    union
+    {
+        void (*def)(registers_t*);            // Interrupt handler used per default
+        void (*pci)(registers_t*, pciDev_t*); // Interrupt handler used for PCI devices
+        void (*cdi)(struct cdi_device*);      // Interrupt handler used for CDI devices
+    } func;
+    irq_handlerType_t type;
 } irq_handler_t;
 
-// Array of function pointers handling custom ir handlers for a given ir
-static irq_handler_t interrupts[256];
+static struct irq
+{
+    size_t calls;             // Counts all interrupts of this number
+    size_t handlerCount;      // Counts the number of handlers assigned to this IRQ. Used to determine, which of the members of following union is valid
+    union
+    {
+        irq_handler_t handler; // Single IRQ handler
+        list_t* handlers;      // List of IRQ handlers. Used if we have more than 1 handler for this IRQ number
+    } handler;
+} interrupts[256]; // Array of function pointers handling custom ir handlers for a given ir
 
 
-// Implement a custom ir handler for the given ir
+// Add an IRQ handler
+static void installHandler(struct irq* irq, void* handler, irq_handlerType_t type, void* data)
+{
+    if(irq->handlerCount == 0) // No handler installed. Install first handler
+    {
+        irq->handler.handler.func.def    = handler;
+        irq->handler.handler.type        = type;
+        irq->handler.handler.data.pciDev = data;
+    }
+    else if(irq->handlerCount == 1) // One handler installed. Install second one. We have to create the handlers-List
+    {
+        // Save old handler
+        irq_handler_t* tempHandler = malloc(sizeof(irq_handler_t), 0, "irq handler");
+        *tempHandler = irq->handler.handler;
+
+        // Create list, insert old handler
+        irq->handler.handlers = list_create();
+        list_append(irq->handler.handlers, tempHandler);
+
+        // Create new handler. Insert to list.
+        tempHandler = malloc(sizeof(irq_handler_t), 0, "irq handler");
+        tempHandler->func.def    = handler;
+        tempHandler->type        = type;
+        tempHandler->data.pciDev = data;
+        list_append(irq->handler.handlers, tempHandler);
+    }
+    else // Multiple handlers installed.
+    {
+        // Create new handler. Insert to list.
+        irq_handler_t* tempHandler = malloc(sizeof(irq_handler_t), 0, "irq handler");
+        tempHandler->func.def    = handler;
+        tempHandler->type        = type;
+        tempHandler->data.pciDev = data;
+        list_append(irq->handler.handlers, tempHandler);
+    }
+    irq->handlerCount++;
+}
+
+// Add a default IRQ handler
 void irq_installHandler(IRQ_NUM_t irq, void (*handler)(registers_t*))
 {
-    interrupts[irq+32].handler = handler;
+    installHandler(interrupts + 32 + irq, handler, IHT_DEFAULT, 0);
 }
 
-// Clear the custom ir handler
+// Add a cdi IRQ handler
+void irq_installCDIHandler(IRQ_NUM_t irq, void (*handler)(struct cdi_device*), struct cdi_device* device)
+{
+    installHandler(interrupts + 32 + irq, handler, IHT_CDI, device);
+}
+
+// Add a pci IRQ handler
+void irq_installPCIHandler(IRQ_NUM_t irq, void (*handler)(registers_t*, pciDev_t*), pciDev_t* device)
+{
+    installHandler(interrupts + 32 + irq, handler, IHT_PCI, device);
+}
+
+// Remove an IRQ handler. TODO: Implement it. Check&Change function prototype
 void irq_uninstallHandler(IRQ_NUM_t irq)
 {
-    interrupts[irq+32].handler = 0;
+    if(interrupts[irq+32].handlerCount == 1) // We delete the last IRQ handler assigned to this IRQ number
+    {
+        interrupts[irq+32].handler.handler.func.def = 0;
+        interrupts[irq+32].handlerCount = 0;
+    }
+    else if(interrupts[irq+32].handlerCount == 2) // There remains just one IRQ handler
+    {
+        // TODO
+    }
+    else if(interrupts[irq+32].handlerCount != 0)
+    {
+        // TODO
+        interrupts[irq+32].handlerCount--;
+    }
 }
+
 
 void irq_resetCounter(IRQ_NUM_t number)
 {
@@ -54,6 +141,7 @@ bool irq_unlockTask(void* data)
 {
     return(interrupts[(size_t)data].calls > 0);
 }
+
 
 // Message string corresponding to the exception number 0-31: exceptionMessages[interrupt_number]
 static const char* const exceptionMessages[] =
@@ -227,20 +315,20 @@ void isr_install()
 {
     for(uint8_t i = 0; i < 32; i++)
     {
-        interrupts[i].calls = 0;
-        interrupts[i].handler = &defaultError; // If nothing else is specified, the default handler is called
+        interrupts[i].handlerCount = 1;
+        interrupts[i].handler.handler.type = IHT_DEFAULT;
+        interrupts[i].handler.handler.func.def = &defaultError; // If nothing else is specified, the default handler is called
     }
     for(uint16_t i = 32; i < 256; i++)
     {
-        interrupts[i].calls = 0;
-        interrupts[i].handler = 0;
+        interrupts[i].handlerCount = 0;
     }
 
     // Installing ISR-Routines
-    interrupts[ISR_invalidOpcode].handler = &invalidOpcode;
-    interrupts[ISR_NM].handler = &NM;
-    interrupts[ISR_GPF].handler = &GPF;
-    interrupts[ISR_PF].handler = &PF;
+    interrupts[ISR_invalidOpcode].handler.handler.func.def = &invalidOpcode;
+    interrupts[ISR_NM].handler.handler.func.def = &NM;
+    interrupts[ISR_GPF].handler.handler.func.def = &GPF;
+    interrupts[ISR_PF].handler.handler.func.def = &PF;
 }
 
 uint32_t irq_handler(uintptr_t esp)
@@ -258,8 +346,49 @@ uint32_t irq_handler(uintptr_t esp)
     }
 
     interrupts[r->int_no].calls++;
-    if (interrupts[r->int_no].handler)
-        interrupts[r->int_no].handler(r); // Execute handler
+    if (interrupts[r->int_no].handlerCount == 1) // One handler registered for this interrupt
+    {
+        switch(interrupts[r->int_no].handler.handler.type)
+        {
+            case IHT_DEFAULT:
+                interrupts[r->int_no].handler.handler.func.def(r); // Execute handler
+                break;
+            case IHT_PCI:
+                //if(pci_deviceSentInterrupt(interrupts[r->int_no].handler.handler.data.pciDev)) // TODO: Why does it not work? Bit 3 of the PCI status register is not set at interrupt on VBox and real hardware
+                    interrupts[r->int_no].handler.handler.func.pci(r, interrupts[r->int_no].handler.handler.data.pciDev); // Execute PCI handler
+                break;
+            case IHT_CDI:
+                interrupts[r->int_no].handler.handler.func.cdi(interrupts[r->int_no].handler.handler.data.cdiDev); // Execute CDI handler
+                break;
+        }
+    }
+    else if(interrupts[r->int_no].handlerCount > 1) // More than one handler registered
+    {
+        for(element_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // First loop: Try to find a PCI handler to call
+        {
+            irq_handler_t* handler = e->data;
+            if(handler->type == IHT_PCI/* && pci_deviceSentInterrupt(handler->data.pciDev)*/) // TODO: Why does it not work? Bit 3 of the PCI status register is not set at interrupt on VBox and real hardwar
+            {
+                handler->func.pci(r, handler->data.pciDev); // Execute PCI handler
+                //goto HANDLED; // Disabled, because pci_deviceSentInterrupt is disabled, too.
+            }
+        }
+        for(element_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // Second loop: Also accept default and CDI handlers. TODO: Move CDI handlers to first loop (check pci device for interrupt)
+        {
+            irq_handler_t* handler = e->data;
+            if(handler->type == IHT_DEFAULT)
+            {
+                handler->func.def(r); // Execute handler
+                goto HANDLED;
+            }
+            else if(handler->type == IHT_CDI)
+            {
+                handler->func.cdi(handler->data.cdiDev);
+                goto HANDLED;
+            }
+        }
+    }
+    HANDLED:
 
     if (r->int_no >= 40)
         outportb(0xA0, 0x20);

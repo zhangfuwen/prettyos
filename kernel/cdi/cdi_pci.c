@@ -17,7 +17,9 @@ void cdi_pci_device_destroy(struct cdi_pci_device* device)
     free(device);
 }
 
-void cdi_pci_alloc_ioports(struct cdi_pci_device* device);
+void cdi_pci_alloc_ioports(struct cdi_pci_device* device)
+{
+}
 
 void cdi_pci_free_ioports(struct cdi_pci_device* device);
 
@@ -38,7 +40,7 @@ void cdi_pci_config_writew(struct cdi_pci_device* device, uint8_t offset, uint16
 void cdi_pci_config_writel(struct cdi_pci_device* device, uint8_t offset, uint32_t value);
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

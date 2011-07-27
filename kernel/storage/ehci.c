@@ -131,7 +131,7 @@ int32_t initEHCIHostController()
         }
     }
 
-    irq_installHandler(PCIdevice->irq, ehci_handler);
+    irq_installPCIHandler(PCIdevice->irq, ehci_handler, PCIdevice);
 
     USBtransferFlag = true;
     enabledPortFlag = false;
@@ -439,7 +439,7 @@ void resetPort(uint8_t j)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void ehci_handler(registers_t* r)
+void ehci_handler(registers_t* r, pciDev_t* device)
 {
   #ifdef _USB_DIAGNOSIS_
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
@@ -613,8 +613,6 @@ void checkPortLineStatus(uint8_t j)
 *                                          Setup USB-Device                                            *
 *                                                                                                      *
 *******************************************************************************************************/
-
-extern uintptr_t SetupQTDpage0; // ehciQHqTD.c
 
 void setupUSBDevice(uint8_t portNumber)
 {

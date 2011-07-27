@@ -3,9 +3,9 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h" // ASSERT
-#include "kheap.h"
 #include "list.h"
+#include "util.h"
+#include "kheap.h"
 
 
 list_t* list_create()
@@ -21,7 +21,7 @@ list_t* list_create()
 bool list_append(list_t* list, void* data)
 {
     ASSERT(list);
-    element_t* newElement = (element_t*)malloc(sizeof(element_t), 0,"listElement");
+    element_t* newElement = (element_t*)malloc(sizeof(element_t), 0, "listElement");
     if (newElement)
     {
         newElement->data = data;

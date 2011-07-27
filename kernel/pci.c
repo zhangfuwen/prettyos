@@ -103,8 +103,7 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
 bool pci_deviceSentInterrupt(pciDev_t* dev)
 {
     uint32_t statusRegister = pci_config_read(dev->bus, dev->device, dev->func, PCI_STATUS);
-    uint32_t commandRegister = pci_config_read(dev->bus, dev->device, dev->func, PCI_COMMAND);
-    return((statusRegister & BIT(3)) && !(commandRegister & BIT(10)));
+    return(statusRegister & BIT(3));
 }
 
 void pci_scan()

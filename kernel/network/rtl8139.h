@@ -89,7 +89,7 @@ typedef struct
 // functions
 bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length);
 void install_RTL8139(network_adapter_t* device);
-void rtl8139_handler(registers_t* data);
+void rtl8139_handler(registers_t* data, pciDev_t* device);
 
 
 #endif

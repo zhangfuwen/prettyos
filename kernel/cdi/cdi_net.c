@@ -5,13 +5,37 @@
 
 #include "cdi/net.h"
 #include "network/network.h"
+#include "list.h"
 
 
-void cdi_net_driver_init(struct cdi_net_driver* driver);
+static uint32_t netcard_id = 0;
+static list_t* netcard_list = 0;
 
-void cdi_net_driver_destroy(struct cdi_net_driver* driver);
+static list_t* ethernet_packet_receivers;
 
-void cdi_net_device_init(struct cdi_net_device* device);
+
+void cdi_net_driver_init(struct cdi_net_driver* driver)
+{
+    driver->drv.type = CDI_NETWORK;
+    cdi_driver_init((struct cdi_driver*)driver);
+
+    netcard_list = list_create();
+    ethernet_packet_receivers = list_create();
+}
+
+void cdi_net_driver_destroy(struct cdi_net_driver* driver)
+{
+    cdi_driver_destroy((struct cdi_driver*) driver);
+}
+
+void cdi_net_device_init(struct cdi_net_device* device)
+{
+    device->number = netcard_id;
+
+    list_append(netcard_list, device);
+
+    network_installDevice(0); // HACK
+}
 
 void cdi_net_receive(struct cdi_net_device* device, void* buffer, size_t size)
 {

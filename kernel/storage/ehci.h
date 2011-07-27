@@ -182,7 +182,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev);
 void enablePorts();
 void resetPort(uint8_t j);
 
-void ehci_handler(registers_t* r);
+void ehci_handler(registers_t* r, pciDev_t* device);
 void ehci_portcheck(void*, size_t); // for thread with own console
 void portCheck();
 void showPORTSC();
