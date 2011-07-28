@@ -47,9 +47,11 @@ void DHCP_Discover(network_adapter_t* adapter)
 {
     xid += (1<<24);
 
+  #ifdef _DHCP_DEBUG_
     textColor(IMPORTANT);
     printf("\nDHCP Discover sent.");
     textColor(TEXT);
+  #endif
 
     dhcp_t packet;
     DHCP_preparePacket(&packet, adapter);
@@ -96,10 +98,12 @@ void DHCP_Discover(network_adapter_t* adapter)
 void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
 {
     xid += (1<<24);
-
+  
+  #ifdef _DHCP_DEBUG_
     textColor(IMPORTANT);
     printf("\nDHCP Request sent.");
     textColor(TEXT);
+  #endif
 
     dhcp_t packet;
     DHCP_preparePacket(&packet, adapter);
@@ -155,10 +159,12 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
 void DHCP_Inform(network_adapter_t* adapter)
 {
     xid += (1<<24);
-
+  
+  #ifdef _DHCP_DEBUG_
     textColor(IMPORTANT);
     printf("\nDHCP Inform sent.");
     textColor(TEXT);
+  #endif
 
     dhcp_t packet;
     DHCP_preparePacket(&packet, adapter);
@@ -200,10 +206,12 @@ void DHCP_Inform(network_adapter_t* adapter)
 void DHCP_Release(network_adapter_t* adapter)
 {
     xid += (1<<24);
-
+  
+  #ifdef _DHCP_DEBUG_
     textColor(IMPORTANT);
     printf("\nDHCP Release sent.");
     textColor(TEXT);
+  #endif
 
     dhcp_t packet;
     DHCP_preparePacket(&packet, adapter);
@@ -230,6 +238,7 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt);
 
 void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
 {
+  #ifdef _DHCP_DEBUG_
     textColor(HEADLINE);
     printf("\nDHCP:");
 
@@ -238,12 +247,14 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
     textColor(LIGHT_GRAY); printf("\tsIP: "); textColor(IMPORTANT); printf("%I", dhcp->siaddr);
     textColor(LIGHT_GRAY); printf("\tgIP: "); textColor(IMPORTANT); printf("%I", dhcp->giaddr);
     textColor(LIGHT_GRAY); printf("\nMAC: "); textColor(IMPORTANT); printf("%M\n", dhcp->chaddr);
-
+  #endif
     DHCP_AnalyzeOptions(adapter, dhcp->options);
     switch(adapter->DHCP_State)
     {
         case OFFER:
+          #ifdef _DHCP_DEBUG_
             printf("\n >>> PrettyOS got a DHCP OFFER. <<<\n");
+          #endif
             if (dhcp->yiaddr.iIP != 0)
             {
               #ifndef QEMU_HACK
@@ -263,14 +274,18 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             textColor(SUCCESS);
             printf("\n >>> PrettyOS got a DHCP ACK.   <<<\n");
             textColor(TEXT);
-
             if (dhcp->yiaddr.iIP != 0)
+            {
                 adapter->IP.iIP = dhcp->yiaddr.iIP;
-
+            }
+          #ifdef _DHCP_DEBUG_  
             printf("\nGateway IP: %I Subnet: %I", adapter->Gateway_IP, adapter->Subnet);
+          #endif
             break;
         case NAK:
+            textColor(ERROR);
             printf("\n >>> DHCP was not successful (NAK). <<<\n");
+            textColor(TEXT);
             break;
         default:
             break;

@@ -21,7 +21,10 @@
 /// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
 /// #define _NETWORK_DATA_         // Enables additional information about networking packets
 /// #define _NETWORK_DIAGNOSIS_    // Enables additional information about the network adapters
+/// #define _ARP_DEBUG_            // Enables additional information about ARP
+/// #define _DHCP_DEBUG_           // Enables additional information about DHCP
 /// #define _ICMP_DEBUG_           // Enables analysis of ICMP information besides echo request/response
+/// #define _UDP_DEBUG_            // Enables additional information about UDP 
 /// #define _NETBIOS_DEBUG_        // Enables NetBIOS packet analysis
 /// #define _VBE_DEBUG_            // Provides additional output of the VBE driver
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly

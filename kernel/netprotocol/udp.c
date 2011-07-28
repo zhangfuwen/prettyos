@@ -18,9 +18,11 @@ static void udp_debug(udpPacket_t* udp);
 
 void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
 {
+  #ifdef _UDP_DEBUG_
     textColor(HEADLINE);
     printf("\nUDP: ");
     textColor(TEXT);
+  #endif
     udp_debug(packet);
 
     switch (ntohs(packet->destPort))
@@ -52,10 +54,12 @@ void udp_send(network_adapter_t* adapter, void* data, uint32_t length, uint16_t 
     free(packet);
 }
 
+#ifdef _UDP_DEBUG_
 static void printUDPPortType(uint16_t port)
 {
     // http://www.iana.org/assignments/port-numbers
     // http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+  
     switch (port)
     {
     case 20:
@@ -113,14 +117,18 @@ static void printUDPPortType(uint16_t port)
         printf("Port: %u", port);
         break;
     }
+  
 }
+#endif
 
 static void udp_debug(udpPacket_t* udp)
 {
+  #ifdef _UDP_DEBUG_
     textColor(IMPORTANT);
     printf("  %u ==> %u   Len: %u\n", ntohs(udp->sourcePort), ntohs(udp->destPort), ntohs(udp->length));
     printUDPPortType(ntohs(udp->sourcePort)); printf(" ==> "); printUDPPortType(ntohs(udp->destPort));
     textColor(TEXT);
+  #endif
 }
 
 

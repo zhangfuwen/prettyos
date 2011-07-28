@@ -86,18 +86,26 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
 
     if(IP.iIP == 0 || IP.iIP == 0xFFFFFFFF || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
     {
+      #ifdef _NETWORK_DATA_
         printf("\nIP is in LAN");
+      #endif
 
         arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, IP);
         if(entry == 0) // Try to find IP by ARP request
         {
+          #ifdef _NETWORK_DATA_
             printf("\nWe try to find %I... ", IP);
+          #endif
             arp_sendRequest(adapter, IP);
             if(arp_waitForReply(adapter, IP) == false)
             {
+              #ifdef _NETWORK_DATA_
                 printf("Not found.");
+              #endif
                 entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
-                // printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
+              #ifdef _NETWORK_DATA_
+                printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
+              #endif
                 EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
             }
             entry = arp_findEntry(&adapter->arpTable, IP);
@@ -109,9 +117,11 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
     {
       #ifdef QEMU_HACK
         uint8_t gatewayMAC[6] = {GW_MAC_1, GW_MAC_2, GW_MAC_3, GW_MAC_4, GW_MAC_5, GW_MAC_6}; // HACK for TCP with qemu
-        //textColor(GRAY);
-        //printf("\nqemu hack: We try to deliver the packet to the gateway %M", gatewayMAC);
-        //textColor(TEXT);
+        #ifdef _NETWORK_DATA_
+          textColor(GRAY);
+          printf("\nqemu hack: We try to deliver the packet to the gateway %M", gatewayMAC);
+          textColor(TEXT);
+        #endif
         EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), gatewayMAC, 0x0800);
       #else
         arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
