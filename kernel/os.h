@@ -25,6 +25,7 @@
 /// #define _DHCP_DEBUG_           // Enables additional information about DHCP
 /// #define _ICMP_DEBUG_           // Enables analysis of ICMP information besides echo request/response
 /// #define _UDP_DEBUG_            // Enables additional information about UDP 
+/// #define _TCP_DEBUG_            // Enables additional information about TCP 
 /// #define _NETBIOS_DEBUG_        // Enables NetBIOS packet analysis
 /// #define _VBE_DEBUG_            // Provides additional output of the VBE driver
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly

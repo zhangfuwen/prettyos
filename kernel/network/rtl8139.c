@@ -116,7 +116,10 @@ void install_RTL8139(network_adapter_t* adapter)
 
     kdebug(3, "\nRTL8139 MMIO: %Xh", adapter->MMIO_base);
     adapter->MMIO_base = paging_acquirePciMemory((uint32_t)adapter->MMIO_base, 1);
+
+  #ifdef _NETWORK_DIAGNOSIS_
     printf("\nMMIO base mapped to virt. addr. %Xh", adapter->MMIO_base);
+  #endif
 
     // "power on" the card
     *((uint8_t*)(adapter->MMIO_base + RTL8139_CONFIG1)) = 0x00;
