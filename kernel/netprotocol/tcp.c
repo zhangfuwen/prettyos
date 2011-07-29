@@ -129,21 +129,30 @@ tcpConnection_t* tcp_createConnection()
 
 void tcp_deleteConnection(tcpConnection_t* connection)
 {
-    serial_log(1,"\r\n%u msec:\t tcp_deleteConnection", timer_getMilliseconds());
+    if (connection)
+    {
+        serial_log(1,"\r\n%u msec:\t tcp_deleteConnection", timer_getMilliseconds());
 
-    connection->TCP_PrevState = connection->TCP_CurrState;
-    connection->TCP_CurrState = CLOSED;
+        connection->TCP_PrevState = connection->TCP_CurrState;
+        connection->TCP_CurrState = CLOSED;
 
-    uint32_t countOUT = tcp_deleteOutBuffers(connection); // free
-    uint32_t countIN  = tcp_deleteInBuffers (connection, connection->inBuffer); // free
-    connection->inBuffer = 0;
-    uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
-    connection->OutofOrderinBuffer = 0;
+        uint32_t countOUT = tcp_deleteOutBuffers(connection); // free
+        uint32_t countIN  = tcp_deleteInBuffers (connection, connection->inBuffer); // free
+        connection->inBuffer = 0;
+        uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
+        connection->OutofOrderinBuffer = 0;
 
-    list_delete(tcpConnections, list_find(tcpConnections, connection));
-    free(connection);
+        list_delete(tcpConnections, list_find(tcpConnections, connection));
+        free(connection);
 
-    serial_log(1,"\r\nTCP conn.ID: %u <--- deleted, del countIN: %u del countOutofOrderIN: %u del countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
+        serial_log(1,"\r\nTCP conn.ID: %u <--- deleted, del countIN: %u del countOutofOrderIN: %u del countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("\nThis connection is not present, and cannot be deleted.\n");
+        textColor(TEXT);
+    }
 }
 
 static void scheduledDeleteConnection(void* data, size_t length)
