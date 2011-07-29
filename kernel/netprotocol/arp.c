@@ -15,7 +15,7 @@
 
 void arp_deleteTableEntry(arpTable_t* cache, arpTableEntry_t* entry)
 {
-    list_delete(cache->table, entry);
+    list_delete(cache->table, list_find(cache->table, entry));
 }
 
 static void arp_checkTable(arpTable_t* cache)
@@ -23,14 +23,17 @@ static void arp_checkTable(arpTable_t* cache)
     if (timer_getSeconds() > (cache->lastCheck + ARP_TABLE_TIME_TO_CHECK * 60 )) // Check only every ... minutes
     {
         cache->lastCheck = timer_getSeconds();
-        for(element_t* e = cache->table->head; e != 0; e = e->next)
+        for(dlelement_t* e = cache->table->head; e != 0;)
         {
             arpTableEntry_t* entry = e->data;
             if(entry->dynamic &&                                                    // Only dynamic entries should be killed.
                timer_getSeconds() > entry->seconds + ARP_TABLE_TIME_TO_DELETE * 60) // Entry is older than ... minutes -> Obsolete entry. Delete it.
             {
-                arp_deleteTableEntry(cache, entry);
+                free(e->data);
+                e = list_delete(cache->table, e);
             }
+            else
+                e = e->next;
         }
     }
 }
@@ -53,7 +56,7 @@ arpTableEntry_t* arp_findEntry(arpTable_t* cache, IP_t IP)
 {
     arp_checkTable(cache); // We check the arp cache for obsolete entries.
 
-    for(element_t* e = cache->table->head; e != 0; e = e->next)
+    for(dlelement_t* e = cache->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
         if(entry->IP.iIP == IP.iIP)
@@ -73,7 +76,7 @@ void arp_showTable(arpTable_t* cache)
     printf("\nIP\t\t  MAC\t\t\tType\t  Time(sec)");
     printf("\n--------------------------------------------------------------------------------");
     textColor(TEXT);
-    for(element_t* e = cache->table->head; e != 0; e = e->next)
+    for(dlelement_t* e = cache->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
         size_t length = printf("%I\t", entry->IP);
@@ -202,9 +205,9 @@ bool arp_sendRequest(network_adapter_t* adapter, IP_t searchedIP)
   #ifdef _ARP_DEBUG_
     textColor(HEADLINE);
     printf("\nARP Request sent:");
-    textColor(LIGHT_GRAY); 
-    printf(" IP Searched: "); 
-    textColor(IMPORTANT);  
+    textColor(LIGHT_GRAY);
+    printf(" IP Searched: ");
+    textColor(IMPORTANT);
     printf("%I", searchedIP);
   #endif
 

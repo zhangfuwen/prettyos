@@ -56,7 +56,7 @@ static tcpConnection_t* tcp_findConnectionID(uint32_t ID)
     if(tcpConnections == 0)
         return(0);
 
-    for(element_t* e = tcpConnections->head; e != 0; e = e->next)
+    for(dlelement_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
         if(connection->ID == ID)
@@ -73,7 +73,7 @@ tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* a
     if(tcpConnections == 0)
         return(0);
 
-    for(element_t* e = tcpConnections->head; e != 0; e = e->next)
+    for(dlelement_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
 
@@ -118,7 +118,7 @@ tcpConnection_t* tcp_createConnection()
     connection->tcb.RCV.dACK       = 0; // duplicate ACKs received
 
     list_append(tcpConnections, connection);
-  
+
   #ifdef _TCP_DEBUG_
     textColor(TEXT);
     printf("\nTCP conn. created, ID: %u\n", connection->ID);
@@ -140,7 +140,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
     uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
     connection->OutofOrderinBuffer = 0;
 
-    list_delete(tcpConnections, connection);
+    list_delete(tcpConnections, list_find(tcpConnections, connection));
     free(connection);
 
     serial_log(1,"\r\nTCP conn.ID: %u <--- deleted, del countIN: %u del countOutofOrderIN: %u del countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
@@ -154,7 +154,7 @@ static void scheduledDeleteConnection(void* data, size_t length)
 static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t timeMilliseconds)
 {
     todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
-    
+
   #ifdef _TCP_DEBUG_
     textColor(LIGHT_BLUE);
     printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
@@ -346,13 +346,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             uint32_t tcpDataLength = length - (4 * tcp->dataOffset);
 
             if (!tcp_IsPacketAcceptable(tcp, connection, tcpDataLength))
-            {              
+            {
               #ifdef _TCP_DEBUG_
-                textColor(ERROR); 
-                printf("not acceptable!"); 
+                textColor(ERROR);
+                printf("not acceptable!");
                 textColor(TEXT);
               #endif
-                
+
                 if (tcp->RST)
                 {
                     return;
@@ -512,7 +512,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); // CHECK for unregular packets above
 
                     // Remove all acked packets from the outBuffer
-                    for (element_t* e = connection->outBuffer->head; e != 0;)
+                    for (dlelement_t* e = connection->outBuffer->head; e != 0;)
                     {
                         tcpOut_t* outPacket = e->data;
                         if ( ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber)) && (outPacket->segment.LEN > 0))
@@ -578,7 +578,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                         if (retVal==0)
                         {
                           #ifdef _TCP_DEBUG_
-                            textColor(SUCCESS); 
+                            textColor(SUCCESS);
                             printf("ID. %u event queue OK", In->ev->connectionID);
                           #endif
 
@@ -592,10 +592,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                         else
                         {
                           #ifdef _TCP_DEBUG_
-                            textColor(ERROR); 
+                            textColor(ERROR);
                             printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
                           #endif
-                            
+
                             connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;
                         }
                         textColor(TEXT);
@@ -856,7 +856,7 @@ static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection, list_t* list)
     serial_log(1,"\r\ntcp_deleteInBuffers");
 
     uint32_t count = 0;
-    for (element_t* e = list->head; e != 0; e = e->next)
+    for (dlelement_t* e = list->head; e != 0; e = e->next)
     {
         count++;
         tcpIn_t* inPacket = e->data;
@@ -873,7 +873,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
     serial_log(1,"\r\ntcp_deleteOutBuffers");
 
     uint32_t count = 0;
-    for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
+    for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
     {
         count++;
         tcpOut_t* outPacket = e->data;
@@ -888,7 +888,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
 
  static bool tcp_retransOutBuffer(tcpConnection_t* connection, uint32_t seq)
  {
-    for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
+    for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
     {
         tcpOut_t* outPacket = e->data;
         if (outPacket->segment.SEQ == seq) // searched packet found
@@ -928,10 +928,10 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
   #endif
 
     uint32_t count = 0;
-    for (element_t* e = connection->outBuffer->head; e != 0; e = e->next)
+    for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
     {
         count++;
-      
+
      #ifdef _TCP_DEBUG_
         tcpOut_t* outPacket = e->data;
         printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->segment.LEN);
@@ -1065,7 +1065,7 @@ void tcp_showConnections()
     printf("\nID\tIP\t\tSrc\tDest\tAddr\t\tState");
     printf("\n--------------------------------------------------------------------------------");
     textColor(TEXT);
-    for(element_t* e = tcpConnections->head; e != 0; e = e->next)
+    for(dlelement_t* e = tcpConnections->head; e != 0; e = e->next)
     {
         tcpConnection_t* connection = e->data;
         printf("%u\t%I\t%u\t%u\t%X\t%s\n", connection->ID, connection->adapter->IP, connection->localSocket.port, connection->remoteSocket.port, connection, tcpStates[connection->TCP_CurrState]);
@@ -1102,7 +1102,7 @@ static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
 
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
 {
-  #ifdef _TCP_DEBUG_  
+  #ifdef _TCP_DEBUG_
     textColor(IMPORTANT);
     putch(' ');
     puts(tcpStates[connection->TCP_CurrState]);
@@ -1119,7 +1119,7 @@ static uint32_t tcp_logBuffers(tcpConnection_t* connection, bool showData, list_
     serial_log(1,"\r\n------------------------------------\r\n");
     serial_log(1,"tcp_logBuffers:\r\n");
     uint32_t count = 0;
-    for (element_t* e = list->head; e != 0; e = e->next)
+    for (dlelement_t* e = list->head; e != 0; e = e->next)
     {
         count++;
         tcpIn_t* inPacket = e->data;
@@ -1169,7 +1169,7 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
     tcpConnection_t* connection = tcp_findConnectionID(ID);
 
     if(connection == 0)
-    {      
+    {
         textColor(ERROR);
         printf("Data could not be sent because there was no connection with ID %u.\n", ID);
         textColor(TEXT);
@@ -1177,7 +1177,7 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
     }
 
     if (connection->TCP_CurrState != ESTABLISHED)
-    {        
+    {
         textColor(ERROR);
         printf("Data are not sent outside from state ESTABLISHED.\n");
         textColor(TEXT);

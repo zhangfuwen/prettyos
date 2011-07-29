@@ -59,7 +59,7 @@ static void printUDPPortType(uint16_t port)
 {
     // http://www.iana.org/assignments/port-numbers
     // http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
-  
+
     switch (port)
     {
     case 20:
@@ -117,7 +117,7 @@ static void printUDPPortType(uint16_t port)
         printf("Port: %u", port);
         break;
     }
-  
+
 }
 #endif
 

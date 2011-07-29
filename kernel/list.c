@@ -1,6 +1,6 @@
 /*
 *  license and disclaimer for the use of this source code as per statement below
-*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+*  Lizenz und Haftungsausschluss fÃ¼r die Verwendung dieses Sourcecodes siehe unten
 */
 
 #include "list.h"
@@ -10,113 +10,111 @@
 
 list_t* list_create()
 {
-    list_t* list = (list_t*)malloc(sizeof(list_t), 0, "listHead");
+    list_t* list = malloc(sizeof(list_t), 0, "listHead");
     if (list)
     {
-        list->head = list->tail = 0;
+        list->head = 0;
+        list->tail = 0;
     }
     return(list);
 }
 
-bool list_append(list_t* list, void* data)
+dlelement_t* list_append(list_t* list, void* data)
 {
-    ASSERT(list);
-    element_t* newElement = (element_t*)malloc(sizeof(element_t), 0, "listElement");
+    dlelement_t* newElement = malloc(sizeof(dlelement_t), 0, "listElement");
     if (newElement)
     {
         newElement->data = data;
         newElement->next = 0;
+        newElement->prev = list->tail;
 
-        if (list->head == 0) // there exist no list element
+        if (list->head == 0)
         {
-            list->head = list->tail = newElement;
+            list->head = newElement;
         }
-        else // there exist at least one list element
+        else
         {
             list->tail->next = newElement;
-            list->tail = newElement;
         }
-        return(true);
+        list->tail = newElement;
+        return(newElement);
     }
-    return(false);
+    return(0);
 }
 
-bool list_insert(list_t* list, element_t* next, void* data)
+dlelement_t* list_insert(list_t* list, dlelement_t* next, void* data)
 {
-    ASSERT(list);
     if (next == 0)
     {
-        return (list_append(list, data));
+        return(list_append(list, data));
     }
 
-    if (next == list->head)
-    {
-        element_t* newElement = (element_t*)malloc(sizeof(element_t), 0,"listElement");
-        if (newElement)
-        {
-            newElement->next = list->head;
-            list->head = newElement;
-            newElement->data = data;
-            return true;
-        }
-        return(false);
-    }
-
-    element_t* prev = 0;
-    element_t* cur  = list->head;
-
-    while(cur != 0 && cur != next)
-    {
-        prev = cur;
-        cur  = cur->next;
-    }
-
-    // insert left of next
-    element_t* newElement = (element_t*)malloc(sizeof(element_t), 0,"listElement");
+    dlelement_t* newElement = malloc(sizeof(dlelement_t), 0, "listElement");
     if (newElement)
     {
         newElement->data = data;
-        newElement->next = next;
-        prev->next = newElement;
-        return true;
+
+        if (next == list->head)
+        {
+            newElement->next = list->head;
+            newElement->prev = 0;
+            list->head->prev = newElement;
+            list->head       = newElement;
+        }
+        else
+        {
+            next->prev->next = newElement;
+            newElement->prev = next->prev;
+            newElement->next = next;
+            next->prev       = newElement;
+        }
+        return newElement;
     }
-    return false;
+
+    return(0);
 }
 
-element_t* list_delete(list_t* list, void* data)
+dlelement_t* list_delete(list_t* list, dlelement_t* elem)
 {
-    ASSERT(list);
-    element_t* cur = list->head;
-    element_t* retval = 0;
-    while(cur != 0 && cur->data == data)
+    if(list->head == 0)
     {
-        element_t* temp = cur;
-        if(!retval) retval = temp->next; // Save element behind the element we are going to delete
-        cur = cur->next;
-        if(list->head == list->tail) list->tail = 0;
-        list->head = cur;
-        free(temp);
+        return 0;
     }
-    while(cur != 0 && cur->next != 0)
+
+    if(list->head == list->tail)
     {
-        if(cur->next->data == data)
-        {
-            element_t* temp = cur->next;
-            if(!retval) retval = temp->next; // Save element behind the element we are going to delete
-            if(cur->next == list->tail) list->tail = cur;
-            cur->next = cur->next->next;
-            free(temp);
-        }
-        cur = cur->next;
+        free(elem);
+        list->head = list->tail = 0;
+        return 0;
     }
-    return(retval);
+
+    dlelement_t* temp = elem->next;
+
+    if (elem == list->head)
+    {
+        list->head       = elem->next;
+        list->head->prev = 0;
+    }
+    else if(elem == list->tail)
+    {
+        list->tail       = elem->prev;
+        list->tail->next = 0;
+    }
+    else
+    {
+        elem->prev->next = elem->next;
+        elem->next->prev = elem->prev;
+    }
+
+    free(elem);
+
+    return temp;
 }
 
 void list_free(list_t* list)
 {
-    ASSERT(list);
-    element_t* cur = list->head;
-    element_t* nex;
+    dlelement_t* cur = list->head;
+    dlelement_t* nex;
 
     while (cur)
     {
@@ -127,11 +125,10 @@ void list_free(list_t* list)
     free(list);
 }
 
-element_t* list_getElement(list_t* list, uint32_t number)
+dlelement_t* list_getElement(list_t* list, uint32_t number)
 {
-    ASSERT(list);
-    element_t* cur = list->head;
-    while (true)
+    dlelement_t* cur = list->head;
+    while(true)
     {
         if (number == 0 || cur == 0)
         {
@@ -140,6 +137,14 @@ element_t* list_getElement(list_t* list, uint32_t number)
         --number;
         cur = cur->next;
     }
+}
+
+dlelement_t* list_find(list_t* list, void* data)
+{
+    dlelement_t* cur = list->head;
+    while(cur != 0 && cur->data != data)
+        cur = cur->next;
+    return(cur);
 }
 
 

@@ -187,6 +187,28 @@ size_t strcspn(const char* str1, const char* str2); /// TODO
 char* strerror(int errornum); /// TODO
 char* strpbrk(const char* str1, const char* str2); /// TODO
 size_t strspn(const char* str1, const char* str2); /// TODO
-char* strstr(const char* str1, const char* str2); /// TODO
+
+char* strstr(const char* str1, const char* str2)
+{
+    const char* p1 = str1;
+    const char* p2;
+    while (*str1)
+    {
+        p2 = str2;
+        while (*p2 && ( *p1 == *p2 ))
+        {
+            ++p1;
+            ++p2;
+        }
+        if (*p2 == 0)
+        {
+            return (char*)str1;
+        }
+        ++str1;
+        p1 = str1;
+    }
+    return 0;
+}
+
 char* strtok(char* str, const char* delimiters); /// TODO
 size_t strxfrm(char* destination, const char* source, size_t num); /// TODO

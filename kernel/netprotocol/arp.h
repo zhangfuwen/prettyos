@@ -41,7 +41,6 @@ struct network_adapter;
 void arp_initTable(arpTable_t* cache);
 void arp_deleteTable(arpTable_t* cache);
 void arp_addTableEntry(arpTable_t* cache, uint8_t MAC[6], IP_t IP, bool dynamic);
-void arp_deleteTableEntry(arpTable_t* cache, arpTableEntry_t* entry);
 arpTableEntry_t* arp_findEntry(arpTable_t* cache, IP_t IP);
 void arp_showTable(arpTable_t* cache);
 void arp_received(struct network_adapter* adapter, arpPacket_t* packet);

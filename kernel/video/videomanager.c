@@ -80,7 +80,7 @@ void video_test()
     puts("----------------------------------------------------------------------");
     textColor(TEXT);
     size_t id = 0;
-    for(element_t* e = modelist->head; e != 0; e = e->next, id++)
+    for(dlelement_t* e = modelist->head; e != 0; e = e->next, id++)
     {
         videoMode_t* mode = e->data;
         printf("\n%u\t%s\t", id, mode->device->driver->driverName);
@@ -131,7 +131,7 @@ void video_test()
         if(strcmp(temp, "exit") == 0) return;
 
         uint16_t modenumber = atoi(temp);
-        element_t* e = list_getElement(modelist, modenumber);
+        dlelement_t* e = list_getElement(modelist, modenumber);
         if(e != 0)
         {
             mode = e->data;
@@ -215,7 +215,7 @@ void video_setMode(videoMode_t* mode)
 
 void video_createModeList(list_t* list)
 {
-    for(element_t* e = basicVideoDevices->head; e != 0; e = e->next)
+    for(dlelement_t* e = basicVideoDevices->head; e != 0; e = e->next)
     {
         videoDevice_t* device = e->data;
         device->driver->createModeList(device, list);

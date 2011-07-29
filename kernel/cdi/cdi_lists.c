@@ -24,11 +24,10 @@ cdi_list_t cdi_list_push(cdi_list_t list, void* value)
     return(list); /// Maybe wrong
 }
 
-void* cdi_list_pop(cdi_list_t list) {
-    void* retVal = list->head->data;
-    element_t* temp = list->head;
-    list->head = list->head->next;
-    free(temp);
+void* cdi_list_pop(cdi_list_t list)
+{
+    void* retVal = list->tail->data;
+    list_delete(list, list->tail);
     return(retVal);
 }
 
@@ -36,7 +35,7 @@ size_t cdi_list_empty(cdi_list_t list);
 
 void* cdi_list_get(cdi_list_t list, size_t index)
 {
-    element_t* temp = list_getElement(list, index);
+    dlelement_t* temp = list_getElement(list, index);
     if(temp == 0)
     {
         return(0);
@@ -46,7 +45,13 @@ void* cdi_list_get(cdi_list_t list, size_t index)
 
 cdi_list_t cdi_list_insert(cdi_list_t list, size_t index, void* value);
 
-void* cdi_list_remove(cdi_list_t list, size_t index);
+void* cdi_list_remove(cdi_list_t list, size_t index)
+{
+    dlelement_t* elem = list_getElement(list, index);
+    void* retVal = elem->data;
+    list_delete(list, elem);
+    return(retVal);
+}
 
 size_t cdi_list_size(cdi_list_t list);
 

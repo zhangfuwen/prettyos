@@ -98,7 +98,7 @@ void DHCP_Discover(network_adapter_t* adapter)
 void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
 {
     xid += (1<<24);
-  
+
   #ifdef _DHCP_DEBUG_
     textColor(IMPORTANT);
     printf("\nDHCP Request sent.");
@@ -159,7 +159,7 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
 void DHCP_Inform(network_adapter_t* adapter)
 {
     xid += (1<<24);
-  
+
   #ifdef _DHCP_DEBUG_
     textColor(IMPORTANT);
     printf("\nDHCP Inform sent.");
@@ -206,7 +206,7 @@ void DHCP_Inform(network_adapter_t* adapter)
 void DHCP_Release(network_adapter_t* adapter)
 {
     xid += (1<<24);
-  
+
   #ifdef _DHCP_DEBUG_
     textColor(IMPORTANT);
     printf("\nDHCP Release sent.");
@@ -278,7 +278,7 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
             {
                 adapter->IP.iIP = dhcp->yiaddr.iIP;
             }
-          #ifdef _DHCP_DEBUG_  
+          #ifdef _DHCP_DEBUG_
             printf("\nGateway IP: %I Subnet: %I", adapter->Gateway_IP, adapter->Subnet);
           #endif
             break;

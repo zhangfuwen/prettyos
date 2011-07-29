@@ -192,11 +192,11 @@ static void keyboard_handler(registers_t* r)
         return;
 
     if(make)
-        for(element_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_DOWN, &key, sizeof(KEY_t));
     else
     {
-        for(element_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_UP, &key, sizeof(KEY_t));
         return;
     }
@@ -204,7 +204,7 @@ static void keyboard_handler(registers_t* r)
     // Find out ASCII representation of key. Issue events.
     char ascii = keyToASCII(key);
     if(ascii != 0)
-        for(element_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_TEXT_ENTERED, &ascii, sizeof(char));
 }
 

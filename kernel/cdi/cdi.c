@@ -12,8 +12,8 @@
 
 static cdi_list_t drivers = 0;
 
-extern struct cdi_driver* _start_cdi_drivers; // Declared in kernel.ld
-extern struct cdi_driver* _stop_cdi_drivers;  // Declared in kernel.ld
+extern struct cdi_driver* _cdi_start; // Declared in kernel.ld
+extern struct cdi_driver* _cdi_end;   // Declared in kernel.ld
 
 // Initialisiert alle PCI-Geraete
 static void cdi_tyndur_init_pci_devices(void)
@@ -107,8 +107,8 @@ void cdi_init()
     ///timer_sync_caches();
 
     // Alle in dieser Binary verfuegbaren Treiber aufsammeln
-    pdrv = &_start_cdi_drivers;
-    while (pdrv < &_stop_cdi_drivers)
+    pdrv = &_cdi_start;
+    while (pdrv < &_cdi_end)
     {
         drv = *pdrv;
         if (drv->init != 0)

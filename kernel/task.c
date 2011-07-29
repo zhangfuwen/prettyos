@@ -296,7 +296,7 @@ static void kill(task_t* task)
     #endif
 
     // Cleanup
-    list_delete(task->console->tasks, task);
+    list_delete(task->console->tasks, list_find(task->console->tasks, task));
     if(task->console->tasks->head == 0)
     {
         // Delete current task's console from list of our reachable consoles, if it is in that list
@@ -327,20 +327,20 @@ static void kill(task_t* task)
     // Inform the parent task that this task has exited
     if (task->type == THREAD)
     {
-        list_delete(task->parent->threads, task);
+        list_delete(task->parent->threads, list_find(task->parent->threads, task));
     }
 
     // Kill all child-threads of this task
     if (task->threads)
     {
-        for(element_t* e = task->threads->head; e != 0; e = e->next)
+        for(dlelement_t* e = task->threads->head; e != 0; e = e->next)
         {
             kill(e->data);
         }
         list_free(task->threads);
     }
 
-    list_delete(tasks, task);
+    list_delete(tasks, list_find(tasks, task));
     scheduler_deleteTask(task);
 
     #ifdef _TASKING_DIAGNOSIS_
@@ -372,7 +372,7 @@ static void kill(task_t* task)
 void task_kill(uint32_t pid)
 {
     // Find out task by looking for the pid in the tasks-list
-    for(element_t* e = tasks->head; e != 0; e = e->next)
+    for(dlelement_t* e = tasks->head; e != 0; e = e->next)
     {
         if(((task_t*)e->data)->pid == pid)
         {
@@ -416,7 +416,7 @@ void task_log(task_t* t)
     {
         printf("\n\t");
         printf("child-threads:");
-        for(element_t* e = t->threads->head; e != 0; e = e->next)
+        for(dlelement_t* e = t->threads->head; e != 0; e = e->next)
         {
             printf(" %u ", ((task_t*)e->data)->pid);
         }

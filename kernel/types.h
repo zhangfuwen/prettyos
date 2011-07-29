@@ -51,13 +51,5 @@ typedef enum
     STANDBY, SHUTDOWN, REBOOT
 } SYSTEM_CONTROL;
 
-// single-chained list and ring use this struct
-typedef struct element element_t;
-struct element
-{
-    void*      data;
-    element_t* next;
-};
-
 
 #endif

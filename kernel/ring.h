@@ -1,13 +1,20 @@
 #ifndef RING_H
 #define RING_H
 
-#include "list.h"
+#include "os.h"
 
+// single linked list element
+typedef struct slelement slelement_t;
+struct slelement
+{
+    void*        data;
+    slelement_t* next;
+};
 
 typedef struct
 {
-    element_t* begin;
-    element_t* current;
+    slelement_t* begin;
+    slelement_t* current;
 } ring_t;
 
 

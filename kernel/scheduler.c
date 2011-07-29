@@ -170,7 +170,7 @@ void scheduler_log()
         textColor(HEADLINE);
         printf("\nrunning tasks:");
         textColor(TEXT);
-        element_t* temp = runningTasks->begin;
+        slelement_t* temp = runningTasks->begin;
         do
         {
             task_log((task_t*)temp->data);
@@ -184,7 +184,7 @@ void scheduler_log()
         textColor(HEADLINE);
         printf("\nblocked tasks:");
         textColor(TEXT);
-        element_t* temp = blockedTasks->begin;
+        slelement_t* temp = blockedTasks->begin;
         do
         {
             task_log((task_t*)temp->data);

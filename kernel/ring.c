@@ -16,7 +16,7 @@ ring_t* ring_create()
     return(ring);
 }
 
-static void putIn(ring_t* ring, element_t* prev, element_t* elem)
+static void putIn(ring_t* ring, slelement_t* prev, slelement_t* elem)
 {
     ASSERT(ring);
     if(ring->begin == 0) // Ring is empty
@@ -32,7 +32,7 @@ static void putIn(ring_t* ring, element_t* prev, element_t* elem)
     }
 }
 
-static void takeOut(ring_t* ring, element_t* prev)
+static void takeOut(ring_t* ring, slelement_t* prev)
 {
     ASSERT(ring);
     if(prev->next == prev) // Just one element in ring
@@ -53,7 +53,7 @@ bool ring_insert(ring_t* ring, void* data, bool single)
     ASSERT(ring);
     if(single && ring->begin != 0) // check if an element with the same data is already in the ring
     {
-        element_t* current = ring->current;
+        slelement_t* current = ring->current;
         do
         {
             if(current->data == data)
@@ -63,7 +63,7 @@ bool ring_insert(ring_t* ring, void* data, bool single)
             current = current->next;
         } while (current != ring->current);
     }
-    element_t* item = malloc(sizeof(element_t), 0, "ring-element");
+    slelement_t* item = malloc(sizeof(slelement_t), 0, "ring-element");
     if (item)
     {
         item->data = data;
@@ -84,12 +84,12 @@ bool ring_deleteFirst(ring_t* ring, void* data)
     ASSERT(ring);
     if(ring->begin == 0) return(false);
 
-    element_t* current = ring->current;
+    slelement_t* current = ring->current;
     do
     {
         if (current->next->data == data) // next element will be deleted
         {
-            element_t* temp = current->next;
+            slelement_t* temp = current->next;
             takeOut(ring, current);
             free(temp);
             return(true);
@@ -104,8 +104,8 @@ void ring_move(ring_t* dest, ring_t* source, void* data)
 {
     if(source == 0 || dest == 0 || source->begin == 0) return;
 
-    element_t* prev = source->begin;
-    element_t* current = prev->next;
+    slelement_t* prev = source->begin;
+    slelement_t* current = prev->next;
     do
     {
         if(current->data == data) // Found. Take it out.

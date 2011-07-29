@@ -364,7 +364,7 @@ uint32_t irq_handler(uintptr_t esp)
     }
     else if(interrupts[r->int_no].handlerCount > 1) // More than one handler registered
     {
-        for(element_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // First loop: Try to find a PCI handler to call
+        for(dlelement_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // First loop: Try to find a PCI handler to call
         {
             irq_handler_t* handler = e->data;
             if(handler->type == IHT_PCI/* && pci_deviceSentInterrupt(handler->data.pciDev)*/) // TODO: Why does it not work? Bit 3 of the PCI status register is not set at interrupt on VBox and real hardwar
@@ -373,7 +373,7 @@ uint32_t irq_handler(uintptr_t esp)
                 //goto HANDLED; // Disabled, because pci_deviceSentInterrupt is disabled, too.
             }
         }
-        for(element_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // Second loop: Also accept default and CDI handlers. TODO: Move CDI handlers to first loop (check pci device for interrupt)
+        for(dlelement_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // Second loop: Also accept default and CDI handlers. TODO: Move CDI handlers to first loop (check pci device for interrupt)
         {
             irq_handler_t* handler = e->data;
             if(handler->type == IHT_DEFAULT)

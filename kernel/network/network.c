@@ -176,7 +176,7 @@ void network_displayArpTables()
     textColor(TEXT);
     printf("\n\nARP Cache:");
     uint8_t i = 0;
-    for (element_t* e = adapters->head; e != 0; e = e->next, i++)
+    for (dlelement_t* e = adapters->head; e != 0; e = e->next, i++)
     {
         printf("\n\nAdapter %u: %I", i, ((network_adapter_t*)e->data)->IP);
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
@@ -187,7 +187,7 @@ void network_displayArpTables()
 network_adapter_t* network_getAdapter(IP_t IP)
 {
     if(adapters == 0) return(0);
-    for(element_t* e = adapters->head; e != 0; e = e->next)
+    for(dlelement_t* e = adapters->head; e != 0; e = e->next)
     {
         network_adapter_t* adapter = e->data;
         if(adapter->IP.iIP == IP.iIP)

@@ -20,7 +20,7 @@ event_queue_t* event_createQueue()
 
 void event_deleteQueue(event_queue_t* queue)
 {
-    for(element_t* e = queue->list->head; e != 0; e = e->next)
+    for(dlelement_t* e = queue->list->head; e != 0; e = e->next)
     {
         free(((event_t*)e->data)->data);
         free(e->data);
@@ -96,7 +96,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     }
     else
     {
-        for(element_t* e = task->eventQueue->list->head; e != 0; e = e->next)
+        for(dlelement_t* e = task->eventQueue->list->head; e != 0; e = e->next)
         {
             ev = e->data;
             if(ev->type == filter)
@@ -131,7 +131,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
             memcpy(destination, &ev->data, ev->length);
     }
     task->eventQueue->num--;
-    list_delete(task->eventQueue->list, ev);
+    list_delete(task->eventQueue->list, list_find(task->eventQueue->list, ev));
     mutex_unlock(task->eventQueue->mutex);
     free(ev);
 
@@ -140,7 +140,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
 {
-    element_t* elem = list_getElement(eventQueue->list, i);
+    dlelement_t* elem = list_getElement(eventQueue->list, i);
     if(elem == 0) return(0);
     return(elem->data);
 }

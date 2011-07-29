@@ -33,14 +33,14 @@ void todoList_add(todoList_t* list, void (*function)(void*, size_t), void* data,
 
 void todoList_execute(todoList_t* list)
 {
-    for(element_t* e = list->queue->head; e != 0;)
+    for(dlelement_t* e = list->queue->head; e != 0;)
     {
         todoList_task_t* task = e->data;
         if(task->timeToExecute == 0 || task->timeToExecute < timer_getMilliseconds())
         {
             task->function(task->data, task->length);
             free(task->data);
-            e = list_delete(list->queue, task);
+            e = list_delete(list->queue, e);
         }
         else
             e = e->next;
