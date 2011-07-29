@@ -10,9 +10,23 @@ int main()
     printLine("================================================================================", 0, 0x0B);
     printLine("                     Pretty Browser - Network test program!",                      2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
-
+	
+	event_enable(true);
+    char buffer[4096];
+    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
+	
+	
+	
     iSetCursor(0, 7);
-    IP_t IP;
+	
+	textColor(0x0F);
+	printf("Enter the address (no subdirs yet!):\n");
+	char hostname[100];
+	gets(hostname);
+	
+    IP_t IP = resolveIP(hostname);
+	
+	/*
     char strIP[4][10];
     for (uint8_t i = 0; i<4; i++)
     {        
@@ -20,13 +34,12 @@ int main()
         IP.IP[i] = atoi(gets(strIP[i]));
     }
     printf("\n%u.%u.%u.%u\n", IP.IP[0],IP.IP[1],IP.IP[2],IP.IP[3]);
-    
+    */
+	
     uint32_t connection = tcp_connect(IP, 80);
     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
-
-    event_enable(true);
-    char buffer[4096];
-    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
+    
+    
     for(;;)
     {
         switch(ev)
@@ -39,13 +52,9 @@ int main()
                 printf("ESTABLISHED.\n");
                 
                 char pStr[200];
+				memset(pStr,0,200);
                 strcat(pStr,"GET / HTTP/1.1\r\nHost: ");
-                for (uint8_t i=0; i<3; i++)
-                {
-                    strcat(pStr,strIP[i]);
-                    strcat(pStr, ".");
-                }
-                strcat(pStr,strIP[3]);
+				strcat(pStr,hostname);
                 strcat(pStr,"\r\nConnection: close\r\n\r\n");
                 textColor(0x0A);
                 printf("%s",pStr);

@@ -155,11 +155,11 @@ static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t ti
 {
     todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
 
-  #ifdef _TCP_DEBUG_
+  //#ifdef _TCP_DEBUG_
     textColor(LIGHT_BLUE);
     printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
     textColor(TEXT);
-  #endif
+  //#endif
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter) // passive open  ==> LISTEN

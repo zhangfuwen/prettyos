@@ -7,6 +7,7 @@
 #include "string.h"
 #include "stdio.h"
 #include "ctype.h"
+#include "stdlib.h"
 
 bool enabledEvents = false;
 
@@ -453,6 +454,160 @@ void showInfo(uint8_t val)
         printLine(line3,45,0xE);
     }
 }
+
+
+IP_t stringToIP(char* str)
+{
+	IP_t IP;
+    for(uint8_t i_start = 0, i_end = 0, byte = 0; byte < 4; i_end++)
+    {
+        if(str[i_end] == 0)
+        {
+            IP.IP[byte] = atoi(str+i_start);
+            break;
+        }
+        if(str[i_end] == '.')
+        {
+            str[i_end] = 0;
+            IP.IP[byte] = atoi(str+i_start);
+            i_start = i_end+1;
+            byte++;
+        }
+    }
+	return(IP);
+}
+
+
+IP_t resolveIP(char* host) {
+	IP_t IP;
+	// 78.138.89.168 is www.fanofblitzbasic.de
+    IP.IP[0]=82;
+    IP.IP[1]=100;
+	IP.IP[2]=220;
+	IP.IP[3]=68;
+	
+	
+	event_enable(true);
+    char buffer[4096];
+    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
+	
+	
+	textColor(0x0F);
+	printf("Resolving DNS...\n");
+	uint32_t connection = tcp_connect(IP, 80);
+    printf(" => Connecting to DNS Server...", connection);
+	
+	
+	
+	for(;;)
+    {
+        switch(ev)
+        {
+            case EVENT_NONE:
+                waitForEvent(0);
+                break;
+            case EVENT_TCP_CONNECTED:
+            {
+                textColor(0x0A);
+				printf("OK\n");
+				textColor(0x0F);
+                
+				printf(" => Sending DNS Request...");
+                char pStr[200];
+				memset(pStr,0,200);
+                strcat(pStr,"GET /PrettyOS/resolve.php");
+				strcat(pStr,"?hostname=");
+				strcat(pStr,host);
+				strcat(pStr," HTTP/1.0\r\nHost: ");
+				strcat(pStr,"www.henkessoft.de");
+                strcat(pStr,"\r\nConnection: close\r\n\r\n");
+				
+                tcp_send(connection, pStr, strlen(pStr));
+				textColor(0x0A);
+				printf("OK\n");
+				textColor(0x0F);
+				
+				printf(" => Waiting for answer...");
+                break;
+            }
+            case EVENT_TCP_RECEIVED:
+            {
+				textColor(0x0A);
+				printf("OK\n");
+				textColor(0x0F);
+				
+                tcpReceivedEventHeader_t* header = (void*)buffer;
+                char* data = (void*)(header+1);
+                data[header->length] = 0;
+				
+				tcp_close(connection);
+				
+				printf(" => Interpreting data...");
+                //printf("\npacket received. Length = %u\n:%s", header->length, data);
+				
+				
+				void *deststring;
+				deststring=strstr(data,"\r\n\r\n");
+				
+				deststring=deststring+4;
+				printf("%s",deststring);
+				
+				char temp[300];
+				strcpy(temp,deststring);
+				
+				
+				IP_t resIP=stringToIP(temp);
+				
+				
+				textColor(0x0A);
+				printf("OK\n");
+				textColor(0x0F);
+				
+				printf("Resolved IP is: %s",temp);
+				printf("\n\n%d.%d.%d.%d\n\n",resIP.IP[0],resIP.IP[1],resIP.IP[2],resIP.IP[3]);
+				
+				
+				
+				return resIP;
+                break;
+            }
+			case EVENT_KEY_DOWN:
+            {
+                KEY_t* key = (void*)buffer;
+                if(*key == KEY_ESC)
+                {
+                    tcp_close(connection);
+                    IP_t noIP;
+					noIP.IP[0]=0;
+					noIP.IP[1]=0;
+					noIP.IP[2]=0;
+					noIP.IP[3]=0;
+					
+					
+					return noIP;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+        ev = event_poll(buffer, 4096, EVENT_NONE);
+    }
+	
+	tcp_close(connection);
+	
+	IP_t noIP;
+	noIP.IP[0]=0;
+	noIP.IP[1]=0;
+	noIP.IP[2]=0;
+	noIP.IP[3]=0;
+	
+	
+	return noIP;
+}
+
+
+
 
 
 

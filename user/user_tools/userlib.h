@@ -62,4 +62,8 @@ void  i2hex(uint32_t val, char* dest, uint32_t len);
 void showInfo(uint8_t val);
 
 
+IP_t resolveIP(char* host);
+IP_t stringToIP(char* str);
+
+
 #endif
