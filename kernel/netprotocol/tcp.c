@@ -210,6 +210,7 @@ void tcp_close(tcpConnection_t* connection)
         case SYN_RECEIVED:
             tcp_sendFin(connection);
             connection->TCP_CurrState = FIN_WAIT_1;
+            tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // TODO: Check if really necessary
             break;
 
         case CLOSE_WAIT:
@@ -634,6 +635,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 if(length-4*tcp->dataOffset > 0) // ACK with data
                 {
                     tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // if there will not come a FIN at FIN_WAIT_2
+                }
+                else
+                {
+                    tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // TODO: Check if really necessary
                 }
                 connection->TCP_CurrState = FIN_WAIT_2;
             }
