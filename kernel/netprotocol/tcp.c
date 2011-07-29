@@ -129,9 +129,10 @@ tcpConnection_t* tcp_createConnection()
 
 void tcp_deleteConnection(tcpConnection_t* connection)
 {
+    printf("\ndeleteConnection: %X ID: %u\n", connection, connection->ID);
     if (connection)
     {
-	    deleteProtection = connection->ID; // TEST
+	    deleteProtection = connection->ID; // prevents multiple delete
 		
         serial_log(1,"\r\n%u msec:\t tcp_deleteConnection", timer_getMilliseconds());
 
@@ -145,9 +146,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
         connection->OutofOrderinBuffer = 0;
         serial_log(1,"\r\nTCP conn.ID: %u <--- deleted, del countIN: %u del countOutofOrderIN: %u del countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
         list_delete(tcpConnections, list_find(tcpConnections, connection));
-        free(connection); 
-        connection = 0;		
-		deleteProtection = 0; // TEST
+        free(connection);         			
     }
     else
     {
@@ -159,6 +158,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 
 static void scheduledDeleteConnection(void* data, size_t length)
 {
+    printf("\nscheduledDeleteConnection: %X ID: %u\n", *(tcpConnection_t**)data, (*(tcpConnection_t**)data)->ID);
     if ( (*(tcpConnection_t**)data) && (deleteProtection != (*(tcpConnection_t**)data)->ID) )
 	{
 		tcp_deleteConnection(*(tcpConnection_t**)data);
