@@ -33,6 +33,7 @@ static const char* const tcpStates[] =
 
 static list_t*  tcpConnections   = 0;
 static uint32_t deleteProtection = 0;
+static uint32_t maxID            = 0;
 
 static bool     tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
 static uint16_t tcp_getFreeSocket();
@@ -129,7 +130,9 @@ tcpConnection_t* tcp_createConnection()
 
 void tcp_deleteConnection(tcpConnection_t* connection)
 {
+  #ifdef _TCP_DEBUG_
     printf("\ndeleteConnection: %X ID: %u\n", connection, connection->ID);
+  #endif
     if (connection)
     {
 	    deleteProtection = connection->ID; // prevents multiple delete
@@ -158,8 +161,11 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 
 static void scheduledDeleteConnection(void* data, size_t length)
 {
+  #ifdef _TCP_DEBUG_
     printf("\nscheduledDeleteConnection: %X ID: %u\n", *(tcpConnection_t**)data, (*(tcpConnection_t**)data)->ID);
-    if ( (*(tcpConnection_t**)data) && (deleteProtection != (*(tcpConnection_t**)data)->ID) )
+  #endif
+
+    if ( (*(tcpConnection_t**)data) && (deleteProtection != (*(tcpConnection_t**)data)->ID) &&  ((*(tcpConnection_t**)data)->ID <= maxID))
 	{
 		tcp_deleteConnection(*(tcpConnection_t**)data);
 	}
@@ -171,9 +177,11 @@ static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t ti
 	{
 		todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
 
-	    textColor(LIGHT_BLUE);
+	  #ifdef _TCP_DEBUG_
+        textColor(LIGHT_BLUE);
 		printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
 		textColor(TEXT);	 
+      #endif
 	}
 }
 
@@ -1065,18 +1073,14 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
 
 static uint16_t tcp_getFreeSocket()
 {
-    static bool flag = false;
-    if (flag==false)
-    {
-        srand(timer_getMilliseconds());
-        flag = true;
-    }
+    srand(timer_getMilliseconds());
     return ( 0xC000 + rand() % (0xFFFF-0xC000) );
 }
 
 static uint32_t tcp_getConnectionID()
 {
     static uint16_t ID = 1;
+    maxID = ID;
     return ID++;
 }
 
