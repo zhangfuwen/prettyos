@@ -32,8 +32,7 @@ static const char* const tcpStates[] =
 };
 
 static list_t*  tcpConnections   = 0;
-static uint32_t deleteProtection = 0;
-static uint32_t maxID            = 0;
+
 
 static bool     tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
 static uint16_t tcp_getFreeSocket();
@@ -135,8 +134,8 @@ void tcp_deleteConnection(tcpConnection_t* connection)
   #endif
     if (connection)
     {
-	    deleteProtection = connection->ID; // prevents multiple delete
-		
+        list_delete(tcpConnections, list_find(tcpConnections, connection));
+
         serial_log(1,"\r\n%u msec:\t tcp_deleteConnection", timer_getMilliseconds());
 
         connection->TCP_PrevState = connection->TCP_CurrState;
@@ -148,41 +147,35 @@ void tcp_deleteConnection(tcpConnection_t* connection)
         uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
         connection->OutofOrderinBuffer = 0;
         serial_log(1,"\r\nTCP conn.ID: %u <--- deleted, del countIN: %u del countOutofOrderIN: %u del countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
-        list_delete(tcpConnections, list_find(tcpConnections, connection));
-        free(connection);         			
-    }
-    else
-    {
-        textColor(ERROR);
-        printf("\nThis connection is not present, and cannot be deleted.\n");
-        textColor(TEXT);
+        free(connection);
     }
 }
 
 static void scheduledDeleteConnection(void* data, size_t length)
 {
+    tcpConnection_t* connection = *(tcpConnection_t**)data;
   #ifdef _TCP_DEBUG_
-    printf("\nscheduledDeleteConnection: %X ID: %u\n", *(tcpConnection_t**)data, (*(tcpConnection_t**)data)->ID);
+    printf("\nscheduledDeleteConnection: %X ID: %u\n", connection, connection->ID);
   #endif
 
-    if ( (*(tcpConnection_t**)data) && (deleteProtection != (*(tcpConnection_t**)data)->ID) &&  ((*(tcpConnection_t**)data)->ID <= maxID))
-	{
-		tcp_deleteConnection(*(tcpConnection_t**)data);
-	}
+    if (connection && list_find(tcpConnections, connection) != 0)
+    {
+        tcp_deleteConnection(connection);
+    }
 }
 
 static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t timeMilliseconds)
 {
     if (connection)
-	{
-		todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
+    {
+        todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
 
-	  #ifdef _TCP_DEBUG_
+      #ifdef _TCP_DEBUG_
         textColor(LIGHT_BLUE);
-		printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
-		textColor(TEXT);	 
+        printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
+        textColor(TEXT);
       #endif
-	}
+    }
 }
 
 void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter) // passive open  ==> LISTEN
@@ -201,7 +194,7 @@ void tcp_bind(tcpConnection_t* connection, struct network_adapter* adapter) // p
 void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
 {
     connection->TCP_PrevState = connection->TCP_CurrState;
-    connection->localSocket.port = tcp_getFreeSocket(); // with srand(...)
+    connection->localSocket.port = tcp_getFreeSocket();
     connection->passive = false;
 
     if (connection->TCP_PrevState == CLOSED || connection->TCP_PrevState == LISTEN || connection->TCP_PrevState == TIME_WAIT)
@@ -226,37 +219,38 @@ void tcp_connect(tcpConnection_t* connection) // active open  ==> SYN-SENT
 void tcp_close(tcpConnection_t* connection)
 {
     if (connection)
-	{
-		connection->TCP_PrevState = connection->TCP_CurrState;
+    {
+        connection->TCP_PrevState = connection->TCP_CurrState;
 
-		switch (connection->TCP_PrevState)
-		{
-			case ESTABLISHED:
-			case SYN_RECEIVED:
-				tcp_sendFin(connection);
-				connection->TCP_CurrState = FIN_WAIT_1;
-				tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // TODO: Check if really necessary
-				break;
+        switch (connection->TCP_PrevState)
+        {
+            case ESTABLISHED:
+            case SYN_RECEIVED:
+                tcp_sendFin(connection);
+                connection->TCP_CurrState = FIN_WAIT_1;
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
+                break;
 
-			case CLOSE_WAIT:
-				tcp_sendFin(connection);
-				connection->TCP_CurrState = LAST_ACK;
-				tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
-				break;
+            case CLOSE_WAIT:
+                tcp_sendFin(connection);
+                connection->TCP_CurrState = LAST_ACK;
+                tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
+                break;
 
-			case SYN_SENT:
-			case LISTEN:
-				connection->TCP_CurrState = CLOSED;
-				tcp_deleteConnection(connection);
-				break;
+            case SYN_SENT:
+            case LISTEN:
+                connection->TCP_CurrState = CLOSED;
+                tcp_deleteConnection(connection);
+                break;
 
-			default:
-				textColor(ERROR);
-				printf("\nClose from unexpected state: %s", tcpStates[connection->TCP_PrevState]);
-				textColor(TEXT);
-				break;
-		}
-	}
+            default:
+                textColor(ERROR);
+                printf("\nClose from unexpected state: %s", tcpStates[connection->TCP_PrevState]);
+                textColor(TEXT);
+                tcp_deleteConnection(connection);
+                break;
+        }
+    }
 }
 
 // This function has to be checked intensively!!!
@@ -369,8 +363,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER *************************
         case ESTABLISHED:
         {
-            char*    tcpData       = (char*)( (uintptr_t)tcp + 4 * tcp->dataOffset ); // dataOffset is given as number of DWORDs
-            uint32_t tcpDataLength = length - (4 * tcp->dataOffset);
+            char*    tcpData       = (char*)tcp + 4 * tcp->dataOffset; // dataOffset is given as number of DWORDs
+            uint32_t tcpDataLength = length - 4 * tcp->dataOffset;
 
             if (!tcp_IsPacketAcceptable(tcp, connection, tcpDataLength))
             {
@@ -384,11 +378,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 {
                     return;
                 }
-                else
-                {
-                    tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
-                    break;
-                }
+
+                tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
+                break;
             }
 
             if (tcp->RST || tcp->SYN) // RST or SYN
@@ -408,11 +400,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                      connection->TCP_CurrState = CLOSE_WAIT;
                      break;
                 }
-                else
-                {
-                    return;
-                }
 
+                return;
             }
             else // ACK
             {
@@ -662,10 +651,6 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 {
                     tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // if there will not come a FIN at FIN_WAIT_2
                 }
-                else
-                {
-                    tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl); // TODO: Check if really necessary
-                }
                 connection->TCP_CurrState = FIN_WAIT_2;
             }
             break;
@@ -710,14 +695,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             break;
 
         case CLOSED:
-            if (tcp->ACK) // ACK
-            {
-                tcp_sendReset(connection, tcp, true, length);
-            }
-            else
-            {
-                tcp_sendReset(connection, tcp, false, length);
-            }
+            tcp_sendReset(connection, tcp, tcp->ACK, length);
+            break;
 
         default: // only for test reasons
             textColor(ERROR);
@@ -884,18 +863,18 @@ static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection, list_t* list)
 {
     uint32_t count = 0;
     if (connection)
-	{
-		tcp_logBuffers(connection, false, list); // --> COM1
-		serial_log(1,"\r\ntcp_deleteInBuffers");
-		
-		for (dlelement_t* e = list->head; e != 0; e = e->next)
-		{
-			count++;
-			tcpIn_t* inPacket = e->data;
-			free(inPacket->ev);
-			free(inPacket);
-		}
-		list_free(list);
+    {
+        tcp_logBuffers(connection, false, list); // --> COM1
+        serial_log(1,"\r\ntcp_deleteInBuffers");
+
+        for (dlelement_t* e = list->head; e != 0; e = e->next)
+        {
+            count++;
+            tcpIn_t* inPacket = e->data;
+            free(inPacket->ev);
+            free(inPacket);
+        }
+        list_free(list);
     }
     return count;
 }
@@ -904,19 +883,19 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
 {
     uint32_t count = 0;
     if (connection)
-	{
-		serial_log(1,"\r\ntcp_deleteOutBuffers");
-		
-		for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
-		{
-			count++;
-			tcpOut_t* outPacket = e->data;
-			free(outPacket->data);
-			free(outPacket);
-		}
-		list_free(connection->outBuffer);
-		connection->outBuffer = 0;
-	}
+    {
+        serial_log(1,"\r\ntcp_deleteOutBuffers");
+
+        for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
+        {
+            count++;
+            tcpOut_t* outPacket = e->data;
+            free(outPacket->data);
+            free(outPacket);
+        }
+        list_free(connection->outBuffer);
+        connection->outBuffer = 0;
+    }
     return count;
 }
 
@@ -1073,14 +1052,12 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
 
 static uint16_t tcp_getFreeSocket()
 {
-    srand(timer_getMilliseconds());
-    return ( 0xC000 + rand() % (0xFFFF-0xC000) );
+    return(0xC000 + rand() % (0xFFFF-0xC000));
 }
 
 static uint32_t tcp_getConnectionID()
 {
     static uint16_t ID = 1;
-    maxID = ID;
     return ID++;
 }
 

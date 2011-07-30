@@ -86,29 +86,6 @@ bool network_installDevice(pciDev_t* device)
             adapter->IO_base = device->bar[j].baseAddress &= 0xFFFC;
     }
 
-    // Input makes #PF at some computers (gets is source of error #PF)
-    /*
-    printf("\nPlease type in your IP address: ");
-    char temp[30];
-    memset(temp, 0, 30);
-    gets(temp);
-    for(uint8_t i_start = 0, i_end = 0, byte = 0; i_end < 30 && byte < 4; i_end++)
-    {
-        if(temp[i_end] == 0)
-        {
-            adapter->IP[byte] = atoi(temp+i_start);
-            break;
-        }
-        if(temp[i_end] == '.')
-        {
-            temp[i_end] = 0;
-            adapter->IP[byte] = atoi(temp+i_start);
-            i_start = i_end+1;
-            byte++;
-        }
-    }
-    */
-    // Workaround: TODO
     adapter->IP.IP[0] =  IP_1;
     adapter->IP.IP[1] =  IP_2;
     adapter->IP.IP[2] =  IP_3;

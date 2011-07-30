@@ -9,6 +9,7 @@
 
 // Internal devices
 #include "cpu.h"                // cpu_analyze
+#include "cmos.h"               // cmos_read
 #include "timer.h"              // timer_install, timer_getSeconds, sleepMilliSeconds
 #include "time.h"               // getCurrentDateAndTime
 #include "descriptor_tables.h"  // idt_install, gdt_install
@@ -36,7 +37,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.258 - Rev: 1106";
+const char* const version = "0.0.2.259 - Rev: 1107";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -170,6 +171,7 @@ static void showMemorySize()
 void main(multiboot_t* mb_struct)
 {
     init(mb_struct);
+    srand(cmos_read(0x00));
 
     scheduler_insertTask(create_cthread(&bootscreen, "Booting ..."));
 
