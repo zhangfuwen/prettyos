@@ -25,10 +25,12 @@ static const uint16_t MAXWINDOW      = 10000;
 
 static const uint16_t MSL            =  5000; // 5 sec max. segment lifetime  // CHECK
 static const uint16_t RTO_STARTVALUE =  3000; // 3 sec // rfc 2988
+static const uint16_t MSS            =  1500 - sizeof(ipv4Packet_t) - sizeof(tcpPacket_t); // Maximum segment size
 
 static const char* const tcpStates[] =
 {
-    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
+    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", 
+    "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
 };
 
 static list_t*  tcpConnections   = 0;
@@ -108,6 +110,7 @@ tcpConnection_t* tcp_createConnection()
     connection->inBuffer           = list_create();
     connection->OutofOrderinBuffer = list_create();
     connection->outBuffer          = list_create();
+    connection->sendBuffer         = list_create();
     connection->owner              = (void*)currentTask;
     connection->ID                 = tcp_getConnectionID();
     connection->TCP_PrevState      = CLOSED;
@@ -142,6 +145,9 @@ void tcp_deleteConnection(tcpConnection_t* connection)
         connection->TCP_CurrState = CLOSED;
 
         uint32_t countOUT = tcp_deleteOutBuffers(connection); // free
+        
+        list_free(connection->sendBuffer); // CHECK INPUT TO BE SENT
+        
         uint32_t countIN  = tcp_deleteInBuffers (connection, connection->inBuffer); // free
         connection->inBuffer = 0;
         uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
@@ -1199,8 +1205,20 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
         return false;
     }
 
-    connection->tcb.SEG.CTL = ACK_FLAG;
-    tcp_send(connection, data, length);
+    if (length <= MSS && length <= connection->tcb.RCV.WND && list_isEmpty(connection->sendBuffer))
+    {
+        connection->tcb.SEG.CTL = ACK_FLAG;
+        tcp_send(connection, data, length);
+    }
+    else
+    {
+        // segment data 
+        textColor(ERROR);
+        printf("user application data packet to be sent must be segmented first.\n");
+        textColor(TEXT);
+
+        /// TODO: take segment <= min(MSS,connection->tcb.RCV.WND) and shuffle rest to sendBuffer
+    }
 
     // send to outBuffer
     tcpOut_t* outPacket = malloc(sizeof(tcpOut_t), 0, "tcp_OutBuffer");

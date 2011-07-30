@@ -92,7 +92,8 @@ typedef struct
     list_t*                       inBuffer;
     list_t*                       OutofOrderinBuffer;
     list_t*                       outBuffer;
-    bool passive; // Used to enable output of incoming packets in the kernel console
+    list_t*                       sendBuffer;
+    bool                          passive; // Used to enable output of incoming packets in the kernel console
 } tcpConnection_t;
 
 typedef struct

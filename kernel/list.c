@@ -147,6 +147,10 @@ dlelement_t* list_find(list_t* list, void* data)
     return(cur);
 }
 
+bool list_isEmpty(list_t* list)
+{
+    return (list->head == 0);
+}
 
 /*
 * Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
