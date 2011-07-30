@@ -1105,13 +1105,15 @@ double sqrt(double x)
 }
 
 static uint32_t seed = 0;
+
 void srand(uint32_t val)
 {
     seed = val;
 }
+
 uint32_t rand()
-{
-    return (((seed *= 214013L + 2531011L) >> 16) & 0x7FFF);
+{    
+    return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7FFF);
 }
 
 
