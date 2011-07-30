@@ -115,6 +115,12 @@ typedef struct
     uint32_t     time_ms_transmitted;
 } tcpOut_t;
 
+typedef struct
+{
+    void*  data;
+    size_t length;
+} tcpSendBufferPacket;
+
 
 tcpConnection_t* tcp_createConnection();
 void tcp_deleteConnection(tcpConnection_t* connection);

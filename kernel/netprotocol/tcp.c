@@ -1210,14 +1210,37 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
         connection->tcb.SEG.CTL = ACK_FLAG;
         tcp_send(connection, data, length);
     }
-    else
+    else // we cannot send directly and have to handle sendBuffer
     {
-        // segment data 
-        textColor(ERROR);
-        printf("user application data packet to be sent must be segmented first.\n");
-        textColor(TEXT);
-
-        /// TODO: take segment <= min(MSS,connection->tcb.RCV.WND) and shuffle rest to sendBuffer
+        if (!list_isEmpty(connection->sendBuffer)) // sendBuffer is not empty
+        {
+            if (((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length <= MSS && 
+                ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length <= connection->tcb.RCV.WND)
+            {
+                connection->tcb.SEG.CTL = ACK_FLAG;
+                tcp_send(connection, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, 
+                                     ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length);
+                list_delete(connection->sendBuffer,connection->sendBuffer->head);
+            }
+            else
+            {
+                // first element in sendBuffer is too large
+                size_t sendSize = min(MSS, connection->tcb.RCV.WND);
+                tcpSendBufferPacket* packet = malloc(((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize, 0, "tcpSendBufPkt"); // new size w/o sendSize
+                memcpy(packet->data, (void*)(uintptr_t)((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->data + sendSize, ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize);
+                tcp_send(connection, ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->data, sendSize);
+                free(connection->sendBuffer->head->data);
+                connection->sendBuffer->head->data = packet;                
+            }
+        }
+        else // sendBuffer is empty
+        {
+            size_t sendSize = min(MSS, connection->tcb.RCV.WND);
+            tcpSendBufferPacket* packet = malloc(length - sendSize, 0, "tcpSendBufPkt");
+            memcpy(packet->data, (void*)(uintptr_t)data + sendSize, length - sendSize);
+            tcp_send(connection, data, sendSize);
+            list_append(connection->sendBuffer, packet);
+        }
     }
 
     // send to outBuffer
