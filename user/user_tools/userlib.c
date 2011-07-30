@@ -540,7 +540,6 @@ IP_t resolveIP(const char* host)
                 deststring=strstr(data,"\r\n\r\n");
 
                 deststring=deststring+4;
-                puts(deststring);
 
                 char temp[300];
                 strcpy(temp,deststring);
@@ -553,8 +552,8 @@ IP_t resolveIP(const char* host)
                 printf("OK\n");
                 textColor(0x0F);
 
-                printf("Resolved IP is: %s",temp);
-                printf("\n\n%u.%u.%u.%u\n\n",resIP.IP[0],resIP.IP[1],resIP.IP[2],resIP.IP[3]);
+                printf("\nResolved IP is:\n",temp);
+                printf("%u.%u.%u.%u\n\n",resIP.IP[0],resIP.IP[1],resIP.IP[2],resIP.IP[3]);
 
                 return resIP;
             }

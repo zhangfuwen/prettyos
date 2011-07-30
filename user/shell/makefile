@@ -59,6 +59,7 @@ $(TARGET): $(TARGETOBJ) $(PRETTYLIB) $(STDLIBCA)
 	$(STRIP) $(TARGET)
 
 clean:
+	$(RM) *.ELF
 ifeq ($(OS),WINDOWS)
 	$(RM) $(OBJDIR)\*.o
 else

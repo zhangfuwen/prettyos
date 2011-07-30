@@ -255,7 +255,14 @@ int main()
 EVALUATION: // evaluation of entry
         if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
-            puts("Implemented Instructions: hi, help, ?, fdir, format and reboot\n");
+            puts("Implemented Instructions:\n");
+			puts("hi        => Displays a message\n");
+			puts("help, ?   => Displays this helptext\n");
+			puts("fdir      => Displays floppy contents\n");
+			puts("format    => Formats a partition\n");
+			puts("reboot    => Reboots the system\n");
+			puts("standby   => Puts the system to standby\n");
+			puts("shutdown  => Shuts down the system\n");
         }
         else if(strcmp(entry, "hi") == 0)
         {
