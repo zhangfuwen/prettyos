@@ -84,13 +84,20 @@ void panic_assert(const char* file, uint32_t line, const char* desc)
 
 /**********************************************************************/
 
-void memshow(const void* start, size_t count)
+void memshow(const void* start, size_t count, bool alpha)
 {
     for (size_t i = 0; i < count; i++)
     {
-        if(i%16 == 0)
-            putch('\n');
-        printf("%y ", ((uint8_t*)start)[i]);
+        if (alpha)
+        {
+            printf("%c", ((uint8_t*)start)[i]);
+        }
+        else
+        {
+            if(i%16 == 0)
+                putch('\n');
+            printf("%y ", ((uint8_t*)start)[i]);
+        }
     }
 }
 

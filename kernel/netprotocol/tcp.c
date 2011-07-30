@@ -1214,23 +1214,35 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
     {
         if (!list_isEmpty(connection->sendBuffer)) // sendBuffer is not empty
         {
-            if (((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length <= MSS && 
+            //printf("\nsendBuffer is not empty.");
+            if (((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length <= MSS &&
                 ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length <= connection->tcb.RCV.WND)
             {
+                //printf("\nsendBufferPaket is suitable.");
+                //printf("\ndata: %X len: %u\n", ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length);
+                //memshow(             ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length, true);
+                
                 connection->tcb.SEG.CTL = ACK_FLAG;
-                tcp_send(connection, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, 
-                                     ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length);
+                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
+                tcp_send(connection, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length);
+                
                 list_delete(connection->sendBuffer,connection->sendBuffer->head);
             }
             else
             {
                 // first element in sendBuffer is too large
+                
+                //printf("\nsendBufferPaket is not suitable.");
                 size_t sendSize = min(MSS, connection->tcb.RCV.WND);
                 tcpSendBufferPacket* packet = malloc(sizeof(tcpSendBufferPacket),0,"tcpSendBufPkt");
                 packet->data   = malloc(((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize, 0, "tcpSendBufPkt"); // new size w/o sendSize
                 packet->length = ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize;
-                memcpy(packet->data, (void*)(uintptr_t)((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->data + sendSize, ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize);
+                memcpy(packet->data, (void*)(((uintptr_t)((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->data) + sendSize), ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize);
+                
+                connection->tcb.SEG.CTL = ACK_FLAG;
+                connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
                 tcp_send(connection, ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->data, sendSize);
+                
                 free(((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data);
                 free(connection->sendBuffer->head->data);
                 connection->sendBuffer->head->data = packet;                
@@ -1238,12 +1250,17 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
         }
         else // sendBuffer is empty
         {
+            //printf("sendBuffer is empty.\n");
             size_t sendSize = min(MSS, connection->tcb.RCV.WND);
             tcpSendBufferPacket* packet = malloc(sizeof(tcpSendBufferPacket),0,"tcpSendBufPkt");
             packet->data   = malloc(length - sendSize, 0, "tcpSendBufPkt");
             packet->length = length - sendSize;
-            memcpy(packet->data, (void*)(uintptr_t)data + sendSize, length - sendSize);
+            memcpy(packet->data, (void*)((uintptr_t)data + sendSize), length - sendSize);
+            
+            connection->tcb.SEG.CTL = ACK_FLAG;
+            connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
             tcp_send(connection, data, sendSize);
+            
             list_append(connection->sendBuffer, packet);
         }
     }
