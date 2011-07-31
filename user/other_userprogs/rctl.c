@@ -9,7 +9,7 @@
  Pretty RemoteControl (PrettyControl)
  by Christian F. Coors (Cuervo)
  
- Created 30.07.2011, 31.07.2011; Rev. 83
+ Created 30.07.2011, 31.07.2011; Rev. 84
  
  
  If you want to optimize the code, please do not change the
