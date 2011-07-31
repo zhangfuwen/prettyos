@@ -8,6 +8,7 @@
 #include "memory.h"
 #include "video/console.h"
 #include "paging.h"
+#include "serial.h"
 
 /*
    The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory.
@@ -342,38 +343,26 @@ void free(void* addr)
 
     textColor(ERROR);
     printf("Broken free: %Xh\n", addr);
-    textColor(TEXT);
-    //ASSERT(false);
+    textColor(TEXT);    
 }
 
 void heap_logRegions()
 {
-    textColor(YELLOW);
-    printf("\n\n---------------- HEAP REGIONS ----------------");
-    printf("\naddress\t\tsize\t\tnumber\tcomment");
-    textColor(DATA);
+    printf("\nDebug: Heap regions sent to serial output.\n");
+    serial_log(1,"\r\n\r\n---------------- HEAP REGIONS ----------------\r\n");
+    serial_log(1,"address\t\tsize\t\tnumber\tcomment");
+    
     uintptr_t regionAddress = (uintptr_t)heapStart;
-    uint8_t lineCounter = 0;
+    
     for (uint32_t i=0; i<regionCount; i++)
     {
         if (regions[i].reserved)
         {
-            printf("\n%Xh\t%Xh\t%u\t%s",
-                    regionAddress,
-                    regions[i].size,
-                    regions[i].number,
-                    regions[i].comment);
-            lineCounter++;
-            if (lineCounter >= 35)
-            {
-                waitForKeyStroke();
-                textColor(DATA);
-                lineCounter = 0;
-            }
+            serial_log(1,"\r\n%Xh\t%Xh\t%u\t%s", regionAddress, regions[i].size, regions[i].number, regions[i].comment);            
         }
         regionAddress += regions[i].size;
     }
-    textColor(TEXT);
+    serial_log(1,"\r\n---------------- HEAP REGIONS ----------------\r\n\r\n");    
 }
 
 /*
