@@ -74,6 +74,23 @@
 #define RTL8139_RX_FRAME_ALIGN      0x00000002    // Frame alignment error
 #define RTL8139_RX_STATUS_OK        0x00000001    // Status ok: a good packet was received
 
+// RTL8139C receive config register bits (offset 0x44 - 0x47)
+#define RTL8139_RCR_ACCEPT_ALL_PACKAGES    0x00000001
+#define RTL8139_RCR_ACCEPT_PHYSICAL_MATCH  0x00000002
+#define RTL8139_RCR_ACCEPT_MULTICAST       0x00000004
+#define RTL8139_RCR_ACCEPT_BROADCAST       0x00000008
+#define RTL8139_RCR_ACCEPT_RUNT            0x00000010
+#define RTL8139_RCR_ACCEPT_ERROR_PACKET    0x00000020
+#define RTL8139_RCR_WRAP                   0x00000080
+#define RTL8139_RCR_DMA_BURST_1024         0x00000600 // bit 10,9
+#define RTL8139_RCR_MAX_DMA_BURST          0x00000700 // bit 10,9,8
+#define RTL8139_RCR_BUFFERLEN_8K           0x00000000
+#define RTL8139_RCR_BUFFERLEN_16K          0x00000800
+#define RTL8139_RCR_BUFFERLEN_32K          0x00001000
+#define RTL8139_RCR_BUFFERLEN_64K          0x00001800
+#define RTL8139_RCR_NO_RX_TRESHOLD         0x00380000
+#define RTL8139_RCR_ERTH_1_16              0x01000000
+
 
 typedef struct
 {
