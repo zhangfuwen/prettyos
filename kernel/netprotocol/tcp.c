@@ -24,7 +24,8 @@ static const uint16_t DECWINDOW      =   100;
 static const uint16_t MAXWINDOW      = 10000;
 
 static const uint16_t MSL            =  5000; // 5 sec max. segment lifetime  // CHECK
-static const uint16_t RTO_STARTVALUE =  3000; // 3 sec // rfc 2988
+static const uint16_t RTO_STARTVALUE =  3000; // 3 sec  // rfc 2988
+static const uint16_t RTO_MAXVALUE   = 60000; // 60 sec // a maximum value MAY be placed on RTO provided it is at least 60 seconds.
 static const uint16_t MSS            =  1500 - sizeof(ipv4Packet_t) - sizeof(tcpPacket_t); // Maximum segment size
 
 static const char* const tcpStates[] =
@@ -148,11 +149,15 @@ void tcp_deleteConnection(tcpConnection_t* connection)
         
         list_free(connection->sendBuffer); // CHECK INPUT TO BE SENT
         
+        serial_log(1,"\r\nInBuffers to be deleted:");
         uint32_t countIN  = tcp_deleteInBuffers (connection, connection->inBuffer); // free
         connection->inBuffer = 0;
+        
+        serial_log(1,"\r\nOutofOrderInBuffers to be deleted:");
         uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
         connection->OutofOrderinBuffer = 0;
-        serial_log(1,"\r\nID %u deleted, del countIN: %u del countOutofOrderIN: %u del countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
+
+        serial_log(1,"\r\nDeleted ID %u, countIN: %u, countOutofOrderIN: %u, countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
         free(connection);
     }
 }
@@ -870,10 +875,9 @@ static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection, list_t* list)
 {
     uint32_t count = 0;
     if (connection)
-    {
+    {        
         tcp_logBuffers(connection, false, list); // --> COM1
-        serial_log(1,"\r\ntcp_deleteInBuffers");
-
+        
         for (dlelement_t* e = list->head; e != 0; e = e->next)
         {
             count++;
@@ -928,7 +932,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
             outPacket->time_ms_transmitted = timer_getMilliseconds();
             connection->tcb.retrans = false;
             connection->tcb.RCV.dACK = 0;
-            connection->tcb.rto = min(2*connection->tcb.rto, 60000);
+            connection->tcb.rto = min(2*connection->tcb.rto, RTO_MAXVALUE);
             return true;
         }
     }
@@ -951,9 +955,9 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
     for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
     {
         count++;
+        //tcpOut_t* outPacket = e->data;
 
      #ifdef _TCP_DEBUG_
-        tcpOut_t* outPacket = e->data;
         printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->segment.LEN);
         if (showData)
         {
@@ -967,12 +971,11 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
         }
       #endif
 
-        /*
         // check need for retransmission
-        if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > connection->tcb.rto)
+        /*
+        if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > 2*connection->tcb.rto)
         {
-            textColor(LIGHT_BLUE);
-            printf("\nrto (%u ms) triggered retransmission done for seq=%u.", connection->tcb.rto, outPacket->segment.SEQ - connection->tcb.SND.ISS);
+            serial_log(1,"\r\nrto (%u ms) triggered retransmission done for seq=%u.\r\n", connection->tcb.rto, outPacket->segment.SEQ - connection->tcb.SND.ISS);
             connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
             connection->tcb.SEG.ACK =  outPacket->segment.ACK;
             connection->tcb.SEG.LEN =  outPacket->segment.LEN;
@@ -981,8 +984,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
             tcp_send(connection, outPacket->data, connection->tcb.SEG.LEN);
             outPacket->time_ms_transmitted = timer_getMilliseconds();
             connection->tcb.retrans = false;
-            connection->tcb.rto = min(2*connection->tcb.rto, 60000);
-            textColor(TEXT);
+            connection->tcb.rto = min(2*connection->tcb.rto, RTO_MAXVALUE);            
         }
         else
         {
@@ -990,7 +992,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
           #ifdef _TCP_DEBUG_
             printf("\nWe are still waiting for the ACK");
           #endif
-        }
+        } 
         */
     }
     return count;
@@ -1053,8 +1055,7 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
     connection->tcb.rto = max( connection->tcb.srtt + /* max( 1000/timer_getFrequency(), */ 4 * connection->tcb.rttvar /* ) */, 1000);
 
     // A maximum value MAY be placed on RTO provided it is at least 60 seconds.
-    if (connection->tcb.rto > 60000)
-        connection->tcb.rto = 60000;
+    connection->tcb.rto = min(connection->tcb.rto, RTO_MAXVALUE);    
 }
 
 static uint16_t tcp_getFreeSocket()
@@ -1130,8 +1131,7 @@ static void tcpShowConnectionStatus(tcpConnection_t* connection)
 
 static uint32_t tcp_logBuffers(tcpConnection_t* connection, bool showData, list_t* list)
 {
-    serial_log(1,"\r\n------------------------------------\r\n");
-    serial_log(1,"tcp_logBuffers:\r\n");
+    serial_log(1,"\r\n------------------------------------");
     uint32_t count = 0;
     for (dlelement_t* e = list->head; e != 0; e = e->next)
     {
@@ -1230,14 +1230,9 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
         {
             if (!list_isEmpty(connection->sendBuffer)) // sendBuffer is not empty
             {
-                //printf("\nsendBuffer is not empty.");
                 if (((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length <= MSS &&
                     ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length <= connection->tcb.RCV.WND)
                 {
-                    //printf("\nsendBufferPaket is suitable.");
-                    //printf("\ndata: %X len: %u\n", ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length);
-                    //memshow(((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length, true);
-                
                     connection->tcb.SEG.CTL = ACK_FLAG;
                     connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
                     tcp_send(connection, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length);
@@ -1247,8 +1242,6 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
                 else
                 {
                     // first element in sendBuffer is too large
-                
-                    //printf("\nsendBufferPaket is not suitable.");
                     size_t sendSize = min(MSS, connection->tcb.RCV.WND);
                     tcpSendBufferPacket* packet = malloc(sizeof(tcpSendBufferPacket),0,"tcpSendBufPkt");
                     packet->data   = malloc(((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize, 0, "tcpSendBufPkt"); // new size w/o sendSize
@@ -1266,7 +1259,6 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
             }
             else // sendBuffer is empty
             {
-                //printf("sendBuffer is empty.\n");
                 size_t sendSize = min(MSS, connection->tcb.RCV.WND);
                 tcpSendBufferPacket* packet = malloc(sizeof(tcpSendBufferPacket),0,"tcpSendBufPkt");
                 packet->data   = malloc(length - sendSize, 0, "tcpSendBufPkt");
