@@ -47,7 +47,7 @@ void setupDescriptors(RTL8168_networkAdapter_t* rAdapter)
     printf("\nDescriptors are set up.");
 }
 
-void install_RTL8168(network_adapter_t* adapter)
+void rtl8168_install(network_adapter_t* adapter)
 {
     RTL8168_networkAdapter_t* rAdapter = malloc(sizeof(RTL8168_networkAdapter_t), 0, "RTL8168");
     adapter->data = rAdapter;

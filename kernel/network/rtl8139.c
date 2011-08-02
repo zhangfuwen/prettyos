@@ -56,7 +56,7 @@ void rtl8139_handler(registers_t* data, pciDev_t* device)
     }
 }
 
-void install_RTL8139(network_adapter_t* adapter)
+void rtl8139_install(network_adapter_t* adapter)
 {
     RTL8139_networkAdapter_t* rAdapter = malloc(sizeof(RTL8139_networkAdapter_t), 0, "RTL8139");
     rAdapter->device                   = adapter;

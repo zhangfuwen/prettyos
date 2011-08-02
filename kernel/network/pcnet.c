@@ -41,7 +41,7 @@ static uint16_t readCSR(network_adapter_t* adapter, uint8_t csr)
     return inportw(adapter->IO_base+RDP);  // Read value from CSR register
 }
 
-void install_AMDPCnet(network_adapter_t* adapter)
+void AMDPCnet_install(network_adapter_t* adapter)
 {
     PCNet_card* pAdapter = malloc(sizeof(PCNet_card), 16, "PCNet_card");
     pAdapter->initialized = false;

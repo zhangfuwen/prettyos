@@ -341,6 +341,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             if (!tcp->SYN && !tcp->FIN && tcp->ACK) // ACK
             {
                 connection->TCP_CurrState = ESTABLISHED;
+                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
                 event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
             }
             break;

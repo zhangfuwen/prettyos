@@ -23,9 +23,9 @@ typedef enum
 
 static network_driver_t drivers[ND_COUNT] =
 {
-    {.install = &install_RTL8139, .interruptHandler = &rtl8139_handler, .sendPacket = &rtl8139_send},
-    {.install = &install_RTL8168, .interruptHandler = &rtl8168_handler, .sendPacket = 0},
-    {.install = &install_AMDPCnet, .interruptHandler = &PCNet_handler, .sendPacket = &PCNet_send}
+    {.install = &rtl8139_install,  .interruptHandler = &rtl8139_handler, .sendPacket = &rtl8139_send},
+    {.install = &rtl8168_install,  .interruptHandler = &rtl8168_handler, .sendPacket = 0},
+    {.install = &AMDPCnet_install, .interruptHandler = &PCNet_handler,   .sendPacket = &PCNet_send}
 };
 
 Packet_t lastPacket; // save data during packet receive thru the protocols

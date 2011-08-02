@@ -93,7 +93,7 @@ typedef struct
 } RTL8168_networkAdapter_t;
 
 
-void install_RTL8168(network_adapter_t* device);
+void rtl8168_install(network_adapter_t* device);
 void rtl8168_handler(registers_t* data, pciDev_t* device);
 
 

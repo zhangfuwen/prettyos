@@ -39,7 +39,7 @@ typedef struct
 } PCNet_card;
 
 
-void install_AMDPCnet(network_adapter_t* dev);
+void AMDPCnet_install(network_adapter_t* dev);
 bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length);
 void PCNet_handler(registers_t* data, pciDev_t* device);
 
