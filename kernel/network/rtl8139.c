@@ -146,12 +146,12 @@ void rtl8139_install(network_adapter_t* adapter)
 
 static bool rtl8139_isRxBufEmpty(network_adapter_t* adapter)
 {
-    return !(*((uint8_t*)(adapter->MMIO_base + RTL8139_CHIPCMD)) & BIT(0));
+    return (*((uint8_t*)(adapter->MMIO_base + RTL8139_CHIPCMD)) & BIT(0));
 }
 
 static void rtl8139_receive(network_adapter_t* adapter)
 {
-    while (rtl8139_isRxBufEmpty(adapter))
+    while (!rtl8139_isRxBufEmpty(adapter))
     {
         RTL8139_networkAdapter_t* rAdapter = adapter->data;
         uint32_t length = (rAdapter->RxBuffer[rAdapter->RxBufferPointer+3] << 8) + rAdapter->RxBuffer[rAdapter->RxBufferPointer+2]; // Little Endian.
