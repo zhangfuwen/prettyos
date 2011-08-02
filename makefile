@@ -32,6 +32,8 @@ STAGE1DIR= stage1_bootloader
 STAGE2DIR= stage2_bootloader
 KERNELDIR= kernel
 USERDIR= user
+ADDTOIMAGE= additionalfiles
+
 ifeq ($(OS),WINDOWS)
 	SHELLDIR= $(USERDIR)\shell
 	USERPROGDIR= $(USERDIR)\other_userprogs
@@ -103,7 +105,7 @@ $(KERNELDIR)/initrd.dat: shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
 FloppyImage.img: other_userprogs $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
-	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(wildcard $(USERPROGDIR)/*.ELF)
+	$(FLOPPYIMAGE) PRETTYOS FloppyImage.img $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN $(wildcard $(USERPROGDIR)/*.ELF) $(wildcard $(ADDTOIMAGE)/*.*)
 
 clean:
 # OS-dependant code because of different interpretation of "/" in Windows and UNIX-Based OS (Linux and Mac OS X)

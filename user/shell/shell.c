@@ -33,7 +33,7 @@ void drawEntry(const char* entry)
     {
         insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;) )
     }
-    printLine(RenderBuffer, 40, 0x0B);
+    printLine(RenderBuffer, 40, 0x0D);
 }
 
 char* formatPath(char* opath)
@@ -255,10 +255,11 @@ int main()
 EVALUATION: // evaluation of entry
         if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
+			textColor(0x0E);
             puts("Implemented Instructions:\n");
 			puts("hi        => Displays a message\n");
 			puts("help, ?   => Displays this helptext\n");
-			puts("fdir      => Displays floppy contents\n");
+			puts("fdir, ls  => Displays floppy contents\n");
 			puts("format    => Formats a partition\n");
 			puts("reboot    => Reboots the system\n");
 			puts("standby   => Puts the system to standby\n");
@@ -266,14 +267,19 @@ EVALUATION: // evaluation of entry
         }
         else if(strcmp(entry, "hi") == 0)
         {
+			textColor(0x0E);
             puts("I am PrettyOS. Always at your service!\n");
         }
-        else if(strcmp(entry, "fdir") == 0)
+        else if(strcmp(entry, "fdir") == 0 || (strcmp(entry, "ls") == 0))
         {
             floppy_dir();
         }
         else if(strcmp(entry, "format") == 0)
         {
+			char temp[20]; // Catch RETURN/ENTER
+			gets(temp);
+			
+			textColor(0x0E);
             puts("Please enter the partition path (for example: 'A:0:'): ");
             char part[20];
             gets(part);
@@ -300,6 +306,7 @@ EVALUATION: // evaluation of entry
         }
         else
         {
+			textColor(0x0E);
             puts("File is being searched... ");
 
             size_t argc = 1;

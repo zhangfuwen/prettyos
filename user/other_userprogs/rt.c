@@ -33,7 +33,7 @@ int main()
 	
 	printf("Generating connection...");
 	IP_t IP = {.iIP = 0};
-    uint32_t connection = tcp_connect(IP, 80);
+    uint32_t connection = tcp_connect(IP, 23);
 	textColor(0x0A);
 	printf("OK\n");
 	textColor(0x0F);
@@ -42,9 +42,9 @@ int main()
 	printf("Awaiting data...\n\n");
 	
 	textColor(0x0E);
-	printf("To use this program, connect to PrettyOS with a webbrowser of your choice.\n\n");
+	printf("To use this program, connect to PrettyOS with a telnet client.\n\n");
 	textColor(0x0C);
-	printf("Just enter http://Pre.tty.OS.IP:80/");
+	printf("Just enter 'telnet Pre.tty.OS.IP'");
 	textColor(0x0F);
 	
 	printf("\n");
