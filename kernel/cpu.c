@@ -33,9 +33,9 @@ void cpu_analyze()
     cpuid_available = (eax==ecx);
     if(!cpuid_available)
     {
-		textColor(ERROR);
+        textColor(ERROR);
         printf("     => CPU does not support cpuid instruction.\n");
-		textColor(TEXT);
+        textColor(TEXT);
         return;
     }
 
@@ -44,10 +44,10 @@ void cpu_analyze()
     ((uint32_t*)cpu_vendor)[1] = cpu_idGetRegister(0, CR_EDX);
     ((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
     cpu_vendor[12] = 0;
-	textColor(LIGHT_GRAY);
+    textColor(LIGHT_GRAY);
     printf("     => VendorID: ");
-	textColor(TEXT);
-	printf("%s\n\n", cpu_vendor);
+    textColor(TEXT);
+    printf("%s\n\n", cpu_vendor);
 }
 
 bool cpu_supports(CPU_FEATURE feature)

@@ -27,16 +27,55 @@
 void panic_assert(const char* file, uint32_t line, const char* desc);
 
 
-uint8_t  inportb (uint16_t port);
-uint16_t inportw (uint16_t port);
-uint32_t inportl (uint16_t port);
-void     outportb(uint16_t port, uint8_t val);
-void     outportw(uint16_t port, uint16_t val);
-void     outportl(uint16_t port, uint32_t val);
+static inline void nop() { __asm__ volatile ("nop"); } // Do nothing
+static inline void hlt() { __asm__ volatile ("hlt"); } // Wait until next interrupt
+static inline void sti() { __asm__ volatile ("sti"); } // Enable interrupts
+static inline void cli() { __asm__ volatile ("cli"); } // Disable interrupts
+static inline uint64_t rdtsc()
+{
+    uint64_t val;
+    __asm__ volatile ("rdtsc" : "=A"(val)); // "=A" for getting 64 bit value
+    return val;
+}
+
+static inline uint8_t inportb(uint16_t port)
+{
+    uint8_t ret_val;
+    __asm__ volatile ("inb %%dx,%%al" : "=a"(ret_val) : "d"(port));
+    return ret_val;
+}
+
+static inline uint16_t inportw(uint16_t port)
+{
+    uint16_t ret_val;
+    __asm__ volatile ("inw %%dx,%%ax" : "=a" (ret_val) : "d"(port));
+    return ret_val;
+}
+
+static inline uint32_t inportl(uint16_t port)
+{
+    uint32_t ret_val;
+    __asm__ volatile ("inl %%dx,%%eax" : "=a" (ret_val) : "d"(port));
+    return ret_val;
+}
+
+static inline void outportb(uint16_t port, uint8_t val)
+{
+    __asm__ volatile ("outb %%al,%%dx" :: "a"(val), "d"(port));
+}
+
+static inline void outportw(uint16_t port, uint16_t val)
+{
+    __asm__ volatile ("outw %%ax,%%dx" :: "a"(val), "d"(port));
+}
+
+static inline void outportl(uint16_t port, uint32_t val)
+{
+    __asm__ volatile ("outl %%eax,%%dx" : : "a"(val), "d"(port));
+}
+
 
 uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len);
-
-uint64_t rdtsc();
 
 void      memshow(const void* start, size_t count, bool alpha);
 void*     memset(void* dest, int8_t val, size_t bytes);
@@ -69,11 +108,6 @@ void  waitForKeyStroke();
 void systemControl(SYSTEM_CONTROL todo); // Reboot, Shutdown, ...
 
 void bootscreen();
-
-void hlt();
-void sti();
-void cli();
-void nop();
 
 void   reverse(char* s);
 int8_t ctoi(char c);

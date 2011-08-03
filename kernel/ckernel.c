@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.274 - Rev: 1124";
+const char* const version = "0.0.2.275 - Rev: 1125";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -93,26 +93,21 @@ static void useMultibootInformation(multiboot_t* mb_struct)
 
 static void log(const char* str)
 {
-	textColor(LIGHT_GRAY);
-	printf("   => %s: ",str);
-	
-	uint16_t len = strlen(str);
-	
-	for(uint16_t i = len; i < 20;i++){
-		printf(" ");
-	}
-	
-	printf("[");
-	textColor(SUCCESS);
-	printf("OK");
-	textColor(LIGHT_GRAY);
-	printf("]\n");
-	textColor(TEXT);
-	
-    
-	/*textColor(SUCCESS);
-    printf("[OK]\n");
-    textColor(TEXT);*/
+    textColor(LIGHT_GRAY);
+    printf("   => %s: ",str);
+
+    uint16_t len = strlen(str);
+
+    for(uint16_t i = len; i < 20;i++){
+        putch(' ');
+    }
+
+    printf("[");
+    textColor(SUCCESS);
+    printf("OK");
+    textColor(LIGHT_GRAY);
+    printf("]\n");
+    textColor(TEXT);
 }
 
 static void init(multiboot_t* mb_struct)
@@ -125,16 +120,13 @@ static void init(multiboot_t* mb_struct)
     // video
     kernel_console_init();
     clear_screen();
-	
-	bootscreen();
-	
 
-	textColor(HEADLINE);
-	printf(" => Initializing PrettyOS:\n\n");
-	
+    textColor(HEADLINE);
+    printf(" => Initializing PrettyOS:\n\n");
+
     // GDT
     gdt_install();
-	
+
     // Interrupts
     isr_install();
     if(apic_install()) log("APIC");
@@ -156,6 +148,10 @@ static void init(multiboot_t* mb_struct)
 
     tasking_install(); log("Multitasking");
 
+  #ifdef _BOOTSCREEN_
+    scheduler_insertTask(create_cthread(&bootscreen, "Booting ..."));
+  #endif
+
     // external devices
     keyboard_install(); log("Keyboard");
     mouse_install(); log("Mouse");
@@ -170,12 +166,10 @@ static void init(multiboot_t* mb_struct)
     deviceManager_install(); log("Devicemanager"); // device management for mass storage devices
 
     kernel_idleTasks = todolist_create();
-	
-	printf("\n\n");
-	
+
+    puts("\n\n");
+
     sti();
-	
-	sleepMilliSeconds(500);
 }
 
 static void showMemorySize()
@@ -191,48 +185,42 @@ static void showMemorySize()
     {
         printf("%u MiB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size);
     }
-	textColor(LIGHT_GRAY);
+    textColor(LIGHT_GRAY);
 }
 
 void main(multiboot_t* mb_struct)
 {
     init(mb_struct);
     srand(cmos_read(0x00));
-	
-    // scheduler_insertTask(create_cthread(&bootscreen, "Booting ..."));
-	
-	textColor(HEADLINE);
-	printf(" => System analysis: \n");
-	
+
+    textColor(HEADLINE);
+    printf(" => System analysis: \n");
+
     showMemorySize();
-	
-	cpu_analyze();
-	
+
+    cpu_analyze();
     fpu_test();
-	
+
     pm_log();
-	
+
     serial_init();
-	
-	
+
     pci_scan(); // Scan of PCI bus to detect PCI devices. (cf. pci.h)
-	
-	
+
     flpydsk_install(); // detect FDDs
-	
-	
-	
+
+
     #ifdef _RAMDISK_DIAGNOSIS_
     void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);
     #else
     initrd_install(ramdisk_install(), 0, 0x200000);
     #endif
-	
+
     #ifdef _DEVMGR_DIAGNOSIS_
     showPortList();
     showDiskList();
     #endif
-	
+
     // search and load shell
     bool shell_found = false;
     struct dirent* node = 0;
@@ -273,17 +261,18 @@ void main(multiboot_t* mb_struct)
             }
         }
     }
-	
+
     if (!shell_found)
     {
         textColor(ERROR);
         printf("\nProgram not found.\n");
         textColor(TEXT);
     }
-	
-	
+
+  #ifdef _VIDEOTEST_
     scheduler_insertTask(create_cthread(&video_test, "VBE"));
-	
+  #endif
+
     textColor(SUCCESS);
     printf("\n\n--------------------------------------------------------------------------------");
     printf("                                PrettyOS Booted\n");

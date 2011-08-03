@@ -46,14 +46,10 @@ void rtl8139_handler(registers_t* data, pciDev_t* device)
 
     if (val & RTL8139_INT_RX_OK)
     {
-        *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
         rtl8139_receive(adapter);
     }
 
-    else
-    {
-        *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
-    }
+    *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRSTATUS)) = val; // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
 }
 
 void rtl8139_install(network_adapter_t* adapter)

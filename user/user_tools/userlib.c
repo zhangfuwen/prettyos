@@ -485,7 +485,7 @@ IP_t resolveIP(const char* host)
     textColor(0x0F);
     printf("Resolving DNS...\n");
     uint32_t connection = tcp_connect(IP, 80);
-    printf(" => Connecting to DNS Server...", connection);
+    printf(" Connecting to DNS Server...", connection);
 
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
@@ -503,7 +503,7 @@ IP_t resolveIP(const char* host)
                 printf("OK\n");
                 textColor(0x0F);
 
-                printf(" => Sending DNS Request...");
+                printf(" Sending DNS Request...");
                 char pStr[200];
                 strcpy(pStr,"GET /PrettyOS/resolve.php");
                 strcat(pStr,"?hostname=");
@@ -517,7 +517,7 @@ IP_t resolveIP(const char* host)
                 printf("OK\n");
                 textColor(0x0F);
 
-                printf(" => Waiting for answer...");
+                printf(" Waiting for answer...");
                 break;
             }
             case EVENT_TCP_RECEIVED:
@@ -532,27 +532,17 @@ IP_t resolveIP(const char* host)
 
                 tcp_close(connection);
 
-                printf(" => Interpreting data...");
-                //printf("\npacket received. Length = %u\n:%s", header->length, data);
+                printf(" Interpreting data...");
 
+                char* deststring = strstr(data,"\r\n\r\n") + 4;
 
-                void *deststring;
-                deststring=strstr(data,"\r\n\r\n");
-
-                deststring=deststring+4;
-
-                char temp[300];
-                strcpy(temp,deststring);
-
-
-                IP_t resIP=stringToIP(temp);
-
+                IP_t resIP = stringToIP(deststring);
 
                 textColor(0x0A);
                 printf("OK\n");
                 textColor(0x0F);
 
-                printf("\nResolved IP is:\n",temp);
+                printf("\nResolved IP is:\n", deststring);
                 printf("%u.%u.%u.%u\n\n",resIP.IP[0],resIP.IP[1],resIP.IP[2],resIP.IP[3]);
 
                 return resIP;

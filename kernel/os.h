@@ -3,11 +3,16 @@
 
 #include "types.h"
 
-// These switches change the behavior of PrettyOS, useful for analyzing tasks:
 
-#define _BEEP_                 // Enables sound with the pc-speaker in PrettyOS that is used in the bootscreen.
-/// #define _PAGING_DIAGNOSIS_     // Diagnosis-Output about PD, PT etc.
+// Enable/Disable features (Should be enabled per default)
+#define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
+#define _VIDEOTEST_            // Enables the vbe test at startup
+#define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
+#define _SERIAL_LOG_           // Enables log information over the COM-Ports
+
+// Enable/Disable diagnosis output (Should be disabled per default)
 /// #define _DIAGNOSIS_            // Diagnosis-Output - activates prints to the screen about some details and memory use
+/// #define _PAGING_DIAGNOSIS_     // Diagnosis-Output about PD, PT etc.
 /// #define _MALLOC_FREE_          // shows information about malloc/free and heap expansion
 /// #define _MEMLEAK_FIND_         // Provides a counter of all (successful) malloc and free calls showing memory leaks
 /// #define _USB_DIAGNOSIS_        // only as transition state during implementation of USB 2.0 transfers
@@ -17,7 +22,6 @@
 /// #define _TASKING_DIAGNOSIS_    // Provides output about tasking and scheduler
 /// #define _FLOPPY_DIAGNOSIS_     // Provides information about the floppy(-motor)
 /// #define _VM_DIAGNOSIS_         // Provides information about the vm86 task, but critical
-#define _SERIAL_LOG_           // Enables Log information over the COM-Ports
 /// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
 /// #define _NETWORK_DATA_         // Enables additional information about networking packets
 /// #define _NETWORK_DIAGNOSIS_    // Enables additional information about the network adapters
@@ -28,10 +32,7 @@
 /// #define _TCP_DEBUG_            // Enables additional information about TCP
 /// #define _NETBIOS_DEBUG_        // Enables NetBIOS packet analysis
 /// #define _VBE_DEBUG_            // Provides additional output of the VBE driver
-#define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 
-#define KEYMAP GER    // German keyboard
-/// #define KEYMAP US     // US keyboard
 
 extern const char* const version; // PrettyOS Version string
 extern system_t system;           // Informations about the operating system
@@ -58,5 +59,6 @@ static inline void kdebug(uint8_t color, const char* args, ...)
     }
     #endif
 }
+
 
 #endif

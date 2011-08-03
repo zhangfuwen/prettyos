@@ -153,8 +153,8 @@ static floppy_t* createFloppy(uint8_t ID)
     CurrentDrive = fdd;
 
     flpydsk_reset();
-	
-	textColor(LIGHT_GRAY);
+
+    textColor(LIGHT_GRAY);
     analyzeDisk(fdd->drive.insertedDisk);
 
     return(fdd);
@@ -172,11 +172,11 @@ void flpydsk_install()
         flpydsk_version = flpydsk_readVersion();
         #ifdef _FLOPPY_DIAGNOSIS_
         printf("     => FDC version: ");
-		textColor(TEXT);
-		printf("%yh\n",flpydsk_version);
-		textColor(LIGHT_GRAY);
+        textColor(TEXT);
+        printf("%yh\n",flpydsk_version);
+        textColor(LIGHT_GRAY);
         #endif
-		
+
         printf("     => 1.44 MB FDD first device found\n");
         floppyDrive[0] = createFloppy(0);
         strncpy(floppyDrive[0]->drive.name, "Floppy Dev 1", 12);
@@ -198,9 +198,9 @@ void flpydsk_install()
     }
     else
     {
-		textColor(IMPORTANT);
+        textColor(IMPORTANT);
         printf("     => 1.44 MB 1st floppy not shown by CMOS\n");
-		textColor(LIGHT_GRAY);
+        textColor(LIGHT_GRAY);
         floppyDrive[0] = 0;
     }
 }

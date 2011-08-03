@@ -2078,7 +2078,8 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
 char FAT_fgetc(file_t* file)
 {
     char temp;
-    FAT_fread(file->data, &temp, 1);
+    if(FAT_fread(file->data, &temp, 1) == CE_EOF)
+        return(-1);
     return(temp);
 }
 

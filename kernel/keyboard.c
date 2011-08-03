@@ -8,7 +8,7 @@
 #include "task.h"
 #include "irq.h"
 
-#if KEYMAP  == GER
+#if KEYMAP == GER
 #include "keyboard_GER.h"
 #else //US-Keyboard if nothing else is defined
 #include "keyboard_US.h"

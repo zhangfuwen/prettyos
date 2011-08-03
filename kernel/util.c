@@ -14,62 +14,11 @@
 
 const int32_t INT_MAX = 2147483647;
 
-void nop() { __asm__ volatile ("nop"); } // Do nothing
-void hlt() { __asm__ volatile ("hlt"); } // Wait until next interrupt
-void sti() { __asm__ volatile ("sti"); } // Enable interrupts
-void cli() { __asm__ volatile ("cli"); } // Disable interrupts
 
 // fetch data field bitwise in byte "byte" from bit "shift" with "len" bits
 uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len)
 {
     return (((uint8_t*)addr)[byte]>>shift) & (BIT(len)-1);
-}
-
-/**********************************************************************/
-
-uint64_t rdtsc()
-{
-    uint64_t val;
-    __asm__ volatile ("rdtsc" : "=A"(val)); // "=A" for getting 64 bit value
-    return val;
-}
-
-/**********************************************************************/
-
-uint8_t inportb(uint16_t port)
-{
-    uint8_t ret_val;
-    __asm__ volatile ("inb %%dx,%%al" : "=a"(ret_val) : "d"(port));
-    return ret_val;
-}
-
-uint16_t inportw(uint16_t port)
-{
-    uint16_t ret_val;
-    __asm__ volatile ("inw %%dx,%%ax" : "=a" (ret_val) : "d"(port));
-    return ret_val;
-}
-
-uint32_t inportl(uint16_t port)
-{
-    uint32_t ret_val;
-    __asm__ volatile ("inl %%dx,%%eax" : "=a" (ret_val) : "d"(port));
-    return ret_val;
-}
-
-void outportb(uint16_t port, uint8_t val)
-{
-    __asm__ volatile ("outb %%al,%%dx" :: "a"(val), "d"(port));
-}
-
-void outportw(uint16_t port, uint16_t val)
-{
-    __asm__ volatile ("outw %%ax,%%dx" :: "a"(val), "d"(port));
-}
-
-void outportl(uint16_t port, uint32_t val)
-{
-    __asm__ volatile ("outl %%eax,%%dx" : : "a"(val), "d"(port));
 }
 
 /**********************************************************************/
@@ -90,7 +39,7 @@ void memshow(const void* start, size_t count, bool alpha)
     {
         if (alpha)
         {
-            printf("%c", ((uint8_t*)start)[i]);
+            putch(((uint8_t*)start)[i]);
         }
         else
         {
@@ -649,436 +598,410 @@ void systemControl(SYSTEM_CONTROL todo) // TODO: Improve it.
 }
 
 // BOOTSCREEN
-void bootscreen()
+#ifdef _BOOTSCREEN_
+static void bootsound()
 {
-    textColor(GRAY);
-    printf("                                                                               \n");
-    printf("                                                                               \n");
-    printf("                                                                               \n");
-    printf("      ");
-    textColor(GRAY);
-    printf("#######                    #    #               ####       #####         \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("#######");
-    textColor(GRAY);
-    printf("##                  ");
-    textColor(TEXT);
-    printf("#");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("#");
-    textColor(GRAY);
-    printf("#             #");
-    textColor(TEXT);
-    printf("####");
-    textColor(GRAY);
-    printf("###    ");
-    textColor(TEXT);
-    printf("#####");
-    textColor(GRAY);
-    printf("##        \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("########");
-    textColor(GRAY);
-    printf("##                ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#            ");
-    textColor(TEXT);
-    printf("########");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("#######");
-    textColor(GRAY);
-    printf("##       \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("###");
-    textColor(GRAY);
-    printf("#  ## ##   ###   ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("###");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#####     ## ");
-    textColor(TEXT);
-    printf("##    ##");
-    textColor(GRAY);
-    printf("## ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("###");
-    textColor(GRAY);
-    printf("#       \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#    ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("# ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("###");
-    textColor(GRAY);
-    printf("## ");
-    textColor(TEXT);
-    printf("############");
-    textColor(GRAY);
-    printf("#    ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("# ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("###  ");
-    textColor(TEXT);
-    printf("##        \n");
-    printf("     ##");
-    textColor(GRAY);
-    printf("####");
-    textColor(TEXT);
-    printf("###  #####  #####");
-    textColor(GRAY);
-    printf("##");
-    textColor(TEXT);
-    printf("############");
-    textColor(GRAY);
-    printf("##   ");
-    textColor(TEXT);
-    printf("## ##");
-    textColor(GRAY);
-    printf("#     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("# ");
-    textColor(TEXT);
-    printf("####");
-    textColor(GRAY);
-    printf("####         \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("########   ###   ##");
-    textColor(GRAY);
-    printf("###");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("# ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("# ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("######");
-    textColor(GRAY);
-    printf("##        \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("#######    ##");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("#######");
-    textColor(GRAY);
-    printf("# ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("## ");
-    textColor(TEXT);
-    printf("##  ##");
-    textColor(GRAY);
-    printf("#     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#    ");
-    textColor(TEXT);
-    printf("#####");
-    textColor(GRAY);
-    printf("##       \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#        ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("#######  ##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ##   ");
-    textColor(TEXT);
-    printf("###");
-    textColor(GRAY);
-    printf("#       \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#        ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("##  ## ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("##    ");
-    textColor(TEXT);
-    printf("##  ##");
-    textColor(GRAY);
-    printf("##   ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#       \n");
-    printf("     ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#        ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#   ");
-    textColor(TEXT);
-    printf("###");
-    textColor(GRAY);
-    printf("##");
-    textColor(TEXT);
-    printf("##  ##");
-    textColor(GRAY);
-    printf("###");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("### ");
-    textColor(TEXT);
-    printf("#####    ##");
-    textColor(GRAY);
-    printf("####");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("###");
-    textColor(GRAY);
-    printf("###");
-    textColor(TEXT);
-    printf("###        \n");
-    printf("     ##");
-    textColor(GRAY);
-    printf("#        ");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#    ");
-    textColor(TEXT);
-    printf("#####   ####");
-    textColor(GRAY);
-    printf("#");
-    textColor(TEXT);
-    printf("####");
-    textColor(GRAY);
-    printf("#  ");
-    textColor(TEXT);
-    printf("###");
-    textColor(GRAY);
-    printf("#    ");
-    textColor(TEXT);
-    printf("########    #######         \n");
-    printf("     ##         ##      ###     ###  ###   ###       ####       #####          \n");
-    printf("                                          ");
-    textColor(GRAY);
-    printf("#");
-    textColor(TEXT);
-    printf("##");
-    textColor(GRAY);
-    printf("#                                 \n");
-    printf("                                         ");
-    textColor(TEXT);
-    printf("####                                  \n");
-    printf("                                         ###\n");
-    printf("\n");
-    
-	/*
-	printf("\n");
-    printf("\n");
-    printf("     ####################################################################      \n");
-    printf("     #                                                                  #      \n");
-    printf("     #                                                                  #      \n");
-    printf("     #                                                                  #      \n");
-    printf("     #                                                                  #      \n");
-    printf("     ####################################################################      \n");
-    printf("                                                                               \n");
-    printf("                                                                               \n\n\n");
-
-
-    for(uint8_t x = 6; x < 72; x++)
-    {
-        sleepMilliSeconds(30);
-        console_setPixel(x, 23, 0x0200|'#');
-        console_setPixel(x, 24, 0x0200|'#');
-        console_setPixel(x, 25, 0x0200|'#');
-        console_setPixel(x, 26, 0x0200|'#');
-    }
-
-
-    textColor(YELLOW);
-    printf("                  Copyright (c) 2009-2011  The PrettyOS Team\n");
-    printf("\n\n\n                     ");
-    textColor(TEXT);
     // Melody
     // C Es F G F Es
     // C E F G F E C
     // http://www.flutepage.de/deutsch/goodies/frequenz.shtml (German)
     // http://www.flutepage.de/englisch/goodies/frequenz.shtml (English)
 
-    beep(523,200); // C
-    printf("This");
-    beep(622,200); // Es
-    printf(" bootscreen");
-    beep(689,200); // F
-    printf(" has");
-    beep(784,200); // G
-    printf(" been");
-    beep(689,200); // F
-    printf(" created");
-    beep(622,200); // Es
-    printf(" by\n\n");
+    beep(523, 200); // C
+    beep(622, 200); // Es
+    beep(689, 200); // F
+    beep(784, 200); // G
+    beep(689, 200); // F
+    beep(622, 200); // Es
+    beep(523, 200); // C
+    beep(659, 200); // E
+    beep(689, 200); // F
+    beep(784, 200); // G
+    beep(689, 200); // F
+    beep(659, 200); // E
 
-    beep(523,200); // C
-    printf("                     Cuervo,");
-    beep(659,200); // E
-    printf(" member");
-    beep(689,200); // F
-    printf(" of the");
-    beep(784,200); // G
-    printf(" PrettyOS");
-    beep(689,200); // F
-    printf(" team");
-    beep(659,200); // E
+    beep(523, 1000); // C
+}
 
-    beep(523,1000); // C
-	 */
+void bootscreen()
+{
+    task_t* soundtask = create_thread(&bootsound);
+    scheduler_insertTask(soundtask);
+    textColor(GRAY);
+    puts("\n\n\n\n\n");
+    puts("      #######                    #    #               ####       #####\n");
+    textColor(TEXT);
+    puts("     #######");
+    textColor(GRAY);
+    puts("##                  ");
+    textColor(TEXT);
+    puts("#");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("#");
+    textColor(GRAY);
+    puts("#             #");
+    textColor(TEXT);
+    puts("####");
+    textColor(GRAY);
+    puts("###    ");
+    textColor(TEXT);
+    puts("#####");
+    textColor(GRAY);
+    puts("##\n");
+    textColor(TEXT);
+    puts("     ########");
+    textColor(GRAY);
+    puts("##                ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#            ");
+    textColor(TEXT);
+    puts("########");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("#######");
+    textColor(GRAY);
+    puts("##\n");
+    textColor(TEXT);
+    puts("     ##");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("###");
+    textColor(GRAY);
+    puts("#  ## ##   ###   ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("###");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#####     ## ");
+    textColor(TEXT);
+    puts("##    ##");
+    textColor(GRAY);
+    puts("## ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("###");
+    textColor(GRAY);
+    puts("#\n");
+    textColor(TEXT);
+    puts("     ##");
+    textColor(GRAY);
+    puts("#    ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("# ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("###");
+    textColor(GRAY);
+    puts("## ");
+    textColor(TEXT);
+    puts("############");
+    textColor(GRAY);
+    puts("#    ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#     ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("# ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("###  ");
+    textColor(TEXT);
+    puts("##\n");
+    puts("     ##");
+    textColor(GRAY);
+    puts("####");
+    textColor(TEXT);
+    puts("###  #####  #####");
+    textColor(GRAY);
+    puts("##");
+    textColor(TEXT);
+    puts("############");
+    textColor(GRAY);
+    puts("##   ");
+    textColor(TEXT);
+    puts("## ##");
+    textColor(GRAY);
+    puts("#     ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("# ");
+    textColor(TEXT);
+    puts("####");
+    textColor(GRAY);
+    puts("####\n");
+    textColor(TEXT);
+    puts("     ########   ###   ##");
+    textColor(GRAY);
+    puts("###");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("# ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("# ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#     ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("######");
+    textColor(GRAY);
+    puts("##\n");
+    textColor(TEXT);
+    puts("     #######    ##");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("#######");
+    textColor(GRAY);
+    puts("# ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("## ");
+    textColor(TEXT);
+    puts("##  ##");
+    textColor(GRAY);
+    puts("#     ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#    ");
+    textColor(TEXT);
+    puts("#####");
+    textColor(GRAY);
+    puts("##\n");
+    textColor(TEXT);
+    puts("     ##");
+    textColor(GRAY);
+    puts("#        ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("#######  ##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#     ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ##   ");
+    textColor(TEXT);
+    puts("###");
+    textColor(GRAY);
+    puts("#\n");
+    textColor(TEXT);
+    puts("     ##");
+    textColor(GRAY);
+    puts("#        ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("##  ## ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("##    ");
+    textColor(TEXT);
+    puts("##  ##");
+    textColor(GRAY);
+    puts("##   ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#\n");
+    textColor(TEXT);
+    puts("     ##");
+    textColor(GRAY);
+    puts("#        ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#   ");
+    textColor(TEXT);
+    puts("###");
+    textColor(GRAY);
+    puts("##");
+    textColor(TEXT);
+    puts("##  ##");
+    textColor(GRAY);
+    puts("###");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("### ");
+    textColor(TEXT);
+    puts("#####    ##");
+    textColor(GRAY);
+    puts("####");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("###");
+    textColor(GRAY);
+    puts("###");
+    textColor(TEXT);
+    puts("###\n");
+    puts("     ##");
+    textColor(GRAY);
+    puts("#        ");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#    ");
+    textColor(TEXT);
+    puts("#####   ####");
+    textColor(GRAY);
+    puts("#");
+    textColor(TEXT);
+    puts("####");
+    textColor(GRAY);
+    puts("#  ");
+    textColor(TEXT);
+    puts("###");
+    textColor(GRAY);
+    puts("#    ");
+    textColor(TEXT);
+    puts("########    #######\n");
+    puts("     ##         ##      ###     ###  ###   ###       ####       #####\n");
+    textColor(GRAY);
+    puts("                                          #");
+    textColor(TEXT);
+    puts("##");
+    textColor(GRAY);
+    puts("#\n");
+    textColor(TEXT);
+    puts("                                         ####\n");
+    puts("                                         ###\n");
+    puts("\n\n\n\n\n");
+    puts("     ####################################################################\n");
+    puts("     #                                                                  #\n");
+    puts("     #                                                                  #\n");
+    puts("     #                                                                  #\n");
+    puts("     #                                                                  #\n");
+    puts("     ####################################################################\n");
+    puts("\n\n\n\n\n\n");
+
+    textColor(YELLOW);
+    puts("                  Copyright (c) 2009-2011  The PrettyOS Team");
+    textColor(TEXT);
+
+    for(uint8_t x = 6; x < 72; x++)
+    {
+        sleepMilliSeconds(30);
+        console_setPixel(x, 27, 0x0200|'#');
+        console_setPixel(x, 28, 0x0200|'#');
+        console_setPixel(x, 29, 0x0200|'#');
+        console_setPixel(x, 30, 0x0200|'#');
+    }
+
+    waitForTask(soundtask, 2000); // Wait for sound
 
     #ifdef _DIAGNOSIS_
     scheduler_log();
     sleepSeconds(2);
     #endif
 }
+#endif
 
 
 float sgn(float x)
@@ -1122,7 +1045,7 @@ void srand(uint32_t val)
 }
 
 uint32_t rand()
-{    
+{
     return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7FFF);
 }
 

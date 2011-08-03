@@ -343,7 +343,7 @@ void free(void* addr)
 
     textColor(ERROR);
     printf("Broken free: %Xh\n", addr);
-    textColor(TEXT);    
+    textColor(TEXT);
 }
 
 void heap_logRegions()
@@ -351,18 +351,18 @@ void heap_logRegions()
     printf("\nDebug: Heap regions sent to serial output.\n");
     serial_log(1,"\r\n\r\n---------------- HEAP REGIONS ----------------\r\n");
     serial_log(1,"address\t\tsize\t\tnumber\tcomment");
-    
+
     uintptr_t regionAddress = (uintptr_t)heapStart;
-    
+
     for (uint32_t i=0; i<regionCount; i++)
     {
         if (regions[i].reserved)
         {
-            serial_log(1,"\r\n%Xh\t%Xh\t%u\t%s", regionAddress, regions[i].size, regions[i].number, regions[i].comment);            
+            serial_log(1,"\r\n%Xh\t%Xh\t%u\t%s", regionAddress, regions[i].size, regions[i].number, regions[i].comment);
         }
         regionAddress += regions[i].size;
     }
-    serial_log(1,"\r\n---------------- HEAP REGIONS ----------------\r\n\r\n");    
+    serial_log(1,"\r\n---------------- HEAP REGIONS ----------------\r\n\r\n");
 }
 
 /*

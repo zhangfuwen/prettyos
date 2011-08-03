@@ -403,9 +403,9 @@ FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
 
     for (uint16_t i = 0; i < NUMREADCACHE; i++)
     {
-        if (readcaches[i].disk == disk && readcaches[i].sector == sector)
+        if (readcaches[i].valid && readcaches[i].disk == disk && readcaches[i].sector == sector)
         {
-            readcaches[i].valid = false;
+            memcpy(readcaches[i].buffer, buffer, 512); // Update cache
         }
     }
 

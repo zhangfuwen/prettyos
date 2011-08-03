@@ -14,9 +14,6 @@
 // Kernel stack size
 static const uint32_t kernelStackSize = 0x1000; // Tasks get a 4 KB kernel stack
 
-// Some externs are needed
-void fpu_setcw(uint16_t ctrlword); // fpu.c
-
 
 bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
 
@@ -30,7 +27,7 @@ task_t kernelTask = { // Needed to find out when the kernel task is exited
 volatile task_t* currentTask = &kernelTask;
 list_t* tasks; // List of all tasks. Not sorted by pid
 
-static uint32_t next_pid = 1; // The next available process ID (kernel has 0, so we start with 1 here). TODO: Reuse old pid
+static uint32_t next_pid = 1; // The next available process ID (kernel has 0, so we start with 1 here).
 
 
 void tasking_install()

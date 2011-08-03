@@ -15,8 +15,8 @@ static uint16_t IOports[4]; // Contains the ports used to access
 
 void serial_init()
 {
-	textColor(LIGHT_GRAY);
-	printf("   => Serial ports:");
+    textColor(LIGHT_GRAY);
+    printf("   => Serial ports:");
     serialPorts = (((*(uint16_t*)0x410)>>9)&0x7); // Read from BIOS Data Area (BDA)
     IOports[0] = *((uint16_t*)0x400);
     IOports[1] = *((uint16_t*)0x402);
@@ -35,8 +35,8 @@ void serial_init()
         textColor(LIGHT_GRAY);
         printf("\n     => COM %d:\n", i+1);
         printf("       => IO-port: ");
-		textColor(TEXT);
-		printf("%xh",IOports[i]);
+        textColor(TEXT);
+        printf("%xh",IOports[i]);
     }
     printf("\n\n");
 }

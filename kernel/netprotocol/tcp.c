@@ -30,11 +30,11 @@ static const uint16_t MSS            =  1500 - sizeof(ipv4Packet_t) - sizeof(tcp
 
 static const char* const tcpStates[] =
 {
-    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED", 
+    "CLOSED", "LISTEN", "SYN_SENT", "SYN_RECEIVED", "ESTABLISHED",
     "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "CLOSE_WAIT", "LAST_ACK", "TIME_WAIT"
 };
 
-static list_t*  tcpConnections   = 0;
+static list_t*  tcpConnections = 0;
 
 
 static bool     tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection, uint16_t tcpDatalength);
@@ -146,13 +146,13 @@ void tcp_deleteConnection(tcpConnection_t* connection)
         connection->TCP_CurrState = CLOSED;
 
         uint32_t countOUT = tcp_deleteOutBuffers(connection); // free
-        
+
         list_free(connection->sendBuffer); // CHECK INPUT TO BE SENT
-        
+
         serial_log(1,"\r\nInBuffers to be deleted:");
         uint32_t countIN  = tcp_deleteInBuffers (connection, connection->inBuffer); // free
         connection->inBuffer = 0;
-        
+
         serial_log(1,"\r\nOutofOrderInBuffers to be deleted:");
         uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
         connection->OutofOrderinBuffer = 0;
@@ -479,7 +479,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     {
                         serial_log(1,"%u ms ID %u\trcvd:\tseq:\t%u", timer_getMilliseconds(), connection->ID, ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
                         serial_log(1," -> send Dup-ACK!");
-                        tcp_send_DupAck(connection); 
+                        tcp_send_DupAck(connection);
 
                         // Add received data to the temporary Out-of-Order In-Buffer
                         if (tcpDataLength)
@@ -875,9 +875,9 @@ static uint32_t tcp_deleteInBuffers(tcpConnection_t* connection, list_t* list)
 {
     uint32_t count = 0;
     if (connection)
-    {        
+    {
         tcp_logBuffers(connection, false, list); // --> COM1
-        
+
         for (dlelement_t* e = list->head; e != 0; e = e->next)
         {
             count++;
@@ -984,7 +984,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
             tcp_send(connection, outPacket->data, connection->tcb.SEG.LEN);
             outPacket->time_ms_transmitted = timer_getMilliseconds();
             connection->tcb.retrans = false;
-            connection->tcb.rto = min(2*connection->tcb.rto, RTO_MAXVALUE);            
+            connection->tcb.rto = min(2*connection->tcb.rto, RTO_MAXVALUE);
         }
         else
         {
@@ -992,7 +992,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
           #ifdef _TCP_DEBUG_
             printf("\nWe are still waiting for the ACK");
           #endif
-        } 
+        }
         */
     }
     return count;
@@ -1055,7 +1055,7 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
     connection->tcb.rto = max( connection->tcb.srtt + /* max( 1000/timer_getFrequency(), */ 4 * connection->tcb.rttvar /* ) */, 1000);
 
     // A maximum value MAY be placed on RTO provided it is at least 60 seconds.
-    connection->tcb.rto = min(connection->tcb.rto, RTO_MAXVALUE);    
+    connection->tcb.rto = min(connection->tcb.rto, RTO_MAXVALUE);
 }
 
 static uint16_t tcp_getFreeSocket()
@@ -1236,7 +1236,7 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
                     connection->tcb.SEG.CTL = ACK_FLAG;
                     connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
                     tcp_send(connection, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data, ((tcpSendBufferPacket*)connection->sendBuffer->head->data)->length);
-                
+
                     list_delete(connection->sendBuffer,connection->sendBuffer->head);
                 }
                 else
@@ -1247,14 +1247,14 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
                     packet->data   = malloc(((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize, 0, "tcpSendBufPkt"); // new size w/o sendSize
                     packet->length = ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize;
                     memcpy(packet->data, (void*)(((uintptr_t)((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->data) + sendSize), ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->length - sendSize);
-                
+
                     connection->tcb.SEG.CTL = ACK_FLAG;
                     connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
                     tcp_send(connection, ((tcpSendBufferPacket*)(connection->sendBuffer->head->data))->data, sendSize);
-                
+
                     free(((tcpSendBufferPacket*)connection->sendBuffer->head->data)->data);
                     free(connection->sendBuffer->head->data);
-                    connection->sendBuffer->head->data = packet;                
+                    connection->sendBuffer->head->data = packet;
                 }
             }
             else // sendBuffer is empty
@@ -1264,11 +1264,11 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
                 packet->data   = malloc(length - sendSize, 0, "tcpSendBufPkt");
                 packet->length = length - sendSize;
                 memcpy(packet->data, (void*)((uintptr_t)data + sendSize), length - sendSize);
-            
+
                 connection->tcb.SEG.CTL = ACK_FLAG;
                 connection->tcb.SEG.SEQ = connection->tcb.SND.NXT;
                 tcp_send(connection, data, sendSize);
-            
+
                 list_append(connection->sendBuffer, packet);
             }
             // send to outBuffer
@@ -1281,10 +1281,10 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
             outPacket->segment.WND = connection->tcb.SEG.WND;
             outPacket->segment.CTL = connection->tcb.SEG.CTL;
             outPacket->time_ms_transmitted = timer_getMilliseconds();
-            list_append(connection->outBuffer, outPacket); // sent data to be acknowledged ==> OutBuffer
+            list_append(connection->outBuffer, outPacket); // sent data to be acknowledged =OutBuffer
         }
         while (!list_isEmpty(connection->sendBuffer)); // sendBuffer is not empty
-    }    
+    }
     return true;
 }
 

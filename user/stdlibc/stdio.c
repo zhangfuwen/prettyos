@@ -28,8 +28,18 @@ char getc(FILE* file); /// TODO
 int ungetc(char c, FILE* file); /// TODO
 char* fgets(char* dest, size_t num, FILE* file); /// TODO
 int fputs(const char* src, FILE* file); /// TODO
-size_t fread(void* dest, size_t size, size_t count, FILE* file); /// TODO
-size_t fwrite(const void* src, size_t size, size_t count, FILE* file); /// TODO
+size_t fread(void* dest, size_t size, size_t count, FILE* file)
+{
+    for(size_t i = 0; i < count*size; i++)
+        ((uint8_t*)dest)[i] = fgetc(file);
+    return(count*size);
+}
+size_t fwrite(const void* src, size_t size, size_t count, FILE* file)
+{
+    for(size_t i = 0; i < count*size; i++)
+        fputc(((uint8_t*)src)[i], file);
+    return(count*size);
+}
 int fflush(FILE* file); // -> Syscall
 size_t ftell(FILE* file); /// TODO
 int fseek(FILE* file, size_t offset, SEEK_ORIGIN origin); // -> Syscall

@@ -4,6 +4,11 @@
 #include "types.h"
 
 
+// Select keyboard layout
+#define KEYMAP GER    // German keyboard
+/// #define KEYMAP US     // US keyboard
+
+
 typedef enum
 {
     __KEY_INVALID,

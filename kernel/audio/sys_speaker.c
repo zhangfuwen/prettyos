@@ -12,7 +12,6 @@
 
 void sound(uint32_t frequency)
 {
-  #ifdef _BEEP_
     outportb(0x43, 0xB6); // sending magic byte
     // writing frequency
     frequency = 1193182/frequency; // PIT (programable interrupt timer)
@@ -20,14 +19,11 @@ void sound(uint32_t frequency)
     outportb(0x42, frequency>>8);
     // Sound on
     outportb(0x61, inportb(0x61)|3);
-  #endif
 }
 
 void noSound()
 {
-  #ifdef _BEEP_
     outportb(0x61, inportb(0x61) & ~3);
-  #endif
 }
 
 void beep(uint32_t freq, uint32_t duration)
@@ -44,7 +40,7 @@ void msgbeep()
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

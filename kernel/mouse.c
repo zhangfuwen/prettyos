@@ -37,7 +37,7 @@ static char mouse_read();
 
 void mouse_install()
 {
-	erroroccurred = false;
+    erroroccurred = false;
     // Enable the auxiliary mouse device
     mouse_wait(1);
     outportb(0x64, 0xA8);
@@ -105,13 +105,14 @@ void mouse_handler(registers_t* a_r)
             else
             {
                 bytecounter = 0;
-				if(erroroccurred == false) { // Ignore it on the first time because some emulators
-					erroroccurred = true;  // do this..
-				} else {				// TODO: Why?
-					textColor(ERROR);
-					printf(" => ERROR (mouse.c, 111): Mouse sent unknown package (%yh)!\n", bytes[0]);
-					textColor(TEXT);
-				}
+                if(erroroccurred == false) // Ignore it on the first time due to some emulators
+                    erroroccurred = true;  // do this.
+                else // TODO: Why?
+                {
+                    textColor(ERROR);
+                    printf(" => ERROR (mouse.c, 111): Mouse sent unknown package (%yh)!\n", bytes[0]);
+                    textColor(TEXT);
+                }
                 return;
             }
             break;
@@ -148,13 +149,14 @@ void mouse_handler(registers_t* a_r)
                     break;
                 default: // We do not expect a fourth byte in this case
                     bytecounter--;
-					if(erroroccurred == false) { // Ignore it on the first time because some emulators
-						erroroccurred = true;  // do this..
-					} else {				// TODO: Why?
-						textColor(ERROR);
-						printf(" => ERROR (mouse.c, 154): Mouse sent unknown package!\n", bytes[0]);
-						textColor(TEXT);
-					}
+                    if(erroroccurred == false) // Ignore it on the first time due to some emulators
+                        erroroccurred = true;  // do this..
+                    else // TODO: Why?
+                    {
+                        textColor(ERROR);
+                        printf(" ERROR (mouse.c, 154): Mouse sent unknown package!\n", bytes[0]);
+                        textColor(TEXT);
+                    }
                     break;
             }
             break;

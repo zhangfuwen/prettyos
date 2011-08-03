@@ -1,5 +1,6 @@
 #include "userlib.h"
 #include "stdio.h"
+#include "string.h"
 
 
 size_t failures = 0;
@@ -19,15 +20,22 @@ void testPassed()
     textColor(0x0F);
 }
 
+void ask()
+{
+    char c = getchar();
+    if(c == 'f' || c == 'n') testFailed();
+    else testPassed();
+}
 
 ///mutex_t* taskingTestProtector = 0;
 void taskingTest();
+void fileTest();
 int main()
 {
     textColor(0x0E);
     printf("*UNDER CONSTRUCTION*   Welcome to the PrettyOS test suite   *UNDER CONSTRUCTION*");
     textColor(0x07);
-    printf("\n\nThe suite is divided into several part. The system will count the number of failures to print it at the end. The goal is to have no failures. For some tests, when the system is not able to determine whether it failed or not, it will ask you. Please answer 'f' if the test failed or any other key otherwise. If the system immediatly terminates the test, reboots or shows error messages, it has obviously failed.");
+    printf("\n\nThe suite is divided into several part. The system will count the number of failures to print it at the end. The goal is to have no failures. For some tests, when the system is not able to determine whether it failed or not, it will ask you. Please answer 'f' or 'n' if the test failed or any other key otherwise. If the system immediatly terminates the test, reboots or shows error messages, it has obviously failed.");
 
 
     textColor(0x0E);
@@ -35,8 +43,7 @@ int main()
     textColor(0x0F);
     printf("\nFirst of all, we will test the text capabilities of PrettyOS.");
     printf("\nDo you see the text output above and does it use different colors?");
-    if(getchar() == 'f') testFailed();
-    else testPassed();
+    ask();
 
 
     textColor(0x0E);
@@ -45,15 +52,16 @@ int main()
     printf("\nAfter having examined whether you are able to even see the test results, we will now go on with the interna of the OS. The OS will now create a thread in a different console.");
     taskingTest();
     printf("\nHas a new, empty console appeared?");
-    if(getchar() == 'f') testFailed();
-    else testPassed();
+    ask();
 
     printf("\n\nNow the OS tests the mutexes. In the console that has just appeared, you should see strings of 'A's and 'B's.");
     ///mutex_unlock(taskingTestProtector); // Let the tasking test thread step further
     printf("\nDoes each of those strings consist of 20 equal letters?");
-    if(getchar() == 'f') testFailed();
-    else testPassed();
+    ask();
     ///mutex_unlock(taskingTestProtector); // Let the tasking test thread step further to free ressources it allocated
+
+
+    fileTest();
 
 
     printf("\n\n\nAll tests Finished.");
@@ -116,4 +124,26 @@ void taskingTest()
     sleep(100); // Wait to give the other tasks enough time to finish
     ///mutex_free(taskingTestMutex);
     ///mutex_free(taskingTestProtector);
+}
+
+void fileTest()
+{
+    textColor(0x0E);
+    printf("\n\n\nFILES");
+    textColor(0x0F);
+    printf("\nNow PrettyOS checks, if opening, reading and writing files works. At first, it writes \"TEST\" to a file called \"test.txt\". After that, it reads 4 characters from this file. The test is passed, if they are equal to the string written.");
+
+    FILE* f = fopen("1:/test.txt", "w");
+    fwrite("TEST", 4, 1, f);
+    fclose(f);
+
+    f = fopen("1:/test.txt", "r");
+    char buf[4];
+    fread(buf, 4, 1, f);
+    fclose(f);
+
+    if(memcmp(buf, "TEST", 4) == 0)
+        testPassed();
+    else
+        testFailed();
 }

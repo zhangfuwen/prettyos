@@ -255,20 +255,20 @@ int main()
 EVALUATION: // evaluation of entry
         if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
-			textColor(0x0D);
+            textColor(0x0D);
             puts(" => Implemented Instructions:\n");
-			textColor(0x0E);
-			puts("   => hi        => Displays a message\n");
-			puts("   => help, ?   => Displays this helptext\n");
-			puts("   => fdir, ls  => Displays floppy contents\n");
-			puts("   => format    => Formats a partition\n");
-			puts("   => reboot    => Reboots the system\n");
-			puts("   => standby   => Puts the system to standby\n");
-			puts("   => shutdown  => Shuts down the system\n");
+            textColor(0x0E);
+            puts("   => hi        => Displays a message\n");
+            puts("   => help, ?   => Displays this helptext\n");
+            puts("   => fdir, ls  => Displays floppy contents\n");
+            puts("   => format    => Formats a partition\n");
+            puts("   => reboot    => Reboots the system\n");
+            puts("   => standby   => Puts the system to standby\n");
+            puts("   => shutdown  => Shuts down the system\n");
         }
         else if(strcmp(entry, "hi") == 0)
         {
-			textColor(0x0D);
+            textColor(0x0D);
             puts(" => I am PrettyOS. Always at your service!\n");
         }
         else if(strcmp(entry, "fdir") == 0 || (strcmp(entry, "ls") == 0))
@@ -277,10 +277,9 @@ EVALUATION: // evaluation of entry
         }
         else if(strcmp(entry, "format") == 0)
         {
-			char temp[20]; // Catch RETURN/ENTER
-			gets(temp);
-			
-			textColor(0x0E);
+            getchar(); // Catch RETURN/ENTER
+
+            textColor(0x0E);
             puts("Please enter the partition path (for example: 'A:0:'): ");
             char part[20];
             gets(part);
@@ -307,10 +306,10 @@ EVALUATION: // evaluation of entry
         }
         else
         {
-			textColor(0x0D);
-            puts(" => Looking for file...\n");
-			textColor(0x0E);
-			
+            textColor(0x0D);
+            puts(" Looking for file...\n");
+            textColor(0x0E);
+
             size_t argc = 1;
             bool apostroph = false;
             // Find out argc
@@ -345,22 +344,22 @@ EVALUATION: // evaluation of entry
             switch(error)
             {
                 case CE_GOOD:
-					textColor(0x0A);
+                    textColor(0x0A);
                     puts("   => Successfull\n");
                     break;
                 case CE_INVALID_FILENAME:
-					textColor(0x0C);
+                    textColor(0x0C);
                     puts("   => The path was malformed\n");
                     break;
                 case CE_FILE_NOT_FOUND:
                     argv[0] = formatPath(argv[0]);
                     error = execute(argv[0], argc, argv);
                     if(error != CE_GOOD)
-						textColor(0x0C);
+                        textColor(0x0C);
                         puts("   => File not found\n");
                     break;
                 default:
-					textColor(0x0C);
+                    textColor(0x0C);
                     printf("   => File load was not successful. Error Code: %u\n", error);
                     break;
             }
