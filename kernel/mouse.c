@@ -13,6 +13,7 @@
 #include "irq.h"
 #include "video/console.h"
 #include "video/vbe.h"
+#include "video/video.h"
 
 enum {NORMAL, WHEEL, WHEELS5BUTTON} mousetype = NORMAL;
 
@@ -26,6 +27,8 @@ bool mouse_br=0;    // Mouse Right Button
 bool mouse_b4=0;    // Mouse Button 4
 bool mouse_b5=0;    // Mouse button 5
 
+bool erroroccurred = false;
+
 
 static void mouse_wait(uint8_t type);
 static void mouse_write(int8_t data);
@@ -34,6 +37,7 @@ static char mouse_read();
 
 void mouse_install()
 {
+	erroroccurred = false;
     // Enable the auxiliary mouse device
     mouse_wait(1);
     outportb(0x64, 0xA8);
@@ -101,7 +105,13 @@ void mouse_handler(registers_t* a_r)
             else
             {
                 bytecounter = 0;
-                printf("Mouse sent unknown package (%yh)!\n", bytes[0]);
+				if(erroroccurred == false) { // Ignore it on the first time because some emulators
+					erroroccurred = true;  // do this..
+				} else {				// TODO: Why?
+					textColor(ERROR);
+					printf(" => ERROR (mouse.c, 111): Mouse sent unknown package (%yh)!\n", bytes[0]);
+					textColor(TEXT);
+				}
                 return;
             }
             break;
@@ -138,7 +148,13 @@ void mouse_handler(registers_t* a_r)
                     break;
                 default: // We do not expect a fourth byte in this case
                     bytecounter--;
-                    printf("Mouse sent unknown package!\n");
+					if(erroroccurred == false) { // Ignore it on the first time because some emulators
+						erroroccurred = true;  // do this..
+					} else {				// TODO: Why?
+						textColor(ERROR);
+						printf(" => ERROR (mouse.c, 154): Mouse sent unknown package!\n", bytes[0]);
+						textColor(TEXT);
+					}
                     break;
             }
             break;

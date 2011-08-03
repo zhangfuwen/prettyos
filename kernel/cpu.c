@@ -15,8 +15,8 @@ char cpu_vendor[13];
 
 void cpu_analyze()
 {
-    textColor(HEADLINE);
-    printf("CPU: ");
+    textColor(LIGHT_GRAY);
+    printf("   => CPU:\n");
     textColor(TEXT);
 
     // Test if the CPU supports the CPUID-Command
@@ -33,7 +33,9 @@ void cpu_analyze()
     cpuid_available = (eax==ecx);
     if(!cpuid_available)
     {
-        printf("CPU does not support cpuid instruction.\n");
+		textColor(ERROR);
+        printf("     => CPU does not support cpuid instruction.\n");
+		textColor(TEXT);
         return;
     }
 
@@ -42,8 +44,10 @@ void cpu_analyze()
     ((uint32_t*)cpu_vendor)[1] = cpu_idGetRegister(0, CR_EDX);
     ((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
     cpu_vendor[12] = 0;
-
-    printf("VendorID: %s", cpu_vendor);
+	textColor(LIGHT_GRAY);
+    printf("     => VendorID: ");
+	textColor(TEXT);
+	printf("%s\n\n", cpu_vendor);
 }
 
 bool cpu_supports(CPU_FEATURE feature)

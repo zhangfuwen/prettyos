@@ -16,7 +16,8 @@ bool fpu_install()
 {
     if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
     {
-        printf("Math Coprozessor not available\n");
+		textColor(ERROR);
+        printf(" => ERROR (fpu.c, 20): Math Coprozessor not available\n");
         return(false);
     }
 
@@ -39,21 +40,31 @@ void fpu_test()
     if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
         return;
 
-    textColor(HEADLINE);
-    printf("\nFPU test: ");
+    textColor(LIGHT_GRAY);
+    printf("   => FPU test: ");
 
     double squareroot = sqrt(2.0);
     squareroot = fabs(squareroot);
     squareroot /= sqrt(2.0);
     if (squareroot == 1.00)
     {
-        textColor(SUCCESS);
-        printf("OK.\n");
+		textColor(LIGHT_GRAY);
+        printf("[");
+		textColor(SUCCESS);
+		printf("PASSED");
+		textColor(LIGHT_GRAY);
+		printf("]\n");
+		textColor(TEXT);
     }
     else
     {
-       textColor(ERROR);
-       printf("ERROR.\n");
+        textColor(LIGHT_GRAY);
+		printf("[");
+		textColor(ERROR);
+		printf("FAILED");
+		textColor(LIGHT_GRAY);
+		printf("]\n");
+		textColor(TEXT);
     }
     textColor(TEXT);
 }

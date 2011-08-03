@@ -15,6 +15,8 @@ static uint16_t IOports[4]; // Contains the ports used to access
 
 void serial_init()
 {
+	textColor(LIGHT_GRAY);
+	printf("   => Serial ports:");
     serialPorts = (((*(uint16_t*)0x410)>>9)&0x7); // Read from BIOS Data Area (BDA)
     IOports[0] = *((uint16_t*)0x400);
     IOports[1] = *((uint16_t*)0x402);
@@ -30,12 +32,13 @@ void serial_init()
         outportb(IOports[i] + 3, 0x03); // 8 bits, no parity, one stop bit
         outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
         outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
-        textColor(HEADLINE);
-        printf("\nCOM%d: ", i+1);
-        textColor(TEXT);
-        printf("IO-port: %xh.", IOports[i]);
+        textColor(LIGHT_GRAY);
+        printf("\n     => COM %d:\n", i+1);
+        printf("       => IO-port: ");
+		textColor(TEXT);
+		printf("%xh",IOports[i]);
     }
-    printf("\n");
+    printf("\n\n");
 }
 
 char serial_received(uint8_t com)

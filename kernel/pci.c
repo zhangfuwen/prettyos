@@ -110,8 +110,8 @@ void pci_scan()
 {
     devices = list_create();
 
-    textColor(HEADLINE);
-    printf("\nPCI devices:");
+    textColor(LIGHT_GRAY);
+    printf("   => PCI devices:");
     textColor(TABLE_HEADING);
     printf("\nB:D:F\tIRQ\tDescription");
     printf("\n--------------------------------------------------------------------------------");

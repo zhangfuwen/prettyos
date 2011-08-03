@@ -334,7 +334,7 @@ FS_ERROR analyzeDisk(disk_t* disk)
     }
     else
     {
-        printf("\nFound single partition on disk. (type: ");
+        printf("       => Found single partition on disk. (type: ");
         // Just one partition
         disk->partition[0] = malloc(sizeof(partition_t), 0, "partition_t");
         disk->partition[0]->start = 0;

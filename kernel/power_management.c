@@ -134,14 +134,14 @@ void pm_install()
 
 void pm_log()
 {
-    textColor(0x03);
-    printf("\nAPM: ");
+    textColor(LIGHT_GRAY);
+    printf("   => APM: ");
     textColor(TEXT);
-    printf("%s.", pm_systems[PM_APM].supported?"Available":"Not supported");
-    textColor(0x03);
-    printf("\tACPI: ");
+    printf("%s", pm_systems[PM_APM].supported?"Available":"Not supported");
+    textColor(LIGHT_GRAY);
+    printf("\n   => ACPI: ");
     textColor(TEXT);
-    printf("%s.\n", "Not supported by PrettyOS");
+    printf("%s\n", "Not supported by PrettyOS");
 }
 
 bool pm_action(PM_STATES state)

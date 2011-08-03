@@ -1012,7 +1012,9 @@ void bootscreen()
     printf("####                                  \n");
     printf("                                         ###\n");
     printf("\n");
-    printf("\n");
+    
+	/*
+	printf("\n");
     printf("\n");
     printf("     ####################################################################      \n");
     printf("     #                                                                  #      \n");
@@ -1070,6 +1072,7 @@ void bootscreen()
     beep(659,200); // E
 
     beep(523,1000); // C
+	 */
 
     #ifdef _DIAGNOSIS_
     scheduler_log();
