@@ -196,9 +196,9 @@ void* createQTD_Handshake(uint8_t direction)
 
 static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
 {
-    #ifdef _USB_DIAGNOSIS_
+  #ifdef _EHCI_DIAGNOSIS_
     printf("virtAddrBuf0 %Xh : ", virtAddrBuf0);
-    #endif
+
     for (uint32_t c=0; c<size; c++)
     {
         textColor(DATA);
@@ -213,6 +213,7 @@ static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
         }
     }
     printf("\n");
+  #endif
 }
 
 void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
@@ -222,7 +223,7 @@ void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
-  #ifdef _USB_DIAGNOSIS_
+  #ifdef _EHCI_DIAGNOSIS_
     showData(virtAddrBuf0, size, false);
   #endif
 }
@@ -233,15 +234,14 @@ uint32_t showStatusbyteQTD(void* addressQTD)
     if (statusbyte != 0x00)
     {
         printf("\n");
-        textColor(YELLOW);
-        if (statusbyte & BIT(7)) { printf("Active - HC transactions enabled"); }
-        textColor(RED);
+        textColor(ERROR);
         if (statusbyte & BIT(6)) { printf("Halted - serious error at the device/endpoint"); }
         if (statusbyte & BIT(5)) { printf("Data Buffer Error (overrun or underrun)"); }
-        if (statusbyte & BIT(4)) { printf("Babble (fatal error leads to Halted)"); }
-        if (statusbyte & BIT(3)) { printf("Transaction Error (XactErr)- host received no valid response device"); }
+        if (statusbyte & BIT(4)) { printf("Babble - fatal error leads to Halted"); }
+        if (statusbyte & BIT(3)) { printf("Transaction Error - host received no valid response device"); }
         if (statusbyte & BIT(2)) { printf("Missed Micro-Frame"); }
-        textColor(YELLOW);
+        textColor(IMPORTANT);
+        if (statusbyte & BIT(7)) { printf("Active - HC transactions enabled"); }
         if (statusbyte & BIT(1)) { printf("Do Complete Split"); }
         if (statusbyte & BIT(0)) { printf("Do Ping"); }
         textColor(TEXT);
@@ -329,7 +329,8 @@ void checkAsyncScheduler()
 {
     // cf. ehci spec 1.0, Figure 3-7. Queue Head Structure Layout
 
-    textColor(GREEN);
+  #ifdef _EHCI_DIAGNOSIS_
+    textColor(IMPORTANT);
 
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register
     void* virtASYNCLISTADDR = paging_acquirePciMemory(pOpRegs->ASYNCLISTADDR, 1);
@@ -375,18 +376,20 @@ void checkAsyncScheduler()
     // NAK counter in overlay area
     uint32_t NakCtr = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+5) ) & 0x1E)>>1;
     printf("\nNAK counter: %u",NakCtr);
-    textColor(YELLOW);
+    textColor(TEXT);
+  #endif
 }
 
 void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
 {
-  #ifdef _USB_DIAGNOSIS_
+
     if (analyze)
     {
+      #ifdef _EHCI_DIAGNOSIS_
         printf("\nbefore aS:");
+      #endif
         checkAsyncScheduler();
     }
-  #endif
 
     // Enable Asynchronous Schdeuler
     pOpRegs->USBSTS |= STS_USBINT;
@@ -401,7 +404,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         if(timeout>0)
         {
             sleepMilliSeconds(20);
-          #ifdef _USB_DIAGNOSIS_
+          #ifdef _EHCI_DIAGNOSIS_
             textColor(LIGHT_MAGENTA);
             printf(">");
             textColor(TEXT);
@@ -409,8 +412,8 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
        }
        else
        {
-            textColor(RED);
-            printf("\ntimeout - STS_ASYNC_ENABLED still not set!");
+            textColor(ERROR);
+            printf("\nTimeout Error - STS_ASYNC_ENABLED not set!");
             textColor(TEXT);
             break;
         }
@@ -426,7 +429,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         {
             sleepMilliSeconds(20);
 
-          #ifdef _USB_DIAGNOSIS_
+          #ifdef _EHCI_DIAGNOSIS_
             textColor(LIGHT_MAGENTA);
             printf("#");
             textColor(TEXT);
@@ -434,8 +437,8 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         }
         else
         {
-            textColor(RED);
-            printf("\ntimeout - no STS_USBINT set!");
+            textColor(ERROR);
+            printf("\nTimeout Error - STS_USBINT not set!");
             textColor(TEXT);
             break;
         }
@@ -455,7 +458,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
             if(timeout>0)
             {
                 sleepMilliSeconds(20);
-              #ifdef _USB_DIAGNOSIS_
+              #ifdef _EHCI_DIAGNOSIS_
                 textColor(LIGHT_MAGENTA);
                 printf("!");
                 textColor(TEXT);
@@ -463,7 +466,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
             }
             else
             {
-                textColor(RED);
+                textColor(ERROR);
                 printf("\ntimeout - STS_ASYNC_ENABLED still set!");
                 textColor(TEXT);
                 break;
@@ -471,13 +474,13 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         }
     }
 
-  #ifdef _USB_DIAGNOSIS_
     if (analyze)
     {
+      #ifdef _EHCI_DIAGNOSIS_
         printf("\nafter aS:");
+      #endif
         checkAsyncScheduler();
     }
-  #endif
 }
 
 void logBulkTransfer(usbBulkTransfer_t* bT)
@@ -487,7 +490,8 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
         (bT->DataBytesToTransferOUT && !bT->successfulDataOUT) ||
         (bT->DataBytesToTransferIN  && !bT->successfulDataIN))
     {
-        textColor(0x03);
+      #ifdef _USB_DIAGNOSIS_
+        textColor(IMPORTANT);
         printf("\nopcode: %yh", bT->SCSIopcode);
         printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
         if (bT->DataBytesToTransferOUT)
@@ -500,6 +504,7 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
         }
         printf("  CSW: %s", bT->successfulCSW ? "OK" : "Error");
         textColor(TEXT);
+      #endif
     }
 }
 

@@ -11,30 +11,48 @@
 void install_USB_HostController(pciDev_t* PCIdev)
 {
     printf(" - USB ");
+
     switch(PCIdev->interfaceID)
     {
-        case 0x00: printf("UHCI ");   break;
-        case 0x10: printf("OHCI ");   break;
-        case 0x20: printf("EHCI ");   break;
-        case 0x30: printf("xHCI ");   break;
-        case 0x80: printf("no HCI "); break;
-        case 0xFE: printf("any ");    break;
+        case UHCI:
+            printf("UHCI ");
+            break;
+        case OHCI:
+            printf("OHCI ");
+            break;
+        case EHCI:
+            printf("EHCI ");
+            break;
+        case XHCI:
+            printf("xHCI ");
+            break;
+        case NO_HCI:
+            printf("no HCI ");
+            break;
+        case ANY_HCI:
+            printf("any ");
+            break;
     }
 
     for (uint8_t i = 0; i < 6; ++i) // check USB BARs
     {
-        if (PCIdev->bar[i].memoryType == PCI_MMIO)
+      #ifdef _EHCI_DIAGNOSIS_
+        switch (PCIdev->bar[i].memoryType)
         {
-            printf("%Xh MMIO ", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+            case PCI_MMIO:
+                printf("%Xh MMIO ", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+                break;
+            case PCI_IO:
+                printf("%xh I/O ",  PCIdev->bar[i].baseAddress & 0xFFFC);
+                break;
         }
-        else if (PCIdev->bar[i].memoryType == PCI_IO)
-        {
-            printf("%xh I/O ",  PCIdev->bar[i].baseAddress & 0xFFFC);
-        }
+      #endif
 
-        if(PCIdev->bar[i].memoryType != PCI_INVALIDBAR)
+        if (PCIdev->bar[i].memoryType != PCI_INVALIDBAR)
         {
+          #ifdef _EHCI_DIAGNOSIS_
             printf("sz: %d ", PCIdev->bar[i].memorySize);
+          #endif
 
             if (PCIdev->interfaceID == 0x20) // EHCI
             {
