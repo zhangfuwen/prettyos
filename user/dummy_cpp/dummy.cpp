@@ -1,4 +1,37 @@
 #include "userlib.hpp"
+#include "stdio.h"
+
+class Stack
+{
+  private:
+    int* stack;
+    int p;
+  public:
+    Stack (int max=500)
+    {
+        stack = new int[max];
+        p=0;
+    }      
+    ~Stack(){delete stack;}
+    void push(int value);    
+    int pop();    
+    bool empty() const;    
+};
+
+void Stack::push(int value)
+{
+    stack[p++] = value;
+}
+int Stack::pop()
+{
+    return stack[--p];
+}
+    
+bool Stack::empty() const
+{
+    return !p;
+}
+
 
 int main()
 {
@@ -7,9 +40,22 @@ int main()
     printLine("                               C++ - Testprogramm!                              ", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
     printLine("                                 ! Hello World !                                ", 7, 0x0C);
-    for(;;)
+    
+    Stack acc(500);
+    
+    iSetCursor(0,6);
+
+    for(int i=0; i<500; i++)
     {
+        acc.push(i);
         showInfo(1);
     }
+    for(int i=0; i<500; i++)
+    {
+        int value = acc.pop();
+        printf("%u ",value);
+        showInfo(1);
+    }
+    for(;;);
     return(0);
 }
