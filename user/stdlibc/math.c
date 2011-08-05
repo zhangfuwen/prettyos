@@ -84,13 +84,13 @@ double fmod(double numerator, double denominator)
 double cos(double x)
 {
     double result;
-    __asm__ volatile("fcos;" : "=t" (result) : "0" (x));
+    __asm__ volatile("fcos" : "=t" (result) : "0" (x));
     return result;
 }
 double sin(double x)
 {
     double result;
-    __asm__ volatile("fsin;" : "=t" (result) : "0" (x));
+    __asm__ volatile("fsin" : "=t" (result) : "0" (x));
     return result;
 }
 double tan(double x)

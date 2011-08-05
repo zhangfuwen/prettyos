@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.276 - Rev: 1127";
+const char* const version = "0.0.2.277 - Rev: 1128";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -269,10 +269,6 @@ void main(multiboot_t* mb_struct)
         textColor(TEXT);
     }
 
-  #ifdef _VIDEOTEST_
-    scheduler_insertTask(create_cthread(&video_test, "VBE"));
-  #endif
-
     textColor(SUCCESS);
     printf("\n\n--------------------------------------------------------------------------------");
     printf("                                PrettyOS Booted\n");
@@ -368,6 +364,9 @@ void main(multiboot_t* mb_struct)
                     {
                         switch(*(char*)buffer)
                         {
+                            case 'v':
+                                scheduler_insertTask(create_cthread(&video_test, "VBE"));
+                                break;
                             case 'd':
                                 showPortList();
                                 showDiskList();

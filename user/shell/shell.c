@@ -105,7 +105,7 @@ int main()
                         break;
 
                     unsigned char text = buffer.buffer[0];
-                    if (text > 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <= MAX_CHAR_PER_LINE && cursorPos < entryLength)))
+                    if (text >= 0x20 && (entryLength<MAX_CHAR_PER_LINE || (insertMode && entryLength <= MAX_CHAR_PER_LINE && cursorPos < entryLength)))
                     {
                         if (curEntry != -1)
                         {
