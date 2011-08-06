@@ -28,6 +28,7 @@
 #include "mouse.h"              // mouse_install
 #include "serial.h"             // serial_init
 #include "video/videomanager.h" // video_install, video_test
+#include "video/textgui.h"		// TextGUI_ShowMSG, TextGUI_AskYN
 #include "filesystem/initrd.h"  // initrd_install, ramdisk_install, readdir_fs, read_fs, finddir_fs
 #include "storage/flpydsk.h"    // flpydsk_install
 
@@ -37,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.282 - Rev: 1133";
+const char* const version = "0.0.2.283 - Rev: 1134";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -220,7 +221,28 @@ void main(multiboot_t* mb_struct)
     showPortList();
     showDiskList();
     #endif
-
+	
+	
+	TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !","This is an educational OS!");
+	
+	uint16_t result = TextGUI_AskYN("Question","Are you a software developer?",TEXTGUI_YES);
+	
+	switch (result) {
+		case TEXTGUI_ABORTED:
+			TextGUI_ShowMSG("Result","You have cancelled the MessageBox!");
+			break;
+		case TEXTGUI_YES:
+			TextGUI_ShowMSG("Result","Hello developer!");
+			break;
+		case TEXTGUI_NO:
+			TextGUI_ShowMSG("Result","Hello user!");
+			break;
+		default:
+			TextGUI_ShowMSG("Result","This can not happen.");
+			break;
+	}
+	
+	
     // search and load shell
     bool shell_found = false;
     struct dirent* node = 0;
