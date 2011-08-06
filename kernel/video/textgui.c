@@ -109,6 +109,7 @@ uint16_t TextGUI_ShowMSG(char* title, char* message) {
     }
 	
 	memcpy((void*)console_current->vidmem, oldvidmem, 8000);
+	free(oldvidmem);
 	setCursor(oldpos);
 	return(returnval);
 }
@@ -223,22 +224,7 @@ uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected) {
     }
 	
 	memcpy((void*)console_current->vidmem, oldvidmem, 8000);
-	
-	/*
-	for (uint16_t i=0; i<4000; i++) {
-		screenCache[i] = *(char*)(vidmem+i);
-	}
-	*/
-	
-	/*
-	for(uint16_t* i = 0; i < 4000; i++) {
-		*(console_current->vidmem + i) = uc | att;
-		
-		i++;
-	}
-	*/
-	
-	
+	free(oldvidmem);
 	setCursor(oldpos);
 	return(returnval);
 }
