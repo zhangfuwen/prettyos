@@ -126,7 +126,7 @@ int main()
     while(true)
     {
         iSetCursor(25,0);
-        printf("\"ARROW ATTACK\" 0.12 E. Henkes  A=left, R=right, S=del");
+        printf("\"ARROW ATTACK\" 0.13 E. Henkes  A=left, D=right, S=delete arrows by chance");
         generateWeapons();
         for (uint8_t line=1; line<42; line++)
         {

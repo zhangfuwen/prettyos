@@ -986,6 +986,8 @@ static void tcp_RemoveAckedPacketsFromOutBuffer(tcpConnection_t* connection, tcp
                 calculateRTO(connection, timer_getMilliseconds() - outPacket->time_ms_transmitted);
             }
             serial_log(1,"Acked Packet seq %u time %u ms removed.\r\n",outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->time_ms_transmitted);
+            free(outPacket->data);
+            free(outPacket);
             e = list_delete(connection->outBuffer, e); // Remove packet.
         }
         else

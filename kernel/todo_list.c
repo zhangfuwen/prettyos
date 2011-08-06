@@ -21,9 +21,13 @@ void todoList_add(todoList_t* list, void (*function)(void*, size_t), void* data,
 {
     todoList_task_t* task = malloc(sizeof(todoList_task_t), 0, "todoList_task_t");
     if(length != 0)
+    {
         task->data = malloc(length, 0, "todoList_task_t::data");
+    }
     else
+    {
         task->data = 0;
+    }
     memcpy(task->data, data, length);
     task->length = length;
     task->timeToExecute = executionTime;
@@ -43,7 +47,9 @@ void todoList_execute(todoList_t* list)
             e = list_delete(list->queue, e);
         }
         else
+        {
             e = e->next;
+        }
     }
 }
 
