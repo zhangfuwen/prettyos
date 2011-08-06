@@ -929,9 +929,9 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
     for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
     {
         count++;
-        //tcpOut_t* outPacket = e->data;
-
+        
      #ifdef _TCP_DEBUG_
+        tcpOut_t* outPacket = e->data;
         printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->segment.LEN);
         if (showData)
         {
