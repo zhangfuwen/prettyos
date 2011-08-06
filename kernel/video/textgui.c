@@ -33,7 +33,7 @@ uint16_t TextGUI_ShowMSG(char* title, char* message) {
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 	
-	void* oldvidmem = malloc(8000, 0, "old_vidmem");
+	void* oldvidmem = malloc(8000, 4, "old_vidmem");
 	memcpy(oldvidmem, (void*)console_current->vidmem, 8000);
 	
 	// memshow(vidmem);
@@ -120,7 +120,7 @@ uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected) {
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 	
-	void* oldvidmem = malloc(8000, 0, "old_vidmem");
+	void* oldvidmem = malloc(8000, 4, "old_vidmem");
 	memcpy(oldvidmem, (void*)console_current->vidmem, 8000);
 	
 	
