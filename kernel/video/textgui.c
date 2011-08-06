@@ -33,6 +33,12 @@ uint16_t TextGUI_ShowMSG(char* title, char* message) {
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 	
+	void* oldvidmem = malloc(8000, 0, "old_vidmem");
+	memcpy(oldvidmem, (void*)console_current->vidmem, 8000);
+	
+	// memshow(vidmem);
+	// memshow(oldvidmem, 4000, false);
+	
 	position_t oldpos;
 	getCursor(&oldpos);
 	
@@ -102,7 +108,7 @@ uint16_t TextGUI_ShowMSG(char* title, char* message) {
         ev = event_poll(buffer, 4096, EVENT_NONE);
     }
 	
-	
+	memcpy((void*)console_current->vidmem, oldvidmem, 8000);
 	setCursor(oldpos);
 	return(returnval);
 }
@@ -112,6 +118,10 @@ uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected) {
 	event_enable(true);
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
+	
+	void* oldvidmem = malloc(8000, 0, "old_vidmem");
+	memcpy(oldvidmem, (void*)console_current->vidmem, 8000);
+	
 	
 	position_t oldpos;
 	getCursor(&oldpos);
@@ -183,7 +193,15 @@ uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected) {
                     break;
                 }
 				
-				if(*key == KEY_ARRL || *key == KEY_ARRR || *key == KEY_ARRU || *key == KEY_ARRD) {
+				if(*key == KEY_Y || *key == KEY_Z) {
+					selected = true;
+				}
+				
+				if(*key == KEY_N) {
+					selected = false;
+				}
+				
+				if(*key == KEY_ARRL || *key == KEY_ARRR) {
 					if(selected == false) {
 						selected = true;
 					} else {
@@ -203,6 +221,22 @@ uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected) {
 		
         ev = event_poll(buffer, 4096, EVENT_NONE);
     }
+	
+	memcpy((void*)console_current->vidmem, oldvidmem, 8000);
+	
+	/*
+	for (uint16_t i=0; i<4000; i++) {
+		screenCache[i] = *(char*)(vidmem+i);
+	}
+	*/
+	
+	/*
+	for(uint16_t* i = 0; i < 4000; i++) {
+		*(console_current->vidmem + i) = uc | att;
+		
+		i++;
+	}
+	*/
 	
 	
 	setCursor(oldpos);
