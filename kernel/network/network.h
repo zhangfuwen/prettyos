@@ -41,15 +41,15 @@
 #else
     // own IP at start
     #define IP_1    192
-    #define IP_2    168
+    #define IP_2    168 
     #define IP_3      1
-    #define IP_4     22
+    #define IP_4     22 
 
     // requested IP
     #define RIP_1   192
     #define RIP_2   168
     #define RIP_3     1
-    #define RIP_4    22
+    #define RIP_4    22 
 
     // gateway IP for routing to the internet
     #define GW_IP_1   192

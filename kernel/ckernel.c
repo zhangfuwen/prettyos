@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.283 - Rev: 1134";
+const char* const version = "0.0.2.284 - Rev: 1135";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -399,38 +399,14 @@ void main(multiboot_t* mb_struct)
                             case 't':
                                 scheduler_log();
                                 break;
-                            case 'n':
-                            {
-                                network_adapter_t* adapter = network_getFirstAdapter();
-
-                                if (adapter)
-                                {
-                                    // parameters for UDPSend(...)
-                                    uint16_t srcPort  = 40; // unassigend
-                                    uint16_t destPort = 40;
-                                    IP_t IP = {.iIP = 0xFFFFFFFF};
-                                    udp_send(adapter, "PrettyOS says hello", strlen("PrettyOS says hello"), srcPort, adapter->IP, destPort, IP);
-                                }
-                                break;
-                            }
-                            case 'f':
-                            {
-                                network_adapter_t* adapter = network_getFirstAdapter();
-
-                                if (adapter)
-                                {
-                                    DHCP_Release(adapter);
-                                }
-                                break;
-                            }
                             case 'b':
                             {
                                 connection = tcp_createConnection();
-
                                 network_adapter_t* adapter = network_getFirstAdapter();
-
                                 if(adapter)
+                                {
                                     tcp_bind(connection, adapter);
+                                }
                                 break;
                             }
                             case 'c': // show tcp connections
@@ -440,23 +416,7 @@ void main(multiboot_t* mb_struct)
                                 textColor(TEXT);
                                 tcp_showConnections();
                                 break;
-                            }
-                            case 'p':
-                            {
-                                network_adapter_t* adapter = network_getFirstAdapter();
-                                IP_t destIP; // qemu subnet
-
-                                for (uint8_t i=0; i<255; i++)
-                                {
-                                    destIP.IP[0] =      10;
-                                    destIP.IP[1] =       0;
-                                    destIP.IP[2] =       2;
-                                    destIP.IP[3] =       i;
-                                    if (adapter)
-                                        icmp_sendEchoRequest(adapter, destIP);
-                                }
-                                break;
-                            }
+                            }                            
                         }
                     }
                     break;
