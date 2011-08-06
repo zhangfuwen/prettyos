@@ -32,7 +32,7 @@ void todoList_add(todoList_t* list, void (*function)(void*, size_t), void* data,
 }
 
 void todoList_execute(todoList_t* list)
-{
+{    
     for(dlelement_t* e = list->queue->head; e != 0;)
     {
         todoList_task_t* task = e->data;

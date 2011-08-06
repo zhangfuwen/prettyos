@@ -157,7 +157,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
         uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
         connection->OutofOrderinBuffer = 0;
 
-        serial_log(1,"\r\nDeleted ID %u, countIN: %u, countOutofOrderIN: %u, countOUT (not acked): %u \n", connection->ID, countIN, countOutofOrderIN, countOUT);
+        serial_log(1,"\r\nDeleted ID %u, countIN: %u, countOutofOrderIN: %u, countOUT (not acked): %u \r\n", connection->ID, countIN, countOutofOrderIN, countOUT);
         free(connection);
     }
 }
@@ -268,6 +268,7 @@ void tcp_close(tcpConnection_t* connection)
 // cf. http://www.systems.ethz.ch/education/past-courses/fs10/operating-systems-and-networks/material/TCP-Spec.pdf
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length)
 {
+    
     bool tcp_sendFlag   = false;
     bool tcp_deleteFlag = false;
 
@@ -299,14 +300,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     if(connection == 0)
     {
       #ifdef _TCP_DEBUG_
-        textColor(RED);
         printf("\nTCP packet received that does not belong to a TCP connection.");
-        textColor(TEXT);
       #endif
         return;
     }
 
-    textColor(TEXT);
     connection->TCP_PrevState = connection->TCP_CurrState;
 
     if (tcp->RST) // RST
@@ -375,6 +373,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER *************************
         case ESTABLISHED:
         {
+            
             char*    tcpData       = (char*)tcp + 4 * tcp->dataOffset; // dataOffset is given as number of DWORDs
             uint32_t tcpDataLength = length - 4 * tcp->dataOffset;
 
@@ -382,7 +381,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
               #ifdef _TCP_DEBUG_
                 textColor(ERROR);
-                printf("not acceptable!");
+                printf("\ntcp packet is not acceptable!");
                 textColor(TEXT);
               #endif
 
@@ -417,6 +416,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             }
             else // ACK
             {
+                
                 if (! (ntohl(tcp->acknowledgmentNumber) >  connection->tcb.SND.UNA && ntohl(tcp->acknowledgmentNumber) <= connection->tcb.SND.NXT ))
                 {
                     // This does not mean a new ACK
@@ -449,18 +449,19 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     }                   
                 }
                 else // This means a new and valid ACK
-                {
-                    tcp_RemoveAckedPacketsFromOutBuffer(connection, tcp); 
-                    connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));                               
-                }// end of: This means a new and valid ACK
+                {                    
+                    connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));                     
+                }
 
                 
                 if (ntohl(tcp->sequenceNumber) == connection->tcb.RCV.NXT)
                 {
+                    
                     // handle Out-of-Order IN-Buffer (sorted --> RCV buffer --> app)
                 }
                 else if (ntohl(tcp->sequenceNumber) > connection->tcb.RCV.NXT)
                 {
+                    
                     serial_log(1,"%u ms ID %u\trcvd:\tseq:\t%u", timer_getMilliseconds(), connection->ID, ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
                     serial_log(1," -> send Dup-ACK!");
                     tcp_send_DupAck(connection);
@@ -492,6 +493,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 }
                 else // ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT
                 {
+                    
                 }
 
                 if (connection->passive)
@@ -517,13 +519,13 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                     #endif
                 }
                 sleepMilliSeconds(2);
-
+                
+                
+                
                 connection->tcb.RCV.ACKforDupACK = connection->tcb.RCV.NXT; // TEST for Dup-ACK
-
-                connection->tcb.RCV.WND = ntohs(tcp->window); // cf. receiving dup-ACK
-                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); // CHECK for unregular packets above
-
-                tcp_RemoveAckedPacketsFromOutBuffer(connection, tcp); // here necessary? yes!
+                connection->tcb.RCV.WND = ntohs(tcp->window);               // cf. receiving dup-ACK
+                tcp_RemoveAckedPacketsFromOutBuffer(connection, tcp);       // here necessary? yes!
+                connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber)); 
 
                 if (tcpDataLength)
                 {
@@ -539,6 +541,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                 if (tcpDataLength)
                 {
+                    
+
                     //Fill in-buffer list
                     tcpIn_t* In    = malloc(sizeof(tcpIn_t), 0, "tcp_InBuffer");
                     In->ev         = malloc(sizeof(tcpReceivedEventHeader_t) + tcpDataLength, 0, "tcp_InBuf_data");
@@ -864,12 +868,13 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
     uint32_t count = 0;
     if (connection)
     {
-        serial_log(1,"\r\ntcp_deleteOutBuffers");
+        serial_log(1,"\r\nOutBuffers not acked: ");
 
         for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
         {
             count++;
             tcpOut_t* outPacket = e->data;
+            serial_log(1,"seq = %u  ",outPacket->segment.SEQ - connection->tcb.SND.ISS);
             free(outPacket->data);
             free(outPacket);
         }
@@ -969,20 +974,24 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 
 static void tcp_RemoveAckedPacketsFromOutBuffer(tcpConnection_t* connection, tcpPacket_t* tcp)
 {
-    for (dlelement_t* e = connection->outBuffer->head; e != 0;)
+    for (dlelement_t* e = connection->outBuffer->head; e != 0; )
     {
         tcpOut_t* outPacket = e->data;
-        if ( ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber)) && (outPacket->segment.LEN > 0))
+        
+        if ((outPacket->segment.SEQ + outPacket->segment.LEN) <= ntohl(tcp->acknowledgmentNumber))
         {
             // Refresh retransmission timeout (RTO)
             if (ntohl(tcp->acknowledgmentNumber) - (outPacket->segment.SEQ + outPacket->segment.LEN) == 0)
             {
                 calculateRTO(connection, timer_getMilliseconds() - outPacket->time_ms_transmitted);
             }
-            e = list_delete(connection->outBuffer, e->data); // Remove packet.
+            serial_log(1,"Acked Packet seq %u time %u ms removed.\r\n",outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->time_ms_transmitted);
+            e = list_delete(connection->outBuffer, e); // Remove packet.
         }
         else
-            e = e->next;
+        {
+            e = e->next;    
+        }
     }
 }
 
