@@ -268,7 +268,6 @@ void tcp_close(tcpConnection_t* connection)
 // cf. http://www.systems.ethz.ch/education/past-courses/fs10/operating-systems-and-networks/material/TCP-Spec.pdf
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length)
 {
-    
     bool tcp_sendFlag   = false;
     bool tcp_deleteFlag = false;
 
@@ -281,6 +280,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
     // search connection
     tcpConnection_t* connection = 0;
+    
     if (tcp->SYN && !tcp->ACK) // SYN
     {
         connection = tcp_findConnection(transmittingIP, ntohs(tcp->destPort), adapter, LISTEN);
@@ -303,7 +303,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
         printf("\nTCP packet received that does not belong to a TCP connection.");
       #endif
         return;
-    }
+    }    
 
     connection->TCP_PrevState = connection->TCP_CurrState;
 
@@ -372,8 +372,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
         // ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER ***** ESTABLISHED ***** DATA TRANSFER *************************
         case ESTABLISHED:
-        {
-            
+        {            
             char*    tcpData       = (char*)tcp + 4 * tcp->dataOffset; // dataOffset is given as number of DWORDs
             uint32_t tcpDataLength = length - 4 * tcp->dataOffset;
 

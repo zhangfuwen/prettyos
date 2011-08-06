@@ -12,7 +12,7 @@
 
 /// Information: The eeprom code for the RTL8139 (rtl8139_eeprom.h/c) has been deleted in rev. 1002. Check out this revision to access it.
 
-#define RTL8139_RX_BUFFER_SIZE 65552 // 64 KiB + 16 Byte
+#define RTL8139_RX_BUFFER_SIZE 65536 // 64 KiB
 #define RTL8139_TX_BUFFER_SIZE 4096
 
 static void rtl8139_receive(network_adapter_t* adapter);
