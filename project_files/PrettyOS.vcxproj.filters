@@ -363,6 +363,9 @@
     <ClInclude Include="..\kernel\ring.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\video\textgui.h">
+      <Filter>Kernel\include\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -607,6 +610,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\ring.c">
       <Filter>Kernel\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\video\textgui.c">
+      <Filter>Kernel\sources\video</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -115,15 +115,6 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
     }
     else // IP is not in LAN. Send packet to server
     {
-      #ifdef QEMU_HACK
-        uint8_t gatewayMAC[6] = {GW_MAC_1, GW_MAC_2, GW_MAC_3, GW_MAC_4, GW_MAC_5, GW_MAC_6}; // HACK for TCP with qemu
-        #ifdef _NETWORK_DATA_
-          textColor(GRAY);
-          printf("\nqemu hack: We try to deliver the packet to the gateway %M", gatewayMAC);
-          textColor(TEXT);
-        #endif
-        EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), gatewayMAC, 0x0800);
-      #else
         arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
         if(entry == 0) // Try to find Server by ARP request
         {
@@ -139,8 +130,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
 
         // printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
 
-        EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
-      #endif
+        EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);      
     }
     free(packet);
 }

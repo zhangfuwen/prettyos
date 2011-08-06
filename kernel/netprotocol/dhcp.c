@@ -257,9 +257,7 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
           #endif
             if (dhcp->yiaddr.iIP != 0)
             {
-              #ifndef QEMU_HACK
                 arp_addTableEntry(&adapter->arpTable, lastPacket.MAC, lastPacket.IP, false);
-              #endif
                 DHCP_Request(adapter, dhcp->yiaddr);
             }
             else
