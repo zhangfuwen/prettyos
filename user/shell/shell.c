@@ -99,7 +99,7 @@ int main()
             {
                 case EVENT_TEXT_ENTERED:
                 {
-                    showInfo(1); // the train goes on...
+                    showInfo( (getCurrentSeconds()/20) % 2 + 1 ); 
 
                     if(keyPressed(KEY_ESC) || keyPressed(KEY_LCTRL) || keyPressed(KEY_RCTRL)) // To avoid conflicts with strg/esc shortcuts in kernel
                         break;
@@ -131,7 +131,7 @@ int main()
                 }
                 case EVENT_KEY_DOWN:
                 {
-                    showInfo(1); // the train goes on...
+                    showInfo( (getCurrentSeconds()/20) % 2 + 1 ); 
                     switch(buffer.key)
                     {
                         case KEY_BACK:

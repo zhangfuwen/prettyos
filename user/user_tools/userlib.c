@@ -432,6 +432,25 @@ void i2hex(uint32_t val, char* dest, uint32_t len)
     dest[len]='\0';
 }
 
+static void scrollInfoLine(char* line1, char* line2, char* line3)
+{
+    char temp1 = line1[79];
+    char temp2 = line2[79];
+    char temp3 = line3[79];
+
+    for (uint8_t i=79; i>0; --i)
+    {
+        line1[i] = line1[i-1];
+        line2[i] = line2[i-1];
+        line3[i] = line3[i-1];
+    }
+    line1[0] = temp1;
+    line2[0] = temp2;
+    line3[0] = temp3;
+    printLine(line1,43,0xE);
+    printLine(line2,44,0xE);
+    printLine(line3,45,0xE);
+}
 
 void showInfo(uint8_t val)
 {
@@ -442,29 +461,17 @@ void showInfo(uint8_t val)
             static char* line1 = "   _______                __________      <>_<>                                 ";
             static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] [] | .---|'\"`|---.                             ";
             static char* line3 = " `-oo---oo-'`-oo-----oo-'`-oo----oo-'`o\"O-OO-OO-O\"o'                            ";
-            char temp1 = line1[79];
-            char temp2 = line2[79];
-            char temp3 = line3[79];
-
-            for (uint8_t i=79; i>0; --i)
-            {
-                line1[i] = line1[i-1];
-                line2[i] = line2[i-1];
-                line3[i] = line3[i-1];
-            }
-            line1[0] = temp1;
-            line2[0] = temp2;
-            line3[0] = temp3;
-            printLine(line1,43,0xE);
-            printLine(line2,44,0xE);
-            printLine(line3,45,0xE);
+            scrollInfoLine(line1, line2, line3);
             break;
         }
         case 2:
         {
-            // TODO: new info line
+            static char* line1 = "       ___    ___    ___    ___                                                 ";
+            static char* line2 = " ______\\  \\___\\  \\___\\  \\___\\  \\__________                                      ";
+            static char* line3 = " \\ =  : : : : : : : : PrettyOS : : : : : /                                      ";
+            scrollInfoLine(line1, line2, line3);
             break;
-        }
+        }        
     }
 }
 
