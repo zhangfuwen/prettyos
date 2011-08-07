@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.290 - Rev: 1141";
+const char* const version = "0.0.2.291 - Rev: 1142";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -317,8 +317,10 @@ void main(multiboot_t* mb_struct)
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
         char buffer[4];
         EVENT_t ev = event_poll(buffer, 4, EVENT_NONE); // Take one event from the event queue
-        while(ev != EVENT_NONE)
-        {
+        uint32_t t = timer_getMilliseconds();
+        
+        while(ev != EVENT_NONE && (timer_getMilliseconds() - t < 1000))
+        {                        
             switch(ev)
             {
                 case EVENT_KEY_DOWN:
@@ -386,18 +388,8 @@ void main(multiboot_t* mb_struct)
                     {
                         switch(*(char*)buffer)
                         {
-                            case 'v':
-                                scheduler_insertTask(create_cthread(&video_test, "VBE"));
-                                break;
-                            case 'd':
-                                showPortList();
-                                showDiskList();
-                                break;
                             case 'a':
                                 network_displayArpTables();
-                                break;
-                            case 't':
-                                scheduler_log();
                                 break;
                             case 'b':
                             {
@@ -410,13 +402,23 @@ void main(multiboot_t* mb_struct)
                                 break;
                             }
                             case 'c': // show tcp connections
-                            {
+                            {                                
                                 textColor(HEADLINE);
                                 printf("\ntcp connections:");
                                 textColor(TEXT);
                                 tcp_showConnections();
                                 break;
                             }                            
+                            case 'd':
+                                showPortList();
+                                showDiskList();
+                                break;
+                            case 't':
+                                scheduler_log();
+                                break;
+                            case 'v':
+                                scheduler_insertTask(create_cthread(&video_test, "VBE"));
+                                break;
                         }
                     }
                     break;
@@ -424,8 +426,9 @@ void main(multiboot_t* mb_struct)
                     break;
             }
             ev = event_poll(buffer, 4, EVENT_NONE);
+            t = timer_getMilliseconds();
         }
-
+        
         if (timer_getSeconds() != CurrentSeconds)
         {
             CurrentSeconds = timer_getSeconds();
@@ -467,10 +470,9 @@ void main(multiboot_t* mb_struct)
             serial_write(1,'y');
             printf("\nAnswered with 'Pretty'!\n");
         }
-
+        
         todoList_execute(kernel_idleTasks);
-
-        switch_context(); // Switch to another task
+        switch_context(); // Switch to another task        
     } // end of kernel idle loop
 }
 
