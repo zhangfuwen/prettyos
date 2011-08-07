@@ -140,7 +140,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
     {
         list_delete(tcpConnections, list_find(tcpConnections, connection));
 
-        serial_log(1,"\r\n%u ms ID %u\t tcp_deleteConnection", timer_getMilliseconds(), connection->ID);
+        serial_log(SER_LOG_TCP,"\r\n%u ms ID %u\t tcp_deleteConnection", timer_getMilliseconds(), connection->ID);
 
         connection->TCP_PrevState = connection->TCP_CurrState;
         connection->TCP_CurrState = CLOSED;
@@ -149,15 +149,15 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 
         list_free(connection->sendBuffer); // CHECK SEGMENTS TO BE SENT
 
-        serial_log(1,"\r\nInBuffers to be deleted:");
+        serial_log(SER_LOG_TCP,"\r\nInBuffers to be deleted:");
         uint32_t countIN  = tcp_deleteInBuffers (connection, connection->inBuffer); // free
         connection->inBuffer = 0;
 
-        serial_log(1,"\r\nOutofOrderInBuffers to be deleted:");
+        serial_log(SER_LOG_TCP,"\r\nOutofOrderInBuffers to be deleted:");
         uint32_t countOutofOrderIN = tcp_deleteInBuffers(connection, connection->OutofOrderinBuffer); // free
         connection->OutofOrderinBuffer = 0;
 
-        serial_log(1,"\r\nDeleted ID %u, countIN: %u, countOutofOrderIN: %u, countOUT (not acked): %u \r\n", connection->ID, countIN, countOutofOrderIN, countOUT);
+        serial_log(SER_LOG_TCP,"\r\nDeleted ID %u, countIN: %u, countOutofOrderIN: %u, countOUT (not acked): %u \r\n", connection->ID, countIN, countOutofOrderIN, countOUT);
         event_issue(connection->owner->eventQueue, EVENT_TCP_CLOSED, &connection->ID, sizeof(connection->ID));
         free(connection);
     }
@@ -423,7 +423,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                     if (ntohl(tcp->acknowledgmentNumber) != connection->tcb.SND.UNA)
                     {
-                        serial_log(1,"\r\ninvalid ack - drop!!!\r\n");
+                        serial_log(SER_LOG_TCP,"\r\ninvalid ack - drop!!!\r\n");
                         return; // invalid ACK, drop
                     }
 
@@ -435,11 +435,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 
                     if (connection->tcb.RCV.dACK == 1)
                     {
-                        serial_log(1,"\r\nignore 1st duplicate ACK and continue!\r\n");
+                        serial_log(SER_LOG_TCP,"\r\nignore 1st duplicate ACK and continue!\r\n");
                     }
                     else if (connection->tcb.RCV.dACK == 2) // 2nd duplicate ACK
                     {
-                        serial_log(1,"\r\n2nd duplicate ACK\r\n");
+                        serial_log(SER_LOG_TCP,"\r\n2nd duplicate ACK\r\n");
                         tcp_retransOutBuffer(connection, ntohl(tcp->acknowledgmentNumber)); // Retransmission                        
                     }
                     else
@@ -462,8 +462,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                 else if (ntohl(tcp->sequenceNumber) > connection->tcb.RCV.NXT)
                 {
                     
-                    serial_log(1,"%u ms ID %u\trcvd:\tseq:\t%u", timer_getMilliseconds(), connection->ID, ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
-                    serial_log(1," -> send Dup-ACK!");
+                    serial_log(SER_LOG_TCP,"%u ms ID %u\trcvd:\tseq:\t%u", timer_getMilliseconds(), connection->ID, ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+                    serial_log(SER_LOG_TCP," -> send Dup-ACK!");
                     tcp_send_DupAck(connection);
 
                     // Add received data to the temporary Out-of-Order In-Buffer
@@ -477,7 +477,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
                         In->ev->connectionID = connection->ID;
 
                         list_append(connection->OutofOrderinBuffer, In);
-                        serial_log(1,"%u ms ID %u\tseq %u send to OutofOrderinBuffer.\r\n", timer_getMilliseconds(), connection->ID, ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+                        serial_log(SER_LOG_TCP,"%u ms ID %u\tseq %u send to OutofOrderinBuffer.\r\n", timer_getMilliseconds(), connection->ID, ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
                         connection->tcb.RCV.WND += tcpDataLength;
 
                         if (tcp->FIN) // FIN ACK
@@ -691,21 +691,21 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
     } // switch(connection->TCP_CurrState)
 
     /// LOG
-    serial_log(1,"%u ms ID %u\trecv: ", timer_getMilliseconds(), connection->ID);
-    if(tcp->FIN) serial_log(1," FIN");
-    if(tcp->SYN) serial_log(1," SYN");
-    if(tcp->ACK) serial_log(1," ACK");
-    if(tcp->RST) serial_log(1," RST");
-    if(tcp->PSH) serial_log(1," PSH");
-    if(tcp->URG) serial_log(1," URG");
-    serial_log(1,"\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
-    serial_log(1,"\trcv nxt:\t%u", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
+    serial_log(SER_LOG_TCP,"%u ms ID %u\trecv: ", timer_getMilliseconds(), connection->ID);
+    if(tcp->FIN) serial_log(SER_LOG_TCP," FIN");
+    if(tcp->SYN) serial_log(SER_LOG_TCP," SYN");
+    if(tcp->ACK) serial_log(SER_LOG_TCP," ACK");
+    if(tcp->RST) serial_log(SER_LOG_TCP," RST");
+    if(tcp->PSH) serial_log(SER_LOG_TCP," PSH");
+    if(tcp->URG) serial_log(SER_LOG_TCP," URG");
+    serial_log(SER_LOG_TCP,"\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.RCV.IRS);
+    serial_log(SER_LOG_TCP,"\trcv nxt:\t%u", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
     if (tcp->ACK)
     {
-        serial_log(1,"\tack:\t%u", ntohl(tcp->acknowledgmentNumber) - connection->tcb.SND.ISS);
-        serial_log(1,"\t\tSND.UNA:\t%u", connection->tcb.SND.UNA - connection->tcb.SND.ISS);
+        serial_log(SER_LOG_TCP,"\tack:\t%u", ntohl(tcp->acknowledgmentNumber) - connection->tcb.SND.ISS);
+        serial_log(SER_LOG_TCP,"\t\tSND.UNA:\t%u", connection->tcb.SND.UNA - connection->tcb.SND.ISS);
     }
-    serial_log(1,"\r\n");
+    serial_log(SER_LOG_TCP,"\r\n");
     /// LOG
 
     if (tcp_sendFlag)
@@ -734,9 +734,9 @@ static void tcp_send_DupAck(tcpConnection_t* connection)
 {
     connection->tcb.SEG.ACK = connection->tcb.RCV.NXT;
     connection->tcb.SEG.CTL = ACK_FLAG;
-    serial_log(1,"%u ms ID %u\tWe send now Dup-Ack:\r\n", timer_getMilliseconds(), connection->ID);
-    serial_log(1,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
-    serial_log(1,"\tack:\t%u\r\n", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
+    serial_log(SER_LOG_TCP,"%u ms ID %u\tWe send now Dup-Ack:\r\n", timer_getMilliseconds(), connection->ID);
+    serial_log(SER_LOG_TCP,"\tseq:\t%u", connection->tcb.SEG.SEQ - connection->tcb.SND.ISS);
+    serial_log(SER_LOG_TCP,"\tack:\t%u\r\n", connection->tcb.RCV.NXT - connection->tcb.RCV.IRS);
     tcp_send(connection, 0, 0);
 }
 
@@ -824,20 +824,20 @@ void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
         connection->tcb.SND.NXT += length;
     }
     /// LOG
-    serial_log(1,"%u ms ID %u\tsend: ", timer_getMilliseconds(), connection->ID);
-    if(tcp->FIN) serial_log(1," FIN");
-    if(tcp->SYN) serial_log(1," SYN");
-    if(tcp->ACK) serial_log(1," ACK");
-    if(tcp->RST) serial_log(1," RST");
-    if(tcp->PSH) serial_log(1," PSH");
-    if(tcp->URG) serial_log(1," URG");
-    serial_log(1,"\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.SND.ISS);
-    serial_log(1,"\tseq nxt:\t%u", connection->tcb.SND.NXT - connection->tcb.SND.ISS);
+    serial_log(SER_LOG_TCP,"%u ms ID %u\tsend: ", timer_getMilliseconds(), connection->ID);
+    if(tcp->FIN) serial_log(SER_LOG_TCP," FIN");
+    if(tcp->SYN) serial_log(SER_LOG_TCP," SYN");
+    if(tcp->ACK) serial_log(SER_LOG_TCP," ACK");
+    if(tcp->RST) serial_log(SER_LOG_TCP," RST");
+    if(tcp->PSH) serial_log(SER_LOG_TCP," PSH");
+    if(tcp->URG) serial_log(SER_LOG_TCP," URG");
+    serial_log(SER_LOG_TCP,"\tseq:\t%u", ntohl(tcp->sequenceNumber) - connection->tcb.SND.ISS);
+    serial_log(SER_LOG_TCP,"\tseq nxt:\t%u", connection->tcb.SND.NXT - connection->tcb.SND.ISS);
     if (tcp->ACK)
     {
-        serial_log(1,"\tack:\t%u", ntohl(tcp->acknowledgmentNumber) - connection->tcb.RCV.IRS);
+        serial_log(SER_LOG_TCP,"\tack:\t%u", ntohl(tcp->acknowledgmentNumber) - connection->tcb.RCV.IRS);
     }
-    serial_log(1,"\r\n");
+    serial_log(SER_LOG_TCP,"\r\n");
     /// LOG
 
     tcp_debug(tcp, true);
@@ -868,13 +868,13 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
     uint32_t count = 0;
     if (connection)
     {
-        serial_log(1,"\r\nOutBuffers not acked: ");
+        serial_log(SER_LOG_TCP,"\r\nOutBuffers not acked: ");
 
         for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
         {
             count++;
             tcpOut_t* outPacket = e->data;
-            serial_log(1,"seq = %u  ",outPacket->segment.SEQ - connection->tcb.SND.ISS);
+            serial_log(SER_LOG_TCP,"seq = %u  ",outPacket->segment.SEQ - connection->tcb.SND.ISS);
             free(outPacket->data);
             free(outPacket);
         }
@@ -896,7 +896,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
             printf("\ndup-ack triggered retransmission done for seq = %u.", outPacket->segment.SEQ - connection->tcb.SND.ISS);
           #endif
 
-            serial_log(1,"\r\nID %u\t dup-ack triggered retransmission done for seq = %u.\r\n", connection->ID, outPacket->segment.SEQ - connection->tcb.SND.ISS);
+            serial_log(SER_LOG_TCP,"\r\nID %u\t dup-ack triggered retransmission done for seq = %u.\r\n", connection->ID, outPacket->segment.SEQ - connection->tcb.SND.ISS);
             connection->tcb.SEG.SEQ = outPacket->segment.SEQ;
             connection->tcb.SEG.ACK = outPacket->segment.ACK;
             connection->tcb.SEG.LEN = outPacket->segment.LEN;
@@ -914,7 +914,7 @@ static uint32_t tcp_deleteOutBuffers(tcpConnection_t* connection)
     textColor(ERROR);
     printf("\nPacket for requested retransmission not found.");
   #endif
-    serial_log(1,"Packet for requested retransmission not found.\r\n");
+    serial_log(SER_LOG_TCP,"Packet for requested retransmission not found.\r\n");
     textColor(TEXT);
     return false;
  }
@@ -949,7 +949,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
         /*
         if ((timer_getMilliseconds() - outPacket->time_ms_transmitted) > 2*connection->tcb.rto)
         {
-            serial_log(1,"\r\nrto (%u ms) triggered retransmission done for seq=%u.\r\n", connection->tcb.rto, outPacket->segment.SEQ - connection->tcb.SND.ISS);
+            serial_log(SER_LOG_TCP,"\r\nrto (%u ms) triggered retransmission done for seq=%u.\r\n", connection->tcb.rto, outPacket->segment.SEQ - connection->tcb.SND.ISS);
             connection->tcb.SEG.SEQ =  outPacket->segment.SEQ;
             connection->tcb.SEG.ACK =  outPacket->segment.ACK;
             connection->tcb.SEG.LEN =  outPacket->segment.LEN;
@@ -985,7 +985,7 @@ static void tcp_RemoveAckedPacketsFromOutBuffer(tcpConnection_t* connection, tcp
             {
                 calculateRTO(connection, timer_getMilliseconds() - outPacket->time_ms_transmitted);
             }
-            serial_log(1,"Acked Packet seq %u time %u ms removed.\r\n",outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->time_ms_transmitted);
+            serial_log(SER_LOG_TCP,"Acked Packet seq %u time %u ms removed.\r\n",outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->time_ms_transmitted);
             free(outPacket->data);
             free(outPacket);
             e = list_delete(connection->outBuffer, e); // Remove packet.
@@ -1129,13 +1129,13 @@ static void tcpShowConnectionStatus(tcpConnection_t* connection)
 
 static uint32_t tcp_logBuffers(tcpConnection_t* connection, bool showData, list_t* list)
 {
-    serial_log(1,"\r\n------------------------------------");
+    serial_log(SER_LOG_TCP,"\r\n------------------------------------");
     uint32_t count = 0;
     for (dlelement_t* e = list->head; e != 0; e = e->next)
     {
         count++;
         tcpIn_t* inPacket = e->data;
-        serial_log(1,"\r\n seq = %u\tlen = %u\tseq.nxt: %u", inPacket->seq - connection->tcb.RCV.IRS, inPacket->ev->length, inPacket->seq - connection->tcb.RCV.IRS + inPacket->ev->length);
+        serial_log(SER_LOG_TCP,"\r\n seq = %u\tlen = %u\tseq.nxt: %u", inPacket->seq - connection->tcb.RCV.IRS, inPacket->ev->length, inPacket->seq - connection->tcb.RCV.IRS + inPacket->ev->length);
         if (showData)
         {
             for (uint32_t i=0; i<inPacket->ev->length; i++)
@@ -1144,7 +1144,7 @@ static uint32_t tcp_logBuffers(tcpConnection_t* connection, bool showData, list_
             }
         }
     }
-    serial_log(1,"\r\n------------------------------------\r\n");
+    serial_log(SER_LOG_TCP,"\r\n------------------------------------\r\n");
     return count;
 }
 

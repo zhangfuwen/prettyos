@@ -42,7 +42,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
     {
         case 0x66: // O32
             #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "o32 ");
+            serial_log(SER_LOG_VM86, "o32 ");
             #endif
             isOperand32 = true;
             ip++;
@@ -50,7 +50,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
             break;
         case 0x67: // A32
             #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "a32 ");
+            serial_log(SER_LOG_VM86, "a32 ");
             #endif
             ip++;
             ctx->eip++;
@@ -63,7 +63,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
     {
         case 0x9C: // PUSHF
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "pushf\r\r\n");
+            serial_log(SER_LOG_VM86, "pushf\r\r\n");
           #endif
             if (isOperand32)
             {
@@ -100,7 +100,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 
         case 0x9D: // POPF
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "popf\r\r\n");
+            serial_log(SER_LOG_VM86, "popf\r\r\n");
           #endif
 
             if (isOperand32)
@@ -122,14 +122,14 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
             if (!isOperand32)
             {
              #ifdef _VM_DIAGNOSIS_
-                serial_log(1, "outw\r\r\n");
+                serial_log(SER_LOG_VM86, "outw\r\r\n");
               #endif
                 outportw(ctx->edx, ctx->eax);
             }
             else
             {
               #ifdef _VM_DIAGNOSIS_
-                 serial_log(1, "outl\r\r\n");
+                 serial_log(SER_LOG_VM86, "outl\r\r\n");
               #endif
                 outportl(ctx->edx, ctx->eax);
             }
@@ -138,7 +138,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 
         case 0xEE: // OUT DX, AL
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "outportb(...)\r\n");
+            serial_log(SER_LOG_VM86, "outportb(...)\r\n");
           #endif
             outportb(ctx->edx, ctx->eax);
             ctx->eip++;
@@ -148,14 +148,14 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
             if (!isOperand32)
             {
               #ifdef _VM_DIAGNOSIS_
-                 serial_log(1, "inw\r\n");
+                 serial_log(SER_LOG_VM86, "inw\r\n");
               #endif
                 ctx->eax = (ctx->eax & 0xFFFF0000) | inportw(ctx->edx);
             }
             else
             {
               #ifdef _VM_DIAGNOSIS_
-                 serial_log(1, "inl\r\n");
+                 serial_log(SER_LOG_VM86, "inl\r\n");
               #endif
                 ctx->eax = inportl(ctx->edx);
             }
@@ -164,7 +164,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 
         case 0xEC: // IN AL,DX
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "inportb(...)\r\n");
+            serial_log(SER_LOG_VM86, "inportb(...)\r\n");
           #endif
             ctx->eax = (ctx->eax & 0xFFFFFF00) | inportb(ctx->edx);
             ctx->eip++;
@@ -172,13 +172,13 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 
         case 0xCD: // INT imm8
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "interrupt %X...\r\n", ip[1]);
+            serial_log(SER_LOG_VM86, "interrupt %X...\r\n", ip[1]);
           #endif
             switch (ip[1])
             {
                 case 0x30:
                   #ifdef _VM_DIAGNOSIS_
-                    serial_log(1, "syscall\r\n");
+                    serial_log(SER_LOG_VM86, "syscall\r\n");
                   #endif
                     ctx->eip += 2;
                     return true;
@@ -211,7 +211,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 
         case 0xCF: // IRET
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "iret\r\n");
+            serial_log(SER_LOG_VM86, "iret\r\n");
           #endif
             ctx->eip     = stack[2];
             ctx->cs      = stack[1];
@@ -223,7 +223,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 
         case 0xFA: // CLI
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "cli\r\n");
+            serial_log(SER_LOG_VM86, "cli\r\n");
           #endif
             v86_if = false;
             ctx->eip++;
@@ -231,7 +231,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 
         case 0xFB: // STI
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "sti\r\n");
+            serial_log(SER_LOG_VM86, "sti\r\n");
           #endif
             v86_if = true;
             ctx->eip++;
@@ -239,14 +239,14 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 
         case 0xF4: // HLT
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "hlt\r\n");
+            serial_log(SER_LOG_VM86, "hlt\r\n");
           #endif
             exit();
             return true;
 
         default: // should not happen!
           #ifdef _VM_DIAGNOSIS_
-            serial_log(1, "error: unhandled opcode %X\r\n", ip[0]);
+            serial_log(SER_LOG_VM86, "error: unhandled opcode %X\r\n", ip[0]);
           #endif
             ctx->eip++;
             return false;

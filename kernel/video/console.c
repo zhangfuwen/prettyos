@@ -26,10 +26,12 @@ uint8_t getTextColor()
     return(currentTask->attrib);
 }
 
-void textColor(uint8_t color) // bit 0-3: background; bit 4-7: foreground
+void textColor(uint8_t color) // bit 0-3: foreground bit 4-7: background 
 {
-    if(currentTask != 0)
+    if(currentTask)
+    {
         currentTask->attrib = color;
+    }
 }
 
 void kernel_console_init()
@@ -128,7 +130,9 @@ static void move_cursor_right()
 static void move_cursor_left()
 {
     if (console_current->cursor.x)
+    {
         --console_current->cursor.x;
+    }
     else if (console_current->cursor.y > 0)
     {
         console_current->cursor.x = COLUMNS-1;
@@ -159,7 +163,9 @@ void console_setPixel(uint8_t x, uint8_t y, uint16_t value)
     console_current->vidmem[y*COLUMNS + x] = value;
     mutex_unlock(console_current->mutex);
     if (console_current == console_displayed)
+    {
         vga_setPixel(x, y+2, value);
+    }
 }
 
 void putch(char c)

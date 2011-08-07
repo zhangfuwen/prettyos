@@ -5,11 +5,9 @@
 
 
 // Enable/Disable features (Should be enabled per default)
-// #define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
+/// #define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 #define _SERIAL_LOG_           // Enables log information over the COM-Ports
-
-// Enable/Disable diagnosis output (Should be disabled per default)
 /// #define _DIAGNOSIS_            // Diagnosis-Output - activates prints to the screen about some details and memory use
 /// #define _PAGING_DIAGNOSIS_     // Diagnosis-Output about PD, PT etc.
 /// #define _MALLOC_FREE_          // shows information about malloc/free and heap expansion
@@ -32,6 +30,10 @@
 /// #define _TCP_DEBUG_            // Enables additional information about TCP
 /// #define _NETBIOS_DEBUG_        // Enables NetBIOS packet analysis
 /// #define _VBE_DEBUG_            // Provides additional output of the VBE driver
+
+#define SER_LOG_TCP    1
+#define SER_LOG_HEAP   2
+#define SER_LOG_VM86   2
 
 
 extern const char* const version; // PrettyOS Version string
