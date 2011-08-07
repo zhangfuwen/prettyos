@@ -147,7 +147,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 
         uint32_t countOUT = tcp_deleteOutBuffers(connection); // free
 
-        list_free(connection->sendBuffer); // CHECK INPUT TO BE SENT
+        list_free(connection->sendBuffer); // CHECK SEGMENTS TO BE SENT
 
         serial_log(1,"\r\nInBuffers to be deleted:");
         uint32_t countIN  = tcp_deleteInBuffers (connection, connection->inBuffer); // free
@@ -158,6 +158,7 @@ void tcp_deleteConnection(tcpConnection_t* connection)
         connection->OutofOrderinBuffer = 0;
 
         serial_log(1,"\r\nDeleted ID %u, countIN: %u, countOutofOrderIN: %u, countOUT (not acked): %u \r\n", connection->ID, countIN, countOutofOrderIN, countOUT);
+        event_issue(connection->owner->eventQueue, EVENT_TCP_CLOSED, &connection->ID, sizeof(connection->ID));
         free(connection);
     }
 }

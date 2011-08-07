@@ -6,9 +6,17 @@
 #include "netprotocol/dhcp.h"
 #include "netutils.h"
 
-// typical qemu.bat:
-// del ser1.txt
-// qemu.exe  -boot a -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139 -redir tcp:5023::23 -redir tcp:8080::80 -localtime -net user -net dump,file=netdump.pcap -serial file:ser1.txt -usb
+/*
+typical qemu.bat:
+del ser1.txt
+del ser2.txt
+del ser3.txt
+del ser4.txt
+set QEMU_AUDIO_DRV=wav
+qemu.exe  -boot a -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139 -redir tcp:5023::23 
+-redir tcp:8080::80 -localtime -net user -net dump,file=netdump.pcap -usb
+-serial file:ser1.txt -serial file:ser2.txt -serial file:ser3.txt -serial file:ser4.txt 
+*/
 
 // own IP at start
 #define IP_1    192
