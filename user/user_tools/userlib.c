@@ -105,7 +105,9 @@ void event_enable(bool b)
 {
     enabledEvents = b;
     if(b)
+    {
         __asm__ volatile("int $0x7F" : : "a"(38), "b"(b));
+    }
 }
 
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
@@ -161,13 +163,15 @@ void clearScreen(uint8_t backgroundColor)
 char getchar()
 {
     char ret = 0;
-    EVENT_t ev = event_poll(&ret, 1, enabledEvents?EVENT_TEXT_ENTERED:EVENT_NONE);
+    EVENT_t ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
 
     while(ev != EVENT_TEXT_ENTERED)
     {
         if(ev == EVENT_NONE)
+        {
             waitForEvent(0);
-        ev = event_poll(&ret, 1, enabledEvents?EVENT_TEXT_ENTERED:EVENT_NONE);
+        }
+        ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
     }
     return(ret);
 }
@@ -431,27 +435,36 @@ void i2hex(uint32_t val, char* dest, uint32_t len)
 
 void showInfo(uint8_t val)
 {
-    if (val==1)
+    switch (val)
     {
-        static char* line1 = "   _______                _______      <>_<>                                    ";
-        static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] | .---|'\"`|---.                                ";
-        static char* line3 = " `-oo---oo-'`-oo-----oo-'`-o---o-'`o\"O-OO-OO-O\"o'                               ";
-        char temp1 = line1[79];
-        char temp2 = line2[79];
-        char temp3 = line3[79];
-
-        for (uint8_t i=79; i>0; --i)
+        case 1:
         {
-            line1[i] = line1[i-1];
-            line2[i] = line2[i-1];
-            line3[i] = line3[i-1];
+            static char* line1 = "   _______                __________      <>_<>                                 ";
+            static char* line2 = "  (_______) |_|_|_|_|_|_|| [] [] [] | .---|'\"`|---.                             ";
+            static char* line3 = " `-oo---oo-'`-oo-----oo-'`-oo----oo-'`o\"O-OO-OO-O\"o'                            ";
+            char temp1 = line1[79];
+            char temp2 = line2[79];
+            char temp3 = line3[79];
+
+            for (uint8_t i=79; i>0; --i)
+            {
+                line1[i] = line1[i-1];
+                line2[i] = line2[i-1];
+                line3[i] = line3[i-1];
+            }
+            line1[0] = temp1;
+            line2[0] = temp2;
+            line3[0] = temp3;
+            printLine(line1,43,0xE);
+            printLine(line2,44,0xE);
+            printLine(line3,45,0xE);
+            break;
         }
-        line1[0] = temp1;
-        line2[0] = temp2;
-        line3[0] = temp3;
-        printLine(line1,43,0xE);
-        printLine(line2,44,0xE);
-        printLine(line3,45,0xE);
+        case 2:
+        {
+            // TODO: new info line
+            break;
+        }
     }
 }
 
@@ -480,7 +493,7 @@ IP_t stringToIP(char* str)
 
 IP_t resolveIP(const char* host)
 {
-    IP_t IP = {.IP = {82, 100, 220, 68}}; // 78.138.89.168 is www.fanofblitzbasic.de
+    IP_t IP = {.IP = {82, 100, 220, 68}}; // www.henkessoft.de (web site of Dr. Erhard Henkes) 
 
     textColor(0x0F);
     printf("Resolving DNS...\n");
