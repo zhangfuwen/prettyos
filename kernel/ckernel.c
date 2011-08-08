@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.292 - Rev: 1144";
+const char* const version = "0.0.2.293 - Rev: 1145";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -221,12 +221,12 @@ void main(multiboot_t* mb_struct)
     showPortList();
     showDiskList();
     #endif
-	
-	
+
+
 	TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !","This is an educational OS!");
-	
+
 	uint16_t result = TextGUI_AskYN("Question","Are you a software developer?",TEXTGUI_YES);
-	
+
 	switch (result) {
 		case TEXTGUI_ABORTED:
 			TextGUI_ShowMSG("Result","You have cancelled the MessageBox!");
@@ -241,11 +241,11 @@ void main(multiboot_t* mb_struct)
 			TextGUI_ShowMSG("Result","This can not happen.");
 			break;
 	}
-	
-	
+
+
     // search and load shell
     bool shell_found = false;
-    struct dirent* node = 0;
+    dirent_t* node = 0;
     for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
     {
         fs_node_t* fsnode = finddir_fs(fs_root, node->name);
@@ -274,7 +274,7 @@ void main(multiboot_t* mb_struct)
                 if(entry == 0)
                 {
                     textColor(ERROR);
-                    printf("Cannot start Shell.\n");
+                    printf("ERROR: shell cannot be started.\n");
                     paging_destroyUserPageDirectory(pd);
                 }
                 else
@@ -318,9 +318,9 @@ void main(multiboot_t* mb_struct)
         char buffer[4];
         EVENT_t ev = event_poll(buffer, 4, EVENT_NONE); // Take one event from the event queue
         uint32_t t = timer_getMilliseconds();
-        
+
         while(ev != EVENT_NONE && (timer_getMilliseconds() - t < 1000))
-        {                        
+        {
             switch(ev)
             {
                 case EVENT_KEY_DOWN:
@@ -402,13 +402,13 @@ void main(multiboot_t* mb_struct)
                                 break;
                             }
                             case 'c': // show tcp connections
-                            {                                
+                            {
                                 textColor(HEADLINE);
                                 printf("\ntcp connections:");
                                 textColor(TEXT);
                                 tcp_showConnections();
                                 break;
-                            }                            
+                            }
                             case 'd':
                                 showPortList();
                                 showDiskList();
@@ -428,7 +428,7 @@ void main(multiboot_t* mb_struct)
             ev = event_poll(buffer, 4, EVENT_NONE);
             t = timer_getMilliseconds();
         }
-        
+
         if (timer_getSeconds() != CurrentSeconds)
         {
             CurrentSeconds = timer_getSeconds();
@@ -470,9 +470,9 @@ void main(multiboot_t* mb_struct)
             serial_write(1,'y');
             printf("\nAnswered with 'Pretty'!\n");
         }
-        
+
         todoList_execute(kernel_idleTasks);
-        switch_context(); // Switch to another task        
+        switch_context(); // Switch to another task
     } // end of kernel idle loop
 }
 
