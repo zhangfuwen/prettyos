@@ -42,7 +42,7 @@ LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 # targets to build an executable from a source file
 %.ELF: %.c
 	$(GCC) $< $(GCCFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$<.o
-	$(LD) $(OBJDIR)/$<.o $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $@
+	$(LD) $(OBJDIR)/$<.o $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -Map ../../documentation/user_$@.map -o $@
 	$(STRIP) $@
 
 # dependancies
