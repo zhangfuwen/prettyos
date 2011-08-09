@@ -6,6 +6,13 @@
 
 typedef struct
 {
+    uint16_t srcPort;
+    uint16_t destPort;
+    size_t   length;
+} __attribute__((packed)) udpReceivedEventHeader_t;
+
+typedef struct
+{
     uint16_t sourcePort;
     uint16_t destPort;
     uint16_t length;

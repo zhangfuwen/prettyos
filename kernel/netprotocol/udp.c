@@ -12,6 +12,13 @@
 #include "util.h"
 #include "ipv4.h"
 #include "netbios.h"
+#include "events.h"
+#include "task.h"
+#include "scheduler.h"
+#include "ring.h"
+
+extern ring_t* runningTasks; // scheduler.c 
+extern ring_t* blockedTasks;
 
 
 static void udp_debug(udpPacket_t* udp);
@@ -34,7 +41,35 @@ void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t lengt
             NetBIOS_Datagramm_Receive(adapter, (NetBIOSDatagramHeader_t*)(packet+1));
             break;
         default:
+        {
+          #ifdef _UDP_DEBUG_
+            printf("\nUDP default port");
+          #endif
+            udpReceivedEventHeader_t* ev = malloc(sizeof(udpReceivedEventHeader_t) + packet->length, 0, "udp_rcvd_eventheader");
+            memcpy(ev+1, packet, packet->length);
+            ev->length   = packet->length;
+            ev->srcPort  = packet->sourcePort;
+            ev->destPort = packet->destPort;
+            
+            slelement_t* temp = runningTasks->begin;
+            do
+            {
+                event_issue( ((task_t*)(temp->data))->eventQueue, EVENT_UDP_RECEIVED, ev, sizeof(udpReceivedEventHeader_t) + packet->length );
+                temp = temp->next;
+            }
+            while (temp && temp != runningTasks->begin);
+                        
+            temp = blockedTasks->begin;
+            do
+            {
+                event_issue( ((task_t*)(temp->data))->eventQueue, EVENT_UDP_RECEIVED, ev, sizeof(udpReceivedEventHeader_t) + packet->length );
+                temp = temp->next;
+            }
+            while (temp && temp != blockedTasks->begin);
+
+            free(ev);
             break;
+        }
     }
 }
 

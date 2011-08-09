@@ -8,25 +8,15 @@ int main()
 {
     setScrollField(7, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                     Pretty Browser - Network test program!",                      2, 0x0B);
+    printLine("                     Pretty UDPreceive - Network test program!",                   2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     event_enable(true);
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 
-
+    
     iSetCursor(0, 7);
-
-    textColor(0x0F);
-    printf("Enter the address (no subdirs yet!):\n");
-    char hostname[100];
-    gets(hostname);
-
-    IP_t IP = resolveIP(hostname);
-
-    uint32_t connection = tcp_connect(IP, 80);
-    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
     for(;;)
     {
@@ -37,24 +27,9 @@ int main()
                 waitForEvent(0);
                 break;
             }
-            case EVENT_TCP_CONNECTED:
+            case EVENT_UDP_RECEIVED:
             {
-                printf("ESTABLISHED.\n");
-
-                char pStr[200];
-                memset(pStr,0,200);
-                strcat(pStr,"GET / HTTP/1.1\r\nHost: ");
-                strcat(pStr,hostname);
-                strcat(pStr,"\r\nConnection: close\r\n\r\n");
-                textColor(0x0A);
-                puts(pStr);
-                textColor(0x0F);
-                tcp_send(connection, pStr, strlen(pStr));
-                break;
-            }
-            case EVENT_TCP_RECEIVED:
-            {
-                tcpReceivedEventHeader_t* header = (void*)buffer;
+                udpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
                 printf("\npacket received. Length = %u\n:%s", header->length, data);
@@ -65,7 +40,6 @@ int main()
                 KEY_t* key = (void*)buffer;
                 if(*key == KEY_ESC)
                 {
-                    tcp_close(connection);
                     return(0);
                 }
                 break;
@@ -75,7 +49,6 @@ int main()
         }
         ev = event_poll(buffer, 4096, EVENT_NONE);
     }
-
-    tcp_close(connection);
+        
     return(0);
 }

@@ -28,7 +28,8 @@ typedef enum
 {
     EVENT_NONE, EVENT_INVALID_ARGUMENTS, EVENT_OVERFLOW,
     EVENT_KEY_DOWN, EVENT_KEY_UP, EVENT_TEXT_ENTERED,
-    EVENT_TCP_CONNECTED, EVENT_TCP_RECEIVED, EVENT_TCP_CLOSED
+    EVENT_TCP_CONNECTED, EVENT_TCP_RECEIVED, EVENT_TCP_CLOSED,
+    EVENT_UDP_RECEIVED
 } EVENT_t;
 
 typedef enum
@@ -109,5 +110,12 @@ typedef struct
     uint32_t connectionID;
     size_t   length;
 } __attribute__((packed)) tcpReceivedEventHeader_t;
+
+typedef struct
+{
+    uint16_t srcPort;
+    uint16_t destPort;
+    size_t   length;
+} __attribute__((packed)) udpReceivedEventHeader_t;
 
 #endif
