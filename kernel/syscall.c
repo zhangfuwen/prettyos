@@ -15,6 +15,7 @@
 #include "events.h"
 #include "keyboard.h"
 #include "netprotocol/tcp.h"
+#include "netprotocol/udp.h"
 
 
 // Overwiew to all syscalls in documentation/Syscalls.odt
@@ -118,7 +119,7 @@ static void* syscalls[] =
 /*  85 */    &tcp_uconnect,
 /*  86 */    &tcp_usend,
 /*  87 */    &tcp_uclose,
-/*  88 */    &nop,
+/*  88 */    &udp_usend,
 /*  89 */    &nop,
 
 // COMPATIBILITY (90-91); should be removed

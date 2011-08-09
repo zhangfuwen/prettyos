@@ -64,6 +64,7 @@
     <ClCompile Include="..\user\other_userprogs\starwars.c" />
     <ClCompile Include="..\user\other_userprogs\test.c" />
     <ClCompile Include="..\user\other_userprogs\ttt.c" />
+    <ClCompile Include="..\user\other_userprogs\udpsend.c" />
     <ClCompile Include="..\user\shell\shell.c" />
     <ClCompile Include="..\user\stdlibc\assert.c" />
     <ClCompile Include="..\user\stdlibc\ctype.c" />

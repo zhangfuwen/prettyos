@@ -209,6 +209,13 @@ bool tcp_close(uint32_t ID)
     return ret;
 }
 
+bool udp_send(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16_t destPort)
+{
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(88), "b"(data), "c"(length), "d"(destIP), "S"(srcPort), "D"(destPort));
+    return ret;
+}
+
  // deprecated
 int32_t floppy_dir()
 {

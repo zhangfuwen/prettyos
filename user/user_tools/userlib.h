@@ -35,6 +35,8 @@ uint32_t tcp_connect(IP_t IP, uint16_t port);
 bool     tcp_send(uint32_t ID, void* data, size_t length);
 bool     tcp_close(uint32_t ID);
 
+bool udp_send(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16_t destPort);
+
  // deprecated
 int32_t floppy_dir();
 void printLine(const char* message, uint32_t line, uint8_t attribute);

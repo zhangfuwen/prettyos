@@ -54,6 +54,26 @@ void udp_send(network_adapter_t* adapter, void* data, uint32_t length, uint16_t 
     free(packet);
 }
 
+
+// user programs
+bool udp_usend(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16_t destPort)
+{
+    network_adapter_t* adapter = network_getFirstAdapter();
+    
+    IP_t srcIP;
+    for (uint8_t i=0; i<4; i++)
+    {
+        srcIP.IP[i] = adapter->IP.IP[i];
+    }
+
+    if (adapter)
+    {
+        udp_send(adapter, data, length, srcPort, srcIP, destPort, destIP);
+        return true;
+    }
+    return false;
+}
+
 #ifdef _UDP_DEBUG_
 static void printUDPPortType(uint16_t port)
 {
