@@ -44,6 +44,7 @@ void todoList_execute(todoList_t* list)
         {
             task->function(task->data, task->length);
             free(task->data);
+            free(task);
             e = list_delete(list->queue, e);
         }
         else
