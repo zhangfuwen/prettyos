@@ -57,9 +57,8 @@ static const KEY_t scancodeToKey_E0[] =
 };
 
 static bool pressedKeys[__KEY_LAST]; // for monitoring pressed keys
-
-
 static void keyboard_handler(registers_t* r);
+
 
 void keyboard_install()
 {
@@ -84,7 +83,7 @@ static uint8_t getScancode()
     outportb(0x61, port_value |  0x80); // 0->1
     outportb(0x61, port_value &~ 0x80); // 1->0
 
-    return(scancode);
+    return (scancode);
 }
 
 static KEY_t scancodeToKey(uint8_t scancode, bool* make)
@@ -188,24 +187,37 @@ static void keyboard_handler(registers_t* r)
 
     // Find out key. Issue events.
     KEY_t key = scancodeToKey(scancode, &make);
-    if(key == __KEY_INVALID)
+    
+    if (key == __KEY_INVALID)
+    {
         return;
+    }
 
-    if(make)
+    if (make)
+    {
         for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        {
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_DOWN, &key, sizeof(KEY_t));
+        }
+    }
     else
     {
         for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        {
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_UP, &key, sizeof(KEY_t));
+        }
         return;
     }
 
     // Find out ASCII representation of key. Issue events.
     char ascii = keyToASCII(key);
-    if(ascii != 0)
+    if (ascii)
+    {
         for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        {
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_TEXT_ENTERED, &ascii, sizeof(char));
+        }
+    }
 }
 
 char getch()
@@ -216,15 +228,17 @@ char getch()
     while(ev != EVENT_TEXT_ENTERED)
     {
         if(ev == EVENT_NONE)
+        {
             waitForEvent(0);
+        }
         ev = event_poll(&ret, 1, EVENT_NONE);
     }
-    return(ret);
+    return (ret);
 }
 
 bool keyPressed(KEY_t Key)
 {
-    return(pressedKeys[Key]);
+    return (pressedKeys[Key]);
 }
 
 /*

@@ -45,27 +45,16 @@ void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t lengt
           #ifdef _UDP_DEBUG_
             printf("\nUDP default port");
           #endif
-            udpReceivedEventHeader_t* ev = malloc(sizeof(udpReceivedEventHeader_t) + packet->length, 0, "udp_rcvd_eventheader");
-            memcpy(ev+1, packet, packet->length);
-            ev->length   = packet->length;
-            ev->srcPort  = packet->sourcePort;
-            ev->destPort = packet->destPort;
+            udpReceivedEventHeader_t* ev = malloc(sizeof(udpReceivedEventHeader_t) + ntohs(packet->length), 0, "udp_rcvd_eventheader");
+            memcpy(ev+1, packet+1, ntohs(packet->length));
+            ev->length   = ntohs(packet->length);
+            ev->srcPort  = ntohs(packet->sourcePort);
+            ev->destPort = ntohs(packet->destPort);
             
-            slelement_t* temp = runningTasks->begin;
-            do
+            for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
             {
-                event_issue( ((task_t*)(temp->data))->eventQueue, EVENT_UDP_RECEIVED, ev, sizeof(udpReceivedEventHeader_t) + packet->length );
-                temp = temp->next;
+                event_issue(((task_t*)(e->data))->eventQueue, EVENT_UDP_RECEIVED, ev, sizeof(udpReceivedEventHeader_t) + ntohs(packet->length) );
             }
-            while (temp && temp != runningTasks->begin);
-                        
-            temp = blockedTasks->begin;
-            do
-            {
-                event_issue( ((task_t*)(temp->data))->eventQueue, EVENT_UDP_RECEIVED, ev, sizeof(udpReceivedEventHeader_t) + packet->length );
-                temp = temp->next;
-            }
-            while (temp && temp != blockedTasks->begin);
 
             free(ev);
             break;

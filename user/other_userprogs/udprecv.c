@@ -12,12 +12,12 @@ int main()
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     event_enable(true);
-    char buffer[4096];
-    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
-
-    
+    const uint32_t BUFFERSIZE = 4000;
+    char buffer[BUFFERSIZE];
+    EVENT_t ev = event_poll(buffer, BUFFERSIZE, EVENT_NONE);
+        
     iSetCursor(0, 7);
-
+    
     for(;;)
     {
         switch(ev)
@@ -32,7 +32,11 @@ int main()
                 udpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
-                printf("\npacket received. Length = %u\n:%s", header->length, data);
+                textColor(0x0F);
+                printf("\npacket received. Length = %u", header->length);
+                textColor(0x0A);
+                printf("\n%s", data);
+                textColor(0x0F);
                 break;
             }
             case EVENT_KEY_DOWN:
@@ -47,7 +51,7 @@ int main()
             default:
                 break;
         }
-        ev = event_poll(buffer, 4096, EVENT_NONE);
+        ev = event_poll(buffer, BUFFERSIZE, EVENT_NONE);
     }
         
     return(0);

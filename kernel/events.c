@@ -34,7 +34,7 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
 {
     if(!destination) // Event handling disabled
     {
-        return(1);
+        return (1);
     }
 
     if(destination->num == MAX_EVENTS)
@@ -49,12 +49,12 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
         destination->num++;
         mutex_unlock(destination->mutex);
 
-        return(2);
+        return (2);
     }
     else if(destination->num > MAX_EVENTS)
     {
         // Nothing to do. OVERFLOW event has already been added.
-        return(3);
+        return (3);
     }
     else
     {
@@ -66,7 +66,9 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
             memcpy(ev->data, data, length);
         }
         else // Data fits in pointer: Optimization for small data, save data in pointer itself
+        {
             memcpy(&ev->data, data, length);
+        }
         ev->length = length;
         ev->type = type;
         mutex_lock(destination->mutex);
@@ -74,7 +76,7 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
         destination->num++;
         mutex_unlock(destination->mutex);
 
-        return(0);
+        return (0);
     }
 }
 
@@ -82,11 +84,14 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 {
     task_t* task = (task_t*)currentTask;
     while(task->parent && task->type == THREAD && task->eventQueue == 0)
+    {
         task = task->parent; // Use parents eventQueue, if the thread has no own queue.
+    }
 
     if(task->eventQueue == 0 || task->eventQueue->num == 0) // Event handling disabled or no events available
+    {
         return(EVENT_NONE);
-
+    }
 
     event_t* ev = 0;
     mutex_lock(task->eventQueue->mutex);
@@ -109,7 +114,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     if(ev == 0)
     {
         mutex_unlock(task->eventQueue->mutex);
-        return(EVENT_NONE);
+        return (EVENT_NONE);
     }
 
     EVENT_t type = EVENT_NONE;
@@ -135,7 +140,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     mutex_unlock(task->eventQueue->mutex);
     free(ev);
 
-    return(type);
+    return (type);
 }
 
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
