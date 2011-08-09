@@ -16,7 +16,7 @@
 #include "keyboard.h"
 #include "netprotocol/tcp.h"
 #include "netprotocol/udp.h"
-
+#include "video/textgui.h"
 
 // Overwiew to all syscalls in documentation/Syscalls.odt
 
@@ -96,8 +96,8 @@ static void* syscalls[] =
 /*  65 */    &nop,
 /*  66 */    &nop,
 /*  67 */    &nop,
-/*  68 */    &nop,
-/*  69 */    &nop,
+/*  68 */    &TextGUI_ShowMSG,
+/*  69 */    &TextGUI_AskYN,
 
 /*  70 */    0,
 /*  71 */    &keyPressed,

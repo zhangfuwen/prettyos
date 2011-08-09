@@ -231,6 +231,20 @@ void printLine(const char* message, uint32_t line, uint8_t attribute)
     }
 }
 
+uint16_t TextGUI_ShowMSG(char* title, char* message) 
+{
+   uint16_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(68), "b"(title), "c"(message));
+    return ret;
+}
+
+uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected)
+{
+   uint16_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(69), "b"(title), "c"(message), "d"(defaultselected));
+    return ret;
+}
+
 
 // user functions
 void sleep(uint32_t milliseconds)
