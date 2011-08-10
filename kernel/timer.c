@@ -3,10 +3,12 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
 #include "timer.h"
+#include "util.h"
+#include "pit.h"
 #include "irq.h"
 #include "task.h"
+
 
 static uint16_t systemfrequency; // system frequency
 static volatile uint32_t timer_ticks = 0;
@@ -59,16 +61,20 @@ void sleepMilliSeconds(uint32_t ms)
 
 void timer_setFrequency(uint32_t freq)
 {
-    systemfrequency = freq;
-    uint16_t divisor = 1193182 / systemfrequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
+    systemfrequency  = freq;
+    uint16_t divisor = TIMECOUNTER_i8254_FREQU / systemfrequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
 
     // Send the command byte
-    // outportb(0x43, 0x36); // 0x36 -> Mode 3 : Square Wave Generator
-    outportb(0x43, 0x34); // 0x34 -> Mode 2 : Rate Generator // idea of +gjm+
+    outportb(COMMANDREGISTER, 0x34);    // 0x34 -> Mode 2 : Rate Generator
+
+    /* cf. http://wiki.osdev.org/Programmable_Interval_Timer
+    Typically, OSes and BIOSes use mode 3 for PIT channel 0 to generate IRQ 0 timer ticks,
+    but some use mode 2 instead, to gain frequency accuracy (this mode operates as a frequency divider).
+    */
 
     // Send divisor
-    outportb(0x40, (uint8_t)(divisor      & 0xFF)); // low  byte
-    outportb(0x40, (uint8_t)((divisor>>8) & 0xFF)); // high byte
+    outportb(CHANNEL_0_DATAPORT, (uint8_t)( divisor       & 0xFF)); // low  byte
+    outportb(CHANNEL_0_DATAPORT, (uint8_t)((divisor >> 8) & 0xFF)); // high byte
 }
 
 uint16_t timer_getFrequency()

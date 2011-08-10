@@ -13,8 +13,7 @@ int main()
 
     iSetCursor(0, 7);
 
-    const char* pStr = "udp send wird getestet.\r\n";
-    
+
     IP_t destIP;
     destIP.IP[0] =  127;
     destIP.IP[1] =    0;
@@ -24,12 +23,17 @@ int main()
     uint16_t srcPort  = 8084;
     uint16_t destPort = 8085;
 
-    for(uint8_t i=0; i<100; i++)
+    for(uint32_t i=1; i<=500; i++)
     {
-        udp_send((void*)pStr, strlen(pStr), destIP, srcPort, destPort); 
-        printf("\nudp data send."); 
-        sleep(1000);
+        static char String[1000];
+        static char number[20];
+        strcpy (String,"udp send wird getestet. Count = ");
+        strcat(String,itoa(i,number));
+        strcat(String,"\r\n");
+        udp_send((void*)String, strlen(String), destIP, srcPort, destPort);
+        printf("%s",String);
+        sleep(50);
     }
-       
+
     return(0);
 }

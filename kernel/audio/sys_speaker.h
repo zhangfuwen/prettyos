@@ -3,9 +3,11 @@
 
 #include "os.h"
 
+
 void sound(uint32_t frequency);
 void noSound();
 void beep(uint32_t freq, uint32_t duration);
 void msgbeep();
+
 
 #endif

@@ -17,11 +17,19 @@ static const uint32_t kernelStackSize = 0x1000; // Tasks get a 4 KB kernel stack
 
 bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
 
-task_t kernelTask = { // Needed to find out when the kernel task is exited
-    .pid = 0, .esp = 0, .privilege = 0, .FPUptr = 0, .console = &kernelConsole, .attrib = 0x0F, .eventQueue = 0, .type = PROCESS,
-    .blocker.type = 0, // The task is not blocked (scheduler.h/c)
-    .kernelStack = 0, // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
-    .threads = 0 // No threads associated with the task at the moment. List is created later if necessary
+task_t kernelTask =          // Needed to find out when the kernel task is exited
+{
+    .pid           = 0,
+    .esp           = 0,
+    .privilege     = 0,
+    .FPUptr        = 0,
+    .console       = &kernelConsole,
+    .attrib        = 0x0F,
+    .eventQueue    = 0,
+    .type          = PROCESS,
+    .blocker.type  = 0,      // The task is not blocked (scheduler.h/c)
+    .kernelStack   = 0,      // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
+    .threads       = 0       // No threads associated with the task at the moment. List is created later if necessary
 };
 
 volatile task_t* currentTask = &kernelTask;
@@ -32,11 +40,11 @@ static uint32_t next_pid = 1; // The next available process ID (kernel has 0, so
 
 void tasking_install()
 {
-    #ifdef _TASKING_DIAGNOSIS_
+  #ifdef _TASKING_DIAGNOSIS_
     textColor(TEXT);
     printf("Install tasking\n");
     textColor(TEXT);
-    #endif
+  #endif
 
     tasks = list_create();
 
@@ -60,7 +68,10 @@ uint32_t getpid()
 bool waitForTask(task_t* blockingTask, uint32_t timeout)
 {
     if(timeout > 0)
-        return(scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, max(1, timer_millisecondsToTicks(timeout))));
+    {
+        return (scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, max(1, timer_millisecondsToTicks(timeout))));
+    }
+
     else
     {
         scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, 0);
@@ -147,17 +158,18 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
 
     list_append(tasks, newTask);
 
-    #ifdef _TASKING_DIAGNOSIS_
+  #ifdef _TASKING_DIAGNOSIS_
     task_log(newTask);
-    #endif
+  #endif
+
     return(newTask);
 }
 
 task_t* create_cprocess(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)
 {
-    #ifdef _TASKING_DIAGNOSIS_
+  #ifdef _TASKING_DIAGNOSIS_
     printf("create ctask");
-    #endif
+  #endif
 
     console_t* console = malloc(sizeof(console_t), 0, "task-console");
     console_init(console, consoleName);
@@ -165,27 +177,27 @@ task_t* create_cprocess(pageDirectory_t* directory, void(*entry)(), uint8_t priv
 
     newTask->eventQueue = event_createQueue(); // For tasks event handling is enabled per default
 
-    return newTask;
+    return (newTask);
 }
 
 task_t* create_process(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[])
 {
-    #ifdef _TASKING_DIAGNOSIS_
+  #ifdef _TASKING_DIAGNOSIS_
     printf("create task");
-    #endif
+  #endif
 
     task_t* newTask = create_task(PROCESS, directory, entry, privilege, currentTask->console, argc, argv); // task shares the console of the current task
 
     newTask->eventQueue = event_createQueue(); // For tasks event handling is enabled per default
 
-    return newTask;
+    return (newTask);
 }
 
 task_t* create_cthread(void(*entry)(), const char* consoleName)
 {
-    #ifdef _TASKING_DIAGNOSIS_
+  #ifdef _TASKING_DIAGNOSIS_
     printf("create cthread");
-    #endif
+  #endif
 
     console_t* console = malloc(sizeof(console_t), 0, "thread-console");
     console_init(console, consoleName);
@@ -193,41 +205,49 @@ task_t* create_cthread(void(*entry)(), const char* consoleName)
 
     // Attach the thread to its parent
     newTask->parent = (task_t*)currentTask;
+
     if(currentTask->threads == 0)
+    {
         currentTask->threads = list_create();
+    }
+
     list_append(currentTask->threads, newTask);
 
     newTask->eventQueue = event_createQueue(); // Every thread with an own console gets an own eventQueue, because otherwise lots of input will never arrive.
 
-    return newTask;
+    return (newTask);
 }
 
 task_t* create_thread(void(*entry)())
 {
-    #ifdef _TASKING_DIAGNOSIS_
+  #ifdef _TASKING_DIAGNOSIS_
     printf("create thread");
-    #endif
+  #endif
 
     task_t* newTask = create_task(THREAD, currentTask->pageDirectory, entry, currentTask->privilege, currentTask->console, 0, 0); // task shares the console of the current task
 
     // Attach the thread to its parent
     newTask->parent = (task_t*)currentTask;
+
     if(currentTask->threads == 0)
+    {
         currentTask->threads = list_create();
+    }
+
     list_append(currentTask->threads, newTask);
 
-    return newTask;
+    return (newTask);
 }
 
 task_t* create_vm86_task(pageDirectory_t* pd, void(*entry)())
 {
-    #ifdef _TASKING_DIAGNOSIS_
+  #ifdef _TASKING_DIAGNOSIS_
     printf("create vm86 task");
-    #endif
+  #endif
 
     task_t* newTask = create_task(VM86, pd, entry, 3, currentTask->console, 0, 0); // task shares the console of the current task
 
-    return newTask;
+    return (newTask);
 }
 
 
@@ -268,7 +288,7 @@ uint32_t task_switch(task_t* newTask)
     }
 
     task_switching = true;
-    return currentTask->esp; // Return new task's esp
+    return (currentTask->esp); // Return new task's esp
 }
 
 void switch_context() // Switch to next task (by interrupt)
@@ -347,7 +367,9 @@ static void kill(task_t* task)
     #endif
 
     if(task->eventQueue != 0)
+    {
         event_deleteQueue(task->eventQueue);
+    }
 
     if(task == &kernelTask) // TODO: Handle termination of shellTask
     {
@@ -392,7 +414,7 @@ void* task_grow_userheap(uint32_t increase)
     if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_heapEnd) ||
         !paging_alloc(currentTask->pageDirectory, old_heap_top, increase, MEM_USER | MEM_WRITE))
     {
-        return 0;
+        return (0);
     }
 
     currentTask->heap_top += increase;
@@ -407,12 +429,17 @@ void task_log(task_t* t)
     printf("esp: %Xh  ", t->esp);           // Stack pointer
     printf("PD: %Xh  ", t->pageDirectory);  // Page directory
     printf("k_stack: %Xh", t->kernelStack); // Kernel stack location
+
     if(t->type == THREAD)
+    {
         printf("  parent: %u", t->parent->pid);
+    }
+
     if(t->threads && t->threads->head)
     {
         printf("\n\t");
         printf("child-threads:");
+
         for(dlelement_t* e = t->threads->head; e != 0; e = e->next)
         {
             printf(" %u ", ((task_t*)e->data)->pid);

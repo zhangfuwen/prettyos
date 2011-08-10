@@ -350,9 +350,9 @@ void free(void* addr)
 void heap_logRegions()
 {
     printf("\nDebug: Heap regions sent to serial output.\n");
-    serial_log(4,"\r\n\r\nregionMaxCount: %u\r\n", regionMaxCount);
-    serial_log(4,"\r\n\r\n---------------- HEAP REGIONS ----------------\r\n");
-    serial_log(4,"address\t\tsize\t\tnumber\tcomment");
+    serial_log(SER_LOG_HEAP,"\r\n\r\nregionMaxCount: %u\r\n", regionMaxCount);
+    serial_log(SER_LOG_HEAP,"\r\n\r\n---------------- HEAP REGIONS ----------------\r\n");
+    serial_log(SER_LOG_HEAP,"address\t\tsize\t\tnumber\tcomment");
 
     uintptr_t regionAddress = (uintptr_t)heapStart;
 
@@ -360,11 +360,11 @@ void heap_logRegions()
     {
         if (regions[i].reserved)
         {
-            serial_log(4,"\r\n%Xh\t%Xh\t%u\t%s", regionAddress, regions[i].size, regions[i].number, regions[i].comment);
+            serial_log(SER_LOG_HEAP,"\r\n%Xh\t%Xh\t%u\t%s", regionAddress, regions[i].size, regions[i].number, regions[i].comment);
         }
         regionAddress += regions[i].size;
     }
-    serial_log(4,"\r\n---------------- HEAP REGIONS ----------------\r\n\r\n");
+    serial_log(SER_LOG_HEAP,"\r\n---------------- HEAP REGIONS ----------------\r\n\r\n");
 }
 
 /*

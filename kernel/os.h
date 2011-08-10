@@ -32,7 +32,7 @@
 /// #define _VBE_DEBUG_            // Provides additional output of the VBE driver
 
 #define SER_LOG_TCP    1
-#define SER_LOG_HEAP   2
+#define SER_LOG_HEAP   1
 #define SER_LOG_VM86   2
 
 
