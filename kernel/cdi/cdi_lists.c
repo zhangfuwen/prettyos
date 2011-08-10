@@ -36,7 +36,7 @@ size_t cdi_list_empty(cdi_list_t list);
 void* cdi_list_get(cdi_list_t list, size_t index)
 {
     dlelement_t* temp = list_getElement(list, index);
-    if(temp == 0)
+    if (temp == 0)
     {
         return(0);
     }

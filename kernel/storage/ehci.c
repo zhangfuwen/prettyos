@@ -384,7 +384,7 @@ void enablePorts()
          snprintf(port[j].name, 14, "EHCI-Port %u", j+1);
          attachPort(&port[j]);
 
-         if ( USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED) ) // high speed, enabled, device attached
+         if (USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)) // high speed, enabled, device attached
          {
              textColor(YELLOW);
              printf("Port %u: high speed enabled, device attached\n",j+1);
@@ -679,7 +679,7 @@ void setupUSBDevice(uint8_t portNumber)
     analyzeQTD();
   #endif
 
-    for(uint8_t i=1; i<4; i++) // fetch 3 strings
+    for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
       #ifdef _EHCI_DIAGNOSIS_
         waitForKeyStroke();

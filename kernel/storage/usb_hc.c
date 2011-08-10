@@ -12,7 +12,7 @@ void install_USB_HostController(pciDev_t* PCIdev)
 {
     printf(" - USB ");
 
-    switch(PCIdev->interfaceID)
+    switch (PCIdev->interfaceID)
     {
         case UHCI:
             printf("UHCI ");

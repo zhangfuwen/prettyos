@@ -24,38 +24,38 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
 {
     // Open file
     file_t* file = fopen(path, "r");
-    if(file == 0) // File not found
+    if (file == 0) // File not found
     {
         return(CE_FILE_NOT_FOUND);
     }
 
     // Find out fileformat
     size_t i = 0;
-    for(; i < FT_END; i++) // Check name and content of the file
+    for (; i < FT_END; i++) // Check name and content of the file
     {
-        if(filetypes[i].filename != 0 && filetypes[i].filename(path))
+        if (filetypes[i].filename != 0 && filetypes[i].filename(path))
         {
             rewind(file);
-            if(filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
+            if (filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
             {
                 break; // found
             }
         }
     }
 
-    if(i == FT_END) // Not found, now do not look at filename, just content
+    if (i == FT_END) // Not found, now do not look at filename, just content
     {
-        for(i = 0; i < FT_END; i++)
+        for (i = 0; i < FT_END; i++)
         {
             rewind(file);
-            if(filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
+            if (filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
             {
                 break; // found
             }
         }
     }
 
-    if(i == FT_END)
+    if (i == FT_END)
     {
         fclose(file);
         printf("The file has an unknown type so it cannot be executed.");
@@ -76,17 +76,17 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
 
         // Prepare executable. Load it into memory.
         void* entry = filetypes[i].prepare(buffer, size, pd);
-        if(entry == 0)
+        if (entry == 0)
         {
             paging_destroyUserPageDirectory(pd);
             return(CE_BAD_FILE);
         }
 
         // Copy argv to kernel PD (intermediate)
-        if(argc != 0)
+        if (argc != 0)
         {
             char** nArgv = malloc(sizeof(char*)*argc, 0, "");
-            for(size_t index = 0; index < argc; index++)
+            for (size_t index = 0; index < argc; index++)
             {
                 size_t argsize = strlen(argv[index]) + 1;
                 void* addr = malloc(argsize, 0, "");
@@ -97,21 +97,21 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
             // Copy nArgv to user PD
             paging_alloc(pd, (void*)USER_DATA_BUFFER, (uintptr_t)USER_heapStart - (uintptr_t)USER_DATA_BUFFER, MEM_USER | MEM_WRITE); // Allocate space in user PD (Pages between heap and dataBuffer)
             cli();
-            paging_switch(pd); // Switch to user PD
+            paging_switch (pd); // Switch to user PD
             char** nnArgv = (void*)USER_DATA_BUFFER; // argv buffer
             void* addr = nnArgv + sizeof(char*)*argc; // argv* strings stored after argv array
-            for(size_t index = 0; index < argc; index++)
+            for (size_t index = 0; index < argc; index++)
             {
                 size_t argsize = strlen(nArgv[index]) + 1;
                 nnArgv[index] = addr;
                 memcpy(nnArgv[index], nArgv[index], argsize);
                 addr += argsize;
             }
-            paging_switch(currentTask->pageDirectory); // Switch back to old PD
+            paging_switch (currentTask->pageDirectory); // Switch back to old PD
             sti();
 
             // Free nArgv (allocated in kernelPD)
-            for(size_t index = 0; index < argc; index++)
+            for (size_t index = 0; index < argc; index++)
             {
                 free(nArgv[index]);
             }

@@ -54,7 +54,7 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, IP_t srcIP, IP_t dest
     uint32_t pseudoHeaderChecksum = 0;
     uint8_t* data = (uint8_t*)&pseudo;
 
-    for(uint8_t i = 0; i < sizeof(updtcpPseudoHeader_t); i+=2)
+    for (uint8_t i = 0; i < sizeof(updtcpPseudoHeader_t); i+=2)
     {
         // pseudo header contains 6 WORD
         pseudoHeaderChecksum += (data[i] << 8u) | data[i+1]; // Big Endian

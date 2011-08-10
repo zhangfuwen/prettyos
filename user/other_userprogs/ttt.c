@@ -13,11 +13,11 @@ bool ende = false;
 void SetField(uint8_t x, uint8_t y, uint8_t Player)
 {
     iSetCursor(x*4+2,y*2+15);
-    if(Player == X)
+    if (Player == X)
     {
         putchar('X');
     }
-    else if(Player == O)
+    else if (Player == O)
     {
         putchar('O');
     }
@@ -37,7 +37,7 @@ void gewinnen()
         printLine("Player X wins!", 26, 0x05);
         ende = true;
     }
-    else if((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) ||
+    else if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == O) ||
         (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == O) ||
         (tictactoe[6] == tictactoe[7] && tictactoe[6] == tictactoe[8] && tictactoe[6] == O) ||
         (tictactoe[0] == tictactoe[3] && tictactoe[0] == tictactoe[6] && tictactoe[0] == O) ||
@@ -49,7 +49,7 @@ void gewinnen()
         printLine("Player O wins!", 26, 0x05);
         ende = true;
     }
-    else if(tictactoe[0] != Leer && tictactoe[1] != Leer && tictactoe[2] != Leer &&
+    else if (tictactoe[0] != Leer && tictactoe[1] != Leer && tictactoe[2] != Leer &&
         tictactoe[3] != Leer && tictactoe[4] != Leer && tictactoe[5] != Leer &&
         tictactoe[6] != Leer && tictactoe[7] != Leer && tictactoe[8] != Leer)
     {
@@ -63,11 +63,11 @@ void Zug(uint16_t Player)
     char str[80];
     uint32_t input = 9;
 
-    for(;;)
+    for (;;)
     {
         iSetCursor(0, 24);
         gets(str);
-        if(isdigit(*str))
+        if (isdigit(*str))
         {
             input = atoi(str);
         }
@@ -79,11 +79,11 @@ void Zug(uint16_t Player)
         printLine("                                                                                ", 24, 0x0F); // Clear Inputline
         printLine("                                                                                ", 26, 0x0F); // Clear Messageline
 
-        if(input >= 9)
+        if (input >= 9)
         {
             printLine("Your Input was not useful.", 26, 0x0C);
         }
-        else if(tictactoe[input] != Leer)
+        else if (tictactoe[input] != Leer)
         {
             printLine("Field already used.", 26, 0x0C);
         }
@@ -114,10 +114,10 @@ int main()
     printLine("Please type in a number betwen 0 and 8.", 22, 0x0B);
 
     Zug(X);
-    for(uint8_t i = 0; i < 4 && !ende; ++i)
+    for (uint8_t i = 0; i < 4 && !ende; ++i)
     {
         Zug(O);
-        if(ende)
+        if (ende)
         {
             break;
         }

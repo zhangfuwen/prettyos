@@ -43,7 +43,7 @@ void memshow(const void* start, size_t count, bool alpha)
         }
         else
         {
-            if(i%16 == 0)
+            if (i%16 == 0)
                 putch('\n');
             printf("%y ", ((uint8_t*)start)[i]);
         }
@@ -55,7 +55,7 @@ void* memcpy(void* dest, const void* src, size_t bytes)
     size_t dwords = bytes/4;
     bytes %= 4;
     __asm__ volatile("cld\n" "rep movsl" : : "S" (src), "D" (dest), "c" (dwords));
-    __asm__ volatile(        "rep movsb" : : "c" (bytes));
+    __asm__ volatile("rep movsb" : : "c" (bytes));
     return(dest);
 }
 
@@ -70,13 +70,13 @@ void* memcpyr(void* dest, const void* src, size_t bytes)
 
     __asm__ volatile("std\n" "rep movsb"         : : "S" (src), "D" (temp), "c" (bytes));
     __asm__ volatile("sub $3, %edi\n" "sub $3, %esi");
-    __asm__ volatile(        "rep movsl\n" "cld" : : "c" (dwords));
+    __asm__ volatile("rep movsl\n" "cld" : : "c" (dwords));
     return(dest);
 }
 
 void* memmove(void* destination, const void* source, size_t size)
 {
-    if(source == destination || size == 0) // Copying is not necessary. Calling memmove with source==destination or size==0 is not a bug.
+    if (source == destination || size == 0) // Copying is not necessary. Calling memmove with source==destination or size==0 is not a bug.
     {
         return(destination);
     }
@@ -90,7 +90,7 @@ void* memmove(void* destination, const void* source, size_t size)
     // underflow because size can neither be greater than the maximum value of a
     // variable of type uintp or 0.
     const uintptr_t memMax = ~((uintptr_t)0) - (size - 1); // ~0 is the highest possible value of the variables type
-    if((uintptr_t)source > memMax || (uintptr_t)destination > memMax)
+    if ((uintptr_t)source > memMax || (uintptr_t)destination > memMax)
     {
         return(destination);
     }
@@ -105,7 +105,7 @@ void* memmove(void* destination, const void* source, size_t size)
     // |      destination|
     // source starts at 0. destination at 6. Coping from start to end will
     // overwrite the last 5 bytes of the source.
-    if(source < destination)
+    if (source < destination)
     {
         memcpyr(destination, source, size);
     }
@@ -122,7 +122,7 @@ void* memset(void* dest, int8_t val, size_t bytes)
     bytes %= 4;              // Remaining bytes
     uint32_t dval = (val<<24)|(val<<16)|(val<<8)|val; // Create dword from byte value
     __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
-    __asm__ volatile(        "rep stosb" : : "al"(val), "c" (bytes));
+    __asm__ volatile("rep stosb" : : "al"(val), "c" (bytes));
     return dest;
 }
 
@@ -132,7 +132,7 @@ uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words)
     words %= 2;              // Remaining words
     uint32_t dval = (val<<16)|val; // Create dword from byte value
     __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
-    __asm__ volatile(        "rep stosw" : : "ax"(val), "c" (words));
+    __asm__ volatile("rep stosw" : : "ax"(val), "c" (words));
     return dest;
 }
 
@@ -144,7 +144,7 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t dwords)
 
 int32_t memcmp(const void* s1, const void* s2, size_t n)
 {
-    if(n == 0) return(0);
+    if (n == 0) return(0);
 
     const uint8_t* v1 = s1;
     const uint8_t* v2 = s2;
@@ -176,7 +176,7 @@ char* gets(char* s)
         }
         else
         {
-            if(c != '\n')
+            if (c != '\n')
             {
                 s[i] = c;
                 i++;
@@ -299,7 +299,7 @@ int32_t strcmp(const char* s1, const char* s2)
 
 int32_t strncmp(const char* s1, const char* s2, size_t n)
 {
-    if(n == 0) return(0);
+    if (n == 0) return(0);
 
     for (; *s1 && n > 1 && *s1 == *s2; n--)
     {
@@ -326,11 +326,11 @@ char* strncpy(char* dest, const char* src, size_t n)
 char* strncpyandfill(char* dest, const char* src, size_t n, char val)
 {
     size_t i = 0;
-    for(; i < n && src[i] != 0; i++)
+    for (; i < n && src[i] != 0; i++)
     {
         dest[i] = src[i];
     }
-    for(; i < n; i++)
+    for (; i < n; i++)
     {
         dest[i] = val;
     }
@@ -496,9 +496,9 @@ float atof(const char* s)
 {
     int32_t i = 0;
     int8_t sign = 1;
-    while(s[i] == ' ' || s[i] == '+' || s[i] == '-')
+    while (s[i] == ' ' || s[i] == '+' || s[i] == '-')
     {
-        if(s[i] == '-')
+        if (s[i] == '-')
         {
             sign *= -1;
         }
@@ -580,18 +580,18 @@ uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
 
 void systemControl(SYSTEM_CONTROL todo) // TODO: Improve it.
 {
-    switch(todo)
+    switch (todo)
     {
         case STANDBY:
-            if(!pm_action(PM_STANDBY))
+            if (!pm_action(PM_STANDBY))
                 puts("Standby failed");
             break;
         case REBOOT:
-            if(!pm_action(PM_REBOOT))
+            if (!pm_action(PM_REBOOT))
                 puts("Rebooting failed");
             break;
         case SHUTDOWN:
-            if(!pm_action(PM_SOFTOFF))
+            if (!pm_action(PM_SOFTOFF))
                 puts("Shutdown failed");
             break;
     }
@@ -985,7 +985,7 @@ void bootscreen()
     puts("                  Copyright (c) 2009-2011  The PrettyOS Team");
     textColor(TEXT);
 
-    for(uint8_t x = 6; x < 72; x++)
+    for (uint8_t x = 6; x < 72; x++)
     {
         sleepMilliSeconds(30);
         console_setPixel(x, 27, 0x0200|'#');

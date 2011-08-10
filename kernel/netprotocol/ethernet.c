@@ -38,7 +38,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     textColor(GRAY); printf(" %M\t<== %M\n", eth->recv_mac, eth->send_mac); // MAC adresses
 
     textColor(TEXT);
-    if(eth->type_len <= 1500)
+    if (eth->type_len <= 1500)
         printf("Type 1, Length: ");
     else
         printf("Type 2, Type: ");
@@ -50,13 +50,13 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 
     memcpy(lastPacket.MAC, eth->send_mac, 6); // save sender
 
-    if(ntohs(eth->type_len) > 1500) // Ethernet 2
+    if (ntohs(eth->type_len) > 1500) // Ethernet 2
     {
         // cf. http://en.wikipedia.org/wiki/EtherType
         // and http://www.cavebear.com/archive/cavebear/Ethernet/type.html
 
         // now we look for IPv4, IPv6, or ARP
-        switch(ntohs(eth->type_len))
+        switch (ntohs(eth->type_len))
         {
             case 0x0800: // IPv4
                 ipv4_received(adapter, (void*)(eth+1), length-sizeof(ethernet_t));

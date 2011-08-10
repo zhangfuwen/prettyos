@@ -229,7 +229,7 @@ void writeInfo(uint8_t line, const char* args, ...)
     vsnprintf(infoBar[line], 81, args, ap);
     va_end(ap);
 
-    if(console_displayed->showInfobar)
+    if (console_displayed->showInfobar)
     {
         refreshInfoBar();
     }
@@ -256,7 +256,7 @@ void refreshUserScreen()
         kputs(Buffer, 0x0C);
     }
     kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
-    if(console_displayed->showInfobar)
+    if (console_displayed->showInfobar)
     {
         // copying content of visible console to the video-ram
         memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_LINES-4) * 2);
@@ -319,9 +319,9 @@ void saveScreenshot()
 {
     readCacheFlag = false; // TODO: solve this problem!
     char Pfad[20];
-    for(int i = 0; i < DISKARRAYSIZE; i++) // HACK
+    for (int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
-        if(disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->subtype == FS_FAT12 || disks[i]->partition[0]->subtype == FS_FAT16 || disks[i]->partition[0]->subtype == FS_FAT32))
+        if (disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->subtype == FS_FAT12 || disks[i]->partition[0]->subtype == FS_FAT16 || disks[i]->partition[0]->subtype == FS_FAT32))
         {
             snprintf(Pfad, 20, "%u:/screen.txt", i+1);
             break;

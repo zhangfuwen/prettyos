@@ -16,7 +16,7 @@ int32_t flpydsk_read_directory()
     static uint8_t track[9216]; // Cache for one track
     memset(track, 0, 9216);
     floppyDrive[0]->drive.insertedDisk->accessRemaining += 18;
-    for(int i = 0; i < 18; i++) // Read one track
+    for (int i = 0; i < 18; i++) // Read one track
     {
         flpydsk_readSector(19+i, track+i*0x200, floppyDrive[0]); // start at 0x2600: root directory (14 sectors)
     }
@@ -31,30 +31,30 @@ int32_t flpydsk_read_directory()
     FAT_dirEntry_t* dirEntry = (void*)track;
     for (uint8_t i = 0; i < 224; i++) // 224 root directory entries in FAT12
     {
-        if(dirEntry[i].Name[0] == DIR_EMPTY) break; // free from here on
+        if (dirEntry[i].Name[0] == DIR_EMPTY) break; // free from here on
 
-        if( dirEntry[i].Name[0] != DIR_DEL &&                     // Entry is not deleted
+        if (dirEntry[i].Name[0] != DIR_DEL &&                     // Entry is not deleted
            (dirEntry[i].Attr & ATTR_LONG_NAME) != ATTR_LONG_NAME) // Entry is not part of long file name (VFAT)
         {
             // Filename
             size_t letters = 0;
-            for(uint8_t j = 0; j < 8; j++)
+            for (uint8_t j = 0; j < 8; j++)
             {
-                if(dirEntry[i].Name[j] != 0x20) // Empty space
+                if (dirEntry[i].Name[j] != 0x20) // Empty space
                 {
                     putch(dirEntry[i].Name[j]);
                     letters++;
                 }
             }
-            if(!(dirEntry[i].Attr & ATTR_VOLUME) && // No volume label
+            if (!(dirEntry[i].Attr & ATTR_VOLUME) && // No volume label
                  dirEntry[i].Extension[0] != 0x20 && dirEntry[i].Extension[1] != 0x20 && dirEntry[i].Extension[2] != 0x20) // Has extension
             {
                 putch('.');
             }
 
-            for(uint8_t j = 0; j < 3; j++)
+            for (uint8_t j = 0; j < 3; j++)
             {
-                if(dirEntry[i].Extension[j] != 0x20) // Empty space
+                if (dirEntry[i].Extension[j] != 0x20) // Empty space
                 {
                     putch(dirEntry[i].Extension[j]);
                     letters++;
@@ -64,18 +64,18 @@ int32_t flpydsk_read_directory()
             if (letters < 7) putch('\t');
 
             // Filesize
-            if(!(dirEntry[i].Attr & ATTR_VOLUME))
+            if (!(dirEntry[i].Attr & ATTR_VOLUME))
                 printf("\t%d\t\t", dirEntry[i].FileSize);
             else
                 puts("\t\t\t");
 
             // Attributes
-            if(dirEntry[i].Attr & ATTR_VOLUME)    puts("(vol) ");
-            if(dirEntry[i].Attr & ATTR_DIRECTORY) puts("(dir) ");
-            if(dirEntry[i].Attr & ATTR_READ_ONLY) puts("(r/o) ");
-            if(dirEntry[i].Attr & ATTR_HIDDEN)    puts("(hid) ");
-            if(dirEntry[i].Attr & ATTR_SYSTEM)    puts("(sys) ");
-            if(dirEntry[i].Attr & ATTR_ARCHIVE)   puts("(arc) ");
+            if (dirEntry[i].Attr & ATTR_VOLUME)    puts("(vol) ");
+            if (dirEntry[i].Attr & ATTR_DIRECTORY) puts("(dir) ");
+            if (dirEntry[i].Attr & ATTR_READ_ONLY) puts("(r/o) ");
+            if (dirEntry[i].Attr & ATTR_HIDDEN)    puts("(hid) ");
+            if (dirEntry[i].Attr & ATTR_SYSTEM)    puts("(sys) ");
+            if (dirEntry[i].Attr & ATTR_ARCHIVE)   puts("(arc) ");
 
              putch('\n');
         }

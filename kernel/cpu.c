@@ -31,7 +31,7 @@ void cpu_analyze()
     register uint32_t eax __asm__("%eax");
     register uint32_t ecx __asm__("%ecx");
     cpuid_available = (eax==ecx);
-    if(!cpuid_available)
+    if (!cpuid_available)
     {
         textColor(ERROR);
         printf("     => CPU does not support cpuid instruction.\n");
@@ -52,8 +52,8 @@ void cpu_analyze()
 
 bool cpu_supports(CPU_FEATURE feature)
 {
-    if(feature == CF_CPUID) return(cpuid_available);
-    if(!cpuid_available) return(false);
+    if (feature == CF_CPUID) return(cpuid_available);
+    if (!cpuid_available) return(false);
 
     CPU_REGISTER r = feature&~31;
     return(cpu_idGetRegister(0x00000001, r) & (BIT(feature-r)));
@@ -61,11 +61,11 @@ bool cpu_supports(CPU_FEATURE feature)
 
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
 {
-    if(!cpuid_available) return(0);
+    if (!cpuid_available) return(0);
 
     __asm__ ("movl %0, %%eax" : : "r"(function) : "%eax");
     __asm__ ("cpuid");
-    switch(reg)
+    switch (reg)
     {
         case CR_EAX:
         {

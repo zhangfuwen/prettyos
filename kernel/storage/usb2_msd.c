@@ -48,7 +48,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     // Create QTDs (in reversed order)
     void* next      = createQTD_Handshake(OUT); // Handshake is the opposite direction of Data
     globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
-    next = DataQTD  = createQTD_IO( (uintptr_t)next, IN, 1, 1);  // IN DATA1, 1 byte
+    next = DataQTD  = createQTD_IO((uintptr_t)next, IN, 1, 1);  // IN DATA1, 1 byte
     globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
@@ -603,7 +603,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
             showUSBSTS();
 
             sense = showResultsRequestSense();
-            if ( ((statusByteTestReady == 0) && ((sense == 0) || (sense == 6))) || (timeout <= 0) )
+            if (((statusByteTestReady == 0) && ((sense == 0) || (sense == 6))) || (timeout <= 0))
             {
                 break;
             }

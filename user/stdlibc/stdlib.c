@@ -75,9 +75,9 @@ float atof(const char* s) // TODO: Should return double
 {
     int32_t i = 0;
     int8_t sign = 1;
-    while(s[i] == ' ' || s[i] == '+' || s[i] == '-')
+    while (s[i] == ' ' || s[i] == '+' || s[i] == '-')
     {
-        if(s[i] == '-')
+        if (s[i] == '-')
         {
             sign *= -1;
         }

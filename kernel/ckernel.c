@@ -28,7 +28,7 @@
 #include "mouse.h"              // mouse_install
 #include "serial.h"             // serial_init
 #include "video/videomanager.h" // video_install, video_test
-#include "video/textgui.h"		// TextGUI_ShowMSG, TextGUI_AskYN
+#include "video/textgui.h"        // TextGUI_ShowMSG, TextGUI_AskYN
 #include "filesystem/initrd.h"  // initrd_install, ramdisk_install, readdir_fs, read_fs, finddir_fs
 #include "storage/flpydsk.h"    // flpydsk_install
 
@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.299 - Rev: 1154";
+const char* const version = "0.0.2.300 - Rev: 1155";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -99,7 +99,7 @@ static void log(const char* str)
 
     uint16_t len = strlen(str);
 
-    for(uint16_t i = len; i < 20;i++){
+    for (uint16_t i = len; i < 20;i++){
         putch(' ');
     }
 
@@ -130,7 +130,7 @@ static void init(multiboot_t* mb_struct)
 
     // Interrupts
     isr_install();
-    if(apic_install()) log("APIC");
+    if (apic_install()) log("APIC");
     else // PIC as fallback
     {
         idt_install(); // cf. interrupts.asm
@@ -139,7 +139,7 @@ static void init(multiboot_t* mb_struct)
 
     // internal devices
     timer_install(SYSTEMFREQUENCY); log("Timer"); // Sets system frequency to ... Hz
-    if(fpu_install()) log("FPU");
+    if (fpu_install()) log("FPU");
 
     // memory
     system.Memory_Size = paging_install(); log("Paging");
@@ -222,26 +222,26 @@ void main(multiboot_t* mb_struct)
     showDiskList();
     #endif
 
+	/*
+    TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !","This is an educational OS!");
 
-	TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !","This is an educational OS!");
+    uint16_t result = TextGUI_AskYN("Question","Are you a software developer?",TEXTGUI_YES);
 
-	uint16_t result = TextGUI_AskYN("Question","Are you a software developer?",TEXTGUI_YES);
-
-	switch (result) {
-		case TEXTGUI_ABORTED:
-			TextGUI_ShowMSG("Result","You have cancelled the MessageBox!");
-			break;
-		case TEXTGUI_YES:
-			TextGUI_ShowMSG("Result","Hello developer!");
-			break;
-		case TEXTGUI_NO:
-			TextGUI_ShowMSG("Result","Hello user!");
-			break;
-		default:
-			TextGUI_ShowMSG("Result","This can not happen.");
-			break;
-	}
-
+    switch (result) {
+        case TEXTGUI_ABORTED:
+            TextGUI_ShowMSG("Result","You have cancelled the MessageBox!");
+            break;
+        case TEXTGUI_YES:
+            TextGUI_ShowMSG("Result","Hello developer!");
+            break;
+        case TEXTGUI_NO:
+            TextGUI_ShowMSG("Result","Hello user!");
+            break;
+        default:
+            TextGUI_ShowMSG("Result","This can not happen.");
+            break;
+    }
+	 */
 
     // search and load shell
     bool shell_found = false;
@@ -271,7 +271,7 @@ void main(multiboot_t* mb_struct)
 
                 pageDirectory_t* pd = paging_createUserPageDirectory();
                 void* entry = elf_prepare(buf, sz, pd);
-                if(entry == 0)
+                if (entry == 0)
                 {
                     textColor(ERROR);
                     printf("ERROR: shell cannot be started.\n");
@@ -319,13 +319,13 @@ void main(multiboot_t* mb_struct)
         EVENT_t ev = event_poll(buffer, 4, EVENT_NONE); // Take one event from the event queue
         uint32_t t = timer_getMilliseconds();
 
-        while(ev != EVENT_NONE && (timer_getMilliseconds() - t < 1000))
+        while (ev != EVENT_NONE && (timer_getMilliseconds() - t < 1000))
         {
-            switch(ev)
+            switch (ev)
             {
                 case EVENT_KEY_DOWN:
                     // Detect CTRL and ESC
-                    switch(*(KEY_t*)buffer)
+                    switch (*(KEY_t*)buffer)
                     {
                         case KEY_ESC:
                             ESC = true;
@@ -342,7 +342,7 @@ void main(multiboot_t* mb_struct)
                     break;
                 case EVENT_KEY_UP:
                     // Detect CTRL and ESC
-                    switch(*(KEY_t*)buffer)
+                    switch (*(KEY_t*)buffer)
                     {
                         case KEY_ESC:
                             ESC = false;
@@ -355,10 +355,10 @@ void main(multiboot_t* mb_struct)
                     }
                     break;
                 case EVENT_TEXT_ENTERED:
-                    if(PRINT)
+                    if (PRINT)
                     {
                         PRINT = false;
-                        switch(*(char*)buffer)
+                        switch (*(char*)buffer)
                         {
                             case 'f': // Taking a screenshot (Floppy)
                                 ScreenDest = &FLOPPYDISK; // HACK
@@ -372,9 +372,9 @@ void main(multiboot_t* mb_struct)
                                 break;
                         }
                     }
-                    if(ESC)
+                    if (ESC)
                     {
-                        switch(*(char*)buffer)
+                        switch (*(char*)buffer)
                         {
                             case 'h':
                                 heap_logRegions();
@@ -384,9 +384,9 @@ void main(multiboot_t* mb_struct)
                                 break;
                         }
                     }
-                    else if(CTRL)
+                    else if (CTRL)
                     {
-                        switch(*(char*)buffer)
+                        switch (*(char*)buffer)
                         {
                             case 'a':
                                 network_displayArpTables();
@@ -395,7 +395,7 @@ void main(multiboot_t* mb_struct)
                             {
                                 connection = tcp_createConnection();
                                 network_adapter_t* adapter = network_getFirstAdapter();
-                                if(adapter)
+                                if (adapter)
                                 {
                                     tcp_bind(connection, adapter);
                                 }

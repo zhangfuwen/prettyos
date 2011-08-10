@@ -23,9 +23,9 @@ int main()
     bool ctrl = false;
     srand(getCurrentMilliseconds());
 
-    for(;;)
+    for (;;)
     {
-        switch(ev)
+        switch (ev)
         {
             case EVENT_NONE:
                 waitForEvent(0);
@@ -59,7 +59,7 @@ int main()
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (KEY_t*)buffer;
-                switch(*key)
+                switch (*key)
                 {
                     case KEY_LCTRL: case KEY_RCTRL:
                         ctrl = true;
@@ -73,7 +73,7 @@ int main()
                     }
                     case KEY_J:
                     {
-                        if(ctrl)
+                        if (ctrl)
                         {
                             printf("\nEnter Channel name: ");
                             getchar(); // Ommit first character, because its a 'j'
@@ -87,16 +87,16 @@ int main()
                     }
                     case KEY_P: case KEY_L:
                     {
-                        if(ctrl)
+                        if (ctrl)
                         {
                             printf("\nEnter message: ");
                             getchar(); // Ommit first character, because its a 'p' or a 'l'
                             char str[200], msg[240];
                             gets(str);
 
-                            if(*key == KEY_P)
+                            if (*key == KEY_P)
                                 snprintf(msg, 240, "PRIVMSG #PrettyOS :%s\r\n", str);
-                            else if(*key == KEY_L)
+                            else if (*key == KEY_L)
                                 snprintf(msg, 240, "PRIVMSG #lost :%s\r\n", str);
 
                             tcp_send(connection, msg, strlen(msg));
@@ -109,7 +109,7 @@ int main()
                 break;
             }
             case EVENT_KEY_UP:
-                switch(*(KEY_t*)buffer)
+                switch (*(KEY_t*)buffer)
                 {
                     case KEY_LCTRL: case KEY_RCTRL:
                         ctrl = false;

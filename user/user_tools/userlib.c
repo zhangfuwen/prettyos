@@ -104,7 +104,7 @@ bool waitForEvent(uint32_t timeout)
 void event_enable(bool b)
 {
     enabledEvents = b;
-    if(b)
+    if (b)
     {
         __asm__ volatile("int $0x7F" : : "a"(38), "b"(b));
     }
@@ -165,9 +165,9 @@ char getchar()
     char ret = 0;
     EVENT_t ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
 
-    while(ev != EVENT_TEXT_ENTERED)
+    while (ev != EVENT_TEXT_ENTERED)
     {
-        if(ev == EVENT_NONE)
+        if (ev == EVENT_NONE)
         {
             waitForEvent(0);
         }
@@ -231,7 +231,7 @@ void printLine(const char* message, uint32_t line, uint8_t attribute)
     }
 }
 
-uint16_t TextGUI_ShowMSG(char* title, char* message) 
+uint16_t TextGUI_ShowMSG(char* title, char* message)
 {
    uint16_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(68), "b"(title), "c"(message));
@@ -492,7 +492,7 @@ void showInfo(uint8_t val)
             static char* line3 = " \\ =  : : : : : : : : PrettyOS : : : : : /                                      ";
             scrollInfoLine(line1, line2, line3);
             break;
-        }        
+        }
     }
 }
 
@@ -500,14 +500,14 @@ void showInfo(uint8_t val)
 IP_t stringToIP(char* str)
 {
     IP_t IP;
-    for(uint8_t i_start = 0, i_end = 0, byte = 0; byte < 4; i_end++)
+    for (uint8_t i_start = 0, i_end = 0, byte = 0; byte < 4; i_end++)
     {
-        if(str[i_end] == 0)
+        if (str[i_end] == 0)
         {
             IP.IP[byte] = atoi(str+i_start);
             break;
         }
-        if(str[i_end] == '.')
+        if (str[i_end] == '.')
         {
             str[i_end] = 0;
             IP.IP[byte] = atoi(str+i_start);
@@ -521,7 +521,7 @@ IP_t stringToIP(char* str)
 
 IP_t resolveIP(const char* host)
 {
-    IP_t IP = {.IP = {82, 100, 220, 68}}; // www.henkessoft.de (web site of Dr. Erhard Henkes) 
+    IP_t IP = {.IP = {82, 100, 220, 68}}; // www.henkessoft.de (web site of Dr. Erhard Henkes)
 
     textColor(0x0F);
     printf("Resolving DNS...\n");
@@ -531,9 +531,9 @@ IP_t resolveIP(const char* host)
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 
-    for(;;)
+    for (;;)
     {
-        switch(ev)
+        switch (ev)
         {
             case EVENT_NONE:
                 waitForEvent(0);
@@ -591,7 +591,7 @@ IP_t resolveIP(const char* host)
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
-                if(*key == KEY_ESC)
+                if (*key == KEY_ESC)
                 {
                     tcp_close(connection);
 

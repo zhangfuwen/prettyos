@@ -30,7 +30,7 @@ void video_drawLine(videoDevice_t* buffer, uint32_t x1, uint32_t y1, uint32_t x2
 
     if (dxabs >= dyabs) // the line is more horizontal than vertical
     {
-        for(uint32_t i=0;i<dxabs;i++)
+        for (uint32_t i=0;i<dxabs;i++)
         {
             y+=dyabs;
             if (y>=dxabs)
@@ -44,7 +44,7 @@ void video_drawLine(videoDevice_t* buffer, uint32_t x1, uint32_t y1, uint32_t x2
     }
     else // the line is more vertical than horizontal
     {
-        for(uint32_t i=0;i<dyabs;i++)
+        for (uint32_t i=0;i<dyabs;i++)
         {
             x+=dxabs;
             if (x>=dyabs)
@@ -76,7 +76,7 @@ void video_drawRect(videoDevice_t* buffer, uint32_t left, uint32_t top, uint32_t
 
     video_fillPixels(buffer, left, top, color, right-left);
     video_fillPixels(buffer, left, bottom, color, right-left);
-    for(uint32_t i=top; i<=bottom; i++)
+    for (uint32_t i=top; i<=bottom; i++)
     {
         video_setPixel(buffer, left, i, color);
         video_setPixel(buffer, right, i, color);
@@ -85,7 +85,7 @@ void video_drawRect(videoDevice_t* buffer, uint32_t left, uint32_t top, uint32_t
 
 void video_drawRectFilled(videoDevice_t* buffer, uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, BGRA_t color)
 {
-    for(uint32_t j = top; j < bottom; j++)
+    for (uint32_t j = top; j < bottom; j++)
     {
         video_fillPixels(buffer, left, j, color, right-left);
     }
@@ -116,7 +116,7 @@ void video_drawChar(videoDevice_t* buffer, char c)
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
             curPos.x = (curPos.x + fontWidth*8) & ~(fontWidth*8 - 1);
-            //if(curPos.x+fontWidth >= buffer->width) vbe_drawChar(buffer, '\n');
+            //if (curPos.x+fontWidth >= buffer->width) vbe_drawChar(buffer, '\n');
             break;
         case '\r': // r: cursor back to the margin
             curPos.x = 0;
@@ -126,12 +126,12 @@ void video_drawChar(videoDevice_t* buffer, char c)
             curPos.y += fontHeight;
             break;
         default:
-            //if(curPos.x+fontWidth >= buffer->width) vbe_drawChar(buffer, '\n');
+            //if (curPos.x+fontWidth >= buffer->width) vbe_drawChar(buffer, '\n');
             if (uc != 0)
             {
-                for(uint32_t y = 0; y < fontHeight; y++)
+                for (uint32_t y = 0; y < fontHeight; y++)
                 {
-                    for(uint32_t x = 0; x < fontWidth; x++)
+                    for (uint32_t x = 0; x < fontWidth; x++)
                     {
                         BGRA_t temp = {font[(x + fontWidth*uc) + (fontHeight-y-1) * 2048], font[(x + fontWidth*uc) + (fontHeight-y-1) * 2048], font[(x + fontWidth*uc) + (fontHeight-y-1) * 2048], 0};
                         video_setPixel(buffer, curPos.x+x, curPos.y+y, temp);
@@ -153,9 +153,9 @@ void video_drawString(videoDevice_t* buffer, const char* text, uint32_t xpos, ui
 void video_drawBitmap(videoDevice_t* buffer, uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap)
 {
     uint8_t* pixel = ((uint8_t*)bitmap) + bitmap->header.Offset + bitmap->header.Width * bitmap->header.Height - 1;
-    for(uint32_t y=0; y<bitmap->header.Height; y++)
+    for (uint32_t y=0; y<bitmap->header.Height; y++)
     {
-        for(uint32_t x=bitmap->header.Width; x>0; x--)
+        for (uint32_t x=bitmap->header.Width; x>0; x--)
         {
             video_setPixel(buffer, xpos+x, ypos+y, bitmap->bmicolors[*pixel]);
             pixel -= bitmap->header.BitsPerPixel/8;
@@ -166,11 +166,11 @@ void video_drawBitmap(videoDevice_t* buffer, uint32_t xpos, uint32_t ypos, BMPIn
 void video_drawBitmapTransparent(videoDevice_t* buffer, uint32_t xpos, uint32_t ypos, BMPInfo_t* bitmap, BGRA_t colorKey)
 {
     uint8_t* pixel = ((uint8_t*)bitmap) + bitmap->header.Offset + bitmap->header.Width * bitmap->header.Height - 1;
-    for(uint32_t y=0; y<bitmap->header.Height; y++)
+    for (uint32_t y=0; y<bitmap->header.Height; y++)
     {
-        for(uint32_t x=bitmap->header.Width; x>0; x--)
+        for (uint32_t x=bitmap->header.Width; x>0; x--)
         {
-            if(bitmap->bmicolors[*pixel].red != colorKey.red || bitmap->bmicolors[*pixel].green != colorKey.green || bitmap->bmicolors[*pixel].blue != colorKey.blue)
+            if (bitmap->bmicolors[*pixel].red != colorKey.red || bitmap->bmicolors[*pixel].green != colorKey.green || bitmap->bmicolors[*pixel].blue != colorKey.blue)
             {
                 video_setPixel(buffer, xpos+x, ypos+y, bitmap->bmicolors[*pixel]);
             }
@@ -187,33 +187,33 @@ void video_drawScaledBitmap(videoDevice_t* buffer, uint32_t newSizeX, uint32_t n
     float FactorY = (float)newSizeY / (float)bitmap->header.Height;
 
     float OverflowX = 0, OverflowY = 0;
-    for(uint32_t y = 0; y < newSizeY; y += (uint32_t)FactorY)
+    for (uint32_t y = 0; y < newSizeY; y += (uint32_t)FactorY)
     {
-        for(int32_t x = newSizeX-1; x >= 0; x -= (int32_t)FactorX)
+        for (int32_t x = newSizeX-1; x >= 0; x -= (int32_t)FactorX)
         {
             pixel -= bitmap->header.BitsPerPixel/8;
 
             uint16_t rowsX = (uint16_t)FactorX + (OverflowX >= 1 ? 1:0);
             uint16_t rowsY = (uint16_t)FactorY + (OverflowY >= 1 ? 1:0);
-            for(uint16_t i = 0; i < rowsX; i++)
+            for (uint16_t i = 0; i < rowsX; i++)
             {
-                for(uint16_t j = 0; j < rowsY; j++)
+                for (uint16_t j = 0; j < rowsY; j++)
                 {
-                    if(x-i > 0)
+                    if (x-i > 0)
                     {
                         video_setPixel(buffer, x-i, y+j, bitmap->bmicolors[*pixel]);
                     }
                 }
             }
 
-            if(OverflowX >= 1)
+            if (OverflowX >= 1)
             {
                 OverflowX--;
                 x--;
             }
             OverflowX += FactorX-(int)FactorX;
         }
-        if(OverflowY >= 1)
+        if (OverflowY >= 1)
         {
             OverflowY--;
             y++;
@@ -224,15 +224,15 @@ void video_drawScaledBitmap(videoDevice_t* buffer, uint32_t newSizeX, uint32_t n
 
 void video_printPalette(videoDevice_t* device)
 {
-    if(device->videoMode.colorMode != CM_256COL) return;
+    if (device->videoMode.colorMode != CM_256COL) return;
 
     uint16_t xpos = 0;
     uint16_t ypos = 0;
-    for(uint16_t j=0; j<256; j++)
+    for (uint16_t j=0; j<256; j++)
     {
         video_drawRectFilled(device, xpos, ypos, xpos+5, ypos+5, device->videoMode.palette[j]);
         xpos +=5;
-        if(xpos >= 255)
+        if (xpos >= 255)
         {
             ypos += 5;
             xpos = 0;
@@ -265,7 +265,7 @@ void renderBuffer_free(renderBuffer_t* buffer)
 
 void renderBuffer_render(videoDevice_t* destination, renderBuffer_t* buffer, uint16_t x, uint16_t y)
 {
-    for(size_t i = 0; i < buffer->device->videoMode.yRes; i++)
+    for (size_t i = 0; i < buffer->device->videoMode.yRes; i++)
     {
         video_copyPixels(destination, x, y+i, buffer->buffer + 4*buffer->device->videoMode.xRes*i, buffer->device->videoMode.xRes); // 32-bit hack
     }
@@ -274,7 +274,7 @@ void renderBuffer_render(videoDevice_t* destination, renderBuffer_t* buffer, uin
 void renderBuffer_setPixel(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t color)
 {
     renderBuffer_t* buffer = device->data;
-    switch(device->videoMode.colorMode)
+    switch (device->videoMode.colorMode)
     {
         case CM_15BIT:
             ((uint16_t*)buffer->buffer)[y * device->videoMode.xRes + x] = BGRAtoBGR15(color);
@@ -298,7 +298,7 @@ void renderBuffer_setPixel(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t
 void renderBuffer_fillPixels(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t color, size_t num)
 {
     renderBuffer_t* buffer = device->data;
-    switch(device->videoMode.colorMode)
+    switch (device->videoMode.colorMode)
     {
         case CM_15BIT:
             memsetw(((uint16_t*)buffer->buffer) + y * device->videoMode.xRes + x, BGRAtoBGR15(color), num);
@@ -309,7 +309,7 @@ void renderBuffer_fillPixels(videoDevice_t* device, uint16_t x, uint16_t y, BGRA
         case CM_24BIT:
         {
             void* vidmemBase = buffer->buffer + (y * device->videoMode.xRes + x) * 3;
-            for(size_t i = 0; i < num; i++)
+            for (size_t i = 0; i < num; i++)
             {
                 *(uint16_t*)(vidmemBase + i*3) = *(uint16_t*)&color; // Performance Hack - copying 16 bits at once should be faster than copying 8 bits twice
                 ((uint8_t*)vidmemBase)[i*3 + 2] = color.red;
@@ -328,13 +328,13 @@ void renderBuffer_fillPixels(videoDevice_t* device, uint16_t x, uint16_t y, BGRA
 void renderBuffer_copyPixels(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t* colors, size_t num)
 {
     renderBuffer_t* buffer = device->data;
-    switch(device->videoMode.colorMode)
+    switch (device->videoMode.colorMode)
     {
         case CM_32BIT:
             memcpy(buffer->buffer + 4*device->videoMode.xRes*y + x*4, colors, num);
             break;
         case CM_15BIT: case CM_16BIT: case CM_24BIT: case CM_256COL: default:
-            for(size_t i = 0; i < num; i++)
+            for (size_t i = 0; i < num; i++)
                 renderBuffer_setPixel(device, x + i, y, colors[i]);
             break;
     }
@@ -354,7 +354,7 @@ BGRA_t renderBuffer_getPixel(videoDevice_t* device, uint16_t x, uint16_t y)
 void renderBuffer_flipScreen(videoDevice_t* device)
 {
     renderBuffer_t* buffer = device->data;
-    if(buffer->buffer2 == 0)
+    if (buffer->buffer2 == 0)
         buffer->buffer2 = malloc(device->videoMode.xRes*device->videoMode.yRes*device->videoMode.colorMode/8, 0, "renderBuffer_t::buffer2");
 
     void* temp = buffer->buffer2;

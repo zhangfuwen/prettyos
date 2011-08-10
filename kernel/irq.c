@@ -48,13 +48,13 @@ static struct irq
 // Add an IRQ handler
 static void installHandler(struct irq* irq, void* handler, irq_handlerType_t type, void* data)
 {
-    if(irq->handlerCount == 0) // No handler installed. Install first handler
+    if (irq->handlerCount == 0) // No handler installed. Install first handler
     {
         irq->handler.handler.func.def    = handler;
         irq->handler.handler.type        = type;
         irq->handler.handler.data.pciDev = data;
     }
-    else if(irq->handlerCount == 1) // One handler installed. Install second one. We have to create the handlers-List
+    else if (irq->handlerCount == 1) // One handler installed. Install second one. We have to create the handlers-List
     {
         // Save old handler
         irq_handler_t* tempHandler = malloc(sizeof(irq_handler_t), 0, "irq handler");
@@ -104,16 +104,16 @@ void irq_installPCIHandler(IRQ_NUM_t irq, void (*handler)(registers_t*, pciDev_t
 // Remove an IRQ handler. TODO: Implement it. Check&Change function prototype
 void irq_uninstallHandler(IRQ_NUM_t irq)
 {
-    if(interrupts[irq+32].handlerCount == 1) // We delete the last IRQ handler assigned to this IRQ number
+    if (interrupts[irq+32].handlerCount == 1) // We delete the last IRQ handler assigned to this IRQ number
     {
         interrupts[irq+32].handler.handler.func.def = 0;
         interrupts[irq+32].handlerCount = 0;
     }
-    else if(interrupts[irq+32].handlerCount == 2) // There remains just one IRQ handler
+    else if (interrupts[irq+32].handlerCount == 2) // There remains just one IRQ handler
     {
         // TODO
     }
-    else if(interrupts[irq+32].handlerCount != 0)
+    else if (interrupts[irq+32].handlerCount != 0)
     {
         // TODO
         interrupts[irq+32].handlerCount--;
@@ -128,7 +128,7 @@ void irq_resetCounter(IRQ_NUM_t number)
 
 bool waitForIRQ(IRQ_NUM_t number, uint32_t timeout)
 {
-    if(timeout > 0)
+    if (timeout > 0)
         return(scheduler_blockCurrentTask(BL_INTERRUPT, (void*)(number+32), max(1, timer_millisecondsToTicks(timeout))));
     else
     {
@@ -188,7 +188,7 @@ static void stackTrace(void* eip, void* ebp)
         __asm__ volatile ("mov %%ebp, %0" : "=r"(frame));
     }
 
-    for(; frame != 0 && frame->ebp != 0; frame = frame->ebp)
+    for (; frame != 0 && frame->ebp != 0; frame = frame->ebp)
     {
         printf("\nebp: %X   eip: %X", frame->ebp, frame->eip);
         if (!paging_getPhysAddr(frame->ebp))
@@ -210,7 +210,7 @@ static void defaultError(registers_t* r)
     printf("eflags: %Xh useresp: %Xh\n", r->eflags, r->useresp);
 
     printf("\nPress 's' to display call stack.\n");
-    if(getch() == 's')
+    if (getch() == 's')
         stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
@@ -227,7 +227,7 @@ static void invalidOpcode(registers_t* r)
     printf("eflags: %Xh useresp: %Xh\n", r->eflags, r->useresp);
 
     printf("\nPress 's' to display call stack.\n");
-    if(getch() == 's')
+    if (getch() == 's')
         stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
@@ -304,7 +304,7 @@ static void PF(registers_t* r)
     if (id)       printf("\ncaused by an instruction fetch");
 
     printf("\n\nPress 's' to display call stack.\n");
-    if(getch() == 's')
+    if (getch() == 's')
         stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
@@ -313,13 +313,13 @@ static void PF(registers_t* r)
 
 void isr_install()
 {
-    for(uint8_t i = 0; i < 32; i++)
+    for (uint8_t i = 0; i < 32; i++)
     {
         interrupts[i].handlerCount = 1;
         interrupts[i].handler.handler.type = IHT_DEFAULT;
         interrupts[i].handler.handler.func.def = &defaultError; // If nothing else is specified, the default handler is called
     }
-    for(uint16_t i = 32; i < 256; i++)
+    for (uint16_t i = 32; i < 256; i++)
     {
         interrupts[i].handlerCount = 0;
     }
@@ -339,22 +339,22 @@ uint32_t irq_handler(uintptr_t esp)
 
     registers_t* r = (registers_t*)esp;
 
-    if(r->int_no == 0x20 || r->int_no == 0x7E) // timer interrupt or function switch_context
+    if (r->int_no == 0x20 || r->int_no == 0x7E) // timer interrupt or function switch_context
     {
-        if(task_switching)
+        if (task_switching)
             esp = scheduler_taskSwitch(esp); // get new task's esp from scheduler
     }
 
     interrupts[r->int_no].calls++;
     if (interrupts[r->int_no].handlerCount == 1) // One handler registered for this interrupt
     {
-        switch(interrupts[r->int_no].handler.handler.type)
+        switch (interrupts[r->int_no].handler.handler.type)
         {
             case IHT_DEFAULT:
                 interrupts[r->int_no].handler.handler.func.def(r); // Execute handler
                 break;
             case IHT_PCI:
-                //if(pci_deviceSentInterrupt(interrupts[r->int_no].handler.handler.data.pciDev)) // TODO: Why does it not work? Bit 3 of the PCI status register is not set at interrupt on VBox and real hardware
+                //if (pci_deviceSentInterrupt(interrupts[r->int_no].handler.handler.data.pciDev)) // TODO: Why does it not work? Bit 3 of the PCI status register is not set at interrupt on VBox and real hardware
                     interrupts[r->int_no].handler.handler.func.pci(r, interrupts[r->int_no].handler.handler.data.pciDev); // Execute PCI handler
                 break;
             case IHT_CDI:
@@ -362,26 +362,26 @@ uint32_t irq_handler(uintptr_t esp)
                 break;
         }
     }
-    else if(interrupts[r->int_no].handlerCount > 1) // More than one handler registered
+    else if (interrupts[r->int_no].handlerCount > 1) // More than one handler registered
     {
-        for(dlelement_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // First loop: Try to find a PCI handler to call
+        for (dlelement_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // First loop: Try to find a PCI handler to call
         {
             irq_handler_t* handler = e->data;
-            if(handler->type == IHT_PCI/* && pci_deviceSentInterrupt(handler->data.pciDev)*/) // TODO: Why does it not work? Bit 3 of the PCI status register is not set at interrupt on VBox and real hardwar
+            if (handler->type == IHT_PCI/* && pci_deviceSentInterrupt(handler->data.pciDev)*/) // TODO: Why does it not work? Bit 3 of the PCI status register is not set at interrupt on VBox and real hardwar
             {
                 handler->func.pci(r, handler->data.pciDev); // Execute PCI handler
                 //goto HANDLED; // Disabled, because pci_deviceSentInterrupt is disabled, too.
             }
         }
-        for(dlelement_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // Second loop: Also accept default and CDI handlers. TODO: Move CDI handlers to first loop (check pci device for interrupt)
+        for (dlelement_t* e = interrupts[r->int_no].handler.handlers->head; e != 0; e = e->next) // Second loop: Also accept default and CDI handlers. TODO: Move CDI handlers to first loop (check pci device for interrupt)
         {
             irq_handler_t* handler = e->data;
-            if(handler->type == IHT_DEFAULT)
+            if (handler->type == IHT_DEFAULT)
             {
                 handler->func.def(r); // Execute handler
                 goto HANDLED;
             }
-            else if(handler->type == IHT_CDI)
+            else if (handler->type == IHT_CDI)
             {
                 handler->func.cdi(handler->data.cdiDev);
                 goto HANDLED;
@@ -395,7 +395,7 @@ uint32_t irq_handler(uintptr_t esp)
     outportb(0x20, 0x20);
 
     console_current = currentTask->console;
-    if(r->int_no != 0x7F) // Syscalls (especially textColor) should be able to change color. HACK: Can this be solved nicer?
+    if (r->int_no != 0x7F) // Syscalls (especially textColor) should be able to change color. HACK: Can this be solved nicer?
         oldTask->attrib = attr;
     return esp;
 }

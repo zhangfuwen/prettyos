@@ -204,7 +204,7 @@ static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
         textColor(DATA);
         if (alphanumeric)
         {
-            if ( (*((uint8_t*)virtAddrBuf0+c)>=0x20) && (*((uint8_t*)virtAddrBuf0+c)<=0x7E) )
+            if ((*((uint8_t*)virtAddrBuf0+c)>=0x20) && (*((uint8_t*)virtAddrBuf0+c)<=0x7E))
                 putch(((char*)virtAddrBuf0)[c]);
         }
         else
@@ -256,7 +256,7 @@ uint32_t showStatusbyteQTD(void* addressQTD)
 /*
 ehci spec 1.0, chapter 4.4 Schedule Traversal Rules:
 
-... , the host controller executes from the asynchronous schedule until the end of the micro-frame.
+..., the host controller executes from the asynchronous schedule until the end of the micro-frame.
 When the host controller determines that it is time to execute from the asynchronous list,
 it uses the operational register ASYNCLISTADDR to access the asynchronous schedule, see Figure 4-4.
 The ASYNCLISTADDR register contains a physical memory pointer to the next queue head.
@@ -348,15 +348,15 @@ void checkAsyncScheduler()
 
     // Last accessed & next to access QH, DWORD 1
     /*
-    uint32_t deviceAddress               = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x7F);
-    uint32_t inactivateOnNextTransaction = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x80)>>7;
-    uint32_t endpoint                    = (BYTE2( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x0F);
-    uint32_t dataToggleControl           = (BYTE2( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x40)>>6;
-    uint32_t Hbit                        = (BYTE2( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x80)>>7;
-    uint32_t mult                        = (BYTE4( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0xC0)>>6;
+    uint32_t deviceAddress               = (BYTE1(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0x7F);
+    uint32_t inactivateOnNextTransaction = (BYTE1(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0x80)>>7;
+    uint32_t endpoint                    = (BYTE2(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0x0F);
+    uint32_t dataToggleControl           = (BYTE2(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0x40)>>6;
+    uint32_t Hbit                        = (BYTE2(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0x80)>>7;
+    uint32_t mult                        = (BYTE4(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0xC0)>>6;
 
-    uint32_t maxPacket = (( BYTE4( *( ((uint32_t*)virtASYNCLISTADDR)+1) ) & 0x07 ) << 8 ) +
-                            BYTE3( *( ((uint32_t*)virtASYNCLISTADDR)+1) );
+    uint32_t maxPacket = ((BYTE4(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0x07) << 8) +
+                            BYTE3(*(((uint32_t*)virtASYNCLISTADDR)+1));
 
     printf("\ndev: %u endp: %u inactivate: %u dtc: %u H: %u mult: %u maxPacket: %u",
              deviceAddress, endpoint, inactivateOnNextTransaction, dataToggleControl, Hbit, mult, maxPacket);
@@ -366,15 +366,15 @@ void checkAsyncScheduler()
     // ...
 
     // Last accessed & next to access QH, DWORD 3
-    uintptr_t firstQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+3)) & 0xFFFFFFE0; // without last 5 bits
+    uintptr_t firstQTD = (*(((uint32_t*)virtASYNCLISTADDR)+3)) & 0xFFFFFFE0; // without last 5 bits
     printf("\ncurr qTD: %Xh",firstQTD);
 
     // Last accessed & next to access QH, DWORD 4
-    uintptr_t nextQTD = (*( ((uint32_t*)virtASYNCLISTADDR)+4)) & 0xFFFFFFE0; // without last 5 bits
+    uintptr_t nextQTD = (*(((uint32_t*)virtASYNCLISTADDR)+4)) & 0xFFFFFFE0; // without last 5 bits
     printf("\tnext qTD: %Xh",nextQTD);
 
     // NAK counter in overlay area
-    uint32_t NakCtr = (BYTE1( *( ((uint32_t*)virtASYNCLISTADDR)+5) ) & 0x1E)>>1;
+    uint32_t NakCtr = (BYTE1(*(((uint32_t*)virtASYNCLISTADDR)+5)) & 0x1E)>>1;
     printf("\nNAK counter: %u",NakCtr);
     textColor(TEXT);
   #endif
@@ -401,7 +401,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
     while (!(pOpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
     {
         timeout--;
-        if(timeout>0)
+        if (timeout>0)
         {
             sleepMilliSeconds(20);
           #ifdef _EHCI_DIAGNOSIS_
@@ -425,7 +425,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
     while (!USBINTflag) // set by interrupt
     {
         timeout--;
-        if(timeout>0)
+        if (timeout>0)
         {
             sleepMilliSeconds(20);
 
@@ -455,7 +455,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         while (pOpRegs->USBSTS & STS_ASYNC_ENABLED) // wait until it is really off
         {
             timeout--;
-            if(timeout>0)
+            if (timeout>0)
             {
                 sleepMilliSeconds(20);
               #ifdef _EHCI_DIAGNOSIS_

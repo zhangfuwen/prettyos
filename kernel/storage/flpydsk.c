@@ -268,12 +268,12 @@ static void flpydsk_checkInt(uint8_t* st0, uint8_t* cyl)
 // turns the current floppy drives motor on
 void flpydsk_motorOn(void* drive)
 {
-    if(drive == 0) return;
+    if (drive == 0) return;
 
     floppy_t* fdrive = drive;
 
   #ifdef _FLOPPY_DIAGNOSIS_
-    if(fdrive->motor == false)
+    if (fdrive->motor == false)
     {
         textColor(IMPORTANT);
         printf("\nflpydsk_motorOn drive: %u", fdrive->ID);
@@ -281,7 +281,7 @@ void flpydsk_motorOn(void* drive)
     }
   #endif
 
-    if(fdrive->motor == true) return;
+    if (fdrive->motor == true) return;
 
     uint32_t motor = 0;
     switch (((floppy_t*)drive)->ID) // select the correct mask based on current drive
@@ -298,12 +298,12 @@ void flpydsk_motorOn(void* drive)
 // turns the current floppy drives motor on
 void flpydsk_motorOff(void* drive)
 {
-    if(drive == 0) return;
+    if (drive == 0) return;
 
     floppy_t* fdrive = drive;
 
   #ifdef _FLOPPY_DIAGNOSIS_
-    if(fdrive->motor == true)
+    if (fdrive->motor == true)
     {
         textColor(IMPORTANT);
         printf("\nflpydsk_motorOff drive: %u", fdrive->ID);
@@ -312,9 +312,9 @@ void flpydsk_motorOff(void* drive)
     writeInfo(0, "Floppy motor: Global-Access-Counter: %u   Internal counter: %u   Motor on: %u", CurrentDrive->drive.insertedDisk->accessRemaining, CurrentDrive->accessRemaining, CurrentDrive->motor);
   #endif
 
-    if(fdrive->motor == false) return; // everything is already fine
+    if (fdrive->motor == false) return; // everything is already fine
 
-    if(fdrive->accessRemaining == 0)
+    if (fdrive->accessRemaining == 0)
     {
         flpydsk_writeDOR(FLPYDSK_DOR_MASK_RESET); // motor off
         fdrive->motor = false;
@@ -375,7 +375,7 @@ static void flpydsk_getDump()
 
 static void flpydsk_configure()
 {
-    if(flpydsk_version == 0x90) // Enhanced FDC
+    if (flpydsk_version == 0x90) // Enhanced FDC
     {
         flpydsk_getDump();
         flpydsk_sendCommand(FDC_CMD_CONFIGURE);
@@ -413,7 +413,7 @@ static void flpydsk_reset()
     flpydsk_writeCCR(0);              // transfer speed 500 kb/s
     waitForIRQ(IRQ_FLOPPY, 2000);
 
-    if(flpydsk_version == 0x90)
+    if (flpydsk_version == 0x90)
     {
         uint8_t st0, cyl;
         // send CHECK_INT/SENSE INTERRUPT command to all drives
@@ -465,12 +465,12 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
         flpydsk_checkInt(&st0, &cyl);
 
         timeout--;
-        if(timeout == 0)
+        if (timeout == 0)
         {
             drive->accessRemaining--;
             return(-1);
         }
-    } while(!IS_BIT_SET(st0, 5));
+    } while (!IS_BIT_SET(st0, 5));
 
     drive->accessRemaining--;
     return(0);
@@ -502,12 +502,12 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
         flpydsk_checkInt(&st0,&cyl0);
 
         timeout--;
-        if(timeout == 0)
+        if (timeout == 0)
         {
             CurrentDrive->accessRemaining--;
             return(-1);
         }
-    } while(!IS_BIT_SET(st0, 5));
+    } while (!IS_BIT_SET(st0, 5));
 
     CurrentDrive->accessRemaining--;
     return(0);
@@ -558,7 +558,7 @@ static int32_t flpydsk_transferSector(uint8_t head, uint8_t track, uint8_t secto
 
     mutex_unlock(CurrentDrive->RW_Lock);
 
-    if(val == 2) // value 2 means 512 Byte
+    if (val == 2) // value 2 means 512 Byte
     {
         return(0);
     }
@@ -635,7 +635,7 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
 
     FS_ERROR retVal = CE_GOOD;
 
-    if(CurrentDrive->lastTrack != sector/18) // Needed Track is not in the cache -> Read it. TODO: Check if floppy has changed
+    if (CurrentDrive->lastTrack != sector/18) // Needed Track is not in the cache -> Read it. TODO: Check if floppy has changed
     {
         CurrentDrive->lastTrack = sector/18;
 
@@ -700,7 +700,7 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
         val = i*18;
     }
 
-    if(val/18 == CurrentDrive->lastTrack) // Clear cache if we change the track which is in the cache
+    if (val/18 == CurrentDrive->lastTrack) // Clear cache if we change the track which is in the cache
         CurrentDrive->lastTrack = 0xFFFFFFFE;
 
     uint32_t timeout = 2; // limit
@@ -724,9 +724,9 @@ void flpydsk_refreshVolumeNames()
 {
     floppy_t* currentDrive = CurrentDrive;
 
-    for(uint8_t i = 0; i < MAX_FLOPPY; i++)
+    for (uint8_t i = 0; i < MAX_FLOPPY; i++)
     {
-        if(floppyDrive[i] == 0) continue;
+        if (floppyDrive[i] == 0) continue;
 
         floppyDrive[i]->drive.insertedDisk->accessRemaining++;
 

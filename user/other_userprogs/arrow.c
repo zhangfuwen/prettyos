@@ -72,20 +72,20 @@ void moveFighter()
         iSetCursor(fighterPosition,43);
         putchar(1); putchar(' ');
     }
-    if(keyPressed(KEY_D) && fighterPosition<79)
+    if (keyPressed(KEY_D) && fighterPosition<79)
     {
         iSetCursor(fighterPosition,43);
         putchar(' '); putchar(1);
         fighterPosition++;
     }
-    if(keyPressed(KEY_S) && fighterPosition<79 && timeout>0)
+    if (keyPressed(KEY_S) && fighterPosition<79 && timeout>0)
     {
         timeout--;
         deleteWeapons();
         iSetCursor(0,0);
         printf("trials: %u/%u", MAX-timeout, MAX);
     }
-    if(keyPressed(KEY_ESC))
+    if (keyPressed(KEY_ESC))
     {
         exit();
     }
@@ -107,9 +107,9 @@ int main()
     clearScreen(0);
     textColor(0x0F);
 
-    for(uint8_t i = 0; i < 80; i++)
+    for (uint8_t i = 0; i < 80; i++)
     {
-        for(uint8_t j = 0; j < 43; j++)
+        for (uint8_t j = 0; j < 43; j++)
         {
             point[i][j] = false;
         }
@@ -118,12 +118,12 @@ int main()
     generateWeapons();
     generateFighter();
 
-    for(uint8_t i = 0; i < 6; i++)
+    for (uint8_t i = 0; i < 6; i++)
     {
-        setWeapon( 5 + rand()%75, 42 );
+        setWeapon(5 + rand()%75, 42);
     }
 
-    while(true)
+    while (true)
     {
         iSetCursor(25,0);
         printf("\"ARROW ATTACK\" 0.14 A=left, D=right, S=delete arrows");

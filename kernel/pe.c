@@ -103,7 +103,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
     const pe_msdosStub_t* MSDOS_stub = file;
     const pe_coffHeader_t* coffHeader = file + MSDOS_stub->offset + 4; // Seek to COFF header
 
-    switch(coffHeader->machine)
+    switch (coffHeader->machine)
     {
         case MT_I386:
             break;
@@ -114,14 +114,14 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
             printf("Unknown. File will not be executed.");
             return(0);
     }
-    if(!(coffHeader->characteristics & 0x0002))
+    if (!(coffHeader->characteristics & 0x0002))
     {
         textColor(ERROR);
         printf("\nInvalid PE executable.");
         textColor(TEXT);
         return(0);
     }
-    if(!(coffHeader->characteristics & 0x0100))
+    if (!(coffHeader->characteristics & 0x0100))
     {
         textColor(ERROR);
         printf("\nNo 32-bit PE executable.");
@@ -132,7 +132,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
     const pe_optionalHeader_t* optHeader = file + MSDOS_stub->offset + 4 + sizeof(pe_coffHeader_t);
 
-    switch(optHeader->magic)
+    switch (optHeader->magic)
     {
         case PT_PE32:
             break;
@@ -149,7 +149,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
     printf("\nSections:");
   #endif
     const pe_sectionTableEntry_t* sectionTable = ((void*)optHeader) + coffHeader->optionalHeaderSize;
-    for(uint32_t i = 0; i < coffHeader->numberOfSections; ++i)
+    for (uint32_t i = 0; i < coffHeader->numberOfSections; ++i)
     {
       #ifdef _DIAGNOSIS_
         char name[9];
@@ -159,7 +159,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
       #endif
 
         MEMFLAGS_t memFlags = MEM_USER;
-        if(sectionTable[i].characteristics & 0x80000000)
+        if (sectionTable[i].characteristics & 0x80000000)
             memFlags |= MEM_WRITE;
 
         // Allocate code area for the user program
@@ -170,9 +170,9 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
         // Copy the code, using the user's page directory
         cli();
-        paging_switch(pd);
+        paging_switch (pd);
         memcpy((void*)(sectionTable[i].virtAddress + optHeader->imageBase), file+sectionTable[i].rawDataPointer, sectionTable[i].rawDataSize);
-        paging_switch(currentTask->pageDirectory);
+        paging_switch (currentTask->pageDirectory);
         sti();
     }
 

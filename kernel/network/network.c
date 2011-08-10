@@ -38,7 +38,7 @@ bool network_installDevice(pciDev_t* device)
     textColor(HEADLINE);
 
     network_driver_t* driver = 0;
-    if(device->deviceID == 0x8139 && device->vendorID == 0x10EC) // RTL 8139
+    if (device->deviceID == 0x8139 && device->vendorID == 0x10EC) // RTL 8139
     {
         driver = &drivers[RTL8139];
         printf("\nRealtek RTL8139");
@@ -54,7 +54,7 @@ bool network_installDevice(pciDev_t* device)
         printf("\nAMD PCnet III");
     }
 
-    if(driver == 0 || driver->install == 0) // PrettyOS does not know the card or the driver is not properly installed
+    if (driver == 0 || driver->install == 0) // PrettyOS does not know the card or the driver is not properly installed
     {
         textColor(TEXT);
         return(false);
@@ -80,9 +80,9 @@ bool network_installDevice(pciDev_t* device)
 
     for (uint8_t j = 0; j < 6; ++j) // check network card BARs
     {
-        if(device->bar[j].memoryType == PCI_MMIO)
+        if (device->bar[j].memoryType == PCI_MMIO)
             adapter->MMIO_base = (void*)(device->bar[j].baseAddress &= 0xFFFFFFF0);
-        else if(device->bar[j].memoryType == PCI_IO)
+        else if (device->bar[j].memoryType == PCI_IO)
             adapter->IO_base = device->bar[j].baseAddress &= 0xFFFC;
     }
 
@@ -98,7 +98,7 @@ bool network_installDevice(pciDev_t* device)
 
     adapter->driver->install(adapter);
 
-    if(adapters == 0)
+    if (adapters == 0)
         adapters = list_create();
     list_append(adapters, adapter);
 
@@ -142,7 +142,7 @@ void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t le
 
 void network_displayArpTables()
 {
-    if(adapters == 0) // No adapters installed
+    if (adapters == 0) // No adapters installed
         return;
     textColor(TEXT);
     printf("\n\nARP Cache:");
@@ -157,11 +157,11 @@ void network_displayArpTables()
 
 network_adapter_t* network_getAdapter(IP_t IP)
 {
-    if(adapters == 0) return(0);
-    for(dlelement_t* e = adapters->head; e != 0; e = e->next)
+    if (adapters == 0) return(0);
+    for (dlelement_t* e = adapters->head; e != 0; e = e->next)
     {
         network_adapter_t* adapter = e->data;
-        if(adapter->IP.iIP == IP.iIP)
+        if (adapter->IP.iIP == IP.iIP)
         {
             return(adapter);
         }
@@ -171,7 +171,7 @@ network_adapter_t* network_getAdapter(IP_t IP)
 
 network_adapter_t* network_getFirstAdapter()
 {
-    if(adapters == 0)
+    if (adapters == 0)
         return(0);
     return(adapters->head->data);
 }

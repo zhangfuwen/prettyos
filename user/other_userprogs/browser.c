@@ -28,9 +28,9 @@ int main()
     uint32_t connection = tcp_connect(IP, 80);
     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
-    for(;;)
+    for (;;)
     {
-        switch(ev)
+        switch (ev)
         {
             case EVENT_NONE:
             {
@@ -63,7 +63,7 @@ int main()
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
-                if(*key == KEY_ESC)
+                if (*key == KEY_ESC)
                 {
                     tcp_close(connection);
                     return(0);

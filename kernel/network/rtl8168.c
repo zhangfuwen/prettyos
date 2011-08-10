@@ -34,9 +34,9 @@ void setupDescriptors(RTL8168_networkAdapter_t* rAdapter)
     rAdapter->Tx_Descriptors = malloc(numOfDesc*sizeof(RTL8168_Desc), 256, "Tx Desc");
     // rx_buffer_len is the size (in bytes) that is reserved for incoming packets
     unsigned int OWN = 0x80000000, EOR = 0x40000000; // bit offsets
-    for(uint16_t i = 0; i < numOfDesc; i++)
+    for (uint16_t i = 0; i < numOfDesc; i++)
     {
-        if(i == (numOfDesc - 1)) // Last descriptor? if so, set the EOR bit
+        if (i == (numOfDesc - 1)) // Last descriptor? if so, set the EOR bit
             rAdapter->Rx_Descriptors[i].command = (OWN | EOR | (2048 & 0x3FFF));
         else
             rAdapter->Rx_Descriptors[i].command = (OWN | (2048 & 0x3FFF));
@@ -62,7 +62,7 @@ void rtl8168_install(network_adapter_t* adapter)
     // Reset card
     *((uint8_t*)(adapter->MMIO_base + RTL8168_CHIPCMD)) = RTL8168_CMD_RESET;
 
-    for(uint8_t k = 0; ; k++) // wait for the reset of the "reset flag"
+    for (uint8_t k = 0; ; k++) // wait for the reset of the "reset flag"
     {
         sleepMilliSeconds(10);
         if (!(*((volatile uint8_t*)(adapter->MMIO_base + RTL8168_CHIPCMD)) & RTL8168_CMD_RESET))

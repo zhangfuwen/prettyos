@@ -41,15 +41,15 @@ void rtl8139_handler(registers_t* data, pciDev_t* device)
     if (val & RTL8139_INT_RXFIFO_OVERFLOW) { puts("Rx FIFO Overflow\n");}
     if (val & RTL8139_INT_CABLE)           { puts("Cable Length Change\n");}
     if (val & RTL8139_INT_TIMEOUT)         { puts("Time Out\n");}
-    if (val & RTL8139_INT_PCIERR)          { puts("PCI Bus Error\n");}    
-    
+    if (val & RTL8139_INT_PCIERR)          { puts("PCI Bus Error\n");}
+
     // reset interrupts by writing 1 to the bits of offset 003Eh to 003Fh, Interrupt Status Register
-    *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRSTATUS)) = val; 
-    
+    *((uint16_t*)(adapter->MMIO_base + RTL8139_INTRSTATUS)) = val;
+
     if (val & RTL8139_INT_RX_OK)
     {
         rtl8139_receive(adapter);
-    }    
+    }
 }
 
 void rtl8139_install(network_adapter_t* adapter)
@@ -198,7 +198,7 @@ bool rtl8139_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     RTL8139_networkAdapter_t* rAdapter = adapter->data;
 
     memcpy(rAdapter->TxBuffer, data, length); // tx buffer
-    if(length < 60) // Fill buffer to a minimal length of 60
+    if (length < 60) // Fill buffer to a minimal length of 60
     {
         memset(rAdapter->TxBuffer+length, 0, 60-length);
         length = 60;

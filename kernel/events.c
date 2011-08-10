@@ -20,7 +20,7 @@ event_queue_t* event_createQueue()
 
 void event_deleteQueue(event_queue_t* queue)
 {
-    for(dlelement_t* e = queue->list->head; e != 0; e = e->next)
+    for (dlelement_t* e = queue->list->head; e != 0; e = e->next)
     {
         free(((event_t*)e->data)->data);
         free(e->data);
@@ -32,12 +32,12 @@ void event_deleteQueue(event_queue_t* queue)
 
 uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length)
 {
-    if(!destination) // Event handling disabled
+    if (!destination) // Event handling disabled
     {
         return (1);
     }
 
-    if(destination->num == MAX_EVENTS)
+    if (destination->num == MAX_EVENTS)
     {
         // Overflow
         event_t* ev = malloc(sizeof(event_t), 0, "event (overflow)");
@@ -51,7 +51,7 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
 
         return (2);
     }
-    else if(destination->num > MAX_EVENTS)
+    else if (destination->num > MAX_EVENTS)
     {
         // Nothing to do. OVERFLOW event has already been added.
         return (3);
@@ -60,7 +60,7 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
     {
         // Add event
         event_t* ev = malloc(sizeof(event_t), 0, "event");
-        if(length > sizeof(ev->data)) // data does not fit in pointer
+        if (length > sizeof(ev->data)) // data does not fit in pointer
         {
             ev->data = malloc(length, 0, "event->data");
             memcpy(ev->data, data, length);
@@ -83,51 +83,51 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 {
     task_t* task = (task_t*)currentTask;
-    while(task->parent && task->type == THREAD && task->eventQueue == 0)
+    while (task->parent && task->type == THREAD && task->eventQueue == 0)
     {
         task = task->parent; // Use parents eventQueue, if the thread has no own queue.
     }
 
-    if(task->eventQueue == 0 || task->eventQueue->num == 0) // Event handling disabled or no events available
+    if (task->eventQueue == 0 || task->eventQueue->num == 0) // Event handling disabled or no events available
     {
         return(EVENT_NONE);
     }
 
     event_t* ev = 0;
     mutex_lock(task->eventQueue->mutex);
-    if(filter == EVENT_NONE)
+    if (filter == EVENT_NONE)
     {
         ev = task->eventQueue->list->head->data;
     }
     else
     {
-        for(dlelement_t* e = task->eventQueue->list->head; e != 0; e = e->next)
+        for (dlelement_t* e = task->eventQueue->list->head; e != 0; e = e->next)
         {
             ev = e->data;
-            if(ev->type == filter)
+            if (ev->type == filter)
                 break; // found event
             else
                 ev = 0;
         }
     }
 
-    if(ev == 0)
+    if (ev == 0)
     {
         mutex_unlock(task->eventQueue->mutex);
         return (EVENT_NONE);
     }
 
     EVENT_t type = EVENT_NONE;
-    if(ev->length > maxLength)
+    if (ev->length > maxLength)
     {
         type = EVENT_INVALID_ARGUMENTS;
-        if(ev->length > sizeof(ev->data)) // data does not fit in pointer
+        if (ev->length > sizeof(ev->data)) // data does not fit in pointer
             free(ev->data);
     }
     else
     {
         type = ev->type;
-        if(ev->length > sizeof(ev->data)) // data does not fit in pointer
+        if (ev->length > sizeof(ev->data)) // data does not fit in pointer
         {
             memcpy(destination, ev->data, ev->length);
             free(ev->data);
@@ -146,7 +146,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
 {
     dlelement_t* elem = list_getElement(eventQueue->list, i);
-    if(elem == 0) return(0);
+    if (elem == 0) return(0);
     return(elem->data);
 }
 
@@ -162,14 +162,14 @@ bool waitForEvent(uint32_t timeout)
 
 void event_enable(bool b)
 {
-    if(b)
+    if (b)
     {
-        if(currentTask->eventQueue == 0)
+        if (currentTask->eventQueue == 0)
             currentTask->eventQueue = event_createQueue();
     }
     else
     {
-        if(currentTask->eventQueue != 0)
+        if (currentTask->eventQueue != 0)
             event_deleteQueue(currentTask->eventQueue);
     }
 }

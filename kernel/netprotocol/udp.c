@@ -55,7 +55,7 @@ void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t lengt
             do
             {
                 event_issue(((task_t*)((task_t*)temp->data))->eventQueue, EVENT_UDP_RECEIVED, ev,
-                                        sizeof(udpReceivedEventHeader_t) + ntohs(packet->length) );
+                                        sizeof(udpReceivedEventHeader_t) + ntohs(packet->length));
                 temp = temp->next;
             }
             while (temp && temp != blockedTasks->begin);

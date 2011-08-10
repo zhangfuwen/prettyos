@@ -36,9 +36,9 @@ int main()
     uint32_t control = tcp_connect(IP, 21);
     printf("\nConnected (ID = %u). Wait until connection is established... ", control);
 
-    for(;;)
+    for (;;)
     {
-        switch(ev)
+        switch (ev)
         {
             case EVENT_NONE:
                 waitForEvent(0);
@@ -54,7 +54,7 @@ int main()
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
-                if(header->connectionID == dataConnection)
+                if (header->connectionID == dataConnection)
                 {
                     textColor(0x07);
                     printf("Closed data-connection.\n");
@@ -67,17 +67,17 @@ int main()
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
 
-                if(header->connectionID == dataConnection)
+                if (header->connectionID == dataConnection)
                     textColor(0x0C);
-                else if(header->connectionID == control)
+                else if (header->connectionID == control)
                     textColor(0x09);
                 printf("%s\n", data);
 
                 textColor(0x0F);
 
-                if(header->connectionID == control)
+                if (header->connectionID == control)
                 {
-                    if(data[0] == '2' && data[1] == '2' && data[2] == '0')
+                    if (data[0] == '2' && data[1] == '2' && data[2] == '0')
                     {
                         char pStr[200];
                         memset(pStr,0,200);
@@ -86,7 +86,7 @@ int main()
                         strcat(pStr,"\r\n");
                         tcp_send(control, pStr, strlen(pStr));
                     }
-                    else if(data[0] == '3' && data[1] == '3' && data[2] == '1')
+                    else if (data[0] == '3' && data[1] == '3' && data[2] == '1')
                     {
                         char pStr[200];
                         memset(pStr,0,200);
@@ -95,32 +95,32 @@ int main()
                         strcat(pStr,"\r\n");
                         tcp_send(control, pStr, strlen(pStr));
                     }
-                    else if(data[0] == '2' && data[1] == '3' && data[2] == '0')
+                    else if (data[0] == '2' && data[1] == '3' && data[2] == '0')
                     {
                         printf("Loggin successful.\n");
                     }
-                    else if(data[0] == '2' && data[1] == '2' && data[2] == '6')
+                    else if (data[0] == '2' && data[1] == '2' && data[2] == '6')
                     {
                         tcp_close(dataConnection);
                     }
-                    else if(data[0] == '2' && data[1] == '2' && data[2] == '7')
+                    else if (data[0] == '2' && data[1] == '2' && data[2] == '7')
                     {
                         uint8_t temp[6];
                         uint8_t it = 3;
                         do
                         {
-                            if(data[it] == '(')
+                            if (data[it] == '(')
                                 break;
-                        }while(it++);
-                        for(uint8_t i_start = it+1, i_end = it+1, byte = 0; byte < 6; i_end++)
+                        }while (it++);
+                        for (uint8_t i_start = it+1, i_end = it+1, byte = 0; byte < 6; i_end++)
                         {
-                            if(data[i_end] == ')')
+                            if (data[i_end] == ')')
                             {
                                 temp[byte] = atoi(data+i_start);
                                 break;
                             }
 
-                            if(data[i_end] == ',')
+                            if (data[i_end] == ',')
                             {
                                 data[i_end] = 0;
                                 temp[byte] = atoi(data+i_start);
@@ -128,7 +128,7 @@ int main()
                                 byte++;
                             }
                         }
-                        for(int i = 0;i < 4;i++)
+                        for (int i = 0;i < 4;i++)
                             dataIP.IP[i] = temp[i];
                         dataPort = temp[4]*256+temp[5];
 
@@ -136,7 +136,7 @@ int main()
                         printf("\nConnected (ID = %u). Wait until connection is established... ", dataConnection);
                     }
                 }
-                else if(header->connectionID == dataConnection)
+                else if (header->connectionID == dataConnection)
                 {
                 }
                 break;
@@ -144,14 +144,14 @@ int main()
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
-                if(*key == KEY_ESC)
+                if (*key == KEY_ESC)
                 {
                     printf("quit...");
                     tcp_send(control, "QUIT\r\n", 8);
                     tcp_close(control);
                     return(0);
                 }
-                else if(*key == KEY_F8)
+                else if (*key == KEY_F8)
                 {
                     textColor(0x0F);
                     printf("Enter command:\n");

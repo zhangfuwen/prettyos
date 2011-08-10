@@ -24,7 +24,7 @@ struct cdi_mem_area* cdi_mem_alloc(size_t size, cdi_mem_flags_t flags) // TODO: 
 
     // Speicher holen
     void* vaddr = malloc(size, alignment, "cdi_mem: vmem");
-    if(vaddr == 0)
+    if (vaddr == 0)
         return(0);
     uintptr_t paddr = paging_getPhysAddr(vaddr);
 
@@ -46,7 +46,7 @@ struct cdi_mem_area* cdi_mem_map(uintptr_t paddr, size_t size)
 {
     void* vaddr = paging_acquirePciMemory(alignDown(paddr, PAGESIZE), alignUp(size, PAGESIZE)/PAGESIZE);
 
-    if(vaddr == 0)
+    if (vaddr == 0)
         return(0);
 
     struct cdi_mem_sg_item* sg_item = malloc(sizeof(*sg_item), 0, "cdi_mem: sg_item");
@@ -71,7 +71,7 @@ void cdi_mem_free(struct cdi_mem_area* p)
 struct cdi_mem_area* cdi_mem_require_flags(struct cdi_mem_area* p, cdi_mem_flags_t flags)
 {
     struct cdi_mem_area* new = cdi_mem_alloc(p->size, flags);
-    if(new == 0)
+    if (new == 0)
         return(0);
 
     memcpy(new->vaddr, p->vaddr, new->size);

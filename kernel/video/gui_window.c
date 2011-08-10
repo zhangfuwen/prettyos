@@ -45,7 +45,7 @@ static uint16_t getnewwid()
 
 void DestroyWindow(uint16_t id)
 {
-    if(id != HWND_DESKTOP)
+    if (id != HWND_DESKTOP)
         video_freeDevice(window_list[id]->renderDevice);
     free((void*)window_list[id]);
     window_list[id] = 0;

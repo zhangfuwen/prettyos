@@ -77,7 +77,7 @@ void AMDPCnet_install(network_adapter_t* adapter)
     pAdapter->currentTransDesc = 0;
     pAdapter->receiveDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: RecDesc");
     pAdapter->transmitDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: TransDesc");
-    for(uint8_t i = 0; i < 8; i++)
+    for (uint8_t i = 0; i < 8; i++)
     {
         void* buffer = malloc(2048, 16, "PCnet receive buffer");
         pAdapter->receiveBuf[i] = buffer;
@@ -108,7 +108,7 @@ void AMDPCnet_install(network_adapter_t* adapter)
     irq_resetCounter(adapter->PCIdev->irq);
     // Init card
     writeCSR(adapter, 0, 0x0041); // Initialize card, activate interrupts
-    if(!waitForIRQ(adapter->PCIdev->irq, 1000))
+    if (!waitForIRQ(adapter->PCIdev->irq, 1000))
     {
         textColor(ERROR);
         printf("\nIRQ did not occur.\n");
@@ -148,7 +148,7 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     printf("\nPCNet: Send packet");
     #endif
     PCNet_card* pAdapter = adapter->data;
-    if(!pAdapter->initialized)
+    if (!pAdapter->initialized)
     {
         textColor(ERROR);
         printf("\nPCNet not initialized. Packet can not be sent.");
@@ -187,7 +187,7 @@ void PCNet_handler(registers_t* data, pciDev_t* device)
     textColor(0x03);
     #endif
 
-    if(pAdapter->initialized == false)
+    if (pAdapter->initialized == false)
     {
         pAdapter->initialized = true;
         #ifdef _NETWORK_DIAGNOSIS_
@@ -196,24 +196,24 @@ void PCNet_handler(registers_t* data, pciDev_t* device)
     }
     else
     {
-        if(csr0 & 0x8000) // Error
+        if (csr0 & 0x8000) // Error
         {
             textColor(ERROR);
-            if(csr0 & 0x2000)
+            if (csr0 & 0x2000)
                 printf("\nCollision error");
-            else if(csr0 & 0x1000)
+            else if (csr0 & 0x1000)
                 printf("\nMissed frame error");
-            else if(csr0 & 0x800)
+            else if (csr0 & 0x800)
                 printf("\nMemory error");
             else
                 printf("\nUndefined error: %x", csr0);
             textColor(TEXT);
         }
         #ifdef _NETWORK_DIAGNOSIS_
-        else if(csr0 & 0x0200)
+        else if (csr0 & 0x0200)
             printf("\nTransmit descriptor finished");
         #endif
-        else if(csr0 & 0x0400)
+        else if (csr0 & 0x0400)
         {
             PCNet_receive(pAdapter);
         }

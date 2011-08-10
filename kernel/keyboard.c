@@ -95,27 +95,27 @@ static KEY_t scancodeToKey(uint8_t scancode, bool* make)
 
     *make = !(scancode & 0x80); // make code
 
-    if(scancode == 0xE0) // First byte of E0 code
+    if (scancode == 0xE0) // First byte of E0 code
     {
         prevScancode = 0xE0;
     }
-    else if(scancode == 0xE1) // First byte of E1 code
+    else if (scancode == 0xE1) // First byte of E1 code
     {
         prevScancode = 0xE1;
         byteCounter = 1;
     }
     else
     {
-        if(prevScancode == 0xE0) // Second byte of E0 code
+        if (prevScancode == 0xE0) // Second byte of E0 code
         {
             prevScancode = 0; // Last scancode is not interesting in this case
             key = scancodeToKey_E0[scancode & 0x7F];
             pressedKeys[key] = !(scancode & 0x80);
         }
-        else if(prevScancode == 0xE1) // Second or third byte of E1 code. HACK: We assume, that all E1 codes mean the pause key
+        else if (prevScancode == 0xE1) // Second or third byte of E1 code. HACK: We assume, that all E1 codes mean the pause key
         {
             byteCounter++;
-            if(byteCounter == 3)
+            if (byteCounter == 3)
                 return(KEY_PAUSE);
         }
         else // Default code
@@ -171,7 +171,7 @@ static char keyToASCII(KEY_t key)
         }
     }
 
-    if(key == KEY_PRINT || key == KEY_F12) // Save content of video memory. F12 is alias for PrintScreen due to problems in some emulators
+    if (key == KEY_PRINT || key == KEY_F12) // Save content of video memory. F12 is alias for PrintScreen due to problems in some emulators
     {
         takeScreenshot();
     }
@@ -187,7 +187,7 @@ static void keyboard_handler(registers_t* r)
 
     // Find out key. Issue events.
     KEY_t key = scancodeToKey(scancode, &make);
-    
+
     if (key == __KEY_INVALID)
     {
         return;
@@ -195,14 +195,14 @@ static void keyboard_handler(registers_t* r)
 
     if (make)
     {
-        for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
         {
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_DOWN, &key, sizeof(KEY_t));
         }
     }
     else
     {
-        for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
         {
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_UP, &key, sizeof(KEY_t));
         }
@@ -213,7 +213,7 @@ static void keyboard_handler(registers_t* r)
     char ascii = keyToASCII(key);
     if (ascii)
     {
-        for(dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+        for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
         {
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_TEXT_ENTERED, &ascii, sizeof(char));
         }
@@ -225,9 +225,9 @@ char getch()
     char ret = 0;
     EVENT_t ev = event_poll(&ret, 1, EVENT_NONE);
 
-    while(ev != EVENT_TEXT_ENTERED)
+    while (ev != EVENT_TEXT_ENTERED)
     {
-        if(ev == EVENT_NONE)
+        if (ev == EVENT_NONE)
         {
             waitForEvent(0);
         }

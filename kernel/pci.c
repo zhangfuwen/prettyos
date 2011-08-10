@@ -27,19 +27,19 @@ void pci_analyzeHostSystemError(pciDev_t* pciDev)
     printf("\nPCI status word: %xh\n",pciStatus);
     textColor(TEXT);
     // bits 0...2 reserved
-    if(pciStatus & BIT(3))  printf("Interrupt Status\n");
-    if(pciStatus & BIT(4))  printf("Capabilities List\n");
-    if(pciStatus & BIT(5))  printf("66 MHz Capable\n");
+    if (pciStatus & BIT(3))  printf("Interrupt Status\n");
+    if (pciStatus & BIT(4))  printf("Capabilities List\n");
+    if (pciStatus & BIT(5))  printf("66 MHz Capable\n");
     // bit 6 reserved
-    if(pciStatus & BIT(7))  printf("Fast Back-to-Back Transactions Capable\n");
+    if (pciStatus & BIT(7))  printf("Fast Back-to-Back Transactions Capable\n");
     textColor(ERROR);
-    if(pciStatus & BIT(8))  printf("Master Data Parity Error\n");
+    if (pciStatus & BIT(8))  printf("Master Data Parity Error\n");
     // DEVSEL Timing: bits 10:9
-    if(pciStatus & BIT(11)) printf("Signalled Target-Abort\n");
-    if(pciStatus & BIT(12)) printf("Received Target-Abort\n");
-    if(pciStatus & BIT(13)) printf("Received Master-Abort\n");
-    if(pciStatus & BIT(14)) printf("Signalled System Error\n");
-    if(pciStatus & BIT(15)) printf("Detected Parity Error\n");
+    if (pciStatus & BIT(11)) printf("Signalled Target-Abort\n");
+    if (pciStatus & BIT(12)) printf("Received Target-Abort\n");
+    if (pciStatus & BIT(13)) printf("Received Master-Abort\n");
+    if (pciStatus & BIT(14)) printf("Signalled System Error\n");
+    if (pciStatus & BIT(15)) printf("Detected Parity Error\n");
     textColor(TEXT);
 }
 
@@ -143,16 +143,16 @@ void pci_scan()
                     PCIdev->revID              = pci_config_read(bus, device, func, PCI_REVISION);
                     PCIdev->irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
                     // Read BARs
-                    for(uint8_t i = 0; i < 6; i++)
+                    for (uint8_t i = 0; i < 6; i++)
                     {
-                        if(i < 2 || !(headerType & 0x01)) // Devices with header type 0x00 have 6 bars
+                        if (i < 2 || !(headerType & 0x01)) // Devices with header type 0x00 have 6 bars
                         {
                             PCIdev->bar[i].baseAddress = pci_config_read(bus, device, func, PCI_BAR0+i*4);
-                            if(PCIdev->bar[i].baseAddress) // Valid bar
+                            if (PCIdev->bar[i].baseAddress) // Valid bar
                             {
                                 // Check memory type
                                 PCIdev->bar[i].memoryType = PCIdev->bar[i].baseAddress & 0x01;
-                                if(PCIdev->bar[i].memoryType == 0) // MMIO bar
+                                if (PCIdev->bar[i].memoryType == 0) // MMIO bar
                                     PCIdev->bar[i].baseAddress &= 0xFFFFFFF0;
                                 else                               // IO bar
                                     PCIdev->bar[i].baseAddress &= 0xFFFC;
@@ -183,7 +183,7 @@ void pci_scan()
                       #ifdef _PCI_VEND_PROD_LIST_
                         // Find Vendor
                         bool found = false;
-                        for(uint32_t i = 0; i < PCI_VENTABLE_LEN; i++)
+                        for (uint32_t i = 0; i < PCI_VENTABLE_LEN; i++)
                         {
                             if (PciVenTable[i].VenId == PCIdev->vendorID)
                             {
@@ -192,7 +192,7 @@ void pci_scan()
                                 break;
                             }
                         }
-                        if(!found)
+                        if (!found)
                         {
                             printf("\tvend: %xh", PCIdev->vendorID); // Vendor not found, display ID
                         }
@@ -200,7 +200,7 @@ void pci_scan()
                         {
                             // Find Device
                             found = false;
-                            for(uint32_t i = 0; i < PCI_DEVTABLE_LEN; i++)
+                            for (uint32_t i = 0; i < PCI_DEVTABLE_LEN; i++)
                             {
                                 if (PciDevTable[i].DevId == PCIdev->deviceID && PciDevTable[i].VenId == PCIdev->vendorID) // VendorID and DeviceID have to fit
                                 {
@@ -210,7 +210,7 @@ void pci_scan()
                                 }
                             }
                         }
-                        if(!found)
+                        if (!found)
                         {
                             printf(", dev: %xh", PCIdev->deviceID); // Device not found, display ID
                         }

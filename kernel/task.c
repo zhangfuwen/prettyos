@@ -67,7 +67,7 @@ uint32_t getpid()
 
 bool waitForTask(task_t* blockingTask, uint32_t timeout)
 {
-    if(timeout > 0)
+    if (timeout > 0)
     {
         return (scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, max(1, timer_millisecondsToTicks(timeout))));
     }
@@ -105,9 +105,9 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
 
     uint32_t code_segment = 0x08;
 
-    if(newTask->type != VM86)
+    if (newTask->type != VM86)
     {
-        if(newTask->type == THREAD)
+        if (newTask->type == THREAD)
             *(--kernelStack) = (uintptr_t)&exit; // When a thread is finished, exit is automatically called
 
         if (newTask->privilege == 3)
@@ -206,7 +206,7 @@ task_t* create_cthread(void(*entry)(), const char* consoleName)
     // Attach the thread to its parent
     newTask->parent = (task_t*)currentTask;
 
-    if(currentTask->threads == 0)
+    if (currentTask->threads == 0)
     {
         currentTask->threads = list_create();
     }
@@ -229,7 +229,7 @@ task_t* create_thread(void(*entry)())
     // Attach the thread to its parent
     newTask->parent = (task_t*)currentTask;
 
-    if(currentTask->threads == 0)
+    if (currentTask->threads == 0)
     {
         currentTask->threads = list_create();
     }
@@ -257,16 +257,16 @@ void task_saveState(uint32_t esp)
     currentTask->esp = esp;
 }
 
-uint32_t task_switch(task_t* newTask)
+uint32_t task_switch (task_t* newTask)
 {
     task_switching = false;
 
-    if(newTask->pageDirectory != currentTask->pageDirectory) // Only switch page directory if the new task has a different one than the current task
-        paging_switch(newTask->pageDirectory);
+    if (newTask->pageDirectory != currentTask->pageDirectory) // Only switch page directory if the new task has a different one than the current task
+        paging_switch (newTask->pageDirectory);
 
     currentTask = newTask;
 
-    tss_switch((uintptr_t)currentTask->kernelStack, currentTask->esp, currentTask->ss); // esp0, esp, ss
+    tss_switch ((uintptr_t)currentTask->kernelStack, currentTask->esp, currentTask->ss); // esp0, esp, ss
 
     #ifdef _TASKING_DIAGNOSIS_
     textColor(TEXT);
@@ -293,7 +293,7 @@ uint32_t task_switch(task_t* newTask)
 
 void switch_context() // Switch to next task (by interrupt)
 {
-    if(!scheduler_shouldSwitchTask()) // If the scheduler does not want to switch the task ...
+    if (!scheduler_shouldSwitchTask()) // If the scheduler does not want to switch the task ...
     {
         sti();
         hlt(); // Wait one cycle
@@ -314,7 +314,7 @@ static void kill(task_t* task)
 
     // Cleanup
     list_delete(task->console->tasks, list_find(task->console->tasks, task));
-    if(task->console->tasks->head == 0)
+    if (task->console->tasks->head == 0)
     {
         // Delete current task's console from list of our reachable consoles, if it is in that list
         for (uint8_t i = 1; i < 11; i++)
@@ -350,7 +350,7 @@ static void kill(task_t* task)
     // Kill all child-threads of this task
     if (task->threads)
     {
-        for(dlelement_t* e = task->threads->head; e != 0; e = e->next)
+        for (dlelement_t* e = task->threads->head; e != 0; e = e->next)
         {
             kill(e->data);
         }
@@ -366,12 +366,12 @@ static void kill(task_t* task)
     scheduler_log();
     #endif
 
-    if(task->eventQueue != 0)
+    if (task->eventQueue != 0)
     {
         event_deleteQueue(task->eventQueue);
     }
 
-    if(task == &kernelTask) // TODO: Handle termination of shellTask
+    if (task == &kernelTask) // TODO: Handle termination of shellTask
     {
         systemControl(REBOOT);
     }
@@ -382,7 +382,7 @@ static void kill(task_t* task)
 
     task_switching = true;
 
-    if(task == currentTask) // Tasks adress is still saved, although its no longer valid so we can use it here
+    if (task == currentTask) // Tasks adress is still saved, although its no longer valid so we can use it here
     {
         switch_context(); // Switch to next task
     }
@@ -391,9 +391,9 @@ static void kill(task_t* task)
 void task_kill(uint32_t pid)
 {
     // Find out task by looking for the pid in the tasks-list
-    for(dlelement_t* e = tasks->head; e != 0; e = e->next)
+    for (dlelement_t* e = tasks->head; e != 0; e = e->next)
     {
-        if(((task_t*)e->data)->pid == pid)
+        if (((task_t*)e->data)->pid == pid)
         {
             kill(e->data);
             return;
@@ -430,17 +430,17 @@ void task_log(task_t* t)
     printf("PD: %Xh  ", t->pageDirectory);  // Page directory
     printf("k_stack: %Xh", t->kernelStack); // Kernel stack location
 
-    if(t->type == THREAD)
+    if (t->type == THREAD)
     {
         printf("  parent: %u", t->parent->pid);
     }
 
-    if(t->threads && t->threads->head)
+    if (t->threads && t->threads->head)
     {
         printf("\n\t");
         printf("child-threads:");
 
-        for(dlelement_t* e = t->threads->head; e != 0; e = e->next)
+        for (dlelement_t* e = t->threads->head; e != 0; e = e->next)
         {
             printf(" %u ", ((task_t*)e->data)->pid);
         }

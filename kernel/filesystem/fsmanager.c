@@ -15,7 +15,7 @@ fileSystem_t FAT    = {.fopen = &FAT_fopen, .fclose = &FAT_fclose, .fgetc = &FAT
 
 static uint64_t getFSType(FS_t type) // BIT 0-31: subtype, BIT 32-63: fileSystem_t
 {
-    switch(type)
+    switch (type)
     {
         case FS_FAT12: case FS_FAT16: case FS_FAT32:
             return(((uint64_t)(uintptr_t)&FAT << 32) | type);
@@ -49,15 +49,15 @@ FS_ERROR analyzePartition(partition_t* part)
 
     // Is it a BPB? -> FAT
     BPBbase_t* BPB = (BPBbase_t*)buffer;
-    if(BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0)
+    if (BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0)
         part->type = &FAT;
     else // We only know FAT at the moment
         return(e);
 
-    if(part->type->pinstall)
+    if (part->type->pinstall)
         e = part->type->pinstall(part);
 
-    if(e == CE_GOOD)
+    if (e == CE_GOOD)
         part->mount = true;
 
     return(e);
@@ -68,7 +68,7 @@ file_t* fopen(const char* path, const char* mode)
 {
     file_t* file = malloc(sizeof(file_t), 0, "fsmgr-file");
     file->volume = getPartition(path);
-    if(file->volume == 0)
+    if (file->volume == 0)
     {   // cleanup
         free(file);
         return(0);
@@ -83,7 +83,7 @@ file_t* fopen(const char* path, const char* mode)
 
     bool appendMode = false; // Used to seek to end
     bool create = true;
-    switch(mode[0])
+    switch (mode[0])
     {
         case 'W': case 'w':
             file->write = true;
@@ -105,14 +105,14 @@ file_t* fopen(const char* path, const char* mode)
             break;
     }
 
-    if(file->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD)
+    if (file->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD)
     {   // cleanup
         free(file->name);
         free(file);
         return(0);
     }
 
-    if(appendMode)
+    if (appendMode)
     {
         //fseek(file, 0, SEEK_END); // To be used later
     }
@@ -139,7 +139,7 @@ FS_ERROR rename(const char* oldpath, const char* newpath)
     partition_t* spart = getPartition(oldpath);
     partition_t* dpart = getPartition(newpath);
 
-    if(spart == dpart || dpart == 0) // same partition
+    if (spart == dpart || dpart == 0) // same partition
     {
         return(spart->type->rename(getFilename(oldpath), getFilename(newpath), spart));
     }
@@ -161,10 +161,10 @@ FS_ERROR fputc(char c, file_t* file)
 
 char* fgets(char* dest, size_t num, file_t* file)
 {
-    for(size_t i = 0; i < num; i++)
+    for (size_t i = 0; i < num; i++)
     {
         dest[i] = fgetc(file);
-        if(dest[i] == 0)
+        if (dest[i] == 0)
             return(dest);
     }
     return(dest);
@@ -173,7 +173,7 @@ char* fgets(char* dest, size_t num, file_t* file)
 FS_ERROR fputs(const char* src, file_t* file)
 {
     FS_ERROR retVal = CE_GOOD;
-    for(; *src != 0 && retVal == CE_GOOD; src++)
+    for (; *src != 0 && retVal == CE_GOOD; src++)
     {
         retVal = fputc(*src, file);
     }
@@ -183,9 +183,9 @@ FS_ERROR fputs(const char* src, file_t* file)
 size_t fread(void* dest, size_t size, size_t count, file_t* file)
 {
     size_t i = 0;
-    for(; i < count; i++)
+    for (; i < count; i++)
     {
-        for(int j = 0; j < size; j++)
+        for (int j = 0; j < size; j++)
         {
             ((uint8_t*)dest)[i*size+j] = fgetc(file);
         }
@@ -196,9 +196,9 @@ size_t fread(void* dest, size_t size, size_t count, file_t* file)
 size_t fwrite(const void* src, size_t size, size_t count, file_t* file)
 {
     size_t i = 0;
-    for(; i < count; i++)
+    for (; i < count; i++)
     {
-        for(size_t j = 0; j < size; j++)
+        for (size_t j = 0; j < size; j++)
         {
             fputc(((uint8_t*)src)[i*size+j], file);
         }
@@ -251,7 +251,7 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
 {
     folder_t* folder = malloc(sizeof(folder_t), 0, "fsmgr-file");
     folder->volume   = getPartition(path);
-    if(folder->volume == 0)
+    if (folder->volume == 0)
     {   // cleanup
         free(folder);
         return(0);
@@ -262,7 +262,7 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
     folder->name      = malloc(strlen(getFilename(path))+1, 0, "fsmgr-foldername");
     strcpy(folder->name, getFilename(path));
 
-    if(folder->volume->type->folderAccess(folder, mode) != CE_GOOD)
+    if (folder->volume->type->folderAccess(folder, mode) != CE_GOOD)
     {   // cleanup
         list_free(folder->files);
         list_free(folder->subfolder);

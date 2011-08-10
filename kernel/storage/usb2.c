@@ -64,7 +64,7 @@ void usbTransferDevice(uint32_t device)
     pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
 
     // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(              0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
+    void* next   = createQTD_IO(0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
     globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
     next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 18);  // IN DATA1, 18 byte
     globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
@@ -76,8 +76,8 @@ void usbTransferDevice(uint32_t device)
     performAsyncScheduler(true, false,0);
 
     // showPacket(DataQTDpage0,18);
-    addDevice ( (struct usb2_deviceDescriptor*)DataQTDpage0, &usbDevices[device] );
-    showDevice( &usbDevices[device] );
+    addDevice ((struct usb2_deviceDescriptor*)DataQTDpage0, &usbDevices[device]);
+    showDevice(&usbDevices[device]);
 
     free(virtualAsyncList);
     for (uint8_t i=0; i<=2; i++)
@@ -124,7 +124,7 @@ void usbTransferConfig(uint32_t device)
     showPacket(DataQTDpage0,(*(uint16_t*)(addrPointer+2)));
   #endif
 
-    while(addrPointer<lastByte)
+    while (addrPointer<lastByte)
     {
         bool found = false;
 
@@ -172,7 +172,7 @@ void usbTransferConfig(uint32_t device)
         if (*(uint8_t*)(addrPointer+1) != 2 && *(uint8_t*)(addrPointer+1) != 4 && *(uint8_t*)(addrPointer+1) != 5) // length, type
         {
           #ifdef _USB_DIAGNOSIS_
-            if ( (*(uint8_t*)addrPointer) > 0)
+            if ((*(uint8_t*)addrPointer) > 0)
             {
                 textColor(HEADLINE);
                 printf("\nlength: %u type: %u unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
@@ -473,7 +473,7 @@ void showDevice(usb2_Device_t* usbDev)
 
     if (usbDev->usbClass == 0x09)
     {
-        switch(usbDev->usbProtocol)
+        switch (usbDev->usbProtocol)
         {
             case 0:
                 printf("Full speed USB hub");
@@ -540,7 +540,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
         printf("length:               %u\t\t", d->length);          // 9
         printf("descriptor type:      %u\n",   d->descriptorType);  // 4
       #endif
-        switch(d->numEndpoints)
+        switch (d->numEndpoints)
         {
             case 0:
                 printf("Interface %u has no endpoint and belongs to class:\n", d->interfaceNumber);
@@ -693,7 +693,7 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
       #endif
 
         printf("\n\nlanguages: ");
-        for(uint8_t i=0; i<10;i++)
+        for (uint8_t i=0; i<10;i++)
         {
             if (d->languageID[i] >=0x0400 && d->languageID[i] <= 0x0465)
             {
@@ -821,7 +821,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
       #endif
 
         textColor(YELLOW);
-        for(uint8_t i=0; i<(d->length-2);i+=2) // show only low value of Unicode character
+        for (uint8_t i=0; i<(d->length-2);i+=2) // show only low value of Unicode character
         {
             if (d->widechar[i])
             {

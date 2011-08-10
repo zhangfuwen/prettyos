@@ -57,9 +57,9 @@ static void setDisplayStart(uint16_t xpos, uint16_t ypos)
 static void Set_DAC_C(videoDevice_t* device, uint8_t PaletteColorNumber, BGRA_t color)
 {
     vbe_videoDevice_t* vbeDevice = device->data;
-    if(vbeDevice->paletteBitsPerColor == 0)
+    if (vbeDevice->paletteBitsPerColor == 0)
     {
-        if(vgaIB.Capabilities[0] & BIT(0)) // VGA can handle palette with 8 bits per color -> Use it
+        if (vgaIB.Capabilities[0] & BIT(0)) // VGA can handle palette with 8 bits per color -> Use it
         {
             vm86_executeSync(vbe_pd, VM86_ENABLE8BITPALETTE);
             vbeDevice->paletteBitsPerColor = 8;
@@ -71,7 +71,7 @@ static void Set_DAC_C(videoDevice_t* device, uint8_t PaletteColorNumber, BGRA_t 
     }
     outportb(0x03C6, 0xFF);
     outportb(0x03C8, PaletteColorNumber);
-    if(vbeDevice->paletteBitsPerColor == 8)
+    if (vbeDevice->paletteBitsPerColor == 8)
     {
         outportb(0x03C9, color.red);
         outportb(0x03C9, color.green);
@@ -104,7 +104,7 @@ static void vgaDebug()
     printf("VESA-Signature:  %c%c%c%c\n", vgaIB.VESASignature[0], vgaIB.VESASignature[1], vgaIB.VESASignature[2], vgaIB.VESASignature[3]);
     printf("VESA-Version:    %u.%u\n",    vgaIB.VESAVersion>>8, vgaIB.VESAVersion&0xFF); // 01 02 ==> 1.2
     printf("Capabilities:    %yh",        vgaIB.Capabilities[0]);
-    if(!(vgaIB.Capabilities[0] & BIT(0)))
+    if (!(vgaIB.Capabilities[0] & BIT(0)))
         printf(" - 8-bit palette not supported.");
     printf("\nVideo Memory:    %u MiB\n", vgaIB.TotalMemory/0x10); // number of 64 KiB blocks of memory on the video card
     printf("Video Modes Ptr: %Xh",        vgaIB.VideoModes);
@@ -184,9 +184,9 @@ void vbe_createModeList(videoDevice_t* device, list_t* list)
     ModeInfoBlock_t mib;
     for (uint16_t i=0; i < 256; i++)
     {
-        if(vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
+        if (vgaIB.VideoModes[i] == 0xFFFF) break; // End of modelist
         vbe_readMIB(vgaIB.VideoModes[i], &mib);
-        if(!(mib.ModeAttributes & BIT(0)) || !(mib.ModeAttributes & BIT(7))) continue; // If bit 0 is not set, the mode is not supported due to the present hardware configuration, if bit 7 is not set, linear frame buffer is not supported
+        if (!(mib.ModeAttributes & BIT(0)) || !(mib.ModeAttributes & BIT(7))) continue; // If bit 0 is not set, the mode is not supported due to the present hardware configuration, if bit 7 is not set, linear frame buffer is not supported
 
         // Usable mode. Add it to list.
         videoMode_t* mode = malloc(sizeof(videoMode_t), 0, "videoMode_t");
@@ -215,12 +215,12 @@ void vbe_enterVideoMode(videoMode_t* mode)
     modeDebug(&mib);
 
     // Initalize screen
-    if(mode->palette != 0)
+    if (mode->palette != 0)
         free(mode->palette);
-    if(mode->colorMode == CM_256COL)
+    if (mode->colorMode == CM_256COL)
     {
         mode->palette = malloc(sizeof(BGRA_t)*256, 0, "vbe palette");
-        for(size_t i = 0; i < 256; i++)
+        for (size_t i = 0; i < 256; i++)
         {
             BGRA_t color = {(i&0x3)<<6, (i&0x1C)<<3, i&0xE0};
             Set_DAC_C(mode->device, i, color);
@@ -229,7 +229,7 @@ void vbe_enterVideoMode(videoMode_t* mode)
     }
 
     // Allocate memory
-    if(vbeDevice->memory == 0)
+    if (vbeDevice->memory == 0)
     {
         uint32_t numberOfPages = vgaIB.TotalMemory * 0x10000 / PAGESIZE;
         vbeDevice->memory = paging_acquirePciMemory(mib.PhysBasePtr, numberOfPages);
@@ -242,7 +242,7 @@ void vbe_enterVideoMode(videoMode_t* mode)
     *(uint16_t*)0x3600 = 0xC1FF&(0xC000|modenumber); // Bits 9-13 may not be set, bits 14-15 should be set always
     vm86_executeSync(vbe_pd, VM86_SWITCH_TO_VIDEO);
 
-    if(!(modenumber&BIT(15))) // We clear the Videoscreen manually, because the VGA is not reliable
+    if (!(modenumber&BIT(15))) // We clear the Videoscreen manually, because the VGA is not reliable
         memset(vbeDevice->memory, 0, mode->xRes*mode->yRes*(mode->colorMode % 8 == 0 ? mode->colorMode/8 : mode->colorMode/8 + 1));
 
     vbeDevice->paletteBitsPerColor = 0; // Has to be reinitializated
@@ -262,7 +262,7 @@ void vbe_leaveVideoMode(videoDevice_t* device)
 void vbe_setPixel(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t color)
 {
     vbe_videoDevice_t* vbeDevice = device->data;
-    switch(device->videoMode.colorMode)
+    switch (device->videoMode.colorMode)
     {
         case CM_15BIT:
             ((uint16_t*)vbeDevice->memory)[y * device->videoMode.xRes + x] = BGRAtoBGR15(color);
@@ -286,7 +286,7 @@ void vbe_setPixel(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t color)
 void vbe_fillPixels(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t color, size_t num)
 {
     vbe_videoDevice_t* vbeDevice = device->data;
-    switch(device->videoMode.colorMode)
+    switch (device->videoMode.colorMode)
     {
         case CM_15BIT:
             memsetw(((uint16_t*)vbeDevice->memory) + y * device->videoMode.xRes + x, BGRAtoBGR15(color), num);
@@ -297,7 +297,7 @@ void vbe_fillPixels(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t color,
         case CM_24BIT:
         {
             void* vidmemBase = vbeDevice->memory + (y * device->videoMode.xRes + x) * 3;
-            for(size_t i = 0; i < num; i++)
+            for (size_t i = 0; i < num; i++)
             {
                 *(uint16_t*)(vidmemBase + i*3) = *(uint16_t*)&color; // Performance Hack - copying 16 bits at once should be faster than copying 8 bits twice
                 ((uint8_t*)vidmemBase)[i*3 + 2] = color.red;
@@ -330,11 +330,11 @@ void vbe_flipScreen(videoDevice_t* device)
     vbe_videoDevice_t* vbeDevice = device->data;
 
     // Wait for a vertical retrace
-    while (  inportb(0x03da) & 0x08 ) {}
+    while (inportb(0x03da) & 0x08) {}
     while (!(inportb(0x03da) & 0x08)) {}
 
     // Set display start during vertical retrace.
-    if(vbeDevice->memory == vbeDevice->buffer1)
+    if (vbeDevice->memory == vbeDevice->buffer1)
     {
         setDisplayStart(0, 0);
         vbeDevice->memory = vbeDevice->buffer2;

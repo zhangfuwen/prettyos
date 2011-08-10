@@ -108,7 +108,7 @@ static void* placementMalloc(uint32_t size, uint32_t alignment)
     // Avoid odd addresses
     size = alignUp(size, 4);
 
-    if((uintptr_t)nextPlacement+size > (uintptr_t)PLACEMENT_END)
+    if ((uintptr_t)nextPlacement+size > (uintptr_t)PLACEMENT_END)
         return(0);
 
     mutex_lock(mutex);

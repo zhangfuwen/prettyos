@@ -72,7 +72,7 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
     return (sector);
 }
 
-static bool ValidateChars(char* FileName , bool mode)
+static bool ValidateChars(char* FileName, bool mode)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> ValidateChars <<<<<");
@@ -80,7 +80,7 @@ static bool ValidateChars(char* FileName , bool mode)
 
     bool radix = false;
     uint16_t StrSz = strlen(FileName);
-    for(uint16_t i=0; i<StrSz; i++)
+    for (uint16_t i=0; i<StrSz; i++)
     {
         if ((FileName[i] <= 0x20 &&  FileName[i] != 0x05) ||
              FileName[i] == 0x22 ||  FileName[i] == 0x2B  ||
@@ -206,7 +206,7 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
 
     if (globalLastFATSectorRead == sector)
     {
-        switch(volume->part->subtype)
+        switch (volume->part->subtype)
         {
             case FS_FAT32:
                 c = MemoryReadLong(globalBufferFATSector, posFAT);
@@ -263,7 +263,7 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
         }
 
         globalLastFATSectorRead = sector;
-        switch(volume->part->subtype)
+        switch (volume->part->subtype)
         {
             case FS_FAT32:
                 c = MemoryReadLong(globalBufferFATSector, posFAT);
@@ -374,7 +374,7 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
         // do we need to load the next cluster?
         if ((offset2 == 0 && *curEntry >= DirectoriesPerSector) || ForceRead)
         {
-            if (cluster == 0 )
+            if (cluster == 0)
             {
                 currCluster = 0;
             }
@@ -546,7 +546,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
     }
 
     char character, test;
-    while(error != CE_GOOD) // Loop until you reach the end or find the file
+    while (error != CE_GOOD) // Loop until you reach the end or find the file
     {
       #ifdef _FAT_DIAGNOSIS_
         textColor(YELLOW); printf("\n\nfHandle %u\n",fHandle); textColor(TEXT);
@@ -796,10 +796,10 @@ void FAT_showDirectoryEntry(FAT_dirEntry_t* dir)
     extension[3] = 0;
     strncpy(extension, dir->Extension, 3);
 
-    printf("\nname.ext: %s.%s",   name, extension                        );
-    printf("\nattrib.:  %yh",     dir->Attr                              );
+    printf("\nname.ext: %s.%s",   name, extension);
+    printf("\nattrib.:  %yh",     dir->Attr);
     printf("\ncluster:  %u",      dir->FstClusLO + 0x10000*dir->FstClusHI);
-    printf("\nfilesize: %u byte", dir->FileSize                          );
+    printf("\nfilesize: %u byte", dir->FileSize);
 }
 
 
@@ -886,7 +886,7 @@ static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t
     switch (volume->part->subtype)
     {
         case FS_FAT32:
-            MemoryWriteByte (globalBufferFATSector, posFAT,   ((value & 0x000000FF)      ));
+            MemoryWriteByte (globalBufferFATSector, posFAT,   ((value & 0x000000FF)));
             MemoryWriteByte (globalBufferFATSector, posFAT+1, ((value & 0x0000FF00) >>  8));
             MemoryWriteByte (globalBufferFATSector, posFAT+2, ((value & 0x00FF0000) >> 16));
             MemoryWriteByte (globalBufferFATSector, posFAT+3, ((value & 0x0F000000) >> 24));
@@ -896,8 +896,8 @@ static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t
             MemoryWriteByte (globalBufferFATSector, posFAT+1, ((value & 0xFF00) >> 8));
             break;
         case FS_FAT12:
-            if (q) { c = ((value & 0x0F) << 4) | (MemoryReadByte(globalBufferFATSector, posFAT) & 0x0F ); }
-            else   { c = ( value & 0xFF); }
+            if (q) { c = ((value & 0x0F) << 4) | (MemoryReadByte(globalBufferFATSector, posFAT) & 0x0F); }
+            else   { c = (value & 0xFF); }
 
             MemoryWriteByte(globalBufferFATSector, posFAT, c);
 
@@ -964,7 +964,7 @@ static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
     uint32_t curcls = c;
     uint32_t value = 0x0;
 
-    while(c)
+    while (c)
     {
         if ((value = fatRead(volume, c)) == ClusterFailValue)
             return(0);
@@ -1012,7 +1012,7 @@ static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
         globalBufferMemSet0 = true;
     }
 
-    for(uint16_t i=0; i<volume->SecPerClus; i++)
+    for (uint16_t i=0; i<volume->SecPerClus; i++)
     {
         if (singleSectorWrite(SectorAddress++, volume->part->buffer, volume->part->disk) != CE_GOOD)
         {
@@ -1110,7 +1110,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
         }
 
         globalBufferMemSet0 = false;
-        if (singleSectorRead(sector, volume->buffer, volume->disk) != CE_GOOD )
+        if (singleSectorRead(sector, volume->buffer, volume->disk) != CE_GOOD)
         {
             error = CE_BAD_SECTOR_READ;
         }
@@ -1283,7 +1283,7 @@ static bool fatEraseClusterChain(uint32_t cluster, FAT_partition_t* volume)
     }
     else
     {
-        while(status == Good)
+        while (status == Good)
         {
             uint32_t c = fatRead(volume, cluster);
             if (c == ClusterFailValue)
@@ -1354,7 +1354,7 @@ FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseCluster
     return(CE_GOOD);
 }
 
-static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name , uint32_t *fHandle, uint8_t mode)
+static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name, uint32_t *fHandle, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
     printf("\n>>>>> PopulateEntries <<<<<");
@@ -1433,7 +1433,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
                 }
                 (*fHandle)++;
             }
-            while((a == DIR_DEL || a == DIR_EMPTY) && dir != 0 &&  ++amountfound < 1);
+            while ((a == DIR_DEL || a == DIR_EMPTY) && dir != 0 &&  ++amountfound < 1);
 
             if (dir == 0)
             {
@@ -1498,7 +1498,7 @@ static FAT_dirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
         return 0;
     }
 
-    while(dir != 0 && dir->Attr == ATTR_LONG_NAME)
+    while (dir != 0 && dir->Attr == ATTR_LONG_NAME)
     {
         (*fHandle)++;
         dir = cacheFileEntry(fileptr, fHandle, false);
@@ -1521,7 +1521,7 @@ static FS_ERROR fileCreateHeadCluster(FAT_file_t* fileptr, uint32_t* cluster)
         return CE_DISK_FULL;
     }
 
-    switch(volume->part->subtype)
+    switch (volume->part->subtype)
     {
         case FS_FAT12:
             if (fatWrite(volume, *cluster, LAST_CLUSTER_FAT12, false) == CLUSTER_FAIL_FAT16)
@@ -1581,7 +1581,7 @@ FS_ERROR FAT_createFileEntry(FAT_file_t* fileptr, uint32_t *fHandle, uint8_t mod
 
     if (FAT_FindEmptyEntries(fileptr, fHandle))
     {
-        if ((error = PopulateEntries(fileptr, name ,fHandle, mode)) == CE_GOOD)
+        if ((error = PopulateEntries(fileptr, name,fHandle, mode)) == CE_GOOD)
         {
             return createFirstCluster(fileptr);
         }
@@ -1696,7 +1696,7 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
     FAT_file_t* FATfile = file->data;
     FAT_partition_t* volume = FATfile->volume;
 
-    switch(whence)
+    switch (whence)
     {
         case SEEK_CUR:
             offset += file->seek;
@@ -1797,7 +1797,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     FATfile->file = file;
 
     //HACK
-    if(!FormatFileName(file->name, FATfile->name, false))
+    if (!FormatFileName(file->name, FATfile->name, false))
     {
         free(FATfile);
         return(CE_INVALID_FILENAME);
@@ -1823,7 +1823,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     {
         fHandle = FATfile->entry;
 
-        if(overwrite) // Should overwrite
+        if (overwrite) // Should overwrite
         {
             error = FAT_fileErase(FATfile, &fHandle, true);
 
@@ -1846,7 +1846,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
                 }
             }
         }
-        else if(create) // Should not overwrite, create includes that its allowed to create it, so that it is not 'r'-mode -> Append
+        else if (create) // Should not overwrite, create includes that its allowed to create it, so that it is not 'r'-mode -> Append
         {
             if (file->size != 0)
             {
@@ -1887,7 +1887,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
                         {
                             error = 0xFF; // ??
                         }
-                        else if(error == CE_GOOD)
+                        else if (error == CE_GOOD)
                         {
                             error = FAT_fseek(file, 0, SEEK_END);
                             if (error != CE_GOOD)
@@ -1908,7 +1908,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     {
         fileptrCopy(FATfile, &fileTemp);
 
-        if(create)
+        if (create)
         {
             fHandle = 0;
             error = FAT_createFileEntry(FATfile, &fHandle, 0);
@@ -2078,7 +2078,7 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
 char FAT_fgetc(file_t* file)
 {
     char temp;
-    if(FAT_fread(file->data, &temp, 1) == CE_EOF)
+    if (FAT_fread(file->data, &temp, 1) == CE_EOF)
         return(-1);
     return(temp);
 }
@@ -2109,7 +2109,7 @@ static void writeBootsector(partition_t* part, uint8_t* sector)
 
     // Jmp-Command to end of BIOS parameter block
     sector[0] = 0xE9; // jmp
-    if(part->subtype == FS_FAT32)
+    if (part->subtype == FS_FAT32)
         sector[1] = 0x57;
     else
         sector[1] = 0x3B;
@@ -2127,11 +2127,11 @@ static void writeBootsector(partition_t* part, uint8_t* sector)
     sector[0x12] = BYTE2(fpart->maxroot);
     sector[0x13] = 0; // Number of sectors. We use the 32-bit field at 0x20 therefore.
     sector[0x14] = 0;
-    if(part->disk->type == &FLOPPYDISK)
+    if (part->disk->type == &FLOPPYDISK)
         sector[0x15] = 0xF0; // Media descriptor (0xF0: Floppy with 80 tracks and 18 sectors per track)
     else
         sector[0x15] = 0xF8; // Media descriptor (0xF8: Hard disk)
-    if(part->subtype == FS_FAT32)
+    if (part->subtype == FS_FAT32)
     {
         sector[0x16] = 0; // FAT size
         sector[0x17] = 0;
@@ -2153,7 +2153,7 @@ static void writeBootsector(partition_t* part, uint8_t* sector)
     sector[0x21] = BYTE2(part->size);
     sector[0x22] = BYTE3(part->size);
     sector[0x23] = BYTE4(part->size);
-    if(part->subtype == FS_FAT32)
+    if (part->subtype == FS_FAT32)
     {
         sector[0x24] = BYTE1(fpart->fatsize); // FAT size
         sector[0x25] = BYTE2(fpart->fatsize);
@@ -2192,7 +2192,7 @@ static void writeBootsector(partition_t* part, uint8_t* sector)
         sector[0x29] = BYTE3(compressedTime);
         sector[0x2A] = BYTE4(compressedTime);
         strncpyandfill((char*)sector+0x2B, part->serial, 11, ' '); // Name of filesystem
-        if(part->subtype == FS_FAT12)
+        if (part->subtype == FS_FAT12)
             strncpyandfill((char*)sector+0x36, "FAT12", 8, ' '); // FAT type
         else
             strncpyandfill((char*)sector+0x36, "FAT16", 8, ' '); // FAT type
@@ -2217,7 +2217,7 @@ FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependancies. Make
     fpart->maxroot = ROOT_DIR_ENTRIES; // HACK? Keep old value here?
     fpart->SecPerClus = 1; // HACK? Keep old value here?
     fpart->fatsize = 9; // HACK? Only valid for FAT12? Keep old value here?
-    if(part->subtype == FS_FAT12 || part->subtype == FS_FAT16)
+    if (part->subtype == FS_FAT12 || part->subtype == FS_FAT16)
         fpart->reservedSectors = 1; // HACK? Keep old value here?
     else
         fpart->reservedSectors = 32; // HACK? Keep old value here?
@@ -2267,12 +2267,12 @@ FS_ERROR FAT_pinstall(partition_t* part)
     BPB1216_t* BPB1216 = (BPB1216_t*)buffer;
     BPB32_t* BPB32 = (BPB32_t*)buffer;
     // Determine subtype (HACK: unrecommended way to determine type. cf. FAT specification)
-    if(BPB1216->FStype[0] == 'F' && BPB1216->FStype[1] == 'A' && BPB1216->FStype[2] == 'T' && BPB1216->FStype[3] == '1' && BPB1216->FStype[4] == '2')
+    if (BPB1216->FStype[0] == 'F' && BPB1216->FStype[1] == 'A' && BPB1216->FStype[2] == 'T' && BPB1216->FStype[3] == '1' && BPB1216->FStype[4] == '2')
     {
         printf("FAT12");
         part->subtype = FS_FAT12;
     }
-    else if(BPB1216->FStype[0] == 'F' && BPB1216->FStype[1] == 'A' && BPB1216->FStype[2] == 'T' && BPB1216->FStype[3] == '1' && BPB1216->FStype[4] == '6')
+    else if (BPB1216->FStype[0] == 'F' && BPB1216->FStype[1] == 'A' && BPB1216->FStype[2] == 'T' && BPB1216->FStype[3] == '1' && BPB1216->FStype[4] == '6')
     {
         printf("FAT16");
         part->subtype = FS_FAT16;
@@ -2284,7 +2284,7 @@ FS_ERROR FAT_pinstall(partition_t* part)
     }
 
 
-    if(BPB->TotalSectors16 == 0)
+    if (BPB->TotalSectors16 == 0)
         part->size = BPB->TotalSectors32;
     else
         part->size = BPB->TotalSectors16;
@@ -2296,7 +2296,7 @@ FS_ERROR FAT_pinstall(partition_t* part)
     part->serial = malloc(5, 0, "part->serial");
     part->serial[5] = 0;
 
-    if(part->subtype == FS_FAT32)
+    if (part->subtype == FS_FAT32)
     {
         fpart->fatsize = BPB32->FATsize32;
         fpart->FatRootDirCluster = BPB32->rootCluster;

@@ -47,25 +47,25 @@ void deviceManager_install(/*partition_t* system*/)
 {
     memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
     memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
-    for(uint16_t i = 0; i < NUMREADCACHE; i++) // Invalidate all read caches
+    for (uint16_t i = 0; i < NUMREADCACHE; i++) // Invalidate all read caches
         readcaches[i].valid = false;
     //systemPartition = system;
 }
 
 void deviceManager_checkDrives()
 {
-    for(int i = 0; i < PORTARRAYSIZE; i++)
+    for (int i = 0; i < PORTARRAYSIZE; i++)
     {
-        if(ports[i] != 0 && ports[i]->type->motorOff != 0 && ports[i]->insertedDisk->accessRemaining == 0)
+        if (ports[i] != 0 && ports[i]->type->motorOff != 0 && ports[i]->insertedDisk->accessRemaining == 0)
             ports[i]->type->motorOff(ports[i]->data);
     }
 }
 
 void attachPort(port_t* port)
 {
-    for(uint8_t i=0; i<PORTARRAYSIZE; i++)
+    for (uint8_t i=0; i<PORTARRAYSIZE; i++)
     {
-        if(ports[i] == 0)
+        if (ports[i] == 0)
         {
             ports[i] = port;
             return;
@@ -76,9 +76,9 @@ void attachPort(port_t* port)
 void attachDisk(disk_t* disk)
 {
     // Later: Searching correct ID in device-File
-    for(uint8_t i=0; i<DISKARRAYSIZE; i++)
+    for (uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
-        if(disks[i] == 0)
+        if (disks[i] == 0)
         {
             disks[i] = disk;
             return;
@@ -88,9 +88,9 @@ void attachDisk(disk_t* disk)
 
 void removeDisk(disk_t* disk)
 {
-    for(uint8_t i=0; i<DISKARRAYSIZE; i++)
+    for (uint8_t i=0; i<DISKARRAYSIZE; i++)
     {
-        if(disks[i] == disk)
+        if (disks[i] == disk)
         {
             disks[i] = 0;
             return;
@@ -111,11 +111,11 @@ void showPortList()
     {
         if (ports[i] != 0)
         {
-            if(ports[i]->type == &FDD) // Type
+            if (ports[i]->type == &FDD) // Type
                 printf("\nFDD ");
-            else if(ports[i]->type == &RAM)
+            else if (ports[i]->type == &RAM)
                 printf("\nRAM ");
-            else if(ports[i]->type == &USB)
+            else if (ports[i]->type == &USB)
                 printf("\nUSB 2.0");
 
             textColor(IMPORTANT);
@@ -126,7 +126,7 @@ void showPortList()
             if (ports[i]->insertedDisk != 0)
             {
                 flpydsk_refreshVolumeNames();
-                if(ports[i]->type != &FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
+                if (ports[i]->type != &FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
                     printf("\t%s",ports[i]->insertedDisk->name); // Attached disk
                 else putch('\t');
             }
@@ -154,17 +154,17 @@ void showDiskList()
     {
         if (disks[i] != 0)
         {
-            if(disks[i]->type == &FLOPPYDISK) /// Todo: Move to flpydsk.c, name set on floppy insertion
+            if (disks[i]->type == &FLOPPYDISK) /// Todo: Move to flpydsk.c, name set on floppy insertion
             {
                 flpydsk_refreshVolumeNames();
             }
-            if(disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) continue; // Floppy workaround
+            if (disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) continue; // Floppy workaround
 
-            if(disks[i]->type == &FLOPPYDISK) // Type
+            if (disks[i]->type == &FLOPPYDISK) // Type
                 printf("\nFloppy");
-            else if(disks[i]->type == &RAMDISK)
+            else if (disks[i]->type == &RAMDISK)
                 printf("\nRAMdisk");
-            else if(disks[i]->type == &USB_MSD)
+            else if (disks[i]->type == &USB_MSD)
                 printf("\nUSB MSD");
 
             textColor(IMPORTANT);
@@ -182,7 +182,7 @@ void showDiskList()
 
                 printf("\t%u", j); // Partition number
 
-                if(disks[i]->type == &FLOPPYDISK) // Serial
+                if (disks[i]->type == &FLOPPYDISK) // Serial
                 {
                     //HACK
                     free(disks[i]->partition[j]->serial);
@@ -191,9 +191,9 @@ void showDiskList()
                     strncpy(disks[i]->partition[j]->serial, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
                     printf("\t%s", disks[i]->partition[j]->serial);
                 }
-                else if(disks[i]->type == &RAMDISK)
+                else if (disks[i]->type == &RAMDISK)
                     printf("\t%s", disks[i]->partition[j]->serial);
-                else if(disks[i]->type == &USB_MSD)
+                else if (disks[i]->type == &USB_MSD)
                     printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber);
                 /// ifs should be changed to:
                 /// printf("\t%s", disks[i]->partition[j]->serial); // serial of partition
@@ -213,10 +213,10 @@ const char* getFilename(const char* path)
     }
     else
     {
-        while(*path != '/' && *path != '|' && *path != '\\')
+        while (*path != '/' && *path != '|' && *path != '\\')
         {
             path++;
-            if(*path == 0)
+            if (*path == 0)
             {
                 return(0);
             }
@@ -241,7 +241,7 @@ partition_t* getPartition(const char* path)
         {
             strncpy(Buffer, path, i);
             Buffer[i] = 0;
-            if(isalpha(Buffer[0]))
+            if (isalpha(Buffer[0]))
             {
                 PortID = toUpper(Buffer[0]) - 'A';
             }
@@ -306,23 +306,23 @@ FS_ERROR analyzeDisk(disk_t* disk)
     singleSectorRead(0, buffer, disk);
 
     BPBbase_t* BPB = (BPBbase_t*)buffer;
-    if(!(BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0 && BPB->bytesPerSector != 0) && // Data looks not like a BPB...
+    if (!(BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0 && BPB->bytesPerSector != 0) && // Data looks not like a BPB...
             (buffer[510] == 0x55 && buffer[511] == 0xAA)) //...but like a MBR
     {
         // Read partitions from MBR
         printf("\nFound MBR (DiskID: %xh):", ((uint16_t*)buffer)[440/2]);
         struct partitionEntry* entries = (struct partitionEntry*)(buffer+446);
-        for(uint8_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
         {
             printf("\npartition entry %u: ", i);
-            if(entries[i].type != 0) // valid entry
+            if (entries[i].type != 0) // valid entry
             {
                 printf("start: %u\tsize: %u\t type: ", entries[i].startLBA, entries[i].sizeLBA);
                 disk->partition[i] = malloc(sizeof(partition_t), 0, "partition_t");
                 disk->partition[i]->start = entries[i].startLBA;
                 disk->partition[i]->size = entries[i].sizeLBA;
                 disk->partition[i]->disk = disk;
-                if(analyzePartition(disk->partition[i]) != CE_GOOD)
+                if (analyzePartition(disk->partition[i]) != CE_GOOD)
                     printf("unknown");
             }
             else
@@ -339,7 +339,7 @@ FS_ERROR analyzeDisk(disk_t* disk)
         disk->partition[0] = malloc(sizeof(partition_t), 0, "partition_t");
         disk->partition[0]->start = 0;
         disk->partition[0]->disk = disk;
-        if(analyzePartition(disk->partition[0]) != CE_GOOD)
+        if (analyzePartition(disk->partition[0]) != CE_GOOD)
         {
             printf("unknown)");
             return(CE_NOT_FORMATTED);
@@ -425,7 +425,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(TEXT);
   #endif
 
-    if(readCacheFlag)
+    if (readCacheFlag)
     {
         for (uint16_t i = 0; i < NUMREADCACHE; i++)
         {

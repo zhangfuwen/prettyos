@@ -25,15 +25,15 @@ void sound(uint32_t frequency)
         BIT(7));          // Channel 2
 
     // send divisor
-    outportb(CHANNEL_2_DATAPORT, (uint8_t)( divisor       & 0xFF)); // low  byte
+    outportb(CHANNEL_2_DATAPORT, (uint8_t)(divisor       & 0xFF)); // low  byte
     outportb(CHANNEL_2_DATAPORT, (uint8_t)((divisor >> 8) & 0xFF)); // high byte
 
     // sound on
     temp = inportb(CHANNEL_2_CONTROLPORT);
-  	if (temp != (temp | 3))
-  	{
- 		outportb(CHANNEL_2_CONTROLPORT, temp | 3);
-  	}
+      if (temp != (temp | 3))
+      {
+         outportb(CHANNEL_2_CONTROLPORT, temp | 3);
+      }
 }
 
 void noSound()

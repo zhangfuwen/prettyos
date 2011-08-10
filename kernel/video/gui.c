@@ -33,26 +33,26 @@ void StartGUI()
     CreateWindow("Window 3", 10, 320, 340, 250, 0);
     CreateWindow("Window 4", 400, 320, 340, 250, 0);
 
-    while(!keyPressed(KEY_ESC))
+    while (!keyPressed(KEY_ESC))
     {
-        if(mouse_bl == 1)
+        if (mouse_bl == 1)
         {
             video_drawString(video_currentMode->device, "left Mouse Button Pressed", 10, 2);
 
-            if(mouse_x > button.x && mouse_x < (button.x + button.width) && mouse_y > button.y && mouse_y < (button.y + button.height))
+            if (mouse_x > button.x && mouse_x < (button.x + button.width) && mouse_y > button.y && mouse_y < (button.y + button.height))
             {
                 DestroyWindow(1);
             }
 
-            for(int i = 1; i < 5; i++)
+            for (int i = 1; i < 5; i++)
             {
-                if(window_list[i])
+                if (window_list[i])
                 {
-                    if(mouse_x > window_list[i]->CloseButton.x && mouse_x < (window_list[i]->CloseButton.x + window_list[i]->CloseButton.width) && mouse_y > button.y && mouse_y < (window_list[i]->CloseButton.y + window_list[i]->CloseButton.height))
+                    if (mouse_x > window_list[i]->CloseButton.x && mouse_x < (window_list[i]->CloseButton.x + window_list[i]->CloseButton.width) && mouse_y > button.y && mouse_y < (window_list[i]->CloseButton.y + window_list[i]->CloseButton.height))
                     {
                         DestroyWindow(i);
                     }
-                    else if(mouse_x > window_list[i]->x && mouse_x < (window_list[i]->x + window_list[i]->width) && mouse_y > (window_list[i]->y) && mouse_y < (window_list[i]->y + 20))
+                    else if (mouse_x > window_list[i]->x && mouse_x < (window_list[i]->x + window_list[i]->width) && mouse_y > (window_list[i]->y) && mouse_y < (window_list[i]->y + 20))
                     {
                         window_list[i]->x = mouse_x;
                         window_list[i]->y = mouse_y;
@@ -61,15 +61,15 @@ void StartGUI()
             }
         }
 
-        for(uint32_t i = 1; i < MAX_WINDOWS; i++)
+        for (uint32_t i = 1; i < MAX_WINDOWS; i++)
         {
-            if(window_list[i])
+            if (window_list[i])
             {
                 DrawWindow(i);
             }
         }
 
-        if(window_list[1])
+        if (window_list[1])
         {
             DrawButton(video_currentMode->device, &button); // TODO: Associate Controls with a window. Draw all of them in the windows drawing function
         }
@@ -84,9 +84,9 @@ void StartGUI()
 
 void EndGUI()
 {
-    for(int i = 1; i < MAX_WINDOWS; i++)
+    for (int i = 1; i < MAX_WINDOWS; i++)
     {
-        if(window_list[i] != 0)
+        if (window_list[i] != 0)
             DestroyWindow(i);
     }
 }

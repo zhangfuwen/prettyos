@@ -4,7 +4,7 @@
 static double yMulLog(double x, double y)
 {
     double result;
-    __asm__ volatile("fyl2x" : "=t" (result) : "0" (x) , "u" (y));
+    __asm__ volatile("fyl2x" : "=t" (result) : "0" (x), "u" (y));
     return result;
 }
 
@@ -18,28 +18,28 @@ static double pow2x(double x)
 
     __asm__ volatile("frndint" : "=t" (rndResult) :"0"(x));
 
-    if(rndResult > x)
+    if (rndResult > x)
     {
         fl = x - (rndResult-1);
         rndResult -=1.0;
     }
-    else if( rndResult < x)
+    else if (rndResult < x)
     {
         fl = x - rndResult;
     }
 
 
-    for(i=1; i <= rndResult; i++)
+    for (i=1; i <= rndResult; i++)
     {
         powResult *= 2;
     }
     __asm__ volatile("f2xm1" : "=t" (result) : "0" (fl));
 
-    if(x >=0)
+    if (x >=0)
     {
-        return( result + 1.0 ) * powResult;
+        return(result + 1.0) * powResult;
     }
-    return 1 / ( ( result + 1.0 ) * powResult);
+    return 1 / ((result + 1.0) * powResult);
 }
 
 
@@ -58,7 +58,7 @@ double ceil(double x)
 {
     double result;
     __asm__ volatile("frndint" :"=t" (result) : "0"(x));
-    if( result < x)
+    if (result < x)
     {
         return result + 1;
     }
@@ -68,7 +68,7 @@ double floor(double x)
 {
     double result;
     __asm__ volatile("frndint" :"=t" (result) : "0"(x));
-    if( result > x)
+    if (result > x)
     {
         return result - 1;
     }
@@ -144,14 +144,14 @@ double sqrt(double x)
 double exp(double x)
 {
     double result;
-    __asm__ volatile("fldl2e": "=t" ( result) );
+    __asm__ volatile("fldl2e": "=t" (result));
     return pow(pow2x(result),x);
 }
 
 double frexp(double x, int* exponent)
 {
     int sign = 1;
-    if(x < 0)
+    if (x < 0)
     {
         x *=-1;
         sign = -1;
@@ -160,7 +160,7 @@ double frexp(double x, int* exponent)
     double e = log(x);
     int po2x;
     *exponent =(int) ceil(e);
-    if(*exponent == e)
+    if (*exponent == e)
     {
         return 1.0;
     }
@@ -174,7 +174,7 @@ double ldexp(double x, int exponent)
 
 double log(double x)
 {
-    if(x <= 0)
+    if (x <= 0)
     {
         return NAN;
     }
@@ -182,7 +182,7 @@ double log(double x)
 }
 double log10(double x)
 {
-    if(x <= 0)
+    if (x <= 0)
     {
         return NAN;
     }
@@ -198,7 +198,7 @@ double modf(double x, double* intpart)
 double pow(double base, double exponent)
 {
     int isOdd = 1;
-    if(base < 0)
+    if (base < 0)
     {
         isOdd = (int) floor(exponent) % 2 ? -1: 1;
         base *=-1;

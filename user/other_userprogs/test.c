@@ -23,7 +23,7 @@ void testPassed()
 void ask()
 {
     char c = getchar();
-    if(c == 'f' || c == 'n') testFailed();
+    if (c == 'f' || c == 'n') testFailed();
     else testPassed();
 }
 
@@ -67,7 +67,7 @@ int main()
     printf("\n\n\nAll tests Finished.");
     textColor(0x09);
     printf("\n\nResult: ");
-    if(failures == 0) textColor(0x0A);
+    if (failures == 0) textColor(0x0A);
     else textColor(0x0C);
     printf("%u", failures);
 
@@ -83,20 +83,20 @@ int main()
 bool taskingTestRunning = true;
 void taskingTestFunc1()
 {
-    while(taskingTestRunning)
+    while (taskingTestRunning)
     {
         ///mutex_lock(taskingTestMutex); // Let only one of the threads inside the critical section
-        for(int i = 0; i < 20; i++)
+        for (int i = 0; i < 20; i++)
             printf("A");
         ///mutex_unlock(taskingTestMutex);
     }
 }
 void taskingTestFunc2()
 {
-    while(taskingTestRunning)
+    while (taskingTestRunning)
     {
         ///mutex_lock(taskingTestMutex); // Let only one of the threads inside the critical section
-        for(int i = 0; i < 20; i++)
+        for (int i = 0; i < 20; i++)
             printf("B");
         ///mutex_unlock(taskingTestMutex);
     }
@@ -106,7 +106,7 @@ void taskingTestFunc() // TODO: Check if it gives different results with and wit
     ///mutex_lock(taskingTestProtector); // Halt the task until the main function steps to the next test
     ///taskingTestMutex = mutex_create();
 
-    for(int i = 0; i < 5; i++)
+    for (int i = 0; i < 5; i++)
     {
         ///CreateThread(&taskingTestFunc1);
         ///CreateThread(&taskingTestFunc2);
@@ -142,7 +142,7 @@ void fileTest()
     fread(buf, 4, 1, f);
     fclose(f);
 
-    if(memcmp(buf, "TEST", 4) == 0)
+    if (memcmp(buf, "TEST", 4) == 0)
         testPassed();
     else
         testFailed();

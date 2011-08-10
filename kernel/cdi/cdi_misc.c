@@ -21,7 +21,7 @@ int cdi_reset_wait_irq(uint8_t irq)
 
 int cdi_wait_irq(uint8_t irq, uint32_t timeout)
 {
-    if(waitForIRQ(irq, timeout))
+    if (waitForIRQ(irq, timeout))
         return(0);
     else
         return(-1);

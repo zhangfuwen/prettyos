@@ -76,12 +76,12 @@ dlelement_t* list_insert(list_t* list, dlelement_t* next, void* data)
 
 dlelement_t* list_delete(list_t* list, dlelement_t* elem)
 {
-    if(list->head == 0)
+    if (list->head == 0)
     {
         return 0;
     }
 
-    if(list->head == list->tail)
+    if (list->head == list->tail)
     {
         free(elem);
         list->head = list->tail = 0;
@@ -95,7 +95,7 @@ dlelement_t* list_delete(list_t* list, dlelement_t* elem)
         list->head       = elem->next;
         list->head->prev = 0;
     }
-    else if(elem == list->tail)
+    else if (elem == list->tail)
     {
         list->tail       = elem->prev;
         list->tail->next = 0;
@@ -128,7 +128,7 @@ void list_free(list_t* list)
 dlelement_t* list_getElement(list_t* list, uint32_t number)
 {
     dlelement_t* cur = list->head;
-    while(true)
+    while (true)
     {
         if (number == 0 || cur == 0)
         {
@@ -142,7 +142,7 @@ dlelement_t* list_getElement(list_t* list, uint32_t number)
 dlelement_t* list_find(list_t* list, void* data)
 {
     dlelement_t* cur = list->head;
-    while(cur != 0 && cur->data != data)
+    while (cur != 0 && cur->data != data)
         cur = cur->next;
     return(cur);
 }

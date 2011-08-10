@@ -93,10 +93,10 @@ void mouse_handler(registers_t* a_r)
     static int8_t bytes[4];
 
     bytes[bytecounter] = inportb(0x60); // Receive byte
-    switch(bytecounter)
+    switch (bytecounter)
     {
         case 0: // First byte: Left Button | Right Button | Middle Button | 1 | X sign | Y sign | X overflow | Y overflow
-            if(bytes[0] & BIT(3)) // Only if this is really the first byte!
+            if (bytes[0] & BIT(3)) // Only if this is really the first byte!
             {
                 mouse_bl = (bytes[0] & BIT(0));
                 mouse_br = (bytes[0] & BIT(1)) >> 1;
@@ -105,7 +105,7 @@ void mouse_handler(registers_t* a_r)
             else
             {
                 bytecounter = 0;
-                if(erroroccurred == false) // Ignore it on the first time due to some emulators
+                if (erroroccurred == false) // Ignore it on the first time due to some emulators
                     erroroccurred = true;  // do this.
                 else // TODO: Why?
                 {
@@ -123,13 +123,13 @@ void mouse_handler(registers_t* a_r)
             mouse_y -= bytes[2]; // Attention: Y-movement is counted from bottom!
             break;
         case 3: // Fourth byte: Z movement (4 bits) | 4th Button | 5th Button | 0 | 0
-            switch(mousetype)
+            switch (mousetype)
             {
                 case WHEEL:
                     mouse_zv += bytes[3];
                     break;
                 case WHEELS5BUTTON:
-                    switch(bytes[3] & 0xF)
+                    switch (bytes[3] & 0xF)
                     {
                         case 0xE:
                             mouse_zh -= 1;
@@ -149,7 +149,7 @@ void mouse_handler(registers_t* a_r)
                     break;
                 default: // We do not expect a fourth byte in this case
                     bytecounter--;
-                    if(erroroccurred == false) // Ignore it on the first time due to some emulators
+                    if (erroroccurred == false) // Ignore it on the first time due to some emulators
                         erroroccurred = true;  // do this..
                     else // TODO: Why?
                     {
@@ -164,21 +164,21 @@ void mouse_handler(registers_t* a_r)
 
 
     bytecounter++;
-    switch(mousetype) // reset packetcounter when received all expected packets
+    switch (mousetype) // reset packetcounter when received all expected packets
     {
         case WHEEL: case WHEELS5BUTTON:
-            if(bytecounter > 3)
+            if (bytecounter > 3)
                 bytecounter = 0;
             break;
         case NORMAL: default:
-            if(bytecounter > 2)
+            if (bytecounter > 2)
                 bytecounter = 0;
             break;
     }
 
 
     // Print mouse on screen
-    if(videomode == VM_VBE)
+    if (videomode == VM_VBE)
     {
         mouse_x = max(0, min(mouse_x, video_currentMode->xRes-1)); // clamp mouse position to width of screen
         mouse_y = max(0, min(mouse_y, video_currentMode->yRes-1)); // same with height
@@ -186,7 +186,7 @@ void mouse_handler(registers_t* a_r)
     }
     else
     {
-        switch(mousetype)
+        switch (mousetype)
         {
             case NORMAL:
                 writeInfo(1, "Mouse: X: %d  Y: %d  Z: -   buttons: L: %d  M: %d  R: %d",

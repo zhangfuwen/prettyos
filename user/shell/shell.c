@@ -26,12 +26,12 @@ char RenderBuffer[81];
 void drawEntry(const char* entry)
 {
     sprintf(RenderBuffer, "$> %s", entry);
-    if(strlen(RenderBuffer) < MAX_CHAR_PER_LINE)
+    if (strlen(RenderBuffer) < MAX_CHAR_PER_LINE)
         memset(RenderBuffer+strlen(RenderBuffer), ' ', MAX_CHAR_PER_LINE-strlen(RenderBuffer));
     RenderBuffer[80] = 0;
-    if(cursorPos < entryLength && entryLength < MAX_CHAR_PER_LINE)
+    if (cursorPos < entryLength && entryLength < MAX_CHAR_PER_LINE)
     {
-        insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;) )
+        insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;))
     }
     printLine(RenderBuffer, 40, 0x0D);
 }
@@ -41,13 +41,13 @@ char* formatPath(char* opath)
     bool insertPartition = false;
     bool insertELF = false;
     size_t length = strlen(opath) + 1;
-    if(strchr(opath, ':') == 0)
+    if (strchr(opath, ':') == 0)
     {
         length += 3;
         insertPartition = true;
     }
     char* pointpos = strrchr(opath, '.');
-    if(pointpos == 0 || strcmp(stoupper(pointpos+1), "ELF") != 0) /// TODO: Do not use stoupper
+    if (pointpos == 0 || strcmp(stoupper(pointpos+1), "ELF") != 0) /// TODO: Do not use stoupper
     {
         length += 4;
         insertELF = true;
@@ -55,14 +55,14 @@ char* formatPath(char* opath)
 
     char* npath = calloc(length, 1);
     char* retval = npath;
-    if(insertPartition)
+    if (insertPartition)
     {
         strcpy(npath, "1:|");
         npath += 3;
     }
     strcpy(npath, opath);
     npath += strlen(opath);
-    if(insertELF)
+    if (insertELF)
     {
         strcpy(npath, ".ELF");
     }
@@ -95,13 +95,13 @@ int main()
             waitForEvent(0);
             EVENT_t ev = event_poll(buffer.buffer, 4, EVENT_NONE);
 
-            switch(ev)
+            switch (ev)
             {
                 case EVENT_TEXT_ENTERED:
                 {
-                    showInfo( (getCurrentSeconds()/20) % 2 + 1 ); 
+                    showInfo((getCurrentSeconds()/20) % 2 + 1);
 
-                    if(keyPressed(KEY_ESC) || keyPressed(KEY_LCTRL) || keyPressed(KEY_RCTRL)) // To avoid conflicts with strg/esc shortcuts in kernel
+                    if (keyPressed(KEY_ESC) || keyPressed(KEY_LCTRL) || keyPressed(KEY_RCTRL)) // To avoid conflicts with strg/esc shortcuts in kernel
                         break;
 
                     unsigned char text = buffer.buffer[0];
@@ -131,8 +131,8 @@ int main()
                 }
                 case EVENT_KEY_DOWN:
                 {
-                    showInfo( (getCurrentSeconds()/20) % 2 + 1 ); 
-                    switch(buffer.key)
+                    showInfo((getCurrentSeconds()/20) % 2 + 1);
+                    switch (buffer.key)
                     {
                         case KEY_BACK:
                             if (cursorPos > 0)
@@ -148,7 +148,7 @@ int main()
                             }
                             break;
                         case KEY_ENTER:
-                            if(*(curEntry == -1 ? entry : entryCache[curEntry]) == 0)
+                            if (*(curEntry == -1 ? entry : entryCache[curEntry]) == 0)
                             {
                                 break; // entry is empty
                             }
@@ -253,7 +253,7 @@ int main()
         } //while
 
 EVALUATION: // evaluation of entry
-        if((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
+        if ((strcmp(entry, "help") == 0) || (strcmp(entry, "?") == 0))
         {
             textColor(0x0D);
             puts(" => Implemented Instructions:\n");
@@ -266,16 +266,16 @@ EVALUATION: // evaluation of entry
             puts("   => standby   => Puts the system to standby\n");
             puts("   => shutdown  => Shuts down the system\n");
         }
-        else if(strcmp(entry, "hi") == 0)
+        else if (strcmp(entry, "hi") == 0)
         {
             textColor(0x0D);
             puts(" => I am PrettyOS. Always at your service!\n");
         }
-        else if(strcmp(entry, "fdir") == 0 || (strcmp(entry, "ls") == 0))
+        else if (strcmp(entry, "fdir") == 0 || (strcmp(entry, "ls") == 0))
         {
             floppy_dir();
         }
-        else if(strcmp(entry, "format") == 0)
+        else if (strcmp(entry, "format") == 0)
         {
             getchar(); // Catch RETURN/ENTER
 
@@ -292,15 +292,15 @@ EVALUATION: // evaluation of entry
             puts("\n");
             partition_format(part, atoi(type), label);
         }
-        else if(strcmp(entry, "reboot") == 0)
+        else if (strcmp(entry, "reboot") == 0)
         {
             systemControl(REBOOT);
         }
-        else if(strcmp(entry, "standby") == 0)
+        else if (strcmp(entry, "standby") == 0)
         {
             systemControl(STANDBY);
         }
-        else if(strcmp(entry, "shutdown") == 0)
+        else if (strcmp(entry, "shutdown") == 0)
         {
             systemControl(SHUTDOWN);
         }
@@ -313,24 +313,24 @@ EVALUATION: // evaluation of entry
             size_t argc = 1;
             bool apostroph = false;
             // Find out argc
-            for(size_t i = 0; entry[i] != 0; i++)
+            for (size_t i = 0; entry[i] != 0; i++)
             {
-                if(entry[i] == '"')
+                if (entry[i] == '"')
                     apostroph = !apostroph;
 
-                if(entry[i] == ' ' && !apostroph) // argument end
+                if (entry[i] == ' ' && !apostroph) // argument end
                     argc++;
             }
 
             char** argv = malloc(sizeof(char*)*argc);
             char* argstart = entry;
             size_t j = 0;
-            for(size_t i = 0; entry[i] != 0; i++)
+            for (size_t i = 0; entry[i] != 0; i++)
             {
-                if(entry[i] == '"')
+                if (entry[i] == '"')
                     apostroph = !apostroph;
 
-                if(entry[i] == ' ' && !apostroph) // argument end
+                if (entry[i] == ' ' && !apostroph) // argument end
                 {
                     entry[i] = 0;
                     argv[j] = argstart;
@@ -341,7 +341,7 @@ EVALUATION: // evaluation of entry
             argv[j] = argstart;
 
             FS_ERROR error = execute(argv[0], argc, argv);
-            switch(error)
+            switch (error)
             {
                 case CE_GOOD:
                     textColor(0x0A);
@@ -354,7 +354,7 @@ EVALUATION: // evaluation of entry
                 case CE_FILE_NOT_FOUND:
                     argv[0] = formatPath(argv[0]);
                     error = execute(argv[0], argc, argv);
-                    if(error != CE_GOOD)
+                    if (error != CE_GOOD)
                         textColor(0x0C);
                         puts("   => File not found\n");
                     break;

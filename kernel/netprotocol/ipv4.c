@@ -31,7 +31,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     textColor(IMPORTANT);
     printf(" %I\t<== %I", packet->destIP, packet->sourceIP);
     textColor(TEXT);
-    if(packet->destIP.iIP != adapter->IP.iIP && packet->destIP.iIP != broadcast_IP.iIP)
+    if (packet->destIP.iIP != adapter->IP.iIP && packet->destIP.iIP != broadcast_IP.iIP)
     {
         printf("\nWe are not the addressee.");
         return;
@@ -41,7 +41,7 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
 
     // IPv4 protocol is parsed here and distributed in switch/case
     uint32_t ipHeaderLengthBytes = 4 * packet->ipHeaderLength; // is given as number of 32 bit pieces (4 byte)
-    switch(packet->protocol)
+    switch (packet->protocol)
     {
         case 1: // icmp
             icmp_receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length), packet->sourceIP);
@@ -84,20 +84,20 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
     Todo: Tell routing table to route the ip address
     */
 
-    if(IP.iIP == 0 || IP.iIP == 0xFFFFFFFF || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
+    if (IP.iIP == 0 || IP.iIP == 0xFFFFFFFF || isSubnet(IP, adapter->IP, adapter->Subnet)) // IP is in LAN
     {
       #ifdef _NETWORK_DATA_
         printf("\nIP is in LAN");
       #endif
 
         arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, IP);
-        if(entry == 0) // Try to find IP by ARP request
+        if (entry == 0) // Try to find IP by ARP request
         {
           #ifdef _NETWORK_DATA_
             printf("\nWe try to find %I... ", IP);
           #endif
             arp_sendRequest(adapter, IP);
-            if(arp_waitForReply(adapter, IP) == false)
+            if (arp_waitForReply(adapter, IP) == false)
             {
               #ifdef _NETWORK_DATA_
                 printf("Not found.");
@@ -116,11 +116,11 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
     else // IP is not in LAN. Send packet to server
     {
         arpTableEntry_t* entry = arp_findEntry(&adapter->arpTable, adapter->Gateway_IP);
-        if(entry == 0) // Try to find Server by ARP request
+        if (entry == 0) // Try to find Server by ARP request
         {
             printf("\nWe try to find %I", adapter->Gateway_IP);
             arp_sendRequest(adapter, adapter->Gateway_IP);
-            if(arp_waitForReply(adapter, adapter->Gateway_IP) == false)
+            if (arp_waitForReply(adapter, adapter->Gateway_IP) == false)
             {
                 printf("\nThe server was not found");
                 return;
@@ -130,7 +130,7 @@ void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP,
 
         // printf("\nWe try to deliver the packet to the gateway %I (%M)", adapter->Gateway_IP, entry->MAC);
 
-        EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);      
+        EthernetSend(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800);
     }
     free(packet);
 }

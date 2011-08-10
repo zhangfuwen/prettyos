@@ -22,7 +22,7 @@ void serial_init()
     IOports[1] = *((uint16_t*)0x402);
     IOports[2] = *((uint16_t*)0x404);
     IOports[3] = *((uint16_t*)0x406);
-    for(uint8_t i = 0; i < serialPorts; i++)
+    for (uint8_t i = 0; i < serialPorts; i++)
     {
         outportb(IOports[i] + 1, 0x00); // Disable all interrupts
         outportb(IOports[i] + 3, 0x80); // Enable DLAB (set baud rate divisor)
@@ -43,7 +43,7 @@ void serial_init()
 
 char serial_received(uint8_t com)
 {
-    if(com <= serialPorts)
+    if (com <= serialPorts)
     {
         return inportb(IOports[com-1] + 5) & 1;
     }
@@ -52,7 +52,7 @@ char serial_received(uint8_t com)
 
 char serial_read(uint8_t com)
 {
-    if(com <= serialPorts)
+    if (com <= serialPorts)
     {
         while (serial_received(com) == 0);
         return inportb(IOports[com-1]);
@@ -62,14 +62,14 @@ char serial_read(uint8_t com)
 
 int32_t serial_isTransmitEmpty(uint8_t com)
 {
-    if(com <= serialPorts)
+    if (com <= serialPorts)
         return inportb(IOports[com-1] + 5) & 0x20;
     return(0);
 }
 
 void serial_write(uint8_t com, char a)
 {
-    if(com <= serialPorts)
+    if (com <= serialPorts)
     {
         while (serial_isTransmitEmpty(com) == 0);
         outportb(IOports[com-1],a);

@@ -26,10 +26,10 @@ static void DHCP_preparePacket(dhcp_t* packet, network_adapter_t* adapter)
     packet->siaddr.iIP = 0;
     packet->giaddr.iIP = 0;
 
-    for(uint8_t i = 0; i <   6; i++)  packet->chaddr[i] = adapter->MAC[i];
-    for(uint8_t i = 6; i <  16; i++)  packet->chaddr[i] = 0;
-    for(uint8_t i = 0; i <  64; i++)  packet->sname[i]  = 0;
-    for(uint8_t i = 0; i < 128; i++)  packet->file[i]   = 0;
+    for (uint8_t i = 0; i <   6; i++)  packet->chaddr[i] = adapter->MAC[i];
+    for (uint8_t i = 6; i <  16; i++)  packet->chaddr[i] = 0;
+    for (uint8_t i = 0; i <  64; i++)  packet->sname[i]  = 0;
+    for (uint8_t i = 0; i < 128; i++)  packet->file[i]   = 0;
 
     // options
     packet->options[0]  =  99;  // MAGIC
@@ -37,7 +37,7 @@ static void DHCP_preparePacket(dhcp_t* packet, network_adapter_t* adapter)
     packet->options[2]  =  83;  // MAGIC
     packet->options[3]  =  99;  // MAGIC
 
-    for(uint16_t i = 4; i < OPTIONSIZE; i++)
+    for (uint16_t i = 4; i < OPTIONSIZE; i++)
         packet->options[i] = 255; // fill with end token
 }
 
@@ -129,7 +129,7 @@ void DHCP_Request(network_adapter_t* adapter, IP_t requestedIP)
     packet.options[19] = 61;  // Client Identifier - hardware type and client hardware address
     packet.options[20] =  7;  // Length
     packet.options[21] =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    for(uint8_t i = 0; i < 6; i++)
+    for (uint8_t i = 0; i < 6; i++)
         packet.options[22+i] = adapter->MAC[i];
 
     packet.options[28] =  50;  // Requested IP
@@ -196,7 +196,7 @@ void DHCP_Inform(network_adapter_t* adapter)
     packet.options[23] =  61;  // Client Identifier - hardware type and client hardware address
     packet.options[24] =   7;  // Length
     packet.options[25] =   1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    for(uint8_t i = 0; i < 6; i++)
+    for (uint8_t i = 0; i < 6; i++)
         packet.options[26+i] = adapter->MAC[i];
 
     IP_t destIP = {.iIP = 0xFFFFFFFF};
@@ -226,7 +226,7 @@ void DHCP_Release(network_adapter_t* adapter)
     packet.options[7]  = 61;  // Client Identifier - hardware type and client hardware address
     packet.options[8]  =  7;  // Length
     packet.options[9]  =  1;  // Type: for ethernet and 802.11 wireless clients, the hardware type is always 01
-    for(uint8_t i = 0; i < 6; i++)
+    for (uint8_t i = 0; i < 6; i++)
         packet.options[10+i] = adapter->MAC[i];
 
     IP_t destIP = {.iIP = 0xFFFFFFFF};
@@ -249,7 +249,7 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
     textColor(LIGHT_GRAY); printf("\nMAC: "); textColor(IMPORTANT); printf("%M\n", dhcp->chaddr);
   #endif
     DHCP_AnalyzeOptions(adapter, dhcp->options);
-    switch(adapter->DHCP_State)
+    switch (adapter->DHCP_State)
     {
         case OFFER:
           #ifdef _DHCP_DEBUG_
@@ -295,11 +295,11 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
     uint32_t leaseTime=0;
 
     textColor(TEXT);
-    switch(opt[count+1]) // 1: message  2: length  3 to (2+length): data
+    switch (opt[count+1]) // 1: message  2: length  3 to (2+length): data
     {
         case 1: // subnet mask
           #ifdef _NETWORK_DATA_
-            for(uint16_t i=0; i<opt[count+2]; i++)
+            for (uint16_t i=0; i<opt[count+2]; i++)
             {
                 printf("%u ", opt[count+3+i]);
             }
@@ -313,12 +313,12 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
 
       #ifdef _NETWORK_DATA_
         case 12: case 14: case 15: case 17: case 18: case 40: case 43: // ASCII output
-            for(uint16_t i=0; i<opt[count+2]; i++)
+            for (uint16_t i=0; i<opt[count+2]; i++)
                 printf("%c", opt[count+3+i]);
             break;
       #endif
         case 51: // Lease time
-            for(uint16_t i=0; i<opt[count+2]; i++)
+            for (uint16_t i=0; i<opt[count+2]; i++)
             {
               #ifdef _NETWORK_DATA_
                 printf("%u ", opt[count+3+i]);
@@ -331,7 +331,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             break;
         case 53: // Message type
           #ifdef _NETWORK_DATA_
-            for(uint16_t i=0; i<opt[count+2]; i++)
+            for (uint16_t i=0; i<opt[count+2]; i++)
                 printf("%u ", opt[count+3+i]);
           #endif
             switch (opt[count+3])
@@ -379,7 +379,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             break;
         case 54: // Server identifier
           #ifdef _NETWORK_DATA_
-            for(uint16_t i=0; i<opt[count+2]; i++)
+            for (uint16_t i=0; i<opt[count+2]; i++)
             {
                 printf("%u ", opt[count+3+i]);
             }
@@ -393,7 +393,7 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             break;
         default:
           #ifdef _NETWORK_DATA_
-            for(uint16_t i=0; i<opt[count+2]; i++)
+            for (uint16_t i=0; i<opt[count+2]; i++)
                 printf("%u ", opt[count+3+i]);
           #endif
             break;
@@ -721,7 +721,7 @@ static void DHCP_AnalyzeOptions(network_adapter_t* adapter, uint8_t* opt)
         } //switch
       #endif
 
-        if(opt[count+1] != 0)
+        if (opt[count+1] != 0)
             count = showOptionsBytes(adapter, opt, count);
         else count++; // Padding
     } //while

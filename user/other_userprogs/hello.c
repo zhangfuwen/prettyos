@@ -13,18 +13,18 @@ int main(size_t argc, char* argv[])
     iSetCursor(0, 10);
 
     srand(getCurrentSeconds());
-    for(uint16_t i = 0; i < 100; i++)
+    for (uint16_t i = 0; i < 100; i++)
     {
         printf("%u\t", rand());
     }
 
     printf("\n\n\nCommand line arguments:\n");
-    for(size_t i = 0; i < argc; i++)
+    for (size_t i = 0; i < argc; i++)
     {
         printf("\n\t%s", argv[i]);
     }
 
-    for(;;)
+    for (;;)
     {
         showInfo(1);
     }

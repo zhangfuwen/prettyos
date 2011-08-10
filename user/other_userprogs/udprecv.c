@@ -18,9 +18,9 @@ int main()
 
     iSetCursor(0, 7);
 
-    for(;;)
+    for (;;)
     {
-        switch(ev)
+        switch (ev)
         {
             case EVENT_NONE:
             {
@@ -45,7 +45,7 @@ int main()
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
-                if(*key == KEY_ESC)
+                if (*key == KEY_ESC)
                 {
                     return(0);
                 }

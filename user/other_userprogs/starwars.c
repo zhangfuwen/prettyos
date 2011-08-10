@@ -18,9 +18,9 @@ int main()
     event_enable(true);
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
-    for(;;)
+    for (;;)
     {
-        switch(ev)
+        switch (ev)
         {
             case EVENT_NONE:
                 waitForEvent(0);
@@ -56,7 +56,7 @@ int main()
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
-                if(*key == KEY_ESC)
+                if (*key == KEY_ESC)
                 {
                     tcp_close(connection);
                     return(0);

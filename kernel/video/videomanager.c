@@ -38,12 +38,12 @@ videoMode_t* video_currentMode = 0;
 void video_install()
 {
     basicVideoDevices = list_create();
-    for(size_t i = 0; i < VDD_COUNT; i++)
+    for (size_t i = 0; i < VDD_COUNT; i++)
     {
-        if(video_drivers[i].detect == 0) continue;
+        if (video_drivers[i].detect == 0) continue;
 
         size_t num = video_drivers[i].detect();
-        for(size_t j = 0; j < num; j++)
+        for (size_t j = 0; j < num; j++)
         {
             videoDevice_t* device = video_createDevice(video_drivers+i);
             device->videoMode.colorMode = 0;
@@ -66,7 +66,7 @@ void video_test()
     printf("       >>>>>   Press 's' to skip video test or any key to continue   <<<<<\n\n");
     textColor(TEXT);
 
-    if(getch() == 's')
+    if (getch() == 's')
     {
         return;
     }
@@ -80,12 +80,12 @@ void video_test()
     puts("----------------------------------------------------------------------");
     textColor(TEXT);
     size_t id = 0;
-    for(dlelement_t* e = modelist->head; e != 0; e = e->next, id++)
+    for (dlelement_t* e = modelist->head; e != 0; e = e->next, id++)
     {
         videoMode_t* mode = e->data;
         printf("\n%u\t%s\t", id, mode->device->driver->driverName);
-        if(printf("%ux%u\t", mode->xRes, mode->yRes) <= 8) putch('\t');
-        switch(mode->colorMode)
+        if (printf("%ux%u\t", mode->xRes, mode->yRes) <= 8) putch('\t');
+        switch (mode->colorMode)
         {
             case CM_2COL:
                 puts("2 colors");
@@ -111,7 +111,7 @@ void video_test()
         }
         printf("\t%s", mode->type==VMT_GRAPHIC?"Graphic":"Text");
 
-        if(id % 40 == 0 && id != 0)
+        if (id % 40 == 0 && id != 0)
             waitForKeyStroke(); // Slow down
     }
     textColor(TABLE_HEADING);
@@ -120,7 +120,7 @@ void video_test()
 
     videoMode_t* mode = 0;
 
-    while(true)
+    while (true)
     {
         textColor(YELLOW);
         printf("Type in the ID of the mode: ");
@@ -128,11 +128,11 @@ void video_test()
         char temp[20];
         gets(temp);
 
-        if(strcmp(temp, "exit") == 0) return;
+        if (strcmp(temp, "exit") == 0) return;
 
         uint16_t modenumber = atoi(temp);
         dlelement_t* e = list_getElement(modelist, modenumber);
-        if(e != 0)
+        if (e != 0)
         {
             mode = e->data;
             break;
@@ -144,7 +144,7 @@ void video_test()
     printf("3. Start VBE-Shell\n\n");
     uint16_t whatToStart = 0;
 
-    while(whatToStart == 0)
+    while (whatToStart == 0)
     {
         textColor(YELLOW);
         printf("Type in the number: ");
@@ -156,12 +156,12 @@ void video_test()
 
     video_setMode(mode);
 
-    if(whatToStart == 1)
+    if (whatToStart == 1)
     {
         uint16_t width = video_currentMode->xRes;
         uint16_t height = video_currentMode->yRes;
         uint16_t radius = min(width, height)/2;
-        for(uint16_t i = 0; i < radius; i++)
+        for (uint16_t i = 0; i < radius; i++)
         {
             BGRA_t color = {i*64/radius, i*256/radius, 128-(i*128/radius), 0}; // Create gradient
             video_drawCartesianCircle(video_currentMode->device, width/2, height/2, radius-i, color); // FPU
@@ -191,11 +191,11 @@ void video_test()
         video_clearScreen(video_currentMode->device, black);
         waitForKeyStroke();
     }
-    else if(whatToStart == 2)
+    else if (whatToStart == 2)
     {
         StartGUI();
     }
-    else if(whatToStart == 3)
+    else if (whatToStart == 3)
     {
         startVBEShell();
     }
@@ -205,17 +205,17 @@ void video_test()
 
 void video_setMode(videoMode_t* mode)
 {
-    if(video_currentMode)
+    if (video_currentMode)
         video_currentMode->device->driver->leaveVideoMode(video_currentMode->device);
 
-    if(mode)
+    if (mode)
         mode->device->driver->enterVideoMode(mode);
     video_currentMode = mode;
 }
 
 void video_createModeList(list_t* list)
 {
-    for(dlelement_t* e = basicVideoDevices->head; e != 0; e = e->next)
+    for (dlelement_t* e = basicVideoDevices->head; e != 0; e = e->next)
     {
         videoDevice_t* device = e->data;
         device->driver->createModeList(device, list);
@@ -234,14 +234,14 @@ videoDevice_t* video_createDevice(videoDeviceDriver_t* driver)
     device->videoMode.device = device;
     device->videoMode.palette = 0;
     device->videoMode.type = VMT_GRAPHIC;
-    if(device->driver->createDevice)
+    if (device->driver->createDevice)
         device->driver->createDevice(device);
     return(device);
 }
 
 void video_freeDevice(videoDevice_t* device)
 {
-    if(device->driver->freeDevice)
+    if (device->driver->freeDevice)
         device->driver->freeDevice(device);
     free(device);
 }
@@ -255,28 +255,28 @@ void video_setPixel(videoDevice_t* device, uint32_t x, uint32_t y, BGRA_t color)
 
 void video_fillPixels(videoDevice_t* device, uint32_t x, uint32_t y, BGRA_t color, size_t num)
 {
-    if(device->driver->fillPixels)
+    if (device->driver->fillPixels)
         device->driver->fillPixels(device, x, y, color, num);
     else // Fallback
-        for(size_t i = 0; i < num; i++)
+        for (size_t i = 0; i < num; i++)
             device->driver->setPixel(device, x+1, y, color);
 }
 
 void video_copyPixels(videoDevice_t* device, uint32_t x, uint32_t y, BGRA_t* pixels, size_t num)
 {
-    if(device->driver->copyPixels)
+    if (device->driver->copyPixels)
         device->driver->copyPixels(device, x, y, pixels, num);
     else // Fallback
-        for(size_t i = 0; i < num; i++)
+        for (size_t i = 0; i < num; i++)
             device->driver->setPixel(device, x+i, y, pixels[i]);
 }
 
 void video_clearScreen(videoDevice_t* device, BGRA_t color)
 {
-    if(device->driver->clear)
+    if (device->driver->clear)
         device->driver->clear(device, color);
     else
-        for(size_t y = 0; y < device->videoMode.yRes; y++)
+        for (size_t y = 0; y < device->videoMode.yRes; y++)
             video_fillPixels(device, 0, y, color, device->videoMode.xRes);
 }
 

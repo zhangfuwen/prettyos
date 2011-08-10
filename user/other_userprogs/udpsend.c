@@ -23,7 +23,7 @@ int main()
     uint16_t srcPort  = 8084;
     uint16_t destPort = 8085;
 
-    for(uint32_t i=1; i<=500; i++)
+    for (uint32_t i=1; i<=500; i++)
     {
         static char String[1000];
         static char number[20];

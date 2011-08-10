@@ -26,7 +26,7 @@ void icmp_sendEchoRequest(network_adapter_t* adapter, IP_t destIP)
     icmp->id           = htons(0xAFFE);
     icmp->seqnumber    = htons(count);
     icmp->checksum     = 0;
-    icmp->checksum     = htons( internetChecksum(icmp, packetSize, 0) );
+    icmp->checksum     = htons(internetChecksum(icmp, packetSize, 0));
 
     ipv4_send(adapter, icmp, packetSize, destIP, 1);
 
@@ -43,7 +43,7 @@ void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 
     size_t icmp_data_length = length - sizeof(icmpheader_t);
 
-    switch(rec->type)
+    switch (rec->type)
     {
         case ICMP_ECHO_REPLY:
             printf("Echo Reply:");
@@ -155,7 +155,7 @@ void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
 
             memcpy(icmp+1, rec+1, icmp_data_length);
 
-            icmp->checksum = htons( internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0) );
+            icmp->checksum = htons(internetChecksum(icmp, sizeof(icmpheader_t) + icmp_data_length, 0));
 
             textColor(TEXT);
             printf(" type: %u  code: %u  checksum %u\n", icmp->type, icmp->code, icmp->checksum);

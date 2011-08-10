@@ -20,13 +20,13 @@ void arp_deleteTableEntry(arpTable_t* cache, arpTableEntry_t* entry)
 
 static void arp_checkTable(arpTable_t* cache)
 {
-    if (timer_getSeconds() > (cache->lastCheck + ARP_TABLE_TIME_TO_CHECK * 60 )) // Check only every ... minutes
+    if (timer_getSeconds() > (cache->lastCheck + ARP_TABLE_TIME_TO_CHECK * 60)) // Check only every ... minutes
     {
         cache->lastCheck = timer_getSeconds();
-        for(dlelement_t* e = cache->table->head; e != 0;)
+        for (dlelement_t* e = cache->table->head; e != 0;)
         {
             arpTableEntry_t* entry = e->data;
-            if(entry->dynamic &&                                                    // Only dynamic entries should be killed.
+            if (entry->dynamic &&                                                    // Only dynamic entries should be killed.
                timer_getSeconds() > entry->seconds + ARP_TABLE_TIME_TO_DELETE * 60) // Entry is older than ... minutes -> Obsolete entry. Delete it.
             {
                 free(e->data);
@@ -41,7 +41,7 @@ static void arp_checkTable(arpTable_t* cache)
 void arp_addTableEntry(arpTable_t* cache, uint8_t MAC[6], IP_t IP, bool dynamic)
 {
     arpTableEntry_t* entry = arp_findEntry(cache, IP); // Check if there is already an entry with the same IP.
-    if(entry == 0) // No entry found. Create new one.
+    if (entry == 0) // No entry found. Create new one.
     {
         entry = malloc(sizeof(arpTableEntry_t), 0, "arp entry");
         list_append(cache->table, entry);
@@ -56,10 +56,10 @@ arpTableEntry_t* arp_findEntry(arpTable_t* cache, IP_t IP)
 {
     arp_checkTable(cache); // We check the arp cache for obsolete entries.
 
-    for(dlelement_t* e = cache->table->head; e != 0; e = e->next)
+    for (dlelement_t* e = cache->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
-        if(entry->IP.iIP == IP.iIP)
+        if (entry->IP.iIP == IP.iIP)
         {
             entry->seconds = timer_getSeconds(); // Update time stamp.
             return(entry);
@@ -76,11 +76,11 @@ void arp_showTable(arpTable_t* cache)
     printf("\nIP\t\t  MAC\t\t\tType\t  Time(sec)");
     printf("\n--------------------------------------------------------------------------------");
     textColor(TEXT);
-    for(dlelement_t* e = cache->table->head; e != 0; e = e->next)
+    for (dlelement_t* e = cache->table->head; e != 0; e = e->next)
     {
         arpTableEntry_t* entry = e->data;
         size_t length = printf("%I\t", entry->IP);
-        if(length < 9) printf("\t");
+        if (length < 9) printf("\t");
         printf("  %M\t%s\t  %u\n", entry->MAC, entry->dynamic?"dynamic":"static", entry->seconds);
     }
     textColor(TABLE_HEADING);
@@ -107,11 +107,11 @@ void arp_deleteTable(arpTable_t* cache)
 void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
 {
     // 1 = Ethernet, 0x0800 = IPv4
-    if(ntohs(packet->hardware_addresstype) == 1 && ntohs(packet->protocol_addresstype) == 0x0800 &&
+    if (ntohs(packet->hardware_addresstype) == 1 && ntohs(packet->protocol_addresstype) == 0x0800 &&
         packet->hardware_addresssize == 6 && packet->protocol_addresssize == 4)
     {
         // extract the operation
-        switch(ntohs(packet->operation))
+        switch (ntohs(packet->operation))
         {
             case 1: // ARP-Request
                 textColor(HEADLINE);

@@ -26,9 +26,9 @@ uint8_t getTextColor()
     return(currentTask->attrib);
 }
 
-void textColor(uint8_t color) // bit 0-3: foreground bit 4-7: background 
+void textColor(uint8_t color) // bit 0-3: foreground bit 4-7: background
 {
-    if(currentTask)
+    if (currentTask)
     {
         currentTask->attrib = color;
     }

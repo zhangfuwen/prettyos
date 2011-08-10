@@ -15,7 +15,7 @@
 
 static bool nopm_action(PM_STATES state)
 {
-    switch(state)
+    switch (state)
     {
         case PM_SOFTOFF: // Implemented by "hack", just as a fallback.
             cli();
@@ -69,7 +69,7 @@ bool apm_install()
     textColor(TEXT);
     // Check for APM
     vm86_executeSync(apm_pd, APM_CHECK);
-    if(*((uint8_t*)0x1300) != 0) // Error
+    if (*((uint8_t*)0x1300) != 0) // Error
     {
         printf("\nNot available.");
         return(false);
@@ -78,7 +78,7 @@ bool apm_install()
 
     // Activate APM
     vm86_executeSync(apm_pd, APM_INSTALL);
-    switch(*((uint8_t*)0x1300))
+    switch (*((uint8_t*)0x1300))
     {
         case 0:
             printf("\nSuccessfully activated.");
@@ -101,7 +101,7 @@ bool apm_install()
 
 static bool apm_action(PM_STATES state)
 {
-    switch(state)
+    switch (state)
     {
         case PM_STANDBY:
             *((uint16_t*)0x1300) = 2; // Suspend-Mode (turns more hardware off than standby)
@@ -146,12 +146,12 @@ void pm_log()
 
 bool pm_action(PM_STATES state)
 {
-    if(state < _PM_STATES_END)
+    if (state < _PM_STATES_END)
     {
         bool success = false;
-        for(int32_t i = _PM_SYSTEMS_END-1; i >= 0 && !success; i--) // Trying out all supported power management systems.
+        for (int32_t i = _PM_SYSTEMS_END-1; i >= 0 && !success; i--) // Trying out all supported power management systems.
         {
-            if(pm_systems[i].supported && pm_systems[i].action != 0)
+            if (pm_systems[i].supported && pm_systems[i].action != 0)
                 success = pm_systems[i].action(state);
         }
         return(success);

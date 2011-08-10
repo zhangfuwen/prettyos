@@ -29,7 +29,7 @@ static uint32_t firstFreeDWORD;
 static uint32_t physMemInit();
 
 
-void paging_switch(pageDirectory_t* pd)
+void paging_switch (pageDirectory_t* pd)
 {
   #ifdef _PAGING_DIAGNOSIS_
     textColor(MAGENTA);
@@ -77,7 +77,7 @@ uint32_t paging_install()
     }
 
     // Tell CPU to enable paging
-    paging_switch(kernelPageDirectory);
+    paging_switch (kernelPageDirectory);
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
     cr0 |= 0x80000000;                            // set the paging bit in CR0
@@ -462,7 +462,7 @@ void paging_analyzeBitTable()
             }
         }
 
-        if(k!=k_old)
+        if (k!=k_old)
         {
             sleepSeconds(3);
         }

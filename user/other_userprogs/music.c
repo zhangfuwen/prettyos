@@ -6,7 +6,7 @@
 
 unsigned int duration = 400;
 void PlayTone(unsigned int Frequency, double DurFak) {
-    if(Frequency == 0) {
+    if (Frequency == 0) {
         sleep(duration*DurFak);
     }
     else {
@@ -16,8 +16,8 @@ void PlayTone(unsigned int Frequency, double DurFak) {
 
 void Play(char* string) {
     unsigned int Frequency = 0;
-    for(int i = 0; string[i] != 0; ++i) {
-        switch(string[i]) {
+    for (int i = 0; string[i] != 0; ++i) {
+        switch (string[i]) {
             case 'c':
                 Frequency = 132;
                 break;
@@ -66,16 +66,16 @@ void Play(char* string) {
             default:
                 continue;
         }
-        if(string[i+1] == '+') {
-            if(string[i+2] == '+') {
+        if (string[i+1] == '+') {
+            if (string[i+2] == '+') {
                 PlayTone(Frequency, 4);
             }
             else {
                 PlayTone(Frequency, 2);
             }
         }
-        else if(string[i+1] == '-') {
-            if(string[i+2] == '-') {
+        else if (string[i+1] == '-') {
+            if (string[i+2] == '-') {
                 PlayTone(Frequency, 0.25);
             }
             else {
@@ -96,11 +96,11 @@ int main() {
     puts("Please type in the duration of a full note or type in \"Alle meine Entchen\" or \"Hänschen klein\" to play that song and press ENTER.\n");
     char string1[100];
     gets(string1);
-    if(strcmp(string1, "Alle meine Entchen") == 0) {
+    if (strcmp(string1, "Alle meine Entchen") == 0) {
         duration = 500;
         Play("cdefg+g+aaaag++aaaag++ffffe+e+ddddc++\n");
     }
-    if(strcmp(string1, "Hänschen klein\n") == 0) {
+    if (strcmp(string1, "Hänschen klein\n") == 0) {
         duration = 500;
         Play("gee+fdd+cdefggg+gee+fdd+ceggc++dddddef+eeeeefg+gee+fdd+ceggc++\n");
     }

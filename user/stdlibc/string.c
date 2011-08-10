@@ -16,7 +16,7 @@ void* memchr(void* ptr, char value, size_t num)
 
 int memcmp(const void* ptr1, const void* ptr2, size_t num)
 {
-    if(num == 0) return(0);
+    if (num == 0) return(0);
 
     const uint8_t* s1 = ptr1;
     const uint8_t* s2 = ptr2;
@@ -33,7 +33,7 @@ void* memcpy(void* dest, const void* source, size_t bytes)
     size_t dwords = bytes/4;
     bytes %= 4;
     __asm__ volatile("cld\n" "rep movsl" : : "S" (source), "D" (dest), "c" (dwords));
-    __asm__ volatile(        "rep movsb" : : "c" (bytes));
+    __asm__ volatile("rep movsb" : : "c" (bytes));
     return(dest);
 }
 
@@ -48,26 +48,26 @@ static void* memcpyr(void* dest, const void* src, size_t bytes)
 
     __asm__ volatile("std\n" "rep movsb"         : : "S" (src), "D" (temp), "c" (bytes));
     __asm__ volatile("sub $3, %edi\n" "sub $3, %esi");
-    __asm__ volatile(        "rep movsl\n" "cld" : : "c" (dwords));
+    __asm__ volatile("rep movsl\n" "cld" : : "c" (dwords));
     return(dest);
 }
 
 void* memmove(void* dest, const void* source, size_t num)
 {
-    if(source == dest || num == 0) // Copying is not necessary. Calling memmove with source==destination or size==0 is not a bug.
+    if (source == dest || num == 0) // Copying is not necessary. Calling memmove with source==destination or size==0 is not a bug.
     {
         return(dest);
     }
 
     // Check for out of memory
     const uintptr_t memMax = ~((uintptr_t)0) - (num - 1); // ~0 is the highest possible value of the variables type. (No underflow possible on substraction, because size < adress space)
-    if((uintptr_t)source > memMax || (uintptr_t)dest > memMax)
+    if ((uintptr_t)source > memMax || (uintptr_t)dest > memMax)
     {
         return(dest);
     }
 
     // Arrangement of the destination and source decides about the direction of copying
-    if(source < dest)
+    if (source < dest)
     {
         memcpyr(dest, source, num);
     }
@@ -84,7 +84,7 @@ void* memset(void* dest, char value, size_t bytes)
     bytes %= 4;              // Remaining bytes
     uint32_t dval = (value<<24)|(value<<16)|(value<<8)|value; // Create dword from byte value
     __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
-    __asm__ volatile(        "rep stosb" : : "al"(value), "c" (bytes));
+    __asm__ volatile("rep stosb" : : "al"(value), "c" (bytes));
     return dest;
 }
 
@@ -110,7 +110,7 @@ int strcmp(const char* s1, const char* s2)
 
 int strncmp(const char* s1, const char* s2, size_t n)
 {
-    if(n == 0) return(0);
+    if (n == 0) return(0);
 
     for (; *s1 && n > 1 && *s1 == *s2; n--)
     {
@@ -130,11 +130,11 @@ char* strcpy(char* dest, const char* src)
 char* strncpy(char* dest, const char* src, size_t n)
 {
     size_t i = 0;
-    for(; i < n && src[i] != 0; i++)
+    for (; i < n && src[i] != 0; i++)
     {
         dest[i] = src[i];
     }
-    for(; i < n; i++)
+    for (; i < n; i++)
     {
         dest[i] = 0;
     }
@@ -195,7 +195,7 @@ char* strstr(const char* str1, const char* str2)
     while (*str1)
     {
         p2 = str2;
-        while (*p2 && ( *p1 == *p2 ))
+        while (*p2 && (*p1 == *p2))
         {
             ++p1;
             ++p2;

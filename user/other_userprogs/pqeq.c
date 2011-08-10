@@ -20,8 +20,8 @@ int main()
     q = atof(str);
     printf("\nq= %f\n",q);
 
-    x1 = -p/2 + sqrt( p*p/4.0 - q );
-    x2 = -p/2 - sqrt( p*p/4.0 - q );
+    x1 = -p/2 + sqrt(p*p/4.0 - q);
+    x2 = -p/2 - sqrt(p*p/4.0 - q);
 
     printf("x1 = %f  x2 = %f\n\n", x1, x2);
 

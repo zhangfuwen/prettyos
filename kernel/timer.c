@@ -73,7 +73,7 @@ void timer_setFrequency(uint32_t freq)
     */
 
     // Send divisor
-    outportb(CHANNEL_0_DATAPORT, (uint8_t)( divisor       & 0xFF)); // low  byte
+    outportb(CHANNEL_0_DATAPORT, (uint8_t)(divisor       & 0xFF)); // low  byte
     outportb(CHANNEL_0_DATAPORT, (uint8_t)((divisor >> 8) & 0xFF)); // high byte
 }
 
