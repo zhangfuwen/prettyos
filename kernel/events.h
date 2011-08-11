@@ -37,8 +37,9 @@ void           event_enable(bool b); // Enables/Disables event handling for the 
 EVENT_t        event_poll(void* destination, size_t maxLength, EVENT_t filter); // Takes an event from the event queue of the current task
 uint8_t        event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length); // Sends an event to an event queue
 event_t*       event_peek(event_queue_t* eventQueue, uint32_t i);
-bool event_unlockTask(void* data);
-bool waitForEvent(uint32_t timeout);
+bool           flushEvent(uint32_t pid, EVENT_t filter);
+bool           event_unlockTask(void* data);
+bool           waitForEvent(uint32_t timeout);
 
 
 #endif

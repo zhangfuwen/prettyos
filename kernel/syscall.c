@@ -61,7 +61,7 @@ static void* syscalls[] =
 /*  33 */    &nop,
 /*  34 */    &nop,
 /*  35 */    &nop,
-/*  36 */    &nop,
+/*  36 */    &flushEvent,
 /*  37 */    &waitForEvent,
 /*  38 */    &event_enable,
 /*  39 */    &event_poll,

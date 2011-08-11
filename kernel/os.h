@@ -31,6 +31,7 @@
 /// #define _NETBIOS_DEBUG_        // Enables NetBIOS packet analysis
 /// #define _VBE_DEBUG_            // Provides additional output of the VBE driver
 
+// output of the serial log to COMx:
 #define SER_LOG_TCP    1
 #define SER_LOG_HEAP   1
 #define SER_LOG_VM86   2

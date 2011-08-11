@@ -13,9 +13,11 @@ uint32_t getMyPID();
 void* userheapAlloc(size_t increase);
 
 FS_ERROR partition_format(const char* path, FS_t type, const char* name);
+
 bool waitForEvent(uint32_t timeout);
 void event_enable(bool b);
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter);
+bool flushEvents(EVENT_t filter);
 
 uint32_t getCurrentMilliseconds();
 

@@ -8,6 +8,7 @@
 #include "kheap.h"
 #include "util.h"
 
+extern list_t* tasks;
 
 event_queue_t* event_createQueue()
 {
@@ -141,6 +142,27 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     free(ev);
 
     return (type);
+}
+
+bool flushEvent(uint32_t pid, EVENT_t filter)
+{
+    for (dlelement_t* e = tasks->head; e != 0; e = e->next)
+    {
+        if (((task_t*)e->data)->pid == pid)
+        {
+            list_t* eventlist = ((task_t*)e->data)->eventQueue->list;
+            
+            for (dlelement_t* element = eventlist->head; element != 0; element = element->next)
+            {
+                if ( *(EVENT_t*)(element->data) == filter )
+                {
+                    free(e->data); // ??
+                    list_delete(eventlist, element);
+                }
+            }
+        }
+    }
+    return (true);
 }
 
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)

@@ -117,6 +117,14 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     return ret;
 }
 
+bool flushEvents(EVENT_t filter)
+{
+    bool ret;
+    uint32_t pid = getMyPID();
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(36), "b"(pid), "c"(filter));
+    return ret;
+}
+
 uint32_t getCurrentMilliseconds()
 {
     uint32_t ret;

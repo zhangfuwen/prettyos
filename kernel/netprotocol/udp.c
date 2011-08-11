@@ -17,9 +17,8 @@
 #include "scheduler.h"
 #include "ring.h"
 
-extern ring_t* runningTasks; // scheduler.c
-extern ring_t* blockedTasks;
 
+extern list_t* tasks; // task.c
 
 static void udp_debug(udpPacket_t* udp);
 
@@ -51,14 +50,10 @@ void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t lengt
             ev->srcPort  = ntohs(packet->sourcePort);
             ev->destPort = ntohs(packet->destPort);
 
-            slelement_t* temp = blockedTasks->begin;
-            do
+            for (dlelement_t* e = tasks->head; e != 0; e = e->next)
             {
-                event_issue(((task_t*)((task_t*)temp->data))->eventQueue, EVENT_UDP_RECEIVED, ev,
-                                        sizeof(udpReceivedEventHeader_t) + ntohs(packet->length));
-                temp = temp->next;
+                event_issue( ((task_t*)(e->data))->eventQueue, EVENT_UDP_RECEIVED, ev, sizeof(udpReceivedEventHeader_t) + ntohs(packet->length) );
             }
-            while (temp && temp != blockedTasks->begin);
 
             free(ev);
             break;

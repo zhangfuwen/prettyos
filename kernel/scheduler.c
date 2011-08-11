@@ -11,10 +11,10 @@
 #include "ring.h"
 #include "scheduler.h"
 
-ring_t* runningTasks = 0;
-ring_t* blockedTasks = 0;
+static ring_t* runningTasks = 0;
+static ring_t* blockedTasks = 0;
 
-static     task_t* freetimeTask = 0;
+static task_t* freetimeTask = 0;
 
 blockerType_t blocker[] =
 {
