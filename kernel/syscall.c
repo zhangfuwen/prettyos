@@ -17,6 +17,7 @@
 #include "netprotocol/tcp.h"
 #include "netprotocol/udp.h"
 #include "video/textgui.h"
+#include "video/video.h"
 
 // Overwiew to all syscalls in documentation/Syscalls.odt
 
@@ -94,8 +95,8 @@ static void* syscalls[] =
 /*  63 */    &nop,
 /*  64 */    &nop,
 /*  65 */    &nop,
-/*  66 */    &nop,
-/*  67 */    &nop,
+/*  66 */    &autorefresh,
+/*  67 */    &refreshUserScreen,
 /*  68 */    &TextGUI_ShowMSG,
 /*  69 */    &TextGUI_AskYN,
 

@@ -12,7 +12,7 @@
 
 #define SCREENSHOT_BYTES 4102
 
-
+bool autoRefresh;
 static uint16_t* vidmem = (uint16_t*)0xB8000;
 
 VIDEOMODES videomode = VM_TEXT;
@@ -235,45 +235,53 @@ void writeInfo(uint8_t line, const char* args, ...)
     }
 }
 
+void autorefresh(bool on)
+{
+    autoRefresh = on;
+}
+
 void refreshUserScreen()
 {
-    mutex_lock(videoLock);
+    if (autoRefresh == true)
+    {
+        mutex_lock(videoLock);
 
-    // Printing titlebar
-    kprintf("PrettyOS [Version %s]                                                            ", 0, TITLEBAR, version);
+        // Printing titlebar
+        kprintf("PrettyOS [Version %s]                                                            ", 0, TITLEBAR, version);
 
-    if (console_displayed->ID == KERNELCONSOLE_ID)
-    {
-        cursor.x = COLUMNS - 5;
-        kputs("Shell", 0x0C);
-    }
-    else
-    {
-        char Buffer[70];
-        snprintf(Buffer, 70, "Console %u: %s", console_displayed->ID-1, console_displayed->name);
-        cursor.x = COLUMNS - strlen(Buffer);
-        cursor.y = 0;
-        kputs(Buffer, 0x0C);
-    }
-    kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
-    if (console_displayed->showInfobar)
-    {
-        // copying content of visible console to the video-ram
-        memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_LINES-4) * 2);
-        kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
-        refreshInfoBar();
-    }
-    else
-    {
-        // copying content of visible console to the video-ram
-        memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * USER_LINES*2);
-    }
-    kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
+        if (console_displayed->ID == KERNELCONSOLE_ID)
+        {
+            cursor.x = COLUMNS - 5;
+            kputs("Shell", 0x0C);
+        }
+        else
+        {
+            char Buffer[70];
+            snprintf(Buffer, 70, "Console %u: %s", console_displayed->ID-1, console_displayed->name);
+            cursor.x = COLUMNS - strlen(Buffer);
+            cursor.y = 0;
+            kputs(Buffer, 0x0C);
+        }
+        kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
+        if (console_displayed->showInfobar)
+        {
+            // copying content of visible console to the video-ram
+            memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_LINES-4) * 2);
+            kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
+            refreshInfoBar();
+        }
+        else
+        {
+            // copying content of visible console to the video-ram
+            memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * USER_LINES*2);
+        }
+        kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
 
-    cursor.y = console_displayed->cursor.y;
-    cursor.x = console_displayed->cursor.x;
-    mutex_unlock(videoLock);
-    video_updateCursor();
+        cursor.y = console_displayed->cursor.y;
+        cursor.x = console_displayed->cursor.x;
+        mutex_unlock(videoLock);
+        video_updateCursor();
+    }
 }
 
 void video_updateCursor()

@@ -253,6 +253,17 @@ uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected)
     return ret;
 }
 
+void autorefresh(bool on)
+{
+    __asm__ volatile("int $0x7F" : : "a"(66), "b"(on));
+}
+
+void flip()
+{
+    __asm__ volatile("int $0x7F" : : "a"(67));
+}
+
+
 
 // user functions
 void sleep(uint32_t milliseconds)
