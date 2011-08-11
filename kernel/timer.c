@@ -65,16 +65,15 @@ void timer_setFrequency(uint32_t freq)
     uint16_t divisor = TIMECOUNTER_i8254_FREQU / systemfrequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
 
     // Send the command byte
-    outportb(COMMANDREGISTER, 0x34);    // 0x34 -> Mode 2 : Rate Generator
+    outportb(COMMANDREGISTER, COUNTER_0 | RW_HI_LO_MODE | RATEGENERATOR);
 
-    /* cf. http://wiki.osdev.org/Programmable_Interval_Timer
-    Typically, OSes and BIOSes use mode 3 for PIT channel 0 to generate IRQ 0 timer ticks,
-    but some use mode 2 instead, to gain frequency accuracy (this mode operates as a frequency divider).
-    */
+    // cf. http://wiki.osdev.org/Programmable_Interval_Timer
+    // Typically, OSes and BIOSes use mode 3 for PIT channel 0 to generate IRQ 0 timer ticks,
+    // but some use mode 2 (rate generator with frequency divider) instead, to gain frequency accuracy.
 
     // Send divisor
-    outportb(CHANNEL_0_DATAPORT, (uint8_t)(divisor       & 0xFF)); // low  byte
-    outportb(CHANNEL_0_DATAPORT, (uint8_t)((divisor >> 8) & 0xFF)); // high byte
+    outportb(COUNTER_0_DATAPORT, BYTE1(divisor));
+    outportb(COUNTER_0_DATAPORT, BYTE2(divisor));
 }
 
 uint16_t timer_getFrequency()
@@ -87,10 +86,7 @@ void delay(uint32_t microsec)
 {
     uint64_t timeout = rdtsc() + (uint64_t)(((uint32_t)(microsec/1000)) * system.CPU_Frequency_kHz);
 
-    while (rdtsc()<timeout)
-    {
-       // nop();
-    }
+    while (rdtsc()<timeout) {}
 }
 
 /*

@@ -19,26 +19,23 @@ void sound(uint32_t frequency)
     uint16_t divisor = TIMECOUNTER_i8254_FREQU / frequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
 
     // set commandregister to 0xB6 = 10 11 011 0 // Select channel, Access mode, Operating mode, BCD/Binary mode
-    outportb(COMMANDREGISTER,
-        BIT(1) | BIT(2) | // Mode 2 (rate generator)     |
-        BIT(4) | BIT(5) | // Access mode: lobyte/hibyte
-        BIT(7));          // Channel 2
+    outportb( COMMANDREGISTER, COUNTER_2 | RW_HI_LO_MODE | SQUAREWAVE ); // x86 offers only binary mode (no BCD)
 
     // send divisor
-    outportb(CHANNEL_2_DATAPORT, (uint8_t)(divisor       & 0xFF)); // low  byte
-    outportb(CHANNEL_2_DATAPORT, (uint8_t)((divisor >> 8) & 0xFF)); // high byte
+    outportb( COUNTER_2_DATAPORT, BYTE1(divisor) );
+    outportb( COUNTER_2_DATAPORT, BYTE2(divisor) );
 
     // sound on
-    temp = inportb(CHANNEL_2_CONTROLPORT);
-      if (temp != (temp | 3))
-      {
-         outportb(CHANNEL_2_CONTROLPORT, temp | 3);
-      }
+    temp = inportb( COUNTER_2_CONTROLPORT );
+    if (temp != ( temp | (AUX_GATE_2 | AUX_OUT_2) ) )
+    {
+        outportb( COUNTER_2_CONTROLPORT, temp | (AUX_GATE_2 | AUX_OUT_2) );
+    }
 }
 
 void noSound()
 {
-    outportb(CHANNEL_2_CONTROLPORT, inportb(CHANNEL_2_CONTROLPORT) & ~3);
+    outportb( COUNTER_2_CONTROLPORT, inportb(COUNTER_2_CONTROLPORT) & ~(AUX_GATE_2 | AUX_OUT_2) );
 }
 
 void beep(uint32_t freq, uint32_t duration)

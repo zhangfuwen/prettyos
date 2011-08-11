@@ -366,6 +366,9 @@
     <ClInclude Include="..\kernel\video\textgui.h">
       <Filter>Kernel\include\video</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\pit.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">

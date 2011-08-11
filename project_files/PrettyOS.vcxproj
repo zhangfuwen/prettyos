@@ -128,6 +128,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\pci.h" />
     <ClInclude Include="..\kernel\pciVendProdList.h" />
     <ClInclude Include="..\kernel\pe.h" />
+    <ClInclude Include="..\kernel\pit.h" />
     <ClInclude Include="..\kernel\power_management.h" />
     <ClInclude Include="..\kernel\ring.h" />
     <ClInclude Include="..\kernel\scheduler.h" />
