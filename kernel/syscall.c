@@ -18,6 +18,7 @@
 #include "netprotocol/udp.h"
 #include "video/textgui.h"
 #include "video/video.h"
+#include "network\network.h"
 
 // Overwiew to all syscalls in documentation/Syscalls.odt
 
@@ -121,7 +122,7 @@ static void* syscalls[] =
 /*  86 */    &tcp_usend,
 /*  87 */    &tcp_uclose,
 /*  88 */    &udp_usend,
-/*  89 */    &nop,
+/*  89 */    &getMyIP,
 
 // COMPATIBILITY (90-91); should be removed
     &flpydsk_read_directory,

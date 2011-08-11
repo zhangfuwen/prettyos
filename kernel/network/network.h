@@ -72,6 +72,7 @@ void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t 
 void network_displayArpTables();
 network_adapter_t* network_getAdapter(IP_t IP);
 network_adapter_t* network_getFirstAdapter();
+uint32_t getMyIP();
 
 
 #endif

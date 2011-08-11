@@ -196,6 +196,13 @@ void beep(uint32_t frequency, uint32_t duration)
     __asm__ volatile("int $0x7F" : : "a"(80), "b"(frequency), "c"(duration));
 }
 
+uint32_t getMyIP()
+{
+    uint32_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret) : "a"(89));
+    return ret;
+}
+
 uint32_t tcp_connect(IP_t IP, uint16_t port)
 {
     uint32_t ret;

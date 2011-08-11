@@ -176,6 +176,18 @@ network_adapter_t* network_getFirstAdapter()
     return(adapters->head->data);
 }
 
+uint32_t getMyIP()
+{
+    network_adapter_t* adapter = network_getFirstAdapter();
+    if (adapter)
+    {
+        return adapter->IP.iIP;
+    }
+    else 
+    {
+        return (0);
+    }
+}
 
 /*
 * Copyright (c) 2011 The PrettyOS Project. All rights reserved.

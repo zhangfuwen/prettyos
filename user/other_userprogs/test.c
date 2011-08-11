@@ -63,6 +63,13 @@ int main()
 
     fileTest();
 
+    textColor(0x0E);
+    printf("\n\n\nNETWORKING\n");
+    textColor(0x0F);
+    IP_t ip;
+    ip.iIP = getMyIP();
+    printf("My IP is %u.%u.%u.%u", ip.IP[0], ip.IP[1], ip.IP[2], ip.IP[3]);
+
 
     printf("\n\n\nAll tests Finished.");
     textColor(0x09);

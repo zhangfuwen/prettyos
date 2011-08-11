@@ -33,6 +33,8 @@ bool keyPressed(KEY_t key);
 
 void beep(uint32_t frequency, uint32_t duration);
 
+uint32_t getMyIP(); 
+
 uint32_t tcp_connect(IP_t IP, uint16_t port);
 bool     tcp_send(uint32_t ID, void* data, size_t length);
 bool     tcp_close(uint32_t ID);
