@@ -12,7 +12,7 @@
 
 #define SCREENSHOT_BYTES 4102
 
-static uint16_t* vidmem = (uint16_t*)0xB8000;
+static uint16_t* vidmem = (uint16_t*)VIDEORAM;
 
 VIDEOMODES videomode = VM_TEXT;
 
@@ -30,7 +30,7 @@ static mutex_t* videoLock = 0;
 void vga_install()
 {
     videoLock = mutex_create(1);
-    vidmem = paging_acquirePciMemory(0xB8000, 2);
+    vidmem = paging_acquirePciMemory(VIDEORAM, 2);
 }
 
 void vga_setPixel(uint8_t x, uint8_t y, uint16_t value)
@@ -43,7 +43,7 @@ void vga_setPixel(uint8_t x, uint8_t y, uint16_t value)
 void clear_screen()
 {
     mutex_lock(videoLock);
-    memset(vidmem, 0x00, COLUMNS * LINES * 2);
+    memset(vidmem, 0, COLUMNS * LINES * 2);
     mutex_unlock(videoLock);
 }
 

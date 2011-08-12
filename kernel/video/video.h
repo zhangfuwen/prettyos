@@ -13,6 +13,7 @@
 #define CURSOR_LOCATION_HI_REGISTER  0xE
 #define CURSOR_LOCATION_LO_REGISTER  0xF
 
+#define VIDEORAM  0xB8000
 
 typedef struct
 {

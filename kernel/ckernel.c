@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.308 - Rev: 1164";
+const char* const version = "0.0.2.309 - Rev: 1165";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -51,6 +51,9 @@ bool fpu_install(); // fpu.c
 void fpu_test();    // fpu.c
 
 extern diskType_t* ScreenDest; // HACK for screenshots
+
+// RAM Disk
+const uint32_t RAMDISKSIZE = 0x100000;
 
 // APIC
 bool apic_install()
@@ -114,7 +117,7 @@ static void log(const char* str)
 static void init(multiboot_t* mb_struct)
 {
     // set .bss to zero
-    memset(&_bss_start, 0x0, (uintptr_t)&_bss_end - (uintptr_t)&_bss_start);
+    memset(&_bss_start, 0, (uintptr_t)&_bss_end - (uintptr_t)&_bss_start);
 
     useMultibootInformation(mb_struct);
 
@@ -192,7 +195,7 @@ static void showMemorySize()
 void main(multiboot_t* mb_struct)
 {
     init(mb_struct);
-    srand(cmos_read(0x00));
+    srand(cmos_read(0));
 
     textColor(HEADLINE);
     printf(" => System analysis: \n");
@@ -212,9 +215,9 @@ void main(multiboot_t* mb_struct)
 
 
     #ifdef _RAMDISK_DIAGNOSIS_
-    void* ramdisk_start = initrd_install(ramdisk_install(), 0, 0x200000);
+    void* ramdisk_start = initrd_install(ramdisk_install(), 0, RAMDISKSIZE);
     #else
-    initrd_install(ramdisk_install(), 0, 0x200000);
+    initrd_install(ramdisk_install(), 0, RAMDISKSIZE);
     #endif
 
     #ifdef _DEVMGR_DIAGNOSIS_

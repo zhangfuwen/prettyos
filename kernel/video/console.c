@@ -38,7 +38,7 @@ void kernel_console_init()
 {
     kernelConsole.tasks = list_create();
     kernelConsole.mutex = mutex_create(1);
-    memset(kernelConsole.vidmem, 0x00, COLUMNS * USER_LINES * 2);
+    memset(kernelConsole.vidmem, 0, COLUMNS * USER_LINES * 2);
 	
     reachableConsoles[KERNELCONSOLE_ID] = &kernelConsole;
     memset(reachableConsoles+1, 0, 10*sizeof(console_t*));
@@ -57,7 +57,7 @@ void console_init(console_t* console, const char* name)
     console->tasks       = list_create();
     console->mutex       = mutex_create(1);
     strcpy(console->name, name);
-    memset(console->vidmem, 0x00, COLUMNS * USER_LINES * 2);
+    memset(console->vidmem, 0, COLUMNS * USER_LINES * 2);
 
     for (uint8_t i = 1; i < 11; i++)
     { // The next free place in our console-list will be filled with the new console

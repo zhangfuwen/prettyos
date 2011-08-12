@@ -14,7 +14,7 @@
 #include "textgui.h"
 #include "os.h"
 
-// static uint16_t* vidmem = (uint16_t*)0xB8000; // Video memory
+// static uint16_t* vidmem = (uint16_t*)VIDEORAM; // Video memory
 
 #define COLUMNS 80 // Why aren't these in one file?
 #define LINES 50 // (found COLUMNS in console.h and LINES in video.c)
