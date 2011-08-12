@@ -273,7 +273,9 @@ void autoscroll(bool on)
 
 void flip()
 {
+	autorefresh(true);
     __asm__ volatile("int $0x7F" : : "a"(67));
+	autorefresh(false);
 }
 
 
