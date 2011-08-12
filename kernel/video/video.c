@@ -12,7 +12,6 @@
 
 #define SCREENSHOT_BYTES 4102
 
-bool autoRefresh;
 static uint16_t* vidmem = (uint16_t*)0xB8000;
 
 VIDEOMODES videomode = VM_TEXT;
@@ -235,14 +234,9 @@ void writeInfo(uint8_t line, const char* args, ...)
     }
 }
 
-void autorefresh(bool on)
-{
-    autoRefresh = on;
-}
-
 void refreshUserScreen()
 {
-    if (autoRefresh == true)
+    if (console_displayed->autorefresh == true)
     {
         mutex_lock(videoLock);
 

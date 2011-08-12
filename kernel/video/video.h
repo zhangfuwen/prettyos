@@ -38,7 +38,6 @@ extern bool autoRefresh;
 
 void vga_install();
 void vga_setPixel(uint8_t x, uint8_t y, uint16_t value);
-void autorefresh(bool on);
 void refreshUserScreen();
 void clear_screen();
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);

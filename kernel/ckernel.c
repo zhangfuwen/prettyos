@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.305 - Rev: 1160";
+const char* const version = "0.0.2.306 - Rev: 1161";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -167,8 +167,6 @@ static void init(multiboot_t* mb_struct)
     deviceManager_install(); log("Devicemanager"); // device management for mass storage devices
 
     kernel_idleTasks = todolist_create();
-
-    autoRefresh = true;
 
     puts("\n\n");
 

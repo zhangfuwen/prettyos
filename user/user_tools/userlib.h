@@ -74,6 +74,7 @@ uint16_t TextGUI_ShowMSG(char* title, char* message);
 uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected);
 
 void autorefresh(bool on);
+void autoscroll(bool on);
 void flip();
 
 

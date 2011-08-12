@@ -17,6 +17,8 @@ typedef struct // Defines the User-Space of the display
     uint8_t    ID; // Number of the console. Used to access it via the reachableConsoles array
     char*      name;
     bool       showInfobar;
+	bool       autorefresh;
+	bool       scrolling;
     uint8_t    scrollBegin;
     uint8_t    scrollEnd;
     position_t cursor;
@@ -41,6 +43,8 @@ void console_clear(uint8_t backcolor);
 void textColor(uint8_t color); // bit 4-7: background; bit 1-3: foreground
 uint8_t getTextColor();
 void showInfobar(bool show);
+void autorefresh(bool on);
+void autoscroll(bool on);
 void setScrollField(uint8_t begin, uint8_t end);
 void console_setPixel(uint8_t x, uint8_t y, uint16_t value);
 void putch(char c);

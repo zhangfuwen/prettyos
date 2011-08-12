@@ -265,6 +265,12 @@ void autorefresh(bool on)
     __asm__ volatile("int $0x7F" : : "a"(66), "b"(on));
 }
 
+void autoscroll(bool on)
+{
+    __asm__ volatile("int $0x7F" : : "a"(65), "b"(on));
+}
+
+
 void flip()
 {
     __asm__ volatile("int $0x7F" : : "a"(67));
