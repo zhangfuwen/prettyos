@@ -158,6 +158,9 @@
     <ClCompile Include="..\user\other_userprogs\udprecv.c">
       <Filter>Other Userprogs</Filter>
     </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\ftp.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\user\user_tools\types.h">

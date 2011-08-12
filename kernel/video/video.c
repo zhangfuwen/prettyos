@@ -282,11 +282,11 @@ void video_updateCursor()
 {
     uint16_t position = (console_displayed->cursor.y+2) * COLUMNS + console_displayed->cursor.x;
     // cursor HIGH port to vga INDEX register
-    outportb(0x3D4, 0x0E);
-    outportb(0x3D5, (uint8_t)((position>>8)&0xFF));
+    outportb(CRTC_ADDR_REGISTER, CURSOR_LOCATION_HI_REGISTER);
+    outportb(CRTC_DATA_REGISTER, BYTE2(position));
     // cursor LOW port to vga INDEX register
-    outportb(0x3D4, 0x0F);
-    outportb(0x3D5, (uint8_t)(position&0xFF));
+    outportb(CRTC_ADDR_REGISTER, CURSOR_LOCATION_LO_REGISTER);
+    outportb(CRTC_DATA_REGISTER, BYTE1(position));
 }
 
 static uint8_t screenCache[SCREENSHOT_BYTES];

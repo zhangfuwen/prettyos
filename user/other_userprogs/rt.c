@@ -26,11 +26,6 @@ int main()
     printf("OK\n");
     textColor(0x0F);
 
-    //char hostname[100];
-    //gets(hostname);
-
-    //IP_t IP = resolveIP(hostname);
-
     printf("Generating connection...");
     IP_t IP = {.iIP = 0};
     uint32_t connection = tcp_connect(IP, 23);
@@ -81,17 +76,6 @@ int main()
 
                 printf("\nLength: %u\n",strlen(bstr));
                 tcp_send(connection, bstr, strlen(bstr));
-
-                /*
-                char abc[1460];
-                memset(abc,0,1460);
-                strcpy(abc,"DUMMYTEXT");
-                tcp_send(connection,abc,strlen(abc));
-                tcp_send(connection,abc,strlen(abc));
-                tcp_send(connection,abc,strlen(abc));
-                tcp_send(connection,abc,strlen(abc));
-                tcp_send(connection,abc,strlen(abc));
-                */
 
                 printf("Closing connection...");
                 tcp_close(connection);

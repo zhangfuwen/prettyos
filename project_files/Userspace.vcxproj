@@ -53,6 +53,7 @@
     <ClCompile Include="..\user\other_userprogs\arrow.c" />
     <ClCompile Include="..\user\other_userprogs\browser.c" />
     <ClCompile Include="..\user\other_userprogs\calc.c" />
+    <ClCompile Include="..\user\other_userprogs\ftp.c" />
     <ClCompile Include="..\user\other_userprogs\hello.c" />
     <ClCompile Include="..\user\other_userprogs\irc.c" />
     <ClCompile Include="..\user\other_userprogs\keysound.c" />

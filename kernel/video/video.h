@@ -5,6 +5,15 @@
 #include "storage/devicemanager.h" // HACK
 
 
+//CRTC Address Register and the CRTC Data Register
+#define CRTC_ADDR_REGISTER           0x3D4
+#define CRTC_DATA_REGISTER           0x3D5
+
+// Cursor Location Registers
+#define CURSOR_LOCATION_HI_REGISTER  0xE
+#define CURSOR_LOCATION_LO_REGISTER  0xF
+
+
 typedef struct
 {
     uint16_t x, y;
@@ -25,6 +34,8 @@ typedef enum
 #define TEXT           WHITE
 #define FOOTNOTE       LIGHT_RED
 #define TITLEBAR       LIGHT_RED
+
+
 
 enum COLORS
 {
