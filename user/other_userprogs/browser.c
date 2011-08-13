@@ -3,47 +3,51 @@
 #include "stdio.h"
 #include "string.h"
 
-
 int main()
 {
     setScrollField(7, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                     Pretty Browser - Network test program!",                      2, 0x0B);
+    printLine("                      Pretty Browser - Network test program!                    ", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
+    printLine("                    F5 - reload; F6 - new file; F7 - new host                   ", 5, 0x0F);
+    printLine("--------------------------------------------------------------------------------", 6, 0x0B);
 
     event_enable(true);
     char buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 
-
     iSetCursor(0, 7);
+
+    char* data;
 
     textColor(0x0F);
     printf("Enter the address (no subdirs yet!):\n");
     char hostname[100];
     gets(hostname);
+    printf("Enter filename (Don't forget / ):\n");
+    char filename[100];
+    gets(filename);
 
     IP_t IP = resolveIP(hostname);
 
     uint32_t connection = tcp_connect(IP, 80);
     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
-    for (;;)
+    for(;;)
     {
-        switch (ev)
+        switch(ev)
         {
             case EVENT_NONE:
-            {
                 waitForEvent(0);
                 break;
-            }
             case EVENT_TCP_CONNECTED:
             {
                 printf("ESTABLISHED.\n");
-
                 char pStr[200];
                 memset(pStr,0,200);
-                strcat(pStr,"GET / HTTP/1.1\r\nHost: ");
+                strcat(pStr,"GET ");
+                strcat(pStr,filename);
+                strcat(pStr," HTTP/1.1\r\nHost: ");
                 strcat(pStr,hostname);
                 strcat(pStr,"\r\nConnection: close\r\n\r\n");
                 textColor(0x0A);
@@ -54,19 +58,45 @@ int main()
             }
             case EVENT_TCP_RECEIVED:
             {
+                textColor(0x06);
                 tcpReceivedEventHeader_t* header = (void*)buffer;
-                char* data = (void*)(header+1);
+                data = (void*)(header+1);
                 data[header->length] = 0;
                 printf("\npacket received. Length = %u\n:%s", header->length, data);
+                tcp_close(connection);
+                textColor(0x0F);
                 break;
             }
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
-                if (*key == KEY_ESC)
+                if(*key == KEY_ESC)
                 {
                     tcp_close(connection);
                     return(0);
+                }
+                else if(*key == KEY_F5)
+                {
+                    printf("Reload...\n");
+                    connection = tcp_connect(IP, 80);
+                    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
+                }
+                else if(*key == KEY_F6)
+                {
+                    printf("\nEnter filename (Don't forget / ):\n");
+                    gets(filename);
+                    connection = tcp_connect(IP, 80);
+                    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
+                }
+                else if(*key == KEY_F7)
+                {
+                    printf("\nEnter hostname:\n");
+                    gets(hostname);
+                    printf("\nEnter filename (Don't forget / ):\n");
+                    gets(filename);
+                    IP = resolveIP(hostname);
+                    connection = tcp_connect(IP, 80);
+                    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
                 }
                 break;
             }

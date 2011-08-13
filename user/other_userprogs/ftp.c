@@ -7,7 +7,7 @@ int main()
 {
     setScrollField(13, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                           neuer_user FTP Client v0.2                           ", 1, 0x0B);
+    printLine("                           neuer_user FTP Client v0.3                           ", 1, 0x0B);
     printLine("--------------------------------------------------------------------------------", 3, 0x0B);
 
     iSetCursor(0, 4);
@@ -22,35 +22,42 @@ int main()
     //
     printf("-F9: List files/directories\n");
     //
+    printf("-F11: Save file\n");
     printf("-F12: Enter FTP-Command\n");
     printf("--------------------------------------------------------------------------------\n\n");
 
     event_enable(true);
-    char buffer[4096];
+    uint8_t buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
+
+    char command[200];
+    uint32_t fileSize = 0, maxFileSize = 30000;
+    uint8_t fileData[maxFileSize];
+    size_t waitingDataCommand = 0;
+    size_t renaming = 0;
+    size_t enterPasvMode = 0;
+    size_t fileTransfer = 0;
+    size_t binaryFileTransfer = 0;
+    size_t saveFile = 0;
 
     char hostname[100];
     char user[100];
     char pass[100];
+    char ctrlPort[10];
     printf("Server:\n");
     gets(hostname);
-    printf("Benutzer:\n");
+    printf("\nBenutzer:\n");
     gets(user);
-    printf("Passwort:\n");
+    printf("\nPasswort:\n");
     gets(pass);
+    printf("\nPort:\n");
+    gets(ctrlPort);
 
-    char command[200];
-    size_t waitingDataCommand = 0;
-    size_t renaming = 0;
-    size_t enterPasvMode = 0;
+    IP_t IP = resolveIP(hostname), dataIP;
+    uint16_t controlPort = atoi(ctrlPort), dataPort;
+    uint32_t control = tcp_connect(IP, controlPort), dataConnection = 0;
 
-    IP_t dataIP;
-    uint16_t dataPort;
-    uint32_t dataConnection = 0;
-
-    IP_t IP = resolveIP(hostname);
-    uint32_t control = tcp_connect(IP, 21);
-    printf("\nConnected (ID = %u). Wait until connection is established... ", control);
+    printf("\nConnected (ID = %u). Wait until connection is established...\n", control);
 
     for (;;)
     {
@@ -89,20 +96,53 @@ int main()
             case EVENT_TCP_RECEIVED:
             {
                 tcpReceivedEventHeader_t* header = (void*)buffer;
-                char* data = (void*)(header+1);
-                data[header->length] = 0;
 
                 if (header->connectionID == dataConnection)
-                    textColor(0x06);
-                else if (header->connectionID == control)
-                    textColor(0x09);
-                printf("%s\n", data);
-
-                textColor(0x0F);
-
-                if (header->connectionID == control)
                 {
-                    if (data[0] == '2' && data[1] == '2' && data[2] == '0')
+                    if (fileTransfer)
+                    {
+                        if (binaryFileTransfer)
+                        {
+                            uint8_t* data = (void*)(header+1);
+                            data[header->length] = 0;
+                            memcpy(fileData+fileSize, data, header->length);
+                            fileSize += header->length;
+                        }
+                        else
+                        {
+                            char* data = (void*)(header+1);
+                            data[header->length] = 0;
+                            memcpy(fileData+fileSize, data, header->length);
+                            fileSize += header->length;
+                        }
+                    }
+                    else
+                    {
+                        char* data = (void*)(header+1);
+                        data[header->length] = 0;
+
+                        textColor(0x06);
+                        printf("%s\n", data);
+                        textColor(0x0F);
+                    }
+                }
+                else if (header->connectionID == control)
+                {
+                    char* data = (void*)(header+1);
+                    data[header->length] = 0;
+                    textColor(0x09);
+                    printf("%s\n", data);
+                    textColor(0x0F);
+
+                    if (data[0] == '2' && data[1] == '0' && data[2] == '0')
+                    {
+                        if (enterPasvMode)
+                        {
+                            enterPasvMode = 0;
+                            tcp_send(control, "PASV\r\n", 6);
+                        }
+                    }
+                    else if (data[0] == '2' && data[1] == '2' && data[2] == '0')
                     {
                         char pStr[200];
                         memset(pStr,0,200);
@@ -111,21 +151,32 @@ int main()
                         strcat(pStr,"\r\n");
                         tcp_send(control, pStr, strlen(pStr));
                     }
-                    else if (data[0] == '2' && data[1] == '3' && data[2] == '0')
-                    {
-                        printf("Loggin successful.\n");
-                        tcp_send(control, "OPTS UTF8 ON\r\n", 14);
-                    }
-                    else if (data[0] == '2' && data[1] == '0' && data[2] == '0')
-                    {
-                        if (enterPasvMode)
-                        {
-                            enterPasvMode = 0;
-                            tcp_send(control, "PASV\r\n", 6);
-                        }
-                    }
                     else if (data[0] == '2' && data[1] == '2' && data[2] == '6')
                     {
+                        if (saveFile)
+                        {
+                            printf("Save file.\nEnter filename/path(f.e.:\"1:/test.txt\",max. 15 characters):\n");
+                            char saveFileName[15];
+                            gets(saveFileName);
+                            FILE* f = fopen(saveFileName, "w");
+                            if (binaryFileTransfer)
+                            {
+                                if (fwrite(fileData, fileSize, 1, f))
+                                {
+                                    printf("\n%s:\nOK.\n", saveFileName);
+                                }
+                            }
+                            else
+                            {
+                                if (fwrite(fileData, fileSize, 1, f))
+                                {
+                                    printf("\n%s:\nOK.\n", saveFileName);
+                                }
+                            }
+                            fclose(f);
+                            saveFile = 0;
+                            fileTransfer = 0;
+                        }
                         tcp_close(dataConnection);
                     }
                     else if (data[0] == '2' && data[1] == '2' && data[2] == '7')
@@ -160,6 +211,11 @@ int main()
                         dataConnection = tcp_connect(dataIP, dataPort);
                         printf("\nConnected (ID = %u). Wait until connection is established... ", dataConnection);
                     }
+                    else if (data[0] == '2' && data[1] == '3' && data[2] == '0')
+                    {
+                        printf("Loggin successful.\n\n");
+                        tcp_send(control, "OPTS UTF8 ON\r\n", 14);
+                    }
                     else if (data[0] == '3' && data[1] == '3' && data[2] == '1')
                     {
                         char pStr[200];
@@ -177,9 +233,14 @@ int main()
                             tcp_send(control, command, strlen(command));
                         }
                     }
-                }
-                else if (header->connectionID == dataConnection)
-                {
+                    else if (data[0] == '5' && data[1] == '5' && data[2] == '0')
+                    {
+                        if (fileTransfer)
+                        {
+                            saveFile = 0;
+                            fileTransfer = 0;
+                        }
+                    }
                 }
                 break;
             }
@@ -190,7 +251,7 @@ int main()
                 if (*key == KEY_ESC)
                 {
                     printf("quit...");
-                    tcp_send(control, "QUIT\r\n", 8);
+                    tcp_send(control, "QUIT\r\n", 6);
                     tcp_close(control);
                     return(0);
                 }
@@ -198,13 +259,14 @@ int main()
                 {
                     memset(command,0,200);
                     char filename[100];
-                    printf("Get file.\nEnter filename:\n");
+                    printf("Get file(ASCII-mode).\nEnter filename:\n");
                     gets(filename);
                     strcat(command,"RETR ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
                     waitingDataCommand = 1;
                     enterPasvMode = 1;
+                    printf("\n");
                     tcp_send(control, "TYPE A\r\n", 8);
                 }
                 else if (*key == KEY_F2)
@@ -220,7 +282,7 @@ int main()
                     char tempCommand[200];
                     printf("Rename.\nEnter current filename:\n");
                     gets(oldFilename);
-                    printf("Enter new filename:\n");
+                    printf("\nEnter new filename:\n");
                     gets(newFilename);
                     
                     strcat(command,"RNTO ");
@@ -231,6 +293,7 @@ int main()
                     strcat(tempCommand,oldFilename);
                     strcat(tempCommand,"\r\n");
                     renaming = 1;
+                    printf("\n");
                     tcp_send(control, tempCommand, strlen(tempCommand));
                 }
                 else if (*key == KEY_F4)
@@ -243,6 +306,7 @@ int main()
                     strcat(command,"DELE ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
+                    printf("\n");
                     tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F5)
@@ -255,6 +319,7 @@ int main()
                     strcat(command,"MKD ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
+                    printf("\n");
                     tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F6)
@@ -267,6 +332,7 @@ int main()
                     strcat(command,"RMD ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
+                    printf("\n");
                     tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F7)
@@ -279,6 +345,7 @@ int main()
                     strcat(command,"CWD ");
                     strcat(command,dirname);
                     strcat(command,"\r\n");
+                    printf("\n");
                     tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F8)
@@ -295,6 +362,36 @@ int main()
                     enterPasvMode = 1;
                     printf("List files/directories.\n");
                     tcp_send(control, "TYPE A\r\n", 8);
+                }
+                else if (*key == KEY_F11)
+                {
+                    memset(command,0,200);
+                    char filename[100];
+                    printf("Save file.(max. size: %i)\nEnter filename(server):\n", maxFileSize);
+                    gets(filename);
+                    char mode[1];
+                    printf("\nEnter transfer mode(A == ASCII, I == Binary):\n");
+                    gets(mode);
+                    strcat(command,"RETR ");
+                    strcat(command,filename);
+                    strcat(command,"\r\n");
+                    waitingDataCommand = 1;
+                    enterPasvMode = 1;
+                    saveFile = 1;
+                    fileTransfer = 1;
+                    binaryFileTransfer = 0;
+                    fileSize = 0;
+                    memset(fileData, 0, 20000);
+                    printf("\n");
+                    if (mode[0] == 'A')
+                        tcp_send(control, "TYPE A\r\n", 8);
+                    else if (mode[0] == 'I')
+                    {
+                        binaryFileTransfer = 1;
+                        tcp_send(control, "TYPE I\r\n", 8);
+                    }
+                    else
+                        tcp_send(control, "TYPE A\r\n", 8);
                 }
                 else if (*key == KEY_F12)
                 {
