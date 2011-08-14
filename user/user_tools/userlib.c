@@ -203,6 +203,16 @@ uint32_t getMyIP()
     return ret;
 }
 
+void dns_setServer(IP_t server)
+{
+    __asm__ volatile("int $0x7F" : : "a"(84), "b"(server));
+}
+
+void dns_getServer(IP_t* server)
+{
+    __asm__ volatile("int $0x7F" : : "a"(83), "b"(server));
+}
+
 uint32_t tcp_connect(IP_t IP, uint16_t port)
 {
     uint32_t ret;

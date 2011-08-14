@@ -68,8 +68,22 @@ int main()
     textColor(0x0F);
     IP_t ip;
     ip.iIP = getMyIP();
-    printf("My IP is %u.%u.%u.%u", ip.IP[0], ip.IP[1], ip.IP[2], ip.IP[3]);
+    printf("My IP is %u.%u.%u.%u\n", ip.IP[0], ip.IP[1], ip.IP[2], ip.IP[3]);
 
+    IP_t dnsServerStart;
+    dns_getServer(&dnsServerStart);
+    printf("DNS Server IP is %u.%u.%u.%u\n", dnsServerStart.IP[0], dnsServerStart.IP[1], dnsServerStart.IP[2], dnsServerStart.IP[3]);
+    
+    IP_t server;
+    server.IP[0] = 0;
+    server.IP[1] = 1;
+    server.IP[2] = 2;
+    server.IP[3] = 3;
+    dns_setServer(server);
+    
+    IP_t dnsServer;
+    dns_getServer(&dnsServer);
+    printf("DNS Server IP is %u.%u.%u.%u\n", dnsServer.IP[0], dnsServer.IP[1], dnsServer.IP[2], dnsServer.IP[3]);
 
     printf("\n\n\nAll tests Finished.");
     textColor(0x09);

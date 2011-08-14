@@ -36,6 +36,12 @@ qemu.exe  -boot a -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139 -re
 #define GW_IP_3     1
 #define GW_IP_4     1
 
+// DNS IP for resolving name to IP
+#define DNS_IP_1     0
+#define DNS_IP_2     0
+#define DNS_IP_3     0
+#define DNS_IP_4     0
+
 typedef struct network_adapter network_adapter_t;
 
 typedef struct
@@ -58,6 +64,7 @@ struct network_adapter
     DHCP_state        DHCP_State;
     IP_t              Gateway_IP;
     IP_t              Subnet;
+    IP_t              dnsServer_IP;  
 };
 
 typedef struct
@@ -73,6 +80,7 @@ void network_displayArpTables();
 network_adapter_t* network_getAdapter(IP_t IP);
 network_adapter_t* network_getFirstAdapter();
 uint32_t getMyIP();
-
+void dns_setServer(IP_t server);
+void dns_getServer(IP_t* server);
 
 #endif

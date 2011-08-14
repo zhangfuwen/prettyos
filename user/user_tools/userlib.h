@@ -34,6 +34,8 @@ bool keyPressed(KEY_t key);
 void beep(uint32_t frequency, uint32_t duration);
 
 uint32_t getMyIP(); 
+void dns_setServer(IP_t server);
+void dns_getServer(IP_t* server);
 
 uint32_t tcp_connect(IP_t IP, uint16_t port);
 bool     tcp_send(uint32_t ID, void* data, size_t length);

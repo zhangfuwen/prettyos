@@ -96,6 +96,11 @@ bool network_installDevice(pciDev_t* device)
     adapter->Gateway_IP.IP[2] = GW_IP_3;
     adapter->Gateway_IP.IP[3] = GW_IP_4;
 
+    adapter->dnsServer_IP.IP[0] = DNS_IP_1;
+    adapter->dnsServer_IP.IP[1] = DNS_IP_2;
+    adapter->dnsServer_IP.IP[2] = DNS_IP_3;
+    adapter->dnsServer_IP.IP[3] = DNS_IP_4;
+    
     adapter->driver->install(adapter);
 
     if (adapters == 0)
@@ -188,6 +193,19 @@ uint32_t getMyIP()
         return (0);
     }
 }
+
+void dns_setServer(IP_t server)
+{
+     network_adapter_t* adapter = network_getFirstAdapter();
+     adapter->dnsServer_IP.iIP  = server.iIP;
+}
+
+void dns_getServer(IP_t* server)
+{
+    network_adapter_t* adapter = network_getFirstAdapter();
+    (*server).iIP = adapter->dnsServer_IP.iIP;
+}
+
 
 /*
 * Copyright (c) 2011 The PrettyOS Project. All rights reserved.

@@ -115,8 +115,8 @@ static void* syscalls[] =
 /*  80 */    &beep,
 /*  81 */    &nop,
 /*  82 */    &nop,
-/*  83 */    &nop,
-/*  84 */    &nop,
+/*  83 */    &dns_getServer,
+/*  84 */    &dns_setServer,
 
 /*  85 */    &tcp_uconnect,
 /*  86 */    &tcp_usend,
