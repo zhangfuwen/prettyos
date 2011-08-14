@@ -62,8 +62,7 @@ int main()
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 data = (void*)(header+1);
                 data[header->length] = 0;
-                printf("\npacket received. Length = %u\n:%s", header->length, data);
-                tcp_close(connection);
+                printf("\n%s", data);
                 textColor(0x0F);
                 break;
             }
@@ -78,6 +77,7 @@ int main()
                 else if(*key == KEY_F5)
                 {
                     printf("Reload...\n");
+                    tcp_close(connection);
                     connection = tcp_connect(IP, 80);
                     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
                 }
@@ -85,6 +85,7 @@ int main()
                 {
                     printf("\nEnter filename (Don't forget / ):\n");
                     gets(filename);
+                    tcp_close(connection);
                     connection = tcp_connect(IP, 80);
                     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
                 }
@@ -95,6 +96,7 @@ int main()
                     printf("\nEnter filename (Don't forget / ):\n");
                     gets(filename);
                     IP = resolveIP(hostname);
+                    tcp_close(connection);
                     connection = tcp_connect(IP, 80);
                     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
                 }
