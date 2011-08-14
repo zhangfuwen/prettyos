@@ -133,19 +133,19 @@ tcpConnection_t* tcp_createConnection()
 	
 	list_append(tcpConnections, connection);
 	
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	textColor(TEXT);
 	printf("\nTCP conn. created, ID: %u\n", connection->ID);
-#endif
+  #endif
 	
 	return(connection);
 }
 
 void tcp_deleteConnection(tcpConnection_t* connection)
 {
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	printf("\ndeleteConnection: %X ID: %u\n", connection, connection->ID);
-#endif
+  #endif
 	if (connection)
 	{
 		list_delete(tcpConnections, list_find(tcpConnections, connection));
@@ -175,9 +175,9 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 static void scheduledDeleteConnection(void* data, size_t length)
 {
 	tcpConnection_t* connection = *(tcpConnection_t**)data;
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	printf("\nscheduledDeleteConnection: %X ID: %u\n", connection, connection->ID);
-#endif
+  #endif
 	
 	if (connection && list_find(tcpConnections, connection) != 0)
 	{
@@ -191,11 +191,11 @@ static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t ti
 	{
 		todoList_add(kernel_idleTasks, &scheduledDeleteConnection, &connection, sizeof(connection), timeMilliseconds + timer_getMilliseconds());
 		
-#ifdef _TCP_DEBUG_
+      #ifdef _TCP_DEBUG_
 		textColor(LIGHT_BLUE);
 		printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
 		textColor(TEXT);
-#endif
+      #endif
 	}
 }
 
@@ -266,9 +266,11 @@ void tcp_close(tcpConnection_t* connection)
 				break;
 				
 			default:
-				textColor(ERROR);
+		      #ifdef _TCP_DEBUG_
+                textColor(ERROR);
 				printf("\nClose from unexpected state: %s", tcpStates[connection->TCP_PrevState]);
 				textColor(TEXT);
+              #endif
 				tcp_deleteConnection(connection);
 				break;
 		}
@@ -282,10 +284,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 	bool tcp_sendFlag   = false;
 	bool tcp_deleteFlag = false;
 	
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	textColor(HEADLINE);
 	printf("\n\nTCP rcvd: ");
-#endif
+  #endif
 	
 	tcp_debug(tcp, false);
 	
@@ -310,9 +312,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 	
 	if (connection == 0)
 	{
-#ifdef _TCP_DEBUG_
+      #ifdef _TCP_DEBUG_
 		printf("\nTCP packet received that does not belong to a TCP connection.");
-#endif
+      #endif
 		return;
 	}
 	
@@ -389,11 +391,11 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 			
 			if (!tcp_IsPacketAcceptable(tcp, connection, tcpDataLength))
 			{
-#ifdef _TCP_DEBUG_
+              #ifdef _TCP_DEBUG_
 				textColor(ERROR);
 				printf("\ntcp packet is not acceptable!");
 				textColor(TEXT);
-#endif
+              #endif
 				
 				if (tcp->RST)
 				{
@@ -519,7 +521,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 					}
 					
 					// Analysis
-#ifdef _TCP_DEBUG_
+                  #ifdef _TCP_DEBUG_
 					textColor(IMPORTANT);
 					printf("\ntcp: %u  tcpData: %u  tcpDataOff: %u\n", length, tcpDataLength, tcp->dataOffset);
 					textColor(LIGHT_BLUE);
@@ -528,11 +530,9 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 						printf("%y ", tcpData[i]);
 					}
 					textColor(TEXT);
-#endif
-				}
+                  #endif
+                }
 				sleepMilliSeconds(2);
-				
-				
 				
 				connection->tcb.RCV.ACKforDupACK = connection->tcb.RCV.NXT; // TEST for Dup-ACK
 				connection->tcb.RCV.WND = ntohs(tcp->window);               // cf. receiving dup-ACK
@@ -581,19 +581,19 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 						}
 					}
 					mutex_unlock(connection->owner->eventQueue->mutex);
-#ifdef _TCP_DEBUG_
+                  #ifdef _TCP_DEBUG_
 					textColor(MAGENTA);
 					printf("\ntotalTCPdataSize: %u ", totalTCPdataSize);
 					textColor(TEXT);
-#endif
+                  #endif
 					
 					// setting sliding window
 					if (retVal==0)
 					{
-#ifdef _TCP_DEBUG_
+                      #ifdef _TCP_DEBUG_
 						textColor(SUCCESS);
 						printf("ID. %u event queue OK", In->ev->connectionID);
-#endif
+                      #endif
 						
 						if (totalTCPdataSize <  STARTWINDOW && connection->tcb.SND.WND < MAXWINDOW)
 							connection->tcb.SEG.WND = connection->tcb.SND.WND += INCWINDOW;
@@ -604,10 +604,10 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 					}
 					else
 					{
-#ifdef _TCP_DEBUG_
+                      #ifdef _TCP_DEBUG_
 						textColor(ERROR);
 						printf("ID. %u event queue error: %u", In->ev->connectionID, retVal);
-#endif
+                      #endif
 						
 						connection->tcb.SEG.WND = connection->tcb.SND.WND  = 0;
 					}
@@ -670,17 +670,17 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 			break;
 			
 		case TIME_WAIT:
-#ifdef _TCP_DEBUG_
+          #ifdef _TCP_DEBUG_
 			textColor(RED);
 			printf("Packet received during state TIME_WAIT.");
 			textColor(TEXT);
-#endif
+          #endif
 			break;
 			
 		case CLOSE_WAIT: // Passive Close
-#ifdef _TCP_DEBUG_
+          #ifdef _TCP_DEBUG_
 			printf("Packet received at CLOSE_WAIT?!");
-#endif
+          #endif
 			break;
 			
 		case LAST_ACK:
@@ -780,11 +780,11 @@ static void tcp_sendReset(tcpConnection_t* connection, tcpPacket_t* tcp, bool ac
 
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length)
 {
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	textColor(HEADLINE);
 	printf("\nTCP send: ");
 	textColor(TEXT);
-#endif
+  #endif
 	
 	tcpPacket_t* tcp = malloc(sizeof(tcpPacket_t)+length, 0, "TCP packet");
 	memcpy(tcp+1, data, length);
@@ -903,10 +903,10 @@ static bool tcp_retransOutBuffer(tcpConnection_t* connection, uint32_t seq)
 		tcpOut_t* outPacket = e->data;
 		if (outPacket->segment.SEQ == seq) // searched packet found
 		{
-#ifdef _TCP_DEBUG_
+          #ifdef _TCP_DEBUG_
 			textColor(LIGHT_BLUE);
 			printf("\ndup-ack triggered retransmission done for seq = %u.", outPacket->segment.SEQ - connection->tcb.SND.ISS);
-#endif
+          #endif
 			
 			serial_log(SER_LOG_TCP,"\r\nID %u\t dup-ack triggered retransmission done for seq = %u.\r\n", connection->ID, outPacket->segment.SEQ - connection->tcb.SND.ISS);
 			connection->tcb.SEG.SEQ = outPacket->segment.SEQ;
@@ -922,10 +922,10 @@ static bool tcp_retransOutBuffer(tcpConnection_t* connection, uint32_t seq)
 			return true;
 		}
 	}
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	textColor(ERROR);
 	printf("\nPacket for requested retransmission not found.");
-#endif
+  #endif
 	serial_log(SER_LOG_TCP,"Packet for requested retransmission not found.\r\n");
 	textColor(TEXT);
 	return false;
@@ -933,16 +933,16 @@ static bool tcp_retransOutBuffer(tcpConnection_t* connection, uint32_t seq)
 
 static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 {
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	printf("\n\n");
-#endif
+  #endif
 	
 	uint32_t count = 0;
 	for (dlelement_t* e = connection->outBuffer->head; e != 0; e = e->next)
 	{
 		count++;
 		
-#ifdef _TCP_DEBUG_
+      #ifdef _TCP_DEBUG_
 		tcpOut_t* outPacket = e->data;
 		printf("\nID %u  seq %u len %u (not yet acknowledged)", connection->ID, outPacket->segment.SEQ - connection->tcb.SND.ISS, outPacket->segment.LEN);
 		if (showData)
@@ -955,7 +955,7 @@ static uint32_t tcp_checkOutBuffers(tcpConnection_t* connection, bool showData)
 			}
 			textColor(TEXT);
 		}
-#endif
+      #endif
 		
 		// check need for retransmission
 		/*
@@ -1110,7 +1110,7 @@ static void printFlag(uint8_t b, const char* s)
 
 static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
 {
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	textColor(IMPORTANT);
 	printf("%u ==> %u   ", ntohs(tcp->sourcePort), ntohs(tcp->destPort));
 	textColor(TEXT);
@@ -1122,21 +1122,21 @@ static void tcp_debug(tcpPacket_t* tcp, bool showWnd)
 		printf("  WND = %u  ", ntohs(tcp->window));
 		textColor(TEXT);
 	}
-#endif
+  #endif
 }
 
 static void tcpShowConnectionStatus(tcpConnection_t* connection)
 {
-#ifdef _TCP_DEBUG_
+  #ifdef _TCP_DEBUG_
 	textColor(IMPORTANT);
 	putch(' ');
 	puts(tcpStates[connection->TCP_CurrState]);
 	textColor(TEXT);
-#endif
-#ifdef _NETWORK_DATA_
+  #endif
+  #ifdef _NETWORK_DATA_
 	printf("   conn. ID: %u   src port: %u\n", connection->ID, connection->localSocket.port);
 	printf("SND.UNA = %u, SND.NXT = %u, SND.WND = %u", connection->tcb.SND.UNA, connection->tcb.SND.NXT, connection->tcb.SND.WND);
-#endif
+  #endif
 }
 
 static uint32_t tcp_logBuffers(tcpConnection_t* connection, bool showData, list_t* list)
@@ -1300,19 +1300,21 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
 
 bool tcp_uclose(uint32_t ID)
 {
-	tcpConnection_t* connection = tcp_findConnectionID(ID);
-	if (connection)
-	{
-		tcp_close(connection);
-		return true;
-	}
-	else
-	{
+    tcpConnection_t* connection = tcp_findConnectionID(ID);
+    if (connection)
+    {
+        tcp_close(connection);
+        return true;
+    }
+    else
+    {
+      #ifdef _TCP_DEBUG_
 		textColor(ERROR);
 		printf("connection with ID %u could not be found and closed.", ID);
 		textColor(TEXT);
-		return false;
-	}
+      #endif
+        return false;
+    }
 }
 
 
