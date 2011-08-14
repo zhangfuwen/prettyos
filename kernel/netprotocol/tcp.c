@@ -24,10 +24,19 @@ static const uint16_t INCWINDOW      =    50;
 static const uint16_t DECWINDOW      =   100;
 static const uint16_t MAXWINDOW      = 10000;
 
-static const uint16_t MSL            =  5000; // 5 sec max. segment lifetime  // CHECK
+// Retransmission timeout
 static const uint16_t RTO_STARTVALUE =  3000; // 3 sec  // rfc 2988
 static const uint16_t RTO_MAXVALUE   = 60000; // 60 sec // a maximum value MAY be placed on RTO provided it is at least 60 seconds.
-static const uint16_t MSS            =  1500 - sizeof(ipv4Packet_t) - sizeof(tcpPacket_t); // Maximum segment size
+
+// Maximum segment lifetime  
+static const uint16_t MSL            =  5000; // 5 sec 
+
+// Maximum segment size 
+static const uint16_t MSS            =  1500 - sizeof(ipv4Packet_t) - sizeof(tcpPacket_t); 
+
+// Lowest Port Number
+static const uint16_t HighestPortNum =  65535;
+static const uint16_t LowestPortNum  =  49152;
 
 static const char* const tcpStates[] =
 {
@@ -159,7 +168,6 @@ void tcp_deleteConnection(tcpConnection_t* connection)
 		connection->OutofOrderinBuffer = 0;
 		
 		serial_log(SER_LOG_TCP,"\r\nDeleted ID %u, countIN: %u, countOutofOrderIN: %u, countOUT (not acked): %u \r\n", connection->ID, countIN, countOutofOrderIN, countOUT);
-		event_issue(connection->owner->eventQueue, EVENT_TCP_CLOSED, &connection->ID, sizeof(connection->ID));
 		free(connection);
 	}
 }
@@ -240,6 +248,7 @@ void tcp_close(tcpConnection_t* connection)
 			case ESTABLISHED:
 			case SYN_RECEIVED:
 				tcp_sendFin(connection);
+                event_issue(connection->owner->eventQueue, EVENT_TCP_CLOSED, &connection->ID, sizeof(connection->ID));
 				connection->TCP_CurrState = FIN_WAIT_1;
 				tcp_timeoutDeleteConnection(connection, 2*connection->tcb.msl);
 				break;
@@ -409,6 +418,7 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
 				if (tcp->FIN) // FIN
 				{
                     tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
+                    event_issue(connection->owner->eventQueue, EVENT_TCP_CLOSED, &connection->ID, sizeof(connection->ID));
                     connection->TCP_CurrState = CLOSE_WAIT;
                     tcp_timeoutDeleteConnection(connection, 4*connection->tcb.msl); // HACK: to finish connection in kernel task
                     break;
@@ -1060,7 +1070,7 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
 
 static uint16_t tcp_getFreeSocket()
 {
-	return(0xC000 + rand() % (0xFFFF-0xC000));
+	return(LowestPortNum + rand() % (0xFFFF - LowestPortNum));
 }
 
 static uint32_t tcp_getConnectionID()

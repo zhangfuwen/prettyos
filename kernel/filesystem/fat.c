@@ -492,7 +492,9 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
     {
         fileptr->dircurrCluster = fileptr->dirfirstCluster;
         dir = cacheFileEntry(fileptr, fHandle, true);
+      #ifdef _FAT_DIAGNOSIS_
         FAT_showDirectoryEntry(dir);
+      #endif
     }
     else { dir = cacheFileEntry (fileptr, fHandle, false); }
 
