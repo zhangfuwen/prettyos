@@ -161,6 +161,15 @@
     <ClCompile Include="..\user\other_userprogs\ftp.c">
       <Filter>Other Userprogs</Filter>
     </ClCompile>
+    <ClCompile Include="..\user\user_tools\dns.c">
+      <Filter>User-Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_tools\dns_help.c">
+      <Filter>User-Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\showdns.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\user\user_tools\types.h">
@@ -225,6 +234,12 @@
     </ClInclude>
     <ClInclude Include="..\user\stdlibc\time.h">
       <Filter>stdlibC\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\dns.h">
+      <Filter>User-Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\dns_help.h">
+      <Filter>User-Tools</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
