@@ -1,7 +1,7 @@
 /* 
  * DNS help functions 
  * Written by: cooky451 - 8/15/2011
- * Last change: cooky451 - 8/15/2011
+ * Last change: ehenkes - 8/16/2011
  * Todo: getHostByName() which returns all hosts for a name.
  * Comments: - 
  */
@@ -26,10 +26,6 @@ IP_t getAddrByName(const char* name)
         sizeof(buf), name, query_id);
 
     dns_getServer(&dns_server);
-    dns_server.IP[0] = 208;
-    dns_server.IP[1] = 67;
-    dns_server.IP[2] = 222;
-    dns_server.IP[3] = 222; // netcologne DNS
     event_enable(1);
 
     if (query_size && dns_server.iIP && udp_send(buf, 
@@ -133,10 +129,6 @@ void showDNSQuery(const char* name)
         sizeof(buf), name, query_id);
 
     dns_getServer(&dns_server);
-    dns_server.IP[0] = 208;
-    dns_server.IP[1] = 67;
-    dns_server.IP[2] = 222;
-    dns_server.IP[3] = 222; // netcologne DNS
     printf("DNS Server: %u.%u.%u.%u\n", 
         dns_server.IP[0], dns_server.IP[1], 
         dns_server.IP[2], dns_server.IP[3]);

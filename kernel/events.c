@@ -4,11 +4,12 @@
 */
 
 #include "events.h"
-#include "task.h"
-#include "kheap.h"
 #include "util.h"
+#include "kheap.h"
+#include "task.h"
 
-extern list_t* tasks;
+
+extern list_t* tasks;   // flushEvent 
 
 event_queue_t* event_createQueue()
 {
@@ -16,7 +17,7 @@ event_queue_t* event_createQueue()
     queue->num = 0;
     queue->mutex = mutex_create();
     queue->list = list_create();
-    return(queue);
+    return (queue);
 }
 
 void event_deleteQueue(event_queue_t* queue)
@@ -33,7 +34,7 @@ void event_deleteQueue(event_queue_t* queue)
 
 uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t length)
 {
-    if (!destination) // Event handling disabled
+    if (destination == 0) // Event handling disabled
     {
         return (1);
     }
@@ -108,6 +109,7 @@ bool flushEvent(uint32_t pid, EVENT_t filter)
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 {
     task_t* task = (task_t*)currentTask;
+    
     while (task->parent && task->type == THREAD && task->eventQueue == 0)
     {
         task = task->parent; // Use parents eventQueue, if the thread has no own queue.
@@ -120,6 +122,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
     event_t* ev = 0;
     mutex_lock(task->eventQueue->mutex);
+    
     if (filter == EVENT_NONE)
     {
         ev = task->eventQueue->list->head->data;
@@ -143,22 +146,29 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     }
 
     EVENT_t type = EVENT_NONE;
+    
     if (ev->length > maxLength)
     {
         type = EVENT_INVALID_ARGUMENTS;
-        if (ev->length > sizeof(ev->data)) // data does not fit in pointer
+        
+        if (ev->length > sizeof(ev->data)) // data do not fit in pointer
+        {
             free(ev->data);
+        }
     }
     else
     {
         type = ev->type;
+        
         if (ev->length > sizeof(ev->data)) // data does not fit in pointer
         {
             memcpy(destination, ev->data, ev->length);
             free(ev->data);
         }
         else // Data fits in pointer: Optimization for small data, data saved in pointer itself
+        {
             memcpy(destination, &ev->data, ev->length);
+        }
     }
     task->eventQueue->num--;
     list_delete(task->eventQueue->list, list_find(task->eventQueue->list, ev));
@@ -171,18 +181,23 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
 {
     dlelement_t* elem = list_getElement(eventQueue->list, i);
-    if (elem == 0) return(0);
-    return(elem->data);
+    
+    if (elem == 0) 
+    {
+        return(0);
+    }
+    
+    return (elem->data);
 }
 
 bool event_unlockTask(void* data)
 {
-    return(((event_queue_t*)data)->num > 0);
+    return (((event_queue_t*)data)->num > 0);
 }
 
 bool waitForEvent(uint32_t timeout)
 {
-    return(scheduler_blockCurrentTask(BL_EVENT, currentTask->eventQueue, timeout));
+    return (scheduler_blockCurrentTask(BL_EVENT, currentTask->eventQueue, timeout));
 }
 
 void event_enable(bool b)
@@ -190,14 +205,19 @@ void event_enable(bool b)
     if (b)
     {
         if (currentTask->eventQueue == 0)
+        {
             currentTask->eventQueue = event_createQueue();
+        }
     }
     else
     {
-        if (currentTask->eventQueue != 0)
+        if (currentTask->eventQueue)
+        {
             event_deleteQueue(currentTask->eventQueue);
+        }
     }
 }
+
 
 /*
 * Copyright (c) 2011 The PrettyOS Project. All rights reserved.

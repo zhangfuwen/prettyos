@@ -81,21 +81,28 @@ bool network_installDevice(pciDev_t* device)
     for (uint8_t j = 0; j < 6; ++j) // check network card BARs
     {
         if (device->bar[j].memoryType == PCI_MMIO)
+        {
             adapter->MMIO_base = (void*)(device->bar[j].baseAddress &= 0xFFFFFFF0);
+        }
         else if (device->bar[j].memoryType == PCI_IO)
+        {
             adapter->IO_base = device->bar[j].baseAddress &= 0xFFFC;
+        }
     }
 
-    adapter->IP.IP[0] =  IP_1;
-    adapter->IP.IP[1] =  IP_2;
-    adapter->IP.IP[2] =  IP_3;
-    adapter->IP.IP[3] =  IP_4;
+    // nic
+    adapter->IP.IP[0]           =  IP_1;
+    adapter->IP.IP[1]           =  IP_2;
+    adapter->IP.IP[2]           =  IP_3;
+    adapter->IP.IP[3]           =  IP_4;
 
-    adapter->Gateway_IP.IP[0] = GW_IP_1;
-    adapter->Gateway_IP.IP[1] = GW_IP_2;
-    adapter->Gateway_IP.IP[2] = GW_IP_3;
-    adapter->Gateway_IP.IP[3] = GW_IP_4;
+    // gateway 
+    adapter->Gateway_IP.IP[0]   = GW_IP_1;
+    adapter->Gateway_IP.IP[1]   = GW_IP_2;
+    adapter->Gateway_IP.IP[2]   = GW_IP_3;
+    adapter->Gateway_IP.IP[3]   = GW_IP_4;
 
+    // DNS server 
     adapter->dnsServer_IP.IP[0] = DNS_IP_1;
     adapter->dnsServer_IP.IP[1] = DNS_IP_2;
     adapter->dnsServer_IP.IP[2] = DNS_IP_3;

@@ -37,10 +37,10 @@ qemu.exe  -boot a -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139 -re
 #define GW_IP_4     1
 
 // DNS IP for resolving name to IP
-#define DNS_IP_1     0
-#define DNS_IP_2     0
-#define DNS_IP_3     0
-#define DNS_IP_4     0
+#define DNS_IP_1   208
+#define DNS_IP_2    67
+#define DNS_IP_3   222
+#define DNS_IP_4   222
 
 typedef struct network_adapter network_adapter_t;
 

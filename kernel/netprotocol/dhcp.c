@@ -388,7 +388,6 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             if (opt[count+2] == 4)
             {
                 memcpy(adapter->Gateway_IP.IP, opt+count+3, 4);
-                dns_setServer(adapter->Gateway_IP); // set DNS server equal to gateway server
                 arp_sendRequest(adapter, adapter->Gateway_IP); // send gateway IP/MAC to arp cache
             }
             break;
