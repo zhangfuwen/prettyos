@@ -11,7 +11,10 @@
 
 bool enabledEvents = false;
 
+/////////////////////////////////////////////////////
 // Syscalls
+/////////////////////////////////////////////////////
+
 FS_ERROR execute(const char* path, size_t argc, char* argv[])
 {
     FS_ERROR ret;
@@ -94,6 +97,14 @@ FS_ERROR partition_format(const char* path, FS_t type, const char* name)
     return ret;
 }
 
+bool flushEvents(EVENT_t filter)
+{
+    bool ret;
+    uint32_t pid = getMyPID();
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(36), "b"(pid), "c"(filter));
+    return ret;
+}
+
 bool waitForEvent(uint32_t timeout)
 {
     bool ret;
@@ -114,14 +125,6 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 {
     EVENT_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(39), "b"(destination), "c"(maxLength), "d"(filter));
-    return ret;
-}
-
-bool flushEvents(EVENT_t filter)
-{
-    bool ret;
-    uint32_t pid = getMyPID();
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(36), "b"(pid), "c"(filter));
     return ret;
 }
 
@@ -168,20 +171,35 @@ void clearScreen(uint8_t backgroundColor)
     __asm__ volatile("int $0x7F" : : "a"(61), "b"(backgroundColor));
 }
 
-char getchar()
+void autoscroll(bool on)
 {
-    char ret = 0;
-    EVENT_t ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
+    __asm__ volatile("int $0x7F" : : "a"(65), "b"(on));
+}
 
-    while (ev != EVENT_TEXT_ENTERED)
-    {
-        if (ev == EVENT_NONE)
-        {
-            waitForEvent(0);
-        }
-        ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
-    }
-    return(ret);
+void autorefresh(bool on)
+{
+    __asm__ volatile("int $0x7F" : : "a"(66), "b"(on));
+}
+
+void flip()
+{
+	autorefresh(true);
+    __asm__ volatile("int $0x7F" : : "a"(67));
+	autorefresh(false);
+}
+
+uint16_t TextGUI_ShowMSG(char* title, char* message)
+{
+   uint16_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(68), "b"(title), "c"(message));
+    return ret;
+}
+
+uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected)
+{
+   uint16_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(69), "b"(title), "c"(message), "d"(defaultselected));
+    return ret;
 }
 
 bool keyPressed(KEY_t key)
@@ -196,21 +214,14 @@ void beep(uint32_t frequency, uint32_t duration)
     __asm__ volatile("int $0x7F" : : "a"(80), "b"(frequency), "c"(duration));
 }
 
-uint32_t getMyIP()
+void dns_getServer(IP_t* server)
 {
-    uint32_t ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret) : "a"(89));
-    return ret;
+    __asm__ volatile("int $0x7F" : : "a"(83), "b"(server));
 }
 
 void dns_setServer(IP_t server)
 {
     __asm__ volatile("int $0x7F" : : "a"(84), "b"(server));
-}
-
-void dns_getServer(IP_t* server)
-{
-    __asm__ volatile("int $0x7F" : : "a"(83), "b"(server));
 }
 
 uint32_t tcp_connect(IP_t IP, uint16_t port)
@@ -241,56 +252,36 @@ bool udp_send(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16
     return ret;
 }
 
- // deprecated
+uint32_t getMyIP()
+{
+    uint32_t ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret) : "a"(89));
+    return ret;
+}
+
+
+ // deprecated, to be substituted
 int32_t floppy_dir()
 {
     int32_t ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(90));
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(100));
     return ret;
 }
 void printLine(const char* message, uint32_t line, uint8_t attribute)
 {
     if (line <= 45) // User must not write outside of client area (size is 45)
     {
-        __asm__ volatile("int $0x7F" : : "a"(91), "b"(message), "c"(line), "d"(attribute));
+        __asm__ volatile("int $0x7F" : : "a"(101), "b"(message), "c"(line), "d"(attribute));
     }
 }
 
-uint16_t TextGUI_ShowMSG(char* title, char* message)
-{
-   uint16_t ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(68), "b"(title), "c"(message));
-    return ret;
-}
-
-uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected)
-{
-   uint16_t ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(69), "b"(title), "c"(message), "d"(defaultselected));
-    return ret;
-}
-
-void autorefresh(bool on)
-{
-    __asm__ volatile("int $0x7F" : : "a"(66), "b"(on));
-}
-
-void autoscroll(bool on)
-{
-    __asm__ volatile("int $0x7F" : : "a"(65), "b"(on));
-}
-
-
-void flip()
-{
-	autorefresh(true);
-    __asm__ volatile("int $0x7F" : : "a"(67));
-	autorefresh(false);
-}
 
 
 
+/////////////////////////////////////////////////////
 // user functions
+/////////////////////////////////////////////////////
+
 void sleep(uint32_t milliseconds)
 {
     wait(BL_TIME, 0, milliseconds);
@@ -306,6 +297,22 @@ void iSetCursor(uint16_t x, uint16_t y)
     position_t temp;
     temp.x = x; temp.y = y;
     setCursor(temp);
+}
+
+char getchar()
+{
+    char ret = 0;
+    EVENT_t ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
+
+    while (ev != EVENT_TEXT_ENTERED)
+    {
+        if (ev == EVENT_NONE)
+        {
+            waitForEvent(0);
+        }
+        ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
+    }
+    return(ret);
 }
 
 uint32_t getCurrentSeconds()

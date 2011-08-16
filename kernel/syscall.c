@@ -101,7 +101,7 @@ static void* syscalls[] =
 /*  68 */    &TextGUI_ShowMSG,
 /*  69 */    &TextGUI_AskYN,
 
-/*  70 */    0,
+/*  70 */    &nop,
 /*  71 */    &keyPressed,
 /*  72 */    &nop, // mousePressed
 /*  73 */    &nop, // getMousePosition
@@ -115,16 +115,27 @@ static void* syscalls[] =
 /*  80 */    &beep,
 /*  81 */    &nop,
 /*  82 */    &nop,
+
 /*  83 */    &dns_getServer,
 /*  84 */    &dns_setServer,
-
 /*  85 */    &tcp_uconnect,
 /*  86 */    &tcp_usend,
 /*  87 */    &tcp_uclose,
 /*  88 */    &udp_usend,
 /*  89 */    &getMyIP,
+/*  90 */    &nop,
+/*  91 */    &nop,
+/*  92 */    &nop,
+/*  93 */    &nop,
+/*  94 */    &nop,
+/*  95 */    &nop,
+/*  96 */    &nop,
+/*  97 */    &nop,
+/*  98 */    &nop,
+/*  99 */    &nop,
 
-// COMPATIBILITY (90-91); should be removed
+
+// COMPATIBILITY (100-101); should be removed
     &flpydsk_read_directory,
     &cprintf
 };
