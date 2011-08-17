@@ -424,27 +424,53 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     textColor(IMPORTANT);
-    printf("\npid: %d\t", t->pid);          // Process ID
+    printf("%d\t\b\b\b", t->pid);           // Process ID (pid)
     textColor(TEXT);
-    printf("esp: %Xh  ", t->esp);           // Stack pointer
-    printf("PD: %Xh  ", t->pageDirectory);  // Page directory
-    printf("k_stack: %Xh", t->kernelStack); // Kernel stack location
+    printf("%X  ",  t->esp);           // Stack pointer
+    printf("%X  ",  t->pageDirectory); // Page directory
+
+    if (t->kernelStack)
+    {
+        printf("%X  ", t->kernelStack); // Kernel stack location
+    }
+    else
+    {
+        textColor(GRAY);
+        printf("--------  ");
+        textColor(TEXT);
+    }
+
+    if (t->privilege)
+    {
+        printf("user   ");
+    }
+    else
+    {
+        printf("kernel   ");
+    }
 
     if (t->type == THREAD)
     {
-        printf("  parent: %u", t->parent->pid);
+        printf("parent task: ");
+        if (!t->parent->pid)
+        {
+             textColor(IMPORTANT);
+        }
+        printf("  %u", t->parent->pid);
+        textColor(TEXT);
     }
 
     if (t->threads && t->threads->head)
     {
-        printf("\n\t");
         printf("child-threads:");
-
+        textColor(IMPORTANT);
         for (dlelement_t* e = t->threads->head; e != 0; e = e->next)
         {
-            printf(" %u ", ((task_t*)e->data)->pid);
+            printf(" %u", ((task_t*)e->data)->pid);
         }
+        textColor(TEXT);
     }
+    printf("\n");
 }
 
 
