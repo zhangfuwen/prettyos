@@ -9,8 +9,6 @@
 #include "task.h"
 
 
-extern list_t* tasks;   // flushEvent 
-
 event_queue_t* event_createQueue()
 {
     event_queue_t* queue = malloc(sizeof(event_queue_t), 0, "event_queue");
@@ -82,34 +80,10 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
     }
 }
 
-bool flushEvent(uint32_t pid, EVENT_t filter)
-{
-    for (dlelement_t* e = tasks->head; e != 0; e = e->next)
-    {
-        if (((task_t*)e->data)->pid == pid)
-        {
-            list_t* eventlist = ((task_t*)e->data)->eventQueue->list;
-            
-            for (dlelement_t* element = eventlist->head; element != 0; element = element->next)
-            {
-                if ( ((event_t*)(element->data))->type == filter )
-                {
-                    free(element->data); 
-                    mutex_lock(((task_t*)e->data)->eventQueue->mutex);
-                    list_delete(eventlist, element);
-                    ((task_t*)e->data)->eventQueue->num--;
-                    mutex_unlock(((task_t*)e->data)->eventQueue->mutex);
-                }
-            }
-        }
-    }
-    return (true);
-}
-
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 {
     task_t* task = (task_t*)currentTask;
-    
+
     while (task->parent && task->type == THREAD && task->eventQueue == 0)
     {
         task = task->parent; // Use parents eventQueue, if the thread has no own queue.
@@ -122,7 +96,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
     event_t* ev = 0;
     mutex_lock(task->eventQueue->mutex);
-    
+
     if (filter == EVENT_NONE)
     {
         ev = task->eventQueue->list->head->data;
@@ -146,11 +120,11 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     }
 
     EVENT_t type = EVENT_NONE;
-    
+
     if (ev->length > maxLength)
     {
         type = EVENT_INVALID_ARGUMENTS;
-        
+
         if (ev->length > sizeof(ev->data)) // data do not fit in pointer
         {
             free(ev->data);
@@ -159,7 +133,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     else
     {
         type = ev->type;
-        
+
         if (ev->length > sizeof(ev->data)) // data does not fit in pointer
         {
             memcpy(destination, ev->data, ev->length);
@@ -181,12 +155,12 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
 {
     dlelement_t* elem = list_getElement(eventQueue->list, i);
-    
-    if (elem == 0) 
+
+    if (elem == 0)
     {
         return(0);
     }
-    
+
     return (elem->data);
 }
 

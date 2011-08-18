@@ -76,7 +76,7 @@ void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)
     tss.ss = tss.ds = tss.es = tss.fs = tss.gs = 0x10;
 }
 
-void tss_switch (uint32_t esp0, uint32_t esp, uint32_t ss)
+void tss_switch(uint32_t esp0, uint32_t esp, uint32_t ss)
 {
     tss.esp0 = esp0;
     tss.esp = esp;

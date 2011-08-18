@@ -3,7 +3,7 @@
 
 #define _cplusplus
 
-extern "C" 
+extern "C"
 {
     #include "userlib.h"
 }

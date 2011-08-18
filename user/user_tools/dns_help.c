@@ -1,9 +1,9 @@
-/* 
- * DNS help functions 
+/*
+ * DNS help functions
  * Written by: cooky451 - 8/15/2011
  * Last change: ehenkes - 8/16/2011
  * Todo: getHostByName() which returns all hosts for a name.
- * Comments: - 
+ * Comments: -
  */
 
 #include "stdlib.h"
@@ -22,20 +22,20 @@ IP_t getAddrByName(const char* name)
     IP_t host, dns_server;
     host.iIP = dns_server.iIP = 0;
 
-    query_size = dns_createSimpleQuery(buf, 
+    query_size = dns_createSimpleQuery(buf,
         sizeof(buf), name, query_id);
 
     dns_getServer(&dns_server);
     event_enable(1);
 
-    if (query_size && dns_server.iIP && udp_send(buf, 
+    if (query_size && dns_server.iIP && udp_send(buf,
         query_size, dns_server, dns_port, dns_port))
     {
         udpReceivedEventHeader_t* udp_header;
         char* data;
         size_t len;
         EVENT_t ev = event_poll(buf, sizeof(buf), EVENT_NONE);
-        for (; ev != EVENT_UDP_RECEIVED; 
+        for (; ev != EVENT_UDP_RECEIVED;
             ev = event_poll(buf, sizeof(buf), EVENT_NONE))
         {
             switch (ev)
@@ -97,22 +97,22 @@ IP_t getAddrByName(const char* name)
 void printDNSHeader(const dns_header *header)
 {
     printf("ID: %i\n""Flags: %u\n""Questions: %u\n"
-        "Answers: %i\n""Authoritys: %u\n""Additionals: %u\n", 
-        header->id, header->flags, header->qdcount, 
+        "Answers: %i\n""Authoritys: %u\n""Additionals: %u\n",
+        header->id, header->flags, header->qdcount,
         header->ancount, header->arcount, header->nscount);
 }
 
 void printDNSQuestion(const dns_question *question)
 {
-    printf("Name: %s\n""Type: %u\n""Class: %u\n", 
+    printf("Name: %s\n""Type: %u\n""Class: %u\n",
         question->qname, question->qtype, question->qclass);
 }
 
 void printDNSResource(const dns_resource *resource)
 {
     printf("Name: %s\n""Type: %u\n""Class: %u\n"
-        "TTL: %ul\n""RDLength: %u\n", 
-        resource->name, resource->type, resource->dns_class, 
+        "TTL: %ul\n""RDLength: %u\n",
+        resource->name, resource->type, resource->dns_class,
         resource->ttl, resource->rdlength);
 }
 
@@ -125,24 +125,24 @@ void showDNSQuery(const char* name)
 
     printf("Begin DNS query for %s..\n", name);
 
-    query_size = dns_createSimpleQuery(buf, 
+    query_size = dns_createSimpleQuery(buf,
         sizeof(buf), name, query_id);
 
     dns_getServer(&dns_server);
-    printf("DNS Server: %u.%u.%u.%u\n", 
-        dns_server.IP[0], dns_server.IP[1], 
+    printf("DNS Server: %u.%u.%u.%u\n",
+        dns_server.IP[0], dns_server.IP[1],
         dns_server.IP[2], dns_server.IP[3]);
 
     event_enable(1);
 
-    if (query_size && dns_server.iIP && udp_send(buf, 
+    if (query_size && dns_server.iIP && udp_send(buf,
         query_size, dns_server, dns_port, dns_port))
     {
         udpReceivedEventHeader_t* udp_header;
         char* data;
         size_t len;
         EVENT_t ev = event_poll(buf, sizeof(buf), EVENT_NONE);
-        for (; ev != EVENT_UDP_RECEIVED; 
+        for (; ev != EVENT_UDP_RECEIVED;
             ev = event_poll(buf, sizeof(buf), EVENT_NONE))
         {
             switch (ev)
@@ -202,18 +202,18 @@ void showDNSQuery(const char* name)
                         resource.dns_class == dns_class_IN &&
                         resource.rdlength >= 4)
                     {
-                        printf("Found IP: %u.%u.%u.%u\n", 
-                            (unsigned char)resource.rdata[0], 
-                            (unsigned char)resource.rdata[1], 
-                            (unsigned char)resource.rdata[2], 
+                        printf("Found IP: %u.%u.%u.%u\n",
+                            (unsigned char)resource.rdata[0],
+                            (unsigned char)resource.rdata[1],
+                            (unsigned char)resource.rdata[2],
                             (unsigned char)resource.rdata[3]);
                     }
-                    else if (resource.type == dns_type_CNAME && 
-                        resource.dns_class == dns_class_IN && 
+                    else if (resource.type == dns_type_CNAME &&
+                        resource.dns_class == dns_class_IN &&
                         resource.rdlength < 256)
                     {
                         char alias[256];
-                        if (dns_parseName(alias, data, resource.rdlength, 
+                        if (dns_parseName(alias, data, resource.rdlength,
                             resource.rdata))
                         {
                             printf("Found CNAME: %s\n", alias);

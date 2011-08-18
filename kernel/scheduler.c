@@ -167,7 +167,7 @@ void scheduler_log()
 
     textColor(TABLE_HEADING);
     printf("\n--------------------------------------------------------------------------------");
-    printf("pid  esp\t\bpd\t k_stack   access   thread"                                    );
+    printf("pid  esp\t\bpd\t k_stack   access   thread");
     printf("\n--------------------------------------------------------------------------------");
 
     if (runningTasks->begin != 0)

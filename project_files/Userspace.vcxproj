@@ -58,6 +58,7 @@
     <ClCompile Include="..\user\other_userprogs\irc.c" />
     <ClCompile Include="..\user\other_userprogs\keysound.c" />
     <ClCompile Include="..\user\other_userprogs\music.c" />
+    <ClCompile Include="..\user\other_userprogs\pong.c" />
     <ClCompile Include="..\user\other_userprogs\pqeq.c" />
     <ClCompile Include="..\user\other_userprogs\rctl.c" />
     <ClCompile Include="..\user\other_userprogs\readme.c" />

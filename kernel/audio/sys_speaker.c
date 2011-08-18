@@ -3,7 +3,6 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-
 // Enable pc-speaker-simulation in qemu: -soundhw pcspk
 
 #include "sys_speaker.h"
@@ -11,31 +10,30 @@
 #include "timer.h"
 #include "pit.h"
 
+
 void sound(uint32_t frequency)
 {
-    uint8_t  temp;
+    // set commandregister to 0xB6 = 10 11 011 0 // Select channel, Access mode, Operating mode, BCD/Binary mode
+    outportb(COMMANDREGISTER, COUNTER_2 | RW_HI_LO_MODE | SQUAREWAVE); // x86 offers only binary mode (no BCD)
 
     // calculate our divisor
     uint16_t divisor = TIMECOUNTER_i8254_FREQU / frequency; //divisor must fit into 16 bits; PIT (programable interrupt timer)
 
-    // set commandregister to 0xB6 = 10 11 011 0 // Select channel, Access mode, Operating mode, BCD/Binary mode
-    outportb( COMMANDREGISTER, COUNTER_2 | RW_HI_LO_MODE | SQUAREWAVE ); // x86 offers only binary mode (no BCD)
-
     // send divisor
-    outportb( COUNTER_2_DATAPORT, BYTE1(divisor) );
-    outportb( COUNTER_2_DATAPORT, BYTE2(divisor) );
+    outportb(COUNTER_2_DATAPORT, BYTE1(divisor));
+    outportb(COUNTER_2_DATAPORT, BYTE2(divisor));
 
     // sound on
-    temp = inportb( COUNTER_2_CONTROLPORT );
-    if (temp != ( temp | (AUX_GATE_2 | AUX_OUT_2) ) )
+    uint8_t temp = inportb(COUNTER_2_CONTROLPORT);
+    if (temp != (temp | (AUX_GATE_2 | AUX_OUT_2)))
     {
-        outportb( COUNTER_2_CONTROLPORT, temp | (AUX_GATE_2 | AUX_OUT_2) );
+        outportb(COUNTER_2_CONTROLPORT, temp | (AUX_GATE_2 | AUX_OUT_2));
     }
 }
 
 void noSound()
 {
-    outportb( COUNTER_2_CONTROLPORT, inportb(COUNTER_2_CONTROLPORT) & ~(AUX_GATE_2 | AUX_OUT_2) );
+    outportb(COUNTER_2_CONTROLPORT, inportb(COUNTER_2_CONTROLPORT) & ~(AUX_GATE_2 | AUX_OUT_2));
 }
 
 void beep(uint32_t freq, uint32_t duration)
@@ -48,7 +46,7 @@ void beep(uint32_t freq, uint32_t duration)
 
 void msgbeep()
 {
-    beep(440,1000);
+    beep(440, 1000);
 }
 
 /*

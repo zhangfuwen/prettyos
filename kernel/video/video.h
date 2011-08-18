@@ -5,6 +5,11 @@
 #include "storage/devicemanager.h" // HACK
 
 
+#define COLUMNS 80
+#define LINES   50
+#define USER_BEGIN 2 // Reserving  Titlebar + Separation
+#define USER_END   48 // Reserving Statusbar + Separation
+
 //CRTC Address Register and the CRTC Data Register
 #define CRTC_ADDR_REGISTER           0x3D4
 #define CRTC_DATA_REGISTER           0x3D5
@@ -25,6 +30,7 @@ typedef enum
     VM_TEXT, VM_VBE
 } VIDEOMODES;
 
+
 // These alias for colors are mandatory
 #define ERROR          LIGHT_RED
 #define SUCCESS        GREEN
@@ -35,7 +41,6 @@ typedef enum
 #define TEXT           WHITE
 #define FOOTNOTE       LIGHT_RED
 #define TITLEBAR       LIGHT_RED
-
 
 
 enum COLORS

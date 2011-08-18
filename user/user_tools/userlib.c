@@ -97,14 +97,6 @@ FS_ERROR partition_format(const char* path, FS_t type, const char* name)
     return ret;
 }
 
-bool flushEvents(EVENT_t filter)
-{
-    bool ret;
-    uint32_t pid = getMyPID();
-    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(36), "b"(pid), "c"(filter));
-    return ret;
-}
-
 bool waitForEvent(uint32_t timeout)
 {
     bool ret;
@@ -171,21 +163,14 @@ void clearScreen(uint8_t backgroundColor)
     __asm__ volatile("int $0x7F" : : "a"(61), "b"(backgroundColor));
 }
 
-void autoscroll(bool on)
+void console_setProperties(console_properties_t properties)
 {
-    __asm__ volatile("int $0x7F" : : "a"(65), "b"(on));
+    __asm__ volatile("int $0x7F" : : "a"(62), "b"(properties));
 }
 
-void autorefresh(bool on)
+void refreshScreen()
 {
-    __asm__ volatile("int $0x7F" : : "a"(66), "b"(on));
-}
-
-void flip()
-{
-	autorefresh(true);
-    __asm__ volatile("int $0x7F" : : "a"(67));
-	autorefresh(false);
+    __asm__ volatile("int $0x7F" : : "a"(63));
 }
 
 uint16_t TextGUI_ShowMSG(char* title, char* message)
@@ -281,6 +266,15 @@ void printLine(const char* message, uint32_t line, uint8_t attribute)
 /////////////////////////////////////////////////////
 // user functions
 /////////////////////////////////////////////////////
+
+void event_flush(EVENT_t filter)
+{
+    EVENT_t ev;
+    do
+    {
+        ev = event_poll(0, 0, filter);
+    } while(ev != EVENT_NONE);
+}
 
 void sleep(uint32_t milliseconds)
 {

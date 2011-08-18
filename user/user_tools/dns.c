@@ -1,10 +1,10 @@
-/* 
- * DNS Parser 
+/*
+ * DNS Parser
  * Ref: tools.ietf.org/html/rfc1035
  * Written by: cooky451 - 8/15/2011
  * Last change: cooky451 - 8/15/2011
  * Todo: Parser for authority, additional. (See dns_header)
- *       Parser for RR's: NS, MD, MF, SOA, MB, MG, MR, NULL, 
+ *       Parser for RR's: NS, MD, MF, SOA, MB, MG, MR, NULL,
  *           WKS, PTR, HINFO, MINFO, MX, TXT. (See dns_qtype)
  * Comments: Take a look at Ref: 2.3.4. Size limits. (Bottom of file)
  */
@@ -24,13 +24,13 @@ void dns_copyInverse(void* dst, const void* src, size_t size)
 
 void dns_fillHeaderWithFlags(dns_header *header, const dns_flags *flags)
 {
-    header->flags = (flags->QR << 15) | (flags->OPCODE << 11) | 
-                    (flags->AA << 10) | (flags->TC << 9) | 
-                    (flags->RD << 8) | (flags->RA << 7) | 
+    header->flags = (flags->QR << 15) | (flags->OPCODE << 11) |
+                    (flags->AA << 10) | (flags->TC << 9) |
+                    (flags->RD << 8) | (flags->RA << 7) |
                     (flags->Z << 4) | (flags->RCODE << 0);
 }
 
-size_t dns_writeHeaderToBuffer(char *buf, size_t buf_size, 
+size_t dns_writeHeaderToBuffer(char *buf, size_t buf_size,
     const dns_header *header)
 {
     if (buf_size >= 12)
@@ -46,7 +46,7 @@ size_t dns_writeHeaderToBuffer(char *buf, size_t buf_size,
     return 0;
 }
 
-size_t dns_writeQuestionToBuffer(char *buf, size_t buf_size, 
+size_t dns_writeQuestionToBuffer(char *buf, size_t buf_size,
     const dns_question *question)
 {
     size_t need_space = strlen(question->qname) + 6;
@@ -54,7 +54,7 @@ size_t dns_writeQuestionToBuffer(char *buf, size_t buf_size,
     {
         // "www.henkessoft.de" -> "\x03www\x0Ahenkessoft\0x02de"
         // Ref: 4.1.2. Question section format, -> QNAME
-        //      
+        //
         char *p;
         uint16_t n;
         strcpy(buf + 1, question->qname);
@@ -83,7 +83,7 @@ size_t dns_writeQuestionToBuffer(char *buf, size_t buf_size,
     return 0;
 }
 
-size_t dns_createSimpleQueryBuffer(char *buf, size_t buf_size, 
+size_t dns_createSimpleQueryBuffer(char *buf, size_t buf_size,
     const dns_header *header, const dns_question *question)
 {
     int w = dns_writeHeaderToBuffer(buf, buf_size, header);
@@ -98,7 +98,7 @@ size_t dns_createSimpleQueryBuffer(char *buf, size_t buf_size,
     return 0;
 }
 
-size_t dns_createSimpleQuery(char *buf, size_t buf_size, 
+size_t dns_createSimpleQuery(char *buf, size_t buf_size,
     const char *url, uint16_t id)
 {
     if (strlen(url) < 256)
@@ -123,13 +123,13 @@ size_t dns_createSimpleQuery(char *buf, size_t buf_size,
         question.qclass = dns_class_IN; // internet
         strcpy(question.qname, url);
         question.qtype = dns_type_A; // IPv4 addr
-        return dns_createSimpleQueryBuffer(buf, 
+        return dns_createSimpleQueryBuffer(buf,
             buf_size, &header, &question);
     }
     return 0;
 }
 
-const char* dns_parseHeader(dns_header *header, 
+const char* dns_parseHeader(dns_header *header,
     const char *buf, size_t buf_size)
 {
     if (buf_size >= 12)
@@ -145,7 +145,7 @@ const char* dns_parseHeader(dns_header *header,
     return 0;
 }
 
-const char* dns_parseName(char *dst, const char *buf, 
+const char* dns_parseName(char *dst, const char *buf,
     size_t buf_size, const char *pos)
 {
     size_t size = buf_size - (pos - buf);
@@ -154,7 +154,7 @@ const char* dns_parseName(char *dst, const char *buf,
     while (size)
     {
         unsigned char i = *pos++;
-        for (; i != 0 && i < size && i < 64 && 
+        for (; i != 0 && i < size && i < 64 &&
             i + written < 256; i = *pos++)
         {
             size -= i + 1;
@@ -183,12 +183,12 @@ const char* dns_parseName(char *dst, const char *buf,
     return 0;
 }
 
-const char* dns_parseQuestion(dns_question *question, 
+const char* dns_parseQuestion(dns_question *question,
     const char *buf, size_t buf_size, const char *pos)
 {
     if (buf_size)
     {
-        const char *p = dns_parseName(question->qname, 
+        const char *p = dns_parseName(question->qname,
             buf, buf_size, pos);
         if (p && buf_size - (p - buf) >= 4)
         {
@@ -200,12 +200,12 @@ const char* dns_parseQuestion(dns_question *question,
     return 0;
 }
 
-const char* dns_parseResource(dns_resource* resource, 
+const char* dns_parseResource(dns_resource* resource,
     const char* buf, size_t buf_size, const char* pos)
 {
     if (buf_size)
     {
-        const char* p = dns_parseName(resource->name, 
+        const char* p = dns_parseName(resource->name,
             buf, buf_size, pos);
         if (p && buf_size - (p - buf) >= 10)
         {
@@ -226,16 +226,16 @@ const char* dns_parseResource(dns_resource* resource,
 
 /* Ref:
  * 2.3.4. Size limits
- * 
+ *
  * Various objects and parameters in the DNS have size limits.  They are
  * listed below.  Some could be easily changed, others are more
  * fundamental.
- * 
+ *
  * labels          63 octets or less
- * 
+ *
  * names           255 octets or less
- * 
+ *
  * TTL             positive values of a signed 32 bit number.
- * 
- * UDP messages    512 octets or less 
+ *
+ * UDP messages    512 octets or less
  */

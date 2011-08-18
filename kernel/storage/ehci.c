@@ -439,7 +439,7 @@ void resetPort(uint8_t j)
     {
         sleepMilliSeconds(20);
         timeout--;
-        if (timeout <= 0)
+        if (timeout == 0)
         {
             textColor(ERROR);
             printf("\nTimeour Error: Port %u did not reset! ",j+1);
@@ -546,7 +546,7 @@ void ehci_portcheck(void* data, size_t size)
 
 void portCheck()
 {
-    showInfobar(true); // protect console against info area
+    console_setProperties(CONSOLE_SHOWINFOBAR|CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH); // protect console against info area
     showPORTSC();      // with resetPort(j) and checkPortLineStatus(j)
     textColor(IMPORTANT);
     printf("\n>>> Press key to close this console. <<<");

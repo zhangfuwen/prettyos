@@ -34,6 +34,14 @@ typedef enum
 
 typedef enum
 {
+	CONSOLE_FULLSCREEN  = 1,
+	CONSOLE_SHOWINFOBAR = 2,
+	CONSOLE_AUTOREFRESH = 4,
+	CONSOLE_AUTOSCROLL  = 8
+} console_properties_t;
+
+typedef enum
+{
     CE_GOOD = 0,                    // No error
     CE_ERASE_FAIL,                  // An erase failed
     CE_NOT_PRESENT,                 // No device was present

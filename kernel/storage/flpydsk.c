@@ -710,7 +710,7 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
     {
         timeout--;
         printf("write error: attempts left: %d\n", timeout);
-        if (timeout<=0)
+        if (timeout == 0)
         {
             printf("timeout\n");
             break;

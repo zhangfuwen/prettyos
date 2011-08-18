@@ -73,14 +73,14 @@ int main()
     IP_t dnsServerStart;
     dns_getServer(&dnsServerStart);
     printf("DNS Server IP is %u.%u.%u.%u\n", dnsServerStart.IP[0], dnsServerStart.IP[1], dnsServerStart.IP[2], dnsServerStart.IP[3]);
-    
+
     IP_t server;
     server.IP[0] = 0;
     server.IP[1] = 1;
     server.IP[2] = 2;
     server.IP[3] = 3;
     dns_setServer(server);
-    
+
     IP_t dnsServer;
     dns_getServer(&dnsServer);
     printf("DNS Server IP is %u.%u.%u.%u\n", dnsServer.IP[0], dnsServer.IP[1], dnsServer.IP[2], dnsServer.IP[3]);

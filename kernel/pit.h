@@ -1,8 +1,6 @@
 #ifndef PIT_H
 #define PIT_H
 
-#include "os.h"
-
 
 // Counter 0, 1, 2
 #define TIMECOUNTER_i8254_FREQU  1193182

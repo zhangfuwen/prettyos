@@ -63,7 +63,7 @@ static void* syscalls[] =
 /*  33 */    &nop,
 /*  34 */    &nop,
 /*  35 */    &nop,
-/*  36 */    &flushEvent,
+/*  36 */    &nop,
 /*  37 */    &waitForEvent,
 /*  38 */    &event_enable,
 /*  39 */    &event_poll,
@@ -92,12 +92,12 @@ static void* syscalls[] =
 /*  59 */    &getCursor,
 /*  60 */    &nop, // readChar
 /*  61 */    &console_clear,
-/*  62 */    &nop,
-/*  63 */    &nop,
+/*  62 */    &console_setProperties,
+/*  63 */    &refreshUserScreen,
 /*  64 */    &nop,
-/*  65 */    &autoscroll,
-/*  66 */    &autorefresh,
-/*  67 */    &refreshUserScreen,
+/*  65 */    &nop,
+/*  66 */    &nop,
+/*  67 */    &nop,
 /*  68 */    &TextGUI_ShowMSG,
 /*  69 */    &TextGUI_AskYN,
 
@@ -154,7 +154,6 @@ static void syscall_handler(registers_t* r)
         return;
 
     console_current = currentTask->console; // Syscall output should appear in the console of the task that caused the syscall
-    void* addr = syscalls[r->eax];
 
     // We don't know how many parameters the function wants.
     // Therefore, we push them all onto the stack in the correct order.
@@ -167,7 +166,7 @@ static void syscall_handler(registers_t* r)
       push %5; \
       call *%6; \
       add $20, %%esp;"
-       : "=a" (r->eax) : "D" (r->edi), "S" (r->esi), "d" (r->edx), "c" (r->ecx), "b" (r->ebx), "a" (addr));
+       : "=a" (r->eax) : "D" (r->edi), "S" (r->esi), "d" (r->edx), "c" (r->ecx), "b" (r->ebx), "a" (syscalls[r->eax]));
 
     console_current = kernelTask.console;
 }

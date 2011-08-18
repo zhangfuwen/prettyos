@@ -18,10 +18,6 @@ VIDEOMODES videomode = VM_TEXT;
 
 static char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 
-static const uint8_t LINES      = 50;
-static const uint8_t USER_BEGIN =  2; // Reserving  Titlebar + Separation
-static const uint8_t USER_END   = 48; // Reserving Statusbar + Separation
-
 static position_t cursor = {0, 0};
 
 static mutex_t* videoLock = 0;
@@ -215,7 +211,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
 static void refreshInfoBar()
 {
-    memset(vidmem + (USER_BEGIN + USER_LINES - 3) * COLUMNS, 0, 3 * COLUMNS * 2); // Clearing info-area
+    memset(vidmem + (USER_BEGIN + LINES - 7) * COLUMNS, 0, 3 * COLUMNS * 2); // Clearing info-area
     kprintf(infoBar[0], 45, 14);
     kprintf(infoBar[1], 46, 14);
     kprintf(infoBar[2], 47, 14);
@@ -228,7 +224,7 @@ void writeInfo(uint8_t line, const char* args, ...)
     vsnprintf(infoBar[line], 81, args, ap);
     va_end(ap);
 
-    if (console_displayed->showInfobar)
+    if (console_displayed->properties & CONSOLE_SHOWINFOBAR)
     {
         refreshInfoBar();
     }
@@ -236,10 +232,14 @@ void writeInfo(uint8_t line, const char* args, ...)
 
 void refreshUserScreen()
 {
-    if (console_displayed->autorefresh == true)
-    {
-        mutex_lock(videoLock);
+    mutex_lock(videoLock);
 
+    if(console_displayed->properties & CONSOLE_FULLSCREEN)
+    {
+        memcpy(vidmem, (void*)console_displayed->vidmem, COLUMNS*LINES*sizeof(uint16_t));
+    }
+    else
+    {
         // Printing titlebar
         kprintf("PrettyOS [Version %s]                                                            ", 0, TITLEBAR, version);
 
@@ -257,25 +257,25 @@ void refreshUserScreen()
             kputs(Buffer, 0x0C);
         }
         kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
-        if (console_displayed->showInfobar)
+        if (console_displayed->properties & CONSOLE_SHOWINFOBAR)
         {
             // copying content of visible console to the video-ram
-            memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_LINES-4) * 2);
+            memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_END-USER_BEGIN-4) * 2);
             kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
             refreshInfoBar();
         }
         else
         {
             // copying content of visible console to the video-ram
-            memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * USER_LINES*2);
+            memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_END-USER_BEGIN)*2);
         }
         kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
 
         cursor.y = console_displayed->cursor.y;
         cursor.x = console_displayed->cursor.x;
-        mutex_unlock(videoLock);
-        video_updateCursor();
     }
+    mutex_unlock(videoLock);
+    video_updateCursor();
 }
 
 void video_updateCursor()

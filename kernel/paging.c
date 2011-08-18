@@ -29,7 +29,7 @@ static uint32_t firstFreeDWORD;
 static uint32_t physMemInit();
 
 
-void paging_switch (pageDirectory_t* pd)
+void paging_switch(pageDirectory_t* pd)
 {
   #ifdef _PAGING_DIAGNOSIS_
     textColor(MAGENTA);

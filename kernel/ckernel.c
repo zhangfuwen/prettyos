@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.2.316 - Rev: 1178";
+const char* const version = "0.0.2.317 - Rev: 1179";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -225,8 +225,8 @@ void main(multiboot_t* mb_struct)
     showDiskList();
     #endif
 
-	/*
-    TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !","This is an educational OS!");
+
+    /*TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !","This is an educational OS!");
 
     uint16_t result = TextGUI_AskYN("Question","Are you a software developer?",TEXTGUI_YES);
 
@@ -243,8 +243,8 @@ void main(multiboot_t* mb_struct)
         default:
             TextGUI_ShowMSG("Result","This can not happen.");
             break;
-    }
-	 */
+    }*/
+
 
     // search and load shell
     bool shell_found = false;
@@ -314,15 +314,15 @@ void main(multiboot_t* mb_struct)
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
-        vga_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
+        if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
+            vga_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
         if (! *++progress) { progress = "|/-\\"; }
 
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
         char buffer[4];
         EVENT_t ev = event_poll(buffer, 4, EVENT_NONE); // Take one event from the event queue
-        uint32_t t = timer_getMilliseconds();
 
-        while (ev != EVENT_NONE && (timer_getMilliseconds() - t < 1000))
+        while (ev != EVENT_NONE)
         {
             switch (ev)
             {
@@ -429,10 +429,9 @@ void main(multiboot_t* mb_struct)
                     break;
             }
             ev = event_poll(buffer, 4, EVENT_NONE);
-            t = timer_getMilliseconds();
         }
 
-        if (timer_getSeconds() != CurrentSeconds)
+        if (timer_getSeconds() != CurrentSeconds && !(console_displayed->properties & CONSOLE_FULLSCREEN))
         {
             CurrentSeconds = timer_getSeconds();
 

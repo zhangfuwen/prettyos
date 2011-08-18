@@ -13,22 +13,22 @@ del ser2.txt
 del ser3.txt
 del ser4.txt
 set QEMU_AUDIO_DRV=wav
-qemu.exe  -boot a -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139 -redir tcp:5023::23 
+qemu.exe  -boot a -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139 -redir tcp:5023::23
 -redir tcp:8080::80 -localtime -net user -net dump,file=netdump.pcap -usb
--serial file:ser1.txt -serial file:ser2.txt -serial file:ser3.txt -serial file:ser4.txt 
+-serial file:ser1.txt -serial file:ser2.txt -serial file:ser3.txt -serial file:ser4.txt
 */
 
 // own IP at start
 #define IP_1    192
-#define IP_2    168 
+#define IP_2    168
 #define IP_3      1
-#define IP_4     22 
+#define IP_4     22
 
 // requested IP
 #define RIP_1   192
 #define RIP_2   168
 #define RIP_3     1
-#define RIP_4    22 
+#define RIP_4    22
 
 // gateway IP for routing to the internet
 #define GW_IP_1   192
@@ -64,7 +64,7 @@ struct network_adapter
     DHCP_state        DHCP_State;
     IP_t              Gateway_IP;
     IP_t              Subnet;
-    IP_t              dnsServer_IP;  
+    IP_t              dnsServer_IP;
 };
 
 typedef struct

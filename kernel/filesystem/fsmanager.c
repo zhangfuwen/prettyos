@@ -9,6 +9,7 @@
 #include "kheap.h"
 #include "util.h"
 
+
 fileSystem_t FAT    = {.fopen = &FAT_fopen, .fclose = &FAT_fclose, .fgetc = &FAT_fgetc, .fputc = &FAT_fputc, .fseek = &FAT_fseek, .remove = &FAT_remove, .rename = &FAT_rename, .pformat = &FAT_format, .pinstall = &FAT_pinstall, .folderAccess = &FAT_folderAccess, .folderClose = &FAT_folderClose},
              INITRD = {};
 

@@ -8,23 +8,26 @@
 
 #define KERNELCONSOLE_ID 0
 
-#define COLUMNS 80
-#define USER_LINES 46
 
+typedef enum
+{
+    CONSOLE_FULLSCREEN  = 1,
+    CONSOLE_SHOWINFOBAR = 2,
+    CONSOLE_AUTOREFRESH = 4,
+    CONSOLE_AUTOSCROLL  = 8
+} console_properties_t;
 
 typedef struct // Defines the User-Space of the display
 {
     uint8_t    ID; // Number of the console. Used to access it via the reachableConsoles array
     char*      name;
-    bool       showInfobar;
-	bool       autorefresh;
-	bool       scrolling;
+    console_properties_t properties;
     uint8_t    scrollBegin;
     uint8_t    scrollEnd;
     position_t cursor;
     mutex_t*   mutex;
     list_t*    tasks;
-    uint16_t   vidmem[USER_LINES*COLUMNS]; // Memory that stores the content of this console. Size is USER_LINES*COLUMNS
+    uint16_t   vidmem[LINES*COLUMNS]; // Memory that stores the content of this console. Size is USER_LINES*COLUMNS
 } console_t;
 
 
@@ -42,9 +45,7 @@ bool console_display(uint8_t ID);
 void console_clear(uint8_t backcolor);
 void textColor(uint8_t color); // bit 4-7: background; bit 1-3: foreground
 uint8_t getTextColor();
-void showInfobar(bool show);
-void autorefresh(bool on);
-void autoscroll(bool on);
+void console_setProperties(console_properties_t properties);
 void setScrollField(uint8_t begin, uint8_t end);
 void console_setPixel(uint8_t x, uint8_t y, uint16_t value);
 void putch(char c);

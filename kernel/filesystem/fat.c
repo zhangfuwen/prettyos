@@ -899,7 +899,7 @@ static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t
             break;
         case FS_FAT12:
             if (q) { c = ((value & 0x0F) << 4) | (MemoryReadByte(globalBufferFATSector, posFAT) & 0x0F); }
-            else   { c = (value & 0xFF); }
+            else   { c = ( value & 0xFF); }
 
             MemoryWriteByte(globalBufferFATSector, posFAT, c);
 
@@ -1583,7 +1583,7 @@ FS_ERROR FAT_createFileEntry(FAT_file_t* fileptr, uint32_t *fHandle, uint8_t mod
 
     if (FAT_FindEmptyEntries(fileptr, fHandle))
     {
-        if ((error = PopulateEntries(fileptr, name,fHandle, mode)) == CE_GOOD)
+        if ((error = PopulateEntries(fileptr, name, fHandle, mode)) == CE_GOOD)
         {
             return createFirstCluster(fileptr);
         }

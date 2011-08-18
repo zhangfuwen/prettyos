@@ -1,4 +1,4 @@
-/* 
+/*
  * DNS
  * Ref: tools.ietf.org/html/rfc1035
  */
@@ -8,7 +8,7 @@
 
 #include "stdint.h"
 
-extern const int dns_port; // 53 
+extern const int dns_port; // 53
 
 typedef enum dns_type
 { // Ref: 3.2.2. TYPE values, 3.2.3. QTYPE values
@@ -48,7 +48,7 @@ typedef struct dns_flags
     unsigned RD : 1; // RD => recursion disired
     unsigned RA : 1; // RA => recursion aviable
     unsigned Z : 3; // Z => reserved
-    unsigned RCODE : 4; // RCODE => 0 no error, 1 format error, 2 server failure, 
+    unsigned RCODE : 4; // RCODE => 0 no error, 1 format error, 2 server failure,
                         //          3 name error, 4 not implemented, 5 refused
 } dns_flags;
 
@@ -84,44 +84,44 @@ void dns_fillHeaderWithFlags(dns_header *header, const dns_flags *flags);
 
 // Return value: Bytes written into buf.
 // 0 = failure, content of buf is undefined.
-size_t dns_writeHeaderToBuffer(char *buf, size_t buf_size, 
+size_t dns_writeHeaderToBuffer(char *buf, size_t buf_size,
     const dns_header *header);
 
 // Return value: Bytes written into buf.
 // 0 = failure, content of buf is undefined.
-size_t dns_writeQuestionToBuffer(char *buf, size_t buf_size, 
+size_t dns_writeQuestionToBuffer(char *buf, size_t buf_size,
     const dns_question *question);
 
 // Return value: Bytes written into buf.
 // 0 = failure, content of buf is undefined.
-size_t dns_createSimpleQueryBuffer(char *buf, size_t buf_size, 
+size_t dns_createSimpleQueryBuffer(char *buf, size_t buf_size,
     const dns_header *header, const dns_question *question);
 
 // Use this function to create a simple DNS query for a name.
-// The buffer is filled with <return value> bytes, 
+// The buffer is filled with <return value> bytes,
 // you can send them to a DNS server as a query.
 // 0 = failure
-size_t dns_createSimpleQuery(char *buf, size_t buf_size, 
+size_t dns_createSimpleQuery(char *buf, size_t buf_size,
     const char *name, uint16_t id);
 
 // Return value: Byte behind the last byte of header.
 // 0 = failure, content of header is undefined.
-const char* dns_parseHeader(dns_header *header, 
+const char* dns_parseHeader(dns_header *header,
     const char *buf, size_t buf_size);
 
 // Return value: Byte behind the last byte of buf.
 // 0 = failure, content of buf is undefined.
-const char* dns_parseName(char *dst, const char *buf, 
+const char* dns_parseName(char *dst, const char *buf,
     size_t buf_size, const char *pos);
 
 // Return value: Byte behind the last byte of question.
 // 0 = failure, content of question is undefined.
-const char* dns_parseQuestion(dns_question *question, 
+const char* dns_parseQuestion(dns_question *question,
     const char *buf, size_t buf_size, const char *pos);
 
 // Return value: Byte behind the last byte of resource.
 // 0 = failure, content of resource is undefined.
-const char* dns_parseResource(dns_resource* resource, 
+const char* dns_parseResource(dns_resource* resource,
     const char* buf, size_t buf_size, const char* pos);
 
 #endif

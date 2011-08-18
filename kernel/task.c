@@ -266,7 +266,7 @@ uint32_t task_switch (task_t* newTask)
 
     currentTask = newTask;
 
-    tss_switch ((uintptr_t)currentTask->kernelStack, currentTask->esp, currentTask->ss); // esp0, esp, ss
+    tss_switch((uintptr_t)currentTask->kernelStack, currentTask->esp, currentTask->ss); // esp0, esp, ss
 
     #ifdef _TASKING_DIAGNOSIS_
     textColor(TEXT);
@@ -424,7 +424,7 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     textColor(IMPORTANT);
-    printf("%d\t\b\b\b", t->pid);           // Process ID (pid)
+    printf("%d\t\b\b\b", t->pid);      // Process ID (pid)
     textColor(TEXT);
     printf("%X  ",  t->esp);           // Stack pointer
     printf("%X  ",  t->pageDirectory); // Page directory

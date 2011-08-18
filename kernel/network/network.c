@@ -96,18 +96,18 @@ bool network_installDevice(pciDev_t* device)
     adapter->IP.IP[2]           =  IP_3;
     adapter->IP.IP[3]           =  IP_4;
 
-    // gateway 
+    // gateway
     adapter->Gateway_IP.IP[0]   = GW_IP_1;
     adapter->Gateway_IP.IP[1]   = GW_IP_2;
     adapter->Gateway_IP.IP[2]   = GW_IP_3;
     adapter->Gateway_IP.IP[3]   = GW_IP_4;
 
-    // DNS server 
+    // DNS server
     adapter->dnsServer_IP.IP[0] = DNS_IP_1;
     adapter->dnsServer_IP.IP[1] = DNS_IP_2;
     adapter->dnsServer_IP.IP[2] = DNS_IP_3;
     adapter->dnsServer_IP.IP[3] = DNS_IP_4;
-    
+
     adapter->driver->install(adapter);
 
     if (adapters == 0)
@@ -195,10 +195,7 @@ uint32_t getMyIP()
     {
         return adapter->IP.iIP;
     }
-    else 
-    {
-        return (0);
-    }
+    return (0);
 }
 
 void dns_setServer(IP_t server)

@@ -284,7 +284,7 @@ int main()
                     gets(oldFilename);
                     printf("\nEnter new filename:\n");
                     gets(newFilename);
-                    
+
                     strcat(command,"RNTO ");
                     strcat(command,newFilename);
                     strcat(command,"\r\n");

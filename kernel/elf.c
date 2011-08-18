@@ -175,10 +175,10 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
         // Copy the code, using the user's page directory
         cli();
-        paging_switch (pd);
+        paging_switch(pd);
         memcpy((void*)ph[i].vaddr, file + ph[i].offset, ph[i].filesz);
         memset((void*)ph[i].vaddr + ph[i].filesz, 0, ph[i].memsz - ph[i].filesz); // to set the bss (Block Started by Symbol) to zero
-        paging_switch (currentTask->pageDirectory);
+        paging_switch(currentTask->pageDirectory);
         sti();
     }
 

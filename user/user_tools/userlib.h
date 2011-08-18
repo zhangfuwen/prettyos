@@ -17,7 +17,6 @@ FS_ERROR partition_format(const char* path, FS_t type, const char* name);
 bool waitForEvent(uint32_t timeout);
 void event_enable(bool b);
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter);
-bool flushEvents(EVENT_t filter);
 
 uint32_t getCurrentMilliseconds();
 
@@ -28,12 +27,14 @@ void setScrollField(uint8_t top, uint8_t bottom);
 void setCursor(position_t pos);
 void getCursor(position_t* pos);
 void clearScreen(uint8_t backgroundColor);
+void console_setProperties(console_properties_t properties);
+void refreshScreen();
 
 bool keyPressed(KEY_t key);
 
 void beep(uint32_t frequency, uint32_t duration);
 
-uint32_t getMyIP(); 
+uint32_t getMyIP();
 void dns_setServer(IP_t server);
 void dns_getServer(IP_t* server);
 
@@ -49,6 +50,7 @@ void printLine(const char* message, uint32_t line, uint8_t attribute);
 
 
 // user functions
+void event_flush(EVENT_t filter);
 void sleep(uint32_t milliseconds);
 bool waitForTask(uint32_t pid, uint32_t timeout);
 
@@ -72,12 +74,8 @@ void showInfo(uint8_t val);
 IP_t resolveIP(const char* host);
 IP_t stringToIP(char* str);
 
-uint16_t TextGUI_ShowMSG(char* title, char* message); 
+uint16_t TextGUI_ShowMSG(char* title, char* message);
 uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected);
-
-void autorefresh(bool on);
-void autoscroll(bool on);
-void flip();
 
 
 #endif
