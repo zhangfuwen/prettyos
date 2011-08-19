@@ -1,77 +1,62 @@
 /*
- * DNS help functions
- * Written by: cooky451 - 8/15/2011
- * Last change: ehenkes - 8/16/2011
- * Todo: getHostByName() which returns all hosts for a name.
- * Comments: -
- */
+*  license and disclaimer for the use of this source code as per statement below
+*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+*/
 
+// DNS help functions
+// TODO: getHostByName() which returns all hosts for a name.
+
+#include "dns_help.h"
+#include "dns.h"
 #include "stdlib.h"
 #include "stdint.h"
 #include "stdio.h"
 #include "string.h"
 #include "userlib.h"
-#include "dns.h"
-#include "dns_help.h"
+
 
 IP_t getAddrByName(const char* name)
 {
     char buf[512];
     uint16_t query_id = 1911; /// TODO
-    size_t query_size;
     IP_t host, dns_server;
     host.iIP = dns_server.iIP = 0;
 
-    query_size = dns_createSimpleQuery(buf,
-        sizeof(buf), name, query_id);
+    size_t query_size = dns_createSimpleQuery(buf, sizeof(buf), name, query_id);
 
     dns_getServer(&dns_server);
     event_enable(1);
 
-    if (query_size && dns_server.iIP && udp_send(buf,
-        query_size, dns_server, dns_port, dns_port))
+    if (query_size && dns_server.iIP && udp_send(buf, query_size, dns_server, dns_port, dns_port))
     {
-        udpReceivedEventHeader_t* udp_header;
-        char* data;
-        size_t len;
         EVENT_t ev = event_poll(buf, sizeof(buf), EVENT_NONE);
         for (; ev != EVENT_UDP_RECEIVED;
             ev = event_poll(buf, sizeof(buf), EVENT_NONE))
         {
             switch (ev)
             {
-            case EVENT_NONE:
-                waitForEvent(0);
-                break;
-            case EVENT_KEY_DOWN:
-                if (*(KEY_t*)buf == KEY_ESC)
-                    return host;
-                break;
-                // gcc: event_not_handled
-            case EVENT_INVALID_ARGUMENTS:
-            case EVENT_OVERFLOW:
-            case EVENT_KEY_UP:
-            case EVENT_TEXT_ENTERED:
-            case EVENT_TCP_CONNECTED:
-            case EVENT_TCP_RECEIVED:
-            case EVENT_TCP_CLOSED:
-            case EVENT_UDP_RECEIVED:
-            default:
-                break;
+                case EVENT_NONE:
+                    waitForEvent(0);
+                    break;
+                case EVENT_KEY_DOWN:
+                    if (*(KEY_t*)buf == KEY_ESC)
+                        return host;
+                    break;
+                default:
+                    break;
             }
         }
 
-        udp_header = (udpReceivedEventHeader_t*)buf;
-        data = (char*)(udp_header + 1);
-        len = udp_header->length;
+        udpReceivedEventHeader_t* udp_header = (udpReceivedEventHeader_t*)buf;
+        char* data = (char*)(udp_header + 1);
+        size_t len = udp_header->length;
 
         if (len)
         {
             dns_header header;
             dns_question question;
             dns_resource resource;
-            const char* p = data;
-            p = dns_parseHeader(&header, data, len);
+            const char* p = dns_parseHeader(&header, data, len);
             while (p && header.qdcount--)
             { // discard questions
                 p = dns_parseQuestion(&question, data, len, p);
@@ -84,7 +69,7 @@ IP_t getAddrByName(const char* name)
                         resource.dns_class == dns_class_IN && // internet
                         resource.rdlength >= 4) // need min 4 bytes
                     {
-                        memcpy(&host.iIP, &resource.rdata, 4);
+                        memcpy(&host.iIP, resource.rdata, 4);
                         break;
                     }
                 }
@@ -120,65 +105,49 @@ void showDNSQuery(const char* name)
 {
     char buf[512];
     uint16_t query_id = 1911; /// TODO
-    size_t query_size;
     IP_t dns_server;
 
     printf("Begin DNS query for %s..\n", name);
 
-    query_size = dns_createSimpleQuery(buf,
-        sizeof(buf), name, query_id);
+    size_t query_size = dns_createSimpleQuery(buf, sizeof(buf), name, query_id);
 
     dns_getServer(&dns_server);
     printf("DNS Server: %u.%u.%u.%u\n",
         dns_server.IP[0], dns_server.IP[1],
         dns_server.IP[2], dns_server.IP[3]);
 
-    event_enable(1);
+    event_enable(true);
 
-    if (query_size && dns_server.iIP && udp_send(buf,
-        query_size, dns_server, dns_port, dns_port))
+    if (query_size && dns_server.iIP && udp_send(buf, query_size, dns_server, dns_port, dns_port))
     {
-        udpReceivedEventHeader_t* udp_header;
-        char* data;
-        size_t len;
         EVENT_t ev = event_poll(buf, sizeof(buf), EVENT_NONE);
-        for (; ev != EVENT_UDP_RECEIVED;
-            ev = event_poll(buf, sizeof(buf), EVENT_NONE))
+        for (; ev != EVENT_UDP_RECEIVED; ev = event_poll(buf, sizeof(buf), EVENT_NONE))
         {
             switch (ev)
             {
-            case EVENT_NONE:
-                waitForEvent(0);
-                break;
-            case EVENT_KEY_DOWN:
-                if (*(KEY_t*)buf == KEY_ESC)
-                    return;
-                break;
-                    // gcc: event_not_handled
-            case EVENT_INVALID_ARGUMENTS:
-            case EVENT_OVERFLOW:
-            case EVENT_KEY_UP:
-            case EVENT_TEXT_ENTERED:
-            case EVENT_TCP_CONNECTED:
-            case EVENT_TCP_RECEIVED:
-            case EVENT_TCP_CLOSED:
-            case EVENT_UDP_RECEIVED:
-            default:
-                break;
+                case EVENT_NONE:
+                    waitForEvent(0);
+                    break;
+                case EVENT_KEY_DOWN:
+                    if (*(KEY_t*)buf == KEY_ESC)
+                        return;
+                    break;
+                default:
+                    break;
             }
         }
 
-        udp_header = (udpReceivedEventHeader_t*)buf;
-        data = (char*)(udp_header + 1);
-        len = udp_header->length;
+        udpReceivedEventHeader_t* udp_header = (udpReceivedEventHeader_t*)buf;
+        char* data = (char*)(udp_header + 1);
+        size_t len = udp_header->length;
 
         if (len)
         {
             dns_header header;
             dns_question question;
             dns_resource resource;
-            const char* p;
-            if ((p = dns_parseHeader(&header, data, len)))
+            const char* p = dns_parseHeader(&header, data, len);
+            if (p)
             {
                 printf(" -- header -- \n");
                 printDNSHeader(&header);
@@ -213,8 +182,7 @@ void showDNSQuery(const char* name)
                         resource.rdlength < 256)
                     {
                         char alias[256];
-                        if (dns_parseName(alias, data, resource.rdlength,
-                            resource.rdata))
+                        if (dns_parseName(alias, data, resource.rdlength, resource.rdata))
                         {
                             printf("Found CNAME: %s\n", alias);
                         }
@@ -227,3 +195,32 @@ void showDNSQuery(const char* name)
     printf(" -- END -- \n");
     getchar();
 }
+
+
+/*
+* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+*
+* http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
+*
+* Redistribution and use in source and binary forms, with or without modification,
+* are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice,
+*    this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/

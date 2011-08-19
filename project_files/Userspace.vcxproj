@@ -83,6 +83,7 @@
     <ClCompile Include="..\user\stdlibc\time.c" />
     <ClCompile Include="..\user\user_tools\dns.c" />
     <ClCompile Include="..\user\user_tools\dns_help.c" />
+    <ClCompile Include="..\user\user_tools\syscalls.c" />
     <ClCompile Include="..\user\user_tools\userlib.c" />
     <ClCompile Include="..\user\user_tools\userlib_cpp.cpp" />
   </ItemGroup>

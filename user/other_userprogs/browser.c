@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
+#include "dns_help.h"
 
 int main()
 {
@@ -28,8 +29,9 @@ int main()
     char filename[100];
     gets(filename);
 
-    IP_t IP = resolveIP(hostname);
+    IP_t IP = getAddrByName(hostname);
 
+    printf("%u.%u.%u.%u", IP.IP[0], IP.IP[1], IP.IP[2], IP.IP[3]);
     uint32_t connection = tcp_connect(IP, 80);
     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
@@ -95,7 +97,7 @@ int main()
                     gets(hostname);
                     printf("\nEnter filename (Don't forget / ):\n");
                     gets(filename);
-                    IP = resolveIP(hostname);
+                    IP = getAddrByName(hostname);
                     tcp_close(connection);
                     connection = tcp_connect(IP, 80);
                     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);

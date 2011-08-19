@@ -4,8 +4,7 @@
 
 int main(size_t argc, char* argv[])
 {
-    console_setProperties(CONSOLE_AUTOREFRESH|CONSOLE_AUTOSCROLL|CONSOLE_FULLSCREEN);
-    //setScrollField(0, 43); // The train should not be destroyed by the output, so we shrink the scrolling area...
+    setScrollField(0, 43); // The train should not be destroyed by the output, so we shrink the scrolling area...
     printLine("================================================================================", 0, 0x0B);
     printLine("                                C - Testprogramm!",                                2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);

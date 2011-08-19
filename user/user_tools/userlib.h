@@ -71,7 +71,6 @@ void  i2hex(uint32_t val, char* dest, uint32_t len);
 
 void showInfo(uint8_t val);
 
-IP_t resolveIP(const char* host);
 IP_t stringToIP(char* str);
 
 uint16_t TextGUI_ShowMSG(char* title, char* message);

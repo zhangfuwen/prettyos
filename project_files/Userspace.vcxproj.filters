@@ -173,6 +173,9 @@
     <ClCompile Include="..\user\other_userprogs\pong.c">
       <Filter>Other Userprogs</Filter>
     </ClCompile>
+    <ClCompile Include="..\user\user_tools\syscalls.c">
+      <Filter>User-Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\user\user_tools\types.h">
