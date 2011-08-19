@@ -2,12 +2,13 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
+#include "dns_help.h"
 
 int main()
 {
     setScrollField(13, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                           neuer_user FTP Client v0.3                           ", 1, 0x0B);
+    printLine("                           neuer_user FTP Client v0.4                           ", 1, 0x0B);
     printLine("--------------------------------------------------------------------------------", 3, 0x0B);
 
     iSetCursor(0, 4);
@@ -53,7 +54,7 @@ int main()
     printf("\nPort:\n");
     gets(ctrlPort);
 
-    IP_t IP = resolveIP(hostname), dataIP;
+    IP_t IP = getAddrByName(hostname), dataIP;
     uint16_t controlPort = atoi(ctrlPort), dataPort;
     uint32_t control = tcp_connect(IP, controlPort), dataConnection = 0;
 
