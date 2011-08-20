@@ -102,6 +102,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\filesystem\fs.h" />
     <ClInclude Include="..\kernel\filesystem\fsmanager.h" />
     <ClInclude Include="..\kernel\filesystem\initrd.h" />
+    <ClInclude Include="..\kernel\ipc.h" />
     <ClInclude Include="..\kernel\irq.h" />
     <ClInclude Include="..\kernel\keyboard.h" />
     <ClInclude Include="..\kernel\keyboard_GER.h" />
@@ -194,6 +195,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\filesystem\fsmanager.c" />
     <ClCompile Include="..\kernel\filesystem\initrd.c" />
     <ClCompile Include="..\kernel\fpu.c" />
+    <ClCompile Include="..\kernel\ipc.c" />
     <ClCompile Include="..\kernel\irq.c" />
     <ClCompile Include="..\kernel\keyboard.c" />
     <ClCompile Include="..\kernel\kheap.c" />

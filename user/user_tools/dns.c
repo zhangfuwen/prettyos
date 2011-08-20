@@ -6,7 +6,6 @@
 /*
  * DNS Parser
  * Ref: tools.ietf.org/html/rfc1035
- * Todo: - 
  * Comments: Take a look at Ref: 2.3.4. Size limits. (Bottom of file)
  */
 
@@ -54,7 +53,6 @@ size_t dns_writeQuestionToBuffer(char* buf, size_t buf_size, const dns_question*
         // Ref: 4.1.2. Question section format, -> QNAME
         //
         char* p;
-        uint16_t n;
         strcpy(buf + 1, question->qname);
         while ((p = strchr(buf + 1, '.')))
         {
@@ -68,7 +66,8 @@ size_t dns_writeQuestionToBuffer(char* buf, size_t buf_size, const dns_question*
                 return 0;
             }
         }
-        if ((n = strlen(buf + 1)) < 64)
+        uint16_t n = strlen(buf + 1);
+        if (n < 64)
         {
             *buf = (char)n;
             buf += n + 1;
@@ -179,7 +178,7 @@ const char* dns_parseQuestion(dns_question* question, const char* buf, size_t bu
 {
     if (buf_size)
     {
-        const char *p = dns_parseName(question->qname, buf, buf_size, pos);
+        const char* p = dns_parseName(question->qname, buf, buf_size, pos);
         if (p && buf_size - (p - buf) >= 4)
         {
             dns_copyInverse(&question->qtype, p + 0, 2);

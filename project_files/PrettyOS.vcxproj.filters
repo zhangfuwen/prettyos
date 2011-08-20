@@ -369,6 +369,9 @@
     <ClInclude Include="..\kernel\pit.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\ipc.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -616,6 +619,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\video\textgui.c">
       <Filter>Kernel\sources\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ipc.c">
+      <Filter>Kernel\sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

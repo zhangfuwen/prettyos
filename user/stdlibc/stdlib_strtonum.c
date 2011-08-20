@@ -1,5 +1,6 @@
-/* Functions: atof, atoi, atol, strtod, strtol, strtoul
- * Todo: errno.h -> ERANGE, strtod() overflow -> HUGE_VAL?
+/*
+ *  license and disclaimer for the use of this source code as per statement below
+ *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
  */
 
 #include "ctype.h"
@@ -7,7 +8,9 @@
 #include "stdlib.h"
 #include "stdint.h"
 
-double atof(const char *nptr)
+// TODO: errno.h -> ERANGE, strtod() overflow -> HUGE_VAL?
+
+double atof(const char* nptr)
 {
     return strtod(nptr, 0);
 }
@@ -25,12 +28,12 @@ long int atol(const char* nptr)
 double strtod(const char* nptr, char** endptr)
 {
     double num = 0.0;
-    int sign, point = 0, exp = 0;
+    int point = 0, exp = 0;
 
     while (isspace(*nptr))
         ++nptr; // skip spaces
 
-    sign = *nptr == '-' ? -1 : 1;
+    int sign = *nptr == '-' ? -1 : 1;
     if (*nptr == '+' || *nptr == '-')
         ++nptr;
 
@@ -97,7 +100,6 @@ double strtod(const char* nptr, char** endptr)
 long int strtol(const char* nptr, char** endptr, int base)
 {
     long num = 0;
-    int sign;
 
     if (base && (base < 2 || base > 36))
         return num;
@@ -105,7 +107,7 @@ long int strtol(const char* nptr, char** endptr, int base)
     while (isspace(*nptr))
         ++nptr; // skip spaces
 
-    sign = *nptr == '-' ? -1 : 1;
+    int sign = *nptr == '-' ? -1 : 1;
     if (*nptr == '-' || *nptr == '+')
         ++nptr;
 
@@ -172,7 +174,7 @@ long int strtol(const char* nptr, char** endptr, int base)
 
 unsigned long int strtoul(const char* nptr, char** endptr, int base)
 {
-    unsigned long num = 0, buf;
+    unsigned long num = 0;
 
     while (isspace(*nptr))
         ++nptr; // skip spaces
@@ -200,7 +202,7 @@ unsigned long int strtoul(const char* nptr, char** endptr, int base)
 
     for (; *nptr != '\0'; ++nptr)
     {
-        buf = num;
+        unsigned long buf = num;
         if (*nptr - '0' < base && *nptr - '0' >= 0)
         {
             num = num * base + *nptr - '0';
@@ -236,3 +238,31 @@ unsigned long int strtoul(const char* nptr, char** endptr, int base)
 
     return num;
 }
+
+/*
+* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+*
+* http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
+*
+* Redistribution and use in source and binary forms, with or without modification,
+* are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice,
+*    this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
