@@ -32,12 +32,12 @@ long labs(long n);
 div_t div(int numerator, int denominator);
 ldiv_t ldiv(long numerator, long denominator);
 
-int atoi(const char* s);
-long atol(const char* s);
-float atof(const char* s); // TODO: Should return double
-double strtod(const char* str, char** endptr);
-long strtol(const char* str, char** endptr, int base);
-unsigned long strtoul(const char* str, char** endptr, int base);
+int atoi(const char* nptr);
+long int atol(const char* nptr);
+double atof(const char *nptr);
+double strtod(const char* nptr, char** endptr);
+long int strtol(const char* nptr, char** endptr, int base);
+unsigned long int strtoul(const char* nptr, char** endptr, int base);
 
 int mblen(const char* pmb, size_t max);
 size_t mbstowcs(wchar_t* wcstr, const char* mbstr, size_t max);

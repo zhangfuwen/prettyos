@@ -6,9 +6,7 @@
 /*
  * DNS Parser
  * Ref: tools.ietf.org/html/rfc1035
- * Todo: Parser for authority, additional. (See dns_header)
- *       Parser for RR's: NS, MD, MF, SOA, MB, MG, MR, NULL,
- *           WKS, PTR, HINFO, MINFO, MX, TXT. (See dns_qtype)
+ * Todo: - 
  * Comments: Take a look at Ref: 2.3.4. Size limits. (Bottom of file)
  */
 
@@ -18,7 +16,7 @@
 
 const int dns_port = 53;
 
-void dns_copyInverse(void* dst, const void* src, size_t size)
+static void dns_copyInverse(void* dst, const void* src, size_t size)
 { // same as htons() + memcpy()
     for (size_t i = 0; size--; ++i)
         *((char*)dst + i) = *((char*)src + size);

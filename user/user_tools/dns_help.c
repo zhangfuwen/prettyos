@@ -5,6 +5,9 @@
 
 // DNS help functions
 // TODO: getHostByName() which returns all hosts for a name.
+//       Parser for authority, additional. (See dns_header)
+//       Parser for RR's: NS, MD, MF, SOA, MB, MG, MR, NULL,
+//          WKS, PTR, HINFO, MINFO, MX, TXT. (See dns_qtype)
 
 #include "dns_help.h"
 #include "dns.h"

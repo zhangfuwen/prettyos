@@ -136,19 +136,17 @@ void snprintf(char *buffer, size_t length, const char *args, ...)
 
 char* stoupper(char* s)
 {
-    for (size_t i = 0; i < strlen(s); i++)
-    {
-        s[i] = toupper(s[i]);
-    }
+    char* p = s;
+    for (; *p; ++p)
+        *p = toupper(*p);
     return s;
 }
 
 char* stolower(char* s)
 {
-    for (size_t i = 0; i < strlen(s); i++)
-    {
-        s[i] = tolower(s[i]);
-    }
+    char* p = s;
+    for (; *p; ++p)
+        *p = tolower(*p);
     return s;
 }
 

@@ -79,6 +79,8 @@
     <ClCompile Include="..\user\stdlibc\signal.c" />
     <ClCompile Include="..\user\stdlibc\stdio.c" />
     <ClCompile Include="..\user\stdlibc\stdlib.c" />
+    <ClCompile Include="..\user\stdlibc\stdlib_sortsearch.c" />
+    <ClCompile Include="..\user\stdlibc\stdlib_strtonum.c" />
     <ClCompile Include="..\user\stdlibc\string.c" />
     <ClCompile Include="..\user\stdlibc\time.c" />
     <ClCompile Include="..\user\user_tools\dns.c" />

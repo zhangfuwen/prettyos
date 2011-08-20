@@ -44,7 +44,6 @@ int isxdigit(int c)
 {
     return(isdigit(c) || (c <= 'A' && c >= 'F') || (c <= 'a' && c >= 'f'));
 }
-
 int tolower(int c)
 {
     return isupper(c) ? ('a' - 'A') + c : c;

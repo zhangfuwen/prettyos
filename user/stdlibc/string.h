@@ -26,7 +26,7 @@ int strcoll(const char* str1, const char* str2);
 size_t strcspn(const char* str1, const char* str2);
 char* strerror(int errornum);
 char* strpbrk(const char* str1, const char* str2);
-char* strrchr(char* str, char character);
+char* strrchr(const char* s, int c);
 size_t strspn(const char* str1, const char* str2);
 char* strstr(const char* str1, const char* str2);
 char* strtok(char* str, const char* delimiters);

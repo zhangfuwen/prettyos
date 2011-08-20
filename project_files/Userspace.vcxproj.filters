@@ -176,6 +176,12 @@
     <ClCompile Include="..\user\user_tools\syscalls.c">
       <Filter>User-Tools</Filter>
     </ClCompile>
+    <ClCompile Include="..\user\stdlibc\stdlib_sortsearch.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\stdlibc\stdlib_strtonum.c">
+      <Filter>stdlibC\source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\user\user_tools\types.h">

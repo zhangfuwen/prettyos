@@ -169,15 +169,15 @@ char* strchr(char* str, char character)
     }
 }
 
-char* strrchr(char* str, char character)
+char* strrchr(const char* s, int c)
 {
-    char* strend = str+strlen(str);
-    for (; strend != str; strend--)
+    const char* p = s + strlen(s);
+    if (c == 0)
+        return (char*)p;
+    while (p != s)
     {
-        if (*strend == character)
-        {
-            return strend;
-        }
+        if (*(--p) == c)
+            return (char*)p;
     }
     return 0;
 }
