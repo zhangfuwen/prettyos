@@ -95,6 +95,7 @@
 typedef struct
 {
     network_adapter_t* device;
+    uint8_t   version; 
     uint8_t*  TxBuffer;
     uintptr_t TxBufferPhys;
     uint8_t   TxBufferIndex;
