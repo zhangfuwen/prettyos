@@ -154,6 +154,8 @@ static void move_cursor_home()
 
 void setCursor(position_t pos)
 {
+    pos.x = min(COLUMNS-1, pos.x);
+    pos.y = min(LINES-1, pos.y);
     console_current->cursor = pos;
     video_updateCursor();
 }

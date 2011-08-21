@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.3.0 - Rev: 1183";
+const char* const version = "0.0.3.1 - Rev: 1184";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -317,7 +317,7 @@ void main(multiboot_t* mb_struct)
         if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
             vga_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
         if (! *++progress)
-			progress = "|/-\\";
+            progress = "|/-\\";
 
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
         char buffer[4];

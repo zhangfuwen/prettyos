@@ -101,7 +101,6 @@ void rtl8139_install(network_adapter_t* adapter)
     uint32_t k=0;
     while (true)
     {
-        delay(10000);
         if (!(*((volatile uint8_t*)(adapter->MMIO_base + RTL8139_CHIPCMD)) & RTL8139_CMD_RESET))
         {
             kdebug(3, "\nwaiting successful (%d).\n", k);
@@ -113,6 +112,7 @@ void rtl8139_install(network_adapter_t* adapter)
             printf("\nWaiting not successful! Finished by timeout.\n");
             break;
         }
+        delay(10000);
     }
 
     // now we set the RE and TE bits from the "Command Register" to Enable Receiving and Transmission
@@ -120,7 +120,7 @@ void rtl8139_install(network_adapter_t* adapter)
     *((uint8_t*)(adapter->MMIO_base + RTL8139_CHIPCMD)) = RTL8139_CMD_TX_ENABLE | RTL8139_CMD_RX_ENABLE;
 
     // set TCR (transmit configuration register, 0x40, 4 byte)
-    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXCONFIG)) = 0x03000700;       // TCR
+    *((uint32_t*)(adapter->MMIO_base + RTL8139_TXCONFIG)) = 0x03000700; // TCR
 
     // set RCR (receive configuration register, RTL8139_RXCONFIG, 4 byte)
     *((uint32_t*)(adapter->MMIO_base + RTL8139_RXCONFIG)) = RTL8139_RCR_ACCEPT_PHYSICAL_MATCH | RTL8139_RCR_ACCEPT_MULTICAST |

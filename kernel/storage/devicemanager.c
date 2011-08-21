@@ -172,7 +172,8 @@ void showDiskList()
             textColor(TEXT);
 
             printf("\t%s", disks[i]->name);   // Name of disk
-            if (strlen(disks[i]->name) < 8) { printf("\t"); }
+            if (strlen(disks[i]->name) < 8)
+                putch('\t');
 
             for (uint8_t j = 0; j < PARTITIONARRAYSIZE; j++)
             {
@@ -185,8 +186,8 @@ void showDiskList()
                 if (disks[i]->type == &FLOPPYDISK) // Serial
                 {
                     //HACK
-                    free(disks[i]->partition[j]->serial);
-                    disks[i]->partition[j]->serial = malloc(13, 0,"devmgr-partserial");
+                    if(disks[i]->partition[j]->serial == 0)
+                        disks[i]->partition[j]->serial = malloc(13, 0, "devmgr-partserial");
                     disks[i]->partition[j]->serial[12] = 0;
                     strncpy(disks[i]->partition[j]->serial, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
                     printf("\t%s", disks[i]->partition[j]->serial);
@@ -322,6 +323,7 @@ FS_ERROR analyzeDisk(disk_t* disk)
                 disk->partition[i]->start = entries[i].startLBA;
                 disk->partition[i]->size = entries[i].sizeLBA;
                 disk->partition[i]->disk = disk;
+                disk->partition[i]->serial = 0;
                 if (analyzePartition(disk->partition[i]) != CE_GOOD)
                     printf("unknown");
             }
@@ -339,12 +341,17 @@ FS_ERROR analyzeDisk(disk_t* disk)
         disk->partition[0] = malloc(sizeof(partition_t), 0, "partition_t");
         disk->partition[0]->start = 0;
         disk->partition[0]->disk = disk;
+        disk->partition[0]->serial = 0;
+        disk->partition[1] = 0;
+        disk->partition[2] = 0;
+        disk->partition[3] = 0;
         if (analyzePartition(disk->partition[0]) != CE_GOOD)
         {
             printf("unknown)");
             return(CE_NOT_FORMATTED);
         }
         printf(")");
+
     }
     return(CE_GOOD);
 }

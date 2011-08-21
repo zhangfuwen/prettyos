@@ -140,7 +140,7 @@ long int strtol(const char* nptr, char** endptr, int base)
                 break;
             }
         }
-        else if ((*nptr | 0x20) - 'a' + 10 < base && 
+        else if ((*nptr | 0x20) - 'a' + 10 < base &&
             (*nptr | 0x20) - 'a' + 10 >= 0)
         { // 'x' | 0x20 =~= tolower('X')
             num = num * base + (*nptr | 0x20) - 'a' + 10;
@@ -158,8 +158,8 @@ long int strtol(const char* nptr, char** endptr, int base)
 
     for (; *nptr != '\0'; ++nptr)
     { // skip rest of integer constant
-        if (!(*nptr - '0' < base && *nptr - '0' >= 0) && 
-            !((*nptr | 0x20) - 'a' + 10 < base) && 
+        if (!(*nptr - '0' < base && *nptr - '0' >= 0) &&
+            !((*nptr | 0x20) - 'a' + 10 < base) &&
             !((*nptr | 0x20) - 'a' + 10 >= 0))
         {
             break;
@@ -207,7 +207,7 @@ unsigned long int strtoul(const char* nptr, char** endptr, int base)
         {
             num = num * base + *nptr - '0';
         }
-        else if ((*nptr | 0x20) - 'a' + 10 < base && 
+        else if ((*nptr | 0x20) - 'a' + 10 < base &&
                  (*nptr | 0x20) - 'a' + 10 >= 0)
         { // 'x' | 0x20 =~= tolower('X')
             num = num * base + (*nptr | 0x20) - 'a' + 10;
@@ -225,8 +225,8 @@ unsigned long int strtoul(const char* nptr, char** endptr, int base)
 
     for (; *nptr != '\0'; ++nptr)
     { // skip rest of integer constant
-        if (!(*nptr - '0' < base && *nptr - '0' >= 0) && 
-            !((*nptr | 0x20) - 'a' + 10 < base) && 
+        if (!(*nptr - '0' < base && *nptr - '0' >= 0) &&
+            !((*nptr | 0x20) - 'a' + 10 < base) &&
             !((*nptr | 0x20) - 'a' + 10 >= 0))
         {
             break;
