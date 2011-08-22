@@ -33,12 +33,10 @@
 #include "storage/flpydsk.h"    // flpydsk_install
 
 // Network. Only for temporary tests. TODO: implement as user applications
-#include "netprotocol/icmp.h"   // send echo request (PING)
-#include "netprotocol/udp.h"    // udp_send (TEST)
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.3.4 - Rev: 1186";
+const char* const version = "0.0.3.5 - Rev: 1187";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -133,7 +131,10 @@ static void init(multiboot_t* mb_struct)
 
     // Interrupts
     isr_install();
-    if (apic_install()) log("APIC");
+    if (apic_install()) 
+    {
+        log("APIC");
+    }
     else // PIC as fallback
     {
         idt_install(); // cf. interrupts.asm
@@ -141,38 +142,57 @@ static void init(multiboot_t* mb_struct)
     }
 
     // internal devices
-    timer_install(SYSTEMFREQUENCY); log("Timer"); // Sets system frequency to ... Hz
-    if (fpu_install()) log("FPU");
+    timer_install(SYSTEMFREQUENCY); // Sets system frequency to ... Hz
+    log("Timer"); 
+    if (fpu_install()) 
+    {
+        log("FPU");
+    }
 
     // memory
-    system.Memory_Size = paging_install(); log("Paging");
-    heap_install(); log("Heap");
+    system.Memory_Size = paging_install(); 
+    log("Paging");
+    heap_install(); 
+    log("Heap");
 
-    vga_install(); log("Video");
+    // video
+    vga_install(); 
+    log("Video");
 
-    tasking_install(); log("Multitasking");
+    // tasks
+    tasking_install(); 
+    log("Multitasking");
 
   #ifdef _BOOTSCREEN_
     scheduler_insertTask(create_cthread(&bootscreen, "Booting ..."));
   #endif
 
     // external devices
-    keyboard_install(); log("Keyboard");
-    mouse_install(); log("Mouse");
+    keyboard_install(); 
+    log("Keyboard");
+    mouse_install(); 
+    log("Mouse");
 
-    pm_install(); log("Power Management");
+    // power management
+    pm_install(); 
+    log("Power Management");
 
     // system calls
-    syscall_install(); log("Syscalls");
+    syscall_install(); 
+    log("Syscalls");
 
-    cdi_init(); log("CDI");
+    // cdi
+    cdi_init(); 
+    log("CDI");
 
-    deviceManager_install(); log("Devicemanager"); // device management for mass storage devices
+    // mass storage devices
+    deviceManager_install(); 
+    log("Devicemanager"); 
 
+    // kernel idle loop
     kernel_idleTasks = todolist_create();
 
     puts("\n\n");
-
     sti();
 }
 
@@ -214,16 +234,16 @@ void main(multiboot_t* mb_struct)
     flpydsk_install(); // detect FDDs
 
 
-    #ifdef _RAMDISK_DIAGNOSIS_
+  #ifdef _RAMDISK_DIAGNOSIS_
     void* ramdisk_start = initrd_install(ramdisk_install(), 0, RAMDISKSIZE);
-    #else
+  #else
     initrd_install(ramdisk_install(), 0, RAMDISKSIZE);
-    #endif
+  #endif
 
-    #ifdef _DEVMGR_DIAGNOSIS_
+  #ifdef _DEVMGR_DIAGNOSIS_
     showPortList();
     showDiskList();
-    #endif
+  #endif
 
 
     /*TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !", "T\nhis is an educational OS!");
@@ -256,15 +276,15 @@ void main(multiboot_t* mb_struct)
 
         if ((fsnode->flags & 0x7) == FS_DIRECTORY)
         {
-            #ifdef _RAMDISK_DIAGNOSIS_
+          #ifdef _RAMDISK_DIAGNOSIS_
             printf("\n<RAMdisk (%Xh) - Root Directory>\n", ramdisk_start);
-            #endif
+          #endif
         }
         else
         {
-            #ifdef _RAMDISK_DIAGNOSIS_
+          #ifdef _RAMDISK_DIAGNOSIS_
             printf("%u \t%s\n", fsnode->length, node->name);
-            #endif
+          #endif
 
             if (strcmp(node->name, "shell") == 0)
             {
@@ -275,6 +295,7 @@ void main(multiboot_t* mb_struct)
 
                 pageDirectory_t* pd = paging_createUserPageDirectory();
                 void* entry = elf_prepare(buf, sz, pd);
+                
                 if (entry == 0)
                 {
                     textColor(ERROR);
@@ -282,7 +303,10 @@ void main(multiboot_t* mb_struct)
                     paging_destroyUserPageDirectory(pd);
                 }
                 else
+                {
                     scheduler_insertTask(create_process(pd, entry, 3, 0, 0));
+                }
+                
                 free(buf);
             }
         }
@@ -316,9 +340,13 @@ void main(multiboot_t* mb_struct)
     {
         // show rotating asterisk
         if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
+        {
             vga_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
+        }
         if (! *++progress)
+        {
             progress = "|/-\\";
+        }
 
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
         char buffer[4];
@@ -445,7 +473,9 @@ void main(multiboot_t* mb_struct)
             LastRdtscValue = Rdtsc;
 
             if (RdtscKCountsHi == 0)
+            {
                 system.CPU_Frequency_kHz = RdtscKCountsLo/1000;
+            }
 
             // draw status bar with date, time and frequency
             getCurrentDateAndTime(DateAndTime, 50);
