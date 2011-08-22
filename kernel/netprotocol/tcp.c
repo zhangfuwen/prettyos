@@ -65,6 +65,7 @@ static bool     tcp_prepare_send_ACK(tcpConnection_t* connection, tcpPacket_t* t
 static void     calculateRTO(tcpConnection_t* connection, uint32_t rtt);
 static void     tcp_RemoveAckedPacketsFromOutBuffer(tcpConnection_t* connection, tcpPacket_t* tcp);
 
+
 static tcpConnection_t* tcp_findConnectionID(uint32_t ID)
 {
     if (tcpConnections == 0)
@@ -197,6 +198,21 @@ static void tcp_timeoutDeleteConnection(tcpConnection_t* connection, uint32_t ti
         printf("\nconnection ID %u will be deleted at %u sec runtime.", connection->ID, (timeMilliseconds + timer_getMilliseconds()) / 1000);
         textColor(TEXT);
       #endif
+    }
+}
+
+void tcp_cleanup(task_t* task)
+{
+    if(tcpConnections)
+    {
+        for (dlelement_t* e = tcpConnections->head; e != 0; e = e->next)
+        {
+            tcpConnection_t* connection = e->data;
+            if(connection->owner == task)
+            {
+                tcp_deleteConnection(connection);
+            }
+        }
     }
 }
 
@@ -1304,7 +1320,7 @@ bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state
 bool tcp_uclose(uint32_t ID)
 {
     tcpConnection_t* connection = tcp_findConnectionID(ID);
-    if (connection)
+    if (connection && connection->owner == currentTask)
     {
         tcp_close(connection);
         return true;

@@ -131,6 +131,7 @@ typedef struct
 
 tcpConnection_t* tcp_createConnection();
 void tcp_deleteConnection(tcpConnection_t* connection);
+void tcp_cleanup(task_t* task);
 void tcp_bind(tcpConnection_t* connection, network_adapter_t* adapter);
 void tcp_connect(tcpConnection_t* connection);
 void tcp_close(tcpConnection_t* connection);

@@ -170,6 +170,25 @@ static char keyToASCII(KEY_t key)
             return 0;
         }
     }
+    if (pressedKeys[KEY_RCTRL] || pressedKeys[KEY_LCTRL])
+    {
+        if(key == KEY_ESC || retchar == 'e')
+        {
+            list_t* list = console_displayed->tasks;
+            for(dlelement_t* e = list->head; e != 0;)
+            {
+                task_t* task = e->data;
+                if(task->pid != 0)
+                {
+                    kill(task);
+                    e = list->head; // Restart at beginning, because other tasks in the list can be deleted as childs of the task before
+                }
+                else
+                    e = e->next;
+            }
+            return(0);
+        }
+    }
 
     if (key == KEY_PRINT || key == KEY_F12) // Save content of video memory. F12 is alias for PrintScreen due to problems in some emulators
     {

@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.3.3 - Rev: 1185";
+const char* const version = "0.0.3.4 - Rev: 1186";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -226,22 +226,23 @@ void main(multiboot_t* mb_struct)
     #endif
 
 
-    /*TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !","This is an educational OS!");
+    /*TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !", "T\nhis is an educational OS!");
 
-    uint16_t result = TextGUI_AskYN("Question","Are you a software developer?",TEXTGUI_YES);
+    uint16_t result = TextGUI_AskYN("Question", "Are you a software developer?",TEXTGUI_YES);
 
-    switch (result) {
+    switch (result)
+    {
         case TEXTGUI_ABORTED:
-            TextGUI_ShowMSG("Result","You have cancelled the MessageBox!");
+            TextGUI_ShowMSG("Result", "You have cancelled the MessageBox!");
             break;
         case TEXTGUI_YES:
-            TextGUI_ShowMSG("Result","Hello developer!");
+            TextGUI_ShowMSG("Result", "Hello developer!");
             break;
         case TEXTGUI_NO:
-            TextGUI_ShowMSG("Result","Hello user!");
+            TextGUI_ShowMSG("Result", "Hello user!");
             break;
         default:
-            TextGUI_ShowMSG("Result","This can not happen.");
+            TextGUI_ShowMSG("Result", "This should not happen.");
             break;
     }*/
 

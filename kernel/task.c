@@ -10,6 +10,11 @@
 #include "kheap.h"
 #include "scheduler.h"
 #include "timer.h"
+#include "netprotocol/udp.h"
+#include "netprotocol/tcp.h"
+#include "filesystem/fsmanager.h"
+#include "audio/sys_speaker.h"
+
 
 // Kernel stack size
 static const uint32_t kernelStackSize = 0x1000; // Tasks get a 4 KB kernel stack
@@ -93,6 +98,8 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     newTask->blocker.type  = 0;
     newTask->threads       = 0; // No threads associated with the task at the moment. created later if necessary
     newTask->eventQueue    = 0; // Event handling is disabled per default
+    newTask->files         = 0;
+    newTask->speaker       = false;
 
     if (newTask->privilege == 3 && newTask->type != VM86)
     {
@@ -257,7 +264,7 @@ void task_saveState(uint32_t esp)
     currentTask->esp = esp;
 }
 
-uint32_t task_switch (task_t* newTask)
+uint32_t task_switch(task_t* newTask)
 {
     task_switching = false;
 
@@ -304,7 +311,7 @@ void switch_context() // Switch to next task (by interrupt)
 
 
 // Functions to kill a task
-static void kill(task_t* task)
+void kill(task_t* task)
 {
     task_switching = false; // There should not occur a task switch while we are exiting from a task, to avoid data corruption
 
@@ -313,27 +320,12 @@ static void kill(task_t* task)
     #endif
 
     // Cleanup
-    list_delete(task->console->tasks, list_find(task->console->tasks, task));
-    if (task->console->tasks->head == 0)
-    {
-        // Delete current task's console from list of our reachable consoles, if it is in that list
-        for (uint8_t i = 1; i < 11; i++)
-        {
-            if (task->console == reachableConsoles[i])
-            {
-                reachableConsoles[i] = 0;
-                break;
-            }
-        }
-        // Switch back to kernel console if the tasks console is displayed at the moment
-        if (task->console == console_displayed)
-        {
-            console_display(KERNELCONSOLE_ID);
-        }
-        // Free memory
-        console_exit(task->console);
-        free(task->console);
-    }
+    console_cleanup(task);
+    udp_cleanup(task);
+    tcp_cleanup(task);
+    fsmanager_cleanup(task);
+    if(task->speaker)
+        noSound();
 
     // Free user memory, if this task has an own PD
     if (task->type != THREAD && task->type != VM86 && task->pageDirectory != kernelPageDirectory)

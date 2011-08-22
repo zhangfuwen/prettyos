@@ -34,6 +34,10 @@ struct task
     // Task specific graphical output settings
     console_t*       console; // Console used by this task
     uint8_t          attrib;  // Color
+
+    // Information needed for cleanup
+    list_t* files;
+    bool    speaker;
 };
 
 
@@ -54,6 +58,7 @@ void     switch_context();
 void     task_saveState(uint32_t esp);
 uint32_t task_switch(task_t* newTask);
 void     exit();
+void     kill(task_t* task);
 void     task_kill(uint32_t pid);
 bool     waitForTask(task_t* blockingTask, uint32_t timeout); // Returns false in case of timeout. TODO: Can this function cause deadlocks?
 uint32_t getpid();

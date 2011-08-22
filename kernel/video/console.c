@@ -73,11 +73,37 @@ void console_init(console_t* console, const char* name)
     }
     console->ID = 255;
 }
+
 void console_exit(console_t* console)
 {
     free(console->name);
     list_free(console->tasks);
     mutex_delete(console->mutex);
+}
+
+void console_cleanup(task_t* task)
+{
+    list_delete(task->console->tasks, list_find(task->console->tasks, task));
+    if (task->console->tasks->head == 0)
+    {
+        // Delete current task's console from list of our reachable consoles, if it is in that list
+        for (uint8_t i = 1; i < 11; i++)
+        {
+            if (task->console == reachableConsoles[i])
+            {
+                reachableConsoles[i] = 0;
+                break;
+            }
+        }
+        // Switch back to kernel console if the tasks console is displayed at the moment
+        if (task->console == console_displayed)
+        {
+            console_display(KERNELCONSOLE_ID);
+        }
+        // Free memory
+        console_exit(task->console);
+        free(task->console);
+    }
 }
 
 bool console_display(uint8_t ID)

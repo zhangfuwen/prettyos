@@ -8,6 +8,7 @@
 #include "fat.h"
 #include "kheap.h"
 #include "util.h"
+#include "task.h"
 
 
 fileSystem_t FAT    = {.fopen = &FAT_fopen, .fclose = &FAT_fclose, .fgetc = &FAT_fgetc, .fputc = &FAT_fputc, .fseek = &FAT_fseek, .remove = &FAT_remove, .rename = &FAT_rename, .pformat = &FAT_format, .pinstall = &FAT_pinstall, .folderAccess = &FAT_folderAccess, .folderClose = &FAT_folderClose},
@@ -118,6 +119,10 @@ file_t* fopen(const char* path, const char* mode)
         //fseek(file, 0, SEEK_END); // To be used later
     }
 
+    if(currentTask->files == 0)
+        currentTask->files = list_create();
+    list_append(currentTask->files, file);
+
     return(file);
 }
 
@@ -126,6 +131,12 @@ void fclose(file_t* file)
     file->volume->type->fclose(file);
     free(file->name);
     free(file);
+    list_delete(currentTask->files, list_find(currentTask->files, file));
+    if(list_isEmpty(currentTask->files))
+    {
+        list_free(currentTask->files);
+        currentTask->files = 0;
+    }
 }
 
 
@@ -285,8 +296,23 @@ void folderClose(folder_t* folder)
 }
 
 
+// General functions
+void fsmanager_cleanup(task_t* task)
+{
+    if(task->files)
+    {
+        for(dlelement_t* e = task->files->head; e != 0; e = e->next)
+        {
+            file_t* file = e->data;
+            fclose(file);
+        }
+        list_free(task->files);
+    }
+}
+
+
 /*
-* Copyright (c) 2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

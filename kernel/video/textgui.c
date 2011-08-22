@@ -3,83 +3,60 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-
+#include "textgui.h"
 #include "keyboard.h"
 #include "events.h"
-#include "video.h"
 #include "util.h"
 #include "console.h"
 #include "kheap.h"
-#include "serial.h"
-#include "textgui.h"
-#include "os.h"
-
-// static uint16_t* vidmem = (uint16_t*)VIDEORAM; // Video memory
-
-#define COLUMNS 80 // Why aren't these in one file?
-#define LINES 50 // (found COLUMNS in console.h and LINES in video.c)
 
 
-char* strstr(const char* str1, const char* str2);
-char * stringReplace(char *search, char *replace, char *string);
-
-bool TextGUI_internal_DrawBox(uint16_t width, uint16_t height);
-bool TextGUI_internal_DrawGUI(uint16_t width, uint16_t height, uint8_t mode, bool selected);
+static void drawBox(uint16_t width, uint16_t height);
+static void drawGUI(uint16_t width, uint16_t height, uint8_t mode, bool selected);
 
 
+void drawTitleAndMessage(const char* title, position_t titlepos, const char* message, position_t messagepos)
+{
+    setCursor(titlepos);
+    textColor(0x0E);
+    puts(title);
+    setCursor(messagepos);
+    textColor(TEXT);
+    for(; *message != 0; message++)
+    {
+        if(*message == '\n')
+            puts("\n           ");
+        else
+            putch(*message);
+    }
+}
 
-uint16_t TextGUI_ShowMSG(char* title, char* message) {
-    event_enable(true);
-    char buffer[4096];
-    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
-
+uint16_t TextGUI_ShowMSG(const char* title, const char* message)
+{
     void* oldvidmem = malloc(8000, 4, "old_vidmem");
     memcpy(oldvidmem, (void*)console_current->vidmem, 8000);
-
-    // memshow(vidmem);
-    // memshow(oldvidmem, 4000, false);
-
     position_t oldpos;
     getCursor(&oldpos);
 
-    position_t titlepos = {11, 10};
-    position_t textpos  = {11, 15};
+    const position_t titlepos = {11, 10};
+    const position_t textpos  = {11, 15};
 
-    message = stringReplace("\n", "(nl)           ", message);
-    message = stringReplace("(nl)", "\n", message);
-
-    TextGUI_internal_DrawBox(60, 30);
-    setCursor(titlepos);
-    textColor(0x0E);
-    printf(title);
-    setCursor(textpos);
-    textColor(TEXT);
-    printf(message);
-    TextGUI_internal_DrawGUI(60, 30, 1, false);
-
+    event_enable(true);
+    char buffer[4096];
+    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 
     uint16_t returnval = TEXTGUI_ABORTED;
     bool exit = false;
     for (;;)
     {
-
-
+        drawBox(60, 30);
+        drawTitleAndMessage(title, titlepos, message, textpos);
+        drawGUI(60, 30, 1, false);
         switch (ev)
         {
             case EVENT_NONE:
-            {
-                TextGUI_internal_DrawBox(60, 30);
-                setCursor(titlepos);
-                textColor(0x0E);
-                printf(title);
-                setCursor(textpos);
-                textColor(TEXT);
-                printf(message);
-                TextGUI_internal_DrawGUI(60, 30, 1, false);
-
                 waitForEvent(50);
                 break;
-            }
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
@@ -87,13 +64,11 @@ uint16_t TextGUI_ShowMSG(char* title, char* message) {
                 {
                     returnval = TEXTGUI_ABORTED;
                     exit = true;
-                    break;
                 }
-                if (*key == KEY_ENTER)
+                else if (*key == KEY_ENTER)
                 {
                     returnval = TEXTGUI_OK;
                     exit = true;
-                    break;
                 }
                 break;
             }
@@ -101,9 +76,8 @@ uint16_t TextGUI_ShowMSG(char* title, char* message) {
                 break;
         }
 
-        if (exit == true) {
+        if (exit == true)
             break;
-        }
 
         ev = event_poll(buffer, 4096, EVENT_NONE);
     }
@@ -115,110 +89,71 @@ uint16_t TextGUI_ShowMSG(char* title, char* message) {
 }
 
 
-uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected) {
-    event_enable(true);
-    char buffer[4096];
-    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
-
+uint16_t TextGUI_AskYN(const char* title, const char* message, uint8_t defaultselected)
+{
     void* oldvidmem = malloc(8000, 4, "old_vidmem");
     memcpy(oldvidmem, (void*)console_current->vidmem, 8000);
-
-
     position_t oldpos;
     getCursor(&oldpos);
 
-    position_t titlepos = {11, 10};
-    position_t textpos  = {11, 15};
+    const position_t titlepos = {11, 10};
+    const position_t textpos  = {11, 15};
 
-    message = stringReplace("\n", "(nl)           ", message);
-    message = stringReplace("(nl)", "\n", message);
+    bool selected = defaultselected==TEXTGUI_YES;
 
-    bool selected = false;
-
-    if (defaultselected==TEXTGUI_YES) {
-        selected=true;
-    } else {
-        selected=false;
-    }
-
-    TextGUI_internal_DrawBox(60, 30);
-    setCursor(titlepos);
-    textColor(0x0E);
-    printf(title);
-    setCursor(textpos);
-    textColor(TEXT);
-    printf(message);
-    TextGUI_internal_DrawGUI(60, 30, 2, selected);
-
+    event_enable(true);
+    char buffer[4096];
+    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 
     uint16_t returnval = TEXTGUI_ABORTED;
     bool exit = false;
     for (;;)
     {
+        drawBox(60, 30);
+        drawTitleAndMessage(title, titlepos, message, textpos);
+        drawGUI(60, 30, 2, selected);
         switch (ev)
         {
             case EVENT_NONE:
-            {
-                TextGUI_internal_DrawBox(60, 30);
-                setCursor(titlepos);
-                textColor(0x0E);
-                printf(title);
-                setCursor(textpos);
-                textColor(TEXT);
-                printf(message);
-                TextGUI_internal_DrawGUI(60, 30, 2, selected);
-
                 waitForEvent(50);
                 break;
-            }
-
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
-                if (*key == KEY_ESC)
+                switch(*key)
                 {
-                    returnval = TEXTGUI_ABORTED;
-                    exit = true;
-                    break;
-                }
+                    case KEY_ESC:
+                        returnval = TEXTGUI_ABORTED;
+                        exit = true;
+                        break;
+                    case KEY_ENTER:
+                        if (selected == false)
+                            returnval = TEXTGUI_NO;
+                        else
+                            returnval = TEXTGUI_YES;
 
-                if (*key == KEY_ENTER)
-                {
-                    if (selected == false) {
-                        returnval = TEXTGUI_NO;
-                    } else {
-                        returnval = TEXTGUI_YES;
-                    }
-
-                    exit = true;
-                    break;
-                }
-
-                if (*key == KEY_Y || *key == KEY_Z) {
-                    selected = true;
-                }
-
-                if (*key == KEY_N) {
-                    selected = false;
-                }
-
-                if (*key == KEY_ARRL || *key == KEY_ARRR) {
-                    if (selected == false) {
+                        exit = true;
+                        break;
+                    case KEY_Y: case KEY_Z:
                         selected = true;
-                    } else {
+                        break;
+                    case KEY_N:
                         selected = false;
-                    }
+                        break;
+                    case KEY_ARRL: case KEY_ARRR:
+                        selected = !selected;
+                        break;
+                    default:
+                        break;
                 }
-
                 break;
             }
             default:
                 break;
         }
 
-        if (exit == true) {
+        if (exit == true)
             break;
-        }
 
         ev = event_poll(buffer, 4096, EVENT_NONE);
     }
@@ -230,55 +165,25 @@ uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected) {
 }
 
 
-bool TextGUI_internal_DrawBox(uint16_t width, uint16_t height) {
-
-    uint16_t startx = ((COLUMNS/2) - (width/2));
-    uint16_t starty = ((LINES/2) - (height/2));
-    uint16_t endx   = ((COLUMNS/2) + (width/2));
-    uint16_t endy   = ((LINES/2) + (height/2));
-
-    endx = endx + 1;
-    endy = endy + 1;
-    startx = startx - 1;
-    starty = starty + 1;
+static void drawBox(uint16_t width, uint16_t height)
+{
+    uint16_t startx = (COLUMNS/2) - (width/2) - 1;
+    uint16_t starty = (LINES/2) - (height/2) - 1;
+    uint16_t endx   = (COLUMNS/2) + (width/2) + 1;
+    uint16_t endy   = (LINES/2) + (height/2) - 1;
 
     // Contentbox
-    for (uint16_t y = starty; y < endy; y++) {
-        for (uint16_t x = startx; x < endx; x++) {
-            vga_setPixel(x, y, (0x00 << 8) | 0xDB);
-        }
-    }
-
-
-    return(0);
+    for (uint16_t y = starty; y < endy; y++)
+        for (uint16_t x = startx; x < endx; x++)
+            console_setPixel(x, y, 0);
 }
 
-bool TextGUI_internal_DrawGUI(uint16_t width, uint16_t height, uint8_t mode, bool selected) {
-
-    uint16_t startx = ((COLUMNS/2) - (width/2));
-    uint16_t starty = ((LINES/2) - (height/2));
-    uint16_t endx   = ((COLUMNS/2) + (width/2));
-    uint16_t endy   = ((LINES/2) + (height/2));
-
-
-    endx = endx + 1;
-    endy = endy + 1;
-    startx = startx - 1;
-    starty = starty + 1;
-
-
-    // X-borders
-    for (uint16_t x = startx; x < (endx - 1); x++) {
-        vga_setPixel(x, starty-1, (0x0F << 8) | 0xCD);
-        vga_setPixel(x, endy-1, (0x0F << 8) | 0xCD);
-    }
-
-    // Y-borders
-    for (uint16_t y = starty; y < (endy - 1); y++) {
-        vga_setPixel(startx-1, y, (0x0F << 8) | 0xBA);
-        vga_setPixel(endx-1, y, (0x0F << 8) | 0xBA);
-    }
-
+static void drawGUI(uint16_t width, uint16_t height, uint8_t mode, bool selected)
+{
+    uint16_t startx = (COLUMNS/2) - (width/2) - 1;
+    uint16_t starty = (LINES/2) - (height/2) - 1;
+    uint16_t endx   = (COLUMNS/2) + (width/2) + 1;
+    uint16_t endy   = (LINES/2) + (height/2) - 1;
 
     // Corners
     /*
@@ -286,163 +191,72 @@ bool TextGUI_internal_DrawGUI(uint16_t width, uint16_t height, uint8_t mode, boo
      |         |
      |         |
      3=========4
-     */
+    */
+    console_setPixel((startx - 1), (starty - 1), (0x0F << 8) | 0xC9); // 1
+    console_setPixel((endx - 1), (starty - 1), (0x0F << 8) | 0xBB);   // 2
+    console_setPixel((startx - 1), (endy - 1), (0x0F << 8) | 0xC8);   // 3
+    console_setPixel((endx - 1), (endy - 1), (0x0F << 8) | 0xBC);     // 4
 
-    // 1:
-    vga_setPixel((startx - 1), (starty - 1), (0x0F << 8) | 0xC9);
+    for (uint16_t y = starty; y < (endy - 1); y++)
+    {
+        // Y-borders
+        console_setPixel(startx-1, y, (0x0F << 8) | 0xBA);
+        console_setPixel(endx-1, y, (0x0F << 8) | 0xBA);
+    }
+    for (uint16_t x = startx; x < (endx - 1); x++)
+    {
+        // X-borders
+        console_setPixel(x, starty-1, (0x0F << 8) | 0xCD);
+        console_setPixel(x, endy-1, (0x0F << 8) | 0xCD);
 
-    // 2:
-    vga_setPixel((endx - 1), (starty - 1), (0x0F << 8) | 0xBB);
+        // Separations
+        console_setPixel(x, endy-5, (0x0F << 8) | 0xCD);
+        console_setPixel(x, starty+3, (0x0F << 8) | 0xCD);
+    }
 
-    // 3:
-    vga_setPixel((startx - 1), (endy - 1), (0x0F << 8) | 0xC8);
+    // Corners of separations
+    console_setPixel((startx - 1), endy - 5, (0x0F << 8) | 0xCC);
+    console_setPixel((endx - 1), endy - 5, (0x0F << 8) | 0xB9);
 
-    // 4:
-    vga_setPixel((endx - 1), (endy - 1), (0x0F << 8) | 0xBC);
+    console_setPixel((startx - 1), starty+3, (0x0F << 8) | 0xCC);
+    console_setPixel((endx - 1), starty+3, (0x0F << 8) | 0xB9);
 
-    position_t buttonpos = { (startx+1), (endy-5) };
+    position_t buttonpos = { (startx+1), (endy-3) };
+    setCursor(buttonpos);
 
-    switch (mode) {
+    switch (mode)
+    {
         case 1: // OK-Box
-            // X-Seperation
-            for (uint16_t x = startx; x < (endx - 1); x++) {
-                vga_setPixel(x, endy-5, (0x0F << 8) | 0xCD);
-            }
-
-            vga_setPixel((startx - 1), endy - 5, (0x0F << 8) | 0xCC);
-            vga_setPixel((endx - 1), endy - 5, (0x0F << 8) | 0xB9);
-
-            for (uint16_t x = startx; x < (endx - 1); x++) {
-                vga_setPixel(x, starty+3, (0x0F << 8) | 0xCD);
-            }
-
-            vga_setPixel((startx - 1), starty+3, (0x0F << 8) | 0xCC);
-            vga_setPixel((endx - 1), starty+3, (0x0F << 8) | 0xB9);
-
-            // OK-Button:
-            setCursor(buttonpos);
-
+            // OK-Button
             textColor(LIGHT_GREEN);
-            printf("<OK>");
-
+            puts("<OK>");
             break;
         case 2: // Yes/No-Box
-            // X-Seperation
-            for (uint16_t x = startx; x < (endx - 1); x++) {
-                vga_setPixel(x, endy-5, (0x0F << 8) | 0xCD);
-            }
-
-            vga_setPixel((startx - 1), endy - 5, (0x0F << 8) | 0xCC);
-            vga_setPixel((endx - 1), endy - 5, (0x0F << 8) | 0xB9);
-
-            for (uint16_t x = startx; x < (endx - 1); x++) {
-                vga_setPixel(x, starty+3, (0x0F << 8) | 0xCD);
-            }
-
-            vga_setPixel((startx - 1), starty+3, (0x0F << 8) | 0xCC);
-            vga_setPixel((endx - 1), starty+3, (0x0F << 8) | 0xB9);
-
-            // OK-Button:
-
-            setCursor(buttonpos);
-
-            if (selected == false) {
+            // YES-Button
+            if (selected == false)
                 textColor(LIGHT_RED);
-                printf("<YES>");
-                textColor(TEXT);
-                printf("  -  ");
+            else
                 textColor(LIGHT_GREEN);
-                printf("<NO>");
-            } else {
-                textColor(LIGHT_GREEN);
-                printf("<YES>");
-                textColor(TEXT);
-                printf("  -  ");
-                textColor(LIGHT_RED);
-                printf("<NO>");
-            }
+            puts("<YES>");
+            textColor(TEXT);
+            puts("  -  ");
 
+            // NO-Button
+            if (selected == true)
+                textColor(LIGHT_RED);
+            else
+                textColor(LIGHT_GREEN);
+            puts("<NO>");
 
             break;
         default:
             break;
     }
-
-    return(0);
-}
-
-
-char* strstr(const char* str1, const char* str2)
-{
-    const char* p1 = str1;
-    const char* p2;
-    while (*str1)
-    {
-        p2 = str2;
-        while (*p2 && (*p1 == *p2))
-        {
-            ++p1;
-            ++p2;
-        }
-        if (*p2 == 0)
-        {
-            return (char*)str1;
-        }
-        ++str1;
-        p1 = str1;
-    }
-    return 0;
-}
-
-// http://www.c-howto.de/tutorial-strings-zeichenketten-uebungen-loesung-teil4-string-replace.html
-// Modified by Cuervo
-char * stringReplace(char *search, char *replace, char *string) {
-    char *tempString, *searchStart;
-    int len=0;
-
-
-    // preuefe ob Such-String vorhanden ist
-    searchStart = strstr(string, search);
-    if (searchStart == NULL) {
-        return string;
-    }
-
-    // Speicher reservieren
-    tempString = (char*) malloc(strlen(string) * sizeof(char), 0, "stringReplace");
-    if (tempString == NULL) {
-        return NULL;
-    }
-
-    // temporaere Kopie anlegen
-    strcpy(tempString, string);
-
-    // ersten Abschnitt in String setzen
-    len = searchStart - string;
-    string[len] = '\0';
-
-    // zweiten Abschnitt anhaengen
-    strcat(string, replace);
-
-    // dritten Abschnitt anhaengen
-    len += strlen(search);
-    strcat(string, (char*)tempString+len);
-
-    // Speicher freigeben
-    free(tempString);
-
-
-    // Rekursives Aufrufen (neu von Cuervo)
-    searchStart = strstr(string, search);
-    if (searchStart == NULL) {
-        return string;
-    } else {
-        return stringReplace(search, replace, string);
-    }
 }
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

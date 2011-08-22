@@ -28,6 +28,12 @@
     <Filter Include="Other Userprogs">
       <UniqueIdentifier>{23ec3ec3-1e1d-4e42-bdb4-0b7197431161}</UniqueIdentifier>
     </Filter>
+    <Filter Include="User-Tools\Include">
+      <UniqueIdentifier>{b682dcc2-6519-44c9-8b9d-dece835b76ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="User-Tools\Source">
+      <UniqueIdentifier>{68b056fc-d209-46c1-aa77-9cc1f24ce0f3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\user\user_tools\start.asm">
@@ -62,12 +68,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\user\user_tools\userlib.c">
-      <Filter>User-Tools</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_tools\userlib_cpp.cpp">
-      <Filter>User-Tools</Filter>
-    </ClCompile>
     <ClCompile Include="..\user\stdlibc\assert.c">
       <Filter>stdlibC\source</Filter>
     </ClCompile>
@@ -161,20 +161,11 @@
     <ClCompile Include="..\user\other_userprogs\ftp.c">
       <Filter>Other Userprogs</Filter>
     </ClCompile>
-    <ClCompile Include="..\user\user_tools\dns.c">
-      <Filter>User-Tools</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_tools\dns_help.c">
-      <Filter>User-Tools</Filter>
-    </ClCompile>
     <ClCompile Include="..\user\other_userprogs\showdns.c">
       <Filter>Other Userprogs</Filter>
     </ClCompile>
     <ClCompile Include="..\user\other_userprogs\pong.c">
       <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\user_tools\syscalls.c">
-      <Filter>User-Tools</Filter>
     </ClCompile>
     <ClCompile Include="..\user\stdlibc\stdlib_sortsearch.c">
       <Filter>stdlibC\source</Filter>
@@ -182,17 +173,23 @@
     <ClCompile Include="..\user\stdlibc\stdlib_strtonum.c">
       <Filter>stdlibC\source</Filter>
     </ClCompile>
+    <ClCompile Include="..\user\user_tools\dns.c">
+      <Filter>User-Tools\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_tools\dns_help.c">
+      <Filter>User-Tools\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_tools\syscalls.c">
+      <Filter>User-Tools\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_tools\userlib.c">
+      <Filter>User-Tools\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\user_tools\userlib_cpp.cpp">
+      <Filter>User-Tools\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\user\user_tools\types.h">
-      <Filter>User-Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\user\user_tools\userlib.h">
-      <Filter>User-Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\user\user_tools\userlib.hpp">
-      <Filter>User-Tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\user\stdlibc\assert.h">
       <Filter>stdlibC\include</Filter>
     </ClInclude>
@@ -248,10 +245,19 @@
       <Filter>stdlibC\include</Filter>
     </ClInclude>
     <ClInclude Include="..\user\user_tools\dns.h">
-      <Filter>User-Tools</Filter>
+      <Filter>User-Tools\Include</Filter>
     </ClInclude>
     <ClInclude Include="..\user\user_tools\dns_help.h">
-      <Filter>User-Tools</Filter>
+      <Filter>User-Tools\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\types.h">
+      <Filter>User-Tools\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\userlib.h">
+      <Filter>User-Tools\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\user\user_tools\userlib.hpp">
+      <Filter>User-Tools\Include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

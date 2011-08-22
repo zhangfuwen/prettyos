@@ -4,6 +4,24 @@
 #include "types.h"
 
 
+#define ERROR          LIGHT_RED
+#define SUCCESS        GREEN
+#define HEADLINE       CYAN
+#define TABLE_HEADING  LIGHT_GRAY
+#define DATA           BROWN
+#define IMPORTANT      YELLOW
+#define TEXT           WHITE
+#define FOOTNOTE       LIGHT_RED
+#define TITLEBAR       LIGHT_RED
+
+
+enum COLORS
+{
+    BLACK, BLUE,        GREEN,       CYAN,       RED,       MAGENTA,       BROWN,  LIGHT_GRAY,
+    GRAY,  LIGHT_BLUE,  LIGHT_GREEN, LIGHT_CYAN, LIGHT_RED, LIGHT_MAGENTA, YELLOW, WHITE
+};
+
+
 // syscalls (only non-standard functions, because we do not want to include stdio.h here.
 FS_ERROR execute(const char* path, size_t argc, char* argv[]);
 void exit();

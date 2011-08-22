@@ -36,11 +36,10 @@ int main()
                 udpReceivedEventHeader_t* header = (void*)buffer;
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
-                textColor(0x0F);
-                printf("\npacket received from %u.%u.%u.%u. Length = %u", header->srcIP.IP[0], header->srcIP.IP[1], header->srcIP.IP[2], header->srcIP.IP[3], header->length);
+                printf("\npacket received from %u.%u.%u.%u:%u to port %u. Length = %u", header->srcIP.IP[0], header->srcIP.IP[1], header->srcIP.IP[2], header->srcIP.IP[3], header->srcPort, header->destPort, header->length);
                 printf("\n%u:\t",count);
                 textColor(0x0A);
-                printf("%s", data);
+                puts(data);
                 textColor(0x0F);
                 break;
             }
@@ -49,6 +48,7 @@ int main()
                 KEY_t* key = (void*)buffer;
                 if (*key == KEY_ESC)
                 {
+                    udp_unbind(8085);
                     return(0);
                 }
                 break;
@@ -59,5 +59,6 @@ int main()
         ev = event_poll(buffer, BUFFERSIZE, EVENT_NONE);
     }
 
+    udp_unbind(8085);
     return(0);
 }

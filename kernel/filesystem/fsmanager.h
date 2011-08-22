@@ -3,6 +3,8 @@
 
 #include "os.h"
 #include "list.h"
+#include "scheduler.h"
+
 
 typedef enum
 {
@@ -175,5 +177,8 @@ void     clearerr(file_t* file);
 // Folder functions
 folder_t* folderAccess(const char* path, folderAccess_t mode);
 void      folderClose (folder_t* folder);
+
+// General functions
+void fsmanager_cleanup();
 
 #endif

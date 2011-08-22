@@ -40,6 +40,7 @@ extern console_t kernelConsole;
 void kernel_console_init();
 void console_init(console_t* console, const char* name);
 void console_exit(console_t* console);
+void console_cleanup(task_t* task);
 bool console_display(uint8_t ID);
 
 void console_clear(uint8_t backcolor);

@@ -9,6 +9,7 @@
 #include "util.h"
 #include "timer.h"
 #include "pit.h"
+#include "task.h"
 
 
 void sound(uint32_t frequency)
@@ -29,11 +30,14 @@ void sound(uint32_t frequency)
     {
         outportb(COUNTER_2_CONTROLPORT, temp | (AUX_GATE_2 | AUX_OUT_2));
     }
+
+    currentTask->speaker = true;
 }
 
 void noSound()
 {
     outportb(COUNTER_2_CONTROLPORT, inportb(COUNTER_2_CONTROLPORT) & ~(AUX_GATE_2 | AUX_OUT_2));
+    currentTask->speaker = false;
 }
 
 void beep(uint32_t freq, uint32_t duration)

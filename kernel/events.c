@@ -22,8 +22,10 @@ void event_deleteQueue(event_queue_t* queue)
 {
     for (dlelement_t* e = queue->list->head; e != 0; e = e->next)
     {
-        free(((event_t*)e->data)->data);
-        free(e->data);
+        event_t* event = e->data;
+        if(event->length > sizeof(event->data))
+            free(event->data);
+        free(event);
     }
     list_free(queue->list);
     mutex_delete(queue->mutex);

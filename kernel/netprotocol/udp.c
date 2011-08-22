@@ -30,11 +30,14 @@ static void udp_debug(udpPacket_t* udp);
 
 static udp_port_t* findConnection(uint16_t port)
 {
-    for(dlelement_t* e = udpPorts->head; e != 0; e = e->next)
+    if(udpPorts)
     {
-        udp_port_t* connection = e->data;
-        if(connection->port == port)
-            return(connection);
+        for(dlelement_t* e = udpPorts->head; e != 0; e = e->next)
+        {
+            udp_port_t* connection = e->data;
+            if(connection->port == port)
+                return(connection);
+        }
     }
     return(0);
 }
@@ -45,6 +48,9 @@ bool udp_bind(uint16_t port)
     if(udpPort)
         return(false);
 
+    if(udpPorts == 0)
+        udpPorts = list_create();
+
     udpPort = malloc(sizeof(udp_port_t), 0, "udp_port_t");
     udpPort->owner = (task_t*)currentTask;
     udpPort->port = port;
@@ -54,14 +60,45 @@ bool udp_bind(uint16_t port)
 
 void udp_unbind(uint16_t port)
 {
-    for(dlelement_t* e = udpPorts->head; e != 0; e = e->next)
+    if(udpPorts)
     {
-        udp_port_t* udpPort = e->data;
-        if(udpPort->port == port && udpPort->owner == currentTask)
+        for(dlelement_t* e = udpPorts->head; e != 0; e = e->next)
         {
-            free(udpPort);
-            list_delete(udpPorts, e);
-            return;
+            udp_port_t* udpPort = e->data;
+            if(udpPort->port == port && udpPort->owner == currentTask)
+            {
+                free(udpPort);
+                list_delete(udpPorts, e);
+                if(list_isEmpty(udpPorts))
+                {
+                    list_free(udpPorts);
+                    udpPorts = 0;
+                }
+                return;
+            }
+        }
+    }
+}
+
+void udp_cleanup(task_t* task)
+{
+    if(udpPorts)
+    {
+        for(dlelement_t* e = udpPorts->head; e != 0;)
+        {
+            udp_port_t* udpPort = e->data;
+            if(udpPort->owner == task)
+            {
+                free(udpPort);
+                e = list_delete(udpPorts, e);
+            }
+            else
+                e = e->next;
+        }
+        if(list_isEmpty(udpPorts))
+        {
+            list_free(udpPorts);
+            udpPorts = 0;
         }
     }
 }
