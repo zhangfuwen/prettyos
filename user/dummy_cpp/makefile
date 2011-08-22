@@ -19,6 +19,10 @@ else
     endif
 endif
 
+ifeq ($(COMPILER),CLANG)
+	CC= clang
+endif
+
 # Folders
 ifeq ($(OS),WINDOWS)
     USERTOOLS= ..\user_tools
@@ -36,7 +40,11 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-GPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
+ifeq ($(COMPILER),CLANG)
+	GPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc -Xclang -triple=i386-pc-unknown
+else
+	GPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
+endif
 LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
 TARGET= CPPDUMMY.ELF

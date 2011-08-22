@@ -135,7 +135,7 @@ void rtl8139_install(network_adapter_t* adapter)
     {
         "RTL8139", "RTL8139A", "RTL8139B", "RTL8139C", "RTL8139D", "RTL8100", "RTL8139C+", "RTL8101"
     };
-    
+
     if (rAdapter->version < 8)
     {
         printf("\n%s\n", rtlVersions[rAdapter->version]);

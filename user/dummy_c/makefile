@@ -19,6 +19,10 @@ else
     endif
 endif
 
+ifeq ($(COMPILER),CLANG)
+	CC= clang
+endif
+
 # Folders
 ifeq ($(OS),WINDOWS)
     USERTOOLS= ..\user_tools
@@ -35,7 +39,11 @@ else
 endif
 
 # Compiler-/Linker-Flags
-GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fno-common -Iinclude
+ifeq ($(COMPILER),CLANG)
+	GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+else
+	GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+endif
 LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
 TARGET= CDUMMY.ELF

@@ -28,8 +28,9 @@ IP_t getAddrByName(const char* name)
     size_t query_size = dns_createSimpleQuery(buf, sizeof(buf), name, query_id);
 
     dns_getServer(&dns_server);
-    event_enable(1);
-
+    event_enable(true);
+    
+    udp_bind(dns_port);
     if (query_size && dns_server.iIP && udp_send(buf, query_size, dns_server, dns_port, dns_port))
     {
         EVENT_t ev = event_poll(buf, sizeof(buf), EVENT_NONE);
@@ -79,6 +80,7 @@ IP_t getAddrByName(const char* name)
             }
         }
     }
+    udp_unbind(dns_port);
     return host;
 }
 
@@ -120,7 +122,8 @@ void showDNSQuery(const char* name)
         dns_server.IP[2], dns_server.IP[3]);
 
     event_enable(true);
-
+    
+    udp_bind(dns_port);
     if (query_size && dns_server.iIP && udp_send(buf, query_size, dns_server, dns_port, dns_port))
     {
         EVENT_t ev = event_poll(buf, sizeof(buf), EVENT_NONE);
@@ -195,6 +198,7 @@ void showDNSQuery(const char* name)
             }
         }
     }
+    udp_unbind(dns_port);
     printf(" -- END -- \n");
     getchar();
 }

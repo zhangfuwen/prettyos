@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.3.6 - Rev: 1189";
+const char* const version = "0.0.3.7 - Rev: 1190";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -131,7 +131,7 @@ static void init(multiboot_t* mb_struct)
 
     // Interrupts
     isr_install();
-    if (apic_install()) 
+    if (apic_install())
     {
         log("APIC");
     }
@@ -143,24 +143,24 @@ static void init(multiboot_t* mb_struct)
 
     // internal devices
     timer_install(SYSTEMFREQUENCY); // Sets system frequency to ... Hz
-    log("Timer"); 
-    if (fpu_install()) 
+    log("Timer");
+    if (fpu_install())
     {
         log("FPU");
     }
 
     // memory
-    system.Memory_Size = paging_install(); 
+    system.Memory_Size = paging_install();
     log("Paging");
-    heap_install(); 
+    heap_install();
     log("Heap");
 
     // video
-    vga_install(); 
+    vga_install();
     log("Video");
 
     // tasks
-    tasking_install(); 
+    tasking_install();
     log("Multitasking");
 
   #ifdef _BOOTSCREEN_
@@ -168,28 +168,27 @@ static void init(multiboot_t* mb_struct)
   #endif
 
     // external devices
-    keyboard_install(); 
+    keyboard_install();
     log("Keyboard");
-    mouse_install(); 
+    mouse_install();
     log("Mouse");
 
     // power management
-    pm_install(); 
+    pm_install();
     log("Power Management");
 
     // system calls
-    syscall_install(); 
+    syscall_install();
     log("Syscalls");
 
     // cdi
-    cdi_init(); 
+    cdi_init();
     log("CDI");
 
     // mass storage devices
-    deviceManager_install(); 
-    log("Devicemanager"); 
+    deviceManager_install();
+    log("Devicemanager");
 
-    // kernel idle loop
     kernel_idleTasks = todolist_create();
 
     puts("\n\n");
@@ -246,7 +245,7 @@ void main(multiboot_t* mb_struct)
   #endif
 
 
-    /*TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !", "T\nhis is an educational OS!");
+    /*TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !", "This is an educational OS!");
 
     uint16_t result = TextGUI_AskYN("Question", "Are you a software developer?",TEXTGUI_YES);
 
@@ -295,7 +294,7 @@ void main(multiboot_t* mb_struct)
 
                 pageDirectory_t* pd = paging_createUserPageDirectory();
                 void* entry = elf_prepare(buf, sz, pd);
-                
+
                 if (entry == 0)
                 {
                     textColor(ERROR);
@@ -306,7 +305,7 @@ void main(multiboot_t* mb_struct)
                 {
                     scheduler_insertTask(create_process(pd, entry, 3, 0, 0));
                 }
-                
+
                 free(buf);
             }
         }
@@ -315,7 +314,7 @@ void main(multiboot_t* mb_struct)
     if (!shell_found)
     {
         textColor(ERROR);
-        printf("\nProgram not found.\n");
+        puts("\nProgram not found.\n");
         textColor(TEXT);
     }
 
@@ -340,13 +339,9 @@ void main(multiboot_t* mb_struct)
     {
         // show rotating asterisk
         if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
-        {
             vga_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
-        }
         if (! *++progress)
-        {
             progress = "|/-\\";
-        }
 
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
         char buffer[4];
@@ -473,9 +468,7 @@ void main(multiboot_t* mb_struct)
             LastRdtscValue = Rdtsc;
 
             if (RdtscKCountsHi == 0)
-            {
                 system.CPU_Frequency_kHz = RdtscKCountsLo/1000;
-            }
 
             // draw status bar with date, time and frequency
             getCurrentDateAndTime(DateAndTime, 50);

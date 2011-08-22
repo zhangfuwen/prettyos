@@ -125,7 +125,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
     if (ev->length > maxLength)
     {
-        if(ev->length >= sizeof(size_t)) // Buffer is large enough to store at least the size of the event. Just issue EVENT_BUFFER_TO_SMALL event, leave event in queue.
+        if(maxLength >= sizeof(size_t)) // Buffer is large enough to store at least the size of the event. Just issue EVENT_BUFFER_TO_SMALL event, leave event in queue.
         {
             *(uint32_t*)destination = ev->length;
             return(EVENT_BUFFER_TO_SMALL);

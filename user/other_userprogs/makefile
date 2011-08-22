@@ -19,6 +19,10 @@ else
     endif
 endif
 
+ifeq ($(COMPILER),CLANG)
+	CC= clang
+endif
+
 # Folders
 ifeq ($(OS),WINDOWS)
     USERTOOLS= ..\user_tools
@@ -36,7 +40,11 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+ifeq ($(COMPILER),CLANG)
+	GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+else
+	GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+endif
 LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
 # targets to build an executable from a source file

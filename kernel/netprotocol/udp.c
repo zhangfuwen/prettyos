@@ -125,7 +125,7 @@ void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, IP_t sourceIP)
           #ifdef _UDP_DEBUG_
             printf("\nUDP default port");
           #endif
-            udp_port_t* udpPort = findConnection(packet->destPort);
+            udp_port_t* udpPort = findConnection(ntohs(packet->destPort));
             if(udpPort == 0)
                 return;
 
@@ -165,7 +165,6 @@ void udp_send(network_adapter_t* adapter, void* data, uint32_t length, uint16_t 
 bool udp_usend(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16_t destPort)
 {
     network_adapter_t* adapter = network_getFirstAdapter();
-
 
     if (adapter)
     {

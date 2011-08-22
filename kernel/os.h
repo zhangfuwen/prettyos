@@ -4,32 +4,34 @@
 #include "types.h"
 
 
-//  Enable/Disable features (Should be enabled per default)
-/// #define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
-#define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
-#define _SERIAL_LOG_           // Enables log information over the COM-Ports
-/// #define _DIAGNOSIS_            // Diagnosis-Output - activates prints to the screen about some details and memory use
-/// #define _PAGING_DIAGNOSIS_     // Diagnosis-Output about PD, PT etc.
-/// #define _MALLOC_FREE_          // shows information about malloc/free and heap expansion
-/// #define _MEMLEAK_FIND_         // Provides a counter of all (successful) malloc and free calls showing memory leaks
+// Additional features (Should be enabled per default)
+#define _BOOTSCREEN_         // Enables the bootscreen displayed at startup
+#define _PCI_VEND_PROD_LIST_ // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
+#define _SERIAL_LOG_         // Enables log information over the COM-Ports
+
+// Additional debug output (Should be disabled per default)
+/// #define _DIAGNOSIS_            // General diagnosis output - activates prints to the screen about some details and memory use
+/// #define _TASKING_DIAGNOSIS_    // Diagnosis output about tasking and scheduler
+/// #define _PAGING_DIAGNOSIS_     // Diagnosis output about PD, PT etc.
+/// #define _MALLOC_FREE_          // Shows information about malloc/free and heap expansion
+/// #define _MEMLEAK_FIND_         // Counter of all (successful) malloc and free calls showing memory leaks in info bar2
+/// #define _VM_DIAGNOSIS_         // Information about the vm86 task, but critical
+/// #define _VBE_DEBUG_            // Debug output of the VBE driver
+/// #define _DEVMGR_DIAGNOSIS_     // E.g. sectorRead, sectorWrite
+/// #define _READCACHE_DIAGNOSIS_  // Read cache logger
 /// #define _EHCI_DIAGNOSIS_       // Debug EHCI
 /// #define _USB_DIAGNOSIS_        // Debug USB 2.0 transfers
-/// #define _FAT_DIAGNOSIS_        // only as transition state during implementation of FAT 12/16/32
-/// #define _DEVMGR_DIAGNOSIS_     // e.g. sectorRead, sectorWrite
-/// #define _READCACHE_DIAGNOSIS_  // read cache logger
-/// #define _TASKING_DIAGNOSIS_    // Provides output about tasking and scheduler
-/// #define _FLOPPY_DIAGNOSIS_     // Provides information about the floppy(-motor)
-/// #define _VM_DIAGNOSIS_         // Provides information about the vm86 task, but critical
-/// #define _RAMDISK_DIAGNOSIS_    // Enables additional information about the ramdisk
-/// #define _NETWORK_DATA_         // Enables additional information about networking packets
-/// #define _NETWORK_DIAGNOSIS_    // Enables additional information about the network adapters
-/// #define _ARP_DEBUG_            // Enables additional information about ARP
-/// #define _DHCP_DEBUG_           // Enables additional information about DHCP
-/// #define _ICMP_DEBUG_           // Enables analysis of ICMP information besides echo request/response
-/// #define _UDP_DEBUG_            // Enables additional information about UDP
-/// #define _TCP_DEBUG_            // Enables additional information about TCP
-/// #define _NETBIOS_DEBUG_        // Enables NetBIOS packet analysis
-/// #define _VBE_DEBUG_            // Provides additional output of the VBE driver
+/// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)
+/// #define _RAMDISK_DIAGNOSIS_    // Information about the ramdisk
+/// #define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/3
+/// #define _NETWORK_DATA_         // Information about networking packets
+/// #define _NETWORK_DIAGNOSIS_    // Information about the network adapters
+/// #define _ARP_DEBUG_            // Information about ARP
+/// #define _DHCP_DEBUG_           // Information about DHCP
+/// #define _ICMP_DEBUG_           // Analysis of ICMP information besides echo request/response
+/// #define _UDP_DEBUG_            // Information about UDP
+/// #define _TCP_DEBUG_            // Information about TCP
+/// #define _NETBIOS_DEBUG_        // NetBIOS packet analysis
 
 // output of the serial log to COMx:
 #define SER_LOG_TCP    1
@@ -37,8 +39,8 @@
 #define SER_LOG_VM86   2
 
 
-extern const char* const version; // PrettyOS Version string
-extern system_t system;           // Informations about the operating system
+extern const char* const version; // PrettyOS version string
+extern system_t system;           // Information about the operating system
 extern struct todoList* kernel_idleTasks;
 
 
