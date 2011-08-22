@@ -1,7 +1,5 @@
 /*
  * Shows a DNS query.
- * Written by: cooky451 - 8/15/2011
- * Last change: cooky451 - 8/15/2011
  * Todo: -
  * Comments: -
  */

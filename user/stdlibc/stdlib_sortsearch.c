@@ -55,13 +55,10 @@ void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const void*, con
                 r = (char*)l >= (char*)i - size ? l : (char*)i - size;
             }
         }
-        else
+        else if (pos != stack)
         {
-            if (pos != stack)
-            {
-                l = (char*)r + size;
-                r = *(--pos);
-            }
+            l = (char*)r + size;
+            r = *(--pos);
         } // what do we do, if (pos == stack + stack_size) ?
     } while (pos != stack && pos != stack + stack_size);
 }

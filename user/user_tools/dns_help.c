@@ -1,13 +1,15 @@
-/*
-*  license and disclaimer for the use of this source code as per statement below
-*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
-*/
+/* 
+ * License and disclaimer for the use of this source code as per statement below.
+ * Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten.
+ */
 
-// DNS help functions
-// TODO: getHostByName() which returns all hosts for a name.
-//       Parser for authority, additional. (See dns_header)
-//       Parser for RR's: NS, MD, MF, SOA, MB, MG, MR, NULL,
-//          WKS, PTR, HINFO, MINFO, MX, TXT. (See dns_qtype)
+/* DNS help functions
+ * Todo:  - getHostByName() which returns all hosts for a name.
+ *        - Parser for authority, additional. (See dns_header)
+ *        - Parser for RR's: NS, MD, MF, SOA, MB, MG, MR, NULL,
+ *                           WKS, PTR, HINFO, MINFO, MX, TXT. 
+ *                           (See dns_qtype)
+ */
 
 #include "dns_help.h"
 #include "dns.h"
@@ -33,9 +35,8 @@ IP_t getAddrByName(const char* name)
     udp_bind(dns_port);
     if (query_size && dns_server.iIP && udp_send(buf, query_size, dns_server, dns_port, dns_port))
     {
-        EVENT_t ev = event_poll(buf, sizeof(buf), EVENT_NONE);
-        for (; ev != EVENT_UDP_RECEIVED;
-            ev = event_poll(buf, sizeof(buf), EVENT_NONE))
+        EVENT_t ev;
+        while ((ev = event_poll(buf, sizeof(buf), EVENT_NONE)) != EVENT_UDP_RECEIVED)
         {
             switch (ev)
             {
@@ -80,6 +81,7 @@ IP_t getAddrByName(const char* name)
             }
         }
     }
+
     udp_unbind(dns_port);
     return host;
 }
@@ -122,12 +124,12 @@ void showDNSQuery(const char* name)
         dns_server.IP[2], dns_server.IP[3]);
 
     event_enable(true);
-    
     udp_bind(dns_port);
+
     if (query_size && dns_server.iIP && udp_send(buf, query_size, dns_server, dns_port, dns_port))
     {
-        EVENT_t ev = event_poll(buf, sizeof(buf), EVENT_NONE);
-        for (; ev != EVENT_UDP_RECEIVED; ev = event_poll(buf, sizeof(buf), EVENT_NONE))
+        EVENT_t ev;
+        while ((ev = event_poll(buf, sizeof(buf), EVENT_NONE)) != EVENT_UDP_RECEIVED)
         {
             switch (ev)
             {
@@ -188,7 +190,7 @@ void showDNSQuery(const char* name)
                         resource.rdlength < 256)
                     {
                         char alias[256];
-                        if (dns_parseName(alias, data, resource.rdlength, resource.rdata))
+                        if (dns_parseName(alias, data, len, resource.rdata))
                         {
                             printf("Found CNAME: %s\n", alias);
                         }
@@ -198,36 +200,38 @@ void showDNSQuery(const char* name)
             }
         }
     }
+
     udp_unbind(dns_port);
     printf(" -- END -- \n");
+
     getchar();
 }
 
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
-*
-* http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
-*
-* Redistribution and use in source and binary forms, with or without modification,
-* are permitted provided that the following conditions are met:
-*
-* 1. Redistributions of source code must retain the above copyright notice,
-*    this list of conditions and the following disclaimer.
-*
-* 2. Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in the
-*    documentation and/or other materials provided with the distribution.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-* ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
-* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+ *
+ * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */

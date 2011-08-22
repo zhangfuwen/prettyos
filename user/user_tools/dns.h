@@ -4,7 +4,10 @@
 #include "stdint.h"
 #include "stddef.h"
 
-// Ref: tools.ietf.org/html/rfc1035
+/* Ref: tools.ietf.org/html/rfc1035
+ * Todo: Rename dns_type, dns_class to dns_qtype, dns_qclass
+ *       and insert the missing values.
+ */
 
 extern const int dns_port; // 53
 
