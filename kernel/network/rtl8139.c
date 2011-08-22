@@ -133,12 +133,17 @@ void rtl8139_install(network_adapter_t* adapter)
 
     static const char* const rtlVersions[] =
     {
-        "RTL8139",  "RTL8139A", "RTL8139B", "RTL8139C", "RTL8139D", "RTL8100", "RTL8139C+"
+        "RTL8139", "RTL8139A", "RTL8139B", "RTL8139C", "RTL8139D", "RTL8100", "RTL8139C+", "RTL8101"
     };
+    
     if (rAdapter->version < 8)
+    {
         printf("\n%s\n", rtlVersions[rAdapter->version]);
+    }
     else
+    {
         printf("\nRTL8139 subversion unknown: %X\n", versionID);
+    }
 
     // now we set the RE and TE bits from the "Command Register" to Enable Receiving and Transmission
     // activate transmitter and receiver: Set bit 2 (TE) and 3 (RE) in control register 0x37 (1 byte).
