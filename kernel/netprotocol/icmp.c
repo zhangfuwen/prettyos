@@ -52,9 +52,9 @@ void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
             {
                 textColor(TEXT);
                 printf("  ID: %x seq: %u\n", ntohs(rec->id), ntohs(rec->seqnumber));
-                char str[icmp_data_length+2];
+                char str[icmp_data_length+1];
                 strncpy(str, (char*)(rec+1), icmp_data_length);
-                str[icmp_data_length+1] = 0;
+                str[icmp_data_length] = 0;
                 textColor(DATA);
                 puts(str);
                 textColor(TEXT);

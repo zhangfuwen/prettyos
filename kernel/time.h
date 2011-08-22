@@ -3,6 +3,7 @@
 
 #include "os.h"
 
+
 typedef struct
 {
     uint8_t second;      // seconds 0-60 (60, because there can be a leap second
@@ -15,7 +16,9 @@ typedef struct
     uint8_t century;     // century (2 digits)
 } tm_t;
 
+
 void cmosTime(tm_t* ptm);
-void getCurrentDateAndTime(char* pStr);
+void getCurrentDateAndTime(char* pStr, size_t strsize);
+
 
 #endif

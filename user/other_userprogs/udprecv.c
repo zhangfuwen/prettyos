@@ -16,6 +16,8 @@ int main()
     char buffer[BUFFERSIZE];
     EVENT_t ev = event_poll(buffer, BUFFERSIZE, EVENT_NONE);
 
+    udp_bind(8085);
+
     iSetCursor(0, 7);
 
     for (;;)
@@ -35,7 +37,7 @@ int main()
                 char* data = (void*)(header+1);
                 data[header->length] = 0;
                 textColor(0x0F);
-                printf("\npacket received. Length = %u", header->length);
+                printf("\npacket received from %u.%u.%u.%u. Length = %u", header->srcIP.IP[0], header->srcIP.IP[1], header->srcIP.IP[2], header->srcIP.IP[3], header->length);
                 printf("\n%u:\t",count);
                 textColor(0x0A);
                 printf("%s", data);

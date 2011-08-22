@@ -71,36 +71,36 @@ int main()
             case EVENT_KEY_DOWN:
             {
                 KEY_t* key = (void*)buffer;
-                if(*key == KEY_ESC)
+                switch(*key)
                 {
-                    tcp_close(connection);
-                    return(0);
-                }
-                else if(*key == KEY_F5)
-                {
-                    printf("Reload...\n");
-                    tcp_close(connection);
-                    connection = tcp_connect(IP, 80);
-                    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
-                }
-                else if(*key == KEY_F6)
-                {
-                    printf("\nEnter filename (Don't forget / ):\n");
-                    gets(filename);
-                    tcp_close(connection);
-                    connection = tcp_connect(IP, 80);
-                    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
-                }
-                else if(*key == KEY_F7)
-                {
-                    printf("\nEnter hostname:\n");
-                    gets(hostname);
-                    printf("\nEnter filename (Don't forget / ):\n");
-                    gets(filename);
-                    IP = getAddrByName(hostname);
-                    tcp_close(connection);
-                    connection = tcp_connect(IP, 80);
-                    printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
+                    case KEY_ESC:
+                        tcp_close(connection);
+                        return(0);
+                    case KEY_F5:
+                        printf("Reload...\n");
+                        tcp_close(connection);
+                        connection = tcp_connect(IP, 80);
+                        printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
+                        break;
+                    case KEY_F6:
+                        printf("\nEnter filename (Don't forget / ):\n");
+                        gets(filename);
+                        tcp_close(connection);
+                        connection = tcp_connect(IP, 80);
+                        printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
+                        break;
+                    case KEY_F7:
+                        printf("\nEnter hostname:\n");
+                        gets(hostname);
+                        printf("\nEnter filename (Don't forget / ):\n");
+                        gets(filename);
+                        IP = getAddrByName(hostname);
+                        tcp_close(connection);
+                        connection = tcp_connect(IP, 80);
+                        printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
+                        break;
+                    default:
+                        break;
                 }
                 break;
             }

@@ -44,13 +44,13 @@ void ipv4_received(struct network_adapter* adapter, ipv4Packet_t* packet, uint32
     switch (packet->protocol)
     {
         case 1: // icmp
-            icmp_receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length), packet->sourceIP);
+            icmp_receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length)-ipHeaderLengthBytes, packet->sourceIP);
             break;
         case 6: // tcp
-            tcp_receive(adapter, (void*)packet+ipHeaderLengthBytes, packet->sourceIP, ntohs(packet->length)-ipHeaderLengthBytes);
+            tcp_receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length)-ipHeaderLengthBytes, packet->sourceIP);
             break;
         case 17: // udp
-            udp_receive(adapter, (void*)packet+ipHeaderLengthBytes, ntohs(packet->length)-ipHeaderLengthBytes);
+            udp_receive(adapter, (void*)packet+ipHeaderLengthBytes, packet->sourceIP);
             break;
         default:
             textColor(IMPORTANT);

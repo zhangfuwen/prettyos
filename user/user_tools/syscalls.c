@@ -232,10 +232,24 @@ bool udp_send(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16
     return ret;
 }
 
+bool udp_bind(uint16_t port)
+{
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(89), "b"(port));
+    return ret;
+}
+
+bool udp_unbind(uint16_t port)
+{
+    bool ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(90), "b"(port));
+    return ret;
+}
+
 uint32_t getMyIP()
 {
     uint32_t ret;
-    __asm__ volatile("int $0x7F" : "=a"(ret) : "a"(89));
+    __asm__ volatile("int $0x7F" : "=a"(ret) : "a"(91));
     return ret;
 }
 

@@ -11,6 +11,7 @@
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
+#include "events.h"
 #include "timer.h"
 #include "ipv4.h"
 #include "task.h"
@@ -279,7 +280,7 @@ void tcp_close(tcpConnection_t* connection)
 
 // This function has to be checked intensively!!!
 // cf. http://www.systems.ethz.ch/education/past-courses/fs10/operating-systems-and-networks/material/TCP-Spec.pdf
-void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmittingIP, size_t length)
+void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, size_t length, IP_t transmittingIP)
 {
     bool tcp_sendFlag   = false;
     bool tcp_deleteFlag = false;
@@ -358,7 +359,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 connection->TCP_CurrState = ESTABLISHED;
                 connection->tcb.SND.UNA = max(connection->tcb.SND.UNA, ntohl(tcp->acknowledgmentNumber));
-                event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
+                tcpConnectedEventHeader_t eventHeader = {.connectionID = connection->ID, .sourceIP = connection->remoteSocket.IP, .sourcePort = connection->remoteSocket.port};
+                event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &eventHeader, sizeof(eventHeader));
             }
             break;
 
@@ -379,7 +381,8 @@ void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, IP_t transmitting
             {
                 tcp_sendFlag = tcp_prepare_send_ACK(connection, tcp);
                 connection->TCP_CurrState = ESTABLISHED;
-                event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &connection->ID, sizeof(connection->ID));
+                tcpConnectedEventHeader_t eventHeader = {.connectionID = connection->ID, .sourceIP = connection->remoteSocket.IP, .sourcePort = connection->remoteSocket.port};
+                event_issue(connection->owner->eventQueue, EVENT_TCP_CONNECTED, &eventHeader, sizeof(eventHeader));
             }
             break;
 

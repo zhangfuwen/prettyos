@@ -65,7 +65,7 @@ void rtl8139_install(network_adapter_t* adapter)
     rAdapter->TxBuffer                 = malloc(RTL8139_TX_BUFFER_SIZE, 4, "RTL8139-TxBuf");
     rAdapter->TxBufferPhys             = paging_getPhysAddr(rAdapter->TxBuffer);
     rAdapter->TxBufferIndex            = 0;
-       
+
 
     /*
     http://wiki.osdev.org/RTL8139
@@ -120,7 +120,7 @@ void rtl8139_install(network_adapter_t* adapter)
 
     uint32_t versionID = *((uint32_t*)(adapter->MMIO_base + RTL8139_TXCONFIG));
     versionID &=          (BIT(30) | BIT(29) | BIT(28) | BIT(27) | BIT(26) | BIT(23) | BIT(22));
-    
+
     if      (versionID == (versionID & (BIT(30) | BIT(29)                                                  ))) rAdapter->version = 0; // RTL8139
     else if (versionID == (versionID & (BIT(30) | BIT(29) | BIT(28)                                        ))) rAdapter->version = 1; // RTL8139A
     else if (versionID == (versionID & (BIT(30) | BIT(29) | BIT(28) | BIT(27)                              ))) rAdapter->version = 2; // RTL8139B
@@ -129,17 +129,16 @@ void rtl8139_install(network_adapter_t* adapter)
     else if (versionID == (versionID & (BIT(30) | BIT(29) | BIT(28)           | BIT(26)           | BIT(22)))) rAdapter->version = 4; // RTL8139D
     else if (versionID == (versionID & (BIT(30) | BIT(29) | BIT(28)           | BIT(26) | BIT(23)          ))) rAdapter->version = 6; // RTL8139C+
     else if (versionID == (versionID & (BIT(30) | BIT(29) | BIT(28)           | BIT(26) | BIT(23) | BIT(22)))) rAdapter->version = 7; // RTL8101
-    else                                                                                                       rAdapter->version = 8; // ???
+    else                                                                                                       rAdapter->version = 8; // Unknown
 
-    if (rAdapter->version == 0) printf("\nRTL8139   \n");
-    if (rAdapter->version == 1) printf("\nRTL8139A  \n");
-    if (rAdapter->version == 2) printf("\nRTL8139B  \n");
-    if (rAdapter->version == 3) printf("\nRTL8139C  \n");
-    if (rAdapter->version == 4) printf("\nRTL8139D  \n");
-    if (rAdapter->version == 5) printf("\nRTL8100   \n");
-    if (rAdapter->version == 6) printf("\nRTL8139C+ \n");
-    if (rAdapter->version == 7) printf("\nRTL8101   \n");
-    if (rAdapter->version == 8) printf("\nRTL8139 subversion unknown: %X\n", versionID);
+    static const char* const rtlVersions[] =
+    {
+        "RTL8139",  "RTL8139A", "RTL8139B", "RTL8139C", "RTL8139D", "RTL8100", "RTL8139C+"
+    };
+    if (rAdapter->version < 8)
+        printf("\n%s\n", rtlVersions[rAdapter->version]);
+    else
+        printf("\nRTL8139 subversion unknown: %X\n", versionID);
 
     // now we set the RE and TE bits from the "Command Register" to Enable Receiving and Transmission
     // activate transmitter and receiver: Set bit 2 (TE) and 3 (RE) in control register 0x37 (1 byte).

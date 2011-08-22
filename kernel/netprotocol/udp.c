@@ -6,7 +6,6 @@
 // http://www.rfc-editor.org/rfc/rfc768.txt <---  User Datagram Protocol (UDP)
 
 #include "udp.h"
-#include "network/netutils.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
@@ -14,15 +13,60 @@
 #include "netbios.h"
 #include "events.h"
 #include "task.h"
-#include "scheduler.h"
-#include "ring.h"
+#include "list.h"
 
 
-extern list_t* tasks; // task.c
+typedef struct
+{
+    task_t*  owner;
+    uint16_t port;
+} udp_port_t;
+
+static list_t* udpPorts = 0;
+
 
 static void udp_debug(udpPacket_t* udp);
 
-void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t length)
+
+static udp_port_t* findConnection(uint16_t port)
+{
+    for(dlelement_t* e = udpPorts->head; e != 0; e = e->next)
+    {
+        udp_port_t* connection = e->data;
+        if(connection->port == port)
+            return(connection);
+    }
+    return(0);
+}
+
+bool udp_bind(uint16_t port)
+{
+    udp_port_t* udpPort = findConnection(port);
+    if(udpPort)
+        return(false);
+
+    udpPort = malloc(sizeof(udp_port_t), 0, "udp_port_t");
+    udpPort->owner = (task_t*)currentTask;
+    udpPort->port = port;
+    list_append(udpPorts, udpPort);
+    return(true);
+}
+
+void udp_unbind(uint16_t port)
+{
+    for(dlelement_t* e = udpPorts->head; e != 0; e = e->next)
+    {
+        udp_port_t* udpPort = e->data;
+        if(udpPort->port == port && udpPort->owner == currentTask)
+        {
+            free(udpPort);
+            list_delete(udpPorts, e);
+            return;
+        }
+    }
+}
+
+void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, IP_t sourceIP)
 {
   #ifdef _UDP_DEBUG_
     textColor(HEADLINE);
@@ -44,16 +88,18 @@ void udp_receive(network_adapter_t* adapter, udpPacket_t* packet, uint32_t lengt
           #ifdef _UDP_DEBUG_
             printf("\nUDP default port");
           #endif
+            udp_port_t* udpPort = findConnection(packet->destPort);
+            if(udpPort == 0)
+                return;
+
             udpReceivedEventHeader_t* ev = malloc(sizeof(udpReceivedEventHeader_t) + ntohs(packet->length), 0, "udp_rcvd_eventheader");
             memcpy(ev+1, packet+1, ntohs(packet->length));
             ev->length   = ntohs(packet->length);
+            ev->srcIP    = sourceIP;
             ev->srcPort  = ntohs(packet->sourcePort);
             ev->destPort = ntohs(packet->destPort);
 
-            for (dlelement_t* e = tasks->head; e != 0; e = e->next)
-            {
-                event_issue( ((task_t*)(e->data))->eventQueue, EVENT_UDP_RECEIVED, ev, sizeof(udpReceivedEventHeader_t) + ntohs(packet->length) );
-            }
+            event_issue(udpPort->owner->eventQueue, EVENT_UDP_RECEIVED, ev, sizeof(udpReceivedEventHeader_t) + ntohs(packet->length));
 
             free(ev);
             break;
@@ -83,15 +129,10 @@ bool udp_usend(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint1
 {
     network_adapter_t* adapter = network_getFirstAdapter();
 
-    IP_t srcIP;
-    for (uint8_t i=0; i<4; i++)
-    {
-        srcIP.IP[i] = adapter->IP.IP[i];
-    }
 
     if (adapter)
     {
-        udp_send(adapter, data, length, srcPort, srcIP, destPort, destIP);
+        udp_send(adapter, data, length, srcPort, adapter->IP, destPort, destIP);
         return true;
     }
     return false;

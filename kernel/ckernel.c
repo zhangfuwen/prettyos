@@ -28,7 +28,7 @@
 #include "mouse.h"              // mouse_install
 #include "serial.h"             // serial_init
 #include "video/videomanager.h" // video_install, video_test
-#include "video/textgui.h"        // TextGUI_ShowMSG, TextGUI_AskYN
+#include "video/textgui.h"      // TextGUI_ShowMSG, TextGUI_AskYN
 #include "filesystem/initrd.h"  // initrd_install, ramdisk_install, readdir_fs, read_fs, finddir_fs
 #include "storage/flpydsk.h"    // flpydsk_install
 
@@ -38,7 +38,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.3.2 - Rev: 1185";
+const char* const version = "0.0.3.3 - Rev: 1185";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -447,7 +447,7 @@ void main(multiboot_t* mb_struct)
                 system.CPU_Frequency_kHz = RdtscKCountsLo/1000;
 
             // draw status bar with date, time and frequency
-            getCurrentDateAndTime(DateAndTime);
+            getCurrentDateAndTime(DateAndTime, 50);
             kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
 
             deviceManager_checkDrives(); // switch off motors if they are not neccessary

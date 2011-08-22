@@ -15,12 +15,6 @@
 const int32_t INT_MAX = 2147483647;
 
 
-// fetch data field bitwise in byte "byte" from bit "shift" with "len" bits
-uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len)
-{
-    return (((uint8_t*)addr)[byte]>>shift) & (BIT(len)-1);
-}
-
 /**********************************************************************/
 
 void panic_assert(const char* file, uint32_t line, const char* desc)
@@ -200,7 +194,7 @@ void waitForKeyStroke()
 
 /**********************************************************************/
 
-size_t vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
+size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
 {
     char m_buffer[32]; // Larger is not needed at the moment
     memset(buffer, 0, length);
@@ -269,7 +263,7 @@ size_t vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
     return(pos);
 }
 
-size_t snprintf(char *buffer, size_t length, const char *args, ...)
+size_t snprintf(char* buffer, size_t length, const char* args, ...)
 {
     va_list ap;
     va_start(ap, args);
@@ -410,10 +404,10 @@ void reverse(char* s)
     }
 }
 
-int8_t ctoi(char c) {
-    if (c < 48 || c > 57) {
+int8_t ctoi(char c)
+{
+    if (c < 48 || c > 57)
         return(-1);
-    }
     return(c-48);
 }
 
@@ -571,9 +565,9 @@ uint32_t alignDown(uint32_t val, uint32_t alignment)
     return val & ~(alignment-1);
 }
 
-uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal)
+uint8_t BCDtoDecimal(uint8_t packedBCDVal)
 {
-    return ((PackedBCDVal >> 4) * 10 + (PackedBCDVal & 0xF));
+    return ((packedBCDVal >> 4) * 10 + (packedBCDVal & 0xF));
 }
 
 /**********************************************************************/
@@ -1002,16 +996,6 @@ void bootscreen()
     #endif
 }
 #endif
-
-
-float sgn(float x)
-{
-    if (x < 0)
-        return -1;
-    if (x > 0)
-        return 1;
-    return 0;
-}
 
 uint32_t abs(int32_t arg)
 {

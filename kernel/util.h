@@ -15,13 +15,16 @@
 #define BYTE3(a) (((a)>>16) & 0xFF)
 #define BYTE4(a) (((a)>>24) & 0xFF)
 
-#define max(a, b) (a >= b ? a : b)
-#define min(a, b) (a <= b ? a : b)
+#define max(a, b) ((a) >= (b) ? (a) : (b))
+#define min(a, b) ((a) <= (b) ? (a) : (b))
 
-#define NAN (__builtin_nanf (""))
-
-#define offsetof(st, m) ((size_t) ( (char *)&((st *)(0))->m - (char *)0 ))
+#define NAN (__builtin_nanf(""))
 #define NULL 0
+
+#define BIT(n) (1<<(n))
+#define IS_BIT_SET(value, pos) ((value)&BIT(pos))
+#define offsetof(st, m) ((size_t) ( (char*)&((st *)(0))->m - (char*)0 ))
+#define getField(addr, byte, shift, len) ((((uint8_t*)(addr))[byte]>>(shift)) & (BIT(len)-1))
 
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b))
 void panic_assert(const char* file, uint32_t line, const char* desc);
@@ -74,9 +77,6 @@ static inline void outportl(uint16_t port, uint32_t val)
     __asm__ volatile ("outl %%eax,%%dx" : : "a"(val), "d"(port));
 }
 
-
-uint8_t getField(void* addr, uint8_t byte, uint8_t shift, uint8_t len);
-
 void      memshow(const void* start, size_t count, bool alpha);
 void*     memset(void* dest, int8_t val, size_t bytes);
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words);
@@ -85,8 +85,8 @@ void*     memcpy(void* dest, const void* src, size_t count);
 void*     memmove(void* destination, const void* source, size_t size);
 int32_t   memcmp(const void* s1, const void* s2, size_t n);
 
-size_t vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
-size_t snprintf (char *buffer, size_t length, const char *args, ...);
+size_t  vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
+size_t  snprintf (char *buffer, size_t length, const char *args, ...);
 size_t  strlen(const char* str);
 int32_t strcmp(const char* s1, const char* s2);
 int32_t strncmp(const char* s1, const char* s2, size_t n);
@@ -118,12 +118,11 @@ char*  utoa(uint32_t n, char* s);
 void   ftoa(float f, char* buffer);
 void   i2hex(uint32_t val, char* dest, int32_t len);
 
-uint8_t PackedBCD2Decimal(uint8_t PackedBCDVal);
+uint8_t BCDtoDecimal(uint8_t packedBCDVal);
 
 uint32_t alignUp(uint32_t val, uint32_t alignment);
 uint32_t alignDown(uint32_t val, uint32_t alignment);
 
-float    sgn(float x);
 uint32_t abs(int32_t arg);
 double   fabs(double x);
 double   sqrt(double x);

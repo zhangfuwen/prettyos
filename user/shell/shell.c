@@ -355,10 +355,10 @@ EVALUATION: // evaluation of entry
                     argv[0] = formatPath(argv[0]);
                     error = execute(argv[0], argc, argv);
                     if (error != CE_GOOD)
-					{
+                    {
                         textColor(0x0C);
                         puts("   => File not found\n");
-					}
+                    }
                     break;
                 default:
                     textColor(0x0C);

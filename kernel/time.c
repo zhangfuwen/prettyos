@@ -11,23 +11,23 @@
 
 void cmosTime(tm_t* ptm)
 {
-    ptm->second     = PackedBCD2Decimal(cmos_read(0x00));
-    ptm->minute     = PackedBCD2Decimal(cmos_read(0x02));
-    ptm->hour       = PackedBCD2Decimal(cmos_read(0x04));
-    ptm->dayofmonth = PackedBCD2Decimal(cmos_read(0x07));
-    ptm->month      = PackedBCD2Decimal(cmos_read(0x08));
-    ptm->year       = PackedBCD2Decimal(cmos_read(0x09));
-    ptm->century    = PackedBCD2Decimal(cmos_read(0x32));
+    ptm->second     = BCDtoDecimal(cmos_read(0x00));
+    ptm->minute     = BCDtoDecimal(cmos_read(0x02));
+    ptm->hour       = BCDtoDecimal(cmos_read(0x04));
+    ptm->dayofmonth = BCDtoDecimal(cmos_read(0x07));
+    ptm->month      = BCDtoDecimal(cmos_read(0x08));
+    ptm->year       = BCDtoDecimal(cmos_read(0x09));
+    ptm->century    = BCDtoDecimal(cmos_read(0x32));
 }
 
-static void appendInt(uint16_t val, char* dest)
+static void appendInt(uint16_t val, char* dest, size_t strsize)
 {
     if (val<10)
     {
         strcat(dest, "0");
     }
     size_t temp = strlen(dest);
-    snprintf(dest+temp, 80-temp, "%u", val);
+    snprintf(dest+temp, strsize-temp, "%u", val);
 }
 
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
@@ -65,63 +65,38 @@ static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
     return(day%7+1);
 }
 
-void getCurrentDateAndTime(char* pStr)
+static const char* const weekdays[] =
+{
+    "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+};
+static const char* const months[] =
+{
+    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
+};
+
+void getCurrentDateAndTime(char* pStr, size_t strsize)
 {
     tm_t pct;
     cmosTime(&pct);
     pct.weekday = calculateWeekday(2000+pct.year, pct.month, pct.dayofmonth);
 
-    pStr[0]='\0'; // clear string
+    snprintf(pStr, strsize, "%s, %s ", weekdays[pct.weekday-1], months[pct.month-1]);
+
+    appendInt(pct.dayofmonth, pStr, strsize);
+
+    strcat(pStr, ", ");
     char buf[32];
-    switch (pct.weekday)
-    {
-        case 1: strcpy(pStr, "Sunday, ");    break;
-        case 2: strcpy(pStr, "Monday, ");    break;
-        case 3: strcpy(pStr, "Tuesday, ");   break;
-        case 4: strcpy(pStr, "Wednesday, "); break;
-        case 5: strcpy(pStr, "Thursday, ");  break;
-        case 6: strcpy(pStr, "Friday, ");    break;
-        case 7: strcpy(pStr, "Saturday, ");  break;
-    }
-
-    switch (pct.month)
-    {
-        case 1:  strcat(pStr, "January ");   break;
-        case 2:  strcat(pStr, "February ");  break;
-        case 3:  strcat(pStr, "March ");     break;
-        case 4:  strcat(pStr, "April ");     break;
-        case 5:  strcat(pStr, "May ");       break;
-        case 6:  strcat(pStr, "June ");      break;
-        case 7:  strcat(pStr, "July ");      break;
-        case 8:  strcat(pStr, "August ");    break;
-        case 9:  strcat(pStr, "September "); break;
-        case 10: strcat(pStr, "October ");   break;
-        case 11: strcat(pStr, "November ");  break;
-        case 12: strcat(pStr, "December ");  break;
-    }
-
-    appendInt(pct.dayofmonth, pStr);
-
-    strcat(pStr,", ");
-
-    itoa(pct.century, buf);
+    itoa(pct.century*100 + pct.year, buf);
     strcat(pStr, buf);
 
-    appendInt(pct.year, pStr);
+    strcat(pStr, ", ");
+    appendInt(pct.hour, pStr, strsize);
 
-    strcat(pStr,", ");
+    strcat(pStr, ":");
+    appendInt(pct.minute, pStr, strsize);
 
-    appendInt(pct.hour, pStr);
-
-    strcat(pStr,":");
-
-    appendInt(pct.minute, pStr);
-
-    strcat(pStr,":");
-
-    appendInt(pct.second, pStr);
-
-    strcat(pStr, ""); // add '\0'
+    strcat(pStr, ":");
+    appendInt(pct.second, pStr, strsize);
 }
 
 /*

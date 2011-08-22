@@ -26,7 +26,7 @@ typedef enum
 
 typedef enum
 {
-    EVENT_NONE, EVENT_INVALID_ARGUMENTS, EVENT_OVERFLOW,
+    EVENT_NONE, EVENT_BUFFER_TO_SMALL, EVENT_OVERFLOW,
     EVENT_KEY_DOWN, EVENT_KEY_UP, EVENT_TEXT_ENTERED,
     EVENT_TCP_CONNECTED, EVENT_TCP_RECEIVED, EVENT_TCP_CLOSED,
     EVENT_UDP_RECEIVED
@@ -34,10 +34,10 @@ typedef enum
 
 typedef enum
 {
-	CONSOLE_FULLSCREEN  = 1,
-	CONSOLE_SHOWINFOBAR = 2,
-	CONSOLE_AUTOREFRESH = 4,
-	CONSOLE_AUTOSCROLL  = 8
+    CONSOLE_FULLSCREEN  = 1,
+    CONSOLE_SHOWINFOBAR = 2,
+    CONSOLE_AUTOREFRESH = 4,
+    CONSOLE_AUTOSCROLL  = 8
 } console_properties_t;
 
 typedef enum
@@ -103,7 +103,8 @@ typedef enum
     STANDBY, SHUTDOWN, REBOOT
 } SYSTEM_CONTROL;
 
-typedef struct {
+typedef struct
+{
     uint16_t x, y;
 } position_t;
 
@@ -116,14 +117,23 @@ typedef union
 typedef struct
 {
     uint32_t connectionID;
+    IP_t sourceIP;
+    uint16_t sourcePort;
+} __attribute((packed)) tcpConnectedEventHeader_t;
+
+typedef struct
+{
+    uint32_t connectionID;
     size_t   length;
 } __attribute__((packed)) tcpReceivedEventHeader_t;
 
 typedef struct
 {
+    IP_t     srcIP;
     uint16_t srcPort;
     uint16_t destPort;
     size_t   length;
 } __attribute__((packed)) udpReceivedEventHeader_t;
+
 
 #endif

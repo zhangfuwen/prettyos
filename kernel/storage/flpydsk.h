@@ -5,8 +5,9 @@
 #include "devicemanager.h"
 #include "synchronisation.h"
 
-#define MAX_FLOPPY                      2
-#define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 10
+#define MAX_FLOPPY                     2
+#define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 5
+
 
 typedef enum
 {
@@ -26,6 +27,7 @@ typedef struct
     uint8_t* trackBuffer;
 } floppy_t;
 
+
 extern floppy_t* floppyDrive[MAX_FLOPPY];
 
 
@@ -36,5 +38,6 @@ void flpydsk_refreshVolumeNames();
 FS_ERROR flpydsk_readSector(uint32_t sector, void* buffer, void* device);
 FS_ERROR flpydsk_writeSector(uint32_t sector, void* buffer, void* device);
 FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option);
+
 
 #endif

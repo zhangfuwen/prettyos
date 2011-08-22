@@ -125,7 +125,7 @@ bool network_installDevice(pciDev_t* device)
     textColor(TEXT);
     printf("\tIP: ");
     textColor(IMPORTANT);
-    printf("%I\n\n", adapter->IP);
+    printf("%I\n", adapter->IP);
     textColor(TEXT);
 
     return(true);

@@ -42,6 +42,8 @@ uint32_t tcp_connect(IP_t IP, uint16_t port);
 bool     tcp_send(uint32_t ID, void* data, size_t length);
 bool     tcp_close(uint32_t ID);
 
+bool udp_bind(uint16_t port);
+bool udp_unbind(uint16_t port);
 bool udp_send(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16_t destPort);
 
  // deprecated
@@ -75,5 +77,6 @@ IP_t stringToIP(char* str);
 
 uint16_t TextGUI_ShowMSG(char* title, char* message);
 uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected);
+
 
 #endif

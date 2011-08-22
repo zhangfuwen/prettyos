@@ -485,7 +485,12 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
     }
 
     CurrentDrive->accessRemaining++;
-    flpydsk_calibrate(CurrentDrive);  // calibrate the disk ==> cyl. 0
+
+    if(flpydsk_calibrate(CurrentDrive) != 0)  // calibrate the disk ==> cyl. 0
+    {
+        CurrentDrive->accessRemaining--;
+        return(-2);
+    }
 
     flpydsk_motorOn(CurrentDrive);
 
@@ -575,15 +580,15 @@ static FS_ERROR flpydsk_read(uint32_t sectorLBA, uint8_t numberOfSectors)
     int32_t head=0, track=0, sector=1;
     flpydsk_LBAtoCHS(sectorLBA, &head, &track, &sector);
 
-    int32_t retVal = CE_GOOD;
     CurrentDrive->accessRemaining+=2;
     if (flpydsk_seek(track, head) != 0)
     {
         printf("\nseek error");
-        retVal = CE_SEEK_ERROR;
+        CurrentDrive->accessRemaining--;
+        return CE_SEEK_ERROR;
     }
 
-    uint32_t timeout = 2; // limit
+    uint32_t timeout = 5; // limit
     while (flpydsk_transferSector(head, track, sector, numberOfSectors, READ) == -1)
     {
         timeout--;
@@ -595,7 +600,7 @@ static FS_ERROR flpydsk_read(uint32_t sectorLBA, uint8_t numberOfSectors)
         CurrentDrive->accessRemaining++;
     }
 
-    return retVal;
+    return CE_GOOD;
 }
 
 // write a sector
@@ -619,12 +624,10 @@ static FS_ERROR flpydsk_write(uint32_t sectorLBA, uint8_t numberOfSectors)
         CurrentDrive->drive.insertedDisk->accessRemaining--;
         return CE_SEEK_ERROR;
     }
-    else
-    {
-        flpydsk_transferSector(head, track, sector, numberOfSectors, WRITE);
-        CurrentDrive->drive.insertedDisk->accessRemaining--;
-        return CE_GOOD;
-    }
+
+    flpydsk_transferSector(head, track, sector, numberOfSectors, WRITE);
+    CurrentDrive->drive.insertedDisk->accessRemaining--;
+    return CE_GOOD;
 }
 
 
@@ -661,7 +664,7 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
                 {
                     printf("\nDMA error.");
                     CurrentDrive->drive.insertedDisk->accessRemaining--;
-                    return(CE_NOT_PRESENT);
+                    return(CE_NOT_PRESENT); // We assume, that this means, that no disk is in the slot
                 }
             }
             else
@@ -669,6 +672,9 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
                 break; // Everything is fine
             }
         }
+
+        if(retVal == CE_SEEK_ERROR) // We assume, that this means, that no disk is in the slot
+            return(CE_NOT_PRESENT);
 
         memcpy(CurrentDrive->trackBuffer, (void*)DMA_BUFFER, 0x2400); // Copy the track from the DMA_BUFFER to the buffer of the floppy drive
     }
@@ -717,6 +723,9 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
         }
         CurrentDrive->drive.insertedDisk->accessRemaining++;
     }
+
+    if(retVal == CE_SEEK_ERROR)
+        return(CE_NOT_PRESENT); // We assume, that this means, that no disk is in the slot
     return retVal;
 }
 
