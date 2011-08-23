@@ -63,6 +63,11 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, IP_t srcIP, IP_t dest
     return internetChecksum(p, length, pseudoHeaderChecksum);
 }
 
+bool sameSubnet(IP_t IP1, IP_t IP2, IP_t subnet)
+{
+    return((IP1.iIP & subnet.iIP) == (IP2.iIP & subnet.iIP));
+}
+
 
 /*
 * Copyright (c) 2011 The PrettyOS Project. All rights reserved.

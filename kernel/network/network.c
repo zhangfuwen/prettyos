@@ -140,7 +140,7 @@ static void network_handleReceivedBuffer(void* data, size_t length)
 {
     network_adapter_t* adapter = *(network_adapter_t**)data;
     ethernet_t* eth = data + sizeof(adapter);
-    EthernetRecv(adapter, eth, length - sizeof(adapter));
+    ethernet_received(adapter, eth, length - sizeof(adapter));
 }
 
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t length) // Called by driver

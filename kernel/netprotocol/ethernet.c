@@ -11,15 +11,16 @@
 #include "arp.h"
 #include "ipv4.h"
 #include "kheap.h"
-#include "network/netutils.h"
 #include "util.h"
+
 
 extern Packet_t lastPacket; // network.c
 
 static const uint8_t broadcast_MAC_FF[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 static const uint8_t broadcast_MAC_00[6] = {0, 0, 0, 0, 0, 0};
 
-void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
+
+void ethernet_received(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
 {
   #ifdef _NETWORK_DATA_
     textColor(LIGHT_BLUE);
@@ -27,12 +28,16 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     textColor(HEADLINE);
     printf("\nEthernet: ");
     textColor(TEXT);
+  #endif
     if (memcmp(eth->recv_mac, adapter->MAC, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_FF, 6) != 0 && memcmp(eth->recv_mac, broadcast_MAC_00, 6) != 0)
     {
+      #ifdef _NETWORK_DATA_
         printf("We are not the addressee.");
+      #endif
         return;
     }
 
+  #ifdef _NETWORK_DATA_
     printf("\nLength: %d", length);
 
     textColor(GRAY); printf(" %M\t<== %M\n", eth->recv_mac, eth->send_mac); // MAC adresses
@@ -85,7 +90,7 @@ void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length)
     }
 }
 
-bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type)
+bool ethernet_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type)
 {
   #ifdef _NETWORK_DATA_
     textColor(HEADLINE);
@@ -99,7 +104,7 @@ bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8
     {
       #ifdef _NETWORK_DATA_
         textColor(ERROR);
-        printf("\nError: This is more than (1792) 0x700\n", sizeof(ethernet_t) + length);
+        printf("\nError: Packet is longer than 0x700 (1792) Bytes\n", sizeof(ethernet_t) + length);
       #endif
         return false;
     }

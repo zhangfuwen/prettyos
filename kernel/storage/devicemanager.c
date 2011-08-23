@@ -350,8 +350,7 @@ FS_ERROR analyzeDisk(disk_t* disk)
             printf("unknown)");
             return(CE_NOT_FORMATTED);
         }
-        printf(")");
-
+        putch(')');
     }
     return(CE_GOOD);
 }

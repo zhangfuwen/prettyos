@@ -46,26 +46,20 @@ void fpu_test()
     double squareroot = sqrt(2.0);
     squareroot = fabs(squareroot);
     squareroot /= sqrt(2.0);
+
+    putch('[');
     if (squareroot == 1.00)
     {
-        textColor(LIGHT_GRAY);
-        printf("[");
         textColor(SUCCESS);
         printf("PASSED");
-        textColor(LIGHT_GRAY);
-        printf("]\n");
-        textColor(TEXT);
     }
     else
     {
-        textColor(LIGHT_GRAY);
-        printf("[");
         textColor(ERROR);
         printf("FAILED");
-        textColor(LIGHT_GRAY);
-        printf("]\n");
-        textColor(TEXT);
     }
+    textColor(LIGHT_GRAY);
+    printf("]\n");
     textColor(TEXT);
 }
 

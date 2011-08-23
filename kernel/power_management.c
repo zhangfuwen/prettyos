@@ -137,7 +137,7 @@ void pm_log()
     textColor(LIGHT_GRAY);
     printf("   => APM: ");
     textColor(TEXT);
-    printf("%s", pm_systems[PM_APM].supported?"Available":"Not supported");
+    puts(pm_systems[PM_APM].supported?"Available":"Not supported");
     textColor(LIGHT_GRAY);
     printf("\n   => ACPI: ");
     textColor(TEXT);

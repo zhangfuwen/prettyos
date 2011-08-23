@@ -1,11 +1,11 @@
-/* 
+/*
  * License and disclaimer for the use of this source code as per statement below.
  * Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten.
  */
 
 /* DNS Parser
  * Ref: tools.ietf.org/html/rfc1035
- * Todo: - 
+ * Todo: -
  * Comments: Take a look at Ref: 2.3.4. Size limits. (Bottom of file)
  */
 

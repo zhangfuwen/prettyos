@@ -102,7 +102,7 @@ static task_t* scheduler_getNextTask()
     {
         if (freetimeTask == 0) // The freetime task has not been needed until now. Use spare time to create it.
         {
-            freetimeTask = create_task(PROCESS, kernelPageDirectory, &doNothing, 0, &kernelConsole, 0, 0);
+            freetimeTask = create_task(PROCESS, kernelPageDirectory, &doNothing, 0, 0, 0, 0);
         }
         return(freetimeTask);
     }
@@ -123,7 +123,7 @@ uint32_t scheduler_taskSwitch(uint32_t esp)
     if (oldTask == newTask) // No task switch needed
         return(esp);
 
-    return(task_switch (newTask));
+    return(task_switch(newTask));
 }
 
 void scheduler_insertTask(task_t* task)

@@ -12,8 +12,8 @@ typedef struct
 } __attribute__((packed)) ethernet_t;
 
 
-void EthernetRecv(network_adapter_t* adapter, ethernet_t* eth, uint32_t length);
-bool EthernetSend(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type);
+void ethernet_received(network_adapter_t* adapter, ethernet_t* eth, uint32_t length);
+bool ethernet_send(network_adapter_t* adapter, void* data, uint32_t length, uint8_t MAC[6], uint16_t type);
 
 
 #endif

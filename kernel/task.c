@@ -161,7 +161,8 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     newTask->ss  = data_segment;
 
     newTask->console = console;
-    list_append(console->tasks, newTask);
+    if(console)
+        list_append(console->tasks, newTask);
 
     list_append(tasks, newTask);
 

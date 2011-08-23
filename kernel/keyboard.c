@@ -181,7 +181,7 @@ static char keyToASCII(KEY_t key)
                 if(task->pid != 0)
                 {
                     kill(task);
-                    e = list->head; // Restart at beginning, because other tasks in the list can be deleted as childs of the task before
+                    e = list->head; // Restart at beginning, because list has been modified by kill()
                 }
                 else
                     e = e->next;

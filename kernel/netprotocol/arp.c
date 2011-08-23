@@ -156,7 +156,7 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
                     reply.destIP.iIP   = packet->sourceIP.iIP;
                     reply.sourceIP.iIP = adapter->IP.iIP;
 
-                    EthernetSend(adapter, (void*)&reply, sizeof(arpPacket_t), packet->source_mac, 0x0806);
+                    ethernet_send(adapter, (void*)&reply, sizeof(arpPacket_t), packet->source_mac, 0x0806);
                 }
                 break;
 
@@ -212,7 +212,7 @@ bool arp_sendRequest(network_adapter_t* adapter, IP_t searchedIP)
   #endif
 
     uint8_t destMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    return EthernetSend(adapter, (void*)&request, sizeof(arpPacket_t), destMAC, 0x0806);
+    return ethernet_send(adapter, (void*)&request, sizeof(arpPacket_t), destMAC, 0x0806);
 }
 
 bool arp_waitForReply(struct network_adapter* adapter, IP_t searchedIP)

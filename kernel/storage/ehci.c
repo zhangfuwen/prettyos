@@ -317,7 +317,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
             while ((pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore) & 0x01) && (timeout>0))
             {
               #ifdef _EHCI_DIAGNOSIS_
-                printf(".");
+                putch('.');
               #endif
                 timeout--;
                 sleepMilliSeconds(20);
@@ -330,7 +330,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
                 timeout=200;
                 while (!(pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore) & 0x01) && (timeout>0))
                 {
-                    printf(".");
+                    putch('.');
                     timeout--;
                     sleepMilliSeconds(20);
                 }

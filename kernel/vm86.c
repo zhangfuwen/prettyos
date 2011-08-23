@@ -20,7 +20,6 @@ a chance to emulate the facilities they affect.
 #include "util.h"
 #include "task.h"
 #ifdef _VM_DIAGNOSIS_
-#include "video/console.h"
 #include "serial.h"
 #endif
 

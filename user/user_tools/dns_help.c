@@ -1,4 +1,4 @@
-/* 
+/*
  * License and disclaimer for the use of this source code as per statement below.
  * Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten.
  */
@@ -7,7 +7,7 @@
  * Todo:  - getHostByName() which returns all hosts for a name.
  *        - Parser for authority, additional. (See dns_header)
  *        - Parser for RR's: NS, MD, MF, SOA, MB, MG, MR, NULL,
- *                           WKS, PTR, HINFO, MINFO, MX, TXT. 
+ *                           WKS, PTR, HINFO, MINFO, MX, TXT.
  *                           (See dns_qtype)
  */
 
@@ -31,7 +31,7 @@ IP_t getAddrByName(const char* name)
 
     dns_getServer(&dns_server);
     event_enable(true);
-    
+
     udp_bind(dns_port);
     if (query_size && dns_server.iIP && udp_send(buf, query_size, dns_server, dns_port, dns_port))
     {
