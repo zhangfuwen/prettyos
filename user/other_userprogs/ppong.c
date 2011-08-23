@@ -408,8 +408,7 @@ void RenderGame()
 	// Draw score(s)
 	textColor(0x0D);
 	iSetCursor(10,5);
-	beep(110,300);
-    printf("%u : %u",player1p,player2p);
+	printf("%u : %u",player1p,player2p);
 }
 
 void UpdateGame()
@@ -488,6 +487,7 @@ double random(double lowerbounds, double upperbounds)
 
 void ResetBall()
 {	
+    beep(200,300);
     sleep(500);
     do
     {
