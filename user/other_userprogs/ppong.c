@@ -4,6 +4,15 @@
 #include "string.h"
 #include "math.h"
 
+// Parameters
+const uint8_t PLAYER_1_HEIGHT = 15;
+const uint8_t PLAYER_2_HEIGHT = 35;
+const double XSPEEDLOW        = -3;
+const double XSPEEDHIGH       =  3;
+const double YSPEEDLOW        = -2;  
+const double YSPEEDHIGH       =  2;
+	
+
 // GFX:
 const uint8_t BLINKFREQ    =   100;
 const uint8_t SLIDEDELAY   =    10;
@@ -163,6 +172,8 @@ bool ignorenextkeystroke;
 
 int main()
 {
+    srand(getCurrentMilliseconds()); // seed
+
 	// Adjust screen
     if (DOUBLEBUFFERING)
     {
@@ -397,7 +408,8 @@ void RenderGame()
 	// Draw score(s)
 	textColor(0x0D);
 	iSetCursor(10,5);
-	printf("%u : %u",player1p,player2p);
+	beep(110,300);
+    printf("%u : %u",player1p,player2p);
 }
 
 void UpdateGame()
@@ -471,20 +483,20 @@ void UpdateGame()
 
 double random(double lowerbounds, double upperbounds)
 {
-	return fmod((lowerbounds + rand()), (upperbounds - lowerbounds + 1));
+	return ((((rand() & 0x01) << 15)  + rand())/(double)(65535))*(upperbounds-lowerbounds)+lowerbounds; 	
 }
 
 void ResetBall()
-{
-	ballx = (COLUMNS/2);
-	bally = (LINES/2);
-	ballxspeed = 2;
-	ballyspeed = random(-2, 2);
-
-	if(ballyspeed == 0)
+{	
+    sleep(500);
+    do
     {
-		ResetBall(); // Well, I know, this is not perfect, but it should work^^
-	}
+        ballx = (COLUMNS/2);
+	    bally = (LINES/2);
+	    ballxspeed = random(XSPEEDLOW, XSPEEDHIGH);
+	    ballyspeed = random(YSPEEDLOW, YSPEEDHIGH);
+    }
+    while(ballyspeed == 0);        
 }
 
 void RunGame()
@@ -506,8 +518,8 @@ void RunGame()
 
 	bool exitgame = false;
 
-	player1h = 15;// 15;
-	player2h = 35;// 15;
+	player1h = PLAYER_1_HEIGHT;
+	player2h = PLAYER_2_HEIGHT;
 
 	player1y = (LINES / 2) - (player1h / 2);
 	player2y = (LINES / 2) - (player2h / 2);
@@ -571,18 +583,23 @@ void RunGame()
 				}
 
 				/*
-				if(*key == KEY_ARRU || *key == KEY_W) {
-					switch(appmode) {
+				if(*key == KEY_ARRU || *key == KEY_W) 
+                {
+					switch(appmode) 
+                    {
 						case APPMODE_MENU:
 							Menu_SelectorUp();
 							break;
 						default:
 							Error("An unknown error occurred (3): %u",appmode);
 							break;
-					}				}
+					}				
+                }
 
-				if(*key == KEY_ARRD || *key == KEY_S) {
-					switch(appmode) {
+				if(*key == KEY_ARRD || *key == KEY_S) 
+                {
+					switch(appmode) 
+                    {
 						case APPMODE_MENU:
 							Menu_SelectorDown();
 							break;
@@ -592,8 +609,10 @@ void RunGame()
 					}
 				}
 
-				if(*key == KEY_ENTER || *key == KEY_SPACE) {
-					switch(appmode) {
+				if(*key == KEY_ENTER || *key == KEY_SPACE) 
+                {
+					switch(appmode) 
+                    {
 						case APPMODE_MENU:
 							Menu_Select();
 							break;
@@ -925,7 +944,7 @@ void Menu_Select()
 			switch (optionsmenuselected)
             {
 				case 0: // Sound
-					if(option_sound == true)
+					if(option_sound)
                     {
 						option_sound = false;
 					}
@@ -936,7 +955,7 @@ void Menu_Select()
 					Sound_OK();
 					break;
 				case 1: // Menu animations
-					if(option_menuanimation == true)
+					if(option_menuanimation)
                     {
 						option_menuanimation = false;
 					}
@@ -1072,7 +1091,7 @@ void DrawOptionsMenu()
 		textColor(0x08);
 	}
 	printf("[");
-	if(option_sound == true)
+	if(option_sound)
     {
 		if(optionsmenuselected == 0)
         {
@@ -1121,7 +1140,7 @@ void DrawOptionsMenu()
 		textColor(0x08);
 	}
 	printf("[");
-	if(option_menuanimation == true)
+	if(option_menuanimation)
     {
 		if(optionsmenuselected == 1)
         {
@@ -1311,7 +1330,7 @@ void DrawMenuPoint(char* name, uint8_t currentlyselected, uint8_t id)
 
 void DrawMenuSlideIn()
 {
-	if(option_menuanimation == true)
+	if(option_menuanimation)
     {
 		for(uint16_t y = 26; y>0; y=(y-2))
         {
@@ -1327,7 +1346,7 @@ void DrawMenuSlideIn()
 
 void DrawMenuSlideOut()
 {
-	if(option_menuanimation == true)
+	if(option_menuanimation)
     {
 		for(uint16_t y = 0; y<25; y=(y+2))
         {
@@ -1457,7 +1476,7 @@ void DrawMenuContentBox(uint16_t addlines)
 
 void Sound_Denied()
 {
-	if(option_sound == true)
+	if(option_sound)
     {
 		beep(600,150);
 		beep(400,150);
@@ -1466,7 +1485,7 @@ void Sound_Denied()
 
 void Sound_OK()
 {
-	if(option_sound == true)
+	if(option_sound)
     {
 		beep(800,100);
 		beep(1000,100);
@@ -1475,7 +1494,7 @@ void Sound_OK()
 
 void Sound_Select()
 {
-	if(option_sound == true)
+	if(option_sound)
     {
 		beep(1000,50);
 	}
@@ -1483,7 +1502,7 @@ void Sound_Select()
 
 void Sound_Error()
 {
-	if(option_sound == true)
+	if(option_sound) 
     {
 		Sound_Denied();
 		sleep(500);
