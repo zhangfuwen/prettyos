@@ -96,7 +96,7 @@ void FlipIfNeeded();
 void WaitKey();
 void clearScreen2();
 
-int64_t random(int64_t lowerbounds, int64_t upperbounds);
+double random(double lowerbounds, double upperbounds);
 
 
 void Sound_Denied();
@@ -142,17 +142,17 @@ uint8_t appmode;
 uint8_t gamemode;
 
 
-int16_t player1y; // Y Position on screen
+int16_t player1y;   // Y Position on screen
 int16_t player2y;
-int16_t player1h; // Height of player
+int16_t player1h;   // Height of player
 int16_t player2h;
-int16_t player1p; // Player score
+int16_t player1p;   // Player score
 int16_t player2p;
 
-int32_t ballx; // Ball X
-int32_t bally; // Ball Y
-int32_t ballxspeed; // Ball X-Speed
-int32_t ballyspeed; // Ball Y-Speed
+double  ballx;      // Ball X
+double  bally;      // Ball Y
+double  ballxspeed; // Ball X-Speed
+double  ballyspeed; // Ball Y-Speed
 
 
 bool exitapp;
@@ -407,13 +407,13 @@ void UpdateGame()
 
 	if((bally-3) < 0)
     {
-		ballyspeed = abs(ballyspeed);
+		ballyspeed = fabs(ballyspeed);
 		bally = 2;
 	}
 
 	if((bally+4) > LINES)
     {
-		ballyspeed = (-(abs(ballyspeed)));
+		ballyspeed = (-(fabs(ballyspeed)));
 		bally = (LINES - 3);
 	}
 
@@ -422,7 +422,7 @@ void UpdateGame()
     {
 		if((bally-3) > player1y && (bally + 3) < (player1y+player1h))
         {
-			ballxspeed = abs(ballxspeed);
+			ballxspeed = fabs(ballxspeed);
 			ballx = 6;
 		}
 	}
@@ -431,7 +431,7 @@ void UpdateGame()
     {
 		if((bally-3) > player2y && (bally + 3) < (player2y+player2h))
         {
-			ballxspeed = (-(abs(ballxspeed)));
+			ballxspeed = (-(fabs(ballxspeed)));
 			ballx = (COLUMNS - 7);
 		}
 	}
@@ -469,7 +469,7 @@ void UpdateGame()
 	}
 }
 
-int64_t random(int64_t lowerbounds, int64_t upperbounds)
+double random(double lowerbounds, double upperbounds)
 {
 	return fmod((lowerbounds + rand()), (upperbounds - lowerbounds + 1));
 }
@@ -507,7 +507,7 @@ void RunGame()
 	bool exitgame = false;
 
 	player1h = 15;// 15;
-	player2h = 45;// 15;
+	player2h = 35;// 15;
 
 	player1y = (LINES / 2) - (player1h / 2);
 	player2y = (LINES / 2) - (player2h / 2);
