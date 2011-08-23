@@ -7,8 +7,8 @@
 // Parameters
 const uint8_t PLAYER_1_HEIGHT = 15;
 const uint8_t PLAYER_2_HEIGHT = 35;
-const double XSPEEDLOW        = -3;
-const double XSPEEDHIGH       =  3;
+const double XSPEEDLOW        =  1.5;
+const double XSPEEDHIGH       =  3.5;
 const double YSPEEDLOW        = -2;  
 const double YSPEEDHIGH       =  2;
 	
@@ -105,7 +105,7 @@ void FlipIfNeeded();
 void WaitKey();
 void clearScreen2();
 
-double random(double lowerbounds, double upperbounds);
+double random(double lower, double upper);
 
 
 void Sound_Denied();
@@ -155,14 +155,14 @@ int16_t player1y;   // Y Position on screen
 int16_t player2y;
 int16_t player1h;   // Height of player
 int16_t player2h;
-int16_t player1p;   // Player score
-int16_t player2p;
+int16_t player1score;   // Player score
+int16_t player2score;
 
 double  ballx;      // Ball X
 double  bally;      // Ball Y
 double  ballxspeed; // Ball X-Speed
 double  ballyspeed; // Ball Y-Speed
-
+bool    kick_off_direction = true; // true (right), false (left)
 
 bool exitapp;
 
@@ -408,54 +408,59 @@ void RenderGame()
 	// Draw score(s)
 	textColor(0x0D);
 	iSetCursor(10,5);
-	printf("%u : %u",player1p,player2p);
+	printf("%u : %u",player1score,player2score);
 }
 
 void UpdateGame()
 {
 	ballx = (ballx + ballxspeed);
 	bally = (bally + ballyspeed);
+    	
+    /////////////////////
+    // collision tests //
+    /////////////////////
 
-	if((bally-3) < 0)
+    if((bally-2) < 0) // collision upper wall
     {
-		ballyspeed = fabs(ballyspeed);
+        ballyspeed = -(ballyspeed);
 		bally = 2;
 	}
 
-	if((bally+4) > LINES)
+	if((bally+2) > LINES) // collision lower wall
     {
-		ballyspeed = (-(fabs(ballyspeed)));
+        ballyspeed = -(ballyspeed);
 		bally = (LINES - 3);
 	}
-
-
-	if((ballx-2) < 5)
+    
+	if((ballx-2) < 5) // collision left 
     {
-		if((bally-3) > player1y && (bally + 3) < (player1y+player1h))
-        {
-			ballxspeed = fabs(ballxspeed);
+        if((bally-2) > player1y && (bally + 2) < (player1y+player1h))
+        {        
+			ballxspeed = -(ballxspeed);
 			ballx = 6;
 		}
 	}
 
-	if((ballx+3) > (COLUMNS - 5))
+	if((ballx+2) > (COLUMNS - 5)) // collision right
     {
-		if((bally-3) > player2y && (bally + 3) < (player2y+player2h))
-        {
-			ballxspeed = (-(fabs(ballxspeed)));
+        if((bally-2) > player2y && (bally + 2) < (player2y+player2h))
+        {        
+			ballxspeed = -(ballxspeed);
 			ballx = (COLUMNS - 7);
 		}
 	}
-
-	if((ballx+3) > COLUMNS && ballxspeed > 0)
+    
+	if((ballx-2) < 0 && ballxspeed < 0) // goal left
     {
-		player1p = (player1p + 1);
+		player2score++;
+        kick_off_direction = true;
 		ResetBall();
 	}
 
-	if((ballx-2) < 0 && ballxspeed < 0)
+    if((ballx+2) > COLUMNS && ballxspeed > 0) // goal right
     {
-		player2p = (player2p + 1);
+        player1score++;
+        kick_off_direction = false;
 		ResetBall();
 	}
 
@@ -480,9 +485,9 @@ void UpdateGame()
 	}
 }
 
-double random(double lowerbounds, double upperbounds)
+double random(double lower, double upper)
 {
-	return ((((rand() & 0x01) << 15)  + rand())/(double)(65535))*(upperbounds-lowerbounds)+lowerbounds; 	
+    return (( (double) rand() / ((double)65535 / (upper - lower))) + lower );
 }
 
 void ResetBall()
@@ -496,7 +501,12 @@ void ResetBall()
 	    ballxspeed = random(XSPEEDLOW, XSPEEDHIGH);
 	    ballyspeed = random(YSPEEDLOW, YSPEEDHIGH);
     }
-    while(ballyspeed == 0);        
+    while(ballyspeed == 0 || ballxspeed == 0);    
+    
+    if((kick_off_direction == true && ballxspeed<0) || (kick_off_direction == false && ballxspeed>0))
+    {
+        ballxspeed = -(ballxspeed);
+    }
 }
 
 void RunGame()
@@ -524,8 +534,8 @@ void RunGame()
 	player1y = (LINES / 2) - (player1h / 2);
 	player2y = (LINES / 2) - (player2h / 2);
 
-	player1p = 0;
-	player2p = 0;
+	player1score = 0;
+	player2score = 0;
 
 	ResetBall();
 
