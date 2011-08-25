@@ -516,7 +516,7 @@ void UpdateGame()
 
 double random(double lower, double upper)
 {
-    return (( (double) rand() / ((double)65535 / (upper - lower))) + lower );
+    return (( (double) rand() / ((double)RAND_MAX / (upper - lower))) + lower );
 }
 
 void ResetBall()

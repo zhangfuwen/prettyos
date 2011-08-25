@@ -3,17 +3,19 @@
 
 #include "stddef.h"
 
-#define EXIT_SUCCESS 0
-#define EXIT_FAILURE -1
+#define EXIT_SUCCESS      0
+#define EXIT_FAILURE     -1
 #define MB_CUR_MAX
-#define RAND_MAX
+#define RAND_MAX     0x7FFF  // do not change
 
 
-typedef struct {
+typedef struct 
+{
     int quot, rem;
 } div_t;
 
-typedef struct {
+typedef struct 
+{
     long quot, rem;
 } ldiv_t;
 

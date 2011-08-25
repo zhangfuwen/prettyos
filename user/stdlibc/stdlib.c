@@ -48,7 +48,7 @@ void srand(int val)
 }
 int rand()
 {
-    return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7FFF);
+    return (((seed = seed * 214013L + 2531011L) >> 16) & RAND_MAX);
 }
 
 void* malloc(size_t size)
