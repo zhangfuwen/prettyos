@@ -7,84 +7,75 @@
 // Parameters
 const uint8_t PLAYER_1_HEIGHT = 15;
 const uint8_t PLAYER_2_HEIGHT = 35;
-const double XSPEEDLOW        =  1.5;
-const double XSPEEDHIGH       =  3.5;
-const double YSPEEDLOW        = -2;  
-const double YSPEEDHIGH       =  2;
+const double XSPEEDLOW        =  2.5;
+const double XSPEEDHIGH       =  4.5;
+const double YSPEEDLOW        = -3;  
+const double YSPEEDHIGH       =  3;
 	
-
 // GFX:
+const bool DOUBLEBUFFERING =  true;
 const uint8_t BLINKFREQ    =   100;
 const uint8_t SLIDEDELAY   =    10;
 const uint8_t COLUMNS      =    80;
 const uint8_t LINES        =    50;
-const bool DOUBLEBUFFERING =  true;
+const uint8_t SCOREX       =    10;
+const uint8_t SCOREY       =     5;
 
 // Default options:
 bool option_sound          = true;
 bool option_menuanimation  = true;
 
+
 // Do not modify anything after this line.
 
 // Menu defines
-#define MENU_MAIN 1
+#define MENU_MAIN                      1
+#define MENU_GAME                     12
+#define MENU_OPTIONS                  13
+#define MENU_CREDITS                  14
+#define MENU_EXIT                     15
 
-#define MENU_GAME 12
-#define MENU_OPTIONS 13
-#define MENU_CREDITS 14
-#define MENU_EXIT 15
+#define MENU_SOLOGAME                120
+#define MENU_LANGAME                 121
+#define MENU_INTERNETGAME            122
 
-#define MENU_SOLOGAME 120
-#define MENU_LANGAME 121
-#define MENU_INTERNETGAME 122
+#define MENU_MAIN_SELECTABLE           4
 
+#define MENU_GAME_SELECTABLE           4
+#define MENU_OPTIONS_SELECTABLE        3
+#define MENU_CREDITS_SELECTABLE        1
+#define MENU_EXIT_SELECTABLE           2
 
-#define MENU_MAIN_SELECTABLE 4
-
-#define MENU_GAME_SELECTABLE 4
-#define MENU_OPTIONS_SELECTABLE 3
-#define MENU_CREDITS_SELECTABLE 1
-#define MENU_EXIT_SELECTABLE 2
-
-#define MENU_SOLOGAME_SELECTABLE 3
-#define MENU_LANGAME_SELECTABLE 3
-#define MENU_INTERNETGAME_SELECTABLE 3
-
-
+#define MENU_SOLOGAME_SELECTABLE       3
+#define MENU_LANGAME_SELECTABLE        3
+#define MENU_INTERNETGAME_SELECTABLE   3
 
 // AppMode defines
-#define APPMODE_MENU 1
-#define APPMODE_GAME 2
-
+#define APPMODE_MENU                   1
+#define APPMODE_GAME                   2
 
 // GameMode defines
-#define GAMEMODE_NONE 1
-#define GAMEMODE_LOCALGAME_1P 2
-#define GAMEMODE_LOCALGAME_2P 3
-#define GAMEMODE_LANGAME_HOST 4
-#define GAMEMODE_LANGAME_JOIN 5
-#define GAMEMODE_INTERNETGAME_HOST 6
-#define GAMEMODE_INTERNETGAME_JOIN 7
+#define GAMEMODE_NONE                  1
+#define GAMEMODE_LOCALGAME_1P          2
+#define GAMEMODE_LOCALGAME_2P          3
+#define GAMEMODE_LANGAME_HOST          4
+#define GAMEMODE_LANGAME_JOIN          5
+#define GAMEMODE_INTERNETGAME_HOST     6
+#define GAMEMODE_INTERNETGAME_JOIN     7
 
-
+// Functions
 void DrawMainMenu();
-
 void DrawGameMenu();
 void DrawOptionsMenu();
 void DrawCreditsMenu();
 void DrawExitMenu();
-
 void DrawSoloGameMenu();
 void DrawLANGameMenu();
 void DrawInternetGameMenu();
-
-
 void DrawMenuStructure();
 void DrawMenuPoint(char* name, uint8_t currentlyselected, uint8_t id);
-
 void DrawMenuHeader();
 void DrawMenuContentBox(uint16_t addlines);
-
 void DrawMenuSlideIn();
 void DrawMenuSlideOut();
 
@@ -92,11 +83,9 @@ void SwitchToMenu(uint8_t switchto);
 
 void Menu_SelectorUp();
 void Menu_SelectorDown();
-
 void Menu_Select();
 
-
-void DrawRect(uint16_t x, uint16_t y, uint16_t x2, uint16_t y2);
+void DrawRect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void DrawText(char* text, uint16_t x, uint16_t y);
 void SetPixel(uint16_t x, uint16_t y);
 void SetSpace(uint16_t x, uint16_t y);
@@ -107,65 +96,52 @@ void clearScreen2();
 
 double random(double lower, double upper);
 
-
 void Sound_Denied();
 void Sound_OK();
 void Sound_Select();
 void Sound_Error();
-
+void Sound_Goal();
+void Sound_GotIt();
 
 void NotImplementedError();
 
 void Error(char* message, bool critical);
 
-
 void RenderApp();
-
-
-
 void ResetBall();
-
 void RunGame();
-
 void UpdateGame();
 void RenderGame();
+void GetGameControl();
 
-
-
+// Variables 
 uint8_t currentmenu;
-
 uint8_t mainmenuselected;
-
 uint8_t gamemenuselected;
 uint8_t optionsmenuselected;
 uint8_t creditsmenuselected;
 uint8_t exitmenuselected;
-
 uint8_t sologamemenuselected;
 uint8_t langamemenuselected;
 uint8_t internetgamemenuselected;
 
-
 uint8_t appmode;
-
 uint8_t gamemode;
 
-
-int16_t player1y;   // Y Position on screen
+int16_t player1y;       // Y Position on screen
 int16_t player2y;
-int16_t player1h;   // Height of player
+int16_t player1h;       // Height of player
 int16_t player2h;
 int16_t player1score;   // Player score
 int16_t player2score;
 
-double  ballx;      // Ball X
-double  bally;      // Ball Y
-double  ballxspeed; // Ball X-Speed
-double  ballyspeed; // Ball Y-Speed
-bool    kick_off_direction = true; // true (right), false (left)
+double  ballx;          // Ball X
+double  bally;          // Ball Y
+double  ballxspeed;     // Ball X-Speed
+double  ballyspeed;     // Ball Y-Speed
+bool    kickoff_to_the_right = true; // true (right), false (left)
 
 bool exitapp;
-
 
 bool ignorenextkeystroke;
 
@@ -174,7 +150,7 @@ int main()
 {
     srand(getCurrentMilliseconds()); // seed
 
-	// Adjust screen
+    // Adjust screen
     if (DOUBLEBUFFERING)
     {
         console_setProperties(CONSOLE_FULLSCREEN);
@@ -183,48 +159,41 @@ int main()
     {
         console_setProperties(CONSOLE_AUTOREFRESH|CONSOLE_FULLSCREEN);
     }
-	setScrollField(0,50);
-	clearScreen(0x00);
+    
+    setScrollField(0,50);
+    clearScreen(0x00);
 
-	#if __STDC__ != 1
-	printf("\n\nThis App requires a standard C Compiler.\n\n");
-	WaitKey();
-	return(0);
-	#endif
-
-	// Enable Events
-	event_enable(true);
+    // Enable Events
+    event_enable(true);
     char buffer[8192];
     EVENT_t ev = event_poll(buffer, 8192, EVENT_NONE);
 
-	// Selected menupoints
-	mainmenuselected = 0;
-
-	gamemenuselected = 0;
-	optionsmenuselected = 0;
-	creditsmenuselected = 0;
-	exitmenuselected = 0;
-
-	sologamemenuselected = 0;
-	langamemenuselected = 0;
-	internetgamemenuselected = 0;
+    // Selected menupoints
+    mainmenuselected         = 0;
+    gamemenuselected         = 0;
+    optionsmenuselected      = 0;
+    creditsmenuselected      = 0;
+    exitmenuselected         = 0;
+    sologamemenuselected     = 0;
+    langamemenuselected      = 0;
+    internetgamemenuselected = 0;
 
 
-	// Clear eventual messages
-	clearScreen(0x00);
+    // Clear eventual messages
+    clearScreen(0x00);
 
-	// Set to menu
-	appmode = APPMODE_MENU;
-	gamemode = GAMEMODE_NONE;
+    // Set to menu
+    appmode  = APPMODE_MENU;
+    gamemode = GAMEMODE_NONE;
 
-	// Play animation
-	DrawMenuSlideIn();
+    // Play animation
+    DrawMenuSlideIn();
 
-	// Initial drawing
-	DrawMainMenu();
+    // Initial drawing
+    DrawMainMenu();
 
-	// If true the app closes with animation
-	exitapp = false;
+    // If true the app closes with animation
+    exitapp = false;
 
     while(exitapp == false)
     {
@@ -366,49 +335,62 @@ int main()
 	return(0);
 }
 
+// Play Game 
+
 void RenderGame()
 {
 	// Draw border around the playfield
-	textColor(0x88);
-	DrawRect(0,0,COLUMNS,LINES);
-	textColor(0x00);
-	DrawRect(1,1,COLUMNS-1,LINES-1);
+	textColor(0x88); DrawRect(0, 0, COLUMNS,   LINES  );
+	textColor(0x00); DrawRect(1, 1, COLUMNS-1, LINES-1);
 
 	// Draw line in the middle
-	textColor(0x11);
-	DrawRect((COLUMNS/2),1,(COLUMNS/2)+1,LINES-1);
+	textColor(0x11); DrawRect((COLUMNS/2),1,(COLUMNS/2)+1,LINES-1);
+
+    // Draw players
+	textColor(0xAA); DrawRect(3,         player1y, 5,         player1y+player1h);
+	textColor(0xEE); DrawRect(COLUMNS-5, player2y, COLUMNS-3, player2y+player2h);
 
 	// Draw ball
-	textColor(0x0C);
-	iSetCursor(ballx-1,bally-1);
-	printf("/");
-	textColor(0xCC);
-	printf("X");
-	textColor(0x0C);
-	printf("\\");
-	iSetCursor(ballx-1,bally);
-	textColor(0xCC);
-	printf("X");
-	printf("X");
-	printf("X");
-	textColor(0x0C);
-	iSetCursor(ballx-1,bally+1);
-	printf("\\");
-	textColor(0xCC);
-	printf("X");
-	textColor(0x0C);
-	printf("/");
-
-	// Draw players
-	textColor(0xAA);
-	DrawRect(3,player1y,5,player1y+player1h);
-	textColor(0xEE);
-	DrawRect(COLUMNS-5,player2y,COLUMNS-3,player2y+player2h);
-
+    iSetCursor(ballx-1,bally-1);
+	textColor(0x0C); putchar('/');   // x-1
+	textColor(0xCC); putchar('X');   // x
+	textColor(0x0C); putchar('\\');  // x+1
+	
+    iSetCursor(ballx-1,bally);
+	textColor(0xCC); putchar('X');   // x-1
+                     putchar('X');   // x
+                     putchar('X');   // x+1
+	
+    iSetCursor(ballx-1,bally+1);    
+    textColor(0x0C); putchar('\\');  // x-1
+	textColor(0xCC); putchar('X');   // x
+	textColor(0x0C); putchar('/');   // x+1
+    
 	// Draw score(s)
-	textColor(0x0D);
-	iSetCursor(10,5);
-	printf("%u : %u",player1score,player2score);
+	textColor(0x0D); iSetCursor(SCOREX,SCOREY);   printf("%u : %u",player1score,player2score);     
+}
+
+void GetGameControl()
+{
+    if(keyPressed(KEY_ARRU) || (keyPressed(KEY_W)))
+    {
+		player1y = (player1y - 3);
+	}
+
+	if(keyPressed(KEY_ARRD) || keyPressed(KEY_S))
+    {
+		player1y = (player1y + 3);
+	}
+
+	if(player1y < 2)
+    {
+		player1y = 2;
+	}
+
+	if((player1y+player1h) > (LINES - 2))
+    {
+		player1y = ((LINES - 2) - player1h);
+	}
 }
 
 void UpdateGame()
@@ -432,57 +414,43 @@ void UpdateGame()
 		bally = (LINES - 3);
 	}
     
-	if((ballx-2) < 5) // collision left 
-    {
-        if((bally-2) > player1y && (bally + 2) < (player1y+player1h))
-        {        
-			ballxspeed = -(ballxspeed);
-			ballx = 6;
-		}
+	if( ballx < 7 && bally >= player1y && bally <= player1y+player1h ) // player1 got it
+    {              
+        Sound_GotIt();
+
+		if (ballxspeed<0) 
+        {
+            ballxspeed = -ballxspeed;			
+            ballx++;
+        }            		
 	}
 
-	if((ballx+2) > (COLUMNS - 5)) // collision right
-    {
-        if((bally-2) > player2y && (bally + 2) < (player2y+player2h))
-        {        
-			ballxspeed = -(ballxspeed);
-			ballx = (COLUMNS - 7);
-		}
+	if( ballx > COLUMNS-7 && bally >= player2y && bally <= player2y+player2h ) // player2 got it
+    {        
+		Sound_GotIt();
+
+        if (ballxspeed>0)
+        {
+            ballxspeed = -ballxspeed;
+            ballx--;
+        }            
 	}
     
-	if((ballx-2) < 0 && ballxspeed < 0) // goal left
+	if( ballx < 2 && ballxspeed < 0 ) // goal left
     {
 		player2score++;
-        kick_off_direction = true;
+        kickoff_to_the_right = true;
 		ResetBall();
 	}
 
-    if((ballx+2) > COLUMNS && ballxspeed > 0) // goal right
+    if( ballx > COLUMNS-2 && ballxspeed > 0 ) // goal right
     {
         player1score++;
-        kick_off_direction = false;
+        kickoff_to_the_right = false;
 		ResetBall();
 	}
 
-	if(keyPressed(KEY_ARRU) || (keyPressed(KEY_W)))
-    {
-		player1y = (player1y - 3);
-	}
-
-	if(keyPressed(KEY_ARRD) || keyPressed(KEY_S))
-    {
-		player1y = (player1y + 3);
-	}
-
-	if(player1y < 3)
-    {
-		player1y = 3;
-	}
-
-	if((player1y+player1h) > (LINES - 3))
-    {
-		player1y = ((LINES - 3) - player1h);
-	}
+	GetGameControl(); // get input from player
 }
 
 double random(double lower, double upper)
@@ -492,8 +460,16 @@ double random(double lower, double upper)
 
 void ResetBall()
 {	
-    beep(200,300);
-    sleep(500);
+    Sound_Goal();
+    if (player1score || player2score) 
+    {
+        sleep(500);
+    }
+    else // begin
+    {
+        sleep(2000);
+    }
+    
     do
     {
         ballx = (COLUMNS/2);
@@ -501,9 +477,9 @@ void ResetBall()
 	    ballxspeed = random(XSPEEDLOW, XSPEEDHIGH);
 	    ballyspeed = random(YSPEEDLOW, YSPEEDHIGH);
     }
-    while(ballyspeed == 0 || ballxspeed == 0);    
-    
-    if((kick_off_direction == true && ballxspeed<0) || (kick_off_direction == false && ballxspeed>0))
+    while( (ballyspeed > -0.5 && ballyspeed < 0.5) || ballxspeed == 0);        
+
+    if((kickoff_to_the_right == true && ballxspeed<0) || (kickoff_to_the_right == false && ballxspeed>0))
     {
         ballxspeed = -(ballxspeed);
     }
@@ -1484,6 +1460,22 @@ void DrawMenuContentBox(uint16_t addlines)
 	}
 }
 
+void Sound_Goal()
+{
+	if(option_sound)
+    {
+		beep(200,50);		
+	}
+}
+
+void Sound_GotIt()
+{
+	if(option_sound)
+    {
+		beep(800,20);		
+	}
+}
+
 void Sound_Denied()
 {
 	if(option_sound)
@@ -1519,11 +1511,11 @@ void Sound_Error()
 	}
 }
 
-void DrawRect(uint16_t x, uint16_t y, uint16_t x2, uint16_t y2)
+void DrawRect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 {
-	for(uint16_t lx = x; lx<x2; lx++)
+	for(uint16_t lx = x1; lx<x2; lx++)
     {
-		for(uint16_t ly = y; ly<y2; ly++)
+		for(uint16_t ly = y1; ly<y2; ly++)
         {
 			SetPixel(lx,ly);
 		}
