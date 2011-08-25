@@ -7,10 +7,10 @@
 
 enum Feldstatus {Leer, X, O};
 
-uint8_t tictactoe[9];
+uint8_t tictactoe[9] = {0,0,0,0,0,0,0,0,0};
 bool ende = false;
 
-void SetField(uint8_t x, uint8_t y, uint8_t Player)
+static void SetField(uint8_t x, uint8_t y, uint8_t Player)
 {
     iSetCursor(x*4+2,y*2+15);
     if (Player == X)
@@ -23,7 +23,7 @@ void SetField(uint8_t x, uint8_t y, uint8_t Player)
     }
 }
 
-void gewinnen()
+static void gewinnen()
 {
     if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == X) ||
         (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == X) ||
@@ -58,7 +58,7 @@ void gewinnen()
     }
 }
 
-void Zug(uint16_t Player)
+static void Zug(uint16_t Player)
 {
     char str[80];
     uint32_t input = 9;
@@ -100,10 +100,8 @@ void Zug(uint16_t Player)
 
 int main()
 {
-    memset(tictactoe, 0, sizeof(tictactoe));
-
     printLine("--------------------------------------------------------------------------------", 0, 0x0B);
-    printLine("                           Mr.X TicTacToe 3x3  v0.6.4                           ", 2, 0x0B);
+    printLine("                           Mr.X TicTacToe 3x3  v0.6.5"                           , 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     iSetCursor(0,6);

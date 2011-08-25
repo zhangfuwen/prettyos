@@ -8,9 +8,9 @@ int main()
 {
     setScrollField(7, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                      Pretty Browser - Network test program!                    ", 2, 0x0B);
+    printLine("                      Pretty Browser - Network test program!",                     2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
-    printLine("                    F5 - reload; F6 - new file; F7 - new host                   ", 5, 0x0F);
+    printLine("                    F5 - reload; F6 - new file; F7 - new host",                    5, 0x0F);
     printLine("--------------------------------------------------------------------------------", 6, 0x0B);
 
     event_enable(true);
@@ -46,8 +46,7 @@ int main()
             {
                 printf("ESTABLISHED.\n");
                 char pStr[200];
-                memset(pStr,0,200);
-                strcat(pStr,"GET ");
+                strcpy(pStr,"GET ");
                 strcat(pStr,filename);
                 strcat(pStr," HTTP/1.1\r\nHost: ");
                 strcat(pStr,hostname);

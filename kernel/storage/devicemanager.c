@@ -208,7 +208,7 @@ void showDiskList()
 
 const char* getFilename(const char* path)
 {
-    if (strchr((char*)path,'/')==0 && strchr((char*)path,'|')==0 && strchr((char*)path,'\\')==0)
+    if (strpbrk((char*)path,"/|\\") == 0)
     {
         return path;
     }
@@ -230,34 +230,27 @@ const char* getFilename(const char* path)
 
 partition_t* getPartition(const char* path)
 {
-    size_t length = strlen(path);
-    char Buffer[10];
-
     int16_t PortID = -1;
     int16_t DiskID = -1;
     uint8_t PartitionID = 0;
-    for (size_t i = 0; i < length && path[i]; i++)
+    for (size_t i = 0; path[i]; i++)
     {
         if ((path[i] == ':') || (path[i] == '-'))
         {
-            strncpy(Buffer, path, i);
-            Buffer[i] = 0;
-            if (isalpha(Buffer[0]))
+            if (isalpha(path[0]))
             {
-                PortID = toUpper(Buffer[0]) - 'A';
+                PortID = toUpper(path[0]) - 'A';
             }
             else
             {
-                DiskID = atoi(Buffer);
+                DiskID = atoi(path);
             }
 
-            for (size_t j = i+1; j < length && path[j]; j++)
+            for (size_t j = i+1; path[j]; j++)
             {
                 if ((path[j] == ':') || (path[j] == '-'))
                 {
-                    strncpy(Buffer, path+i+1, j-i-1);
-                    Buffer[j-i-1] = 0;
-                    PartitionID = atoi(Buffer);
+                    PartitionID = atoi(path+i+1);
                     break;
                 }
                 if (!isdigit(path[j]) || (path[j] == '/') || (path[j] == '|') || (path[j] == '\\'))

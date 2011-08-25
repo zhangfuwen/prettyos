@@ -32,11 +32,11 @@
 #include "filesystem/initrd.h"  // initrd_install, ramdisk_install, readdir_fs, read_fs, finddir_fs
 #include "storage/flpydsk.h"    // flpydsk_install
 
-// Network. Only for temporary tests. TODO: implement as user applications
+// Network
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.3.9 - Rev: 1199";
+const char* const version = "0.0.3.10 - Rev: 1200";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -96,13 +96,12 @@ static void useMultibootInformation(multiboot_t* mb_struct)
 static void log(const char* str)
 {
     textColor(LIGHT_GRAY);
-    printf("   => %s: ",str);
+    printf("   => %s: ", str);
 
     uint16_t len = strlen(str);
 
-    for (uint16_t i = len; i < 20;i++){
+    for (uint16_t i = len; i < 20;i++)
         putch(' ');
-    }
 
     putch('[');
     textColor(SUCCESS);
@@ -217,7 +216,7 @@ void main(multiboot_t* mb_struct)
     srand(cmos_read(0));
 
     textColor(HEADLINE);
-    printf(" => System analysis: \n");
+    printf(" => System analysis:\n");
 
     showMemorySize();
 
@@ -299,6 +298,7 @@ void main(multiboot_t* mb_struct)
                 {
                     textColor(ERROR);
                     printf("ERROR: shell cannot be started.\n");
+                    textColor(TEXT);
                     paging_destroyUserPageDirectory(pd);
                 }
                 else
@@ -315,7 +315,6 @@ void main(multiboot_t* mb_struct)
     {
         textColor(ERROR);
         puts("\nProgram not found.\n");
-        textColor(TEXT);
     }
 
     textColor(SUCCESS);
@@ -333,14 +332,12 @@ void main(multiboot_t* mb_struct)
     bool CTRL  = false;
     bool PRINT = false;
 
-    tcpConnection_t* connection = 0;
-
     while (true) // start of kernel idle loop
     {
         // show rotating asterisk
         if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
             vga_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
-        if (! *++progress)
+        if (*++progress == 0)
             progress = "|/-\\";
 
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
@@ -419,24 +416,9 @@ void main(multiboot_t* mb_struct)
                             case 'a':
                                 network_displayArpTables();
                                 break;
-                            case 'b':
-                            {
-                                connection = tcp_createConnection();
-                                network_adapter_t* adapter = network_getFirstAdapter();
-                                if (adapter)
-                                {
-                                    tcp_bind(connection, adapter);
-                                }
-                                break;
-                            }
-                            case 'c': // show tcp connections
-                            {
-                                textColor(HEADLINE);
-                                printf("\ntcp connections:");
-                                textColor(TEXT);
+                            case 'c':
                                 tcp_showConnections();
                                 break;
-                            }
                             case 'd':
                                 showPortList();
                                 showDiskList();
@@ -456,11 +438,11 @@ void main(multiboot_t* mb_struct)
             ev = event_poll(buffer, 4, EVENT_NONE);
         }
 
-        if (timer_getSeconds() != CurrentSeconds && !(console_displayed->properties & CONSOLE_FULLSCREEN))
+        if (timer_getSeconds() != CurrentSeconds) // Execute one time per second
         {
             CurrentSeconds = timer_getSeconds();
 
-            // all values 64 bit
+            // calculate cpu frequency
             uint64_t Rdtsc = rdtsc();
             uint64_t RdtscKCounts   = (Rdtsc - LastRdtscValue);  // Build difference
             uint32_t RdtscKCountsHi = RdtscKCounts >> 32;        // high dword
@@ -470,9 +452,12 @@ void main(multiboot_t* mb_struct)
             if (RdtscKCountsHi == 0)
                 system.CPU_Frequency_kHz = RdtscKCountsLo/1000;
 
-            // draw status bar with date, time and frequency
-            getCurrentDateAndTime(DateAndTime, 50);
-            kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
+            if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
+            {
+                // draw status bar with date, time and frequency
+                getCurrentDateAndTime(DateAndTime, 50);
+                kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
+            }
 
             deviceManager_checkDrives(); // switch off motors if they are not neccessary
         }
@@ -481,21 +466,13 @@ void main(multiboot_t* mb_struct)
         if (serial_received(1) != 0)
         {
             textColor(HEADLINE);
-            printf("\nSerial message:\n");
-            textColor(TEXT);
+            printf("\nSerial message: ");
+            textColor(DATA);
             do
             {
-                uint8_t sbyt=serial_read(1);
-                printf("%y ",sbyt);
+                printf("%y ", serial_read(1));
                 sleepMilliSeconds(8);
             } while (serial_received(1) != 0);
-            serial_write(1,'P');
-            serial_write(1,'r');
-            serial_write(1,'e');
-            serial_write(1,'t');
-            serial_write(1,'t');
-            serial_write(1,'y');
-            printf("\nAnswered with 'Pretty'!\n");
         }
 
         todoList_execute(kernel_idleTasks);

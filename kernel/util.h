@@ -95,7 +95,8 @@ char*   strncpy(char* dest, const char* src, size_t n);
 char*   strncpyandfill(char* dest, const char* src, size_t n, char val);
 char*   strcat(char* dest, const char* src);
 char*   strncat(char* dest, const char* src, size_t n);
-char*   strchr(char* str, int character);
+char*   strchr(const char* str, int character);
+char*   strpbrk(const char* str, const char* delim);
 
 char  toLower(char c);
 char  toUpper(char c);

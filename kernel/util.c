@@ -197,7 +197,7 @@ void waitForKeyStroke()
 size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
 {
     char m_buffer[32]; // Larger is not needed at the moment
-    memset(buffer, 0, length);
+    buffer[0] = 0;
 
     size_t pos;
     for (pos = 0; *args && pos < length - 1; args++)
@@ -242,7 +242,7 @@ size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
                         pos = strlen(buffer);
                         break;
                     case 'c':
-                        buffer[pos] = (int8_t)va_arg(ap, int32_t);
+                        buffer[pos] = (char)va_arg(ap, int32_t);
                         pos++;
                         break;
                     case '%':
@@ -344,20 +344,30 @@ char* strncat(char* dest, const char* src, size_t n)
     return dest;
 }
 
-char* strchr(char* str, int character)
+char* strchr(const char* str, int character)
 {
     for (;;str++)
     {
         // the order here is important
         if (*str == character)
         {
-            return str;
+            return (char*)str;
         }
         if (*str == 0) // end of string
         {
             return 0;
         }
     }
+}
+
+char* strpbrk(const char* str, const char* delim)
+{
+    for(; *str != 0; str++)
+        for(size_t i = 0; delim[i] != 0; i++)
+            if(*str == delim[i])
+                return((char*)str);
+
+    return(0);
 }
 
 /**********************************************************************/

@@ -30,7 +30,7 @@ typedef struct
 
 typedef struct ipc_node
 {
-    const char* name;
+    char* name;
     IPC_TYPE    type;
     union
     {

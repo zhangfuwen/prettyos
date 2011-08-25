@@ -1105,6 +1105,8 @@ void tcp_showConnections()
     if (tcpConnections == 0)
         return;
 
+    textColor(HEADLINE);
+    printf("\nTCP connections:");
     textColor(TABLE_HEADING);
     printf("\nID\tIP\t\tSrc\tDest\tAddr\t\tState");
     printf("\n--------------------------------------------------------------------------------");

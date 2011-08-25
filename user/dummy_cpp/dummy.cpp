@@ -20,7 +20,7 @@ Stack::Stack(size_t max)
 }
 Stack::~Stack()
 {
-    delete stack;
+    delete[] stack;
 }
 void Stack::push(int value)
 {
@@ -40,13 +40,13 @@ int main()
 {
     setScrollField(0, 43); // The train should not be destroyed by the output, so we shrink the scrolling area...
     printLine("================================================================================", 0, 0x0B);
-    printLine("                               C++ - Testprogramm!                              ", 2, 0x0B);
+    printLine("                               C++ - Testprogramm!",                               2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
-    printLine("                                 ! Hello World !                                ", 7, 0x0C);
+    printLine("                                 ! Hello World !",                                 7, 0x0C);
 
     Stack acc(500);
 
-    iSetCursor(0,6);
+    iSetCursor(0, 10);
 
     for(int i=0; i<500; i++)
     {

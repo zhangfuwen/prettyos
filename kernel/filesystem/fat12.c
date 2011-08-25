@@ -33,7 +33,7 @@ int32_t flpydsk_read_directory()
     {
         if (dirEntry[i].Name[0] == DIR_EMPTY) break; // free from here on
 
-        if (dirEntry[i].Name[0] != DIR_DEL &&                     // Entry is not deleted
+        if ((uint8_t)dirEntry[i].Name[0] != DIR_DEL &&            // Entry is not deleted
            (dirEntry[i].Attr & ATTR_LONG_NAME) != ATTR_LONG_NAME) // Entry is not part of long file name (VFAT)
         {
             // Filename
@@ -75,9 +75,9 @@ int32_t flpydsk_read_directory()
             if (dirEntry[i].Attr & ATTR_READ_ONLY) puts("(r/o) ");
             if (dirEntry[i].Attr & ATTR_HIDDEN)    puts("(hid) ");
             if (dirEntry[i].Attr & ATTR_SYSTEM)    puts("(sys) ");
-            if (dirEntry[i].Attr & ATTR_ARCHIVE)   puts("(arc) ");
+            if (dirEntry[i].Attr & ATTR_ARCHIVE)   puts("(arc)" );
 
-             putch('\n');
+            putch('\n');
         }
     }
     putch('\n');

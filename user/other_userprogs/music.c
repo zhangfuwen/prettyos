@@ -14,7 +14,7 @@ void PlayTone(unsigned int Frequency, double DurFak) {
     }
 }
 
-void Play(char* string) {
+void Play(const char* string) {
     unsigned int Frequency = 0;
     for (int i = 0; string[i] != 0; ++i) {
         switch (string[i]) {
@@ -91,18 +91,18 @@ void Play(char* string) {
 int main() {
     textColor(0x0B);
     puts("================================================================================\n");
-    puts("                    Mr.X Simple-Simple-Music-Creator  v0.4.2                    \n");
+    puts("                        Mr.X Simple-Music-Creator  v0.4.3\n");
     puts("--------------------------------------------------------------------------------\n\n");
     puts("Please type in the duration of a full note or type in \"Alle meine Entchen\" or \"Hänschen klein\" to play that song and press ENTER.\n");
     char string1[100];
     gets(string1);
-    if (strcmp(string1, "Alle meine Entchen") == 0) {
+    if (strstr(string1, "Alle meine Entchen") == string1) {
         duration = 500;
-        Play("cdefg+g+aaaag++aaaag++ffffe+e+ddddc++\n");
+        Play("cdefg+g+aaaag++aaaag++ffffe+e+ddddc++");
     }
-    if (strcmp(string1, "Hänschen klein\n") == 0) {
+    else if (strstr(string1, "Hänschen klein") == string1) {
         duration = 500;
-        Play("gee+fdd+cdefggg+gee+fdd+ceggc++dddddef+eeeeefg+gee+fdd+ceggc++\n");
+        Play("gee+fdd+cdefggg+gee+fdd+ceggc++dddddef+eeeeefg+gee+fdd+ceggc++");
     }
     else {
         duration = atoi(string1);

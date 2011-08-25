@@ -16,7 +16,34 @@ static ipc_node_t root = {.name = 0, .type = IPC_FOLDER, .data.folder = 0, .owne
 
 static ipc_node_t* getNode(const char* remainingPath, ipc_node_t* node)
 {
-    return(0); // TODO
+    const char* end = strpbrk(remainingPath, "/|\\");
+
+    if(end == 0) // Final element
+    {
+        for(dlelement_t* e = node->data.folder->head; e != 0; e = e->next)
+        {
+            ipc_node_t* newnode = e->data;
+            if(strcmp(remainingPath, newnode->name) == 0)
+                return(newnode);
+        }
+    }
+    else
+    {
+        size_t sublength = end-remainingPath;
+        for(dlelement_t* e = node->data.folder->head; e != 0; e = e->next)
+        {
+            ipc_node_t* newnode = e->data;
+            if(strncmp(remainingPath, newnode->name, sublength) == 0 && strlen(newnode->name) == sublength)
+            {
+                if(newnode->type == IPC_FOLDER)
+                    return(getNode(end+1, newnode)); // One layer downwards
+                else
+                    return(0); // Node with name found, but we cannot go one step downwards, because its no folder. -> Not found.
+            }
+        }
+    }
+
+    return(0); // Not found
 }
 
 static bool accessAllowed(ipc_node_t* node, IPC_RIGHTS needed)
@@ -88,8 +115,19 @@ IPC_ERROR createNode(const char* path, ipc_node_t** node, IPC_TYPE type)
 {
     // TODO: Create folders up to this element (recursivly)
     // TODO: Get Parent
-    // TODO: Set Nodes name
+
+	// Find out nodes name. (TODO: Can this be solved by first TODO as well?)
+	const char* lastbreak;
+	const char* temp = path;
+	do
+	{
+		lastbreak = temp;
+		temp = strpbrk(temp+1, "/|\\");
+	} while(temp);
+
     *node = malloc(sizeof(ipc_node_t), 0, "ipc_node_t");
+	(*node)->name = malloc(strlen(lastbreak)+1, 0, "ipc_node_t::name");
+	strcpy((*node)->name, lastbreak);
     (*node)->type = type;
     (*node)->owner = getpid();
     (*node)->general = IPC_READ; // TODO: Use parents rights?

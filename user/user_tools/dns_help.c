@@ -157,14 +157,14 @@ void showDNSQuery(const char* name)
             const char* p = dns_parseHeader(&header, data, len);
             if (p)
             {
-                printf(" -- header -- \n");
+                printf(" -- header --\n");
                 printDNSHeader(&header);
             }
             while (p && header.qdcount--)
             {
                 if ((p = dns_parseQuestion(&question, data, len, p)))
                 {
-                    printf(" -- question -- \n");
+                    printf(" -- question --\n");
                     printDNSQuestion(&question);
                     getchar();
                 }
@@ -173,7 +173,7 @@ void showDNSQuery(const char* name)
             {
                 if ((p = dns_parseResource(&resource, data, len, p)))
                 {
-                    printf(" -- answer -- \n");
+                    printf(" -- answer --\n");
                     printDNSResource(&resource);
                     if (resource.type == dns_type_A &&
                         resource.dns_class == dns_class_IN &&
@@ -202,7 +202,7 @@ void showDNSQuery(const char* name)
     }
 
     udp_unbind(dns_port);
-    printf(" -- END -- \n");
+    printf(" -- END --\n");
 
     getchar();
 }

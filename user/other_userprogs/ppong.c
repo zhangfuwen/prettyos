@@ -1395,7 +1395,7 @@ void DrawMenuContentBox(uint16_t addlines)
 				case 0:
 					printf("                   ");
 					//intf("/######################################\\\n");
-					printf("##################################### \n");
+					printf("#####################################\n");
 					break;
 				case 1:
 					printf("                   ");
@@ -1525,7 +1525,7 @@ void DrawRect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 void DrawText(char* text, uint16_t x, uint16_t y)
 {
 	iSetCursor(x,y);
-	printf("%s",text);
+	puts(text);
 }
 
 void SetPixel(uint16_t x, uint16_t y)
@@ -1588,7 +1588,7 @@ void Error(char* message, bool critical)
 	clearScreen(0x00);
 	iSetCursor(10,7);
 	textColor(0x0F);
-	printf("%s",message);
+	puts(message);
 
 	iSetCursor(10,9);
 	if(critical == false)

@@ -8,7 +8,7 @@ int main()
 {
     setScrollField(13, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                           neuer_user FTP Client v0.4                           ", 1, 0x0B);
+    printLine("                           neuer_user FTP Client v0.4",                            1, 0x0B);
     printLine("--------------------------------------------------------------------------------", 3, 0x0B);
 
     iSetCursor(0, 4);

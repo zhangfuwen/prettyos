@@ -185,7 +185,17 @@ char* strrchr(const char* s, int c)
 int strcoll(const char* str1, const char* str2); /// TODO
 size_t strcspn(const char* str1, const char* str2); /// TODO
 char* strerror(int errornum); /// TODO
-char* strpbrk(const char* str1, const char* str2); /// TODO
+
+char* strpbrk(const char* str, const char* delim)
+{
+    for(; *str != 0; str++)
+        for(size_t i = 0; delim[i] != 0; i++)
+            if(*str == delim[i])
+                return((char*)str);
+
+    return(0);
+}
+
 size_t strspn(const char* str1, const char* str2); /// TODO
 
 char* strstr(const char* str1, const char* str2)
