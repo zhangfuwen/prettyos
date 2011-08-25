@@ -7,20 +7,20 @@
 #define AI
 
 // Parameters
-const uint8_t PLAYER_1_HEIGHT = 15;
+const uint8_t PLAYER_1_HEIGHT   = 15;
 
 #ifdef AI
-  const uint8_t PLAYER_2_HEIGHT = 1;
+  const uint8_t PLAYER_2_HEIGHT =   1;
 #else
   const uint8_t PLAYER_2_HEIGHT =  35;
 #endif
 
-const double  XSPEEDLOW       =  2.5;
-const double  XSPEEDHIGH      =  4.5;
-const double  YSPEEDLOW       = -3;  
-const double  YSPEEDHIGH      =  3;
+const double  XSPEEDLOW       =  1.5;
+const double  XSPEEDHIGH      =  2.5;
+const double  YSPEEDLOW       = -2.0;
+const double  YSPEEDHIGH      =  2.0;
 const uint8_t MAXSCORE        = 10;
-	
+
 // GFX:
 const bool DOUBLEBUFFERING =  true;
 const uint8_t BLINKFREQ    =   100;
@@ -123,7 +123,7 @@ void UpdateGame();
 void RenderGame();
 void GetGameControl();
 
-// Variables 
+// Variables
 uint8_t currentmenu;
 uint8_t mainmenuselected;
 uint8_t gamemenuselected;
@@ -170,7 +170,7 @@ int main()
     {
         console_setProperties(CONSOLE_AUTOREFRESH|CONSOLE_FULLSCREEN);
     }
-    
+
     setScrollField(0,50);
     clearScreen(0x00);
 
@@ -346,7 +346,7 @@ int main()
 	return(0);
 }
 
-// Play Game 
+// Play Game
 
 void RenderGame()
 {
@@ -366,51 +366,51 @@ void RenderGame()
 	textColor(0x0C); putchar('/');   // x-1
 	textColor(0xCC); putchar('X');   // x
 	textColor(0x0C); putchar('\\');  // x+1
-	
+
     iSetCursor(ballx-1,bally);
 	textColor(0xCC); putchar('X');   // x-1
                      putchar('X');   // x
                      putchar('X');   // x+1
-	
-    iSetCursor(ballx-1,bally+1);    
+
+    iSetCursor(ballx-1,bally+1);
     textColor(0x0C); putchar('\\');  // x-1
 	textColor(0xCC); putchar('X');   // x
 	textColor(0x0C); putchar('/');   // x+1
-    
+
 	// Draw Score and Game
     if (player1score == MAXSCORE)
     {
         player1game++;
     }
-    
+
     if (player2score == MAXSCORE)
     {
         player2game++;
     }
-	
+
     iSetCursor(SCOREX,SCOREY);
     textColor(0x07); printf("score: ");
     textColor(0x0D); printf("%u", player1score);
     textColor(0x07); printf(" : ");
     textColor(0x0D); printf("%u", player2score);
-    
-    iSetCursor(SCOREX,SCOREY+1); 
+
+    iSetCursor(SCOREX,SCOREY+1);
     textColor(0x07); printf("game:  ");
     textColor(0x0D); printf("%u", player1game);
     textColor(0x07); printf(" : ");
     textColor(0x0D); printf("%u", player2game);
-    
+
     if ( (player1score == MAXSCORE) || (player2score == MAXSCORE) )
     {
         player1score = player2score = 0;
-        beep(220,100); 
-        beep(440,100);        
-        beep(880,100);        
+        beep(220,100);
+        beep(440,100);
+        beep(880,100);
 
       #ifdef AI
         player1h -= 2*player1game;
         if (player1h < 5)
-        { 
+        {
             player1h = 5;
         }
       #endif
@@ -440,8 +440,8 @@ void GetGameControl()
 	}
 
   #ifdef AI
-    player2y = bally - player2h/2; // AI Strategy 
-    
+    player2y = bally - player2h/2; // AI Strategy
+
     if(player2y < 2)
     {
 		player2y = 2;
@@ -458,7 +458,7 @@ void UpdateGame()
 {
 	ballx = (ballx + ballxspeed);
 	bally = (bally + ballyspeed);
-    	
+
     //////////////////////
     // collision / goal //
     //////////////////////
@@ -474,29 +474,31 @@ void UpdateGame()
         ballyspeed = -ballyspeed;
 		bally = (LINES - 3);
 	}
-    
+
 	if( ballx < 7 && bally >= player1y && bally <= player1y + player1h ) // player1 got it
-    {              
+    {
         Sound_GotIt();
 
-		if (ballxspeed < 0) 
+		if (ballxspeed < 0)
         {
-            ballxspeed = -ballxspeed;			
+            ballxspeed = -ballxspeed;
             ballx++;
-        }            		
+            ballyspeed += random(-0.2,0.2);
+        }
 	}
 
 	if( ballx > COLUMNS - 7 && bally >= player2y && bally <= player2y + player2h ) // player2 got it
-    {        
+    {
 		Sound_GotIt();
 
         if (ballxspeed > 0)
         {
             ballxspeed = -ballxspeed;
             ballx--;
-        }            
+            ballyspeed += random(-0.2,0.2);
+        }
 	}
-    
+
 	if( ballx < 2 && ballxspeed < 0 ) // goal left
     {
 		player2score++;
@@ -520,10 +522,10 @@ double random(double lower, double upper)
 }
 
 void ResetBall()
-{	
+{
     Sound_Goal();
     sleep(500);
-            
+
     do
     {
         ballx = (COLUMNS/2);
@@ -531,7 +533,7 @@ void ResetBall()
 	    ballxspeed = random(XSPEEDLOW, XSPEEDHIGH);
 	    ballyspeed = random(YSPEEDLOW, YSPEEDHIGH);
     }
-    while( (ballyspeed > -0.5 && ballyspeed < 0.5) || ballxspeed == 0);        
+    while( (ballyspeed > -0.5 && ballyspeed < 0.5) || ballxspeed == 0);
 
     if((kickoff_to_the_right == true && ballxspeed<0) || (kickoff_to_the_right == false && ballxspeed>0))
     {
@@ -623,9 +625,9 @@ void RunGame()
 				}
 
 				/*
-				if(*key == KEY_ARRU || *key == KEY_W) 
+				if(*key == KEY_ARRU || *key == KEY_W)
                 {
-					switch(appmode) 
+					switch(appmode)
                     {
 						case APPMODE_MENU:
 							Menu_SelectorUp();
@@ -633,12 +635,12 @@ void RunGame()
 						default:
 							Error("An unknown error occurred (3): %u",appmode);
 							break;
-					}				
+					}
                 }
 
-				if(*key == KEY_ARRD || *key == KEY_S) 
+				if(*key == KEY_ARRD || *key == KEY_S)
                 {
-					switch(appmode) 
+					switch(appmode)
                     {
 						case APPMODE_MENU:
 							Menu_SelectorDown();
@@ -649,9 +651,9 @@ void RunGame()
 					}
 				}
 
-				if(*key == KEY_ENTER || *key == KEY_SPACE) 
+				if(*key == KEY_ENTER || *key == KEY_SPACE)
                 {
-					switch(appmode) 
+					switch(appmode)
                     {
 						case APPMODE_MENU:
 							Menu_Select();
@@ -1518,7 +1520,7 @@ void Sound_Goal()
 {
 	if(option_sound)
     {
-		beep(200,50);		
+		beep(200,50);
 	}
 }
 
@@ -1526,7 +1528,7 @@ void Sound_GotIt()
 {
 	if(option_sound)
     {
-		beep(800,20);		
+		beep(800,20);
 	}
 }
 
@@ -1558,7 +1560,7 @@ void Sound_Select()
 
 void Sound_Error()
 {
-	if(option_sound) 
+	if(option_sound)
     {
 		Sound_Denied();
 		sleep(500);
