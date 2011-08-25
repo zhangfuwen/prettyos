@@ -10,7 +10,7 @@
 const uint8_t PLAYER_1_HEIGHT = 15;
 
 #ifdef AI
-  const uint8_t PLAYER_2_HEIGHT = 8;
+  const uint8_t PLAYER_2_HEIGHT = 1;
 #else
   const uint8_t PLAYER_2_HEIGHT =  35;
 #endif
@@ -413,12 +413,6 @@ void RenderGame()
         { 
             player1h = 5;
         }
-
-        player2h += 2*player2game;
-        if (player2h > 15)
-        { 
-            player2h = 15;
-        }
       #endif
     }
 }
@@ -446,7 +440,7 @@ void GetGameControl()
 	}
 
   #ifdef AI
-    player2y = bally + player2h/2; // AI Strategy 
+    player2y = bally - player2h/2; // AI Strategy 
     
     if(player2y < 2)
     {
