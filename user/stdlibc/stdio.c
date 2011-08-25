@@ -205,38 +205,38 @@ int vsprintf(char* dest, const char* format, va_list arg)
                 {
                     case 'u':
                         utoa(va_arg(arg, uint32_t), m_buffer);
-                        strcat(dest, m_buffer);
+                        strcpy(dest+pos, m_buffer);
                         pos += strlen(m_buffer);
                         break;
                     case 'f':
                         ftoa(va_arg(arg, double), m_buffer);
-                        strcat(dest, m_buffer);
+                        strcpy(dest+pos, m_buffer);
                         pos += strlen(m_buffer);
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(arg, int32_t), m_buffer);
-                        strcat(dest, m_buffer);
+                        strcpy(dest+pos, m_buffer);
                         pos += strlen(m_buffer);
                         break;
                     case 'X':
                         i2hex(va_arg(arg, int32_t), m_buffer,8);
-                        strcat(dest, m_buffer);
+                        strcpy(dest+pos, m_buffer);
                         pos += strlen(m_buffer);
                         break;
                     case 'x':
                         i2hex(va_arg(arg, int32_t), m_buffer,4);
-                        strcat(dest, m_buffer);
+                        strcpy(dest+pos, m_buffer);
                         pos += strlen(m_buffer);
                         break;
                     case 'y':
                         i2hex(va_arg(arg, int32_t), m_buffer,2);
-                        strcat(dest, m_buffer);
+                        strcpy(dest+pos, m_buffer);
                         pos += strlen(m_buffer);
                         break;
                     case 's':
                     {
                         char* buf = va_arg(arg, char*);
-                        strcat(dest, buf);
+                        strcpy(dest+pos, buf);
                         pos += strlen(buf);
                         break;
                     }

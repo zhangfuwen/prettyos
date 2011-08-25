@@ -63,7 +63,6 @@ uint32_t getCurrentSeconds()
 void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
 {
     char m_buffer[32]; // Larger is not needed at the moment
-    memset(buffer, 0, length);
 
     for (size_t pos = 0; *args && pos < length; args++)
     {
@@ -74,36 +73,36 @@ void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
                 {
                     case 'u':
                         utoa(va_arg(ap, uint32_t), m_buffer);
-                        strncat(buffer, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'f':
                         ftoa(va_arg(ap, double), m_buffer);
-                        strncat(buffer, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), m_buffer);
-                        strncat(buffer, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'X':
                         i2hex(va_arg(ap, int32_t), m_buffer, 8);
-                        strncat(buffer, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'x':
                         i2hex(va_arg(ap, int32_t), m_buffer, 4);
-                        strncat(buffer, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 'y':
                         i2hex(va_arg(ap, int32_t), m_buffer, 2);
-                        strncat(buffer, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer) - 1;
                         break;
                     case 's':
-                        strncat(buffer, va_arg (ap, char*), length - pos - 1);
+                        strncpy(buffer+pos, va_arg (ap, char*), length - pos - 1);
                         pos = strlen(buffer) - 1;
                         break;
                     case 'c':

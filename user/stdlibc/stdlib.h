@@ -9,12 +9,12 @@
 #define RAND_MAX     0x7FFF  // do not change
 
 
-typedef struct 
+typedef struct
 {
     int quot, rem;
 } div_t;
 
-typedef struct 
+typedef struct
 {
     long quot, rem;
 } ldiv_t;

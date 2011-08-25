@@ -46,11 +46,7 @@ int main()
             {
                 printf("ESTABLISHED.\n");
                 char pStr[200];
-                strcpy(pStr,"GET ");
-                strcat(pStr,filename);
-                strcat(pStr," HTTP/1.1\r\nHost: ");
-                strcat(pStr,hostname);
-                strcat(pStr,"\r\nConnection: close\r\n\r\n");
+                snprintf(pStr, 200, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", filename, hostname);
                 textColor(0x0A);
                 puts(pStr);
                 textColor(0x0F);

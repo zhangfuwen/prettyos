@@ -116,18 +116,18 @@ IPC_ERROR createNode(const char* path, ipc_node_t** node, IPC_TYPE type)
     // TODO: Create folders up to this element (recursivly)
     // TODO: Get Parent
 
-	// Find out nodes name. (TODO: Can this be solved by first TODO as well?)
-	const char* lastbreak;
-	const char* temp = path;
-	do
-	{
-		lastbreak = temp;
-		temp = strpbrk(temp+1, "/|\\");
-	} while(temp);
+    // Find out nodes name. (TODO: Can this be solved by first TODO as well?)
+    const char* lastbreak;
+    const char* temp = path;
+    do
+    {
+        lastbreak = temp;
+        temp = strpbrk(temp+1, "/|\\");
+    } while(temp);
 
     *node = malloc(sizeof(ipc_node_t), 0, "ipc_node_t");
-	(*node)->name = malloc(strlen(lastbreak)+1, 0, "ipc_node_t::name");
-	strcpy((*node)->name, lastbreak);
+    (*node)->name = malloc(strlen(lastbreak)+1, 0, "ipc_node_t::name");
+    strcpy((*node)->name, lastbreak);
     (*node)->type = type;
     (*node)->owner = getpid();
     (*node)->general = IPC_READ; // TODO: Use parents rights?

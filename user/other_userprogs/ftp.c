@@ -146,10 +146,7 @@ int main()
                     else if (data[0] == '2' && data[1] == '2' && data[2] == '0')
                     {
                         char pStr[200];
-                        memset(pStr,0,200);
-                        strcat(pStr,"USER ");
-                        strcat(pStr,user);
-                        strcat(pStr,"\r\n");
+                        snprintf(pStr, 200, "USER %s\r\n", user);
                         tcp_send(control, pStr, strlen(pStr));
                     }
                     else if (data[0] == '2' && data[1] == '2' && data[2] == '6')
@@ -220,10 +217,7 @@ int main()
                     else if (data[0] == '3' && data[1] == '3' && data[2] == '1')
                     {
                         char pStr[200];
-                        memset(pStr,0,200);
-                        strcat(pStr,"PASS ");
-                        strcat(pStr,pass);
-                        strcat(pStr,"\r\n");
+                        snprintf(pStr, 200, "PASS %s\r\n", pass);
                         tcp_send(control, pStr, strlen(pStr));
                     }
                     else if (data[0] == '3' && data[1] == '5' && data[2] == '0')
@@ -290,9 +284,7 @@ int main()
                     strcat(command,newFilename);
                     strcat(command,"\r\n");
 
-                    strcat(tempCommand,"RNFR ");
-                    strcat(tempCommand,oldFilename);
-                    strcat(tempCommand,"\r\n");
+                    snprintf(tempCommand, 200, "RNFR %s\r\n", oldFilename);
                     renaming = 1;
                     printf("\n");
                     tcp_send(control, tempCommand, strlen(tempCommand));
