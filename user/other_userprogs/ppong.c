@@ -4,13 +4,22 @@
 #include "string.h"
 #include "math.h"
 
+#define AI
+
 // Parameters
 const uint8_t PLAYER_1_HEIGHT = 15;
-const uint8_t PLAYER_2_HEIGHT = 35;
-const double XSPEEDLOW        =  2.5;
-const double XSPEEDHIGH       =  4.5;
-const double YSPEEDLOW        = -3;  
-const double YSPEEDHIGH       =  3;
+
+#ifdef AI
+  const uint8_t PLAYER_2_HEIGHT = 8;
+#else
+  const uint8_t PLAYER_2_HEIGHT =  35;
+#endif
+
+const double  XSPEEDLOW       =  2.5;
+const double  XSPEEDHIGH      =  4.5;
+const double  YSPEEDLOW       = -3;  
+const double  YSPEEDHIGH      =  3;
+const uint8_t MAXSCORE        = 10;
 	
 // GFX:
 const bool DOUBLEBUFFERING =  true;
@@ -134,6 +143,8 @@ int16_t player1h;       // Height of player
 int16_t player2h;
 int16_t player1score;   // Player score
 int16_t player2score;
+int16_t player1game;    // Player games
+int16_t player2game;
 
 double  ballx;          // Ball X
 double  bally;          // Ball Y
@@ -366,8 +377,50 @@ void RenderGame()
 	textColor(0xCC); putchar('X');   // x
 	textColor(0x0C); putchar('/');   // x+1
     
-	// Draw score(s)
-	textColor(0x0D); iSetCursor(SCOREX,SCOREY);   printf("%u : %u",player1score,player2score);     
+	// Draw Score and Game
+    if (player1score == MAXSCORE)
+    {
+        player1game++;
+    }
+    
+    if (player2score == MAXSCORE)
+    {
+        player2game++;
+    }
+	
+    iSetCursor(SCOREX,SCOREY);
+    textColor(0x07); printf("score: ");
+    textColor(0x0D); printf("%u", player1score);
+    textColor(0x07); printf(" : ");
+    textColor(0x0D); printf("%u", player2score);
+    
+    iSetCursor(SCOREX,SCOREY+1); 
+    textColor(0x07); printf("game:  ");
+    textColor(0x0D); printf("%u", player1game);
+    textColor(0x07); printf(" : ");
+    textColor(0x0D); printf("%u", player2game);
+    
+    if ( (player1score == MAXSCORE) || (player2score == MAXSCORE) )
+    {
+        player1score = player2score = 0;
+        beep(220,100); 
+        beep(440,100);        
+        beep(880,100);        
+
+      #ifdef AI
+        player1h -= 2*player1game;
+        if (player1h < 5)
+        { 
+            player1h = 5;
+        }
+
+        player2h += 2*player2game;
+        if (player2h > 15)
+        { 
+            player2h = 15;
+        }
+      #endif
+    }
 }
 
 void GetGameControl()
@@ -391,6 +444,20 @@ void GetGameControl()
     {
 		player1y = ((LINES - 2) - player1h);
 	}
+
+  #ifdef AI
+    player2y = bally + player2h/2; // AI Strategy 
+    
+    if(player2y < 2)
+    {
+		player2y = 2;
+	}
+
+	if((player2y+player2h) > (LINES - 2))
+    {
+		player2y = ((LINES - 2) - player2h);
+	}
+  #endif
 }
 
 void UpdateGame()
@@ -398,38 +465,38 @@ void UpdateGame()
 	ballx = (ballx + ballxspeed);
 	bally = (bally + ballyspeed);
     	
-    /////////////////////
-    // collision tests //
-    /////////////////////
+    //////////////////////
+    // collision / goal //
+    //////////////////////
 
     if((bally-2) < 0) // collision upper wall
     {
-        ballyspeed = -(ballyspeed);
+        ballyspeed = -ballyspeed;
 		bally = 2;
 	}
 
 	if((bally+2) > LINES) // collision lower wall
     {
-        ballyspeed = -(ballyspeed);
+        ballyspeed = -ballyspeed;
 		bally = (LINES - 3);
 	}
     
-	if( ballx < 7 && bally >= player1y && bally <= player1y+player1h ) // player1 got it
+	if( ballx < 7 && bally >= player1y && bally <= player1y + player1h ) // player1 got it
     {              
         Sound_GotIt();
 
-		if (ballxspeed<0) 
+		if (ballxspeed < 0) 
         {
             ballxspeed = -ballxspeed;			
             ballx++;
         }            		
 	}
 
-	if( ballx > COLUMNS-7 && bally >= player2y && bally <= player2y+player2h ) // player2 got it
+	if( ballx > COLUMNS - 7 && bally >= player2y && bally <= player2y + player2h ) // player2 got it
     {        
 		Sound_GotIt();
 
-        if (ballxspeed>0)
+        if (ballxspeed > 0)
         {
             ballxspeed = -ballxspeed;
             ballx--;
@@ -443,7 +510,7 @@ void UpdateGame()
 		ResetBall();
 	}
 
-    if( ballx > COLUMNS-2 && ballxspeed > 0 ) // goal right
+    if( ballx > COLUMNS - 2 && ballxspeed > 0 ) // goal right
     {
         player1score++;
         kickoff_to_the_right = false;
@@ -461,15 +528,8 @@ double random(double lower, double upper)
 void ResetBall()
 {	
     Sound_Goal();
-    if (player1score || player2score) 
-    {
-        sleep(500);
-    }
-    else // begin
-    {
-        sleep(2000);
-    }
-    
+    sleep(500);
+            
     do
     {
         ballx = (COLUMNS/2);
@@ -510,8 +570,8 @@ void RunGame()
 	player1y = (LINES / 2) - (player1h / 2);
 	player2y = (LINES / 2) - (player2h / 2);
 
-	player1score = 0;
-	player2score = 0;
+	player1score = player1game = 0;
+	player2score = player2game = 0;
 
 	ResetBall();
 
