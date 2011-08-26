@@ -50,6 +50,10 @@ int rand()
 {
     return (((seed = seed * 214013L + 2531011L) >> 16) & RAND_MAX);
 }
+double random(double lower, double upper)
+{
+    return (( (double) rand() / ((double)RAND_MAX / (upper - lower))) + lower );
+}
 
 void* malloc(size_t size)
 {

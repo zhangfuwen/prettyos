@@ -1,8 +1,40 @@
+/*
+ 
+ PrettyPong (v2)
+ by Christian F. Coors (Cuervo)
+ 
+ Created 23.08.2011; Rev. 24
+ 
+ Please update the changelog if you change something.
+ 
+ 
+ Changelog:
+ 
+  Rev.   | Date             | User        | Changes
+ ==========================================================================================
+      23 | 23.08.2011       | Cuervo      | - Initial release
+ --------|------------------|-------------|------------------------------------------------
+      24 | - 26.08.2011     | ehenkes     | - Some changes (see http://www.c-plusplus.de/forum/254893-1260)
+ --------|------------------|-------------|------------------------------------------------
+      25 | 26.08.2011       | ehenkes     | - ppong.h, game control optimized
+ --------|------------------|-------------|------------------------------------------------
+      26 |                  |             |                                                  
+ --------|------------------|-------------|------------------------------------------------         
+         |                  |             |
+ --------|------------------|-------------|------------------------------------------------
+         |                  |             |
+ --------|------------------|-------------|------------------------------------------------
+  
+ */
+
+
 #include "userlib.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
 #include "math.h"
+#include "stdlib.h"
+#include "pong.h"
 
 
 // Parameters:
@@ -28,93 +60,7 @@ const uint8_t SCOREY       =     5;
 bool option_sound          = true;
 bool option_menuanimation  = true;
 
-
-// Do not modify anything after this line.
-
-// Menu defines
-#define MENU_MAIN                      1
-#define MENU_GAME                     12
-#define MENU_OPTIONS                  13
-#define MENU_CREDITS                  14
-#define MENU_EXIT                     15
-
-#define MENU_SOLOGAME                120
-#define MENU_LANGAME                 121
-#define MENU_INTERNETGAME            122
-
-#define MENU_MAIN_SELECTABLE           4
-
-#define MENU_GAME_SELECTABLE           4
-#define MENU_OPTIONS_SELECTABLE        3
-#define MENU_CREDITS_SELECTABLE        1
-#define MENU_EXIT_SELECTABLE           2
-
-#define MENU_SOLOGAME_SELECTABLE       3
-#define MENU_LANGAME_SELECTABLE        3
-#define MENU_INTERNETGAME_SELECTABLE   3
-
-// AppMode defines
-#define APPMODE_MENU                   1
-#define APPMODE_GAME                   2
-
-// GameMode defines
-#define GAMEMODE_NONE                  1
-#define GAMEMODE_LOCALGAME_1P          2
-#define GAMEMODE_LOCALGAME_2P          3
-#define GAMEMODE_LANGAME_HOST          4
-#define GAMEMODE_LANGAME_JOIN          5
-#define GAMEMODE_INTERNETGAME_HOST     6
-#define GAMEMODE_INTERNETGAME_JOIN     7
-
-// Functions
-void DrawMainMenu();
-void DrawGameMenu();
-void DrawOptionsMenu();
-void DrawCreditsMenu();
-void DrawExitMenu();
-void DrawSoloGameMenu();
-void DrawLANGameMenu();
-void DrawInternetGameMenu();
-void DrawMenuStructure();
-void DrawMenuPoint(char* name, uint8_t currentlySelected, uint8_t id);
-void DrawMenuHeader();
-void DrawMenuContentBox(uint16_t addlines);
-void DrawMenuSlideIn();
-void DrawMenuSlideOut();
-
-void SwitchToMenu(uint8_t switchto);
-
-void Menu_SelectorUp();
-void Menu_SelectorDown();
-void Menu_Select();
-
-void DrawRect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
-void DrawText(char* text, uint16_t x, uint16_t y);
-void SetPixel(uint16_t x, uint16_t y);
-void SetSpace(uint16_t x, uint16_t y);
-void FlipIfNeeded();
-void clearScreen2();
-
-void Sound_Denied();
-void Sound_OK();
-void Sound_Select();
-void Sound_Error();
-void Sound_Goal();
-void Sound_GotIt();
-
-void NotImplementedError();
-void Error(char* message, bool critical);
-
-void RenderApp();
-void ResetBall();
-void RunGame();
-void UpdateGame();
-void RenderGame();
-
-void GetGameControl();
-void WaitKey();
-
-double random(double lower, double upper);
+///////////////// Do not modify anything behind this line ///////////////////////////
 
 // Variables
 uint8_t currentmenu;
@@ -146,7 +92,6 @@ double  ballyspeed;     // Ball Y-Speed
 bool    kickoff_to_the_right = true; // true (right), false (left)
 
 bool    exitapp;
-
 
 int main()
 {
@@ -429,7 +374,7 @@ void UpdateGame()
 		bally = (LINES - 3);
 	}
 
-	if( ballx < 7 && bally >= player1y && bally <= player1y + player1h ) // player1 got it
+	if( ballx > 5 && ballx < 7 && bally >= player1y && bally <= player1y + player1h ) // player1 got it
     {
         Sound_GotIt();
 
@@ -441,7 +386,7 @@ void UpdateGame()
         }
 	}
 
-	if( ballx > COLUMNS - 7 && bally >= player2y && bally <= player2y + player2h ) // player2 got it
+	if( ballx > COLUMNS - 7 && ballx < COLUMNS - 5 && bally >= player2y && bally <= player2y + player2h ) // player2 got it
     {
 		Sound_GotIt();
 
@@ -1175,56 +1120,38 @@ void DrawOptionsMenu()
 
 void DrawSoloGameMenu()
 {
-	currentmenu=MENU_SOLOGAME;
-	DrawMenuStructure();
+    currentmenu=MENU_SOLOGAME;
+    DrawMenuStructure();
 
-	textColor(0x0D);
-	DrawText("Local game type:",21,24);
+    textColor(0x0D);   DrawText("Local game type:",21,24);
 
-	iSetCursor(26,29);
-	DrawMenuPoint("1 player (Arrow, W/S, P/L)", sologame_menu_selected,0);
-
-	iSetCursor(26,31);
-	DrawMenuPoint("2 players (1: W/S  2: P/L)",    sologame_menu_selected,1);
-
-	iSetCursor(26,38);
-	DrawMenuPoint("Return to game menu",           sologame_menu_selected,2);
+    iSetCursor(26,29); DrawMenuPoint("1 player"            , sologame_menu_selected,0);
+    iSetCursor(26,31); DrawMenuPoint("2 players"           , sologame_menu_selected,1);
+    iSetCursor(26,38); DrawMenuPoint("Return to game menu" , sologame_menu_selected,2);
 }
 
 void DrawLANGameMenu()
 {
-	currentmenu=MENU_LANGAME;
-	DrawMenuStructure();
+    currentmenu=MENU_LANGAME;
+    DrawMenuStructure();
 
-	textColor(0x0D);
-	DrawText("LAN game:",21,24);
+    textColor(0x0D);    DrawText("LAN game:",21,24);
 
-	iSetCursor(26,29);
-	DrawMenuPoint("Join game",langame_menu_selected,0);
-
-	iSetCursor(26,31);
-	DrawMenuPoint("Host game",langame_menu_selected,1);
-
-	iSetCursor(26,38);
-	DrawMenuPoint("Return to game menu",langame_menu_selected,2);
+    iSetCursor(26,29);  DrawMenuPoint("Join game",langame_menu_selected,0);
+    iSetCursor(26,31);  DrawMenuPoint("Host game",langame_menu_selected,1);
+    iSetCursor(26,38);  DrawMenuPoint("Return to game menu",langame_menu_selected,2);
 }
 
 void DrawInternetGameMenu()
 {
-	currentmenu=MENU_INTERNETGAME;
-	DrawMenuStructure();
+    currentmenu=MENU_INTERNETGAME;
+    DrawMenuStructure();
 
-	textColor(0x0D);
-	DrawText("Internet game:",21,24);
+    textColor(0x0D);    DrawText("Internet game:",21,24);
 
-	iSetCursor(26,29);
-	DrawMenuPoint("Join game",internetgame_menu_selected,0);
-
-	iSetCursor(26,31);
-	DrawMenuPoint("Host game",internetgame_menu_selected,1);
-
-	iSetCursor(26,38);
-	DrawMenuPoint("Return to game menu",internetgame_menu_selected,2);
+    iSetCursor(26,29);  DrawMenuPoint("Join game",internetgame_menu_selected,0);
+    iSetCursor(26,31);  DrawMenuPoint("Host game",internetgame_menu_selected,1);
+    iSetCursor(26,38);  DrawMenuPoint("Return to game menu",internetgame_menu_selected,2);
 }
 
 void DrawCreditsMenu()
@@ -1250,38 +1177,26 @@ void DrawCreditsMenu()
 
 void DrawExitMenu()
 {
-	currentmenu=MENU_EXIT;
-	DrawMenuStructure();
+    currentmenu=MENU_EXIT;
+    DrawMenuStructure();
 
-	textColor(0x0D);
-	DrawText("Do you really want to exit?",21,24);
+    textColor(0x0D);   DrawText("Do you really want to exit?",21,24);
 
-	iSetCursor(26,30);
-	DrawMenuPoint("Yes",exit_menu_selected,0);
-	iSetCursor(26,32);
-	DrawMenuPoint("No",exit_menu_selected,1);
-
+    iSetCursor(26,30); DrawMenuPoint("Yes",exit_menu_selected,0);
+    iSetCursor(26,32); DrawMenuPoint("No",exit_menu_selected,1);
 }
 
 void DrawGameMenu()
 {
-	currentmenu = MENU_GAME;
-	DrawMenuStructure();
+    currentmenu = MENU_GAME;
+    DrawMenuStructure();
 
-	textColor(0x0D);
-	DrawText("New game / Gametype:",21,24);
-
-
-	iSetCursor(26,29);
-	DrawMenuPoint("Local game",game_menu_selected,0);
-	iSetCursor(26,31);
-	DrawMenuPoint("Local network (LAN) game",game_menu_selected,1);
-	iSetCursor(26,33);
-	DrawMenuPoint("Internet game",game_menu_selected,2);
-
-	iSetCursor(26,36);
-	DrawMenuPoint("Return to main menu",game_menu_selected,3);
-
+    textColor(0x0D);    DrawText("New game / Gametype:",21,24);
+    
+    iSetCursor(26,29);  DrawMenuPoint("Local game",game_menu_selected,0);
+    iSetCursor(26,31);  DrawMenuPoint("Local network (LAN) game",game_menu_selected,1);
+    iSetCursor(26,33);  DrawMenuPoint("Internet game",game_menu_selected,2);
+    iSetCursor(26,36);	DrawMenuPoint("Return to main menu",game_menu_selected,3);
 }
 
 void DrawMenuStructure()
@@ -2100,11 +2015,5 @@ void Sound_GotIt()
 	}
 }
 
-// Math
-
-double random(double lower, double upper)
-{
-    return (( (double) rand() / ((double)RAND_MAX / (upper - lower))) + lower );
-}
 
 

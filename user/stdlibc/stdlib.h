@@ -52,6 +52,7 @@ void qsort(void* base, size_t num, size_t size, int (*comparator)(const void*, c
 
 void srand(int val);
 int rand();
+double random(double lower, double upper);
 
 void* malloc(size_t size);
 void* calloc(size_t num, size_t size);

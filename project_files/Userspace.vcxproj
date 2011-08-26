@@ -91,6 +91,7 @@
     <ClCompile Include="..\user\user_tools\userlib_cpp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\user\other_userprogs\pong.h" />
     <ClInclude Include="..\user\stdlibc\assert.h" />
     <ClInclude Include="..\user\stdlibc\ctype.h" />
     <ClInclude Include="..\user\stdlibc\errno.h" />
