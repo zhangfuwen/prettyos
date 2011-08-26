@@ -34,7 +34,7 @@
 #include "string.h"
 #include "math.h"
 #include "stdlib.h"
-#include "pong.h"
+#include "ppong.h"
 
 
 // Parameters:

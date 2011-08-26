@@ -262,7 +262,7 @@
     <ClInclude Include="..\user\user_tools\userlib.hpp">
       <Filter>User-Tools\Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\user\other_userprogs\pong.h">
+    <ClInclude Include="..\user\other_userprogs\ppong.h">
       <Filter>Other Userprogs</Filter>
     </ClInclude>
   </ItemGroup>
