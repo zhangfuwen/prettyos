@@ -37,16 +37,17 @@
 *                                                                             *
 ******************************************************************************/
 
-// User prorams start at 0x1400000 // 20 MiB  // cf. user.ld
-
-// Area to move data from kernel to userprogram (for example, parameter lists)
-#define USER_DATA_BUFFER 0x1420000
+// User program starts at 0x1400000 // 20 MiB  // cf. user.ld
 
 // User Stack
-#define USER_STACK 0x1420000
+#define USER_STACK        0x1500000 // nearly 1 MiB
+
+// Area to move data from kernel to userprogram (for example, parameter lists)
+#define USER_DATA_BUFFER  USER_STACK  // 64 KiB
+
 
 // User Heap management
-#define USER_heapStart   ((uint8_t*)0x1430000)                       // 20 MiB plus 192 KiB
-#define USER_heapEnd     ((uint8_t*)(KERNEL_DATA_START - 0x1000000)) //  3 GiB minus 16 MiB
+#define USER_heapStart    ((uint8_t*)(USER_DATA_BUFFER  + 0x10000))   // 21 MiB plus 64 KiB
+#define USER_heapEnd      ((uint8_t*)(KERNEL_DATA_START - 0x1000000)) //  3 GiB minus 16 MiB
 
 #endif
