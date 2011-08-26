@@ -372,6 +372,9 @@
     <ClInclude Include="..\kernel\ipc.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\storage\uhci.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">

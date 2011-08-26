@@ -138,6 +138,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\storage\ehci.h" />
     <ClInclude Include="..\kernel\storage\ehciQHqTD.h" />
     <ClInclude Include="..\kernel\storage\flpydsk.h" />
+    <ClInclude Include="..\kernel\storage\uhci.h" />
     <ClInclude Include="..\kernel\storage\usb2.h" />
     <ClInclude Include="..\kernel\storage\usb2_msd.h" />
     <ClInclude Include="..\kernel\storage\usb_hc.h" />
