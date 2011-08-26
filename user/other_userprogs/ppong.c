@@ -4,17 +4,11 @@
 #include "string.h"
 #include "math.h"
 
-#define AI
 
-// Parameters
-const uint8_t PLAYER_1_HEIGHT   = 15;
-
-#ifdef AI
-  const uint8_t PLAYER_2_HEIGHT =   1;
-#else
-  const uint8_t PLAYER_2_HEIGHT =  35;
-#endif
-
+// Parameters:
+const uint8_t PLAYER_1_HEIGHT = 15;
+const uint8_t PLAYER_2_HEIGHT = 15;
+const uint8_t PLAYER_2_HEIGHT_SHORT = 1;
 const double  XSPEEDLOW       =  1.5;
 const double  XSPEEDHIGH      =  2.5;
 const double  YSPEEDLOW       = -2.0;
@@ -82,7 +76,7 @@ void DrawSoloGameMenu();
 void DrawLANGameMenu();
 void DrawInternetGameMenu();
 void DrawMenuStructure();
-void DrawMenuPoint(char* name, uint8_t currentlyselected, uint8_t id);
+void DrawMenuPoint(char* name, uint8_t currentlySelected, uint8_t id);
 void DrawMenuHeader();
 void DrawMenuContentBox(uint16_t addlines);
 void DrawMenuSlideIn();
@@ -99,11 +93,7 @@ void DrawText(char* text, uint16_t x, uint16_t y);
 void SetPixel(uint16_t x, uint16_t y);
 void SetSpace(uint16_t x, uint16_t y);
 void FlipIfNeeded();
-
-void WaitKey();
 void clearScreen2();
-
-double random(double lower, double upper);
 
 void Sound_Denied();
 void Sound_OK();
@@ -113,7 +103,6 @@ void Sound_Goal();
 void Sound_GotIt();
 
 void NotImplementedError();
-
 void Error(char* message, bool critical);
 
 void RenderApp();
@@ -121,18 +110,22 @@ void ResetBall();
 void RunGame();
 void UpdateGame();
 void RenderGame();
+
 void GetGameControl();
+void WaitKey();
+
+double random(double lower, double upper);
 
 // Variables
 uint8_t currentmenu;
-uint8_t mainmenuselected;
-uint8_t gamemenuselected;
-uint8_t optionsmenuselected;
-uint8_t creditsmenuselected;
-uint8_t exitmenuselected;
-uint8_t sologamemenuselected;
-uint8_t langamemenuselected;
-uint8_t internetgamemenuselected;
+uint8_t main_menu_selected;
+uint8_t game_menu_selected;
+uint8_t options_menu_selected;
+uint8_t credits_menu_selected;
+uint8_t exit_menu_selected;
+uint8_t sologame_menu_selected;
+uint8_t langame_menu_selected;
+uint8_t internetgame_menu_selected;
 
 uint8_t appmode;
 uint8_t gamemode;
@@ -152,9 +145,7 @@ double  ballxspeed;     // Ball X-Speed
 double  ballyspeed;     // Ball Y-Speed
 bool    kickoff_to_the_right = true; // true (right), false (left)
 
-bool exitapp;
-
-bool ignorenextkeystroke;
+bool    exitapp;
 
 
 int main()
@@ -180,14 +171,14 @@ int main()
     EVENT_t ev = event_poll(buffer, 8192, EVENT_NONE);
 
     // Selected menupoints
-    mainmenuselected         = 0;
-    gamemenuselected         = 0;
-    optionsmenuselected      = 0;
-    creditsmenuselected      = 0;
-    exitmenuselected         = 0;
-    sologamemenuselected     = 0;
-    langamemenuselected      = 0;
-    internetgamemenuselected = 0;
+    main_menu_selected         = 0;
+    game_menu_selected         = 0;
+    options_menu_selected      = 0;
+    credits_menu_selected      = 0;
+    exit_menu_selected         = 0;
+    sologame_menu_selected     = 0;
+    langame_menu_selected      = 0;
+    internetgame_menu_selected = 0;
 
 
     // Clear eventual messages
@@ -288,7 +279,7 @@ int main()
 					}
 				}
 
-				if(*key == KEY_ARRU || *key == KEY_W)
+				if(*key == KEY_ARRU || *key == KEY_W || *key == KEY_P)
                 {
 					switch(appmode)
                     {
@@ -301,7 +292,7 @@ int main()
 					}
                 }
 
-				if(*key == KEY_ARRD || *key == KEY_S)
+				if(*key == KEY_ARRD || *key == KEY_S || *key == KEY_L)
                 {
 					switch(appmode)
                     {
@@ -417,43 +408,6 @@ void RenderGame()
     }
 }
 
-void GetGameControl()
-{
-    if(keyPressed(KEY_ARRU) || (keyPressed(KEY_W)))
-    {
-		player1y = (player1y - 3);
-	}
-
-	if(keyPressed(KEY_ARRD) || keyPressed(KEY_S))
-    {
-		player1y = (player1y + 3);
-	}
-
-	if(player1y < 2)
-    {
-		player1y = 2;
-	}
-
-	if((player1y+player1h) > (LINES - 2))
-    {
-		player1y = ((LINES - 2) - player1h);
-	}
-
-  #ifdef AI
-    player2y = bally - player2h/2; // AI Strategy
-
-    if(player2y < 2)
-    {
-		player2y = 2;
-	}
-
-	if((player2y+player2h) > (LINES - 2))
-    {
-		player2y = ((LINES - 2) - player2h);
-	}
-  #endif
-}
-
 void UpdateGame()
 {
 	ballx = (ballx + ballxspeed);
@@ -516,11 +470,6 @@ void UpdateGame()
 	GetGameControl(); // get input from player
 }
 
-double random(double lower, double upper)
-{
-    return (( (double) rand() / ((double)RAND_MAX / (upper - lower))) + lower );
-}
-
 void ResetBall()
 {
     Sound_Goal();
@@ -549,7 +498,11 @@ void RunGame()
 			Error("An unknown error occurred.",true);
 			break;
 		case GAMEMODE_LOCALGAME_1P:
+            player2h = PLAYER_2_HEIGHT_SHORT;
 			break;
+        case GAMEMODE_LOCALGAME_2P:
+			player2h = PLAYER_2_HEIGHT;
+            break;
 		default:
 			Error("An unknown error occurred (10).",true);
 			break;
@@ -559,12 +512,11 @@ void RunGame()
     EVENT_t ev = event_poll(buffer, 8192, EVENT_NONE);
 
 	bool exitgame = false;
-
+        
 	player1h = PLAYER_1_HEIGHT;
-	player2h = PLAYER_2_HEIGHT;
-
 	player1y = (LINES / 2) - (player1h / 2);
-	player2y = (LINES / 2) - (player2h / 2);
+	
+    player2y = (LINES / 2) - (player2h / 2);
 
 	player1score = player1game = 0;
 	player2score = player2game = 0;
@@ -680,10 +632,6 @@ void RunGame()
 }
 
 
-void clearScreen2()
-{
-	clearScreen(0x00);
-}
 
 
 void RenderApp()
@@ -726,40 +674,42 @@ void RenderApp()
 	}
 }
 
+// Menu
+
 void Menu_SelectorUp()
 {
 	switch (currentmenu)
     {
 		case MENU_MAIN:
-			if(mainmenuselected == 0)
+			if(main_menu_selected == 0)
             {
-				mainmenuselected = (MENU_MAIN_SELECTABLE-1);
+				main_menu_selected = (MENU_MAIN_SELECTABLE-1);
 			}
             else
             {
-				mainmenuselected = (mainmenuselected-1);
+				main_menu_selected = (main_menu_selected-1);
 			}
 			Sound_Select();
 			break;
 		case MENU_EXIT:
-			if(exitmenuselected == 0)
+			if(exit_menu_selected == 0)
             {
-				exitmenuselected = (MENU_EXIT_SELECTABLE-1);
+				exit_menu_selected = (MENU_EXIT_SELECTABLE-1);
 			}
             else
             {
-				exitmenuselected = (exitmenuselected-1);
+				exit_menu_selected = (exit_menu_selected-1);
 			}
 			Sound_Select();
 			break;
 		case MENU_GAME:
-			if(gamemenuselected == 0)
+			if(game_menu_selected == 0)
             {
-				gamemenuselected = (MENU_GAME_SELECTABLE-1);
+				game_menu_selected = (MENU_GAME_SELECTABLE-1);
 			}
             else
             {
-				gamemenuselected = (gamemenuselected-1);
+				game_menu_selected = (game_menu_selected-1);
 			}
 			Sound_Select();
 			break;
@@ -767,46 +717,46 @@ void Menu_SelectorUp()
 			Sound_Select();
 			break;
 		case MENU_OPTIONS:
-			if(optionsmenuselected == 0)
+			if(options_menu_selected == 0)
             {
-				optionsmenuselected = (MENU_OPTIONS_SELECTABLE-1);
+				options_menu_selected = (MENU_OPTIONS_SELECTABLE-1);
 			}
             else
             {
-				optionsmenuselected = (optionsmenuselected-1);
+				options_menu_selected = (options_menu_selected-1);
 			}
 			Sound_Select();
 			break;
 		case MENU_SOLOGAME:
-			if(sologamemenuselected == 0)
+			if(sologame_menu_selected == 0)
             {
-				sologamemenuselected = (MENU_SOLOGAME_SELECTABLE-1);
+				sologame_menu_selected = (MENU_SOLOGAME_SELECTABLE-1);
 			}
             else
             {
-				sologamemenuselected = (sologamemenuselected-1);
+				sologame_menu_selected = (sologame_menu_selected-1);
 			}
 			Sound_Select();
 			break;
 		case MENU_LANGAME:
-			if(langamemenuselected == 0)
+			if(langame_menu_selected == 0)
             {
-				langamemenuselected = (MENU_LANGAME_SELECTABLE-1);
+				langame_menu_selected = (MENU_LANGAME_SELECTABLE-1);
 			}
             else
             {
-				langamemenuselected = (langamemenuselected-1);
+				langame_menu_selected = (langame_menu_selected-1);
 			}
 			Sound_Select();
 			break;
 		case MENU_INTERNETGAME:
-			if(internetgamemenuselected == 0)
+			if(internetgame_menu_selected == 0)
             {
-				internetgamemenuselected = (MENU_INTERNETGAME_SELECTABLE-1);
+				internetgame_menu_selected = (MENU_INTERNETGAME_SELECTABLE-1);
 			}
             else
             {
-				internetgamemenuselected = (internetgamemenuselected-1);
+				internetgame_menu_selected = (internetgame_menu_selected-1);
 			}
 			Sound_Select();
 			break;
@@ -821,24 +771,24 @@ void Menu_SelectorDown()
 	switch (currentmenu)
     {
 		case MENU_MAIN:
-			if(mainmenuselected == (MENU_MAIN_SELECTABLE-1))
+			if(main_menu_selected == (MENU_MAIN_SELECTABLE-1))
             {
-				mainmenuselected = 0;
+				main_menu_selected = 0;
 			}
             else
             {
-				mainmenuselected = (mainmenuselected+1);
+				main_menu_selected = (main_menu_selected+1);
 			}
 			Sound_Select();
 			break;
 		case MENU_EXIT:
-			if(exitmenuselected == (MENU_EXIT_SELECTABLE-1))
+			if(exit_menu_selected == (MENU_EXIT_SELECTABLE-1))
             {
-				exitmenuselected = 0;
+				exit_menu_selected = 0;
 			}
             else
             {
-				exitmenuselected = (exitmenuselected+1);
+				exit_menu_selected = (exit_menu_selected+1);
 			}
 			Sound_Select();
 			break;
@@ -846,57 +796,57 @@ void Menu_SelectorDown()
 			Sound_Select();
 			break;
 		case MENU_GAME:
-			if(gamemenuselected == (MENU_GAME_SELECTABLE-1))
+			if(game_menu_selected == (MENU_GAME_SELECTABLE-1))
             {
-				gamemenuselected = 0;
+				game_menu_selected = 0;
 			}
             else
             {
-				gamemenuselected = (gamemenuselected+1);
+				game_menu_selected = (game_menu_selected+1);
 			}
 			Sound_Select();
 			break;
 		case MENU_OPTIONS:
-			if(optionsmenuselected == (MENU_OPTIONS_SELECTABLE-1))
+			if(options_menu_selected == (MENU_OPTIONS_SELECTABLE-1))
             {
-				optionsmenuselected = 0;
+				options_menu_selected = 0;
 			}
             else
             {
-				optionsmenuselected = (optionsmenuselected+1);
+				options_menu_selected = (options_menu_selected+1);
 			}
 			Sound_Select();
 			break;
 		case MENU_SOLOGAME:
-			if(sologamemenuselected == (MENU_SOLOGAME_SELECTABLE-1))
+			if(sologame_menu_selected == (MENU_SOLOGAME_SELECTABLE-1))
             {
-				sologamemenuselected = 0;
+				sologame_menu_selected = 0;
 			}
             else
             {
-				sologamemenuselected = (sologamemenuselected+1);
+				sologame_menu_selected = (sologame_menu_selected+1);
 			}
 			Sound_Select();
 			break;
 		case MENU_LANGAME:
-			if(langamemenuselected == (MENU_LANGAME_SELECTABLE-1))
+			if(langame_menu_selected == (MENU_LANGAME_SELECTABLE-1))
             {
-				langamemenuselected = 0;
+				langame_menu_selected = 0;
 			}
             else
             {
-				langamemenuselected = (langamemenuselected+1);
+				langame_menu_selected = (langame_menu_selected+1);
 			}
 			Sound_Select();
 			break;
 		case MENU_INTERNETGAME:
-			if(internetgamemenuselected == (MENU_INTERNETGAME_SELECTABLE-1))
+			if(internetgame_menu_selected == (MENU_INTERNETGAME_SELECTABLE-1))
             {
-				internetgamemenuselected = 0;
+				internetgame_menu_selected = 0;
 			}
             else
             {
-				internetgamemenuselected = (internetgamemenuselected+1);
+				internetgame_menu_selected = (internetgame_menu_selected+1);
 			}
 			Sound_Select();
 			break;
@@ -911,7 +861,7 @@ void Menu_Select()
 	switch (currentmenu)
     {
 		case MENU_MAIN:
-			switch (mainmenuselected)
+			switch (main_menu_selected)
             {
 				case 0: // New game
 					Sound_OK();
@@ -934,7 +884,7 @@ void Menu_Select()
 			}
 			break;
 		case MENU_EXIT:
-			switch (exitmenuselected)
+			switch (exit_menu_selected)
             {
 				case 0: // Yes
 					Sound_OK();
@@ -949,7 +899,7 @@ void Menu_Select()
 			}
 			break;
 		case MENU_CREDITS:
-			switch (creditsmenuselected)
+			switch (credits_menu_selected)
             {
 				case 0:
 					Sound_OK();
@@ -960,7 +910,7 @@ void Menu_Select()
 			}
 			break;
 		case MENU_GAME:
-			switch (gamemenuselected)
+			switch (game_menu_selected)
             {
 				case 0: // Local
 					Sound_OK();
@@ -983,7 +933,7 @@ void Menu_Select()
 			}
 			break;
 		case MENU_OPTIONS:
-			switch (optionsmenuselected)
+			switch (options_menu_selected)
             {
 				case 0: // Sound
 					if(option_sound)
@@ -1016,17 +966,19 @@ void Menu_Select()
 			}
 			break;
 		case MENU_SOLOGAME:
-			switch (sologamemenuselected)
+			switch (sologame_menu_selected)
             {
 				case 0: // One player
-					// NotImplementedError();
 					gamemode=GAMEMODE_LOCALGAME_1P;
 					appmode=APPMODE_GAME;
 					RunGame();
 					appmode=APPMODE_MENU;
 					break;
 				case 1: // Two players
-					NotImplementedError();
+                    gamemode=GAMEMODE_LOCALGAME_2P;
+					appmode=APPMODE_GAME;
+					RunGame();
+					appmode=APPMODE_MENU;
 					break;
 				case 2: // GameMenu
 					Sound_OK();
@@ -1037,7 +989,7 @@ void Menu_Select()
 			}
 			break;
 		case MENU_LANGAME:
-			switch (langamemenuselected)
+			switch (langame_menu_selected)
             {
 				case 0: // Join game
 					NotImplementedError();
@@ -1054,7 +1006,7 @@ void Menu_Select()
 			}
 			break;
 		case MENU_INTERNETGAME:
-			switch (internetgamemenuselected)
+			switch (internetgame_menu_selected)
             {
 				case 0: // Join game
 					NotImplementedError();
@@ -1090,24 +1042,24 @@ void DrawMainMenu()
 	DrawText("Main menu",21,24);
 
 
-	if(mainmenuselected > 127)
+	if(main_menu_selected > 127)
     {
-		mainmenuselected = (MENU_MAIN_SELECTABLE-1);
+		main_menu_selected = (MENU_MAIN_SELECTABLE-1);
 	}
 
-	if(mainmenuselected > (MENU_MAIN_SELECTABLE-1))
+	if(main_menu_selected > (MENU_MAIN_SELECTABLE-1))
     {
-		mainmenuselected = 0;
+		main_menu_selected = 0;
 	}
 
 	iSetCursor(26,29);
-	DrawMenuPoint("New game",mainmenuselected,0);
+	DrawMenuPoint("New game",main_menu_selected,0);
 	iSetCursor(26,31);
-	DrawMenuPoint("Options",mainmenuselected,1);
+	DrawMenuPoint("Options",main_menu_selected,1);
 	iSetCursor(26,33);
-	DrawMenuPoint("Credits",mainmenuselected,2);
+	DrawMenuPoint("Credits",main_menu_selected,2);
 	iSetCursor(26,37);
-	DrawMenuPoint("Exit",mainmenuselected,3);
+	DrawMenuPoint("Exit",main_menu_selected,3);
 
 }
 
@@ -1121,10 +1073,10 @@ void DrawOptionsMenu()
 
 
 	iSetCursor(26,29);
-	DrawMenuPoint("Sound",optionsmenuselected,0);
+	DrawMenuPoint("Sound",options_menu_selected,0);
 
 	iSetCursor(38,29);
-	if(optionsmenuselected == 0)
+	if(options_menu_selected == 0)
     {
 		textColor(0x0F);
 	}
@@ -1135,7 +1087,7 @@ void DrawOptionsMenu()
 	printf("[");
 	if(option_sound)
     {
-		if(optionsmenuselected == 0)
+		if(options_menu_selected == 0)
         {
 			textColor(0x0A);
 		}
@@ -1147,7 +1099,7 @@ void DrawOptionsMenu()
 	}
     else
     {
-		if(optionsmenuselected == 0)
+		if(options_menu_selected == 0)
         {
 			textColor(0x0C);
 		}
@@ -1157,7 +1109,7 @@ void DrawOptionsMenu()
 		}
 		printf("NO");
 	}
-	if(optionsmenuselected == 0)
+	if(options_menu_selected == 0)
     {
 		textColor(0x0F);
 	}
@@ -1170,10 +1122,10 @@ void DrawOptionsMenu()
 	// option_menuanimation
 
 	iSetCursor(26,31);
-	DrawMenuPoint("Menu animations",optionsmenuselected,1);
+	DrawMenuPoint("Menu animations",options_menu_selected,1);
 
 	iSetCursor(48,31);
-	if(optionsmenuselected == 1)
+	if(options_menu_selected == 1)
     {
 		textColor(0x0F);
 	}
@@ -1184,7 +1136,7 @@ void DrawOptionsMenu()
 	printf("[");
 	if(option_menuanimation)
     {
-		if(optionsmenuselected == 1)
+		if(options_menu_selected == 1)
         {
 			textColor(0x0A);
 		}
@@ -1196,7 +1148,7 @@ void DrawOptionsMenu()
 	}
     else
     {
-		if(optionsmenuselected == 1)
+		if(options_menu_selected == 1)
         {
 			textColor(0x0C);
 		}
@@ -1206,7 +1158,7 @@ void DrawOptionsMenu()
 		}
 		printf("NO");
 	}
-	if(optionsmenuselected == 1)
+	if(options_menu_selected == 1)
     {
 		textColor(0x0F);
 	}
@@ -1217,7 +1169,7 @@ void DrawOptionsMenu()
 	printf("]");
 
 	iSetCursor(26,38);
-	DrawMenuPoint("Done",optionsmenuselected,2);
+	DrawMenuPoint("Done",options_menu_selected,2);
 
 }
 
@@ -1230,13 +1182,13 @@ void DrawSoloGameMenu()
 	DrawText("Local game type:",21,24);
 
 	iSetCursor(26,29);
-	DrawMenuPoint("1 player",sologamemenuselected,0);
+	DrawMenuPoint("1 player (Arrow, W/S, P/L)", sologame_menu_selected,0);
 
 	iSetCursor(26,31);
-	DrawMenuPoint("2 players",sologamemenuselected,1);
+	DrawMenuPoint("2 players (1: W/S  2: P/L)",    sologame_menu_selected,1);
 
 	iSetCursor(26,38);
-	DrawMenuPoint("Return to game menu",sologamemenuselected,2);
+	DrawMenuPoint("Return to game menu",           sologame_menu_selected,2);
 }
 
 void DrawLANGameMenu()
@@ -1248,13 +1200,13 @@ void DrawLANGameMenu()
 	DrawText("LAN game:",21,24);
 
 	iSetCursor(26,29);
-	DrawMenuPoint("Join game",langamemenuselected,0);
+	DrawMenuPoint("Join game",langame_menu_selected,0);
 
 	iSetCursor(26,31);
-	DrawMenuPoint("Host game",langamemenuselected,1);
+	DrawMenuPoint("Host game",langame_menu_selected,1);
 
 	iSetCursor(26,38);
-	DrawMenuPoint("Return to game menu",langamemenuselected,2);
+	DrawMenuPoint("Return to game menu",langame_menu_selected,2);
 }
 
 void DrawInternetGameMenu()
@@ -1266,13 +1218,13 @@ void DrawInternetGameMenu()
 	DrawText("Internet game:",21,24);
 
 	iSetCursor(26,29);
-	DrawMenuPoint("Join game",internetgamemenuselected,0);
+	DrawMenuPoint("Join game",internetgame_menu_selected,0);
 
 	iSetCursor(26,31);
-	DrawMenuPoint("Host game",internetgamemenuselected,1);
+	DrawMenuPoint("Host game",internetgame_menu_selected,1);
 
 	iSetCursor(26,38);
-	DrawMenuPoint("Return to game menu",internetgamemenuselected,2);
+	DrawMenuPoint("Return to game menu",internetgame_menu_selected,2);
 }
 
 void DrawCreditsMenu()
@@ -1284,15 +1236,15 @@ void DrawCreditsMenu()
 	DrawText("Credits:",21,24);
 
 	textColor(0x0E);
-	DrawText("Created by Christian F. Coors",21,28);
+	DrawText("Created by C.Coors and E.Henkes",21,28);
 
 	textColor(0x09);
-	DrawText("Copyright (c) 2011",21,31);
-	DrawText("Christian F. Coors,",21,33);
-	DrawText("All rights reserved",21,35);
+	DrawText("Copyright (c) 2011"  ,21,31);
+	DrawText("PrettyOS Team"       ,21,33);
+	DrawText("All rights reserved" ,21,35);
 
 	iSetCursor(26,38);
-	DrawMenuPoint("Done",creditsmenuselected,0);
+	DrawMenuPoint("Done",credits_menu_selected,0);
 
 }
 
@@ -1305,15 +1257,15 @@ void DrawExitMenu()
 	DrawText("Do you really want to exit?",21,24);
 
 	iSetCursor(26,30);
-	DrawMenuPoint("Yes",exitmenuselected,0);
+	DrawMenuPoint("Yes",exit_menu_selected,0);
 	iSetCursor(26,32);
-	DrawMenuPoint("No",exitmenuselected,1);
+	DrawMenuPoint("No",exit_menu_selected,1);
 
 }
 
 void DrawGameMenu()
 {
-	currentmenu=MENU_GAME;
+	currentmenu = MENU_GAME;
 	DrawMenuStructure();
 
 	textColor(0x0D);
@@ -1321,14 +1273,14 @@ void DrawGameMenu()
 
 
 	iSetCursor(26,29);
-	DrawMenuPoint("Local game",gamemenuselected,0);
+	DrawMenuPoint("Local game",game_menu_selected,0);
 	iSetCursor(26,31);
-	DrawMenuPoint("Local network (LAN) game",gamemenuselected,1);
+	DrawMenuPoint("Local network (LAN) game",game_menu_selected,1);
 	iSetCursor(26,33);
-	DrawMenuPoint("Internet game",gamemenuselected,2);
+	DrawMenuPoint("Internet game",game_menu_selected,2);
 
 	iSetCursor(26,36);
-	DrawMenuPoint("Return to main menu",gamemenuselected,3);
+	DrawMenuPoint("Return to main menu",game_menu_selected,3);
 
 }
 
@@ -1338,9 +1290,9 @@ void DrawMenuStructure()
 	DrawMenuContentBox(0);
 }
 
-void DrawMenuPoint(char* name, uint8_t currentlyselected, uint8_t id)
+void DrawMenuPoint(char* name, uint8_t currentlySelected, uint8_t id)
 {
-	if(currentlyselected == id)
+	if(currentlySelected == id)
     {
 		textColor(0x0E);
 	}
@@ -1350,7 +1302,7 @@ void DrawMenuPoint(char* name, uint8_t currentlyselected, uint8_t id)
 	}
 	printf("[ ");
 
-	if( ((getCurrentMilliseconds()/ (1000/BLINKFREQ)) % 2) == 1 && currentlyselected == id)
+	if( ((getCurrentMilliseconds()/ (1000/BLINKFREQ)) % 2) == 1 && currentlySelected == id)
     {
 		printf("X");
 	}
@@ -1359,7 +1311,8 @@ void DrawMenuPoint(char* name, uint8_t currentlyselected, uint8_t id)
 		printf(" ");
 	}
 	printf(" ]");
-	if(currentlyselected == id)
+	
+    if(currentlySelected == id)
     {
 		textColor(0x0F);
 	}
@@ -1407,17 +1360,17 @@ void SwitchToMenu(uint8_t switchto)
 	DrawMenuSlideOut();
 	if(switchto == MENU_EXIT)
     {
-		exitmenuselected = 0;
+		exit_menu_selected = 0;
 	}
 
 	if(switchto == MENU_MAIN)
     {
-		mainmenuselected = 0;
+		main_menu_selected = 0;
 	}
 
-	if(switchto == MENU_GAME && gamemenuselected == (MENU_GAME_SELECTABLE-1))
+	if(switchto == MENU_GAME && game_menu_selected == (MENU_GAME_SELECTABLE-1))
     {
-		gamemenuselected = 0;
+		game_menu_selected = 0;
 	}
 
 	currentmenu = switchto;
@@ -1450,7 +1403,6 @@ void DrawMenuContentBox(uint16_t addlines)
             {
 				case 0:
 					printf("                   ");
-					//intf("/######################################\\\n");
 					printf("#####################################\n");
 					break;
 				case 1:
@@ -1469,7 +1421,6 @@ void DrawMenuContentBox(uint16_t addlines)
 					printf("                   ");
 					printf("#");
 					textColor(0x07);
-					//intf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 					printf("======================================");
 					textColor(0x0F);
 					printf("#\n");
@@ -1488,7 +1439,6 @@ void DrawMenuContentBox(uint16_t addlines)
 					break;
 				case 19:
 					printf("                   ");
-					//intf("/######################################\\\n");
 					printf("   #####################################\n");
 					break;
 				case 20:
@@ -1503,7 +1453,7 @@ void DrawMenuContentBox(uint16_t addlines)
 					break;
 				case 24:
 					textColor(0x09);
-					printf("  If you can't use the arrow keys, you can use W and S instead.\n");
+					printf("  If you can't use the arrow keys, you can use W and S or P and L instead.\n");
 					break;
 				default:
 					printf("                   ");
@@ -1516,55 +1466,12 @@ void DrawMenuContentBox(uint16_t addlines)
 	}
 }
 
-void Sound_Goal()
-{
-	if(option_sound)
-    {
-		beep(200,50);
-	}
-}
 
-void Sound_GotIt()
-{
-	if(option_sound)
-    {
-		beep(800,20);
-	}
-}
+// GFX
 
-void Sound_Denied()
+void clearScreen2()
 {
-	if(option_sound)
-    {
-		beep(600,150);
-		beep(400,150);
-	}
-}
-
-void Sound_OK()
-{
-	if(option_sound)
-    {
-		beep(800,100);
-		beep(1000,100);
-	}
-}
-
-void Sound_Select()
-{
-	if(option_sound)
-    {
-		beep(1000,50);
-	}
-}
-
-void Sound_Error()
-{
-	if(option_sound)
-    {
-		Sound_Denied();
-		sleep(500);
-	}
+	clearScreen(0x00);
 }
 
 void DrawRect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
@@ -1604,6 +1511,103 @@ void FlipIfNeeded()
     }
 }
 
+// Input 
+
+void GetGameControl()
+{
+    switch(gamemode)
+    {
+        case GAMEMODE_LOCALGAME_1P:
+        {    
+            // Player 1
+            
+            if(keyPressed(KEY_ARRU) || keyPressed(KEY_P) || (keyPressed(KEY_W)))
+            {
+		        player1y = (player1y - 3);
+	        }
+
+	        if(keyPressed(KEY_ARRD) || keyPressed(KEY_L) || keyPressed(KEY_S))
+            {
+		        player1y = (player1y + 3);
+	        }
+
+	        if(player1y < 2)
+            {
+		        player1y = 2;
+	        }
+
+	        if((player1y+player1h) > (LINES - 2))
+            {
+		        player1y = ((LINES - 2) - player1h);
+	        }
+
+            // Player 2 (AI)
+            
+            player2y = bally - player2h/2; // AI Strategy
+
+            if(player2y < 2)
+            {
+		        player2y = 2;
+	        }
+
+	        if((player2y+player2h) > (LINES - 2))
+            {
+		        player2y = ((LINES - 2) - player2h);
+	        }
+            
+            break;
+        }
+
+        case GAMEMODE_LOCALGAME_2P:
+        {
+            // Player 1
+            
+            if(keyPressed(KEY_W))
+            {
+		        player1y = (player1y - 3);
+	        }
+
+	        if(keyPressed(KEY_S))
+            {
+		        player1y = (player1y + 3);
+	        }
+
+	        if(player1y < 2)
+            {
+		        player1y = 2;
+	        }
+
+	        if((player1y+player1h) > (LINES - 2))
+            {
+		        player1y = ((LINES - 2) - player1h);
+	        }
+
+            // Player 2
+            
+            if(keyPressed(KEY_P))
+            {
+		        player2y = (player2y - 3);
+	        }
+
+	        if(keyPressed(KEY_L))
+            {
+		        player2y = (player2y + 3);
+	        }
+
+	        if(player2y < 2)
+            {
+		        player2y = 2;
+	        }
+
+	        if((player2y+player2h) > (LINES - 2))
+            {
+		        player2y = ((LINES - 2) - player2h);
+	        }
+            break;
+        }
+    }
+}
+
 void WaitKey()
 {
 	char buffer[8192];
@@ -1630,6 +1634,8 @@ void WaitKey()
 	}
 }
 
+// Error
+
 void NotImplementedError()
 {
 	Error("This feature is not (yet) implemented.",false);
@@ -1637,173 +1643,168 @@ void NotImplementedError()
 
 void Error(char* message, bool critical)
 {
-	if(appmode==APPMODE_MENU)
+    if(appmode==APPMODE_MENU)
     {
-		DrawMenuSlideOut();
-	}
-	clearScreen(0x00);
-	iSetCursor(10,7);
-	textColor(0x0F);
-	puts(message);
+	    DrawMenuSlideOut();
+    }
 
-	iSetCursor(10,9);
-	if(critical == false)
+    clearScreen(0x00);
+    iSetCursor(10,7);
+    textColor(0x0F);
+    puts(message);
+
+    iSetCursor(10,9);
+    
+    if(critical == false)
     {
-		printf("Press any key to continue...");
-	}
+	    printf("Press any key to continue...");
+    }
     else
     {
-		printf("Press any key to exit...");
-		exitapp = true;
-	}
+	    printf("Press any key to exit...");
+	    exitapp = true;
+    }
 
-	printf("\n\n\n\n\n\n\n");
-	printf("                              ");
-	textColor(0x04);
-	printf("#####         #####\n");
-	printf("                              ");
-	printf("#");
-	textColor(0x0C);
-	printf("#####       #####");
-	textColor(0x04);
-	printf("#\n");
-	printf("                               ");
-	textColor(0x04);
-	printf("#");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#     #");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#\n");
-	printf("                                ");
-	textColor(0x0C);
-	printf("#####     #####\n");
-	printf("                                ");
-	textColor(0x04);
-	printf("#");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#   #");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#\n");
-	printf("                                 #");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("# #");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#\n");
-	printf("                                  ");
-	textColor(0x0C);
-	printf("##### #####\n");
-	printf("                                  ");
-	textColor(0x04);
-	printf("#");
-	textColor(0x0C);
-	printf("#########");
-	textColor(0x04);
-	printf("#\n");
-	printf("                                   #");
-	textColor(0x0C);
-	printf("#######");
-	textColor(0x04);
-	printf("#\n");
-	printf("                                    ");
-	textColor(0x0C);
-	printf("#######\n");
-	printf("                                    ");
-	textColor(0x04);
-	printf("#");
-	textColor(0x0C);
-	printf("#####");
-	textColor(0x04);
-	printf("#\n");
-	printf("                                    #");
-	textColor(0x0C);
-	printf("#####");
-	textColor(0x04);
-	printf("#\n");
-	printf("                                   #");
-	textColor(0x0C);
-	printf("#######\n");
-	printf("                                   #########\n");
-	printf("                                  ");
-	textColor(0x04);
-	printf("#");
-	textColor(0x0C);
-	printf("#########");
-	textColor(0x04);
-	printf("#\n");
-	printf("                                 #");
-	textColor(0x0C);
-	printf("##### #####\n");
-	printf("                                 #####");
-	textColor(0x04);
-	printf("# #");
-	textColor(0x0C);
-	printf("#####\n");
-	printf("                                ");
-	textColor(0x04);
-	printf("#");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#   #");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#\n");
-	printf("                               #");
-	textColor(0x0C);
-	printf("#####     #####\n");
-	printf("                               #####");
-	textColor(0x04);
-	printf("#     #");
-	textColor(0x0C);
-	printf("#####\n");
-	printf("                              ");
-	textColor(0x04);
-	printf("#");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#       #");
-	textColor(0x0C);
-	printf("####");
-	textColor(0x04);
-	printf("#\n");
-	printf("                              ");
-	textColor(0x0C);
-	printf("#####         #####\n");
-	printf("\n");
+    printf("\n\n\n\n\n\n\n");
+    printf("                              ");
+    textColor(0x04);
+    printf("#####         #####\n");
+    printf("                              ");
+    printf("#");
+    textColor(0x0C);
+    printf("#####       #####");
+    textColor(0x04);
+    printf("#\n");
+    printf("                               ");
+    textColor(0x04);
+    printf("#");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#     #");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#\n");
+    printf("                                ");
+    textColor(0x0C);
+    printf("#####     #####\n");
+    printf("                                ");
+    textColor(0x04);
+    printf("#");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#   #");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#\n");
+    printf("                                 #");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("# #");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#\n");
+    printf("                                  ");
+    textColor(0x0C);
+    printf("##### #####\n");
+    printf("                                  ");
+    textColor(0x04);
+    printf("#");
+    textColor(0x0C);
+    printf("#########");
+    textColor(0x04);
+    printf("#\n");
+    printf("                                   #");
+    textColor(0x0C);
+    printf("#######");
+    textColor(0x04);
+    printf("#\n");
+    printf("                                    ");
+    textColor(0x0C);
+    printf("#######\n");
+    printf("                                    ");
+    textColor(0x04);
+    printf("#");
+    textColor(0x0C);
+    printf("#####");
+    textColor(0x04);
+    printf("#\n");
+    printf("                                    #");
+    textColor(0x0C);
+    printf("#####");
+    textColor(0x04);
+    printf("#\n");
+    printf("                                   #");
+    textColor(0x0C);
+    printf("#######\n");
+    printf("                                   #########\n");
+    printf("                                  ");
+    textColor(0x04);
+    printf("#");
+    textColor(0x0C);
+    printf("#########");
+    textColor(0x04);
+    printf("#\n");
+    printf("                                 #");
+    textColor(0x0C);
+    printf("##### #####\n");
+    printf("                                 #####");
+    textColor(0x04);
+    printf("# #");
+    textColor(0x0C);
+    printf("#####\n");
+    printf("                                ");
+    textColor(0x04);
+    printf("#");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#   #");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#\n");
+    printf("                               #");
+    textColor(0x0C);
+    printf("#####     #####\n");
+    printf("                               #####");
+    textColor(0x04);
+    printf("#     #");
+    textColor(0x0C);
+    printf("#####\n");
+    printf("                              ");
+    textColor(0x04);
+    printf("#");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#       #");
+    textColor(0x0C);
+    printf("####");
+    textColor(0x04);
+    printf("#\n");
+    printf("                              ");
+    textColor(0x0C);
+    printf("#####         #####\n");
+    printf("\n");
 
-	FlipIfNeeded();
+    FlipIfNeeded();
+    Sound_Error();
+    WaitKey();
+    clearScreen(0x00);
 
-	Sound_Error();
-
-
-	// flushEvents(EVENT_TEXT_ENTERED);
-	// getchar();
-
-	WaitKey();
-
-	clearScreen(0x00);
-
-	if(appmode==APPMODE_MENU)
+    if(appmode==APPMODE_MENU)
     {
-		DrawMenuSlideIn();
-	}
+	    DrawMenuSlideIn();
+    }
 
-	iSetCursor(0,0);
-	textColor(0x0F);
+    iSetCursor(0,0);
+    textColor(0x0F);
 }
 
 void DrawMenuHeader()
@@ -2045,4 +2046,65 @@ void DrawMenuHeader()
 	printf("                                ");textColor(0x99);
 	printf("####\n\n");textColor(0x0E);
 }
+
+// Sound
+
+void Sound_Denied()
+{
+	if(option_sound)
+    {
+		beep(600,150);
+		beep(400,150);
+	}
+}
+
+void Sound_OK()
+{
+	if(option_sound)
+    {
+		beep(800,100);
+		beep(1000,100);
+	}
+}
+
+void Sound_Select()
+{
+	if(option_sound)
+    {
+		beep(1000,50);
+	}
+}
+
+void Sound_Error()
+{
+	if(option_sound)
+    {
+		Sound_Denied();
+		sleep(500);
+	}
+}
+
+void Sound_Goal()
+{
+	if(option_sound)
+    {
+		beep(200,50);
+	}
+}
+
+void Sound_GotIt()
+{
+	if(option_sound)
+    {
+		beep(800,20);
+	}
+}
+
+// Math
+
+double random(double lower, double upper)
+{
+    return (( (double) rand() / ((double)RAND_MAX / (upper - lower))) + lower );
+}
+
 
