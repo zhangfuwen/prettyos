@@ -19,9 +19,9 @@
 /// #define _VBE_DEBUG_            // Debug output of the VBE driver
 /// #define _DEVMGR_DIAGNOSIS_     // E.g. sectorRead, sectorWrite
 /// #define _READCACHE_DIAGNOSIS_  // Read cache logger
-#define _HCI_DIAGNOSIS_        // Debug usb host controller (UHCI, OHCI, EHCI)
+/// #define _HCI_DIAGNOSIS_        // Debug usb host controller (UHCI, OHCI, EHCI)
 /// #define _OHCI_DIAGNOSIS_       // Debug OHCI
-#define _UHCI_DIAGNOSIS_       // Debug UHCI
+/// #define _UHCI_DIAGNOSIS_       // Debug UHCI
 /// #define _EHCI_DIAGNOSIS_       // Debug EHCI
 /// #define _USB2_DIAGNOSIS_       // Debug USB 2.0 transfers
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)

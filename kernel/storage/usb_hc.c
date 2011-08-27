@@ -61,7 +61,7 @@ void install_USB_HostController(pciDev_t* PCIdev)
                 ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
                 break;
             case UHCI:
-                uhci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+                uhci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0, PCIdev->bar[i].memorySize);
                 break;
             }
         }

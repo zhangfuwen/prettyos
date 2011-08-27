@@ -148,7 +148,7 @@ struct uhci_qh
 
 
 // functions
-void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys);
+void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
 void uhci_init(void* data, size_t size);
 void startUHCI();
 int32_t initUHCIHostController();

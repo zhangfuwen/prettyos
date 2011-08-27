@@ -17,8 +17,9 @@
 bool UHCIflag = false;          // signals that one UHCI device was found /// TODO: manage more than one UHCI
 static pciDev_t* PCIdevice = 0; // pci device
 uintptr_t bar;
+size_t memSize;
 
-void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
+void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>uhci_install<<<\n");
@@ -26,6 +27,7 @@ void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 
     if (!UHCIflag) // only the first EHCI is used
     {  
+        memSize = memorySize;
         bar = bar_phys;
         PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
         UHCIflag = true; // only the first EHCI is used
@@ -72,7 +74,7 @@ int32_t initUHCIHostController()
     // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
     // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
     uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
-    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | BIT(2) /* bus master */); // resets status register, sets command register
+    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | BIT(0) /*IO-space*/ | BIT(2) /* bus master */); // resets status register, sets command register
     // uint16_t pciCapabilitiesList = pci_config_read(bus, dev, func, 0x0234);
 
   #ifdef _UHCI_DIAGNOSIS_
@@ -112,7 +114,6 @@ void uhci_startHostController(pciDev_t* PCIdev)
     
     textColor(TEXT);
     printf("\nStart Host Controller (reset HC).");
-
     uhci_resetHostController();
 }
 
@@ -121,7 +122,44 @@ void uhci_resetHostController()
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>uhci_resetHostController<<<\n");
   #endif    
+    
+    // http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Informationen_vom_PCI-Treiber_holen
+
+    // Zuerst sollte ein globaler USB-Reset auf allen aktivierten Ports getrieben werden. 
+    // Dies geschieht, indem das GRESET-Bit im USBCMD-Register (USBCMD.GRESET) gesetzt wird.
+    
+    // Außerdem kann man hierbei auch gleich alle anderen Bits in diesem Register löschen, sodass der Controller anhält.
+    outportw(bar + UHCI_USBCMD, 0x00);
+    outportw(bar + UHCI_USBCMD, UHCI_CMD_GRESET); 
+
+    // Nach 50 Millisekunden muss das Resetsignal wieder aufgehoben werden, indem das GRESET-Bit wieder gelöscht wird. 
+    sleepMilliSeconds(50);
+    outportw(bar + UHCI_USBCMD, 0x00); 
+    
+    // Jetzt muss die Anzahl der vorhanden Rootports in Erfahrung gebracht werden. 
+    // Hierzu nimmt man zunächst die Größe des I/O-Raums minus 0x10 und geteilt durch 2 als Obergrenze und 2 als Untergrenze. 
+    // Jetzt wird für jeden Rootport überprüft, ob sowohl Bit 7 gesetzt ist (0x0080) als auch der Gesamtwert nicht 0xFFFF ist. 
+    // Ist das Bit nicht gesetzt oder beträgt der Wert 0xFFFF, so handelt es sich beim verwendeten Port um keinen I/O-Port für einen Rootport mehr.
+    uint32_t root_ports = (memSize - UHCI_PORTSC1) / 2;
+    for (uint32_t i=2; i<root_ports; i++)
+    {
+        if (!(inportw(bar + UHCI_PORTSC1 + i*2) & 0x0080) || (inportw(bar + UHCI_PORTSC1 + i*2) == 0xFFFF))
+        {
+            root_ports = i;
+            break;
+        }
+    }
+    textColor(IMPORTANT);
+    printf("\nUHCI root ports: %u\n", root_ports);
+    textColor(TEXT);
+
+    // Deaktivieren des Legacy Supports 
+    uhci_DeactivateLegacySupport(PCIdevice);
+
     // TODO
+    /*
+        http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Deaktivieren_des_Legacy_Supports
+    */
 }
 
 void uhci_DeactivateLegacySupport(pciDev_t* PCIdev)
