@@ -4,22 +4,16 @@
 #include "os.h"
 #include "pci.h"
 
-struct uhci_OpRegs
-{
-    uint16_t UHCI_USBCMD;           // USB Command                     +00h
-    uint16_t UHCI_USBSTS;           // USB Status                      +02h
-    uint16_t UHCI_USBINTR;          // USB Interrupt Enable            +04h
-    uint16_t UHCI_FRNUM;            // Frame Number                    +06h
-    uint32_t UHCI_FRBASEADD;        // Frame List Base Address         +08h
-    uint8_t  UHCI_SOFMOD;           // Start Of Frame Modify           +0Ch
-    uint8_t  reserved1;             // Reserved                        +0Dh
-    uint8_t  reserved2;             // Reserved                        +0Eh
-    uint8_t  reserved3;             // Reserved                        +0Fh
-    uint16_t UHCI_PORTSC1;          // Port 1 Status/Control           +10h
-    uint16_t UHCI_PORTSC2;          // Port 2 Status/Control           +12h
-} __attribute__((packed));
 
-extern struct uhci_OpRegs*  puhci_OpRegs;  // = &OpRegs;
+#define UHCI_USBCMD         0x00 
+#define UHCI_USBSTS         0x02
+#define UHCI_USBINTR        0x04
+#define UHCI_FRNUM          0x06
+#define UHCI_FRBASEADD      0x08
+#define UHCI_SOFMOD         0x0C
+#define UHCI_PORTSC1        0x10
+#define UHCI_PORTSC2        0x12
+
 
 /* ****** */
 /* USBCMD */
@@ -155,7 +149,6 @@ struct uhci_qh
 
 // functions
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys);
-void analyzeUHCI(uintptr_t bar, uintptr_t offset);
 void uhci_init(void* data, size_t size);
 void startUHCI();
 int32_t initUHCIHostController();

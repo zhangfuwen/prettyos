@@ -14,10 +14,9 @@
 #include "uhci.h"
 
 
-bool UHCIflag = false; // signals that one UHCI device was found /// TODO: manage more than one UHCI
+bool UHCIflag = false;          // signals that one UHCI device was found /// TODO: manage more than one UHCI
 static pciDev_t* PCIdevice = 0; // pci device
-struct uhci_OpRegs*  puhci_OpRegs;  // = &OpRegs;
-
+uintptr_t bar;
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 {
@@ -25,39 +24,13 @@ void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     printf("\n>>>uhci_install<<<\n");
   #endif
 
-    uintptr_t bar      = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
-    uintptr_t offset   = bar_phys % PAGESIZE;
-
-  #ifdef _UHCI_DIAGNOSIS_
-    printf("\nUHCI_MMIO %Xh mapped to virt addr %Xh, offset: %xh\n", bar_phys, bar, offset);
-  #endif
-
     if (!UHCIflag) // only the first EHCI is used
-    {
+    {  
+        bar = bar_phys;
         PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
         UHCIflag = true; // only the first EHCI is used
-
-        todoList_add(kernel_idleTasks, &uhci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for UHCI ??
-
-        analyzeUHCI(bar,offset); // get data (opregs)
+        todoList_add(kernel_idleTasks, &uhci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for UHCI ??        
     }
-}
-
-void analyzeUHCI(uintptr_t bar, uintptr_t offset)
-{
-  #ifdef _UHCI_DIAGNOSIS_
-    printf("\n>>>analyzeUHCI<<<\n");
-  #endif
-        
-    bar += offset;
-    // puhci_OpRegs  = (struct uhci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
-
-
-  #ifdef _UHCI_DIAGNOSIS_
-    uintptr_t bar_phys  = (uintptr_t)paging_getPhysAddr((void*)bar);
-    printf("UHCI bar get_physAddress: %Xh\n", bar_phys);
-    printf("\nOpRegs Address: %Xh ", puhci_OpRegs);                      // Host Controller Operational Registers    
-  #endif
 }
 
 // start thread at kernel idle loop (ckernel.c)
@@ -94,9 +67,7 @@ int32_t initUHCIHostController()
     uint8_t bus  = PCIdevice->bus;
     uint8_t dev  = PCIdevice->device;
     uint8_t func = PCIdevice->func;
-
-
-
+    
     // prepare PCI command register // offset 0x04
     // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
     // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
@@ -143,8 +114,6 @@ void uhci_startHostController(pciDev_t* PCIdev)
     printf("\nStart Host Controller (reset HC).");
 
     uhci_resetHostController();
-
-
 }
 
 void uhci_resetHostController()
@@ -175,78 +144,60 @@ void uhci_handler(registers_t* r, pciDev_t* device)
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>uhci_handler<<<\n");
   #endif   
-  #ifdef _UHCI_DIAGNOSIS_
-    /*
-    if (!(puhci_OpRegs->UHCI_USBSTS & STS_FRAMELIST_ROLLOVER) && !(puhci_OpRegs->UHCI_USBSTS & STS_USBINT))
+    textColor(IMPORTANT);
+    
+    uint16_t reg = bar + UHCI_USBSTS; 
+    uint16_t tmp = inportw(reg);
+    
+    if ( tmp & UHCI_STS_USBINT)
     {
-        textColor(LIGHT_BLUE);
-        printf("\nehci_handler: ");
-    }
-    */
-  #endif
-
-    textColor(YELLOW);
-
-    /*
-    if (pOpRegs->UHCI_USBSTS & STS_USBINT)
-    {
-        USBINTflag = true; // is asked by polling
-        // printf("USB Interrupt");
-        puhci_OpRegs->UHCI_USBSTS |= STS_USBINT; // reset interrupt
+        printf("USB UHCI - USB transaction completed\n");
+        outportw(reg, UHCI_STS_USBINT); // reset interrupt      
     }
 
-    if (puhci_OpRegs->UHCI_USBSTS & STS_USBERRINT)
+    if (tmp & UHCI_STS_RESUME_DETECT)
+    {
+        printf("USB UHCI Resume Detect\n");
+        outportw(reg, UHCI_STS_RESUME_DETECT);
+    }
+    
+    textColor(ERROR);
+
+    if (tmp & UHCI_STS_HCHALTED)
+    {
+        printf("USB UHCI Host Controller Halted\n");
+        // outportw(reg, UHCI_STS_HCHALTED); 
+    }
+    
+    if (tmp & UHCI_STS_HC_PROCESS_ERROR)
+    {
+        printf("USB UHCI Host Controller Process Error\n");
+        outportw(reg, UHCI_STS_HC_PROCESS_ERROR); // reset interrupt
+    }
+
+    if (tmp & UHCI_STS_USB_ERROR)
+    {
+        printf("USB UHCI - USB Error\n");
+        outportw(reg, UHCI_STS_USB_ERROR); // reset interrupt
+    }
+    
+    if (tmp & UHCI_STS_HOST_SYSTEM_ERROR)
     {
         textColor(ERROR);
-        printf("USB Error Interrupt");
+        printf("Host System Error\n");
         textColor(TEXT);
-        puhci_OpRegs->UHCI_USBSTS |= STS_USBERRINT;
-    }
-
-    if (puhci_OpRegs->UHCI_USBSTS & STS_PORT_CHANGE)
-    {
-        textColor(LIGHT_BLUE);
-        printf("Port Change");
-        textColor(TEXT);
-
-        puhci_OpRegs->UHCI_USBSTS |= STS_PORT_CHANGE;
-
-        if (enabledPortFlag && PCIdevice)
-        {
-            todoList_add(kernel_idleTasks, &ehci_portcheck, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
-        }
-    }
-
-    if (puhci_OpRegs->UHCI_USBSTS & STS_FRAMELIST_ROLLOVER)
-    {
-        //printf("Frame List Rollover Interrupt");
-        puhci_OpRegs->UHCI_USBSTS |= STS_FRAMELIST_ROLLOVER;
-    }
-
-    if (puhci_OpRegs->UHCI_USBSTS & STS_HOST_SYSTEM_ERROR)
-    {
-        textColor(ERROR);
-        printf("Host System Error");
-        textColor(TEXT);
-        puhci_OpRegs->UHCI_USBSTS |= STS_HOST_SYSTEM_ERROR;
+        outportw(reg, UHCI_STS_HOST_SYSTEM_ERROR);
         pci_analyzeHostSystemError(PCIdevice);
         textColor(IMPORTANT);
-        printf("\n>>> Init EHCI after fatal error:           <<<");
-        printf("\n>>> Press key for EHCI (re)initialization. <<<");
+        printf("\n>>> Init UHCI after fatal error:           <<<");
+        printf("\n>>> Press key for UHCI (re)initialization. <<<");
         getch();
         textColor(TEXT);
-        todoList_add(kernel_idleTasks, &ehci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
+        todoList_add(kernel_idleTasks, &uhci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for UHCI
     }
-
-    if (puhci_OpRegs->UHCI_USBSTS & STS_ASYNC_INT)
-    {
-      #ifdef _EHCI_DIAGNOSIS_
-        printf("Interrupt on Async Advance");
-      #endif
-        puhci_OpRegs->UHCI_USBSTS |= STS_ASYNC_INT;
-    }
-    */
+    textColor(TEXT);
 }
+
 
 
 
@@ -276,7 +227,7 @@ void uhci_showUSBSTS()
     textColor(HEADLINE);
     printf("\nUSB status: ");
     textColor(IMPORTANT);
-    printf("%Xh",puhci_OpRegs->UHCI_USBSTS);
+    printf("%xh",inportw(bar+UHCI_USBSTS));
   #endif
     /*
     textColor(ERROR);
