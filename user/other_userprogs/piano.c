@@ -4,29 +4,28 @@
 */
 
 #include "userlib.h"
-#include "stdlib.h"
 #include "stdio.h"
 
 int main()
 {
-    setScrollField(0, 43); // The train should not be destroyed by the output, so we shrink the scrolling area...
+    setScrollField(5, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                                C - Testprogramm!",                                2, 0x0B);
+    printLine("                                   PrettyPiano", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
-    printLine("                                 ! Hello World !",                                 7, 0x0C);
+    iSetCursor(0, 6);
+    puts("This Application generates a beep sound whenever you press a key (A-Z)\n\n");
+    puts("You may now switch to an other console. Press ESC to quit.");
 
-    iSetCursor(0, 10);
-
-    srand(getCurrentSeconds());
-    for (uint16_t i = 0; i < 100; i++)
+    while (!keyPressed(KEY_ESC))
     {
-        printf("%u\t", rand());
+        waitForEvent(0);
+        for (KEY_t key = KEY_A; key <= KEY_Z; key++)
+        {
+            if (keyPressed(key))
+                beep(300 + key*20, 30);
+        }
     }
 
-    for (;;)
-    {
-        showInfo(1);
-    }
     return(0);
 }
 

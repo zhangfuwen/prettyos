@@ -1,82 +1,21 @@
+/*
+*  license and disclaimer for the use of this source code as per statement below
+*  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
+*/
+
 #include "userlib.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
 
-/*
-
- Pretty RemoteControl (PrettyControl)
- by Christian F. Coors (Cuervo)
-
- Created 30.07.2011, 31.07.2011; Rev. 84
-
-
- If you want to optimize the code, please do not change the
- generated output, I spent much time adjusting it.
-
- Please update the changelog if you change something.
-
-
- Changelog:
-
- Rev.    | Date             | User        | Changes
- ==========================================================================================
-      84 | 31.07.2011       | Cuervo      | - Initial release
- --------|------------------|-------------|------------------------------------------------
-      85 |                  |             |
-         |                  |             |
-         |                  |             |
-         |                  |             |
-         |                  |             |
-         |                  |             |
-
-
-
- */
-
-char* formatPath(char* opath)
-{
-    bool insertPartition = false;
-    bool insertELF = false;
-    size_t length = strlen(opath) + 1;
-    if (strchr(opath, ':') == 0)
-    {
-        length += 3;
-        insertPartition = true;
-    }
-    char* pointpos = strrchr(opath, '.');
-    if (pointpos == 0 || strcmp(stoupper(pointpos+1), "ELF") != 0)
-    {
-        length += 4;
-        insertELF = true;
-    }
-
-    char* npath = calloc(length, 1);
-    char* retval = npath;
-    if (insertPartition)
-    {
-        strcpy(npath, "1:|");
-        npath += 3;
-    }
-    strcpy(npath, opath);
-    npath += strlen(opath);
-    if (insertELF)
-    {
-        strcpy(npath, ".ELF");
-    }
-
-    return(retval);
-}
-
 
 int main()
 {
-    setScrollField(7, 46);
+    setScrollField(5, 46);
     printLine("================================================================================", 0, 0x0D);
-    printLine("                     Pretty RemoteControl (PrettyControl) Rev. 84", 2, 0x0F);
-    printLine("                            by Christian F. Coors (Cuervo)", 4, 0x0F);
-    printLine("--------------------------------------------------------------------------------", 6, 0x0D);
+    printLine("                                 Pretty WebShell", 2, 0x0F);
+    printLine("--------------------------------------------------------------------------------", 4, 0x0D);
 
     event_enable(true);
     char buffer[4096];
@@ -119,19 +58,16 @@ int main()
     printf("OK");
     textColor(0x07);
     printf("]\n");
-    textColor(0x0F);
 
     printf("\n\n");
     textColor(0x0E);
     printf(" To use this app, simply connect to PrettyOS with a webbrowser of your choice.\n\n");
     textColor(0x0C);
     printf(" Just enter http://Pre.tty.OS.IP:80/");
-    textColor(0x0F);
 
     printf("\n\n\n");
 
     textColor(0x09);
-    //***************************************************************#);
     printf(" --------------------------------------------------------");
     textColor(0x0F);
     printf("\n\n");
@@ -145,7 +81,6 @@ int main()
                 break;
             case EVENT_TCP_CONNECTED:
             {
-                //**********************************************************#);
                 printf(" => Connected - awaiting data...                    ");
                 break;
             }
@@ -190,9 +125,8 @@ int main()
                 printf(" => Generating basic HTML-Code...                   ");
 
                 char bstr[8000];
-                memset(bstr,0,8000);
 
-                strcat(bstr,"<!DOCTYPE HTML>\n");
+                strcpy(bstr,"<!DOCTYPE HTML>\n");
                 strcat(bstr,"<html>\n");
                 strcat(bstr,"<head>\n");
                 strcat(bstr,"<title>PrettyOS RemoteControl (PrettyControl)</title>\n");
@@ -226,7 +160,6 @@ int main()
 
                 strcat(bstr,"</style>\n");
                 strcat(bstr,"<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">\n");
-                //strcat(bstr,"<link href=\"data:image/x-icon;base64,AAABAAEAICAAAAEAIAAoDQAAFgAAACgAAAAgAAAAQAAAAAEAGAAAAAAAAAAAABMLAAATCwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT76jz3CbzDCbzDCbzDCbzDCbzDCbzDCbzBgNxgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT5/SR8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT5/SR8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7viDs9Iw89Iw89Iw89Iw89Iw89Iw89Iw8eEggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7qhjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT77jz7JczHJczHJczHJczHJczHJczHJczHJczFzQhwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT6TVCQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACsYir+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT7+kT6TVCQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAqGAs/JBA/JBA/JBA/JBA/JBA/JBA/JBA/JBA/JBA/JBA/JBAkFQkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\" rel=\"icon\" type=\"image/x-icon\">");
                 strcat(bstr,"\n");
                 strcat(bstr,"</head>\n");
                 strcat(bstr,"<body><div id=\"content\">\n");
@@ -263,9 +196,7 @@ int main()
                     strcat(bstr,"<a href=\"/beep\">Make a sound (BEEP)</a><br><br>");
                     strcat(bstr,"<a href=\"/open_starwars\">Open starwars.ELF in PrettyOS</a>");
                     strcat(bstr,"</td>\n\n");
-                    strcat(bstr,"\n");
-                    strcat(bstr,"\n");
-                    strcat(bstr,"\n");
+                    strcat(bstr,"\n\n\n");
                     strcat(bstr,"</tr></table>\n");
 
                     strcat(bstr,"<br><br><br><br><hr><br>\n");
@@ -274,19 +205,13 @@ int main()
 
                     strcat(bstr,"<li>rctl-PID: ");
                     char tempstr[50];
-                    memset(tempstr,0,50);
-                    sprintf(tempstr,"%u",getMyPID());
+					itoa(getMyPID(), tempstr);
                     strcat(bstr,tempstr);
                     strcat(bstr,"</li>\n");
 
-                    strcat(bstr,"\n");
-                    strcat(bstr,"\n");
-                    strcat(bstr,"\n");
+                    strcat(bstr,"\n\n\n");
                     strcat(bstr,"</ul>\n");
-                    strcat(bstr,"\n");
-                    strcat(bstr,"\n");
-                    strcat(bstr,"\n");
-                    strcat(bstr,"\n");
+                    strcat(bstr,"\n\n\n\n");
 
 
                 } else {
@@ -366,8 +291,6 @@ int main()
 
 
                 if (answer==1) {
-                    // strcat(bstr,"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum do PACKET CLOSE");
-
                     strcat(bstr,"<br><br><br><br><br><br><hr><br><p><b>Please note:</b><br>Even though this document is dynamically created by a C-Application, it generates completely valid HTML5-Code!</p></div></body>\n");
                     strcat(bstr,"</html>\n\n");
 
@@ -387,8 +310,7 @@ int main()
                     strcat(astr,"Content-Length: ");
 
                     char length[50];
-                    memset(length,0,50);
-                    sprintf(length,"%u",strlen(bstr));
+                    itoa(strlen(bstr), length);
                     strcat(astr,length);
                     strcat(astr,"\r\n");
 
@@ -398,10 +320,7 @@ int main()
                     strcat(astr,"Connection: close\r\n");
 
                     char rstr[10000];
-                    memset(rstr,0,10000);
-                    strcpy(rstr,astr);
-                    strcat(rstr,"\r\n");
-                    strcat(rstr,bstr);
+					snprintf(rstr, 10000, "%s\r\n%s", astr, bstr);
 
                     textColor(0x07);
                     printf("[");
@@ -527,7 +446,6 @@ int main()
                 textColor(0x07);
                 printf("]\n");
 
-                textColor(0x0F);
                 printf("\n");
                 textColor(0x09);
                 //***************************************************************#);
@@ -556,3 +474,31 @@ int main()
     tcp_close(connection);
     return(0);
 }
+
+/*
+* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+*
+* http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
+*
+* Redistribution and use in source and binary forms, with or without modification,
+* are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice,
+*    this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/

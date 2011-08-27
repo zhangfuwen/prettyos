@@ -54,10 +54,10 @@ void install_USB_HostController(pciDev_t* PCIdev)
           #ifdef _HCI_DIAGNOSIS_
             printf("sz: %d ", PCIdev->bar[i].memorySize);
           #endif
-            
-            switch(PCIdev->interfaceID) 
+
+            switch(PCIdev->interfaceID)
             {
-            case EHCI: 
+            case EHCI:
                 ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
                 break;
             case UHCI:

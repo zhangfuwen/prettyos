@@ -30,6 +30,8 @@ entry_point:
                                        ; (known ss, but unknown sp)
     xor     sp, sp                     ; interrupts are disabled here
 
+    cld                                ; clear direction flag. We rely on this later.
+
     mov [bootdevice], dl               ; store boot device
 
     mov ax, 0x1112

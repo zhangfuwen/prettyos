@@ -51,7 +51,7 @@ void analyzeUHCI(uintptr_t bar, uintptr_t offset)
         
     bar += offset;
     // puhci_OpRegs  = (struct uhci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
-    
+
 
   #ifdef _UHCI_DIAGNOSIS_
     uintptr_t bar_phys  = (uintptr_t)paging_getPhysAddr((void*)bar);
@@ -95,7 +95,7 @@ int32_t initUHCIHostController()
     uint8_t dev  = PCIdevice->device;
     uint8_t func = PCIdevice->func;
 
-    
+
 
     // prepare PCI command register // offset 0x04
     // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
@@ -144,7 +144,7 @@ void uhci_startHostController(pciDev_t* PCIdev)
 
     uhci_resetHostController();
 
-    
+
 }
 
 void uhci_resetHostController()

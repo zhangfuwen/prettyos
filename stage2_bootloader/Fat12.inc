@@ -125,7 +125,6 @@ LoadRoot:
 
     ; compute size of root directory and store in "cx"
     xor     cx, cx
-    xor     dx, dx
     mov     ax, 32                              ; 32 byte directory entry
     mul     WORD [RootEntries]                  ; total size of directory
     div     WORD [BytesPerSec]                  ; sectors used by directory
@@ -181,14 +180,13 @@ FindFile:
     ; browse root directory for binary image
     mov cx, WORD [RootEntries]  ; load loop counter
     mov di, ROOT_OFFSET         ; locate first root entry at 1 MB mark
-    cld                         ; clear direction flag
 
 .LOOP2:
     push cx
     mov cx, 11                  ; eleven character name
     push si                     ; image name is in SI
     push di
-    rep cmpsb                   ; test for entry match
+    repe cmpsb                  ; test for entry match
     pop di
     pop si
     je .Found
@@ -251,12 +249,11 @@ LoadFile:
 
     ; get next cluster
     mov ax, WORD [cluster]          ; identify current cluster
-    mov cx, ax                      ; copy current cluster
+    mov bx, ax                      ; copy current cluster
     mov dx, ax                      ; copy current cluster
     shr dx, 1                       ; divide by two
-    add cx, dx                      ; sum for (3/2)
-    mov bx, cx                      ; location of fat in memory
-    mov dx, WORD [es:bx]
+    add bx, dx                      ; sum for (3/2)
+    mov dx, WORD [es:bx]            ; bx: location of fat in memory
     test ax, 1                      ; test for odd or even cluster
     jnz .ODD_CLUSTER
 

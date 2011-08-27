@@ -110,63 +110,6 @@
     <ClCompile Include="..\user\dummy_c\dummy.c">
       <Filter>C-Dummy</Filter>
     </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\arrow.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\calc.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\hello.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\keysound.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\music.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\pqeq.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\readme.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\ttt.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\test.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\starwars.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\browser.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\irc.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\rt.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\rctl.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\udpsend.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\udprecv.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\ftp.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\showdns.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\pong.c">
-      <Filter>Other Userprogs</Filter>
-    </ClCompile>
     <ClCompile Include="..\user\stdlibc\stdlib_sortsearch.c">
       <Filter>stdlibC\source</Filter>
     </ClCompile>
@@ -188,7 +131,58 @@
     <ClCompile Include="..\user\user_tools\userlib_cpp.cpp">
       <Filter>User-Tools\Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\user\other_userprogs\ppong.c">
+    <ClCompile Include="..\user\other_userprogs\ttt.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\udprecv.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\udpsend.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\webshell.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\arrow.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\browser.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\calc.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\ftp.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\hello.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\irc.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\music.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\piano.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\pong.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\pqeq.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\readme.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\showdns.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\starwars.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\test.c">
       <Filter>Other Userprogs</Filter>
     </ClCompile>
     <ClCompile Include="..\user\other_userprogs\psort.c">
@@ -265,6 +259,8 @@
     <ClInclude Include="..\user\user_tools\userlib.hpp">
       <Filter>User-Tools\Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\user\other_userprogs\ppong.h" />
+    <ClInclude Include="..\user\other_userprogs\pong.h">
+      <Filter>Other Userprogs</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
