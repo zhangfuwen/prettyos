@@ -226,6 +226,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\storage\ehci.c" />
     <ClCompile Include="..\kernel\storage\ehciQHqTD.c" />
     <ClCompile Include="..\kernel\storage\flpydsk.c" />
+    <ClCompile Include="..\kernel\storage\uhci.c" />
     <ClCompile Include="..\kernel\storage\usb2.c" />
     <ClCompile Include="..\kernel\storage\usb2_msd.c" />
     <ClCompile Include="..\kernel\storage\usb_hc.c" />

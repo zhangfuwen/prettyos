@@ -36,7 +36,7 @@ void install_USB_HostController(pciDev_t* PCIdev)
 
     for (uint8_t i = 0; i < 6; ++i) // check USB BARs
     {
-      #ifdef _EHCI_DIAGNOSIS_
+      #ifdef _HCI_DIAGNOSIS_
         switch (PCIdev->bar[i].memoryType)
         {
             case PCI_MMIO:
@@ -50,11 +50,17 @@ void install_USB_HostController(pciDev_t* PCIdev)
 
         if (PCIdev->bar[i].memoryType != PCI_INVALIDBAR)
         {
-          #ifdef _EHCI_DIAGNOSIS_
+          #ifdef _HCI_DIAGNOSIS_
             printf("sz: %d ", PCIdev->bar[i].memorySize);
           #endif
+            
+            if (PCIdev->interfaceID == UHCI) 
+            {
+                // uhci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+            }
+            break;
 
-            if (PCIdev->interfaceID == 0x20) // EHCI
+            if (PCIdev->interfaceID == EHCI) 
             {
                 ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
             }

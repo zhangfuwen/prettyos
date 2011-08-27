@@ -154,6 +154,16 @@ struct uhci_qh
 
 
 // functions
-// ... TODO
+void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys);
+void analyzeUHCI(uintptr_t bar, uintptr_t offset);
+void uhci_init(void* data, size_t size);
+void startUHCI();
+int32_t initUHCIHostController();
+void uhci_startHostController(pciDev_t* PCIdev);
+void uhci_resetHostController();
+void uhci_DeactivateLegacySupport(pciDev_t* PCIdev);
+void uhci_handler(registers_t* r, pciDev_t* device);
+void uhci_showUSBSTS();
+
 
 #endif

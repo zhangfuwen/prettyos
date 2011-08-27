@@ -490,7 +490,7 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
         (bT->DataBytesToTransferOUT && !bT->successfulDataOUT) ||
         (bT->DataBytesToTransferIN  && !bT->successfulDataIN))
     {
-      #ifdef _USB_DIAGNOSIS_
+      #ifdef _USB2_DIAGNOSIS_
         textColor(IMPORTANT);
         printf("\nopcode: %yh", bT->SCSIopcode);
         printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
