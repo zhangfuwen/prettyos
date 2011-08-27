@@ -26,14 +26,15 @@ Start address | End address | Contains    | Annotations
 0xC0000000    | 0xE0000000  | Kernel Data | Where the kernel's private data is stored
 0xE0000000    | 0x100000000 | PCI         | Memory for MMIO of Devices
 
+=========================================================================================================
 
 Virtual addresses - User:
 Start address | End address | Contains    | Annotations
 --------------|-------------|-------------|--------------------------------------------------------------
 0x1400000     | ~~~~        | Userprog    | Position of the user programs executable
-~~~~          | 0x1420000   | Stack       | User stack
-0x1420000     | 0x1430000   | Data Buffer | Used to give parameters from kernel to new user program
-0x1430000     | 0xBF000000  | Heap        | User heap
+~~~~          | 0x1500000   | Stack       | User stack
+0x1500000     | 0x1510000   | Data Buffer | Used to give parameters from kernel to new user program
+0x1510000     | 0xBF000000  | Heap        | User heap
 
 
 Explanation:

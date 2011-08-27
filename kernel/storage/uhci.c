@@ -21,6 +21,10 @@ struct uhci_OpRegs*  puhci_OpRegs;  // = &OpRegs;
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 {
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>uhci_install<<<\n");
+  #endif
+
     uintptr_t bar      = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
     uintptr_t offset   = bar_phys % PAGESIZE;
 
@@ -41,32 +45,35 @@ void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 
 void analyzeUHCI(uintptr_t bar, uintptr_t offset)
 {
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>analyzeUHCI<<<\n");
+  #endif
+        
     bar += offset;
-    // pOpRegs  = (struct uhci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
+    // puhci_OpRegs  = (struct uhci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
     
 
   #ifdef _UHCI_DIAGNOSIS_
-    /*
     uintptr_t bar_phys  = (uintptr_t)paging_getPhysAddr((void*)bar);
-    printf("EHCI bar get_physAddress: %Xh\n", bar_phys);
-    printf("HCIVERSION: %xh ",  pCapRegs->HCIVERSION);              // Interface Version Number
-    printf("HCSPARAMS: %Xh ",   pCapRegs->HCSPARAMS);               // Structural Parameters
-    printf("Ports: %u ",       numPorts);                           // Number of Ports
-    printf("\nHCCPARAMS: %Xh ", pCapRegs->HCCPARAMS);               // Capability Parameters
-    if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. "); // Extended Capabilities Pointer
-    printf("\nOpRegs Address: %Xh ", pOpRegs);                      // Host Controller Operational Registers
-    */
+    printf("UHCI bar get_physAddress: %Xh\n", bar_phys);
+    printf("\nOpRegs Address: %Xh ", puhci_OpRegs);                      // Host Controller Operational Registers    
   #endif
 }
 
 // start thread at kernel idle loop (ckernel.c)
 void uhci_init(void* data, size_t size)
 {
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>uhci_init<<<\n");
+  #endif
     scheduler_insertTask(create_cthread(&startUHCI, "UHCI"));
 }
 
 void startUHCI()
 {
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>startUHCI<<<\n");
+  #endif
     initUHCIHostController();
     textColor(LIGHT_MAGENTA);
     printf("\n\n>>> Press key to close this console. <<<");
@@ -75,6 +82,10 @@ void startUHCI()
 
 int32_t initUHCIHostController()
 {
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>initUHCIHostController<<<\n");
+  #endif
+    
     textColor(HEADLINE);
     printf("Initialize UHCI Host Controller:");
     textColor(TEXT);
@@ -106,7 +117,7 @@ int32_t initUHCIHostController()
     uhci_startHostController(PCIdevice);
 
     /*
-    if (!(pOpRegs->USBSTS & STS_HCHALTED))
+    if (!(puhci_OpRegs->UHCI_USBSTS & STS_HCHALTED))
     {
          enablePorts();
     }
@@ -114,7 +125,7 @@ int32_t initUHCIHostController()
     {
          textColor(ERROR);
          printf("\nFatal Error: Ports cannot be enabled. HCHalted set.");
-         showUSBSTS();
+         uhci_showUSBSTS();
          textColor(TEXT);
          return -1;
     }
@@ -124,21 +135,31 @@ int32_t initUHCIHostController()
 
 void uhci_startHostController(pciDev_t* PCIdev)
 {
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>uhci_startHostController<<<\n");
+  #endif
+    
     textColor(TEXT);
     printf("\nStart Host Controller (reset HC).");
 
-    // resetHostController();
+    uhci_resetHostController();
 
     
 }
 
 void uhci_resetHostController()
 {
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>uhci_resetHostController<<<\n");
+  #endif    
     // TODO
 }
 
 void uhci_DeactivateLegacySupport(pciDev_t* PCIdev)
 {
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>uhci_DeactivateLegacySupport<<<\n");
+  #endif   
     // TODO
 }
 
@@ -152,8 +173,11 @@ void uhci_DeactivateLegacySupport(pciDev_t* PCIdev)
 void uhci_handler(registers_t* r, pciDev_t* device)
 {
   #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>uhci_handler<<<\n");
+  #endif   
+  #ifdef _UHCI_DIAGNOSIS_
     /*
-    if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
+    if (!(puhci_OpRegs->UHCI_USBSTS & STS_FRAMELIST_ROLLOVER) && !(puhci_OpRegs->UHCI_USBSTS & STS_USBINT))
     {
         textColor(LIGHT_BLUE);
         printf("\nehci_handler: ");
@@ -164,28 +188,28 @@ void uhci_handler(registers_t* r, pciDev_t* device)
     textColor(YELLOW);
 
     /*
-    if (pOpRegs->USBSTS & STS_USBINT)
+    if (pOpRegs->UHCI_USBSTS & STS_USBINT)
     {
         USBINTflag = true; // is asked by polling
         // printf("USB Interrupt");
-        pOpRegs->USBSTS |= STS_USBINT; // reset interrupt
+        puhci_OpRegs->UHCI_USBSTS |= STS_USBINT; // reset interrupt
     }
 
-    if (pOpRegs->USBSTS & STS_USBERRINT)
+    if (puhci_OpRegs->UHCI_USBSTS & STS_USBERRINT)
     {
         textColor(ERROR);
         printf("USB Error Interrupt");
         textColor(TEXT);
-        pOpRegs->USBSTS |= STS_USBERRINT;
+        puhci_OpRegs->UHCI_USBSTS |= STS_USBERRINT;
     }
 
-    if (pOpRegs->USBSTS & STS_PORT_CHANGE)
+    if (puhci_OpRegs->UHCI_USBSTS & STS_PORT_CHANGE)
     {
         textColor(LIGHT_BLUE);
         printf("Port Change");
         textColor(TEXT);
 
-        pOpRegs->USBSTS |= STS_PORT_CHANGE;
+        puhci_OpRegs->UHCI_USBSTS |= STS_PORT_CHANGE;
 
         if (enabledPortFlag && PCIdevice)
         {
@@ -193,18 +217,18 @@ void uhci_handler(registers_t* r, pciDev_t* device)
         }
     }
 
-    if (pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER)
+    if (puhci_OpRegs->UHCI_USBSTS & STS_FRAMELIST_ROLLOVER)
     {
         //printf("Frame List Rollover Interrupt");
-        pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;
+        puhci_OpRegs->UHCI_USBSTS |= STS_FRAMELIST_ROLLOVER;
     }
 
-    if (pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)
+    if (puhci_OpRegs->UHCI_USBSTS & STS_HOST_SYSTEM_ERROR)
     {
         textColor(ERROR);
         printf("Host System Error");
         textColor(TEXT);
-        pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
+        puhci_OpRegs->UHCI_USBSTS |= STS_HOST_SYSTEM_ERROR;
         pci_analyzeHostSystemError(PCIdevice);
         textColor(IMPORTANT);
         printf("\n>>> Init EHCI after fatal error:           <<<");
@@ -214,12 +238,12 @@ void uhci_handler(registers_t* r, pciDev_t* device)
         todoList_add(kernel_idleTasks, &ehci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
     }
 
-    if (pOpRegs->USBSTS & STS_ASYNC_INT)
+    if (puhci_OpRegs->UHCI_USBSTS & STS_ASYNC_INT)
     {
       #ifdef _EHCI_DIAGNOSIS_
         printf("Interrupt on Async Advance");
       #endif
-        pOpRegs->USBSTS |= STS_ASYNC_INT;
+        puhci_OpRegs->UHCI_USBSTS |= STS_ASYNC_INT;
     }
     */
 }
@@ -243,25 +267,30 @@ void uhci_handler(registers_t* r, pciDev_t* device)
 
 void uhci_showUSBSTS()
 {
-  /*
-  #ifdef _EHCI_DIAGNOSIS_
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("\n>>>uhci_handler<<<\n");
+  #endif   
+
+  
+  #ifdef _UHCI_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\nUSB status: ");
     textColor(IMPORTANT);
-    printf("%Xh",pOpRegs->USBSTS);
+    printf("%Xh",puhci_OpRegs->UHCI_USBSTS);
   #endif
+    /*
     textColor(ERROR);
-    if (pOpRegs->USBSTS & STS_USBERRINT)          { printf("\nUSB Error Interrupt");           pOpRegs->USBSTS |= STS_USBERRINT;           }
-    if (pOpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)  { printf("\nHost System Error");             pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
-    if (pOpRegs->USBSTS & STS_HCHALTED)           { printf("\nHCHalted");                      pOpRegs->USBSTS |= STS_HCHALTED;            }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_USBERRINT)          { printf("\nUSB Error Interrupt");           puhci_OpRegs->UHCI_USBSTS |= STS_USBERRINT;           }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_HOST_SYSTEM_ERROR)  { printf("\nHost System Error");             puhci_OpRegs->UHCI_USBSTS |= STS_HOST_SYSTEM_ERROR;   }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_HCHALTED)           { printf("\nHCHalted");                      puhci_OpRegs->UHCI_USBSTS |= STS_HCHALTED;            }
     textColor(IMPORTANT);
-    if (pOpRegs->USBSTS & STS_PORT_CHANGE)        { printf("\nPort Change Detect");            pOpRegs->USBSTS |= STS_PORT_CHANGE;         }
-    if (pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) { printf("\nFrame List Rollover");           pOpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
-    if (pOpRegs->USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 pOpRegs->USBSTS |= STS_USBINT;              }
-    if (pOpRegs->USBSTS & STS_ASYNC_INT)          { printf("\nInterrupt on Async Advance");    pOpRegs->USBSTS |= STS_ASYNC_INT;           }
-    if (pOpRegs->USBSTS & STS_RECLAMATION)        { printf("\nReclamation");                   pOpRegs->USBSTS |= STS_RECLAMATION;         }
-    if (pOpRegs->USBSTS & STS_PERIODIC_ENABLED)   { printf("\nPeriodic Schedule Status");      pOpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
-    if (pOpRegs->USBSTS & STS_ASYNC_ENABLED)      { printf("\nAsynchronous Schedule Status");  pOpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_PORT_CHANGE)        { printf("\nPort Change Detect");            puhci_OpRegs->UHCI_USBSTS |= STS_PORT_CHANGE;         }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_FRAMELIST_ROLLOVER) { printf("\nFrame List Rollover");           puhci_OpRegs->UHCI_USBSTS |= STS_FRAMELIST_ROLLOVER;  }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 puhci_OpRegs->UHCI_USBSTS |= STS_USBINT;              }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_ASYNC_INT)          { printf("\nInterrupt on Async Advance");    puhci_OpRegs->UHCI_USBSTS |= STS_ASYNC_INT;           }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_RECLAMATION)        { printf("\nReclamation");                   puhci_OpRegs->UHCI_USBSTS |= STS_RECLAMATION;         }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_PERIODIC_ENABLED)   { printf("\nPeriodic Schedule Status");      puhci_OpRegs->UHCI_USBSTS |= STS_PERIODIC_ENABLED;    }
+    if (puhci_OpRegs->UHCI_USBSTS & STS_ASYNC_ENABLED)      { printf("\nAsynchronous Schedule Status");  puhci_OpRegs->UHCI_USBSTS |= STS_ASYNC_ENABLED;       }
     textColor(TEXT);
     */
 }

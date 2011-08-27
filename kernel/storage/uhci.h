@@ -25,48 +25,48 @@ extern struct uhci_OpRegs*  puhci_OpRegs;  // = &OpRegs;
 /* USBCMD */
 /* ****** */
 
-#define MAXP     BIT(7)
-#define CF       BIT(6)
-#define SWDBG    BIT(5)
-#define FGR      BIT(4)
-#define EGSM     BIT(3)
-#define GRESET   BIT(2)
-#define HCRESET  BIT(1)
-#define RS       BIT(0)
+#define UHCI_CMD_MAXP     BIT(7)
+#define UHCI_CMD_CF       BIT(6)
+#define UHCI_CMD_SWDBG    BIT(5)
+#define UHCI_CMD_FGR      BIT(4)
+#define UHCI_CMD_EGSM     BIT(3)
+#define UHCI_CMD_GRESET   BIT(2)
+#define UHCI_CMD_HCRESET  BIT(1)
+#define UHCI_CMD_RS       BIT(0)
 
 
 /* ******* */
 /* USBSTS  */
 /* ******* */
 
-#define STS_HCHALTED            BIT(5)
-#define STS_HC_PROCESS_ERROR    BIT(4)
-#define STS_HOST_SYSTEM_ERROR   BIT(3)
-#define STS_RESUME_DETECT       BIT(2)
-#define STS_USB_ERROR           BIT(1)
-#define STS_USBINT              BIT(0)
+#define UHCI_STS_HCHALTED            BIT(5)
+#define UHCI_STS_HC_PROCESS_ERROR    BIT(4)
+#define UHCI_STS_HOST_SYSTEM_ERROR   BIT(3)
+#define UHCI_STS_RESUME_DETECT       BIT(2)
+#define UHCI_STS_USB_ERROR           BIT(1)
+#define UHCI_STS_USBINT              BIT(0)
 
 /* ******* */
 /* USBINTR */
 /* ******* */
 
-#define SHORT_PACKET_INT_ENABLE BIT(3)
-#define IOC_ENABLE              BIT(2)
-#define RESUME_INT_ENABLE       BIT(1)
-#define TIMEOUT_INT_ENABLE      BIT(0)
+#define UHCI_INT_SHORT_PACKET_ENABLE BIT(3)
+#define UHCI_INT_IOC_ENABLE          BIT(2)
+#define UHCI_INT_RESUME_ENABLE       BIT(1)
+#define UHCI_INT_TIMEOUT_ENABLE      BIT(0)
 
 /* ******* */
 /* PORTSC  */
 /* ******* */
 
-#define SUSPEND                 BIT(12)
-#define PORT_RESET              BIT(9)
-#define PORT_LOWSPEED_DEVICE    BIT(8)
-#define PORT_RESUME_DETECT      BIT(6)
-#define PORT_ENABLE_CHANGE      BIT(3)
-#define PORT_ENABLE             BIT(2)
-#define PORT_CS_CHANGE          BIT(1)
-#define PORT_CS                 BIT(0)
+#define UHCI_SUSPEND                 BIT(12)
+#define UHCI_PORT_RESET              BIT(9)
+#define UHCI_PORT_LOWSPEED_DEVICE    BIT(8)
+#define UHCI_PORT_RESUME_DETECT      BIT(6)
+#define UHCI_PORT_ENABLE_CHANGE      BIT(3)
+#define UHCI_PORT_ENABLE             BIT(2)
+#define UHCI_PORT_CS_CHANGE          BIT(1)
+#define UHCI_PORT_CS                 BIT(0)
 
 /* *************** */
 /* LEGACY SUPPORT  */

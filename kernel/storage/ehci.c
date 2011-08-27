@@ -40,6 +40,10 @@ extern uintptr_t    SetupQTDpage0;
 
 void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 {
+  #ifdef _EHCI_DIAGNOSIS_
+    printf("\n>>>ehci_install<<<\n");
+  #endif
+
     uintptr_t bar      = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
     uintptr_t offset   = bar_phys % PAGESIZE;
 

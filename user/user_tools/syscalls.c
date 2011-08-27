@@ -17,6 +17,8 @@ FS_ERROR execute(const char* path, size_t argc, char* argv[])
     return ret;
 }
 
+// TODO: (2) createThread
+
 void exit()
 {
     __asm__ volatile("int $0x7F" : : "a"(2));
@@ -28,6 +30,8 @@ bool wait(BLOCKERTYPE reason, void* data, uint32_t timeout)
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(3), "b"(reason), "c"(data), "d"(timeout/10)); // HACK. Unbound it from system frequency. cf. scheduler.c
     return ret;
 }
+
+// TODO: (4) createConsoleThread
 
 uint32_t getMyPID()
 {
@@ -42,6 +46,8 @@ void* userheapAlloc(size_t increase)
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(10), "b"(increase));
     return (void*)ret;
 }
+
+// TODO: (11) userheapFree
 
 file_t* fopen(const char* path, const char* mode)
 {
@@ -92,6 +98,8 @@ FS_ERROR partition_format(const char* path, FS_t type, const char* name)
     return ret;
 }
 
+// TODO (25-32) ipc
+
 bool waitForEvent(uint32_t timeout)
 {
     bool ret;
@@ -126,6 +134,8 @@ void systemControl(SYSTEM_CONTROL todo)
 {
     __asm__ volatile("int $0x7F" : : "a"(50), "b"(todo));
 }
+
+// TODO (51) systemRefresh
 
 int putchar(char val)
 {
@@ -188,6 +198,8 @@ bool keyPressed(KEY_t key)
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(71), "b"(key));
     return ret;
 }
+
+// TODO (72-74) mouse
 
 void beep(uint32_t frequency, uint32_t duration)
 {
