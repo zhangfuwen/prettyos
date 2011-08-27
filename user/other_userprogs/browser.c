@@ -15,7 +15,7 @@ int main()
 
     event_enable(true);
     char buffer[4096];
-    EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
+    EVENT_t ev = event_poll(buffer, 4095, EVENT_NONE);
 
     iSetCursor(0, 7);
 
@@ -59,7 +59,7 @@ int main()
                 tcpReceivedEventHeader_t* header = (void*)buffer;
                 data = (void*)(header+1);
                 data[header->length] = 0;
-                printf("\n%s", data);
+                printf("%s", data);
                 textColor(0x0F);
                 break;
             }
@@ -102,7 +102,7 @@ int main()
             default:
                 break;
         }
-        ev = event_poll(buffer, 4096, EVENT_NONE);
+        ev = event_poll(buffer, 4095, EVENT_NONE);
     }
 
     tcp_close(connection);

@@ -48,7 +48,7 @@ size_t wcstombs(char* mbstr, const wchar_t* wcstr, size_t max);
 int wctomb(char* pmb, wchar_t character);
 
 void* bsearch(const void* key, const void* base, size_t num, size_t size, int (*comparator)(const void*, const void*));
-void qsort(void* base, size_t num, size_t size, int (*comparator)(const void*, const void*));
+void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const void*, const void*));
 
 void srand(int val);
 int rand();

@@ -191,6 +191,9 @@
     <ClCompile Include="..\user\other_userprogs\ppong.c">
       <Filter>Other Userprogs</Filter>
     </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\psort.c">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\user\stdlibc\assert.h">
@@ -262,8 +265,6 @@
     <ClInclude Include="..\user\user_tools\userlib.hpp">
       <Filter>User-Tools\Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\user\other_userprogs\ppong.h">
-      <Filter>Other Userprogs</Filter>
-    </ClInclude>
+    <ClInclude Include="..\user\other_userprogs\ppong.h" />
   </ItemGroup>
 </Project>

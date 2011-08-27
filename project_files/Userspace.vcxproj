@@ -61,6 +61,7 @@
     <ClCompile Include="..\user\other_userprogs\pong.c" />
     <ClCompile Include="..\user\other_userprogs\ppong.c" />
     <ClCompile Include="..\user\other_userprogs\pqeq.c" />
+    <ClCompile Include="..\user\other_userprogs\psort.c" />
     <ClCompile Include="..\user\other_userprogs\rctl.c" />
     <ClCompile Include="..\user\other_userprogs\readme.c" />
     <ClCompile Include="..\user\other_userprogs\rt.c" />
