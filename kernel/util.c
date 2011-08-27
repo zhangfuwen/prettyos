@@ -208,45 +208,50 @@ size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
                 {
                     case 'u':
                         utoa(va_arg(ap, uint32_t), m_buffer);
-                        strncpy(buffer+pos, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos);
                         pos += strlen(m_buffer);
                         break;
                     case 'f':
                         ftoa(va_arg(ap, double), m_buffer);
-                        strncpy(buffer+pos, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos);
                         pos += strlen(m_buffer);
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), m_buffer);
-                        strncpy(buffer+pos, m_buffer, length - pos - 1);
+                        strncpy(buffer+pos, m_buffer, length - pos);
                         pos += strlen(m_buffer);
                         break;
                     case 'X':
                         i2hex(va_arg(ap, int32_t), m_buffer, 8);
-                        strncpy(buffer+pos, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += 8;
                         break;
                     case 'x':
                         i2hex(va_arg(ap, int32_t), m_buffer, 4);
-                        strncpy(buffer+pos, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += 4;
                         break;
                     case 'y':
                         i2hex(va_arg(ap, int32_t), m_buffer, 2);
-                        strncpy(buffer+pos, m_buffer, length - pos - 1);
-                        pos += strlen(m_buffer);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += 2;
                         break;
                     case 's':
-                        strncpy(buffer+pos, va_arg(ap, char*), length - pos - 1);
-                        pos = strlen(buffer);
+                    {
+                        const char* string = va_arg(ap, const char*);
+                        strncpy(buffer+pos, string, length - pos);
+                        pos += strlen(string);
                         break;
+                    }
                     case 'c':
                         buffer[pos] = (char)va_arg(ap, int32_t);
                         pos++;
+                        buffer[pos] = 0;
                         break;
                     case '%':
                         buffer[pos] = '%';
                         pos++;
+                        buffer[pos] = 0;
                         break;
                     default:
                         --args;
@@ -382,7 +387,7 @@ char toUpper(char c)
 
 char* toupper(char* s)
 {
-    for (int i=0;i<strlen(s);i++)
+    for (int i =0; s[i] != 0; i++)
     {
         s[i] = toUpper(s[i]);
     }
@@ -391,7 +396,7 @@ char* toupper(char* s)
 
 char* tolower(char* s)
 {
-    for (int i=0;i<strlen(s);i++)
+    for (int i=0; s[i] != 0; i++)
     {
         s[i] = toLower(s[i]);
     }
@@ -420,27 +425,23 @@ int8_t ctoi(char c)
     return(c-48);
 }
 
-/// http://en.wikipedia.org/wiki/Itoa
+
 char* itoa(int32_t n, char* s)
 {
-    bool sign = n < 0;
-    if (sign)   // record sign
+    uint32_t i = 0;
+    if (n < 0) // for negative numbers
     {
+        s[i++] = '-';
         n = -n; // make n positive
     }
-    uint32_t i = 0;
     do // generate digits in reverse order
     {
         s[i++] = n % 10 + '0'; // get next digit
     }
     while ((n /= 10) > 0);     // delete it
 
-    if (sign)
-    {
-        s[i++] = '-';
-    }
     s[i] = '\0';
-    reverse(s);
+    reverse(s+1);
     return(s);
 }
 
@@ -473,7 +474,7 @@ int atoi(const char* s)
 {
     int num = 0;
     bool sign = false;
-    for (size_t i=0; i<=strlen(s); i++)
+    for (size_t i=0; s[i] != 0; i++)
     {
         if (s[i] >= '0' && s[i] <= '9')
         {
@@ -712,7 +713,7 @@ void bootscreen()
     textColor(TEXT);
     puts("##");
     textColor(GRAY);
-    puts("#");
+    putch('#');
     textColor(TEXT);
     puts("##");
     textColor(GRAY);
@@ -728,7 +729,7 @@ void bootscreen()
     textColor(TEXT);
     puts("##");
     textColor(GRAY);
-    puts("#");
+    putch('#');
     textColor(TEXT);
     puts("##");
     textColor(GRAY);
@@ -853,7 +854,7 @@ void bootscreen()
     textColor(TEXT);
     puts("##");
     textColor(GRAY);
-    puts("#");
+    putch('#');
     textColor(TEXT);
     puts("##");
     textColor(GRAY);
@@ -893,7 +894,7 @@ void bootscreen()
     textColor(TEXT);
     puts("##");
     textColor(GRAY);
-    puts("#");
+    putch('#');
     textColor(TEXT);
     puts("##");
     textColor(GRAY);
@@ -954,7 +955,7 @@ void bootscreen()
     textColor(TEXT);
     puts("#####   ####");
     textColor(GRAY);
-    puts("#");
+    putch('#');
     textColor(TEXT);
     puts("####");
     textColor(GRAY);

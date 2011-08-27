@@ -44,19 +44,14 @@ void timer_handler(registers_t* r)
     ++timer_ticks;
 }
 
-void timer_wait(uint32_t ticks)
-{
-    scheduler_blockCurrentTask(0, 0, max(1, ticks)); // "abuse" timeout function
-}
-
 void sleepSeconds(uint32_t seconds)
 {
-    sleepMilliSeconds(1000*seconds);
+    scheduler_blockCurrentTask(0, 0, max(1, 1000*seconds)); // "abuse" timeout function
 }
 
 void sleepMilliSeconds(uint32_t ms)
 {
-    timer_wait(systemfrequency*ms/1000);
+    scheduler_blockCurrentTask(0, 0, max(1, ms)); // "abuse" timeout function
 }
 
 void timer_setFrequency(uint32_t freq)

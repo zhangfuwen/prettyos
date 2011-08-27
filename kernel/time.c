@@ -20,16 +20,6 @@ void cmosTime(tm_t* ptm)
     ptm->century    = BCDtoDecimal(cmos_read(0x32));
 }
 
-static void appendInt(uint16_t val, char* dest, size_t strsize)
-{
-    if (val<10)
-    {
-        strcat(dest, "0");
-    }
-    size_t temp = strlen(dest);
-    snprintf(dest+temp, strsize-temp, "%u", val);
-}
-
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
 {
     day += 6; // 1.1.2000 was a saturday
@@ -65,6 +55,14 @@ static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
     return(day%7+1);
 }
 
+static void writeInt(uint16_t val, char* dest, size_t strsize)
+{
+    if (val<10)
+        snprintf(dest, strsize, "0%u", val);
+    else
+        snprintf(dest, strsize, "%u", val);
+}
+
 static const char* const weekdays[] =
 {
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
@@ -78,29 +76,20 @@ void getCurrentDateAndTime(char* pStr, size_t strsize)
 {
     tm_t pct;
     cmosTime(&pct);
-    pct.weekday = calculateWeekday(2000+pct.year, pct.month, pct.dayofmonth);
+    pct.weekday = calculateWeekday(100*pct.century+pct.year, pct.month, pct.dayofmonth);
 
-    snprintf(pStr, strsize, "%s, %s ", weekdays[pct.weekday-1], months[pct.month-1]);
+    // Prepare some numbers
+    char dayofmonth[3], hour[3], minute[3], second[3];
+    writeInt(pct.dayofmonth, dayofmonth, 3);
+    writeInt(pct.hour, hour, 3);
+    writeInt(pct.minute, minute, 3);
+    writeInt(pct.second, second, 3);
 
-    appendInt(pct.dayofmonth, pStr, strsize);
-
-    strcat(pStr, ", ");
-    char buf[32];
-    itoa(pct.century*100 + pct.year, buf);
-    strcat(pStr, buf);
-
-    strcat(pStr, ", ");
-    appendInt(pct.hour, pStr, strsize);
-
-    strcat(pStr, ":");
-    appendInt(pct.minute, pStr, strsize);
-
-    strcat(pStr, ":");
-    appendInt(pct.second, pStr, strsize);
+    snprintf(pStr, strsize, "%s, %s %s, %u, %s:%s:%s", weekdays[pct.weekday-1], months[pct.month-1], dayofmonth, pct.century*100+pct.year, hour, minute, second);
 }
 
 /*
-* Copyright (c) 2009-2010 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

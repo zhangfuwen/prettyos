@@ -136,17 +136,17 @@ int vprintf(const char* format, va_list arg)
             case 'X':
                 i2hex(va_arg(arg, int32_t), buffer,8);
                 puts(buffer);
-                pos += strlen(buffer);
+                pos += 8;
                 break;
             case 'x':
                 i2hex(va_arg(arg, int32_t), buffer,4);
                 puts(buffer);
-                pos += strlen(buffer);
+                pos += 4;
                 break;
             case 'y':
                 i2hex(va_arg(arg, int32_t), buffer,2);
                 puts(buffer);
-                pos += strlen(buffer);
+                pos += 2;
                 break;
             case 's':
             {
@@ -194,7 +194,6 @@ int vsprintf(char* dest, const char* format, va_list arg)
 {
     int pos = 0;
     char m_buffer[32]; // Larger is not needed at the moment
-    dest[0] = '\0';
 
     for (; *format; format++)
     {
@@ -242,9 +241,11 @@ int vsprintf(char* dest, const char* format, va_list arg)
                     }
                     case 'c':
                         dest[pos] = (int8_t)va_arg(arg, int32_t);
+                        pos++;
                         break;
                     case '%':
                         dest[pos] = '%';
+                        pos++;
                         break;
                     default:
                         --format;

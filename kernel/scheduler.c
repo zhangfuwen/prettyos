@@ -147,7 +147,7 @@ bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout
     if (timeout == 0)
         currentTask->blocker.timeout = 0;
     else
-        currentTask->blocker.timeout = timer_getTicks()+timeout;
+        currentTask->blocker.timeout = timer_getTicks()+timer_millisecondsToTicks(timeout);
 
     cli();
     ring_move(blockedTasks, runningTasks, (task_t*)currentTask);

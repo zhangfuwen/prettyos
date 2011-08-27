@@ -129,7 +129,7 @@ void irq_resetCounter(IRQ_NUM_t number)
 bool waitForIRQ(IRQ_NUM_t number, uint32_t timeout)
 {
     if (timeout > 0)
-        return(scheduler_blockCurrentTask(BL_INTERRUPT, (void*)(number+32), max(1, timer_millisecondsToTicks(timeout))));
+        return(scheduler_blockCurrentTask(BL_INTERRUPT, (void*)(number+32), max(1, timeout)));
     else
     {
         scheduler_blockCurrentTask(BL_INTERRUPT, (void*)(number+32), 0);
