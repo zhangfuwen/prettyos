@@ -15,9 +15,12 @@
 
 
 bool UHCIflag = false;          // signals that one UHCI device was found /// TODO: manage more than one UHCI
+
+// TODO: implement struct 
 static pciDev_t* PCIdevice = 0; // pci device
 uintptr_t bar;
 size_t memSize;
+// root_ports
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
@@ -122,9 +125,16 @@ void uhci_resetHostController()
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>uhci_resetHostController<<<\n");
   #endif    
-    
+   
+    uint8_t bus  = PCIdevice->bus;
+    uint8_t dev  = PCIdevice->device;
+    uint8_t func = PCIdevice->func;
+
     // http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Informationen_vom_PCI-Treiber_holen
 
+    uint16_t val = pci_config_read(bus, dev, func, 0x02C0);
+    printf("\nLegacy Support Register: %x",val); // if value is not zero, Legacy Support (LEGSUP) is activated 
+    
     outportw(bar + UHCI_USBCMD, 0x00); // perhaps not necessary
     outportw(bar + UHCI_USBCMD, UHCI_CMD_GRESET); 
     sleepMilliSeconds(100); // at least 50 msec
@@ -145,7 +155,7 @@ void uhci_resetHostController()
     printf("\nUHCI root ports: %u\n", root_ports);
     textColor(TEXT);
 
-    outportw(bar + UHCI_USBCMD, UHCI_CMD_HCRESET);
+    outportw(bar + UHCI_USBCMD, UHCI_CMD_HCRESET); // Reset
     
     uint8_t timeout = 10;
 	while (inportw (bar + UHCI_USBCMD) & UHCI_CMD_HCRESET) 
@@ -166,9 +176,6 @@ void uhci_resetHostController()
     sleepMilliSeconds(1);
     
     // resets support status bits in Legacy support register
-    uint8_t bus  = PCIdevice->bus;
-    uint8_t dev  = PCIdevice->device;
-    uint8_t func = PCIdevice->func;
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_STATUS); 
     
     // frame timespan
@@ -179,6 +186,12 @@ void uhci_resetHostController()
 	void* framelistAddrVirt = malloc(0x1000,16,"uhci-framelist");
     uintptr_t framelistAddrPhys = paging_getPhysAddr(framelistAddrVirt);
     outportl(bar + UHCI_FRBASEADD, framelistAddrPhys);
+
+    // switch off the ports 
+    for (uint8_t i=0; i<root_ports; i++) 
+    {
+        outportw(bar + UHCI_PORTSC1 + i*2, UHCI_PORT_CS_CHANGE);
+    }
 
     // generate PCI IRQs
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_PIRQ); 
@@ -194,6 +207,8 @@ void uhci_resetHostController()
     textColor(SUCCESS);
     printf("UHCI ready");
     textColor(TEXT);
+    val = pci_config_read(bus, dev, func, 0x02C0);
+    printf("\nLegacy Support Register: %x",val); // if value is not zero, Legacy Support (LEGSUP) is activated 
 }
 
 
