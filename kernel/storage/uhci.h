@@ -154,9 +154,7 @@ void startUHCI();
 int32_t initUHCIHostController();
 void uhci_startHostController(pciDev_t* PCIdev);
 void uhci_resetHostController();
-void uhci_DeactivateLegacySupport(pciDev_t* PCIdev);
 void uhci_handler(registers_t* r, pciDev_t* device);
-void uhci_showUSBSTS();
 
 
 #endif

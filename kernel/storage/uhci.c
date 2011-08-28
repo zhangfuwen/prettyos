@@ -125,21 +125,13 @@ void uhci_resetHostController()
     
     // http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Informationen_vom_PCI-Treiber_holen
 
-    // Zuerst sollte ein globaler USB-Reset auf allen aktivierten Ports getrieben werden. 
-    // Dies geschieht, indem das GRESET-Bit im USBCMD-Register (USBCMD.GRESET) gesetzt wird.
-    
-    // Außerdem kann man hierbei auch gleich alle anderen Bits in diesem Register löschen, sodass der Controller anhält.
-    outportw(bar + UHCI_USBCMD, 0x00);
+    outportw(bar + UHCI_USBCMD, 0x00); // perhaps not necessary
     outportw(bar + UHCI_USBCMD, UHCI_CMD_GRESET); 
-
-    // Nach 50 Millisekunden muss das Resetsignal wieder aufgehoben werden, indem das GRESET-Bit wieder gelöscht wird. 
-    sleepMilliSeconds(50);
+    sleepMilliSeconds(100); // at least 50 msec
     outportw(bar + UHCI_USBCMD, 0x00); 
-    
-    // Jetzt muss die Anzahl der vorhanden Rootports in Erfahrung gebracht werden. 
-    // Hierzu nimmt man zunächst die Größe des I/O-Raums minus 0x10 und geteilt durch 2 als Obergrenze und 2 als Untergrenze. 
-    // Jetzt wird für jeden Rootport überprüft, ob sowohl Bit 7 gesetzt ist (0x0080) als auch der Gesamtwert nicht 0xFFFF ist. 
-    // Ist das Bit nicht gesetzt oder beträgt der Wert 0xFFFF, so handelt es sich beim verwendeten Port um keinen I/O-Port für einen Rootport mehr.
+    sleepMilliSeconds(20);  // at least 10 msec
+
+    // get number of root ports
     uint32_t root_ports = (memSize - UHCI_PORTSC1) / 2;
     for (uint32_t i=2; i<root_ports; i++)
     {
@@ -153,21 +145,55 @@ void uhci_resetHostController()
     printf("\nUHCI root ports: %u\n", root_ports);
     textColor(TEXT);
 
-    // Deaktivieren des Legacy Supports 
-    uhci_DeactivateLegacySupport(PCIdevice);
+    outportw(bar + UHCI_USBCMD, UHCI_CMD_HCRESET);
+    
+    uint8_t timeout = 10;
+	while (inportw (bar + UHCI_USBCMD) & UHCI_CMD_HCRESET) 
+    {
+		if (timeout==0) 
+        {
+            textColor(ERROR);
+			printf("USBCMD_HCRESET timed out!");
+			break;
+		}
+		sleepMilliSeconds(1);
+        timeout--;
+	}
 
-    // TODO
-    /*
-        http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Deaktivieren_des_Legacy_Supports
-    */
-}
+	// turn on all interrupts 
+	outportw (bar + UHCI_USBINTR, UHCI_INT_TIMEOUT_ENABLE | UHCI_INT_RESUME_ENABLE | 
+                                  UHCI_INT_IOC_ENABLE     | UHCI_INT_SHORT_PACKET_ENABLE );
+    sleepMilliSeconds(1);
+    
+    // resets support status bits in Legacy support register
+    uint8_t bus  = PCIdevice->bus;
+    uint8_t dev  = PCIdevice->device;
+    uint8_t func = PCIdevice->func;
+    pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_STATUS); 
+    
+    // frame timespan
+	outportb(bar + UHCI_SOFMOD, 0x40);
+    
+    // start at frame 0 and provide phys. addr. of frame list
+	outportw (bar + UHCI_FRNUM, 0x00);
+	void* framelistAddrVirt = malloc(0x1000,16,"uhci-framelist");
+    uintptr_t framelistAddrPhys = paging_getPhysAddr(framelistAddrVirt);
+    outportl(bar + UHCI_FRBASEADD, framelistAddrPhys);
 
-void uhci_DeactivateLegacySupport(pciDev_t* PCIdev)
-{
-  #ifdef _UHCI_DIAGNOSIS_
-    printf("\n>>>uhci_DeactivateLegacySupport<<<\n");
-  #endif   
-    // TODO
+    // generate PCI IRQs
+    pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_PIRQ); 
+        
+    // Run and mark it configured with a 64-byte max packet 
+	outportw (bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
+
+    outportw (bar + UHCI_USBCMD, inportw(bar + UHCI_USBCMD) | UHCI_CMD_FGR);
+    sleepMilliSeconds(20);
+    outportw (bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
+    sleepMilliSeconds(10);
+
+    textColor(SUCCESS);
+    printf("UHCI ready");
+    textColor(TEXT);
 }
 
 
@@ -245,7 +271,7 @@ void uhci_handler(registers_t* r, pciDev_t* device)
 *                                                                                                      *
 *******************************************************************************************************/
 
-
+// TODO
 
 /*******************************************************************************************************
 *                                                                                                      *
@@ -253,36 +279,8 @@ void uhci_handler(registers_t* r, pciDev_t* device)
 *                                                                                                      *
 *******************************************************************************************************/
 
+// TODO
 
-void uhci_showUSBSTS()
-{
-  #ifdef _UHCI_DIAGNOSIS_
-    printf("\n>>>uhci_handler<<<\n");
-  #endif   
-
-  
-  #ifdef _UHCI_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\nUSB status: ");
-    textColor(IMPORTANT);
-    printf("%xh",inportw(bar+UHCI_USBSTS));
-  #endif
-    /*
-    textColor(ERROR);
-    if (puhci_OpRegs->UHCI_USBSTS & STS_USBERRINT)          { printf("\nUSB Error Interrupt");           puhci_OpRegs->UHCI_USBSTS |= STS_USBERRINT;           }
-    if (puhci_OpRegs->UHCI_USBSTS & STS_HOST_SYSTEM_ERROR)  { printf("\nHost System Error");             puhci_OpRegs->UHCI_USBSTS |= STS_HOST_SYSTEM_ERROR;   }
-    if (puhci_OpRegs->UHCI_USBSTS & STS_HCHALTED)           { printf("\nHCHalted");                      puhci_OpRegs->UHCI_USBSTS |= STS_HCHALTED;            }
-    textColor(IMPORTANT);
-    if (puhci_OpRegs->UHCI_USBSTS & STS_PORT_CHANGE)        { printf("\nPort Change Detect");            puhci_OpRegs->UHCI_USBSTS |= STS_PORT_CHANGE;         }
-    if (puhci_OpRegs->UHCI_USBSTS & STS_FRAMELIST_ROLLOVER) { printf("\nFrame List Rollover");           puhci_OpRegs->UHCI_USBSTS |= STS_FRAMELIST_ROLLOVER;  }
-    if (puhci_OpRegs->UHCI_USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 puhci_OpRegs->UHCI_USBSTS |= STS_USBINT;              }
-    if (puhci_OpRegs->UHCI_USBSTS & STS_ASYNC_INT)          { printf("\nInterrupt on Async Advance");    puhci_OpRegs->UHCI_USBSTS |= STS_ASYNC_INT;           }
-    if (puhci_OpRegs->UHCI_USBSTS & STS_RECLAMATION)        { printf("\nReclamation");                   puhci_OpRegs->UHCI_USBSTS |= STS_RECLAMATION;         }
-    if (puhci_OpRegs->UHCI_USBSTS & STS_PERIODIC_ENABLED)   { printf("\nPeriodic Schedule Status");      puhci_OpRegs->UHCI_USBSTS |= STS_PERIODIC_ENABLED;    }
-    if (puhci_OpRegs->UHCI_USBSTS & STS_ASYNC_ENABLED)      { printf("\nAsynchronous Schedule Status");  puhci_OpRegs->UHCI_USBSTS |= STS_ASYNC_ENABLED;       }
-    textColor(TEXT);
-    */
-}
 
 /*
 * Copyright (c) 2011 The PrettyOS Project. All rights reserved.
