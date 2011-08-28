@@ -21,6 +21,7 @@ static pciDev_t* PCIdevice = 0; // pci device
 uintptr_t bar;
 size_t memSize;
 // root_ports
+// framelist-base
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
@@ -133,7 +134,7 @@ void uhci_resetHostController()
     // http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Informationen_vom_PCI-Treiber_holen
 
     uint16_t val = pci_config_read(bus, dev, func, 0x02C0);
-    printf("\nLegacy Support Register: %x",val); // if value is not zero, Legacy Support (LEGSUP) is activated 
+    printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated 
     
     outportw(bar + UHCI_USBCMD, 0x00); // perhaps not necessary
     outportw(bar + UHCI_USBCMD, UHCI_CMD_GRESET); 
@@ -183,8 +184,9 @@ void uhci_resetHostController()
     
     // start at frame 0 and provide phys. addr. of frame list
 	outportw (bar + UHCI_FRNUM, 0x00);
-	void* framelistAddrVirt = malloc(0x1000,16,"uhci-framelist");
+	void* framelistAddrVirt = malloc(PAGESIZE,PAGESIZE,"uhci-framelist");
     uintptr_t framelistAddrPhys = paging_getPhysAddr(framelistAddrVirt);
+    printf("\nFrame list physical address (must be page-aligned): %Xh", framelistAddrPhys);
     outportl(bar + UHCI_FRBASEADD, framelistAddrPhys);
 
     // switch off the ports 
@@ -205,10 +207,10 @@ void uhci_resetHostController()
     sleepMilliSeconds(10);
 
     textColor(SUCCESS);
-    printf("UHCI ready");
+    printf("\nUHCI ready");
     textColor(TEXT);
     val = pci_config_read(bus, dev, func, 0x02C0);
-    printf("\nLegacy Support Register: %x",val); // if value is not zero, Legacy Support (LEGSUP) is activated 
+    printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated 
 }
 
 
