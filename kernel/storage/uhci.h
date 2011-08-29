@@ -3,6 +3,9 @@
 
 #include "os.h"
 #include "pci.h"
+#include "synchronisation.h"
+
+#define UHCIMAX  8 // max number of UHCI devices
 
 
 #define UHCI_USBCMD         0x00 
@@ -126,8 +129,6 @@ struct uhci_td
     uint32_t         dWord7; // ?
   } __attribute__((packed)) uhci_TD_t;
 
-
-
 // Queue Heads support the requirements of Control, Bulk, and Interrupt transfers
 // and must be aligned on a 16-byte boundary
 typedef
@@ -146,14 +147,29 @@ struct uhci_qh
     uhci_TD_t* q_last;
 } __attribute__((packed)) uhci_QH_t;
 
+// UHCI device
+typedef
+struct uhci 
+{    
+    pciDev_t*  PCIdevice;          // PCI device
+    uint16_t   bar;                // start of I/O space (base address register
+    uintptr_t  framelistAddrPhys;  // physical adress of frame list
+    uintptr_t  framelistAddrVirt;  // virtual adress of frame list
+    uintptr_t  qhPointerPhys;      // physical address of QH
+    uhci_QH_t* qhPointerVirt;      // virtual adress of QH
+    uint8_t    rootPorts;          // number of rootports
+    size_t     memSize;            // memory size of IO space
+    mutex_t*   framelistLock;      // mutex for access on the frame list
+    mutex_t*   qhLock;             // mutex for access on the QH
+} uhci_t;
+
 
 // functions
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
 void uhci_init(void* data, size_t size);
 void startUHCI();
-int32_t initUHCIHostController();
-void uhci_startHostController(pciDev_t* PCIdev);
-void uhci_resetHostController();
+int32_t initUHCIHostController(uhci_t* u);
+void uhci_resetHostController(uhci_t* u);
 void uhci_handler(registers_t* r, pciDev_t* device);
 
 

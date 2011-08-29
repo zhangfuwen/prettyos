@@ -14,29 +14,24 @@
 #include "uhci.h"
 
 
-bool UHCIflag = false;          // signals that one UHCI device was found /// TODO: manage more than one UHCI
-
-// TODO: implement struct 
-static pciDev_t* PCIdevice = 0; // pci device
-uintptr_t bar;
-size_t memSize;
-// root_ports
-// framelist-base
+static uint8_t index   = 0;
+static uhci_t* curUHCI = 0;
+static uhci_t* uhci[UHCIMAX];
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>uhci_install<<<\n");
   #endif
-
-    if (!UHCIflag) // only the first EHCI is used
-    {  
-        memSize = memorySize;
-        bar = bar_phys;
-        PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
-        UHCIflag = true; // only the first EHCI is used
-        todoList_add(kernel_idleTasks, &uhci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for UHCI ??        
-    }
+    
+    curUHCI = uhci[index]   = (uhci_t*)malloc(sizeof(uhci_t),0,"uhci"); 
+    uhci[index]->PCIdevice  = PCIdev;
+    uhci[index]->bar        = bar_phys;
+    uhci[index]->memSize    = memorySize;            
+    
+    todoList_add(kernel_idleTasks, &uhci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for UHCI ??        
+    
+    index++;
 }
 
 // start thread at kernel idle loop (ckernel.c)
@@ -53,13 +48,13 @@ void startUHCI()
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>startUHCI<<<\n");
   #endif
-    initUHCIHostController();
+    initUHCIHostController(curUHCI);
     textColor(LIGHT_MAGENTA);
     printf("\n\n>>> Press key to close this console. <<<");
     getch();
 }
 
-int32_t initUHCIHostController()
+int32_t initUHCIHostController(uhci_t* u)
 {
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>initUHCIHostController<<<\n");
@@ -70,9 +65,9 @@ int32_t initUHCIHostController()
     textColor(TEXT);
 
     // pci bus data
-    uint8_t bus  = PCIdevice->bus;
-    uint8_t dev  = PCIdevice->device;
-    uint8_t func = PCIdevice->func;
+    uint8_t bus  = u->PCIdevice->bus;
+    uint8_t dev  = u->PCIdevice->device;
+    uint8_t func = u->PCIdevice->func;
     
     // prepare PCI command register // offset 0x04
     // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
@@ -86,12 +81,12 @@ int32_t initUHCIHostController()
     printf("\nPCI Command Register plus bus master: %xh", pci_config_read(bus, dev, func, 0x0204));
     // printf("\nPCI Capabilities List: first Pointer: %xh", pciCapabilitiesList);
  #endif
-    irq_installPCIHandler(PCIdevice->irq, uhci_handler, PCIdevice);
+    irq_installPCIHandler(u->PCIdevice->irq, uhci_handler, u->PCIdevice);
 
     //USBtransferFlag = true;
     //enabledPortFlag = false;
 
-    uhci_startHostController(PCIdevice);
+    uhci_resetHostController(u);
 
     /*
     if (!(puhci_OpRegs->UHCI_USBSTS & STS_HCHALTED))
@@ -110,56 +105,45 @@ int32_t initUHCIHostController()
     return 0;
 }
 
-void uhci_startHostController(pciDev_t* PCIdev)
-{
-  #ifdef _UHCI_DIAGNOSIS_
-    printf("\n>>>uhci_startHostController<<<\n");
-  #endif
-    
-    textColor(TEXT);
-    printf("\nStart Host Controller (reset HC).");
-    uhci_resetHostController();
-}
-
-void uhci_resetHostController()
+void uhci_resetHostController(uhci_t* u)
 {
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>uhci_resetHostController<<<\n");
   #endif    
    
-    uint8_t bus  = PCIdevice->bus;
-    uint8_t dev  = PCIdevice->device;
-    uint8_t func = PCIdevice->func;
+    uint8_t bus  = u->PCIdevice->bus;
+    uint8_t dev  = u->PCIdevice->device;
+    uint8_t func = u->PCIdevice->func;
 
     // http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Informationen_vom_PCI-Treiber_holen
 
     uint16_t val = pci_config_read(bus, dev, func, 0x02C0);
     printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated 
     
-    outportw(bar + UHCI_USBCMD, 0x00); // perhaps not necessary
-    outportw(bar + UHCI_USBCMD, UHCI_CMD_GRESET); 
+    outportw(u->bar + UHCI_USBCMD, 0x00); // perhaps not necessary
+    outportw(u->bar + UHCI_USBCMD, UHCI_CMD_GRESET); 
     sleepMilliSeconds(100); // at least 50 msec
-    outportw(bar + UHCI_USBCMD, 0x00); 
+    outportw(u->bar + UHCI_USBCMD, 0x00); 
     sleepMilliSeconds(20);  // at least 10 msec
 
     // get number of root ports
-    uint32_t root_ports = (memSize - UHCI_PORTSC1) / 2;
-    for (uint32_t i=2; i<root_ports; i++)
+    u->rootPorts = (u->memSize - UHCI_PORTSC1) / 2;
+    for (uint32_t i=2; i<u->rootPorts; i++)
     {
-        if (!(inportw(bar + UHCI_PORTSC1 + i*2) & 0x0080) || (inportw(bar + UHCI_PORTSC1 + i*2) == 0xFFFF))
+        if (!(inportw(u->bar + UHCI_PORTSC1 + i*2) & 0x0080) || (inportw(u->bar + UHCI_PORTSC1 + i*2) == 0xFFFF))
         {
-            root_ports = i;
+            u->rootPorts = i;
             break;
         }
     }
     textColor(IMPORTANT);
-    printf("\nUHCI root ports: %u\n", root_ports);
+    printf("\nUHCI root ports: %u\n", u->rootPorts);
     textColor(TEXT);
 
-    outportw(bar + UHCI_USBCMD, UHCI_CMD_HCRESET); // Reset
+    outportw(u->bar + UHCI_USBCMD, UHCI_CMD_HCRESET); // Reset
     
     uint8_t timeout = 10;
-	while (inportw (bar + UHCI_USBCMD) & UHCI_CMD_HCRESET) 
+	while (inportw (u->bar + UHCI_USBCMD) & UHCI_CMD_HCRESET) 
     {
 		if (timeout==0) 
         {
@@ -172,38 +156,40 @@ void uhci_resetHostController()
 	}
 
 	// turn on all interrupts 
-	outportw (bar + UHCI_USBINTR, UHCI_INT_TIMEOUT_ENABLE | UHCI_INT_RESUME_ENABLE | 
-                                  UHCI_INT_IOC_ENABLE     | UHCI_INT_SHORT_PACKET_ENABLE );
+	outportw (u->bar + UHCI_USBINTR, UHCI_INT_TIMEOUT_ENABLE | UHCI_INT_RESUME_ENABLE | 
+                                     UHCI_INT_IOC_ENABLE     | UHCI_INT_SHORT_PACKET_ENABLE );
     sleepMilliSeconds(1);
     
     // resets support status bits in Legacy support register
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_STATUS); 
     
     // frame timespan
-	outportb(bar + UHCI_SOFMOD, 0x40);
+	outportb(u->bar + UHCI_SOFMOD, 0x40);
     
     // start at frame 0 and provide phys. addr. of frame list
-	outportw (bar + UHCI_FRNUM, 0x00);
-	void* framelistAddrVirt = malloc(PAGESIZE,PAGESIZE,"uhci-framelist");
-    uintptr_t framelistAddrPhys = paging_getPhysAddr(framelistAddrVirt);
-    printf("\nFrame list physical address (must be page-aligned): %Xh", framelistAddrPhys);
-    outportl(bar + UHCI_FRBASEADD, framelistAddrPhys);
+	outportw (u->bar + UHCI_FRNUM, 0x00);
+	
+      
+    u->framelistAddrVirt = (uintptr_t)malloc(PAGESIZE,PAGESIZE,"uhci-framelist");
+    u->framelistAddrPhys = paging_getPhysAddr((void*)u->framelistAddrVirt);
+    printf("\nFrame list physical address (must be page-aligned): %Xh", u->framelistAddrPhys);
+    outportl(u->bar + UHCI_FRBASEADD, u->framelistAddrPhys);
 
     // switch off the ports 
-    for (uint8_t i=0; i<root_ports; i++) 
+    for (uint8_t i=0; i<u->rootPorts; i++) 
     {
-        outportw(bar + UHCI_PORTSC1 + i*2, UHCI_PORT_CS_CHANGE);
+        outportw(u->bar + UHCI_PORTSC1 + i*2, UHCI_PORT_CS_CHANGE);
     }
 
     // generate PCI IRQs
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_PIRQ); 
         
     // Run and mark it configured with a 64-byte max packet 
-	outportw (bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
+	outportw (u->bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
 
-    outportw (bar + UHCI_USBCMD, inportw(bar + UHCI_USBCMD) | UHCI_CMD_FGR);
+    outportw (u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) | UHCI_CMD_FGR);
     sleepMilliSeconds(20);
-    outportw (bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
+    outportw (u->bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
     sleepMilliSeconds(10);
 
     textColor(SUCCESS);
@@ -225,56 +211,71 @@ void uhci_handler(registers_t* r, pciDev_t* device)
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>uhci_handler<<<\n");
   #endif   
-    textColor(IMPORTANT);
     
-    uint16_t reg = bar + UHCI_USBSTS; 
+    uhci_t* u = 0;
+    uint8_t i = 0;
+    
+    for (i=0; i<UHCIMAX; i++)
+    {
+        u = uhci[i];
+        
+        if (u->PCIdevice == device)
+        {        
+            break;
+        } 
+    }
+    
+    textColor(IMPORTANT);
+    printf("USB UHCI %u: ", i);
+    uint16_t reg = u->bar + UHCI_USBSTS; 
     uint16_t tmp = inportw(reg);
     
     if ( tmp & UHCI_STS_USBINT)
     {
-        printf("USB UHCI - USB transaction completed\n");
+        printf("USB transaction completed\n", i);
         outportw(reg, UHCI_STS_USBINT); // reset interrupt      
     }
 
-    if (tmp & UHCI_STS_RESUME_DETECT)
+    else if (tmp & UHCI_STS_RESUME_DETECT)
     {
-        printf("USB UHCI Resume Detect\n");
-        outportw(reg, UHCI_STS_RESUME_DETECT);
-    }
-    
-    textColor(ERROR);
+        printf("Resume Detect\n", i);
+        outportw(reg, UHCI_STS_RESUME_DETECT); // reset interrupt
+    }    
 
-    if (tmp & UHCI_STS_HCHALTED)
+    else if (tmp & UHCI_STS_HCHALTED)
     {
-        printf("USB UHCI Host Controller Halted\n");
-        // outportw(reg, UHCI_STS_HCHALTED); 
+        textColor(ERROR);
+        printf("Host Controller Halted\n", i);
+        outportw(reg, UHCI_STS_HCHALTED); // reset interrupt
     }
     
-    if (tmp & UHCI_STS_HC_PROCESS_ERROR)
-    {
-        printf("USB UHCI Host Controller Process Error\n");
+    else if (tmp & UHCI_STS_HC_PROCESS_ERROR)
+    {  
+        textColor(ERROR);
+        printf("Host Controller Process Error\n", i);
         outportw(reg, UHCI_STS_HC_PROCESS_ERROR); // reset interrupt
     }
 
-    if (tmp & UHCI_STS_USB_ERROR)
+    else if (tmp & UHCI_STS_USB_ERROR)
     {
-        printf("USB UHCI - USB Error\n");
+        textColor(ERROR);
+        printf("USB Error\n",i);
         outportw(reg, UHCI_STS_USB_ERROR); // reset interrupt
     }
     
-    if (tmp & UHCI_STS_HOST_SYSTEM_ERROR)
+    else if (tmp & UHCI_STS_HOST_SYSTEM_ERROR)
     {
         textColor(ERROR);
-        printf("Host System Error\n");
+        printf("Host System Error\n", i);
         textColor(TEXT);
-        outportw(reg, UHCI_STS_HOST_SYSTEM_ERROR);
-        pci_analyzeHostSystemError(PCIdevice);
+        outportw(reg, UHCI_STS_HOST_SYSTEM_ERROR); // reset interrupt
+        pci_analyzeHostSystemError(u->PCIdevice);        
+    }
+
+    else
+    {
         textColor(IMPORTANT);
-        printf("\n>>> Init UHCI after fatal error:           <<<");
-        printf("\n>>> Press key for UHCI (re)initialization. <<<");
-        getch();
-        textColor(TEXT);
-        todoList_add(kernel_idleTasks, &uhci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for UHCI
+        printf("%x", tmp);
     }
     textColor(TEXT);
 }
