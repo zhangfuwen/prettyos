@@ -41,7 +41,7 @@ void uhci_init(void* data, size_t size)
     printf("\n>>>uhci_init<<<\n");
   #endif
     scheduler_insertTask(create_cthread(&startUHCI, "UHCI"));
-    sleepMilliSeconds(1); // HACK: Avoid race condition between uhci_init and the thread just created. Problem related to curUHCI global variable
+    sleepMilliSeconds(10); // HACK: Avoid race condition between uhci_init and the thread just created. Problem related to curUHCI global variable
 }
 
 void startUHCI()
@@ -212,12 +212,12 @@ void uhci_resetHostController(uhci_t* u)
 void uhci_handler(registers_t* r, pciDev_t* device)
 {
   #ifdef _UHCI_DIAGNOSIS_
+    textColor(TEXT);
     printf("\n>>>uhci_handler<<<\n");
   #endif
 
-    // Find UHCI that issued the interrupt
-    uhci_t* u = 0;
-
+    uhci_t* u = 0; // find UHCI that issued the interrupt
+    
     for (uint8_t i=0; i<UHCIMAX; i++)
     {
         if (u->PCIdevice == device)
@@ -227,7 +227,15 @@ void uhci_handler(registers_t* r, pciDev_t* device)
             break;
         }
     }
-    if(!u) return; // Not found
+    
+    if(!u) // No interrupt from uhci device found
+    {
+      #ifdef _UHCI_DIAGNOSIS_
+        textColor(ERROR);
+        printf("interrupt did not come from uhci device!\n");
+      #endif
+        return; 
+    }
 
     textColor(IMPORTANT);
 
