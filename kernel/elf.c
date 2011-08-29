@@ -7,6 +7,7 @@
 #include "util.h"
 #include "task.h"
 
+
 enum elf_headerType
 {
     ET_NONE  = 0,
@@ -76,7 +77,7 @@ typedef struct
     uint16_t shentrysize;
     uint16_t shnum;
     uint16_t shstrndx;
-} elf_header_t;
+} __attribute__((packed)) elf_header_t;
 
 
 enum elf_programHeaderTypes
@@ -107,7 +108,7 @@ typedef struct
     uint32_t memsz;
     uint32_t flags;
     uint32_t align;
-} elf_programHeader_t;
+} __attribute__((packed)) elf_programHeader_t;
 
 
 bool elf_filename(const char* filename)
@@ -153,9 +154,9 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
         #ifdef _DIAGNOSIS_
         textColor(GREEN);
         printf("ELF file program header:\n");
-        const char* types[] = { "NULL", "Loadable Segment", "Dynamic Linking Information",
-                                "Interpreter", "Note", "??", "Program Header" };
-        printf("  %s, offset %u, vaddr %Xh, paddr %Xh, filesz %u, memsz %u, flags %u, align %u\n",
+        const char* const types[] = { "NULL", "Loadable Segment", "Dynamic Linking Information",
+                                      "Interpreter", "Note", "Shared Library", "Program Header" };
+        printf(" %s, offset %u, vaddr %Xh, paddr %Xh, filesz %u, memsz %u, flags %u, align %u\n",
             types[ph[i].type], ph[i].offset, ph[i].vaddr, ph[i].paddr, ph[i].filesz, ph[i].memsz, ph[i].flags, ph[i].align);
         textColor(TEXT);
         #endif

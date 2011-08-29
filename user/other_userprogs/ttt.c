@@ -7,25 +7,23 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "ctype.h"
-#include "string.h"
 
 
 enum Feldstatus {Leer, X, O};
 
-uint8_t tictactoe[9] = {0,0,0,0,0,0,0,0,0};
+uint8_t tictactoe[9] = {Leer,Leer,Leer,
+                        Leer,Leer,Leer,
+                        Leer,Leer,Leer};
 bool ende = false;
 
 static void SetField(uint8_t x, uint8_t y, uint8_t Player)
 {
-    iSetCursor(x*4+2,y*2+15);
+    textColor(0x0F);
+    iSetCursor(x*4+3,y*2+15);
     if (Player == X)
-    {
         putchar('X');
-    }
     else if (Player == O)
-    {
         putchar('O');
-    }
 }
 
 static void gewinnen()
@@ -63,8 +61,20 @@ static void gewinnen()
     }
 }
 
+static void ClearLine(uint8_t line)
+{
+    printLine("                                                                                ", line, 0x0F);
+}
+
 static void Zug(uint16_t Player)
 {
+    textColor(0x0B);
+    iSetCursor(7, 22);
+    if(Player == X)
+        putchar('X');
+    else
+        putchar('O');
+
     char str[80];
     uint32_t input = 9;
 
@@ -81,8 +91,8 @@ static void Zug(uint16_t Player)
             input = 9; // String is empty -> Input not useful
         }
 
-        printLine("                                                                                ", 24, 0x0F); // Clear Inputline
-        printLine("                                                                                ", 26, 0x0F); // Clear Messageline
+        ClearLine(24); // Clear Inputline
+        ClearLine(26); // Clear Messageline
 
         if (input >= 9)
         {
@@ -105,27 +115,25 @@ static void Zug(uint16_t Player)
 
 int main()
 {
-	textColor(0x0B);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                              TicTacToe 3x3  v0.6.6"                             , 2, 0x0B);
+    printLine("                              TicTacToe 3x3  v0.7.0"                             , 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     iSetCursor(0,6);
-    textColor(0x0F);
-    puts("*************\n| 0 | 1 | 2 |\n*************\n| 3 | 4 | 5 |\n*************\n| 6 | 7 | 8 |\n*************\n\n");
-    puts("*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n|   |   |   |\n*************\n\n");
+    puts(" -------------\n | 0 | 1 | 2 |\n -------------\n | 3 | 4 | 5 |\n -------------\n | 6 | 7 | 8 |\n -------------\n\n");
+    puts(" -------------\n |   |   |   |\n -------------\n |   |   |   |\n -------------\n |   |   |   |\n -------------");
 
-    printLine("Please type in a number betwen 0 and 8.", 22, 0x0B);
+    printLine("Player  : Please type in a number betwen 0 and 8.", 22, 0x0B);
 
-    Zug(X);
-    for (uint8_t i = 0; i < 4 && !ende; ++i)
+    srand(getCurrentMilliseconds());
+    int Spieler = rand()%2 + X;
+    for(uint8_t i = 0; i < 9 && !ende; i++)
     {
-        Zug(O);
-        if (ende)
-        {
-            break;
-        }
-        Zug(X);
+        Zug(Spieler);
+        if(Spieler == X)
+            Spieler = O;
+        else
+            Spieler = X;
     }
 
     printLine("Press a key to continue...", 28, 0x0F);

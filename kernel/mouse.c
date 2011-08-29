@@ -6,7 +6,6 @@
 // http://houbysoft.com/download/ps2mouse.html
 // http://forum.osdev.org/viewtopic.php?t=10247
 // http://lowlevel.brainsware.org/wiki/index.php/Programmierung_der_PS/2-Maus
-// 'ported' and debugged by Cuervo
 
 #include "mouse.h"
 #include "util.h"
@@ -14,6 +13,7 @@
 #include "video/console.h"
 #include "video/vbe.h"
 #include "video/video.h"
+
 
 enum {NORMAL, WHEEL, WHEELS5BUTTON} mousetype = NORMAL;
 
@@ -27,17 +27,15 @@ bool mouse_br=0;    // Mouse Right Button
 bool mouse_b4=0;    // Mouse Button 4
 bool mouse_b5=0;    // Mouse button 5
 
-bool erroroccurred = false;
-
 
 static void mouse_wait(uint8_t type);
 static void mouse_write(int8_t data);
 static char mouse_read();
+static void mouse_handler(registers_t* a_r);
 
 
 void mouse_install()
 {
-    erroroccurred = false;
     // Enable the auxiliary mouse device
     mouse_wait(1);
     outportb(0x64, 0xA8);
@@ -55,7 +53,6 @@ void mouse_install()
     // Tell the mouse to use default settings
     mouse_write(0xF6);
     mouse_read();
-
 
     // Wheel-Mode test
     mouse_setsamples(200);
@@ -77,7 +74,6 @@ void mouse_install()
         }
     }
 
-
     // Setup the mouse handler
     irq_installHandler(IRQ_MOUSE, mouse_handler);
 
@@ -86,9 +82,9 @@ void mouse_install()
     mouse_read();
 }
 
-// Mouse functions
-void mouse_handler(registers_t* a_r)
+static void mouse_handler(registers_t* r)
 {
+    static bool erroroccurred = false;
     static uint8_t bytecounter = 0;
     static int8_t bytes[4];
 

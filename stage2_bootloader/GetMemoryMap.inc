@@ -55,12 +55,10 @@ get_memory_by_int15_e820:
 
 [BITS 32]
 convert_mmap:
-    push ebp
     mov ebp, esp
-    sub esp, 16
-    mov DWORD [ebp-4], 4096
-    mov DWORD [ebp-8], 0x1100
-    mov DWORD [ebp-12], 0
+    mov DWORD [ebp-4], 0x1000 ; src
+    mov DWORD [ebp-8], 0x1100 ; dest
+    mov edi, 0                ; counts entries
     jmp .L2
 .L3:
     mov eax, DWORD [ebp-4]
@@ -83,20 +81,16 @@ convert_mmap:
     mov DWORD [eax], 24
     add DWORD [ebp-4], 24
     add DWORD [ebp-8], 24
-    add DWORD [ebp-12], 1
+    inc edi
 .L2:
     mov eax, DWORD [ebp-4]
     mov eax, DWORD [eax+8]
     test eax, eax
     jne .L3
-    mov edx, DWORD [ebp-12]
-    mov eax, edx
+    mov eax, edi
     add eax, eax
-    add eax, edx
+    add eax, edi
     sal eax, 3
-    mov DWORD [ebp-12], eax
-    mov eax, DWORD [ebp-12]
-    leave
     ret
 
 %endif

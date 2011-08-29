@@ -12,14 +12,15 @@
    Because of this, the DMA is used for data transfers. */
 
 
-dma_channel_t dma_channel[4] = {{0, 0x87, 0x00, 0x01}, {1, 0x83, 0x02, 0x03}, {2, 0x81, 0x04, 0x05}, {3, 0x82, 0x06, 0x07}};
+const dma_channel_t dma_channel[4] = {{0, 0x87, 0x00, 0x01}, {1, 0x83, 0x02, 0x03}, {2, 0x81, 0x04, 0x05}, {3, 0x82, 0x06, 0x07}};
 
-static void dma_action(void* address, uint16_t length, dma_channel_t* channel, uint8_t mode)
+
+static void dma_action(void* address, uint16_t length, const dma_channel_t* channel, uint8_t mode)
 {
     length--; // ISA DMA counts from 0
 
     outportb(0x0A,                 BIT(2) | channel->portNum); // Mask channel
-    outportb(channel->pagePort,    (uintptr_t)address >> 16);  // Address: Bits 16-23 (External page register. Allows us to address 16 MiB)
+    outportb(channel->pagePort,    (uintptr_t)address >> 16);  // Address: Bits 16-23 (External page register. Allows us to address up to 16 MiB)
     outportb(0x0C,                 0x00);                      // Reset flip-flop
     outportb(channel->addressPort, (uintptr_t)address);        // Address: Bits 0-7
     outportb(channel->addressPort, (uintptr_t)address >> 8);   // Address: Bits 8-15
@@ -30,16 +31,16 @@ static void dma_action(void* address, uint16_t length, dma_channel_t* channel, u
     outportb(0x0A,                 channel->portNum);          // Unmask channel
 }
 
-// prepare the DMA for read transfer from hardware
-void dma_read(void* dest, uint16_t length, dma_channel_t* channel, DMA_TRANSFERMODE_t mode)
+// Prepare the DMA for read transfer from hardware
+void dma_read(void* dest, uint16_t length, const dma_channel_t* channel, DMA_TRANSFERMODE_t mode)
 {
     dma_action(dest, length, channel, mode | DMA_WRITE);
 }
 
-// prepare the DMA for write transfer to hardware
-void dma_write(void* source, uint16_t length, dma_channel_t* channel, DMA_TRANSFERMODE_t mode)
+// Prepare the DMA for write transfer to hardware
+void dma_write(const void* source, uint16_t length, const dma_channel_t* channel, DMA_TRANSFERMODE_t mode)
 {
-    dma_action(source, length, channel, mode | DMA_READ);
+    dma_action((void*)source, length, channel, mode | DMA_READ);
 }
 
 

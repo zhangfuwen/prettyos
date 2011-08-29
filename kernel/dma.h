@@ -1,16 +1,8 @@
-#ifndef CPU_H
-#define CPU_H
+#ifndef DMA_H
+#define DMA_H
 
 #include "util.h"
 
-
-enum DMA_CHANNEL
-{
-    DMA_CHANNEL_0 = 0,
-    DMA_CHANNEL_1 = 1,
-    DMA_CHANNEL_2 = 2,
-    DMA_CHANNEL_3 = 3
-};
 
 typedef enum
 {
@@ -33,10 +25,12 @@ typedef struct
     uint16_t counterPort;
 } dma_channel_t;
 
-extern dma_channel_t dma_channel[4]; // dma.c
 
-void dma_read (void* dest,   uint16_t length, dma_channel_t* channel, DMA_TRANSFERMODE_t mode);
-void dma_write(void* source, uint16_t length, dma_channel_t* channel, DMA_TRANSFERMODE_t mode);
+extern const dma_channel_t dma_channel[4];
+
+
+void dma_read (void* dest,      uint16_t length, const dma_channel_t* channel, DMA_TRANSFERMODE_t mode);
+void dma_write(const void* src, uint16_t length, const dma_channel_t* channel, DMA_TRANSFERMODE_t mode);
 
 
 #endif

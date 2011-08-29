@@ -8,7 +8,7 @@
 #define UHCIMAX  8 // max number of UHCI devices
 
 
-#define UHCI_USBCMD         0x00 
+#define UHCI_USBCMD         0x00
 #define UHCI_USBSTS         0x02
 #define UHCI_USBINTR        0x04
 #define UHCI_FRNUM          0x06
@@ -86,8 +86,7 @@
 // All transfer descriptors have the same basic, 32-byte structure.
 // The last 4 DWORDs are for software use.
 
-typedef
-struct uhci_td
+typedef struct uhci_td
 {
     // pointer to another TD or QH
     // inclusive control bits  (DWORD 0)
@@ -131,8 +130,7 @@ struct uhci_td
 
 // Queue Heads support the requirements of Control, Bulk, and Interrupt transfers
 // and must be aligned on a 16-byte boundary
-typedef
-struct uhci_qh
+typedef struct uhci_qh
 {
     // QUEUE HEAD LINK POINTER
     // inclusive control bits (DWORD 0)
@@ -148,9 +146,8 @@ struct uhci_qh
 } __attribute__((packed)) uhci_QH_t;
 
 // UHCI device
-typedef
-struct uhci 
-{    
+typedef struct
+{
     pciDev_t*  PCIdevice;          // PCI device
     uint16_t   bar;                // start of I/O space (base address register
     uintptr_t  framelistAddrPhys;  // physical adress of frame list

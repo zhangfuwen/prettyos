@@ -4,14 +4,14 @@
 */
 
 // http://wiki.osdev.org/Serial_ports
-// 'ported' and debugged by Cuervo, bugfixed (VBox) and extended by MrX
 
 #include "serial.h"
-#include "util.h"
 #include "video/console.h"
+
 
 static uint8_t  serialPorts;
 static uint16_t IOports[4]; // Contains the ports used to access
+
 
 void serial_init()
 {
@@ -33,38 +33,38 @@ void serial_init()
         outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
         outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
         textColor(LIGHT_GRAY);
-        printf("\n     => COM %d:\n", i+1);
-        printf("       => IO-port: ");
+        printf("\n     => COM %d:", i+1);
+        printf("\n       => IO-port: ");
         textColor(TEXT);
         printf("%xh",IOports[i]);
     }
     printf("\n\n");
 }
 
-char serial_received(uint8_t com)
+bool serial_received(uint8_t com)
 {
     if (com <= serialPorts)
     {
         return inportb(IOports[com-1] + 5) & 1;
     }
-    return 0;
+    return false;
 }
 
 char serial_read(uint8_t com)
 {
     if (com <= serialPorts)
     {
-        while (serial_received(com) == 0);
+        while (serial_received(com) == false);
         return inportb(IOports[com-1]);
     }
     return 0;
 }
 
-int32_t serial_isTransmitEmpty(uint8_t com)
+bool serial_isTransmitEmpty(uint8_t com)
 {
     if (com <= serialPorts)
         return inportb(IOports[com-1] + 5) & 0x20;
-    return(0);
+    return(true);
 }
 
 void serial_write(uint8_t com, char a)
@@ -72,7 +72,7 @@ void serial_write(uint8_t com, char a)
     if (com <= serialPorts)
     {
         while (serial_isTransmitEmpty(com) == 0);
-        outportb(IOports[com-1],a);
+        outportb(IOports[com-1], a);
     }
 }
 
