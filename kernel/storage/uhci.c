@@ -48,9 +48,11 @@ void startUHCI()
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>startUHCI<<<\n");
   #endif
-    initUHCIHostController(curUHCI);
-    textColor(LIGHT_MAGENTA);
-    printf("\n\n>>> Press key to close this console. <<<");
+    uhci_t* u = curUHCI;
+    initUHCIHostController(u);
+    textColor(IMPORTANT);
+    printf("\n>>> Press key to close this console. <<<");
+    textColor(TEXT);
     getch();
 }
 
@@ -221,12 +223,13 @@ void uhci_handler(registers_t* r, pciDev_t* device)
         
         if (u->PCIdevice == device)
         {        
+            printf("USB UHCI %u: ", i);
             break;
         } 
     }
     
     textColor(IMPORTANT);
-    printf("USB UHCI %u: ", i);
+    
     uint16_t reg = u->bar + UHCI_USBSTS; 
     uint16_t tmp = inportw(reg);
     
