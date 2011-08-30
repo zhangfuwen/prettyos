@@ -4,9 +4,10 @@
 #include "os.h"
 #include "pci.h"
 #include "synchronisation.h"
+#include "devicemanager.h"
 
-#define UHCIMAX  8 // max number of UHCI devices
-
+#define UHCIMAX      8  // max number of UHCI devices
+#define UHCIPORTMAX  4  // max number of UHCI device ports 
 
 #define UHCI_USBCMD         0x00
 #define UHCI_USBSTS         0x02
@@ -158,6 +159,8 @@ typedef struct
     size_t     memSize;            // memory size of IO space
     mutex_t*   framelistLock;      // mutex for access on the frame list
     mutex_t*   qhLock;             // mutex for access on the QH
+    bool       enabledPorts;       // root ports enabled
+    port_t     port[UHCIPORTMAX];  // root ports  
 } uhci_t;
 
 
@@ -167,6 +170,8 @@ void uhci_init(void* data, size_t size);
 void startUHCI();
 int32_t initUHCIHostController(uhci_t* u);
 void uhci_resetHostController(uhci_t* u);
+void uhci_enablePorts(uhci_t* u);
+void uhci_resetPort(uhci_t* u, uint8_t j);
 void uhci_handler(registers_t* r, pciDev_t* device);
 
 

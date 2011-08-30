@@ -17,6 +17,7 @@
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
 static uhci_t* uhci[UHCIMAX];
+static bool    UHCI_USBtransferFlag;
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
@@ -86,26 +87,12 @@ int32_t initUHCIHostController(uhci_t* u)
  #endif
     irq_installPCIHandler(u->PCIdevice->irq, uhci_handler, u->PCIdevice);
 
-    //USBtransferFlag = true;
-    //enabledPortFlag = false;
+    UHCI_USBtransferFlag = true;
+    u->enabledPorts      = false;
 
     uhci_resetHostController(u);
 
-    /*
-    if (!(puhci_OpRegs->UHCI_USBSTS & STS_HCHALTED))
-    {
-         enablePorts();
-    }
-    else
-    {
-         textColor(ERROR);
-         printf("\nFatal Error: Ports cannot be enabled. HCHalted set.");
-         uhci_showUSBSTS();
-         textColor(TEXT);
-         return -1;
-    }
-    */
-    return 0;
+    return (0);
 }
 
 void uhci_resetHostController(uhci_t* u)
@@ -189,6 +176,29 @@ void uhci_resetHostController(uhci_t* u)
     val = pci_config_read(bus, dev, func, 0x02C0);
     printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated
 
+    
+    
+    // root ports
+    printf("\nRoot-Hub: port1: %x port2: %x ", inportw (u->bar + UHCI_PORTSC1), inportw (u->bar + UHCI_PORTSC2));
+    
+    //if (!((u->bar + UHCI_USBSTS) & UHCI_STS_HCHALTED))
+    {
+         uhci_enablePorts(u); // attaches the ports
+    }
+    /*    
+    else
+    {
+         textColor(ERROR);
+         printf("\nFatal Error: Ports cannot be enabled. UHCI -  HCHalted set.");
+         textColor(TEXT);         
+    }
+    */
+
+    
+    textColor(SUCCESS);
+    printf("\nUHCI ready");
+    textColor(TEXT);
+
     // Run and mark it configured with a 64-byte max packet
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
 
@@ -196,10 +206,64 @@ void uhci_resetHostController(uhci_t* u)
     sleepMilliSeconds(20);
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
     sleepMilliSeconds(10);
+}
 
-    textColor(SUCCESS);
-    printf("\nUHCI ready");
+// ports
+void uhci_enablePorts(uhci_t* u)
+{
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("Enable ports");
+  #endif
+    textColor(HEADLINE);
+    printf("\nEnable UHCI root ports:\n");
     textColor(TEXT);
+
+    for (uint8_t j=0; j<u->rootPorts; j++)
+    {
+         uhci_resetPort(u,j);
+         u->enabledPorts = true;
+
+         u->port[j].type = &USB1; // device manager
+         u->port[j].data = (void*)(j+1);
+         snprintf(u->port[j].name, 14, "UHCI-Port %u", j+1);
+         attachPort(&u->port[j]);
+
+         if (UHCI_USBtransferFlag && u->enabledPorts && (inportw(u->bar + UHCI_PORTSC1+2*j) == (UHCI_PORT_LOWSPEED_DEVICE | UHCI_PORT_ENABLE | UHCI_PORT_CS))) // low speed, enabled, device attached
+         {
+             textColor(YELLOW);
+             printf("Port %u: low speed enabled, device attached\n",j+1);
+             textColor(TEXT);
+
+             //setupUSBDevice(j); // TEST
+         }
+    }
+}
+
+void uhci_resetPort(uhci_t* u, uint8_t j)
+{
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("Reset port %u\n", j+1);
+  #endif
+    
+    outportw(u->bar + UHCI_PORTSC1+2*j, inportw(u->bar + UHCI_PORTSC1+2*j) |  UHCI_PORT_RESET) ; // start reset sequence
+    sleepMilliSeconds(250);                 // do not delete this wait
+    outportw(u->bar + UHCI_PORTSC1+2*j, inportw(u->bar + UHCI_PORTSC1+2*j) & ~UHCI_PORT_RESET); // stop reset sequence
+
+    // wait and check, whether really zero
+    uint32_t timeout=20;
+    while ((inportw(u->bar + UHCI_PORTSC1+2*j) & UHCI_PORT_RESET) != 0)
+    {
+        sleepMilliSeconds(20);
+        timeout--;
+        if (timeout == 0)
+        {
+            textColor(ERROR);
+            printf("\nTimeour Error: Port %u did not reset! ",j+1);
+            textColor(TEXT);
+            printf("Port Status: %Xh", inportw(u->bar + UHCI_PORTSC1+2*j));
+            break;
+        }
+    }    
 }
 
 

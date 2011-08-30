@@ -383,7 +383,7 @@ void enablePorts()
          resetPort(j);
          enabledPortFlag = true;
 
-         port[j].type = &USB; // device manager
+         port[j].type = &USB2; // device manager
          port[j].data = (void*)(j+1);
          snprintf(port[j].name, 14, "EHCI-Port %u", j+1);
          attachPort(&port[j]);

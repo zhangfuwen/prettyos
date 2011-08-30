@@ -20,9 +20,10 @@ disk_t* disks[DISKARRAYSIZE];
 port_t* ports[PORTARRAYSIZE];
 partition_t* systemPartition = 0;
 
-portType_t FDD = {.motorOff = &flpydsk_motorOff},
-           USB = {.motorOff = 0},
-           RAM = {.motorOff = 0};
+portType_t FDD  = {.motorOff = &flpydsk_motorOff},
+           USB1 = {.motorOff = 0},
+           USB2 = {.motorOff = 0},
+           RAM  = {.motorOff = 0};
 diskType_t FLOPPYDISK = {.readSector = &flpydsk_readSector, .writeSector = &flpydsk_writeSector},
            USB_MSD    = {.readSector = &usbRead,            .writeSector = &usbWrite},
            RAMDISK    = {.readSector = 0,                   .writeSector = 0};
@@ -115,7 +116,9 @@ void showPortList()
                 printf("\nFDD ");
             else if (ports[i]->type == &RAM)
                 printf("\nRAM ");
-            else if (ports[i]->type == &USB)
+            else if (ports[i]->type == &USB1)
+                printf("\nUSB 1.1");
+            else if (ports[i]->type == &USB2)
                 printf("\nUSB 2.0");
 
             textColor(IMPORTANT);
