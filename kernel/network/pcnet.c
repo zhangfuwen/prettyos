@@ -173,7 +173,16 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 
 void PCNet_handler(registers_t* data, pciDev_t* device)
 {
-    network_adapter_t* adapter = device->data;
+    /*
+    // does not work with pcnet ???
+    network_adapter_t* adapter = network_getFirstAdapter();
+    if (!(adapter->PCIdev == device))
+    {
+        return;
+    }
+    */
+
+    network_adapter_t* adapter = device->data; 
     PCNet_card* pAdapter = adapter->data;
 
     uint16_t csr0 = readCSR(adapter, 0);

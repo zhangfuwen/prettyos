@@ -146,13 +146,19 @@ typedef struct uhci_qh
     uhci_TD_t* q_last;
 } __attribute__((packed)) uhci_QH_t;
 
+typedef 
+struct
+{
+    uintptr_t frPtr[1024];
+} frPtr_t;
+
 // UHCI device
 typedef struct
 {
     pciDev_t*  PCIdevice;          // PCI device
     uint16_t   bar;                // start of I/O space (base address register
     uintptr_t  framelistAddrPhys;  // physical adress of frame list
-    uintptr_t  framelistAddrVirt;  // virtual adress of frame list
+    frPtr_t*   framelistAddrVirt;  // virtual adress of frame list
     uintptr_t  qhPointerPhys;      // physical address of QH
     uhci_QH_t* qhPointerVirt;      // virtual adress of QH
     uint8_t    rootPorts;          // number of rootports
@@ -160,8 +166,11 @@ typedef struct
     mutex_t*   framelistLock;      // mutex for access on the frame list
     mutex_t*   qhLock;             // mutex for access on the QH
     bool       enabledPorts;       // root ports enabled
-    port_t     port[UHCIPORTMAX];  // root ports  
+    port_t     port[UHCIPORTMAX];  // root ports         
 } uhci_t;
+
+
+
 
 
 // functions

@@ -19,8 +19,12 @@ static void rtl8139_receive(network_adapter_t* adapter);
 
 void rtl8139_handler(registers_t* data, pciDev_t* device)
 {
-    network_adapter_t* adapter = device->data;
-
+    network_adapter_t* adapter = network_getFirstAdapter();
+    if (!(adapter->PCIdev == device))
+    {
+        return;
+    }
+    
   #ifdef _NETWORK_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n--------------------------------------------------------------------------------");
