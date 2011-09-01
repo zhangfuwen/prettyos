@@ -42,7 +42,14 @@ qemu.exe  -boot a -fda FloppyImage.img -soundhw pcspk -net nic,model=rtl8139 -re
 #define DNS_IP_3   222
 #define DNS_IP_4   222
 
+
 typedef struct network_adapter network_adapter_t;
+
+
+enum network_drivers
+{
+    RTL8139, RTL8168, PCNET, ND_COUNT
+};
 
 typedef struct
 {
@@ -69,9 +76,13 @@ struct network_adapter
 
 typedef struct
 {
-    IP_t IP;
-    uint8_t  MAC[6];
+    IP_t    IP;
+    uint8_t MAC[6];
 } Packet_t;
+
+
+extern network_driver_t network_drivers[ND_COUNT];
+
 
 bool network_installDevice(pciDev_t* device);
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length);
@@ -82,5 +93,6 @@ network_adapter_t* network_getFirstAdapter();
 uint32_t getMyIP();
 void dns_setServer(IP_t server);
 void dns_getServer(IP_t* server);
+
 
 #endif

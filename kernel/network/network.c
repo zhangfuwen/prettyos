@@ -16,12 +16,7 @@
 #include "pcnet.h"
 
 
-typedef enum
-{
-    RTL8139, RTL8168, PCNET, ND_COUNT
-} network_drivers;
-
-static network_driver_t drivers[ND_COUNT] =
+network_driver_t network_drivers[ND_COUNT] =
 {
     {.install = &rtl8139_install,  .interruptHandler = &rtl8139_handler, .sendPacket = &rtl8139_send},
     {.install = &rtl8168_install,  .interruptHandler = &rtl8168_handler, .sendPacket = 0},
@@ -40,17 +35,17 @@ bool network_installDevice(pciDev_t* device)
     network_driver_t* driver = 0;
     if (device->deviceID == 0x8139 && device->vendorID == 0x10EC) // RTL 8139
     {
-        driver = &drivers[RTL8139];
+        driver = &network_drivers[RTL8139];
         printf("\nRealtek RTL8139");
     }
     else if (device->deviceID == 0x8168 && device->vendorID == 0x10EC) // RTL 8111b/8168
     {
-        driver = &drivers[RTL8168];
+        driver = &network_drivers[RTL8168];
         printf("\nRealtek RTL8168");
     }
     else if (device->deviceID == 0x2000 && device->vendorID == 0x1022) // AMD PCNet III (Am79C973)
     {
-        driver = &drivers[PCNET];
+        driver = &network_drivers[PCNET];
         printf("\nAMD PCnet III");
     }
 

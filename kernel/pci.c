@@ -147,13 +147,14 @@ void pci_scan()
                     pciDev_t* PCIdev = malloc(sizeof(pciDev_t), 0, "pciDev_t");
                     list_append(devices, PCIdev);
 
-                    PCIdev->vendorID           = vendorID;
-                    PCIdev->deviceID           = pci_config_read(bus, device, func, PCI_DEVICE_ID);
-                    PCIdev->classID            = pci_config_read(bus, device, func, PCI_CLASS);
-                    PCIdev->subclassID         = pci_config_read(bus, device, func, PCI_SUBCLASS);
-                    PCIdev->interfaceID        = pci_config_read(bus, device, func, PCI_INTERFACE);
-                    PCIdev->revID              = pci_config_read(bus, device, func, PCI_REVISION);
-                    PCIdev->irq                = pci_config_read(bus, device, func, PCI_IRQLINE);
+                    PCIdev->data        = 0;
+                    PCIdev->vendorID    = vendorID;
+                    PCIdev->deviceID    = pci_config_read(bus, device, func, PCI_DEVICE_ID);
+                    PCIdev->classID     = pci_config_read(bus, device, func, PCI_CLASS);
+                    PCIdev->subclassID  = pci_config_read(bus, device, func, PCI_SUBCLASS);
+                    PCIdev->interfaceID = pci_config_read(bus, device, func, PCI_INTERFACE);
+                    PCIdev->revID       = pci_config_read(bus, device, func, PCI_REVISION);
+                    PCIdev->irq         = pci_config_read(bus, device, func, PCI_IRQLINE);
                     // Read BARs
                     for (uint8_t i = 0; i < 6; i++)
                     {

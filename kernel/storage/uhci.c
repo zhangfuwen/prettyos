@@ -8,16 +8,14 @@
 #include "timer.h"
 #include "kheap.h"
 #include "task.h"
-#include "todo_list.h"
 #include "irq.h"
-#include "audio/sys_speaker.h"
 #include "keyboard.h"
 
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
 static uhci_t* uhci[UHCIMAX];
-static bool    UHCI_USBtransferFlag;
+static bool    UHCI_USBtransferFlag = false;
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
@@ -25,24 +23,15 @@ void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     printf("\n>>>uhci_install<<<\n");
   #endif
 
-    curUHCI = uhci[index]   = (uhci_t*)malloc(sizeof(uhci_t),0,"uhci");
+    curUHCI = uhci[index]   = malloc(sizeof(uhci_t), 0, "uhci");
     uhci[index]->PCIdevice  = PCIdev;
+    uhci[index]->PCIdevice->data = uhci[index];
     uhci[index]->bar        = bar_phys;
     uhci[index]->memSize    = memorySize;
-
-    todoList_add(kernel_idleTasks, &uhci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for UHCI ??
-
     index++;
-}
 
-// start thread at kernel idle loop (ckernel.c)
-void uhci_init(void* data, size_t size)
-{
-  #ifdef _UHCI_DIAGNOSIS_
-    printf("\n>>>uhci_init<<<\n");
-  #endif
     scheduler_insertTask(create_cthread(&startUHCI, "UHCI"));
-    sleepMilliSeconds(10); // HACK: Avoid race condition between uhci_init and the thread just created. Problem related to curUHCI global variable
+    sleepMilliSeconds(10); // HACK: Avoid race condition between uhci_install and the thread just created. Problem related to curUHCI global variable
 }
 
 void startUHCI()
@@ -107,11 +96,11 @@ void uhci_resetHostController(uhci_t* u)
     // http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Informationen_vom_PCI-Treiber_holen
 
     uint16_t val = pci_config_read(bus, dev, func, 0x02C0);
-  
+
   #ifdef _UHCI_DIAGNOSIS_
     printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated
   #endif
-  
+
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_GRESET);
     sleepMilliSeconds(100); // at least 50 msec
     outportw(u->bar + UHCI_USBCMD, 0x00);
@@ -158,7 +147,7 @@ void uhci_resetHostController(uhci_t* u)
     // frame list
     u->framelistAddrVirt = (frPtr_t*)malloc(PAGESIZE, PAGESIZE, "uhci-framelist");
     u->framelistAddrPhys = paging_getPhysAddr((void*)u->framelistAddrVirt);
-    outportl(u->bar + UHCI_FRBASEADD, u->framelistAddrPhys);    
+    outportl(u->bar + UHCI_FRBASEADD, u->framelistAddrPhys);
 
     // resets support status bits in Legacy support register
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_STATUS);
@@ -168,7 +157,7 @@ void uhci_resetHostController(uhci_t* u)
 
     for (uint16_t i=1; i<1024; i++)
     {
-       u->framelistAddrVirt->frPtr[i] &= BIT(0) /*T*/; 
+       u->framelistAddrVirt->frPtr[i] &= BIT(0) /*T*/;
     }
 
     uhci_QH_t* qhOut = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
@@ -206,17 +195,17 @@ void uhci_resetHostController(uhci_t* u)
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, 0 /*UHCI_PCI_LEGACY_SUPPORT_PIRQ*/);
 
     val = pci_config_read(bus, dev, func, 0x02C0);
-    
+
     if (!val) // if value is not zero, Legacy Support (LEGSUP) is activated
     {
         textColor(SUCCESS);
-        printf("\n\nLegacy support is deactivated. UHCI ready\n"); 
+        printf("\n\nLegacy support is deactivated. UHCI ready\n");
         textColor(TEXT);
     }
     else
     {
         textColor(ERROR);
-        printf("\n\nLegacy support could not be deactivated.\n"); 
+        printf("\n\nLegacy support could not be deactivated.\n");
         textColor(TEXT);
     }
 
@@ -237,7 +226,6 @@ void uhci_resetHostController(uhci_t* u)
     {
          uhci_enablePorts(u); // attaches the ports
     }
-
     else
     {
          textColor(ERROR);
@@ -254,7 +242,7 @@ void uhci_enablePorts(uhci_t* u)
   #ifdef _UHCI_DIAGNOSIS_
     printf("Enable ports");
   #endif
-    
+
     for (uint8_t j=0; j<u->rootPorts; j++)
     {
          uhci_resetPort(u,j);
@@ -294,6 +282,7 @@ void uhci_enablePorts(uhci_t* u)
          }
     }
     // root ports
+
   #ifdef _UHCI_DIAGNOSIS_
     printf("\nRoot-Hub: port1: %x port2: %x ", inportw (u->bar + UHCI_PORTSC1), inportw (u->bar + UHCI_PORTSC2));
   #endif
@@ -343,23 +332,25 @@ void uhci_handler(registers_t* r, pciDev_t* device)
     printf("\n>>>uhci_handler<<<\n");
   #endif
 
-    uhci_t* u = 0; // find UHCI that issued the interrupt
-
+    uhci_t* u = device->data;
+    bool found = false;
+    // Check if its
     for (uint8_t i=0; i<UHCIMAX; i++)
     {
-        if (u->PCIdevice == device)
+        if (u == uhci[i])
         {
-            u = uhci[i];
             printf("USB UHCI %u: ", i);
+            found = true;
             break;
         }
     }
 
-    if(!u) // No interrupt from uhci device found
+    if(!found || u == 0) // No interrupt from uhci device found
     {
       #ifdef _UHCI_DIAGNOSIS_
         textColor(ERROR);
         printf("interrupt did not come from uhci device!\n");
+        textColor(TEXT);
       #endif
         return;
     }

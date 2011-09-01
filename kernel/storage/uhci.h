@@ -7,7 +7,7 @@
 #include "devicemanager.h"
 
 #define UHCIMAX      8  // max number of UHCI devices
-#define UHCIPORTMAX  4  // max number of UHCI device ports 
+#define UHCIPORTMAX  4  // max number of UHCI device ports
 
 #define UHCI_USBCMD         0x00
 #define UHCI_USBSTS         0x02
@@ -131,7 +131,7 @@ typedef struct uhci_td
 
 // Queue Heads support the requirements of Control, Bulk, and Interrupt transfers
 // and must be aligned on a 16-byte boundary
-typedef struct uhci_qh
+typedef struct
 {
     // QUEUE HEAD LINK POINTER
     // inclusive control bits (DWORD 0)
@@ -146,8 +146,7 @@ typedef struct uhci_qh
     uhci_TD_t* q_last;
 } __attribute__((packed)) uhci_QH_t;
 
-typedef 
-struct
+typedef struct
 {
     uintptr_t frPtr[1024];
 } frPtr_t;
@@ -166,14 +165,10 @@ typedef struct
     mutex_t*   framelistLock;      // mutex for access on the frame list
     mutex_t*   qhLock;             // mutex for access on the QH
     bool       enabledPorts;       // root ports enabled
-    port_t     port[UHCIPORTMAX];  // root ports         
+    port_t     port[UHCIPORTMAX];  // root ports
 } uhci_t;
 
 
-
-
-
-// functions
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
 void uhci_init(void* data, size_t size);
 void startUHCI();

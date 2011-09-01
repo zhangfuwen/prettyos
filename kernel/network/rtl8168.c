@@ -16,6 +16,10 @@ static const uint16_t numOfDesc = 32; // Can be up to 1024
 void rtl8168_handler(registers_t* data, pciDev_t* device)
 {
     network_adapter_t* adapter = device->data;
+    if (!adapter || adapter->PCIdev != device || adapter->driver != &network_drivers[RTL8168])
+    {
+        return;
+    }
 
     #ifdef _NETWORK_DIAGNOSIS_
     printf("IRQ: RTL8168");
