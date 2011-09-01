@@ -52,9 +52,8 @@ void startUHCI()
   #endif
     uhci_t* u = curUHCI;
     initUHCIHostController(u);
-    textColor(IMPORTANT);
-    printf("\n>>> Press key to close this console. <<<");
     textColor(TEXT);
+    printf("\n\n>>> Press key to close this console. <<<");
     getch();
 }
 
@@ -108,8 +107,11 @@ void uhci_resetHostController(uhci_t* u)
     // http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Informationen_vom_PCI-Treiber_holen
 
     uint16_t val = pci_config_read(bus, dev, func, 0x02C0);
+  
+  #ifdef _UHCI_DIAGNOSIS_
     printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated
-
+  #endif
+  
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_GRESET);
     sleepMilliSeconds(100); // at least 50 msec
     outportw(u->bar + UHCI_USBCMD, 0x00);
@@ -125,9 +127,11 @@ void uhci_resetHostController(uhci_t* u)
             break;
         }
     }
+  #ifdef _UHCI_DIAGNOSIS_
     textColor(IMPORTANT);
-    printf("\nUHCI root ports: %u\n", u->rootPorts);
+    printf("\nUHCI root ports: %u", u->rootPorts);
     textColor(TEXT);
+  #endif
 
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_HCRESET); // Reset
 
@@ -147,47 +151,50 @@ void uhci_resetHostController(uhci_t* u)
     // turn on all interrupts
     outportw(u->bar + UHCI_USBINTR, UHCI_INT_TIMEOUT_ENABLE | UHCI_INT_RESUME_ENABLE |
                                     UHCI_INT_IOC_ENABLE     | UHCI_INT_SHORT_PACKET_ENABLE );
-    
+
     // start at frame 0 and provide physical address of frame list
     outportw(u->bar + UHCI_FRNUM, 0x0000);
-    
+
     // frame list
-    u->framelistAddrVirt = (frPtr_t*)malloc(PAGESIZE, PAGESIZE, "uhci-framelist"); 
+    u->framelistAddrVirt = (frPtr_t*)malloc(PAGESIZE, PAGESIZE, "uhci-framelist");
     u->framelistAddrPhys = paging_getPhysAddr((void*)u->framelistAddrVirt);
-    outportl(u->bar + UHCI_FRBASEADD, u->framelistAddrPhys);
-    u->framelistAddrPhys = paging_getPhysAddr((void*)u->framelistAddrVirt) & BIT(1) /*QH*/;
-    
+    outportl(u->bar + UHCI_FRBASEADD, u->framelistAddrPhys);    
+
     // resets support status bits in Legacy support register
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_STATUS);
 
     // frame timespan
     outportb(u->bar + UHCI_SOFMOD, 0x40);
-        
+
     for (uint16_t i=1; i<1024; i++)
     {
-       u->framelistAddrVirt->frPtr[i] &= BIT(0); /*T*/
+       u->framelistAddrVirt->frPtr[i] &= BIT(0) /*T*/; 
     }
 
     uhci_QH_t* qhOut = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
     uhci_QH_t* qhIn  = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
-        
+
     uhci_TD_t* tdIn  = malloc(sizeof(uhci_TD_t),16,"uhci-TD");
     uhci_TD_t* tdOut = malloc(sizeof(uhci_TD_t),16,"uhci-TD");
-    tdIn->next       = BIT(0);
-    tdIn->buffer     = (uintptr_t)malloc(0x1000,0,"uhci-TDbuffer");
-    tdOut->next      = BIT(0);
-    tdOut->buffer    = (uintptr_t)malloc(0x1000,0,"uhci-TDbuffer");
+    tdIn->next       = BIT(0) /*T*/;
+    tdIn->buffer     = paging_getPhysAddr(malloc(0x1000,0,"uhci-TDbuffer"));
+    tdIn->active     = 0;
+    tdIn->intOnComplete = 0;
+    tdOut->next      = BIT(0) /*T*/;
+    tdOut->buffer    = paging_getPhysAddr(malloc(0x1000,0,"uhci-TDbuffer"));
+    tdOut->active    = 0;
+    tdOut->intOnComplete = 0;
 
-    qhIn->next       = paging_getPhysAddr((void*)qhOut)& BIT(1) /*QH*/;  
+    qhIn->next       = paging_getPhysAddr((void*)qhOut)& BIT(1) /*QH*/;
     qhIn->transfer   = paging_getPhysAddr((void*)tdIn);
     qhIn->q_first    = 0;
     qhIn->q_last     = 0;
 
-    qhOut->next       = u->framelistAddrPhys;  
+    qhOut->next       = u->framelistAddrPhys & BIT(1) /*QH*/;
     qhOut->transfer   = paging_getPhysAddr((void*)tdOut);
     qhOut->q_first    = 0;
-    qhOut->q_last     = 0;    
-    
+    qhOut->q_last     = 0;
+
 
     // switch off the ports
     for (uint8_t i=0; i<u->rootPorts; i++)
@@ -196,42 +203,48 @@ void uhci_resetHostController(uhci_t* u)
     }
 
     // generate PCI IRQs
-    pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_PIRQ);
-    
+    pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, 0 /*UHCI_PCI_LEGACY_SUPPORT_PIRQ*/);
+
     val = pci_config_read(bus, dev, func, 0x02C0);
-    printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated
-
-    textColor(SUCCESS);
-    printf("\nUHCI ready");
-    textColor(TEXT);
-
     
+    if (!val) // if value is not zero, Legacy Support (LEGSUP) is activated
+    {
+        textColor(SUCCESS);
+        printf("\n\nLegacy support is deactivated. UHCI ready"); 
+        textColor(TEXT);
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("\n\nLegacy support could not be deactivated."); 
+        textColor(TEXT);
+    }
 
     // Run and mark it configured with a 64-byte max packet
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
     sleepMilliSeconds(100);
-    
+
     outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) | UHCI_CMD_FGR);
     sleepMilliSeconds(100);
-    
+
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
-    
+
     // root ports
-    printf("\nRoot-Hub: port1: %x port2: %x ", inportw (u->bar + UHCI_PORTSC1), inportw (u->bar + UHCI_PORTSC2));
-    
+    printf("\n\nRoot-Hub: port1: %xh port2: %xh\n", inportw (u->bar + UHCI_PORTSC1), inportw (u->bar + UHCI_PORTSC2));
+
     if (!((u->bar + UHCI_USBSTS) & UHCI_STS_HCHALTED))
     {
          uhci_enablePorts(u); // attaches the ports
     }
-    
+
     else
     {
          textColor(ERROR);
          printf("\nFatal Error: Ports cannot be enabled. UHCI -  HCHalted.");
-         textColor(TEXT);         
+         textColor(TEXT);
 
          uhci_enablePorts(u); // attaches the ports  /// TEST
-    }    
+    }
 }
 
 // ports
@@ -240,10 +253,7 @@ void uhci_enablePorts(uhci_t* u)
   #ifdef _UHCI_DIAGNOSIS_
     printf("Enable ports");
   #endif
-    textColor(HEADLINE);
-    printf("\nEnable UHCI root ports:\n");
-    textColor(TEXT);
-
+    
     for (uint8_t j=0; j<u->rootPorts; j++)
     {
          uhci_resetPort(u,j);
@@ -254,25 +264,38 @@ void uhci_enablePorts(uhci_t* u)
          snprintf(u->port[j].name, 14, "UHCI-Port %u", j+1);
          attachPort(&u->port[j]);
 
-         if (UHCI_USBtransferFlag && u->enabledPorts && (inportw(u->bar + UHCI_PORTSC1+2*j) == (UHCI_PORT_LOWSPEED_DEVICE | UHCI_PORT_ENABLE | UHCI_PORT_CS))) // low speed, enabled, device attached
+         uint16_t portsc = inportw(u->bar + UHCI_PORTSC1+2*j);
+
+         if (UHCI_USBtransferFlag && u->enabledPorts &&
+            ((portsc & (UHCI_PORT_LOWSPEED_DEVICE | UHCI_PORT_ENABLE | UHCI_PORT_CS)) == (UHCI_PORT_LOWSPEED_DEVICE | UHCI_PORT_ENABLE | UHCI_PORT_CS))) // low speed, enabled, device attached
          {
              textColor(YELLOW);
-             printf("Port %u: low speed enabled, device attached\n",j+1);
+             printf("\nPort %u: low speed enabled, device attached",j+1);
              textColor(TEXT);
 
              //setupUSBDevice(j); // TEST
          }
-         else if (UHCI_USBtransferFlag && u->enabledPorts && (inportw(u->bar + UHCI_PORTSC1+2*j) == (UHCI_PORT_ENABLE | UHCI_PORT_CS))) // full speed, enabled, device attached
+         else if (UHCI_USBtransferFlag && u->enabledPorts &&
+                 ((portsc & (UHCI_PORT_ENABLE | UHCI_PORT_CS)) == (UHCI_PORT_ENABLE | UHCI_PORT_CS))) // full speed, enabled, device attached
          {
              textColor(YELLOW);
-             printf("Port %u: full speed enabled, device attached\n",j+1);
+             printf("\nPort %u: full speed enabled, device attached",j+1);
              textColor(TEXT);
 
              //setupUSBDevice(j); // TEST
+         }
+
+         if (UHCI_USBtransferFlag && u->enabledPorts && (portsc & UHCI_PORT_CS) == 0)
+         {
+             textColor(YELLOW);
+             printf("\nPort %u: no device attached",j+1);
+             textColor(TEXT);
          }
     }
     // root ports
+  #ifdef _UHCI_DIAGNOSIS_
     printf("\nRoot-Hub: port1: %x port2: %x ", inportw (u->bar + UHCI_PORTSC1), inportw (u->bar + UHCI_PORTSC2));
+  #endif
 }
 
 void uhci_resetPort(uhci_t* u, uint8_t j)
@@ -280,12 +303,12 @@ void uhci_resetPort(uhci_t* u, uint8_t j)
   #ifdef _UHCI_DIAGNOSIS_
     printf("Reset port %u\n", j+1);
   #endif
-    
+
     outportw(u->bar + UHCI_PORTSC1+2*j,UHCI_PORT_RESET);
     sleepMilliSeconds(250); // do not delete this wait
     outportw(u->bar + UHCI_PORTSC1+2*j,0x0000);
     outportw(u->bar + UHCI_PORTSC1+2*j,UHCI_PORT_ENABLE_CHANGE|UHCI_PORT_CS_CHANGE|UHCI_PORT_ENABLE); // Clear bit 1 & 3, and Set bit 2 [Enable]
-    
+
     // wait and check, whether really zero
     uint32_t timeout=20;
     while ((inportw(u->bar + UHCI_PORTSC1+2*j) & UHCI_PORT_RESET) != 0)
@@ -297,10 +320,12 @@ void uhci_resetPort(uhci_t* u, uint8_t j)
             textColor(ERROR);
             printf("\nTimeour Error: Port %u did not reset! ",j+1);
             textColor(TEXT);
+          #ifdef _UHCI_DIAGNOSIS_
             printf("Port Status: %Xh", inportw(u->bar + UHCI_PORTSC1+2*j));
+          #endif
             break;
         }
-    }    
+    }
 }
 
 
@@ -318,7 +343,7 @@ void uhci_handler(registers_t* r, pciDev_t* device)
   #endif
 
     uhci_t* u = 0; // find UHCI that issued the interrupt
-    
+
     for (uint8_t i=0; i<UHCIMAX; i++)
     {
         if (u->PCIdevice == device)
@@ -328,14 +353,14 @@ void uhci_handler(registers_t* r, pciDev_t* device)
             break;
         }
     }
-    
+
     if(!u) // No interrupt from uhci device found
     {
       #ifdef _UHCI_DIAGNOSIS_
         textColor(ERROR);
         printf("interrupt did not come from uhci device!\n");
       #endif
-        return; 
+        return;
     }
 
     textColor(IMPORTANT);
