@@ -95,10 +95,9 @@ void uhci_resetHostController(uhci_t* u)
 
     // http://www.lowlevel.eu/wiki/Universal_Host_Controller_Interface#Informationen_vom_PCI-Treiber_holen
 
-    uint16_t val = pci_config_read(bus, dev, func, 0x02C0);
-
   #ifdef _UHCI_DIAGNOSIS_
-    printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated
+    uint16_t val = pci_config_read(bus, dev, func, 0x02C0);
+    // printf("\nLegacy Support Register: %xh",val); // if value is not zero, Legacy Support (LEGSUP) is activated
   #endif
 
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_GRESET);
@@ -191,18 +190,17 @@ void uhci_resetHostController(uhci_t* u)
         outportw(u->bar + UHCI_PORTSC1 + i*2, UHCI_PORT_CS_CHANGE);
     }
 
-    // generate PCI IRQs
+    // deactivate legacy support 
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, 0 /*UHCI_PCI_LEGACY_SUPPORT_PIRQ*/);
-
     val = pci_config_read(bus, dev, func, 0x02C0);
 
-    if (!val) // if value is not zero, Legacy Support (LEGSUP) is activated
+    if (val == 0x0000) 
     {
         textColor(SUCCESS);
         printf("\n\nLegacy support is deactivated. UHCI ready\n");
         textColor(TEXT);
     }
-    else
+    else // if value is not zero, Legacy Support (LEGSUP) is activated
     {
         textColor(ERROR);
         printf("\n\nLegacy support could not be deactivated.\n");
@@ -253,45 +251,14 @@ void uhci_enablePorts(uhci_t* u)
          snprintf(u->port[j].name, 14, "UHCI-Port %u", j+1);
          attachPort(&u->port[j]);
 
-         uint16_t portsc = inportw(u->bar + UHCI_PORTSC1+2*j);
-
-         if (UHCI_USBtransferFlag && u->enabledPorts &&
-            ((portsc & (UHCI_PORT_LOWSPEED_DEVICE | UHCI_PORT_ENABLE | UHCI_PORT_CS)) == (UHCI_PORT_LOWSPEED_DEVICE | UHCI_PORT_ENABLE | UHCI_PORT_CS))) // low speed, enabled, device attached
-         {
-             textColor(YELLOW);
-             printf("\nPort %u: low speed enabled, device attached",j+1);
-             textColor(TEXT);
-
-             //setupUSBDevice(j); // TEST
-         }
-         else if (UHCI_USBtransferFlag && u->enabledPorts &&
-                 ((portsc & (UHCI_PORT_ENABLE | UHCI_PORT_CS)) == (UHCI_PORT_ENABLE | UHCI_PORT_CS))) // full speed, enabled, device attached
-         {
-             textColor(YELLOW);
-             printf("\nPort %u: full speed enabled, device attached",j+1);
-             textColor(TEXT);
-
-             //setupUSBDevice(j); // TEST
-         }
-
-         if (UHCI_USBtransferFlag && u->enabledPorts && (portsc & UHCI_PORT_CS) == 0)
-         {
-             textColor(YELLOW);
-             printf("\nPort %u: no device attached",j+1);
-             textColor(TEXT);
-         }
+         showPortState(u,j);
     }
-    // root ports
-
-  #ifdef _UHCI_DIAGNOSIS_
-    printf("\nRoot-Hub: port1: %x port2: %x ", inportw (u->bar + UHCI_PORTSC1), inportw (u->bar + UHCI_PORTSC2));
-  #endif
 }
 
 void uhci_resetPort(uhci_t* u, uint8_t j)
 {
   #ifdef _UHCI_DIAGNOSIS_
-    printf("Reset port %u\n", j+1);
+    printf("\n\nReset port %u\n", j+1);
   #endif
 
     outportw(u->bar + UHCI_PORTSC1+2*j,UHCI_PORT_RESET);
@@ -358,49 +325,52 @@ void uhci_handler(registers_t* r, pciDev_t* device)
     textColor(IMPORTANT);
 
     uint16_t reg = u->bar + UHCI_USBSTS;
-    uint16_t tmp = inportw(reg);
+    uint16_t val = inportw(reg);
 
-    if (tmp & UHCI_STS_USBINT)
+    if (val & UHCI_STS_USBINT)
     {
         printf("USB transaction completed\n");
         outportw(reg, UHCI_STS_USBINT); // reset interrupt
     }
-    if (tmp & UHCI_STS_RESUME_DETECT)
+    if (val & UHCI_STS_RESUME_DETECT)
     {
         printf("Resume Detect\n");
         outportw(reg, UHCI_STS_RESUME_DETECT); // reset interrupt
     }
-    if (tmp & UHCI_STS_HCHALTED)
+    if (val & UHCI_STS_HCHALTED)
     {
         textColor(ERROR);
         printf("Host Controller Halted\n");
         outportw(reg, UHCI_STS_HCHALTED); // reset interrupt
     }
-    if (tmp & UHCI_STS_HC_PROCESS_ERROR)
+    if (val & UHCI_STS_HC_PROCESS_ERROR)
     {
         textColor(ERROR);
         printf("Host Controller Process Error\n");
         outportw(reg, UHCI_STS_HC_PROCESS_ERROR); // reset interrupt
     }
-    if (tmp & UHCI_STS_USB_ERROR)
+    if (val & UHCI_STS_USB_ERROR)
     {
         textColor(ERROR);
         printf("USB Error\n");
         outportw(reg, UHCI_STS_USB_ERROR); // reset interrupt
     }
-    if (tmp & UHCI_STS_HOST_SYSTEM_ERROR)
+    if (val & UHCI_STS_HOST_SYSTEM_ERROR)
     {
         textColor(ERROR);
         printf("Host System Error\n");
         outportw(reg, UHCI_STS_HOST_SYSTEM_ERROR); // reset interrupt
         pci_analyzeHostSystemError(u->PCIdevice);
     }
-    if (tmp == 0)
+    if (val == 0)
+    {
+        textColor(ERROR);
         printf("Invalid interrupt");
+    }
     else
     {
         textColor(IMPORTANT);
-        printf("%x", tmp);
+        printf("%x", val);
     }
     textColor(TEXT);
 }
@@ -415,6 +385,28 @@ void uhci_handler(registers_t* r, pciDev_t* device)
 *******************************************************************************************************/
 
 // TODO
+
+void showPortState(uhci_t* u, uint8_t j)
+{
+    uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*j);
+
+    printf("port %u: %xh", j+1, val);
+
+    if (val & UHCI_SUSPEND)                     {printf("\nport %u: SUSPEND",            j+1);}
+    if (val & UHCI_PORT_RESET)                  {printf("\nport %u: RESET",              j+1);}
+    if (val & UHCI_PORT_LOWSPEED_DEVICE)        {printf("\nport %u: LOWSPEED DEVICE",    j+1);} 
+    if ((val & UHCI_PORT_LOWSPEED_DEVICE) == 0) {printf("\nport %u: FULLSPEED DEVICE",   j+1);} 
+    if (val & UHCI_PORT_RESUME_DETECT)          {printf("\nport %u: RESUME DETECT",      j+1);}
+    
+    if (val & BIT(5))                           {printf("\nport %u: Line State: D-",     j+1);}
+    if (val & BIT(4))                           {printf("\nport %u: Line State: D+",     j+1);}
+    
+    if (val & UHCI_PORT_ENABLE_CHANGE)          {printf("\nport %u: ENABLE CHANGE",      j+1);}
+    if (val & UHCI_PORT_ENABLE)                 {printf("\nport %u: ENABLED",            j+1);}
+    if (val & UHCI_PORT_CS_CHANGE)              {printf("\nport %u: DEVICE CHANGE",      j+1);}
+    if (val & UHCI_PORT_CS)                     {printf("\nport %u: DEVICE ATTACHED",    j+1);} 
+    if ((val & UHCI_PORT_CS) == 0)              {printf("\nport %u: NO DEVICE ATTACHED", j+1);}    
+}
 
 /*******************************************************************************************************
 *                                                                                                      *

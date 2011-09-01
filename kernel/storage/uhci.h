@@ -176,6 +176,7 @@ int32_t initUHCIHostController(uhci_t* u);
 void uhci_resetHostController(uhci_t* u);
 void uhci_enablePorts(uhci_t* u);
 void uhci_resetPort(uhci_t* u, uint8_t j);
+void showPortState(uhci_t* u, uint8_t j);
 void uhci_handler(registers_t* r, pciDev_t* device);
 
 
