@@ -210,13 +210,13 @@ void uhci_resetHostController(uhci_t* u)
     if (!val) // if value is not zero, Legacy Support (LEGSUP) is activated
     {
         textColor(SUCCESS);
-        printf("\n\nLegacy support is deactivated. UHCI ready"); 
+        printf("\n\nLegacy support is deactivated. UHCI ready\n"); 
         textColor(TEXT);
     }
     else
     {
         textColor(ERROR);
-        printf("\n\nLegacy support could not be deactivated."); 
+        printf("\n\nLegacy support could not be deactivated.\n"); 
         textColor(TEXT);
     }
 
@@ -229,8 +229,9 @@ void uhci_resetHostController(uhci_t* u)
 
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
 
-    // root ports
+  #ifdef _UHCI_DIAGNOSIS_
     printf("\n\nRoot-Hub: port1: %xh port2: %xh\n", inportw (u->bar + UHCI_PORTSC1), inportw (u->bar + UHCI_PORTSC2));
+  #endif
 
     if (!((u->bar + UHCI_USBSTS) & UHCI_STS_HCHALTED))
     {
