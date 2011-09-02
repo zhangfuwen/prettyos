@@ -43,6 +43,7 @@
 #define UHCI_STS_RESUME_DETECT       BIT(2)
 #define UHCI_STS_USB_ERROR           BIT(1)
 #define UHCI_STS_USBINT              BIT(0)
+#define UHCI_STS_MASK                0x3F
 
 /* ******* */
 /* USBINTR */
@@ -52,6 +53,7 @@
 #define UHCI_INT_IOC_ENABLE          BIT(2)
 #define UHCI_INT_RESUME_ENABLE       BIT(1)
 #define UHCI_INT_TIMEOUT_ENABLE      BIT(0)
+#define UHCI_INT_MASK                0xF
 
 /* ******* */
 /* PORTSC  */
@@ -60,6 +62,7 @@
 #define UHCI_SUSPEND                 BIT(12)
 #define UHCI_PORT_RESET              BIT(9)
 #define UHCI_PORT_LOWSPEED_DEVICE    BIT(8)
+#define UHCI_PORT_VALID              BIT(7) // reserved an readonly; always read as 1
 #define UHCI_PORT_RESUME_DETECT      BIT(6)
 #define UHCI_PORT_ENABLE_CHANGE      BIT(3)
 #define UHCI_PORT_ENABLE             BIT(2)
@@ -81,6 +84,13 @@
 
 // Status bits that are cleared by setting to 1
 #define UHCI_PCI_LEGACY_SUPPORT_STATUS   0x8F00
+
+/* ***** */
+/* QH TD */
+/* ***** */
+
+#define BIT_T  0
+#define BIT_QH 1
 
 
 // Transfer Descriptors (TD) are always aligned on 16-byte boundaries.
