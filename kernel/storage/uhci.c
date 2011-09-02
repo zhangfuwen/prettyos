@@ -173,6 +173,7 @@ void uhci_resetHostController(uhci_t* u)
 
 
     // ---------------------------
+    /*
     uhci_QH_t* qhIn  = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
     uhci_QH_t* qhOut = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
 
@@ -198,8 +199,14 @@ void uhci_resetHostController(uhci_t* u)
     tdOut->buffer    = paging_getPhysAddr(malloc(0x1000,0,"uhci-TDbuffer"));
     tdOut->active    = 1;
     tdOut->intOnComplete = 1;
+    */
     // ---------------------------
 
+    uhci_QH_t* qhIn  = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
+    qhIn->next       = BIT_T;
+    qhIn->transfer   = BIT_T;
+    qhIn->q_first    = 0;
+    qhIn->q_last     = 0;
 
     for (uint16_t i=0; i<1024; i++)
     {
@@ -211,8 +218,8 @@ void uhci_resetHostController(uhci_t* u)
     outportl(u->bar + UHCI_FRBASEADD, u->framelistAddrPhys);
     outportw(u->bar + UHCI_FRNUM, 0x0000);
 
-    // set PIRQ or zero (???)
-    pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, 0 /*UHCI_PCI_LEGACY_SUPPORT_PIRQ*/);
+    // set PIRQ 
+    pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_PIRQ);
 
     // start hostcontroller and mark it configured with a 64-byte max packet
     outportw(u->bar + UHCI_USBCMD, UHCI_CMD_RS | UHCI_CMD_CF | UHCI_CMD_MAXP);
