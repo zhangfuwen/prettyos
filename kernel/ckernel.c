@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.3.38 - Rev: 1239";
+const char* const version = "0.0.3.39 - Rev: 1240";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
