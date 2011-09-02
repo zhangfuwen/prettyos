@@ -239,15 +239,20 @@ void uhci_resetHostController(uhci_t* u)
     printf("\n\nRoot-Hub: port1: %xh port2: %xh\n", inportw (u->bar + UHCI_PORTSC1), inportw (u->bar + UHCI_PORTSC2));
   #endif
 
+    u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS; 
     if (!(inportw(u->bar + UHCI_USBSTS) & UHCI_STS_HCHALTED))
-    {
-         uhci_enablePorts(u); // attaches the ports
+    {        
+        textColor(SUCCESS);
+        printf("\n\nRunStop bit: %u\n", u->run); 
+        textColor(TEXT);
+        uhci_enablePorts(u); // attaches the ports
     }
     else
     {
-         textColor(ERROR);
-         printf("\nFatal Error: Ports cannot be enabled. UHCI -  HCHalted.");
-         textColor(TEXT);
+        textColor(ERROR);
+        printf("\nFatal Error: UHCI - HCHalted. Ports will not be enabled.");
+        printf(" - RunStop bit: %u", u->run); 
+        textColor(TEXT);         
     }
 }
 

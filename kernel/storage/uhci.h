@@ -89,8 +89,8 @@
 /* QH TD */
 /* ***** */
 
-#define BIT_T  0
-#define BIT_QH 1
+#define BIT_T    0x01 // bit 0
+#define BIT_QH   0x02 // bit 1
 
 
 // Transfer Descriptors (TD) are always aligned on 16-byte boundaries.
@@ -176,6 +176,7 @@ typedef struct
     mutex_t*   qhLock;             // mutex for access on the QH
     bool       enabledPorts;       // root ports enabled
     port_t     port[UHCIPORTMAX];  // root ports
+    bool       run;                // hc running (RS bit) 
 } uhci_t;
 
 
