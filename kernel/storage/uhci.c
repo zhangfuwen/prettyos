@@ -334,19 +334,23 @@ void uhci_handler(registers_t* r, pciDev_t* device)
 {
     uhci_t* u = device->data;
     bool found = false;
+    uint8_t i;
     // Check if its
-    for (uint8_t i=0; i<UHCIMAX; i++)
+    
+    for (i=0; i<UHCIMAX; i++)
     {
         if (u == uhci[i])
         {
             textColor(TEXT);
-            printf("\nUSB UHCI %u: ", i);
             found = true;
             break;
         }
     }
 
-    if(!found || u == 0) // No interrupt from uhci device found
+    uint16_t reg = u->bar + UHCI_USBSTS;
+    uint16_t val = inportw(reg);
+
+    if(found==false || u==0 || val==0) // No interrupt from corresponding uhci device found
     {
       #ifdef _UHCI_DIAGNOSIS_
         textColor(ERROR);
@@ -356,11 +360,10 @@ void uhci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
+    printf("\nUSB UHCI %u: ", i);
+
     textColor(IMPORTANT);
-
-    uint16_t reg = u->bar + UHCI_USBSTS;
-    uint16_t val = inportw(reg);
-
+    
     if (val & UHCI_STS_USBINT)
     {
         printf("USB transaction completed\n");
@@ -371,46 +374,32 @@ void uhci_handler(registers_t* r, pciDev_t* device)
         printf("Resume Detect\n");
         outportw(reg, UHCI_STS_RESUME_DETECT); // reset interrupt
     }
+
+    textColor(ERROR);
+
     if (val & UHCI_STS_HCHALTED)
     {
-        textColor(ERROR);
         printf("Host Controller Halted\n");
         outportw(reg, UHCI_STS_HCHALTED); // reset interrupt
     }
     if (val & UHCI_STS_HC_PROCESS_ERROR)
     {
-        textColor(ERROR);
         printf("Host Controller Process Error\n");
         outportw(reg, UHCI_STS_HC_PROCESS_ERROR); // reset interrupt
     }
     if (val & UHCI_STS_USB_ERROR)
     {
-        textColor(ERROR);
         printf("USB Error\n");
         outportw(reg, UHCI_STS_USB_ERROR); // reset interrupt
     }
     if (val & UHCI_STS_HOST_SYSTEM_ERROR)
     {
-        textColor(ERROR);
         printf("Host System Error\n");
         outportw(reg, UHCI_STS_HOST_SYSTEM_ERROR); // reset interrupt
         pci_analyzeHostSystemError(u->PCIdevice);
     }
-    if (val == 0)
-    {
-        textColor(ERROR);
-        printf("Invalid interrupt");
-        textColor(TEXT);
-    }
-    else
-    {
-        textColor(IMPORTANT);
-        printf("%x", val);
-    }
     textColor(TEXT);
 }
-
-
 
 
 /*******************************************************************************************************
