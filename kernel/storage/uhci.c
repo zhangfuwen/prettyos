@@ -11,6 +11,7 @@
 #include "irq.h"
 #include "keyboard.h"
 
+#define UHCI_SCENARIO // qh/td experiments
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -174,15 +175,14 @@ void uhci_resetHostController(uhci_t* u)
     // TODO: mutex for frame list
 
 
-    // ---------------------------
-    /*
+#ifdef UHCI_SCENARIO    
     uhci_QH_t* qhIn  = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
     uhci_QH_t* qhOut = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
 
     uhci_TD_t* tdIn  = malloc(sizeof(uhci_TD_t),16,"uhci-TD");
     uhci_TD_t* tdOut = malloc(sizeof(uhci_TD_t),16,"uhci-TD");
 
-    qhIn->next       = paging_getPhysAddr((void*)qhOut)& BIT_QH;
+    qhIn->next       = paging_getPhysAddr((void*)qhOut)| BIT_QH;
     qhIn->transfer   = paging_getPhysAddr((void*)tdIn);
     qhIn->q_first    = 0;
     qhIn->q_last     = 0;
@@ -201,15 +201,16 @@ void uhci_resetHostController(uhci_t* u)
     tdOut->buffer    = paging_getPhysAddr(malloc(0x1000,0,"uhci-TDbuffer"));
     tdOut->active    = 1;
     tdOut->intOnComplete = 1;
-    */
-    // ---------------------------
-
+#else 
     uhci_QH_t* qhIn  = malloc(sizeof(uhci_QH_t),PAGESIZE,"uhci-QH");
     qhIn->next       = BIT_T;
     qhIn->transfer   = BIT_T;
     qhIn->q_first    = 0;
     qhIn->q_last     = 0;
-            
+#endif
+
+    // ---------------------------
+
     for (uint16_t i=0; i<1024; i++)
     {
        u->framelistAddrVirt->frPtr[i] = paging_getPhysAddr(qhIn) | BIT_QH;
@@ -373,12 +374,12 @@ void uhci_handler(registers_t* r, pciDev_t* device)
     
     if (val & UHCI_STS_USBINT)
     {
-        printf("USB transaction completed\n");
+        printf("Frame: %u - USB transaction completed", inportw(u->bar + UHCI_FRNUM));
         outportw(reg, UHCI_STS_USBINT); // reset interrupt
     }
     if (val & UHCI_STS_RESUME_DETECT)
     {
-        printf("Resume Detect\n");
+        printf("Resume Detect");
         outportw(reg, UHCI_STS_RESUME_DETECT); // reset interrupt
     }
 
@@ -386,22 +387,22 @@ void uhci_handler(registers_t* r, pciDev_t* device)
 
     if (val & UHCI_STS_HCHALTED)
     {
-        printf("Host Controller Halted\n");
+        printf("Host Controller Halted");
         outportw(reg, UHCI_STS_HCHALTED); // reset interrupt
     }
     if (val & UHCI_STS_HC_PROCESS_ERROR)
     {
-        printf("Host Controller Process Error\n");
+        printf("Host Controller Process Error");
         outportw(reg, UHCI_STS_HC_PROCESS_ERROR); // reset interrupt
     }
     if (val & UHCI_STS_USB_ERROR)
     {
-        printf("USB Error\n");
+        printf("USB Error");
         outportw(reg, UHCI_STS_USB_ERROR); // reset interrupt
     }
     if (val & UHCI_STS_HOST_SYSTEM_ERROR)
     {
-        printf("Host System Error\n");
+        printf("Host System Error");
         outportw(reg, UHCI_STS_HOST_SYSTEM_ERROR); // reset interrupt
         pci_analyzeHostSystemError(u->PCIdevice);
     }
