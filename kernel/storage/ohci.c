@@ -33,9 +33,26 @@ void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     curOHCI = ohci[index]   = malloc(sizeof(ohci_t), 0, "ohci");
     ohci[index]->PCIdevice  = PCIdev;
     ohci[index]->PCIdevice->data = ohci[index];
-    ohci[index]->bar        = bar_phys;
+    ohci[index]->bar        = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
+    uint16_t offset         = bar_phys % PAGESIZE;
     ohci[index]->memSize    = memorySize;
     ohci[index]->num        = index;
+
+  #ifdef _OHCI_DIAGNOSIS_
+    printf("\nOHCI_MMIO %Xh mapped to virt addr %Xh, offset: %xh", bar_phys, ohci[index]->bar, offset);
+  #endif
+    
+    ohci[index]->bar+= offset;
+    ohci[index]->ohci_pOpRegs = (ohci_OpRegs_t*) (ohci[index]->bar);
+
+  #ifdef _OHCI_DIAGNOSIS_
+    textColor(IMPORTANT);
+    printf("\nOHCI Revision: %u.%u  OHCI Number Downstream Ports: %u\n", 
+        ohci[index]->ohci_pOpRegs->HcRevision >> 4, 
+        ohci[index]->ohci_pOpRegs->HcRevision & 0xF,
+        BYTE1(ohci[index]->ohci_pOpRegs->HcRhDescriptorA)); // 7:0 provides Number Downstream Ports (NDP)
+    textColor(TEXT);
+  #endif
 
     char str[10];
     snprintf(str, 10, "OHCI %u", index+1);
