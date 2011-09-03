@@ -164,31 +164,29 @@ typedef struct
 // UHCI device
 typedef struct
 {
-    pciDev_t*  PCIdevice;          // PCI device
-    uint16_t   bar;                // start of I/O space (base address register
-    uintptr_t  framelistAddrPhys;  // physical adress of frame list
-    frPtr_t*   framelistAddrVirt;  // virtual adress of frame list
-    uintptr_t  qhPointerPhys;      // physical address of QH
-    uhci_QH_t* qhPointerVirt;      // virtual adress of QH
-    uint8_t    rootPorts;          // number of rootports
-    size_t     memSize;            // memory size of IO space
-    mutex_t*   framelistLock;      // mutex for access on the frame list
-    mutex_t*   qhLock;             // mutex for access on the QH
-    bool       enabledPorts;       // root ports enabled
-    port_t     port[UHCIPORTMAX];  // root ports
-    bool       run;                // hc running (RS bit)
+    pciDev_t*  PCIdevice;         // PCI device
+    uint16_t   bar;               // start of I/O space (base address register
+    uintptr_t  framelistAddrPhys; // physical adress of frame list
+    frPtr_t*   framelistAddrVirt; // virtual adress of frame list
+    uintptr_t  qhPointerPhys;     // physical address of QH
+    uhci_QH_t* qhPointerVirt;     // virtual adress of QH
+    uint8_t    rootPorts;         // number of rootports
+    size_t     memSize;           // memory size of IO space
+    mutex_t*   framelistLock;     // mutex for access on the frame list
+    mutex_t*   qhLock;            // mutex for access on the QH
+    bool       enabledPorts;      // root ports enabled
+    port_t     port[UHCIPORTMAX]; // root ports
+    bool       run;               // hc running (RS bit)
+    uint8_t    num;               // Number of the UHCI
 } uhci_t;
 
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
-void uhci_init(void* data, size_t size);
-void startUHCI();
-int32_t initUHCIHostController(uhci_t* u);
-void uhci_resetHostController(uhci_t* u);
+void uhci_pollDisk(void* dev);
+void uhci_initHC(uhci_t* u);
+void uhci_resetHC(uhci_t* u);
 void uhci_enablePorts(uhci_t* u);
-void uhci_resetPort(uhci_t* u, uint8_t j);
-void showPortState(uhci_t* u, uint8_t j);
-void uhci_handler(registers_t* r, pciDev_t* device);
+void uhci_resetPort(uhci_t* u, uint8_t port);
 
 
 #endif

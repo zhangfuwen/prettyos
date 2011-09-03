@@ -13,10 +13,17 @@
 
 //#define UHCI_SCENARIO // qh/td experiments
 
+
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
 static uhci_t* uhci[UHCIMAX];
 static bool    UHCI_USBtransferFlag = false;
+
+
+static void uhci_start();
+static void uhci_showPortState(uhci_t* u, uint8_t port);
+static void uhci_handler(registers_t* r, pciDev_t* device);
+
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
@@ -29,17 +36,18 @@ void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     uhci[index]->PCIdevice->data = uhci[index];
     uhci[index]->bar        = bar_phys;
     uhci[index]->memSize    = memorySize;
+    uhci[index]->num        = index;
 
     char str[10];
-    snprintf(str, 10, "UHCI %u", index);
+    snprintf(str, 10, "UHCI %u", index+1);
 
-    scheduler_insertTask(create_cthread(&startUHCI, str));
+    scheduler_insertTask(create_cthread(&uhci_start, str));
 
     index++;
     sleepMilliSeconds(20); // HACK: Avoid race condition between uhci_install and the thread just created. Problem related to curUHCI global variable
 }
 
-void startUHCI()
+static void uhci_start()
 {
     uhci_t* u = curUHCI;
 
@@ -47,13 +55,13 @@ void startUHCI()
     printf("\n>>>startUHCI<<<\n");
   #endif
 
-    initUHCIHostController(u);
+    uhci_initHC(u);
     textColor(TEXT);
     printf("\n\n>>> Press key to close this console. <<<");
     getch();
 }
 
-int32_t initUHCIHostController(uhci_t* u)
+void uhci_initHC(uhci_t* u)
 {
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n>>>initUHCIHostController<<<\n");
@@ -85,12 +93,10 @@ int32_t initUHCIHostController(uhci_t* u)
     UHCI_USBtransferFlag = true;
     u->enabledPorts      = false;
 
-    uhci_resetHostController(u);
-
-    return (0);
+    uhci_resetHC(u);
 }
 
-void uhci_resetHostController(uhci_t* u)
+void uhci_resetHC(uhci_t* u)
 {
   #ifdef _UHCI_DIAGNOSIS_
     printf("\n\n>>>uhci_resetHostController<<<\n");
@@ -124,7 +130,7 @@ void uhci_resetHostController(uhci_t* u)
 
     if (u->rootPorts > UHCIMAX)
     {
-        u->rootPorts = UHCIMAX; 
+        u->rootPorts = UHCIMAX;
     }
 
   #ifdef _UHCI_DIAGNOSIS_
@@ -267,40 +273,40 @@ void uhci_enablePorts(uhci_t* u)
 
     for (uint8_t j=0; j<u->rootPorts; j++)
     {
-         uhci_resetPort(u,j);
-         u->enabledPorts = true;
+        uhci_resetPort(u, j);
+        u->enabledPorts = true;
 
-         u->port[j].type = &USB1; // device manager
-         u->port[j].data = (void*)(j+1);
-		 u->port[j].insertedDisk = 0;
-         snprintf(u->port[j].name, 14, "UHCI-Port %u", j+1);
-         attachPort(&u->port[j]);
+        u->port[j].type = &USB_UHCI; // device manager
+        u->port[j].data = u;
+        u->port[j].insertedDisk = 0;
+        snprintf(u->port[j].name, 14, "UHCI-Port %u", j+1);
+        attachPort(&u->port[j]);
 
-         showPortState(u,j);
+        uhci_showPortState(u, j);
     }
 }
 
 
-void uhci_resetPort(uhci_t* u, uint8_t j)
+void uhci_resetPort(uhci_t* u, uint8_t port)
 {
-    outportw(u->bar + UHCI_PORTSC1+2*j,UHCI_PORT_RESET);
+    outportw(u->bar + UHCI_PORTSC1+2*port,UHCI_PORT_RESET);
     sleepMilliSeconds(50); // do not delete this wait
-    outportw(u->bar + UHCI_PORTSC1+2*j, inportw(u->bar + UHCI_PORTSC1+2*j) & ~UHCI_PORT_RESET); // clear reset bit
-    outportw(u->bar + UHCI_PORTSC1+2*j,UHCI_PORT_ENABLE_CHANGE|UHCI_PORT_CS_CHANGE|UHCI_PORT_ENABLE); // Clear bit 1 & 3, and Set bit 2 [Enable]
+    outportw(u->bar + UHCI_PORTSC1+2*port, inportw(u->bar + UHCI_PORTSC1+2*port) & ~UHCI_PORT_RESET); // clear reset bit
+    outportw(u->bar + UHCI_PORTSC1+2*port, UHCI_PORT_ENABLE_CHANGE|UHCI_PORT_CS_CHANGE|UHCI_PORT_ENABLE); // Clear bit 1 & 3, and Set bit 2 [Enable]
 
     // wait and check, whether reset bit is really zero
     uint32_t timeout=20;
-    while ((inportw(u->bar + UHCI_PORTSC1+2*j) & UHCI_PORT_RESET) != 0)
+    while ((inportw(u->bar + UHCI_PORTSC1+2*port) & UHCI_PORT_RESET) != 0)
     {
         sleepMilliSeconds(20);
         timeout--;
         if (timeout == 0)
         {
             textColor(ERROR);
-            printf("\nTimeour Error: Port %u did not reset! ",j+1);
+            printf("\nTimeour Error: Port %u did not reset! ", port+1);
             textColor(TEXT);
           #ifdef _UHCI_DIAGNOSIS_
-            printf("Port Status: %Xh", inportw(u->bar + UHCI_PORTSC1+2*j));
+            printf("Port Status: %Xh", inportw(u->bar + UHCI_PORTSC1+2*port));
           #endif
             break;
         }
@@ -338,7 +344,7 @@ void uhci_resetPort(uhci_t* u, uint8_t j)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void uhci_handler(registers_t* r, pciDev_t* device)
+static void uhci_handler(registers_t* r, pciDev_t* device)
 {
     // Check if an UHCI controller issued this interrupt
     uhci_t* u = device->data;
@@ -415,28 +421,50 @@ void uhci_handler(registers_t* r, pciDev_t* device)
 *                                                                                                      *
 *******************************************************************************************************/
 
-// TODO
-
-void showPortState(uhci_t* u, uint8_t j)
+void uhci_pollDisk(void* dev)
 {
-    uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*j);
+    uhci_t* u = dev;
+    for(uint8_t port = 0; port < u->rootPorts; port++)
+    {
+        uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*port);
 
-    printf("\nport %u: %xh", j+1, val);
+        if(val & UHCI_PORT_CS_CHANGE)
+        {
+            printf("\nUHCI %u: Port %u changed: ", u->num, port);
+            outportw(u->bar + UHCI_PORTSC1 + 2*port, UHCI_PORT_CS_CHANGE);
 
-    if (val & UHCI_SUSPEND)                     {printf("\nport %u: SUSPEND",            j+1);}
-    if (val & UHCI_PORT_RESET)                  {printf("\nport %u: RESET",              j+1);}
-    if (val & UHCI_PORT_LOWSPEED_DEVICE)        {printf("\nport %u: LOWSPEED DEVICE",    j+1);}
-    if ((val & UHCI_PORT_LOWSPEED_DEVICE) == 0) {printf("\nport %u: FULLSPEED DEVICE",   j+1);}
-    if (val & UHCI_PORT_RESUME_DETECT)          {printf("\nport %u: RESUME DETECT",      j+1);}
+            if (val & UHCI_PORT_LOWSPEED_DEVICE)
+                printf("Lowspeed device");
+            else
+                printf("Fullspeed device");
+            if (val & UHCI_PORT_CS)
+                printf(" attached.");
+            else
+                printf(" removed.");
+        }
+    }
+}
 
-    if (val & BIT(5))                           {printf("\nport %u: Line State: D-",     j+1);}
-    if (val & BIT(4))                           {printf("\nport %u: Line State: D+",     j+1);}
+static void uhci_showPortState(uhci_t* u, uint8_t port)
+{
+    uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*port);
 
-    if (val & UHCI_PORT_ENABLE_CHANGE)          {printf("\nport %u: ENABLE CHANGE",      j+1);}
-    if (val & UHCI_PORT_ENABLE)                 {printf("\nport %u: ENABLED",            j+1);}
-    if (val & UHCI_PORT_CS_CHANGE)              {printf("\nport %u: DEVICE CHANGE",      j+1);}
-    if (val & UHCI_PORT_CS)                     {printf("\nport %u: DEVICE ATTACHED",    j+1);}
-    if ((val & UHCI_PORT_CS) == 0)              {printf("\nport %u: NO DEVICE ATTACHED", j+1);}
+    printf("\nport %u: %xh", port+1, val);
+
+    if (val & UHCI_SUSPEND)              {printf(", SUSPEND"           );}
+    if (val & UHCI_PORT_RESET)           {printf(", RESET"             );}
+    if (val & UHCI_PORT_LOWSPEED_DEVICE) {printf(", LOWSPEED DEVICE"   );}
+    else                                 {printf(", FULLSPEED DEVICE"  );}
+    if (val & UHCI_PORT_RESUME_DETECT)   {printf(", RESUME DETECT"     );}
+
+    if (val & BIT(5))                    {printf(", Line State: D-"    );}
+    if (val & BIT(4))                    {printf(", Line State: D+"    );}
+
+    if (val & UHCI_PORT_ENABLE_CHANGE)   {printf(", ENABLE CHANGE"     );}
+    if (val & UHCI_PORT_ENABLE)          {printf(", ENABLED"           );}
+    if (val & UHCI_PORT_CS_CHANGE)       {printf(", DEVICE CHANGE"     );}
+    if (val & UHCI_PORT_CS)              {printf(", DEVICE ATTACHED"   );}
+    else                                 {printf(", NO DEVICE ATTACHED");}
 }
 
 /*******************************************************************************************************

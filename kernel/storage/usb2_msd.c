@@ -3,12 +3,13 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "usb2_msd.h"
 #include "paging.h"
 #include "kheap.h"
 #include "video/console.h"
 #include "util.h"
 #include "usb2.h"
-#include "usb2_msd.h"
+
 
 extern const uint8_t ALIGNVALUE;
 
@@ -178,8 +179,10 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
 static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer)
 {
     // CSW Status
-    printf("\n");
+  #ifdef _EHCI_DIAGNOSIS_
+    putch('\n');
     showPacket(MSDStatusQTDpage0,13);
+  #endif
 
     // check signature 0x53425355 // DWORD 0 (byte 0:3)
     uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
@@ -188,6 +191,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
       #ifdef _USB2_DIAGNOSIS_
         textColor(SUCCESS);
         printf("\nCSW signature OK    ");
+        textColor(TEXT);
       #endif
     }
     else if (CSWsignature == CSWMagicNotOK)
@@ -201,8 +205,8 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     {
         textColor(ERROR);
         printf("\nCSW signature wrong (processed, but wrong value)");
+        textColor(TEXT);
     }
-    textColor(TEXT);
 
     // check matching tag
     uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
@@ -211,14 +215,15 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
       #ifdef _USB2_DIAGNOSIS_
         textColor(SUCCESS);
         printf("CSW tag %yh OK    ",BYTE1(CSWtag));
+        textColor(TEXT);
       #endif
     }
     else
     {
         textColor(ERROR);
         printf("\nError: CSW tag wrong");
+        textColor(TEXT);
     }
-    textColor(TEXT);
 
     // check CSWDataResidue
     uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
@@ -227,14 +232,15 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
       #ifdef _USB2_DIAGNOSIS_
         textColor(SUCCESS);
         printf("\tCSW data residue OK    ");
+        textColor(TEXT);
       #endif
     }
     else
     {
         textColor(0x06);
         printf("\nCSW data residue: %d",CSWDataResidue);
+        textColor(TEXT);
     }
-    textColor(TEXT);
 
     // check status byte // DWORD 3 (byte 12)
     uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
@@ -433,15 +439,18 @@ labelTransferIN: /// TEST
 
     performAsyncScheduler(true, true, TransferLength/200);
 
+  #ifdef _EHCI_DIAGNOSIS_
     if (TransferLength) // byte
     {
-        printf("\n");
+        putch('\n');
         showPacket(DataQTDpage0,TransferLength);
         if ((TransferLength==512) || (TransferLength==36)) // data block (512 byte), inquiry feedback (36 byte)
         {
             showPacketAlphaNumeric(DataQTDpage0,TransferLength);
+            putch('\n');
         }
     }
+  #endif
 
     uint8_t index = TransferLength > 0 ? 1 : 0;
 
@@ -914,7 +923,7 @@ int32_t showResultsRequestSense()
     if (ResponseCode >= 0x70 && ResponseCode <= 0x73)
     {
         textColor(TEXT);
-        printf("Valid: \t\t");
+        printf("Valid:\t\t");
         if (Valid == 0)
         {
             printf("Sense data are not SCSI compliant");
@@ -923,7 +932,7 @@ int32_t showResultsRequestSense()
         {
             printf("Sense data are SCSI compliant");
         }
-        printf("\nResponse Code: \t");
+        printf("\nResponse Code:\t");
         switch (ResponseCode)
         {
             case 0x70:
@@ -942,61 +951,31 @@ int32_t showResultsRequestSense()
                 printf("No vaild response code!");
                 break;
         }
-        printf("\nSense Key: \t");
-        switch (SenseKey)
+
+        static const char* const SenseKeys[] =
         {
-            case 0x0:
-                printf("No Sense");
-                break;
-            case 0x1:
-                printf("Recovered Error - last command completed with some recovery action");
-                break;
-            case 0x2:
-                printf("Not Ready - logical unit addressed cannot be accessed");
-                break;
-            case 0x3:
-                printf("Medium Error - command terminated with a non-recovered error condition");
-                break;
-            case 0x4:
-                printf("Hardware Error");
-                break;
-            case 0x5:
-                printf("Illegal Request - illegal parameter in the command descriptor block ");
-                break;
-            case 0x6:
-                printf("Unit Attention - disc drive may have been reset.");
-                break;
-            case 0x7:
-                printf("Data Protect - command read/write on a protected block");
-                break;
-            case 0x8:
-                printf("not defined");
-                break;
-            case 0x9:
-                printf("Firmware Error");
-                break;
-            case 0xA:
-                printf("not defined");
-                break;
-            case 0xB:
-                printf("Aborted Command - disc drive aborted the command");
-                break;
-            case 0xC:
-                printf("Equal - SEARCH DATA command has satisfied an equal comparison");
-                break;
-            case 0xD:
-                printf("Volume Overflow - buffered peripheral device has reached the end of medium partition");
-                break;
-            case 0xE:
-                printf("Miscompare - source data did not match the data read from the medium");
-                break;
-            case 0xF:
-                printf("not defined");
-                break;
-            default:
-                printf("sense key not known!");
-                break;
-        }
+            "No Sense",
+            "Recovered Error - last command completed with some recovery action",
+            "Not Ready - logical unit addressed cannot be accessed",
+            "Medium Error - command terminated with a non-recovered error condition",
+            "Hardware Error",
+            "Illegal Request - illegal parameter in the command descriptor block",
+            "Unit Attention - disc drive may have been reset.",
+            "Data Protect - command read/write on a protected block",
+            "not defined",
+            "Firmware Error",
+            "not defined",
+            "Aborted Command - disc drive aborted the command",
+            "Equal - SEARCH DATA command has satisfied an equal comparison",
+            "Volume Overflow - buffered peripheral device has reached the end of medium partition",
+            "Miscompare - source data did not match the data read from the medium",
+            "not defined"
+        };
+        printf("\nSense Key:\t");
+        if(SenseKey <= 0xF)
+            puts(SenseKeys[SenseKey]);
+        else
+            printf("sense key not known!");
         return SenseKey;
     }
 

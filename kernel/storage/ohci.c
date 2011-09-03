@@ -13,10 +13,16 @@
 
 //#define OHCI_SCENARIO // ed/td experiments
 
+
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
 static ohci_t* ohci[OHCIMAX];
 static bool    OHCI_USBtransferFlag = false;
+
+
+static void ohci_handler(registers_t* r, pciDev_t* device);
+static void ohci_start();
+
 
 void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
@@ -29,17 +35,18 @@ void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     ohci[index]->PCIdevice->data = ohci[index];
     ohci[index]->bar        = bar_phys;
     ohci[index]->memSize    = memorySize;
+    ohci[index]->num        = index;
 
     char str[10];
-    snprintf(str, 10, "OHCI %u", index);
+    snprintf(str, 10, "OHCI %u", index+1);
 
-    scheduler_insertTask(create_cthread(&startOHCI, str));
+    scheduler_insertTask(create_cthread(&ohci_start, str));
 
     index++;
     sleepMilliSeconds(20); // HACK: Avoid race condition between ohci_install and the thread just created. Problem related to curOHCI global variable
 }
 
-void startOHCI()
+static void ohci_start()
 {
     ohci_t* o = curOHCI;
 
@@ -47,13 +54,12 @@ void startOHCI()
     printf("\n>>>startOHCI<<<\n");
   #endif
 
-    initOHCIHostController(o);
-    textColor(TEXT);
+    ohci_initHC(o);
     printf("\n\n>>> Press key to close this console. <<<");
     getch();
 }
 
-int32_t initOHCIHostController(ohci_t* o)
+void ohci_initHC(ohci_t* o)
 {
   #ifdef _OHCI_DIAGNOSIS_
     printf("\n>>>initOHCIHostController<<<\n");
@@ -85,12 +91,10 @@ int32_t initOHCIHostController(ohci_t* o)
     OHCI_USBtransferFlag = true;
     o->enabledPorts      = false;
 
-    ohci_resetHostController(o);
-
-    return (0);
+    ohci_resetHC(o);
 }
 
-void ohci_resetHostController(ohci_t* o)
+void ohci_resetHC(ohci_t* o)
 {
   #ifdef _OHCI_DIAGNOSIS_
     printf("\n\n>>>ohci_resetHostController<<<\n");
@@ -116,7 +120,7 @@ void ohci_resetHostController(ohci_t* o)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void ohci_handler(registers_t* r, pciDev_t* device)
+static void ohci_handler(registers_t* r, pciDev_t* device)
 {
     // Check if an OHCI controller issued this interrupt
     ohci_t* o = device->data;
@@ -133,7 +137,7 @@ void ohci_handler(registers_t* r, pciDev_t* device)
     }
 
     uint32_t val=0;
-    // val = o->memory->hc_interrupt_status; 
+    // val = o->memory->hc_interrupt_status;
 
     if(!found || o==0 || val==0) // No interrupt from corresponding ohci device found
     {
@@ -147,12 +151,9 @@ void ohci_handler(registers_t* r, pciDev_t* device)
 
     printf("\nUSB OHCI %u: ", i);
 
-    textColor(IMPORTANT);
-
     //
     //
 
-    textColor(TEXT);
 }
 
 
@@ -161,6 +162,11 @@ void ohci_handler(registers_t* r, pciDev_t* device)
 *                                              PORT CHANGE                                             *
 *                                                                                                      *
 *******************************************************************************************************/
+
+void ohci_pollDisk(void* dev)
+{
+    // TODO
+}
 
 
 /*******************************************************************************************************

@@ -376,7 +376,7 @@ void enablePorts()
          resetPort(j);
          enabledPortFlag = true;
 
-         port[j].type = &USB2; // device manager
+         port[j].type = &USB_EHCI; // device manager
          port[j].data = (void*)(j+1);
          snprintf(port[j].name, 14, "EHCI-Port %u", j+1);
          attachPort(&port[j]);
@@ -419,7 +419,8 @@ void resetPort(uint8_t j)
      when the HCHalted bit is a one.
     */
     if (pOpRegs->USBSTS & STS_HCHALTED) // TEST
-    {   textColor(ERROR);
+    {
+        textColor(ERROR);
         printf("\nHCHalted set to 1 (Not OK!)");
         showUSBSTS();
         textColor(TEXT);
@@ -466,8 +467,6 @@ void ehci_handler(registers_t* r, pciDev_t* device)
     }
   #endif
 
-    textColor(YELLOW);
-
     if (pOpRegs->USBSTS & STS_USBINT)
     {
         USBINTflag = true; // is asked by polling
@@ -507,7 +506,6 @@ void ehci_handler(registers_t* r, pciDev_t* device)
     {
         textColor(ERROR);
         printf("Host System Error");
-        textColor(TEXT);
         pOpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;
         pci_analyzeHostSystemError(PCIdevice);
         textColor(IMPORTANT);
@@ -521,7 +519,9 @@ void ehci_handler(registers_t* r, pciDev_t* device)
     if (pOpRegs->USBSTS & STS_ASYNC_INT)
     {
       #ifdef _EHCI_DIAGNOSIS_
+        textColor(YELLOW);
         printf("Interrupt on Async Advance");
+        textColor(TEXT);
       #endif
         pOpRegs->USBSTS |= STS_ASYNC_INT;
     }

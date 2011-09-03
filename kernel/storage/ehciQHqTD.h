@@ -4,7 +4,8 @@
 #include "os.h"
 #include "ehci.h"
 
-struct usbBulkTransfer
+
+typedef struct
 {
     uint8_t  SCSIopcode;
     bool     successfulCommand;
@@ -13,8 +14,7 @@ struct usbBulkTransfer
     bool     successfulCSW;
     uint32_t DataBytesToTransferOUT;
     uint32_t DataBytesToTransferIN;
-}__attribute__((packed));
-typedef struct usbBulkTransfer usbBulkTransfer_t;
+} __attribute__((packed)) usbBulkTransfer_t;
 
 struct qtd_token
 {
@@ -26,10 +26,9 @@ struct qtd_token
     uint8_t interrupt:    1;
     uint16_t bytes:      15;
     uint16_t dataToggle:  1;
-
 } __attribute__((packed));
 
-struct ehci_qtd
+typedef struct ehci_qtd
 {
     uint32_t next;
     uint32_t nextAlt;
@@ -44,10 +43,9 @@ struct ehci_qtd
     uint32_t extend2;
     uint32_t extend3;
     uint32_t extend4;
-} __attribute__((packed));
-typedef struct ehci_qtd ehci_qtd_t;
+} __attribute__((packed)) ehci_qtd_t;
 
-struct ehci_qhd
+typedef struct ehci_qhd
 {
     uint32_t horizontalPointer;
     uint32_t deviceAddress:       7;
@@ -66,8 +64,7 @@ struct ehci_qhd
     uint16_t mult:                2;
     uint32_t current;
     struct ehci_qtd qtd;
-} __attribute__((packed));
-typedef struct ehci_qhd ehci_qhd_t;
+} __attribute__((packed)) ehci_qhd_t;
 
 struct ehci_request
 {
@@ -78,6 +75,7 @@ struct ehci_request
     uint16_t index;
     uint16_t length;
 } __attribute__((packed));
+
 
 ehci_qtd_t* allocQTD(uintptr_t next);
 uintptr_t allocQTDbuffer(ehci_qtd_t* td);
@@ -97,5 +95,6 @@ void checkAsyncScheduler();
 void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity);
 
 void logBulkTransfer(usbBulkTransfer_t* bT);
+
 
 #endif

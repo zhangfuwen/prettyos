@@ -4,6 +4,7 @@
 #include "os.h"
 #include "pci.h"
 
+
 struct ehci_CapRegs
 {
     volatile uint8_t  CAPLENGTH;        // Core Capability Register Length
@@ -14,7 +15,6 @@ struct ehci_CapRegs
     volatile uint32_t HCSPPORTROUTE_Hi; // Core Companion Port Route Description
     volatile uint32_t HCSPPORTROUTE_Lo; // Core Companion Port Route Description
 } __attribute__((packed));
-
 
 struct ehci_OpRegs
 {
@@ -38,6 +38,7 @@ struct ehci_OpRegs
     volatile uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h
 } __attribute__((packed));
 
+
 extern struct ehci_OpRegs*  pOpRegs;  // = &OpRegs;
 
 extern bool      USBINTflag;
@@ -46,7 +47,6 @@ extern void*     DataQTD;
 extern void*     SetupQTD;
 extern uintptr_t DataQTDpage0;
 extern uintptr_t MSDStatusQTDpage0;
-
 
 
 /* ****** */
@@ -191,5 +191,6 @@ void checkPortLineStatus(uint8_t j);
 void setupUSBDevice(uint8_t portNumber);
 
 void showUSBSTS();
+
 
 #endif

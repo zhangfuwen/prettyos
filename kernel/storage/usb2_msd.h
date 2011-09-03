@@ -9,6 +9,7 @@
 #define IN    1
 #define SETUP 2
 
+
 struct usb2_CommandBlockWrapper
 {
     uint32_t CBWSignature;
@@ -19,6 +20,7 @@ struct usb2_CommandBlockWrapper
     uint8_t  CBWCBLength;      // only bits 4:0
     uint8_t  commandByte[16];
 } __attribute__((packed));
+
 
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
@@ -33,5 +35,6 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device);
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
 
 int32_t showResultsRequestSense();
+
 
 #endif

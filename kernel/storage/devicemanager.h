@@ -8,9 +8,11 @@
 #define DISKARRAYSIZE 20
 #define PARTITIONARRAYSIZE 4
 
+
 typedef struct
 {
     void (*motorOff)(void*);
+    void (*pollDisk)(void*);
 } portType_t;
 
 typedef struct
@@ -19,7 +21,7 @@ typedef struct
     FS_ERROR (*writeSector)(uint32_t, void*, void*);
 } diskType_t;
 
-extern portType_t FDD, USB1, USB2, RAM;
+extern portType_t FDD, USB_UHCI, USB_OHCI, USB_EHCI, RAM;
 extern diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
 
 typedef struct disk
@@ -63,5 +65,6 @@ FS_ERROR sectorRead       (uint32_t sector, uint8_t* buffer, disk_t* disk);
 FS_ERROR singleSectorRead (uint32_t sector, uint8_t* buffer, disk_t* disk);
 FS_ERROR sectorWrite      (uint32_t sector, uint8_t* buffer, disk_t* disk);
 FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk);
+
 
 #endif

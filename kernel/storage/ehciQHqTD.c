@@ -3,13 +3,14 @@
 *  Lizenz und Haftungsausschluss f?r die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "ehciQHqTD.h"
 #include "util.h"
 #include "timer.h"
 #include "paging.h"
 #include "kheap.h"
 #include "usb2.h"
-#include "ehciQHqTD.h"
 #include "video/console.h"
+
 
 void*        DataQTD;            // pointer to IO qTD transferring data
 void*        SetupQTD;           // pointer to Setup qTD transferring control transfer command
@@ -194,37 +195,19 @@ void* createQTD_Handshake(uint8_t direction)
 // analysis tools //
 ////////////////////
 
-static void showData(uint32_t virtAddrBuf0, uint32_t size, bool alphanumeric)
-{
-  #ifdef _EHCI_DIAGNOSIS_
-    printf("virtAddrBuf0 %Xh : ", virtAddrBuf0);
-
-    for (uint32_t c=0; c<size; c++)
-    {
-        textColor(DATA);
-        if (alphanumeric)
-        {
-            if ((*((uint8_t*)virtAddrBuf0+c)>=0x20) && (*((uint8_t*)virtAddrBuf0+c)<=0x7E))
-                putch(((char*)virtAddrBuf0)[c]);
-        }
-        else
-        {
-            printf("%y ", ((uint8_t*)virtAddrBuf0)[c]);
-        }
-    }
-    printf("\n");
-  #endif
-}
-
 void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
 {
-    showData(virtAddrBuf0, size, true);
+  #ifdef _EHCI_DIAGNOSIS_
+    memshow((void*)virtAddrBuf0, size, true);
+    putch('\n');
+  #endif
 }
 
 void showPacket(uint32_t virtAddrBuf0, uint32_t size)
 {
   #ifdef _EHCI_DIAGNOSIS_
-    showData(virtAddrBuf0, size, false);
+    memshow((void*)virtAddrBuf0, size, false);
+    putch('\n');
   #endif
 }
 
@@ -382,14 +365,13 @@ void checkAsyncScheduler()
 
 void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
 {
-
+  #ifdef _EHCI_DIAGNOSIS_
     if (analyze)
     {
-      #ifdef _EHCI_DIAGNOSIS_
         printf("\nbefore aS:");
-      #endif
         checkAsyncScheduler();
     }
+  #endif
 
     // Enable Asynchronous Schdeuler
     pOpRegs->USBSTS |= STS_USBINT;
@@ -409,9 +391,9 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
             printf(">");
             textColor(TEXT);
           #endif
-       }
-       else
-       {
+        }
+        else
+        {
             textColor(ERROR);
             printf("\nTimeout Error - STS_ASYNC_ENABLED not set!");
             textColor(TEXT);
@@ -461,7 +443,6 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
               #ifdef _EHCI_DIAGNOSIS_
                 textColor(LIGHT_MAGENTA);
                 printf("!");
-                textColor(TEXT);
               #endif
             }
             else
@@ -474,23 +455,23 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         }
     }
 
+  #ifdef _EHCI_DIAGNOSIS_
     if (analyze)
     {
-      #ifdef _EHCI_DIAGNOSIS_
         printf("\nafter aS:");
-      #endif
         checkAsyncScheduler();
     }
+  #endif
 }
 
 void logBulkTransfer(usbBulkTransfer_t* bT)
 {
+  #ifdef _USB2_DIAGNOSIS_
     if (!bT->successfulCommand ||
         !bT->successfulCSW     ||
         (bT->DataBytesToTransferOUT && !bT->successfulDataOUT) ||
         (bT->DataBytesToTransferIN  && !bT->successfulDataIN))
     {
-      #ifdef _USB2_DIAGNOSIS_
         textColor(IMPORTANT);
         printf("\nopcode: %yh", bT->SCSIopcode);
         printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
@@ -504,8 +485,8 @@ void logBulkTransfer(usbBulkTransfer_t* bT)
         }
         printf("  CSW: %s", bT->successfulCSW ? "OK" : "Error");
         textColor(TEXT);
-      #endif
     }
+  #endif
 }
 
 /*

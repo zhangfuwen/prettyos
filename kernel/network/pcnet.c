@@ -195,8 +195,8 @@ void PCNet_handler(registers_t* data, pciDev_t* device)
 
     uint16_t csr0 = readCSR(pAdapter, 0);
 
-	if(!(csr0 & BIT(7)))
-		return;
+    if(!(csr0 & BIT(7)))
+        return;
 
     #ifdef _NETWORK_DIAGNOSIS_
     textColor(0x03);

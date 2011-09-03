@@ -3,13 +3,14 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "usb2.h"
 #include "kheap.h"
 #include "paging.h"
 #include "video/console.h"
 #include "timer.h"
 #include "util.h"
 #include "ehciQHqTD.h"
-#include "usb2.h"
+
 
 const uint8_t ALIGNVALUE = 32;
 
@@ -17,6 +18,7 @@ usb2_Device_t usbDevices[16]; // ports 1-16
 
 extern void* globalqTD[3];
 extern void* globalqTDbuffer[3];
+
 
 uint8_t usbTransferEnumerate(uint8_t j)
 {
@@ -552,7 +554,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
                 printf("Interface %u has %u endpoints and belongs to class:\n", d->interfaceNumber, d->numEndpoints);
                 break;
         }
-        textColor(IMPORTANT);
+
         switch (d->interfaceClass)
         {
             case 0x01:
@@ -695,7 +697,7 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
         printf("\n\nlanguages: ");
         for (uint8_t i=0; i<10;i++)
         {
-            if (d->languageID[i] >=0x0400 && d->languageID[i] <= 0x0465)
+            if (d->languageID[i] >= 0x0400 && d->languageID[i] <= 0x0465)
             {
                 switch (d->languageID[i])
                 {
