@@ -77,7 +77,7 @@ int32_t initUHCIHostController(uhci_t* u)
 
   #ifdef _UHCI_DIAGNOSIS_
     printf("\nPCI Command Register before:          %xh", pciCommandRegister);
-    printf("\nPCI Command Register plus bus master: %xh", pci_config_read(bus, dev, func, 0x0204));
+    printf("\nPCI Command Register plus bus master: %xh", pci_config_read(bus, dev, func, PCI_COMMAND, 2));
     //printf("\nPCI Capabilities List: first Pointer: %yh", pciCapabilitiesList);
  #endif
     irq_installPCIHandler(u->PCIdevice->irq, uhci_handler, u->PCIdevice);
@@ -122,9 +122,9 @@ void uhci_resetHostController(uhci_t* u)
         }
     }
 
-    if (u->rootPorts > 7)
+    if (u->rootPorts > UHCIMAX)
     {
-        u->rootPorts = 7; // more than 7 root ports are usually not present
+        u->rootPorts = UHCIMAX; 
     }
 
   #ifdef _UHCI_DIAGNOSIS_

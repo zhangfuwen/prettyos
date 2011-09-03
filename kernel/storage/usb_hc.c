@@ -4,8 +4,9 @@
 */
 
 #include "usb_hc.h"
-#include "ehci.h"
 #include "uhci.h"
+#include "ohci.h"
+#include "ehci.h"
 #include "video/console.h"
 
 
@@ -57,11 +58,14 @@ void install_USB_HostController(pciDev_t* PCIdev)
 
             switch(PCIdev->interfaceID)
             {
-            case EHCI:
-                ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
-                break;
             case UHCI:
                 uhci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0, PCIdev->bar[i].memorySize);
+                break;
+            case OHCI:
+                ohci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0, PCIdev->bar[i].memorySize);
+                break;
+            case EHCI:
+                ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
                 break;
             }
         }

@@ -138,6 +138,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\storage\ehci.h" />
     <ClInclude Include="..\kernel\storage\ehciQHqTD.h" />
     <ClInclude Include="..\kernel\storage\flpydsk.h" />
+    <ClInclude Include="..\kernel\storage\ohci.h" />
     <ClInclude Include="..\kernel\storage\uhci.h" />
     <ClInclude Include="..\kernel\storage\usb2.h" />
     <ClInclude Include="..\kernel\storage\usb2_msd.h" />
@@ -226,6 +227,7 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\storage\ehci.c" />
     <ClCompile Include="..\kernel\storage\ehciQHqTD.c" />
     <ClCompile Include="..\kernel\storage\flpydsk.c" />
+    <ClCompile Include="..\kernel\storage\ohci.c" />
     <ClCompile Include="..\kernel\storage\uhci.c" />
     <ClCompile Include="..\kernel\storage\usb2.c" />
     <ClCompile Include="..\kernel\storage\usb2_msd.c" />

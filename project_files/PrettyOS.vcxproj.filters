@@ -375,6 +375,9 @@
     <ClInclude Include="..\kernel\storage\uhci.h">
       <Filter>Kernel\include\storage</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\storage\ohci.h">
+      <Filter>Kernel\include\storage</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -627,6 +630,9 @@
       <Filter>Kernel\Source</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\storage\uhci.c">
+      <Filter>Kernel\Source\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\storage\ohci.c">
       <Filter>Kernel\Source\storage</Filter>
     </ClCompile>
   </ItemGroup>
