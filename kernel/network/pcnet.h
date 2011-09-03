@@ -36,6 +36,7 @@ typedef struct
     uint8_t            currentTransDesc;
     void*              receiveBuf[8];
     void*              transmitBuf[8];
+    uint16_t           IO_base;
 } PCNet_card;
 
 

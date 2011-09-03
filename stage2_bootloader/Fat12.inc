@@ -27,8 +27,7 @@ DriveNum     db 0
 
 Convert_Cluster_to_LBA:
     sub ax, 2                                  ; zero base cluster number
-    xor cx, cx
-    mov cl, BYTE [SecPerClus]                  ; convert byte to word
+    movzx cx, BYTE [SecPerClus]                ; convert byte to word
     mul cx
     add ax, WORD [datasector]                  ; base data sector
     ret
@@ -124,14 +123,13 @@ LoadRoot:
     pusha
 
     ; compute size of root directory and store in "cx"
-    xor     cx, cx
     mov     ax, 32                              ; 32 byte directory entry
     mul     WORD [RootEntries]                  ; total size of directory
     div     WORD [BytesPerSec]                  ; sectors used by directory
-    xchg    ax, cx                              ; store in CX
+    mov     cx, ax                              ; store in CX
 
     ; compute location of root directory and store in "ax"
-    mov     al, BYTE [NumFATs]                  ; number of FATs
+    movzx   ax, BYTE [NumFATs]                  ; number of FATs
     mul     WORD [FATSize]                      ; sectors used by FATs
     add     ax, WORD [ReservedSec]
     mov     WORD [datasector], ax               ; base of root directory
@@ -153,8 +151,7 @@ LoadFAT:
     pusha
 
     ; compute size of FAT and store it into CX
-    xor ax, ax
-    mov al, BYTE [NumFATs]                      ; number of FATs
+    movzx ax, BYTE [NumFATs]                    ; number of FATs
     mul WORD [FATSize]                          ; sectors used by FATs
     mov cx, ax
 
@@ -237,8 +234,7 @@ LoadFile:
     ; load the cluster
     mov ax, WORD [cluster]          ; cluster to read
     call Convert_Cluster_to_LBA
-    xor ch, ch
-    mov cl, BYTE [SecPerClus]
+    movzx cx, BYTE [SecPerClus]
 
     pop edi
     call ReadSectors

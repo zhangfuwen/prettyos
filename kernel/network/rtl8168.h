@@ -90,6 +90,7 @@ typedef struct
     RTL8168_Desc*      Rx_Descriptors;
     RTL8168_Desc*      Tx_Descriptors;
     uint8_t*           RxBuffer;
+    void*              MMIO_base;
 } RTL8168_networkAdapter_t;
 
 

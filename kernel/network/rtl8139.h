@@ -101,6 +101,7 @@ typedef struct
     uint8_t   TxBufferIndex;
     uint8_t*  RxBuffer;
     uint32_t  RxBufferPointer;
+    void*     MMIO_base;
 } RTL8139_networkAdapter_t;
 
 

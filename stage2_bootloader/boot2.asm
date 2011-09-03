@@ -56,7 +56,7 @@ A20:
 ;*******************************************************
 
 Get_Memory_Map:
-    xor eax, eax
+    xor ax, ax
     mov ds, ax
     mov di, 0x1000
     call get_memory_by_int15_e820
@@ -82,7 +82,7 @@ Load_Root:
 
     call LoadFile       ; c.f. FAT12.inc
 
-    cmp ax, 0
+    test ax, ax
     je EnterProtectedMode
     mov si, msgFailure
     call print_string

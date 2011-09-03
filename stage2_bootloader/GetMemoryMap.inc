@@ -69,7 +69,6 @@ convert_mmap:
     mov DWORD [ecx+8], edx
     mov eax, DWORD [ebp-4]
     mov eax, DWORD [eax+8]
-    xor edx, edx
     mov ecx, DWORD [ebp-8]
     mov DWORD [ecx+12], eax
     mov DWORD [ecx+16], edx

@@ -25,20 +25,20 @@
 #define BDP    0x16
 
 
-static void writeBCR(network_adapter_t* adapter, uint16_t value)
+static void writeBCR(PCNet_card* pAdapter, uint16_t value)
 {
-    outportw(adapter->IO_base+RAP, BCR20); // Enable BCR20 register
-    outportw(adapter->IO_base+BDP, value); // Write value to BCR20 register
+    outportw(pAdapter->IO_base+RAP, BCR20); // Enable BCR20 register
+    outportw(pAdapter->IO_base+BDP, value); // Write value to BCR20 register
 }
-static void writeCSR(network_adapter_t* adapter, uint8_t csr, uint16_t value)
+static void writeCSR(PCNet_card* pAdapter, uint8_t csr, uint16_t value)
 {
-    outportw(adapter->IO_base+RAP, csr);   // Enable CSR register
-    outportw(adapter->IO_base+RDP, value); // Write value to CSR register
+    outportw(pAdapter->IO_base+RAP, csr);   // Enable CSR register
+    outportw(pAdapter->IO_base+RDP, value); // Write value to CSR register
 }
-static uint16_t readCSR(network_adapter_t* adapter, uint8_t csr)
+static uint16_t readCSR(PCNet_card* pAdapter, uint8_t csr)
 {
-    outportw(adapter->IO_base+RAP, csr);   // Enable CSR register
-    return inportw(adapter->IO_base+RDP);  // Read value from CSR register
+    outportw(pAdapter->IO_base+RAP, csr);   // Enable CSR register
+    return inportw(pAdapter->IO_base+RDP);  // Read value from CSR register
 }
 
 void AMDPCnet_install(network_adapter_t* adapter)
@@ -48,29 +48,41 @@ void AMDPCnet_install(network_adapter_t* adapter)
     pAdapter->device = adapter;
     adapter->data = pAdapter;
 
+    // Detect IO space
+    pciDev_t* device = adapter->PCIdev;
+    uint16_t pciCommandRegister = pci_config_read(device->bus, device->device, device->func, PCI_COMMAND, 2);
+    pci_config_write_dword(device->bus, device->device, device->func, PCI_COMMAND, pciCommandRegister | PCI_CMD_IO | PCI_CMD_BUSMASTER); // resets status register, sets command register
+    for (uint8_t j = 0; j < 6; ++j) // check network card BARs
+    {
+        if (device->bar[j].memoryType == PCI_IO)
+        {
+            pAdapter->IO_base = device->bar[j].baseAddress &= 0xFFFC;
+        }
+    }
+
     #ifdef _NETWORK_DIAGNOSIS_
-    printf("\nIO: %xh", adapter->IO_base);
+    printf("\nIO: %xh", pAdapter->IO_base);
     #endif
 
     // Get MAC
-    uint16_t temp = inportw(adapter->IO_base + APROM0);
+    uint16_t temp = inportw(pAdapter->IO_base + APROM0);
     adapter->MAC[0] = temp;
     adapter->MAC[1] = temp>>8;
-    temp = inportw(adapter->IO_base + APROM2);
+    temp = inportw(pAdapter->IO_base + APROM2);
     adapter->MAC[2] = temp;
     adapter->MAC[3] = temp>>8;
-    temp = inportw(adapter->IO_base + APROM4);
+    temp = inportw(pAdapter->IO_base + APROM4);
     adapter->MAC[4] = temp;
     adapter->MAC[5] = temp>>8;
 
     // Reset
-    inportw(adapter->IO_base+RESET);
-    outportw(adapter->IO_base+RESET, 0); // Needed for NE2100LANCE adapters
+    inportw(pAdapter->IO_base+RESET);
+    outportw(pAdapter->IO_base+RESET, 0); // Needed for NE2100LANCE adapters
     sleepMilliSeconds(10);
-    writeBCR(adapter, 0x0102); // Enable 32-bit mode
+    writeBCR(pAdapter, 0x0102); // Enable 32-bit mode
 
     // Stop
-    writeCSR(adapter, 0, 0x04); // STOP-Reset
+    writeCSR(pAdapter, 0, 0x04); // STOP-Reset
 
     // Setup descriptors, Init send and receive buffers
     pAdapter->currentRecDesc = 0;
@@ -102,22 +114,22 @@ void AMDPCnet_install(network_adapter_t* adapter)
     initBlock->receive_descriptor = paging_getPhysAddr(pAdapter->receiveDesc);
     initBlock->transmit_descriptor = paging_getPhysAddr(pAdapter->transmitDesc);
     uintptr_t phys_address = (uintptr_t)paging_getPhysAddr(initBlock);
-    writeCSR(adapter, 1, phys_address); // Lower bits of initBlock address
-    writeCSR(adapter, 2, phys_address>>16); // Higher bits of initBlock address
+    writeCSR(pAdapter, 1, phys_address); // Lower bits of initBlock address
+    writeCSR(pAdapter, 2, phys_address>>16); // Higher bits of initBlock address
 
     irq_resetCounter(adapter->PCIdev->irq);
     // Init card
-    writeCSR(adapter, 0, 0x0041); // Initialize card, activate interrupts
+    writeCSR(pAdapter, 0, 0x0041); // Initialize card, activate interrupts
     if (!waitForIRQ(adapter->PCIdev->irq, 1000))
     {
         textColor(ERROR);
         printf("\nIRQ did not occur.\n");
         textColor(TEXT);
     }
-    writeCSR(adapter, 4, 0x0C00 | readCSR(adapter, 4));
+    writeCSR(pAdapter, 4, 0x0C00 | readCSR(pAdapter, 4));
 
     // Activate card
-    writeCSR(adapter, 0, 0x0042);
+    writeCSR(pAdapter, 0, 0x0042);
 }
 
 static void PCNet_receive(PCNet_card* pAdapter)
@@ -162,7 +174,7 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     // Prepare descriptor
     pAdapter->transmitDesc[pAdapter->currentTransDesc].flags2 = 0;
     pAdapter->transmitDesc[pAdapter->currentTransDesc].flags = 0x8300F000 | ((-length) & 0x7FF);
-    writeCSR(adapter, 0, 0x48);
+    writeCSR(pAdapter, 0, 0x48);
 
     pAdapter->currentTransDesc++;
     if (pAdapter->currentTransDesc == 8)
@@ -174,14 +186,17 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 void PCNet_handler(registers_t* data, pciDev_t* device)
 {
     network_adapter_t* adapter = device->data;
-    if (!adapter || adapter->PCIdev != device || adapter->driver != &network_drivers[PCNET])
+    if (!adapter || adapter->driver != &network_drivers[PCNET])
     {
         return;
     }
 
     PCNet_card* pAdapter = adapter->data;
 
-    uint16_t csr0 = readCSR(adapter, 0);
+    uint16_t csr0 = readCSR(pAdapter, 0);
+
+	if(!(csr0 & BIT(7)))
+		return;
 
     #ifdef _NETWORK_DIAGNOSIS_
     textColor(0x03);
@@ -223,7 +238,7 @@ void PCNet_handler(registers_t* data, pciDev_t* device)
             PCNet_receive(pAdapter);
         }
     }
-    writeCSR(adapter, 0, csr0);
+    writeCSR(pAdapter, 0, csr0);
 }
 
 

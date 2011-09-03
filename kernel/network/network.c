@@ -69,22 +69,6 @@ bool network_installDevice(pciDev_t* device)
     // Set IRQ handler
     irq_installPCIHandler(device->irq, driver->interruptHandler, device);
 
-    // Detect MMIO and IO space
-    uint16_t pciCommandRegister = pci_config_read(device->bus, device->device, device->func, PCI_COMMAND);
-    pci_config_write_dword(device->bus, device->device, device->func, PCI_COMMAND&0xFF, pciCommandRegister /*already set*/ | BIT(2) /*bus master*/); // resets status register, sets command register
-
-    for (uint8_t j = 0; j < 6; ++j) // check network card BARs
-    {
-        if (device->bar[j].memoryType == PCI_MMIO)
-        {
-            adapter->MMIO_base = (void*)(device->bar[j].baseAddress &= 0xFFFFFFF0);
-        }
-        else if (device->bar[j].memoryType == PCI_IO)
-        {
-            adapter->IO_base = device->bar[j].baseAddress &= 0xFFFC;
-        }
-    }
-
     // nic
     adapter->IP.IP[0]           =  IP_1;
     adapter->IP.IP[1]           =  IP_2;

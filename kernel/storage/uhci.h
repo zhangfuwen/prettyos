@@ -176,7 +176,7 @@ typedef struct
     mutex_t*   qhLock;             // mutex for access on the QH
     bool       enabledPorts;       // root ports enabled
     port_t     port[UHCIPORTMAX];  // root ports
-    bool       run;                // hc running (RS bit) 
+    bool       run;                // hc running (RS bit)
 } uhci_t;
 
 

@@ -7,7 +7,6 @@
 #include "timer.h"
 #include "kheap.h"
 #include "task.h"
-#include "todo_list.h"
 #include "irq.h"
 #include "audio/sys_speaker.h"
 #include "keyboard.h"
@@ -27,7 +26,7 @@ static uint8_t numPorts; // maximum
 static disk_t usbDev[16];
 static port_t port[16];
 
-static uintptr_t eecp;
+static uint8_t eecp;
 
 static bool USBtransferFlag; // switch on/off tests for USB-Transfer
 static bool enabledPortFlag; // port enabled
@@ -56,7 +55,7 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
         PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
         EHCIflag = true; // only the first EHCI is used
 
-        todoList_add(kernel_idleTasks, &ehci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
+        ehci_init(0,0);
 
         analyzeEHCI(bar,offset); // get data (capregs, opregs)
     }
@@ -106,33 +105,29 @@ int32_t initEHCIHostController()
     uint8_t dev  = PCIdevice->device;
     uint8_t func = PCIdevice->func;
 
-    // prepare PCI command register // offset 0x04
-    // bit 9 (0x0200): Fast Back-to-Back Enable // not necessary
-    // bit 2 (0x0004): Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
-    uint16_t pciCommandRegister = pci_config_read(bus, dev, func, 0x0204);
-    pci_config_write_dword(bus, dev, func, 0x04, pciCommandRegister /*already set*/ | BIT(2) /* bus master */); // resets status register, sets command register
-    uint16_t pciCapabilitiesList = pci_config_read(bus, dev, func, 0x0234);
+    // prepare PCI command register
+    // bit 9: Fast Back-to-Back Enable // not necessary
+    // bit 2: Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
+    uint16_t pciCommandRegister = pci_config_read(bus, dev, func, PCI_COMMAND, 2);
+    pci_config_write_dword(bus, dev, func, PCI_COMMAND, pciCommandRegister | PCI_CMD_MMIO | PCI_CMD_BUSMASTER); // resets status register, sets command register
+    uint8_t pciCapabilitiesList = pci_config_read(bus, dev, func, PCI_CAPLIST, 1);
 
   #ifdef _EHCI_DIAGNOSIS_
     printf("\nPCI Command Register before:          %xh", pciCommandRegister);
-    printf("\nPCI Command Register plus bus master: %xh", pci_config_read(bus, dev, func, 0x0204));
-    printf("\nPCI Capabilities List: first Pointer: %xh", pciCapabilitiesList);
+    printf("\nPCI Command Register plus bus master: %xh", pci_config_read(bus, dev, func, PCI_COMMAND, 2));
+    printf("\nPCI Capabilities List: first Pointer: %yh", pciCapabilitiesList);
   #endif
 
     if (pciCapabilitiesList) // pointer != 0
     {
-        uint16_t nextCapability = pci_config_read(bus, dev, func, 0x0200 | pciCapabilitiesList);
-      #ifdef _EHCI_DIAGNOSIS_
-        printf("\nPCI Capabilities List: ID: %yh, next Pointer: %yh",BYTE1(nextCapability),BYTE2(nextCapability));
-      #endif
-
-        while (BYTE2(nextCapability)) // pointer to next capability != 0
+        uint16_t nextCapability = 0;
+        do
         {
-            nextCapability = pci_config_read(bus, dev, func, 0x0200 | BYTE2(nextCapability));
+            nextCapability = pci_config_read(bus, dev, func, BYTE2(nextCapability), 2);
           #ifdef _EHCI_DIAGNOSIS_
             printf("\nPCI Capabilities List: ID: %yh, next Pointer: %yh",BYTE1(nextCapability),BYTE2(nextCapability));
           #endif
-        }
+        } while (BYTE2(nextCapability)); // pointer to next capability != 0
     }
 
     irq_installPCIHandler(PCIdevice->irq, ehci_handler, PCIdevice);
@@ -268,7 +263,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
     eecp = BYTE2(pCapRegs->HCCPARAMS);
 
   #ifdef _EHCI_DIAGNOSIS_
-    printf("\nDeactivateLegacySupport: eecp = %xh\n",eecp);
+    printf("\nDeactivateLegacySupport: eecp = %yh\n",eecp);
   #endif
     /*
     cf. EHCI 1.0 spec, 2.2.4 HCCPARAMS - Capability Parameters, Bit 15:8 (BYTE2)
@@ -291,9 +286,9 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
         {
             uint32_t NextEHCIExtCapPtr; // RO  - 00h indicates end of the ext. cap. list.
           #ifdef _EHCI_DIAGNOSIS_
-            printf("eecp = %xh, ",eecp);
+            printf("eecp = %yh, ",eecp);
           #endif
-            eecp_id = pci_config_read(bus, dev, func, 0x0100/*length 1 byte*/ | (eecp + 0));
+            eecp_id = pci_config_read(bus, dev, func, eecp, 1);
           #ifdef _EHCI_DIAGNOSIS_
             printf("eecp_id = %xh\n",eecp_id);
           #endif
@@ -302,14 +297,14 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
                 break;
             }
             NextEHCIExtCapPtr = eecp + 1;
-            eecp = pci_config_read(bus, dev, func, 0x0100 | NextEHCIExtCapPtr);
+            eecp = pci_config_read(bus, dev, func, NextEHCIExtCapPtr, 1);
         }
-        uint32_t BIOSownedSemaphore = eecp + 2; // R/W - only Bit 16 (Bit 23:17 Reserved, must be set to zero)
-        uint32_t OSownedSemaphore   = eecp + 3; // R/W - only Bit 24 (Bit 31:25 Reserved, must be set to zero)
-        uint32_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
+        uint8_t BIOSownedSemaphore = eecp + 2; // R/W - only Bit 16 (Bit 23:17 Reserved, must be set to zero)
+        uint8_t OSownedSemaphore   = eecp + 3; // R/W - only Bit 24 (Bit 31:25 Reserved, must be set to zero)
+        uint8_t USBLEGCTLSTS       = eecp + 4; // USB Legacy Support Control/Status (DWORD, cf. EHCI 1.0 spec, 2.1.8)
 
         // Legacy-Support-EC found? BIOS-Semaphore set?
-        if (eecp_id == 1 && (pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore) & 0x01))
+        if (eecp_id == 1 && (pci_config_read(bus, dev, func, BIOSownedSemaphore, 1) & 0x01))
         {
           #ifdef _EHCI_DIAGNOSIS_
             printf("set OS-Semaphore.\n");
@@ -318,7 +313,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
 
             int32_t timeout=200;
             // Wait for BIOS-Semaphore being not set
-            while ((pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore) & 0x01) && (timeout>0))
+            while ((pci_config_read(bus, dev, func, BIOSownedSemaphore, 1) & 0x01) && (timeout>0))
             {
               #ifdef _EHCI_DIAGNOSIS_
                 putch('.');
@@ -326,20 +321,20 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
                 timeout--;
                 sleepMilliSeconds(20);
             }
-            if (!(pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore) & 0x01)) // not set
+            if (!(pci_config_read(bus, dev, func, BIOSownedSemaphore, 1) & 0x01)) // not set
             {
               #ifdef _EHCI_DIAGNOSIS_
                 printf("BIOS-Semaphore being not set.\n");
               #endif
                 timeout=200;
-                while (!(pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore) & 0x01) && (timeout>0))
+                while (!(pci_config_read(bus, dev, func, OSownedSemaphore, 1) & 0x01) && (timeout>0))
                 {
                     putch('.');
                     timeout--;
                     sleepMilliSeconds(20);
                 }
             }
-            if (pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore) & 0x01)
+            if (pci_config_read(bus, dev, func, OSownedSemaphore, 1) & 0x01)
             {
               #ifdef _EHCI_DIAGNOSIS_
                 printf("OS-Semaphore being set.\n");
@@ -347,28 +342,26 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
             }
           #ifdef _EHCI_DIAGNOSIS_
             printf("Check: BIOSownedSemaphore: %u OSownedSemaphore: %u\n",
-                pci_config_read(bus, dev, func, 0x0100 | BIOSownedSemaphore),
-                pci_config_read(bus, dev, func, 0x0100 | OSownedSemaphore));
+                pci_config_read(bus, dev, func, BIOSownedSemaphore, 1),
+                pci_config_read(bus, dev, func, OSownedSemaphore, 1));
           #endif
 
             // USB SMI Enable R/W. 0=Default.
             // The OS tries to set SMI to disabled in case that BIOS bit satys at one.
             pci_config_write_dword(bus, dev, func, USBLEGCTLSTS, 0x0); // USB SMI disabled
         }
+      #ifdef _EHCI_DIAGNOSIS_
         else
         {
-          #ifdef _EHCI_DIAGNOSIS_
             textColor(SUCCESS);
             printf("\nBIOS did not own the EHCI. No action needed.\n");
             textColor(TEXT);
-          #endif
         }
     }
     else
     {
-      #ifdef _EHCI_DIAGNOSIS_
         printf("No valid eecp found.\n");
-      #endif
+  #endif
     }
 }
 
@@ -500,7 +493,7 @@ void ehci_handler(registers_t* r, pciDev_t* device)
 
         if (enabledPortFlag && PCIdevice)
         {
-            todoList_add(kernel_idleTasks, &ehci_portcheck, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
+            ehci_portcheck(0,0);
         }
     }
 
@@ -522,7 +515,7 @@ void ehci_handler(registers_t* r, pciDev_t* device)
         printf("\n>>> Press key for EHCI (re)initialization. <<<");
         getch();
         textColor(TEXT);
-        todoList_add(kernel_idleTasks, &ehci_init, 0, 0, 0); // HACK: RTL8139 generates interrupts (endless) if its not used for EHCI
+        ehci_init(0,0);
     }
 
     if (pOpRegs->USBSTS & STS_ASYNC_INT)

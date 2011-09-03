@@ -63,8 +63,6 @@ struct network_adapter
     pciDev_t*         PCIdev;
     network_driver_t* driver;
     void*             data; // Drivers internal data
-    uint16_t          IO_base;
-    void*             MMIO_base;
     uint8_t           MAC[6];
     IP_t              IP;
     arpTable_t        arpTable;

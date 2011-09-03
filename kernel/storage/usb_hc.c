@@ -16,22 +16,22 @@ void install_USB_HostController(pciDev_t* PCIdev)
     switch (PCIdev->interfaceID)
     {
         case UHCI:
-            printf("UHCI ");
+            printf("UHCI");
             break;
         case OHCI:
-            printf("OHCI ");
+            printf("OHCI");
             break;
         case EHCI:
-            printf("EHCI ");
+            printf("EHCI");
             break;
         case XHCI:
-            printf("xHCI ");
+            printf("xHCI");
             break;
         case NO_HCI:
-            printf("no HCI ");
+            printf("no HCI");
             break;
         case ANY_HCI:
-            printf("any ");
+            printf("any");
             break;
     }
 
@@ -41,10 +41,10 @@ void install_USB_HostController(pciDev_t* PCIdev)
         switch (PCIdev->bar[i].memoryType)
         {
             case PCI_MMIO:
-                printf("%Xh MMIO ", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+                printf(" %Xh MMIO", PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
                 break;
             case PCI_IO:
-                printf("%xh I/O ",  PCIdev->bar[i].baseAddress & 0xFFFC);
+                printf(" %xh I/O",  PCIdev->bar[i].baseAddress & 0xFFFC);
                 break;
         }
       #endif
@@ -52,7 +52,7 @@ void install_USB_HostController(pciDev_t* PCIdev)
         if (PCIdev->bar[i].memoryType != PCI_INVALIDBAR)
         {
           #ifdef _HCI_DIAGNOSIS_
-            printf("sz: %d ", PCIdev->bar[i].memorySize);
+            printf(" sz: %d", PCIdev->bar[i].memorySize);
           #endif
 
             switch(PCIdev->interfaceID)

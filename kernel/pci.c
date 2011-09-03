@@ -21,7 +21,7 @@ static list_t* devices = 0;
 void pci_analyzeHostSystemError(pciDev_t* pciDev)
 {
     // check pci status register of the device
-    uint32_t pciStatus = pci_config_read(pciDev->bus, pciDev->device, pciDev->func, PCI_STATUS);
+    uint16_t pciStatus = pci_config_read(pciDev->bus, pciDev->device, pciDev->func, PCI_STATUS, 2);
 
     textColor(HEADLINE);
     printf("\nPCI status word: %xh\n",pciStatus);
@@ -43,20 +43,17 @@ void pci_analyzeHostSystemError(pciDev_t* pciDev)
     textColor(TEXT);
 }
 
-uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t func, uint16_t content)
+uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t func, uint8_t reg_off, uint8_t length)
 {
-    // example: PCI_VENDOR_ID 0x0200 ==> length: 0x02 reg: 0x00 offset: 0x00
-    uint8_t length  = content >> 8;
-    uint8_t reg_off = content & 0x00FF;
-    uint8_t reg     = reg_off & 0xFC;     // bit mask: 11111100b
-    uint8_t offset  = reg_off % 0x04;     // remainder of modulo operation provides offset
+    uint8_t reg    = reg_off & 0xFC;     // bit mask: 11111100b
+    uint8_t offset = reg_off % 0x04;     // remainder of modulo operation provides offset
 
     outportl(PCI_CONFIGURATION_ADDRESS,
         0x80000000
         | (bus    << 16)
         | (device << 11)
         | (func   <<  8)
-        | (reg));
+        |  reg);
 
     // use offset to find searched content
     uint32_t readVal = inportl(PCI_CONFIGURATION_DATA) >> (8 * offset);
@@ -114,7 +111,7 @@ void pci_config_write_dword(uint8_t bus, uint8_t device, uint8_t func, uint8_t r
 
 bool pci_deviceSentInterrupt(pciDev_t* dev)
 {
-    uint32_t statusRegister = pci_config_read(dev->bus, dev->device, dev->func, PCI_STATUS);
+    uint16_t statusRegister = pci_config_read(dev->bus, dev->device, dev->func, PCI_STATUS, 2);
     return(statusRegister & BIT(3));
 }
 
@@ -132,7 +129,7 @@ void pci_scan()
     {
         for (uint8_t device = 0; device < PCIDEVICES; ++device)
         {
-            uint8_t headerType = pci_config_read(bus, device, 0, PCI_HEADERTYPE);
+            uint8_t headerType = pci_config_read(bus, device, 0, PCI_HEADERTYPE, 1);
             uint8_t funcCount = PCIFUNCS;
             if (!(headerType & 0x80)) // Bit 7 in header type (Bit 23-16) --> multifunctional
             {
@@ -141,7 +138,7 @@ void pci_scan()
 
             for (uint8_t func = 0; func < funcCount; ++func)
             {
-                uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID);
+                uint16_t vendorID = pci_config_read(bus, device, func, PCI_VENDOR_ID, 2);
                 if (vendorID && vendorID != 0xFFFF)
                 {
                     pciDev_t* PCIdev = malloc(sizeof(pciDev_t), 0, "pciDev_t");
@@ -149,18 +146,18 @@ void pci_scan()
 
                     PCIdev->data        = 0;
                     PCIdev->vendorID    = vendorID;
-                    PCIdev->deviceID    = pci_config_read(bus, device, func, PCI_DEVICE_ID);
-                    PCIdev->classID     = pci_config_read(bus, device, func, PCI_CLASS);
-                    PCIdev->subclassID  = pci_config_read(bus, device, func, PCI_SUBCLASS);
-                    PCIdev->interfaceID = pci_config_read(bus, device, func, PCI_INTERFACE);
-                    PCIdev->revID       = pci_config_read(bus, device, func, PCI_REVISION);
-                    PCIdev->irq         = pci_config_read(bus, device, func, PCI_IRQLINE);
+                    PCIdev->deviceID    = pci_config_read(bus, device, func, PCI_DEVICE_ID, 2);
+                    PCIdev->classID     = pci_config_read(bus, device, func, PCI_CLASS, 1);
+                    PCIdev->subclassID  = pci_config_read(bus, device, func, PCI_SUBCLASS, 1);
+                    PCIdev->interfaceID = pci_config_read(bus, device, func, PCI_INTERFACE, 1);
+                    PCIdev->revID       = pci_config_read(bus, device, func, PCI_REVISION, 1);
+                    PCIdev->irq         = pci_config_read(bus, device, func, PCI_IRQLINE, 1);
                     // Read BARs
                     for (uint8_t i = 0; i < 6; i++)
                     {
                         if (i < 2 || !(headerType & 0x01)) // Devices with header type 0x00 have 6 bars
                         {
-                            PCIdev->bar[i].baseAddress = pci_config_read(bus, device, func, PCI_BAR0+i*4);
+                            PCIdev->bar[i].baseAddress = pci_config_read(bus, device, func, PCI_BAR0+i*4, 4);
                             if (PCIdev->bar[i].baseAddress) // Valid bar
                             {
                                 // Check memory type
@@ -173,7 +170,7 @@ void pci_scan()
                                 // Check Memory Size
                                 cli();
                                 pci_config_write_dword(bus, device, func, PCI_BAR0 + 4*i, 0xFFFFFFFF);
-                                PCIdev->bar[i].memorySize = (~(pci_config_read(bus, device, func, PCI_BAR0 + 4*i)) | 0x0F) + 1;
+                                PCIdev->bar[i].memorySize = (~(pci_config_read(bus, device, func, PCI_BAR0 + 4*i, 4)) | 0x0F) + 1;
                                 pci_config_write_dword(bus, device, func, PCI_BAR0 + 4*i, PCIdev->bar[i].baseAddress);
                                 sti();
                             }
