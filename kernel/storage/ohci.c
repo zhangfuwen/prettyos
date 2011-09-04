@@ -186,9 +186,24 @@ void ohci_resetHC(ohci_t* o)
     }
 
     o->hcca                        = (ohci_HCCA_t*)paging_getPhysAddr(hccaVirt);
+  #ifdef _OHCI_DIAGNOSIS_
+    printf("\nHCCA (phys. address): %X", o->hcca);
+  #endif
+    o->pOpRegs->HcHCCA = (uintptr_t)o->hcca;
     o->pOpRegs->HcInterruptDisable = OHCI_INT_MIE;
     o->pOpRegs->HcInterruptStatus  = 0xFFFFFFFF;
-    o->pOpRegs->HcInterruptEnable  = OHCI_INT_SO | OHCI_INT_WDH | OHCI_INT_RD | OHCI_INT_UE | OHCI_INT_RHSC | OHCI_INT_MIE;
+    
+    // enable interrupts
+    o->pOpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
+                                     OHCI_INT_WDH  | // write back done head
+                                  // OHCI_INT_SF   | // start of frame           // disabled due to qemu 
+                                     OHCI_INT_RD   | // resume detected
+                                     OHCI_INT_UE   | // unrecoverable error
+                                     OHCI_INT_FNO  | // frame number overflow
+                                     OHCI_INT_RHSC | // root hub status change
+                                     OHCI_INT_OC   | // ownership change
+                                     OHCI_INT_MIE;   // (de)activates interrupts
+
     o->pOpRegs->HcControl         &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE);
     o->pOpRegs->HcControl         |= OHCI_CTRL_CLE | OHCI_CTRL_BLE; //activate control and bulk
     o->pOpRegs->HcPeriodicStart    = 0x4B0;

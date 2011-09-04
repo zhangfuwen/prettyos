@@ -65,7 +65,9 @@ void usb_hc_install(pciDev_t* PCIdev)
 					ohci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0, PCIdev->bar[i].memorySize);
 					break;
 				case EHCI:
-					ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+                  #ifdef _EHCI_ENABLE_
+                    ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+                  #endif
 					break;
             }
         }
