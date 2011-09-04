@@ -316,7 +316,7 @@ void checkAsyncScheduler()
     textColor(IMPORTANT);
 
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register
-    void* virtASYNCLISTADDR = paging_acquirePciMemory(pOpRegs->ASYNCLISTADDR, 1);
+    void* virtASYNCLISTADDR = paging_acquirePciMemory(OpRegs->ASYNCLISTADDR, 1);
     printf("\ncurr QH: %Xh ",paging_getPhysAddr(virtASYNCLISTADDR));
 
     // Last accessed & next to access QH, DWORD 0
@@ -374,13 +374,13 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
   #endif
 
     // Enable Asynchronous Schdeuler
-    pOpRegs->USBSTS |= STS_USBINT;
+    OpRegs->USBSTS |= STS_USBINT;
     USBINTflag = false;
 
-    pOpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
+    OpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
 
     int8_t timeout=7;
-    while (!(pOpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
+    while (!(OpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
     {
         timeout--;
         if (timeout>0)
@@ -426,15 +426,15 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         }
     };
 
-    pOpRegs->USBSTS |= STS_USBINT;
+    OpRegs->USBSTS |= STS_USBINT;
     USBINTflag = false;
 
     if (stop)
     {
-        pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // switch off
+        OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // switch off
 
         timeout=7;
-        while (pOpRegs->USBSTS & STS_ASYNC_ENABLED) // wait until it is really off
+        while (OpRegs->USBSTS & STS_ASYNC_ENABLED) // wait until it is really off
         {
             timeout--;
             if (timeout>0)

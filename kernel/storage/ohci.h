@@ -8,66 +8,74 @@
 #define OHCIMAX      8  // max number of OHCI devices
 #define OHCIPORTMAX  4  // max number of OHCI device ports
 
+#define OHCI_HCCA_ALIGN 0x100
+
 // control
-#define OHCI_CTRL_CBSR  0x00000003 // relation between control und bulk (cbsr+1 vs. 1)
-#define OHCI_CTRL_PLE   0x00000004 // activate periodical transfers
-#define OHCI_CTRL_IE    0x00000008 // activate isochronous transfers
-#define OHCI_CTRL_CLE   0x00000010 // activate control transfers
-#define OHCI_CTRL_BLE   0x00000020 // activate bulk transfers
-#define OHCI_CTRL_HCFS  0x000000C0 // HC status
-#define OHCI_CTRL_IR    0x00000100 // redirect IRQ to SMB
-#define OHCI_CTRL_RWC   0x00000200 // remote wakeup
-#define OHCI_CTRL_RW    0x00000400 // activate remote wakeup
+#define OHCI_CTRL_CBSR (BIT(0)|BIT(1)) // relation between control und bulk (cbsr+1 vs. 1)
+#define OHCI_CTRL_PLE   BIT(2)        // activate periodical transfers
+#define OHCI_CTRL_IE    BIT(3)        // activate isochronous transfers
+#define OHCI_CTRL_CLE   BIT(4)        // activate control transfers
+#define OHCI_CTRL_BLE   BIT(5)        // activate bulk transfers
+#define OHCI_CTRL_HCFS (BIT(6)|BIT(7)) // HC status
+#define OHCI_CTRL_IR    BIT(8)        // redirect IRQ to SMB
+#define OHCI_CTRL_RWC   BIT(9)        // remote wakeup
+#define OHCI_CTRL_RW    BIT(10)       // activate remote wakeup
 
 // Interrupts
-#define OHCI_INT_SO     0x00000001 // scheduling overrun
-#define OHCI_INT_WDH    0x00000002 // write back done head
-#define OHCI_INT_SF     0x00000004 // start of frame
-#define OHCI_INT_RD     0x00000008 // resume detected
-#define OHCI_INT_UE     0x00000010 // unrecoverable error
-#define OHCI_INT_FNO    0x00000020 // frame number overflow
-#define OHCI_INT_RHSC   0x00000040 // root hub status change
-#define OHCI_INT_OC     0x40000000 // ownership change
-#define OHCI_INT_MIE    0x80000000 // (de)activates interrupts
+#define OHCI_INT_SO     BIT(0)        // scheduling overrun
+#define OHCI_INT_WDH    BIT(1)        // HcDoneHead writeback
+#define OHCI_INT_SF     BIT(2)        // start of frame
+#define OHCI_INT_RD     BIT(3)        // resume detect
+#define OHCI_INT_UE     BIT(4)        // unrecoverable error
+#define OHCI_INT_FNO    BIT(5)        // frame number overflow
+#define OHCI_INT_RHSC   BIT(6)        // root hub status change
+#define OHCI_INT_OC     BIT(30)       // ownership change
+#define OHCI_INT_MIE    BIT(31)       // master interrupt enable
 
 // Command Status
-#define OHCI_CMST_RESET 0x00000001 // reset
-#define OHCI_CMST_CLF   0x00000002 // control list filled
-#define OHCI_CMST_BLF   0x00000004 // bulk list filled
-#define OHCI_CMST_OCR   0x00000008 // ownership change request
-#define OHCI_CMST_SOC   0x00030000 // scheduling overrun count
+#define OHCI_STATUS_RESET BIT(0)        // reset
+#define OHCI_STATUS_CLF   BIT(1)        // control list filled
+#define OHCI_STATUS_BLF   BIT(2)        // bulk list filled
+#define OHCI_STATUS_OCR   BIT(3)        // ownership change request
+#define OHCI_STATUS_SOC  (BIT(6)|BIT(7)) // scheduling overrun count
 
+//
 #define OHCI_RHA_NDP    0x000000FF // number downstream rootports (max. 15)
-#define OHCI_RHA_PSM    0x00000100 //
-#define OHCI_RHA_NPS    0x00000200 //
-#define OHCI_RHA_DT     0x00000400 // always 0
-#define OHCI_RHA_OCPM   0x00000800 //
-#define OHCI_RHA_NOCP   0x00001000 //
+#define OHCI_RHA_PSM    BIT(8)     //
+#define OHCI_RHA_NPS    BIT(9)     //
+#define OHCI_RHA_DT     BIT(10)    // always 0
+#define OHCI_RHA_OCPM   BIT(11)    //
+#define OHCI_RHA_NOCP   BIT(12)    //
 #define OHCI_RHA_POTPGT 0xFF000000 //
-#define OHCI_RHS_LPS    0x00000001 //
-#define OHCI_RHS_OCI    0x00000002 //
-#define OHCI_RHS_DRWE   0x00008000 //
-#define OHCI_RHS_LPSC   0x00010000 //
-#define OHCI_RHS_OCIC   0x00020000 //
-#define OHCI_RHS_CRWE   0x80000000 //
-#define OHCI_RP_CCS     0x00000001 //
-#define OHCI_RP_PES     0x00000002 //
-#define OHCI_RP_PSS     0x00000004 //
-#define OHCI_RP_POCI    0x00000008 //
-#define OHCI_RP_PRS     0x00000010 //
-#define OHCI_RP_PPS     0x00000100 //
-#define OHCI_RP_LSDA    0x00000200 //
-#define OHCI_RP_CSC     0x00010000 //
-#define OHCI_RP_PESC    0x00020000 //
-#define OHCI_RP_PSSC    0x00040000 //
-#define OHCI_RP_OCIC    0x00080000 //
-#define OHCI_RP_PRSC    0x00100000 //
+
+//
+#define OHCI_RHS_LPS    BIT(0)     //
+#define OHCI_RHS_OCI    BIT(1)     //
+#define OHCI_RHS_DRWE   BIT(15)    //
+#define OHCI_RHS_LPSC   BIT(16)    //
+#define OHCI_RHS_OCIC   BIT(17)    //
+#define OHCI_RHS_CRWE   BIT(31)    //
+
+// Port 
+#define OHCI_PORT_CCS   BIT(0)     //
+#define OHCI_PORT_PES   BIT(1)     //
+#define OHCI_PORT_PSS   BIT(2)     //
+#define OHCI_PORT_POCI  BIT(3)     //
+#define OHCI_PORT_PRS   BIT(4)     //
+#define OHCI_PORT_PPS   BIT(8)     //
+#define OHCI_PORT_LSDA  BIT(9)     //
+#define OHCI_PORT_CSC   BIT(16)    //
+#define OHCI_PORT_PESC  BIT(17)    //
+#define OHCI_PORT_PSSC  BIT(18)    //
+#define OHCI_PORT_OCIC  BIT(19)    //
+#define OHCI_PORT_PRSC  BIT(20)    //
+#define OHCI_PORT_WTC	(OHCI_PORT_CSC|OHCI_PORT_PESC|OHCI_PORT_PSSC|OHCI_PORT_OCIC|OHCI_PORT_PRSC)
 
 // USB
-#define OHCI_USB_RESET       0x00000000
-#define OHCI_USB_RESUME      0x00000040
-#define OHCI_USB_OPERATIONAL 0x00000080
-#define OHCI_USB_SUSPEND     0x000000C0
+#define OHCI_USB_RESET       0
+#define OHCI_USB_RESUME      BIT(6)
+#define OHCI_USB_OPERATIONAL BIT(7)
+#define OHCI_USB_SUSPEND    (BIT(6)|BIT(7))
 
 
 // OHCI operational registers
@@ -118,7 +126,7 @@ typedef struct
     pciDev_t*      PCIdevice;         // PCI device
     uintptr_t      bar;               // MMIO space (base address register)
 
-    ohci_OpRegs_t* pOpRegs;           // operational registers
+    ohci_OpRegs_t* OpRegs;           // operational registers
     ohci_HCCA_t*   hcca;              // HC Communications Area
 
     uint8_t        rootPorts;         // number of rootports

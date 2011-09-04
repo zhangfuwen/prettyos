@@ -41,8 +41,8 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-GetMaxLun");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next      = createQTD_Handshake(OUT); // Handshake is the opposite direction of Data
@@ -78,8 +78,8 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-MSD-Reset");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
@@ -335,10 +335,10 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiIN-QH_In");
 
     // async list points to QH Out
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
 
   #ifdef _USB2_DIAGNOSIS_
-    printf("\nasyncList: %Xh <-- QH_Out", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_Out", OpRegs->ASYNCLISTADDR);
 
     // OUT qTD
     // No handshake!
@@ -383,10 +383,10 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
   #endif
 
     // async list points to QH In
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
 
   #ifdef _USB2_DIAGNOSIS_
-    printf("\nasyncList: %Xh <-- QH_In", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_In", OpRegs->ASYNCLISTADDR);
   #endif
 
     // IN qTDs
@@ -482,10 +482,10 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiOUT-QH_In");
 
     // async list points to QH Out
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
 
   #ifdef _USB2_DIAGNOSIS_
-    printf("\nasyncList: %Xh <-- QH_Out", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_Out", OpRegs->ASYNCLISTADDR);
 
     // OUT qTD
     // No handshake!
@@ -540,10 +540,10 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
   #endif
 
     // async list points to QH In
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
 
   #ifdef _USB2_DIAGNOSIS_
-    printf("\nasyncList: %Xh <-- QH_In", pOpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_In", OpRegs->ASYNCLISTADDR);
 
     // IN qTDs
     // No handshake!

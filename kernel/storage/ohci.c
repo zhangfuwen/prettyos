@@ -43,7 +43,7 @@ void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
   #endif
 
     ohci[index]->bar+= offset;
-    ohci[index]->pOpRegs = (ohci_OpRegs_t*) (ohci[index]->bar);
+    ohci[index]->OpRegs = (ohci_OpRegs_t*) (ohci[index]->bar);
 
     char str[10];
     snprintf(str, 10, "OHCI %u", index+1);
@@ -120,26 +120,26 @@ void ohci_resetHC(ohci_t* o)
     // Revision and Number Downstream Ports (NDP)
     textColor(IMPORTANT);
     printf("\nOHCI: Revision %u.%u, Number Downstream Ports: %u\n",
-        BYTE1(o->pOpRegs->HcRevision) >> 4,
-        BYTE1(o->pOpRegs->HcRevision) & 0xF,
-        BYTE1(o->pOpRegs->HcRhDescriptorA)); // bits 7:0 provide Number Downstream Ports (NDP)
+        BYTE1(o->OpRegs->HcRevision) >> 4,
+        BYTE1(o->OpRegs->HcRevision) & 0xF,
+        BYTE1(o->OpRegs->HcRhDescriptorA)); // bits 7:0 provide Number Downstream Ports (NDP)
     textColor(TEXT);
 
     // HCCA
-    void* hccaVirt = malloc(sizeof(ohci_HCCA_t), 0x100, "ohci HCCA"); // HCCA must be 256-byte aligned
+    void* hccaVirt = malloc(sizeof(ohci_HCCA_t), OHCI_HCCA_ALIGN, "ohci HCCA"); // HCCA must be 256-byte aligned
     memset(hccaVirt, 0, sizeof(ohci_HCCA_t));
 
     // ED Pool: malloc 64 EDs (size: ED)
     // TD Pool: malloc 56 TDs (size: TD+1024)
 
-    o->pOpRegs->HcInterruptDisable = OHCI_INT_MIE;
+    o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
 
-    if (o->pOpRegs->HcControl & OHCI_CTRL_IR)
+    if (o->OpRegs->HcControl & OHCI_CTRL_IR)
     {   
-        o->pOpRegs->HcCommandStatus |= OHCI_CMST_OCR;        
+        o->OpRegs->HcCommandStatus |= OHCI_STATUS_OCR;        
 
         uint16_t i=0;
-        for (i=0; (o->pOpRegs->HcControl & OHCI_CTRL_IR) && (i < 1000); i++)
+        for (i=0; (o->OpRegs->HcControl & OHCI_CTRL_IR) && (i < 1000); i++)
         {
              sleepMilliSeconds(1);
         }
@@ -151,17 +151,17 @@ void ohci_resetHC(ohci_t* o)
         else
         {
             printf("\nOHCI taking control from SMM did not work.");
-            o->pOpRegs->HcControl &= ~OHCI_CTRL_IR;
+            o->OpRegs->HcControl &= ~OHCI_CTRL_IR;
         }
     }
-    else if ((o->pOpRegs->HcControl & OHCI_CTRL_CBSR) != OHCI_USB_RESET)
+    else if ((o->OpRegs->HcControl & OHCI_CTRL_CBSR) != OHCI_USB_RESET)
     {
         printf("\nBIOS active");
 
-        if ((o->pOpRegs->HcControl & OHCI_CTRL_CBSR) != OHCI_USB_OPERATIONAL)
+        if ((o->OpRegs->HcControl & OHCI_CTRL_CBSR) != OHCI_USB_OPERATIONAL)
         {
             printf("\nActivate RESUME");
-            o->pOpRegs->HcControl = (o->pOpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_RESUME;
+            o->OpRegs->HcControl = (o->OpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_RESUME;
             sleepMilliSeconds(10);
          }
      }
@@ -173,15 +173,15 @@ void ohci_resetHC(ohci_t* o)
 
     printf("\n\nReset HC\n");
 
-    o->pOpRegs->HcCommandStatus |= OHCI_CMST_RESET;
+    o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
     sleepMilliSeconds(3); //10 µs reset, 2 ms resume
 
-    if ((o->pOpRegs->HcControl & OHCI_CTRL_CBSR) == OHCI_USB_SUSPEND)
+    if ((o->OpRegs->HcControl & OHCI_CTRL_CBSR) == OHCI_USB_SUSPEND)
     {
         textColor(ERROR);
         printf("\nTimeout!\n");
         textColor(TEXT);
-        o->pOpRegs->HcControl = (o->pOpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_RESUME;
+        o->OpRegs->HcControl = (o->OpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_RESUME;
         sleepMilliSeconds(10);
     }
 
@@ -189,12 +189,12 @@ void ohci_resetHC(ohci_t* o)
   #ifdef _OHCI_DIAGNOSIS_
     printf("\nHCCA (phys. address): %X", o->hcca);
   #endif
-    o->pOpRegs->HcHCCA = (uintptr_t)o->hcca;
-    o->pOpRegs->HcInterruptDisable = OHCI_INT_MIE;
-    o->pOpRegs->HcInterruptStatus  = 0xFFFFFFFF;
+    o->OpRegs->HcHCCA = (uintptr_t)o->hcca;
+    o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
+    o->OpRegs->HcInterruptStatus  = 0xFFFFFFFF;
     
     // enable interrupts
-    o->pOpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
+    o->OpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
                                      OHCI_INT_WDH  | // write back done head
                                   // OHCI_INT_SF   | // start of frame           // disabled due to qemu 
                                      OHCI_INT_RD   | // resume detected
@@ -204,16 +204,16 @@ void ohci_resetHC(ohci_t* o)
                                      OHCI_INT_OC   | // ownership change
                                      OHCI_INT_MIE;   // (de)activates interrupts
 
-    o->pOpRegs->HcControl         &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE);
-    o->pOpRegs->HcControl         |= OHCI_CTRL_CLE | OHCI_CTRL_BLE; //activate control and bulk
-    o->pOpRegs->HcPeriodicStart    = 0x4B0;
+    o->OpRegs->HcControl         &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE);
+    o->OpRegs->HcControl         |= OHCI_CTRL_CLE | OHCI_CTRL_BLE; //activate control and bulk
+    o->OpRegs->HcPeriodicStart    = 0x4B0;
 
     printf("\n\nHC will be activated.\n");
 
-    o->pOpRegs->HcControl = (o->pOpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_OPERATIONAL;
-    o->pOpRegs->HcRhStatus |= OHCI_RHS_LPSC; // power on
-    o->rootPorts = o->pOpRegs->HcRhDescriptorA & OHCI_RHA_NDP;
-    sleepMilliSeconds((o->pOpRegs->HcRhDescriptorA & OHCI_RHA_POTPGT) >> 23);
+    o->OpRegs->HcControl = (o->OpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_OPERATIONAL;
+    o->OpRegs->HcRhStatus |= OHCI_RHS_LPSC; // power on
+    o->rootPorts = o->OpRegs->HcRhDescriptorA & OHCI_RHA_NDP;
+    sleepMilliSeconds((o->OpRegs->HcRhDescriptorA & OHCI_RHA_POTPGT) >> 23);
 
     textColor(IMPORTANT);
     printf("\n\nFound %i Rootports.\n", o->rootPorts);
@@ -221,7 +221,7 @@ void ohci_resetHC(ohci_t* o)
 
     for (uint8_t i=0; i < o->rootPorts; i++)
     {
-        o->pOpRegs->HcRhPortStatus[i] |= OHCI_RP_CCS; // deactivate
+        o->OpRegs->HcRhPortStatus[i] |= OHCI_PORT_CCS; // deactivate
     }
 
     //
@@ -251,7 +251,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         }
     }
 
-    volatile uint32_t val = o->pOpRegs->HcInterruptStatus;
+    volatile uint32_t val = o->OpRegs->HcInterruptStatus;
     uint32_t handled = 0;
     uintptr_t phys;
 
@@ -276,7 +276,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     if (val & OHCI_INT_UE) // Unrecoverable error
     {
         printf("\nUnrecoverable HC error.");
-        o->pOpRegs->HcCommandStatus |= OHCI_CMST_RESET;
+        o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
         handled |= OHCI_INT_UE;
     }
 
@@ -299,7 +299,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         printf("\nUnhandled interrupt: %X", val & ~handled);
     }
   
-    o->pOpRegs->HcInterruptStatus = val; // reset interrupts
+    o->OpRegs->HcInterruptStatus = val; // reset interrupts
 }
 
 /*******************************************************************************************************

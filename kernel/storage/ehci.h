@@ -161,7 +161,7 @@ struct ehci_OpRegs
 } __attribute__((packed));
 
 
-extern struct ehci_OpRegs* pOpRegs;  // = &OpRegs;
+extern struct ehci_OpRegs* OpRegs;  // = &OpRegs;
 
 extern bool      USBINTflag;
 

@@ -31,7 +31,7 @@ uint8_t usbTransferEnumerate(uint8_t j)
     uint8_t new_address = j; // indicated port number
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Enum");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; OpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
@@ -63,7 +63,7 @@ void usbTransferDevice(uint32_t device)
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Device");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; OpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -98,7 +98,7 @@ void usbTransferConfig(uint32_t device)
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Config");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; OpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -211,7 +211,7 @@ void usbTransferString(uint32_t device)
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-String");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; OpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -247,7 +247,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-wideStr");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; OpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -285,7 +285,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-SetConf");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; OpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
@@ -314,7 +314,7 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
   #endif
 
     void* virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-GetConf");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; OpRegs->ASYNCLISTADDR = paging_getPhysAddr(virtualAsyncList);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(OUT);
@@ -351,8 +351,8 @@ void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize)
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-SetHalt");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
@@ -387,8 +387,8 @@ void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-ClrHalt");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
@@ -423,8 +423,8 @@ uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize)
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-QH-getStatus");
-    pOpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    pOpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
+    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(OUT);
