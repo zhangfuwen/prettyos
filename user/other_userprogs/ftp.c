@@ -78,9 +78,7 @@ int main()
                 textColor(0x0A);
                 printf("\nESTABLISHED.\n\n");
 
-                tcpReceivedEventHeader_t* header = (void*)buffer;
-                char* data = (void*)(header+1);
-                data[header->length] = 0;
+                tcpConnectedEventHeader_t* header = (void*)buffer;
                 if (header->connectionID == dataConnection && waitingDataCommand)
                 {
                     waitingDataCommand = 0;
@@ -90,10 +88,8 @@ int main()
             }
             case EVENT_TCP_CLOSED:
             {
-                tcpReceivedEventHeader_t* header = (void*)buffer;
-                char* data = (void*)(header+1);
-                data[header->length] = 0;
-                if (header->connectionID == dataConnection)
+                uint32_t connectionID = *(uint32_t*)buffer;
+                if (connectionID == dataConnection)
                 {
                     textColor(0x07);
                     printf("Closed dataConnection.\n");
@@ -191,7 +187,7 @@ int main()
                         {
                             if (data[it] == '(')
                                 break;
-                        }while (it++);
+                        } while (it++);
                         for (uint8_t i_start = it+1, i_end = it+1, byte = 0; byte < 6; i_end++)
                         {
                             if (data[i_end] == ')')

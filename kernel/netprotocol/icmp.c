@@ -253,7 +253,7 @@ void icmp_receive(network_adapter_t* adapter, icmpheader_t* rec, uint32_t length
         case ICMP_SEAMOBY:
             printf("ICMP for experimental mobility protocols such as Seamoby [RFC4065]");
             break;
-     #endif
+      #endif
         default:
             break;
     }

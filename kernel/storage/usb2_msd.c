@@ -26,8 +26,6 @@ static uint8_t currCSWtag;
 static void* cmdQTD;
 static void* StatusQTD;
 
-static int32_t numberTries = 10; // repeats for IN-Transfer
-
 uint32_t usbMSDVolumeMaxLBA;
 
 extern usb2_Device_t usbDevices[16]; // ports 1-16
@@ -157,7 +155,7 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[7]         = BYTE2(TransferLength); // MSB <--- blocks not byte!
             cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
             break;
-         case 0x2A: // write(10)
+        case 0x2A: // write(10)
             cbw->CBWSignature           = CBWMagic;              // magic
             cbw->CBWTag                 = 0x4242422A;            // device echoes this field in the CSWTag field of the associated CSW
             cbw->CBWDataTransferLength  = TransferLength*512;    // byte = 512 * block
@@ -345,9 +343,9 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     // OUT qTD
     // No handshake!
 
-     textColor(0x03);
-     printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
-     textColor(TEXT);
+    textColor(0x03);
+    printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
+    textColor(TEXT);
   #endif
 
     // The qTD for the SCSI command is built
@@ -435,6 +433,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     // QH IN with data and status qTD
     createQH(QH_In, paging_getPhysAddr(QH_In), QTD_In, 1, device+1, endpointIn, 512); // endpoint IN for MSD
 
+	uint32_t numberTries = 10; // repeats for IN-Transfer
 labelTransferIN: /// TEST
 
     performAsyncScheduler(true, true, TransferLength/200);
@@ -452,8 +451,6 @@ labelTransferIN: /// TEST
     }
   #endif
 
-    uint8_t index = TransferLength > 0 ? 1 : 0;
-
     if (checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer) == -1)
     {
         numberTries--;
@@ -463,6 +460,8 @@ labelTransferIN: /// TEST
             goto labelTransferIN;
         }
     }
+
+    uint8_t index = TransferLength > 0 ? 1 : 0;
 
     free(QH_In);
     for (uint8_t i=0; i<=index; i++)
@@ -491,9 +490,9 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     // OUT qTD
     // No handshake!
 
-     textColor(0x03);
-     printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
-     textColor(TEXT);
+    textColor(0x03);
+    printf("\ntoggle OUT %u", usbDevices[device].ToggleEndpointOutMSD);
+    textColor(TEXT);
   #endif
 
     if (SCSIcommand == 0x2A)   // write(10)
@@ -567,11 +566,9 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer);
 
     free(QH_In);
-    for (uint8_t i=0; i<=0; i++)
-    {
-        free(globalqTD[i]);
-        free(globalqTDbuffer[i]);
-    }
+
+    free(globalqTD[0]);
+    free(globalqTDbuffer[0]);
 }
 
 static uint8_t getStatusByte()

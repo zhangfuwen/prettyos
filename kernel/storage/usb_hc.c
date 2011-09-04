@@ -10,7 +10,7 @@
 #include "video/console.h"
 
 
-void install_USB_HostController(pciDev_t* PCIdev)
+void usb_hc_install(pciDev_t* PCIdev)
 {
     printf(" - USB ");
 
@@ -36,7 +36,7 @@ void install_USB_HostController(pciDev_t* PCIdev)
             break;
     }
 
-    for (uint8_t i = 0; i < 6; ++i) // check USB BARs
+    for (uint8_t i = 0; i < 6; ++i) // check BARs
     {
       #ifdef _HCI_DIAGNOSIS_
         switch (PCIdev->bar[i].memoryType)
@@ -58,15 +58,15 @@ void install_USB_HostController(pciDev_t* PCIdev)
 
             switch(PCIdev->interfaceID)
             {
-            case UHCI:
-                uhci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0, PCIdev->bar[i].memorySize);
-                break;
-            case OHCI:
-                ohci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0, PCIdev->bar[i].memorySize);
-                break;
-            case EHCI:
-                ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
-                break;
+				case UHCI:
+					uhci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0, PCIdev->bar[i].memorySize);
+					break;
+				case OHCI:
+					ohci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0, PCIdev->bar[i].memorySize);
+					break;
+				case EHCI:
+					ehci_install(PCIdev, PCIdev->bar[i].baseAddress & 0xFFFFFFF0);
+					break;
             }
         }
     }

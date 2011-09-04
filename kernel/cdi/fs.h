@@ -282,7 +282,7 @@ struct cdi_fs_res_dir {
        eigene Liste erstellen, die sie intern abspeichern.
        stream: Stream
        return: Pointer auf eine Liste mit den Untereintraegen vom Typ cdi_fs_res. */
-     cdi_list_t (*list)(struct cdi_fs_stream* stream);
+    cdi_list_t (*list)(struct cdi_fs_stream* stream);
 
     /* Neue Ressource in der Aktuellen erstellen. Diese wird erstmal noch keiner Klasse zugewiesen. Diese Funktion wird mit einem NULL-Pointer als
        Ressource im Stream aufgerufen. Dieser NULL-Pointer muss bei Erfolgreichem Beenden durch einen Pointer auf die neue Ressource ersetzt

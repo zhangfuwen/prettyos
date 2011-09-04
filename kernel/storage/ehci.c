@@ -26,8 +26,6 @@ static uint8_t numPorts; // maximum
 static disk_t usbDev[16];
 static port_t port[16];
 
-static uint8_t eecp;
-
 static bool USBtransferFlag; // switch on/off tests for USB-Transfer
 static bool enabledPortFlag; // port enabled
 
@@ -37,17 +35,24 @@ static pciDev_t* PCIdevice = 0; // pci device
 extern usb2_Device_t usbDevices[16]; // ports 1-16
 extern uintptr_t    SetupQTDpage0;
 
+
+static void ehci_handler(registers_t* r, pciDev_t* device);
+static void ehci_deactivateLegacySupport(pciDev_t* PCIdev);
+static void ehci_analyze(uintptr_t bar, uintptr_t offset);
+static void ehci_checkPortLineStatus(uint8_t j);
+
+
 void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 {
   #ifdef _EHCI_DIAGNOSIS_
     printf("\n>>>ehci_install<<<\n");
   #endif
 
-    uintptr_t bar      = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
-    uintptr_t offset   = bar_phys % PAGESIZE;
+    uintptr_t bar    = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
+    uintptr_t offset = bar_phys % PAGESIZE;
 
   #ifdef _EHCI_DIAGNOSIS_
-    printf("\nEHCI_MMIO %Xh mapped to virt addr %Xh, offset: %xh\n", bar_phys, bar, offset);
+    printf("\nEHCI_MMIO %Xh mapped to virt addr %Xh, offset: %xh", bar_phys, bar, offset);
   #endif
 
     if (!EHCIflag) // only the first EHCI is used
@@ -55,50 +60,60 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
         PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
         EHCIflag = true; // only the first EHCI is used
 
-        ehci_init(0,0);
+        scheduler_insertTask(create_cthread(&ehci_start, "EHCI"));
 
-        analyzeEHCI(bar,offset); // get data (capregs, opregs)
+        ehci_analyze(bar,offset); // get data (capregs, opregs)
     }
 }
 
-void analyzeEHCI(uintptr_t bar, uintptr_t offset)
+static void ehci_analyze(uintptr_t bar, uintptr_t offset)
 {
     bar += offset;
-    pCapRegs = (struct ehci_CapRegs*) bar;
-    pOpRegs  = (struct ehci_OpRegs*) (bar + pCapRegs->CAPLENGTH);
+    pCapRegs = (struct ehci_CapRegs*)bar;
+    pOpRegs  = (struct ehci_OpRegs*)(bar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
   #ifdef _EHCI_DIAGNOSIS_
     uintptr_t bar_phys  = (uintptr_t)paging_getPhysAddr((void*)bar);
-    printf("EHCI bar get_physAddress: %Xh\n", bar_phys);
-    printf("HCIVERSION: %xh ",  pCapRegs->HCIVERSION);              // Interface Version Number
-    printf("HCSPARAMS: %Xh ",   pCapRegs->HCSPARAMS);               // Structural Parameters
-    printf("Ports: %u ",       numPorts);                           // Number of Ports
-    printf("\nHCCPARAMS: %Xh ", pCapRegs->HCCPARAMS);               // Capability Parameters
-    if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil. "); // Extended Capabilities Pointer
-    printf("\nOpRegs Address: %Xh ", pOpRegs);                      // Host Controller Operational Registers
+    printf("\nEHCI bar get_physAddress: %Xh\n", bar_phys);
+    printf("HCIVERSION: %xh ",  pCapRegs->HCIVERSION);             // Interface Version Number
+    printf("HCSPARAMS: %Xh ",   pCapRegs->HCSPARAMS);              // Structural Parameters
+    printf("Ports: %u",         numPorts);                         // Number of Ports
+    printf("\nHCCPARAMS: %Xh ", pCapRegs->HCCPARAMS);              // Capability Parameters
+    if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil."); // Extended Capabilities Pointer
+    printf("\nOpRegs Address: %Xh", pOpRegs);                      // Host Controller Operational Registers
   #endif
 }
 
-// start thread at kernel idle loop (ckernel.c)
-void ehci_init(void* data, size_t size)
+void ehci_start()
 {
-    scheduler_insertTask(create_cthread(&startEHCI, "EHCI"));
-}
+    textColor(HEADLINE);
+    printf("Start EHCI Host Controller:");
+    textColor(TEXT);
 
-void startEHCI()
-{
-    initEHCIHostController();
+    ehci_initHC();
+    ehci_resetHC();
+    ehci_startHC(PCIdevice);
+
+    if (!(pOpRegs->USBSTS & STS_HCHALTED))
+    {
+        ehci_enablePorts();
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("\nFatal Error: HCHalted set. Ports cannot be enabled.");
+        showUSBSTS();
+    }
+
     textColor(LIGHT_MAGENTA);
     printf("\n\n>>> Press key to close this console. <<<");
     getch();
 }
 
-int32_t initEHCIHostController()
+void ehci_initHC()
 {
-    textColor(HEADLINE);
-    printf("Initialize EHCI Host Controller:");
-    textColor(TEXT);
+    printf(" Initialize");
 
     // pci bus data
     uint8_t bus  = PCIdevice->bus;
@@ -110,13 +125,12 @@ int32_t initEHCIHostController()
     // bit 2: Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
     uint16_t pciCommandRegister = pci_config_read(bus, dev, func, PCI_COMMAND, 2);
     pci_config_write_dword(bus, dev, func, PCI_COMMAND, pciCommandRegister | PCI_CMD_MMIO | PCI_CMD_BUSMASTER); // resets status register, sets command register
-    uint8_t pciCapabilitiesList = pci_config_read(bus, dev, func, PCI_CAPLIST, 1);
 
   #ifdef _EHCI_DIAGNOSIS_
+    uint8_t pciCapabilitiesList = pci_config_read(bus, dev, func, PCI_CAPLIST, 1);
     printf("\nPCI Command Register before:          %xh", pciCommandRegister);
     printf("\nPCI Command Register plus bus master: %xh", pci_config_read(bus, dev, func, PCI_COMMAND, 2));
     printf("\nPCI Capabilities List: first Pointer: %yh", pciCapabilitiesList);
-  #endif
 
     if (pciCapabilitiesList) // pointer != 0
     {
@@ -124,40 +138,20 @@ int32_t initEHCIHostController()
         do
         {
             nextCapability = pci_config_read(bus, dev, func, BYTE2(nextCapability), 2);
-          #ifdef _EHCI_DIAGNOSIS_
-            printf("\nPCI Capabilities List: ID: %yh, next Pointer: %yh",BYTE1(nextCapability),BYTE2(nextCapability));
-          #endif
+            printf("\nPCI Capabilities List: ID: %yh, next Pointer: %yh", BYTE1(nextCapability), BYTE2(nextCapability));
         } while (BYTE2(nextCapability)); // pointer to next capability != 0
     }
+  #endif
 
     irq_installPCIHandler(PCIdevice->irq, ehci_handler, PCIdevice);
 
     USBtransferFlag = true;
     enabledPortFlag = false;
-
-    startHostController(PCIdevice);
-
-    if (!(pOpRegs->USBSTS & STS_HCHALTED))
-    {
-         enablePorts();
-    }
-    else
-    {
-         textColor(ERROR);
-         printf("\nFatal Error: Ports cannot be enabled. HCHalted set.");
-         showUSBSTS();
-         textColor(TEXT);
-         return -1;
-    }
-    return 0;
 }
 
-void startHostController(pciDev_t* PCIdev)
+void ehci_startHC(pciDev_t* PCIdev)
 {
-    textColor(TEXT);
-    printf("\nStart Host Controller (reset HC).");
-
-    resetHostController();
+    printf(" Start");
 
     /*
     Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
@@ -169,7 +163,7 @@ void startHostController(pciDev_t* PCIdev)
     */
 
     // 1. Claim/request ownership of the EHCI. This process is described in detail in Section 5 - EHCI Ownership.
-    DeactivateLegacySupport(PCIdev);
+    ehci_deactivateLegacySupport(PCIdev);
 
     // 2. Program the CTRLDSSEGMENT register. This value must be programmed since the ICH4/5 only uses 64bit addressing
     //    (See Section 4.3.3.1.2-HCCPARAMS – Host Controller Capability Parameters).
@@ -201,30 +195,28 @@ void startHostController(pciDev_t* PCIdev)
     sleepMilliSeconds(100); // do not delete
 }
 
-void resetHostController()
+void ehci_resetHC()
 {
+    printf(" Reset");
     /*
     Intel Intel® 82801EB (ICH5), 82801ER (ICH5R), and 82801DB (ICH4)
     Enhanced Host Controller Interface (EHCI) Programmer’s Reference Manual (PRM) April 2003
 
-    To initiate a host controller reset
-    system software must:
+    To initiate a host controller reset system software must:
     */
 
     // 1. Stop the host controller.
     //    System software must program the USB2CMD.Run/Stop bit to 0 to stop the host controller.
     pOpRegs->USBCMD &= ~CMD_RUN_STOP;            // set Run-Stop-Bit to 0
 
-    /*
-    2. Wait for the host controller to halt.
-       To determine when the host controller has halted, system software must read the USB2STS.HCHalted bit;
-       the host controller will set this bit to 1 as soon as
-       it has successfully transitioned from a running state to a stopped state (halted).
-       Attempting to reset an actively running host controller will result in undefined behavior.
-    */
+    // 2. Wait for the host controller to halt.
+    //    To determine when the host controller has halted, system software must read the USB2STS.HCHalted bit;
+    //    the host controller will set this bit to 1 as soon as
+    //    it has successfully transitioned from a running state to a stopped state (halted).
+    //    Attempting to reset an actively running host controller will result in undefined behavior.
     while (!(pOpRegs->USBSTS & STS_HCHALTED))
     {
-        sleepMilliSeconds(30); // wait at least 16 microframes (= 16*125 micro-sec = 2 ms)
+        sleepMilliSeconds(10); // wait at least 16 microframes (= 16*125 micro-sec = 2 ms)
     }
 
     // 3. Program the USB2CMD.HostControllerReset bit to a 1.
@@ -234,7 +226,6 @@ void resetHostController()
     // 4. Wait until the host controller has completed its reset.
     // To determine when the reset is complete, system software must read the USB2CMD.HostControllerReset bit;
     // the host controller will set this bit to 0 upon completion of the reset.
-
     int32_t timeout=10;
     while ((pOpRegs->USBCMD & CMD_HCRESET) != 0) // Reset-Bit still set to 1
     {
@@ -253,14 +244,14 @@ void resetHostController()
     }
 }
 
-void DeactivateLegacySupport(pciDev_t* PCIdev)
+static void ehci_deactivateLegacySupport(pciDev_t* PCIdev)
 {
     // pci bus data
     uint8_t bus  = PCIdev->bus;
     uint8_t dev  = PCIdev->device;
     uint8_t func = PCIdev->func;
 
-    eecp = BYTE2(pCapRegs->HCCPARAMS);
+    uint8_t eecp = BYTE2(pCapRegs->HCCPARAMS);
 
   #ifdef _EHCI_DIAGNOSIS_
     printf("\nDeactivateLegacySupport: eecp = %yh\n",eecp);
@@ -276,15 +267,14 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
     */
     // cf. http://wiki.osdev.org/PCI#PCI_Device_Structure
 
-    //               eecp       // RO - This field identifies the extended capability.
-                                //      01h identifies the capability as Legacy Support.
+    //   eecp     // RO - This field identifies the extended capability.
+                  //      01h identifies the capability as Legacy Support.
     if (eecp >= 0x40)
     {
-        int32_t eecp_id=0;
+        uint8_t eecp_id=0;
 
-        while (eecp)
+        while (eecp) // 00h indicates end of the ext. cap. list.
         {
-            uint32_t NextEHCIExtCapPtr; // RO  - 00h indicates end of the ext. cap. list.
           #ifdef _EHCI_DIAGNOSIS_
             printf("eecp = %yh, ",eecp);
           #endif
@@ -296,8 +286,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
             {
                 break;
             }
-            NextEHCIExtCapPtr = eecp + 1;
-            eecp = pci_config_read(bus, dev, func, NextEHCIExtCapPtr, 1);
+            eecp = pci_config_read(bus, dev, func, eecp + 1, 1);
         }
         uint8_t BIOSownedSemaphore = eecp + 2; // R/W - only Bit 16 (Bit 23:17 Reserved, must be set to zero)
         uint8_t OSownedSemaphore   = eecp + 3; // R/W - only Bit 24 (Bit 31:25 Reserved, must be set to zero)
@@ -334,13 +323,11 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
                     sleepMilliSeconds(20);
                 }
             }
+          #ifdef _EHCI_DIAGNOSIS_
             if (pci_config_read(bus, dev, func, OSownedSemaphore, 1) & 0x01)
             {
-              #ifdef _EHCI_DIAGNOSIS_
                 printf("OS-Semaphore being set.\n");
-              #endif
             }
-          #ifdef _EHCI_DIAGNOSIS_
             printf("Check: BIOSownedSemaphore: %u OSownedSemaphore: %u\n",
                 pci_config_read(bus, dev, func, BIOSownedSemaphore, 1),
                 pci_config_read(bus, dev, func, OSownedSemaphore, 1));
@@ -365,7 +352,7 @@ void DeactivateLegacySupport(pciDev_t* PCIdev)
     }
 }
 
-void enablePorts()
+void ehci_enablePorts()
 {
     textColor(HEADLINE);
     printf("\nEnable ports:\n");
@@ -373,32 +360,32 @@ void enablePorts()
 
     for (uint8_t j=0; j<numPorts; j++)
     {
-         resetPort(j);
-         enabledPortFlag = true;
+        ehci_resetPort(j);
+        enabledPortFlag = true;
 
-         port[j].type = &USB_EHCI; // device manager
-         port[j].data = (void*)(j+1);
-         snprintf(port[j].name, 14, "EHCI-Port %u", j+1);
-         attachPort(&port[j]);
+        port[j].type = &USB_EHCI; // device manager
+        port[j].data = (void*)(j+1);
+        snprintf(port[j].name, 14, "EHCI-Port %u", j+1);
+        attachPort(&port[j]);
 
-         if (USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)) // high speed, enabled, device attached
-         {
-             textColor(YELLOW);
-             printf("Port %u: high speed enabled, device attached\n",j+1);
-             textColor(TEXT);
+        if (USBtransferFlag && enabledPortFlag && pOpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)) // high speed, enabled, device attached
+        {
+            textColor(YELLOW);
+            printf("Port %u: high speed enabled, device attached\n",j+1);
+            textColor(TEXT);
 
-             setupUSBDevice(j); // TEST
-         }
+            setupUSBDevice(j); // TEST
+        }
     }
 }
 
-void resetPort(uint8_t j)
+void ehci_resetPort(uint8_t j)
 {
   #ifdef _EHCI_DIAGNOSIS_
     printf("Reset port %u\n", j+1);
   #endif
 
-    pOpRegs->PORTSC[j] |=  PSTS_POWERON;
+    pOpRegs->PORTSC[j] |= PSTS_POWERON;
 
     /*
      http://www.intel.com/technology/usb/download/ehci-r10.pdf
@@ -440,7 +427,7 @@ void resetPort(uint8_t j)
         if (timeout == 0)
         {
             textColor(ERROR);
-            printf("\nTimeour Error: Port %u did not reset! ",j+1);
+            printf("\nTimeour Error: Port %u did not reset! ", j+1);
             textColor(TEXT);
             printf("Port Status: %Xh",pOpRegs->PORTSC[j]);
             break;
@@ -457,7 +444,7 @@ void resetPort(uint8_t j)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void ehci_handler(registers_t* r, pciDev_t* device)
+static void ehci_handler(registers_t* r, pciDev_t* device)
 {
   #ifdef _EHCI_DIAGNOSIS_
     if (!(pOpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) && !(pOpRegs->USBSTS & STS_USBINT))
@@ -492,7 +479,7 @@ void ehci_handler(registers_t* r, pciDev_t* device)
 
         if (enabledPortFlag && PCIdevice)
         {
-            ehci_portcheck(0,0);
+            scheduler_insertTask(create_cthread(&ehci_portCheck, "EHCI Ports"));
         }
     }
 
@@ -512,8 +499,8 @@ void ehci_handler(registers_t* r, pciDev_t* device)
         printf("\n>>> Init EHCI after fatal error:           <<<");
         printf("\n>>> Press key for EHCI (re)initialization. <<<");
         getch();
+        scheduler_insertTask(create_cthread(&ehci_start, "EHCI"));
         textColor(TEXT);
-        ehci_init(0,0);
     }
 
     if (pOpRegs->USBSTS & STS_ASYNC_INT)
@@ -535,24 +522,9 @@ void ehci_handler(registers_t* r, pciDev_t* device)
 *                                                                                                      *
 *******************************************************************************************************/
 
-// PORT_CHANGE via ehci_handler starts thread at kernel idle loop (ckernel.c)
-void ehci_portcheck(void* data, size_t size)
-{
-    scheduler_insertTask(create_cthread(&portCheck, "EHCI Ports"));
-}
-
-void portCheck()
+void ehci_portCheck()
 {
     console_setProperties(CONSOLE_SHOWINFOBAR|CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH); // protect console against info area
-    showPORTSC();      // with resetPort(j) and checkPortLineStatus(j)
-    textColor(IMPORTANT);
-    printf("\n>>> Press key to close this console. <<<");
-    textColor(TEXT);
-    getch();
-}
-
-void showPORTSC()
-{
     for (uint8_t j=0; j<numPorts; j++)
     {
         if (pOpRegs->PORTSC[j] & PSTS_CONNECTED_CHANGE)
@@ -560,8 +532,8 @@ void showPORTSC()
             if (pOpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
                 writeInfo(0, "Port: %u, device attached", j+1);
-                resetPort(j);
-                checkPortLineStatus(j);
+                ehci_resetPort(j);
+                ehci_checkPortLineStatus(j);
             }
             else
             {
@@ -578,54 +550,55 @@ void showPORTSC()
             beep(1000,100);
         }
     }
+    textColor(IMPORTANT);
+    printf("\n>>> Press key to close this console. <<<");
+    textColor(TEXT);
+    getch();
 }
 
-void checkPortLineStatus(uint8_t j)
+static void ehci_checkPortLineStatus(uint8_t j)
 {
-    if (j<numPorts)
-    {
-        //check line status
+    // check line status
 
+  #ifdef _EHCI_DIAGNOSIS_
+    textColor(LIGHT_CYAN);
+    printf("\nport %u: %xh, line: %yh ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
+  #endif
+    if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
+    {
       #ifdef _EHCI_DIAGNOSIS_
-        textColor(LIGHT_CYAN);
-        printf("\nport %u: %xh, line: %yh ",j+1,pOpRegs->PORTSC[j],(pOpRegs->PORTSC[j]>>10)&3);
+        printf("SE0");
       #endif
-        if (((pOpRegs->PORTSC[j]>>10)&3) == 0) // SE0
+
+        if ((pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
         {
           #ifdef _EHCI_DIAGNOSIS_
-            printf("SE0 ");
+            textColor(IMPORTANT); printf(", power on, enabled, EHCI owned"); textColor(TEXT);
           #endif
-
-            if ((pOpRegs->PORTSC[j] & PSTS_POWERON) && (pOpRegs->PORTSC[j] & PSTS_ENABLED) && (pOpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
+            if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
             {
-              #ifdef _EHCI_DIAGNOSIS_
-                 textColor(IMPORTANT); printf(", power on, enabled, EHCI owned"); textColor(TEXT);
-              #endif
-                 if (USBtransferFlag && enabledPortFlag && (pOpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
-                 {
-                     setupUSBDevice(j);
-                 }
+                setupUSBDevice(j);
             }
         }
-
-      #ifdef _EHCI_DIAGNOSIS_
-        textColor(IMPORTANT);
-        switch ((pOpRegs->PORTSC[j]>>10)&3)
-        {
-            case 1:
-                printf("K-State");
-                break;
-            case 2:
-                printf("J-state");
-                break;
-            default:
-                textColor(RED);
-                printf("undefined");
-                break;
-        }
-        textColor(TEXT);
-      #endif
     }
+
+  #ifdef _EHCI_DIAGNOSIS_
+    textColor(IMPORTANT);
+    switch ((pOpRegs->PORTSC[j]>>10)&3)
+    {
+        case 1:
+            printf("K-State");
+            break;
+        case 2:
+            printf("J-state");
+            break;
+        default:
+            textColor(RED);
+            printf("undefined");
+            break;
+    }
+    textColor(TEXT);
+  #endif
 }
 
 
@@ -637,16 +610,16 @@ void checkPortLineStatus(uint8_t j)
 *******************************************************************************************************/
 
 #ifdef _EHCI_DIAGNOSIS_
-  static void analyzeQTD()
-  {
-      printf("\nsetup packet: ");
-      showPacket(SetupQTDpage0,8);
-      printf("\nSETUP: ");
-      showStatusbyteQTD(SetupQTD);
-      printf("\nIO:    ");
-      showStatusbyteQTD(DataQTD);
-      waitForKeyStroke();
-  }
+static void analyzeQTD()
+{
+    printf("\nsetup packet: ");
+    showPacket(SetupQTDpage0,8);
+    printf("\nSETUP: ");
+    showStatusbyteQTD(SetupQTD);
+    printf("\nIO:    ");
+    showStatusbyteQTD(DataQTD);
+    waitForKeyStroke();
+}
 #endif
 
 

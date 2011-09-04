@@ -104,7 +104,7 @@ bool network_installDevice(pciDev_t* device)
     textColor(TEXT);
     printf("\tIP: ");
     textColor(IMPORTANT);
-    printf("%I\n", adapter->IP);
+    printf("%I", adapter->IP);
     textColor(TEXT);
 
     return(true);
@@ -179,8 +179,8 @@ uint32_t getMyIP()
 
 void dns_setServer(IP_t server)
 {
-     network_adapter_t* adapter = network_getFirstAdapter();
-     adapter->dnsServer_IP.iIP  = server.iIP;
+    network_adapter_t* adapter = network_getFirstAdapter();
+    adapter->dnsServer_IP.iIP  = server.iIP;
 }
 
 void dns_getServer(IP_t* server)

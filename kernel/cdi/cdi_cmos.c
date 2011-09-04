@@ -14,7 +14,7 @@ uint8_t cdi_cmos_read(uint8_t index)
 
 void cdi_cmos_write(uint8_t index, uint8_t value)
 {
-     cmos_write(index, value); // Write byte to CMOS
+    cmos_write(index, value); // Write byte to CMOS
 }
 
 /*

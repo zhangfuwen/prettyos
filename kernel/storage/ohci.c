@@ -41,7 +41,7 @@ void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
   #ifdef _OHCI_DIAGNOSIS_
     printf("\nOHCI_MMIO %Xh mapped to virt addr %Xh, offset: %xh", bar_phys, ohci[index]->bar, offset);
   #endif
-    
+
     ohci[index]->bar+= offset;
     ohci[index]->pOpRegs = (ohci_OpRegs_t*) (ohci[index]->bar);
 
@@ -116,15 +116,15 @@ void ohci_resetHC(ohci_t* o)
 
     // uint16_t legacySupport = pci_config_read(bus, dev, func, OHCI_PCI_LEGACY_SUPPORT, 2);
     // printf("\nLegacy Support Register: %xh", legacySupport); // if value is not zero, Legacy Support (LEGSUP) is activated
-    
+
     // Revision and Number Downstream Ports (NDP)
     textColor(IMPORTANT);
-    printf("\nOHCI: Revision %u.%u, Number Downstream Ports: %u\n", 
-        BYTE1(o->pOpRegs->HcRevision) >> 4, 
+    printf("\nOHCI: Revision %u.%u, Number Downstream Ports: %u\n",
+        BYTE1(o->pOpRegs->HcRevision) >> 4,
         BYTE1(o->pOpRegs->HcRevision) & 0xF,
         BYTE1(o->pOpRegs->HcRhDescriptorA)); // bits 7:0 provide Number Downstream Ports (NDP)
     textColor(TEXT);
-  
+
     // HCCA
     void* hccaVirt = malloc(sizeof(ohci_HCCA_t), 0x100, "ohci HCCA"); // HCCA must be 256-byte aligned
     memset(hccaVirt, 0, sizeof(ohci_HCCA_t));
@@ -133,27 +133,27 @@ void ohci_resetHC(ohci_t* o)
     // TD Pool: malloc 56 TDs (size: TD+1024)
 
     o->pOpRegs->HcInterruptDisable = OHCI_INT_MIE;
-    
-    if (o->pOpRegs->HcControl & OHCI_CTRL_IR) 
+
+    if (o->pOpRegs->HcControl & OHCI_CTRL_IR)
     {
         uint16_t i=0;
-        
+
         o->pOpRegs->HcCommandStatus |= OHCI_CMST_OCR;
         for (i=0; (o->pOpRegs->HcControl & OHCI_CTRL_IR) && (i < 1000); i++)
         {
              sleepMilliSeconds(1);
         }
-        if (i < 100) 
+        if (i < 100)
         {
             printf("\nOHCI takes control from SMM.");
-        } 
-        else 
+        }
+        else
         {
             printf("\nOHCI taking control from SMM did not work.");
             o->pOpRegs->HcControl &= ~OHCI_CTRL_IR;
         }
     }
-    else if ((o->pOpRegs->HcControl & OHCI_CTRL_CBSR) != OHCI_USB_RESET) 
+    else if ((o->pOpRegs->HcControl & OHCI_CTRL_CBSR) != OHCI_USB_RESET)
     {
         printf("\nBIOS active");
 
@@ -163,51 +163,51 @@ void ohci_resetHC(ohci_t* o)
             o->pOpRegs->HcControl = (o->pOpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_RESUME;
             sleepMilliSeconds(10);
          }
-     } 
-    else 
-    { 
+     }
+    else
+    {
         //Neither BIOS nor SMM
-        sleepMilliSeconds(10); 
+        sleepMilliSeconds(10);
     }
- 
+
     printf("\n\nReset HC\n");
-    
+
     o->pOpRegs->HcCommandStatus |= OHCI_CMST_RESET;
     sleepMilliSeconds(3); //10 µs reset, 2 ms resume
-    
-    if ((o->pOpRegs->HcControl & OHCI_CTRL_CBSR) == OHCI_USB_SUSPEND) 
-    { 
+
+    if ((o->pOpRegs->HcControl & OHCI_CTRL_CBSR) == OHCI_USB_SUSPEND)
+    {
         textColor(ERROR);
         printf("\nTimeout!\n");
         textColor(TEXT);
         o->pOpRegs->HcControl = (o->pOpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_RESUME;
-        sleepMilliSeconds(10); 
+        sleepMilliSeconds(10);
     }
 
-    o->hcca                        = (ohci_HCCA_t*)paging_getPhysAddr(hccaVirt); 
+    o->hcca                        = (ohci_HCCA_t*)paging_getPhysAddr(hccaVirt);
     o->pOpRegs->HcInterruptDisable = OHCI_INT_MIE;
     o->pOpRegs->HcInterruptStatus  = 0xFFFFFFFF;
     o->pOpRegs->HcInterruptEnable  = OHCI_INT_SO | OHCI_INT_WDH | OHCI_INT_RD | OHCI_INT_UE | OHCI_INT_RHSC | OHCI_INT_MIE;
     o->pOpRegs->HcControl         &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE);
     o->pOpRegs->HcControl         |= OHCI_CTRL_CLE | OHCI_CTRL_BLE; //activate control and bulk
     o->pOpRegs->HcPeriodicStart    = 0x4B0;
-  
-    printf("\n\nHC will be activated.\n");  
- 
+
+    printf("\n\nHC will be activated.\n");
+
     o->pOpRegs->HcControl = (o->pOpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_OPERATIONAL;
     o->pOpRegs->HcRhStatus |= OHCI_RHS_LPSC; // power on
     o->rootPorts = o->pOpRegs->HcRhDescriptorA & OHCI_RHA_NDP;
     sleepMilliSeconds((o->pOpRegs->HcRhDescriptorA & OHCI_RHA_POTPGT) >> 23);
-  
+
     textColor(IMPORTANT);
     printf("\n\nFound %i Rootports.\n", o->rootPorts);
     textColor(TEXT);
-  
-    for (uint8_t i=0; i < o->rootPorts; i++) 
+
+    for (uint8_t i=0; i < o->rootPorts; i++)
     {
         o->pOpRegs->HcRhPortStatus[i] |= OHCI_RP_CCS; // deactivate
     }
-    
+
     //
     //
 }

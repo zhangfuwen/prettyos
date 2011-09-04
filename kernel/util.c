@@ -408,11 +408,9 @@ char* tolower(char* s)
 /// http://en.wikipedia.org/wiki/Itoa
 void reverse(char* s)
 {
-    char c;
-
-    for (int32_t i=0, j=strlen(s)-1; i<j; i++, j--)
+    for (size_t i=0, j=strlen(s)-1; i<j; i++, j--)
     {
-        c = s[i];
+        char c = s[i];
         s[i] = s[j];
         s[j] = c;
     }
@@ -425,23 +423,26 @@ int8_t ctoi(char c)
     return(c-48);
 }
 
-
 char* itoa(int32_t n, char* s)
 {
-    uint32_t i = 0;
-    if (n < 0) // for negative numbers
+    bool sign = n < 0;
+    if (sign)   // record sign
     {
-        s[i++] = '-';
         n = -n; // make n positive
     }
+    uint32_t i = 0;
     do // generate digits in reverse order
     {
         s[i++] = n % 10 + '0'; // get next digit
     }
     while ((n /= 10) > 0);     // delete it
 
+    if (sign)
+    {
+        s[i++] = '-';
+    }
     s[i] = '\0';
-    reverse(s+1);
+    reverse(s);
     return(s);
 }
 

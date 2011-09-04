@@ -228,15 +228,12 @@ void pci_scan()
                         printf("\tvend: %xh, dev: %xh", PCIdev->vendorID, PCIdev->deviceID);
                       #endif
 
-                        /// USB Host Controller
-                        if (PCIdev->classID == 0x0C && PCIdev->subclassID == 0x03)
-                        {
-                            install_USB_HostController(PCIdev);
-                        }
-                        putch('\n');
-
-                        /// network adapters
-                        network_installDevice(PCIdev);
+						// Install device driver
+                        if (PCIdev->classID == 0x0C && PCIdev->subclassID == 0x03) // USB Host Controller
+                            usb_hc_install(PCIdev);
+						else // network adapters
+	                        network_installDevice(PCIdev);
+						putch('\n');
                     } // if irq != 255
                 } // if pciVendor
             } // for function

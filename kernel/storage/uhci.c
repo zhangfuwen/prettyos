@@ -28,7 +28,7 @@ static void uhci_handler(registers_t* r, pciDev_t* device);
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
   #ifdef _UHCI_DIAGNOSIS_
-    printf("\n>>>uhci_install<<<\n");
+    printf("\n>>>uhci_install<<<");
   #endif
 
     curUHCI = uhci[index]   = malloc(sizeof(uhci_t), 0, "uhci");

@@ -11,6 +11,8 @@
 #define NO_HCI  0x80
 #define ANY_HCI 0xFE
 
-void install_USB_HostController(pciDev_t* PCIdev);
+
+void usb_hc_install(pciDev_t* PCIdev);
+
 
 #endif

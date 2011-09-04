@@ -2,7 +2,7 @@
 %define A20_INC
 
 ;******************************************************************************
-;    Enable A20 address line
+;   Enable A20 address line
 ;******************************************************************************
 
 [BITS 16]
@@ -15,7 +15,7 @@ EnableA20:
     or  al, 2         ; set A20_Gate_Bit (bit 1)
     and al, ~1        ; clear INIT_NOW bit (don't reset pc...)
     out 0x92, al
-    jmp .A20_done
+    ret
 
 .no_fast_A20:         ; no fast shortcut -> use the slow kbc...
     call empty_8042
@@ -27,9 +27,7 @@ EnableA20:
     mov al, 0xDF      ; writing this to kbc output port enables A20
     out 0x60, al
     call empty_8042
-
-.A20_done:
-
+    ret
 
 ;******************************************************************************
 ;   calls
