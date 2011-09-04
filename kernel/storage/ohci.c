@@ -236,7 +236,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         }
     }
 
-    uint32_t val = o->pOpRegs->HcInterruptStatus;
+    volatile uint32_t val = o->pOpRegs->HcInterruptStatus;
     uint32_t handled = 0;
     uintptr_t phys;
 
@@ -284,7 +284,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         printf("\nUnhandled interrupt: %X", val & ~handled);
     }
   
-    o->pOpRegs->HcInterruptStatus |= val; // reset interrupts
+    o->pOpRegs->HcInterruptStatus = val; // reset interrupts
 }
 
 /*******************************************************************************************************
