@@ -135,15 +135,16 @@ void ohci_resetHC(ohci_t* o)
     o->pOpRegs->HcInterruptDisable = OHCI_INT_MIE;
 
     if (o->pOpRegs->HcControl & OHCI_CTRL_IR)
-    {
-        uint16_t i=0;
+    {   
+        o->pOpRegs->HcCommandStatus |= OHCI_CMST_OCR;        
 
-        o->pOpRegs->HcCommandStatus |= OHCI_CMST_OCR;
+        uint16_t i=0;
         for (i=0; (o->pOpRegs->HcControl & OHCI_CTRL_IR) && (i < 1000); i++)
         {
              sleepMilliSeconds(1);
         }
-        if (i < 100)
+
+        if (i < 500) 
         {
             printf("\nOHCI takes control from SMM.");
         }
@@ -235,8 +236,9 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         }
     }
 
-    uint32_t val=0;
-    // val = o->memory->hc_interrupt_status;
+    uint32_t val = o->pOpRegs->HcInterruptStatus;
+    uint32_t handled = 0;
+    uintptr_t phys;
 
     if(!found || o==0 || val==0) // No interrupt from corresponding ohci device found
     {
@@ -250,11 +252,40 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
     printf("\nUSB OHCI %u: ", i);
 
-    //
-    //
+    if (val & OHCI_INT_RHSC) // Root hub status change
+    {    
+        printf("\nRoot hub status change.");
+        handled |= OHCI_INT_RHSC;
+    }
+    
+    if (val & OHCI_INT_UE) // Unrecoverable error
+    {
+        printf("\nUnrecoverable HC error.");
+        o->pOpRegs->HcCommandStatus |= OHCI_CMST_RESET;
+        handled |= OHCI_INT_UE;
+    }
 
+    if (val & OHCI_INT_SF) // Start of frame 
+    { 
+        printf("\nStart of frame.");
+        handled |= OHCI_INT_SF;
+    }
+      
+    if (val & OHCI_INT_WDH) // Write back handled head
+    {         
+        printf("\nStart of frame.");
+        phys = o->hcca->doneHead;           
+        // TODO: handle ready transfer (ED, TD)
+        handled |= OHCI_INT_WDH;
+    }
+  
+    if (val & ~handled) 
+    {
+        printf("\nUnhandled interrupt: %X", val & ~handled);
+    }
+  
+    o->pOpRegs->HcInterruptStatus |= val; // reset interrupts
 }
-
 
 /*******************************************************************************************************
 *                                                                                                      *
