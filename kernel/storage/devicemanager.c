@@ -24,7 +24,7 @@ partition_t* systemPartition = 0;
 
 portType_t FDD      = {.motorOff = &flpydsk_motorOff, .pollDisk = 0},
            USB_UHCI = {.motorOff = 0,                 .pollDisk = &uhci_pollDisk},
-           USB_OHCI = {.motorOff = 0,                 .pollDisk = &ohci_pollDisk},
+           USB_OHCI = {.motorOff = 0,                 .pollDisk = 0},
            USB_EHCI = {.motorOff = 0,                 .pollDisk = 0},
            RAM      = {.motorOff = 0,                 .pollDisk = 0};
 diskType_t FLOPPYDISK = {.readSector = &flpydsk_readSector, .writeSector = &flpydsk_writeSector},

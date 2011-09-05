@@ -135,8 +135,8 @@ void ohci_resetHC(ohci_t* o)
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
 
     if (o->OpRegs->HcControl & OHCI_CTRL_IR)
-    {   
-        o->OpRegs->HcCommandStatus |= OHCI_STATUS_OCR;        
+    {
+        o->OpRegs->HcCommandStatus |= OHCI_STATUS_OCR;
 
         uint16_t i=0;
         for (i=0; (o->OpRegs->HcControl & OHCI_CTRL_IR) && (i < 1000); i++)
@@ -144,7 +144,7 @@ void ohci_resetHC(ohci_t* o)
              sleepMilliSeconds(1);
         }
 
-        if (i < 500) 
+        if (i < 500)
         {
             printf("\nOHCI takes control from SMM.");
         }
@@ -192,21 +192,22 @@ void ohci_resetHC(ohci_t* o)
     o->OpRegs->HcHCCA = (uintptr_t)o->hcca;
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
     o->OpRegs->HcInterruptStatus  = 0xFFFFFFFF;
-    
-    // enable interrupts
     o->OpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
-                                     OHCI_INT_WDH  | // write back done head
-                                  // OHCI_INT_SF   | // start of frame           // disabled due to qemu 
-                                     OHCI_INT_RD   | // resume detected
-                                     OHCI_INT_UE   | // unrecoverable error
-                                     OHCI_INT_FNO  | // frame number overflow
-                                     OHCI_INT_RHSC | // root hub status change
-                                     OHCI_INT_OC   | // ownership change
-                                     OHCI_INT_MIE;   // (de)activates interrupts
+                                    OHCI_INT_WDH  | // write back done head
+                                  //OHCI_INT_SF   | // start of frame           // disabled due to qemu
+                                    OHCI_INT_RD   | // resume detected
+                                    OHCI_INT_UE   | // unrecoverable error
+                                    OHCI_INT_FNO  | // frame number overflow
+                                    OHCI_INT_RHSC | // root hub status change
+                                    OHCI_INT_OC   | // ownership change
+                                    OHCI_INT_MIE;   // (de)activates interrupts
 
     o->OpRegs->HcControl         &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE);
-    o->OpRegs->HcControl         |= OHCI_CTRL_CLE | OHCI_CTRL_BLE; //activate control and bulk
-    o->OpRegs->HcPeriodicStart    = 0x4B0;
+    o->OpRegs->HcControl         |=   OHCI_CTRL_CLE | OHCI_CTRL_BLE; //activate control and bulk
+
+    o->OpRegs->HcPeriodicStart    = 0x3E67; // When HcFmRemaining reaches this value,
+                                            // periodic lists gets priority over control/bulk processing
+                                            // The value is calculated as 10% off from HcFmInterval
 
     printf("\n\nHC will be activated.\n");
 
@@ -267,40 +268,65 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
     printf("\nUSB OHCI %u: ", i);
 
-    if (val & OHCI_INT_RHSC) // Root hub status change
-    {    
-        printf("\nRoot hub status change.");
-        handled |= OHCI_INT_RHSC;
+    if (val & OHCI_INT_SO) // scheduling overrun
+    {
+        printf("\nScheduling overrun.");
+        handled |= OHCI_INT_SO;
     }
-    
-    if (val & OHCI_INT_UE) // Unrecoverable error
+
+    if (val & OHCI_INT_WDH) // write back done head
+    {
+        printf("\nWrite back done head.");
+        phys = o->hcca->doneHead;
+        // TODO: handle ready transfer (ED, TD)
+        handled |= OHCI_INT_WDH;
+    }
+
+    if (val & OHCI_INT_SF) // start of frame
+    {
+        printf("\nStart of frame.");
+        handled |= OHCI_INT_SF;
+    }
+
+    if (val & OHCI_INT_RD) // resume detected
+    {
+        printf("\nResume detected.");
+        handled |= OHCI_INT_RD;
+    }
+
+    if (val & OHCI_INT_UE) // unrecoverable error
     {
         printf("\nUnrecoverable HC error.");
         o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
         handled |= OHCI_INT_UE;
     }
 
-    if (val & OHCI_INT_SF) // Start of frame 
-    { 
-        printf("\nStart of frame.");
-        handled |= OHCI_INT_SF;
+    if (val & OHCI_INT_FNO) // frame number overflow
+    {
+        printf("\nFrame number overflow.");
+        handled |= OHCI_INT_FNO;
     }
-      
-    if (val & OHCI_INT_WDH) // Write back handled head
-    {         
-        printf("\nStart of frame.");
-        phys = o->hcca->doneHead;           
-        // TODO: handle ready transfer (ED, TD)
-        handled |= OHCI_INT_WDH;
+
+    if (val & OHCI_INT_RHSC) // root hub status change
+    {
+        printf("\nRoot hub status change.");
+        handled |= OHCI_INT_RHSC;
     }
-  
-    if (val & ~handled) 
+
+    if (val & OHCI_INT_OC) // ownership change
+    {
+        printf("\nOwnership change.");
+        handled |= OHCI_INT_OC;
+    }
+
+    if (val & ~handled)
     {
         printf("\nUnhandled interrupt: %X", val & ~handled);
     }
-  
+
     o->OpRegs->HcInterruptStatus = val; // reset interrupts
 }
+
 
 /*******************************************************************************************************
 *                                                                                                      *
@@ -308,10 +334,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void ohci_pollDisk(void* dev)
-{
-    // TODO
-}
+
 
 
 /*******************************************************************************************************
