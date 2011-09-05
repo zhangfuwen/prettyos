@@ -5,8 +5,8 @@
 #include "pci.h"
 #include "devicemanager.h"
 
-#define OHCIMAX      8  // max number of OHCI devices
-#define OHCIPORTMAX  4  // max number of OHCI device ports
+#define OHCIMAX      4  // max number of OHCI devices
+#define OHCIPORTMAX  8  // max number of OHCI device ports
 
 #define OHCI_HCCA_ALIGN 0x100
 
@@ -16,7 +16,7 @@
 #define OHCI_CTRL_IE    BIT(3)           // activate isochronous transfers
 #define OHCI_CTRL_CLE   BIT(4)           // activate control transfers
 #define OHCI_CTRL_BLE   BIT(5)           // activate bulk transfers
-#define OHCI_CTRL_HCFS (BIT(6)|BIT(7))   // HC status
+#define OHCI_CTRL_HCFS (BIT(6)|BIT(7))   // HostControllerFunctionalState for USB
 #define OHCI_CTRL_IR    BIT(8)           // redirect IRQ to SMB
 #define OHCI_CTRL_RWC   BIT(9)           // remote wakeup
 #define OHCI_CTRL_RW    BIT(10)          // activate remote wakeup
@@ -154,7 +154,7 @@ typedef struct
     pciDev_t*      PCIdevice;            // PCI device
     uintptr_t      bar;                  // MMIO space (base address register)
     ohci_OpRegs_t* OpRegs;               // operational registers
-    ohci_HCCA_t*   hcca;                 // HC Communications Area
+    ohci_HCCA_t*   hcca;                 // HC Communications Area (virtual address)
     uint8_t        rootPorts;            // number of rootports
     size_t         memSize;              // memory size of IO space
     bool           enabledPorts;         // root ports enabled

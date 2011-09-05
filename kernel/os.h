@@ -5,9 +5,10 @@
 
 
 // Additional features (Should be enabled per default)
-/// #define _BOOTSCREEN_         // Enables the bootscreen displayed at startup
-#define _PCI_VEND_PROD_LIST_ // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
-#define _SERIAL_LOG_         // Enables log information over the COM-Ports
+/// #define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
+#define _PCI_VEND_PROD_LIST_       // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
+#define _SERIAL_LOG_               // Enables log information over the COM-Ports
+#define _EHCI_ENABLE_              // EHCI will be installed, if this is defined, otherwise not 
 
 // Additional debug output (Should be disabled per default)
 /// #define _DIAGNOSIS_            // General diagnosis output - activates prints to the screen about some details and memory use
@@ -22,7 +23,6 @@
 /// #define _HCI_DIAGNOSIS_        // Debug usb host controller (UHCI, OHCI, EHCI)
 /// #define _OHCI_DIAGNOSIS_       // Debug OHCI
 /// #define _UHCI_DIAGNOSIS_       // Debug UHCI
-/// #define _EHCI_ENABLE_          // EHCI will be installed, if this is defined, otherwise not 
 /// #define _EHCI_DIAGNOSIS_       // Debug EHCI
 /// #define _USB2_DIAGNOSIS_       // Debug USB 2.0 transfers
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)

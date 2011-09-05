@@ -118,6 +118,10 @@ void ohci_resetHC(ohci_t* o)
     // printf("\nLegacy Support Register: %xh", legacySupport); // if value is not zero, Legacy Support (LEGSUP) is activated
 
     // Revision and Number Downstream Ports (NDP)
+    /*
+    When checking the Revision, the HC Driver must mask the rest of the bits in the HcRevision register 
+    as they are used to specify which optional features that are supported by the HC.
+    */
     textColor(IMPORTANT);
     printf("\nOHCI: Revision %u.%u, Number Downstream Ports: %u\n",
         BYTE1(o->OpRegs->HcRevision) >> 4,
@@ -125,76 +129,123 @@ void ohci_resetHC(ohci_t* o)
         BYTE1(o->OpRegs->HcRhDescriptorA)); // bits 7:0 provide Number Downstream Ports (NDP)
     textColor(TEXT);
 
-    // HCCA
-    void* hccaVirt = malloc(sizeof(ohci_HCCA_t), OHCI_HCCA_ALIGN, "ohci HCCA"); // HCCA must be 256-byte aligned
-    memset(hccaVirt, 0, sizeof(ohci_HCCA_t));
-
-    // ED Pool: malloc 64 EDs (size: ED)
-    // TD Pool: malloc 56 TDs (size: TD+1024)
-
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
 
-    if (o->OpRegs->HcControl & OHCI_CTRL_IR)
+    if (o->OpRegs->HcControl & OHCI_CTRL_IR) // SMM driver is active because the InterruptRouting bit is set
     {
-        o->OpRegs->HcCommandStatus |= OHCI_STATUS_OCR;
+        o->OpRegs->HcCommandStatus |= OHCI_STATUS_OCR; // ownership change request
 
-        uint16_t i=0;
+        // monitor the IR bit to determine when the ownership change has taken effect
+        uint16_t i;
         for (i=0; (o->OpRegs->HcControl & OHCI_CTRL_IR) && (i < 1000); i++)
         {
              sleepMilliSeconds(1);
         }
 
-        if (i < 500)
+        if (i < 1000)
         {
-            printf("\nOHCI takes control from SMM.");
+            // Once the IR bit is cleared, the HC driver may proceed to the setup of the HC.
+            textColor(SUCCESS);
+            printf("\nOHCI takes control from SMM after %u loops.", i);
+            textColor(TEXT);
         }
         else
         {
-            printf("\nOHCI taking control from SMM did not work.");
+            textColor(ERROR);
+            printf("\nOHCI taking control from SMM did not work."); // evil
+            textColor(TEXT);
             o->OpRegs->HcControl &= ~OHCI_CTRL_IR;
         }
     }
-    else if ((o->OpRegs->HcControl & OHCI_CTRL_CBSR) != OHCI_USB_RESET)
+    else // InterruptRouting bit is not set
     {
-        printf("\nBIOS active");
-
-        if ((o->OpRegs->HcControl & OHCI_CTRL_CBSR) != OHCI_USB_OPERATIONAL)
+        if ((o->OpRegs->HcControl & OHCI_CTRL_HCFS) != OHCI_USB_RESET)
         {
-            printf("\nActivate RESUME");
-            o->OpRegs->HcControl = (o->OpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_RESUME;
+            // there is an active BIOS driver, if the InterruptRouting bit is not set 
+            // and the HostControllerFunctionalState (HCFS) is not USBRESET
+            printf("\nThere is an active BIOS OHCI driver");
+
+            if ((o->OpRegs->HcControl & OHCI_CTRL_HCFS) != OHCI_USB_OPERATIONAL)
+            {            
+                // If the HostControllerFunctionalState is not USBOPERATIONAL, the OS driver should set the HCFS to USBRESUME 
+                printf("\nActivate RESUME");
+                o->OpRegs->HcControl &= ~OHCI_CTRL_HCFS; // clear HCFS bits
+                o->OpRegs->HcControl |= OHCI_USB_RESUME; // set specific HCFS bit
+            
+                // and wait the minimum time specified in the USB Specification for assertion of resume on the USB
+                sleepMilliSeconds(10); 
+            }
+        }
+        else // HCFS is USBRESET
+        {
+            // Neither SMM nor BIOS 
             sleepMilliSeconds(10);
-         }
-     }
-    else
-    {
-        //Neither BIOS nor SMM
-        sleepMilliSeconds(10);
+        }
     }
 
-    printf("\n\nReset HC\n");
-
+    // setup of the Host Controller 
+    printf("\n\nSetup of the HC\n");
+        
+    // The HC Driver should now save the contents of the HcFmInterval register ... 
+    uint32_t saveHcFmInterval = o->OpRegs->HcFmInterval;
+    
+    // ... and then issue a software reset 
     o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
-    sleepMilliSeconds(3); //10 µs reset, 2 ms resume
+    sleepMilliSeconds(20); 
 
-    if ((o->OpRegs->HcControl & OHCI_CTRL_CBSR) == OHCI_USB_SUSPEND)
+    // After the software reset is complete (a maximum of 10 ms), the Host Controller Driver
+    // should restore the value of the HcFmInterval register
+    o->OpRegs->HcFmInterval = saveHcFmInterval;
+    
+    /* 
+    The HC is now in the USBSUSPEND state; it must not stay in this state more than 2 ms 
+    or the USBRESUME state will need to be entered for the minimum time specified 
+    in the USB Specification for the assertion of resume on the USB. 
+    */   
+
+    if ((o->OpRegs->HcControl & OHCI_CTRL_HCFS) == OHCI_USB_SUSPEND)
     {
-        textColor(ERROR);
-        printf("\nTimeout!\n");
-        textColor(TEXT);
-        o->OpRegs->HcControl = (o->OpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_RESUME;
+        o->OpRegs->HcControl &= ~OHCI_CTRL_HCFS; // clear HCFS bits
+        o->OpRegs->HcControl |= OHCI_USB_RESUME; // set specific HCFS bit
         sleepMilliSeconds(10);
     }
 
-    o->hcca                        = (ohci_HCCA_t*)paging_getPhysAddr(hccaVirt);
+    /////////////////////
+    // initializations //
+    /////////////////////
+
+    // HCCA
+    /*
+    Initialize the device data HCCA block to match the current device data state; 
+    i.e., all virtual queues are run and constructed into physical queues on the HCCA block 
+    and other fields initialized accordingly.
+    */
+    void* hccaVirt = malloc(sizeof(ohci_HCCA_t), OHCI_HCCA_ALIGN, "ohci HCCA"); // HCCA must be minimum 256-byte aligned
+    memset(hccaVirt, 0, sizeof(ohci_HCCA_t));
+    o->hcca = (ohci_HCCA_t*)hccaVirt;
+    // TODO: ...
+     
   #ifdef _OHCI_DIAGNOSIS_
-    printf("\nHCCA (phys. address): %X", o->hcca);
+    printf("\nHCCA (phys. address): %X", o->OpRegs->HcHCCA);
   #endif
-    o->OpRegs->HcHCCA = (uintptr_t)o->hcca;
+    
+    /*
+    Initialize the Operational Registers to match the current device data state; 
+    i.e., all virtual queues are run and constructed into physical queues for HcControlHeadED and HcBulkHeadED
+    */
+    // ED Pool: malloc 64 EDs (size: ED)
+    // TD Pool: malloc 56 TDs (size: TD+1024)
+    // TODO: ...
+    
+    // Set the HcHCCA to the physical address of the HCCA block
+    o->OpRegs->HcHCCA = paging_getPhysAddr(hccaVirt);
+
+    // Set HcInterruptEnable to have all interrupt enabled except Start-of-Frame detect
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
     o->OpRegs->HcInterruptStatus  = 0xFFFFFFFF;
     o->OpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
                                     OHCI_INT_WDH  | // write back done head
-                                  //OHCI_INT_SF   | // start of frame           // disabled due to qemu
+                                  //OHCI_INT_SF   | // start of frame           
                                     OHCI_INT_RD   | // resume detected
                                     OHCI_INT_UE   | // unrecoverable error
                                     OHCI_INT_FNO  | // frame number overflow
@@ -202,16 +253,26 @@ void ohci_resetHC(ohci_t* o)
                                     OHCI_INT_OC   | // ownership change
                                     OHCI_INT_MIE;   // (de)activates interrupts
 
-    o->OpRegs->HcControl         &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE);
-    o->OpRegs->HcControl         |=   OHCI_CTRL_CLE | OHCI_CTRL_BLE; //activate control and bulk
-
-    o->OpRegs->HcPeriodicStart    = 0x3E67; // When HcFmRemaining reaches this value,
-                                            // periodic lists gets priority over control/bulk processing
-                                            // The value is calculated as 10% off from HcFmInterval
+    // Set HcControl to have “all queues on”
+    o->OpRegs->HcControl |=   OHCI_CTRL_CLE | OHCI_CTRL_BLE; // activate control and bulk transfers
+    o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE); // de-activate periodical and isochronous transfers
+    
+    // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
+    // When HcFmRemaining reaches this value, periodic lists gets priority over control/bulk processing 
+    o->OpRegs->HcPeriodicStart = (o->OpRegs->HcFmInterval & 0x3FFF) * 90/100; 
+       
+    /*
+    The HCD then begins to send SOF tokens on the USB by writing to the HcControl register with
+    the HostControllerFunctionalState set to USBOPERATIONAL and the appropriate enable bits set.
+    The Host Controller begins sending SOF tokens within one ms 
+    (if the HCD needs to know when the SOFs it may unmask the StartOfFrame interrupt).
+    */
 
     printf("\n\nHC will be activated.\n");
 
-    o->OpRegs->HcControl = (o->OpRegs->HcControl & ~OHCI_CTRL_CBSR) | OHCI_USB_OPERATIONAL;
+    o->OpRegs->HcControl &= ~OHCI_CTRL_HCFS;      // clear HCFS bits
+    o->OpRegs->HcControl |= OHCI_USB_OPERATIONAL; // set specific HCFS bit
+    
     o->OpRegs->HcRhStatus |= OHCI_RHS_LPSC; // power on
     o->rootPorts = o->OpRegs->HcRhDescriptorA & OHCI_RHA_NDP;
     sleepMilliSeconds((o->OpRegs->HcRhDescriptorA & OHCI_RHA_POTPGT) >> 23);
