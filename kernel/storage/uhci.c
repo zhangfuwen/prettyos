@@ -314,29 +314,6 @@ void uhci_resetPort(uhci_t* u, uint8_t port)
     sleepMilliSeconds(10);
 }
 
-/*
-Enabling did not work with qemu 0.11.5
-
-void uhci_resetPort(uhci_t* u, uint8_t j)
-{
-
-    //    http://forum.osdev.org/viewtopic.php?f=1&t=23318
-    //    1. Set reset bit
-    //    2. Wait 50ms
-    //    3. Clear reset bit
-    //    4. Set enabled bit
-    //    5. Wait 10ms
-    //    6. Proceed with enumeration
-
-    outportw(u->bar + UHCI_PORTSC1+2*j,UHCI_PORT_RESET);
-    sleepMilliSeconds(50);
-    outportw(u->bar + UHCI_PORTSC1+2*j, inportw(u->bar + UHCI_PORTSC1+2*j) & ~UHCI_PORT_RESET); // clear reset bit
-    outportw(u->bar + UHCI_PORTSC1+2*j, inportw(u->bar + UHCI_PORTSC1+2*j) & UHCI_PORT_ENABLE); // set enable bit
-    sleepMilliSeconds(10);
-
-    // TODO: Proceed with usb enumeration
-}
-*/
 
 /*******************************************************************************************************
 *                                                                                                      *

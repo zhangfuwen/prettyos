@@ -22,6 +22,7 @@ static bool    OHCI_USBtransferFlag = false;
 
 static void ohci_handler(registers_t* r, pciDev_t* device);
 static void ohci_start();
+static void showPortstatus(ohci_t* o);
 
 
 void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
@@ -151,10 +152,25 @@ void ohci_resetHC(ohci_t* o)
         }
         else
         {
-            textColor(ERROR);
-            printf("\nOHCI taking control from SMM did not work."); // evil
+            textColor(ERROR);            
+            printf("\nOwnership change request did not work. SMM has still control.");             
             textColor(TEXT);
-            o->OpRegs->HcControl &= ~OHCI_CTRL_IR;
+
+            o->OpRegs->HcControl &= ~OHCI_CTRL_IR; // we try to reset the IR bit
+            sleepMilliSeconds(200);
+
+            if (o->OpRegs->HcControl & OHCI_CTRL_IR) // SMM driver is still active
+            {                
+                textColor(ERROR); 
+                printf("\nOHCI taking control from SMM did not work."); // evil
+                textColor(TEXT);
+            }
+            else
+            {
+                textColor(SUCCESS);
+                printf("\nSuccess in taking control from SMM.");
+                textColor(TEXT); 
+            }
         }
     }
     else // InterruptRouting bit is not set
@@ -281,9 +297,10 @@ void ohci_resetHC(ohci_t* o)
     printf("\n\nFound %i Rootports.\n", o->rootPorts);
     textColor(TEXT);
 
-    for (uint8_t i=0; i < o->rootPorts; i++)
+    for (uint8_t j=0; j < o->rootPorts; j++)
     {
-        o->OpRegs->HcRhPortStatus[i] |= OHCI_PORT_CCS; // deactivate
+        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CCS; // deactivate
+       // o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; // enable 
     }
 
     //
@@ -372,6 +389,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     {
         printf("\nRoot hub status change.");
         handled |= OHCI_INT_RHSC;
+        showPortstatus(o);
     }
 
     if (val & OHCI_INT_OC) // ownership change
@@ -391,12 +409,40 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
 /*******************************************************************************************************
 *                                                                                                      *
-*                                              PORT CHANGE                                             *
+*                                              PORTS                                                   *
 *                                                                                                      *
 *******************************************************************************************************/
 
+void showPortstatus(ohci_t* o)
+{
+    for (uint8_t j=0; j<o->rootPorts; j++)
+    {
+        printf("\nport[%u]: %Xh ", j, o->OpRegs->HcRhPortStatus[j]);
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_LSDA)
+        {
+            printf("- Low Speed ");
+        }
+        else
+        {
+            printf("- Full Speed ");
+        }
 
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)
+        {
+            printf(" Device attached - ");
+        }
 
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)
+        {
+            printf(" enabled - ");
+        }
+        
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS)
+        {
+            printf(" power on ");
+        }        
+    }
+}
 
 /*******************************************************************************************************
 *                                                                                                      *
