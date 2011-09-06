@@ -109,15 +109,6 @@ void ohci_resetHC(ohci_t* o)
     printf("\n\n>>>ohci_resetHostController<<<\n");
   #endif
 
-    /*
-    uint8_t bus  = o->PCIdevice->bus;
-    uint8_t dev  = o->PCIdevice->device;
-    uint8_t func = o->PCIdevice->func;
-    */
-
-    // uint16_t legacySupport = pci_config_read(bus, dev, func, OHCI_PCI_LEGACY_SUPPORT, 2);
-    // printf("\nLegacy Support Register: %xh", legacySupport); // if value is not zero, Legacy Support (LEGSUP) is activated
-
     // Revision and Number Downstream Ports (NDP)
     /*
     When checking the Revision, the HC Driver must mask the rest of the bits in the HcRevision register
@@ -129,6 +120,13 @@ void ohci_resetHC(ohci_t* o)
         BYTE1(o->OpRegs->HcRevision) & 0xF,
         BYTE1(o->OpRegs->HcRhDescriptorA)); // bits 7:0 provide Number Downstream Ports (NDP)
     textColor(TEXT);
+
+    if (!((BYTE1(o->OpRegs->HcRevision)) == 0x10 || BYTE1(o->OpRegs->HcRevision) == 0x11))
+    {
+        textColor(ERROR);
+        printf("Revision not valid!");
+        textColor(TEXT);
+    }
 
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
 
@@ -249,9 +247,9 @@ void ohci_resetHC(ohci_t* o)
     Initialize the Operational Registers to match the current device data state;
     i.e., all virtual queues are run and constructed into physical queues for HcControlHeadED and HcBulkHeadED
     */
-    // ED Pool: malloc 64 EDs (size: ED)
-    // TD Pool: malloc 56 TDs (size: TD+1024)
-    // TODO: ...
+    // ED Pool: 64 EDs (size: ED)
+    // TD Pool: 56 TDs (size: TD+1024)    
+    // ED and TD are part of ohci_t
 
     // Set the HcHCCA to the physical address of the HCCA block
     o->OpRegs->HcHCCA = paging_getPhysAddr(hccaVirt);
