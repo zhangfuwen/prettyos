@@ -120,7 +120,7 @@ void ohci_resetHC(ohci_t* o)
 
     // Revision and Number Downstream Ports (NDP)
     /*
-    When checking the Revision, the HC Driver must mask the rest of the bits in the HcRevision register 
+    When checking the Revision, the HC Driver must mask the rest of the bits in the HcRevision register
     as they are used to specify which optional features that are supported by the HC.
     */
     textColor(IMPORTANT);
@@ -152,16 +152,16 @@ void ohci_resetHC(ohci_t* o)
         }
         else
         {
-            textColor(ERROR);            
-            printf("\nOwnership change request did not work. SMM has still control.");             
+            textColor(ERROR);
+            printf("\nOwnership change request did not work. SMM has still control.");
             textColor(TEXT);
 
             o->OpRegs->HcControl &= ~OHCI_CTRL_IR; // we try to reset the IR bit
             sleepMilliSeconds(200);
 
             if (o->OpRegs->HcControl & OHCI_CTRL_IR) // SMM driver is still active
-            {                
-                textColor(ERROR); 
+            {
+                textColor(ERROR);
                 printf("\nOHCI taking control from SMM did not work."); // evil
                 textColor(TEXT);
             }
@@ -169,7 +169,7 @@ void ohci_resetHC(ohci_t* o)
             {
                 textColor(SUCCESS);
                 printf("\nSuccess in taking control from SMM.");
-                textColor(TEXT); 
+                textColor(TEXT);
             }
         }
     }
@@ -177,47 +177,47 @@ void ohci_resetHC(ohci_t* o)
     {
         if ((o->OpRegs->HcControl & OHCI_CTRL_HCFS) != OHCI_USB_RESET)
         {
-            // there is an active BIOS driver, if the InterruptRouting bit is not set 
+            // there is an active BIOS driver, if the InterruptRouting bit is not set
             // and the HostControllerFunctionalState (HCFS) is not USBRESET
             printf("\nThere is an active BIOS OHCI driver");
 
             if ((o->OpRegs->HcControl & OHCI_CTRL_HCFS) != OHCI_USB_OPERATIONAL)
-            {            
-                // If the HostControllerFunctionalState is not USBOPERATIONAL, the OS driver should set the HCFS to USBRESUME 
+            {
+                // If the HostControllerFunctionalState is not USBOPERATIONAL, the OS driver should set the HCFS to USBRESUME
                 printf("\nActivate RESUME");
                 o->OpRegs->HcControl &= ~OHCI_CTRL_HCFS; // clear HCFS bits
                 o->OpRegs->HcControl |= OHCI_USB_RESUME; // set specific HCFS bit
-            
+
                 // and wait the minimum time specified in the USB Specification for assertion of resume on the USB
-                sleepMilliSeconds(10); 
+                sleepMilliSeconds(10);
             }
         }
         else // HCFS is USBRESET
         {
-            // Neither SMM nor BIOS 
+            // Neither SMM nor BIOS
             sleepMilliSeconds(10);
         }
     }
 
-    // setup of the Host Controller 
+    // setup of the Host Controller
     printf("\n\nSetup of the HC\n");
-        
-    // The HC Driver should now save the contents of the HcFmInterval register ... 
+
+    // The HC Driver should now save the contents of the HcFmInterval register ...
     uint32_t saveHcFmInterval = o->OpRegs->HcFmInterval;
-    
-    // ... and then issue a software reset 
+
+    // ... and then issue a software reset
     o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
-    sleepMilliSeconds(20); 
+    sleepMilliSeconds(20);
 
     // After the software reset is complete (a maximum of 10 ms), the Host Controller Driver
     // should restore the value of the HcFmInterval register
     o->OpRegs->HcFmInterval = saveHcFmInterval;
-    
-    /* 
-    The HC is now in the USBSUSPEND state; it must not stay in this state more than 2 ms 
-    or the USBRESUME state will need to be entered for the minimum time specified 
-    in the USB Specification for the assertion of resume on the USB. 
-    */   
+
+    /*
+    The HC is now in the USBSUSPEND state; it must not stay in this state more than 2 ms
+    or the USBRESUME state will need to be entered for the minimum time specified
+    in the USB Specification for the assertion of resume on the USB.
+    */
 
     if ((o->OpRegs->HcControl & OHCI_CTRL_HCFS) == OHCI_USB_SUSPEND)
     {
@@ -232,36 +232,36 @@ void ohci_resetHC(ohci_t* o)
 
     // HCCA
     /*
-    Initialize the device data HCCA block to match the current device data state; 
-    i.e., all virtual queues are run and constructed into physical queues on the HCCA block 
+    Initialize the device data HCCA block to match the current device data state;
+    i.e., all virtual queues are run and constructed into physical queues on the HCCA block
     and other fields initialized accordingly.
     */
     void* hccaVirt = malloc(sizeof(ohci_HCCA_t), OHCI_HCCA_ALIGN, "ohci HCCA"); // HCCA must be minimum 256-byte aligned
     memset(hccaVirt, 0, sizeof(ohci_HCCA_t));
     o->hcca = (ohci_HCCA_t*)hccaVirt;
     // TODO: ...
-     
+
   #ifdef _OHCI_DIAGNOSIS_
     printf("\nHCCA (phys. address): %X", o->OpRegs->HcHCCA);
   #endif
-    
+
     /*
-    Initialize the Operational Registers to match the current device data state; 
+    Initialize the Operational Registers to match the current device data state;
     i.e., all virtual queues are run and constructed into physical queues for HcControlHeadED and HcBulkHeadED
     */
     // ED Pool: malloc 64 EDs (size: ED)
     // TD Pool: malloc 56 TDs (size: TD+1024)
     // TODO: ...
-    
+
     // Set the HcHCCA to the physical address of the HCCA block
     o->OpRegs->HcHCCA = paging_getPhysAddr(hccaVirt);
 
     // Set HcInterruptEnable to have all interrupt enabled except Start-of-Frame detect
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
-    o->OpRegs->HcInterruptStatus  = 0xFFFFFFFF;
+    o->OpRegs->HcInterruptStatus  = ~0;
     o->OpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
                                     OHCI_INT_WDH  | // write back done head
-                                  //OHCI_INT_SF   | // start of frame           
+                                  //OHCI_INT_SF   | // start of frame
                                     OHCI_INT_RD   | // resume detected
                                     OHCI_INT_UE   | // unrecoverable error
                                     OHCI_INT_FNO  | // frame number overflow
@@ -272,15 +272,15 @@ void ohci_resetHC(ohci_t* o)
     // Set HcControl to have “all queues on”
     o->OpRegs->HcControl |=   OHCI_CTRL_CLE | OHCI_CTRL_BLE; // activate control and bulk transfers
     o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE); // de-activate periodical and isochronous transfers
-    
+
     // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
-    // When HcFmRemaining reaches this value, periodic lists gets priority over control/bulk processing 
-    o->OpRegs->HcPeriodicStart = (o->OpRegs->HcFmInterval & 0x3FFF) * 90/100; 
-       
+    // When HcFmRemaining reaches this value, periodic lists gets priority over control/bulk processing
+    o->OpRegs->HcPeriodicStart = (o->OpRegs->HcFmInterval & 0x3FFF) * 90/100;
+
     /*
     The HCD then begins to send SOF tokens on the USB by writing to the HcControl register with
     the HostControllerFunctionalState set to USBOPERATIONAL and the appropriate enable bits set.
-    The Host Controller begins sending SOF tokens within one ms 
+    The Host Controller begins sending SOF tokens within one ms
     (if the HCD needs to know when the SOFs it may unmask the StartOfFrame interrupt).
     */
 
@@ -288,10 +288,13 @@ void ohci_resetHC(ohci_t* o)
 
     o->OpRegs->HcControl &= ~OHCI_CTRL_HCFS;      // clear HCFS bits
     o->OpRegs->HcControl |= OHCI_USB_OPERATIONAL; // set specific HCFS bit
-    
-    o->OpRegs->HcRhStatus |= OHCI_RHS_LPSC; // power on
-    o->rootPorts = o->OpRegs->HcRhDescriptorA & OHCI_RHA_NDP;
-    sleepMilliSeconds((o->OpRegs->HcRhDescriptorA & OHCI_RHA_POTPGT) >> 23);
+
+    o->OpRegs->HcRhStatus |= OHCI_RHS_LPSC;           // SetGlobalPower: turn on power to all ports
+    o->rootPorts = BYTE1(o->OpRegs->HcRhDescriptorA); // NumberDownstreamPorts
+
+    // duration HCD has to wait before accessing a powered-on port of the Root Hub.
+    // It is implementation-specific. Duration is calculated as POTPGT * 2 ms.
+    sleepMilliSeconds(2 * BYTE4(o->OpRegs->HcRhDescriptorA));
 
     textColor(IMPORTANT);
     printf("\n\nFound %i Rootports.\n", o->rootPorts);
@@ -299,12 +302,74 @@ void ohci_resetHC(ohci_t* o)
 
     for (uint8_t j=0; j < o->rootPorts; j++)
     {
-        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CCS; // deactivate
-       // o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; // enable 
+        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS; 
+        sleepMilliSeconds(20);
+
+        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CCS; 
+        sleepMilliSeconds(20);
+
+        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; 
+        sleepMilliSeconds(20);
     }
 
     //
     //
+}
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                              PORTS                                                   *
+*                                                                                                      *
+*******************************************************************************************************/
+
+void showPortstatus(ohci_t* o)
+{
+    for (uint8_t j=0; j<o->rootPorts; j++)
+    {
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
+        {
+            textColor(IMPORTANT);
+            printf("\nport[%u]:", j+1);
+            textColor(TEXT);
+        
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_LSDA) { printf(" LowSpeed");            }
+            else                                               { printf(" FullSpeed");           }
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)  { textColor(SUCCESS);   printf(" dev. attached -");     
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;                                   }
+            
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)  { textColor(SUCCESS);   printf(" enabled  -");  }
+            else                                               { textColor(IMPORTANT); printf(" disabled -");  } 
+            textColor(TEXT);
+        
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSS)  { printf(" susp.     -");         }
+            else                                               { printf(" not susp. -");         } 
+        
+            textColor(ERROR);
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_POCI) { printf(" overcurrent -");       }
+            textColor(TEXT);
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRS)  { printf(" reset -");             }
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS)  { printf(" pow on -  ");          }
+            else                                               { printf(" pow off - ");          } 
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)  { printf(" CSC -");              
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CSC;                                   }
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PESC) { printf(" enable Change -");    
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PESC;                                  }
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSSC) { printf(" resume compl. -");     
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PSSC;                                  }
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_OCIC) { printf(" overcurrent Change -");
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_OCIC;                                  }
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRSC) { printf(" Reset Complete -");    
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRSC;                                  }
+        }
+    }
 }
 
 
@@ -406,43 +471,6 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     o->OpRegs->HcInterruptStatus = val; // reset interrupts
 }
 
-
-/*******************************************************************************************************
-*                                                                                                      *
-*                                              PORTS                                                   *
-*                                                                                                      *
-*******************************************************************************************************/
-
-void showPortstatus(ohci_t* o)
-{
-    for (uint8_t j=0; j<o->rootPorts; j++)
-    {
-        printf("\nport[%u]: %Xh ", j, o->OpRegs->HcRhPortStatus[j]);
-        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_LSDA)
-        {
-            printf("- Low Speed ");
-        }
-        else
-        {
-            printf("- Full Speed ");
-        }
-
-        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)
-        {
-            printf(" Device attached - ");
-        }
-
-        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)
-        {
-            printf(" enabled - ");
-        }
-        
-        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS)
-        {
-            printf(" power on ");
-        }        
-    }
-}
 
 /*******************************************************************************************************
 *                                                                                                      *
