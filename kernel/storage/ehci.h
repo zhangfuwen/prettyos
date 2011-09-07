@@ -127,16 +127,35 @@
 #define PSTS_CONNECTED                 0x00000001 // ro
 
 
+#define N_PORTS                        0x000F     // number of ports
+#define PORT_ROUTING_RULES             BIT(7);    // port routing to EHCI or cHC
+
+
 struct ehci_CapRegs
 {
     volatile uint8_t  CAPLENGTH;        // Core Capability Register Length
     volatile uint8_t  reserved;
     volatile uint16_t HCIVERSION;       // Core Interface Version Number
-    volatile uint32_t HCSPARAMS;        // Core Structural Parameters
+    volatile uint32_t HCSPARAMS;        // Core Structural Parameters // 
     volatile uint32_t HCCPARAMS;        // Core Capability Parameters
     volatile uint32_t HCSPPORTROUTE_Hi; // Core Companion Port Route Description
     volatile uint32_t HCSPPORTROUTE_Lo; // Core Companion Port Route Description
 } __attribute__((packed));
+
+/*
+HCSP-PORTROUTE - Companion Port Route Description:
+
+This optional field is valid only if Port Routing Rules field in the HCSPARAMS register is set to a one.
+
+This field is a 15-element nibble array (each 4 bits is one array element). 
+Each array location corresponds one-to-one with a physical port provided by the HC 
+(e.g. PORTROUTE[0] corresponds to the first PORTSC port, PORTROUTE[1] to the second PORTSC port, etc.). 
+The value of each element indicates to which of the cHC this port is routed. 
+Only the first N_PORTS elements have valid information. 
+A value of zero indicates that the port is routed to the lowest numbered function cHC.
+A value of one indicates that the port is routed to the next lowest numbered function cHC, and so on.
+*/
+
 
 struct ehci_OpRegs
 {
@@ -156,9 +175,17 @@ struct ehci_OpRegs
     volatile uint32_t reserved7;                                                 // +34h
     volatile uint32_t reserved8;                                                 // +38h
     volatile uint32_t reserved9;                                                 // +3Ch
-    volatile uint32_t CONFIGFLAG;       // Configured Flag Register        Aux   // +40h
+    volatile uint32_t CONFIGFLAG;       // Configure Flag Register         Aux   // +40h
     volatile uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h
 } __attribute__((packed));
+
+/*
+Configure Flag (CF) - R/W. Default: 0. Host software sets this bit as the last action in
+its process of configuring the HC. This bit controls the default port-routing control logic. 
+Bit values and side-effects are listed below. 
+0: routes each port to an implementation dependent classic HC.
+1: routes all ports to the EHCI.
+*/
 
 
 extern struct ehci_OpRegs* OpRegs;  // = &OpRegs;

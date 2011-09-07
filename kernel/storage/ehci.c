@@ -12,6 +12,7 @@
 #include "keyboard.h"
 #include "usb2.h"
 #include "usb2_msd.h"
+#include "ehci.h"
 
 
 static struct ehci_CapRegs* pCapRegs; // = &CapRegs;
@@ -190,7 +191,13 @@ void ehci_startHC(pciDev_t* PCIdev)
     //    this flag causes all ports to be unconditionally routed to the EHCI, all USB1.1 devices will
     //    cease to function until the bus is properly enumerated (i.e., each port is properly routed to its
     //    associated controller type: UHCI or EHCI)
-    OpRegs->CONFIGFLAG = CF; // Write a 1 to CONFIGFLAG register to route all ports to the EHCI controller
+    
+    // OpRegs->CONFIGFLAG  =  0; // Write a 0 to CONFIGFLAG register to default-route only to cHC (no high-speed!)
+    OpRegs->CONFIGFLAG  = CF; // Write a 1 to CONFIGFLAG register to default-route all ports to the EHCI  
+                              // The EHCI can temporarily release control of the port to a cHC 
+                              // by setting the PortOwner bit in the PORTSC register to a one
+    pCapRegs->HCSPARAMS |= PORT_ROUTING_RULES;
+    pCapRegs->HCSPPORTROUTE_Hi = pCapRegs->HCSPPORTROUTE_Lo = 0; // all valid ports go to lowest cHC number 
 
     sleepMilliSeconds(100); // do not delete
 }
@@ -531,13 +538,13 @@ void ehci_portCheck()
         {
             if (OpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
-                writeInfo(0, "Port: %u, device attached", j+1);
                 ehci_resetPort(j);
                 ehci_checkPortLineStatus(j);
             }
             else
             {
-                writeInfo(0, "Port: %u, device not attached", j+1);
+                writeInfo(0, "Port: %u, hi-speed device not attached", j+1);
+                OpRegs->PORTSC[j] &= ~PSTS_COMPANION_HC_OWNED; // port is given back to the EHCI
 
                 // Device Manager
                 removeDisk(&usbDev[j]);
@@ -557,15 +564,15 @@ void ehci_portCheck()
 }
 
 static void ehci_checkPortLineStatus(uint8_t j)
-{
-    // check line status
-
+{    
   #ifdef _EHCI_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nport %u: %xh, line: %yh ",j+1,OpRegs->PORTSC[j],(OpRegs->PORTSC[j]>>10)&3);
   #endif
     if (((OpRegs->PORTSC[j]>>10)&3) == 0) // SE0
     {
+      writeInfo(0, "Port: %u, hi-speed device attached", j+1);
+      
       #ifdef _EHCI_DIAGNOSIS_
         printf("SE0");
       #endif
@@ -580,6 +587,10 @@ static void ehci_checkPortLineStatus(uint8_t j)
                 setupUSBDevice(j);
             }
         }
+    }
+    else if (((OpRegs->PORTSC[j]>>10)&3) == 1) // K-state, release ownership of port
+    {
+        OpRegs->PORTSC[j] |= PSTS_COMPANION_HC_OWNED; // release it to the cHC
     }
 
   #ifdef _EHCI_DIAGNOSIS_
@@ -600,7 +611,6 @@ static void ehci_checkPortLineStatus(uint8_t j)
     textColor(TEXT);
   #endif
 }
-
 
 
 /*******************************************************************************************************

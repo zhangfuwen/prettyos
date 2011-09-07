@@ -188,16 +188,16 @@ typedef struct
 // Transfer Descriptor 
 typedef struct 
 {
-    uint32_t ours               : 18;  // available
-    uint32_t bufRounding        :  1;  // If the bit is 1, then the last data packet may be smaller than the defined buffer without causing an error
-    uint32_t direction          :  2;  // transfer direction 
-    uint32_t delayInt           :  3;  // wait delayInt frames before sending interrupt. If DelayInterrupt is 111b, then there is no interrupt at completion of this TD. 
-    uint32_t toggle             :  2;  // toggle 
-    volatile uint32_t errCnt    :  2;  // Anzahl der aufgetretenen Fehler - bei 11b wird der Status im "condition"-Feld gespeichert.
-    volatile uint32_t cond      :  4;  // status of the last attempted transaction
-    volatile uint32_t curBuffPtr;      // data ptr 
-    uint32_t nextTD;                   // next TD
-    uint32_t buffEnd;                  // last byte in buffer
+    uint32_t  ours               : 18;  // available
+    uint32_t  bufRounding        :  1;  // If the bit is 1, then the last data packet may be smaller than the defined buffer without causing an error
+    uint32_t  direction          :  2;  // transfer direction 
+    uint32_t  delayInt           :  3;  // wait delayInt frames before sending interrupt. If DelayInterrupt is 111b, then there is no interrupt at completion of this TD. 
+    uint32_t  toggle             :  2;  // toggle 
+    volatile  uint32_t errCnt    :  2;  // Anzahl der aufgetretenen Fehler - bei 11b wird der Status im "condition"-Feld gespeichert.
+    volatile  uint32_t cond      :  4;  // status of the last attempted transaction
+    uintptr_t curBuffPtr;               // data ptr 
+    volatile uintptr_t nextTD;          // next TD
+    uintptr_t buffEnd;                  // last byte in buffer
 } __attribute__((packed)) ohciTD_t;
  
 typedef struct
