@@ -569,47 +569,39 @@ static void ehci_checkPortLineStatus(uint8_t j)
     textColor(LIGHT_CYAN);
     printf("\nport %u: %xh, line: %yh ",j+1,OpRegs->PORTSC[j],(OpRegs->PORTSC[j]>>10)&3);
   #endif
-    if (((OpRegs->PORTSC[j]>>10)&3) == 0) // SE0
-    {
-      writeInfo(0, "Port: %u, hi-speed device attached", j+1);
-      
-      #ifdef _EHCI_DIAGNOSIS_
-        printf("SE0");
-      #endif
-
-        if ((OpRegs->PORTSC[j] & PSTS_POWERON) && (OpRegs->PORTSC[j] & PSTS_ENABLED) && (OpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
-        {
-          #ifdef _EHCI_DIAGNOSIS_
-            textColor(IMPORTANT); printf(", power on, enabled, EHCI owned"); textColor(TEXT);
-          #endif
-            if (USBtransferFlag && enabledPortFlag && (OpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
-            {
-                setupUSBDevice(j);
-            }
-        }
-    }
-    else if (((OpRegs->PORTSC[j]>>10)&3) == 1) // K-state, release ownership of port
-    {
-        OpRegs->PORTSC[j] |= PSTS_COMPANION_HC_OWNED; // release it to the cHC
-    }
-
-  #ifdef _EHCI_DIAGNOSIS_
-    textColor(IMPORTANT);
+    
     switch ((OpRegs->PORTSC[j]>>10)&3)
     {
-        case 1:
-            printf("K-State");
+        case 0: // SE0
+        {
+            writeInfo(0, "Port: %u, hi-speed device attached", j+1);
+      
+            if ((OpRegs->PORTSC[j] & PSTS_POWERON) && (OpRegs->PORTSC[j] & PSTS_ENABLED) && (OpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
+            {
+              #ifdef _EHCI_DIAGNOSIS_
+                textColor(IMPORTANT); printf(", power on, enabled, EHCI owned"); textColor(TEXT);
+              #endif
+                if (USBtransferFlag && enabledPortFlag && (OpRegs->PORTSC[j] & (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)))
+                {
+                    setupUSBDevice(j);
+                }
+            }
             break;
-        case 2:
-            printf("J-state");
+        }
+
+        case 1: // K-state, release ownership of port (in EHCI spec 1.0 this is recommended) 
+        case 2: // J-state, release ownership of port (in EHCI spec 1.0 this is not recommended)
+            OpRegs->PORTSC[j] |= PSTS_COMPANION_HC_OWNED; // release it to the cHC
+            break;       
+        
+        case 3: // undefined
+        {
+            textColor(ERROR);
+            printf("\nline state: undefined");
+            textColor(TEXT);
             break;
-        default:
-            textColor(RED);
-            printf("undefined");
-            break;
-    }
-    textColor(TEXT);
-  #endif
+        }
+    }// switch
 }
 
 
