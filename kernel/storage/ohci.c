@@ -257,16 +257,16 @@ void ohci_resetHC(ohci_t* o)
     // Set HcInterruptEnable to have all interrupt enabled except Start-of-Frame detect
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
     o->OpRegs->HcInterruptStatus  = ~0;
+     
     o->OpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
                                     OHCI_INT_WDH  | // write back done head
-                                  //OHCI_INT_SF   | // start of frame
                                     OHCI_INT_RD   | // resume detected
                                     OHCI_INT_UE   | // unrecoverable error
                                     OHCI_INT_FNO  | // frame number overflow
                                     OHCI_INT_RHSC | // root hub status change
                                     OHCI_INT_OC   | // ownership change
                                     OHCI_INT_MIE;   // (de)activates interrupts
-
+        
     // Set HcControl to have “all queues on”
     o->OpRegs->HcControl |=   OHCI_CTRL_CLE | OHCI_CTRL_BLE; // activate control and bulk transfers
     o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE); // de-activate periodical and isochronous transfers
@@ -300,18 +300,8 @@ void ohci_resetHC(ohci_t* o)
 
     for (uint8_t j=0; j < o->rootPorts; j++)
     {
-        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS; 
-        sleepMilliSeconds(20);
-
-        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CCS; 
-        sleepMilliSeconds(20);
-
-        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; 
-        sleepMilliSeconds(20);
+        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;         
     }
-
-    //
-    //
 }
 
 
