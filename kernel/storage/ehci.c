@@ -59,7 +59,7 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     if (!EHCIflag) // only the first EHCI is used
     {
         PCIdevice = PCIdev; /// TODO: implement for more than one EHCI
-        EHCIflag = true; // only the first EHCI is used
+        EHCIflag  = true; // only the first EHCI is used
 
         scheduler_insertTask(create_cthread(&ehci_start, "EHCI"));
 
@@ -69,9 +69,9 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 
 static void ehci_analyze(uintptr_t bar, uintptr_t offset)
 {
-    bar += offset;
+    bar     += offset;
     pCapRegs = (struct ehci_CapRegs*)bar;
-    OpRegs  = (struct ehci_OpRegs*)(bar + pCapRegs->CAPLENGTH);
+    OpRegs   = (struct ehci_OpRegs*)(bar + pCapRegs->CAPLENGTH);
     numPorts = (pCapRegs->HCSPARAMS & 0x000F);
 
   #ifdef _EHCI_DIAGNOSIS_
@@ -82,7 +82,7 @@ static void ehci_analyze(uintptr_t bar, uintptr_t offset)
     printf("Ports: %u",         numPorts);                         // Number of Ports
     printf("\nHCCPARAMS: %Xh ", pCapRegs->HCCPARAMS);              // Capability Parameters
     if (BYTE2(pCapRegs->HCCPARAMS)==0) printf("No ext. capabil."); // Extended Capabilities Pointer
-    printf("\nOpRegs Address: %Xh", OpRegs);                      // Host Controller Operational Registers
+    printf("\nOpRegs Address: %Xh", OpRegs);                       // Host Controller Operational Registers
   #endif
 }
 
@@ -191,13 +191,12 @@ void ehci_startHC(pciDev_t* PCIdev)
     //    this flag causes all ports to be unconditionally routed to the EHCI, all USB1.1 devices will
     //    cease to function until the bus is properly enumerated (i.e., each port is properly routed to its
     //    associated controller type: UHCI or EHCI)
-    
-    // OpRegs->CONFIGFLAG  =  0; // Write a 0 to CONFIGFLAG register to default-route only to cHC (no high-speed!)
-    OpRegs->CONFIGFLAG  = CF; // Write a 1 to CONFIGFLAG register to default-route all ports to the EHCI  
-                              // The EHCI can temporarily release control of the port to a cHC 
+
+    OpRegs->CONFIGFLAG  = CF; // Write a 1 to CONFIGFLAG register to default-route all ports to the EHCI
+                              // The EHCI can temporarily release control of the port to a cHC
                               // by setting the PortOwner bit in the PORTSC register to a one
     pCapRegs->HCSPARAMS |= PORT_ROUTING_RULES;
-    pCapRegs->HCSPPORTROUTE_Hi = pCapRegs->HCSPPORTROUTE_Lo = 0; // all valid ports go to lowest cHC number 
+    pCapRegs->HCSPPORTROUTE_Hi = pCapRegs->HCSPPORTROUTE_Lo = 0; // all valid ports go to lowest cHC number
 
     sleepMilliSeconds(100); // do not delete
 }
@@ -341,7 +340,7 @@ static void ehci_deactivateLegacySupport(pciDev_t* PCIdev)
           #endif
 
             // USB SMI Enable R/W. 0=Default.
-            // The OS tries to set SMI to disabled in case that BIOS bit satys at one.
+            // The OS tries to set SMI to disabled in case that BIOS bit stays at one.
             pci_config_write_dword(bus, dev, func, USBLEGCTLSTS, 0x0); // USB SMI disabled
         }
       #ifdef _EHCI_DIAGNOSIS_
@@ -377,7 +376,7 @@ void ehci_enablePorts()
 
         if (USBtransferFlag && enabledPortFlag && OpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)) // high speed, enabled, device attached
         {
-            textColor(YELLOW);
+            textColor(IMPORTANT);
             printf("Port %u: high speed enabled, device attached\n",j+1);
             textColor(TEXT);
 
@@ -422,7 +421,7 @@ void ehci_resetPort(uint8_t j)
 
     OpRegs->USBINTR = 0;
     OpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
-    sleepMilliSeconds(250);                 // do not delete this wait
+    sleepMilliSeconds(250);                // do not delete this wait
     OpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
 
     // wait and check, whether really zero
@@ -564,18 +563,18 @@ void ehci_portCheck()
 }
 
 static void ehci_checkPortLineStatus(uint8_t j)
-{    
+{
   #ifdef _EHCI_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nport %u: %xh, line: %yh ",j+1,OpRegs->PORTSC[j],(OpRegs->PORTSC[j]>>10)&3);
   #endif
-    
-    switch ((OpRegs->PORTSC[j]>>10)&3)
+
+    switch ((OpRegs->PORTSC[j]>>10)&3) // bits 11:10
     {
         case 0: // SE0
         {
             writeInfo(0, "Port: %u, hi-speed device attached", j+1);
-      
+
             if ((OpRegs->PORTSC[j] & PSTS_POWERON) && (OpRegs->PORTSC[j] & PSTS_ENABLED) && (OpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
             {
               #ifdef _EHCI_DIAGNOSIS_
@@ -589,11 +588,11 @@ static void ehci_checkPortLineStatus(uint8_t j)
             break;
         }
 
-        case 1: // K-state, release ownership of port (in EHCI spec 1.0 this is recommended) 
+        case 1: // K-state, release ownership of port (in EHCI spec 1.0 this is recommended)
         case 2: // J-state, release ownership of port (in EHCI spec 1.0 this is not recommended)
             OpRegs->PORTSC[j] |= PSTS_COMPANION_HC_OWNED; // release it to the cHC
-            break;       
-        
+            break;
+
         case 3: // undefined
         {
             textColor(ERROR);

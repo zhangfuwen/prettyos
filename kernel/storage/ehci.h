@@ -10,31 +10,28 @@
 /* ****** */
 
 #define CMD_INTERRUPT_THRESHOLD        0x00FF0000 // valid values are:
-#define CMD_1_MICROFRAME               0x00010000
-#define CMD_2_MICROFRAME               0x00020000
-#define CMD_4_MICROFRAME               0x00040000
-#define CMD_8_MICROFRAME               0x00080000 // 1ms
-#define CMD_16_MICROFRAME              0x00100000
-#define CMD_32_MICROFRAME              0x00200000
-#define CMD_64_MICROFRAME              0x00400000
+#define CMD_1_MICROFRAME               BIT(16)
+#define CMD_2_MICROFRAME               BIT(17)
+#define CMD_4_MICROFRAME               BIT(18)
+#define CMD_8_MICROFRAME               BIT(19) // 1ms
+#define CMD_16_MICROFRAME              BIT(20)
+#define CMD_32_MICROFRAME              BIT(21)
+#define CMD_64_MICROFRAME              BIT(22)
 
-#define CMD_PARK_MODE                  0x00000800
-#define CMD_PARK_COUNT                 0x00000300
+#define CMD_PARK_MODE                  0x800
+#define CMD_PARK_COUNT                 0x300
+#define CMD_LIGHT_RESET                BIT(7)
+#define CMD_ASYNCH_INT_DOORBELL        BIT(6)
+#define CMD_ASYNCH_ENABLE              BIT(5)
+#define CMD_PERIODIC_ENABLE            BIT(4)
 
-#define CMD_LIGHT_RESET                0x00000080
+#define CMD_FRAMELIST_SIZE             0xC     // valid values are:
+#define CMD_FRAMELIST_1024             0x0
+#define CMD_FRAMELIST_512              0x4
+#define CMD_FRAMELIST_256              0x8
 
-#define CMD_ASYNCH_INT_DOORBELL        0x00000040
-#define CMD_ASYNCH_ENABLE              0x00000020
-
-#define CMD_PERIODIC_ENABLE            0x00000010
-
-#define CMD_FRAMELIST_SIZE             0x0000000C // valid values are:
-#define CMD_FRAMELIST_1024             0x00000000
-#define CMD_FRAMELIST_512              0x00000004
-#define CMD_FRAMELIST_256              0x00000008
-
-#define CMD_HCRESET                    0x00000002 // reset
-#define CMD_RUN_STOP                   0x00000001 // run/stop
+#define CMD_HCRESET                    BIT(1)  // reset
+#define CMD_RUN_STOP                   BIT(0)  // run/stop
 
 
 /* ************** */
@@ -42,19 +39,19 @@
 /* ************** */
 
 // only USBSTS
-#define STS_ASYNC_ENABLED              0x00008000
-#define STS_PERIODIC_ENABLED           0x00004000
-#define STS_RECLAMATION                0x00002000
-#define STS_HCHALTED                   0x00001000
+#define STS_ASYNC_ENABLED              BIT(15)
+#define STS_PERIODIC_ENABLED           BIT(14)
+#define STS_RECLAMATION                BIT(13)
+#define STS_HCHALTED                   BIT(12)
 
 // USBSTS (Interrupts)
 #define STS_INTMASK                    0x0000003F
-#define STS_ASYNC_INT                  0x00000020
-#define STS_HOST_SYSTEM_ERROR          0x00000010
-#define STS_FRAMELIST_ROLLOVER         0x00000008
-#define STS_PORT_CHANGE                0x00000004
-#define STS_USBERRINT                  0x00000002
-#define STS_USBINT                     0x00000001
+#define STS_ASYNC_INT                  BIT(5)
+#define STS_HOST_SYSTEM_ERROR          BIT(4)
+#define STS_FRAMELIST_ROLLOVER         BIT(3)
+#define STS_PORT_CHANGE                BIT(2)
+#define STS_USBERRINT                  BIT(1)
+#define STS_USBINT                     BIT(0)
 
 
 /* *********/
@@ -68,67 +65,41 @@
 /* PERIODICLISTBASE */
 /* **************** */
 
-#define PLB_ALIGNMENT                  0x00000FFF  // 4kB
+#define PLB_ALIGNMENT                  0x00000FFF  // 4 KiB
 
 
 /* ************* */
 /* ASYNCLISTADDR */
 /* ************* */
 
-#define ALB_ALIGNMENT                  0x0000001F  // 32B
+#define ALB_ALIGNMENT                  0x0000001F  // 32 Byte
 
 
 /* ********** */
 /* CONFIGFLAG */
 /* ********** */
 
-#define CF                             0x00000001
+#define CF                             BIT(0)
 
 
 /* *********** */
 /* PORTSC[...] */
 /* *********** */
 
-#define PSTS_WKOC_E                    0x00400000 // rw
-#define PSTS_WKDSCNNT_E                0x00200000 // rw
-#define PSTS_WKCNNT_E                  0x00100000 // rw
+#define PSTS_COMPANION_HC_OWNED        BIT(13) // rw
+#define PSTS_POWERON                   BIT(12) // rw valid, if PPC == 1
+#define PSTS_PORT_RESET                BIT(8)  // rw
+#define PSTS_PORT_SUSPEND              BIT(7)  // rw
+#define PSTS_PORT_RESUME               BIT(6)  // rw
+#define PSTS_OVERCURRENT_CHANGE        BIT(5)  // rwc
+#define PSTS_OVERCURRENT               BIT(4)  // ro
+#define PSTS_ENABLED_CHANGE            BIT(3)  // rwc
+#define PSTS_ENABLED                   BIT(2)  // rw
+#define PSTS_CONNECTED_CHANGE          BIT(1)  // rwc
+#define PSTS_CONNECTED                 BIT(0)  // ro
 
-#define PSTS_PORT_TEST                 0x000F0000 // rw valid:
-#define PSTS_J_STATE                   0x00010000
-#define PSTS_TEST_K_STATE              0x00020000
-#define PSTS_TEST_SE0_NAK              0x00030000
-#define PSTS_TEST_PACKET               0x00040000
-#define PSTS_TEST_FORCE_ENABLE         0x00050000
-
-#define PSTS_PORT_INDICATOR            0x0000C000 // rw valid:
-#define PSTS_PI_OFF                    0x00000000
-#define PSTS_PI_AMBER                  0x00004000
-#define PSTS_PI_GREEN                  0x00008000
-
-#define PSTS_COMPANION_HC_OWNED        0x00002000 // rw
-#define PSTS_POWERON                   0x00001000 // rw valid, if PPC == 1
-
-#define PSTS_LINE_STATUS               0x00000C00 // ro meanings:
-#define PSTS_LINE_SE0                  0x00000000
-#define PSTS_LINE_J_STATE              0x00000800
-#define PSTS_LINE_K_STATE              0x00000400
-
-#define PSTS_PORT_RESET                0x00000100 // rw
-#define PSTS_PORT_SUSPEND              0x00000080 // rw
-#define PSTS_PORT_RESUME               0x00000040 // rw
-
-#define PSTS_OVERCURRENT_CHANGE        0x00000020 // rwc
-#define PSTS_OVERCURRENT               0x00000010 // ro
-
-#define PSTS_ENABLED_CHANGE            0x00000008 // rwc
-#define PSTS_ENABLED                   0x00000004 // rw
-
-#define PSTS_CONNECTED_CHANGE          0x00000002 // rwc
-#define PSTS_CONNECTED                 0x00000001 // ro
-
-
-#define N_PORTS                        0x000F     // number of ports
-#define PORT_ROUTING_RULES             BIT(7);    // port routing to EHCI or cHC
+#define N_PORTS                        0xF     // number of ports (bits 3:0)
+#define PORT_ROUTING_RULES             BIT(7)  // port routing to EHCI or cHC
 
 
 struct ehci_CapRegs
@@ -136,7 +107,7 @@ struct ehci_CapRegs
     volatile uint8_t  CAPLENGTH;        // Core Capability Register Length
     volatile uint8_t  reserved;
     volatile uint16_t HCIVERSION;       // Core Interface Version Number
-    volatile uint32_t HCSPARAMS;        // Core Structural Parameters // 
+    volatile uint32_t HCSPARAMS;        // Core Structural Parameters //
     volatile uint32_t HCCPARAMS;        // Core Capability Parameters
     volatile uint32_t HCSPPORTROUTE_Hi; // Core Companion Port Route Description
     volatile uint32_t HCSPPORTROUTE_Lo; // Core Companion Port Route Description
@@ -147,11 +118,11 @@ HCSP-PORTROUTE - Companion Port Route Description:
 
 This optional field is valid only if Port Routing Rules field in the HCSPARAMS register is set to a one.
 
-This field is a 15-element nibble array (each 4 bits is one array element). 
-Each array location corresponds one-to-one with a physical port provided by the HC 
-(e.g. PORTROUTE[0] corresponds to the first PORTSC port, PORTROUTE[1] to the second PORTSC port, etc.). 
-The value of each element indicates to which of the cHC this port is routed. 
-Only the first N_PORTS elements have valid information. 
+This field is a 15-element nibble array (each 4 bits is one array element).
+Each array location corresponds one-to-one with a physical port provided by the HC
+(e.g. PORTROUTE[0] corresponds to the first PORTSC port, PORTROUTE[1] to the second PORTSC port, etc.).
+The value of each element indicates to which of the cHC this port is routed.
+Only the first N_PORTS elements have valid information.
 A value of zero indicates that the port is routed to the lowest numbered function cHC.
 A value of one indicates that the port is routed to the next lowest numbered function cHC, and so on.
 */
@@ -181,8 +152,8 @@ struct ehci_OpRegs
 
 /*
 Configure Flag (CF) - R/W. Default: 0. Host software sets this bit as the last action in
-its process of configuring the HC. This bit controls the default port-routing control logic. 
-Bit values and side-effects are listed below. 
+its process of configuring the HC. This bit controls the default port-routing control logic.
+Bit values and side-effects are listed below.
 0: routes each port to an implementation dependent classic HC.
 1: routes all ports to the EHCI.
 */
