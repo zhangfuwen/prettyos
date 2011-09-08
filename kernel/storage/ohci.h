@@ -9,7 +9,8 @@
 #define OHCIMAX      4  // max number of OHCI devices
 #define OHCIPORTMAX  8  // max number of OHCI device ports
 
-#define OHCI_HCCA_ALIGN 0x100
+#define OHCI_HCCA_ALIGN          0x0100
+#define OHCI_DESCRIPTORS_ALIGN   0x0010
 
 // HcControl Register
 #define OHCI_CTRL_CBSR (BIT(0)|BIT(1))   // relation between control und bulk (cbsr+1 vs. 1)
@@ -214,9 +215,9 @@ typedef struct
     uintptr_t      bar;                  // MMIO space (base address register)
     ohci_OpRegs_t* OpRegs;               // operational registers
     ohci_HCCA_t*   hcca;                 // HC Communications Area (virtual address)
-    ohciED_t       ed[64];               // EDs
-    ohciTD_t       td[56];               // TDs
-    uint8_t        tdBuff[56][1024];     // TD buffers 
+    ohciED_t*      pED[64];              // EDs
+    ohciTD_t*      pTD[56];              // TDs
+    uintptr_t      pTDbuff[56];          // TD buffers 
     uint8_t        rootPorts;            // number of rootports
     size_t         memSize;              // memory size of IO space
     bool           enabledPorts;         // root ports enabled

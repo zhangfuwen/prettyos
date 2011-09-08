@@ -247,9 +247,23 @@ void ohci_resetHC(ohci_t* o)
     Initialize the Operational Registers to match the current device data state;
     i.e., all virtual queues are run and constructed into physical queues for HcControlHeadED and HcBulkHeadED
     */
-    // ED Pool: 64 EDs (size: ED)
-    // TD Pool: 56 TDs (size: TD+1024)    
-    // ED and TD are part of ohci_t
+    
+    // Pointers to ED, TD and TD buffers are part of ohci_t
+    
+    // ED pool: 64 EDs 
+    for (uint8_t i=0; i<64; i++)
+    {
+        o->pED[i] = malloc(sizeof(ohciED_t), OHCI_DESCRIPTORS_ALIGN, "ohci_ED");
+    }
+    
+    // TD pool: 56 TDs and buffers
+    for (uint8_t i=0; i<56; i++)
+    {
+        o->pTDbuff[i] = (uintptr_t) malloc(1024, OHCI_DESCRIPTORS_ALIGN, "ohci_TDbuffer");
+        o->pTD[i] = malloc(sizeof(ohciTD_t), OHCI_DESCRIPTORS_ALIGN, "ohci_TD");
+        o->pTD[i]->curBuffPtr = paging_getPhysAddr((void*)o->pTDbuff[i]);
+    }  
+
 
     // Set the HcHCCA to the physical address of the HCCA block
     o->OpRegs->HcHCCA = paging_getPhysAddr(hccaVirt);
@@ -267,9 +281,9 @@ void ohci_resetHC(ohci_t* o)
                                     OHCI_INT_OC   | // ownership change
                                     OHCI_INT_MIE;   // (de)activates interrupts
         
-    // Set HcControl to have “all queues on”
-    o->OpRegs->HcControl |=   OHCI_CTRL_CLE | OHCI_CTRL_BLE; // activate control and bulk transfers
-    o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE); // de-activate periodical and isochronous transfers
+    // prepare transfers
+    o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_BLE); // de-activate control and bulk transfers // later activate, if ED/TD lists exist!
+    o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE ); // de-activate periodical and isochronous transfers
 
     // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
     // When HcFmRemaining reaches this value, periodic lists gets priority over control/bulk processing
