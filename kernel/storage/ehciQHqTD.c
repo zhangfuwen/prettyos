@@ -316,8 +316,8 @@ void checkAsyncScheduler(ehci_t* e)
     textColor(IMPORTANT);
 
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register
-    void* virtASYNCLISTADDR = paging_acquirePciMemory(OpRegs->ASYNCLISTADDR, 1);
-    printf("\ncurr QH: %Xh ",paging_getPhysAddr(virtASYNCLISTADDR));
+    void* virtASYNCLISTADDR = paging_acquirePciMemory(e->OpRegs->ASYNCLISTADDR, 1);
+    printf("\ncurr QH: %Xh ", paging_getPhysAddr(virtASYNCLISTADDR));
 
     // Last accessed & next to access QH, DWORD 0
     uintptr_t horizontalPointer = (*((uint32_t*)virtASYNCLISTADDR)) & 0xFFFFFFE0; // without last 5 bits
@@ -325,7 +325,7 @@ void checkAsyncScheduler(ehci_t* e)
     uint32_t type = (BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x06) >> 1 ;       // bit 2:1
     uint32_t Tbit =  BYTE1(*((uint32_t*)virtASYNCLISTADDR)) & 0x01;              // bit 0
     */
-    printf("\tnext QH: %Xh ",horizontalPointer);
+    printf("\tnext QH: %Xh ", horizontalPointer);
 
     //printf("\ntype: %u T-bit: %u",type,Tbit);
 
@@ -339,7 +339,7 @@ void checkAsyncScheduler(ehci_t* e)
     uint32_t mult                        = (BYTE4(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0xC0)>>6;
 
     uint32_t maxPacket = ((BYTE4(*(((uint32_t*)virtASYNCLISTADDR)+1)) & 0x07) << 8) +
-                            BYTE3(*(((uint32_t*)virtASYNCLISTADDR)+1));
+                           BYTE3(*(((uint32_t*)virtASYNCLISTADDR)+1));
 
     printf("\ndev: %u endp: %u inactivate: %u dtc: %u H: %u mult: %u maxPacket: %u",
              deviceAddress, endpoint, inactivateOnNextTransaction, dataToggleControl, Hbit, mult, maxPacket);
@@ -350,15 +350,15 @@ void checkAsyncScheduler(ehci_t* e)
 
     // Last accessed & next to access QH, DWORD 3
     uintptr_t firstQTD = (*(((uint32_t*)virtASYNCLISTADDR)+3)) & 0xFFFFFFE0; // without last 5 bits
-    printf("\ncurr qTD: %Xh",firstQTD);
+    printf("\ncurr qTD: %Xh", firstQTD);
 
     // Last accessed & next to access QH, DWORD 4
     uintptr_t nextQTD = (*(((uint32_t*)virtASYNCLISTADDR)+4)) & 0xFFFFFFE0; // without last 5 bits
-    printf("\tnext qTD: %Xh",nextQTD);
+    printf("\tnext qTD: %Xh", nextQTD);
 
     // NAK counter in overlay area
     uint32_t NakCtr = (BYTE1(*(((uint32_t*)virtASYNCLISTADDR)+5)) & 0x1E)>>1;
-    printf("\nNAK counter: %u",NakCtr);
+    printf("\nNAK counter: %u", NakCtr);
     textColor(TEXT);
   #endif
 }
@@ -369,7 +369,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     if (analyze)
     {
         printf("\nbefore aS:");
-        checkAsyncScheduler();
+        checkAsyncScheduler(e);
     }
   #endif
 

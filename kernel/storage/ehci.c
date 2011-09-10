@@ -43,45 +43,41 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     printf("\n>>>ehci_install<<<\n");
   #endif
 
-    curEHCI = ehci[index]        = malloc(sizeof(ehci_t), 0, "ehci");
-    ehci[index]->PCIdevice       = PCIdev;
-    ehci[index]->PCIdevice->data = ehci[index];
-    ehci[index]->bar             = (uintptr_t)paging_acquirePciMemory(bar_phys,1);
-    uint16_t offset              = bar_phys % PAGESIZE;
-    ehci[index]->num             = index;
-
+    ehci_t* e = curEHCI = ehci[index] = malloc(sizeof(ehci_t), 0, "ehci");
+    e->num              = index;
+    e->PCIdevice        = PCIdev;
+    e->PCIdevice->data  = e;
+    e->bar              = (uintptr_t)paging_acquirePciMemory(bar_phys,1) + (bar_phys % PAGESIZE);
+    
   #ifdef _EHCI_DIAGNOSIS_
-    printf("\nEHCI_MMIO %Xh mapped to virt addr %Xh, offset: %xh", bar_phys, ehci[index]->bar, offset);
+    printf("\nEHCI_MMIO %Xh mapped to virt addr %Xh", bar_phys, e->bar);
   #endif
-
-    ehci[index]->bar+= offset;
-    ehci[index]->OpRegs = (ehci_OpRegs_t*) (ehci[index]->bar);
+        
+    e->CapRegs   = (ehci_CapRegs_t*) e->bar;
+    e->OpRegs    = (ehci_OpRegs_t*)(e->bar + e->CapRegs->CAPLENGTH);
+    e->numPorts  = (e->CapRegs->HCSPARAMS & 0x000F);
 
     char str[10];
     snprintf(str, 10, "EHCI %u", index+1);
 
-    scheduler_insertTask(create_cthread(&ehci_start, str));
     ehci_analyze(ehci[index]); // get data (capregs, opregs)
-    
+
+    scheduler_insertTask(create_cthread(&ehci_start, str));
+        
     index++;
     sleepMilliSeconds(20); // HACK: Avoid race condition between ohci_install and the thread just created. Problem related to curOHCI global variable    
 }
 
 static void ehci_analyze(ehci_t* e)
 {
-    e->CapRegs   = (ehci_CapRegs_t*) e->bar;
-    e->OpRegs    = (ehci_OpRegs_t*)(e->bar + e->CapRegs->CAPLENGTH);
-    e->numPorts  = (e->CapRegs->HCSPARAMS & 0x000F);
-
   #ifdef _EHCI_DIAGNOSIS_
-    uintptr_t bar_phys  = (uintptr_t)paging_getPhysAddr((void*)e->bar);
-    printf("\nEHCI bar get_physAddress: %Xh\n", bar_phys);
+    printf("\nEHCI bar get_physAddress: %Xh\n", (uintptr_t)paging_getPhysAddr((void*)e->bar));
     printf("HCIVERSION: %xh ",  e->CapRegs->HCIVERSION);             // Interface Version Number
     printf("HCSPARAMS: %Xh ",   e->CapRegs->HCSPARAMS);              // Structural Parameters
-    printf("Ports: %u",         e->numPorts);                         // Number of Ports
+    printf("Ports: %u",         e->numPorts);                        // Number of Ports
     printf("\nHCCPARAMS: %Xh ", e->CapRegs->HCCPARAMS);              // Capability Parameters
     if (BYTE2(e->CapRegs->HCCPARAMS)==0) printf("No ext. capabil."); // Extended Capabilities Pointer
-    printf("\nOpRegs Address: %Xh", e->OpRegs);                       // Host Controller Operational Registers
+    printf("\nOpRegs Address: %Xh", e->OpRegs);                      // Host Controller Operational Registers
   #endif
 }
 
