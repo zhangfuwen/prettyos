@@ -9,7 +9,10 @@
 #include "video/console.h"
 #include "util.h"
 #include "usb2.h"
+#include "ehci.h"
 
+
+extern ehci_t* curEHCI;
 
 extern const uint8_t ALIGNVALUE;
 
@@ -34,6 +37,8 @@ extern usb2_Device_t usbDevices[16]; // ports 1-16
 // Bulk-Only Mass Storage get maximum number of Logical Units
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 {
+    ehci_t* e = curEHCI;
+
   #ifdef _USB2_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %u interface: %u", device+1, numInterface);
@@ -41,8 +46,8 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-GetMaxLun");
-    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
+    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next      = createQTD_Handshake(OUT); // Handshake is the opposite direction of Data
@@ -56,7 +61,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     // Create QH
     createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
-    performAsyncScheduler(true, false, 0);
+    performAsyncScheduler(e, true, false, 0);
 
     free(QH);
     for (uint8_t i=0; i<=2; i++)
@@ -71,6 +76,8 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 // Bulk-Only Mass Storage Reset
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 {
+    ehci_t* e = curEHCI;
+     
   #ifdef _USB2_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %u interface: %u", device+1, numInterface);
@@ -78,8 +85,8 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
   #endif
 
     void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-MSD-Reset");
-    OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
+    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
@@ -91,7 +98,7 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     // Create QH
     createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
-    performAsyncScheduler(true, false, 0);
+    performAsyncScheduler(e, true, false, 0);
 
     free(QH);
     for (uint8_t i=0; i<=1; i++)
@@ -326,6 +333,8 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
 /// cf. http://www.beyondlogic.org/usbnutshell/usb4.htm#Bulk
 void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer)
 {
+    ehci_t* e = curEHCI;
+     
   #ifdef _USB2_DIAGNOSIS_
     printf("\nOUT part");
   #endif
@@ -335,10 +344,10 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiIN-QH_In");
 
     // async list points to QH Out
-    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
+    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
 
   #ifdef _USB2_DIAGNOSIS_
-    printf("\nasyncList: %Xh <-- QH_Out", OpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_Out", e->OpRegs->ASYNCLISTADDR);
 
     // OUT qTD
     // No handshake!
@@ -370,7 +379,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     createQH(QH_Out, paging_getPhysAddr(QH_Out), cmdQTD,  1, device+1, endpointOut, 512); // endpoint OUT for MSD
 
     // Bulk Transfer to endpoint OUT
-    performAsyncScheduler(true, true, 0);
+    performAsyncScheduler(e, true, true, 0);
 
     free(QH_Out);
     free(globalqTD[0]);
@@ -383,10 +392,10 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
   #endif
 
     // async list points to QH In
-    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
+    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
 
   #ifdef _USB2_DIAGNOSIS_
-    printf("\nasyncList: %Xh <-- QH_In", OpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_In", e->OpRegs->ASYNCLISTADDR);
   #endif
 
     // IN qTDs
@@ -436,7 +445,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
 	uint32_t numberTries = 10; // repeats for IN-Transfer
 labelTransferIN: /// TEST
 
-    performAsyncScheduler(true, true, TransferLength/200);
+    performAsyncScheduler(e, true, true, TransferLength/200);
 
   #ifdef _EHCI_DIAGNOSIS_
     if (TransferLength) // byte
@@ -473,6 +482,8 @@ labelTransferIN: /// TEST
 
 void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, uint8_t* buffer)
 {
+    ehci_t* e = curEHCI;
+
   #ifdef _USB2_DIAGNOSIS_
     printf("\nOUT part");
   #endif
@@ -482,10 +493,10 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     void* QH_In  = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "scsiOUT-QH_In");
 
     // async list points to QH Out
-    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
+    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_Out);
 
   #ifdef _USB2_DIAGNOSIS_
-    printf("\nasyncList: %Xh <-- QH_Out", OpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_Out", e->OpRegs->ASYNCLISTADDR);
 
     // OUT qTD
     // No handshake!
@@ -524,7 +535,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     createQH(QH_Out, paging_getPhysAddr(QH_Out), cmdQTD,  1, device+1, endpointOut, 512); // endpoint OUT for MSD
 
     // Bulk Transfer to endpoint OUT
-    performAsyncScheduler(true, true, TransferLength/200);
+    performAsyncScheduler(e, true, true, TransferLength/200);
 
     free(QH_Out);
     for (uint8_t i=0; i<=1; i++)
@@ -540,10 +551,10 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
   #endif
 
     // async list points to QH In
-    OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
+    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH_In);
 
   #ifdef _USB2_DIAGNOSIS_
-    printf("\nasyncList: %Xh <-- QH_In", OpRegs->ASYNCLISTADDR);
+    printf("\nasyncList: %Xh <-- QH_In", e->OpRegs->ASYNCLISTADDR);
 
     // IN qTDs
     // No handshake!
@@ -562,7 +573,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
 
     // QH IN with status qTD only
     createQH(QH_In, paging_getPhysAddr(QH_In), StatusQTD, 1, device+1, endpointIn, 512); // endpoint IN for MSD
-    performAsyncScheduler(true, true, 0);
+    performAsyncScheduler(e, true, true, 0);
     checkSCSICommandUSBTransfer(device, TransferLength, bulkTransfer);
 
     free(QH_In);
@@ -578,6 +589,8 @@ static uint8_t getStatusByte()
 
 static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferTestUnitReady, usbBulkTransfer_t* bulkTransferRequestSense)
 {
+    ehci_t* e = curEHCI;
+    
     const uint8_t maxTest = 3;
     int32_t timeout = maxTest;
     int32_t sense = -1;
@@ -593,7 +606,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady); // dev, endp, cmd, LBA, transfer length
 
         uint8_t statusByteTestReady = getStatusByte();
-        showUSBSTS();
+        showUSBSTS(e);
 
         if (timeout != maxTest-1)
         {
@@ -606,7 +619,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
             usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense); // dev, endp, cmd, LBA, transfer length
 
             statusByte = getStatusByte();
-            showUSBSTS();
+            showUSBSTS(e);
 
             sense = showResultsRequestSense();
             if (((statusByteTestReady == 0) && ((sense == 0) || (sense == 6))) || (timeout <= 0))
@@ -735,6 +748,8 @@ static void analyzeInquiry()
 
 void testMSD(uint8_t devAddr, disk_t* disk)
 {
+    ehci_t* e = curEHCI;
+    
     if (usbDevices[devAddr].InterfaceClass != 0x08)
     {
         textColor(ERROR);
@@ -769,7 +784,7 @@ void testMSD(uint8_t devAddr, disk_t* disk)
                        &inquiry);
 
         analyzeInquiry();
-        showUSBSTS();
+        showUSBSTS(e);
         logBulkTransfer(&inquiry);
 
         ///////// send SCSI command "test unit ready(6)"
@@ -808,7 +823,7 @@ void testMSD(uint8_t devAddr, disk_t* disk)
         printf("\nCapacity: %u MB, Last LBA: %u, block size %u\n", capacityMB, lastLBA, blocksize);
         textColor(TEXT);
 
-        showUSBSTS();
+        showUSBSTS(e);
         logBulkTransfer(&readCapacity);
 
         analyzeDisk(disk);
@@ -819,9 +834,13 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* device)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
   #ifdef _USB2_DIAGNOSIS_
-    textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read   sector: %u", sector); textColor(TEXT);
+    textColor(LIGHT_BLUE); 
+    printf("\n\n>>> SCSI: read   sector: %u", sector); 
+    textColor(TEXT);
   #endif
 
+    ehci_t* e = curEHCI;
+    
     uint8_t           devAddr = currentDevice;
     uint32_t          blocks  = 1; // number of blocks to be read
     usbBulkTransfer_t read;
@@ -838,7 +857,7 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* device)
                    &read);
 
     memcpy((void*)buffer,(void*)DataQTDpage0,512);
-    showUSBSTS();
+    showUSBSTS(e);
     logBulkTransfer(&read);
 
     return(CE_GOOD); // SUCCESS // TEST
@@ -846,9 +865,13 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* device)
 
 FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device)
 {
-        ///////// send SCSI command "write(10)", write one block to LBA ..., get Status
+    ///////// send SCSI command "write(10)", write one block to LBA ..., get Status
 
-    textColor(IMPORTANT); printf("\n\n>>> SCSI: write  sector: %u", sector); textColor(TEXT);
+    ehci_t* e = curEHCI;
+    
+    textColor(IMPORTANT); 
+    printf("\n\n>>> SCSI: write  sector: %u", sector); 
+    textColor(TEXT);
 
     uint8_t           devAddr = currentDevice;
     uint32_t          blocks  = 1; // number of blocks to be written
@@ -865,7 +888,7 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device)
                    write.DataBytesToTransferOUT,
                    &write, buffer);
 
-    showUSBSTS();
+    showUSBSTS(e);
     logBulkTransfer(&write);
 
     return(CE_GOOD);

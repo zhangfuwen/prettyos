@@ -230,9 +230,13 @@ void pci_scan()
 
 						// Install device driver
                         if (PCIdev->classID == 0x0C && PCIdev->subclassID == 0x03) // USB Host Controller
+                        {
                             usb_hc_install(PCIdev);
-						else // network adapters
+                        }
+						else if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00) // Ethernet Network Controller
+                        {
 	                        network_installDevice(PCIdev);
+                        }
 						putch('\n');
                     } // if irq != 255
                 } // if pciVendor

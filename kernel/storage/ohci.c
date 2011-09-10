@@ -280,9 +280,10 @@ void ohci_resetHC(ohci_t* o)
                                     OHCI_INT_RHSC | // root hub status change
                                     OHCI_INT_OC   | // ownership change
                                     OHCI_INT_MIE;   // (de)activates interrupts
-        
+     
+    
     // prepare transfers
-    o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_BLE); // de-activate control and bulk transfers // later activate, if ED/TD lists exist!
+    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers 
     o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE ); // de-activate periodical and isochronous transfers
 
     // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register

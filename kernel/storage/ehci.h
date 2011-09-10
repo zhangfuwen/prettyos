@@ -4,6 +4,7 @@
 #include "os.h"
 #include "pci.h"
 
+#define EHCIMAX 4
 
 /* ****** */
 /* USBCMD */
@@ -102,7 +103,7 @@
 #define PORT_ROUTING_RULES             BIT(7)  // port routing to EHCI or cHC
 
 
-struct ehci_CapRegs
+typedef struct 
 {
     volatile uint8_t  CAPLENGTH;        // Core Capability Register Length
     volatile uint8_t  reserved;
@@ -111,7 +112,7 @@ struct ehci_CapRegs
     volatile uint32_t HCCPARAMS;        // Core Capability Parameters
     volatile uint32_t HCSPPORTROUTE_Hi; // Core Companion Port Route Description
     volatile uint32_t HCSPPORTROUTE_Lo; // Core Companion Port Route Description
-} __attribute__((packed));
+} __attribute__((packed)) ehci_CapRegs_t;
 
 /*
 HCSP-PORTROUTE - Companion Port Route Description:
@@ -128,7 +129,7 @@ A value of one indicates that the port is routed to the next lowest numbered fun
 */
 
 
-struct ehci_OpRegs
+typedef struct
 {
     volatile uint32_t USBCMD;           // USB Command                     Core  // +00h
     volatile uint32_t USBSTS;           // USB Status                      Core  // +04h
@@ -148,7 +149,7 @@ struct ehci_OpRegs
     volatile uint32_t reserved9;                                                 // +3Ch
     volatile uint32_t CONFIGFLAG;       // Configure Flag Register         Aux   // +40h
     volatile uint32_t PORTSC[16];       // Port Status/Control             Aux   // +44h
-} __attribute__((packed));
+} __attribute__((packed))  ehci_OpRegs_t;
 
 /*
 Configure Flag (CF) - R/W. Default: 0. Host software sets this bit as the last action in
@@ -159,7 +160,7 @@ Bit values and side-effects are listed below.
 */
 
 
-extern struct ehci_OpRegs* OpRegs;  // = &OpRegs;
+extern ehci_OpRegs_t* OpRegs;  // = &OpRegs;
 
 extern bool      USBINTflag;
 
@@ -169,17 +170,31 @@ extern uintptr_t DataQTDpage0;
 extern uintptr_t MSDStatusQTDpage0;
 
 
+typedef struct 
+{
+    pciDev_t*       PCIdevice;         // PCI device
+    uint32_t        bar;               // base address register
+    ehci_OpRegs_t*  OpRegs;
+    ehci_CapRegs_t* CapRegs;
+    void*           virtualAsyncList;
+    uint8_t         num;               // number of the EHCI
+    uint8_t         numPorts;          // number of ports of the EHCI
+    bool            enabledPortFlag;
+    bool            USBINTflag;
+    bool            USBtransferFlag;
+} ehci_t;
+
 void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys);
 void ehci_start();
-void ehci_initHC();
-void ehci_startHC(pciDev_t* PCIdev);
-void ehci_resetHC();
-void ehci_enablePorts();
-void ehci_resetPort(uint8_t port);
+void ehci_initHC(ehci_t* e);
+void ehci_startHC(ehci_t* e);
+void ehci_resetHC(ehci_t* e);
+void ehci_enablePorts(ehci_t* e);
+void ehci_resetPort(ehci_t* e, uint8_t port);
 void ehci_portCheck();
 
-void setupUSBDevice(uint8_t portNumber);
-void showUSBSTS();
+void setupUSBDevice(ehci_t* e, uint8_t portNumber);
+void showUSBSTS(ehci_t* e);
 
 
 #endif

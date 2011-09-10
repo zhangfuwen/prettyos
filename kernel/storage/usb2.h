@@ -2,6 +2,7 @@
 #define USB2_H
 
 #include "os.h"
+#include "ehci.h"
 
 #define OUT   0
 #define IN    1
@@ -105,7 +106,7 @@ struct usb2_stringDescriptorUnicode
 } __attribute__((packed));
 
 
-uint8_t usbTransferEnumerate(uint8_t j);
+uint8_t usbTransferEnumerate(ehci_t* e, uint8_t j);
 void usbTransferDevice(uint32_t device);
 void usbTransferConfig(uint32_t device);
 void usbTransferString(uint32_t device);

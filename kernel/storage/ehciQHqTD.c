@@ -308,7 +308,7 @@ If the Enhanced Host Controller Interface ever encounters an H-bit of one and a 
 the EHCI controller simply stops traversal of the asynchronous schedule.
 */
 
-void checkAsyncScheduler()
+void checkAsyncScheduler(ehci_t* e)
 {
     // cf. ehci spec 1.0, Figure 3-7. Queue Head Structure Layout
 
@@ -363,7 +363,7 @@ void checkAsyncScheduler()
   #endif
 }
 
-void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
+void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
 {
   #ifdef _EHCI_DIAGNOSIS_
     if (analyze)
@@ -374,13 +374,13 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
   #endif
 
     // Enable Asynchronous Schdeuler
-    OpRegs->USBSTS |= STS_USBINT;
-    USBINTflag = false;
+    e->OpRegs->USBSTS |= STS_USBINT;
+    e->USBINTflag = false;
 
-    OpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
+    e->OpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
 
     int8_t timeout=7;
-    while (!(OpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
+    while (!(e->OpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
     {
         timeout--;
         if (timeout>0)
@@ -404,7 +404,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
     sleepMilliSeconds(100 + velocity * 100);
 
     timeout=7;
-    while (!USBINTflag) // set by interrupt
+    while (!e->USBINTflag) // set by interrupt
     {
         timeout--;
         if (timeout>0)
@@ -426,15 +426,15 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
         }
     };
 
-    OpRegs->USBSTS |= STS_USBINT;
-    USBINTflag = false;
+    e->OpRegs->USBSTS |= STS_USBINT;
+    e->USBINTflag = false;
 
     if (stop)
     {
-        OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // switch off
+        e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // switch off
 
         timeout=7;
-        while (OpRegs->USBSTS & STS_ASYNC_ENABLED) // wait until it is really off
+        while (e->OpRegs->USBSTS & STS_ASYNC_ENABLED) // wait until it is really off
         {
             timeout--;
             if (timeout>0)
@@ -459,7 +459,7 @@ void performAsyncScheduler(bool stop, bool analyze, uint8_t velocity)
     if (analyze)
     {
         printf("\nafter aS:");
-        checkAsyncScheduler();
+        checkAsyncScheduler(e);
     }
   #endif
 }
