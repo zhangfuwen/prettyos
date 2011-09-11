@@ -200,7 +200,7 @@ double pow(double base, double exponent)
     int isOdd = 1;
     if (base < 0)
     {
-        isOdd = (int) floor(exponent) % 2 ? -1: 1;
+        isOdd = ((int)floor(exponent) % 2) ? -1: 1;
         base *=-1;
     }
     return isOdd * pow2x(yMulLog(base,exponent));

@@ -28,7 +28,7 @@
 #define OHCI_STATUS_CLF   BIT(1)         // control list filled
 #define OHCI_STATUS_BLF   BIT(2)         // bulk list filled
 #define OHCI_STATUS_OCR   BIT(3)         // ownership change request
-#define OHCI_STATUS_SOC  (BIT(16)|BIT(17))  // scheduling overrun count
+#define OHCI_STATUS_SOC  (BIT(16)|BIT(17)) // scheduling overrun count
 
 // HcInterruptStatus
 // HcInterruptEnable, HcInterruptDisable Register
@@ -98,15 +98,15 @@
 #define ED_EOF              0xFF
 
 // ED
-#define OHCI_ED_TD    0 
+#define OHCI_ED_TD    0
 #define OHCI_ED_OUT   1
 #define OHCI_ED_IN    2
 
-// TD 
+// TD
 #define OHCI_TD_SETUP 0
 #define OHCI_TD_OUT   1
 #define OHCI_TD_IN    2
- 
+
 enum usbTransferType {USBCONTROL, USBBULK};
 
 
@@ -159,8 +159,8 @@ typedef struct
              uint8_t  reserved[116];
  } __attribute__((packed)) ohci_HCCA_t;
 
-// Endpoint Descriptor 
-typedef struct 
+// Endpoint Descriptor
+typedef struct
 {
     uint32_t devAddr :  7; // device address
     uint32_t endpNum :  4; // number of endpoint
@@ -170,13 +170,13 @@ typedef struct
     uint32_t format  :  1; // bit with isochronous transfers
     uint32_t mps     : 11; // maximum packet size
     uint32_t ours    :  5; // available
-    
+
     volatile uint32_t tdQueueTail; // last TD in queue
     volatile uint32_t tdQueueHead; // head TD in queue
     volatile uint32_t nextED;      // next ED on the list
 } __attribute__((packed)) ohciED_t;
-  
-typedef struct 
+
+typedef struct
 {
     ohciED_t*       virt;
     uintptr_t       phys;
@@ -185,22 +185,22 @@ typedef struct
     list_t*         transfers;
     uint8_t         usbType;
 } __attribute__((packed)) ohciEDdesc_t;
- 
-// Transfer Descriptor 
-typedef struct 
+
+// Transfer Descriptor
+typedef struct
 {
     uint32_t  ours               : 18;  // available
     uint32_t  bufRounding        :  1;  // If the bit is 1, then the last data packet may be smaller than the defined buffer without causing an error
-    uint32_t  direction          :  2;  // transfer direction 
-    uint32_t  delayInt           :  3;  // wait delayInt frames before sending interrupt. If DelayInterrupt is 111b, then there is no interrupt at completion of this TD. 
-    uint32_t  toggle             :  2;  // toggle 
+    uint32_t  direction          :  2;  // transfer direction
+    uint32_t  delayInt           :  3;  // wait delayInt frames before sending interrupt. If DelayInterrupt is 111b, then there is no interrupt at completion of this TD.
+    uint32_t  toggle             :  2;  // toggle
     volatile  uint32_t errCnt    :  2;  // Anzahl der aufgetretenen Fehler - bei 11b wird der Status im "condition"-Feld gespeichert.
     volatile  uint32_t cond      :  4;  // status of the last attempted transaction
-    uintptr_t curBuffPtr;               // data ptr 
+    uintptr_t curBuffPtr;               // data ptr
     volatile uintptr_t nextTD;          // next TD
     uintptr_t buffEnd;                  // last byte in buffer
 } __attribute__((packed)) ohciTD_t;
- 
+
 typedef struct
 {
      ohciTD_t*     virt;
@@ -217,7 +217,7 @@ typedef struct
     ohci_HCCA_t*   hcca;                 // HC Communications Area (virtual address)
     ohciED_t*      pED[64];              // EDs
     ohciTD_t*      pTD[56];              // TDs
-    uintptr_t      pTDbuff[56];          // TD buffers 
+    uintptr_t      pTDbuff[56];          // TD buffers
     uint8_t        rootPorts;            // number of rootports
     size_t         memSize;              // memory size of IO space
     bool           enabledPorts;         // root ports enabled

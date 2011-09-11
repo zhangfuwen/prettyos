@@ -103,7 +103,7 @@
 #define PORT_ROUTING_RULES             BIT(7)  // port routing to EHCI or cHC
 
 
-typedef struct 
+typedef struct
 {
     volatile uint8_t  CAPLENGTH;        // Core Capability Register Length
     volatile uint8_t  reserved;
@@ -170,7 +170,7 @@ extern uintptr_t DataQTDpage0;
 extern uintptr_t MSDStatusQTDpage0;
 
 
-typedef struct 
+typedef struct
 {
     pciDev_t*       PCIdevice;         // PCI device
     uint32_t        bar;               // base address register

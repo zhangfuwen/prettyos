@@ -77,7 +77,7 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
 {
     ehci_t* e = curEHCI;
-     
+
   #ifdef _USB2_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %u interface: %u", device+1, numInterface);
@@ -334,7 +334,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
 void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer)
 {
     ehci_t* e = curEHCI;
-     
+
   #ifdef _USB2_DIAGNOSIS_
     printf("\nOUT part");
   #endif
@@ -442,7 +442,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     // QH IN with data and status qTD
     createQH(QH_In, paging_getPhysAddr(QH_In), QTD_In, 1, device+1, endpointIn, 512); // endpoint IN for MSD
 
-	uint32_t numberTries = 10; // repeats for IN-Transfer
+    int32_t numberTries = 10; // repeats for IN-Transfer
 labelTransferIN: /// TEST
 
     performAsyncScheduler(e, true, true, TransferLength/200);
@@ -590,7 +590,7 @@ static uint8_t getStatusByte()
 static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferTestUnitReady, usbBulkTransfer_t* bulkTransferRequestSense)
 {
     ehci_t* e = curEHCI;
-    
+
     const uint8_t maxTest = 3;
     int32_t timeout = maxTest;
     int32_t sense = -1;
@@ -749,7 +749,7 @@ static void analyzeInquiry()
 void testMSD(uint8_t devAddr, disk_t* disk)
 {
     ehci_t* e = curEHCI;
-    
+
     if (usbDevices[devAddr].InterfaceClass != 0x08)
     {
         textColor(ERROR);
@@ -834,13 +834,13 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* device)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
   #ifdef _USB2_DIAGNOSIS_
-    textColor(LIGHT_BLUE); 
-    printf("\n\n>>> SCSI: read   sector: %u", sector); 
+    textColor(LIGHT_BLUE);
+    printf("\n\n>>> SCSI: read   sector: %u", sector);
     textColor(TEXT);
   #endif
 
     ehci_t* e = curEHCI;
-    
+
     uint8_t           devAddr = currentDevice;
     uint32_t          blocks  = 1; // number of blocks to be read
     usbBulkTransfer_t read;
@@ -868,9 +868,9 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device)
     ///////// send SCSI command "write(10)", write one block to LBA ..., get Status
 
     ehci_t* e = curEHCI;
-    
-    textColor(IMPORTANT); 
-    printf("\n\n>>> SCSI: write  sector: %u", sector); 
+
+    textColor(IMPORTANT);
+    printf("\n\n>>> SCSI: write  sector: %u", sector);
     textColor(TEXT);
 
     uint8_t           devAddr = currentDevice;

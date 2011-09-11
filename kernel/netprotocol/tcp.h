@@ -107,7 +107,7 @@ typedef struct
     uint32_t connectionID;
     IP_t     sourceIP;
     uint16_t sourcePort;
-} __attribute((packed)) tcpConnectedEventHeader_t;
+} __attribute__((packed)) tcpConnectedEventHeader_t;
 
 typedef struct
 {

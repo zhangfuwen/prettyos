@@ -326,8 +326,7 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
     // Check if an UHCI controller issued this interrupt
     uhci_t* u = device->data;
     bool found = false;
-    uint8_t i;
-    for (i=0; i<UHCIMAX; i++)
+    for (uint8_t i=0; i<UHCIMAX; i++)
     {
         if (u == uhci[i])
         {
@@ -337,20 +336,26 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
         }
     }
 
-    uint16_t reg = u->bar + UHCI_USBSTS;
-    uint16_t val = inportw(reg);
-
-    if(!found || u==0 || val==0) // No interrupt from corresponding uhci device found
+    if(!found || u == 0) // Interrupt did not came from UHCI device
     {
       #ifdef _UHCI_DIAGNOSIS_
-        textColor(ERROR);
-        printf("interrupt did not come from uhci device!\n");
-        textColor(TEXT);
+        printf("Interrupt did not came from UHCI device!\n");
       #endif
         return;
     }
 
-    printf("\nUSB UHCI %u: ", i);
+    uint16_t reg = u->bar + UHCI_USBSTS;
+    uint16_t val = inportw(reg);
+
+    if(val==0) // Interrupt came from another UHCI device
+    {
+      #ifdef _UHCI_DIAGNOSIS_
+        printf("Interrupt came from another UHCI device!\n");
+      #endif
+        return;
+    }
+
+    printf("\nUSB UHCI %u: ", u->num);
 
     textColor(IMPORTANT);
 

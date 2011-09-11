@@ -34,6 +34,16 @@
 
 // TODO: Ensure the heap will not overflow (over 4 GB)
 
+
+typedef struct
+{
+    uint32_t size;
+    bool     reserved;
+    char     comment[21];
+    uint32_t number;
+} __attribute__((packed)) region_t;
+
+
 static region_t*      regions         = 0;
 static uint32_t       regionCount     = 0;
 static uint32_t       regionMaxCount  = 0;

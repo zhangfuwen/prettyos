@@ -14,7 +14,7 @@ volatile task_t* FPUTask = 0;
 
 bool fpu_install()
 {
-    if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
+    if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
     {
         textColor(ERROR);
         printf(" => ERROR (fpu.c, 20): Math Coprozessor not available\n");
@@ -37,7 +37,7 @@ bool fpu_install()
 
 void fpu_test()
 {
-    if (!(cmos_read(0x14) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
+    if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
         return;
 
     textColor(LIGHT_GRAY);

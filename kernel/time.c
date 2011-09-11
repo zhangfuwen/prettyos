@@ -11,13 +11,13 @@
 
 void cmosTime(tm_t* ptm)
 {
-    ptm->second     = BCDtoDecimal(cmos_read(0x00));
-    ptm->minute     = BCDtoDecimal(cmos_read(0x02));
-    ptm->hour       = BCDtoDecimal(cmos_read(0x04));
-    ptm->dayofmonth = BCDtoDecimal(cmos_read(0x07));
-    ptm->month      = BCDtoDecimal(cmos_read(0x08));
-    ptm->year       = BCDtoDecimal(cmos_read(0x09));
-    ptm->century    = BCDtoDecimal(cmos_read(0x32));
+    ptm->second     = BCDtoDecimal(cmos_read(CMOS_SECOND));
+    ptm->minute     = BCDtoDecimal(cmos_read(CMOS_MINUTE));
+    ptm->hour       = BCDtoDecimal(cmos_read(CMOS_HOUR));
+    ptm->dayofmonth = BCDtoDecimal(cmos_read(CMOS_DAYOFMONTH));
+    ptm->month      = BCDtoDecimal(cmos_read(CMOS_MONTH));
+    ptm->year       = BCDtoDecimal(cmos_read(CMOS_YEAR));
+    ptm->century    = BCDtoDecimal(cmos_read(CMOS_CENTURY));
 }
 
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)

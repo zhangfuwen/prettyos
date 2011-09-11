@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
 
 
-const char* const version = "0.0.3.62 - Rev: 1263";
+const char* const version = "0.0.3.63 - Rev: 1264";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -213,7 +213,7 @@ static void showMemorySize()
 void main(multiboot_t* mb_struct)
 {
     init(mb_struct);
-    srand(cmos_read(0));
+    srand(cmos_read(CMOS_SECOND));
 
     textColor(HEADLINE);
     printf(" => System analysis:\n");

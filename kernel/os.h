@@ -5,14 +5,12 @@
 
 
 // Additional features (Should be enabled per default)
-/// #define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
-#define _PCI_VEND_PROD_LIST_       // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
-
-#define _SERIAL_LOG_               // Enables log information over the COM-Ports
-
-#define _EHCI_ENABLE_              // EHCI will be installed, if this is defined, otherwise not 
-#define _OHCI_ENABLE_              // OHCI will be installed, if this is defined, otherwise not 
-#define _UHCI_ENABLE_              // UHCI will be installed, if this is defined, otherwise not 
+#define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
+#define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
+#define _SERIAL_LOG_           // Enables log information over the COM-Ports
+#define _EHCI_ENABLE_          // EHCI will be installed, if this is defined, otherwise not
+#define _OHCI_ENABLE_          // OHCI will be installed, if this is defined, otherwise not
+#define _UHCI_ENABLE_          // UHCI will be installed, if this is defined, otherwise not
 
 // Additional debug output (Should be disabled per default)
 /// #define _DIAGNOSIS_            // General diagnosis output - activates prints to the screen about some details and memory use
@@ -52,8 +50,10 @@ extern system_t system;           // Information about the operating system
 extern struct todoList* kernel_idleTasks;
 
 
+#ifdef _DIAGNOSIS_
 void textColor(uint8_t color);
 size_t vprintf(const char*, va_list);
+#endif
 
 static inline void kdebug(uint8_t color, const char* args, ...)
 {

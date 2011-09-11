@@ -285,11 +285,11 @@ static void PF(registers_t* r)
     __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_address)); // faulting address <== CR2 register
 
     // The error code gives us details of what happened.
-    int32_t present  = !r->err_code & 0x1;  // Page not present
-    int32_t rw       =  r->err_code & 0x2;  // Write operation?
-    int32_t us       =  r->err_code & 0x4;  // Processor was in user-mode?
-    int32_t reserved =  r->err_code & 0x8;  // Overwritten CPU-reserved bits of page entry?
-    int32_t id       =  r->err_code & 0x10; // Caused by an instruction fetch?
+    int32_t present  = !(r->err_code & 0x1); // Page not present
+    int32_t rw       =   r->err_code & 0x2;  // Write operation?
+    int32_t us       =   r->err_code & 0x4;  // Processor was in user-mode?
+    int32_t reserved =   r->err_code & 0x8;  // Overwritten CPU-reserved bits of page entry?
+    int32_t id       =   r->err_code & 0x10; // Caused by an instruction fetch?
 
     // Output an error message.
     textColor(ERROR);

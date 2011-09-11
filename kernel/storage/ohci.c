@@ -43,7 +43,7 @@ void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     printf("\nOHCI_MMIO %Xh mapped to virt addr %Xh, offset: %xh", bar_phys, ohci[index]->bar, offset);
   #endif
 
-    ohci[index]->bar+= offset;
+    ohci[index]->bar += offset;
     ohci[index]->OpRegs = (ohci_OpRegs_t*) (ohci[index]->bar);
 
     char str[10];
@@ -87,7 +87,7 @@ void ohci_initHC(ohci_t* o)
     // bit 9: Fast Back-to-Back Enable // not necessary
     // bit 2: Bus Master               // cf. http://forum.osdev.org/viewtopic.php?f=1&t=20255&start=0
     uint16_t pciCommandRegister = pci_config_read(bus, dev, func, PCI_COMMAND, 2);
-    pci_config_write_dword(bus, dev, func, PCI_COMMAND, pciCommandRegister | PCI_CMD_IO | PCI_CMD_MMIO | PCI_CMD_BUSMASTER); // resets status register, sets command register
+    pci_config_write_dword(bus, dev, func, PCI_COMMAND, pciCommandRegister | PCI_CMD_MMIO | PCI_CMD_BUSMASTER); // resets status register, sets command register
     //uint8_t pciCapabilitiesList = pci_config_read(bus, dev, func, PCI_CAPLIST, 1);
 
   #ifdef _OHCI_DIAGNOSIS_
@@ -146,30 +146,26 @@ void ohci_resetHC(ohci_t* o)
             // Once the IR bit is cleared, the HC driver may proceed to the setup of the HC.
             textColor(SUCCESS);
             printf("\nOHCI takes control from SMM after %u loops.", i);
-            textColor(TEXT);
         }
         else
         {
             textColor(ERROR);
             printf("\nOwnership change request did not work. SMM has still control.");
-            textColor(TEXT);
 
             o->OpRegs->HcControl &= ~OHCI_CTRL_IR; // we try to reset the IR bit
             sleepMilliSeconds(200);
 
             if (o->OpRegs->HcControl & OHCI_CTRL_IR) // SMM driver is still active
             {
-                textColor(ERROR);
                 printf("\nOHCI taking control from SMM did not work."); // evil
-                textColor(TEXT);
             }
             else
             {
                 textColor(SUCCESS);
                 printf("\nSuccess in taking control from SMM.");
-                textColor(TEXT);
             }
         }
+        textColor(TEXT);
     }
     else // InterruptRouting bit is not set
     {
@@ -247,22 +243,22 @@ void ohci_resetHC(ohci_t* o)
     Initialize the Operational Registers to match the current device data state;
     i.e., all virtual queues are run and constructed into physical queues for HcControlHeadED and HcBulkHeadED
     */
-    
+
     // Pointers to ED, TD and TD buffers are part of ohci_t
-    
-    // ED pool: 64 EDs 
+
+    // ED pool: 64 EDs
     for (uint8_t i=0; i<64; i++)
     {
         o->pED[i] = malloc(sizeof(ohciED_t), OHCI_DESCRIPTORS_ALIGN, "ohci_ED");
     }
-    
+
     // TD pool: 56 TDs and buffers
     for (uint8_t i=0; i<56; i++)
     {
         o->pTDbuff[i] = (uintptr_t) malloc(1024, OHCI_DESCRIPTORS_ALIGN, "ohci_TDbuffer");
         o->pTD[i] = malloc(sizeof(ohciTD_t), OHCI_DESCRIPTORS_ALIGN, "ohci_TD");
         o->pTD[i]->curBuffPtr = paging_getPhysAddr((void*)o->pTDbuff[i]);
-    }  
+    }
 
 
     // Set the HcHCCA to the physical address of the HCCA block
@@ -271,7 +267,6 @@ void ohci_resetHC(ohci_t* o)
     // Set HcInterruptEnable to have all interrupt enabled except Start-of-Frame detect
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
     o->OpRegs->HcInterruptStatus  = ~0;
-     
     o->OpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
                                     OHCI_INT_WDH  | // write back done head
                                     OHCI_INT_RD   | // resume detected
@@ -280,10 +275,9 @@ void ohci_resetHC(ohci_t* o)
                                     OHCI_INT_RHSC | // root hub status change
                                     OHCI_INT_OC   | // ownership change
                                     OHCI_INT_MIE;   // (de)activates interrupts
-     
-    
+
     // prepare transfers
-    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers 
+    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers
     o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE ); // de-activate periodical and isochronous transfers
 
     // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
@@ -313,9 +307,9 @@ void ohci_resetHC(ohci_t* o)
     printf("\n\nFound %i Rootports.\n", o->rootPorts);
     textColor(TEXT);
 
-    for (uint8_t j=0; j < o->rootPorts; j++)
+    for (uint8_t j = 0; j < o->rootPorts; j++)
     {
-        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;         
+        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;
     }
 }
 
@@ -328,49 +322,89 @@ void ohci_resetHC(ohci_t* o)
 
 void showPortstatus(ohci_t* o)
 {
-    for (uint8_t j=0; j<o->rootPorts; j++)
+    for (uint8_t j=0; j < o->rootPorts; j++)
     {
         if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
         {
             textColor(IMPORTANT);
             printf("\nport[%u]:", j+1);
             textColor(TEXT);
-        
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_LSDA) { printf(" LowSpeed");            }
-            else                                               { printf(" FullSpeed");           }
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)  { textColor(SUCCESS);   printf(" dev. attached -");     
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;                                   }
-            
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)  { textColor(SUCCESS);   printf(" enabled  -");  }
-            else                                               { textColor(IMPORTANT); printf(" disabled -");  } 
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_LSDA)
+                printf(" LowSpeed");
+            else
+                printf(" FullSpeed");
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)
+            {
+                textColor(SUCCESS);
+                printf(" dev. attached  -");
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;
+            }
+            else
+                printf(" device removed -");
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)
+            {
+                textColor(SUCCESS);
+                printf(" enabled  -");
+            }
+            else
+            {
+                textColor(IMPORTANT);
+                printf(" disabled -");
+            }
             textColor(TEXT);
-        
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSS)  { printf(" susp.     -");         }
-            else                                               { printf(" not susp. -");         } 
-        
-            textColor(ERROR);
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_POCI) { printf(" overcurrent -");       }
-            textColor(TEXT);
 
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRS)  { printf(" reset -");             }
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSS)
+                printf(" suspend   -");
+            else
+                printf(" not susp. -");
 
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS)  { printf(" pow on -  ");          }
-            else                                               { printf(" pow off - ");          } 
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_POCI)
+            {
+                textColor(ERROR);
+                printf(" overcurrent -");
+                textColor(TEXT);
+            }
 
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)  { printf(" CSC -");              
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CSC;                                   }
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRS)
+                printf(" reset -");
 
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PESC) { printf(" enable Change -");    
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PESC;                                  }
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS)
+                printf(" pow on  -");
+            else
+                printf(" pow off -");
 
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSSC) { printf(" resume compl. -");     
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PSSC;                                  }
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
+            {
+                printf(" CSC -");
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CSC;
+            }
 
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_OCIC) { printf(" overcurrent Change -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_OCIC;                                  }
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PESC)
+            {
+                printf(" enable Change -");
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PESC;
+            }
 
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRSC) { printf(" Reset Complete -");    
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRSC;                                  }
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSSC)
+            {
+                printf(" resume compl. -");
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PSSC;
+            }
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_OCIC)
+            {
+                printf(" overcurrent Change -");
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_OCIC;
+            }
+
+            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRSC)
+            {
+                printf(" Reset Complete -");
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRSC;
+            }
         }
     }
 }
@@ -387,8 +421,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     // Check if an OHCI controller issued this interrupt
     ohci_t* o = device->data;
     bool found = false;
-    uint8_t i;
-    for (i=0; i<OHCIMAX; i++)
+    for (uint8_t i=0; i<OHCIMAX; i++)
     {
         if (o == ohci[i])
         {
@@ -398,77 +431,83 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         }
     }
 
-    volatile uint32_t val = o->OpRegs->HcInterruptStatus;
-    uint32_t handled = 0;
-    uintptr_t phys;
-
-    if(!found || o==0 || val==0) // No interrupt from corresponding ohci device found
+    if(!found || o == 0)
     {
       #ifdef _OHCI_DIAGNOSIS_
-        textColor(ERROR);
-        printf("interrupt did not come from ohci device!\n");
-        textColor(TEXT);
+        printf("Interrupt did not came from OHCI device!\n");
       #endif
         return;
     }
 
-    printf("\nUSB OHCI %u: ", i);
+    volatile uint32_t val = o->OpRegs->HcInterruptStatus;
+
+    if(val==0)
+    {
+      #ifdef _OHCI_DIAGNOSIS_
+        printf("Interrupt came from another OHCI device!\n");
+      #endif
+        return;
+    }
+
+    printf("\nUSB OHCI %u: ", o->num);
+
+    uint32_t handled = 0;
 
     if (val & OHCI_INT_SO) // scheduling overrun
     {
-        printf("\nScheduling overrun.");
+        printf("Scheduling overrun.");
         handled |= OHCI_INT_SO;
     }
 
     if (val & OHCI_INT_WDH) // write back done head
     {
-        printf("\nWrite back done head.");
-        phys = o->hcca->doneHead;
+        printf("Write back done head.");
+        //phys = o->hcca->doneHead;
         // TODO: handle ready transfer (ED, TD)
         handled |= OHCI_INT_WDH;
     }
 
     if (val & OHCI_INT_SF) // start of frame
     {
-        printf("\nStart of frame.");
+        printf("Start of frame.");
         handled |= OHCI_INT_SF;
     }
 
     if (val & OHCI_INT_RD) // resume detected
     {
-        printf("\nResume detected.");
+        printf("Resume detected.");
         handled |= OHCI_INT_RD;
     }
 
     if (val & OHCI_INT_UE) // unrecoverable error
     {
-        printf("\nUnrecoverable HC error.");
+        printf("Unrecoverable HC error.");
         o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
         handled |= OHCI_INT_UE;
     }
 
     if (val & OHCI_INT_FNO) // frame number overflow
     {
-        printf("\nFrame number overflow.");
+        printf("Frame number overflow.");
         handled |= OHCI_INT_FNO;
     }
 
     if (val & OHCI_INT_RHSC) // root hub status change
     {
-        printf("\nRoot hub status change.");
+        printf("Root hub status change.");
         handled |= OHCI_INT_RHSC;
         showPortstatus(o);
     }
 
     if (val & OHCI_INT_OC) // ownership change
     {
-        printf("\nOwnership change.");
+        printf("Ownership change.");
         handled |= OHCI_INT_OC;
     }
 
     if (val & ~handled)
     {
-        printf("\nUnhandled interrupt: %X", val & ~handled);
+        printf("Unhandled interrupt: %X", val & ~handled);
     }
 
     o->OpRegs->HcInterruptStatus = val; // reset interrupts

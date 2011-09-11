@@ -164,7 +164,7 @@ static uint8_t flpydsk_readVersion();
 // Looks for Floppy drives and installs them
 void flpydsk_install()
 {
-    if ((cmos_read(0x10)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
+    if ((cmos_read(CMOS_FLOPPYTYPE)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
     {
         textColor(LIGHT_GRAY);
         printf("   => Floppy Disk:\n");
@@ -182,7 +182,7 @@ void flpydsk_install()
         strncpy(floppyDrive[0]->drive.name, "Floppy Dev 1", 12);
         floppyDrive[0]->drive.name[12]=0; // terminate string
 
-        if ((cmos_read(0x10) & 0xF) == 4) // 2nd floppy 1,44 MB: ....0100b
+        if ((cmos_read(CMOS_FLOPPYTYPE) & 0xF) == 4) // 2nd floppy 1,44 MB: ....0100b
         {
             printf("     => 1.44 MB FDD second device found\n");
             floppyDrive[1] = createFloppy(1);

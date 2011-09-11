@@ -24,6 +24,15 @@ typedef enum
     IRQ_SYSCALL  = 95
 } IRQ_NUM_t;
 
+// This defines what the stack looks like after an ISR was running
+typedef struct
+{
+    uint32_t gs, fs, es, ds;
+    uint32_t edi, esi, ebp, ebx, edx, ecx, eax;
+    uint32_t int_no, err_code;
+    uint32_t eip, cs, eflags, useresp, ss;
+} __attribute__((packed)) registers_t;
+
 
 void isr_install();
 uint32_t irq_handler(uintptr_t esp);

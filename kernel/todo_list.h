@@ -4,14 +4,6 @@
 #include "list.h"
 
 
-typedef struct
-{
-    void*      data;
-    size_t     length;
-    void     (*function)(void*, size_t);
-    uint32_t   timeToExecute;
-} todoList_task_t;
-
 typedef struct todoList
 {
     list_t* queue;

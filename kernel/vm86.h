@@ -4,6 +4,7 @@
 // code derived on basic proposal at http://osdev.berlios.de/v86.html
 
 #include "paging.h"
+#include "irq.h"
 
 // eflags
 #define VALID_FLAGS  0x3FFFFF

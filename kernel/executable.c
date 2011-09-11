@@ -9,9 +9,19 @@
 #include "kheap.h"
 #include "task.h"
 #include "video/console.h"
+#include "paging.h"
 #include "elf.h"
 #include "pe.h"
 
+
+typedef struct
+{
+    bool  (*filename)(const char*);
+    bool  (*fileheader)(file_t*);
+    void* (*prepare)(const void*, size_t, pageDirectory_t*); // file content, length, page directory. Returns entry point
+} filetype_t;
+
+enum FILETYPES {FT_ELF, FT_PE, FT_END};
 
 static filetype_t filetypes[FT_END] =
 {

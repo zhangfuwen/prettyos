@@ -10,6 +10,15 @@
 #include "timer.h"
 
 
+typedef struct
+{
+    void*      data;
+    size_t     length;
+    void     (*function)(void*, size_t);
+    uint32_t   timeToExecute;
+} todoList_task_t;
+
+
 todoList_t* todolist_create()
 {
     todoList_t* list = malloc(sizeof(list), 0, "todoList");

@@ -6,6 +6,10 @@
 #include "cmos.h"
 #include "util.h"
 
+#define CMOS_ADDRESS  0x70
+#define CMOS_DATA     0x71
+
+
 // Read byte from CMOS
 uint8_t cmos_read(uint8_t off)
 {
@@ -19,11 +23,12 @@ void cmos_write(uint8_t off, uint8_t val)
 {
     uint8_t tmp = inportb(CMOS_ADDRESS);
     outportb(CMOS_ADDRESS, (tmp & 0x80) | (off & 0x7F));
-    outportb(CMOS_DATA,val);
+    outportb(CMOS_DATA, val);
 }
 
+
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

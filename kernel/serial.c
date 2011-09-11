@@ -7,6 +7,7 @@
 
 #include "serial.h"
 #include "video/console.h"
+#include "util.h"
 
 
 static uint8_t  serialPorts;
@@ -75,6 +76,22 @@ void serial_write(uint8_t com, char a)
         outportb(IOports[com-1], a);
     }
 }
+
+#ifdef _SERIAL_LOG_
+void serial_log(uint8_t com, const char* msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    size_t length = strlen(msg) + 100;
+    char array[length]; // HACK: Should be large enough.
+    vsnprintf(array, length, msg, ap);
+    for(size_t i = 0; i < length && array[i] != 0; i++)
+    {
+        serial_write(com, array[i]);
+    }
+}
+#endif
+
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.

@@ -48,7 +48,7 @@ Load_Root_Directory_Table:
     xchg cx, ax
 
     ; compute location of root directory and store in "ax"
-    movzx ax, BYTE [NumFATs]                    ; number of FATs
+    movzx ax, BYTE [NumFATs]                  ; number of FATs
     mul WORD [FATSize]                        ; sectors used by FATs
     add ax, WORD [ReservedSec]                ; adjust for bootsector
     mov WORD [datasector], ax                 ; base of root directory

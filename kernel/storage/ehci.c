@@ -20,8 +20,6 @@ ehci_t* curEHCI = 0;
 static uint8_t index   = 0;
 static ehci_t* ehci[EHCIMAX];
 
-// static uint8_t numPorts; // maximum
-
 // Device Manager
 static disk_t usbDev[16];
 static port_t port[16];
@@ -48,11 +46,11 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     e->PCIdevice        = PCIdev;
     e->PCIdevice->data  = e;
     e->bar              = (uintptr_t)paging_acquirePciMemory(bar_phys,1) + (bar_phys % PAGESIZE);
-    
+
   #ifdef _EHCI_DIAGNOSIS_
     printf("\nEHCI_MMIO %Xh mapped to virt addr %Xh", bar_phys, e->bar);
   #endif
-        
+
     e->CapRegs   = (ehci_CapRegs_t*) e->bar;
     e->OpRegs    = (ehci_OpRegs_t*)(e->bar + e->CapRegs->CAPLENGTH);
     e->numPorts  = (e->CapRegs->HCSPARAMS & 0x000F);
@@ -63,9 +61,9 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     ehci_analyze(ehci[index]); // get data (capregs, opregs)
 
     scheduler_insertTask(create_cthread(&ehci_start, str));
-        
+
     index++;
-    sleepMilliSeconds(20); // HACK: Avoid race condition between ohci_install and the thread just created. Problem related to curOHCI global variable    
+    sleepMilliSeconds(20); // HACK: Avoid race condition between ohci_install and the thread just created. Problem related to curOHCI global variable
 }
 
 static void ehci_analyze(ehci_t* e)
@@ -84,7 +82,7 @@ static void ehci_analyze(ehci_t* e)
 void ehci_start()
 {
     ehci_t* e = curEHCI;
-    
+
     textColor(HEADLINE);
     printf("Start EHCI Host Controller:");
     textColor(TEXT);
@@ -452,8 +450,7 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
     // Check if an EHCI controller issued this interrupt
     ehci_t* e = device->data;
     bool found = false;
-    uint8_t i;
-    for (i=0; i<EHCIMAX; i++)
+    for (uint8_t i=0; i<EHCIMAX; i++)
     {
         if (e == ehci[i])
         {
@@ -463,17 +460,23 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
         }
     }
 
-    volatile uint32_t val = e->OpRegs->USBSTS;
-    
-    if(!found || e==0 || val==0) // No interrupt from corresponding ohci device found
+    if(!found || e == 0) // Interrupt did not came from EHCI device
     {
-      #ifdef _EHCI_DIAGNOSIS_
-        textColor(ERROR);
-        printf("interrupt did not come from ehci device!\n");
-        textColor(TEXT);
+      #ifdef _UHCI_DIAGNOSIS_
+        printf("Interrupt did not came from EHCI device!\n");
       #endif
         return;
-    }  
+    }
+
+    volatile uint32_t val = e->OpRegs->USBSTS;
+
+    if(val==0) // Interrupt came from another EHCI device
+    {
+      #ifdef _UHCI_DIAGNOSIS_
+        printf("Interrupt came from another EHCI device!\n");
+      #endif
+        return;
+    }
 
 
   #ifdef _EHCI_DIAGNOSIS_
@@ -487,7 +490,6 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
     if (e->OpRegs->USBSTS & STS_USBINT)
     {
         e->USBINTflag = true; // is asked by polling
-        // printf("USB Interrupt");
         e->OpRegs->USBSTS |= STS_USBINT; // reset interrupt
     }
 
@@ -555,7 +557,7 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
 void ehci_portCheck()
 {
     ehci_t* e = curEHCI;
-    
+
     console_setProperties(CONSOLE_SHOWINFOBAR|CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH); // protect console against info area
     for (uint8_t j=0; j<e->numPorts; j++)
     {

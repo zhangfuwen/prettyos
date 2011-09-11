@@ -248,7 +248,7 @@ void usbTransferString(uint32_t device)
 
 void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 {
-    ehci_t* e = curEHCI;  
+    ehci_t* e = curEHCI;
 
   #ifdef _USB2_DIAGNOSIS_
     textColor(HEADLINE);
@@ -320,7 +320,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
 uint8_t usbTransferGetConfiguration(uint32_t device)
 {
     ehci_t* e = curEHCI;
-  
+
   #ifdef _USB2_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\nUSB2: GET_CONFIGURATION");

@@ -5,6 +5,7 @@
 #include "netprotocol/arp.h"
 #include "netprotocol/dhcp.h"
 #include "netutils.h"
+#include "irq.h"
 
 /*
 typical qemu.bat:

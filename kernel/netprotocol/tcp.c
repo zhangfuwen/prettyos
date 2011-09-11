@@ -146,7 +146,9 @@ tcpConnection_t* tcp_createConnection()
 void tcp_deleteConnection(tcpConnection_t* connection)
 {
   #ifdef _TCP_DEBUG_
-    printf("\ndeleteConnection: %X ID: %u\n", connection, connection->ID);
+    printf("\ndeleteConnection: %X", connection);
+    if(connection)
+        printf(" ID: %u", connection->ID);
   #endif
     if (connection)
     {
@@ -178,11 +180,14 @@ static void scheduledDeleteConnection(void* data, size_t length)
 {
     tcpConnection_t* connection = *(tcpConnection_t**)data;
   #ifdef _TCP_DEBUG_
-    printf("\nscheduledDeleteConnection: %X ID: %u\n", connection, connection->ID);
+    printf("\nscheduledDeleteConnection: %X", connection);
   #endif
 
     if (connection && list_find(tcpConnections, connection) != 0)
     {
+      #ifdef _TCP_DEBUG_
+        printf(" ID: %u", connection->ID);
+      #endif
         tcp_deleteConnection(connection);
     }
 }

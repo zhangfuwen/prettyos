@@ -16,7 +16,7 @@ typedef struct
     uint32_t DataBytesToTransferIN;
 } __attribute__((packed)) usbBulkTransfer_t;
 
-typedef struct 
+typedef struct
 {
     uint8_t status;
 
