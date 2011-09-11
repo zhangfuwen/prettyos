@@ -21,7 +21,7 @@ void PlayTone(unsigned int Frequency, double DurFak) {
 
 void Play(const char* string) {
     unsigned int Frequency = 0;
-    for (int i = 0; string[i] != 0; ++i) {
+    for (size_t i = 0; string[i] != 0; ++i) {
         switch (string[i]) {
             case 'c':
                 Frequency = 132;

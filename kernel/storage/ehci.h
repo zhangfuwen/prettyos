@@ -162,8 +162,6 @@ Bit values and side-effects are listed below.
 
 extern ehci_OpRegs_t* OpRegs;  // = &OpRegs;
 
-extern bool      USBINTflag;
-
 extern void*     DataQTD;
 extern void*     SetupQTD;
 extern uintptr_t DataQTDpage0;
