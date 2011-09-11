@@ -44,33 +44,21 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface)
     printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %u interface: %u", device+1, numInterface);
     textColor(TEXT);
   #endif
+    
+    uint8_t maxLUN;
 
-    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-GetMaxLun");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
-
-    // Create QTDs (in reversed order)
-    void* next      = createQTD_Handshake(OUT); // Handshake is the opposite direction of Data
-    globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
-    next = DataQTD  = createQTD_IO((uintptr_t)next, IN, 1, 1);  // IN DATA1, 1 byte
-    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
-    next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
+    usb_transfer_t transfer;
+    usb_setupTransfer(&e->ports[device]->port, &transfer, USB_CONTROL, 0, 64);
+    
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 10100001b     11111110b 0000h  Interface 0001h     1 byte
-
-    // Create QH
-    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
-
-    performAsyncScheduler(e, true, false, 0);
-
-    free(QH);
-    for (uint8_t i=0; i<=2; i++)
-    {
-        free(globalqTD[i]);
-        free(globalqTDbuffer[i]);
-    }
-
-    return *((uint8_t*)DataQTDpage0);
+    usb_setupTransaction(&transfer, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
+    usb_inTransaction(&transfer, 1, &maxLUN, 1);
+    usb_outTransaction(&transfer, 1, 0, 0); // handshake
+    
+    usb_issueTransfer(&transfer);
+    
+    return maxLUN;
 }
 
 // Bulk-Only Mass Storage Reset
@@ -84,28 +72,15 @@ void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface)
     textColor(TEXT);
   #endif
 
-    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "QH-MSD-Reset");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
+    usb_transfer_t transfer;
+    usb_setupTransfer(&e->ports[device]->port, &transfer, USB_CONTROL, 0, 64);
 
-    // Create QTDs (in reversed order)
-    void* next = createQTD_Handshake(IN);
-    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
-    next = SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
     // bmRequestType bRequest  wValue wIndex    wLength   Data
-    // 00100001b     11111111b 0000h  Interface 0000h     none
+    // 00100001b     11111111b 0000h  Interface 0000h     none    
+    usb_setupTransaction(&transfer, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
+    usb_inTransaction(&transfer, 1, 0, 0); // handshake
 
-    // Create QH
-    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
-
-    performAsyncScheduler(e, true, false, 0);
-
-    free(QH);
-    for (uint8_t i=0; i<=1; i++)
-    {
-        free(globalqTD[i]);
-        free(globalqTDbuffer[i]);
-    }
+    usb_issueTransfer(&transfer);    
 }
 
 void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t LBA, uint16_t TransferLength)
@@ -190,7 +165,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
   #endif
 
     // check signature 0x53425355 // DWORD 0 (byte 0:3)
-    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0
+    uint32_t CSWsignature = *(uint32_t*)MSDStatusQTDpage0; // DWORD 0 /// EHCI specific
     if (CSWsignature == CSWMagicOK)
     {
       #ifdef _USB2_DIAGNOSIS_
@@ -214,7 +189,8 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     }
 
     // check matching tag
-    uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7)
+    uint32_t CSWtag = *(((uint32_t*)MSDStatusQTDpage0)+1); // DWORD 1 (byte 4:7) /// EHCI specific
+
     if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
     {
       #ifdef _USB2_DIAGNOSIS_
@@ -231,7 +207,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     }
 
     // check CSWDataResidue
-    uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11)
+    uint32_t CSWDataResidue = *(((uint32_t*)MSDStatusQTDpage0)+2); // DWORD 2 (byte 8:11) /// EHCI specific
     if (CSWDataResidue == 0)
     {
       #ifdef _USB2_DIAGNOSIS_
@@ -248,7 +224,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     }
 
     // check status byte // DWORD 3 (byte 12)
-    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes)
+    uint8_t CSWstatusByte = *(((uint8_t*)MSDStatusQTDpage0)+12); // byte 12 (last byte of 13 bytes) /// EHCI specific
 
     textColor(ERROR);
     switch (CSWstatusByte)
@@ -275,7 +251,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     textColor(TEXT);
 
     // transfer diagnosis (qTD status)
-    uint32_t statusCommand = showStatusbyteQTD(cmdQTD);
+    uint32_t statusCommand = showStatusbyteQTD(cmdQTD); /// EHCI specific
     if (statusCommand)
     {
         printf("<-- command"); // In/Out Data
@@ -289,7 +265,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
     uint32_t statusData = 0x00;
     if (TransferLength)
     {
-        statusData = showStatusbyteQTD(DataQTD);
+        statusData = showStatusbyteQTD(DataQTD); /// EHCI specific 
         if (statusData)
         {
             printf("<-- data");   // In/Out Data
@@ -307,7 +283,7 @@ static int32_t checkSCSICommandUSBTransfer(uint32_t device, uint16_t TransferLen
         }
     }
 
-    uint32_t statusStatus = showStatusbyteQTD(StatusQTD);
+    uint32_t statusStatus = showStatusbyteQTD(StatusQTD); /// EHCI specific
     if (statusStatus)
     {
         printf("<-- status");   // In CSW
