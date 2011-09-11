@@ -190,7 +190,7 @@ void ehci_startHC(ehci_t* e)
                               // The EHCI can temporarily release control of the port to a cHC
                               // by setting the PortOwner bit in the PORTSC register to a one
     e->CapRegs->HCSPARAMS |= PORT_ROUTING_RULES;
-    e->CapRegs->HCSPPORTROUTE_Hi = e->CapRegs->HCSPPORTROUTE_Lo = 0; // all valid ports go to lowest cHC number
+    // e->CapRegs->HCSPPORTROUTE_Hi = e->CapRegs->HCSPPORTROUTE_Lo = 0; // all valid ports go to lowest cHC number // VMWare does not reset!
 
     sleepMilliSeconds(100); // do not delete
 }
