@@ -1,8 +1,8 @@
 #ifndef EHCI_H
 #define EHCI_H
 
-#include "os.h"
 #include "pci.h"
+#include "usb_hc.h"
 
 #define EHCIMAX 4
 
@@ -170,19 +170,29 @@ extern uintptr_t DataQTDpage0;
 extern uintptr_t MSDStatusQTDpage0;
 
 
+struct ehci;
+
 typedef struct
+{
+    uint8_t      num;
+    port_t       port;
+    struct ehci* ehci;
+} ehci_port_t;
+
+typedef struct ehci
 {
     pciDev_t*       PCIdevice;         // PCI device
     uint32_t        bar;               // base address register
     ehci_OpRegs_t*  OpRegs;
     ehci_CapRegs_t* CapRegs;
-    void*           virtualAsyncList;
     uint8_t         num;               // number of the EHCI
     uint8_t         numPorts;          // number of ports of the EHCI
     bool            enabledPortFlag;
     bool            USBINTflag;
     bool            USBtransferFlag;
+    ehci_port_t*    ports[16];
 } ehci_t;
+
 
 void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys);
 void ehci_start();
@@ -195,6 +205,13 @@ void ehci_portCheck();
 
 void setupUSBDevice(ehci_t* e, uint8_t portNumber);
 void showUSBSTS(ehci_t* e);
+
+
+void ehci_setupTransfer(usb_transfer_t* transfer);
+void ehci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* transaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
+void ehci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* transaction, bool toggle, void* buffer, size_t length);
+void ehci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* transaction, bool toggle, void* buffer, size_t length);
+void ehci_issueTransfer(usb_transfer_t* transfer);
 
 
 #endif

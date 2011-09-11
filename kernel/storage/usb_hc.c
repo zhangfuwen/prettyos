@@ -8,6 +8,7 @@
 #include "ohci.h"
 #include "ehci.h"
 #include "video/console.h"
+#include "kheap.h"
 
 
 void usb_hc_install(pciDev_t* PCIdev)
@@ -77,6 +78,50 @@ void usb_hc_install(pciDev_t* PCIdev)
         }
     }
 }
+
+
+void usb_setupTransfer(port_t* device, usb_transfer_t* transfer, usb_tranferType_t type, uint32_t endpoint, uint32_t packetSize)
+{
+    transfer->HC = device;
+    transfer->transactions = list_create();
+    transfer->endpoint = endpoint;
+    transfer->type = type;
+    transfer->packetSize = packetSize;
+    ehci_setupTransfer(transfer);
+}
+
+void usb_setupTransaction(usb_transfer_t* transfer, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
+{
+    usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
+    transaction->type = USB_TT_SETUP;
+    ehci_setupTransaction(transfer, transaction, toggle, tokenBytes, type, req, hiVal, loVal, index, length);
+    list_append(transfer->transactions, transaction);
+}
+
+void usb_inTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size_t length)
+{
+    usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
+    transaction->type = USB_TT_IN;
+    ehci_inTransaction(transfer, transaction, toggle, buffer, length);
+    list_append(transfer->transactions, transaction);
+}
+
+void usb_outTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size_t length)
+{
+    usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
+    transaction->type = USB_TT_OUT;
+    ehci_outTransaction(transfer, transaction, toggle, buffer, length);
+    list_append(transfer->transactions, transaction);
+}
+
+void usb_issueTransfer(usb_transfer_t* transfer)
+{
+    ehci_issueTransfer(transfer);
+    for(dlelement_t* e = transfer->transactions->head; e != 0; e = e->next)
+        free(e->data);
+    list_free(transfer->transactions);
+}
+
 
 /*
 * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.

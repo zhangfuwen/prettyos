@@ -17,12 +17,11 @@
 
 ehci_t* curEHCI = 0;
 
-static uint8_t index   = 0;
+static uint8_t numPorts = 0;
 static ehci_t* ehci[EHCIMAX];
 
 // Device Manager
 static disk_t usbDev[16];
-static port_t port[16];
 
 // usb devices list
 extern usb2_Device_t usbDevices[16]; // ports 1-16
@@ -41,8 +40,8 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     printf("\n>>>ehci_install<<<\n");
   #endif
 
-    ehci_t* e = curEHCI = ehci[index] = malloc(sizeof(ehci_t), 0, "ehci");
-    e->num              = index;
+    ehci_t* e = curEHCI = ehci[numPorts] = malloc(sizeof(ehci_t), 0, "ehci");
+    e->num              = numPorts;
     e->PCIdevice        = PCIdev;
     e->PCIdevice->data  = e;
     e->bar              = (uintptr_t)paging_acquirePciMemory(bar_phys,1) + (bar_phys % PAGESIZE);
@@ -56,13 +55,13 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     e->numPorts  = (e->CapRegs->HCSPARAMS & 0x000F);
 
     char str[10];
-    snprintf(str, 10, "EHCI %u", index+1);
+    snprintf(str, 10, "EHCI %u", numPorts+1);
 
-    ehci_analyze(ehci[index]); // get data (capregs, opregs)
+    ehci_analyze(e); // get data (capregs, opregs)
 
     scheduler_insertTask(create_cthread(&ehci_start, str));
 
-    index++;
+    numPorts++;
     sleepMilliSeconds(20); // HACK: Avoid race condition between ohci_install and the thread just created. Problem related to curOHCI global variable
 }
 
@@ -359,15 +358,20 @@ void ehci_enablePorts(ehci_t* e)
     printf("\nEnable ports:\n");
     textColor(TEXT);
 
+    memset(e->ports, 0, 16*4);
     for (uint8_t j=0; j<e->numPorts; j++)
     {
         ehci_resetPort(e,j);
         e->enabledPortFlag = true;
 
-        port[j].type = &USB_EHCI; // device manager
-        port[j].data = (void*)(j+1);
-        snprintf(port[j].name, 14, "EHCI-Port %u", j+1);
-        attachPort(&port[j]);
+        e->ports[j] = malloc(sizeof(ehci_port_t), 0, "ehci_port_t");
+        e->ports[j]->num = j+1;
+        e->ports[j]->ehci = e;
+        e->ports[j]->port.type = &USB_EHCI; // device manager
+        e->ports[j]->port.data = e->ports[j];
+        e->ports[j]->port.insertedDisk = 0;
+        snprintf(e->ports[j]->port.name, 14, "EHCI-Port %u", j+1);
+        attachPort(&e->ports[j]->port);
 
         if (e->USBtransferFlag && e->enabledPortFlag && e->OpRegs->PORTSC[j] == (PSTS_POWERON | PSTS_ENABLED | PSTS_CONNECTED)) // high speed, enabled, device attached
         {
@@ -575,7 +579,7 @@ void ehci_portCheck()
 
                 // Device Manager
                 removeDisk(&usbDev[j]);
-                port[j].insertedDisk = 0;
+                e->ports[j]->port.insertedDisk = 0;
 
                 showPortList();
                 showDiskList();
@@ -660,7 +664,7 @@ void setupUSBDevice(ehci_t* e, uint8_t portNumber)
     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
   #endif
 
-    usbTransferDevice(devAddr); // device address, endpoint=0
+    usbTransferDevice(e, devAddr); // device address, endpoint=0
 
   #ifdef _EHCI_DIAGNOSIS_
     analyzeQTD();
@@ -720,7 +724,7 @@ void setupUSBDevice(ehci_t* e, uint8_t portNumber)
         attachDisk(&usbDev[portNumber]);
 
         // Port
-        port[portNumber].insertedDisk = &usbDev[portNumber];
+        e->ports[portNumber]->port.insertedDisk = &usbDev[portNumber];
 
         showPortList(); // TEST
         showDiskList(); // TEST
@@ -762,6 +766,100 @@ void showUSBSTS(ehci_t* e)
     if (e->OpRegs->USBSTS & STS_ASYNC_ENABLED)      { printf("\nAsynchronous Schedule Status");  e->OpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
     textColor(TEXT);
 }
+
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                            Transactions                                              *
+*                                                                                                      *
+*******************************************************************************************************/
+
+
+typedef struct
+{
+    ehci_qtd_t* qTD;
+    void*       qTDBuffer;
+    void*       inBuffer;
+    size_t      inLength;
+} ehci_transaction_t;
+
+
+void ehci_setupTransfer(usb_transfer_t* transfer)
+{
+    transfer->data = malloc(sizeof(ehci_qhd_t), 32, "EHCI-QH");
+}
+
+void ehci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
+{
+    ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
+    eTransaction->inBuffer = 0;
+    eTransaction->inLength = 0;
+    eTransaction->qTD = createQTD_SETUP(1, toggle, tokenBytes, type, req, hiVal, loVal, index, length);
+    if(transfer->transactions->tail)
+    {
+        ehci_transaction_t* eLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+        eLastTransaction->qTD->next = paging_getPhysAddr(eTransaction->qTD);
+    }
+}
+
+void ehci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length)
+{
+    ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
+    eTransaction->inBuffer = buffer;
+    eTransaction->inLength = length;
+    eTransaction->qTD = createQTD_IO(1, 1, toggle, length);
+    eTransaction->qTDBuffer = allocQTDbuffer(eTransaction->qTD);
+    if(transfer->transactions->tail)
+    {
+        ehci_transaction_t* eLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+        eLastTransaction->qTD->next = paging_getPhysAddr(eTransaction->qTD);
+    }
+}
+
+void ehci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length)
+{
+    ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
+    eTransaction->inBuffer = 0;
+    eTransaction->inLength = 0;
+    eTransaction->qTD = createQTD_IO(1, 0, toggle, length);
+    eTransaction->qTDBuffer = allocQTDbuffer(eTransaction->qTD);
+    if(buffer != 0 && length != 0)
+        memcpy(eTransaction->qTDBuffer, buffer, length);
+    if(transfer->transactions->tail)
+    {
+        ehci_transaction_t* eLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+        eLastTransaction->qTD->next = paging_getPhysAddr(eTransaction->qTD);
+    }
+}
+
+void ehci_issueTransfer(usb_transfer_t* transfer)
+{
+    ehci_t* e = ehci[0]; // HACK
+
+    if(transfer->type == USB_CONTROL)
+        e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // TODO: Necessary?
+    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(transfer->data);
+
+    ehci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
+    createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD,  1, ((ehci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
+
+    if(transfer->type == USB_CONTROL)
+        performAsyncScheduler(e, true, false, 0);
+    else
+        performAsyncScheduler(e, true, true, transfer->packetSize/200);
+
+    free(transfer->data);
+    for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+    {
+        ehci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+        if(transaction->inBuffer != 0 && transaction->inLength != 0)
+            memcpy(transaction->inBuffer, transaction->qTDBuffer, transaction->inLength);
+        free(transaction->qTDBuffer);
+        free(transaction);
+    }
+}
+
 
 /*
 * Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.

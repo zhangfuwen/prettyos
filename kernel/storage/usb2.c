@@ -32,65 +32,36 @@ uint8_t usbTransferEnumerate(ehci_t* e, uint8_t j)
 
     uint8_t new_address = j; // indicated port number
 
-    e->virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Enum");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(e->virtualAsyncList);
-
-    // Create QTDs (in reversed order)
-    void* next = createQTD_IO(0x1, IN, 1,  0); // Handshake IN directly after Setup
-    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
-    SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x00, 5, 0, new_address+1, 0, 0); // SETUP DATA0, 8 byte, ..., SET_ADDRESS, hi, 0...127 (new address), index=0, length=0
-
-    // Create QH
-    createQH(e->virtualAsyncList, paging_getPhysAddr(e->virtualAsyncList), SetupQTD, 1, 0, 0,64);
-
-    performAsyncScheduler(e, true, false, 0);
-
-    free(e->virtualAsyncList);
-
-    for (uint8_t i=0; i<=1; i++)
-    {
-        free(globalqTD[i]);
-        free(globalqTDbuffer[i]);
-    }
+    e->ports[j]->num = 0; // device number has to be set to 0
+    usb_transfer_t transfer;
+    usb_setupTransfer(&e->ports[j]->port, &transfer, USB_CONTROL, 0, 64);
+    usb_setupTransaction(&transfer, 0, 8, 0x00, 5, 0, new_address+1, 0, 0);
+    usb_inTransaction(&transfer, 1, 0, 0);
+    usb_issueTransfer(&transfer);
+    e->ports[j]->num = j+1;
 
     return new_address;
 }
 
-void usbTransferDevice(uint32_t device)
+void usbTransferDevice(ehci_t* e, uint32_t device)
 {
-  ehci_t* e = curEHCI;
-
   #ifdef _USB2_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\nUSB2: GET_DESCRIPTOR device, dev: %u endpoint: 0", device+1);
     textColor(TEXT);
   #endif
 
-    e->virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Device");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(e->virtualAsyncList);
+    char buffer[18];
 
-    // Create QTDs (in reversed order)
-    void* next   = createQTD_IO(0x1, OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
-    globalqTD[2] = globalqTD[0]; globalqTDbuffer[2] = globalqTDbuffer[0]; // save pointers for later free(pointer)
-    next = DataQTD = createQTD_IO((uintptr_t)next, IN,  1, 18);  // IN DATA1, 18 byte
-    globalqTD[1] = globalqTD[0]; globalqTDbuffer[1] = globalqTDbuffer[0]; // save pointers for later free(pointer)
-    SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 1, 0, 0, 18); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, hi, lo, index, length
+    usb_transfer_t transfer;
+    usb_setupTransfer(&e->ports[device]->port, &transfer, USB_CONTROL, 0, 64);
+    usb_setupTransaction(&transfer, 0, 8, 0x80, 6, 1, 0, 0, 18);
+    usb_inTransaction(&transfer, 1, buffer, 18);
+    usb_outTransaction(&transfer, 1, buffer, 0);
+    usb_issueTransfer(&transfer);
 
-    // Create QH
-    createQH(e->virtualAsyncList, paging_getPhysAddr(e->virtualAsyncList), SetupQTD, 1, device+1, 0, 64); // endpoint 0
-
-    performAsyncScheduler(e, true, false,0);
-
-    // showPacket(DataQTDpage0,18);
-    addDevice ((struct usb2_deviceDescriptor*)DataQTDpage0, &usbDevices[device]);
+    addDevice((struct usb2_deviceDescriptor*)buffer, &usbDevices[device]);
     showDevice(&usbDevices[device]);
-
-    free(e->virtualAsyncList);
-    for (uint8_t i=0; i<=2; i++)
-    {
-        free(globalqTD[i]);
-        free(globalqTDbuffer[i]);
-    }
 }
 
 void usbTransferConfig(uint32_t device)
@@ -103,8 +74,8 @@ void usbTransferConfig(uint32_t device)
     textColor(TEXT);
   #endif
 
-    e->virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Config");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(e->virtualAsyncList);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-Config");
+    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -114,7 +85,7 @@ void usbTransferConfig(uint32_t device)
     SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 2, 0, 0, ALIGNVALUE); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, configuration, lo, index, length
 
     // Create QH
-    createQH(e->virtualAsyncList, paging_getPhysAddr(e->virtualAsyncList), SetupQTD, 1, device+1, 0, 64); // endpoint 0
+    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
     performAsyncScheduler(e, true, false, 0);
 
@@ -200,7 +171,7 @@ void usbTransferConfig(uint32_t device)
         }
     }
 
-    free(e->virtualAsyncList);
+    free(QH);
     for (uint8_t i=0; i<=2; i++)
     {
         free(globalqTD[i]);
@@ -218,8 +189,8 @@ void usbTransferString(uint32_t device)
     textColor(TEXT);
   #endif
 
-    e->virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-String");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(e->virtualAsyncList);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-String");
+    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -229,7 +200,7 @@ void usbTransferString(uint32_t device)
     SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 3, 0, 0, 12); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, lo, index, length
 
     // Create QH
-    createQH(e->virtualAsyncList, paging_getPhysAddr(e->virtualAsyncList), SetupQTD, 1, device+1, 0, 64); // endpoint 0
+    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
     performAsyncScheduler(e, true, false, 0);
 
@@ -238,7 +209,7 @@ void usbTransferString(uint32_t device)
   #endif
     showStringDescriptor((struct usb2_stringDescriptor*)DataQTDpage0);
 
-    free(e->virtualAsyncList);
+    free(QH);
     for (uint8_t i=0; i<=2; i++)
     {
         free(globalqTD[i]);
@@ -256,8 +227,8 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
     textColor(TEXT);
   #endif
 
-    e->virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-wideStr");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(e->virtualAsyncList);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-wideStr");
+    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next   = createQTD_IO(0x1,               OUT, 1,  0);  // Handshake is the opposite direction of Data, therefore OUT after IN
@@ -267,7 +238,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
     SetupQTD = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 64); // SETUP DATA0, 8 byte, Device->Host, GET_DESCRIPTOR, string, stringIndex, languageID, length
 
     // Create QH
-    createQH(e->virtualAsyncList, paging_getPhysAddr(e->virtualAsyncList), SetupQTD, 1, device+1, 0, 64); // endpoint 0
+    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
     performAsyncScheduler(e, true, false, 0);
 
@@ -277,7 +248,7 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
 
     showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0, device, stringIndex);
 
-    free(e->virtualAsyncList);
+    free(QH);
     for (uint8_t i=0; i<=2; i++)
     {
         free(globalqTD[i]);
@@ -296,8 +267,8 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
     textColor(TEXT);
   #endif
 
-    e->virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-SetConf");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(e->virtualAsyncList);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-SetConf");
+    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(IN);
@@ -305,11 +276,11 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
 
     // Create QH
-    createQH(e->virtualAsyncList, paging_getPhysAddr(e->virtualAsyncList), SetupQTD, 1, device+1, 0, 64); // endpoint 0
+    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
     performAsyncScheduler(e, true, false, 0);
 
-    free(e->virtualAsyncList);
+    free(QH);
     for (uint8_t i=0; i<=1; i++)
     {
         free(globalqTD[i]);
@@ -327,8 +298,8 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     textColor(TEXT);
   #endif
 
-    e->virtualAsyncList = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-GetConf");
-    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(e->virtualAsyncList);
+    void* QH = malloc(sizeof(ehci_qhd_t), ALIGNVALUE, "usb2-aL-QH-GetConf");
+    e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(QH);
 
     // Create QTDs (in reversed order)
     void* next = createQTD_Handshake(OUT);
@@ -338,13 +309,13 @@ uint8_t usbTransferGetConfiguration(uint32_t device)
     SetupQTD   = createQTD_SETUP((uintptr_t)next, 0, 8, 0x80, 8, 0, 0, 0, 1); // SETUP DATA0, 8 byte, request type, GET_CONFIGURATION(9), hi, lo, index=0, length=1
 
     // Create QH
-    createQH(e->virtualAsyncList, paging_getPhysAddr(e->virtualAsyncList), SetupQTD, 1, device+1, 0, 64); // endpoint 0
+    createQH(QH, paging_getPhysAddr(QH), SetupQTD, 1, device+1, 0, 64); // endpoint 0
 
     performAsyncScheduler(e, true, false, 0);
 
     uint8_t configuration = *((uint8_t*)DataQTDpage0);
 
-    free(e->virtualAsyncList);
+    free(QH);
     for (uint8_t i=0; i<=2; i++)
     {
         free(globalqTD[i]);

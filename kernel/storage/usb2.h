@@ -107,7 +107,7 @@ struct usb2_stringDescriptorUnicode
 
 
 uint8_t usbTransferEnumerate(ehci_t* e, uint8_t j);
-void usbTransferDevice(uint32_t device);
+void usbTransferDevice(ehci_t* e, uint32_t device);
 void usbTransferConfig(uint32_t device);
 void usbTransferString(uint32_t device);
 void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex);

@@ -82,7 +82,7 @@ ehci_qtd_t* allocQTD(uintptr_t next)
     return td;
 }
 
-uintptr_t allocQTDbuffer(ehci_qtd_t* td)
+void* allocQTDbuffer(ehci_qtd_t* td)
 {
     void* data = malloc(PAGESIZE, ALIGNVALUE, "qTD-buffer"); // Enough for a full page
     memset(data,0,PAGESIZE);
@@ -93,7 +93,7 @@ uintptr_t allocQTDbuffer(ehci_qtd_t* td)
 
     globalqTDbuffer[0] = data; // save pointer for later free(pointer)
 
-    return (uintptr_t)data;
+    return data;
 }
 
 void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
@@ -109,7 +109,7 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    SetupQTDpage0 = allocQTDbuffer(td);
+    SetupQTDpage0 = (uintptr_t)allocQTDbuffer(td);
 
     struct ehci_request* request = (struct ehci_request*)SetupQTDpage0;
     request->type    = type;
@@ -135,7 +135,7 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    QTDpage0 = allocQTDbuffer(td);
+    QTDpage0 = (uintptr_t)allocQTDbuffer(td);
 
     if (tokenBytes > 0) // data are transferred, no handshake
         DataQTDpage0 = QTDpage0;
@@ -156,7 +156,7 @@ void* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t 
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    DataQTDpage0 = QTDpage0 = allocQTDbuffer(td);
+    DataQTDpage0 = QTDpage0 = (uintptr_t)allocQTDbuffer(td);
     memcpy((void*)QTDpage0,(void*)buffer,512);
 
     return (void*)td;
@@ -175,7 +175,7 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
     td->token.bytes        = 13;     // dependent on transfer, here 13 byte status information
     td->token.dataToggle   = toggle; // Should be toggled every list entry
 
-    MSDStatusQTDpage0 = allocQTDbuffer(td);
+    MSDStatusQTDpage0 = (uintptr_t)allocQTDbuffer(td);
 
     ((uint32_t*)MSDStatusQTDpage0)[0] = CSWMagicNotOK; // magic USBS
     ((uint32_t*)MSDStatusQTDpage0)[1] = 0xAAAAAAAA;    // CSWTag
