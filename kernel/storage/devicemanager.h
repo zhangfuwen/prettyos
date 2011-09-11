@@ -4,8 +4,8 @@
 #include "os.h"
 #include "filesystem/fsmanager.h"
 
-#define PORTARRAYSIZE 20
-#define DISKARRAYSIZE 20
+#define PORTARRAYSIZE 26
+#define DISKARRAYSIZE 26
 #define PARTITIONARRAYSIZE 4
 
 

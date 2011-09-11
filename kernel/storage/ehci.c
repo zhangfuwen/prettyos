@@ -181,16 +181,17 @@ void ehci_startHC(ehci_t* e)
         e->OpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
     }
 
-    // 5. Program the Configure Flag to a 1 to route all ports to the EHCI controller. Because setting
-    //    this flag causes all ports to be unconditionally routed to the EHCI, all USB1.1 devices will
-    //    cease to function until the bus is properly enumerated (i.e., each port is properly routed to its
-    //    associated controller type: UHCI or EHCI)
+    // 5. Write a 1 to CONFIGFLAG register to default-route all ports to the EHCI. The EHCI can temporarily release control 
+    //    of the port to a cHC by setting the PortOwner bit in the PORTSC register to a one
 
-    e->OpRegs->CONFIGFLAG  = CF; // Write a 1 to CONFIGFLAG register to default-route all ports to the EHCI
-                              // The EHCI can temporarily release control of the port to a cHC
-                              // by setting the PortOwner bit in the PORTSC register to a one
-    e->CapRegs->HCSPARAMS |= PORT_ROUTING_RULES;
-    // e->CapRegs->HCSPPORTROUTE_Hi = e->CapRegs->HCSPPORTROUTE_Lo = 0; // all valid ports go to lowest cHC number // VMWare does not reset!
+    e->OpRegs->CONFIGFLAG  = CF;                 // if zero, EHCI is not enabled and all usb devices go to the cHC                 
+    e->CapRegs->HCSPARAMS |= PORT_ROUTING_RULES; // full/low speed can go to companion HC (UHCI, OHCI)
+    
+  #ifdef _EHCI_DIAGNOSIS_
+    // 60 bits = 15 nibble  for the 15 possible ports of the EHCI show number of cHC
+    printf("\nHCSPPORTROUTE_Hi: %X  HCSPPORTROUTE_Lo: %X", e->CapRegs->HCSPPORTROUTE_Hi, e->CapRegs->HCSPPORTROUTE_Lo);
+    // There VMWare has a bug! You can write to this Read-Only register, and then it does not reset.
+  #endif
 
     sleepMilliSeconds(100); // do not delete
 }

@@ -109,7 +109,7 @@ void showPortList()
     textColor(HEADLINE);
     printf("\n\nAvailable ports:");
     textColor(TABLE_HEADING);
-    printf("\nType\tNumber\tName\t\tInserted disk");
+    printf("\nType            Letter\tName\t\tInserted disk");
     printf("\n----------------------------------------------------------------------");
     textColor(TEXT);
 
@@ -118,15 +118,15 @@ void showPortList()
         if (ports[i] != 0)
         {
             if (ports[i]->type == &FDD) // Type
-                printf("\nFDD ");
+                printf("\nFDD            ");
             else if (ports[i]->type == &RAM)
-                printf("\nRAM ");
+                printf("\nRAM            ");
             else if (ports[i]->type == &USB_OHCI)
-                printf("\nUSB 1.1 (OHCI)");
+                printf("\nUSB 1.1 (OHCI) ");
             else if (ports[i]->type == &USB_UHCI)
-                printf("\nUSB 1.1 (UHCI)");
+                printf("\nUSB 1.1 (UHCI) ");
             else if (ports[i]->type == &USB_EHCI)
-                printf("\nUSB 2.0");
+                printf("\nUSB 2.0        ");
 
             textColor(IMPORTANT);
             printf("\t%c", 'A'+i); // number
