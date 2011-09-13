@@ -67,11 +67,6 @@ struct ehci_request
 } __attribute__((packed));
 
 
-extern ehci_qtd_t* DataQTD;
-extern void*       DataQTDpage0;
-extern void*       MSDStatusQTDpage0;
-
-
 void* allocQTDbuffer(ehci_qtd_t* td);
 
 void  createQH(ehci_qhd_t* address, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);

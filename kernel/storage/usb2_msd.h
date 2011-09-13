@@ -35,8 +35,8 @@ typedef struct
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
 
-void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer);
-void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, uint8_t* buffer);
+void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer);
+void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer);
 
 void testMSD(uint8_t devAddr, disk_t* disk);
 FS_ERROR usbRead (uint32_t sector, void* buffer, void* device);

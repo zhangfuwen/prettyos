@@ -26,7 +26,6 @@ static disk_t usbDev[16];
 
 // usb devices list
 extern usb2_Device_t usbDevices[16]; // ports 1-16
-extern void* SetupQTDpage0;
 
 
 static void ehci_handler(registers_t* r, pciDev_t* device);
