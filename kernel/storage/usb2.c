@@ -9,12 +9,9 @@
 #include "video/console.h"
 #include "timer.h"
 #include "util.h"
-#include "ehciQHqTD.h"
 
 
 extern ehci_t* curEHCI;
-
-const uint8_t ALIGNVALUE = 32;
 
 usb2_Device_t usbDevices[16]; // ports 1-16
 
@@ -40,8 +37,10 @@ uint8_t usbTransferEnumerate(ehci_t* e, uint8_t j)
     return new_address;
 }
 
-void usbTransferDevice(ehci_t* e, uint32_t device)
+void usbTransferDevice(uint32_t device)
 {
+    ehci_t* e = curEHCI;
+
   #ifdef _USB2_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\nUSB2: GET_DESCRIPTOR device, dev: %u endpoint: 0", device+1);
@@ -71,12 +70,12 @@ void usbTransferConfig(uint32_t device)
     textColor(TEXT);
   #endif
 
-    char buffer[ALIGNVALUE];
+    char buffer[32];
 
     usb_transfer_t transfer;
     usb_setupTransfer(&e->ports[device]->port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x80, 6, 2, 0, 0, ALIGNVALUE);
-    usb_inTransaction(&transfer, 1, buffer, ALIGNVALUE);
+    usb_setupTransaction(&transfer, 0, 8, 0x80, 6, 2, 0, 0, 32);
+    usb_inTransaction(&transfer, 1, buffer, 32);
     usb_outTransaction(&transfer, 1, 0, 0);
     usb_issueTransfer(&transfer);
 
@@ -87,79 +86,80 @@ void usbTransferConfig(uint32_t device)
   #endif
 
     // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
-    uintptr_t addrPointer = (uintptr_t)buffer;
-    uintptr_t lastByte    = addrPointer + (*(uint16_t*)(addrPointer+2)); // totalLength (WORD)
+    void* addr     = buffer;
+    void* lastByte = addr + (*(uint16_t*)(addr+2)); // totalLength (WORD)
 
   #ifdef _USB2_DIAGNOSIS_
-    showPacket(DataQTDpage0,(*(uint16_t*)(addrPointer+2)));
+    showPacket(buffer,(*(uint16_t*)(addr+2)));
   #endif
 
-    while (addrPointer<lastByte)
+    while ((uintptr_t)addr < (uintptr_t)lastByte)
     {
         bool found = false;
 
-        if (*(uint8_t*)addrPointer == 9 && *(uint8_t*)(addrPointer+1) == 2) // length, type
+        uint8_t type =  *(uint8_t*)(addr+1);
+        uint8_t length = *(uint8_t*)addr;
+
+        if (length == 9 && type == 2)
         {
-            showConfigurationDescriptor((struct usb2_configurationDescriptor*)addrPointer);
-            addrPointer += 9;
+            struct usb2_configurationDescriptor* descriptor = addr;
+            showConfigurationDescriptor(descriptor);
             found = true;
         }
-
-        if (*(uint8_t*)addrPointer == 9 && *(uint8_t*)(addrPointer+1) == 4) // length, type
+        else if (length == 9 && type == 4)
         {
-            showInterfaceDescriptor((struct usb2_interfaceDescriptor*)addrPointer);
+            struct usb2_interfaceDescriptor* descriptor = addr;
+            showInterfaceDescriptor(descriptor);
 
-            if (((struct usb2_interfaceDescriptor*)addrPointer)->interfaceClass == 8)
+            if (descriptor->interfaceClass == 8)
             {
                 // store interface number for mass storage transfers
-                usbDevices[device].numInterfaceMSD    = ((struct usb2_interfaceDescriptor*)addrPointer)->interfaceNumber;
-                usbDevices[device].InterfaceClass     = ((struct usb2_interfaceDescriptor*)addrPointer)->interfaceClass;
-                usbDevices[device].InterfaceSubclass  = ((struct usb2_interfaceDescriptor*)addrPointer)->interfaceSubclass;
+                usbDevices[device].numInterfaceMSD   = descriptor->interfaceNumber;
+                usbDevices[device].InterfaceClass    = descriptor->interfaceClass;
+                usbDevices[device].InterfaceSubclass = descriptor->interfaceSubclass;
             }
-            addrPointer += 9;
             found = true;
         }
-
-        if (*(uint8_t*)addrPointer == 7 && *(uint8_t*)(addrPointer+1) == 5) // length, type
+        else if (length == 7 && type == 5)
         {
-            showEndpointDescriptor((struct usb2_endpointDescriptor*)addrPointer);
+            struct usb2_endpointDescriptor* descriptor = addr;
+            showEndpointDescriptor(descriptor);
 
             // store endpoint numbers for IN/OUT mass storage transfers, attributes must be 0x2, because there are also endpoints with attributes 0x3(interrupt)
-            if (((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80 && ((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2)
+            if (descriptor->endpointAddress & 0x80 && descriptor->attributes == 0x2)
             {
-                usbDevices[device].numEndpointInMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
+                usbDevices[device].numEndpointInMSD = descriptor->endpointAddress & 0xF;
             }
 
-            if (!(((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0x80) && ((struct usb2_endpointDescriptor*)addrPointer)->attributes == 0x2)
+            if (!(descriptor->endpointAddress & 0x80) && descriptor->attributes == 0x2)
             {
-                usbDevices[device].numEndpointOutMSD = ((struct usb2_endpointDescriptor*)addrPointer)->endpointAddress & 0xF;
+                usbDevices[device].numEndpointOutMSD = descriptor->endpointAddress & 0xF;
             }
 
-            addrPointer += 7;
             found = true;
         }
-
-        if (*(uint8_t*)(addrPointer+1) != 2 && *(uint8_t*)(addrPointer+1) != 4 && *(uint8_t*)(addrPointer+1) != 5) // length, type
+        else if (type != 2 && type != 4 && type != 5)
         {
           #ifdef _USB2_DIAGNOSIS_
-            if ((*(uint8_t*)addrPointer) > 0)
+            if (length > 0)
             {
                 textColor(HEADLINE);
-                printf("\nlength: %u type: %u unknown\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
+                printf("\nlength: %u type: %u unknown\n", length, type);
                 textColor(TEXT);
             }
           #endif
-            addrPointer += *(uint8_t*)addrPointer;
             found = true;
         }
 
         if (found == false)
         {
           #ifdef _USB2_DIAGNOSIS_
-            printf("\nlength: %u type: %u not found\n",*(uint8_t*)addrPointer,*(uint8_t*)(addrPointer+1));
+            printf("\nlength: %u type: %u not found\n", length, type);
           #endif
             break;
         }
+
+        addr += length;
     }
 }
 
@@ -208,10 +208,10 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
     usb_issueTransfer(&transfer);
 
   #ifdef _USB2_DIAGNOSIS_
-    showPacket(DataQTDpage0,64);
+    showPacket(buffer, 64);
   #endif
 
-    showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)DataQTDpage0, device, stringIndex);
+    showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)buffer, device, stringIndex);
 }
 
 // http://www.lowlevel.eu/wiki/USB#SET_CONFIGURATION
@@ -221,7 +221,7 @@ void usbTransferSetConfiguration(uint32_t device, uint32_t configuration)
 
   #ifdef _USB2_DIAGNOSIS_
     textColor(LIGHT_CYAN);
-    printf("\nUSB2: SET_CONFIGURATION %u",configuration);
+    printf("\nUSB2: SET_CONFIGURATION %u", configuration);
     textColor(TEXT);
   #endif
 
@@ -339,7 +339,7 @@ void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
 void showDevice(usb2_Device_t* usbDev)
 {
     textColor(IMPORTANT);
-    printf("\nUSB %u.%u\t",    BYTE2(usbDev->usbSpec), BYTE1(usbDev->usbSpec)); // e.g. 0x0210 means 2.10
+    printf("\nUSB %u.%u\t", BYTE2(usbDev->usbSpec), BYTE1(usbDev->usbSpec)); // e.g. 0x0210 means 2.10
 
     if (usbDev->usbClass == 0x09)
     {
@@ -378,19 +378,19 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
     {
       #ifdef _USB2_DIAGNOSIS_
         textColor(IMPORTANT);
-        printf("length:               %u\t\t",  d->length);
-        printf("descriptor type:      %u\n",  d->descriptorType);
+        printf("length:               %u\t\t", d->length);
+        printf("descriptor type:      %u\n", d->descriptorType);
         textColor(LIGHT_GRAY);
-        printf("total length:         %u\t",  d->totalLength);
+        printf("total length:         %u\t", d->totalLength);
       #endif
         textColor(IMPORTANT);
-        printf("\nNumber of interfaces: %u",  d->numInterfaces);
+        printf("\nNumber of interfaces: %u", d->numInterfaces);
       #ifdef _USB2_DIAGNOSIS_
-        printf("ID of config:         %xh\t",  d->configurationValue);
-        printf("ID of config name     %xh\n",  d->configuration);
-        printf("remote wakeup:        %s\t",  d->attributes & BIT(5) ? "yes" : "no");
-        printf("self-powered:         %s\n",  d->attributes & BIT(6) ? "yes" : "no");
-        printf("max power (mA):       %u\n",  d->maxPower*2); // 2 mA steps used
+        printf("ID of config:         %xh\t", d->configurationValue);
+        printf("ID of config name     %xh\n", d->configuration);
+        printf("remote wakeup:        %s\t", d->attributes & BIT(5) ? "yes" : "no");
+        printf("self-powered:         %s\n", d->attributes & BIT(6) ? "yes" : "no");
+        printf("max power (mA):       %u\n", d->maxPower*2); // 2 mA steps used
       #endif
         textColor(TEXT);
     }

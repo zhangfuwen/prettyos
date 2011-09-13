@@ -12,30 +12,27 @@
 #include "video/console.h"
 
 
-void*        DataQTD;            // pointer to IO qTD transferring data
-void*        SetupQTD;           // pointer to Setup qTD transferring control transfer command
-extern void* StatusQTD;          // pointer to IN qTD transferring CSW
+ehci_qtd_t* DataQTD; // pointer to IO qTD transferring data
 
-uintptr_t    QTDpage0;           // pointer to qTD page0 (general)
-uintptr_t    DataQTDpage0;       // pointer to qTD page0 (In/Out data)
-uintptr_t    MSDStatusQTDpage0;  // pointer to qTD page0 (IN, mass storage device status)
-uintptr_t    SetupQTDpage0;      // pointer to qTD page0 (OUT, setup control transfer)
+void* QTDpage0;          // pointer to qTD page0 (general)
+void* DataQTDpage0;      // pointer to qTD page0 (In/Out data)
+void* MSDStatusQTDpage0; // pointer to qTD page0 (IN, mass storage device status)
+void* SetupQTDpage0;     // pointer to qTD page0 (OUT, setup control transfer)
 
 void* globalqTD[3];
 void* globalqTDbuffer[3];
 
 const uint32_t CSWMagicNotOK = 0x01010101;
 
-extern const uint8_t ALIGNVALUE;
+static const uint8_t ALIGNVALUE = 32;
 
 /////////////////////
 // Queue Head (QH) //
 /////////////////////
 
-void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
+void createQH(ehci_qhd_t* head, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-    struct ehci_qhd* head = (struct ehci_qhd*)address;
-    memset(address, 0, sizeof(struct ehci_qhd));
+    memset(head, 0, sizeof(ehci_qhd_t));
 
                                                     // bit 31:5 Horizontal Link Pointer, bit 4:3 reserved,
     head->horizontalPointer     =   horizPtr | 0x2; // bit 2:1  type:  00b iTD,   01b QH,   10b siTD,   11b FSTN
@@ -57,17 +54,14 @@ void createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint3
     if (firstQTD == 0)
         head->qtd.next = 0x1;
     else
-    {
-        uint32_t physNext = paging_getPhysAddr(firstQTD);
-        head->qtd.next = physNext;
-    }
+        head->qtd.next = paging_getPhysAddr(firstQTD);
 }
 
 /////////////////////////////////////////////
 // Queue Element Transfer Descriptor (qTD) //
 /////////////////////////////////////////////
 
-ehci_qtd_t* allocQTD(uintptr_t next)
+static ehci_qtd_t* allocQTD(uintptr_t next)
 {
     ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), ALIGNVALUE, "qTD"); // can be 32 byte alignment
     memset(td,0,sizeof(ehci_qtd_t));
@@ -85,33 +79,29 @@ ehci_qtd_t* allocQTD(uintptr_t next)
 void* allocQTDbuffer(ehci_qtd_t* td)
 {
     void* data = malloc(PAGESIZE, ALIGNVALUE, "qTD-buffer"); // Enough for a full page
-    memset(data,0,PAGESIZE);
+    memset(data, 0, PAGESIZE);
 
     td->buffer0 = paging_getPhysAddr(data);
-    td->buffer1 = td->buffer2 = td->buffer3 = td->buffer4 = 0x0;
-    td->extend0 = td->extend1 = td->extend2 = td->extend3 = td->extend4 = 0x0;
 
     globalqTDbuffer[0] = data; // save pointer for later free(pointer)
 
     return data;
 }
 
-void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
+ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer)
 {
     ehci_qtd_t* td = allocQTD(next);
 
     td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = 0x2;        // SETUP = 2
+    td->token.pid          = SETUP;      // SETUP = 2
     td->token.errorCounter = 0x3;        // Written by the Host Controller.
     td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
     td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    SetupQTDpage0 = (uintptr_t)allocQTDbuffer(td);
-
-    struct ehci_request* request = (struct ehci_request*)SetupQTDpage0;
+    struct ehci_request* request = *buffer = SetupQTDpage0 = allocQTDbuffer(td);
     request->type    = type;
     request->request = req;
     request->valueHi = hiVal;
@@ -119,10 +109,10 @@ void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t
     request->index   = index;
     request->length  = length;
 
-    return (void*)td;
+    return td;
 }
 
-void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
+ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
 {
     ehci_qtd_t* td = allocQTD(next);
 
@@ -135,15 +125,15 @@ void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t toke
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    QTDpage0 = (uintptr_t)allocQTDbuffer(td);
+    QTDpage0 = allocQTDbuffer(td);
 
     if (tokenBytes > 0) // data are transferred, no handshake
         DataQTDpage0 = QTDpage0;
 
-    return (void*)td;
+    return td;
 }
 
-void* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint8_t* buffer)
+ehci_qtd_t* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint8_t* buffer)
 {
     ehci_qtd_t* td = allocQTD(next);
 
@@ -156,13 +146,13 @@ void* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t 
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    DataQTDpage0 = QTDpage0 = (uintptr_t)allocQTDbuffer(td);
-    memcpy((void*)QTDpage0,(void*)buffer,512);
+    DataQTDpage0 = QTDpage0 = allocQTDbuffer(td);
+    memcpy(QTDpage0, buffer, 512);
 
-    return (void*)td;
+    return td;
 }
 
-void* createQTD_MSDStatus(uintptr_t next, bool toggle)
+ehci_qtd_t* createQTD_MSDStatus(uintptr_t next, bool toggle)
 {
     ehci_qtd_t* td = allocQTD(next);
 
@@ -175,19 +165,14 @@ void* createQTD_MSDStatus(uintptr_t next, bool toggle)
     td->token.bytes        = 13;     // dependent on transfer, here 13 byte status information
     td->token.dataToggle   = toggle; // Should be toggled every list entry
 
-    MSDStatusQTDpage0 = (uintptr_t)allocQTDbuffer(td);
+    MSDStatusQTDpage0 = allocQTDbuffer(td);
 
     ((uint32_t*)MSDStatusQTDpage0)[0] = CSWMagicNotOK; // magic USBS
     ((uint32_t*)MSDStatusQTDpage0)[1] = 0xAAAAAAAA;    // CSWTag
     ((uint32_t*)MSDStatusQTDpage0)[2] = 0xAAAAAAAA;
     ((uint32_t*)MSDStatusQTDpage0)[3] = 0xFFFFFFAA;
 
-    return (void*)td;
-}
-
-void* createQTD_Handshake(uint8_t direction)
-{
-    return createQTD_IO(0x1, direction, 1, 0);
+    return td;
 }
 
 

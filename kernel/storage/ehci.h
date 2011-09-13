@@ -160,14 +160,6 @@ Bit values and side-effects are listed below.
 */
 
 
-extern ehci_OpRegs_t* OpRegs;  // = &OpRegs;
-
-extern void*     DataQTD;
-extern void*     SetupQTD;
-extern uintptr_t DataQTDpage0;
-extern uintptr_t MSDStatusQTDpage0;
-
-
 struct ehci;
 
 typedef struct

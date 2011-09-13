@@ -3,8 +3,9 @@
 *  Lizenz und Haftungsausschluss f?r die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
 #include "ehci.h"
+#include "ehciQHqTD.h"
+#include "util.h"
 #include "timer.h"
 #include "kheap.h"
 #include "task.h"
@@ -25,7 +26,7 @@ static disk_t usbDev[16];
 
 // usb devices list
 extern usb2_Device_t usbDevices[16]; // ports 1-16
-extern uintptr_t    SetupQTDpage0;
+extern void* SetupQTDpage0;
 
 
 static void ehci_handler(registers_t* r, pciDev_t* device);
@@ -181,12 +182,12 @@ void ehci_startHC(ehci_t* e)
         e->OpRegs->USBCMD |= CMD_RUN_STOP; // set Run-Stop-Bit
     }
 
-    // 5. Write a 1 to CONFIGFLAG register to default-route all ports to the EHCI. The EHCI can temporarily release control 
+    // 5. Write a 1 to CONFIGFLAG register to default-route all ports to the EHCI. The EHCI can temporarily release control
     //    of the port to a cHC by setting the PortOwner bit in the PORTSC register to a one
 
-    e->OpRegs->CONFIGFLAG  = CF;                 // if zero, EHCI is not enabled and all usb devices go to the cHC                 
+    e->OpRegs->CONFIGFLAG  = CF;                 // if zero, EHCI is not enabled and all usb devices go to the cHC
     e->CapRegs->HCSPARAMS |= PORT_ROUTING_RULES; // full/low speed can go to companion HC (UHCI, OHCI)
-    
+
   #ifdef _EHCI_DIAGNOSIS_
     // 60 bits = 15 nibble  for the 15 possible ports of the EHCI show number of cHC
     printf("\nHCSPPORTROUTE_Hi: %X  HCSPPORTROUTE_Lo: %X", e->CapRegs->HCSPPORTROUTE_Hi, e->CapRegs->HCSPPORTROUTE_Lo);
@@ -380,7 +381,7 @@ void ehci_enablePorts(ehci_t* e)
             printf("Port %u: high speed enabled, device attached\n",j+1);
             textColor(TEXT);
 
-            setupUSBDevice(e,j); // TEST
+            setupUSBDevice(e, j); // TEST
         }
     }
 }
@@ -665,7 +666,7 @@ void setupUSBDevice(ehci_t* e, uint8_t portNumber)
     printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
   #endif
 
-    usbTransferDevice(e, devAddr); // device address, endpoint=0
+    usbTransferDevice(devAddr); // device address, endpoint=0
 
   #ifdef _EHCI_DIAGNOSIS_
     analyzeQTD();
@@ -796,7 +797,7 @@ void ehci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransac
     ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
     eTransaction->inBuffer = 0;
     eTransaction->inLength = 0;
-    eTransaction->qTD = createQTD_SETUP(1, toggle, tokenBytes, type, req, hiVal, loVal, index, length);
+    eTransaction->qTD = createQTD_SETUP(1, toggle, tokenBytes, type, req, hiVal, loVal, index, length, &eTransaction->qTDBuffer);
     if(transfer->transactions->tail)
     {
         ehci_transaction_t* eLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
@@ -836,7 +837,7 @@ void ehci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransacti
 
 void ehci_issueTransfer(usb_transfer_t* transfer)
 {
-    ehci_t* e = ehci[0]; // HACK
+    ehci_t* e = ((ehci_port_t*)transfer->HC->data)->ehci;
 
     if(transfer->type == USB_CONTROL)
         e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // TODO: Necessary?

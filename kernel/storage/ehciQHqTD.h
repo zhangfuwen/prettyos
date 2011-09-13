@@ -3,18 +3,8 @@
 
 #include "os.h"
 #include "ehci.h"
+#include "usb2_msd.h"
 
-
-typedef struct
-{
-    uint8_t  SCSIopcode;
-    bool     successfulCommand;
-    bool     successfulDataOUT;
-    bool     successfulDataIN;
-    bool     successfulCSW;
-    uint32_t DataBytesToTransferOUT;
-    uint32_t DataBytesToTransferIN;
-} __attribute__((packed)) usbBulkTransfer_t;
 
 typedef struct
 {
@@ -28,7 +18,7 @@ typedef struct
     uint16_t dataToggle   :  1;
 } __attribute__((packed)) qtdToken_t;
 
-typedef struct ehci_qtd
+typedef struct
 {
     uint32_t   next;
     uint32_t   nextAlt;
@@ -45,7 +35,7 @@ typedef struct ehci_qtd
     uint32_t   extend4;
 } __attribute__((packed)) ehci_qtd_t;
 
-typedef struct ehci_qhd
+typedef struct
 {
     uint32_t   horizontalPointer;
     uint32_t   deviceAddress       :  7;
@@ -77,15 +67,18 @@ struct ehci_request
 } __attribute__((packed));
 
 
-ehci_qtd_t* allocQTD(uintptr_t next);
+extern ehci_qtd_t* DataQTD;
+extern void*       DataQTDpage0;
+extern void*       MSDStatusQTDpage0;
+
+
 void* allocQTDbuffer(ehci_qtd_t* td);
 
-void  createQH(void* address, uint32_t horizPtr, void* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
-void* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
-void* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
-void* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint8_t* buffer);
-void* createQTD_MSDStatus(uintptr_t next, bool toggle);
-void* createQTD_Handshake(uint8_t direction);
+void  createQH(ehci_qhd_t* address, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
+ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);
+ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
+ehci_qtd_t* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint8_t* buffer);
+ehci_qtd_t* createQTD_MSDStatus(uintptr_t next, bool toggle);
 
 void  checkAsyncScheduler(ehci_t* e);
 void  performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity);

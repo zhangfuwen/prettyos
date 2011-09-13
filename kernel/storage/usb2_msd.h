@@ -2,7 +2,6 @@
 #define USB2_MSD_H
 
 #include "os.h"
-#include "ehciQHqTD.h"
 #include "devicemanager.h"
 
 #define OUT   0
@@ -21,6 +20,17 @@ struct usb2_CommandBlockWrapper
     uint8_t  commandByte[16];
 } __attribute__((packed));
 
+typedef struct
+{
+    uint8_t  SCSIopcode;
+    bool     successfulCommand;
+    bool     successfulDataOUT;
+    bool     successfulDataIN;
+    bool     successfulCSW;
+    uint32_t DataBytesToTransferOUT;
+    uint32_t DataBytesToTransferIN;
+} usbBulkTransfer_t;
+
 
 void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
 uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
@@ -34,7 +44,7 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device);
 
 void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
 
-int32_t showResultsRequestSense();
+int32_t showResultsRequestSense(void* addr);
 
 
 #endif

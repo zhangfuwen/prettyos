@@ -309,13 +309,13 @@ void ohci_resetHC(ohci_t* o)
 
     for (uint8_t j = 0; j < o->rootPorts; j++)
     {
-        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;   
+        o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;
         o->port[j].type = &USB_OHCI; // device manager
         o->port[j].data = o;
         o->port[j].insertedDisk = 0;
         snprintf(o->port[j].name, 14, "OHCI-Port %u", j+1);
         attachPort(&o->port[j]);
-    }    
+    }
 }
 
 
@@ -344,7 +344,7 @@ void showPortstatus(ohci_t* o)
             {
                 textColor(SUCCESS);
                 printf(" dev. attached  -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;                
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;
             }
             else
                 printf(" device removed -");
