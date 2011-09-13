@@ -325,7 +325,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
         }
     }
 
-    sleepMilliSeconds(100 + velocity * 100);
+    sleepMilliSeconds(50 + velocity * 200);
 
     timeout=7;
     while (!e->USBINTflag) // set by interrupt

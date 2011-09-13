@@ -839,7 +839,10 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
     ehci_t* e = ((ehci_port_t*)transfer->HC->data)->ehci;
 
     if(transfer->type == USB_CONTROL)
-        e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // TODO: Necessary?
+    {
+        e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+    }
+    
     e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(transfer->data);
 
     ehci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;

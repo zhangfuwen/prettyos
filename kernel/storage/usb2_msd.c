@@ -263,7 +263,7 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     SCSIcmd(SCSIcommand, &cbw, LBA, TransferLength);
 
     usb_transfer_t transfer;
-    usb_setupTransfer(&e->ports[device]->port, &transfer, USB_CONTROL, endpointOut, 512); // CONTROL instead of BULK to avoid slowdown by asyncScheduler. TODO: Improve Scheduler
+    usb_setupTransfer(&e->ports[device]->port, &transfer, USB_BULK, endpointOut, 512); // CONTROL instead of BULK to avoid slowdown by asyncScheduler. TODO: Improve Scheduler
     usb_outTransaction(&transfer, usbDevices[device].ToggleEndpointOutMSD, &cbw, 31);
     usb_issueTransfer(&transfer);
 
@@ -334,7 +334,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     }
 
     usb_transfer_t transfer;
-    usb_setupTransfer(&e->ports[device]->port, &transfer, USB_CONTROL, endpointOut, 512); // CONTROL instead of BULK to avoid slowdown by asyncScheduler. TODO: Improve Scheduler
+    usb_setupTransfer(&e->ports[device]->port, &transfer, USB_BULK, endpointOut, 512); // CONTROL instead of BULK to avoid slowdown by asyncScheduler. TODO: Improve Scheduler
     usb_outTransaction(&transfer, usbDevices[device].ToggleEndpointOutMSD, &cbw, 31);
     usb_outTransaction(&transfer, !usbDevices[device].ToggleEndpointOutMSD, dataBuffer, TransferLength);
     usb_issueTransfer(&transfer);
@@ -356,6 +356,7 @@ void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut
     usbDevices[device].ToggleEndpointInMSD = !usbDevices[device].ToggleEndpointInMSD; // switch toggle
 }
 
+
 static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferTestUnitReady, usbBulkTransfer_t* bulkTransferRequestSense)
 {
     ehci_t* e = curEHCI;
@@ -367,12 +368,10 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
     while (timeout != 0)
     {
         timeout--;
-      #ifdef _USB2_DIAGNOSIS_
+
         textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: test unit ready"); textColor(TEXT);
-      #endif
 
         char statusBuffer[13];
-
         usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady, 0, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
         uint8_t statusByteTestReady = BYTE1(*(((uint32_t*)statusBuffer)+3));
@@ -380,13 +379,9 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
 
         if (timeout != maxTest-1)
         {
-            ///////// send SCSI command "request sense"
-
-          #ifdef _USB2_DIAGNOSIS_
             textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(TEXT);
-          #endif
-            char dataBuffer[18];
 
+            char dataBuffer[18];
             usbSendSCSIcmd(devAddr, usbDevices[devAddr].numInterfaceMSD, usbDevices[devAddr].numEndpointOutMSD, usbDevices[devAddr].numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense, dataBuffer, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
             statusByte = BYTE1(*(((uint32_t*)statusBuffer)+3));
@@ -403,6 +398,7 @@ static uint8_t testDeviceReady(uint8_t devAddr, usbBulkTransfer_t* bulkTransferT
 
     return statusByte;
 }
+
 
 static void startLogBulkTransfer(usbBulkTransfer_t* pTransferLog, uint8_t SCSIopcode, uint32_t DataBytesToTransferIN, uint32_t DataBytesToTransferOUT)
 {
@@ -538,14 +534,9 @@ void testMSD(uint8_t devAddr, disk_t* disk)
         usbTransferBulkOnlyMassStorageReset(devAddr, usbDevices[devAddr].numInterfaceMSD); // Reset Interface
 
         ///////// send SCSI command "inquiry (opcode: 0x12)"
-      #ifdef _USB2_DIAGNOSIS_
-        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: inquiry"); textColor(TEXT);
-      #endif
         usbBulkTransfer_t inquiry;
         startLogBulkTransfer(&inquiry, 0x12, 36, 0);
-
         char inquiryBuffer[36];
-
         usbSendSCSIcmd(devAddr,
                        usbDevices[devAddr].numInterfaceMSD,
                        usbDevices[devAddr].numEndpointOutMSD,
@@ -560,7 +551,6 @@ void testMSD(uint8_t devAddr, disk_t* disk)
         logBulkTransfer(&inquiry);
 
         ///////// send SCSI command "test unit ready(6)"
-
         usbBulkTransfer_t testUnitReady, requestSense;
         startLogBulkTransfer(&testUnitReady, 0x00,  0, 0);
         startLogBulkTransfer(&requestSense,  0x03, 18, 0);
@@ -568,16 +558,11 @@ void testMSD(uint8_t devAddr, disk_t* disk)
         logBulkTransfer(&testUnitReady);
         logBulkTransfer(&requestSense);
 
-        ///////// send SCSI command "read capacity(10)"
-      #ifdef _USB2_DIAGNOSIS_
-        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read capacity"); textColor(TEXT);
-      #endif
 
+        ///////// send SCSI command "read capacity(10)"
         usbBulkTransfer_t readCapacity;
         startLogBulkTransfer(&readCapacity, 0x25, 8, 0);
-
         char capacityBuffer[8];
-
         usbSendSCSIcmd(devAddr,
                        usbDevices[devAddr].numInterfaceMSD,
                        usbDevices[devAddr].numEndpointOutMSD,
