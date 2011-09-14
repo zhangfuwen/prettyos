@@ -9,6 +9,7 @@
 #include "kheap.h"
 #include "util.h"
 #include "task.h"
+#include "memory.h"
 
 
 fileSystem_t FAT    = {.fopen = &FAT_fopen, .fclose = &FAT_fclose, .fgetc = &FAT_fgetc, .fputc = &FAT_fputc, .fseek = &FAT_fseek, .remove = &FAT_remove, .rename = &FAT_rename, .pformat = &FAT_format, .pinstall = &FAT_pinstall, .folderAccess = &FAT_folderAccess, .folderClose = &FAT_folderClose},
@@ -68,13 +69,26 @@ FS_ERROR analyzePartition(partition_t* part)
 // File functions
 file_t* fopen(const char* path, const char* mode)
 {
+    // printf("\npath:%s", path);
+
     file_t* file = malloc(sizeof(file_t), 0, "fsmgr-file");
     file->volume = getPartition(path);
-    if (file->volume == 0)
-    {   // cleanup
-        free(file);
+
+    if (!file->volume)
+    {
+        free(file); // cleanup
         return(0);
     }
+
+    if (!( (uintptr_t)file->volume >= (uintptr_t)KERNEL_heapStart && (uintptr_t)file->volume <= (uintptr_t)KERNEL_heapEnd ))
+    {
+        textColor(ERROR);
+        printf("\nERROR: invalid file->volume");
+        textColor(TEXT);
+        free(file); // cleanup
+        return (0);
+    }
+
     file->seek   = 0;
     file->folder = file->volume->rootFolder; // HACK. Not all files are in the root folder
     file->size   = 0; // Init with 0 but set in FS-specific fopen
@@ -105,6 +119,18 @@ file_t* fopen(const char* path, const char* mode)
             file->read = false;
             file->write = false;
             break;
+    }
+
+    if(file->volume->type->fopen == 0)
+    {
+        textColor(ERROR);
+        printf("\nERROR: function fopen not defined");
+        textColor(TEXT);
+        return (0);
+    }
+    else
+    {
+        // printf("\nfunction fopen defined: %Xh", file->volume->type->fopen);
     }
 
     if (file->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD)
