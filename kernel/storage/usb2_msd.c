@@ -9,7 +9,7 @@
 #include "video/console.h"
 #include "util.h"
 #include "usb2.h"
-#include "ehciQHqTD.h"
+#include "ehciQHqTD.h" // logBulkTransfer
 #include "ehci.h"
 
 
@@ -155,7 +155,8 @@ static int32_t checkSCSICommandUSBTransfer(void* MSDStatus, uint32_t device, uin
     // CSW Status
   #ifdef _EHCI_DIAGNOSIS_
     putch('\n');
-    showPacket(MSDStatus,13);
+    memshow(MSDStatus,13, false);
+    putch('\n');
   #endif
 
     // check signature 0x53425355 // DWORD 0 (byte 0:3)
@@ -302,10 +303,12 @@ void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, u
     if (TransferLength) // byte
     {
         putch('\n');
-        showPacket(dataBuffer, TransferLength);
+        memshow(dataBuffer, TransferLength, false);
+        putch('\n');
+
         if ((TransferLength==512) || (TransferLength==36)) // data block (512 byte), inquiry feedback (36 byte)
         {
-            showPacketAlphaNumeric(dataBuffer, TransferLength);
+            memshow(dataBuffer, TransferLength, true); // alphanumeric
             putch('\n');
         }
     }

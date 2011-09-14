@@ -643,68 +643,25 @@ static void ehci_checkPortLineStatus(ehci_t* e, uint8_t j)
 *                                                                                                      *
 *******************************************************************************************************/
 
-#ifdef _EHCI_DIAGNOSIS_
-static void analyzeQTD()
-{
-    printf("\nsetup packet: ");
-    showPacket(SetupQTDpage0,8);
-    printf("\nSETUP: ");
-    showStatusbyteQTD(SetupQTD);
-    printf("\nIO:    ");
-    showStatusbyteQTD(DataQTD);
-    waitForKeyStroke();
-}
-#endif
-
 
 void setupUSBDevice(ehci_t* e, uint8_t portNumber)
 {
     uint8_t devAddr = usbTransferEnumerate(e, portNumber);
 
-  #ifdef _EHCI_DIAGNOSIS_
-    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD); waitForKeyStroke();
-  #endif
-
     usbTransferDevice(devAddr); // device address, endpoint=0
-
-  #ifdef _EHCI_DIAGNOSIS_
-    analyzeQTD();
-  #endif
-
     usbTransferConfig(devAddr); // device address, endpoint 0
-
-  #ifdef _EHCI_DIAGNOSIS_
-    analyzeQTD();
-  #endif
-
     usbTransferString(devAddr); // device address, endpoint 0
-
-  #ifdef _EHCI_DIAGNOSIS_
-    analyzeQTD();
-  #endif
 
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
-      #ifdef _EHCI_DIAGNOSIS_
-        waitForKeyStroke();
-      #endif
-
         usbTransferStringUnicode(devAddr,i);
-
-      #ifdef _EHCI_DIAGNOSIS_
-        printf("\nsetup packet: "); showPacket(SetupQTDpage0,8);
-        printf("\nSETUP: ");        showStatusbyteQTD(SetupQTD);
-        printf("\nIO   : ");        showStatusbyteQTD(DataQTD);
-      #endif
     }
 
     usbTransferSetConfiguration(devAddr, 1); // set first configuration
+
   #ifdef _EHCI_DIAGNOSIS_
-    printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
     uint8_t config = usbTransferGetConfiguration(devAddr);
-    printf(" %u",config); // check configuration
-    printf("\nsetup packet: "); showPacket(SetupQTDpage0,8); printf("\nSETUP: "); showStatusbyteQTD(SetupQTD);
-    printf("\ndata packet: ");  showPacket(DataQTDpage0, 1); printf("\nIO:    "); showStatusbyteQTD(DataQTD);
+    printf("\nconfiguration: %u", config); // check configuration
     waitForKeyStroke();
   #endif
 
@@ -840,9 +797,9 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
 
     if(transfer->type == USB_CONTROL)
     {
-        e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; 
+        e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
     }
-    
+
     e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(transfer->data);
 
     ehci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;

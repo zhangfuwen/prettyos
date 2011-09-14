@@ -119,22 +119,6 @@ ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_
 // analysis tools //
 ////////////////////
 
-void showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size)
-{
-  #ifdef _EHCI_DIAGNOSIS_
-    memshow((void*)virtAddrBuf0, size, true);
-    putch('\n');
-  #endif
-}
-
-void showPacket(uint32_t virtAddrBuf0, uint32_t size)
-{
-  #ifdef _EHCI_DIAGNOSIS_
-    memshow((void*)virtAddrBuf0, size, false);
-    putch('\n');
-  #endif
-}
-
 uint32_t showStatusbyteQTD(void* addressQTD)
 {
     uint8_t statusbyte = getField(addressQTD, 8, 0, 8);

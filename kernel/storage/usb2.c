@@ -90,7 +90,8 @@ void usbTransferConfig(uint32_t device)
     void* lastByte = addr + (*(uint16_t*)(addr+2)); // totalLength (WORD)
 
   #ifdef _USB2_DIAGNOSIS_
-    showPacket(buffer,(*(uint16_t*)(addr+2)));
+    memshow(buffer, (*(uint16_t*)(addr+2)), false);
+    putch('\n');
   #endif
 
     while ((uintptr_t)addr < (uintptr_t)lastByte)
@@ -183,7 +184,8 @@ void usbTransferString(uint32_t device)
     usb_issueTransfer(&transfer);
 
   #ifdef _USB2_DIAGNOSIS_
-    showPacket(&descriptor,12);
+    memshow(&descriptor, 12, false);
+    putch('\n');
   #endif
     showStringDescriptor(&descriptor);
 }
@@ -208,7 +210,8 @@ void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex)
     usb_issueTransfer(&transfer);
 
   #ifdef _USB2_DIAGNOSIS_
-    showPacket(buffer, 64);
+    memshow(buffer, 64, false);
+    putch('\n');
   #endif
 
     showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)buffer, device, stringIndex);
