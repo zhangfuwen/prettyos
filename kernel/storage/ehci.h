@@ -179,6 +179,7 @@ typedef struct ehci
     uint8_t         numPorts;          // number of ports of the EHCI
     bool            enabledPortFlag;
     bool            USBINTflag;
+    bool            USBasyncIntFlag;
     bool            USBtransferFlag;
     ehci_port_t*    ports[16];
 } ehci_t;

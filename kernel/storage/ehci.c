@@ -542,6 +542,7 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
 
     if (e->OpRegs->USBSTS & STS_ASYNC_INT)
     {
+        e->USBasyncIntFlag = true;
       #ifdef _EHCI_DIAGNOSIS_
         textColor(YELLOW);
         printf("Interrupt on Async Advance");

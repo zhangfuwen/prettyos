@@ -273,7 +273,10 @@ void checkAsyncScheduler(ehci_t* e)
 
 void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
 {
-  #ifdef _EHCI_DIAGNOSIS_
+
+    
+  
+ #ifdef _EHCI_DIAGNOSIS_
     if (analyze)
     {
         printf("\nbefore aS:");
@@ -281,10 +284,12 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     }
   #endif
 
-    // Enable Asynchronous Schdeuler
     e->OpRegs->USBSTS |= STS_USBINT;
     e->USBINTflag = false;
+    e->OpRegs->USBSTS |= STS_ASYNC_INT;
+    e->USBasyncIntFlag = false; 
 
+    // Enable Asynchronous Schdeuler
     e->OpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
 
     int8_t timeout=7;
@@ -308,16 +313,37 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
             break;
         }
     }
-
-    sleepMilliSeconds(50 + velocity * 200);
-
-    timeout=7;
+    
+    
+    // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
+    // sleepMilliSeconds(50 + velocity * 200);
+        
+    timeout=100;
+    while (!e->USBasyncIntFlag)
+    {
+        timeout--;
+        if (timeout>0)
+        {
+            sleepMilliSeconds(10);
+        }
+        else
+        {
+            textColor(ERROR);
+            printf("\nTimeout Error - ASYNC_INT not set!");
+            textColor(TEXT);
+            break;
+        }
+    };
+    // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
+    
+    
+    timeout=20;
     while (!e->USBINTflag) // set by interrupt
     {
         timeout--;
         if (timeout>0)
         {
-            sleepMilliSeconds(20);
+            sleepMilliSeconds(10);
 
           #ifdef _EHCI_DIAGNOSIS_
             textColor(LIGHT_MAGENTA);
@@ -333,6 +359,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
             break;
         }
     };
+    
 
     e->OpRegs->USBSTS |= STS_USBINT;
     e->USBINTflag = false;
