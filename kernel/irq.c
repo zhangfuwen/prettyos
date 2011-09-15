@@ -263,9 +263,10 @@ static void NM(registers_t* r) // -> FPU
     }
 }
 
-static void GPF(registers_t* r) // -> VM86
+static void GPF(registers_t* r) // VM86
 {
-    if (r->eflags & 0x20000) // VM bit - it is a VM86-task
+    // http://en.wikipedia.org/wiki/FLAGS_register_%28computing%29
+    if (r->eflags & BIT(17))    // VM bit - it is a VM86-task
     {
         if (!vm86_sensitiveOpcodehandler(r))
         {
@@ -285,11 +286,11 @@ static void PF(registers_t* r)
     __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_address)); // faulting address <== CR2 register
 
     // The error code gives us details of what happened.
-    int32_t present  = !(r->err_code & 0x1); // Page not present
-    int32_t rw       =   r->err_code & 0x2;  // Write operation?
-    int32_t us       =   r->err_code & 0x4;  // Processor was in user-mode?
-    int32_t reserved =   r->err_code & 0x8;  // Overwritten CPU-reserved bits of page entry?
-    int32_t id       =   r->err_code & 0x10; // Caused by an instruction fetch?
+    bool pres  = !(r->err_code & BIT(0)); // Page not present
+    bool rw    =   r->err_code & BIT(1);  // Write operation?
+    bool us    =   r->err_code & BIT(2);  // Processor was in user-mode?
+    bool res   =   r->err_code & BIT(3);  // Overwritten CPU-reserved bits of page entry?
+    bool id    =   r->err_code & BIT(4);  // Caused by an instruction fetch?
 
     // Output an error message.
     textColor(ERROR);
@@ -297,11 +298,11 @@ static void PF(registers_t* r)
     textColor(IMPORTANT);
     printf("\nAddress: %Xh   EIP: %Xh", faulting_address, r->eip);
     textColor(TEXT);
-    if (present)  printf("\npage not present");
-    if (rw)       printf("\nread-only - write operation");
-    if (us)       printf("\nuser-mode");
-    if (reserved) printf("\noverwritten CPU-reserved bits of page entry");
-    if (id)       printf("\ncaused by an instruction fetch");
+    if (pres) printf("\npage not present");
+    if (rw)   printf("\nread-only - write operation");
+    if (us)   printf("\nuser-mode");
+    if (res)  printf("\noverwritten CPU-reserved bits of page entry");
+    if (id)   printf("\ncaused by an instruction fetch");
 
     printf("\n\nPress 's' to display call stack.\n");
     if (getch() == 's')
@@ -388,16 +389,16 @@ uint32_t irq_handler(uintptr_t esp)
             }
         }
     }
-    HANDLED:
 
-    if (r->int_no >= 40)
-        outportb(0xA0, 0x20);
-    outportb(0x20, 0x20);
+HANDLED:
+    if(r->int_no >= (32+8))               // IRQs from slave PIC have to be quit by EOI to both PICs
+        outportb(PIC_SLAVE_CMD, PIC_EOI); // Issue EOI on slave PIC
+    outportb(PIC_MASTER_CMD, PIC_EOI);    // Issue EOI on master PIC
 
     console_current = currentTask->console;
     if (r->int_no != 0x7F) // Syscalls (especially textColor) should be able to change color. HACK: Can this be solved nicer?
         oldTask->attrib = attr;
-    return esp;
+    return (esp);
 }
 
 /*
