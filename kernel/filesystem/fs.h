@@ -50,11 +50,11 @@ extern struct fs_node* fs_root; // The root of the filesystem.
 
 // Standard read/write/open/close functions. Note that these are all suffixed with _fs to distinguish them
 // from the read/write/open/close which deal with file descriptors, not file nodes.
-uint32_t       read_fs   (struct fs_node* node, uint32_t offset, uint32_t size, uint8_t* buffer);
-uint32_t       write_fs  (struct fs_node* node, uint32_t offset, uint32_t size, uint8_t* buffer);
-void           open_fs   (struct fs_node* node, uint8_t read, uint8_t write);
-void           close_fs  (struct fs_node* node);
-struct dirent* readdir_fs(struct fs_node* node, uint32_t index);
-struct fs_node*     finddir_fs(struct fs_node* node, const char* name);
+uint32_t         read_fs   (struct fs_node* node, uint32_t offset, uint32_t size, uint8_t* buffer);
+uint32_t         write_fs  (struct fs_node* node, uint32_t offset, uint32_t size, uint8_t* buffer);
+void             open_fs   (struct fs_node* node, uint8_t read, uint8_t write);
+void             close_fs  (struct fs_node* node);
+struct dirent*   readdir_fs(struct fs_node* node, uint32_t index);
+struct fs_node*  finddir_fs(struct fs_node* node, const char* name);
 
 #endif

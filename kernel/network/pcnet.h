@@ -7,10 +7,10 @@
 typedef struct
 {
     uint16_t mode;
-    unsigned reserved1 : 4;
-    unsigned receive_length : 4;
-    unsigned reserved2 : 4;
-    unsigned transfer_length : 4;
+    unsigned reserved1        :  4;
+    unsigned receive_length   :  4;
+    unsigned reserved2        :  4;
+    unsigned transfer_length  :  4;
     uint64_t physical_address : 48;
     uint16_t reserved3;
     uint64_t logical_address;

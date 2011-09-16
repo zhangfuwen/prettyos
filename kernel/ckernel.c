@@ -33,10 +33,10 @@
 #include "storage/flpydsk.h"    // flpydsk_install
 
 // Network
-#include "netprotocol/tcp.h"    // passive opened connection (LISTEN)
+#include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.75 - Rev: 1276";
+const char* const version = "0.0.3.76 - Rev: 1277";
 
 // .bss
 extern uintptr_t _bss_start; // linker script

@@ -29,7 +29,8 @@
 /// #define _USB2_DIAGNOSIS_       // Debug USB 2.0 transfers
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)
 /// #define _RAMDISK_DIAGNOSIS_    // Information about the ramdisk
-/// #define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/3
+#define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/32
+/// #define _FAT_DETAIL_DIAGNOSIS_ // cluster2sector, read
 /// #define _NETWORK_DATA_         // Information about networking packets
 /// #define _NETWORK_DIAGNOSIS_    // Information about the network adapters
 /// #define _ARP_DEBUG_            // Information about ARP
@@ -43,7 +44,7 @@
 #define SER_LOG_TCP    1
 #define SER_LOG_HEAP   1
 #define SER_LOG_VM86   2
-
+#define SER_LOG_FAT    1
 
 extern const char* const version; // PrettyOS version string
 extern system_t system;           // Information about the operating system

@@ -298,7 +298,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
         timeout--;
         if (timeout>0)
         {
-            sleepMilliSeconds(20);
+            sleepMilliSeconds(10);
           #ifdef _EHCI_DIAGNOSIS_
             textColor(LIGHT_MAGENTA);
             printf(">");
@@ -318,7 +318,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
     // sleepMilliSeconds(50 + velocity * 200);
         
-    timeout=100;
+    timeout=5;
     while (!e->USBasyncIntFlag)
     {
         timeout--;
@@ -334,10 +334,18 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
             break;
         }
     };
+
+    if (timeout > 0)
+    {
+        textColor(SUCCESS);
+        printf("\nASYNC_INT successfully set! timeout-counter: %u", timeout);
+        textColor(TEXT);        
+    }
+
     // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
     
     
-    timeout=20;
+    timeout=5;
     while (!e->USBINTflag) // set by interrupt
     {
         timeout--;
@@ -374,7 +382,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
             timeout--;
             if (timeout>0)
             {
-                sleepMilliSeconds(20);
+                sleepMilliSeconds(10);
               #ifdef _EHCI_DIAGNOSIS_
                 textColor(LIGHT_MAGENTA);
                 printf("!");

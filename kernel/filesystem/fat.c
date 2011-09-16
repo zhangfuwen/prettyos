@@ -27,6 +27,7 @@
 #include "kheap.h"
 #include "video/console.h"
 #include "time.h"
+#include "serial.h"
 
 
 // prototypes
@@ -66,8 +67,8 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
         sector = volume->dataLBA + (cluster-2) * volume->SecPerClus;
     }
 
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> cluster2sector <<<<<    cluster: %u  sector %u", cluster, sector);
+  #ifdef _FAT_DETAIL_DIAGNOSIS_
+    serial_log(SER_LOG_FAT, "\r\r\n>>>>> cluster2sector <<<<<    cluster: %u  sector %u", cluster, sector);
   #endif
     return (sector);
 }
@@ -75,7 +76,7 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
 static bool ValidateChars(char* FileName, bool mode)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> ValidateChars <<<<<");
+    serial_log(SER_LOG_FAT, "\r\r\n>>>>> ValidateChars <<<<<");
   #endif
 
     bool radix = false;
@@ -113,7 +114,7 @@ static bool ValidateChars(char* FileName, bool mode)
 static bool FormatFileName(const char* fileName, char* fN2, bool mode)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> FormatFileName <<<<<");
+    serial_log(SER_LOG_FAT, "\r\r\n>>>>> FormatFileName <<<<<");
   #endif
 
     memset(fN2, ' ', 11);
@@ -167,7 +168,7 @@ static bool FormatFileName(const char* fileName, char* fN2, bool mode)
 static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatRead <<<<<");
+    serial_log(SER_LOG_FAT, "\r\r\n>>>>> fatRead <<<<<");
   #endif
 
     uint8_t  q = 0;
@@ -288,7 +289,7 @@ static uint32_t fatRead(FAT_partition_t* volume, uint32_t currCluster)
 static FS_ERROR fileGetNextCluster(FAT_file_t* fileptr, uint32_t n)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fileGetNextCluster <<<<<");
+    serial_log(SER_LOG_FAT, "\r\r\n>>>>> fileGetNextCluster <<<<<");
   #endif
 
     uint32_t ClusterFailValue, LastClustervalue;
@@ -345,7 +346,7 @@ static FS_ERROR fileGetNextCluster(FAT_file_t* fileptr, uint32_t n)
 static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, bool ForceRead)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
+    serial_log(SER_LOG_FAT, "\r\r\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
   #endif
     FAT_partition_t* volume       = fileptr->volume;
     uint32_t cluster              = fileptr->dirfirstCluster;
@@ -449,7 +450,7 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
 static FAT_dirEntry_t* getFileAttribute(FAT_file_t* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> getFileAttribute <<<<<");
+    serial_log(SER_LOG_FAT, "\r\r\n>>>>> getFileAttribute <<<<<");
   #endif
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
@@ -471,7 +472,7 @@ static FAT_dirEntry_t* getFileAttribute(FAT_file_t* fileptr, uint32_t* fHandle)
 static void updateTimeStamp(FAT_dirEntry_t* dir)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> updateTimeStamp not yet implemented, does nothing <<<<<");
+    serial_log(SER_LOG_FAT, "\r\r\n>>>>> updateTimeStamp not yet implemented, does nothing <<<<<");
   #endif
     // TODO
 }
@@ -483,7 +484,7 @@ static void updateTimeStamp(FAT_dirEntry_t* dir)
 static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fillFILEPTR <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fillFILEPTR <<<<<");
   #endif
 
     FAT_dirEntry_t* dir;
@@ -526,7 +527,7 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
 FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_t cmd, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> searchFile <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> searchFile <<<<<");
   #endif
 
     FS_ERROR error              = CE_FILE_NOT_FOUND;
@@ -537,7 +538,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
 
     memset(fileptrDest->name, 0x20, FILE_NAME_SIZE);
   #ifdef _FAT_DIAGNOSIS_
-    textColor(YELLOW); printf("\nfHandle (searchFile): %d",fHandle); textColor(TEXT);
+    textColor(YELLOW); serial_log(SER_LOG_FAT, "\r\nfHandle (searchFile): %d",fHandle); textColor(TEXT);
   #endif
     if (fHandle == 0 || (fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) != 0) // Maximum 16 entries possible
     {
@@ -551,7 +552,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
     while (error != CE_GOOD) // Loop until you reach the end or find the file
     {
       #ifdef _FAT_DIAGNOSIS_
-        textColor(YELLOW); printf("\n\nfHandle %u\n",fHandle); textColor(TEXT);
+        textColor(YELLOW); serial_log(SER_LOG_FAT, "\r\n\r\nfHandle %u\r\n",fHandle); textColor(TEXT);
       #endif
 
         uint8_t state = fillFILEPTR(fileptrDest, &fHandle);
@@ -560,7 +561,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
         if (state == FOUND)
         {
           #ifdef _FAT_DIAGNOSIS_
-            textColor(GREEN);printf("\n\nstate == FOUND");textColor(TEXT);
+            textColor(GREEN);serial_log(SER_LOG_FAT, "\r\n\r\nstate == FOUND");textColor(TEXT);
           #endif
             uint32_t attrib =  fileptrDest->attributes;
             attrib &= ATTR_MASK;
@@ -576,20 +577,20 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
                     if ((attrib != ATTR_VOLUME) && ((attrib & ATTR_HIDDEN) != ATTR_HIDDEN))
                     {
                       #ifdef _FAT_DIAGNOSIS_
-                        textColor(GREEN);printf("\n\nAn entry is found. Attributes OK for search");textColor(TEXT); /// TEST
+                        textColor(GREEN);serial_log(SER_LOG_FAT, "\r\n\r\nAn entry is found. Attributes OK for search");textColor(TEXT); /// TEST
                       #endif
                         error = CE_GOOD;
                         for (uint8_t i=0; i < FILE_NAME_SIZE; i++)
                         {
                             character = fileptrDest->name[i];
                           #ifdef _FAT_DIAGNOSIS_
-                            printf("\ni: %u character: %c test: %c", i, character, fileptrTest->name[i]); textColor(TEXT); /// TEST
+                            serial_log(SER_LOG_FAT, "\r\ni: %u character: %c test: %c", i, character, fileptrTest->name[i]); textColor(TEXT); /// TEST
                           #endif
                             if (toLower(character) != toLower(fileptrTest->name[i]))
                             {
                                 error = CE_FILE_NOT_FOUND;
                               #ifdef _FAT_DIAGNOSIS_
-                                textColor(RED); printf("\n\n %c <--- not equal", character); textColor(TEXT);
+                                textColor(RED); serial_log(SER_LOG_FAT, "\r\n\r\n %c <--- not equal", character); textColor(TEXT);
                               #endif
                                 break; // finish for loop
                             }
@@ -664,7 +665,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
 FS_ERROR FAT_fclose(file_t* file)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fclose <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fclose <<<<<");
   #endif
 
     FAT_file_t* FATfile = file->data;
@@ -725,8 +726,8 @@ FS_ERROR FAT_fclose(file_t* file)
 
 FS_ERROR FAT_fread(FAT_file_t* fileptr, void* dest, uint32_t count)
 {
-  #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fread <<<<<");
+  #ifdef _FAT_DETAIL_DIAGNOSIS_
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fread <<<<<");
   #endif
     FS_ERROR error      = CE_GOOD;
     partition_t* volume = fileptr->volume->part;
@@ -798,10 +799,10 @@ void FAT_showDirectoryEntry(FAT_dirEntry_t* dir)
     extension[3] = 0;
     strncpy(extension, dir->Extension, 3);
 
-    printf("\nname.ext: %s.%s",   name, extension);
-    printf("\nattrib.:  %yh",     dir->Attr);
-    printf("\ncluster:  %u",      dir->FstClusLO + 0x10000*dir->FstClusHI);
-    printf("\nfilesize: %u byte", dir->FileSize);
+    serial_log(SER_LOG_FAT, "\r\nname.ext: %s.%s",   name, extension);
+    serial_log(SER_LOG_FAT, "\r\nattrib.:  %yh",     dir->Attr);
+    serial_log(SER_LOG_FAT, "\r\ncluster:  %u",      dir->FstClusLO + 0x10000*dir->FstClusHI);
+    serial_log(SER_LOG_FAT, "\r\nfilesize: %u byte", dir->FileSize);
 }
 
 
@@ -812,7 +813,7 @@ void FAT_showDirectoryEntry(FAT_dirEntry_t* dir)
 static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t value, bool forceWrite)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatWrite forceWrite: %d <<<<<",forceWrite);
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fatWrite forceWrite: %d <<<<<",forceWrite);
   #endif
 
     if ((volume->part->subtype != FS_FAT32) && (volume->part->subtype != FS_FAT16) && (volume->part->subtype != FS_FAT12))
@@ -932,7 +933,7 @@ static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t
 static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatFindEmptyCluster <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fatFindEmptyCluster <<<<<");
   #endif
 
     uint32_t EndClusterLimit, ClusterFailValue;
@@ -989,7 +990,7 @@ static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
 static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> eraseCluster <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> eraseCluster <<<<<");
   #endif
 
     uint32_t SectorAddress = cluster2sector(volume,cluster);
@@ -1027,7 +1028,7 @@ static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
 static FS_ERROR fileAllocateNewCluster(FAT_file_t* fileptr, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fileAllocateNewCluster <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fileAllocateNewCluster <<<<<");
   #endif
 
     FAT_partition_t* volume = fileptr->volume;
@@ -1058,7 +1059,7 @@ static FS_ERROR fileAllocateNewCluster(FAT_file_t* fileptr, uint8_t mode)
 uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* fileptr)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fwrite <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fwrite <<<<<");
   #endif
 
     if (!fileptr->file->write)
@@ -1222,7 +1223,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
 static uint32_t getFullClusterNumber(FAT_dirEntry_t* entry)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> getFullClusterNumber <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> getFullClusterNumber <<<<<");
   #endif
 
     uint32_t TempFullClusterCalc = entry->FstClusHI;
@@ -1234,7 +1235,7 @@ static uint32_t getFullClusterNumber(FAT_dirEntry_t* entry)
 static bool writeFileEntry(FAT_file_t* fileptr, uint32_t* curEntry)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> writeFileEntry <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> writeFileEntry <<<<<");
   #endif
 
     FAT_partition_t* volume = fileptr->volume;
@@ -1255,7 +1256,7 @@ static bool writeFileEntry(FAT_file_t* fileptr, uint32_t* curEntry)
 static bool fatEraseClusterChain(uint32_t cluster, FAT_partition_t* volume)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fatEraseClusterChain <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fatEraseClusterChain <<<<<");
   #endif
 
     uint32_t c2, ClusterFailValue;
@@ -1323,7 +1324,7 @@ static bool fatEraseClusterChain(uint32_t cluster, FAT_partition_t* volume)
 FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseClusters)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fileErase <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fileErase <<<<<");
   #endif
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
@@ -1359,7 +1360,7 @@ FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseCluster
 static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name, uint32_t *fHandle, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> PopulateEntries <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> PopulateEntries <<<<<");
   #endif
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
@@ -1406,7 +1407,7 @@ static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name, uint32_t *fHand
 uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> FindEmptyEntries <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> FindEmptyEntries <<<<<");
   #endif
 
     uint8_t  status = NOT_FOUND;
@@ -1488,7 +1489,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
 static FAT_dirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> loadDirAttrib <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> loadDirAttrib <<<<<");
   #endif
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
@@ -1512,7 +1513,7 @@ static FAT_dirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
 static FS_ERROR fileCreateHeadCluster(FAT_file_t* fileptr, uint32_t* cluster)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fileCreateHeadCluster <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fileCreateHeadCluster <<<<<");
   #endif
 
     FAT_partition_t* volume = fileptr->volume;
@@ -1545,7 +1546,7 @@ static FS_ERROR fileCreateHeadCluster(FAT_file_t* fileptr, uint32_t* cluster)
 static FS_ERROR createFirstCluster(FAT_file_t* fileptr)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> createFirstCluster <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> createFirstCluster <<<<<");
   #endif
 
     uint32_t cluster;
@@ -1569,7 +1570,7 @@ static FS_ERROR createFirstCluster(FAT_file_t* fileptr)
 FS_ERROR FAT_createFileEntry(FAT_file_t* fileptr, uint32_t *fHandle, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> createFileEntry <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> createFileEntry <<<<<");
   #endif
 
     FS_ERROR error = CE_GOOD;
@@ -1600,7 +1601,7 @@ FS_ERROR FAT_createFileEntry(FAT_file_t* fileptr, uint32_t *fHandle, uint8_t mod
 static void fileptrCopy(FAT_file_t* dest, FAT_file_t* source)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fileptrCopy <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fileptrCopy <<<<<");
   #endif
 
     memcpy(dest, source, sizeof(FAT_file_t));
@@ -1609,7 +1610,7 @@ static void fileptrCopy(FAT_file_t* dest, FAT_file_t* source)
 static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fdopen <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fdopen <<<<<");
   #endif
 
     partition_t* volume = fileptr->volume->part;
@@ -1692,7 +1693,7 @@ static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
 FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fseek<<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fseek<<<<<");
   #endif
 
     FAT_file_t* FATfile = file->data;
@@ -1791,7 +1792,7 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
 FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
 {
   #ifdef _FAT_DIAGNOSIS_
-    printf("\n>>>>> fopen <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> fopen <<<<<");
   #endif
 
     FAT_file_t* FATfile = malloc(sizeof(FAT_file_t), 0,"FAT_fopen-FATfile");
@@ -2052,7 +2053,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
 
 FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_t* part)
 {
-    printf("\n rename: fileNameOld: %s, fileNameNew: %s", fileNameOld, fileNameNew);
+    serial_log(SER_LOG_FAT, "\r\n rename: fileNameOld: %s, fileNameNew: %s", fileNameOld, fileNameNew);
 
     FAT_file_t tempFile;
     FAT_file_t* fileptr = &tempFile;
@@ -2251,7 +2252,8 @@ FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependancies. Make
     flpydsk_write_ia(1, track, TRACK); // HACK: floppy dependance
 
     /// DONE
-    printf("Quickformat complete.\n");
+    printf("Quickformat complete.\r\n");
+    serial_log(SER_LOG_FAT, "Quickformat complete.\r\n");
     return CE_GOOD;
 }
 
