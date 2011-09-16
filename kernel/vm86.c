@@ -276,10 +276,10 @@ void vm86_initPageDirectory(pageDirectory_t* pd, void* address, void* data, size
 void vm86_executeSync(pageDirectory_t* pd, void (*entry)())
 {
     task_t* vm86task = create_vm86_task(pd, entry);
-    task_switching = false; // To avoid a race condition, we try to avoid task switches while creating task and initializing the blocker
+    cli(); // To avoid a race condition, we try to avoid task switches while creating task and initializing the blocker
     scheduler_insertTask(vm86task);
     waitForTask(vm86task, 0);
-    task_switching = true;
+    sti();
 }
 
 

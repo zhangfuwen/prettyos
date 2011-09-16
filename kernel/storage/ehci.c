@@ -13,7 +13,6 @@
 #include "audio/sys_speaker.h"
 #include "keyboard.h"
 #include "usb2.h"
-#include "usb2_msd.h"
 
 
 ehci_t* curEHCI = 0;
@@ -36,10 +35,6 @@ static void ehci_checkPortLineStatus(ehci_t* e, uint8_t j);
 
 void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
 {
-  #ifdef _EHCI_DIAGNOSIS_
-    printf("\n>>>ehci_install<<<\n");
-  #endif
-
     ehci_t* e = curEHCI = ehci[numPorts] = malloc(sizeof(ehci_t), 0, "ehci");
     e->num              = numPorts;
     e->PCIdevice        = PCIdev;
@@ -571,7 +566,6 @@ void ehci_portCheck()
         {
             if (e->OpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
-                ehci_resetPort(e,j);
                 ehci_checkPortLineStatus(e,j);
             }
             else
@@ -600,15 +594,25 @@ static void ehci_checkPortLineStatus(ehci_t* e, uint8_t j)
 {
   #ifdef _EHCI_DIAGNOSIS_
     textColor(LIGHT_CYAN);
-    printf("\nport %u: %xh, line: %yh ",j+1,e->OpRegs->PORTSC[j],(e->OpRegs->PORTSC[j]>>10)&3);
+    static const char* const state[] = {"SE0", "K-state", "J-state", "undefined"};
+    printf("\nport %u: %xh, line: %yh (%s) ",j+1,e->OpRegs->PORTSC[j],(e->OpRegs->PORTSC[j]>>10)&3, state[(e->OpRegs->PORTSC[j]>>10)&3]);
   #endif
+    static const char* const state[] = {"SE0", "K-state", "J-state", "undefined"};
+    printf("\nline state: %s", state[(e->OpRegs->PORTSC[j]>>10)&3]);
 
     switch ((e->OpRegs->PORTSC[j]>>10)&3) // bits 11:10
     {
+
+        case 1: // K-state, release ownership of port, because a low speed device is attached
+            e->OpRegs->PORTSC[j] |= PSTS_COMPANION_HC_OWNED; // release it to the cHC
+            break;
         case 0: // SE0
+        case 2: // J-state
+        case 3: // undefined
         {
             writeInfo(0, "Port: %u, hi-speed device attached", j+1);
 
+            ehci_resetPort(e,j);
             if ((e->OpRegs->PORTSC[j] & PSTS_POWERON) && (e->OpRegs->PORTSC[j] & PSTS_ENABLED) && (e->OpRegs->PORTSC[j] & ~PSTS_COMPANION_HC_OWNED))
             {
               #ifdef _EHCI_DIAGNOSIS_
@@ -619,19 +623,6 @@ static void ehci_checkPortLineStatus(ehci_t* e, uint8_t j)
                     setupUSBDevice(e,j);
                 }
             }
-            break;
-        }
-
-        case 1: // K-state, release ownership of port (in EHCI spec 1.0 this is recommended)
-        case 2: // J-state, release ownership of port (in EHCI spec 1.0 this is not recommended)
-            e->OpRegs->PORTSC[j] |= PSTS_COMPANION_HC_OWNED; // release it to the cHC
-            break;
-
-        case 3: // undefined
-        {
-            textColor(ERROR);
-            printf("\nline state: undefined");
-            textColor(TEXT);
             break;
         }
     }// switch

@@ -9,7 +9,6 @@
 #include "kheap.h"
 #include "util.h"
 #include "task.h"
-#include "memory.h"
 
 
 fileSystem_t FAT    = {.fopen = &FAT_fopen, .fclose = &FAT_fclose, .fgetc = &FAT_fgetc, .fputc = &FAT_fputc, .fseek = &FAT_fseek, .remove = &FAT_remove, .rename = &FAT_rename, .pformat = &FAT_format, .pinstall = &FAT_pinstall, .folderAccess = &FAT_folderAccess, .folderClose = &FAT_folderClose},
@@ -69,24 +68,13 @@ FS_ERROR analyzePartition(partition_t* part)
 // File functions
 file_t* fopen(const char* path, const char* mode)
 {
-    // printf("\npath:%s", path);
-
     file_t* file = malloc(sizeof(file_t), 0, "fsmgr-file");
     file->volume = getPartition(path);
 
     if (!file->volume)
     {
-        free(file); // cleanup
+        free(file);
         return(0);
-    }
-
-    if (!( (uintptr_t)file->volume >= (uintptr_t)KERNEL_heapStart && (uintptr_t)file->volume <= (uintptr_t)KERNEL_heapEnd ))
-    {
-        textColor(ERROR);
-        printf("\nERROR: invalid file->volume");
-        textColor(TEXT);
-        free(file); // cleanup
-        return (0);
     }
 
     file->seek   = 0;
@@ -128,13 +116,9 @@ file_t* fopen(const char* path, const char* mode)
         textColor(TEXT);
         return (0);
     }
-    else
-    {
-        // printf("\nfunction fopen defined: %Xh", file->volume->type->fopen);
-    }
 
     if (file->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD)
-    {   // cleanup
+    {
         free(file->name);
         free(file);
         return(0);

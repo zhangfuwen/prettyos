@@ -75,7 +75,6 @@ ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_
 ehci_qtd_t* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint8_t* buffer);
 ehci_qtd_t* createQTD_MSDStatus(uintptr_t next, bool toggle);
 
-void  checkAsyncScheduler(ehci_t* e);
 void  performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity);
 
 void  logBulkTransfer(usbBulkTransfer_t* bT);

@@ -48,7 +48,7 @@ typedef struct
 } port_t;
 
 
-void deviceManager_install(/*partition_t* system*/);
+void deviceManager_install(partition_t* systemPart);
 void deviceManager_checkDrives();
 void attachPort(port_t* port);
 void attachDisk(disk_t* disk);

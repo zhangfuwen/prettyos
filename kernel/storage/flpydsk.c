@@ -729,22 +729,18 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
     return retVal;
 }
 
-void flpydsk_refreshVolumeNames()
+void flpydsk_refreshVolumeName(floppy_t* drive)
 {
     floppy_t* currentDrive = CurrentDrive;
 
-    for (uint8_t i = 0; i < MAX_FLOPPY; i++)
-    {
-        if (floppyDrive[i] == 0) continue;
+    drive->drive.insertedDisk->accessRemaining++;
 
-        floppyDrive[i]->drive.insertedDisk->accessRemaining++;
+    char buffer[512];
+    flpydsk_readSector(19, buffer, drive); // start at 0x2600: root directory (14 sectors)
 
-        char buffer[512];
-        flpydsk_readSector(19, buffer, floppyDrive[i]); // start at 0x2600: root directory (14 sectors)
+    strncpy(drive->drive.insertedDisk->name, buffer, 11);
+    drive->drive.insertedDisk->name[11] = 0; // end of string
 
-        strncpy(floppyDrive[i]->drive.insertedDisk->name, buffer, 11);
-        floppyDrive[i]->drive.insertedDisk->name[11] = 0; // end of string
-    }
     CurrentDrive = currentDrive;
 }
 

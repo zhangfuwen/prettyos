@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.76 - Rev: 1277";
+const char* const version = "0.0.3.77 - Rev: 1278";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -185,7 +185,7 @@ static void init(multiboot_t* mb_struct)
     log("CDI");
 
     // mass storage devices
-    deviceManager_install();
+    deviceManager_install(0);
     log("Devicemanager");
 
     kernel_idleTasks = todolist_create();

@@ -315,11 +315,9 @@ void takeScreenshot()
 }
 
 extern disk_t* disks[DISKARRAYSIZE]; // HACK
-extern bool    readCacheFlag;        // HACK
 diskType_t*    ScreenDest = &FLOPPYDISK; // HACK
 void saveScreenshot()
 {
-    readCacheFlag = false; // TODO: solve this problem!
     char Pfad[20];
     for (int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
@@ -340,7 +338,6 @@ void saveScreenshot()
     {
         puts("\nError: file could not be opened!");
     }
-    readCacheFlag = true;
 }
 
 /*

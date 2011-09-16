@@ -497,7 +497,7 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
         FAT_showDirectoryEntry(dir);
       #endif
     }
-    else { dir = cacheFileEntry (fileptr, fHandle, false); }
+    else { dir = cacheFileEntry(fileptr, fHandle, false); }
 
     if (dir == 0)                  { return NO_MORE; }
     if (dir->Name[0] == DIR_DEL)   { return NOT_FOUND; }
@@ -510,10 +510,7 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
     }
     if (dir->Extension[0] != ' ')
     {
-        for (uint8_t i=0; i<DIR_EXTENSION; i++)
-        {
-            fileptr->name[test++]=dir->Extension[i];
-        }
+        memcpy(fileptr->name + test, dir->Extension, DIR_EXTENSION);
     }
     fileptr->entry        = *fHandle;
     fileptr->file->size   = dir->FileSize;

@@ -34,7 +34,7 @@ extern floppy_t* floppyDrive[MAX_FLOPPY];
 void flpydsk_install();
 void flpydsk_motorOn (void* drive);
 void flpydsk_motorOff(void* drive);
-void flpydsk_refreshVolumeNames();
+void flpydsk_refreshVolumeName(floppy_t* drive);
 FS_ERROR flpydsk_readSector(uint32_t sector, void* buffer, void* device);
 FS_ERROR flpydsk_writeSector(uint32_t sector, void* buffer, void* device);
 FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option);

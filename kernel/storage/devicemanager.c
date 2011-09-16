@@ -33,7 +33,6 @@ diskType_t FLOPPYDISK = {.readSector = &flpydsk_readSector, .writeSector = &flpy
 
 // ReadCache
 #define NUMREADCACHE 20
-bool readCacheFlag = true;
 
 typedef struct
 {
@@ -47,13 +46,13 @@ static readcache_t readcaches[NUMREADCACHE];
 static uint8_t     currReadCache = 0;
 
 
-void deviceManager_install(/*partition_t* system*/)
+void deviceManager_install(partition_t* systemPart)
 {
     memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
     memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
     for (uint16_t i = 0; i < NUMREADCACHE; i++) // Invalidate all read caches
         readcaches[i].valid = false;
-    //systemPartition = system;
+    systemPartition = systemPart;
 }
 
 void deviceManager_checkDrives()
@@ -135,10 +134,9 @@ void showPortList()
 
             if (ports[i]->insertedDisk != 0)
             {
-                flpydsk_refreshVolumeNames();
-                if (ports[i]->type != &FDD || *ports[i]->insertedDisk->name != 0) // Floppy workaround
-                    printf("\t%s",ports[i]->insertedDisk->name); // Attached disk
-                else putch('\t');
+                if(ports[i]->type == &FDD)
+                    flpydsk_refreshVolumeName(ports[i]->data);
+                printf("\t%s", ports[i]->insertedDisk->name); // Attached disk
             }
             else
             {
@@ -166,7 +164,7 @@ void showDiskList()
         {
             if (disks[i]->type == &FLOPPYDISK) /// Todo: Move to flpydsk.c, name set on floppy insertion
             {
-                flpydsk_refreshVolumeNames();
+                flpydsk_refreshVolumeName(disks[i]->data);
             }
             if (disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) continue; // Floppy workaround
 
@@ -278,7 +276,10 @@ partition_t* getPartition(const char* path)
 
     if ((PortID != -1) && (PortID < PORTARRAYSIZE))
     {
-        return(ports[PortID]->insertedDisk->partition[PartitionID]);
+        if(ports[PortID] && ports[PortID]->insertedDisk)
+        {
+            return(ports[PortID]->insertedDisk->partition[PartitionID]);
+        }
     }
     else
     {
@@ -286,7 +287,7 @@ partition_t* getPartition(const char* path)
         {
             return(systemPartition);
         }
-        if (DiskID > 0 && DiskID <= DISKARRAYSIZE)
+        if (DiskID > 0 && DiskID <= DISKARRAYSIZE && disks[DiskID-1])
         {
             return(disks[DiskID-1]->partition[PartitionID]);
         }
@@ -434,21 +435,18 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(TEXT);
   #endif
 
-    if (readCacheFlag)
+    for (uint16_t i = 0; i < NUMREADCACHE; i++)
     {
-        for (uint16_t i = 0; i < NUMREADCACHE; i++)
+        if (readcaches[i].valid && readcaches[i].sector == sector && readcaches[i].disk == disk)
         {
-            if (readcaches[i].valid && readcaches[i].sector == sector && readcaches[i].disk == disk)
-            {
-                #ifdef _DEVMGR_DIAGNOSIS_
-                printf("\nsector: %u <--- read from RAM Cache", readcaches[i].sector);
-                #endif
+            #ifdef _DEVMGR_DIAGNOSIS_
+            printf("\nsector: %u <--- read from RAM Cache", readcaches[i].sector);
+            #endif
 
-                memcpy(buffer, readcaches[i].buffer, 512); // use read cache
+            memcpy(buffer, readcaches[i].buffer, 512); // use read cache
 
-                disk->accessRemaining--;
-                return(CE_GOOD);
-            }
+            disk->accessRemaining--;
+            return(CE_GOOD);
         }
     }
 

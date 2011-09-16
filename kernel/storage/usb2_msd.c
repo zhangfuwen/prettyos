@@ -9,8 +9,7 @@
 #include "video/console.h"
 #include "util.h"
 #include "usb2.h"
-#include "ehciQHqTD.h" // logBulkTransfer
-#include "ehci.h"
+#include "ehciQHqTD.h"
 
 
 extern ehci_t* curEHCI;

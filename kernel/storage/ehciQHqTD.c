@@ -216,11 +216,11 @@ If the Enhanced Host Controller Interface ever encounters an H-bit of one and a 
 the EHCI controller simply stops traversal of the asynchronous schedule.
 */
 
-void checkAsyncScheduler(ehci_t* e)
+#ifdef _EHCI_DIAGNOSIS_
+static void checkAsyncScheduler(ehci_t* e)
 {
     // cf. ehci spec 1.0, Figure 3-7. Queue Head Structure Layout
 
-  #ifdef _EHCI_DIAGNOSIS_
     textColor(IMPORTANT);
 
     // async scheduler: last QH accessed or QH to be accessed is shown by ASYNCLISTADDR register
@@ -268,14 +268,11 @@ void checkAsyncScheduler(ehci_t* e)
     uint32_t NakCtr = (BYTE1(*(((uint32_t*)virtASYNCLISTADDR)+5)) & 0x1E)>>1;
     printf("\nNAK counter: %u", NakCtr);
     textColor(TEXT);
-  #endif
 }
+#endif
 
 void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
 {
-
-    
-  
  #ifdef _EHCI_DIAGNOSIS_
     if (analyze)
     {
@@ -287,7 +284,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     e->OpRegs->USBSTS |= STS_USBINT;
     e->USBINTflag = false;
     e->OpRegs->USBSTS |= STS_ASYNC_INT;
-    e->USBasyncIntFlag = false; 
+    e->USBasyncIntFlag = false;
 
     // Enable Asynchronous Schdeuler
     e->OpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
@@ -313,11 +310,11 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
             break;
         }
     }
-    
-    
+
+
     // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
     // sleepMilliSeconds(50 + velocity * 200);
-        
+
     timeout=5;
     while (!e->USBasyncIntFlag)
     {
@@ -339,12 +336,12 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     {
         textColor(SUCCESS);
         printf("\nASYNC_INT successfully set! timeout-counter: %u", timeout);
-        textColor(TEXT);        
+        textColor(TEXT);
     }
 
     // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
-    
-    
+
+
     timeout=5;
     while (!e->USBINTflag) // set by interrupt
     {
@@ -367,7 +364,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
             break;
         }
     };
-    
+
 
     e->OpRegs->USBSTS |= STS_USBINT;
     e->USBINTflag = false;
