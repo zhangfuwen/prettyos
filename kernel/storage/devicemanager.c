@@ -298,45 +298,43 @@ partition_t* getPartition(const char* path)
 FS_ERROR analyzeDisk(disk_t* disk)
 {
     uint8_t buffer[512];
-    singleSectorRead(0, buffer, disk); // first sector of partition 
+    singleSectorRead(0, buffer, disk); // first sector of partition
 
     BPBbase_t* BPB = (BPBbase_t*)buffer; // BIOS Parameter Block (BPB)
-    if ( !(BPB->FATcount > 0 && BPB->bytesPerSector % 512 == 0 && BPB->bytesPerSector != 0) && // Data look not like a BPB ...
-         (buffer[510] == 0x55 && buffer[511] == 0xAA)) // ... but like a Master Boot Record (MBR)
+    if (!(BPB->FATcount > 0 && BPB->bytesPerSector % 512 == 0 && BPB->bytesPerSector != 0) && // Data look not like a BPB ...
+        (buffer[510] == 0x55 && buffer[511] == 0xAA)) // ... but like a Master Boot Record (MBR)
     {
         // Read partitions from MBR
         printf("\nFound MBR (DiskID: %xh):", ((uint16_t*)buffer)[440/2]);
         partitionEntry_t* entries = (partitionEntry_t*)(buffer+446);
-        
+
         for (uint8_t i = 0; i < 4; i++) // four entries in partition table
         {
             printf("\npartition entry %u: ", i);
             if (entries[i].type != 0) // valid entry
             {
                 printf("start: %u\tsize: %u\t type: ", entries[i].startLBA, entries[i].sizeLBA);
-                
+
                 disk->partition[i]         = malloc(sizeof(partition_t), 0, "partition_t");
                 disk->partition[i]->start  = entries[i].startLBA;
                 disk->partition[i]->size   = entries[i].sizeLBA;
                 disk->partition[i]->disk   = disk;
                 disk->partition[i]->serial = 0;
-                
+
                 if (analyzePartition(disk->partition[i]) != CE_GOOD)
-                {
                     printf("unknown");
-                }
             }
             else
             {
                 disk->partition[i] = 0;
                 printf("invalid");
             }
-        }//for
+        }
     }
-    else
+    else // There is just one partition
     {
-        printf("       => Found single partition on disk. (type: "); // There is just one partition
-        
+        printf("       => Found single partition on disk. (type: ");
+
         disk->partition[0]         = malloc(sizeof(partition_t), 0, "partition_t");
         disk->partition[0]->start  = 0;
         disk->partition[0]->disk   = disk;
@@ -430,7 +428,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
   #ifdef _DEVMGR_DIAGNOSIS_
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(TEXT);
   #endif
-       
+
     for (uint16_t i = 0; i < NUMREADCACHE; i++)
     {
         if (readcaches[i].valid && readcaches[i].sector == sector && readcaches[i].disk == disk)
@@ -445,7 +443,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
             return(CE_GOOD);
         }
     }
-   
+
     FS_ERROR error = disk->type->readSector(sector, buffer, disk->data);
     if (error == CE_GOOD)
     {

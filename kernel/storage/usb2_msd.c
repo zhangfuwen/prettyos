@@ -434,25 +434,16 @@ static void analyzeInquiry(void* addr)
     uint8_t Linked               = getField(addr, 7, 3, 1);
 
     char vendorID[9];
-    for (uint8_t i=0; i<8;i++)
-    {
-        vendorID[i]= getField(addr, i+8, 0, 8);
-    }
+    memcpy(vendorID, addr+8, 8);
     vendorID[8]=0;
 
     char productID[17];
-    for (uint8_t i=0; i<16;i++)
-    {
-        productID[i]= getField(addr, i+16, 0, 8);
-    }
+    memcpy(productID, addr+16, 16);
     productID[16]=0;
 
   #ifdef _USB2_DIAGNOSIS_
     char productRevisionLevel[5];
-    for (uint8_t i=0; i<4;i++)
-    {
-        productRevisionLevel[i]= getField(addr, i+32, 0, 8);
-    }
+    memcpy(productRevisionLevel, addr+32, 4);
     productRevisionLevel[4]=0;
   #endif
 
@@ -507,7 +498,7 @@ static void analyzeInquiry(void* addr)
         case 0x10: printf("\nReserved for bridging expanders");                       break;
         case 0x11: printf("\nObject-based Storage Device");                           break;
         case 0x12: printf("\nAutomation/Drive Interface");                            break;
-        case 0x13: printf("\nReserved");                                              break;
+        case 0x13:
         case 0x1D: printf("\nReserved");                                              break;
         case 0x1E: printf("\nReduced block command (RBC) direct-access device");      break;
         case 0x1F: printf("\nUnknown or no device type");                             break;
@@ -576,12 +567,12 @@ void testMSD(uint8_t devAddr, disk_t* disk)
 
         uint32_t lastLBA    = (*((uint8_t*)capacityBuffer+0)) * 0x1000000 + (*((uint8_t*)capacityBuffer+1)) * 0x10000 + (*((uint8_t*)capacityBuffer+2)) * 0x100 + (*((uint8_t*)capacityBuffer+3));
         uint32_t blocksize  = (*((uint8_t*)capacityBuffer+4)) * 0x1000000 + (*((uint8_t*)capacityBuffer+5)) * 0x10000 + (*((uint8_t*)capacityBuffer+6)) * 0x100 + (*((uint8_t*)capacityBuffer+7));
-        uint32_t capacityMB = ((lastLBA+1)/0x100000) * blocksize;
+        uint32_t capacityMiB = ((lastLBA+1)/0x100000) * blocksize;
 
         usbMSDVolumeMaxLBA = lastLBA;
 
         textColor(IMPORTANT);
-        printf("\nCapacity: %u MB, Last LBA: %u, block size: %u\n", capacityMB, lastLBA, blocksize);
+        printf("\nCapacity: %u MiB, Last LBA: %u, block size: %u\n", capacityMiB, lastLBA, blocksize);
         textColor(TEXT);
 
         showUSBSTS(e);

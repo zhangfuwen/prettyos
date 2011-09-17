@@ -87,6 +87,7 @@ void usb_setupTransfer(port_t* device, usb_transfer_t* transfer, usb_tranferType
     transfer->endpoint = endpoint;
     transfer->type = type;
     transfer->packetSize = packetSize;
+    transfer->success = false;
     ehci_setupTransfer(transfer);
 }
 

@@ -102,7 +102,6 @@ struct usb2_stringDescriptorUnicode
    uint8_t  length;            // 2 + 2 * numUnicodeCharacters
    uint8_t  descriptorType;    // 3
    uint8_t  widechar[30];      // n = 30 test-wise
-   uint8_t  asciichar[30];
 } __attribute__((packed));
 
 

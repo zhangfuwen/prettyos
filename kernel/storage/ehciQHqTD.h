@@ -72,16 +72,12 @@ void* allocQTDbuffer(ehci_qtd_t* td);
 void  createQH(ehci_qhd_t* address, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
 ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);
 ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
-ehci_qtd_t* createQTD_IO_OUT(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint8_t* buffer);
-ehci_qtd_t* createQTD_MSDStatus(uintptr_t next, bool toggle);
 
 void  performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity);
 
 void  logBulkTransfer(usbBulkTransfer_t* bT);
 
-uint32_t showStatusbyteQTD(void* addressQTD);
-void     showPacket(uint32_t virtAddrBuf0, uint32_t size);
-void     showPacketAlphaNumeric(uint32_t virtAddrBuf0, uint32_t size);
+uint8_t showStatusbyteQTD(ehci_qtd_t* qTD);
 
 
 #endif

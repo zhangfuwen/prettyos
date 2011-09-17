@@ -119,25 +119,24 @@ ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_
 // analysis tools //
 ////////////////////
 
-uint32_t showStatusbyteQTD(void* addressQTD)
+uint8_t showStatusbyteQTD(ehci_qtd_t* qTD)
 {
-    uint8_t statusbyte = getField(addressQTD, 8, 0, 8);
-    if (statusbyte != 0x00)
+    if (qTD->token.status != 0x00)
     {
         printf("\n");
         textColor(ERROR);
-        if (statusbyte & BIT(6)) { printf("Halted - serious error at the device/endpoint"); }
-        if (statusbyte & BIT(5)) { printf("Data Buffer Error (overrun or underrun)"); }
-        if (statusbyte & BIT(4)) { printf("Babble - fatal error leads to Halted"); }
-        if (statusbyte & BIT(3)) { printf("Transaction Error - host received no valid response device"); }
-        if (statusbyte & BIT(2)) { printf("Missed Micro-Frame"); }
+        if (qTD->token.status & BIT(6)) { printf("\nHalted - serious error at the device/endpoint"); }
+        if (qTD->token.status & BIT(5)) { printf("\nData Buffer Error (overrun or underrun)"); }
+        if (qTD->token.status & BIT(4)) { printf("\nBabble - fatal error leads to Halted"); }
+        if (qTD->token.status & BIT(3)) { printf("\nTransaction Error - host received no valid response device"); }
+        if (qTD->token.status & BIT(2)) { printf("\nMissed Micro-Frame"); }
         textColor(IMPORTANT);
-        if (statusbyte & BIT(7)) { printf("Active - HC transactions enabled"); }
-        if (statusbyte & BIT(1)) { printf("Do Complete Split"); }
-        if (statusbyte & BIT(0)) { printf("Do Ping"); }
+        if (qTD->token.status & BIT(7)) { printf("\nActive - HC transactions enabled"); }
+        if (qTD->token.status & BIT(1)) { printf("\nDo Complete Split"); }
+        if (qTD->token.status & BIT(0)) { printf("\nDo Ping"); }
         textColor(TEXT);
     }
-    return statusbyte;
+    return qTD->token.status;
 }
 
 /////////////////////////////////////
@@ -332,7 +331,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
           #endif
             break;
         }
-    };
+    }
 
     if (timeout > 0)
     {
@@ -367,7 +366,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
             textColor(TEXT);
             break;
         }
-    };
+    }
 
 
     e->OpRegs->USBSTS |= STS_USBINT;

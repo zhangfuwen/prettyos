@@ -25,6 +25,7 @@ typedef struct
     uint32_t          packetSize;
     port_t*           HC;
     list_t*           transactions;
+    bool              success;
 } usb_transfer_t;
 
 typedef enum

@@ -90,7 +90,7 @@ void usbTransferConfig(uint32_t device)
     void* lastByte = addr + (*(uint16_t*)(addr+2)); // totalLength (WORD)
 
   #ifdef _USB2_DIAGNOSIS_
-    memshow(buffer, (*(uint16_t*)(addr+2)), false);
+    memshow(buffer, *(uint16_t*)(addr+2), false);
     putch('\n');
   #endif
 
@@ -515,15 +515,14 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
         }
 
       #ifdef _USB2_DIAGNOSIS_
-        printf("\nalternate Setting:  %u\n",   d->alternateSetting);
-        printf("interface class:      %u\n",   d->interfaceClass);
-        printf("interface subclass:   %u\n",   d->interfaceSubclass);
-        printf("interface protocol:   %u\n",   d->interfaceProtocol);
-        printf("interface:            %xh\n",  d->interface);
+        printf("\nalternate Setting:  %u\n",  d->alternateSetting);
+        printf("interface class:      %u\n",  d->interfaceClass);
+        printf("interface subclass:   %u\n",  d->interfaceSubclass);
+        printf("interface protocol:   %u\n",  d->interfaceProtocol);
+        printf("interface:            %xh\n", d->interface);
       #endif
 
         textColor(TEXT);
-        sleepSeconds(1); // wait to show data
     }
 }
 
@@ -561,8 +560,8 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
         textColor(IMPORTANT);
 
       #ifdef _USB2_DIAGNOSIS_
-        printf("\nlength:            %u\t\t",  d->length);     // 12
-        printf("descriptor type:   %u\n",  d->descriptorType); //  3
+        printf("\nlength:          %u\t", d->length);         // 12
+        printf("\tdescriptor type: %u\n", d->descriptorType); //  3
       #endif
 
         printf("\n\nlanguages: ");
@@ -688,26 +687,32 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
     {
       #ifdef _USB2_DIAGNOSIS_
         textColor(IMPORTANT);
-        printf("\nlength:            %u\t\t",  d->length);
-        printf("descriptor type:   %u\n",  d->descriptorType); // 3
-        printf("string: ");
-      #endif
-
+        printf("\nlength:          %u\t", d->length);
+        printf("\tdescriptor type: %u", d->descriptorType);
+        printf("\nstring:          ");
         textColor(YELLOW);
-        for (uint8_t i=0; i<(d->length-2);i+=2) // show only low value of Unicode character
+      #endif
+        char asciichar[15];
+        memset(asciichar, 0, 15);
+
+        for (uint8_t i=0; i<(d->length-2); i+=2) // show only low value of Unicode character
         {
             if (d->widechar[i])
             {
-                putch(d->widechar[i]); // output
-                d->asciichar[i/2] = d->widechar[i];
+              #ifdef _USB2_DIAGNOSIS_
+                putch(d->widechar[i]);
+              #endif
+                asciichar[i/2] = d->widechar[i];
             }
         }
+      #ifdef _USB2_DIAGNOSIS_
         printf("\t");
         textColor(TEXT);
+      #endif
 
         if (stringIndex == 2) // product name
         {
-            strncpy(usbDevices[device].productName, (char*)d->asciichar, 15);
+            strncpy(usbDevices[device].productName, asciichar, 15);
 
           #ifdef _USB2_DIAGNOSIS_
             printf(" product name: %s", usbDevices[device].productName);
@@ -717,14 +722,8 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
         {
             // take the last 12 characters:
 
-            // find the last character
-            int16_t j=0; // start at the front
-            while (d->asciichar[j]) // not '\0'
-            {
-                j++;     // go to the next character
-            }
-            int16_t last = j; // store last position
-            j = max(j-12, 0); // step 12 characters backwards, but not below zero
+            int16_t last = strlen(asciichar); // store last position
+            int16_t j = max(last-12, 0); // step 12 characters backwards, but not below zero
 
             for (uint16_t index=0; index<13; index++)
             {
@@ -735,7 +734,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_
                 }
                 else
                 {
-                    usbDevices[device].serialNumber[index] = d->asciichar[j+index];
+                    usbDevices[device].serialNumber[index] = asciichar[j+index];
                 }
             }
           #ifdef _USB2_DIAGNOSIS_
