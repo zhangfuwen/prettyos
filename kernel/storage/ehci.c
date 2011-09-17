@@ -180,7 +180,9 @@ void ehci_startHC(ehci_t* e)
     //    of the port to a cHC by setting the PortOwner bit in the PORTSC register to a one
 
     e->OpRegs->CONFIGFLAG  = CF;                 // if zero, EHCI is not enabled and all usb devices go to the cHC
-    e->CapRegs->HCSPARAMS |= PORT_ROUTING_RULES; // full/low speed can go to companion HC (UHCI, OHCI)
+    printf("\nHCSPARAMS: %u", e->CapRegs->HCSPARAMS & PORT_ROUTING_RULES);
+    e->CapRegs->HCSPARAMS |= PORT_ROUTING_RULES; // full/low speed can go to companion HC (UHCI, OHCI). TODO: Register is read only.
+    printf(" -> %u", e->CapRegs->HCSPARAMS&PORT_ROUTING_RULES);
 
   #ifdef _EHCI_DIAGNOSIS_
     // 60 bits = 15 nibble  for the 15 possible ports of the EHCI show number of cHC

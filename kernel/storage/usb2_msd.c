@@ -594,11 +594,11 @@ void testMSD(uint8_t devAddr, disk_t* disk)
 FS_ERROR usbRead(uint32_t sector, void* buffer, void* device)
 {
     ///////// send SCSI command "read(10)", read one block from LBA ..., get Status
-  #ifdef _USB2_DIAGNOSIS_
+  // #ifdef _USB2_DIAGNOSIS_
     textColor(LIGHT_BLUE);
     printf("\n\n>>> SCSI: read   sector: %u", sector);
     textColor(TEXT);
-  #endif
+  // #endif
 
     ehci_t* e = curEHCI;
 

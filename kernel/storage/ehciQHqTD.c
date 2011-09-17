@@ -289,7 +289,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     // Enable Asynchronous Schdeuler
     e->OpRegs->USBCMD |= CMD_ASYNCH_ENABLE | CMD_ASYNCH_INT_DOORBELL; // switch on and set doorbell
 
-    int8_t timeout=7;
+    uint32_t timeout=7;
     while (!(e->OpRegs->USBSTS & STS_ASYNC_ENABLED)) // wait until it is really on
     {
         timeout--;
@@ -315,7 +315,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
     // sleepMilliSeconds(50 + velocity * 200);
 
-    timeout=5;
+    timeout = 5 + velocity * 20;
     while (!e->USBasyncIntFlag)
     {
         timeout--;
@@ -325,18 +325,22 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
         }
         else
         {
+          #ifdef _EHCI_DIAGNOSIS_
             textColor(ERROR);
             printf("\nTimeout Error - ASYNC_INT not set!");
             textColor(TEXT);
+          #endif
             break;
         }
     };
 
     if (timeout > 0)
     {
+      #ifdef _EHCI_DIAGNOSIS_
         textColor(SUCCESS);
         printf("\nASYNC_INT successfully set! timeout-counter: %u", timeout);
         textColor(TEXT);
+      #endif
     }
 
     // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}

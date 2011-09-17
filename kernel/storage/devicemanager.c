@@ -434,7 +434,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
   #ifdef _DEVMGR_DIAGNOSIS_
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(TEXT);
   #endif
-
+       
     for (uint16_t i = 0; i < NUMREADCACHE; i++)
     {
         if (readcaches[i].valid && readcaches[i].sector == sector && readcaches[i].disk == disk)
@@ -449,7 +449,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
             return(CE_GOOD);
         }
     }
-
+   
     FS_ERROR error = disk->type->readSector(sector, buffer, disk->data);
     if (error == CE_GOOD)
     {

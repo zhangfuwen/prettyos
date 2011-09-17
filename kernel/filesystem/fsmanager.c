@@ -74,6 +74,7 @@ file_t* fopen(const char* path, const char* mode)
     if (!file->volume)
     {
         free(file);
+        printf("\n!file->volume");
         return(0);
     }
 
@@ -114,6 +115,7 @@ file_t* fopen(const char* path, const char* mode)
         textColor(ERROR);
         printf("\nERROR: function fopen not defined");
         textColor(TEXT);
+        printf("\nfile->volume->type->fopen == 0");
         return (0);
     }
 
@@ -121,6 +123,7 @@ file_t* fopen(const char* path, const char* mode)
     {
         free(file->name);
         free(file);
+        printf("\nfile->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD");
         return(0);
     }
 

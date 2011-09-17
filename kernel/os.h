@@ -5,7 +5,7 @@
 
 
 // Additional features (Should be enabled per default)
-#define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
+/// #define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 #define _SERIAL_LOG_           // Enables log information over the COM-Ports
 #define _EHCI_ENABLE_          // EHCI will be installed, if this is defined, otherwise not
@@ -29,7 +29,7 @@
 /// #define _USB2_DIAGNOSIS_       // Debug USB 2.0 transfers
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)
 /// #define _RAMDISK_DIAGNOSIS_    // Information about the ramdisk
-/// #define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/32
+#define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/32
 /// #define _FAT_DETAIL_DIAGNOSIS_ // cluster2sector, read
 /// #define _NETWORK_DATA_         // Information about networking packets
 /// #define _NETWORK_DIAGNOSIS_    // Information about the network adapters
