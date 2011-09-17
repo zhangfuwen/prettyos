@@ -47,6 +47,17 @@ typedef struct
     void*       data;         // Contains additional information depending on its type
 } port_t;
 
+// 16-byte partition record // http://en.wikipedia.org/wiki/Master_boot_record
+typedef struct 
+{
+    uint8_t  bootflag;     // Status: 0x80 = bootable (active), 0x00 = non-bootable, other = invalid 
+    uint8_t  startCHS[3];  // CHS address of first absolute sector in partition
+    uint8_t  type;         // http://en.wikipedia.org/wiki/Partition_type
+    uint8_t  endCHS[3];    // CHS address of last absolute sector in partition
+    uint32_t startLBA;     // LBA of first absolute sector in the partition 
+    uint32_t sizeLBA;      // Number of sectors in partition (little-endian format)
+} __attribute__((packed)) partitionEntry_t;
+
 
 void deviceManager_install(partition_t* systemPart);
 void deviceManager_checkDrives();

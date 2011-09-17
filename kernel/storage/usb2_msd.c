@@ -576,12 +576,12 @@ void testMSD(uint8_t devAddr, disk_t* disk)
 
         uint32_t lastLBA    = (*((uint8_t*)capacityBuffer+0)) * 0x1000000 + (*((uint8_t*)capacityBuffer+1)) * 0x10000 + (*((uint8_t*)capacityBuffer+2)) * 0x100 + (*((uint8_t*)capacityBuffer+3));
         uint32_t blocksize  = (*((uint8_t*)capacityBuffer+4)) * 0x1000000 + (*((uint8_t*)capacityBuffer+5)) * 0x10000 + (*((uint8_t*)capacityBuffer+6)) * 0x100 + (*((uint8_t*)capacityBuffer+7));
-        uint32_t capacityMB = ((lastLBA+1)/1000000) * blocksize;
+        uint32_t capacityMB = ((lastLBA+1)/0x100000) * blocksize;
 
         usbMSDVolumeMaxLBA = lastLBA;
 
         textColor(IMPORTANT);
-        printf("\nCapacity: %u MB, Last LBA: %u, block size %u\n", capacityMB, lastLBA, blocksize);
+        printf("\nCapacity: %u MB, Last LBA: %u, block size: %u\n", capacityMB, lastLBA, blocksize);
         textColor(TEXT);
 
         showUSBSTS(e);

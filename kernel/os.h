@@ -29,7 +29,7 @@
 /// #define _USB2_DIAGNOSIS_       // Debug USB 2.0 transfers
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)
 /// #define _RAMDISK_DIAGNOSIS_    // Information about the ramdisk
-#define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/32
+/// #define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/32
 /// #define _FAT_DETAIL_DIAGNOSIS_ // cluster2sector, read
 /// #define _NETWORK_DATA_         // Information about networking packets
 /// #define _NETWORK_DIAGNOSIS_    // Information about the network adapters

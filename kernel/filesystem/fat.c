@@ -59,7 +59,7 @@ static uint32_t cluster2sector(FAT_partition_t* volume, uint32_t cluster)
         }
         else
         {
-            sector = volume->root + cluster * volume->SecPerClus;
+            sector = volume->root + cluster * volume->SecPerClus;  
         }
     }
     else // data area
@@ -349,21 +349,21 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
     serial_log(SER_LOG_FAT, "\r\r\n>>>>> cacheFileEntry <<<<< *curEntry: %u ForceRead: %u", *curEntry, ForceRead);
   #endif
     FAT_partition_t* volume       = fileptr->volume;
-    uint32_t cluster              = fileptr->dirfirstCluster;
+    uint32_t cluster              = fileptr->dirfirstCluster; serial_log(SER_LOG_FAT, "\r\nfileptr->dirfirstCluster: %u", fileptr->dirfirstCluster);
     uint32_t DirectoriesPerSector = volume->part->disk->sectorSize/sizeof(FAT_dirEntry_t);
     uint32_t offset2              = (*curEntry)/DirectoriesPerSector;
     uint32_t LastClusterLimit;
 
     if (volume->part->subtype == FS_FAT32)
     {
-        offset2  = offset2 % (volume->SecPerClus);
+        offset2  %= volume->SecPerClus;
         LastClusterLimit = LAST_CLUSTER_FAT32;
     }
     else
     {
-        if (cluster != 0)
+        if (cluster != 0 ) // not root dir 
         {
-            offset2  = offset2 % (volume->SecPerClus);
+            offset2 %= volume->SecPerClus;
         }
         LastClusterLimit = LAST_CLUSTER_FAT16;
     }
@@ -524,7 +524,7 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
 FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_t cmd, uint8_t mode)
 {
   #ifdef _FAT_DIAGNOSIS_
-    serial_log(SER_LOG_FAT, "\r\n>>>>> searchFile <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> FAT_searchFile <<<<<");
   #endif
 
     FS_ERROR error              = CE_FILE_NOT_FOUND;
@@ -1789,7 +1789,7 @@ FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
 FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
 {
   #ifdef _FAT_DIAGNOSIS_
-    serial_log(SER_LOG_FAT, "\r\n>>>>> fopen <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> FAT_fopen <<<<<");
   #endif
 
     FAT_file_t* FATfile = malloc(sizeof(FAT_file_t), 0,"FAT_fopen-FATfile");
@@ -1808,7 +1808,12 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     FATfile->currCluster       = 0;
     FATfile->entry             = 0;
     FATfile->attributes        = ATTR_ARCHIVE;
-    FATfile->dirfirstCluster   = FATfile->volume->FatRootDirCluster;
+    FATfile->dirfirstCluster   = FATfile->volume->FatRootDirCluster; 
+
+  #ifdef _FAT_DIAGNOSIS_
+    serial_log(SER_LOG_FAT, "\r\nFATfile->volume->FatRootDirCluster: %u", FATfile->volume->FatRootDirCluster);
+  #endif
+
     FATfile->dircurrCluster    = FATfile->volume->FatRootDirCluster;
 
 
@@ -2257,16 +2262,23 @@ FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependancies. Make
 extern uint32_t usbMSDVolumeMaxLBA; // HACK
 FS_ERROR FAT_pinstall(partition_t* part)
 {
+  #ifdef _FAT_DIAGNOSIS_
+    printf("\r\n>>>>> FAT_pinstall <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> FAT_pinstall <<<<<");
+  #endif
+
+
     FAT_partition_t* fpart = malloc(sizeof(FAT_partition_t), 0, "FAT_partition_t");
-    part->data = fpart;
+    part->data  = fpart;
     fpart->part = part;
 
     uint8_t buffer[512];
     singleSectorRead(part->start, buffer, part->disk);
 
-    BPBbase_t* BPB = (BPBbase_t*)buffer;
+    BPBbase_t* BPB     = (BPBbase_t*)buffer;
     BPB1216_t* BPB1216 = (BPB1216_t*)buffer;
-    BPB32_t* BPB32 = (BPB32_t*)buffer;
+    BPB32_t* BPB32     = (BPB32_t*)  buffer;
+    
     // Determine subtype (HACK: unrecommended way to determine type. cf. FAT specification)
     if (BPB1216->FStype[0] == 'F' && BPB1216->FStype[1] == 'A' && BPB1216->FStype[2] == 'T' && BPB1216->FStype[3] == '1' && BPB1216->FStype[4] == '2')
     {
@@ -2284,37 +2296,43 @@ FS_ERROR FAT_pinstall(partition_t* part)
         part->subtype = FS_FAT32;
     }
 
-
     if (BPB->TotalSectors16 == 0)
         part->size = BPB->TotalSectors32;
     else
         part->size = BPB->TotalSectors16;
-    fpart->fatcopy = BPB->FATcount;
-    fpart->SecPerClus = BPB->SectorsPerCluster;
-    fpart->maxroot = BPB->MaxRootEntries;
+
+    fpart->fatcopy         = BPB->FATcount;
+    fpart->SecPerClus      = BPB->SectorsPerCluster;
+    fpart->maxroot         = BPB->MaxRootEntries;
     fpart->reservedSectors = BPB->ReservedSectors;
-    fpart->fat = part->start + BPB->ReservedSectors;
-    part->serial = malloc(5, 0, "part->serial");
-    part->serial[5] = 0;
+    fpart->fat             = part->start + BPB->ReservedSectors;
+    part->serial           = malloc(5, 0, "part->serial");
+    part->serial[5]        = 0;
 
     if (part->subtype == FS_FAT32)
     {
-        fpart->fatsize = BPB32->FATsize32;
+        fpart->fatsize           = BPB32->FATsize32;
         fpart->FatRootDirCluster = BPB32->rootCluster;
-        fpart->root = fpart->fat + fpart->fatcopy*fpart->fatsize + fpart->SecPerClus*(fpart->FatRootDirCluster-2);
-        fpart->dataLBA = fpart->root;
+        fpart->root              = fpart->fat + fpart->fatcopy*fpart->fatsize + fpart->SecPerClus*(fpart->FatRootDirCluster-2);
+        fpart->dataLBA           = fpart->root;
         memcpy(part->serial, &BPB32->VolID, 4);
+      #ifdef _FAT_DIAGNOSIS_
+        printf("\r\nFAT32 result: root: %u dataLBA: %u start: %u", fpart->root, fpart->dataLBA, fpart->part->start ); 
+      #endif
     }
     else
     {
-        fpart->fatsize = BPB->FATsize16;
-        fpart->root = fpart->fat + fpart->fatcopy*fpart->fatsize;
-        fpart->dataLBA = fpart->root + fpart->maxroot/(part->disk->sectorSize/sizeof(FAT_dirEntry_t));
+        fpart->fatsize           = BPB->FATsize16;
+        fpart->FatRootDirCluster = 0; 
+        fpart->root              = fpart->fat + fpart->fatcopy*fpart->fatsize;
+        fpart->dataLBA           = fpart->root + fpart->maxroot/(part->disk->sectorSize/sizeof(FAT_dirEntry_t));
         memcpy(part->serial, &BPB1216->VolID, 4);
+      #ifdef _FAT_DIAGNOSIS_
+        printf("\r\nFAT12/16 result: root: %u dataLBA: %u start: %u", fpart->root, fpart->dataLBA, fpart->part->start ); 
+      #endif
     }
+    
     fpart->maxcls = (usbMSDVolumeMaxLBA - fpart->dataLBA - part->start) / fpart->SecPerClus;
-
-
     return(CE_GOOD);
 }
 
