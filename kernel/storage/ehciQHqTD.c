@@ -8,7 +8,6 @@
 #include "timer.h"
 #include "paging.h"
 #include "kheap.h"
-#include "usb2.h"
 #include "video/console.h"
 
 
@@ -280,9 +279,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     }
   #endif
 
-    e->OpRegs->USBSTS |= STS_USBINT;
     e->USBINTflag = false;
-    e->OpRegs->USBSTS |= STS_ASYNC_INT;
     e->USBasyncIntFlag = false;
 
     // Enable Asynchronous Schdeuler
@@ -368,10 +365,6 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
         }
     }
 
-
-    e->OpRegs->USBSTS |= STS_USBINT;
-    e->USBINTflag = false;
-
     if (stop)
     {
         e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE; // switch off
@@ -403,31 +396,6 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
     {
         printf("\nafter aS:");
         checkAsyncScheduler(e);
-    }
-  #endif
-}
-
-void logBulkTransfer(usbBulkTransfer_t* bT)
-{
-  #ifdef _USB2_DIAGNOSIS_
-    if (!bT->successfulCommand ||
-        !bT->successfulCSW     ||
-        (bT->DataBytesToTransferOUT && !bT->successfulDataOUT) ||
-        (bT->DataBytesToTransferIN  && !bT->successfulDataIN))
-    {
-        textColor(IMPORTANT);
-        printf("\nopcode: %yh", bT->SCSIopcode);
-        printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
-        if (bT->DataBytesToTransferOUT)
-        {
-            printf("  data out: %s", bT->successfulDataOUT ? "OK" : "Error");
-        }
-        if (bT->DataBytesToTransferIN)
-        {
-            printf("  data in: %s", bT->successfulDataIN ? "OK" : "Error");
-        }
-        printf("  CSW: %s", bT->successfulCSW ? "OK" : "Error");
-        textColor(TEXT);
     }
   #endif
 }

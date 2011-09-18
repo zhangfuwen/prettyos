@@ -9,10 +9,8 @@
 #include "kheap.h"
 #include "usb2_msd.h"
 #include "flpydsk.h"
-#include "usb2.h"
 #include "filesystem/fat.h"
 #include "uhci.h"
-#include "ohci.h"
 #ifdef _READCACHE_DIAGNOSIS_
   #include "timer.h"
 #endif

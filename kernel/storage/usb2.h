@@ -2,7 +2,7 @@
 #define USB2_H
 
 #include "os.h"
-#include "ehci.h"
+#include "devicemanager.h"
 
 #define OUT   0
 #define IN    1
@@ -11,6 +11,8 @@
 
 typedef struct
 {
+    disk_t*  disk;
+
     uint16_t usbSpec;
     uint8_t  usbClass;
     uint8_t  usbSubclass;
@@ -105,17 +107,17 @@ struct usb2_stringDescriptorUnicode
 } __attribute__((packed));
 
 
-uint8_t usbTransferEnumerate(ehci_t* e, uint8_t j);
-void usbTransferDevice(uint32_t device);
-void usbTransferConfig(uint32_t device);
-void usbTransferString(uint32_t device);
-void usbTransferStringUnicode(uint32_t device, uint32_t stringIndex);
-void usbTransferSetConfiguration(uint32_t device, uint32_t configuration);
-uint8_t usbTransferGetConfiguration(uint32_t device);
-uint16_t usbGetStatus(uint32_t device, uint32_t endpoint, uint32_t packetSize);
+uint8_t usbTransferEnumerate(port_t* port, uint8_t num);
+void usbTransferDevice(usb2_Device_t* device);
+void usbTransferConfig(usb2_Device_t* device);
+void usbTransferString(usb2_Device_t* device);
+void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex);
+void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration);
+uint8_t usbTransferGetConfiguration(usb2_Device_t* device);
+uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize);
 
-void usbSetFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize);
-void usbClearFeatureHALT(uint32_t device, uint32_t endpoint, uint32_t packetSize);
+void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize);
+void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize);
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);
@@ -123,7 +125,7 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d);
 void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d);
 void showEndpointDescriptor(struct usb2_endpointDescriptor* d);
 void showStringDescriptor(struct usb2_stringDescriptor* d);
-void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, uint32_t device, uint32_t stringIndex);
+void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, usb2_Device_t* device, uint32_t stringIndex);
 
 
 #endif

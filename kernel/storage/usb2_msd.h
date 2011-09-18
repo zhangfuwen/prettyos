@@ -3,10 +3,7 @@
 
 #include "os.h"
 #include "devicemanager.h"
-
-#define OUT   0
-#define IN    1
-#define SETUP 2
+#include "usb2.h"
 
 
 struct usb2_CommandBlockWrapper
@@ -32,17 +29,20 @@ typedef struct
 } usbBulkTransfer_t;
 
 
-void usbTransferBulkOnlyMassStorageReset(uint32_t device, uint8_t numInterface);
-uint8_t usbTransferBulkOnlyGetMaxLUN(uint32_t device, uint8_t numInterface);
+usb2_Device_t* usb2_createDevice(disk_t* disk);
+void usb2_destroyDevice(usb2_Device_t* device);
 
-void usbSendSCSIcmd(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer);
-void usbSendSCSIcmdOUT(uint32_t device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer);
+void usbTransferBulkOnlyMassStorageReset(usb2_Device_t* device, uint8_t numInterface);
+uint8_t usbTransferBulkOnlyGetMaxLUN(usb2_Device_t* device, uint8_t numInterface);
 
-void testMSD(uint8_t devAddr, disk_t* disk);
+void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer);
+void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer);
+
+void testMSD(usb2_Device_t* device);
 FS_ERROR usbRead (uint32_t sector, void* buffer, void* device);
 FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device);
 
-void usbResetRecoveryMSD(uint32_t device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
+void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
 
 int32_t showResultsRequestSense(void* addr);
 

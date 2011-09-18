@@ -120,7 +120,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
         case 0xEF: // OUT DX, AX and OUT DX, EAX
             if (!isOperand32)
             {
-             #ifdef _VM_DIAGNOSIS_
+              #ifdef _VM_DIAGNOSIS_
                 serial_log(SER_LOG_VM86, "outw\r\r\n");
               #endif
                 outportw(ctx->edx, ctx->eax);
@@ -128,7 +128,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
             else
             {
               #ifdef _VM_DIAGNOSIS_
-                 serial_log(SER_LOG_VM86, "outl\r\r\n");
+                serial_log(SER_LOG_VM86, "outl\r\r\n");
               #endif
                 outportl(ctx->edx, ctx->eax);
             }
@@ -147,14 +147,14 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
             if (!isOperand32)
             {
               #ifdef _VM_DIAGNOSIS_
-                 serial_log(SER_LOG_VM86, "inw\r\n");
+                serial_log(SER_LOG_VM86, "inw\r\n");
               #endif
                 ctx->eax = (ctx->eax & 0xFFFF0000) | inportw(ctx->edx);
             }
             else
             {
               #ifdef _VM_DIAGNOSIS_
-                 serial_log(SER_LOG_VM86, "inl\r\n");
+                serial_log(SER_LOG_VM86, "inl\r\n");
               #endif
                 ctx->eax = inportl(ctx->edx);
             }

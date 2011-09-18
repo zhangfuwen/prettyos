@@ -4,13 +4,6 @@
 */
 
 #include "usb1.h"
-#include "kheap.h"
-#include "paging.h"
-#include "video/console.h"
-#include "timer.h"
-#include "util.h"
-#include "uhci.h"
-#include "ohci.h"
 
 
 uint8_t usb1_TransferEnumerate(uint8_t j)

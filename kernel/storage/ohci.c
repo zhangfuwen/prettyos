@@ -138,7 +138,7 @@ void ohci_resetHC(ohci_t* o)
         uint16_t i;
         for (i=0; (o->OpRegs->HcControl & OHCI_CTRL_IR) && (i < 1000); i++)
         {
-             sleepMilliSeconds(1);
+            sleepMilliSeconds(1);
         }
 
         if (i < 1000)

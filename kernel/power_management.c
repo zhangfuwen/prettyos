@@ -30,9 +30,9 @@ static bool nopm_action(PM_STATES state)
             int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
             do // Flush the keyboard controller
             {
-               temp = inportb(0x64);
-               if (temp & 1)
-                 inportb(0x60);
+                temp = inportb(0x64);
+                if (temp & 1)
+                    inportb(0x60);
             }
             while (temp & 2);
 

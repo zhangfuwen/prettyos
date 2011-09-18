@@ -12,53 +12,43 @@
 
 int main()
 {
-    setScrollField(13, 46);
-    printLine("================================================================================", 0, 0x0B);
-    printLine("                                   FTP Client", 1, 0x0B);
-    printLine("--------------------------------------------------------------------------------", 3, 0x0B);
-
-    iSetCursor(0, 4);
-    textColor(0x0F);
-
-    printf("Implemented functions:\n");
-    printf("-F1: Get file\t\t\t\t-F2: [Don't use]\n");
-    printf("-F3: Rename File\t\t\t-F4: Delete File\n");
-    //
-    printf("-F5: Create Directory\t\t\t-F6: Remove Directory\n");
-    printf("-F7: Change current directory\t\t-F8: Get current directory\n");
-    //
-    printf("-F9: List files/directories\n");
-    //
-    printf("-F11: Save file\n");
-    printf("-F12: Enter FTP-Command\n");
-    printf("--------------------------------------------------------------------------------\n\n");
-
     event_enable(true);
     uint8_t buffer[4096];
     EVENT_t ev = event_poll(buffer, 4096, EVENT_NONE);
 
-    char command[200];
-    uint32_t fileSize = 0, maxFileSize = 30000;
-    uint8_t fileData[maxFileSize];
-    size_t waitingDataCommand = 0;
-    size_t renaming = 0;
-    size_t enterPasvMode = 0;
-    size_t fileTransfer = 0;
-    size_t binaryFileTransfer = 0;
-    size_t saveFile = 0;
+    size_t waitingDataCommand = 0, renaming = 0, enterPasvMode = 0, fileTransfer = 0, binaryFileTransfer = 0, saveFile = 0, storeFile = 0, fileSize = 0, maxFileSize = 30000;
 
-    char hostname[100];
-    char user[100];
-    char pass[100];
-    char ctrlPort[10];
+    uint8_t fileData[maxFileSize];
+    char command[200], hostname[100], user[100], pass[100], ctrlPort[10];
+
+    printLine("================================================================================", 0, 0x0B);
+    printLine("                                   FTP Client", 1, 0x0B);
+    printLine("--------------------------------------------------------------------------------", 3, 0x0B);
+    iSetCursor(0, 5);
+
     printf("Server:\n");
     gets(hostname);
-    printf("\nBenutzer:\n");
+    printf("\nUser:\n");
     gets(user);
-    printf("\nPasswort:\n");
+    printf("\nPassword:\n");
     gets(pass);
     printf("\nPort:\n");
     gets(ctrlPort);
+
+    clearScreen(0x00);
+    setScrollField(11, 46);
+    printLine("================================================================================", 0, 0x0B);
+    printLine("                                   FTP Client", 1, 0x0B);
+    printLine("--------------------------------------------------------------------------------", 3, 0x0B);
+    iSetCursor(0, 4);
+    textColor(0x0F);
+    printf("-F1:  Show file\t\t\t\t-F2:  Save file\n");
+    printf("-F3:  Upload File\t\t\t-F4:  Delete File\n");
+    printf("-F5:  Create Directory\t\t\t-F6:  Remove Directory\n");
+    printf("-F7:  Change current directory\t\t-F8:  Get current directory\n");
+    printf("-F9:  List files/directories\t\t-F10: Rename file/directory\n");
+    printf("-F11: Change file/directory permissions\t-F12: Enter FTP-Command\n");
+    printf("--------------------------------------------------------------------------------\n\n");
 
     IP_t IP = getAddrByName(hostname), dataIP;
     uint16_t controlPort = atoi(ctrlPort), dataPort;
@@ -137,7 +127,42 @@ int main()
                     printf("%s\n", data);
                     textColor(0x0F);
 
-                    if (data[0] == '2' && data[1] == '0' && data[2] == '0')
+                    if (data[0] == '1' && data[1] == '5' && data[2] == '0')
+                    {
+                        if (storeFile)
+                        {
+                            storeFile = 0;
+                            printf("Enter filename/path to load(e.g.:\"1:/test.txt\",max. 15 characters):\n");
+                            char filename[15];
+                            gets(filename);
+                            FILE* f = fopen(filename, "r");
+
+                            char c;
+                            while (1)
+                            {
+                                c = fgetc(f);
+                                if(c == -1)
+                                    break;
+                                memcpy(fileData+fileSize, &c, 1);
+                                fileSize++;
+                            }
+
+                            size_t mod = (fileSize % 1460), packets = ((fileSize - mod) / 1460);
+                            size_t i = 0;
+                            while (i < packets)
+                            {
+                                tcp_send(dataConnection, fileData+i*1460, 1460);
+                                i++;
+                            }
+                            if (mod > 0)
+                            {
+                                tcp_send(dataConnection, fileData+i*1460, mod);
+                            }
+                            tcp_close(dataConnection);
+                            fclose(f);
+                        }
+                    }
+                    else if (data[0] == '2' && data[1] == '0' && data[2] == '0')
                     {
                         if (enterPasvMode)
                         {
@@ -155,7 +180,9 @@ int main()
                     {
                         if (saveFile)
                         {
-                            printf("Save file.\nEnter filename/path(f.e.:\"1:/test.txt\",max. 15 characters):\n");
+                            saveFile = 0;
+                            fileTransfer = 0;
+                            printf("Save file.\n\nEnter filename/path(e.g.:\"1:/test.txt\",max. 15 characters):\n");
                             char saveFileName[15];
                             gets(saveFileName);
                             FILE* f = fopen(saveFileName, "w");
@@ -163,7 +190,7 @@ int main()
                             {
                                 if (fwrite(fileData, fileSize, 1, f))
                                 {
-                                    printf("\n%s:\nOK.\n", saveFileName);
+                                    printf("\n%s:\nOK.\n\n", saveFileName);
                                 }
                             }
                             else
@@ -174,8 +201,6 @@ int main()
                                 }
                             }
                             fclose(f);
-                            saveFile = 0;
-                            fileTransfer = 0;
                         }
                         tcp_close(dataConnection);
                     }
@@ -204,12 +229,13 @@ int main()
                                 byte++;
                             }
                         }
+
                         for (int i = 0;i < 4;i++)
                             dataIP.IP[i] = temp[i];
                         dataPort = temp[4]*256+temp[5];
 
                         dataConnection = tcp_connect(dataIP, dataPort);
-                        printf("\nConnected (ID = %u). Wait until connection is established... ", dataConnection);
+                        printf("Connected (ID = %u)...\n ", dataConnection);
                     }
                     else if (data[0] == '2' && data[1] == '3' && data[2] == '0')
                     {
@@ -238,6 +264,18 @@ int main()
                             fileTransfer = 0;
                         }
                     }
+                    /*
+                    FTP reply codes (http://www.w3.org/Protocols/rfc959/9_References.html):
+                        150 File status okay; about to open data connection.
+                        200 Command okay.
+                        220 Service ready for new user.
+                        226 Closing data connection. Requested file action successful (for example, file transfer or file abort).
+                        227 Entering Passive Mode (h1,h2,h3,h4,p1,p2).
+                        230 User logged in, proceed.
+                        331 User name okay, need password.
+                        350 Requested file action pending further information.
+                        550 Requested action not taken. File unavailable (e.g., file not found, no access).
+                    */
                 }
                 break;
             }
@@ -247,57 +285,75 @@ int main()
                 KEY_t* key = (void*)buffer;
                 if (*key == KEY_ESC)
                 {
-                    printf("quit...");
                     tcp_send(control, "QUIT\r\n", 6);
                     tcp_close(control);
                     return(0);
                 }
                 else if (*key == KEY_F1)
                 {
-                    memset(command,0,200);
-                    char filename[100];
+                    waitingDataCommand = 1;
+                    enterPasvMode = 1;
                     printf("Get file(ASCII-mode).\nEnter filename:\n");
+                    char filename[100];
                     gets(filename);
+                    memset(command,0,200);
                     strcat(command,"RETR ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
-                    waitingDataCommand = 1;
-                    enterPasvMode = 1;
                     printf("\n");
                     tcp_send(control, "TYPE A\r\n", 8);
                 }
                 else if (*key == KEY_F2)
                 {
-                    //STOR
+                    waitingDataCommand = 1;
+                    enterPasvMode = 1;
+                    saveFile = 1;
+                    fileTransfer = 1;
+                    binaryFileTransfer = 0;
+                    fileSize = 0;
+                    printf("Save file.(max. size: %i)\nEnter filename(server):\n", maxFileSize);
+                    char filename[100];
+                    gets(filename);
+                    printf("\nEnter transfer mode(A == ASCII, I == Binary):\n");
+                    char mode[1];
+                    gets(mode);
+                    memset(command,0,200);
+                    strcat(command,"RETR ");
+                    strcat(command,filename);
+                    strcat(command,"\r\n");
+                    memset(fileData, 0, 20000);
+                    printf("\n");
+                    if (mode[0] == 'I')
+                    {
+                        binaryFileTransfer = 1;
+                        tcp_send(control, "TYPE I\r\n", 8);
+                    }
+                    else
+                        tcp_send(control, "TYPE A\r\n", 8);
                 }
                 else if (*key == KEY_F3)
                 {
-                    //Rename
+                    waitingDataCommand = 1;
+                    enterPasvMode = 1;
+                    storeFile = 1;
+                    fileSize = 0;
+                    printf("Store file(ASCII-mode).\n\nEnter filename(server):\n");
+                    char filename[100];
+                    gets(filename);
                     memset(command,0,200);
-                    char oldFilename[100];
-                    char newFilename[100];
-                    char tempCommand[200];
-                    printf("Rename.\nEnter current filename:\n");
-                    gets(oldFilename);
-                    printf("\nEnter new filename:\n");
-                    gets(newFilename);
-
-                    strcat(command,"RNTO ");
-                    strcat(command,newFilename);
+                    strcat(command,"STOR ");
+                    strcat(command,filename);
                     strcat(command,"\r\n");
-
-                    snprintf(tempCommand, 200, "RNFR %s\r\n", oldFilename);
-                    renaming = 1;
                     printf("\n");
-                    tcp_send(control, tempCommand, strlen(tempCommand));
+                    tcp_send(control, "TYPE A\r\n", 8);
                 }
                 else if (*key == KEY_F4)
                 {
-                    //Delete
-                    memset(command,0,200);
-                    char filename[100];
+                    //Delete file
                     printf("Delete file.\nEnter filename:\n");
+                    char filename[100];
                     gets(filename);
+                    memset(command,0,200);
                     strcat(command,"DELE ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
@@ -307,12 +363,12 @@ int main()
                 else if (*key == KEY_F5)
                 {
                     //Create directory
+                    printf("Create directory.\nEnter directory name:\n");
+                    char dirname[100];
+                    gets(dirname);
                     memset(command,0,200);
-                    char filename[100];
-                    printf("Make directory.\nEnter directory:\n");
-                    gets(filename);
                     strcat(command,"MKD ");
-                    strcat(command,filename);
+                    strcat(command,dirname);
                     strcat(command,"\r\n");
                     printf("\n");
                     tcp_send(control, command, strlen(command));
@@ -320,10 +376,10 @@ int main()
                 else if (*key == KEY_F6)
                 {
                     //Remove directory
-                    memset(command,0,200);
+                    printf("Remove directory.\nEnter directory name:\n");
                     char filename[100];
-                    printf("Remove directory.\nEnter directory:\n");
                     gets(filename);
+                    memset(command,0,200);
                     strcat(command,"RMD ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
@@ -333,10 +389,10 @@ int main()
                 else if (*key == KEY_F7)
                 {
                     //Change current directory
-                    memset(command,0,200);
+                    printf("Change current directory.\n\nEnter directory name(without initiating / !):\n");
                     char dirname[100];
-                    printf("Change current directory.\nEnter directory(without initiating / !):\n");
                     gets(dirname);
+                    memset(command,0,200);
                     strcat(command,"CWD ");
                     strcat(command,dirname);
                     strcat(command,"\r\n");
@@ -346,47 +402,50 @@ int main()
                 else if (*key == KEY_F8)
                 {
                     //Get current directory
+                    printf("Current directory is:\n\n");
                     tcp_send(control, "PWD\r\n", 5);
                 }
                 else if (*key == KEY_F9)
                 {
                     //List files/directories
-                    memset(command,0,200);
-                    strcat(command,"LIST -a\r\n");
                     waitingDataCommand = 1;
                     enterPasvMode = 1;
-                    printf("List files/directories.\n");
+                    memset(command,0,200);
+                    strcat(command,"LIST -a\r\n");
+                    printf("List files/directories.\n\n");
                     tcp_send(control, "TYPE A\r\n", 8);
+                }
+                else if (*key == KEY_F10)
+                {
+                    //Rename
+                    renaming = 1;
+                    printf("Rename.\nEnter current filename:\n");
+                    char oldFilename[100];
+                    gets(oldFilename);
+                    printf("\nEnter new filename:\n");
+                    char newFilename[100];
+                    gets(newFilename);
+                    memset(command,0,200);
+                    strcat(command,"RNTO ");
+                    strcat(command,newFilename);
+                    strcat(command,"\r\n");
+                    char tempCommand[200];
+                    snprintf(tempCommand, 200, "RNFR %s\r\n", oldFilename);
+                    printf("\n");
+                    tcp_send(control, tempCommand, strlen(tempCommand));
                 }
                 else if (*key == KEY_F11)
                 {
-                    memset(command,0,200);
-                    char filename[100];
-                    printf("Save file.(max. size: %i)\nEnter filename(server):\n", maxFileSize);
+                    printf("Change file/directory permissions.\n\nEnter file/directory:\n");
+                    char filename[183];
                     gets(filename);
-                    char mode[1];
-                    printf("\nEnter transfer mode(A == ASCII, I == Binary):\n");
-                    gets(mode);
-                    strcat(command,"RETR ");
-                    strcat(command,filename);
-                    strcat(command,"\r\n");
-                    waitingDataCommand = 1;
-                    enterPasvMode = 1;
-                    saveFile = 1;
-                    fileTransfer = 1;
-                    binaryFileTransfer = 0;
-                    fileSize = 0;
-                    memset(fileData, 0, 20000);
+                    printf("\nEnter new file/directory permissions (e.g. 644):\n");
+                    char permissions[3];
+                    gets(permissions);
                     printf("\n");
-                    if (mode[0] == 'A')
-                        tcp_send(control, "TYPE A\r\n", 8);
-                    else if (mode[0] == 'I')
-                    {
-                        binaryFileTransfer = 1;
-                        tcp_send(control, "TYPE I\r\n", 8);
-                    }
-                    else
-                        tcp_send(control, "TYPE A\r\n", 8);
+                    memset(command,0,200);
+                    snprintf(command, 200, "SITE CHMOD %s %s\r\n", permissions, filename);
+                    tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F12)
                 {

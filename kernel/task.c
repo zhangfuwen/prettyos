@@ -444,7 +444,7 @@ void task_log(task_t* t)
         printf("parent task: ");
         if (!t->parent->pid)
         {
-             textColor(IMPORTANT);
+            textColor(IMPORTANT);
         }
         printf("  %u", t->parent->pid);
         textColor(TEXT);

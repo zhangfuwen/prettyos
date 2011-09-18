@@ -46,7 +46,6 @@
 #define STS_HCHALTED                   BIT(12)
 
 // USBSTS (Interrupts)
-#define STS_INTMASK                    0x0000003F
 #define STS_ASYNC_INT                  BIT(5)
 #define STS_HOST_SYSTEM_ERROR          BIT(4)
 #define STS_FRAMELIST_ROLLOVER         BIT(3)

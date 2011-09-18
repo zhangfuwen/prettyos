@@ -31,6 +31,7 @@ typedef struct disk
     char         name[15];
     void*        data;                          // Contains additional information depending on disk-type
     uint32_t     accessRemaining;               // Used to control motor
+    struct port* port;
 
     // Technical data of the disk
     uint32_t sectorSize;    // Bytes per sector
@@ -39,7 +40,7 @@ typedef struct disk
     uint8_t  BIOS_driveNum; // Number of this disk given by BIOS
 } disk_t;
 
-typedef struct
+typedef struct port
 {
     portType_t* type;
     disk_t*     insertedDisk; // 0 if no disk is inserted

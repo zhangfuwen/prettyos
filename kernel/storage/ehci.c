@@ -12,19 +12,13 @@
 #include "irq.h"
 #include "audio/sys_speaker.h"
 #include "keyboard.h"
-#include "usb2.h"
+#include "usb2_msd.h"
 
 
 ehci_t* curEHCI = 0;
 
 static uint8_t numPorts = 0;
 static ehci_t* ehci[EHCIMAX];
-
-// Device Manager
-static disk_t usbDev[16];
-
-// usb devices list
-extern usb2_Device_t usbDevices[16]; // ports 1-16
 
 
 static void ehci_handler(registers_t* r, pciDev_t* device);
@@ -423,7 +417,7 @@ void ehci_resetPort(ehci_t* e, uint8_t j)
             break;
         }
     }
-    e->OpRegs->USBINTR = STS_INTMASK;
+    e->OpRegs->USBINTR = STS_ASYNC_INT|STS_HOST_SYSTEM_ERROR|STS_PORT_CHANGE|STS_USBERRINT|STS_USBINT;
 }
 
 
@@ -550,21 +544,28 @@ void ehci_portCheck()
             if (e->OpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
                 ehci_checkPortLineStatus(e,j);
+				beep(800, 80);
+				beep(1000, 80);
             }
             else
             {
                 writeInfo(0, "Port: %u, no device attached", j+1);
                 e->OpRegs->PORTSC[j] &= ~PSTS_COMPANION_HC_OWNED; // port is given back to the EHCI
 
-                // Device Manager
-                removeDisk(&usbDev[j]);
-                e->ports[j]->port.insertedDisk = 0;
+				if(e->ports[j]->port.insertedDisk && e->ports[j]->port.insertedDisk->type == &USB_MSD)
+				{
+	                usb2_destroyDevice(e->ports[j]->port.insertedDisk->data);
+	                removeDisk(e->ports[j]->port.insertedDisk);
+	                e->ports[j]->port.insertedDisk = 0;
 
-                showPortList();
-                showDiskList();
+					showPortList();
+					showDiskList();
+					beep(1000, 80);
+					beep(800, 80);
+				}
+
             }
             e->OpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
-            // beep(1000,100);
         }
     }
     textColor(IMPORTANT);
@@ -579,9 +580,10 @@ static void ehci_checkPortLineStatus(ehci_t* e, uint8_t j)
     textColor(LIGHT_CYAN);
     static const char* const state[] = {"SE0", "K-state", "J-state", "undefined"};
     printf("\nport %u: %xh, line: %yh (%s) ",j+1,e->OpRegs->PORTSC[j],(e->OpRegs->PORTSC[j]>>10)&3, state[(e->OpRegs->PORTSC[j]>>10)&3]);
-  #endif
+  #else
     static const char* const state[] = {"SE0", "K-state", "J-state", "undefined"};
     printf("\nline state: %s", state[(e->OpRegs->PORTSC[j]>>10)&3]);
+  #endif
 
     switch ((e->OpRegs->PORTSC[j]>>10)&3) // bits 11:10
     {
@@ -623,26 +625,31 @@ static void ehci_detectDevice(ehci_t* e, uint8_t j)
 
 void setupUSBDevice(ehci_t* e, uint8_t portNumber)
 {
-    uint8_t devAddr = usbTransferEnumerate(e, portNumber);
+    e->ports[portNumber]->num = 0; // device number has to be set to 0
+    e->ports[portNumber]->num = 1 + usbTransferEnumerate(&e->ports[portNumber]->port, portNumber);
 
-    usbTransferDevice(devAddr);
-    usbTransferConfig(devAddr);
-    usbTransferString(devAddr);
+    disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
+    disk->port = &e->ports[portNumber]->port;
+    usb2_Device_t* device = usb2_createDevice(disk);
+
+    usbTransferDevice(device);
+    usbTransferConfig(device);
+    usbTransferString(device);
 
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
-        usbTransferStringUnicode(devAddr, i);
+        usbTransferStringUnicode(device, i);
     }
 
-    usbTransferSetConfiguration(devAddr, 1); // set first configuration
+    usbTransferSetConfiguration(device, 1); // set first configuration
 
   #ifdef _EHCI_DIAGNOSIS_
-    uint8_t config = usbTransferGetConfiguration(devAddr);
+    uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
     waitForKeyStroke();
   #endif
 
-    if (usbDevices[devAddr].InterfaceClass != 0x08)
+    if (device->InterfaceClass != 0x08)
     {
         textColor(ERROR);
         printf("\nThis is no Mass Storage Device! MSD test and addition to device manager will not be carried out.");
@@ -652,14 +659,14 @@ void setupUSBDevice(ehci_t* e, uint8_t portNumber)
     else
     {
         // Disk
-        usbDev[portNumber].type         = &USB_MSD;
-        usbDev[portNumber].data         = usbDevices + devAddr;
-        usbDev[portNumber].sectorSize   = 512;
-        strcpy(usbDev[portNumber].name, usbDevices[devAddr].productName);
-        attachDisk(&usbDev[portNumber]);
+        disk->type       = &USB_MSD;
+        disk->sectorSize = 512;
+        disk->port       = &e->ports[portNumber]->port;
+        strcpy(disk->name, device->productName);
+        attachDisk(disk);
 
         // Port
-        e->ports[portNumber]->port.insertedDisk = &usbDev[portNumber];
+        e->ports[portNumber]->port.insertedDisk = disk;
 
       #ifdef _EHCI_DIAGNOSIS_
         showPortList(); // TEST
@@ -670,14 +677,14 @@ void setupUSBDevice(ehci_t* e, uint8_t portNumber)
         // device, interface, endpoints
       #ifdef _EHCI_DIAGNOSIS_
         textColor(HEADLINE);
-        printf("\n\nMSD test now with device: %u  interface: %u  endpOUT: %u  endpIN: %u\n",
-                                                devAddr+1, usbDevices[devAddr].numInterfaceMSD,
-                                                usbDevices[devAddr].numEndpointOutMSD,
-                                                usbDevices[devAddr].numEndpointInMSD);
+        printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
+                                                device, device->numInterfaceMSD,
+                                                device->numEndpointOutMSD,
+                                                device->numEndpointInMSD);
         textColor(TEXT);
       #endif
 
-        testMSD(devAddr, &usbDev[devAddr]); // test with some SCSI commands
+        testMSD(device); // test with some SCSI commands
     }
 }
 
@@ -687,20 +694,14 @@ void showUSBSTS(ehci_t* e)
     textColor(HEADLINE);
     printf("\nUSB status: ");
     textColor(IMPORTANT);
-    printf("%Xh",e->OpRegs->USBSTS);
+    printf("%Xh", e->OpRegs->USBSTS);
   #endif
     textColor(ERROR);
-    if (e->OpRegs->USBSTS & STS_USBERRINT)          { printf("\nUSB Error Interrupt");           e->OpRegs->USBSTS |= STS_USBERRINT;           }
-    if (e->OpRegs->USBSTS & STS_HOST_SYSTEM_ERROR)  { printf("\nHost System Error");             e->OpRegs->USBSTS |= STS_HOST_SYSTEM_ERROR;   }
-    if (e->OpRegs->USBSTS & STS_HCHALTED)           { printf("\nHCHalted");                      e->OpRegs->USBSTS |= STS_HCHALTED;            }
+    if (e->OpRegs->USBSTS & STS_HCHALTED)         { printf("\nHCHalted");                     e->OpRegs->USBSTS |= STS_HCHALTED;         }
     textColor(IMPORTANT);
-    if (e->OpRegs->USBSTS & STS_PORT_CHANGE)        { printf("\nPort Change Detect");            e->OpRegs->USBSTS |= STS_PORT_CHANGE;         }
-    if (e->OpRegs->USBSTS & STS_FRAMELIST_ROLLOVER) { printf("\nFrame List Rollover");           e->OpRegs->USBSTS |= STS_FRAMELIST_ROLLOVER;  }
-    if (e->OpRegs->USBSTS & STS_USBINT)             { printf("\nUSB Interrupt");                 e->OpRegs->USBSTS |= STS_USBINT;              }
-    if (e->OpRegs->USBSTS & STS_ASYNC_INT)          { printf("\nInterrupt on Async Advance");    e->OpRegs->USBSTS |= STS_ASYNC_INT;           }
-    if (e->OpRegs->USBSTS & STS_RECLAMATION)        { printf("\nReclamation");                   e->OpRegs->USBSTS |= STS_RECLAMATION;         }
-    if (e->OpRegs->USBSTS & STS_PERIODIC_ENABLED)   { printf("\nPeriodic Schedule Status");      e->OpRegs->USBSTS |= STS_PERIODIC_ENABLED;    }
-    if (e->OpRegs->USBSTS & STS_ASYNC_ENABLED)      { printf("\nAsynchronous Schedule Status");  e->OpRegs->USBSTS |= STS_ASYNC_ENABLED;       }
+	if (e->OpRegs->USBSTS & STS_RECLAMATION)      { printf("\nReclamation");                  e->OpRegs->USBSTS |= STS_RECLAMATION;      }
+    if (e->OpRegs->USBSTS & STS_PERIODIC_ENABLED) { printf("\nPeriodic Schedule Status");     e->OpRegs->USBSTS |= STS_PERIODIC_ENABLED; }
+    if (e->OpRegs->USBSTS & STS_ASYNC_ENABLED)    { printf("\nAsynchronous Schedule Status"); e->OpRegs->USBSTS |= STS_ASYNC_ENABLED;    }
     textColor(TEXT);
 }
 
