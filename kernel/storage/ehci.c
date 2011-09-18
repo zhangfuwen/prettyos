@@ -787,9 +787,13 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
     for(uint8_t i = 0; i < 5 && !transfer->success; i++)
     {
         if(transfer->type == USB_CONTROL)
+        {
             performAsyncScheduler(e, true, false, 0);
+        }
         else
-            performAsyncScheduler(e, true, true, transfer->packetSize/200);
+        {
+            performAsyncScheduler(e, true, true, 1 + transfer->packetSize/100);
+        }
 
         transfer->success = true;
         for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
@@ -798,8 +802,12 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
             showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (transaction->qTD->token.status == 0);
         }
+      #ifdef _EHCI_DIAGNOSIS_
         if(!transfer->success)
+        {
             printf("\nRetry transfer: %u", i+1);
+        }
+      #endif
     }
 
     free(transfer->data);

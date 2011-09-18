@@ -119,9 +119,11 @@ file_t* fopen(const char* path, const char* mode)
 
     if (file->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD)
     {
+        textColor(IMPORTANT);
+        printf("\nFile will be opened.");
+        textColor(TEXT);
         free(file->name);
         free(file);
-        printf("\nfile->volume->type->fopen(file, create, !appendMode&&create) != CE_GOOD");
         return(0);
     }
 

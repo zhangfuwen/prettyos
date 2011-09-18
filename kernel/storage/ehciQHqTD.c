@@ -34,7 +34,7 @@ void createQH(ehci_qhd_t* head, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t
     head->H                     =   H;              // mark a queue head as being the head of the reclaim list
     head->maxPacketLength       =   packetSize;     // 64 byte for a control transfer to a high speed device
     head->controlEndpointFlag   =   0;              // only used if endpoint is a control endpoint and not high speed
-    head->nakCountReload        =  15;              // this value is used by EHCI to reload the Nak Counter field. 0=ignores NAK counter.
+    head->nakCountReload        =   0;              // this value is used by EHCI to reload the Nak Counter field. 0=ignores NAK counter.
     head->interruptScheduleMask =   0;              // not used for async schedule
     head->splitCompletionMask   =   0;              // unused if (not low/full speed and in periodic schedule)
     head->hubAddr               =   0;              // unused if high speed (Split transfer)
@@ -80,7 +80,7 @@ ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, ui
     td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
     td->token.pid          = SETUP;      // SETUP = 2
-    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.errorCounter = 0x0;        // Written by the Host Controller.
     td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
     td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
     td->token.bytes        = tokenBytes; // dependent on transfer
@@ -104,7 +104,7 @@ ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_
     td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
     td->token.status       = 0x80;       // This will be filled by the Host Controller
     td->token.pid          = direction;  // OUT = 0, IN = 1
-    td->token.errorCounter = 0x3;        // Written by the Host Controller.
+    td->token.errorCounter = 0x0;        // Written by the Host Controller.
     td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
     td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
     td->token.bytes        = tokenBytes; // dependent on transfer
@@ -307,12 +307,8 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
         }
     }
 
-
-    // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
-    // sleepMilliSeconds(50 + velocity * 200);
-
-    timeout = 5 + velocity * 20;
-    while (!e->USBasyncIntFlag)
+    timeout = 3 * velocity + 1;
+    while (true /*!e->USBasyncIntFlag*/ )
     {
         timeout--;
         if (timeout>0)
@@ -339,10 +335,7 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
       #endif
     }
 
-    // printf("\nline: %u", __LINE__); if (e->OpRegs->USBSTS & STS_RECLAMATION) { printf("Recl=1");} else { printf("Recl=0");} if (e->USBasyncIntFlag) { printf(" asyncInt=1");} else { printf(" asyncInt=0");}
-
-
-    timeout=5;
+    timeout=3;
     while (!e->USBINTflag) // set by interrupt
     {
         timeout--;
@@ -358,9 +351,11 @@ void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity)
         }
         else
         {
+          #ifdef _EHCI_DIAGNOSIS_
             textColor(ERROR);
             printf("\nTimeout Error - STS_USBINT not set!");
             textColor(TEXT);
+          #endif
             break;
         }
     }

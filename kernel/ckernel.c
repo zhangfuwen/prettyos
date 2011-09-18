@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.81 - Rev: 1282";
+const char* const version = "0.0.3.82 - Rev: 1283";
 
 // .bss
 extern uintptr_t _bss_start; // linker script

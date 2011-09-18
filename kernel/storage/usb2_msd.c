@@ -730,7 +730,7 @@ int32_t showResultsRequestSense(void* addr)
                 printf("Deferred error, descriptor format");
                 break;
             default:
-                printf("No vaild response code!");
+                printf("No valid response code!");
                 break;
         }
 
