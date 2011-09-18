@@ -208,8 +208,17 @@ typedef struct
      ohciEDdesc_t* endp;
 } __attribute__((packed)) ohciTDdesc_t ;
 
-// OHCI device
+
+struct ohci;
+
 typedef struct
+{
+    uint8_t      num;
+    port_t       port;
+    struct ohci* ohci;
+} ohci_port_t;
+
+typedef struct ohci
 {
     pciDev_t*      PCIdevice;            // PCI device
     uintptr_t      bar;                  // MMIO space (base address register)
@@ -220,8 +229,8 @@ typedef struct
     uintptr_t      pTDbuff[56];          // TD buffers
     uint8_t        rootPorts;            // number of rootports
     size_t         memSize;              // memory size of IO space
-    bool           enabledPorts;         // root ports enabled
-    port_t         port[OHCIPORTMAX];    // root ports
+    bool           enabledPortFlag;         // root ports enabled
+    ohci_port_t*   ports[OHCIPORTMAX];   // root ports  
     bool           run;                  // hc running (RS bit)
     uint8_t        num;                  // number of the OHCI
 } ohci_t;
@@ -229,6 +238,7 @@ typedef struct
 void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
 void ohci_initHC(ohci_t* o);
 void ohci_resetHC(ohci_t* o);
+void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber);
 
 
 #endif

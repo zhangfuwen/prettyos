@@ -342,10 +342,6 @@ static void ehci_deactivateLegacySupport(ehci_t* e)
 
 void ehci_enablePorts(ehci_t* e)
 {
-    textColor(HEADLINE);
-    printf("\nEnable ports:\n");
-    textColor(TEXT);
-
     memset(e->ports, 0, 16*4);
     for (uint8_t j=0; j<e->numPorts; j++)
     {
@@ -606,7 +602,7 @@ static void ehci_detectDevice(ehci_t* e, uint8_t j)
         if(e->OpRegs->PORTSC[j] & PSTS_ENABLED) // High speed
         {
             writeInfo(0, "Port: %u, hi-speed device attached", j+1);
-            setupUSBDevice(e, j);
+            ehci_setupUSBDevice(e, j);
         }
         else // Full speed
         {
@@ -623,7 +619,7 @@ static void ehci_detectDevice(ehci_t* e, uint8_t j)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void setupUSBDevice(ehci_t* e, uint8_t portNumber)
+void ehci_setupUSBDevice(ehci_t* e, uint8_t portNumber)
 {
     e->ports[portNumber]->num = 0; // device number has to be set to 0
     e->ports[portNumber]->num = 1 + usbTransferEnumerate(&e->ports[portNumber]->port, portNumber);

@@ -10,9 +10,10 @@
 #include "task.h"
 #include "irq.h"
 #include "keyboard.h"
+#include "usb2.h"
+#include "usb2_msd.h"
 
-//#define OHCI_SCENARIO // ed/td experiments
-
+// #define OHCI_USB_TRANSFER // does not work fully (#PF, reboot)
 
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
@@ -98,7 +99,7 @@ void ohci_initHC(ohci_t* o)
     irq_installPCIHandler(o->PCIdevice->irq, ohci_handler, o->PCIdevice);
 
     OHCI_USBtransferFlag = true;
-    o->enabledPorts      = false;
+    o->enabledPortFlag   = false;
 
     ohci_resetHC(o);
 }
@@ -307,14 +308,19 @@ void ohci_resetHC(ohci_t* o)
     printf("\n\nFound %i Rootports.\n", o->rootPorts);
     textColor(TEXT);
 
-    for (uint8_t j = 0; j < o->rootPorts; j++)
+    for (uint8_t j = 0; j < OHCIPORTMAX /*o->rootPorts*/; j++)
     {
+        memset(o->ports, 0, OHCIPORTMAX*4);
+        o->ports[j] = malloc(sizeof(ohci_port_t), 0, "ohci_port_t");
+        o->ports[j]->num = j+1;
+        o->ports[j]->ohci = o;
+        o->ports[j]->port.type = &USB_OHCI; // device manager
+        o->ports[j]->port.data = o->ports[j];
+        o->ports[j]->port.insertedDisk = 0;
+        snprintf(o->ports[j]->port.name, 14, "OHCI-Port %u", j+1);
+        attachPort(&o->ports[j]->port);
+        o->enabledPortFlag = true;
         o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;
-        o->port[j].type = &USB_OHCI; // device manager
-        o->port[j].data = o;
-        o->port[j].insertedDisk = 0;
-        snprintf(o->port[j].name, 14, "OHCI-Port %u", j+1);
-        attachPort(&o->port[j]);
     }
 }
 
@@ -327,7 +333,7 @@ void ohci_resetHC(ohci_t* o)
 
 void showPortstatus(ohci_t* o)
 {
-    for (uint8_t j=0; j < o->rootPorts; j++)
+    for (uint8_t j=0; j < OHCIPORTMAX /*o->rootPorts*/; j++)
     {
         if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
         {
@@ -345,6 +351,12 @@ void showPortstatus(ohci_t* o)
                 textColor(SUCCESS);
                 printf(" dev. attached  -");
                 o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;
+                if (OHCI_USBtransferFlag) 
+                {
+                  #ifdef OHCI_USB_TRANSFER
+                    ohci_setupUSBDevice(o, j); // TEST
+                  #endif
+                }
             }
             else
                 printf(" device removed -");
@@ -352,7 +364,7 @@ void showPortstatus(ohci_t* o)
             if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)
             {
                 textColor(SUCCESS);
-                printf(" enabled  -");
+                printf(" enabled  -");                
             }
             else
             {
@@ -501,7 +513,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     {
         printf("Root hub status change.");
         handled |= OHCI_INT_RHSC;
-        showPortstatus(o);
+        showPortstatus(o);        
     }
 
     if (val & OHCI_INT_OC) // ownership change
@@ -525,7 +537,74 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 *                                                                                                      *
 *******************************************************************************************************/
 
-// TODO
+void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
+{
+    ///TEST
+    o->ports[portNumber]->port.type = &USB_OHCI; // why necessary?
+    ///TEST
+
+    o->ports[portNumber]->num = 0; // device number has to be set to 0
+    o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
+
+    disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
+    disk->port = &o->ports[portNumber]->port;
+        
+    usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
+    usbTransferDevice(device);
+    usbTransferConfig(device);
+    usbTransferString(device);
+
+    for (uint8_t i=1; i<4; i++) // fetch 3 strings
+    {
+        usbTransferStringUnicode(device, i);
+    }
+
+    usbTransferSetConfiguration(device, 1); // set first configuration
+
+  #ifdef _OHCI_DIAGNOSIS_
+    uint8_t config = usbTransferGetConfiguration(device);
+    printf("\nconfiguration: %u", config); // check configuration
+    waitForKeyStroke();
+  #endif
+
+    if (device->InterfaceClass != 0x08)
+    {
+        textColor(ERROR);
+        printf("\nThis is no Mass Storage Device! MSD test and addition to device manager will not be carried out.");
+        textColor(TEXT);
+        waitForKeyStroke();
+    }
+    else
+    {
+        // Disk
+        disk->type       = &USB_MSD;
+        disk->sectorSize = 512;
+        disk->port       = &o->ports[portNumber]->port;
+        strcpy(disk->name, device->productName);
+        attachDisk(disk);
+
+        // Port
+        o->ports[portNumber]->port.insertedDisk = disk;
+
+      #ifdef _OHCI_DIAGNOSIS_
+        showPortList(); // TEST
+        showDiskList(); // TEST
+      #endif
+        waitForKeyStroke();
+
+        // device, interface, endpoints
+      #ifdef _OHCI_DIAGNOSIS_
+        textColor(HEADLINE);
+        printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
+                                                device, device->numInterfaceMSD,
+                                                device->numEndpointOutMSD,
+                                                device->numEndpointInMSD);
+        textColor(TEXT);
+      #endif
+
+        testMSD(device); // test with some SCSI commands
+    }
+}
 
 
 /*
