@@ -229,7 +229,7 @@ typedef struct ohci
     uintptr_t      pTDbuff[56];          // TD buffers
     uint8_t        rootPorts;            // number of rootports
     size_t         memSize;              // memory size of IO space
-    bool           enabledPortFlag;         // root ports enabled
+    bool           enabledPortFlag;      // root ports enabled
     ohci_port_t*   ports[OHCIPORTMAX];   // root ports  
     bool           run;                  // hc running (RS bit)
     uint8_t        num;                  // number of the OHCI

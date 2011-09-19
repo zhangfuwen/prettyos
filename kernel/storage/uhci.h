@@ -161,23 +161,32 @@ typedef struct
     uintptr_t frPtr[1024];
 } frPtr_t;
 
-// UHCI device
+
+struct uhci;
+
 typedef struct
 {
-    pciDev_t*  PCIdevice;         // PCI device
-    uint16_t   bar;               // start of I/O space (base address register
-    uintptr_t  framelistAddrPhys; // physical adress of frame list
-    frPtr_t*   framelistAddrVirt; // virtual adress of frame list
-    uintptr_t  qhPointerPhys;     // physical address of QH
-    uhci_QH_t* qhPointerVirt;     // virtual adress of QH
-    uint8_t    rootPorts;         // number of rootports
-    size_t     memSize;           // memory size of IO space
-    mutex_t*   framelistLock;     // mutex for access on the frame list
-    mutex_t*   qhLock;            // mutex for access on the QH
-    bool       enabledPorts;      // root ports enabled
-    port_t     port[UHCIPORTMAX]; // root ports
-    bool       run;               // hc running (RS bit)
-    uint8_t    num;               // Number of the UHCI
+    uint8_t      num;
+    port_t       port;
+    struct uhci* uhci;
+} uhci_port_t;
+
+typedef struct uhci
+{
+    pciDev_t*      PCIdevice;           // PCI device
+    uint16_t       bar;                 // start of I/O space (base address register
+    uintptr_t      framelistAddrPhys;   // physical adress of frame list
+    frPtr_t*       framelistAddrVirt;   // virtual adress of frame list
+    uintptr_t      qhPointerPhys;       // physical address of QH
+    uhci_QH_t*     qhPointerVirt;       // virtual adress of QH
+    uint8_t        rootPorts;           // number of rootports
+    size_t         memSize;             // memory size of IO space
+    mutex_t*       framelistLock;       // mutex for access on the frame list
+    mutex_t*       qhLock;              // mutex for access on the QH
+    bool           enabledPortFlag;     // root ports enabled
+    uhci_port_t*   ports[UHCIPORTMAX];  // root ports  
+    bool           run;                 // hc running (RS bit)
+    uint8_t        num;                 // Number of the UHCI
 } uhci_t;
 
 
@@ -187,6 +196,7 @@ void uhci_initHC(uhci_t* u);
 void uhci_resetHC(uhci_t* u);
 void uhci_enablePorts(uhci_t* u);
 void uhci_resetPort(uhci_t* u, uint8_t port);
+void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber);
 
 
 #endif

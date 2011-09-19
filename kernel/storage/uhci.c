@@ -10,9 +10,12 @@
 #include "task.h"
 #include "irq.h"
 #include "keyboard.h"
+#include "usb2.h"
+#include "usb2_msd.h"
 
 //#define UHCI_SCENARIO // qh/td experiments
 
+#define UHCI_USB_TRANSFER 
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -91,7 +94,7 @@ void uhci_initHC(uhci_t* u)
     irq_installPCIHandler(u->PCIdevice->irq, uhci_handler, u->PCIdevice);
 
     UHCI_USBtransferFlag = true;
-    u->enabledPorts      = false;
+    u->enabledPortFlag   = false;
 
     uhci_resetHC(u);
 }
@@ -262,7 +265,7 @@ void uhci_resetHC(uhci_t* u)
         textColor(TEXT);
         printf("\nRunStop Bit: %u  Frame Number: %u", u->run, inportw(u->bar + UHCI_FRNUM));
     }
-}
+} 
 
 // ports
 void uhci_enablePorts(uhci_t* u)
@@ -274,24 +277,24 @@ void uhci_enablePorts(uhci_t* u)
     for (uint8_t j=0; j<u->rootPorts; j++)
     {
         uhci_resetPort(u, j);
-        u->enabledPorts = true;
-
-        u->port[j].type = &USB_UHCI; // device manager
-        u->port[j].data = u;
-        u->port[j].insertedDisk = 0;
-        snprintf(u->port[j].name, 14, "UHCI-Port %u", j+1);
-        attachPort(&u->port[j]);
-
+        u->ports[j] = malloc(sizeof(uhci_port_t), 0, "uhci_port_t");
+        u->ports[j]->num = j+1;
+        u->ports[j]->uhci = u;
+        u->ports[j]->port.type = &USB_UHCI; // device manager
+        u->ports[j]->port.data = u->ports[j];
+        u->ports[j]->port.insertedDisk = 0;
+        snprintf(u->ports[j]->port.name, 14, "UHCI-Port %u", j+1);
+        attachPort(&u->ports[j]->port);
+        u->enabledPortFlag = true;
         uhci_showPortState(u, j);
     }
 }
-
 
 void uhci_resetPort(uhci_t* u, uint8_t port)
 {
     outportw(u->bar + UHCI_PORTSC1+2*port,UHCI_PORT_RESET);
     sleepMilliSeconds(50); // do not delete this wait
-    outportw(u->bar + UHCI_PORTSC1+2*port, inportw(u->bar + UHCI_PORTSC1+2*port) & ~UHCI_PORT_RESET); // clear reset bit
+    outportw(u->bar + UHCI_PORTSC1+2*port, inportw(u->bar + UHCI_PORTSC1+2*port) & ~UHCI_PORT_RESET);     // clear reset bit
     outportw(u->bar + UHCI_PORTSC1+2*port, UHCI_PORT_ENABLE_CHANGE|UHCI_PORT_CS_CHANGE|UHCI_PORT_ENABLE); // Clear bit 1 & 3, and Set bit 2 [Enable]
 
     // wait and check, whether reset bit is really zero
@@ -416,13 +419,28 @@ void uhci_pollDisk(void* dev)
             outportw(u->bar + UHCI_PORTSC1 + 2*port, UHCI_PORT_CS_CHANGE);
 
             if (val & UHCI_PORT_LOWSPEED_DEVICE)
+            {
                 printf("Lowspeed device");
+            }
             else
+            {
                 printf("Fullspeed device");
+            }
+
             if (val & UHCI_PORT_CS)
+            {
                 printf(" attached.");
+                if (UHCI_USBtransferFlag) 
+                {
+                  #ifdef UHCI_USB_TRANSFER
+                    uhci_setupUSBDevice(u, port); // TEST
+                  #endif
+                }
+            }
             else
+            {
                 printf(" removed.");
+            }
         }
     }
 }
@@ -455,7 +473,73 @@ static void uhci_showPortState(uhci_t* u, uint8_t port)
 *                                                                                                      *
 *******************************************************************************************************/
 
-// TODO
+void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
+{
+    u->ports[portNumber]->num = 0; // device number has to be set to 0
+    u->ports[portNumber]->num = 1 + usbTransferEnumerate(&u->ports[portNumber]->port, portNumber);
+
+    disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
+    disk->port = &u->ports[portNumber]->port;
+        
+    usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
+    usbTransferDevice(device);
+    
+    /*
+    usbTransferConfig(device);
+    usbTransferString(device);
+    
+    for (uint8_t i=1; i<4; i++) // fetch 3 strings
+    {
+        usbTransferStringUnicode(device, i);
+    }
+
+    usbTransferSetConfiguration(device, 1); // set first configuration
+    
+  #ifdef _OHCI_DIAGNOSIS_
+    uint8_t config = usbTransferGetConfiguration(device);
+    printf("\nconfiguration: %u", config); // check configuration
+    waitForKeyStroke();
+  #endif
+
+    if (device->InterfaceClass != 0x08)
+    {
+        textColor(ERROR);
+        printf("\nThis is no Mass Storage Device! MSD test and addition to device manager will not be carried out.");
+        textColor(TEXT);
+        waitForKeyStroke();
+    }
+    else
+    {
+        // Disk
+        disk->type       = &USB_MSD;
+        disk->sectorSize = 512;
+        disk->port       = &u->ports[portNumber]->port;
+        strcpy(disk->name, device->productName);
+        attachDisk(disk);
+
+        // Port
+        u->ports[portNumber]->port.insertedDisk = disk;
+
+      #ifdef _UHCI_DIAGNOSIS_
+        showPortList(); // TEST
+        showDiskList(); // TEST
+      #endif
+        waitForKeyStroke();
+
+        // device, interface, endpoints
+      #ifdef _UHCI_DIAGNOSIS_
+        textColor(HEADLINE);
+        printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
+                                                device, device->numInterfaceMSD,
+                                                device->numEndpointOutMSD,
+                                                device->numEndpointInMSD);
+        textColor(TEXT);
+      #endif
+
+        testMSD(device); // test with some SCSI commands        
+    }
+    */
+}
 
 
 /*

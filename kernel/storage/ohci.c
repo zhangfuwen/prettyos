@@ -13,7 +13,7 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-// #define OHCI_USB_TRANSFER // does not yet work fully (#PF, reboot)
+// #define OHCI_USB_TRANSFER 
 
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
@@ -437,7 +437,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     // Check if an OHCI controller issued this interrupt
     ohci_t* o = device->data;
     bool found = false;
-    for (uint8_t i=0; i<o->rootPorts; i++)
+    for (uint8_t i=0; i<OHCIMAX; i++)
     {
         if (o == ohci[i])
         {
