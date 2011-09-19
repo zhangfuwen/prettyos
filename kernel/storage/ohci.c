@@ -13,7 +13,7 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-// #define OHCI_USB_TRANSFER // does not work fully (#PF, reboot)
+// #define OHCI_USB_TRANSFER // does not yet work fully (#PF, reboot)
 
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
@@ -308,9 +308,8 @@ void ohci_resetHC(ohci_t* o)
     printf("\n\nFound %i Rootports.\n", o->rootPorts);
     textColor(TEXT);
 
-    for (uint8_t j = 0; j < OHCIPORTMAX /*o->rootPorts*/; j++)
+    for (uint8_t j = 0; j < o->rootPorts; j++)
     {
-        memset(o->ports, 0, OHCIPORTMAX*4);
         o->ports[j] = malloc(sizeof(ohci_port_t), 0, "ohci_port_t");
         o->ports[j]->num = j+1;
         o->ports[j]->ohci = o;
@@ -333,7 +332,7 @@ void ohci_resetHC(ohci_t* o)
 
 void showPortstatus(ohci_t* o)
 {
-    for (uint8_t j=0; j < OHCIPORTMAX /*o->rootPorts*/; j++)
+    for (uint8_t j=0; j < o->rootPorts; j++)
     {
         if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
         {
@@ -350,13 +349,7 @@ void showPortstatus(ohci_t* o)
             {
                 textColor(SUCCESS);
                 printf(" dev. attached  -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;
-                if (OHCI_USBtransferFlag) 
-                {
-                  #ifdef OHCI_USB_TRANSFER
-                    ohci_setupUSBDevice(o, j); // TEST
-                  #endif
-                }
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;                
             }
             else
                 printf(" device removed -");
@@ -365,6 +358,12 @@ void showPortstatus(ohci_t* o)
             {
                 textColor(SUCCESS);
                 printf(" enabled  -");                
+                if (OHCI_USBtransferFlag) 
+                {
+                  #ifdef OHCI_USB_TRANSFER
+                    ohci_setupUSBDevice(o, j); // TEST
+                  #endif
+                }
             }
             else
             {
@@ -438,7 +437,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     // Check if an OHCI controller issued this interrupt
     ohci_t* o = device->data;
     bool found = false;
-    for (uint8_t i=0; i<OHCIMAX; i++)
+    for (uint8_t i=0; i<o->rootPorts; i++)
     {
         if (o == ohci[i])
         {
@@ -539,10 +538,6 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
 void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
 {
-    ///TEST
-    o->ports[portNumber]->port.type = &USB_OHCI; // why necessary?
-    ///TEST
-
     o->ports[portNumber]->num = 0; // device number has to be set to 0
     o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
 
@@ -551,16 +546,18 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
         
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
+    
+    /*
     usbTransferConfig(device);
     usbTransferString(device);
-
+    
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
         usbTransferStringUnicode(device, i);
     }
 
     usbTransferSetConfiguration(device, 1); // set first configuration
-
+    
   #ifdef _OHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
@@ -602,8 +599,9 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
         textColor(TEXT);
       #endif
 
-        testMSD(device); // test with some SCSI commands
+        testMSD(device); // test with some SCSI commands        
     }
+    */
 }
 
 
