@@ -318,7 +318,17 @@ void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
 void showDevice(usb2_Device_t* usbDev)
 {
     textColor(IMPORTANT);
-    printf("\nUSB %u.%u\t", BYTE2(usbDev->usbSpec), BYTE1(usbDev->usbSpec)); // e.g. 0x0210 means 2.10
+    if (usbDev->usbSpec == 0x0100 || usbDev->usbSpec == 0x0110 || usbDev->usbSpec == 0x0200 || usbDev->usbSpec == 0x0300)
+    {
+        printf("\nUSB %u.%u\t", BYTE2(usbDev->usbSpec), BYTE1(usbDev->usbSpec)); // e.g. 0x0210 means 2.10
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("\nInvalid USB version!"); 
+        textColor(TEXT);
+        return;
+    }
 
     if (usbDev->usbClass == 0x09)
     {

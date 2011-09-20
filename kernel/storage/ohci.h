@@ -5,6 +5,7 @@
 #include "pci.h"
 #include "list.h"
 #include "devicemanager.h"
+#include "usb_hc.h"
 
 #define OHCIMAX      4  // max number of OHCI devices
 #define OHCIPORTMAX  8  // max number of OHCI device ports
@@ -230,7 +231,7 @@ typedef struct ohci
     uint8_t        rootPorts;            // number of rootports
     size_t         memSize;              // memory size of IO space
     bool           enabledPortFlag;      // root ports enabled
-    ohci_port_t*   ports[OHCIPORTMAX];   // root ports  
+    ohci_port_t*   ports[OHCIPORTMAX];   // root ports
     bool           run;                  // hc running (RS bit)
     uint8_t        num;                  // number of the OHCI
 } ohci_t;
@@ -239,6 +240,18 @@ void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
 void ohci_initHC(ohci_t* o);
 void ohci_resetHC(ohci_t* o);
 void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber);
+
+void ohci_setupTransfer(usb_transfer_t* transfer);
+void ohci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
+void ohci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length);
+void ohci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length);
+void ohci_issueTransfer(usb_transfer_t* transfer);
+
+void*     ohci_allocQTDbuffer(ohciTD_t* td);
+ohciTD_t* ohci_createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);
+ohciTD_t* ohci_createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
+void      ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
+
 
 
 #endif

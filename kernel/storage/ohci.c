@@ -13,7 +13,7 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-// #define OHCI_USB_TRANSFER 
+#define OHCI_USB_TRANSFER
 
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
@@ -349,7 +349,7 @@ void showPortstatus(ohci_t* o)
             {
                 textColor(SUCCESS);
                 printf(" dev. attached  -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;                
+                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;
             }
             else
                 printf(" device removed -");
@@ -357,8 +357,8 @@ void showPortstatus(ohci_t* o)
             if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)
             {
                 textColor(SUCCESS);
-                printf(" enabled  -");                
-                if (OHCI_USBtransferFlag) 
+                printf(" enabled  -");
+                if (OHCI_USBtransferFlag)
                 {
                   #ifdef OHCI_USB_TRANSFER
                     ohci_setupUSBDevice(o, j); // TEST
@@ -512,7 +512,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     {
         printf("Root hub status change.");
         handled |= OHCI_INT_RHSC;
-        showPortstatus(o);        
+        showPortstatus(o);
     }
 
     if (val & OHCI_INT_OC) // ownership change
@@ -543,21 +543,20 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
 
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &o->ports[portNumber]->port;
-        
+
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
-    
-    /*
+
     usbTransferConfig(device);
     usbTransferString(device);
-    
+
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
         usbTransferStringUnicode(device, i);
     }
 
     usbTransferSetConfiguration(device, 1); // set first configuration
-    
+
   #ifdef _OHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
@@ -599,10 +598,196 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
         textColor(TEXT);
       #endif
 
-        testMSD(device); // test with some SCSI commands        
+        testMSD(device); // test with some SCSI commands
     }
-    */
 }
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                            Transactions                                              *
+*                                                                                                      *
+*******************************************************************************************************/
+
+typedef struct
+{
+    ohciTD_t*   qTD;
+    void*       qTDBuffer;
+    void*       inBuffer;
+    size_t      inLength;
+} ohci_transaction_t;
+
+
+void ohci_setupTransfer(usb_transfer_t* transfer)
+{
+    transfer->data = malloc(sizeof(ohciED_t), 32, "OHCI-ED");
+}
+
+void ohci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes,
+                           uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
+{
+    ohci_transaction_t* oTransaction = uTransaction->data = malloc(sizeof(ohci_transaction_t), 0, "ohci_transaction_t");
+    oTransaction->inBuffer = 0;
+    oTransaction->inLength = 0;
+
+    oTransaction->qTD = ohci_createQTD_SETUP(1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &oTransaction->qTDBuffer);
+
+    if(transfer->transactions->tail)
+    {
+        ohci_transaction_t* oLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data; // unused variable
+        oLastTransaction->qTD->nextTD = paging_getPhysAddr(oTransaction->qTD); // no member next
+    }
+}
+
+void ohci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length)
+{
+    ohci_transaction_t* oTransaction = uTransaction->data = malloc(sizeof(ohci_transaction_t), 0, "ohci_transaction_t");
+    oTransaction->inBuffer = buffer;
+    oTransaction->inLength = length;
+
+    oTransaction->qTD = ohci_createQTD_IO(1, 1, toggle, length);
+    oTransaction->qTDBuffer = ohci_allocQTDbuffer(oTransaction->qTD);
+
+    if(transfer->transactions->tail)
+    {
+       ohci_transaction_t* oLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+       oLastTransaction->qTD->nextTD = paging_getPhysAddr(oTransaction->qTD);
+    }
+}
+
+void ohci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length)
+{
+    ohci_transaction_t* oTransaction = uTransaction->data = malloc(sizeof(ohci_transaction_t), 0, "ohci_transaction_t");
+    oTransaction->inBuffer = 0;
+    oTransaction->inLength = 0;
+
+    oTransaction->qTD = ohci_createQTD_IO(1, 0, toggle, length);
+    oTransaction->qTDBuffer = ohci_allocQTDbuffer(oTransaction->qTD);
+
+    if(buffer != 0 && length != 0)
+    {
+        memcpy(oTransaction->qTDBuffer, buffer, length);
+    }
+
+    if(transfer->transactions->tail)
+    {
+        ohci_transaction_t* oLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+        oLastTransaction->qTD->nextTD = paging_getPhysAddr(oTransaction->qTD);
+    }
+}
+
+void ohci_issueTransfer(usb_transfer_t* transfer)
+{
+    ohci_t* o = ((ohci_port_t*)transfer->HC->data)->ohci; 
+    
+    // TEST
+    textColor(TEXT);
+    printf("\nTransfer->endpoint: %u, &o: %X", transfer->endpoint, o); // TEST for ununsed variable
+    // TEST
+
+    if(transfer->type == USB_CONTROL)
+    {
+       // e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
+    }
+
+    // e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(transfer->data);
+
+    ohci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data; // unused variable
+
+    ohci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD,  1, ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
+
+    for(uint8_t i = 0; i < 5 && !transfer->success; i++)
+    {
+        if(transfer->type == USB_CONTROL)
+        {
+            // performAsyncScheduler(e, true, false, 0);
+        }
+        else
+        {
+            // performAsyncScheduler(e, true, true, 1 + transfer->packetSize/100);
+        }
+
+        transfer->success = true;
+        for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+        {
+            // ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data; // unused variable
+            // ohci_showStatusbyteQTD(transaction->qTD);
+            // transfer->success = transfer->success && (transaction->qTD->token.status == 0); // status // 'ohciTD_t' has no member named 'token'
+        }
+      #ifdef _OHCI_DIAGNOSIS_
+        if(!transfer->success)
+        {
+            printf("\nRetry transfer: %u", i+1);
+        }
+      #endif
+    }
+
+    free(transfer->data);
+    for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+    {
+        ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+
+        if(transaction->inBuffer != 0 && transaction->inLength != 0)
+            memcpy(transaction->inBuffer, transaction->qTDBuffer, transaction->inLength);
+        free(transaction->qTDBuffer);
+        free(transaction->qTD);
+        free(transaction);
+    }
+    if(transfer->success)
+    {
+      #ifdef _OHCI_DIAGNOSIS_
+        textColor(SUCCESS);
+        printf("\nTransfer successful.");
+        textColor(TEXT);
+      #endif
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("\nTransfer failed.");
+        textColor(TEXT);
+    }
+}
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                            ohci ED TD functions                                      *
+*                                                                                                      *
+*******************************************************************************************************/
+
+void* ohci_allocQTDbuffer(ohciTD_t* td)
+{
+    void* data = malloc(PAGESIZE, 32, "ohciTD-buffer"); // Enough for a full page
+    memset(data, 0, PAGESIZE);
+
+    td->curBuffPtr = paging_getPhysAddr(data);
+
+    return data;
+}
+
+ohciTD_t* ohci_createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer)
+{
+    return (0);
+}
+
+ohciTD_t* ohci_createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
+{
+    return (0);
+}
+
+void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
+{
+    memset(head, 0, sizeof(ohciED_t));
+
+    //
+    //
+    if (firstQTD == 0)
+        head->tdQueueHead /* head TD in queue */ = 0x1; // ??
+    else
+        head->tdQueueHead = paging_getPhysAddr(firstQTD);
+}
+
 
 
 /*
