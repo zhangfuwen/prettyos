@@ -341,7 +341,7 @@ EVALUATION: // evaluation of entry
             switch (error)
             {
                 case CE_GOOD:
-                    video_drawString(video_currentMode->device, " Successfull.\n", 0, ypos);
+                    video_drawString(video_currentMode->device, " Successful.\n", 0, ypos);
                     ypos += 16;
                     break;
                 case CE_INVALID_FILENAME:

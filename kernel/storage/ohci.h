@@ -236,6 +236,17 @@ typedef struct ohci
     uint8_t        num;                  // number of the OHCI
 } ohci_t;
 
+typedef struct 
+{
+    uint8_t   type;
+    uint8_t   request;
+    uint8_t   valueLo;
+    uint8_t   valueHi;
+    uint16_t  index;
+    uint16_t  length;
+} __attribute__((packed)) ohci_request_t;
+
+
 void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
 void ohci_initHC(ohci_t* o);
 void ohci_resetHC(ohci_t* o);
@@ -247,11 +258,11 @@ void ohci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransactio
 void ohci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length);
 void ohci_issueTransfer(usb_transfer_t* transfer);
 
-void*     ohci_allocQTDbuffer(ohciTD_t* td);
 ohciTD_t* ohci_createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);
 ohciTD_t* ohci_createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
 void      ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
 
+uint8_t   ohci_showStatusbyteQTD(ohciTD_t* qTD);
 
 
 #endif

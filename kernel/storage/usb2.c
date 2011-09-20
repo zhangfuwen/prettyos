@@ -320,12 +320,14 @@ void showDevice(usb2_Device_t* usbDev)
     textColor(IMPORTANT);
     if (usbDev->usbSpec == 0x0100 || usbDev->usbSpec == 0x0110 || usbDev->usbSpec == 0x0200 || usbDev->usbSpec == 0x0300)
     {
+        textColor(SUCCESS);
         printf("\nUSB %u.%u\t", BYTE2(usbDev->usbSpec), BYTE1(usbDev->usbSpec)); // e.g. 0x0210 means 2.10
+        textColor(TEXT);
     }
     else
     {
         textColor(ERROR);
-        printf("\nInvalid USB version!"); 
+        printf("\nInvalid USB version %u.%u !", BYTE2(usbDev->usbSpec), BYTE1(usbDev->usbSpec)); 
         textColor(TEXT);
         return;
     }

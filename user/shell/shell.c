@@ -345,7 +345,7 @@ EVALUATION: // evaluation of entry
             {
                 case CE_GOOD:
                     textColor(0x0A);
-                    puts("   => Successfull\n");
+                    puts("   => Successful\n");
                     break;
                 case CE_INVALID_FILENAME:
                     textColor(0x0C);
@@ -362,7 +362,7 @@ EVALUATION: // evaluation of entry
                     else
                     {
                         textColor(0x0A);
-                        puts("   => Successfull\n");
+                        puts("   => Successful\n");
                     }
                     break;
                 default:
