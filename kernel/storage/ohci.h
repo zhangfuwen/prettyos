@@ -171,7 +171,6 @@ typedef struct
     uint32_t format  :  1; // bit with isochronous transfers
     uint32_t mps     : 11; // maximum packet size
     uint32_t ours    :  5; // available
-
     volatile uint32_t tdQueueTail; // last TD in queue
     volatile uint32_t tdQueueHead; // head TD in queue
     volatile uint32_t nextED;      // next ED on the list
