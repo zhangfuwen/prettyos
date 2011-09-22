@@ -236,6 +236,7 @@ typedef struct ohci
     ohci_OpRegs_t* OpRegs;               // operational registers
     ohci_HCCA_t*   hcca;                 // HC Communications Area (virtual address)
     ohciED_t*      pED[64];              // EDs
+    ohciED_t*      pEDdoneHead;          // ED donehead 
     ohciTD_t*      pTD[56];              // TDs
     uintptr_t      pTDbuff[56];          // TD buffers
     uint8_t        rootPorts;            // number of rootports

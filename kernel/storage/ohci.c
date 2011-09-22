@@ -255,6 +255,8 @@ void ohci_resetHC(ohci_t* o)
         o->pED[i] = malloc(sizeof(ohciED_t), OHCI_DESCRIPTORS_ALIGN, "ohci_ED");
     }
 
+    o->pEDdoneHead = malloc(sizeof(ohciED_t), OHCI_DESCRIPTORS_ALIGN, "ohci_EDdonehead");
+    
     for (uint8_t i=0; i<64; i++)
     {
         if (i<63)
@@ -266,9 +268,8 @@ void ohci_resetHC(ohci_t* o)
             o->pED[i]->nextED = 0; // no next ED
         }
     }
-    o->OpRegs->HcControlHeadED = paging_getPhysAddr(o->pED[0]);
-
-
+    o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(o->pED[0]);
+    o->OpRegs->HcDoneHead = paging_getPhysAddr(o->pEDdoneHead);
 
     // TD pool: 56 TDs and buffers
     for (uint8_t i=0; i<56; i++)
@@ -718,7 +719,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     
     ohci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD,  1, ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
     
-    o->OpRegs->HcControlCurrentED = paging_getPhysAddr(transfer->data);
+    o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(transfer->data);
     o->OpRegs->HcCommandStatus |= OHCI_STATUS_CLF; // control list filled 
 
     o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers
@@ -743,6 +744,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     // TEST
     textColor(IMPORTANT);
     printf("\n\nED-Index: %u, Transfer->endpoint: %u, &o: %X", indexED-1, transfer->endpoint, o);
+    printf("\nhcca->donehead: %X", o->hcca->doneHead);
     textColor(TEXT);
 
     /*
