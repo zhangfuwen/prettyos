@@ -236,11 +236,6 @@ void ohci_resetHC(ohci_t* o)
     void* hccaVirt = malloc(sizeof(ohci_HCCA_t), OHCI_HCCA_ALIGN, "ohci HCCA"); // HCCA must be minimum 256-byte aligned
     memset(hccaVirt, 0, sizeof(ohci_HCCA_t));
     o->hcca = (ohci_HCCA_t*)hccaVirt;
-    // TODO: ...
-
-  #ifdef _OHCI_DIAGNOSIS_
-    printf("\nHCCA (phys. address): %X", o->OpRegs->HcHCCA);
-  #endif
 
     /*
     Initialize the Operational Registers to match the current device data state;
@@ -249,21 +244,21 @@ void ohci_resetHC(ohci_t* o)
 
     // Pointers to ED, TD and TD buffers are part of ohci_t
 
-    // ED pool: 64 EDs
-    for (uint8_t i=0; i<64; i++)
+    // ED pool: NUM_ED EDs
+    for (uint8_t i=0; i<NUM_ED; i++)
     {
         o->pED[i] = malloc(sizeof(ohciED_t), OHCI_DESCRIPTORS_ALIGN, "ohci_ED");
     }
 
     o->pEDdoneHead = malloc(sizeof(ohciED_t), OHCI_DESCRIPTORS_ALIGN, "ohci_EDdonehead");
     
-    for (uint8_t i=0; i<64; i++)
+    for (uint8_t i=0; i<NUM_ED; i++)
     {
         if (i<63)
         {
             o->pED[i]->nextED = paging_getPhysAddr(o->pED[i+1]);
         }
-        if (i==63)
+        if (i == NUM_ED - 1)
         {
             o->pED[i]->nextED = 0; // no next ED
         }
@@ -271,18 +266,21 @@ void ohci_resetHC(ohci_t* o)
     o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(o->pED[0]);
     o->OpRegs->HcDoneHead = paging_getPhysAddr(o->pEDdoneHead);
 
-    // TD pool: 56 TDs and buffers
-    for (uint8_t i=0; i<56; i++)
+    // TD pool: NUM_TD TDs and buffers
+    for (uint8_t i=0; i<NUM_TD; i++)
     {
         o->pTDbuff[i] = (uintptr_t) malloc(1024, OHCI_DESCRIPTORS_ALIGN, "ohci_TDbuffer");
         o->pTD[i] = malloc(sizeof(ohciTD_t), OHCI_DESCRIPTORS_ALIGN, "ohci_TD");
         o->pTD[i]->curBuffPtr = paging_getPhysAddr((void*)o->pTDbuff[i]);
+        o->pTDphys[i] = paging_getPhysAddr((void*)o->pTD[i]);
     }
-
-
 
     // Set the HcHCCA to the physical address of the HCCA block
     o->OpRegs->HcHCCA = paging_getPhysAddr(hccaVirt);
+
+  #ifdef _OHCI_DIAGNOSIS_
+    printf("\nHCCA (phys. address): %X", o->OpRegs->HcHCCA);
+  #endif
 
     // Set HcInterruptEnable to have all interrupt enabled except Start-of-Frame detect
     o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
@@ -497,8 +495,18 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     if (val & OHCI_INT_WDH) // write back done head
     {
         printf("Write back done head.");
-        //phys = o->hcca->doneHead;
-        // TODO: handle ready transfer (ED, TD)
+        
+        // the value has to be stored before resetting OHCI_INT_WDH
+        for (uint8_t i=0; i<NUM_TD; i++)
+        {
+            if (o->hcca->doneHead == o->pTDphys[i])
+            {
+                printf("\nDONEHEAD:");
+                ohci_showStatusbyteQTD(o->pTD[i]);
+                printf("\n");
+            }
+        }        
+        
         handled |= OHCI_INT_WDH;
     }
 
@@ -722,7 +730,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(transfer->data);
     o->OpRegs->HcCommandStatus |= OHCI_STATUS_CLF; // control list filled 
 
-    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers
+    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control and bulk transfers
     
     for(uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
     {
@@ -804,17 +812,10 @@ ohciTD_t* ohci_createQTD_SETUP(usb_transfer_t* transfer, uintptr_t next, bool to
     oTD->direction   = OHCI_TD_SETUP; 
     oTD->toggle      = toggle; 
     oTD->toggleFromTD = 1;
-    if(tokenBytes) 
-    {
-        oTD->curBuffPtr  = paging_getPhysAddr((void*)((ohci_t*)transfer->HC->data)->pTDbuff[indexTD]);
-        oTD->buffEnd     = oTD->curBuffPtr + tokenBytes;
-    }
-    else
-    {
-        oTD->curBuffPtr  = 0;
-    }
-
     
+    oTD->curBuffPtr  = paging_getPhysAddr((void*)((ohci_t*)transfer->HC->data)->pTDbuff[indexTD]);
+    oTD->buffEnd     = oTD->curBuffPtr + length/*tokenBytes*/;
+        
     oTD->cond        = 15; // to be executed
     oTD->bufRounding = 1;  // 1 = the last data packet may be smaller than the defined buffer without causing an error
     oTD->delayInt    = 0;
@@ -871,7 +872,7 @@ ohciTD_t* ohci_createQTD_IO(usb_transfer_t* transfer, uintptr_t next, uint8_t di
 
 void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-    // head->nextED  = horizPtr;
+    // head->nextED  = horizPtr; ==> freeze
     head->endpNum = endpoint;
     head->devAddr = device;
     head->mps     = MPS_FULLSPEED; //packetSize;
@@ -903,6 +904,7 @@ uint8_t ohci_showStatusbyteQTD(ohciTD_t* qTD)
 {
     if (qTD->cond != 0x00)
     {
+        textColor(IMPORTANT);
         printf("\nErrCnt: %u Status: ", qTD->errCnt);
         textColor(ERROR);
         if (qTD->cond ==  1) { printf("Last data packet from endpoint contained a CRC error."); }

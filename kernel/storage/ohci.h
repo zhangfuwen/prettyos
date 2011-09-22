@@ -7,13 +7,15 @@
 #include "devicemanager.h"
 #include "usb_hc.h"
 
-#define OHCIMAX      4  // max number of OHCI devices
-#define OHCIPORTMAX  8  // max number of OHCI device ports
+#define OHCIMAX       4  // max number of OHCI devices
+#define OHCIPORTMAX   8  // max number of OHCI device ports
+#define NUM_ED       50  // number of EDs in memory pool
+#define NUM_TD      100  // number of TDs in memory pool 
 
 #define OHCI_HCCA_ALIGN          0x0100
 #define OHCI_DESCRIPTORS_ALIGN   0x0010
 
-#define MPS_FULLSPEED 64;
+#define MPS_FULLSPEED 64
 
 // HcControl Register
 #define OHCI_CTRL_CBSR (BIT(0)|BIT(1))   // relation between control und bulk (cbsr+1 vs. 1)
@@ -235,10 +237,11 @@ typedef struct ohci
     uintptr_t      bar;                  // MMIO space (base address register)
     ohci_OpRegs_t* OpRegs;               // operational registers
     ohci_HCCA_t*   hcca;                 // HC Communications Area (virtual address)
-    ohciED_t*      pED[64];              // EDs
+    ohciED_t*      pED[NUM_ED];          // EDs
     ohciED_t*      pEDdoneHead;          // ED donehead 
-    ohciTD_t*      pTD[56];              // TDs
-    uintptr_t      pTDbuff[56];          // TD buffers
+    ohciTD_t*      pTD[NUM_TD];          // TDs
+    uintptr_t      pTDphys[NUM_TD];      // TDs phys. address
+    uintptr_t      pTDbuff[NUM_TD];      // TD buffers
     uint8_t        rootPorts;            // number of rootports
     size_t         memSize;              // memory size of IO space
     bool           enabledPortFlag;      // root ports enabled
