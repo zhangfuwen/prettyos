@@ -799,6 +799,40 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
 
 ohciTD_t* ohci_createQTD_SETUP(usb_transfer_t* transfer, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer)
 {
+    printf("\nvirt. next: %X ", next);
+
+    ohciTD_t* oTD = curOHCI->pTD[indexTD];
+
+    if (next != 0x1)
+    {
+        oTD->nextTD = paging_getPhysAddr((void*)next);
+    }
+    else
+    {
+        oTD->nextTD = 0x1;
+    }
+    oTD->direction   = 0; // SETUP
+    oTD->toggle      = toggle;
+    oTD->curBuffPtr  = paging_getPhysAddr((void*)curOHCI->pTD[indexTD]);
+    oTD->cond        = 15; // to be executed
+
+    ohci_request_t* request = (ohci_request_t*)curOHCI->pTD[indexTD];
+    request->type    = type;
+    request->request = req;
+    request->valueHi = hiVal;
+    request->valueLo = loVal;
+    request->index   = i;
+    request->length  = length;
+
+    indexTD++;
+    return (oTD);
+}
+
+/*
+ohciTD_t* ohci_createQTD_SETUP(usb_transfer_t* transfer, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer)
+{
+    printf("\nvirt. next: %X ", next);
+
     ohciTD_t* oTD = (void*)((((ohci_t*)transfer->HC->data))->pTD[indexTD]);
 
     if (next != 0x1)
@@ -809,18 +843,16 @@ ohciTD_t* ohci_createQTD_SETUP(usb_transfer_t* transfer, uintptr_t next, bool to
     {
         oTD->nextTD = 0x1;
     }
-    oTD->direction   = OHCI_TD_SETUP; 
-    oTD->toggle      = toggle; 
-    oTD->toggleFromTD = 1;
     
-    oTD->curBuffPtr  = paging_getPhysAddr((void*)((ohci_t*)transfer->HC->data)->pTDbuff[indexTD]);
-    oTD->buffEnd     = oTD->curBuffPtr + length/*tokenBytes*/;
-        
+    oTD->direction   = OHCI_TD_SETUP; 
+    oTD->toggle      = toggle;
+    oTD->toggleFromTD = 1;
     oTD->cond        = 15; // to be executed
-    oTD->bufRounding = 1;  // 1 = the last data packet may be smaller than the defined buffer without causing an error
-    oTD->delayInt    = 0;
-
-    ohci_request_t* request = *buffer = (ohci_request_t*)((((ohci_t*)transfer->HC->data))->pTDbuff[indexTD]);
+    
+    oTD->curBuffPtr  = paging_getPhysAddr((void*)(((ohci_t*)transfer->HC->data)->pTDbuff[indexTD]));
+    oTD->buffEnd     = oTD->curBuffPtr tokenBytes;
+    
+    ohci_request_t* request = *buffer = (void*)((ohci_t*)transfer->HC->data)->pTDbuff[indexTD];
     request->type    = type;
     request->request = req;
     request->valueHi = hiVal;
@@ -833,6 +865,7 @@ ohciTD_t* ohci_createQTD_SETUP(usb_transfer_t* transfer, uintptr_t next, bool to
     indexTD++;
     return (oTD);
 }
+*/
 
 ohciTD_t* ohci_createQTD_IO(usb_transfer_t* transfer, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
 {
