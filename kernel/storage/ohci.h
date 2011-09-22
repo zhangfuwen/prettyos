@@ -13,6 +13,8 @@
 #define OHCI_HCCA_ALIGN          0x0100
 #define OHCI_DESCRIPTORS_ALIGN   0x0010
 
+#define MPS_FULLSPEED 64;
+
 // HcControl Register
 #define OHCI_CTRL_CBSR (BIT(0)|BIT(1))   // relation between control und bulk (cbsr+1 vs. 1)
 #define OHCI_CTRL_PLE   BIT(2)           // activate periodical transfers
@@ -171,9 +173,12 @@ typedef struct
     uint32_t format  :  1; // bit with isochronous transfers
     uint32_t mps     : 11; // maximum packet size
     uint32_t ours    :  5; // available
+    
     volatile uint32_t tdQueueTail; // last TD in queue
     volatile uint32_t tdQueueHead; // head TD in queue
+    
     volatile uint32_t nextED;      // next ED on the list
+
 } __attribute__((packed)) ohciED_t;
 
 typedef struct
@@ -193,12 +198,18 @@ typedef struct
     uint32_t  bufRounding        :  1;  // If the bit is 1, then the last data packet may be smaller than the defined buffer without causing an error
     uint32_t  direction          :  2;  // transfer direction
     uint32_t  delayInt           :  3;  // wait delayInt frames before sending interrupt. If DelayInterrupt is 111b, then there is no interrupt at completion of this TD.
-    uint32_t  toggle             :  2;  // toggle
+        
+    uint32_t  toggle             :  1;  // toggle // This 2-bit field is used to generate/compare the data PID value (DATA0 or DATA1).
+                                        // The MSb of this field is ‘0’ when the data toggle value is acquired from the toggleCarry field in the ED 
+    uint32_t  toggleFromTD       :  1;  // and ‘1’ when the data toggle value is taken from the LSb of this field    
+
     volatile  uint32_t errCnt    :  2;  // Anzahl der aufgetretenen Fehler - bei 11b wird der Status im "condition"-Feld gespeichert.
     volatile  uint32_t cond      :  4;  // status of the last attempted transaction
+   
     uintptr_t curBuffPtr;               // data ptr
     volatile uintptr_t nextTD;          // next TD
     uintptr_t buffEnd;                  // last byte in buffer
+
 } __attribute__((packed)) ohciTD_t;
 
 typedef struct
