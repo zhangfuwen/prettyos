@@ -155,7 +155,7 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
     currCSWtag = SCSIcommand;
 }
 
-static int32_t checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer)
+static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer)
 {
     // CSW Status
   #ifdef _EHCI_DIAGNOSIS_
@@ -163,6 +163,8 @@ static int32_t checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* devic
     memshow(MSDStatus,13, false);
     putch('\n');
   #endif
+
+    int error = 0;
 
     // check signature 0x53425355 // DWORD 0 (byte 0:3)
     uint32_t CSWsignature = *(uint32_t*)MSDStatus; // DWORD 0
@@ -186,6 +188,7 @@ static int32_t checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* devic
         textColor(ERROR);
         printf("\nCSW signature wrong (processed, but wrong value)");
         textColor(TEXT);
+        error = -2;
     }
 
     // check matching tag
@@ -204,6 +207,7 @@ static int32_t checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* devic
         textColor(ERROR);
         printf("\nError: CSW tag wrong");
         textColor(TEXT);
+        error = -3;
     }
 
     // check CSWDataResidue
@@ -237,20 +241,23 @@ static int32_t checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* devic
             break;
         case 0x01:
             printf("\nCommand failed");
+            error = -4;
             break;
         case 0x02:
             printf("\nPhase Error");
             textColor(IMPORTANT);
             printf("\nReset recovery is needed");
             usbResetRecoveryMSD(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD);
+            error = -5;
             break;
         default:
             printf("\nCSW status byte: undefined value (error)");
+            error = -6;
             break;
     }
     textColor(TEXT);
 
-    return 0;
+    return error;
 }
 
 /// cf. http://www.beyondlogic.org/usbnutshell/usb4.htm#Bulk
@@ -267,7 +274,7 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
     SCSIcmd(SCSIcommand, &cbw, LBA, TransferLength);
 
     usb_transfer_t transfer;
-    usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpointOut, 512); // CONTROL instead of BULK to avoid slowdown by asyncScheduler. TODO: Improve Scheduler
+    usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointOut, 512); // CONTROL instead of BULK to avoid slowdown by asyncScheduler. TODO: Improve Scheduler
     usb_outTransaction(&transfer, device->ToggleEndpointOutMSD, &cbw, 31);
     usb_issueTransfer(&transfer);
 
@@ -284,10 +291,13 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
     printf("\nIN part");
   #endif
 
+    uint32_t timeout = 0;
+
     char tempStatusBuffer[13];
     if(statusBuffer == 0)
         statusBuffer = tempStatusBuffer;
 
+IN_TRANSFER:
     usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointIn, 512);
     if (TransferLength > 0)
     {
@@ -317,7 +327,11 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
     }
   #endif
 
-    checkSCSICommandUSBTransfer(statusBuffer, device, TransferLength, bulkTransfer);
+    if(checkSCSICommandUSBTransfer(statusBuffer, device, TransferLength, bulkTransfer) != 0 && timeout < 5)
+    {
+        timeout++;
+        goto IN_TRANSFER;
+    }
 }
 
 void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer)

@@ -3,7 +3,6 @@
 
 #include "os.h"
 #include "pci.h"
-#include "list.h"
 #include "devicemanager.h"
 #include "usb_hc.h"
 
@@ -112,8 +111,6 @@
 #define OHCI_TD_OUT   1
 #define OHCI_TD_IN    2
 
-enum usbTransferType {USBCONTROL, USBBULK};
-
 
 /*
 There are two communication channels between the HC and the HC Driver.
@@ -180,18 +177,7 @@ typedef struct
     volatile uint32_t tdQueueHead; // head TD in queue
 
     volatile uint32_t nextED;      // next ED on the list
-
 } __attribute__((packed)) ohciED_t;
-
-typedef struct
-{
-    ohciED_t*       virt;
-    uintptr_t       phys;
-    uint32_t        devAddr;
-    uint32_t        endp;
-    list_t*         transfers;
-    uint8_t         usbType;
-} __attribute__((packed)) ohciEDdesc_t;
 
 // Transfer Descriptor
 typedef struct
@@ -211,15 +197,7 @@ typedef struct
     uintptr_t curBuffPtr;               // data ptr
     uintptr_t nextTD;                   // next TD
     uintptr_t buffEnd;                  // last byte in buffer
-
 } __attribute__((packed)) ohciTD_t;
-
-typedef struct
-{
-     ohciTD_t*     virt;
-     uintptr_t     phys;
-     ohciEDdesc_t* endp;
-} __attribute__((packed)) ohciTDdesc_t ;
 
 
 struct ohci;
@@ -234,18 +212,16 @@ typedef struct
 typedef struct ohci
 {
     pciDev_t*      PCIdevice;            // PCI device
-    uintptr_t      bar;                  // MMIO space (base address register)
-    ohci_OpRegs_t* OpRegs;               // operational registers
+    ohci_OpRegs_t* OpRegs;               // operational registers (MMIO space)
     ohci_HCCA_t*   hcca;                 // HC Communications Area (virtual address)
     ohciED_t*      pED[NUM_ED];          // EDs
     ohciED_t*      pEDdoneHead;          // ED donehead
     ohciTD_t*      pTD[NUM_TD];          // TDs
     uintptr_t      pTDphys[NUM_TD];      // TDs phys. address
-    uintptr_t      pTDbuff[NUM_TD];      // TD buffers
+    void*          pTDbuff[NUM_TD];      // TD buffers
     uint32_t       indexTD;              // index at TD and TD buffer
     uint32_t       indexED;              // index at ED
     uint8_t        rootPorts;            // number of rootports
-    size_t         memSize;              // memory size of IO space
     bool           enabledPortFlag;      // root ports enabled
     ohci_port_t*   ports[OHCIPORTMAX];   // root ports
     bool           run;                  // hc running (RS bit)
@@ -274,11 +250,11 @@ void ohci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransactio
 void ohci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length);
 void ohci_issueTransfer(usb_transfer_t* transfer);
 
-ohciTD_t* ohci_createQTD_SETUP(usb_transfer_t* transfer, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer);
-ohciTD_t* ohci_createQTD_IO(usb_transfer_t* transfer, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
+ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer);
+ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
 void      ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
 
-uint8_t   ohci_showStatusbyteQTD(ohciTD_t* qTD);
+uint8_t ohci_showStatusbyteQTD(ohciTD_t* qTD);
 
 
 #endif

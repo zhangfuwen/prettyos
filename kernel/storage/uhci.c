@@ -15,7 +15,7 @@
 
 //#define UHCI_SCENARIO // qh/td experiments
 
-#define UHCI_USB_TRANSFER 
+#define UHCI_USB_TRANSFER
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -265,7 +265,7 @@ void uhci_resetHC(uhci_t* u)
         textColor(TEXT);
         printf("\nRunStop Bit: %u  Frame Number: %u", u->run, inportw(u->bar + UHCI_FRNUM));
     }
-} 
+}
 
 // ports
 void uhci_enablePorts(uhci_t* u)
@@ -430,7 +430,7 @@ void uhci_pollDisk(void* dev)
             if (val & UHCI_PORT_CS)
             {
                 printf(" attached.");
-                if (UHCI_USBtransferFlag) 
+                if (UHCI_USBtransferFlag)
                 {
                   #ifdef UHCI_USB_TRANSFER
                     uhci_setupUSBDevice(u, port); // TEST
@@ -480,21 +480,21 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
 
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &u->ports[portNumber]->port;
-        
+
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
-    
+
     /*
     usbTransferConfig(device);
     usbTransferString(device);
-    
+
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
         usbTransferStringUnicode(device, i);
     }
 
     usbTransferSetConfiguration(device, 1); // set first configuration
-    
+
   #ifdef _OHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
@@ -536,7 +536,7 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
         textColor(TEXT);
       #endif
 
-        testMSD(device); // test with some SCSI commands        
+        testMSD(device); // test with some SCSI commands
     }
     */
 }

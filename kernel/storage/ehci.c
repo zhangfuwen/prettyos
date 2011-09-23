@@ -540,25 +540,25 @@ void ehci_portCheck()
             if (e->OpRegs->PORTSC[j] & PSTS_CONNECTED)
             {
                 ehci_checkPortLineStatus(e,j);
-				beep(800, 80);
-				beep(1000, 80);
+                beep(800, 100);
+                beep(1000, 100);
             }
             else
             {
                 writeInfo(0, "Port: %u, no device attached", j+1);
                 e->OpRegs->PORTSC[j] &= ~PSTS_COMPANION_HC_OWNED; // port is given back to the EHCI
 
-				if(e->ports[j]->port.insertedDisk && e->ports[j]->port.insertedDisk->type == &USB_MSD)
-				{
-	                usb2_destroyDevice(e->ports[j]->port.insertedDisk->data);
-	                removeDisk(e->ports[j]->port.insertedDisk);
-	                e->ports[j]->port.insertedDisk = 0;
+                if(e->ports[j]->port.insertedDisk && e->ports[j]->port.insertedDisk->type == &USB_MSD)
+                {
+                    usb2_destroyDevice(e->ports[j]->port.insertedDisk->data);
+                    removeDisk(e->ports[j]->port.insertedDisk);
+                    e->ports[j]->port.insertedDisk = 0;
 
-					showPortList();
-					showDiskList();
-					beep(1000, 80);
-					beep(800, 80);
-				}
+                    showPortList();
+                    showDiskList();
+                    beep(1000, 100);
+                    beep(800, 80);
+                }
 
             }
             e->OpRegs->PORTSC[j] |= PSTS_CONNECTED_CHANGE; // reset interrupt
@@ -695,7 +695,7 @@ void showUSBSTS(ehci_t* e)
     textColor(ERROR);
     if (e->OpRegs->USBSTS & STS_HCHALTED)         { printf("\nHCHalted");                     e->OpRegs->USBSTS |= STS_HCHALTED;         }
     textColor(IMPORTANT);
-	if (e->OpRegs->USBSTS & STS_RECLAMATION)      { printf("\nReclamation");                  e->OpRegs->USBSTS |= STS_RECLAMATION;      }
+    if (e->OpRegs->USBSTS & STS_RECLAMATION)      { printf("\nReclamation");                  e->OpRegs->USBSTS |= STS_RECLAMATION;      }
     if (e->OpRegs->USBSTS & STS_PERIODIC_ENABLED) { printf("\nPeriodic Schedule Status");     e->OpRegs->USBSTS |= STS_PERIODIC_ENABLED; }
     if (e->OpRegs->USBSTS & STS_ASYNC_ENABLED)    { printf("\nAsynchronous Schedule Status"); e->OpRegs->USBSTS |= STS_ASYNC_ENABLED;    }
     textColor(TEXT);
@@ -795,8 +795,8 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
         for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
             ehci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-            showStatusbyteQTD(transaction->qTD);
-            transfer->success = transfer->success && (transaction->qTD->token.status == 0);
+            uint8_t status = showStatusbyteQTD(transaction->qTD);
+            transfer->success = transfer->success && (status == 0);
         }
       #ifdef _EHCI_DIAGNOSIS_
         if(!transfer->success)

@@ -682,7 +682,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, usb2_De
         char asciichar[15];
         memset(asciichar, 0, 15);
 
-        for (uint8_t i=0; i<(d->length-2); i+=2) // show only low value of Unicode character
+        for (uint8_t i=0; i<min(30, (d->length-2)); i+=2) // show only low value of Unicode character
         {
             if (d->widechar[i])
             {

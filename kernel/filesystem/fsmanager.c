@@ -54,7 +54,10 @@ FS_ERROR analyzePartition(partition_t* part)
     if (BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0)
         part->type = &FAT;
     else // We only know FAT at the moment
+    {
+        part->type = 0;
         return(e);
+    }
 
     if (part->type->pinstall)
         e = part->type->pinstall(part);

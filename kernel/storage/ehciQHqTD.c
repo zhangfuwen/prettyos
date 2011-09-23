@@ -65,7 +65,7 @@ static ehci_qtd_t* allocQTD(uintptr_t next)
 
 void* allocQTDbuffer(ehci_qtd_t* td)
 {
-    void* data = malloc(PAGESIZE, ALIGNVALUE, "qTD-buffer"); // Enough for a full page
+    void* data = malloc(PAGESIZE, PAGESIZE, "qTD-buffer"); // Enough for a full page
     memset(data, 0, PAGESIZE);
 
     td->buffer0 = paging_getPhysAddr(data);
