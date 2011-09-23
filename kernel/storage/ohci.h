@@ -10,7 +10,7 @@
 #define OHCIMAX       4  // max number of OHCI devices
 #define OHCIPORTMAX   8  // max number of OHCI device ports
 #define NUM_ED       50  // number of EDs in memory pool
-#define NUM_TD      100  // number of TDs in memory pool 
+#define NUM_TD      100  // number of TDs in memory pool
 
 #define OHCI_HCCA_ALIGN          0x0100
 #define OHCI_DESCRIPTORS_ALIGN   0x0010
@@ -175,10 +175,10 @@ typedef struct
     uint32_t format  :  1; // bit with isochronous transfers
     uint32_t mps     : 11; // maximum packet size
     uint32_t ours    :  5; // available
-    
+
     volatile uint32_t tdQueueTail; // last TD in queue
     volatile uint32_t tdQueueHead; // head TD in queue
-    
+
     volatile uint32_t nextED;      // next ED on the list
 
 } __attribute__((packed)) ohciED_t;
@@ -200,16 +200,16 @@ typedef struct
     uint32_t  bufRounding        :  1;  // If the bit is 1, then the last data packet may be smaller than the defined buffer without causing an error
     uint32_t  direction          :  2;  // transfer direction
     uint32_t  delayInt           :  3;  // wait delayInt frames before sending interrupt. If DelayInterrupt is 111b, then there is no interrupt at completion of this TD.
-        
-    uint32_t  toggle             :  1;  // toggle // This 2-bit field is used to generate/compare the data PID value (DATA0 or DATA1).
-                                        // The MSb of this field is ‘0’ when the data toggle value is acquired from the toggleCarry field in the ED 
-    uint32_t  toggleFromTD       :  1;  // and ‘1’ when the data toggle value is taken from the LSb of this field    
 
-    volatile  uint32_t errCnt    :  2;  // Anzahl der aufgetretenen Fehler - bei 11b wird der Status im "condition"-Feld gespeichert.
-    volatile  uint32_t cond      :  4;  // status of the last attempted transaction
-   
+    uint32_t  toggle             :  1;  // toggle // This 2-bit field is used to generate/compare the data PID value (DATA0 or DATA1).
+                                        // The MSb of this field is ‘0’ when the data toggle value is acquired from the toggleCarry field in the ED
+    uint32_t  toggleFromTD       :  1;  // and ‘1’ when the data toggle value is taken from the LSb of this field
+
+    uint32_t  errCnt             :  2;  // Anzahl der aufgetretenen Fehler - bei 11b wird der Status im "condition"-Feld gespeichert.
+    uint32_t  cond               :  4;  // status of the last attempted transaction
+
     uintptr_t curBuffPtr;               // data ptr
-    volatile uintptr_t nextTD;          // next TD
+    uintptr_t nextTD;                   // next TD
     uintptr_t buffEnd;                  // last byte in buffer
 
 } __attribute__((packed)) ohciTD_t;
@@ -238,10 +238,12 @@ typedef struct ohci
     ohci_OpRegs_t* OpRegs;               // operational registers
     ohci_HCCA_t*   hcca;                 // HC Communications Area (virtual address)
     ohciED_t*      pED[NUM_ED];          // EDs
-    ohciED_t*      pEDdoneHead;          // ED donehead 
+    ohciED_t*      pEDdoneHead;          // ED donehead
     ohciTD_t*      pTD[NUM_TD];          // TDs
     uintptr_t      pTDphys[NUM_TD];      // TDs phys. address
     uintptr_t      pTDbuff[NUM_TD];      // TD buffers
+    uint32_t       indexTD;              // index at TD and TD buffer
+    uint32_t       indexED;              // index at ED
     uint8_t        rootPorts;            // number of rootports
     size_t         memSize;              // memory size of IO space
     bool           enabledPortFlag;      // root ports enabled
@@ -250,7 +252,7 @@ typedef struct ohci
     uint8_t        num;                  // number of the OHCI
 } ohci_t;
 
-typedef struct 
+typedef struct
 {
     uint8_t   type;
     uint8_t   request;
