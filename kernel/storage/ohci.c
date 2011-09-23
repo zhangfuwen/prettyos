@@ -14,7 +14,7 @@
 #include "usb2_msd.h"
 
 #define OHCI_USB_TRANSFER
-#define NUMBER_OF_RETRIES  2
+#define NUMBER_OF_RETRIES  3
 
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
@@ -253,9 +253,14 @@ void ohci_resetHC(ohci_t* o)
     for (uint8_t i=0; i<NUM_ED; i++)
     {
         if (i == NUM_ED - 1)
+        {
             o->pED[i]->nextED = 0; // no next ED
+        }
         else
+        {
             o->pED[i]->nextED = paging_getPhysAddr(o->pED[i+1]);
+            o->pED[i]->sKip = 1; //TEST
+        }           
     }
     o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(o->pED[0]);
     o->OpRegs->HcDoneHead = paging_getPhysAddr(o->pEDdoneHead);
@@ -664,9 +669,11 @@ void ohci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransac
     oTransaction->inLength = 0;
 
     ohci_t* o = ((ohci_port_t*)transfer->HC->data)->ohci;
-    oTransaction->qTDBuffer = o->pTDbuff[o->indexTD];
-
+    
     oTransaction->qTD = ohci_createQTD_SETUP(o, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &oTransaction->qTDBuffer);
+
+    ohci_request_t* request = (ohci_request_t*)oTransaction->qTDBuffer;
+    printf("\ntype: %u req: %u valHi: %u valLo: %u i: %u len: %u", request->type, request->request, request->valueHi, request->valueLo, request->index, request->length);
 
     if (transfer->transactions->tail)
     {
@@ -730,6 +737,8 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     o->OpRegs->HcCommandStatus |= OHCI_STATUS_CLF; // control list filled
 
     o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers
+    
+    sleepMilliSeconds(50);
 
     for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
     {
@@ -737,6 +746,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
             ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+            sleepMilliSeconds(300);
             ohci_showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)
         }
@@ -751,7 +761,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     // TEST
     textColor(IMPORTANT);
     printf("\n\nED-Index: %u, Transfer->endpoint: %u, &o: %X", o->indexED, transfer->endpoint, o);
-    printf("\nhcca->donehead: %X", o->hcca->doneHead);
+    printf("\nhcca->donehead: %X ", o->hcca->doneHead);
     textColor(TEXT);
 
     for (uint8_t i=0; i<10; i++)
@@ -818,16 +828,16 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
     oTD->toggleFromTD = 1;
     oTD->cond         = 15; // to be executed
 
-    oTD->curBuffPtr   = paging_getPhysAddr(o->pTDbuff[o->indexTD]);
-    oTD->buffEnd      = oTD->curBuffPtr + tokenBytes;
-
-    ohci_request_t* request = *buffer = (ohci_request_t*)o->pTDbuff[o->indexTD];
+    ohci_request_t* request = *buffer = o->pTDbuff[o->indexTD];
     request->type     = type;
-    request->request  = req;
+    request->request  = req;  printf("\nreq: %u", request->request);
     request->valueHi  = hiVal;
     request->valueLo  = loVal;
     request->index    = i;
     request->length   = length;
+
+    oTD->curBuffPtr   = paging_getPhysAddr(request);
+    oTD->buffEnd      = oTD->curBuffPtr + 64;
 
     oED->tdQueueTail = paging_getPhysAddr(oTD);
 
@@ -876,10 +886,9 @@ void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_
     // head->nextED  = horizPtr; ==> freeze
     head->endpNum = endpoint;
     head->devAddr = device;
-    head->mps     = MPS_FULLSPEED; //packetSize;
-    head->dir     = 0;  // 00b Get direction From TD
+    head->mps     = MPS_FULLSPEED; // packetSize;
+    head->dir     = OHCI_ED_TD ;   // 00b Get direction From TD
     head->speed   = 0;  // speed of the endpoint: full-speed (0), low-speed (1)
-    head->sKip    = 0;  // 1: HC continues on to next ED w/o attempting access to the TD queue or issuing any USB token for the endpoint
     head->format  = 0;  // format of the TDs: Control, Bulk, or Interrupt Endpoint (0); Isochronous Endpoint (1)
 
     // H not needed?
@@ -894,6 +903,7 @@ void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_
         head->tdQueueHead = paging_getPhysAddr((void*)firstQTD) & ~0xF; // head TD in queue
         printf("\nohci_createQH: %X tdQueueHead = %X tdQueueTail = %X", head, head->tdQueueHead, head->tdQueueTail); // Tail is read-only
     }
+    head->sKip    = 0;  // 1: HC continues on to next ED w/o attempting access to the TD queue or issuing any USB token for the endpoint
 }
 
 
