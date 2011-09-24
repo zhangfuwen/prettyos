@@ -692,11 +692,6 @@ void ohci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransactio
     oTransaction->qTDBuffer = o->pTDbuff[o->indexTD];
     oTransaction->qTD = ohci_createQTD_IO(o, transfer->data, 1, OHCI_TD_IN, toggle, length);
 
-    if (buffer != 0 && length != 0)
-    {
-        memcpy(oTransaction->qTDBuffer, buffer, length);
-    }
-
     if (transfer->transactions->tail)
     {
        ohci_transaction_t* oLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
@@ -717,7 +712,7 @@ void ohci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransacti
     if (buffer != 0 && length != 0)
     {
         memcpy(oTransaction->qTDBuffer, buffer, length);
-    }
+    }    
 
     if (transfer->transactions->tail)
     {
@@ -811,6 +806,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
 ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer)
 {
     printf("\nohci_createQTD_SETUP: ED = %u  TD = %u", o->indexED, o->indexTD);
+    printf("\ntokenBytes: %u", tokenBytes);
 
     ohciTD_t* oTD = (ohciTD_t*)o->pTD[o->indexTD];
 
@@ -825,19 +821,22 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
 
     oTD->direction    = OHCI_TD_SETUP;
     oTD->toggle       = toggle;
-    oTD->toggleFromTD = 1;
+    oTD->toggleFromTD =  1; 
     oTD->cond         = 15; // to be executed
+    oTD->delayInt     =  7;
+    oTD->errCnt       =  0; 
+    oTD->bufRounding  =  1;
 
     ohci_request_t* request = *buffer = o->pTDbuff[o->indexTD];
     request->type     = type;
-    request->request  = req;  printf("\nreq: %u", request->request);
+    request->request  = req;  
     request->valueHi  = hiVal;
     request->valueLo  = loVal;
     request->index    = i;
     request->length   = length;
 
-    oTD->curBuffPtr   = paging_getPhysAddr(request);
-    oTD->buffEnd      = oTD->curBuffPtr + 64;
+    oTD->curBuffPtr   = paging_getPhysAddr(request);  // in spec request[0]
+    oTD->buffEnd      = oTD->curBuffPtr + tokenBytes; // ?? in spec request[7], this would mean tokenBytes-1 ??? 
 
     oED->tdQueueTail = paging_getPhysAddr(oTD);
 
@@ -861,8 +860,11 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
     }
     oTD->direction    = direction;
     oTD->toggle       = toggle;
-    oTD->toggleFromTD = 1;
+    oTD->toggleFromTD = 1; 
     oTD->cond         = 15; // to be executed
+    oTD->delayInt     =  7;         
+    oTD->errCnt       =  0; 
+    oTD->bufRounding  =  1;
 
     if(tokenBytes)
     {
@@ -872,6 +874,7 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
     else
     {
         oTD->curBuffPtr  = 0;
+        oTD->buffEnd     = 0;
     }
 
     oED->tdQueueTail = paging_getPhysAddr((void*)oTD);
@@ -900,8 +903,8 @@ void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_
     }
     else
     {
-        head->tdQueueHead = paging_getPhysAddr((void*)firstQTD) & ~0xF; // head TD in queue
-        printf("\nohci_createQH: %X tdQueueHead = %X tdQueueTail = %X", head, head->tdQueueHead, head->tdQueueTail); // Tail is read-only
+        head->tdQueueHead = paging_getPhysAddr((void*)firstQTD) /*& ~0xF*/; // head TD in queue
+        printf("\nohci_createQH: %X tdQueueHead = %X tdQueueTail = %X", paging_getPhysAddr(head), head->tdQueueHead, head->tdQueueTail); // Tail is read-only
     }
     head->sKip    = 0;  // 1: HC continues on to next ED w/o attempting access to the TD queue or issuing any USB token for the endpoint
 }
@@ -936,7 +939,7 @@ uint8_t ohci_showStatusbyteQTD(ohciTD_t* qTD)
             printf("TD was moved to the Done Queue because the endpoint returned a STALL PID.");
             break;
         case 5:
-            printf("Device: no response to IN or no handshake (OUT).");
+            printf("Device did not respond to token (IN) or did not provide a handshake (OUT)");
             break;
         case 6:
             printf("Check bits on PID from endpoint failed on data PID (IN) or handshake (OUT).");
