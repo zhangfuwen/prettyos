@@ -729,9 +729,20 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     ohci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD,  1, ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
 
     o->OpRegs->HcControlCurrentED = paging_getPhysAddr(transfer->data);
-    o->OpRegs->HcCommandStatus |= OHCI_STATUS_CLF; // control list filled
+    
+    textColor(MAGENTA);
+    printf("\nHcControlCurrentED: %X", o->OpRegs->HcControlCurrentED);
+    printf(" ED->skip = %u ED->Halted = %u", ((ohciED_t*)transfer->data)->sKip, ((ohciED_t*)transfer->data)->tdQueueHead & BIT(0));
+    printf("\nHeadP = %X TailP = %X", ((ohciED_t*)transfer->data)->tdQueueHead,  ((ohciED_t*)transfer->data)->tdQueueTail);
+    textColor(TEXT);
+        
+    o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF /*| OHCI_STATUS_BLF*/); // control list filled
 
-    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers
+    textColor(MAGENTA);
+    printf("\nHcCommandStatus: %X", o->OpRegs->HcCommandStatus);
+    textColor(TEXT);
+
+    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control and bulk transfers
     
     sleepMilliSeconds(50);
 
@@ -903,7 +914,7 @@ void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_
     }
     else
     {
-        head->tdQueueHead = paging_getPhysAddr((void*)firstQTD) /*& ~0xF*/; // head TD in queue
+        head->tdQueueHead = paging_getPhysAddr((void*)firstQTD) & ~0xD; // head TD in queue // Flags 0 0 C H
         printf("\nohci_createQH: %X tdQueueHead = %X tdQueueTail = %X", paging_getPhysAddr(head), head->tdQueueHead, head->tdQueueTail); // Tail is read-only
     }
     head->sKip    = 0;  // 1: HC continues on to next ED w/o attempting access to the TD queue or issuing any USB token for the endpoint
