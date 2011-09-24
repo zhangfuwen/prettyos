@@ -26,6 +26,9 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
     usb_setupTransfer(port, &transfer, USB_CONTROL, 0, 64);
     usb_setupTransaction(&transfer, 0, 8, 0x00, 5, 0, new_address+1, 0, 0);
     usb_inTransaction(&transfer, 1, 0, 0);
+    
+    usb_outTransaction(&transfer, 1, 0, 0); //// TEST ////
+    
     usb_issueTransfer(&transfer);
 
     return new_address;

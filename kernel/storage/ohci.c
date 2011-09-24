@@ -248,8 +248,6 @@ void ohci_resetHC(ohci_t* o)
         o->pED[i] = malloc(sizeof(ohciED_t), OHCI_DESCRIPTORS_ALIGN, "ohci_ED");
     }
 
-    o->pEDdoneHead = malloc(sizeof(ohciED_t), OHCI_DESCRIPTORS_ALIGN, "ohci_EDdonehead");
-
     for (uint8_t i=0; i<NUM_ED; i++)
     {
         if (i == NUM_ED - 1)
@@ -263,12 +261,11 @@ void ohci_resetHC(ohci_t* o)
         }           
     }
     o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(o->pED[0]);
-    o->OpRegs->HcDoneHead = paging_getPhysAddr(o->pEDdoneHead);
-
+    
     // TD pool: NUM_TD TDs and buffers
     for (uint8_t i=0; i<NUM_TD; i++)
     {
-        o->pTDbuff[i]         = malloc(512, OHCI_DESCRIPTORS_ALIGN, "ohci_TDbuffer");
+        o->pTDbuff[i]         = malloc(512, 512, "ohci_TDbuffer");
         o->pTD[i]             = malloc(sizeof(ohciTD_t), OHCI_DESCRIPTORS_ALIGN, "ohci_TD");
         o->pTD[i]->curBuffPtr = paging_getPhysAddr(o->pTDbuff[i]);
         o->pTDphys[i]         = paging_getPhysAddr(o->pTD[i]);
@@ -498,11 +495,11 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         // the value has to be stored before resetting OHCI_INT_WDH
         for (uint8_t i=0; i<NUM_TD; i++)
         {
-            if (o->hcca->doneHead == o->pTDphys[i])
+            if ( (o->hcca->doneHead & ~0xF) == o->pTDphys[i])
             {
                 printf("\nDONEHEAD:");
                 ohci_showStatusbyteQTD(o->pTD[i]);
-                printf("\n");
+                printf("\n\n");
             }
         }
 
@@ -549,7 +546,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
     if (val & ~handled)
     {
-        printf("Unhandled interrupt: %X", val & ~handled);
+        printf("Unhandled interrupt: %X", val);
     }
 
     o->OpRegs->HcInterruptStatus = val; // reset interrupts
@@ -658,6 +655,8 @@ void ohci_setupTransfer(usb_transfer_t* transfer)
     ohci_t* o = ((ohci_port_t*)transfer->HC->data)->ohci;
 
     o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_BLE); // de-activate control and bulk transfers
+    o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_CLF; // control list not filled
+    o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_BLF; // bulk list not filled
 
     transfer->data = o->pED[o->indexED]; // endpoint descriptor
 }
@@ -816,10 +815,10 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
 
 ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer)
 {
-    printf("\nohci_createQTD_SETUP: ED = %u  TD = %u", o->indexED, o->indexTD);
-    printf("\ntokenBytes: %u", tokenBytes);
-
     ohciTD_t* oTD = (ohciTD_t*)o->pTD[o->indexTD];
+    
+    printf("\nohci_createQTD_SETUP: ED = %u  TD = %u toggle: %u", o->indexED, o->indexTD, oTD->toggle);
+    printf("\ntokenBytes: %u", tokenBytes);    
 
     if (next != 0x1)
     {
@@ -832,11 +831,11 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
 
     oTD->direction    = OHCI_TD_SETUP;
     oTD->toggle       = toggle;
-    oTD->toggleFromTD =  1; 
-    oTD->cond         = 15; // to be executed
-    oTD->delayInt     =  7;
-    oTD->errCnt       =  0; 
-    oTD->bufRounding  =  1;
+    oTD->toggleFromTD = 1;  
+    oTD->cond         = OHCI_TD_NOCC; // to be executed
+    oTD->delayInt     = OHCI_TD_NOINT;
+    oTD->errCnt       = 0; 
+    oTD->bufRounding  = 1;
 
     ohci_request_t* request = *buffer = o->pTDbuff[o->indexTD];
     request->type     = type;
@@ -846,9 +845,9 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
     request->index    = i;
     request->length   = length;
 
-    oTD->curBuffPtr   = paging_getPhysAddr(request);  // in spec request[0]
-    oTD->buffEnd      = oTD->curBuffPtr + tokenBytes; // ?? in spec request[7], this would mean tokenBytes-1 ??? 
-
+    oTD->curBuffPtr   = paging_getPhysAddr(request);                  
+    oTD->buffEnd      = oTD->curBuffPtr + sizeof(ohci_request_t) - 1; // physical address of the last byte in the buffer 
+                                                          
     oED->tdQueueTail = paging_getPhysAddr(oTD);
 
     o->indexTD++;
@@ -857,10 +856,10 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
 
 ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
 {
-    printf("\nohci_createQTD_IO: ED = %u  TD = %u", o->indexED, o->indexTD);
-
     ohciTD_t* oTD = o->pTD[o->indexTD];
-
+    
+    printf("\nohci_createQTD_IO: ED = %u  TD = %u toggle: %u", o->indexED, o->indexTD, oTD->toggle);
+    
     if (next != 0x1)
     {
         oTD->nextTD = paging_getPhysAddr((void*)next);
@@ -872,15 +871,15 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
     oTD->direction    = direction;
     oTD->toggle       = toggle;
     oTD->toggleFromTD = 1; 
-    oTD->cond         = 15; // to be executed
-    oTD->delayInt     =  7;         
-    oTD->errCnt       =  0; 
-    oTD->bufRounding  =  1;
+    oTD->cond         = OHCI_TD_NOCC; // to be executed
+    oTD->delayInt     = OHCI_TD_NOINT;         
+    oTD->errCnt       = 0; 
+    oTD->bufRounding  = 1;
 
     if(tokenBytes)
     {
         oTD->curBuffPtr  = paging_getPhysAddr(o->pTDbuff[o->indexTD]);
-        oTD->buffEnd     = oTD->curBuffPtr + tokenBytes;
+        oTD->buffEnd     = oTD->curBuffPtr + tokenBytes - 1; // BufferEnd contains physical address of the last byte in the buffer 
     }
     else
     {
@@ -888,7 +887,7 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
         oTD->buffEnd     = 0;
     }
 
-    oED->tdQueueTail = paging_getPhysAddr((void*)oTD);
+    oED->tdQueueTail = paging_getPhysAddr(oTD);
 
     o->indexTD++;
     return (oTD);
@@ -904,7 +903,7 @@ void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_
     head->dir     = OHCI_ED_TD ;   // 00b Get direction From TD
     head->speed   = 0;  // speed of the endpoint: full-speed (0), low-speed (1)
     head->format  = 0;  // format of the TDs: Control, Bulk, or Interrupt Endpoint (0); Isochronous Endpoint (1)
-
+    
     // H not needed?
 
     if (firstQTD == 0)
@@ -931,50 +930,21 @@ uint8_t ohci_showStatusbyteQTD(ohciTD_t* qTD)
     printf("\ndir: %u Status: ", qTD->direction);
     textColor(ERROR);
 
-    switch (qTD->cond)
+    switch (qTD->cond) // status // bits 10 and 11 reserved
     {
-        case 0:
-            textColor(SUCCESS);
-            printf("Successful Completion.");
-            break;
-        case 1:
-            printf("Last data packet from endpoint contained a CRC error.");
-            break;
-        case 2:
-            printf("Last data packet from endpoint contained a bit stuffing violation.");
-            break;
-        case 3:
-            printf("Last packet from endpoint had data toggle PID that did not match the expected value.");
-            break;
-        case 4:
-            printf("TD was moved to the Done Queue because the endpoint returned a STALL PID.");
-            break;
-        case 5:
-            printf("Device did not respond to token (IN) or did not provide a handshake (OUT)");
-            break;
-        case 6:
-            printf("Check bits on PID from endpoint failed on data PID (IN) or handshake (OUT).");
-            break;
-        case 7:
-            printf("Receive PID was not valid when encountered or PID value is not defined.");
-            break;
-        case 8:
-            printf("DATAOVERRUN: Too many data returned by the endpoint.");
-            break;
-        case 9:
-            printf("DATAUNDERRUN: Endpoint returned less than MPS, not sufficient to fill the specified buffer.");
-            break;
-        case 12:
-            printf("BUFFEROVERRUN");
-            break;
-        case 13:
-            printf("BUFFERUNDERRUN");
-            break;
-        case 14:
-        case 15:
-            textColor(GRAY);
-            printf("NOT ACCESSED");
-            break;
+        case 0:  textColor(SUCCESS); printf("Successful Completion.");                                             break;
+        case 1:  printf("Last data packet from endpoint contained a CRC error.");                                  break;
+        case 2:  printf("Last data packet from endpoint contained a bit stuffing violation.");                     break;
+        case 3:  printf("Last packet from endpoint had data toggle PID that did not match the expected value.");   break;
+        case 4:  printf("TD was moved to the Done Queue because the endpoint returned a STALL PID.");              break;
+        case 5:  printf("Device: no response to token (IN) or no handshake (OUT)");                                break;
+        case 6:  printf("Check bits on PID from endpoint failed on data PID (IN) or handshake (OUT).");            break;
+        case 7:  printf("Receive PID was not valid when encountered or PID value is not defined.");                break;
+        case 8:  printf("DATAOVERRUN: Too many data returned by the endpoint.");                                   break;
+        case 9:  printf("DATAUNDERRUN: Endpoint returned less than MPS.");                                         break;
+        case 12: printf("BUFFEROVERRUN");                                                                          break;
+        case 13: printf("BUFFERUNDERRUN");                                                                         break;
+        case 14: case 15: textColor(GRAY); printf("NOT ACCESSED");                                                 break;
     }
 
     textColor(TEXT);
@@ -983,7 +953,8 @@ uint8_t ohci_showStatusbyteQTD(ohciTD_t* qTD)
 
 static void ohci_resetMempool(ohci_t* o)
 {
-    o->indexED = o->indexTD = 0;
+    o->indexED = 1;
+    o->indexTD = 0;
 }
 
 /*

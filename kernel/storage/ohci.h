@@ -11,7 +11,7 @@
 #define NUM_ED       50  // number of EDs in memory pool
 #define NUM_TD      100  // number of TDs in memory pool
 
-#define OHCI_HCCA_ALIGN          0x0100
+#define OHCI_HCCA_ALIGN          PAGESIZE
 #define OHCI_DESCRIPTORS_ALIGN   0x0010
 
 #define MPS_FULLSPEED 64
@@ -102,14 +102,16 @@
 #define ED_EOF              0xFF
 
 // ED
-#define OHCI_ED_TD    0
-#define OHCI_ED_OUT   1
-#define OHCI_ED_IN    2
+#define OHCI_ED_TD     0
+#define OHCI_ED_OUT    1
+#define OHCI_ED_IN     2
 
 // TD
-#define OHCI_TD_SETUP 0
-#define OHCI_TD_OUT   1
-#define OHCI_TD_IN    2
+#define OHCI_TD_SETUP  0
+#define OHCI_TD_OUT    1
+#define OHCI_TD_IN     2
+#define OHCI_TD_NOINT  7
+#define OHCI_TD_NOCC  15 
 
 
 /*
@@ -164,14 +166,14 @@ typedef struct
 // Endpoint Descriptor
 typedef struct
 {
-    uint32_t devAddr :  7; // device address
-    uint32_t endpNum :  4; // number of endpoint
-    uint32_t dir     :  2; // transfer direction
-    uint32_t speed   :  1; // 0 = fullspeed, 1 = lowspeed
-    uint32_t sKip    :  1; // HC skips to the next ED w/o attempting access to the TD queue
-    uint32_t format  :  1; // bit with isochronous transfers
-    uint32_t mps     : 11; // maximum packet size
-    uint32_t ours    :  5; // available
+    volatile uint32_t devAddr :  7; // device address
+    volatile uint32_t endpNum :  4; // number of endpoint
+    volatile uint32_t dir     :  2; // transfer direction
+    volatile uint32_t speed   :  1; // 0 = fullspeed, 1 = lowspeed
+    volatile uint32_t sKip    :  1; // HC skips to the next ED w/o attempting access to the TD queue
+    volatile uint32_t format  :  1; // bit with isochronous transfers
+    volatile uint32_t mps     : 11; // maximum packet size
+    volatile uint32_t ours    :  5; // available
 
     volatile uint32_t tdQueueTail; // last TD in queue
     volatile uint32_t tdQueueHead; // head TD in queue
@@ -182,21 +184,21 @@ typedef struct
 // Transfer Descriptor
 typedef struct
 {
-    uint32_t  ours               : 18;  // available
-    uint32_t  bufRounding        :  1;  // If the bit is 1, then the last data packet may be smaller than the defined buffer without causing an error
-    uint32_t  direction          :  2;  // transfer direction
-    uint32_t  delayInt           :  3;  // wait delayInt frames before sending interrupt. If DelayInterrupt is 111b, then there is no interrupt at completion of this TD.
+    volatile uint32_t  ours               : 18;  // available
+    volatile uint32_t  bufRounding        :  1;  // If the bit is 1, then the last data packet may be smaller than the defined buffer without causing an error
+    volatile uint32_t  direction          :  2;  // transfer direction
+    volatile uint32_t  delayInt           :  3;  // wait delayInt frames before sending interrupt. If DelayInterrupt is 111b, then there is no interrupt at completion of this TD.
 
-    uint32_t  toggle             :  1;  // toggle // This 2-bit field is used to generate/compare the data PID value (DATA0 or DATA1).
+    volatile uint32_t  toggle             :  1;  // toggle // This 2-bit field is used to generate/compare the data PID value (DATA0 or DATA1).
                                         // The MSb of this field is ‘0’ when the data toggle value is acquired from the toggleCarry field in the ED
-    uint32_t  toggleFromTD       :  1;  // and ‘1’ when the data toggle value is taken from the LSb of this field
+    volatile uint32_t  toggleFromTD       :  1;  // and ‘1’ when the data toggle value is taken from the LSb of this field
 
-    uint32_t  errCnt             :  2;  // Anzahl der aufgetretenen Fehler - bei 11b wird der Status im "condition"-Feld gespeichert.
-    uint32_t  cond               :  4;  // status of the last attempted transaction
+    volatile uint32_t  errCnt             :  2;  // Anzahl der aufgetretenen Fehler - bei 11b wird der Status im "condition"-Feld gespeichert.
+    volatile uint32_t  cond               :  4;  // status of the last attempted transaction
 
-    uintptr_t curBuffPtr;               // data ptr
-    uintptr_t nextTD;                   // next TD
-    uintptr_t buffEnd;                  // last byte in buffer
+    volatile uintptr_t curBuffPtr;               // data ptr
+    volatile uintptr_t nextTD;                   // next TD
+    volatile uintptr_t buffEnd;                  // last byte in buffer
 } __attribute__((packed)) ohciTD_t;
 
 
@@ -215,7 +217,6 @@ typedef struct ohci
     ohci_OpRegs_t* OpRegs;               // operational registers (MMIO space)
     ohci_HCCA_t*   hcca;                 // HC Communications Area (virtual address)
     ohciED_t*      pED[NUM_ED];          // EDs
-    ohciED_t*      pEDdoneHead;          // ED donehead
     ohciTD_t*      pTD[NUM_TD];          // TDs
     uintptr_t      pTDphys[NUM_TD];      // TDs phys. address
     void*          pTDbuff[NUM_TD];      // TD buffers
