@@ -496,9 +496,11 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         {
             if ( (o->hcca->doneHead & ~0xF) == o->pTDphys[i])
             {
-                printf("\nDONEHEAD:");
-                ohci_showStatusbyteQTD(o->pTD[i]);
-                printf("\n\n");
+                textColor(SUCCESS);
+                printf("\nDONEHEAD.");
+                textColor(TEXT);
+                //ohci_showStatusbyteQTD(o->pTD[i]);
+                //printf("\n\n");
             }
         }
 
@@ -734,25 +736,38 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     printf("\nHeadP = %X TailP = %X", ((ohciED_t*)transfer->data)->tdQueueHead,  ((ohciED_t*)transfer->data)->tdQueueTail);
     textColor(TEXT);
 
+    for (uint8_t i=0; i<5; i++)
+    {
+        printf("\ni=%u\tED->TD:%X->%X TD->TD:%X->%X buf:%X",
+                  i, paging_getPhysAddr(o->pED[i]), o->pED[i]->tdQueueHead,
+                     paging_getPhysAddr(o->pTD[i]), o->pTD[i]->nextTD, o->pTD[i]->curBuffPtr);
+    }
+    waitForKeyStroke();
+
     o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF /*| OHCI_STATUS_BLF*/); // control list filled
 
     textColor(MAGENTA);
     printf("\nHcCommandStatus: %X", o->OpRegs->HcCommandStatus);
     textColor(TEXT);
-
-    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control and bulk transfers
-
-    sleepMilliSeconds(50);
+    waitForKeyStroke();
 
     for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
     {
         transfer->success = true;
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
+            printf("\ntry = %u elem=%X", i, elem);
             ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+            o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF /*| OHCI_STATUS_BLF*/); // control list filled
+            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control and bulk transfers
+            textColor(IMPORTANT);
+            printf("\nactivate control transfers");
+            textColor(TEXT);
             sleepMilliSeconds(300);
             ohci_showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)
+
+            waitForKeyStroke();
         }
       #ifdef _OHCI_DIAGNOSIS_
         if (!transfer->success)
@@ -768,7 +783,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     printf("\nhcca->donehead: %X ", o->hcca->doneHead);
     textColor(TEXT);
 
-    for (uint8_t i=0; i<10; i++)
+    for (uint8_t i=0; i<5; i++)
     {
         printf("\ni=%u\tED->TD:%X->%X TD->TD:%X->%X buf:%X",
                   i, paging_getPhysAddr(o->pED[i]), o->pED[i]->tdQueueHead,
@@ -952,7 +967,7 @@ uint8_t ohci_showStatusbyteQTD(ohciTD_t* qTD)
 
 static void ohci_resetMempool(ohci_t* o)
 {
-    o->indexED = 1;
+    o->indexED = 0;
     o->indexTD = 0;
 }
 

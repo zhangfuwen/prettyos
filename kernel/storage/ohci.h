@@ -237,7 +237,7 @@ typedef struct
     uint8_t   valueHi;
     uint16_t  index;
     uint16_t  length;
-} __attribute__((packed)) ohci_request_t;
+} /*__attribute__((packed))*/ ohci_request_t;
 
 
 void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
