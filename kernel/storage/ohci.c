@@ -851,7 +851,7 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
     oTD->errCnt       = 0;
     oTD->bufRounding  = 1;
 
-    ohci_request_t* request = *buffer = o->pTDbuff[o->indexTD];
+    ohci_request_t* request = *buffer = o->pTDbuff[o->indexTD]; printf("\nindexTD = %u, setup buffer = %X %X", o->indexTD, paging_getPhysAddr(request), paging_getPhysAddr(o->pTDbuff[o->indexTD]));
     request->type     = type;
     request->request  = req;
     request->valueHi  = hiVal;
@@ -889,6 +889,8 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
     oTD->delayInt     = OHCI_TD_NOINT;
     oTD->errCnt       = 0;
     oTD->bufRounding  = 1;
+
+    printf("\nindexTD = %u, IO buffer = %X", o->indexTD, paging_getPhysAddr(o->pTDbuff[o->indexTD]));
 
     if(tokenBytes)
     {
