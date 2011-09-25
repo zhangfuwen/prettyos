@@ -205,7 +205,7 @@ int main()
 
                     strcat(bstr,"<li>rctl-PID: ");
                     char tempstr[50];
-					itoa(getMyPID(), tempstr);
+                    itoa(getMyPID(), tempstr);
                     strcat(bstr,tempstr);
                     strcat(bstr,"</li>\n");
 
@@ -320,7 +320,7 @@ int main()
                     strcat(astr,"Connection: close\r\n");
 
                     char rstr[10000];
-					snprintf(rstr, 10000, "%s\r\n%s", astr, bstr);
+                    snprintf(rstr, 10000, "%s\r\n%s", astr, bstr);
 
                     textColor(0x07);
                     printf("[");

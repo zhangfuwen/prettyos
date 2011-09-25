@@ -24,7 +24,6 @@ static bool    OHCI_USBtransferFlag = false;
 static void ohci_handler(registers_t* r, pciDev_t* device);
 static void ohci_start();
 static void showPortstatus(ohci_t* o);
-
 static void ohci_resetMempool(ohci_t* o);
 
 
@@ -258,10 +257,10 @@ void ohci_resetHC(ohci_t* o)
         {
             o->pED[i]->nextED = paging_getPhysAddr(o->pED[i+1]);
             o->pED[i]->sKip = 1; //TEST
-        }           
+        }
     }
     o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(o->pED[0]);
-    
+
     // TD pool: NUM_TD TDs and buffers
     for (uint8_t i=0; i<NUM_TD; i++)
     {
@@ -350,13 +349,13 @@ void showPortstatus(ohci_t* o)
         if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
         {
             textColor(IMPORTANT);
-            printf("\nport[%u]:", j+1);
+            printf("\nport[%u]: ", j+1);
             textColor(TEXT);
 
             if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_LSDA)
-                printf(" LowSpeed");
+                printf("LowSpeed");
             else
-                printf(" FullSpeed");
+                printf("FullSpeed");
 
             if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)
             {
@@ -580,7 +579,7 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
 
     usbTransferString(device);
     waitForKeyStroke();
-	
+
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
         usbTransferStringUnicode(device, i);
@@ -668,7 +667,7 @@ void ohci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransac
     oTransaction->inLength = 0;
 
     ohci_t* o = ((ohci_port_t*)transfer->HC->data)->ohci;
-    
+
     oTransaction->qTD = ohci_createQTD_SETUP(o, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &oTransaction->qTDBuffer);
 
     ohci_request_t* request = (ohci_request_t*)oTransaction->qTDBuffer;
@@ -711,7 +710,7 @@ void ohci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransacti
     if (buffer != 0 && length != 0)
     {
         memcpy(oTransaction->qTDBuffer, buffer, length);
-    }    
+    }
 
     if (transfer->transactions->tail)
     {
@@ -728,13 +727,13 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     ohci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD,  1, ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
 
     o->OpRegs->HcControlCurrentED = paging_getPhysAddr(transfer->data);
-    
+
     textColor(MAGENTA);
     printf("\nHcControlCurrentED: %X", o->OpRegs->HcControlCurrentED);
     printf(" ED->skip = %u ED->Halted = %u", ((ohciED_t*)transfer->data)->sKip, ((ohciED_t*)transfer->data)->tdQueueHead & BIT(0));
     printf("\nHeadP = %X TailP = %X", ((ohciED_t*)transfer->data)->tdQueueHead,  ((ohciED_t*)transfer->data)->tdQueueTail);
     textColor(TEXT);
-        
+
     o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF /*| OHCI_STATUS_BLF*/); // control list filled
 
     textColor(MAGENTA);
@@ -742,7 +741,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     textColor(TEXT);
 
     o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control and bulk transfers
-    
+
     sleepMilliSeconds(50);
 
     for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
@@ -790,11 +789,11 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     }
     if (transfer->success)
     {
-      //#ifdef _OHCI_DIAGNOSIS_
+      #ifdef _OHCI_DIAGNOSIS_
         textColor(SUCCESS);
         printf("\nTransfer successful.");
         textColor(TEXT);
-      //#endif
+      #endif
     }
     else
     {
@@ -816,9 +815,9 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
 ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer)
 {
     ohciTD_t* oTD = (ohciTD_t*)o->pTD[o->indexTD];
-    
+
     printf("\nohci_createQTD_SETUP: ED = %u  TD = %u toggle: %u", o->indexED, o->indexTD, oTD->toggle);
-    printf("\ntokenBytes: %u", tokenBytes);    
+    printf("\ntokenBytes: %u", tokenBytes);
 
     if (next != 0x1)
     {
@@ -831,23 +830,23 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
 
     oTD->direction    = OHCI_TD_SETUP;
     oTD->toggle       = toggle;
-    oTD->toggleFromTD = 1;  
+    oTD->toggleFromTD = 1;
     oTD->cond         = OHCI_TD_NOCC; // to be executed
     oTD->delayInt     = OHCI_TD_NOINT;
-    oTD->errCnt       = 0; 
+    oTD->errCnt       = 0;
     oTD->bufRounding  = 1;
 
     ohci_request_t* request = *buffer = o->pTDbuff[o->indexTD];
     request->type     = type;
-    request->request  = req;  
+    request->request  = req;
     request->valueHi  = hiVal;
     request->valueLo  = loVal;
     request->index    = i;
     request->length   = length;
 
-    oTD->curBuffPtr   = paging_getPhysAddr(request);                  
-    oTD->buffEnd      = oTD->curBuffPtr + sizeof(ohci_request_t) - 1; // physical address of the last byte in the buffer 
-                                                          
+    oTD->curBuffPtr   = paging_getPhysAddr(request);
+    oTD->buffEnd      = oTD->curBuffPtr + sizeof(ohci_request_t) - 1; // physical address of the last byte in the buffer
+
     oED->tdQueueTail = paging_getPhysAddr(oTD);
 
     o->indexTD++;
@@ -857,9 +856,9 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
 ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
 {
     ohciTD_t* oTD = o->pTD[o->indexTD];
-    
+
     printf("\nohci_createQTD_IO: ED = %u  TD = %u toggle: %u", o->indexED, o->indexTD, oTD->toggle);
-    
+
     if (next != 0x1)
     {
         oTD->nextTD = paging_getPhysAddr((void*)next);
@@ -870,16 +869,16 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
     }
     oTD->direction    = direction;
     oTD->toggle       = toggle;
-    oTD->toggleFromTD = 1; 
+    oTD->toggleFromTD = 1;
     oTD->cond         = OHCI_TD_NOCC; // to be executed
-    oTD->delayInt     = OHCI_TD_NOINT;         
-    oTD->errCnt       = 0; 
+    oTD->delayInt     = OHCI_TD_NOINT;
+    oTD->errCnt       = 0;
     oTD->bufRounding  = 1;
 
     if(tokenBytes)
     {
         oTD->curBuffPtr  = paging_getPhysAddr(o->pTDbuff[o->indexTD]);
-        oTD->buffEnd     = oTD->curBuffPtr + tokenBytes - 1; // BufferEnd contains physical address of the last byte in the buffer 
+        oTD->buffEnd     = oTD->curBuffPtr + tokenBytes - 1; // BufferEnd contains physical address of the last byte in the buffer
     }
     else
     {
@@ -896,14 +895,14 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
 
 void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-    // head->nextED  = horizPtr; ==> freeze
+    //head->nextED  = horizPtr;// ==> freeze
     head->endpNum = endpoint;
     head->devAddr = device;
     head->mps     = MPS_FULLSPEED; // packetSize;
     head->dir     = OHCI_ED_TD ;   // 00b Get direction From TD
     head->speed   = 0;  // speed of the endpoint: full-speed (0), low-speed (1)
     head->format  = 0;  // format of the TDs: Control, Bulk, or Interrupt Endpoint (0); Isochronous Endpoint (1)
-    
+
     // H not needed?
 
     if (firstQTD == 0)

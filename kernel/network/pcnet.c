@@ -60,9 +60,9 @@ void AMDPCnet_install(network_adapter_t* adapter)
         }
     }
 
-    #ifdef _NETWORK_DIAGNOSIS_
+  #ifdef _NETWORK_DIAGNOSIS_
     printf("\nIO: %xh", pAdapter->IO_base);
-    #endif
+  #endif
 
     // Get MAC
     uint16_t temp = inportw(pAdapter->IO_base + APROM0);
@@ -156,9 +156,9 @@ static void PCNet_receive(PCNet_card* pAdapter)
 
 bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
 {
-    #ifdef _NETWORK_DIAGNOSIS_
+  #ifdef _NETWORK_DIAGNOSIS_
     printf("\nPCNet: Send packet");
-    #endif
+  #endif
     PCNet_card* pAdapter = adapter->data;
     if (!pAdapter->initialized)
     {
@@ -198,21 +198,21 @@ void PCNet_handler(registers_t* data, pciDev_t* device)
     if(!(csr0 & BIT(7)))
         return;
 
-    #ifdef _NETWORK_DIAGNOSIS_
+  #ifdef _NETWORK_DIAGNOSIS_
     textColor(0x03);
     printf("\n--------------------------------------------------------------------------------");
 
     textColor(YELLOW);
     printf("\nPCNet Interrupt Status: %yh, ", csr0);
     textColor(0x03);
-    #endif
+  #endif
 
     if (pAdapter->initialized == false)
     {
         pAdapter->initialized = true;
-        #ifdef _NETWORK_DIAGNOSIS_
+      #ifdef _NETWORK_DIAGNOSIS_
         printf("\nInitialized");
-        #endif
+      #endif
     }
     else
     {
@@ -225,14 +225,16 @@ void PCNet_handler(registers_t* data, pciDev_t* device)
                 printf("\nMissed frame error");
             else if (csr0 & 0x800)
                 printf("\nMemory error");
+          #ifdef _NETWORK_DIAGNOSIS_
             else
                 printf("\nUndefined error: %x", csr0);
+          #endif
             textColor(TEXT);
         }
-        #ifdef _NETWORK_DIAGNOSIS_
+      #ifdef _NETWORK_DIAGNOSIS_
         else if (csr0 & 0x0200)
             printf("\nTransmit descriptor finished");
-        #endif
+      #endif
         else if (csr0 & 0x0400)
         {
             PCNet_receive(pAdapter);

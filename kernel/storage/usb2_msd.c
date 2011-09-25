@@ -13,9 +13,10 @@
 
 extern ehci_t* curEHCI;
 
-extern const uint32_t CSWMagicNotOK;
-static const uint32_t CSWMagicOK = 0x53425355; // USBS
-static const uint32_t CBWMagic   = 0x43425355; // USBC
+
+static const uint32_t CSWMagicNotOK = 0x01010101;
+static const uint32_t CSWMagicOK    = 0x53425355; // USBS
+static const uint32_t CBWMagic      = 0x43425355; // USBC
 
 static uint8_t currCSWtag;
 
@@ -562,13 +563,13 @@ void testMSD(usb2_Device_t* device)
     startLogBulkTransfer(&inquiry, 0x12, 36, 0);
     char inquiryBuffer[36];
     usbSendSCSIcmd(device,
-                    device->numInterfaceMSD,
-                    device->numEndpointOutMSD,
-                    device->numEndpointInMSD,
-                    inquiry.SCSIopcode,
-                    0, // LBA
-                    inquiry.DataBytesToTransferIN,
-                    &inquiry, inquiryBuffer, 0);
+                   device->numInterfaceMSD,
+                   device->numEndpointOutMSD,
+                   device->numEndpointInMSD,
+                   inquiry.SCSIopcode,
+                   0, // LBA
+                   inquiry.DataBytesToTransferIN,
+                   &inquiry, inquiryBuffer, 0);
 
     analyzeInquiry(inquiryBuffer);
     showUSBSTS(e);

@@ -111,7 +111,7 @@
 #define OHCI_TD_OUT    1
 #define OHCI_TD_IN     2
 #define OHCI_TD_NOINT  7
-#define OHCI_TD_NOCC  15 
+#define OHCI_TD_NOCC  15
 
 
 /*

@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.102 - Rev: 1303";
+const char* const version = "0.0.3.103 - Rev: 1304";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -51,7 +51,7 @@ void fpu_test();    // fpu.c
 extern diskType_t* ScreenDest; // HACK for screenshots
 
 // RAM Disk
-const uint32_t RAMDISKSIZE = 0x100000;
+static const uint32_t RAMDISKSIZE = 0x100000;
 
 // APIC
 bool apic_install()

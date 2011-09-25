@@ -11,10 +11,6 @@
 #include "video/console.h"
 
 
-const uint32_t CSWMagicNotOK = 0x01010101;
-
-static const uint8_t ALIGNVALUE = 32;
-
 /////////////////////
 // Queue Head (QH) //
 /////////////////////
@@ -22,7 +18,6 @@ static const uint8_t ALIGNVALUE = 32;
 void createQH(ehci_qhd_t* head, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
     memset(head, 0, sizeof(ehci_qhd_t));
-
                                                     // bit 31:5 Horizontal Link Pointer, bit 4:3 reserved,
     head->horizontalPointer     =   horizPtr | 0x2; // bit 2:1  type:  00b iTD,   01b QH,   10b siTD,   11b FSTN
                                                     // bit 0    T-Bit: is set to zero
@@ -52,7 +47,7 @@ void createQH(ehci_qhd_t* head, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t
 
 static ehci_qtd_t* allocQTD(uintptr_t next)
 {
-    ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), ALIGNVALUE, "qTD"); // can be 32 byte alignment
+    ehci_qtd_t* td = (ehci_qtd_t*)malloc(sizeof(ehci_qtd_t), 32, "qTD"); // can be 32 byte alignment
     memset(td,0,sizeof(ehci_qtd_t));
 
     if (next != 0x1)
@@ -63,7 +58,7 @@ static ehci_qtd_t* allocQTD(uintptr_t next)
     return td;
 }
 
-void* allocQTDbuffer(ehci_qtd_t* td)
+static void* allocQTDbuffer(ehci_qtd_t* td)
 {
     void* data = malloc(PAGESIZE, PAGESIZE, "qTD-buffer"); // Enough for a full page
     memset(data, 0, PAGESIZE);
@@ -97,7 +92,7 @@ ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, ui
     return td;
 }
 
-ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
+ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, void** buffer)
 {
     ehci_qtd_t* td = allocQTD(next);
 
@@ -109,6 +104,8 @@ ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_
     td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
+
+    *buffer = allocQTDbuffer(td);
 
     return td;
 }

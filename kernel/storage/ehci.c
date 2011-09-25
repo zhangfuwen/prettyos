@@ -741,8 +741,7 @@ void ehci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransactio
     ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
     eTransaction->inBuffer = buffer;
     eTransaction->inLength = length;
-    eTransaction->qTD = createQTD_IO(1, 1, toggle, length);
-    eTransaction->qTDBuffer = allocQTDbuffer(eTransaction->qTD);
+    eTransaction->qTD = createQTD_IO(1, 1, toggle, length, &eTransaction->qTDBuffer);
     if(transfer->transactions->tail)
     {
         ehci_transaction_t* eLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
@@ -755,8 +754,7 @@ void ehci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransacti
     ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
     eTransaction->inBuffer = 0;
     eTransaction->inLength = 0;
-    eTransaction->qTD = createQTD_IO(1, 0, toggle, length);
-    eTransaction->qTDBuffer = allocQTDbuffer(eTransaction->qTD);
+    eTransaction->qTD = createQTD_IO(1, 0, toggle, length, &eTransaction->qTDBuffer);
     if(buffer != 0 && length != 0)
         memcpy(eTransaction->qTDBuffer, buffer, length);
     if(transfer->transactions->tail)
