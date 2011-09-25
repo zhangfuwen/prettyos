@@ -14,7 +14,7 @@
 #include "usb2_msd.h"
 
 #define OHCI_USB_TRANSFER
-#define NUMBER_OF_RETRIES  3
+#define NUMBER_OF_RETRIES  1
 
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
@@ -296,6 +296,9 @@ void ohci_resetHC(ohci_t* o)
     // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
     // When HcFmRemaining reaches this value, periodic lists gets priority over control/bulk processing
     o->OpRegs->HcPeriodicStart = (o->OpRegs->HcFmInterval & 0x3FFF) * 90/100;
+
+    // ControlBulkServiceRatio (CBSR)
+    o->OpRegs->HcControl |= OHCI_CTRL_CBSR;  // No. of Control EDs Over Bulk EDs Served = 4 : 1
 
     /*
     The HCD then begins to send SOF tokens on the USB by writing to the HcControl register with
@@ -723,6 +726,11 @@ void ohci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransacti
 
 void ohci_issueTransfer(usb_transfer_t* transfer)
 {
+    /*  A transfer is completed when the Host Controller successfully transfers, to or from an endpoint, the byte pointed to by BufferEnd. 
+        Upon successful completion, the Host Controller sets CurrentBufferPointer to zero, sets ConditionCode to NOERROR, 
+        and retires the General TD to the Done Queue.
+    */    
+    
     ohci_t* o = ((ohci_port_t*)transfer->HC->data)->ohci;
     ohci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
 
@@ -755,14 +763,13 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     {
         transfer->success = true;
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
-        {
+        {   
             printf("\ntry = %u elem=%X", i, elem);
             ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
             o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF /*| OHCI_STATUS_BLF*/); // control list filled
-            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control and bulk transfers
-            textColor(IMPORTANT);
-            printf("\nactivate control transfers");
-            textColor(TEXT);
+            textColor(IMPORTANT); printf("\nactivate control transfers"); textColor(TEXT);
+            o->pED[i]->tdQueueHead &= ~0x1; // reset Halted Bit
+            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control and bulk transfers            
             sleepMilliSeconds(300);
             ohci_showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)
