@@ -3,6 +3,7 @@
 *  Lizenz und Haftungsausschluss f?r die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "usb2.h"
 #include "ehciQHqTD.h"
 #include "util.h"
 #include "timer.h"
@@ -81,7 +82,7 @@ ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, ui
     td->token.bytes        = tokenBytes; // dependent on transfer
     td->token.dataToggle   = toggle;     // Should be toggled every list entry
 
-    struct ehci_request* request = *buffer = allocQTDbuffer(td);
+    usb_request_t* request = *buffer = allocQTDbuffer(td);
     request->type    = type;
     request->request = req;
     request->valueHi = hiVal;

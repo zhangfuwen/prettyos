@@ -59,16 +59,6 @@ typedef struct
     ehci_qtd_t qtd;
 } __attribute__((packed)) ehci_qhd_t;
 
-struct ehci_request
-{
-    uint8_t   type;
-    uint8_t   request;
-    uint8_t   valueLo;
-    uint8_t   valueHi;
-    uint16_t  index;
-    uint16_t  length;
-} __attribute__((packed));
-
 
 void  createQH(ehci_qhd_t* address, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
 ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);

@@ -287,11 +287,12 @@ void ohci_resetHC(ohci_t* o)
                                     OHCI_INT_FNO  | // frame number overflow
                                     OHCI_INT_RHSC | // root hub status change
                                     OHCI_INT_OC   | // ownership change
+                                    // OHCI_INT_SF   | // start of frame
                                     OHCI_INT_MIE;   // (de)activates interrupts
 
     // prepare transfers
-    o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers
-    o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE ); // de-activate periodical and isochronous transfers
+    // o->OpRegs->HcControl |=  OHCI_CTRL_CLE; // activate control transfers
+    o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE | OHCI_CTRL_BLE);  // de-activate bulk, periodical and isochronous transfers
 
     // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
     // When HcFmRemaining reaches this value, periodic lists gets priority over control/bulk processing
@@ -675,7 +676,7 @@ void ohci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransac
 
     oTransaction->qTD = ohci_createQTD_SETUP(o, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &oTransaction->qTDBuffer);
 
-    ohci_request_t* request = (ohci_request_t*)oTransaction->qTDBuffer;
+    usb_request_t* request = (usb_request_t*)oTransaction->qTDBuffer;
     printf("\ntype: %u req: %u valHi: %u valLo: %u i: %u len: %u", request->type, request->request, request->valueHi, request->valueLo, request->index, request->length);
 
     if (transfer->transactions->tail)
@@ -733,6 +734,9 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     
     ohci_t* o = ((ohci_port_t*)transfer->HC->data)->ohci;
     ohci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
+
+    
+    printf("\nohci_createQH: devNum = %u endp = %u packetsize = %u", ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
 
     ohci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD,  1, ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
 
@@ -858,7 +862,7 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
     oTD->errCnt       = 0;
     oTD->bufRounding  = 1;
 
-    ohci_request_t* request = *buffer = o->pTDbuff[o->indexTD]; printf("\nindexTD = %u, setup buffer = %X %X", o->indexTD, paging_getPhysAddr(request), paging_getPhysAddr(o->pTDbuff[o->indexTD]));
+    usb_request_t* request = *buffer = o->pTDbuff[o->indexTD]; printf("\nindexTD = %u, setup buffer = %X %X", o->indexTD, paging_getPhysAddr(request), paging_getPhysAddr(o->pTDbuff[o->indexTD]));
     request->type     = type;
     request->request  = req;
     request->valueHi  = hiVal;
@@ -867,7 +871,7 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
     request->length   = length;
 
     oTD->curBuffPtr   = paging_getPhysAddr(request);
-    oTD->buffEnd      = oTD->curBuffPtr + sizeof(ohci_request_t) - 1; // physical address of the last byte in the buffer
+    oTD->buffEnd      = oTD->curBuffPtr + sizeof(usb_request_t) - 1; // physical address of the last byte in the buffer
 
     oED->tdQueueTail = paging_getPhysAddr(oTD);
 

@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.106 - Rev: 1307";
+const char* const version = "0.0.3.107 - Rev: 1308";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -169,8 +169,11 @@ static void init(multiboot_t* mb_struct)
     // external devices
     keyboard_install();
     log("Keyboard");
+    
+  #ifdef _MOUSE_
     mouse_install();
     log("Mouse");
+  #endif
 
     // power management
     pm_install();

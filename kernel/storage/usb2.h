@@ -11,6 +11,17 @@
 
 typedef struct
 {
+    uint8_t   type;
+    uint8_t   request;
+    uint8_t   valueLo;
+    uint8_t   valueHi;
+    uint16_t  index;
+    uint16_t  length;
+} __attribute__((packed)) usb_request_t;
+
+
+typedef struct
+{
     disk_t*  disk;
 
     uint16_t usbSpec;
