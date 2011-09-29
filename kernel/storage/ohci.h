@@ -243,7 +243,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer);
 
 ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer);
 ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
-void      ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
+void      ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint32_t device, uint32_t endpoint, uint32_t packetSize);
 
 uint8_t ohci_showStatusbyteQTD(ohciTD_t* qTD);
 
