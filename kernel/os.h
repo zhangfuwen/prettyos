@@ -9,7 +9,7 @@
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 #define _MOUSE_                // mouse will be installed
 #define _SERIAL_LOG_           // Enables log information over the COM-Ports
-#define _EHCI_ENABLE_          // EHCI will be installed, if this is defined, otherwise not
+/// #define _EHCI_ENABLE_          // EHCI will be installed, if this is defined, otherwise not
 #define _OHCI_ENABLE_          // OHCI will be installed, if this is defined, otherwise not
 #define _UHCI_ENABLE_          // UHCI will be installed, if this is defined, otherwise not
 
@@ -28,7 +28,7 @@
 /// #define _UHCI_DIAGNOSIS_       // Debug UHCI
 /// #define _EHCI_DIAGNOSIS_       // Debug EHCI
 /// #define _USB2_DIAGNOSIS_       // Debug USB 2.0 transfers
-#define _USB2_TRANSFER_DIAGNOSIS_ // Debug USB 2.0 transfers and transactions
+/// #define _USB2_TRANSFER_DIAGNOSIS_ // Debug USB 2.0 transfers and transactions
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)
 /// #define _RAMDISK_DIAGNOSIS_    // Information about the ramdisk
 /// #define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/32

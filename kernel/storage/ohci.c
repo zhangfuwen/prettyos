@@ -25,7 +25,6 @@ static void ohci_handler(registers_t* r, pciDev_t* device);
 static void ohci_start();
 static void ohci_portCheck();
 static void ohci_showPortstatus(ohci_t* o, uint8_t j);
-static void ohci_detectDevice(ohci_t* o, uint8_t j);
 static void ohci_resetPort(ohci_t* o, uint8_t j);
 static void ohci_resetMempool(ohci_t* o);
 static void ohci_toggleFrameInterval(ohci_t* o);
@@ -420,7 +419,7 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
         {
             textColor(SUCCESS);
             printf(" dev. attached  -");
-            ohci_detectDevice(o, j);            
+            ohci_resetPort(o, j);            
         }
         else
         {
@@ -431,15 +430,15 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
         {
             textColor(SUCCESS);
             printf(" enabled  -");
-            if (OHCI_USBtransferFlag)
+            if (o->enabledPortFlag && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS) && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)) // powered, device attached
             {
-                #ifdef OHCI_USB_TRANSFER
-                if ((o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS) && 
-                    (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS))
+                if (OHCI_USBtransferFlag)
                 {
+                    #ifdef OHCI_USB_TRANSFER
+                    printf("o->OpRegs->HcRhPortStatus[%u]: %X", j, o->OpRegs->HcRhPortStatus[j]);
                     ohci_setupUSBDevice(o, j); // TEST
+                    #endif
                 }
-                #endif
             }
         }
         else
@@ -501,23 +500,28 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
     }
 }
 
-static void ohci_detectDevice(ohci_t* o, uint8_t j)
-{
-    ohci_resetPort(o,j);
-
-    if (o->enabledPortFlag && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS) && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)) // powered, device attached
-    {
-      #ifdef OHCI_USB_TRANSFER
-        // ohci_setupUSBDevice(o, j); // this is carried out by port change interrupt (enabled)
-      #endif
-    }
-}
-
 static void ohci_resetPort(ohci_t* o, uint8_t j)
 {
     o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS; // reset
-    sleepMilliSeconds(50);
-    o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; // enable
+    
+    uint32_t timeout=100;
+    while ((o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRS) != 0) // Reset-Bit still set to 1
+    {
+      #ifdef _OHCI_DIAGNOSIS_
+        printf("waiting for ohci port reset\n");
+      #endif
+        sleepMilliSeconds(20);
+        timeout--;
+        if (timeout==0)
+        {
+            textColor(ERROR);
+            printf("Timeout Error: ohci port reset bit still set to 1\n");
+            textColor(TEXT);
+            break;
+        }
+    }
+    printf("\ntimeout: %u", timeout);    
+    o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; // enable     
     sleepMilliSeconds(20);
 }
 
@@ -847,8 +851,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
         printf("\ni=%u\tED->TD:%X->%X TD->TD:%X->%X buf:%X",
                   i, paging_getPhysAddr(o->pED[i]), o->pED[i]->tdQueueHead,
                      paging_getPhysAddr(o->pTD[i]), o->pTD[i]->nextTD, o->pTD[i]->curBuffPtr);
-    }
-    waitForKeyStroke();
+    }    
   #endif
 
     o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
@@ -857,7 +860,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     textColor(MAGENTA);
     printf("\nHcCommandStatus: %X", o->OpRegs->HcCommandStatus);
     textColor(TEXT);
-    waitForKeyStroke();
+    
   #endif
 
     for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
@@ -865,7 +868,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
         transfer->success = true;
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {   
-            // printf("\ntry = %u", i);
+            printf("\ntry = %u", i);
             ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
             o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
             
@@ -886,7 +889,8 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
             }
             o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////           
             o->sof = false;
-            sleepMilliSeconds(200);
+
+            sleepMilliSeconds(250);
             
             ohci_showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)      
