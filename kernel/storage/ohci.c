@@ -23,9 +23,12 @@ static bool    OHCI_USBtransferFlag = false;
 
 static void ohci_handler(registers_t* r, pciDev_t* device);
 static void ohci_start();
-static void showPortstatus(ohci_t* o);
+static void ohci_portCheck();
+static void ohci_showPortstatus(ohci_t* o, uint8_t j);
+static void ohci_detectDevice(ohci_t* o, uint8_t j);
+static void ohci_resetPort(ohci_t* o, uint8_t j);
 static void ohci_resetMempool(ohci_t* o);
-
+static void ohci_toggleFrameInterval(ohci_t* o);
 
 void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
@@ -201,11 +204,12 @@ void ohci_resetHC(ohci_t* o)
 
     // ... and then issue a software reset
     o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
-    sleepMilliSeconds(10);
+    sleepMilliSeconds(50);
 
     // After the software reset is complete (a maximum of 10 ms), the Host Controller Driver
     // should restore the value of the HcFmInterval register
     o->OpRegs->HcFmInterval = saveHcFmInterval;
+    ohci_toggleFrameInterval(o);
 
     /*
     The HC is now in the USBSUSPEND state; it must not stay in this state more than 2 ms
@@ -266,7 +270,7 @@ void ohci_resetHC(ohci_t* o)
     for (uint8_t i=0; i<NUM_TD; i++)
     {
         o->pTDbuff[i]         = malloc(512, 512, "ohci_TDbuffer");
-        o->pTD[i]             = malloc(sizeof(ohciTD_t), OHCI_DESCRIPTORS_ALIGN, "ohci_TD");
+        o->pTD[i]             = malloc(sizeof(ohciTD_t), PAGESIZE/*OHCI_DESCRIPTORS_ALIGN*/, "ohci_TD");
         o->pTD[i]->curBuffPtr = paging_getPhysAddr(o->pTDbuff[i]);
         o->pTDphys[i]         = paging_getPhysAddr(o->pTD[i]);
     }
@@ -288,14 +292,14 @@ void ohci_resetHC(ohci_t* o)
                                     OHCI_INT_FNO  | // frame number overflow
                                     OHCI_INT_RHSC | // root hub status change
                                     OHCI_INT_OC   | // ownership change
-                                    // OHCI_INT_SF   | // start of frame
+                                    OHCI_INT_SF   | // start of frame
                                     OHCI_INT_MIE;   // (de)activates interrupts
 
     o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_PLE | OHCI_CTRL_IE | OHCI_CTRL_BLE);  // de-activate bulk, periodical and isochronous transfers
     
     o->OpRegs->HcControl |= OHCI_CTRL_RWE; // activate RemoteWakeup 
     
-        // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
+    // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
     // When HcFmRemaining reaches this value, periodic lists gets priority over control/bulk processing
     o->OpRegs->HcPeriodicStart = (o->OpRegs->HcFmInterval & 0x3FFF) * 90/100;
     
@@ -305,11 +309,19 @@ void ohci_resetHC(ohci_t* o)
     */
     o->OpRegs->HcFmInterval &= ~OHCI_CTRL_FSLARGESTDATAPACKET; // clear FSLargestDataPacket    
     o->OpRegs->HcFmInterval |= BIT(30); // ???
-    
+    ohci_toggleFrameInterval(o);
+
+    /*
+    LSThreshold contains a value which is compared to the FrameRemaining field prior to initiating a Low Speed transaction. 
+    The transaction is started only if FrameRemaining >= this field. 
+    The value is calculated by HCD with the consideration of transmission and setup overhead.
+    */
+    o->OpRegs->HcLSThreshold = 0; // HCD allowed to change? 
+        
     printf("\nHcFrameInterval: %u", o->OpRegs->HcFmInterval & 0x3FFF);
     printf("  HcPeriodicStart: %u", o->OpRegs->HcPeriodicStart);
     printf("  FSMPS: %u bits", (o->OpRegs->HcFmInterval >> 16) & 0x7FFF);
-    waitForKeyStroke();
+    printf("  LSThreshhold: %u", o->OpRegs->HcLSThreshold & 0xFFF);
 
     // ControlBulkServiceRatio (CBSR)
     o->OpRegs->HcControl |= OHCI_CTRL_CBSR;  // No. of Control EDs Over Bulk EDs Served = 4 : 1
@@ -329,12 +341,16 @@ void ohci_resetHC(ohci_t* o)
     o->OpRegs->HcRhStatus |= OHCI_RHS_LPSC;           // SetGlobalPower: turn on power to all ports
     o->rootPorts = BYTE1(o->OpRegs->HcRhDescriptorA); // NumberDownstreamPorts
 
+    o->OpRegs->HcRhDescriptorA &= ~OHCI_RHA_DT; // DeviceType: This bit specifies that the Root Hub is not a compound device.
+                                                // The Root Hub is not permitted to be a compound device. This field should always read/write 0.
+    o->OpRegs->HcRhDescriptorB = 0; // DR: devices removable; PPCM: PortPowerControlMask is set to global power switching mode
+
     // duration HCD has to wait before accessing a powered-on port of the Root Hub.
     // It is implementation-specific. Duration is calculated as POTPGT * 2 ms.
-    uint8_t powerWait = max(20, 2 * BYTE4(o->OpRegs->HcRhDescriptorA));
+    o->powerWait = max(20, 2 * BYTE4(o->OpRegs->HcRhDescriptorA));
 
     textColor(IMPORTANT);
-    printf("\n\nFound %u Rootports. Power wait: %u ms\n", o->rootPorts, powerWait);
+    printf("\n\nFound %u Rootports. Power wait: %u ms\n", o->rootPorts, o->powerWait);
     textColor(TEXT);
 
     for (uint8_t j = 0; j < o->rootPorts; j++)
@@ -349,7 +365,7 @@ void ohci_resetHC(ohci_t* o)
         attachPort(&o->ports[j]->port);
         o->enabledPortFlag = true;
         o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;
-        sleepMilliSeconds(powerWait);
+        sleepMilliSeconds(50);
     }
 }
 
@@ -360,100 +376,149 @@ void ohci_resetHC(ohci_t* o)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void showPortstatus(ohci_t* o)
+void ohci_portCheck()
 {
-    for (uint8_t j=0; j < o->rootPorts; j++)
+    ohci_t* o = curOHCI;
+        
+    for (uint8_t j=0; j<o->rootPorts; j++)
     {
-        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS) // connected
         {
-            textColor(IMPORTANT);
-            printf("\nport[%u]: ", j+1);
-            textColor(TEXT);
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_LSDA)
-                printf("LowSpeed");
-            else
-                printf("FullSpeed");
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)
-            {
-                textColor(SUCCESS);
-                printf(" dev. attached  -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES;
-            }
-            else
-                printf(" device removed -");
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)
-            {
-                textColor(SUCCESS);
-                printf(" enabled  -");
-                if (OHCI_USBtransferFlag)
-                {
-                  #ifdef OHCI_USB_TRANSFER
-                    sleepMilliSeconds(50);
-                    ohci_setupUSBDevice(o, j); // TEST
-                  #endif
-                }
-            }
-            else
-            {
-                textColor(IMPORTANT);
-                printf(" disabled -");
-            }
-            textColor(TEXT);
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSS)
-                printf(" suspend   -");
-            else
-                printf(" not susp. -");
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_POCI)
-            {
-                textColor(ERROR);
-                printf(" overcurrent -");
-                textColor(TEXT);
-            }
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRS)
-                printf(" reset -");
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS)
-                printf(" pow on  -");
-            else
-                printf(" pow off -");
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
-            {
-                printf(" CSC -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CSC;
-            }
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PESC)
-            {
-                printf(" enable Change -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PESC;
-            }
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSSC)
-            {
-                printf(" resume compl. -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PSSC;
-            }
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_OCIC)
-            {
-                printf(" overcurrent Change -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_OCIC;
-            }
-
-            if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRSC)
-            {
-                printf(" Reset Complete -");
-                o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRSC;
-            }
+             console_setProperties(CONSOLE_SHOWINFOBAR|CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH); // protect console against info area 
+             ohci_showPortstatus(o,j);    
+        }
+        else
+        {
+            writeInfo(0, "Port: %u, no device attached", j+1);
         }
     }
+    
+    textColor(IMPORTANT);
+    printf("\n>>> Press key to close this console. <<<");
+    textColor(TEXT);
+    getch();
+}
+
+void ohci_showPortstatus(ohci_t* o, uint8_t j)
+{
+    if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
+    {
+        textColor(IMPORTANT);
+        printf("\nport[%u]: ", j+1);
+        textColor(TEXT);
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_LSDA)
+        {
+            printf("LowSpeed");
+        }
+        else
+        {
+            printf("FullSpeed");
+        }
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)
+        {
+            textColor(SUCCESS);
+            printf(" dev. attached  -");
+            ohci_detectDevice(o, j);            
+        }
+        else
+        {
+            printf(" device removed -");
+        }        
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)
+        {
+            textColor(SUCCESS);
+            printf(" enabled  -");
+            if (OHCI_USBtransferFlag)
+            {
+                #ifdef OHCI_USB_TRANSFER
+                if ((o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS) && 
+                    (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS))
+                {
+                    ohci_setupUSBDevice(o, j); // TEST
+                }
+                #endif
+            }
+        }
+        else
+        {
+            textColor(IMPORTANT);
+            printf(" disabled -");
+        }
+        textColor(TEXT);
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSS)
+            printf(" suspend   -");
+        else
+            printf(" not susp. -");
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_POCI)
+        {
+            textColor(ERROR);
+            printf(" overcurrent -");
+            textColor(TEXT);
+        }
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRS)
+            printf(" reset -");
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS)
+            printf(" pow on  -");
+        else
+            printf(" pow off -");
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
+        {
+            printf(" CSC -");
+            o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_CSC;
+        }
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PESC)
+        {
+            printf(" enable Change -");
+            o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PESC;
+        }
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PSSC)
+        {
+            printf(" resume compl. -");
+            o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PSSC;
+        }
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_OCIC)
+        {
+            printf(" overcurrent Change -");
+            o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_OCIC;
+        }
+
+        if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRSC)
+        {
+            printf(" Reset Complete -");
+            o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRSC;
+        }
+    }
+}
+
+static void ohci_detectDevice(ohci_t* o, uint8_t j)
+{
+    ohci_resetPort(o,j);
+
+    if (o->enabledPortFlag && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS) && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)) // powered, device attached
+    {
+      #ifdef OHCI_USB_TRANSFER
+        // ohci_setupUSBDevice(o, j); // this is carried out by port change interrupt (enabled)
+      #endif
+    }
+}
+
+static void ohci_resetPort(ohci_t* o, uint8_t j)
+{
+    o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS; // reset
+    sleepMilliSeconds(50);
+    o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; // enable
+    sleepMilliSeconds(20);
 }
 
 
@@ -496,7 +561,10 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
-    printf("\nUSB OHCI %u: ", o->num);
+    if (!(val & OHCI_INT_SF))
+    {
+        printf("\nUSB OHCI %u: ", o->num);
+    }
 
     uint32_t handledInterrupts = 0;
 
@@ -530,8 +598,9 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
     if (val & OHCI_INT_SF) // start of frame
     {
-        printf("Start of frame.");
-        handledInterrupts |= OHCI_INT_SF;
+        // printf(".");
+        o->sof = true; // for issueTransfer
+        handledInterrupts |= OHCI_INT_SF;        
     }
 
     if (val & OHCI_INT_RD) // resume detected
@@ -557,7 +626,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     {
         printf("Root hub status change.");
         handledInterrupts |= OHCI_INT_RHSC;
-        showPortstatus(o);
+        scheduler_insertTask(create_cthread(&ohci_portCheck, "OHCI Ports"));        
     }
 
     if (val & OHCI_INT_OC) // ownership change
@@ -570,8 +639,8 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     {
         printf("Interrupt not handled: %X", val); // should be nothing! 
     }
-
-    o->OpRegs->HcInterruptStatus = val; // reset interrupts
+    
+    o->OpRegs->HcInterruptStatus = val; // reset interrupts    
 }
 
 
@@ -587,30 +656,35 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
 
     o->ports[portNumber]->num = 0; // device number has to be set to 0
     o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
+    
     waitForKeyStroke();
 
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &o->ports[portNumber]->port;
 
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
-
     usbTransferDevice(device);
+    
     waitForKeyStroke();
-
+    
     usbTransferConfig(device);
+
     waitForKeyStroke();
 
     usbTransferString(device);
-    waitForKeyStroke();
 
+    waitForKeyStroke();
+    
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
-        usbTransferStringUnicode(device, i);
-        waitForKeyStroke();
+        usbTransferStringUnicode(device, i);        
     }
+    waitForKeyStroke();
 
     usbTransferSetConfiguration(device, 1); // set first configuration
+
     waitForKeyStroke();
+    
 
   #ifdef _OHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
@@ -640,8 +714,7 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
         showPortList(); // TEST
         showDiskList(); // TEST
       #endif
-        waitForKeyStroke();
-
+        
         // device, interface, endpoints
       #ifdef _OHCI_DIAGNOSIS_
         textColor(HEADLINE);
@@ -792,25 +865,31 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
         transfer->success = true;
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {   
-            printf("\ntry = %u", i);
+            // printf("\ntry = %u", i);
             ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-            o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF /*| OHCI_STATUS_BLF*/); // control list filled
+            o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
             
           #ifdef _OHCI_DIAGNOSIS_
             textColor(IMPORTANT); printf("\nactivate control transfers"); textColor(TEXT);
           #endif  
 
             o->pED[i]->tdQueueHead &= ~0x1; // reset Halted Bit
-            
-            waitForKeyStroke();
 
-            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers            
+            /*
+            printf("\nHcFrameInterval: %u", o->OpRegs->HcFmInterval & 0x3FFF);
+            printf("  HcPeriodicStart: %u", o->OpRegs->HcPeriodicStart);
+            printf("  FSMPS: %u bits", (o->OpRegs->HcFmInterval >> 16) & 0x7FFF);
+            */
+            while(!o->sof)
+            {
+                // do nothing 
+            }
+            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////           
+            o->sof = false;
             sleepMilliSeconds(200);
             
             ohci_showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)      
-            
-            waitForKeyStroke();
         }
       #ifdef _OHCI_DIAGNOSIS_
         if (!transfer->success)
@@ -1033,6 +1112,19 @@ static void ohci_resetMempool(ohci_t* o)
     o->indexED = 0;
     o->indexTD = 0;
 }
+
+static void ohci_toggleFrameInterval(ohci_t* o)
+{
+    if ((o->OpRegs->HcFmInterval & BIT(31)) == true) // check FRT
+    {
+        o->OpRegs->HcFmInterval &= ~BIT(31); // clear FRT
+    }
+    else
+    {
+        o->OpRegs->HcFmInterval |= BIT(31); // set FRT
+    }
+}
+    
 
 /*
 * Copyright (c) 2011 The PrettyOS Project. All rights reserved.

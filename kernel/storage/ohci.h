@@ -7,7 +7,9 @@
 #include "usb_hc.h"
 
 #define OHCIMAX          4  // max number of OHCI devices
+
 #define OHCIPORTMAX      8  // max number of OHCI device ports
+
 #define NUM_ED         100  // number of EDs in memory pool
 #define NUM_ED_CONTROL   0  // EDs for control transfer
 #define NUM_ED_BULK     50  // EDs for bulk transfer 
@@ -215,8 +217,9 @@ typedef struct ohci
     uint8_t        rootPorts;            // number of rootports
     bool           enabledPortFlag;      // root ports enabled
     ohci_port_t*   ports[OHCIPORTMAX];   // root ports
-    bool           run;                  // hc running (RS bit)
     uint8_t        num;                  // number of the OHCI
+    bool           sof;                  // start of frame
+    uint32_t       powerWait;            // wait time (ms) for ports after power-on
 } ohci_t;
 
 
