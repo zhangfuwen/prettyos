@@ -6,10 +6,12 @@
 #include "devicemanager.h"
 #include "usb_hc.h"
 
-#define OHCIMAX       4  // max number of OHCI devices
-#define OHCIPORTMAX   8  // max number of OHCI device ports
-#define NUM_ED       50  // number of EDs in memory pool
-#define NUM_TD      100  // number of TDs in memory pool
+#define OHCIMAX          4  // max number of OHCI devices
+#define OHCIPORTMAX      8  // max number of OHCI device ports
+#define NUM_ED         100  // number of EDs in memory pool
+#define NUM_ED_CONTROL   0  // EDs for control transfer
+#define NUM_ED_BULK     50  // EDs for bulk transfer 
+#define NUM_TD         200  // number of TDs in memory pool
 
 #define OHCI_HCCA_ALIGN          PAGESIZE
 #define OHCI_DESCRIPTORS_ALIGN   0x0010
@@ -25,7 +27,8 @@
 #define OHCI_CTRL_HCFS (BIT(6)|BIT(7))   // HostControllerFunctionalState for USB
 #define OHCI_CTRL_IR    BIT(8)           // redirect IRQ to SMB
 #define OHCI_CTRL_RWC   BIT(9)           // remote wakeup
-#define OHCI_CTRL_RW    BIT(10)          // activate remote wakeup
+#define OHCI_CTRL_RWE   BIT(10)          // activate remote wakeup
+#define OHCI_CTRL_FSLARGESTDATAPACKET (BIT(16)|BIT(17)|BIT(18)|BIT(19)|BIT(20)|BIT(21)|BIT(22)|BIT(23)|BIT(24)|BIT(25)|BIT(26)|BIT(27)|BIT(28)|BIT(29)|BIT(30))
 
 // HcCommandStatus Register
 #define OHCI_STATUS_RESET BIT(0)         // reset
@@ -86,20 +89,7 @@
 #define OHCI_USB_RESET       0
 #define OHCI_USB_RESUME      BIT(6)
 #define OHCI_USB_OPERATIONAL BIT(7)
-#define OHCI_USB_SUSPEND    (BIT(6)|BIT(7))
-
-// ED lists
-#define ED_INTERRUPT_1ms     0
-#define ED_INTERRUPT_2ms     1
-#define ED_INTERRUPT_4ms     3
-#define ED_INTERRUPT_8ms     7
-#define ED_INTERRUPT_16ms   15
-#define ED_INTERRUPT_32ms   31
-#define ED_CONTROL          63
-#define ED_BULK             64
-#define ED_ISOCHRONOUS       0 // same as 1ms interrupt queue
-#define NO_ED_LISTS         65
-#define ED_EOF              0xFF
+#define OHCI_USB_SUSPEND     (BIT(6)|BIT(7))
 
 // ED
 #define OHCI_ED_TD     0
@@ -144,7 +134,7 @@ typedef struct
     volatile uint32_t HcRhDescriptorA;            // characteristics of the Root Hub
     volatile uint32_t HcRhDescriptorB;            // characteristics of the Root Hub
     volatile uint32_t HcRhStatus;                 // lower word: Root Hub Status field, upper word: Root Hub Status Change field
-    volatile uint32_t HcRhPortStatus[8];          // port events on a per-port basis, max. NDP = 15, we assume 8 (taken from VBox)
+    volatile uint32_t HcRhPortStatus[OHCIPORTMAX];// port events on a per-port basis, max. NDP = 15, we assume 8 (taken from VBox)
 } __attribute__((packed)) ohci_OpRegs_t;
 
 /*

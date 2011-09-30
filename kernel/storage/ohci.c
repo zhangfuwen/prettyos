@@ -201,7 +201,7 @@ void ohci_resetHC(ohci_t* o)
 
     // ... and then issue a software reset
     o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
-    sleepMilliSeconds(20);
+    sleepMilliSeconds(10);
 
     // After the software reset is complete (a maximum of 10 ms), the Host Controller Driver
     // should restore the value of the HcFmInterval register
@@ -217,7 +217,7 @@ void ohci_resetHC(ohci_t* o)
     {
         o->OpRegs->HcControl &= ~OHCI_CTRL_HCFS; // clear HCFS bits
         o->OpRegs->HcControl |= OHCI_USB_RESUME; // set specific HCFS bit
-        sleepMilliSeconds(10);
+        sleepMilliSeconds(100);
     }
 
     /////////////////////
@@ -249,9 +249,9 @@ void ohci_resetHC(ohci_t* o)
 
     for (uint8_t i=0; i<NUM_ED; i++)
     {
-        if (i == NUM_ED - 1)
+        if ((i == NUM_ED_BULK - 1) || (i == NUM_ED - 1)) 
         {
-            o->pED[i]->nextED = 0; // no next ED
+            o->pED[i]->nextED = 0; // no next ED, end of control or bulk list
         }
         else
         {
@@ -259,7 +259,8 @@ void ohci_resetHC(ohci_t* o)
             o->pED[i]->sKip = 1; //TEST
         }
     }
-    o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(o->pED[0]);
+    o->OpRegs->HcControlHeadED = o->OpRegs->HcControlCurrentED = paging_getPhysAddr(o->pED[NUM_ED_CONTROL]);
+    o->OpRegs->HcBulkHeadED    = o->OpRegs->HcBulkCurrentED    = paging_getPhysAddr(o->pED[NUM_ED_BULK]);
 
     // TD pool: NUM_TD TDs and buffers
     for (uint8_t i=0; i<NUM_TD; i++)
@@ -290,13 +291,25 @@ void ohci_resetHC(ohci_t* o)
                                     // OHCI_INT_SF   | // start of frame
                                     OHCI_INT_MIE;   // (de)activates interrupts
 
-    // prepare transfers
-    // o->OpRegs->HcControl |=  OHCI_CTRL_CLE; // activate control transfers
-    o->OpRegs->HcControl &= ~(OHCI_CTRL_PLE | OHCI_CTRL_IE | OHCI_CTRL_BLE);  // de-activate bulk, periodical and isochronous transfers
-
-    // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
+    o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_PLE | OHCI_CTRL_IE | OHCI_CTRL_BLE);  // de-activate bulk, periodical and isochronous transfers
+    
+    o->OpRegs->HcControl |= OHCI_CTRL_RWE; // activate RemoteWakeup 
+    
+        // Set HcPeriodicStart to a value that is 90% of the value in FrameInterval field of the HcFmInterval register
     // When HcFmRemaining reaches this value, periodic lists gets priority over control/bulk processing
     o->OpRegs->HcPeriodicStart = (o->OpRegs->HcFmInterval & 0x3FFF) * 90/100;
+    
+    /*
+    The counter value represents the largest amount of data in bits which can be sent or received by the HC in a single
+    transaction at any given time without causing scheduling overrun.
+    */
+    o->OpRegs->HcFmInterval &= ~OHCI_CTRL_FSLARGESTDATAPACKET; // clear FSLargestDataPacket    
+    o->OpRegs->HcFmInterval |= BIT(30); // ???
+    
+    printf("\nHcFrameInterval: %u", o->OpRegs->HcFmInterval & 0x3FFF);
+    printf("  HcPeriodicStart: %u", o->OpRegs->HcPeriodicStart);
+    printf("  FSMPS: %u bits", (o->OpRegs->HcFmInterval >> 16) & 0x7FFF);
+    waitForKeyStroke();
 
     // ControlBulkServiceRatio (CBSR)
     o->OpRegs->HcControl |= OHCI_CTRL_CBSR;  // No. of Control EDs Over Bulk EDs Served = 4 : 1
@@ -308,20 +321,20 @@ void ohci_resetHC(ohci_t* o)
     (if the HCD needs to know when the SOFs it may unmask the StartOfFrame interrupt).
     */
 
-    printf("\n\nHC will be activated.\n");
+    printf("\n\nHC will be set to USB Operational.\n");
 
     o->OpRegs->HcControl &= ~OHCI_CTRL_HCFS;      // clear HCFS bits
     o->OpRegs->HcControl |= OHCI_USB_OPERATIONAL; // set specific HCFS bit
-
+    
     o->OpRegs->HcRhStatus |= OHCI_RHS_LPSC;           // SetGlobalPower: turn on power to all ports
     o->rootPorts = BYTE1(o->OpRegs->HcRhDescriptorA); // NumberDownstreamPorts
 
     // duration HCD has to wait before accessing a powered-on port of the Root Hub.
     // It is implementation-specific. Duration is calculated as POTPGT * 2 ms.
-    sleepMilliSeconds(2 * BYTE4(o->OpRegs->HcRhDescriptorA));
+    uint8_t powerWait = max(20, 2 * BYTE4(o->OpRegs->HcRhDescriptorA));
 
     textColor(IMPORTANT);
-    printf("\n\nFound %i Rootports.\n", o->rootPorts);
+    printf("\n\nFound %u Rootports. Power wait: %u ms\n", o->rootPorts, powerWait);
     textColor(TEXT);
 
     for (uint8_t j = 0; j < o->rootPorts; j++)
@@ -336,6 +349,7 @@ void ohci_resetHC(ohci_t* o)
         attachPort(&o->ports[j]->port);
         o->enabledPortFlag = true;
         o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;
+        sleepMilliSeconds(powerWait);
     }
 }
 
@@ -377,6 +391,7 @@ void showPortstatus(ohci_t* o)
                 if (OHCI_USBtransferFlag)
                 {
                   #ifdef OHCI_USB_TRANSFER
+                    sleepMilliSeconds(50);
                     ohci_setupUSBDevice(o, j); // TEST
                   #endif
                 }
@@ -483,12 +498,12 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
     printf("\nUSB OHCI %u: ", o->num);
 
-    uint32_t handled = 0;
+    uint32_t handledInterrupts = 0;
 
     if (val & OHCI_INT_SO) // scheduling overrun
     {
         printf("Scheduling overrun.");
-        handled |= OHCI_INT_SO;
+        handledInterrupts |= OHCI_INT_SO;
     }
 
     if (val & OHCI_INT_WDH) // write back done head
@@ -503,55 +518,57 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
                 textColor(SUCCESS);
                 printf("\nDONEHEAD.");
                 textColor(TEXT);
+                printf(" toggle: %u  ", o->pTD[i]->toggle);
+                
                 //ohci_showStatusbyteQTD(o->pTD[i]);
                 //printf("\n\n");
             }
         }
 
-        handled |= OHCI_INT_WDH;
+        handledInterrupts |= OHCI_INT_WDH;
     }
 
     if (val & OHCI_INT_SF) // start of frame
     {
         printf("Start of frame.");
-        handled |= OHCI_INT_SF;
+        handledInterrupts |= OHCI_INT_SF;
     }
 
     if (val & OHCI_INT_RD) // resume detected
     {
         printf("Resume detected.");
-        handled |= OHCI_INT_RD;
+        handledInterrupts |= OHCI_INT_RD;
     }
 
     if (val & OHCI_INT_UE) // unrecoverable error
     {
         printf("Unrecoverable HC error.");
         o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
-        handled |= OHCI_INT_UE;
+        handledInterrupts |= OHCI_INT_UE;
     }
 
     if (val & OHCI_INT_FNO) // frame number overflow
     {
         printf("Frame number overflow.");
-        handled |= OHCI_INT_FNO;
+        handledInterrupts |= OHCI_INT_FNO;
     }
 
     if (val & OHCI_INT_RHSC) // root hub status change
     {
         printf("Root hub status change.");
-        handled |= OHCI_INT_RHSC;
+        handledInterrupts |= OHCI_INT_RHSC;
         showPortstatus(o);
     }
 
     if (val & OHCI_INT_OC) // ownership change
     {
         printf("Ownership change.");
-        handled |= OHCI_INT_OC;
+        handledInterrupts |= OHCI_INT_OC;
     }
 
-    if (val & ~handled)
+    if (val & ~handledInterrupts)
     {
-        printf("Unhandled interrupt: %X", val);
+        printf("Interrupt not handled: %X", val); // should be nothing! 
     }
 
     o->OpRegs->HcInterruptStatus = val; // reset interrupts
@@ -761,7 +778,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     waitForKeyStroke();
   #endif
 
-    o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF /*| OHCI_STATUS_BLF*/); // control list filled
+    o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
 
   #ifdef _OHCI_DIAGNOSIS_
     textColor(MAGENTA);
@@ -784,10 +801,16 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
           #endif  
 
             o->pED[i]->tdQueueHead &= ~0x1; // reset Halted Bit
-            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control and bulk transfers            
-            sleepMilliSeconds(50);
+            
+            waitForKeyStroke();
+
+            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers            
+            sleepMilliSeconds(200);
+            
             ohci_showStatusbyteQTD(transaction->qTD);
-            transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)           
+            transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)      
+            
+            waitForKeyStroke();
         }
       #ifdef _OHCI_DIAGNOSIS_
         if (!transfer->success)
@@ -880,8 +903,8 @@ ohciTD_t* ohci_createQTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool to
     request->index    = i;
     request->length   = length;
 
-    oTD->curBuffPtr   = paging_getPhysAddr(request);
-    oTD->buffEnd      = oTD->curBuffPtr + sizeof(usb_request_t) - 1; // physical address of the last byte in the buffer
+    oTD->curBuffPtr   = paging_getPhysAddr(request); 
+    oTD->buffEnd      = oTD->curBuffPtr + sizeof(usb_request_t) - 1; // physical address of the last byte in the buffer                                                     
 
     oED->tdQueueTail = paging_getPhysAddr(oTD);
 
