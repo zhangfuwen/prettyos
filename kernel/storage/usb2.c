@@ -351,6 +351,8 @@ void showDevice(usb2_Device_t* usbDev)
         }
     }
 
+    printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
+
   #ifdef _USB2_TRANSFER_DIAGNOSIS_
     printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
     printf("vendor:            %xh\n",   usbDev->vendor);

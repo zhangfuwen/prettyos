@@ -419,7 +419,7 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
         {
             textColor(SUCCESS);
             printf(" dev. attached  -");
-            ohci_resetPort(o, j);            
+            ohci_resetPort(o, j);           ///// <--- reset on attached ///// 
         }
         else
         {
@@ -434,10 +434,10 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
             {
                 if (OHCI_USBtransferFlag)
                 {
-                    #ifdef OHCI_USB_TRANSFER
-                    printf("o->OpRegs->HcRhPortStatus[%u]: %X", j, o->OpRegs->HcRhPortStatus[j]);
+                  #ifdef OHCI_USB_TRANSFER
+                    printf("\no->OpRegs->HcRhPortStatus[%u]: %X", j, o->OpRegs->HcRhPortStatus[j]);
                     ohci_setupUSBDevice(o, j); // TEST
-                    #endif
+                  #endif
                 }
             }
         }
@@ -508,21 +508,23 @@ static void ohci_resetPort(ohci_t* o, uint8_t j)
     while ((o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRS) != 0) // Reset-Bit still set to 1
     {
       #ifdef _OHCI_DIAGNOSIS_
-        printf("waiting for ohci port reset\n");
+        printf("\nwaiting for ohci port reset");
       #endif
         sleepMilliSeconds(20);
         timeout--;
         if (timeout==0)
         {
             textColor(ERROR);
-            printf("Timeout Error: ohci port reset bit still set to 1\n");
+            printf("\nTimeout Error: ohci port reset bit still set to 1");
             textColor(TEXT);
             break;
         }
     }
-    printf("\ntimeout: %u", timeout);    
+    printf("\ntimeout: %u\n", timeout);  
+
     o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; // enable     
-    sleepMilliSeconds(20);
+    sleepMilliSeconds(200);
+    waitForKeyStroke();
 }
 
 
