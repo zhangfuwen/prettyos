@@ -523,8 +523,7 @@ static void ohci_resetPort(ohci_t* o, uint8_t j)
     printf("\ntimeout: %u\n", timeout);  
 
     o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; // enable     
-    sleepMilliSeconds(200);
-    waitForKeyStroke();
+    sleepMilliSeconds(200);    
 }
 
 
@@ -668,9 +667,13 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
-        
+     
+    waitForKeyStroke();
+
     o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
     
+    waitForKeyStroke();
+
     device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
     

@@ -26,11 +26,15 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
     usb_setupTransfer(port, &transfer, USB_CONTROL, 0, 64);
     usb_setupTransaction(&transfer, 0, 8, 0x00, 5, 0, new_address+1, 0, 0);
     usb_inTransaction(&transfer, 1, 0, 0);
+    usb_issueTransfer(&transfer);  
 
-    // usb_outTransaction(&transfer, 1, 0, 0); //// TEST ////
-
-    usb_issueTransfer(&transfer);
-
+  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+    textColor(HEADLINE);
+    printf("\nnew address: %u", new_address);
+    textColor(TEXT);
+    waitForKeyStroke();
+  #endif    
+    
     return new_address;
 }
 
@@ -324,7 +328,7 @@ void showDevice(usb2_Device_t* usbDev)
     if (usbDev->usbSpec == 0x0100 || usbDev->usbSpec == 0x0110 || usbDev->usbSpec == 0x0200 || usbDev->usbSpec == 0x0300)
     {
         textColor(SUCCESS);
-        printf("\nUSB %u.%u\t", BYTE2(usbDev->usbSpec), BYTE1(usbDev->usbSpec)); // e.g. 0x0210 means 2.10
+        printf("\nUSB %y.%y\t", BYTE2(usbDev->usbSpec), BYTE1(usbDev->usbSpec)); // e.g. 0x0210 means 2.10
         textColor(TEXT);
     }
     else
