@@ -269,7 +269,7 @@ void ohci_resetHC(ohci_t* o)
     for (uint8_t i=0; i<NUM_TD; i++)
     {
         o->pTDbuff[i]         = malloc(512, 512, "ohci_TDbuffer");
-        o->pTD[i]             = malloc(sizeof(ohciTD_t), PAGESIZE/*OHCI_DESCRIPTORS_ALIGN*/, "ohci_TD");
+        o->pTD[i]             = malloc(sizeof(ohciTD_t), OHCI_DESCRIPTORS_ALIGN, "ohci_TD");
         o->pTD[i]->curBuffPtr = paging_getPhysAddr(o->pTDbuff[i]);
         o->pTDphys[i]         = paging_getPhysAddr(o->pTD[i]);
     }
@@ -537,6 +537,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     // Check if an OHCI controller issued this interrupt
     ohci_t* o = device->data;
     bool found = false;
+    
     for (uint8_t i=0; i<OHCIMAX; i++)
     {
         if (o == ohci[i])
@@ -565,7 +566,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
-    if (!(val & OHCI_INT_SF))
+    if (!((val & OHCI_INT_SF) || (val & OHCI_INT_RHSC)))
     {
         printf("\nUSB OHCI %u: ", o->num);
     }
@@ -628,7 +629,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
     if (val & OHCI_INT_RHSC) // root hub status change
     {
-        printf("Root hub status change.");
+        // printf("Root hub status change.");
         handledInterrupts |= OHCI_INT_RHSC;
         scheduler_insertTask(create_cthread(&ohci_portCheck, "OHCI Ports"));        
     }
@@ -658,15 +659,17 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
 {
     ohci_resetMempool(o);
 
-    o->ports[portNumber]->num = 0; // device number has to be set to 0
-    o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
-    
-    waitForKeyStroke();
-
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &o->ports[portNumber]->port;
 
+    o->ports[portNumber]->num = 0; // device number has to be set to 0
+    
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
+    usbTransferDevice(device);
+        
+    o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
+    
+    device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
     
     waitForKeyStroke();
