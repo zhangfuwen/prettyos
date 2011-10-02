@@ -604,8 +604,6 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
     if (val & OHCI_INT_SF) // start of frame
     {
-        // printf(".");
-        o->sof = true; // for issueTransfer
         handledInterrupts |= OHCI_INT_SF;        
     }
 
@@ -891,15 +889,11 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
             printf("  HcPeriodicStart: %u", o->OpRegs->HcPeriodicStart);
             printf("  FSMPS: %u bits", (o->OpRegs->HcFmInterval >> 16) & 0x7FFF);
             */
-            while(!o->sof)
-            {
-                // do nothing 
-            }
-            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////           
-            o->sof = false;
-
-            sleepMilliSeconds(250);
             
+            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////           
+                        
+            delay(250000); // sleepMilliSeconds(...) --> freeze!
+                        
             ohci_showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)      
         }

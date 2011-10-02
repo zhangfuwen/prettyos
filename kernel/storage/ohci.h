@@ -218,7 +218,6 @@ typedef struct ohci
     bool           enabledPortFlag;      // root ports enabled
     ohci_port_t*   ports[OHCIPORTMAX];   // root ports
     uint8_t        num;                  // number of the OHCI
-    bool           sof;                  // start of frame
     uint32_t       powerWait;            // wait time (ms) for ports after power-on
 } ohci_t;
 
