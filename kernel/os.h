@@ -9,7 +9,7 @@
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 #define _MOUSE_                // mouse will be installed
 #define _SERIAL_LOG_           // Enables log information over the COM-Ports
-#define _EHCI_ENABLE_          // EHCI will be installed, if this is defined, otherwise not
+/// #define _EHCI_ENABLE_          // EHCI will be installed, if this is defined, otherwise not
 #define _OHCI_ENABLE_          // OHCI will be installed, if this is defined, otherwise not
 #define _UHCI_ENABLE_          // UHCI will be installed, if this is defined, otherwise not
 

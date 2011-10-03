@@ -23,7 +23,7 @@ static bool    OHCI_USBtransferFlag = false;
 
 static void ohci_handler(registers_t* r, pciDev_t* device);
 static void ohci_start();
-static void ohci_portCheck();
+static void ohci_portCheck(ohci_t* o);
 static void ohci_showPortstatus(ohci_t* o, uint8_t j);
 static void ohci_resetPort(ohci_t* o, uint8_t j);
 static void ohci_resetMempool(ohci_t* o);
@@ -375,10 +375,8 @@ void ohci_resetHC(ohci_t* o)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void ohci_portCheck()
+void ohci_portCheck(ohci_t* o)
 {
-    ohci_t* o = curOHCI;
-        
     for (uint8_t j=0; j<o->rootPorts; j++)
     {
         if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS) // connected
@@ -388,12 +386,14 @@ void ohci_portCheck()
         }
         else
         {
-            writeInfo(0, "Port: %u, no device attached", j+1);
+            writeInfo(0, "OHCI-Nr.: %u, Port-Nr.: %u, no device attached",o->num, j+1);
+            delay(500000);
         }
     }
     
     textColor(IMPORTANT);
     printf("\n>>> Port-Check finished <<<");
+    
     textColor(TEXT);
     // getch();
 }
@@ -596,56 +596,39 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
                 printf("\nDONEHEAD.");
                 textColor(TEXT);
                 printf(" toggle: %u  ", o->pTD[i]->toggle);
-                
-                //ohci_showStatusbyteQTD(o->pTD[i]);
-                //printf("\n\n");
             }
         }
-
-        handledInterrupts |= OHCI_INT_WDH;
     }
 
     if (val & OHCI_INT_SF) // start of frame
     {
-        handledInterrupts |= OHCI_INT_SF;        
+        // ???      
     }
 
     if (val & OHCI_INT_RD) // resume detected
     {
-        printf("Resume detected.");
-        handledInterrupts |= OHCI_INT_RD;
+        printf("Resume detected.");        
     }
 
     if (val & OHCI_INT_UE) // unrecoverable error
     {
         printf("Unrecoverable HC error.");
-        o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;
-        handledInterrupts |= OHCI_INT_UE;
+        o->OpRegs->HcCommandStatus |= OHCI_STATUS_RESET;        
     }
 
     if (val & OHCI_INT_FNO) // frame number overflow
     {
-        printf("Frame number overflow.");
-        handledInterrupts |= OHCI_INT_FNO;
+        printf("Frame number overflow.");        
     }
 
     if (val & OHCI_INT_RHSC) // root hub status change
     {
-        // printf("Root hub status change.");
-        handledInterrupts |= OHCI_INT_RHSC;
-        // scheduler_insertTask(create_cthread(&ohci_portCheck, "OHCI Ports"));   
-        ohci_portCheck();   
+        ohci_portCheck(o);   
     }
 
     if (val & OHCI_INT_OC) // ownership change
     {
-        printf("Ownership change.");
-        handledInterrupts |= OHCI_INT_OC;
-    }
-
-    if (val & ~handledInterrupts)
-    {
-        printf("Interrupt not handled: %X", val); // should be nothing! 
+        printf("Ownership change.");     
     }
 }
 
