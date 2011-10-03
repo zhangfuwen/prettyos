@@ -27,7 +27,7 @@
 /// #define _OHCI_DIAGNOSIS_       // Debug OHCI
 /// #define _UHCI_DIAGNOSIS_       // Debug UHCI
 /// #define _EHCI_DIAGNOSIS_       // Debug EHCI
-#define _USB2_DIAGNOSIS_       // Debug USB 2.0 transfers
+/// #define _USB2_DIAGNOSIS_       // Debug USB 2.0 transfers
 #define _USB2_TRANSFER_DIAGNOSIS_ // Debug USB 2.0 transfers and transactions
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)
 /// #define _RAMDISK_DIAGNOSIS_    // Information about the ramdisk

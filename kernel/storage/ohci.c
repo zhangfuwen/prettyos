@@ -393,10 +393,12 @@ void ohci_portCheck()
     }
     
     textColor(IMPORTANT);
-    printf("\n>>> Press key to close this console. <<<");
+    printf("\n>>> Port-Check finished <<<");
     textColor(TEXT);
-    getch();
+    // getch();
 }
+
+
 
 void ohci_showPortstatus(ohci_t* o, uint8_t j)
 {
@@ -507,10 +509,10 @@ static void ohci_resetPort(ohci_t* o, uint8_t j)
     uint32_t timeout=100;
     while ((o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PRS) != 0) // Reset-Bit still set to 1
     {
-      #ifdef _OHCI_DIAGNOSIS_
+     #ifdef _OHCI_DIAGNOSIS_
         printf("\nwaiting for ohci port reset");
-      #endif
-        sleepMilliSeconds(20);
+     #endif
+        delay(20000);
         timeout--;
         if (timeout==0)
         {
@@ -523,7 +525,7 @@ static void ohci_resetPort(ohci_t* o, uint8_t j)
     printf("\ntimeout: %u\n", timeout);  
 
     o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PES; // enable     
-    sleepMilliSeconds(200);    
+    delay(100000);    
 }
 
 
@@ -567,12 +569,13 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
+    o->OpRegs->HcInterruptStatus = val; // reset interrupts  
+    uint32_t handledInterrupts = 0;
+
     if (!((val & OHCI_INT_SF) || (val & OHCI_INT_RHSC)))
     {
         printf("\nUSB OHCI %u: ", o->num);
     }
-
-    uint32_t handledInterrupts = 0;
 
     if (val & OHCI_INT_SO) // scheduling overrun
     {
@@ -630,7 +633,8 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     {
         // printf("Root hub status change.");
         handledInterrupts |= OHCI_INT_RHSC;
-        scheduler_insertTask(create_cthread(&ohci_portCheck, "OHCI Ports"));        
+        // scheduler_insertTask(create_cthread(&ohci_portCheck, "OHCI Ports"));   
+        ohci_portCheck();   
     }
 
     if (val & OHCI_INT_OC) // ownership change
@@ -643,8 +647,6 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     {
         printf("Interrupt not handled: %X", val); // should be nothing! 
     }
-    
-    o->OpRegs->HcInterruptStatus = val; // reset interrupts    
 }
 
 
@@ -666,36 +668,24 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
      
-    waitForKeyStroke();
-
     o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
     
-    waitForKeyStroke();
-
     device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
     
-    waitForKeyStroke();
-    
     usbTransferConfig(device);
-
-    waitForKeyStroke();
 
     usbTransferString(device);
 
-    waitForKeyStroke();
     
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
         usbTransferStringUnicode(device, i);        
     }
-    waitForKeyStroke();
-
+    
     usbTransferSetConfiguration(device, 1); // set first configuration
 
-    waitForKeyStroke();
     
-
   #ifdef _OHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
@@ -1030,8 +1020,8 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
     }
     else
     {
-        oTD->curBuffPtr  = 0;
-        oTD->buffEnd     = 0;
+        oTD->curBuffPtr  = paging_getPhysAddr(o->pTDbuff[o->indexTD]); printf("\ncurr: %X", oTD->curBuffPtr);
+        oTD->buffEnd     = paging_getPhysAddr(((uint8_t*)(o->pTDbuff[o->indexTD]))+1); printf("\nend: %X", oTD->buffEnd);
     }
 
     oED->tdQueueTail = paging_getPhysAddr(oTD);
