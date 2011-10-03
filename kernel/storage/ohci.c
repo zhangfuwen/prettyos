@@ -384,18 +384,7 @@ void ohci_portCheck(ohci_t* o)
              console_setProperties(CONSOLE_SHOWINFOBAR|CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH); // protect console against info area 
              ohci_showPortstatus(o,j);    
         }
-        else
-        {
-            writeInfo(0, "OHCI-Nr.: %u, Port-Nr.: %u, no device attached",o->num, j+1);
-            delay(500000);
-        }
-    }
-    
-    textColor(IMPORTANT);
-    printf("\n>>> Port-Check finished <<<");
-    
-    textColor(TEXT);
-    // getch();
+    }    
 }
 
 
@@ -650,25 +639,28 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
-     
-    o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
     
-    device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
-    usbTransferDevice(device);
+    waitForKeyStroke();
+
+    //o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
     
     usbTransferConfig(device);
+    
+    waitForKeyStroke();
 
     usbTransferString(device);
-
     
+    waitForKeyStroke();
+
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
         usbTransferStringUnicode(device, i);        
+        waitForKeyStroke();
     }
     
     usbTransferSetConfiguration(device, 1); // set first configuration
-
-    
+    waitForKeyStroke();
+        
   #ifdef _OHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
@@ -683,6 +675,11 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     }
     else
     {
+        textColor(SUCCESS);
+        printf("\nThis is a Mass Storage Device! MSD test and addition to device manager will be carried out.");
+        textColor(TEXT);
+        waitForKeyStroke();
+        
         // Disk
         disk->type       = &USB_MSD;
         disk->sectorSize = 512;
@@ -708,7 +705,8 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
         textColor(TEXT);
       #endif
 
-        testMSD(device); // test with some SCSI commands
+        printf("\n\nTODO: implement bulk transfers");
+        // testMSD(device); // test with some SCSI commands
     }
 }
 
@@ -1003,8 +1001,8 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
     }
     else
     {
-        oTD->curBuffPtr  = paging_getPhysAddr(o->pTDbuff[o->indexTD]); printf("\ncurr: %X", oTD->curBuffPtr);
-        oTD->buffEnd     = paging_getPhysAddr(((uint8_t*)(o->pTDbuff[o->indexTD]))+1); printf("\nend: %X", oTD->buffEnd);
+        oTD->curBuffPtr  = paging_getPhysAddr(o->pTDbuff[o->indexTD]); 
+        oTD->buffEnd     = oTD->curBuffPtr;                            
     }
 
     oED->tdQueueTail = paging_getPhysAddr(oTD);
