@@ -14,7 +14,7 @@
 
 uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n\nUSB2: SET_ADDRESS");
     textColor(TEXT);
@@ -28,7 +28,7 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
     usb_inTransaction(&transfer, 1, 0, 0);
     usb_issueTransfer(&transfer);  
 
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\nnew address: %u", new_address);
     textColor(TEXT);
@@ -40,7 +40,7 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
 
 void usbTransferDevice(usb2_Device_t* device)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n\nUSB2: GET_DESCRIPTOR device, dev: %X endpoint: 0", device);
     textColor(TEXT);
@@ -61,7 +61,7 @@ void usbTransferDevice(usb2_Device_t* device)
 
 void usbTransferConfig(usb2_Device_t* device)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n\nUSB2: GET_DESCRIPTOR config, dev: %X endpoint: 0", device);
     textColor(TEXT);
@@ -76,7 +76,7 @@ void usbTransferConfig(usb2_Device_t* device)
     usb_outTransaction(&transfer, 1, 0, 0);
     usb_issueTransfer(&transfer);
 
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_GRAY);
     printf("\n---------------------------------------------------------------------\n");
     textColor(GREEN);
@@ -138,7 +138,7 @@ void usbTransferConfig(usb2_Device_t* device)
         }
         else if (type != 2 && type != 4 && type != 5)
         {
-          #ifdef _USB2_TRANSFER_DIAGNOSIS_
+          #ifdef _USB_TRANSFER_DIAGNOSIS_
             if (length > 0)
             {
                 textColor(HEADLINE);
@@ -151,7 +151,7 @@ void usbTransferConfig(usb2_Device_t* device)
 
         if (found == false)
         {
-          #ifdef _USB2_TRANSFER_DIAGNOSIS_
+          #ifdef _USB_TRANSFER_DIAGNOSIS_
             printf("\nlength: %u type: %u not found\n", length, type);
           #endif
             break;
@@ -163,7 +163,7 @@ void usbTransferConfig(usb2_Device_t* device)
 
 void usbTransferString(usb2_Device_t* device)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n\nUSB2: GET_DESCRIPTOR string, dev: %X endpoint: 0 languageIDs", device);
     textColor(TEXT);
@@ -178,7 +178,7 @@ void usbTransferString(usb2_Device_t* device)
     usb_outTransaction(&transfer, 1, 0, 0);
     usb_issueTransfer(&transfer);
 
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     memshow(&descriptor, 12, false);
     putch('\n');
   #endif
@@ -187,7 +187,7 @@ void usbTransferString(usb2_Device_t* device)
 
 void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n\nUSB2: GET_DESCRIPTOR string, dev: %X endpoint: 0 stringIndex: %u", device, stringIndex);
     textColor(TEXT);
@@ -202,7 +202,7 @@ void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex)
     usb_outTransaction(&transfer, 1, 0, 0);
     usb_issueTransfer(&transfer);
 
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     memshow(buffer, 64, false);
     putch('\n');
   #endif
@@ -213,7 +213,7 @@ void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex)
 // http://www.lowlevel.eu/wiki/USB#SET_CONFIGURATION
 void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\n\nUSB2: SET_CONFIGURATION %u", configuration);
     textColor(TEXT);
@@ -228,7 +228,7 @@ void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration)
 
 uint8_t usbTransferGetConfiguration(usb2_Device_t* device)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n\nUSB2: GET_CONFIGURATION");
     textColor(TEXT);
@@ -250,7 +250,7 @@ uint8_t usbTransferGetConfiguration(usb2_Device_t* device)
 // seems not to work correct, does not set HALT ???
 void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n\nUSB2: usbSetFeatureHALT, endpoint: %u", endpoint);
     textColor(TEXT);
@@ -262,14 +262,14 @@ void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packet
     usb_inTransaction(&transfer, 1, 0, 0);
     usb_issueTransfer(&transfer);
 
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     printf("\nset HALT at dev: %X endpoint: %u", device, endpoint);
   #endif
 }
 
 void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\n\nUSB2: usbClearFeatureHALT, endpoint: %u", endpoint);
     textColor(TEXT);
@@ -288,7 +288,7 @@ void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t pack
 
 uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(YELLOW);
     printf("\n\nUSB2: usbGetStatus at device: %X endpoint: %u", device, endpoint);
     textColor(TEXT);
@@ -357,7 +357,7 @@ void showDevice(usb2_Device_t* usbDev)
 
     printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
 
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
     printf("vendor:            %xh\n",   usbDev->vendor);
     printf("product:           %xh\t",   usbDev->product);
@@ -375,7 +375,7 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
 {
     if (d->length)
     {
-      #ifdef _USB2_TRANSFER_DIAGNOSIS_
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
         textColor(IMPORTANT);
         printf("length:               %u\t\t", d->length);
         printf("descriptor type:      %u\n", d->descriptorType);
@@ -384,7 +384,7 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
       #endif
         textColor(IMPORTANT);
         printf("\nNumber of interfaces: %u", d->numInterfaces);
-      #ifdef _USB2_TRANSFER_DIAGNOSIS_
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
         printf("ID of config:         %xh\t", d->configurationValue);
         printf("ID of config name     %xh\n", d->configuration);
         printf("remote wakeup:        %s\t", d->attributes & BIT(5) ? "yes" : "no");
@@ -400,12 +400,12 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
     if (d->length)
     {
         putch('\n');
-      #ifdef _USB2_TRANSFER_DIAGNOSIS_
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
         textColor(LIGHT_GRAY);
         printf("---------------------------------------------------------------------\n");
       #endif
         textColor(IMPORTANT);
-      #ifdef _USB2_TRANSFER_DIAGNOSIS_
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
         printf("length:               %u\t\t", d->length);          // 9
         printf("descriptor type:      %u\n",   d->descriptorType);  // 4
       #endif
@@ -510,7 +510,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
                 break;
         }
 
-      #ifdef _USB2_TRANSFER_DIAGNOSIS_
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
         printf("\nalternate Setting:  %u\n",  d->alternateSetting);
         printf("interface class:      %u\n",  d->interfaceClass);
         printf("interface subclass:   %u\n",  d->interfaceSubclass);
@@ -524,7 +524,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
 
 void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
 {
-  #ifdef _USB2_TRANSFER_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     if (d->length)
     {
         textColor(LIGHT_GRAY);
@@ -555,7 +555,7 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
     {
         textColor(IMPORTANT);
 
-      #ifdef _USB2_TRANSFER_DIAGNOSIS_
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
         printf("\nlength:          %u\t", d->length);         // 12
         printf("\tdescriptor type: %u\n", d->descriptorType); //  3
       #endif
@@ -681,7 +681,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, usb2_De
 {
     if (d->length)
     {
-      #ifdef _USB2_TRANSFER_DIAGNOSIS_
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
         textColor(IMPORTANT);
         printf("\nlength:          %u\t", d->length);
         printf("\tdescriptor type: %u", d->descriptorType);
@@ -695,13 +695,13 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, usb2_De
         {
             if (d->widechar[i])
             {
-              #ifdef _USB2_TRANSFER_DIAGNOSIS_
+              #ifdef _USB_TRANSFER_DIAGNOSIS_
                 putch(d->widechar[i]);
               #endif
                 asciichar[i/2] = d->widechar[i];
             }
         }
-      #ifdef _USB2_TRANSFER_DIAGNOSIS_
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
         printf("\t");
         textColor(TEXT);
       #endif
@@ -710,7 +710,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, usb2_De
         {
             strncpy(device->productName, asciichar, 15);
 
-          #ifdef _USB2_TRANSFER_DIAGNOSIS_
+          #ifdef _USB_TRANSFER_DIAGNOSIS_
             printf(" product name: %s", device->productName);
           #endif
         }
@@ -733,7 +733,7 @@ void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, usb2_De
                     device->serialNumber[index] = asciichar[j+index];
                 }
             }
-          #ifdef _USB2_TRANSFER_DIAGNOSIS_
+          #ifdef _USB_TRANSFER_DIAGNOSIS_
             printf(" serial: %s", device->serialNumber);
           #endif
         }

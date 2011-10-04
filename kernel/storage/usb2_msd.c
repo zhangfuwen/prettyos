@@ -3,15 +3,12 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
+#include "usb_hc.h"
 #include "usb2_msd.h"
 #include "paging.h"
 #include "kheap.h"
 #include "video/console.h"
 #include "util.h"
-#include "ehci.h"
-
-
-extern ehci_t* curEHCI;
 
 
 static const uint32_t CSWMagicNotOK = 0x01010101;
@@ -159,7 +156,7 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
 static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer)
 {
     // CSW Status
-  #ifdef _EHCI_DIAGNOSIS_
+  #ifdef _USB2_DIAGNOSIS_
     putch('\n');
     memshow(MSDStatus,13, false);
     putch('\n');
@@ -313,7 +310,7 @@ IN_TRANSFER:
     usb_issueTransfer(&transfer);
 
 
-  #ifdef _EHCI_DIAGNOSIS_
+  #ifdef _USB2_DIAGNOSIS_
     if (TransferLength) // byte
     {
         putch('\n');
@@ -375,11 +372,8 @@ void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpo
     device->ToggleEndpointInMSD = !device->ToggleEndpointInMSD; // switch toggle
 }
 
-
 static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTransferTestUnitReady, usbBulkTransfer_t* bulkTransferRequestSense)
 {
-    ehci_t* e = curEHCI;
-
     const uint8_t maxTest = 3;
     uint32_t timeout = maxTest;
     uint8_t statusByte;
@@ -394,8 +388,7 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
         usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady, 0, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
         uint8_t statusByteTestReady = BYTE1(*(((uint32_t*)statusBuffer)+3));
-        showUSBSTS(e);
-
+        
         if (timeout != maxTest-1)
         {
             textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(TEXT);
@@ -404,8 +397,7 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
             usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense, dataBuffer, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
             statusByte = BYTE1(*(((uint32_t*)statusBuffer)+3));
-            showUSBSTS(e);
-
+            
             int32_t sense = showResultsRequestSense(dataBuffer);
             if (statusByteTestReady == 0 && (sense == 0 || sense == 6))
             {
@@ -417,7 +409,6 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
 
     return statusByte;
 }
-
 
 static void startLogBulkTransfer(usbBulkTransfer_t* pTransferLog, uint8_t SCSIopcode, uint32_t DataBytesToTransferIN, uint32_t DataBytesToTransferOUT)
 {
@@ -549,8 +540,6 @@ static void logBulkTransfer(usbBulkTransfer_t* bT)
 
 void testMSD(usb2_Device_t* device)
 {
-    ehci_t* e = curEHCI;
-
     // maxLUN (0 for USB-sticks)
     device->maxLUN  = 0;
 
@@ -572,7 +561,6 @@ void testMSD(usb2_Device_t* device)
                    &inquiry, inquiryBuffer, 0);
 
     analyzeInquiry(inquiryBuffer);
-    showUSBSTS(e);
     logBulkTransfer(&inquiry);
 
     ///////// send SCSI command "test unit ready(6)"
@@ -607,7 +595,6 @@ void testMSD(usb2_Device_t* device)
     printf("\nCapacity: %u MiB, Last LBA: %u, block size: %u\n", capacityMiB, lastLBA, blocksize);
     textColor(TEXT);
 
-    showUSBSTS(e);
     logBulkTransfer(&readCapacity);
 
     analyzeDisk(device->disk);
@@ -621,10 +608,8 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* dev)
     textColor(TEXT);
   #endif
 
-    ehci_t* e = curEHCI;
     usb2_Device_t* device = dev;
-
-    uint32_t          blocks  = 1; // number of blocks to be read
+    uint32_t blocks = 1; // number of blocks to be read
     usbBulkTransfer_t read;
 
     startLogBulkTransfer(&read, 0x28, blocks, 0);
@@ -638,7 +623,6 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* dev)
                    read.DataBytesToTransferIN,
                    &read, buffer, 0);
 
-    showUSBSTS(e);
     logBulkTransfer(&read);
 
     return(CE_GOOD);
@@ -652,7 +636,6 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* dev)
     textColor(TEXT);
   #endif
 
-    ehci_t* e = curEHCI;
     usb2_Device_t* device = dev;
 
     uint32_t          blocks  = 1; // number of blocks to be written
@@ -669,7 +652,6 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* dev)
                       write.DataBytesToTransferOUT,
                       &write, buffer, 0);
 
-    showUSBSTS(e);
     logBulkTransfer(&write);
 
     return(CE_GOOD);
