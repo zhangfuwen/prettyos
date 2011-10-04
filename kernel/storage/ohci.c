@@ -636,7 +636,7 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     disk->port = &o->ports[portNumber]->port;
 
     o->ports[portNumber]->num = 0; // device number has to be set to 0
-    //o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
+    o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
 
     waitForKeyStroke();
 
@@ -804,11 +804,13 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     /*  A transfer is completed when the Host Controller successfully transfers, to or from an endpoint, the byte pointed to by BufferEnd. 
         Upon successful completion, the Host Controller sets CurrentBufferPointer to zero, sets ConditionCode to NOERROR, 
         and retires the General TD to the Done Queue.
-    */    
+    */     
     
+    usb_outTransaction(transfer, 1, 0, 0); // dummy at the end of the TD chain (for different headPtr and tailPtr in the ED)
+
     ohci_t* o = ((ohci_port_t*)transfer->HC->data)->ohci;
     ohci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
-
+    
   #ifdef _OHCI_DIAGNOSIS_  
     printf("\nohci_createQH: devNum = %u endp = %u packetsize = %u", ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
   #endif
@@ -864,13 +866,13 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
             qTD[tdNumber] = (uintptr_t)transaction->qTD;
             tdNumber++; 
             
-            delay(5000); // wait time after transaction
+            delay(50000); // wait time after transaction
         }        
         
         delay(100000); // wait time after transfer
 
         // check conditions
-        for (uint8_t c=0; c< 3; c++)
+        for (uint8_t c=0; c<(tdNumber-1); c++)
         {
             ohci_showStatusbyteQTD((ohciTD_t*)qTD[c]);
             cond[c] = (((ohciTD_t*)qTD[c])->cond);
