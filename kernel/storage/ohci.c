@@ -636,13 +636,14 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     disk->port = &o->ports[portNumber]->port;
 
     o->ports[portNumber]->num = 0; // device number has to be set to 0
-    
+    //o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
+
+    waitForKeyStroke();
+
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
     
     waitForKeyStroke();
-
-    //o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
     
     usbTransferConfig(device);
     
@@ -836,38 +837,46 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
   #ifdef _OHCI_DIAGNOSIS_
     textColor(MAGENTA);
     printf("\nHcCommandStatus: %X", o->OpRegs->HcCommandStatus);
-    textColor(TEXT);
-    
+    textColor(TEXT);    
   #endif
 
     for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
     {
+        printf("\ntransfer try = %u\n", i);
+        uintptr_t qTD[3]; 
+        uint8_t cond[3];
+        cond[0]=cond[1]=cond[2]=0;
+        uint8_t tdNumber = 0;
         transfer->success = true;
+
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {   
-            printf("\ntry = %u", i);
+            printf("\nTD %u: ", tdNumber);
             ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-            o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
-            
-          #ifdef _OHCI_DIAGNOSIS_
-            textColor(IMPORTANT); printf("\nactivate control transfers"); textColor(TEXT);
-          #endif  
-
+            o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF /*| OHCI_STATUS_BLF*/); // control and bulk lists filled
             o->pED[i]->tdQueueHead &= ~0x1; // reset Halted Bit
-
-            /*
-            printf("\nHcFrameInterval: %u", o->OpRegs->HcFmInterval & 0x3FFF);
-            printf("  HcPeriodicStart: %u", o->OpRegs->HcPeriodicStart);
-            printf("  FSMPS: %u bits", (o->OpRegs->HcFmInterval >> 16) & 0x7FFF);
-            */
+        
+            while((o->OpRegs->HcFmRemaining & 0x3FFF) < 16000) { /* wait */ }            
+                    
+            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE /*| OHCI_CTRL_BLE*/); // activate control transfers ////////////////////// S T A R T /////////////////           
+            printf(" remaining time: %u  frame number: %u", o->OpRegs->HcFmRemaining & 0x3FFF, o->OpRegs->HcFmNumber);
             
-            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////           
-                        
-            delay(250000); // sleepMilliSeconds(...) --> freeze!
-                        
-            ohci_showStatusbyteQTD(transaction->qTD);
-            transfer->success = transfer->success && (transaction->qTD->cond == 0); // status (TD: condition)      
+            qTD[tdNumber] = (uintptr_t)transaction->qTD;
+            tdNumber++; 
+            
+            delay(5000); // wait time after transaction
+        }        
+        
+        delay(100000); // wait time after transfer
+
+        // check conditions
+        for (uint8_t c=0; c< 3; c++)
+        {
+            ohci_showStatusbyteQTD((ohciTD_t*)qTD[c]);
+            cond[c] = (((ohciTD_t*)qTD[c])->cond);
         }
+        transfer->success = transfer->success && (cond[0] == 0) && (cond[1] == 0) && (cond[2] == 0); // status (TD: condition)      
+
       #ifdef _OHCI_DIAGNOSIS_
         if (!transfer->success)
         {
