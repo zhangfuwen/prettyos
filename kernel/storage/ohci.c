@@ -735,6 +735,11 @@ void ohci_setupTransfer(usb_transfer_t* transfer)
     o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_BLE); // de-activate control and bulk transfers
     o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_CLF; // control list not filled
     o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_BLF; // bulk list not filled
+    
+    if ((o->indexED >= NUM_ED-2) || (o->indexTD >= NUM_TD-2))
+    {
+        ohci_resetMempool(o, USB_BULK);
+    }   
 
     transfer->data = o->pED[o->indexED]; // endpoint descriptor
 }
@@ -991,9 +996,9 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
 {
     ohciTD_t* oTD = o->pTD[o->indexTD];
 
-  #ifdef _OHCI_DIAGNOSIS_
+  //#ifdef _OHCI_DIAGNOSIS_
     printf("\nohci_createQTD_IO: ED = %u  TD = %u toggle: %u", o->indexED, o->indexTD, oTD->toggle);
-  #endif
+  //#endif
 
     if (next != 0x1)
     {
