@@ -354,8 +354,9 @@ void ohci_resetHC(ohci_t* o)
     printf("\n\nFound %u Rootports. Power wait: %u ms\n", o->rootPorts, o->powerWait);
     textColor(TEXT);
 
-    for (uint8_t j = 0; j < o->rootPorts; j++)
+    for (uint8_t j = 0; j < min(o->rootPorts,OHCIPORTMAX); j++)
     {
+        o->connected[j] = false;
         o->ports[j] = malloc(sizeof(ohci_port_t), 0, "ohci_port_t");
         o->ports[j]->num = j+1;
         o->ports[j]->ohci = o;
@@ -379,12 +380,21 @@ void ohci_resetHC(ohci_t* o)
 
 void ohci_portCheck(ohci_t* o)
 {
-    for (uint8_t j=0; j<o->rootPorts; j++)
+    for (uint8_t j = 0; j < min(o->rootPorts,OHCIPORTMAX); j++)
     {
+        console_setProperties(CONSOLE_SHOWINFOBAR|CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH); // protect console against info area
+
         if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS) // connected
         {
-             console_setProperties(CONSOLE_SHOWINFOBAR|CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH); // protect console against info area
+             
              ohci_showPortstatus(o,j);
+        }
+        else
+        {
+            if (o->connected[j] == true)
+            {
+                ohci_showPortstatus(o,j);
+            }
         }
     }
 }
@@ -410,6 +420,7 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
         {
             textColor(SUCCESS);
             printf(" dev. attached  -");
+            o->connected[j] = true;
             ohci_resetPort(o, j);           ///// <--- reset on attached /////
         }
         else
@@ -421,7 +432,7 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
                 usb2_destroyDevice(o->ports[j]->port.insertedDisk->data);
                 removeDisk(o->ports[j]->port.insertedDisk);
                 o->ports[j]->port.insertedDisk = 0;
-
+                o->connected[j] = false;
                 showPortList();
                 showDiskList();
                 beep(1000, 100);
@@ -719,7 +730,6 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
         textColor(TEXT);
       #endif
 
-        printf("\n\nTODO: implement bulk transfers");
         ohci_resetMempool(o, USB_BULK);
         testMSD(device); // test with some SCSI commands
     }
@@ -765,7 +775,10 @@ void ohci_setupTransfer(usb_transfer_t* transfer)
 
     // endpoint descriptor
     transfer->data = o->pED[o->indexED]; 
+  
+  #ifdef _OHCI_DIAGNOSIS_
     printf("\nsetupTransfer: indexED: %u", o->indexED);
+  #endif
 }
 
 void ohci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
@@ -881,7 +894,10 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
 
     for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
     {
+      #ifdef _OHCI_DIAGNOSIS_
         printf("\ntransfer try = %u\n", i);
+      #endif
+
         uintptr_t qTD[3];
         uint8_t cond[3];
         cond[0]=cond[1]=cond[2]=0;
@@ -890,7 +906,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
 
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
-            printf("\nTD %u: ", tdNumber);
+            // printf("\nTD %u: ", tdNumber);
             ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
             o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
             o->pED[i]->tdQueueHead &= ~0x1; // reset Halted Bit
@@ -1023,9 +1039,9 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
 {
     ohciTD_t* oTD = o->pTD[o->indexTD];
 
-  //#ifdef _OHCI_DIAGNOSIS_
+  #ifdef _OHCI_DIAGNOSIS_
     printf("\nohci_createQTD_IO: ED = %u  TD = %u toggle: %u", o->indexED, o->indexTD, oTD->toggle);
-  //#endif
+  #endif
 
     if (next != 0x1)
     {
@@ -1065,7 +1081,7 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
 
 void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-    //head->nextED  = horizPtr;// ==> freeze
+    // head->nextED  = horizPtr;// ==> freeze
   #ifdef _OHCI_DIAGNOSIS_
     printf("\nnext ED: %X", head->nextED);
   #endif
