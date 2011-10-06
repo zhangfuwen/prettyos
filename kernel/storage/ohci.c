@@ -10,8 +10,10 @@
 #include "task.h"
 #include "irq.h"
 #include "keyboard.h"
+#include "audio/sys_speaker.h"
 #include "usb2.h"
 #include "usb2_msd.h"
+
 
 #define OHCI_USB_TRANSFER
 #define NUMBER_OF_RETRIES  1
@@ -387,8 +389,6 @@ void ohci_portCheck(ohci_t* o)
     }
 }
 
-
-
 void ohci_showPortstatus(ohci_t* o, uint8_t j)
 {
     if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CSC)
@@ -415,6 +415,18 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
         else
         {
             printf(" device removed -");
+
+            if(o->ports[j]->port.insertedDisk && o->ports[j]->port.insertedDisk->type == &USB_MSD)
+            {
+                usb2_destroyDevice(o->ports[j]->port.insertedDisk->data);
+                removeDisk(o->ports[j]->port.insertedDisk);
+                o->ports[j]->port.insertedDisk = 0;
+
+                showPortList();
+                showDiskList();
+                beep(1000, 100);
+                beep(800, 80);
+            }
         }
 
         if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PES)
@@ -548,7 +560,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
-    volatile uint32_t val = o->OpRegs->HcInterruptStatus;
+    volatile uint32_t val = o->OpRegs->HcInterruptStatus; 
 
     if(val==0)
     {
@@ -556,20 +568,6 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         printf("Interrupt came from another OHCI device!\n");
       #endif
         return;
-    }
-
-    o->OpRegs->HcInterruptStatus = val; // reset interrupts
-    uint32_t handledInterrupts = 0;
-
-    if (!((val & OHCI_INT_SF) || (val & OHCI_INT_RHSC)))
-    {
-        printf("\nUSB OHCI %u: ", o->num);
-    }
-
-    if (val & OHCI_INT_SO) // scheduling overrun
-    {
-        printf("Scheduling overrun.");
-        handledInterrupts |= OHCI_INT_SO;
     }
 
     if (val & OHCI_INT_WDH) // write back done head
@@ -581,6 +579,9 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         {
             if ( (o->hcca->doneHead & ~0xF) == o->pTDphys[i])
             {
+                // TODO: save o->pTDphys[i] // ??
+                //
+
                 textColor(SUCCESS);
                 printf("\nDONEHEAD.");
                 textColor(TEXT);
@@ -589,6 +590,18 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         }
     }
 
+    o->OpRegs->HcInterruptStatus = val; // reset interrupts
+    
+    if (!((val & OHCI_INT_SF) || (val & OHCI_INT_RHSC)))
+    {
+        printf("\nUSB OHCI %u: ", o->num);
+    }
+
+    if (val & OHCI_INT_SO) // scheduling overrun
+    {
+        printf("Scheduling overrun.");    
+    }
+    
     if (val & OHCI_INT_SF) // start of frame
     {
         // ???
@@ -736,12 +749,23 @@ void ohci_setupTransfer(usb_transfer_t* transfer)
     o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_CLF; // control list not filled
     o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_BLF; // bulk list not filled
     
-    if ((o->indexED >= NUM_ED-2) || (o->indexTD >= NUM_TD-2))
+    // recycle bulk ED/TDs    
+    if ((o->indexED >= NUM_ED-2) || 
+        (o->indexTD >= NUM_TD-2))
     {
         ohci_resetMempool(o, USB_BULK);
     }   
 
-    transfer->data = o->pED[o->indexED]; // endpoint descriptor
+    // recycle control ED/TDs
+    if ((o->indexED == NUM_ED_BULK-2) || (o->indexED == NUM_ED_BULK-1) || 
+        (o->indexTD == NUM_TD_BULK-2) || (o->indexTD == NUM_TD_BULK-1))
+    {
+        ohci_resetMempool(o, USB_CONTROL);
+    }   
+
+    // endpoint descriptor
+    transfer->data = o->pED[o->indexED]; 
+    printf("\nsetupTransfer: indexED: %u", o->indexED);
 }
 
 void ohci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
@@ -871,10 +895,13 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
             o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
             o->pED[i]->tdQueueHead &= ~0x1; // reset Halted Bit
 
-            while((o->OpRegs->HcFmRemaining & 0x3FFF) < 16000) { /* wait */ }
+            while((o->OpRegs->HcFmRemaining & 0x3FFF) < 16000) { /* wait for nearly full frame time */ }
 
             o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////
+            
+          #ifdef _OHCI_DIAGNOSIS_
             printf(" remaining time: %u  frame number: %u", o->OpRegs->HcFmRemaining & 0x3FFF, o->OpRegs->HcFmNumber);
+          #endif
 
             qTD[tdNumber] = (uintptr_t)transaction->qTD;
             tdNumber++;
@@ -882,7 +909,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
             delay(50000); // wait time after transaction
         }
 
-        delay(100000); // wait time after transfer
+        delay(50000); // wait time after transfer
 
         // check conditions
         for (uint8_t c=0; c<(tdNumber-1); c++)

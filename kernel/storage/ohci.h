@@ -10,13 +10,13 @@
 
 #define OHCIPORTMAX      8  // max number of OHCI device ports
 
-#define NUM_ED         120  // number of EDs in memory pool
+#define NUM_ED          50  // number of EDs in memory pool
 #define NUM_ED_CONTROL   0  // EDs for control transfer
-#define NUM_ED_BULK     30  // EDs for bulk transfer
+#define NUM_ED_BULK     20  // EDs for bulk transfer
 
-#define NUM_TD         240  // number of TDs in memory pool
+#define NUM_TD         100  // number of TDs in memory pool
 #define NUM_TD_CONTROL   0  // TDs for control transfer
-#define NUM_TD_BULK     60  // TDs for bulk transfer
+#define NUM_TD_BULK     40  // TDs for bulk transfer
 
 #define OHCI_HCCA_ALIGN          PAGESIZE
 #define OHCI_DESCRIPTORS_ALIGN   0x0010
