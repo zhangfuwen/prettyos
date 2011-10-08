@@ -55,7 +55,7 @@ int main()
                 if (*key == KEY_ESC)
                 {
                     udp_unbind(8085);
-                    return(0);
+                    return (0);
                 }
                 break;
             }
@@ -66,7 +66,7 @@ int main()
     }
 
     udp_unbind(8085);
-    return(0);
+    return (0);
 }
 
 

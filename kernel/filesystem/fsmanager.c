@@ -24,7 +24,7 @@ static uint64_t getFSType(FS_t type) // BIT 0-31: subtype, BIT 32-63: fileSystem
         case FS_INITRD:
             return(((uint64_t)(uintptr_t)&INITRD << 32) | type);
     }
-    return(0);
+    return (0);
 }
 
 // Partition functions
@@ -77,7 +77,7 @@ file_t* fopen(const char* path, const char* mode)
     if (!file->volume)
     {
         free(file);
-        return(0);
+        return (0);
     }
 
     file->seek   = 0;
@@ -127,7 +127,7 @@ file_t* fopen(const char* path, const char* mode)
         textColor(TEXT);
         free(file->name);
         free(file);
-        return(0);
+        return (0);
     }
 
     if (appendMode)
@@ -282,7 +282,7 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
     if (folder->volume == 0)
     {   // cleanup
         free(folder);
-        return(0);
+        return (0);
     }
     folder->files     = list_create();
     folder->subfolder = list_create();
@@ -296,7 +296,7 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
         list_free(folder->subfolder);
         free(folder->name);
         free(folder);
-        return(0);
+        return (0);
     }
 
     return(folder);

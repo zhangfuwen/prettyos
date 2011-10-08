@@ -103,7 +103,7 @@ int puts(const char* str)
     {
         putchar(str[i]);
     }
-    return(0);
+    return (0);
 }
 
 int vprintf(const char* format, va_list arg)

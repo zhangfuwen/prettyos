@@ -32,13 +32,15 @@ bool fpu_install()
     cr0 |= BIT(3); // Set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // Write cr0
 
-    return(true);
+    return (true);
 }
 
 void fpu_test()
 {
     if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
+    {
         return;
+    }
 
     textColor(LIGHT_GRAY);
     printf("   => FPU test: ");
@@ -48,6 +50,7 @@ void fpu_test()
     squareroot /= sqrt(2.0);
 
     putch('[');
+
     if (squareroot == 1.00)
     {
         textColor(SUCCESS);
@@ -58,6 +61,7 @@ void fpu_test()
         textColor(ERROR);
         printf("FAILED");
     }
+
     textColor(LIGHT_GRAY);
     printf("]\n");
     textColor(TEXT);

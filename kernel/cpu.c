@@ -11,10 +11,11 @@
 
 static bool cpuid_available = true;
 
-char cpu_vendor[13];
 
 void cpu_analyze()
 {
+    char cpu_vendor[13];
+
     textColor(LIGHT_GRAY);
     printf("   => CPU:\n");
     textColor(TEXT);
@@ -31,6 +32,7 @@ void cpu_analyze()
     register uint32_t eax __asm__("%eax");
     register uint32_t ecx __asm__("%ecx");
     cpuid_available = (eax==ecx);
+    
     if (!cpuid_available)
     {
         textColor(ERROR);
@@ -44,24 +46,29 @@ void cpu_analyze()
     ((uint32_t*)cpu_vendor)[1] = cpu_idGetRegister(0, CR_EDX);
     ((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
     cpu_vendor[12] = 0;
-    textColor(LIGHT_GRAY);
-    printf("     => VendorID: ");
-    textColor(TEXT);
-    printf("%s\n\n", cpu_vendor);
+    
+    textColor(LIGHT_GRAY); printf("     => VendorID: ");
+    textColor(TEXT);       printf("%s\n\n", cpu_vendor);
 }
 
 bool cpu_supports(CPU_FEATURE feature)
 {
-    if (feature == CF_CPUID) return(cpuid_available);
-    if (!cpuid_available) return(false);
-
-    CPU_REGISTER r = feature&~31;
-    return(cpu_idGetRegister(0x00000001, r) & (BIT(feature-r)));
+    if (feature == CF_CPUID)
+    {
+        return(cpuid_available);
+    }
+    if (!cpuid_available) 
+    {
+           return(false);    
+    }
+           
+    CPU_REGISTER r = feature &~ 31;
+    return ( cpu_idGetRegister(0x00000001, r) & (BIT(feature-r)) );
 }
 
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
 {
-    if (!cpuid_available) return(0);
+    if (!cpuid_available) return (0);
 
     __asm__ ("movl %0, %%eax" : : "r"(function) : "%eax");
     __asm__ ("cpuid");
@@ -88,7 +95,7 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
             return(temp);
         }
         default:
-            return(0);
+            return (0);
     }
 }
 

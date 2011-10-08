@@ -225,7 +225,7 @@ const char* getFilename(const char* path)
             path++;
             if (*path == 0)
             {
-                return(0);
+                return (0);
             }
         }
         path++;
@@ -268,7 +268,7 @@ partition_t* getPartition(const char* path)
         }
         if (!isalnum(path[i]))
         {
-            return(0);
+            return (0);
         }
     }
 
@@ -290,7 +290,7 @@ partition_t* getPartition(const char* path)
             return(disks[DiskID-1]->partition[PartitionID]);
         }
     }
-    return(0);
+    return (0);
 }
 
 FS_ERROR analyzeDisk(disk_t* disk)

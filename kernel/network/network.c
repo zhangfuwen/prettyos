@@ -148,7 +148,7 @@ void network_displayArpTables()
 
 network_adapter_t* network_getAdapter(IP_t IP)
 {
-    if (adapters == 0) return(0);
+    if (adapters == 0) return (0);
     for (dlelement_t* e = adapters->head; e != 0; e = e->next)
     {
         network_adapter_t* adapter = e->data;
@@ -157,13 +157,13 @@ network_adapter_t* network_getAdapter(IP_t IP)
             return(adapter);
         }
     }
-    return(0);
+    return (0);
 }
 
 network_adapter_t* network_getFirstAdapter()
 {
     if (adapters == 0)
-        return(0);
+        return (0);
     return(adapters->head->data);
 }
 

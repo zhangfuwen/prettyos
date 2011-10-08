@@ -69,7 +69,7 @@ static void     tcp_RemoveAckedPacketsFromOutBuffer(tcpConnection_t* connection,
 static tcpConnection_t* tcp_findConnectionID(uint32_t ID)
 {
     if (tcpConnections == 0)
-        return(0);
+        return (0);
 
     for (dlelement_t* e = tcpConnections->head; e != 0; e = e->next)
     {
@@ -80,13 +80,13 @@ static tcpConnection_t* tcp_findConnectionID(uint32_t ID)
         }
     }
 
-    return(0);
+    return (0);
 }
 
 tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state)
 {
     if (tcpConnections == 0)
-        return(0);
+        return (0);
 
     for (dlelement_t* e = tcpConnections->head; e != 0; e = e->next)
     {
@@ -110,7 +110,7 @@ tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* a
                 break;
         }
     }
-    return(0);
+    return (0);
 }
 
 tcpConnection_t* tcp_createConnection()

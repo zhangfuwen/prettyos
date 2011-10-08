@@ -119,7 +119,7 @@ static void* placementMalloc(uint32_t size, uint32_t alignment)
     size = alignUp(size, 4);
 
     if ((uintptr_t)nextPlacement+size > (uintptr_t)PLACEMENT_END)
-        return(0);
+        return (0);
 
     mutex_lock(mutex);
     // Do simple placement allocation

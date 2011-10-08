@@ -254,7 +254,7 @@ int main()
     DrawMenuSlideOut();
 
     console_setProperties(CONSOLE_AUTOREFRESH|CONSOLE_AUTOSCROLL|CONSOLE_FULLSCREEN);
-    return(0);
+    return (0);
 }
 
 // Play Game

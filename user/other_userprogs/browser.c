@@ -77,7 +77,7 @@ int main()
                 {
                     case KEY_ESC:
                         tcp_close(connection);
-                        return(0);
+                        return (0);
                     case KEY_F5:
                         printf("Reload...\n");
                         tcp_close(connection);
@@ -113,7 +113,7 @@ int main()
     }
 
     tcp_close(connection);
-    return(0);
+    return (0);
 }
 
 

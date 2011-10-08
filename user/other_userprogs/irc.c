@@ -75,7 +75,7 @@ int main()
                         char* msgQuit = "QUIT\r\n";
                         tcp_send(connection, msgQuit, strlen(msgQuit));
                         tcp_close(connection);
-                        return(0);
+                        return (0);
                     }
                     case KEY_J:
                     {
@@ -131,7 +131,7 @@ int main()
     }
 
     tcp_close(connection);
-    return(0);
+    return (0);
 }
 
 

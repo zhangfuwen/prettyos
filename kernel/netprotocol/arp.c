@@ -65,7 +65,7 @@ arpTableEntry_t* arp_findEntry(arpTable_t* cache, IP_t IP)
             return(entry);
         }
     }
-    return(0);
+    return (0);
 }
 
 void arp_showTable(arpTable_t* cache)

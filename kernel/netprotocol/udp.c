@@ -39,7 +39,7 @@ static udp_port_t* findConnection(uint16_t port)
                 return(connection);
         }
     }
-    return(0);
+    return (0);
 }
 
 bool udp_bind(uint16_t port)

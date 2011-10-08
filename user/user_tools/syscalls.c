@@ -14,7 +14,7 @@ FS_ERROR execute(const char* path, size_t argc, char* argv[])
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(0), "b"(path), "c"(argc), "d"(argv));
-    return ret;
+   return (ret);
 }
 
 // TODO: (2) createThread
@@ -28,7 +28,7 @@ bool wait(BLOCKERTYPE reason, void* data, uint32_t timeout)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(3), "b"(reason), "c"(data), "d"(timeout/10)); // HACK. Unbound it from system frequency. cf. scheduler.c
-    return ret;
+   return (ret);
 }
 
 // TODO: (4) createConsoleThread
@@ -37,7 +37,7 @@ uint32_t getMyPID()
 {
     uint32_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(6));
-    return ret;
+   return (ret);
 }
 
 void* userheapAlloc(size_t increase)
@@ -53,49 +53,49 @@ file_t* fopen(const char* path, const char* mode)
 {
     file_t* ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(15), "b"(path), "c"(mode));
-    return ret;
+   return (ret);
 }
 
 char fgetc(file_t* file)
 {
     char ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(16), "b"(file));
-    return ret;
+   return (ret);
 }
 
 int fputc(char value, file_t* file)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(17), "b"(value), "c"(file));
-    return ret;
+   return (ret);
 }
 
 int fseek(file_t* file, size_t offset, SEEK_ORIGIN origin)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(18), "b"(file), "c"(offset), "d"(origin));
-    return ret;
+   return (ret);
 }
 
 int fflush(file_t* file)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(19), "b"(file));
-    return ret;
+   return (ret);
 }
 
 int fclose(file_t* file)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(21), "b"(file));
-    return ret;
+   return (ret);
 }
 
 FS_ERROR partition_format(const char* path, FS_t type, const char* name)
 {
     FS_ERROR ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(22), "b"(path), "c"(type), "d"(name));
-    return ret;
+   return (ret);
 }
 
 // TODO (25-32) ipc
@@ -104,7 +104,7 @@ bool waitForEvent(uint32_t timeout)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(37), "b"(timeout));
-    return ret;
+   return (ret);
 }
 
 void event_enable(bool b)
@@ -120,14 +120,14 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 {
     EVENT_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(39), "b"(destination), "c"(maxLength), "d"(filter));
-    return ret;
+   return (ret);
 }
 
 uint32_t getCurrentMilliseconds()
 {
     uint32_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(40));
-    return ret;
+   return (ret);
 }
 
 void systemControl(SYSTEM_CONTROL todo)
@@ -140,7 +140,7 @@ void systemControl(SYSTEM_CONTROL todo)
 int putchar(char val)
 {
     __asm__ volatile("int $0x7F" : : "a"(55), "b"(val));
-    return(0); // HACK
+    return (0); // HACK
 }
 
 void textColor(uint8_t color)
@@ -182,21 +182,21 @@ uint16_t TextGUI_ShowMSG(char* title, char* message)
 {
    uint16_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(68), "b"(title), "c"(message));
-    return ret;
+   return (ret);
 }
 
 uint16_t TextGUI_AskYN(char* title, char* message, uint8_t defaultselected)
 {
    uint16_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(69), "b"(title), "c"(message), "d"(defaultselected));
-    return ret;
+   return (ret);
 }
 
 bool keyPressed(KEY_t key)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(71), "b"(key));
-    return ret;
+   return (ret);
 }
 
 // TODO (72-74) mouse
@@ -220,49 +220,49 @@ uint32_t tcp_connect(IP_t IP, uint16_t port)
 {
     uint32_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(85), "b"(IP), "c"(port));
-    return ret;
+   return (ret);
 }
 
 bool tcp_send(uint32_t ID, void* data, size_t length)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(86), "b"(ID), "c"(data), "d"(length));
-    return ret;
+   return (ret);
 }
 
 bool tcp_close(uint32_t ID)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(87), "b"(ID));
-    return ret;
+   return (ret);
 }
 
 bool udp_send(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16_t destPort)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(88), "b"(data), "c"(length), "d"(destIP), "S"(srcPort), "D"(destPort));
-    return ret;
+   return (ret);
 }
 
 bool udp_bind(uint16_t port)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(89), "b"(port));
-    return ret;
+   return (ret);
 }
 
 bool udp_unbind(uint16_t port)
 {
     bool ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(90), "b"(port));
-    return ret;
+   return (ret);
 }
 
 uint32_t getMyIP()
 {
     uint32_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret) : "a"(91));
-    return ret;
+   return (ret);
 }
 
 
@@ -271,7 +271,7 @@ int32_t floppy_dir()
 {
     int32_t ret;
     __asm__ volatile("int $0x7F" : "=a"(ret): "a"(100));
-    return ret;
+   return (ret);
 }
 
 void printLine(const char* message, uint32_t line, uint8_t attribute)

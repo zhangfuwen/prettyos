@@ -64,7 +64,7 @@ int main()
         showInfo(1);
     }
     for(;;);
-    return(0);
+    return (0);
 }
 
 /*

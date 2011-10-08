@@ -474,7 +474,7 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
     } while (!IS_BIT_SET(st0, 5));
 
     drive->accessRemaining--;
-    return(0);
+    return (0);
 }
 
 // seek to given track/cylinder
@@ -516,7 +516,7 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
     } while (!IS_BIT_SET(st0, 5));
 
     CurrentDrive->accessRemaining--;
-    return(0);
+    return (0);
 }
 
 
@@ -566,7 +566,7 @@ static int32_t flpydsk_transferSector(uint8_t head, uint8_t track, uint8_t secto
 
     if (val == 2) // value 2 means 512 Byte
     {
-        return(0);
+        return (0);
     }
     return(-1);
 }

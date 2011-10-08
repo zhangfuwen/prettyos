@@ -138,7 +138,7 @@ uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t dwords)
 
 int32_t memcmp(const void* s1, const void* s2, size_t n)
 {
-    if (n == 0) return(0);
+    if (n == 0) return (0);
 
     const uint8_t* v1 = s1;
     const uint8_t* v2 = s2;
@@ -297,7 +297,7 @@ int32_t strcmp(const char* s1, const char* s2)
 
 int32_t strncmp(const char* s1, const char* s2, size_t n)
 {
-    if (n == 0) return(0);
+    if (n == 0) return (0);
 
     for (; *s1 && n > 1 && *s1 == *s2; n--)
     {
@@ -371,7 +371,7 @@ char* strpbrk(const char* str, const char* delim)
             if(*str == delim[i])
                 return((char*)str);
 
-    return(0);
+    return (0);
 }
 
 /**********************************************************************/

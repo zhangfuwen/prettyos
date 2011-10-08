@@ -967,7 +967,7 @@ static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
     while (c)
     {
         if ((value = fatRead(volume, c)) == ClusterFailValue)
-            return(0);
+            return (0);
 
         if (value == CLUSTER_EMPTY)
             return(c);
@@ -978,7 +978,7 @@ static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
             c = 2;
 
         if (c == curcls)
-            return(0);
+            return (0);
     }
 
     return(c);

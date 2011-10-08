@@ -155,7 +155,7 @@ int main()
 
     printf("   Press ESC to quit.");
     while (!keyPressed(KEY_ESC));
-    return(0);
+    return (0);
 }
 
 

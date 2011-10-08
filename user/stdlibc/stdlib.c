@@ -83,7 +83,7 @@ void* malloc(size_t size)
 
     void* ret = cur;
     cur += size;
-    return ret;
+   return (ret);
 }
 
 void* calloc(size_t num, size_t size)
@@ -102,7 +102,7 @@ void free(void* ptr)
 
 char* getenv(const char* name)
 {
-    return(0); // We do not support any environment variables at the moment
+    return (0); // We do not support any environment variables at the moment
 }
 
 int system(const char* command); /// TODO

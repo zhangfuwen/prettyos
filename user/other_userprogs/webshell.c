@@ -461,7 +461,7 @@ int main()
                 if (*key == KEY_ESC)
                 {
                     tcp_close(connection);
-                    return(0);
+                    return (0);
                 }
                 break;
             }
@@ -472,7 +472,7 @@ int main()
     }
 
     tcp_close(connection);
-    return(0);
+    return (0);
 }
 
 /*

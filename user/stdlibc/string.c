@@ -11,12 +11,12 @@ void* memchr(void* ptr, char value, size_t num)
             return str;
         }
     }
-    return(0);
+    return (0);
 }
 
 int memcmp(const void* ptr1, const void* ptr2, size_t num)
 {
-    if (num == 0) return(0);
+    if (num == 0) return (0);
 
     const uint8_t* s1 = ptr1;
     const uint8_t* s2 = ptr2;
@@ -110,7 +110,7 @@ int strcmp(const char* s1, const char* s2)
 
 int strncmp(const char* s1, const char* s2, size_t n)
 {
-    if (n == 0) return(0);
+    if (n == 0) return (0);
 
     for (; *s1 && n > 1 && *s1 == *s2; n--)
     {
@@ -193,7 +193,7 @@ char* strpbrk(const char* str, const char* delim)
             if(*str == delim[i])
                 return((char*)str);
 
-    return(0);
+    return (0);
 }
 
 size_t strspn(const char* str1, const char* str2); /// TODO

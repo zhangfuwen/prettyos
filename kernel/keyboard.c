@@ -162,7 +162,7 @@ static char keyToASCII(KEY_t key)
         if (retchar == 'm')
         {
             console_display(KERNELCONSOLE_ID);
-            return(0);
+            return (0);
         }
         if (ctoi(retchar) != -1)
         {
@@ -186,7 +186,7 @@ static char keyToASCII(KEY_t key)
                 else
                     e = e->next;
             }
-            return(0);
+            return (0);
         }
     }
 

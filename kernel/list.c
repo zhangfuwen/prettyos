@@ -39,7 +39,7 @@ dlelement_t* list_append(list_t* list, void* data)
         list->tail = newElement;
         return(newElement);
     }
-    return(0);
+    return (0);
 }
 
 dlelement_t* list_insert(list_t* list, dlelement_t* next, void* data)
@@ -72,7 +72,7 @@ dlelement_t* list_insert(list_t* list, dlelement_t* next, void* data)
         return newElement;
     }
 
-    return(0);
+    return (0);
 }
 
 dlelement_t* list_delete(list_t* list, dlelement_t* elem)

@@ -61,8 +61,8 @@ typedef struct
 enum MACHINE_TYPE
 {
     MT_UNKNOWN = 0,
-    MT_AMD64  = 0x8664,
-    MT_I386   = 0x14C
+    MT_AMD64   = 0x8664,
+    MT_I386    = 0x14C
 };
 
 enum PE_TYPE
@@ -75,7 +75,7 @@ enum PE_TYPE
 
 bool pe_filename(const char* filename)
 {
-    return(strcmp(filename+strlen(filename)-4, ".exe") == 0);
+    return (strcmp(filename+strlen(filename)-4, ".exe") == 0);
 }
 
 bool pe_header(file_t* file)
@@ -95,12 +95,12 @@ bool pe_header(file_t* file)
     valid = valid && PE_sig[2]    == 0;
     valid = valid && PE_sig[3]    == 0;
 
-    return(valid);
+    return (valid);
 }
 
 void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
 {
-    const pe_msdosStub_t* MSDOS_stub = file;
+    const pe_msdosStub_t* MSDOS_stub  = file;
     const pe_coffHeader_t* coffHeader = file + MSDOS_stub->offset + 4; // Seek to COFF header
 
     switch (coffHeader->machine)
@@ -109,24 +109,24 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
             break;
         case MT_AMD64:
             printf("x64. File will not be executed.");
-            return(0);
+            return (0);
         case MT_UNKNOWN: default:
             printf("Unknown. File will not be executed.");
-            return(0);
+            return (0);
     }
     if (!(coffHeader->characteristics & 0x0002))
     {
         textColor(ERROR);
         printf("\nInvalid PE executable.");
         textColor(TEXT);
-        return(0);
+        return (0);
     }
     if (!(coffHeader->characteristics & 0x0100))
     {
         textColor(ERROR);
         printf("\nNo 32-bit PE executable.");
         textColor(TEXT);
-        return(0);
+        return (0);
     }
 
 
@@ -142,7 +142,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
             textColor(ERROR);
             printf("\nPE32+ file. Cannot be executed");
             textColor(TEXT);
-            return(0);
+            return (0);
     }
 
   #ifdef _DIAGNOSIS_
@@ -165,7 +165,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
         // Allocate code area for the user program
         if (!paging_alloc(pd, (void*)(sectionTable[i].virtAddress + optHeader->imageBase), alignUp(sectionTable[i].virtSize, PAGESIZE), memFlags))
         {
-            return(0);
+            return (0);
         }
 
         // Copy the code, using the user's page directory

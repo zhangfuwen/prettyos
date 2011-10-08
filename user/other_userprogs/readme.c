@@ -16,7 +16,7 @@ int main() {
     puts("Here should be inserted a bit more content ;-)\n");
     puts("You can find us under: http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html\n");
     getchar();
-    return(0);
+    return (0);
 }
 
 /*

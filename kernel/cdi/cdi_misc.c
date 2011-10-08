@@ -16,15 +16,19 @@ void cdi_register_irq(uint8_t irq, void (*handler)(struct cdi_device*), struct c
 int cdi_reset_wait_irq(uint8_t irq)
 {
     irq_resetCounter(irq);
-    return(0);
+    return (0);
 }
 
 int cdi_wait_irq(uint8_t irq, uint32_t timeout)
 {
     if (waitForIRQ(irq, timeout))
-        return(0);
+    {
+        return (0);
+    }
     else
-        return(-1);
+    {
+        return (-1);
+    }
 }
 
 int cdi_ioports_alloc(uint16_t start, uint16_t count);

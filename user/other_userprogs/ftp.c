@@ -287,7 +287,7 @@ int main()
                 {
                     tcp_send(control, "QUIT\r\n", 6);
                     tcp_close(control);
-                    return(0);
+                    return (0);
                 }
                 else if (*key == KEY_F1)
                 {
@@ -464,7 +464,7 @@ int main()
     }
 
     tcp_close(control);
-    return(0);
+    return (0);
 }
 
 

@@ -391,7 +391,7 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
             printf("\nNot enough PCI-memory available");
             textColor(TEXT);
             task_switching = true;
-            return(0);
+            return (0);
         }
 
         uint32_t pagenr = (uintptr_t)virtAddress/PAGESIZE;

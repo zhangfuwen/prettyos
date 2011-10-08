@@ -115,7 +115,7 @@ int main() {
         gets(string1);
         Play(string1);
     }
-    return(0);
+    return (0);
 }
 
 /*

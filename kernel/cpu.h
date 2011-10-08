@@ -50,9 +50,6 @@ typedef enum
 } CPU_FEATURE;
 
 
-extern char cpu_vendor[13];
-
-
 void     cpu_analyze();
 bool     cpu_supports(CPU_FEATURE feature);
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg);

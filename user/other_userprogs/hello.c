@@ -33,7 +33,7 @@ int main(size_t argc, char* argv[])
     {
         showInfo(1);
     }
-    return(0);
+    return (0);
 }
 
 /*

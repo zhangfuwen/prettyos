@@ -165,7 +165,7 @@ event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
 
     if (elem == 0)
     {
-        return(0);
+        return (0);
     }
 
     return (elem->data);

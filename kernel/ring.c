@@ -10,10 +10,10 @@
 
 ring_t* ring_create()
 {
-    ring_t* ring = malloc(sizeof(ring_t), 0, "ring");
+    ring_t* ring  = malloc(sizeof(ring_t), 0, "ring");
     ring->current = 0;
-    ring->begin = 0;
-    return(ring);
+    ring->begin   = 0;
+    return (ring);
 }
 
 static void putIn(ring_t* ring, slelement_t* prev, slelement_t* elem)
@@ -21,9 +21,9 @@ static void putIn(ring_t* ring, slelement_t* prev, slelement_t* elem)
     ASSERT(ring);
     if (ring->begin == 0) // Ring is empty
     {
-        ring->begin = elem;
+        ring->begin   = elem;
         ring->current = elem;
-        elem->next = elem;
+        elem->next    = elem;
     }
     else
     {
@@ -58,25 +58,26 @@ bool ring_insert(ring_t* ring, void* data, bool single)
         {
             if (current->data == data)
             {
-                return false;
+                return (false);
             }
             current = current->next;
-        } while (current != ring->current);
+        } 
+        while (current != ring->current);
     }
     slelement_t* item = malloc(sizeof(slelement_t), 0, "ring-element");
     if (item)
     {
         item->data = data;
         putIn(ring, ring->current, item);
-        return true;
+        return (true);
     }
-    return false;
+    return (false);
 }
 
 bool ring_isEmpty(ring_t* ring)
 {
     ASSERT(ring);
-    return(ring->begin == 0);
+    return (ring->begin == 0);
 }
 
 bool ring_deleteFirst(ring_t* ring, void* data)
@@ -95,17 +96,19 @@ bool ring_deleteFirst(ring_t* ring, void* data)
             return(true);
         }
         current = current->next;
-    } while (current != ring->current);
+    } 
+    while (current != ring->current);
 
-    return(false);
+    return (false);
 }
 
 void ring_move(ring_t* dest, ring_t* source, void* data)
 {
     if (source == 0 || dest == 0 || source->begin == 0) return;
 
-    slelement_t* prev = source->begin;
+    slelement_t* prev    = source->begin;
     slelement_t* current = prev->next;
+    
     do
     {
         if (current->data == data) // Found. Take it out.
@@ -113,9 +116,10 @@ void ring_move(ring_t* dest, ring_t* source, void* data)
             takeOut(source, prev);
             break;
         }
-        prev = current;
+        prev    = current;
         current = current->next;
-    } while (prev != source->begin);
+    } 
+    while (prev != source->begin);
 
     if (current->data == data) // Found element. Insert it to dest ring.
     {

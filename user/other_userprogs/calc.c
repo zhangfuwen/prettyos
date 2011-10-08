@@ -31,7 +31,7 @@ static int getPrevNumberPos(unsigned int Pos, const char* string) {
             return(i+1);
         }
     }
-    return(0);
+    return (0);
 }
 static int getNextNumber(unsigned int Pos, const char* string) {
     for (int i = Pos+1; ; i++) {
@@ -108,7 +108,7 @@ int main() {
         printf("The result of your term is: %i\n\n", Erg);
     }
 
-    return(0);
+    return (0);
 }
 
 /*

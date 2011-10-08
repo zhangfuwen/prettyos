@@ -113,7 +113,7 @@ typedef struct
 
 bool elf_filename(const char* filename)
 {
-    return(strcmp(filename+strlen(filename)-4, ".elf") == 0);
+    return (strcmp(filename+strlen(filename)-4, ".elf") == 0);
 }
 
 bool elf_header(file_t* file)
@@ -133,7 +133,7 @@ bool elf_header(file_t* file)
     valid = valid && header.machine           == EM_386;
     valid = valid && header.version           == EV_CURRENT;
 
-    return(valid);
+    return (valid);
 }
 
 void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
@@ -148,7 +148,7 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
         // Check whether the entry exceeds the file
         if ((void*)(ph+i) >= file+size)
         {
-            return(0);
+            return (0);
         }
 
         #ifdef _DIAGNOSIS_
@@ -163,13 +163,16 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
         // Read flags from header
         MEMFLAGS_t memFlags = MEM_USER;
+        
         if (ph[i].flags & PF_W)
+        {
             memFlags |= MEM_WRITE;
+        }
 
         // Allocate code area for the user program
         if (!paging_alloc(pd, (void*)(ph[i].vaddr), alignUp(ph[i].memsz,PAGESIZE), memFlags))
         {
-            return(0);
+            return (0);
         }
 
         /// TODO: check all sections, not only code
@@ -183,7 +186,7 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
         sti();
     }
 
-    return((void*)header->entry);
+    return ((void*)header->entry);
 }
 
 /*
