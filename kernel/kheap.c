@@ -11,8 +11,7 @@
 #include "serial.h"
 #include "task.h"
 
-/*
-   The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory.
+/* The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory.
    It manages a certain amount of continuous virtual memory, starting at "heapStart".
    Whenever more memory is requested than there is available, the heap expands.
    For expansion, the heap asks the paging module to map physical memory to the following virtual addresses
@@ -29,8 +28,7 @@
    the allocation just moves a pointer forward by the requested size and returns its previous value.
 
    The heap's management data is placed at this placement address, too.
-   Since this area cannot grow, the heap has a maximum amount of region objects ("regionMaxCount").
-*/
+   Since this area cannot grow, the heap has a maximum amount of region objects ("regionMaxCount").*/
 
 // TODO: Ensure the heap will not overflow (over 4 GB)
 

@@ -68,7 +68,7 @@ dlelement_t* list_insert(list_t* list, dlelement_t* next, void* data)
             newElement->next = next;
             next->prev       = newElement;
         }
-        
+
         return newElement;
     }
 
@@ -123,7 +123,7 @@ void list_free(list_t* list)
         free(cur);
         cur=nex;
     }
-    
+
     free(list);
 }
 
@@ -136,7 +136,7 @@ dlelement_t* list_getElement(list_t* list, uint32_t number)
         {
             return(cur);
         }
-        
+
         --number;
         cur = cur->next;
     }
@@ -149,25 +149,23 @@ dlelement_t* list_find(list_t* list, void* data)
     {
         cur = cur->next;
     }
-    
+
     return(cur);
 }
 
 size_t list_getCount(list_t* list)
 {
-    size_t count;
-    dlelement_t* cur = list->head;
-    for (count = 0; cur ; count++) 
+    size_t count = 0;
+    for (dlelement_t* e = list->head; e; e = e->next)
     {
-        cur = cur->next;        
+        count++;
     }
-    
     return(count);
 }
 
 bool list_isEmpty(list_t* list)
 {
-    return (list->head == 0);
+    return(list->head == 0);
 }
 
 /*

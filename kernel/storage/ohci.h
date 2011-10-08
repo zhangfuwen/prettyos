@@ -118,7 +118,7 @@ Within the operational register set is a pointer to a location in shared memory 
 
 typedef struct
 {
-             uint32_t HcRevision;                 // BCD version of HCI spec implemented by this HC
+    volatile uint32_t HcRevision;                 // BCD version of HCI spec implemented by this HC
     volatile uint32_t HcControl;                  // operating modes for the HC
     volatile uint32_t HcCommandStatus;            // current status of the HC
     volatile uint32_t HcInterruptStatus;          // hardware interrupts
@@ -203,7 +203,7 @@ typedef struct
 {
     uint8_t      num;
     port_t       port;
-    struct ohci* ohci;     
+    struct ohci* ohci;
 } ohci_port_t;
 
 typedef struct ohci

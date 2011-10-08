@@ -177,12 +177,12 @@ FS_ERROR rename(const char* oldpath, const char* newpath)
     }
 }
 
-char fgetc(file_t* file)
+inline char fgetc(file_t* file)
 {
     return(file->volume->type->fgetc(file));
 }
 
-FS_ERROR fputc(char c, file_t* file)
+inline FS_ERROR fputc(char c, file_t* file)
 {
     return(file->volume->type->fputc(file, c));
 }

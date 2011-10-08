@@ -21,6 +21,7 @@
 #include "task.h"               // tasking_install & others
 #include "elf.h"                // elf_prepare
 #include "syscall.h"            // syscall_install
+#include "ipc.h"                // ipc_print
 
 // External devices
 #include "cdi.h"                // cdi_init
@@ -36,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.127 - Rev: 1328"; 
+const char* const version = "0.0.3.128 - Rev: 1329";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -169,11 +170,9 @@ static void init(multiboot_t* mb_struct)
     // external devices
     keyboard_install();
     log("Keyboard");
-    
-  #ifdef _MOUSE_
+
     mouse_install();
     log("Mouse");
-  #endif
 
     // power management
     pm_install();
@@ -425,6 +424,9 @@ void main(multiboot_t* mb_struct)
                             case 'd':
                                 showPortList();
                                 showDiskList();
+                                break;
+                            case 'i':
+                                ipc_print();
                                 break;
                             case 't':
                                 scheduler_log();

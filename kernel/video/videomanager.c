@@ -201,6 +201,7 @@ void video_test()
     }
 
     video_setMode(0); // Return to 80x50 text mode
+    video_freeModeList(modelist);
 }
 
 void video_setMode(videoMode_t* mode)
@@ -224,6 +225,10 @@ void video_createModeList(list_t* list)
 
 void video_freeModeList(list_t* list)
 {
+    for(dlelement_t* e = list->head; e != 0; e = e->next)
+    {
+        free(e->data);
+    }
 }
 
 videoDevice_t* video_createDevice(videoDeviceDriver_t* driver)

@@ -18,7 +18,7 @@ int main()
     iSetCursor(0, 10);
 
     srand(getCurrentSeconds());
-    
+
     for (uint16_t i = 0; i < 100; i++)
     {
         printf("%u\t", rand());

@@ -11,6 +11,7 @@
 #include "timer.h"
 #include "task.h"
 #include "kheap.h"
+#include "ipc.h"
 #include "video/console.h"
 
 
@@ -48,8 +49,8 @@ uint32_t paging_install()
     memset(kernelPageDirectory, 0, sizeof(pageDirectory_t));
     kernelPageDirectory->physAddr = (uint32_t)kernelPageDirectory;
 
-    kdebug(3, "\nkernelPageDirectory (virt.): %Xh ", kernelPageDirectory);
-    kdebug(3, "kernelPageDirectory (phys.): %Xh\n", kernelPageDirectory->physAddr);
+    kdebug(3, "\nkernelPageDirectory (virt., phys.): %Xh", kernelPageDirectory);
+    kdebug(3, ", %Xh\n", kernelPageDirectory->physAddr);
 
     // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;
@@ -77,7 +78,7 @@ uint32_t paging_install()
     }
 
     // Tell CPU to enable paging
-    paging_switch (kernelPageDirectory);
+    paging_switch(kernelPageDirectory);
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read cr0
     cr0 |= 0x80000000;                            // set the paging bit in CR0
@@ -89,19 +90,15 @@ uint32_t paging_install()
 
 static bool isMemoryMapAvailable(const memoryMapEntry_t* entries, uint64_t beg, uint64_t end)
 {
-    // There must not be an "reserved" entry which reaches into the specified area
-    for (const memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
-    {
-        if ((entry->type != 1) && (entry->base < end) && ((entry->base + entry->size) > beg))
-        {
-            return false;
-        }
-    }
-
-    // Check whether the "free" entries cover the whole specified area.
     uint64_t covered = beg;
     for (const memoryMapEntry_t* outer_loop=entries; outer_loop < memoryMapEnd; ++outer_loop)
     {
+        // There must not be an "reserved" entry which reaches into the specified area
+        if ((outer_loop->type != 1) && (outer_loop->base < end) && ((outer_loop->base + outer_loop->size) > beg))
+        {
+            return false;
+        }
+        // Check whether the "free" entries cover the whole specified area.
         for (const memoryMapEntry_t* entry=entries; entry < memoryMapEnd; ++entry)
         {
             if (entry->base<=covered && (entry->base+entry->size)>covered)
@@ -146,7 +143,7 @@ static uint32_t physMemInit()
     textColor(TEXT);
     for (const memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; entry++)
     {
-        printf("\n  %Xh -> %Xh %u", (uint32_t)(entry->base), (uint32_t)(entry->base+entry->size), entry->type);
+        printf("\n  %Xh -> %Xh %u", entry->base, entry->base+entry->size, entry->type);
     }
     #endif
 

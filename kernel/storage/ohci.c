@@ -386,7 +386,6 @@ void ohci_portCheck(ohci_t* o)
 
         if (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS) // connected
         {
-             
              ohci_showPortstatus(o,j);
         }
         else
@@ -571,7 +570,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
-    volatile uint32_t val = o->OpRegs->HcInterruptStatus; 
+    volatile uint32_t val = o->OpRegs->HcInterruptStatus;
 
     if(val==0)
     {
@@ -602,7 +601,7 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
     }
 
     o->OpRegs->HcInterruptStatus = val; // reset interrupts
-    
+
     if (!((val & OHCI_INT_SF) || (val & OHCI_INT_RHSC)))
     {
         printf("\nUSB OHCI %u: ", o->num);
@@ -610,9 +609,9 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
     if (val & OHCI_INT_SO) // scheduling overrun
     {
-        printf("Scheduling overrun.");    
+        printf("Scheduling overrun.");
     }
-    
+
     if (val & OHCI_INT_SF) // start of frame
     {
         // ???
@@ -758,24 +757,24 @@ void ohci_setupTransfer(usb_transfer_t* transfer)
     o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_BLE); // de-activate control and bulk transfers
     o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_CLF; // control list not filled
     o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_BLF; // bulk list not filled
-    
-    // recycle bulk ED/TDs    
-    if ((o->indexED >= NUM_ED-2) || 
+
+    // recycle bulk ED/TDs
+    if ((o->indexED >= NUM_ED-2) ||
         (o->indexTD >= NUM_TD-2))
     {
         ohci_resetMempool(o, USB_BULK);
-    }   
+    }
 
     // recycle control ED/TDs
-    if ((o->indexED == NUM_ED_BULK-2) || (o->indexED == NUM_ED_BULK-1) || 
+    if ((o->indexED == NUM_ED_BULK-2) || (o->indexED == NUM_ED_BULK-1) ||
         (o->indexTD == NUM_TD_BULK-2) || (o->indexTD == NUM_TD_BULK-1))
     {
         ohci_resetMempool(o, USB_CONTROL);
-    }   
+    }
 
     // endpoint descriptor
-    transfer->data = o->pED[o->indexED]; 
-  
+    transfer->data = o->pED[o->indexED];
+
   #ifdef _OHCI_DIAGNOSIS_
     printf("\nsetupTransfer: indexED: %u", o->indexED);
   #endif
@@ -907,7 +906,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
       #ifdef _OHCI_DIAGNOSIS_
         printf("\nNumber of TD elements (incl. dummy-TD): %u", list_getCount(transfer->transactions));
       #endif
-        
+
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
             // printf("\nTD %u: ", tdNumber);
@@ -918,7 +917,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
             while((o->OpRegs->HcFmRemaining & 0x3FFF) < 16000) { /* wait for nearly full frame time */ }
 
             o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////
-            
+
           #ifdef _OHCI_DIAGNOSIS_
             printf(" remaining time: %u  frame number: %u", o->OpRegs->HcFmRemaining & 0x3FFF, o->OpRegs->HcFmNumber);
           #endif
@@ -952,9 +951,6 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     printf("\n\nED-Index: %u, Transfer->endpoint: %u, &o: %X", o->indexED, transfer->endpoint, o);
     printf("\nhcca->donehead: %X ", o->hcca->doneHead);
     textColor(TEXT);
-  #endif
-
-  #ifdef _OHCI_DIAGNOSIS_
     for (uint8_t i=0; i<5; i++)
     {
         printf("\ni=%u\tED->TD:%X->%X TD->TD:%X->%X buf:%X",
@@ -1085,7 +1081,7 @@ ohciTD_t* ohci_createQTD_IO(ohci_t* o, ohciED_t* oED, uintptr_t next, uint8_t di
 
 void ohci_createQH(ohciED_t* head, uint32_t horizPtr, ohciTD_t* firstQTD, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-    // head->nextED  = horizPtr;// ==> freeze
+    //head->nextED  = horizPtr; // ==> freeze
   #ifdef _OHCI_DIAGNOSIS_
     printf("\nnext ED: %X", head->nextED);
   #endif
@@ -1172,7 +1168,7 @@ static void ohci_resetMempool(ohci_t* o, usb_tranferType_t usbType)
 
 static void ohci_toggleFrameInterval(ohci_t* o)
 {
-    if ((o->OpRegs->HcFmInterval & BIT(31)) == true) // check FRT
+    if (o->OpRegs->HcFmInterval & BIT(31)) // check FRT
     {
         o->OpRegs->HcFmInterval &= ~BIT(31); // clear FRT
     }

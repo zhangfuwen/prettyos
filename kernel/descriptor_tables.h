@@ -106,7 +106,6 @@ void gdt_install();
 void gdt_setGate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 void gdt_flush(uintptr_t); // c.f. flush.asm
 void tss_write(int32_t num, uint16_t ss0, uint32_t esp0);
-void tss_log(TSSentry_t* tss);
 void tss_flush(); // c.f. flush.asm
 void tss_switch(uint32_t esp0, uint32_t esp, uint32_t ss); // Used by task_switch
 

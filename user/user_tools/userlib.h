@@ -21,6 +21,7 @@ enum COLORS
     GRAY,  LIGHT_BLUE,  LIGHT_GREEN, LIGHT_CYAN, LIGHT_RED, LIGHT_MAGENTA, YELLOW, WHITE
 };
 
+struct file;
 
 // syscalls (only non-standard functions, because we do not want to include stdio.h here.
 FS_ERROR execute(const char* path, size_t argc, char* argv[]);
@@ -63,6 +64,17 @@ bool     tcp_close(uint32_t ID);
 bool udp_bind(uint16_t port);
 bool udp_unbind(uint16_t port);
 bool udp_send(void* data, uint32_t length, IP_t destIP, uint16_t srcPort, uint16_t destPort);
+
+struct file* ipc_fopen(const char* path, const char* mode);
+IPC_ERROR ipc_getFolder(const char* path, char* destination, size_t length);
+IPC_ERROR ipc_getString(const char* path, char* destination, size_t length);
+IPC_ERROR ipc_setString(const char* path, const char* source);
+IPC_ERROR ipc_getInt(const char* path, int64_t* destination);
+IPC_ERROR ipc_setInt(const char* path, int64_t* source);
+IPC_ERROR ipc_getDouble(const char* path, double* destination);
+IPC_ERROR ipc_setDouble(const char* path, double* source);
+IPC_ERROR ipc_deleteKey(const char* path);
+IPC_ERROR ipc_setAccess(const char* path, IPC_RIGHTS permissions, uint32_t task);
 
  // deprecated
 int32_t floppy_dir();

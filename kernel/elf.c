@@ -163,7 +163,7 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
         // Read flags from header
         MEMFLAGS_t memFlags = MEM_USER;
-        
+
         if (ph[i].flags & PF_W)
         {
             memFlags |= MEM_WRITE;

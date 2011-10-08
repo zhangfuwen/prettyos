@@ -309,7 +309,6 @@ IN_TRANSFER:
     }
     usb_issueTransfer(&transfer);
 
-
   #ifdef _USB2_DIAGNOSIS_
     if (TransferLength) // byte
     {
@@ -388,7 +387,7 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
         usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady, 0, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
         uint8_t statusByteTestReady = BYTE1(*(((uint32_t*)statusBuffer)+3));
-        
+
         if (timeout != maxTest-1)
         {
             textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(TEXT);
@@ -397,7 +396,7 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
             usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense, dataBuffer, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
             statusByte = BYTE1(*(((uint32_t*)statusBuffer)+3));
-            
+
             int32_t sense = showResultsRequestSense(dataBuffer);
             if (statusByteTestReady == 0 && (sense == 0 || sense == 6))
             {

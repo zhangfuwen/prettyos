@@ -25,12 +25,12 @@ static bool scroll_flag = true;
 static void scroll();
 
 
-uint8_t getTextColor()
+inline uint8_t getTextColor()
 {
     return(currentTask->attrib);
 }
 
-void textColor(uint8_t color) // bit 0-3: foreground bit 4-7: background
+inline void textColor(uint8_t color) // bit 0-3: foreground bit 4-7: background
 {
     if (currentTask)
     {

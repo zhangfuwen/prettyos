@@ -316,7 +316,7 @@ char* strcpy(char* dest, const char* src)
    return save;
 }
 
-char* strncpy(char* dest, const char* src, size_t n)
+inline char* strncpy(char* dest, const char* src, size_t n)
 {
     return(strncpyandfill(dest, src, n, 0));
 }
@@ -375,12 +375,12 @@ char* strpbrk(const char* str, const char* delim)
 }
 
 /**********************************************************************/
-char toLower(char c)
+inline char toLower(char c)
 {
     return isupper(c) ? ('a' - 'A') + c : c;
 }
 
-char toUpper(char c)
+inline char toUpper(char c)
 {
     return islower(c) ? ('A' - 'a') + c : c;
 }
@@ -563,7 +563,7 @@ void ftoa(float f, char* buffer)
 
 uint32_t alignUp(uint32_t val, uint32_t alignment)
 {
-    if (! alignment)
+    if (!alignment)
         return val;
     --alignment;
     return (val+alignment) & ~alignment;
@@ -571,7 +571,7 @@ uint32_t alignUp(uint32_t val, uint32_t alignment)
 
 uint32_t alignDown(uint32_t val, uint32_t alignment)
 {
-    if (! alignment)
+    if (!alignment)
         return val;
     return val & ~(alignment-1);
 }

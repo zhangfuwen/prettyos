@@ -38,7 +38,7 @@ typedef struct
     uint32_t   extend4;
 } __attribute__((packed)) ehci_qtd_t;
 
-typedef struct
+typedef struct ehci_qhd
 {
     uint32_t   horizontalPointer;
     uint32_t   deviceAddress       :  7;
@@ -64,7 +64,8 @@ void  createQH(ehci_qhd_t* address, uint32_t horizPtr, ehci_qtd_t* firstQTD, uin
 ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);
 ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, void** buffer);
 
-void performAsyncScheduler(ehci_t* e, bool stop, bool analyze, uint8_t velocity);
+void addToAsyncScheduler(ehci_t* e, ehci_qhd_t* qh, uint8_t velocity);
+void initializeAsyncScheduler(ehci_t* e);
 
 uint8_t showStatusbyteQTD(ehci_qtd_t* qTD);
 

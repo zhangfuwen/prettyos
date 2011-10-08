@@ -54,38 +54,13 @@ void gdt_install()
 
 
 /// TSS
+
 static TSSentry_t tss;
 
-// Initialise our task state segment structure.
-void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)
+#ifdef _DIAGNOSIS_
+static void tss_log(TSSentry_t* tssEntry)
 {
-    // Firstly, let's compute the base and limit of our entry into the GDT.
-    uint32_t base = (uint32_t) &tss;
-    uint32_t limit = sizeof(tss); //http://forum.osdev.org/viewtopic.php?f=1&t=19819&p=155587&hilit=tss_entry#p155587
-
-    // Now, add our TSS descriptor's address to the GDT.
-    gdt_setGate(num, base, limit, 0xE9, 0x00);
-
-    // Ensure the descriptor is initially zero.
-    memset(&tss, 0, sizeof(tss));
-
-    tss.ss0  = ss0;  // Set the kernel stack segment.
-    tss.esp0 = esp0; // Set the kernel stack pointer.
-
-    tss.cs   = 0x08;
-    tss.ss = tss.ds = tss.es = tss.fs = tss.gs = 0x10;
-}
-
-void tss_switch(uint32_t esp0, uint32_t esp, uint32_t ss)
-{
-    tss.esp0 = esp0;
-    tss.esp = esp;
-    tss.ss = ss;
-}
-
-void tss_log(TSSentry_t* tssEntry)
-{
-    textColor(0x06);
+    textColor(DATA);
     printf("esp0: %Xh ", tssEntry->esp0);
     printf("ss0: %Xh ", tssEntry->ss0);
     printf("cr3: %Xh ", tssEntry->cr3);
@@ -106,7 +81,37 @@ void tss_log(TSSentry_t* tssEntry)
     printf("gs: %Xh\n", tssEntry->gs);
     textColor(TEXT);
 }
+#endif
 
+// Initialise our task state segment structure.
+void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)
+{
+    // Firstly, let's compute the base and limit of our entry into the GDT.
+    uint32_t base = (uint32_t) &tss;
+    uint32_t limit = sizeof(tss); //http://forum.osdev.org/viewtopic.php?f=1&t=19819&p=155587&hilit=tss_entry#p155587
+
+    // Now, add our TSS descriptor's address to the GDT.
+    gdt_setGate(num, base, limit, 0xE9, 0x00);
+
+    // Ensure the descriptor is initially zero.
+    memset(&tss, 0, sizeof(tss));
+
+    tss.ss0  = ss0;  // Set the kernel stack segment.
+    tss.esp0 = esp0; // Set the kernel stack pointer.
+
+    tss.cs   = 0x08;
+    tss.ss = tss.ds = tss.es = tss.fs = tss.gs = 0x10;
+  #ifdef _DIAGNOSIS_
+    tss_log(&tss);
+  #endif
+}
+
+void tss_switch(uint32_t esp0, uint32_t esp, uint32_t ss)
+{
+    tss.esp0 = esp0;
+    tss.esp = esp;
+    tss.ss = ss;
+}
 
 /*
 * Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.

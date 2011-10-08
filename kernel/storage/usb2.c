@@ -26,15 +26,15 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
     usb_setupTransfer(port, &transfer, USB_CONTROL, 0, 64);
     usb_setupTransaction(&transfer, 0, 8, 0x00, 5, 0, new_address+1, 0, 0);
     usb_inTransaction(&transfer, 1, 0, 0);
-    usb_issueTransfer(&transfer);  
+    usb_issueTransfer(&transfer);
 
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
     printf("\nnew address: %u", new_address);
     textColor(TEXT);
     waitForKeyStroke();
-  #endif    
-    
+  #endif
+
     return new_address;
 }
 

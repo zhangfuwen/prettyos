@@ -170,17 +170,19 @@ typedef struct
 
 typedef struct ehci
 {
-    pciDev_t*       PCIdevice;         // PCI device
-    uint32_t        bar;               // base address register
-    ehci_OpRegs_t*  OpRegs;
-    ehci_CapRegs_t* CapRegs;
-    uint8_t         num;               // number of the EHCI
-    uint8_t         numPorts;          // number of ports of the EHCI
-    bool            enabledPortFlag;
-    bool            USBINTflag;
-    bool            USBasyncIntFlag;
-    bool            USBtransferFlag;
-    ehci_port_t*    ports[16];
+    pciDev_t*        PCIdevice;         // PCI device
+    uint32_t         bar;               // base address register
+    ehci_OpRegs_t*   OpRegs;
+    ehci_CapRegs_t*  CapRegs;
+    uint8_t          num;               // number of the EHCI
+    uint8_t          numPorts;          // number of ports of the EHCI
+    bool             enabledPortFlag;
+    bool             USBINTflag;
+    bool             USBasyncIntFlag;
+    bool             USBtransferFlag;
+    struct ehci_qhd* idleQH;
+    struct ehci_qhd* tailQH;
+    ehci_port_t*     ports[16];
 } ehci_t;
 
 

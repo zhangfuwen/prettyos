@@ -98,7 +98,75 @@ FS_ERROR partition_format(const char* path, FS_t type, const char* name)
    return (ret);
 }
 
-// TODO (25-32) ipc
+file_t* ipc_fopen(const char* path, const char* mode)
+{
+    file_t* ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(25), "b"(path), "c"(mode));
+   return (ret);
+}
+
+IPC_ERROR ipc_getFolder(const char* path, char* destination, size_t length)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(26), "b"(path), "c"(destination), "d"(length));
+   return (ret);
+}
+
+IPC_ERROR ipc_getString(const char* path, char* destination, size_t length)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(27), "b"(path), "c"(destination), "d"(length));
+   return (ret);
+}
+
+IPC_ERROR ipc_setString(const char* path, const char* source)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(28), "b"(path), "c"(source));
+   return (ret);
+}
+
+IPC_ERROR ipc_getInt(const char* path, int64_t* destination)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(29), "b"(path), "c"(destination));
+   return (ret);
+}
+
+IPC_ERROR ipc_setInt(const char* path, int64_t* source)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(30), "b"(path), "c"(source));
+   return (ret);
+}
+
+IPC_ERROR ipc_getDouble(const char* path, double* destination)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(31), "b"(path), "c"(destination));
+   return (ret);
+}
+
+IPC_ERROR ipc_setDouble(const char* path, double* source)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(32), "b"(path), "c"(source));
+   return (ret);
+}
+
+IPC_ERROR ipc_deleteKey(const char* path)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(33), "b"(path));
+   return (ret);
+}
+
+IPC_ERROR ipc_setAccess(const char* path, IPC_RIGHTS permissions, uint32_t task)
+{
+    IPC_ERROR ret;
+    __asm__ volatile("int $0x7F" : "=a"(ret): "a"(34), "b"(path), "c"(permissions), "d"(task));
+   return (ret);
+}
 
 bool waitForEvent(uint32_t timeout)
 {

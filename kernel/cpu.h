@@ -50,7 +50,12 @@ typedef enum
 } CPU_FEATURE;
 
 
+extern char cpu_vendor[13];
+extern int64_t* cpu_frequency;
+
+
 void     cpu_analyze();
+void     cpu_calculateFrequency();
 bool     cpu_supports(CPU_FEATURE feature);
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg);
 uint64_t cpu_MSRread(uint32_t msr);

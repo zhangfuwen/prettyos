@@ -42,6 +42,18 @@ typedef enum
 
 typedef enum
 {
+    IPC_SUCCESSFUL = 0,
+    IPC_NOTENOUGHMEMORY, IPC_NOTFOUND, IPC_ACCESSDENIED, IPC_WRONGTYPE
+} IPC_ERROR;
+
+typedef enum
+{
+    IPC_NONE = 0,
+    IPC_READ = 1, IPC_WRITE = 2, IPC_DELEGATERIGHTS = 4
+} IPC_RIGHTS;
+
+typedef enum
+{
     CE_GOOD = 0,                    // No error
     CE_ERASE_FAIL,                  // An erase failed
     CE_NOT_PRESENT,                 // No device was present

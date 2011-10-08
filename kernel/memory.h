@@ -3,8 +3,6 @@
 
 #include "os.h"
 
-//// Memory configuration ////
-
 /******************************************************************************
 *                                                                             *
 *                          K E R N E L   A R E A                              *
@@ -24,7 +22,6 @@
 // Virtual adress area for the kernel heap
 #define KERNEL_heapStart KERNEL_DATA_START
 #define KERNEL_heapEnd   PCI_MEM_START
-#define KERNEL_heapSize  ((uint8_t*)((uintptr_t)KERNEL_heapEnd - (uintptr_t)KERNEL_heapStart))
 
 // memory location for MMIO of devices (networking card, EHCI, grafics card, ...)
 #define PCI_MEM_START     ((uint8_t*)0x0E0000000)
@@ -45,9 +42,9 @@
 // Area to move data from kernel to userprogram (for example, parameter lists)
 #define USER_DATA_BUFFER  USER_STACK  // 64 KiB
 
-
 // User Heap management
 #define USER_heapStart    ((uint8_t*)(USER_DATA_BUFFER  + 0x10000))   // 21 MiB plus 64 KiB
 #define USER_heapEnd      ((uint8_t*)(KERNEL_DATA_START - 0x1000000)) //  3 GiB minus 16 MiB
+
 
 #endif

@@ -414,10 +414,10 @@ void* task_grow_userheap(uint32_t increase)
 void task_log(task_t* t)
 {
     textColor(IMPORTANT);
-    printf("%d\t\b\b\b", t->pid);      // Process ID (pid)
+    printf("%d\t\b\b\b", t->pid);     // Process ID (pid)
     textColor(TEXT);
-    printf("%X  ",  t->esp);           // Stack pointer
-    printf("%X  ",  t->pageDirectory); // Page directory
+    printf("%X  ", t->esp);           // Stack pointer
+    printf("%X  ", t->pageDirectory); // Page directory
 
     if (t->kernelStack)
     {

@@ -13,7 +13,7 @@ typedef enum
     SEEK_SET, SEEK_CUR, SEEK_END
 } SEEK_ORIGIN;
 
-typedef struct
+typedef struct file
 { // HACK; Should be filled
 } file_t;
 

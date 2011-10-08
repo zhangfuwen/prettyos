@@ -138,9 +138,7 @@ static void kputch(char c, uint8_t attrib)
 
 static void kputs(const char* text, uint8_t attrib)
 {
-    mutex_lock(videoLock);
     for (; *text; kputch(*text, attrib), ++text);
-    mutex_unlock(videoLock);
 }
 
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)

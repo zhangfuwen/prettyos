@@ -19,6 +19,7 @@
 #include "video/textgui.h"
 #include "video/video.h"
 #include "network/network.h"
+#include "ipc.h"
 
 // Overwiew to all syscalls in documentation/Syscalls.odt
 
@@ -51,17 +52,17 @@ static void* syscalls[] =
 /*  22 */    &formatPartition,
 /*  23 */    &nop,
 /*  24 */    &nop,
+/*  25 */    &ipc_fopen,
+/*  26 */    &ipc_getFolder,
+/*  27 */    &ipc_getString,
+/*  28 */    &ipc_setString,
+/*  29 */    &ipc_getInt,
+/*  30 */    &ipc_setInt,
+/*  31 */    &ipc_getDouble,
+/*  32 */    &ipc_setDouble,
+/*  33 */    &ipc_deleteKey,
+/*  34 */    &ipc_setAccess,
 
-/*  25 */    &nop, // ipc_getString
-/*  26 */    &nop, // ipc_setString
-/*  27 */    &nop, // ipc_getInt
-/*  28 */    &nop, // ipc_setInt
-/*  29 */    &nop, // ipc_getDouble
-/*  30 */    &nop, // ipc_setDouble
-/*  31 */    &nop, // ipc_deleteKey
-/*  32 */    &nop, // ipc_allowAccess
-/*  33 */    &nop,
-/*  34 */    &nop,
 /*  35 */    &nop,
 /*  36 */    &nop,
 /*  37 */    &waitForEvent,

@@ -14,6 +14,7 @@
 #include "keyboard.h"
 #include "usb2_msd.h"
 
+#define NUMBER_OF_EHCI_ASYNCLIST_RETRIES 3
 
 ehci_t* curEHCI = 0;
 
@@ -52,7 +53,7 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     scheduler_insertTask(create_cthread(&ehci_start, str));
 
     numPorts++;
-    sleepMilliSeconds(20); // HACK: Avoid race condition between ohci_install and the thread just created. Problem related to curOHCI global variable
+    sleepMilliSeconds(20); // HACK: Avoid race condition between ehci_install and the thread just created. Problem related to curEHCI global variable
 }
 
 static void ehci_analyze(ehci_t* e)
@@ -83,6 +84,7 @@ void ehci_start()
     if (!(e->OpRegs->USBSTS & STS_HCHALTED))
     {
         ehci_enablePorts(e);
+        initializeAsyncScheduler(e);
     }
     else
     {
@@ -557,7 +559,7 @@ void ehci_portCheck()
                     showPortList();
                     showDiskList();
                     beep(1000, 100);
-                    beep(800, 80);
+                    beep(800, 100);
                 }
 
             }
@@ -667,11 +669,8 @@ void ehci_setupUSBDevice(ehci_t* e, uint8_t portNumber)
       #ifdef _EHCI_DIAGNOSIS_
         showPortList(); // TEST
         showDiskList(); // TEST
-      #endif
-        waitForKeyStroke();
 
         // device, interface, endpoints
-      #ifdef _EHCI_DIAGNOSIS_
         textColor(HEADLINE);
         printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
                                                 device, device->numInterfaceMSD,
@@ -768,25 +767,18 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
 {
     ehci_t* e = ((ehci_port_t*)transfer->HC->data)->ehci;
 
-    if(transfer->type == USB_CONTROL)
-    {
-        e->OpRegs->USBCMD &= ~CMD_ASYNCH_ENABLE;
-    }
-
-    e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(transfer->data);
-
     ehci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
-    createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD,  1, ((ehci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
+    createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD, 0, ((ehci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
 
-    for(uint8_t i = 0; i < 5 && !transfer->success; i++)
+    for(uint8_t i = 0; i < NUMBER_OF_EHCI_ASYNCLIST_RETRIES && !transfer->success; i++)
     {
         if(transfer->type == USB_CONTROL)
         {
-            performAsyncScheduler(e, true, false, 0);
+            addToAsyncScheduler(e, transfer->data, 0);
         }
         else
         {
-            performAsyncScheduler(e, true, true, 1 + transfer->packetSize/100);
+            addToAsyncScheduler(e, transfer->data, 1 + transfer->packetSize/200);
         }
 
         transfer->success = true;
@@ -796,6 +788,7 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
             uint8_t status = showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (status == 0);
         }
+
       #ifdef _EHCI_DIAGNOSIS_
         if(!transfer->success)
         {
