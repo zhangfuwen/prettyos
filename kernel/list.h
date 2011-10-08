@@ -27,6 +27,8 @@ dlelement_t* list_append(list_t* list, void* data);                    // Insert
 dlelement_t* list_delete(list_t* list, dlelement_t* elem);             // Deletes the element elem and returns a pointer to the element that was behind it.
 dlelement_t* list_getElement(list_t* list, uint32_t number);           // Returns the data at the position "number".
 dlelement_t* list_find(list_t* list, void* data);                      // Finds an element with data in the list and returns a pointer to it.
-bool         list_isEmpty(list_t* list);
+size_t       list_getCount(list_t* list);                              // Returns the number of elements of the list    
+bool         list_isEmpty(list_t* list);                                
+
 
 #endif

@@ -904,6 +904,10 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
         uint8_t tdNumber = 0;
         transfer->success = true;
 
+      #ifdef _OHCI_DIAGNOSIS_
+        printf("\nNumber of TD elements (incl. dummy-TD): %u", list_getCount(transfer->transactions));
+      #endif
+        
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
             // printf("\nTD %u: ", tdNumber);
