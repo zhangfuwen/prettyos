@@ -665,14 +665,14 @@ void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface, uint32_t end
     //usbSetFeatureHALT(device, endpointOUT, 512);
 
     // Clear Feature HALT to the Bulk-In  endpoint
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 512));
-    usbClearFeatureHALT(device, endpointIN,  512);
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 512));
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 64));
+    usbClearFeatureHALT(device, endpointIN, 64);
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 64));
 
     // Clear Feature HALT to the Bulk-Out endpoint
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT, 512));
-    usbClearFeatureHALT(device, endpointOUT, 512);
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT, 512));
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT, 64));
+    usbClearFeatureHALT(device, endpointOUT, 64);
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT, 64));
 
     // set configuration to 1 and endpoint IN/OUT toggles to 0
     usbTransferSetConfiguration(device, 1); // set first configuration

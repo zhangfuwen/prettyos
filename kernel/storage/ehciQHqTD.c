@@ -215,30 +215,36 @@ void addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity)
         textColor(TEXT);
     }
 
-    timeout = 10 * velocity + 25; // Wait up to 250+100*velocity milliseconds for all transfers to be finished
-    dlelement_t* dlE = transfer->transactions->head;
-    while(timeout > 0)
+    timeout = 10 * velocity + 25; // Wait up to 100*velocity + 250 milliseconds for all transfers to be finished
+    
+    while (timeout > 0)
     {
-        if(dlE == 0)
-            break;
-        ehci_transaction_t* eT = ((usb_transaction_t*)dlE->data)->data;
-        while(!(eT->qTD->token.status & BIT(7)))
+		bool b = true;
+		
+        for (dlelement_t* elem = transfer->transactions->head; b && elem; elem = elem->next)
+		{
+			ehci_transaction_t* eT = ((usb_transaction_t*)elem->data)->data;
+			b = b && !(eT->qTD->token.status & BIT(7));
+		}
+		
+        if(b)
         {
-            dlE = dlE->next;
-            if(dlE == 0)
-                break;
-            eT = dlE->data;
+			break;
         }
+        
         sleepMilliSeconds(10);
+        timeout--;
     }
+    
     if(timeout == 0)
     {
         textColor(ERROR);
         printf("\nEHCI: Timeout!");
         textColor(TEXT);
     }
+    
 
-    timeout=5; // Wait up to 50 milliseconds for e->USBINTflag to be set
+    timeout=20;            // Wait for e->USBINTflag to be setja
     while (!e->USBINTflag) // set by interrupt
     {
         timeout--;
