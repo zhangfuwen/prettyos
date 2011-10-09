@@ -295,7 +295,6 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
     if(statusBuffer == 0)
         statusBuffer = tempStatusBuffer;
 
-IN_TRANSFER:
     usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointIn, 512);
     if (TransferLength > 0)
     {
@@ -327,8 +326,8 @@ IN_TRANSFER:
     if(checkSCSICommandUSBTransfer(statusBuffer, device, TransferLength, bulkTransfer) != 0 && timeout < 5)
     {
         timeout++;
-        goto IN_TRANSFER;
     }
+    // TODO: Handle failure/timeout
 }
 
 void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer)
@@ -373,7 +372,7 @@ void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpo
 
 static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTransferTestUnitReady, usbBulkTransfer_t* bulkTransferRequestSense)
 {
-    const uint8_t maxTest = 3;
+    const uint8_t maxTest = 5;
     uint32_t timeout = maxTest;
     uint8_t statusByte;
 
@@ -388,23 +387,23 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
 
         uint8_t statusByteTestReady = BYTE1(*(((uint32_t*)statusBuffer)+3));
 
-        if (timeout != maxTest-1)
+        if(timeout >= maxTest/2 && statusByteTestReady != 0) continue;
+
+
+        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(TEXT);
+
+        char dataBuffer[18];
+        usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense, dataBuffer, statusBuffer); // dev, endp, cmd, LBA, transfer length
+
+        statusByte = BYTE1(*(((uint32_t*)statusBuffer)+3));
+
+        int32_t sense = showResultsRequestSense(dataBuffer);
+        if (sense == 0 || sense == 6)
         {
-            textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(TEXT);
-
-            char dataBuffer[18];
-            usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense, dataBuffer, statusBuffer); // dev, endp, cmd, LBA, transfer length
-
-            statusByte = BYTE1(*(((uint32_t*)statusBuffer)+3));
-
-            int32_t sense = showResultsRequestSense(dataBuffer);
-            if (statusByteTestReady == 0 && (sense == 0 || sense == 6))
-            {
-                break;
-            }
+            break;
         }
+
     }
-    waitForKeyStroke();
 
     return statusByte;
 }

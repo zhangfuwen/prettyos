@@ -59,12 +59,20 @@ typedef struct ehci_qhd
     ehci_qtd_t qtd;
 } __attribute__((packed)) ehci_qhd_t;
 
+typedef struct
+{
+    ehci_qtd_t* qTD;
+    void*       qTDBuffer;
+    void*       inBuffer;
+    size_t      inLength;
+} ehci_transaction_t;
+
 
 void  createQH(ehci_qhd_t* address, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
 ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);
 ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, void** buffer);
 
-void addToAsyncScheduler(ehci_t* e, ehci_qhd_t* qh, uint8_t velocity);
+void addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity);
 void initializeAsyncScheduler(ehci_t* e);
 
 uint8_t showStatusbyteQTD(ehci_qtd_t* qTD);

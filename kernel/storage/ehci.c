@@ -459,6 +459,8 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
+    e->OpRegs->USBSTS = val; // reset interrupt
+
 
   #ifdef _EHCI_DIAGNOSIS_
     if (!(val & STS_FRAMELIST_ROLLOVER) && !(e->OpRegs->USBSTS & STS_USBINT))
@@ -519,7 +521,6 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
         textColor(TEXT);
       #endif
     }
-    e->OpRegs->USBSTS = val; // reset interrupt
 }
 
 
@@ -708,14 +709,6 @@ void showUSBSTS(ehci_t* e)
 *                                                                                                      *
 *******************************************************************************************************/
 
-typedef struct
-{
-    ehci_qtd_t* qTD;
-    void*       qTDBuffer;
-    void*       inBuffer;
-    size_t      inLength;
-} ehci_transaction_t;
-
 
 void ehci_setupTransfer(usb_transfer_t* transfer)
 {
@@ -774,11 +767,11 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
     {
         if(transfer->type == USB_CONTROL)
         {
-            addToAsyncScheduler(e, transfer->data, 0);
+            addToAsyncScheduler(e, transfer, 0);
         }
         else
         {
-            addToAsyncScheduler(e, transfer->data, 1 + transfer->packetSize/200);
+            addToAsyncScheduler(e, transfer, 1 + transfer->packetSize/200);
         }
 
         transfer->success = true;
@@ -786,7 +779,7 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
         {
             ehci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
             uint8_t status = showStatusbyteQTD(transaction->qTD);
-            transfer->success = transfer->success && (status == 0);
+            transfer->success = transfer->success && (status == 0 || status == BIT(0));
         }
 
       #ifdef _EHCI_DIAGNOSIS_

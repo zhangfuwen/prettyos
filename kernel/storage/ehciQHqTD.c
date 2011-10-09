@@ -130,7 +130,9 @@ uint8_t showStatusbyteQTD(ehci_qtd_t* qTD)
         textColor(IMPORTANT);
         if (qTD->token.status & BIT(7)) { printf("\nActive - HC transactions enabled"); }
         if (qTD->token.status & BIT(1)) { printf("\nDo Complete Split"); }
+      #ifdef _EHCI_DIAGNOSIS_
         if (qTD->token.status & BIT(0)) { printf("\nDo Ping"); }
+      #endif
         textColor(TEXT);
     }
     return qTD->token.status;
@@ -176,7 +178,7 @@ void initializeAsyncScheduler(ehci_t* e)
     enableAsyncScheduler(e);
 }
 
-void addToAsyncScheduler(ehci_t* e, ehci_qhd_t* qh, uint8_t velocity)
+void addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity)
 {
     e->USBasyncIntFlag = false;
     e->USBINTflag = false;
@@ -186,13 +188,10 @@ void addToAsyncScheduler(ehci_t* e, ehci_qhd_t* qh, uint8_t velocity)
     e->OpRegs->USBCMD |= CMD_ASYNCH_INT_DOORBELL; // Activate Doorbell: We would like to receive an asynchronous schedule interrupt
 
     ehci_qhd_t* oldTailQH = e->tailQH; // save old tail QH
-    e->tailQH = qh; // qh is now end of Queue
+    e->tailQH = transfer->data; // new QH is now end of Queue
 
-    qh->horizontalPointer        = paging_getPhysAddr(e->idleQH) | BIT(1); // Create ring. Link qh with idleQH (always head of Queue)
+    e->tailQH->horizontalPointer = paging_getPhysAddr(e->idleQH) | BIT(1); // Create ring. Link new QH with idleQH (always head of Queue)
     oldTailQH->horizontalPointer = paging_getPhysAddr(e->tailQH) | BIT(1); // Insert qh to Queue as element behind old queue head
-
-
-    sleepMilliSeconds(50); // Wait always 50 Milliseconds
 
     uint32_t timeout = 10 * velocity + 25; // Wait up to 250+100*velocity milliseconds for e->USBasyncIntFlag to be set
     while (!e->USBasyncIntFlag && timeout > 0)
@@ -216,8 +215,30 @@ void addToAsyncScheduler(ehci_t* e, ehci_qhd_t* qh, uint8_t velocity)
         textColor(TEXT);
     }
 
+    timeout = 10 * velocity + 25; // Wait up to 250+100*velocity milliseconds for all transfers to be finished
+    dlelement_t* dlE = transfer->transactions->head;
+    while(timeout > 0)
+    {
+        if(dlE == 0)
+            break;
+        ehci_transaction_t* eT = ((usb_transaction_t*)dlE->data)->data;
+        while(!(eT->qTD->token.status & BIT(7)))
+        {
+            dlE = dlE->next;
+            if(dlE == 0)
+                break;
+            eT = dlE->data;
+        }
+        sleepMilliSeconds(10);
+    }
+    if(timeout == 0)
+    {
+        textColor(ERROR);
+        printf("\nEHCI: Timeout!");
+        textColor(TEXT);
+    }
 
-    timeout=3; // Wait up to 30 milliseconds for e->USBINTflag to be set
+    timeout=5; // Wait up to 50 milliseconds for e->USBINTflag to be set
     while (!e->USBINTflag) // set by interrupt
     {
         timeout--;
@@ -233,15 +254,12 @@ void addToAsyncScheduler(ehci_t* e, ehci_qhd_t* qh, uint8_t velocity)
         }
         else
         {
-          #ifdef _EHCI_DIAGNOSIS_
             textColor(ERROR);
             printf("\nTimeout Error - STS_USBINT not set!");
             textColor(TEXT);
-          #endif
             break;
         }
     }
-
 
     e->idleQH->horizontalPointer = paging_getPhysAddr(e->idleQH) | BIT(1); // Restore link of idleQH to idleQH (endless loop)
     e->tailQH = e->idleQH; // qh done. idleQH is end of Queue again (ring structure of asynchronous schedule)
