@@ -19,23 +19,23 @@ typedef struct
     uint8_t  interrupt    :  1;
     uint16_t bytes        : 15;
     uint16_t dataToggle   :  1;
-} __attribute__((packed)) qtdToken_t;
+} __attribute__((packed)) ehci_qtdToken_t;
 
 typedef struct
 {
-    uint32_t   next;
-    uint32_t   nextAlt;
-    qtdToken_t token;
-    uint32_t   buffer0;
-    uint32_t   buffer1;
-    uint32_t   buffer2;
-    uint32_t   buffer3;
-    uint32_t   buffer4;
-    uint32_t   extend0;
-    uint32_t   extend1;
-    uint32_t   extend2;
-    uint32_t   extend3;
-    uint32_t   extend4;
+    uint32_t        next;
+    uint32_t        nextAlt;
+    ehci_qtdToken_t token;
+    uint32_t        buffer0;
+    uint32_t        buffer1;
+    uint32_t        buffer2;
+    uint32_t        buffer3;
+    uint32_t        buffer4;
+    uint32_t        extend0;
+    uint32_t        extend1;
+    uint32_t        extend2;
+    uint32_t        extend3;
+    uint32_t        extend4;
 } __attribute__((packed)) ehci_qtd_t;
 
 typedef struct ehci_qhd
@@ -68,14 +68,14 @@ typedef struct
 } ehci_transaction_t;
 
 
-void  createQH(ehci_qhd_t* address, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
-ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);
-ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, void** buffer);
+void ehci_createQH(ehci_qhd_t* address, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize);
+ehci_qtd_t* ehci_createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer);
+ehci_qtd_t* ehci_createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, void** buffer);
 
-void addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity);
-void initializeAsyncScheduler(ehci_t* e);
+void ehci_addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity);
+void ehci_initializeAsyncScheduler(ehci_t* e);
 
-uint8_t showStatusbyteQTD(ehci_qtd_t* qTD);
+uint8_t ehci_showStatusbyteQTD(ehci_qtd_t* qTD);
 
 
 #endif

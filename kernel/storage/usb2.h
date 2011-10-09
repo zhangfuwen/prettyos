@@ -125,10 +125,10 @@ void usbTransferString(usb2_Device_t* device);
 void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex);
 void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration);
 uint8_t usbTransferGetConfiguration(usb2_Device_t* device);
-uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize);
+uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint);
 
-void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize);
-void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize);
+void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint);
+void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint);
 
 void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
 void showDevice(usb2_Device_t* usbDev);

@@ -284,7 +284,8 @@ void ohci_resetHC(ohci_t* o)
   #endif
 
     // Set HcInterruptEnable to have all interrupt enabled except Start-of-Frame detect
-    o->OpRegs->HcInterruptDisable = OHCI_INT_MIE;
+    o->OpRegs->HcInterruptDisable = OHCI_INT_SF   | // start of frame
+                                    OHCI_INT_MIE;   // deactivates interrupts
     o->OpRegs->HcInterruptStatus  = ~0;
     o->OpRegs->HcInterruptEnable  = OHCI_INT_SO   | // scheduling overrun
                                     OHCI_INT_WDH  | // write back done head
@@ -293,8 +294,7 @@ void ohci_resetHC(ohci_t* o)
                                     OHCI_INT_FNO  | // frame number overflow
                                     OHCI_INT_RHSC | // root hub status change
                                     OHCI_INT_OC   | // ownership change
-                                    OHCI_INT_SF   | // start of frame
-                                    OHCI_INT_MIE;   // (de)activates interrupts
+                                    OHCI_INT_MIE;   // activates interrupts
 
     o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_PLE | OHCI_CTRL_IE | OHCI_CTRL_BLE);  // de-activate bulk, periodical and isochronous transfers
 
@@ -612,11 +612,6 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
         printf("Scheduling overrun.");
     }
 
-    if (val & OHCI_INT_SF) // start of frame
-    {
-        // ???
-    }
-
     if (val & OHCI_INT_RD) // resume detected
     {
         printf("Resume detected.");
@@ -717,10 +712,8 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
       #ifdef _OHCI_DIAGNOSIS_
         showPortList(); // TEST
         showDiskList(); // TEST
-      #endif
 
         // device, interface, endpoints
-      #ifdef _OHCI_DIAGNOSIS_
         textColor(HEADLINE);
         printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
                                                 device, device->numInterfaceMSD,
@@ -921,13 +914,13 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
         delay(50000); // pause after transfer
 
         // check conditions - do not check the last dummy-TD
-        for (dlelement_t* elem = transfer->transactions->head; elem && elem->next; elem = elem->next) 
+        for (dlelement_t* elem = transfer->transactions->head; elem && elem->next; elem = elem->next)
         {
             ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
             ohci_showStatusbyteQTD(transaction->qTD);
 
             transfer->success = transfer->success && (transaction->qTD->cond == 0);
-        }        
+        }
 
       #ifdef _OHCI_DIAGNOSIS_
         if (!transfer->success)
@@ -950,7 +943,6 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     }
   #endif
 
-    free(transfer->data);
     for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
     {
         ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;

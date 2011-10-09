@@ -248,7 +248,7 @@ uint8_t usbTransferGetConfiguration(usb2_Device_t* device)
 
 // new control transfer as TEST /////////////////////////////////////////////////
 // seems not to work correct, does not set HALT ???
-void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize)
+void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
@@ -257,7 +257,7 @@ void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packet
   #endif
 
     usb_transfer_t transfer;
-    usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, packetSize);
+    usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, 64);
     usb_setupTransaction(&transfer, 0, 8, 0x02, 3, 0, 0, endpoint, 0);
     usb_inTransaction(&transfer, 1, 0, 0);
     usb_issueTransfer(&transfer);
@@ -267,7 +267,7 @@ void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packet
   #endif
 }
 
-void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize)
+void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
@@ -276,7 +276,7 @@ void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t pack
   #endif
 
     usb_transfer_t transfer;
-    usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, packetSize);
+    usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, 64);
     usb_setupTransaction(&transfer, 0, 8, 0x02, 1, 0, 0, endpoint, 0);
     usb_inTransaction(&transfer, 1, 0, 0);
     usb_issueTransfer(&transfer);
@@ -286,7 +286,7 @@ void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint, uint32_t pack
   #endif
 }
 
-uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint, uint32_t packetSize)
+uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(YELLOW);
@@ -297,7 +297,7 @@ uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint, uint32_t packetS
     uint16_t status;
 
     usb_transfer_t transfer;
-    usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, packetSize);
+    usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, 64);
     usb_setupTransaction(&transfer, 0, 8, 0x02, 0, 0, 0, endpoint, 2);
     usb_inTransaction(&transfer, 1, &status, 2);
     usb_outTransaction(&transfer, 1, 0, 0);

@@ -272,7 +272,7 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
     SCSIcmd(SCSIcommand, &cbw, LBA, TransferLength);
 
     usb_transfer_t transfer;
-    usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointOut, 512); // CONTROL instead of BULK to avoid slowdown by asyncScheduler. TODO: Improve Scheduler
+    usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointOut, 512);
     usb_outTransaction(&transfer, device->ToggleEndpointOutMSD, &cbw, 31);
     usb_issueTransfer(&transfer);
 
@@ -348,7 +348,7 @@ void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpo
     }
 
     usb_transfer_t transfer;
-    usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointOut, 512); // CONTROL instead of BULK to avoid slowdown by asyncScheduler. TODO: Improve Scheduler
+    usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointOut, 512);
     usb_outTransaction(&transfer, device->ToggleEndpointOutMSD, &cbw, 31);
     usb_outTransaction(&transfer, !device->ToggleEndpointOutMSD, dataBuffer, TransferLength);
     usb_issueTransfer(&transfer);
@@ -661,18 +661,18 @@ void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface, uint32_t end
     usbTransferBulkOnlyMassStorageReset(device, Interface);
 
     // TEST ////////////////////////////////////
-    //usbSetFeatureHALT(device, endpointIN,  512);
-    //usbSetFeatureHALT(device, endpointOUT, 512);
+    //usbSetFeatureHALT(device, endpointIN);
+    //usbSetFeatureHALT(device, endpointOUT);
 
     // Clear Feature HALT to the Bulk-In  endpoint
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 64));
-    usbClearFeatureHALT(device, endpointIN, 64);
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN, 64));
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN));
+    usbClearFeatureHALT(device, endpointIN);
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN));
 
     // Clear Feature HALT to the Bulk-Out endpoint
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT, 64));
-    usbClearFeatureHALT(device, endpointOUT, 64);
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT, 64));
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT));
+    usbClearFeatureHALT(device, endpointOUT);
+    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT));
 
     // set configuration to 1 and endpoint IN/OUT toggles to 0
     usbTransferSetConfiguration(device, 1); // set first configuration

@@ -5,7 +5,7 @@
 
 
 // Additional features (Should be enabled per default)
-/// #define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
+#define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
 #define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
 #define _SERIAL_LOG_           // Enables log information over the COM-Ports
 #define _EHCI_ENABLE_          // EHCI will be installed, if this is defined, otherwise not
@@ -16,7 +16,8 @@
 /// #define _DIAGNOSIS_            // General diagnosis output - activates prints to the screen about some details and memory use
 /// #define _TASKING_DIAGNOSIS_    // Diagnosis output about tasking and scheduler
 /// #define _PAGING_DIAGNOSIS_     // Diagnosis output about PD, PT etc.
-/// #define _MALLOC_FREE_          // Shows information about malloc/free and heap expansion
+/// #define _MALLOC_FREE_LOG_      // Shows information about malloc/free and heap expansion
+/// #define _BROKENFREE_DIAGNOSIS_ // Shows file and line when a broken free occurs
 /// #define _MEMLEAK_FIND_         // Counter of all (successful) malloc and free calls showing memory leaks in info bar2
 /// #define _VM_DIAGNOSIS_         // Information about the vm86 task, but critical
 /// #define _VBE_DEBUG_            // Debug output of the VBE driver
@@ -27,7 +28,7 @@
 /// #define _UHCI_DIAGNOSIS_       // Debug UHCI
 /// #define _EHCI_DIAGNOSIS_       // Debug EHCI
 /// #define _USB_DIAGNOSIS_        // Debug USB transfers
-/// #define _USB_TRANSFER_DIAGNOSIS_   // Debug USB transfers and transactions
+/// #define _USB_TRANSFER_DIAGNOSIS_ // Debug USB transfers and transactions
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)
 /// #define _RAMDISK_DIAGNOSIS_    // Information about the ramdisk
 /// #define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/32

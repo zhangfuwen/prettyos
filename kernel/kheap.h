@@ -5,9 +5,14 @@
 
 
 void  heap_install();
-void* malloc(uint32_t size, uint32_t alignment, char* comment);
-void  free(void* mem);
 void  heap_logRegions();
+void* malloc(uint32_t size, uint32_t alignment, char* comment);
+#ifdef _BROKENFREE_DIAGNOSIS_
+void f_free(void* addr, const char* file, size_t line);
+#define free(addr) f_free(addr, __FILE__, __LINE__);
+#else
+void free(void* addr);
+#endif
 
 
 #endif

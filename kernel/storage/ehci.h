@@ -196,7 +196,7 @@ void ehci_resetPort(ehci_t* e, uint8_t port);
 void ehci_portCheck();
 
 void ehci_setupUSBDevice(ehci_t* e, uint8_t portNumber);
-void showUSBSTS(ehci_t* e);
+void ehci_showUSBSTS(ehci_t* e);
 
 
 void ehci_setupTransfer(usb_transfer_t* transfer);

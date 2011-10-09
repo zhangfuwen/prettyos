@@ -84,13 +84,13 @@ void ehci_start()
     if (!(e->OpRegs->USBSTS & STS_HCHALTED))
     {
         ehci_enablePorts(e);
-        initializeAsyncScheduler(e);
+        ehci_initializeAsyncScheduler(e);
     }
     else
     {
         textColor(ERROR);
         printf("\nFatal Error: HCHalted set. Ports cannot be enabled.");
-        showUSBSTS(e);
+        ehci_showUSBSTS(e);
     }
 
     textColor(LIGHT_MAGENTA);
@@ -391,7 +391,7 @@ void ehci_resetPort(ehci_t* e, uint8_t j)
     {
         textColor(ERROR);
         printf("\nHCHalted set to 1 (Not OK!)");
-        showUSBSTS(e);
+        ehci_showUSBSTS(e);
         textColor(TEXT);
     }
 
@@ -515,6 +515,7 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
     if (val & STS_ASYNC_INT)
     {
         e->USBasyncIntFlag = true;
+        e->OpRegs->USBCMD |= CMD_ASYNCH_INT_DOORBELL; // Activate Doorbell: We would like to receive an asynchronous schedule interrupt
       #ifdef _EHCI_DIAGNOSIS_
         textColor(YELLOW);
         printf("Interrupt on Async Advance");
@@ -684,7 +685,7 @@ void ehci_setupUSBDevice(ehci_t* e, uint8_t portNumber)
     }
 }
 
-void showUSBSTS(ehci_t* e)
+void ehci_showUSBSTS(ehci_t* e)
 {
   #ifdef _EHCI_DIAGNOSIS_
     textColor(HEADLINE);
@@ -720,7 +721,7 @@ void ehci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransac
     ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
     eTransaction->inBuffer = 0;
     eTransaction->inLength = 0;
-    eTransaction->qTD = createQTD_SETUP(1, toggle, tokenBytes, type, req, hiVal, loVal, index, length, &eTransaction->qTDBuffer);
+    eTransaction->qTD = ehci_createQTD_SETUP(1, toggle, tokenBytes, type, req, hiVal, loVal, index, length, &eTransaction->qTDBuffer);
     if(transfer->transactions->tail)
     {
         ehci_transaction_t* eLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
@@ -733,7 +734,7 @@ void ehci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransactio
     ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
     eTransaction->inBuffer = buffer;
     eTransaction->inLength = length;
-    eTransaction->qTD = createQTD_IO(1, 1, toggle, length, &eTransaction->qTDBuffer);
+    eTransaction->qTD = ehci_createQTD_IO(1, 1, toggle, length, &eTransaction->qTDBuffer);
     if(transfer->transactions->tail)
     {
         ehci_transaction_t* eLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
@@ -746,7 +747,7 @@ void ehci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransacti
     ehci_transaction_t* eTransaction = uTransaction->data = malloc(sizeof(ehci_transaction_t), 0, "ehci_transaction_t");
     eTransaction->inBuffer = 0;
     eTransaction->inLength = 0;
-    eTransaction->qTD = createQTD_IO(1, 0, toggle, length, &eTransaction->qTDBuffer);
+    eTransaction->qTD = ehci_createQTD_IO(1, 0, toggle, length, &eTransaction->qTDBuffer);
     if(buffer != 0 && length != 0)
         memcpy(eTransaction->qTDBuffer, buffer, length);
     if(transfer->transactions->tail)
@@ -761,24 +762,24 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
     ehci_t* e = ((ehci_port_t*)transfer->HC->data)->ehci;
 
     ehci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
-    createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD, 0, ((ehci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
+    ehci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD, 0, ((ehci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
 
     for(uint8_t i = 0; i < NUMBER_OF_EHCI_ASYNCLIST_RETRIES && !transfer->success; i++)
     {
         if(transfer->type == USB_CONTROL)
         {
-            addToAsyncScheduler(e, transfer, 0);
+            ehci_addToAsyncScheduler(e, transfer, 0);
         }
         else
         {
-            addToAsyncScheduler(e, transfer, 1 + transfer->packetSize/200);
+            ehci_addToAsyncScheduler(e, transfer, 1 + transfer->packetSize/200);
         }
 
         transfer->success = true;
         for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
             ehci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-            uint8_t status = showStatusbyteQTD(transaction->qTD);
+            uint8_t status = ehci_showStatusbyteQTD(transaction->qTD);
             transfer->success = transfer->success && (status == 0 || status == BIT(0));
         }
 

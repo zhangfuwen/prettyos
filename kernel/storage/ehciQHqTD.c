@@ -16,26 +16,26 @@
 // Queue Head (QH) //
 /////////////////////
 
-void createQH(ehci_qhd_t* head, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
+void ehci_createQH(ehci_qhd_t* head, uint32_t horizPtr, ehci_qtd_t* firstQTD, uint8_t H, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
     memset(head, 0, sizeof(ehci_qhd_t));
-                                                    // bit 31:5 Horizontal Link Pointer, bit 4:3 reserved,
-    head->horizontalPointer     =   horizPtr | 0x2; // bit 2:1  type:  00b iTD,   01b QH,   10b siTD,   11b FSTN
-                                                    // bit 0    T-Bit: is set to zero
-    head->deviceAddress         =   device;         // The device address
-    head->inactive              =   0;
-    head->endpoint              =   endpoint;       // endpoint 0 contains Device infos such as name
-    head->endpointSpeed         =   2;              // 00b = full speed; 01b = low speed; 10b = high speed
-    head->dataToggleControl     =   1;              // get the Data Toggle bit out of the included qTD
-    head->H                     =   H;              // mark a queue head as being the head of the reclaim list
-    head->maxPacketLength       =   packetSize;     // 64 byte for a control transfer to a high speed device
-    head->controlEndpointFlag   =   0;              // only used if endpoint is a control endpoint and not high speed
-    head->nakCountReload        =   0;              // this value is used by EHCI to reload the Nak Counter field. 0=ignores NAK counter.
-    head->interruptScheduleMask =   0;              // not used for async schedule
-    head->splitCompletionMask   =   0;              // unused if (not low/full speed and in periodic schedule)
-    head->hubAddr               =   0;              // unused if high speed (Split transfer)
-    head->portNumber            =   0;              // unused if high speed (Split transfer)
-    head->mult                  =   1;              // 1-3 transaction per micro-frame, 0 means undefined results
+                                                  // bit 31:5 Horizontal Link Pointer, bit 4:3 reserved,
+    head->horizontalPointer     = horizPtr | 0x2; // bit 2:1  type:  00b iTD,   01b QH,   10b siTD,   11b FSTN
+                                                  // bit 0    T-Bit: is set to zero
+    head->deviceAddress         = device;         // The device address
+    head->inactive              = 0;
+    head->endpoint              = endpoint;       // endpoint 0 contains Device infos such as name
+    head->endpointSpeed         = 2;              // 00b = full speed; 01b = low speed; 10b = high speed
+    head->dataToggleControl     = 1;              // get the Data Toggle bit out of the included qTD
+    head->H                     = H;              // mark a queue head as being the head of the reclaim list
+    head->maxPacketLength       = packetSize;     // 64 byte for a control transfer to a high speed device
+    head->controlEndpointFlag   = 0;              // only used if endpoint is a control endpoint and not high speed
+    head->nakCountReload        = 0;              // this value is used by EHCI to reload the Nak Counter field. 0=ignores NAK counter.
+    head->interruptScheduleMask = 0;              // not used for async schedule
+    head->splitCompletionMask   = 0;              // unused if (not low/full speed and in periodic schedule)
+    head->hubAddr               = 0;              // unused if high speed (Split transfer)
+    head->portNumber            = 0;              // unused if high speed (Split transfer)
+    head->mult                  = 1;              // 1-3 transaction per micro-frame, 0 means undefined results
     if (firstQTD == 0)
         head->qtd.next = 0x1;
     else
@@ -55,6 +55,11 @@ static ehci_qtd_t* allocQTD(uintptr_t next)
         td->next = paging_getPhysAddr((void*)next);
     else
         td->next = 0x1;
+    td->nextAlt            = 0x1;  // No alternate next, so T-Bit is set to 1
+    td->token.status       = 0x80; // This will be filled by the Host Controller. Active bit set
+    td->token.errorCounter = 0x0;  // Written by the Host Controller.
+    td->token.currPage     = 0x0;  // Start with first page. After that it's written by Host Controller???
+    td->token.interrupt    = 0x1;  // We want an interrupt after complete transfer
 
     return td;
 }
@@ -69,18 +74,13 @@ static void* allocQTDbuffer(ehci_qtd_t* td)
     return data;
 }
 
-ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer)
+ehci_qtd_t* ehci_createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length, void** buffer)
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
-    td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = SETUP;      // SETUP = 2
-    td->token.errorCounter = 0x0;        // Written by the Host Controller.
-    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
-    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
-    td->token.bytes        = tokenBytes; // dependent on transfer
-    td->token.dataToggle   = toggle;     // Should be toggled every list entry
+    td->token.pid        = SETUP;      // SETUP = 2
+    td->token.bytes      = tokenBytes; // dependent on transfer
+    td->token.dataToggle = toggle;     // Should be toggled every list entry
 
     usb_request_t* request = *buffer = allocQTDbuffer(td);
     request->type    = type;
@@ -93,18 +93,13 @@ ehci_qtd_t* createQTD_SETUP(uintptr_t next, bool toggle, uint32_t tokenBytes, ui
     return td;
 }
 
-ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, void** buffer)
+ehci_qtd_t* ehci_createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, void** buffer)
 {
     ehci_qtd_t* td = allocQTD(next);
 
-    td->nextAlt            = 0x1;        // No alternate next, so T-Bit is set to 1
-    td->token.status       = 0x80;       // This will be filled by the Host Controller
-    td->token.pid          = direction;  // OUT = 0, IN = 1
-    td->token.errorCounter = 0x0;        // Written by the Host Controller.
-    td->token.currPage     = 0x0;        // Start with first page. After that it's written by Host Controller???
-    td->token.interrupt    = 0x1;        // We want an interrupt after complete transfer
-    td->token.bytes        = tokenBytes; // dependent on transfer
-    td->token.dataToggle   = toggle;     // Should be toggled every list entry
+    td->token.pid        = direction;  // OUT = 0, IN = 1
+    td->token.bytes      = tokenBytes; // dependent on transfer
+    td->token.dataToggle = toggle;     // Should be toggled every list entry
 
     *buffer = allocQTDbuffer(td);
 
@@ -116,7 +111,7 @@ ehci_qtd_t* createQTD_IO(uintptr_t next, uint8_t direction, bool toggle, uint32_
 // analysis tools //
 ////////////////////
 
-uint8_t showStatusbyteQTD(ehci_qtd_t* qTD)
+uint8_t ehci_showStatusbyteQTD(ehci_qtd_t* qTD)
 {
     if (qTD->token.status != 0x00)
     {
@@ -143,7 +138,7 @@ uint8_t showStatusbyteQTD(ehci_qtd_t* qTD)
 // Asynchronous schedule traversal //
 /////////////////////////////////////
 
-void enableAsyncScheduler(ehci_t* e)
+static void enableAsyncScheduler(ehci_t* e)
 {
     e->OpRegs->USBCMD |= CMD_ASYNCH_ENABLE;
 
@@ -170,15 +165,15 @@ void enableAsyncScheduler(ehci_t* e)
     }
 }
 
-void initializeAsyncScheduler(ehci_t* e)
+void ehci_initializeAsyncScheduler(ehci_t* e)
 {
     e->idleQH = e->tailQH = malloc(sizeof(ehci_qhd_t), 32, "EHCI-QH");
-    createQH(e->idleQH, paging_getPhysAddr(e->idleQH), 0, 1, 0, 0, 0);
+    ehci_createQH(e->idleQH, paging_getPhysAddr(e->idleQH), 0, 1, 0, 0, 0);
     e->OpRegs->ASYNCLISTADDR = paging_getPhysAddr(e->idleQH);
     enableAsyncScheduler(e);
 }
 
-void addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity)
+void ehci_addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity)
 {
     e->USBasyncIntFlag = false;
     e->USBINTflag = false;
@@ -192,6 +187,7 @@ void addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity)
 
     e->tailQH->horizontalPointer = paging_getPhysAddr(e->idleQH) | BIT(1); // Create ring. Link new QH with idleQH (always head of Queue)
     oldTailQH->horizontalPointer = paging_getPhysAddr(e->tailQH) | BIT(1); // Insert qh to Queue as element behind old queue head
+
 
     uint32_t timeout = 10 * velocity + 25; // Wait up to 250+100*velocity milliseconds for e->USBasyncIntFlag to be set
     while (!e->USBasyncIntFlag && timeout > 0)
@@ -215,36 +211,54 @@ void addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t velocity)
         textColor(TEXT);
     }
 
+
     timeout = 10 * velocity + 25; // Wait up to 100*velocity + 250 milliseconds for all transfers to be finished
-    
-    while (timeout > 0)
+    while(timeout > 0)
     {
-		bool b = true;
-		
-        for (dlelement_t* elem = transfer->transactions->head; b && elem; elem = elem->next)
-		{
-			ehci_transaction_t* eT = ((usb_transaction_t*)elem->data)->data;
-			b = b && !(eT->qTD->token.status & BIT(7));
-		}
-		
-        if(b)
+        bool b = true;
+        for(dlelement_t* elem = transfer->transactions->head; b && elem; elem = elem->next)
         {
-			break;
+            ehci_transaction_t* eT = ((usb_transaction_t*)elem->data)->data;
+            b = b && !(eT->qTD->token.status & BIT(7));
         }
-        
+        if(b)
+            break;
         sleepMilliSeconds(10);
         timeout--;
     }
-    
     if(timeout == 0)
     {
         textColor(ERROR);
         printf("\nEHCI: Timeout!");
         textColor(TEXT);
     }
-    
 
-    timeout=20;            // Wait for e->USBINTflag to be setja
+    /* TODO: Why does this optimized loop not work?
+    timeout = 10 * velocity + 25; // Wait up to  100*velocity + 250 milliseconds for all transfers to be finished
+    dlelement_t* dlE = transfer->transactions->head;
+    while(dlE && timeout > 0)
+    {
+        ehci_transaction_t* eT = ((usb_transaction_t*)dlE->data)->data;
+        while(!(eT->qTD->token.status & BIT(7)))
+        {
+            dlE = dlE->next;
+            if(dlE == 0)
+                goto done;
+            eT = dlE->data;
+        }
+        sleepMilliSeconds(10);
+        timeout--;
+    }
+    if(timeout == 0)
+    {
+        textColor(ERROR);
+        printf("\nEHCI: Timeout!");
+        textColor(TEXT);
+    }
+    done:*/
+
+
+    timeout = 10; // Wait for e->USBINTflag to be set
     while (!e->USBINTflag) // set by interrupt
     {
         timeout--;

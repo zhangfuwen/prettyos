@@ -96,7 +96,7 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
     {
         regions[regionCount].reserved = false;
         regions[regionCount].size = size;
-      #ifdef _MALLOC_FREE_
+      #ifdef _MALLOC_FREE_LOG_
         strcpy(regions[regionCount].comment, "free");
         regions[regionCount].number=0;
       #endif
@@ -185,7 +185,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 // Setup the regions
                 regions[i].size     = alignedAddress - regionAddress;
                 regions[i].reserved = false;
-              #ifdef _MALLOC_FREE_
+              #ifdef _MALLOC_FREE_LOG_
                 strcpy(regions[i].comment, "free");
               #endif
 
@@ -214,7 +214,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 // Setup the regions
                 regions[i+1].size     = regions[i].size - size;
                 regions[i+1].reserved = false;
-              #ifdef _MALLOC_FREE_
+              #ifdef _MALLOC_FREE_LOG_
                 strcpy(regions[i+1].comment, "free");
                 regions[i+1].number=0;
               #endif
@@ -234,7 +234,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             counter++;
             writeInfo(2, "Malloc - free: %u", counter);
           #endif
-          #ifdef _MALLOC_FREE_
+          #ifdef _MALLOC_FREE_LOG_
             textColor(YELLOW);
             task_switching = false;
             printf("\nmalloc: %Xh %s", regionAddress, comment);
@@ -265,7 +265,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     }
     else
     {
-      #ifdef _MALLOC_FREE_
+      #ifdef _MALLOC_FREE_LOG_
         textColor(YELLOW);
         task_switching = false;
         printf("\nheap expanded: %Xh heap end: %Xh", sizeToGrow, (uintptr_t)(heapStart + (uintptr_t)heapSize));
@@ -281,9 +281,13 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
 }
 
 
+#ifdef _BROKENFREE_DIAGNOSIS_
+void f_free(void* addr, const char* file, size_t line)
+#else
 void free(void* addr)
+#endif
 {
-  #ifdef _MALLOC_FREE_
+  #ifdef _MALLOC_FREE_LOG_
     textColor(LIGHT_GRAY);
     task_switching = false;
     printf("\nfree:   %Xh", addr);
@@ -306,7 +310,7 @@ void free(void* addr)
     {
         if (regionAddress == addr)
         {
-          #ifdef _MALLOC_FREE_
+          #ifdef _MALLOC_FREE_LOG_
             textColor(LIGHT_GRAY);
             task_switching = false;
             printf(" %s", regions[i].comment);
@@ -351,7 +355,11 @@ void free(void* addr)
     mutex_unlock(mutex);
 
     textColor(ERROR);
-    printf("Broken free: %Xh\n", addr);
+  #ifdef _BROKENFREE_DIAGNOSIS_
+    printf("\nBroken free (file: %s, line: %u, addr: %Xh)", file, line, addr);
+  #else
+    printf("\nBroken free: %Xh", addr);
+  #endif
     textColor(TEXT);
 }
 
