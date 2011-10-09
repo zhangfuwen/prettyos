@@ -397,7 +397,7 @@ void ehci_resetPort(ehci_t* e, uint8_t j)
 
     e->OpRegs->USBINTR = 0;
     e->OpRegs->PORTSC[j] |=  PSTS_PORT_RESET; // start reset sequence
-    sleepMilliSeconds(250);                   // do not delete this wait
+    sleepMilliSeconds(100);                   // do not delete this wait (freeBSD: 250 ms, spec: 50 ms)
     e->OpRegs->PORTSC[j] &= ~PSTS_PORT_RESET; // stop reset sequence
 
     // wait and check, whether really zero

@@ -897,11 +897,11 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
         printf("\ntransfer try = %u\n", i);
       #endif
 
-        uintptr_t qTD[3];
-        uint8_t cond[3];
-        cond[0]=cond[1]=cond[2]=0;
-        uint8_t tdNumber = 0;
         transfer->success = true;
+
+        o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
+        o->pED[i]->tdQueueHead &= ~0x1; // reset Halted Bit
+        o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////
 
       #ifdef _OHCI_DIAGNOSIS_
         printf("\nNumber of TD elements (incl. dummy-TD): %u", list_getCount(transfer->transactions));
@@ -909,34 +909,25 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
 
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
-            // printf("\nTD %u: ", tdNumber);
-            ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-            o->OpRegs->HcCommandStatus |= (OHCI_STATUS_CLF | OHCI_STATUS_BLF); // control and bulk lists filled
-            o->pED[i]->tdQueueHead &= ~0x1; // reset Halted Bit
-
             while((o->OpRegs->HcFmRemaining & 0x3FFF) < 16000) { /* wait for nearly full frame time */ }
-
-            o->OpRegs->HcControl |=  (OHCI_CTRL_CLE | OHCI_CTRL_BLE); // activate control and bulk transfers ////////////////////// S T A R T /////////////////
 
           #ifdef _OHCI_DIAGNOSIS_
             printf(" remaining time: %u  frame number: %u", o->OpRegs->HcFmRemaining & 0x3FFF, o->OpRegs->HcFmNumber);
           #endif
 
-            qTD[tdNumber] = (uintptr_t)transaction->qTD;
-            tdNumber++;
-
-            delay(50000); // wait time after transaction
+            delay(50000); // pause after transaction
         }
 
-        delay(50000); // wait time after transfer
+        delay(50000); // pause after transfer
 
-        // check conditions
-        for (uint8_t c=0; c<(tdNumber-1); c++)
+        // check conditions - do not check the last dummy-TD
+        for (dlelement_t* elem = transfer->transactions->head; elem && elem->next; elem = elem->next) 
         {
-            ohci_showStatusbyteQTD((ohciTD_t*)qTD[c]);
-            cond[c] = (((ohciTD_t*)qTD[c])->cond);
-        }
-        transfer->success = transfer->success && (cond[0] == 0) && (cond[1] == 0) && (cond[2] == 0); // status (TD: condition)
+            ohci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+            ohci_showStatusbyteQTD(transaction->qTD);
+
+            transfer->success = transfer->success && (transaction->qTD->cond == 0);
+        }        
 
       #ifdef _OHCI_DIAGNOSIS_
         if (!transfer->success)
