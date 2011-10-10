@@ -86,18 +86,27 @@
 // Status bits that are cleared by setting to 1
 #define UHCI_PCI_LEGACY_SUPPORT_STATUS   0x8F00
 
+
 /* ***** */
 /* QH TD */
 /* ***** */
 
-#define BIT_T    0x01 // bit 0
-#define BIT_QH   0x02 // bit 1
+#define BIT_T    BIT(0)
+#define BIT_QH   BIT(1)
 
+/*
+Packet Identification (PID). This field contains the Packet ID to be used for this transaction. Only
+the IN (69h), OUT (E1h), and SETUP (2Dh) tokens are allowed. Any other value in this field causes
+a consistency check failure resulting in an immediate halt of the Host Controller. Bits [3:0] are
+complements of bits [7:4].
+*/
+#define UHCI_TD_SETUP  0x2D  // 00101101
+#define UHCI_TD_IN     0x69  // 11100001
+#define UHCI_TD_OUT    0xE1  // 11100001
 
 // Transfer Descriptors (TD) are always aligned on 16-byte boundaries.
 // All transfer descriptors have the same basic, 32-byte structure.
 // The last 4 DWORDs are for software use.
-
 typedef struct uhci_td
 {
     // pointer to another TD or QH
@@ -176,9 +185,7 @@ typedef struct uhci
 {
     pciDev_t*      PCIdevice;           // PCI device
     uint16_t       bar;                 // start of I/O space (base address register
-    uintptr_t      framelistAddrPhys;   // physical adress of frame list
     frPtr_t*       framelistAddrVirt;   // virtual adress of frame list
-    uintptr_t      qhPointerPhys;       // physical address of QH
     uhciQH_t*      qhPointerVirt;       // virtual adress of QH
     uint8_t        rootPorts;           // number of rootports
     size_t         memSize;             // memory size of IO space
@@ -200,9 +207,9 @@ void uhci_resetPort(uhci_t* u, uint8_t port);
 void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber);
 
 void uhci_setupTransfer(usb_transfer_t* transfer);
-void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length);
-void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length);
-void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length);
+void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length);
+void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length);
+void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length);
 void uhci_issueTransfer(usb_transfer_t* transfer);
 
 uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer);

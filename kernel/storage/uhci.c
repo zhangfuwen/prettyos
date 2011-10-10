@@ -177,7 +177,6 @@ void uhci_resetHC(uhci_t* u)
 
     // frame list
     u->framelistAddrVirt = (frPtr_t*)malloc(PAGESIZE, PAGESIZE, "uhci-framelist");
-    u->framelistAddrPhys = paging_getPhysAddr((void*)u->framelistAddrVirt);
     // TODO: mutex for frame list
 
 
@@ -208,20 +207,21 @@ void uhci_resetHC(uhci_t* u)
     tdOut->active    = 1;
     tdOut->intOnComplete = 1;
 */
-    uhciQH_t* qhIn   = malloc(sizeof(uhciQH_t),PAGESIZE,"uhci-QH");
-    qhIn->next       = BIT_T;
-    qhIn->transfer   = BIT_T;
-    qhIn->q_first    = 0;
-    qhIn->q_last     = 0;
-
+    uhciQH_t* qh     = malloc(sizeof(uhciQH_t),PAGESIZE,"uhci-QH");
+    qh->next         = BIT_T;
+    qh->transfer     = BIT_T;
+    qh->q_first      = 0;
+    qh->q_last       = 0;
+    u->qhPointerVirt = qh;
+        
     for (uint16_t i=0; i<1024; i++)
     {
-       u->framelistAddrVirt->frPtr[i] = paging_getPhysAddr(qhIn) | BIT_QH;
+       u->framelistAddrVirt->frPtr[i] = paging_getPhysAddr(qh) | BIT_QH;
     }
 
     // define each millisecond one frame, provide physical address of frame list, and start at frame 0
     outportb(u->bar + UHCI_SOFMOD, 0x40); // SOF cycle time: 12000. For a 12 MHz SOF counter clock input, this produces a 1 ms Frame period.
-    outportl(u->bar + UHCI_FRBASEADD, u->framelistAddrPhys);
+    outportl(u->bar + UHCI_FRBASEADD, paging_getPhysAddr((void*)u->framelistAddrVirt));
     outportw(u->bar + UHCI_FRNUM, 0x0000);
 
     // set PIRQ
@@ -562,27 +562,88 @@ typedef struct
 
 void uhci_setupTransfer(usb_transfer_t* transfer)
 {
-
+    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci; // HC
+    transfer->data = u->qhPointerVirt; // QH
+ 
+    // stop scheduler?    
 }
 
-void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
+void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
 {
+    uhci_transaction_t* uhciTransaction = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
+    uhciTransaction->inBuffer = 0;
+    uhciTransaction->inLength = 0;
 
+    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
+
+    uhciTransaction->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uhciTransaction->TDBuffer);
+
+  #ifdef _UHCI_DIAGNOSIS_
+    usb_request_t* request = (usb_request_t*)uhciTransaction->TDBuffer;
+    printf("\ntype: %u req: %u valHi: %u valLo: %u i: %u len: %u", request->type, request->request, request->valueHi, request->valueLo, request->index, request->length);
+  #endif
+
+    if (transfer->transactions->tail)
+    {
+        uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+        uhciLastTransaction->TD->next = paging_getPhysAddr(uhciTransaction->TD); // build TD queue
+    }
 }
 
-void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length)
+void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length)
 {
+    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
+    uhci_transaction_t* uhciTransaction = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
+    uhciTransaction->inBuffer = buffer;
+    uhciTransaction->inLength = length;
 
+    //uhciTransaction->TDBuffer = u->...;
+    uhciTransaction->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length);
+
+    if (transfer->transactions->tail)
+    {
+        uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+        uhciLastTransaction->TD->next = paging_getPhysAddr(uhciTransaction->TD); // build TD queue
+    }
 }
 
-void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length)
+void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length)
 {
+    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
+    uhci_transaction_t* uhciTransaction = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
+    uhciTransaction->inBuffer = 0;
+    uhciTransaction->inLength = 0;
 
+    //uhciTransaction->TDBuffer = u->...;
+    uhciTransaction->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length);
+
+    if (buffer != 0 && length != 0)
+    {
+        memcpy(uhciTransaction->TDBuffer, buffer, length);
+    }
+    
+    if (transfer->transactions->tail)
+    {
+        uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+        uhciLastTransaction->TD->next = paging_getPhysAddr(uhciTransaction->TD); // build TD queue
+    }
 }
 
 void uhci_issueTransfer(usb_transfer_t* transfer)
 {
+    //
+    //
 
+    delay(50000); // pause after transfer
+
+    // check conditions - do not check the last dummy-TD
+    for (dlelement_t* elem = transfer->transactions->head; elem && elem->next; elem = elem->next)
+    {
+        uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+        uhci_showStatusbyteTD(transaction->TD);
+
+        transfer->success = transfer->success && (transaction->TD->active == 0); // executed (errorfree?)
+    }
 }
 
 
