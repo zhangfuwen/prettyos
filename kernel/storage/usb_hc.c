@@ -99,7 +99,7 @@ void usb_setupTransfer(port_t* device, usb_transfer_t* transfer, usb_tranferType
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        printf("\nThis feature is not yet implemented.");
+        uhci_setupTransfer(transfer);
     }
     else
     {
@@ -122,7 +122,7 @@ void usb_setupTransaction(usb_transfer_t* transfer, bool toggle, uint32_t tokenB
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        printf("\nThis feature is not yet implemented.");
+        uhci_setupTransaction(transfer, transaction, toggle, tokenBytes, type, req, hiVal, loVal, index, length);
     }
     else
     {
@@ -146,7 +146,7 @@ void usb_inTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        printf("\nThis feature is not yet implemented.");
+        uhci_inTransaction(transfer, transaction, toggle, buffer, length);
     }
     else
     {
@@ -170,7 +170,7 @@ void usb_outTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, siz
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        printf("\nThis feature is not yet implemented.");
+        uhci_outTransaction(transfer, transaction, toggle, buffer, length);
     }
     else
     {
@@ -192,7 +192,7 @@ void usb_issueTransfer(usb_transfer_t* transfer)
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        printf("\nThis feature is not yet implemented.");
+        uhci_issueTransfer(transfer);
     }
     else
     {

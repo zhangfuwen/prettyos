@@ -5,9 +5,10 @@
 #include "pci.h"
 #include "synchronisation.h"
 #include "devicemanager.h"
+#include "usb_hc.h"
 
 #define UHCIMAX      8  // max number of UHCI devices
-#define UHCIPORTMAX  4  // max number of UHCI device ports
+#define UHCIPORTMAX  8  // max number of UHCI device ports
 
 #define UHCI_USBCMD         0x00
 #define UHCI_USBSTS         0x02
@@ -137,7 +138,7 @@ typedef struct uhci_td
     uint32_t         dWord5; // ?
     uint32_t         dWord6; // ?
     uint32_t         dWord7; // ?
-  } __attribute__((packed)) uhci_TD_t;
+  } __attribute__((packed)) uhciTD_t;
 
 // Queue Heads support the requirements of Control, Bulk, and Interrupt transfers
 // and must be aligned on a 16-byte boundary
@@ -152,9 +153,9 @@ typedef struct
     uint32_t   transfer;
 
     // TDs
-    uhci_TD_t* q_first;
-    uhci_TD_t* q_last;
-} __attribute__((packed)) uhci_QH_t;
+    uhciTD_t* q_first;
+    uhciTD_t* q_last;
+} __attribute__((packed)) uhciQH_t;
 
 typedef struct
 {
@@ -178,7 +179,7 @@ typedef struct uhci
     uintptr_t      framelistAddrPhys;   // physical adress of frame list
     frPtr_t*       framelistAddrVirt;   // virtual adress of frame list
     uintptr_t      qhPointerPhys;       // physical address of QH
-    uhci_QH_t*     qhPointerVirt;       // virtual adress of QH
+    uhciQH_t*      qhPointerVirt;       // virtual adress of QH
     uint8_t        rootPorts;           // number of rootports
     size_t         memSize;             // memory size of IO space
     mutex_t*       framelistLock;       // mutex for access on the frame list
@@ -198,5 +199,16 @@ void uhci_enablePorts(uhci_t* u);
 void uhci_resetPort(uhci_t* u, uint8_t port);
 void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber);
 
+void uhci_setupTransfer(usb_transfer_t* transfer);
+void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length);
+void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length);
+void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length);
+void uhci_issueTransfer(usb_transfer_t* transfer);
+
+uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer);
+uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
+void      uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD, uint32_t device, uint32_t endpoint, uint32_t packetSize);
+
+void uhci_showStatusbyteTD(uhciTD_t* TD);
 
 #endif

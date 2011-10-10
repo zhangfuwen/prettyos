@@ -13,9 +13,7 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-//#define UHCI_SCENARIO // qh/td experiments
-
-#define UHCI_USB_TRANSFER
+#define UHCI_USB_TRANSFER 
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -183,12 +181,12 @@ void uhci_resetHC(uhci_t* u)
     // TODO: mutex for frame list
 
 
-#ifdef UHCI_SCENARIO
-    uhci_QH_t* qhIn  = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
-    uhci_QH_t* qhOut = malloc(sizeof(uhci_QH_t),16,"uhci-QH");
+/*
+    uhciQH_t* qhIn  = malloc(sizeof(uhciQH_t),16,"uhci-QH");
+    uhciQH_t* qhOut  = malloc(sizeof(uhciQH_t),16,"uhci-QH");
 
-    uhci_TD_t* tdIn  = malloc(sizeof(uhci_TD_t),16,"uhci-TD");
-    uhci_TD_t* tdOut = malloc(sizeof(uhci_TD_t),16,"uhci-TD");
+    uhciTD_t* tdIn  = malloc(sizeof(uhciTD_t),16,"uhci-TD");
+    uhciTD_t* tdOut = malloc(sizeof(uhciTD_t),16,"uhci-TD");
 
     qhIn->next       = paging_getPhysAddr((void*)qhOut)| BIT_QH;
     qhIn->transfer   = paging_getPhysAddr((void*)tdIn);
@@ -209,15 +207,12 @@ void uhci_resetHC(uhci_t* u)
     tdOut->buffer    = paging_getPhysAddr(malloc(0x1000,0,"uhci-TDbuffer"));
     tdOut->active    = 1;
     tdOut->intOnComplete = 1;
-#else
-    uhci_QH_t* qhIn  = malloc(sizeof(uhci_QH_t),PAGESIZE,"uhci-QH");
+*/
+    uhciQH_t* qhIn   = malloc(sizeof(uhciQH_t),PAGESIZE,"uhci-QH");
     qhIn->next       = BIT_T;
     qhIn->transfer   = BIT_T;
     qhIn->q_first    = 0;
     qhIn->q_last     = 0;
-#endif
-
-    // ---------------------------
 
     for (uint16_t i=0; i<1024; i++)
     {
@@ -251,6 +246,7 @@ void uhci_resetHC(uhci_t* u)
   #endif
 
     u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
+    
     if (!(inportw(u->bar + UHCI_USBSTS) & UHCI_STS_HCHALTED))
     {
         textColor(SUCCESS);
@@ -265,7 +261,7 @@ void uhci_resetHC(uhci_t* u)
         textColor(TEXT);
         printf("\nRunStop Bit: %u  Frame Number: %u", u->run, inportw(u->bar + UHCI_FRNUM));
     }
-}
+} 
 
 // ports
 void uhci_enablePorts(uhci_t* u)
@@ -274,7 +270,7 @@ void uhci_enablePorts(uhci_t* u)
     printf("\n\n>>>uhci_enablePorts<<<\n");
   #endif
 
-    for (uint8_t j=0; j<u->rootPorts; j++)
+    for (uint8_t j=0; j < min(u->rootPorts,UHCIPORTMAX); j++)
     {
         uhci_resetPort(u, j);
         u->ports[j] = malloc(sizeof(uhci_port_t), 0, "uhci_port_t");
@@ -287,7 +283,7 @@ void uhci_enablePorts(uhci_t* u)
         attachPort(&u->ports[j]->port);
         u->enabledPortFlag = true;
         uhci_showPortState(u, j);
-    }
+    }    
 }
 
 void uhci_resetPort(uhci_t* u, uint8_t port)
@@ -358,15 +354,19 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
-    printf("\nUSB UHCI %u: ", u->num);
+    if (!(val & UHCI_STS_USBINT)) 
+    {
+        printf("\nUSB UHCI %u: ", u->num);
+    }
 
     textColor(IMPORTANT);
 
     if (val & UHCI_STS_USBINT)
-    {
-        printf("Frame: %u - USB transaction completed", inportw(u->bar + UHCI_FRNUM));
+    {      
+        // printf("Frame: %u - USB transaction completed", inportw(u->bar + UHCI_FRNUM));
         outportw(reg, UHCI_STS_USBINT); // reset interrupt
     }
+
     if (val & UHCI_STS_RESUME_DETECT)
     {
         printf("Resume Detect");
@@ -380,22 +380,26 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
         printf("Host Controller Halted");
         outportw(reg, UHCI_STS_HCHALTED); // reset interrupt
     }
+
     if (val & UHCI_STS_HC_PROCESS_ERROR)
     {
         printf("Host Controller Process Error");
         outportw(reg, UHCI_STS_HC_PROCESS_ERROR); // reset interrupt
     }
+
     if (val & UHCI_STS_USB_ERROR)
     {
         printf("USB Error");
         outportw(reg, UHCI_STS_USB_ERROR); // reset interrupt
     }
+
     if (val & UHCI_STS_HOST_SYSTEM_ERROR)
     {
         printf("Host System Error");
         outportw(reg, UHCI_STS_HOST_SYSTEM_ERROR); // reset interrupt
         pci_analyzeHostSystemError(u->PCIdevice);
     }
+
     textColor(TEXT);
 }
 
@@ -405,45 +409,6 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
 *                                              PORT CHANGE                                             *
 *                                                                                                      *
 *******************************************************************************************************/
-
-void uhci_pollDisk(void* dev)
-{
-    uhci_t* u = dev;
-    for(uint8_t port = 0; port < u->rootPorts; port++)
-    {
-        uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*port);
-
-        if(val & UHCI_PORT_CS_CHANGE)
-        {
-            printf("\nUHCI %u: Port %u changed: ", u->num, port);
-            outportw(u->bar + UHCI_PORTSC1 + 2*port, UHCI_PORT_CS_CHANGE);
-
-            if (val & UHCI_PORT_LOWSPEED_DEVICE)
-            {
-                printf("Lowspeed device");
-            }
-            else
-            {
-                printf("Fullspeed device");
-            }
-
-            if (val & UHCI_PORT_CS)
-            {
-                printf(" attached.");
-                if (UHCI_USBtransferFlag)
-                {
-                  #ifdef UHCI_USB_TRANSFER
-                    uhci_setupUSBDevice(u, port); // TEST
-                  #endif
-                }
-            }
-            else
-            {
-                printf(" removed.");
-            }
-        }
-    }
-}
 
 static void uhci_showPortState(uhci_t* u, uint8_t port)
 {
@@ -467,6 +432,47 @@ static void uhci_showPortState(uhci_t* u, uint8_t port)
     else                                 {printf(", NO DEVICE ATTACHED");}
 }
 
+void uhci_pollDisk(void* dev)
+{
+    uhci_t* u = ((uhci_port_t*)dev)->uhci;
+
+    for(uint8_t port = 0; port < u->rootPorts; port++)
+    {
+        uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*port);
+
+        if(val & UHCI_PORT_CS_CHANGE)
+        {
+            printf("\nUHCI %u: Port %u changed: ", u->num, port);
+            outportw(u->bar + UHCI_PORTSC1 + 2*port, UHCI_PORT_CS_CHANGE);
+
+            if (val & UHCI_PORT_LOWSPEED_DEVICE)
+            {
+                printf("Lowspeed device");
+            }
+            else
+            {
+                printf("Fullspeed device");
+            }
+
+            if (val & UHCI_PORT_CS)
+            {
+                printf(" attached.");
+                if (UHCI_USBtransferFlag) 
+                {
+                  #ifdef UHCI_USB_TRANSFER
+                    uhci_setupUSBDevice(u, port); // TEST
+                  #endif
+                }
+            }
+            else
+            {
+                printf(" removed.");
+            }
+        }
+    }
+}
+
+
 /*******************************************************************************************************
 *                                                                                                      *
 *                                          Setup USB-Device                                            *
@@ -480,22 +486,21 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
 
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &u->ports[portNumber]->port;
-
+        
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
-
-    /*
+    
     usbTransferConfig(device);
     usbTransferString(device);
-
+    
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
         usbTransferStringUnicode(device, i);
     }
 
     usbTransferSetConfiguration(device, 1); // set first configuration
-
-  #ifdef _OHCI_DIAGNOSIS_
+    
+  #ifdef _UHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
     waitForKeyStroke();
@@ -536,9 +541,101 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
         textColor(TEXT);
       #endif
 
-        testMSD(device); // test with some SCSI commands
+        testMSD(device); // test with some SCSI commands        
     }
-    */
+}
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                            Transactions                                              *
+*                                                                                                      *
+*******************************************************************************************************/
+
+typedef struct
+{
+    uhciTD_t*   TD;
+    void*       TDBuffer;
+    void*       inBuffer;
+    size_t      inLength;
+} uhci_transaction_t;
+
+void uhci_setupTransfer(usb_transfer_t* transfer)
+{
+
+}
+
+void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
+{
+
+}
+
+void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length)
+{
+
+}
+
+void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransaction, bool toggle, void* buffer, size_t length)
+{
+
+}
+
+void uhci_issueTransfer(usb_transfer_t* transfer)
+{
+
+}
+
+
+/*******************************************************************************************************
+*                                                                                                      *
+*                                            uhci QH TD functions                                      *
+*                                                                                                      *
+*******************************************************************************************************/
+
+uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer)
+{
+    return (0);
+}
+
+uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
+{
+    return (0);
+}
+
+void uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD, uint32_t device, uint32_t endpoint, uint32_t packetSize)
+{
+
+}
+
+
+////////////////////
+// analysis tools //
+////////////////////
+
+
+void uhci_showStatusbyteTD(uhciTD_t* TD)
+{
+    textColor(ERROR);
+
+    if (TD->bitstuffError)     printf("\nBitstuff Error");          // receive data stream contained a sequence of more than 6 ones in a row
+    if (TD->crc_timeoutError)  printf("\nNo Response from Device"); // no response from the device (CRC or timeout)
+    if (TD->nakReceived)       printf("\nNAK received");            // NAK handshake
+    if (TD->babbleDetected)    printf("\nBabble detected");         // Babble (fatal error)
+    if (TD->dataBufferError)   printf("\nData Buffer Error");       // HC cannot keep up with the data  (overrun) or cannot supply data fast enough (underrun)
+    if (TD->stall)             printf("\nStalled");                 // can be caused by babble, error counter (0) or STALL from device
+
+    textColor(GRAY);
+
+    if (TD->active)            printf("\nactive");                  // 1: HC will execute   0: set by HC after excution (HC will not excute next time)
+
+    textColor(IMPORTANT);
+
+    if (TD->intOnComplete)     printf("\ninterrupt on complete");   // 1: HC issues interrupt on completion of the frame in which the TD is executed
+    if (TD->isochrSelect)      printf("\nisochronous TD");          // 1: Isochronous TD
+    if (TD->lowSpeedDevice)    printf("\nLowspeed Device");         // 1: LS   0: FS
+    if (TD->shortPacketDetect) printf("\nShortPacketDetect");       // 1: enable   0: disable
+
+    textColor(TEXT);
 }
 
 

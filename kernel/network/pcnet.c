@@ -25,6 +25,14 @@
 #define BDP    0x16
 
 
+// TEST
+static void writebcr(PCNet_card* pAdapter, uint16_t BCR, uint16_t value)
+{
+    outportw(pAdapter->IO_base+RAP, BCR);   // Enables BCR register
+    outportw(pAdapter->IO_base+BDP, value); // Write value to BCR register
+}
+// TEST
+
 static void writeBCR(PCNet_card* pAdapter, uint16_t value)
 {
     outportw(pAdapter->IO_base+RAP, BCR20); // Enable BCR20 register
@@ -80,7 +88,7 @@ void AMDPCnet_install(network_adapter_t* adapter)
     outportw(pAdapter->IO_base+RESET, 0); // Needed for NE2100LANCE adapters
     sleepMilliSeconds(10);
     writeBCR(pAdapter, 0x0102); // Enable 32-bit mode
-
+    
     // Stop
     writeCSR(pAdapter, 0, 0x04); // STOP-Reset
 
@@ -89,6 +97,7 @@ void AMDPCnet_install(network_adapter_t* adapter)
     pAdapter->currentTransDesc = 0;
     pAdapter->receiveDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: RecDesc");
     pAdapter->transmitDesc = malloc(8*sizeof(PCNet_descriptor), 16, "PCNet: TransDesc");
+    
     for (uint8_t i = 0; i < 8; i++)
     {
         void* buffer = malloc(2048, 16, "PCnet receive buffer");
@@ -118,6 +127,12 @@ void AMDPCnet_install(network_adapter_t* adapter)
     writeCSR(pAdapter, 2, phys_address>>16); // Higher bits of initBlock address
 
     irq_resetCounter(adapter->PCIdev->irq);
+    
+    // TEST: 
+    // When the FDRPAD (BCR9, bit 2) is set and the Am79C973/ Am79C975 controller is in full-duplex mode
+    writebcr(pAdapter, 9, BIT(2));
+    // TEST
+
     // Init card
     writeCSR(pAdapter, 0, 0x0041); // Initialize card, activate interrupts
     if (!waitForIRQ(adapter->PCIdev->irq, 1000))
