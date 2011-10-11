@@ -215,7 +215,7 @@ void uhci_issueTransfer(usb_transfer_t* transfer);
 
 uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer, uint32_t device, uint32_t endpoint, uint32_t packetSize);
 uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint32_t device, uint32_t endpoint, uint32_t packetSize);
-void      uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD);
+void      uhci_createQH(uhci_t* u, uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD);
 
 void uhci_showStatusbyteTD(uhciTD_t* TD);
 

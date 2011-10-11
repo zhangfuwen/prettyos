@@ -639,6 +639,10 @@ void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransac
 void uhci_issueTransfer(usb_transfer_t* transfer)
 {
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci; // HC
+    uhci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
+    uhci_createQH(u, transfer->data, (uintptr_t)transfer->data, firstTransaction->TD);
+
+    transfer->success = true;
 
     // start scheduler
     outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) | UHCI_CMD_RS);
@@ -649,15 +653,42 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
     //
     //
 
-    delay(50000); // pause after transfer
+    delay(500000); // pause after transfer
 
     // check conditions
     for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
     {
         uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
         uhci_showStatusbyteTD(transaction->TD);
-
         transfer->success = transfer->success && (transaction->TD->active == 0); // executed (errorfree?)
+    }
+
+    for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+    {
+        uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+
+        if(transaction->inBuffer != 0 && transaction->inLength != 0)
+        {
+            memcpy(transaction->inBuffer, transaction->TDBuffer, transaction->inLength);
+        }
+        free(transaction->TDBuffer);
+        free(transaction->TD);
+        free(transaction);
+    }
+    
+    if(transfer->success)
+    {
+      #ifdef _EHCI_DIAGNOSIS_
+        textColor(SUCCESS);
+        printf("\nTransfer successful.");
+        textColor(TEXT);
+      #endif
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("\nTransfer failed.");
+        textColor(TEXT);
     }
 }
 
@@ -744,7 +775,7 @@ uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t dir
     return (td);
 }
 
-void uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD)
+void uhci_createQH(uhci_t* u, uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD)
 {
     memset(head, 0, sizeof(uhciQH_t));
 
@@ -752,7 +783,7 @@ void uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD)
 
     if (firstTD == 0)
     {
-    	head->next = BIT_T;
+    	head->transfer = BIT_T;
     }
 
     else
@@ -760,6 +791,8 @@ void uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD)
     	head->transfer = paging_getPhysAddr(firstTD);
 		head->q_first  = firstTD;
     }
+
+    printf("\nuhci_createQH: QH = %X, firstTD = %X, qh = %X", head, head->q_first, u->qhPointerVirt);
 }
 
 
