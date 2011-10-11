@@ -174,39 +174,10 @@ void uhci_resetHC(uhci_t* u)
         }
     }
 
-
     // frame list
     u->framelistAddrVirt = (frPtr_t*)malloc(PAGESIZE, PAGESIZE, "uhci-framelist");
     // TODO: mutex for frame list
 
-
-/*
-    uhciQH_t* qhIn  = malloc(sizeof(uhciQH_t),16,"uhci-QH");
-    uhciQH_t* qhOut  = malloc(sizeof(uhciQH_t),16,"uhci-QH");
-
-    uhciTD_t* tdIn  = malloc(sizeof(uhciTD_t),16,"uhci-TD");
-    uhciTD_t* tdOut = malloc(sizeof(uhciTD_t),16,"uhci-TD");
-
-    qhIn->next       = paging_getPhysAddr((void*)qhOut)| BIT_QH;
-    qhIn->transfer   = paging_getPhysAddr((void*)tdIn);
-    qhIn->q_first    = 0;
-    qhIn->q_last     = 0;
-
-    tdIn->next       = BIT_T;
-    tdIn->buffer     = paging_getPhysAddr(malloc(0x1000,0,"uhci-TDbuffer"));
-    tdIn->active     = 1;
-    tdIn->intOnComplete = 1;
-
-    qhOut->next       = BIT_T;
-    qhOut->transfer   = paging_getPhysAddr((void*)tdOut);
-    qhOut->q_first    = 0;
-    qhOut->q_last     = 0;
-
-    tdOut->next      = BIT_T;
-    tdOut->buffer    = paging_getPhysAddr(malloc(0x1000,0,"uhci-TDbuffer"));
-    tdOut->active    = 1;
-    tdOut->intOnComplete = 1;
-*/
     uhciQH_t* qh     = malloc(sizeof(uhciQH_t),PAGESIZE,"uhci-QH");
     qh->next         = BIT_T;
     qh->transfer     = BIT_T;
@@ -214,15 +185,18 @@ void uhci_resetHC(uhci_t* u)
     qh->q_last       = 0;
     u->qhPointerVirt = qh;
 
-    for (uint16_t i=0; i<1024; i++)
+    u->framelistAddrVirt->frPtr[0] = paging_getPhysAddr(qh) | BIT_QH;
+
+    for (uint16_t i=1; i<1024; i++)
     {
-       u->framelistAddrVirt->frPtr[i] = paging_getPhysAddr(qh) | BIT_QH;
+       u->framelistAddrVirt->frPtr[i] = BIT_T;
     }
 
     // define each millisecond one frame, provide physical address of frame list, and start at frame 0
     outportb(u->bar + UHCI_SOFMOD, 0x40); // SOF cycle time: 12000. For a 12 MHz SOF counter clock input, this produces a 1 ms Frame period.
-    outportl(u->bar + UHCI_FRBASEADD, paging_getPhysAddr((void*)u->framelistAddrVirt));
-    outportw(u->bar + UHCI_FRNUM, 0x0000);
+    
+    outportl(u->bar + UHCI_FRBASEADD, paging_getPhysAddr((void*)u->framelistAddrVirt->frPtr));
+    outportw(u->bar + UHCI_FRNUM, 0);
 
     // set PIRQ
     pci_config_write_word(bus, dev, func, UHCI_PCI_LEGACY_SUPPORT, UHCI_PCI_LEGACY_SUPPORT_PIRQ);
@@ -482,23 +456,23 @@ void uhci_pollDisk(void* dev)
 void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
 {
     u->ports[portNumber]->num = 0; // device number has to be set to 0
-    u->ports[portNumber]->num = 1 + usbTransferEnumerate(&u->ports[portNumber]->port, portNumber);
+    // u->ports[portNumber]->num = 1 + usbTransferEnumerate(&u->ports[portNumber]->port, portNumber);
 
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &u->ports[portNumber]->port;
 
-    usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
-    usbTransferDevice(device);
-
-    usbTransferConfig(device);
-    usbTransferString(device);
+    usb2_Device_t* device = usb2_createDevice(disk); 
+    usbTransferDevice(device); waitForKeyStroke();
+    usbTransferConfig(device); waitForKeyStroke();
+    usbTransferString(device); waitForKeyStroke();
 
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
-        usbTransferStringUnicode(device, i);
+        usbTransferStringUnicode(device, i); waitForKeyStroke();
     }
 
     usbTransferSetConfiguration(device, 1); // set first configuration
+    waitForKeyStroke();
 
   #ifdef _UHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
@@ -565,13 +539,7 @@ void uhci_setupTransfer(usb_transfer_t* transfer)
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci; // HC
     transfer->data = u->qhPointerVirt; // QH
 
-    transfer->device = ((uhci_port_t*)transfer->HC->data)->num; // ??? -1 ???
-
-    // stop scheduler
-    outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) & ~UHCI_CMD_RS);
-    delay(10000);
-    u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
-    printf("\nuhci_setupTransfer u->run: %u", u->run);
+    transfer->device = ((uhci_port_t*)transfer->HC->data)->num; 
 }
 
 void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
@@ -594,6 +562,7 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
     {
         uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
         uhciLastTransaction->TD->next = paging_getPhysAddr(uhciTransaction->TD); // build TD queue
+        uhciLastTransaction->TD->q_next = uhciTransaction->TD;
     }
 }
 
@@ -611,6 +580,7 @@ void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransact
     {
         uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
         uhciLastTransaction->TD->next = paging_getPhysAddr(uhciTransaction->TD); // build TD queue
+        uhciLastTransaction->TD->q_next = uhciTransaction->TD;
     }
 }
 
@@ -633,6 +603,7 @@ void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransac
     {
         uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
         uhciLastTransaction->TD->next = paging_getPhysAddr(uhciTransaction->TD); // build TD queue
+        uhciLastTransaction->TD->q_next = uhciTransaction->TD;
     }
 }
 
@@ -645,15 +616,26 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
     transfer->success = true;
 
     // start scheduler
-    outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) | UHCI_CMD_RS);
+    outportw(u->bar + UHCI_FRNUM, 0);
+    outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) | UHCI_CMD_RS | UHCI_CMD_CF );
     delay(10000);
     u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
     printf("\nuhci_issueTransfer u->run: %u", u->run);
 
-    //
-    //
+    // run transactions
+    for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+    {
+        uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
 
-    delay(500000); // pause after transfer
+        if(transaction->inBuffer != 0 && transaction->inLength != 0)
+        {
+            memcpy(transaction->inBuffer, transaction->TDBuffer, transaction->inLength);
+        }
+        
+        delay(50000);
+    }
+
+    delay(50000);
 
     // check conditions
     for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
@@ -663,18 +645,17 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
         transfer->success = transfer->success && (transaction->TD->active == 0); // executed (errorfree?)
     }
 
-    for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+    for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
     {
         uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-
-        if(transaction->inBuffer != 0 && transaction->inLength != 0)
-        {
-            memcpy(transaction->inBuffer, transaction->TDBuffer, transaction->inLength);
-        }
+    
+        printf("\nTDBuffer: %X TD->buff: %X",transaction->TDBuffer, transaction->TD->virtBuffer);  
+        printf("\nTD:       %X next:     %X",transaction->TD, transaction->TD->q_next);            
+        
         free(transaction->TDBuffer);
         free(transaction->TD);
-        free(transaction);
-    }
+        free(transaction);    
+    }    
     
     if(transfer->success)
     {
@@ -690,6 +671,12 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
         printf("\nTransfer failed.");
         textColor(TEXT);
     }
+    
+    // stop scheduler
+    outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) & ~UHCI_CMD_RS);
+    delay(10000);
+    u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
+    printf("\nuhci_setupTransfer u->run: %u", u->run);
 }
 
 
@@ -706,7 +693,7 @@ static uhciTD_t* uhci_allocTD(uintptr_t next)
 
     if (next != BIT(0))
     {
-        td->next   = paging_getPhysAddr((void*)next) | BIT_Vf;
+        td->next   = paging_getPhysAddr((void*)next);
         td->q_next = (void*)next;
     }
     else
@@ -734,15 +721,17 @@ static void* uhci_allocTDbuffer(uhciTD_t* td)
 
 uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
+    printf("\nSETUP: tokenBytes: %u packetSize: %u", tokenBytes, packetSize);
+    
     uhciTD_t* td = uhci_allocTD(next);
 
     td->PacketID      = UHCI_TD_SETUP;
-    td->actualLength  = tokenBytes;
+    
     td->dataToggle    = toggle; // Should be toggled every list entry
 
-    td->actualLength  = packetSize;
     td->deviceAddress = device;
     td->endpoint      = endpoint;
+    td->maxLength     = tokenBytes-1;
 
     usb_request_t* request = *buffer = td->virtBuffer = uhci_allocTDbuffer(td);
     request->type    = type;
@@ -758,16 +747,26 @@ uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool tog
 
 uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-	uhciTD_t* td = uhci_allocTD(next);
+	printf("\nIO: tokenBytes: %u packetSize: %u", tokenBytes, packetSize);
+    
+    uhciTD_t* td = uhci_allocTD(next);
 
     td->PacketID      = direction;
-    td->actualLength  = tokenBytes;
+    
+    if (tokenBytes)
+    {
+        td->maxLength  = (tokenBytes-1) & 0x7FF;
+    }
+    else
+    {
+        td->maxLength  = 0x7FF;
+    }
+
     td->dataToggle    = toggle; // Should be toggled every list entry
 
-    td->actualLength  = packetSize;
     td->deviceAddress = device;
     td->endpoint      = endpoint;
-
+    
     td->virtBuffer    = uhci_allocTDbuffer(td);
     td->buffer        = paging_getPhysAddr(td->virtBuffer);
 
@@ -780,6 +779,7 @@ void uhci_createQH(uhci_t* u, uhciQH_t* head, uint32_t horizPtr, uhciTD_t* first
     memset(head, 0, sizeof(uhciQH_t));
 
     head->next     = paging_getPhysAddr((void*)horizPtr) | BIT_QH;
+    //head->next     = BIT_T; //paging_getPhysAddr((void*)horizPtr) | BIT_QH;
 
     if (firstTD == 0)
     {
