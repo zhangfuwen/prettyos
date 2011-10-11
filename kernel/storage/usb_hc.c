@@ -80,9 +80,9 @@ void usb_hc_install(pciDev_t* PCIdev)
 }
 
 
-void usb_setupTransfer(port_t* device, usb_transfer_t* transfer, usb_tranferType_t type, uint32_t endpoint, uint32_t packetSize)
+void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_tranferType_t type, uint32_t endpoint, uint32_t packetSize)
 {
-    transfer->HC           = device;
+    transfer->HC           = usbPort;
     transfer->transactions = list_create();
     transfer->endpoint     = endpoint;
     transfer->type         = type;

@@ -93,6 +93,7 @@
 
 #define BIT_T    BIT(0)
 #define BIT_QH   BIT(1)
+#define BIT_Vf   BIT(2)
 
 /*
 Packet Identification (PID). This field contains the Packet ID to be used for this transaction. Only
@@ -140,11 +141,11 @@ typedef struct uhci_td
     uint32_t maxLength         : 11; // 21-31
 
     // TD BUFFER POINTER (DWORD 3)
-    uint32_t         buffer;
+    uintptr_t        buffer;
 
     // RESERVED FOR SOFTWARE (DWORDS 4-7)
     struct uhci_td*  q_next;
-    uint32_t         dWord5; // ?
+    void*            virtBuffer;
     uint32_t         dWord6; // ?
     uint32_t         dWord7; // ?
   } __attribute__((packed)) uhciTD_t;
@@ -155,11 +156,11 @@ typedef struct
 {
     // QUEUE HEAD LINK POINTER
     // inclusive control bits (DWORD 0)
-    uint32_t   next;
+    uintptr_t   next;
 
     // QUEUE ELEMENT LINK POINTER
     // inclusive control bits (DWORD 1)
-    uint32_t   transfer;
+    uintptr_t   transfer;
 
     // TDs
     uhciTD_t* q_first;
@@ -184,7 +185,7 @@ typedef struct
 typedef struct uhci
 {
     pciDev_t*      PCIdevice;           // PCI device
-    uint16_t       bar;                 // start of I/O space (base address register
+    uint16_t       bar;                 // start of I/O space (base address register)
     frPtr_t*       framelistAddrVirt;   // virtual adress of frame list
     uhciQH_t*      qhPointerVirt;       // virtual adress of QH
     uint8_t        rootPorts;           // number of rootports
@@ -212,9 +213,9 @@ void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransact
 void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length);
 void uhci_issueTransfer(usb_transfer_t* transfer);
 
-uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer);
-uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes);
-void      uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD, uint32_t device, uint32_t endpoint, uint32_t packetSize);
+uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer, uint32_t device, uint32_t endpoint, uint32_t packetSize);
+uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint32_t device, uint32_t endpoint, uint32_t packetSize);
+void      uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD);
 
 void uhci_showStatusbyteTD(uhciTD_t* TD);
 

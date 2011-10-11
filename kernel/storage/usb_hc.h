@@ -21,6 +21,7 @@ typedef struct
 {
     void*             data; // EHCI: Contains pointer to QH
     usb_tranferType_t type;
+    uint32_t          device;
     uint32_t          endpoint;
     uint32_t          packetSize;
     port_t*           HC;

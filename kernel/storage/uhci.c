@@ -565,7 +565,13 @@ void uhci_setupTransfer(usb_transfer_t* transfer)
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci; // HC
     transfer->data = u->qhPointerVirt; // QH
 
-    // stop scheduler?
+    transfer->device = ((uhci_port_t*)transfer->HC->data)->num; // ??? -1 ???
+
+    // stop scheduler
+    outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) & ~UHCI_CMD_RS);
+    delay(10000);
+    u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
+    printf("\nuhci_setupTransfer u->run: %u", u->run);
 }
 
 void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
@@ -576,7 +582,8 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
 
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
 
-    uhciTransaction->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uhciTransaction->TDBuffer);
+    uhciTransaction->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uhciTransaction->TDBuffer,
+											  transfer->device, transfer->endpoint, transfer->packetSize);
 
   #ifdef _UHCI_DIAGNOSIS_
     usb_request_t* request = (usb_request_t*)uhciTransaction->TDBuffer;
@@ -597,8 +604,8 @@ void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransact
     uhciTransaction->inBuffer = buffer;
     uhciTransaction->inLength = length;
 
-    //uhciTransaction->TDBuffer = u->...;
-    uhciTransaction->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length);
+    uhciTransaction->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length, transfer->device, transfer->endpoint, transfer->packetSize);
+    uhciTransaction->TDBuffer = uhciTransaction->TD->virtBuffer;
 
     if (transfer->transactions->tail)
     {
@@ -614,8 +621,8 @@ void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransac
     uhciTransaction->inBuffer = 0;
     uhciTransaction->inLength = 0;
 
-    //uhciTransaction->TDBuffer = u->...;
-    uhciTransaction->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length);
+    uhciTransaction->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length, transfer->device, transfer->endpoint, transfer->packetSize);
+    uhciTransaction->TDBuffer = uhciTransaction->TD->virtBuffer;
 
     if (buffer != 0 && length != 0)
     {
@@ -631,13 +638,21 @@ void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransac
 
 void uhci_issueTransfer(usb_transfer_t* transfer)
 {
+    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci; // HC
+
+    // start scheduler
+    outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) | UHCI_CMD_RS);
+    delay(10000);
+    u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
+    printf("\nuhci_issueTransfer u->run: %u", u->run);
+
     //
     //
 
     delay(50000); // pause after transfer
 
-    // check conditions - do not check the last dummy-TD
-    for (dlelement_t* elem = transfer->transactions->head; elem && elem->next; elem = elem->next)
+    // check conditions
+    for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
     {
         uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
         uhci_showStatusbyteTD(transaction->TD);
@@ -653,19 +668,98 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
 *                                                                                                      *
 *******************************************************************************************************/
 
-uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer)
+static uhciTD_t* uhci_allocTD(uintptr_t next)
 {
-    return (0);
+    uhciTD_t* td = (uhciTD_t*)malloc(sizeof(uhciTD_t), 16, "uhciTD"); // 16 byte alignment
+    memset(td, 0, sizeof(uhciTD_t));
+
+    if (next != BIT(0))
+    {
+        td->next   = paging_getPhysAddr((void*)next) | BIT_Vf;
+        td->q_next = (void*)next;
+    }
+    else
+    {
+    	td->next = BIT_T;
+    }
+
+    td->active             = 1;  // to be executed
+    td->intOnComplete      = 1;  // We want an interrupt after complete transfer
+    td->PacketID           = UHCI_TD_SETUP;
+    td->maxLength          = 0x3F; // 64 byte // uhci, rev. 1.1, page 24
+
+    return td;
 }
 
-uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes)
+static void* uhci_allocTDbuffer(uhciTD_t* td)
 {
-    return (0);
+    td->virtBuffer = malloc(512, 512, "uhciTD-buffer");
+    memset(td->virtBuffer, 0, 512);
+    td->buffer = paging_getPhysAddr(td->virtBuffer);
+
+    return td->virtBuffer;
 }
 
-void uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD, uint32_t device, uint32_t endpoint, uint32_t packetSize)
-{
 
+uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer, uint32_t device, uint32_t endpoint, uint32_t packetSize)
+{
+    uhciTD_t* td = uhci_allocTD(next);
+
+    td->PacketID      = UHCI_TD_SETUP;
+    td->actualLength  = tokenBytes;
+    td->dataToggle    = toggle; // Should be toggled every list entry
+
+    td->actualLength  = packetSize;
+    td->deviceAddress = device;
+    td->endpoint      = endpoint;
+
+    usb_request_t* request = *buffer = td->virtBuffer = uhci_allocTDbuffer(td);
+    request->type    = type;
+    request->request = req;
+    request->valueHi = hiVal;
+    request->valueLo = loVal;
+    request->index   = i;
+    request->length  = length;
+
+    uQH->q_last = td;
+    return (td);
+}
+
+uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint32_t device, uint32_t endpoint, uint32_t packetSize)
+{
+	uhciTD_t* td = uhci_allocTD(next);
+
+    td->PacketID      = direction;
+    td->actualLength  = tokenBytes;
+    td->dataToggle    = toggle; // Should be toggled every list entry
+
+    td->actualLength  = packetSize;
+    td->deviceAddress = device;
+    td->endpoint      = endpoint;
+
+    td->virtBuffer    = uhci_allocTDbuffer(td);
+    td->buffer        = paging_getPhysAddr(td->virtBuffer);
+
+    uQH->q_last = td;
+    return (td);
+}
+
+void uhci_createQH(uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD)
+{
+    memset(head, 0, sizeof(uhciQH_t));
+
+    head->next     = paging_getPhysAddr((void*)horizPtr) | BIT_QH;
+
+    if (firstTD == 0)
+    {
+    	head->next = BIT_T;
+    }
+
+    else
+    {
+    	head->transfer = paging_getPhysAddr(firstTD);
+		head->q_first  = firstTD;
+    }
 }
 
 
