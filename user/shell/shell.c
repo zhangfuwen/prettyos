@@ -10,28 +10,32 @@ void eraseFirst(char* string)
 {
     strcpy(string, string+1);
 }
-void insert(char* string, char c)
+void prependStr(char* string, char* ins)
 {
-    for (int i = strlen(string)-1; i >= 0; i--)
-    {
-        string[i+1] = string[i];
-    }
-    *string = c;
+    size_t toBeInserted = strlen(ins);
+    memmove(string+toBeInserted, string, strlen(string));
+    memcpy(string, ins, toBeInserted);
+}
+void prependChar(char* string, char ins)
+{
+    memmove(string+1, string, strlen(string));
+    *string = ins;
 }
 
 static unsigned int cursorPos;
-static unsigned int entryLength;
+static unsigned int entryLength = 0;
 
-char RenderBuffer[81];
+char RenderBuffer[83];
 void drawEntry(const char* entry)
 {
     sprintf(RenderBuffer, "$> %s", entry);
-    if (strlen(RenderBuffer) < MAX_CHAR_PER_LINE)
-        memset(RenderBuffer+strlen(RenderBuffer), ' ', MAX_CHAR_PER_LINE-strlen(RenderBuffer));
+    size_t length = min(80, entryLength)+3;
+    if (length < MAX_CHAR_PER_LINE)
+        memset(RenderBuffer+length, ' ', MAX_CHAR_PER_LINE-length);
     RenderBuffer[80] = 0;
     if (cursorPos < entryLength && entryLength < MAX_CHAR_PER_LINE)
     {
-        insert(RenderBuffer+3+cursorPos, 'v'); insert(RenderBuffer+3+cursorPos, '%'); // inserting %v (it looks confusing ;))
+        prependStr(RenderBuffer+3+cursorPos, "%v");
     }
     printLine(RenderBuffer, 40, 0x0D);
 }
@@ -122,7 +126,7 @@ int main()
                         }
                         else
                         {
-                            insert(entry+cursorPos, text);
+                            prependChar(entry+cursorPos, text);
                             ++entryLength;
                         }
                         ++cursorPos;

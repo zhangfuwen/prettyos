@@ -19,7 +19,7 @@ static bool nopm_action(PM_STATES state)
     {
         case PM_SOFTOFF: // Implemented by "hack", just as a fallback.
             cli();
-            clear_screen();
+            vga_clearScreen();
             kprintf("                                                                                ", 24, 0x20);
             kprintf("                     Your computer can now be switched off.                     ", 25, 0x20);
             kprintf("                                                                                ", 26, 0x20);

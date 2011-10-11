@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.135 - Rev: 1336";
+const char* const version = "0.0.3.136 - Rev: 1337";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -121,7 +121,7 @@ static void init(multiboot_t* mb_struct)
 
     // video
     kernel_console_init();
-    clear_screen();
+    vga_clearScreen();
 
     textColor(HEADLINE);
     printf(" => Initializing PrettyOS:\n\n");

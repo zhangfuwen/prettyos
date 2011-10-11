@@ -56,14 +56,14 @@ extern bool autoRefresh;
 void vga_install();
 void vga_setPixel(uint8_t x, uint8_t y, uint16_t value);
 void refreshUserScreen();
-void clear_screen();
+void vga_clearScreen();
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
+void vga_updateCursor();
 uint8_t AsciiToCP437(uint8_t ascii);
 void writeInfo(uint8_t line, const char* content, ...);
 void saveScreenshot();
 void takeScreenshot();
 void mt_screenshot();
-void video_updateCursor();
 
 
 #endif

@@ -36,7 +36,7 @@ void vga_setPixel(uint8_t x, uint8_t y, uint16_t value)
     mutex_unlock(videoLock);
 }
 
-void clear_screen()
+void vga_clearScreen()
 {
     mutex_lock(videoLock);
     memset(vidmem, 0, COLUMNS * LINES * 2);
@@ -273,10 +273,9 @@ void refreshUserScreen()
         cursor.x = console_displayed->cursor.x;
     }
     mutex_unlock(videoLock);
-    video_updateCursor();
 }
 
-void video_updateCursor()
+void vga_updateCursor()
 {
     uint16_t position = (console_displayed->cursor.y+2) * COLUMNS + console_displayed->cursor.x;
     // cursor HIGH port to vga INDEX register

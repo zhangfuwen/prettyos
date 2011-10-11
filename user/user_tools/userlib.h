@@ -15,6 +15,10 @@
 #define TITLEBAR       LIGHT_RED
 
 
+#define max(a, b) ((a) >= (b) ? (a) : (b))
+#define min(a, b) ((a) <= (b) ? (a) : (b))
+
+
 enum COLORS
 {
     BLACK, BLUE,        GREEN,       CYAN,       RED,       MAGENTA,       BROWN,  LIGHT_GRAY,

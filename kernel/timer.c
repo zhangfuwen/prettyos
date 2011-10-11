@@ -11,7 +11,7 @@
 
 
 static uint16_t systemfrequency; // system frequency
-static volatile uint32_t timer_ticks = 0;
+static volatile uint64_t timer_ticks = 0;
 
 void timer_install(uint16_t sysfreq)
 {
@@ -23,11 +23,11 @@ void timer_install(uint16_t sysfreq)
 
 uint32_t timer_getSeconds()
 {
-    return(timer_ticks/systemfrequency);
+    return((uint32_t)timer_ticks/systemfrequency);
 }
 uint32_t timer_getMilliseconds()
 {
-    return((timer_ticks*1000)/systemfrequency);
+    return(((uint32_t)timer_ticks*1000)/systemfrequency);
 }
 uint64_t timer_getTicks()
 {

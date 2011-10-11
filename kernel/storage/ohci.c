@@ -14,14 +14,15 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-
 #define OHCI_USB_TRANSFER
 #define NUMBER_OF_RETRIES  1
+
 
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
 static ohci_t* ohci[OHCIMAX];
 static bool    OHCI_USBtransferFlag = false;
+
 
 static void ohci_handler(registers_t* r, pciDev_t* device);
 static void ohci_start();
@@ -30,6 +31,7 @@ static void ohci_showPortstatus(ohci_t* o, uint8_t j);
 static void ohci_resetPort(ohci_t* o, uint8_t j);
 static void ohci_resetMempool(ohci_t* o, usb_tranferType_t usbType);
 static void ohci_toggleFrameInterval(ohci_t* o);
+
 
 void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
 {
@@ -448,7 +450,7 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
                 if (OHCI_USBtransferFlag)
                 {
                   #ifdef OHCI_USB_TRANSFER
-                    ohci_setupUSBDevice(o, j); 
+                    ohci_setupUSBDevice(o, j);
                   #endif
                 }
             }
@@ -658,18 +660,18 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
 
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
-    
+
     usbTransferDevice(device);
     usbTransferConfig(device);
     usbTransferString(device);
 
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
-        usbTransferStringUnicode(device, i);    
+        usbTransferStringUnicode(device, i);
     }
 
     usbTransferSetConfiguration(device, 1); // set first configuration
-    
+
   #ifdef _OHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
@@ -845,7 +847,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     {
         o->OpRegs->HcControlCurrentED = paging_getPhysAddr(transfer->data);
     }
-    
+
     if (transfer->type == USB_BULK)
     {
         o->OpRegs->HcBulkCurrentED = paging_getPhysAddr(transfer->data);
@@ -993,7 +995,7 @@ ohciTD_t* ohci_createTD_SETUP(ohci_t* o, ohciED_t* oED, uintptr_t next, bool tog
     oTD->errCnt       = 0;
     oTD->bufRounding  = 1;
 
-    usb_request_t* request = *buffer = o->pTDbuff[o->indexTD]; 
+    usb_request_t* request = *buffer = o->pTDbuff[o->indexTD];
     request->type     = type;
     request->request  = req;
     request->valueHi  = hiVal;
@@ -1115,12 +1117,12 @@ uint8_t ohci_showStatusbyteTD(ohciTD_t* TD)
         case 9:  printf("\nDATAUNDERRUN: Endpoint returned less than MPS.");                                         break;
         case 12: printf("\nBUFFEROVERRUN");                                                                          break;
         case 13: printf("\nBUFFERUNDERRUN");                                                                         break;
-        case 14: 
+        case 14:
         case 15: printf("\nNOT ACCESSED");                                                                           break;
     }
 
     textColor(TEXT);
-    
+
     return TD->cond;
 }
 

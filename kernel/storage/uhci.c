@@ -13,7 +13,7 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-#define UHCI_USB_TRANSFER 
+#define UHCI_USB_TRANSFER
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -213,7 +213,7 @@ void uhci_resetHC(uhci_t* u)
     qh->q_first      = 0;
     qh->q_last       = 0;
     u->qhPointerVirt = qh;
-        
+
     for (uint16_t i=0; i<1024; i++)
     {
        u->framelistAddrVirt->frPtr[i] = paging_getPhysAddr(qh) | BIT_QH;
@@ -246,7 +246,7 @@ void uhci_resetHC(uhci_t* u)
   #endif
 
     u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
-    
+
     if (!(inportw(u->bar + UHCI_USBSTS) & UHCI_STS_HCHALTED))
     {
         textColor(SUCCESS);
@@ -261,7 +261,7 @@ void uhci_resetHC(uhci_t* u)
         textColor(TEXT);
         printf("\nRunStop Bit: %u  Frame Number: %u", u->run, inportw(u->bar + UHCI_FRNUM));
     }
-} 
+}
 
 // ports
 void uhci_enablePorts(uhci_t* u)
@@ -283,7 +283,7 @@ void uhci_enablePorts(uhci_t* u)
         attachPort(&u->ports[j]->port);
         u->enabledPortFlag = true;
         uhci_showPortState(u, j);
-    }    
+    }
 }
 
 void uhci_resetPort(uhci_t* u, uint8_t port)
@@ -354,7 +354,7 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
         return;
     }
 
-    if (!(val & UHCI_STS_USBINT)) 
+    if (!(val & UHCI_STS_USBINT))
     {
         printf("\nUSB UHCI %u: ", u->num);
     }
@@ -362,7 +362,7 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
     textColor(IMPORTANT);
 
     if (val & UHCI_STS_USBINT)
-    {      
+    {
         // printf("Frame: %u - USB transaction completed", inportw(u->bar + UHCI_FRNUM));
         outportw(reg, UHCI_STS_USBINT); // reset interrupt
     }
@@ -457,7 +457,7 @@ void uhci_pollDisk(void* dev)
             if (val & UHCI_PORT_CS)
             {
                 printf(" attached.");
-                if (UHCI_USBtransferFlag) 
+                if (UHCI_USBtransferFlag)
                 {
                   #ifdef UHCI_USB_TRANSFER
                     uhci_setupUSBDevice(u, port); // TEST
@@ -486,20 +486,20 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
 
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &u->ports[portNumber]->port;
-        
+
     usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
     usbTransferDevice(device);
-    
+
     usbTransferConfig(device);
     usbTransferString(device);
-    
+
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
         usbTransferStringUnicode(device, i);
     }
 
     usbTransferSetConfiguration(device, 1); // set first configuration
-    
+
   #ifdef _UHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
@@ -541,7 +541,7 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
         textColor(TEXT);
       #endif
 
-        testMSD(device); // test with some SCSI commands        
+        testMSD(device); // test with some SCSI commands
     }
 }
 
@@ -564,8 +564,8 @@ void uhci_setupTransfer(usb_transfer_t* transfer)
 {
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci; // HC
     transfer->data = u->qhPointerVirt; // QH
- 
-    // stop scheduler?    
+
+    // stop scheduler?
 }
 
 void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
@@ -621,7 +621,7 @@ void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransac
     {
         memcpy(uhciTransaction->TDBuffer, buffer, length);
     }
-    
+
     if (transfer->transactions->tail)
     {
         uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;

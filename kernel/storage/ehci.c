@@ -84,7 +84,6 @@ void ehci_start()
     if (!(e->OpRegs->USBSTS & STS_HCHALTED))
     {
         ehci_enablePorts(e);
-        ehci_initializeAsyncScheduler(e);
     }
     else
     {
@@ -216,13 +215,13 @@ void ehci_resetHC(ehci_t* e)
     // 4. Wait until the host controller has completed its reset.
     // To determine when the reset is complete, system software must read the USB2CMD.HostControllerReset bit;
     // the host controller will set this bit to 0 upon completion of the reset.
-    uint32_t timeout=10;
+    uint32_t timeout=20;
     while ((e->OpRegs->USBCMD & CMD_HCRESET) != 0) // Reset-Bit still set to 1
     {
       #ifdef _EHCI_DIAGNOSIS_
         printf("waiting for HC reset\n");
       #endif
-        sleepMilliSeconds(20);
+        sleepMilliSeconds(10);
         timeout--;
         if (timeout==0)
         {
@@ -290,7 +289,7 @@ static void ehci_deactivateLegacySupport(ehci_t* e)
           #endif
             pci_config_write_byte(bus, dev, func, OSownedSemaphore, 0x01);
 
-            int32_t timeout=200;
+            int32_t timeout=250;
             // Wait for BIOS-Semaphore being not set
             while ((pci_config_read(bus, dev, func, BIOSownedSemaphore, 1) & 0x01) && (timeout>0))
             {
@@ -298,19 +297,19 @@ static void ehci_deactivateLegacySupport(ehci_t* e)
                 putch('.');
               #endif
                 timeout--;
-                sleepMilliSeconds(20);
+                sleepMilliSeconds(10);
             }
             if (!(pci_config_read(bus, dev, func, BIOSownedSemaphore, 1) & 0x01)) // not set
             {
               #ifdef _EHCI_DIAGNOSIS_
                 printf("BIOS-Semaphore being not set.\n");
               #endif
-                timeout=200;
+                timeout=250;
                 while (!(pci_config_read(bus, dev, func, OSownedSemaphore, 1) & 0x01) && (timeout>0))
                 {
                     putch('.');
                     timeout--;
-                    sleepMilliSeconds(20);
+                    sleepMilliSeconds(10);
                 }
             }
           #ifdef _EHCI_DIAGNOSIS_
@@ -357,7 +356,8 @@ void ehci_enablePorts(ehci_t* e)
         attachPort(&e->ports[j]->port);
 
         e->enabledPortFlag = true;
-        ehci_detectDevice(e, j);
+        ehci_initializeAsyncScheduler(e);
+        ehci_checkPortLineStatus(e, j);
     }
 }
 
@@ -404,7 +404,7 @@ void ehci_resetPort(ehci_t* e, uint8_t j)
     uint32_t timeout=20;
     while ((e->OpRegs->PORTSC[j] & PSTS_PORT_RESET) != 0)
     {
-        sleepMilliSeconds(20);
+        sleepMilliSeconds(10);
         timeout--;
         if (timeout == 0)
         {

@@ -41,15 +41,15 @@ static const KEY_t scancodeToKey_E0[] =
     0, 0, 0, 0, 0, 0, 0, 0, // 0
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, // 1
-    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, KEY_KPEN, KEY_RCTRL, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, // 2
     0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, KEY_PRINT, // 3
+    0, 0, 0, 0, 0, KEY_KPSLASH, 0, KEY_PRINT, // 3
     KEY_ALTGR, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, // 4
-    KEY_ARRU, 0, 0, KEY_ARRL, 0, KEY_ARRR, 0, 0,
-    KEY_ARRD, 0, 0, 0, 0, 0, 0, 0, // 5
-    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, KEY_HOME, // 4
+    KEY_ARRU, KEY_PGUP, 0, KEY_ARRL, 0, KEY_ARRR, 0, KEY_END,
+    KEY_ARRD, KEY_PGDWN, KEY_INS, KEY_DEL, 0, 0, 0, 0, // 5
+    0, 0, 0, KEY_LGUI, KEY_RGUI, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, // 6
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, // 7
