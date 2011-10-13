@@ -14,6 +14,7 @@
 #include "usb2_msd.h"
 
 #define UHCI_USB_TRANSFER
+#define NUMBER_OF_RETRIES 1
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -175,7 +176,7 @@ void uhci_resetHC(uhci_t* u)
     }
 
     // frame list
-    u->framelistAddrVirt = (frPtr_t*)malloc(PAGESIZE, PAGESIZE, "uhci-framelist");
+    u->framelistAddrVirt = (frPtr_t*) malloc(PAGESIZE, PAGESIZE, "uhci-framelist");
     // TODO: mutex for frame list
 
     uhciQH_t* qh     = malloc(sizeof(uhciQH_t), 16, "uhci-QH");
@@ -185,11 +186,9 @@ void uhci_resetHC(uhci_t* u)
     qh->q_last       = 0;
     u->qhPointerVirt = qh;
 
-    u->framelistAddrVirt->frPtr[0] = paging_getPhysAddr(qh) | BIT_QH;
-
-    for (uint16_t i=1; i<1024; i++)
+    for (uint16_t i=0; i<1024; i++)
     {
-       u->framelistAddrVirt->frPtr[i] = BIT_T;
+       u->framelistAddrVirt->frPtr[i] = paging_getPhysAddr(qh) | BIT_QH;
     }
 
     // define each millisecond one frame, provide physical address of frame list, and start at frame 0
@@ -262,29 +261,35 @@ void uhci_enablePorts(uhci_t* u)
 
 void uhci_resetPort(uhci_t* u, uint8_t port)
 {
-    outportw(u->bar + UHCI_PORTSC1+2*port,UHCI_PORT_RESET);
+    outportw(u->bar + UHCI_PORTSC1 + 2 * port, UHCI_PORT_RESET);
     sleepMilliSeconds(50); // do not delete this wait
-    outportw(u->bar + UHCI_PORTSC1+2*port, inportw(u->bar + UHCI_PORTSC1+2*port) & ~UHCI_PORT_RESET);     // clear reset bit
-    outportw(u->bar + UHCI_PORTSC1+2*port, UHCI_PORT_ENABLE_CHANGE|UHCI_PORT_CS_CHANGE|UHCI_PORT_ENABLE); // Clear bit 1 & 3, and Set bit 2 [Enable]
+    outportw(u->bar + UHCI_PORTSC1 + 2 * port, inportw(u->bar + UHCI_PORTSC1+2*port) & ~UHCI_PORT_RESET);     // clear reset bit
+    outportw(u->bar + UHCI_PORTSC1 + 2 * port, UHCI_PORT_ENABLE_CHANGE | UHCI_PORT_CS_CHANGE | UHCI_PORT_ENABLE); // Clear bit 1 & 3, and set bit 2 [Enable]
 
     // wait and check, whether reset bit is really zero
     uint32_t timeout=20;
-    while ((inportw(u->bar + UHCI_PORTSC1+2*port) & UHCI_PORT_RESET) != 0)
+    while ((inportw(u->bar + UHCI_PORTSC1 + 2 * port) & UHCI_PORT_RESET) != 0)
     {
         sleepMilliSeconds(20);
         timeout--;
         if (timeout == 0)
         {
             textColor(ERROR);
-            printf("\nTimeour Error: Port %u did not reset! ", port+1);
+            printf("\nTimeour Error: Port %u did not reset! ", port + 1);
             textColor(TEXT);
           #ifdef _UHCI_DIAGNOSIS_
-            printf("Port Status: %Xh", inportw(u->bar + UHCI_PORTSC1+2*port));
+            printf("Port Status: %Xh", inportw(u->bar + UHCI_PORTSC1 + 2 * port));
+            waitForKeyStroke();
           #endif
             break;
         }
     }
     sleepMilliSeconds(10);
+  
+  #ifdef _UHCI_DIAGNOSIS_
+    printf("Port Status: %Xh", inportw(u->bar + UHCI_PORTSC1 + 2 * port));
+    waitForKeyStroke();
+  #endif
 }
 
 
@@ -337,7 +342,7 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
 
     if (val & UHCI_STS_USBINT)
     {
-        // printf("Frame: %u - USB transaction completed", inportw(u->bar + UHCI_FRNUM));
+        printf("Frame: %u - USB transaction completed", inportw(u->bar + UHCI_FRNUM));
         outportw(reg, UHCI_STS_USBINT); // reset interrupt
     }
 
@@ -431,6 +436,7 @@ void uhci_pollDisk(void* dev)
             if (val & UHCI_PORT_CS)
             {
                 printf(" attached.");
+                uhci_resetPort(u, port);           ///// <--- reset on attached /////
                 if (UHCI_USBtransferFlag)
                 {
                   #ifdef UHCI_USB_TRANSFER
@@ -456,7 +462,8 @@ void uhci_pollDisk(void* dev)
 void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
 {
     u->ports[portNumber]->num = 0; // device number has to be set to 0
-    // u->ports[portNumber]->num = 1 + usbTransferEnumerate(&u->ports[portNumber]->port, portNumber);
+    u->ports[portNumber]->num = 1 + usbTransferEnumerate(&u->ports[portNumber]->port, portNumber);
+    waitForKeyStroke();
 
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &u->ports[portNumber]->port;
@@ -483,9 +490,9 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
     if (device->InterfaceClass != 0x08)
     {
         textColor(ERROR);
-        printf("\nThis is no Mass Storage Device! MSD test and addition to device manager will not be carried out.");
+        printf("\nThis is no Mass Storage Device!\nMSD test and addition to device manager will not be carried out.");
         textColor(TEXT);
-        waitForKeyStroke();
+        waitForKeyStroke();        
     }
     else
     {
@@ -516,7 +523,7 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
       #endif
 
         testMSD(device); // test with some SCSI commands
-    }
+    }    
 }
 
 
@@ -613,71 +620,81 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
     uhci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
     uhci_createQH(u, transfer->data, (uintptr_t)transfer->data, firstTransaction->TD);
 
-    transfer->success = true;
-
-    // start scheduler
-    outportw(u->bar + UHCI_FRNUM, 0);
-    outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) | UHCI_CMD_RS | UHCI_CMD_CF );
-    delay(10000);
-    u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
-    printf("\nuhci_issueTransfer u->run: %u", u->run);
-
-    // run transactions
-    for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+    for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
     {
-        uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+      #ifdef _UHCI_DIAGNOSIS_
+        printf("\ntransfer try = %u\n", i);
+      #endif
 
-        if(transaction->inBuffer != 0 && transaction->inLength != 0)
+        transfer->success = true;
+        
+        // start scheduler
+        outportl(u->bar + UHCI_FRBASEADD, paging_getPhysAddr((void*)u->framelistAddrVirt->frPtr));
+        outportw(u->bar + UHCI_FRNUM, 0);
+        outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) | UHCI_CMD_RS);
+                    
+        // run transactions
+        for(dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
-            memcpy(transaction->inBuffer, transaction->TDBuffer, transaction->inLength);
+          #ifdef _UHCI_DIAGNOSIS_
+            uint16_t num = inportw(u->bar + UHCI_FRNUM);
+            printf("\nFRBADDR: %X  frame pointer: %X frame number: %u", inportl(u->bar + UHCI_FRBASEADD), u->framelistAddrVirt->frPtr[num], num);                                
+          #endif
+            delay(50000); // pause after transaction
+        }
+        delay(50000); // pause after transfer
+
+        // stop scheduler
+        outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) & ~UHCI_CMD_RS);
+                
+        // check conditions
+        for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+        {
+            uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+            uhci_showStatusbyteTD(transaction->TD);
+        
+            transfer->success = transfer->success && (transaction->TD->active == 0); // executed (errorfree?)
+        }
+
+        // save data
+        for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+        {
+            uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+
+            if(transaction->inBuffer != 0 && transaction->inLength != 0)
+            {
+                memcpy(transaction->inBuffer, transaction->TDBuffer, transaction->inLength);
+            }
         }
         
-        delay(50000);
-    }
-
-    delay(50000);
-
-    // check conditions
-    for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
-    {
-        uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-        uhci_showStatusbyteTD(transaction->TD);
-        transfer->success = transfer->success && (transaction->TD->active == 0); // executed (errorfree?)
-    }
-
-    for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
-    {
-        uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-    
-        printf("\nTD: %X next: %X", paging_getPhysAddr(transaction->TD), transaction->TD->next);            
-        
-        free(transaction->TDBuffer);
-        free(transaction->TD);
-        free(transaction);    
-    } 
-
-    printf("\nQH->transfer: %X", ((uhciQH_t*)transfer->data)->transfer);
-    
-    if(transfer->success)
-    {
-      #ifdef _EHCI_DIAGNOSIS_
-        textColor(SUCCESS);
-        printf("\nTransfer successful.");
-        textColor(TEXT);
+      #ifdef _UHCI_DIAGNOSIS_
+        printf("\nQH: %X  QH->transfer: %X", paging_getPhysAddr(transfer->data), ((uhciQH_t*)transfer->data)->transfer);
       #endif
-    }
-    else
-    {
-        textColor(ERROR);
-        printf("\nTransfer failed.");
-        textColor(TEXT);
-    }
+        
+        for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
+        {
+            uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
+
+          #ifdef _UHCI_DIAGNOSIS_
+            printf("\nTD: %X next: %X", paging_getPhysAddr(transaction->TD), transaction->TD->next);            
+          #endif
+        }
     
-    // stop scheduler
-    outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) & ~UHCI_CMD_RS);
-    delay(10000);
-    u->run = inportw(u->bar + UHCI_USBCMD) & UHCI_CMD_RS;
-    printf("\nuhci_setupTransfer u->run: %u", u->run);
+        if(transfer->success)
+        {
+          #ifdef _UHCI_DIAGNOSIS_
+            textColor(SUCCESS);
+            printf("\nTransfer successful.");
+            textColor(TEXT);
+          #endif
+        }
+        else
+        {
+            textColor(ERROR);
+            printf("\nTransfer failed.");
+            textColor(TEXT);
+        }
+    }
 }
 
 
@@ -722,8 +739,6 @@ static void* uhci_allocTDbuffer(uhciTD_t* td)
 
 uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length, void** buffer, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-    printf("\nSETUP: tokenBytes: %u packetSize: %u", tokenBytes, packetSize);
-    
     uhciTD_t* td = uhci_allocTD(next);
 
     td->PacketID      = UHCI_TD_SETUP;
@@ -748,9 +763,7 @@ uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool tog
 
 uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-	printf("\nIO: tokenBytes: %u packetSize: %u", tokenBytes, packetSize);
-    
-    uhciTD_t* td = uhci_allocTD(next);
+	uhciTD_t* td = uhci_allocTD(next);
 
     td->PacketID      = direction;
     
@@ -777,7 +790,7 @@ uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t dir
 
 void uhci_createQH(uhci_t* u, uhciQH_t* head, uint32_t horizPtr, uhciTD_t* firstTD)
 {
-    head->next     = BIT_T; //(paging_getPhysAddr((void*)horizPtr) & 0xFFFFFFF0) | BIT_QH;
+    head->next = BIT_T; // (paging_getPhysAddr((void*)horizPtr) & 0xFFFFFFF0) | BIT_QH;
 
     if (firstTD == 0)
     {
