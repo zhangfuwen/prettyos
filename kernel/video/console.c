@@ -220,6 +220,8 @@ void putch(char c)
         case 0x08: // backspace: move the cursor one space backwards and delete
             move_cursor_left();
             *(console_current->vidmem + console_current->cursor.y * COLUMNS + console_current->cursor.x) = ' ' | getTextColor() << 8;
+            if (console_displayed == console_current && (console_current->properties & CONSOLE_AUTOREFRESH)) // Print to screen, if current console is displayed at the moment
+                vga_setPixel(console_current->cursor.x, console_current->cursor.y+2, uc | getTextColor() << 8);
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
             console_current->cursor.x = alignUp(console_current->cursor.x+1, 8);

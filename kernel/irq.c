@@ -197,6 +197,7 @@ static void stackTrace(void* eip, void* ebp)
             break;
         }
     }
+    cli(); hlt();
 }
 
 static void defaultError(registers_t* r)
@@ -209,9 +210,7 @@ static void defaultError(registers_t* r)
     printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
     printf("eflags: %Xh useresp: %Xh\n", r->eflags, r->useresp);
 
-    printf("\nPress 's' to display call stack.\n");
-    if (getch() == 's')
-        stackTrace((void*)r->eip, (void*)r->ebp);
+    stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
 }
@@ -226,9 +225,7 @@ static void invalidOpcode(registers_t* r)
     printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
     printf("eflags: %Xh useresp: %Xh\n", r->eflags, r->useresp);
 
-    printf("\nPress 's' to display call stack.\n");
-    if (getch() == 's')
-        stackTrace((void*)r->eip, (void*)r->ebp);
+    stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
 }
@@ -304,9 +301,7 @@ static void PF(registers_t* r)
     if (res)  printf("\noverwritten CPU-reserved bits of page entry");
     if (id)   printf("\ncaused by an instruction fetch");
 
-    printf("\n\nPress 's' to display call stack.\n");
-    if (getch() == 's')
-        stackTrace((void*)r->eip, (void*)r->ebp);
+    stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
 }

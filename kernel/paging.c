@@ -403,10 +403,11 @@ uint32_t paging_getPhysAddr(void* virtAddress)
     uint32_t pagenr = (uint32_t)virtAddress / PAGESIZE;
     pageTable_t* pt = pd->tables[pagenr/1024];
 
-    kdebug(3, "\nvirt-->phys: pagenr: %u ",pagenr);
-    kdebug(3, "pt: %Xh\n",pt);
+    kdebug(3, "\nvirt-->phys: pagenr: %u ", pagenr);
+    kdebug(3, "pt: %Xh\n", pt);
 
-    ASSERT(pt);
+    if(pt == 0)
+        return(0);
 
     // Read the address, cut off the flags, append the address' odd part
     return (pt->pages[pagenr%1024]&0xFFFF000) + (((uint32_t)virtAddress)&0x00000FFF);
@@ -419,7 +420,9 @@ uint32_t paging_getPhysAddr(void* virtAddress)
 void paging_analyzeBitTable()
 {
     uint32_t k=0, k_old=2;
-    uint32_t maximum = min(system.Memory_Size/PAGESIZE/32, MAX_DWORDS);
+    int64_t ramsize;
+    ipc_getInt("PrettyOS/RAM", &ramsize);
+    uint32_t maximum = min(((uint32_t)ramsize)/PAGESIZE/32, MAX_DWORDS);
 
     for (uint32_t index=0; index<maximum; ++index)
     {

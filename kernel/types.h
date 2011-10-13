@@ -26,14 +26,6 @@ typedef __builtin_va_list va_list;
 #define va_copy(dest, src) __builtin_va_copy(dest, src)
 
 
-// This defines the operatings system common data area
-typedef struct
-{
-    uint32_t CPU_Frequency_kHz;  // determined from rdtsc
-    uint32_t Memory_Size;        // memory size in byte
-} system_t;
-
-
 typedef enum
 {
     STANDBY, SHUTDOWN, REBOOT

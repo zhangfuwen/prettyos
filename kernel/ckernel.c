@@ -37,14 +37,11 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.143 - Rev: 1344";
+const char* const version = "0.0.3.144 - Rev: 1345";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
 extern uintptr_t _bss_end;   // linker script
-
-// Information about the system
-system_t system;
 
 bool fpu_install(); // fpu.c
 void fpu_test();    // fpu.c
@@ -150,7 +147,8 @@ static void init(multiboot_t* mb_struct)
     }
 
     // memory
-    system.Memory_Size = paging_install();
+    int64_t memsize = paging_install();
+    ipc_setInt("PrettyOS/RAM", &memsize);
     log("Paging");
     heap_install();
     log("Heap");
@@ -201,13 +199,15 @@ static void showMemorySize()
     textColor(LIGHT_GRAY);
     printf("   => Memory: ");
     textColor(TEXT);
-    if (system.Memory_Size >= 0x40000000) // More than 1 GiB
+    int64_t ramsize;
+    ipc_getInt("PrettyOS/RAM", &ramsize);
+    if (ramsize >= 0x40000000) // More than 1 GiB
     {
-        printf("%u GiB  (%u MiB, %u Bytes)\n", system.Memory_Size>>30, system.Memory_Size>>20, system.Memory_Size);
+        printf("%u GiB  (%u MiB, %u Bytes)\n", ramsize>>30, ramsize>>20, ramsize);
     }
     else
     {
-        printf("%u MiB  (%u Bytes)\n", system.Memory_Size>>20, system.Memory_Size);
+        printf("%u MiB  (%u Bytes)\n", ramsize>>20, ramsize);
     }
     textColor(LIGHT_GRAY);
 }
@@ -326,7 +326,6 @@ void main(multiboot_t* mb_struct)
     textColor(TEXT);
 
     const char* progress    = "|/-\\";    // rotating asterisk
-    uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
     char     DateAndTime[50];             // String for Date&Time
 
@@ -447,21 +446,13 @@ void main(multiboot_t* mb_struct)
         {
             CurrentSeconds = timer_getSeconds();
 
-            // calculate cpu frequency
-            uint64_t Rdtsc = rdtsc();
-            uint64_t RdtscKCounts   = (Rdtsc - LastRdtscValue);  // Build difference
-            uint32_t RdtscKCountsHi = RdtscKCounts >> 32;        // high dword
-            uint32_t RdtscKCountsLo = RdtscKCounts & 0xFFFFFFFF; // low dword
-            LastRdtscValue = Rdtsc;
-
-            if (RdtscKCountsHi == 0)
-                system.CPU_Frequency_kHz = RdtscKCountsLo/1000;
+            cpu_calculateFrequency();
 
             if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
             {
                 // draw status bar with date, time and frequency
                 getCurrentDateAndTime(DateAndTime, 50);
-                kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, system.CPU_Frequency_kHz/1000); // output in status bar
+                kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, ((uint32_t)*cpu_frequency)/1000); // output in status bar
             }
 
             deviceManager_checkDrives(); // switch off motors if they are not neccessary

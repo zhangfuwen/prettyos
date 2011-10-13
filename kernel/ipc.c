@@ -118,6 +118,7 @@ static IPC_ERROR createNode(ipc_node_t* parent, ipc_node_t** node, const char* n
     (*node)->owner = getpid();
     (*node)->general = IPC_READ; // TODO: Use parents rights?
     (*node)->accessTable = 0;
+    (*node)->data.folder = 0;
 
     if(parent->data.folder == 0)
         parent->data.folder = list_create();

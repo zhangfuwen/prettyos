@@ -21,6 +21,10 @@ void cpu_analyze()
     printf("   => CPU:\n");
     textColor(TEXT);
 
+    ipc_node_t* node;
+    ipc_createNode("PrettyOS/CPU/Frequency in kHz", &node, IPC_INTEGER);
+    cpu_frequency = &node->data.integer;
+
     // Test if the CPU supports the CPUID-Command
     __asm__ volatile ("pushfl\n\t"
                       "pop %ecx\n\t"
@@ -55,7 +59,7 @@ void cpu_analyze()
 
 void cpu_calculateFrequency()
 {
-    /*static uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
+    static uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
 
     // calculate cpu frequency
     uint64_t Rdtsc = rdtsc();
@@ -65,7 +69,7 @@ void cpu_calculateFrequency()
     LastRdtscValue = Rdtsc;
 
     if (RdtscKCountsHi == 0)
-        *cpu_frequency = RdtscKCountsLo/1000;*/
+        *cpu_frequency = RdtscKCountsLo/1000;
 }
 
 bool cpu_supports(CPU_FEATURE feature)

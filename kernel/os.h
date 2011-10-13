@@ -49,7 +49,6 @@
 #define SER_LOG_FAT    1
 
 extern const char* const version; // PrettyOS version string
-extern system_t system;           // Information about the operating system
 extern struct todoList* kernel_idleTasks;
 
 
