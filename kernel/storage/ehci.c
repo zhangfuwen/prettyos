@@ -36,6 +36,7 @@ void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys)
     e->PCIdevice        = PCIdev;
     e->PCIdevice->data  = e;
     e->bar              = (uintptr_t)paging_acquirePciMemory(bar_phys,1) + (bar_phys % PAGESIZE);
+    e->enabledPortFlag  = false;
 
   #ifdef _EHCI_DIAGNOSIS_
     printf("\nEHCI_MMIO %Xh mapped to virt addr %Xh", bar_phys, e->bar);
@@ -130,9 +131,6 @@ void ehci_initHC(ehci_t* e)
   #endif
 
     irq_installPCIHandler(e->PCIdevice->irq, ehci_handler, e->PCIdevice);
-
-    e->USBtransferFlag = true;
-    e->enabledPortFlag = false;
 }
 
 void ehci_startHC(ehci_t* e)
@@ -601,7 +599,7 @@ static void ehci_checkPortLineStatus(ehci_t* e, uint8_t j)
 static void ehci_detectDevice(ehci_t* e, uint8_t j)
 {
     ehci_resetPort(e,j);
-    if (e->USBtransferFlag && e->enabledPortFlag && (e->OpRegs->PORTSC[j] & PSTS_POWERON) && (e->OpRegs->PORTSC[j] & PSTS_CONNECTED)) // enabled, device attached
+    if (e->enabledPortFlag && (e->OpRegs->PORTSC[j] & PSTS_POWERON) && (e->OpRegs->PORTSC[j] & PSTS_CONNECTED)) // enabled, device attached
     {
         if(e->OpRegs->PORTSC[j] & PSTS_ENABLED) // High speed
         {

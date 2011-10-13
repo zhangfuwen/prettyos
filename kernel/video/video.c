@@ -87,7 +87,6 @@ static void kputch(char c, uint8_t attrib)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
 
-    uint16_t* pos;
     uint16_t att = attrib << 8;
 
     mutex_lock(videoLock);
@@ -97,20 +96,17 @@ static void kputch(char c, uint8_t attrib)
             if (cursor.x)
             {
                 --cursor.x;
-                kputch(' ', attrib);
-                --cursor.x;
+                *(vidmem + cursor.y * COLUMNS + cursor.x) = ' ' | att;
             }
             else if (cursor.y>0)
             {
                 cursor.x=COLUMNS-1;
                 --cursor.y;
-                kputch(' ', attrib);
-                cursor.x=COLUMNS-1;
-                --cursor.y;
+                *(vidmem + cursor.y * COLUMNS + cursor.x) = ' ' | att;
             }
             break;
         case 0x09: // tab: increment csr_x (divisible by 8)
-            cursor.x = (cursor.x + 8) & ~(8 - 1);
+            cursor.x = alignUp(cursor.x+1, 8);
             break;
         case '\r': // cr: cursor back to the margin
             cursor.x = 0;
@@ -121,7 +117,7 @@ static void kputch(char c, uint8_t attrib)
         default:
             if (uc != 0)
             {
-                pos = vidmem + (cursor.y * COLUMNS + cursor.x);
+                uint16_t* pos = vidmem + (cursor.y * COLUMNS + cursor.x);
                 *pos = uc | att; // character AND attributes: color
                 ++cursor.x;
             }

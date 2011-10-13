@@ -18,15 +18,15 @@
 videoDeviceDriver_t video_drivers[VDD_COUNT] =
 {
     { // Renderbuffer
-        .driverName = "RenderBuffer", .detect = 0, .createDevice = 0, .freeDevice = 0, .createModeList = 0, .enterVideoMode = 0, .leaveVideoMode = 0,
+        .driverName = "RenderBuffer", .detect = 0, .createDevice = 0, .freeDevice = 0, .createModeList = 0, .freeVideoMode = 0, .enterVideoMode = 0, .leaveVideoMode = 0,
         .setPixel = &renderBuffer_setPixel, .fillPixels = &renderBuffer_fillPixels, .copyPixels = &renderBuffer_copyPixels, .clear = &renderBuffer_clear, .getPixel = &renderBuffer_getPixel, .flipScreen = &renderBuffer_flipScreen
     },
     { // VGA
-        .driverName = "VGA", .detect = 0, .createDevice = 0, .freeDevice = 0, .createModeList = 0, .enterVideoMode = 0, .leaveVideoMode = 0,
+        .driverName = "VGA", .detect = 0, .createDevice = 0, .freeDevice = 0, .createModeList = 0, .freeVideoMode = 0, .enterVideoMode = 0, .leaveVideoMode = 0,
         .setPixel = 0, .fillPixels = 0, .copyPixels = 0, .clear = 0, .getPixel = 0, .flipScreen = 0
     },
     { // VBE
-        .driverName = "VBE", .detect = &vbe_detect, .createDevice = &vbe_createDevice, .freeDevice = &vbe_freeDevice, .createModeList = &vbe_createModeList, .enterVideoMode = &vbe_enterVideoMode, .leaveVideoMode = &vbe_leaveVideoMode,
+        .driverName = "VBE", .detect = &vbe_detect, .createDevice = &vbe_createDevice, .freeDevice = &vbe_freeDevice, .createModeList = &vbe_createModeList, .freeVideoMode = &vbe_freeMode, .enterVideoMode = &vbe_enterVideoMode, .leaveVideoMode = &vbe_leaveVideoMode,
         .setPixel = &vbe_setPixel, .fillPixels = &vbe_fillPixels, .copyPixels = 0, .clear = &vbe_clear, .getPixel = &vbe_getPixel, .flipScreen = &vbe_flipScreen
     }
 };
@@ -202,6 +202,12 @@ void video_test()
 
     video_setMode(0); // Return to 80x50 text mode
     video_freeModeList(modelist);
+    for (dlelement_t* e = basicVideoDevices->head; e != 0; e = e->next)
+    {
+        video_freeDevice(e->data);
+    }
+    list_free(basicVideoDevices);
+    basicVideoDevices = 0;
 }
 
 void video_setMode(videoMode_t* mode)
@@ -219,7 +225,8 @@ void video_createModeList(list_t* list)
     for (dlelement_t* e = basicVideoDevices->head; e != 0; e = e->next)
     {
         videoDevice_t* device = e->data;
-        device->driver->createModeList(device, list);
+        if(device->driver->createModeList)
+            device->driver->createModeList(device, list);
     }
 }
 
@@ -227,8 +234,11 @@ void video_freeModeList(list_t* list)
 {
     for(dlelement_t* e = list->head; e != 0; e = e->next)
     {
-        free(e->data);
+        videoMode_t* mode = e->data;
+        if(mode->device->driver->freeVideoMode)
+            mode->device->driver->freeVideoMode(mode);
     }
+    list_free(list);
 }
 
 videoDevice_t* video_createDevice(videoDeviceDriver_t* driver)

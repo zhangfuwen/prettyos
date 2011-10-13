@@ -76,6 +76,7 @@ size_t vbe_detect();
 void   vbe_createDevice(videoDevice_t* device);
 void   vbe_freeDevice(videoDevice_t* device);
 void   vbe_createModeList(videoDevice_t* device, list_t* list);
+void   vbe_freeMode(videoMode_t* mode);
 void   vbe_enterVideoMode(videoMode_t* mode);
 void   vbe_leaveVideoMode(videoDevice_t* device);
 

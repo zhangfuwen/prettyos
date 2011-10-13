@@ -202,6 +202,12 @@ void vbe_createModeList(videoDevice_t* device, list_t* list)
     }
 }
 
+void vbe_freeMode(videoMode_t* mode)
+{
+    free(mode->palette);
+    free(mode);
+}
+
 void vbe_enterVideoMode(videoMode_t* mode)
 {
     mode->device->videoMode = *mode;

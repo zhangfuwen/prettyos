@@ -26,7 +26,7 @@ extern char _kernel_beg, _kernel_end; // defined in linker script
 // Physical Memory
 static const uint32_t MAX_DWORDS = 0x100000000ull / PAGESIZE / 32;
 static uint32_t* bittable;
-static uint32_t firstFreeDWORD;
+static uint32_t firstFreeDWORD = 10*1024*1024 / PAGESIZE / 32; // Exclude the first 10 MiB from being allocated (they'll be needed for DMA later on)
 static uint32_t physMemInit();
 
 
@@ -46,11 +46,10 @@ uint32_t paging_install()
 
     // Setup the kernel page directory
     kernelPageDirectory = malloc(sizeof(pageDirectory_t), PAGESIZE, "pag-kernelPD");
-    memset(kernelPageDirectory, 0, sizeof(pageDirectory_t));
+    memset(kernelPageDirectory, 0, sizeof(pageDirectory_t)-4);
     kernelPageDirectory->physAddr = (uint32_t)kernelPageDirectory;
 
-    kdebug(3, "\nkernelPageDirectory (virt., phys.): %Xh", kernelPageDirectory);
-    kdebug(3, ", %Xh\n", kernelPageDirectory->physAddr);
+    kdebug(3, "\nkernelPageDirectory (virt., phys.): %Xh, %Xh\n", kernelPageDirectory, kernelPageDirectory->physAddr);
 
     // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;
@@ -69,9 +68,10 @@ uint32_t paging_install()
     }
 
     // Setup the page tables for the kernel heap (3GB-4GB), unmapped
-    pageTable_t* heap_pts = malloc(256*sizeof(pageTable_t), PAGESIZE, "pag-PTheap");
-    memset(heap_pts, 0, 256*sizeof(pageTable_t));
-    for (uint32_t i=0; i<256; ++i)
+    size_t kernelpts = max(256, ram_available/4096/1024); // Maximum kernel heap size limited by available memory
+    pageTable_t* heap_pts = malloc(kernelpts*sizeof(pageTable_t), PAGESIZE, "pag-PTheap");
+    memset(heap_pts, 0, kernelpts*sizeof(pageTable_t));
+    for (uint32_t i = 0; i < kernelpts; ++i)
     {
         kernelPageDirectory->tables[0x300+i] = &heap_pts[i];
         kernelPageDirectory->codes[0x300+i]  = (uint32_t)kernelPageDirectory->tables[0x300+i] | MEM_PRESENT | MEM_WRITE;
@@ -136,28 +136,24 @@ static uint32_t physMemInit()
 {
     static const uint64_t FOUR_GB  = 0x100000000ull;
 
-    // Print the memory map
-    #ifdef _DIAGNOSIS_
+  #ifdef _DIAGNOSIS_
     textColor(HEADLINE);
     printf("\nMemory map:");
     textColor(TEXT);
-    for (const memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; entry++)
-    {
-        printf("\n  %Xh -> %Xh %u", entry->base, entry->base+entry->size, entry->type);
-    }
-    #endif
+  #endif
 
     // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size 0.
     for (memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; ++entry)
     {
-        // We will completely ignore memory above 4 GB, move following entries backward by one then
-        if (entry->base >= FOUR_GB)
+      #ifdef _DIAGNOSIS_
+        printf("\n  %Xh -> %Xh %u", entry->base, entry->base+entry->size, entry->type); // Print the memory map
+      #endif
+
+        // We will completely ignore memory above 4 GB or with size of 0, move following entries backward by one then
+        if (entry->base >= FOUR_GB || entry->size == 0)
         {
-            for (memoryMapEntry_t* e = entry; e < memoryMapEnd; ++e)
-            {
-                *e = *(e+1);
-                memoryMapEnd--;
-            }
+            memmove(entry, entry+1, (memoryMapEnd-entry)/sizeof(entry));
+            memoryMapEnd--;
         }
 
         // Eventually reduce the size so the the block doesn't exceed 4 GB
@@ -182,14 +178,9 @@ static uint32_t physMemInit()
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
     for (const memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; ++entry)
     {
-        physSetBits(entry->base, entry->base+entry->size, !entry->type);
+        if(entry->type == 1) // Set bits to "free"
+            physSetBits(entry->base, entry->base+entry->size, false);
     }
-
-    // Reserve first 20 MiB
-    physSetBits(0x00000000, 20*1024*1024, true);
-
-    // Reserve the region of the kernel code
-    physSetBits((uint32_t)&_kernel_beg, (uint32_t)&_kernel_end, true);
 
     // Find the number of dwords we can use, skipping the last, "reserved"-only ones
     uint32_t dword_count = 0;
@@ -201,8 +192,11 @@ static uint32_t physMemInit()
         }
     }
 
-    // Exclude the first 10 MiB from being allocated (they'll be needed for DMA later on)
-    firstFreeDWORD = 10*1024*1024 / PAGESIZE / 32;
+    // Reserve first 20 MiB
+    physSetBits(0x00000000, 20*1024*1024, true);
+
+    // Reserve the region of the kernel code
+    physSetBits((uint32_t)&_kernel_beg, (uint32_t)&_kernel_end, true);
 
     kdebug(3, "Highest available RAM: %Xh\n", dword_count*32*4096);
 
@@ -217,13 +211,8 @@ static uint32_t physMemAlloc()
     {
         if (bittable[firstFreeDWORD] != 0xFFFFFFFF)
         {
-            // Find the number of a free bit
-            uint32_t val = bittable[firstFreeDWORD];
-            uint32_t bitnr = 0;
-            while (val & 1)
-            {
-                val>>=1, ++bitnr;
-            }
+            uint32_t bitnr;
+            __asm__ volatile("bsfl %1, %0" : "=r"(bitnr) : "r"(~bittable[firstFreeDWORD])); // Find the number of first free bit. This inline assembler instruction is smaller and faster than a C loop to identify this bit
 
             // Set the page to "reserved" and return the frame's address
             bittable[firstFreeDWORD] |= BIT(bitnr%32);
@@ -256,7 +245,7 @@ bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAG
     ASSERT(size % PAGESIZE == 0);
 
     // We repeat allocating one page at once
-    for (uint32_t done=0; done!=size/PAGESIZE; ++done)
+    for (uint32_t done=0; done<size/PAGESIZE; ++done)
     {
         uint32_t pagenr = (uint32_t)virtAddress/PAGESIZE + done;
 

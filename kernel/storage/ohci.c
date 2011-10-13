@@ -21,7 +21,6 @@
 static uint8_t index   = 0;
 static ohci_t* curOHCI = 0;
 static ohci_t* ohci[OHCIMAX];
-static bool    OHCI_USBtransferFlag = false;
 
 
 static void ohci_handler(registers_t* r, pciDev_t* device);
@@ -44,6 +43,7 @@ void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     ohci[index]->PCIdevice->data = ohci[index];
     uint16_t offset         = bar_phys % PAGESIZE;
     ohci[index]->num        = index;
+    ohci[index]->enabledPortFlag = false;
 
     void* bar = paging_acquirePciMemory(bar_phys, alignUp(memorySize, PAGESIZE)/PAGESIZE);
 
@@ -103,9 +103,6 @@ void ohci_initHC(ohci_t* o)
     //printf("\nPCI Capabilities List: first Pointer: %yh", pciCapabilitiesList);
  #endif
     irq_installPCIHandler(o->PCIdevice->irq, ohci_handler, o->PCIdevice);
-
-    OHCI_USBtransferFlag = true;
-    o->enabledPortFlag   = false;
 
     ohci_resetHC(o);
 }
@@ -447,12 +444,9 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
             printf(" enabled  -");
             if (o->enabledPortFlag && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS) && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)) // powered, device attached
             {
-                if (OHCI_USBtransferFlag)
-                {
-                  #ifdef OHCI_USB_TRANSFER
-                    ohci_setupUSBDevice(o, j);
-                  #endif
-                }
+              #ifdef OHCI_USB_TRANSFER
+                ohci_setupUSBDevice(o, j);
+              #endif
             }
         }
         else

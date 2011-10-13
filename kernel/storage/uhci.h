@@ -194,7 +194,7 @@ typedef struct uhci
     mutex_t*       qhLock;                   // mutex for access on the QH
     bool           enabledPortFlag;          // root ports enabled
     uhci_port_t*   ports[UHCIPORTMAX];       // root ports
-    uint32_t       connected[UHCIPORTMAX];   // port connected (counter)
+    uint8_t        connected[UHCIPORTMAX];   // port connected (counter)
     bool           run;                      // hc running (RS bit)
     uint8_t        num;                      // Number of the UHCI
 } uhci_t;

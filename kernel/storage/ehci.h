@@ -179,7 +179,6 @@ typedef struct ehci
     bool             enabledPortFlag;
     bool             USBINTflag;
     bool             USBasyncIntFlag;
-    bool             USBtransferFlag;
     struct ehci_qhd* idleQH;
     struct ehci_qhd* tailQH;
     ehci_port_t*     ports[16];

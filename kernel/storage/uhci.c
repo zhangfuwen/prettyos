@@ -19,7 +19,6 @@
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
 static uhci_t* uhci[UHCIMAX];
-static bool    UHCI_USBtransferFlag = false;
 
 
 static void uhci_start();
@@ -39,6 +38,7 @@ void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     uhci[index]->bar        = bar_phys;
     uhci[index]->memSize    = memorySize;
     uhci[index]->num        = index;
+    uhci[index]->enabledPortFlag = false;
 
     char str[10];
     snprintf(str, 10, "UHCI %u", index+1);
@@ -91,9 +91,6 @@ void uhci_initHC(uhci_t* u)
     //printf("\nPCI Capabilities List: first Pointer: %yh", pciCapabilitiesList);
  #endif
     irq_installPCIHandler(u->PCIdevice->irq, uhci_handler, u->PCIdevice);
-
-    UHCI_USBtransferFlag = true;
-    u->enabledPortFlag   = false;
 
     uhci_resetHC(u);
 }
@@ -289,8 +286,8 @@ void uhci_resetPort(uhci_t* u, uint8_t port)
 
     // Enable
     outportw(u->bar + UHCI_PORTSC1 + 2 * port, UHCI_PORT_CS_CHANGE | UHCI_PORT_ENABLE_CHANGE // clear Change-Bits Connected and Enabled
-			                                                       | UHCI_PORT_ENABLE);      // set Enable-Bit
-	sleepMilliSeconds(10);
+                                                                   | UHCI_PORT_ENABLE);      // set Enable-Bit
+    sleepMilliSeconds(10);
 
   #ifdef _UHCI_DIAGNOSIS_
     printf("Port Status: %Xh", inportw(u->bar + UHCI_PORTSC1 + 2 * port));
@@ -443,25 +440,22 @@ void uhci_pollDisk(void* dev)
             {
                 printf(" attached.");
 
-                u->connected[port]++;              // polling, therefore counter
                 if (u->connected[port] == 0)       // ovverrun of 32-bit-counter
                 {
-                	u->connected[port] = 2;
+                    u->connected[port] = 1;
                 }
 
                 uhci_resetPort(u, port);           ///// <--- reset on attached /////
                 uhci_showPortState(u, port);
                 waitForKeyStroke();
 
-                if (UHCI_USBtransferFlag)
+              #ifdef UHCI_USB_TRANSFER
+                if (u->connected[port] == 1)
                 {
-                  #ifdef UHCI_USB_TRANSFER
-                    if (u->connected[port] == 1)
-                    {
-                    	uhci_setupUSBDevice(u, port); // TEST
-                    }
-                  #endif
+                    uhci_setupUSBDevice(u, port); // TEST
+                    u->connected[port] = 2;
                 }
+              #endif
             }
             else
             {
@@ -578,7 +572,7 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
 
     uhciTransaction->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uhciTransaction->TDBuffer,
-											  transfer->device, transfer->endpoint, transfer->packetSize);
+                                              transfer->device, transfer->endpoint, transfer->packetSize);
 
   #ifdef _UHCI_DIAGNOSIS_
     usb_request_t* request = (usb_request_t*)uhciTransaction->TDBuffer;
@@ -689,16 +683,13 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
 
       #ifdef _UHCI_DIAGNOSIS_
         printf("\nQH: %X  QH->transfer: %X", paging_getPhysAddr(transfer->data), ((uhciQH_t*)transfer->data)->transfer);
-      #endif
 
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
             uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-
-          #ifdef _UHCI_DIAGNOSIS_
             printf("\nTD: %X next: %X", paging_getPhysAddr(transaction->TD), transaction->TD->next);
-          #endif
         }
+      #endif
 
         if(transfer->success)
         {
@@ -736,7 +727,7 @@ static uhciTD_t* uhci_allocTD(uintptr_t next)
     }
     else
     {
-    	td->next = BIT_T;
+        td->next = BIT_T;
     }
 
     td->active             = 1;  // to be executed
@@ -783,17 +774,17 @@ uhciTD_t* uhci_createTD_SETUP(uhci_t* u, uhciQH_t* uQH, uintptr_t next, bool tog
 
 uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t direction, bool toggle, uint32_t tokenBytes, uint32_t device, uint32_t endpoint, uint32_t packetSize)
 {
-	uhciTD_t* td = uhci_allocTD(next);
+    uhciTD_t* td = uhci_allocTD(next);
 
     td->PacketID      = direction;
 
     if (tokenBytes)
     {
-        td->maxLength  = (tokenBytes-1) & 0x7FF;
+        td->maxLength = (tokenBytes-1) & 0x7FF;
     }
     else
     {
-        td->maxLength  = 0x7FF;
+        td->maxLength = 0x7FF;
     }
 
     td->dataToggle    = toggle; // Should be toggled every list entry
@@ -814,13 +805,13 @@ void uhci_createQH(uhci_t* u, uhciQH_t* head, uint32_t horizPtr, uhciTD_t* first
 
     if (firstTD == 0)
     {
-    	head->transfer = BIT_T;
+        head->transfer = BIT_T;
     }
 
     else
     {
-    	head->transfer = (paging_getPhysAddr(firstTD) & 0xFFFFFFF0);
-		head->q_first  = firstTD;
+        head->transfer = (paging_getPhysAddr(firstTD) & 0xFFFFFFF0);
+        head->q_first  = firstTD;
     }
 }
 

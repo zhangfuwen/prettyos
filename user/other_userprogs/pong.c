@@ -1295,13 +1295,13 @@ void DrawMenuContentBox(uint16_t addlines)
                 case 1:
                     printf("                   ");
                     printf("#");
-                    printf("				        ");
+                    printf("\t\t\t\t        ");
                     printf("#\n");
                     break;
                 case 2:
                     printf("                   ");
                     printf("#");
-                    printf("			   	         ");
+                    printf("\t\t\t   \t         ");
                     printf("#\n");
                     break;
                 case 4:
@@ -1315,13 +1315,13 @@ void DrawMenuContentBox(uint16_t addlines)
                 case 17:
                     printf("                    ");
                     printf("#");
-                    printf("				          ");
+                    printf("\t\t\t\t          ");
                     printf("#\n");
                     break;
                 case 18:
                     printf("                     ");
                     printf("#");
-                    printf("				          ");
+                    printf("\t\t\t\t          ");
                     printf("#\n");
                     break;
                 case 19:
@@ -1345,7 +1345,7 @@ void DrawMenuContentBox(uint16_t addlines)
                 default:
                     printf("                   ");
                     printf("#");
-                    printf("				          ");
+                    printf("\t\t\t\t          ");
                     printf("#\n");
                     break;
             }

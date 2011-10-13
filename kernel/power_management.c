@@ -139,9 +139,9 @@ void pm_log()
     textColor(TEXT);
     puts(pm_systems[PM_APM].supported?"Available":"Not supported");
     textColor(LIGHT_GRAY);
-    printf("\n   => ACPI: ");
+    /*printf("\n   => ACPI: ");
     textColor(TEXT);
-    printf("%s\n", "Not supported by PrettyOS");
+    puts("Not supported by PrettyOS");*/
 }
 
 bool pm_action(PM_STATES state)

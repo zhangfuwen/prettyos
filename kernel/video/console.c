@@ -145,7 +145,7 @@ void console_clear(uint8_t backcolor)
     if (console_current == console_displayed && (console_current->properties & CONSOLE_AUTOREFRESH)) // If it is also displayed at the moment, refresh screen
     {
         refreshUserScreen();
-	    vga_updateCursor();
+        vga_updateCursor();
     }
     mutex_unlock(console_current->mutex);
 }
@@ -159,8 +159,8 @@ static void move_cursor_right()
         console_current->cursor.x = 0;
         scroll();
     }
-	if(console_current == console_displayed)
-	    vga_updateCursor();
+    if(console_current == console_displayed)
+        vga_updateCursor();
 }
 
 static void move_cursor_left()
@@ -174,15 +174,15 @@ static void move_cursor_left()
         console_current->cursor.x = COLUMNS-1;
         --console_current->cursor.y;
     }
-	if(console_current == console_displayed)
-	    vga_updateCursor();
+    if(console_current == console_displayed)
+        vga_updateCursor();
 }
 
 static void move_cursor_home()
 {
     console_current->cursor.x = 0;
-	if(console_current == console_displayed)
-	    vga_updateCursor();
+    if(console_current == console_displayed)
+        vga_updateCursor();
 }
 
 void setCursor(position_t pos)
@@ -190,8 +190,8 @@ void setCursor(position_t pos)
     pos.x = min(COLUMNS-1, pos.x);
     pos.y = min(LINES-1, pos.y);
     console_current->cursor = pos;
-	if(console_current == console_displayed)
-		vga_updateCursor();
+    if(console_current == console_displayed)
+        vga_updateCursor();
 }
 
 void getCursor(position_t* pos)
@@ -219,17 +219,17 @@ void putch(char c)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete
             move_cursor_left();
-			*(console_current->vidmem + console_current->cursor.y * COLUMNS + console_current->cursor.x) = ' ' | getTextColor() << 8;
+            *(console_current->vidmem + console_current->cursor.y * COLUMNS + console_current->cursor.x) = ' ' | getTextColor() << 8;
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
-            console_current->cursor.x = (console_current->cursor.x + 8) & ~(8 - 1);
+            console_current->cursor.x = alignUp(console_current->cursor.x+1, 8);
             if (console_current->cursor.x>=COLUMNS)
             {
                 ++console_current->cursor.y;
                 console_current->cursor.x=0;
                 scroll();
-				if(console_displayed == console_current)
-					vga_updateCursor();
+                if(console_displayed == console_current)
+                    vga_updateCursor();
             }
             break;
         case '\r': // cr: cursor back to the margin
@@ -274,10 +274,10 @@ static void scroll()
             memsetw((uint16_t*)console_current->vidmem + (scroll_end - lines) * COLUMNS, getTextColor() << 8, COLUMNS);
             console_current->cursor.y = scroll_end - 1;
             if(console_current == console_displayed && (console_current->properties & CONSOLE_AUTOREFRESH))
-			{
+            {
                 refreshUserScreen();
-				vga_updateCursor();
-			}
+                vga_updateCursor();
+            }
         }
     }
     mutex_unlock(console_current->mutex);
