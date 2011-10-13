@@ -296,6 +296,8 @@ partition_t* getPartition(const char* path)
 FS_ERROR analyzeDisk(disk_t* disk)
 {
     uint8_t buffer[512];
+    
+    printf("\nsingleSectorRead(0, buffer, disk)");
     singleSectorRead(0, buffer, disk); // first sector of partition
 
     BPBbase_t* BPB = (BPBbase_t*)buffer; // BIOS Parameter Block (BPB)
@@ -431,9 +433,9 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
     {
         if (readcaches[i].valid && readcaches[i].sector == sector && readcaches[i].disk == disk)
         {
-            #ifdef _DEVMGR_DIAGNOSIS_
+          #ifdef _DEVMGR_DIAGNOSIS_
             printf("\nsector: %u <--- read from RAM Cache", readcaches[i].sector);
-            #endif
+          #endif
 
             memcpy(buffer, readcaches[i].buffer, 512); // use read cache
 

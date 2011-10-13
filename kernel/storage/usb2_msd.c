@@ -571,6 +571,7 @@ void testMSD(usb2_Device_t* device)
 
 
     ///////// send SCSI command "read capacity(10)"
+    textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read capacity"); textColor(TEXT);
     usbBulkTransfer_t readCapacity;
     startLogBulkTransfer(&readCapacity, 0x25, 8, 0);
     char capacityBuffer[8];
@@ -595,6 +596,7 @@ void testMSD(usb2_Device_t* device)
 
     logBulkTransfer(&readCapacity);
 
+    textColor(LIGHT_BLUE); printf("\n\n>>> analyzeDisk(device->disk)"); textColor(TEXT);
     analyzeDisk(device->disk);
 }
 

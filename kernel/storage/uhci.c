@@ -14,7 +14,7 @@
 #include "usb2_msd.h"
 
 #define UHCI_USB_TRANSFER
-#define NUMBER_OF_RETRIES 1
+#define NUMBER_OF_RETRIES 3
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -182,7 +182,7 @@ void uhci_resetHC(uhci_t* u)
     qh->q_first      = 0;
     qh->q_last       = 0;
     u->qhPointerVirt = qh;
-
+    
     for (uint16_t i=0; i<1024; i++)
     {
        u->framelistAddrVirt->frPtr[i] = paging_getPhysAddr(qh) | BIT_QH;
@@ -345,7 +345,9 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
 
     if (val & UHCI_STS_USBINT)
     {
+      #ifdef _UHCI_DIAGNOSIS_
         printf("Frame: %u - USB transaction completed", inportw(u->bar + UHCI_FRNUM));
+      #endif
         outportw(reg, UHCI_STS_USBINT); // reset interrupt
     }
 
@@ -654,27 +656,21 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
             uint16_t num = inportw(u->bar + UHCI_FRNUM);
             printf("\nFRBADDR: %X  frame pointer: %X frame number: %u", inportl(u->bar + UHCI_FRBASEADD), u->framelistAddrVirt->frPtr[num], num);
           #endif
-            delay(50000); // pause after transaction
+
+          delay(50000); // pause after transaction
         }
         delay(50000); // pause after transfer
 
         // stop scheduler
         outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) & ~UHCI_CMD_RS);
 
-        // check conditions
+        // check conditions and save data
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
             uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
             uhci_showStatusbyteTD(transaction->TD);
-
-            transfer->success = transfer->success && (transaction->TD->active == 0); // executed (errorfree?)
-        }
-
-        // save data
-        for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
-        {
-            uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-
+            transfer->success = transfer->success && (transaction->TD->active == 0); // executed 
+        
             if(transaction->inBuffer != 0 && transaction->inLength != 0)
             {
                 memcpy(transaction->inBuffer, transaction->TDBuffer, transaction->inLength);
@@ -740,8 +736,8 @@ static uhciTD_t* uhci_allocTD(uintptr_t next)
 
 static void* uhci_allocTDbuffer(uhciTD_t* td)
 {
-    td->virtBuffer = malloc(512, 512, "uhciTD-buffer");
-    memset(td->virtBuffer, 0, 512);
+    td->virtBuffer = malloc(1024, 0, "uhciTD-buffer");
+    memset(td->virtBuffer, 0, 1024);
     td->buffer = paging_getPhysAddr(td->virtBuffer);
 
     return td->virtBuffer;
@@ -786,7 +782,7 @@ uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t dir
     {
         td->maxLength = 0x7FF;
     }
-
+    
     td->dataToggle    = toggle; // Should be toggled every list entry
 
     td->deviceAddress = device;
@@ -820,11 +816,9 @@ void uhci_createQH(uhci_t* u, uhciQH_t* head, uint32_t horizPtr, uhciTD_t* first
 // analysis tools //
 ////////////////////
 
-
 void uhci_showStatusbyteTD(uhciTD_t* TD)
 {
     textColor(ERROR);
-
     if (TD->bitstuffError)     printf("\nBitstuff Error");          // receive data stream contained a sequence of more than 6 ones in a row
     if (TD->crc_timeoutError)  printf("\nNo Response from Device"); // no response from the device (CRC or timeout)
     if (TD->nakReceived)       printf("\nNAK received");            // NAK handshake
@@ -833,16 +827,16 @@ void uhci_showStatusbyteTD(uhciTD_t* TD)
     if (TD->stall)             printf("\nStalled");                 // can be caused by babble, error counter (0) or STALL from device
 
     textColor(GRAY);
-
     if (TD->active)            printf("\nactive");                  // 1: HC will execute   0: set by HC after excution (HC will not excute next time)
 
+  #ifdef _UHCI_DIAGNOSIS_
     textColor(IMPORTANT);
-
     if (TD->intOnComplete)     printf("\ninterrupt on complete");   // 1: HC issues interrupt on completion of the frame in which the TD is executed
     if (TD->isochrSelect)      printf("\nisochronous TD");          // 1: Isochronous TD
     if (TD->lowSpeedDevice)    printf("\nLowspeed Device");         // 1: LS   0: FS
     if (TD->shortPacketDetect) printf("\nShortPacketDetect");       // 1: enable   0: disable
-
+  #endif
+    
     textColor(TEXT);
 }
 
