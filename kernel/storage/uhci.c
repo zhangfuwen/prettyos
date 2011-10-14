@@ -182,7 +182,7 @@ void uhci_resetHC(uhci_t* u)
     qh->q_first      = 0;
     qh->q_last       = 0;
     u->qhPointerVirt = qh;
-    
+
     for (uint16_t i=0; i<1024; i++)
     {
        u->framelistAddrVirt->frPtr[i] = paging_getPhysAddr(qh) | BIT_QH;
@@ -557,6 +557,9 @@ typedef struct
     size_t      inLength;
 } uhci_transaction_t;
 
+static bool isTransactionSuccessful(uhci_transaction_t* uT);
+static void uhci_showStatusbyteTD(uhciTD_t* TD);
+
 void uhci_setupTransfer(usb_transfer_t* transfer)
 {
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci; // HC
@@ -567,66 +570,66 @@ void uhci_setupTransfer(usb_transfer_t* transfer)
 
 void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
 {
-    uhci_transaction_t* uhciTransaction = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
-    uhciTransaction->inBuffer = 0;
-    uhciTransaction->inLength = 0;
+    uhci_transaction_t* uT = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
+    uT->inBuffer = 0;
+    uT->inLength = 0;
 
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
 
-    uhciTransaction->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uhciTransaction->TDBuffer,
+    uT->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uT->TDBuffer,
                                               transfer->device, transfer->endpoint, transfer->packetSize);
 
   #ifdef _UHCI_DIAGNOSIS_
-    usb_request_t* request = (usb_request_t*)uhciTransaction->TDBuffer;
+    usb_request_t* request = (usb_request_t*)uT->TDBuffer;
     printf("\ntype: %u req: %u valHi: %u valLo: %u i: %u len: %u", request->type, request->request, request->valueHi, request->valueLo, request->index, request->length);
   #endif
 
     if (transfer->transactions->tail)
     {
         uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
-        uhciLastTransaction->TD->next = (paging_getPhysAddr(uhciTransaction->TD) & 0xFFFFFFF0) | BIT_Vf; // build TD queue
-        uhciLastTransaction->TD->q_next = uhciTransaction->TD;
+        uhciLastTransaction->TD->next = (paging_getPhysAddr(uT->TD) & 0xFFFFFFF0) | BIT_Vf; // build TD queue
+        uhciLastTransaction->TD->q_next = uT->TD;
     }
 }
 
 void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length)
 {
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
-    uhci_transaction_t* uhciTransaction = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
-    uhciTransaction->inBuffer = buffer;
-    uhciTransaction->inLength = length;
+    uhci_transaction_t* uT = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
+    uT->inBuffer = buffer;
+    uT->inLength = length;
 
-    uhciTransaction->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length, transfer->device, transfer->endpoint, transfer->packetSize);
-    uhciTransaction->TDBuffer = uhciTransaction->TD->virtBuffer;
+    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length, transfer->device, transfer->endpoint, transfer->packetSize);
+    uT->TDBuffer = uT->TD->virtBuffer;
 
     if (transfer->transactions->tail)
     {
         uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
-        uhciLastTransaction->TD->next = (paging_getPhysAddr(uhciTransaction->TD) & 0xFFFFFFF0) | BIT_Vf; // build TD queue
-        uhciLastTransaction->TD->q_next = uhciTransaction->TD;
+        uhciLastTransaction->TD->next = (paging_getPhysAddr(uT->TD) & 0xFFFFFFF0) | BIT_Vf; // build TD queue
+        uhciLastTransaction->TD->q_next = uT->TD;
     }
 }
 
 void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length)
 {
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
-    uhci_transaction_t* uhciTransaction = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
-    uhciTransaction->inBuffer = 0;
-    uhciTransaction->inLength = 0;
+    uhci_transaction_t* uT = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
+    uT->inBuffer = 0;
+    uT->inLength = 0;
 
-    uhciTransaction->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length, transfer->device, transfer->endpoint, transfer->packetSize);
-    uhciTransaction->TDBuffer = uhciTransaction->TD->virtBuffer;
+    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length, transfer->device, transfer->endpoint, transfer->packetSize);
+    uT->TDBuffer = uT->TD->virtBuffer;
 
     if (buffer != 0 && length != 0)
     {
-        memcpy(uhciTransaction->TDBuffer, buffer, length);
+        memcpy(uT->TDBuffer, buffer, length);
     }
 
     if (transfer->transactions->tail)
     {
         uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
-        uhciLastTransaction->TD->next = (paging_getPhysAddr(uhciTransaction->TD) & 0xFFFFFFF0) | BIT_Vf; // build TD queue
-        uhciLastTransaction->TD->q_next = uhciTransaction->TD;
+        uhciLastTransaction->TD->next = (paging_getPhysAddr(uT->TD) & 0xFFFFFFF0) | BIT_Vf; // build TD queue
+        uhciLastTransaction->TD->q_next = uT->TD;
     }
 }
 
@@ -667,13 +670,13 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
         // check conditions and save data
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
-            uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-            uhci_showStatusbyteTD(transaction->TD);
-            transfer->success = transfer->success && (transaction->TD->active == 0); // executed 
-        
-            if(transaction->inBuffer != 0 && transaction->inLength != 0)
+            uhci_transaction_t* uT = ((usb_transaction_t*)elem->data)->data;
+            uhci_showStatusbyteTD(uT->TD);
+            transfer->success = transfer->success && isTransactionSuccessful(uT); // executed w/o error
+
+            if(uT->inBuffer != 0 && uT->inLength != 0)
             {
-                memcpy(transaction->inBuffer, transaction->TDBuffer, transaction->inLength);
+                memcpy(uT->inBuffer, uT->TDBuffer, uT->inLength);
             }
         }
 
@@ -682,8 +685,8 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
 
         for (dlelement_t* elem = transfer->transactions->head; elem != 0; elem = elem->next)
         {
-            uhci_transaction_t* transaction = ((usb_transaction_t*)elem->data)->data;
-            printf("\nTD: %X next: %X", paging_getPhysAddr(transaction->TD), transaction->TD->next);
+            uhci_transaction_t* uT = ((usb_transaction_t*)elem->data)->data;
+            printf("\nTD: %X next: %X", paging_getPhysAddr(uT->TD), uT->TD->next);
         }
       #endif
 
@@ -782,7 +785,7 @@ uhciTD_t* uhci_createTD_IO(uhci_t* u, uhciQH_t* uQH, uintptr_t next, uint8_t dir
     {
         td->maxLength = 0x7FF;
     }
-    
+
     td->dataToggle    = toggle; // Should be toggled every list entry
 
     td->deviceAddress = device;
@@ -822,7 +825,7 @@ void uhci_showStatusbyteTD(uhciTD_t* TD)
     if (TD->bitstuffError)     printf("\nBitstuff Error");          // receive data stream contained a sequence of more than 6 ones in a row
     if (TD->crc_timeoutError)  printf("\nNo Response from Device"); // no response from the device (CRC or timeout)
     if (TD->nakReceived)       printf("\nNAK received");            // NAK handshake
-    if (TD->babbleDetected)    printf("\nBabble detected");         // Babble (fatal error)
+    if (TD->babbleDetected)    printf("\nBabble detected");         // Babble (fatal error), e.g. more data from the device than MAXP
     if (TD->dataBufferError)   printf("\nData Buffer Error");       // HC cannot keep up with the data  (overrun) or cannot supply data fast enough (underrun)
     if (TD->stall)             printf("\nStalled");                 // can be caused by babble, error counter (0) or STALL from device
 
@@ -836,10 +839,28 @@ void uhci_showStatusbyteTD(uhciTD_t* TD)
     if (TD->lowSpeedDevice)    printf("\nLowspeed Device");         // 1: LS   0: FS
     if (TD->shortPacketDetect) printf("\nShortPacketDetect");       // 1: enable   0: disable
   #endif
-    
+
     textColor(TEXT);
 }
 
+bool isTransactionSuccessful(uhci_transaction_t* uT)
+{
+	if
+	(
+	    // no error
+		(uT->TD->bitstuffError  == 0) && (uT->TD->crc_timeoutError == 0) && (uT->TD->nakReceived == 0) &&
+		(uT->TD->babbleDetected == 0) && (uT->TD->dataBufferError  == 0) && (uT->TD->stall       == 0) &&
+	    // executed
+	    (uT->TD->active == 0)
+	)
+	{
+		return (true);
+	}
+	else
+	{
+		return (false);
+	}
+}
 
 /*
 * Copyright (c) 2011 The PrettyOS Project. All rights reserved.
