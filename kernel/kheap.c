@@ -23,14 +23,14 @@
    The third region address is calculated by adding the first and second region size to "heapStart":
    region_3_addr = heapStart + regions[0].size + regions[1].size
 
-   Before the heap is set up memory is allocated on a "placement address".
+   Before the heap is set up, memory is allocated on a "placement address".
    This is an identity mapped area of continuous memory,
    the allocation just moves a pointer forward by the requested size and returns its previous value.
 
    The heap's management data is placed at this placement address, too.
    Since this area cannot grow, the heap has a maximum amount of region objects ("regionMaxCount").*/
 
-// TODO: Ensure the heap will not overflow (over 4 GB)
+// TODO: Ensure the heap will not overflow (above KERNEL_heapEnd, cf. memory.h)
 
 
 typedef struct
@@ -79,7 +79,7 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
     // We will have to append another region-object to our array if we can't merge with the last region - check whether there would be enough space to insert the region-object
     if ((regionCount > 0) && regions[regionCount-1].reserved && (regionCount >= regionMaxCount))
     {
-        return false;
+        return (false);
     }
 
     mutex_lock(mutex);
@@ -87,7 +87,7 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
     if (!paging_alloc(kernelPageDirectory, heapEnd, size, MEM_KERNEL|MEM_WRITE))
     {
         mutex_unlock(mutex);
-        return false;
+        return (false);
     }
 
     // Maybe we can merge with the last region object?
@@ -110,7 +110,7 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
 
     heapSize += size;
     mutex_unlock(mutex);
-    return true;
+    return (true);
 }
 
 static void* placementMalloc(uint32_t size, uint32_t alignment)
@@ -130,7 +130,7 @@ static void* placementMalloc(uint32_t size, uint32_t alignment)
     nextPlacement += size;
 
     mutex_unlock(mutex);
-    return currPlacement;
+    return (currPlacement);
 }
 
 void* malloc(uint32_t size, uint32_t alignment, char* comment)
@@ -141,7 +141,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     // If the heap is not set up, do placement malloc
     if (regions == 0)
     {
-        return placementMalloc(size, alignment);
+        return (placementMalloc(size, alignment));
     }
 
     // Avoid odd addresses
@@ -154,7 +154,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     {
         // Calculate aligned address and the additional size needed due to alignment
         uint8_t* alignedAddress = (uint8_t*)alignUp((uintptr_t)regionAddress, alignment);
-        uint32_t additionalSize = alignedAddress - regionAddress;
+        uintptr_t additionalSize = (uintptr_t)alignedAddress - (uintptr_t)regionAddress;
 
         // Check whether this region is free and big enough
         if (!regions[i].reserved && (regions[i].size >= size + additionalSize))
@@ -178,17 +178,18 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 if (regionCount >= regionMaxCount)
                 {
                     mutex_unlock(mutex);
-                    return 0;
+                    return (0);
                 }
 
                 // Move all following regions ahead to get room for a new one
-                memmove(regions + i+1, regions + i, (regionCount-i)*sizeof(region_t));
+                memmove(regions + i+1, regions + i, (regionCount-i) * sizeof(region_t));
 
                 ++regionCount;
 
                 // Setup the regions
                 regions[i].size     = alignedAddress - regionAddress;
                 regions[i].reserved = false;
+
               #ifdef _MALLOC_FREE_LOG_
                 strcpy(regions[i].comment, "free");
               #endif
@@ -207,7 +208,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
                 if (regionCount+1 > regionMaxCount)
                 {
                     mutex_unlock(mutex);
-                    return 0;
+                    return (0);
                 }
 
                 // Move all following regions ahead to get room for a new one
@@ -247,7 +248,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
           #endif
 
             mutex_unlock(mutex);
-            return regionAddress;
+            return (regionAddress);
 
         } //region is free and big enough
 
@@ -256,7 +257,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
 
     // There is nothing free, try to expand the heap
     uint32_t sizeToGrow = max(HEAP_MIN_GROWTH, alignUp(size*3/2,PAGESIZE));
-    bool success = heap_grow(sizeToGrow, (uint8_t*)(heapStart + (uintptr_t)heapSize));
+    bool success = heap_grow(sizeToGrow, (uint8_t*)((uintptr_t)heapStart + heapSize));
 
     mutex_unlock(mutex);
 
@@ -265,14 +266,14 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
         textColor(RED);
         printf("\nmalloc failed, heap could not be expanded!");
         textColor(TEXT);
-        return 0;
+        return (0);
     }
     else
     {
       #ifdef _MALLOC_FREE_LOG_
         textColor(YELLOW);
         task_switching = false;
-        printf("\nheap expanded: %Xh heap end: %Xh", sizeToGrow, (uintptr_t)(heapStart + (uintptr_t)heapSize));
+        printf("\nheap expanded: %Xh heap end: %Xh", sizeToGrow, (uintptr_t)heapStart + heapSize);
         task_switching = true;
         textColor(TEXT);
       #endif
@@ -281,7 +282,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     // Now there should be a region that is large enough
     void* address = malloc(size, alignment, comment);
 
-    return address;
+    return (address);
 }
 
 
@@ -299,7 +300,10 @@ void free(void* addr)
     textColor(TEXT);
   #endif
 
-    if (addr == 0) return;
+    if (addr == 0) 
+    {
+        return;
+    }
 
   #ifdef _MEMLEAK_FIND_
     counter--;
