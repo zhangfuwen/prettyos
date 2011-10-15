@@ -43,7 +43,7 @@ bool     paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEM
 void     paging_free (pageDirectory_t* pd, void* virtAddress, uint32_t size);
 void*    paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages);
 uint32_t paging_getPhysAddr(void* virtAddress);
-uint32_t paging_getVirtAddr(void* physAddress);
+uintptr_t paging_getVirtAddr(uintptr_t physAddress);
 
 pageDirectory_t* paging_createUserPageDirectory();
 void             paging_destroyUserPageDirectory(pageDirectory_t* pd);
