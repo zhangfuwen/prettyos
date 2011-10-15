@@ -424,6 +424,25 @@ uint32_t paging_getPhysAddr(void* virtAddress)
     return (pt->pages[pagenr % 1024] & 0xFFFF000) + (((uint32_t)virtAddress) & 0x00000FFF);
 }
 
+uint32_t paging_getVirtAddr(void* physAddress)
+{
+    int64_t ramsize;
+    ipc_getInt("PrettyOS/RAM", &ramsize);  
+
+    printf("\nramsize: %Xh", ramsize);
+    printf("\nphys: %X", (uint32_t)physAddress & 0xFFFFF000);
+
+    for (uint32_t i=0; i < 0xFFFFF; i++)
+    {
+        if (paging_getPhysAddr((void*)(i * PAGESIZE)) == ((uint32_t)physAddress & 0xFFFFF000))
+        {
+            return (i * PAGESIZE + ((uint32_t)physAddress & 0x00000FFF));
+        }
+    }
+
+    return (0); // not found 
+}
+
 void paging_analyzeBitTable()
 {    
     int64_t ramsize;
