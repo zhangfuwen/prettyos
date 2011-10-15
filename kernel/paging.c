@@ -14,6 +14,7 @@
 #include "ipc.h"
 #include "video/console.h"
 
+#define IDMAP  5  // 0 MiB - 20 MiB, identity mapping
 
 pageDirectory_t* kernelPageDirectory;
 
@@ -53,7 +54,7 @@ uint32_t paging_install()
 
     // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;
-    for (uint8_t i=0; i<5; ++i)
+    for (uint8_t i=0; i<IDMAP; ++i)
     {
         // Page directory entry, virt=phys due to placement allocation in id-mapped area
         kernelPageDirectory->tables[i] = malloc(sizeof(pageTable_t), PAGESIZE, "pag-kernelPT");
@@ -404,35 +405,79 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
     return (retVal);
 }
 
-uint32_t paging_getPhysAddr(void* virtAddress)
+uintptr_t paging_getPhysAddr(void* virtAddress)
 {
     pageDirectory_t* pd = kernelPageDirectory;
 
     // Find the page table
-    uint32_t pagenr = (uint32_t)virtAddress / PAGESIZE;
-    pageTable_t* pt = pd->tables[pagenr/1024];
-
+    uint32_t pageNumber = (uintptr_t)virtAddress / PAGESIZE;
+    pageTable_t* pt = pd->tables[pageNumber/1024];
+    
+  #ifdef _DIAGNOSIS_
     kdebug(3, "\nvirt-->phys: pagenr: %u ", pagenr);
     kdebug(3, "pt: %Xh\n", pt);
+  #endif
 
-    if (!pt)
+    if (pt)
     {
-        return (0);
+        // Read the address, cut off the flags, append the odd part of the address
+        return ( (pt->pages[pageNumber % 1024] & 0xFFFFF000) + ((uintptr_t)virtAddress & 0x00000FFF) );        
     }
-
-    // Read the address, cut off the flags, append the odd part of the address
-    return (pt->pages[pagenr % 1024] & 0xFFFF000) + (((uint32_t)virtAddress) & 0x00000FFF);
+    else
+    {
+        return (0); // not mapped
+    }    
 }
 
 uintptr_t paging_getVirtAddr(uintptr_t physAddress)
 {
-    for (uintptr_t i=0; i < 0xFFFFF; i++)
+    // check idendity mapping area
+    if (physAddress < IDMAP * 1024 * PAGESIZE )
+    {
+        return physAddress;
+    }
+    
+    uintptr_t heapStart        = (uintptr_t)KERNEL_heapStart / PAGESIZE;
+    uintptr_t heapCurrentEnd   = heap_getCurrentEnd()        / PAGESIZE;
+    uintptr_t heapEnd          = (uintptr_t)KERNEL_heapEnd   / PAGESIZE;
+    uintptr_t pciMemStart      = (uintptr_t)PCI_MEM_START    / PAGESIZE;
+
+    // check current used heap 
+    for (uintptr_t i = heapStart; i < heapCurrentEnd; i++)
     {
         if (paging_getPhysAddr((void*)(i * PAGESIZE)) == (physAddress & 0xFFFFF000))
         {
             return (i * PAGESIZE + (physAddress & 0x00000FFF));
         }
     }
+    
+    // check pci memory    
+    for (uintptr_t i = pciMemStart; i < 0xFFFFF; i++)
+    {
+        if (paging_getPhysAddr((void*)(i * PAGESIZE)) == (physAddress & 0xFFFFF000))
+        {
+            return (i * PAGESIZE + (physAddress & 0x00000FFF));
+        }
+    }    
+    
+    // check between idendity mapping area and heap start
+    for (uintptr_t i = IDMAP * 1024; i < heapStart; i++)
+    {
+        if (paging_getPhysAddr((void*)(i * PAGESIZE)) == (physAddress & 0xFFFFF000))
+        {
+            return (i * PAGESIZE + (physAddress & 0x00000FFF));
+        }
+    }
+
+    // check between current heap end and theoretical heap end // should not happen!!!
+    for (uintptr_t i = heapCurrentEnd; i < heapEnd; i++)
+    {
+        if (paging_getPhysAddr((void*)(i * PAGESIZE)) == (physAddress & 0xFFFFF000))
+        {
+            return (i * PAGESIZE + (physAddress & 0x00000FFF));
+        }
+    }
+    
     return (0); // not mapped
 }
 

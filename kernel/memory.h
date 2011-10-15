@@ -12,20 +12,20 @@
 // Kernel is located at 0x100000 // 1 MiB  // cf. kernel.ld
 
 // Placement allocation
-#define PLACEMENT_BEGIN   ((uint8_t*) 0x1000000)     // 16 MiB
-#define PLACEMENT_END     ((uint8_t*) 0x1400000)     // 20 MiB
+#define PLACEMENT_BEGIN   ((uint8_t*) 0x1000000)   // 16 MiB
+#define PLACEMENT_END     ((uint8_t*) 0x1400000)   // 20 MiB
 
 // Where the kernel's private data is stored (virtual addresses)
-#define KERNEL_DATA_START ((uint8_t*)0x0C0000000)  // 3 GiB
-#define KERNEL_DATA_END   ((uint8_t*)0xE0000000)   // 3,75 GiB
+#define KERNEL_DATA_START ((uint8_t*)0xC0000000)   // 3 GiB
+#define KERNEL_DATA_END   ((uint8_t*)0xE0000000)   // 3,5 GiB
 
 // Virtual adress area for the kernel heap
 #define KERNEL_heapStart KERNEL_DATA_START
 #define KERNEL_heapEnd   PCI_MEM_START
 
 // memory location for MMIO of devices (networking card, EHCI, grafics card, ...)
-#define PCI_MEM_START     ((uint8_t*)0x0E0000000)
-#define PCI_MEM_END       ((uint8_t*)0x100000000)   // 4 GiB
+#define PCI_MEM_START     ((uint8_t*)0xE0000000)
+#define PCI_MEM_END       ((uint8_t*)0xFFFFFFFF)   // 4 GiB - 1
 
 
 /******************************************************************************

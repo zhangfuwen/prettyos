@@ -57,6 +57,10 @@ static mutex_t* mutex = 0;
 
 static void* placementMalloc(uint32_t size, uint32_t alignment);
 
+uintptr_t heap_getCurrentEnd()
+{
+    return ((uintptr_t)heapStart + heapSize);
+}
 
 void heap_install()
 {

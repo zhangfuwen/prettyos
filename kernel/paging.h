@@ -37,12 +37,14 @@ extern memoryMapEntry_t* memoryMapAdress;
 extern memoryMapEntry_t* memoryMapEnd; // Read from multiboot structure
 
 
-uint32_t paging_install();
-void     paging_analyzeBitTable();
-bool     paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAGS_t flags);
-void     paging_free (pageDirectory_t* pd, void* virtAddress, uint32_t size);
-void*    paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages);
-uint32_t paging_getPhysAddr(void* virtAddress);
+uint32_t  paging_install();
+void      paging_analyzeBitTable();
+bool      paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAGS_t flags);
+void      paging_free (pageDirectory_t* pd, void* virtAddress, uint32_t size);
+
+void*     paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages);
+
+uintptr_t paging_getPhysAddr(void*     virtAddress);
 uintptr_t paging_getVirtAddr(uintptr_t physAddress);
 
 pageDirectory_t* paging_createUserPageDirectory();
