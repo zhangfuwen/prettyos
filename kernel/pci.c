@@ -10,6 +10,7 @@
 #include "network/network.h"
 #include "video/console.h"
 #include "kheap.h"
+#include "ipc.h"
 
 #ifdef _PCI_VEND_PROD_LIST_
   #include "pciVendProdList.h" // http://www.pcidatabase.com/pci_c_header.php
@@ -125,6 +126,7 @@ void pci_scan()
     printf("\nB:D:F\tIRQ\tDescription");
     printf("\n--------------------------------------------------------------------------------");
     textColor(TEXT);
+    int64_t counter = 0;
     for (uint16_t bus = 0; bus < PCIBUSES; ++bus)
     {
         for (uint8_t device = 0; device < PCIDEVICES; ++device)
@@ -188,6 +190,28 @@ void pci_scan()
                     // Screen output
                     if (PCIdev->irq != 255)
                     {
+                        char path[50];
+                        char* end = path + snprintf(path, 50, "PrettyOS/PCI/%u/", counter);
+
+                        strcpy(end, "Bus");
+                        int64_t Bus = bus;
+                        ipc_setInt(path, &Bus);
+                        strcpy(end, "Device");
+                        int64_t Device = device;
+                        ipc_setInt(path, &Device);
+                        strcpy(end, "Function");
+                        int64_t Function = func;
+                        ipc_setInt(path, &Function);
+                        strcpy(end, "IRQ");
+                        int64_t Irq = PCIdev->irq;
+                        ipc_setInt(path, &Irq);
+                        strcpy(end, "VendorID");
+                        int64_t VendorID = PCIdev->vendorID;
+                        ipc_setInt(path, &VendorID);
+                        strcpy(end, "DeviceID");
+                        int64_t DeviceID = PCIdev->deviceID;
+                        ipc_setInt(path, &DeviceID);
+
                         printf("%d:%d.%d\t%d", PCIdev->bus, PCIdev->device, PCIdev->func, PCIdev->irq);
 
                       #ifdef _PCI_VEND_PROD_LIST_
@@ -234,11 +258,14 @@ void pci_scan()
                         else if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00) // network adapters
                             network_installDevice(PCIdev);
                         putch('\n');
+
+                        counter++;
                     } // if irq != 255
                 } // if pciVendor
             } // for function
         } // for device
     } // for bus
+    ipc_setInt("PrettyOS/PCI/Number of Devices", &counter);
     textColor(TABLE_HEADING);
     printf("--------------------------------------------------------------------------------\n");
     textColor(TEXT);

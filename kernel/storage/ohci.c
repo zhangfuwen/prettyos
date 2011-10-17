@@ -649,11 +649,12 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
 
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &o->ports[portNumber]->port;
+    disk->port->insertedDisk = disk;
+
+    usb2_Device_t* device = usb2_createDevice(disk);
 
     o->ports[portNumber]->num = 0; // device number has to be set to 0
     o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
-
-    usb2_Device_t* device = usb2_createDevice(disk); // TODO: usb2 --> usb1 or usb (unified)
 
     usbTransferDevice(device);
     usbTransferConfig(device);
@@ -687,12 +688,8 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
         // Disk
         disk->type       = &USB_MSD;
         disk->sectorSize = 512;
-        disk->port       = &o->ports[portNumber]->port;
         strcpy(disk->name, device->productName);
         attachDisk(disk);
-
-        // Port
-        o->ports[portNumber]->port.insertedDisk = disk;
 
       #ifdef _OHCI_DIAGNOSIS_
         showPortList(); // TEST
@@ -792,8 +789,8 @@ void ohci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* uTransactio
 
     if (transfer->transactions->tail)
     {
-       ohci_transaction_t* oLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
-       oLastTransaction->TD->nextTD = paging_getPhysAddr(oTransaction->TD); // build TD queue
+        ohci_transaction_t* oLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
+        oLastTransaction->TD->nextTD = paging_getPhysAddr(oTransaction->TD); // build TD queue
     }
 }
 

@@ -50,7 +50,6 @@ typedef enum
 } CPU_FEATURE;
 
 
-extern char cpu_vendor[13];
 extern int64_t* cpu_frequency;
 
 

@@ -45,7 +45,7 @@ void      paging_free (pageDirectory_t* pd, void* virtAddress, uint32_t size);
 void*     paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages);
 
 uintptr_t paging_getPhysAddr(void*     virtAddress);
-uintptr_t paging_getVirtAddr(uintptr_t physAddress);
+void*     paging_getVirtAddr(uintptr_t physAddress);
 
 pageDirectory_t* paging_createUserPageDirectory();
 void             paging_destroyUserPageDirectory(pageDirectory_t* pd);

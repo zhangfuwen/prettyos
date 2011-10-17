@@ -72,7 +72,7 @@ uint32_t paging_install()
     size_t kernelpts = max(256, ram_available / 4096 / 1024); // Maximum kernel heap size limited by available memory
     pageTable_t* heap_pts = malloc(kernelpts*sizeof(pageTable_t), PAGESIZE, "pag-PTheap");
     memset(heap_pts, 0, kernelpts * sizeof(pageTable_t));
-    for (uint32_t i=0; i<kernelpts; ++i)
+    for (uint32_t i = 0; i < kernelpts; ++i)
     {
         kernelPageDirectory->tables[0x300 + i] = &heap_pts[i];
         kernelPageDirectory->codes [0x300 + i] = (uint32_t)kernelPageDirectory->tables[0x300 + i] | MEM_PRESENT | MEM_WRITE;
@@ -169,7 +169,7 @@ static uint32_t physMemInit()
     {
         textColor(ERROR);
         printf("The memory between 10 MiB and 20 MiB is not free for use. OS halted!\n");
-        cli(); 
+        cli();
         hlt();
     }
 
@@ -217,16 +217,16 @@ static uint32_t physMemAlloc()
         if (bittable[firstFreeDWORD] != 0xFFFFFFFF)
         {
             uint32_t bitnr;
-            // Find the number of first free bit. 
+            // Find the number of first free bit.
             // This inline assembler instruction is smaller and faster than a C loop to identify this bit
-            __asm__ volatile("bsfl %1, %0" : "=r"(bitnr) : "r"(~bittable[firstFreeDWORD])); 
+            __asm__ volatile("bsfl %1, %0" : "=r"(bitnr) : "r"(~bittable[firstFreeDWORD]));
 
             // Set the page to "reserved" and return the frame's address
             bittable[firstFreeDWORD] |= BIT(bitnr % 32);
             return ((firstFreeDWORD * 32 + bitnr) * PAGESIZE);
         }
     }
-    
+
     // No free page found
     return (0);
 }
@@ -276,7 +276,7 @@ bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAG
 
         // Get the page table
         pageTable_t* pt = pd->tables[pagenr/1024];
-        
+
         if (!pt)
         {
             // Allocate the page table
@@ -315,7 +315,7 @@ void paging_free(pageDirectory_t* pd, void* virtAddress, uint32_t size)
 
     // Go through all pages and free them
     uint32_t pagenr = (uint32_t)virtAddress / PAGESIZE;
-    
+
     while (size)
     {
         // Get the physical address and invalidate the page
@@ -334,7 +334,7 @@ pageDirectory_t* paging_createUserPageDirectory()
 {
     // Allocate memory for the page directory
     pageDirectory_t* pd = (pageDirectory_t*) malloc(sizeof(pageDirectory_t), PAGESIZE,"pag-userPD");
-    
+
     if (!pd)
     {
         return (0);
@@ -372,6 +372,7 @@ void paging_destroyUserPageDirectory(pageDirectory_t* pd)
 
     free(pd);
 }
+
 
 void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
 {
@@ -412,7 +413,7 @@ uintptr_t paging_getPhysAddr(void* virtAddress)
     // Find the page table
     uint32_t pageNumber = (uintptr_t)virtAddress / PAGESIZE;
     pageTable_t* pt = pd->tables[pageNumber/1024];
-    
+
   #ifdef _DIAGNOSIS_
     kdebug(3, "\nvirt-->phys: pagenr: %u ", pagenr);
     kdebug(3, "pt: %Xh\n", pt);
@@ -421,75 +422,64 @@ uintptr_t paging_getPhysAddr(void* virtAddress)
     if (pt)
     {
         // Read the address, cut off the flags, append the odd part of the address
-        return ( (pt->pages[pageNumber % 1024] & 0xFFFFF000) + ((uintptr_t)virtAddress & 0x00000FFF) );        
+        return ( (pt->pages[pageNumber % 1024] & 0xFFFFF000) + ((uintptr_t)virtAddress & 0x00000FFF) );
     }
     else
     {
         return (0); // not mapped
-    }    
+    }
 }
 
-uintptr_t paging_getVirtAddr(uintptr_t physAddress)
+static void* lookForVirtAddr(uintptr_t physAddr, uintptr_t start, uintptr_t end)
+{
+    for (uintptr_t i = start; i < end; i+=PAGESIZE)
+    {
+        if (paging_getPhysAddr((void*)i) == (physAddr & 0xFFFFF000))
+        {
+            return (void*)(i + (physAddr & 0x00000FFF));
+        }
+    }
+    return(0); // Not mapped between start and end
+}
+
+void* paging_getVirtAddr(uintptr_t physAddress)
 {
     // check idendity mapping area
-    if (physAddress < IDMAP * 1024 * PAGESIZE )
+    if (physAddress < IDMAP * 1024 * PAGESIZE)
     {
-        return physAddress;
+        return (void*)physAddress;
     }
-    
-    uintptr_t heapStart        = (uintptr_t)KERNEL_heapStart / PAGESIZE;
-    uintptr_t heapCurrentEnd   = heap_getCurrentEnd()        / PAGESIZE;
-    uintptr_t heapEnd          = (uintptr_t)KERNEL_heapEnd   / PAGESIZE;
-    uintptr_t pciMemStart      = (uintptr_t)PCI_MEM_START    / PAGESIZE;
 
-    // check current used heap 
-    for (uintptr_t i = heapStart; i < heapCurrentEnd; i++)
-    {
-        if (paging_getPhysAddr((void*)(i * PAGESIZE)) == (physAddress & 0xFFFFF000))
-        {
-            return (i * PAGESIZE + (physAddress & 0x00000FFF));
-        }
-    }
-    
-    // check pci memory    
-    for (uintptr_t i = pciMemStart; i < 0xFFFFF; i++)
-    {
-        if (paging_getPhysAddr((void*)(i * PAGESIZE)) == (physAddress & 0xFFFFF000))
-        {
-            return (i * PAGESIZE + (physAddress & 0x00000FFF));
-        }
-    }    
-    
+    // check current used heap
+    void* virtAddr = lookForVirtAddr(physAddress, (uintptr_t)KERNEL_heapStart, (uintptr_t)heap_getCurrentEnd());
+    if(virtAddr)
+        return(virtAddr);
+
+    // check pci memory
+    lookForVirtAddr(physAddress, (uintptr_t)PCI_MEM_START, (uintptr_t)PCI_MEM_END);
+    if(virtAddr)
+        return(virtAddr);
+
     // check between idendity mapping area and heap start
-    for (uintptr_t i = IDMAP * 1024; i < heapStart; i++)
-    {
-        if (paging_getPhysAddr((void*)(i * PAGESIZE)) == (physAddress & 0xFFFFF000))
-        {
-            return (i * PAGESIZE + (physAddress & 0x00000FFF));
-        }
-    }
+    lookForVirtAddr(physAddress, IDMAP * 1024 * PAGESIZE, (uintptr_t)KERNEL_heapStart);
+    if(virtAddr)
+        return(virtAddr);
 
-    // check between current heap end and theoretical heap end // should not happen!!!
-    for (uintptr_t i = heapCurrentEnd; i < heapEnd; i++)
-    {
-        if (paging_getPhysAddr((void*)(i * PAGESIZE)) == (physAddress & 0xFFFFF000))
-        {
-            return (i * PAGESIZE + (physAddress & 0x00000FFF));
-        }
-    }
-    
-    return (0); // not mapped
+    // check between current heap end and theoretical heap end
+    lookForVirtAddr(physAddress, (uintptr_t)heap_getCurrentEnd(), (uintptr_t)KERNEL_heapEnd);
+    return(virtAddr);
 }
 
-void paging_analyzeBitTable()
-{    
-    int64_t ramsize;
-    ipc_getInt("PrettyOS/RAM", &ramsize);    
-        
-    for (uint32_t i=0; i < min(((uint32_t)ramsize) / PAGESIZE / 32, MAX_DWORDS); i++)
-    {
-        uint32_t k = 0, k_old = 2;
 
+void paging_analyzeBitTable()
+{
+    uint32_t k = 0, k_old = 2;
+    int64_t ramsize;
+    ipc_getInt("PrettyOS/RAM", &ramsize);
+    uint32_t maximum = min(((uint32_t)ramsize)/PAGESIZE/32, MAX_DWORDS);
+
+    for (uint32_t i=0; i < maximum; i++)
+    {
         textColor(TEXT);
         printf("\n%Xh: ", 32 * i * PAGESIZE);
 
@@ -499,10 +489,10 @@ void paging_analyzeBitTable()
             {
                 textColor(GREEN);
                 putch('0');
-                
+
                 if (offset == 31)
                 {
-                    k_old = k; 
+                    k_old = k;
                     k = 0;
                 }
             }
@@ -510,10 +500,10 @@ void paging_analyzeBitTable()
             {
                 textColor(LIGHT_GRAY);
                 putch('1');
-                
+
                 if (offset == 31)
                 {
-                    k_old = k; 
+                    k_old = k;
                     k = 1;
                 }
             }

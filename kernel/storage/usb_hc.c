@@ -9,6 +9,8 @@
 #include "ehci.h"
 #include "video/console.h"
 #include "kheap.h"
+#include "util.h"
+#include "usb2.h"
 
 
 void usb_hc_install(pciDev_t* PCIdev)
@@ -80,13 +82,13 @@ void usb_hc_install(pciDev_t* PCIdev)
 }
 
 
-void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_tranferType_t type, uint32_t endpoint, uint32_t packetSize)
+void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_tranferType_t type, uint32_t endpoint, size_t maxLength)
 {
     transfer->HC           = usbPort;
     transfer->transactions = list_create();
     transfer->endpoint     = endpoint;
     transfer->type         = type;
-    transfer->packetSize   = packetSize;
+    transfer->packetSize   = min(maxLength, ((usb2_Device_t*)usbPort->insertedDisk->data)->mps[endpoint]);
     transfer->success      = false;
 
     if (transfer->HC->type == &USB_EHCI)
@@ -133,44 +135,55 @@ void usb_setupTransaction(usb_transfer_t* transfer, bool toggle, uint32_t tokenB
 
 void usb_inTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size_t length)
 {
+    size_t clampedLength = min(transfer->packetSize, length);
+
     usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
     transaction->type = USB_TT_IN;
 
     if (transfer->HC->type == &USB_EHCI)
     {
-        ehci_inTransaction(transfer, transaction, toggle, buffer, length);
+        ehci_inTransaction(transfer, transaction, toggle, buffer, clampedLength);
     }
     else if (transfer->HC->type == &USB_OHCI)
     {
-        ohci_inTransaction(transfer, transaction, toggle, buffer, length);
+        ohci_inTransaction(transfer, transaction, toggle, buffer, clampedLength);
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        uhci_inTransaction(transfer, transaction, toggle, buffer, length);
+        uhci_inTransaction(transfer, transaction, toggle, buffer, clampedLength);
     }
     else
     {
         printf("\nUnknown port type.");
     }
+
     list_append(transfer->transactions, transaction);
+
+    length -= clampedLength;
+    if(length > 0)
+    {
+        usb_inTransaction(transfer, !toggle, buffer+clampedLength, length);
+    }
 }
 
 void usb_outTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size_t length)
 {
+    size_t clampedLength = min(transfer->packetSize, length);
+
     usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
     transaction->type = USB_TT_OUT;
 
     if (transfer->HC->type == &USB_EHCI)
     {
-        ehci_outTransaction(transfer, transaction, toggle, buffer, length);
+        ehci_outTransaction(transfer, transaction, toggle, buffer, clampedLength);
     }
     else if (transfer->HC->type == &USB_OHCI)
     {
-        ohci_outTransaction(transfer, transaction, toggle, buffer, length);
+        ohci_outTransaction(transfer, transaction, toggle, buffer, clampedLength);
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        uhci_outTransaction(transfer, transaction, toggle, buffer, length);
+        uhci_outTransaction(transfer, transaction, toggle, buffer, clampedLength);
     }
     else
     {
@@ -178,6 +191,12 @@ void usb_outTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, siz
     }
 
     list_append(transfer->transactions, transaction);
+
+    length -= clampedLength;
+    if(length > 0)
+    {
+        usb_outTransaction(transfer, !toggle, buffer+clampedLength, length);
+    }
 }
 
 void usb_issueTransfer(usb_transfer_t* transfer)

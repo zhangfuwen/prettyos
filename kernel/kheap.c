@@ -55,12 +55,9 @@ static mutex_t* mutex = 0;
   static uint32_t counter = 0;
 #endif
 
+
 static void* placementMalloc(uint32_t size, uint32_t alignment);
 
-uintptr_t heap_getCurrentEnd()
-{
-    return ((uintptr_t)heapStart + heapSize);
-}
 
 void heap_install()
 {
@@ -72,6 +69,11 @@ void heap_install()
     // We take the rest of the placement area
     regionCount = 0;
     regionMaxCount = ((uintptr_t)PLACEMENT_END - (uintptr_t)regions) / sizeof(region_t);
+}
+
+void* heap_getCurrentEnd()
+{
+    return (heapStart + heapSize);
 }
 
 static bool heap_grow(uint32_t size, uint8_t* heapEnd)
@@ -300,7 +302,7 @@ void free(void* addr)
     textColor(TEXT);
   #endif
 
-    if (addr == 0) 
+    if (addr == 0)
     {
         return;
     }

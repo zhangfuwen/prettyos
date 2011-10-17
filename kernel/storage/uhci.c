@@ -477,14 +477,16 @@ void uhci_pollDisk(void* dev)
 
 void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
 {
+    disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
+    disk->port = &u->ports[portNumber]->port;
+    disk->port->insertedDisk = disk;
+
+    usb2_Device_t* device = usb2_createDevice(disk);
+
     u->ports[portNumber]->num = 0; // device number has to be set to 0
     u->ports[portNumber]->num = 1 + usbTransferEnumerate(&u->ports[portNumber]->port, portNumber);
     waitForKeyStroke();
 
-    disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
-    disk->port = &u->ports[portNumber]->port;
-
-    usb2_Device_t* device = usb2_createDevice(disk);
     usbTransferDevice(device); waitForKeyStroke();
     usbTransferConfig(device); waitForKeyStroke();
     usbTransferString(device); waitForKeyStroke();
@@ -515,12 +517,8 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
         // Disk
         disk->type       = &USB_MSD;
         disk->sectorSize = 512;
-        disk->port       = &u->ports[portNumber]->port;
         strcpy(disk->name, device->productName);
         attachDisk(disk);
-
-        // Port
-        u->ports[portNumber]->port.insertedDisk = disk;
 
       #ifdef _UHCI_DIAGNOSIS_
         showPortList(); // TEST
@@ -576,8 +574,7 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
 
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
 
-    uT->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uT->TDBuffer,
-                                              transfer->device, transfer->endpoint, transfer->packetSize);
+    uT->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uT->TDBuffer, transfer->device, transfer->endpoint, transfer->packetSize);
 
   #ifdef _UHCI_DIAGNOSIS_
     usb_request_t* request = (usb_request_t*)uT->TDBuffer;
@@ -845,21 +842,21 @@ void uhci_showStatusbyteTD(uhciTD_t* TD)
 
 bool isTransactionSuccessful(uhci_transaction_t* uT)
 {
-	if
-	(
-	    // no error
-		(uT->TD->bitstuffError  == 0) && (uT->TD->crc_timeoutError == 0) && (uT->TD->nakReceived == 0) &&
-		(uT->TD->babbleDetected == 0) && (uT->TD->dataBufferError  == 0) && (uT->TD->stall       == 0) &&
-	    // executed
-	    (uT->TD->active == 0)
-	)
-	{
-		return (true);
-	}
-	else
-	{
-		return (false);
-	}
+    if
+    (
+        // no error
+        (uT->TD->bitstuffError  == 0) && (uT->TD->crc_timeoutError == 0) && (uT->TD->nakReceived == 0) &&
+        (uT->TD->babbleDetected == 0) && (uT->TD->dataBufferError  == 0) && (uT->TD->stall       == 0) &&
+        // executed
+        (uT->TD->active == 0)
+    )
+    {
+        return (true);
+    }
+    else
+    {
+        return (false);
+    }
 }
 
 /*

@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.151 - Rev: 1352";
+const char* const version = "0.0.3.152 - Rev: 1353";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -148,7 +148,7 @@ static void init(multiboot_t* mb_struct)
 
     // memory
     int64_t memsize = paging_install();
-    ipc_setInt("PrettyOS/RAM", &memsize);
+    ipc_setInt("PrettyOS/RAM (Bytes)", &memsize);
     log("Paging");
     heap_install();
     log("Heap");
@@ -200,14 +200,14 @@ static void showMemorySize()
     printf("   => Memory: ");
     textColor(TEXT);
     int64_t ramsize;
-    ipc_getInt("PrettyOS/RAM", &ramsize);
+    ipc_getInt("PrettyOS/RAM (Bytes)", &ramsize);
     if (ramsize >= 0x40000000) // More than 1 GiB
     {
-        printf("%u GiB  (%u MiB, %u Bytes)\n", ramsize>>30, ramsize>>20, ramsize);
+        printf("%u GiB  (%u MiB, %u Bytes)\n", (uint32_t)(ramsize>>30), (uint32_t)(ramsize>>20), (uint32_t)ramsize);
     }
     else
     {
-        printf("%u MiB  (%u Bytes)\n", ramsize>>20, ramsize);
+        printf("%u MiB  (%u Bytes)\n", (uint32_t)(ramsize>>20), (uint32_t)ramsize);
     }
     textColor(LIGHT_GRAY);
 }

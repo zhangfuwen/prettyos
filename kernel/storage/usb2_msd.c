@@ -24,6 +24,8 @@ usb2_Device_t* usb2_createDevice(disk_t* disk)
 {
     usb2_Device_t* device = malloc(sizeof(usb2_Device_t), 0, "usb2_Device_t");
     device->disk = disk;
+    device->mps = malloc(sizeof(*device->mps)*3, 0, "usbDev->mps"); // Assume that we have three endpoints (only interface 1)
+    device->mps[0] = 64;
     disk->data = device;
     return(device);
 }
@@ -596,7 +598,6 @@ void testMSD(usb2_Device_t* device)
 
     logBulkTransfer(&readCapacity);
 
-    textColor(LIGHT_BLUE); printf("\n\n>>> analyzeDisk(device->disk)"); textColor(TEXT);
     analyzeDisk(device->disk);
 }
 
@@ -610,38 +611,20 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* dev)
 
     usb2_Device_t* device = dev;
 
-    if ((device->disk->port->type == &USB_OHCI) || (device->disk->port->type == &USB_EHCI))
-    {        
-        if (device->disk->port->type == &USB_OHCI)
-        {
-           // printf("\nread from OHCI");
-        }
-        else
-        {
-           // printf("\nread from EHCI");
-        }
-     
-        uint32_t blocks = 1; // number of blocks to be read
-        usbBulkTransfer_t read;
+    uint32_t blocks = 1; // number of blocks to be read
+    usbBulkTransfer_t read;
 
-        startLogBulkTransfer(&read, 0x28, blocks, 0);
+    startLogBulkTransfer(&read, 0x28, blocks, 0);
 
-        usbSendSCSIcmd(device,
-                       device->numInterfaceMSD,
-                       device->numEndpointOutMSD,
-                       device->numEndpointInMSD,
-                       read.SCSIopcode,
-                       sector, // LBA
-                       read.DataBytesToTransferIN,
-                       &read, buffer, 0);
-        logBulkTransfer(&read);
-    }
-
-    if (device->disk->port->type == &USB_UHCI)
-    {
-        printf("\nread from UHCI");
-        printf("\n64-byte-packet read not yet implemented!");
-    }
+    usbSendSCSIcmd(device,
+                    device->numInterfaceMSD,
+                    device->numEndpointOutMSD,
+                    device->numEndpointInMSD,
+                    read.SCSIopcode,
+                    sector, // LBA
+                    read.DataBytesToTransferIN,
+                    &read, buffer, 0);
+    logBulkTransfer(&read);
 
     return(CE_GOOD);
 }
@@ -655,40 +638,22 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* dev)
   #endif
 
     usb2_Device_t* device = dev;
-    
-    if ((device->disk->port->type == &USB_OHCI) || (device->disk->port->type == &USB_EHCI))
-    {        
-        if (device->disk->port->type == &USB_OHCI)
-        {
-           // printf("\nread from OHCI");
-        }
-        else
-        {
-           // printf("\nread from EHCI");
-        }
 
-        uint32_t          blocks  = 1; // number of blocks to be written
-        usbBulkTransfer_t write;
+    uint32_t          blocks  = 1; // number of blocks to be written
+    usbBulkTransfer_t write;
 
-        startLogBulkTransfer(&write, 0x2A, 0, blocks);
+    startLogBulkTransfer(&write, 0x2A, 0, blocks);
 
-        usbSendSCSIcmdOUT(device,
-                          device->numInterfaceMSD,
-                          device->numEndpointOutMSD,
-                          device->numEndpointInMSD,
-                          write.SCSIopcode,
-                          sector, // LBA
-                          write.DataBytesToTransferOUT,
-                          &write, buffer, 0);
+    usbSendSCSIcmdOUT(device,
+                        device->numInterfaceMSD,
+                        device->numEndpointOutMSD,
+                        device->numEndpointInMSD,
+                        write.SCSIopcode,
+                        sector, // LBA
+                        write.DataBytesToTransferOUT,
+                        &write, buffer, 0);
 
-        logBulkTransfer(&write);
-    }
-    
-    if (device->disk->port->type == &USB_UHCI)
-    {
-        printf("\nwrite from UHCI");
-        printf("\n64-byte-packet write not yet implemented!");
-    }
+    logBulkTransfer(&write);
 
     return(CE_GOOD);
 }

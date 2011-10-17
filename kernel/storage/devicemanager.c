@@ -296,8 +296,7 @@ partition_t* getPartition(const char* path)
 FS_ERROR analyzeDisk(disk_t* disk)
 {
     uint8_t buffer[512];
-    
-    printf("\nsingleSectorRead(0, buffer, disk)");
+
     singleSectorRead(0, buffer, disk); // first sector of partition
 
     BPBbase_t* BPB = (BPBbase_t*)buffer; // BIOS Parameter Block (BPB)

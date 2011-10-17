@@ -24,19 +24,19 @@ typedef struct
 {
     disk_t*  disk;
 
-    uint16_t usbSpec;
-    uint8_t  usbClass;
-    uint8_t  usbSubclass;
-    uint8_t  usbProtocol;
-    uint8_t  maxPacketSize;
-    uint16_t vendor;
-    uint16_t product;
-    uint16_t releaseNumber;
-    uint8_t  manufacturerStringID;
-    uint8_t  productStringID;
-    uint8_t  serNumberStringID;
-    uint8_t  numConfigurations;
-    uint8_t  maxLUN;
+    uint16_t  usbSpec;
+    uint8_t   usbClass;
+    uint8_t   usbSubclass;
+    uint8_t   usbProtocol;
+    uint16_t  vendor;
+    uint16_t  product;
+    uint16_t  releaseNumber;
+    uint8_t   manufacturerStringID;
+    uint8_t   productStringID;
+    uint8_t   serNumberStringID;
+    uint8_t   numConfigurations;
+    uint8_t   maxLUN;
+    uint16_t* mps; // Stores the mps of each endpoint
 
     // MSD specific
     char     productName[16];

@@ -13,7 +13,6 @@
 static bool cpuid_available = true;
 
 int64_t* cpu_frequency;
-char cpu_vendor[13];
 
 void cpu_analyze()
 {
@@ -22,7 +21,7 @@ void cpu_analyze()
     textColor(TEXT);
 
     ipc_node_t* node;
-    ipc_createNode("PrettyOS/CPU/Frequency in kHz", &node, IPC_INTEGER);
+    ipc_createNode("PrettyOS/CPU/Frequency (kHz)", &node, IPC_INTEGER);
     cpu_frequency = &node->data.integer;
 
     // Test if the CPU supports the CPUID-Command
@@ -47,10 +46,14 @@ void cpu_analyze()
     }
 
     // Read out VendorID
+    char cpu_vendor[13];
     ((uint32_t*)cpu_vendor)[0] = cpu_idGetRegister(0, CR_EBX);
     ((uint32_t*)cpu_vendor)[1] = cpu_idGetRegister(0, CR_EDX);
     ((uint32_t*)cpu_vendor)[2] = cpu_idGetRegister(0, CR_ECX);
     cpu_vendor[12] = 0;
+
+    ipc_setString("PrettyOS/CPU/VendorID", cpu_vendor);
+
     textColor(LIGHT_GRAY);
     printf("     => VendorID: ");
     textColor(TEXT);
@@ -59,7 +62,7 @@ void cpu_analyze()
 
 void cpu_calculateFrequency()
 {
-    static uint64_t LastRdtscValue = 0;          // rdtsc: read time-stamp counter
+    static uint64_t LastRdtscValue = 0; // rdtsc: read time-stamp counter
 
     // calculate cpu frequency
     uint64_t Rdtsc = rdtsc();
@@ -128,7 +131,7 @@ void cpu_MSRwrite(uint32_t msr, uint64_t value)
     uint32_t low = value & 0xFFFFFFFF;
     uint32_t high = value >> 32;
 
-    __asm__ __volatile__ ("wrmsr" :: "a"(low), "c"(msr), "d"(high));
+    __asm__ volatile ("wrmsr" :: "a"(low), "c"(msr), "d"(high));
 }
 
 

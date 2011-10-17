@@ -123,6 +123,9 @@ void usbTransferConfig(usb2_Device_t* device)
             struct usb2_endpointDescriptor* descriptor = addr;
             showEndpointDescriptor(descriptor);
 
+            if((descriptor->endpointAddress & 0xF) < 3)
+                device->mps[descriptor->endpointAddress & 0xF] = descriptor->maxPacketSize;
+
             // store endpoint numbers for IN/OUT mass storage transfers, attributes must be 0x2, because there are also endpoints with attributes 0x3(interrupt)
             if (descriptor->endpointAddress & 0x80 && descriptor->attributes == 0x2)
             {
@@ -312,7 +315,6 @@ void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
     usbDev->usbClass              = d->deviceClass;
     usbDev->usbSubclass           = d->deviceSubclass;
     usbDev->usbProtocol           = d->deviceProtocol;
-    usbDev->maxPacketSize         = d->maxPacketSize;
     usbDev->vendor                = d->idVendor;
     usbDev->product               = d->idProduct;
     usbDev->releaseNumber         = d->bcdDevice;
@@ -320,6 +322,7 @@ void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
     usbDev->productStringID       = d->product;
     usbDev->serNumberStringID     = d->serialNumber;
     usbDev->numConfigurations     = d->numConfigurations;
+    usbDev->mps[0]                = d->maxPacketSize;
 }
 
 void showDevice(usb2_Device_t* usbDev)
@@ -355,10 +358,8 @@ void showDevice(usb2_Device_t* usbDev)
         }
     }
 
-    printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
-
+    printf("\nendpoint 0 mps: %u byte.", usbDev->mps[0]); // MPS0, must be 8,16,32,64
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    printf("\nendpoint 0 mps: %u byte.", usbDev->maxPacketSize); // MPS0, must be 8,16,32,64
     printf("vendor:            %xh\n",   usbDev->vendor);
     printf("product:           %xh\t",   usbDev->product);
     printf("release number:    %u.%u\n", BYTE2(usbDev->releaseNumber), BYTE1(usbDev->releaseNumber));
