@@ -19,10 +19,12 @@ void serial_init()
     textColor(LIGHT_GRAY);
     printf("\n   => Serial ports:");
     serialPorts = (((*(uint16_t*)0x410)>>9)&0x7); // Read from BIOS Data Area (BDA)
-    IOports[0] = *((uint16_t*)0x400);
-    IOports[1] = *((uint16_t*)0x402);
-    IOports[2] = *((uint16_t*)0x404);
-    IOports[3] = *((uint16_t*)0x406);
+    
+    IOports[0]  = *((uint16_t*)0x400);
+    IOports[1]  = *((uint16_t*)0x402);
+    IOports[2]  = *((uint16_t*)0x404);
+    IOports[3]  = *((uint16_t*)0x406);
+        
     for (uint8_t i = 0; i < serialPorts; i++)
     {
         outportb(IOports[i] + 1, 0x00); // Disable all interrupts
@@ -39,6 +41,7 @@ void serial_init()
         textColor(TEXT);
         printf("%xh",IOports[i]);
     }
+
     printf("\n\n");
 }
 

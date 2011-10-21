@@ -626,6 +626,9 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* dev)
                     &read, buffer, 0);
     logBulkTransfer(&read);
 
+    memshow(buffer,512,false);
+    waitForKeyStroke();
+
     return(CE_GOOD);
 }
 

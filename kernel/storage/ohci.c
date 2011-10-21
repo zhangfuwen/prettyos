@@ -15,7 +15,7 @@
 #include "usb2_msd.h"
 
 #define OHCI_USB_TRANSFER
-#define NUMBER_OF_RETRIES  1
+#define NUMBER_OF_OHCI_RETRIES  1
 
 
 static uint8_t index   = 0;
@@ -867,7 +867,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     textColor(TEXT);
   #endif
 
-    for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
+    for (uint8_t i = 0; i < NUMBER_OF_OHCI_RETRIES && !transfer->success; i++)
     {
       #ifdef _OHCI_DIAGNOSIS_
         printf("\ntransfer try = %u\n", i);

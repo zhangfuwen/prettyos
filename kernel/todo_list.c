@@ -23,12 +23,13 @@ todoList_t* todolist_create()
 {
     todoList_t* list = malloc(sizeof(list), 0, "todoList");
     list->queue = list_create();
-    return(list);
+    return (list);
 }
 
 void todoList_add(todoList_t* list, void (*function)(void*, size_t), void* data, size_t length, uint32_t executionTime)
 {
     todoList_task_t* task = malloc(sizeof(todoList_task_t), 0, "todoList_task_t");
+    
     if (length != 0)
     {
         task->data = malloc(length, 0, "todoList_task_t::data");
@@ -37,6 +38,7 @@ void todoList_add(todoList_t* list, void (*function)(void*, size_t), void* data,
     {
         task->data = 0;
     }
+
     memcpy(task->data, data, length);
     task->length = length;
     task->timeToExecute = executionTime;
@@ -49,6 +51,7 @@ void todoList_execute(todoList_t* list)
     for (dlelement_t* e = list->queue->head; e != 0;)
     {
         todoList_task_t* task = e->data;
+        
         if (task->timeToExecute == 0 || task->timeToExecute < timer_getMilliseconds())
         {
             task->function(task->data, task->length);
@@ -70,7 +73,7 @@ void todoList_wait(todoList_t* list)
 
 bool todoList_unlockTask(void* data)
 {
-    return(((todoList_t*)data)->queue->head != 0);
+    return (((todoList_t*)data)->queue->head != 0);
 }
 
 void todolist_delete(todoList_t* list)

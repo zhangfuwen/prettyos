@@ -14,7 +14,7 @@
 #include "usb2_msd.h"
 
 #define UHCI_USB_TRANSFER
-#define NUMBER_OF_RETRIES 3
+#define NUMBER_OF_UHCI_RETRIES 1
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -636,7 +636,7 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
     uhci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
     uhci_createQH(u, transfer->data, (uintptr_t)transfer->data, firstTransaction->TD);
 
-    for (uint8_t i = 0; i < NUMBER_OF_RETRIES && !transfer->success; i++)
+    for (uint8_t i = 0; i < NUMBER_OF_UHCI_RETRIES && !transfer->success; i++)
     {
       #ifdef _UHCI_DIAGNOSIS_
         printf("\ntransfer try = %u\n", i);
