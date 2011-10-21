@@ -22,6 +22,12 @@ typedef struct
 
 typedef struct
 {
+    uint16_t mps;
+    bool     toggle;
+} usb_endpoint_t;
+
+typedef struct
+{
     disk_t*  disk;
 
     uint16_t  usbSpec;
@@ -36,7 +42,8 @@ typedef struct
     uint8_t   serNumberStringID;
     uint8_t   numConfigurations;
     uint8_t   maxLUN;
-    uint16_t* mps; // Stores the mps of each endpoint
+
+    usb_endpoint_t* endpoints;
 
     // MSD specific
     char     productName[16];
@@ -46,8 +53,6 @@ typedef struct
     uint8_t  InterfaceSubclass;
     uint8_t  numEndpointInMSD;
     uint8_t  numEndpointOutMSD;
-    bool     ToggleEndpointInMSD;
-    bool     ToggleEndpointOutMSD;
 } usb2_Device_t;
 
 struct usb2_deviceDescriptor

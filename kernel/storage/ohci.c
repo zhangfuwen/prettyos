@@ -14,7 +14,6 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-#define OHCI_USB_TRANSFER
 #define NUMBER_OF_OHCI_RETRIES  1
 
 
@@ -28,7 +27,7 @@ static void ohci_start();
 static void ohci_portCheck(ohci_t* o);
 static void ohci_showPortstatus(ohci_t* o, uint8_t j);
 static void ohci_resetPort(ohci_t* o, uint8_t j);
-static void ohci_resetMempool(ohci_t* o, usb_tranferType_t usbType);
+static void ohci_resetMempool(ohci_t* o, usb_transferType_t usbType);
 static void ohci_toggleFrameInterval(ohci_t* o);
 
 
@@ -244,6 +243,7 @@ void ohci_resetHC(ohci_t* o)
 
     // Pointers and indices to ED, TD and TD buffers are part of ohci_t
     ohci_resetMempool(o, USB_CONTROL);
+    o->lastTT = USB_CONTROL;
 
     // ED pool: NUM_ED EDs
     for (uint32_t i=0; i<NUM_ED; i++)
@@ -444,9 +444,7 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
             printf(" enabled  -");
             if (o->enabledPortFlag && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_PPS) && (o->OpRegs->HcRhPortStatus[j] & OHCI_PORT_CCS)) // powered, device attached
             {
-              #ifdef OHCI_USB_TRANSFER
                 ohci_setupUSBDevice(o, j);
-              #endif
             }
         }
         else
@@ -645,8 +643,6 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 
 void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
 {
-    ohci_resetMempool(o, USB_CONTROL);
-
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &o->ports[portNumber]->port;
     disk->port->insertedDisk = disk;
@@ -654,59 +650,10 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     usb2_Device_t* device = usb2_createDevice(disk);
 
     o->ports[portNumber]->num = 0; // device number has to be set to 0
-    o->ports[portNumber]->num = 1 + usbTransferEnumerate(&o->ports[portNumber]->port, portNumber);
+    o->ports[portNumber]->num = 1 + usbTransferEnumerate(disk->port, portNumber);
+    waitForKeyStroke();
 
-    usbTransferDevice(device);
-    usbTransferConfig(device);
-    usbTransferString(device);
-
-    for (uint8_t i=1; i<4; i++) // fetch 3 strings
-    {
-        usbTransferStringUnicode(device, i);
-    }
-
-    usbTransferSetConfiguration(device, 1); // set first configuration
-
-  #ifdef _OHCI_DIAGNOSIS_
-    uint8_t config = usbTransferGetConfiguration(device);
-    printf("\nconfiguration: %u", config); // check configuration
-  #endif
-
-    if (device->InterfaceClass != 0x08)
-    {
-        textColor(ERROR);
-        printf("\nThis is no Mass Storage Device! MSD test and addition to device manager will not be carried out.");
-        textColor(TEXT);
-        waitForKeyStroke();
-    }
-    else
-    {
-        textColor(SUCCESS);
-        printf("\nThis is a Mass Storage Device! MSD test and addition to device manager will be carried out.");
-        textColor(TEXT);
-
-        // Disk
-        disk->type       = &USB_MSD;
-        disk->sectorSize = 512;
-        strcpy(disk->name, device->productName);
-        attachDisk(disk);
-
-      #ifdef _OHCI_DIAGNOSIS_
-        showPortList(); // TEST
-        showDiskList(); // TEST
-
-        // device, interface, endpoints
-        textColor(HEADLINE);
-        printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
-                                                device, device->numInterfaceMSD,
-                                                device->numEndpointOutMSD,
-                                                device->numEndpointInMSD);
-        textColor(TEXT);
-      #endif
-
-        ohci_resetMempool(o, USB_BULK);
-        testMSD(device); // test with some SCSI commands
-    }
+    usb_setupDevice(device);
 }
 
 
@@ -728,6 +675,12 @@ typedef struct
 void ohci_setupTransfer(usb_transfer_t* transfer)
 {
     ohci_t* o = ((ohci_port_t*)transfer->HC->data)->ohci;
+
+    if(o->lastTT != transfer->type)
+    {
+        ohci_resetMempool(o, transfer->type);
+        o->lastTT = transfer->type;
+    }
 
     o->OpRegs->HcControl &= ~(OHCI_CTRL_CLE | OHCI_CTRL_BLE); // de-activate control and bulk transfers
     o->OpRegs->HcCommandStatus &= ~OHCI_STATUS_CLF; // control list not filled
@@ -1117,7 +1070,7 @@ uint8_t ohci_showStatusbyteTD(ohciTD_t* TD)
     return TD->cond;
 }
 
-static void ohci_resetMempool(ohci_t* o, usb_tranferType_t usbType)
+static void ohci_resetMempool(ohci_t* o, usb_transferType_t usbType)
 {
     if (usbType == USB_CONTROL)
     {

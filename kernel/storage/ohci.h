@@ -223,6 +223,7 @@ typedef struct ohci
     bool           connected[OHCIPORTMAX]; // port connected
     uint8_t        num;                    // number of the OHCI
     uint32_t       powerWait;              // wait time (ms) for ports after power-on
+    usb_transferType_t lastTT;
 } ohci_t;
 
 

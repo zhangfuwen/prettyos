@@ -82,13 +82,13 @@ void usb_hc_install(pciDev_t* PCIdev)
 }
 
 
-void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_tranferType_t type, uint32_t endpoint, size_t maxLength)
+void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_transferType_t type, uint32_t endpoint, size_t maxLength)
 {
     transfer->HC           = usbPort;
     transfer->transactions = list_create();
     transfer->endpoint     = endpoint;
     transfer->type         = type;
-    transfer->packetSize   = min(maxLength, ((usb2_Device_t*)usbPort->insertedDisk->data)->mps[endpoint]);
+    transfer->packetSize   = min(maxLength, ((usb2_Device_t*)usbPort->insertedDisk->data)->endpoints[endpoint].mps);
     transfer->success      = false;
 
     if (transfer->HC->type == &USB_EHCI)
@@ -109,48 +109,55 @@ void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_tranferTyp
     }
 }
 
-void usb_setupTransaction(usb_transfer_t* transfer, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
+void usb_setupTransaction(usb_transfer_t* transfer, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length)
 {
     usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
     transaction->type = USB_TT_SETUP;
 
+    usb2_Device_t* device = transfer->HC->insertedDisk->data;
+
     if (transfer->HC->type == &USB_EHCI)
     {
-        ehci_setupTransaction(transfer, transaction, toggle, tokenBytes, type, req, hiVal, loVal, index, length);
+        ehci_setupTransaction(transfer, transaction, false, tokenBytes, type, req, hiVal, loVal, index, length);
     }
     else if (transfer->HC->type == &USB_OHCI)
     {
-        ohci_setupTransaction(transfer, transaction, toggle, tokenBytes, type, req, hiVal, loVal, index, length);
+        ohci_setupTransaction(transfer, transaction, false, tokenBytes, type, req, hiVal, loVal, index, length);
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        uhci_setupTransaction(transfer, transaction, toggle, tokenBytes, type, req, hiVal, loVal, index, length);
+        uhci_setupTransaction(transfer, transaction, false, tokenBytes, type, req, hiVal, loVal, index, length);
     }
     else
     {
         printf("\nUnknown port type.");
     }
     list_append(transfer->transactions, transaction);
+    device->endpoints[transfer->endpoint].toggle = true;
 }
 
-void usb_inTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size_t length)
+void usb_inTransaction(usb_transfer_t* transfer, bool controlHandshake, void* buffer, size_t length)
 {
     size_t clampedLength = min(transfer->packetSize, length);
 
     usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
     transaction->type = USB_TT_IN;
 
+    usb2_Device_t* device = transfer->HC->insertedDisk->data;
+    if(controlHandshake) // Handshake transaction of control transfers have always set toggle to 1
+        device->endpoints[transfer->endpoint].toggle = 1;
+
     if (transfer->HC->type == &USB_EHCI)
     {
-        ehci_inTransaction(transfer, transaction, toggle, buffer, clampedLength);
+        ehci_inTransaction(transfer, transaction, device->endpoints[transfer->endpoint].toggle, buffer, clampedLength);
     }
     else if (transfer->HC->type == &USB_OHCI)
     {
-        ohci_inTransaction(transfer, transaction, toggle, buffer, clampedLength);
+        ohci_inTransaction(transfer, transaction, device->endpoints[transfer->endpoint].toggle, buffer, clampedLength);
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        uhci_inTransaction(transfer, transaction, toggle, buffer, clampedLength);
+        uhci_inTransaction(transfer, transaction, device->endpoints[transfer->endpoint].toggle, buffer, clampedLength);
     }
     else
     {
@@ -159,31 +166,37 @@ void usb_inTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size
 
     list_append(transfer->transactions, transaction);
 
+    device->endpoints[transfer->endpoint].toggle = !device->endpoints[transfer->endpoint].toggle; // Switch toggle
+
     length -= clampedLength;
     if(length > 0)
     {
-        usb_inTransaction(transfer, !toggle, buffer+clampedLength, length);
+        usb_inTransaction(transfer, device->endpoints[transfer->endpoint].toggle, buffer+clampedLength, length);
     }
 }
 
-void usb_outTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size_t length)
+void usb_outTransaction(usb_transfer_t* transfer, bool controlHandshake, void* buffer, size_t length)
 {
     size_t clampedLength = min(transfer->packetSize, length);
 
     usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
     transaction->type = USB_TT_OUT;
 
+    usb2_Device_t* device = transfer->HC->insertedDisk->data;
+    if(controlHandshake) // Handshake transaction of control transfers have always set toggle to 1
+        device->endpoints[transfer->endpoint].toggle = true;
+
     if (transfer->HC->type == &USB_EHCI)
     {
-        ehci_outTransaction(transfer, transaction, toggle, buffer, clampedLength);
+        ehci_outTransaction(transfer, transaction, device->endpoints[transfer->endpoint].toggle, buffer, clampedLength);
     }
     else if (transfer->HC->type == &USB_OHCI)
     {
-        ohci_outTransaction(transfer, transaction, toggle, buffer, clampedLength);
+        ohci_outTransaction(transfer, transaction, device->endpoints[transfer->endpoint].toggle, buffer, clampedLength);
     }
     else if (transfer->HC->type == &USB_UHCI)
     {
-        uhci_outTransaction(transfer, transaction, toggle, buffer, clampedLength);
+        uhci_outTransaction(transfer, transaction, device->endpoints[transfer->endpoint].toggle, buffer, clampedLength);
     }
     else
     {
@@ -192,10 +205,12 @@ void usb_outTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, siz
 
     list_append(transfer->transactions, transaction);
 
+    device->endpoints[transfer->endpoint].toggle = !device->endpoints[transfer->endpoint].toggle; // Switch toggle
+
     length -= clampedLength;
     if(length > 0)
     {
-        usb_outTransaction(transfer, !toggle, buffer+clampedLength, length);
+        usb_outTransaction(transfer, device->endpoints[transfer->endpoint].toggle, buffer+clampedLength, length);
     }
 }
 

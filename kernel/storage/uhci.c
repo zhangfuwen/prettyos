@@ -13,7 +13,6 @@
 #include "usb2.h"
 #include "usb2_msd.h"
 
-#define UHCI_USB_TRANSFER
 #define NUMBER_OF_UHCI_RETRIES 1
 
 static uint8_t index   = 0;
@@ -451,13 +450,11 @@ void uhci_pollDisk(void* dev)
                 uhci_showPortState(u, port);
                 waitForKeyStroke();
 
-              #ifdef UHCI_USB_TRANSFER
                 if (u->connected[port] == 1)
                 {
                     uhci_setupUSBDevice(u, port); // TEST
                     u->connected[port] = 2;
                 }
-              #endif
             }
             else
             {
@@ -484,60 +481,10 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
     usb2_Device_t* device = usb2_createDevice(disk);
 
     u->ports[portNumber]->num = 0; // device number has to be set to 0
-    u->ports[portNumber]->num = 1 + usbTransferEnumerate(&u->ports[portNumber]->port, portNumber);
+    u->ports[portNumber]->num = 1 + usbTransferEnumerate(disk->port, portNumber);
     waitForKeyStroke();
 
-    usbTransferDevice(device); waitForKeyStroke();
-    usbTransferConfig(device); waitForKeyStroke();
-    usbTransferString(device); waitForKeyStroke();
-
-    for (uint8_t i=1; i<4; i++) // fetch 3 strings
-    {
-        usbTransferStringUnicode(device, i); waitForKeyStroke();
-    }
-
-    usbTransferSetConfiguration(device, 1); // set first configuration
-    waitForKeyStroke();
-
-  #ifdef _UHCI_DIAGNOSIS_
-    uint8_t config = usbTransferGetConfiguration(device);
-    printf("\nconfiguration: %u", config); // check configuration
-    waitForKeyStroke();
-  #endif
-
-    if (device->InterfaceClass != 0x08)
-    {
-        textColor(ERROR);
-        printf("\nThis is no Mass Storage Device!\nMSD test and addition to device manager will not be carried out.");
-        textColor(TEXT);
-        waitForKeyStroke();
-    }
-    else
-    {
-        // Disk
-        disk->type       = &USB_MSD;
-        disk->sectorSize = 512;
-        strcpy(disk->name, device->productName);
-        attachDisk(disk);
-
-      #ifdef _UHCI_DIAGNOSIS_
-        showPortList(); // TEST
-        showDiskList(); // TEST
-      #endif
-        waitForKeyStroke();
-
-        // device, interface, endpoints
-      #ifdef _UHCI_DIAGNOSIS_
-        textColor(HEADLINE);
-        printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
-                                                device, device->numInterfaceMSD,
-                                                device->numEndpointOutMSD,
-                                                device->numEndpointInMSD);
-        textColor(TEXT);
-      #endif
-
-        testMSD(device); // test with some SCSI commands
-    }
+    usb_setupDevice(device);
 }
 
 
@@ -842,21 +789,14 @@ void uhci_showStatusbyteTD(uhciTD_t* TD)
 
 bool isTransactionSuccessful(uhci_transaction_t* uT)
 {
-    if
+    return
     (
         // no error
         (uT->TD->bitstuffError  == 0) && (uT->TD->crc_timeoutError == 0) && (uT->TD->nakReceived == 0) &&
         (uT->TD->babbleDetected == 0) && (uT->TD->dataBufferError  == 0) && (uT->TD->stall       == 0) &&
         // executed
         (uT->TD->active == 0)
-    )
-    {
-        return (true);
-    }
-    else
-    {
-        return (false);
-    }
+    );
 }
 
 /*

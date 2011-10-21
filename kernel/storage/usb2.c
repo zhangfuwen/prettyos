@@ -24,8 +24,8 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
 
     usb_transfer_t transfer;
     usb_setupTransfer(port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x00, 5, 0, new_address+1, 0, 0);
-    usb_inTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x00, 5, 0, new_address+1, 0, 0);
+    usb_inTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
   #ifdef _USB_TRANSFER_DIAGNOSIS_
@@ -50,9 +50,9 @@ void usbTransferDevice(usb2_Device_t* device)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x80, 6, 1, 0, 0, 18);
-    usb_inTransaction(&transfer, 1, &descriptor, 18);
-    usb_outTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x80, 6, 1, 0, 0, 18);
+    usb_inTransaction(&transfer, false, &descriptor, 18);
+    usb_outTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
     addDevice(&descriptor, device);
@@ -71,9 +71,9 @@ void usbTransferConfig(usb2_Device_t* device)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x80, 6, 2, 0, 0, 32);
-    usb_inTransaction(&transfer, 1, buffer, 32);
-    usb_outTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x80, 6, 2, 0, 0, 32);
+    usb_inTransaction(&transfer, false, buffer, 32);
+    usb_outTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
   #ifdef _USB_TRANSFER_DIAGNOSIS_
@@ -124,7 +124,7 @@ void usbTransferConfig(usb2_Device_t* device)
             showEndpointDescriptor(descriptor);
 
             if((descriptor->endpointAddress & 0xF) < 3)
-                device->mps[descriptor->endpointAddress & 0xF] = descriptor->maxPacketSize;
+                device->endpoints[descriptor->endpointAddress & 0xF].mps = descriptor->maxPacketSize;
 
             // store endpoint numbers for IN/OUT mass storage transfers, attributes must be 0x2, because there are also endpoints with attributes 0x3(interrupt)
             if (descriptor->endpointAddress & 0x80 && descriptor->attributes == 0x2)
@@ -176,9 +176,9 @@ void usbTransferString(usb2_Device_t* device)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x80, 6, 3, 0, 0, 12);
-    usb_inTransaction(&transfer, 1, &descriptor, 12);
-    usb_outTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x80, 6, 3, 0, 0, 12);
+    usb_inTransaction(&transfer, false, &descriptor, 12);
+    usb_outTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
   #ifdef _USB_TRANSFER_DIAGNOSIS_
@@ -200,9 +200,9 @@ void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x80, 6, 3, stringIndex, 0x0409, 64);
-    usb_inTransaction(&transfer, 1, buffer, 64);
-    usb_outTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x80, 6, 3, stringIndex, 0x0409, 64);
+    usb_inTransaction(&transfer, false, buffer, 64);
+    usb_outTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
   #ifdef _USB_TRANSFER_DIAGNOSIS_
@@ -224,8 +224,8 @@ void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
-    usb_inTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x00, 9, 0, configuration, 0, 0); // SETUP DATA0, 8 byte, request type, SET_CONFIGURATION(9), hi(reserved), configuration, index=0, length=0
+    usb_inTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 }
 
@@ -241,9 +241,9 @@ uint8_t usbTransferGetConfiguration(usb2_Device_t* device)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x80, 8, 0, 0, 0, 1);
-    usb_inTransaction(&transfer, 1, &configuration, 1);
-    usb_outTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x80, 8, 0, 0, 0, 1);
+    usb_inTransaction(&transfer, false, &configuration, 1);
+    usb_outTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
     return configuration;
@@ -261,8 +261,8 @@ void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x02, 3, 0, 0, endpoint, 0);
-    usb_inTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x02, 3, 0, 0, endpoint, 0);
+    usb_inTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
   #ifdef _USB_TRANSFER_DIAGNOSIS_
@@ -280,8 +280,8 @@ void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x02, 1, 0, 0, endpoint, 0);
-    usb_inTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x02, 1, 0, 0, endpoint, 0);
+    usb_inTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
   #ifdef _USB2_DIAGNOSIS_
@@ -301,9 +301,9 @@ uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint)
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, endpoint, 64);
-    usb_setupTransaction(&transfer, 0, 8, 0x02, 0, 0, 0, endpoint, 2);
-    usb_inTransaction(&transfer, 1, &status, 2);
-    usb_outTransaction(&transfer, 1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x02, 0, 0, 0, endpoint, 2);
+    usb_inTransaction(&transfer, false, &status, 2);
+    usb_outTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
     return status;
@@ -322,7 +322,7 @@ void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
     usbDev->productStringID       = d->product;
     usbDev->serNumberStringID     = d->serialNumber;
     usbDev->numConfigurations     = d->numConfigurations;
-    usbDev->mps[0]                = d->maxPacketSize;
+    usbDev->endpoints[0].mps      = d->maxPacketSize;
 }
 
 void showDevice(usb2_Device_t* usbDev)
@@ -358,7 +358,7 @@ void showDevice(usb2_Device_t* usbDev)
         }
     }
 
-    printf("\nendpoint 0 mps: %u byte.", usbDev->mps[0]); // MPS0, must be 8,16,32,64
+    printf("\nendpoint 0 mps: %u byte.", usbDev->endpoints[0].mps); // MPS0, must be 8,16,32,64
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     printf("vendor:            %xh\n",   usbDev->vendor);
     printf("product:           %xh\t",   usbDev->product);

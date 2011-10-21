@@ -55,16 +55,14 @@ static void unblockTask(task_t* task, bool timeout)
 
 void scheduler_unblockEvent(BLOCKERTYPE type, void* data) // Event based blocks are handled here
 {
-    if (!blockedTasks || blockedTasks->begin == 0) 
-    {
+    if (!blockedTasks || blockedTasks->begin == 0)
         return; // Ring is empty
-    }
 
     blockedTasks->current = blockedTasks->begin;
     do
     {
         task_t* current = (task_t*)blockedTasks->current->data;
-        
+
         if (current->blocker.type == &blocker[type] && current->blocker.data == data) // The blocking event this ring element is waiting for appeared -> unblock
         {
             unblockTask(current, false);
@@ -76,17 +74,15 @@ void scheduler_unblockEvent(BLOCKERTYPE type, void* data) // Event based blocks 
 
 static void checkBlocked() // Not event based blocks are handled here (polling)
 {
-    if (blockedTasks->begin == 0) 
-    {
+    if (blockedTasks->begin == 0)
         return; // Ring is empty
-    }
 
     blockedTasks->current = blockedTasks->begin;
 
     do
     {
         task_t* current = (task_t*)blockedTasks->current->data;
-        
+
         if (current->blocker.type && current->blocker.type->unlock && current->blocker.type->unlock(current->blocker.data)) // Unblock function specified and the task should not be blocked any more...
         {
             unblockTask(current, false);
@@ -115,7 +111,6 @@ static task_t* scheduler_getNextTask()
         {
             freetimeTask = create_task(PROCESS, kernelPageDirectory, &doNothing, 0, 0, 0, 0);
         }
-        
         return (freetimeTask);
     }
 
@@ -126,19 +121,15 @@ static task_t* scheduler_getNextTask()
 uint32_t scheduler_taskSwitch(uint32_t esp)
 {
     if (runningTasks == 0)
-    {
         return (esp); // Tasking seems to be not installed -> Don't switch task.
-    }
 
     task_saveState(esp);
 
     task_t* oldTask = (task_t*)currentTask;
     task_t* newTask = scheduler_getNextTask();
-    
+
     if (oldTask == newTask) // No task switch needed
-    {
         return (esp);
-    }
 
     return (task_switch(newTask));
 }
@@ -161,7 +152,7 @@ bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout
 {
     currentTask->blocker.type = &blocker[reason];
     currentTask->blocker.data = data;
-    
+
     if (timeout == 0)
     {
         currentTask->blocker.timeout = 0;
@@ -198,7 +189,7 @@ void scheduler_log()
         printf("\nrunning:\n\n");
         textColor(TEXT);
         slelement_t* temp = runningTasks->begin;
-        
+
         do
         {
             task_log((task_t*)temp->data);
@@ -213,7 +204,7 @@ void scheduler_log()
         printf("\nblocked:\n\n");
         textColor(TEXT);
         slelement_t* temp = blockedTasks->begin;
-       
+
         do
         {
             task_log((task_t*)temp->data);

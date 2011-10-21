@@ -24,8 +24,10 @@ usb2_Device_t* usb2_createDevice(disk_t* disk)
 {
     usb2_Device_t* device = malloc(sizeof(usb2_Device_t), 0, "usb2_Device_t");
     device->disk = disk;
-    device->mps = malloc(sizeof(*device->mps)*3, 0, "usbDev->mps"); // Assume that we have three endpoints (only interface 1)
-    device->mps[0] = 64;
+    device->endpoints = malloc(sizeof(usb_endpoint_t)*3, 0, "usbDev->endpoints"); // Assume that we have three endpoints (only interface 1)
+    device->endpoints[0].mps = 64;
+    for(uint8_t i = 0; i < 3; i++)
+        device->endpoints[0].toggle = false;
     disk->data = device;
     return(device);
 }
@@ -34,6 +36,57 @@ void usb2_destroyDevice(usb2_Device_t* device)
 {
     device->disk->data = 0;
     free(device);
+}
+
+void usb_setupDevice(usb2_Device_t* device)
+{
+    usbTransferDevice(device);
+    usbTransferConfig(device);
+    usbTransferString(device);
+
+    for (uint8_t i=1; i<4; i++) // fetch 3 strings
+    {
+        usbTransferStringUnicode(device, i);
+    }
+
+    usbTransferSetConfiguration(device, 1); // set first configuration
+
+  #ifdef _EHCI_DIAGNOSIS_
+    uint8_t config = usbTransferGetConfiguration(device);
+    printf("\nconfiguration: %u", config); // check configuration
+    waitForKeyStroke();
+  #endif
+
+    if (device->InterfaceClass != 0x08)
+    {
+        textColor(ERROR);
+        printf("\nThis is no Mass Storage Device! MSD test and addition to device manager will not be carried out.");
+        textColor(TEXT);
+        waitForKeyStroke();
+    }
+    else
+    {
+        // Disk
+        device->disk->type       = &USB_MSD;
+        device->disk->sectorSize = 512;
+        strcpy(device->disk->name, device->productName);
+        attachDisk(device->disk);
+
+      #ifdef _EHCI_DIAGNOSIS_
+        showPortList(); // TEST
+        showDiskList(); // TEST
+
+        // device, interface, endpoints
+        textColor(HEADLINE);
+        printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
+                                                device, device->numInterfaceMSD,
+                                                device->numEndpointOutMSD,
+                                                device->numEndpointInMSD);
+        textColor(TEXT);
+      #endif
+
+        testMSD(device); // test with some SCSI commands
+    }
 }
 
 // Bulk-Only Mass Storage get maximum number of Logical Units
@@ -52,9 +105,9 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(usb2_Device_t* device, uint8_t numInterface
 
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 10100001b     11111110b 0000h  Interface 0001h     1 byte
-    usb_setupTransaction(&transfer, 0, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
-    usb_inTransaction(&transfer, 1, &maxLUN, 1);
-    usb_outTransaction(&transfer, 1, 0, 0); // handshake
+    usb_setupTransaction(&transfer, 8, 0xA1, 0xFE, 0, 0, numInterface, 1);
+    usb_inTransaction(&transfer, false, &maxLUN, 1);
+    usb_outTransaction(&transfer, true, 0, 0); // handshake
 
     usb_issueTransfer(&transfer);
 
@@ -75,8 +128,8 @@ void usbTransferBulkOnlyMassStorageReset(usb2_Device_t* device, uint8_t numInter
 
     // bmRequestType bRequest  wValue wIndex    wLength   Data
     // 00100001b     11111111b 0000h  Interface 0000h     none
-    usb_setupTransaction(&transfer, 0, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
-    usb_inTransaction(&transfer, 1, 0, 0); // handshake
+    usb_setupTransaction(&transfer, 8, 0x21, 0xFF, 0, 0, numInterface, 0);
+    usb_inTransaction(&transfer, true, 0, 0); // handshake
 
     usb_issueTransfer(&transfer);
 }
@@ -275,10 +328,8 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointOut, 512);
-    usb_outTransaction(&transfer, device->ToggleEndpointOutMSD, &cbw, 31);
+    usb_outTransaction(&transfer, false, &cbw, 31);
     usb_issueTransfer(&transfer);
-
-    device->ToggleEndpointOutMSD = !device->ToggleEndpointOutMSD; // switch toggle
 
     if (SCSIcommand == 0x28 || SCSIcommand == 0x2A)   // read(10) and write(10)
     {
@@ -300,13 +351,12 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
     usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointIn, 512);
     if (TransferLength > 0)
     {
-        usb_inTransaction(&transfer, device->ToggleEndpointInMSD, dataBuffer, TransferLength);
-        usb_inTransaction(&transfer, !device->ToggleEndpointInMSD, statusBuffer, 13);
+        usb_inTransaction(&transfer, false, dataBuffer, TransferLength);
+        usb_inTransaction(&transfer, false, statusBuffer, 13);
     }
     else
     {
-        usb_inTransaction(&transfer, device->ToggleEndpointInMSD, statusBuffer, 13);
-        device->ToggleEndpointInMSD = !device->ToggleEndpointInMSD; // switch toggle
+        usb_inTransaction(&transfer, false, statusBuffer, 13);
     }
     usb_issueTransfer(&transfer);
 
@@ -351,8 +401,8 @@ void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpo
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointOut, 512);
-    usb_outTransaction(&transfer, device->ToggleEndpointOutMSD, &cbw, 31);
-    usb_outTransaction(&transfer, !device->ToggleEndpointOutMSD, dataBuffer, TransferLength);
+    usb_outTransaction(&transfer, false, &cbw, 31);
+    usb_outTransaction(&transfer, false, dataBuffer, TransferLength);
     usb_issueTransfer(&transfer);
 
   /**************************************************************************************************************************************/
@@ -366,10 +416,8 @@ void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpo
         statusBuffer = tempStatusBuffer;
 
     usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointIn, 512);
-    usb_inTransaction(&transfer, device->ToggleEndpointInMSD, statusBuffer, 13);
+    usb_inTransaction(&transfer, false, statusBuffer, 13);
     usb_issueTransfer(&transfer);
-
-    device->ToggleEndpointInMSD = !device->ToggleEndpointInMSD; // switch toggle
 }
 
 static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTransferTestUnitReady, usbBulkTransfer_t* bulkTransferRequestSense)
@@ -544,7 +592,8 @@ void testMSD(usb2_Device_t* device)
     device->maxLUN  = 0;
 
     // start with correct endpoint toggles and reset interface
-    device->ToggleEndpointInMSD = device->ToggleEndpointOutMSD = 0;
+    device->endpoints[device->numEndpointOutMSD].toggle = false;
+    device->endpoints[device->numEndpointInMSD].toggle = false;
     usbTransferBulkOnlyMassStorageReset(device, device->numInterfaceMSD); // Reset Interface
 
     ///////// send SCSI command "inquiry (opcode: 0x12)"
@@ -626,9 +675,6 @@ FS_ERROR usbRead(uint32_t sector, void* buffer, void* dev)
                     &read, buffer, 0);
     logBulkTransfer(&read);
 
-    memshow(buffer,512,false);
-    waitForKeyStroke();
-
     return(CE_GOOD);
 }
 
@@ -686,12 +732,13 @@ void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface, uint32_t end
     if (config != 1)
     {
         textColor(ERROR);
-        printf("\tconfiguration: %u (to be: 1)",config);
+        printf("\tconfiguration: %u (to be: 1)", config);
         textColor(TEXT);
     }
 
     // start with correct endpoint toggles and reset interface
-    device->ToggleEndpointInMSD = device->ToggleEndpointOutMSD = 0;
+    device->endpoints[endpointOUT].toggle = 0;
+    device->endpoints[endpointIN].toggle = 0;
     usbTransferBulkOnlyMassStorageReset(device, device->numInterfaceMSD); // Reset Interface
 }
 

@@ -19,18 +19,18 @@ void serial_init()
     textColor(LIGHT_GRAY);
     printf("\n   => Serial ports:");
     serialPorts = (((*(uint16_t*)0x410)>>9)&0x7); // Read from BIOS Data Area (BDA)
-    
+
     IOports[0]  = *((uint16_t*)0x400);
     IOports[1]  = *((uint16_t*)0x402);
     IOports[2]  = *((uint16_t*)0x404);
     IOports[3]  = *((uint16_t*)0x406);
-        
+
     for (uint8_t i = 0; i < serialPorts; i++)
     {
         outportb(IOports[i] + 1, 0x00); // Disable all interrupts
         outportb(IOports[i] + 3, 0x80); // Enable DLAB (set baud rate divisor)
         //outportb(IOports[i] + 0, 0x03); // Set divisor to 3 (lo byte) 38400 baud (DO NOT TRY 0!!!)
-        outportb(IOports[i] + 0, 0x01); // Set divisor to 1
+        outportb(IOports[i] + 0, 0x01); // Set divisor to 1 (lo byte)
         outportb(IOports[i] + 1, 0x00); //                  (hi byte)
         outportb(IOports[i] + 3, 0x03); // 8 bits, no parity, one stop bit
         outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold

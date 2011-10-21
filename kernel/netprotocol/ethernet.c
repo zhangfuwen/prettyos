@@ -104,7 +104,7 @@ bool ethernet_send(network_adapter_t* adapter, void* data, uint32_t length, uint
     {
       #ifdef _NETWORK_DATA_
         textColor(ERROR);
-        printf("\nError: Packet is longer than 0x700 (1792) Bytes\n", sizeof(ethernet_t) + length);
+        printf("\nError: Packet is longer than 0x700 (1792) Bytes\n");
       #endif
         return false;
     }

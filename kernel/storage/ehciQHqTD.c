@@ -207,7 +207,7 @@ void ehci_addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t veloc
     else
     {
         textColor(ERROR);
-        printf("\nASYNC_INT not set!", timeout);
+        printf("\nASYNC_INT not set!");
         textColor(TEXT);
     }
 

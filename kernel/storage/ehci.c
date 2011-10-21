@@ -623,64 +623,16 @@ static void ehci_detectDevice(ehci_t* e, uint8_t j)
 
 void ehci_setupUSBDevice(ehci_t* e, uint8_t portNumber)
 {
-    e->ports[portNumber]->num = 0; // device number has to be set to 0
-    e->ports[portNumber]->num = 1 + usbTransferEnumerate(&e->ports[portNumber]->port, portNumber);
-
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
     disk->port = &e->ports[portNumber]->port;
+    disk->port->insertedDisk = disk;
+
     usb2_Device_t* device = usb2_createDevice(disk);
 
-    usbTransferDevice(device);
-    usbTransferConfig(device);
-    usbTransferString(device);
+    e->ports[portNumber]->num = 0; // device number has to be set to 0
+    e->ports[portNumber]->num = 1 + usbTransferEnumerate(disk->port, portNumber);
 
-    for (uint8_t i=1; i<4; i++) // fetch 3 strings
-    {
-        usbTransferStringUnicode(device, i);
-    }
-
-    usbTransferSetConfiguration(device, 1); // set first configuration
-
-  #ifdef _EHCI_DIAGNOSIS_
-    uint8_t config = usbTransferGetConfiguration(device);
-    printf("\nconfiguration: %u", config); // check configuration
-    waitForKeyStroke();
-  #endif
-
-    if (device->InterfaceClass != 0x08)
-    {
-        textColor(ERROR);
-        printf("\nThis is no Mass Storage Device! MSD test and addition to device manager will not be carried out.");
-        textColor(TEXT);
-        waitForKeyStroke();
-    }
-    else
-    {
-        // Disk
-        disk->type       = &USB_MSD;
-        disk->sectorSize = 512;
-        disk->port       = &e->ports[portNumber]->port;
-        strcpy(disk->name, device->productName);
-        attachDisk(disk);
-
-        // Port
-        e->ports[portNumber]->port.insertedDisk = disk;
-
-      #ifdef _EHCI_DIAGNOSIS_
-        showPortList(); // TEST
-        showDiskList(); // TEST
-
-        // device, interface, endpoints
-        textColor(HEADLINE);
-        printf("\n\nMSD test now with device: %X  interface: %u  endpOUT: %u  endpIN: %u\n",
-                                                device, device->numInterfaceMSD,
-                                                device->numEndpointOutMSD,
-                                                device->numEndpointInMSD);
-        textColor(TEXT);
-      #endif
-
-        testMSD(device); // test with some SCSI commands
-    }
+    usb_setupDevice(device);
 }
 
 void ehci_showUSBSTS(ehci_t* e)

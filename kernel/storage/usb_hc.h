@@ -15,18 +15,18 @@
 typedef enum
 {
     USB_BULK, USB_CONTROL, USB_INTERRUPT, USB_ISOCHRONOUS
-} usb_tranferType_t;
+} usb_transferType_t;
 
 typedef struct
 {
-    void*             data; // EHCI: Contains pointer to QH
-    usb_tranferType_t type;
-    uint32_t          device;
-    uint32_t          endpoint;
-    uint32_t          packetSize;
-    port_t*           HC;
-    list_t*           transactions;
-    bool              success;
+    void*              data; // EHCI: Contains pointer to QH
+    usb_transferType_t type;
+    uint32_t           device;
+    uint32_t           endpoint;
+    uint32_t           packetSize;
+    port_t*            HC;
+    list_t*            transactions;
+    bool               success;
 } usb_transfer_t;
 
 typedef enum
@@ -43,10 +43,10 @@ typedef struct
 
 void usb_hc_install(pciDev_t* PCIdev);
 
-void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_tranferType_t type, uint32_t endpoint, size_t maxLength);
-void usb_setupTransaction(usb_transfer_t* transfer, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
-void usb_inTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size_t length);
-void usb_outTransaction(usb_transfer_t* transfer, bool toggle, void* buffer, size_t length);
+void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_transferType_t type, uint32_t endpoint, size_t maxLength);
+void usb_setupTransaction(usb_transfer_t* transfer, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t index, uint32_t length);
+void usb_inTransaction(usb_transfer_t* transfer, bool controlHandshake, void* buffer, size_t length);
+void usb_outTransaction(usb_transfer_t* transfer, bool controlHandshake, void* buffer, size_t length);
 void usb_issueTransfer(usb_transfer_t* transfer);
 
 

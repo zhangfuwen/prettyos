@@ -150,7 +150,7 @@ static void mouse_handler(registers_t* r)
                     else // TODO: Why?
                     {
                         textColor(ERROR);
-                        printf(" ERROR (mouse.c, 154): Mouse sent unknown package!\n", bytes[0]);
+                        printf(" ERROR (mouse.c, 154): Mouse sent unknown package (%u)!\n", bytes[0]);
                         textColor(TEXT);
                     }
                     break;

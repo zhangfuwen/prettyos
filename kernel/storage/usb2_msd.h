@@ -31,6 +31,7 @@ typedef struct
 
 usb2_Device_t* usb2_createDevice(disk_t* disk);
 void usb2_destroyDevice(usb2_Device_t* device);
+void usb_setupDevice(usb2_Device_t* device);
 
 void usbTransferBulkOnlyMassStorageReset(usb2_Device_t* device, uint8_t numInterface);
 uint8_t usbTransferBulkOnlyGetMaxLUN(usb2_Device_t* device, uint8_t numInterface);
