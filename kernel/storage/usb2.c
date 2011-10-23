@@ -15,8 +15,8 @@
 uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\n\nUSB2: SET_ADDRESS");
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: SET_ADDRESS");
     textColor(TEXT);
   #endif
 
@@ -41,8 +41,8 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
 bool usbTransferDevice(usb2_Device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\n\nUSB2: GET_DESCRIPTOR device, dev: %X endpoint: 0", device);
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: GET_DESCRIPTOR Device");
     textColor(TEXT);
   #endif
 
@@ -55,8 +55,11 @@ bool usbTransferDevice(usb2_Device_t* device)
     usb_outTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
-    addDevice(&descriptor, device);
-    showDevice(device);
+    if (transfer.success)
+    {
+        addDevice(&descriptor, device);
+        showDevice(device);
+    }
 
     return (transfer.success);
 }
@@ -64,8 +67,8 @@ bool usbTransferDevice(usb2_Device_t* device)
 bool usbTransferConfig(usb2_Device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\n\nUSB2: GET_DESCRIPTOR config, dev: %X endpoint: 0", device);
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: GET_DESCRIPTOR Config");
     textColor(TEXT);
   #endif
 
@@ -78,71 +81,75 @@ bool usbTransferConfig(usb2_Device_t* device)
     usb_outTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
-  #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(LIGHT_GRAY);
-    printf("\n---------------------------------------------------------------------\n");
-    textColor(GREEN);
-  #endif
-
-    // parse to config (len=9,type=2), interface (len=9,type=4) or endpoint (len=7,type=5)
-    void* addr     = buffer;
-    void* lastByte = addr + (*(uint16_t*)(addr+2)); // totalLength (WORD)
-
-  #ifdef _USB2_DIAGNOSIS_
-    memshow(buffer, *(uint16_t*)(addr+2), false);
-    putch('\n');
-  #endif
-
-    while ((uintptr_t)addr < (uintptr_t)lastByte)
+    if (transfer.success)
     {
-        uint8_t type =  *(uint8_t*)(addr+1);
-        uint8_t length = *(uint8_t*)addr;
 
-        if (length == 9 && type == 2)
-        {
-            struct usb2_configurationDescriptor* descriptor = addr;
-            showConfigurationDescriptor(descriptor);
-        }
-        else if (length == 9 && type == 4)
-        {
-            struct usb2_interfaceDescriptor* descriptor = addr;
-            showInterfaceDescriptor(descriptor);
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
+        textColor(LIGHT_GRAY);
+        printf("\n---------------------------------------------------------------------\n");
+        textColor(GREEN);
+      #endif
 
-            if (descriptor->interfaceClass == 8)
+        // parse to config (len=9,type=2), interface (len=9,type=4) or endpoint (len=7,type=5)
+        void* addr     = buffer;
+        void* lastByte = addr + (*(uint16_t*)(addr+2)); // totalLength (WORD)
+
+      #ifdef _USB2_DIAGNOSIS_
+        memshow(buffer, *(uint16_t*)(addr+2), false);
+        putch('\n');
+      #endif
+
+        while ((uintptr_t)addr < (uintptr_t)lastByte)
+        {
+            uint8_t type =  *(uint8_t*)(addr+1);
+            uint8_t length = *(uint8_t*)addr;
+
+            if (length == 9 && type == 2)
             {
-                // store interface number for mass storage transfers
-                device->numInterfaceMSD   = descriptor->interfaceNumber;
-                device->InterfaceClass    = descriptor->interfaceClass;
-                device->InterfaceSubclass = descriptor->interfaceSubclass;
+                struct usb2_configurationDescriptor* descriptor = addr;
+                showConfigurationDescriptor(descriptor);
             }
-        }
-        else if (length == 7 && type == 5)
-        {
-            struct usb2_endpointDescriptor* descriptor = addr;
-            showEndpointDescriptor(descriptor);
-
-            if((descriptor->endpointAddress & 0xF) < 3)
-                device->endpoints[descriptor->endpointAddress & 0xF].mps = descriptor->maxPacketSize;
-
-            // store endpoint numbers for IN/OUT mass storage transfers, attributes must be 0x2, because there are also endpoints with attributes 0x3(interrupt)
-            if (descriptor->endpointAddress & 0x80 && descriptor->attributes == 0x2)
+            else if (length == 9 && type == 4)
             {
-                device->numEndpointInMSD = descriptor->endpointAddress & 0xF;
-            }
+                struct usb2_interfaceDescriptor* descriptor = addr;
+                showInterfaceDescriptor(descriptor);
 
-            if (!(descriptor->endpointAddress & 0x80) && descriptor->attributes == 0x2)
+                if (descriptor->interfaceClass == 8)
+                {
+                    // store interface number for mass storage transfers
+                    device->numInterfaceMSD   = descriptor->interfaceNumber;
+                    device->InterfaceClass    = descriptor->interfaceClass;
+                    device->InterfaceSubclass = descriptor->interfaceSubclass;
+                }
+            }
+            else if (length == 7 && type == 5)
             {
-                device->numEndpointOutMSD = descriptor->endpointAddress & 0xF;
-            }
-        }
-        else
-        {
-          #ifdef _USB_TRANSFER_DIAGNOSIS_
-            printf("\nlength: %u type: %u - unknown\n", length, type);
-          #endif
-        }
+                struct usb2_endpointDescriptor* descriptor = addr;
+                showEndpointDescriptor(descriptor);
 
-        addr += length;
+                if((descriptor->endpointAddress & 0xF) < 3)
+                    device->endpoints[descriptor->endpointAddress & 0xF].mps = descriptor->maxPacketSize;
+
+                // store endpoint numbers for IN/OUT mass storage transfers, attributes must be 0x2, because there are also endpoints with attributes 0x3(interrupt)
+                if (descriptor->endpointAddress & 0x80 && descriptor->attributes == 0x2)
+                {
+                    device->numEndpointInMSD = descriptor->endpointAddress & 0xF;
+                }
+
+                if (!(descriptor->endpointAddress & 0x80) && descriptor->attributes == 0x2)
+                {
+                    device->numEndpointOutMSD = descriptor->endpointAddress & 0xF;
+                }
+            }
+            else
+            {
+              #ifdef _USB_TRANSFER_DIAGNOSIS_
+                printf("\nlength: %u type: %u - unknown\n", length, type);
+              #endif
+            }
+
+            addr += length;
+        }
     }
 
     return (transfer.success);
@@ -151,8 +158,8 @@ bool usbTransferConfig(usb2_Device_t* device)
 void usbTransferString(usb2_Device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\n\nUSB2: GET_DESCRIPTOR string, dev: %X endpoint: 0 languageIDs", device);
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: GET_DESCRIPTOR string, dev: %X endpoint: 0 languageIDs", device);
     textColor(TEXT);
   #endif
 
@@ -175,8 +182,8 @@ void usbTransferString(usb2_Device_t* device)
 void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\n\nUSB2: GET_DESCRIPTOR string, dev: %X endpoint: 0 stringIndex: %u", device, stringIndex);
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: GET_DESCRIPTOR string, dev: %X endpoint: 0 stringIndex: %u", device, stringIndex);
     textColor(TEXT);
   #endif
 
@@ -202,7 +209,7 @@ void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
-    printf("\n\nUSB2: SET_CONFIGURATION %u", configuration);
+    printf("\n\nUSB: SET_CONFIGURATION %u", configuration);
     textColor(TEXT);
   #endif
 
@@ -216,8 +223,8 @@ void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration)
 uint8_t usbTransferGetConfiguration(usb2_Device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\n\nUSB2: GET_CONFIGURATION");
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: GET_CONFIGURATION");
     textColor(TEXT);
   #endif
 
@@ -238,8 +245,8 @@ uint8_t usbTransferGetConfiguration(usb2_Device_t* device)
 void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\n\nUSB2: usbSetFeatureHALT, endpoint: %u", endpoint);
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: usbSetFeatureHALT, endpoint: %u", endpoint);
     textColor(TEXT);
   #endif
 
@@ -257,8 +264,8 @@ void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
 void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(HEADLINE);
-    printf("\n\nUSB2: usbClearFeatureHALT, endpoint: %u", endpoint);
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: usbClearFeatureHALT, endpoint: %u", endpoint);
     textColor(TEXT);
   #endif
 
@@ -276,8 +283,8 @@ void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
 uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
-    textColor(YELLOW);
-    printf("\n\nUSB2: usbGetStatus at device: %X endpoint: %u", device, endpoint);
+    textColor(LIGHT_CYAN);
+    printf("\n\nUSB: usbGetStatus at device: %X endpoint: %u", device, endpoint);
     textColor(TEXT);
   #endif
 
@@ -518,17 +525,17 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
         printf("length:      %u\t\t",   d->length);         // 7
         printf("descriptor type: %u\n", d->descriptorType); // 5
         printf("endpoint %u: %s, ",     d->endpointAddress & 0xF, d->endpointAddress & 0x80 ? "IN " : "OUT");
-        printf("attributes: %yh\t\t",   d->attributes);
+        printf("attributes: %yh\t",   d->attributes);
         // bit 1:0 00 control    01 isochronous    10 bulk                         11 interrupt
         // bit 3:2 00 no sync    01 async          10 adaptive                     11 sync (only if isochronous)
         // bit 5:4 00 data endp. 01 feedback endp. 10 explicit feedback data endp. 11 reserved (Iso Mode)
 
         if (d->attributes == 2)
         {
-           printf(" bulk data,");
+           printf("\nbulk data,");
         }
         printf(" mps: %u byte",  d->maxPacketSize);
-        printf("interval:          %u\n",  d->interval);
+        printf(" interval: %u\n",  d->interval);
         textColor(TEXT);
     }
   #endif

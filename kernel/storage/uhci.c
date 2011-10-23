@@ -10,6 +10,7 @@
 #include "task.h"
 #include "irq.h"
 #include "keyboard.h"
+#include "audio/sys_speaker.h"
 #include "usb2.h"
 #include "usb2_msd.h"
 
@@ -456,7 +457,18 @@ void uhci_pollDisk(void* dev)
             else
             {
                 printf(" removed.");
-                u->ports[j].connected = false; // reset connect (counter)
+                
+                if(u->ports[j].port.insertedDisk && u->ports[j].port.insertedDisk->type == &USB_MSD)
+                {
+                    usb2_destroyDevice(u->ports[j].port.insertedDisk->data);
+                    removeDisk(u->ports[j].port.insertedDisk);
+                    u->ports[j].port.insertedDisk = 0;
+                    u->ports[j].connected = false;
+                    showPortList();
+                    showDiskList();
+                    beep(1000, 100);
+                    beep(800, 80);
+                }
             }
         }//if
     }//for
@@ -518,6 +530,12 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
     printf("\ntype: %u req: %u valHi: %u valLo: %u i: %u len: %u", request->type, request->request, request->valueHi, request->valueLo, request->index, request->length);
   #endif
 
+    /// TEST
+    textColor(LIGHT_GRAY);
+    printf("\nuhci_setup - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
+    textColor(TEXT);
+    /// TEST
+
     if (transfer->transactions->tail)
     {
         uhci_transaction_t* uhciLastTransaction = ((usb_transaction_t*)transfer->transactions->tail->data)->data;
@@ -536,6 +554,12 @@ void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransact
 
     uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
     uT->TDBuffer = uT->TD->virtBuffer;
+
+    /// TEST
+    textColor(LIGHT_BLUE);
+    printf("\nuhci_in - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
+    textColor(TEXT);
+    /// TEST
 
     if (transfer->transactions->tail)
     {
@@ -560,6 +584,12 @@ void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransac
     {
         memcpy(uT->TDBuffer, buffer, length);
     }
+
+    /// TEST
+    textColor(LIGHT_GREEN);
+    printf("\nuhci_out - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
+    textColor(TEXT);
+    /// TEST
 
     if (transfer->transactions->tail)
     {
@@ -596,9 +626,9 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
             printf("\nFRBADDR: %X  frame pointer: %X frame number: %u", inportl(u->bar + UHCI_FRBASEADD), u->framelistAddrVirt->frPtr[num], num);
           #endif
 
-          delay(50000); // pause after transaction
+            delay(50000); // pause after transaction
         }
-        delay(20000); // pause after transfer
+        delay(50000); // pause after transfer
 
         // stop scheduler
         outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) & ~UHCI_CMD_RS);

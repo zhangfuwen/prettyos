@@ -463,9 +463,12 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
     while (timeout != 0)
     {
         timeout--;
-
-        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: test unit ready"); textColor(TEXT);
-
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
+        textColor(LIGHT_BLUE);
+        printf("\n\nSCSI: test unit ready");
+        textColor(TEXT);
+      #endif
+      
         char statusBuffer[13];
         usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady, 0, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
@@ -473,9 +476,12 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
 
         if(timeout >= maxTest/2 && statusByteTestReady != 0) continue;
 
-
-        textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: request sense"); textColor(TEXT);
-
+      #ifdef _USB_TRANSFER_DIAGNOSIS_
+        textColor(LIGHT_BLUE);
+        printf("\n\nSCSI: request sense");
+        textColor(TEXT);
+      #endif
+        
         char dataBuffer[18];
         usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense, dataBuffer, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
@@ -488,6 +494,7 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
         }
 
     }
+    waitForKeyStroke();
 
     return statusByte;
 }
@@ -627,10 +634,17 @@ void testMSD(usb2_Device_t* device)
 
     // start with correct endpoint toggles and reset interface
     device->endpoints[device->numEndpointOutMSD].toggle = false;
-    device->endpoints[device->numEndpointInMSD].toggle = false;
+    device->endpoints[device->numEndpointInMSD].toggle  = false;
+      
     usbTransferBulkOnlyMassStorageReset(device, device->numInterfaceMSD); // Reset Interface
 
     ///////// send SCSI command "inquiry (opcode: 0x12)"
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
+    textColor(LIGHT_BLUE);
+    printf("\n\nSCSI: inquiry");
+    textColor(TEXT);
+  #endif
+
     usbBulkTransfer_t inquiry;
     startLogBulkTransfer(&inquiry, 0x12, 36, 0);
     char inquiryBuffer[36];
@@ -646,6 +660,8 @@ void testMSD(usb2_Device_t* device)
     analyzeInquiry(inquiryBuffer);
     logBulkTransfer(&inquiry);
 
+    waitForKeyStroke();
+
     ///////// send SCSI command "test unit ready(6)"
     usbBulkTransfer_t testUnitReady, requestSense;
     startLogBulkTransfer(&testUnitReady, 0x00,  0, 0);
@@ -656,7 +672,12 @@ void testMSD(usb2_Device_t* device)
 
 
     ///////// send SCSI command "read capacity(10)"
-    textColor(LIGHT_BLUE); printf("\n\n>>> SCSI: read capacity"); textColor(TEXT);
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
+    textColor(LIGHT_BLUE);
+    printf("\n\nSCSI: read capacity");
+    textColor(TEXT);
+  #endif
+    
     usbBulkTransfer_t readCapacity;
     startLogBulkTransfer(&readCapacity, 0x25, 8, 0);
     char capacityBuffer[8];
@@ -669,14 +690,22 @@ void testMSD(usb2_Device_t* device)
                    readCapacity.DataBytesToTransferIN,
                    &readCapacity, capacityBuffer, 0);
 
-    uint32_t lastLBA    = (*((uint8_t*)capacityBuffer+0)) * 0x1000000 + (*((uint8_t*)capacityBuffer+1)) * 0x10000 + (*((uint8_t*)capacityBuffer+2)) * 0x100 + (*((uint8_t*)capacityBuffer+3));
-    uint32_t blocksize  = (*((uint8_t*)capacityBuffer+4)) * 0x1000000 + (*((uint8_t*)capacityBuffer+5)) * 0x10000 + (*((uint8_t*)capacityBuffer+6)) * 0x100 + (*((uint8_t*)capacityBuffer+7));
+    uint32_t lastLBA     = (*((uint8_t*)capacityBuffer+0)) * 0x1000000 +
+                           (*((uint8_t*)capacityBuffer+1)) *   0x10000 + 
+                           (*((uint8_t*)capacityBuffer+2)) *     0x100 + 
+                           (*((uint8_t*)capacityBuffer+3));
+
+    uint32_t blocksize   = (*((uint8_t*)capacityBuffer+4)) * 0x1000000 + 
+                           (*((uint8_t*)capacityBuffer+5)) *   0x10000 + 
+                           (*((uint8_t*)capacityBuffer+6)) *     0x100 + 
+                           (*((uint8_t*)capacityBuffer+7));
+    
     uint32_t capacityMiB = ((lastLBA+1)/0x100000) * blocksize;
 
-    usbMSDVolumeMaxLBA = lastLBA;
+    usbMSDVolumeMaxLBA   = lastLBA;
 
     textColor(IMPORTANT);
-    printf("\nCapacity: %u MiB, Last LBA: %u, block size: %u\n", capacityMiB, lastLBA, blocksize);
+    printf("\n\nCapacity: %u MiB, Last LBA: %u, block size: %u\n", capacityMiB, lastLBA, blocksize);
     textColor(TEXT);
 
     logBulkTransfer(&readCapacity);
@@ -686,9 +715,9 @@ void testMSD(usb2_Device_t* device)
 
 FS_ERROR usbRead(uint32_t sector, void* buffer, void* dev)
 {
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_BLUE);
-    printf("\n\n>>> SCSI: read   sector: %u", sector);
+    printf("\n\n>SCSI: read   sector: %u", sector);
     textColor(TEXT);
   #endif
 

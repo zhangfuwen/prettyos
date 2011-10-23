@@ -39,7 +39,7 @@ void usb_hc_install(pciDev_t* PCIdev)
             break;
     }
 
-    for (uint8_t i = 0; i < 6; ++i) // check BARs
+    for (uint8_t i=0; i < 6; ++i) // check BARs
     {
       #ifdef _HCI_DIAGNOSIS_
         switch (PCIdev->bar[i].memoryType)
@@ -77,8 +77,8 @@ void usb_hc_install(pciDev_t* PCIdev)
                   #endif
                     break;
             }
-        }
-    }
+        }//if
+    }//for
 }
 
 
@@ -132,7 +132,9 @@ void usb_setupTransaction(usb_transfer_t* transfer, uint32_t tokenBytes, uint32_
     {
         printf("\nUnknown port type.");
     }
+
     list_append(transfer->transactions, transaction);
+    
     device->endpoints[transfer->endpoint].toggle = true;
 }
 
@@ -144,8 +146,11 @@ void usb_inTransaction(usb_transfer_t* transfer, bool controlHandshake, void* bu
     transaction->type = USB_TT_IN;
 
     usb2_Device_t* device = transfer->HC->insertedDisk->data;
+    
     if(controlHandshake) // Handshake transaction of control transfers have always set toggle to 1
-        device->endpoints[transfer->endpoint].toggle = 1;
+    {
+        device->endpoints[transfer->endpoint].toggle = true;
+    }
 
     if (transfer->HC->type == &USB_EHCI)
     {
@@ -169,6 +174,7 @@ void usb_inTransaction(usb_transfer_t* transfer, bool controlHandshake, void* bu
     device->endpoints[transfer->endpoint].toggle = !device->endpoints[transfer->endpoint].toggle; // Switch toggle
 
     length -= clampedLength;
+    
     if(length > 0)
     {
         usb_inTransaction(transfer, device->endpoints[transfer->endpoint].toggle, buffer+clampedLength, length);
@@ -183,8 +189,11 @@ void usb_outTransaction(usb_transfer_t* transfer, bool controlHandshake, void* b
     transaction->type = USB_TT_OUT;
 
     usb2_Device_t* device = transfer->HC->insertedDisk->data;
+    
     if(controlHandshake) // Handshake transaction of control transfers have always set toggle to 1
+    {
         device->endpoints[transfer->endpoint].toggle = true;
+    }
 
     if (transfer->HC->type == &USB_EHCI)
     {
@@ -208,7 +217,8 @@ void usb_outTransaction(usb_transfer_t* transfer, bool controlHandshake, void* b
     device->endpoints[transfer->endpoint].toggle = !device->endpoints[transfer->endpoint].toggle; // Switch toggle
 
     length -= clampedLength;
-    if(length > 0)
+    
+    if (length > 0)
     {
         usb_outTransaction(transfer, device->endpoints[transfer->endpoint].toggle, buffer+clampedLength, length);
     }
@@ -233,8 +243,11 @@ void usb_issueTransfer(usb_transfer_t* transfer)
         printf("\nUnknown port type.");
     }
 
-    for(dlelement_t* e = transfer->transactions->head; e != 0; e = e->next)
+    for (dlelement_t* e = transfer->transactions->head; e != 0; e = e->next)
+    {
         free(e->data);
+    }
+
     list_free(transfer->transactions);
 }
 
