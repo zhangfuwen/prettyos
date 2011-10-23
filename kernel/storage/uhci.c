@@ -260,9 +260,9 @@ void uhci_enablePorts(uhci_t* u)
 
 void uhci_resetPort(uhci_t* u, uint8_t port)
 {
-    outportw(u->bar + UHCI_PORTSC1 + 2 * port, UHCI_PORT_RESET);
+    outportw(u->bar + UHCI_PORTSC1 + 2*port, UHCI_PORT_RESET);
     sleepMilliSeconds(50); // do not delete this wait
-    outportw(u->bar + UHCI_PORTSC1 + 2 * port, inportw(u->bar + UHCI_PORTSC1+2*port) & ~UHCI_PORT_RESET);     // clear reset bit
+    outportw(u->bar + UHCI_PORTSC1 + 2*port, inportw(u->bar + UHCI_PORTSC1 + 2*port) & ~UHCI_PORT_RESET); // clear reset bit
 
     // wait and check, whether reset bit is really zero
     uint32_t timeout=20;
@@ -395,23 +395,25 @@ static void uhci_handler(registers_t* r, pciDev_t* device)
 *                                                                                                      *
 *******************************************************************************************************/
 
-static void uhci_showPortState(uhci_t* u, uint8_t port)
+static void uhci_showPortState(uhci_t* u, uint8_t j)
 {
-    uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*port);
+    uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*j);
 
-    printf("\nport %u: %xh", port+1, val);
+    printf("\nport %u: %xh", j+1, val);
 
-    if (val & UHCI_SUSPEND)              {printf(", SUSPEND"           );}
     if (val & UHCI_PORT_RESET)           {printf(", RESET"             );}
+    
+    if (val & UHCI_SUSPEND)              {printf(", SUSPEND"           );}
+    if (val & UHCI_PORT_RESUME_DETECT)   {printf(", RESUME DETECT"     );}
+        
     if (val & UHCI_PORT_LOWSPEED_DEVICE) {printf(", LOWSPEED DEVICE"   );}
     else                                 {printf(", FULLSPEED DEVICE"  );}
-    if (val & UHCI_PORT_RESUME_DETECT)   {printf(", RESUME DETECT"     );}
-
     if (val & BIT(5))                    {printf(", Line State: D-"    );}
     if (val & BIT(4))                    {printf(", Line State: D+"    );}
 
     if (val & UHCI_PORT_ENABLE_CHANGE)   {printf(", ENABLE CHANGE"     );}
     if (val & UHCI_PORT_ENABLE)          {printf(", ENABLED"           );}
+    
     if (val & UHCI_PORT_CS_CHANGE)       {printf(", DEVICE CHANGE"     );}
     if (val & UHCI_PORT_CS)              {printf(", DEVICE ATTACHED"   );}
     else                                 {printf(", NO DEVICE ATTACHED");}
@@ -421,43 +423,43 @@ void uhci_pollDisk(void* dev)
 {
     uhci_t* u = ((uhci_port_t*)dev)->uhci;
 
-    for(uint8_t port = 0; port < u->rootPorts; port++)
+    for (uint8_t j=0; j < u->rootPorts; j++)
     {
-        uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*port);
+        uint16_t val = inportw(u->bar + UHCI_PORTSC1 + 2*j);
 
-        if(val & UHCI_PORT_CS_CHANGE)
+        if (val & UHCI_PORT_CS_CHANGE)
         {
-            printf("\nUHCI %u: Port %u changed: ", u->num, port);
-            outportw(u->bar + UHCI_PORTSC1 + 2*port, UHCI_PORT_CS_CHANGE);
+            printf("\nUHCI %u: Port %u changed: ", u->num, j+1);
+            outportw(u->bar + UHCI_PORTSC1 + 2*j, UHCI_PORT_CS_CHANGE);
 
             if (val & UHCI_PORT_LOWSPEED_DEVICE)
             {
                 printf("Lowspeed device");
+                u->ports[j].lowSpeedDevice = true;
             }
             else
             {
                 printf("Fullspeed device");
+                u->ports[j].lowSpeedDevice = false;
             }
 
-            if ((val & UHCI_PORT_CS) && !u->ports[port].connected)
+            if ((val & UHCI_PORT_CS) && !u->ports[j].connected)
             {
                 printf(" attached.");
-
-                u->ports[port].connected = true;
-
-                uhci_resetPort(u, port);           ///// <--- reset on attached /////
-                uhci_showPortState(u, port);
+                u->ports[j].connected = true;
+                uhci_resetPort(u, j);      // reset on attached 
+                uhci_showPortState(u, j);
                 waitForKeyStroke();
 
-                uhci_setupUSBDevice(u, port);
+                uhci_setupUSBDevice(u, j);
             }
             else
             {
                 printf(" removed.");
-                u->ports[port].connected = 0; // reset connect (counter)
+                u->ports[j].connected = false; // reset connect (counter)
             }
-        }
-    }
+        }//if
+    }//for
 }
 
 
@@ -596,7 +598,7 @@ void uhci_issueTransfer(usb_transfer_t* transfer)
 
           delay(50000); // pause after transaction
         }
-        delay(50000); // pause after transfer
+        delay(20000); // pause after transfer
 
         // stop scheduler
         outportw(u->bar + UHCI_USBCMD, inportw(u->bar + UHCI_USBCMD) & ~UHCI_CMD_RS);

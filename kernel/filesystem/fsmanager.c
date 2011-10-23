@@ -11,8 +11,19 @@
 #include "task.h"
 
 
-fileSystem_t FAT    = {.fopen = &FAT_fopen, .fclose = &FAT_fclose, .fgetc = &FAT_fgetc, .fputc = &FAT_fputc, .fseek = &FAT_fseek, .remove = &FAT_remove, .rename = &FAT_rename, .pformat = &FAT_format, .pinstall = &FAT_pinstall, .folderAccess = &FAT_folderAccess, .folderClose = &FAT_folderClose},
-             INITRD = {};
+fileSystem_t FAT    = {.fopen        = &FAT_fopen,        
+                       .fclose       = &FAT_fclose, 
+                       .fgetc        = &FAT_fgetc,        
+                       .fputc        = &FAT_fputc,   
+                       .fseek        = &FAT_fseek, 
+                       .remove       = &FAT_remove,       
+                       .rename       = &FAT_rename, 
+                       .pformat      = &FAT_format, 
+                       .pinstall     = &FAT_pinstall, 
+                       .folderAccess = &FAT_folderAccess, 
+                       .folderClose  = &FAT_folderClose};
+             
+fileSystem_t INITRD = {};
 
 
 static uint64_t getFSType(FS_t type) // BIT 0-31: subtype, BIT 32-63: fileSystem_t
@@ -20,9 +31,9 @@ static uint64_t getFSType(FS_t type) // BIT 0-31: subtype, BIT 32-63: fileSystem
     switch (type)
     {
         case FS_FAT12: case FS_FAT16: case FS_FAT32:
-            return(((uint64_t)(uintptr_t)&FAT << 32) | type);
+            return (((uint64_t)(uintptr_t)&FAT << 32) | type);
         case FS_INITRD:
-            return(((uint64_t)(uintptr_t)&INITRD << 32) | type);
+            return (((uint64_t)(uintptr_t)&INITRD << 32) | type);
     }
     return (0);
 }
@@ -36,7 +47,8 @@ FS_ERROR formatPartition(const char* path, FS_t type, const char* name)
     part->type = (fileSystem_t*)(uintptr_t)(ptype>>32);
     strcpy(part->serial, name);
     part->type->pformat(part);
-    return(CE_GOOD);
+    
+    return (CE_GOOD);
 }
 
 FS_ERROR analyzePartition(partition_t* part)
@@ -52,20 +64,26 @@ FS_ERROR analyzePartition(partition_t* part)
     // Is it a BPB? -> FAT
     BPBbase_t* BPB = (BPBbase_t*)buffer;
     if (BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0)
+    {
         part->type = &FAT;
+    }
     else // We only know FAT at the moment
     {
         part->type = 0;
-        return(e);
+        return (e);
     }
 
     if (part->type->pinstall)
+    {
         e = part->type->pinstall(part);
+    }
 
     if (e == CE_GOOD)
+    {
         part->mount = true;
+    }
 
-    return(e);
+    return (e);
 }
 
 // File functions
@@ -112,7 +130,7 @@ file_t* fopen(const char* path, const char* mode)
             break;
     }
 
-    if(file->volume->type->fopen == 0)
+    if (file->volume->type->fopen == 0)
     {
         textColor(ERROR);
         printf("\nERROR: function fopen not defined");
@@ -135,11 +153,14 @@ file_t* fopen(const char* path, const char* mode)
         //fseek(file, 0, SEEK_END); // To be used later
     }
 
-    if(currentTask->files == 0)
+    if (currentTask->files == 0)
+    {
         currentTask->files = list_create();
+    }
+
     list_append(currentTask->files, file);
 
-    return(file);
+    return (file);
 }
 
 void fclose(file_t* file)
@@ -148,7 +169,8 @@ void fclose(file_t* file)
     free(file->name);
     free(file);
     list_delete(currentTask->files, list_find(currentTask->files, file));
-    if(list_isEmpty(currentTask->files))
+    
+    if (list_isEmpty(currentTask->files))
     {
         list_free(currentTask->files);
         currentTask->files = 0;
@@ -159,7 +181,7 @@ void fclose(file_t* file)
 FS_ERROR remove(const char* path)
 {
     partition_t* part = getPartition(path);
-    return(part->type->remove(getFilename(path), part));
+    return (part->type->remove(getFilename(path), part));
 }
 
 FS_ERROR rename(const char* oldpath, const char* newpath)
@@ -169,22 +191,22 @@ FS_ERROR rename(const char* oldpath, const char* newpath)
 
     if (spart == dpart || dpart == 0) // same partition
     {
-        return(spart->type->rename(getFilename(oldpath), getFilename(newpath), spart));
+        return (spart->type->rename(getFilename(oldpath), getFilename(newpath), spart));
     }
     else
     {
-        return(0xFFFFFFFF); // Needs to be implemented: create File at destination, write content of old file to it and remove old file
+        return (0xFFFFFFFF); // Needs to be implemented: create File at destination, write content of old file to it and remove old file
     }
 }
 
 inline char fgetc(file_t* file)
 {
-    return(file->volume->type->fgetc(file));
+    return (file->volume->type->fgetc(file));
 }
 
 inline FS_ERROR fputc(char c, file_t* file)
 {
-    return(file->volume->type->fputc(file, c));
+    return (file->volume->type->fputc(file, c));
 }
 
 char* fgets(char* dest, size_t num, file_t* file)
@@ -193,9 +215,9 @@ char* fgets(char* dest, size_t num, file_t* file)
     {
         dest[i] = fgetc(file);
         if (dest[i] == 0)
-            return(dest);
+            return (dest);
     }
-    return(dest);
+    return (dest);
 }
 
 FS_ERROR fputs(const char* src, file_t* file)
@@ -205,7 +227,7 @@ FS_ERROR fputs(const char* src, file_t* file)
     {
         retVal = fputc(*src, file);
     }
-    return(retVal);
+    return (retVal);
 }
 
 size_t fread(void* dest, size_t size, size_t count, file_t* file)
@@ -218,7 +240,7 @@ size_t fread(void* dest, size_t size, size_t count, file_t* file)
             ((uint8_t*)dest)[i*size+j] = fgetc(file);
         }
     }
-    return(++i);
+    return (++i);
 }
 
 size_t fwrite(const void* src, size_t size, size_t count, file_t* file)
@@ -231,41 +253,41 @@ size_t fwrite(const void* src, size_t size, size_t count, file_t* file)
             fputc(((uint8_t*)src)[i*size+j], file);
         }
     }
-    return(++i);
+    return (++i);
 }
 
 
 FS_ERROR fflush(file_t* file)
 {
-    return(file->volume->type->fflush(file));
+    return (file->volume->type->fflush(file));
 }
 
 
 size_t ftell(file_t* file)
 {
-    return(file->seek);
+    return (file->seek);
 }
 
 FS_ERROR fseek(file_t* file, size_t offset, SEEK_ORIGIN origin)
 {
-    return(file->volume->type->fseek(file, offset, origin));
+    return (file->volume->type->fseek(file, offset, origin));
 }
 
 FS_ERROR rewind(file_t* file)
 {
-    return(fseek(file, 0, SEEK_SET));
+    return (fseek(file, 0, SEEK_SET));
 }
 
 
 bool feof(file_t* file)
 {
-    return(file->EOF);
+    return (file->EOF);
 }
 
 
 FS_ERROR ferror(file_t* file)
 {
-    return(file->error);
+    return (file->error);
 }
 
 void clearerr(file_t* file)
@@ -279,11 +301,13 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
 {
     folder_t* folder = malloc(sizeof(folder_t), 0, "fsmgr-file");
     folder->volume   = getPartition(path);
+    
     if (folder->volume == 0)
     {   // cleanup
         free(folder);
         return (0);
     }
+
     folder->files     = list_create();
     folder->subfolder = list_create();
     folder->folder    = folder->volume->rootFolder; // HACK. Not all folders are in the root folder
@@ -299,7 +323,7 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
         return (0);
     }
 
-    return(folder);
+    return (folder);
 }
 
 void folderClose(folder_t* folder)
@@ -315,9 +339,9 @@ void folderClose(folder_t* folder)
 // General functions
 void fsmanager_cleanup(task_t* task)
 {
-    if(task->files)
+    if (task->files)
     {
-        for(dlelement_t* e = task->files->head; e != 0; e = e->next)
+        for (dlelement_t* e = task->files->head; e != 0; e = e->next)
         {
             file_t* file = e->data;
             fclose(file);

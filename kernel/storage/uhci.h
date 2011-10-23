@@ -180,6 +180,7 @@ typedef struct
     port_t       port;
     struct uhci* uhci;
     bool         connected;
+    bool         lowSpeedDevice;
 } uhci_port_t;
 
 typedef struct uhci

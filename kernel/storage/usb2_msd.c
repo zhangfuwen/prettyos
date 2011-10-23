@@ -43,16 +43,26 @@ void usb_setupDevice(usb2_Device_t* device, uint8_t address)
     device->num = 0; // device number has to be set to 0
     device->num = usbTransferEnumerate(device->disk->port, address);
 
-    usbTransferDevice(device);
-    usbTransferConfig(device);
-    usbTransferString(device);
+    bool success = usbTransferDevice(device); waitForKeyStroke();
+    
+    if (!success) 
+    {
+        textColor(ERROR);
+        printf("\nSetup Device interrupted!");
+        textColor(TEXT);
+        return; 
+    }
+
+    usbTransferConfig(device); waitForKeyStroke();
+    usbTransferString(device); waitForKeyStroke();
 
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
-        usbTransferStringUnicode(device, i);
+        usbTransferStringUnicode(device, i); waitForKeyStroke();
     }
 
     usbTransferSetConfiguration(device, 1); // set first configuration
+    waitForKeyStroke();
 
   #ifdef _EHCI_DIAGNOSIS_
     uint8_t config = usbTransferGetConfiguration(device);

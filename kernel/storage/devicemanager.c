@@ -25,6 +25,7 @@ portType_t FDD      = {.motorOff = &flpydsk_motorOff, .pollDisk = 0},
            USB_OHCI = {.motorOff = 0,                 .pollDisk = 0},
            USB_EHCI = {.motorOff = 0,                 .pollDisk = 0},
            RAM      = {.motorOff = 0,                 .pollDisk = 0};
+
 diskType_t FLOPPYDISK = {.readSector = &flpydsk_readSector, .writeSector = &flpydsk_writeSector},
            USB_MSD    = {.readSector = &usbRead,            .writeSector = &usbWrite},
            RAMDISK    = {.readSector = 0,                   .writeSector = 0};
@@ -48,8 +49,12 @@ void deviceManager_install(partition_t* systemPart)
 {
     memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
     memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
+    
     for (uint16_t i = 0; i < NUMREADCACHE; i++) // Invalidate all read caches
+    {
         readcaches[i].valid = false;
+    }
+
     systemPartition = systemPart;
 }
 
@@ -58,9 +63,14 @@ void deviceManager_checkDrives()
     for (size_t i = 0; i < PORTARRAYSIZE; i++)
     {
         if(ports[i] != 0 && ports[i]->type->pollDisk != 0)
+        {
             ports[i]->type->pollDisk(ports[i]->data);
+        }
+        
         if (ports[i] != 0 && ports[i]->type->motorOff != 0 && ports[i]->insertedDisk->accessRemaining == 0)
+        {
             ports[i]->type->motorOff(ports[i]->data);
+        }
     }
 }
 
@@ -110,7 +120,7 @@ void showPortList()
     printf("\n----------------------------------------------------------------------");
     textColor(TEXT);
 
-    for (size_t i = 0; i < PORTARRAYSIZE; i++)
+    for (size_t i=0; i < PORTARRAYSIZE; i++)
     {
         if (ports[i] != 0)
         {
@@ -156,7 +166,7 @@ void showDiskList()
     printf("\n----------------------------------------------------------------------");
     textColor(TEXT);
 
-    for (size_t i=0; i<DISKARRAYSIZE; i++)
+    for (size_t i=0; i < DISKARRAYSIZE; i++)
     {
         if (disks[i] != 0)
         {
@@ -164,28 +174,38 @@ void showDiskList()
             {
                 flpydsk_refreshVolumeName(disks[i]->data);
             }
-            if (disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) continue; // Floppy workaround
 
-            if (disks[i]->type == &FLOPPYDISK) // Type
-                printf("\nFloppy");
-            else if (disks[i]->type == &RAMDISK)
-                printf("\nRAMdisk");
-            else if (disks[i]->type == &USB_MSD)
-                printf("\nUSB MSD");
+            if (disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) // Floppy workaround
+            {
+                continue; 
+            }
+
+            if      (disks[i]->type == &FLOPPYDISK) printf("\nFloppy");
+            else if (disks[i]->type == &RAMDISK)    printf("\nRAMdisk");
+            else if (disks[i]->type == &USB_MSD)    printf("\nUSB MSD");
 
             textColor(IMPORTANT);
             printf("\t%u", i+1); // Number
             textColor(TEXT);
 
             printf("\t%s", disks[i]->name);   // Name of disk
+            
             if (strlen(disks[i]->name) < 8)
-                putch('\t');
-
-            for (uint8_t j = 0; j < PARTITIONARRAYSIZE; j++)
             {
-                if (disks[i]->partition[j] == 0) continue; // Empty
+                putch('\t');
+            }
 
-                if (j!=0) printf("\n\t\t\t"); // Not first, indent
+            for (uint8_t j=0; j < PARTITIONARRAYSIZE; j++)
+            {
+                if (disks[i]->partition[j] == 0) // Empty
+                {
+                    continue; 
+                }
+
+                if (j!=0) 
+                {
+                    printf("\n\t\t\t"); // Not first, indent
+                }
 
                 printf("\t%u", j); // Partition number
 
@@ -193,16 +213,23 @@ void showDiskList()
                 {
                     //HACK
                     if(disks[i]->partition[j]->serial == 0)
+                    {
                         disks[i]->partition[j]->serial = malloc(13, 0, "devmgr-partserial");
+                    }
+
                     disks[i]->partition[j]->serial[12] = 0;
                     strncpy(disks[i]->partition[j]->serial, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
                     printf("\t%s", disks[i]->partition[j]->serial);
                 }
                 else if (disks[i]->type == &RAMDISK)
+                {
                     printf("\t%s", disks[i]->partition[j]->serial);
+                }
                 else if (disks[i]->type == &USB_MSD)
+                {
                     printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber);
-                /// ifs should be changed to:
+                }
+                /// TODO: ifs should be changed to:
                 /// printf("\t%s", disks[i]->partition[j]->serial); // serial of partition
             }
         }
@@ -239,7 +266,7 @@ partition_t* getPartition(const char* path)
     int16_t PortID = -1;
     int16_t DiskID = -1;
     uint8_t PartitionID = 0;
-    for (size_t i = 0; path[i]; i++)
+    for (size_t i=0; path[i]; i++)
     {
         if ((path[i] == ':') || (path[i] == '-'))
         {
@@ -252,7 +279,7 @@ partition_t* getPartition(const char* path)
                 DiskID = atoi(path);
             }
 
-            for (size_t j = i+1; path[j]; j++)
+            for (size_t j=i+1; path[j]; j++)
             {
                 if ((path[j] == ':') || (path[j] == '-'))
                 {
@@ -307,12 +334,11 @@ FS_ERROR analyzeDisk(disk_t* disk)
         printf("\nFound MBR (DiskID: %xh):", ((uint16_t*)buffer)[440/2]);
         partitionEntry_t* entries = (partitionEntry_t*)(buffer+446);
 
-        for (uint8_t i = 0; i < 4; i++) // four entries in partition table
+        for (uint8_t i=0; i < 4; i++) // four entries in partition table
         {
-            printf("\npartition entry %u: ", i);
             if (entries[i].type != 0) // valid entry
             {
-                printf("start: %u\tsize: %u\t type: ", entries[i].startLBA, entries[i].sizeLBA);
+                printf("\npartition entry %u: start: %u\tsize: %u\t type: ", i, entries[i].startLBA, entries[i].sizeLBA);
 
                 disk->partition[i]         = malloc(sizeof(partition_t), 0, "partition_t");
                 disk->partition[i]->start  = entries[i].startLBA;
@@ -321,18 +347,20 @@ FS_ERROR analyzeDisk(disk_t* disk)
                 disk->partition[i]->serial = 0;
 
                 if (analyzePartition(disk->partition[i]) != CE_GOOD)
+                {
                     printf("unknown");
+                }
             }
             else
             {
                 disk->partition[i] = 0;
-                printf("invalid");
+                // printf("\npartition entry %u: invalid", i);
             }
         }
     }
     else // There is just one partition
     {
-        printf("       => Found single partition on disk. (type: ");
+        printf("       => Only single partition on disk. (type: ");
 
         disk->partition[0]         = malloc(sizeof(partition_t), 0, "partition_t");
         disk->partition[0]->start  = 0;

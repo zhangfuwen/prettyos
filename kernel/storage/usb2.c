@@ -38,7 +38,7 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
     return new_address;
 }
 
-void usbTransferDevice(usb2_Device_t* device)
+bool usbTransferDevice(usb2_Device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
@@ -57,6 +57,8 @@ void usbTransferDevice(usb2_Device_t* device)
 
     addDevice(&descriptor, device);
     showDevice(device);
+
+    return (transfer.success);
 }
 
 void usbTransferConfig(usb2_Device_t* device)
