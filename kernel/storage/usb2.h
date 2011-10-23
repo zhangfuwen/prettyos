@@ -126,7 +126,7 @@ struct usb2_stringDescriptorUnicode
 
 uint8_t usbTransferEnumerate(port_t* port, uint8_t num);
 bool usbTransferDevice(usb2_Device_t* device);
-void usbTransferConfig(usb2_Device_t* device);
+bool usbTransferConfig(usb2_Device_t* device);
 void usbTransferString(usb2_Device_t* device);
 void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex);
 void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration);

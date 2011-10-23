@@ -41,9 +41,13 @@ void usb2_destroyDevice(usb2_Device_t* device)
 void usb_setupDevice(usb2_Device_t* device, uint8_t address)
 {
     device->num = 0; // device number has to be set to 0
-    device->num = usbTransferEnumerate(device->disk->port, address);
+    bool success = false;
 
-    bool success = usbTransferDevice(device); waitForKeyStroke();
+    success = usbTransferDevice(device); 
+    if (!success) 
+    {
+        success = usbTransferDevice(device); 
+    }
     
     if (!success) 
     {
@@ -52,8 +56,25 @@ void usb_setupDevice(usb2_Device_t* device, uint8_t address)
         textColor(TEXT);
         return; 
     }
+    waitForKeyStroke();
 
-    usbTransferConfig(device); waitForKeyStroke();
+    device->num = usbTransferEnumerate(device->disk->port, address);
+
+    success = usbTransferConfig(device);
+    if (!success) 
+    {
+        success = usbTransferConfig(device); 
+    }
+    
+    if (!success) 
+    {
+        textColor(ERROR);
+        printf("\nSetup Device interrupted!");
+        textColor(TEXT);
+        return; 
+    }
+    waitForKeyStroke();
+    
     usbTransferString(device); waitForKeyStroke();
 
     for (uint8_t i=1; i<4; i++) // fetch 3 strings

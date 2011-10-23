@@ -61,7 +61,7 @@ bool usbTransferDevice(usb2_Device_t* device)
     return (transfer.success);
 }
 
-void usbTransferConfig(usb2_Device_t* device)
+bool usbTransferConfig(usb2_Device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(HEADLINE);
@@ -144,6 +144,8 @@ void usbTransferConfig(usb2_Device_t* device)
 
         addr += length;
     }
+
+    return (transfer.success);
 }
 
 void usbTransferString(usb2_Device_t* device)
