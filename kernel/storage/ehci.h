@@ -163,7 +163,6 @@ struct ehci;
 
 typedef struct
 {
-    uint8_t      num;
     port_t       port;
     struct ehci* ehci;
 } ehci_port_t;
@@ -181,7 +180,7 @@ typedef struct ehci
     bool             USBasyncIntFlag;
     struct ehci_qhd* idleQH;
     struct ehci_qhd* tailQH;
-    ehci_port_t*     ports[16];
+    ehci_port_t*     ports;
 } ehci_t;
 
 

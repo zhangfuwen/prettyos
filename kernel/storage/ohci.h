@@ -201,28 +201,27 @@ struct ohci;
 
 typedef struct
 {
-    uint8_t      num;
     port_t       port;
     struct ohci* ohci;
+    bool         connected;
 } ohci_port_t;
 
 typedef struct ohci
 {
-    pciDev_t*      PCIdevice;              // PCI device
-    ohci_OpRegs_t* OpRegs;                 // operational registers (MMIO space)
-    ohci_HCCA_t*   hcca;                   // HC Communications Area (virtual address)
-    ohciED_t*      pED[NUM_ED];            // EDs
-    ohciTD_t*      pTD[NUM_TD];            // TDs
-    uintptr_t      pTDphys[NUM_TD];        // TDs phys. address
-    void*          pTDbuff[NUM_TD];        // TD buffers
-    uint32_t       indexTD;                // index at TD and TD buffer
-    uint32_t       indexED;                // index at ED
-    uint8_t        rootPorts;              // number of rootports
-    bool           enabledPortFlag;        // root ports enabled
-    ohci_port_t*   ports[OHCIPORTMAX];     // root ports
-    bool           connected[OHCIPORTMAX]; // port connected
-    uint8_t        num;                    // number of the OHCI
-    uint32_t       powerWait;              // wait time (ms) for ports after power-on
+    pciDev_t*      PCIdevice;       // PCI device
+    ohci_OpRegs_t* OpRegs;          // operational registers (MMIO space)
+    ohci_HCCA_t*   hcca;            // HC Communications Area (virtual address)
+    ohciED_t*      pED[NUM_ED];     // EDs
+    ohciTD_t*      pTD[NUM_TD];     // TDs
+    uintptr_t      pTDphys[NUM_TD]; // TDs phys. address
+    void*          pTDbuff[NUM_TD]; // TD buffers
+    uint32_t       indexTD;         // index at TD and TD buffer
+    uint32_t       indexED;         // index at ED
+    uint8_t        rootPorts;       // number of rootports
+    bool           enabledPortFlag; // root ports enabled
+    ohci_port_t*   ports;           // root ports
+    uint8_t        num;             // number of the OHCI
+    uint32_t       powerWait;       // wait time (ms) for ports after power-on
     usb_transferType_t lastTT;
 } ohci_t;
 

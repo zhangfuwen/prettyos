@@ -341,20 +341,20 @@ static void ehci_deactivateLegacySupport(ehci_t* e)
 
 void ehci_enablePorts(ehci_t* e)
 {
-    memset(e->ports, 0, 16*4);
+    e->ports = malloc(sizeof(ehci_port_t)*e->numPorts, 0, "ehci_port_t");
     for (uint8_t j=0; j<e->numPorts; j++)
     {
-        e->ports[j] = malloc(sizeof(ehci_port_t), 0, "ehci_port_t");
-        e->ports[j]->num = j+1;
-        e->ports[j]->ehci = e;
-        e->ports[j]->port.type = &USB_EHCI; // device manager
-        e->ports[j]->port.data = e->ports[j];
-        e->ports[j]->port.insertedDisk = 0;
-        snprintf(e->ports[j]->port.name, 14, "EHCI-Port %u", j+1);
-        attachPort(&e->ports[j]->port);
-
-        e->enabledPortFlag = true;
+        e->ports[j].ehci = e;
+        e->ports[j].port.type = &USB_EHCI; // device manager
+        e->ports[j].port.data = e->ports + j;
+        e->ports[j].port.insertedDisk = 0;
+        snprintf(e->ports[j].port.name, 14, "EHCI-Port %u", j+1);
+        attachPort(&e->ports[j].port);
         ehci_initializeAsyncScheduler(e);
+    }
+    e->enabledPortFlag = true;
+    for (uint8_t j=0; j<e->numPorts; j++)
+    {
         ehci_checkPortLineStatus(e, j);
     }
 }
@@ -550,11 +550,11 @@ void ehci_portCheck()
                 writeInfo(0, "Port: %u, no device attached", j+1);
                 e->OpRegs->PORTSC[j] &= ~PSTS_COMPANION_HC_OWNED; // port is given back to the EHCI
 
-                if(e->ports[j]->port.insertedDisk && e->ports[j]->port.insertedDisk->type == &USB_MSD)
+                if(e->ports[j].port.insertedDisk && e->ports[j].port.insertedDisk->type == &USB_MSD)
                 {
-                    usb2_destroyDevice(e->ports[j]->port.insertedDisk->data);
-                    removeDisk(e->ports[j]->port.insertedDisk);
-                    e->ports[j]->port.insertedDisk = 0;
+                    usb2_destroyDevice(e->ports[j].port.insertedDisk->data);
+                    removeDisk(e->ports[j].port.insertedDisk);
+                    e->ports[j].port.insertedDisk = 0;
 
                     showPortList();
                     showDiskList();
@@ -624,15 +624,11 @@ static void ehci_detectDevice(ehci_t* e, uint8_t j)
 void ehci_setupUSBDevice(ehci_t* e, uint8_t portNumber)
 {
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
-    disk->port = &e->ports[portNumber]->port;
+    disk->port = &e->ports[portNumber].port;
     disk->port->insertedDisk = disk;
 
     usb2_Device_t* device = usb2_createDevice(disk);
-
-    e->ports[portNumber]->num = 0; // device number has to be set to 0
-    e->ports[portNumber]->num = 1 + usbTransferEnumerate(disk->port, portNumber);
-
-    usb_setupDevice(device);
+    usb_setupDevice(device, portNumber+1);
 }
 
 void ehci_showUSBSTS(ehci_t* e)
@@ -712,7 +708,7 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
     ehci_t* e = ((ehci_port_t*)transfer->HC->data)->ehci;
 
     ehci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
-    ehci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD, 0, ((ehci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
+    ehci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD, 0, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
 
     for(uint8_t i = 0; i < NUMBER_OF_EHCI_ASYNCLIST_RETRIES && !transfer->success; i++)
     {

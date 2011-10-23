@@ -177,26 +177,25 @@ struct uhci;
 
 typedef struct
 {
-    uint8_t      num;
     port_t       port;
     struct uhci* uhci;
+    bool         connected;
 } uhci_port_t;
 
 typedef struct uhci
 {
-    pciDev_t*      PCIdevice;                // PCI device
-    uint16_t       bar;                      // start of I/O space (base address register)
-    frPtr_t*       framelistAddrVirt;        // virtual adress of frame list
-    uhciQH_t*      qhPointerVirt;            // virtual adress of QH
-    uint8_t        rootPorts;                // number of rootports
-    size_t         memSize;                  // memory size of IO space
-    mutex_t*       framelistLock;            // mutex for access on the frame list
-    mutex_t*       qhLock;                   // mutex for access on the QH
-    bool           enabledPortFlag;          // root ports enabled
-    uhci_port_t*   ports[UHCIPORTMAX];       // root ports
-    uint8_t        connected[UHCIPORTMAX];   // port connected (counter)
-    bool           run;                      // hc running (RS bit)
-    uint8_t        num;                      // Number of the UHCI
+    pciDev_t*      PCIdevice;         // PCI device
+    uint16_t       bar;               // start of I/O space (base address register)
+    frPtr_t*       framelistAddrVirt; // virtual adress of frame list
+    uhciQH_t*      qhPointerVirt;     // virtual adress of QH
+    uint8_t        rootPorts;         // number of rootports
+    size_t         memSize;           // memory size of IO space
+    mutex_t*       framelistLock;     // mutex for access on the frame list
+    mutex_t*       qhLock;            // mutex for access on the QH
+    bool           enabledPortFlag;   // root ports enabled
+    uhci_port_t*   ports;             // root ports
+    bool           run;               // hc running (RS bit)
+    uint8_t        num;               // Number of the UHCI
 } uhci_t;
 
 

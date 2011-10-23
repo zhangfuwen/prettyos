@@ -38,8 +38,11 @@ void usb2_destroyDevice(usb2_Device_t* device)
     free(device);
 }
 
-void usb_setupDevice(usb2_Device_t* device)
+void usb_setupDevice(usb2_Device_t* device, uint8_t address)
 {
+    device->num = 0; // device number has to be set to 0
+    device->num = usbTransferEnumerate(device->disk->port, address);
+
     usbTransferDevice(device);
     usbTransferConfig(device);
     usbTransferString(device);
@@ -300,7 +303,7 @@ static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, u
             printf("\nPhase Error");
             textColor(IMPORTANT);
             printf("\nReset recovery is needed");
-            usbResetRecoveryMSD(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD);
+            usbResetRecoveryMSD(device, device->numInterfaceMSD);
             error = -5;
             break;
         default:
@@ -707,7 +710,7 @@ FS_ERROR usbWrite(uint32_t sector, void* buffer, void* dev)
     return(CE_GOOD);
 }
 
-void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN)
+void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface)
 {
     // Reset Interface
     usbTransferBulkOnlyMassStorageReset(device, Interface);
@@ -717,14 +720,14 @@ void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface, uint32_t end
     //usbSetFeatureHALT(device, endpointOUT);
 
     // Clear Feature HALT to the Bulk-In  endpoint
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN));
-    usbClearFeatureHALT(device, endpointIN);
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointIN));
+    printf("\nGetStatus: %u", usbGetStatus(device, device->numEndpointInMSD));
+    usbClearFeatureHALT(device, device->numEndpointInMSD);
+    printf("\nGetStatus: %u", usbGetStatus(device, device->numEndpointInMSD));
 
     // Clear Feature HALT to the Bulk-Out endpoint
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT));
-    usbClearFeatureHALT(device, endpointOUT);
-    printf("\nGetStatus: %u", usbGetStatus(device, endpointOUT));
+    printf("\nGetStatus: %u", usbGetStatus(device, device->numEndpointOutMSD));
+    usbClearFeatureHALT(device, device->numEndpointOutMSD);
+    printf("\nGetStatus: %u", usbGetStatus(device, device->numEndpointOutMSD));
 
     // set configuration to 1 and endpoint IN/OUT toggles to 0
     usbTransferSetConfiguration(device, 1); // set first configuration
@@ -737,8 +740,8 @@ void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface, uint32_t end
     }
 
     // start with correct endpoint toggles and reset interface
-    device->endpoints[endpointOUT].toggle = 0;
-    device->endpoints[endpointIN].toggle = 0;
+    device->endpoints[device->numEndpointOutMSD].toggle = 0;
+    device->endpoints[device->numEndpointInMSD].toggle = 0;
     usbTransferBulkOnlyMassStorageReset(device, device->numInterfaceMSD); // Reset Interface
 }
 

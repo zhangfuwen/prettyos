@@ -339,7 +339,7 @@ void ohci_resetHC(ohci_t* o)
     o->OpRegs->HcControl |= OHCI_USB_OPERATIONAL; // set specific HCFS bit
 
     o->OpRegs->HcRhStatus |= OHCI_RHS_LPSC;           // SetGlobalPower: turn on power to all ports
-    o->rootPorts = BYTE1(o->OpRegs->HcRhDescriptorA); // NumberDownstreamPorts
+    o->rootPorts = min(OHCIPORTMAX, BYTE1(o->OpRegs->HcRhDescriptorA)); // NumberDownstreamPorts
 
     o->OpRegs->HcRhDescriptorA &= ~OHCI_RHA_DT; // DeviceType: This bit specifies that the Root Hub is not a compound device.
                                                 // The Root Hub is not permitted to be a compound device. This field should always read/write 0.
@@ -353,18 +353,20 @@ void ohci_resetHC(ohci_t* o)
     printf("\n\nFound %u Rootports. Power wait: %u ms\n", o->rootPorts, o->powerWait);
     textColor(TEXT);
 
-    for (uint8_t j = 0; j < min(o->rootPorts,OHCIPORTMAX); j++)
+    o->ports = malloc(sizeof(ohci_port_t)*o->rootPorts, 0, "ohci_port_t");
+    for (uint8_t j = 0; j < o->rootPorts; j++)
     {
-        o->connected[j] = false;
-        o->ports[j] = malloc(sizeof(ohci_port_t), 0, "ohci_port_t");
-        o->ports[j]->num = j+1;
-        o->ports[j]->ohci = o;
-        o->ports[j]->port.type = &USB_OHCI;
-        o->ports[j]->port.data = o->ports[j];
-        o->ports[j]->port.insertedDisk = 0;
-        snprintf(o->ports[j]->port.name, 14, "OHCI-Port %u", j+1);
-        attachPort(&o->ports[j]->port);
-        o->enabledPortFlag = true;
+        o->ports[j].connected = false;
+        o->ports[j].ohci = o;
+        o->ports[j].port.type = &USB_OHCI;
+        o->ports[j].port.data = o->ports + j;
+        o->ports[j].port.insertedDisk = 0;
+        snprintf(o->ports[j].port.name, 14, "OHCI-Port %u", j+1);
+        attachPort(&o->ports[j].port);
+    }
+    o->enabledPortFlag = true;
+    for (uint8_t j = 0; j < o->rootPorts; j++)
+    {
         o->OpRegs->HcRhPortStatus[j] |= OHCI_PORT_PRS | OHCI_PORT_CCS | OHCI_PORT_PES;
         sleepMilliSeconds(50);
     }
@@ -379,7 +381,7 @@ void ohci_resetHC(ohci_t* o)
 
 void ohci_portCheck(ohci_t* o)
 {
-    for (uint8_t j = 0; j < min(o->rootPorts,OHCIPORTMAX); j++)
+    for (uint8_t j = 0; j < o->rootPorts; j++)
     {
         console_setProperties(CONSOLE_SHOWINFOBAR|CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH); // protect console against info area
 
@@ -389,7 +391,7 @@ void ohci_portCheck(ohci_t* o)
         }
         else
         {
-            if (o->connected[j] == true)
+            if (o->ports[j].connected == true)
             {
                 ohci_showPortstatus(o,j);
             }
@@ -418,19 +420,19 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
         {
             textColor(SUCCESS);
             printf(" dev. attached  -");
-            o->connected[j] = true;
+            o->ports[j].connected = true;
             ohci_resetPort(o, j);           ///// <--- reset on attached /////
         }
         else
         {
             printf(" device removed -");
 
-            if(o->ports[j]->port.insertedDisk && o->ports[j]->port.insertedDisk->type == &USB_MSD)
+            if(o->ports[j].port.insertedDisk && o->ports[j].port.insertedDisk->type == &USB_MSD)
             {
-                usb2_destroyDevice(o->ports[j]->port.insertedDisk->data);
-                removeDisk(o->ports[j]->port.insertedDisk);
-                o->ports[j]->port.insertedDisk = 0;
-                o->connected[j] = false;
+                usb2_destroyDevice(o->ports[j].port.insertedDisk->data);
+                removeDisk(o->ports[j].port.insertedDisk);
+                o->ports[j].port.insertedDisk = 0;
+                o->ports[j].connected = false;
                 showPortList();
                 showDiskList();
                 beep(1000, 100);
@@ -644,16 +646,11 @@ static void ohci_handler(registers_t* r, pciDev_t* device)
 void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
 {
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
-    disk->port = &o->ports[portNumber]->port;
+    disk->port = &o->ports[portNumber].port;
     disk->port->insertedDisk = disk;
 
     usb2_Device_t* device = usb2_createDevice(disk);
-
-    o->ports[portNumber]->num = 0; // device number has to be set to 0
-    o->ports[portNumber]->num = 1 + usbTransferEnumerate(disk->port, portNumber);
-    waitForKeyStroke();
-
-    usb_setupDevice(device);
+    usb_setupDevice(device, portNumber+1);
 }
 
 
@@ -785,7 +782,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     printf("\nohci_createED: devNum = %u endp = %u packetsize = %u", ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
   #endif
 
-    ohci_createED(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->TD, ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
+    ohci_createED(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->TD, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
 
     if (transfer->type == USB_CONTROL)
     {

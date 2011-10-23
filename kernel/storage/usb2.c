@@ -24,7 +24,7 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
 
     usb_transfer_t transfer;
     usb_setupTransfer(port, &transfer, USB_CONTROL, 0, 64);
-    usb_setupTransaction(&transfer, 8, 0x00, 5, 0, new_address+1, 0, 0);
+    usb_setupTransaction(&transfer, 8, 0x00, 5, 0, new_address, 0, 0);
     usb_inTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
@@ -82,7 +82,7 @@ void usbTransferConfig(usb2_Device_t* device)
     textColor(GREEN);
   #endif
 
-    // parsen auf config (len=9,type=2), interface (len=9,type=4), endpoint (len=7,type=5)
+    // parse to config (len=9,type=2), interface (len=9,type=4) or endpoint (len=7,type=5)
     void* addr     = buffer;
     void* lastByte = addr + (*(uint16_t*)(addr+2)); // totalLength (WORD)
 
@@ -93,8 +93,6 @@ void usbTransferConfig(usb2_Device_t* device)
 
     while ((uintptr_t)addr < (uintptr_t)lastByte)
     {
-        bool found = false;
-
         uint8_t type =  *(uint8_t*)(addr+1);
         uint8_t length = *(uint8_t*)addr;
 
@@ -102,7 +100,6 @@ void usbTransferConfig(usb2_Device_t* device)
         {
             struct usb2_configurationDescriptor* descriptor = addr;
             showConfigurationDescriptor(descriptor);
-            found = true;
         }
         else if (length == 9 && type == 4)
         {
@@ -116,7 +113,6 @@ void usbTransferConfig(usb2_Device_t* device)
                 device->InterfaceClass    = descriptor->interfaceClass;
                 device->InterfaceSubclass = descriptor->interfaceSubclass;
             }
-            found = true;
         }
         else if (length == 7 && type == 5)
         {
@@ -136,28 +132,12 @@ void usbTransferConfig(usb2_Device_t* device)
             {
                 device->numEndpointOutMSD = descriptor->endpointAddress & 0xF;
             }
-
-            found = true;
         }
-        else if (type != 2 && type != 4 && type != 5)
+        else
         {
           #ifdef _USB_TRANSFER_DIAGNOSIS_
-            if (length > 0)
-            {
-                textColor(HEADLINE);
-                printf("\nlength: %u type: %u unknown\n", length, type);
-                textColor(TEXT);
-            }
+            printf("\nlength: %u type: %u - unknown\n", length, type);
           #endif
-            found = true;
-        }
-
-        if (found == false)
-        {
-          #ifdef _USB_TRANSFER_DIAGNOSIS_
-            printf("\nlength: %u type: %u not found\n", length, type);
-          #endif
-            break;
         }
 
         addr += length;

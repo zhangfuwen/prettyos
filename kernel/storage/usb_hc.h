@@ -19,9 +19,8 @@ typedef enum
 
 typedef struct
 {
-    void*              data; // EHCI: Contains pointer to QH
+    void*              data;
     usb_transferType_t type;
-    uint32_t           device;
     uint32_t           endpoint;
     uint32_t           packetSize;
     port_t*            HC;
@@ -36,7 +35,7 @@ typedef enum
 
 typedef struct
 {
-    void*                 data; // EHCI: Contains pointer to ehci_transaction_t
+    void*                 data; // Contains pointer to *hci_transaction_t
     usb_transactionType_t type;
 } usb_transaction_t;
 

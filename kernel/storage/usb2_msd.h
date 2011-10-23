@@ -31,7 +31,7 @@ typedef struct
 
 usb2_Device_t* usb2_createDevice(disk_t* disk);
 void usb2_destroyDevice(usb2_Device_t* device);
-void usb_setupDevice(usb2_Device_t* device);
+void usb_setupDevice(usb2_Device_t* device, uint8_t address);
 
 void usbTransferBulkOnlyMassStorageReset(usb2_Device_t* device, uint8_t numInterface);
 uint8_t usbTransferBulkOnlyGetMaxLUN(usb2_Device_t* device, uint8_t numInterface);
@@ -43,7 +43,7 @@ void testMSD(usb2_Device_t* device);
 FS_ERROR usbRead (uint32_t sector, void* buffer, void* device);
 FS_ERROR usbWrite(uint32_t sector, void* buffer, void* device);
 
-void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface, uint32_t endpointOUT, uint32_t endpointIN);
+void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface);
 
 int32_t showResultsRequestSense(void* addr);
 

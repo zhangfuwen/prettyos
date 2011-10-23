@@ -239,19 +239,21 @@ void uhci_enablePorts(uhci_t* u)
     printf("\n\n>>>uhci_enablePorts<<<\n");
   #endif
 
-    for (uint8_t j=0; j < min(u->rootPorts,UHCIPORTMAX); j++)
+    u->ports = malloc(sizeof(uhci_port_t)*u->rootPorts, 0, "uhci_port_t");
+    for (uint8_t j=0; j < u->rootPorts; j++)
     {
-        u->connected[j] = 0;
         uhci_resetPort(u, j);
-        u->ports[j] = malloc(sizeof(uhci_port_t), 0, "uhci_port_t");
-        u->ports[j]->num = j+1;
-        u->ports[j]->uhci = u;
-        u->ports[j]->port.type = &USB_UHCI; // device manager
-        u->ports[j]->port.data = u->ports[j];
-        u->ports[j]->port.insertedDisk = 0;
-        snprintf(u->ports[j]->port.name, 14, "UHCI-Port %u", j+1);
-        attachPort(&u->ports[j]->port);
-        u->enabledPortFlag = true;
+        u->ports[j].connected = false;
+        u->ports[j].uhci = u;
+        u->ports[j].port.type = &USB_UHCI; // device manager
+        u->ports[j].port.data = u->ports + j;
+        u->ports[j].port.insertedDisk = 0;
+        snprintf(u->ports[j].port.name, 14, "UHCI-Port %u", j+1);
+        attachPort(&u->ports[j].port);
+    }
+    u->enabledPortFlag = true;
+    for (uint8_t j=0; j < u->rootPorts; j++)
+    {
         uhci_showPortState(u, j);
     }
 }
@@ -437,29 +439,22 @@ void uhci_pollDisk(void* dev)
                 printf("Fullspeed device");
             }
 
-            if (val & UHCI_PORT_CS)
+            if ((val & UHCI_PORT_CS) && !u->ports[port].connected)
             {
                 printf(" attached.");
 
-                if (u->connected[port] == 0)       // ovverrun of 32-bit-counter
-                {
-                    u->connected[port] = 1;
-                }
+                u->ports[port].connected = true;
 
                 uhci_resetPort(u, port);           ///// <--- reset on attached /////
                 uhci_showPortState(u, port);
                 waitForKeyStroke();
 
-                if (u->connected[port] == 1)
-                {
-                    uhci_setupUSBDevice(u, port); // TEST
-                    u->connected[port] = 2;
-                }
+                uhci_setupUSBDevice(u, port);
             }
             else
             {
                 printf(" removed.");
-                u->connected[port] = 0; // reset connect (counter)
+                u->ports[port].connected = 0; // reset connect (counter)
             }
         }
     }
@@ -475,16 +470,11 @@ void uhci_pollDisk(void* dev)
 void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
 {
     disk_t* disk = malloc(sizeof(disk_t), 0, "disk_t"); // TODO: Handle non-MSDs
-    disk->port = &u->ports[portNumber]->port;
+    disk->port = &u->ports[portNumber].port;
     disk->port->insertedDisk = disk;
 
     usb2_Device_t* device = usb2_createDevice(disk);
-
-    u->ports[portNumber]->num = 0; // device number has to be set to 0
-    u->ports[portNumber]->num = 1 + usbTransferEnumerate(disk->port, portNumber);
-    waitForKeyStroke();
-
-    usb_setupDevice(device);
+    usb_setupDevice(device, portNumber+1);
 }
 
 
@@ -507,10 +497,8 @@ static void uhci_showStatusbyteTD(uhciTD_t* TD);
 
 void uhci_setupTransfer(usb_transfer_t* transfer)
 {
-    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci; // HC
+    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
     transfer->data = u->qhPointerVirt; // QH
-
-    transfer->device = ((uhci_port_t*)transfer->HC->data)->num;
 }
 
 void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, uint32_t tokenBytes, uint32_t type, uint32_t req, uint32_t hiVal, uint32_t loVal, uint32_t i, uint32_t length)
@@ -521,7 +509,7 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
 
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
 
-    uT->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uT->TDBuffer, transfer->device, transfer->endpoint, transfer->packetSize);
+    uT->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uT->TDBuffer, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
 
   #ifdef _UHCI_DIAGNOSIS_
     usb_request_t* request = (usb_request_t*)uT->TDBuffer;
@@ -538,12 +526,13 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
 
 void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length)
 {
-    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
     uhci_transaction_t* uT = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
     uT->inBuffer = buffer;
     uT->inLength = length;
 
-    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length, transfer->device, transfer->endpoint, transfer->packetSize);
+    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
+
+    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
     uT->TDBuffer = uT->TD->virtBuffer;
 
     if (transfer->transactions->tail)
@@ -556,12 +545,13 @@ void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransact
 
 void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransaction, bool toggle, void* buffer, size_t length)
 {
-    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
     uhci_transaction_t* uT = usbTransaction->data = malloc(sizeof(uhci_transaction_t), 0, "uhci_transaction_t");
     uT->inBuffer = 0;
     uT->inLength = 0;
 
-    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length, transfer->device, transfer->endpoint, transfer->packetSize);
+    uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
+
+    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
     uT->TDBuffer = uT->TD->virtBuffer;
 
     if (buffer != 0 && length != 0)

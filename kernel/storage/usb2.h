@@ -42,6 +42,7 @@ typedef struct
     uint8_t   serNumberStringID;
     uint8_t   numConfigurations;
     uint8_t   maxLUN;
+    uint8_t   num;
 
     usb_endpoint_t* endpoints;
 
