@@ -12,14 +12,14 @@
 #include "irq.h"
 #include "audio/sys_speaker.h"
 #include "keyboard.h"
-#include "usb2_msd.h"
+#include "usb_msd.h"
 
 #define NUMBER_OF_EHCI_ASYNCLIST_RETRIES 3
 
-ehci_t* curEHCI = 0;
 
 static uint8_t numPorts = 0;
 static ehci_t* ehci[EHCIMAX];
+static ehci_t* curEHCI = 0;
 
 
 static void ehci_handler(registers_t* r, pciDev_t* device);
@@ -552,7 +552,7 @@ void ehci_portCheck()
 
                 if(e->ports[j].port.insertedDisk && e->ports[j].port.insertedDisk->type == &USB_MSD)
                 {
-                    usb2_destroyDevice(e->ports[j].port.insertedDisk->data);
+                    usb_destroyDevice(e->ports[j].port.insertedDisk->data);
                     removeDisk(e->ports[j].port.insertedDisk);
                     e->ports[j].port.insertedDisk = 0;
 
@@ -627,7 +627,7 @@ void ehci_setupUSBDevice(ehci_t* e, uint8_t portNumber)
     disk->port = &e->ports[portNumber].port;
     disk->port->insertedDisk = disk;
 
-    usb2_Device_t* device = usb2_createDevice(disk);
+    usb_device_t* device = usb_createDevice(disk);
     usb_setupDevice(device, portNumber+1);
 }
 
@@ -708,7 +708,7 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
     ehci_t* e = ((ehci_port_t*)transfer->HC->data)->ehci;
 
     ehci_transaction_t* firstTransaction = ((usb_transaction_t*)transfer->transactions->head->data)->data;
-    ehci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD, 0, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
+    ehci_createQH(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->qTD, 0, ((usb_device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
 
     for(uint8_t i = 0; i < NUMBER_OF_EHCI_ASYNCLIST_RETRIES && !transfer->success; i++)
     {

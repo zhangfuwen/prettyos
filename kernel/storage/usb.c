@@ -3,7 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "usb2.h"
+#include "usb.h"
 #include "usb_hc.h"
 #include "kheap.h"
 #include "paging.h"
@@ -12,7 +12,16 @@
 #include "util.h"
 
 
-uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
+static void analyzeDeviceDescriptor(struct usb_deviceDescriptor* d, usb_device_t* usbDev);
+static void showDevice(usb_device_t* usbDev);
+static void showConfigurationDescriptor(struct usb_configurationDescriptor* d);
+static void showInterfaceDescriptor(struct usb_interfaceDescriptor* d);
+static void showEndpointDescriptor(struct usb_endpointDescriptor* d);
+static void showStringDescriptor(struct usb_stringDescriptor* d);
+static void showUnicodeStringDescriptor(struct usb_stringDescriptorUnicode* d, usb_device_t* device, uint32_t stringIndex);
+
+
+uint8_t usb_setDeviceAddress(port_t* port, uint8_t num)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -38,7 +47,7 @@ uint8_t usbTransferEnumerate(port_t* port, uint8_t num)
     return new_address;
 }
 
-bool usbTransferDevice(usb2_Device_t* device)
+bool usb_getDeviceDescriptor(usb_device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -46,7 +55,7 @@ bool usbTransferDevice(usb2_Device_t* device)
     textColor(TEXT);
   #endif
 
-    struct usb2_deviceDescriptor descriptor;
+    struct usb_deviceDescriptor descriptor;
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, 0, 64);
@@ -57,14 +66,14 @@ bool usbTransferDevice(usb2_Device_t* device)
 
     if (transfer.success)
     {
-        addDevice(&descriptor, device);
+        analyzeDeviceDescriptor(&descriptor, device);
         showDevice(device);
     }
 
     return (transfer.success);
 }
 
-bool usbTransferConfig(usb2_Device_t* device)
+bool usb_getConfigDescriptor(usb_device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -94,7 +103,7 @@ bool usbTransferConfig(usb2_Device_t* device)
         void* addr     = buffer;
         void* lastByte = addr + (*(uint16_t*)(addr+2)); // totalLength (WORD)
 
-      #ifdef _USB2_DIAGNOSIS_
+      #ifdef _USB_DIAGNOSIS_
         memshow(buffer, *(uint16_t*)(addr+2), false);
         putch('\n');
       #endif
@@ -106,12 +115,12 @@ bool usbTransferConfig(usb2_Device_t* device)
 
             if (length == 9 && type == 2)
             {
-                struct usb2_configurationDescriptor* descriptor = addr;
+                struct usb_configurationDescriptor* descriptor = addr;
                 showConfigurationDescriptor(descriptor);
             }
             else if (length == 9 && type == 4)
             {
-                struct usb2_interfaceDescriptor* descriptor = addr;
+                struct usb_interfaceDescriptor* descriptor = addr;
                 showInterfaceDescriptor(descriptor);
 
                 if (descriptor->interfaceClass == 8)
@@ -124,7 +133,7 @@ bool usbTransferConfig(usb2_Device_t* device)
             }
             else if (length == 7 && type == 5)
             {
-                struct usb2_endpointDescriptor* descriptor = addr;
+                struct usb_endpointDescriptor* descriptor = addr;
                 showEndpointDescriptor(descriptor);
 
                 if((descriptor->endpointAddress & 0xF) < 3)
@@ -155,7 +164,7 @@ bool usbTransferConfig(usb2_Device_t* device)
     return (transfer.success);
 }
 
-void usbTransferString(usb2_Device_t* device)
+void usb_getStringDescriptor(usb_device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -163,7 +172,7 @@ void usbTransferString(usb2_Device_t* device)
     textColor(TEXT);
   #endif
 
-    struct usb2_stringDescriptor descriptor;
+    struct usb_stringDescriptor descriptor;
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_CONTROL, 0, 64);
@@ -179,7 +188,7 @@ void usbTransferString(usb2_Device_t* device)
     showStringDescriptor(&descriptor);
 }
 
-void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex)
+void usb_getUnicodeStringDescriptor(usb_device_t* device, uint32_t stringIndex)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -201,11 +210,11 @@ void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex)
     putch('\n');
   #endif
 
-    showStringDescriptorUnicode((struct usb2_stringDescriptorUnicode*)buffer, device, stringIndex);
+    showUnicodeStringDescriptor((struct usb_stringDescriptorUnicode*)buffer, device, stringIndex);
 }
 
 // http://www.lowlevel.eu/wiki/USB#SET_CONFIGURATION
-void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration)
+void usb_setConfiguration(usb_device_t* device, uint32_t configuration)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -220,7 +229,7 @@ void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration)
     usb_issueTransfer(&transfer);
 }
 
-uint8_t usbTransferGetConfiguration(usb2_Device_t* device)
+uint8_t usb_getConfiguration(usb_device_t* device)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -242,7 +251,7 @@ uint8_t usbTransferGetConfiguration(usb2_Device_t* device)
 
 // new control transfer as TEST /////////////////////////////////////////////////
 // seems not to work correct, does not set HALT ???
-void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
+void usb_setFeatureHALT(usb_device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -261,7 +270,7 @@ void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
   #endif
 }
 
-void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
+void usb_clearFeatureHALT(usb_device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -275,12 +284,12 @@ void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint)
     usb_inTransaction(&transfer, true, 0, 0);
     usb_issueTransfer(&transfer);
 
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     printf("\nclear HALT at dev: %X endpoint: %u", device, endpoint);
   #endif
 }
 
-uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint)
+uint16_t usb_getStatus(usb_device_t* device, uint32_t endpoint)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_CYAN);
@@ -300,23 +309,23 @@ uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint)
     return status;
 }
 
-void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev)
+void analyzeDeviceDescriptor(struct usb_deviceDescriptor* d, usb_device_t* usbDev)
 {
-    usbDev->usbSpec               = d->bcdUSB;
-    usbDev->usbClass              = d->deviceClass;
-    usbDev->usbSubclass           = d->deviceSubclass;
-    usbDev->usbProtocol           = d->deviceProtocol;
-    usbDev->vendor                = d->idVendor;
-    usbDev->product               = d->idProduct;
-    usbDev->releaseNumber         = d->bcdDevice;
-    usbDev->manufacturerStringID  = d->manufacturer;
-    usbDev->productStringID       = d->product;
-    usbDev->serNumberStringID     = d->serialNumber;
-    usbDev->numConfigurations     = d->numConfigurations;
-    usbDev->endpoints[0].mps      = d->maxPacketSize;
+    usbDev->usbSpec              = d->bcdUSB;
+    usbDev->usbClass             = d->deviceClass;
+    usbDev->usbSubclass          = d->deviceSubclass;
+    usbDev->usbProtocol          = d->deviceProtocol;
+    usbDev->vendor               = d->idVendor;
+    usbDev->product              = d->idProduct;
+    usbDev->releaseNumber        = d->bcdDevice;
+    usbDev->manufacturerStringID = d->manufacturer;
+    usbDev->productStringID      = d->product;
+    usbDev->serNumberStringID    = d->serialNumber;
+    usbDev->numConfigurations    = d->numConfigurations;
+    usbDev->endpoints[0].mps     = d->maxPacketSize;
 }
 
-void showDevice(usb2_Device_t* usbDev)
+static void showDevice(usb_device_t* usbDev)
 {
     textColor(IMPORTANT);
     if (usbDev->usbSpec == 0x0100 || usbDev->usbSpec == 0x0110 || usbDev->usbSpec == 0x0200 || usbDev->usbSpec == 0x0300)
@@ -363,7 +372,7 @@ void showDevice(usb2_Device_t* usbDev)
     textColor(TEXT);
 }
 
-void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
+static void showConfigurationDescriptor(struct usb_configurationDescriptor* d)
 {
     if (d->length)
     {
@@ -387,7 +396,7 @@ void showConfigurationDescriptor(struct usb2_configurationDescriptor* d)
     }
 }
 
-void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
+static void showInterfaceDescriptor(struct usb_interfaceDescriptor* d)
 {
     if (d->length)
     {
@@ -514,7 +523,7 @@ void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d)
     }
 }
 
-void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
+static void showEndpointDescriptor(struct usb_endpointDescriptor* d)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     if (d->length)
@@ -541,7 +550,7 @@ void showEndpointDescriptor(struct usb2_endpointDescriptor* d)
   #endif
 }
 
-void showStringDescriptor(struct usb2_stringDescriptor* d)
+static void showStringDescriptor(struct usb_stringDescriptor* d)
 {
     if (d->length)
     {
@@ -669,7 +678,7 @@ void showStringDescriptor(struct usb2_stringDescriptor* d)
     }
 }
 
-void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, usb2_Device_t* device, uint32_t stringIndex)
+static void showUnicodeStringDescriptor(struct usb_stringDescriptorUnicode* d, usb_device_t* device, uint32_t stringIndex)
 {
     if (d->length)
     {

@@ -7,7 +7,7 @@
 #include "video/console.h"
 #include "util.h"
 #include "kheap.h"
-#include "usb2_msd.h"
+#include "usb_msd.h"
 #include "flpydsk.h"
 #include "filesystem/fat.h"
 #include "uhci.h"
@@ -27,7 +27,7 @@ portType_t FDD      = {.motorOff = &flpydsk_motorOff, .pollDisk = 0},
            RAM      = {.motorOff = 0,                 .pollDisk = 0};
 
 diskType_t FLOPPYDISK = {.readSector = &flpydsk_readSector, .writeSector = &flpydsk_writeSector},
-           USB_MSD    = {.readSector = &usbRead,            .writeSector = &usbWrite},
+           USB_MSD    = {.readSector = &usb_read,           .writeSector = &usb_write},
            RAMDISK    = {.readSector = 0,                   .writeSector = 0};
 
 // ReadCache
@@ -49,7 +49,7 @@ void deviceManager_install(partition_t* systemPart)
 {
     memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
     memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
-    
+
     for (uint16_t i = 0; i < NUMREADCACHE; i++) // Invalidate all read caches
     {
         readcaches[i].valid = false;
@@ -66,7 +66,7 @@ void deviceManager_checkDrives()
         {
             ports[i]->type->pollDisk(ports[i]->data);
         }
-        
+
         if (ports[i] != 0 && ports[i]->type->motorOff != 0 && ports[i]->insertedDisk->accessRemaining == 0)
         {
             ports[i]->type->motorOff(ports[i]->data);
@@ -176,9 +176,7 @@ void showDiskList()
             }
 
             if (disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) // Floppy workaround
-            {
-                continue; 
-            }
+                continue;
 
             if      (disks[i]->type == &FLOPPYDISK) printf("\nFloppy");
             else if (disks[i]->type == &RAMDISK)    printf("\nRAMdisk");
@@ -189,7 +187,7 @@ void showDiskList()
             textColor(TEXT);
 
             printf("\t%s", disks[i]->name);   // Name of disk
-            
+
             if (strlen(disks[i]->name) < 8)
             {
                 putch('\t');
@@ -198,11 +196,9 @@ void showDiskList()
             for (uint8_t j=0; j < PARTITIONARRAYSIZE; j++)
             {
                 if (disks[i]->partition[j] == 0) // Empty
-                {
-                    continue; 
-                }
+                    continue;
 
-                if (j!=0) 
+                if (j!=0)
                 {
                     printf("\n\t\t\t"); // Not first, indent
                 }
@@ -227,7 +223,7 @@ void showDiskList()
                 }
                 else if (disks[i]->type == &USB_MSD)
                 {
-                    printf("\t%s", ((usb2_Device_t*)disks[i]->data)->serialNumber);
+                    printf("\t%s", ((usb_device_t*)disks[i]->data)->serialNumber);
                 }
                 /// TODO: ifs should be changed to:
                 /// printf("\t%s", disks[i]->partition[j]->serial); // serial of partition

@@ -11,18 +11,18 @@
 #include "task.h"
 
 
-fileSystem_t FAT    = {.fopen        = &FAT_fopen,        
-                       .fclose       = &FAT_fclose, 
-                       .fgetc        = &FAT_fgetc,        
-                       .fputc        = &FAT_fputc,   
-                       .fseek        = &FAT_fseek, 
-                       .remove       = &FAT_remove,       
-                       .rename       = &FAT_rename, 
-                       .pformat      = &FAT_format, 
-                       .pinstall     = &FAT_pinstall, 
-                       .folderAccess = &FAT_folderAccess, 
+fileSystem_t FAT    = {.fopen        = &FAT_fopen,
+                       .fclose       = &FAT_fclose,
+                       .fgetc        = &FAT_fgetc,
+                       .fputc        = &FAT_fputc,
+                       .fseek        = &FAT_fseek,
+                       .remove       = &FAT_remove,
+                       .rename       = &FAT_rename,
+                       .pformat      = &FAT_format,
+                       .pinstall     = &FAT_pinstall,
+                       .folderAccess = &FAT_folderAccess,
                        .folderClose  = &FAT_folderClose};
-             
+
 fileSystem_t INITRD = {};
 
 
@@ -47,7 +47,7 @@ FS_ERROR formatPartition(const char* path, FS_t type, const char* name)
     part->type = (fileSystem_t*)(uintptr_t)(ptype>>32);
     strcpy(part->serial, name);
     part->type->pformat(part);
-    
+
     return (CE_GOOD);
 }
 
@@ -169,7 +169,7 @@ void fclose(file_t* file)
     free(file->name);
     free(file);
     list_delete(currentTask->files, list_find(currentTask->files, file));
-    
+
     if (list_isEmpty(currentTask->files))
     {
         list_free(currentTask->files);
@@ -301,7 +301,7 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
 {
     folder_t* folder = malloc(sizeof(folder_t), 0, "fsmgr-file");
     folder->volume   = getPartition(path);
-    
+
     if (folder->volume == 0)
     {   // cleanup
         free(folder);

@@ -3,7 +3,7 @@
 *  Lizenz und Haftungsausschluss f?r die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "usb2.h"
+#include "usb.h"
 #include "ehciQHqTD.h"
 #include "util.h"
 #include "timer.h"

@@ -10,7 +10,7 @@
 #include "video/console.h"
 #include "kheap.h"
 #include "util.h"
-#include "usb2.h"
+#include "usb.h"
 
 
 void usb_hc_install(pciDev_t* PCIdev)
@@ -88,7 +88,7 @@ void usb_setupTransfer(port_t* usbPort, usb_transfer_t* transfer, usb_transferTy
     transfer->transactions = list_create();
     transfer->endpoint     = endpoint;
     transfer->type         = type;
-    transfer->packetSize   = min(maxLength, ((usb2_Device_t*)usbPort->insertedDisk->data)->endpoints[endpoint].mps);
+    transfer->packetSize   = min(maxLength, ((usb_device_t*)usbPort->insertedDisk->data)->endpoints[endpoint].mps);
     transfer->success      = false;
 
     if (transfer->HC->type == &USB_EHCI)
@@ -114,7 +114,7 @@ void usb_setupTransaction(usb_transfer_t* transfer, uint32_t tokenBytes, uint32_
     usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
     transaction->type = USB_TT_SETUP;
 
-    usb2_Device_t* device = transfer->HC->insertedDisk->data;
+    usb_device_t* device = transfer->HC->insertedDisk->data;
 
     if (transfer->HC->type == &USB_EHCI)
     {
@@ -134,7 +134,7 @@ void usb_setupTransaction(usb_transfer_t* transfer, uint32_t tokenBytes, uint32_
     }
 
     list_append(transfer->transactions, transaction);
-    
+
     device->endpoints[transfer->endpoint].toggle = true;
 }
 
@@ -145,8 +145,8 @@ void usb_inTransaction(usb_transfer_t* transfer, bool controlHandshake, void* bu
     usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
     transaction->type = USB_TT_IN;
 
-    usb2_Device_t* device = transfer->HC->insertedDisk->data;
-    
+    usb_device_t* device = transfer->HC->insertedDisk->data;
+
     if(controlHandshake) // Handshake transaction of control transfers have always set toggle to 1
     {
         device->endpoints[transfer->endpoint].toggle = true;
@@ -174,7 +174,7 @@ void usb_inTransaction(usb_transfer_t* transfer, bool controlHandshake, void* bu
     device->endpoints[transfer->endpoint].toggle = !device->endpoints[transfer->endpoint].toggle; // Switch toggle
 
     length -= clampedLength;
-    
+
     if(length > 0)
     {
         usb_inTransaction(transfer, device->endpoints[transfer->endpoint].toggle, buffer+clampedLength, length);
@@ -188,8 +188,8 @@ void usb_outTransaction(usb_transfer_t* transfer, bool controlHandshake, void* b
     usb_transaction_t* transaction = malloc(sizeof(usb_transaction_t), 0, "usb_transaction_t");
     transaction->type = USB_TT_OUT;
 
-    usb2_Device_t* device = transfer->HC->insertedDisk->data;
-    
+    usb_device_t* device = transfer->HC->insertedDisk->data;
+
     if(controlHandshake) // Handshake transaction of control transfers have always set toggle to 1
     {
         device->endpoints[transfer->endpoint].toggle = true;
@@ -217,7 +217,7 @@ void usb_outTransaction(usb_transfer_t* transfer, bool controlHandshake, void* b
     device->endpoints[transfer->endpoint].toggle = !device->endpoints[transfer->endpoint].toggle; // Switch toggle
 
     length -= clampedLength;
-    
+
     if (length > 0)
     {
         usb_outTransaction(transfer, device->endpoints[transfer->endpoint].toggle, buffer+clampedLength, length);

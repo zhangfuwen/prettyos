@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.158 - Rev: 1359";
+const char* const version = "0.0.3.159 - Rev: 1360";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -130,7 +130,7 @@ static void init(multiboot_t* mb_struct)
 
     // Interrupts
     isr_install();
-    
+
     if (apic_install())
     {
         log("APIC");
@@ -144,11 +144,9 @@ static void init(multiboot_t* mb_struct)
     // internal devices
     timer_install(SYSTEMFREQUENCY); // Sets system frequency to ... Hz
     log("Timer");
-    
+
     if (fpu_install())
-    {
         log("FPU");
-    }
 
     // memory
     int64_t memsize = paging_install();
@@ -205,7 +203,7 @@ static void showMemorySize()
     textColor(TEXT);
     int64_t ramsize;
     ipc_getInt("PrettyOS/RAM (Bytes)", &ramsize);
-    
+
     if (ramsize >= 0x40000000) // More than 1 GiB
     {
         printf("%u GiB  (%u MiB, %u Bytes)\n", (uint32_t)(ramsize>>30), (uint32_t)(ramsize>>20), (uint32_t)ramsize);
@@ -275,7 +273,7 @@ void main(multiboot_t* mb_struct)
     // search and load shell
     bool shell_found = false;
     dirent_t* node = 0;
-    
+
     for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
     {
         fs_node_t* fsnode = finddir_fs(fs_root, node->name);
@@ -339,8 +337,7 @@ void main(multiboot_t* mb_struct)
     bool CTRL  = false;
     bool PRINT = false;
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    while (true) // start of kernel idle loop ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    while (true) /// Start of kernel idle loop
     {
         // show rotating asterisk
         if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
@@ -370,9 +367,9 @@ void main(multiboot_t* mb_struct)
                         case KEY_LCTRL: case KEY_RCTRL:
                             CTRL = true;
                             break;
-                        case KEY_PRINT: // Because of special behavior of the PRINT key in emulators, we handle it in a special way: 
+                        case KEY_PRINT: // Because of special behavior of the PRINT key in emulators, we handle it in a special way:
                                         // After PRINT was pressed, next text-entered event is taken as argument to PRINT.
-                        case KEY_F12:   // F12 is used as alias for PrintScreen due to problems in some emulators                                         
+                        case KEY_F12:   // F12 is used as alias for PrintScreen due to problems in some emulators
                             PRINT = true;
                             break;
                         default:
@@ -465,8 +462,7 @@ void main(multiboot_t* mb_struct)
             {
                 // draw status bar with date, time and frequency
                 getCurrentDateAndTime(DateAndTime, 50);
-                kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, 
-                       ((uint32_t)*cpu_frequency)/1000); // output in status bar
+                kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, ((uint32_t)*cpu_frequency)/1000); // output in status bar
             }
 
             deviceManager_checkDrives(); // switch off motors if they are not neccessary
@@ -478,7 +474,7 @@ void main(multiboot_t* mb_struct)
             textColor(HEADLINE);
             printf("\nSerial message: ");
             textColor(DATA);
-            
+
             do
             {
                 printf("%y ", serial_read(1));
@@ -487,9 +483,8 @@ void main(multiboot_t* mb_struct)
         }
 
         todoList_execute(kernel_idleTasks);
-        switch_context(); 
-    } // end of kernel idle loop ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        switch_context();
+    }
 }
 
 /*

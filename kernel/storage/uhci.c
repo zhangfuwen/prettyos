@@ -11,10 +11,10 @@
 #include "irq.h"
 #include "keyboard.h"
 #include "audio/sys_speaker.h"
-#include "usb2.h"
-#include "usb2_msd.h"
+#include "usb_msd.h"
 
-#define NUMBER_OF_UHCI_RETRIES 1
+#define NUMBER_OF_UHCI_RETRIES 3
+
 
 static uint8_t index   = 0;
 static uhci_t* curUHCI = 0;
@@ -403,10 +403,10 @@ static void uhci_showPortState(uhci_t* u, uint8_t j)
     printf("\nport %u: %xh", j+1, val);
 
     if (val & UHCI_PORT_RESET)           {printf(", RESET"             );}
-    
+
     if (val & UHCI_SUSPEND)              {printf(", SUSPEND"           );}
     if (val & UHCI_PORT_RESUME_DETECT)   {printf(", RESUME DETECT"     );}
-        
+
     if (val & UHCI_PORT_LOWSPEED_DEVICE) {printf(", LOWSPEED DEVICE"   );}
     else                                 {printf(", FULLSPEED DEVICE"  );}
     if (val & BIT(5))                    {printf(", Line State: D-"    );}
@@ -414,7 +414,7 @@ static void uhci_showPortState(uhci_t* u, uint8_t j)
 
     if (val & UHCI_PORT_ENABLE_CHANGE)   {printf(", ENABLE CHANGE"     );}
     if (val & UHCI_PORT_ENABLE)          {printf(", ENABLED"           );}
-    
+
     if (val & UHCI_PORT_CS_CHANGE)       {printf(", DEVICE CHANGE"     );}
     if (val & UHCI_PORT_CS)              {printf(", DEVICE ATTACHED"   );}
     else                                 {printf(", NO DEVICE ATTACHED");}
@@ -448,7 +448,7 @@ void uhci_pollDisk(void* dev)
             {
                 printf(" attached.");
                 u->ports[j].connected = true;
-                uhci_resetPort(u, j);      // reset on attached 
+                uhci_resetPort(u, j);      // reset on attached
                 uhci_showPortState(u, j);
                 waitForKeyStroke();
 
@@ -457,10 +457,10 @@ void uhci_pollDisk(void* dev)
             else
             {
                 printf(" removed.");
-                
+
                 if(u->ports[j].port.insertedDisk && u->ports[j].port.insertedDisk->type == &USB_MSD)
                 {
-                    usb2_destroyDevice(u->ports[j].port.insertedDisk->data);
+                    usb_destroyDevice(u->ports[j].port.insertedDisk->data);
                     removeDisk(u->ports[j].port.insertedDisk);
                     u->ports[j].port.insertedDisk = 0;
                     u->ports[j].connected = false;
@@ -470,8 +470,8 @@ void uhci_pollDisk(void* dev)
                     beep(800, 80);
                 }
             }
-        }//if
-    }//for
+        }
+    }
 }
 
 
@@ -487,7 +487,7 @@ void uhci_setupUSBDevice(uhci_t* u, uint8_t portNumber)
     disk->port = &u->ports[portNumber].port;
     disk->port->insertedDisk = disk;
 
-    usb2_Device_t* device = usb2_createDevice(disk);
+    usb_device_t* device = usb_createDevice(disk);
     usb_setupDevice(device, portNumber+1);
 }
 
@@ -523,7 +523,7 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
 
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
 
-    uT->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uT->TDBuffer, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
+    uT->TD = uhci_createTD_SETUP(u, transfer->data, 1, toggle, tokenBytes, type, req, hiVal, loVal, i, length, &uT->TDBuffer, ((usb_device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
 
   #ifdef _UHCI_DIAGNOSIS_
     usb_request_t* request = (usb_request_t*)uT->TDBuffer;
@@ -532,7 +532,7 @@ void uhci_setupTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTrans
 
     /// TEST
     textColor(LIGHT_GRAY);
-    printf("\nuhci_setup - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
+    printf("\nuhci_setup - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb_device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
     textColor(TEXT);
     /// TEST
 
@@ -552,12 +552,12 @@ void uhci_inTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransact
 
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
 
-    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
+    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_IN, toggle, length, ((usb_device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
     uT->TDBuffer = uT->TD->virtBuffer;
 
     /// TEST
     textColor(LIGHT_BLUE);
-    printf("\nuhci_in - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
+    printf("\nuhci_in - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb_device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
     textColor(TEXT);
     /// TEST
 
@@ -577,7 +577,7 @@ void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransac
 
     uhci_t* u = ((uhci_port_t*)transfer->HC->data)->uhci;
 
-    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
+    uT->TD = uhci_createTD_IO(u, transfer->data, 1, UHCI_TD_OUT, toggle, length, ((usb_device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
     uT->TDBuffer = uT->TD->virtBuffer;
 
     if (buffer != 0 && length != 0)
@@ -587,7 +587,7 @@ void uhci_outTransaction(usb_transfer_t* transfer, usb_transaction_t* usbTransac
 
     /// TEST
     textColor(LIGHT_GREEN);
-    printf("\nuhci_out - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
+    printf("\nuhci_out - \ttoggle: %u \tlength: %u \tdev: %u \tendp: %u", toggle, length, ((usb_device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint);
     textColor(TEXT);
     /// TEST
 

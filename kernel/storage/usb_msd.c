@@ -4,7 +4,7 @@
 */
 
 #include "usb_hc.h"
-#include "usb2_msd.h"
+#include "usb_msd.h"
 #include "paging.h"
 #include "kheap.h"
 #include "video/console.h"
@@ -15,14 +15,15 @@ static const uint32_t CSWMagicNotOK = 0x01010101;
 static const uint32_t CSWMagicOK    = 0x53425355; // USBS
 static const uint32_t CBWMagic      = 0x43425355; // USBC
 
-static uint8_t currCSWtag;
-
 uint32_t usbMSDVolumeMaxLBA;
 
 
-usb2_Device_t* usb2_createDevice(disk_t* disk)
+static int32_t showResultsRequestSense(void* addr);
+
+
+usb_device_t* usb_createDevice(disk_t* disk)
 {
-    usb2_Device_t* device = malloc(sizeof(usb2_Device_t), 0, "usb2_Device_t");
+    usb_device_t* device = malloc(sizeof(usb_device_t), 0, "usb_device_t");
     device->disk = disk;
     device->endpoints = malloc(sizeof(usb_endpoint_t)*3, 0, "usbDev->endpoints"); // Assume that we have three endpoints (only interface 1)
     device->endpoints[0].mps = 64;
@@ -32,61 +33,61 @@ usb2_Device_t* usb2_createDevice(disk_t* disk)
     return(device);
 }
 
-void usb2_destroyDevice(usb2_Device_t* device)
+void usb_destroyDevice(usb_device_t* device)
 {
     device->disk->data = 0;
     free(device);
 }
 
-void usb_setupDevice(usb2_Device_t* device, uint8_t address)
+void usb_setupDevice(usb_device_t* device, uint8_t address)
 {
     device->num = 0; // device number has to be set to 0
     bool success = false;
 
-    success = usbTransferDevice(device); 
-    if (!success) 
+    success = usb_getDeviceDescriptor(device);
+    if (!success)
     {
-        success = usbTransferDevice(device); 
+        success = usb_getDeviceDescriptor(device);
     }
-    
-    if (!success) 
+
+    if (!success)
     {
         textColor(ERROR);
         printf("\nSetup Device interrupted!");
         textColor(TEXT);
-        return; 
+        return;
     }
     waitForKeyStroke();
 
-    device->num = usbTransferEnumerate(device->disk->port, address);
+    device->num = usb_setDeviceAddress(device->disk->port, address);
 
-    success = usbTransferConfig(device);
-    if (!success) 
+    success = usb_getConfigDescriptor(device);
+    if (!success)
     {
-        success = usbTransferConfig(device); 
+        success = usb_getConfigDescriptor(device);
     }
-    
-    if (!success) 
+
+    if (!success)
     {
         textColor(ERROR);
         printf("\nSetup Device interrupted!");
         textColor(TEXT);
-        return; 
+        return;
     }
     waitForKeyStroke();
-    
-    usbTransferString(device); waitForKeyStroke();
+
+    usb_getStringDescriptor(device); waitForKeyStroke();
 
     for (uint8_t i=1; i<4; i++) // fetch 3 strings
     {
-        usbTransferStringUnicode(device, i); waitForKeyStroke();
+        usb_getUnicodeStringDescriptor(device, i); waitForKeyStroke();
     }
 
-    usbTransferSetConfiguration(device, 1); // set first configuration
+    usb_setConfiguration(device, 1); // set first configuration
     waitForKeyStroke();
 
-  #ifdef _EHCI_DIAGNOSIS_
-    uint8_t config = usbTransferGetConfiguration(device);
+  #ifdef _USB_DIAGNOSIS_
+    uint8_t config = usb_getConfiguration(device);
     printf("\nconfiguration: %u", config); // check configuration
     waitForKeyStroke();
   #endif
@@ -106,7 +107,7 @@ void usb_setupDevice(usb2_Device_t* device, uint8_t address)
         strcpy(device->disk->name, device->productName);
         attachDisk(device->disk);
 
-      #ifdef _EHCI_DIAGNOSIS_
+      #ifdef _USB_DIAGNOSIS_
         showPortList(); // TEST
         showDiskList(); // TEST
 
@@ -124,9 +125,9 @@ void usb_setupDevice(usb2_Device_t* device, uint8_t address)
 }
 
 // Bulk-Only Mass Storage get maximum number of Logical Units
-uint8_t usbTransferBulkOnlyGetMaxLUN(usb2_Device_t* device, uint8_t numInterface)
+uint8_t usb_getMaxLUN(usb_device_t* device, uint8_t numInterface)
 {
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nUSB2: usbTransferBulkOnlyGetMaxLUN, dev: %X interface: %u", device, numInterface);
     textColor(TEXT);
@@ -149,9 +150,9 @@ uint8_t usbTransferBulkOnlyGetMaxLUN(usb2_Device_t* device, uint8_t numInterface
 }
 
 // Bulk-Only Mass Storage Reset
-void usbTransferBulkOnlyMassStorageReset(usb2_Device_t* device, uint8_t numInterface)
+void usb_bulkReset(usb_device_t* device, uint8_t numInterface)
 {
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     textColor(LIGHT_CYAN);
     printf("\nUSB2: usbTransferBulkOnlyMassStorageReset, dev: %X interface: %u", device, numInterface);
     textColor(TEXT);
@@ -168,9 +169,9 @@ void usbTransferBulkOnlyMassStorageReset(usb2_Device_t* device, uint8_t numInter
     usb_issueTransfer(&transfer);
 }
 
-void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t LBA, uint16_t TransferLength)
+static void formatSCSICommand(uint8_t SCSIcommand, struct usb_CommandBlockWrapper* cbw, uint32_t LBA, uint16_t TransferLength)
 {
-    memset(cbw, 0, sizeof(struct usb2_CommandBlockWrapper));
+    memset(cbw, 0, sizeof(struct usb_CommandBlockWrapper));
     switch (SCSIcommand)
     {
         case 0x00: // test unit ready(6)
@@ -238,14 +239,12 @@ void SCSIcmd(uint8_t SCSIcommand, struct usb2_CommandBlockWrapper* cbw, uint32_t
             cbw->commandByte[8]         = BYTE1(TransferLength); // LSB
             break;
     }
-
-    currCSWtag = SCSIcommand;
 }
 
-static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer)
+static int checkSCSICommand(void* MSDStatus, usb_device_t* device, uint16_t TransferLength, uint8_t SCSIOpcode)
 {
     // CSW Status
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     putch('\n');
     memshow(MSDStatus,13, false);
     putch('\n');
@@ -257,7 +256,7 @@ static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, u
     uint32_t CSWsignature = *(uint32_t*)MSDStatus; // DWORD 0
     if (CSWsignature == CSWMagicOK)
     {
-      #ifdef _USB2_DIAGNOSIS_
+      #ifdef _USB_DIAGNOSIS_
         textColor(SUCCESS);
         printf("\nCSW signature OK    ");
         textColor(TEXT);
@@ -281,9 +280,9 @@ static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, u
     // check matching tag
     uint32_t CSWtag = *(((uint32_t*)MSDStatus)+1); // DWORD 1 (byte 4:7)
 
-    if ((BYTE1(CSWtag) == currCSWtag) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
+    if ((BYTE1(CSWtag) == SCSIOpcode) && (BYTE2(CSWtag) == 0x42) && (BYTE3(CSWtag) == 0x42) && (BYTE4(CSWtag) == 0x42))
     {
-      #ifdef _USB2_DIAGNOSIS_
+      #ifdef _USB_DIAGNOSIS_
         textColor(SUCCESS);
         printf("CSW tag %yh OK    ",BYTE1(CSWtag));
         textColor(TEXT);
@@ -301,7 +300,7 @@ static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, u
     uint32_t CSWDataResidue = *(((uint32_t*)MSDStatus)+2); // DWORD 2 (byte 8:11)
     if (CSWDataResidue == 0)
     {
-      #ifdef _USB2_DIAGNOSIS_
+      #ifdef _USB_DIAGNOSIS_
         textColor(SUCCESS);
         printf("\tCSW data residue OK    ");
         textColor(TEXT);
@@ -321,7 +320,7 @@ static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, u
     switch (CSWstatusByte)
     {
         case 0x00:
-          #ifdef _USB2_DIAGNOSIS_
+          #ifdef _USB_DIAGNOSIS_
             textColor(SUCCESS);
             printf("\tCSW status OK");
           #endif
@@ -334,7 +333,7 @@ static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, u
             printf("\nPhase Error");
             textColor(IMPORTANT);
             printf("\nReset recovery is needed");
-            usbResetRecoveryMSD(device, device->numInterfaceMSD);
+            usb_resetRecoveryMSD(device, device->numInterfaceMSD);
             error = -5;
             break;
         default:
@@ -348,17 +347,17 @@ static int checkSCSICommandUSBTransfer(void* MSDStatus, usb2_Device_t* device, u
 }
 
 /// cf. http://www.beyondlogic.org/usbnutshell/usb4.htm#Bulk
-void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer)
+void usb_sendSCSICommand(usb_device_t* device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, void* dataBuffer, void* statusBuffer)
 {
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     printf("\nOUT part");
     textColor(0x03);
     printf("\ntoggle OUT %u", device->ToggleEndpointOutMSD);
     textColor(TEXT);
   #endif
 
-    struct usb2_CommandBlockWrapper cbw;
-    SCSIcmd(SCSIcommand, &cbw, LBA, TransferLength);
+    struct usb_CommandBlockWrapper cbw;
+    formatSCSICommand(SCSIcommand, &cbw, LBA, TransferLength);
 
     usb_transfer_t transfer;
     usb_setupTransfer(device->disk->port, &transfer, USB_BULK, endpointOut, 512);
@@ -372,7 +371,7 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
 
   /**************************************************************************************************************************************/
 
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     printf("\nIN part");
   #endif
 
@@ -394,7 +393,7 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
     }
     usb_issueTransfer(&transfer);
 
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     if (TransferLength) // byte
     {
         putch('\n');
@@ -409,24 +408,24 @@ void usbSendSCSIcmd(usb2_Device_t* device, uint32_t interface, uint32_t endpoint
     }
   #endif
 
-    if(checkSCSICommandUSBTransfer(statusBuffer, device, TransferLength, bulkTransfer) != 0 && timeout < 5)
+    if(checkSCSICommand(statusBuffer, device, TransferLength, SCSIcommand) != 0 && timeout < 5)
     {
         timeout++;
     }
     // TODO: Handle failure/timeout
 }
 
-void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, usbBulkTransfer_t* bulkTransfer, void* dataBuffer, void* statusBuffer)
+void usb_sendSCSICommand_out(usb_device_t* device, uint32_t interface, uint32_t endpointOut, uint32_t endpointIn, uint8_t SCSIcommand, uint32_t LBA, uint16_t TransferLength, void* dataBuffer, void* statusBuffer)
 {
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     printf("\nOUT part");
     textColor(0x03);
     printf("\ntoggle OUT %u", device->ToggleEndpointOutMSD);
     textColor(TEXT);
   #endif
 
-    struct usb2_CommandBlockWrapper cbw;
-    SCSIcmd(SCSIcommand, &cbw, LBA, TransferLength);
+    struct usb_CommandBlockWrapper cbw;
+    formatSCSICommand(SCSIcommand, &cbw, LBA, TransferLength);
 
     if (SCSIcommand == 0x2A)   // write(10)
     {
@@ -441,7 +440,7 @@ void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpo
 
   /**************************************************************************************************************************************/
 
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     printf("\nIN part");
   #endif
 
@@ -454,7 +453,7 @@ void usbSendSCSIcmdOUT(usb2_Device_t* device, uint32_t interface, uint32_t endpo
     usb_issueTransfer(&transfer);
 }
 
-static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTransferTestUnitReady, usbBulkTransfer_t* bulkTransferRequestSense)
+static uint8_t testDeviceReady(usb_device_t* device)
 {
     const uint8_t maxTest = 5;
     uint32_t timeout = maxTest;
@@ -468,9 +467,9 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
         printf("\n\nSCSI: test unit ready");
         textColor(TEXT);
       #endif
-      
+
         char statusBuffer[13];
-        usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x00, 0, 0, bulkTransferTestUnitReady, 0, statusBuffer); // dev, endp, cmd, LBA, transfer length
+        usb_sendSCSICommand(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x00, 0, 0, 0, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
         uint8_t statusByteTestReady = BYTE1(*(((uint32_t*)statusBuffer)+3));
 
@@ -481,9 +480,9 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
         printf("\n\nSCSI: request sense");
         textColor(TEXT);
       #endif
-        
+
         char dataBuffer[18];
-        usbSendSCSIcmd(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x03, 0, 18, bulkTransferRequestSense, dataBuffer, statusBuffer); // dev, endp, cmd, LBA, transfer length
+        usb_sendSCSICommand(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD, 0x03, 0, 18, dataBuffer, statusBuffer); // dev, endp, cmd, LBA, transfer length
 
         statusByte = BYTE1(*(((uint32_t*)statusBuffer)+3));
 
@@ -499,17 +498,6 @@ static uint8_t testDeviceReady(usb2_Device_t* device, usbBulkTransfer_t* bulkTra
     return statusByte;
 }
 
-static void startLogBulkTransfer(usbBulkTransfer_t* pTransferLog, uint8_t SCSIopcode, uint32_t DataBytesToTransferIN, uint32_t DataBytesToTransferOUT)
-{
-    pTransferLog->SCSIopcode             = SCSIopcode;
-    pTransferLog->successfulCommand      = false;
-    pTransferLog->successfulDataOUT      = false;
-    pTransferLog->successfulDataIN       = false;
-    pTransferLog->successfulCSW          = false;
-    pTransferLog->DataBytesToTransferIN  = DataBytesToTransferIN;
-    pTransferLog->DataBytesToTransferOUT = DataBytesToTransferOUT;
-}
-
 // http://en.wikipedia.org/wiki/SCSI_Inquiry_Command
 static void analyzeInquiry(void* addr)
 {
@@ -518,7 +506,7 @@ static void analyzeInquiry(void* addr)
  // uint8_t PeripheralQualifier  = getField(addr, 0, 5, 3);
  // uint8_t DeviceTypeModifier   = getField(addr, 1, 0, 7);
     uint8_t RMB                  = getField(addr, 1, 7, 1);
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     uint8_t ANSIapprovedVersion  = getField(addr, 2, 0, 3);
   #endif
  // uint8_t ECMAversion          = getField(addr, 2, 3, 3);
@@ -538,7 +526,7 @@ static void analyzeInquiry(void* addr)
     memcpy(productID, addr+16, 16);
     productID[16]=0;
 
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     char productRevisionLevel[5];
     memcpy(productRevisionLevel, addr+32, 4);
     productRevisionLevel[4]=0;
@@ -547,7 +535,7 @@ static void analyzeInquiry(void* addr)
     printf("\nVendor ID:  %s", vendorID);
     printf("\nProduct ID: %s", productID);
 
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     printf("\nRevision:   %s", productRevisionLevel);
 
     // Book of Jan Axelson, "USB Mass Storage", page 140:
@@ -602,32 +590,7 @@ static void analyzeInquiry(void* addr)
     }
 }
 
-static void logBulkTransfer(usbBulkTransfer_t* bT)
-{
-  #ifdef _USB2_DIAGNOSIS_
-    if (!bT->successfulCommand ||
-        !bT->successfulCSW     ||
-        (bT->DataBytesToTransferOUT && !bT->successfulDataOUT) ||
-        (bT->DataBytesToTransferIN  && !bT->successfulDataIN))
-    {
-        textColor(IMPORTANT);
-        printf("\nopcode: %yh", bT->SCSIopcode);
-        printf("  cmd: %s",    bT->successfulCommand ? "OK" : "Error");
-        if (bT->DataBytesToTransferOUT)
-        {
-            printf("  data out: %s", bT->successfulDataOUT ? "OK" : "Error");
-        }
-        if (bT->DataBytesToTransferIN)
-        {
-            printf("  data in: %s", bT->successfulDataIN ? "OK" : "Error");
-        }
-        printf("  CSW: %s", bT->successfulCSW ? "OK" : "Error");
-        textColor(TEXT);
-    }
-  #endif
-}
-
-void testMSD(usb2_Device_t* device)
+void testMSD(usb_device_t* device)
 {
     // maxLUN (0 for USB-sticks)
     device->maxLUN  = 0;
@@ -635,8 +598,8 @@ void testMSD(usb2_Device_t* device)
     // start with correct endpoint toggles and reset interface
     device->endpoints[device->numEndpointOutMSD].toggle = false;
     device->endpoints[device->numEndpointInMSD].toggle  = false;
-      
-    usbTransferBulkOnlyMassStorageReset(device, device->numInterfaceMSD); // Reset Interface
+
+    usb_bulkReset(device, device->numInterfaceMSD); // Reset Interface
 
     ///////// send SCSI command "inquiry (opcode: 0x12)"
   #ifdef _USB_TRANSFER_DIAGNOSIS_
@@ -645,30 +608,16 @@ void testMSD(usb2_Device_t* device)
     textColor(TEXT);
   #endif
 
-    usbBulkTransfer_t inquiry;
-    startLogBulkTransfer(&inquiry, 0x12, 36, 0);
     char inquiryBuffer[36];
-    usbSendSCSIcmd(device,
-                   device->numInterfaceMSD,
-                   device->numEndpointOutMSD,
-                   device->numEndpointInMSD,
-                   inquiry.SCSIopcode,
-                   0, // LBA
-                   inquiry.DataBytesToTransferIN,
-                   &inquiry, inquiryBuffer, 0);
+    usb_sendSCSICommand(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
+                        0x12 /*SCSI opcode*/, 0 /*LBA*/, 36 /*Bytes In*/, inquiryBuffer, 0);
 
     analyzeInquiry(inquiryBuffer);
-    logBulkTransfer(&inquiry);
 
     waitForKeyStroke();
 
     ///////// send SCSI command "test unit ready(6)"
-    usbBulkTransfer_t testUnitReady, requestSense;
-    startLogBulkTransfer(&testUnitReady, 0x00,  0, 0);
-    startLogBulkTransfer(&requestSense,  0x03, 18, 0);
-    testDeviceReady(device, &testUnitReady, &requestSense);
-    logBulkTransfer(&testUnitReady);
-    logBulkTransfer(&requestSense);
+    testDeviceReady(device);
 
 
     ///////// send SCSI command "read capacity(10)"
@@ -677,29 +626,21 @@ void testMSD(usb2_Device_t* device)
     printf("\n\nSCSI: read capacity");
     textColor(TEXT);
   #endif
-    
-    usbBulkTransfer_t readCapacity;
-    startLogBulkTransfer(&readCapacity, 0x25, 8, 0);
+
     char capacityBuffer[8];
-    usbSendSCSIcmd(device,
-                   device->numInterfaceMSD,
-                   device->numEndpointOutMSD,
-                   device->numEndpointInMSD,
-                   readCapacity.SCSIopcode,
-                   0, // LBA
-                   readCapacity.DataBytesToTransferIN,
-                   &readCapacity, capacityBuffer, 0);
+    usb_sendSCSICommand(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
+                        0x25 /*SCSI opcode*/, 0 /*LBA*/, 8 /*Bytes In*/, capacityBuffer, 0);
 
     uint32_t lastLBA     = (*((uint8_t*)capacityBuffer+0)) * 0x1000000 +
-                           (*((uint8_t*)capacityBuffer+1)) *   0x10000 + 
-                           (*((uint8_t*)capacityBuffer+2)) *     0x100 + 
+                           (*((uint8_t*)capacityBuffer+1)) *   0x10000 +
+                           (*((uint8_t*)capacityBuffer+2)) *     0x100 +
                            (*((uint8_t*)capacityBuffer+3));
 
-    uint32_t blocksize   = (*((uint8_t*)capacityBuffer+4)) * 0x1000000 + 
-                           (*((uint8_t*)capacityBuffer+5)) *   0x10000 + 
-                           (*((uint8_t*)capacityBuffer+6)) *     0x100 + 
+    uint32_t blocksize   = (*((uint8_t*)capacityBuffer+4)) * 0x1000000 +
+                           (*((uint8_t*)capacityBuffer+5)) *   0x10000 +
+                           (*((uint8_t*)capacityBuffer+6)) *     0x100 +
                            (*((uint8_t*)capacityBuffer+7));
-    
+
     uint32_t capacityMiB = ((lastLBA+1)/0x100000) * blocksize;
 
     usbMSDVolumeMaxLBA   = lastLBA;
@@ -708,90 +649,63 @@ void testMSD(usb2_Device_t* device)
     printf("\n\nCapacity: %u MiB, Last LBA: %u, block size: %u\n", capacityMiB, lastLBA, blocksize);
     textColor(TEXT);
 
-    logBulkTransfer(&readCapacity);
-
     analyzeDisk(device->disk);
 }
 
-FS_ERROR usbRead(uint32_t sector, void* buffer, void* dev)
+FS_ERROR usb_read(uint32_t sector, void* buffer, void* dev)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_BLUE);
-    printf("\n\n>SCSI: read   sector: %u", sector);
+    printf("\n\n>SCSI: read sector: %u", sector);
     textColor(TEXT);
   #endif
 
-    usb2_Device_t* device = dev;
+    usb_device_t* device = dev;
 
-    uint32_t blocks = 1; // number of blocks to be read
-    usbBulkTransfer_t read;
-
-    startLogBulkTransfer(&read, 0x28, blocks, 0);
-
-    usbSendSCSIcmd(device,
-                    device->numInterfaceMSD,
-                    device->numEndpointOutMSD,
-                    device->numEndpointInMSD,
-                    read.SCSIopcode,
-                    sector, // LBA
-                    read.DataBytesToTransferIN,
-                    &read, buffer, 0);
-    logBulkTransfer(&read);
+    usb_sendSCSICommand(dev, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
+                        0x28 /*SCSI opcode*/, sector /*LBA*/, 1 /*Blocks In*/, buffer, 0);
 
     return(CE_GOOD);
 }
 
-FS_ERROR usbWrite(uint32_t sector, void* buffer, void* dev)
+FS_ERROR usb_write(uint32_t sector, void* buffer, void* dev)
 {
-  #ifdef _USB2_DIAGNOSIS_
+  #ifdef _USB_DIAGNOSIS_
     textColor(IMPORTANT);
-    printf("\n\n>>> SCSI: write  sector: %u", sector);
+    printf("\n\n>>> SCSI: write sector: %u", sector);
     textColor(TEXT);
   #endif
 
-    usb2_Device_t* device = dev;
+    usb_device_t* device = dev;
 
-    uint32_t          blocks  = 1; // number of blocks to be written
-    usbBulkTransfer_t write;
-
-    startLogBulkTransfer(&write, 0x2A, 0, blocks);
-
-    usbSendSCSIcmdOUT(device,
-                        device->numInterfaceMSD,
-                        device->numEndpointOutMSD,
-                        device->numEndpointInMSD,
-                        write.SCSIopcode,
-                        sector, // LBA
-                        write.DataBytesToTransferOUT,
-                        &write, buffer, 0);
-
-    logBulkTransfer(&write);
+    usb_sendSCSICommand_out(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
+                            0x2A /*SCSI opcode*/, sector /*LBA*/, 1 /*Blocks Out*/, buffer, 0);
 
     return(CE_GOOD);
 }
 
-void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface)
+void usb_resetRecoveryMSD(usb_device_t* device, uint32_t Interface)
 {
     // Reset Interface
-    usbTransferBulkOnlyMassStorageReset(device, Interface);
+    usb_bulkReset(device, Interface);
 
     // TEST ////////////////////////////////////
-    //usbSetFeatureHALT(device, endpointIN);
-    //usbSetFeatureHALT(device, endpointOUT);
+    //usbSetFeatureHALT(device, device->numEndpointInMSD);
+    //usbSetFeatureHALT(device, device->numEndpointOutMSD);
 
     // Clear Feature HALT to the Bulk-In  endpoint
-    printf("\nGetStatus: %u", usbGetStatus(device, device->numEndpointInMSD));
-    usbClearFeatureHALT(device, device->numEndpointInMSD);
-    printf("\nGetStatus: %u", usbGetStatus(device, device->numEndpointInMSD));
+    printf("\nGetStatus: %u", usb_getStatus(device, device->numEndpointInMSD));
+    usb_clearFeatureHALT(device, device->numEndpointInMSD);
+    printf("\nGetStatus: %u", usb_getStatus(device, device->numEndpointInMSD));
 
     // Clear Feature HALT to the Bulk-Out endpoint
-    printf("\nGetStatus: %u", usbGetStatus(device, device->numEndpointOutMSD));
-    usbClearFeatureHALT(device, device->numEndpointOutMSD);
-    printf("\nGetStatus: %u", usbGetStatus(device, device->numEndpointOutMSD));
+    printf("\nGetStatus: %u", usb_getStatus(device, device->numEndpointOutMSD));
+    usb_clearFeatureHALT(device, device->numEndpointOutMSD);
+    printf("\nGetStatus: %u", usb_getStatus(device, device->numEndpointOutMSD));
 
     // set configuration to 1 and endpoint IN/OUT toggles to 0
-    usbTransferSetConfiguration(device, 1); // set first configuration
-    uint8_t config = usbTransferGetConfiguration(device);
+    usb_setConfiguration(device, 1); // set first configuration
+    uint8_t config = usb_getConfiguration(device);
     if (config != 1)
     {
         textColor(ERROR);
@@ -802,10 +716,10 @@ void usbResetRecoveryMSD(usb2_Device_t* device, uint32_t Interface)
     // start with correct endpoint toggles and reset interface
     device->endpoints[device->numEndpointOutMSD].toggle = 0;
     device->endpoints[device->numEndpointInMSD].toggle = 0;
-    usbTransferBulkOnlyMassStorageReset(device, device->numInterfaceMSD); // Reset Interface
+    usb_bulkReset(device, device->numInterfaceMSD); // Reset Interface
 }
 
-int32_t showResultsRequestSense(void* addr)
+static int32_t showResultsRequestSense(void* addr)
 {
     uint32_t Valid        = getField(addr, 0, 7, 1); // byte 0, bit 7
     uint32_t ResponseCode = getField(addr, 0, 0, 7); // byte 0, bit 6:0

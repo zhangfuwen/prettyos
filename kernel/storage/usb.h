@@ -1,5 +1,5 @@
-#ifndef USB2_H
-#define USB2_H
+#ifndef USB_H
+#define USB_H
 
 #include "os.h"
 #include "devicemanager.h"
@@ -18,7 +18,6 @@ typedef struct
     uint16_t  index;
     uint16_t  length;
 } __attribute__((packed)) usb_request_t;
-
 
 typedef struct
 {
@@ -54,9 +53,9 @@ typedef struct
     uint8_t  InterfaceSubclass;
     uint8_t  numEndpointInMSD;
     uint8_t  numEndpointOutMSD;
-} usb2_Device_t;
+} usb_device_t;
 
-struct usb2_deviceDescriptor
+struct usb_deviceDescriptor
 {
    uint8_t  length;            // 18
    uint8_t  descriptorType;    // 1
@@ -74,7 +73,7 @@ struct usb2_deviceDescriptor
    uint8_t  numConfigurations; // number of possible configurations
 } __attribute__((packed));
 
-struct usb2_configurationDescriptor
+struct usb_configurationDescriptor
 {
    uint8_t  length;            // 9
    uint8_t  descriptorType;    // 2
@@ -86,7 +85,7 @@ struct usb2_configurationDescriptor
    uint8_t  maxPower;
 } __attribute__((packed));
 
-struct usb2_interfaceDescriptor
+struct usb_interfaceDescriptor
 {
    uint8_t  length;            // 9
    uint8_t  descriptorType;    // 4
@@ -99,7 +98,7 @@ struct usb2_interfaceDescriptor
    uint8_t  interface;
 } __attribute__((packed));
 
-struct usb2_endpointDescriptor
+struct usb_endpointDescriptor
 {
    uint8_t  length;            // 7
    uint8_t  descriptorType;    // 5
@@ -109,14 +108,14 @@ struct usb2_endpointDescriptor
    uint8_t  interval;
 } __attribute__((packed));
 
-struct usb2_stringDescriptor
+struct usb_stringDescriptor
 {
    uint8_t  length;            // ?
    uint8_t  descriptorType;    // 3
    uint16_t languageID[10];    // n = 10 test-wise
 } __attribute__((packed));
 
-struct usb2_stringDescriptorUnicode
+struct usb_stringDescriptorUnicode
 {
    uint8_t  length;            // 2 + 2 * numUnicodeCharacters
    uint8_t  descriptorType;    // 3
@@ -124,25 +123,17 @@ struct usb2_stringDescriptorUnicode
 } __attribute__((packed));
 
 
-uint8_t usbTransferEnumerate(port_t* port, uint8_t num);
-bool usbTransferDevice(usb2_Device_t* device);
-bool usbTransferConfig(usb2_Device_t* device);
-void usbTransferString(usb2_Device_t* device);
-void usbTransferStringUnicode(usb2_Device_t* device, uint32_t stringIndex);
-void usbTransferSetConfiguration(usb2_Device_t* device, uint32_t configuration);
-uint8_t usbTransferGetConfiguration(usb2_Device_t* device);
-uint16_t usbGetStatus(usb2_Device_t* device, uint32_t endpoint);
+uint8_t usb_setDeviceAddress(port_t* port, uint8_t num);
+bool usb_getDeviceDescriptor(usb_device_t* device);
+bool usb_getConfigDescriptor(usb_device_t* device);
+void usb_getStringDescriptor(usb_device_t* device);
+void usb_getUnicodeStringDescriptor(usb_device_t* device, uint32_t stringIndex);
+void usb_setConfiguration(usb_device_t* device, uint32_t configuration);
+uint8_t usb_getConfiguration(usb_device_t* device);
+uint16_t usb_getStatus(usb_device_t* device, uint32_t endpoint);
 
-void usbSetFeatureHALT(usb2_Device_t* device, uint32_t endpoint);
-void usbClearFeatureHALT(usb2_Device_t* device, uint32_t endpoint);
-
-void addDevice(struct usb2_deviceDescriptor* d, usb2_Device_t* usbDev);
-void showDevice(usb2_Device_t* usbDev);
-void showConfigurationDescriptor(struct usb2_configurationDescriptor* d);
-void showInterfaceDescriptor(struct usb2_interfaceDescriptor* d);
-void showEndpointDescriptor(struct usb2_endpointDescriptor* d);
-void showStringDescriptor(struct usb2_stringDescriptor* d);
-void showStringDescriptorUnicode(struct usb2_stringDescriptorUnicode* d, usb2_Device_t* device, uint32_t stringIndex);
+void usb_setFeatureHALT(usb_device_t* device, uint32_t endpoint);
+void usb_clearFeatureHALT(usb_device_t* device, uint32_t endpoint);
 
 
 #endif

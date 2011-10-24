@@ -11,10 +11,9 @@
 #include "irq.h"
 #include "keyboard.h"
 #include "audio/sys_speaker.h"
-#include "usb2.h"
-#include "usb2_msd.h"
+#include "usb_msd.h"
 
-#define NUMBER_OF_OHCI_RETRIES  1
+#define NUMBER_OF_OHCI_RETRIES 3
 
 
 static uint8_t index   = 0;
@@ -429,7 +428,7 @@ void ohci_showPortstatus(ohci_t* o, uint8_t j)
 
             if(o->ports[j].port.insertedDisk && o->ports[j].port.insertedDisk->type == &USB_MSD)
             {
-                usb2_destroyDevice(o->ports[j].port.insertedDisk->data);
+                usb_destroyDevice(o->ports[j].port.insertedDisk->data);
                 removeDisk(o->ports[j].port.insertedDisk);
                 o->ports[j].port.insertedDisk = 0;
                 o->ports[j].connected = false;
@@ -649,7 +648,7 @@ void ohci_setupUSBDevice(ohci_t* o, uint8_t portNumber)
     disk->port = &o->ports[portNumber].port;
     disk->port->insertedDisk = disk;
 
-    usb2_Device_t* device = usb2_createDevice(disk);
+    usb_device_t* device = usb_createDevice(disk);
     usb_setupDevice(device, portNumber+1);
 }
 
@@ -782,7 +781,7 @@ void ohci_issueTransfer(usb_transfer_t* transfer)
     printf("\nohci_createED: devNum = %u endp = %u packetsize = %u", ((ohci_port_t*)transfer->HC->data)->num, transfer->endpoint, transfer->packetSize);
   #endif
 
-    ohci_createED(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->TD, ((usb2_Device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
+    ohci_createED(transfer->data, paging_getPhysAddr(transfer->data), firstTransaction->TD, ((usb_device_t*)transfer->HC->insertedDisk->data)->num, transfer->endpoint, transfer->packetSize);
 
     if (transfer->type == USB_CONTROL)
     {
