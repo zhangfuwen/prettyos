@@ -31,7 +31,7 @@ static ipc_node_t* getNode(const char* remainingPath, ipc_node_t* node)
             {
                 ipc_node_t* newnode = e->data;
                 if(strcmp(remainingPath, newnode->name) == 0)
-                    return(newnode);
+                    return (newnode);
             }
         }
         else
@@ -43,15 +43,15 @@ static ipc_node_t* getNode(const char* remainingPath, ipc_node_t* node)
                 if(strncmp(remainingPath, newnode->name, sublength) == 0 && strlen(newnode->name) == sublength)
                 {
                     if(newnode->type == IPC_FOLDER)
-                        return(getNode(end+1, newnode)); // One layer downwards
+                        return (getNode(end+1, newnode)); // One layer downwards
                     else
-                        return(0); // Node with name found, but we cannot go one step downwards, because its no folder. -> Not found.
+                        return (0); // Node with name found, but we cannot go one step downwards, because its no folder. -> Not found.
                 }
             }
         }
     }
 
-    return(0); // Not found
+    return (0); // Not found
 }
 
 static bool accessAllowed(ipc_node_t* node, IPC_RIGHTS needed)
@@ -59,7 +59,7 @@ static bool accessAllowed(ipc_node_t* node, IPC_RIGHTS needed)
     uint32_t pid = getpid();
 
     if(pid == 0 || pid == node->owner) // Kernel and owner have full access
-        return(true);
+        return (true);
 
     if(node->accessTable)
     {
@@ -67,11 +67,11 @@ static bool accessAllowed(ipc_node_t* node, IPC_RIGHTS needed)
         {
             ipc_certificate_t* certificate = e->data;
             if(certificate->owner == pid) // Task has a specific certificate to access this node
-                return((certificate->privileges & needed) == needed);
+                return ((certificate->privileges & needed) == needed);
         }
     }
 
-    return((node->general & needed) == needed); // Use general access rights as fallback
+    return ((node->general & needed) == needed); // Use general access rights as fallback
 }
 
 static IPC_ERROR prepareNodeToWrite(ipc_node_t** node, const char* path, IPC_TYPE type)
@@ -80,20 +80,20 @@ static IPC_ERROR prepareNodeToWrite(ipc_node_t** node, const char* path, IPC_TYP
     {
         IPC_ERROR err = ipc_createNode(path, node, type);
         if(err != IPC_SUCCESSFUL)
-            return(err);
+            return (err);
     }
     else if((*node)->type != type)
-        return(IPC_WRONGTYPE);
+        return (IPC_WRONGTYPE);
     else if(!accessAllowed(*node, IPC_WRITE))
-        return(IPC_ACCESSDENIED);
+        return (IPC_ACCESSDENIED);
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 static IPC_ERROR deleteNode(ipc_node_t* node)
 {
     if(!accessAllowed(node, IPC_WRITE))
-        return(IPC_ACCESSDENIED);
+        return (IPC_ACCESSDENIED);
     if(node->type == IPC_FOLDER)
     {
         IPC_ERROR err = IPC_SUCCESSFUL;
@@ -103,18 +103,18 @@ static IPC_ERROR deleteNode(ipc_node_t* node)
                 err = IPC_ACCESSDENIED;
         }
         if(err == IPC_ACCESSDENIED)
-            return(IPC_ACCESSDENIED);
+            return (IPC_ACCESSDENIED);
     }
 
     // TODO: Delete node.
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 static IPC_ERROR createNode(ipc_node_t* parent, ipc_node_t** node, const char* name, IPC_TYPE type)
 {
     if(parent->type != IPC_FOLDER)
-        return(IPC_WRONGTYPE);
+        return (IPC_WRONGTYPE);
 
     *node = malloc(sizeof(ipc_node_t), 0, "ipc_node_t");
     (*node)->name        = malloc(strlen(name)+1, 0, "ipc_node_t::name");
@@ -129,7 +129,7 @@ static IPC_ERROR createNode(ipc_node_t* parent, ipc_node_t** node, const char* n
         parent->data.folder = list_create();
     list_append(parent->data.folder, *node);
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 static void ipc_printNode(ipc_node_t* node, int indent)
@@ -181,7 +181,7 @@ static void ipc_printNode(ipc_node_t* node, int indent)
 
 ipc_node_t* ipc_getNode(const char* path)
 {
-    return(getNode(path, &root));
+    return (getNode(path, &root));
 }
 
 IPC_ERROR ipc_createNode(const char* path, ipc_node_t** node, IPC_TYPE type)
@@ -205,7 +205,7 @@ IPC_ERROR ipc_createNode(const char* path, ipc_node_t** node, IPC_TYPE type)
             parent = nparent;
     } while(temp);
 
-    return(createNode(parent, node, nodename, type));
+    return (createNode(parent, node, nodename, type));
 }
 
 void ipc_print()
@@ -223,18 +223,18 @@ void ipc_print()
 
 file_t* ipc_fopen(const char* path, const char* mode)
 {
-    return(0); // TODO
+    return (0); // TODO
 }
 
 IPC_ERROR ipc_getFolder(const char* path, char* destination, size_t length) // TODO: Its possible to solve this more efficient. For example we currently require one byte too much as string length
 {
     ipc_node_t* node = ipc_getNode(path);
     if(node == 0)
-        return(IPC_NOTFOUND);
+        return (IPC_NOTFOUND);
     if(node->type != IPC_FOLDER)
-        return(IPC_WRONGTYPE);
+        return (IPC_WRONGTYPE);
     if(!accessAllowed(node, IPC_READ))
-        return(IPC_ACCESSDENIED);
+        return (IPC_ACCESSDENIED);
 
     // Collect length to check if destination is large enough
     size_t neededLength = 2;
@@ -247,7 +247,7 @@ IPC_ERROR ipc_getFolder(const char* path, char* destination, size_t length) // T
     {
         if(length > sizeof(size_t))
             *(size_t*)destination = neededLength;
-        return(IPC_NOTENOUGHMEMORY);
+        return (IPC_NOTENOUGHMEMORY);
     }
     destination[0] = 0; // Clear destination
     for(dlelement_t* e = node->data.folder->head; e != 0; e = e->next)
@@ -257,58 +257,58 @@ IPC_ERROR ipc_getFolder(const char* path, char* destination, size_t length) // T
         strcat(destination, "|");
     }
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 IPC_ERROR ipc_getString(const char* path, char* destination, size_t length)
 {
     ipc_node_t* node = ipc_getNode(path);
     if(node == 0)
-        return(IPC_NOTFOUND);
+        return (IPC_NOTFOUND);
     if(node->type != IPC_STRING)
-        return(IPC_WRONGTYPE);
+        return (IPC_WRONGTYPE);
     if(!accessAllowed(node, IPC_READ))
-        return(IPC_ACCESSDENIED);
+        return (IPC_ACCESSDENIED);
     if(strlen(node->data.string)+1 > length)
     {
         if(length > sizeof(size_t))
             *(size_t*)destination = strlen(node->data.string)+1;
-        return(IPC_NOTENOUGHMEMORY);
+        return (IPC_NOTENOUGHMEMORY);
     }
 
     strcpy(destination, node->data.string);
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 IPC_ERROR ipc_getInt(const char* path, int64_t* destination)
 {
     ipc_node_t* node = ipc_getNode(path);
     if(node == 0)
-        return(IPC_NOTFOUND);
+        return (IPC_NOTFOUND);
     if(node->type != IPC_INTEGER)
-        return(IPC_WRONGTYPE);
+        return (IPC_WRONGTYPE);
     if(!accessAllowed(node, IPC_READ))
-        return(IPC_ACCESSDENIED);
+        return (IPC_ACCESSDENIED);
 
     *destination = node->data.integer;
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 IPC_ERROR ipc_getDouble(const char* path, double* destination)
 {
     ipc_node_t* node = ipc_getNode(path);
     if(node == 0)
-        return(IPC_NOTFOUND);
+        return (IPC_NOTFOUND);
     if(node->type != IPC_FLOAT)
-        return(IPC_WRONGTYPE);
+        return (IPC_WRONGTYPE);
     if(!accessAllowed(node, IPC_READ))
-        return(IPC_ACCESSDENIED);
+        return (IPC_ACCESSDENIED);
 
     *destination = node->data.floatnum;
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 IPC_ERROR ipc_setString(const char* path, const char* source)
@@ -317,14 +317,14 @@ IPC_ERROR ipc_setString(const char* path, const char* source)
 
     IPC_ERROR err = prepareNodeToWrite(&node, path, IPC_STRING);
     if(err != IPC_SUCCESSFUL)
-        return(err);
+        return (err);
 
     free(node->data.string);
     node->data.string = malloc(strlen(source)+1, 0, "ipc string");
     //node->data.string = realloc(node->data.string, strlen(val)+1); // TODO
     strcpy(node->data.string, source);
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 IPC_ERROR ipc_setInt(const char* path, int64_t* source)
@@ -333,11 +333,11 @@ IPC_ERROR ipc_setInt(const char* path, int64_t* source)
 
     IPC_ERROR err = prepareNodeToWrite(&node, path, IPC_INTEGER);
     if(err != IPC_SUCCESSFUL)
-        return(err);
+        return (err);
 
     node->data.integer = *source;
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 IPC_ERROR ipc_setDouble(const char* path, double* source)
@@ -346,31 +346,31 @@ IPC_ERROR ipc_setDouble(const char* path, double* source)
 
     IPC_ERROR err = prepareNodeToWrite(&node, path, IPC_FLOAT);
     if(err != IPC_SUCCESSFUL)
-        return(err);
+        return (err);
 
     node->data.floatnum = *source;
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 IPC_ERROR ipc_deleteKey(const char* path)
 {
     ipc_node_t* node = ipc_getNode(path);
     if(node == 0)
-        return(IPC_NOTFOUND);
+        return (IPC_NOTFOUND);
     if(!node->parent || !accessAllowed(node->parent, IPC_WRITE)) // Deleting requires write access to nodes parent
-        return(IPC_ACCESSDENIED);
+        return (IPC_ACCESSDENIED);
 
-    return(deleteNode(node));
+    return (deleteNode(node));
 }
 
 IPC_ERROR ipc_setAccess(const char* path, IPC_RIGHTS permissions, uint32_t task)
 {
     ipc_node_t* node = ipc_getNode(path);
     if(node == 0)
-        return(IPC_NOTFOUND);
+        return (IPC_NOTFOUND);
     if(!accessAllowed(node, IPC_DELEGATERIGHTS))
-        return(IPC_ACCESSDENIED);
+        return (IPC_ACCESSDENIED);
 
     if(task == 0)
         node->general = permissions;
@@ -382,7 +382,7 @@ IPC_ERROR ipc_setAccess(const char* path, IPC_RIGHTS permissions, uint32_t task)
             if(certificate->owner == task) // Task has already specific certificate to access this node
             {
                 certificate->privileges = permissions;
-                return(IPC_SUCCESSFUL);
+                return (IPC_SUCCESSFUL);
             }
         }
         ipc_certificate_t* certificate = malloc(sizeof(ipc_certificate_t), 0, "ipc_certificate_t");
@@ -393,7 +393,7 @@ IPC_ERROR ipc_setAccess(const char* path, IPC_RIGHTS permissions, uint32_t task)
         list_append(node->accessTable, certificate);
     }
 
-    return(IPC_SUCCESSFUL);
+    return (IPC_SUCCESSFUL);
 }
 
 

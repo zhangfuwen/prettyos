@@ -252,7 +252,7 @@ renderBuffer_t* renderBuffer_create(uint16_t width, uint16_t height, uint8_t bit
     buffer->device->data = buffer;
     buffer->buffer = malloc(width*height*bitsPerPixel/8, 0, "renderBuffer_t::buffer");
     buffer->buffer2 = 0;
-    return(buffer);
+    return (buffer);
 }
 
 void renderBuffer_free(renderBuffer_t* buffer)

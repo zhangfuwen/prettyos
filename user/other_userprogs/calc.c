@@ -20,15 +20,15 @@ static void replace(const char* source, char* dest, int Pos, int length, const c
 static int getPrevNumber(unsigned int Pos, const char* string) {
     for (int i = Pos-1; i >= 0; i--) {
         if (!isdigit(string[i])) {
-            return(atoi(string+i+1));
+            return (atoi(string+i+1));
         }
     }
-    return(atoi(string));
+    return (atoi(string));
 }
 static int getPrevNumberPos(unsigned int Pos, const char* string) {
     for (int i = Pos-1; i >= 0; i--) {
         if (!isdigit(string[i])) {
-            return(i+1);
+            return (i+1);
         }
     }
     return (0);
@@ -36,14 +36,14 @@ static int getPrevNumberPos(unsigned int Pos, const char* string) {
 static int getNextNumber(unsigned int Pos, const char* string) {
     for (int i = Pos+1; ; i++) {
         if (!isdigit(string[i])) {
-            return(atoi(string+Pos+1));
+            return (atoi(string+Pos+1));
         }
     }
 }
 static int getNextNumberPos(unsigned int Pos, const char* string) {
     for (int i = Pos+1; ; i++) {
         if (!isdigit(string[i])) {
-            return(i-1);
+            return (i-1);
         }
     }
 }
@@ -52,11 +52,11 @@ static int find_first(const char* string, const char* search) {
     for (int i = 0; string[i] != 0; i++) {
         for (int j = 0; search[j] != 0; j++) {
             if (string[i] == search[j]) {
-                return(i);
+                return (i);
             }
         }
     }
-    return(-1);
+    return (-1);
 }
 
 static int32_t CalcTerm(char* term) {
@@ -89,7 +89,7 @@ static int32_t CalcTerm(char* term) {
         replace(temp2, term, getPrevNumberPos(point, term), getNextNumberPos(point, term) - getPrevNumberPos(point, term)+1, temp);
         printf("%s\n", term); // Debug output. Shows how the calculator solves terms
     }
-    return(atoi(term));
+    return (atoi(term));
 }
 
 int main() {

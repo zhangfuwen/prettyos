@@ -163,7 +163,7 @@ size_t vbe_detect()
     vbe_readVIB();
     vgaDebug();
 
-    return((strncmp(vgaIB.VESASignature, "VESA", 4) == 0) ? 1 : 0);
+    return ((strncmp(vgaIB.VESASignature, "VESA", 4) == 0) ? 1 : 0);
 }
 
 void vbe_createDevice(videoDevice_t* device)

@@ -83,7 +83,7 @@ bool ring_isEmpty(ring_t* ring)
 bool ring_deleteFirst(ring_t* ring, void* data)
 {
     ASSERT(ring);
-    if (ring->begin == 0) return(false);
+    if (ring->begin == 0) return (false);
 
     slelement_t* current = ring->current;
     do
@@ -93,7 +93,7 @@ bool ring_deleteFirst(ring_t* ring, void* data)
             slelement_t* temp = current->next;
             takeOut(ring, current);
             free(temp);
-            return(true);
+            return (true);
         }
         current = current->next;
     }

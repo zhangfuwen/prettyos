@@ -10,7 +10,7 @@
 
 cdi_list_t cdi_list_create()
 {
-    return(list_create());
+    return (list_create());
 }
 
 void cdi_list_destroy(cdi_list_t list)
@@ -21,14 +21,14 @@ void cdi_list_destroy(cdi_list_t list)
 cdi_list_t cdi_list_push(cdi_list_t list, void* value)
 {
     list_append(list, value); /// Probably not good... push maybe != append
-    return(list); /// Maybe wrong
+    return (list); /// Maybe wrong
 }
 
 void* cdi_list_pop(cdi_list_t list)
 {
     void* retVal = list->tail->data;
     list_delete(list, list->tail);
-    return(retVal);
+    return (retVal);
 }
 
 size_t cdi_list_empty(cdi_list_t list);
@@ -40,7 +40,7 @@ void* cdi_list_get(cdi_list_t list, size_t index)
     {
         return (0);
     }
-    return(temp->data);
+    return (temp->data);
 }
 
 cdi_list_t cdi_list_insert(cdi_list_t list, size_t index, void* value);
@@ -50,7 +50,7 @@ void* cdi_list_remove(cdi_list_t list, size_t index)
     dlelement_t* elem = list_getElement(list, index);
     void* retVal = elem->data;
     list_delete(list, elem);
-    return(retVal);
+    return (retVal);
 }
 
 size_t cdi_list_size(cdi_list_t list);

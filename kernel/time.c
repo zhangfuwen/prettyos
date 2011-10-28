@@ -52,7 +52,7 @@ static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
         day--;
     }
 
-    return(day%7+1);
+    return (day%7+1);
 }
 
 static void writeInt(uint16_t val, char* dest, size_t strsize)

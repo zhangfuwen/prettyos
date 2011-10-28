@@ -7,7 +7,7 @@ char* ctime(const time_t* time); /// TODO
 
 double difftime(time_t t1, time_t t2)
 {
-    return((double)t2 - (double)t1);
+    return ((double)t2 - (double)t1);
 }
 
 struct tm* gmtime(const time_t* timer); /// TODO

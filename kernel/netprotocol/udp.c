@@ -36,7 +36,7 @@ static udp_port_t* findConnection(uint16_t port)
         {
             udp_port_t* connection = e->data;
             if(connection->port == port)
-                return(connection);
+                return (connection);
         }
     }
     return (0);
@@ -46,7 +46,7 @@ bool udp_bind(uint16_t port)
 {
     udp_port_t* udpPort = findConnection(port);
     if(udpPort)
-        return(false);
+        return (false);
 
     if(udpPorts == 0)
         udpPorts = list_create();
@@ -55,7 +55,7 @@ bool udp_bind(uint16_t port)
     udpPort->owner = (task_t*)currentTask;
     udpPort->port = port;
     list_append(udpPorts, udpPort);
-    return(true);
+    return (true);
 }
 
 void udp_unbind(uint16_t port)

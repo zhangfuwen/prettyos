@@ -119,7 +119,7 @@ bool ethernet_send(network_adapter_t* adapter, void* data, uint32_t length, uint
     bool retVal = network_sendPacket(adapter, (void*)packet, length + sizeof(ethernet_t));
 
     free(packet);
-    return(retVal);
+    return (retVal);
 }
 
 /*

@@ -48,37 +48,37 @@ uint8_t AsciiToCP437(uint8_t ascii)
 {
     switch (ascii)
     {
-        case 0xE4:  return 0x84;  // ä
-        case 0xF6:  return 0x94;  // ö
-        case 0xFC:  return 0x81;  // ü
-        case 0xDF:  return 0xE1;  // ß
-        case 0xA7:  return 0x15;  // §
-        case 0xB0:  return 0xF8;  // °
-        case 0xC4:  return 0x8E;  // Ä
-        case 0xD6:  return 0x99;  // Ö
-        case 0xDC:  return 0x9A;  // Ü
-        case 0xB2:  return 0xFD;  // ²
-        case 0xB3:  return 0x00;  // ³ <-- not available
-        case 0x80:  return 0xEE;  // € <-- Greek epsilon used
-        case 0xB5:  return 0xE6;  // µ
-        case 0xB6:  return 0x14;  // ¶
-        case 0xC6:  return 0x92;  // æ
-        case 0xE6:  return 0x91;  // Æ
-        case 0xF1:  return 0xA4;  // ñ
-        case 0xD1:  return 0xA5;  // Ñ
-        case 0xE7:  return 0x87;  // ç
-        case 0xC7:  return 0x80;  // Ç
-        case 0xBF:  return 0xA8;  // ¿
-        case 0xA1:  return 0xAD;  // ¡
-        case 0xA2:  return 0x0B;  // ¢
-        case 0xA3:  return 0x9C;  // £
-        case 0xBD:  return 0xAB;  // ½
-        case 0xBC:  return 0xAC;  // ¼
-        case 0xA5:  return 0x9D;  // ¥
-        case 0xF7:  return 0xF6;  // ÷
-        case 0xAC:  return 0xAA;  // ¬
-        case 0xAB:  return 0xAE;  // «
-        case 0xBB:  return 0xAF;  // »
+        case 0xE4:  return (0x84);  // ä
+        case 0xF6:  return (0x94);  // ö
+        case 0xFC:  return (0x81);  // ü
+        case 0xDF:  return (0xE1);  // ß
+        case 0xA7:  return (0x15);  // §
+        case 0xB0:  return (0xF8);  // °
+        case 0xC4:  return (0x8E);  // Ä
+        case 0xD6:  return (0x99);  // Ö
+        case 0xDC:  return (0x9A);  // Ü
+        case 0xB2:  return (0xFD);  // ²
+        case 0xB3:  return (0x00);  // ³ <-- not available
+        case 0x80:  return (0xEE);  // € <-- Greek epsilon used
+        case 0xB5:  return (0xE6);  // µ
+        case 0xB6:  return (0x14);  // ¶
+        case 0xC6:  return (0x92);  // æ
+        case 0xE6:  return (0x91);  // Æ
+        case 0xF1:  return (0xA4);  // ñ
+        case 0xD1:  return (0xA5);  // Ñ
+        case 0xE7:  return (0x87);  // ç
+        case 0xC7:  return (0x80);  // Ç
+        case 0xBF:  return (0xA8);  // ¿
+        case 0xA1:  return (0xAD);  // ¡
+        case 0xA2:  return (0x0B);  // ¢
+        case 0xA3:  return (0x9C);  // £
+        case 0xBD:  return (0xAB);  // ½
+        case 0xBC:  return (0xAC);  // ¼
+        case 0xA5:  return (0x9D);  // ¥
+        case 0xF7:  return (0xF6);  // ÷
+        case 0xAC:  return (0xAA);  // ¬
+        case 0xAB:  return (0xAE);  // «
+        case 0xBB:  return (0xAF);  // »
         default:    return ascii; // to be checked for more deviations
     }
 }
@@ -90,6 +90,7 @@ static void kputch(char c, uint8_t attrib)
     uint16_t att = attrib << 8;
 
     mutex_lock(videoLock);
+    
     switch (uc)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete
@@ -289,17 +290,20 @@ void takeScreenshot()
     int32_t NewLine = 0;
 
     mutex_lock(videoLock);
+    
     for (uint16_t i=0; i<4000; i++)
     {
         uint16_t j=i+2*NewLine;
         screenCache[j] = *(char*)(vidmem+i); // only signs, no attributes
-        if (i%80 == 79)
+        
+        if (i % 80 == 79)
         {
             screenCache[j+1]= 0xD; // CR
             screenCache[j+2]= 0xA; // LF
             NewLine++;
         }
     }
+    
     mutex_unlock(videoLock);
 
     // additional newline at the end of the screenshot
@@ -312,6 +316,7 @@ diskType_t*    ScreenDest = &FLOPPYDISK; // HACK
 void saveScreenshot()
 {
     char Pfad[20];
+    
     for (int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
         if (disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->subtype == FS_FAT12 || disks[i]->partition[0]->subtype == FS_FAT16 || disks[i]->partition[0]->subtype == FS_FAT32))
@@ -322,6 +327,7 @@ void saveScreenshot()
     }
 
     file_t* file = fopen(Pfad, "a+");
+    
     if (file) // check for NULL pointer, otherwise #PF
     {
         fwrite(screenCache, 1, SCREENSHOT_BYTES, file);

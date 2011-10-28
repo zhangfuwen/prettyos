@@ -252,7 +252,7 @@ const char* getFilename(const char* path)
             }
         }
         path++;
-        return(path);
+        return (path);
     }
 }
 
@@ -299,18 +299,18 @@ partition_t* getPartition(const char* path)
     {
         if(ports[PortID] && ports[PortID]->insertedDisk)
         {
-            return(ports[PortID]->insertedDisk->partition[PartitionID]);
+            return (ports[PortID]->insertedDisk->partition[PartitionID]);
         }
     }
     else
     {
         if (DiskID == 0)
         {
-            return(systemPartition);
+            return (systemPartition);
         }
         if (DiskID > 0 && DiskID <= DISKARRAYSIZE && disks[DiskID-1])
         {
-            return(disks[DiskID-1]->partition[PartitionID]);
+            return (disks[DiskID-1]->partition[PartitionID]);
         }
     }
     return (0);
@@ -369,11 +369,11 @@ FS_ERROR analyzeDisk(disk_t* disk)
         if (analyzePartition(disk->partition[0]) != CE_GOOD)
         {
             printf("unknown)");
-            return(CE_NOT_FORMATTED);
+            return (CE_NOT_FORMATTED);
         }
         putch(')');
     }
-    return(CE_GOOD);
+    return (CE_GOOD);
 }
 
 
@@ -463,7 +463,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
             memcpy(buffer, readcaches[i].buffer, 512); // use read cache
 
             disk->accessRemaining--;
-            return(CE_GOOD);
+            return (CE_GOOD);
         }
     }
 

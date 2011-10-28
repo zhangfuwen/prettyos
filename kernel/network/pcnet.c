@@ -169,7 +169,7 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
         textColor(ERROR);
         printf("\nPCNet not initialized. Packet can not be sent.");
         textColor(TEXT);
-        return(false);
+        return (false);
     }
 
     // Prepare buffer
@@ -184,7 +184,7 @@ bool PCNet_send(network_adapter_t* adapter, uint8_t* data, size_t length)
     if (pAdapter->currentTransDesc == 8)
         pAdapter->currentTransDesc = 0;
 
-    return(true);
+    return (true);
 }
 
 void PCNet_handler(registers_t* data, pciDev_t* device)

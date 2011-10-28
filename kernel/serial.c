@@ -61,14 +61,14 @@ char serial_read(uint8_t com)
         while (serial_received(com) == false);
         return inportb(IOports[com-1]);
     }
-    return 0;
+    return (0);
 }
 
 bool serial_isTransmitEmpty(uint8_t com)
 {
     if (com <= serialPorts)
         return inportb(IOports[com-1] + 5) & 0x20;
-    return(true);
+    return (true);
 }
 
 void serial_write(uint8_t com, char a)

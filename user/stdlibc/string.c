@@ -34,7 +34,7 @@ void* memcpy(void* dest, const void* source, size_t bytes)
     bytes %= 4;
     __asm__ volatile("cld\n" "rep movsl" : : "S" (source), "D" (dest), "c" (dwords));
     __asm__ volatile("rep movsb" : : "c" (bytes));
-    return(dest);
+    return (dest);
 }
 
 static void* memcpyr(void* dest, const void* src, size_t bytes)
@@ -49,21 +49,21 @@ static void* memcpyr(void* dest, const void* src, size_t bytes)
     __asm__ volatile("std\n" "rep movsb"         : : "S" (src), "D" (temp), "c" (bytes));
     __asm__ volatile("sub $3, %edi\n" "sub $3, %esi");
     __asm__ volatile("rep movsl\n" "cld" : : "c" (dwords));
-    return(dest);
+    return (dest);
 }
 
 void* memmove(void* dest, const void* source, size_t num)
 {
     if (source == dest || num == 0) // Copying is not necessary. Calling memmove with source==destination or size==0 is not a bug.
     {
-        return(dest);
+        return (dest);
     }
 
     // Check for out of memory
     const uintptr_t memMax = ~((uintptr_t)0) - (num - 1); // ~0 is the highest possible value of the variables type. (No underflow possible on substraction, because size < adress space)
     if ((uintptr_t)source > memMax || (uintptr_t)dest > memMax)
     {
-        return(dest);
+        return (dest);
     }
 
     // Arrangement of the destination and source decides about the direction of copying
@@ -75,7 +75,7 @@ void* memmove(void* dest, const void* source, size_t num)
     {
         memcpy(dest, source, num); // We assume, that memcpy does forward copy
     }
-    return(dest);
+    return (dest);
 }
 
 void* memset(void* dest, char value, size_t bytes)
@@ -138,7 +138,7 @@ char* strncpy(char* dest, const char* src, size_t n)
     {
         dest[i] = 0;
     }
-    return(dest);
+    return (dest);
 }
 
 char* strcat(char* dest, const char* src)
@@ -164,7 +164,7 @@ char* strchr(char* str, char character)
         }
         if (*str == 0) // end of string
         {
-            return 0;
+            return (0);
         }
     }
 }
@@ -179,7 +179,7 @@ char* strrchr(const char* s, int c)
         if (*(--p) == c)
             return (char*)p;
     }
-    return 0;
+    return (0);
 }
 
 int strcoll(const char* str1, const char* str2); /// TODO
@@ -191,7 +191,7 @@ char* strpbrk(const char* str, const char* delim)
     for(; *str != 0; str++)
         for(size_t i = 0; delim[i] != 0; i++)
             if(*str == delim[i])
-                return((char*)str);
+                return ((char*)str);
 
     return (0);
 }
@@ -217,7 +217,7 @@ char* strstr(const char* str1, const char* str2)
         ++str1;
         p1 = str1;
     }
-    return 0;
+    return (0);
 }
 
 char* strtok(char* str, const char* delimiters); /// TODO

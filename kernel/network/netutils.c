@@ -65,7 +65,7 @@ uint16_t udptcpCalculateChecksum(void* p, uint16_t length, IP_t srcIP, IP_t dest
 
 bool sameSubnet(IP_t IP1, IP_t IP2, IP_t subnet)
 {
-    return((IP1.iIP & subnet.iIP) == (IP2.iIP & subnet.iIP));
+    return ((IP1.iIP & subnet.iIP) == (IP2.iIP & subnet.iIP));
 }
 
 

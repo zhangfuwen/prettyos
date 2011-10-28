@@ -93,7 +93,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
     if (task->eventQueue == 0 || task->eventQueue->num == 0) // Event handling disabled or no events available
     {
-        return(EVENT_NONE);
+        return (EVENT_NONE);
     }
 
     event_t* ev = 0;
@@ -128,7 +128,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
         if(maxLength >= sizeof(size_t)) // Buffer is large enough to store at least the size of the event. Just issue EVENT_BUFFER_TO_SMALL event, leave event in queue.
         {
             *(uint32_t*)destination = ev->length;
-            return(EVENT_BUFFER_TO_SMALL);
+            return (EVENT_BUFFER_TO_SMALL);
         }
 
         type = EVENT_BUFFER_TO_SMALL;

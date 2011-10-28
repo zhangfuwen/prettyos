@@ -50,7 +50,7 @@ void* memcpy(void* dest, const void* src, size_t bytes)
     bytes %= 4;
     __asm__ volatile("cld\n" "rep movsl" : : "S" (src), "D" (dest), "c" (dwords));
     __asm__ volatile("rep movsb" : : "c" (bytes));
-    return(dest);
+    return (dest);
 }
 
 void* memcpyr(void* dest, const void* src, size_t bytes)
@@ -65,14 +65,14 @@ void* memcpyr(void* dest, const void* src, size_t bytes)
     __asm__ volatile("std\n" "rep movsb"         : : "S" (src), "D" (temp), "c" (bytes));
     __asm__ volatile("sub $3, %edi\n" "sub $3, %esi");
     __asm__ volatile("rep movsl\n" "cld" : : "c" (dwords));
-    return(dest);
+    return (dest);
 }
 
 void* memmove(void* destination, const void* source, size_t size)
 {
     if (source == destination || size == 0) // Copying is not necessary. Calling memmove with source==destination or size==0 is not a bug.
     {
-        return(destination);
+        return (destination);
     }
 
     // Check if either one of the memory regions is beyond the end of the
@@ -86,7 +86,7 @@ void* memmove(void* destination, const void* source, size_t size)
     const uintptr_t memMax = ~((uintptr_t)0) - (size - 1); // ~0 is the highest possible value of the variables type
     if ((uintptr_t)source > memMax || (uintptr_t)destination > memMax)
     {
-        return(destination);
+        return (destination);
     }
 
     // The source overlaps with the destination and the destination is after the
@@ -107,7 +107,7 @@ void* memmove(void* destination, const void* source, size_t size)
     {
         memcpy(destination, source, size); // We assume, that memcpy does forward copy
     }
-    return(destination);
+    return (destination);
 }
 
 void* memset(void* dest, int8_t val, size_t bytes)
@@ -181,7 +181,7 @@ char* gets(char* s)
     while (c != '\n'); // Linefeed
     s[i]='\0';
 
-    return(s);
+    return (s);
 }
 
 void waitForKeyStroke()
@@ -264,7 +264,7 @@ size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
                 break;
         }
     }
-    return(pos);
+    return (pos);
 }
 
 size_t snprintf(char* buffer, size_t length, const char* args, ...)
@@ -273,7 +273,7 @@ size_t snprintf(char* buffer, size_t length, const char* args, ...)
     va_start(ap, args);
     size_t retval = vsnprintf(buffer, length, args, ap);
     va_end(ap);
-    return(retval);
+    return (retval);
 }
 
 size_t strlen(const char* str)
@@ -318,7 +318,7 @@ char* strcpy(char* dest, const char* src)
 
 inline char* strncpy(char* dest, const char* src, size_t n)
 {
-    return(strncpyandfill(dest, src, n, 0));
+    return (strncpyandfill(dest, src, n, 0));
 }
 
 char* strncpyandfill(char* dest, const char* src, size_t n, char val)
@@ -332,7 +332,7 @@ char* strncpyandfill(char* dest, const char* src, size_t n, char val)
     {
         dest[i] = val;
     }
-    return(dest);
+    return (dest);
 }
 
 /// http://en.wikipedia.org/wiki/Strcat
@@ -359,7 +359,7 @@ char* strchr(const char* str, int character)
         }
         if (*str == 0) // end of string
         {
-            return 0;
+            return (0);
         }
     }
 }
@@ -369,7 +369,7 @@ char* strpbrk(const char* str, const char* delim)
     for(; *str != 0; str++)
         for(size_t i = 0; delim[i] != 0; i++)
             if(*str == delim[i])
-                return((char*)str);
+                return ((char*)str);
 
     return (0);
 }
@@ -419,8 +419,8 @@ void reverse(char* s)
 int8_t ctoi(char c)
 {
     if (c < 48 || c > 57)
-        return(-1);
-    return(c-48);
+        return (-1);
+    return (c-48);
 }
 
 char* itoa(int32_t n, char* s)
@@ -443,7 +443,7 @@ char* itoa(int32_t n, char* s)
     }
     s[i] = '\0';
     reverse(s);
-    return(s);
+    return (s);
 }
 
 char* utoa(uint32_t n, char* s)
@@ -456,7 +456,7 @@ char* utoa(uint32_t n, char* s)
     while ((n /= 10) > 0);     // delete it
     s[i] = '\0';
     reverse(s);
-    return(s);
+    return (s);
 }
 
 void i2hex(uint32_t val, char* dest, int32_t len)
@@ -525,7 +525,7 @@ float atof(const char* s)
         val = 10.0 * val + s[i] - '0';
         pow *= 10.0;
     }
-    return(sign * val / pow);
+    return (sign * val / pow);
 }
 
 void ftoa(float f, char* buffer)
@@ -1012,7 +1012,7 @@ uint32_t abs(int32_t arg)
 {
     if (arg < 0)
         arg = -arg;
-    return(arg);
+    return (arg);
 }
 
 double fabs(double x)

@@ -62,7 +62,7 @@ arpTableEntry_t* arp_findEntry(arpTable_t* cache, IP_t IP)
         if (entry->IP.iIP == IP.iIP)
         {
             entry->seconds = timer_getSeconds(); // Update time stamp.
-            return(entry);
+            return (entry);
         }
     }
     return (0);

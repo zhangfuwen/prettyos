@@ -15,7 +15,7 @@ semaphore_t* semaphore_create(uint16_t resourceCount)
     semaphore_t* obj = malloc(sizeof(semaphore_t), 0, "semaphore");
     obj->resCount = resourceCount;
     obj->freeRes = obj->resCount;
-    return(obj);
+    return (obj);
 }
 
 void semaphore_lock(semaphore_t* obj)
@@ -52,7 +52,7 @@ mutex_t* mutex_create()
 {
     mutex_t* obj = malloc(sizeof(mutex_t), 0, "mutex");
     obj->blocks = 0;
-    return(obj);
+    return (obj);
 }
 
 void mutex_lock(mutex_t* obj)

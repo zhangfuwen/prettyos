@@ -27,10 +27,10 @@ int getAnswer(char a, char b)
         if (toupper(c) == toupper(b))
         {
             //while ((c = getchar()) != EOF && c != '\n');
-            return 0;
+            return (0);
         }
     }
-    return 0;
+    return (0);
 }
 
 void is_sorted(int* a, size_t size)
@@ -65,7 +65,7 @@ int main()
         size_t amount = strtoul(gets(buf), 0, 10);
         if (!amount)
         {
-            return 0;
+            return (0);
         }
         if ((numbers = (int*)malloc(amount * sizeof(*numbers))))
         {
@@ -74,7 +74,7 @@ int main()
             size_t i;
             if (getAnswer('c', 'r'))
             {
-                for (i = 0; i < amount; ++i)
+                for (i = 0; i < amount; i++)
                 {
                     printf("Number %i: ", i + 1);
                     numbers[i] = atoi(gets(buf));
@@ -83,7 +83,7 @@ int main()
             else
             {
                 srand(getCurrentMilliseconds());
-                for (i = 0; i < amount; ++i)
+                for (i = 0; i < amount; i++)
                     numbers[i] = rand();
             }
             printf("Sorting %i numbers..\n", amount);
@@ -95,7 +95,7 @@ int main()
             printf("\n");
             if (getAnswer('y', 'n'))
             {
-                for (i = 0; i < amount; ++i)
+                for (i = 0; i < amount; i++)
                     printf("%i, ", numbers[i]);
             }
             free(numbers);

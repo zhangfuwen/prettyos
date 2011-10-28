@@ -152,7 +152,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
     mutex_lock(mutex);
     // Walk the regions and find one being suitable
     uint8_t* regionAddress = heapStart;
-    for (uint32_t i=0; i<regionCount; ++i)
+    for (uint32_t i=0; i<regionCount; i++)
     {
         // Calculate aligned address and the additional size needed due to alignment
         uint8_t* alignedAddress = (uint8_t*)alignUp((uintptr_t)regionAddress, alignment);
@@ -200,7 +200,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
 
                 // "Aligned Destination Area" becomes the "current" region
                 regionAddress += regions[i].size;
-                ++i;
+                i++;
             }
 
             // Split the leftover
@@ -316,7 +316,7 @@ void free(void* addr)
 
     // Walk the regions and find the correct one
     uint8_t* regionAddress = heapStart;
-    for (uint32_t i=0; i<regionCount; ++i)
+    for (uint32_t i=0; i<regionCount; i++)
     {
         if (regionAddress == addr)
         {

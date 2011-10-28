@@ -71,7 +71,7 @@ char* formatPath(char* opath)
         strcpy(npath, ".ELF");
     }
 
-    return(retval);
+    return (retval);
 }
 
 
@@ -379,5 +379,5 @@ EVALUATION: // evaluation of entry
             free(argv);
         }
     } //while
-    return 0;
+    return (0);
 }

@@ -116,7 +116,7 @@ static KEY_t scancodeToKey(uint8_t scancode, bool* make)
         {
             byteCounter++;
             if (byteCounter == 3)
-                return(KEY_PAUSE);
+                return (KEY_PAUSE);
         }
         else // Default code
         {
@@ -125,7 +125,7 @@ static KEY_t scancodeToKey(uint8_t scancode, bool* make)
             pressedKeys[key] = !(scancode & 0x80);
         }
     }
-    return(key);
+    return (key);
 }
 
 static char keyToASCII(KEY_t key)
@@ -167,7 +167,7 @@ static char keyToASCII(KEY_t key)
         if (ctoi(retchar) != -1)
         {
             console_display(1+ctoi(retchar));
-            return 0;
+            return (0);
         }
     }
     if (pressedKeys[KEY_RCTRL] || pressedKeys[KEY_LCTRL])
@@ -195,7 +195,7 @@ static char keyToASCII(KEY_t key)
         takeScreenshot();
     }
 
-    return(retchar);
+    return (retchar);
 }
 
 static void keyboard_handler(registers_t* r)

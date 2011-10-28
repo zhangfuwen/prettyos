@@ -24,7 +24,7 @@ static bool nopm_action(PM_STATES state)
             kprintf("                     Your computer can now be switched off.                     ", 25, 0x20);
             kprintf("                                                                                ", 26, 0x20);
             hlt();
-            return(false); // Hopefully not reached
+            return (false); // Hopefully not reached
         case PM_REBOOT: // We do not use the powermanagement here because its not necessary
         {
             int32_t temp; // A temporary int for storing keyboard info. The keyboard is used to reboot
@@ -39,10 +39,10 @@ static bool nopm_action(PM_STATES state)
             // Reboot
             outportb(0x64, 0xFE);
 
-            return(false); // Hopefully not reached
+            return (false); // Hopefully not reached
         }
         default: // Every other state is unreachable without PM
-            return(false);
+            return (false);
     }
 }
 
@@ -72,7 +72,7 @@ bool apm_install()
     if (*((uint8_t*)0x1300) != 0) // Error
     {
         printf("\nNot available.");
-        return(false);
+        return (false);
     }
     printf("\nVersion: %u.%u, Control string: %c%c, Flags: %x.", *((uint8_t*)0x1302), *((uint8_t*)0x1301), *((uint8_t*)0x1304), *((uint8_t*)0x1303), *((uint16_t*)0x1305));
 
@@ -82,21 +82,21 @@ bool apm_install()
     {
         case 0:
             printf("\nSuccessfully activated.");
-            return(true);
+            return (true);
         case 1:
             printf("\nError while disconnecting: %yh.", *((uint8_t*)0x1301));
-            return(false);
+            return (false);
         case 2:
             printf("\nError while connecting: %yh.", *((uint8_t*)0x1301));
-            return(false);
+            return (false);
         case 3:
             printf("\nError while handling out APM version: %yh.", *((uint8_t*)0x1301));
-            return(false);
+            return (false);
         case 4:
             printf("\nError while activating: %yh.", *((uint8_t*)0x1301));
-            return(false);
+            return (false);
     }
-    return(false);
+    return (false);
 }
 
 static bool apm_action(PM_STATES state)
@@ -106,13 +106,13 @@ static bool apm_action(PM_STATES state)
         case PM_STANDBY:
             *((uint16_t*)0x1300) = 2; // Suspend-Mode (turns more hardware off than standby)
             vm86_executeSync(apm_pd, APM_SETSTATE);
-            return(*((uint16_t*)0x1300) != 0);
+            return (*((uint16_t*)0x1300) != 0);
         case PM_SOFTOFF:
             *((uint16_t*)0x1300) = 3;
             vm86_executeSync(apm_pd, APM_SETSTATE);
-            return(*((uint16_t*)0x1300) != 0);
+            return (*((uint16_t*)0x1300) != 0);
         default: // Every other state is unreachable with APM
-            return(false);
+            return (false);
     }
 }
 
@@ -154,9 +154,9 @@ bool pm_action(PM_STATES state)
             if (pm_systems[i].supported && pm_systems[i].action != 0)
                 success = pm_systems[i].action(state);
         }
-        return(success);
+        return (success);
     }
-    return(false); // Invalid state
+    return (false); // Invalid state
 }
 
 /*

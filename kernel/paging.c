@@ -54,7 +54,7 @@ uint32_t paging_install()
 
     // Setup the page tables for 0 MiB - 20 MiB, identity mapping
     uint32_t addr = 0;
-    for (uint8_t i=0; i<IDMAP; ++i)
+    for (uint8_t i=0; i<IDMAP; i++)
     {
         // Page directory entry, virt=phys due to placement allocation in id-mapped area
         kernelPageDirectory->tables[i] = malloc(sizeof(pageTable_t), PAGESIZE, "pag-kernelPT");
@@ -72,7 +72,7 @@ uint32_t paging_install()
     size_t kernelpts = max(256, ram_available / 4096 / 1024); // Maximum kernel heap size limited by available memory
     pageTable_t* heap_pts = malloc(kernelpts*sizeof(pageTable_t), PAGESIZE, "pag-PTheap");
     memset(heap_pts, 0, kernelpts * sizeof(pageTable_t));
-    for (uint32_t i = 0; i < kernelpts; ++i)
+    for (uint32_t i = 0; i < kernelpts; i++)
     {
         kernelPageDirectory->tables[0x300 + i] = &heap_pts[i];
         kernelPageDirectory->codes [0x300 + i] = (uint32_t)kernelPageDirectory->tables[0x300 + i] | MEM_PRESENT | MEM_WRITE;
@@ -189,7 +189,7 @@ static uint32_t physMemInit()
     // Find the number of dwords we can use, skipping the last, "reserved"-only ones
     uint32_t dwordCount = 0;
 
-    for (uint32_t i=0; i<MAX_DWORDS; ++i)
+    for (uint32_t i=0; i<MAX_DWORDS; i++)
     {
         if (bittable[i] != 0xFFFFFFFF)
         {
@@ -439,7 +439,7 @@ static void* lookForVirtAddr(uintptr_t physAddr, uintptr_t start, uintptr_t end)
             return (void*)(i + (physAddr & 0x00000FFF));
         }
     }
-    return(0); // Not mapped between start and end
+    return (0); // Not mapped between start and end
 }
 
 void* paging_getVirtAddr(uintptr_t physAddress)
@@ -453,21 +453,21 @@ void* paging_getVirtAddr(uintptr_t physAddress)
     // check current used heap
     void* virtAddr = lookForVirtAddr(physAddress, (uintptr_t)KERNEL_heapStart, (uintptr_t)heap_getCurrentEnd());
     if(virtAddr)
-        return(virtAddr);
+        return (virtAddr);
 
     // check pci memory
     lookForVirtAddr(physAddress, (uintptr_t)PCI_MEM_START, (uintptr_t)PCI_MEM_END);
     if(virtAddr)
-        return(virtAddr);
+        return (virtAddr);
 
     // check between idendity mapping area and heap start
     lookForVirtAddr(physAddress, IDMAP * 1024 * PAGESIZE, (uintptr_t)KERNEL_heapStart);
     if(virtAddr)
-        return(virtAddr);
+        return (virtAddr);
 
     // check between current heap end and theoretical heap end
     lookForVirtAddr(physAddress, (uintptr_t)heap_getCurrentEnd(), (uintptr_t)KERNEL_heapEnd);
-    return(virtAddr);
+    return (virtAddr);
 }
 
 

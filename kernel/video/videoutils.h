@@ -48,17 +48,17 @@ extern const BGRA_t white;
 // Color conversions. Inlined to improve performance
 static inline uint16_t BGRAtoBGR16(BGRA_t bgr)
 {
-    return(((bgr.red & 0xF8)<<8) | ((bgr.green & 0xFC)<<3) | (bgr.blue >> 3));
+    return (((bgr.red & 0xF8)<<8) | ((bgr.green & 0xFC)<<3) | (bgr.blue >> 3));
 }
 
 static inline uint16_t BGRAtoBGR15(BGRA_t bgr)
 {
-    return(((bgr.red & 0xF8)<<7) | ((bgr.green & 0xF8)<<2) | (bgr.blue >> 3));
+    return (((bgr.red & 0xF8)<<7) | ((bgr.green & 0xF8)<<2) | (bgr.blue >> 3));
 }
 
 static inline uint16_t BGRAtoBGR8(BGRA_t bgr)
 {
-    return((bgr.red & 0xE0) | ((bgr.green & 0xE0)>>3) | (bgr.blue >> 6));
+    return ((bgr.red & 0xE0) | ((bgr.green & 0xE0)>>3) | (bgr.blue >> 6));
 }
 
 // Advanced and formatted drawing functionality

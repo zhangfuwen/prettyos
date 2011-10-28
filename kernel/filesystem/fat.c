@@ -412,7 +412,7 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
 
             if ((currCluster == volume->FatRootDirCluster) && ((sector + offset2) >= volume->dataLBA) && (volume->part->subtype != FS_FAT32))
             {
-                return 0;
+                return (0);
             }
             if (globalDataWriteNecessary)
             {
@@ -420,7 +420,7 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
                                       globalFilePtr->volume->part->buffer,                                                   // buffer
                                       globalFilePtr->volume->part->disk))
                 {
-                    return 0;
+                    return (0);
                 }
                 globalDataWriteNecessary = false;
             }
@@ -432,7 +432,7 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
 
             if (error != CE_GOOD)
             {
-                return 0;
+                return (0);
             }
             if (ForceRead)
             {
@@ -441,7 +441,7 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
             return (FAT_dirEntry_t*)volume->part->buffer;
         } // END: a valid cluster is found
 
-        return 0; // invalid cluster number
+        return (0); // invalid cluster number
     }
 
     return (FAT_dirEntry_t*)volume->part->buffer + ((*curEntry)%DirectoriesPerSector);
@@ -458,7 +458,7 @@ static FAT_dirEntry_t* getFileAttribute(FAT_file_t* fileptr, uint32_t* fHandle)
 
     if (dir == 0 || dir->Name[0] == DIR_EMPTY || dir->Name[0] == DIR_DEL)
     {
-        return 0;
+        return (0);
     }
 
     while (dir != 0 && dir->Attr == ATTR_LONG_NAME)
@@ -656,7 +656,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_
         // increment it no matter what happened
         fHandle++;
     } // while
-    return(error);
+    return (error);
 }
 
 FS_ERROR FAT_fclose(file_t* file)
@@ -836,7 +836,7 @@ static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t
             }
         }
         globalFATWriteNecessary = false;
-        return 0;
+        return (0);
     }
 
     uint32_t posFAT; // position (byte) in FAT
@@ -923,7 +923,7 @@ static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t
             break;
     }
     globalFATWriteNecessary = true;
-    return 0;
+    return (0);
 }
 
 
@@ -970,7 +970,7 @@ static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
             return (0);
 
         if (value == CLUSTER_EMPTY)
-            return(c);
+            return (c);
 
         c++;
 
@@ -981,7 +981,7 @@ static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
             return (0);
     }
 
-    return(c);
+    return (c);
 }
 
 static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
@@ -1019,7 +1019,7 @@ static FS_ERROR eraseCluster(FAT_partition_t* volume, uint32_t cluster)
             return CE_WRITE_ERROR;
         }
     }
-    return(CE_GOOD);
+    return (CE_GOOD);
 }
 
 static FS_ERROR fileAllocateNewCluster(FAT_file_t* fileptr, uint8_t mode)
@@ -1061,10 +1061,10 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
 
     if (!fileptr->file->write)
     {
-        return 0;
+        return (0);
     }
     uint32_t count = size * n;
-    if (!count) {return 0;}
+    if (!count) {return (0);}
 
     FS_ERROR error      = CE_GOOD;
     globalBufferMemSet0 = false;
@@ -1086,7 +1086,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
                             globalFilePtr->volume->part->disk))
             {
                 volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been written
-                return 0; // write count
+                return (0); // write count
             }
             globalDataWriteNecessary = false;
         }
@@ -1104,7 +1104,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
                             globalFilePtr->volume->part->disk))
             {
                 volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been written
-                return 0; // write count
+                return (0); // write count
             }
             globalDataWriteNecessary = false;
         }
@@ -1141,7 +1141,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
                                 globalFilePtr->volume->part->disk))
                 {
                     volume->disk->accessRemaining -= sectors; // Subtract sectors that have not been written
-                    return 0; // write count
+                    return (0); // write count
                 }
                 globalDataWriteNecessary = false;
             }
@@ -1166,7 +1166,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
             if (error == CE_DISK_FULL)
             {
                 volume->disk->accessRemaining -= sectors; // Subtract sectors that have not been written
-                return 0;
+                return (0);
             }
 
             if (error == CE_GOOD)
@@ -1182,7 +1182,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
                         error   = CE_BAD_SECTOR_READ;
                         globalLastDataSectorRead = 0xFFFFFFFF;
                         volume->disk->accessRemaining -= sectors; // Subtract sectors which has not been written
-                        return 0;
+                        return (0);
                     }
                 }
                 globalLastDataSectorRead = sector;
@@ -1211,7 +1211,7 @@ uint32_t FAT_fwrite(const void* ptr, uint32_t size, uint32_t n, FAT_file_t* file
     fileptr->file->seek = seek;     // save seek
     fileptr->file->size = filesize; // new filesize
 
-    return(writeCount/size);
+    return (writeCount/size);
 }
 
 
@@ -1314,7 +1314,7 @@ static bool fatEraseClusterChain(uint32_t cluster, FAT_partition_t* volume)
 
     fatWrite(volume, 0, 0, true);
 
-    return(status == Exit);
+    return (status == Exit);
 }
 
 
@@ -1351,7 +1351,7 @@ FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseCluster
             fatEraseClusterChain(clus, fileptr->volume);
         }
     }
-    return(CE_GOOD);
+    return (CE_GOOD);
 }
 
 static FS_ERROR PopulateEntries(FAT_file_t* fileptr, char *name, uint32_t *fHandle, uint8_t mode)
@@ -1480,7 +1480,7 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
         }
         *fHandle = bHandle;
     }
-    return(status == FOUND);
+    return (status == FOUND);
 }
 
 static FAT_dirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
@@ -1495,7 +1495,7 @@ static FAT_dirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
 
     if (dir == 0 || dir->Name[0] == DIR_EMPTY || dir->Name[0] == DIR_DEL)
     {
-        return 0;
+        return (0);
     }
 
     while (dir != 0 && dir->Attr == ATTR_LONG_NAME)
@@ -1504,7 +1504,7 @@ static FAT_dirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
         dir = cacheFileEntry(fileptr, fHandle, false);
     }
 
-    return(dir);
+    return (dir);
 }
 
 static FS_ERROR fileCreateHeadCluster(FAT_file_t* fileptr, uint32_t* cluster)
@@ -1684,7 +1684,7 @@ static FS_ERROR FAT_fdopen(FAT_file_t* fileptr, uint32_t* fHandle, char type)
     fileptr->file->write = (type == 'w' || type == 'a');
     fileptr->file->read  = !fileptr->file->write;
 
-    return(error);
+    return (error);
 }
 
 FS_ERROR FAT_fseek(file_t* file, int32_t offset, SEEK_ORIGIN whence)
@@ -1800,7 +1800,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     if (!FormatFileName(file->name, FATfile->name, false))
     {
         free(FATfile);
-        return(CE_INVALID_FILENAME);
+        return (CE_INVALID_FILENAME);
     }
 
     FATfile->volume            = file->volume->data;
@@ -2084,8 +2084,8 @@ char FAT_fgetc(file_t* file)
 {
     char temp;
     if (FAT_fread(file->data, &temp, 1) == CE_EOF)
-        return(-1);
-    return(temp);
+        return (-1);
+    return (temp);
 }
 
 FS_ERROR FAT_fputc(file_t* file, char c)
@@ -2094,7 +2094,7 @@ FS_ERROR FAT_fputc(file_t* file, char c)
 
     if (retVal == 1)
     {
-        return(CE_GOOD);
+        return (CE_GOOD);
     }
     return CE_WRITE_ERROR;
 }
@@ -2333,14 +2333,14 @@ FS_ERROR FAT_pinstall(partition_t* part)
     }
 
     fpart->maxcls = (usbMSDVolumeMaxLBA - fpart->dataLBA - part->start) / fpart->SecPerClus;
-    return(CE_GOOD);
+    return (CE_GOOD);
 }
 
 
 FS_ERROR FAT_folderAccess(folder_t* folder, folderAccess_t mode)
 {
     // Read directory content. Analyze it as a FAT_dirEntry_t array. Put all valid entries into the already created subfolder and files lists.
-    return(CE_GOOD);
+    return (CE_GOOD);
 }
 
 void FAT_folderClose(folder_t* folder)

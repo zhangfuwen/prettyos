@@ -256,7 +256,7 @@ bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 void vm86_initPageDirectory(pageDirectory_t* pd, void* address, void* data, size_t size)
 {
     pd->codes[0] |= MEM_USER | MEM_WRITE;
-    for (uint16_t i=0; i<256; ++i) // Make first 1 MiB accessible
+    for (uint16_t i=0; i<256; i++) // Make first 1 MiB accessible
     {
         pd->tables[0]->pages[i] |= MEM_USER; // address = i*0x1000
     }

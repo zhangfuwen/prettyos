@@ -18,7 +18,7 @@ bool fpu_install()
     {
         textColor(ERROR);
         printf(" => ERROR (fpu.c, 20): Math Coprozessor not available\n");
-        return(false);
+        return (false);
     }
 
     __asm__ volatile ("finit");

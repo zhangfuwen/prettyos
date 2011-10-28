@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
     }
 
     showDNSQuery(name);
-    return 0;
+    return (0);
 }
 
 /*

@@ -92,12 +92,12 @@ static void moveFighter()
 
 bool checkCrash()
 {
-    return(point[fighterPosition][41]);
+    return (point[fighterPosition][41]);
 }
 
 bool checkWin()
 {
-    return(fighterPosition >= 79);
+    return (fighterPosition >= 79);
 }
 
 int main()

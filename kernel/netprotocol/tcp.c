@@ -76,7 +76,7 @@ static tcpConnection_t* tcp_findConnectionID(uint32_t ID)
         tcpConnection_t* connection = e->data;
         if (connection->ID == ID)
         {
-            return(connection);
+            return (connection);
         }
     }
 
@@ -98,15 +98,15 @@ tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* a
                 if (connection->TCP_CurrState == state && connection->adapter == adapter &&
                     ((connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP) ||
                      (connection->remoteSocket.port == 0 && connection->remoteSocket.IP.iIP == 0)))
-                    return(connection);
+                    return (connection);
                 break;
             case TCP_ANY:
                 if (connection->adapter == adapter && connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP)
-                    return(connection);
+                    return (connection);
                 break;
             default:
                 if (connection->adapter == adapter && connection->remoteSocket.port == port && connection->remoteSocket.IP.iIP == IP.iIP && connection->TCP_CurrState == state)
-                    return(connection);
+                    return (connection);
                 break;
         }
     }
@@ -140,7 +140,7 @@ tcpConnection_t* tcp_createConnection()
     printf("\nTCP conn. created, ID: %u\n", connection->ID);
   #endif
 
-    return(connection);
+    return (connection);
 }
 
 void tcp_deleteConnection(tcpConnection_t* connection)
@@ -1040,7 +1040,7 @@ static bool tcp_IsPacketAcceptable(tcpPacket_t* tcp, tcpConnection_t* connection
     {
         if (tcpDatalength)
         {
-            return((ntohl(tcp->sequenceNumber) >=  connection->tcb.RCV.NXT  &&
+            return ((ntohl(tcp->sequenceNumber) >=  connection->tcb.RCV.NXT  &&
                     ntohl(tcp->sequenceNumber) < connection->tcb.RCV.NXT + ntohs(tcp->window)) ||
                    (ntohl(tcp->sequenceNumber) + tcpDatalength >= connection->tcb.RCV.NXT &&
                     ntohl(tcp->sequenceNumber) + tcpDatalength < (connection->tcb.RCV.NXT + ntohs(tcp->window))));
@@ -1094,7 +1094,7 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
 
 static uint16_t tcp_getFreeSocket()
 {
-    return(LowestPortNum + rand() % (0xFFFF - LowestPortNum));
+    return (LowestPortNum + rand() % (0xFFFF - LowestPortNum));
 }
 
 static uint32_t tcp_getConnectionID()
@@ -1197,7 +1197,7 @@ uint32_t tcp_uconnect(IP_t IP, uint16_t port)
 
     if (connection->adapter == 0)
     {
-        return 0;
+        return (0);
     }
 
     connection->localSocket.IP = connection->adapter->IP;
@@ -1211,7 +1211,7 @@ uint32_t tcp_uconnect(IP_t IP, uint16_t port)
         tcp_connect(connection); // active open
     }
 
-    return(connection->ID);
+    return (connection->ID);
 }
 
 bool tcp_usend(uint32_t ID, void* data, size_t length) // data exchange in state ESTABLISHED

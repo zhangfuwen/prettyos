@@ -27,7 +27,7 @@ static void scroll();
 
 inline uint8_t getTextColor()
 {
-    return(currentTask->attrib);
+    return (currentTask->attrib);
 }
 
 inline void textColor(uint8_t color) // bit 0-3: foreground bit 4-7: background
@@ -111,13 +111,13 @@ bool console_display(uint8_t ID)
     // Changing visible console, returning false, if this console is not available.
     if (ID > 11 || reachableConsoles[ID] == 0)
     {
-        return(false);
+        return (false);
     }
     console_displayed = reachableConsoles[ID];
     if(console_displayed->properties & CONSOLE_AUTOREFRESH)
         refreshUserScreen();
     vga_updateCursor();
-    return(true);
+    return (true);
 }
 
 void setScrollField(uint8_t begin, uint8_t end)
@@ -378,7 +378,7 @@ size_t vprintf(const char* args, va_list ap)
         }
     }
     mutex_unlock(console_current->mutex);
-    return(pos);
+    return (pos);
 }
 
 size_t printf(const char* args, ...)
@@ -387,7 +387,7 @@ size_t printf(const char* args, ...)
     va_start(ap, args);
     size_t retval = vprintf(args, ap);
     va_end(ap);
-    return(retval);
+    return (retval);
 }
 
 size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
@@ -411,7 +411,7 @@ size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     console_current->cursor = cOld;
     mutex_unlock(console_current->mutex);
 
-    return(retval);
+    return (retval);
 }
 
 

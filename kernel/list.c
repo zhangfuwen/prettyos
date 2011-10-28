@@ -16,7 +16,7 @@ list_t* list_create()
         list->head = 0;
         list->tail = 0;
     }
-    return(list);
+    return (list);
 }
 
 dlelement_t* list_append(list_t* list, void* data)
@@ -37,7 +37,7 @@ dlelement_t* list_append(list_t* list, void* data)
             list->tail->next = newElement;
         }
         list->tail = newElement;
-        return(newElement);
+        return (newElement);
     }
     return (0);
 }
@@ -46,7 +46,7 @@ dlelement_t* list_insert(list_t* list, dlelement_t* next, void* data)
 {
     if (next == 0)
     {
-        return(list_append(list, data));
+        return (list_append(list, data));
     }
 
     dlelement_t* newElement = malloc(sizeof(dlelement_t), 0, "listElement");
@@ -79,14 +79,14 @@ dlelement_t* list_delete(list_t* list, dlelement_t* elem)
 {
     if (list->head == 0)
     {
-        return 0;
+        return (0);
     }
 
     if (list->head == list->tail)
     {
         free(elem);
         list->head = list->tail = 0;
-        return 0;
+        return (0);
     }
 
     dlelement_t* temp = elem->next;
@@ -134,7 +134,7 @@ dlelement_t* list_getElement(list_t* list, uint32_t number)
     {
         if (number == 0 || cur == 0)
         {
-            return(cur);
+            return (cur);
         }
 
         --number;
@@ -150,7 +150,7 @@ dlelement_t* list_find(list_t* list, void* data)
         cur = cur->next;
     }
 
-    return(cur);
+    return (cur);
 }
 
 size_t list_getCount(list_t* list)
@@ -160,12 +160,12 @@ size_t list_getCount(list_t* list)
     {
         count++;
     }
-    return(count);
+    return (count);
 }
 
 bool list_isEmpty(list_t* list)
 {
-    return(list->head == 0);
+    return (list->head == 0);
 }
 
 /*

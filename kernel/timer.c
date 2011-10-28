@@ -24,20 +24,20 @@ void timer_install(uint16_t sysfreq)
 
 uint32_t timer_getSeconds()
 {
-    return((uint32_t)timer_ticks/systemfrequency);
+    return ((uint32_t)timer_ticks/systemfrequency);
 }
 uint32_t timer_getMilliseconds()
 {
-    return(((uint32_t)timer_ticks*1000)/systemfrequency);
+    return (((uint32_t)timer_ticks*1000)/systemfrequency);
 }
 uint64_t timer_getTicks()
 {
-    return(timer_ticks);
+    return (timer_ticks);
 }
 
 uint32_t timer_millisecondsToTicks(uint32_t milliseconds)
 {
-    return((milliseconds*systemfrequency)/1000);
+    return ((milliseconds*systemfrequency)/1000);
 }
 
 void timer_handler(registers_t* r)
@@ -74,7 +74,7 @@ void timer_setFrequency(uint32_t freq)
 
 uint16_t timer_getFrequency()
 {
-    return(systemfrequency);
+    return (systemfrequency);
 }
 
 // delay in microseconds independent of timer interrupt but on rdtsc

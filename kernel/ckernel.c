@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.159 - Rev: 1360";
+const char* const version = "0.0.3.160 - Rev: 1361";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -55,7 +55,7 @@ static const uint32_t RAMDISKSIZE = 0x100000;
 bool apic_install()
 {
     // TODO: implement APIC functionality
-    return(false);
+    return (false);
 }
 
 todoList_t* kernel_idleTasks;
@@ -274,7 +274,7 @@ void main(multiboot_t* mb_struct)
     bool shell_found = false;
     dirent_t* node = 0;
 
-    for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; ++i)
+    for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; i++)
     {
         fs_node_t* fsnode = finddir_fs(fs_root, node->name);
 

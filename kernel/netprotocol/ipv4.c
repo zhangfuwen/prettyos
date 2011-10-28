@@ -69,12 +69,12 @@ static bool ipv4_sendPacket(network_adapter_t* adapter, ipv4Packet_t* packet, ui
         arp_waitForReply(adapter, IP);
         entry = arp_findEntry(&adapter->arpTable, IP);
         if(entry == 0)
-            return(false); // IP not found
+            return (false); // IP not found
     }
 
     ethernet_send(adapter, packet, length+sizeof(ipv4Packet_t), entry->MAC, 0x0800); // Send packet
 
-    return(true);
+    return (true);
 }
 
 void ipv4_send(network_adapter_t* adapter, void* data, uint32_t length, IP_t IP, int protocol)

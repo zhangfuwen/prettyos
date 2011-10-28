@@ -143,7 +143,7 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
     // Read all program headers
     const elf_programHeader_t* ph = file + header->phoff;
-    for (uint32_t i = 0; i < header->phnum; ++i)
+    for (uint32_t i = 0; i < header->phnum; i++)
     {
         // Check whether the entry exceeds the file
         if ((void*)(ph+i) >= file+size)

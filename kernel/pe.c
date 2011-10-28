@@ -149,7 +149,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
     printf("\nSections:");
   #endif
     const pe_sectionTableEntry_t* sectionTable = ((void*)optHeader) + coffHeader->optionalHeaderSize;
-    for (uint32_t i = 0; i < coffHeader->numberOfSections; ++i)
+    for (uint32_t i = 0; i < coffHeader->numberOfSections; i++)
     {
       #ifdef _DIAGNOSIS_
         char name[9];
@@ -176,7 +176,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
         sti();
     }
 
-    return((void*)(optHeader->entryPoint + optHeader->imageBase));
+    return ((void*)(optHeader->entryPoint + optHeader->imageBase));
 }
 
 

@@ -34,7 +34,7 @@ int main()
     printf("Press key.");
     getchar();
 
-    return 0;
+    return (0);
 }
 
 

@@ -36,7 +36,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
     file_t* file = fopen(path, "r");
     if (file == 0) // File not found
     {
-        return(CE_FILE_NOT_FOUND);
+        return (CE_FILE_NOT_FOUND);
     }
 
     // Find out fileformat
@@ -69,7 +69,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
     {
         fclose(file);
         printf("The file has an unknown type so it cannot be executed.");
-        return(CE_BAD_FILE);
+        return (CE_BAD_FILE);
     }
 
     // Now execute
@@ -89,7 +89,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
         if (entry == 0)
         {
             paging_destroyUserPageDirectory(pd);
-            return(CE_BAD_FILE);
+            return (CE_BAD_FILE);
         }
 
         // Copy argv to kernel PD (intermediate)
@@ -138,11 +138,11 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
     {
         free(buffer);
         printf("Executing the file failed");
-        return(CE_BAD_FILE);
+        return (CE_BAD_FILE);
     }
 
     free(buffer);
-    return(CE_GOOD);
+    return (CE_GOOD);
 }
 
 /*

@@ -16,9 +16,12 @@
 const int dns_port = 53;
 
 static void dns_copyInverse(void* dst, const void* src, size_t size)
-{ // same as htons() + memcpy()
-    for (size_t i = 0; size--; ++i)
+{ 
+    // same as htons() + memcpy()
+    for (size_t i = 0; size--; i++)
+    {
         *((char*)dst + i) = *((char*)src + size);
+    }
 }
 
 void dns_fillHeaderWithFlags(dns_header* header, const dns_flags* flags)
@@ -33,15 +36,15 @@ size_t dns_writeHeaderToBuffer(char* buf, size_t buf_size, const dns_header* hea
 {
     if (buf_size >= 12)
     {
-        dns_copyInverse(buf + 0, &header->id, 2);
-        dns_copyInverse(buf + 2, &header->flags, 2);
-        dns_copyInverse(buf + 4, &header->qdcount, 2);
-        dns_copyInverse(buf + 6, &header->ancount, 2);
-        dns_copyInverse(buf + 8, &header->nscount, 2);
+        dns_copyInverse(buf + 0,  &header->id,      2);
+        dns_copyInverse(buf + 2,  &header->flags,   2);
+        dns_copyInverse(buf + 4,  &header->qdcount, 2);
+        dns_copyInverse(buf + 6,  &header->ancount, 2);
+        dns_copyInverse(buf + 8,  &header->nscount, 2);
         dns_copyInverse(buf + 10, &header->arcount, 2);
-        return 12;
+        return (12);
     }
-    return 0;
+    return (0);
 }
 
 size_t dns_writeQuestionToBuffer(char* buf, size_t buf_size, const dns_question* question)
@@ -63,7 +66,7 @@ size_t dns_writeQuestionToBuffer(char* buf, size_t buf_size, const dns_question*
             }
             else
             {
-                return 0;
+                return (0);
             }
         }
         uint16_t n = strlen(buf + 1);
@@ -77,7 +80,7 @@ size_t dns_writeQuestionToBuffer(char* buf, size_t buf_size, const dns_question*
             return need_space;
         }
     }
-    return 0;
+    return (0);
 }
 
 size_t dns_createSimpleQueryBuffer(char* buf, size_t buf_size, const dns_header* header, const dns_question* question)
@@ -91,7 +94,7 @@ size_t dns_createSimpleQueryBuffer(char* buf, size_t buf_size, const dns_header*
             return w + v;
         }
     }
-    return 0;
+    return (0);
 }
 
 size_t dns_createSimpleQuery(char* buf, size_t buf_size, const char* url, uint16_t id)
@@ -120,7 +123,7 @@ size_t dns_createSimpleQuery(char* buf, size_t buf_size, const char* url, uint16
         question.qtype = dns_type_A; // IPv4 addr
         return dns_createSimpleQueryBuffer(buf, buf_size, &header, &question);
     }
-    return 0;
+    return (0);
 }
 
 const char* dns_parseHeader(dns_header* header, const char* buf, size_t buf_size)
@@ -135,7 +138,7 @@ const char* dns_parseHeader(dns_header* header, const char* buf, size_t buf_size
         dns_copyInverse(&header->arcount, buf + 10, 2);
         return buf + 12;
     }
-    return 0;
+    return (0);
 }
 
 const char* dns_parseName(char* dst, const char* buf, size_t buf_size, const char* pos)
@@ -171,7 +174,7 @@ const char* dns_parseName(char* dst, const char* buf, size_t buf_size, const cha
         }
         break;
     }
-    return 0;
+    return (0);
 }
 
 const char* dns_parseQuestion(dns_question* question, const char* buf, size_t buf_size, const char* pos)
@@ -186,7 +189,7 @@ const char* dns_parseQuestion(dns_question* question, const char* buf, size_t bu
             return p + 4;
         }
     }
-    return 0;
+    return (0);
 }
 
 const char* dns_parseResource(dns_resource* resource, const char* buf, size_t buf_size, const char* pos)
@@ -208,7 +211,7 @@ const char* dns_parseResource(dns_resource* resource, const char* buf, size_t bu
             }
         }
     }
-    return 0;
+    return (0);
 }
 
 /* Ref:

@@ -74,7 +74,7 @@ char* formatPath(char* opath)
         strcpy(npath, ".ELF");
     }
 
-    return(retval);
+    return (retval);
 }
 
 

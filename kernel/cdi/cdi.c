@@ -165,7 +165,7 @@ void cdi_driver_register(struct cdi_driver* driver)
 int __attribute__((weak)) main(void)
 {
     cdi_init();
-    return 0;
+    return (0);
 }
 
 /*

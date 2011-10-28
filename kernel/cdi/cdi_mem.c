@@ -60,7 +60,7 @@ struct cdi_mem_area* cdi_mem_map(uintptr_t paddr, size_t size)
     area->paddr.num = 1;
     area->vaddr = vaddr;
 
-    return(area);
+    return (area);
 }
 
 void cdi_mem_free(struct cdi_mem_area* p)
@@ -75,7 +75,7 @@ struct cdi_mem_area* cdi_mem_require_flags(struct cdi_mem_area* p, cdi_mem_flags
         return (0);
 
     memcpy(new->vaddr, p->vaddr, new->size);
-    return(new);
+    return (new);
 }
 
 int cdi_mem_copy(struct cdi_mem_area* dest, struct cdi_mem_area* src)
@@ -86,7 +86,7 @@ int cdi_mem_copy(struct cdi_mem_area* dest, struct cdi_mem_area* src)
     if (dest->vaddr != src->vaddr)
         memcpy(dest->vaddr, src->vaddr, dest->size);
 
-    return 0;
+    return (0);
 }
 
 

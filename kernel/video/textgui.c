@@ -85,7 +85,7 @@ uint16_t TextGUI_ShowMSG(const char* title, const char* message)
     memcpy((void*)console_current->vidmem, oldvidmem, 8000);
     free(oldvidmem);
     setCursor(oldpos);
-    return(returnval);
+    return (returnval);
 }
 
 
@@ -161,7 +161,7 @@ uint16_t TextGUI_AskYN(const char* title, const char* message, uint8_t defaultse
     memcpy((void*)console_current->vidmem, oldvidmem, 8000);
     free(oldvidmem);
     setCursor(oldpos);
-    return(returnval);
+    return (returnval);
 }
 
 

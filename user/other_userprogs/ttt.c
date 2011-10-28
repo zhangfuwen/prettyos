@@ -139,7 +139,7 @@ int main()
     printLine("Press a key to continue...", 28, 0x0F);
     getchar();
 
-    return 0;
+    return (0);
 }
 
 /*

@@ -30,7 +30,7 @@ usb_device_t* usb_createDevice(disk_t* disk)
     for(uint8_t i = 0; i < 3; i++)
         device->endpoints[0].toggle = false;
     disk->data = device;
-    return(device);
+    return (device);
 }
 
 void usb_destroyDevice(usb_device_t* device)
@@ -665,7 +665,7 @@ FS_ERROR usb_read(uint32_t sector, void* buffer, void* dev)
     usb_sendSCSICommand(dev, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
                         0x28 /*SCSI opcode*/, sector /*LBA*/, 1 /*Blocks In*/, buffer, 0);
 
-    return(CE_GOOD);
+    return (CE_GOOD);
 }
 
 FS_ERROR usb_write(uint32_t sector, void* buffer, void* dev)
@@ -681,7 +681,7 @@ FS_ERROR usb_write(uint32_t sector, void* buffer, void* dev)
     usb_sendSCSICommand_out(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
                             0x2A /*SCSI opcode*/, sector /*LBA*/, 1 /*Blocks Out*/, buffer, 0);
 
-    return(CE_GOOD);
+    return (CE_GOOD);
 }
 
 void usb_resetRecoveryMSD(usb_device_t* device, uint32_t Interface)

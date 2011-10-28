@@ -77,16 +77,16 @@ void cpu_calculateFrequency()
 
 bool cpu_supports(CPU_FEATURE feature)
 {
-    if (feature == CF_CPUID) return(cpuid_available);
-    if (!cpuid_available) return(false);
+    if (feature == CF_CPUID) return (cpuid_available);
+    if (!cpuid_available) return (false);
 
     CPU_REGISTER r = feature&~31;
-    return(cpu_idGetRegister(0x00000001, r) & (BIT(feature-r)));
+    return (cpu_idGetRegister(0x00000001, r) & (BIT(feature-r)));
 }
 
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
 {
-    if (!cpuid_available) return(0);
+    if (!cpuid_available) return (0);
 
     __asm__ ("movl %0, %%eax" : : "r"(function) : "%eax");
     __asm__ ("cpuid");
@@ -95,25 +95,25 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
         case CR_EAX:
         {
             register uint32_t temp __asm__("%eax");
-            return(temp);
+            return (temp);
         }
         case CR_EBX:
         {
             register uint32_t temp __asm__("%ebx");
-            return(temp);
+            return (temp);
         }
         case CR_ECX:
         {
             register uint32_t temp __asm__("%ecx");
-            return(temp);
+            return (temp);
         }
         case CR_EDX:
         {
             register uint32_t temp __asm__("%edx");
-            return(temp);
+            return (temp);
         }
         default:
-            return(0);
+            return (0);
     }
 }
 

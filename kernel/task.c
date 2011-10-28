@@ -67,18 +67,18 @@ void tasking_install()
 
 uint32_t getpid()
 {
-    return(currentTask->pid);
+    return (currentTask->pid);
 }
 
 bool waitForTask(task_t* blockingTask, uint32_t timeout)
 {
     if (timeout > 0)
     {
-        return(scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, max(1, timeout)));
+        return (scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, max(1, timeout)));
     }
 
     scheduler_blockCurrentTask(BL_TASK, (void*)blockingTask->pid, 0);
-    return(true);
+    return (true);
 }
 
 
@@ -167,7 +167,7 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     task_log(newTask);
   #endif
 
-    return(newTask);
+    return (newTask);
 }
 
 task_t* create_cprocess(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)

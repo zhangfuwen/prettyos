@@ -20,19 +20,19 @@ int atexit(void (*func)()); /// TODO
 int abs(int n); // -> math.c
 long labs(long n)
 {
-    return(abs(n)); // HACK?
+    return (abs(n)); // HACK?
 }
 
 div_t div(int numerator, int denominator)
 {
     div_t d = {.quot = numerator/denominator, .rem = numerator%denominator};
-    return(d);
+    return (d);
 }
 
 ldiv_t ldiv(long numerator, long denominator)
 {
     ldiv_t d = {.quot = numerator/denominator, .rem = numerator%denominator};
-    return(d);
+    return (d);
 }
 
 int mblen(const char* pmb, size_t max); /// TODO
@@ -69,7 +69,7 @@ void* malloc(size_t size)
         uint32_t sizeToGrow = (size+4095) & ~4095;
         cur = userheapAlloc(sizeToGrow);
         if (!cur)
-            return 0;
+            return (0);
         top = cur + sizeToGrow;
     }
     // Not enough space on heap?
@@ -77,7 +77,7 @@ void* malloc(size_t size)
     {
         uint32_t sizeToGrow = (size+4095) & ~4095;
         if (!userheapAlloc(sizeToGrow))
-            return 0;
+            return (0);
         top += sizeToGrow;
     }
 
@@ -90,7 +90,7 @@ void* calloc(size_t num, size_t size)
 {
     void* ptr = malloc(num*size);
     memset(ptr, 0, num*size);
-    return(ptr);
+    return (ptr);
 }
 
 void* realloc(void* ptr, size_t size); /// TODO (Impossible with placement)

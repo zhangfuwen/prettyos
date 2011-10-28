@@ -39,7 +39,7 @@ void usb_hc_install(pciDev_t* PCIdev)
             break;
     }
 
-    for (uint8_t i=0; i < 6; ++i) // check BARs
+    for (uint8_t i=0; i < 6; i++) // check BARs
     {
       #ifdef _HCI_DIAGNOSIS_
         switch (PCIdev->bar[i].memoryType)

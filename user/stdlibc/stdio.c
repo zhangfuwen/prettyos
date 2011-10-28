@@ -32,13 +32,13 @@ size_t fread(void* dest, size_t size, size_t count, FILE* file)
 {
     for (size_t i = 0; i < count*size; i++)
         ((uint8_t*)dest)[i] = fgetc(file);
-    return(count*size);
+    return (count*size);
 }
 size_t fwrite(const void* src, size_t size, size_t count, FILE* file)
 {
     for (size_t i = 0; i < count*size; i++)
         fputc(((uint8_t*)src)[i], file);
-    return(count*size);
+    return (count*size);
 }
 int fflush(FILE* file); // -> Syscall
 size_t ftell(FILE* file); /// TODO
@@ -175,7 +175,7 @@ int vprintf(const char* format, va_list arg)
             break;
         }
     }
-    return(pos);
+    return (pos);
 }
 
 int printf(const char* format, ...)
@@ -184,7 +184,7 @@ int printf(const char* format, ...)
     va_start(arg, format);
     int retval = vprintf(format, arg);
     va_end(arg);
-    return(retval);
+    return (retval);
 }
 
 
@@ -259,7 +259,7 @@ int vsprintf(char* dest, const char* format, va_list arg)
         }
         dest[pos] = '\0';
     }
-    return(pos);
+    return (pos);
 }
 
 int sprintf(char* dest, const char* format, ...)
@@ -268,7 +268,7 @@ int sprintf(char* dest, const char* format, ...)
     va_start(arg, format);
     int retval = vsprintf(dest, format, arg);
     va_end(arg);
-    return(retval);
+    return (retval);
 }
 
 int sscanf(const char* src, const char* format, ...); /// TODO

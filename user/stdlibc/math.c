@@ -37,7 +37,7 @@ static double pow2x(double x)
 
     if (x >=0)
     {
-        return(result + 1.0) * powResult;
+        return (result + 1.0) * powResult;
     }
     return 1 / ((result + 1.0) * powResult);
 }
@@ -45,7 +45,7 @@ static double pow2x(double x)
 
 int abs(int n)
 {
-    return(n<0?-n:n);
+    return (n<0?-n:n);
 }
 double fabs(double x)
 {
@@ -78,7 +78,7 @@ double floor(double x)
 
 double fmod(double numerator, double denominator)
 {
-    return(numerator - (double)((int)(numerator/denominator)) * denominator);
+    return (numerator - (double)((int)(numerator/denominator)) * denominator);
 }
 
 double cos(double x)
@@ -109,14 +109,14 @@ double acos(double x)
     if (x < -1 || x > 1)
         return NAN;
 
-    return(pi / 2 - asin(x));
+    return (pi / 2 - asin(x));
 }
 double asin(double x)
 {
     if (x < -1 || x > 1)
         return NAN;
 
-    return(2 * atan(x / (1 + sqrt(1 - (x * x)))));
+    return (2 * atan(x / (1 + sqrt(1 - (x * x)))));
 }
 double atan(double x)
 {
@@ -169,7 +169,7 @@ double frexp(double x, int* exponent)
 }
 double ldexp(double x, int exponent)
 {
-    return(x*pow(2, exponent));
+    return (x*pow(2, exponent));
 }
 
 double log(double x)
@@ -192,7 +192,7 @@ double log10(double x)
 double modf(double x, double* intpart)
 {
     *intpart = (double)((int)x);
-    return(x-*intpart);
+    return (x-*intpart);
 }
 
 double pow(double base, double exponent)

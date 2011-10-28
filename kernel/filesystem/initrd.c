@@ -42,7 +42,7 @@ disk_t* ramdisk_install()
     strcpy(RAMport.name, "RAM     ");
     attachPort(&RAMport);
 
-    return(&RAMdisk);
+    return (&RAMdisk);
 }
 
 void* initrd_install(disk_t* disk, size_t partitionID, size_t size)
@@ -63,7 +63,7 @@ void* initrd_install(disk_t* disk, size_t partitionID, size_t size)
     itoa(((uint32_t)(ramdisk_start)/PAGESIZE), disk->partition[partitionID]->serial);
     disk->partition[partitionID]->serial[12] = 0;
 
-    return(ramdisk_start);
+    return (ramdisk_start);
 }
 
 static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer)
@@ -72,7 +72,7 @@ static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, uin
     size = header.length;
     if (offset > header.length)
     {
-        return 0;
+        return (0);
     }
     if (offset+size > header.length)
     {
@@ -94,7 +94,7 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 
     if (index-1 >= nroot_nodes)
     {
-        return 0;
+        return (0);
     }
     strcpy(dirent.name, root_nodes[index-1].name);
     dirent.name[strlen(root_nodes[index-1].name)] = 0; // NUL-terminate the string
@@ -108,14 +108,14 @@ static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
     {
         return initrd_dev;
     }
-    for (int32_t i=0; i<nroot_nodes; ++i)
+    for (int32_t i=0; i<nroot_nodes; i++)
     {
         if (!strcmp(name, root_nodes[i].name))
         {
             return &root_nodes[i];
         }
     }
-    return 0;
+    return (0);
 }
 
 fs_node_t* install_initrd(void* location)
@@ -162,7 +162,7 @@ fs_node_t* install_initrd(void* location)
     nroot_nodes = initrd_header->nfiles;
 
     // For every file...
-    for (uint32_t i=0; i<initrd_header->nfiles; ++i)
+    for (uint32_t i=0; i<initrd_header->nfiles; i++)
     {
         // Edit the file's header - currently it holds the file offset relative to the start of the ramdisk.
         file_headers[i].off += (uintptr_t)location; /// We want it relative to the start of memory. ///

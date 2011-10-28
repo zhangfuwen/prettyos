@@ -52,7 +52,7 @@ bool network_installDevice(pciDev_t* device)
     if (driver == 0 || driver->install == 0) // PrettyOS does not know the card or the driver is not properly installed
     {
         textColor(TEXT);
-        return(false);
+        return (false);
     }
 
     printf(" network adapter:");
@@ -107,12 +107,12 @@ bool network_installDevice(pciDev_t* device)
     printf("%I", adapter->IP);
     textColor(TEXT);
 
-    return(true);
+    return (true);
 }
 
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length)
 {
-    return(adapter->driver->sendPacket != 0 && adapter->driver->sendPacket(adapter, buffer, length));
+    return (adapter->driver->sendPacket != 0 && adapter->driver->sendPacket(adapter, buffer, length));
 }
 
 static void network_handleReceivedBuffer(void* data, size_t length)
@@ -154,7 +154,7 @@ network_adapter_t* network_getAdapter(IP_t IP)
         network_adapter_t* adapter = e->data;
         if (adapter->IP.iIP == IP.iIP)
         {
-            return(adapter);
+            return (adapter);
         }
     }
     return (0);
@@ -164,7 +164,7 @@ network_adapter_t* network_getFirstAdapter()
 {
     if (adapters == 0)
         return (0);
-    return(adapters->head->data);
+    return (adapters->head->data);
 }
 
 uint32_t getMyIP()

@@ -29,7 +29,7 @@ void sleep(uint32_t milliseconds)
 
 bool waitForTask(uint32_t pid, uint32_t timeout)
 {
-    return(wait(BL_TASK, (void*)pid, timeout));
+    return (wait(BL_TASK, (void*)pid, timeout));
 }
 
 void iSetCursor(uint16_t x, uint16_t y)
@@ -52,12 +52,12 @@ char getchar()
         }
         ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
     }
-    return(ret);
+    return (ret);
 }
 
 uint32_t getCurrentSeconds()
 {
-    return(getCurrentMilliseconds()/1000);
+    return (getCurrentMilliseconds()/1000);
 }
 
 void vsnprintf(char *buffer, size_t length, const char *args, va_list ap)
@@ -187,7 +187,7 @@ char* itoa(int32_t n, char* s)
     }
     s[i] = '\0';
     reverse(s);
-    return(s);
+    return (s);
 }
 
 char* utoa(uint32_t n, char* s)
@@ -200,7 +200,7 @@ char* utoa(uint32_t n, char* s)
     while ((n /= 10) > 0);     // delete it
     s[i] = '\0';
     reverse(s);
-    return(s);
+    return (s);
 }
 
 void ftoa(float f, char* buffer)
@@ -309,7 +309,7 @@ IP_t stringToIP(char* str)
             byte++;
         }
     }
-    return(IP);
+    return (IP);
 }
 
 

@@ -251,7 +251,7 @@ videoDevice_t* video_createDevice(videoDeviceDriver_t* driver)
     device->videoMode.type = VMT_GRAPHIC;
     if (device->driver->createDevice)
         device->driver->createDevice(device);
-    return(device);
+    return (device);
 }
 
 void video_freeDevice(videoDevice_t* device)
@@ -303,7 +303,7 @@ void video_flipScreen(videoDevice_t* device)
 
 BGRA_t video_getPixel(videoDevice_t* buffer, uint32_t x, uint32_t y)
 {
-    return(buffer->driver->getPixel(buffer, x, y));
+    return (buffer->driver->getPixel(buffer, x, y));
 }
 
 /*
