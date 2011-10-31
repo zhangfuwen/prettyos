@@ -11,18 +11,23 @@
 
 initrd_header_t*      initrd_header; // The header.
 initrd_file_header_t* file_headers;  // The list of file headers.
+
+
+/// TODO: ==> device/filesystem manager
 fs_node_t*            initrd_root;   // Our root directory node.
 fs_node_t*            initrd_dev;    // We also add a directory node for /dev, so we can mount devfs later on.
 fs_node_t*            root_nodes;    // List of file nodes.
 int                   nroot_nodes;   // Number of file nodes.
-
 struct dirent dirent;
+//////////////////////////
 
 // file and data going to RAM disk
 extern uintptr_t file_data_start;
 extern uintptr_t file_data_end;
 
+/// TODO: ==> device/filesystem manager
 fs_node_t* install_initrd(void* location);
+
 disk_t* ramdisk_install()
 {
     static port_t RAMport;
@@ -50,6 +55,8 @@ void* initrd_install(disk_t* disk, size_t partitionID, size_t size)
     void* ramdisk_start = malloc(size, 0, "initrd-RAMD-start");
     // shell via incbin in data.asm
     memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
+    
+    /// TODO: ==> device/filesystem manager    
     fs_root = install_initrd(ramdisk_start);
 
     disk->partition[partitionID]         = malloc(sizeof(partition_t), 0, "initrd-part");
@@ -68,22 +75,29 @@ void* initrd_install(disk_t* disk, size_t partitionID, size_t size)
 
 static uint32_t initrd_read(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer)
 {
+    /// TODO: ==> device/filesystem manager    
     initrd_file_header_t header = file_headers[node->inode];
+    
     size = header.length;
-    if (offset > header.length)
+    
+    if (offset > size)
     {
         return (0);
     }
-    if (offset+size > header.length)
+
+    if (offset > 0)
     {
-        size = header.length-offset;
+        size -= offset;
     }
+    
     memcpy(buffer, (void*)(header.off + offset), size);
-    return size;
+    
+    return (size);
 }
 
 static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
 {
+    /// TODO: ==> device/filesystem manager    
     if (node == initrd_root && index == 0)
     {
         strcpy(dirent.name, "dev");
@@ -92,27 +106,33 @@ static struct dirent* initrd_readdir(fs_node_t* node, uint32_t index)
         return &dirent;
     }
 
+    /// TODO: ==> device/filesystem manager    
     if (index-1 >= nroot_nodes)
     {
         return (0);
     }
+    
+    /// TODO: ==> device/filesystem manager    
     strcpy(dirent.name, root_nodes[index-1].name);
     dirent.name[strlen(root_nodes[index-1].name)] = 0; // NUL-terminate the string
     dirent.ino = root_nodes[index-1].inode;
-    return &dirent;
+    
+    return (&dirent);
 }
 
+/// TODO: ==> device/filesystem manager    
 static fs_node_t* initrd_finddir(fs_node_t* node, const char* name)
 {
     if (node == initrd_root && !strcmp(name, "dev"))
     {
-        return initrd_dev;
+        return (initrd_dev);
     }
+
     for (int32_t i=0; i<nroot_nodes; i++)
     {
         if (!strcmp(name, root_nodes[i].name))
         {
-            return &root_nodes[i];
+            return (&root_nodes[i]);
         }
     }
     return (0);
@@ -122,11 +142,12 @@ fs_node_t* install_initrd(void* location)
 {
     // Initialise the main and file header pointers and populate the root directory.
     initrd_header = (initrd_header_t*)location;
-    file_headers  = (initrd_file_header_t*)(location+sizeof(initrd_header_t));
+    file_headers  = (initrd_file_header_t*)(location + sizeof(initrd_header_t));
 
     // Initialise the root directory.
     kdebug(3, "rd_root: ");
 
+    /// TODO: ==> device/filesystem manager    
     initrd_root          = malloc(sizeof(fs_node_t), 0, "initrd-root");
     strcpy(initrd_root->name, "dev");
     initrd_root->mask    = initrd_root->uid = initrd_root->gid = initrd_root->inode = initrd_root->length = 0;
@@ -143,6 +164,7 @@ fs_node_t* install_initrd(void* location)
     // Initialise the /dev directory (required!)
     kdebug(3, "rd_dev: ");
 
+    /// TODO: ==> device/filesystem manager    
     initrd_dev          = malloc(sizeof(fs_node_t), 0, "initrd-dev");
     strcpy(initrd_dev->name, "ramdisk");
     initrd_dev->mask    = initrd_dev->uid = initrd_dev->gid = initrd_dev->inode = initrd_dev->length = 0;
@@ -161,6 +183,7 @@ fs_node_t* install_initrd(void* location)
     root_nodes  = malloc(sizeof(fs_node_t)*initrd_header->nfiles, 0, "initrd-rootnodes");
     nroot_nodes = initrd_header->nfiles;
 
+    /// TODO: ==> device/filesystem manager    
     // For every file...
     for (uint32_t i=0; i<initrd_header->nfiles; i++)
     {
@@ -183,11 +206,11 @@ fs_node_t* install_initrd(void* location)
         root_nodes[i].close   = 0;
         root_nodes[i].impl    = 0;
     }
-    return initrd_root;
+    return (initrd_root);
 }
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

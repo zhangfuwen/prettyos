@@ -378,6 +378,12 @@
     <ClInclude Include="..\kernel\storage\usb_msd.h">
       <Filter>Kernel\include\storage</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\network\e1000.h">
+      <Filter>Kernel\include\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\network\e1000_io.h">
+      <Filter>Kernel\include\network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -634,6 +640,12 @@
     </ClCompile>
     <ClCompile Include="..\kernel\storage\usb.c">
       <Filter>Kernel\Source\storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\network\e1000_cdi.c">
+      <Filter>Kernel\Source\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\network\e1000.c">
+      <Filter>Kernel\Source\network</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

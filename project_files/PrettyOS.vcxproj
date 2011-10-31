@@ -119,6 +119,8 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\netprotocol\netbios.h" />
     <ClInclude Include="..\kernel\netprotocol\tcp.h" />
     <ClInclude Include="..\kernel\netprotocol\udp.h" />
+    <ClInclude Include="..\kernel\network\e1000.h" />
+    <ClInclude Include="..\kernel\network\e1000_io.h" />
     <ClInclude Include="..\kernel\network\netutils.h" />
     <ClInclude Include="..\kernel\network\network.h" />
     <ClInclude Include="..\kernel\network\pcnet.h" />
@@ -211,6 +213,8 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\netprotocol\netbios.c" />
     <ClCompile Include="..\kernel\netprotocol\tcp.c" />
     <ClCompile Include="..\kernel\netprotocol\udp.c" />
+    <ClCompile Include="..\kernel\network\e1000.c" />
+    <ClCompile Include="..\kernel\network\e1000_cdi.c" />
     <ClCompile Include="..\kernel\network\netutils.c" />
     <ClCompile Include="..\kernel\network\network.c" />
     <ClCompile Include="..\kernel\network\pcnet.c" />

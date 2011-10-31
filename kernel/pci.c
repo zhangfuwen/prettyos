@@ -11,6 +11,7 @@
 #include "video/console.h"
 #include "kheap.h"
 #include "ipc.h"
+#include "network\e1000.h"
 
 #ifdef _PCI_VEND_PROD_LIST_
   #include "pciVendProdList.h" // http://www.pcidatabase.com/pci_c_header.php
@@ -254,9 +255,21 @@ void pci_scan()
 
                         // Install device driver
                         if (PCIdev->classID == 0x0C && PCIdev->subclassID == 0x03) // USB Host Controller
+                        {
                             usb_hc_install(PCIdev);
+                        }
+                        else if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00 && 
+                                 PCIdev->deviceID == 0x100E && PCIdev->vendorID == 0x8086) // Intel Gigabit Ethernet Controller // CDI-Interface
+                        {
+                            // driver = &network_drivers[...]; // CDI 
+                            printf("\nIntel Gigabit Ethernet Controller");
+                            e1000_driver_init(); // CDI
+                        }
                         else if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00) // network adapters
+                        {
                             network_installDevice(PCIdev);
+                        }                        
+
                         putch('\n');
 
                         counter++;
