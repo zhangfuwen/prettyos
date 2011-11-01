@@ -21,25 +21,19 @@ void cmosTime(tm_t* ptm)
     ptm->century    = BCDtoDecimal(cmos_read(CMOS_CENTURY));
 }
 
-// TODO: has to be improved 
+static uint16_t days[12] = {  0,  31,  59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+
+static bool isLeapyear(uint16_t year)
+{
+    return (year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0));
+}
+
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
 {
     day += 6; // 1.1.2000 was a saturday
-    day += (year-2000) * 365.24219;
-    
-    if      (month > 11)    day+=334;
-    else if (month > 10)    day+=304;
-    else if (month >  9)    day+=273;
-    else if (month >  8)    day+=243;
-    else if (month >  7)    day+=212;
-    else if (month >  6)    day+=181;
-    else if (month >  5)    day+=151;
-    else if (month >  4)    day+=120;
-    else if (month >  3)    day+=90;
-    else if (month >  2)    day+=59;
-    else if (month >  1)    day+=31;
+    day += (year-2000) * 146097.0/400.0 + days[month-1];
 
-    if ((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0)) && (month < 2 || (month == 2 && day <= 28)))
+    if (isLeapyear(year) && (month < 2 || (month == 2 && day <= 28)))
     {
         day--;
     }
