@@ -7,6 +7,7 @@
 #include "util.h"
 #include "cmos.h"
 
+
 // info from http://lowlevel.brainsware.org/wiki/index.php/CMOS
 
 void cmosTime(tm_t* ptm)
@@ -20,47 +21,42 @@ void cmosTime(tm_t* ptm)
     ptm->century    = BCDtoDecimal(cmos_read(CMOS_CENTURY));
 }
 
+// TODO: has to be improved 
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
 {
     day += 6; // 1.1.2000 was a saturday
-    day += (year-2000)*365.25;
-    if (month > 11)
-        day+=334;
-    else if (month > 10)
-        day+=304;
-    else if (month > 9)
-        day+=273;
-    else if (month > 8)
-        day+=243;
-    else if (month > 7)
-        day+=212;
-    else if (month > 6)
-        day+=181;
-    else if (month > 5)
-        day+=151;
-    else if (month > 4)
-        day+=120;
-    else if (month > 3)
-        day+=90;
-    else if (month > 2)
-        day+=59;
-    else if (month > 1)
-        day+=31;
+    day += (year-2000) * 365.24219;
+    
+    if      (month > 11)    day+=334;
+    else if (month > 10)    day+=304;
+    else if (month >  9)    day+=273;
+    else if (month >  8)    day+=243;
+    else if (month >  7)    day+=212;
+    else if (month >  6)    day+=181;
+    else if (month >  5)    day+=151;
+    else if (month >  4)    day+=120;
+    else if (month >  3)    day+=90;
+    else if (month >  2)    day+=59;
+    else if (month >  1)    day+=31;
 
-    if (year%4 == 0 && (month < 2 || (month == 2 && day <= 28)))
+    if ((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0)) && (month < 2 || (month == 2 && day <= 28)))
     {
         day--;
     }
 
-    return (day%7+1);
+    return ( day % 7 + 1 );
 }
 
 static void writeInt(uint16_t val, char* dest, size_t strsize)
 {
     if (val<10)
+    {
         snprintf(dest, strsize, "0%u", val);
+    }
     else
-        snprintf(dest, strsize, "%u", val);
+    {
+        snprintf(dest, strsize, "%u",  val);
+    }
 }
 
 static const char* const weekdays[] =
@@ -85,8 +81,10 @@ void getCurrentDateAndTime(char* pStr, size_t strsize)
     writeInt(pct.minute, minute, 3);
     writeInt(pct.second, second, 3);
 
-    snprintf(pStr, strsize, "%s, %s %s, %u, %s:%s:%s", weekdays[pct.weekday-1], months[pct.month-1], dayofmonth, pct.century*100+pct.year, hour, minute, second);
+    snprintf(pStr, strsize, "%s, %s %s, %u, %s:%s:%s", weekdays[pct.weekday-1], months[pct.month-1], dayofmonth, 
+                                                       pct.century*100+pct.year, hour, minute, second);
 }
+
 
 /*
 * Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.

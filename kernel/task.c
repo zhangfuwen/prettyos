@@ -112,7 +112,9 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     if (newTask->type != VM86)
     {
         if (newTask->type == THREAD)
+        {
             *(--kernelStack) = (uintptr_t)&exit; // When a thread is finished, exit is automatically called
+        }
 
         if (newTask->privilege == 3)
         {
@@ -158,8 +160,11 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     newTask->ss  = data_segment;
 
     newTask->console = console;
+    
     if(console)
+    {
         list_append(console->tasks, newTask);
+    }
 
     list_append(tasks, newTask);
 
@@ -266,8 +271,11 @@ uint32_t task_switch(task_t* newTask)
 {
     task_switching = false;
 
-    if (newTask->pageDirectory != currentTask->pageDirectory) // Only switch page directory if the new task has a different one than the current task
+    // Switch page directory only if the new task has a different one than the current task
+    if (newTask->pageDirectory != currentTask->pageDirectory) 
+    {
         paging_switch (newTask->pageDirectory);
+    }
 
     currentTask = newTask;
 
@@ -293,6 +301,7 @@ uint32_t task_switch(task_t* newTask)
     }
 
     task_switching = true;
+    
     return (currentTask->esp); // Return new task's esp
 }
 
@@ -322,8 +331,11 @@ void kill(task_t* task)
     udp_cleanup(task);
     tcp_cleanup(task);
     fsmanager_cleanup(task);
+    
     if(task->speaker)
+    {
         noSound();
+    }
 
     // Free user memory, if this task has an own PD
     if (task->type != THREAD && task->type != VM86 && task->pageDirectory != kernelPageDirectory)
@@ -408,6 +420,7 @@ void* task_grow_userheap(uint32_t increase)
     }
 
     currentTask->heap_top += increase;
+
     return old_heap_top;
 }
 
@@ -442,10 +455,12 @@ void task_log(task_t* t)
     if (t->type == THREAD)
     {
         printf("parent task: ");
+        
         if (!t->parent->pid)
         {
             textColor(IMPORTANT);
         }
+        
         printf("  %u", t->parent->pid);
         textColor(TEXT);
     }
@@ -454,12 +469,15 @@ void task_log(task_t* t)
     {
         printf("child-threads:");
         textColor(IMPORTANT);
+        
         for (dlelement_t* e = t->threads->head; e != 0; e = e->next)
         {
             printf(" %u", ((task_t*)e->data)->pid);
         }
+        
         textColor(TEXT);
     }
+
     printf("\n");
 }
 
