@@ -7,6 +7,7 @@
 #include "cdi/pci.h"
 #include "network/network.h"
 #include "list.h"
+#include "util.h"
 
 
 static uint32_t netcard_id = 0;
@@ -31,7 +32,9 @@ void cdi_net_device_init(struct cdi_net_device* device)
     ((struct cdi_pci_device*)device->dev.bus_data)->meta.dev->data = device->dev.bus_data;
     device->dev.driver = ((struct cdi_pci_device*)device->dev.bus_data)->meta.driver;
 
-    device->dev.backdev = network_createDevice(((struct cdi_pci_device*)device->dev.bus_data)->meta.dev);
+    network_adapter_t* adapter = device->dev.backdev = network_createDevice(((struct cdi_pci_device*)device->dev.bus_data)->meta.dev);
+    for(uint8_t i = 0; i < 6; i++) // Copy MAC bytewise due to design failure in CDI
+        adapter->MAC[i] = device->mac>>(i*8);
     network_installCDIDevice(device->dev.backdev);
 }
 
